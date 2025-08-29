@@ -1,0 +1,660 @@
+{
+  "__elements": {},
+  "__inputs": [],
+  "__requires": [
+    {
+      "id": "cloudwatch",
+      "name": "CloudWatch",
+      "type": "datasource",
+      "version": "1.0.0"
+    },
+    {
+      "id": "grafana",
+      "name": "Grafana",
+      "type": "grafana",
+      "version": "11.3.1"
+    },
+    {
+      "id": "text",
+      "name": "Text",
+      "type": "panel",
+      "version": ""
+    },
+    {
+      "id": "timeseries",
+      "name": "Time series",
+      "type": "panel",
+      "version": ""
+    }
+  ],
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "type": "datasource",
+          "uid": "grafana"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations \u0026 Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "description": "Visualize AWS CloudWatch logs metrics",
+  "editable": false,
+  "fiscalYearStartMonth": 0,
+  "gnetId": 758,
+  "graphTooltip": 0,
+  "id": null,
+  "links": [],
+  "panels": [
+    {
+      "datasource": {
+        "uid": "$datasource"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "bytes"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "ForwardedBytes"
+            },
+            "properties": [
+              {
+                "id": "custom.axisPlacement",
+                "value": "right"
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "id": 1,
+      "options": {
+        "legend": {
+          "calcs": [
+            "mean",
+            "max",
+            "min"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "11.3.1",
+      "targets": [
+        {
+          "alias": "",
+          "application": {
+            "filter": ""
+          },
+          "datasource": {
+            "type": "cloudwatch",
+            "uid": "$datasource"
+          },
+          "dimensions": {
+            "LogGroupName": "$loggroupname"
+          },
+          "functions": [],
+          "group": {
+            "filter": ""
+          },
+          "host": {
+            "filter": ""
+          },
+          "item": {
+            "filter": ""
+          },
+          "label": "",
+          "metricEditorMode": 0,
+          "metricName": "IncomingBytes",
+          "metricQueryType": 0,
+          "mode": 0,
+          "namespace": "AWS/Logs",
+          "options": {
+            "showDisabledItems": false
+          },
+          "period": "",
+          "refId": "A",
+          "region": "$region",
+          "statistic": "Sum"
+        },
+        {
+          "alias": "",
+          "application": {
+            "filter": ""
+          },
+          "datasource": {
+            "uid": "$datasource"
+          },
+          "dimensions": {
+            "LogGroupName": "$loggroupname"
+          },
+          "functions": [],
+          "group": {
+            "filter": ""
+          },
+          "host": {
+            "filter": ""
+          },
+          "item": {
+            "filter": ""
+          },
+          "label": "",
+          "metricEditorMode": 0,
+          "metricName": "ForwardedBytes",
+          "metricQueryType": 0,
+          "mode": 0,
+          "namespace": "AWS/Logs",
+          "options": {
+            "showDisabledItems": false
+          },
+          "period": "",
+          "refId": "B",
+          "region": "$region",
+          "statistic": "Sum"
+        }
+      ],
+      "title": "IncomingBytes/ForwardedBytes",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "cloudwatch",
+        "uid": "$datasource"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "none"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "ForwardedLogEvents"
+            },
+            "properties": [
+              {
+                "id": "custom.axisPlacement",
+                "value": "right"
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 24,
+        "x": 0,
+        "y": 7
+      },
+      "id": 10,
+      "options": {
+        "legend": {
+          "calcs": [
+            "mean",
+            "max",
+            "min"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "11.3.1",
+      "targets": [
+        {
+          "alias": "",
+          "application": {
+            "filter": ""
+          },
+          "datasource": {
+            "uid": "$datasource"
+          },
+          "dimensions": {
+            "LogGroupName": "$loggroupname"
+          },
+          "functions": [],
+          "group": {
+            "filter": ""
+          },
+          "host": {
+            "filter": ""
+          },
+          "item": {
+            "filter": ""
+          },
+          "label": "",
+          "metricEditorMode": 0,
+          "metricName": "IncomingLogEvents",
+          "metricQueryType": 0,
+          "mode": 0,
+          "namespace": "AWS/Logs",
+          "options": {
+            "showDisabledItems": false
+          },
+          "period": "",
+          "refId": "A",
+          "region": "$region",
+          "statistic": "Sum"
+        },
+        {
+          "alias": "",
+          "application": {
+            "filter": ""
+          },
+          "datasource": {
+            "type": "cloudwatch",
+            "uid": "$datasource"
+          },
+          "dimensions": {
+            "LogGroupName": "$loggroupname"
+          },
+          "functions": [],
+          "group": {
+            "filter": ""
+          },
+          "host": {
+            "filter": ""
+          },
+          "item": {
+            "filter": ""
+          },
+          "label": "",
+          "metricEditorMode": 0,
+          "metricName": "ForwardedLogEvents",
+          "metricQueryType": 0,
+          "mode": 0,
+          "namespace": "AWS/Logs",
+          "options": {
+            "showDisabledItems": false
+          },
+          "period": "",
+          "refId": "B",
+          "region": "$region",
+          "statistic": "Sum"
+        }
+      ],
+      "title": "IncomingLogEvents/ForwardedLogEvents",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "uid": "$datasource"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "none"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "DeliveryThrottling"
+            },
+            "properties": [
+              {
+                "id": "custom.axisPlacement",
+                "value": "right"
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 24,
+        "x": 0,
+        "y": 14
+      },
+      "id": 11,
+      "options": {
+        "legend": {
+          "calcs": [
+            "mean",
+            "max",
+            "min"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "11.3.1",
+      "targets": [
+        {
+          "alias": "",
+          "application": {
+            "filter": ""
+          },
+          "datasource": {
+            "type": "cloudwatch",
+            "uid": "$datasource"
+          },
+          "dimensions": {
+            "LogGroupName": "$loggroupname"
+          },
+          "functions": [],
+          "group": {
+            "filter": ""
+          },
+          "host": {
+            "filter": ""
+          },
+          "item": {
+            "filter": ""
+          },
+          "label": "",
+          "metricEditorMode": 0,
+          "metricName": "DeliveryErrors",
+          "metricQueryType": 0,
+          "mode": 0,
+          "namespace": "AWS/Logs",
+          "options": {
+            "showDisabledItems": false
+          },
+          "period": "",
+          "refId": "A",
+          "region": "$region",
+          "statistic": "Sum"
+        },
+        {
+          "alias": "",
+          "application": {
+            "filter": ""
+          },
+          "datasource": {
+            "uid": "$datasource"
+          },
+          "dimensions": {
+            "LogGroupName": "$loggroupname"
+          },
+          "functions": [],
+          "group": {
+            "filter": ""
+          },
+          "host": {
+            "filter": ""
+          },
+          "item": {
+            "filter": ""
+          },
+          "label": "",
+          "metricEditorMode": 0,
+          "metricName": "DeliveryThrottling",
+          "metricQueryType": 0,
+          "mode": 0,
+          "namespace": "AWS/Logs",
+          "options": {
+            "showDisabledItems": false
+          },
+          "period": "",
+          "refId": "B",
+          "region": "$region",
+          "statistic": "Sum"
+        }
+      ],
+      "title": "DeliveryErrors/DeliveryThrottling",
+      "type": "timeseries"
+    },
+    {
+      "gridPos": {
+        "h": 3,
+        "w": 24,
+        "x": 0,
+        "y": 21
+      },
+      "id": 2,
+      "options": {
+        "code": {
+          "language": "plaintext",
+          "showLineNumbers": false,
+          "showMiniMap": false
+        },
+        "content": "\u003ca target=\"_blank\" href=\"http://www.monitoringartist.com\" title=\"Dashboard maintained by Monitoring Artist - DevOps / Docker / Kubernetes / AWS ECS / Google GCP / Zabbix / Zenoss / Terraform / Monitoring\"\u003e\u003cimg src=\"https://monitoringartist.github.io/monitoring-artist-logo-grafana.png\" height=\"30px\" /\u003e\u003c/a\u003e | \n\u003ca target=\"_blank\" href=\"https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/CloudWatch-Logs-Monitoring-CloudWatch-Metrics.html\"\u003eAWS CloudWatch Log documentation\u003c/a\u003e | \n\u003ca target=\"_blank\" href=\"https://grafana.com/dashboards/758\"\u003eInstalled from Grafana.com dashboards\u003c/a\u003e\n",
+        "mode": "html"
+      },
+      "pluginVersion": "11.3.1",
+      "title": "Documentation",
+      "type": "text"
+    }
+  ],
+  "refresh": "",
+  "schemaVersion": 41,
+  "tags": [
+    "monitoringartist",
+    "cloudwatch"
+  ],
+  "templating": {
+    "list": [
+      {
+        "current": {},
+        "includeAll": false,
+        "label": "Datasource",
+        "name": "datasource",
+        "options": [],
+        "query": "cloudwatch",
+        "refresh": 1,
+        "regex": "",
+        "type": "datasource"
+      },
+      {
+        "current": {},
+        "datasource": {
+          "type": "cloudwatch",
+          "uid": "$datasource"
+        },
+        "includeAll": false,
+        "label": "Region",
+        "name": "region",
+        "options": [],
+        "query": "regions()",
+        "refresh": 1,
+        "regex": "",
+        "type": "query"
+      },
+      {
+        "current": {},
+        "datasource": {
+          "type": "cloudwatch",
+          "uid": "$datasource"
+        },
+        "includeAll": false,
+        "label": "LogGroupName",
+        "name": "loggroupname",
+        "options": [],
+        "query": "dimension_values($region, AWS/Logs, IncomingBytes, LogGroupName)",
+        "refresh": 1,
+        "regex": "",
+        "type": "query"
+      }
+    ]
+  },
+  "time": {
+    "from": "now-24h",
+    "to": "now"
+  },
+  "timepicker": {},
+  "timezone": "browser",
+  "title": "AWS CloudWatch Logs",
+  "uid": "AWSLogs00",
+  "version": 2,
+  "weekStart": ""
+}

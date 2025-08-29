@@ -1,0 +1,594 @@
+{
+    "annotations": {
+      "list": [
+        {
+          "builtIn": 1,
+          "datasource": {
+            "type": "grafana",
+            "uid": "-- Grafana --"
+          },
+          "enable": true,
+          "hide": true,
+          "iconColor": "rgba(0, 211, 255, 1)",
+          "name": "Annotations & Alerts",
+          "type": "dashboard"
+        }
+      ]
+    },
+    "editable": true,
+    "fiscalYearStartMonth": 0,
+    "graphTooltip": 0,
+    "id": 301,
+    "links": [],
+    "liveNow": false,
+    "panels": [
+      {
+        "collapsed": false,
+        "gridPos": {
+          "h": 1,
+          "w": 24,
+          "x": 0,
+          "y": 0
+        },
+        "id": 4,
+        "panels": [],
+        "title": "Field Override - Data Links",
+        "type": "row"
+      },
+      {
+        "datasource": {},
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "palette-classic"
+            },
+            "custom": {
+              "axisCenteredZero": false,
+              "axisColorMode": "text",
+              "axisLabel": "",
+              "axisPlacement": "auto",
+              "fillOpacity": 80,
+              "gradientMode": "none",
+              "hideFrom": {
+                "legend": false,
+                "tooltip": false,
+                "viz": false
+              },
+              "lineWidth": 1,
+              "scaleDistribution": {
+                "type": "linear"
+              },
+              "thresholdsStyle": {
+                "mode": "off"
+              }
+            },
+            "mappings": [],
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {
+                  "color": "green",
+                  "value": null
+                },
+                {
+                  "color": "red",
+                  "value": 80
+                }
+              ]
+            }
+          },
+          "overrides": [
+            {
+              "matcher": {
+                "id": "byName",
+                "options": "column1"
+              },
+              "properties": [
+                {
+                  "id": "links",
+                  "value": [
+                    {
+                      "title": "google",
+                      "url": "google.com"
+                    },
+                    {
+                      "targetBlank": true,
+                      "title": "youtube",
+                      "url": "youtube.com"
+                    }
+                  ]
+                },
+                {
+                  "id": "custom.fillOpacity",
+                  "value": 14
+                }
+              ]
+            },
+            {
+              "matcher": {
+                "id": "byName",
+                "options": "column2"
+              },
+              "properties": [
+                {
+                  "id": "links",
+                  "value": [
+                    {
+                      "title": "datalink column 2",
+                      "url": "grafana.com"
+                    }
+                  ]
+                },
+                {
+                  "id": "color",
+                  "value": {
+                    "fixedColor": "purple",
+                    "mode": "shades"
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        "gridPos": {
+          "h": 6,
+          "w": 9,
+          "x": 0,
+          "y": 1
+        },
+        "id": 1,
+        "options": {
+          "barRadius": 0,
+          "barWidth": 0.97,
+          "fullHighlight": false,
+          "groupWidth": 0.7,
+          "legend": {
+            "calcs": [],
+            "displayMode": "list",
+            "placement": "bottom",
+            "showLegend": true
+          },
+          "orientation": "auto",
+          "showValue": "auto",
+          "stacking": "none",
+          "tooltip": {
+            "mode": "single",
+            "sort": "none"
+          },
+          "xTickLabelRotation": 0,
+          "xTickLabelSpacing": 0
+        },
+        "pluginVersion": "9.5.0-cloud.4.a016665c",
+        "targets": [
+          {
+            "csvContent": "id,column1,column2\r\nA,1,2",
+            "datasource": {
+              "type": "testdata",
+              "uid": "o63ntNT4z"
+            },
+            "refId": "A",
+            "scenarioId": "csv_content"
+          },
+          {
+            "csvContent": "id,column1,column2\r\nB,2,1",
+            "datasource": {
+              "type": "testdata",
+              "uid": "o63ntNT4z"
+            },
+            "hide": false,
+            "refId": "B",
+            "scenarioId": "csv_content"
+          }
+        ],
+        "title": "Tooltip mode: Single",
+        "transformations": [
+          {
+            "id": "merge",
+            "options": {}
+          }
+        ],
+        "type": "barchart"
+      },
+      {
+        "datasource": {},
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "palette-classic"
+            },
+            "custom": {
+              "axisCenteredZero": false,
+              "axisColorMode": "text",
+              "axisLabel": "",
+              "axisPlacement": "auto",
+              "fillOpacity": 80,
+              "gradientMode": "none",
+              "hideFrom": {
+                "legend": false,
+                "tooltip": false,
+                "viz": false
+              },
+              "lineWidth": 1,
+              "scaleDistribution": {
+                "type": "linear"
+              },
+              "thresholdsStyle": {
+                "mode": "off"
+              }
+            },
+            "mappings": [],
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {
+                  "color": "green",
+                  "value": null
+                },
+                {
+                  "color": "red",
+                  "value": 80
+                }
+              ]
+            }
+          },
+          "overrides": [
+            {
+              "matcher": {
+                "id": "byName",
+                "options": "column1"
+              },
+              "properties": [
+                {
+                  "id": "links",
+                  "value": [
+                    {
+                      "title": "google",
+                      "url": "google.com"
+                    },
+                    {
+                      "targetBlank": true,
+                      "title": "youtube",
+                      "url": "youtube.com"
+                    }
+                  ]
+                },
+                {
+                  "id": "custom.fillOpacity",
+                  "value": 14
+                }
+              ]
+            },
+            {
+              "matcher": {
+                "id": "byName",
+                "options": "column2"
+              },
+              "properties": [
+                {
+                  "id": "links",
+                  "value": [
+                    {
+                      "title": "datalink column 2",
+                      "url": "grafana.com"
+                    }
+                  ]
+                },
+                {
+                  "id": "color",
+                  "value": {
+                    "fixedColor": "purple",
+                    "mode": "shades"
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        "gridPos": {
+          "h": 6,
+          "w": 9,
+          "x": 9,
+          "y": 1
+        },
+        "id": 6,
+        "options": {
+          "barRadius": 0,
+          "barWidth": 0.97,
+          "fullHighlight": false,
+          "groupWidth": 0.7,
+          "legend": {
+            "calcs": [],
+            "displayMode": "list",
+            "placement": "bottom",
+            "showLegend": true
+          },
+          "orientation": "auto",
+          "showValue": "auto",
+          "stacking": "none",
+          "tooltip": {
+            "mode": "multi",
+            "sort": "none"
+          },
+          "xTickLabelRotation": 0,
+          "xTickLabelSpacing": 0
+        },
+        "pluginVersion": "9.5.0-cloud.4.a016665c",
+        "targets": [
+          {
+            "csvContent": "id,column1,column2\r\nA,1,2",
+            "datasource": {
+              "type": "testdata",
+              "uid": "o63ntNT4z"
+            },
+            "refId": "A",
+            "scenarioId": "csv_content"
+          },
+          {
+            "csvContent": "id,column1,column2\r\nB,2,1",
+            "datasource": {
+              "type": "testdata",
+              "uid": "o63ntNT4z"
+            },
+            "hide": false,
+            "refId": "B",
+            "scenarioId": "csv_content"
+          }
+        ],
+        "title": "Tooltip mode: All",
+        "transformations": [
+          {
+            "id": "merge",
+            "options": {}
+          }
+        ],
+        "type": "barchart"
+      },
+      {
+        "collapsed": false,
+        "gridPos": {
+          "h": 1,
+          "w": 24,
+          "x": 0,
+          "y": 7
+        },
+        "id": 3,
+        "panels": [],
+        "title": "Field Override - Hide Tooltip",
+        "type": "row"
+      },
+      {
+        "datasource": {
+          "type": "testdata",
+          "uid": "PD8C576611E62080A"
+        },
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "palette-classic"
+            },
+            "custom": {
+              "axisCenteredZero": false,
+              "axisColorMode": "text",
+              "axisLabel": "",
+              "axisPlacement": "auto",
+              "fillOpacity": 80,
+              "gradientMode": "none",
+              "hideFrom": {
+                "legend": false,
+                "tooltip": false,
+                "viz": false
+              },
+              "lineWidth": 1,
+              "scaleDistribution": {
+                "type": "linear"
+              },
+              "thresholdsStyle": {
+                "mode": "off"
+              }
+            },
+            "mappings": [],
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {
+                  "color": "green",
+                  "value": null
+                },
+                {
+                  "color": "red",
+                  "value": 80
+                }
+              ]
+            }
+          },
+          "overrides": [
+            {
+              "matcher": {
+                "id": "byName",
+                "options": "field 3"
+              },
+              "properties": [
+                {
+                  "id": "custom.hideFrom",
+                  "value": {
+                    "legend": false,
+                    "tooltip": true,
+                    "viz": false
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        "gridPos": {
+          "h": 6,
+          "w": 9,
+          "x": 0,
+          "y": 8
+        },
+        "id": 5,
+        "options": {
+          "barRadius": 0,
+          "barWidth": 0.97,
+          "fullHighlight": false,
+          "groupWidth": 0.7,
+          "legend": {
+            "calcs": [],
+            "displayMode": "list",
+            "placement": "bottom",
+            "showLegend": true
+          },
+          "orientation": "auto",
+          "showValue": "auto",
+          "stacking": "none",
+          "tooltip": {
+            "mode": "multi",
+            "sort": "none"
+          },
+          "xTickLabelRotation": 0,
+          "xTickLabelSpacing": 0
+        },
+        "targets": [
+          {
+            "csvContent": "id, field 1, field 2, field 3\na, 20, 30, 40\nb, 40, 50, 60",
+            "datasource": {
+              "type": "testdata",
+              "uid": "PD8C576611E62080A"
+            },
+            "refId": "A",
+            "scenarioId": "csv_content"
+          }
+        ],
+        "title": "Hide 'field 3'",
+        "type": "barchart"
+      },
+      {
+        "datasource": {
+          "type": "testdata",
+          "uid": "PD8C576611E62080A"
+        },
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "palette-classic"
+            },
+            "custom": {
+              "axisCenteredZero": false,
+              "axisColorMode": "text",
+              "axisLabel": "",
+              "axisPlacement": "auto",
+              "fillOpacity": 80,
+              "gradientMode": "none",
+              "hideFrom": {
+                "legend": false,
+                "tooltip": false,
+                "viz": false
+              },
+              "lineWidth": 1,
+              "scaleDistribution": {
+                "type": "linear"
+              },
+              "thresholdsStyle": {
+                "mode": "off"
+              }
+            },
+            "mappings": [],
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {
+                  "color": "green",
+                  "value": null
+                },
+                {
+                  "color": "red",
+                  "value": 80
+                }
+              ]
+            }
+          },
+          "overrides": [
+            {
+              "matcher": {
+                "id": "byName",
+                "options": "id"
+              },
+              "properties": [
+                {
+                  "id": "custom.hideFrom",
+                  "value": {
+                    "legend": false,
+                    "tooltip": true,
+                    "viz": false
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        "gridPos": {
+          "h": 6,
+          "w": 9,
+          "x": 9,
+          "y": 8
+        },
+        "id": 7,
+        "options": {
+          "barRadius": 0,
+          "barWidth": 0.97,
+          "fullHighlight": false,
+          "groupWidth": 0.7,
+          "legend": {
+            "calcs": [],
+            "displayMode": "list",
+            "placement": "bottom",
+            "showLegend": true
+          },
+          "orientation": "auto",
+          "showValue": "auto",
+          "stacking": "none",
+          "tooltip": {
+            "mode": "multi",
+            "sort": "none"
+          },
+          "xTickLabelRotation": 0,
+          "xTickLabelSpacing": 0
+        },
+        "targets": [
+          {
+            "csvContent": "id, field 1, field 2, field 3\na, 20, 30, 40\nb, 40, 50, 60",
+            "datasource": {
+              "type": "testdata",
+              "uid": "PD8C576611E62080A"
+            },
+            "refId": "A",
+            "scenarioId": "csv_content"
+          }
+        ],
+        "title": "Hide 'id'",
+        "type": "barchart"
+      }
+    ],
+    "refresh": "",
+    "schemaVersion": 38,
+    "style": "dark",
+    "tags": [
+        "gdev",
+        "panel-tests",
+        "barchart",
+        "graph-ng"
+      ],
+    "templating": {
+      "list": []
+    },
+    "time": {
+      "from": "now-6h",
+      "to": "now"
+    },
+    "timepicker": {},
+    "timezone": "",
+    "title": "Panel Tests - Bar Chart Tooltip",
+    "uid": "ea33320b-bd97-4fe1-a27c-24bc61a48b41",
+    "version": 12,
+    "weekStart": ""
+  }

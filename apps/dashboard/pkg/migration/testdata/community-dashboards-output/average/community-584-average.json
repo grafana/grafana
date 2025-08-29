@@ -1,0 +1,904 @@
+{
+  "__inputs": [
+    {
+      "description": "",
+      "label": "CloudWatch Datasource",
+      "name": "DS_CLOUDWATCH",
+      "pluginId": "cloudwatch",
+      "pluginName": "CloudWatch",
+      "type": "datasource"
+    }
+  ],
+  "__requires": [
+    {
+      "id": "cloudwatch",
+      "name": "CloudWatch",
+      "type": "datasource",
+      "version": "5.0.0"
+    },
+    {
+      "id": "grafana",
+      "name": "Grafana",
+      "type": "grafana",
+      "version": "5.0.0"
+    },
+    {
+      "id": "graph",
+      "name": "Graph",
+      "type": "panel",
+      "version": "5.0.0"
+    },
+    {
+      "id": "text",
+      "name": "Text",
+      "type": "panel",
+      "version": "5.0.0"
+    }
+  ],
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "uid": "-- Grafana --"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations \u0026 Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "description": "Visualize AWS SQS metrics",
+  "editable": false,
+  "gnetId": 584,
+  "graphTooltip": 0,
+  "id": null,
+  "iteration": 1529069302464,
+  "links": [],
+  "panels": [
+    {
+      "aliasColors": {},
+      "bars": false,
+      "dashLength": 10,
+      "dashes": false,
+      "datasource": {
+        "uid": "${DS_CLOUDWATCH}"
+      },
+      "editable": true,
+      "error": false,
+      "fill": 1,
+      "grid": {},
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "id": 7,
+      "isNew": true,
+      "legend": {
+        "alignAsTable": true,
+        "avg": true,
+        "current": true,
+        "max": true,
+        "min": true,
+        "show": true,
+        "sort": "current",
+        "sortDesc": true,
+        "total": false,
+        "values": true
+      },
+      "lines": true,
+      "linewidth": 2,
+      "links": [],
+      "nullPointMode": "connected",
+      "percentage": false,
+      "pointradius": 5,
+      "points": false,
+      "renderer": "flot",
+      "seriesOverrides": [],
+      "spaceLength": 10,
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
+        {
+          "alias": "",
+          "application": {
+            "filter": ""
+          },
+          "datasource": {
+            "uid": "${DS_CLOUDWATCH}"
+          },
+          "dimensions": {
+            "QueueName": "$queue"
+          },
+          "functions": [],
+          "group": {
+            "filter": ""
+          },
+          "host": {
+            "filter": ""
+          },
+          "item": {
+            "filter": ""
+          },
+          "metricEditorMode": 0,
+          "metricName": "NumberOfMessagesDeleted",
+          "metricQueryType": 0,
+          "mode": 0,
+          "namespace": "AWS/SQS",
+          "options": {
+            "showDisabledItems": false
+          },
+          "period": "",
+          "refId": "A",
+          "region": "$region",
+          "statistic": "Average"
+        },
+        {
+          "alias": "",
+          "application": {
+            "filter": ""
+          },
+          "datasource": {
+            "uid": "${DS_CLOUDWATCH}"
+          },
+          "dimensions": {
+            "QueueName": "$queue"
+          },
+          "functions": [],
+          "group": {
+            "filter": ""
+          },
+          "host": {
+            "filter": ""
+          },
+          "item": {
+            "filter": ""
+          },
+          "metricEditorMode": 0,
+          "metricName": "NumberOfMessagesReceived",
+          "metricQueryType": 0,
+          "mode": 0,
+          "namespace": "AWS/SQS",
+          "options": {
+            "showDisabledItems": false
+          },
+          "period": "",
+          "refId": "B",
+          "region": "$region",
+          "statistic": "Average"
+        },
+        {
+          "alias": "",
+          "application": {
+            "filter": ""
+          },
+          "datasource": {
+            "uid": "${DS_CLOUDWATCH}"
+          },
+          "dimensions": {
+            "QueueName": "$queue"
+          },
+          "functions": [],
+          "group": {
+            "filter": ""
+          },
+          "host": {
+            "filter": ""
+          },
+          "item": {
+            "filter": ""
+          },
+          "metricEditorMode": 0,
+          "metricName": "NumberOfMessagesSent",
+          "metricQueryType": 0,
+          "mode": 0,
+          "namespace": "AWS/SQS",
+          "options": {
+            "showDisabledItems": false
+          },
+          "period": "",
+          "refId": "C",
+          "region": "$region",
+          "statistic": "Average"
+        }
+      ],
+      "thresholds": [],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "Messages",
+      "tooltip": {
+        "msResolution": false,
+        "shared": true,
+        "sort": 0,
+        "value_type": "cumulative"
+      },
+      "type": "graph",
+      "xaxis": {
+        "buckets": null,
+        "mode": "time",
+        "name": null,
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "format": "none",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": 0,
+          "show": true
+        },
+        {
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": false
+        }
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
+    },
+    {
+      "aliasColors": {},
+      "bars": false,
+      "dashLength": 10,
+      "dashes": false,
+      "datasource": {
+        "uid": "${DS_CLOUDWATCH}"
+      },
+      "editable": true,
+      "error": false,
+      "fill": 1,
+      "grid": {},
+      "gridPos": {
+        "h": 7,
+        "w": 24,
+        "x": 0,
+        "y": 8
+      },
+      "id": 1,
+      "isNew": true,
+      "legend": {
+        "alignAsTable": true,
+        "avg": true,
+        "current": true,
+        "max": true,
+        "min": true,
+        "show": true,
+        "sort": "current",
+        "sortDesc": true,
+        "total": false,
+        "values": true
+      },
+      "lines": true,
+      "linewidth": 2,
+      "links": [],
+      "nullPointMode": "connected",
+      "percentage": false,
+      "pointradius": 5,
+      "points": false,
+      "renderer": "flot",
+      "seriesOverrides": [],
+      "spaceLength": 10,
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
+        {
+          "alias": "",
+          "application": {
+            "filter": ""
+          },
+          "datasource": {
+            "uid": "${DS_CLOUDWATCH}"
+          },
+          "dimensions": {
+            "QueueName": "$queue"
+          },
+          "functions": [],
+          "group": {
+            "filter": ""
+          },
+          "host": {
+            "filter": ""
+          },
+          "item": {
+            "filter": ""
+          },
+          "metricEditorMode": 0,
+          "metricName": "ApproximateAgeOfOldestMessage",
+          "metricQueryType": 0,
+          "mode": 0,
+          "namespace": "AWS/SQS",
+          "options": {
+            "showDisabledItems": false
+          },
+          "period": "",
+          "refId": "A",
+          "region": "$region",
+          "statistic": "Average"
+        }
+      ],
+      "thresholds": [],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "ApproximateAgeOfOldestMessage",
+      "tooltip": {
+        "msResolution": false,
+        "shared": true,
+        "sort": 0,
+        "value_type": "cumulative"
+      },
+      "type": "graph",
+      "xaxis": {
+        "buckets": null,
+        "mode": "time",
+        "name": null,
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "format": "s",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": 0,
+          "show": true
+        },
+        {
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": false
+        }
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
+    },
+    {
+      "aliasColors": {},
+      "bars": false,
+      "dashLength": 10,
+      "dashes": false,
+      "datasource": {
+        "uid": "${DS_CLOUDWATCH}"
+      },
+      "editable": true,
+      "error": false,
+      "fill": 1,
+      "grid": {},
+      "gridPos": {
+        "h": 7,
+        "w": 24,
+        "x": 0,
+        "y": 15
+      },
+      "id": 4,
+      "isNew": true,
+      "legend": {
+        "alignAsTable": true,
+        "avg": true,
+        "current": true,
+        "max": true,
+        "min": true,
+        "show": true,
+        "sort": "current",
+        "sortDesc": true,
+        "total": false,
+        "values": true
+      },
+      "lines": true,
+      "linewidth": 2,
+      "links": [],
+      "nullPointMode": "connected",
+      "percentage": false,
+      "pointradius": 5,
+      "points": false,
+      "renderer": "flot",
+      "seriesOverrides": [],
+      "spaceLength": 10,
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
+        {
+          "alias": "",
+          "application": {
+            "filter": ""
+          },
+          "datasource": {
+            "uid": "${DS_CLOUDWATCH}"
+          },
+          "dimensions": {
+            "QueueName": "$queue"
+          },
+          "functions": [],
+          "group": {
+            "filter": ""
+          },
+          "host": {
+            "filter": ""
+          },
+          "item": {
+            "filter": ""
+          },
+          "metricEditorMode": 0,
+          "metricName": "ApproximateNumberOfMessagesVisible",
+          "metricQueryType": 0,
+          "mode": 0,
+          "namespace": "AWS/SQS",
+          "options": {
+            "showDisabledItems": false
+          },
+          "period": "",
+          "refId": "C",
+          "region": "$region",
+          "statistic": "Average"
+        },
+        {
+          "alias": "",
+          "application": {
+            "filter": ""
+          },
+          "datasource": {
+            "uid": "${DS_CLOUDWATCH}"
+          },
+          "dimensions": {
+            "QueueName": "$queue"
+          },
+          "functions": [],
+          "group": {
+            "filter": ""
+          },
+          "host": {
+            "filter": ""
+          },
+          "item": {
+            "filter": ""
+          },
+          "metricEditorMode": 0,
+          "metricName": "ApproximateNumberOfMessagesNotVisible",
+          "metricQueryType": 0,
+          "mode": 0,
+          "namespace": "AWS/SQS",
+          "options": {
+            "showDisabledItems": false
+          },
+          "period": "",
+          "refId": "A",
+          "region": "$region",
+          "statistic": "Average"
+        },
+        {
+          "alias": "",
+          "application": {
+            "filter": ""
+          },
+          "datasource": {
+            "uid": "${DS_CLOUDWATCH}"
+          },
+          "dimensions": {
+            "QueueName": "$queue"
+          },
+          "functions": [],
+          "group": {
+            "filter": ""
+          },
+          "host": {
+            "filter": ""
+          },
+          "item": {
+            "filter": ""
+          },
+          "metricEditorMode": 0,
+          "metricName": "ApproximateNumberOfMessagesDelayed",
+          "metricQueryType": 0,
+          "mode": 0,
+          "namespace": "AWS/SQS",
+          "options": {
+            "showDisabledItems": false
+          },
+          "period": "",
+          "refId": "B",
+          "region": "$region",
+          "statistic": "Average"
+        }
+      ],
+      "thresholds": [],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "ApproximateNumberOfMessages",
+      "tooltip": {
+        "msResolution": false,
+        "shared": true,
+        "sort": 0,
+        "value_type": "cumulative"
+      },
+      "type": "graph",
+      "xaxis": {
+        "buckets": null,
+        "mode": "time",
+        "name": null,
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "format": "none",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": 0,
+          "show": true
+        },
+        {
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": false
+        }
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
+    },
+    {
+      "aliasColors": {},
+      "bars": false,
+      "dashLength": 10,
+      "dashes": false,
+      "datasource": {
+        "uid": "${DS_CLOUDWATCH}"
+      },
+      "editable": true,
+      "error": false,
+      "fill": 1,
+      "grid": {},
+      "gridPos": {
+        "h": 7,
+        "w": 24,
+        "x": 0,
+        "y": 22
+      },
+      "id": 6,
+      "isNew": true,
+      "legend": {
+        "alignAsTable": true,
+        "avg": true,
+        "current": true,
+        "max": true,
+        "min": true,
+        "show": true,
+        "sort": "current",
+        "sortDesc": true,
+        "total": false,
+        "values": true
+      },
+      "lines": true,
+      "linewidth": 2,
+      "links": [],
+      "nullPointMode": "connected",
+      "percentage": false,
+      "pointradius": 5,
+      "points": false,
+      "renderer": "flot",
+      "seriesOverrides": [],
+      "spaceLength": 10,
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
+        {
+          "alias": "",
+          "application": {
+            "filter": ""
+          },
+          "datasource": {
+            "uid": "${DS_CLOUDWATCH}"
+          },
+          "dimensions": {
+            "QueueName": "$queue"
+          },
+          "functions": [],
+          "group": {
+            "filter": ""
+          },
+          "host": {
+            "filter": ""
+          },
+          "item": {
+            "filter": ""
+          },
+          "metricEditorMode": 0,
+          "metricName": "NumberOfEmptyReceives",
+          "metricQueryType": 0,
+          "mode": 0,
+          "namespace": "AWS/SQS",
+          "options": {
+            "showDisabledItems": false
+          },
+          "period": "",
+          "refId": "A",
+          "region": "$region",
+          "statistic": "Average"
+        }
+      ],
+      "thresholds": [],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "NumberOfEmptyReceives",
+      "tooltip": {
+        "msResolution": false,
+        "shared": true,
+        "sort": 0,
+        "value_type": "cumulative"
+      },
+      "type": "graph",
+      "xaxis": {
+        "buckets": null,
+        "mode": "time",
+        "name": null,
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "format": "none",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": 0,
+          "show": true
+        },
+        {
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": false
+        }
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
+    },
+    {
+      "aliasColors": {},
+      "bars": false,
+      "dashLength": 10,
+      "dashes": false,
+      "datasource": {
+        "uid": "${DS_CLOUDWATCH}"
+      },
+      "editable": true,
+      "error": false,
+      "fill": 1,
+      "grid": {},
+      "gridPos": {
+        "h": 7,
+        "w": 24,
+        "x": 0,
+        "y": 29
+      },
+      "id": 10,
+      "isNew": true,
+      "legend": {
+        "alignAsTable": true,
+        "avg": true,
+        "current": true,
+        "max": true,
+        "min": true,
+        "show": true,
+        "sort": "current",
+        "sortDesc": true,
+        "total": false,
+        "values": true
+      },
+      "lines": true,
+      "linewidth": 2,
+      "links": [],
+      "nullPointMode": "connected",
+      "percentage": false,
+      "pointradius": 5,
+      "points": false,
+      "renderer": "flot",
+      "seriesOverrides": [],
+      "spaceLength": 10,
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
+        {
+          "alias": "",
+          "application": {
+            "filter": ""
+          },
+          "datasource": {
+            "uid": "${DS_CLOUDWATCH}"
+          },
+          "dimensions": {
+            "QueueName": "$queue"
+          },
+          "functions": [],
+          "group": {
+            "filter": ""
+          },
+          "host": {
+            "filter": ""
+          },
+          "item": {
+            "filter": ""
+          },
+          "metricEditorMode": 0,
+          "metricName": "SentMessageSize",
+          "metricQueryType": 0,
+          "mode": 0,
+          "namespace": "AWS/SQS",
+          "options": {
+            "showDisabledItems": false
+          },
+          "period": "",
+          "refId": "A",
+          "region": "$region",
+          "statistic": "Average"
+        }
+      ],
+      "thresholds": [],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "SentMessageSize",
+      "tooltip": {
+        "msResolution": false,
+        "shared": true,
+        "sort": 0,
+        "value_type": "cumulative"
+      },
+      "type": "graph",
+      "xaxis": {
+        "buckets": null,
+        "mode": "time",
+        "name": null,
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "format": "bytes",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": 0,
+          "show": true
+        },
+        {
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": false
+        }
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
+    },
+    {
+      "content": "\u003ca style=\"float: right\" href=\"http://www.monitoringartist.com\" target=\"_blank\" title=\"Dashboard maintained by Monitoring Artist - DevOps / Docker / Kubernetes / AWS ECS / Google GCP / Zabbix / Zenoss / Terraform / Monitoring\"\u003e\u003cimg src=\"https://monitoringartist.github.io/monitoring-artist-logo-grafana.png\" height=\"30px\" /\u003e\u003c/a\u003e\n\u003ca style=\"float: left\"  target=\"_blank\" href=\"http://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/sqs-metricscollected.html\"\u003eAWS CloudWatch SQS documentation\u003c/a\u003e\u003cbr/\u003e\n\u003ca style=\"float: left\"  target=\"_blank\" href=\"https://grafana.net/dashboards/584\"\u003eInstalled from Grafana.net dashboards\u003c/a\u003e\n\u003cdiv style=\"clear:both; width:100%;height:0;font-size:0;\"\u003e\u003c/div\u003e",
+      "datasource": {
+        "apiVersion": "v1",
+        "type": "prometheus",
+        "uid": "default-ds-uid"
+      },
+      "editable": true,
+      "error": false,
+      "gridPos": {
+        "h": 3,
+        "w": 24,
+        "x": 0,
+        "y": 36
+      },
+      "id": 2,
+      "isNew": true,
+      "links": [],
+      "mode": "html",
+      "targets": [
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "prometheus",
+            "uid": "default-ds-uid"
+          },
+          "refId": "A"
+        }
+      ],
+      "title": "Documentation",
+      "type": "text"
+    }
+  ],
+  "refresh": "",
+  "schemaVersion": 41,
+  "style": "dark",
+  "tags": [
+    "monitoringartist",
+    "cloudwatch"
+  ],
+  "templating": {
+    "list": [
+      {
+        "allValue": null,
+        "current": {},
+        "datasource": {
+          "uid": "${DS_CLOUDWATCH}"
+        },
+        "hide": 0,
+        "includeAll": false,
+        "label": "Region",
+        "multi": false,
+        "name": "region",
+        "options": [],
+        "query": "regions()",
+        "refresh": 1,
+        "regex": "",
+        "sort": 0,
+        "type": "query"
+      },
+      {
+        "allValue": null,
+        "current": {},
+        "datasource": {
+          "uid": "${DS_CLOUDWATCH}"
+        },
+        "hide": 0,
+        "includeAll": false,
+        "label": "Queue name",
+        "multi": false,
+        "name": "queue",
+        "options": [],
+        "query": "dimension_values($region,AWS/SQS,NumberOfMessagesReceived,QueueName)",
+        "refresh": 1,
+        "regex": "",
+        "sort": 0,
+        "type": "query"
+      }
+    ]
+  },
+  "time": {
+    "from": "now-24h",
+    "to": "now"
+  },
+  "timepicker": {
+    "refresh_intervals": [
+      "5s",
+      "10s",
+      "30s",
+      "1m",
+      "5m",
+      "15m",
+      "30m",
+      "1h",
+      "2h",
+      "1d"
+    ]
+  },
+  "timezone": "browser",
+  "title": "AWS SQS",
+  "uid": "AWSSQS000",
+  "version": 1
+}

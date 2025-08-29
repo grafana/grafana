@@ -1,0 +1,1218 @@
+{
+  "__elements": {},
+  "__inputs": [],
+  "__requires": [
+    {
+      "id": "cloudwatch",
+      "name": "CloudWatch",
+      "type": "datasource",
+      "version": "1.0.0"
+    },
+    {
+      "id": "grafana",
+      "name": "Grafana",
+      "type": "grafana",
+      "version": "11.3.1"
+    },
+    {
+      "id": "text",
+      "name": "Text",
+      "type": "panel",
+      "version": ""
+    },
+    {
+      "id": "timeseries",
+      "name": "Time series",
+      "type": "panel",
+      "version": ""
+    }
+  ],
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "type": "datasource",
+          "uid": "grafana"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations \u0026 Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "description": "Visualize AWS API Gateway metrics",
+  "editable": false,
+  "gnetId": 1516,
+  "graphTooltip": 0,
+  "id": null,
+  "links": [],
+  "panels": [
+    {
+      "datasource": {
+        "uid": "$datasource"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "links": [],
+          "mappings": [],
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "none"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Latency_Average"
+            },
+            "properties": [
+              {
+                "id": "custom.axisPlacement",
+                "value": "right"
+              },
+              {
+                "id": "custom.axisPlacement",
+                "value": "hidden"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "TargetResponseTime_Average"
+            },
+            "properties": [
+              {
+                "id": "custom.axisPlacement",
+                "value": "right"
+              },
+              {
+                "id": "custom.axisPlacement",
+                "value": "hidden"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "ClientConnections_Sum"
+            },
+            "properties": [
+              {
+                "id": "custom.axisPlacement",
+                "value": "right"
+              },
+              {
+                "id": "custom.axisPlacement",
+                "value": "hidden"
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "id": 7,
+      "options": {
+        "legend": {
+          "calcs": [
+            "mean",
+            "max",
+            "min",
+            "sum"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "11.3.1",
+      "targets": [
+        {
+          "alias": "{{metric}} {{stat}}",
+          "application": {
+            "filter": ""
+          },
+          "datasource": {
+            "type": "cloudwatch",
+            "uid": "$datasource"
+          },
+          "dimensions": {
+            "ApiName": "$apiname",
+            "Stage": "$stage"
+          },
+          "expression": "",
+          "functions": [],
+          "group": {
+            "filter": ""
+          },
+          "highResolution": false,
+          "host": {
+            "filter": ""
+          },
+          "id": "",
+          "item": {
+            "filter": ""
+          },
+          "label": "${PROP('MetricName')} ${PROP('Stat')}",
+          "matchExact": true,
+          "metricEditorMode": 0,
+          "metricName": "Count",
+          "metricQueryType": 0,
+          "mode": 0,
+          "namespace": "AWS/ApiGateway",
+          "options": {
+            "showDisabledItems": false
+          },
+          "period": "$agg",
+          "refId": "A",
+          "region": "$region",
+          "statistic": "Sum"
+        }
+      ],
+      "title": "Count",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "uid": "$datasource"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "links": [],
+          "mappings": [],
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "ms"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "TargetResponseTime_Average"
+            },
+            "properties": [
+              {
+                "id": "custom.axisPlacement",
+                "value": "right"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "ClientConnections_Sum"
+            },
+            "properties": [
+              {
+                "id": "custom.axisPlacement",
+                "value": "right"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "IntegrationLatency_Average"
+            },
+            "properties": [
+              {
+                "id": "custom.axisPlacement",
+                "value": "right"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "IntegrationLatency"
+            },
+            "properties": [
+              {
+                "id": "custom.axisPlacement",
+                "value": "right"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Latency Maximum"
+            },
+            "properties": [
+              {
+                "id": "custom.axisPlacement",
+                "value": "right"
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 24,
+        "x": 0,
+        "y": 7
+      },
+      "id": 14,
+      "options": {
+        "legend": {
+          "calcs": [
+            "mean",
+            "max",
+            "min"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "11.3.1",
+      "targets": [
+        {
+          "alias": "{{metric}} {{stat}}",
+          "application": {
+            "filter": ""
+          },
+          "datasource": {
+            "type": "cloudwatch",
+            "uid": "$datasource"
+          },
+          "dimensions": {
+            "ApiName": "$apiname",
+            "Stage": "$stage"
+          },
+          "expression": "",
+          "functions": [],
+          "group": {
+            "filter": ""
+          },
+          "highResolution": false,
+          "host": {
+            "filter": ""
+          },
+          "id": "",
+          "item": {
+            "filter": ""
+          },
+          "label": "${PROP('MetricName')} ${PROP('Stat')}",
+          "metricEditorMode": 0,
+          "metricName": "Latency",
+          "metricQueryType": 0,
+          "mode": 0,
+          "namespace": "AWS/ApiGateway",
+          "options": {
+            "showDisabledItems": false
+          },
+          "period": "$agg",
+          "refId": "A",
+          "region": "$region",
+          "statistic": "Average"
+        },
+        {
+          "alias": "{{metric}} {{stat}}",
+          "application": {
+            "filter": ""
+          },
+          "datasource": {
+            "uid": "$datasource"
+          },
+          "dimensions": {
+            "ApiName": "$apiname",
+            "Stage": "$stage"
+          },
+          "expression": "",
+          "functions": [],
+          "group": {
+            "filter": ""
+          },
+          "highResolution": false,
+          "host": {
+            "filter": ""
+          },
+          "id": "",
+          "item": {
+            "filter": ""
+          },
+          "label": "${PROP('MetricName')} ${PROP('Stat')}",
+          "metricEditorMode": 0,
+          "metricName": "IntegrationLatency",
+          "metricQueryType": 0,
+          "mode": 0,
+          "namespace": "AWS/ApiGateway",
+          "options": {
+            "showDisabledItems": false
+          },
+          "period": "$agg",
+          "refId": "B",
+          "region": "$region",
+          "statistic": "Average"
+        },
+        {
+          "alias": "{{metric}} {{stat}}",
+          "application": {
+            "filter": ""
+          },
+          "datasource": {
+            "type": "cloudwatch",
+            "uid": "$datasource"
+          },
+          "dimensions": {
+            "ApiName": "$apiname",
+            "Stage": "$stage"
+          },
+          "expression": "",
+          "functions": [],
+          "group": {
+            "filter": ""
+          },
+          "highResolution": false,
+          "host": {
+            "filter": ""
+          },
+          "id": "",
+          "item": {
+            "filter": ""
+          },
+          "label": "${PROP('MetricName')} ${PROP('Stat')}",
+          "metricEditorMode": 0,
+          "metricName": "Latency",
+          "metricQueryType": 0,
+          "mode": 0,
+          "namespace": "AWS/ApiGateway",
+          "options": {
+            "showDisabledItems": false
+          },
+          "period": "$agg",
+          "refId": "C",
+          "region": "$region",
+          "statistic": "Maximum"
+        }
+      ],
+      "title": "Latency / IntegrationLatency",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "uid": "$datasource"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "links": [],
+          "mappings": [],
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "none"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "4XXError Sum"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "#e24d42",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "5XXError Sum"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "#ef843c",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Total Error Rate"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "percent"
+              },
+              {
+                "id": "custom.axisPlacement",
+                "value": "right"
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 24,
+        "x": 0,
+        "y": 14
+      },
+      "id": 15,
+      "options": {
+        "legend": {
+          "calcs": [
+            "mean",
+            "max",
+            "min"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "11.3.1",
+      "targets": [
+        {
+          "alias": "{{metric}} {{stat}}",
+          "application": {
+            "filter": ""
+          },
+          "datasource": {
+            "type": "cloudwatch",
+            "uid": "$datasource"
+          },
+          "dimensions": {
+            "ApiName": "$apiname",
+            "Stage": "$stage"
+          },
+          "expression": "",
+          "functions": [],
+          "group": {
+            "filter": ""
+          },
+          "highResolution": false,
+          "host": {
+            "filter": ""
+          },
+          "id": "e400",
+          "item": {
+            "filter": ""
+          },
+          "label": "${PROP('MetricName')} ${PROP('Stat')}",
+          "metricEditorMode": 0,
+          "metricName": "4XXError",
+          "metricQueryType": 0,
+          "mode": 0,
+          "namespace": "AWS/ApiGateway",
+          "options": {
+            "showDisabledItems": false
+          },
+          "period": "",
+          "refId": "A",
+          "region": "$region",
+          "statistic": "Sum"
+        },
+        {
+          "alias": "{{metric}} {{stat}}",
+          "application": {
+            "filter": ""
+          },
+          "datasource": {
+            "uid": "$datasource"
+          },
+          "dimensions": {
+            "ApiName": "$apiname",
+            "Stage": "$stage"
+          },
+          "expression": "",
+          "functions": [],
+          "group": {
+            "filter": ""
+          },
+          "highResolution": false,
+          "host": {
+            "filter": ""
+          },
+          "id": "e500",
+          "item": {
+            "filter": ""
+          },
+          "label": "${PROP('MetricName')} ${PROP('Stat')}",
+          "metricEditorMode": 0,
+          "metricName": "5XXError",
+          "metricQueryType": 0,
+          "mode": 0,
+          "namespace": "AWS/ApiGateway",
+          "options": {
+            "showDisabledItems": false
+          },
+          "period": "",
+          "refId": "B",
+          "region": "$region",
+          "statistic": "Sum"
+        },
+        {
+          "alias": "{{metric}} {{stat}}",
+          "application": {
+            "filter": ""
+          },
+          "datasource": {
+            "type": "cloudwatch",
+            "uid": "$datasource"
+          },
+          "dimensions": {
+            "ApiName": "$apiname",
+            "Stage": "$stage"
+          },
+          "expression": "",
+          "functions": [],
+          "group": {
+            "filter": ""
+          },
+          "hide": true,
+          "highResolution": false,
+          "host": {
+            "filter": ""
+          },
+          "id": "countt",
+          "item": {
+            "filter": ""
+          },
+          "label": "${PROP('MetricName')} ${PROP('Stat')}",
+          "metricEditorMode": 0,
+          "metricName": "Count",
+          "metricQueryType": 0,
+          "mode": 0,
+          "namespace": "AWS/ApiGateway",
+          "options": {
+            "showDisabledItems": false
+          },
+          "period": "",
+          "refId": "E",
+          "region": "$region",
+          "statistic": "Sum"
+        },
+        {
+          "alias": "Total Error Rate",
+          "application": {
+            "filter": ""
+          },
+          "datasource": {
+            "uid": "$datasource"
+          },
+          "dimensions": {
+            "ApiName": "$apiname",
+            "Stage": "$stage"
+          },
+          "expression": "SUM([e400,e500])*100/countt",
+          "functions": [],
+          "group": {
+            "filter": ""
+          },
+          "highResolution": false,
+          "host": {
+            "filter": ""
+          },
+          "id": "rate",
+          "item": {
+            "filter": ""
+          },
+          "label": "Total Error Rate",
+          "metricEditorMode": 1,
+          "metricName": "Count",
+          "metricQueryType": 0,
+          "mode": 0,
+          "namespace": "AWS/ApiGateway",
+          "options": {
+            "showDisabledItems": false
+          },
+          "period": "",
+          "refId": "D",
+          "region": "$region",
+          "statistic": "Sum"
+        }
+      ],
+      "title": "4XXError / 5XXError",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "cloudwatch",
+        "uid": "$datasource"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "normal"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "links": [],
+          "mappings": [],
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "none"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "TargetResponseTime_Average"
+            },
+            "properties": [
+              {
+                "id": "custom.axisPlacement",
+                "value": "right"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "ClientConnections_Sum"
+            },
+            "properties": [
+              {
+                "id": "custom.axisPlacement",
+                "value": "right"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "IntegrationLatency_Average"
+            },
+            "properties": [
+              {
+                "id": "custom.axisPlacement",
+                "value": "right"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "5XXError_Average"
+            },
+            "properties": [
+              {
+                "id": "custom.axisPlacement",
+                "value": "right"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "CacheHitCount Sum"
+            },
+            "properties": [
+              {
+                "id": "custom.axisPlacement",
+                "value": "right"
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 24,
+        "x": 0,
+        "y": 21
+      },
+      "id": 16,
+      "options": {
+        "legend": {
+          "calcs": [
+            "mean",
+            "max",
+            "min"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "11.3.1",
+      "targets": [
+        {
+          "alias": "{{metric}} {{stat}}",
+          "application": {
+            "filter": ""
+          },
+          "datasource": {
+            "uid": "$datasource"
+          },
+          "dimensions": {
+            "ApiName": "$apiname",
+            "Stage": "$stage"
+          },
+          "expression": "",
+          "functions": [],
+          "group": {
+            "filter": ""
+          },
+          "highResolution": false,
+          "host": {
+            "filter": ""
+          },
+          "id": "",
+          "item": {
+            "filter": ""
+          },
+          "label": "${PROP('MetricName')} ${PROP('Stat')}",
+          "matchExact": true,
+          "metricEditorMode": 0,
+          "metricName": "CacheHitCount",
+          "metricQueryType": 0,
+          "mode": 0,
+          "namespace": "AWS/ApiGateway",
+          "options": {
+            "showDisabledItems": false
+          },
+          "period": "$agg",
+          "refId": "A",
+          "region": "$region",
+          "statistic": "Sum"
+        },
+        {
+          "alias": "{{metric}} {{stat}}",
+          "application": {
+            "filter": ""
+          },
+          "datasource": {
+            "type": "cloudwatch",
+            "uid": "$datasource"
+          },
+          "dimensions": {
+            "ApiName": "$apiname",
+            "Stage": "$stage"
+          },
+          "expression": "",
+          "functions": [],
+          "group": {
+            "filter": ""
+          },
+          "highResolution": false,
+          "host": {
+            "filter": ""
+          },
+          "id": "",
+          "item": {
+            "filter": ""
+          },
+          "label": "${PROP('MetricName')} ${PROP('Stat')}",
+          "matchExact": true,
+          "metricEditorMode": 0,
+          "metricName": "CacheMissCount",
+          "metricQueryType": 0,
+          "mode": 0,
+          "namespace": "AWS/ApiGateway",
+          "options": {
+            "showDisabledItems": false
+          },
+          "period": "$agg",
+          "refId": "B",
+          "region": "$region",
+          "statistic": "Sum"
+        }
+      ],
+      "title": "CacheHitCount / CacheMissCount",
+      "type": "timeseries"
+    },
+    {
+      "gridPos": {
+        "h": 3,
+        "w": 24,
+        "x": 0,
+        "y": 28
+      },
+      "id": 2,
+      "options": {
+        "code": {
+          "language": "plaintext",
+          "showLineNumbers": false,
+          "showMiniMap": false
+        },
+        "content": "\u003ca target=\"_blank\" href=\"http://www.monitoringartist.com\" title=\"Dashboard maintained by Monitoring Artist - DevOps / Docker / Kubernetes / AWS ECS / Google GCP / Zabbix / Zenoss / Terraform / Monitoring\"\u003e\u003cimg src=\"https://monitoringartist.github.io/monitoring-artist-logo-grafana.png\" height=\"30px\" /\u003e\u003c/a\u003e | \n\u003ca target=\"_blank\" href=\"https://docs.aws.amazon.com/apigateway/latest/developerguide/api-gateway-metrics-and-dimensions.html\"\u003eAWS CloudWatch API Gateway documentation\u003c/a\u003e | \n\u003ca target=\"_blank\" href=\"https://grafana.com/dashboards/1516\"\u003eInstalled from Grafana.com dashboards\u003c/a\u003e",
+        "mode": "html"
+      },
+      "pluginVersion": "11.3.1",
+      "title": "Documentation",
+      "type": "text"
+    }
+  ],
+  "refresh": "",
+  "schemaVersion": 41,
+  "tags": [
+    "monitoringartist",
+    "cloudwatch"
+  ],
+  "templating": {
+    "list": [
+      {
+        "current": {},
+        "includeAll": false,
+        "label": "Datasource",
+        "name": "datasource",
+        "options": [],
+        "query": "cloudwatch",
+        "refresh": 1,
+        "regex": "",
+        "type": "datasource"
+      },
+      {
+        "auto": true,
+        "auto_count": 30,
+        "auto_min": "10s",
+        "current": {
+          "text": "$__auto",
+          "value": "$__auto"
+        },
+        "label": "Aggregation",
+        "name": "agg",
+        "options": [
+          {
+            "selected": false,
+            "text": "1s",
+            "value": "1s"
+          },
+          {
+            "selected": false,
+            "text": "5s",
+            "value": "5s"
+          },
+          {
+            "selected": false,
+            "text": "10s",
+            "value": "10s"
+          },
+          {
+            "selected": false,
+            "text": "30s",
+            "value": "30s"
+          },
+          {
+            "selected": false,
+            "text": "1m",
+            "value": "1m"
+          },
+          {
+            "selected": false,
+            "text": "5m",
+            "value": "5m"
+          },
+          {
+            "selected": false,
+            "text": "15m",
+            "value": "15m"
+          },
+          {
+            "selected": false,
+            "text": "1h",
+            "value": "1h"
+          },
+          {
+            "selected": false,
+            "text": "6h",
+            "value": "6h"
+          },
+          {
+            "selected": false,
+            "text": "1d",
+            "value": "1d"
+          },
+          {
+            "selected": false,
+            "text": "7d",
+            "value": "7d"
+          },
+          {
+            "selected": false,
+            "text": "30d",
+            "value": "30d"
+          }
+        ],
+        "query": "1s,5s,10s,30s,1m,5m,15m,1h,6h,1d,7d,30d",
+        "refresh": 2,
+        "type": "interval"
+      },
+      {
+        "current": {},
+        "datasource": {
+          "type": "cloudwatch",
+          "uid": "$datasource"
+        },
+        "definition": "regions()",
+        "includeAll": false,
+        "label": "Region",
+        "name": "region",
+        "options": [],
+        "query": "regions()",
+        "refresh": 1,
+        "regex": "",
+        "sort": 1,
+        "type": "query"
+      },
+      {
+        "current": {},
+        "datasource": {
+          "type": "cloudwatch",
+          "uid": "$datasource"
+        },
+        "definition": "dimension_values($region,AWS/ApiGateway,Count,ApiName)",
+        "includeAll": false,
+        "label": "ApiName",
+        "name": "apiname",
+        "options": [],
+        "query": "dimension_values($region,AWS/ApiGateway,Count,ApiName)",
+        "refresh": 1,
+        "regex": "",
+        "sort": 1,
+        "type": "query"
+      },
+      {
+        "allValue": "*",
+        "current": {},
+        "datasource": {
+          "type": "cloudwatch",
+          "uid": "$datasource"
+        },
+        "definition": "dimension_values($region,AWS/ApiGateway,Count,Stage, {\"ApiName\": \"$apiname\"})",
+        "includeAll": false,
+        "label": "Stage",
+        "name": "stage",
+        "options": [],
+        "query": "dimension_values($region,AWS/ApiGateway,Count,Stage, {\"ApiName\": \"$apiname\"})",
+        "refresh": 1,
+        "regex": "",
+        "sort": 1,
+        "type": "query"
+      }
+    ]
+  },
+  "time": {
+    "from": "now-7d",
+    "to": "now"
+  },
+  "timepicker": {},
+  "timezone": "browser",
+  "title": "AWS API Gateway",
+  "uid": "AWSAPIGat",
+  "version": 2,
+  "weekStart": ""
+}

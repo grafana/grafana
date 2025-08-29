@@ -1,0 +1,3491 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "type": "grafana",
+          "uid": "-- Grafana --"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "target": {
+          "limit": 100,
+          "matchAny": false,
+          "tags": [],
+          "type": "dashboard"
+        },
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "links": [],
+  "liveNow": false,
+  "panels": [
+    {
+      "datasource": {
+        "type": "testdata",
+        "uid": "PD8C576611E62080A"
+      },
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 20,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 4,
+        "x": 0,
+        "y": 0
+      },
+      "id": 6,
+      "maxDataPoints": 100,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "testdata",
+            "uid": "PD8C576611E62080A"
+          },
+          "refId": "A",
+          "scenarioId": "csv_metric_values",
+          "stringInput": "0,2,2,3,4,5"
+        },
+        {
+          "datasource": {
+            "type": "testdata",
+            "uid": "PD8C576611E62080A"
+          },
+          "refId": "B",
+          "scenarioId": "csv_metric_values",
+          "stringInput": "5,4,3,2,2,0"
+        },
+        {
+          "datasource": {
+            "type": "testdata",
+            "uid": "PD8C576611E62080A"
+          },
+          "refId": "C",
+          "scenarioId": "csv_metric_values",
+          "stringInput": "1,20,10,25,5,0"
+        }
+      ],
+      "title": "Pos Only",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "datasource",
+        "uid": "-- Dashboard --"
+      },
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 20,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "normal"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 4,
+        "x": 4,
+        "y": 0
+      },
+      "id": 7,
+      "maxDataPoints": 100,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "datasource",
+            "uid": "-- Dashboard --"
+          },
+          "panelId": 6,
+          "refId": "A"
+        }
+      ],
+      "title": "Stack Normal",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "datasource",
+        "uid": "-- Dashboard --"
+      },
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 20,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "percent"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 4,
+        "x": 8,
+        "y": 0
+      },
+      "id": 8,
+      "maxDataPoints": 100,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "datasource",
+            "uid": "-- Dashboard --"
+          },
+          "panelId": 6,
+          "refId": "A"
+        }
+      ],
+      "title": "Stack 100%",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "testdata",
+        "uid": "PD8C576611E62080A"
+      },
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 20,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 4,
+        "x": 12,
+        "y": 0
+      },
+      "id": 3,
+      "maxDataPoints": 100,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "alias": "+100",
+          "datasource": {
+            "type": "testdata",
+            "uid": "PD8C576611E62080A"
+          },
+          "hide": false,
+          "refId": "A",
+          "scenarioId": "csv_metric_values",
+          "stringInput": "100,100,100,100,100,100,100,100"
+        },
+        {
+          "alias": "+50",
+          "datasource": {
+            "type": "testdata",
+            "uid": "PD8C576611E62080A"
+          },
+          "refId": "B",
+          "scenarioId": "csv_metric_values",
+          "stringInput": "50,50,50,50,50,50,50,50"
+        },
+        {
+          "alias": "+25",
+          "datasource": {
+            "type": "testdata",
+            "uid": "PD8C576611E62080A"
+          },
+          "refId": "C",
+          "scenarioId": "csv_metric_values",
+          "stringInput": "25,25,25,25,25,25,25,25"
+        },
+        {
+          "alias": "-50",
+          "datasource": {
+            "type": "testdata",
+            "uid": "PD8C576611E62080A"
+          },
+          "refId": "D",
+          "scenarioId": "csv_metric_values",
+          "stringInput": "-50,-50,-50,-50,-50,-50,-50,-50"
+        },
+        {
+          "alias": "-100",
+          "datasource": {
+            "type": "testdata",
+            "uid": "PD8C576611E62080A"
+          },
+          "refId": "E",
+          "scenarioId": "csv_metric_values",
+          "stringInput": "-100,-100,-100,-100,-100,-100,-100,-100"
+        }
+      ],
+      "title": "Pos & Neg",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "datasource",
+        "uid": "-- Dashboard --"
+      },
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 20,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "normal"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 4,
+        "x": 16,
+        "y": 0
+      },
+      "id": 4,
+      "maxDataPoints": 100,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "datasource",
+            "uid": "-- Dashboard --"
+          },
+          "panelId": 3,
+          "refId": "A"
+        }
+      ],
+      "title": "Stack Normal",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "datasource",
+        "uid": "-- Dashboard --"
+      },
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 20,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "percent"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 4,
+        "x": 20,
+        "y": 0
+      },
+      "id": 12,
+      "maxDataPoints": 100,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "datasource",
+            "uid": "-- Dashboard --"
+          },
+          "panelId": 3,
+          "refId": "A"
+        }
+      ],
+      "title": "Stacked 100%",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "testdata",
+        "uid": "PD8C576611E62080A"
+      },
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 20,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "NegY"
+            },
+            "properties": [
+              {
+                "id": "custom.transform",
+                "value": "negative-Y"
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 4,
+        "x": 0,
+        "y": 9
+      },
+      "id": 9,
+      "maxDataPoints": 100,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "alias": "NegY",
+          "datasource": {
+            "type": "testdata",
+            "uid": "PD8C576611E62080A"
+          },
+          "refId": "C",
+          "scenarioId": "csv_metric_values",
+          "stringInput": "1,20,10,25,5,0"
+        },
+        {
+          "datasource": {
+            "type": "testdata",
+            "uid": "PD8C576611E62080A"
+          },
+          "refId": "A",
+          "scenarioId": "csv_metric_values",
+          "stringInput": "0,2,2,3,4,5"
+        },
+        {
+          "datasource": {
+            "type": "testdata",
+            "uid": "PD8C576611E62080A"
+          },
+          "refId": "B",
+          "scenarioId": "csv_metric_values",
+          "stringInput": "5,4,3,2,2,0"
+        },
+        {
+          "alias": "Neg",
+          "datasource": {
+            "type": "testdata",
+            "uid": "PD8C576611E62080A"
+          },
+          "refId": "D",
+          "scenarioId": "csv_metric_values",
+          "stringInput": "-15,-5,-15,-5,-15,-5"
+        }
+      ],
+      "title": "Pos & Neg & NegY",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "datasource",
+        "uid": "-- Dashboard --"
+      },
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 20,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "normal"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "NegY"
+            },
+            "properties": [
+              {
+                "id": "custom.transform",
+                "value": "negative-Y"
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 4,
+        "x": 4,
+        "y": 9
+      },
+      "id": 10,
+      "maxDataPoints": 100,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "datasource",
+            "uid": "-- Dashboard --"
+          },
+          "panelId": 9,
+          "refId": "A"
+        }
+      ],
+      "title": "Stack Normal",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "datasource",
+        "uid": "-- Dashboard --"
+      },
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 20,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "percent"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "NegY"
+            },
+            "properties": [
+              {
+                "id": "custom.transform",
+                "value": "negative-Y"
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 4,
+        "x": 8,
+        "y": 9
+      },
+      "id": 11,
+      "maxDataPoints": 100,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "datasource",
+            "uid": "-- Dashboard --"
+          },
+          "panelId": 9,
+          "refId": "A"
+        }
+      ],
+      "title": "Stack 100%",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "testdata",
+        "uid": "PD8C576611E62080A"
+      },
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "axisSoftMin": 0,
+            "fillOpacity": 80,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineWidth": 0,
+            "scaleDistribution": {
+              "type": "linear"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 4,
+        "x": 12,
+        "y": 9
+      },
+      "id": 17,
+      "options": {
+        "barRadius": 0,
+        "barWidth": 1,
+        "groupWidth": 0.89,
+        "legend": {
+          "calcs": [
+            "max"
+          ],
+          "displayMode": "hidden",
+          "placement": "right"
+        },
+        "orientation": "auto",
+        "showValue": "auto",
+        "stacking": "none",
+        "text": {},
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        },
+        "xTickLabelRotation": 0,
+        "xTickLabelSpacing": 0
+      },
+      "targets": [
+        {
+          "csvContent": "Name,Stat1,Stat2,Stat3,Stat4,Stat5,Stat6,Stat7,Stat8\nA, 10, 15,8,3,4,12,14,1\nB, 19, 5,8,3,4,12,14,6\nC, 15, 5,8,3,4,10,4,6\n",
+          "datasource": {
+            "type": "testdata",
+            "uid": "PD8C576611E62080A"
+          },
+          "refId": "A",
+          "scenarioId": "csv_content"
+        }
+      ],
+      "title": "Barchart",
+      "type": "barchart"
+    },
+    {
+      "datasource": {
+        "type": "datasource",
+        "uid": "-- Dashboard --"
+      },
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "axisSoftMin": 0,
+            "fillOpacity": 80,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineWidth": 0,
+            "scaleDistribution": {
+              "type": "linear"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 4,
+        "x": 16,
+        "y": 9
+      },
+      "id": 18,
+      "options": {
+        "barRadius": 0,
+        "barWidth": 1,
+        "groupWidth": 0.89,
+        "legend": {
+          "calcs": [
+            "max"
+          ],
+          "displayMode": "hidden",
+          "placement": "right"
+        },
+        "orientation": "auto",
+        "showValue": "auto",
+        "stacking": "normal",
+        "text": {},
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        },
+        "xTickLabelRotation": 0,
+        "xTickLabelSpacing": 0
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "datasource",
+            "uid": "-- Dashboard --"
+          },
+          "panelId": 17,
+          "refId": "A"
+        }
+      ],
+      "title": "Stack Normal",
+      "type": "barchart"
+    },
+    {
+      "datasource": {
+        "type": "datasource",
+        "uid": "-- Dashboard --"
+      },
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "axisSoftMin": 0,
+            "fillOpacity": 80,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineWidth": 0,
+            "scaleDistribution": {
+              "type": "linear"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 4,
+        "x": 20,
+        "y": 9
+      },
+      "id": 19,
+      "options": {
+        "barRadius": 0,
+        "barWidth": 1,
+        "groupWidth": 0.89,
+        "legend": {
+          "calcs": [
+            "max"
+          ],
+          "displayMode": "hidden",
+          "placement": "right"
+        },
+        "orientation": "auto",
+        "showValue": "auto",
+        "stacking": "percent",
+        "text": {},
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        },
+        "xTickLabelRotation": 0,
+        "xTickLabelSpacing": 0
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "datasource",
+            "uid": "-- Dashboard --"
+          },
+          "panelId": 17,
+          "refId": "A"
+        }
+      ],
+      "title": "Stack 100%",
+      "type": "barchart"
+    },
+    {
+      "datasource": {
+        "type": "datasource",
+        "uid": "-- Dashboard --"
+      },
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "bars",
+            "fillOpacity": 50,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineInterpolation": "linear",
+            "lineWidth": 0,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "NegY"
+            },
+            "properties": [
+              {
+                "id": "custom.transform",
+                "value": "negative-Y"
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 4,
+        "x": 0,
+        "y": 18
+      },
+      "id": 13,
+      "maxDataPoints": 100,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "datasource",
+            "uid": "-- Dashboard --"
+          },
+          "panelId": 9,
+          "refId": "A"
+        }
+      ],
+      "title": "Neg & NegY Bars",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "datasource",
+        "uid": "-- Dashboard --"
+      },
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "bars",
+            "fillOpacity": 50,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineInterpolation": "linear",
+            "lineWidth": 0,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "normal"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "NegY"
+            },
+            "properties": [
+              {
+                "id": "custom.transform",
+                "value": "negative-Y"
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 4,
+        "x": 4,
+        "y": 18
+      },
+      "id": 14,
+      "maxDataPoints": 100,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "datasource",
+            "uid": "-- Dashboard --"
+          },
+          "panelId": 9,
+          "refId": "A"
+        }
+      ],
+      "title": "Stack Normal",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "datasource",
+        "uid": "-- Dashboard --"
+      },
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "bars",
+            "fillOpacity": 50,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineInterpolation": "linear",
+            "lineWidth": 0,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "percent"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "NegY"
+            },
+            "properties": [
+              {
+                "id": "custom.transform",
+                "value": "negative-Y"
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 4,
+        "x": 8,
+        "y": 18
+      },
+      "id": 15,
+      "maxDataPoints": 100,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "datasource",
+            "uid": "-- Dashboard --"
+          },
+          "panelId": 9,
+          "refId": "A"
+        }
+      ],
+      "title": "Stack 100%",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "testdata",
+        "uid": "PD8C576611E62080A"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 40,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": "(A|B)-series.*"
+            },
+            "properties": [
+              {
+                "id": "custom.drawStyle",
+                "value": "bars"
+              },
+              {
+                "id": "custom.lineWidth",
+                "value": 0
+              },
+              {
+                "id": "custom.fillOpacity",
+                "value": 100
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 4,
+        "x": 12,
+        "y": 18
+      },
+      "id": 21,
+      "maxDataPoints": 20,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "testdata",
+            "uid": "PD8C576611E62080A"
+          },
+          "refId": "A",
+          "scenarioId": "csv_metric_values",
+          "stringInput": "18,25,43,11,5"
+        },
+        {
+          "datasource": {
+            "type": "testdata",
+            "uid": "PD8C576611E62080A"
+          },
+          "refId": "B",
+          "scenarioId": "csv_metric_values",
+          "stringInput": "41,29,20,23,27"
+        },
+        {
+          "datasource": {
+            "type": "testdata",
+            "uid": "PD8C576611E62080A"
+          },
+          "refId": "C",
+          "scenarioId": "csv_metric_values",
+          "stringInput": "169,109,170,150,116"
+        },
+        {
+          "datasource": {
+            "type": "testdata",
+            "uid": "PD8C576611E62080A"
+          },
+          "refId": "D",
+          "scenarioId": "csv_metric_values",
+          "stringInput": "160,131,117,134,139"
+        }
+      ],
+      "title": "Mixed Styles",
+      "transformations": [],
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "datasource",
+        "uid": "-- Dashboard --"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 40,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "normal"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": "(A|B)-series.*"
+            },
+            "properties": [
+              {
+                "id": "custom.drawStyle",
+                "value": "bars"
+              },
+              {
+                "id": "custom.lineWidth",
+                "value": 0
+              },
+              {
+                "id": "custom.fillOpacity",
+                "value": 100
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 4,
+        "x": 16,
+        "y": 18
+      },
+      "id": 22,
+      "maxDataPoints": 20,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "datasource",
+            "uid": "-- Dashboard --"
+          },
+          "panelId": 21,
+          "refId": "A"
+        }
+      ],
+      "title": "Stack Normal Auto-grouped",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "datasource",
+        "uid": "-- Dashboard --"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 40,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "percent"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": "(A|B)-series.*"
+            },
+            "properties": [
+              {
+                "id": "custom.drawStyle",
+                "value": "bars"
+              },
+              {
+                "id": "custom.lineWidth",
+                "value": 0
+              },
+              {
+                "id": "custom.fillOpacity",
+                "value": 100
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 4,
+        "x": 20,
+        "y": 18
+      },
+      "id": 23,
+      "maxDataPoints": 20,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "datasource",
+            "uid": "-- Dashboard --"
+          },
+          "panelId": 21,
+          "refId": "A"
+        }
+      ],
+      "title": "Stack 100% Auto-grouped",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "testdata",
+        "uid": "PD8C576611E62080A"
+      },
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 20,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 4,
+        "x": 0,
+        "y": 27
+      },
+      "id": 24,
+      "maxDataPoints": 100,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "alias": "+100",
+          "datasource": {
+            "type": "testdata",
+            "uid": "PD8C576611E62080A"
+          },
+          "hide": false,
+          "refId": "A",
+          "scenarioId": "csv_metric_values",
+          "stringInput": "100,100,100,100,100,null,100,100"
+        },
+        {
+          "alias": "+50",
+          "datasource": {
+            "type": "testdata",
+            "uid": "PD8C576611E62080A"
+          },
+          "refId": "B",
+          "scenarioId": "csv_metric_values",
+          "stringInput": "50,50,50,50,50,null,50,50"
+        },
+        {
+          "alias": "+25",
+          "datasource": {
+            "type": "testdata",
+            "uid": "PD8C576611E62080A"
+          },
+          "refId": "C",
+          "scenarioId": "csv_metric_values",
+          "stringInput": "25,25,25,25,25,null,25,25"
+        },
+        {
+          "alias": "-50",
+          "datasource": {
+            "type": "testdata",
+            "uid": "PD8C576611E62080A"
+          },
+          "refId": "D",
+          "scenarioId": "csv_metric_values",
+          "stringInput": "-50,-50,null,-50,-50,-50,-50,-50"
+        },
+        {
+          "alias": "-100",
+          "datasource": {
+            "type": "testdata",
+            "uid": "PD8C576611E62080A"
+          },
+          "refId": "E",
+          "scenarioId": "csv_metric_values",
+          "stringInput": "-100,-100,null,-100,-100,-100,-100,-100"
+        }
+      ],
+      "title": "Null through all",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "datasource",
+        "uid": "-- Dashboard --"
+      },
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 20,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "normal"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 4,
+        "x": 4,
+        "y": 27
+      },
+      "id": 25,
+      "maxDataPoints": 100,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "datasource",
+            "uid": "-- Dashboard --"
+          },
+          "panelId": 24,
+          "refId": "A"
+        }
+      ],
+      "title": "Stack Normal",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "testdata",
+        "uid": "PD8C576611E62080A"
+      },
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "NegY"
+            },
+            "properties": [
+              {
+                "id": "custom.transform",
+                "value": "negative-Y"
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 4,
+        "x": 8,
+        "y": 27
+      },
+      "id": 2,
+      "maxDataPoints": 100,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "testdata",
+            "uid": "PD8C576611E62080A"
+          },
+          "hide": false,
+          "refId": "A",
+          "scenarioId": "csv_metric_values",
+          "stringInput": "50,50,50,null,50,50,50,50"
+        },
+        {
+          "alias": "NegY",
+          "datasource": {
+            "type": "testdata",
+            "uid": "PD8C576611E62080A"
+          },
+          "refId": "B",
+          "scenarioId": "csv_metric_values",
+          "stringInput": "50,50,50,50,null,50,50"
+        }
+      ],
+      "title": "NegY nulls",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "testdata",
+        "uid": "PD8C576611E62080A"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 8,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 4,
+        "x": 12,
+        "y": 27
+      },
+      "id": 26,
+      "maxDataPoints": 20,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "testdata",
+            "uid": "PD8C576611E62080A"
+          },
+          "refId": "A",
+          "scenarioId": "csv_metric_values",
+          "stringInput": "1,2,1,2,1"
+        },
+        {
+          "datasource": {
+            "type": "testdata",
+            "uid": "PD8C576611E62080A"
+          },
+          "refId": "B",
+          "scenarioId": "csv_metric_values",
+          "stringInput": "3,3,3,3,3"
+        },
+        {
+          "datasource": {
+            "type": "testdata",
+            "uid": "PD8C576611E62080A"
+          },
+          "refId": "C",
+          "scenarioId": "csv_metric_values",
+          "stringInput": "2,2,2,2,2"
+        },
+        {
+          "datasource": {
+            "type": "testdata",
+            "uid": "PD8C576611E62080A"
+          },
+          "refId": "D",
+          "scenarioId": "csv_metric_values",
+          "stringInput": "4,4,4,4,4"
+        }
+      ],
+      "title": "1,2,3,4 Unstacked",
+      "transformations": [],
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "datasource",
+        "uid": "-- Dashboard --"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 8,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "normal"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": "(A|B)-series.*"
+            },
+            "properties": [
+              {
+                "id": "custom.stacking",
+                "value": {
+                  "group": "B",
+                  "mode": "normal"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 4,
+        "x": 16,
+        "y": 27
+      },
+      "id": 27,
+      "maxDataPoints": 20,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "datasource",
+            "uid": "-- Dashboard --"
+          },
+          "panelId": 26,
+          "refId": "A"
+        }
+      ],
+      "title": "Stack Normal Groups A + B / C + D",
+      "transformations": [],
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "datasource",
+        "uid": "-- Dashboard --"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 8,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "percent"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": "(A|B)-series.*"
+            },
+            "properties": [
+              {
+                "id": "custom.stacking",
+                "value": {
+                  "group": "B",
+                  "mode": "percent"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 4,
+        "x": 20,
+        "y": 27
+      },
+      "id": 28,
+      "maxDataPoints": 20,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "datasource",
+            "uid": "-- Dashboard --"
+          },
+          "panelId": 26,
+          "refId": "A"
+        }
+      ],
+      "title": "Stack 100% Groups A + B / C + D",
+      "transformations": [],
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "testdata",
+        "uid": "PD8C576611E62080A"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byFrameRefID",
+              "options": "B"
+            },
+            "properties": [
+              {
+                "id": "custom.drawStyle",
+                "value": "bars"
+              },
+              {
+                "id": "color",
+                "value": {
+                  "mode": "palette-classic"
+                }
+              },
+              {
+                "id": "custom.gradientMode",
+                "value": "none"
+              },
+              {
+                "id": "custom.barAlignment",
+                "value": 1
+              },
+              {
+                "id": "custom.stacking",
+                "value": {
+                  "group": "A",
+                  "mode": "normal"
+                }
+              },
+              {
+                "id": "custom.spanNulls",
+                "value": 3600000
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 0,
+        "y": 36
+      },
+      "id": 30,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "hidden",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "csvContent": "\"Time\",\"Sum daily.cost_per_kwh\"\n1639612800000,\n1639872000000,0\n1639958400000,272\n1640044800000,272\n1640131200000,327\n1640217600000,290\n1640304000000,286\n1640390400000,256\n1640476800000,397\n1640563200000,295\n1640649600000,310\n1640736000000,224\n1640822400000,291\n1640908800000,265\n1640995200000,256\n1641081600000,399\n1641168000000,471\n1641254400000,325\n1641340800000,363\n1641427200000,375\n1641513600000,365\n1641600000000,492\n1641686400000,409\n1641772800000,371\n1641859200000,448\n1641945600000,372\n1642032000000,0\n1642118400000,0\n1642204800000,0\n1642291200000,0\n1642377600000,0\n1642464000000,0\n\n",
+          "datasource": {
+            "type": "testdata",
+            "uid": "PD8C576611E62080A"
+          },
+          "hide": false,
+          "refId": "A",
+          "scenarioId": "csv_content"
+        },
+        {
+          "csvContent": "\"Time\",\"Sum morning.cost_per_kwh\",\"Sum afternoon.cost_per_kwh\",\"Sum evening.cost_per_kwh\",\"Sum night.cost_per_kwh\",\"Sum late.cost_per_kwh\"\n1639612800000,0,0,0,0,0\n1639872000000,,,,,\n1639958400000,,,,,\n1640044800000,,,,,\n1640131200000,,,,,\n1640217600000,32,28,62,63,32\n1640304000000,,,,,\n1640390400000,,,,,\n1640476800000,,,,,\n1640563200000,,,,,\n1640649600000,,,,,\n1640736000000,,,,,\n1640822400000,47,53,68,96,45\n1640908800000,,,,,\n1640995200000,,,,,\n1641081600000,,,,,\n1641168000000,,,,,\n1641254400000,,,,,\n1641340800000,,,,,\n1641427200000,112,130,147,152,115\n1641513600000,,,,,\n1641600000000,,,,,\n1641686400000,,,,,\n1641772800000,,,,,\n1641859200000,,,,,\n1641945600000,,,,,\n1642032000000,0,0,0,0,0\n1642118400000,,,,,\n1642204800000,,,,,\n1642291200000,,,,,\n1642377600000,,,,,\n1642464000000,,,,,\n\n",
+          "datasource": {
+            "type": "testdata",
+            "uid": "PD8C576611E62080A"
+          },
+          "hide": false,
+          "refId": "B",
+          "scenarioId": "csv_content"
+        }
+      ],
+      "title": "https://github.com/grafana/grafana/pull/44359",
+      "transformations": [],
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "testdata",
+        "uid": "PD8C576611E62080A"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byFrameRefID",
+              "options": "B"
+            },
+            "properties": [
+              {
+                "id": "custom.drawStyle",
+                "value": "line"
+              },
+              {
+                "id": "color",
+                "value": {
+                  "mode": "palette-classic"
+                }
+              },
+              {
+                "id": "custom.gradientMode",
+                "value": "none"
+              },
+              {
+                "id": "custom.barAlignment",
+                "value": 1
+              },
+              {
+                "id": "custom.stacking",
+                "value": {
+                  "group": "A",
+                  "mode": "normal"
+                }
+              },
+              {
+                "id": "custom.spanNulls",
+                "value": true
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 8,
+        "y": 36
+      },
+      "id": 32,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "hidden",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "csvContent": "\"Time\",\"Sum daily.cost_per_kwh\"\n1639612800000,\n1639872000000,0\n1639958400000,272\n1640044800000,272\n1640131200000,327\n1640217600000,290\n1640304000000,286\n1640390400000,256\n1640476800000,397\n1640563200000,295\n1640649600000,310\n1640736000000,224\n1640822400000,291\n1640908800000,265\n1640995200000,256\n1641081600000,399\n1641168000000,471\n1641254400000,325\n1641340800000,363\n1641427200000,375\n1641513600000,365\n1641600000000,492\n1641686400000,409\n1641772800000,371\n1641859200000,448\n1641945600000,372\n1642032000000,0\n1642118400000,0\n1642204800000,0\n1642291200000,0\n1642377600000,0\n1642464000000,0\n\n",
+          "datasource": {
+            "type": "testdata",
+            "uid": "PD8C576611E62080A"
+          },
+          "hide": false,
+          "refId": "A",
+          "scenarioId": "csv_content"
+        },
+        {
+          "csvContent": "\"Time\",\"Sum morning.cost_per_kwh\",\"Sum afternoon.cost_per_kwh\",\"Sum evening.cost_per_kwh\",\"Sum night.cost_per_kwh\",\"Sum late.cost_per_kwh\"\n1639612800000,0,0,0,0,0\n1639872000000,,,,,\n1639958400000,,,,,\n1640044800000,,,,,\n1640131200000,,,,,\n1640217600000,32,28,62,63,32\n1640304000000,,,,,\n1640390400000,,,,,\n1640476800000,,,,,\n1640563200000,,,,,\n1640649600000,,,,,\n1640736000000,,,,,\n1640822400000,47,53,68,96,45\n1640908800000,,,,,\n1640995200000,,,,,\n1641081600000,,,,,\n1641168000000,,,,,\n1641254400000,,,,,\n1641340800000,,,,,\n1641427200000,112,130,147,152,115\n1641513600000,,,,,\n1641600000000,,,,,\n1641686400000,,,,,\n1641772800000,,,,,\n1641859200000,,,,,\n1641945600000,,,,,\n1642032000000,0,0,0,0,0\n1642118400000,,,,,\n1642204800000,,,,,\n1642291200000,,,,,\n1642377600000,,,,,\n1642464000000,,,,,\n\n",
+          "datasource": {
+            "type": "testdata",
+            "uid": "PD8C576611E62080A"
+          },
+          "hide": false,
+          "refId": "B",
+          "scenarioId": "csv_content"
+        }
+      ],
+      "title": "Connect null values = always",
+      "transformations": [],
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "testdata",
+        "uid": "PD8C576611E62080A"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byFrameRefID",
+              "options": "B"
+            },
+            "properties": [
+              {
+                "id": "custom.drawStyle",
+                "value": "line"
+              },
+              {
+                "id": "color",
+                "value": {
+                  "mode": "palette-classic"
+                }
+              },
+              {
+                "id": "custom.gradientMode",
+                "value": "none"
+              },
+              {
+                "id": "custom.barAlignment",
+                "value": 1
+              },
+              {
+                "id": "custom.stacking",
+                "value": {
+                  "group": "A",
+                  "mode": "normal"
+                }
+              },
+              {
+                "id": "custom.spanNulls",
+                "value": false
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 16,
+        "y": 36
+      },
+      "id": 34,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "hidden",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "csvContent": "\"Time\",\"Sum daily.cost_per_kwh\"\n1639612800000,\n1639872000000,0\n1639958400000,272\n1640044800000,272\n1640131200000,327\n1640217600000,290\n1640304000000,286\n1640390400000,256\n1640476800000,397\n1640563200000,295\n1640649600000,310\n1640736000000,224\n1640822400000,291\n1640908800000,265\n1640995200000,256\n1641081600000,399\n1641168000000,471\n1641254400000,325\n1641340800000,363\n1641427200000,375\n1641513600000,365\n1641600000000,492\n1641686400000,409\n1641772800000,371\n1641859200000,448\n1641945600000,372\n1642032000000,0\n1642118400000,0\n1642204800000,0\n1642291200000,0\n1642377600000,0\n1642464000000,0\n\n",
+          "datasource": {
+            "type": "testdata",
+            "uid": "PD8C576611E62080A"
+          },
+          "hide": false,
+          "refId": "A",
+          "scenarioId": "csv_content"
+        },
+        {
+          "csvContent": "\"Time\",\"Sum morning.cost_per_kwh\",\"Sum afternoon.cost_per_kwh\",\"Sum evening.cost_per_kwh\",\"Sum night.cost_per_kwh\",\"Sum late.cost_per_kwh\"\n1639612800000,0,0,0,0,0\n1639872000000,,,,,\n1639958400000,,,,,\n1640044800000,,,,,\n1640131200000,,,,,\n1640217600000,32,28,62,63,32\n1640304000000,,,,,\n1640390400000,,,,,\n1640476800000,,,,,\n1640563200000,,,,,\n1640649600000,,,,,\n1640736000000,,,,,\n1640822400000,47,53,68,96,45\n1640908800000,,,,,\n1640995200000,,,,,\n1641081600000,,,,,\n1641168000000,,,,,\n1641254400000,,,,,\n1641340800000,,,,,\n1641427200000,112,130,147,152,115\n1641513600000,,,,,\n1641600000000,,,,,\n1641686400000,,,,,\n1641772800000,,,,,\n1641859200000,,,,,\n1641945600000,,,,,\n1642032000000,0,0,0,0,0\n1642118400000,,,,,\n1642204800000,,,,,\n1642291200000,,,,,\n1642377600000,,,,,\n1642464000000,,,,,\n\n",
+          "datasource": {
+            "type": "testdata",
+            "uid": "PD8C576611E62080A"
+          },
+          "hide": false,
+          "refId": "B",
+          "scenarioId": "csv_content"
+        }
+      ],
+      "title": "Connect null values = never",
+      "transformations": [],
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "testdata",
+        "uid": "PD8C576611E62080A"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "bars",
+            "fillOpacity": 100,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineInterpolation": "linear",
+            "lineWidth": 0,
+            "pointSize": 4,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "normal"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 21,
+        "w": 12,
+        "x": 0,
+        "y": 44
+      },
+      "id": 36,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "csvContent": "time,Label 1\n2021-12-20T05:09:05.832Z,1000",
+          "datasource": {
+            "type": "testdata",
+            "uid": "PD8C576611E62080A"
+          },
+          "refId": "A",
+          "scenarioId": "csv_content"
+        },
+        {
+          "csvContent": "time,Label 10\n2021-12-18T04:54:45.888Z,2500\n2021-12-20T05:09:05.832Z,600\n2021-12-22T05:23:25.776Z,350\n2022-01-03T06:49:25.440Z,500",
+          "datasource": {
+            "type": "testdata",
+            "uid": "PD8C576611E62080A"
+          },
+          "refId": "B",
+          "scenarioId": "csv_content"
+        },
+        {
+          "csvContent": "time,Label 11\n2021-12-18T04:54:45.888Z,28000\n2021-12-20T05:09:05.832Z,3100\n2021-12-22T05:23:25.776Z,36000\n2021-12-24T05:37:45.720Z,2800",
+          "datasource": {
+            "type": "testdata",
+            "uid": "PD8C576611E62080A"
+          },
+          "refId": "C",
+          "scenarioId": "csv_content"
+        },
+        {
+          "csvContent": "time,Label 12\n2021-12-20T05:09:05.832Z,255\n2021-12-24T05:37:45.720Z,651\n2021-12-26T05:52:05.664Z,50",
+          "datasource": {
+            "type": "testdata",
+            "uid": "PD8C576611E62080A"
+          },
+          "refId": "D",
+          "scenarioId": "csv_content"
+        },
+        {
+          "csvContent": "time,Label 13\n2021-12-18T04:54:45.888Z,5000\n2021-12-20T05:09:05.832Z,1231",
+          "datasource": {
+            "type": "testdata",
+            "uid": "PD8C576611E62080A"
+          },
+          "refId": "E",
+          "scenarioId": "csv_content"
+        },
+        {
+          "csvContent": "time,Label 14\n2021-12-14T04:26:06.000Z,122\n2021-12-16T04:40:25.944Z,123\n2021-12-18T04:54:45.888Z,12345\n2021-12-20T05:09:05.832Z,23456\n2021-12-22T05:23:25.776Z,34567\n2021-12-24T05:37:45.720Z,12345\n2021-12-26T05:52:05.664Z,8000\n2021-12-28T06:06:25.608Z,3000\n2021-12-30T06:20:45.552Z,1000\n2022-01-01T06:35:05.496Z,21",
+          "datasource": {
+            "type": "testdata",
+            "uid": "PD8C576611E62080A"
+          },
+          "refId": "F",
+          "scenarioId": "csv_content"
+        },
+        {
+          "csvContent": "time,Label 15\n2022-01-07T07:18:05.328Z,20",
+          "datasource": {
+            "type": "testdata",
+            "uid": "PD8C576611E62080A"
+          },
+          "refId": "G",
+          "scenarioId": "csv_content"
+        },
+        {
+          "csvContent": "time,Label 16\n2022-01-03T06:49:25.440Z,210\n2022-01-07T07:18:05.328Z,321",
+          "datasource": {
+            "type": "testdata",
+            "uid": "PD8C576611E62080A"
+          },
+          "refId": "H",
+          "scenarioId": "csv_content"
+        },
+        {
+          "csvContent": "time,Label 17\n2021-12-28T06:06:25.608Z,210\n2022-01-07T07:18:05.328Z,210",
+          "datasource": {
+            "type": "testdata",
+            "uid": "PD8C576611E62080A"
+          },
+          "refId": "I",
+          "scenarioId": "csv_content"
+        },
+        {
+          "csvContent": "time,Label 18\n2021-12-18T04:54:45.888Z,250\n2021-12-20T05:09:05.832Z,852\n2021-12-22T05:23:25.776Z,1234\n2021-12-26T05:52:05.664Z,321\n2021-12-30T06:20:45.552Z,432",
+          "datasource": {
+            "type": "testdata",
+            "uid": "PD8C576611E62080A"
+          },
+          "refId": "J",
+          "scenarioId": "csv_content"
+        },
+        {
+          "csvContent": "time,Label 2\n2021-12-24T05:37:45.720Z,543\n2021-12-26T05:52:05.664Z,18000\n2021-12-28T06:06:25.608Z,17000\n2021-12-30T06:20:45.552Z,12000\n2022-01-01T06:35:05.496Z,8500\n2022-01-03T06:49:25.440Z,8000\n2022-01-05T07:03:45.384Z,5000\n2022-01-07T07:18:05.328Z,3000\n2022-01-09T07:32:25.272Z,2500\n2022-01-11T07:46:45.216Z,2200\n2022-01-13T08:01:05.160Z,3000\n2022-01-15T08:15:25.104Z,1520\n2022-01-17T08:29:45.048Z,665.35",
+          "datasource": {
+            "type": "testdata",
+            "uid": "PD8C576611E62080A"
+          },
+          "refId": "K",
+          "scenarioId": "csv_content"
+        },
+        {
+          "csvContent": "time,Label 3\n2022-01-11T07:46:45.216Z,800",
+          "datasource": {
+            "type": "testdata",
+            "uid": "PD8C576611E62080A"
+          },
+          "refId": "L",
+          "scenarioId": "csv_content"
+        },
+        {
+          "csvContent": "time,Label 4\n2021-12-22T05:23:25.776Z,14173\n2021-12-24T05:37:45.720Z,14805\n2021-12-26T05:52:05.664Z,5600\n2021-12-28T06:06:25.608Z,5950\n2021-12-30T06:20:45.552Z,775\n2022-01-01T06:35:05.496Z,725\n2022-01-03T06:49:25.440Z,1450\n2022-01-05T07:03:45.384Z,3175\n2022-01-07T07:18:05.328Z,1850\n2022-01-09T07:32:25.272Z,1025\n2022-01-11T07:46:45.216Z,2700\n2022-01-13T08:01:05.160Z,4825\n2022-01-15T08:15:25.104Z,3600",
+          "datasource": {
+            "type": "testdata",
+            "uid": "PD8C576611E62080A"
+          },
+          "refId": "M",
+          "scenarioId": "csv_content"
+        },
+        {
+          "csvContent": "time,Label 5\n2022-01-15T08:15:25.104Z,1675",
+          "datasource": {
+            "type": "testdata",
+            "uid": "PD8C576611E62080A"
+          },
+          "refId": "N",
+          "scenarioId": "csv_content"
+        },
+        {
+          "csvContent": "time,Label 6\n2021-12-22T05:23:25.776Z,433.16",
+          "datasource": {
+            "type": "testdata",
+            "uid": "PD8C576611E62080A"
+          },
+          "refId": "O",
+          "scenarioId": "csv_content"
+        },
+        {
+          "csvContent": "time,Label 7\n2021-12-24T05:37:45.720Z,41250\n2021-12-26T05:52:05.664Z,45150\n2021-12-28T06:06:25.608Z,45870.16\n2021-12-30T06:20:45.552Z,38728.17\n2022-01-01T06:35:05.496Z,39931.77\n2022-01-03T06:49:25.440Z,39831.8\n2022-01-05T07:03:45.384Z,38252.06\n2022-01-07T07:18:05.328Z,44332.92\n2022-01-09T07:32:25.272Z,51359.74\n2022-01-11T07:46:45.216Z,56155.84\n2022-01-13T08:01:05.160Z,55676.92\n2022-01-15T08:15:25.104Z,55323.84\n2022-01-17T08:29:45.048Z,13830.96",
+          "datasource": {
+            "type": "testdata",
+            "uid": "PD8C576611E62080A"
+          },
+          "refId": "P",
+          "scenarioId": "csv_content"
+        },
+        {
+          "csvContent": "time,Label 8\n2021-12-30T06:20:45.552Z,52.89\n2022-01-01T06:35:05.496Z,569.57",
+          "datasource": {
+            "type": "testdata",
+            "uid": "PD8C576611E62080A"
+          },
+          "refId": "Q",
+          "scenarioId": "csv_content"
+        },
+        {
+          "csvContent": "time,Label 9\n2022-01-01T06:35:05.496Z,2140.34\n2022-01-03T06:49:25.440Z,4074.92\n2022-01-05T07:03:45.384Z,1557.85\n2022-01-07T07:18:05.328Z,1097.74\n2022-01-09T07:32:25.272Z,692.06\n2022-01-11T07:46:45.216Z,758.67\n2022-01-13T08:01:05.160Z,957.56\n2022-01-15T08:15:25.104Z,1470.49\n2022-01-17T08:29:45.048Z,198.18",
+          "datasource": {
+            "type": "testdata",
+            "uid": "PD8C576611E62080A"
+          },
+          "refId": "R",
+          "scenarioId": "csv_content"
+        }
+      ],
+      "title": "'undefined' join artifacts (bars)",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "testdata",
+        "uid": "PD8C576611E62080A"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 100,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineInterpolation": "linear",
+            "lineWidth": 0,
+            "pointSize": 4,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "normal"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 21,
+        "w": 12,
+        "x": 12,
+        "y": 44
+      },
+      "id": 37,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "csvContent": "time,Label 1\n2021-12-20T05:09:05.832Z,1000",
+          "datasource": {
+            "type": "testdata",
+            "uid": "PD8C576611E62080A"
+          },
+          "refId": "A",
+          "scenarioId": "csv_content"
+        },
+        {
+          "csvContent": "time,Label 10\n2021-12-18T04:54:45.888Z,2500\n2021-12-20T05:09:05.832Z,600\n2021-12-22T05:23:25.776Z,350\n2022-01-03T06:49:25.440Z,500",
+          "datasource": {
+            "type": "testdata",
+            "uid": "PD8C576611E62080A"
+          },
+          "refId": "B",
+          "scenarioId": "csv_content"
+        },
+        {
+          "csvContent": "time,Label 11\n2021-12-18T04:54:45.888Z,28000\n2021-12-20T05:09:05.832Z,3100\n2021-12-22T05:23:25.776Z,36000\n2021-12-24T05:37:45.720Z,2800",
+          "datasource": {
+            "type": "testdata",
+            "uid": "PD8C576611E62080A"
+          },
+          "refId": "C",
+          "scenarioId": "csv_content"
+        },
+        {
+          "csvContent": "time,Label 12\n2021-12-20T05:09:05.832Z,255\n2021-12-24T05:37:45.720Z,651\n2021-12-26T05:52:05.664Z,50",
+          "datasource": {
+            "type": "testdata",
+            "uid": "PD8C576611E62080A"
+          },
+          "refId": "D",
+          "scenarioId": "csv_content"
+        },
+        {
+          "csvContent": "time,Label 13\n2021-12-18T04:54:45.888Z,5000\n2021-12-20T05:09:05.832Z,1231",
+          "datasource": {
+            "type": "testdata",
+            "uid": "PD8C576611E62080A"
+          },
+          "refId": "E",
+          "scenarioId": "csv_content"
+        },
+        {
+          "csvContent": "time,Label 14\n2021-12-14T04:26:06.000Z,122\n2021-12-16T04:40:25.944Z,123\n2021-12-18T04:54:45.888Z,12345\n2021-12-20T05:09:05.832Z,23456\n2021-12-22T05:23:25.776Z,34567\n2021-12-24T05:37:45.720Z,12345\n2021-12-26T05:52:05.664Z,8000\n2021-12-28T06:06:25.608Z,3000\n2021-12-30T06:20:45.552Z,1000\n2022-01-01T06:35:05.496Z,21",
+          "datasource": {
+            "type": "testdata",
+            "uid": "PD8C576611E62080A"
+          },
+          "refId": "F",
+          "scenarioId": "csv_content"
+        },
+        {
+          "csvContent": "time,Label 15\n2022-01-07T07:18:05.328Z,20",
+          "datasource": {
+            "type": "testdata",
+            "uid": "PD8C576611E62080A"
+          },
+          "refId": "G",
+          "scenarioId": "csv_content"
+        },
+        {
+          "csvContent": "time,Label 16\n2022-01-03T06:49:25.440Z,210\n2022-01-07T07:18:05.328Z,321",
+          "datasource": {
+            "type": "testdata",
+            "uid": "PD8C576611E62080A"
+          },
+          "refId": "H",
+          "scenarioId": "csv_content"
+        },
+        {
+          "csvContent": "time,Label 17\n2021-12-28T06:06:25.608Z,210\n2022-01-07T07:18:05.328Z,210",
+          "datasource": {
+            "type": "testdata",
+            "uid": "PD8C576611E62080A"
+          },
+          "refId": "I",
+          "scenarioId": "csv_content"
+        },
+        {
+          "csvContent": "time,Label 18\n2021-12-18T04:54:45.888Z,250\n2021-12-20T05:09:05.832Z,852\n2021-12-22T05:23:25.776Z,1234\n2021-12-26T05:52:05.664Z,321\n2021-12-30T06:20:45.552Z,432",
+          "datasource": {
+            "type": "testdata",
+            "uid": "PD8C576611E62080A"
+          },
+          "refId": "J",
+          "scenarioId": "csv_content"
+        },
+        {
+          "csvContent": "time,Label 2\n2021-12-24T05:37:45.720Z,543\n2021-12-26T05:52:05.664Z,18000\n2021-12-28T06:06:25.608Z,17000\n2021-12-30T06:20:45.552Z,12000\n2022-01-01T06:35:05.496Z,8500\n2022-01-03T06:49:25.440Z,8000\n2022-01-05T07:03:45.384Z,5000\n2022-01-07T07:18:05.328Z,3000\n2022-01-09T07:32:25.272Z,2500\n2022-01-11T07:46:45.216Z,2200\n2022-01-13T08:01:05.160Z,3000\n2022-01-15T08:15:25.104Z,1520\n2022-01-17T08:29:45.048Z,665.35",
+          "datasource": {
+            "type": "testdata",
+            "uid": "PD8C576611E62080A"
+          },
+          "refId": "K",
+          "scenarioId": "csv_content"
+        },
+        {
+          "csvContent": "time,Label 3\n2022-01-11T07:46:45.216Z,800",
+          "datasource": {
+            "type": "testdata",
+            "uid": "PD8C576611E62080A"
+          },
+          "refId": "L",
+          "scenarioId": "csv_content"
+        },
+        {
+          "csvContent": "time,Label 4\n2021-12-22T05:23:25.776Z,14173\n2021-12-24T05:37:45.720Z,14805\n2021-12-26T05:52:05.664Z,5600\n2021-12-28T06:06:25.608Z,5950\n2021-12-30T06:20:45.552Z,775\n2022-01-01T06:35:05.496Z,725\n2022-01-03T06:49:25.440Z,1450\n2022-01-05T07:03:45.384Z,3175\n2022-01-07T07:18:05.328Z,1850\n2022-01-09T07:32:25.272Z,1025\n2022-01-11T07:46:45.216Z,2700\n2022-01-13T08:01:05.160Z,4825\n2022-01-15T08:15:25.104Z,3600",
+          "datasource": {
+            "type": "testdata",
+            "uid": "PD8C576611E62080A"
+          },
+          "refId": "M",
+          "scenarioId": "csv_content"
+        },
+        {
+          "csvContent": "time,Label 5\n2022-01-15T08:15:25.104Z,1675",
+          "datasource": {
+            "type": "testdata",
+            "uid": "PD8C576611E62080A"
+          },
+          "refId": "N",
+          "scenarioId": "csv_content"
+        },
+        {
+          "csvContent": "time,Label 6\n2021-12-22T05:23:25.776Z,433.16",
+          "datasource": {
+            "type": "testdata",
+            "uid": "PD8C576611E62080A"
+          },
+          "refId": "O",
+          "scenarioId": "csv_content"
+        },
+        {
+          "csvContent": "time,Label 7\n2021-12-24T05:37:45.720Z,41250\n2021-12-26T05:52:05.664Z,45150\n2021-12-28T06:06:25.608Z,45870.16\n2021-12-30T06:20:45.552Z,38728.17\n2022-01-01T06:35:05.496Z,39931.77\n2022-01-03T06:49:25.440Z,39831.8\n2022-01-05T07:03:45.384Z,38252.06\n2022-01-07T07:18:05.328Z,44332.92\n2022-01-09T07:32:25.272Z,51359.74\n2022-01-11T07:46:45.216Z,56155.84\n2022-01-13T08:01:05.160Z,55676.92\n2022-01-15T08:15:25.104Z,55323.84\n2022-01-17T08:29:45.048Z,13830.96",
+          "datasource": {
+            "type": "testdata",
+            "uid": "PD8C576611E62080A"
+          },
+          "refId": "P",
+          "scenarioId": "csv_content"
+        },
+        {
+          "csvContent": "time,Label 8\n2021-12-30T06:20:45.552Z,52.89\n2022-01-01T06:35:05.496Z,569.57",
+          "datasource": {
+            "type": "testdata",
+            "uid": "PD8C576611E62080A"
+          },
+          "refId": "Q",
+          "scenarioId": "csv_content"
+        },
+        {
+          "csvContent": "time,Label 9\n2022-01-01T06:35:05.496Z,2140.34\n2022-01-03T06:49:25.440Z,4074.92\n2022-01-05T07:03:45.384Z,1557.85\n2022-01-07T07:18:05.328Z,1097.74\n2022-01-09T07:32:25.272Z,692.06\n2022-01-11T07:46:45.216Z,758.67\n2022-01-13T08:01:05.160Z,957.56\n2022-01-15T08:15:25.104Z,1470.49\n2022-01-17T08:29:45.048Z,198.18",
+          "datasource": {
+            "type": "testdata",
+            "uid": "PD8C576611E62080A"
+          },
+          "refId": "R",
+          "scenarioId": "csv_content"
+        }
+      ],
+      "title": "'undefined' join artifacts (lines)",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "testdata",
+        "uid": "PD8C576611E62080A"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "axisSoftMin": 0,
+            "fillOpacity": 80,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineWidth": 1,
+            "scaleDistribution": {
+              "type": "linear"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 12,
+        "x": 0,
+        "y": 65
+      },
+      "id": 39,
+      "options": {
+        "barRadius": 0,
+        "barWidth": 0.97,
+        "groupWidth": 0.7,
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "orientation": "auto",
+        "showValue": "auto",
+        "stacking": "percent",
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        },
+        "xTickLabelRotation": 0,
+        "xTickLabelSpacing": 0
+      },
+      "pluginVersion": "9.1.0-pre",
+      "targets": [
+        {
+          "csvContent": "name, number, number2, number3, number4\nName1, 40, 5, 20, 10\nName2, 0,0,0,0\nName3, 6, 3, 5, 1\nName4, 1, 1, 1, 2",
+          "datasource": {
+            "type": "testdata",
+            "uid": "PD8C576611E62080A"
+          },
+          "refId": "A",
+          "scenarioId": "csv_content"
+        }
+      ],
+      "title": "Bar chart stack with 0 only series",
+      "type": "barchart"
+    }
+  ],
+  "refresh": false,
+  "schemaVersion": 36,
+  "style": "dark",
+  "tags": [
+    "gdev",
+    "panel-tests",
+    "graph-ng"
+  ],
+  "templating": {
+    "list": []
+  },
+  "time": {
+    "from": "2021-12-14T04:26:06.000Z",
+    "to": "2022-01-19T08:44:05.000Z"
+  },
+  "timepicker": {},
+  "timezone": "",
+  "title": "TimeSeries & BarChart Stacking",
+  "uid": "1KxMUdE7k",
+  "version": 5,
+  "weekStart": ""
+}

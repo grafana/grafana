@@ -1,0 +1,2534 @@
+{
+  "__inputs": [
+    {
+      "description": "",
+      "label": "prometheus",
+      "name": "DS_PROMETHEUS",
+      "pluginId": "prometheus",
+      "pluginName": "Prometheus",
+      "type": "datasource"
+    }
+  ],
+  "__requires": [
+    {
+      "id": "grafana",
+      "name": "Grafana",
+      "type": "grafana",
+      "version": "7.0.0"
+    },
+    {
+      "id": "prometheus",
+      "name": "prometheus",
+      "type": "datasource",
+      "version": "2.0.0"
+    },
+    {
+      "id": "graph",
+      "name": "Graph",
+      "type": "panel",
+      "version": ""
+    },
+    {
+      "id": "singlestat",
+      "name": "Singlestat",
+      "type": "panel",
+      "version": ""
+    },
+    {
+      "id": "heatmap",
+      "name": "Heatmap",
+      "type": "panel",
+      "version": ""
+    },
+    {
+      "id": "flant-statusmap-panel",
+      "name": "Statusmap",
+      "type": "panel",
+      "version": "0.3.4"
+    }
+  ],
+  "annotations": {
+    "list": [
+      {
+        "$$hashKey": "object:13",
+        "builtIn": 1,
+        "datasource": {
+          "uid": "-- Grafana --"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations \u0026 Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "description": "Erlang Distribution links, inet socket, port driver, dist process + tls_connection \u0026 tls_sender",
+  "editable": true,
+  "gnetId": 11352,
+  "graphTooltip": 1,
+  "id": null,
+  "iteration": 1587996382757,
+  "links": [],
+  "panels": [
+    {
+      "cacheTimeout": null,
+      "datasource": {
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "fixedColor": "rgb(255, 255, 255)",
+            "mode": "fixed"
+          },
+          "mappings": [],
+          "nullValueMode": "connected",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "#C4162A",
+                "value": null
+              },
+              {
+                "color": "#1F60C4",
+                "value": 2
+              },
+              {
+                "color": "#37872D",
+                "value": 6
+              }
+            ]
+          },
+          "unit": "none"
+        },
+        "overrides": []
+      },
+      "id": 25,
+      "interval": "",
+      "links": [],
+      "mappingType": 1,
+      "mappingTypes": [
+        {
+          "name": "value to text",
+          "value": 1
+        },
+        {
+          "name": "range to text",
+          "value": 2
+        }
+      ],
+      "maxDataPoints": 100,
+      "options": {
+        "colorMode": "background",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "horizontal",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "1.0.0",
+      "postfix": "",
+      "postfixFontSize": "50%",
+      "prefix": "",
+      "prefixFontSize": "50%",
+      "rangeMaps": [
+        {
+          "from": "null",
+          "text": "N/A",
+          "to": "null"
+        }
+      ],
+      "targets": [
+        {
+          "datasource": {
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "expr": "count(erlang_vm_dist_node_state * on(instance) group_left(rabbitmq_cluster) rabbitmq_identity_info{rabbitmq_cluster=\"$rabbitmq_cluster\", namespace=\"$namespace\"}) OR vector(0)",
+          "format": "time_series",
+          "interval": "",
+          "intervalFactor": 1,
+          "refId": "A"
+        }
+      ],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "All distribution links",
+      "type": "stat",
+      "valueFontSize": "80%"
+    },
+    {
+      "cacheTimeout": null,
+      "datasource": {
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "description": "When a connection between a node and peer is established, the distribution link is considered to be `up`",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "fixedColor": "rgb(255, 255, 255)",
+            "mode": "fixed"
+          },
+          "mappings": [],
+          "nullValueMode": "connected",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "#C4162A",
+                "value": null
+              },
+              {
+                "color": "#1F60C4",
+                "value": 2
+              },
+              {
+                "color": "#37872D",
+                "value": 6
+              }
+            ]
+          },
+          "unit": "none"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 3,
+        "w": 6,
+        "x": 6,
+        "y": 0
+      },
+      "id": 27,
+      "interval": "",
+      "links": [],
+      "mappingType": 1,
+      "mappingTypes": [
+        {
+          "name": "value to text",
+          "value": 1
+        },
+        {
+          "name": "range to text",
+          "value": 2
+        }
+      ],
+      "maxDataPoints": 100,
+      "options": {
+        "colorMode": "background",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "horizontal",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "1.0.0",
+      "postfix": "",
+      "postfixFontSize": "50%",
+      "prefix": "",
+      "prefixFontSize": "50%",
+      "rangeMaps": [
+        {
+          "from": "null",
+          "text": "N/A",
+          "to": "null"
+        }
+      ],
+      "targets": [
+        {
+          "datasource": {
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "expr": "count(erlang_vm_dist_node_state * on(instance) group_left(rabbitmq_cluster) rabbitmq_identity_info{rabbitmq_cluster=\"$rabbitmq_cluster\", namespace=\"$namespace\"} == 3) OR vector(0)",
+          "format": "time_series",
+          "interval": "",
+          "intervalFactor": 1,
+          "refId": "A"
+        }
+      ],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "Established distribution links",
+      "type": "stat",
+      "valueFontSize": "80%"
+    },
+    {
+      "cacheTimeout": null,
+      "datasource": {
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "description": "When a new connection is exchanging information between the node and the peer the distribution link is considered to be `pending`",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "fixedColor": "rgb(255, 255, 255)",
+            "mode": "fixed"
+          },
+          "mappings": [],
+          "nullValueMode": "connected",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "#37872D",
+                "value": null
+              },
+              {
+                "color": "#1F60C4",
+                "value": 1
+              },
+              {
+                "color": "#C4162A",
+                "value": 6
+              }
+            ]
+          },
+          "unit": "none"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 3,
+        "w": 6,
+        "x": 12,
+        "y": 0
+      },
+      "id": 26,
+      "interval": "",
+      "links": [],
+      "mappingType": 1,
+      "mappingTypes": [
+        {
+          "name": "value to text",
+          "value": 1
+        },
+        {
+          "name": "range to text",
+          "value": 2
+        }
+      ],
+      "maxDataPoints": 100,
+      "options": {
+        "colorMode": "background",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "horizontal",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "1.0.0",
+      "postfix": "",
+      "postfixFontSize": "50%",
+      "prefix": "",
+      "prefixFontSize": "50%",
+      "rangeMaps": [
+        {
+          "from": "null",
+          "text": "N/A",
+          "to": "null"
+        }
+      ],
+      "targets": [
+        {
+          "datasource": {
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "expr": "count(erlang_vm_dist_node_state * on(instance) group_left(rabbitmq_cluster) rabbitmq_identity_info{rabbitmq_cluster=\"$rabbitmq_cluster\", namespace=\"$namespace\"} == 1) OR vector(0)",
+          "format": "time_series",
+          "interval": "",
+          "intervalFactor": 1,
+          "refId": "A"
+        }
+      ],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "Connecting distribution links",
+      "type": "stat",
+      "valueFontSize": "80%"
+    },
+    {
+      "cacheTimeout": null,
+      "datasource": {
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "description": "When a new connection is established and there is an existing connection between the node and the peer, this connection needs to wait for the initial connection to go down before it can become active. The distribution link is considered `up_pending`",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "fixedColor": "rgb(255, 255, 255)",
+            "mode": "fixed"
+          },
+          "mappings": [],
+          "nullValueMode": "connected",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "#37872D",
+                "value": null
+              },
+              {
+                "color": "#1F60C4",
+                "value": 1
+              },
+              {
+                "color": "#C4162A",
+                "value": 6
+              }
+            ]
+          },
+          "unit": "none"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 3,
+        "w": 6,
+        "x": 18,
+        "y": 0
+      },
+      "id": 28,
+      "interval": "",
+      "links": [],
+      "mappingType": 1,
+      "mappingTypes": [
+        {
+          "name": "value to text",
+          "value": 1
+        },
+        {
+          "name": "range to text",
+          "value": 2
+        }
+      ],
+      "maxDataPoints": 100,
+      "options": {
+        "colorMode": "background",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "horizontal",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "1.0.0",
+      "postfix": "",
+      "postfixFontSize": "50%",
+      "prefix": "",
+      "prefixFontSize": "50%",
+      "rangeMaps": [
+        {
+          "from": "null",
+          "text": "N/A",
+          "to": "null"
+        }
+      ],
+      "targets": [
+        {
+          "datasource": {
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "expr": "count(erlang_vm_dist_node_state * on(instance) group_left(rabbitmq_cluster) rabbitmq_identity_info{rabbitmq_cluster=\"$rabbitmq_cluster\", namespace=\"$namespace\"} == 2) OR vector(0)",
+          "format": "time_series",
+          "interval": "",
+          "intervalFactor": 1,
+          "refId": "A"
+        }
+      ],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "Waiting distribution links",
+      "type": "stat",
+      "valueFontSize": "80%"
+    },
+    {
+      "collapsed": false,
+      "datasource": {
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 3
+      },
+      "id": 74,
+      "panels": [],
+      "targets": [
+        {
+          "datasource": {
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "refId": "A"
+        }
+      ],
+      "title": "distribution links",
+      "type": "row"
+    },
+    {
+      "cards": {
+        "cardHSpacing": 2,
+        "cardMinWidth": 5,
+        "cardRound": null,
+        "cardVSpacing": 2
+      },
+      "color": {
+        "cardColor": "#b4ff00",
+        "colorScale": "sqrt",
+        "colorScheme": "interpolateGreens",
+        "defaultColor": "#757575",
+        "exponent": 0.5,
+        "min": null,
+        "mode": "discrete",
+        "thresholds": [
+          {
+            "color": "#37872D",
+            "tooltip": "established",
+            "value": "3"
+          },
+          {
+            "color": "#FA6400",
+            "tooltip": "connecting",
+            "value": "1"
+          },
+          {
+            "color": "#FADE2A",
+            "tooltip": "waiting",
+            "value": "2"
+          }
+        ]
+      },
+      "data": {
+        "decimals": null,
+        "unitFormat": "short"
+      },
+      "datasource": {
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "description": "",
+      "gridPos": {
+        "h": 5,
+        "w": 12,
+        "x": 0,
+        "y": 4
+      },
+      "highlightCards": true,
+      "id": 19,
+      "legend": {
+        "show": true
+      },
+      "links": [],
+      "nullPointMode": "as empty",
+      "targets": [
+        {
+          "aggregation": "Last",
+          "datasource": {
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "decimals": 2,
+          "displayAliasType": "Warning / Critical",
+          "displayType": "Regular",
+          "displayValueWithAlias": "Never",
+          "expr": "erlang_vm_dist_node_state * on(instance) group_left(rabbitmq_node, rabbitmq_cluster) rabbitmq_identity_info{rabbitmq_cluster=\"$rabbitmq_cluster\", namespace=\"$namespace\"}",
+          "format": "time_series",
+          "intervalFactor": 1,
+          "legendFormat": "{{rabbitmq_node}} -\u003e {{peer}}",
+          "refId": "A",
+          "units": "none",
+          "valueHandler": "Number Threshold"
+        }
+      ],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "State of distribution links",
+      "tooltip": {
+        "show": true
+      },
+      "type": "flant-statusmap-panel",
+      "useMax": true,
+      "xAxis": {
+        "labelFormat": "%a %m/%d",
+        "minBucketWidthToShowWeekends": 4,
+        "show": true,
+        "showCrosshair": true,
+        "showWeekends": true
+      },
+      "yAxis": {
+        "show": true,
+        "showCrosshair": false
+      },
+      "yAxisSort": "metrics"
+    },
+    {
+      "aliasColors": {},
+      "bars": false,
+      "dashLength": 10,
+      "dashes": false,
+      "datasource": {
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "description": "Data currently buffered in the output queue of the distribution link.\n\nAny values above the 64MB threshold hint to an overloaded distribution. This applies to the default `zdbbl` value in RabbitMQ, which is 128MB.\n\n- [RabbitMQ Runtime Tuning - zdbbl](https://www.rabbitmq.com/runtime.html#distribution-buffer)\n- [erl +zdbbl](http://erlang.org/doc/man/erl.html#+zdbbl)",
+      "fill": 0,
+      "fillGradient": 0,
+      "gridPos": {
+        "h": 5,
+        "w": 12,
+        "x": 12,
+        "y": 4
+      },
+      "hiddenSeries": false,
+      "id": 62,
+      "legend": {
+        "alignAsTable": true,
+        "avg": false,
+        "current": true,
+        "max": true,
+        "min": true,
+        "show": false,
+        "total": false,
+        "values": true
+      },
+      "lines": true,
+      "linewidth": 1,
+      "links": [],
+      "nullPointMode": "null",
+      "options": {
+        "dataLinks": []
+      },
+      "percentage": false,
+      "pointradius": 2,
+      "points": false,
+      "renderer": "flot",
+      "seriesOverrides": [
+        {
+          "$$hashKey": "object:130",
+          "alias": "/^rabbit@[\\w.-]+0/",
+          "color": "#56A64B"
+        },
+        {
+          "$$hashKey": "object:131",
+          "alias": "/^rabbit@[\\w.-]+1/",
+          "color": "#F2CC0C"
+        },
+        {
+          "$$hashKey": "object:132",
+          "alias": "/^rabbit@[\\w.-]+2/",
+          "color": "#3274D9"
+        },
+        {
+          "$$hashKey": "object:133",
+          "alias": "/^rabbit@[\\w.-]+3/",
+          "color": "#A352CC"
+        },
+        {
+          "$$hashKey": "object:134",
+          "alias": "/^rabbit@[\\w.-]+4/",
+          "color": "#FF780A"
+        },
+        {
+          "$$hashKey": "object:135",
+          "alias": "/^rabbit@[\\w.-]+5/",
+          "color": "#96D98D"
+        },
+        {
+          "$$hashKey": "object:136",
+          "alias": "/^rabbit@[\\w.-]+6/",
+          "color": "#FFEE52"
+        },
+        {
+          "$$hashKey": "object:137",
+          "alias": "/^rabbit@[\\w.-]+7/",
+          "color": "#8AB8FF"
+        },
+        {
+          "$$hashKey": "object:138",
+          "alias": "/^rabbit@[\\w.-]+8/",
+          "color": "#CA95E5"
+        },
+        {
+          "$$hashKey": "object:139",
+          "alias": "/^rabbit@[\\w.-]+9/",
+          "color": "#FFB357"
+        }
+      ],
+      "spaceLength": 10,
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
+        {
+          "datasource": {
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "expr": "erlang_vm_dist_node_queue_size_bytes * on(instance) group_left(rabbitmq_node, rabbitmq_cluster) rabbitmq_identity_info{rabbitmq_cluster=\"$rabbitmq_cluster\", namespace=\"$namespace\"}",
+          "format": "time_series",
+          "interval": "",
+          "intervalFactor": 1,
+          "legendFormat": "{{rabbitmq_node}} -\u003e {{peer}}",
+          "refId": "A"
+        }
+      ],
+      "thresholds": [
+        {
+          "$$hashKey": "object:234",
+          "colorMode": "critical",
+          "fill": true,
+          "line": true,
+          "op": "gt",
+          "value": 65536000,
+          "yaxis": "left"
+        }
+      ],
+      "timeFrom": null,
+      "timeRegions": [],
+      "timeShift": null,
+      "title": "Data buffered in the distribution links queue",
+      "tooltip": {
+        "shared": true,
+        "sort": 2,
+        "value_type": "individual"
+      },
+      "type": "graph",
+      "xaxis": {
+        "buckets": null,
+        "mode": "time",
+        "name": null,
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "$$hashKey": "object:206",
+          "decimals": 0,
+          "format": "decbytes",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": "0",
+          "show": true
+        },
+        {
+          "$$hashKey": "object:207",
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        }
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
+    },
+    {
+      "collapsed": false,
+      "datasource": {
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 9
+      },
+      "id": 9,
+      "panels": [],
+      "targets": [
+        {
+          "datasource": {
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "refId": "A"
+        }
+      ],
+      "title": "inet socket",
+      "type": "row"
+    },
+    {
+      "aliasColors": {},
+      "bars": false,
+      "dashLength": 10,
+      "dashes": false,
+      "datasource": {
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "description": "",
+      "fill": 0,
+      "fillGradient": 0,
+      "gridPos": {
+        "h": 5,
+        "w": 12,
+        "x": 0,
+        "y": 10
+      },
+      "hiddenSeries": false,
+      "id": 3,
+      "legend": {
+        "alignAsTable": true,
+        "avg": false,
+        "current": true,
+        "max": true,
+        "min": true,
+        "show": false,
+        "total": false,
+        "values": true
+      },
+      "lines": true,
+      "linewidth": 1,
+      "links": [],
+      "nullPointMode": "null",
+      "options": {
+        "dataLinks": []
+      },
+      "percentage": false,
+      "pointradius": 2,
+      "points": false,
+      "renderer": "flot",
+      "seriesOverrides": [
+        {
+          "alias": "/^rabbit@[\\w.-]+0/",
+          "color": "#56A64B"
+        },
+        {
+          "alias": "/^rabbit@[\\w.-]+1/",
+          "color": "#F2CC0C"
+        },
+        {
+          "alias": "/^rabbit@[\\w.-]+2/",
+          "color": "#3274D9"
+        },
+        {
+          "alias": "/^rabbit@[\\w.-]+3/",
+          "color": "#A352CC"
+        },
+        {
+          "alias": "/^rabbit@[\\w.-]+4/",
+          "color": "#FF780A"
+        },
+        {
+          "alias": "/^rabbit@[\\w.-]+5/",
+          "color": "#96D98D"
+        },
+        {
+          "alias": "/^rabbit@[\\w.-]+6/",
+          "color": "#FFEE52"
+        },
+        {
+          "alias": "/^rabbit@[\\w.-]+7/",
+          "color": "#8AB8FF"
+        },
+        {
+          "alias": "/^rabbit@[\\w.-]+8/",
+          "color": "#CA95E5"
+        },
+        {
+          "alias": "/^rabbit@[\\w.-]+9/",
+          "color": "#FFB357"
+        }
+      ],
+      "spaceLength": 10,
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
+        {
+          "datasource": {
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "expr": "rate(erlang_vm_dist_send_bytes[60s]) * on(instance) group_left(rabbitmq_cluster, rabbitmq_node) rabbitmq_identity_info{rabbitmq_cluster=\"$rabbitmq_cluster\", namespace=\"$namespace\"}",
+          "format": "time_series",
+          "intervalFactor": 1,
+          "legendFormat": "{{rabbitmq_node}} -\u003e {{peer}}",
+          "refId": "A"
+        }
+      ],
+      "thresholds": [],
+      "timeFrom": null,
+      "timeRegions": [],
+      "timeShift": null,
+      "title": "Data sent to peer node / s",
+      "tooltip": {
+        "shared": true,
+        "sort": 2,
+        "value_type": "individual"
+      },
+      "type": "graph",
+      "xaxis": {
+        "buckets": null,
+        "mode": "time",
+        "name": null,
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "decimals": 1,
+          "format": "Bps",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": "0",
+          "show": true
+        },
+        {
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        }
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
+    },
+    {
+      "aliasColors": {},
+      "bars": false,
+      "dashLength": 10,
+      "dashes": false,
+      "datasource": {
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "description": "",
+      "fill": 0,
+      "fillGradient": 0,
+      "gridPos": {
+        "h": 5,
+        "w": 12,
+        "x": 12,
+        "y": 10
+      },
+      "hiddenSeries": false,
+      "id": 2,
+      "legend": {
+        "alignAsTable": true,
+        "avg": false,
+        "current": true,
+        "max": true,
+        "min": true,
+        "show": false,
+        "sort": "max",
+        "sortDesc": true,
+        "total": false,
+        "values": true
+      },
+      "lines": true,
+      "linewidth": 1,
+      "links": [],
+      "nullPointMode": "null",
+      "options": {
+        "dataLinks": []
+      },
+      "percentage": false,
+      "pointradius": 2,
+      "points": false,
+      "renderer": "flot",
+      "seriesOverrides": [
+        {
+          "$$hashKey": "object:276",
+          "alias": "/^rabbit@[\\w.-]+0/",
+          "color": "#56A64B"
+        },
+        {
+          "$$hashKey": "object:277",
+          "alias": "/^rabbit@[\\w.-]+1/",
+          "color": "#F2CC0C"
+        },
+        {
+          "$$hashKey": "object:278",
+          "alias": "/^rabbit@[\\w.-]+2/",
+          "color": "#3274D9"
+        },
+        {
+          "$$hashKey": "object:279",
+          "alias": "/^rabbit@[\\w.-]+3/",
+          "color": "#A352CC"
+        },
+        {
+          "$$hashKey": "object:280",
+          "alias": "/^rabbit@[\\w.-]+4/",
+          "color": "#FF780A"
+        },
+        {
+          "$$hashKey": "object:281",
+          "alias": "/^rabbit@[\\w.-]+5/",
+          "color": "#96D98D"
+        },
+        {
+          "$$hashKey": "object:282",
+          "alias": "/^rabbit@[\\w.-]+6/",
+          "color": "#FFEE52"
+        },
+        {
+          "$$hashKey": "object:283",
+          "alias": "/^rabbit@[\\w.-]+7/",
+          "color": "#8AB8FF"
+        },
+        {
+          "$$hashKey": "object:284",
+          "alias": "/^rabbit@[\\w.-]+8/",
+          "color": "#CA95E5"
+        },
+        {
+          "$$hashKey": "object:285",
+          "alias": "/^rabbit@[\\w.-]+9/",
+          "color": "#FFB357"
+        }
+      ],
+      "spaceLength": 10,
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
+        {
+          "datasource": {
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "expr": "rate(erlang_vm_dist_recv_bytes[60s]) * on(instance) group_left(rabbitmq_cluster, rabbitmq_node) rabbitmq_identity_info{rabbitmq_cluster=\"$rabbitmq_cluster\", namespace=\"$namespace\"}",
+          "format": "time_series",
+          "intervalFactor": 1,
+          "legendFormat": "{{rabbitmq_node}} \u003c- {{peer}}",
+          "refId": "A"
+        }
+      ],
+      "thresholds": [],
+      "timeFrom": null,
+      "timeRegions": [],
+      "timeShift": null,
+      "title": "Data received from peer node / s",
+      "tooltip": {
+        "shared": true,
+        "sort": 2,
+        "value_type": "individual"
+      },
+      "type": "graph",
+      "xaxis": {
+        "buckets": null,
+        "mode": "time",
+        "name": null,
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "$$hashKey": "object:352",
+          "decimals": 1,
+          "format": "Bps",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": "0",
+          "show": true
+        },
+        {
+          "$$hashKey": "object:353",
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        }
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
+    },
+    {
+      "aliasColors": {},
+      "bars": false,
+      "dashLength": 10,
+      "dashes": false,
+      "datasource": {
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "description": "Number of inet packets sent to the distribution link port.\n\nIf too few messages are sent and data sits in the port driver buffer, increasing the `inet_dist_connect_options` as well as `inet_dist_listen_options` buffer values will result in more stable throughput.",
+      "fill": 0,
+      "fillGradient": 0,
+      "gridPos": {
+        "h": 5,
+        "w": 12,
+        "x": 0,
+        "y": 15
+      },
+      "hiddenSeries": false,
+      "id": 4,
+      "legend": {
+        "alignAsTable": true,
+        "avg": false,
+        "current": true,
+        "max": true,
+        "min": true,
+        "show": false,
+        "sort": "max",
+        "sortDesc": true,
+        "total": false,
+        "values": true
+      },
+      "lines": true,
+      "linewidth": 1,
+      "links": [],
+      "nullPointMode": "null",
+      "options": {
+        "dataLinks": []
+      },
+      "percentage": false,
+      "pointradius": 2,
+      "points": false,
+      "renderer": "flot",
+      "seriesOverrides": [
+        {
+          "alias": "/^rabbit@[\\w.-]+0/",
+          "color": "#56A64B"
+        },
+        {
+          "alias": "/^rabbit@[\\w.-]+1/",
+          "color": "#F2CC0C"
+        },
+        {
+          "alias": "/^rabbit@[\\w.-]+2/",
+          "color": "#3274D9"
+        },
+        {
+          "alias": "/^rabbit@[\\w.-]+3/",
+          "color": "#A352CC"
+        },
+        {
+          "alias": "/^rabbit@[\\w.-]+4/",
+          "color": "#FF780A"
+        },
+        {
+          "alias": "/^rabbit@[\\w.-]+5/",
+          "color": "#96D98D"
+        },
+        {
+          "alias": "/^rabbit@[\\w.-]+6/",
+          "color": "#FFEE52"
+        },
+        {
+          "alias": "/^rabbit@[\\w.-]+7/",
+          "color": "#8AB8FF"
+        },
+        {
+          "alias": "/^rabbit@[\\w.-]+8/",
+          "color": "#CA95E5"
+        },
+        {
+          "alias": "/^rabbit@[\\w.-]+9/",
+          "color": "#FFB357"
+        }
+      ],
+      "spaceLength": 10,
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
+        {
+          "datasource": {
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "expr": "rate(erlang_vm_dist_send_cnt[60s]) * on(instance) group_left(rabbitmq_cluster, rabbitmq_node) rabbitmq_identity_info{rabbitmq_cluster=\"$rabbitmq_cluster\", namespace=\"$namespace\"}",
+          "format": "time_series",
+          "intervalFactor": 1,
+          "legendFormat": "{{rabbitmq_node}} -\u003e {{peer}}",
+          "refId": "A"
+        }
+      ],
+      "thresholds": [],
+      "timeFrom": null,
+      "timeRegions": [],
+      "timeShift": null,
+      "title": "Distribution messages sent to peer node / s",
+      "tooltip": {
+        "shared": true,
+        "sort": 2,
+        "value_type": "individual"
+      },
+      "type": "graph",
+      "xaxis": {
+        "buckets": null,
+        "mode": "time",
+        "name": null,
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "decimals": 0,
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": "0",
+          "show": true
+        },
+        {
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        }
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
+    },
+    {
+      "aliasColors": {},
+      "bars": false,
+      "dashLength": 10,
+      "dashes": false,
+      "datasource": {
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "description": "Number of inet packets received from the distribution link port.\n\nIf too many messages are received, increasing the `inet_dist_connect_options` as well as `inet_dist_listen_options` buffer values will result in more stable throughput.",
+      "fill": 0,
+      "fillGradient": 0,
+      "gridPos": {
+        "h": 5,
+        "w": 12,
+        "x": 12,
+        "y": 15
+      },
+      "hiddenSeries": false,
+      "id": 5,
+      "legend": {
+        "alignAsTable": true,
+        "avg": false,
+        "current": true,
+        "max": true,
+        "min": true,
+        "show": false,
+        "total": false,
+        "values": true
+      },
+      "lines": true,
+      "linewidth": 1,
+      "links": [],
+      "nullPointMode": "null",
+      "options": {
+        "dataLinks": []
+      },
+      "percentage": false,
+      "pointradius": 2,
+      "points": false,
+      "renderer": "flot",
+      "seriesOverrides": [
+        {
+          "alias": "/^rabbit@[\\w.-]+0/",
+          "color": "#56A64B"
+        },
+        {
+          "alias": "/^rabbit@[\\w.-]+1/",
+          "color": "#F2CC0C"
+        },
+        {
+          "alias": "/^rabbit@[\\w.-]+2/",
+          "color": "#3274D9"
+        },
+        {
+          "alias": "/^rabbit@[\\w.-]+3/",
+          "color": "#A352CC"
+        },
+        {
+          "alias": "/^rabbit@[\\w.-]+4/",
+          "color": "#FF780A"
+        },
+        {
+          "alias": "/^rabbit@[\\w.-]+5/",
+          "color": "#96D98D"
+        },
+        {
+          "alias": "/^rabbit@[\\w.-]+6/",
+          "color": "#FFEE52"
+        },
+        {
+          "alias": "/^rabbit@[\\w.-]+7/",
+          "color": "#8AB8FF"
+        },
+        {
+          "alias": "/^rabbit@[\\w.-]+8/",
+          "color": "#CA95E5"
+        },
+        {
+          "alias": "/^rabbit@[\\w.-]+9/",
+          "color": "#FFB357"
+        }
+      ],
+      "spaceLength": 10,
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
+        {
+          "datasource": {
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "expr": "rate(erlang_vm_dist_recv_cnt[60s]) * on(instance) group_left(rabbitmq_cluster, rabbitmq_node) rabbitmq_identity_info{rabbitmq_cluster=\"$rabbitmq_cluster\", namespace=\"$namespace\"}",
+          "format": "time_series",
+          "intervalFactor": 1,
+          "legendFormat": "{{rabbitmq_node}} \u003c- {{peer}}",
+          "refId": "A"
+        }
+      ],
+      "thresholds": [],
+      "timeFrom": null,
+      "timeRegions": [],
+      "timeShift": null,
+      "title": "Distribution messages received from peer node / s",
+      "tooltip": {
+        "shared": true,
+        "sort": 2,
+        "value_type": "individual"
+      },
+      "type": "graph",
+      "xaxis": {
+        "buckets": null,
+        "mode": "time",
+        "name": null,
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "decimals": 0,
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": "0",
+          "show": true
+        },
+        {
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        }
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
+    },
+    {
+      "aliasColors": {},
+      "bars": false,
+      "dashLength": 10,
+      "dashes": false,
+      "datasource": {
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "description": "Corresponds to the average size of the argument passed to `gen_tcp:send/2` or equivalent.\n\nTypically corresponds to TCP window size.\n\nIf TLS is used for inter-node communication, the `inet` packet size will be varied so that the system as a whole is both secure and performant.\n\n`inet` packets larger than the TCP window will be split into TCP packets by the system kernel.\n\n`inet` packets smaller than the TCP window _may_ be joined into TCP packets by the system kernel.\n\n* [`inet` packet](http://erlang.org/doc/man/inet.html#packet)",
+      "fill": 0,
+      "fillGradient": 0,
+      "gridPos": {
+        "h": 5,
+        "w": 12,
+        "x": 0,
+        "y": 20
+      },
+      "hiddenSeries": false,
+      "id": 39,
+      "legend": {
+        "alignAsTable": true,
+        "avg": false,
+        "current": true,
+        "max": true,
+        "min": true,
+        "show": false,
+        "total": false,
+        "values": true
+      },
+      "lines": true,
+      "linewidth": 1,
+      "links": [],
+      "nullPointMode": "null",
+      "options": {
+        "dataLinks": []
+      },
+      "percentage": false,
+      "pointradius": 2,
+      "points": false,
+      "renderer": "flot",
+      "seriesOverrides": [
+        {
+          "alias": "/^rabbit@[\\w.-]+0/",
+          "color": "#56A64B"
+        },
+        {
+          "alias": "/^rabbit@[\\w.-]+1/",
+          "color": "#F2CC0C"
+        },
+        {
+          "alias": "/^rabbit@[\\w.-]+2/",
+          "color": "#3274D9"
+        },
+        {
+          "alias": "/^rabbit@[\\w.-]+3/",
+          "color": "#A352CC"
+        },
+        {
+          "alias": "/^rabbit@[\\w.-]+4/",
+          "color": "#FF780A"
+        },
+        {
+          "alias": "/^rabbit@[\\w.-]+5/",
+          "color": "#96D98D"
+        },
+        {
+          "alias": "/^rabbit@[\\w.-]+6/",
+          "color": "#FFEE52"
+        },
+        {
+          "alias": "/^rabbit@[\\w.-]+7/",
+          "color": "#8AB8FF"
+        },
+        {
+          "alias": "/^rabbit@[\\w.-]+8/",
+          "color": "#CA95E5"
+        },
+        {
+          "alias": "/^rabbit@[\\w.-]+9/",
+          "color": "#FFB357"
+        }
+      ],
+      "spaceLength": 10,
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
+        {
+          "datasource": {
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "expr": "(rate(erlang_vm_dist_send_bytes[60s]) * on(instance) group_left(rabbitmq_cluster, rabbitmq_node) rabbitmq_identity_info{rabbitmq_cluster=\"$rabbitmq_cluster\", namespace=\"$namespace\"}) / \n(rate(erlang_vm_dist_send_cnt[60s]) * on(instance) group_left(rabbitmq_cluster, rabbitmq_node) rabbitmq_identity_info{rabbitmq_cluster=\"$rabbitmq_cluster\", namespace=\"$namespace\"})",
+          "format": "time_series",
+          "intervalFactor": 1,
+          "legendFormat": "{{rabbitmq_node}} -\u003e {{peer}}",
+          "refId": "A"
+        }
+      ],
+      "thresholds": [],
+      "timeFrom": null,
+      "timeRegions": [],
+      "timeShift": null,
+      "title": "Average inet packet size sent to peer node",
+      "tooltip": {
+        "shared": true,
+        "sort": 2,
+        "value_type": "individual"
+      },
+      "type": "graph",
+      "xaxis": {
+        "buckets": null,
+        "mode": "time",
+        "name": null,
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "decimals": 0,
+          "format": "decbytes",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": "0",
+          "show": true
+        },
+        {
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        }
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
+    },
+    {
+      "aliasColors": {},
+      "bars": false,
+      "dashLength": 10,
+      "dashes": false,
+      "datasource": {
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "description": "Corresponds to the average size of the argument received from `gen_tcp:recv/2` or equivalent.\n\nTypically corresponds to TCP window size.\n\nIf TLS is used for inter-node communication, the `inet` packet size will be varied so that the system as a whole is both secure and performant.\n\n* [`inet` packet](http://erlang.org/doc/man/inet.html#packet)",
+      "fill": 0,
+      "fillGradient": 0,
+      "gridPos": {
+        "h": 5,
+        "w": 12,
+        "x": 12,
+        "y": 20
+      },
+      "hiddenSeries": false,
+      "id": 50,
+      "legend": {
+        "alignAsTable": true,
+        "avg": false,
+        "current": true,
+        "max": true,
+        "min": true,
+        "show": false,
+        "sort": "max",
+        "sortDesc": true,
+        "total": false,
+        "values": true
+      },
+      "lines": true,
+      "linewidth": 1,
+      "links": [],
+      "nullPointMode": "null",
+      "options": {
+        "dataLinks": []
+      },
+      "percentage": false,
+      "pointradius": 2,
+      "points": false,
+      "renderer": "flot",
+      "seriesOverrides": [
+        {
+          "alias": "/^rabbit@[\\w.-]+0/",
+          "color": "#56A64B"
+        },
+        {
+          "alias": "/^rabbit@[\\w.-]+1/",
+          "color": "#F2CC0C"
+        },
+        {
+          "alias": "/^rabbit@[\\w.-]+2/",
+          "color": "#3274D9"
+        },
+        {
+          "alias": "/^rabbit@[\\w.-]+3/",
+          "color": "#A352CC"
+        },
+        {
+          "alias": "/^rabbit@[\\w.-]+4/",
+          "color": "#FF780A"
+        },
+        {
+          "alias": "/^rabbit@[\\w.-]+5/",
+          "color": "#96D98D"
+        },
+        {
+          "alias": "/^rabbit@[\\w.-]+6/",
+          "color": "#FFEE52"
+        },
+        {
+          "alias": "/^rabbit@[\\w.-]+7/",
+          "color": "#8AB8FF"
+        },
+        {
+          "alias": "/^rabbit@[\\w.-]+8/",
+          "color": "#CA95E5"
+        },
+        {
+          "alias": "/^rabbit@[\\w.-]+9/",
+          "color": "#FFB357"
+        }
+      ],
+      "spaceLength": 10,
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
+        {
+          "datasource": {
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "expr": "(rate(erlang_vm_dist_recv_bytes[60s]) * on(instance) group_left(rabbitmq_cluster, rabbitmq_node) rabbitmq_identity_info{rabbitmq_cluster=\"$rabbitmq_cluster\", namespace=\"$namespace\"}) / \n(rate(erlang_vm_dist_recv_cnt[60s]) * on(instance) group_left(rabbitmq_cluster, rabbitmq_node) rabbitmq_identity_info{rabbitmq_cluster=\"$rabbitmq_cluster\", namespace=\"$namespace\"})",
+          "format": "time_series",
+          "intervalFactor": 1,
+          "legendFormat": "{{rabbitmq_node}} \u003c- {{peer}}",
+          "refId": "A"
+        }
+      ],
+      "thresholds": [],
+      "timeFrom": null,
+      "timeRegions": [],
+      "timeShift": null,
+      "title": "Average inet packet size received from peer node",
+      "tooltip": {
+        "shared": true,
+        "sort": 2,
+        "value_type": "individual"
+      },
+      "type": "graph",
+      "xaxis": {
+        "buckets": null,
+        "mode": "time",
+        "name": null,
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "decimals": 0,
+          "format": "Bps",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": "0",
+          "show": true
+        },
+        {
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        }
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
+    },
+    {
+      "collapsed": false,
+      "datasource": {
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 25
+      },
+      "id": 11,
+      "panels": [],
+      "targets": [
+        {
+          "datasource": {
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "refId": "A"
+        }
+      ],
+      "title": "port driver",
+      "type": "row"
+    },
+    {
+      "aliasColors": {},
+      "bars": false,
+      "dashLength": 10,
+      "dashes": false,
+      "datasource": {
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "description": "The total number of bytes allocated for this port by the runtime system. The port itself can have allocated memory that is not included.",
+      "fill": 0,
+      "fillGradient": 0,
+      "gridPos": {
+        "h": 5,
+        "w": 12,
+        "x": 0,
+        "y": 26
+      },
+      "hiddenSeries": false,
+      "id": 12,
+      "legend": {
+        "alignAsTable": true,
+        "avg": false,
+        "current": true,
+        "max": true,
+        "min": true,
+        "show": false,
+        "total": false,
+        "values": true
+      },
+      "lines": true,
+      "linewidth": 1,
+      "links": [],
+      "nullPointMode": "null",
+      "options": {
+        "dataLinks": []
+      },
+      "percentage": false,
+      "pointradius": 2,
+      "points": false,
+      "renderer": "flot",
+      "seriesOverrides": [
+        {
+          "alias": "/^rabbit@[\\w.-]+0/",
+          "color": "#56A64B"
+        },
+        {
+          "alias": "/^rabbit@[\\w.-]+1/",
+          "color": "#F2CC0C"
+        },
+        {
+          "alias": "/^rabbit@[\\w.-]+2/",
+          "color": "#3274D9"
+        },
+        {
+          "alias": "/^rabbit@[\\w.-]+3/",
+          "color": "#A352CC"
+        },
+        {
+          "alias": "/^rabbit@[\\w.-]+4/",
+          "color": "#FF780A"
+        },
+        {
+          "alias": "/^rabbit@[\\w.-]+5/",
+          "color": "#96D98D"
+        },
+        {
+          "alias": "/^rabbit@[\\w.-]+6/",
+          "color": "#FFEE52"
+        },
+        {
+          "alias": "/^rabbit@[\\w.-]+7/",
+          "color": "#8AB8FF"
+        },
+        {
+          "alias": "/^rabbit@[\\w.-]+8/",
+          "color": "#CA95E5"
+        },
+        {
+          "alias": "/^rabbit@[\\w.-]+9/",
+          "color": "#FFB357"
+        }
+      ],
+      "spaceLength": 10,
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
+        {
+          "datasource": {
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "expr": "erlang_vm_dist_port_memory_bytes * on(instance) group_left(rabbitmq_cluster, rabbitmq_node) rabbitmq_identity_info{rabbitmq_cluster=\"$rabbitmq_cluster\", namespace=\"$namespace\"}",
+          "format": "time_series",
+          "intervalFactor": 1,
+          "legendFormat": "{{rabbitmq_node}} -\u003e {{peer}}",
+          "refId": "A"
+        }
+      ],
+      "thresholds": [],
+      "timeFrom": null,
+      "timeRegions": [],
+      "timeShift": null,
+      "title": "Memory used by the port driver",
+      "tooltip": {
+        "shared": true,
+        "sort": 2,
+        "value_type": "individual"
+      },
+      "type": "graph",
+      "xaxis": {
+        "buckets": null,
+        "mode": "time",
+        "name": null,
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "decimals": 0,
+          "format": "decbytes",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": "0",
+          "show": true
+        },
+        {
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        }
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
+    },
+    {
+      "aliasColors": {},
+      "bars": false,
+      "dashLength": 10,
+      "dashes": false,
+      "datasource": {
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "description": "The total number of bytes queued by the port using the ERTS driver queue implementation\n\nAny values above a few KBs hint to an overloaded distribution",
+      "fill": 1,
+      "fillGradient": 0,
+      "gridPos": {
+        "h": 5,
+        "w": 12,
+        "x": 12,
+        "y": 26
+      },
+      "hiddenSeries": false,
+      "id": 7,
+      "legend": {
+        "alignAsTable": true,
+        "avg": false,
+        "current": true,
+        "max": true,
+        "min": true,
+        "show": false,
+        "total": false,
+        "values": true
+      },
+      "lines": true,
+      "linewidth": 1,
+      "links": [],
+      "nullPointMode": "null",
+      "options": {
+        "dataLinks": []
+      },
+      "percentage": false,
+      "pointradius": 2,
+      "points": false,
+      "renderer": "flot",
+      "seriesOverrides": [
+        {
+          "alias": "/rabbit/",
+          "color": "#C4162A"
+        }
+      ],
+      "spaceLength": 10,
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
+        {
+          "datasource": {
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "expr": "erlang_vm_dist_port_queue_size_bytes * on(instance) group_left(rabbitmq_cluster, rabbitmq_node) rabbitmq_identity_info{rabbitmq_cluster=\"$rabbitmq_cluster\", namespace=\"$namespace\"}",
+          "format": "time_series",
+          "intervalFactor": 1,
+          "legendFormat": "{{rabbitmq_node}} -\u003e {{peer}}",
+          "refId": "A"
+        }
+      ],
+      "thresholds": [
+        {
+          "colorMode": "critical",
+          "fill": true,
+          "line": true,
+          "op": "gt",
+          "value": 0,
+          "yaxis": "left"
+        }
+      ],
+      "timeFrom": null,
+      "timeRegions": [],
+      "timeShift": null,
+      "title": "Data in the port driver buffer",
+      "tooltip": {
+        "shared": true,
+        "sort": 2,
+        "value_type": "individual"
+      },
+      "type": "graph",
+      "xaxis": {
+        "buckets": null,
+        "mode": "time",
+        "name": null,
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "decimals": 0,
+          "format": "decbytes",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": "0",
+          "show": true
+        },
+        {
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        }
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
+    },
+    {
+      "collapsed": false,
+      "datasource": {
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 31
+      },
+      "id": 14,
+      "panels": [],
+      "repeat": "erlang_vm_dist_proc_type",
+      "targets": [
+        {
+          "datasource": {
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "refId": "A"
+        }
+      ],
+      "title": "$erlang_vm_dist_proc_type process",
+      "type": "row"
+    },
+    {
+      "cacheTimeout": null,
+      "cards": {
+        "cardHSpacing": 2,
+        "cardMinWidth": 5,
+        "cardRound": null,
+        "cardVSpacing": 2
+      },
+      "color": {
+        "cardColor": "#b4ff00",
+        "colorScale": "sqrt",
+        "colorScheme": "interpolateGnYlRd",
+        "defaultColor": "#757575",
+        "exponent": 0.5,
+        "mode": "discrete",
+        "thresholds": [
+          {
+            "color": "#37872D",
+            "tooltip": "waiting",
+            "value": "6"
+          },
+          {
+            "color": "#96D98D",
+            "tooltip": "running",
+            "value": "5"
+          },
+          {
+            "color": "#1F60C4",
+            "tooltip": "garbage_collecting",
+            "value": "4"
+          },
+          {
+            "color": "#FADE2A",
+            "tooltip": "runnable",
+            "value": "3"
+          },
+          {
+            "color": "#FA6400",
+            "tooltip": "suspended",
+            "value": "2"
+          },
+          {
+            "color": "#C4162A",
+            "tooltip": "exiting",
+            "value": "1"
+          }
+        ]
+      },
+      "data": {
+        "decimals": null,
+        "unitFormat": "short"
+      },
+      "datasource": {
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "description": "",
+      "gridPos": {
+        "h": 5,
+        "w": 12,
+        "x": 0,
+        "y": 32
+      },
+      "highlightCards": true,
+      "id": 18,
+      "legend": {
+        "show": true
+      },
+      "links": [],
+      "nullPointMode": "as empty",
+      "targets": [
+        {
+          "aggregation": "Last",
+          "datasource": {
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "decimals": 2,
+          "displayAliasType": "Warning / Critical",
+          "displayType": "Regular",
+          "displayValueWithAlias": "Never",
+          "expr": "erlang_vm_dist_proc_status{type=\"$erlang_vm_dist_proc_type\"} * on(instance) group_left(rabbitmq_node, rabbitmq_cluster) rabbitmq_identity_info{rabbitmq_cluster=\"$rabbitmq_cluster\", namespace=\"$namespace\"} ",
+          "format": "time_series",
+          "intervalFactor": 1,
+          "legendFormat": "{{rabbitmq_node}} -\u003e {{peer}}",
+          "refId": "A",
+          "units": "none",
+          "valueHandler": "Number Threshold"
+        }
+      ],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "Process state",
+      "tooltip": {
+        "show": true
+      },
+      "type": "flant-statusmap-panel",
+      "useMax": true,
+      "xAxis": {
+        "labelFormat": "%a %m/%d",
+        "minBucketWidthToShowWeekends": 4,
+        "show": true,
+        "showCrosshair": true,
+        "showWeekends": true
+      },
+      "yAxis": {
+        "show": true,
+        "showCrosshair": false
+      },
+      "yAxisSort": "metrics"
+    },
+    {
+      "aliasColors": {},
+      "bars": false,
+      "dashLength": 10,
+      "dashes": false,
+      "datasource": {
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "description": "The number of messages currently in the message queue of the process\n\nAny values above 0 hint to an overloaded distribution",
+      "fill": 0,
+      "fillGradient": 0,
+      "gridPos": {
+        "h": 5,
+        "w": 12,
+        "x": 12,
+        "y": 32
+      },
+      "hiddenSeries": false,
+      "id": 16,
+      "legend": {
+        "alignAsTable": true,
+        "avg": false,
+        "current": true,
+        "max": true,
+        "min": true,
+        "show": false,
+        "total": false,
+        "values": true
+      },
+      "lines": true,
+      "linewidth": 1,
+      "links": [],
+      "nullPointMode": "null",
+      "options": {
+        "dataLinks": []
+      },
+      "percentage": false,
+      "pointradius": 2,
+      "points": false,
+      "renderer": "flot",
+      "seriesOverrides": [
+        {
+          "alias": "/rabbit/",
+          "color": "#C4162A"
+        }
+      ],
+      "spaceLength": 10,
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
+        {
+          "datasource": {
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "expr": "erlang_vm_dist_proc_message_queue_len{type=\"$erlang_vm_dist_proc_type\"} * on(instance) group_left(rabbitmq_cluster, rabbitmq_node) rabbitmq_identity_info{rabbitmq_cluster=\"$rabbitmq_cluster\", namespace=\"$namespace\"}",
+          "format": "time_series",
+          "intervalFactor": 1,
+          "legendFormat": "{{rabbitmq_node}} -\u003e {{peer}}",
+          "refId": "A"
+        }
+      ],
+      "thresholds": [
+        {
+          "colorMode": "critical",
+          "fill": true,
+          "line": true,
+          "op": "gt",
+          "value": 0,
+          "yaxis": "left"
+        }
+      ],
+      "timeFrom": null,
+      "timeRegions": [],
+      "timeShift": null,
+      "title": "Messages in the process queue",
+      "tooltip": {
+        "shared": true,
+        "sort": 2,
+        "value_type": "individual"
+      },
+      "type": "graph",
+      "xaxis": {
+        "buckets": null,
+        "mode": "time",
+        "name": null,
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "decimals": 0,
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": "0",
+          "show": true
+        },
+        {
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        }
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
+    },
+    {
+      "aliasColors": {},
+      "bars": false,
+      "dashLength": 10,
+      "dashes": false,
+      "datasource": {
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "description": "The size in bytes of process memory. This includes call stack, heap, and internal structures.",
+      "fill": 0,
+      "fillGradient": 0,
+      "gridPos": {
+        "h": 5,
+        "w": 12,
+        "x": 0,
+        "y": 37
+      },
+      "hiddenSeries": false,
+      "id": 15,
+      "legend": {
+        "alignAsTable": true,
+        "avg": false,
+        "current": true,
+        "max": true,
+        "min": true,
+        "show": false,
+        "total": false,
+        "values": true
+      },
+      "lines": true,
+      "linewidth": 1,
+      "links": [],
+      "nullPointMode": "null",
+      "options": {
+        "dataLinks": []
+      },
+      "percentage": false,
+      "pointradius": 2,
+      "points": false,
+      "renderer": "flot",
+      "seriesOverrides": [
+        {
+          "alias": "/^rabbit@[\\w.-]+0/",
+          "color": "#56A64B"
+        },
+        {
+          "alias": "/^rabbit@[\\w.-]+1/",
+          "color": "#F2CC0C"
+        },
+        {
+          "alias": "/^rabbit@[\\w.-]+2/",
+          "color": "#3274D9"
+        },
+        {
+          "alias": "/^rabbit@[\\w.-]+3/",
+          "color": "#A352CC"
+        },
+        {
+          "alias": "/^rabbit@[\\w.-]+4/",
+          "color": "#FF780A"
+        },
+        {
+          "alias": "/^rabbit@[\\w.-]+5/",
+          "color": "#96D98D"
+        },
+        {
+          "alias": "/^rabbit@[\\w.-]+6/",
+          "color": "#FFEE52"
+        },
+        {
+          "alias": "/^rabbit@[\\w.-]+7/",
+          "color": "#8AB8FF"
+        },
+        {
+          "alias": "/^rabbit@[\\w.-]+8/",
+          "color": "#CA95E5"
+        },
+        {
+          "alias": "/^rabbit@[\\w.-]+9/",
+          "color": "#FFB357"
+        }
+      ],
+      "spaceLength": 10,
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
+        {
+          "datasource": {
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "expr": "erlang_vm_dist_proc_memory_bytes{type=\"$erlang_vm_dist_proc_type\"} * on(instance) group_left(rabbitmq_node, rabbitmq_cluster) rabbitmq_identity_info{rabbitmq_cluster=\"$rabbitmq_cluster\", namespace=\"$namespace\"}",
+          "format": "time_series",
+          "intervalFactor": 1,
+          "legendFormat": "{{rabbitmq_node}} -\u003e {{peer}}",
+          "refId": "A"
+        }
+      ],
+      "thresholds": [],
+      "timeFrom": null,
+      "timeRegions": [],
+      "timeShift": null,
+      "title": "Memory used by the process",
+      "tooltip": {
+        "shared": true,
+        "sort": 2,
+        "value_type": "individual"
+      },
+      "type": "graph",
+      "xaxis": {
+        "buckets": null,
+        "mode": "time",
+        "name": null,
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "decimals": 0,
+          "format": "decbytes",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": "0",
+          "show": true
+        },
+        {
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        }
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
+    },
+    {
+      "aliasColors": {},
+      "bars": false,
+      "dashLength": 10,
+      "dashes": false,
+      "datasource": {
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "description": "The number of reductions executed by the process",
+      "fill": 0,
+      "fillGradient": 0,
+      "gridPos": {
+        "h": 5,
+        "w": 12,
+        "x": 12,
+        "y": 37
+      },
+      "hiddenSeries": false,
+      "id": 17,
+      "legend": {
+        "alignAsTable": true,
+        "avg": false,
+        "current": true,
+        "max": true,
+        "min": true,
+        "show": false,
+        "total": false,
+        "values": true
+      },
+      "lines": true,
+      "linewidth": 1,
+      "links": [],
+      "nullPointMode": "null",
+      "options": {
+        "dataLinks": []
+      },
+      "percentage": false,
+      "pointradius": 2,
+      "points": false,
+      "renderer": "flot",
+      "seriesOverrides": [
+        {
+          "alias": "/^rabbit@[\\w.-]+0/",
+          "color": "#56A64B"
+        },
+        {
+          "alias": "/^rabbit@[\\w.-]+1/",
+          "color": "#F2CC0C"
+        },
+        {
+          "alias": "/^rabbit@[\\w.-]+2/",
+          "color": "#3274D9"
+        },
+        {
+          "alias": "/^rabbit@[\\w.-]+3/",
+          "color": "#A352CC"
+        },
+        {
+          "alias": "/^rabbit@[\\w.-]+4/",
+          "color": "#FF780A"
+        },
+        {
+          "alias": "/^rabbit@[\\w.-]+5/",
+          "color": "#96D98D"
+        },
+        {
+          "alias": "/^rabbit@[\\w.-]+6/",
+          "color": "#FFEE52"
+        },
+        {
+          "alias": "/^rabbit@[\\w.-]+7/",
+          "color": "#8AB8FF"
+        },
+        {
+          "alias": "/^rabbit@[\\w.-]+8/",
+          "color": "#CA95E5"
+        },
+        {
+          "alias": "/^rabbit@[\\w.-]+9/",
+          "color": "#FFB357"
+        }
+      ],
+      "spaceLength": 10,
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
+        {
+          "datasource": {
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "expr": "rate(erlang_vm_dist_proc_reductions{type=\"$erlang_vm_dist_proc_type\"}[60s]) * on(instance) group_left(rabbitmq_cluster, rabbitmq_node) rabbitmq_identity_info{rabbitmq_cluster=\"$rabbitmq_cluster\", namespace=\"$namespace\"}",
+          "format": "time_series",
+          "intervalFactor": 1,
+          "legendFormat": "{{rabbitmq_node}} -\u003e {{peer}}",
+          "refId": "A"
+        }
+      ],
+      "thresholds": [],
+      "timeFrom": null,
+      "timeRegions": [],
+      "timeShift": null,
+      "title": "Process reductions / s",
+      "tooltip": {
+        "shared": true,
+        "sort": 2,
+        "value_type": "individual"
+      },
+      "type": "graph",
+      "xaxis": {
+        "buckets": null,
+        "mode": "time",
+        "name": null,
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "decimals": 0,
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": "0",
+          "show": true
+        },
+        {
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        }
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
+    }
+  ],
+  "refresh": "15s",
+  "schemaVersion": 41,
+  "style": "dark",
+  "tags": [
+    "rabbitmq-prometheus"
+  ],
+  "templating": {
+    "list": [
+      {
+        "allValue": null,
+        "current": {},
+        "datasource": {
+          "uid": "${DS_PROMETHEUS}"
+        },
+        "definition": "label_values(rabbitmq_identity_info, namespace)",
+        "hide": 0,
+        "includeAll": false,
+        "label": "Namespace",
+        "multi": false,
+        "name": "namespace",
+        "options": [],
+        "query": "label_values(rabbitmq_identity_info, namespace)",
+        "refresh": 1,
+        "regex": "",
+        "skipUrlSync": false,
+        "sort": 1,
+        "type": "query"
+      },
+      {
+        "allValue": null,
+        "current": {},
+        "datasource": {
+          "uid": "${DS_PROMETHEUS}"
+        },
+        "definition": "label_values(rabbitmq_identity_info{namespace=\"$namespace\"}, rabbitmq_cluster)",
+        "hide": 0,
+        "includeAll": false,
+        "index": -1,
+        "label": "RabbitMQ Cluster",
+        "multi": false,
+        "name": "rabbitmq_cluster",
+        "options": [],
+        "query": "label_values(rabbitmq_identity_info{namespace=\"$namespace\"}, rabbitmq_cluster)",
+        "refresh": 1,
+        "regex": "",
+        "skipUrlSync": false,
+        "sort": 1,
+        "type": "query"
+      },
+      {
+        "allValue": null,
+        "current": {
+          "text": [
+            "All"
+          ],
+          "value": [
+            "$__all"
+          ]
+        },
+        "datasource": {
+          "uid": "${DS_PROMETHEUS}"
+        },
+        "definition": "label_values(erlang_vm_dist_proc_status, type)",
+        "hide": 0,
+        "includeAll": true,
+        "index": -1,
+        "label": "Process type",
+        "multi": true,
+        "name": "erlang_vm_dist_proc_type",
+        "options": [],
+        "query": "label_values(erlang_vm_dist_proc_status, type)",
+        "refresh": 1,
+        "regex": "",
+        "skipUrlSync": false,
+        "sort": 1,
+        "type": "query"
+      }
+    ]
+  },
+  "time": {
+    "from": "now-15m",
+    "to": "now"
+  },
+  "timepicker": {
+    "refresh_intervals": [
+      "15s",
+      "30s",
+      "1m",
+      "5m",
+      "10m"
+    ]
+  },
+  "timezone": "",
+  "title": "Erlang-Distribution",
+  "uid": "d-SFCCmZz",
+  "variables": {
+    "list": []
+  },
+  "version": 20210118
+}

@@ -1,0 +1,710 @@
+{
+  "total_collected": 100,
+  "successfully_downloaded": 0,
+  "failed_downloads": 100,
+  "collection_date": "2025-08-28T22:23:35.348046",
+  "oldest_date": "2016-06-21T14:51:11.000Z",
+  "newest_date": "2016-12-09T09:46:58.000Z",
+  "dashboards": [
+    {
+      "id": 24,
+      "name": "CollectD Server Metrics",
+      "createdAt": "2016-06-21T14:51:11.000Z",
+      "downloads": 11554,
+      "revisionId": 33
+    },
+    {
+      "id": 30,
+      "name": "Memcached Server Metrics",
+      "createdAt": "2016-06-22T08:37:18.000Z",
+      "downloads": 1128,
+      "revisionId": 39
+    },
+    {
+      "id": 43,
+      "name": "Graphite Carbon Metrics",
+      "createdAt": "2016-06-23T10:11:18.000Z",
+      "downloads": 1808,
+      "revisionId": 55
+    },
+    {
+      "id": 55,
+      "name": "Internal Grafana Stats",
+      "createdAt": "2016-06-24T07:43:17.000Z",
+      "downloads": 3503,
+      "revisionId": 5858
+    },
+    {
+      "id": 56,
+      "name": "Icinga2 with Graphite",
+      "createdAt": "2016-06-24T09:46:24.000Z",
+      "downloads": 4561,
+      "revisionId": 2109
+    },
+    {
+      "id": 73,
+      "name": "HTTP logs",
+      "createdAt": "2016-06-26T22:28:03.000Z",
+      "downloads": 3289,
+      "revisionId": 286
+    },
+    {
+      "id": 79,
+      "name": "Dynamic Dashboard",
+      "createdAt": "2016-06-27T18:27:51.000Z",
+      "downloads": 5047,
+      "revisionId": 283
+    },
+    {
+      "id": 85,
+      "name": "Carbon C Relay",
+      "createdAt": "2016-06-28T13:25:09.000Z",
+      "downloads": 1398,
+      "revisionId": 7259
+    },
+    {
+      "id": 139,
+      "name": "AWS Billing",
+      "createdAt": "2016-07-09T15:10:46.000Z",
+      "downloads": 4171648,
+      "revisionId": 35503
+    },
+    {
+      "id": 162,
+      "name": "Kubernetes cluster monitoring (via Prometheus)",
+      "createdAt": "2016-07-12T21:39:11.000Z",
+      "downloads": 10160,
+      "revisionId": 204
+    },
+    {
+      "id": 178,
+      "name": "kato::etcd",
+      "createdAt": "2016-07-14T08:57:37.000Z",
+      "downloads": 1212,
+      "revisionId": 611
+    },
+    {
+      "id": 179,
+      "name": "Docker and Host Monitoring w/ Prometheus",
+      "createdAt": "2016-07-14T11:06:31.000Z",
+      "downloads": 39486,
+      "revisionId": 9887
+    },
+    {
+      "id": 193,
+      "name": "Docker monitoring",
+      "createdAt": "2016-07-14T21:30:30.000Z",
+      "downloads": 23530,
+      "revisionId": 244
+    },
+    {
+      "id": 199,
+      "name": "kato::prometheus",
+      "createdAt": "2016-07-15T14:31:16.000Z",
+      "downloads": 408,
+      "revisionId": 256
+    },
+    {
+      "id": 226,
+      "name": "kato::dashboard",
+      "createdAt": "2016-07-21T13:16:49.000Z",
+      "downloads": 551,
+      "revisionId": 692
+    },
+    {
+      "id": 233,
+      "name": "Jenkins: Performance and health overview",
+      "createdAt": "2016-07-22T20:46:46.000Z",
+      "downloads": 3823,
+      "revisionId": 305
+    },
+    {
+      "id": 240,
+      "name": "Go Processes",
+      "createdAt": "2016-07-23T22:05:26.000Z",
+      "downloads": 123345,
+      "revisionId": 427
+    },
+    {
+      "id": 252,
+      "name": "Grafana + Snap ",
+      "createdAt": "2016-07-25T16:48:14.000Z",
+      "downloads": 493,
+      "revisionId": 324
+    },
+    {
+      "id": 266,
+      "name": "ElasticSearch",
+      "createdAt": "2016-08-02T21:17:32.000Z",
+      "downloads": 1356256,
+      "revisionId": 3509
+    },
+    {
+      "id": 285,
+      "name": "factorio",
+      "createdAt": "2016-08-07T16:50:15.000Z",
+      "downloads": 538,
+      "revisionId": 372
+    },
+    {
+      "id": 306,
+      "name": "Jenkins: Performance and health overview",
+      "createdAt": "2016-08-11T15:15:28.000Z",
+      "downloads": 4177,
+      "revisionId": 402
+    },
+    {
+      "id": 311,
+      "name": "Graphite Carbon Metrics (obfuscurity)",
+      "createdAt": "2016-08-12T16:22:02.000Z",
+      "downloads": 2311,
+      "revisionId": 540
+    },
+    {
+      "id": 314,
+      "name": "Consul",
+      "createdAt": "2016-08-13T15:20:25.000Z",
+      "downloads": 2155,
+      "revisionId": 646
+    },
+    {
+      "id": 315,
+      "name": "Kubernetes cluster monitoring (via Prometheus)",
+      "createdAt": "2016-08-13T16:19:19.000Z",
+      "downloads": 21483417,
+      "revisionId": 5121
+    },
+    {
+      "id": 317,
+      "name": "InfluxDB Metrics",
+      "createdAt": "2016-08-13T17:59:14.000Z",
+      "downloads": 9351,
+      "revisionId": 413
+    },
+    {
+      "id": 325,
+      "name": "MemcacheD Overview",
+      "createdAt": "2016-08-14T20:21:41.000Z",
+      "downloads": 1312,
+      "revisionId": 430
+    },
+    {
+      "id": 331,
+      "name": "Apache Overview",
+      "createdAt": "2016-08-14T20:54:17.000Z",
+      "downloads": 7265,
+      "revisionId": 436
+    },
+    {
+      "id": 338,
+      "name": "Carbon-relay-ng",
+      "createdAt": "2016-08-17T15:16:52.000Z",
+      "downloads": 1703,
+      "revisionId": 21669
+    },
+    {
+      "id": 361,
+      "name": "HAproxy Frontend | HAproxy",
+      "createdAt": "2016-08-26T08:00:31.000Z",
+      "downloads": 1248,
+      "revisionId": 2230
+    },
+    {
+      "id": 364,
+      "name": "HAproxy Backend | HAproxy",
+      "createdAt": "2016-08-26T08:12:39.000Z",
+      "downloads": 15041,
+      "revisionId": 2227
+    },
+    {
+      "id": 367,
+      "name": "HAproxy Servers | HAproxy",
+      "createdAt": "2016-08-26T08:18:36.000Z",
+      "downloads": 13885,
+      "revisionId": 2233
+    },
+    {
+      "id": 371,
+      "name": "Cassandra detail",
+      "createdAt": "2016-08-29T08:08:29.000Z",
+      "downloads": 4181,
+      "revisionId": 506
+    },
+    {
+      "id": 381,
+      "name": "Icinga2 with InfluxDB",
+      "createdAt": "2016-08-29T14:12:55.000Z",
+      "downloads": 7426,
+      "revisionId": 516
+    },
+    {
+      "id": 395,
+      "name": "Docker Host & Container Overview",
+      "createdAt": "2016-09-07T09:31:11.000Z",
+      "downloads": 16089,
+      "revisionId": 536
+    },
+    {
+      "id": 411,
+      "name": "Internal Grafana Stats (Prometheus)",
+      "createdAt": "2016-09-09T22:49:52.000Z",
+      "downloads": 715,
+      "revisionId": 555
+    },
+    {
+      "id": 421,
+      "name": "InfluxDB Internals",
+      "createdAt": "2016-09-11T17:20:51.000Z",
+      "downloads": 10092,
+      "revisionId": 565
+    },
+    {
+      "id": 465,
+      "name": "Atop Monitoring",
+      "createdAt": "2016-09-19T20:18:24.000Z",
+      "downloads": 2043,
+      "revisionId": 618
+    },
+    {
+      "id": 470,
+      "name": "Kubernetes Node host metrics",
+      "createdAt": "2016-09-20T14:30:29.000Z",
+      "downloads": 934,
+      "revisionId": 629
+    },
+    {
+      "id": 482,
+      "name": "Kubernetes Container Stats",
+      "createdAt": "2016-09-20T15:19:31.000Z",
+      "downloads": 1728,
+      "revisionId": 641
+    },
+    {
+      "id": 533,
+      "name": "Mesos",
+      "createdAt": "2016-10-03T13:22:06.000Z",
+      "downloads": 490,
+      "revisionId": 713
+    },
+    {
+      "id": 538,
+      "name": "Isilon Data Insights Cluster Summary",
+      "createdAt": "2016-10-03T16:32:54.000Z",
+      "downloads": 904,
+      "revisionId": 3152
+    },
+    {
+      "id": 541,
+      "name": "Isilon Data Insights Cluster Detail",
+      "createdAt": "2016-10-03T17:06:42.000Z",
+      "downloads": 718,
+      "revisionId": 3149
+    },
+    {
+      "id": 544,
+      "name": "Isilon Data Insights Protocol Detail",
+      "createdAt": "2016-10-03T20:15:52.000Z",
+      "downloads": 424,
+      "revisionId": 724
+    },
+    {
+      "id": 547,
+      "name": "Isilon Data Insights Cluster Capacity Utilization Table",
+      "createdAt": "2016-10-03T20:19:23.000Z",
+      "downloads": 589,
+      "revisionId": 727
+    },
+    {
+      "id": 551,
+      "name": "AWS ECS",
+      "createdAt": "2016-10-04T19:19:49.000Z",
+      "downloads": 2945921,
+      "revisionId": 35531
+    },
+    {
+      "id": 554,
+      "name": "Host Overview",
+      "createdAt": "2016-10-05T06:49:08.000Z",
+      "downloads": 6114,
+      "revisionId": 740
+    },
+    {
+      "id": 569,
+      "name": "Disk stats",
+      "createdAt": "2016-10-06T08:28:50.000Z",
+      "downloads": 5753,
+      "revisionId": 767
+    },
+    {
+      "id": 575,
+      "name": "AWS S3",
+      "createdAt": "2016-10-06T21:38:21.000Z",
+      "downloads": 2121743,
+      "revisionId": 35554
+    },
+    {
+      "id": 581,
+      "name": "AWS SNS",
+      "createdAt": "2016-10-07T21:18:44.000Z",
+      "downloads": 3497852,
+      "revisionId": 35557
+    },
+    {
+      "id": 584,
+      "name": "AWS SQS",
+      "createdAt": "2016-10-07T21:32:36.000Z",
+      "downloads": 16755742,
+      "revisionId": 35558
+    },
+    {
+      "id": 593,
+      "name": "AWS Lambda",
+      "createdAt": "2016-10-07T23:02:03.000Z",
+      "downloads": 17022326,
+      "revisionId": 35546
+    },
+    {
+      "id": 597,
+      "name": "Kubernetes\u8d44\u6e90\u5229\u7528\u7387\u76d1\u63a7(via xiaoping378)",
+      "createdAt": "2016-10-09T04:53:30.000Z",
+      "downloads": 677,
+      "revisionId": 816
+    },
+    {
+      "id": 607,
+      "name": "AWS EMR Hadoop 2",
+      "createdAt": "2016-10-10T22:13:47.000Z",
+      "downloads": 54528,
+      "revisionId": 35541
+    },
+    {
+      "id": 609,
+      "name": "Docker Swarm & Container Overview",
+      "createdAt": "2016-10-11T00:50:06.000Z",
+      "downloads": 12996,
+      "revisionId": 4991
+    },
+    {
+      "id": 617,
+      "name": "AWS EC2",
+      "createdAt": "2016-10-11T22:27:58.000Z",
+      "downloads": 237855,
+      "revisionId": 35523
+    },
+    {
+      "id": 623,
+      "name": "AWS EBS",
+      "createdAt": "2016-10-11T22:56:41.000Z",
+      "downloads": 140443,
+      "revisionId": 35518
+    },
+    {
+      "id": 635,
+      "name": "Logstash Browser",
+      "createdAt": "2016-10-12T20:57:06.000Z",
+      "downloads": 4072,
+      "revisionId": 1232
+    },
+    {
+      "id": 644,
+      "name": "AWS ELB Classic Load Balancer",
+      "createdAt": "2016-10-15T00:12:04.000Z",
+      "downloads": 143427,
+      "revisionId": 35540
+    },
+    {
+      "id": 650,
+      "name": "AWS ELB Application Load Balancer",
+      "createdAt": "2016-10-15T06:10:50.000Z",
+      "downloads": 3203740,
+      "revisionId": 35539
+    },
+    {
+      "id": 653,
+      "name": "AWS EFS",
+      "createdAt": "2016-10-15T07:34:14.000Z",
+      "downloads": 100852,
+      "revisionId": 35533
+    },
+    {
+      "id": 659,
+      "name": "AWS EventBridge",
+      "createdAt": "2016-10-15T22:41:11.000Z",
+      "downloads": 53904,
+      "revisionId": 35542
+    },
+    {
+      "id": 665,
+      "name": "Internal Grafana Stats (Elasticsearch)",
+      "createdAt": "2016-10-17T15:08:26.000Z",
+      "downloads": 601,
+      "revisionId": 920
+    },
+    {
+      "id": 674,
+      "name": "AWS CloudFront",
+      "createdAt": "2016-10-17T20:34:10.000Z",
+      "downloads": 165482,
+      "revisionId": 35526
+    },
+    {
+      "id": 677,
+      "name": "AWS Auto Scaling",
+      "createdAt": "2016-10-17T21:17:28.000Z",
+      "downloads": 41283,
+      "revisionId": 35501
+    },
+    {
+      "id": 702,
+      "name": "Amazon RDS OS Metrics",
+      "createdAt": "2016-10-21T12:54:50.000Z",
+      "downloads": 57835,
+      "revisionId": 969
+    },
+    {
+      "id": 707,
+      "name": "AWS RDS",
+      "createdAt": "2016-10-21T18:46:53.000Z",
+      "downloads": 7475853,
+      "revisionId": 35551
+    },
+    {
+      "id": 708,
+      "name": "Kubernetes cluster monitoring (via Prometheus)",
+      "createdAt": "2016-10-22T03:03:31.000Z",
+      "downloads": 704,
+      "revisionId": 984
+    },
+    {
+      "id": 713,
+      "name": "FRITZ!Box Router Status",
+      "createdAt": "2016-10-22T09:43:14.000Z",
+      "downloads": 5631,
+      "revisionId": 16585
+    },
+    {
+      "id": 718,
+      "name": "Host Stats - Prometheus Node Exporter - pre 0.16.0",
+      "createdAt": "2016-10-23T19:49:45.000Z",
+      "downloads": 7888,
+      "revisionId": 997
+    },
+    {
+      "id": 721,
+      "name": "Kafka Overview",
+      "createdAt": "2016-10-23T20:14:49.000Z",
+      "downloads": 30844,
+      "revisionId": 1000
+    },
+    {
+      "id": 725,
+      "name": "Dashboard Gerador",
+      "createdAt": "2016-10-24T13:49:15.000Z",
+      "downloads": 3521,
+      "revisionId": 1004
+    },
+    {
+      "id": 737,
+      "name": "Kubernetes Pod Resources",
+      "createdAt": "2016-10-25T08:50:34.000Z",
+      "downloads": 2266,
+      "revisionId": 1179
+    },
+    {
+      "id": 741,
+      "name": "Kubernetes Deployment metrics",
+      "createdAt": "2016-10-25T10:27:11.000Z",
+      "downloads": 10219107,
+      "revisionId": 1023
+    },
+    {
+      "id": 747,
+      "name": "Kubernetes Pod Metrics",
+      "createdAt": "2016-10-25T10:48:12.000Z",
+      "downloads": 9566575,
+      "revisionId": 1059
+    },
+    {
+      "id": 758,
+      "name": "AWS CloudWatch Logs",
+      "createdAt": "2016-10-25T19:43:04.000Z",
+      "downloads": 225403,
+      "revisionId": 35547
+    },
+    {
+      "id": 762,
+      "name": "Kubernetes Kafka resource metrics",
+      "createdAt": "2016-10-26T15:41:35.000Z",
+      "downloads": 1619,
+      "revisionId": 1062
+    },
+    {
+      "id": 768,
+      "name": "dump1090",
+      "createdAt": "2016-10-28T23:03:29.000Z",
+      "downloads": 1039,
+      "revisionId": 11558
+    },
+    {
+      "id": 784,
+      "name": "Docker Hub Stats",
+      "createdAt": "2016-10-31T13:59:34.000Z",
+      "downloads": 676,
+      "revisionId": 1090
+    },
+    {
+      "id": 789,
+      "name": "HaProxy backend (or frontend/servers)  ",
+      "createdAt": "2016-10-31T17:18:25.000Z",
+      "downloads": 9658,
+      "revisionId": 1098
+    },
+    {
+      "id": 797,
+      "name": "Kamon IO",
+      "createdAt": "2016-11-01T02:49:39.000Z",
+      "downloads": 587,
+      "revisionId": 1139
+    },
+    {
+      "id": 863,
+      "name": "GitHub activity of dcos org",
+      "createdAt": "2016-11-16T17:54:44.000Z",
+      "downloads": 300,
+      "revisionId": 1253
+    },
+    {
+      "id": 869,
+      "name": "ClickHouse overview",
+      "createdAt": "2016-11-17T09:06:39.000Z",
+      "downloads": 2079,
+      "revisionId": 1259
+    },
+    {
+      "id": 878,
+      "name": "Elasticsearch Dashboard",
+      "createdAt": "2016-11-17T18:53:54.000Z",
+      "downloads": 21185,
+      "revisionId": 8633
+    },
+    {
+      "id": 882,
+      "name": "Clickhouse",
+      "createdAt": "2016-11-17T21:05:07.000Z",
+      "downloads": 9860,
+      "revisionId": 1272
+    },
+    {
+      "id": 893,
+      "name": "Docker and system monitoring",
+      "createdAt": "2016-11-20T02:08:15.000Z",
+      "downloads": 77027,
+      "revisionId": 1471
+    },
+    {
+      "id": 908,
+      "name": "controller",
+      "createdAt": "2016-11-20T14:37:26.000Z",
+      "downloads": 501,
+      "revisionId": 1310
+    },
+    {
+      "id": 917,
+      "name": "Ceph - Cluster",
+      "createdAt": "2016-11-21T16:04:22.000Z",
+      "downloads": 4427,
+      "revisionId": 1328
+    },
+    {
+      "id": 923,
+      "name": "Ceph - OSD",
+      "createdAt": "2016-11-21T16:08:14.000Z",
+      "downloads": 1437,
+      "revisionId": 1331
+    },
+    {
+      "id": 926,
+      "name": "Ceph - Pools",
+      "createdAt": "2016-11-21T16:10:44.000Z",
+      "downloads": 1259,
+      "revisionId": 1334
+    },
+    {
+      "id": 938,
+      "name": "Kubernetes with  Open Stack statistsics",
+      "createdAt": "2016-11-22T15:40:03.000Z",
+      "downloads": 313,
+      "revisionId": 1352
+    },
+    {
+      "id": 941,
+      "name": "HW nodes statistics for Open Stack in Kubernetes ",
+      "createdAt": "2016-11-22T15:48:24.000Z",
+      "downloads": 519,
+      "revisionId": 1355
+    },
+    {
+      "id": 947,
+      "name": "Graphite Server (Carbon Metrics)",
+      "createdAt": "2016-11-22T21:59:59.000Z",
+      "downloads": 1137,
+      "revisionId": 1361
+    },
+    {
+      "id": 950,
+      "name": "DD-WRT Router Dashboard",
+      "createdAt": "2016-11-23T03:52:21.000Z",
+      "downloads": 883,
+      "revisionId": 1475
+    },
+    {
+      "id": 966,
+      "name": "Dashboard Mysql Zabbix",
+      "createdAt": "2016-11-28T13:43:57.000Z",
+      "downloads": 7424,
+      "revisionId": 1410
+    },
+    {
+      "id": 968,
+      "name": "Apache Logs",
+      "createdAt": "2016-11-28T17:50:17.000Z",
+      "downloads": 2893,
+      "revisionId": 1412
+    },
+    {
+      "id": 969,
+      "name": "AWS ElastiCache Redis",
+      "createdAt": "2016-11-28T22:53:19.000Z",
+      "downloads": 20107775,
+      "revisionId": 35534
+    },
+    {
+      "id": 1004,
+      "name": "elasticsearch-logstash",
+      "createdAt": "2016-11-30T03:36:48.000Z",
+      "downloads": 4781,
+      "revisionId": 1454
+    },
+    {
+      "id": 1013,
+      "name": "51.com-\u57df\u540d\u65e5\u5fd7",
+      "createdAt": "2016-12-01T01:19:36.000Z",
+      "downloads": 4180,
+      "revisionId": 1811
+    },
+    {
+      "id": 1100,
+      "name": "Backups Internacional",
+      "createdAt": "2016-12-09T09:13:17.000Z",
+      "downloads": 1125,
+      "revisionId": 1553
+    },
+    {
+      "id": 1115,
+      "name": "DHCP Leases",
+      "createdAt": "2016-12-09T09:46:58.000Z",
+      "downloads": 633,
+      "revisionId": 1568
+    }
+  ]
+}

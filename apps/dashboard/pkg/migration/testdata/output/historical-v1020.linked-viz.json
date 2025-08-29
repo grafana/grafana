@@ -1,0 +1,1468 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "uid": "-- Grafana --"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations \u0026 Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "gnetId": null,
+  "graphTooltip": 0,
+  "id": 321,
+  "links": [],
+  "panels": [
+    {
+      "datasource": {
+        "apiVersion": "v1",
+        "type": "prometheus",
+        "uid": "default-ds-uid"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "links": [],
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 8,
+        "x": 0,
+        "y": 0
+      },
+      "id": 3,
+      "links": [
+        {
+          "targetBlank": true,
+          "title": "Go to grafana.com",
+          "url": "http://grafana.com"
+        }
+      ],
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "text": {},
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "7.5.0-pre",
+      "targets": [
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "prometheus",
+            "uid": "default-ds-uid"
+          },
+          "refId": "A"
+        }
+      ],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "No data link",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "apiVersion": "v1",
+        "type": "prometheus",
+        "uid": "default-ds-uid"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "links": [
+            {
+              "targetBlank": true,
+              "title": "Data link",
+              "url": "http://www.wp.pl"
+            }
+          ],
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 8,
+        "x": 8,
+        "y": 0
+      },
+      "id": 2,
+      "links": [
+        {
+          "title": "asdasd",
+          "url": "www.wp.pl"
+        }
+      ],
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "text": {},
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "7.5.0-pre",
+      "targets": [
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "prometheus",
+            "uid": "default-ds-uid"
+          },
+          "refId": "A"
+        }
+      ],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "Single data link",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "apiVersion": "v1",
+        "type": "prometheus",
+        "uid": "default-ds-uid"
+      },
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "links": [
+            {
+              "targetBlank": true,
+              "title": "Wp",
+              "url": "http://www.wp.pl"
+            },
+            {
+              "targetBlank": true,
+              "title": "Onet",
+              "url": "http://www.onet.pl"
+            }
+          ],
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 8,
+        "x": 16,
+        "y": 0
+      },
+      "id": 4,
+      "links": [
+        {
+          "title": "asdasd",
+          "url": "www.wp.pl"
+        }
+      ],
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "text": {},
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "7.5.0-pre",
+      "targets": [
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "prometheus",
+            "uid": "default-ds-uid"
+          },
+          "refId": "A"
+        }
+      ],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "Multiple data links",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "apiVersion": "v1",
+        "type": "prometheus",
+        "uid": "default-ds-uid"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "links": [],
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 8,
+        "x": 0,
+        "y": 6
+      },
+      "id": 12,
+      "links": [
+        {
+          "targetBlank": true,
+          "title": "Go to grafana.com",
+          "url": "http://grafana.com"
+        }
+      ],
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "first"
+          ],
+          "fields": "",
+          "limit": 2,
+          "values": true
+        },
+        "showPercentChange": false,
+        "text": {},
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "7.5.0-pre",
+      "targets": [
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "prometheus",
+            "uid": "default-ds-uid"
+          },
+          "refId": "A"
+        }
+      ],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "No data link",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "apiVersion": "v1",
+        "type": "prometheus",
+        "uid": "default-ds-uid"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "links": [
+            {
+              "targetBlank": true,
+              "title": "Data link",
+              "url": "http://www.wp.pl"
+            }
+          ],
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 8,
+        "x": 8,
+        "y": 6
+      },
+      "id": 13,
+      "links": [
+        {
+          "title": "asdasd",
+          "url": "www.wp.pl"
+        }
+      ],
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "limit": 2,
+          "values": true
+        },
+        "showPercentChange": false,
+        "text": {},
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "7.5.0-pre",
+      "targets": [
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "prometheus",
+            "uid": "default-ds-uid"
+          },
+          "refId": "A"
+        }
+      ],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "Single data link",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "apiVersion": "v1",
+        "type": "prometheus",
+        "uid": "default-ds-uid"
+      },
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "links": [
+            {
+              "targetBlank": true,
+              "title": "Wp",
+              "url": "http://www.wp.pl"
+            },
+            {
+              "targetBlank": true,
+              "title": "Onet",
+              "url": "http://www.onet.pl"
+            }
+          ],
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 8,
+        "x": 16,
+        "y": 6
+      },
+      "id": 14,
+      "links": [
+        {
+          "title": "asdasd",
+          "url": "www.wp.pl"
+        }
+      ],
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "limit": 2,
+          "values": true
+        },
+        "showPercentChange": false,
+        "text": {},
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "7.5.0-pre",
+      "targets": [
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "prometheus",
+            "uid": "default-ds-uid"
+          },
+          "refId": "A"
+        }
+      ],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "Multiple data links",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "apiVersion": "v1",
+        "type": "prometheus",
+        "uid": "default-ds-uid"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "links": [],
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 8,
+        "x": 0,
+        "y": 12
+      },
+      "id": 8,
+      "links": [
+        {
+          "targetBlank": true,
+          "title": "Go to grafana.com",
+          "url": "http://grafana.com"
+        }
+      ],
+      "options": {
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showThresholdLabels": false,
+        "showThresholdMarkers": true,
+        "text": {}
+      },
+      "pluginVersion": "7.5.0-pre",
+      "targets": [
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "prometheus",
+            "uid": "default-ds-uid"
+          },
+          "refId": "A"
+        }
+      ],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "No data link",
+      "type": "gauge"
+    },
+    {
+      "datasource": {
+        "apiVersion": "v1",
+        "type": "prometheus",
+        "uid": "default-ds-uid"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "links": [
+            {
+              "targetBlank": true,
+              "title": "Data link",
+              "url": "http://www.wp.pl"
+            }
+          ],
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 8,
+        "x": 8,
+        "y": 12
+      },
+      "id": 6,
+      "links": [
+        {
+          "title": "asdasd",
+          "url": "www.wp.pl"
+        }
+      ],
+      "options": {
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showThresholdLabels": false,
+        "showThresholdMarkers": true,
+        "text": {}
+      },
+      "pluginVersion": "7.5.0-pre",
+      "targets": [
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "prometheus",
+            "uid": "default-ds-uid"
+          },
+          "refId": "A"
+        }
+      ],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "Single data link",
+      "type": "gauge"
+    },
+    {
+      "datasource": {
+        "apiVersion": "v1",
+        "type": "prometheus",
+        "uid": "default-ds-uid"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "links": [
+            {
+              "targetBlank": true,
+              "title": "Wp",
+              "url": "http://www.wp.pl"
+            },
+            {
+              "targetBlank": true,
+              "title": "Onet",
+              "url": "http://www.onet.pl"
+            }
+          ],
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 8,
+        "x": 16,
+        "y": 12
+      },
+      "id": 7,
+      "links": [
+        {
+          "title": "asdasd",
+          "url": "www.wp.pl"
+        }
+      ],
+      "options": {
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showThresholdLabels": false,
+        "showThresholdMarkers": true,
+        "text": {}
+      },
+      "pluginVersion": "7.5.0-pre",
+      "targets": [
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "prometheus",
+            "uid": "default-ds-uid"
+          },
+          "refId": "A"
+        }
+      ],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "Multiple data links",
+      "type": "gauge"
+    },
+    {
+      "datasource": {
+        "apiVersion": "v1",
+        "type": "prometheus",
+        "uid": "default-ds-uid"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "links": [],
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 8,
+        "x": 0,
+        "y": 18
+      },
+      "id": 15,
+      "links": [
+        {
+          "targetBlank": true,
+          "title": "Go to grafana.com",
+          "url": "http://grafana.com"
+        }
+      ],
+      "options": {
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "limit": 2,
+          "values": true
+        },
+        "showThresholdLabels": false,
+        "showThresholdMarkers": true,
+        "text": {}
+      },
+      "pluginVersion": "7.5.0-pre",
+      "targets": [
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "prometheus",
+            "uid": "default-ds-uid"
+          },
+          "refId": "A"
+        }
+      ],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "No data link",
+      "type": "gauge"
+    },
+    {
+      "datasource": {
+        "apiVersion": "v1",
+        "type": "prometheus",
+        "uid": "default-ds-uid"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "links": [
+            {
+              "targetBlank": true,
+              "title": "Data link",
+              "url": "http://www.wp.pl"
+            }
+          ],
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 8,
+        "x": 8,
+        "y": 18
+      },
+      "id": 16,
+      "links": [
+        {
+          "title": "asdasd",
+          "url": "www.wp.pl"
+        }
+      ],
+      "options": {
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "limit": 2,
+          "values": true
+        },
+        "showThresholdLabels": false,
+        "showThresholdMarkers": true,
+        "text": {}
+      },
+      "pluginVersion": "7.5.0-pre",
+      "targets": [
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "prometheus",
+            "uid": "default-ds-uid"
+          },
+          "refId": "A"
+        }
+      ],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "Single data link",
+      "type": "gauge"
+    },
+    {
+      "datasource": {
+        "apiVersion": "v1",
+        "type": "prometheus",
+        "uid": "default-ds-uid"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "links": [
+            {
+              "targetBlank": true,
+              "title": "Wp",
+              "url": "http://www.wp.pl"
+            },
+            {
+              "targetBlank": true,
+              "title": "Onet",
+              "url": "http://www.onet.pl"
+            }
+          ],
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 8,
+        "x": 16,
+        "y": 18
+      },
+      "id": 17,
+      "links": [
+        {
+          "title": "asdasd",
+          "url": "www.wp.pl"
+        }
+      ],
+      "options": {
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "limit": 2,
+          "values": true
+        },
+        "showThresholdLabels": false,
+        "showThresholdMarkers": true,
+        "text": {}
+      },
+      "pluginVersion": "7.5.0-pre",
+      "targets": [
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "prometheus",
+            "uid": "default-ds-uid"
+          },
+          "refId": "A"
+        }
+      ],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "Multiple data links",
+      "type": "gauge"
+    },
+    {
+      "datasource": {
+        "apiVersion": "v1",
+        "type": "prometheus",
+        "uid": "default-ds-uid"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "links": [],
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 8,
+        "x": 0,
+        "y": 24
+      },
+      "id": 18,
+      "links": [
+        {
+          "targetBlank": true,
+          "title": "Go to grafana.com",
+          "url": "http://grafana.com"
+        }
+      ],
+      "options": {
+        "displayMode": "gradient",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showUnfilled": true,
+        "text": {}
+      },
+      "pluginVersion": "7.5.0-pre",
+      "targets": [
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "prometheus",
+            "uid": "default-ds-uid"
+          },
+          "refId": "A"
+        }
+      ],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "No data link",
+      "type": "bargauge"
+    },
+    {
+      "datasource": {
+        "apiVersion": "v1",
+        "type": "prometheus",
+        "uid": "default-ds-uid"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "links": [
+            {
+              "targetBlank": true,
+              "title": "Data link",
+              "url": "http://www.wp.pl"
+            }
+          ],
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 8,
+        "x": 8,
+        "y": 24
+      },
+      "id": 10,
+      "links": [
+        {
+          "title": "asdasd",
+          "url": "www.wp.pl"
+        }
+      ],
+      "options": {
+        "displayMode": "gradient",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showUnfilled": true,
+        "text": {}
+      },
+      "pluginVersion": "7.5.0-pre",
+      "targets": [
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "prometheus",
+            "uid": "default-ds-uid"
+          },
+          "refId": "A"
+        }
+      ],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "Single data link",
+      "type": "bargauge"
+    },
+    {
+      "datasource": {
+        "apiVersion": "v1",
+        "type": "prometheus",
+        "uid": "default-ds-uid"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "links": [
+            {
+              "targetBlank": true,
+              "title": "Wp",
+              "url": "http://www.wp.pl"
+            },
+            {
+              "targetBlank": true,
+              "title": "Onet",
+              "url": "http://www.onet.pl"
+            }
+          ],
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 8,
+        "x": 16,
+        "y": 24
+      },
+      "id": 11,
+      "links": [
+        {
+          "title": "asdasd",
+          "url": "www.wp.pl"
+        }
+      ],
+      "options": {
+        "displayMode": "gradient",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showUnfilled": true,
+        "text": {}
+      },
+      "pluginVersion": "7.5.0-pre",
+      "targets": [
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "prometheus",
+            "uid": "default-ds-uid"
+          },
+          "refId": "A"
+        }
+      ],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "Multiple data links",
+      "type": "bargauge"
+    },
+    {
+      "datasource": {
+        "apiVersion": "v1",
+        "type": "prometheus",
+        "uid": "default-ds-uid"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "links": [],
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 8,
+        "x": 0,
+        "y": 30
+      },
+      "id": 9,
+      "links": [
+        {
+          "targetBlank": true,
+          "title": "Go to grafana.com",
+          "url": "http://grafana.com"
+        }
+      ],
+      "options": {
+        "displayMode": "gradient",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "limit": 2,
+          "values": true
+        },
+        "showUnfilled": true,
+        "text": {}
+      },
+      "pluginVersion": "7.5.0-pre",
+      "targets": [
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "prometheus",
+            "uid": "default-ds-uid"
+          },
+          "refId": "A"
+        }
+      ],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "No data link",
+      "type": "bargauge"
+    },
+    {
+      "datasource": {
+        "apiVersion": "v1",
+        "type": "prometheus",
+        "uid": "default-ds-uid"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "links": [
+            {
+              "targetBlank": true,
+              "title": "Data link",
+              "url": "http://www.wp.pl"
+            }
+          ],
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 8,
+        "x": 8,
+        "y": 30
+      },
+      "id": 19,
+      "links": [
+        {
+          "title": "asdasd",
+          "url": "www.wp.pl"
+        }
+      ],
+      "options": {
+        "displayMode": "gradient",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "limit": 2,
+          "values": true
+        },
+        "showUnfilled": true,
+        "text": {}
+      },
+      "pluginVersion": "7.5.0-pre",
+      "targets": [
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "prometheus",
+            "uid": "default-ds-uid"
+          },
+          "refId": "A"
+        }
+      ],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "Single data link",
+      "type": "bargauge"
+    },
+    {
+      "datasource": {
+        "apiVersion": "v1",
+        "type": "prometheus",
+        "uid": "default-ds-uid"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "links": [
+            {
+              "targetBlank": true,
+              "title": "Wp",
+              "url": "http://www.wp.pl"
+            },
+            {
+              "targetBlank": true,
+              "title": "Onet",
+              "url": "http://www.onet.pl"
+            }
+          ],
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 8,
+        "x": 16,
+        "y": 30
+      },
+      "id": 20,
+      "links": [
+        {
+          "title": "asdasd",
+          "url": "www.wp.pl"
+        }
+      ],
+      "options": {
+        "displayMode": "gradient",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "limit": 2,
+          "values": true
+        },
+        "showUnfilled": true,
+        "text": {}
+      },
+      "pluginVersion": "7.5.0-pre",
+      "targets": [
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "prometheus",
+            "uid": "default-ds-uid"
+          },
+          "refId": "A"
+        }
+      ],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "Multiple data links",
+      "type": "bargauge"
+    }
+  ],
+  "refresh": "",
+  "schemaVersion": 41,
+  "tags": [
+    "gdev"
+  ],
+  "templating": {
+    "list": []
+  },
+  "time": {
+    "from": "now-6h",
+    "to": "now"
+  },
+  "timepicker": {},
+  "timezone": "",
+  "title": "Panel \u0026 data links in stat, gauge and bargauge",
+  "uid": "O1Mi-z8Gz",
+  "version": 19
+}

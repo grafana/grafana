@@ -1,0 +1,772 @@
+{
+  "__inputs": [
+    {
+      "description": "",
+      "label": "",
+      "name": "DS_LCS",
+      "pluginId": "alexanderzobnin-zabbix-datasource",
+      "pluginName": "Zabbix",
+      "type": "datasource"
+    }
+  ],
+  "__requires": [
+    {
+      "id": "text",
+      "name": "Text",
+      "type": "panel",
+      "version": ""
+    },
+    {
+      "id": "singlestat",
+      "name": "Singlestat",
+      "type": "panel",
+      "version": ""
+    },
+    {
+      "id": "graph",
+      "name": "Graph",
+      "type": "panel",
+      "version": ""
+    },
+    {
+      "id": "grafana",
+      "name": "Grafana",
+      "type": "grafana",
+      "version": "4.0.2"
+    },
+    {
+      "id": "alexanderzobnin-zabbix-datasource",
+      "name": "Zabbix",
+      "type": "datasource",
+      "version": "1.0.0"
+    }
+  ],
+  "annotations": {
+    "list": []
+  },
+  "description": "Speed Test",
+  "editable": true,
+  "gnetId": 1746,
+  "graphTooltip": 0,
+  "hideControls": true,
+  "id": null,
+  "links": [],
+  "panels": [
+    {
+      "content": "\u003cdiv class=\"text-center dashboard-header\"\u003e\n  \u003cspan\u003eSpeed Test \u003c/span\u003e\n\u003c/div\u003e",
+      "datasource": {
+        "apiVersion": "v1",
+        "type": "prometheus",
+        "uid": "default-ds-uid"
+      },
+      "editable": true,
+      "error": false,
+      "gridPos": {
+        "h": 3,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "id": 7,
+      "links": [],
+      "mode": "html",
+      "targets": [
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "prometheus",
+            "uid": "default-ds-uid"
+          },
+          "refId": "A"
+        }
+      ],
+      "title": "",
+      "transparent": true,
+      "type": "text"
+    },
+    {
+      "cacheTimeout": null,
+      "datasource": {
+        "uid": "${DS_LCS}"
+      },
+      "editable": true,
+      "error": false,
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [],
+          "max": 100,
+          "min": 0,
+          "nullValueMode": "connected",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "rgba(245, 54, 54, 0.9)",
+                "value": null
+              },
+              {
+                "color": "rgba(237, 129, 40, 0.89)",
+                "value": 48
+              },
+              {
+                "color": "rgba(50, 172, 45, 0.97)",
+                "value": 51
+              }
+            ]
+          },
+          "unit": "percent"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 8,
+        "x": 0,
+        "y": 3
+      },
+      "id": 1,
+      "interval": null,
+      "links": [],
+      "mappingType": 1,
+      "mappingTypes": [
+        {
+          "name": "value to text",
+          "value": 1
+        },
+        {
+          "name": "range to text",
+          "value": 2
+        }
+      ],
+      "maxDataPoints": 100,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "horizontal",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "1.0.0",
+      "postfix": "",
+      "postfixFontSize": "50%",
+      "prefix": "",
+      "prefixFontSize": "50%",
+      "rangeMaps": [
+        {
+          "from": "null",
+          "text": "N/A",
+          "to": "null"
+        }
+      ],
+      "targets": [
+        {
+          "application": {
+            "filter": "Speed Test"
+          },
+          "datasource": {
+            "uid": "${DS_LCS}"
+          },
+          "functions": [],
+          "group": {
+            "filter": "Zabbix servers"
+          },
+          "host": {
+            "filter": "ZABBIX-BD"
+          },
+          "item": {
+            "filter": "Download Link %"
+          },
+          "mode": 0,
+          "options": {
+            "showDisabledItems": false
+          },
+          "refId": "A"
+        }
+      ],
+      "title": "Download Link %",
+      "type": "stat",
+      "valueFontSize": "80%"
+    },
+    {
+      "cacheTimeout": null,
+      "datasource": {
+        "uid": "${DS_LCS}"
+      },
+      "editable": true,
+      "error": false,
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "fixedColor": "rgb(31, 120, 193)",
+            "mode": "fixed"
+          },
+          "decimals": 2,
+          "mappings": [],
+          "nullValueMode": "connected",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "rgba(245, 54, 54, 0.9)",
+                "value": null
+              },
+              {
+                "color": "rgba(237, 129, 40, 0.89)",
+                "value": 50
+              },
+              {
+                "color": "rgba(50, 172, 45, 0.97)"
+              }
+            ]
+          },
+          "unit": "MBs"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 8,
+        "x": 8,
+        "y": 3
+      },
+      "id": 5,
+      "interval": null,
+      "links": [],
+      "mappingType": 1,
+      "mappingTypes": [
+        {
+          "name": "value to text",
+          "value": 1
+        },
+        {
+          "name": "range to text",
+          "value": 2
+        }
+      ],
+      "maxDataPoints": 100,
+      "options": {
+        "colorMode": "none",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "horizontal",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "1.0.0",
+      "postfix": "",
+      "postfixFontSize": "50%",
+      "prefix": "",
+      "prefixFontSize": "50%",
+      "rangeMaps": [
+        {
+          "from": "null",
+          "text": "N/A",
+          "to": "null"
+        }
+      ],
+      "targets": [
+        {
+          "application": {
+            "filter": "Speed Test"
+          },
+          "datasource": {
+            "uid": "${DS_LCS}"
+          },
+          "functions": [],
+          "group": {
+            "filter": "Zabbix servers"
+          },
+          "host": {
+            "filter": "ZABBIX-BD"
+          },
+          "item": {
+            "filter": "Download"
+          },
+          "mode": 0,
+          "options": {
+            "showDisabledItems": false
+          },
+          "refId": "A"
+        }
+      ],
+      "timeFrom": "8h",
+      "title": "Download Link MBs",
+      "type": "stat",
+      "valueFontSize": "80%"
+    },
+    {
+      "aliasColors": {
+        "Download": "#BF1B00"
+      },
+      "bars": false,
+      "datasource": {
+        "uid": "${DS_LCS}"
+      },
+      "editable": true,
+      "error": false,
+      "fill": 1,
+      "gridPos": {
+        "h": 7,
+        "w": 8,
+        "x": 16,
+        "y": 3
+      },
+      "id": 3,
+      "legend": {
+        "avg": false,
+        "current": false,
+        "max": false,
+        "min": false,
+        "show": true,
+        "total": false,
+        "values": false
+      },
+      "lines": true,
+      "linewidth": 1,
+      "links": [],
+      "nullPointMode": "connected",
+      "percentage": false,
+      "pointradius": 5,
+      "points": false,
+      "renderer": "flot",
+      "seriesOverrides": [],
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
+        {
+          "application": {
+            "filter": "Speed Test"
+          },
+          "datasource": {
+            "uid": "${DS_LCS}"
+          },
+          "functions": [],
+          "group": {
+            "filter": "Zabbix servers"
+          },
+          "host": {
+            "filter": "ZABBIX-BD"
+          },
+          "item": {
+            "filter": "Download"
+          },
+          "mode": 0,
+          "options": {
+            "showDisabledItems": false
+          },
+          "refId": "A"
+        }
+      ],
+      "thresholds": [],
+      "timeFrom": "8h",
+      "timeShift": null,
+      "title": "Download LINK",
+      "tooltip": {
+        "msResolution": false,
+        "shared": false,
+        "sort": 0,
+        "value_type": "individual"
+      },
+      "type": "graph",
+      "xaxis": {
+        "mode": "time",
+        "name": null,
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "format": "decmbytes",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        },
+        {
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        }
+      ]
+    },
+    {
+      "cacheTimeout": null,
+      "datasource": {
+        "uid": "${DS_LCS}"
+      },
+      "editable": true,
+      "error": false,
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [],
+          "max": 100,
+          "min": 0,
+          "nullValueMode": "connected",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "rgba(245, 54, 54, 0.9)",
+                "value": null
+              },
+              {
+                "color": "rgba(237, 129, 40, 0.89)",
+                "value": 45
+              },
+              {
+                "color": "rgba(50, 172, 45, 0.97)",
+                "value": 50
+              }
+            ]
+          },
+          "unit": "percent"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 8,
+        "x": 0,
+        "y": 10
+      },
+      "id": 2,
+      "interval": null,
+      "links": [],
+      "mappingType": 1,
+      "mappingTypes": [
+        {
+          "name": "value to text",
+          "value": 1
+        },
+        {
+          "name": "range to text",
+          "value": 2
+        }
+      ],
+      "maxDataPoints": 100,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "horizontal",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "1.0.0",
+      "postfix": "",
+      "postfixFontSize": "50%",
+      "prefix": "",
+      "prefixFontSize": "50%",
+      "rangeMaps": [
+        {
+          "from": "null",
+          "text": "N/A",
+          "to": "null"
+        }
+      ],
+      "targets": [
+        {
+          "application": {
+            "filter": "Speed Test"
+          },
+          "datasource": {
+            "uid": "${DS_LCS}"
+          },
+          "functions": [],
+          "group": {
+            "filter": "Zabbix servers"
+          },
+          "host": {
+            "filter": "ZABBIX-BD"
+          },
+          "item": {
+            "filter": "Upload Link %"
+          },
+          "mode": 0,
+          "options": {
+            "showDisabledItems": false
+          },
+          "refId": "A"
+        }
+      ],
+      "title": "Upload Link %",
+      "type": "stat",
+      "valueFontSize": "80%"
+    },
+    {
+      "cacheTimeout": null,
+      "datasource": {
+        "uid": "${DS_LCS}"
+      },
+      "editable": true,
+      "error": false,
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "fixedColor": "rgb(31, 120, 193)",
+            "mode": "fixed"
+          },
+          "decimals": 2,
+          "mappings": [],
+          "nullValueMode": "connected",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "rgba(245, 54, 54, 0.9)",
+                "value": null
+              },
+              {
+                "color": "rgba(237, 129, 40, 0.89)",
+                "value": 50
+              },
+              {
+                "color": "rgba(50, 172, 45, 0.97)"
+              }
+            ]
+          },
+          "unit": "MBs"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 8,
+        "x": 8,
+        "y": 10
+      },
+      "id": 6,
+      "interval": null,
+      "links": [],
+      "mappingType": 1,
+      "mappingTypes": [
+        {
+          "name": "value to text",
+          "value": 1
+        },
+        {
+          "name": "range to text",
+          "value": 2
+        }
+      ],
+      "maxDataPoints": 100,
+      "options": {
+        "colorMode": "none",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "horizontal",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "1.0.0",
+      "postfix": "",
+      "postfixFontSize": "50%",
+      "prefix": "",
+      "prefixFontSize": "50%",
+      "rangeMaps": [
+        {
+          "from": "null",
+          "text": "N/A",
+          "to": "null"
+        }
+      ],
+      "targets": [
+        {
+          "application": {
+            "filter": "Speed Test"
+          },
+          "datasource": {
+            "uid": "${DS_LCS}"
+          },
+          "functions": [],
+          "group": {
+            "filter": "Zabbix servers"
+          },
+          "host": {
+            "filter": "ZABBIX-BD"
+          },
+          "item": {
+            "filter": "Upload"
+          },
+          "mode": 0,
+          "options": {
+            "showDisabledItems": false
+          },
+          "refId": "A"
+        }
+      ],
+      "timeFrom": "8h",
+      "title": "Upload Link MBs",
+      "type": "stat",
+      "valueFontSize": "80%"
+    },
+    {
+      "aliasColors": {
+        "Upload": "#0A50A1"
+      },
+      "bars": false,
+      "datasource": {
+        "uid": "${DS_LCS}"
+      },
+      "editable": true,
+      "error": false,
+      "fill": 1,
+      "gridPos": {
+        "h": 7,
+        "w": 8,
+        "x": 16,
+        "y": 10
+      },
+      "id": 4,
+      "legend": {
+        "avg": false,
+        "current": false,
+        "max": false,
+        "min": false,
+        "show": true,
+        "total": false,
+        "values": false
+      },
+      "lines": true,
+      "linewidth": 1,
+      "links": [],
+      "nullPointMode": "connected",
+      "percentage": false,
+      "pointradius": 5,
+      "points": false,
+      "renderer": "flot",
+      "seriesOverrides": [],
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
+        {
+          "application": {
+            "filter": "Speed Test"
+          },
+          "datasource": {
+            "uid": "${DS_LCS}"
+          },
+          "functions": [],
+          "group": {
+            "filter": "Zabbix servers"
+          },
+          "host": {
+            "filter": "ZABBIX-BD"
+          },
+          "item": {
+            "filter": "Upload"
+          },
+          "mode": 0,
+          "options": {
+            "showDisabledItems": false
+          },
+          "refId": "A"
+        }
+      ],
+      "thresholds": [],
+      "timeFrom": "8h",
+      "timeShift": null,
+      "title": "Upload LINK",
+      "tooltip": {
+        "msResolution": false,
+        "shared": true,
+        "sort": 0,
+        "value_type": "individual"
+      },
+      "type": "graph",
+      "xaxis": {
+        "mode": "time",
+        "name": null,
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "format": "decmbytes",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        },
+        {
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        }
+      ]
+    }
+  ],
+  "refresh": "1m",
+  "schemaVersion": 41,
+  "style": "dark",
+  "tags": [],
+  "templating": {
+    "list": []
+  },
+  "time": {
+    "from": "now-15m",
+    "to": "now"
+  },
+  "timepicker": {
+    "refresh_intervals": [
+      "5s",
+      "10s",
+      "30s",
+      "1m",
+      "5m",
+      "15m",
+      "30m",
+      "1h",
+      "2h",
+      "1d"
+    ]
+  },
+  "timezone": "browser",
+  "title": "Dashboard Speed Test",
+  "version": 14
+}

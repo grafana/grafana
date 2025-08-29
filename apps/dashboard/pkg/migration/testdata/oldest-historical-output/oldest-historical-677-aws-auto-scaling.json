@@ -1,0 +1,532 @@
+{
+  "__elements": {},
+  "__inputs": [],
+  "__requires": [
+    {
+      "id": "cloudwatch",
+      "name": "CloudWatch",
+      "type": "datasource",
+      "version": "1.0.0"
+    },
+    {
+      "id": "grafana",
+      "name": "Grafana",
+      "type": "grafana",
+      "version": "11.3.1"
+    },
+    {
+      "id": "text",
+      "name": "Text",
+      "type": "panel",
+      "version": ""
+    },
+    {
+      "id": "timeseries",
+      "name": "Time series",
+      "type": "panel",
+      "version": ""
+    }
+  ],
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "type": "grafana",
+          "uid": "-- Grafana --"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations \u0026 Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "description": "Visualize AWS Auto Scaling metrics",
+  "editable": false,
+  "fiscalYearStartMonth": 0,
+  "gnetId": 677,
+  "graphTooltip": 0,
+  "id": null,
+  "links": [],
+  "panels": [
+    {
+      "datasource": {
+        "uid": "$datasource"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": true,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "none"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "VolumeIdleTime_Average"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "s"
+              },
+              {
+                "id": "custom.axisPlacement",
+                "value": "right"
+              },
+              {
+                "id": "custom.axisPlacement",
+                "value": "hidden"
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 12,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "id": 16,
+      "options": {
+        "legend": {
+          "calcs": [
+            "mean",
+            "max",
+            "min"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "11.3.1",
+      "targets": [
+        {
+          "alias": "",
+          "application": {
+            "filter": ""
+          },
+          "datasource": {
+            "type": "cloudwatch",
+            "uid": "$datasource"
+          },
+          "dimensions": {
+            "AutoScalingGroupName": "$autoscalinggroupname"
+          },
+          "functions": [],
+          "group": {
+            "filter": ""
+          },
+          "host": {
+            "filter": ""
+          },
+          "item": {
+            "filter": ""
+          },
+          "label": "",
+          "metricEditorMode": 0,
+          "metricName": "GroupTotalInstances",
+          "metricQueryType": 0,
+          "mode": 0,
+          "namespace": "AWS/AutoScaling",
+          "options": {
+            "showDisabledItems": false
+          },
+          "period": "",
+          "refId": "A",
+          "region": "$region",
+          "statistic": "Average"
+        },
+        {
+          "alias": "",
+          "application": {
+            "filter": ""
+          },
+          "datasource": {
+            "uid": "$datasource"
+          },
+          "dimensions": {
+            "AutoScalingGroupName": "$autoscalinggroupname"
+          },
+          "functions": [],
+          "group": {
+            "filter": ""
+          },
+          "host": {
+            "filter": ""
+          },
+          "item": {
+            "filter": ""
+          },
+          "label": "",
+          "metricEditorMode": 0,
+          "metricName": "GroupDesiredCapacity",
+          "metricQueryType": 0,
+          "mode": 0,
+          "namespace": "AWS/AutoScaling",
+          "options": {
+            "showDisabledItems": false
+          },
+          "period": "",
+          "refId": "B",
+          "region": "$region",
+          "statistic": "Average"
+        },
+        {
+          "alias": "",
+          "application": {
+            "filter": ""
+          },
+          "datasource": {
+            "type": "cloudwatch",
+            "uid": "$datasource"
+          },
+          "dimensions": {
+            "AutoScalingGroupName": "$autoscalinggroupname"
+          },
+          "functions": [],
+          "group": {
+            "filter": ""
+          },
+          "host": {
+            "filter": ""
+          },
+          "item": {
+            "filter": ""
+          },
+          "label": "",
+          "metricEditorMode": 0,
+          "metricName": "GroupInServiceInstances",
+          "metricQueryType": 0,
+          "mode": 0,
+          "namespace": "AWS/AutoScaling",
+          "options": {
+            "showDisabledItems": false
+          },
+          "period": "",
+          "refId": "C",
+          "region": "$region",
+          "statistic": "Average"
+        },
+        {
+          "alias": "",
+          "application": {
+            "filter": ""
+          },
+          "datasource": {
+            "uid": "$datasource"
+          },
+          "dimensions": {
+            "AutoScalingGroupName": "$autoscalinggroupname"
+          },
+          "functions": [],
+          "group": {
+            "filter": ""
+          },
+          "host": {
+            "filter": ""
+          },
+          "item": {
+            "filter": ""
+          },
+          "label": "",
+          "metricEditorMode": 0,
+          "metricName": "GroupMaxSize",
+          "metricQueryType": 0,
+          "mode": 0,
+          "namespace": "AWS/AutoScaling",
+          "options": {
+            "showDisabledItems": false
+          },
+          "period": "",
+          "refId": "D",
+          "region": "$region",
+          "statistic": "Average"
+        },
+        {
+          "alias": "",
+          "application": {
+            "filter": ""
+          },
+          "datasource": {
+            "type": "cloudwatch",
+            "uid": "$datasource"
+          },
+          "dimensions": {
+            "AutoScalingGroupName": "$autoscalinggroupname"
+          },
+          "functions": [],
+          "group": {
+            "filter": ""
+          },
+          "host": {
+            "filter": ""
+          },
+          "item": {
+            "filter": ""
+          },
+          "label": "",
+          "metricEditorMode": 0,
+          "metricName": "GroupMinSize",
+          "metricQueryType": 0,
+          "mode": 0,
+          "namespace": "AWS/AutoScaling",
+          "options": {
+            "showDisabledItems": false
+          },
+          "period": "",
+          "refId": "E",
+          "region": "$region",
+          "statistic": "Average"
+        },
+        {
+          "alias": "",
+          "application": {
+            "filter": ""
+          },
+          "datasource": {
+            "uid": "$datasource"
+          },
+          "dimensions": {
+            "AutoScalingGroupName": "$autoscalinggroupname"
+          },
+          "functions": [],
+          "group": {
+            "filter": ""
+          },
+          "host": {
+            "filter": ""
+          },
+          "item": {
+            "filter": ""
+          },
+          "label": "",
+          "metricEditorMode": 0,
+          "metricName": "GroupPendingInstances",
+          "metricQueryType": 0,
+          "mode": 0,
+          "namespace": "AWS/AutoScaling",
+          "options": {
+            "showDisabledItems": false
+          },
+          "period": "",
+          "refId": "F",
+          "region": "$region",
+          "statistic": "Average"
+        },
+        {
+          "alias": "",
+          "application": {
+            "filter": ""
+          },
+          "datasource": {
+            "type": "cloudwatch",
+            "uid": "$datasource"
+          },
+          "dimensions": {
+            "AutoScalingGroupName": "$autoscalinggroupname"
+          },
+          "functions": [],
+          "group": {
+            "filter": ""
+          },
+          "host": {
+            "filter": ""
+          },
+          "item": {
+            "filter": ""
+          },
+          "label": "",
+          "metricEditorMode": 0,
+          "metricName": "GroupStandbyInstances",
+          "metricQueryType": 0,
+          "mode": 0,
+          "namespace": "AWS/AutoScaling",
+          "options": {
+            "showDisabledItems": false
+          },
+          "period": "",
+          "refId": "G",
+          "region": "$region",
+          "statistic": "Average"
+        },
+        {
+          "alias": "",
+          "application": {
+            "filter": ""
+          },
+          "datasource": {
+            "uid": "$datasource"
+          },
+          "dimensions": {
+            "AutoScalingGroupName": "$autoscalinggroupname"
+          },
+          "functions": [],
+          "group": {
+            "filter": ""
+          },
+          "host": {
+            "filter": ""
+          },
+          "item": {
+            "filter": ""
+          },
+          "label": "",
+          "metricEditorMode": 0,
+          "metricName": "GroupTerminatingInstances",
+          "metricQueryType": 0,
+          "mode": 0,
+          "namespace": "AWS/AutoScaling",
+          "options": {
+            "showDisabledItems": false
+          },
+          "period": "",
+          "refId": "H",
+          "region": "$region",
+          "statistic": "Average"
+        }
+      ],
+      "title": "Instances",
+      "type": "timeseries"
+    },
+    {
+      "gridPos": {
+        "h": 3,
+        "w": 24,
+        "x": 0,
+        "y": 12
+      },
+      "id": 2,
+      "options": {
+        "code": {
+          "language": "plaintext",
+          "showLineNumbers": false,
+          "showMiniMap": false
+        },
+        "content": "\u003ca target=\"_blank\" href=\"http://www.monitoringartist.com\" title=\"Dashboard maintained by Monitoring Artist - DevOps / Docker / Kubernetes / AWS ECS / Google GCP / Zabbix / Zenoss / Terraform / Monitoring\"\u003e\u003cimg src=\"https://monitoringartist.github.io/monitoring-artist-logo-grafana.png\" height=\"30px\" /\u003e\u003c/a\u003e | \n\u003ca target=\"_blank\" href=\"https://docs.aws.amazon.com/autoscaling/ec2/userguide/ec2-auto-scaling-metrics.html\"\u003eAWS CloudWatch Auto Scaling documentation\u003c/a\u003e | \n\u003ca target=\"_blank\" href=\"https://grafana.com/dashboards/677\"\u003eInstalled from Grafana.com dashboards\u003c/a\u003e",
+        "mode": "html"
+      },
+      "pluginVersion": "11.3.1",
+      "title": "Documentation",
+      "type": "text"
+    }
+  ],
+  "refresh": "",
+  "schemaVersion": 41,
+  "tags": [
+    "monitoringartist",
+    "cloudwatch"
+  ],
+  "templating": {
+    "list": [
+      {
+        "current": {},
+        "includeAll": false,
+        "label": "Datasource",
+        "name": "datasource",
+        "options": [],
+        "query": "cloudwatch",
+        "refresh": 1,
+        "regex": "",
+        "type": "datasource"
+      },
+      {
+        "current": {},
+        "datasource": {
+          "type": "cloudwatch",
+          "uid": "$datasource"
+        },
+        "includeAll": false,
+        "label": "Region",
+        "name": "region",
+        "options": [],
+        "query": "regions()",
+        "refresh": 1,
+        "regex": "",
+        "type": "query"
+      },
+      {
+        "current": {},
+        "datasource": {
+          "type": "cloudwatch",
+          "uid": "$datasource"
+        },
+        "includeAll": false,
+        "label": "AutoScalingGroupName",
+        "name": "autoscalinggroupname",
+        "options": [],
+        "query": "dimension_values($region, AWS/AutoScaling, GroupTotalInstances, AutoScalingGroupName)",
+        "refresh": 1,
+        "regex": "",
+        "type": "query"
+      }
+    ]
+  },
+  "time": {
+    "from": "now-7d",
+    "to": "now"
+  },
+  "timepicker": {},
+  "timezone": "browser",
+  "title": "AWS Auto Scaling",
+  "uid": "ce7pbrf5d9kaob",
+  "version": 4,
+  "weekStart": ""
+}

@@ -1,0 +1,2961 @@
+{
+  "__inputs": [
+    {
+      "name": "DS_INFLUXDB_TELEGRAF",
+      "label": "influxdb_telegraf",
+      "description": "Just select your telegraf database insted this one.",
+      "type": "datasource",
+      "pluginId": "influxdb",
+      "pluginName": "InfluxDB"
+    }
+  ],
+  "__requires": [
+    {
+      "type": "grafana",
+      "id": "grafana",
+      "name": "Grafana",
+      "version": "4.6.3"
+    },
+    {
+      "type": "panel",
+      "id": "graph",
+      "name": "Graph",
+      "version": ""
+    },
+    {
+      "type": "datasource",
+      "id": "influxdb",
+      "name": "InfluxDB",
+      "version": "1.0.0"
+    }
+  ],
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": "-- Grafana --",
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "gnetId": 4423,
+  "graphTooltip": 0,
+  "hideControls": false,
+  "id": null,
+  "links": [],
+  "refresh": "5m",
+  "rows": [
+    {
+      "collapse": false,
+      "height": 384,
+      "panels": [
+        {
+          "aliasColors": {},
+          "bars": false,
+          "dashLength": 10,
+          "dashes": false,
+          "datasource": "${DS_INFLUXDB_TELEGRAF}",
+          "description": "",
+          "fill": 1,
+          "id": 1,
+          "legend": {
+            "alignAsTable": true,
+            "avg": true,
+            "current": true,
+            "max": true,
+            "min": true,
+            "rightSide": false,
+            "show": true,
+            "total": false,
+            "values": true
+          },
+          "lines": true,
+          "linewidth": 1,
+          "links": [],
+          "nullPointMode": "null as zero",
+          "percentage": false,
+          "pointradius": 5,
+          "points": false,
+          "renderer": "flot",
+          "seriesOverrides": [
+            {
+              "alias": "Usuarios Totales:",
+              "lines": false,
+              "stack": false
+            },
+            {
+              "alias": ":",
+              "legend": false,
+              "lines": false,
+              "stack": false
+            }
+          ],
+          "spaceLength": 10,
+          "span": 6,
+          "stack": true,
+          "steppedLine": false,
+          "targets": [
+            {
+              "alias": "$tag_UserRole:",
+              "dsType": "influxdb",
+              "groupBy": [
+                {
+                  "params": [
+                    "5m"
+                  ],
+                  "type": "time"
+                },
+                {
+                  "params": [
+                    "UserRole"
+                  ],
+                  "type": "tag"
+                },
+                {
+                  "params": [
+                    "previous"
+                  ],
+                  "type": "fill"
+                }
+              ],
+              "measurement": "wifi_users",
+              "orderByTime": "ASC",
+              "policy": "1year",
+              "query": "SELECT mean(\"Users\") FROM \"1year\".\"wifi_users\" WHERE (\"UserRole\" =~ /^\\w/) AND $timeFilter GROUP BY time(5m), \"UserRole\" fill(previous)",
+              "rawQuery": false,
+              "refId": "A",
+              "resultFormat": "time_series",
+              "select": [
+                [
+                  {
+                    "params": [
+                      "Users"
+                    ],
+                    "type": "field"
+                  },
+                  {
+                    "params": [],
+                    "type": "mean"
+                  }
+                ]
+              ],
+              "tags": [
+                {
+                  "key": "UserRole",
+                  "operator": "=~",
+                  "value": "/^\\w/"
+                }
+              ]
+            },
+            {
+              "alias": "Total Users:",
+              "dsType": "influxdb",
+              "groupBy": [
+                {
+                  "params": [
+                    "5m"
+                  ],
+                  "type": "time"
+                },
+                {
+                  "params": [
+                    "previous"
+                  ],
+                  "type": "fill"
+                }
+              ],
+              "hide": false,
+              "measurement": "wifi_users",
+              "orderByTime": "ASC",
+              "policy": "1year",
+              "query": "SELECT sum(\"Users\") FROM \"1year\".\"wifi_users\" WHERE (\"UserRole\" = 'select tag value') AND $timeFilter GROUP BY time(5m) fill(previous)",
+              "rawQuery": false,
+              "refId": "B",
+              "resultFormat": "time_series",
+              "select": [
+                [
+                  {
+                    "params": [
+                      "Users"
+                    ],
+                    "type": "field"
+                  },
+                  {
+                    "params": [],
+                    "type": "sum"
+                  }
+                ]
+              ],
+              "tags": [
+                {
+                  "key": "UserRole",
+                  "operator": "=~",
+                  "value": "/^\\w/"
+                }
+              ]
+            }
+          ],
+          "thresholds": [],
+          "timeFrom": null,
+          "timeShift": null,
+          "title": "Users by Role",
+          "tooltip": {
+            "shared": true,
+            "sort": 0,
+            "value_type": "individual"
+          },
+          "type": "graph",
+          "xaxis": {
+            "buckets": null,
+            "mode": "time",
+            "name": null,
+            "show": true,
+            "values": []
+          },
+          "yaxes": [
+            {
+              "format": "short",
+              "label": "Users",
+              "logBase": 1,
+              "max": null,
+              "min": null,
+              "show": true
+            },
+            {
+              "format": "short",
+              "label": null,
+              "logBase": 1,
+              "max": null,
+              "min": null,
+              "show": false
+            }
+          ]
+        },
+        {
+          "aliasColors": {},
+          "bars": false,
+          "dashLength": 10,
+          "dashes": false,
+          "datasource": "${DS_INFLUXDB_TELEGRAF}",
+          "fill": 1,
+          "id": 3,
+          "legend": {
+            "alignAsTable": true,
+            "avg": true,
+            "current": true,
+            "max": true,
+            "min": false,
+            "rightSide": true,
+            "show": true,
+            "total": false,
+            "values": true
+          },
+          "lines": true,
+          "linewidth": 1,
+          "links": [],
+          "nullPointMode": "null as zero",
+          "percentage": false,
+          "pointradius": 5,
+          "points": false,
+          "renderer": "flot",
+          "seriesOverrides": [],
+          "spaceLength": 10,
+          "span": 6,
+          "stack": true,
+          "steppedLine": false,
+          "targets": [
+            {
+              "alias": "$tag_DeviceType",
+              "dsType": "influxdb",
+              "groupBy": [
+                {
+                  "params": [
+                    "5m"
+                  ],
+                  "type": "time"
+                },
+                {
+                  "params": [
+                    "DeviceType"
+                  ],
+                  "type": "tag"
+                },
+                {
+                  "params": [
+                    "previous"
+                  ],
+                  "type": "fill"
+                }
+              ],
+              "measurement": "wifi_users",
+              "orderByTime": "ASC",
+              "policy": "1year",
+              "query": "SELECT count(\"UserName\") FROM \"wifi_users\" WHERE $timeFilter GROUP BY time(5m), \"DeviceType\" fill(linear)",
+              "rawQuery": false,
+              "refId": "A",
+              "resultFormat": "time_series",
+              "select": [
+                [
+                  {
+                    "params": [
+                      "Users"
+                    ],
+                    "type": "field"
+                  },
+                  {
+                    "params": [],
+                    "type": "sum"
+                  }
+                ]
+              ],
+              "tags": [
+                {
+                  "key": "DeviceType",
+                  "operator": "=~",
+                  "value": "/^\\w/"
+                }
+              ]
+            }
+          ],
+          "thresholds": [],
+          "timeFrom": null,
+          "timeShift": null,
+          "title": "Users by Device",
+          "tooltip": {
+            "shared": true,
+            "sort": 0,
+            "value_type": "individual"
+          },
+          "type": "graph",
+          "xaxis": {
+            "buckets": null,
+            "mode": "time",
+            "name": null,
+            "show": true,
+            "values": []
+          },
+          "yaxes": [
+            {
+              "format": "short",
+              "label": "Users",
+              "logBase": 1,
+              "max": null,
+              "min": null,
+              "show": true
+            },
+            {
+              "format": "short",
+              "label": null,
+              "logBase": 1,
+              "max": null,
+              "min": null,
+              "show": false
+            }
+          ]
+        }
+      ],
+      "repeat": null,
+      "repeatIteration": null,
+      "repeatRowId": null,
+      "showTitle": false,
+      "title": "Dashboard Row",
+      "titleSize": "h6"
+    },
+    {
+      "collapse": false,
+      "height": 357,
+      "panels": [
+        {
+          "aliasColors": {},
+          "bars": false,
+          "dashLength": 10,
+          "dashes": false,
+          "datasource": "${DS_INFLUXDB_TELEGRAF}",
+          "fill": 1,
+          "id": 2,
+          "interval": "",
+          "legend": {
+            "alignAsTable": true,
+            "avg": true,
+            "current": true,
+            "hideEmpty": false,
+            "hideZero": false,
+            "max": true,
+            "min": false,
+            "rightSide": false,
+            "show": true,
+            "total": false,
+            "values": true
+          },
+          "lines": true,
+          "linewidth": 1,
+          "links": [],
+          "nullPointMode": "null as zero",
+          "percentage": false,
+          "pointradius": 5,
+          "points": false,
+          "renderer": "flot",
+          "seriesOverrides": [],
+          "spaceLength": 10,
+          "span": 4,
+          "stack": true,
+          "steppedLine": false,
+          "targets": [
+            {
+              "alias": "dot11a_ht20",
+              "dsType": "influxdb",
+              "groupBy": [
+                {
+                  "params": [
+                    "5m"
+                  ],
+                  "type": "time"
+                },
+                {
+                  "params": [
+                    "previous"
+                  ],
+                  "type": "fill"
+                }
+              ],
+              "measurement": "wifi_users",
+              "orderByTime": "ASC",
+              "policy": "1year",
+              "query": "SELECT sum(\"Users\") FROM \"1year\".\"DiffRadio\" WHERE (\"PhyType\" = '1' AND \"HTMode\" = '1') AND $timeFilter GROUP BY time(5m) fill(linear)",
+              "rawQuery": false,
+              "refId": "A",
+              "resultFormat": "time_series",
+              "select": [
+                [
+                  {
+                    "params": [
+                      "Users"
+                    ],
+                    "type": "field"
+                  },
+                  {
+                    "params": [],
+                    "type": "sum"
+                  }
+                ]
+              ],
+              "tags": [
+                {
+                  "key": "PhyType",
+                  "operator": "=",
+                  "value": "1"
+                },
+                {
+                  "condition": "AND",
+                  "key": "HTMode",
+                  "operator": "=",
+                  "value": "2"
+                }
+              ]
+            },
+            {
+              "alias": "dot11a_ht40",
+              "dsType": "influxdb",
+              "groupBy": [
+                {
+                  "params": [
+                    "5m"
+                  ],
+                  "type": "time"
+                },
+                {
+                  "params": [
+                    "previous"
+                  ],
+                  "type": "fill"
+                }
+              ],
+              "measurement": "wifi_users",
+              "orderByTime": "ASC",
+              "policy": "1year",
+              "query": "SELECT sum(\"Users\") FROM \"1year\".\"DiffRadio\" WHERE (\"PhyType\" = '1' AND \"HTMode\" = '3') AND $timeFilter GROUP BY time(5m) fill(linear)",
+              "rawQuery": false,
+              "refId": "B",
+              "resultFormat": "time_series",
+              "select": [
+                [
+                  {
+                    "params": [
+                      "Users"
+                    ],
+                    "type": "field"
+                  },
+                  {
+                    "params": [],
+                    "type": "sum"
+                  }
+                ]
+              ],
+              "tags": [
+                {
+                  "key": "PhyType",
+                  "operator": "=",
+                  "value": "1"
+                },
+                {
+                  "condition": "AND",
+                  "key": "HTMode",
+                  "operator": "=",
+                  "value": "3"
+                }
+              ]
+            },
+            {
+              "alias": "dot11a_vht20",
+              "dsType": "influxdb",
+              "groupBy": [
+                {
+                  "params": [
+                    "5m"
+                  ],
+                  "type": "time"
+                },
+                {
+                  "params": [
+                    "previous"
+                  ],
+                  "type": "fill"
+                }
+              ],
+              "measurement": "wifi_users",
+              "orderByTime": "ASC",
+              "policy": "1year",
+              "query": "SELECT sum(\"Users\") FROM \"1year\".\"DiffRadio\" WHERE (\"PhyType\" = '1' AND \"HTMode\" = '5') AND $timeFilter GROUP BY time(5m) fill(linear)",
+              "rawQuery": false,
+              "refId": "C",
+              "resultFormat": "time_series",
+              "select": [
+                [
+                  {
+                    "params": [
+                      "Users"
+                    ],
+                    "type": "field"
+                  },
+                  {
+                    "params": [],
+                    "type": "sum"
+                  }
+                ]
+              ],
+              "tags": [
+                {
+                  "key": "PhyType",
+                  "operator": "=",
+                  "value": "1"
+                },
+                {
+                  "condition": "AND",
+                  "key": "HTMode",
+                  "operator": "=",
+                  "value": "4"
+                }
+              ]
+            },
+            {
+              "alias": "dot11a_vht40",
+              "dsType": "influxdb",
+              "groupBy": [
+                {
+                  "params": [
+                    "5m"
+                  ],
+                  "type": "time"
+                },
+                {
+                  "params": [
+                    "previous"
+                  ],
+                  "type": "fill"
+                }
+              ],
+              "measurement": "wifi_users",
+              "orderByTime": "ASC",
+              "policy": "1year",
+              "query": "SELECT sum(\"Users\") FROM \"1year\".\"DiffRadio\" WHERE (\"PhyType\" = '1' AND \"HTMode\" = '5') AND $timeFilter GROUP BY time(5m) fill(linear)",
+              "rawQuery": false,
+              "refId": "D",
+              "resultFormat": "time_series",
+              "select": [
+                [
+                  {
+                    "params": [
+                      "Users"
+                    ],
+                    "type": "field"
+                  },
+                  {
+                    "params": [],
+                    "type": "sum"
+                  }
+                ]
+              ],
+              "tags": [
+                {
+                  "key": "PhyType",
+                  "operator": "=",
+                  "value": "1"
+                },
+                {
+                  "condition": "AND",
+                  "key": "HTMode",
+                  "operator": "=",
+                  "value": "5"
+                }
+              ]
+            },
+            {
+              "alias": "dot11a_vht80",
+              "dsType": "influxdb",
+              "groupBy": [
+                {
+                  "params": [
+                    "5m"
+                  ],
+                  "type": "time"
+                },
+                {
+                  "params": [
+                    "previous"
+                  ],
+                  "type": "fill"
+                }
+              ],
+              "measurement": "wifi_users",
+              "orderByTime": "ASC",
+              "policy": "1year",
+              "query": "SELECT sum(\"Users\") FROM \"1year\".\"DiffRadio\" WHERE (\"PhyType\" = '1' AND \"HTMode\" = '5') AND $timeFilter GROUP BY time(5m) fill(linear)",
+              "rawQuery": false,
+              "refId": "E",
+              "resultFormat": "time_series",
+              "select": [
+                [
+                  {
+                    "params": [
+                      "Users"
+                    ],
+                    "type": "field"
+                  },
+                  {
+                    "params": [],
+                    "type": "sum"
+                  }
+                ]
+              ],
+              "tags": [
+                {
+                  "key": "PhyType",
+                  "operator": "=",
+                  "value": "1"
+                },
+                {
+                  "condition": "AND",
+                  "key": "HTMode",
+                  "operator": "=",
+                  "value": "6"
+                }
+              ]
+            },
+            {
+              "alias": "dot11b",
+              "dsType": "influxdb",
+              "groupBy": [
+                {
+                  "params": [
+                    "5m"
+                  ],
+                  "type": "time"
+                },
+                {
+                  "params": [
+                    "previous"
+                  ],
+                  "type": "fill"
+                }
+              ],
+              "measurement": "wifi_users",
+              "orderByTime": "ASC",
+              "policy": "1year",
+              "query": "SELECT sum(\"Users\") FROM \"1year\".\"DiffRadio\" WHERE (\"PhyType\" = '1' AND \"HTMode\" = '5') AND $timeFilter GROUP BY time(5m) fill(linear)",
+              "rawQuery": false,
+              "refId": "F",
+              "resultFormat": "time_series",
+              "select": [
+                [
+                  {
+                    "params": [
+                      "Users"
+                    ],
+                    "type": "field"
+                  },
+                  {
+                    "params": [],
+                    "type": "sum"
+                  }
+                ]
+              ],
+              "tags": [
+                {
+                  "key": "PhyType",
+                  "operator": "=",
+                  "value": "2"
+                }
+              ]
+            },
+            {
+              "alias": "dot11g_ht20",
+              "dsType": "influxdb",
+              "groupBy": [
+                {
+                  "params": [
+                    "5m"
+                  ],
+                  "type": "time"
+                },
+                {
+                  "params": [
+                    "previous"
+                  ],
+                  "type": "fill"
+                }
+              ],
+              "measurement": "wifi_users",
+              "orderByTime": "ASC",
+              "policy": "1year",
+              "query": "SELECT sum(\"Users\") FROM \"1year\".\"DiffRadio\" WHERE (\"PhyType\" = '1' AND \"HTMode\" = '5') AND $timeFilter GROUP BY time(5m) fill(linear)",
+              "rawQuery": false,
+              "refId": "G",
+              "resultFormat": "time_series",
+              "select": [
+                [
+                  {
+                    "params": [
+                      "Users"
+                    ],
+                    "type": "field"
+                  },
+                  {
+                    "params": [],
+                    "type": "sum"
+                  }
+                ]
+              ],
+              "tags": [
+                {
+                  "key": "PhyType",
+                  "operator": "=",
+                  "value": "3"
+                },
+                {
+                  "condition": "AND",
+                  "key": "HTMode",
+                  "operator": "=",
+                  "value": "2"
+                }
+              ]
+            },
+            {
+              "alias": "dot11g_ht40",
+              "dsType": "influxdb",
+              "groupBy": [
+                {
+                  "params": [
+                    "5m"
+                  ],
+                  "type": "time"
+                },
+                {
+                  "params": [
+                    "previous"
+                  ],
+                  "type": "fill"
+                }
+              ],
+              "measurement": "wifi_users",
+              "orderByTime": "ASC",
+              "policy": "1year",
+              "query": "SELECT sum(\"Users\") FROM \"1year\".\"DiffRadio\" WHERE (\"PhyType\" = '1' AND \"HTMode\" = '5') AND $timeFilter GROUP BY time(5m) fill(linear)",
+              "rawQuery": false,
+              "refId": "H",
+              "resultFormat": "time_series",
+              "select": [
+                [
+                  {
+                    "params": [
+                      "Users"
+                    ],
+                    "type": "field"
+                  },
+                  {
+                    "params": [],
+                    "type": "sum"
+                  }
+                ]
+              ],
+              "tags": [
+                {
+                  "key": "PhyType",
+                  "operator": "=",
+                  "value": "3"
+                },
+                {
+                  "condition": "AND",
+                  "key": "HTMode",
+                  "operator": "=",
+                  "value": "3"
+                }
+              ]
+            },
+            {
+              "alias": "dot11g_vht20",
+              "dsType": "influxdb",
+              "groupBy": [
+                {
+                  "params": [
+                    "5m"
+                  ],
+                  "type": "time"
+                },
+                {
+                  "params": [
+                    "previous"
+                  ],
+                  "type": "fill"
+                }
+              ],
+              "measurement": "wifi_users",
+              "orderByTime": "ASC",
+              "policy": "1year",
+              "query": "SELECT sum(\"Users\") FROM \"1year\".\"DiffRadio\" WHERE (\"PhyType\" = '1' AND \"HTMode\" = '5') AND $timeFilter GROUP BY time(5m) fill(linear)",
+              "rawQuery": false,
+              "refId": "I",
+              "resultFormat": "time_series",
+              "select": [
+                [
+                  {
+                    "params": [
+                      "Users"
+                    ],
+                    "type": "field"
+                  },
+                  {
+                    "params": [],
+                    "type": "sum"
+                  }
+                ]
+              ],
+              "tags": [
+                {
+                  "key": "PhyType",
+                  "operator": "=",
+                  "value": "3"
+                },
+                {
+                  "condition": "AND",
+                  "key": "HTMode",
+                  "operator": "=",
+                  "value": "4"
+                }
+              ]
+            },
+            {
+              "alias": "dot11g_vht40",
+              "dsType": "influxdb",
+              "groupBy": [
+                {
+                  "params": [
+                    "5m"
+                  ],
+                  "type": "time"
+                },
+                {
+                  "params": [
+                    "previous"
+                  ],
+                  "type": "fill"
+                }
+              ],
+              "measurement": "wifi_users",
+              "orderByTime": "ASC",
+              "policy": "1year",
+              "query": "SELECT sum(\"Users\") FROM \"1year\".\"DiffRadio\" WHERE (\"PhyType\" = '1' AND \"HTMode\" = '5') AND $timeFilter GROUP BY time(5m) fill(linear)",
+              "rawQuery": false,
+              "refId": "J",
+              "resultFormat": "time_series",
+              "select": [
+                [
+                  {
+                    "params": [
+                      "Users"
+                    ],
+                    "type": "field"
+                  },
+                  {
+                    "params": [],
+                    "type": "sum"
+                  }
+                ]
+              ],
+              "tags": [
+                {
+                  "key": "PhyType",
+                  "operator": "=",
+                  "value": "3"
+                },
+                {
+                  "condition": "AND",
+                  "key": "HTMode",
+                  "operator": "=",
+                  "value": "5"
+                }
+              ]
+            },
+            {
+              "alias": "dot11g_vht80",
+              "dsType": "influxdb",
+              "groupBy": [
+                {
+                  "params": [
+                    "5m"
+                  ],
+                  "type": "time"
+                },
+                {
+                  "params": [
+                    "previous"
+                  ],
+                  "type": "fill"
+                }
+              ],
+              "measurement": "wifi_users",
+              "orderByTime": "ASC",
+              "policy": "1year",
+              "query": "SELECT sum(\"Users\") FROM \"1year\".\"DiffRadio\" WHERE (\"PhyType\" = '1' AND \"HTMode\" = '5') AND $timeFilter GROUP BY time(5m) fill(linear)",
+              "rawQuery": false,
+              "refId": "K",
+              "resultFormat": "time_series",
+              "select": [
+                [
+                  {
+                    "params": [
+                      "Users"
+                    ],
+                    "type": "field"
+                  },
+                  {
+                    "params": [],
+                    "type": "sum"
+                  }
+                ]
+              ],
+              "tags": [
+                {
+                  "key": "PhyType",
+                  "operator": "=",
+                  "value": "3"
+                },
+                {
+                  "condition": "AND",
+                  "key": "HTMode",
+                  "operator": "=",
+                  "value": "6"
+                }
+              ]
+            },
+            {
+              "alias": "dot11ag",
+              "dsType": "influxdb",
+              "groupBy": [
+                {
+                  "params": [
+                    "5m"
+                  ],
+                  "type": "time"
+                },
+                {
+                  "params": [
+                    "previous"
+                  ],
+                  "type": "fill"
+                }
+              ],
+              "measurement": "wifi_users",
+              "orderByTime": "ASC",
+              "policy": "1year",
+              "query": "SELECT sum(\"Users\") FROM \"1year\".\"DiffRadio\" WHERE (\"PhyType\" = '1' AND \"HTMode\" = '5') AND $timeFilter GROUP BY time(5m) fill(linear)",
+              "rawQuery": false,
+              "refId": "L",
+              "resultFormat": "time_series",
+              "select": [
+                [
+                  {
+                    "params": [
+                      "Users"
+                    ],
+                    "type": "field"
+                  },
+                  {
+                    "params": [],
+                    "type": "sum"
+                  }
+                ]
+              ],
+              "tags": [
+                {
+                  "key": "PhyType",
+                  "operator": "=",
+                  "value": "4"
+                }
+              ]
+            }
+          ],
+          "thresholds": [],
+          "timeFrom": null,
+          "timeShift": null,
+          "title": "Users by Radio Usage",
+          "tooltip": {
+            "shared": true,
+            "sort": 0,
+            "value_type": "individual"
+          },
+          "type": "graph",
+          "xaxis": {
+            "buckets": null,
+            "mode": "time",
+            "name": null,
+            "show": true,
+            "values": []
+          },
+          "yaxes": [
+            {
+              "format": "short",
+              "label": "Users",
+              "logBase": 1,
+              "max": null,
+              "min": null,
+              "show": true
+            },
+            {
+              "format": "short",
+              "label": null,
+              "logBase": 1,
+              "max": null,
+              "min": null,
+              "show": false
+            }
+          ]
+        },
+        {
+          "aliasColors": {},
+          "bars": false,
+          "dashLength": 10,
+          "dashes": false,
+          "datasource": "${DS_INFLUXDB_TELEGRAF}",
+          "fill": 1,
+          "id": 4,
+          "interval": "",
+          "legend": {
+            "alignAsTable": true,
+            "avg": true,
+            "current": true,
+            "max": true,
+            "min": false,
+            "rightSide": false,
+            "show": true,
+            "total": false,
+            "values": true
+          },
+          "lines": true,
+          "linewidth": 1,
+          "links": [],
+          "nullPointMode": "null",
+          "percentage": false,
+          "pointradius": 5,
+          "points": false,
+          "renderer": "flot",
+          "seriesOverrides": [],
+          "spaceLength": 10,
+          "span": 4,
+          "stack": true,
+          "steppedLine": false,
+          "targets": [
+            {
+              "alias": "authPAP",
+              "dsType": "influxdb",
+              "groupBy": [
+                {
+                  "params": [
+                    "5m"
+                  ],
+                  "type": "time"
+                },
+                {
+                  "params": [
+                    "null"
+                  ],
+                  "type": "fill"
+                }
+              ],
+              "measurement": "wifi_users",
+              "orderByTime": "ASC",
+              "policy": "1year",
+              "query": "SELECT sum(\"Users\") FROM \"1year\".\"DiffAuth\" WHERE (\"SubAuthenticationMethod\" = '1') AND $timeFilter GROUP BY time(5m) fill(linear)",
+              "rawQuery": false,
+              "refId": "A",
+              "resultFormat": "time_series",
+              "select": [
+                [
+                  {
+                    "params": [
+                      "Users"
+                    ],
+                    "type": "field"
+                  },
+                  {
+                    "params": [],
+                    "type": "sum"
+                  }
+                ]
+              ],
+              "tags": [
+                {
+                  "key": "SubAuthenticationMethod",
+                  "operator": "=",
+                  "value": "1"
+                }
+              ]
+            },
+            {
+              "alias": "authCHAP",
+              "dsType": "influxdb",
+              "groupBy": [
+                {
+                  "params": [
+                    "5m"
+                  ],
+                  "type": "time"
+                },
+                {
+                  "params": [
+                    "null"
+                  ],
+                  "type": "fill"
+                }
+              ],
+              "measurement": "wifi_users",
+              "orderByTime": "ASC",
+              "policy": "1year",
+              "refId": "B",
+              "resultFormat": "time_series",
+              "select": [
+                [
+                  {
+                    "params": [
+                      "Users"
+                    ],
+                    "type": "field"
+                  },
+                  {
+                    "params": [],
+                    "type": "sum"
+                  }
+                ]
+              ],
+              "tags": [
+                {
+                  "key": "SubAuthenticationMethod",
+                  "operator": "=",
+                  "value": "2"
+                }
+              ]
+            },
+            {
+              "alias": "authMSCHAP",
+              "dsType": "influxdb",
+              "groupBy": [
+                {
+                  "params": [
+                    "5m"
+                  ],
+                  "type": "time"
+                },
+                {
+                  "params": [
+                    "null"
+                  ],
+                  "type": "fill"
+                }
+              ],
+              "measurement": "wifi_users",
+              "orderByTime": "ASC",
+              "policy": "1year",
+              "refId": "C",
+              "resultFormat": "time_series",
+              "select": [
+                [
+                  {
+                    "params": [
+                      "Users"
+                    ],
+                    "type": "field"
+                  },
+                  {
+                    "params": [],
+                    "type": "sum"
+                  }
+                ]
+              ],
+              "tags": [
+                {
+                  "key": "SubAuthenticationMethod",
+                  "operator": "=",
+                  "value": "3"
+                }
+              ]
+            },
+            {
+              "alias": "authMSCHAPv2",
+              "dsType": "influxdb",
+              "groupBy": [
+                {
+                  "params": [
+                    "5m"
+                  ],
+                  "type": "time"
+                },
+                {
+                  "params": [
+                    "null"
+                  ],
+                  "type": "fill"
+                }
+              ],
+              "measurement": "wifi_users",
+              "orderByTime": "ASC",
+              "policy": "1year",
+              "refId": "D",
+              "resultFormat": "time_series",
+              "select": [
+                [
+                  {
+                    "params": [
+                      "Users"
+                    ],
+                    "type": "field"
+                  },
+                  {
+                    "params": [],
+                    "type": "sum"
+                  }
+                ]
+              ],
+              "tags": [
+                {
+                  "key": "SubAuthenticationMethod",
+                  "operator": "=",
+                  "value": "4"
+                }
+              ]
+            },
+            {
+              "alias": "eapTLS",
+              "dsType": "influxdb",
+              "groupBy": [
+                {
+                  "params": [
+                    "5m"
+                  ],
+                  "type": "time"
+                },
+                {
+                  "params": [
+                    "null"
+                  ],
+                  "type": "fill"
+                }
+              ],
+              "measurement": "wifi_users",
+              "orderByTime": "ASC",
+              "policy": "1year",
+              "refId": "E",
+              "resultFormat": "time_series",
+              "select": [
+                [
+                  {
+                    "params": [
+                      "Users"
+                    ],
+                    "type": "field"
+                  },
+                  {
+                    "params": [],
+                    "type": "sum"
+                  }
+                ]
+              ],
+              "tags": [
+                {
+                  "key": "SubAuthenticationMethod",
+                  "operator": "=",
+                  "value": "5"
+                }
+              ]
+            },
+            {
+              "alias": "eapTTLS",
+              "dsType": "influxdb",
+              "groupBy": [
+                {
+                  "params": [
+                    "5m"
+                  ],
+                  "type": "time"
+                },
+                {
+                  "params": [
+                    "null"
+                  ],
+                  "type": "fill"
+                }
+              ],
+              "measurement": "wifi_users",
+              "orderByTime": "ASC",
+              "policy": "1year",
+              "refId": "F",
+              "resultFormat": "time_series",
+              "select": [
+                [
+                  {
+                    "params": [
+                      "Users"
+                    ],
+                    "type": "field"
+                  },
+                  {
+                    "params": [],
+                    "type": "sum"
+                  }
+                ]
+              ],
+              "tags": [
+                {
+                  "key": "SubAuthenticationMethod",
+                  "operator": "=",
+                  "value": "6"
+                }
+              ]
+            },
+            {
+              "alias": "eapLEAP",
+              "dsType": "influxdb",
+              "groupBy": [
+                {
+                  "params": [
+                    "5m"
+                  ],
+                  "type": "time"
+                },
+                {
+                  "params": [
+                    "null"
+                  ],
+                  "type": "fill"
+                }
+              ],
+              "measurement": "wifi_users",
+              "orderByTime": "ASC",
+              "policy": "1year",
+              "refId": "G",
+              "resultFormat": "time_series",
+              "select": [
+                [
+                  {
+                    "params": [
+                      "Users"
+                    ],
+                    "type": "field"
+                  },
+                  {
+                    "params": [],
+                    "type": "sum"
+                  }
+                ]
+              ],
+              "tags": [
+                {
+                  "key": "SubAuthenticationMethod",
+                  "operator": "=",
+                  "value": "7"
+                }
+              ]
+            },
+            {
+              "alias": "eapMD5",
+              "dsType": "influxdb",
+              "groupBy": [
+                {
+                  "params": [
+                    "5m"
+                  ],
+                  "type": "time"
+                },
+                {
+                  "params": [
+                    "null"
+                  ],
+                  "type": "fill"
+                }
+              ],
+              "measurement": "wifi_users",
+              "orderByTime": "ASC",
+              "policy": "1year",
+              "refId": "H",
+              "resultFormat": "time_series",
+              "select": [
+                [
+                  {
+                    "params": [
+                      "Users"
+                    ],
+                    "type": "field"
+                  },
+                  {
+                    "params": [],
+                    "type": "sum"
+                  }
+                ]
+              ],
+              "tags": [
+                {
+                  "key": "SubAuthenticationMethod",
+                  "operator": "=",
+                  "value": "8"
+                }
+              ]
+            },
+            {
+              "alias": "eapPEAP",
+              "dsType": "influxdb",
+              "groupBy": [
+                {
+                  "params": [
+                    "5m"
+                  ],
+                  "type": "time"
+                },
+                {
+                  "params": [
+                    "null"
+                  ],
+                  "type": "fill"
+                }
+              ],
+              "measurement": "wifi_users",
+              "orderByTime": "ASC",
+              "policy": "1year",
+              "refId": "I",
+              "resultFormat": "time_series",
+              "select": [
+                [
+                  {
+                    "params": [
+                      "Users"
+                    ],
+                    "type": "field"
+                  },
+                  {
+                    "params": [],
+                    "type": "sum"
+                  }
+                ]
+              ],
+              "tags": [
+                {
+                  "key": "SubAuthenticationMethod",
+                  "operator": "=",
+                  "value": "9"
+                }
+              ]
+            }
+          ],
+          "thresholds": [],
+          "timeFrom": null,
+          "timeShift": null,
+          "title": "Users by Authentication",
+          "tooltip": {
+            "shared": true,
+            "sort": 0,
+            "value_type": "individual"
+          },
+          "type": "graph",
+          "xaxis": {
+            "buckets": null,
+            "mode": "time",
+            "name": null,
+            "show": true,
+            "values": []
+          },
+          "yaxes": [
+            {
+              "format": "short",
+              "label": "Users",
+              "logBase": 1,
+              "max": null,
+              "min": null,
+              "show": true
+            },
+            {
+              "format": "short",
+              "label": null,
+              "logBase": 1,
+              "max": null,
+              "min": null,
+              "show": false
+            }
+          ]
+        },
+        {
+          "aliasColors": {},
+          "bars": false,
+          "dashLength": 10,
+          "dashes": false,
+          "datasource": "${DS_INFLUXDB_TELEGRAF}",
+          "fill": 1,
+          "id": 5,
+          "legend": {
+            "alignAsTable": true,
+            "avg": true,
+            "current": true,
+            "max": true,
+            "min": false,
+            "rightSide": false,
+            "show": true,
+            "total": false,
+            "values": true
+          },
+          "lines": true,
+          "linewidth": 1,
+          "links": [],
+          "nullPointMode": "null",
+          "percentage": false,
+          "pointradius": 5,
+          "points": false,
+          "renderer": "flot",
+          "seriesOverrides": [],
+          "spaceLength": 10,
+          "span": 4,
+          "stack": true,
+          "steppedLine": false,
+          "targets": [
+            {
+              "alias": "disabled",
+              "dsType": "influxdb",
+              "groupBy": [
+                {
+                  "params": [
+                    "5m"
+                  ],
+                  "type": "time"
+                },
+                {
+                  "params": [
+                    "null"
+                  ],
+                  "type": "fill"
+                }
+              ],
+              "measurement": "wifi_users",
+              "orderByTime": "ASC",
+              "policy": "1year",
+              "query": "SELECT count(\"UserName\") FROM \"wifi_users\" WHERE (\"EncryptionMethod\" = '0') AND $timeFilter GROUP BY time(5m) fill(linear)",
+              "rawQuery": false,
+              "refId": "A",
+              "resultFormat": "time_series",
+              "select": [
+                [
+                  {
+                    "params": [
+                      "Users"
+                    ],
+                    "type": "field"
+                  },
+                  {
+                    "params": [],
+                    "type": "sum"
+                  }
+                ]
+              ],
+              "tags": [
+                {
+                  "key": "EncryptionMethod",
+                  "operator": "=",
+                  "value": "0"
+                }
+              ]
+            },
+            {
+              "alias": "static-wep",
+              "dsType": "influxdb",
+              "groupBy": [
+                {
+                  "params": [
+                    "5m"
+                  ],
+                  "type": "time"
+                },
+                {
+                  "params": [
+                    "null"
+                  ],
+                  "type": "fill"
+                }
+              ],
+              "measurement": "wifi_users",
+              "orderByTime": "ASC",
+              "policy": "1year",
+              "refId": "B",
+              "resultFormat": "time_series",
+              "select": [
+                [
+                  {
+                    "params": [
+                      "Users"
+                    ],
+                    "type": "field"
+                  },
+                  {
+                    "params": [],
+                    "type": "sum"
+                  }
+                ]
+              ],
+              "tags": [
+                {
+                  "key": "EncryptionMethod",
+                  "operator": "=",
+                  "value": "1"
+                }
+              ]
+            },
+            {
+              "alias": "dynamic-wep",
+              "dsType": "influxdb",
+              "groupBy": [
+                {
+                  "params": [
+                    "5m"
+                  ],
+                  "type": "time"
+                },
+                {
+                  "params": [
+                    "null"
+                  ],
+                  "type": "fill"
+                }
+              ],
+              "measurement": "wifi_users",
+              "orderByTime": "ASC",
+              "policy": "1year",
+              "refId": "C",
+              "resultFormat": "time_series",
+              "select": [
+                [
+                  {
+                    "params": [
+                      "Users"
+                    ],
+                    "type": "field"
+                  },
+                  {
+                    "params": [],
+                    "type": "sum"
+                  }
+                ]
+              ],
+              "tags": [
+                {
+                  "key": "EncryptionMethod",
+                  "operator": "=",
+                  "value": "2"
+                }
+              ]
+            },
+            {
+              "alias": "static-wpa",
+              "dsType": "influxdb",
+              "groupBy": [
+                {
+                  "params": [
+                    "5m"
+                  ],
+                  "type": "time"
+                },
+                {
+                  "params": [
+                    "null"
+                  ],
+                  "type": "fill"
+                }
+              ],
+              "measurement": "wifi_users",
+              "orderByTime": "ASC",
+              "policy": "1year",
+              "refId": "D",
+              "resultFormat": "time_series",
+              "select": [
+                [
+                  {
+                    "params": [
+                      "Users"
+                    ],
+                    "type": "field"
+                  },
+                  {
+                    "params": [],
+                    "type": "sum"
+                  }
+                ]
+              ],
+              "tags": [
+                {
+                  "key": "EncryptionMethod",
+                  "operator": "=",
+                  "value": "3"
+                }
+              ]
+            },
+            {
+              "alias": "dynamic-wpa",
+              "dsType": "influxdb",
+              "groupBy": [
+                {
+                  "params": [
+                    "5m"
+                  ],
+                  "type": "time"
+                },
+                {
+                  "params": [
+                    "null"
+                  ],
+                  "type": "fill"
+                }
+              ],
+              "measurement": "wifi_users",
+              "orderByTime": "ASC",
+              "policy": "1year",
+              "refId": "E",
+              "resultFormat": "time_series",
+              "select": [
+                [
+                  {
+                    "params": [
+                      "Users"
+                    ],
+                    "type": "field"
+                  },
+                  {
+                    "params": [],
+                    "type": "sum"
+                  }
+                ]
+              ],
+              "tags": [
+                {
+                  "key": "EncryptionMethod",
+                  "operator": "=",
+                  "value": "4"
+                }
+              ]
+            },
+            {
+              "alias": "wpa2-psk-aes",
+              "dsType": "influxdb",
+              "groupBy": [
+                {
+                  "params": [
+                    "5m"
+                  ],
+                  "type": "time"
+                },
+                {
+                  "params": [
+                    "null"
+                  ],
+                  "type": "fill"
+                }
+              ],
+              "measurement": "wifi_users",
+              "orderByTime": "ASC",
+              "policy": "1year",
+              "refId": "F",
+              "resultFormat": "time_series",
+              "select": [
+                [
+                  {
+                    "params": [
+                      "Users"
+                    ],
+                    "type": "field"
+                  },
+                  {
+                    "params": [],
+                    "type": "sum"
+                  }
+                ]
+              ],
+              "tags": [
+                {
+                  "key": "EncryptionMethod",
+                  "operator": "=",
+                  "value": "5"
+                }
+              ]
+            },
+            {
+              "alias": "wpa2-8021x-aes",
+              "dsType": "influxdb",
+              "groupBy": [
+                {
+                  "params": [
+                    "5m"
+                  ],
+                  "type": "time"
+                },
+                {
+                  "params": [
+                    "null"
+                  ],
+                  "type": "fill"
+                }
+              ],
+              "measurement": "wifi_users",
+              "orderByTime": "ASC",
+              "policy": "1year",
+              "refId": "G",
+              "resultFormat": "time_series",
+              "select": [
+                [
+                  {
+                    "params": [
+                      "Users"
+                    ],
+                    "type": "field"
+                  },
+                  {
+                    "params": [],
+                    "type": "sum"
+                  }
+                ]
+              ],
+              "tags": [
+                {
+                  "key": "EncryptionMethod",
+                  "operator": "=",
+                  "value": "6"
+                }
+              ]
+            },
+            {
+              "alias": "wpa2PreAuth",
+              "dsType": "influxdb",
+              "groupBy": [
+                {
+                  "params": [
+                    "5m"
+                  ],
+                  "type": "time"
+                },
+                {
+                  "params": [
+                    "null"
+                  ],
+                  "type": "fill"
+                }
+              ],
+              "measurement": "wifi_users",
+              "orderByTime": "ASC",
+              "policy": "1year",
+              "refId": "H",
+              "resultFormat": "time_series",
+              "select": [
+                [
+                  {
+                    "params": [
+                      "Users"
+                    ],
+                    "type": "field"
+                  },
+                  {
+                    "params": [],
+                    "type": "sum"
+                  }
+                ]
+              ],
+              "tags": [
+                {
+                  "key": "EncryptionMethod",
+                  "operator": "=",
+                  "value": "7"
+                }
+              ]
+            },
+            {
+              "alias": "xsec",
+              "dsType": "influxdb",
+              "groupBy": [
+                {
+                  "params": [
+                    "5m"
+                  ],
+                  "type": "time"
+                },
+                {
+                  "params": [
+                    "null"
+                  ],
+                  "type": "fill"
+                }
+              ],
+              "measurement": "wifi_users",
+              "orderByTime": "ASC",
+              "policy": "1year",
+              "refId": "I",
+              "resultFormat": "time_series",
+              "select": [
+                [
+                  {
+                    "params": [
+                      "Users"
+                    ],
+                    "type": "field"
+                  },
+                  {
+                    "params": [],
+                    "type": "sum"
+                  }
+                ]
+              ],
+              "tags": [
+                {
+                  "key": "EncryptionMethod",
+                  "operator": "=",
+                  "value": "8"
+                }
+              ]
+            },
+            {
+              "alias": "wpa-psk-aes",
+              "dsType": "influxdb",
+              "groupBy": [
+                {
+                  "params": [
+                    "5m"
+                  ],
+                  "type": "time"
+                },
+                {
+                  "params": [
+                    "null"
+                  ],
+                  "type": "fill"
+                }
+              ],
+              "measurement": "wifi_users",
+              "orderByTime": "ASC",
+              "policy": "1year",
+              "refId": "J",
+              "resultFormat": "time_series",
+              "select": [
+                [
+                  {
+                    "params": [
+                      "Users"
+                    ],
+                    "type": "field"
+                  },
+                  {
+                    "params": [],
+                    "type": "sum"
+                  }
+                ]
+              ],
+              "tags": [
+                {
+                  "key": "EncryptionMethod",
+                  "operator": "=",
+                  "value": "9"
+                }
+              ]
+            },
+            {
+              "alias": "wpa-aes",
+              "dsType": "influxdb",
+              "groupBy": [
+                {
+                  "params": [
+                    "5m"
+                  ],
+                  "type": "time"
+                },
+                {
+                  "params": [
+                    "null"
+                  ],
+                  "type": "fill"
+                }
+              ],
+              "measurement": "wifi_users",
+              "orderByTime": "ASC",
+              "policy": "1year",
+              "refId": "K",
+              "resultFormat": "time_series",
+              "select": [
+                [
+                  {
+                    "params": [
+                      "Users"
+                    ],
+                    "type": "field"
+                  },
+                  {
+                    "params": [],
+                    "type": "sum"
+                  }
+                ]
+              ],
+              "tags": [
+                {
+                  "key": "EncryptionMethod",
+                  "operator": "=",
+                  "value": "10"
+                }
+              ]
+            },
+            {
+              "alias": "wpa2-psk-tkip",
+              "dsType": "influxdb",
+              "groupBy": [
+                {
+                  "params": [
+                    "5m"
+                  ],
+                  "type": "time"
+                },
+                {
+                  "params": [
+                    "null"
+                  ],
+                  "type": "fill"
+                }
+              ],
+              "measurement": "wifi_users",
+              "orderByTime": "ASC",
+              "policy": "1year",
+              "refId": "L",
+              "resultFormat": "time_series",
+              "select": [
+                [
+                  {
+                    "params": [
+                      "Users"
+                    ],
+                    "type": "field"
+                  },
+                  {
+                    "params": [],
+                    "type": "sum"
+                  }
+                ]
+              ],
+              "tags": [
+                {
+                  "key": "EncryptionMethod",
+                  "operator": "=",
+                  "value": "11"
+                }
+              ]
+            },
+            {
+              "alias": "wpa2-8021x-tkip",
+              "dsType": "influxdb",
+              "groupBy": [
+                {
+                  "params": [
+                    "5m"
+                  ],
+                  "type": "time"
+                },
+                {
+                  "params": [
+                    "null"
+                  ],
+                  "type": "fill"
+                }
+              ],
+              "measurement": "wifi_users",
+              "orderByTime": "ASC",
+              "policy": "1year",
+              "refId": "M",
+              "resultFormat": "time_series",
+              "select": [
+                [
+                  {
+                    "params": [
+                      "Users"
+                    ],
+                    "type": "field"
+                  },
+                  {
+                    "params": [],
+                    "type": "sum"
+                  }
+                ]
+              ],
+              "tags": [
+                {
+                  "key": "EncryptionMethod",
+                  "operator": "=",
+                  "value": "12"
+                }
+              ]
+            }
+          ],
+          "thresholds": [],
+          "timeFrom": null,
+          "timeShift": null,
+          "title": "Users by Encription Mode",
+          "tooltip": {
+            "shared": true,
+            "sort": 0,
+            "value_type": "individual"
+          },
+          "type": "graph",
+          "xaxis": {
+            "buckets": null,
+            "mode": "time",
+            "name": null,
+            "show": true,
+            "values": []
+          },
+          "yaxes": [
+            {
+              "format": "short",
+              "label": "Users",
+              "logBase": 1,
+              "max": null,
+              "min": null,
+              "show": true
+            },
+            {
+              "format": "short",
+              "label": null,
+              "logBase": 1,
+              "max": null,
+              "min": null,
+              "show": false
+            }
+          ]
+        }
+      ],
+      "repeat": null,
+      "repeatIteration": null,
+      "repeatRowId": null,
+      "showTitle": false,
+      "title": "Dashboard Row",
+      "titleSize": "h6"
+    },
+    {
+      "collapse": false,
+      "height": 250,
+      "panels": [
+        {
+          "aliasColors": {},
+          "bars": true,
+          "dashLength": 10,
+          "dashes": false,
+          "datasource": "${DS_INFLUXDB_TELEGRAF}",
+          "fill": 1,
+          "id": 6,
+          "legend": {
+            "avg": false,
+            "current": false,
+            "max": false,
+            "min": false,
+            "show": false,
+            "total": false,
+            "values": false
+          },
+          "lines": false,
+          "linewidth": 1,
+          "links": [],
+          "nullPointMode": "null",
+          "percentage": false,
+          "pointradius": 5,
+          "points": false,
+          "renderer": "flot",
+          "seriesOverrides": [],
+          "spaceLength": 10,
+          "span": 4,
+          "stack": false,
+          "steppedLine": false,
+          "targets": [
+            {
+              "alias": "$tag_ApLocation",
+              "dsType": "influxdb",
+              "groupBy": [
+                {
+                  "params": [
+                    "ApLocation"
+                  ],
+                  "type": "tag"
+                }
+              ],
+              "limit": "",
+              "measurement": "wifi_users",
+              "orderByTime": "ASC",
+              "policy": "1day",
+              "refId": "A",
+              "resultFormat": "time_series",
+              "select": [
+                [
+                  {
+                    "params": [
+                      "UserName"
+                    ],
+                    "type": "field"
+                  },
+                  {
+                    "params": [],
+                    "type": "count"
+                  }
+                ]
+              ],
+              "slimit": "",
+              "tags": []
+            }
+          ],
+          "thresholds": [],
+          "timeFrom": null,
+          "timeShift": null,
+          "title": "Associations by Access Point",
+          "tooltip": {
+            "shared": false,
+            "sort": 0,
+            "value_type": "individual"
+          },
+          "transparent": false,
+          "type": "graph",
+          "xaxis": {
+            "buckets": null,
+            "mode": "series",
+            "name": null,
+            "show": false,
+            "values": [
+              "total"
+            ]
+          },
+          "yaxes": [
+            {
+              "decimals": null,
+              "format": "none",
+              "label": "Associations",
+              "logBase": 1,
+              "max": null,
+              "min": null,
+              "show": true
+            },
+            {
+              "format": "short",
+              "label": null,
+              "logBase": 1,
+              "max": null,
+              "min": null,
+              "show": false
+            }
+          ]
+        },
+        {
+          "aliasColors": {},
+          "bars": true,
+          "dashLength": 10,
+          "dashes": false,
+          "datasource": "${DS_INFLUXDB_TELEGRAF}",
+          "fill": 1,
+          "id": 7,
+          "legend": {
+            "avg": false,
+            "current": false,
+            "max": false,
+            "min": false,
+            "show": false,
+            "total": false,
+            "values": false
+          },
+          "lines": false,
+          "linewidth": 1,
+          "links": [],
+          "nullPointMode": "null",
+          "percentage": false,
+          "pointradius": 5,
+          "points": false,
+          "renderer": "flot",
+          "seriesOverrides": [],
+          "spaceLength": 10,
+          "span": 4,
+          "stack": false,
+          "steppedLine": false,
+          "targets": [
+            {
+              "alias": "$tag_CurrentVlan",
+              "dsType": "influxdb",
+              "groupBy": [
+                {
+                  "params": [
+                    "CurrentVlan"
+                  ],
+                  "type": "tag"
+                }
+              ],
+              "measurement": "wifi_users",
+              "orderByTime": "ASC",
+              "policy": "1day",
+              "refId": "A",
+              "resultFormat": "time_series",
+              "select": [
+                [
+                  {
+                    "params": [
+                      "UserName"
+                    ],
+                    "type": "field"
+                  },
+                  {
+                    "params": [],
+                    "type": "count"
+                  }
+                ]
+              ],
+              "tags": []
+            }
+          ],
+          "thresholds": [],
+          "timeFrom": null,
+          "timeShift": null,
+          "title": "Vlans distribution",
+          "tooltip": {
+            "shared": false,
+            "sort": 0,
+            "value_type": "individual"
+          },
+          "type": "graph",
+          "xaxis": {
+            "buckets": null,
+            "mode": "series",
+            "name": null,
+            "show": true,
+            "values": [
+              "total"
+            ]
+          },
+          "yaxes": [
+            {
+              "format": "short",
+              "label": "Associations",
+              "logBase": 1,
+              "max": null,
+              "min": null,
+              "show": true
+            },
+            {
+              "format": "short",
+              "label": null,
+              "logBase": 1,
+              "max": null,
+              "min": null,
+              "show": false
+            }
+          ]
+        },
+        {
+          "aliasColors": {},
+          "bars": false,
+          "dashLength": 10,
+          "dashes": false,
+          "datasource": "${DS_INFLUXDB_TELEGRAF}",
+          "fill": 1,
+          "id": 8,
+          "legend": {
+            "alignAsTable": true,
+            "avg": true,
+            "current": true,
+            "max": true,
+            "min": false,
+            "rightSide": true,
+            "show": true,
+            "total": false,
+            "values": true
+          },
+          "lines": true,
+          "linewidth": 1,
+          "links": [],
+          "nullPointMode": "null as zero",
+          "percentage": false,
+          "pointradius": 5,
+          "points": false,
+          "renderer": "flot",
+          "seriesOverrides": [],
+          "spaceLength": 10,
+          "span": 4,
+          "stack": true,
+          "steppedLine": false,
+          "targets": [
+            {
+              "alias": "1h",
+              "dsType": "influxdb",
+              "groupBy": [
+                {
+                  "params": [
+                    "5m"
+                  ],
+                  "type": "time"
+                },
+                {
+                  "params": [
+                    "previous"
+                  ],
+                  "type": "fill"
+                }
+              ],
+              "hide": false,
+              "measurement": "wifi_users",
+              "orderByTime": "ASC",
+              "policy": "1day",
+              "query": "SELECT count(\"UserName\") FROM \"1day\".\"wifi_users\" WHERE (\"UserUpTime\" < 3600) AND $timeFilter GROUP BY time(5m) fill(previous)",
+              "rawQuery": false,
+              "refId": "A",
+              "resultFormat": "time_series",
+              "select": [
+                [
+                  {
+                    "params": [
+                      "UserName"
+                    ],
+                    "type": "field"
+                  },
+                  {
+                    "params": [],
+                    "type": "count"
+                  }
+                ]
+              ],
+              "tags": [
+                {
+                  "key": "UserUpTime",
+                  "operator": "<",
+                  "value": "360000"
+                }
+              ]
+            },
+            {
+              "alias": "2h",
+              "dsType": "influxdb",
+              "groupBy": [
+                {
+                  "params": [
+                    "5m"
+                  ],
+                  "type": "time"
+                },
+                {
+                  "params": [
+                    "previous"
+                  ],
+                  "type": "fill"
+                }
+              ],
+              "measurement": "wifi_users",
+              "orderByTime": "ASC",
+              "policy": "1day",
+              "query": "SELECT \"UserName\" FROM \"wifi_users\" WHERE (\"UserUpTime\" > 3600 AND \"UserUpTime\" < 7200) AND $timeFilter GROUP BY time(1m) fill(null)",
+              "rawQuery": false,
+              "refId": "B",
+              "resultFormat": "time_series",
+              "select": [
+                [
+                  {
+                    "params": [
+                      "UserName"
+                    ],
+                    "type": "field"
+                  },
+                  {
+                    "params": [],
+                    "type": "count"
+                  }
+                ]
+              ],
+              "tags": [
+                {
+                  "key": "UserUpTime",
+                  "operator": ">",
+                  "value": "360000"
+                },
+                {
+                  "condition": "AND",
+                  "key": "UserUpTime",
+                  "operator": "<",
+                  "value": "720000"
+                }
+              ]
+            },
+            {
+              "alias": "4h",
+              "dsType": "influxdb",
+              "groupBy": [
+                {
+                  "params": [
+                    "5m"
+                  ],
+                  "type": "time"
+                },
+                {
+                  "params": [
+                    "previous"
+                  ],
+                  "type": "fill"
+                }
+              ],
+              "hide": false,
+              "measurement": "wifi_users",
+              "orderByTime": "ASC",
+              "policy": "1day",
+              "refId": "C",
+              "resultFormat": "time_series",
+              "select": [
+                [
+                  {
+                    "params": [
+                      "UserName"
+                    ],
+                    "type": "field"
+                  },
+                  {
+                    "params": [],
+                    "type": "count"
+                  }
+                ]
+              ],
+              "tags": [
+                {
+                  "key": "UserUpTime",
+                  "operator": ">",
+                  "value": "720000"
+                },
+                {
+                  "condition": "AND",
+                  "key": "UserUpTime",
+                  "operator": "<",
+                  "value": "1440000"
+                }
+              ]
+            },
+            {
+              "alias": "8h",
+              "dsType": "influxdb",
+              "groupBy": [
+                {
+                  "params": [
+                    "5m"
+                  ],
+                  "type": "time"
+                },
+                {
+                  "params": [
+                    "previous"
+                  ],
+                  "type": "fill"
+                }
+              ],
+              "hide": false,
+              "measurement": "wifi_users",
+              "orderByTime": "ASC",
+              "policy": "1day",
+              "refId": "D",
+              "resultFormat": "time_series",
+              "select": [
+                [
+                  {
+                    "params": [
+                      "UserName"
+                    ],
+                    "type": "field"
+                  },
+                  {
+                    "params": [],
+                    "type": "count"
+                  }
+                ]
+              ],
+              "tags": [
+                {
+                  "key": "UserUpTime",
+                  "operator": ">",
+                  "value": "1440000"
+                },
+                {
+                  "condition": "AND",
+                  "key": "UserUpTime",
+                  "operator": "<",
+                  "value": "2880000"
+                }
+              ]
+            },
+            {
+              "alias": "12h",
+              "dsType": "influxdb",
+              "groupBy": [
+                {
+                  "params": [
+                    "5m"
+                  ],
+                  "type": "time"
+                },
+                {
+                  "params": [
+                    "previous"
+                  ],
+                  "type": "fill"
+                }
+              ],
+              "hide": false,
+              "measurement": "wifi_users",
+              "orderByTime": "ASC",
+              "policy": "1day",
+              "refId": "E",
+              "resultFormat": "time_series",
+              "select": [
+                [
+                  {
+                    "params": [
+                      "UserName"
+                    ],
+                    "type": "field"
+                  },
+                  {
+                    "params": [],
+                    "type": "count"
+                  }
+                ]
+              ],
+              "tags": [
+                {
+                  "key": "UserUpTime",
+                  "operator": ">",
+                  "value": "2880000"
+                },
+                {
+                  "condition": "AND",
+                  "key": "UserUpTime",
+                  "operator": "<",
+                  "value": "4320000"
+                }
+              ]
+            },
+            {
+              "alias": "24h",
+              "dsType": "influxdb",
+              "groupBy": [
+                {
+                  "params": [
+                    "5m"
+                  ],
+                  "type": "time"
+                },
+                {
+                  "params": [
+                    "previous"
+                  ],
+                  "type": "fill"
+                }
+              ],
+              "hide": false,
+              "measurement": "wifi_users",
+              "orderByTime": "ASC",
+              "policy": "1day",
+              "refId": "F",
+              "resultFormat": "time_series",
+              "select": [
+                [
+                  {
+                    "params": [
+                      "UserName"
+                    ],
+                    "type": "field"
+                  },
+                  {
+                    "params": [],
+                    "type": "count"
+                  }
+                ]
+              ],
+              "tags": [
+                {
+                  "key": "UserUpTime",
+                  "operator": ">",
+                  "value": "4320000"
+                },
+                {
+                  "condition": "AND",
+                  "key": "UserUpTime",
+                  "operator": "<",
+                  "value": "8640000"
+                }
+              ]
+            },
+            {
+              "alias": "1w",
+              "dsType": "influxdb",
+              "groupBy": [
+                {
+                  "params": [
+                    "5m"
+                  ],
+                  "type": "time"
+                },
+                {
+                  "params": [
+                    "previous"
+                  ],
+                  "type": "fill"
+                }
+              ],
+              "hide": false,
+              "measurement": "wifi_users",
+              "orderByTime": "ASC",
+              "policy": "1day",
+              "query": "SELECT count(\"UserName\") FROM \"1day\".\"wifi_users\" WHERE (\"UserUpTime\" > 86400 AND \"UserUpTime\" < 604800) AND $timeFilter GROUP BY time(5m) fill(previous)",
+              "rawQuery": false,
+              "refId": "G",
+              "resultFormat": "time_series",
+              "select": [
+                [
+                  {
+                    "params": [
+                      "UserName"
+                    ],
+                    "type": "field"
+                  },
+                  {
+                    "params": [],
+                    "type": "count"
+                  }
+                ]
+              ],
+              "tags": [
+                {
+                  "key": "UserUpTime",
+                  "operator": ">",
+                  "value": "8640000"
+                },
+                {
+                  "condition": "AND",
+                  "key": "UserUpTime",
+                  "operator": "<",
+                  "value": "60480000"
+                }
+              ]
+            },
+            {
+              "alias": "1m",
+              "dsType": "influxdb",
+              "groupBy": [
+                {
+                  "params": [
+                    "5m"
+                  ],
+                  "type": "time"
+                },
+                {
+                  "params": [
+                    "previous"
+                  ],
+                  "type": "fill"
+                }
+              ],
+              "hide": false,
+              "measurement": "wifi_users",
+              "orderByTime": "ASC",
+              "policy": "1day",
+              "refId": "H",
+              "resultFormat": "time_series",
+              "select": [
+                [
+                  {
+                    "params": [
+                      "UserName"
+                    ],
+                    "type": "field"
+                  },
+                  {
+                    "params": [],
+                    "type": "count"
+                  }
+                ]
+              ],
+              "tags": [
+                {
+                  "key": "UserUpTime",
+                  "operator": ">",
+                  "value": "60480000"
+                },
+                {
+                  "condition": "AND",
+                  "key": "UserUpTime",
+                  "operator": "<",
+                  "value": "259200000"
+                }
+              ]
+            },
+            {
+              "alias": "1m - \u221e",
+              "dsType": "influxdb",
+              "groupBy": [
+                {
+                  "params": [
+                    "5m"
+                  ],
+                  "type": "time"
+                },
+                {
+                  "params": [
+                    "previous"
+                  ],
+                  "type": "fill"
+                }
+              ],
+              "hide": false,
+              "measurement": "wifi_users",
+              "orderByTime": "ASC",
+              "policy": "1day",
+              "refId": "I",
+              "resultFormat": "time_series",
+              "select": [
+                [
+                  {
+                    "params": [
+                      "UserName"
+                    ],
+                    "type": "field"
+                  },
+                  {
+                    "params": [],
+                    "type": "count"
+                  }
+                ]
+              ],
+              "tags": [
+                {
+                  "key": "UserUpTime",
+                  "operator": ">",
+                  "value": "259200000"
+                }
+              ]
+            }
+          ],
+          "thresholds": [],
+          "timeFrom": null,
+          "timeShift": null,
+          "title": "Session Mean time",
+          "tooltip": {
+            "shared": true,
+            "sort": 0,
+            "value_type": "individual"
+          },
+          "type": "graph",
+          "xaxis": {
+            "buckets": null,
+            "mode": "time",
+            "name": null,
+            "show": true,
+            "values": []
+          },
+          "yaxes": [
+            {
+              "format": "short",
+              "label": "Users",
+              "logBase": 1,
+              "max": null,
+              "min": null,
+              "show": true
+            },
+            {
+              "format": "short",
+              "label": null,
+              "logBase": 1,
+              "max": null,
+              "min": null,
+              "show": false
+            }
+          ]
+        }
+      ],
+      "repeat": null,
+      "repeatIteration": null,
+      "repeatRowId": null,
+      "showTitle": true,
+      "title": "LIVE DATA (24H)",
+      "titleSize": "h6"
+    }
+  ],
+  "schemaVersion": 14,
+  "style": "dark",
+  "tags": [],
+  "templating": {
+    "list": []
+  },
+  "time": {
+    "from": "now-24h",
+    "to": "now"
+  },
+  "timepicker": {
+    "refresh_intervals": [
+      "5s",
+      "10s",
+      "30s",
+      "1m",
+      "5m",
+      "15m",
+      "30m",
+      "1h",
+      "2h",
+      "1d"
+    ],
+    "time_options": [
+      "5m",
+      "15m",
+      "1h",
+      "6h",
+      "12h",
+      "24h",
+      "2d",
+      "7d",
+      "30d"
+    ]
+  },
+  "timezone": "",
+  "title": "Aruba Wifi Users",
+  "version": 2,
+  "description": "Steps and configuration to create a complete wifi users dashboard in GRAFANA from ARUBA wireless switches infraestructure. "
+}

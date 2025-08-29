@@ -1,0 +1,350 @@
+{
+  "annotations": {
+    "enable": false,
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "uid": "-- Grafana --"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations \u0026 Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "gnetId": null,
+  "graphTooltip": 0,
+  "iteration": 1556259111212,
+  "links": [],
+  "panels": [
+    {
+      "aliasColors": {},
+      "annotate": {
+        "enable": false
+      },
+      "bars": false,
+      "dashLength": 10,
+      "dashes": false,
+      "datasource": {
+        "uid": "gdev-influxdb1-influxql"
+      },
+      "editable": true,
+      "error": false,
+      "fill": 2,
+      "grid": {},
+      "gridPos": {
+        "h": 9,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "id": 1,
+      "interval": "$summarize",
+      "legend": {
+        "alignAsTable": true,
+        "avg": false,
+        "current": false,
+        "max": false,
+        "min": false,
+        "rightSide": true,
+        "show": true,
+        "total": false,
+        "values": false
+      },
+      "lines": true,
+      "linewidth": 1,
+      "links": [],
+      "nullPointMode": "connected",
+      "percentage": false,
+      "pointradius": 5,
+      "points": false,
+      "renderer": "flot",
+      "resolution": 100,
+      "scale": 1,
+      "seriesOverrides": [],
+      "spaceLength": 10,
+      "stack": true,
+      "steppedLine": false,
+      "targets": [
+        {
+          "alias": "$tag_hostname",
+          "datasource": {
+            "uid": "gdev-influxdb1-influxql"
+          },
+          "dsType": "influxdb",
+          "groupBy": [
+            {
+              "params": [
+                "auto"
+              ],
+              "type": "time"
+            },
+            {
+              "params": [
+                "hostname"
+              ],
+              "type": "tag"
+            }
+          ],
+          "measurement": "logins.count",
+          "policy": "default",
+          "query": "SELECT mean(\"value\") FROM \"logins.count\" WHERE \"hostname\" =~ /$Hostname$/ AND $timeFilter GROUP BY time($interval), \"hostname\"",
+          "refId": "A",
+          "resultFormat": "time_series",
+          "select": [
+            [
+              {
+                "params": [
+                  "value"
+                ],
+                "type": "field"
+              },
+              {
+                "params": [],
+                "type": "mean"
+              }
+            ]
+          ],
+          "tags": [
+            {
+              "key": "datacenter",
+              "operator": "=~",
+              "value": "/^$datacenter$/"
+            },
+            {
+              "condition": "AND",
+              "key": "hostname",
+              "operator": "=~",
+              "value": "/^$host$/"
+            }
+          ],
+          "target": ""
+        }
+      ],
+      "thresholds": [],
+      "timeFrom": null,
+      "timeRegions": [],
+      "timeShift": null,
+      "title": "Selected Servers",
+      "tooltip": {
+        "msResolution": false,
+        "query_as_alias": true,
+        "shared": false,
+        "sort": 0,
+        "value_type": "cumulative"
+      },
+      "type": "graph",
+      "xaxis": {
+        "buckets": null,
+        "mode": "time",
+        "name": null,
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "format": "short",
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        },
+        {
+          "format": "short",
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        }
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      },
+      "zerofill": true
+    }
+  ],
+  "refresh": "",
+  "schemaVersion": 41,
+  "style": "dark",
+  "tags": [
+    "gdev",
+    "datasource-test",
+    "influxdb"
+  ],
+  "templating": {
+    "list": [
+      {
+        "allValue": null,
+        "current": {
+          "text": "America",
+          "value": "America"
+        },
+        "datasource": {
+          "uid": "gdev-influxdb1-influxql"
+        },
+        "definition": "",
+        "hide": 0,
+        "includeAll": false,
+        "label": null,
+        "multi": false,
+        "name": "datacenter",
+        "options": [],
+        "query": "SHOW TAG VALUES  WITH KEY = \"datacenter\" ",
+        "refresh": 1,
+        "regex": "",
+        "skipUrlSync": false,
+        "sort": 0,
+        "type": "query"
+      },
+      {
+        "allFormat": "regex values",
+        "allValue": null,
+        "current": {
+          "text": [
+            "All"
+          ],
+          "value": [
+            "$__all"
+          ]
+        },
+        "datasource": {
+          "uid": "gdev-influxdb1-influxql"
+        },
+        "definition": "",
+        "hide": 0,
+        "includeAll": true,
+        "label": null,
+        "multi": true,
+        "multiFormat": "regex values",
+        "name": "host",
+        "options": [],
+        "query": "SHOW TAG VALUES WITH KEY = \"hostname\" WHERE \"datacenter\" =~ /^$datacenter$/",
+        "refresh": 1,
+        "refresh_on_load": false,
+        "regex": "",
+        "skipUrlSync": false,
+        "sort": 0,
+        "type": "query"
+      },
+      {
+        "allFormat": "glob",
+        "auto": true,
+        "auto_count": 5,
+        "auto_min": "10s",
+        "current": {
+          "text": "1m",
+          "value": "1m"
+        },
+        "datasource": null,
+        "hide": 0,
+        "includeAll": false,
+        "label": "",
+        "name": "summarize",
+        "options": [
+          {
+            "selected": false,
+            "text": "auto",
+            "value": "$__auto_interval_summarize"
+          },
+          {
+            "selected": true,
+            "text": "1m",
+            "value": "1m"
+          },
+          {
+            "selected": false,
+            "text": "10m",
+            "value": "10m"
+          },
+          {
+            "selected": false,
+            "text": "30m",
+            "value": "30m"
+          },
+          {
+            "selected": false,
+            "text": "1h",
+            "value": "1h"
+          },
+          {
+            "selected": false,
+            "text": "6h",
+            "value": "6h"
+          },
+          {
+            "selected": false,
+            "text": "12h",
+            "value": "12h"
+          },
+          {
+            "selected": false,
+            "text": "1d",
+            "value": "1d"
+          },
+          {
+            "selected": false,
+            "text": "7d",
+            "value": "7d"
+          },
+          {
+            "selected": false,
+            "text": "14d",
+            "value": "14d"
+          },
+          {
+            "selected": false,
+            "text": "30d",
+            "value": "30d"
+          }
+        ],
+        "query": "1m,10m,30m,1h,6h,12h,1d,7d,14d,30d",
+        "refresh": 2,
+        "refresh_on_load": false,
+        "skipUrlSync": false,
+        "type": "interval"
+      },
+      {
+        "datasource": "InfluxDB",
+        "filters": [],
+        "hide": 0,
+        "label": null,
+        "name": "adhoc",
+        "skipUrlSync": false,
+        "type": "adhoc"
+      }
+    ]
+  },
+  "time": {
+    "from": "now-1h",
+    "to": "now"
+  },
+  "timepicker": {
+    "collapse": false,
+    "enable": true,
+    "notice": false,
+    "now": true,
+    "refresh_intervals": [
+      "5s",
+      "10s",
+      "30s",
+      "1m",
+      "5m",
+      "15m",
+      "30m",
+      "1h",
+      "2h",
+      "1d"
+    ],
+    "status": "Stable",
+    "type": "timepicker"
+  },
+  "timezone": "browser",
+  "title": "Datasource tests - InfluxDB Templated",
+  "uid": "000000002",
+  "version": 2
+}

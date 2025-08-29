@@ -1,0 +1,674 @@
+{
+  "__inputs": [
+    {
+      "description": "",
+      "label": "CloudWatch",
+      "name": "DS_CLOUDWATCH",
+      "pluginId": "cloudwatch",
+      "pluginName": "CloudWatch",
+      "type": "datasource"
+    }
+  ],
+  "__requires": [
+    {
+      "id": "cloudwatch",
+      "name": "CloudWatch",
+      "type": "datasource",
+      "version": "1.0.0"
+    },
+    {
+      "id": "gauge",
+      "name": "Gauge",
+      "type": "panel",
+      "version": ""
+    },
+    {
+      "id": "grafana",
+      "name": "Grafana",
+      "type": "grafana",
+      "version": "6.7.1"
+    },
+    {
+      "id": "graph",
+      "name": "Graph",
+      "type": "panel",
+      "version": ""
+    },
+    {
+      "id": "stat",
+      "name": "Stat",
+      "type": "panel",
+      "version": ""
+    }
+  ],
+  "annotations": {
+    "list": [
+      {
+        "$$hashKey": "object:1032",
+        "builtIn": 1,
+        "datasource": {
+          "uid": "-- Grafana --"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations \u0026 Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "description": "Cluster Level Monitoring for AWS MSK (Kafka) from CloudWatch",
+  "editable": true,
+  "gnetId": 12009,
+  "graphTooltip": 0,
+  "id": null,
+  "iteration": 1585763127469,
+  "links": [],
+  "panels": [
+    {
+      "cacheTimeout": null,
+      "datasource": {
+        "uid": "${DS_CLOUDWATCH}"
+      },
+      "description": "Only one controller per cluster should be active at any given time.\n",
+      "gridPos": {
+        "h": 7,
+        "w": 11,
+        "x": 0,
+        "y": 0
+      },
+      "id": 4,
+      "links": [
+        {
+          "title": "MKS monitoring documentation",
+          "url": "https://docs.aws.amazon.com/msk/latest/developerguide/monitoring.html"
+        }
+      ],
+      "options": {
+        "colorMode": "value",
+        "fieldOptions": {
+          "calcs": [
+            "mean"
+          ],
+          "defaults": {
+            "mappings": [],
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {
+                  "color": "green",
+                  "value": null
+                },
+                {
+                  "color": "red",
+                  "value": 0
+                },
+                {
+                  "color": "green",
+                  "value": 1
+                },
+                {
+                  "color": "red",
+                  "value": 2
+                }
+              ]
+            }
+          },
+          "overrides": [],
+          "values": false
+        },
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "6.7.1",
+      "targets": [
+        {
+          "alias": "",
+          "datasource": {
+            "uid": "${DS_CLOUDWATCH}"
+          },
+          "dimensions": {
+            "Cluster Name": "$clustername"
+          },
+          "expression": "",
+          "id": "",
+          "matchExact": true,
+          "metricEditorMode": 0,
+          "metricName": "ActiveControllerCount",
+          "metricQueryType": 0,
+          "namespace": "AWS/Kafka",
+          "refId": "A",
+          "region": "$region",
+          "statistic": "Maximum"
+        }
+      ],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "Active Controller Count",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "uid": "${DS_CLOUDWATCH}"
+      },
+      "description": "Connection status of broker's ZooKeeper session which may be one of the following: \n\nNOT_CONNECTED: '0.0', \n\nASSOCIATING: '0.1', \n\nCONNECTING: '0.5', \n\nCONNECTEDREADONLY: '0.8', \n\nCONNECTED: '1.0', \n\nCLOSED: '5.0',\n\nAUTH_FAILED: '10.0'.\n",
+      "gridPos": {
+        "h": 7,
+        "w": 13,
+        "x": 11,
+        "y": 0
+      },
+      "id": 9,
+      "links": [
+        {
+          "title": "MKS monitoring documentation",
+          "url": "https://docs.aws.amazon.com/msk/latest/developerguide/monitoring.html"
+        }
+      ],
+      "options": {
+        "fieldOptions": {
+          "calcs": [
+            "mean"
+          ],
+          "defaults": {
+            "mappings": [],
+            "max": 11,
+            "min": 0,
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {
+                  "color": "green",
+                  "value": null
+                },
+                {
+                  "color": "red",
+                  "value": 0
+                },
+                {
+                  "color": "orange",
+                  "value": 0.1
+                },
+                {
+                  "color": "yellow",
+                  "value": 0.5
+                },
+                {
+                  "color": "green",
+                  "value": 1
+                },
+                {
+                  "color": "dark-red",
+                  "value": 5
+                },
+                {
+                  "color": "semi-dark-red",
+                  "value": 10
+                }
+              ]
+            },
+            "title": "",
+            "unit": "short"
+          },
+          "overrides": [],
+          "values": false
+        },
+        "orientation": "auto",
+        "showThresholdLabels": false,
+        "showThresholdMarkers": true
+      },
+      "pluginVersion": "6.7.1",
+      "targets": [
+        {
+          "alias": "",
+          "datasource": {
+            "uid": "${DS_CLOUDWATCH}"
+          },
+          "dimensions": {
+            "Cluster Name": "$clustername"
+          },
+          "expression": "",
+          "id": "",
+          "matchExact": true,
+          "metricEditorMode": 0,
+          "metricName": "ZooKeeperSessionState",
+          "metricQueryType": 0,
+          "namespace": "AWS/Kafka",
+          "refId": "A",
+          "region": "$region",
+          "statistic": "Average"
+        }
+      ],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "ZooKeeper Session State",
+      "type": "gauge"
+    },
+    {
+      "aliasColors": {},
+      "bars": false,
+      "dashLength": 10,
+      "dashes": false,
+      "datasource": {
+        "uid": "${DS_CLOUDWATCH}"
+      },
+      "fill": 1,
+      "fillGradient": 0,
+      "gridPos": {
+        "h": 9,
+        "w": 24,
+        "x": 0,
+        "y": 7
+      },
+      "hiddenSeries": false,
+      "id": 8,
+      "legend": {
+        "alignAsTable": false,
+        "avg": false,
+        "current": true,
+        "max": false,
+        "min": false,
+        "rightSide": false,
+        "show": true,
+        "total": false,
+        "values": true
+      },
+      "lines": true,
+      "linewidth": 1,
+      "nullPointMode": "null",
+      "options": {
+        "dataLinks": []
+      },
+      "percentage": false,
+      "pointradius": 2,
+      "points": false,
+      "renderer": "flot",
+      "seriesOverrides": [],
+      "spaceLength": 10,
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
+        {
+          "alias": "",
+          "datasource": {
+            "uid": "${DS_CLOUDWATCH}"
+          },
+          "dimensions": {
+            "Cluster Name": "$clustername"
+          },
+          "expression": "",
+          "id": "",
+          "matchExact": true,
+          "metricEditorMode": 0,
+          "metricName": "ZooKeeperRequestLatencyMsMean",
+          "metricQueryType": 0,
+          "namespace": "AWS/Kafka",
+          "refId": "A",
+          "region": "$region",
+          "statistic": "Average"
+        }
+      ],
+      "thresholds": [],
+      "timeFrom": null,
+      "timeRegions": [],
+      "timeShift": null,
+      "title": "ZooKeeper Request Latency MsMean",
+      "tooltip": {
+        "shared": true,
+        "sort": 0,
+        "value_type": "individual"
+      },
+      "type": "graph",
+      "xaxis": {
+        "buckets": null,
+        "mode": "time",
+        "name": null,
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "$$hashKey": "object:1304",
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        },
+        {
+          "$$hashKey": "object:1305",
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        }
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
+    },
+    {
+      "aliasColors": {},
+      "bars": false,
+      "dashLength": 10,
+      "dashes": false,
+      "datasource": {
+        "uid": "${DS_CLOUDWATCH}"
+      },
+      "fill": 1,
+      "fillGradient": 0,
+      "gridPos": {
+        "h": 7,
+        "w": 12,
+        "x": 0,
+        "y": 16
+      },
+      "hiddenSeries": false,
+      "id": 5,
+      "legend": {
+        "alignAsTable": false,
+        "avg": false,
+        "current": true,
+        "max": false,
+        "min": false,
+        "rightSide": false,
+        "show": false,
+        "total": false,
+        "values": true
+      },
+      "lines": true,
+      "linewidth": 1,
+      "nullPointMode": "null",
+      "options": {
+        "dataLinks": []
+      },
+      "percentage": false,
+      "pointradius": 2,
+      "points": false,
+      "renderer": "flot",
+      "seriesOverrides": [],
+      "spaceLength": 10,
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
+        {
+          "alias": "",
+          "datasource": {
+            "uid": "${DS_CLOUDWATCH}"
+          },
+          "dimensions": {
+            "Cluster Name": "$clustername"
+          },
+          "expression": "",
+          "id": "",
+          "matchExact": true,
+          "metricEditorMode": 0,
+          "metricName": "GlobalPartitionCount",
+          "metricQueryType": 0,
+          "namespace": "AWS/Kafka",
+          "refId": "A",
+          "region": "$region",
+          "statistic": "Average"
+        },
+        {
+          "alias": "",
+          "datasource": {
+            "uid": "${DS_CLOUDWATCH}"
+          },
+          "dimensions": {
+            "Cluster Name": "$clustername"
+          },
+          "expression": "",
+          "id": "",
+          "matchExact": true,
+          "metricEditorMode": 0,
+          "metricName": "OfflinePartitionsCount",
+          "metricQueryType": 0,
+          "namespace": "AWS/Kafka",
+          "refId": "B",
+          "region": "$region",
+          "statistic": "Average"
+        }
+      ],
+      "thresholds": [],
+      "timeFrom": null,
+      "timeRegions": [],
+      "timeShift": null,
+      "title": "Global Partition Count",
+      "tooltip": {
+        "shared": true,
+        "sort": 0,
+        "value_type": "individual"
+      },
+      "type": "graph",
+      "xaxis": {
+        "buckets": null,
+        "mode": "time",
+        "name": null,
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "$$hashKey": "object:1304",
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        },
+        {
+          "$$hashKey": "object:1305",
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        }
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
+    },
+    {
+      "aliasColors": {},
+      "bars": false,
+      "dashLength": 10,
+      "dashes": false,
+      "datasource": {
+        "uid": "${DS_CLOUDWATCH}"
+      },
+      "description": "Total number of topics across all brokers in the cluster.\n",
+      "fill": 1,
+      "fillGradient": 0,
+      "gridPos": {
+        "h": 7,
+        "w": 12,
+        "x": 12,
+        "y": 16
+      },
+      "hiddenSeries": false,
+      "id": 6,
+      "legend": {
+        "alignAsTable": true,
+        "avg": false,
+        "current": true,
+        "max": false,
+        "min": false,
+        "rightSide": true,
+        "show": false,
+        "total": false,
+        "values": true
+      },
+      "lines": true,
+      "linewidth": 1,
+      "nullPointMode": "null",
+      "options": {
+        "dataLinks": []
+      },
+      "percentage": false,
+      "pointradius": 2,
+      "points": false,
+      "renderer": "flot",
+      "seriesOverrides": [],
+      "spaceLength": 10,
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
+        {
+          "alias": "",
+          "datasource": {
+            "uid": "${DS_CLOUDWATCH}"
+          },
+          "dimensions": {
+            "Cluster Name": "$clustername"
+          },
+          "expression": "",
+          "id": "",
+          "matchExact": true,
+          "metricEditorMode": 0,
+          "metricName": "GlobalTopicCount",
+          "metricQueryType": 0,
+          "namespace": "AWS/Kafka",
+          "refId": "A",
+          "region": "$region",
+          "statistic": "Average"
+        }
+      ],
+      "thresholds": [],
+      "timeFrom": null,
+      "timeRegions": [],
+      "timeShift": null,
+      "title": "Global Topic Count",
+      "tooltip": {
+        "shared": true,
+        "sort": 0,
+        "value_type": "individual"
+      },
+      "type": "graph",
+      "xaxis": {
+        "buckets": null,
+        "mode": "time",
+        "name": null,
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "$$hashKey": "object:1304",
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        },
+        {
+          "$$hashKey": "object:1305",
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        }
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
+    }
+  ],
+  "refresh": "",
+  "schemaVersion": 41,
+  "style": "dark",
+  "tags": [
+    "AWS",
+    "Kafka",
+    "Amazon",
+    "CloudWatch"
+  ],
+  "templating": {
+    "list": [
+      {
+        "allValue": "*",
+        "current": {},
+        "datasource": {
+          "uid": "${DS_CLOUDWATCH}"
+        },
+        "definition": "regions()",
+        "hide": 0,
+        "includeAll": true,
+        "index": -1,
+        "label": "Region",
+        "multi": false,
+        "name": "region",
+        "options": [],
+        "query": "regions()",
+        "refresh": 1,
+        "regex": "",
+        "skipUrlSync": false,
+        "sort": 1,
+        "type": "query"
+      },
+      {
+        "allValue": "*",
+        "current": {},
+        "datasource": {
+          "uid": "${DS_CLOUDWATCH}"
+        },
+        "definition": "dimension_values($region,AWS/Kafka, BytesInPerSec,Cluster Name)",
+        "hide": 0,
+        "includeAll": true,
+        "index": -1,
+        "label": "Cluster Name",
+        "multi": false,
+        "name": "clustername",
+        "options": [],
+        "query": "dimension_values($region,AWS/Kafka, BytesInPerSec,Cluster Name)",
+        "refresh": 1,
+        "regex": "",
+        "skipUrlSync": false,
+        "sort": 0,
+        "type": "query"
+      }
+    ]
+  },
+  "time": {
+    "from": "now-6h",
+    "to": "now"
+  },
+  "timepicker": {
+    "refresh_intervals": [
+      "5s",
+      "10s",
+      "30s",
+      "1m",
+      "5m",
+      "15m",
+      "30m",
+      "1h",
+      "2h",
+      "1d"
+    ]
+  },
+  "timezone": "",
+  "title": "AWS Kafka Cluster",
+  "uid": "qZz6iq9Wz",
+  "variables": {
+    "list": []
+  },
+  "version": 5
+}

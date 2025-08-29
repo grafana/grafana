@@ -1,0 +1,1370 @@
+{
+  "__inputs": [
+    {
+      "description": "Grafana metadata",
+      "label": "AirFlow PostGreSQL",
+      "name": "DS_AIRFLOW_POSTGRESQL",
+      "pluginId": "postgres",
+      "pluginName": "PostgreSQL",
+      "type": "datasource"
+    }
+  ],
+  "__requires": [
+    {
+      "id": "bargauge",
+      "name": "Bar gauge",
+      "type": "panel",
+      "version": ""
+    },
+    {
+      "id": "grafana",
+      "name": "Grafana",
+      "type": "grafana",
+      "version": "7.5.6"
+    },
+    {
+      "id": "postgres",
+      "name": "PostgreSQL",
+      "type": "datasource",
+      "version": "1.0.0"
+    },
+    {
+      "id": "table-old",
+      "name": "Table (old)",
+      "type": "panel",
+      "version": ""
+    }
+  ],
+  "annotations": {
+    "list": [
+      {
+        "$$hashKey": "object:948",
+        "builtIn": 1,
+        "datasource": {
+          "uid": "-- Grafana --"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations \u0026 Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "description": "Monitor percent of conclusion, if there is some failed tasks, link to the airflow logs, status per day of each failure",
+  "editable": true,
+  "gnetId": 14448,
+  "graphTooltip": 0,
+  "id": null,
+  "iteration": 1621271677999,
+  "links": [],
+  "panels": [
+    {
+      "cacheTimeout": null,
+      "columns": [],
+      "datasource": {
+        "uid": "${DS_AIRFLOW_POSTGRESQL}"
+      },
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": []
+      },
+      "fontSize": "80%",
+      "gridPos": {
+        "h": 6,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "id": 6,
+      "links": [],
+      "pageSize": null,
+      "pluginVersion": "6.7.1",
+      "showHeader": true,
+      "sort": {
+        "col": 3,
+        "desc": true
+      },
+      "styles": [
+        {
+          "$$hashKey": "object:3032",
+          "alias": "Time",
+          "align": "auto",
+          "dateFormat": "YYYY-MM-DD HH:mm:ss",
+          "pattern": "Time",
+          "type": "date"
+        },
+        {
+          "$$hashKey": "object:3564",
+          "alias": "",
+          "align": "auto",
+          "colorMode": null,
+          "colors": [
+            "rgba(245, 54, 54, 0.9)",
+            "rgba(237, 129, 40, 0.89)",
+            "rgba(50, 172, 45, 0.97)"
+          ],
+          "dateFormat": "YYYY-MM-DD HH:mm:ss",
+          "decimals": 2,
+          "mappingType": 1,
+          "pattern": "",
+          "thresholds": [],
+          "type": "number",
+          "unit": "short"
+        },
+        {
+          "$$hashKey": "object:5629",
+          "alias": "Conclusão",
+          "align": "center",
+          "colorMode": "value",
+          "colors": [
+            "#F2CC0C",
+            "#37872D",
+            "#C4162A"
+          ],
+          "dateFormat": "YYYY-MM-DD HH:mm:ss",
+          "decimals": 2,
+          "link": true,
+          "mappingType": 2,
+          "pattern": "percentual_conclusao",
+          "rangeMaps": [
+            {
+              "$$hashKey": "object:7869",
+              "from": "0.8",
+              "text": "Atenção",
+              "to": "0.99"
+            },
+            {
+              "$$hashKey": "object:7871",
+              "from": "0.9999999",
+              "text": "Completo",
+              "to": "1"
+            },
+            {
+              "$$hashKey": "object:7873",
+              "from": "0.0",
+              "text": "Atenção",
+              "to": "0.799999"
+            }
+          ],
+          "thresholds": [
+            "1"
+          ],
+          "type": "string",
+          "unit": "none",
+          "valueMaps": [
+            {
+              "$$hashKey": "object:7590",
+              "text": "",
+              "value": ""
+            }
+          ]
+        },
+        {
+          "$$hashKey": "object:6372",
+          "alias": "Data",
+          "align": "left",
+          "colorMode": null,
+          "colors": [
+            "rgba(245, 54, 54, 0.9)",
+            "rgba(237, 129, 40, 0.89)",
+            "rgba(50, 172, 45, 0.97)"
+          ],
+          "dateFormat": "YYYY-MM-DD",
+          "decimals": 2,
+          "mappingType": 1,
+          "pattern": "start_date",
+          "thresholds": [],
+          "type": "date",
+          "unit": "short"
+        },
+        {
+          "$$hashKey": "object:8649",
+          "alias": "Nome_Dag",
+          "align": "center",
+          "colorMode": null,
+          "colors": [
+            "rgba(245, 54, 54, 0.9)",
+            "rgba(237, 129, 40, 0.89)",
+            "rgba(50, 172, 45, 0.97)"
+          ],
+          "dateFormat": "YYYY-MM-DD HH:mm:ss",
+          "decimals": 2,
+          "mappingType": 1,
+          "pattern": "dag_id",
+          "thresholds": [],
+          "type": "number",
+          "unit": "short"
+        },
+        {
+          "$$hashKey": "object:8673",
+          "alias": "Status_Dag",
+          "align": "center",
+          "colorMode": null,
+          "colors": [
+            "rgba(245, 54, 54, 0.9)",
+            "rgba(237, 129, 40, 0.89)",
+            "rgba(50, 172, 45, 0.97)"
+          ],
+          "dateFormat": "YYYY-MM-DD HH:mm:ss",
+          "decimals": 2,
+          "link": false,
+          "mappingType": 1,
+          "pattern": "state",
+          "preserveFormat": false,
+          "rangeMaps": [
+            {
+              "$$hashKey": "object:8697",
+              "from": "",
+              "text": "",
+              "to": ""
+            }
+          ],
+          "sanitize": false,
+          "thresholds": [],
+          "type": "string",
+          "unit": "short",
+          "valueMaps": []
+        },
+        {
+          "$$hashKey": "object:9002",
+          "alias": "Percentual_Conclusão",
+          "align": "center",
+          "colorMode": null,
+          "colors": [
+            "rgba(245, 54, 54, 0.9)",
+            "rgba(237, 129, 40, 0.89)",
+            "rgba(50, 172, 45, 0.97)"
+          ],
+          "dateFormat": "YYYY-MM-DD HH:mm:ss",
+          "decimals": 0,
+          "mappingType": 1,
+          "pattern": "percentual_conclusao_num",
+          "thresholds": [],
+          "type": "number",
+          "unit": "percentunit"
+        },
+        {
+          "$$hashKey": "object:9169",
+          "alias": "Total_Jobs",
+          "align": "center",
+          "colorMode": null,
+          "colors": [
+            "rgba(245, 54, 54, 0.9)",
+            "rgba(237, 129, 40, 0.89)",
+            "rgba(50, 172, 45, 0.97)"
+          ],
+          "dateFormat": "YYYY-MM-DD HH:mm:ss",
+          "decimals": 0,
+          "mappingType": 1,
+          "pattern": "total_tasks",
+          "thresholds": [],
+          "type": "string",
+          "unit": "none"
+        },
+        {
+          "$$hashKey": "object:9180",
+          "alias": "Jobs_Executando",
+          "align": "center",
+          "colorMode": null,
+          "colors": [
+            "rgba(245, 54, 54, 0.9)",
+            "#E0B400",
+            "rgba(50, 172, 45, 0.97)"
+          ],
+          "dateFormat": "YYYY-MM-DD HH:mm:ss",
+          "decimals": 0,
+          "link": false,
+          "mappingType": 1,
+          "pattern": "running",
+          "thresholds": [
+            ""
+          ],
+          "type": "number",
+          "unit": "none"
+        },
+        {
+          "$$hashKey": "object:9191",
+          "alias": "Job_Completados",
+          "align": "center",
+          "colorMode": "cell",
+          "colors": [
+            "rgba(50, 172, 45, 0.97)",
+            "#E0B400",
+            "rgba(245, 54, 54, 0.9)"
+          ],
+          "dateFormat": "YYYY-MM-DD HH:mm:ss",
+          "decimals": 0,
+          "mappingType": 1,
+          "pattern": "success",
+          "sanitize": false,
+          "thresholds": [
+            "150",
+            "200"
+          ],
+          "type": "string",
+          "unit": "none",
+          "valueMaps": [
+            {
+              "$$hashKey": "object:1561",
+              "text": "",
+              "value": ""
+            },
+            {
+              "$$hashKey": "object:1563",
+              "text": "",
+              "value": ""
+            }
+          ]
+        },
+        {
+          "$$hashKey": "object:10366",
+          "alias": "Jobs_Falhados",
+          "align": "center",
+          "colorMode": "cell",
+          "colors": [
+            "#37872D",
+            "#C4162A",
+            "rgba(50, 172, 45, 0.97)"
+          ],
+          "dateFormat": "YYYY-MM-DD HH:mm:ss",
+          "decimals": 0,
+          "link": true,
+          "mappingType": 1,
+          "pattern": "failed",
+          "thresholds": [
+            "1"
+          ],
+          "type": "number",
+          "unit": "short"
+        },
+        {
+          "$$hashKey": "object:10377",
+          "alias": "Outros_Status",
+          "align": "center",
+          "colorMode": "cell",
+          "colors": [
+            "rgba(50, 172, 45, 0.97)",
+            "#E02F44",
+            "rgba(245, 54, 54, 0.9)"
+          ],
+          "dateFormat": "YYYY-MM-DD HH:mm:ss",
+          "decimals": 0,
+          "mappingType": 1,
+          "pattern": "other_status",
+          "thresholds": [
+            "2",
+            "10"
+          ],
+          "type": "number",
+          "unit": "short"
+        },
+        {
+          "$$hashKey": "object:11447",
+          "alias": "Warning",
+          "align": "auto",
+          "colorMode": null,
+          "colors": [
+            "rgba(245, 54, 54, 0.9)",
+            "rgba(237, 129, 40, 0.89)",
+            "rgba(50, 172, 45, 0.97)"
+          ],
+          "dateFormat": "YYYY-MM-DD HH:mm:ss",
+          "decimals": 0,
+          "mappingType": 1,
+          "pattern": "waring",
+          "thresholds": [],
+          "type": "number",
+          "unit": "short"
+        },
+        {
+          "$$hashKey": "object:11458",
+          "alias": "Crítico",
+          "align": "auto",
+          "colorMode": null,
+          "colors": [
+            "rgba(245, 54, 54, 0.9)",
+            "rgba(237, 129, 40, 0.89)",
+            "rgba(50, 172, 45, 0.97)"
+          ],
+          "dateFormat": "YYYY-MM-DD HH:mm:ss",
+          "decimals": 0,
+          "mappingType": 1,
+          "pattern": "critical",
+          "thresholds": [],
+          "type": "number",
+          "unit": "short"
+        },
+        {
+          "$$hashKey": "object:4298",
+          "alias": "",
+          "align": "auto",
+          "colorMode": null,
+          "colors": [
+            "rgba(245, 54, 54, 0.9)",
+            "rgba(237, 129, 40, 0.89)",
+            "rgba(50, 172, 45, 0.97)"
+          ],
+          "dateFormat": "YYYY-MM-DD HH:mm:ss",
+          "decimals": 0,
+          "mappingType": 1,
+          "pattern": "job",
+          "thresholds": [],
+          "type": "number",
+          "unit": "short"
+        },
+        {
+          "$$hashKey": "object:3077",
+          "alias": "Status",
+          "align": "center",
+          "colorMode": "cell",
+          "colors": [
+            "rgba(245, 54, 54, 0.9)",
+            "#37872D",
+            "#C4162A"
+          ],
+          "dateFormat": "YYYY-MM-DD HH:mm:ss",
+          "decimals": 2,
+          "mappingType": 1,
+          "pattern": "failed2",
+          "preserveFormat": false,
+          "sanitize": false,
+          "thresholds": [
+            "0",
+            "1"
+          ],
+          "type": "string",
+          "unit": "short",
+          "valueMaps": [
+            {
+              "$$hashKey": "object:3098",
+              "text": "Necessita intervenção Manual",
+              "value": "1"
+            },
+            {
+              "$$hashKey": "object:3100",
+              "text": "Necessita intervenção Manual",
+              "value": "2"
+            },
+            {
+              "$$hashKey": "object:3102",
+              "text": "Necessita intervenção Manual",
+              "value": "3"
+            },
+            {
+              "$$hashKey": "object:3104",
+              "text": "Nenhum job falhado",
+              "value": "0"
+            },
+            {
+              "$$hashKey": "object:3399",
+              "text": "Necessita intervenção Manual",
+              "value": "4"
+            },
+            {
+              "$$hashKey": "object:3401",
+              "text": "Necessita intervenção Manual",
+              "value": "5"
+            }
+          ]
+        },
+        {
+          "$$hashKey": "object:1550",
+          "alias": "",
+          "align": "auto",
+          "colorMode": null,
+          "colors": [
+            "rgba(245, 54, 54, 0.9)",
+            "rgba(237, 129, 40, 0.89)",
+            "rgba(50, 172, 45, 0.97)"
+          ],
+          "dateFormat": "YYYY-MM-DD HH:mm:ss",
+          "decimals": 2,
+          "mappingType": 1,
+          "pattern": "",
+          "thresholds": [],
+          "type": "number",
+          "unit": "short"
+        },
+        {
+          "$$hashKey": "object:6361",
+          "alias": "",
+          "align": "center",
+          "colorMode": null,
+          "colors": [
+            "rgba(245, 54, 54, 0.9)",
+            "rgba(237, 129, 40, 0.89)",
+            "rgba(50, 172, 45, 0.97)"
+          ],
+          "dateFormat": "YYYY-MM-DD HH:mm:ss",
+          "decimals": 0,
+          "mappingType": 1,
+          "pattern": "/.*/",
+          "thresholds": [],
+          "type": "number",
+          "unit": "none"
+        }
+      ],
+      "targets": [
+        {
+          "datasource": {
+            "uid": "${DS_AIRFLOW_POSTGRESQL}"
+          },
+          "format": "table",
+          "group": [],
+          "hide": false,
+          "metricColumn": "none",
+          "rawQuery": true,
+          "rawSql": "with \ndags_processar as (\n\tselect * from public.dag where dag_id in ($Dags)),\ntask_avg as (\n\t-- media de duracao por task\n\tselect ti.dag_id, ti.task_id, round(avg(ti.duration)) avg_duration_seconds, count(1) total_execution_times \n\tfrom dags_processar dp \n\tinner join task_instance  ti on ti.dag_id  = dp.dag_id\n\twhere ti.execution_date  \u003e= execution_date -  interval '60 day'\n\tand   ti.state  = 'success'\n\tgroup by ti.dag_id, ti.task_id\n\torder by 1, 2),\ntmp as(\n\tselect dr.*, rank() over (partition by dr.dag_id  order by id desc) as rk from dag_run dr \n\tinner join dags_processar dp on dp.dag_id = dr.dag_id ),\ndags_last_execution as (\n\tselect * from tmp where rk = 1),\nlast_execution_tasks as (\t\n--- tasks da ultima execucao\n\tselect ti.dag_id \n\t\t  ,ti.task_id \n\t\t  ,ti.state \n\t\t  ,ti.start_date \n\t\t  ,round(EXTRACT(EPOCH FROM (coalesce(ti.end_date, current_timestamp) - ti.start_date ))) as last_duration \n\tfrom dags_last_execution dle \n\tinner join task_instance ti on dle.dag_id = ti.dag_id  and ti.execution_date  = dle.execution_date),\ntemp_last_execution_rules as (\n\tselect let.dag_id, let.task_id, let.state,\n\t\tcase when  let.last_duration\u003e 900 and let.last_duration \u003e= ta.avg_duration_seconds*1.3 and total_execution_times \u003e 10 then 'CRITICAL'\n                     when  let.last_duration\u003e 180 and let.last_duration \u003e= ta.avg_duration_seconds*1.3 and total_execution_times \u003e 10 then 'WARNING'\n\t\t     \t\telse 'OK'\n\t\tend message,\n\t\tlet.last_duration,\n\t\tta.avg_duration_seconds,\n\t\ttotal_execution_times,\n\t\tcase when  let.state = 'success' then ta.avg_duration_seconds- let.last_duration  else 0 end dif_between_avg_and_last\n\tfrom last_execution_tasks let \n\tleft join task_avg ta on let.dag_id = ta.dag_id and let.task_id = ta.task_id)\n--- ultima execuçao status das tasks\nselect ti.dag_id, \n\t   dle.execution_date +  interval '1 day' start_date , \n\t   dle.state,\n\t    sum(avg_duration_seconds)   FILTER (WHERE ti.state = 'success') / sum(avg_duration_seconds) as percentual_conclusao,\n\t   sum(avg_duration_seconds)   FILTER (WHERE ti.state = 'success') / sum(avg_duration_seconds) as percentual_conclusao_num,\n\t   count(1)    as total_tasks,\n\t   count(1)   FILTER (WHERE ti.state = 'running') as running,\n\t   count(1)   FILTER (WHERE ti.state = 'success') as success,\n\t   count(1)   FILTER (WHERE ti.state = 'failed') as failed,\n\t   count(1)   FILTER (WHERE ti.state = 'failed') as failed2,\n\t   count(1)   FILTER (WHERE ti.state not in ('failed', 'success' ,'failed' )    ) as other_status,\n\t   count(1)   filter (where ti.message = 'WARNING') as waring,\n\t   count(1)   filter (where ti.message = 'CRITICAL') as critical,\n\t   cast(avg(dif_between_avg_and_last) FILTER (WHERE ti.state = 'success')  as Integer) as speed\n\t \nfrom dags_last_execution dle \ninner join temp_last_execution_rules ti on dle.dag_id = ti.dag_id \ngroup by ti.dag_id, dle.execution_date,  dle.state",
+          "refId": "A",
+          "select": [
+            [
+              {
+                "params": [
+                  "duration"
+                ],
+                "type": "column"
+              }
+            ]
+          ],
+          "table": "task_instance",
+          "timeColumn": "execution_date",
+          "timeColumnType": "timestamp",
+          "where": [
+            {
+              "name": "$__timeFilter",
+              "params": [],
+              "type": "macro"
+            }
+          ]
+        }
+      ],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "Dags Status (Se há jobs falhados)",
+      "transform": "table",
+      "transparent": true,
+      "type": "table-old"
+    },
+    {
+      "datasource": {
+        "uid": "${DS_AIRFLOW_POSTGRESQL}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [
+            {
+              "options": {
+                "": {
+                  "text": ""
+                }
+              },
+              "type": "value"
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "semi-dark-green",
+                "value": null
+              },
+              {
+                "color": "semi-dark-yellow",
+                "value": 35
+              },
+              {
+                "color": "semi-dark-red",
+                "value": 70
+              }
+            ]
+          },
+          "unit": "percentunit"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 2,
+        "w": 24,
+        "x": 0,
+        "y": 6
+      },
+      "id": 12,
+      "options": {
+        "displayMode": "lcd",
+        "orientation": "horizontal",
+        "reduceOptions": {
+          "calcs": [
+            "last"
+          ],
+          "fields": "",
+          "values": true
+        },
+        "showUnfilled": true,
+        "text": {}
+      },
+      "pluginVersion": "7.5.6",
+      "targets": [
+        {
+          "datasource": {
+            "uid": "${DS_AIRFLOW_POSTGRESQL}"
+          },
+          "format": "table",
+          "group": [],
+          "hide": false,
+          "metricColumn": "none",
+          "rawQuery": true,
+          "rawSql": "with \r\ndags_processar as (\r\n\tselect * from public.dag where dag_id in ($Dags)),\r\ntask_avg as (\r\n\t-- media de duracao por task\r\n\tselect ti.dag_id, ti.task_id, round(avg(ti.duration)) avg_duration_seconds, count(1) total_execution_times \r\n\tfrom dags_processar dp \r\n\tinner join task_instance  ti on ti.dag_id  = dp.dag_id\r\n\twhere ti.execution_date  \u003e= execution_date -  interval '60 day'\r\n\tand   ti.state  = 'success'\r\n\tgroup by ti.dag_id, ti.task_id\r\n\torder by 1, 2),\r\ntmp as(\r\n\tselect dr.*, rank() over (partition by dr.dag_id  order by id desc) as rk from dag_run dr \r\n\tinner join dags_processar dp on dp.dag_id = dr.dag_id ),\r\ndags_last_execution as (\r\n\tselect * from tmp where rk = 1),\r\nlast_execution_tasks as (\t\r\n--- tasks da ultima execucao\r\n\tselect ti.dag_id \r\n\t\t  ,ti.task_id \r\n\t\t  ,ti.state \r\n\t\t  ,ti.start_date \r\n\t\t  ,round(EXTRACT(EPOCH FROM (coalesce(ti.end_date, current_timestamp) - ti.start_date ))) as last_duration \r\n\tfrom dags_last_execution dle \r\n\tinner join task_instance ti on dle.dag_id = ti.dag_id  and ti.execution_date  = dle.execution_date),\r\ntemp_last_execution_rules as (\r\n\tselect let.dag_id, let.task_id, let.state,\r\n\t\tcase when  let.last_duration\u003e 900 and let.last_duration \u003e= ta.avg_duration_seconds*1.3 and total_execution_times \u003e 10 then 'CRITICAL'\r\n                     when  let.last_duration\u003e 180 and let.last_duration \u003e= ta.avg_duration_seconds*1.3 and total_execution_times \u003e 10 then 'WARNING'\r\n\t\t     \t\telse 'OK'\r\n\t\tend message,\r\n\t\tlet.last_duration,\r\n\t\tta.avg_duration_seconds,\r\n\t\ttotal_execution_times,\r\n\t\tcase when  let.state = 'success' then ta.avg_duration_seconds- let.last_duration  else 0 end dif_between_avg_and_last\r\n\tfrom last_execution_tasks let \r\n\tleft join task_avg ta on let.dag_id = ta.dag_id and let.task_id = ta.task_id)\r\n--- ultima execuçao status das tasks\r\nselect ti.dag_id, \r\n\t    sum(avg_duration_seconds)   FILTER (WHERE ti.state = 'success') / sum(avg_duration_seconds) as Percentual\r\n\t    --  sum(avg_duration_seconds)   FILTER (WHERE ti.state = 'success') / sum(avg_duration_seconds) as percentual_conclusao_num\r\nfrom dags_last_execution dle \r\ninner join temp_last_execution_rules ti on dle.dag_id = ti.dag_id \r\ngroup by ti.dag_id, dle.execution_date,  dle.state",
+          "refId": "A",
+          "select": [
+            [
+              {
+                "params": [
+                  "duration"
+                ],
+                "type": "column"
+              }
+            ]
+          ],
+          "table": "task_instance",
+          "timeColumn": "execution_date",
+          "timeColumnType": "timestamp",
+          "where": [
+            {
+              "name": "$__timeFilter",
+              "params": [],
+              "type": "macro"
+            }
+          ]
+        }
+      ],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "Percentual de conclusão",
+      "type": "bargauge"
+    },
+    {
+      "columns": [],
+      "datasource": {
+        "uid": "${DS_AIRFLOW_POSTGRESQL}"
+      },
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": []
+      },
+      "fontSize": "80%",
+      "gridPos": {
+        "h": 5,
+        "w": 24,
+        "x": 0,
+        "y": 8
+      },
+      "id": 10,
+      "pageSize": 3,
+      "showHeader": true,
+      "sort": {
+        "col": 5,
+        "desc": true
+      },
+      "styles": [
+        {
+          "$$hashKey": "object:77723",
+          "alias": "Time",
+          "align": "auto",
+          "dateFormat": "YYYY-MM-DD HH:mm:ss",
+          "pattern": "Time",
+          "type": "date"
+        },
+        {
+          "$$hashKey": "object:77821",
+          "alias": "Start",
+          "align": "center",
+          "colorMode": null,
+          "colors": [
+            "rgba(245, 54, 54, 0.9)",
+            "rgba(237, 129, 40, 0.89)",
+            "rgba(50, 172, 45, 0.97)"
+          ],
+          "dateFormat": "YYYY-MM-DD HH:mm:ss",
+          "decimals": 2,
+          "mappingType": 1,
+          "pattern": "start",
+          "thresholds": [],
+          "type": "date",
+          "unit": "short"
+        },
+        {
+          "$$hashKey": "object:77832",
+          "alias": "End",
+          "align": "center",
+          "colorMode": null,
+          "colors": [
+            "rgba(245, 54, 54, 0.9)",
+            "rgba(237, 129, 40, 0.89)",
+            "rgba(50, 172, 45, 0.97)"
+          ],
+          "dateFormat": "YYYY-MM-DD HH:mm:ss",
+          "decimals": 2,
+          "mappingType": 1,
+          "pattern": "end",
+          "thresholds": [],
+          "type": "date",
+          "unit": "short"
+        },
+        {
+          "$$hashKey": "object:77843",
+          "alias": "",
+          "align": "center",
+          "colorMode": null,
+          "colors": [
+            "rgba(245, 54, 54, 0.9)",
+            "rgba(237, 129, 40, 0.89)",
+            "rgba(50, 172, 45, 0.97)"
+          ],
+          "dateFormat": "YYYY-MM-DD HH:mm:ss",
+          "decimals": 0,
+          "mappingType": 1,
+          "pattern": "duration",
+          "sanitize": false,
+          "thresholds": [],
+          "type": "string",
+          "unit": "short",
+          "valueMaps": []
+        },
+        {
+          "$$hashKey": "object:77889",
+          "alias": "",
+          "align": "auto",
+          "colorMode": null,
+          "colors": [
+            "rgba(245, 54, 54, 0.9)",
+            "rgba(237, 129, 40, 0.89)",
+            "rgba(50, 172, 45, 0.97)"
+          ],
+          "dateFormat": "HH:mm:ss",
+          "decimals": 2,
+          "mappingType": 1,
+          "pattern": "avg",
+          "thresholds": [],
+          "type": "date",
+          "unit": "short"
+        },
+        {
+          "$$hashKey": "object:765",
+          "alias": "Alerta Dag Demorada",
+          "align": "center",
+          "colorMode": "cell",
+          "colors": [
+            "#37872D",
+            "#F2CC0C",
+            "#C4162A"
+          ],
+          "dateFormat": "YYYY-MM-DD HH:mm:ss",
+          "decimals": 0,
+          "link": false,
+          "mappingType": 2,
+          "pattern": "avg2",
+          "rangeMaps": [
+            {
+              "$$hashKey": "object:801",
+              "from": "0",
+              "text": "",
+              "to": "6"
+            }
+          ],
+          "sanitize": false,
+          "thresholds": [
+            "600",
+            "700"
+          ],
+          "type": "number",
+          "unit": "short"
+        },
+        {
+          "$$hashKey": "object:77724",
+          "alias": "",
+          "align": "right",
+          "colorMode": null,
+          "colors": [
+            "rgba(245, 54, 54, 0.9)",
+            "rgba(237, 129, 40, 0.89)",
+            "rgba(50, 172, 45, 0.97)"
+          ],
+          "decimals": 2,
+          "pattern": "/.*/",
+          "thresholds": [],
+          "type": "number",
+          "unit": "short"
+        }
+      ],
+      "targets": [
+        {
+          "datasource": {
+            "uid": "${DS_AIRFLOW_POSTGRESQL}"
+          },
+          "format": "table",
+          "group": [],
+          "hide": false,
+          "metricColumn": "none",
+          "rawQuery": true,
+          "rawSql": " SELECT   dag_id\r\n       ,  MIN(start_date) AS START\r\n       ,  MAX(end_date) AS end\r\n       ,  MAX(end_date) -  MIN(start_date) AS duration\r\n       ,  AVG(duration)\r\n       ,  AVG(duration) as avg2\r\n    FROM  task_instance\r\nWHERE  \r\n  dag_id in ($Dags)\r\n     AND  state = 'success'\r\n     GROUP BY  execution_date, dag_id\r\n",
+          "refId": "A",
+          "select": [
+            [
+              {
+                "params": [
+                  "duration"
+                ],
+                "type": "column"
+              }
+            ]
+          ],
+          "table": "task_instance",
+          "timeColumn": "execution_date",
+          "timeColumnType": "timestamp",
+          "where": [
+            {
+              "name": "$__timeFilter",
+              "params": [],
+              "type": "macro"
+            }
+          ]
+        }
+      ],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "Duração das Execuções por dia",
+      "transform": "table",
+      "transparent": true,
+      "type": "table-old"
+    },
+    {
+      "cacheTimeout": null,
+      "columns": [],
+      "datasource": {
+        "uid": "${DS_AIRFLOW_POSTGRESQL}"
+      },
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": []
+      },
+      "fontSize": "80%",
+      "gridPos": {
+        "h": 5,
+        "w": 24,
+        "x": 0,
+        "y": 13
+      },
+      "id": 4,
+      "links": [],
+      "pageSize": 4,
+      "pluginVersion": "6.7.1",
+      "showHeader": true,
+      "sort": {
+        "col": 2,
+        "desc": false
+      },
+      "styles": [
+        {
+          "$$hashKey": "object:472",
+          "alias": "Time",
+          "align": "auto",
+          "dateFormat": "YYYY-MM-DD HH:mm:ss",
+          "pattern": "Time",
+          "type": "date"
+        },
+        {
+          "$$hashKey": "object:1625",
+          "alias": "",
+          "align": "",
+          "colorMode": "value",
+          "colors": [
+            "rgba(50, 172, 45, 0.97)",
+            "#C4162A",
+            "rgba(245, 54, 54, 0.9)"
+          ],
+          "dateFormat": "YYYY-MM-DD HH:mm:ss",
+          "decimals": 2,
+          "link": true,
+          "mappingType": 2,
+          "pattern": "last_duration",
+          "preserveFormat": true,
+          "rangeMaps": [
+            {
+              "$$hashKey": "object:4504",
+              "from": "0",
+              "text": "OK",
+              "to": "179"
+            },
+            {
+              "$$hashKey": "object:4506",
+              "from": "180",
+              "text": "WARNING",
+              "to": "899"
+            },
+            {
+              "$$hashKey": "object:4508",
+              "from": "900",
+              "text": "CRITICAL",
+              "to": "100000000000"
+            }
+          ],
+          "sanitize": true,
+          "thresholds": [
+            "900"
+          ],
+          "type": "string",
+          "unit": "short"
+        },
+        {
+          "$$hashKey": "object:4884",
+          "alias": "",
+          "align": "auto",
+          "colorMode": null,
+          "colors": [
+            "rgba(245, 54, 54, 0.9)",
+            "rgba(237, 129, 40, 0.89)",
+            "rgba(50, 172, 45, 0.97)"
+          ],
+          "dateFormat": "YYYY-MM-DD HH:mm:ss",
+          "decimals": 2,
+          "mappingType": 1,
+          "pattern": "state",
+          "thresholds": [],
+          "type": "string",
+          "unit": "short",
+          "valueMaps": [
+            {
+              "$$hashKey": "object:4905",
+              "text": "running",
+              "value": "sucess"
+            },
+            {
+              "$$hashKey": "object:4910",
+              "text": "",
+              "value": ""
+            }
+          ]
+        },
+        {
+          "$$hashKey": "object:473",
+          "alias": "",
+          "align": "center",
+          "colorMode": null,
+          "colors": [
+            "rgba(245, 54, 54, 0.9)",
+            "rgba(237, 129, 40, 0.89)",
+            "rgba(50, 172, 45, 0.97)"
+          ],
+          "decimals": 0,
+          "pattern": "/.*/",
+          "thresholds": [],
+          "type": "number",
+          "unit": "short"
+        }
+      ],
+      "targets": [
+        {
+          "datasource": {
+            "uid": "${DS_AIRFLOW_POSTGRESQL}"
+          },
+          "format": "table",
+          "group": [],
+          "hide": false,
+          "metricColumn": "none",
+          "rawQuery": true,
+          "rawSql": "\r\nwith \r\ndags_processar as (\r\n\tselect * from public.dag\r\n\twhere dag_id  in ($Dags)),\r\ntask_avg as (\r\n\t-- media de duracao por task\r\n\tselect ti.dag_id, ti.task_id, round(avg(ti.duration)) avg_duration_seconds, count(1) total_execution_times \r\n\tfrom dags_processar dp \r\n\tinner join task_instance  ti on ti.dag_id  = dp.dag_id\r\n\twhere ti.execution_date  \u003e= execution_date -  interval '7 day'\r\n\tand   ti.state  = 'success'\r\n\tgroup by ti.dag_id, ti.task_id\r\n\torder by 1, 2),\r\ntmp as(\r\n\tselect dr.*, rank() over (partition by dr.dag_id  order by id desc) as rk from dag_run dr \r\n\tinner join dags_processar dp on dp.dag_id = dr.dag_id ),\r\ndags_last_execution as (\r\n\tselect * from tmp where rk = 1),\r\nlast_execution_tasks as (\t\r\n--- tasks da ultima execucao\r\n\tselect ti.dag_id \r\n\t\t  ,ti.task_id \r\n\t\t  ,ti.state \r\n\t\t  ,ti.start_date \r\n\t\t  ,round(EXTRACT(EPOCH FROM (coalesce(ti.end_date, current_timestamp) - ti.start_date ))) as last_duration \r\n\tfrom dags_last_execution dle \r\n\tinner join task_instance ti on dle.dag_id = ti.dag_id  and ti.execution_date  = dle.execution_date),\r\ntemp_last_execution_rules as (\r\n\tselect let.dag_id, let.task_id, let.state,\r\n\t\t--case when  let.last_duration\u003e 900 and let.last_duration \u003e= ta.avg_duration_seconds*1.3 and total_execution_times \u003e 10 then 'CRITICAL' \r\n\t--\t\t when  let.last_duration\u003e 180 and let.last_duration \u003e= ta.avg_duration_seconds*1.3 and total_execution_times \u003e 10 then 'WARNING'\r\n\t--\telse 'OK'\r\n\t--\tend message,\r\n\t\tlet.last_duration,\r\n\t\tta.avg_duration_seconds,\r\n\t\ttotal_execution_times,\r\n\t\tcase when  let.state = 'success' then ta.avg_duration_seconds- let.last_duration  else 0 end dif_between_avg_and_last\r\n\tfrom last_execution_tasks let \r\n\tleft join task_avg ta on let.dag_id = ta.dag_id and let.task_id = ta.task_id)\r\n--- ultima execuçao status das tasks\r\nselect * from temp_last_execution_rules\r\nwhere dag_id in ($Dags) and state = 'running'",
+          "refId": "A",
+          "select": [
+            [
+              {
+                "params": [
+                  "duration"
+                ],
+                "type": "column"
+              }
+            ]
+          ],
+          "table": "task_instance",
+          "timeColumn": "execution_date",
+          "timeColumnType": "timestamp",
+          "where": [
+            {
+              "name": "$__timeFilter",
+              "params": [],
+              "type": "macro"
+            }
+          ]
+        }
+      ],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "Tasks",
+      "transform": "table",
+      "transparent": true,
+      "type": "table-old"
+    },
+    {
+      "columns": [],
+      "datasource": {
+        "uid": "${DS_AIRFLOW_POSTGRESQL}"
+      },
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": []
+      },
+      "fontSize": "80%",
+      "gridPos": {
+        "h": 5,
+        "w": 24,
+        "x": 0,
+        "y": 18
+      },
+      "id": 2,
+      "links": [
+        {
+          "title": "",
+          "url": ""
+        }
+      ],
+      "pageSize": 5,
+      "showHeader": true,
+      "sort": {
+        "col": 1,
+        "desc": true
+      },
+      "styles": [
+        {
+          "$$hashKey": "object:1077",
+          "alias": "Time",
+          "align": "auto",
+          "dateFormat": "YYYY-MM-DD HH:mm:ss",
+          "pattern": "Time",
+          "type": "date"
+        },
+        {
+          "$$hashKey": "object:1078",
+          "alias": "",
+          "align": "right",
+          "colorMode": null,
+          "colors": [
+            "rgba(245, 54, 54, 0.9)",
+            "rgba(237, 129, 40, 0.89)",
+            "rgba(50, 172, 45, 0.97)"
+          ],
+          "decimals": 2,
+          "link": true,
+          "linkTargetBlank": true,
+          "linkTooltip": "",
+          "linkUrl": "${__cell:task_id}",
+          "pattern": "log",
+          "thresholds": [],
+          "type": "number",
+          "unit": "short"
+        },
+        {
+          "$$hashKey": "object:6734",
+          "alias": "",
+          "align": "center",
+          "colorMode": "value",
+          "colors": [
+            "rgba(50, 172, 45, 0.97)",
+            "#C4162A",
+            "#FF9830"
+          ],
+          "dateFormat": "YYYY-MM-DD HH:mm:ss",
+          "decimals": 2,
+          "link": false,
+          "mappingType": 2,
+          "pattern": "status_job",
+          "preserveFormat": false,
+          "rangeMaps": [
+            {
+              "$$hashKey": "object:6837",
+              "from": "1",
+              "text": "FAILED",
+              "to": "1"
+            }
+          ],
+          "sanitize": false,
+          "thresholds": [
+            "1"
+          ],
+          "type": "string",
+          "unit": "short",
+          "valueMaps": [
+            {
+              "$$hashKey": "object:6759",
+              "text": "failed",
+              "value": "failed"
+            }
+          ]
+        }
+      ],
+      "targets": [
+        {
+          "datasource": {
+            "uid": "${DS_AIRFLOW_POSTGRESQL}"
+          },
+          "format": "table",
+          "group": [],
+          "hide": false,
+          "metricColumn": "none",
+          "rawQuery": true,
+          "rawSql": "SELECT \r\n dr.dag_id as NOME_DAG\r\n,LEFT(RIGHT(dr.run_id,25),10)  AS DATA\r\n,LEFT(RIGHT(dr.run_id,14),8)  AS HORARIO\r\n,ti.task_id as NOME_TASK_AIRFLOW\r\n--,ti.state as STATUS_JOB\r\n,case when ti.state = 'failed' then 1 else 0 end STATUS_JOB\r\n,concat('http://airflow.service.consul:8080/admin/taskinstance/?flt0_task_id_contains=' ) as log\r\nFROM dag_run as dr\r\nINNER JOIN\r\n(\r\n    SELECT dag_id, task_id, state, execution_date\r\n    FROM task_instance\r\n    WHERE state = 'failed'  and execution_date \u003e now() - interval '7 day' and dag_id in ($Dags)\r\n  ) as ti\r\nON dr.dag_id = ti.dag_id AND dr.execution_date = ti.execution_date\r\norder by dr.dag_id, dr.execution_date\r\n",
+          "refId": "A",
+          "select": [
+            [
+              {
+                "params": [
+                  "duration"
+                ],
+                "type": "column"
+              }
+            ]
+          ],
+          "table": "task_instance",
+          "timeColumn": "execution_date",
+          "timeColumnType": "timestamp",
+          "where": [
+            {
+              "name": "$__timeFilter",
+              "params": [],
+              "type": "macro"
+            }
+          ]
+        }
+      ],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "Jobs falhados",
+      "transform": "table",
+      "transparent": true,
+      "type": "table-old"
+    },
+    {
+      "columns": [],
+      "datasource": {
+        "uid": "${DS_AIRFLOW_POSTGRESQL}"
+      },
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": []
+      },
+      "fontSize": "80%",
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 23
+      },
+      "id": 8,
+      "pageSize": 1000,
+      "showHeader": true,
+      "sort": {
+        "col": 0,
+        "desc": true
+      },
+      "styles": [
+        {
+          "$$hashKey": "object:73841",
+          "alias": "Time",
+          "align": "auto",
+          "dateFormat": "YYYY-MM-DD HH:mm:ss",
+          "pattern": "Time",
+          "type": "date"
+        },
+        {
+          "$$hashKey": "object:73960",
+          "alias": "",
+          "align": "auto",
+          "colorMode": null,
+          "colors": [
+            "rgba(245, 54, 54, 0.9)",
+            "rgba(237, 129, 40, 0.89)",
+            "rgba(50, 172, 45, 0.97)"
+          ],
+          "dateFormat": "YYYY-MM-DD HH:mm:ss",
+          "decimals": 2,
+          "mappingType": 1,
+          "pattern": "start",
+          "thresholds": [],
+          "type": "date",
+          "unit": "short"
+        },
+        {
+          "$$hashKey": "object:73973",
+          "alias": "",
+          "align": "auto",
+          "colorMode": null,
+          "colors": [
+            "rgba(245, 54, 54, 0.9)",
+            "rgba(237, 129, 40, 0.89)",
+            "rgba(50, 172, 45, 0.97)"
+          ],
+          "dateFormat": "YYYY-MM-DD HH:mm:ss",
+          "decimals": 2,
+          "mappingType": 1,
+          "pattern": "end",
+          "thresholds": [],
+          "type": "date",
+          "unit": "short"
+        },
+        {
+          "$$hashKey": "object:73986",
+          "alias": "",
+          "align": "left",
+          "colorMode": null,
+          "colors": [
+            "rgba(245, 54, 54, 0.9)",
+            "rgba(237, 129, 40, 0.89)",
+            "rgba(50, 172, 45, 0.97)"
+          ],
+          "dateFormat": "YYYY-MM-DD HH:mm:ss",
+          "decimals": 0,
+          "link": false,
+          "mappingType": 1,
+          "pattern": "duration",
+          "preserveFormat": false,
+          "sanitize": false,
+          "thresholds": [],
+          "type": "number",
+          "unit": "none",
+          "valueMaps": [
+            {
+              "$$hashKey": "object:74022",
+              "text": "",
+              "value": ""
+            }
+          ]
+        },
+        {
+          "$$hashKey": "object:74528",
+          "alias": "",
+          "align": "auto",
+          "colorMode": null,
+          "colors": [
+            "rgba(245, 54, 54, 0.9)",
+            "rgba(237, 129, 40, 0.89)",
+            "rgba(50, 172, 45, 0.97)"
+          ],
+          "dateFormat": "YYYY-MM-DD HH:mm:ss",
+          "decimals": 2,
+          "mappingType": 1,
+          "pattern": "execution_date",
+          "thresholds": [],
+          "type": "date",
+          "unit": "short"
+        },
+        {
+          "$$hashKey": "object:73842",
+          "alias": "",
+          "align": "center",
+          "colorMode": null,
+          "colors": [
+            "rgba(245, 54, 54, 0.9)",
+            "rgba(237, 129, 40, 0.89)",
+            "rgba(50, 172, 45, 0.97)"
+          ],
+          "decimals": 2,
+          "pattern": "/.*/",
+          "thresholds": [],
+          "type": "number",
+          "unit": "short"
+        }
+      ],
+      "targets": [
+        {
+          "datasource": {
+            "uid": "${DS_AIRFLOW_POSTGRESQL}"
+          },
+          "format": "table",
+          "group": [],
+          "hide": false,
+          "metricColumn": "none",
+          "rawQuery": true,
+          "rawSql": " SELECT  execution_date\r\n      , task_id\r\n       ,  MIN(start_date) AS start\r\n       ,  MAX(end_date) AS end\r\n       ,  MAX(end_date) - MIN(start_date) AS duration\r\n    FROM  task_instance\r\n   WHERE  dag_id in ($Dags)\r\n     AND  state = 'success'\r\nGROUP BY  execution_date, TASK_ID\r\nORDER BY  execution_date DESC",
+          "refId": "A",
+          "select": [
+            [
+              {
+                "params": [
+                  "duration"
+                ],
+                "type": "column"
+              }
+            ]
+          ],
+          "table": "task_instance",
+          "timeColumn": "execution_date",
+          "timeColumnType": "timestamp",
+          "where": [
+            {
+              "name": "$__timeFilter",
+              "params": [],
+              "type": "macro"
+            }
+          ]
+        }
+      ],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "Duração de cada job",
+      "transform": "table",
+      "transparent": true,
+      "type": "table-old"
+    }
+  ],
+  "refresh": "",
+  "schemaVersion": 41,
+  "style": "dark",
+  "tags": [],
+  "templating": {
+    "list": [
+      {
+        "allValue": null,
+        "current": {},
+        "datasource": {
+          "uid": "${DS_AIRFLOW_POSTGRESQL}"
+        },
+        "definition": "select dag_id from public.dag ",
+        "description": null,
+        "error": null,
+        "hide": 0,
+        "includeAll": true,
+        "label": "Pesquisar por Dags",
+        "multi": true,
+        "name": "Dags",
+        "options": [],
+        "query": "select dag_id from public.dag ",
+        "refresh": 1,
+        "regex": "",
+        "skipUrlSync": false,
+        "sort": 1,
+        "type": "query"
+      }
+    ]
+  },
+  "time": {
+    "from": "now-6h",
+    "to": "now"
+  },
+  "timepicker": {
+    "refresh_intervals": [
+      "5s",
+      "10s",
+      "30s",
+      "1m",
+      "5m",
+      "15m",
+      "30m",
+      "1h",
+      "2h",
+      "1d"
+    ]
+  },
+  "timezone": "",
+  "title": "Airflow monitoring",
+  "uid": "e9JMc2CZz",
+  "version": 2
+}

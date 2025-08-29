@@ -1,0 +1,2593 @@
+{
+  "__inputs": [],
+  "__requires": [
+    {
+      "id": "gauge",
+      "name": "Gauge",
+      "type": "panel",
+      "version": ""
+    },
+    {
+      "id": "grafana",
+      "name": "Grafana",
+      "type": "grafana",
+      "version": "7.2.0"
+    },
+    {
+      "id": "grafana-piechart-panel",
+      "name": "Pie Chart",
+      "type": "panel",
+      "version": "1.6.1"
+    },
+    {
+      "id": "graph",
+      "name": "Graph",
+      "type": "panel",
+      "version": ""
+    },
+    {
+      "id": "heatmap",
+      "name": "Heatmap",
+      "type": "panel",
+      "version": ""
+    },
+    {
+      "id": "prometheus",
+      "name": "Prometheus",
+      "type": "datasource",
+      "version": "1.0.0"
+    }
+  ],
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "uid": "-- Grafana --"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations \u0026 Alerts",
+        "type": "dashboard"
+      },
+      {
+        "datasource": {
+          "uid": "-- Grafana --"
+        },
+        "enable": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "iconSize": 0,
+        "lineColor": "",
+        "name": "Annotations \u0026 Alerts",
+        "query": "",
+        "showLine": false,
+        "tags": null,
+        "tagsField": "",
+        "textField": "",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "description": "Dashboard of Keycloak metrics exported with Keycloak Metrics SPI\r\n\r\nhttps://github.com/aerogear/keycloak-metrics-spi",
+  "editable": true,
+  "gnetId": 10441,
+  "graphTooltip": 1,
+  "id": null,
+  "iteration": 1624395370240,
+  "links": [],
+  "panels": [
+    {
+      "CustomPanel": {
+        "cacheTimeout": null,
+        "datasource": "$Datasource",
+        "description": "Memory currently being used by Keycloak.",
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "thresholds"
+            },
+            "custom": {},
+            "mappings": [],
+            "max": 100,
+            "min": 0,
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {
+                  "color": "green",
+                  "value": null
+                },
+                {
+                  "color": "#EAB839",
+                  "value": 80
+                },
+                {
+                  "color": "red",
+                  "value": 90
+                }
+              ]
+            },
+            "unit": "percent"
+          },
+          "overrides": []
+        },
+        "gridPos": {
+          "h": 7,
+          "w": 6,
+          "x": 0,
+          "y": 0
+        },
+        "hideTimeOverride": false,
+        "id": 5,
+        "links": [],
+        "options": {
+          "orientation": "auto",
+          "reduceOptions": {
+            "calcs": [
+              "mean"
+            ],
+            "fields": "",
+            "values": false
+          },
+          "showThresholdLabels": false,
+          "showThresholdMarkers": true
+        },
+        "pluginVersion": "7.2.0",
+        "targets": [
+          {
+            "expr": "sum(jvm_memory_bytes_used{instance=\"$instance\", area=\"heap\"})*100/sum(jvm_memory_bytes_max{instance=\"$instance\", area=\"heap\"})\n",
+            "format": "time_series",
+            "hide": false,
+            "instant": false,
+            "intervalFactor": 1,
+            "legendFormat": "",
+            "refId": "B"
+          }
+        ],
+        "timeFrom": null,
+        "timeShift": null,
+        "title": "Current Memory HEAP",
+        "type": "gauge"
+      },
+      "datasource": {
+        "uid": "$Datasource"
+      },
+      "editable": false,
+      "error": false,
+      "fieldConfig": {
+        "defaults": {
+          "custom": {},
+          "mappings": [],
+          "thresholds": {
+            "mode": "percentage",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "#EAB839",
+                "value": 80
+              },
+              {
+                "color": "red",
+                "value": 90
+              }
+            ]
+          },
+          "unit": "percent"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 6,
+        "x": 0,
+        "y": 0
+      },
+      "hideTimeOverride": false,
+      "id": 5,
+      "isNew": false,
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "mean"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showThresholdLabels": false,
+        "showThresholdMarkers": true
+      },
+      "pluginVersion": "7.2.0",
+      "span": 0,
+      "targets": [
+        {
+          "datasource": {
+            "uid": "$Datasource"
+          },
+          "expr": "sum(jvm_memory_bytes_used{kubernetes_pod_name=\"$instance\", area=\"heap\"})*100/sum(jvm_memory_bytes_max{kubernetes_pod_name=\"$instance\", area=\"heap\"})",
+          "interval": "",
+          "legendFormat": "",
+          "refId": "A"
+        }
+      ],
+      "title": "Current Memory HEAP",
+      "type": "gauge"
+    },
+    {
+      "CustomPanel": {
+        "cacheTimeout": null,
+        "datasource": "$Datasource",
+        "description": "Memory currently being used by Keycloak.",
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "thresholds"
+            },
+            "custom": {},
+            "mappings": [],
+            "max": 100,
+            "min": 0,
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {
+                  "color": "green",
+                  "value": null
+                },
+                {
+                  "color": "#EAB839",
+                  "value": 80
+                },
+                {
+                  "color": "red",
+                  "value": 90
+                }
+              ]
+            },
+            "unit": "percent"
+          },
+          "overrides": []
+        },
+        "gridPos": {
+          "h": 7,
+          "w": 6,
+          "x": 6,
+          "y": 0
+        },
+        "hideTimeOverride": false,
+        "id": 23,
+        "links": [],
+        "options": {
+          "orientation": "auto",
+          "reduceOptions": {
+            "calcs": [
+              "mean"
+            ],
+            "fields": "",
+            "values": false
+          },
+          "showThresholdLabels": false,
+          "showThresholdMarkers": true
+        },
+        "pluginVersion": "7.2.0",
+        "targets": [
+          {
+            "expr": "sum(jvm_memory_bytes_used{instance=\"$instance\", area=\"nonheap\"})*100/sum(jvm_memory_bytes_max{instance=\"$instance\", area=\"nonheap\"})",
+            "format": "time_series",
+            "hide": false,
+            "instant": false,
+            "intervalFactor": 1,
+            "legendFormat": "",
+            "refId": "B"
+          }
+        ],
+        "timeFrom": null,
+        "title": "Current Memory nonHEAP",
+        "type": "gauge"
+      },
+      "datasource": {
+        "uid": "$Datasource"
+      },
+      "editable": false,
+      "error": false,
+      "fieldConfig": {
+        "defaults": {
+          "custom": {},
+          "mappings": [],
+          "thresholds": {
+            "mode": "percentage",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "#EAB839",
+                "value": 80
+              },
+              {
+                "color": "red",
+                "value": 90
+              }
+            ]
+          },
+          "unit": "percent"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 6,
+        "x": 6,
+        "y": 0
+      },
+      "hideTimeOverride": false,
+      "id": 23,
+      "isNew": false,
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "mean"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showThresholdLabels": false,
+        "showThresholdMarkers": true
+      },
+      "pluginVersion": "7.2.0",
+      "span": 0,
+      "targets": [
+        {
+          "datasource": {
+            "uid": "$Datasource"
+          },
+          "expr": "sum(jvm_memory_bytes_used{kubernetes_pod_name=\"$instance\", area=\"nonheap\"})*100/sum(jvm_memory_bytes_max{kubernetes_pod_name=\"$instance\", area=\"nonheap\"})",
+          "interval": "",
+          "legendFormat": "",
+          "refId": "A"
+        }
+      ],
+      "title": "Current Memory nonHEAP",
+      "type": "gauge"
+    },
+    {
+      "aliasColors": {},
+      "bars": false,
+      "dashLength": 10,
+      "dashes": false,
+      "datasource": {
+        "uid": "$Datasource"
+      },
+      "editable": false,
+      "error": false,
+      "fieldConfig": {
+        "defaults": {
+          "custom": {}
+        },
+        "overrides": []
+      },
+      "fill": 2,
+      "fillGradient": 0,
+      "gridPos": {
+        "h": 7,
+        "w": 12,
+        "x": 12,
+        "y": 0
+      },
+      "hiddenSeries": false,
+      "hideTimeOverride": false,
+      "id": 12,
+      "isNew": false,
+      "legend": {
+        "alignAsTable": false,
+        "avg": false,
+        "current": false,
+        "hideEmpty": false,
+        "hideZero": false,
+        "max": false,
+        "min": false,
+        "rightSide": true,
+        "show": true,
+        "sideWidth": 70,
+        "total": false,
+        "values": false
+      },
+      "lines": true,
+      "linewidth": 1,
+      "nullPointMode": "connected",
+      "options": {
+        "alertThreshold": true
+      },
+      "percentage": false,
+      "pluginVersion": "7.2.0",
+      "pointradius": 5,
+      "points": false,
+      "renderer": "flot",
+      "seriesOverrides": [],
+      "spaceLength": 10,
+      "span": 0,
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
+        {
+          "datasource": {
+            "uid": "$Datasource"
+          },
+          "expr": "sum(jvm_memory_bytes_max{kubernetes_pod_name=\"$instance\"})",
+          "format": "time_series",
+          "interval": "",
+          "intervalFactor": 1,
+          "legendFormat": "Max",
+          "refId": "A"
+        },
+        {
+          "datasource": {
+            "uid": "$Datasource"
+          },
+          "expr": "sum(jvm_memory_bytes_committed{kubernetes_pod_name=\"$instance\"})",
+          "format": "time_series",
+          "interval": "",
+          "intervalFactor": 1,
+          "legendFormat": "Comitted",
+          "refId": "C"
+        },
+        {
+          "datasource": {
+            "uid": "$Datasource"
+          },
+          "expr": "sum(jvm_memory_bytes_used{kubernetes_pod_name=\"$instance\"})",
+          "format": "time_series",
+          "interval": "",
+          "intervalFactor": 1,
+          "legendFormat": "Used",
+          "refId": "B"
+        }
+      ],
+      "thresholds": [],
+      "timeFrom": null,
+      "timeRegions": [],
+      "timeShift": null,
+      "title": "Memory Usage",
+      "tooltip": {
+        "shared": true,
+        "sort": 0,
+        "value_type": "individual"
+      },
+      "type": "graph",
+      "xaxis": {
+        "buckets": null,
+        "format": "",
+        "logBase": 0,
+        "mode": "time",
+        "name": null,
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "format": "bytes",
+          "logBase": 1,
+          "min": 0,
+          "show": true
+        },
+        {
+          "format": "short",
+          "logBase": 1,
+          "show": false
+        }
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
+    },
+    {
+      "CustomPanel": {
+        "aliasColors": {},
+        "breakPoint": "50%",
+        "cacheTimeout": null,
+        "combine": {
+          "label": "Others",
+          "threshold": 0
+        },
+        "datasource": "$Datasource",
+        "fieldConfig": {
+          "defaults": {
+            "custom": {}
+          },
+          "overrides": []
+        },
+        "fontSize": "80%",
+        "format": "none",
+        "gridPos": {
+          "h": 7,
+          "w": 6,
+          "x": 0,
+          "y": 7
+        },
+        "hideTimeOverride": true,
+        "id": 16,
+        "interval": null,
+        "legend": {
+          "percentage": true,
+          "percentageDecimals": 0,
+          "show": true,
+          "values": false
+        },
+        "legendType": "Right side",
+        "links": [],
+        "maxDataPoints": 3,
+        "nullPointMode": "connected",
+        "pieType": "donut",
+        "strokeWidth": "",
+        "targets": [
+          {
+            "expr": "sum(keycloak_logins) by (realm)",
+            "format": "time_series",
+            "intervalFactor": 1,
+            "legendFormat": "{{realm}}",
+            "refId": "B"
+          }
+        ],
+        "timeFrom": null,
+        "title": "Logins Per REALM",
+        "type": "grafana-piechart-panel",
+        "valueName": "current"
+      },
+      "aliasColors": {},
+      "breakPoint": "50%",
+      "cacheTimeout": null,
+      "combine": {
+        "label": "Others",
+        "threshold": 0
+      },
+      "datasource": {
+        "uid": "$Datasource"
+      },
+      "editable": false,
+      "error": false,
+      "fieldConfig": {
+        "defaults": {
+          "custom": {}
+        },
+        "overrides": []
+      },
+      "fontSize": "80%",
+      "format": "short",
+      "gridPos": {
+        "h": 7,
+        "w": 6,
+        "x": 0,
+        "y": 7
+      },
+      "hideTimeOverride": true,
+      "id": 16,
+      "interval": null,
+      "isNew": false,
+      "legend": {
+        "percentage": true,
+        "show": true,
+        "values": false
+      },
+      "legendType": "Right side",
+      "links": [],
+      "nullPointMode": "connected",
+      "pieType": "pie",
+      "span": 0,
+      "strokeWidth": 1,
+      "targets": [
+        {
+          "datasource": {
+            "uid": "$Datasource"
+          },
+          "expr": "sum by (realm)(increase(keycloak_logins[24h]))",
+          "interval": "",
+          "legendFormat": "{{realm}}",
+          "refId": "A"
+        }
+      ],
+      "title": "Logins Per REALM for past 24h",
+      "type": "grafana-piechart-panel",
+      "valueName": "current"
+    },
+    {
+      "aliasColors": {},
+      "breakPoint": "50%",
+      "cacheTimeout": null,
+      "combine": {
+        "label": "Others",
+        "threshold": 0
+      },
+      "datasource": {
+        "uid": "$Datasource"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {}
+        },
+        "overrides": []
+      },
+      "fontSize": "80%",
+      "format": "short",
+      "gridPos": {
+        "h": 7,
+        "w": 6,
+        "x": 6,
+        "y": 7
+      },
+      "id": 44,
+      "interval": null,
+      "legend": {
+        "percentage": true,
+        "show": true,
+        "values": false
+      },
+      "legendType": "Right side",
+      "links": [],
+      "nullPointMode": "connected",
+      "pieType": "pie",
+      "pluginVersion": "7.2.0",
+      "strokeWidth": 1,
+      "targets": [
+        {
+          "datasource": {
+            "uid": "$Datasource"
+          },
+          "expr": "sum by (realm)(increase(keycloak_registrations[24h]))",
+          "interval": "",
+          "legendFormat": "{{realm}}",
+          "refId": "A"
+        }
+      ],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "Registrations Per REALM for past 24h",
+      "type": "grafana-piechart-panel",
+      "valueName": "current"
+    },
+    {
+      "CustomPanel": {
+        "aliasColors": {},
+        "breakPoint": "50%",
+        "cacheTimeout": null,
+        "combine": {
+          "label": "Others",
+          "threshold": 0
+        },
+        "datasource": "$Datasource",
+        "fieldConfig": {
+          "defaults": {
+            "custom": {}
+          },
+          "overrides": []
+        },
+        "fontSize": "80%",
+        "format": "none",
+        "gridPos": {
+          "h": 7,
+          "w": 12,
+          "x": 6,
+          "y": 7
+        },
+        "hideTimeOverride": true,
+        "id": 20,
+        "interval": null,
+        "legend": {
+          "percentage": true,
+          "percentageDecimals": 0,
+          "show": true,
+          "values": false
+        },
+        "legendType": "Right side",
+        "links": [],
+        "maxDataPoints": 3,
+        "nullPointMode": "connected",
+        "pieType": "donut",
+        "strokeWidth": "",
+        "targets": [
+          {
+            "expr": "sum(keycloak_logins) by (client_id)",
+            "format": "time_series",
+            "intervalFactor": 1,
+            "legendFormat": "{{client_id}}",
+            "refId": "B"
+          }
+        ],
+        "timeFrom": null,
+        "title": "Logins Per CLIENT",
+        "type": "grafana-piechart-panel",
+        "valueName": "current"
+      },
+      "aliasColors": {},
+      "breakPoint": "50%",
+      "cacheTimeout": null,
+      "combine": {
+        "label": "Others",
+        "threshold": 0
+      },
+      "datasource": {
+        "uid": "$Datasource"
+      },
+      "editable": false,
+      "error": false,
+      "fieldConfig": {
+        "defaults": {
+          "custom": {}
+        },
+        "overrides": []
+      },
+      "fontSize": "80%",
+      "format": "short",
+      "gridPos": {
+        "h": 7,
+        "w": 6,
+        "x": 12,
+        "y": 7
+      },
+      "hideTimeOverride": true,
+      "id": 20,
+      "interval": null,
+      "isNew": false,
+      "legend": {
+        "percentage": true,
+        "show": true,
+        "values": false
+      },
+      "legendType": "Right side",
+      "links": [],
+      "nullPointMode": "connected",
+      "pieType": "pie",
+      "span": 0,
+      "strokeWidth": 1,
+      "targets": [
+        {
+          "datasource": {
+            "uid": "$Datasource"
+          },
+          "expr": "sum by (client_id)(increase(keycloak_logins[24h]))",
+          "interval": "",
+          "legendFormat": "{{client_id}}",
+          "refId": "A"
+        }
+      ],
+      "title": "Logins Per CLIENT for past 24h",
+      "type": "grafana-piechart-panel",
+      "valueName": "current"
+    },
+    {
+      "CustomPanel": {
+        "aliasColors": {},
+        "breakPoint": "50%",
+        "cacheTimeout": null,
+        "combine": {
+          "label": "Others",
+          "threshold": 0
+        },
+        "datasource": "$Datasource",
+        "fieldConfig": {
+          "defaults": {
+            "custom": {}
+          },
+          "overrides": []
+        },
+        "fontSize": "80%",
+        "format": "none",
+        "gridPos": {
+          "h": 7,
+          "w": 6,
+          "x": 18,
+          "y": 7
+        },
+        "hideTimeOverride": true,
+        "id": 17,
+        "interval": null,
+        "legend": {
+          "percentage": true,
+          "percentageDecimals": 0,
+          "show": true,
+          "values": false
+        },
+        "legendType": "Under graph",
+        "links": [],
+        "maxDataPoints": 3,
+        "nullPointMode": "connected",
+        "pieType": "donut",
+        "strokeWidth": "",
+        "targets": [
+          {
+            "expr": "sum(keycloak_registrations) by (client_id)",
+            "format": "time_series",
+            "hide": false,
+            "instant": false,
+            "intervalFactor": 1,
+            "legendFormat": "{{client_id}}",
+            "refId": "A"
+          }
+        ],
+        "timeFrom": null,
+        "title": "Registrations Per CLIENT",
+        "type": "grafana-piechart-panel",
+        "valueName": "current"
+      },
+      "aliasColors": {},
+      "breakPoint": "50%",
+      "cacheTimeout": null,
+      "combine": {
+        "label": "Others",
+        "threshold": 0
+      },
+      "datasource": {
+        "uid": "$Datasource"
+      },
+      "editable": false,
+      "error": false,
+      "fieldConfig": {
+        "defaults": {
+          "custom": {}
+        },
+        "overrides": []
+      },
+      "fontSize": "80%",
+      "format": "short",
+      "gridPos": {
+        "h": 7,
+        "w": 6,
+        "x": 18,
+        "y": 7
+      },
+      "hideTimeOverride": true,
+      "id": 17,
+      "interval": null,
+      "isNew": false,
+      "legend": {
+        "percentage": true,
+        "show": true,
+        "values": false
+      },
+      "legendType": "Right side",
+      "links": [],
+      "nullPointMode": "connected",
+      "pieType": "pie",
+      "span": 0,
+      "strokeWidth": 1,
+      "targets": [
+        {
+          "datasource": {
+            "uid": "$Datasource"
+          },
+          "expr": "sum by (client_id)(increase(keycloak_registrations[24h]))",
+          "interval": "",
+          "legendFormat": "{{client_id}}",
+          "refId": "A"
+        }
+      ],
+      "title": "Registrations Per CLIENT for past 24h",
+      "type": "grafana-piechart-panel",
+      "valueName": "current"
+    },
+    {
+      "aliasColors": {},
+      "bars": false,
+      "dashLength": 10,
+      "dashes": false,
+      "datasource": {
+        "uid": "$Datasource"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {}
+        },
+        "overrides": []
+      },
+      "fill": 1,
+      "fillGradient": 0,
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 6,
+        "y": 14
+      },
+      "hiddenSeries": false,
+      "id": 46,
+      "legend": {
+        "avg": false,
+        "current": false,
+        "max": false,
+        "min": false,
+        "show": true,
+        "total": false,
+        "values": false
+      },
+      "lines": true,
+      "linewidth": 1,
+      "nullPointMode": "null",
+      "options": {
+        "alertThreshold": true
+      },
+      "percentage": false,
+      "pluginVersion": "7.2.0",
+      "pointradius": 2,
+      "points": false,
+      "renderer": "flot",
+      "seriesOverrides": [],
+      "spaceLength": 10,
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
+        {
+          "datasource": {
+            "uid": "$Datasource"
+          },
+          "expr": "sum by (code)(increase(keycloak_response_errors[30m]))",
+          "interval": "",
+          "legendFormat": "{{code}}",
+          "refId": "A"
+        }
+      ],
+      "thresholds": [],
+      "timeFrom": null,
+      "timeRegions": [],
+      "timeShift": null,
+      "title": "4xx and 5xx Responses",
+      "tooltip": {
+        "shared": true,
+        "sort": 0,
+        "value_type": "individual"
+      },
+      "type": "graph",
+      "xaxis": {
+        "buckets": null,
+        "mode": "time",
+        "name": null,
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "$$hashKey": "object:98",
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        },
+        {
+          "$$hashKey": "object:99",
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        }
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
+    },
+    {
+      "aliasColors": {},
+      "bars": false,
+      "dashLength": 10,
+      "dashes": false,
+      "datasource": {
+        "uid": "$Datasource"
+      },
+      "editable": false,
+      "error": false,
+      "fieldConfig": {
+        "defaults": {
+          "custom": {}
+        },
+        "overrides": []
+      },
+      "fill": 1,
+      "fillGradient": 0,
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 22
+      },
+      "hiddenSeries": false,
+      "hideTimeOverride": false,
+      "id": 1,
+      "isNew": false,
+      "legend": {
+        "alignAsTable": true,
+        "avg": false,
+        "current": false,
+        "hideEmpty": false,
+        "hideZero": false,
+        "max": false,
+        "min": false,
+        "rightSide": true,
+        "show": true,
+        "sideWidth": 100,
+        "total": false,
+        "values": false
+      },
+      "lines": true,
+      "linewidth": 1,
+      "nullPointMode": "connected",
+      "options": {
+        "alertThreshold": true
+      },
+      "percentage": false,
+      "pluginVersion": "7.2.0",
+      "pointradius": 5,
+      "points": false,
+      "renderer": "flot",
+      "seriesOverrides": [],
+      "spaceLength": 10,
+      "span": 0,
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
+        {
+          "datasource": {
+            "uid": "$Datasource"
+          },
+          "expr": "sum by (realm)(increase(keycloak_logins[30m]))",
+          "format": "time_series",
+          "interval": "",
+          "intervalFactor": 1,
+          "legendFormat": "{{realm}}",
+          "refId": "A"
+        }
+      ],
+      "thresholds": [],
+      "timeFrom": null,
+      "timeRegions": [],
+      "timeShift": null,
+      "title": "Logins per REALM",
+      "tooltip": {
+        "shared": true,
+        "sort": 0,
+        "value_type": "individual"
+      },
+      "type": "graph",
+      "xaxis": {
+        "buckets": null,
+        "format": "",
+        "logBase": 0,
+        "mode": "time",
+        "name": null,
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "$$hashKey": "object:160",
+          "format": "none",
+          "logBase": 1,
+          "min": 0,
+          "show": true
+        },
+        {
+          "$$hashKey": "object:161",
+          "format": "short",
+          "logBase": 1,
+          "show": false
+        }
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
+    },
+    {
+      "aliasColors": {},
+      "bars": false,
+      "dashLength": 10,
+      "dashes": false,
+      "datasource": {
+        "uid": "$Datasource"
+      },
+      "editable": false,
+      "error": false,
+      "fieldConfig": {
+        "defaults": {
+          "custom": {}
+        },
+        "overrides": []
+      },
+      "fill": 1,
+      "fillGradient": 0,
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 22
+      },
+      "hiddenSeries": false,
+      "hideTimeOverride": false,
+      "id": 7,
+      "isNew": false,
+      "legend": {
+        "alignAsTable": true,
+        "avg": false,
+        "current": true,
+        "hideEmpty": false,
+        "hideZero": true,
+        "max": false,
+        "min": false,
+        "rightSide": true,
+        "show": true,
+        "total": false,
+        "values": true
+      },
+      "lines": true,
+      "linewidth": 1,
+      "nullPointMode": "connected",
+      "options": {
+        "alertThreshold": true
+      },
+      "percentage": false,
+      "pluginVersion": "7.2.0",
+      "pointradius": 5,
+      "points": false,
+      "renderer": "flot",
+      "seriesOverrides": [],
+      "spaceLength": 10,
+      "span": 0,
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
+        {
+          "datasource": {
+            "uid": "$Datasource"
+          },
+          "expr": "sum by (error) (increase(keycloak_failed_login_attempts{provider=\"keycloak\",realm=\"$realm\"}[30m]))",
+          "format": "time_series",
+          "interval": "",
+          "intervalFactor": 1,
+          "legendFormat": "{{$realm }} {{error}}",
+          "refId": "A"
+        },
+        {
+          "datasource": {
+            "uid": "$Datasource"
+          },
+          "expr": "sum by (realm) (increase(keycloak_failed_login_attempts{provider=\"keycloak\",realm=\"dialog-test\"} [30m]))",
+          "interval": "",
+          "legendFormat": "{{sum by $realm}}",
+          "refId": "B"
+        }
+      ],
+      "thresholds": [],
+      "timeFrom": null,
+      "timeRegions": [],
+      "timeShift": null,
+      "title": "Login Errors on realm $realm",
+      "tooltip": {
+        "shared": true,
+        "sort": 0,
+        "value_type": "individual"
+      },
+      "type": "graph",
+      "xaxis": {
+        "buckets": null,
+        "format": "",
+        "logBase": 0,
+        "mode": "time",
+        "name": null,
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "format": "none",
+          "logBase": 1,
+          "min": 0,
+          "show": true
+        },
+        {
+          "format": "short",
+          "logBase": 1,
+          "show": false
+        }
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
+    },
+    {
+      "aliasColors": {},
+      "bars": false,
+      "dashLength": 10,
+      "dashes": false,
+      "datasource": {
+        "uid": "$Datasource"
+      },
+      "editable": false,
+      "error": false,
+      "fieldConfig": {
+        "defaults": {
+          "custom": {}
+        },
+        "overrides": []
+      },
+      "fill": 1,
+      "fillGradient": 0,
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 30
+      },
+      "hiddenSeries": false,
+      "hideTimeOverride": false,
+      "id": 18,
+      "isNew": false,
+      "legend": {
+        "alignAsTable": true,
+        "avg": false,
+        "current": false,
+        "hideEmpty": false,
+        "hideZero": false,
+        "max": false,
+        "min": false,
+        "rightSide": true,
+        "show": true,
+        "sideWidth": 100,
+        "total": false,
+        "values": false
+      },
+      "lines": true,
+      "linewidth": 1,
+      "nullPointMode": "connected",
+      "options": {
+        "alertThreshold": true
+      },
+      "percentage": false,
+      "pluginVersion": "7.2.0",
+      "pointradius": 5,
+      "points": false,
+      "renderer": "flot",
+      "seriesOverrides": [],
+      "spaceLength": 10,
+      "span": 0,
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
+        {
+          "datasource": {
+            "uid": "$Datasource"
+          },
+          "expr": "sum by (client_id)(increase(keycloak_logins{realm=\"$realm\",provider=\"keycloak\"}[30m]))",
+          "format": "time_series",
+          "interval": "",
+          "intervalFactor": 2,
+          "legendFormat": "{{client_id}}",
+          "refId": "A"
+        }
+      ],
+      "thresholds": [],
+      "timeFrom": null,
+      "timeRegions": [],
+      "timeShift": null,
+      "title": "Logins per CLIENT on realm $realm",
+      "tooltip": {
+        "shared": true,
+        "sort": 0,
+        "value_type": "individual"
+      },
+      "type": "graph",
+      "xaxis": {
+        "buckets": null,
+        "format": "",
+        "logBase": 0,
+        "mode": "time",
+        "name": null,
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "format": "none",
+          "logBase": 1,
+          "min": 0,
+          "show": true
+        },
+        {
+          "format": "short",
+          "logBase": 1,
+          "show": false
+        }
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
+    },
+    {
+      "aliasColors": {},
+      "bars": false,
+      "dashLength": 10,
+      "dashes": false,
+      "datasource": {
+        "uid": "$Datasource"
+      },
+      "editable": false,
+      "error": false,
+      "fieldConfig": {
+        "defaults": {
+          "custom": {}
+        },
+        "overrides": []
+      },
+      "fill": 1,
+      "fillGradient": 0,
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 30
+      },
+      "hiddenSeries": false,
+      "hideTimeOverride": false,
+      "id": 21,
+      "isNew": false,
+      "legend": {
+        "alignAsTable": true,
+        "avg": false,
+        "current": false,
+        "hideEmpty": false,
+        "hideZero": false,
+        "max": false,
+        "min": false,
+        "rightSide": true,
+        "show": true,
+        "total": false,
+        "values": false
+      },
+      "lines": true,
+      "linewidth": 1,
+      "nullPointMode": "null",
+      "options": {
+        "alertThreshold": false
+      },
+      "percentage": false,
+      "pluginVersion": "7.2.0",
+      "pointradius": 5,
+      "points": false,
+      "renderer": "flot",
+      "seriesOverrides": [],
+      "spaceLength": 10,
+      "span": 0,
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
+        {
+          "datasource": {
+            "uid": "$Datasource"
+          },
+          "expr": "sum by (realm) (increase(keycloak_registrations_errors{provider=\"keycloak\",realm=\"$realm\"} [30m]))",
+          "format": "time_series",
+          "interval": "",
+          "intervalFactor": 2,
+          "legendFormat": "Sum by {{realm}}",
+          "refId": "A"
+        },
+        {
+          "datasource": {
+            "uid": "$Datasource"
+          },
+          "expr": "sum by (error) (increase(keycloak_registrations_errors{provider=\"keycloak\",realm=\"$realm\"} [30m]))",
+          "interval": "",
+          "legendFormat": "{{error}}",
+          "refId": "B"
+        }
+      ],
+      "thresholds": [],
+      "timeFrom": null,
+      "timeRegions": [],
+      "timeShift": null,
+      "title": "Registration Errors on realm $realm",
+      "tooltip": {
+        "shared": true,
+        "sort": 0,
+        "value_type": "individual"
+      },
+      "type": "graph",
+      "xaxis": {
+        "buckets": null,
+        "format": "",
+        "logBase": 0,
+        "mode": "time",
+        "name": null,
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "format": "short",
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        },
+        {
+          "format": "short",
+          "logBase": 1,
+          "show": true
+        }
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
+    },
+    {
+      "aliasColors": {},
+      "bars": false,
+      "dashLength": 10,
+      "dashes": false,
+      "datasource": {
+        "uid": "$Datasource"
+      },
+      "editable": false,
+      "error": false,
+      "fieldConfig": {
+        "defaults": {
+          "custom": {}
+        },
+        "overrides": []
+      },
+      "fill": 1,
+      "fillGradient": 0,
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 38
+      },
+      "hiddenSeries": false,
+      "hideTimeOverride": false,
+      "id": 33,
+      "isNew": false,
+      "legend": {
+        "alignAsTable": true,
+        "avg": false,
+        "current": false,
+        "hideEmpty": false,
+        "hideZero": false,
+        "max": false,
+        "min": false,
+        "rightSide": true,
+        "show": true,
+        "sideWidth": 100,
+        "total": false,
+        "values": false
+      },
+      "lines": true,
+      "linewidth": 1,
+      "nullPointMode": "null",
+      "options": {
+        "alertThreshold": false
+      },
+      "percentage": false,
+      "pluginVersion": "7.2.0",
+      "pointradius": 5,
+      "points": false,
+      "renderer": "flot",
+      "seriesOverrides": [],
+      "spaceLength": 10,
+      "span": 0,
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
+        {
+          "datasource": {
+            "uid": "$Datasource"
+          },
+          "expr": "sum by (realm)(increase(keycloak_registrations[30m]))",
+          "format": "time_series",
+          "interval": "",
+          "intervalFactor": 1,
+          "legendFormat": "{{realm}}",
+          "refId": "A"
+        }
+      ],
+      "thresholds": [],
+      "timeFrom": null,
+      "timeRegions": [],
+      "timeShift": null,
+      "title": "Registrations per REALM",
+      "tooltip": {
+        "shared": true,
+        "sort": 0,
+        "value_type": "individual"
+      },
+      "type": "graph",
+      "xaxis": {
+        "buckets": null,
+        "format": "",
+        "logBase": 0,
+        "mode": "time",
+        "name": null,
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "format": "short",
+          "label": "",
+          "logBase": 1,
+          "min": 0,
+          "show": true
+        },
+        {
+          "format": "short",
+          "logBase": 1,
+          "show": false
+        }
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
+    },
+    {
+      "aliasColors": {},
+      "bars": false,
+      "dashLength": 10,
+      "dashes": false,
+      "datasource": {
+        "uid": "$Datasource"
+      },
+      "editable": false,
+      "error": false,
+      "fieldConfig": {
+        "defaults": {
+          "custom": {}
+        },
+        "overrides": []
+      },
+      "fill": 1,
+      "fillGradient": 0,
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 38
+      },
+      "hiddenSeries": false,
+      "hideTimeOverride": false,
+      "id": 19,
+      "isNew": false,
+      "legend": {
+        "alignAsTable": true,
+        "avg": false,
+        "current": true,
+        "hideEmpty": false,
+        "hideZero": false,
+        "max": false,
+        "min": false,
+        "rightSide": true,
+        "show": true,
+        "total": false,
+        "values": true
+      },
+      "lines": true,
+      "linewidth": 1,
+      "nullPointMode": "connected",
+      "options": {
+        "alertThreshold": true
+      },
+      "percentage": false,
+      "pluginVersion": "7.2.0",
+      "pointradius": 5,
+      "points": false,
+      "renderer": "flot",
+      "seriesOverrides": [],
+      "spaceLength": 10,
+      "span": 0,
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
+        {
+          "datasource": {
+            "uid": "$Datasource"
+          },
+          "expr": "sum by (error) (increase(keycloak_failed_login_attempts{provider=\"keycloak\",realm=\"$realm\",client_id=\"$ClientId\"}[30m]))",
+          "format": "time_series",
+          "interval": "",
+          "intervalFactor": 2,
+          "legendFormat": "{{error}}",
+          "refId": "A"
+        }
+      ],
+      "thresholds": [],
+      "timeFrom": null,
+      "timeRegions": [],
+      "timeShift": null,
+      "title": "Login Errors for $ClientId",
+      "tooltip": {
+        "shared": true,
+        "sort": 0,
+        "value_type": "individual"
+      },
+      "type": "graph",
+      "xaxis": {
+        "buckets": null,
+        "format": "",
+        "logBase": 0,
+        "mode": "time",
+        "name": null,
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "format": "none",
+          "logBase": 1,
+          "min": 0,
+          "show": true
+        },
+        {
+          "format": "short",
+          "logBase": 1,
+          "show": false
+        }
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
+    },
+    {
+      "aliasColors": {},
+      "bars": false,
+      "dashLength": 10,
+      "dashes": false,
+      "datasource": {
+        "uid": "$Datasource"
+      },
+      "editable": false,
+      "error": false,
+      "fieldConfig": {
+        "defaults": {
+          "custom": {}
+        },
+        "overrides": []
+      },
+      "fill": 1,
+      "fillGradient": 0,
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 46
+      },
+      "hiddenSeries": false,
+      "hideTimeOverride": false,
+      "id": 22,
+      "isNew": false,
+      "legend": {
+        "alignAsTable": true,
+        "avg": false,
+        "current": false,
+        "hideEmpty": false,
+        "hideZero": false,
+        "max": false,
+        "min": false,
+        "rightSide": true,
+        "show": true,
+        "sideWidth": 100,
+        "total": false,
+        "values": false
+      },
+      "lines": true,
+      "linewidth": 1,
+      "nullPointMode": "connected",
+      "options": {
+        "alertThreshold": true
+      },
+      "percentage": false,
+      "pluginVersion": "7.2.0",
+      "pointradius": 5,
+      "points": false,
+      "renderer": "flot",
+      "seriesOverrides": [],
+      "spaceLength": 10,
+      "span": 0,
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
+        {
+          "datasource": {
+            "uid": "$Datasource"
+          },
+          "expr": "sum by (client_id)(increase(keycloak_registrations{realm=\"$realm\",provider=\"keycloak\"}[30m]))",
+          "format": "time_series",
+          "interval": "",
+          "intervalFactor": 2,
+          "legendFormat": "{{client_id}}",
+          "refId": "A"
+        },
+        {
+          "datasource": {
+            "uid": "$Datasource"
+          },
+          "expr": "sum by (realm)(increase(keycloak_registrations{provider=\"keycloak\",realm=\"$realm\"} [30m]))",
+          "interval": "",
+          "legendFormat": "Sum by {{realm}}",
+          "refId": "B"
+        }
+      ],
+      "thresholds": [],
+      "timeFrom": null,
+      "timeRegions": [],
+      "timeShift": null,
+      "title": "Registrations per CLIENT on relm $realm",
+      "tooltip": {
+        "shared": true,
+        "sort": 0,
+        "value_type": "individual"
+      },
+      "type": "graph",
+      "xaxis": {
+        "buckets": null,
+        "format": "",
+        "logBase": 0,
+        "mode": "time",
+        "name": null,
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "format": "none",
+          "logBase": 1,
+          "min": 0,
+          "show": true
+        },
+        {
+          "format": "short",
+          "logBase": 1,
+          "show": false
+        }
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
+    },
+    {
+      "aliasColors": {},
+      "bars": false,
+      "dashLength": 10,
+      "dashes": false,
+      "datasource": {
+        "uid": "$Datasource"
+      },
+      "editable": false,
+      "error": false,
+      "fieldConfig": {
+        "defaults": {
+          "custom": {}
+        },
+        "overrides": []
+      },
+      "fill": 1,
+      "fillGradient": 0,
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 46
+      },
+      "hiddenSeries": false,
+      "hideTimeOverride": false,
+      "id": 34,
+      "isNew": false,
+      "legend": {
+        "alignAsTable": true,
+        "avg": false,
+        "current": true,
+        "hideEmpty": false,
+        "hideZero": false,
+        "max": false,
+        "min": false,
+        "rightSide": true,
+        "show": true,
+        "total": false,
+        "values": true
+      },
+      "lines": true,
+      "linewidth": 1,
+      "nullPointMode": "connected",
+      "options": {
+        "alertThreshold": true
+      },
+      "percentage": false,
+      "pluginVersion": "7.2.0",
+      "pointradius": 5,
+      "points": false,
+      "renderer": "flot",
+      "seriesOverrides": [],
+      "spaceLength": 10,
+      "span": 0,
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
+        {
+          "datasource": {
+            "uid": "$Datasource"
+          },
+          "expr": "sum by (error) (increase(keycloak_registrations_errors{provider=\"keycloak\",realm=\"$realm\",client_id=\"$ClientId\"}[30m]))",
+          "format": "time_series",
+          "interval": "",
+          "intervalFactor": 2,
+          "legendFormat": "{{error}}",
+          "refId": "A"
+        }
+      ],
+      "thresholds": [],
+      "timeFrom": null,
+      "timeRegions": [],
+      "timeShift": null,
+      "title": "Registration Errors for $ClientId",
+      "tooltip": {
+        "shared": true,
+        "sort": 0,
+        "value_type": "individual"
+      },
+      "type": "graph",
+      "xaxis": {
+        "buckets": null,
+        "format": "",
+        "logBase": 0,
+        "mode": "time",
+        "name": null,
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "format": "none",
+          "logBase": 1,
+          "min": 0,
+          "show": true
+        },
+        {
+          "format": "short",
+          "logBase": 1,
+          "show": false
+        }
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
+    },
+    {
+      "cards": {
+        "cardPadding": null,
+        "cardRound": null
+      },
+      "color": {
+        "cardColor": "#73BF69",
+        "colorScale": "sqrt",
+        "colorScheme": "interpolateGreens",
+        "exponent": 0.4,
+        "min": null,
+        "mode": "opacity"
+      },
+      "dataFormat": "tsbuckets",
+      "datasource": {
+        "uid": "$Datasource"
+      },
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "custom": {}
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 54
+      },
+      "heatmap": {},
+      "hideTimeOverride": false,
+      "hideZeroBuckets": true,
+      "highlightCards": true,
+      "id": 35,
+      "legend": {
+        "show": true
+      },
+      "pluginVersion": "7.2.0",
+      "reverseYBuckets": false,
+      "targets": [
+        {
+          "datasource": {
+            "uid": "$Datasource"
+          },
+          "expr": "sum(increase(keycloak_request_duration_bucket{method=\"GET\"}[30m])) by (le)",
+          "format": "heatmap",
+          "interval": "",
+          "intervalFactor": 4,
+          "legendFormat": "{{ le }}",
+          "refId": "A"
+        }
+      ],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "Request duration method = \"GET\" Heatmap",
+      "tooltip": {
+        "show": true,
+        "showHistogram": false
+      },
+      "type": "heatmap",
+      "xAxis": {
+        "show": true
+      },
+      "xBucketNumber": null,
+      "xBucketSize": null,
+      "yAxis": {
+        "decimals": null,
+        "format": "ms",
+        "logBase": 1,
+        "max": null,
+        "min": null,
+        "show": true,
+        "splitFactor": null
+      },
+      "yBucketBound": "auto",
+      "yBucketNumber": null,
+      "yBucketSize": null
+    },
+    {
+      "datasource": {
+        "uid": "$Datasource"
+      },
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "custom": {},
+          "mappings": [],
+          "thresholds": {
+            "mode": "percentage",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              },
+              {
+                "color": "#EAB839",
+                "value": 90
+              },
+              {
+                "color": "green",
+                "value": 98
+              }
+            ]
+          },
+          "unit": "percent"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 54
+      },
+      "hideTimeOverride": false,
+      "id": 39,
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "mean"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showThresholdLabels": false,
+        "showThresholdMarkers": true
+      },
+      "pluginVersion": "7.2.0",
+      "targets": [
+        {
+          "datasource": {
+            "uid": "$Datasource"
+          },
+          "expr": "sum(rate(keycloak_request_duration_bucket{method=\"GET\", le=\"100.0\"}[30m])) / sum(rate(keycloak_request_duration_count{method=\"GET\"}[30m])) * 100",
+          "format": "time_series",
+          "interval": "",
+          "intervalFactor": 2,
+          "legendFormat": "",
+          "refId": "A"
+        }
+      ],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "Percentage of requests \"GET\"  method  was served in 100ms or below",
+      "type": "gauge"
+    },
+    {
+      "cards": {
+        "cardPadding": null,
+        "cardRound": null
+      },
+      "color": {
+        "cardColor": "#73BF69",
+        "colorScale": "sqrt",
+        "colorScheme": "interpolateGreens",
+        "exponent": 0.4,
+        "min": null,
+        "mode": "opacity"
+      },
+      "dataFormat": "tsbuckets",
+      "datasource": {
+        "uid": "$Datasource"
+      },
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "custom": {}
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 62
+      },
+      "heatmap": {},
+      "hideTimeOverride": false,
+      "hideZeroBuckets": true,
+      "highlightCards": true,
+      "id": 36,
+      "legend": {
+        "show": true
+      },
+      "pluginVersion": "7.2.0",
+      "reverseYBuckets": false,
+      "targets": [
+        {
+          "datasource": {
+            "uid": "$Datasource"
+          },
+          "expr": "sum(increase(keycloak_request_duration_bucket{method=\"POST\"}[30m])) by (le)",
+          "format": "heatmap",
+          "interval": "",
+          "intervalFactor": 4,
+          "legendFormat": "{{ le }}",
+          "refId": "A"
+        }
+      ],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "Request duration method = \"POST\" Heatmap",
+      "tooltip": {
+        "show": true,
+        "showHistogram": false
+      },
+      "type": "heatmap",
+      "xAxis": {
+        "show": true
+      },
+      "xBucketNumber": null,
+      "xBucketSize": null,
+      "yAxis": {
+        "decimals": null,
+        "format": "ms",
+        "logBase": 1,
+        "max": null,
+        "min": null,
+        "show": true,
+        "splitFactor": null
+      },
+      "yBucketBound": "auto",
+      "yBucketNumber": null,
+      "yBucketSize": null
+    },
+    {
+      "datasource": {
+        "uid": "$Datasource"
+      },
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "custom": {},
+          "mappings": [],
+          "thresholds": {
+            "mode": "percentage",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              },
+              {
+                "color": "#EAB839",
+                "value": 90
+              },
+              {
+                "color": "green",
+                "value": 98
+              }
+            ]
+          },
+          "unit": "percent"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 62
+      },
+      "hideTimeOverride": false,
+      "id": 40,
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "mean"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showThresholdLabels": false,
+        "showThresholdMarkers": true
+      },
+      "pluginVersion": "7.2.0",
+      "targets": [
+        {
+          "datasource": {
+            "uid": "$Datasource"
+          },
+          "expr": "sum(rate(keycloak_request_duration_bucket{method=\"POST\", le=\"100.0\"}[30m])) / sum(rate(keycloak_request_duration_count{method=\"POST\"}[30m])) * 100",
+          "format": "time_series",
+          "interval": "",
+          "intervalFactor": 2,
+          "legendFormat": "",
+          "refId": "A"
+        }
+      ],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "Percentage of requests \"POST\"  method  was served in 100ms or below",
+      "type": "gauge"
+    },
+    {
+      "cards": {
+        "cardPadding": null,
+        "cardRound": null
+      },
+      "color": {
+        "cardColor": "#73BF69",
+        "colorScale": "sqrt",
+        "colorScheme": "interpolateGreens",
+        "exponent": 0.4,
+        "min": null,
+        "mode": "opacity"
+      },
+      "dataFormat": "tsbuckets",
+      "datasource": {
+        "uid": "$Datasource"
+      },
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "custom": {}
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 70
+      },
+      "heatmap": {},
+      "hideTimeOverride": false,
+      "hideZeroBuckets": true,
+      "highlightCards": true,
+      "id": 37,
+      "legend": {
+        "show": true
+      },
+      "pluginVersion": "7.2.0",
+      "reverseYBuckets": false,
+      "targets": [
+        {
+          "datasource": {
+            "uid": "$Datasource"
+          },
+          "expr": "sum(increase(keycloak_request_duration_bucket{method=\"HEAD\"}[30m])) by (le)",
+          "format": "heatmap",
+          "interval": "",
+          "intervalFactor": 4,
+          "legendFormat": "{{ le }}",
+          "refId": "A"
+        }
+      ],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "Request duration method = \"HEAD\" Heatmap",
+      "tooltip": {
+        "show": true,
+        "showHistogram": false
+      },
+      "type": "heatmap",
+      "xAxis": {
+        "show": true
+      },
+      "xBucketNumber": null,
+      "xBucketSize": null,
+      "yAxis": {
+        "decimals": null,
+        "format": "ms",
+        "logBase": 1,
+        "max": null,
+        "min": null,
+        "show": true,
+        "splitFactor": null
+      },
+      "yBucketBound": "auto",
+      "yBucketNumber": null,
+      "yBucketSize": null
+    },
+    {
+      "datasource": {
+        "uid": "$Datasource"
+      },
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "custom": {},
+          "mappings": [],
+          "thresholds": {
+            "mode": "percentage",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              },
+              {
+                "color": "#EAB839",
+                "value": 90
+              },
+              {
+                "color": "green",
+                "value": 98
+              }
+            ]
+          },
+          "unit": "percent"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 70
+      },
+      "hideTimeOverride": false,
+      "id": 41,
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "mean"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showThresholdLabels": false,
+        "showThresholdMarkers": true
+      },
+      "pluginVersion": "7.2.0",
+      "targets": [
+        {
+          "datasource": {
+            "uid": "$Datasource"
+          },
+          "expr": "sum(rate(keycloak_request_duration_bucket{method=\"HEAD\", le=\"100.0\"}[30m])) / sum(rate(keycloak_request_duration_count{method=\"HEAD\"}[30m])) * 100",
+          "format": "time_series",
+          "interval": "",
+          "intervalFactor": 2,
+          "legendFormat": "",
+          "refId": "A"
+        }
+      ],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "Percentage of requests \"HEAD\"  method  was served in 100ms or below",
+      "type": "gauge"
+    },
+    {
+      "cards": {
+        "cardPadding": null,
+        "cardRound": null
+      },
+      "color": {
+        "cardColor": "#73BF69",
+        "colorScale": "sqrt",
+        "colorScheme": "interpolateGreens",
+        "exponent": 0.4,
+        "min": null,
+        "mode": "opacity"
+      },
+      "dataFormat": "tsbuckets",
+      "datasource": {
+        "uid": "$Datasource"
+      },
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "custom": {}
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 78
+      },
+      "heatmap": {},
+      "hideTimeOverride": false,
+      "hideZeroBuckets": true,
+      "highlightCards": true,
+      "id": 38,
+      "legend": {
+        "show": true
+      },
+      "pluginVersion": "7.2.0",
+      "reverseYBuckets": false,
+      "targets": [
+        {
+          "datasource": {
+            "uid": "$Datasource"
+          },
+          "expr": "sum(increase(keycloak_request_duration_bucket{method=\"PUT\"}[30m])) by (le)",
+          "format": "heatmap",
+          "interval": "",
+          "intervalFactor": 4,
+          "legendFormat": "{{ le }}",
+          "refId": "A"
+        }
+      ],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "Request duration method = \"PUT\" Heatmap",
+      "tooltip": {
+        "show": true,
+        "showHistogram": false
+      },
+      "type": "heatmap",
+      "xAxis": {
+        "show": true
+      },
+      "xBucketNumber": null,
+      "xBucketSize": null,
+      "yAxis": {
+        "decimals": null,
+        "format": "ms",
+        "logBase": 1,
+        "max": null,
+        "min": null,
+        "show": true,
+        "splitFactor": null
+      },
+      "yBucketBound": "auto",
+      "yBucketNumber": null,
+      "yBucketSize": null
+    },
+    {
+      "datasource": {
+        "uid": "$Datasource"
+      },
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "custom": {},
+          "mappings": [],
+          "thresholds": {
+            "mode": "percentage",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              },
+              {
+                "color": "#EAB839",
+                "value": 90
+              },
+              {
+                "color": "green",
+                "value": 98
+              }
+            ]
+          },
+          "unit": "percent"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 78
+      },
+      "hideTimeOverride": false,
+      "id": 42,
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "mean"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showThresholdLabels": false,
+        "showThresholdMarkers": true
+      },
+      "pluginVersion": "7.2.0",
+      "targets": [
+        {
+          "datasource": {
+            "uid": "$Datasource"
+          },
+          "expr": "sum(rate(keycloak_request_duration_bucket{method=\"PUT\", le=\"100.0\"}[30m])) / sum(rate(keycloak_request_duration_count{method=\"PUT\"}[30m])) * 100",
+          "format": "time_series",
+          "interval": "",
+          "intervalFactor": 2,
+          "legendFormat": "",
+          "refId": "A"
+        }
+      ],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "Percentage of requests \"PUT\"  method  was served in 100ms or below",
+      "type": "gauge"
+    }
+  ],
+  "refresh": "",
+  "schemaVersion": 41,
+  "style": "dark",
+  "tags": [],
+  "templating": {
+    "list": [
+      {
+        "current": {
+          "selected": false,
+          "text": "Prometheus-DevTest",
+          "value": "Prometheus-DevTest"
+        },
+        "hide": 0,
+        "includeAll": false,
+        "label": null,
+        "multi": false,
+        "name": "Datasource",
+        "options": [],
+        "query": "prometheus",
+        "queryValue": "",
+        "refresh": 1,
+        "regex": "",
+        "skipUrlSync": false,
+        "type": "datasource"
+      },
+      {
+        "allFormat": "",
+        "allValue": "",
+        "current": {},
+        "datasource": {
+          "uid": "$Datasource"
+        },
+        "definition": "label_values(keycloak_logins,kubernetes_pod_name)",
+        "hide": 0,
+        "includeAll": false,
+        "label": "Instance",
+        "multi": false,
+        "multiFormat": "",
+        "name": "instance",
+        "options": [],
+        "query": "label_values(keycloak_logins,kubernetes_pod_name)",
+        "refresh": 1,
+        "regex": "",
+        "skipUrlSync": false,
+        "sort": 0,
+        "type": "query"
+      },
+      {
+        "allFormat": "",
+        "allValue": "",
+        "current": {},
+        "datasource": {
+          "uid": "$Datasource"
+        },
+        "definition": "",
+        "hide": 0,
+        "includeAll": false,
+        "label": "Realm",
+        "multi": false,
+        "multiFormat": "",
+        "name": "realm",
+        "options": [],
+        "query": "label_values(keycloak_logins{provider=\"keycloak\"},realm)",
+        "refresh": 1,
+        "regex": "",
+        "skipUrlSync": false,
+        "sort": 0,
+        "type": "query"
+      },
+      {
+        "allFormat": "",
+        "allValue": "",
+        "current": {},
+        "datasource": {
+          "uid": "$Datasource"
+        },
+        "definition": "",
+        "hide": 0,
+        "includeAll": false,
+        "label": "ClientId",
+        "multi": false,
+        "multiFormat": "",
+        "name": "ClientId",
+        "options": [],
+        "query": "label_values(keycloak_logins{provider=\"keycloak\",realm=\"$realm\"},client_id)",
+        "refresh": 1,
+        "regex": "",
+        "skipUrlSync": false,
+        "sort": 0,
+        "type": "query"
+      }
+    ]
+  },
+  "time": {
+    "from": "now-30d",
+    "to": "now"
+  },
+  "timepicker": {
+    "refresh_intervals": [
+      "5s",
+      "10s",
+      "30s",
+      "1m",
+      "5m",
+      "15m",
+      "30m",
+      "1h",
+      "2h",
+      "1d"
+    ]
+  },
+  "timezone": "",
+  "title": "Keycloak Metrics Dashboard",
+  "uid": "keycloak-dashboard",
+  "version": 6
+}

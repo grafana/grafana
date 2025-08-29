@@ -1,0 +1,1197 @@
+{
+  "__inputs": [
+    {
+      "description": "",
+      "label": "prometheus",
+      "name": "DS_PROMETHEUS",
+      "pluginId": "prometheus",
+      "pluginName": "Prometheus",
+      "type": "datasource"
+    }
+  ],
+  "__requires": [
+    {
+      "id": "grafana",
+      "name": "Grafana",
+      "type": "grafana",
+      "version": "5.2.4"
+    },
+    {
+      "id": "graph",
+      "name": "Graph",
+      "type": "panel",
+      "version": "5.0.0"
+    },
+    {
+      "id": "prometheus",
+      "name": "Prometheus",
+      "type": "datasource",
+      "version": "5.0.0"
+    }
+  ],
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "uid": "-- Grafana --"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations \u0026 Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "description": "%cpu utilization by mode (up to 8 cores)",
+  "editable": true,
+  "gnetId": 3377,
+  "graphTooltip": 0,
+  "id": null,
+  "iteration": 1539453171016,
+  "links": [],
+  "panels": [
+    {
+      "aliasColors": {},
+      "bars": false,
+      "dashLength": 10,
+      "dashes": false,
+      "datasource": {
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "decimals": 1,
+      "fill": 1,
+      "gridPos": {
+        "h": 5,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "id": 11,
+      "legend": {
+        "alignAsTable": true,
+        "avg": true,
+        "current": false,
+        "hideEmpty": false,
+        "hideZero": false,
+        "max": true,
+        "min": false,
+        "rightSide": true,
+        "show": true,
+        "sideWidth": 250,
+        "sort": "max",
+        "sortDesc": true,
+        "total": false,
+        "values": true
+      },
+      "lines": true,
+      "linewidth": 1,
+      "links": [],
+      "nullPointMode": "null",
+      "percentage": false,
+      "pointradius": 1,
+      "points": false,
+      "renderer": "flot",
+      "seriesOverrides": [],
+      "spaceLength": 10,
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
+        {
+          "datasource": {
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "expr": "irate(node_cpu_seconds_total{job=\"node\",cpu=\"0\",mode=\"user\",instance=~\"$node:$port\"}[5m]) * 100",
+          "format": "time_series",
+          "intervalFactor": 1,
+          "legendFormat": "{{mode}}",
+          "refId": "A",
+          "step": 4,
+          "target": ""
+        },
+        {
+          "datasource": {
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "expr": "irate(node_cpu_seconds_total{job=\"node\",cpu=\"0\",mode=\"system\",instance=~\"$node:$port\"}[5m]) * 100",
+          "format": "time_series",
+          "intervalFactor": 1,
+          "legendFormat": "{{mode}}",
+          "refId": "B",
+          "step": 4,
+          "target": ""
+        },
+        {
+          "datasource": {
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "expr": "irate(node_cpu_seconds_total{job=\"node\",cpu=\"0\",mode=\"iowait\",instance=~\"$node:$port\"}[5m]) * 100",
+          "format": "time_series",
+          "intervalFactor": 1,
+          "legendFormat": "{{mode}}",
+          "refId": "C",
+          "step": 4,
+          "target": ""
+        },
+        {
+          "datasource": {
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "expr": "irate(node_cpu_seconds_total{job=\"node\",cpu=\"0\",mode=\"softirq\",instance=~\"$node:$port\"}[5m]) * 100",
+          "format": "time_series",
+          "intervalFactor": 1,
+          "legendFormat": "{{mode}}",
+          "refId": "D",
+          "step": 4,
+          "target": ""
+        }
+      ],
+      "thresholds": [],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "CPU-0",
+      "tooltip": {
+        "shared": true,
+        "sort": 2,
+        "value_type": "individual"
+      },
+      "type": "graph",
+      "xaxis": {
+        "buckets": null,
+        "mode": "time",
+        "name": null,
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "format": "percent",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        },
+        {
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        }
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
+    },
+    {
+      "aliasColors": {},
+      "bars": false,
+      "dashLength": 10,
+      "dashes": false,
+      "datasource": {
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "decimals": 1,
+      "fill": 1,
+      "gridPos": {
+        "h": 5,
+        "w": 24,
+        "x": 0,
+        "y": 5
+      },
+      "id": 6,
+      "legend": {
+        "alignAsTable": true,
+        "avg": true,
+        "current": false,
+        "hideEmpty": false,
+        "hideZero": false,
+        "max": true,
+        "min": false,
+        "rightSide": true,
+        "show": true,
+        "sideWidth": 250,
+        "sort": "max",
+        "sortDesc": true,
+        "total": false,
+        "values": true
+      },
+      "lines": true,
+      "linewidth": 1,
+      "links": [],
+      "nullPointMode": "null",
+      "percentage": false,
+      "pointradius": 1,
+      "points": false,
+      "renderer": "flot",
+      "seriesOverrides": [],
+      "spaceLength": 10,
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
+        {
+          "datasource": {
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "expr": "irate(node_cpu_seconds_total{job=\"node\",cpu=\"1\",mode=\"user\",instance=~\"$node:$port\"}[5m]) * 100",
+          "format": "time_series",
+          "intervalFactor": 1,
+          "legendFormat": "{{mode}}",
+          "refId": "A",
+          "step": 4,
+          "target": ""
+        },
+        {
+          "datasource": {
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "expr": "irate(node_cpu_seconds_total{job=\"node\",cpu=\"1\",mode=\"system\",instance=~\"$node:$port\"}[5m]) * 100",
+          "format": "time_series",
+          "intervalFactor": 1,
+          "legendFormat": "{{mode}}",
+          "refId": "B",
+          "step": 4,
+          "target": ""
+        },
+        {
+          "datasource": {
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "expr": "irate(node_cpu_seconds_total{job=\"node\",cpu=\"1\",mode=\"iowait\",instance=~\"$node:$port\"}[5m]) * 100",
+          "format": "time_series",
+          "intervalFactor": 1,
+          "legendFormat": "{{mode}}",
+          "refId": "C",
+          "step": 4,
+          "target": ""
+        },
+        {
+          "datasource": {
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "expr": "irate(node_cpu_seconds_total{job=\"node\",cpu=\"1\",mode=\"softirq\",instance=~\"$node:$port\"}[5m]) * 100",
+          "format": "time_series",
+          "intervalFactor": 1,
+          "legendFormat": "{{mode}}",
+          "refId": "D",
+          "step": 4,
+          "target": ""
+        }
+      ],
+      "thresholds": [],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "CPU-1",
+      "tooltip": {
+        "shared": true,
+        "sort": 2,
+        "value_type": "individual"
+      },
+      "type": "graph",
+      "xaxis": {
+        "buckets": null,
+        "mode": "time",
+        "name": null,
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "format": "percent",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        },
+        {
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        }
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
+    },
+    {
+      "aliasColors": {},
+      "bars": false,
+      "dashLength": 10,
+      "dashes": false,
+      "datasource": {
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "decimals": 1,
+      "fill": 1,
+      "gridPos": {
+        "h": 5,
+        "w": 24,
+        "x": 0,
+        "y": 10
+      },
+      "id": 10,
+      "legend": {
+        "alignAsTable": true,
+        "avg": true,
+        "current": false,
+        "hideEmpty": false,
+        "hideZero": false,
+        "max": true,
+        "min": false,
+        "rightSide": true,
+        "show": true,
+        "sideWidth": 250,
+        "sort": "max",
+        "sortDesc": true,
+        "total": false,
+        "values": true
+      },
+      "lines": true,
+      "linewidth": 1,
+      "links": [],
+      "nullPointMode": "null",
+      "percentage": false,
+      "pointradius": 1,
+      "points": false,
+      "renderer": "flot",
+      "seriesOverrides": [],
+      "spaceLength": 10,
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
+        {
+          "datasource": {
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "expr": "irate(node_cpu_seconds_total{job=\"node\",cpu=\"2\",mode=\"user\",instance=~\"$node:$port\"}[5m]) * 100",
+          "format": "time_series",
+          "intervalFactor": 1,
+          "legendFormat": "{{mode}}",
+          "refId": "A",
+          "step": 4,
+          "target": ""
+        },
+        {
+          "datasource": {
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "expr": "irate(node_cpu_seconds_total{job=\"node\",cpu=\"2\",mode=\"system\",instance=~\"$node:$port\"}[5m]) * 100",
+          "format": "time_series",
+          "intervalFactor": 1,
+          "legendFormat": "{{mode}}",
+          "refId": "B",
+          "step": 4,
+          "target": ""
+        },
+        {
+          "datasource": {
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "expr": "irate(node_cpu_seconds_total{job=\"node\",cpu=\"2\",mode=\"iowait\",instance=~\"$node:$port\"}[5m]) * 100",
+          "format": "time_series",
+          "intervalFactor": 1,
+          "legendFormat": "{{mode}}",
+          "refId": "C",
+          "step": 4,
+          "target": ""
+        },
+        {
+          "datasource": {
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "expr": "irate(node_cpu_seconds_total{job=\"node\",cpu=\"2\",mode=\"softirq\",instance=~\"$node:$port\"}[5m]) * 100",
+          "format": "time_series",
+          "intervalFactor": 1,
+          "legendFormat": "{{mode}}",
+          "refId": "D",
+          "step": 4,
+          "target": ""
+        }
+      ],
+      "thresholds": [],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "CPU-2",
+      "tooltip": {
+        "shared": true,
+        "sort": 2,
+        "value_type": "individual"
+      },
+      "type": "graph",
+      "xaxis": {
+        "buckets": null,
+        "mode": "time",
+        "name": null,
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "format": "percent",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        },
+        {
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        }
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
+    },
+    {
+      "aliasColors": {},
+      "bars": false,
+      "dashLength": 10,
+      "dashes": false,
+      "datasource": {
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "decimals": 1,
+      "fill": 1,
+      "gridPos": {
+        "h": 5,
+        "w": 24,
+        "x": 0,
+        "y": 15
+      },
+      "id": 9,
+      "legend": {
+        "alignAsTable": true,
+        "avg": true,
+        "current": false,
+        "hideEmpty": false,
+        "hideZero": false,
+        "max": true,
+        "min": false,
+        "rightSide": true,
+        "show": true,
+        "sideWidth": 250,
+        "sort": "max",
+        "sortDesc": true,
+        "total": false,
+        "values": true
+      },
+      "lines": true,
+      "linewidth": 1,
+      "links": [],
+      "nullPointMode": "null",
+      "percentage": false,
+      "pointradius": 1,
+      "points": false,
+      "renderer": "flot",
+      "seriesOverrides": [],
+      "spaceLength": 10,
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
+        {
+          "datasource": {
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "expr": "irate(node_cpu_seconds_total{job=\"node\",cpu=\"3\",mode=\"user\",instance=~\"$node:$port\"}[5m]) * 100",
+          "format": "time_series",
+          "intervalFactor": 1,
+          "legendFormat": "{{mode}}",
+          "refId": "A",
+          "step": 4,
+          "target": ""
+        },
+        {
+          "datasource": {
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "expr": "irate(node_cpu_seconds_total{job=\"node\",cpu=\"3\",mode=\"system\",instance=~\"$node:$port\"}[5m]) * 100",
+          "format": "time_series",
+          "intervalFactor": 1,
+          "legendFormat": "{{mode}}",
+          "refId": "B",
+          "step": 4,
+          "target": ""
+        },
+        {
+          "datasource": {
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "expr": "irate(node_cpu_seconds_total{job=\"node\",cpu=\"3\",mode=\"iowait\",instance=~\"$node:$port\"}[5m]) * 100",
+          "format": "time_series",
+          "intervalFactor": 1,
+          "legendFormat": "{{mode}}",
+          "refId": "C",
+          "step": 4,
+          "target": ""
+        },
+        {
+          "datasource": {
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "expr": "irate(node_cpu_seconds_total{job=\"node\",cpu=\"3\",mode=\"softirq\",instance=~\"$node:$port\"}[5m]) * 100",
+          "format": "time_series",
+          "intervalFactor": 1,
+          "legendFormat": "{{mode}}",
+          "refId": "D",
+          "step": 4,
+          "target": ""
+        }
+      ],
+      "thresholds": [],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "CPU-3",
+      "tooltip": {
+        "shared": true,
+        "sort": 2,
+        "value_type": "individual"
+      },
+      "type": "graph",
+      "xaxis": {
+        "buckets": null,
+        "mode": "time",
+        "name": null,
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "format": "percent",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        },
+        {
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        }
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
+    },
+    {
+      "aliasColors": {},
+      "bars": false,
+      "dashLength": 10,
+      "dashes": false,
+      "datasource": {
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "decimals": 1,
+      "fill": 1,
+      "gridPos": {
+        "h": 5,
+        "w": 24,
+        "x": 0,
+        "y": 20
+      },
+      "id": 8,
+      "legend": {
+        "alignAsTable": true,
+        "avg": true,
+        "current": false,
+        "hideEmpty": false,
+        "hideZero": false,
+        "max": true,
+        "min": false,
+        "rightSide": true,
+        "show": true,
+        "sideWidth": 250,
+        "sort": "max",
+        "sortDesc": true,
+        "total": false,
+        "values": true
+      },
+      "lines": true,
+      "linewidth": 1,
+      "links": [],
+      "nullPointMode": "null",
+      "percentage": false,
+      "pointradius": 1,
+      "points": false,
+      "renderer": "flot",
+      "seriesOverrides": [],
+      "spaceLength": 10,
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
+        {
+          "datasource": {
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "expr": "irate(node_cpu_seconds_total{job=\"node\",cpu=\"4\",mode=\"user\",instance=~\"$node:$port\"}[5m]) * 100",
+          "format": "time_series",
+          "intervalFactor": 1,
+          "legendFormat": "{{mode}}",
+          "refId": "A",
+          "step": 4,
+          "target": ""
+        },
+        {
+          "datasource": {
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "expr": "irate(node_cpu_seconds_total{job=\"node\",cpu=\"4\",mode=\"system\",instance=~\"$node:$port\"}[5m]) * 100",
+          "format": "time_series",
+          "intervalFactor": 1,
+          "legendFormat": "{{mode}}",
+          "refId": "B",
+          "step": 4,
+          "target": ""
+        },
+        {
+          "datasource": {
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "expr": "irate(node_cpu_seconds_total{job=\"node\",cpu=\"4\",mode=\"iowait\",instance=~\"$node:$port\"}[5m]) * 100",
+          "format": "time_series",
+          "intervalFactor": 1,
+          "legendFormat": "{{mode}}",
+          "refId": "C",
+          "step": 4,
+          "target": ""
+        },
+        {
+          "datasource": {
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "expr": "irate(node_cpu_seconds_total{job=\"node\",cpu=\"4\",mode=\"softirq\",instance=~\"$node:$port\"}[5m]) * 100",
+          "format": "time_series",
+          "intervalFactor": 1,
+          "legendFormat": "{{mode}}",
+          "refId": "D",
+          "step": 4,
+          "target": ""
+        }
+      ],
+      "thresholds": [],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "CPU-4",
+      "tooltip": {
+        "shared": true,
+        "sort": 2,
+        "value_type": "individual"
+      },
+      "type": "graph",
+      "xaxis": {
+        "buckets": null,
+        "mode": "time",
+        "name": null,
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "format": "percent",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        },
+        {
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        }
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
+    },
+    {
+      "aliasColors": {},
+      "bars": false,
+      "dashLength": 10,
+      "dashes": false,
+      "datasource": {
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "decimals": 1,
+      "fill": 1,
+      "gridPos": {
+        "h": 5,
+        "w": 24,
+        "x": 0,
+        "y": 25
+      },
+      "id": 7,
+      "legend": {
+        "alignAsTable": true,
+        "avg": true,
+        "current": false,
+        "hideEmpty": false,
+        "hideZero": false,
+        "max": true,
+        "min": false,
+        "rightSide": true,
+        "show": true,
+        "sideWidth": 250,
+        "sort": "max",
+        "sortDesc": true,
+        "total": false,
+        "values": true
+      },
+      "lines": true,
+      "linewidth": 1,
+      "links": [],
+      "nullPointMode": "null",
+      "percentage": false,
+      "pointradius": 1,
+      "points": false,
+      "renderer": "flot",
+      "seriesOverrides": [],
+      "spaceLength": 10,
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
+        {
+          "datasource": {
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "expr": "irate(node_cpu_seconds_total{job=\"node\",cpu=\"5\",mode=\"user\",instance=~\"$node:$port\"}[5m]) * 100",
+          "format": "time_series",
+          "intervalFactor": 1,
+          "legendFormat": "{{mode}}",
+          "refId": "A",
+          "step": 4,
+          "target": ""
+        },
+        {
+          "datasource": {
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "expr": "irate(node_cpu_seconds_total{job=\"node\",cpu=\"5\",mode=\"system\",instance=~\"$node:$port\"}[5m]) * 100",
+          "format": "time_series",
+          "intervalFactor": 1,
+          "legendFormat": "{{mode}}",
+          "refId": "B",
+          "step": 4,
+          "target": ""
+        },
+        {
+          "datasource": {
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "expr": "irate(node_cpu_seconds_total{job=\"node\",cpu=\"5\",mode=\"iowait\",instance=~\"$node:$port\"}[5m]) * 100",
+          "format": "time_series",
+          "intervalFactor": 1,
+          "legendFormat": "{{mode}}",
+          "refId": "C",
+          "step": 4,
+          "target": ""
+        },
+        {
+          "datasource": {
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "expr": "irate(node_cpu_seconds_total{job=\"node\",cpu=\"5\",mode=\"softirq\",instance=~\"$node:$port\"}[5m]) * 100",
+          "format": "time_series",
+          "intervalFactor": 1,
+          "legendFormat": "{{mode}}",
+          "refId": "D",
+          "step": 4,
+          "target": ""
+        }
+      ],
+      "thresholds": [],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "CPU-5",
+      "tooltip": {
+        "shared": true,
+        "sort": 2,
+        "value_type": "individual"
+      },
+      "type": "graph",
+      "xaxis": {
+        "buckets": null,
+        "mode": "time",
+        "name": null,
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "format": "percent",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        },
+        {
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        }
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
+    },
+    {
+      "aliasColors": {},
+      "bars": false,
+      "dashLength": 10,
+      "dashes": false,
+      "datasource": {
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "decimals": 1,
+      "fill": 1,
+      "gridPos": {
+        "h": 5,
+        "w": 24,
+        "x": 0,
+        "y": 30
+      },
+      "id": 5,
+      "legend": {
+        "alignAsTable": true,
+        "avg": true,
+        "current": false,
+        "hideEmpty": false,
+        "hideZero": false,
+        "max": true,
+        "min": false,
+        "rightSide": true,
+        "show": true,
+        "sideWidth": 250,
+        "sort": "max",
+        "sortDesc": true,
+        "total": false,
+        "values": true
+      },
+      "lines": true,
+      "linewidth": 1,
+      "links": [],
+      "nullPointMode": "null",
+      "percentage": false,
+      "pointradius": 1,
+      "points": false,
+      "renderer": "flot",
+      "seriesOverrides": [],
+      "spaceLength": 10,
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
+        {
+          "datasource": {
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "expr": "irate(node_cpu_seconds_total{job=\"node\",cpu=\"6\",mode=\"user\",instance=~\"$node:$port\"}[5m]) * 100",
+          "format": "time_series",
+          "intervalFactor": 1,
+          "legendFormat": "{{mode}}",
+          "refId": "A",
+          "step": 4,
+          "target": ""
+        },
+        {
+          "datasource": {
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "expr": "irate(node_cpu_seconds_total{job=\"node\",cpu=\"6\",mode=\"system\",instance=~\"$node:$port\"}[5m]) * 100",
+          "format": "time_series",
+          "intervalFactor": 1,
+          "legendFormat": "{{mode}}",
+          "refId": "B",
+          "step": 4,
+          "target": ""
+        },
+        {
+          "datasource": {
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "expr": "irate(node_cpu_seconds_total{job=\"node\",cpu=\"6\",mode=\"iowait\",instance=~\"$node:$port\"}[5m]) * 100",
+          "format": "time_series",
+          "intervalFactor": 1,
+          "legendFormat": "{{mode}}",
+          "refId": "C",
+          "step": 4,
+          "target": ""
+        },
+        {
+          "datasource": {
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "expr": "irate(node_cpu_seconds_total{job=\"node\",cpu=\"6\",mode=\"softirq\",instance=~\"$node:$port\"}[5m]) * 100",
+          "format": "time_series",
+          "intervalFactor": 1,
+          "legendFormat": "{{mode}}",
+          "refId": "D",
+          "step": 4,
+          "target": ""
+        }
+      ],
+      "thresholds": [],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "CPU-6",
+      "tooltip": {
+        "shared": true,
+        "sort": 2,
+        "value_type": "individual"
+      },
+      "type": "graph",
+      "xaxis": {
+        "buckets": null,
+        "mode": "time",
+        "name": null,
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "format": "percent",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        },
+        {
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        }
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
+    },
+    {
+      "aliasColors": {},
+      "bars": false,
+      "dashLength": 10,
+      "dashes": false,
+      "datasource": {
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "decimals": 1,
+      "fill": 1,
+      "gridPos": {
+        "h": 5,
+        "w": 24,
+        "x": 0,
+        "y": 35
+      },
+      "id": 4,
+      "legend": {
+        "alignAsTable": true,
+        "avg": true,
+        "current": false,
+        "hideEmpty": false,
+        "hideZero": false,
+        "max": true,
+        "min": false,
+        "rightSide": true,
+        "show": true,
+        "sideWidth": 250,
+        "sort": "max",
+        "sortDesc": true,
+        "total": false,
+        "values": true
+      },
+      "lines": true,
+      "linewidth": 1,
+      "links": [],
+      "nullPointMode": "null",
+      "percentage": false,
+      "pointradius": 1,
+      "points": false,
+      "renderer": "flot",
+      "seriesOverrides": [],
+      "spaceLength": 10,
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
+        {
+          "datasource": {
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "expr": "irate(node_cpu_seconds_total{job=\"node\",cpu=\"7\",mode=\"user\",instance=~\"$node:$port\"}[5m]) * 100",
+          "format": "time_series",
+          "intervalFactor": 1,
+          "legendFormat": "{{mode}}",
+          "refId": "A",
+          "step": 4,
+          "target": ""
+        },
+        {
+          "datasource": {
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "expr": "irate(node_cpu_seconds_total{job=\"node\",cpu=\"7\",mode=\"system\",instance=~\"$node:$port\"}[5m]) * 100",
+          "format": "time_series",
+          "intervalFactor": 1,
+          "legendFormat": "{{mode}}",
+          "refId": "B",
+          "step": 4,
+          "target": ""
+        },
+        {
+          "datasource": {
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "expr": "irate(node_cpu_seconds_total{job=\"node\",cpu=\"7\",mode=\"iowait\",instance=~\"$node:$port\"}[5m]) * 100",
+          "format": "time_series",
+          "intervalFactor": 1,
+          "legendFormat": "{{mode}}",
+          "refId": "C",
+          "step": 4,
+          "target": ""
+        },
+        {
+          "datasource": {
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "expr": "irate(node_cpu_seconds_total{job=\"node\",cpu=\"7\",mode=\"softirq\",instance=~\"$node:$port\"}[5m]) * 100",
+          "format": "time_series",
+          "intervalFactor": 1,
+          "legendFormat": "{{mode}}",
+          "refId": "D",
+          "step": 4,
+          "target": ""
+        }
+      ],
+      "thresholds": [],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "CPU-7",
+      "tooltip": {
+        "shared": true,
+        "sort": 2,
+        "value_type": "individual"
+      },
+      "type": "graph",
+      "xaxis": {
+        "buckets": null,
+        "mode": "time",
+        "name": null,
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "format": "percent",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        },
+        {
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        }
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
+    }
+  ],
+  "refresh": "5m",
+  "schemaVersion": 41,
+  "style": "dark",
+  "tags": [],
+  "templating": {
+    "list": [
+      {
+        "allValue": null,
+        "current": {},
+        "datasource": {
+          "uid": "${DS_PROMETHEUS}"
+        },
+        "hide": 0,
+        "includeAll": false,
+        "label": null,
+        "multi": false,
+        "name": "node",
+        "options": [],
+        "query": "label_values(node_cpu_seconds_total{job=\"node\"}, instance)",
+        "refresh": 1,
+        "regex": "/([^:]+):.*/",
+        "sort": 1,
+        "type": "query"
+      },
+      {
+        "allValue": null,
+        "current": {},
+        "datasource": {
+          "uid": "${DS_PROMETHEUS}"
+        },
+        "hide": 2,
+        "includeAll": false,
+        "label": null,
+        "multi": false,
+        "name": "port",
+        "options": [],
+        "query": "label_values(node_cpu_seconds_total{job=\"node\"}, instance)",
+        "refresh": 1,
+        "regex": "/[^:]+:(.*)/",
+        "sort": 0,
+        "type": "query"
+      }
+    ]
+  },
+  "time": {
+    "from": "now-3h",
+    "to": "now"
+  },
+  "timepicker": {
+    "refresh_intervals": [
+      "5s",
+      "10s",
+      "30s",
+      "1m",
+      "5m"
+    ]
+  },
+  "timezone": "browser",
+  "title": "cpu_core",
+  "uid": "000000003",
+  "version": 4
+}

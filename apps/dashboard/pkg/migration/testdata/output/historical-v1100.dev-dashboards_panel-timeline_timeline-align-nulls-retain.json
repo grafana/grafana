@@ -1,0 +1,213 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "type": "grafana",
+          "uid": "-- Grafana --"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations \u0026 Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "id": 993,
+  "links": [],
+  "panels": [
+    {
+      "datasource": {
+        "type": "grafana-testdata-datasource",
+        "uid": "PD8C576611E62080A"
+      },
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "fixedColor": "light-blue",
+            "mode": "fixed"
+          },
+          "custom": {
+            "fillOpacity": 20,
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineWidth": 1,
+            "spanNulls": false
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "blue",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Dose"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "#289fb0",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Mix"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "#d4b10b",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Cook"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "#c900c3",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Int. Shear"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "#a49225",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Ext. Shear"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "#148dd7",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Transfer"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "#01b70c",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 19,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "id": 2,
+      "options": {
+        "alignValue": "center",
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": false
+        },
+        "mergeValues": false,
+        "rowHeight": 0.9,
+        "showValue": "auto",
+        "tooltip": {
+          "maxHeight": 600,
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "repeat": "CHANNEL",
+      "repeatDirection": "v",
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-testdata-datasource",
+            "uid": "PD8C576611E62080A"
+          },
+          "rawFrameContent": "[\n  {\n    \"schema\": {\n      \"refId\": \"Dose\",\n      \"meta\": {\n        \"executedQueryString\": \"from(bucket: \\\"data\\\")\\r\\n  |\u003e range(start: 2023-10-20T05:04:00Z, stop: 2023-10-20T07:22:00Z)\\r\\n  |\u003e filter(fn: (r) =\u003e r[\\\"_field\\\"] == \\\"FactoryManager_Analogs_DB.A01C02U09.PHS.Dose\\\")\\r\\n  |\u003e keep(columns: [\\\"_time\\\", \\\"_value\\\"])\\r\\n  |\u003e map(fn: (r) =\u003e ({ \\r\\n    \\\"Dose\\\": r._value,\\r\\n    time: r._time,\\r\\n  }))\\r\\n\",\n        \"typeVersion\": [\n          0,\n          0\n        ]\n      },\n      \"fields\": [\n        {\n          \"config\": {},\n          \"labels\": {},\n          \"name\": \"time\",\n          \"type\": \"time\",\n          \"typeInfo\": {\n            \"frame\": \"time.Time\",\n            \"nullable\": true\n          }\n        },\n        {\n          \"config\": {},\n          \"labels\": {},\n          \"name\": \"Dose\",\n          \"type\": \"string\",\n          \"typeInfo\": {\n            \"frame\": \"string\",\n            \"nullable\": true\n          }\n        }\n      ]\n    },\n    \"data\": {\n      \"values\": [\n        [\n          1697781872300,\n          1697781963303,\n          1697784138453,\n          1697784160451\n        ],\n        [\n          \"Cold Water Dosing Active (150 ltrs)\",\n          null,\n          \"Hot Water Dosing Active (50 ltrs)\",\n          null\n        ]\n      ]\n    }\n  },\n  {\n    \"schema\": {\n      \"refId\": \"Mix\",\n      \"meta\": {\n        \"executedQueryString\": \"from(bucket: \\\"data\\\")\\r\\n  |\u003e range(start: 2023-10-20T05:04:00Z, stop: 2023-10-20T07:22:00Z)\\r\\n  |\u003e filter(fn: (r) =\u003e r[\\\"_field\\\"] == \\\"FactoryManager_Analogs_DB.A01C02U09.PHS.Mix\\\")\\r\\n  |\u003e keep(columns: [\\\"_time\\\", \\\"_value\\\"])\\r\\n  |\u003e map(fn: (r) =\u003e ({ \\r\\n    \\\"Mix\\\": r._value,\\r\\n    time: r._time,\\r\\n  }))\\r\\n\",\n        \"typeVersion\": [\n          0,\n          0\n        ]\n      },\n      \"fields\": [\n        {\n          \"config\": {},\n          \"labels\": {},\n          \"name\": \"time\",\n          \"type\": \"time\",\n          \"typeInfo\": {\n            \"frame\": \"time.Time\",\n            \"nullable\": true\n          }\n        },\n        {\n          \"config\": {},\n          \"labels\": {},\n          \"name\": \"Mix\",\n          \"type\": \"string\",\n          \"typeInfo\": {\n            \"frame\": \"string\",\n            \"nullable\": true\n          }\n        }\n      ]\n    },\n    \"data\": {\n      \"values\": [\n        [\n          1697778291972,\n          1697778393992,\n          1697778986994,\n          1697786485890\n        ],\n        [\n          \"Running Constant Forward\",\n          null,\n          \"Running Constant Forward\",\n          null\n        ]\n      ]\n    }\n  },\n  {\n    \"schema\": {\n      \"refId\": \"Cook\",\n      \"meta\": {\n        \"executedQueryString\": \"from(bucket: \\\"data\\\")\\r\\n  |\u003e range(start: 2023-10-20T05:04:00Z, stop: 2023-10-20T07:22:00Z)\\r\\n  |\u003e filter(fn: (r) =\u003e r[\\\"_field\\\"] == \\\"FactoryManager_Analogs_DB.A01C02U09.PHS.Cook\\\")\\r\\n  |\u003e keep(columns: [\\\"_time\\\", \\\"_value\\\"])\\r\\n  |\u003e map(fn: (r) =\u003e ({ \\r\\n    \\\"Cook\\\": r._value,\\r\\n    time: r._time,\\r\\n  }))\\r\\n\",\n        \"typeVersion\": [\n          0,\n          0\n        ]\n      },\n      \"fields\": [\n        {\n          \"config\": {},\n          \"labels\": {},\n          \"name\": \"time\",\n          \"type\": \"time\",\n          \"typeInfo\": {\n            \"frame\": \"time.Time\",\n            \"nullable\": true\n          }\n        },\n        {\n          \"config\": {},\n          \"labels\": {},\n          \"name\": \"Cook\",\n          \"type\": \"string\",\n          \"typeInfo\": {\n            \"frame\": \"string\",\n            \"nullable\": true\n          }\n        }\n      ]\n    },\n    \"data\": {\n      \"values\": [\n        [\n          1697779163986,\n          1697779921045,\n          1697780221094,\n          1697780521111,\n          1697781186192,\n          1697781786291,\n          1697783332361,\n          1697783784395,\n          1697783790397,\n          1697784146478,\n          1697784517471,\n          1697784523487,\n          1697784949480,\n          1697785369505\n        ],\n        [\n          \"Heating to Setpoint (92c)\",\n          \"Stage Time Running (5 mins)\",\n          null,\n          \"Heating to Setpoint (96c)\",\n          \"Stage Time Running (10 mins)\",\n          null,\n          \"Heating to Setpoint (92c)\",\n          \"Stage Time Running (0 mins)\",\n          null,\n          \"Heating to Setpoint (92c)\",\n          \"Stage Time Running (0 mins)\",\n          null,\n          \"CCP in Progress (7 mins)\",\n          null\n        ]\n      ]\n    }\n  },\n  {\n    \"schema\": {\n      \"refId\": \"Shear\",\n      \"meta\": {\n        \"executedQueryString\": \"from(bucket: \\\"data\\\")\\r\\n  |\u003e range(start: 2023-10-20T05:04:00Z, stop: 2023-10-20T07:22:00Z)\\r\\n  |\u003e filter(fn: (r) =\u003e r[\\\"_field\\\"] == \\\"FactoryManager_Analogs_DB.A01C02U09.PHS.Shear\\\")\\r\\n  |\u003e keep(columns: [\\\"_time\\\", \\\"_value\\\"])\\r\\n  |\u003e map(fn: (r) =\u003e ({ \\r\\n    \\\"Int. Shear\\\": r._value,\\r\\n    time: r._time,\\r\\n  }))\\r\\n\",\n        \"typeVersion\": [\n          0,\n          0\n        ]\n      },\n      \"fields\": [\n        {\n          \"config\": {},\n          \"labels\": {},\n          \"name\": \"time\",\n          \"type\": \"time\",\n          \"typeInfo\": {\n            \"frame\": \"time.Time\",\n            \"nullable\": true\n          }\n        },\n        {\n          \"config\": {},\n          \"labels\": {},\n          \"name\": \"Int. Shear\",\n          \"type\": \"string\",\n          \"typeInfo\": {\n            \"frame\": \"string\",\n            \"nullable\": true\n          }\n        }\n      ]\n    },\n    \"data\": {\n      \"values\": [\n        [\n          1697782100330,\n          1697782832342\n        ],\n        [\n          \"Shearing Active (12 mins)\",\n          null\n        ]\n      ]\n    }\n  },\n  {\n    \"schema\": {\n      \"refId\": \"Recirc\",\n      \"meta\": {\n        \"executedQueryString\": \"from(bucket: \\\"data\\\")\\r\\n  |\u003e range(start: 2023-10-20T05:04:00Z, stop: 2023-10-20T07:22:00Z)\\r\\n  |\u003e filter(fn: (r) =\u003e r[\\\"_field\\\"] == \\\"FactoryManager_Analogs_DB.A01C02U09.PHS.Recirc\\\")\\r\\n  |\u003e keep(columns: [\\\"_time\\\", \\\"_value\\\"])\\r\\n  |\u003e map(fn: (r) =\u003e ({ \\r\\n    \\\"Ext. Shear\\\": r._value,\\r\\n    time: r._time,\\r\\n  }))\\r\\n\",\n        \"typeVersion\": [\n          0,\n          0\n        ]\n      },\n      \"fields\": []\n    },\n    \"data\": {\n      \"values\": []\n    }\n  },\n  {\n    \"schema\": {\n      \"refId\": \"Transfer\",\n      \"meta\": {\n        \"executedQueryString\": \"from(bucket: \\\"data\\\")\\r\\n  |\u003e range(start: 2023-10-20T05:04:00Z, stop: 2023-10-20T07:22:00Z)\\r\\n  |\u003e filter(fn: (r) =\u003e r[\\\"_field\\\"] == \\\"FactoryManager_Analogs_DB.A01C02U09.PHS.Transfer\\\")\\r\\n  |\u003e keep(columns: [\\\"_time\\\", \\\"_value\\\"])\\r\\n  |\u003e map(fn: (r) =\u003e ({ \\r\\n    \\\"Transfer\\\": r._value,\\r\\n    time: r._time,\\r\\n  }))\\r\\n\",\n        \"typeVersion\": [\n          0,\n          0\n        ]\n      },\n      \"fields\": [\n        {\n          \"config\": {},\n          \"labels\": {},\n          \"name\": \"time\",\n          \"type\": \"time\",\n          \"typeInfo\": {\n            \"frame\": \"time.Time\",\n            \"nullable\": true\n          }\n        },\n        {\n          \"config\": {},\n          \"labels\": {},\n          \"name\": \"Transfer\",\n          \"type\": \"string\",\n          \"typeInfo\": {\n            \"frame\": \"string\",\n            \"nullable\": true\n          }\n        }\n      ]\n    },\n    \"data\": {\n      \"values\": [\n        [\n          1697785713869,\n          1697785753879,\n          1697785764887,\n          1697785875872,\n          1697786481929\n        ],\n        [\n          \"Pre-Start Drain\",\n          null,\n          \"Build Pressure (0.6 Barg)\",\n          \"Transfer in progress (0.7 Barg)\",\n          \"Wait for pressure dissipation (0.2 Barg)\"\n        ]\n      ]\n    }\n  }\n]",
+          "refId": "A",
+          "scenarioId": "raw_frame"
+        }
+      ],
+      "title": "Reproduced with embedded data",
+      "type": "state-timeline"
+    }
+  ],
+  "refresh": "",
+  "schemaVersion": 41,
+  "tags": [
+    "gdev",
+    "panel-tests",
+    "graph-ng",
+    "demo"
+  ],
+  "templating": {
+    "list": []
+  },
+  "time": {
+    "from": "2023-10-20T05:04:00.000Z",
+    "to": "2023-10-20T07:22:00.000Z"
+  },
+  "timeRangeUpdatedDuringEditOrView": false,
+  "timepicker": {},
+  "timezone": "utc",
+  "title": "Panel Tests - StateTimeline - multiple frames with nulls",
+  "uid": "edf55caay3w8wa",
+  "version": 4,
+  "weekStart": ""
+}

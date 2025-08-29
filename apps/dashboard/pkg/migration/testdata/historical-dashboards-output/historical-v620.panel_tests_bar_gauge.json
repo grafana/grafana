@@ -1,0 +1,1172 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "uid": "-- Grafana --"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations \u0026 Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "gnetId": null,
+  "graphTooltip": 0,
+  "links": [],
+  "panels": [
+    {
+      "datasource": {
+        "apiVersion": "v1",
+        "type": "prometheus",
+        "uid": "default-ds-uid"
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 6,
+        "x": 0,
+        "y": 0
+      },
+      "id": 6,
+      "links": [],
+      "options": {
+        "displayMode": "gradient",
+        "fieldOptions": {
+          "calcs": [
+            "mean"
+          ],
+          "defaults": {
+            "decimals": null,
+            "max": 100,
+            "min": 0,
+            "unit": "celsius"
+          },
+          "mappings": [],
+          "override": {},
+          "thresholds": [
+            {
+              "color": "blue",
+              "index": 0,
+              "value": null
+            },
+            {
+              "color": "green",
+              "index": 1,
+              "value": 20
+            },
+            {
+              "color": "orange",
+              "index": 2,
+              "value": 40
+            },
+            {
+              "color": "red",
+              "index": 3,
+              "value": 80
+            }
+          ],
+          "values": false
+        },
+        "orientation": "horizontal"
+      },
+      "pluginVersion": "6.2.0-pre",
+      "targets": [
+        {
+          "alias": "Inside",
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "prometheus",
+            "uid": "default-ds-uid"
+          },
+          "refId": "H",
+          "scenarioId": "csv_metric_values",
+          "stringInput": "100,100,100"
+        },
+        {
+          "alias": "Outhouse",
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "prometheus",
+            "uid": "default-ds-uid"
+          },
+          "refId": "A",
+          "scenarioId": "random_walk"
+        },
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "prometheus",
+            "uid": "default-ds-uid"
+          },
+          "refId": "F",
+          "scenarioId": "random_walk"
+        }
+      ],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "Title above bar",
+      "type": "bargauge"
+    },
+    {
+      "datasource": {
+        "apiVersion": "v1",
+        "type": "prometheus",
+        "uid": "default-ds-uid"
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 5,
+        "x": 6,
+        "y": 0
+      },
+      "id": 12,
+      "links": [],
+      "options": {
+        "displayMode": "gradient",
+        "fieldOptions": {
+          "calcs": [
+            "mean"
+          ],
+          "defaults": {
+            "decimals": null,
+            "max": 100,
+            "min": 0,
+            "unit": "celsius"
+          },
+          "mappings": [],
+          "override": {},
+          "thresholds": [
+            {
+              "color": "blue",
+              "index": 0,
+              "value": null
+            },
+            {
+              "color": "green",
+              "index": 1,
+              "value": 20
+            },
+            {
+              "color": "orange",
+              "index": 2,
+              "value": 40
+            },
+            {
+              "color": "red",
+              "index": 3,
+              "value": 80
+            }
+          ],
+          "values": false
+        },
+        "orientation": "horizontal"
+      },
+      "pluginVersion": "6.2.0-pre",
+      "targets": [
+        {
+          "alias": "Inside",
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "prometheus",
+            "uid": "default-ds-uid"
+          },
+          "refId": "H",
+          "scenarioId": "csv_metric_values",
+          "stringInput": "100,100,100"
+        },
+        {
+          "alias": "Outhouse",
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "prometheus",
+            "uid": "default-ds-uid"
+          },
+          "refId": "A",
+          "scenarioId": "random_walk"
+        },
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "prometheus",
+            "uid": "default-ds-uid"
+          },
+          "refId": "F",
+          "scenarioId": "random_walk"
+        },
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "prometheus",
+            "uid": "default-ds-uid"
+          },
+          "refId": "B",
+          "scenarioId": "random_walk"
+        },
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "prometheus",
+            "uid": "default-ds-uid"
+          },
+          "refId": "C",
+          "scenarioId": "random_walk"
+        }
+      ],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "Title to left of bar",
+      "type": "bargauge"
+    },
+    {
+      "datasource": {
+        "apiVersion": "v1",
+        "type": "prometheus",
+        "uid": "default-ds-uid"
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 7,
+        "x": 11,
+        "y": 0
+      },
+      "id": 13,
+      "links": [],
+      "options": {
+        "displayMode": "basic",
+        "fieldOptions": {
+          "calcs": [
+            "mean"
+          ],
+          "defaults": {
+            "decimals": null,
+            "max": 100,
+            "min": 0,
+            "unit": "celsius"
+          },
+          "mappings": [],
+          "override": {},
+          "thresholds": [
+            {
+              "color": "blue",
+              "index": 0,
+              "value": null
+            },
+            {
+              "color": "green",
+              "index": 1,
+              "value": 20
+            },
+            {
+              "color": "orange",
+              "index": 2,
+              "value": 40
+            },
+            {
+              "color": "red",
+              "index": 3,
+              "value": 80
+            }
+          ],
+          "values": false
+        },
+        "orientation": "horizontal"
+      },
+      "pluginVersion": "6.2.0-pre",
+      "targets": [
+        {
+          "alias": "Inside",
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "prometheus",
+            "uid": "default-ds-uid"
+          },
+          "refId": "H",
+          "scenarioId": "csv_metric_values",
+          "stringInput": "100,100,100"
+        },
+        {
+          "alias": "Outhouse",
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "prometheus",
+            "uid": "default-ds-uid"
+          },
+          "refId": "A",
+          "scenarioId": "random_walk"
+        },
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "prometheus",
+            "uid": "default-ds-uid"
+          },
+          "refId": "F",
+          "scenarioId": "random_walk"
+        },
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "prometheus",
+            "uid": "default-ds-uid"
+          },
+          "refId": "B",
+          "scenarioId": "random_walk"
+        },
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "prometheus",
+            "uid": "default-ds-uid"
+          },
+          "refId": "C",
+          "scenarioId": "random_walk"
+        }
+      ],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "Basic mode",
+      "type": "bargauge"
+    },
+    {
+      "datasource": {
+        "apiVersion": "v1",
+        "type": "prometheus",
+        "uid": "default-ds-uid"
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 6,
+        "x": 18,
+        "y": 0
+      },
+      "id": 14,
+      "links": [],
+      "options": {
+        "displayMode": "lcd",
+        "fieldOptions": {
+          "calcs": [
+            "mean"
+          ],
+          "defaults": {
+            "decimals": null,
+            "max": 100,
+            "min": 0,
+            "unit": "celsius"
+          },
+          "mappings": [],
+          "override": {},
+          "thresholds": [
+            {
+              "color": "blue",
+              "index": 0,
+              "value": null
+            },
+            {
+              "color": "green",
+              "index": 1,
+              "value": 20
+            },
+            {
+              "color": "orange",
+              "index": 2,
+              "value": 40
+            },
+            {
+              "color": "red",
+              "index": 3,
+              "value": 80
+            }
+          ],
+          "values": false
+        },
+        "orientation": "horizontal"
+      },
+      "pluginVersion": "6.2.0-pre",
+      "targets": [
+        {
+          "alias": "Inside",
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "prometheus",
+            "uid": "default-ds-uid"
+          },
+          "refId": "H",
+          "scenarioId": "csv_metric_values",
+          "stringInput": "100,100,100"
+        },
+        {
+          "alias": "Outhouse",
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "prometheus",
+            "uid": "default-ds-uid"
+          },
+          "refId": "A",
+          "scenarioId": "random_walk"
+        },
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "prometheus",
+            "uid": "default-ds-uid"
+          },
+          "refId": "F",
+          "scenarioId": "random_walk"
+        },
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "prometheus",
+            "uid": "default-ds-uid"
+          },
+          "refId": "B",
+          "scenarioId": "random_walk"
+        },
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "prometheus",
+            "uid": "default-ds-uid"
+          },
+          "refId": "C",
+          "scenarioId": "random_walk"
+        }
+      ],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "LED",
+      "type": "bargauge"
+    },
+    {
+      "datasource": {
+        "apiVersion": "v1",
+        "type": "prometheus",
+        "uid": "default-ds-uid"
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 11,
+        "x": 0,
+        "y": 7
+      },
+      "id": 7,
+      "links": [],
+      "options": {
+        "displayMode": "lcd",
+        "fieldOptions": {
+          "calcs": [
+            "mean"
+          ],
+          "defaults": {
+            "decimals": null,
+            "max": 100,
+            "min": 0,
+            "unit": "watt"
+          },
+          "mappings": [],
+          "override": {},
+          "thresholds": [
+            {
+              "color": "green",
+              "index": 0,
+              "value": null
+            },
+            {
+              "color": "orange",
+              "index": 1,
+              "value": 40
+            },
+            {
+              "color": "red",
+              "index": 2,
+              "value": 80
+            }
+          ],
+          "values": false
+        },
+        "orientation": "vertical"
+      },
+      "pluginVersion": "6.2.0-pre",
+      "targets": [
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "prometheus",
+            "uid": "default-ds-uid"
+          },
+          "refId": "E",
+          "scenarioId": "csv_metric_values",
+          "stringInput": "10003,33333"
+        },
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "prometheus",
+            "uid": "default-ds-uid"
+          },
+          "refId": "F",
+          "scenarioId": "random_walk"
+        },
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "prometheus",
+            "uid": "default-ds-uid"
+          },
+          "refId": "G",
+          "scenarioId": "random_walk"
+        },
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "prometheus",
+            "uid": "default-ds-uid"
+          },
+          "refId": "H",
+          "scenarioId": "csv_metric_values",
+          "stringInput": "100,100,100"
+        },
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "prometheus",
+            "uid": "default-ds-uid"
+          },
+          "refId": "I",
+          "scenarioId": "random_walk"
+        },
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "prometheus",
+            "uid": "default-ds-uid"
+          },
+          "refId": "J",
+          "scenarioId": "random_walk"
+        },
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "prometheus",
+            "uid": "default-ds-uid"
+          },
+          "refId": "K",
+          "scenarioId": "random_walk"
+        },
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "prometheus",
+            "uid": "default-ds-uid"
+          },
+          "refId": "L",
+          "scenarioId": "random_walk"
+        },
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "prometheus",
+            "uid": "default-ds-uid"
+          },
+          "refId": "M",
+          "scenarioId": "random_walk"
+        },
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "prometheus",
+            "uid": "default-ds-uid"
+          },
+          "refId": "N",
+          "scenarioId": "random_walk"
+        },
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "prometheus",
+            "uid": "default-ds-uid"
+          },
+          "refId": "O",
+          "scenarioId": "random_walk"
+        },
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "prometheus",
+            "uid": "default-ds-uid"
+          },
+          "refId": "P",
+          "scenarioId": "random_walk"
+        },
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "prometheus",
+            "uid": "default-ds-uid"
+          },
+          "refId": "Q",
+          "scenarioId": "random_walk"
+        }
+      ],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "LED Vertical",
+      "type": "bargauge"
+    },
+    {
+      "datasource": {
+        "apiVersion": "v1",
+        "type": "prometheus",
+        "uid": "default-ds-uid"
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 13,
+        "x": 11,
+        "y": 7
+      },
+      "id": 8,
+      "links": [],
+      "options": {
+        "displayMode": "basic",
+        "fieldOptions": {
+          "calcs": [
+            "mean"
+          ],
+          "defaults": {
+            "decimals": null,
+            "max": 100,
+            "min": 0,
+            "unit": "watt"
+          },
+          "mappings": [],
+          "override": {},
+          "thresholds": [
+            {
+              "color": "green",
+              "index": 0,
+              "value": null
+            },
+            {
+              "color": "purple",
+              "index": 1,
+              "value": 50
+            },
+            {
+              "color": "blue",
+              "index": 2,
+              "value": 70
+            }
+          ],
+          "values": false
+        },
+        "orientation": "vertical"
+      },
+      "pluginVersion": "6.2.0-pre",
+      "targets": [
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "prometheus",
+            "uid": "default-ds-uid"
+          },
+          "refId": "H",
+          "scenarioId": "csv_metric_values",
+          "stringInput": "100,100,100"
+        },
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "prometheus",
+            "uid": "default-ds-uid"
+          },
+          "refId": "A",
+          "scenarioId": "random_walk"
+        },
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "prometheus",
+            "uid": "default-ds-uid"
+          },
+          "refId": "B",
+          "scenarioId": "random_walk"
+        },
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "prometheus",
+            "uid": "default-ds-uid"
+          },
+          "refId": "C",
+          "scenarioId": "random_walk"
+        },
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "prometheus",
+            "uid": "default-ds-uid"
+          },
+          "refId": "D",
+          "scenarioId": "random_walk"
+        },
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "prometheus",
+            "uid": "default-ds-uid"
+          },
+          "refId": "I",
+          "scenarioId": "random_walk"
+        },
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "prometheus",
+            "uid": "default-ds-uid"
+          },
+          "refId": "J",
+          "scenarioId": "random_walk"
+        },
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "prometheus",
+            "uid": "default-ds-uid"
+          },
+          "refId": "K",
+          "scenarioId": "random_walk"
+        },
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "prometheus",
+            "uid": "default-ds-uid"
+          },
+          "refId": "L",
+          "scenarioId": "random_walk"
+        },
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "prometheus",
+            "uid": "default-ds-uid"
+          },
+          "refId": "M",
+          "scenarioId": "random_walk"
+        },
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "prometheus",
+            "uid": "default-ds-uid"
+          },
+          "refId": "N",
+          "scenarioId": "random_walk"
+        },
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "prometheus",
+            "uid": "default-ds-uid"
+          },
+          "refId": "O",
+          "scenarioId": "random_walk"
+        },
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "prometheus",
+            "uid": "default-ds-uid"
+          },
+          "refId": "P",
+          "scenarioId": "random_walk"
+        },
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "prometheus",
+            "uid": "default-ds-uid"
+          },
+          "refId": "Q",
+          "scenarioId": "random_walk"
+        }
+      ],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "Basic vertical ",
+      "type": "bargauge"
+    },
+    {
+      "datasource": {
+        "apiVersion": "v1",
+        "type": "prometheus",
+        "uid": "default-ds-uid"
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 11,
+        "x": 0,
+        "y": 16
+      },
+      "id": 16,
+      "links": [],
+      "options": {
+        "displayMode": "lcd",
+        "fieldOptions": {
+          "calcs": [
+            "last"
+          ],
+          "defaults": {
+            "max": 100,
+            "min": 0
+          },
+          "mappings": [],
+          "override": {},
+          "thresholds": [
+            {
+              "color": "green",
+              "index": 0,
+              "value": null
+            },
+            {
+              "color": "blue",
+              "index": 1,
+              "value": 40
+            },
+            {
+              "color": "red",
+              "index": 2,
+              "value": 80
+            }
+          ],
+          "values": false
+        },
+        "orientation": "horizontal"
+      },
+      "pluginVersion": "6.3.0-pre",
+      "targets": [
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "prometheus",
+            "uid": "default-ds-uid"
+          },
+          "refId": "A",
+          "scenarioId": "csv_metric_values",
+          "stringInput": "1,20,90,30,5,0,-100"
+        }
+      ],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "Negative value below min",
+      "type": "bargauge"
+    },
+    {
+      "datasource": {
+        "apiVersion": "v1",
+        "type": "prometheus",
+        "uid": "default-ds-uid"
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 3,
+        "x": 11,
+        "y": 16
+      },
+      "id": 17,
+      "links": [],
+      "options": {
+        "displayMode": "lcd",
+        "fieldOptions": {
+          "calcs": [
+            "last"
+          ],
+          "defaults": {
+            "max": 100,
+            "min": 0
+          },
+          "mappings": [],
+          "override": {},
+          "thresholds": [
+            {
+              "color": "green",
+              "index": 0,
+              "value": null
+            },
+            {
+              "color": "blue",
+              "index": 1,
+              "value": 40
+            },
+            {
+              "color": "red",
+              "index": 2,
+              "value": 80
+            }
+          ],
+          "values": false
+        },
+        "orientation": "vertical"
+      },
+      "pluginVersion": "6.3.0-pre",
+      "targets": [
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "prometheus",
+            "uid": "default-ds-uid"
+          },
+          "refId": "A",
+          "scenarioId": "csv_metric_values",
+          "stringInput": "1,20,90,30,5,0,-100"
+        }
+      ],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "Negative value below min",
+      "type": "bargauge"
+    },
+    {
+      "datasource": {
+        "apiVersion": "v1",
+        "type": "prometheus",
+        "uid": "default-ds-uid"
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 3,
+        "x": 14,
+        "y": 16
+      },
+      "id": 18,
+      "links": [],
+      "options": {
+        "displayMode": "lcd",
+        "fieldOptions": {
+          "calcs": [
+            "last"
+          ],
+          "defaults": {
+            "max": 100,
+            "min": -10
+          },
+          "mappings": [],
+          "override": {},
+          "thresholds": [
+            {
+              "color": "green",
+              "index": 0,
+              "value": null
+            },
+            {
+              "color": "blue",
+              "index": 1,
+              "value": 40
+            },
+            {
+              "color": "red",
+              "index": 2,
+              "value": 80
+            }
+          ],
+          "values": false
+        },
+        "orientation": "vertical"
+      },
+      "pluginVersion": "6.3.0-pre",
+      "targets": [
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "prometheus",
+            "uid": "default-ds-uid"
+          },
+          "refId": "A",
+          "scenarioId": "csv_metric_values",
+          "stringInput": "1,20,90,30,5,6"
+        }
+      ],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "Positive value above min",
+      "type": "bargauge"
+    },
+    {
+      "datasource": {
+        "apiVersion": "v1",
+        "type": "prometheus",
+        "uid": "default-ds-uid"
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 3,
+        "x": 17,
+        "y": 16
+      },
+      "id": 19,
+      "links": [],
+      "options": {
+        "displayMode": "lcd",
+        "fieldOptions": {
+          "calcs": [
+            "last"
+          ],
+          "defaults": {
+            "max": 35,
+            "min": -20
+          },
+          "mappings": [],
+          "override": {},
+          "thresholds": [
+            {
+              "color": "blue",
+              "index": 0,
+              "value": null
+            },
+            {
+              "color": "green",
+              "index": 1,
+              "value": 5
+            },
+            {
+              "color": "#EAB839",
+              "index": 2,
+              "value": 25
+            },
+            {
+              "color": "red",
+              "index": 3,
+              "value": 30
+            }
+          ],
+          "values": false
+        },
+        "orientation": "vertical"
+      },
+      "pluginVersion": "6.3.0-pre",
+      "targets": [
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "prometheus",
+            "uid": "default-ds-uid"
+          },
+          "refId": "A",
+          "scenarioId": "csv_metric_values",
+          "stringInput": "1,20,90,30,5,6"
+        }
+      ],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "Negative min ",
+      "type": "bargauge"
+    },
+    {
+      "datasource": {
+        "apiVersion": "v1",
+        "type": "prometheus",
+        "uid": "default-ds-uid"
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 4,
+        "x": 20,
+        "y": 16
+      },
+      "id": 20,
+      "links": [],
+      "options": {
+        "displayMode": "gradient",
+        "fieldOptions": {
+          "calcs": [
+            "last"
+          ],
+          "defaults": {
+            "max": 35,
+            "min": -20
+          },
+          "mappings": [],
+          "override": {},
+          "thresholds": [
+            {
+              "color": "blue",
+              "index": 0,
+              "value": null
+            },
+            {
+              "color": "green",
+              "index": 1,
+              "value": 5
+            },
+            {
+              "color": "#EAB839",
+              "index": 2,
+              "value": 25
+            },
+            {
+              "color": "red",
+              "index": 3,
+              "value": 30
+            }
+          ],
+          "values": false
+        },
+        "orientation": "vertical"
+      },
+      "pluginVersion": "6.3.0-pre",
+      "targets": [
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "prometheus",
+            "uid": "default-ds-uid"
+          },
+          "refId": "A",
+          "scenarioId": "csv_metric_values",
+          "stringInput": "30,30"
+        }
+      ],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "Negative min",
+      "type": "bargauge"
+    }
+  ],
+  "refresh": "",
+  "schemaVersion": 41,
+  "style": "dark",
+  "tags": [
+    "gdev",
+    "panel-tests"
+  ],
+  "templating": {
+    "list": []
+  },
+  "time": {
+    "from": "now-6h",
+    "to": "now"
+  },
+  "timepicker": {
+    "refresh_intervals": [
+      "5s",
+      "10s",
+      "30s",
+      "1m",
+      "5m",
+      "15m",
+      "30m",
+      "1h",
+      "2h",
+      "1d"
+    ]
+  },
+  "timezone": "",
+  "title": "Panel Tests - Bar Gauge",
+  "uid": "O6f11TZWk",
+  "version": 12
+}

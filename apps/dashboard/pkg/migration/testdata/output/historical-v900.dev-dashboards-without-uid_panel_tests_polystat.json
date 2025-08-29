@@ -1,0 +1,3426 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "uid": "-- Grafana --"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations \u0026 Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "gnetId": null,
+  "graphTooltip": 0,
+  "links": [],
+  "panels": [
+    {
+      "animationModes": [
+        {
+          "text": "Show All",
+          "value": "all"
+        },
+        {
+          "text": "Show Triggered",
+          "value": "triggered"
+        }
+      ],
+      "colors": [
+        "#299c46",
+        "rgba(237, 129, 40, 0.89)",
+        "#d44a3a"
+      ],
+      "d3DivId": "d3_svg_4",
+      "datasource": {
+        "uid": "gdev-testdata"
+      },
+      "decimals": 2,
+      "displayModes": [
+        {
+          "text": "Show All",
+          "value": "all"
+        },
+        {
+          "text": "Show Triggered",
+          "value": "triggered"
+        }
+      ],
+      "fontSizes": [
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18,
+        19,
+        20,
+        22,
+        24,
+        26,
+        28,
+        30,
+        32,
+        34,
+        36,
+        38,
+        40,
+        42,
+        44,
+        46,
+        48,
+        50,
+        52,
+        54,
+        56,
+        58,
+        60,
+        62,
+        64,
+        66,
+        68,
+        70
+      ],
+      "fontTypes": [
+        "Open Sans",
+        "Arial",
+        "Avant Garde",
+        "Bookman",
+        "Consolas",
+        "Courier",
+        "Courier New",
+        "Futura",
+        "Garamond",
+        "Helvetica",
+        "Palatino",
+        "Times",
+        "Times New Roman",
+        "Verdana"
+      ],
+      "format": "none",
+      "gridPos": {
+        "h": 9,
+        "w": 12,
+        "x": 0,
+        "y": 0
+      },
+      "id": 4,
+      "links": [],
+      "notcolors": [
+        "rgba(245, 54, 54, 0.9)",
+        "rgba(237, 129, 40, 0.89)",
+        "rgba(50, 172, 45, 0.97)"
+      ],
+      "operatorName": "avg",
+      "operatorOptions": [
+        {
+          "text": "Average",
+          "value": "avg"
+        },
+        {
+          "text": "Count",
+          "value": "count"
+        },
+        {
+          "text": "Current",
+          "value": "current"
+        },
+        {
+          "text": "Delta",
+          "value": "delta"
+        },
+        {
+          "text": "Difference",
+          "value": "diff"
+        },
+        {
+          "text": "First",
+          "value": "first"
+        },
+        {
+          "text": "Log Min",
+          "value": "logmin"
+        },
+        {
+          "text": "Max",
+          "value": "max"
+        },
+        {
+          "text": "Min",
+          "value": "min"
+        },
+        {
+          "text": "Name",
+          "value": "name"
+        },
+        {
+          "text": "Time of Last Point",
+          "value": "last_time"
+        },
+        {
+          "text": "Time Step",
+          "value": "time_step"
+        },
+        {
+          "text": "Total",
+          "value": "total"
+        }
+      ],
+      "polystat": {
+        "animationSpeed": 2500,
+        "columnAutoSize": true,
+        "columns": "",
+        "defaultClickThrough": "",
+        "defaultClickThroughSanitize": true,
+        "displayLimit": 100,
+        "fontAutoScale": true,
+        "fontSize": 12,
+        "globalDisplayMode": "all",
+        "globalOperatorName": "avg",
+        "gradientEnabled": true,
+        "hexagonSortByDirection": "asc",
+        "hexagonSortByField": "name",
+        "maxMetrics": 0,
+        "polygonBorderColor": "black",
+        "polygonBorderSize": 2,
+        "radius": "",
+        "radiusAutoSize": true,
+        "rowAutoSize": true,
+        "rows": "",
+        "shape": "hexagon_pointed_top",
+        "tooltipDisplayMode": "all",
+        "tooltipDisplayTextTriggeredEmpty": "OK",
+        "tooltipFontSize": 12,
+        "tooltipFontType": "Open Sans",
+        "tooltipPrimarySortDirection": "desc",
+        "tooltipPrimarySortField": "thresholdLevel",
+        "tooltipSecondarySortDirection": "desc",
+        "tooltipSecondarySortField": "value",
+        "tooltipTimestampEnabled": true
+      },
+      "savedComposites": [],
+      "savedOverrides": [],
+      "shapes": [
+        {
+          "text": "Hexagon Pointed Top",
+          "value": "hexagon_pointed_top"
+        },
+        {
+          "text": "Hexagon Flat Top",
+          "value": "hexagon_flat_top"
+        },
+        {
+          "text": "Circle",
+          "value": "circle"
+        },
+        {
+          "text": "Cross",
+          "value": "cross"
+        },
+        {
+          "text": "Diamond",
+          "value": "diamond"
+        },
+        {
+          "text": "Square",
+          "value": "square"
+        },
+        {
+          "text": "Star",
+          "value": "star"
+        },
+        {
+          "text": "Triangle",
+          "value": "triangle"
+        },
+        {
+          "text": "Wye",
+          "value": "wye"
+        }
+      ],
+      "sortDirections": [
+        {
+          "text": "Ascending",
+          "value": "asc"
+        },
+        {
+          "text": "Descending",
+          "value": "desc"
+        }
+      ],
+      "sortFields": [
+        {
+          "text": "Name",
+          "value": "name"
+        },
+        {
+          "text": "Threshold Level",
+          "value": "thresholdLevel"
+        },
+        {
+          "text": "Value",
+          "value": "value"
+        }
+      ],
+      "svgContainer": {},
+      "targets": [
+        {
+          "datasource": {
+            "uid": "gdev-testdata"
+          },
+          "expr": "",
+          "format": "time_series",
+          "intervalFactor": 1,
+          "refId": "A",
+          "scenarioId": "random_walk"
+        },
+        {
+          "datasource": {
+            "uid": "gdev-testdata"
+          },
+          "expr": "",
+          "format": "time_series",
+          "intervalFactor": 1,
+          "refId": "B",
+          "scenarioId": "random_walk"
+        },
+        {
+          "datasource": {
+            "uid": "gdev-testdata"
+          },
+          "expr": "",
+          "format": "time_series",
+          "intervalFactor": 1,
+          "refId": "C",
+          "scenarioId": "random_walk"
+        },
+        {
+          "datasource": {
+            "uid": "gdev-testdata"
+          },
+          "expr": "",
+          "format": "time_series",
+          "intervalFactor": 1,
+          "refId": "D",
+          "scenarioId": "random_walk"
+        },
+        {
+          "datasource": {
+            "uid": "gdev-testdata"
+          },
+          "expr": "",
+          "format": "time_series",
+          "intervalFactor": 1,
+          "refId": "E",
+          "scenarioId": "random_walk"
+        }
+      ],
+      "thresholdStates": [
+        {
+          "text": "ok",
+          "value": 0
+        },
+        {
+          "text": "warning",
+          "value": 1
+        },
+        {
+          "text": "critical",
+          "value": 2
+        },
+        {
+          "text": "custom",
+          "value": 3
+        }
+      ],
+      "title": "Poor use of space",
+      "type": "grafana-polystat-panel",
+      "unitFormats": [
+        {
+          "submenu": [
+            {
+              "text": "none",
+              "value": "none"
+            },
+            {
+              "text": "short",
+              "value": "short"
+            },
+            {
+              "text": "percent (0-100)",
+              "value": "percent"
+            },
+            {
+              "text": "percent (0.0-1.0)",
+              "value": "percentunit"
+            },
+            {
+              "text": "Humidity (%H)",
+              "value": "humidity"
+            },
+            {
+              "text": "decibel",
+              "value": "dB"
+            },
+            {
+              "text": "hexadecimal (0x)",
+              "value": "hex0x"
+            },
+            {
+              "text": "hexadecimal",
+              "value": "hex"
+            },
+            {
+              "text": "scientific notation",
+              "value": "sci"
+            },
+            {
+              "text": "locale format",
+              "value": "locale"
+            }
+          ],
+          "text": "none"
+        },
+        {
+          "submenu": [
+            {
+              "text": "Dollars ($)",
+              "value": "currencyUSD"
+            },
+            {
+              "text": "Pounds (£)",
+              "value": "currencyGBP"
+            },
+            {
+              "text": "Euro (€)",
+              "value": "currencyEUR"
+            },
+            {
+              "text": "Yen (¥)",
+              "value": "currencyJPY"
+            },
+            {
+              "text": "Rubles (₽)",
+              "value": "currencyRUB"
+            },
+            {
+              "text": "Hryvnias (₴)",
+              "value": "currencyUAH"
+            },
+            {
+              "text": "Real (R$)",
+              "value": "currencyBRL"
+            },
+            {
+              "text": "Danish Krone (kr)",
+              "value": "currencyDKK"
+            },
+            {
+              "text": "Icelandic Króna (kr)",
+              "value": "currencyISK"
+            },
+            {
+              "text": "Norwegian Krone (kr)",
+              "value": "currencyNOK"
+            },
+            {
+              "text": "Swedish Krona (kr)",
+              "value": "currencySEK"
+            },
+            {
+              "text": "Czech koruna (czk)",
+              "value": "currencyCZK"
+            },
+            {
+              "text": "Swiss franc (CHF)",
+              "value": "currencyCHF"
+            },
+            {
+              "text": "Polish Złoty (PLN)",
+              "value": "currencyPLN"
+            },
+            {
+              "text": "Bitcoin (฿)",
+              "value": "currencyBTC"
+            },
+            {
+              "text": "Milli Bitcoin (mBTC)",
+              "value": "currencymBTC"
+            },
+            {
+              "text": "Micro Bitcoin (μBTC)",
+              "value": "currencyμBTC"
+            },
+            {
+              "text": "Vietnamese Dong (VND)",
+              "value": "currencyVND"
+            }
+          ],
+          "text": "currency"
+        },
+        {
+          "submenu": [
+            {
+              "text": "Hertz (1/s)",
+              "value": "hertz"
+            },
+            {
+              "text": "nanoseconds (ns)",
+              "value": "ns"
+            },
+            {
+              "text": "microseconds (µs)",
+              "value": "µs"
+            },
+            {
+              "text": "milliseconds (ms)",
+              "value": "ms"
+            },
+            {
+              "text": "seconds (s)",
+              "value": "s"
+            },
+            {
+              "text": "minutes (m)",
+              "value": "m"
+            },
+            {
+              "text": "hours (h)",
+              "value": "h"
+            },
+            {
+              "text": "days (d)",
+              "value": "d"
+            },
+            {
+              "text": "duration (ms)",
+              "value": "dtdurationms"
+            },
+            {
+              "text": "duration (s)",
+              "value": "dtdurations"
+            },
+            {
+              "text": "duration (hh:mm:ss)",
+              "value": "dthms"
+            },
+            {
+              "text": "Timeticks (s/100)",
+              "value": "timeticks"
+            }
+          ],
+          "text": "time"
+        },
+        {
+          "submenu": [
+            {
+              "text": "YYYY-MM-DD HH:mm:ss",
+              "value": "dateTimeAsIso"
+            },
+            {
+              "text": "DD/MM/YYYY h:mm:ss a",
+              "value": "dateTimeAsUS"
+            },
+            {
+              "text": "From Now",
+              "value": "dateTimeFromNow"
+            }
+          ],
+          "text": "date \u0026 time"
+        },
+        {
+          "submenu": [
+            {
+              "text": "bits",
+              "value": "bits"
+            },
+            {
+              "text": "bytes",
+              "value": "bytes"
+            },
+            {
+              "text": "kibibytes",
+              "value": "kbytes"
+            },
+            {
+              "text": "mebibytes",
+              "value": "mbytes"
+            },
+            {
+              "text": "gibibytes",
+              "value": "gbytes"
+            }
+          ],
+          "text": "data (IEC)"
+        },
+        {
+          "submenu": [
+            {
+              "text": "bits",
+              "value": "decbits"
+            },
+            {
+              "text": "bytes",
+              "value": "decbytes"
+            },
+            {
+              "text": "kilobytes",
+              "value": "deckbytes"
+            },
+            {
+              "text": "megabytes",
+              "value": "decmbytes"
+            },
+            {
+              "text": "gigabytes",
+              "value": "decgbytes"
+            }
+          ],
+          "text": "data (Metric)"
+        },
+        {
+          "submenu": [
+            {
+              "text": "packets/sec",
+              "value": "pps"
+            },
+            {
+              "text": "bits/sec",
+              "value": "bps"
+            },
+            {
+              "text": "bytes/sec",
+              "value": "Bps"
+            },
+            {
+              "text": "kilobits/sec",
+              "value": "Kbits"
+            },
+            {
+              "text": "kilobytes/sec",
+              "value": "KBs"
+            },
+            {
+              "text": "megabits/sec",
+              "value": "Mbits"
+            },
+            {
+              "text": "megabytes/sec",
+              "value": "MBs"
+            },
+            {
+              "text": "gigabytes/sec",
+              "value": "GBs"
+            },
+            {
+              "text": "gigabits/sec",
+              "value": "Gbits"
+            }
+          ],
+          "text": "data rate"
+        },
+        {
+          "submenu": [
+            {
+              "text": "hashes/sec",
+              "value": "Hs"
+            },
+            {
+              "text": "kilohashes/sec",
+              "value": "KHs"
+            },
+            {
+              "text": "megahashes/sec",
+              "value": "MHs"
+            },
+            {
+              "text": "gigahashes/sec",
+              "value": "GHs"
+            },
+            {
+              "text": "terahashes/sec",
+              "value": "THs"
+            },
+            {
+              "text": "petahashes/sec",
+              "value": "PHs"
+            },
+            {
+              "text": "exahashes/sec",
+              "value": "EHs"
+            }
+          ],
+          "text": "hash rate"
+        },
+        {
+          "submenu": [
+            {
+              "text": "ops/sec (ops)",
+              "value": "ops"
+            },
+            {
+              "text": "requests/sec (rps)",
+              "value": "reqps"
+            },
+            {
+              "text": "reads/sec (rps)",
+              "value": "rps"
+            },
+            {
+              "text": "writes/sec (wps)",
+              "value": "wps"
+            },
+            {
+              "text": "I/O ops/sec (iops)",
+              "value": "iops"
+            },
+            {
+              "text": "ops/min (opm)",
+              "value": "opm"
+            },
+            {
+              "text": "reads/min (rpm)",
+              "value": "rpm"
+            },
+            {
+              "text": "writes/min (wpm)",
+              "value": "wpm"
+            }
+          ],
+          "text": "throughput"
+        },
+        {
+          "submenu": [
+            {
+              "text": "millimetre (mm)",
+              "value": "lengthmm"
+            },
+            {
+              "text": "meter (m)",
+              "value": "lengthm"
+            },
+            {
+              "text": "inch (in)",
+              "value": "lengthin"
+            },
+            {
+              "text": "feet (ft)",
+              "value": "lengthft"
+            },
+            {
+              "text": "kilometer (km)",
+              "value": "lengthkm"
+            },
+            {
+              "text": "mile (mi)",
+              "value": "lengthmi"
+            }
+          ],
+          "text": "length"
+        },
+        {
+          "submenu": [
+            {
+              "text": "Square Meters (m²)",
+              "value": "areaM2"
+            },
+            {
+              "text": "Square Feet (ft²)",
+              "value": "areaF2"
+            },
+            {
+              "text": "Square Miles (mi²)",
+              "value": "areaMI2"
+            }
+          ],
+          "text": "area"
+        },
+        {
+          "submenu": [
+            {
+              "text": "milligram (mg)",
+              "value": "massmg"
+            },
+            {
+              "text": "gram (g)",
+              "value": "massg"
+            },
+            {
+              "text": "pound (lb)",
+              "value": "masslb"
+            },
+            {
+              "text": "kilogram (kg)",
+              "value": "masskg"
+            },
+            {
+              "text": "metric ton (t)",
+              "value": "masst"
+            }
+          ],
+          "text": "mass"
+        },
+        {
+          "submenu": [
+            {
+              "text": "metres/second (m/s)",
+              "value": "velocityms"
+            },
+            {
+              "text": "kilometers/hour (km/h)",
+              "value": "velocitykmh"
+            },
+            {
+              "text": "miles/hour (mph)",
+              "value": "velocitymph"
+            },
+            {
+              "text": "knot (kn)",
+              "value": "velocityknot"
+            }
+          ],
+          "text": "velocity"
+        },
+        {
+          "submenu": [
+            {
+              "text": "millilitre (mL)",
+              "value": "mlitre"
+            },
+            {
+              "text": "litre (L)",
+              "value": "litre"
+            },
+            {
+              "text": "cubic metre",
+              "value": "m3"
+            },
+            {
+              "text": "Normal cubic metre",
+              "value": "Nm3"
+            },
+            {
+              "text": "cubic decimetre",
+              "value": "dm3"
+            },
+            {
+              "text": "gallons",
+              "value": "gallons"
+            }
+          ],
+          "text": "volume"
+        },
+        {
+          "submenu": [
+            {
+              "text": "Watt (W)",
+              "value": "watt"
+            },
+            {
+              "text": "Kilowatt (kW)",
+              "value": "kwatt"
+            },
+            {
+              "text": "Milliwatt (mW)",
+              "value": "mwatt"
+            },
+            {
+              "text": "Watt per square metre (W/m²)",
+              "value": "Wm2"
+            },
+            {
+              "text": "Volt-Ampere (VA)",
+              "value": "voltamp"
+            },
+            {
+              "text": "Kilovolt-Ampere (kVA)",
+              "value": "kvoltamp"
+            },
+            {
+              "text": "Volt-Ampere reactive (VAr)",
+              "value": "voltampreact"
+            },
+            {
+              "text": "Kilovolt-Ampere reactive (kVAr)",
+              "value": "kvoltampreact"
+            },
+            {
+              "text": "Watt-hour (Wh)",
+              "value": "watth"
+            },
+            {
+              "text": "Kilowatt-hour (kWh)",
+              "value": "kwatth"
+            },
+            {
+              "text": "Kilowatt-min (kWm)",
+              "value": "kwattm"
+            },
+            {
+              "text": "Joule (J)",
+              "value": "joule"
+            },
+            {
+              "text": "Electron volt (eV)",
+              "value": "ev"
+            },
+            {
+              "text": "Ampere (A)",
+              "value": "amp"
+            },
+            {
+              "text": "Kiloampere (kA)",
+              "value": "kamp"
+            },
+            {
+              "text": "Milliampere (mA)",
+              "value": "mamp"
+            },
+            {
+              "text": "Volt (V)",
+              "value": "volt"
+            },
+            {
+              "text": "Kilovolt (kV)",
+              "value": "kvolt"
+            },
+            {
+              "text": "Millivolt (mV)",
+              "value": "mvolt"
+            },
+            {
+              "text": "Decibel-milliwatt (dBm)",
+              "value": "dBm"
+            },
+            {
+              "text": "Ohm (Ω)",
+              "value": "ohm"
+            },
+            {
+              "text": "Lumens (Lm)",
+              "value": "lumens"
+            }
+          ],
+          "text": "energy"
+        },
+        {
+          "submenu": [
+            {
+              "text": "Celsius (°C)",
+              "value": "celsius"
+            },
+            {
+              "text": "Fahrenheit (°F)",
+              "value": "fahrenheit"
+            },
+            {
+              "text": "Kelvin (K)",
+              "value": "kelvin"
+            }
+          ],
+          "text": "temperature"
+        },
+        {
+          "submenu": [
+            {
+              "text": "Millibars",
+              "value": "pressurembar"
+            },
+            {
+              "text": "Bars",
+              "value": "pressurebar"
+            },
+            {
+              "text": "Kilobars",
+              "value": "pressurekbar"
+            },
+            {
+              "text": "Hectopascals",
+              "value": "pressurehpa"
+            },
+            {
+              "text": "Kilopascals",
+              "value": "pressurekpa"
+            },
+            {
+              "text": "Inches of mercury",
+              "value": "pressurehg"
+            },
+            {
+              "text": "PSI",
+              "value": "pressurepsi"
+            }
+          ],
+          "text": "pressure"
+        },
+        {
+          "submenu": [
+            {
+              "text": "Newton-meters (Nm)",
+              "value": "forceNm"
+            },
+            {
+              "text": "Kilonewton-meters (kNm)",
+              "value": "forcekNm"
+            },
+            {
+              "text": "Newtons (N)",
+              "value": "forceN"
+            },
+            {
+              "text": "Kilonewtons (kN)",
+              "value": "forcekN"
+            }
+          ],
+          "text": "force"
+        },
+        {
+          "submenu": [
+            {
+              "text": "Gallons/min (gpm)",
+              "value": "flowgpm"
+            },
+            {
+              "text": "Cubic meters/sec (cms)",
+              "value": "flowcms"
+            },
+            {
+              "text": "Cubic feet/sec (cfs)",
+              "value": "flowcfs"
+            },
+            {
+              "text": "Cubic feet/min (cfm)",
+              "value": "flowcfm"
+            },
+            {
+              "text": "Litre/hour",
+              "value": "litreh"
+            },
+            {
+              "text": "Litre/min (l/min)",
+              "value": "flowlpm"
+            },
+            {
+              "text": "milliLitre/min (mL/min)",
+              "value": "flowmlpm"
+            }
+          ],
+          "text": "flow"
+        },
+        {
+          "submenu": [
+            {
+              "text": "Degrees (°)",
+              "value": "degree"
+            },
+            {
+              "text": "Radians",
+              "value": "radian"
+            },
+            {
+              "text": "Gradian",
+              "value": "grad"
+            }
+          ],
+          "text": "angle"
+        },
+        {
+          "submenu": [
+            {
+              "text": "Meters/sec²",
+              "value": "accMS2"
+            },
+            {
+              "text": "Feet/sec²",
+              "value": "accFS2"
+            },
+            {
+              "text": "G unit",
+              "value": "accG"
+            }
+          ],
+          "text": "acceleration"
+        },
+        {
+          "submenu": [
+            {
+              "text": "Becquerel (Bq)",
+              "value": "radbq"
+            },
+            {
+              "text": "curie (Ci)",
+              "value": "radci"
+            },
+            {
+              "text": "Gray (Gy)",
+              "value": "radgy"
+            },
+            {
+              "text": "rad",
+              "value": "radrad"
+            },
+            {
+              "text": "Sievert (Sv)",
+              "value": "radsv"
+            },
+            {
+              "text": "rem",
+              "value": "radrem"
+            },
+            {
+              "text": "Exposure (C/kg)",
+              "value": "radexpckg"
+            },
+            {
+              "text": "roentgen (R)",
+              "value": "radr"
+            },
+            {
+              "text": "Sievert/hour (Sv/h)",
+              "value": "radsvh"
+            }
+          ],
+          "text": "radiation"
+        },
+        {
+          "submenu": [
+            {
+              "text": "parts-per-million (ppm)",
+              "value": "ppm"
+            },
+            {
+              "text": "parts-per-billion (ppb)",
+              "value": "conppb"
+            },
+            {
+              "text": "nanogram per cubic metre (ng/m³)",
+              "value": "conngm3"
+            },
+            {
+              "text": "nanogram per normal cubic metre (ng/Nm³)",
+              "value": "conngNm3"
+            },
+            {
+              "text": "microgram per cubic metre (μg/m³)",
+              "value": "conμgm3"
+            },
+            {
+              "text": "microgram per normal cubic metre (μg/Nm³)",
+              "value": "conμgNm3"
+            },
+            {
+              "text": "milligram per cubic metre (mg/m³)",
+              "value": "conmgm3"
+            },
+            {
+              "text": "milligram per normal cubic metre (mg/Nm³)",
+              "value": "conmgNm3"
+            },
+            {
+              "text": "gram per cubic metre (g/m³)",
+              "value": "congm3"
+            },
+            {
+              "text": "gram per normal cubic metre (g/Nm³)",
+              "value": "congNm3"
+            }
+          ],
+          "text": "concentration"
+        }
+      ]
+    },
+    {
+      "animationModes": [
+        {
+          "text": "Show All",
+          "value": "all"
+        },
+        {
+          "text": "Show Triggered",
+          "value": "triggered"
+        }
+      ],
+      "colors": [
+        "#299c46",
+        "rgba(237, 129, 40, 0.89)",
+        "#d44a3a"
+      ],
+      "d3DivId": "d3_svg_5",
+      "datasource": {
+        "uid": "gdev-testdata"
+      },
+      "decimals": 2,
+      "displayModes": [
+        {
+          "text": "Show All",
+          "value": "all"
+        },
+        {
+          "text": "Show Triggered",
+          "value": "triggered"
+        }
+      ],
+      "fontSizes": [
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18,
+        19,
+        20,
+        22,
+        24,
+        26,
+        28,
+        30,
+        32,
+        34,
+        36,
+        38,
+        40,
+        42,
+        44,
+        46,
+        48,
+        50,
+        52,
+        54,
+        56,
+        58,
+        60,
+        62,
+        64,
+        66,
+        68,
+        70
+      ],
+      "fontTypes": [
+        "Open Sans",
+        "Arial",
+        "Avant Garde",
+        "Bookman",
+        "Consolas",
+        "Courier",
+        "Courier New",
+        "Futura",
+        "Garamond",
+        "Helvetica",
+        "Palatino",
+        "Times",
+        "Times New Roman",
+        "Verdana"
+      ],
+      "format": "none",
+      "gridPos": {
+        "h": 9,
+        "w": 12,
+        "x": 12,
+        "y": 0
+      },
+      "id": 5,
+      "links": [],
+      "notcolors": [
+        "rgba(245, 54, 54, 0.9)",
+        "rgba(237, 129, 40, 0.89)",
+        "rgba(50, 172, 45, 0.97)"
+      ],
+      "operatorName": "avg",
+      "operatorOptions": [
+        {
+          "text": "Average",
+          "value": "avg"
+        },
+        {
+          "text": "Count",
+          "value": "count"
+        },
+        {
+          "text": "Current",
+          "value": "current"
+        },
+        {
+          "text": "Delta",
+          "value": "delta"
+        },
+        {
+          "text": "Difference",
+          "value": "diff"
+        },
+        {
+          "text": "First",
+          "value": "first"
+        },
+        {
+          "text": "Log Min",
+          "value": "logmin"
+        },
+        {
+          "text": "Max",
+          "value": "max"
+        },
+        {
+          "text": "Min",
+          "value": "min"
+        },
+        {
+          "text": "Name",
+          "value": "name"
+        },
+        {
+          "text": "Time of Last Point",
+          "value": "last_time"
+        },
+        {
+          "text": "Time Step",
+          "value": "time_step"
+        },
+        {
+          "text": "Total",
+          "value": "total"
+        }
+      ],
+      "polystat": {
+        "animationSpeed": 2500,
+        "columnAutoSize": true,
+        "columns": "",
+        "defaultClickThrough": "",
+        "defaultClickThroughSanitize": true,
+        "displayLimit": 100,
+        "fontAutoScale": true,
+        "fontSize": 12,
+        "globalDisplayMode": "all",
+        "globalOperatorName": "avg",
+        "gradientEnabled": true,
+        "hexagonSortByDirection": "asc",
+        "hexagonSortByField": "name",
+        "maxMetrics": 0,
+        "polygonBorderColor": "black",
+        "polygonBorderSize": 2,
+        "radius": "",
+        "radiusAutoSize": true,
+        "rowAutoSize": true,
+        "rows": "",
+        "shape": "hexagon_pointed_top",
+        "tooltipDisplayMode": "all",
+        "tooltipDisplayTextTriggeredEmpty": "OK",
+        "tooltipFontSize": 12,
+        "tooltipFontType": "Open Sans",
+        "tooltipPrimarySortDirection": "desc",
+        "tooltipPrimarySortField": "thresholdLevel",
+        "tooltipSecondarySortDirection": "desc",
+        "tooltipSecondarySortField": "value",
+        "tooltipTimestampEnabled": true
+      },
+      "savedComposites": [
+        {
+          "animateMode": "all",
+          "clickThrough": "",
+          "compositeName": "comp",
+          "enabled": true,
+          "hideMembers": true,
+          "members": [
+            {
+              "seriesName": "A-series"
+            },
+            {
+              "seriesName": "B-series"
+            }
+          ],
+          "sanitizeURLEnabled": true,
+          "sanitizedURL": "",
+          "showName": true,
+          "showValue": true,
+          "thresholdLevel": 0
+        }
+      ],
+      "savedOverrides": [],
+      "shapes": [
+        {
+          "text": "Hexagon Pointed Top",
+          "value": "hexagon_pointed_top"
+        },
+        {
+          "text": "Hexagon Flat Top",
+          "value": "hexagon_flat_top"
+        },
+        {
+          "text": "Circle",
+          "value": "circle"
+        },
+        {
+          "text": "Cross",
+          "value": "cross"
+        },
+        {
+          "text": "Diamond",
+          "value": "diamond"
+        },
+        {
+          "text": "Square",
+          "value": "square"
+        },
+        {
+          "text": "Star",
+          "value": "star"
+        },
+        {
+          "text": "Triangle",
+          "value": "triangle"
+        },
+        {
+          "text": "Wye",
+          "value": "wye"
+        }
+      ],
+      "sortDirections": [
+        {
+          "text": "Ascending",
+          "value": "asc"
+        },
+        {
+          "text": "Descending",
+          "value": "desc"
+        }
+      ],
+      "sortFields": [
+        {
+          "text": "Name",
+          "value": "name"
+        },
+        {
+          "text": "Threshold Level",
+          "value": "thresholdLevel"
+        },
+        {
+          "text": "Value",
+          "value": "value"
+        }
+      ],
+      "svgContainer": {},
+      "targets": [
+        {
+          "datasource": {
+            "uid": "gdev-testdata"
+          },
+          "expr": "",
+          "format": "time_series",
+          "intervalFactor": 1,
+          "refId": "A",
+          "scenarioId": "random_walk"
+        },
+        {
+          "datasource": {
+            "uid": "gdev-testdata"
+          },
+          "expr": "",
+          "format": "time_series",
+          "intervalFactor": 1,
+          "refId": "B",
+          "scenarioId": "random_walk"
+        },
+        {
+          "datasource": {
+            "uid": "gdev-testdata"
+          },
+          "expr": "",
+          "format": "time_series",
+          "intervalFactor": 1,
+          "refId": "C",
+          "scenarioId": "random_walk"
+        },
+        {
+          "datasource": {
+            "uid": "gdev-testdata"
+          },
+          "expr": "",
+          "format": "time_series",
+          "intervalFactor": 1,
+          "refId": "D",
+          "scenarioId": "random_walk"
+        },
+        {
+          "datasource": {
+            "uid": "gdev-testdata"
+          },
+          "expr": "",
+          "format": "time_series",
+          "intervalFactor": 1,
+          "refId": "E",
+          "scenarioId": "random_walk"
+        }
+      ],
+      "thresholdStates": [
+        {
+          "text": "ok",
+          "value": 0
+        },
+        {
+          "text": "warning",
+          "value": 1
+        },
+        {
+          "text": "critical",
+          "value": 2
+        },
+        {
+          "text": "custom",
+          "value": 3
+        }
+      ],
+      "title": "Composite crash",
+      "type": "grafana-polystat-panel",
+      "unitFormats": [
+        {
+          "submenu": [
+            {
+              "text": "none",
+              "value": "none"
+            },
+            {
+              "text": "short",
+              "value": "short"
+            },
+            {
+              "text": "percent (0-100)",
+              "value": "percent"
+            },
+            {
+              "text": "percent (0.0-1.0)",
+              "value": "percentunit"
+            },
+            {
+              "text": "Humidity (%H)",
+              "value": "humidity"
+            },
+            {
+              "text": "decibel",
+              "value": "dB"
+            },
+            {
+              "text": "hexadecimal (0x)",
+              "value": "hex0x"
+            },
+            {
+              "text": "hexadecimal",
+              "value": "hex"
+            },
+            {
+              "text": "scientific notation",
+              "value": "sci"
+            },
+            {
+              "text": "locale format",
+              "value": "locale"
+            }
+          ],
+          "text": "none"
+        },
+        {
+          "submenu": [
+            {
+              "text": "Dollars ($)",
+              "value": "currencyUSD"
+            },
+            {
+              "text": "Pounds (£)",
+              "value": "currencyGBP"
+            },
+            {
+              "text": "Euro (€)",
+              "value": "currencyEUR"
+            },
+            {
+              "text": "Yen (¥)",
+              "value": "currencyJPY"
+            },
+            {
+              "text": "Rubles (₽)",
+              "value": "currencyRUB"
+            },
+            {
+              "text": "Hryvnias (₴)",
+              "value": "currencyUAH"
+            },
+            {
+              "text": "Real (R$)",
+              "value": "currencyBRL"
+            },
+            {
+              "text": "Danish Krone (kr)",
+              "value": "currencyDKK"
+            },
+            {
+              "text": "Icelandic Króna (kr)",
+              "value": "currencyISK"
+            },
+            {
+              "text": "Norwegian Krone (kr)",
+              "value": "currencyNOK"
+            },
+            {
+              "text": "Swedish Krona (kr)",
+              "value": "currencySEK"
+            },
+            {
+              "text": "Czech koruna (czk)",
+              "value": "currencyCZK"
+            },
+            {
+              "text": "Swiss franc (CHF)",
+              "value": "currencyCHF"
+            },
+            {
+              "text": "Polish Złoty (PLN)",
+              "value": "currencyPLN"
+            },
+            {
+              "text": "Bitcoin (฿)",
+              "value": "currencyBTC"
+            },
+            {
+              "text": "Vietnamese Dong (VND)",
+              "value": "currencyVND"
+            }
+          ],
+          "text": "currency"
+        },
+        {
+          "submenu": [
+            {
+              "text": "Hertz (1/s)",
+              "value": "hertz"
+            },
+            {
+              "text": "nanoseconds (ns)",
+              "value": "ns"
+            },
+            {
+              "text": "microseconds (µs)",
+              "value": "µs"
+            },
+            {
+              "text": "milliseconds (ms)",
+              "value": "ms"
+            },
+            {
+              "text": "seconds (s)",
+              "value": "s"
+            },
+            {
+              "text": "minutes (m)",
+              "value": "m"
+            },
+            {
+              "text": "hours (h)",
+              "value": "h"
+            },
+            {
+              "text": "days (d)",
+              "value": "d"
+            },
+            {
+              "text": "duration (ms)",
+              "value": "dtdurationms"
+            },
+            {
+              "text": "duration (s)",
+              "value": "dtdurations"
+            },
+            {
+              "text": "duration (hh:mm:ss)",
+              "value": "dthms"
+            },
+            {
+              "text": "Timeticks (s/100)",
+              "value": "timeticks"
+            }
+          ],
+          "text": "time"
+        },
+        {
+          "submenu": [
+            {
+              "text": "YYYY-MM-DD HH:mm:ss",
+              "value": "dateTimeAsIso"
+            },
+            {
+              "text": "DD/MM/YYYY h:mm:ss a",
+              "value": "dateTimeAsUS"
+            },
+            {
+              "text": "From Now",
+              "value": "dateTimeFromNow"
+            }
+          ],
+          "text": "date \u0026 time"
+        },
+        {
+          "submenu": [
+            {
+              "text": "bits",
+              "value": "bits"
+            },
+            {
+              "text": "bytes",
+              "value": "bytes"
+            },
+            {
+              "text": "kibibytes",
+              "value": "kbytes"
+            },
+            {
+              "text": "mebibytes",
+              "value": "mbytes"
+            },
+            {
+              "text": "gibibytes",
+              "value": "gbytes"
+            }
+          ],
+          "text": "data (IEC)"
+        },
+        {
+          "submenu": [
+            {
+              "text": "bits",
+              "value": "decbits"
+            },
+            {
+              "text": "bytes",
+              "value": "decbytes"
+            },
+            {
+              "text": "kilobytes",
+              "value": "deckbytes"
+            },
+            {
+              "text": "megabytes",
+              "value": "decmbytes"
+            },
+            {
+              "text": "gigabytes",
+              "value": "decgbytes"
+            }
+          ],
+          "text": "data (Metric)"
+        },
+        {
+          "submenu": [
+            {
+              "text": "packets/sec",
+              "value": "pps"
+            },
+            {
+              "text": "bits/sec",
+              "value": "bps"
+            },
+            {
+              "text": "bytes/sec",
+              "value": "Bps"
+            },
+            {
+              "text": "kilobits/sec",
+              "value": "Kbits"
+            },
+            {
+              "text": "kilobytes/sec",
+              "value": "KBs"
+            },
+            {
+              "text": "megabits/sec",
+              "value": "Mbits"
+            },
+            {
+              "text": "megabytes/sec",
+              "value": "MBs"
+            },
+            {
+              "text": "gigabytes/sec",
+              "value": "GBs"
+            },
+            {
+              "text": "gigabits/sec",
+              "value": "Gbits"
+            }
+          ],
+          "text": "data rate"
+        },
+        {
+          "submenu": [
+            {
+              "text": "hashes/sec",
+              "value": "Hs"
+            },
+            {
+              "text": "kilohashes/sec",
+              "value": "KHs"
+            },
+            {
+              "text": "megahashes/sec",
+              "value": "MHs"
+            },
+            {
+              "text": "gigahashes/sec",
+              "value": "GHs"
+            },
+            {
+              "text": "terahashes/sec",
+              "value": "THs"
+            },
+            {
+              "text": "petahashes/sec",
+              "value": "PHs"
+            },
+            {
+              "text": "exahashes/sec",
+              "value": "EHs"
+            }
+          ],
+          "text": "hash rate"
+        },
+        {
+          "submenu": [
+            {
+              "text": "ops/sec (ops)",
+              "value": "ops"
+            },
+            {
+              "text": "requests/sec (rps)",
+              "value": "reqps"
+            },
+            {
+              "text": "reads/sec (rps)",
+              "value": "rps"
+            },
+            {
+              "text": "writes/sec (wps)",
+              "value": "wps"
+            },
+            {
+              "text": "I/O ops/sec (iops)",
+              "value": "iops"
+            },
+            {
+              "text": "ops/min (opm)",
+              "value": "opm"
+            },
+            {
+              "text": "reads/min (rpm)",
+              "value": "rpm"
+            },
+            {
+              "text": "writes/min (wpm)",
+              "value": "wpm"
+            }
+          ],
+          "text": "throughput"
+        },
+        {
+          "submenu": [
+            {
+              "text": "millimetre (mm)",
+              "value": "lengthmm"
+            },
+            {
+              "text": "meter (m)",
+              "value": "lengthm"
+            },
+            {
+              "text": "inch (in)",
+              "value": "lengthin"
+            },
+            {
+              "text": "feet (ft)",
+              "value": "lengthft"
+            },
+            {
+              "text": "kilometer (km)",
+              "value": "lengthkm"
+            },
+            {
+              "text": "mile (mi)",
+              "value": "lengthmi"
+            }
+          ],
+          "text": "length"
+        },
+        {
+          "submenu": [
+            {
+              "text": "Square Meters (m²)",
+              "value": "areaM2"
+            },
+            {
+              "text": "Square Feet (ft²)",
+              "value": "areaF2"
+            },
+            {
+              "text": "Square Miles (mi²)",
+              "value": "areaMI2"
+            }
+          ],
+          "text": "area"
+        },
+        {
+          "submenu": [
+            {
+              "text": "milligram (mg)",
+              "value": "massmg"
+            },
+            {
+              "text": "gram (g)",
+              "value": "massg"
+            },
+            {
+              "text": "pound (lb)",
+              "value": "masslb"
+            },
+            {
+              "text": "kilogram (kg)",
+              "value": "masskg"
+            },
+            {
+              "text": "metric ton (t)",
+              "value": "masst"
+            }
+          ],
+          "text": "mass"
+        },
+        {
+          "submenu": [
+            {
+              "text": "metres/second (m/s)",
+              "value": "velocityms"
+            },
+            {
+              "text": "kilometers/hour (km/h)",
+              "value": "velocitykmh"
+            },
+            {
+              "text": "miles/hour (mph)",
+              "value": "velocitymph"
+            },
+            {
+              "text": "knot (kn)",
+              "value": "velocityknot"
+            }
+          ],
+          "text": "velocity"
+        },
+        {
+          "submenu": [
+            {
+              "text": "millilitre (mL)",
+              "value": "mlitre"
+            },
+            {
+              "text": "litre (L)",
+              "value": "litre"
+            },
+            {
+              "text": "cubic metre",
+              "value": "m3"
+            },
+            {
+              "text": "Normal cubic metre",
+              "value": "Nm3"
+            },
+            {
+              "text": "cubic decimetre",
+              "value": "dm3"
+            },
+            {
+              "text": "gallons",
+              "value": "gallons"
+            }
+          ],
+          "text": "volume"
+        },
+        {
+          "submenu": [
+            {
+              "text": "Watt (W)",
+              "value": "watt"
+            },
+            {
+              "text": "Kilowatt (kW)",
+              "value": "kwatt"
+            },
+            {
+              "text": "Milliwatt (mW)",
+              "value": "mwatt"
+            },
+            {
+              "text": "Watt per square metre (W/m²)",
+              "value": "Wm2"
+            },
+            {
+              "text": "Volt-ampere (VA)",
+              "value": "voltamp"
+            },
+            {
+              "text": "Kilovolt-ampere (kVA)",
+              "value": "kvoltamp"
+            },
+            {
+              "text": "Volt-ampere reactive (var)",
+              "value": "voltampreact"
+            },
+            {
+              "text": "Kilovolt-ampere reactive (kvar)",
+              "value": "kvoltampreact"
+            },
+            {
+              "text": "Watt-hour (Wh)",
+              "value": "watth"
+            },
+            {
+              "text": "Kilowatt-hour (kWh)",
+              "value": "kwatth"
+            },
+            {
+              "text": "Kilowatt-min (kWm)",
+              "value": "kwattm"
+            },
+            {
+              "text": "Joule (J)",
+              "value": "joule"
+            },
+            {
+              "text": "Electron volt (eV)",
+              "value": "ev"
+            },
+            {
+              "text": "Ampere (A)",
+              "value": "amp"
+            },
+            {
+              "text": "Kiloampere (kA)",
+              "value": "kamp"
+            },
+            {
+              "text": "Milliampere (mA)",
+              "value": "mamp"
+            },
+            {
+              "text": "Volt (V)",
+              "value": "volt"
+            },
+            {
+              "text": "Kilovolt (kV)",
+              "value": "kvolt"
+            },
+            {
+              "text": "Millivolt (mV)",
+              "value": "mvolt"
+            },
+            {
+              "text": "Decibel-milliwatt (dBm)",
+              "value": "dBm"
+            },
+            {
+              "text": "Ohm (Ω)",
+              "value": "ohm"
+            },
+            {
+              "text": "Lumens (Lm)",
+              "value": "lumens"
+            }
+          ],
+          "text": "energy"
+        },
+        {
+          "submenu": [
+            {
+              "text": "Celsius (°C)",
+              "value": "celsius"
+            },
+            {
+              "text": "Fahrenheit (°F)",
+              "value": "fahrenheit"
+            },
+            {
+              "text": "Kelvin (K)",
+              "value": "kelvin"
+            }
+          ],
+          "text": "temperature"
+        },
+        {
+          "submenu": [
+            {
+              "text": "Millibars",
+              "value": "pressurembar"
+            },
+            {
+              "text": "Bars",
+              "value": "pressurebar"
+            },
+            {
+              "text": "Kilobars",
+              "value": "pressurekbar"
+            },
+            {
+              "text": "Hectopascals",
+              "value": "pressurehpa"
+            },
+            {
+              "text": "Kilopascals",
+              "value": "pressurekpa"
+            },
+            {
+              "text": "Inches of mercury",
+              "value": "pressurehg"
+            },
+            {
+              "text": "PSI",
+              "value": "pressurepsi"
+            }
+          ],
+          "text": "pressure"
+        },
+        {
+          "submenu": [
+            {
+              "text": "Newton-meters (Nm)",
+              "value": "forceNm"
+            },
+            {
+              "text": "Kilonewton-meters (kNm)",
+              "value": "forcekNm"
+            },
+            {
+              "text": "Newtons (N)",
+              "value": "forceN"
+            },
+            {
+              "text": "Kilonewtons (kN)",
+              "value": "forcekN"
+            }
+          ],
+          "text": "force"
+        },
+        {
+          "submenu": [
+            {
+              "text": "Gallons/min (gpm)",
+              "value": "flowgpm"
+            },
+            {
+              "text": "Cubic meters/sec (cms)",
+              "value": "flowcms"
+            },
+            {
+              "text": "Cubic feet/sec (cfs)",
+              "value": "flowcfs"
+            },
+            {
+              "text": "Cubic feet/min (cfm)",
+              "value": "flowcfm"
+            },
+            {
+              "text": "Litre/hour",
+              "value": "litreh"
+            },
+            {
+              "text": "Litre/min (l/min)",
+              "value": "flowlpm"
+            },
+            {
+              "text": "milliLitre/min (mL/min)",
+              "value": "flowmlpm"
+            }
+          ],
+          "text": "flow"
+        },
+        {
+          "submenu": [
+            {
+              "text": "Degrees (°)",
+              "value": "degree"
+            },
+            {
+              "text": "Radians",
+              "value": "radian"
+            },
+            {
+              "text": "Gradian",
+              "value": "grad"
+            }
+          ],
+          "text": "angle"
+        },
+        {
+          "submenu": [
+            {
+              "text": "Meters/sec²",
+              "value": "accMS2"
+            },
+            {
+              "text": "Feet/sec²",
+              "value": "accFS2"
+            },
+            {
+              "text": "G unit",
+              "value": "accG"
+            }
+          ],
+          "text": "acceleration"
+        },
+        {
+          "submenu": [
+            {
+              "text": "Becquerel (Bq)",
+              "value": "radbq"
+            },
+            {
+              "text": "curie (Ci)",
+              "value": "radci"
+            },
+            {
+              "text": "Gray (Gy)",
+              "value": "radgy"
+            },
+            {
+              "text": "rad",
+              "value": "radrad"
+            },
+            {
+              "text": "Sievert (Sv)",
+              "value": "radsv"
+            },
+            {
+              "text": "rem",
+              "value": "radrem"
+            },
+            {
+              "text": "Exposure (C/kg)",
+              "value": "radexpckg"
+            },
+            {
+              "text": "roentgen (R)",
+              "value": "radr"
+            },
+            {
+              "text": "Sievert/hour (Sv/h)",
+              "value": "radsvh"
+            }
+          ],
+          "text": "radiation"
+        },
+        {
+          "submenu": [
+            {
+              "text": "parts-per-million (ppm)",
+              "value": "ppm"
+            },
+            {
+              "text": "parts-per-billion (ppb)",
+              "value": "conppb"
+            },
+            {
+              "text": "nanogram per cubic metre (ng/m³)",
+              "value": "conngm3"
+            },
+            {
+              "text": "nanogram per normal cubic metre (ng/Nm³)",
+              "value": "conngNm3"
+            },
+            {
+              "text": "microgram per cubic metre (μg/m³)",
+              "value": "conμgm3"
+            },
+            {
+              "text": "microgram per normal cubic metre (μg/Nm³)",
+              "value": "conμgNm3"
+            },
+            {
+              "text": "milligram per cubic metre (mg/m³)",
+              "value": "conmgm3"
+            },
+            {
+              "text": "milligram per normal cubic metre (mg/Nm³)",
+              "value": "conmgNm3"
+            },
+            {
+              "text": "gram per cubic metre (g/m³)",
+              "value": "congm3"
+            },
+            {
+              "text": "gram per normal cubic metre (g/Nm³)",
+              "value": "congNm3"
+            }
+          ],
+          "text": "concentration"
+        }
+      ]
+    },
+    {
+      "animationModes": [
+        {
+          "text": "Show All",
+          "value": "all"
+        },
+        {
+          "text": "Show Triggered",
+          "value": "triggered"
+        }
+      ],
+      "colors": [
+        "#299c46",
+        "rgba(237, 129, 40, 0.89)",
+        "#d44a3a"
+      ],
+      "d3DivId": "d3_svg_2",
+      "datasource": {
+        "uid": "gdev-testdata"
+      },
+      "decimals": 2,
+      "displayModes": [
+        {
+          "text": "Show All",
+          "value": "all"
+        },
+        {
+          "text": "Show Triggered",
+          "value": "triggered"
+        }
+      ],
+      "fontSizes": [
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18,
+        19,
+        20,
+        22,
+        24,
+        26,
+        28,
+        30,
+        32,
+        34,
+        36,
+        38,
+        40,
+        42,
+        44,
+        46,
+        48,
+        50,
+        52,
+        54,
+        56,
+        58,
+        60,
+        62,
+        64,
+        66,
+        68,
+        70
+      ],
+      "fontTypes": [
+        "Open Sans",
+        "Arial",
+        "Avant Garde",
+        "Bookman",
+        "Consolas",
+        "Courier",
+        "Courier New",
+        "Futura",
+        "Garamond",
+        "Helvetica",
+        "Palatino",
+        "Times",
+        "Times New Roman",
+        "Verdana"
+      ],
+      "format": "none",
+      "gridPos": {
+        "h": 10,
+        "w": 12,
+        "x": 0,
+        "y": 9
+      },
+      "id": 2,
+      "links": [],
+      "notcolors": [
+        "rgba(245, 54, 54, 0.9)",
+        "rgba(237, 129, 40, 0.89)",
+        "rgba(50, 172, 45, 0.97)"
+      ],
+      "operatorName": "avg",
+      "operatorOptions": [
+        {
+          "text": "Average",
+          "value": "avg"
+        },
+        {
+          "text": "Count",
+          "value": "count"
+        },
+        {
+          "text": "Current",
+          "value": "current"
+        },
+        {
+          "text": "Delta",
+          "value": "delta"
+        },
+        {
+          "text": "Difference",
+          "value": "diff"
+        },
+        {
+          "text": "First",
+          "value": "first"
+        },
+        {
+          "text": "Log Min",
+          "value": "logmin"
+        },
+        {
+          "text": "Max",
+          "value": "max"
+        },
+        {
+          "text": "Min",
+          "value": "min"
+        },
+        {
+          "text": "Name",
+          "value": "name"
+        },
+        {
+          "text": "Time of Last Point",
+          "value": "last_time"
+        },
+        {
+          "text": "Time Step",
+          "value": "time_step"
+        },
+        {
+          "text": "Total",
+          "value": "total"
+        }
+      ],
+      "polystat": {
+        "animationSpeed": 2500,
+        "columnAutoSize": true,
+        "columns": 1,
+        "defaultClickThrough": "",
+        "defaultClickThroughSanitize": true,
+        "displayLimit": 100,
+        "fontAutoScale": true,
+        "fontSize": 12,
+        "globalDisplayMode": "all",
+        "globalOperatorName": "avg",
+        "gradientEnabled": true,
+        "hexagonSortByDirection": "asc",
+        "hexagonSortByField": "name",
+        "maxMetrics": 0,
+        "polygonBorderColor": "black",
+        "polygonBorderSize": 2,
+        "radius": "",
+        "radiusAutoSize": true,
+        "rowAutoSize": true,
+        "rows": 1,
+        "shape": "hexagon_pointed_top",
+        "tooltipDisplayMode": "all",
+        "tooltipDisplayTextTriggeredEmpty": "OK",
+        "tooltipFontSize": 12,
+        "tooltipFontType": "Open Sans",
+        "tooltipPrimarySortDirection": "desc",
+        "tooltipPrimarySortField": "thresholdLevel",
+        "tooltipSecondarySortDirection": "desc",
+        "tooltipSecondarySortField": "value",
+        "tooltipTimestampEnabled": true
+      },
+      "savedComposites": [],
+      "savedOverrides": [],
+      "shapes": [
+        {
+          "text": "Hexagon Pointed Top",
+          "value": "hexagon_pointed_top"
+        },
+        {
+          "text": "Hexagon Flat Top",
+          "value": "hexagon_flat_top"
+        },
+        {
+          "text": "Circle",
+          "value": "circle"
+        },
+        {
+          "text": "Cross",
+          "value": "cross"
+        },
+        {
+          "text": "Diamond",
+          "value": "diamond"
+        },
+        {
+          "text": "Square",
+          "value": "square"
+        },
+        {
+          "text": "Star",
+          "value": "star"
+        },
+        {
+          "text": "Triangle",
+          "value": "triangle"
+        },
+        {
+          "text": "Wye",
+          "value": "wye"
+        }
+      ],
+      "sortDirections": [
+        {
+          "text": "Ascending",
+          "value": "asc"
+        },
+        {
+          "text": "Descending",
+          "value": "desc"
+        }
+      ],
+      "sortFields": [
+        {
+          "text": "Name",
+          "value": "name"
+        },
+        {
+          "text": "Threshold Level",
+          "value": "thresholdLevel"
+        },
+        {
+          "text": "Value",
+          "value": "value"
+        }
+      ],
+      "svgContainer": {},
+      "targets": [
+        {
+          "alias": "Sensor-A",
+          "datasource": {
+            "uid": "gdev-testdata"
+          },
+          "expr": "",
+          "format": "time_series",
+          "intervalFactor": 1,
+          "refId": "A",
+          "scenarioId": "csv_metric_values",
+          "stringInput": "1,20,90,30,5,0"
+        },
+        {
+          "alias": "Sensor-B",
+          "datasource": {
+            "uid": "gdev-testdata"
+          },
+          "expr": "",
+          "format": "time_series",
+          "intervalFactor": 1,
+          "refId": "B",
+          "scenarioId": "csv_metric_values",
+          "stringInput": "3433,23432,55"
+        },
+        {
+          "alias": "Sensor-C",
+          "datasource": {
+            "uid": "gdev-testdata"
+          },
+          "expr": "",
+          "format": "time_series",
+          "intervalFactor": 1,
+          "refId": "C",
+          "scenarioId": "csv_metric_values",
+          "stringInput": "1,2,3,4,5,6"
+        },
+        {
+          "alias": "Sensor-E",
+          "datasource": {
+            "uid": "gdev-testdata"
+          },
+          "expr": "",
+          "format": "time_series",
+          "intervalFactor": 1,
+          "refId": "D",
+          "scenarioId": "csv_metric_values",
+          "stringInput": "1,20,90,30,5,0"
+        }
+      ],
+      "thresholdStates": [
+        {
+          "text": "ok",
+          "value": 0
+        },
+        {
+          "text": "warning",
+          "value": 1
+        },
+        {
+          "text": "critical",
+          "value": 2
+        },
+        {
+          "text": "custom",
+          "value": 3
+        }
+      ],
+      "title": "No Value in Sensor-C Bug",
+      "type": "grafana-polystat-panel",
+      "unitFormats": [
+        {
+          "submenu": [
+            {
+              "text": "none",
+              "value": "none"
+            },
+            {
+              "text": "short",
+              "value": "short"
+            },
+            {
+              "text": "percent (0-100)",
+              "value": "percent"
+            },
+            {
+              "text": "percent (0.0-1.0)",
+              "value": "percentunit"
+            },
+            {
+              "text": "Humidity (%H)",
+              "value": "humidity"
+            },
+            {
+              "text": "decibel",
+              "value": "dB"
+            },
+            {
+              "text": "hexadecimal (0x)",
+              "value": "hex0x"
+            },
+            {
+              "text": "hexadecimal",
+              "value": "hex"
+            },
+            {
+              "text": "scientific notation",
+              "value": "sci"
+            },
+            {
+              "text": "locale format",
+              "value": "locale"
+            }
+          ],
+          "text": "none"
+        },
+        {
+          "submenu": [
+            {
+              "text": "Dollars ($)",
+              "value": "currencyUSD"
+            },
+            {
+              "text": "Pounds (£)",
+              "value": "currencyGBP"
+            },
+            {
+              "text": "Euro (€)",
+              "value": "currencyEUR"
+            },
+            {
+              "text": "Yen (¥)",
+              "value": "currencyJPY"
+            },
+            {
+              "text": "Rubles (₽)",
+              "value": "currencyRUB"
+            },
+            {
+              "text": "Hryvnias (₴)",
+              "value": "currencyUAH"
+            },
+            {
+              "text": "Real (R$)",
+              "value": "currencyBRL"
+            },
+            {
+              "text": "Danish Krone (kr)",
+              "value": "currencyDKK"
+            },
+            {
+              "text": "Icelandic Króna (kr)",
+              "value": "currencyISK"
+            },
+            {
+              "text": "Norwegian Krone (kr)",
+              "value": "currencyNOK"
+            },
+            {
+              "text": "Swedish Krona (kr)",
+              "value": "currencySEK"
+            },
+            {
+              "text": "Czech koruna (czk)",
+              "value": "currencyCZK"
+            },
+            {
+              "text": "Swiss franc (CHF)",
+              "value": "currencyCHF"
+            },
+            {
+              "text": "Polish Złoty (PLN)",
+              "value": "currencyPLN"
+            },
+            {
+              "text": "Bitcoin (฿)",
+              "value": "currencyBTC"
+            },
+            {
+              "text": "Vietnamese Dong (VND)",
+              "value": "currencyVND"
+            }
+          ],
+          "text": "currency"
+        },
+        {
+          "submenu": [
+            {
+              "text": "Hertz (1/s)",
+              "value": "hertz"
+            },
+            {
+              "text": "nanoseconds (ns)",
+              "value": "ns"
+            },
+            {
+              "text": "microseconds (µs)",
+              "value": "µs"
+            },
+            {
+              "text": "milliseconds (ms)",
+              "value": "ms"
+            },
+            {
+              "text": "seconds (s)",
+              "value": "s"
+            },
+            {
+              "text": "minutes (m)",
+              "value": "m"
+            },
+            {
+              "text": "hours (h)",
+              "value": "h"
+            },
+            {
+              "text": "days (d)",
+              "value": "d"
+            },
+            {
+              "text": "duration (ms)",
+              "value": "dtdurationms"
+            },
+            {
+              "text": "duration (s)",
+              "value": "dtdurations"
+            },
+            {
+              "text": "duration (hh:mm:ss)",
+              "value": "dthms"
+            },
+            {
+              "text": "Timeticks (s/100)",
+              "value": "timeticks"
+            }
+          ],
+          "text": "time"
+        },
+        {
+          "submenu": [
+            {
+              "text": "YYYY-MM-DD HH:mm:ss",
+              "value": "dateTimeAsIso"
+            },
+            {
+              "text": "DD/MM/YYYY h:mm:ss a",
+              "value": "dateTimeAsUS"
+            },
+            {
+              "text": "From Now",
+              "value": "dateTimeFromNow"
+            }
+          ],
+          "text": "date \u0026 time"
+        },
+        {
+          "submenu": [
+            {
+              "text": "bits",
+              "value": "bits"
+            },
+            {
+              "text": "bytes",
+              "value": "bytes"
+            },
+            {
+              "text": "kibibytes",
+              "value": "kbytes"
+            },
+            {
+              "text": "mebibytes",
+              "value": "mbytes"
+            },
+            {
+              "text": "gibibytes",
+              "value": "gbytes"
+            }
+          ],
+          "text": "data (IEC)"
+        },
+        {
+          "submenu": [
+            {
+              "text": "bits",
+              "value": "decbits"
+            },
+            {
+              "text": "bytes",
+              "value": "decbytes"
+            },
+            {
+              "text": "kilobytes",
+              "value": "deckbytes"
+            },
+            {
+              "text": "megabytes",
+              "value": "decmbytes"
+            },
+            {
+              "text": "gigabytes",
+              "value": "decgbytes"
+            }
+          ],
+          "text": "data (Metric)"
+        },
+        {
+          "submenu": [
+            {
+              "text": "packets/sec",
+              "value": "pps"
+            },
+            {
+              "text": "bits/sec",
+              "value": "bps"
+            },
+            {
+              "text": "bytes/sec",
+              "value": "Bps"
+            },
+            {
+              "text": "kilobits/sec",
+              "value": "Kbits"
+            },
+            {
+              "text": "kilobytes/sec",
+              "value": "KBs"
+            },
+            {
+              "text": "megabits/sec",
+              "value": "Mbits"
+            },
+            {
+              "text": "megabytes/sec",
+              "value": "MBs"
+            },
+            {
+              "text": "gigabytes/sec",
+              "value": "GBs"
+            },
+            {
+              "text": "gigabits/sec",
+              "value": "Gbits"
+            }
+          ],
+          "text": "data rate"
+        },
+        {
+          "submenu": [
+            {
+              "text": "hashes/sec",
+              "value": "Hs"
+            },
+            {
+              "text": "kilohashes/sec",
+              "value": "KHs"
+            },
+            {
+              "text": "megahashes/sec",
+              "value": "MHs"
+            },
+            {
+              "text": "gigahashes/sec",
+              "value": "GHs"
+            },
+            {
+              "text": "terahashes/sec",
+              "value": "THs"
+            },
+            {
+              "text": "petahashes/sec",
+              "value": "PHs"
+            },
+            {
+              "text": "exahashes/sec",
+              "value": "EHs"
+            }
+          ],
+          "text": "hash rate"
+        },
+        {
+          "submenu": [
+            {
+              "text": "ops/sec (ops)",
+              "value": "ops"
+            },
+            {
+              "text": "requests/sec (rps)",
+              "value": "reqps"
+            },
+            {
+              "text": "reads/sec (rps)",
+              "value": "rps"
+            },
+            {
+              "text": "writes/sec (wps)",
+              "value": "wps"
+            },
+            {
+              "text": "I/O ops/sec (iops)",
+              "value": "iops"
+            },
+            {
+              "text": "ops/min (opm)",
+              "value": "opm"
+            },
+            {
+              "text": "reads/min (rpm)",
+              "value": "rpm"
+            },
+            {
+              "text": "writes/min (wpm)",
+              "value": "wpm"
+            }
+          ],
+          "text": "throughput"
+        },
+        {
+          "submenu": [
+            {
+              "text": "millimetre (mm)",
+              "value": "lengthmm"
+            },
+            {
+              "text": "meter (m)",
+              "value": "lengthm"
+            },
+            {
+              "text": "inch (in)",
+              "value": "lengthin"
+            },
+            {
+              "text": "feet (ft)",
+              "value": "lengthft"
+            },
+            {
+              "text": "kilometer (km)",
+              "value": "lengthkm"
+            },
+            {
+              "text": "mile (mi)",
+              "value": "lengthmi"
+            }
+          ],
+          "text": "length"
+        },
+        {
+          "submenu": [
+            {
+              "text": "Square Meters (m²)",
+              "value": "areaM2"
+            },
+            {
+              "text": "Square Feet (ft²)",
+              "value": "areaF2"
+            },
+            {
+              "text": "Square Miles (mi²)",
+              "value": "areaMI2"
+            }
+          ],
+          "text": "area"
+        },
+        {
+          "submenu": [
+            {
+              "text": "milligram (mg)",
+              "value": "massmg"
+            },
+            {
+              "text": "gram (g)",
+              "value": "massg"
+            },
+            {
+              "text": "pound (lb)",
+              "value": "masslb"
+            },
+            {
+              "text": "kilogram (kg)",
+              "value": "masskg"
+            },
+            {
+              "text": "metric ton (t)",
+              "value": "masst"
+            }
+          ],
+          "text": "mass"
+        },
+        {
+          "submenu": [
+            {
+              "text": "metres/second (m/s)",
+              "value": "velocityms"
+            },
+            {
+              "text": "kilometers/hour (km/h)",
+              "value": "velocitykmh"
+            },
+            {
+              "text": "miles/hour (mph)",
+              "value": "velocitymph"
+            },
+            {
+              "text": "knot (kn)",
+              "value": "velocityknot"
+            }
+          ],
+          "text": "velocity"
+        },
+        {
+          "submenu": [
+            {
+              "text": "millilitre (mL)",
+              "value": "mlitre"
+            },
+            {
+              "text": "litre (L)",
+              "value": "litre"
+            },
+            {
+              "text": "cubic metre",
+              "value": "m3"
+            },
+            {
+              "text": "Normal cubic metre",
+              "value": "Nm3"
+            },
+            {
+              "text": "cubic decimetre",
+              "value": "dm3"
+            },
+            {
+              "text": "gallons",
+              "value": "gallons"
+            }
+          ],
+          "text": "volume"
+        },
+        {
+          "submenu": [
+            {
+              "text": "Watt (W)",
+              "value": "watt"
+            },
+            {
+              "text": "Kilowatt (kW)",
+              "value": "kwatt"
+            },
+            {
+              "text": "Milliwatt (mW)",
+              "value": "mwatt"
+            },
+            {
+              "text": "Watt per square metre (W/m²)",
+              "value": "Wm2"
+            },
+            {
+              "text": "Volt-ampere (VA)",
+              "value": "voltamp"
+            },
+            {
+              "text": "Kilovolt-ampere (kVA)",
+              "value": "kvoltamp"
+            },
+            {
+              "text": "Volt-ampere reactive (var)",
+              "value": "voltampreact"
+            },
+            {
+              "text": "Kilovolt-ampere reactive (kvar)",
+              "value": "kvoltampreact"
+            },
+            {
+              "text": "Watt-hour (Wh)",
+              "value": "watth"
+            },
+            {
+              "text": "Kilowatt-hour (kWh)",
+              "value": "kwatth"
+            },
+            {
+              "text": "Kilowatt-min (kWm)",
+              "value": "kwattm"
+            },
+            {
+              "text": "Joule (J)",
+              "value": "joule"
+            },
+            {
+              "text": "Electron volt (eV)",
+              "value": "ev"
+            },
+            {
+              "text": "Ampere (A)",
+              "value": "amp"
+            },
+            {
+              "text": "Kiloampere (kA)",
+              "value": "kamp"
+            },
+            {
+              "text": "Milliampere (mA)",
+              "value": "mamp"
+            },
+            {
+              "text": "Volt (V)",
+              "value": "volt"
+            },
+            {
+              "text": "Kilovolt (kV)",
+              "value": "kvolt"
+            },
+            {
+              "text": "Millivolt (mV)",
+              "value": "mvolt"
+            },
+            {
+              "text": "Decibel-milliwatt (dBm)",
+              "value": "dBm"
+            },
+            {
+              "text": "Ohm (Ω)",
+              "value": "ohm"
+            },
+            {
+              "text": "Lumens (Lm)",
+              "value": "lumens"
+            }
+          ],
+          "text": "energy"
+        },
+        {
+          "submenu": [
+            {
+              "text": "Celsius (°C)",
+              "value": "celsius"
+            },
+            {
+              "text": "Fahrenheit (°F)",
+              "value": "fahrenheit"
+            },
+            {
+              "text": "Kelvin (K)",
+              "value": "kelvin"
+            }
+          ],
+          "text": "temperature"
+        },
+        {
+          "submenu": [
+            {
+              "text": "Millibars",
+              "value": "pressurembar"
+            },
+            {
+              "text": "Bars",
+              "value": "pressurebar"
+            },
+            {
+              "text": "Kilobars",
+              "value": "pressurekbar"
+            },
+            {
+              "text": "Hectopascals",
+              "value": "pressurehpa"
+            },
+            {
+              "text": "Kilopascals",
+              "value": "pressurekpa"
+            },
+            {
+              "text": "Inches of mercury",
+              "value": "pressurehg"
+            },
+            {
+              "text": "PSI",
+              "value": "pressurepsi"
+            }
+          ],
+          "text": "pressure"
+        },
+        {
+          "submenu": [
+            {
+              "text": "Newton-meters (Nm)",
+              "value": "forceNm"
+            },
+            {
+              "text": "Kilonewton-meters (kNm)",
+              "value": "forcekNm"
+            },
+            {
+              "text": "Newtons (N)",
+              "value": "forceN"
+            },
+            {
+              "text": "Kilonewtons (kN)",
+              "value": "forcekN"
+            }
+          ],
+          "text": "force"
+        },
+        {
+          "submenu": [
+            {
+              "text": "Gallons/min (gpm)",
+              "value": "flowgpm"
+            },
+            {
+              "text": "Cubic meters/sec (cms)",
+              "value": "flowcms"
+            },
+            {
+              "text": "Cubic feet/sec (cfs)",
+              "value": "flowcfs"
+            },
+            {
+              "text": "Cubic feet/min (cfm)",
+              "value": "flowcfm"
+            },
+            {
+              "text": "Litre/hour",
+              "value": "litreh"
+            },
+            {
+              "text": "Litre/min (l/min)",
+              "value": "flowlpm"
+            },
+            {
+              "text": "milliLitre/min (mL/min)",
+              "value": "flowmlpm"
+            }
+          ],
+          "text": "flow"
+        },
+        {
+          "submenu": [
+            {
+              "text": "Degrees (°)",
+              "value": "degree"
+            },
+            {
+              "text": "Radians",
+              "value": "radian"
+            },
+            {
+              "text": "Gradian",
+              "value": "grad"
+            }
+          ],
+          "text": "angle"
+        },
+        {
+          "submenu": [
+            {
+              "text": "Meters/sec²",
+              "value": "accMS2"
+            },
+            {
+              "text": "Feet/sec²",
+              "value": "accFS2"
+            },
+            {
+              "text": "G unit",
+              "value": "accG"
+            }
+          ],
+          "text": "acceleration"
+        },
+        {
+          "submenu": [
+            {
+              "text": "Becquerel (Bq)",
+              "value": "radbq"
+            },
+            {
+              "text": "curie (Ci)",
+              "value": "radci"
+            },
+            {
+              "text": "Gray (Gy)",
+              "value": "radgy"
+            },
+            {
+              "text": "rad",
+              "value": "radrad"
+            },
+            {
+              "text": "Sievert (Sv)",
+              "value": "radsv"
+            },
+            {
+              "text": "rem",
+              "value": "radrem"
+            },
+            {
+              "text": "Exposure (C/kg)",
+              "value": "radexpckg"
+            },
+            {
+              "text": "roentgen (R)",
+              "value": "radr"
+            },
+            {
+              "text": "Sievert/hour (Sv/h)",
+              "value": "radsvh"
+            }
+          ],
+          "text": "radiation"
+        },
+        {
+          "submenu": [
+            {
+              "text": "parts-per-million (ppm)",
+              "value": "ppm"
+            },
+            {
+              "text": "parts-per-billion (ppb)",
+              "value": "conppb"
+            },
+            {
+              "text": "nanogram per cubic metre (ng/m³)",
+              "value": "conngm3"
+            },
+            {
+              "text": "nanogram per normal cubic metre (ng/Nm³)",
+              "value": "conngNm3"
+            },
+            {
+              "text": "microgram per cubic metre (μg/m³)",
+              "value": "conμgm3"
+            },
+            {
+              "text": "microgram per normal cubic metre (μg/Nm³)",
+              "value": "conμgNm3"
+            },
+            {
+              "text": "milligram per cubic metre (mg/m³)",
+              "value": "conmgm3"
+            },
+            {
+              "text": "milligram per normal cubic metre (mg/Nm³)",
+              "value": "conmgNm3"
+            },
+            {
+              "text": "gram per cubic metre (g/m³)",
+              "value": "congm3"
+            },
+            {
+              "text": "gram per normal cubic metre (g/Nm³)",
+              "value": "congNm3"
+            }
+          ],
+          "text": "concentration"
+        }
+      ]
+    }
+  ],
+  "refresh": "",
+  "schemaVersion": 41,
+  "style": "dark",
+  "tags": [
+    "panel-test",
+    "gdev"
+  ],
+  "templating": {
+    "list": []
+  },
+  "time": {
+    "from": "now-6h",
+    "to": "now"
+  },
+  "timepicker": {
+    "refresh_intervals": [
+      "5s",
+      "10s",
+      "30s",
+      "1m",
+      "5m",
+      "15m",
+      "30m",
+      "1h",
+      "2h",
+      "1d"
+    ]
+  },
+  "timezone": "",
+  "title": "Panel Tests - Polystat",
+  "version": 5
+}

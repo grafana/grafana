@@ -1,0 +1,2288 @@
+{
+  "__inputs": [
+    {
+      "description": "",
+      "label": "Zabbix 3.0",
+      "name": "DS_ZABBIX_3.0",
+      "pluginId": "alexanderzobnin-zabbix-datasource",
+      "pluginName": "Zabbix",
+      "type": "datasource"
+    }
+  ],
+  "__requires": [
+    {
+      "id": "alexanderzobnin-zabbix-datasource",
+      "name": "Zabbix",
+      "type": "datasource",
+      "version": "1.0.0"
+    },
+    {
+      "id": "grafana",
+      "name": "Grafana",
+      "type": "grafana",
+      "version": "4.1.2"
+    },
+    {
+      "id": "graph",
+      "name": "Graph",
+      "type": "panel",
+      "version": ""
+    },
+    {
+      "id": "singlestat",
+      "name": "Singlestat",
+      "type": "panel",
+      "version": ""
+    },
+    {
+      "id": "text",
+      "name": "Text",
+      "type": "panel",
+      "version": ""
+    }
+  ],
+  "annotations": {
+    "list": []
+  },
+  "description": "Monitoramento de Nobreaks",
+  "editable": true,
+  "gnetId": 1913,
+  "graphTooltip": 0,
+  "hideControls": false,
+  "id": null,
+  "links": [],
+  "panels": [
+    {
+      "content": "\u003cdiv class=\"text-center dashboard-header\"\u003e\n  \u003cspan\u003eNobreak APC Modulo - X\u003c/span\u003e\n\u003c/div\u003e",
+      "datasource": {
+        "apiVersion": "v1",
+        "type": "prometheus",
+        "uid": "default-ds-uid"
+      },
+      "editable": true,
+      "error": false,
+      "gridPos": {
+        "h": 3,
+        "w": 12,
+        "x": 0,
+        "y": 0
+      },
+      "id": 3,
+      "links": [],
+      "mode": "html",
+      "targets": [
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "prometheus",
+            "uid": "default-ds-uid"
+          },
+          "refId": "A"
+        }
+      ],
+      "title": "",
+      "transparent": true,
+      "type": "text"
+    },
+    {
+      "content": "\u003cdiv class=\"text-center dashboard-header\"\u003e\n  \u003cspan\u003eNobreak APC Modulo - Y\u003c/span\u003e\n\u003c/div\u003e",
+      "datasource": {
+        "apiVersion": "v1",
+        "type": "prometheus",
+        "uid": "default-ds-uid"
+      },
+      "editable": true,
+      "error": false,
+      "gridPos": {
+        "h": 3,
+        "w": 11,
+        "x": 12,
+        "y": 0
+      },
+      "id": 5,
+      "links": [],
+      "mode": "html",
+      "targets": [
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "prometheus",
+            "uid": "default-ds-uid"
+          },
+          "refId": "A"
+        }
+      ],
+      "title": "",
+      "transparent": true,
+      "type": "text"
+    },
+    {
+      "cacheTimeout": null,
+      "datasource": {
+        "uid": "${DS_ZABBIX_3.0}"
+      },
+      "editable": true,
+      "error": false,
+      "fieldConfig": {
+        "defaults": {
+          "decimals": 0,
+          "mappings": [],
+          "nullValueMode": "connected",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "dtdurations"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 4,
+        "x": 0,
+        "y": 3
+      },
+      "id": 4,
+      "interval": null,
+      "links": [],
+      "mappingType": 1,
+      "mappingTypes": [
+        {
+          "name": "value to text",
+          "value": 1
+        },
+        {
+          "name": "range to text",
+          "value": 2
+        }
+      ],
+      "maxDataPoints": 100,
+      "options": {
+        "colorMode": "background",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "horizontal",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "1.0.0",
+      "postfix": "",
+      "postfixFontSize": "50%",
+      "prefix": "",
+      "prefixFontSize": "50%",
+      "rangeMaps": [
+        {
+          "from": "null",
+          "text": "N/A",
+          "to": "null"
+        }
+      ],
+      "targets": [
+        {
+          "application": {
+            "filter": "General"
+          },
+          "datasource": {
+            "uid": "${DS_ZABBIX_3.0}"
+          },
+          "functions": [],
+          "group": {
+            "filter": "MAPA - Redes - Power"
+          },
+          "host": {
+            "filter": "Nobreak APC Modulo - X"
+          },
+          "item": {
+            "filter": "Device uptime"
+          },
+          "mode": 0,
+          "options": {
+            "showDisabledItems": false
+          },
+          "refId": "A"
+        }
+      ],
+      "title": "Modulo - X - Device uptime",
+      "type": "stat",
+      "valueFontSize": "80%"
+    },
+    {
+      "cacheTimeout": null,
+      "datasource": {
+        "uid": "${DS_ZABBIX_3.0}"
+      },
+      "editable": true,
+      "error": false,
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [],
+          "nullValueMode": "connected",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "rgba(166, 168, 5, 0.97)",
+                "value": null
+              },
+              {
+                "color": "rgba(23, 152, 7, 0.89)",
+                "value": 200
+              },
+              {
+                "color": "rgba(205, 14, 14, 0.9)",
+                "value": 210
+              }
+            ]
+          },
+          "unit": "volt"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 4,
+        "x": 4,
+        "y": 3
+      },
+      "hideTimeOverride": false,
+      "id": 1,
+      "interval": null,
+      "links": [],
+      "mappingType": 1,
+      "mappingTypes": [
+        {
+          "name": "value to text",
+          "value": 1
+        },
+        {
+          "name": "range to text",
+          "value": 2
+        }
+      ],
+      "maxDataPoints": 100,
+      "options": {
+        "colorMode": "none",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "horizontal",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "1.0.0",
+      "postfix": "",
+      "postfixFontSize": "50%",
+      "prefix": "",
+      "prefixFontSize": "50%",
+      "rangeMaps": [
+        {
+          "from": "null",
+          "text": "N/A",
+          "to": "null"
+        }
+      ],
+      "targets": [
+        {
+          "application": {
+            "filter": "Battery"
+          },
+          "datasource": {
+            "uid": "${DS_ZABBIX_3.0}"
+          },
+          "functions": [],
+          "group": {
+            "filter": "MAPA - Redes - Power"
+          },
+          "host": {
+            "filter": "Nobreak APC Modulo - X"
+          },
+          "item": {
+            "filter": "Battery voltage"
+          },
+          "mode": 0,
+          "options": {
+            "showDisabledItems": false
+          },
+          "refId": "A"
+        }
+      ],
+      "title": "Modulo - X - Battery voltage",
+      "type": "stat",
+      "valueFontSize": "80%"
+    },
+    {
+      "cacheTimeout": null,
+      "datasource": {
+        "uid": "${DS_ZABBIX_3.0}"
+      },
+      "editable": true,
+      "error": false,
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [],
+          "nullValueMode": "connected",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "rgba(245, 237, 54, 0.9)",
+                "value": null
+              },
+              {
+                "color": "rgba(40, 237, 73, 0.89)"
+              },
+              {
+                "color": "rgba(172, 45, 45, 0.97)",
+                "value": 38
+              }
+            ]
+          },
+          "unit": "celsius"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 3,
+        "x": 8,
+        "y": 3
+      },
+      "id": 2,
+      "interval": null,
+      "links": [],
+      "mappingType": 1,
+      "mappingTypes": [
+        {
+          "name": "value to text",
+          "value": 1
+        },
+        {
+          "name": "range to text",
+          "value": 2
+        }
+      ],
+      "maxDataPoints": 100,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "horizontal",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "1.0.0",
+      "postfix": "",
+      "postfixFontSize": "50%",
+      "prefix": "",
+      "prefixFontSize": "50%",
+      "rangeMaps": [
+        {
+          "from": "null",
+          "text": "N/A",
+          "to": "null"
+        }
+      ],
+      "targets": [
+        {
+          "application": {
+            "filter": "Battery"
+          },
+          "datasource": {
+            "uid": "${DS_ZABBIX_3.0}"
+          },
+          "functions": [],
+          "group": {
+            "filter": "MAPA - Redes - Power"
+          },
+          "host": {
+            "filter": "Nobreak APC Modulo - X"
+          },
+          "item": {
+            "filter": "Battery temperature"
+          },
+          "mode": 0,
+          "options": {
+            "showDisabledItems": false
+          },
+          "refId": "A"
+        }
+      ],
+      "title": "Modulo - X - Battery temperature",
+      "type": "stat",
+      "valueFontSize": "80%"
+    },
+    {
+      "cacheTimeout": null,
+      "datasource": {
+        "uid": "${DS_ZABBIX_3.0}"
+      },
+      "editable": true,
+      "error": false,
+      "fieldConfig": {
+        "defaults": {
+          "decimals": 0,
+          "mappings": [],
+          "nullValueMode": "connected",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "dtdurations"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 4,
+        "x": 11,
+        "y": 3
+      },
+      "id": 26,
+      "interval": null,
+      "links": [],
+      "mappingType": 1,
+      "mappingTypes": [
+        {
+          "name": "value to text",
+          "value": 1
+        },
+        {
+          "name": "range to text",
+          "value": 2
+        }
+      ],
+      "maxDataPoints": 100,
+      "options": {
+        "colorMode": "background",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "horizontal",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "1.0.0",
+      "postfix": "",
+      "postfixFontSize": "50%",
+      "prefix": "",
+      "prefixFontSize": "50%",
+      "rangeMaps": [
+        {
+          "from": "null",
+          "text": "N/A",
+          "to": "null"
+        }
+      ],
+      "targets": [
+        {
+          "application": {
+            "filter": "General"
+          },
+          "datasource": {
+            "uid": "${DS_ZABBIX_3.0}"
+          },
+          "functions": [],
+          "group": {
+            "filter": "MAPA - Redes - Power"
+          },
+          "host": {
+            "filter": "Nobreak APC Modulo - Y"
+          },
+          "item": {
+            "filter": "Device uptime"
+          },
+          "mode": 0,
+          "options": {
+            "showDisabledItems": false
+          },
+          "refId": "A"
+        }
+      ],
+      "title": "Modulo - Y - Device uptime",
+      "type": "stat",
+      "valueFontSize": "80%"
+    },
+    {
+      "cacheTimeout": null,
+      "datasource": {
+        "uid": "${DS_ZABBIX_3.0}"
+      },
+      "editable": true,
+      "error": false,
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [],
+          "nullValueMode": "connected",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "rgba(166, 168, 5, 0.97)",
+                "value": null
+              },
+              {
+                "color": "rgba(23, 152, 7, 0.89)",
+                "value": 210
+              },
+              {
+                "color": "rgba(205, 14, 14, 0.9)",
+                "value": 220
+              }
+            ]
+          },
+          "unit": "volt"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 4,
+        "x": 15,
+        "y": 3
+      },
+      "hideTimeOverride": false,
+      "id": 20,
+      "interval": null,
+      "links": [],
+      "mappingType": 1,
+      "mappingTypes": [
+        {
+          "name": "value to text",
+          "value": 1
+        },
+        {
+          "name": "range to text",
+          "value": 2
+        }
+      ],
+      "maxDataPoints": 100,
+      "options": {
+        "colorMode": "none",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "horizontal",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "1.0.0",
+      "postfix": "",
+      "postfixFontSize": "50%",
+      "prefix": "",
+      "prefixFontSize": "50%",
+      "rangeMaps": [
+        {
+          "from": "null",
+          "text": "N/A",
+          "to": "null"
+        }
+      ],
+      "targets": [
+        {
+          "application": {
+            "filter": "Battery"
+          },
+          "datasource": {
+            "uid": "${DS_ZABBIX_3.0}"
+          },
+          "functions": [],
+          "group": {
+            "filter": "MAPA - Redes - Power"
+          },
+          "host": {
+            "filter": "Nobreak APC Modulo - Y"
+          },
+          "item": {
+            "filter": "Battery voltage"
+          },
+          "mode": 0,
+          "options": {
+            "showDisabledItems": false
+          },
+          "refId": "A"
+        }
+      ],
+      "title": "Modulo - Y - Battery voltage",
+      "type": "stat",
+      "valueFontSize": "80%"
+    },
+    {
+      "cacheTimeout": null,
+      "datasource": {
+        "uid": "${DS_ZABBIX_3.0}"
+      },
+      "editable": true,
+      "error": false,
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [],
+          "nullValueMode": "connected",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "rgba(245, 237, 54, 0.9)",
+                "value": null
+              },
+              {
+                "color": "rgba(40, 237, 73, 0.89)"
+              },
+              {
+                "color": "rgba(172, 45, 45, 0.97)",
+                "value": 38
+              }
+            ]
+          },
+          "unit": "celsius"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 3,
+        "x": 19,
+        "y": 3
+      },
+      "id": 29,
+      "interval": null,
+      "links": [],
+      "mappingType": 1,
+      "mappingTypes": [
+        {
+          "name": "value to text",
+          "value": 1
+        },
+        {
+          "name": "range to text",
+          "value": 2
+        }
+      ],
+      "maxDataPoints": 100,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "horizontal",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "1.0.0",
+      "postfix": "",
+      "postfixFontSize": "50%",
+      "prefix": "",
+      "prefixFontSize": "50%",
+      "rangeMaps": [
+        {
+          "from": "null",
+          "text": "N/A",
+          "to": "null"
+        }
+      ],
+      "targets": [
+        {
+          "application": {
+            "filter": "Battery"
+          },
+          "datasource": {
+            "uid": "${DS_ZABBIX_3.0}"
+          },
+          "functions": [],
+          "group": {
+            "filter": "MAPA - Redes - Power"
+          },
+          "host": {
+            "filter": "Nobreak APC Modulo - Y"
+          },
+          "item": {
+            "filter": "Battery temperature"
+          },
+          "mode": 0,
+          "options": {
+            "showDisabledItems": false
+          },
+          "refId": "A"
+        }
+      ],
+      "title": "Modulo - Y - Battery temperature",
+      "type": "stat",
+      "valueFontSize": "80%"
+    },
+    {
+      "cacheTimeout": null,
+      "datasource": {
+        "uid": "${DS_ZABBIX_3.0}"
+      },
+      "editable": true,
+      "error": false,
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [],
+          "max": 100,
+          "min": 0,
+          "nullValueMode": "connected",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "rgba(209, 20, 18, 0.9)",
+                "value": null
+              },
+              {
+                "color": "rgba(231, 255, 3, 0.89)",
+                "value": 40
+              },
+              {
+                "color": "rgba(50, 172, 45, 0.97)",
+                "value": 75
+              }
+            ]
+          },
+          "unit": "percent"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 4,
+        "x": 0,
+        "y": 9
+      },
+      "id": 12,
+      "interval": null,
+      "links": [],
+      "mappingType": 1,
+      "mappingTypes": [
+        {
+          "name": "value to text",
+          "value": 1
+        },
+        {
+          "name": "range to text",
+          "value": 2
+        }
+      ],
+      "maxDataPoints": "",
+      "options": {
+        "colorMode": "none",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "horizontal",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "1.0.0",
+      "postfix": "",
+      "postfixFontSize": "50%",
+      "prefix": "",
+      "prefixFontSize": "50%",
+      "rangeMaps": [
+        {
+          "from": "null",
+          "text": "N/A",
+          "to": "null"
+        }
+      ],
+      "targets": [
+        {
+          "application": {
+            "filter": "Battery"
+          },
+          "datasource": {
+            "uid": "${DS_ZABBIX_3.0}"
+          },
+          "functions": [],
+          "group": {
+            "filter": "MAPA - Redes - Power"
+          },
+          "host": {
+            "filter": "Nobreak APC Modulo - X"
+          },
+          "item": {
+            "filter": "Battery charge"
+          },
+          "mode": 0,
+          "options": {
+            "showDisabledItems": false
+          },
+          "refId": "A",
+          "useCaptureGroups": true
+        }
+      ],
+      "timeFrom": null,
+      "title": "Battery charge - Nobreak X-APC",
+      "type": "stat",
+      "valueFontSize": "80%"
+    },
+    {
+      "cacheTimeout": null,
+      "datasource": {
+        "uid": "${DS_ZABBIX_3.0}"
+      },
+      "editable": true,
+      "error": false,
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [],
+          "max": 100,
+          "min": 0,
+          "nullValueMode": "connected",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "rgba(209, 20, 18, 0.9)",
+                "value": null
+              },
+              {
+                "color": "rgba(231, 255, 3, 0.89)",
+                "value": 40
+              },
+              {
+                "color": "rgba(50, 172, 45, 0.97)",
+                "value": 75
+              }
+            ]
+          },
+          "unit": "percent"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 4,
+        "x": 4,
+        "y": 9
+      },
+      "id": 30,
+      "interval": null,
+      "links": [],
+      "mappingType": 1,
+      "mappingTypes": [
+        {
+          "name": "value to text",
+          "value": 1
+        },
+        {
+          "name": "range to text",
+          "value": 2
+        }
+      ],
+      "maxDataPoints": "",
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "horizontal",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "1.0.0",
+      "postfix": "",
+      "postfixFontSize": "50%",
+      "prefix": "",
+      "prefixFontSize": "50%",
+      "rangeMaps": [
+        {
+          "from": "null",
+          "text": "N/A",
+          "to": "null"
+        }
+      ],
+      "targets": [
+        {
+          "application": {
+            "filter": "Power"
+          },
+          "datasource": {
+            "uid": "${DS_ZABBIX_3.0}"
+          },
+          "functions": [],
+          "group": {
+            "filter": "MAPA - Redes - Power"
+          },
+          "host": {
+            "filter": "Nobreak APC Modulo - X"
+          },
+          "item": {
+            "filter": "Output load"
+          },
+          "mode": 0,
+          "options": {
+            "showDisabledItems": false
+          },
+          "refId": "A",
+          "useCaptureGroups": true
+        }
+      ],
+      "timeFrom": null,
+      "title": "Output Load - Nobreak X-APC",
+      "type": "stat",
+      "valueFontSize": "80%"
+    },
+    {
+      "cacheTimeout": null,
+      "datasource": {
+        "uid": "${DS_ZABBIX_3.0}"
+      },
+      "editable": true,
+      "error": false,
+      "fieldConfig": {
+        "defaults": {
+          "decimals": null,
+          "mappings": [],
+          "max": 60,
+          "min": 0,
+          "nullValueMode": "connected",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "rgba(163, 11, 11, 0.9)",
+                "value": null
+              },
+              {
+                "color": "rgba(153, 181, 15, 0.89)",
+                "value": 15
+              },
+              {
+                "color": "rgba(58, 163, 31, 0.97)",
+                "value": 45
+              }
+            ]
+          },
+          "unit": "dtdurations"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 4,
+        "x": 8,
+        "y": 9
+      },
+      "id": 27,
+      "interval": null,
+      "links": [],
+      "mappingType": 1,
+      "mappingTypes": [
+        {
+          "name": "value to text",
+          "value": 1
+        },
+        {
+          "name": "range to text",
+          "value": 2
+        }
+      ],
+      "maxDataPoints": 100,
+      "options": {
+        "colorMode": "none",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "horizontal",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "1.0.0",
+      "postfix": "",
+      "postfixFontSize": "50%",
+      "prefix": "",
+      "prefixFontSize": "50%",
+      "rangeMaps": [
+        {
+          "from": "null",
+          "text": "N/A",
+          "to": "null"
+        }
+      ],
+      "targets": [
+        {
+          "application": {
+            "filter": "Battery"
+          },
+          "datasource": {
+            "uid": "${DS_ZABBIX_3.0}"
+          },
+          "functions": [],
+          "group": {
+            "filter": "MAPA - Redes - Power"
+          },
+          "host": {
+            "filter": "Nobreak APC Modulo - X"
+          },
+          "item": {
+            "filter": "Runtime remaining"
+          },
+          "mode": 0,
+          "options": {
+            "showDisabledItems": false
+          },
+          "refId": "A"
+        }
+      ],
+      "title": "Modulo - X - Runtime remaining",
+      "type": "stat",
+      "valueFontSize": "50%"
+    },
+    {
+      "cacheTimeout": null,
+      "datasource": {
+        "uid": "${DS_ZABBIX_3.0}"
+      },
+      "editable": true,
+      "error": false,
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [],
+          "max": 100,
+          "min": 0,
+          "nullValueMode": "connected",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "rgba(209, 20, 18, 0.9)",
+                "value": null
+              },
+              {
+                "color": "rgba(231, 255, 3, 0.89)",
+                "value": 40
+              },
+              {
+                "color": "rgba(50, 172, 45, 0.97)",
+                "value": 75
+              }
+            ]
+          },
+          "unit": "percent"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 4,
+        "x": 12,
+        "y": 9
+      },
+      "id": 13,
+      "interval": null,
+      "links": [],
+      "mappingType": 1,
+      "mappingTypes": [
+        {
+          "name": "value to text",
+          "value": 1
+        },
+        {
+          "name": "range to text",
+          "value": 2
+        }
+      ],
+      "maxDataPoints": "",
+      "options": {
+        "colorMode": "none",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "horizontal",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "1.0.0",
+      "postfix": "",
+      "postfixFontSize": "50%",
+      "prefix": "",
+      "prefixFontSize": "50%",
+      "rangeMaps": [
+        {
+          "from": "null",
+          "text": "N/A",
+          "to": "null"
+        }
+      ],
+      "targets": [
+        {
+          "application": {
+            "filter": "Battery"
+          },
+          "datasource": {
+            "uid": "${DS_ZABBIX_3.0}"
+          },
+          "functions": [],
+          "group": {
+            "filter": "MAPA - Redes - Power"
+          },
+          "host": {
+            "filter": "Nobreak APC Modulo - Y"
+          },
+          "item": {
+            "filter": "Battery charge"
+          },
+          "mode": 0,
+          "options": {
+            "showDisabledItems": false
+          },
+          "refId": "A",
+          "useCaptureGroups": true
+        }
+      ],
+      "timeFrom": null,
+      "title": "Battery charge - Nobreak Y-APC",
+      "type": "stat",
+      "valueFontSize": "80%"
+    },
+    {
+      "cacheTimeout": null,
+      "datasource": {
+        "uid": "${DS_ZABBIX_3.0}"
+      },
+      "editable": true,
+      "error": false,
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [],
+          "max": 100,
+          "min": 0,
+          "nullValueMode": "connected",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "rgba(209, 20, 18, 0.9)",
+                "value": null
+              },
+              {
+                "color": "rgba(231, 255, 3, 0.89)",
+                "value": 40
+              },
+              {
+                "color": "rgba(50, 172, 45, 0.97)",
+                "value": 75
+              }
+            ]
+          },
+          "unit": "percent"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 4,
+        "x": 16,
+        "y": 9
+      },
+      "id": 31,
+      "interval": null,
+      "links": [],
+      "mappingType": 1,
+      "mappingTypes": [
+        {
+          "name": "value to text",
+          "value": 1
+        },
+        {
+          "name": "range to text",
+          "value": 2
+        }
+      ],
+      "maxDataPoints": "",
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "horizontal",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "1.0.0",
+      "postfix": "",
+      "postfixFontSize": "50%",
+      "prefix": "",
+      "prefixFontSize": "50%",
+      "rangeMaps": [
+        {
+          "from": "null",
+          "text": "N/A",
+          "to": "null"
+        }
+      ],
+      "targets": [
+        {
+          "application": {
+            "filter": "Power"
+          },
+          "datasource": {
+            "uid": "${DS_ZABBIX_3.0}"
+          },
+          "functions": [],
+          "group": {
+            "filter": "MAPA - Redes - Power"
+          },
+          "host": {
+            "filter": "Nobreak APC Modulo - Y"
+          },
+          "item": {
+            "filter": "Output load"
+          },
+          "mode": 0,
+          "options": {
+            "showDisabledItems": false
+          },
+          "refId": "A",
+          "useCaptureGroups": true
+        }
+      ],
+      "timeFrom": null,
+      "title": "Output Load - Nobreak Y-APC",
+      "type": "stat",
+      "valueFontSize": "80%"
+    },
+    {
+      "cacheTimeout": null,
+      "datasource": {
+        "uid": "${DS_ZABBIX_3.0}"
+      },
+      "editable": true,
+      "error": false,
+      "fieldConfig": {
+        "defaults": {
+          "decimals": null,
+          "mappings": [],
+          "max": 60,
+          "min": 0,
+          "nullValueMode": "connected",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "rgba(163, 11, 11, 0.9)",
+                "value": null
+              },
+              {
+                "color": "rgba(153, 181, 15, 0.89)",
+                "value": 15
+              },
+              {
+                "color": "rgba(58, 163, 31, 0.97)",
+                "value": 45
+              }
+            ]
+          },
+          "unit": "dtdurations"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 4,
+        "x": 20,
+        "y": 9
+      },
+      "id": 28,
+      "interval": null,
+      "links": [],
+      "mappingType": 1,
+      "mappingTypes": [
+        {
+          "name": "value to text",
+          "value": 1
+        },
+        {
+          "name": "range to text",
+          "value": 2
+        }
+      ],
+      "maxDataPoints": 100,
+      "options": {
+        "colorMode": "none",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "horizontal",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "1.0.0",
+      "postfix": "",
+      "postfixFontSize": "50%",
+      "prefix": "",
+      "prefixFontSize": "50%",
+      "rangeMaps": [
+        {
+          "from": "null",
+          "text": "N/A",
+          "to": "null"
+        }
+      ],
+      "targets": [
+        {
+          "application": {
+            "filter": "Battery"
+          },
+          "datasource": {
+            "uid": "${DS_ZABBIX_3.0}"
+          },
+          "functions": [],
+          "group": {
+            "filter": "MAPA - Redes - Power"
+          },
+          "host": {
+            "filter": "Nobreak APC Modulo - Y"
+          },
+          "item": {
+            "filter": "Runtime remaining"
+          },
+          "mode": 0,
+          "options": {
+            "showDisabledItems": false
+          },
+          "refId": "A"
+        }
+      ],
+      "title": "Modulo - Y - Runtime remaining",
+      "type": "stat",
+      "valueFontSize": "50%"
+    },
+    {
+      "aliasColors": {},
+      "bars": false,
+      "datasource": {
+        "uid": "${DS_ZABBIX_3.0}"
+      },
+      "decimals": null,
+      "fill": 2,
+      "gridPos": {
+        "h": 6,
+        "w": 6,
+        "x": 0,
+        "y": 15
+      },
+      "id": 15,
+      "legend": {
+        "alignAsTable": true,
+        "avg": true,
+        "current": true,
+        "hideEmpty": false,
+        "hideZero": false,
+        "max": true,
+        "min": true,
+        "rightSide": false,
+        "show": true,
+        "total": false,
+        "values": true
+      },
+      "lines": true,
+      "linewidth": 2,
+      "links": [],
+      "nullPointMode": "connected",
+      "percentage": false,
+      "pointradius": 5,
+      "points": false,
+      "renderer": "flot",
+      "seriesOverrides": [],
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
+        {
+          "application": {
+            "filter": "Power"
+          },
+          "datasource": {
+            "uid": "${DS_ZABBIX_3.0}"
+          },
+          "functions": [],
+          "group": {
+            "filter": "MAPA - Redes - Power"
+          },
+          "host": {
+            "filter": "Nobreak APC Modulo - X"
+          },
+          "item": {
+            "filter": "Input frequency"
+          },
+          "mode": 0,
+          "options": {
+            "showDisabledItems": false
+          },
+          "refId": "A"
+        }
+      ],
+      "thresholds": [],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "Nobreak APC Modulo - X: Input frequency",
+      "tooltip": {
+        "shared": true,
+        "sort": 0,
+        "value_type": "individual"
+      },
+      "type": "graph",
+      "xaxis": {
+        "mode": "time",
+        "name": null,
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "format": "hertz",
+          "label": "Input frequency",
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        },
+        {
+          "format": "short",
+          "label": "",
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        }
+      ]
+    },
+    {
+      "aliasColors": {},
+      "bars": false,
+      "datasource": {
+        "uid": "${DS_ZABBIX_3.0}"
+      },
+      "decimals": null,
+      "fill": 2,
+      "gridPos": {
+        "h": 6,
+        "w": 6,
+        "x": 6,
+        "y": 15
+      },
+      "id": 21,
+      "legend": {
+        "alignAsTable": true,
+        "avg": true,
+        "current": true,
+        "hideEmpty": false,
+        "hideZero": false,
+        "max": true,
+        "min": true,
+        "rightSide": false,
+        "show": true,
+        "total": false,
+        "values": true
+      },
+      "lines": true,
+      "linewidth": 2,
+      "links": [],
+      "nullPointMode": "connected",
+      "percentage": false,
+      "pointradius": 5,
+      "points": false,
+      "renderer": "flot",
+      "seriesOverrides": [],
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
+        {
+          "application": {
+            "filter": "Power"
+          },
+          "datasource": {
+            "uid": "${DS_ZABBIX_3.0}"
+          },
+          "functions": [],
+          "group": {
+            "filter": "MAPA - Redes - Power"
+          },
+          "host": {
+            "filter": "Nobreak APC Modulo - X"
+          },
+          "item": {
+            "filter": "Output frequency"
+          },
+          "mode": 0,
+          "options": {
+            "showDisabledItems": false
+          },
+          "refId": "A"
+        }
+      ],
+      "thresholds": [],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "Nobreak APC Modulo - X: Output frequency",
+      "tooltip": {
+        "shared": true,
+        "sort": 0,
+        "value_type": "individual"
+      },
+      "type": "graph",
+      "xaxis": {
+        "mode": "time",
+        "name": null,
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "format": "hertz",
+          "label": "Output frequency",
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        },
+        {
+          "format": "short",
+          "label": "",
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        }
+      ]
+    },
+    {
+      "aliasColors": {},
+      "bars": false,
+      "datasource": {
+        "uid": "${DS_ZABBIX_3.0}"
+      },
+      "decimals": null,
+      "fill": 2,
+      "gridPos": {
+        "h": 6,
+        "w": 6,
+        "x": 12,
+        "y": 15
+      },
+      "id": 16,
+      "legend": {
+        "alignAsTable": true,
+        "avg": true,
+        "current": true,
+        "hideEmpty": false,
+        "hideZero": false,
+        "max": true,
+        "min": true,
+        "rightSide": false,
+        "show": true,
+        "total": false,
+        "values": true
+      },
+      "lines": true,
+      "linewidth": 2,
+      "links": [],
+      "nullPointMode": "connected",
+      "percentage": false,
+      "pointradius": 5,
+      "points": false,
+      "renderer": "flot",
+      "seriesOverrides": [],
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
+        {
+          "application": {
+            "filter": "Power"
+          },
+          "datasource": {
+            "uid": "${DS_ZABBIX_3.0}"
+          },
+          "functions": [],
+          "group": {
+            "filter": "MAPA - Redes - Power"
+          },
+          "host": {
+            "filter": "Nobreak APC Modulo - Y"
+          },
+          "item": {
+            "filter": "Input frequency"
+          },
+          "mode": 0,
+          "options": {
+            "showDisabledItems": false
+          },
+          "refId": "A"
+        }
+      ],
+      "thresholds": [],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "Nobreak APC Modulo - Y: Input frequency",
+      "tooltip": {
+        "shared": true,
+        "sort": 0,
+        "value_type": "individual"
+      },
+      "type": "graph",
+      "xaxis": {
+        "mode": "time",
+        "name": null,
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "format": "hertz",
+          "label": "Input frequency",
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        },
+        {
+          "format": "short",
+          "label": "",
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        }
+      ]
+    },
+    {
+      "aliasColors": {},
+      "bars": false,
+      "datasource": {
+        "uid": "${DS_ZABBIX_3.0}"
+      },
+      "decimals": null,
+      "fill": 2,
+      "gridPos": {
+        "h": 6,
+        "w": 6,
+        "x": 18,
+        "y": 15
+      },
+      "id": 19,
+      "legend": {
+        "alignAsTable": true,
+        "avg": true,
+        "current": true,
+        "hideEmpty": false,
+        "hideZero": false,
+        "max": true,
+        "min": true,
+        "rightSide": false,
+        "show": true,
+        "total": false,
+        "values": true
+      },
+      "lines": true,
+      "linewidth": 2,
+      "links": [],
+      "nullPointMode": "connected",
+      "percentage": false,
+      "pointradius": 5,
+      "points": false,
+      "renderer": "flot",
+      "seriesOverrides": [],
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
+        {
+          "application": {
+            "filter": "Power"
+          },
+          "datasource": {
+            "uid": "${DS_ZABBIX_3.0}"
+          },
+          "functions": [],
+          "group": {
+            "filter": "MAPA - Redes - Power"
+          },
+          "host": {
+            "filter": "Nobreak APC Modulo - Y"
+          },
+          "item": {
+            "filter": "Output frequency"
+          },
+          "mode": 0,
+          "options": {
+            "showDisabledItems": false
+          },
+          "refId": "A"
+        }
+      ],
+      "thresholds": [],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "Nobreak APC Modulo - Y: Output frequency",
+      "tooltip": {
+        "shared": true,
+        "sort": 0,
+        "value_type": "individual"
+      },
+      "type": "graph",
+      "xaxis": {
+        "mode": "time",
+        "name": null,
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "format": "hertz",
+          "label": "Output frequency",
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        },
+        {
+          "format": "short",
+          "label": "",
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        }
+      ]
+    },
+    {
+      "aliasColors": {},
+      "bars": false,
+      "datasource": {
+        "uid": "${DS_ZABBIX_3.0}"
+      },
+      "decimals": null,
+      "fill": 2,
+      "gridPos": {
+        "h": 6,
+        "w": 6,
+        "x": 0,
+        "y": 21
+      },
+      "id": 18,
+      "legend": {
+        "alignAsTable": true,
+        "avg": true,
+        "current": true,
+        "hideEmpty": false,
+        "hideZero": false,
+        "max": true,
+        "min": true,
+        "rightSide": false,
+        "show": true,
+        "total": false,
+        "values": true
+      },
+      "lines": true,
+      "linewidth": 2,
+      "links": [],
+      "nullPointMode": "connected",
+      "percentage": false,
+      "pointradius": 5,
+      "points": false,
+      "renderer": "flot",
+      "seriesOverrides": [],
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
+        {
+          "application": {
+            "filter": "Power"
+          },
+          "datasource": {
+            "uid": "${DS_ZABBIX_3.0}"
+          },
+          "functions": [],
+          "group": {
+            "filter": "MAPA - Redes - Power"
+          },
+          "host": {
+            "filter": "Nobreak APC Modulo - X"
+          },
+          "item": {
+            "filter": "Input voltage"
+          },
+          "mode": 0,
+          "options": {
+            "showDisabledItems": false
+          },
+          "refId": "A"
+        }
+      ],
+      "thresholds": [],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "Nobreak APC Modulo - X: Input voltage",
+      "tooltip": {
+        "shared": true,
+        "sort": 0,
+        "value_type": "individual"
+      },
+      "type": "graph",
+      "xaxis": {
+        "mode": "time",
+        "name": null,
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "format": "volt",
+          "label": "Input voltage",
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        },
+        {
+          "format": "short",
+          "label": "",
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        }
+      ]
+    },
+    {
+      "aliasColors": {},
+      "bars": false,
+      "datasource": {
+        "uid": "${DS_ZABBIX_3.0}"
+      },
+      "decimals": null,
+      "fill": 2,
+      "gridPos": {
+        "h": 6,
+        "w": 6,
+        "x": 6,
+        "y": 21
+      },
+      "id": 22,
+      "legend": {
+        "alignAsTable": true,
+        "avg": true,
+        "current": true,
+        "hideEmpty": false,
+        "hideZero": false,
+        "max": true,
+        "min": true,
+        "rightSide": false,
+        "show": true,
+        "total": false,
+        "values": true
+      },
+      "lines": true,
+      "linewidth": 2,
+      "links": [],
+      "nullPointMode": "connected",
+      "percentage": false,
+      "pointradius": 5,
+      "points": false,
+      "renderer": "flot",
+      "seriesOverrides": [],
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
+        {
+          "application": {
+            "filter": "Power"
+          },
+          "datasource": {
+            "uid": "${DS_ZABBIX_3.0}"
+          },
+          "functions": [],
+          "group": {
+            "filter": "MAPA - Redes - Power"
+          },
+          "host": {
+            "filter": "Nobreak APC Modulo - X"
+          },
+          "item": {
+            "filter": "Output voltage"
+          },
+          "mode": 0,
+          "options": {
+            "showDisabledItems": false
+          },
+          "refId": "A"
+        }
+      ],
+      "thresholds": [],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "Nobreak APC Modulo - X: Output voltage",
+      "tooltip": {
+        "shared": true,
+        "sort": 0,
+        "value_type": "individual"
+      },
+      "type": "graph",
+      "xaxis": {
+        "mode": "time",
+        "name": null,
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "format": "volt",
+          "label": "Output voltage",
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        },
+        {
+          "format": "short",
+          "label": "",
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        }
+      ]
+    },
+    {
+      "aliasColors": {},
+      "bars": false,
+      "datasource": {
+        "uid": "${DS_ZABBIX_3.0}"
+      },
+      "decimals": null,
+      "fill": 2,
+      "gridPos": {
+        "h": 6,
+        "w": 6,
+        "x": 12,
+        "y": 21
+      },
+      "id": 23,
+      "legend": {
+        "alignAsTable": true,
+        "avg": true,
+        "current": true,
+        "hideEmpty": false,
+        "hideZero": false,
+        "max": true,
+        "min": true,
+        "rightSide": false,
+        "show": true,
+        "total": false,
+        "values": true
+      },
+      "lines": true,
+      "linewidth": 2,
+      "links": [],
+      "nullPointMode": "connected",
+      "percentage": false,
+      "pointradius": 5,
+      "points": false,
+      "renderer": "flot",
+      "seriesOverrides": [],
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
+        {
+          "application": {
+            "filter": "Power"
+          },
+          "datasource": {
+            "uid": "${DS_ZABBIX_3.0}"
+          },
+          "functions": [],
+          "group": {
+            "filter": "MAPA - Redes - Power"
+          },
+          "host": {
+            "filter": "Nobreak APC Modulo - Y"
+          },
+          "item": {
+            "filter": "Input voltage"
+          },
+          "mode": 0,
+          "options": {
+            "showDisabledItems": false
+          },
+          "refId": "A"
+        }
+      ],
+      "thresholds": [],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "Nobreak APC Modulo - Y: Input voltage",
+      "tooltip": {
+        "shared": true,
+        "sort": 0,
+        "value_type": "individual"
+      },
+      "type": "graph",
+      "xaxis": {
+        "mode": "time",
+        "name": null,
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "format": "volt",
+          "label": "Input voltage",
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        },
+        {
+          "format": "short",
+          "label": "",
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        }
+      ]
+    },
+    {
+      "aliasColors": {},
+      "bars": false,
+      "datasource": {
+        "uid": "${DS_ZABBIX_3.0}"
+      },
+      "decimals": null,
+      "fill": 2,
+      "gridPos": {
+        "h": 6,
+        "w": 6,
+        "x": 18,
+        "y": 21
+      },
+      "id": 24,
+      "legend": {
+        "alignAsTable": true,
+        "avg": true,
+        "current": true,
+        "hideEmpty": false,
+        "hideZero": false,
+        "max": true,
+        "min": true,
+        "rightSide": false,
+        "show": true,
+        "total": false,
+        "values": true
+      },
+      "lines": true,
+      "linewidth": 2,
+      "links": [],
+      "nullPointMode": "connected",
+      "percentage": false,
+      "pointradius": 5,
+      "points": false,
+      "renderer": "flot",
+      "seriesOverrides": [],
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
+        {
+          "application": {
+            "filter": "Power"
+          },
+          "datasource": {
+            "uid": "${DS_ZABBIX_3.0}"
+          },
+          "functions": [],
+          "group": {
+            "filter": "MAPA - Redes - Power"
+          },
+          "host": {
+            "filter": "Nobreak APC Modulo - Y"
+          },
+          "item": {
+            "filter": "Output voltage"
+          },
+          "mode": 0,
+          "options": {
+            "showDisabledItems": false
+          },
+          "refId": "A"
+        }
+      ],
+      "thresholds": [],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "Nobreak APC Modulo - Y: Output voltage",
+      "tooltip": {
+        "shared": true,
+        "sort": 0,
+        "value_type": "individual"
+      },
+      "type": "graph",
+      "xaxis": {
+        "mode": "time",
+        "name": null,
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "format": "volt",
+          "label": "Output voltage",
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        },
+        {
+          "format": "short",
+          "label": "",
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        }
+      ]
+    }
+  ],
+  "refresh": "30s",
+  "schemaVersion": 41,
+  "style": "dark",
+  "tags": [],
+  "templating": {
+    "list": []
+  },
+  "time": {
+    "from": "now-1h",
+    "to": "now"
+  },
+  "timepicker": {
+    "refresh_intervals": [
+      "5s",
+      "10s",
+      "30s",
+      "1m",
+      "5m",
+      "15m",
+      "30m",
+      "1h",
+      "2h",
+      "1d"
+    ]
+  },
+  "timezone": "browser",
+  "title": "Dashboard Nobreak",
+  "version": 26
+}

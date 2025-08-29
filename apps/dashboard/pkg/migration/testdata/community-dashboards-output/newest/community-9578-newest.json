@@ -1,0 +1,4232 @@
+{
+  "__inputs": [],
+  "__requires": [
+    {
+      "id": "grafana",
+      "name": "Grafana",
+      "type": "grafana",
+      "version": "6.1.0"
+    },
+    {
+      "id": "graph",
+      "name": "Graph",
+      "type": "panel",
+      "version": ""
+    },
+    {
+      "id": "prometheus",
+      "name": "Prometheus",
+      "type": "datasource",
+      "version": "1.0.0"
+    },
+    {
+      "id": "singlestat",
+      "name": "Singlestat",
+      "type": "panel",
+      "version": ""
+    },
+    {
+      "id": "table",
+      "name": "Table",
+      "type": "panel",
+      "version": ""
+    }
+  ],
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "uid": "-- Grafana --"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations \u0026 Alerts",
+        "type": "dashboard"
+      },
+      {
+        "datasource": {
+          "uid": "$datasource"
+        },
+        "enable": true,
+        "expr": "changes(process_start_time_seconds{ instance=~\"$instance\"}[2m]) \u003e 0",
+        "hide": false,
+        "iconColor": "#bf1b00",
+        "name": "Restarts",
+        "showIn": 0,
+        "step": "1m",
+        "tagKeys": "instance",
+        "titleFormat": "Restart"
+      }
+    ]
+  },
+  "description": "Dashboard showing Prometheus Alertmanager metrics for observing status of the cluster and possible debbuging.",
+  "editable": true,
+  "gnetId": 9578,
+  "graphTooltip": 1,
+  "id": null,
+  "iteration": 1555334727804,
+  "links": [
+    {
+      "icon": "doc",
+      "tags": [],
+      "targetBlank": true,
+      "title": "Docs",
+      "tooltip": "Official documentation of Alertmanager",
+      "type": "link",
+      "url": "https://prometheus.io/docs/alerting/alertmanager/"
+    },
+    {
+      "icon": "info",
+      "tags": [],
+      "targetBlank": true,
+      "title": "GitHub",
+      "tooltip": "Alertmanager sources on GitHub",
+      "type": "link",
+      "url": "https://github.com/prometheus/alertmanager"
+    },
+    {
+      "icon": "info",
+      "tags": [],
+      "targetBlank": true,
+      "title": "Twitter",
+      "tooltip": "Twitter account with prometheus related info",
+      "type": "link",
+      "url": "https://twitter.com/PrometheusIO"
+    },
+    {
+      "icon": "question",
+      "tags": [],
+      "targetBlank": true,
+      "title": "Mailing list",
+      "tooltip": "Prometheus users mailing list",
+      "type": "link",
+      "url": "https://groups.google.com/forum/#!forum/prometheus-users"
+    },
+    {
+      "icon": "question",
+      "tags": [],
+      "targetBlank": true,
+      "title": "IRC",
+      "tooltip": "Join IRC using Riot",
+      "type": "link",
+      "url": "https://riot.im/app/#/room/#prometheus:matrix.org"
+    }
+  ],
+  "panels": [
+    {
+      "collapsed": false,
+      "datasource": {
+        "apiVersion": "v1",
+        "type": "prometheus",
+        "uid": "default-ds-uid"
+      },
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "id": 36,
+      "panels": [],
+      "targets": [
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "prometheus",
+            "uid": "default-ds-uid"
+          },
+          "refId": "A"
+        }
+      ],
+      "title": "General info",
+      "type": "row"
+    },
+    {
+      "cacheTimeout": null,
+      "datasource": {
+        "uid": "$datasource"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "fixedColor": "#f4d598",
+            "mode": "fixed"
+          },
+          "decimals": 0,
+          "mappings": [],
+          "nullValueMode": "connected",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 3,
+        "x": 0,
+        "y": 1
+      },
+      "id": 4,
+      "interval": null,
+      "links": [],
+      "mappingType": 1,
+      "mappingTypes": [
+        {
+          "name": "value to text",
+          "value": 1
+        },
+        {
+          "name": "range to text",
+          "value": 2
+        }
+      ],
+      "maxDataPoints": 100,
+      "options": {
+        "colorMode": "none",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "horizontal",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "mean"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "1.0.0",
+      "postfix": "",
+      "postfixFontSize": "50%",
+      "prefix": "",
+      "prefixFontSize": "50%",
+      "rangeMaps": [
+        {
+          "from": "null",
+          "text": "N/A",
+          "to": "null"
+        }
+      ],
+      "targets": [
+        {
+          "datasource": {
+            "uid": "$datasource"
+          },
+          "expr": "count(alertmanager_build_info{instance=~\"$instance\"})",
+          "format": "time_series",
+          "intervalFactor": 1,
+          "refId": "A"
+        }
+      ],
+      "title": "Number of instances",
+      "type": "stat",
+      "valueFontSize": "80%"
+    },
+    {
+      "datasource": {
+        "uid": "$datasource"
+      },
+      "description": "Table containing list of Alertmanager instances showing it's version, up time, last reload time and if it was successful.",
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "inspect": false
+          },
+          "decimals": 2,
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Time"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Time"
+              },
+              {
+                "id": "custom.hideFrom.viz",
+                "value": true
+              },
+              {
+                "id": "custom.align",
+                "value": ""
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "instance"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Instance"
+              },
+              {
+                "id": "unit",
+                "value": "short"
+              },
+              {
+                "id": "decimals",
+                "value": 2
+              },
+              {
+                "id": "custom.align",
+                "value": ""
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "version"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Version"
+              },
+              {
+                "id": "unit",
+                "value": "short"
+              },
+              {
+                "id": "decimals",
+                "value": 2
+              },
+              {
+                "id": "custom.align",
+                "value": ""
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Value #A"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Up time"
+              },
+              {
+                "id": "unit",
+                "value": "s"
+              },
+              {
+                "id": "decimals",
+                "value": 0
+              },
+              {
+                "id": "custom.align",
+                "value": ""
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Value #B"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Last reload"
+              },
+              {
+                "id": "unit",
+                "value": "s"
+              },
+              {
+                "id": "decimals",
+                "value": 0
+              },
+              {
+                "id": "custom.align",
+                "value": ""
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Value #C"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Last reload sucessfull"
+              },
+              {
+                "id": "unit",
+                "value": "short"
+              },
+              {
+                "id": "decimals",
+                "value": 2
+              },
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-background"
+                }
+              },
+              {
+                "id": "custom.align",
+                "value": ""
+              },
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "rgba(245, 54, 54, 0.9)",
+                      "value": null
+                    },
+                    {
+                      "color": "rgba(237, 129, 40, 0.89)",
+                      "value": 0
+                    },
+                    {
+                      "color": "rgba(50, 172, 45, 0.97)",
+                      "value": 1
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "fontSize": "90%",
+      "gridPos": {
+        "h": 5,
+        "w": 9,
+        "x": 3,
+        "y": 1
+      },
+      "id": 26,
+      "links": [],
+      "options": {
+        "cellHeight": "sm",
+        "footer": {
+          "countRows": false,
+          "fields": "",
+          "reducer": [
+            "sum"
+          ],
+          "show": false
+        },
+        "showHeader": true
+      },
+      "pageSize": null,
+      "pluginVersion": "1.0.0",
+      "scroll": true,
+      "showHeader": true,
+      "sort": {
+        "col": 13,
+        "desc": false
+      },
+      "targets": [
+        {
+          "datasource": {
+            "uid": "$datasource"
+          },
+          "expr": "time() - (alertmanager_build_info{instance=~\"$instance\"} * on (instance, cluster) group_left process_start_time_seconds{instance=~\"$instance\"})",
+          "format": "table",
+          "instant": true,
+          "intervalFactor": 1,
+          "refId": "A"
+        },
+        {
+          "datasource": {
+            "uid": "$datasource"
+          },
+          "expr": "time() - alertmanager_config_last_reload_success_timestamp_seconds{instance=~\"$instance\"}",
+          "format": "table",
+          "instant": true,
+          "intervalFactor": 1,
+          "refId": "B"
+        },
+        {
+          "datasource": {
+            "uid": "$datasource"
+          },
+          "expr": "alertmanager_config_last_reload_successful{instance=~\"$instance\"}",
+          "format": "table",
+          "instant": true,
+          "intervalFactor": 1,
+          "refId": "C"
+        }
+      ],
+      "title": "Instance versions and up time",
+      "transformations": [
+        {
+          "id": "merge",
+          "options": {
+            "reducers": []
+          }
+        }
+      ],
+      "type": "table"
+    },
+    {
+      "cacheTimeout": null,
+      "datasource": {
+        "uid": "$datasource"
+      },
+      "description": "Number of peers in the Alertmanager cluster.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "fixedColor": "#e5ac0e",
+            "mode": "fixed"
+          },
+          "decimals": 0,
+          "mappings": [],
+          "nullValueMode": "connected",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "none"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 3,
+        "x": 12,
+        "y": 1
+      },
+      "id": 207,
+      "interval": null,
+      "links": [],
+      "mappingType": 1,
+      "mappingTypes": [
+        {
+          "name": "value to text",
+          "value": 1
+        },
+        {
+          "name": "range to text",
+          "value": 2
+        }
+      ],
+      "maxDataPoints": 100,
+      "options": {
+        "colorMode": "none",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "horizontal",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "mean"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "1.0.0",
+      "postfix": "",
+      "postfixFontSize": "50%",
+      "prefix": "",
+      "prefixFontSize": "50%",
+      "rangeMaps": [
+        {
+          "from": "null",
+          "text": "N/A",
+          "to": "null"
+        }
+      ],
+      "targets": [
+        {
+          "datasource": {
+            "uid": "$datasource"
+          },
+          "expr": "max(alertmanager_cluster_members{instance=~\"$instance\"})",
+          "format": "time_series",
+          "intervalFactor": 1,
+          "refId": "A"
+        }
+      ],
+      "title": "Cluster size",
+      "type": "stat",
+      "valueFontSize": "80%"
+    },
+    {
+      "cacheTimeout": null,
+      "datasource": {
+        "uid": "$datasource"
+      },
+      "description": "Current number of active alerts.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "fixedColor": "#bf1b00",
+            "mode": "fixed"
+          },
+          "mappings": [],
+          "nullValueMode": "connected",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "none"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 3,
+        "x": 15,
+        "y": 1
+      },
+      "id": 2,
+      "interval": null,
+      "links": [],
+      "mappingType": 1,
+      "mappingTypes": [
+        {
+          "name": "value to text",
+          "value": 1
+        },
+        {
+          "name": "range to text",
+          "value": 2
+        }
+      ],
+      "maxDataPoints": 100,
+      "options": {
+        "colorMode": "none",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "horizontal",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "mean"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "1.0.0",
+      "postfix": "",
+      "postfixFontSize": "50%",
+      "prefix": "",
+      "prefixFontSize": "50%",
+      "rangeMaps": [
+        {
+          "from": "null",
+          "text": "N/A",
+          "to": "null"
+        }
+      ],
+      "targets": [
+        {
+          "datasource": {
+            "uid": "$datasource"
+          },
+          "expr": "max(alertmanager_alerts{state=\"active\", instance=~\"$instance\"})",
+          "format": "time_series",
+          "intervalFactor": 1,
+          "refId": "A"
+        }
+      ],
+      "title": "Number of active alerts",
+      "type": "stat",
+      "valueFontSize": "80%"
+    },
+    {
+      "cacheTimeout": null,
+      "datasource": {
+        "uid": "$datasource"
+      },
+      "description": "Current number of suppressed alerts.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "fixedColor": "#f9e2d2",
+            "mode": "fixed"
+          },
+          "mappings": [],
+          "nullValueMode": "connected",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "none"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 3,
+        "x": 18,
+        "y": 1
+      },
+      "id": 3,
+      "interval": null,
+      "links": [],
+      "mappingType": 1,
+      "mappingTypes": [
+        {
+          "name": "value to text",
+          "value": 1
+        },
+        {
+          "name": "range to text",
+          "value": 2
+        }
+      ],
+      "maxDataPoints": 100,
+      "options": {
+        "colorMode": "none",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "horizontal",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "mean"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "1.0.0",
+      "postfix": "",
+      "postfixFontSize": "50%",
+      "prefix": "",
+      "prefixFontSize": "50%",
+      "rangeMaps": [
+        {
+          "from": "null",
+          "text": "N/A",
+          "to": "null"
+        }
+      ],
+      "targets": [
+        {
+          "datasource": {
+            "uid": "$datasource"
+          },
+          "expr": "max(alertmanager_alerts{state=\"suppressed\", instance=~\"$instance\"})",
+          "format": "time_series",
+          "intervalFactor": 1,
+          "refId": "A"
+        }
+      ],
+      "title": "Number of suppressed alerts",
+      "type": "stat",
+      "valueFontSize": "80%"
+    },
+    {
+      "cacheTimeout": null,
+      "datasource": {
+        "uid": "$datasource"
+      },
+      "description": "Current number of active silences.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "fixedColor": "#f9e2d2",
+            "mode": "fixed"
+          },
+          "mappings": [],
+          "nullValueMode": "connected",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "none"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 3,
+        "x": 21,
+        "y": 1
+      },
+      "id": 121,
+      "interval": null,
+      "links": [],
+      "mappingType": 1,
+      "mappingTypes": [
+        {
+          "name": "value to text",
+          "value": 1
+        },
+        {
+          "name": "range to text",
+          "value": 2
+        }
+      ],
+      "maxDataPoints": 100,
+      "options": {
+        "colorMode": "none",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "horizontal",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "mean"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "1.0.0",
+      "postfix": "",
+      "postfixFontSize": "50%",
+      "prefix": "",
+      "prefixFontSize": "50%",
+      "rangeMaps": [
+        {
+          "from": "null",
+          "text": "N/A",
+          "to": "null"
+        }
+      ],
+      "targets": [
+        {
+          "datasource": {
+            "uid": "$datasource"
+          },
+          "expr": "max(alertmanager_silences{state=\"active\", instance=~\"$instance\"})",
+          "format": "time_series",
+          "intervalFactor": 1,
+          "refId": "A"
+        }
+      ],
+      "title": "Number of active silences",
+      "type": "stat",
+      "valueFontSize": "80%"
+    },
+    {
+      "collapsed": false,
+      "datasource": {
+        "apiVersion": "v1",
+        "type": "prometheus",
+        "uid": "default-ds-uid"
+      },
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 6
+      },
+      "id": 113,
+      "panels": [],
+      "targets": [
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "prometheus",
+            "uid": "default-ds-uid"
+          },
+          "refId": "A"
+        }
+      ],
+      "title": "Notifications",
+      "type": "row"
+    },
+    {
+      "aliasColors": {},
+      "bars": false,
+      "dashLength": 10,
+      "dashes": false,
+      "datasource": {
+        "uid": "$datasource"
+      },
+      "description": "Number of sent notifications to distinct integrations such as PagerDuty, Slack and so on. On negative axis are displayed failed notifications.",
+      "fill": 1,
+      "gridPos": {
+        "h": 5,
+        "w": 6,
+        "x": 0,
+        "y": 7
+      },
+      "id": 118,
+      "legend": {
+        "alignAsTable": true,
+        "avg": true,
+        "current": false,
+        "hideEmpty": true,
+        "hideZero": true,
+        "max": false,
+        "min": false,
+        "rightSide": true,
+        "show": true,
+        "sort": "total",
+        "sortDesc": true,
+        "total": true,
+        "values": true
+      },
+      "lines": true,
+      "linewidth": 1,
+      "links": [],
+      "nullPointMode": "null",
+      "percentage": false,
+      "pointradius": 5,
+      "points": false,
+      "renderer": "flot",
+      "repeat": "instance",
+      "repeatDirection": "h",
+      "seriesOverrides": [
+        {
+          "alias": "/Failed.*/",
+          "color": "#99440a",
+          "transform": "negative-Y"
+        }
+      ],
+      "spaceLength": 10,
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
+        {
+          "datasource": {
+            "uid": "$datasource"
+          },
+          "expr": "sum(increase(alertmanager_notifications_total{instance=~\"$instance\"}[$__interval])) by (integration)",
+          "format": "time_series",
+          "intervalFactor": 1,
+          "legendFormat": "{{ integration}}",
+          "refId": "B"
+        },
+        {
+          "datasource": {
+            "uid": "$datasource"
+          },
+          "expr": "sum(increase(alertmanager_notifications_failed_total{instance=~\"$instance\"}[$__interval])) by (integration)",
+          "format": "time_series",
+          "hide": false,
+          "interval": "",
+          "intervalFactor": 1,
+          "legendFormat": "Failed {{ integration }}",
+          "refId": "A"
+        }
+      ],
+      "thresholds": [],
+      "timeFrom": null,
+      "timeRegions": [],
+      "timeShift": null,
+      "title": "Notifications sent from $instance",
+      "tooltip": {
+        "shared": true,
+        "sort": 0,
+        "value_type": "individual"
+      },
+      "type": "graph",
+      "xaxis": {
+        "buckets": null,
+        "mode": "time",
+        "name": null,
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        },
+        {
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        }
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
+    },
+    {
+      "aliasColors": {},
+      "bars": false,
+      "dashLength": 10,
+      "dashes": false,
+      "datasource": {
+        "uid": "$datasource"
+      },
+      "description": "Duration of notification sends in 0.99 and 0.9 quantiles per integration.",
+      "fill": 0,
+      "gridPos": {
+        "h": 6,
+        "w": 6,
+        "x": 0,
+        "y": 12
+      },
+      "id": 115,
+      "legend": {
+        "alignAsTable": true,
+        "avg": true,
+        "current": false,
+        "hideEmpty": true,
+        "hideZero": true,
+        "max": false,
+        "min": false,
+        "rightSide": true,
+        "show": true,
+        "sort": "avg",
+        "sortDesc": true,
+        "total": false,
+        "values": true
+      },
+      "lines": true,
+      "linewidth": 1,
+      "links": [],
+      "nullPointMode": "connected",
+      "percentage": false,
+      "pointradius": 5,
+      "points": false,
+      "renderer": "flot",
+      "repeat": "instance",
+      "repeatDirection": "h",
+      "seriesOverrides": [
+        {
+          "alias": "/0.99.*/",
+          "linewidth": 1
+        },
+        {
+          "alias": "/0.5 .*/",
+          "linewidth": 2
+        }
+      ],
+      "spaceLength": 10,
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
+        {
+          "datasource": {
+            "uid": "$datasource"
+          },
+          "expr": "sum(histogram_quantile(0.9,rate(alertmanager_notification_latency_seconds_bucket{instance=~\"$instance\"}[$__interval]))) by (integration)",
+          "format": "time_series",
+          "intervalFactor": 1,
+          "legendFormat": "0.9q {{ integration }}",
+          "refId": "B"
+        },
+        {
+          "datasource": {
+            "uid": "$datasource"
+          },
+          "expr": "sum(histogram_quantile(0.99,rate(alertmanager_notification_latency_seconds_bucket{instance=~\"$instance\"}[$__interval]))) by (integration)",
+          "format": "time_series",
+          "interval": "",
+          "intervalFactor": 1,
+          "legendFormat": "0.99q  {{ integration }}",
+          "refId": "A"
+        }
+      ],
+      "thresholds": [],
+      "timeFrom": null,
+      "timeRegions": [],
+      "timeShift": null,
+      "title": "Notification durations per integration on $instance",
+      "tooltip": {
+        "shared": true,
+        "sort": 0,
+        "value_type": "individual"
+      },
+      "type": "graph",
+      "xaxis": {
+        "buckets": null,
+        "mode": "time",
+        "name": null,
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "format": "s",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        },
+        {
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        }
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
+    },
+    {
+      "collapsed": false,
+      "datasource": {
+        "apiVersion": "v1",
+        "type": "prometheus",
+        "uid": "default-ds-uid"
+      },
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 18
+      },
+      "id": 18,
+      "panels": [],
+      "targets": [
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "prometheus",
+            "uid": "default-ds-uid"
+          },
+          "refId": "A"
+        }
+      ],
+      "title": "Alerts",
+      "type": "row"
+    },
+    {
+      "aliasColors": {},
+      "bars": false,
+      "dashLength": 10,
+      "dashes": false,
+      "datasource": {
+        "uid": "$datasource"
+      },
+      "description": "Number of alerts by state such as `active`, `suppressed` etc.",
+      "fill": 4,
+      "gridPos": {
+        "h": 5,
+        "w": 6,
+        "x": 0,
+        "y": 19
+      },
+      "id": 6,
+      "legend": {
+        "avg": false,
+        "current": false,
+        "max": false,
+        "min": false,
+        "show": false,
+        "total": false,
+        "values": false
+      },
+      "lines": true,
+      "linewidth": 1,
+      "links": [],
+      "nullPointMode": "null as zero",
+      "percentage": false,
+      "pointradius": 5,
+      "points": false,
+      "renderer": "flot",
+      "repeat": "instance",
+      "repeatDirection": "h",
+      "seriesOverrides": [
+        {
+          "alias": "active",
+          "color": "#bf1b00"
+        },
+        {
+          "alias": "suppressed",
+          "color": "#2f575e"
+        }
+      ],
+      "spaceLength": 10,
+      "stack": true,
+      "steppedLine": false,
+      "targets": [
+        {
+          "datasource": {
+            "uid": "$datasource"
+          },
+          "expr": "sum(alertmanager_alerts{instance=~\"$instance\"}) by (state)",
+          "format": "time_series",
+          "intervalFactor": 1,
+          "legendFormat": "{{state}}",
+          "refId": "A"
+        }
+      ],
+      "thresholds": [],
+      "timeFrom": null,
+      "timeRegions": [],
+      "timeShift": null,
+      "title": "Active alerts in $instance",
+      "tooltip": {
+        "shared": true,
+        "sort": 0,
+        "value_type": "individual"
+      },
+      "type": "graph",
+      "xaxis": {
+        "buckets": null,
+        "mode": "time",
+        "name": null,
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        },
+        {
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        }
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
+    },
+    {
+      "aliasColors": {},
+      "bars": false,
+      "dashLength": 10,
+      "dashes": false,
+      "datasource": {
+        "uid": "$datasource"
+      },
+      "description": "Number of received alerts from Prometheus by status `firing` on positive axis and `resolved` on negative axis.",
+      "fill": 1,
+      "gridPos": {
+        "h": 5,
+        "w": 6,
+        "x": 0,
+        "y": 24
+      },
+      "id": 8,
+      "legend": {
+        "avg": false,
+        "current": false,
+        "max": false,
+        "min": false,
+        "show": false,
+        "total": false,
+        "values": false
+      },
+      "lines": true,
+      "linewidth": 1,
+      "links": [],
+      "nullPointMode": "null",
+      "percentage": false,
+      "pointradius": 5,
+      "points": false,
+      "renderer": "flot",
+      "repeat": "instance",
+      "repeatDirection": "h",
+      "seriesOverrides": [
+        {
+          "alias": "resolved",
+          "color": "#7eb26d",
+          "transform": "negative-Y"
+        },
+        {
+          "alias": "firing",
+          "color": "#99440a"
+        }
+      ],
+      "spaceLength": 10,
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
+        {
+          "datasource": {
+            "uid": "$datasource"
+          },
+          "expr": "sum(increase(alertmanager_alerts_received_total{instance=~\"$instance\"}[$__interval])) by (status)",
+          "format": "time_series",
+          "interval": "",
+          "intervalFactor": 1,
+          "legendFormat": "{{ status }}",
+          "refId": "A"
+        }
+      ],
+      "thresholds": [],
+      "timeFrom": null,
+      "timeRegions": [],
+      "timeShift": null,
+      "title": "Received alerts by status for $instance",
+      "tooltip": {
+        "shared": true,
+        "sort": 0,
+        "value_type": "individual"
+      },
+      "type": "graph",
+      "xaxis": {
+        "buckets": null,
+        "mode": "time",
+        "name": null,
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        },
+        {
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        }
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
+    },
+    {
+      "collapsed": true,
+      "datasource": {
+        "apiVersion": "v1",
+        "type": "prometheus",
+        "uid": "default-ds-uid"
+      },
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 29
+      },
+      "id": 34,
+      "panels": [
+        {
+          "aliasColors": {},
+          "bars": false,
+          "dashLength": 10,
+          "dashes": false,
+          "datasource": {
+            "uid": "$datasource"
+          },
+          "description": "Shows cluster score representing cluster health. From Hashicorps official documentation: \n\u003e This metric describes a node's perception of its own health based on how well it is meeting the soft real-time requirements of the protocol. This metric ranges from 0 to 8, where 0 indicates \"totally healthy\".\n\nFor more info see https://www.consul.io/docs/agent/telemetry.html#cluster-health",
+          "fill": 1,
+          "gridPos": {
+            "h": 4,
+            "w": 6,
+            "x": 0,
+            "y": 20
+          },
+          "id": 57,
+          "legend": {
+            "avg": false,
+            "current": false,
+            "max": false,
+            "min": false,
+            "show": false,
+            "total": false,
+            "values": false
+          },
+          "lines": true,
+          "linewidth": 1,
+          "links": [],
+          "nullPointMode": "null",
+          "percentage": false,
+          "pointradius": 5,
+          "points": false,
+          "renderer": "flot",
+          "repeat": "instance",
+          "repeatDirection": "h",
+          "scopedVars": {
+            "instance": {
+              "selected": false,
+              "text": "alertmanager-54b9fdf9bf-gqxs4",
+              "value": "alertmanager-54b9fdf9bf-gqxs4"
+            }
+          },
+          "seriesOverrides": [
+            {
+              "alias": "Number of failed peers",
+              "color": "#bf1b00",
+              "fill": 7
+            }
+          ],
+          "spaceLength": 10,
+          "stack": false,
+          "steppedLine": false,
+          "targets": [
+            {
+              "datasource": {
+                "uid": "$datasource"
+              },
+              "expr": "alertmanager_cluster_health_score{instance=~\"$instance\"}",
+              "format": "time_series",
+              "intervalFactor": 1,
+              "legendFormat": "Cluster health score",
+              "refId": "A"
+            }
+          ],
+          "thresholds": [],
+          "timeFrom": null,
+          "timeRegions": [],
+          "timeShift": null,
+          "title": "Clusterhealth score for $instance",
+          "tooltip": {
+            "shared": true,
+            "sort": 0,
+            "value_type": "individual"
+          },
+          "type": "graph",
+          "xaxis": {
+            "buckets": null,
+            "mode": "time",
+            "name": null,
+            "show": true,
+            "values": []
+          },
+          "yaxes": [
+            {
+              "format": "short",
+              "label": null,
+              "logBase": 1,
+              "max": null,
+              "min": null,
+              "show": true
+            },
+            {
+              "format": "short",
+              "label": null,
+              "logBase": 1,
+              "max": null,
+              "min": null,
+              "show": true
+            }
+          ],
+          "yaxis": {
+            "align": false,
+            "alignLevel": null
+          }
+        },
+        {
+          "aliasColors": {},
+          "bars": false,
+          "dashLength": 10,
+          "dashes": false,
+          "datasource": {
+            "uid": "$datasource"
+          },
+          "description": "Shows gossip cluster members count in time and failing peers in case of any in red color.",
+          "fill": 1,
+          "gridPos": {
+            "h": 4,
+            "w": 6,
+            "x": 0,
+            "y": 24
+          },
+          "id": 38,
+          "legend": {
+            "avg": false,
+            "current": false,
+            "max": false,
+            "min": false,
+            "show": false,
+            "total": false,
+            "values": false
+          },
+          "lines": true,
+          "linewidth": 1,
+          "links": [],
+          "nullPointMode": "null",
+          "percentage": false,
+          "pointradius": 5,
+          "points": false,
+          "renderer": "flot",
+          "repeat": "instance",
+          "repeatDirection": "h",
+          "scopedVars": {
+            "instance": {
+              "selected": false,
+              "text": "alertmanager-54b9fdf9bf-gqxs4",
+              "value": "alertmanager-54b9fdf9bf-gqxs4"
+            }
+          },
+          "seriesOverrides": [
+            {
+              "alias": "Number of failed peers",
+              "color": "#bf1b00",
+              "fill": 7
+            }
+          ],
+          "spaceLength": 10,
+          "stack": true,
+          "steppedLine": false,
+          "targets": [
+            {
+              "datasource": {
+                "uid": "$datasource"
+              },
+              "expr": "alertmanager_cluster_members{instance=~\"$instance\"}",
+              "format": "time_series",
+              "intervalFactor": 1,
+              "legendFormat": "Number of cluster members",
+              "refId": "A"
+            },
+            {
+              "datasource": {
+                "uid": "$datasource"
+              },
+              "expr": "alertmanager_cluster_failed_peers{instance=~\"$instance\"}",
+              "format": "time_series",
+              "intervalFactor": 1,
+              "legendFormat": "Number of failed peers",
+              "refId": "B"
+            }
+          ],
+          "thresholds": [],
+          "timeFrom": null,
+          "timeRegions": [],
+          "timeShift": null,
+          "title": "Cluster members count on $instance",
+          "tooltip": {
+            "shared": true,
+            "sort": 0,
+            "value_type": "individual"
+          },
+          "type": "graph",
+          "xaxis": {
+            "buckets": null,
+            "mode": "time",
+            "name": null,
+            "show": true,
+            "values": []
+          },
+          "yaxes": [
+            {
+              "format": "short",
+              "label": null,
+              "logBase": 1,
+              "max": null,
+              "min": null,
+              "show": true
+            },
+            {
+              "format": "short",
+              "label": null,
+              "logBase": 1,
+              "max": null,
+              "min": null,
+              "show": true
+            }
+          ],
+          "yaxis": {
+            "align": false,
+            "alignLevel": null
+          }
+        },
+        {
+          "aliasColors": {},
+          "bars": false,
+          "dashLength": 10,
+          "dashes": false,
+          "datasource": {
+            "uid": "$datasource"
+          },
+          "description": "On positive axis shows number of peers that joined the cluster and on negative axis number of peers that left the cluster.",
+          "fill": 1,
+          "gridPos": {
+            "h": 6,
+            "w": 6,
+            "x": 0,
+            "y": 28
+          },
+          "id": 75,
+          "legend": {
+            "avg": false,
+            "current": false,
+            "max": false,
+            "min": false,
+            "show": false,
+            "total": false,
+            "values": false
+          },
+          "lines": true,
+          "linewidth": 1,
+          "links": [],
+          "nullPointMode": "null as zero",
+          "percentage": false,
+          "pointradius": 5,
+          "points": false,
+          "renderer": "flot",
+          "repeat": "instance",
+          "repeatDirection": "h",
+          "scopedVars": {
+            "instance": {
+              "selected": false,
+              "text": "alertmanager-54b9fdf9bf-gqxs4",
+              "value": "alertmanager-54b9fdf9bf-gqxs4"
+            }
+          },
+          "seriesOverrides": [
+            {
+              "alias": "Cluster left peers",
+              "color": "#890f02",
+              "transform": "negative-Y"
+            }
+          ],
+          "spaceLength": 10,
+          "stack": false,
+          "steppedLine": false,
+          "targets": [
+            {
+              "datasource": {
+                "uid": "$datasource"
+              },
+              "expr": "increase(alertmanager_cluster_peers_left_total{instance=~\"$instance\"}[$__interval])",
+              "format": "time_series",
+              "intervalFactor": 1,
+              "legendFormat": "Cluster joined peers",
+              "refId": "A"
+            },
+            {
+              "datasource": {
+                "uid": "$datasource"
+              },
+              "expr": "increase(alertmanager_cluster_peers_joined_total{instance=~\"$instance\"}[$__interval])",
+              "format": "time_series",
+              "intervalFactor": 1,
+              "legendFormat": "Cluster left peers",
+              "refId": "B"
+            }
+          ],
+          "thresholds": [],
+          "timeFrom": null,
+          "timeRegions": [],
+          "timeShift": null,
+          "title": "Cluster peers left/joined on $instance",
+          "tooltip": {
+            "shared": true,
+            "sort": 0,
+            "value_type": "individual"
+          },
+          "type": "graph",
+          "xaxis": {
+            "buckets": null,
+            "mode": "time",
+            "name": null,
+            "show": true,
+            "values": []
+          },
+          "yaxes": [
+            {
+              "format": "short",
+              "label": null,
+              "logBase": 1,
+              "max": null,
+              "min": null,
+              "show": true
+            },
+            {
+              "format": "short",
+              "label": null,
+              "logBase": 1,
+              "max": null,
+              "min": null,
+              "show": true
+            }
+          ],
+          "yaxis": {
+            "align": false,
+            "alignLevel": null
+          }
+        },
+        {
+          "aliasColors": {},
+          "bars": false,
+          "dashLength": 10,
+          "dashes": false,
+          "datasource": {
+            "uid": "$datasource"
+          },
+          "description": "On positive axis is number of attempts to reconnect the cluster. On negative axis if number of failed attempts.",
+          "fill": 1,
+          "gridPos": {
+            "h": 6,
+            "w": 6,
+            "x": 0,
+            "y": 34
+          },
+          "id": 68,
+          "legend": {
+            "avg": false,
+            "current": false,
+            "max": false,
+            "min": false,
+            "show": false,
+            "total": false,
+            "values": false
+          },
+          "lines": true,
+          "linewidth": 1,
+          "links": [],
+          "nullPointMode": "null as zero",
+          "percentage": false,
+          "pointradius": 5,
+          "points": false,
+          "renderer": "flot",
+          "repeat": "instance",
+          "repeatDirection": "h",
+          "scopedVars": {
+            "instance": {
+              "selected": false,
+              "text": "alertmanager-54b9fdf9bf-gqxs4",
+              "value": "alertmanager-54b9fdf9bf-gqxs4"
+            }
+          },
+          "seriesOverrides": [
+            {
+              "alias": "Failed reconnections",
+              "color": "#890f02",
+              "transform": "negative-Y"
+            }
+          ],
+          "spaceLength": 10,
+          "stack": false,
+          "steppedLine": false,
+          "targets": [
+            {
+              "datasource": {
+                "uid": "$datasource"
+              },
+              "expr": "increase(alertmanager_cluster_reconnections_total{instance=~\"$instance\"}[$__interval])",
+              "format": "time_series",
+              "intervalFactor": 1,
+              "legendFormat": "Sucessful reconnections",
+              "refId": "A"
+            },
+            {
+              "datasource": {
+                "uid": "$datasource"
+              },
+              "expr": "increase(alertmanager_cluster_reconnections_failed_total{instance=~\"$instance\"}[$__interval])",
+              "format": "time_series",
+              "intervalFactor": 1,
+              "legendFormat": "Failed reconnections",
+              "refId": "B"
+            }
+          ],
+          "thresholds": [],
+          "timeFrom": null,
+          "timeRegions": [],
+          "timeShift": null,
+          "title": "Cluster reconnections on $instance",
+          "tooltip": {
+            "shared": true,
+            "sort": 0,
+            "value_type": "individual"
+          },
+          "type": "graph",
+          "xaxis": {
+            "buckets": null,
+            "mode": "time",
+            "name": null,
+            "show": true,
+            "values": []
+          },
+          "yaxes": [
+            {
+              "format": "short",
+              "label": null,
+              "logBase": 1,
+              "max": null,
+              "min": null,
+              "show": true
+            },
+            {
+              "format": "short",
+              "label": null,
+              "logBase": 1,
+              "max": null,
+              "min": null,
+              "show": true
+            }
+          ],
+          "yaxis": {
+            "align": false,
+            "alignLevel": null
+          }
+        },
+        {
+          "aliasColors": {},
+          "bars": false,
+          "dashLength": 10,
+          "dashes": false,
+          "datasource": {
+            "uid": "$datasource"
+          },
+          "description": "On positive axis is number of sent cluster messages by type `update`  or `full_state` and on negative axis the same for received messages.",
+          "fill": 1,
+          "gridPos": {
+            "h": 6,
+            "w": 6,
+            "x": 0,
+            "y": 40
+          },
+          "id": 48,
+          "legend": {
+            "avg": false,
+            "current": false,
+            "max": false,
+            "min": false,
+            "show": false,
+            "total": false,
+            "values": false
+          },
+          "lines": true,
+          "linewidth": 1,
+          "links": [],
+          "nullPointMode": "null as zero",
+          "percentage": false,
+          "pointradius": 5,
+          "points": false,
+          "renderer": "flot",
+          "repeat": "instance",
+          "repeatDirection": "h",
+          "scopedVars": {
+            "instance": {
+              "selected": false,
+              "text": "alertmanager-54b9fdf9bf-gqxs4",
+              "value": "alertmanager-54b9fdf9bf-gqxs4"
+            }
+          },
+          "seriesOverrides": [
+            {
+              "alias": "/received.*/",
+              "transform": "negative-Y"
+            },
+            {
+              "alias": "/.*full_state.*/",
+              "color": "#629e51"
+            },
+            {
+              "alias": "/.*update.*/",
+              "color": "#f4d598"
+            }
+          ],
+          "spaceLength": 10,
+          "stack": false,
+          "steppedLine": false,
+          "targets": [
+            {
+              "datasource": {
+                "uid": "$datasource"
+              },
+              "expr": "sum(increase(alertmanager_cluster_messages_sent_total{instance=~\"$instance\"}[$__interval])) by (msg_type)",
+              "format": "time_series",
+              "intervalFactor": 1,
+              "legendFormat": "sent {{msg_type}}",
+              "refId": "A"
+            },
+            {
+              "datasource": {
+                "uid": "$datasource"
+              },
+              "expr": "sum(increase(alertmanager_cluster_messages_received_total{instance=~\"$instance\"}[$__interval])) by (msg_type)",
+              "format": "time_series",
+              "intervalFactor": 1,
+              "legendFormat": "received {{msg_type}}",
+              "refId": "B"
+            }
+          ],
+          "thresholds": [],
+          "timeFrom": null,
+          "timeRegions": [],
+          "timeShift": null,
+          "title": "Cluster messages count on $instance",
+          "tooltip": {
+            "shared": true,
+            "sort": 0,
+            "value_type": "individual"
+          },
+          "type": "graph",
+          "xaxis": {
+            "buckets": null,
+            "mode": "time",
+            "name": null,
+            "show": true,
+            "values": []
+          },
+          "yaxes": [
+            {
+              "format": "short",
+              "label": null,
+              "logBase": 1,
+              "max": null,
+              "min": null,
+              "show": true
+            },
+            {
+              "format": "short",
+              "label": null,
+              "logBase": 1,
+              "max": null,
+              "min": null,
+              "show": true
+            }
+          ],
+          "yaxis": {
+            "align": false,
+            "alignLevel": null
+          }
+        },
+        {
+          "aliasColors": {},
+          "bars": false,
+          "dashLength": 10,
+          "dashes": false,
+          "datasource": {
+            "uid": "$datasource"
+          },
+          "description": "On positive axis is size of sent cluster messages by type `update`  or `full_state` and on negative axis the same for received messages.",
+          "fill": 1,
+          "gridPos": {
+            "h": 6,
+            "w": 6,
+            "x": 0,
+            "y": 46
+          },
+          "id": 53,
+          "legend": {
+            "avg": false,
+            "current": false,
+            "max": false,
+            "min": false,
+            "show": false,
+            "total": false,
+            "values": false
+          },
+          "lines": true,
+          "linewidth": 1,
+          "links": [],
+          "nullPointMode": "null as zero",
+          "percentage": false,
+          "pointradius": 5,
+          "points": false,
+          "renderer": "flot",
+          "repeat": "instance",
+          "repeatDirection": "h",
+          "scopedVars": {
+            "instance": {
+              "selected": false,
+              "text": "alertmanager-54b9fdf9bf-gqxs4",
+              "value": "alertmanager-54b9fdf9bf-gqxs4"
+            }
+          },
+          "seriesOverrides": [
+            {
+              "alias": "/received.*/",
+              "transform": "negative-Y"
+            },
+            {
+              "alias": "/.*full_state.*/",
+              "color": "#629e51"
+            },
+            {
+              "alias": "/.*update.*/",
+              "color": "#f4d598"
+            }
+          ],
+          "spaceLength": 10,
+          "stack": false,
+          "steppedLine": false,
+          "targets": [
+            {
+              "datasource": {
+                "uid": "$datasource"
+              },
+              "expr": "sum(increase(alertmanager_cluster_messages_sent_size_total{instance=~\"$instance\"}[$__interval])) by (msg_type)",
+              "format": "time_series",
+              "intervalFactor": 1,
+              "legendFormat": "sent {{msg_type}}",
+              "refId": "A"
+            },
+            {
+              "datasource": {
+                "uid": "$datasource"
+              },
+              "expr": "sum(increase(alertmanager_cluster_messages_received_size_total{instance=~\"$instance\"}[$__interval])) by (msg_type)",
+              "format": "time_series",
+              "intervalFactor": 1,
+              "legendFormat": "received {{msg_type}}",
+              "refId": "B"
+            }
+          ],
+          "thresholds": [],
+          "timeFrom": null,
+          "timeRegions": [],
+          "timeShift": null,
+          "title": "Cluster messages size on $instance",
+          "tooltip": {
+            "shared": true,
+            "sort": 0,
+            "value_type": "individual"
+          },
+          "type": "graph",
+          "xaxis": {
+            "buckets": null,
+            "mode": "time",
+            "name": null,
+            "show": true,
+            "values": []
+          },
+          "yaxes": [
+            {
+              "format": "bytes",
+              "label": null,
+              "logBase": 1,
+              "max": null,
+              "min": null,
+              "show": true
+            },
+            {
+              "format": "short",
+              "label": null,
+              "logBase": 1,
+              "max": null,
+              "min": null,
+              "show": true
+            }
+          ],
+          "yaxis": {
+            "align": false,
+            "alignLevel": null
+          }
+        },
+        {
+          "aliasColors": {},
+          "bars": false,
+          "dashLength": 10,
+          "dashes": false,
+          "datasource": {
+            "uid": "$datasource"
+          },
+          "description": "On positive axis is number of queued cluster messages and on negative axis number of pruned messages.",
+          "fill": 1,
+          "gridPos": {
+            "h": 6,
+            "w": 6,
+            "x": 0,
+            "y": 52
+          },
+          "id": 62,
+          "legend": {
+            "avg": false,
+            "current": false,
+            "max": false,
+            "min": false,
+            "show": false,
+            "total": false,
+            "values": false
+          },
+          "lines": true,
+          "linewidth": 1,
+          "links": [],
+          "nullPointMode": "null as zero",
+          "percentage": false,
+          "pointradius": 5,
+          "points": false,
+          "renderer": "flot",
+          "repeat": "instance",
+          "repeatDirection": "h",
+          "scopedVars": {
+            "instance": {
+              "selected": false,
+              "text": "alertmanager-54b9fdf9bf-gqxs4",
+              "value": "alertmanager-54b9fdf9bf-gqxs4"
+            }
+          },
+          "seriesOverrides": [
+            {
+              "alias": "Pruned messaged",
+              "transform": "negative-Y"
+            }
+          ],
+          "spaceLength": 10,
+          "stack": false,
+          "steppedLine": false,
+          "targets": [
+            {
+              "datasource": {
+                "uid": "$datasource"
+              },
+              "expr": "alertmanager_cluster_messages_pruned_total{instance=~\"$instance\"}",
+              "format": "time_series",
+              "intervalFactor": 1,
+              "legendFormat": "Pruned messaged",
+              "refId": "A"
+            },
+            {
+              "datasource": {
+                "uid": "$datasource"
+              },
+              "expr": "alertmanager_cluster_messages_queued{instance=~\"$instance\"}",
+              "format": "time_series",
+              "intervalFactor": 1,
+              "legendFormat": "Queued messages",
+              "refId": "B"
+            }
+          ],
+          "thresholds": [],
+          "timeFrom": null,
+          "timeRegions": [],
+          "timeShift": null,
+          "title": "Cluster messages queue on $instance",
+          "tooltip": {
+            "shared": true,
+            "sort": 0,
+            "value_type": "individual"
+          },
+          "type": "graph",
+          "xaxis": {
+            "buckets": null,
+            "mode": "time",
+            "name": null,
+            "show": true,
+            "values": []
+          },
+          "yaxes": [
+            {
+              "format": "short",
+              "label": null,
+              "logBase": 1,
+              "max": null,
+              "min": null,
+              "show": true
+            },
+            {
+              "format": "short",
+              "label": null,
+              "logBase": 1,
+              "max": null,
+              "min": null,
+              "show": true
+            }
+          ],
+          "yaxis": {
+            "align": false,
+            "alignLevel": null
+          }
+        }
+      ],
+      "targets": [
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "prometheus",
+            "uid": "default-ds-uid"
+          },
+          "refId": "A"
+        }
+      ],
+      "title": "Cluster members",
+      "type": "row"
+    },
+    {
+      "collapsed": true,
+      "datasource": {
+        "apiVersion": "v1",
+        "type": "prometheus",
+        "uid": "default-ds-uid"
+      },
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 30
+      },
+      "id": 284,
+      "panels": [
+        {
+          "aliasColors": {},
+          "bars": false,
+          "dashLength": 10,
+          "dashes": false,
+          "datasource": {
+            "uid": "$datasource"
+          },
+          "fill": 1,
+          "gridPos": {
+            "h": 6,
+            "w": 6,
+            "x": 0,
+            "y": 10
+          },
+          "id": 314,
+          "legend": {
+            "avg": false,
+            "current": false,
+            "max": false,
+            "min": false,
+            "show": false,
+            "total": false,
+            "values": false
+          },
+          "lines": true,
+          "linewidth": 1,
+          "links": [],
+          "nullPointMode": "null as zero",
+          "percentage": false,
+          "pointradius": 5,
+          "points": false,
+          "renderer": "flot",
+          "repeat": "instance",
+          "repeatDirection": "h",
+          "scopedVars": {
+            "instance": {
+              "selected": false,
+              "text": "alertmanager-54b9fdf9bf-gqxs4",
+              "value": "alertmanager-54b9fdf9bf-gqxs4"
+            }
+          },
+          "seriesOverrides": [
+            {
+              "alias": "/dropped/",
+              "color": "#cca300",
+              "transform": "negative-Y"
+            },
+            {
+              "alias": "/failed/",
+              "color": "#bf1b00",
+              "transform": "negative-Y"
+            }
+          ],
+          "spaceLength": 10,
+          "stack": false,
+          "steppedLine": false,
+          "targets": [
+            {
+              "datasource": {
+                "uid": "$datasource"
+              },
+              "expr": "increase(alertmanager_oversized_gossip_message_sent_total{instance=~\"$instance\"}[$__interval])",
+              "format": "time_series",
+              "hide": false,
+              "intervalFactor": 1,
+              "legendFormat": "{{key}}",
+              "refId": "A"
+            },
+            {
+              "datasource": {
+                "uid": "$datasource"
+              },
+              "expr": "increase(alertmanager_oversized_gossip_message_dropped_total{instance=~\"$instance\"}[$__interval])",
+              "format": "time_series",
+              "intervalFactor": 1,
+              "legendFormat": "dropped {{key}}",
+              "refId": "B"
+            },
+            {
+              "datasource": {
+                "uid": "$datasource"
+              },
+              "expr": "increase(alertmanager_oversized_gossip_message_failure_total{instance=~\"$instance\"}[$__interval])",
+              "format": "time_series",
+              "intervalFactor": 1,
+              "legendFormat": "failed {{key}}",
+              "refId": "C"
+            }
+          ],
+          "thresholds": [],
+          "timeFrom": null,
+          "timeRegions": [],
+          "timeShift": null,
+          "title": "Count of oversized gossip messages on $instance",
+          "tooltip": {
+            "shared": true,
+            "sort": 0,
+            "value_type": "individual"
+          },
+          "type": "graph",
+          "xaxis": {
+            "buckets": null,
+            "mode": "time",
+            "name": null,
+            "show": true,
+            "values": []
+          },
+          "yaxes": [
+            {
+              "format": "s",
+              "label": null,
+              "logBase": 1,
+              "max": null,
+              "min": null,
+              "show": true
+            },
+            {
+              "format": "short",
+              "label": null,
+              "logBase": 1,
+              "max": null,
+              "min": null,
+              "show": true
+            }
+          ],
+          "yaxis": {
+            "align": false,
+            "alignLevel": null
+          }
+        },
+        {
+          "aliasColors": {},
+          "bars": false,
+          "dashLength": 10,
+          "dashes": false,
+          "datasource": {
+            "uid": "$datasource"
+          },
+          "fill": 1,
+          "gridPos": {
+            "h": 6,
+            "w": 6,
+            "x": 0,
+            "y": 16
+          },
+          "id": 307,
+          "legend": {
+            "avg": false,
+            "current": false,
+            "max": false,
+            "min": false,
+            "show": false,
+            "total": false,
+            "values": false
+          },
+          "lines": true,
+          "linewidth": 1,
+          "links": [],
+          "nullPointMode": "null as zero",
+          "percentage": false,
+          "pointradius": 5,
+          "points": false,
+          "renderer": "flot",
+          "repeat": "instance",
+          "repeatDirection": "h",
+          "scopedVars": {
+            "instance": {
+              "selected": false,
+              "text": "alertmanager-54b9fdf9bf-gqxs4",
+              "value": "alertmanager-54b9fdf9bf-gqxs4"
+            }
+          },
+          "seriesOverrides": [
+            {
+              "alias": "Nf log query errors",
+              "color": "#890f02",
+              "transform": "negative-Y"
+            }
+          ],
+          "spaceLength": 10,
+          "stack": false,
+          "steppedLine": false,
+          "targets": [
+            {
+              "datasource": {
+                "uid": "$datasource"
+              },
+              "expr": "histogram_quantile(1,rate(alertmanager_oversize_gossip_message_duration_seconds_bucket{instance=~\"$instance\"}[$__interval]))",
+              "format": "time_series",
+              "hide": false,
+              "intervalFactor": 1,
+              "legendFormat": "{{key}}",
+              "refId": "A"
+            }
+          ],
+          "thresholds": [],
+          "timeFrom": null,
+          "timeRegions": [],
+          "timeShift": null,
+          "title": "Duration of oversized gossip messages on $instance",
+          "tooltip": {
+            "shared": true,
+            "sort": 0,
+            "value_type": "individual"
+          },
+          "type": "graph",
+          "xaxis": {
+            "buckets": null,
+            "mode": "time",
+            "name": null,
+            "show": true,
+            "values": []
+          },
+          "yaxes": [
+            {
+              "format": "s",
+              "label": null,
+              "logBase": 1,
+              "max": null,
+              "min": null,
+              "show": true
+            },
+            {
+              "format": "short",
+              "label": null,
+              "logBase": 1,
+              "max": null,
+              "min": null,
+              "show": true
+            }
+          ],
+          "yaxis": {
+            "align": false,
+            "alignLevel": null
+          }
+        },
+        {
+          "aliasColors": {},
+          "bars": false,
+          "dashLength": 10,
+          "dashes": false,
+          "datasource": {
+            "uid": "$datasource"
+          },
+          "fill": 1,
+          "gridPos": {
+            "h": 6,
+            "w": 6,
+            "x": 0,
+            "y": 22
+          },
+          "id": 303,
+          "legend": {
+            "avg": false,
+            "current": false,
+            "max": false,
+            "min": false,
+            "show": false,
+            "total": false,
+            "values": false
+          },
+          "lines": true,
+          "linewidth": 1,
+          "links": [],
+          "nullPointMode": "null as zero",
+          "percentage": false,
+          "pointradius": 5,
+          "points": false,
+          "renderer": "flot",
+          "repeat": "instance",
+          "repeatDirection": "h",
+          "scopedVars": {
+            "instance": {
+              "selected": false,
+              "text": "alertmanager-54b9fdf9bf-gqxs4",
+              "value": "alertmanager-54b9fdf9bf-gqxs4"
+            }
+          },
+          "seriesOverrides": [
+            {
+              "alias": "Nf log query errors",
+              "color": "#890f02",
+              "transform": "negative-Y"
+            }
+          ],
+          "spaceLength": 10,
+          "stack": false,
+          "steppedLine": false,
+          "targets": [
+            {
+              "datasource": {
+                "uid": "$datasource"
+              },
+              "expr": "increase(alertmanager_silences_gossip_messages_propagated_total{instance=~\"$instance\"}[$__interval])",
+              "format": "time_series",
+              "hide": false,
+              "intervalFactor": 1,
+              "legendFormat": "silences",
+              "refId": "A"
+            },
+            {
+              "datasource": {
+                "uid": "$datasource"
+              },
+              "expr": "increase(alertmanager_nflog_gossip_messages_propagated_total{instance=~\"$instance\"}[$__interval])",
+              "format": "time_series",
+              "intervalFactor": 1,
+              "legendFormat": "nf_log",
+              "refId": "B"
+            }
+          ],
+          "thresholds": [],
+          "timeFrom": null,
+          "timeRegions": [],
+          "timeShift": null,
+          "title": "Number of  propagated gossip messages on $instance",
+          "tooltip": {
+            "shared": true,
+            "sort": 0,
+            "value_type": "individual"
+          },
+          "type": "graph",
+          "xaxis": {
+            "buckets": null,
+            "mode": "time",
+            "name": null,
+            "show": true,
+            "values": []
+          },
+          "yaxes": [
+            {
+              "format": "short",
+              "label": null,
+              "logBase": 1,
+              "max": null,
+              "min": null,
+              "show": true
+            },
+            {
+              "format": "short",
+              "label": null,
+              "logBase": 1,
+              "max": null,
+              "min": null,
+              "show": true
+            }
+          ],
+          "yaxis": {
+            "align": false,
+            "alignLevel": null
+          }
+        }
+      ],
+      "targets": [
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "prometheus",
+            "uid": "default-ds-uid"
+          },
+          "refId": "A"
+        }
+      ],
+      "title": "Gossip messages",
+      "type": "row"
+    },
+    {
+      "collapsed": true,
+      "datasource": {
+        "apiVersion": "v1",
+        "type": "prometheus",
+        "uid": "default-ds-uid"
+      },
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 31
+      },
+      "id": 84,
+      "panels": [
+        {
+          "aliasColors": {},
+          "bars": false,
+          "dashLength": 10,
+          "dashes": false,
+          "datasource": {
+            "uid": "$datasource"
+          },
+          "fill": 1,
+          "gridPos": {
+            "h": 6,
+            "w": 6,
+            "x": 0,
+            "y": 11
+          },
+          "id": 94,
+          "legend": {
+            "avg": false,
+            "current": false,
+            "max": false,
+            "min": false,
+            "show": false,
+            "total": false,
+            "values": false
+          },
+          "lines": true,
+          "linewidth": 1,
+          "links": [],
+          "nullPointMode": "null as zero",
+          "percentage": false,
+          "pointradius": 5,
+          "points": false,
+          "renderer": "flot",
+          "repeat": "instance",
+          "repeatDirection": "h",
+          "scopedVars": {
+            "instance": {
+              "selected": false,
+              "text": "alertmanager-54b9fdf9bf-gqxs4",
+              "value": "alertmanager-54b9fdf9bf-gqxs4"
+            }
+          },
+          "seriesOverrides": [
+            {
+              "alias": "Nf log query errors",
+              "color": "#890f02",
+              "transform": "negative-Y"
+            }
+          ],
+          "spaceLength": 10,
+          "stack": false,
+          "steppedLine": false,
+          "targets": [
+            {
+              "datasource": {
+                "uid": "$datasource"
+              },
+              "expr": "increase(alertmanager_nflog_queries_total{instance=~\"$instance\"}[$__interval])",
+              "format": "time_series",
+              "intervalFactor": 1,
+              "legendFormat": "Nf log query count",
+              "refId": "A"
+            },
+            {
+              "datasource": {
+                "uid": "$datasource"
+              },
+              "expr": "increase(alertmanager_nflog_query_errors_total{instance=~\"$instance\"}[$__interval])",
+              "format": "time_series",
+              "intervalFactor": 1,
+              "legendFormat": "Nf log query errors",
+              "refId": "B"
+            }
+          ],
+          "thresholds": [],
+          "timeFrom": null,
+          "timeRegions": [],
+          "timeShift": null,
+          "title": "Nf log queries count for $instance",
+          "tooltip": {
+            "shared": true,
+            "sort": 0,
+            "value_type": "individual"
+          },
+          "type": "graph",
+          "xaxis": {
+            "buckets": null,
+            "mode": "time",
+            "name": null,
+            "show": true,
+            "values": []
+          },
+          "yaxes": [
+            {
+              "format": "short",
+              "label": null,
+              "logBase": 1,
+              "max": null,
+              "min": null,
+              "show": true
+            },
+            {
+              "format": "short",
+              "label": null,
+              "logBase": 1,
+              "max": null,
+              "min": null,
+              "show": true
+            }
+          ],
+          "yaxis": {
+            "align": false,
+            "alignLevel": null
+          }
+        },
+        {
+          "aliasColors": {},
+          "bars": false,
+          "dashLength": 10,
+          "dashes": false,
+          "datasource": {
+            "uid": "$datasource"
+          },
+          "fill": 1,
+          "gridPos": {
+            "h": 6,
+            "w": 6,
+            "x": 0,
+            "y": 17
+          },
+          "id": 106,
+          "legend": {
+            "avg": false,
+            "current": false,
+            "max": false,
+            "min": false,
+            "show": false,
+            "total": false,
+            "values": false
+          },
+          "lines": true,
+          "linewidth": 1,
+          "links": [],
+          "nullPointMode": "null as zero",
+          "percentage": false,
+          "pointradius": 5,
+          "points": false,
+          "renderer": "flot",
+          "repeat": "instance",
+          "repeatDirection": "h",
+          "scopedVars": {
+            "instance": {
+              "selected": false,
+              "text": "alertmanager-54b9fdf9bf-gqxs4",
+              "value": "alertmanager-54b9fdf9bf-gqxs4"
+            }
+          },
+          "seriesOverrides": [
+            {
+              "alias": "Nf log query errors",
+              "color": "#890f02",
+              "transform": "negative-Y"
+            }
+          ],
+          "spaceLength": 10,
+          "stack": false,
+          "steppedLine": false,
+          "targets": [
+            {
+              "datasource": {
+                "uid": "$datasource"
+              },
+              "expr": "histogram_quantile(1,rate(alertmanager_nflog_query_duration_seconds_bucket{instance=~\"$instance\"}[$__interval]))",
+              "format": "time_series",
+              "intervalFactor": 1,
+              "legendFormat": "Nf log query duration",
+              "refId": "A"
+            }
+          ],
+          "thresholds": [],
+          "timeFrom": null,
+          "timeRegions": [],
+          "timeShift": null,
+          "title": "Nf log query duration for $instance",
+          "tooltip": {
+            "shared": true,
+            "sort": 0,
+            "value_type": "individual"
+          },
+          "type": "graph",
+          "xaxis": {
+            "buckets": null,
+            "mode": "time",
+            "name": null,
+            "show": true,
+            "values": []
+          },
+          "yaxes": [
+            {
+              "format": "s",
+              "label": null,
+              "logBase": 1,
+              "max": null,
+              "min": null,
+              "show": true
+            },
+            {
+              "format": "short",
+              "label": null,
+              "logBase": 1,
+              "max": null,
+              "min": null,
+              "show": true
+            }
+          ],
+          "yaxis": {
+            "align": false,
+            "alignLevel": null
+          }
+        },
+        {
+          "aliasColors": {},
+          "bars": false,
+          "dashLength": 10,
+          "dashes": false,
+          "datasource": {
+            "uid": "$datasource"
+          },
+          "fill": 1,
+          "gridPos": {
+            "h": 6,
+            "w": 6,
+            "x": 0,
+            "y": 23
+          },
+          "id": 97,
+          "legend": {
+            "avg": false,
+            "current": false,
+            "max": false,
+            "min": false,
+            "show": false,
+            "total": false,
+            "values": false
+          },
+          "lines": true,
+          "linewidth": 1,
+          "links": [],
+          "nullPointMode": "null as zero",
+          "percentage": false,
+          "pointradius": 5,
+          "points": false,
+          "renderer": "flot",
+          "repeat": "instance",
+          "repeatDirection": "h",
+          "scopedVars": {
+            "instance": {
+              "selected": false,
+              "text": "alertmanager-54b9fdf9bf-gqxs4",
+              "value": "alertmanager-54b9fdf9bf-gqxs4"
+            }
+          },
+          "seriesOverrides": [
+            {
+              "alias": "Nf log query errors",
+              "color": "#890f02",
+              "transform": "negative-Y"
+            }
+          ],
+          "spaceLength": 10,
+          "stack": false,
+          "steppedLine": false,
+          "targets": [
+            {
+              "datasource": {
+                "uid": "$datasource"
+              },
+              "expr": "alertmanager_nflog_snapshot_size_bytes{instance=~\"$instance\"}",
+              "format": "time_series",
+              "intervalFactor": 1,
+              "legendFormat": "Nf log snapshot size",
+              "refId": "A"
+            }
+          ],
+          "thresholds": [],
+          "timeFrom": null,
+          "timeRegions": [],
+          "timeShift": null,
+          "title": "Nf log snapshot size for $instance",
+          "tooltip": {
+            "shared": true,
+            "sort": 0,
+            "value_type": "individual"
+          },
+          "type": "graph",
+          "xaxis": {
+            "buckets": null,
+            "mode": "time",
+            "name": null,
+            "show": true,
+            "values": []
+          },
+          "yaxes": [
+            {
+              "format": "bytes",
+              "label": null,
+              "logBase": 1,
+              "max": null,
+              "min": null,
+              "show": true
+            },
+            {
+              "format": "short",
+              "label": null,
+              "logBase": 1,
+              "max": null,
+              "min": null,
+              "show": true
+            }
+          ],
+          "yaxis": {
+            "align": false,
+            "alignLevel": null
+          }
+        },
+        {
+          "aliasColors": {},
+          "bars": false,
+          "dashLength": 10,
+          "dashes": false,
+          "datasource": {
+            "uid": "$datasource"
+          },
+          "fill": 1,
+          "gridPos": {
+            "h": 6,
+            "w": 6,
+            "x": 0,
+            "y": 29
+          },
+          "id": 101,
+          "legend": {
+            "avg": false,
+            "current": false,
+            "max": false,
+            "min": false,
+            "show": false,
+            "total": false,
+            "values": false
+          },
+          "lines": true,
+          "linewidth": 1,
+          "links": [],
+          "nullPointMode": "null as zero",
+          "percentage": false,
+          "pointradius": 5,
+          "points": false,
+          "renderer": "flot",
+          "repeat": "instance",
+          "repeatDirection": "h",
+          "scopedVars": {
+            "instance": {
+              "selected": false,
+              "text": "alertmanager-54b9fdf9bf-gqxs4",
+              "value": "alertmanager-54b9fdf9bf-gqxs4"
+            }
+          },
+          "seriesOverrides": [
+            {
+              "alias": "Nf log query errors",
+              "color": "#890f02",
+              "transform": "negative-Y"
+            }
+          ],
+          "spaceLength": 10,
+          "stack": false,
+          "steppedLine": false,
+          "targets": [
+            {
+              "datasource": {
+                "uid": "$datasource"
+              },
+              "expr": "rate(alertmanager_nflog_snapshot_duration_seconds_sum{instance=~\"$instance\"}[$__interval]) / rate(alertmanager_nflog_snapshot_duration_seconds_sum{instance=~\"$instance\"}[$__interval])",
+              "format": "time_series",
+              "hide": false,
+              "intervalFactor": 1,
+              "legendFormat": "Nf log snapshot size",
+              "refId": "A"
+            }
+          ],
+          "thresholds": [],
+          "timeFrom": null,
+          "timeRegions": [],
+          "timeShift": null,
+          "title": "Nf log snapshot duration for $instance",
+          "tooltip": {
+            "shared": true,
+            "sort": 0,
+            "value_type": "individual"
+          },
+          "type": "graph",
+          "xaxis": {
+            "buckets": null,
+            "mode": "time",
+            "name": null,
+            "show": true,
+            "values": []
+          },
+          "yaxes": [
+            {
+              "format": "s",
+              "label": null,
+              "logBase": 1,
+              "max": null,
+              "min": null,
+              "show": true
+            },
+            {
+              "format": "short",
+              "label": null,
+              "logBase": 1,
+              "max": null,
+              "min": null,
+              "show": true
+            }
+          ],
+          "yaxis": {
+            "align": false,
+            "alignLevel": null
+          }
+        },
+        {
+          "aliasColors": {},
+          "bars": false,
+          "dashLength": 10,
+          "dashes": false,
+          "datasource": {
+            "uid": "$datasource"
+          },
+          "fill": 1,
+          "gridPos": {
+            "h": 6,
+            "w": 6,
+            "x": 0,
+            "y": 35
+          },
+          "id": 92,
+          "legend": {
+            "avg": false,
+            "current": false,
+            "max": false,
+            "min": false,
+            "show": false,
+            "total": false,
+            "values": false
+          },
+          "lines": true,
+          "linewidth": 1,
+          "links": [],
+          "nullPointMode": "null as zero",
+          "percentage": false,
+          "pointradius": 5,
+          "points": false,
+          "renderer": "flot",
+          "repeat": "instance",
+          "repeatDirection": "h",
+          "scopedVars": {
+            "instance": {
+              "selected": false,
+              "text": "alertmanager-54b9fdf9bf-gqxs4",
+              "value": "alertmanager-54b9fdf9bf-gqxs4"
+            }
+          },
+          "seriesOverrides": [
+            {
+              "alias": "Cluster left peers",
+              "color": "#890f02",
+              "transform": "negative-Y"
+            }
+          ],
+          "spaceLength": 10,
+          "stack": false,
+          "steppedLine": false,
+          "targets": [
+            {
+              "datasource": {
+                "uid": "$datasource"
+              },
+              "expr": "alertmanager_nflog_gc_duration_seconds{instance=~\"$instance\"}",
+              "format": "time_series",
+              "intervalFactor": 1,
+              "legendFormat": "Cluster joined peers",
+              "refId": "A"
+            }
+          ],
+          "thresholds": [],
+          "timeFrom": null,
+          "timeRegions": [],
+          "timeShift": null,
+          "title": "Nf log Go GC time for $instance",
+          "tooltip": {
+            "shared": true,
+            "sort": 0,
+            "value_type": "individual"
+          },
+          "type": "graph",
+          "xaxis": {
+            "buckets": null,
+            "mode": "time",
+            "name": null,
+            "show": true,
+            "values": []
+          },
+          "yaxes": [
+            {
+              "format": "s",
+              "label": null,
+              "logBase": 1,
+              "max": null,
+              "min": null,
+              "show": true
+            },
+            {
+              "format": "short",
+              "label": null,
+              "logBase": 1,
+              "max": null,
+              "min": null,
+              "show": true
+            }
+          ],
+          "yaxis": {
+            "align": false,
+            "alignLevel": null
+          }
+        }
+      ],
+      "targets": [
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "prometheus",
+            "uid": "default-ds-uid"
+          },
+          "refId": "A"
+        }
+      ],
+      "title": "Nflog",
+      "type": "row"
+    },
+    {
+      "collapsed": true,
+      "datasource": {
+        "apiVersion": "v1",
+        "type": "prometheus",
+        "uid": "default-ds-uid"
+      },
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 32
+      },
+      "id": 123,
+      "panels": [
+        {
+          "aliasColors": {},
+          "bars": false,
+          "dashLength": 10,
+          "dashes": false,
+          "datasource": {
+            "uid": "$datasource"
+          },
+          "fill": 1,
+          "gridPos": {
+            "h": 6,
+            "w": 6,
+            "x": 0,
+            "y": 12
+          },
+          "id": 129,
+          "legend": {
+            "avg": false,
+            "current": false,
+            "max": false,
+            "min": false,
+            "show": false,
+            "total": false,
+            "values": false
+          },
+          "lines": true,
+          "linewidth": 1,
+          "links": [],
+          "nullPointMode": "null as zero",
+          "percentage": false,
+          "pointradius": 5,
+          "points": false,
+          "renderer": "flot",
+          "repeat": "instance",
+          "repeatDirection": "h",
+          "scopedVars": {
+            "instance": {
+              "selected": false,
+              "text": "alertmanager-54b9fdf9bf-gqxs4",
+              "value": "alertmanager-54b9fdf9bf-gqxs4"
+            }
+          },
+          "seriesOverrides": [
+            {
+              "alias": "Nf log query errors",
+              "color": "#890f02",
+              "transform": "negative-Y"
+            }
+          ],
+          "spaceLength": 10,
+          "stack": false,
+          "steppedLine": false,
+          "targets": [
+            {
+              "datasource": {
+                "uid": "$datasource"
+              },
+              "expr": "alertmanager_silences{instance=~\"$instance\"}",
+              "format": "time_series",
+              "hide": false,
+              "intervalFactor": 1,
+              "legendFormat": "{{state}}",
+              "refId": "A"
+            }
+          ],
+          "thresholds": [],
+          "timeFrom": null,
+          "timeRegions": [],
+          "timeShift": null,
+          "title": "Silences count by state on $instance",
+          "tooltip": {
+            "shared": true,
+            "sort": 0,
+            "value_type": "individual"
+          },
+          "type": "graph",
+          "xaxis": {
+            "buckets": null,
+            "mode": "time",
+            "name": null,
+            "show": true,
+            "values": []
+          },
+          "yaxes": [
+            {
+              "format": "short",
+              "label": null,
+              "logBase": 1,
+              "max": null,
+              "min": null,
+              "show": true
+            },
+            {
+              "format": "short",
+              "label": null,
+              "logBase": 1,
+              "max": null,
+              "min": null,
+              "show": true
+            }
+          ],
+          "yaxis": {
+            "align": false,
+            "alignLevel": null
+          }
+        },
+        {
+          "aliasColors": {},
+          "bars": false,
+          "dashLength": 10,
+          "dashes": false,
+          "datasource": {
+            "uid": "$datasource"
+          },
+          "fill": 1,
+          "gridPos": {
+            "h": 6,
+            "w": 6,
+            "x": 0,
+            "y": 18
+          },
+          "id": 134,
+          "legend": {
+            "avg": false,
+            "current": false,
+            "max": false,
+            "min": false,
+            "show": false,
+            "total": false,
+            "values": false
+          },
+          "lines": true,
+          "linewidth": 1,
+          "links": [],
+          "nullPointMode": "null as zero",
+          "percentage": false,
+          "pointradius": 5,
+          "points": false,
+          "renderer": "flot",
+          "repeat": "instance",
+          "repeatDirection": "h",
+          "scopedVars": {
+            "instance": {
+              "selected": false,
+              "text": "alertmanager-54b9fdf9bf-gqxs4",
+              "value": "alertmanager-54b9fdf9bf-gqxs4"
+            }
+          },
+          "seriesOverrides": [
+            {
+              "alias": "Silecnces query fails",
+              "color": "#890f02",
+              "transform": "negative-Y"
+            }
+          ],
+          "spaceLength": 10,
+          "stack": false,
+          "steppedLine": false,
+          "targets": [
+            {
+              "datasource": {
+                "uid": "$datasource"
+              },
+              "expr": "increase(alertmanager_silences_queries_total{instance=~\"$instance\"}[$__interval])",
+              "format": "time_series",
+              "hide": false,
+              "intervalFactor": 1,
+              "legendFormat": "Silecnces query count",
+              "refId": "A"
+            },
+            {
+              "datasource": {
+                "uid": "$datasource"
+              },
+              "expr": "increase(alertmanager_silences_query_errors_total{instance=~\"$instance\"}[$__interval])",
+              "format": "time_series",
+              "intervalFactor": 1,
+              "legendFormat": "Silecnces query fails",
+              "refId": "B"
+            }
+          ],
+          "thresholds": [],
+          "timeFrom": null,
+          "timeRegions": [],
+          "timeShift": null,
+          "title": "Silences query count on $instance",
+          "tooltip": {
+            "shared": true,
+            "sort": 0,
+            "value_type": "individual"
+          },
+          "type": "graph",
+          "xaxis": {
+            "buckets": null,
+            "mode": "time",
+            "name": null,
+            "show": true,
+            "values": []
+          },
+          "yaxes": [
+            {
+              "format": "short",
+              "label": null,
+              "logBase": 1,
+              "max": null,
+              "min": null,
+              "show": true
+            },
+            {
+              "format": "short",
+              "label": null,
+              "logBase": 1,
+              "max": null,
+              "min": null,
+              "show": true
+            }
+          ],
+          "yaxis": {
+            "align": false,
+            "alignLevel": null
+          }
+        },
+        {
+          "aliasColors": {},
+          "bars": false,
+          "dashLength": 10,
+          "dashes": false,
+          "datasource": {
+            "uid": "$datasource"
+          },
+          "fill": 1,
+          "gridPos": {
+            "h": 6,
+            "w": 6,
+            "x": 0,
+            "y": 24
+          },
+          "id": 138,
+          "legend": {
+            "avg": false,
+            "current": false,
+            "max": false,
+            "min": false,
+            "show": false,
+            "total": false,
+            "values": false
+          },
+          "lines": true,
+          "linewidth": 1,
+          "links": [],
+          "nullPointMode": "null as zero",
+          "percentage": false,
+          "pointradius": 5,
+          "points": false,
+          "renderer": "flot",
+          "repeat": "instance",
+          "repeatDirection": "h",
+          "scopedVars": {
+            "instance": {
+              "selected": false,
+              "text": "alertmanager-54b9fdf9bf-gqxs4",
+              "value": "alertmanager-54b9fdf9bf-gqxs4"
+            }
+          },
+          "seriesOverrides": [
+            {
+              "alias": "Nf log query errors",
+              "color": "#890f02",
+              "transform": "negative-Y"
+            }
+          ],
+          "spaceLength": 10,
+          "stack": false,
+          "steppedLine": false,
+          "targets": [
+            {
+              "datasource": {
+                "uid": "$datasource"
+              },
+              "expr": "histogram_quantile(1,rate(alertmanager_silences_query_duration_seconds_bucket{instance=~\"$instance\"}[$__interval]))",
+              "format": "time_series",
+              "hide": false,
+              "intervalFactor": 1,
+              "legendFormat": "Silecnces query duration",
+              "refId": "A"
+            }
+          ],
+          "thresholds": [],
+          "timeFrom": null,
+          "timeRegions": [],
+          "timeShift": null,
+          "title": "Silences query duration on $instance",
+          "tooltip": {
+            "shared": true,
+            "sort": 0,
+            "value_type": "individual"
+          },
+          "type": "graph",
+          "xaxis": {
+            "buckets": null,
+            "mode": "time",
+            "name": null,
+            "show": true,
+            "values": []
+          },
+          "yaxes": [
+            {
+              "format": "s",
+              "label": null,
+              "logBase": 1,
+              "max": null,
+              "min": null,
+              "show": true
+            },
+            {
+              "format": "short",
+              "label": null,
+              "logBase": 1,
+              "max": null,
+              "min": null,
+              "show": true
+            }
+          ],
+          "yaxis": {
+            "align": false,
+            "alignLevel": null
+          }
+        },
+        {
+          "aliasColors": {},
+          "bars": false,
+          "dashLength": 10,
+          "dashes": false,
+          "datasource": {
+            "uid": "$datasource"
+          },
+          "fill": 1,
+          "gridPos": {
+            "h": 6,
+            "w": 6,
+            "x": 0,
+            "y": 30
+          },
+          "id": 149,
+          "legend": {
+            "avg": false,
+            "current": false,
+            "max": false,
+            "min": false,
+            "show": false,
+            "total": false,
+            "values": false
+          },
+          "lines": true,
+          "linewidth": 1,
+          "links": [],
+          "nullPointMode": "null as zero",
+          "percentage": false,
+          "pointradius": 5,
+          "points": false,
+          "renderer": "flot",
+          "repeat": "instance",
+          "repeatDirection": "h",
+          "scopedVars": {
+            "instance": {
+              "selected": false,
+              "text": "alertmanager-54b9fdf9bf-gqxs4",
+              "value": "alertmanager-54b9fdf9bf-gqxs4"
+            }
+          },
+          "seriesOverrides": [
+            {
+              "alias": "Nf log query errors",
+              "color": "#890f02",
+              "transform": "negative-Y"
+            }
+          ],
+          "spaceLength": 10,
+          "stack": false,
+          "steppedLine": false,
+          "targets": [
+            {
+              "datasource": {
+                "uid": "$datasource"
+              },
+              "expr": "alertmanager_silences_snapshot_size_bytes{instance=~\"$instance\"}",
+              "format": "time_series",
+              "hide": false,
+              "intervalFactor": 1,
+              "legendFormat": "Silecnces snapshot size",
+              "refId": "A"
+            }
+          ],
+          "thresholds": [],
+          "timeFrom": null,
+          "timeRegions": [],
+          "timeShift": null,
+          "title": "Silences snapshot size on $instance",
+          "tooltip": {
+            "shared": true,
+            "sort": 0,
+            "value_type": "individual"
+          },
+          "type": "graph",
+          "xaxis": {
+            "buckets": null,
+            "mode": "time",
+            "name": null,
+            "show": true,
+            "values": []
+          },
+          "yaxes": [
+            {
+              "format": "bytes",
+              "label": null,
+              "logBase": 1,
+              "max": null,
+              "min": null,
+              "show": true
+            },
+            {
+              "format": "short",
+              "label": null,
+              "logBase": 1,
+              "max": null,
+              "min": null,
+              "show": true
+            }
+          ],
+          "yaxis": {
+            "align": false,
+            "alignLevel": null
+          }
+        },
+        {
+          "aliasColors": {},
+          "bars": false,
+          "dashLength": 10,
+          "dashes": false,
+          "datasource": {
+            "uid": "$datasource"
+          },
+          "fill": 1,
+          "gridPos": {
+            "h": 6,
+            "w": 6,
+            "x": 0,
+            "y": 36
+          },
+          "id": 143,
+          "legend": {
+            "avg": false,
+            "current": false,
+            "max": false,
+            "min": false,
+            "show": false,
+            "total": false,
+            "values": false
+          },
+          "lines": true,
+          "linewidth": 1,
+          "links": [],
+          "nullPointMode": "null as zero",
+          "percentage": false,
+          "pointradius": 5,
+          "points": false,
+          "renderer": "flot",
+          "repeat": "instance",
+          "repeatDirection": "h",
+          "scopedVars": {
+            "instance": {
+              "selected": false,
+              "text": "alertmanager-54b9fdf9bf-gqxs4",
+              "value": "alertmanager-54b9fdf9bf-gqxs4"
+            }
+          },
+          "seriesOverrides": [
+            {
+              "alias": "Nf log query errors",
+              "color": "#890f02",
+              "transform": "negative-Y"
+            }
+          ],
+          "spaceLength": 10,
+          "stack": false,
+          "steppedLine": false,
+          "targets": [
+            {
+              "datasource": {
+                "uid": "$datasource"
+              },
+              "expr": "alertmanager_silences_snapshot_duration_seconds{instance=~\"$instance\", quantile=\"0.99\"}",
+              "format": "time_series",
+              "hide": false,
+              "intervalFactor": 1,
+              "legendFormat": "Silecnces snapshot duration",
+              "refId": "A"
+            }
+          ],
+          "thresholds": [],
+          "timeFrom": null,
+          "timeRegions": [],
+          "timeShift": null,
+          "title": "Silences snapshot duration on $instance",
+          "tooltip": {
+            "shared": true,
+            "sort": 0,
+            "value_type": "individual"
+          },
+          "type": "graph",
+          "xaxis": {
+            "buckets": null,
+            "mode": "time",
+            "name": null,
+            "show": true,
+            "values": []
+          },
+          "yaxes": [
+            {
+              "format": "s",
+              "label": null,
+              "logBase": 1,
+              "max": null,
+              "min": null,
+              "show": true
+            },
+            {
+              "format": "short",
+              "label": null,
+              "logBase": 1,
+              "max": null,
+              "min": null,
+              "show": true
+            }
+          ],
+          "yaxis": {
+            "align": false,
+            "alignLevel": null
+          }
+        },
+        {
+          "aliasColors": {},
+          "bars": false,
+          "dashLength": 10,
+          "dashes": false,
+          "datasource": {
+            "uid": "$datasource"
+          },
+          "fill": 1,
+          "gridPos": {
+            "h": 6,
+            "w": 6,
+            "x": 0,
+            "y": 42
+          },
+          "id": 131,
+          "legend": {
+            "avg": false,
+            "current": false,
+            "max": false,
+            "min": false,
+            "show": false,
+            "total": false,
+            "values": false
+          },
+          "lines": true,
+          "linewidth": 1,
+          "links": [],
+          "nullPointMode": "null as zero",
+          "percentage": false,
+          "pointradius": 5,
+          "points": false,
+          "renderer": "flot",
+          "repeat": "instance",
+          "repeatDirection": "h",
+          "scopedVars": {
+            "instance": {
+              "selected": false,
+              "text": "alertmanager-54b9fdf9bf-gqxs4",
+              "value": "alertmanager-54b9fdf9bf-gqxs4"
+            }
+          },
+          "seriesOverrides": [
+            {
+              "alias": "Nf log query errors",
+              "color": "#890f02",
+              "transform": "negative-Y"
+            }
+          ],
+          "spaceLength": 10,
+          "stack": false,
+          "steppedLine": false,
+          "targets": [
+            {
+              "datasource": {
+                "uid": "$datasource"
+              },
+              "expr": "alertmanager_silences_gc_duration_seconds{instance=~\"$instance\"}",
+              "format": "time_series",
+              "hide": false,
+              "intervalFactor": 1,
+              "legendFormat": "Silecnces GC  duration",
+              "refId": "A"
+            }
+          ],
+          "thresholds": [],
+          "timeFrom": null,
+          "timeRegions": [],
+          "timeShift": null,
+          "title": "Silences GC duraton on $instance",
+          "tooltip": {
+            "shared": true,
+            "sort": 0,
+            "value_type": "individual"
+          },
+          "type": "graph",
+          "xaxis": {
+            "buckets": null,
+            "mode": "time",
+            "name": null,
+            "show": true,
+            "values": []
+          },
+          "yaxes": [
+            {
+              "format": "s",
+              "label": null,
+              "logBase": 1,
+              "max": null,
+              "min": null,
+              "show": true
+            },
+            {
+              "format": "short",
+              "label": null,
+              "logBase": 1,
+              "max": null,
+              "min": null,
+              "show": true
+            }
+          ],
+          "yaxis": {
+            "align": false,
+            "alignLevel": null
+          }
+        }
+      ],
+      "targets": [
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "prometheus",
+            "uid": "default-ds-uid"
+          },
+          "refId": "A"
+        }
+      ],
+      "title": "Silences",
+      "type": "row"
+    },
+    {
+      "collapsed": true,
+      "datasource": {
+        "apiVersion": "v1",
+        "type": "prometheus",
+        "uid": "default-ds-uid"
+      },
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 33
+      },
+      "id": 173,
+      "panels": [
+        {
+          "aliasColors": {},
+          "bars": false,
+          "dashLength": 10,
+          "dashes": false,
+          "datasource": {
+            "uid": "$datasource"
+          },
+          "decimals": 2,
+          "fill": 1,
+          "gridPos": {
+            "h": 7,
+            "w": 6,
+            "x": 0,
+            "y": 13
+          },
+          "id": 175,
+          "legend": {
+            "avg": false,
+            "current": false,
+            "max": false,
+            "min": false,
+            "show": false,
+            "total": false,
+            "values": false
+          },
+          "lines": true,
+          "linewidth": 1,
+          "links": [],
+          "nullPointMode": "connected",
+          "percentage": false,
+          "pointradius": 5,
+          "points": false,
+          "renderer": "flot",
+          "repeat": "instance",
+          "repeatDirection": "h",
+          "scopedVars": {
+            "instance": {
+              "selected": false,
+              "text": "alertmanager-54b9fdf9bf-gqxs4",
+              "value": "alertmanager-54b9fdf9bf-gqxs4"
+            }
+          },
+          "seriesOverrides": [
+            {
+              "alias": "/Limit .*/",
+              "color": "#C15C17",
+              "dashes": true,
+              "fill": 0
+            }
+          ],
+          "spaceLength": 10,
+          "stack": false,
+          "steppedLine": false,
+          "targets": [
+            {
+              "datasource": {
+                "uid": "$datasource"
+              },
+              "expr": "rate(process_cpu_seconds_total{instance=~\"$instance\"}[$__interval])",
+              "format": "time_series",
+              "groupBy": [
+                {
+                  "params": [
+                    "$__interval"
+                  ],
+                  "type": "time"
+                },
+                {
+                  "params": [
+                    "null"
+                  ],
+                  "type": "fill"
+                }
+              ],
+              "interval": "",
+              "intervalFactor": 1,
+              "legendFormat": "{{instance}}",
+              "orderByTime": "ASC",
+              "policy": "default",
+              "refId": "A",
+              "resultFormat": "time_series",
+              "select": [
+                [
+                  {
+                    "params": [
+                      "value"
+                    ],
+                    "type": "field"
+                  },
+                  {
+                    "params": [],
+                    "type": "mean"
+                  }
+                ]
+              ],
+              "tags": []
+            },
+            {
+              "datasource": {
+                "uid": "$datasource"
+              },
+              "expr": "max(kube_pod_container_resource_limits_cpu_cores{pod=~\"$instance\"}) by (pod)",
+              "format": "time_series",
+              "intervalFactor": 1,
+              "legendFormat": "Limit {{pod}}",
+              "refId": "B"
+            }
+          ],
+          "thresholds": [],
+          "timeFrom": null,
+          "timeRegions": [],
+          "timeShift": null,
+          "title": "CPU usage/s for $instance",
+          "tooltip": {
+            "shared": true,
+            "sort": 2,
+            "value_type": "individual"
+          },
+          "type": "graph",
+          "xaxis": {
+            "buckets": null,
+            "mode": "time",
+            "name": null,
+            "show": true,
+            "values": []
+          },
+          "yaxes": [
+            {
+              "format": "short",
+              "label": null,
+              "logBase": 1,
+              "max": null,
+              "min": null,
+              "show": true
+            },
+            {
+              "format": "short",
+              "label": null,
+              "logBase": 1,
+              "max": null,
+              "min": null,
+              "show": true
+            }
+          ],
+          "yaxis": {
+            "align": false,
+            "alignLevel": null
+          }
+        },
+        {
+          "aliasColors": {},
+          "bars": false,
+          "dashLength": 10,
+          "dashes": false,
+          "datasource": {
+            "uid": "$datasource"
+          },
+          "fill": 1,
+          "gridPos": {
+            "h": 7,
+            "w": 6,
+            "x": 0,
+            "y": 20
+          },
+          "id": 177,
+          "legend": {
+            "avg": false,
+            "current": false,
+            "max": false,
+            "min": false,
+            "show": false,
+            "total": false,
+            "values": false
+          },
+          "lines": true,
+          "linewidth": 1,
+          "links": [],
+          "nullPointMode": "connected",
+          "percentage": false,
+          "pointradius": 5,
+          "points": false,
+          "renderer": "flot",
+          "repeat": "instance",
+          "repeatDirection": "h",
+          "scopedVars": {
+            "instance": {
+              "selected": false,
+              "text": "alertmanager-54b9fdf9bf-gqxs4",
+              "value": "alertmanager-54b9fdf9bf-gqxs4"
+            }
+          },
+          "seriesOverrides": [
+            {
+              "alias": "/Limit .*/",
+              "color": "#C15C17",
+              "dashes": true,
+              "fill": 0
+            }
+          ],
+          "spaceLength": 10,
+          "stack": false,
+          "steppedLine": false,
+          "targets": [
+            {
+              "datasource": {
+                "uid": "$datasource"
+              },
+              "expr": "process_resident_memory_bytes{instance=~\"$instance\"}",
+              "format": "time_series",
+              "hide": false,
+              "interval": "",
+              "intervalFactor": 1,
+              "legendFormat": "{{ instance }}",
+              "refId": "E"
+            },
+            {
+              "datasource": {
+                "uid": "$datasource"
+              },
+              "expr": "max(kube_pod_container_resource_limits_memory_bytes{pod=~\"$instance\"}) by (pod)",
+              "format": "time_series",
+              "intervalFactor": 1,
+              "legendFormat": "Limit {{ pod }}",
+              "refId": "A"
+            }
+          ],
+          "thresholds": [],
+          "timeFrom": null,
+          "timeRegions": [],
+          "timeShift": null,
+          "title": "Memory usage for $instance",
+          "tooltip": {
+            "shared": true,
+            "sort": 2,
+            "value_type": "individual"
+          },
+          "type": "graph",
+          "xaxis": {
+            "buckets": null,
+            "mode": "time",
+            "name": null,
+            "show": true,
+            "values": []
+          },
+          "yaxes": [
+            {
+              "format": "bytes",
+              "label": null,
+              "logBase": 1,
+              "max": null,
+              "min": null,
+              "show": true
+            },
+            {
+              "format": "short",
+              "label": null,
+              "logBase": 1,
+              "max": null,
+              "min": null,
+              "show": true
+            }
+          ],
+          "yaxis": {
+            "align": false,
+            "alignLevel": null
+          }
+        }
+      ],
+      "targets": [
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "prometheus",
+            "uid": "default-ds-uid"
+          },
+          "refId": "A"
+        }
+      ],
+      "title": "Resources",
+      "type": "row"
+    }
+  ],
+  "refresh": "5m",
+  "schemaVersion": 41,
+  "style": "dark",
+  "tags": [
+    "alertmanager",
+    "prometheus",
+    "alerting"
+  ],
+  "templating": {
+    "list": [
+      {
+        "current": {
+          "tags": [],
+          "text": "default",
+          "value": "default"
+        },
+        "hide": 0,
+        "includeAll": false,
+        "label": "Prometheus datasource",
+        "multi": false,
+        "name": "datasource",
+        "options": [],
+        "query": "prometheus",
+        "refresh": 1,
+        "regex": "",
+        "skipUrlSync": false,
+        "type": "datasource"
+      },
+      {
+        "allValue": "",
+        "current": {},
+        "datasource": {
+          "uid": "$datasource"
+        },
+        "definition": "query_result(alertmanager_build_info)",
+        "hide": 0,
+        "includeAll": true,
+        "label": "Instance",
+        "multi": true,
+        "name": "instance",
+        "options": [],
+        "query": "query_result(alertmanager_build_info)",
+        "refresh": 1,
+        "regex": "/.*instance=\"([^\"]+)\".*/",
+        "skipUrlSync": false,
+        "sort": 1,
+        "type": "query"
+      }
+    ]
+  },
+  "time": {
+    "from": "now-12h",
+    "to": "now"
+  },
+  "timepicker": {
+    "refresh_intervals": [
+      "5s",
+      "10s",
+      "30s",
+      "1m",
+      "5m",
+      "15m",
+      "30m",
+      "1h",
+      "2h",
+      "1d"
+    ]
+  },
+  "timezone": "",
+  "title": "Alertmanager",
+  "uid": "eea-9_sik",
+  "version": 27
+}
