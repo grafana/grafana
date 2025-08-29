@@ -30,6 +30,10 @@ export interface Options {
     left?: number;
   };
   /**
+   * limits the maximum height of a row, if text wrapping or dynamic height is enabled
+   */
+  maxRowHeight?: number;
+  /**
    * Controls whether the panel should show the header
    */
   showHeader: boolean;

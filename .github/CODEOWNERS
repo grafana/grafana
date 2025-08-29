@@ -464,6 +464,7 @@
 /e2e-playwright/panels-suite/table-kitchenSink.spec.ts @grafana/dataviz-squad
 /e2e-playwright/panels-suite/table-markdown.spec.ts @grafana/dataviz-squad
 /e2e-playwright/panels-suite/table-sparkline.spec.ts @grafana/dataviz-squad
+/e2e-playwright/panels-suite/table-utils.ts @grafana/dataviz-squad
 /e2e-playwright/plugin-e2e/ @grafana/oss-big-tent @grafana/partner-datasources
 /e2e-playwright/plugin-e2e/plugin-e2e-api-tests/ @grafana/plugins-platform-frontend
 /e2e-playwright/smoke-tests-suite/ @grafana/grafana-frontend-platform

@@ -12812,6 +12812,7 @@
     "name-fields": "Fields",
     "name-frozen-columns": "Frozen columns",
     "name-hide-in-table": "Hide in table",
+    "name-max-height": "Max row height",
     "name-min-column-width": "Minimum column width",
     "name-show-table-footer": "Show table footer",
     "name-show-table-header": "Show table header",
@@ -12821,6 +12822,7 @@
     "name-wrap-text": "Wrap text",
     "placeholder-column-width": "auto",
     "placeholder-fields": "All Numeric Fields",
+    "placeholder-max-height": "none",
     "tooltip-placement-options": {
       "label-auto": "Auto",
       "label-bottom": "Bottom",

@@ -11,6 +11,7 @@ import {
 } from '@grafana/data';
 import { FieldColorModeId } from '@grafana/schema';
 
+import { getActiveCellSelector } from '../styles';
 import { PillCellProps, TableCellStyles, TableCellValue } from '../types';
 
 export function PillCell({ rowIdx, field, theme, getTextColorForBackground }: PillCellProps) {
@@ -101,14 +102,14 @@ function getPillColor(value: unknown, field: Field, theme: GrafanaTheme2): strin
   return getColorByStringHash(colors, String(value));
 }
 
-export const getStyles: TableCellStyles = (theme, { textWrap, shouldOverflow }) =>
+export const getStyles: TableCellStyles = (theme, { textWrap, shouldOverflow, maxHeight }) =>
   css({
     display: 'inline-flex',
     gap: theme.spacing(0.5),
     flexWrap: textWrap ? 'wrap' : 'nowrap',
 
     ...(shouldOverflow && {
-      '&:hover, &[aria-selected=true]': {
+      [getActiveCellSelector(Boolean(maxHeight))]: {
         flexWrap: 'wrap',
       },
     }),
