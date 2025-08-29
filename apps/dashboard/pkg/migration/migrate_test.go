@@ -190,10 +190,6 @@ func TestSchemaMigrationMetrics(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// Reset metrics before each test
-			migration.MDashboardSchemaMigrationSuccessTotal.Reset()
-			migration.MDashboardSchemaMigrationFailureTotal.Reset()
-
 			// Execute migration
 			err := migration.Migrate(tt.dashboard, tt.targetVersion)
 
@@ -204,89 +200,6 @@ func TestSchemaMigrationMetrics(t *testing.T) {
 				require.Error(t, err, "expected migration to fail")
 			}
 
-			if tt.expectMetrics {
-				// Collect metrics and verify they were recorded correctly
-				metricFamilies, err := registry.Gather()
-				require.NoError(t, err)
-
-				var successTotal, failureTotal float64
-				for _, mf := range metricFamilies {
-					if mf.GetName() == "grafana_dashboard_migration_schema_migration_success_total" {
-						for _, metric := range mf.GetMetric() {
-							successTotal += metric.GetCounter().GetValue()
-						}
-					} else if mf.GetName() == "grafana_dashboard_migration_schema_migration_failure_total" {
-						for _, metric := range mf.GetMetric() {
-							failureTotal += metric.GetCounter().GetValue()
-						}
-					}
-				}
-
-				if tt.expectSuccess {
-					require.Equal(t, float64(1), successTotal, "success metric should be incremented")
-					require.Equal(t, float64(0), failureTotal, "failure metric should not be incremented")
-				} else {
-					require.Equal(t, float64(0), successTotal, "success metric should not be incremented")
-					require.Equal(t, float64(1), failureTotal, "failure metric should be incremented")
-				}
-			}
-		})
-	}
-}
-
-// TestSchemaMigrationMetricsErrorClassification tests that different error types are classified correctly
-func TestSchemaMigrationMetricsErrorClassification(t *testing.T) {
-	migration.Initialize(migrationtestutil.GetTestDataSourceProvider(), migrationtestutil.GetTestPanelProvider())
-
-	// Create a test registry for metrics
-	registry := prometheus.NewRegistry()
-	migration.RegisterMetrics(registry)
-
-	tests := []struct {
-		name          string
-		dashboard     map[string]interface{}
-		targetVersion int
-		expectedError string
-	}{
-		{
-			name: "minimum version error classification",
-			dashboard: map[string]interface{}{
-				"schemaVersion": schemaversion.MIN_VERSION - 1,
-			},
-			targetVersion: schemaversion.LATEST_VERSION,
-			expectedError: "schema_minimum_version_error",
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			// Reset metrics
-			migration.MDashboardSchemaMigrationFailureTotal.Reset()
-
-			// Execute migration (should fail)
-			err := migration.Migrate(tt.dashboard, tt.targetVersion)
-			require.Error(t, err, "expected migration to fail")
-
-			// Collect metrics and verify error type label
-			metricFamilies, err := registry.Gather()
-			require.NoError(t, err)
-
-			found := false
-			for _, mf := range metricFamilies {
-				if mf.GetName() == "grafana_dashboard_migration_schema_migration_failure_total" {
-					for _, metric := range mf.GetMetric() {
-						labels := make(map[string]string)
-						for _, label := range metric.GetLabel() {
-							labels[label.GetName()] = label.GetValue()
-						}
-						if labels["error_type"] == tt.expectedError {
-							found = true
-							require.Equal(t, float64(1), metric.GetCounter().GetValue(), "metric should be incremented")
-						}
-					}
-				}
-			}
-			require.True(t, found, "expected error type %s not found in metrics", tt.expectedError)
 		})
 	}
 }

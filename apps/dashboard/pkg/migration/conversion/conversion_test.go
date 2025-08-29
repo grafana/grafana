@@ -497,14 +497,14 @@ func TestSchemaVersionExtraction(t *testing.T) {
 			dashboard: &dashv2alpha1.Dashboard{
 				Spec: dashv2alpha1.DashboardSpec{Title: "test"},
 			},
-			expectedVersion: "v2alpha1",
+			expectedVersion: "", // v2+ dashboards don't track schema versions
 		},
 		{
 			name: "v2beta1 dashboard without numeric schema version",
 			dashboard: &dashv2beta1.Dashboard{
 				Spec: dashv2beta1.DashboardSpec{Title: "test"},
 			},
-			expectedVersion: "v2beta1",
+			expectedVersion: "", // v2+ dashboards don't track schema versions
 		},
 		{
 			name: "dashboard with missing schema version",
@@ -513,7 +513,7 @@ func TestSchemaVersionExtraction(t *testing.T) {
 					"title": "test",
 				}},
 			},
-			expectedVersion: "<nil>", // When schema version is missing, it becomes <nil> in string conversion
+			expectedVersion: "0", // When schema version is missing, GetSchemaVersion() returns 0
 		},
 	}
 
