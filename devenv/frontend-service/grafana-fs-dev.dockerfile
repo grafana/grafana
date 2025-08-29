@@ -22,6 +22,8 @@ COPY public/emails public/emails
 COPY public/views public/views
 COPY public/dashboards public/dashboards
 COPY public/app/plugins public/app/plugins
+COPY public/gazetteer public/gazetteer
+COPY public/maps public/maps
 
 ADD devenv/frontend-service/build/grafana bin/grafana
 

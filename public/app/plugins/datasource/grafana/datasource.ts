@@ -180,7 +180,7 @@ export class GrafanaDatasource extends DataSourceWithBackend<GrafanaQuery> {
         },
       ],
       maxDataPoints,
-    } as any).pipe(
+    } as DataQueryRequest<GrafanaQuery>).pipe(
       map((v) => {
         const frame = v.data[0] ?? new MutableDataFrame();
         return new DataFrameView<FileElement>(frame);

@@ -93,6 +93,8 @@ docker_build('grafana-fs-dev',
     'public/dashboards',
     'public/app/plugins',
     'public/build/assets-manifest.json',
+    'public/gazetteer',
+    'public/maps',
   ],
 
   # Sync paths are relative to the Tiltfile

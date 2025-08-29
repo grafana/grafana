@@ -76,7 +76,7 @@ describe('Worldmap Migrations', () => {
                     "min": 2,
                   },
                   "symbol": {
-                    "fixed": "img/icons/marker/circle.svg",
+                    "fixed": "build/img/icons/marker/circle.svg",
                     "mode": "fixed",
                   },
                   "symbolAlign": {
