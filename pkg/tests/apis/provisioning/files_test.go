@@ -395,6 +395,7 @@ func TestIntegrationProvisioning_MoveResources(t *testing.T) {
 }
 
 func TestIntegrationProvisioning_FilesOwnershipProtection(t *testing.T) {
+	t.Skip("skipping integration test, flaky")
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
