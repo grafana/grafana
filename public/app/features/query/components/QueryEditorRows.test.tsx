@@ -179,8 +179,8 @@ describe('QueryEditorRows', () => {
       onUpdateDatasources: onUpdateDatasourcesMock,
       dsSettings: { ...props.dsSettings, uid: 'current-datasource' },
       queries: [
-        { datasource: { uid: 'datasource-1' }, refId: 'A' },
-        { datasource: { uid: 'datasource-2' }, refId: 'B' },
+        { datasource: { uid: 'datasource-1', type: 'loki' }, refId: 'A' },
+        { datasource: { uid: 'datasource-2', type: 'test-data' }, refId: 'B' },
       ],
     };
 
