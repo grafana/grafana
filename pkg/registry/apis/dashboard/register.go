@@ -15,6 +15,7 @@ import (
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 	"k8s.io/apiserver/pkg/registry/rest"
 	genericapiserver "k8s.io/apiserver/pkg/server"
+	clientrest "k8s.io/client-go/rest"
 	"k8s.io/kube-openapi/pkg/common"
 	"k8s.io/kube-openapi/pkg/spec3"
 	"k8s.io/kube-openapi/pkg/validation/spec"
@@ -173,7 +174,9 @@ func RegisterAPIService(
 	return builder
 }
 
-func NewAPIService(ac claims.AccessClient, features featuremgmt.FeatureToggles) *DashboardsAPIBuilder {
+func NewAPIService(ac claims.AccessClient, features featuremgmt.FeatureToggles, dual dualwrite.Service, sorter sort.Service, getRestConfig func(context.Context) (*clientrest.Config, error)) *DashboardsAPIBuilder {
+	folderClient := client.NewK8sHandler(dual, request.GetNamespaceMapper(setting.NewCfg()), folders.FolderResourceInfo.GroupVersionResource(), getRestConfig, nil, nil, nil, sorter, features)
+
 	return &DashboardsAPIBuilder{
 		log: log.New("grafana-apiserver.dashboards"),
 		reg: prometheus.NewRegistry(),
@@ -185,6 +188,7 @@ func NewAPIService(ac claims.AccessClient, features featuremgmt.FeatureToggles) 
 		authorizer:       authsvc.NewResourceAuthorizer(ac),
 		features:         features,
 		dashboardService: &dashsvc.DashboardServiceImpl{}, // for validation helpers only
+		folderClient:     folderClient,
 
 		ignoreLegacy: true,
 	}
@@ -320,16 +324,16 @@ func (b *DashboardsAPIBuilder) validateCreate(ctx context.Context, a admission.A
 		return apierrors.NewBadRequest(err.Error())
 	}
 
-	/* id, err := identity.GetRequester(ctx)
+	id, err := identity.GetRequester(ctx)
 	if err != nil {
 		return fmt.Errorf("error getting requester: %w", err)
-	} */
+	}
 
 	// Validate folder existence if specified
 	if !a.IsDryRun() && accessor.GetFolder() != "" {
-		/* if err := b.validateFolderExists(ctx, accessor.GetFolder(), id.GetOrgID()); err != nil {
+		if err := b.validateFolderExists(ctx, accessor.GetFolder(), id.GetOrgID()); err != nil {
 			return apierrors.NewNotFound(folders.FolderResourceInfo.GroupResource(), accessor.GetFolder())
-		} */
+		}
 	}
 
 	// Validate quota
