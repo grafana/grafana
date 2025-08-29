@@ -4562,6 +4562,12 @@
       "overwrite": "Overwrite",
       "title-plugin-dashboard": "Plugin dashboard"
     },
+    "controls": {
+      "menu": {
+        "aria-label": "",
+        "title": ""
+      }
+    },
     "dash-nav": {
       "on-open-snapshot-original": {
         "confirmText": {
@@ -6941,11 +6947,6 @@
       "dragging-a-divider": "Dragging a divider",
       "dragging-a-sub-region": "Dragging a sub-region",
       "value": "Value: {{ dividerPos }}"
-    },
-    "drilldownInfo": {
-      "action": "Go to Grafana Drilldown",
-      "description": "Looking for the Grafana Explore apps? They are now called the Grafana Drilldown apps and can be found under <1>Menu > Drilldown</1>",
-      "title": "Explore Metrics, Logs, Traces and Profiles have moved!"
     },
     "drop-down-menu": {
       "aria-label-links": "Links",
