@@ -474,9 +474,9 @@ describe('AzureMonitor ResourcePicker', () => {
     // Combobox tests seem to be quite finnicky when it comes to selecting options
     // I've had to add multiple {ArrowDown} key-presses as sometimes the expected option isn't
     // at the top of the list
-    it('should call fetchFiltered when subscription filter changes', async () => {
+    it('should call fetchInitialRows when subscription filter changes', async () => {
       const user = userEvent.setup();
-      const mockFetchFiltered = jest.spyOn(resourcePickerData, 'fetchFiltered');
+      const mockFetchInitialRows = jest.spyOn(resourcePickerData, 'fetchInitialRows');
 
       await act(async () => render(<ResourcePicker {...defaultProps} />));
 
@@ -489,8 +489,9 @@ describe('AzureMonitor ResourcePicker', () => {
       });
 
       await waitFor(() => {
-        expect(mockFetchFiltered).toHaveBeenCalledWith(
+        expect(mockFetchInitialRows).toHaveBeenCalledWith(
           'logs',
+          undefined,
           expect.objectContaining({
             subscriptions: ['def-456'],
             types: [],
@@ -500,9 +501,9 @@ describe('AzureMonitor ResourcePicker', () => {
       });
     });
 
-    it('should call fetchFiltered when location filter changes', async () => {
+    it('should call fetchInitialRows when location filter changes', async () => {
       const user = userEvent.setup();
-      const mockFetchFiltered = jest.spyOn(resourcePickerData, 'fetchFiltered');
+      const mockFetchInitialRows = jest.spyOn(resourcePickerData, 'fetchInitialRows');
 
       await act(async () => render(<ResourcePicker {...defaultProps} />));
 
@@ -515,8 +516,9 @@ describe('AzureMonitor ResourcePicker', () => {
       await user.type(locationFilter, 'North Europe{ArrowDown}{Enter}');
 
       await waitFor(() => {
-        expect(mockFetchFiltered).toHaveBeenCalledWith(
+        expect(mockFetchInitialRows).toHaveBeenCalledWith(
           'logs',
+          undefined,
           expect.objectContaining({
             subscriptions: [],
             types: [],
@@ -526,9 +528,9 @@ describe('AzureMonitor ResourcePicker', () => {
       });
     });
 
-    it('should call fetchFiltered when resource type filter changes for metrics', async () => {
+    it('should call fetchInitialRows when resource type filter changes for metrics', async () => {
       const user = userEvent.setup();
-      const mockFetchFiltered = jest.spyOn(resourcePickerData, 'fetchFiltered');
+      const mockFetchInitialRows = jest.spyOn(resourcePickerData, 'fetchInitialRows');
 
       await act(async () => render(<ResourcePicker {...defaultProps} queryType="metrics" />));
 
@@ -539,8 +541,9 @@ describe('AzureMonitor ResourcePicker', () => {
 
       await user.type(typeFilter, 'Kubernetes services {ArrowDown}{Enter}');
       await waitFor(() => {
-        expect(mockFetchFiltered).toHaveBeenCalledWith(
+        expect(mockFetchInitialRows).toHaveBeenCalledWith(
           'metrics',
+          undefined,
           expect.objectContaining({
             subscriptions: [],
             types: ['microsoft.containerservice/managedclusters'],
