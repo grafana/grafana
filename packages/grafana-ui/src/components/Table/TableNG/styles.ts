@@ -135,11 +135,11 @@ export const getDefaultCellStyles: TableCellStyles = (theme, { textAlign, should
     textAlign,
     justifyContent: Boolean(maxHeight) ? 'flex-start' : getJustifyContent(textAlign),
     ...(maxHeight && { overflowY: 'hidden' }),
-    ...((shouldOverflow || Boolean(maxHeight)) && { minHeight: '100%' }),
+    ...(shouldOverflow && { minHeight: '100%' }),
 
     [getActiveCellSelector()]: {
       '.table-cell-actions': { display: 'flex' },
-      ...((shouldOverflow || Boolean(maxHeight)) && {
+      ...(shouldOverflow && {
         zIndex: theme.zIndex.tooltip - 2,
         height: 'fit-content',
         minWidth: 'fit-content',

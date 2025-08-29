@@ -419,7 +419,7 @@ export function TableNG(props: TableNGProps) {
           ? clsx('table-cell-actions', getCellActionStyles(theme, textAlign))
           : undefined;
 
-        const shouldOverflow = rowHeight !== 'auto' && shouldTextOverflow(field);
+        const shouldOverflow = rowHeight !== 'auto' && (shouldTextOverflow(field) || Boolean(maxRowHeight));
         const textWrap = rowHeight === 'auto' || shouldTextWrap(field);
         const withTooltip = withDataLinksActionsTooltip(field, cellType);
         const canBeColorized = canFieldBeColorized(cellType, applyToRowBgFn);

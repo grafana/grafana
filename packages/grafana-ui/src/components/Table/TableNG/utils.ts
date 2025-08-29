@@ -401,7 +401,7 @@ export function getRowHeight(
  * @internal
  * Returns true if text overflow handling should be applied to the cell.
  */
-export function shouldTextOverflow(field: Field): boolean {
+export function shouldTextOverflow(field: Field, maxRowHeight?: number): boolean {
   const cellOptions = getCellOptions(field);
   const eligibleCellType =
     // Tech debt: Technically image cells are of type string, which is misleading (kinda?)
