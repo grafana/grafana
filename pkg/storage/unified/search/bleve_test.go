@@ -863,9 +863,11 @@ func TestBuildIndex(t *testing.T) {
 	tmpDir := t.TempDir()
 
 	type RV string
-	const RVLessThan RV = "less"
-	const RVBiggerThan RV = "more"
-	const RVSame RV = "same"
+	const (
+		RVLessThan   RV = "less"
+		RVBiggerThan RV = "more"
+		RVSame       RV = "same"
+	)
 	for _, searchAfterWrite := range []bool{false, true} {
 		for _, rebuild := range []bool{false, true} {
 			for _, sameSize := range []bool{false, true} {
