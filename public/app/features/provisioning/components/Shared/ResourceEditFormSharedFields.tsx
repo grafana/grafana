@@ -48,7 +48,7 @@ export const ResourceEditFormSharedFields = memo<DashboardEditFormSharedFieldsPr
         'provisioned-resource-form.save-or-delete-resource-shared-fields.suffix-configured-branch',
         '(Configured branch)'
       );
-      // Show the configured branch first in the list of
+      // Show the configured branch first in the list
       if (configuredBranch) {
         options.push({
           label: `${configuredBranch} ${prefix}`,
@@ -68,7 +68,6 @@ export const ResourceEditFormSharedFields = memo<DashboardEditFormSharedFieldsPr
       return options;
     }, [branchData?.items, repository?.branch]);
 
-    // Create a default branch name outside the useEffect so it stays consistent in cases of workflow changes
     const newBranchDefaultName = useMemo(() => generateNewBranchName(resourceType), [resourceType]);
 
     const pathText =
