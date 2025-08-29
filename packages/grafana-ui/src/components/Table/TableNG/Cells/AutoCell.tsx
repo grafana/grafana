@@ -28,10 +28,7 @@ export const getStyles: TableCellStyles = (_theme, { textWrap, shouldOverflow, m
     ...(maxHeight != null &&
       textWrap && {
         // :not(.rdg-cell:hover &):not([aria-selected=true] &)
-        [getActiveCellSelector(true)
-          .split(',')
-          .map((sel) => `:not(${sel.trim()})`)
-          .join('')]: {
+        [`:not(${getActiveCellSelector(true)}`]: {
           height: 'auto',
           overflowY: 'hidden',
           display: '-webkit-box',
