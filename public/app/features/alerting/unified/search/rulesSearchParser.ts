@@ -23,6 +23,7 @@ export interface RulesFilter {
   dashboardUid?: string;
   plugins?: 'hide';
   contactPoint?: string | null;
+  ruleSource?: 'grafana' | 'external';
 }
 
 const filterSupportedTerms: FilterSupportedTerm[] = [
