@@ -2,7 +2,7 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { CoreApp, getDefaultTimeRange, LogRowModel, LogsDedupStrategy, LogsSortOrder, store } from '@grafana/data';
-import { reportInteraction } from '@grafana/runtime';
+import { config, reportInteraction } from '@grafana/runtime';
 
 import { disablePopoverMenu, enablePopoverMenu, isPopoverMenuDisabled } from '../../utils';
 import { createLogRow } from '../mocks/logRow';
@@ -35,6 +35,14 @@ jest.mock('../../utils', () => ({
   disablePopoverMenu: jest.fn(),
   enablePopoverMenu: jest.fn(),
 }));
+
+const originalFlagValue = config.featureToggles.newLogsPanel;
+beforeAll(() => {
+  config.featureToggles.newLogsPanel = true;
+});
+afterAll(() => {
+  config.featureToggles.newLogsPanel = originalFlagValue;
+});
 
 describe('LogList', () => {
   let logs: LogRowModel[], defaultProps: Props;
@@ -343,6 +351,25 @@ describe('LogList', () => {
 
       expect(screen.getByText('log message 1')).toBeInTheDocument();
       expect(screen.getByText('some text')).toBeInTheDocument();
+    });
+
+    test('Allows to toggle between ms and ns precision timestamps', async () => {
+      logs = [createLogRow({ uid: '1', timeEpochMs: 1754472919504, timeEpochNs: '1754472919504133766' })];
+
+      render(<LogList {...defaultProps} showTime showControls logs={logs} />);
+
+      expect(screen.getByText('2025-08-06 03:35:19.504')).toBeInTheDocument();
+      expect(screen.getByLabelText('Show nanosecond timestamps')).toBeInTheDocument();
+
+      await userEvent.click(screen.getByLabelText('Show nanosecond timestamps'));
+
+      expect(screen.getByText('2025-08-06 03:35:19.504133766')).toBeInTheDocument();
+      expect(screen.getByLabelText('Hide timestamps')).toBeInTheDocument();
+
+      await userEvent.click(screen.getByLabelText('Hide timestamps'));
+
+      expect(screen.queryByText(/2025-08-06 03:35:19/)).not.toBeInTheDocument();
+      expect(screen.getByLabelText('Show millisecond timestamps')).toBeInTheDocument();
     });
   });
   describe('Interactions', () => {

@@ -87,7 +87,7 @@ func TestMigrationWorker_WithHistory(t *testing.T) {
 		progressRecorder := jobs.NewMockJobProgressRecorder(t)
 		progressRecorder.On("SetTotal", mock.Anything, 10).Return()
 
-		repo := local.NewLocal(&provisioning.Repository{}, nil)
+		repo := local.NewRepository(&provisioning.Repository{}, nil)
 		err := worker.Process(context.Background(), repo, job, progressRecorder)
 		require.EqualError(t, err, "history is only supported for github repositories")
 	})
@@ -114,6 +114,7 @@ func TestMigrationWorker_Process(t *testing.T) {
 	tests := []struct {
 		name           string
 		setupMocks     func(*MockMigrator, *MockMigrator, *dualwrite.MockService, *jobs.MockJobProgressRecorder)
+		setupRepo      func(*repository.MockRepository)
 		job            provisioning.Job
 		expectedError  string
 		isLegacyActive bool
@@ -127,6 +128,9 @@ func TestMigrationWorker_Process(t *testing.T) {
 				},
 			},
 			setupMocks: func(lm *MockMigrator, um *MockMigrator, ds *dualwrite.MockService, pr *jobs.MockJobProgressRecorder) {
+			},
+			setupRepo: func(repo *repository.MockRepository) {
+				// No Config() call expected since we fail before that
 			},
 			expectedError: "missing migrate settings",
 		},
@@ -144,6 +148,15 @@ func TestMigrationWorker_Process(t *testing.T) {
 				ds.On("ReadFromUnified", mock.Anything, mock.Anything).Return(false, nil)
 				lm.On("Migrate", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
 			},
+			setupRepo: func(repo *repository.MockRepository) {
+				repo.On("Config").Return(&provisioning.Repository{
+					Spec: provisioning.RepositorySpec{
+						Sync: provisioning.SyncOptions{
+							Target: provisioning.SyncTargetTypeInstance,
+						},
+					},
+				})
+			},
 		},
 		{
 			name: "should use unified storage migrator when legacy storage is not active",
@@ -158,6 +171,15 @@ func TestMigrationWorker_Process(t *testing.T) {
 				pr.On("SetTotal", mock.Anything, 10).Return()
 				ds.On("ReadFromUnified", mock.Anything, mock.Anything).Return(true, nil)
 				um.On("Migrate", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
+			},
+			setupRepo: func(repo *repository.MockRepository) {
+				repo.On("Config").Return(&provisioning.Repository{
+					Spec: provisioning.RepositorySpec{
+						Sync: provisioning.SyncOptions{
+							Target: provisioning.SyncTargetTypeInstance,
+						},
+					},
+				})
 			},
 		},
 		{
@@ -174,7 +196,91 @@ func TestMigrationWorker_Process(t *testing.T) {
 				ds.On("ReadFromUnified", mock.Anything, mock.Anything).Return(false, nil)
 				lm.On("Migrate", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(errors.New("migration failed"))
 			},
+			setupRepo: func(repo *repository.MockRepository) {
+				repo.On("Config").Return(&provisioning.Repository{
+					Spec: provisioning.RepositorySpec{
+						Sync: provisioning.SyncOptions{
+							Target: provisioning.SyncTargetTypeInstance,
+						},
+					},
+				})
+			},
 			expectedError: "migration failed",
+		},
+		{
+			name: "should block migration of legacy resources for folder-type repositories",
+			job: provisioning.Job{
+				Spec: provisioning.JobSpec{
+					Action:  provisioning.JobActionMigrate,
+					Migrate: &provisioning.MigrateJobOptions{},
+				},
+			},
+			isLegacyActive: true,
+			setupMocks: func(lm *MockMigrator, um *MockMigrator, ds *dualwrite.MockService, pr *jobs.MockJobProgressRecorder) {
+				pr.On("SetTotal", mock.Anything, 10).Return()
+				ds.On("ReadFromUnified", mock.Anything, mock.Anything).Return(false, nil)
+				// legacyMigrator should not be called as we block before reaching it
+			},
+			setupRepo: func(repo *repository.MockRepository) {
+				repo.On("Config").Return(&provisioning.Repository{
+					Spec: provisioning.RepositorySpec{
+						Sync: provisioning.SyncOptions{
+							Target: provisioning.SyncTargetTypeFolder,
+						},
+					},
+				})
+			},
+			expectedError: "migration of legacy resources is not supported for folder-type repositories",
+		},
+		{
+			name: "should allow migration of legacy resources for instance-type repositories",
+			job: provisioning.Job{
+				Spec: provisioning.JobSpec{
+					Action:  provisioning.JobActionMigrate,
+					Migrate: &provisioning.MigrateJobOptions{},
+				},
+			},
+			isLegacyActive: true,
+			setupMocks: func(lm *MockMigrator, um *MockMigrator, ds *dualwrite.MockService, pr *jobs.MockJobProgressRecorder) {
+				pr.On("SetTotal", mock.Anything, 10).Return()
+				ds.On("ReadFromUnified", mock.Anything, mock.Anything).Return(false, nil)
+				lm.On("Migrate", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
+			},
+			setupRepo: func(repo *repository.MockRepository) {
+				repo.On("Config").Return(&provisioning.Repository{
+					Spec: provisioning.RepositorySpec{
+						Sync: provisioning.SyncOptions{
+							Target: provisioning.SyncTargetTypeInstance,
+						},
+					},
+				})
+			},
+			expectedError: "",
+		},
+		{
+			name: "should allow migration for folder-type repositories when legacy storage is not active",
+			job: provisioning.Job{
+				Spec: provisioning.JobSpec{
+					Action:  provisioning.JobActionMigrate,
+					Migrate: &provisioning.MigrateJobOptions{},
+				},
+			},
+			isLegacyActive: false,
+			setupMocks: func(lm *MockMigrator, um *MockMigrator, ds *dualwrite.MockService, pr *jobs.MockJobProgressRecorder) {
+				pr.On("SetTotal", mock.Anything, 10).Return()
+				ds.On("ReadFromUnified", mock.Anything, mock.Anything).Return(true, nil)
+				um.On("Migrate", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
+			},
+			setupRepo: func(repo *repository.MockRepository) {
+				repo.On("Config").Return(&provisioning.Repository{
+					Spec: provisioning.RepositorySpec{
+						Sync: provisioning.SyncOptions{
+							Target: provisioning.SyncTargetTypeFolder,
+						},
+					},
+				})
+			},
+			expectedError: "",
 		},
 	}
 
@@ -192,6 +298,9 @@ func TestMigrationWorker_Process(t *testing.T) {
 			}
 
 			rw := repository.NewMockRepository(t)
+			if tt.setupRepo != nil {
+				tt.setupRepo(rw)
+			}
 			err := worker.Process(context.Background(), rw, tt.job, progressRecorder)
 
 			if tt.expectedError != "" {

@@ -703,12 +703,16 @@ PostgreSQL, MySQL, and MSSQL data sources don't use the proxy and are not affect
 
 Set to `true` to disable [brute force login protection](https://cheatsheetseries.owasp.org/cheatsheets/Authentication_Cheat_Sheet.html#account-lockout).
 Default is `false`.
-An existing user's account is unable to login for five minutes if all login attempts are spent within a 5 minute window.
+Login is blocked for five minutes if all login attempts are spent within a 5 minute window.
 
 #### `brute_force_login_protection_max_attempts`
 
-Configure how many login attempts a user can have within a five minute window before their account is locked.
+Configure how many login attempts can be made within a five minute window before being blocked.
 Default is `5`.
+
+#### `disable_username_login_protection`
+
+Set to `true` to disable [brute force login protection by username](https://cheatsheetseries.owasp.org/cheatsheets/Authentication_Cheat_Sheet.html#account-lockout). Default is `false`. User will be unable to login for 5 minutes if all login attempts are spent within a 5 minute window.
 
 #### `disable_ip_address_login_protection`
 
@@ -792,7 +796,7 @@ The following example limits access to the backend of a single plugin:
 
 #### `angular_support_enabled`
 
-This is set to false by default, meaning that the angular framework and support components aren't be loaded.
+This is set to false by default, meaning that the angular framework and support components aren't loaded.
 This means that all [plugins](../../developers/angular_deprecation/angular-plugins/) and core features that depend on angular support won't work.
 
 The core features that depend on angular are:
@@ -2854,15 +2858,19 @@ Set this to `false` to disable expressions and hide them in the Grafana UI. Defa
 
 #### `sql_expression_cell_limit`
 
-Set the maximum number of cells that can be passed to a SQL expression. Default is `100000`.
+Set the maximum number of cells that can be passed to a SQL expression. Default is `100000`. A setting of `0` means no limit.
 
 #### `sql_expression_output_cell_limit`
 
-Set the maximum number of cells that can be returned from a SQL expression. Default is `100000`.
+Set the maximum number of cells that can be returned from a SQL expression. Default is `100000`. A setting of `0` means no limit.
+
+### `sql_expression_query_length_limit`
+
+Set the maximum length of a SQL query that can be used in a SQL expression. Default is `10000` characters. A setting of `0` means no limit.
 
 #### `sql_expression_timeout`
 
-The duration a SQL expression will run before being cancelled. The default is `10s`.
+The duration a SQL expression will run before being cancelled. The default is `10s`. A setting of `0s` means no limit.
 
 ### `[geomap]`
 

@@ -1,41 +1,37 @@
 package metrics
 
 import (
+	"errors"
 	"sync"
 
+	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/prometheus/client_golang/prometheus"
 )
 
 const (
 	namespace = "grafana_secrets_manager"
 	subsystem = "storage"
+	// labels
+	successLabel = "success"
+	resultLabel  = "result"
 )
 
 // StorageMetrics is a struct that contains all the metrics for all operations of secrets storage.
 type StorageMetrics struct {
 	KeeperMetadataCreateDuration          *prometheus.HistogramVec
-	KeeperMetadataCreateCount             *prometheus.CounterVec
 	KeeperMetadataUpdateDuration          *prometheus.HistogramVec
-	KeeperMetadataUpdateCount             *prometheus.CounterVec
-	KeeperMetadataDeleteDuration          prometheus.Histogram
-	KeeperMetadataDeleteCount             prometheus.Counter
+	KeeperMetadataDeleteDuration          *prometheus.HistogramVec
 	KeeperMetadataGetDuration             *prometheus.HistogramVec
-	KeeperMetadataGetCount                *prometheus.CounterVec
-	KeeperMetadataListDuration            prometheus.Histogram
-	KeeperMetadataListCount               prometheus.Counter
-	KeeperMetadataGetKeeperConfigDuration prometheus.Histogram
+	KeeperMetadataListDuration            *prometheus.HistogramVec
+	KeeperMetadataGetKeeperConfigDuration *prometheus.HistogramVec
 
 	SecureValueMetadataCreateDuration *prometheus.HistogramVec
-	SecureValueMetadataCreateCount    *prometheus.CounterVec
-	SecureValueMetadataGetDuration    prometheus.Histogram
-	SecureValueMetadataGetCount       prometheus.Counter
-	SecureValueMetadataListDuration   prometheus.Histogram
-	SecureValueMetadataListCount      prometheus.Counter
-	SecureValueSetExternalIDDuration  prometheus.Histogram
-	SecureValueSetStatusDuration      prometheus.Histogram
+	SecureValueMetadataGetDuration    *prometheus.HistogramVec
+	SecureValueMetadataListDuration   *prometheus.HistogramVec
+	SecureValueSetExternalIDDuration  *prometheus.HistogramVec
+	SecureValueSetStatusDuration      *prometheus.HistogramVec
 
-	DecryptDuration     *prometheus.HistogramVec
-	DecryptRequestCount *prometheus.CounterVec
+	DecryptDuration *prometheus.HistogramVec
 }
 
 func newStorageMetrics() *StorageMetrics {
@@ -47,72 +43,42 @@ func newStorageMetrics() *StorageMetrics {
 			Name:      "keeper_metadata_create_duration_seconds",
 			Help:      "Duration of keeper metadata create operations",
 			Buckets:   prometheus.DefBuckets,
-		}, []string{"keeper_type"}),
-		KeeperMetadataCreateCount: prometheus.NewCounterVec(prometheus.CounterOpts{
-			Namespace: namespace,
-			Subsystem: subsystem,
-			Name:      "keeper_metadata_create_count",
-			Help:      "Count of keeper metadata create operations",
-		}, []string{"keeper_type"}),
+		}, []string{successLabel}),
 		KeeperMetadataUpdateDuration: prometheus.NewHistogramVec(prometheus.HistogramOpts{
 			Namespace: namespace,
 			Subsystem: subsystem,
 			Name:      "keeper_metadata_update_duration_seconds",
 			Help:      "Duration of keeper metadata update operations",
 			Buckets:   prometheus.DefBuckets,
-		}, []string{"keeper_type"}),
-		KeeperMetadataUpdateCount: prometheus.NewCounterVec(prometheus.CounterOpts{
-			Namespace: namespace,
-			Subsystem: subsystem,
-			Name:      "keeper_metadata_update_count",
-			Help:      "Count of keeper metadata update operations",
-		}, []string{"keeper_type"}),
-		KeeperMetadataDeleteDuration: prometheus.NewHistogram(prometheus.HistogramOpts{
+		}, []string{successLabel}),
+		KeeperMetadataDeleteDuration: prometheus.NewHistogramVec(prometheus.HistogramOpts{
 			Namespace: namespace,
 			Subsystem: subsystem,
 			Name:      "keeper_metadata_delete_duration_seconds",
 			Help:      "Duration of keeper metadata delete operations",
 			Buckets:   prometheus.DefBuckets,
-		}),
-		KeeperMetadataDeleteCount: prometheus.NewCounter(prometheus.CounterOpts{
-			Namespace: namespace,
-			Subsystem: subsystem,
-			Name:      "keeper_metadata_delete_count",
-			Help:      "Count of keeper metadata delete operations",
-		}),
+		}, []string{successLabel}),
 		KeeperMetadataGetDuration: prometheus.NewHistogramVec(prometheus.HistogramOpts{
 			Namespace: namespace,
 			Subsystem: subsystem,
 			Name:      "keeper_metadata_get_duration_seconds",
 			Help:      "Duration of keeper metadata get operations",
 			Buckets:   prometheus.DefBuckets,
-		}, []string{"keeper_type"}),
-		KeeperMetadataGetCount: prometheus.NewCounterVec(prometheus.CounterOpts{
-			Namespace: namespace,
-			Subsystem: subsystem,
-			Name:      "keeper_metadata_get_count",
-			Help:      "Count of keeper metadata get operations",
-		}, []string{"keeper_type"}),
-		KeeperMetadataListDuration: prometheus.NewHistogram(prometheus.HistogramOpts{
+		}, []string{successLabel}),
+		KeeperMetadataListDuration: prometheus.NewHistogramVec(prometheus.HistogramOpts{
 			Namespace: namespace,
 			Subsystem: subsystem,
 			Name:      "keeper_metadata_list_duration_seconds",
 			Help:      "Duration of keeper metadata list operations",
 			Buckets:   prometheus.DefBuckets,
-		}),
-		KeeperMetadataListCount: prometheus.NewCounter(prometheus.CounterOpts{
-			Namespace: namespace,
-			Subsystem: subsystem,
-			Name:      "keeper_metadata_list_count",
-			Help:      "Count of keeper metadata list operations",
-		}),
-		KeeperMetadataGetKeeperConfigDuration: prometheus.NewHistogram(prometheus.HistogramOpts{
+		}, []string{successLabel}),
+		KeeperMetadataGetKeeperConfigDuration: prometheus.NewHistogramVec(prometheus.HistogramOpts{
 			Namespace: namespace,
 			Subsystem: subsystem,
 			Name:      "keeper_metadata_get_keeper_config_duration_seconds",
 			Help:      "Duration of keeper metadata get keeper config operations",
 			Buckets:   prometheus.DefBuckets,
-		}),
+		}, []string{successLabel}),
 
 		// Secure value metrics
 		SecureValueMetadataCreateDuration: prometheus.NewHistogramVec(prometheus.HistogramOpts{
@@ -121,53 +87,35 @@ func newStorageMetrics() *StorageMetrics {
 			Name:      "secure_value_metadata_create_duration_seconds",
 			Help:      "Duration of secure value metadata create operations",
 			Buckets:   prometheus.DefBuckets,
-		}, []string{"successful"}),
-		SecureValueMetadataCreateCount: prometheus.NewCounterVec(prometheus.CounterOpts{
-			Namespace: namespace,
-			Subsystem: subsystem,
-			Name:      "secure_value_metadata_create_count",
-			Help:      "Count of secure value metadata create operations",
-		}, []string{"successful"}),
-		SecureValueMetadataGetDuration: prometheus.NewHistogram(prometheus.HistogramOpts{
+		}, []string{successLabel}),
+		SecureValueMetadataGetDuration: prometheus.NewHistogramVec(prometheus.HistogramOpts{
 			Namespace: namespace,
 			Subsystem: subsystem,
 			Name:      "secure_value_metadata_get_duration_seconds",
 			Help:      "Duration of secure value metadata get operations",
 			Buckets:   prometheus.DefBuckets,
-		}),
-		SecureValueMetadataGetCount: prometheus.NewCounter(prometheus.CounterOpts{
-			Namespace: namespace,
-			Subsystem: subsystem,
-			Name:      "secure_value_metadata_get_count",
-			Help:      "Count of secure value metadata get operations",
-		}),
-		SecureValueMetadataListDuration: prometheus.NewHistogram(prometheus.HistogramOpts{
+		}, []string{successLabel}),
+		SecureValueMetadataListDuration: prometheus.NewHistogramVec(prometheus.HistogramOpts{
 			Namespace: namespace,
 			Subsystem: subsystem,
 			Name:      "secure_value_metadata_list_duration_seconds",
 			Help:      "Duration of secure value metadata list operations",
 			Buckets:   prometheus.DefBuckets,
-		}),
-		SecureValueMetadataListCount: prometheus.NewCounter(prometheus.CounterOpts{
-			Namespace: namespace,
-			Subsystem: subsystem,
-			Name:      "secure_value_metadata_list_count",
-			Help:      "Count of secure value metadata list operations",
-		}),
-		SecureValueSetExternalIDDuration: prometheus.NewHistogram(prometheus.HistogramOpts{
+		}, []string{successLabel}),
+		SecureValueSetExternalIDDuration: prometheus.NewHistogramVec(prometheus.HistogramOpts{
 			Namespace: namespace,
 			Subsystem: subsystem,
 			Name:      "secure_value_set_external_id_duration_seconds",
 			Help:      "Duration of secure value set external id operations",
 			Buckets:   prometheus.DefBuckets,
-		}),
-		SecureValueSetStatusDuration: prometheus.NewHistogram(prometheus.HistogramOpts{
+		}, []string{successLabel}),
+		SecureValueSetStatusDuration: prometheus.NewHistogramVec(prometheus.HistogramOpts{
 			Namespace: namespace,
 			Subsystem: subsystem,
 			Name:      "secure_value_set_status_duration_seconds",
 			Help:      "Duration of secure value set status operations",
 			Buckets:   prometheus.DefBuckets,
-		}),
+		}, []string{successLabel}),
 
 		// Decrypt metrics
 		DecryptDuration: prometheus.NewHistogramVec(prometheus.HistogramOpts{
@@ -176,13 +124,7 @@ func newStorageMetrics() *StorageMetrics {
 			Name:      "decrypt_duration_seconds",
 			Help:      "Duration of decrypt operations",
 			Buckets:   prometheus.DefBuckets,
-		}, []string{"successful"}),
-		DecryptRequestCount: prometheus.NewCounterVec(prometheus.CounterOpts{
-			Namespace: namespace,
-			Subsystem: subsystem,
-			Name:      "decrypt_request_count",
-			Help:      "Count of decrypt operations",
-		}, []string{"successful"}),
+		}, []string{resultLabel}),
 	}
 }
 
@@ -199,26 +141,17 @@ func NewStorageMetrics(reg prometheus.Registerer) *StorageMetrics {
 		if reg != nil {
 			reg.MustRegister(
 				m.KeeperMetadataCreateDuration,
-				m.KeeperMetadataCreateCount,
 				m.KeeperMetadataUpdateDuration,
-				m.KeeperMetadataUpdateCount,
 				m.KeeperMetadataDeleteDuration,
-				m.KeeperMetadataDeleteCount,
 				m.KeeperMetadataGetDuration,
-				m.KeeperMetadataGetCount,
 				m.KeeperMetadataListDuration,
-				m.KeeperMetadataListCount,
 				m.KeeperMetadataGetKeeperConfigDuration,
 				m.SecureValueMetadataCreateDuration,
-				m.SecureValueMetadataCreateCount,
 				m.SecureValueMetadataGetDuration,
-				m.SecureValueMetadataGetCount,
 				m.SecureValueMetadataListDuration,
-				m.SecureValueMetadataListCount,
 				m.SecureValueSetExternalIDDuration,
 				m.SecureValueSetStatusDuration,
 				m.DecryptDuration,
-				m.DecryptRequestCount,
 			)
 		}
 
@@ -230,4 +163,19 @@ func NewStorageMetrics(reg prometheus.Registerer) *StorageMetrics {
 
 func NewTestMetrics() *StorageMetrics {
 	return newStorageMetrics()
+}
+
+// DecryptResultLabel returns a label value for the given decrypt error.
+func DecryptResultLabel(err error) string {
+	if err == nil {
+		return "success"
+	}
+
+	if errors.Is(err, contracts.ErrDecryptNotFound) {
+		return "error_not_found"
+	} else if errors.Is(err, contracts.ErrDecryptNotAuthorized) {
+		return "error_unauthorized"
+	}
+
+	return "error_generic_failure"
 }

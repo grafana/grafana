@@ -382,7 +382,10 @@ func (l *LibraryElementService) filterLibraryPanelsByPermission(c *contextmodel.
 	for _, p := range elements {
 		allowed, err := l.AccessControl.Evaluate(c.Req.Context(), c.SignedInUser, ac.EvalPermission(ActionLibraryPanelsRead, ScopeLibraryPanelsProvider.GetResourceScopeUID(p.UID)))
 		if err != nil {
-			return nil, err
+			// This could fail because the folder that contains the library panel does not exist or the user doesn't have permissions to read it.
+			// We skip it instead of breaking the library panel list rendering flow and log the error.
+			l.log.Warn("Failed to evaluate permissions", "error", err)
+			continue
 		}
 		if allowed {
 			filteredPanels = append(filteredPanels, p)

@@ -292,6 +292,120 @@ func TestRouteConvertPrometheusPostRuleGroup(t *testing.T) {
 		}
 	})
 
+	t.Run("with extra labels header should apply labels only to alert rules", func(t *testing.T) {
+		srv, _, ruleStore := createConvertPrometheusSrv(t)
+		rc := createRequestCtx()
+		rc.Req.Header.Set(extraLabelsHeader, "environment=production,team=alerting")
+
+		response := srv.RouteConvertPrometheusPostRuleGroup(rc, "test", simpleGroup)
+		require.Equal(t, http.StatusAccepted, response.Status())
+
+		rules, err := ruleStore.ListAlertRules(context.Background(), &models.ListAlertRulesQuery{
+			OrgID: 1,
+		})
+		require.NoError(t, err)
+		require.Len(t, rules, 2)
+
+		var alertRule, recordingRule *models.AlertRule
+		for i := range rules {
+			switch rules[i].Title {
+			case "TestAlert":
+				alertRule = rules[i]
+			case "recorded-metric":
+				recordingRule = rules[i]
+			}
+		}
+
+		require.NotNil(t, alertRule, "Alert rule should be present")
+		require.NotNil(t, recordingRule, "Recording rule should be present")
+
+		// Alert rule should have extra labels
+		require.Equal(t, "production", alertRule.Labels["environment"])
+		require.Equal(t, "alerting", alertRule.Labels["team"])
+		require.Equal(t, "critical", alertRule.Labels["severity"])
+
+		// Recording rule should not have extra labels
+		require.NotContains(t, recordingRule.Labels, "environment")
+		require.NotContains(t, recordingRule.Labels, "team")
+		require.Equal(t, "warning", recordingRule.Labels["severity"])
+	})
+
+	t.Run("with extra labels that conflict with rule labels", func(t *testing.T) {
+		srv, _, ruleStore := createConvertPrometheusSrv(t)
+		rc := createRequestCtx()
+		// rules in the simpleGroup already have a severity label, so
+		// it should not be overwritten by the label from the header
+		rc.Req.Header.Set(extraLabelsHeader, "environment=production,severity=low")
+
+		response := srv.RouteConvertPrometheusPostRuleGroup(rc, "test", simpleGroup)
+		require.Equal(t, http.StatusAccepted, response.Status())
+
+		rules, err := ruleStore.ListAlertRules(context.Background(), &models.ListAlertRulesQuery{
+			OrgID: 1,
+		})
+		require.NoError(t, err)
+		require.Len(t, rules, 2)
+
+		var alertRule, recordingRule *models.AlertRule
+		for i := range rules {
+			switch rules[i].Title {
+			case "TestAlert":
+				alertRule = rules[i]
+			case "recorded-metric":
+				recordingRule = rules[i]
+			}
+		}
+
+		require.NotNil(t, alertRule, "Alert rule should be present")
+		require.NotNil(t, recordingRule, "Recording rule should be present")
+
+		// Alert rule should have extra labels where they don't conflict
+		require.Equal(t, "production", alertRule.Labels["environment"])
+		// Rule label should take precedence over extra label
+		require.Equal(t, "critical", alertRule.Labels["severity"])
+		require.NotEqual(t, "low", alertRule.Labels["severity"])
+
+		// Recording rule should not have extra labels
+		require.NotContains(t, recordingRule.Labels, "environment")
+		require.Equal(t, "warning", recordingRule.Labels["severity"])
+	})
+
+	t.Run("with invalid extra labels header should return 400", func(t *testing.T) {
+		testCases := []struct {
+			name          string
+			headerValue   string
+			expectedError string
+		}{
+			{
+				name:          "missing equals sign",
+				headerValue:   "environment,team=platform",
+				expectedError: "Invalid value for header X-Grafana-Alerting-Extra-Labels: format should be 'key=value,key2=value2'",
+			},
+			{
+				name:          "empty key",
+				headerValue:   "=production,team=platform",
+				expectedError: "Invalid value for header X-Grafana-Alerting-Extra-Labels: keys and values cannot be empty",
+			},
+			{
+				name:          "empty value",
+				headerValue:   "environment=,team=platform",
+				expectedError: "Invalid value for header X-Grafana-Alerting-Extra-Labels: keys and values cannot be empty",
+			},
+		}
+
+		for _, tc := range testCases {
+			t.Run(tc.name, func(t *testing.T) {
+				srv, _, _ := createConvertPrometheusSrv(t)
+				rc := createRequestCtx()
+				rc.Req.Header.Set(extraLabelsHeader, tc.headerValue)
+
+				response := srv.RouteConvertPrometheusPostRuleGroup(rc, "test", simpleGroup)
+				require.Equal(t, http.StatusBadRequest, response.Status())
+				require.Contains(t, string(response.Body()), tc.expectedError)
+			})
+		}
+	})
+
 	t.Run("with empty rule group name should return 400", func(t *testing.T) {
 		srv, _, _ := createConvertPrometheusSrv(t)
 		rc := createRequestCtx()
@@ -1668,8 +1782,8 @@ func (m *mockAlertmanager) SaveAndApplyExtraConfiguration(ctx context.Context, o
 	return args.Error(0)
 }
 
-func (m *mockAlertmanager) GetAlertmanagerConfiguration(ctx context.Context, org int64, withAutogen bool) (apimodels.GettableUserConfig, error) {
-	args := m.Called(ctx, org, withAutogen)
+func (m *mockAlertmanager) GetAlertmanagerConfiguration(ctx context.Context, org int64, withAutogen bool, withMergedExtraConfig bool) (apimodels.GettableUserConfig, error) {
+	args := m.Called(ctx, org, withAutogen, withMergedExtraConfig)
 	return args.Get(0).(apimodels.GettableUserConfig), args.Error(1)
 }
 
@@ -1798,7 +1912,7 @@ func TestRouteConvertPrometheusGetAlertmanagerConfig(t *testing.T) {
 
 	t.Run("without config identifier header should use default identifier", func(t *testing.T) {
 		mockAM := &mockAlertmanager{}
-		mockAM.On("GetAlertmanagerConfiguration", mock.Anything, orgID, false).Return(apimodels.GettableUserConfig{
+		mockAM.On("GetAlertmanagerConfiguration", mock.Anything, orgID, false, false).Return(apimodels.GettableUserConfig{
 			ExtraConfigs: []apimodels.ExtraConfiguration{
 				{
 					Identifier: defaultConfigIdentifier,
@@ -1821,7 +1935,7 @@ receivers:
 
 	t.Run("with empty config identifier header should use default identifier", func(t *testing.T) {
 		mockAM := &mockAlertmanager{}
-		mockAM.On("GetAlertmanagerConfiguration", mock.Anything, orgID, false).Return(apimodels.GettableUserConfig{
+		mockAM.On("GetAlertmanagerConfiguration", mock.Anything, orgID, false, false).Return(apimodels.GettableUserConfig{
 			ExtraConfigs: []apimodels.ExtraConfiguration{
 				{
 					Identifier: defaultConfigIdentifier,
@@ -1869,7 +1983,7 @@ receivers:
 			},
 		}
 
-		mockAM.On("GetAlertmanagerConfiguration", mock.Anything, int64(1), false).Return(expectedConfig, nil).Once()
+		mockAM.On("GetAlertmanagerConfiguration", mock.Anything, int64(1), false, false).Return(expectedConfig, nil).Once()
 
 		rc := createRequestCtx()
 		rc.Req.Header.Set(configIdentifierHeader, identifier)
@@ -1923,7 +2037,7 @@ receivers:
 			},
 		}
 
-		mockAM.On("GetAlertmanagerConfiguration", mock.Anything, orgID, false).Return(expectedConfig, nil).Once()
+		mockAM.On("GetAlertmanagerConfiguration", mock.Anything, orgID, false, false).Return(expectedConfig, nil).Once()
 
 		rc := createRequestCtx()
 		rc.Req.Header.Set(configIdentifierHeader, identifier)
@@ -1938,7 +2052,7 @@ receivers:
 		ft := featuremgmt.WithFeatures(featuremgmt.FlagAlertingImportAlertmanagerAPI)
 		srv, _, _ := createConvertPrometheusSrv(t, withAlertmanager(mockAM), withFeatureToggles(ft))
 
-		mockAM.On("GetAlertmanagerConfiguration", mock.Anything, orgID, false).Return(apimodels.GettableUserConfig{}, errors.New("config error")).Once()
+		mockAM.On("GetAlertmanagerConfiguration", mock.Anything, orgID, false, false).Return(apimodels.GettableUserConfig{}, errors.New("config error")).Once()
 
 		rc := createRequestCtx()
 		rc.Req.Header.Set(configIdentifierHeader, identifier)

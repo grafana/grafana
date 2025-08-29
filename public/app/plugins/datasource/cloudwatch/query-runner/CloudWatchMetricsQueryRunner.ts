@@ -77,6 +77,7 @@ export class CloudWatchMetricsQueryRunner extends CloudWatchRequest {
 
     const request: DataQueryRequest<CloudWatchQuery> = {
       ...options,
+      requestId: options.requestId + '-metrics', // adding -metrics to prevent requestId from matching logs queries sent from the same panel
       targets: validMetricsQueries,
     };
 

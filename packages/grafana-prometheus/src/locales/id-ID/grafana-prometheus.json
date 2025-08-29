@@ -158,8 +158,8 @@
         "aria-label-prometheus-type": "Jenis Prometheus",
         "aria-label-select-http-method": "Pilih metode HTTP",
         "editor-options": {
-          "label-builder": "",
-          "label-code": ""
+          "label-builder": "Pembangun",
+          "label-code": "Kode"
         },
         "label-cache-level": "Level cache",
         "label-custom-query-parameters": "Parameter kueri kustom",
@@ -168,7 +168,6 @@
         "label-disable-recording-rules-beta": "Nonaktifkan aturan perekaman (beta)",
         "label-http-method": "Metode HTTP",
         "label-incremental-querying-beta": "Kueri inkremental (beta)",
-        "label-metric-names-suggestion-limit": "Batas saran nama metrik",
         "label-prom-type-version": "Versi {{promType}}",
         "label-prometheus-type": "Jenis Prometheus",
         "label-query-overlap-window": "Jendela kueri tumpang tindih",
@@ -189,7 +188,6 @@
         "tooltip-disable-recording-rules-beta": "Fitur ini akan menonaktifkan aturan perekaman. Aktifkan ini untuk meningkatkan kinerja dasbor",
         "tooltip-http-method": "Anda dapat menggunakan metode HTTP POST atau GET untuk melakukan kueri sumber data Prometheus Anda. POST adalah metode yang disarankan karena memungkinkan kueri yang lebih besar. Ubah ini menjadi GET jika Anda memiliki versi Prometheus yang lebih lama dari 2.1 atau jika permintaan POST dibatasi di jaringan Anda.",
         "tooltip-incremental-querying-beta": "Fitur ini akan mengubah perilaku default kueri relatif: alih-alih selalu meminta data terbaru dari instans Prometheus, hasil kueri akan disimpan sementara, dan hanya data baru yang akan diminta. Aktifkan ini untuk mengurangi beban basis data dan jaringan.",
-        "tooltip-metric-names-suggestion-limit": "Jumlah maksimum nama metrik yang mungkin muncul sebagai saran pelengkapan otomatis dalam mode Kode editor kueri.",
         "tooltip-prom-type-version": "Gunakan ini untuk mengatur versi instans {{promType}} Anda jika tidak dikonfigurasi secara otomatis.",
         "tooltip-prometheus-type": "Atur ini ke jenis basis data prometheus Anda, misalnya Prometheus, Cortex, Mimir, atau Thanos. Mengubah bidang ini akan menyimpan pengaturan Anda saat ini. Jenis Prometheus tertentu mendukung atau tidak mendukung berbagai API. Misalnya, beberapa jenis mendukung pencocokan regex bagi kueri label untuk meningkatkan kinerja. Beberapa jenis memiliki API untuk metadata. Jika Anda mengatur ini secara tidak benar, Anda mungkin mengalami perilaku tidak biasa saat melakukan kueri metrik dan label. Periksa dokumentasi Prometheus Anda untuk memastikan Anda memasukkan jenis yang benar.",
         "tooltip-query-overlap-window": "Tetapkan durasi seperti {{example1}} atau {{example2}} atau {{example3}}. Default {{default}}. Durasi ini akan ditambahkan ke durasi setiap permintaan tambahan.",
@@ -200,114 +198,114 @@
       }
     },
     "metrics-browser": {
-      "disabled-label": "",
-      "enabled-label": ""
+      "disabled-label": "(Dinonaktifkan)",
+      "enabled-label": "Browser metrik"
     },
     "prom-query-legend-editor": {
       "get-legend-mode-options": {
-        "description-auto": "",
-        "description-custom": "",
-        "description-verbose": "",
-        "label-auto": "",
-        "label-custom": "",
-        "label-verbose": ""
+        "description-auto": "Hanya menyertakan label unik",
+        "description-custom": "Berikan templat penamaan",
+        "description-verbose": "Semua nama dan nilai label",
+        "label-auto": "Otomatis",
+        "label-custom": "Kustom",
+        "label-verbose": "Verbose"
       }
     },
     "promql": {
       "getAggregationOptions": {
-        "documentation-avg": "",
-        "documentation-bottomk": "",
-        "documentation-count": "",
-        "documentation-count-values": "",
-        "documentation-group": "",
-        "documentation-max": "",
-        "documentation-min": "",
-        "documentation-quantile": "",
-        "documentation-stddev": "",
-        "documentation-stdvar": "",
-        "documentation-sum": "",
-        "documentation-topk": ""
+        "documentation-avg": "Hitung rata-rata atas dimensi",
+        "documentation-bottomk": "Elemen k terkecil berdasarkan nilai sampel",
+        "documentation-count": "Hitung jumlah elemen dalam vektor",
+        "documentation-count-values": "Hitung jumlah elemen dengan nilai yang sama",
+        "documentation-group": "Semua nilai dalam vektor yang dihasilkan adalah 1",
+        "documentation-max": "Pilih dimensi maksimum",
+        "documentation-min": "Pilih dimensi minimum",
+        "documentation-quantile": "Hitung φ-kuantil (0 ≤ φ ≤ 1) berdasarkan dimensi",
+        "documentation-stddev": "Hitung standar deviasi populasi berdasarkan dimensi",
+        "documentation-stdvar": "Hitung varians standar populasi berdasarkan dimensi",
+        "documentation-sum": "Hitung jumlah berdasarkan dimensi",
+        "documentation-topk": "Elemen k terbesar berdasarkan nilai sampel"
       },
       "getFunctions": {
-        "documentation-abs": "",
-        "documentation-absent": "",
-        "documentation-absent-over-time": "",
-        "documentation-avg-over-time": "",
-        "documentation-ceil": "",
-        "documentation-changes": "",
-        "documentation-clamp": "",
-        "documentation-clamp-max": "",
-        "documentation-clamp-min": "",
-        "documentation-count-over-time": "",
-        "documentation-count-scalar": "",
-        "documentation-day-of-month": "",
-        "documentation-day-of-week": "",
-        "documentation-day-of-year": "",
-        "documentation-days-in-month": "",
-        "documentation-deg": "",
-        "documentation-delta": "",
-        "documentation-deriv": "",
-        "documentation-double-exponential-smoothing": "",
-        "documentation-drop-common-labels": "",
-        "documentation-exp": "",
-        "documentation-floor": "",
-        "documentation-histogram-avg": "",
-        "documentation-histogram-count": "",
-        "documentation-histogram-fraction": "",
-        "documentation-histogram-quantile": "",
-        "documentation-histogram-stddev": "",
-        "documentation-histogram-stdvar": "",
-        "documentation-histogram-sum": "",
-        "documentation-holt-winters": "",
-        "documentation-hour": "",
-        "documentation-idelta": "",
-        "documentation-increase": "",
-        "documentation-info": "",
-        "documentation-irate": "",
-        "documentation-label-join": "",
-        "documentation-label-replace": "",
-        "documentation-last-over-time": "",
-        "documentation-ln": "",
-        "documentation-log10": "",
-        "documentation-log2": "",
-        "documentation-max-over-time": "",
-        "documentation-min-over-time": "",
-        "documentation-minute": "",
-        "documentation-month": "",
-        "documentation-pi": "",
-        "documentation-predict-linear": "",
-        "documentation-present-over-time": "",
-        "documentation-quantile-over-time": "",
-        "documentation-rad": "",
-        "documentation-rate": "",
-        "documentation-resets": "",
-        "documentation-round": "",
-        "documentation-scalar": "",
-        "documentation-sgn": "",
-        "documentation-sort": "",
-        "documentation-sort-desc": "",
-        "documentation-sqrt": "",
-        "documentation-stddev-over-time": "",
-        "documentation-stdvar-over-time": "",
-        "documentation-sum-over-time": "",
-        "documentation-time": "",
-        "documentation-timestamp": "",
-        "documentation-vector": "",
-        "documentation-year": ""
+        "documentation-abs": "Mengembalikan vektor input dengan semua nilai sampel dikonversi ke nilai absolutnya.",
+        "documentation-absent": "Mengembalikan vektor kosong jika vektor yang diteruskan memiliki elemen, dan vektor dengan satu elemen bernilai 1 jika vektor tersebut tidak memiliki elemen. Ini berguna untuk memberi peringatan saat tidak ada deret waktu yang tersedia untuk kombinasi nama metrik dan label tertentu.",
+        "documentation-absent-over-time": "Mengembalikan vektor kosong jika vektor rentang yang diteruskan memiliki elemen, dan vektor dengan satu elemen bernilai 1 jika vektor rentang tersebut tidak memiliki elemen.",
+        "documentation-avg-over-time": "Nilai rata-rata dari semua poin dalam interval yang ditentukan.",
+        "documentation-ceil": "Membulatkan nilai sampel dari semua elemen dalam `v` ke bilangan bulat terdekat.",
+        "documentation-changes": "Untuk setiap deret waktu input, `changes(v range-vector)` mengembalikan berapa kali nilainya telah berubah dalam rentang waktu yang diberikan sebagai vektor instan.",
+        "documentation-clamp": "Menjepit nilai sampel dari semua elemen dalam `v` untuk memiliki batas bawah `min` dan batas atas `max`.",
+        "documentation-clamp-max": "Menjepit nilai sampel dari semua elemen dalam `v` agar memiliki batas atas `maks`.",
+        "documentation-clamp-min": "Menjepit nilai sampel dari semua elemen dalam `v` untuk memiliki batas bawah `min`.",
+        "documentation-count-over-time": "Hitungan semua nilai dalam interval yang ditentukan.",
+        "documentation-count-scalar": "Mengembalikan jumlah elemen dalam vektor deret waktu sebagai skalar. Ini bertentangan dengan operator agregasi `count()`, yang selalu mengembalikan vektor (kosong jika vektor input kosong) dan memungkinkan pengelompokan berdasarkan label melalui klausa `by`.",
+        "documentation-day-of-month": "Mengembalikan hari dalam sebulan untuk setiap waktu yang diberikan dalam UTC. Nilai yang dikembalikan adalah dari 1 hingga 31.",
+        "documentation-day-of-week": "Mengembalikan hari dalam seminggu untuk setiap waktu yang diberikan dalam UTC. Nilai yang dikembalikan adalah dari 0 hingga 6, di mana 0 berarti hari Minggu, dll.",
+        "documentation-day-of-year": "Mengembalikan hari dalam setahun untuk setiap waktu yang diberikan dalam UTC. Nilai yang dikembalikan adalah dari 1 hingga 365 untuk tahun non-kabisat, dan 1 hingga 366 pada tahun kabisat.",
+        "documentation-days-in-month": "Mengembalikan jumlah hari dalam sebulan untuk setiap waktu yang diberikan dalam UTC. Nilai yang dikembalikan adalah dari 28 hingga 31.",
+        "documentation-deg": "Mengonversi radian ke derajat untuk semua elemen dalam v",
+        "documentation-delta": "Menghitung perbedaan antara nilai pertama dan terakhir dari setiap elemen deret waktu dalam vektor rentang `v`, lalu mengembalikan vektor instan dengan delta dan label yang sesuai. Delta tersebut diekstrapolasi untuk mencakup seluruh rentang waktu yang ditentukan oleh pemilih vektor, sehingga memungkinkan hasil berupa bilangan non-integer meskipun nilai sampelnya semuanya bilangan bulat.",
+        "documentation-deriv": "Menghitung turunan per detik dari deret waktu dalam vektor rentang `v`, menggunakan regresi linier sederhana.",
+        "documentation-double-exponential-smoothing": "Menghasilkan nilai yang dihaluskan untuk deret waktu berdasarkan rentang dalam `v`. Semakin rendah faktor penghalusan `sf`, semakin besar bobot yang diberikan ke data lama. Semakin tinggi faktor tren `tf`, semakin banyak tren dalam data yang dipertimbangkan. `sf` dan `tf` harus antara 0 dan 1.",
+        "documentation-drop-common-labels": "Menghapus semua label yang memiliki nama dan nilai yang sama di semua deret dalam vektor input.",
+        "documentation-exp": "Menghitung fungsi eksponensial untuk semua elemen dalam `v`.\nKasus khusus adalah:\n* `Exp(+Inf) = +Inf` \n* `Exp(NaN) = NaN`",
+        "documentation-floor": "Membulatkan nilai sampel dari semua elemen dalam `v` ke bilangan bulat terdekat.",
+        "documentation-histogram-avg": "Mengembalikan rata-rata aritmatika dari nilai yang diamati yang disimpan dalam histogram asli. Sampel yang bukan histogram asli diabaikan dan tidak muncul dalam vektor yang dikembalikan.",
+        "documentation-histogram-count": "Mengembalikan jumlah pengamatan yang disimpan dalam histogram asli.",
+        "documentation-histogram-fraction": "Mengembalikan perkiraan fraksi pengamatan antara nilai bawah dan atas yang diberikan.",
+        "documentation-histogram-quantile": "Menghitung φ-kuantil (0 ≤ φ ≤ 1) dari bucket `b` dari histogram. Sampel dalam 'b' adalah jumlah pengamatan di setiap bucket. Setiap sampel harus memiliki label `le` di mana nilai label menunjukkan batas atas inklusif dari bucket. (Sampel tanpa label seperti itu akan diabaikan tanpa peringatan.) Tipe metrik histogram secara otomatis menyediakan deret waktu dengan akhiran `_bucket` dan label yang sesuai.",
+        "documentation-histogram-stddev": "Mengembalikan estimasi standar deviasi pengamatan dalam histogram asli, berdasarkan rata-rata geometris dari bucket tempat pengamatan berada.",
+        "documentation-histogram-stdvar": "Mengembalikan perkiraan varians standar pengamatan dalam histogram asli.",
+        "documentation-histogram-sum": "Mengembalikan jumlah pengamatan yang disimpan dalam histogram asli.",
+        "documentation-holt-winters": "Diganti namanya menjadi double_exponential_smoothing di prometheus v3.x. Untuk versi prometheus yang sama dan lebih besar dari v3.0, gunakan double_exponential_smoothing. \n\nMenghasilkan nilai yang dihaluskan untuk deret waktu berdasarkan rentang dalam `v`. Semakin rendah faktor penghalusan `sf`, semakin besar bobot yang diberikan ke data lama. Semakin tinggi faktor tren `tf`, semakin banyak tren dalam data yang dipertimbangkan. `sf` dan `tf` harus antara 0 dan 1.",
+        "documentation-hour": "Mengembalikan jam dalam sehari untuk setiap waktu yang diberikan dalam UTC. Nilai yang dikembalikan adalah dari 0 hingga 23.",
+        "documentation-idelta": "Menghitung perbedaan antara dua sampel terakhir dalam vektor rentang `v`, mengembalikan vektor instan dengan delta dan label yang setara yang diberikan.",
+        "documentation-increase": "Menghitung peningkatan dalam deret waktu pada vektor rentang. Pemutusan dalam monotonisitas (seperti pengaturan ulang penghitung akibat target dimulai ulang) disesuaikan secara otomatis. Nilai peningkatan diekstrapolasi untuk mencakup seluruh rentang waktu seperti yang ditentukan dalam pemilih vektor rentang, sehingga memungkinkan diperolehnya hasil non-integer meskipun penghitung hanya bertambah dalam satuan bulat.",
+        "documentation-info": "Mengembalikan detail dan metadata terbaru tentang sekelompok metrik, seperti label dan nilai saat ini, tanpa melakukan perhitungan apa pun",
+        "documentation-irate": "Menghitung laju kenaikan instan per detik dari deret waktu dalam vektor rentang, berdasarkan dua titik data terakhir. Pemutusan dalam monotonisitas (seperti reset penghitung karena target dimulai ulang) disesuaikan secara otomatis.",
+        "documentation-label-join": "Untuk setiap deret waktu dalam `v`, gabungkan semua nilai dari semua `src_labels` menggunakan `separator` dan kembalikan rangkaian waktu dengan label `dst_label` yang berisi nilai yang digabungkan. Dalam fungsi ini, dapat ada sejumlah `src_labels`.",
+        "documentation-label-replace": "Untuk setiap deret waktu dalam `v`, `label_replace(v instant-vector, dst_label string, replacement string, src_label string, regex string)`  mencocokkan ekspresi reguler `regex` terhadap label `src_label`.  Jika cocok, rangkaian waktu dikembalikan dengan label `dst_label` diganti dengan perluasan `replacement`. `$1` diganti dengan subkelompok pertama yang cocok, `$2` dengan yang kedua, dll. Jika ekspresi reguler tidak cocok, deret waktu dikembalikan tanpa perubahan.",
+        "documentation-last-over-time": "Nilai poin terbaru dalam interval yang ditentukan.",
+        "documentation-ln": "Menghitung logaritma alami untuk semua elemen dalam `v`.\nKasus khusus adalah:\n * `ln(+Inf) = +Inf`\n * `ln(0) = -Inf`\n * `ln(x < 0) = NaN`\n * `ln(NaN) = NaN`",
+        "documentation-log10": "Menghitung logaritma desimal untuk semua elemen dalam `v`. Kasus khusus setara dengan yang ada di `ln`.",
+        "documentation-log2": "Menghitung logaritma biner untuk semua elemen dalam `v`. Kasus khusus setara dengan yang ada di `ln`.",
+        "documentation-max-over-time": "Nilai maksimum dari semua poin dalam interval yang ditentukan.",
+        "documentation-min-over-time": "Nilai minimum dari semua poin dalam interval yang ditentukan.",
+        "documentation-minute": "Mengembalikan menit dari jam untuk setiap waktu yang diberikan dalam UTC. Nilai yang dikembalikan adalah dari 0 hingga 59.",
+        "documentation-month": "Mengembalikan bulan dalam setahun untuk setiap waktu yang diberikan dalam UTC. Nilai yang dikembalikan adalah dari 1 hingga 12, di mana 1 berarti Januari, dll.",
+        "documentation-pi": "Mengembalikan pi",
+        "documentation-predict-linear": "Memprediksi nilai deret waktu `t` detik dari sekarang, berdasarkan vektor rentang `v`, menggunakan regresi linier sederhana.",
+        "documentation-present-over-time": "Nilai 1 untuk setiap deret dalam interval yang ditentukan.",
+        "documentation-quantile-over-time": "Nilai φ-kuantil (0 ≤ φ ≤ 1) dalam interval yang ditentukan.",
+        "documentation-rad": "Mengonversi derajat menjadi radian untuk semua elemen dalam v",
+        "documentation-rate": "Menghitung laju peningkatan rata-rata per detik dari deret waktu dalam vektor rentang. Pemutusan monotonisitas (seperti reset penghitung akibat target yang dimulai ulang) akan disesuaikan secara otomatis. Selain itu, perhitungan ini juga melakukan ekstrapolasi hingga ke ujung rentang waktu, sehingga tetap memperhitungkan scrape yang terlewat atau ketidaksesuaian waktu antara siklus scrape dan periode waktu rentang.",
+        "documentation-resets": "Untuk setiap deret waktu input, `resets(v range-vector)` mengembalikan jumlah reset penghitung dalam rentang waktu yang diberikan sebagai vektor instan. Setiap penurunan nilai antara dua sampel berturut-turut ditafsirkan sebagai reset penghitung.",
+        "documentation-round": "Membulatkan nilai sampel dari semua elemen dalam `v` ke bilangan bulat terdekat. Ikatan diselesaikan dengan pembulatan ke atas. Argumen opsional `to_nearest` memungkinkan untuk menentukan kelipatan terdekat di mana nilai sampel harus dibulatkan. Kelipatan ini juga mungkin pecahan.",
+        "documentation-scalar": "Dengan vektor input elemen tunggal, `skalar(v instant-vector)` mengembalikan nilai sampel dari elemen tunggal tersebut sebagai skalar. Jika vektor input tidak memiliki satu elemen persis, `skalar` akan mengembalikan `NaN`.",
+        "documentation-sgn": "Mengembalikan vektor dengan semua nilai sampel dikonversi ke tanda mereka, didefinisikan sebagai berikut: 1 jika v positif, -1 jika v negatif dan 0 jika v sama dengan nol.",
+        "documentation-sort": "Mengembalikan elemen vektor yang diurutkan berdasarkan nilai sampelnya, dalam urutan naik.",
+        "documentation-sort-desc": "Mengembalikan elemen vektor yang diurutkan berdasarkan nilai sampelnya, dalam urutan menurun.",
+        "documentation-sqrt": "Menghitung akar kuadrat dari semua elemen dalam `v`.",
+        "documentation-stddev-over-time": "Standar deviasi populasi dari nilai dalam interval yang ditentukan.",
+        "documentation-stdvar-over-time": "Varians standar populasi dari nilai dalam interval yang ditentukan.",
+        "documentation-sum-over-time": "Jumlah semua nilai dalam interval yang ditentukan.",
+        "documentation-time": "Mengembalikan jumlah detik sejak 1 Januari 1970 UTC. Perhatikan bahwa ini tidak benar-benar mengembalikan waktu saat ini, tetapi waktu saat ekspresi dievaluasi.",
+        "documentation-timestamp": "Mengembalikan stempel waktu dari setiap sampel vektor yang diberikan sebagai jumlah detik sejak 1 Januari 1970 UTC.",
+        "documentation-vector": "Mengembalikan skalar `s` sebagai vektor tanpa label.",
+        "documentation-year": "Mengembalikan tahun untuk setiap waktu yang diberikan dalam UTC."
       },
       "getTrigonometricFunctions": {
-        "documentation-acos": "",
-        "documentation-acosh": "",
-        "documentation-asin": "",
-        "documentation-asinh": "",
-        "documentation-atan": "",
-        "documentation-atanh": "",
-        "documentation-cos": "",
-        "documentation-cosh": "",
-        "documentation-sin": "",
-        "documentation-sinh": "",
-        "documentation-tan": "",
-        "documentation-tanh": ""
+        "documentation-acos": "menghitung arkus kosinus dari semua elemen di {{argument}}",
+        "documentation-acosh": "menghitung kosinus hiperbolik inversi dari semua elemen di {{argument}}",
+        "documentation-asin": "menghitung arcsin dari semua elemen di {{argument}}",
+        "documentation-asinh": "menghitung sinus hiperbolik inversi dari semua elemen di {{argument}}",
+        "documentation-atan": "menghitung arctangent dari semua elemen di {{argument}}",
+        "documentation-atanh": "menghitung tanget hiperbolik inversi dari semua elemen di {{argument}}",
+        "documentation-cos": "menghitung kosinus dari semua elemen di {{argument}}",
+        "documentation-cosh": "menghitung kosinus hiperbolik dari semua elemen di {{argument}}",
+        "documentation-sin": "menghitung sinus dari semua elemen di {{argument}}",
+        "documentation-sinh": "menghitung sinus hiperbolik dari semua elemen di {{argument}}",
+        "documentation-tan": "menghitung tangent dari semua elemen di {{argument}}",
+        "documentation-tanh": "menghitung tanget hiperbolik dari semua elemen di {{argument}}"
       }
     },
     "querybuilder": {
@@ -316,31 +314,31 @@
         "title-give-feedback": "Penjelajah metrik ini masih baru, beri tahu kami cara untuk meningkatkannya"
       },
       "get-collapsed-info": {
-        "exemplars": "",
-        "format": "",
-        "legend": "",
-        "step": "",
-        "type": ""
+        "exemplars": "Contoh: {{value}}",
+        "format": "Format: {{value}}",
+        "legend": "Legenda: {{value}}",
+        "step": "Langkah: {{value}}",
+        "type": "Tipe: {{value}}"
       },
       "get-placeholders": {
-        "browse": "",
-        "type": ""
+        "browse": "Cari metrik berdasarkan nama",
+        "type": "Filter berdasarkan jenis"
       },
       "get-prom-types": {
-        "description-counter": "",
-        "description-gauge": "",
-        "description-histogram": "",
-        "description-native-histogram": "",
-        "description-no-type": "",
-        "description-summary": "",
-        "description-unknown": "",
-        "label-counter": "",
-        "label-gauge": "",
-        "label-histogram": "",
-        "label-native-histogram": "",
-        "label-no-type": "",
-        "label-summary": "",
-        "label-unknown": ""
+        "description-counter": "Metrik kumulatif yang merepresentasikan satu penghitung yang meningkat secara monoton, yang nilainya hanya dapat bertambah atau direset ke nol saat sistem dimulai ulang.",
+        "description-gauge": "Metrik yang merepresentasikan satu nilai numerik yang dapat naik turun secara bebas.",
+        "description-histogram": "Histogram mengambil sampel pengamatan (biasanya seperti durasi permintaan atau ukuran respons) dan menghitungnya dalam bucket yang dapat dikonfigurasi.",
+        "description-native-histogram": "Histogram asli berbeda dari histogram Prometheus klasik dalam beberapa hal: Batas bucket pada histogram asli dihitung menggunakan rumus yang bergantung pada skala (resolusi) histogram, dan tidak ditentukan oleh pengguna.",
+        "description-no-type": "Metrik ini tidak memiliki tipe yang ditentukan dalam metadata.",
+        "description-summary": "Ringkasan mengambil sampel pengamatan (biasanya seperti durasi permintaan dan ukuran respons), dan dapat menghitung kuantil yang dapat dikonfigurasi selama rentang waktu geser.",
+        "description-unknown": "Metrik ini telah diberi tipe yang tidak diketahui dalam metadata.",
+        "label-counter": "Penghitung",
+        "label-gauge": "Pengukur",
+        "label-histogram": "Histogram",
+        "label-native-histogram": "Histogram asli",
+        "label-no-type": "Tanpa tipe",
+        "label-summary": "Ringkasan",
+        "label-unknown": "Tidak diketahui"
       },
       "handle-function": {
         "text": {
@@ -358,8 +356,8 @@
         "tooltip-label-filters": "Opsional: digunakan untuk menyaring metrik yang dipilih untuk jenis kueri ini."
       },
       "label-param-editor": {
-        "loadingMessage-loading-labels": "",
-        "noOptionsMessage-no-labels-found": ""
+        "loadingMessage-loading-labels": "Memuat label",
+        "noOptionsMessage-no-labels-found": "Tidak ada label yang ditemukan"
       },
       "metric-combobox": {
         "async-select": {
@@ -409,18 +407,18 @@
       },
       "operation-utils": {
         "getAggregationExplainer": {
-          "label-by": "",
-          "label-default": "",
-          "label-without": ""
+          "label-by": "Menghitung {{aggregationName}} berdasarkan dimensi sekaligus mempertahankan {{labelWord}} {{labels}}.",
+          "label-default": "Menghitung {{aggregationName}} berdasarkan dimensi.",
+          "label-without": "Menghitung {{aggregationName}} berdasarkan dimensi {{labels}}. Semua label lainnya dipertahankan."
         }
       },
       "prom-query-builder-options": {
         "aria-label-lower-limit-parameter": "Tetapkan batas bawah untuk parameter langkah",
         "aria-label-select-resolution": "Pilih resolusi",
         "format-options": {
-          "label-heatmap": "",
-          "label-table": "",
-          "label-time-series": ""
+          "label-heatmap": "Peta panas",
+          "label-table": "Tabel",
+          "label-time-series": "Deret waktu"
         },
         "label-exemplars": "Contoh",
         "label-format": "Format",
@@ -431,13 +429,9 @@
         "title-options": "Opsi",
         "tooltip-min-step": "Batas bawah tambahan untuk parameter langkah kueri Prometheus dan untuk variabel <2>{{interval}}</2> dan <4>{{rateInterval}}</4>."
       },
-      "prom-query-code-editor-autocomplete-info": {
-        "autocomplete-suggestions-limited": "Saran pelengkapan otomatis dibatasi",
-        "tooltip-autocomplete-suggestions-limited": "Jumlah nama metrik melebihi batas pelengkapan otomatis. Hanya {{autocompleteLimit}} metrik yang paling relevan yang ditampilkan. Anda dapat menyesuaikan ambang batas dalam pengaturan sumber data."
-      },
       "prom-query-editor-selector": {
-        "body-syntax-error": "",
-        "confirmText-continue": "",
+        "body-syntax-error": "Ada kesalahan sintaksis, atau struktur kueri tidak dapat divisualisasikan saat beralih ke mode pembuat. Bagian dari kueri mungkin hilang.",
+        "confirmText-continue": "Lanjutkan",
         "kick-start-your-query": "Mulai kueri Anda",
         "label-explain": "Penjelasan",
         "run-queries": "Jalankan kueri",
@@ -453,8 +447,8 @@
       },
       "query-editor-mode-toggle": {
         "editor-modes": {
-          "label-builder": "",
-          "label-code": ""
+          "label-builder": "Pembangun",
+          "label-code": "Kode"
         }
       },
       "query-pattern": {
@@ -483,9 +477,9 @@
       "results-table": {
         "content-descriptive-type": "Saat membuat {{descriptiveType}}, Prometheus mengekspos beberapa data seri dengan penghitung jenis. ",
         "description": "Deskripsi",
-        "message-expand-label-filters": "",
-        "message-expand-search": "",
-        "message-no-metrics-found": "",
+        "message-expand-label-filters": "Tidak ada metrik yang ditemukan. Coba perluas filter label Anda.",
+        "message-expand-search": "Tidak ada metrik yang ditemukan. Coba perluas pencarian dan filter Anda.",
+        "message-no-metrics-found": "Tidak ada metrik yang ditemukan di sumber data.",
         "name": "Nama",
         "type": "Jenis"
       },
