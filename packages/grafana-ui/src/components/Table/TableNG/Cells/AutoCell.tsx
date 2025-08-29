@@ -4,6 +4,7 @@ import { formattedValueToString } from '@grafana/data';
 
 import { MaybeWrapWithLink } from '../components/MaybeWrapWithLink';
 import { TABLE } from '../constants';
+import { getActiveCellSelector } from '../styles';
 import { AutoCellProps, TableCellStyles } from '../types';
 
 export function AutoCell({ value, field, rowIdx }: AutoCellProps) {
@@ -20,27 +21,32 @@ export const getStyles: TableCellStyles = (_theme, { textWrap, shouldOverflow, m
   css({
     ...(textWrap && { whiteSpace: 'pre-line' }),
     ...(shouldOverflow && {
-      '&:hover, &[aria-selected=true]': {
+      [getActiveCellSelector(Boolean(maxHeight))]: {
         whiteSpace: 'pre-line',
       },
     }),
     ...(maxHeight != null &&
       textWrap && {
-        height: 'auto',
-        minHeight: 'none',
-        overflowY: 'hidden',
-        display: '-webkit-box',
-        WebkitBoxOrient: 'vertical',
-        WebkitLineClamp: Math.floor(maxHeight / TABLE.LINE_HEIGHT),
+        // :not(.rdg-cell:hover &):not([aria-selected=true] &)
+        [getActiveCellSelector(true)
+          .split(',')
+          .map((sel) => `:not(${sel.trim()})`)
+          .join('')]: {
+          height: 'auto',
+          overflowY: 'hidden',
+          display: '-webkit-box',
+          WebkitBoxOrient: 'vertical',
+          WebkitLineClamp: Math.floor(maxHeight / TABLE.LINE_HEIGHT),
+        },
       }),
   });
 
-export const getJsonCellStyles: TableCellStyles = (_theme, { textWrap, shouldOverflow }) =>
+export const getJsonCellStyles: TableCellStyles = (_theme, { textWrap, shouldOverflow, maxHeight }) =>
   css({
     fontFamily: 'monospace',
     ...(textWrap && { whiteSpace: 'pre' }),
     ...(shouldOverflow && {
-      '&:hover, &[aria-selected=true]': {
+      [getActiveCellSelector(Boolean(maxHeight))]: {
         whiteSpace: 'pre',
       },
     }),
