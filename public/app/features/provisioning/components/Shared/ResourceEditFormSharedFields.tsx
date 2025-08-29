@@ -158,10 +158,14 @@ export const ResourceEditFormSharedFields = memo<DashboardEditFormSharedFieldsPr
                 )}
                 invalid={Boolean(errors.ref || branchError)}
                 error={
-                  errors.ref ? (
-                    <BranchValidationError />
-                  ) : branchError ? (
-                    t('provisioning.config-form.error-fetch-branches', 'Failed to fetch branches')
+                  errors.ref || branchError ? (
+                    <BranchValidationError
+                      message={
+                        branchError
+                          ? t('provisioning.config-form.error-fetch-branches', 'Failed to fetch branches')
+                          : undefined
+                      }
+                    />
                   ) : undefined
                 }
               >
