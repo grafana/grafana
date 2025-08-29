@@ -1,14 +1,16 @@
 import { skipToken } from '@reduxjs/toolkit/query/react';
-import { memo, useMemo } from 'react';
+import { memo, useEffect, useMemo } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 
 import { t } from '@grafana/i18n';
-import { Field, TextArea, Input, RadioButtonGroup, Combobox } from '@grafana/ui';
+import { Combobox, Field, Input, RadioButtonGroup, TextArea } from '@grafana/ui';
 import { RepositoryView, useGetRepositoryRefsQuery } from 'app/api/clients/provisioning/v0alpha1';
 import { BranchValidationError } from 'app/features/provisioning/Shared/BranchValidationError';
 import { WorkflowOption } from 'app/features/provisioning/types';
 import { validateBranchName } from 'app/features/provisioning/utils/git';
 import { isGitProvider } from 'app/features/provisioning/utils/repositoryTypes';
+
+import { generateNewBranchName } from '../utils/newBranchName';
 
 interface DashboardEditFormSharedFieldsProps {
   resourceType: 'dashboard' | 'folder';
@@ -25,6 +27,8 @@ export const ResourceEditFormSharedFields = memo<DashboardEditFormSharedFieldsPr
     const {
       control,
       register,
+      watch,
+      setValue,
       formState: { errors },
     } = useFormContext();
 
@@ -46,6 +50,24 @@ export const ResourceEditFormSharedFields = memo<DashboardEditFormSharedFieldsPr
         value: ref.name,
       }));
     }, [branchData?.items]);
+
+    const selectedWorkflow = watch('workflow');
+    const newBranchDefaultRef = generateNewBranchName(resourceType);
+    useEffect(() => {
+      switch (selectedWorkflow) {
+        case 'branch':
+          setValue('ref', newBranchDefaultRef);
+          break;
+        case 'write':
+          if (repository?.branch) {
+            setValue('ref', repository.branch);
+          }
+          break;
+        default:
+          // Do nothing for read-only repositories
+          break;
+      }
+    }, [selectedWorkflow, repository?.branch, setValue, newBranchDefaultRef]);
 
     const pathText =
       resourceType === 'dashboard'
@@ -107,7 +129,7 @@ export const ResourceEditFormSharedFields = memo<DashboardEditFormSharedFieldsPr
                 )}
               />
             </Field>
-            {workflow === 'branch' && (
+            {(workflow === 'write' || workflow === 'branch') && (
               <Field
                 noMargin
                 label={t('provisioned-resource-form.save-or-delete-resource-shared-fields.label-branch', 'Branch')}
@@ -124,26 +146,37 @@ export const ResourceEditFormSharedFields = memo<DashboardEditFormSharedFieldsPr
                   ) : undefined
                 }
               >
-                <Controller
-                  name="ref"
-                  control={control}
-                  rules={{ validate: validateBranchName }}
-                  render={({ field: { ref, onChange, ...field } }) => (
-                    <Combobox
-                      invalid={!!errors.ref}
-                      onChange={(option) => onChange(option?.value || '')}
-                      placeholder={t(
-                        'provisioned-resource-form.save-or-delete-resource-shared-fields.placeholder-branch',
-                        'Select or enter branch name'
-                      )}
-                      options={branchOptions}
-                      loading={branchLoading}
-                      createCustomValue
-                      isClearable
-                      {...field}
-                    />
-                  )}
-                />
+                {workflow === 'write' ? (
+                  <Controller
+                    name="ref"
+                    control={control}
+                    rules={{ validate: validateBranchName }}
+                    render={({ field: { ref, onChange, ...field } }) => (
+                      <Combobox
+                        invalid={!!errors.ref}
+                        onChange={(option) => onChange(option?.value || '')}
+                        placeholder={t(
+                          'provisioned-resource-form.save-or-delete-resource-shared-fields.placeholder-branch',
+                          'Select or enter branch name'
+                        )}
+                        options={branchOptions}
+                        loading={branchLoading}
+                        createCustomValue
+                        isClearable
+                        {...field}
+                      />
+                    )}
+                  />
+                ) : (
+                  <Input
+                    id="provisioned-resource-form-branch-input"
+                    placeholder={t(
+                      'provisioned-resource-form.save-or-delete-resource-shared-fields.placeholder-new-branch',
+                      'Enter new branch name'
+                    )}
+                    {...register('ref', { validate: validateBranchName })}
+                  />
+                )}
               </Field>
             )}
           </>

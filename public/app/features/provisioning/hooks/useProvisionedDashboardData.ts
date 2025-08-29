@@ -9,6 +9,7 @@ import { getIsReadOnlyRepo } from 'app/features/provisioning/utils/repository';
 import { DashboardMeta } from 'app/types/dashboard';
 
 import { getDefaultWorkflow, getWorkflowOptions } from '../components/defaults';
+import { generateNewBranchName } from '../components/utils/newBranchName';
 import { generatePath } from '../components/utils/path';
 import { generateTimestamp } from '../components/utils/timestamp';
 import { ProvisionedDashboardFormData } from '../types/form';
@@ -29,8 +30,8 @@ export function useDefaultValues({ meta, defaultTitle, defaultDescription, loade
     name: managerKind === 'repo' ? managerIdentity : undefined,
     folderName: meta.folderUid,
   });
-  const timestamp = generateTimestamp();
 
+  const timestamp = generateTimestamp();
   const folderPath = folder?.metadata?.annotations?.[AnnoKeySourcePath];
 
   const dashboardPath = generatePath({
@@ -40,13 +41,15 @@ export function useDefaultValues({ meta, defaultTitle, defaultDescription, loade
     folderPath,
   });
 
+  const defaultWorkflow = getDefaultWorkflow(repository, loadedFromRef);
+
   if (isLoading || !repository) {
     return null;
   }
 
   return {
     values: {
-      ref: `dashboard/${timestamp}`,
+      ref: defaultWorkflow === 'branch' ? generateNewBranchName('dashboard') : (repository?.branch ?? ''),
       path: dashboardPath,
       repo: managerIdentity || repository?.name || '',
       comment: '',
@@ -108,7 +111,7 @@ export function useProvisionedDashboardData(dashboard: DashboardScene): Provisio
   }
 
   const { values, isNew, repository } = defaultValuesResult;
-  const workflowOptions = getWorkflowOptions(repository, loadedFromRef);
+  const workflowOptions = getWorkflowOptions(repository);
 
   return {
     isReady: true,
