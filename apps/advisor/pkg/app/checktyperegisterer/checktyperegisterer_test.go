@@ -10,9 +10,7 @@ import (
 	"github.com/grafana/grafana-app-sdk/resource"
 	advisorv0alpha1 "github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1"
 	"github.com/grafana/grafana/apps/advisor/pkg/app/checks"
-	k8sErrs "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
 func TestCheckTypesRegisterer_Run(t *testing.T) {
@@ -41,7 +39,7 @@ func TestCheckTypesRegisterer_Run(t *testing.T) {
 			expectedErr: nil,
 		},
 		{
-			name: "create already exists, successful update",
+			name: "resource exists, successful update",
 			checks: []checks.Check{
 				&mockCheck{
 					id: "check1",
@@ -50,8 +48,19 @@ func TestCheckTypesRegisterer_Run(t *testing.T) {
 					},
 				},
 			},
-			createFunc: func(ctx context.Context, id resource.Identifier, obj resource.Object, opts resource.CreateOptions) (resource.Object, error) {
-				return nil, k8sErrs.NewAlreadyExists(schema.GroupResource{}, obj.GetName())
+			getFunc: func(ctx context.Context, id resource.Identifier) (resource.Object, error) {
+				return &advisorv0alpha1.CheckType{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "check1",
+						Annotations: map[string]string{
+							checks.NameAnnotation: "different-name", // Different to trigger update
+						},
+					},
+					Spec: advisorv0alpha1.CheckTypeSpec{
+						Name:  "check1",
+						Steps: []advisorv0alpha1.CheckTypeStep{},
+					},
+				}, nil
 			},
 			updateFunc: func(ctx context.Context, id resource.Identifier, obj resource.Object, opts resource.UpdateOptions) (resource.Object, error) {
 				return obj, nil
@@ -59,7 +68,7 @@ func TestCheckTypesRegisterer_Run(t *testing.T) {
 			expectedErr: nil,
 		},
 		{
-			name: "create already exists, with custom annotations",
+			name: "resource exists, with custom annotations preserved",
 			checks: []checks.Check{
 				&mockCheck{
 					id: "check1",
@@ -76,10 +85,11 @@ func TestCheckTypesRegisterer_Run(t *testing.T) {
 							checks.IgnoreStepsAnnotationList: "step1",
 						},
 					},
+					Spec: advisorv0alpha1.CheckTypeSpec{
+						Name:  "check1",
+						Steps: []advisorv0alpha1.CheckTypeStep{},
+					},
 				}, nil
-			},
-			createFunc: func(ctx context.Context, id resource.Identifier, obj resource.Object, opts resource.CreateOptions) (resource.Object, error) {
-				return nil, k8sErrs.NewAlreadyExists(schema.GroupResource{}, obj.GetName())
 			},
 			updateFunc: func(ctx context.Context, id resource.Identifier, obj resource.Object, opts resource.UpdateOptions) (resource.Object, error) {
 				if obj.GetAnnotations()[checks.IgnoreStepsAnnotationList] != "step1" {
@@ -115,8 +125,19 @@ func TestCheckTypesRegisterer_Run(t *testing.T) {
 					},
 				},
 			},
-			createFunc: func(ctx context.Context, id resource.Identifier, obj resource.Object, opts resource.CreateOptions) (resource.Object, error) {
-				return nil, k8sErrs.NewAlreadyExists(schema.GroupResource{}, obj.GetName())
+			getFunc: func(ctx context.Context, id resource.Identifier) (resource.Object, error) {
+				return &advisorv0alpha1.CheckType{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "check1",
+						Annotations: map[string]string{
+							checks.NameAnnotation: "different-name", // Different to trigger update
+						},
+					},
+					Spec: advisorv0alpha1.CheckTypeSpec{
+						Name:  "check1",
+						Steps: []advisorv0alpha1.CheckTypeStep{},
+					},
+				}, nil
 			},
 			updateFunc: func(ctx context.Context, id resource.Identifier, obj resource.Object, opts resource.UpdateOptions) (resource.Object, error) {
 				return nil, errors.New("update error")
@@ -133,8 +154,19 @@ func TestCheckTypesRegisterer_Run(t *testing.T) {
 					},
 				},
 			},
-			createFunc: func(ctx context.Context, id resource.Identifier, obj resource.Object, opts resource.CreateOptions) (resource.Object, error) {
-				return nil, k8sErrs.NewAlreadyExists(schema.GroupResource{}, obj.GetName())
+			getFunc: func(ctx context.Context, id resource.Identifier) (resource.Object, error) {
+				return &advisorv0alpha1.CheckType{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "check1",
+						Annotations: map[string]string{
+							checks.NameAnnotation: "different-name", // Different to trigger update
+						},
+					},
+					Spec: advisorv0alpha1.CheckTypeSpec{
+						Name:  "check1",
+						Steps: []advisorv0alpha1.CheckTypeStep{},
+					},
+				}, nil
 			},
 			updateFunc: func(ctx context.Context, id resource.Identifier, obj resource.Object, opts resource.UpdateOptions) (resource.Object, error) {
 				return nil, errors.New("apiserver is shutting down")
@@ -266,9 +298,15 @@ func (m *mockClient) Get(ctx context.Context, id resource.Identifier) (resource.
 }
 
 func (m *mockClient) Create(ctx context.Context, id resource.Identifier, obj resource.Object, opts resource.CreateOptions) (resource.Object, error) {
-	return m.createFunc(ctx, id, obj, opts)
+	if m.createFunc != nil {
+		return m.createFunc(ctx, id, obj, opts)
+	}
+	return obj, nil
 }
 
 func (m *mockClient) Update(ctx context.Context, id resource.Identifier, obj resource.Object, opts resource.UpdateOptions) (resource.Object, error) {
-	return m.updateFunc(ctx, id, obj, opts)
+	if m.updateFunc != nil {
+		return m.updateFunc(ctx, id, obj, opts)
+	}
+	return obj, nil
 }
