@@ -1012,6 +1012,13 @@ func TestAlertRuleCopy(t *testing.T) {
 		copied := rule.Copy()
 		require.NotSame(t, rule.Metadata.PrometheusStyleRule, copied.Metadata.PrometheusStyleRule)
 	})
+	t.Run("should return an exact copy of recording rule", func(t *testing.T) {
+		for i := 0; i < 100; i++ {
+			rule := RuleGen.With(RuleGen.WithAllRecordingRules()).GenerateRef()
+			copied := rule.Copy()
+			require.Empty(t, rule.Diff(copied))
+		}
+	})
 }
 
 // This test makes sure the default generator
@@ -1033,6 +1040,48 @@ func TestGeneratorFillsAllFields(t *testing.T) {
 
 	for i := 0; i < 1000; i++ {
 		rule := RuleGen.Generate()
+		v := reflect.ValueOf(rule)
+
+		for j := 0; j < tpe.NumField(); j++ {
+			field := tpe.Field(j)
+			value := v.Field(j)
+			if !value.IsValid() || value.Kind() == reflect.Ptr && value.IsNil() || value.IsZero() {
+				continue
+			}
+			delete(fields, field.Name)
+			if len(fields) == 0 {
+				return
+			}
+		}
+	}
+
+	require.FailNow(t, "AlertRule generator does not populate fields", "skipped fields: %v", maps.Keys(fields))
+}
+
+func TestGeneratorFillsAllRecordingRuleFields(t *testing.T) {
+	ignoredFields := map[string]struct{}{
+		"ID":                          {},
+		"IsPaused":                    {},
+		"NoDataState":                 {},
+		"ExecErrState":                {},
+		"Condition":                   {},
+		"KeepFiringFor":               {},
+		"MissingSeriesEvalsToResolve": {},
+		"For":                         {},
+		"NotificationSettings":        {},
+	}
+
+	tpe := reflect.TypeOf(AlertRule{})
+	fields := make(map[string]struct{}, tpe.NumField())
+	for i := 0; i < tpe.NumField(); i++ {
+		if _, ok := ignoredFields[tpe.Field(i).Name]; ok {
+			continue
+		}
+		fields[tpe.Field(i).Name] = struct{}{}
+	}
+
+	for i := 0; i < 1000; i++ {
+		rule := RuleGen.With(RuleGen.WithAllRecordingRules()).Generate()
 		v := reflect.ValueOf(rule)
 
 		for j := 0; j < tpe.NumField(); j++ {
