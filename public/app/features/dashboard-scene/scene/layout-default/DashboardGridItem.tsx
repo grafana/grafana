@@ -85,9 +85,9 @@ export class DashboardGridItem
     const stateChange: Partial<DashboardGridItemState> = {};
 
     if (this.getRepeatDirection() === 'v') {
-      stateChange.itemHeight = Math.ceil(newState.height! / this.getPanelCount());
+      stateChange.itemHeight = Math.ceil(newState.height! / this.getChildCount());
     } else {
-      const rowCount = Math.ceil(this.getPanelCount() / this.getMaxPerRow());
+      const rowCount = Math.ceil(this.getChildCount() / this.getMaxPerRow());
       stateChange.itemHeight = Math.ceil(newState.height! / rowCount);
     }
 
@@ -96,7 +96,7 @@ export class DashboardGridItem
     }
   }
 
-  public getPanelCount() {
+  public getChildCount() {
     return (this.state.repeatedPanels?.length ?? 0) + 1;
   }
 
