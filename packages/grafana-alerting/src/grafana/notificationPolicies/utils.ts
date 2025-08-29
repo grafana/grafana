@@ -4,7 +4,7 @@ import { RoutingTree, RoutingTreeRoute } from '../api/v0alpha1/api.gen';
 import { Label, LabelMatcher } from '../matchers/types';
 import { LabelMatchDetails, matchLabels } from '../matchers/utils';
 
-import { Route } from './types';
+import { Route, RouteWithID } from './types';
 
 export const INHERITABLE_KEYS = ['receiver', 'group_by', 'group_wait', 'group_interval', 'repeat_interval'] as const;
 export type InheritableKeys = typeof INHERITABLE_KEYS;
@@ -142,7 +142,6 @@ export function getInheritedProperties<T extends Route>(
   return inherited;
 }
 
-export type RouteWithID = Route & { id: string };
 export function addUniqueIdentifier(route: Route): RouteWithID {
   return {
     id: uniqueId('route-'),

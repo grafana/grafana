@@ -1,3 +1,5 @@
+import { omit } from 'lodash';
+
 import { LabelMatcherFactory, RouteFactory } from '../api/v0alpha1/mocks/fakes/Routes';
 import { Label } from '../matchers/types';
 import { LabelMatchDetails, matchLabels } from '../matchers/utils';
@@ -6,6 +8,7 @@ import { Route } from './types';
 import {
   InheritableProperties,
   RouteMatchResult,
+  addUniqueIdentifier,
   computeInheritedTree,
   findMatchingRoutes,
   getInheritedProperties,
@@ -991,6 +994,55 @@ describe('matchLabels', () => {
   it('does match regular expressions with flags', () => {
     const result = matchLabels([{ label: 'foo', type: '=~', value: '(?i).*BAr.*' }], [['foo', 'barbarbar']]);
     expect(result.matches).toEqual(true);
+  });
+});
+
+describe('addUniqueIdentifier', () => {
+  it('should add unique identifiers recursively and preserve all properties', () => {
+    const childRoute = RouteFactory.build({
+      receiver: 'child-receiver',
+      matchers: [LabelMatcherFactory.build({ label: 'env', type: '=', value: 'prod' })],
+    });
+    const parentRoute = RouteFactory.build({
+      receiver: 'parent-receiver',
+      matchers: [LabelMatcherFactory.build({ label: 'service', type: '=', value: 'web' })],
+      group_by: ['service'],
+      group_wait: '30s',
+      routes: [childRoute],
+    });
+
+    const { id, routes, ...rest } = addUniqueIdentifier(parentRoute);
+
+    // Should add unique ID to parent
+    expect(id).toMatch(/^route-/);
+    // Should match the original route
+    expect(rest).toStrictEqual(omit(parentRoute, 'routes'));
+
+    // Should recursively add unique ID to child
+    expect(routes).toHaveLength(1);
+    expect(routes[0]).toHaveProperty('id');
+    expect(routes[0].id).toMatch(/^route-/);
+    expect(routes[0].receiver).toBe('child-receiver');
+    expect(omit(routes[0], 'id')).toStrictEqual(childRoute);
+
+    // IDs should be unique
+    expect(id).not.toBe(routes[0]?.id);
+
+    // Should not modify original
+    expect(parentRoute).not.toHaveProperty('id');
+    expect(childRoute).not.toHaveProperty('id');
+  });
+
+  it('should handle undefined routes by converting to empty array', () => {
+    const route = RouteFactory.build({
+      receiver: 'test-receiver',
+      routes: undefined,
+    });
+
+    const result = addUniqueIdentifier(route);
+
+    expect(result).toHaveProperty('id');
+    expect(result.routes).toEqual([]);
   });
 });
 
