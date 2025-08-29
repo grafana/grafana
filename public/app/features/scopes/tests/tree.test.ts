@@ -279,7 +279,6 @@ describe('Tree', () => {
       await user.keyboard('{ArrowDown}');
 
       // Get all tree items and find the one that's selected
-      const treeItems = screen.getAllByRole('treeitem');
       const selectedItem = screen.getByRole('treeitem', { selected: true });
       expect(selectedItem).toBeTruthy();
 
