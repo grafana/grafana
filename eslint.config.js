@@ -54,11 +54,6 @@ const baseImportConfig = {
         'Do not import test files. If you require reuse of constants/mocks across files, create a separate file with no tests',
     },
     {
-      group: ['@grafana/ui*', '*/Layout/*'],
-      importNames: ['Layout', 'HorizontalGroup', 'VerticalGroup'],
-      message: 'Use Stack component instead.',
-    },
-    {
       group: ['@grafana/ui/src/*', '@grafana/runtime/src/*', '@grafana/data/src/*'],
       message: 'Import from the public export instead.',
     },
@@ -82,7 +77,6 @@ function withBaseRestrictedImportsConfig(config = {}) {
     patterns: [...baseImportConfig.patterns, ...(config?.patterns ?? [])],
     paths: [...baseImportConfig.paths, ...(config?.paths ?? [])],
   };
-  console.log(finalConfig);
   return finalConfig;
 }
 
