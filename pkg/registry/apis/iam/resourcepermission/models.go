@@ -78,8 +78,7 @@ func toV0ResourcePermission(permissionGroups map[string][]flatResourcePermission
 		resourceName = "*"
 	}
 
-	// Build permissions array for all users/teams/roles
-	permissions := make([]v0alpha1.ResourcePermissionspecPermission, 0, len(permissionGroups))
+	permissions := make([]v0alpha1.ResourcePermissionspecPermission, 0, 1)
 
 	for _, perms := range permissionGroups {
 		if len(perms) == 0 {
@@ -104,26 +103,11 @@ func toV0ResourcePermission(permissionGroups map[string][]flatResourcePermission
 			permissionKind = v0alpha1.ResourcePermissionSpecPermissionKindServiceAccount
 		}
 
-		actions := make([]string, 0, len(perms))
-		for _, perm := range perms {
-			actions = append(actions, strings.Split(perm.Action, ":")[1])
-		}
-
-		verbs := make([]string, 0, 1)
-		if contains(actions, "admin") {
-			verbs = append(verbs, "admin")
-		}
-		if contains(actions, "edit") {
-			verbs = append(verbs, "edit")
-		}
-		if contains(actions, "view") {
-			verbs = append(verbs, "view")
-		}
-
+		verb := strings.Split(first.Action, ":")[1]
 		permissions = append(permissions, v0alpha1.ResourcePermissionspecPermission{
-			Kind:  permissionKind,
-			Name:  first.SubjectUID,
-			Verbs: verbs,
+			Kind: permissionKind,
+			Name: first.SubjectUID,
+			Verb: verb,
 		})
 	}
 
@@ -156,13 +140,4 @@ func getApiGroupForResource(resourceType string) string {
 	default:
 		return "core.grafana.app"
 	}
-}
-
-func contains(slice []string, item string) bool {
-	for _, s := range slice {
-		if s == item {
-			return true
-		}
-	}
-	return false
 }
