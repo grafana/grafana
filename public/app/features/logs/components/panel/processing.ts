@@ -1,6 +1,6 @@
 import ansicolor from 'ansicolor';
 import { LosslessNumber, parse, stringify } from 'lossless-json';
-import Prism, { Grammar } from 'prismjs';
+import Prism, { Grammar, Token } from 'prismjs';
 
 import {
   DataFrame,
@@ -10,7 +10,6 @@ import {
   LogRowModel,
   LogsSortOrder,
   systemDateFormats,
-  textUtil,
 } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { GetFieldLinksFn } from 'app/plugins/panel/logs/types';
@@ -59,6 +58,7 @@ export class LogListModel implements LogRowModel {
   private _currentSearch: string | undefined = undefined;
   private _grammar?: Grammar;
   private _highlightedBody: string | undefined = undefined;
+  private _tokens: Array<string | Token> | undefined = undefined;
   private _fields: FieldDef[] | undefined = undefined;
   private _getFieldLinks: GetFieldLinksFn | undefined = undefined;
   private _prettifyJSON: boolean;
@@ -161,12 +161,22 @@ export class LogListModel implements LogRowModel {
   get highlightedBody() {
     if (this._highlightedBody === undefined) {
       // Body is accessed first to trigger the getter code before generateLogGrammar()
-      const sanitizedBody = textUtil.sanitize(this.body);
       this._grammar = this._grammar ?? generateLogGrammar(this);
       const extraGrammar = generateTextMatchGrammar(this.searchWords, this._currentSearch);
-      this._highlightedBody = Prism.highlight(sanitizedBody, { ...extraGrammar, ...this._grammar }, 'lokiql');
+      this._highlightedBody = Prism.highlight(this.body, { ...extraGrammar, ...this._grammar }, 'logs');
     }
     return this._highlightedBody;
+  }
+
+  get highlightedBodyTokens() {
+    if (this._tokens === undefined) {
+      // Body is accessed first to trigger the getter code before generateLogGrammar()
+      this._grammar = this._grammar ?? generateLogGrammar(this);
+      const extraGrammar = generateTextMatchGrammar(this.searchWords, this._currentSearch);
+      this._tokens = Prism.tokenize(this.body, { ...extraGrammar, ...this._grammar });
+      console.log(this._tokens);
+    }
+    return this._tokens;
   }
 
   get isJSON() {
