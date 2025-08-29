@@ -68,6 +68,7 @@ func convertToK8sResource(
 			DisableResolveMessage: &integration.DisableResolveMessage,
 			Settings:              maps.Clone(integration.Settings),
 			SecureFields:          integration.SecureFields(),
+			Version:               integration.Config.Version,
 		})
 	}
 
@@ -120,10 +121,13 @@ func convertToDomainModel(receiver *model.Receiver) (*ngmodels.Receiver, map[str
 		Version:      receiver.ResourceVersion,
 		Provenance:   ngmodels.ProvenanceNone,
 	}
-
 	storedSecureFields := make(map[string][]string, len(receiver.Spec.Integrations))
 	for _, integration := range receiver.Spec.Integrations {
-		config, err := ngmodels.IntegrationConfigFromType(integration.Type)
+		version := &integration.Version
+		if *version == "" {
+			version = nil
+		}
+		config, err := ngmodels.IntegrationConfigFromType(integration.Type, version)
 		if err != nil {
 			return nil, nil, err
 		}
