@@ -561,15 +561,6 @@ export function TableNG(props: TableNGProps) {
             const tooltipBodyClasses = clsx(tooltipDefaultStyles, tooltipSpecificStyles, tooltipLinkStyles);
 
             const tooltipFieldRenderer = getCellRenderer(tooltipField, tooltipCellOptions);
-            // if (maxRowHeight != null) {
-            //   const OrigCellRenderer = tooltipFieldRenderer;
-            //   const tooltipMaxHeightClassName = getMaxHeightCellStyles(theme, tooltipCellStyleOptions);
-            //   tooltipFieldRenderer = (props) => (
-            //     <div className={tooltipMaxHeightClassName}>
-            //       <OrigCellRenderer {...props} />
-            //     </div>
-            //   )
-            // }
 
             const placement = field.config.custom?.tooltip?.placement ?? TableCellTooltipPlacement.Auto;
             const tooltipWidth =
