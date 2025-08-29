@@ -22,7 +22,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/modules"
-	"github.com/grafana/grafana/pkg/operator"
 	"github.com/grafana/grafana/pkg/services/apiserver/standalone"
 	"github.com/grafana/grafana/pkg/services/authz"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -213,7 +212,7 @@ func (s *ModuleServer) initOperatorServer() (services.Service, error) {
 		return nil, nil
 	}
 
-	for _, op := range operator.GetRegisteredOperators() {
+	for _, op := range GetRegisteredOperators() {
 		if op.Name == operatorName {
 			return services.NewBasicService(
 				nil,
@@ -230,7 +229,7 @@ func (s *ModuleServer) initOperatorServer() (services.Service, error) {
 		}
 	}
 
-	return nil, fmt.Errorf("unknown operator: %s. available operators: %v", operatorName, operator.GetRegisteredOperators())
+	return nil, fmt.Errorf("unknown operator: %s. available operators: %v", operatorName, GetRegisteredOperatorNames())
 }
 
 // Shutdown initiates Grafana graceful shutdown. This shuts down all

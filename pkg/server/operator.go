@@ -1,4 +1,4 @@
-package operator
+package server
 
 import (
 	"github.com/grafana/grafana/pkg/services/apiserver/standalone"
@@ -23,4 +23,13 @@ func RegisterOperator(operator Operator) {
 // GetRegisteredOperators returns all registered operators
 func GetRegisteredOperators() []Operator {
 	return operatorsRegistry
+}
+
+// GetRegisteredOperatorNames returns the names of all registered operators
+func GetRegisteredOperatorNames() []string {
+	names := make([]string, len(operatorsRegistry))
+	for i, op := range operatorsRegistry {
+		names[i] = op.Name
+	}
+	return names
 }

@@ -18,7 +18,7 @@ import (
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/transport"
 
-	"github.com/grafana/grafana/pkg/operator"
+	"github.com/grafana/grafana/pkg/server"
 	"github.com/grafana/grafana/pkg/services/apiserver/standalone"
 	"github.com/grafana/grafana/pkg/setting"
 
@@ -29,7 +29,7 @@ import (
 )
 
 func init() {
-	operator.RegisterOperator(operator.Operator{
+	server.RegisterOperator(server.Operator{
 		Name:        "provisioning-jobs",
 		Description: "Watch provisioning jobs and manage job history cleanup",
 		RunFunc:     runJobController,
@@ -185,14 +185,14 @@ func buildTLSConfig(insecure bool, certFile, keyFile, caFile string) (rest.TLSCl
 		Insecure: insecure,
 	}
 
-	// If client certificate and key are provided
 	if certFile != "" && keyFile != "" {
 		tlsConfig.CertFile = certFile
 		tlsConfig.KeyFile = keyFile
 	}
 
-	// If CA certificate is provided
 	if caFile != "" {
+		// caFile is set in operator.ini file
+		// nolint:gosec
 		caCert, err := os.ReadFile(caFile)
 		if err != nil {
 			return tlsConfig, fmt.Errorf("failed to read CA certificate file: %w", err)
