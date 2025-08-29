@@ -113,6 +113,7 @@ type fakeRuleAccessControlService struct {
 	AuthorizeRuleChangesFunc       func(ctx context.Context, user identity.Requester, change *store.GroupDelta) error
 	CanReadAllRulesFunc            func(ctx context.Context, user identity.Requester) (bool, error)
 	CanWriteAllRulesFunc           func(ctx context.Context, user identity.Requester) (bool, error)
+	HasAccessInFolderFunc          func(ctx context.Context, user identity.Requester, folder models.Namespaced) (bool, error)
 }
 
 func (s *fakeRuleAccessControlService) RecordCall(method string, args ...interface{}) {
@@ -165,6 +166,14 @@ func (s *fakeRuleAccessControlService) CanWriteAllRules(ctx context.Context, use
 		return s.CanWriteAllRulesFunc(ctx, user)
 	}
 	return false, nil
+}
+
+func (s *fakeRuleAccessControlService) HasAccessInFolder(ctx context.Context, user identity.Requester, folder models.Namespaced) (bool, error) {
+	s.RecordCall("HasAccessInFolder", ctx, user, folder)
+	if s.HasAccessInFolderFunc != nil {
+		return s.HasAccessInFolderFunc(ctx, user, folder)
+	}
+	return true, nil
 }
 
 type fakeAlertRuleNotificationStore struct {

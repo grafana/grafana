@@ -237,13 +237,16 @@ export class CanvasPanel extends Component<Props, State> {
     const panZoomSwitched = this.props.options.panZoom !== nextProps.options.panZoom;
     const zoomToContentSwitched = this.props.options.zoomToContent !== nextProps.options.zoomToContent;
     const tooltipModeSwitched = this.props.options.tooltip?.mode !== nextProps.options.tooltip?.mode;
+    const tooltipDisableForOneClickSwitched =
+      this.props.options.tooltip?.disableForOneClick !== nextProps.options.tooltip?.disableForOneClick;
     if (
       this.needsReload ||
       inlineEditingSwitched ||
       shouldShowAdvancedTypesSwitched ||
       panZoomSwitched ||
       zoomToContentSwitched ||
-      tooltipModeSwitched
+      tooltipModeSwitched ||
+      tooltipDisableForOneClickSwitched
     ) {
       if (inlineEditingSwitched) {
         // Replace scene div to prevent selecto instance leaks
