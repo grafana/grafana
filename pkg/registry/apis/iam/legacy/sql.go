@@ -22,6 +22,8 @@ type LegacyIdentityStore interface {
 
 	GetServiceAccountInternalID(ctx context.Context, ns claims.NamespaceInfo, query GetServiceAccountInternalIDQuery) (*GetServiceAccountInternalIDResult, error)
 	ListServiceAccounts(ctx context.Context, ns claims.NamespaceInfo, query ListServiceAccountsQuery) (*ListServiceAccountResult, error)
+	CreateServiceAccount(ctx context.Context, ns claims.NamespaceInfo, cmd CreateServiceAccountCommand) (*CreateServiceAccountResult, error)
+
 	ListServiceAccountTokens(ctx context.Context, ns claims.NamespaceInfo, query ListServiceAccountTokenQuery) (*ListServiceAccountTokenResult, error)
 
 	GetTeamInternalID(ctx context.Context, ns claims.NamespaceInfo, query GetTeamInternalIDQuery) (*GetTeamInternalIDResult, error)
@@ -30,9 +32,7 @@ type LegacyIdentityStore interface {
 	ListTeamMembers(ctx context.Context, ns claims.NamespaceInfo, query ListTeamMembersQuery) (*ListTeamMembersResult, error)
 }
 
-var (
-	_ LegacyIdentityStore = (*legacySQLStore)(nil)
-)
+var _ LegacyIdentityStore = (*legacySQLStore)(nil)
 
 func NewLegacySQLStores(sql legacysql.LegacyDatabaseProvider) LegacyIdentityStore {
 	return &legacySQLStore{

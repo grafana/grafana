@@ -9,6 +9,7 @@ import (
 	claims "github.com/grafana/authlib/types"
 
 	"github.com/grafana/grafana/pkg/registry/apis/iam/common"
+	"github.com/grafana/grafana/pkg/services/sqlstore/session"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
 )
@@ -109,6 +110,20 @@ type ServiceAccount struct {
 	Disabled bool
 	Created  time.Time
 	Updated  time.Time
+}
+
+type CreateServiceAccountCommand struct {
+	UID        string
+	Name       string
+	IsDisabled bool
+	OrgID      int64
+	Created    time.Time
+	Updated    time.Time
+	LastSeenAt time.Time
+}
+
+type CreateServiceAccountResult struct {
+	ServiceAccount ServiceAccount
 }
 
 var sqlQueryServiceAccountsTemplate = mustTemplate("service_accounts_query.sql")
@@ -285,4 +300,97 @@ func (s *legacySQLStore) ListServiceAccountTokens(ctx context.Context, ns claims
 	}
 
 	return res, err
+}
+
+var sqlCreateServiceAccountTemplate = mustTemplate("create_service_account.sql")
+
+func newCreateServiceAccount(sql *legacysql.LegacyDatabaseHelper, cmd *CreateServiceAccountCommand) createServiceAccountQuery {
+	return createServiceAccountQuery{
+		SQLTemplate:  sqltemplate.New(sql.DialectForDriver()),
+		UserTable:    sql.Table("user"),
+		OrgUserTable: sql.Table("org_user"),
+		Command:      cmd,
+	}
+}
+
+type createServiceAccountQuery struct {
+	sqltemplate.SQLTemplate
+	UserTable    string
+	OrgUserTable string
+	Command      *CreateServiceAccountCommand
+}
+
+func (r createServiceAccountQuery) Validate() error {
+	return nil
+}
+
+func (s *legacySQLStore) CreateServiceAccount(ctx context.Context, ns claims.NamespaceInfo, cmd CreateServiceAccountCommand) (*CreateServiceAccountResult, error) {
+	cmd.OrgID = ns.OrgID
+
+	now := time.Now()
+	lastSeenAt := now.AddDate(-10, 0, 0) // Set last seen 10 years ago like in user service
+
+	cmd.Created = now
+	cmd.Updated = now
+	cmd.LastSeenAt = lastSeenAt
+
+	if ns.OrgID == 0 {
+		return nil, fmt.Errorf("expected non zero org id")
+	}
+
+	sql, err := s.sql(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	req := newCreateServiceAccount(sql, &cmd)
+
+	var createdSA ServiceAccount
+	err = sql.DB.GetSqlxSession().WithTransaction(ctx, func(st *session.SessionTx) error {
+		userQuery, err := sqltemplate.Execute(sqlCreateServiceAccountTemplate, req)
+		if err != nil {
+			return fmt.Errorf("execute service account template %q: %w", sqlCreateServiceAccountTemplate.Name(), err)
+		}
+
+		serviceAccountID, err := st.ExecWithReturningId(ctx, userQuery, req.GetArgs()...)
+		if err != nil {
+			return fmt.Errorf("failed to create service account: %w", err)
+		}
+
+		orgUserCmd := &CreateOrgUserCommand{
+			OrgID:   ns.OrgID,
+			UserID:  serviceAccountID,
+			Role:    "Viewer", // TODO: Default role for service accounts for now
+			Created: cmd.Created,
+			Updated: cmd.Updated,
+		}
+		orgUserReq := newCreateOrgUser(sql, orgUserCmd)
+
+		orgUserQuery, err := sqltemplate.Execute(sqlCreateOrgUserTemplate, orgUserReq)
+		if err != nil {
+			return fmt.Errorf("execute org_user template %q: %w", sqlCreateOrgUserTemplate.Name(), err)
+		}
+
+		_, err = st.Exec(ctx, orgUserQuery, orgUserReq.GetArgs()...)
+		if err != nil {
+			return fmt.Errorf("failed to create org_user relationship: %w", err)
+		}
+
+		createdSA = ServiceAccount{
+			ID:       serviceAccountID,
+			UID:      cmd.UID,
+			Name:     cmd.Name,
+			Disabled: cmd.IsDisabled,
+			Created:  cmd.Created,
+			Updated:  cmd.Updated,
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &CreateServiceAccountResult{ServiceAccount: createdSA}, nil
 }

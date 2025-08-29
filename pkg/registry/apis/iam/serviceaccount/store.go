@@ -3,7 +3,9 @@ package serviceaccount
 import (
 	"context"
 	"fmt"
+	"strings"
 
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -23,17 +25,65 @@ var (
 	_ rest.Getter               = (*LegacyStore)(nil)
 	_ rest.Lister               = (*LegacyStore)(nil)
 	_ rest.Storage              = (*LegacyStore)(nil)
+	_ rest.CreaterUpdater       = (*LegacyStore)(nil)
 )
 
 var resource = iamv0alpha1.ServiceAccountResourceInfo
 
-func NewLegacyStore(store legacy.LegacyIdentityStore, ac claims.AccessClient) *LegacyStore {
-	return &LegacyStore{store, ac}
+func NewLegacyStore(store legacy.LegacyIdentityStore, ac claims.AccessClient, enableAuthnMutation bool) *LegacyStore {
+	return &LegacyStore{store, ac, enableAuthnMutation}
 }
 
 type LegacyStore struct {
-	store legacy.LegacyIdentityStore
-	ac    claims.AccessClient
+	store               legacy.LegacyIdentityStore
+	ac                  claims.AccessClient
+	enableAuthnMutation bool
+}
+
+// Update implements rest.Updater.
+func (s *LegacyStore) Update(ctx context.Context, name string, objInfo rest.UpdatedObjectInfo, createValidation rest.ValidateObjectFunc, updateValidation rest.ValidateObjectUpdateFunc, forceAllowCreate bool, options *metav1.UpdateOptions) (runtime.Object, bool, error) {
+	return nil, false, apierrors.NewMethodNotSupported(resource.GroupResource(), "update")
+}
+
+// Create implements rest.Creater.
+func (s *LegacyStore) Create(ctx context.Context, obj runtime.Object, createValidation rest.ValidateObjectFunc, options *metav1.CreateOptions) (runtime.Object, error) {
+	if !s.enableAuthnMutation {
+		return nil, apierrors.NewMethodNotSupported(resource.GroupResource(), "create")
+	}
+
+	ns, err := request.NamespaceInfoFrom(ctx, true)
+	if err != nil {
+		return nil, err
+	}
+
+	saObj, ok := obj.(*iamv0alpha1.ServiceAccount)
+	if !ok {
+		return nil, fmt.Errorf("expected ServiceAccount object, got %T", obj)
+	}
+
+	if createValidation != nil {
+		if err := createValidation(ctx, obj); err != nil {
+			return nil, err
+		}
+	}
+
+	if saObj.Spec.Title == "" {
+		return nil, fmt.Errorf("service account must have a title")
+	}
+
+	createCmd := legacy.CreateServiceAccountCommand{
+		UID:        saObj.Name,
+		Name:       saObj.Spec.Title,
+		IsDisabled: saObj.Spec.Disabled,
+	}
+
+	result, err := s.store.CreateServiceAccount(ctx, ns, createCmd)
+	if err != nil {
+		return nil, err
+	}
+
+	iamSA := toSAItem(result.ServiceAccount, ns.Value)
+	return &iamSA, nil
 }
 
 func (s *LegacyStore) New() runtime.Object {
@@ -132,4 +182,17 @@ func (s *LegacyStore) Get(ctx context.Context, name string, options *metav1.GetO
 
 	res := toSAItem(found.Items[0], ns.Value)
 	return &res, nil
+}
+
+// generateLogin makes a generated string to have a ID for the service account across orgs and it's name
+// this causes you to create a service account with the same name in different orgs
+// not the same name in the same org
+// -- WARNING:
+// -- if you change this function you need to change the ExtSvcLoginPrefix as well
+// -- to make sure they are not considered as regular service accounts
+func generateLogin(prefix string, orgId int64, name string) string {
+	generatedLogin := fmt.Sprintf("%v-%v-%v", prefix, orgId, strings.ToLower(name))
+	// in case the name has multiple spaces or dashes in the prefix or otherwise, replace them with a single dash
+	generatedLogin = strings.Replace(generatedLogin, "--", "-", 1)
+	return strings.ReplaceAll(generatedLogin, " ", "-")
 }
