@@ -58,7 +58,7 @@ jobs:
           GRAFANA_ADMIN_USER: ${{ env.FSPERFBASELINE_USERNAME }}
           GRAFANA_ADMIN_PASSWORD: ${{ env.FSPERFBASELINE_PASSWORD }}
         run: yarn e2e:playwright --grep @performance --reporter json
-      
+
       - name: Run Playwright tests (fsperf)
         id: pw-fsperf
         continue-on-error: true
@@ -82,7 +82,7 @@ jobs:
             -e PROMETHEUS_URL="$PROMETHEUS_URL" \
             -e PROMETHEUS_USER="$PROMETHEUS_USER" \
             -e PROMETHEUS_PASSWORD="$PROMETHEUS_TOKEN" \
-            us-docker.pkg.dev/grafanalabs-global/docker-grafana-bench-prod/grafana-bench:v0.6.0 report \
+            us-docker.pkg.dev/grafanalabs-global/docker-grafana-bench-prod/grafana-bench:v0.6.1 report \
               --grafana-url "http://fsperfbaseline.grafana-dev.net" \
               --test-suite-name "FrontendPerfTests" \
               --report-input playwright \
@@ -104,7 +104,7 @@ jobs:
             -e PROMETHEUS_URL="$PROMETHEUS_URL" \
             -e PROMETHEUS_USER="$PROMETHEUS_USER" \
             -e PROMETHEUS_PASSWORD="$PROMETHEUS_TOKEN" \
-            us-docker.pkg.dev/grafanalabs-global/docker-grafana-bench-prod/grafana-bench:v0.6.0 report \
+            us-docker.pkg.dev/grafanalabs-global/docker-grafana-bench-prod/grafana-bench:v0.6.1 report \
               --grafana-url "http://fsperf.grafana-dev.net" \
               --test-suite-name "FrontendPerfTests" \
               --report-input playwright \

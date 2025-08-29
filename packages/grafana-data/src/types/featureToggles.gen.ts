@@ -301,6 +301,10 @@ export interface FeatureToggles {
   */
   queryService?: boolean;
   /**
+  * Adds datasource connections to the query service
+  */
+  queryServiceWithConnections?: boolean;
+  /**
   * Rewrite requests targeting /ds/query to the query service
   */
   queryServiceRewrite?: boolean;
