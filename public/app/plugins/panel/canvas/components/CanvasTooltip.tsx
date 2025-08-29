@@ -57,7 +57,7 @@ export const CanvasTooltip = ({ scene }: Props) => {
   const shouldDisplayTimeContentItem =
     timeField && lastTimeValue && element.data.field && getFieldDisplayName(timeField) !== element.data.field;
 
-  const headerItem: VizTooltipItem | null = {
+  const headerItem: VizTooltipItem = {
     label: element.getName(),
     value: '',
   };

@@ -1,5 +1,4 @@
 import { useId, useMemo } from 'react';
-import { v4 as uuidv4 } from 'uuid';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
@@ -22,10 +21,11 @@ export function useEditOptions(model: RowItem, isNewElement: boolean): OptionsPa
 
   const rowCategory = useMemo(
     () =>
-      new OptionsPaneCategoryDescriptor({ title: '', id: 'row-options' })
+      new OptionsPaneCategoryDescriptor({ title: '', id: 'dash-row-edit' })
         .addItem(
           new OptionsPaneItemDescriptor({
             title: '',
+            id: 'dash-row-title',
             skipField: true,
             render: () => <RowTitleInput row={model} isNewElement={isNewElement} />,
           })
@@ -33,14 +33,14 @@ export function useEditOptions(model: RowItem, isNewElement: boolean): OptionsPa
         .addItem(
           new OptionsPaneItemDescriptor({
             title: t('dashboard.rows-layout.row-options.row.fill-screen', 'Fill screen'),
-            id: uuidv4(),
+            id: 'dash-row-fill-screen',
             render: (descriptor) => <FillScreenSwitch id={descriptor.props.id} row={model} />,
           })
         )
         .addItem(
           new OptionsPaneItemDescriptor({
             title: t('dashboard.rows-layout.row-options.row.hide-header', 'Hide row header'),
-            id: uuidv4(),
+            id: 'dash-row-hide-header',
             render: (descriptor) => <RowHeaderSwitch id={descriptor.props.id} row={model} />,
           })
         ),
@@ -51,12 +51,12 @@ export function useEditOptions(model: RowItem, isNewElement: boolean): OptionsPa
     () =>
       new OptionsPaneCategoryDescriptor({
         title: t('dashboard.rows-layout.row-options.repeat.title', 'Repeat options'),
-        id: 'repeat-options',
+        id: 'dash-row-repeat',
         isOpenDefault: false,
       }).addItem(
         new OptionsPaneItemDescriptor({
           title: t('dashboard.rows-layout.row-options.repeat.variable.title', 'Repeat by variable'),
-          id: uuidv4(),
+          id: `dash-row-repeat-by-variable`,
           description: t(
             'dashboard.rows-layout.row-options.repeat.variable.description',
             'Repeat this row for each value in the selected variable.'

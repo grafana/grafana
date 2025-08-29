@@ -20,8 +20,6 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 )
 
-const backendType = "prometheus"
-
 const (
 	// Network error strings
 	networkErrDialTCP           = "dial tcp"
@@ -236,16 +234,18 @@ type HttpClientProvider interface {
 }
 
 type PrometheusWriter struct {
-	client  promremote.Client
-	clock   clock.Clock
-	logger  log.Logger
-	metrics *metrics.RemoteWriter
+	client      promremote.Client
+	clock       clock.Clock
+	logger      log.Logger
+	metrics     *metrics.RemoteWriter
+	backendType backendType
 }
 
 type PrometheusWriterConfig struct {
 	URL         string
 	HTTPOptions httpclient.Options
 	Timeout     time.Duration
+	BackendType backendType
 }
 
 func NewPrometheusWriter(
@@ -272,11 +272,19 @@ func NewPrometheusWriter(
 		return nil, err
 	}
 
+	var backend backendType
+	if cfg.BackendType != "" {
+		backend = cfg.BackendType
+	} else {
+		backend = prometheusType
+	}
+
 	return &PrometheusWriter{
-		client:  client,
-		clock:   clock,
-		logger:  l,
-		metrics: metrics,
+		client:      client,
+		clock:       clock,
+		logger:      l,
+		metrics:     metrics,
+		backendType: backend,
 	}, nil
 }
 
@@ -295,7 +303,7 @@ func (w PrometheusWriter) WriteDatasource(ctx context.Context, dsUID string, nam
 // Write writes the given frames to the Prometheus remote write endpoint.
 func (w PrometheusWriter) Write(ctx context.Context, name string, t time.Time, frames data.Frames, orgID int64, extraLabels map[string]string) error {
 	l := w.logger.FromContext(ctx)
-	lvs := []string{fmt.Sprint(orgID), backendType}
+	lvs := []string{fmt.Sprint(orgID), string(w.backendType)}
 
 	points, err := PointsFromFrames(name, t, frames, extraLabels)
 	if err != nil {

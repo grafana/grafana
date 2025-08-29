@@ -5,12 +5,9 @@ import { GrafanaTheme2, colorManipulator } from '@grafana/data';
 
 import { COLUMN, TABLE } from './constants';
 import { TableCellStyles } from './types';
-import { getJustifyContent } from './utils';
+import { getJustifyContent, TextAlign } from './utils';
 
-export const getGridStyles = (
-  theme: GrafanaTheme2,
-  { enablePagination, transparent }: { enablePagination?: boolean; transparent?: boolean }
-) => {
+export const getGridStyles = (theme: GrafanaTheme2, enablePagination?: boolean, transparent?: boolean) => {
   const bgColor = transparent ? theme.colors.background.canvas : theme.colors.background.primary;
   // this needs to be pre-calc'd since the theme colors have alpha and the border color becomes
   // unpredictable for background color cells
@@ -24,6 +21,8 @@ export const getGridStyles = (
       '--rdg-color': theme.colors.text.primary,
       '--rdg-summary-border-color': borderColor,
       '--rdg-summary-border-width': '1px',
+
+      '--rdg-selection-color': theme.colors.info.transparent,
 
       // note: this cannot have any transparency since default cells that
       // overlay/overflow on hover inherit this background and need to occlude cells below
@@ -75,7 +74,8 @@ export const getGridStyles = (
     gridNested: css({
       height: '100%',
       width: `calc(100% - ${COLUMN.EXPANDER_WIDTH - TABLE.CELL_PADDING * 2 - 1}px)`,
-      overflow: 'visible',
+      overflowX: 'scroll',
+      overflowY: 'hidden',
       marginLeft: COLUMN.EXPANDER_WIDTH - TABLE.CELL_PADDING - 1,
       marginBlock: TABLE.CELL_PADDING,
     }),
@@ -88,19 +88,6 @@ export const getGridStyles = (
       color: theme.colors.text.secondary,
       fontSize: theme.typography.h4.fontSize,
     }),
-    cellActions: css({
-      display: 'none',
-      position: 'absolute',
-      top: 0,
-      margin: 'auto',
-      height: '100%',
-      color: theme.colors.text.primary,
-      background: theme.isDark ? 'rgba(0, 0, 0, 0.7)' : 'rgba(255, 255, 255, 0.7)',
-      padding: theme.spacing.x0_5,
-      paddingInlineStart: theme.spacing.x1,
-    }),
-    cellActionsEnd: css({ left: 0 }),
-    cellActionsStart: css({ right: 0 }),
     headerRow: css({
       paddingBlockStart: 0,
       fontWeight: 'normal',
@@ -158,6 +145,20 @@ export const getDefaultCellStyles: TableCellStyles = (theme, { textAlign, should
     },
   });
 
+export const getCellActionStyles = (theme: GrafanaTheme2, textAlign: TextAlign) =>
+  css({
+    display: 'none',
+    position: 'absolute',
+    top: 0,
+    margin: 'auto',
+    height: '100%',
+    color: theme.colors.text.primary,
+    background: theme.isDark ? 'rgba(0, 0, 0, 0.7)' : 'rgba(255, 255, 255, 0.7)',
+    padding: theme.spacing.x0_5,
+    paddingInlineStart: theme.spacing.x1,
+    [textAlign === 'right' ? 'left' : 'right']: 0,
+  });
+
 export const getLinkStyles = (theme: GrafanaTheme2, canBeColorized: boolean) =>
   css({
     a: {
@@ -174,3 +175,34 @@ export const getLinkStyles = (theme: GrafanaTheme2, canBeColorized: boolean) =>
           }),
     },
   });
+
+const caretTriangle = (direction: 'left' | 'right', bgColor: string) =>
+  `linear-gradient(to top ${direction}, transparent 62.5%, ${bgColor} 50%)`;
+
+export const getTooltipStyles = (theme: GrafanaTheme2, textAlign: TextAlign) => ({
+  tooltipContent: css({
+    height: '100%',
+    width: '100%',
+  }),
+  tooltipWrapper: css({
+    background: theme.colors.background.primary,
+    border: `1px solid ${theme.colors.border.weak}`,
+    borderRadius: theme.shape.radius.default,
+    boxShadow: theme.shadows.z3,
+    overflow: 'hidden',
+    padding: theme.spacing(1),
+    width: 'inherit',
+  }),
+  tooltipCaret: css({
+    cursor: 'pointer',
+    position: 'absolute',
+    top: theme.spacing(0.25),
+    [textAlign === 'right' ? 'right' : 'left']: theme.spacing(0.25),
+    width: theme.spacing(1.75),
+    height: theme.spacing(1.75),
+    background: caretTriangle(textAlign === 'right' ? 'right' : 'left', theme.colors.border.medium),
+    '&:hover, &[aria-pressed=true]': {
+      background: caretTriangle(textAlign === 'right' ? 'right' : 'left', theme.colors.border.strong),
+    },
+  }),
+});

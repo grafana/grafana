@@ -32,6 +32,7 @@ export function getTextBoxVariableOptions(variable: SceneVariable): OptionsPaneI
   return [
     new OptionsPaneItemDescriptor({
       title: t('dashboard-scene.textbox-variable-form.label-value', 'Value'),
+      id: `variable-${variable.state.name}-value`,
       render: () => <TextBoxVariableEditor onChange={noop} variable={variable} inline={true} />,
     }),
   ];

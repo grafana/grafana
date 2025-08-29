@@ -171,10 +171,6 @@ const (
 	// Next generation provisioning... and git
 	FlagProvisioning = "provisioning"
 
-	// FlagProvisioningSecretsService
-	// Experimental feature to use the secrets service for provisioning instead of the legacy secrets
-	FlagProvisioningSecretsService = "provisioningSecretsService"
-
 	// FlagGrafanaAPIServerEnsureKubectlAccess
 	// Start an additional https handler and write kubectl options
 	FlagGrafanaAPIServerEnsureKubectlAccess = "grafanaAPIServerEnsureKubectlAccess"
@@ -275,6 +271,10 @@ const (
 	// Register /apis/query.grafana.app/ -- will eventually replace /api/ds/query
 	FlagQueryService = "queryService"
 
+	// FlagQueryServiceWithConnections
+	// Adds datasource connections to the query service
+	FlagQueryServiceWithConnections = "queryServiceWithConnections"
+
 	// FlagQueryServiceRewrite
 	// Rewrite requests targeting /ds/query to the query service
 	FlagQueryServiceRewrite = "queryServiceRewrite"
@@ -294,10 +294,6 @@ const (
 	// FlagCachingOptimizeSerializationMemoryUsage
 	// If enabled, the caching backend gradually serializes query responses for the cache, comparing against the configured `[caching]max_value_mb` value as it goes. This can can help prevent Grafana from running out of memory while attempting to cache very large query responses.
 	FlagCachingOptimizeSerializationMemoryUsage = "cachingOptimizeSerializationMemoryUsage"
-
-	// FlagPrometheusCodeModeMetricNamesSearch
-	// Enables search for metric names in Code Mode, to improve performance when working with an enormous number of metric names
-	FlagPrometheusCodeModeMetricNamesSearch = "prometheusCodeModeMetricNamesSearch"
 
 	// FlagAddFieldFromCalculationStatFunctions
 	// Add cumulative and window functions to the add field from calculation transformation
@@ -451,10 +447,6 @@ const (
 	// Enable CAP token based authentication in grafana&#39;s embedded kube-aggregator
 	FlagKubernetesAggregatorCapTokenAuth = "kubernetesAggregatorCapTokenAuth"
 
-	// FlagExpressionParser
-	// Enable new expression parser
-	FlagExpressionParser = "expressionParser"
-
 	// FlagGroupByVariable
 	// Enable groupBy variable support in scenes dashboards
 	FlagGroupByVariable = "groupByVariable"
@@ -484,8 +476,12 @@ const (
 	FlagGrafanaManagedRecordingRules = "grafanaManagedRecordingRules"
 
 	// FlagQueryLibrary
-	// Enables Query Library feature in Explore
+	// Renamed feature toggle, enables Saved queries feature
 	FlagQueryLibrary = "queryLibrary"
+
+	// FlagSavedQueries
+	// Enables Saved Queries feature
+	FlagSavedQueries = "savedQueries"
 
 	// FlagLogsExploreTableDefaultVisualization
 	// Sets the logs table as default visualisation in logs explore
@@ -562,10 +558,6 @@ const (
 	// FlagNewFiltersUI
 	// Enables new combobox style UI for the Ad hoc filters variable in scenes architecture
 	FlagNewFiltersUI = "newFiltersUI"
-
-	// FlagTableNextGen
-	// Allows access to the new react-data-grid based table component.
-	FlagTableNextGen = "tableNextGen"
 
 	// FlagAlertingPrometheusRulesPrimary
 	// Uses Prometheus rules as the primary source of truth for ruler-enabled data sources
@@ -690,6 +682,10 @@ const (
 	// FlagAlertingAIGenTemplates
 	// Enable AI-generated alerting templates.
 	FlagAlertingAIGenTemplates = "alertingAIGenTemplates"
+
+	// FlagAlertingEnrichmentPerRule
+	// Enable enrichment per rule in the alerting UI.
+	FlagAlertingEnrichmentPerRule = "alertingEnrichmentPerRule"
 
 	// FlagAlertingAIAnalyzeCentralStateHistory
 	// Enable AI-analyze central state history.
@@ -862,6 +858,10 @@ const (
 	// FlagMetricsFromProfiles
 	// Enables creating metrics from profiles and storing them as recording rules
 	FlagMetricsFromProfiles = "metricsFromProfiles"
+
+	// FlagGrafanaAssistantInProfilesDrilldown
+	// Enables integration with Grafana Assistant in Profiles Drilldown
+	FlagGrafanaAssistantInProfilesDrilldown = "grafanaAssistantInProfilesDrilldown"
 
 	// FlagPostgresDSUsePGX
 	// Enables using PGX instead of libpq for PostgreSQL datasource
