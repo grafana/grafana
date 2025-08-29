@@ -43,3 +43,5 @@ public/mockServiceWorker.js
 # Playwright results
 test-results
 playwright-report
+
+eslint-suppressions.json
