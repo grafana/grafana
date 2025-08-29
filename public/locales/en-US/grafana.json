@@ -4015,6 +4015,7 @@
       }
     },
     "tooltip-options": {
+      "label-disable-one-click": "Disable for one-click elements",
       "name-tooltip-mode": "Tooltip mode",
       "tooltip-mode-options": {
         "label-disabled": "Disabled",
@@ -4556,6 +4557,12 @@
       "cancel": "Cancel",
       "overwrite": "Overwrite",
       "title-plugin-dashboard": "Plugin dashboard"
+    },
+    "controls": {
+      "menu": {
+        "aria-label": "",
+        "title": ""
+      }
     },
     "dash-nav": {
       "on-open-snapshot-original": {
@@ -5835,11 +5842,6 @@
         "transparent-background": "Transparent background"
       }
     },
-    "get-workflow-options": {
-      "label": {
-        "push-to-a-new-branch": "Push to a new branch"
-      }
-    },
     "group-by-variable-form": {
       "alert-not-supported": "This data source does not support group by variables",
       "description-enables-users-custom-values": "Enables users to add custom values to the list",
@@ -6936,11 +6938,6 @@
       "dragging-a-divider": "Dragging a divider",
       "dragging-a-sub-region": "Dragging a sub-region",
       "value": "Value: {{ dividerPos }}"
-    },
-    "drilldownInfo": {
-      "action": "Go to Grafana Drilldown",
-      "description": "Looking for the Grafana Explore apps? They are now called the Grafana Drilldown apps and can be found under <1>Menu > Drilldown</1>",
-      "title": "Explore Metrics, Logs, Traces and Profiles have moved!"
     },
     "drop-down-menu": {
       "aria-label-links": "Links",
@@ -11153,11 +11150,16 @@
     "save-or-delete-resource-shared-fields": {
       "comment-placeholder-describe-changes-optional": "Add a note to describe your changes (optional)",
       "description-branch-name-in-git-hub": "Branch name in GitHub",
+      "description-file-path": "File path inside the repository (.json or .yaml)",
+      "description-folder-path": "Folder path inside the repository",
       "description-inside-repository": "",
       "label-branch": "Branch",
       "label-comment": "Comment",
       "label-path": "Path",
-      "label-workflow": "Workflow"
+      "label-workflow": "Workflow",
+      "placeholder-branch": "Select or enter branch name",
+      "placeholder-new-branch": "Enter new branch name",
+      "suffix-configured-branch": "(Configured branch)"
     }
   },
   "provisioned-resource-preview-banner": {
@@ -11691,6 +11693,10 @@
       "button-previous": "Previous",
       "button-submitting": "Submitting...",
       "error-instance-repository-exists": "Instance repository already exists"
+    },
+    "workflow-options-label": {
+      "push-to-a-new-branch": "Push to a new branch",
+      "push-to-existing-branch": "Push to an existing branch"
     }
   },
   "public-dashboard": {

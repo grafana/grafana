@@ -4,7 +4,7 @@ import { RoutingTree, RoutingTreeRoute } from '../api/v0alpha1/api.gen';
 import { Label, LabelMatcher } from '../matchers/types';
 import { LabelMatchDetails, matchLabels } from '../matchers/utils';
 
-import { Route } from './types';
+import { Route, RouteWithID } from './types';
 
 export const INHERITABLE_KEYS = ['receiver', 'group_by', 'group_wait', 'group_interval', 'repeat_interval'] as const;
 export type InheritableKeys = typeof INHERITABLE_KEYS;
@@ -24,11 +24,12 @@ export interface RouteMatchResult<T extends Route> {
   matchingJourney: Array<RouteMatchInfo<T>>;
 }
 
-// This function performs a depth-first left-to-right search through the route tree
-// and returns the matching routing nodes.
-//
-// If the current node is not a match, return nothing
-// Normalization should have happened earlier in the code
+/**
+ * This function performs a depth-first left-to-right search through the route tree and returns the matching routing nodes.
+ *
+ * If the current node is not a match, return nothing
+ * Normalization should have happened earlier in the code
+ */
 export function findMatchingRoutes<T extends Route>(
   route: T,
   labels: Label[],
@@ -141,7 +142,6 @@ export function getInheritedProperties<T extends Route>(
   return inherited;
 }
 
-export type RouteWithID = Route & { id: string };
 export function addUniqueIdentifier(route: Route): RouteWithID {
   return {
     id: uniqueId('route-'),
@@ -157,6 +157,15 @@ export type TreeMatch = {
   matchedPolicies: Map<RouteWithID, Array<RouteMatchResult<RouteWithID>>>;
 };
 
+/**
+ * This function will return what notification policies would match a set of labels.
+ *
+ * ⚠️ This function is rather CPU intensive depending on both the size of the labels list and the size of the notification policy tree.
+ * When using this function, consider wrapping it in a web-worker to offload this from the main JavaScript thread.
+ *
+ * @param instances - A set of labels for which you want to determine the matching policies
+ * @param routingTree - A notification policy tree (or subtree)
+ */
 export function matchAlertInstancesToPolicyTree(instances: Label[][], routingTree: Route): TreeMatch {
   // initially empty map of matches policies
   const matchedPolicies = new Map();

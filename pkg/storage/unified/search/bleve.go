@@ -1268,17 +1268,18 @@ func (b *bleveIndex) updateIndexWithLatestModifications(ctx context.Context, req
 	ctx, span := b.tracing.Start(ctx, tracingPrexfixBleve+"updateIndexWithLatestModifications")
 	defer span.End()
 
-	b.logger.Debug("Updating index", "sinceRV", b.resourceVersion, "requests", requests, "reasons", reasons)
+	sinceRV := b.resourceVersion
+	b.logger.Debug("Updating index", "sinceRV", sinceRV, "requests", requests, "reasons", reasons)
 
 	startTime := time.Now()
-	rv, docs, err := b.updaterFn(ctx, b, b.resourceVersion)
-	if err == nil && rv > 0 {
-		err = b.updateResourceVersion(rv)
+	listRV, docs, err := b.updaterFn(ctx, b, sinceRV)
+	if err == nil && listRV > 0 && listRV != sinceRV {
+		err = b.updateResourceVersion(listRV) // updates b.resourceVersion
 	}
 
 	elapsed := time.Since(startTime)
 	if err == nil {
-		b.logger.Debug("Finished updating index", "listRV", b.resourceVersion, "duration", elapsed, "docs", docs)
+		b.logger.Debug("Finished updating index", "sinceRV", sinceRV, "listRV", listRV, "duration", elapsed, "docs", docs, "reasons", reasons)
 
 		if b.updateLatency != nil {
 			b.updateLatency.Observe(elapsed.Seconds())
@@ -1287,9 +1288,9 @@ func (b *bleveIndex) updateIndexWithLatestModifications(ctx context.Context, req
 			b.updatedDocuments.Observe(float64(docs))
 		}
 	} else {
-		b.logger.Debug("Updating of index finished with error", "duration", elapsed, "err", err)
+		b.logger.Error("Updating of index finished with error", "duration", elapsed, "err", err)
 	}
-	return rv, err
+	return listRV, err
 }
 
 func safeInt64ToInt(i64 int64) (int, error) {

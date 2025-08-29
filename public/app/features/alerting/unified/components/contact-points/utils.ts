@@ -3,6 +3,7 @@ import { ReactNode } from 'react';
 
 import { computeInheritedTree } from '@grafana/alerting/unstable';
 import { t } from '@grafana/i18n';
+import { NotifierDTO, NotifierStatus, ReceiversStateDTO } from 'app/features/alerting/unified/types/alerting';
 import { canAdminEntity, shouldUseK8sApi } from 'app/features/alerting/unified/utils/k8s/utils';
 import {
   AlertManagerCortexConfig,
@@ -12,7 +13,6 @@ import {
   Receiver,
   Route,
 } from 'app/plugins/datasource/alertmanager/types';
-import { NotifierDTO, NotifierStatus, ReceiversStateDTO } from 'app/types/alerting';
 
 import { OnCallIntegrationDTO } from '../../api/onCallApi';
 import { extractReceivers } from '../../utils/receivers';

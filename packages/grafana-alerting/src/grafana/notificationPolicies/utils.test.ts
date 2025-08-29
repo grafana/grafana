@@ -1,3 +1,5 @@
+import { omit } from 'lodash';
+
 import { LabelMatcherFactory, RouteFactory } from '../api/v0alpha1/mocks/fakes/Routes';
 import { Label } from '../matchers/types';
 import { LabelMatchDetails, matchLabels } from '../matchers/utils';
@@ -6,9 +8,11 @@ import { Route } from './types';
 import {
   InheritableProperties,
   RouteMatchResult,
+  addUniqueIdentifier,
   computeInheritedTree,
   findMatchingRoutes,
   getInheritedProperties,
+  matchAlertInstancesToPolicyTree,
 } from './utils';
 
 describe('findMatchingRoutes', () => {
@@ -991,6 +995,129 @@ describe('matchLabels', () => {
   it('does match regular expressions with flags', () => {
     const result = matchLabels([{ label: 'foo', type: '=~', value: '(?i).*BAr.*' }], [['foo', 'barbarbar']]);
     expect(result.matches).toEqual(true);
+  });
+});
+
+describe('addUniqueIdentifier', () => {
+  it('should add unique identifiers recursively and preserve all properties', () => {
+    const childRoute = RouteFactory.build({
+      receiver: 'child-receiver',
+      matchers: [LabelMatcherFactory.build({ label: 'env', type: '=', value: 'prod' })],
+    });
+    const parentRoute = RouteFactory.build({
+      receiver: 'parent-receiver',
+      matchers: [LabelMatcherFactory.build({ label: 'service', type: '=', value: 'web' })],
+      group_by: ['service'],
+      group_wait: '30s',
+      routes: [childRoute],
+    });
+
+    const { id, routes, ...rest } = addUniqueIdentifier(parentRoute);
+
+    // Should add unique ID to parent
+    expect(id).toMatch(/^route-/);
+    // Should match the original route
+    expect(rest).toStrictEqual(omit(parentRoute, 'routes'));
+
+    // Should recursively add unique ID to child
+    expect(routes).toHaveLength(1);
+    expect(routes[0]).toHaveProperty('id');
+    expect(routes[0].id).toMatch(/^route-/);
+    expect(routes[0].receiver).toBe('child-receiver');
+    expect(omit(routes[0], 'id')).toStrictEqual(childRoute);
+
+    // IDs should be unique
+    expect(id).not.toBe(routes[0]?.id);
+
+    // Should not modify original
+    expect(parentRoute).not.toHaveProperty('id');
+    expect(childRoute).not.toHaveProperty('id');
+  });
+
+  it('should handle undefined routes by converting to empty array', () => {
+    const route = RouteFactory.build({
+      receiver: 'test-receiver',
+      routes: undefined,
+    });
+
+    const result = addUniqueIdentifier(route);
+
+    expect(result).toHaveProperty('id');
+    expect(result.routes).toEqual([]);
+  });
+});
+
+describe('matchAlertInstancesToPolicyTree', () => {
+  it('should match alert instances to policy tree and return expanded tree with matched policies', () => {
+    const childRoute = RouteFactory.build({
+      receiver: 'child-receiver',
+      matchers: [LabelMatcherFactory.build({ label: 'env', type: '=', value: 'prod' })],
+      group_wait: undefined, // Will inherit from parent
+    });
+    const parentRoute = RouteFactory.build({
+      receiver: 'parent-receiver',
+      matchers: [LabelMatcherFactory.build({ label: 'service', type: '=', value: 'web' })],
+      group_wait: '30s',
+      routes: [childRoute],
+    });
+
+    const instances: Label[][] = [
+      [
+        ['service', 'web'],
+        ['env', 'prod'],
+      ], // Should match child
+      [
+        ['service', 'web'],
+        ['env', 'staging'],
+      ], // Should match parent only
+    ];
+
+    const result = matchAlertInstancesToPolicyTree(instances, parentRoute);
+
+    // Should return expanded tree with identifiers
+    expect(result.expandedTree).toHaveProperty('id');
+
+    // Should have matched policies map
+    expect(result.matchedPolicies).toBeInstanceOf(Map);
+    expect(result.matchedPolicies.size).toBe(2); // Both child and parent routes matched
+
+    // Convert map to array for easier testing
+    const matches = Array.from(result.matchedPolicies.values()).flat();
+    expect(matches).toHaveLength(2);
+
+    // First instance should match child route
+    const childMatch = matches.find((match) => match.route.receiver === 'child-receiver');
+    expect(childMatch).toBeDefined();
+    expect(childMatch?.labels).toEqual([
+      ['service', 'web'],
+      ['env', 'prod'],
+    ]);
+
+    // Second instance should match parent route
+    const parentMatch = matches.find((match) => match.route.receiver === 'parent-receiver');
+    expect(parentMatch).toBeDefined();
+    expect(parentMatch?.labels).toEqual([
+      ['service', 'web'],
+      ['env', 'staging'],
+    ]);
+  });
+
+  it('should handle empty instances and no matches', () => {
+    const route = RouteFactory.build({
+      receiver: 'receiver',
+      matchers: [LabelMatcherFactory.build({ label: 'service', type: '=', value: 'web' })],
+    });
+
+    // Empty instances array
+    const result1 = matchAlertInstancesToPolicyTree([], route);
+    expect(result1.expandedTree).toHaveProperty('id');
+    expect(result1.matchedPolicies.size).toBe(0);
+
+    // Instances that don't match
+    const instances: Label[][] = [[['service', 'api']]];
+    const result2 = matchAlertInstancesToPolicyTree(instances, route);
+    expect(result2.expandedTree).toHaveProperty('id');
+    expect(result2.matchedPolicies.size).toBe(0);
   });
 });
 

@@ -12,13 +12,14 @@ type LabelMatchingResult = {
 // LabelMatchDetails is a map of labels to their match results
 export type LabelMatchDetails = {
   labelIndex: number; // index of the label in the labels array
+  match: boolean;
+  matcher: LabelMatcher | null;
 } & (PositiveLabelMatch | NegativeLabelMatch);
 
 type PositiveLabelMatch = {
   match: true;
   matcher: LabelMatcher;
 };
-
 type NegativeLabelMatch = {
   match: false;
   matcher: null;
@@ -61,10 +62,6 @@ export function isLabelMatch(matcher: LabelMatcher, label: Label): boolean {
   }
 
   const matchFunction = OperatorFunctions[matcherType];
-  if (!matchFunction) {
-    throw new Error(`no such operator: ${matcherType}`);
-  }
-
   return matchFunction(labelValue, matcherValue);
 }
 
@@ -89,19 +86,13 @@ function isLabelMatchInSet(matcher: LabelMatcher, labels: Label[]): boolean {
   }
 
   const matchFunction = OperatorFunctions[type];
-  if (!matchFunction) {
-    throw new Error(`no such operator: ${type}`);
-  }
-
   try {
     // This can throw because the regex operators use the JavaScript regex engine
     // and "new RegExp()" throws on invalid regular expressions.
     //
     // This is usually a user-error (because matcher values are taken from user input)
-    // but we're still logging this as a warning because it _might_ be a programmer error.
     return matchFunction(labelValue, value);
   } catch (err) {
-    console.warn(err);
     return false;
   }
 }

@@ -26,6 +26,7 @@ import ConditionalWrap from 'app/features/alerting/unified/components/Conditiona
 import MoreButton from 'app/features/alerting/unified/components/MoreButton';
 import { PrimaryText } from 'app/features/alerting/unified/components/common/TextVariants';
 import { ContactPointReceiverSummary } from 'app/features/alerting/unified/components/contact-points/ContactPoint';
+import { ReceiversState } from 'app/features/alerting/unified/types/alerting';
 import {
   AlertmanagerGroup,
   MatcherOperator,
@@ -33,7 +34,6 @@ import {
   Receiver,
   RouteWithID,
 } from 'app/plugins/datasource/alertmanager/types';
-import { ReceiversState } from 'app/types/alerting';
 
 import { AlertmanagerAction, useAlertmanagerAbilities, useAlertmanagerAbility } from '../../hooks/useAbilities';
 import { getAmMatcherFormatter } from '../../utils/alertmanager';
