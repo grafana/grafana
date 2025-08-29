@@ -38,6 +38,7 @@ import { buildPluginSectionNav, pluginsLogger } from '../utils';
 
 import { PluginErrorBoundary } from './PluginErrorBoundary';
 import { buildPluginPageContext, PluginPageContext } from './PluginPageContext';
+import { RestrictedGrafanaApisProvider } from './restrictedGrafanaApis/RestrictedGrafanaApisProvider';
 
 interface Props {
   // The ID of the plugin we would like to load and display
@@ -116,22 +117,24 @@ export function AppRootPage({ pluginId, pluginNavSection }: Props) {
           />
         )}
       >
-        <ExtensionRegistriesProvider
-          registries={{
-            addedLinksRegistry: addedLinksRegistry.readOnly(),
-            addedComponentsRegistry: addedComponentsRegistry.readOnly(),
-            exposedComponentsRegistry: exposedComponentsRegistry.readOnly(),
-            addedFunctionsRegistry: addedFunctionsRegistry.readOnly(),
-          }}
-        >
-          <plugin.root
-            meta={plugin.meta}
-            basename={location.pathname}
-            onNavChanged={onNavChanged}
-            query={queryParams}
-            path={location.pathname}
-          />
-        </ExtensionRegistriesProvider>
+        <RestrictedGrafanaApisProvider pluginId={pluginId}>
+          <ExtensionRegistriesProvider
+            registries={{
+              addedLinksRegistry: addedLinksRegistry.readOnly(),
+              addedComponentsRegistry: addedComponentsRegistry.readOnly(),
+              exposedComponentsRegistry: exposedComponentsRegistry.readOnly(),
+              addedFunctionsRegistry: addedFunctionsRegistry.readOnly(),
+            }}
+          >
+            <plugin.root
+              meta={plugin.meta}
+              basename={location.pathname}
+              onNavChanged={onNavChanged}
+              query={queryParams}
+              path={location.pathname}
+            />
+          </ExtensionRegistriesProvider>
+        </RestrictedGrafanaApisProvider>
       </PluginErrorBoundary>
     </PluginContextProvider>
   );
