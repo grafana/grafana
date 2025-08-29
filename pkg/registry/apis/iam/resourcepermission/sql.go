@@ -10,9 +10,9 @@ import (
 	"github.com/grafana/grafana/pkg/storage/legacysql"
 )
 
-//LIST
+// List
 
-// GET
+// Get
 func (s *ResourcePermSqlBackend) getResourcePermissions(ctx context.Context, sql *legacysql.LegacyDatabaseHelper, query *ListResourcePermissionsQuery) (map[string][]flatResourcePermission, error) {
 	rawQuery, args, err := buildListResourcePermissionsQueryFromTemplate(sql, query)
 	if err != nil {
@@ -86,8 +86,8 @@ func (s *ResourcePermSqlBackend) getResourcePermission(ctx context.Context, sql 
 	return resourcePermission, nil
 }
 
-//CREATE
+// Create
 
-//UPDATE
+// Update
 
-//DELETE
+// Delete
