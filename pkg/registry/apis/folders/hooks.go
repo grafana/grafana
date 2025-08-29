@@ -54,18 +54,9 @@ func (b *FolderAPIBuilder) beginUpdate(_ context.Context, obj runtime.Object, ol
 }
 
 func (b *FolderAPIBuilder) writeFolderToZanzana(ctx context.Context, folder utils.GrafanaMetaAccessor) {
-	log := logging.FromContext(ctx)
-	if isFolderAtRoot(folder) {
-		// Folder was moved to root, remove any existing parent relationships in Zanzana
-		err := b.permissionStore.DeleteFolderParents(ctx, folder.GetNamespace(), folder.GetName())
-		if err != nil {
-			log.Warn("failed to propagate folder to zanzana", "err", err)
-		}
-		return
-	}
 	err := b.permissionStore.SetFolderParent(ctx, folder.GetNamespace(), folder.GetName(), folder.GetFolder())
 	if err != nil {
-		log.Warn("failed to propagate folder to zanzana", "err", err)
+		logging.FromContext(ctx).Warn("failed to propagate folder to zanzana", "err", err)
 	}
 }
 
