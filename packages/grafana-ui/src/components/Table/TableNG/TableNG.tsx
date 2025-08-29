@@ -541,6 +541,7 @@ export function TableNG(props: TableNGProps) {
           if (tooltipField) {
             const tooltipDisplayName = getDisplayName(tooltipField);
             const tooltipCellOptions = getCellOptions(tooltipField);
+            const tooltipFieldRenderer = getCellRenderer(tooltipField, tooltipCellOptions);
 
             const tooltipCellStyleOptions = {
               textAlign: getAlignment(tooltipField),
@@ -558,9 +559,6 @@ export function TableNG(props: TableNGProps) {
             );
             const tooltipLinkStyles = getLinkStyles(theme, tooltipCanBeColorized);
             const tooltipClasses = getTooltipStyles(theme, textAlign);
-            const tooltipBodyClasses = clsx(tooltipDefaultStyles, tooltipSpecificStyles, tooltipLinkStyles);
-
-            const tooltipFieldRenderer = getCellRenderer(tooltipField, tooltipCellOptions);
 
             const placement = field.config.custom?.tooltip?.placement ?? TableCellTooltipPlacement.Auto;
             const tooltipWidth =
@@ -571,7 +569,12 @@ export function TableNG(props: TableNGProps) {
             const tooltipProps = {
               cellOptions: tooltipCellOptions,
               classes: tooltipClasses,
-              className: clsx(tooltipClasses.tooltipContent, tooltipBodyClasses),
+              className: clsx(
+                tooltipClasses.tooltipContent,
+                tooltipDefaultStyles,
+                tooltipSpecificStyles,
+                tooltipLinkStyles
+              ),
               data,
               disableSanitizeHtml,
               field: tooltipField,
