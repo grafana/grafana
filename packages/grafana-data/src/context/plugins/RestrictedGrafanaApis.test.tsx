@@ -1,16 +1,21 @@
 import { renderHook, RenderHookResult } from '@testing-library/react';
 
-import { VizPanel } from '@grafana/scenes';
-
 import {
   RestrictedGrafanaApisContextProvider,
   RestrictedGrafanaApisContextType,
   useRestrictedGrafanaApis,
 } from './RestrictedGrafanaApis';
 
+// Re-declaring the types here, so we can run tests without type error even in case there are no APIs exposed
+declare module './RestrictedGrafanaApis' {
+  interface RestrictedGrafanaApisContextTypeInternal {
+    addPanel?: () => void;
+  }
+}
+
 describe('RestrictedGrafanaApis', () => {
   const apis: RestrictedGrafanaApisContextType = {
-    addPanel: (vizPanel: VizPanel) => {},
+    addPanel: () => {},
   };
 
   beforeEach(() => {
