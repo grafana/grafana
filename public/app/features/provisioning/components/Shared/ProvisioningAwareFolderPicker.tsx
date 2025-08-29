@@ -1,9 +1,11 @@
 import { skipToken } from '@reduxjs/toolkit/query';
 
 import { config } from '@grafana/runtime';
-import { RepositoryViewList, useGetFrontendSettingsQuery } from 'app/api/clients/provisioning/v0alpha1';
+import { RepositoryView, RepositoryViewList, useGetFrontendSettingsQuery } from 'app/api/clients/provisioning/v0alpha1';
 import { NestedFolderPickerProps } from 'app/core/components/NestedFolderPicker/NestedFolderPicker';
+import { getCustomRootFolderItem } from 'app/core/components/NestedFolderPicker/utils';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
+import { ManagerKind } from 'app/features/apiserver/types';
 
 import { useIsProvisionedInstance } from '../../hooks/useIsProvisionedInstance';
 
@@ -30,12 +32,18 @@ export function ProvisioningAwareFolderPicker({ repositoryName, showAllFolders, 
     provisioningEnabled,
     settingsData,
   });
+  const rootFolderDisplayItem = getRootFolderDisplayItem({
+    isProvisionedInstance,
+    rootFolderUID,
+    settingsDataItem: settingsData?.items,
+  });
 
   return (
     <FolderPicker
       {...props}
       rootFolderUID={showAllFolders ? undefined : rootFolderUID}
       excludeUIDs={showAllFolders ? undefined : [...excludeUIDs, ...(props.excludeUIDs || [])]}
+      rootFolderItem={showAllFolders ? undefined : rootFolderDisplayItem}
     />
   );
 }
@@ -85,4 +93,15 @@ function getExcludeUIDs({
   }
 
   return [];
+}
+
+function getRootFolderDisplayItem({ isProvisionedInstance, rootFolderUID, settingsDataItem }) {
+  if (isProvisionedInstance) {
+    return undefined; // If it's a provisioned instance, we don't want to show a specific folder display, root will be "Dashboards"
+  }
+
+  const repoFolder: RepositoryView = settingsDataItem?.find((item: RepositoryView) => item.name === rootFolderUID);
+  return repoFolder
+    ? getCustomRootFolderItem({ title: repoFolder.title, uid: repoFolder.name, managedBy: ManagerKind.Repo })
+    : undefined;
 }

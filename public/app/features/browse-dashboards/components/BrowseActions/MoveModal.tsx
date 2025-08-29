@@ -1,7 +1,8 @@
 import { useState } from 'react';
 
 import { Trans, t } from '@grafana/i18n';
-import { Alert, Button, Field, Modal, Text, Space } from '@grafana/ui';
+import { Alert, Button, Field, Modal, Text, Space, Box } from '@grafana/ui';
+import { MoveActionAvailableTargetWarning } from 'app/features/provisioning/components/Shared/MoveActionAvailableTargetWarning';
 import { ProvisioningAwareFolderPicker } from 'app/features/provisioning/components/Shared/ProvisioningAwareFolderPicker';
 
 import { DashboardTreeSelection } from '../../types';
@@ -42,11 +43,15 @@ export const MoveModal = ({ onConfirm, onDismiss, selectedItems, ...props }: Pro
         />
       )}
 
-      <Text element="p">
-        <Trans i18nKey="browse-dashboards.action.move-modal-text">This action will move the following content:</Trans>
-      </Text>
+      <MoveActionAvailableTargetWarning />
 
-      <DescendantCount selectedItems={selectedItems} />
+      <Box paddingTop={2}>
+        <Text element="p">
+          <Trans i18nKey="browse-dashboards.action.move-modal-text">This action will move the following content:</Trans>
+        </Text>
+
+        <DescendantCount selectedItems={selectedItems} />
+      </Box>
 
       <Space v={3} />
 

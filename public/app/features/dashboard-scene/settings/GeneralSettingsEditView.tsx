@@ -289,6 +289,7 @@ function GeneralSettingsEditViewComponent({ model }: SceneComponentProps<General
             <ProvisioningAwareFolderPicker
               value={meta.folderUid}
               onChange={dashboard.isManagedRepository() ? model.onProvisionedFolderChange : model.onFolderChange}
+              repositoryName={dashboard.getManagerIdentity()}
             />
           </Field>
 

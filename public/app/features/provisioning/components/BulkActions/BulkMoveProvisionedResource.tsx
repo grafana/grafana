@@ -17,6 +17,7 @@ import { useGetResourceRepositoryView } from 'app/features/provisioning/hooks/us
 import { GENERAL_FOLDER_UID } from 'app/features/search/constants';
 
 import { useSelectionRepoValidation } from '../../hooks/useSelectionRepoValidation';
+import { MoveActionAvailableTargetWarning } from '../Shared/MoveActionAvailableTargetWarning';
 import { ProvisioningAwareFolderPicker } from '../Shared/ProvisioningAwareFolderPicker';
 import { RepoInvalidStateBanner } from '../Shared/RepoInvalidStateBanner';
 import { ResourceEditFormSharedFields } from '../Shared/ResourceEditFormSharedFields';
@@ -112,11 +113,9 @@ function FormContent({ initialValues, selectedItems, repository, workflowOptions
     <FormProvider {...methods}>
       <form onSubmit={handleSubmit(handleSubmitForm)}>
         <Stack direction="column" gap={2}>
+          <MoveActionAvailableTargetWarning />
           <Box paddingBottom={2}>
-            <Trans i18nKey="browse-dashboards.bulk-move-resources-form.move-warning">
-              This will move selected folders and their descendants. Available target folders depend on the selected
-              resources. In total, this will affect:
-            </Trans>
+            <Trans i18nKey="browse-dashboards.bulk-move-resources-form.move-total">In total, this will affect:</Trans>
             <DescendantCount selectedItems={{ ...selectedItems, panel: {}, $all: false }} />
           </Box>
 
