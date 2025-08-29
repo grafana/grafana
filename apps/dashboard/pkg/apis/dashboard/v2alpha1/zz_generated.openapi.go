@@ -4114,9 +4114,9 @@ func schema_pkg_apis_dashboard_v2alpha1_DashboardThreshold(ref common.ReferenceC
 				Properties: map[string]spec.Schema{
 					"value": {
 						SchemaProps: spec.SchemaProps{
-							Default: 0,
-							Type:    []string{"number"},
-							Format:  "double",
+							Description: "Value null means -Infinity",
+							Type:        []string{"number"},
+							Format:      "double",
 						},
 					},
 					"color": {

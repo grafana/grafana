@@ -320,7 +320,10 @@ describe('ResponseTransformers', () => {
             targets: [
               {
                 refId: 'A',
-                datasource: 'datasource1',
+                datasource: {
+                  uid: 'datasource1',
+                  type: 'prometheus',
+                },
                 expr: 'test-query',
                 hide: false,
               },
@@ -446,7 +449,7 @@ describe('ResponseTransformers', () => {
           vizConfig: {
             kind: 'VizConfig',
             group: 'timeseries',
-            version: undefined,
+            version: '',
             spec: {
               fieldConfig: {
                 defaults: {},
@@ -478,15 +481,7 @@ describe('ResponseTransformers', () => {
                   },
                 },
               ],
-              queryOptions: {
-                cacheTimeout: undefined,
-                hideTimeOverride: undefined,
-                interval: undefined,
-                maxDataPoints: undefined,
-                queryCachingTTL: undefined,
-                timeFrom: undefined,
-                timeShift: undefined,
-              },
+              queryOptions: {},
               transformations: [],
             },
           },
@@ -582,7 +577,10 @@ describe('ResponseTransformers', () => {
             targets: [
               {
                 refId: 'A',
-                datasource: 'datasource1',
+                datasource: {
+                  type: 'prometheus',
+                  uid: 'datasource1',
+                },
                 expr: 'test-query',
                 hide: false,
               },
@@ -627,7 +625,10 @@ describe('ResponseTransformers', () => {
             targets: [
               {
                 refId: 'A',
-                datasource: 'datasource1',
+                datasource: {
+                  type: 'prometheus',
+                  uid: 'datasource1',
+                },
                 expr: 'test-query',
                 hide: false,
               },
@@ -656,7 +657,10 @@ describe('ResponseTransformers', () => {
                 targets: [
                   {
                     refId: 'A',
-                    datasource: 'datasource1',
+                    datasource: {
+                      type: 'prometheus',
+                      uid: 'datasource1',
+                    },
                     expr: 'test-query',
                     hide: false,
                   },
