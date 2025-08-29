@@ -52,5 +52,5 @@ import (
 	_ "github.com/grafana/e2e"
 	_ "github.com/grafana/gofpdf"
 	_ "github.com/grafana/gomemcache/memcache"
-	_ "github.com/spyzhov/ajson"
+	_ "github.com/grafana/tempo/pkg/traceql"
 )

@@ -709,11 +709,6 @@ func (b *backend) ListModifiedSince(ctx context.Context, key resource.Namespaced
 				continue
 			}
 
-			if mr.Key.Name <= lastSeen {
-				// resource names should be sorted alphabetically. So if not, the query is not correct.
-				yield(nil, fmt.Errorf("listModifiedSince: resources are not sorted by name ASC, lastSeen: %q, current: %q", lastSeen, mr.Key.Name))
-			}
-
 			lastSeen = mr.Key.Name
 
 			if !yield(mr, nil) {

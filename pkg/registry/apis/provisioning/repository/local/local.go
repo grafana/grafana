@@ -23,8 +23,8 @@ import (
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/apps/provisioning/pkg/safepath"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/safepath"
 )
 
 type LocalFolderResolver struct {
@@ -89,11 +89,12 @@ type localRepository struct {
 	path string
 }
 
-func NewLocal(config *provisioning.Repository, resolver *LocalFolderResolver) *localRepository {
+func NewRepository(config *provisioning.Repository, resolver *LocalFolderResolver) *localRepository {
 	r := &localRepository{
 		config:   config,
 		resolver: resolver,
 	}
+
 	if config.Spec.Local != nil {
 		r.path, _ = resolver.LocalPath(config.Spec.Local.Path)
 		if r.path != "" && !safepath.IsDir(r.path) {
