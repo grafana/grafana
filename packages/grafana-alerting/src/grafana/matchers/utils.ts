@@ -62,10 +62,6 @@ export function isLabelMatch(matcher: LabelMatcher, label: Label): boolean {
   }
 
   const matchFunction = OperatorFunctions[matcherType];
-  if (!matchFunction) {
-    throw new Error(`no such operator: ${matcherType}`);
-  }
-
   return matchFunction(labelValue, matcherValue);
 }
 
