@@ -6,13 +6,6 @@ import {
   useRestrictedGrafanaApis,
 } from './RestrictedGrafanaApis';
 
-// Re-declaring the types here, so we can run tests without type error even in case there are no APIs exposed
-declare module './RestrictedGrafanaApis' {
-  interface RestrictedGrafanaApisContextTypeInternal {
-    addPanel?: () => void;
-  }
-}
-
 describe('RestrictedGrafanaApis', () => {
   const apis: RestrictedGrafanaApisContextType = {
     addPanel: () => {},
@@ -35,6 +28,7 @@ describe('RestrictedGrafanaApis', () => {
       ),
     });
 
+    // @ts-expect-error No APIs are defined yet
     expect(result.current.addPanel).toEqual(apis.addPanel);
     expect(Object.keys(result.current)).toEqual(['addPanel']);
   });
@@ -52,6 +46,7 @@ describe('RestrictedGrafanaApis', () => {
       ),
     });
 
+    // @ts-expect-error No APIs are defined yet
     expect(result.current.addPanel).toEqual(apis.addPanel);
     expect(Object.keys(result.current)).toEqual(['addPanel']);
   });
@@ -69,6 +64,7 @@ describe('RestrictedGrafanaApis', () => {
       ),
     });
 
+    // @ts-expect-error No APIs are defined yet
     expect(result.current.addPanel).not.toBeDefined();
   });
 
@@ -87,6 +83,7 @@ describe('RestrictedGrafanaApis', () => {
       ),
     });
 
+    // @ts-expect-error No APIs are defined yet
     expect(result.current.addPanel).toEqual(apis.addPanel);
     expect(Object.keys(result.current)).toEqual(['addPanel']);
   });
@@ -106,6 +103,7 @@ describe('RestrictedGrafanaApis', () => {
         </RestrictedGrafanaApisContextProvider>
       ),
     });
+    // @ts-expect-error No APIs are defined yet
     expect(result.result.current.addPanel).toEqual(apis.addPanel);
 
     // 2. Second app
@@ -120,6 +118,7 @@ describe('RestrictedGrafanaApis', () => {
         </RestrictedGrafanaApisContextProvider>
       ),
     });
+    // @ts-expect-error No APIs are defined yet
     expect(result.result.current.addPanel).toEqual(apis.addPanel);
   });
 
@@ -136,6 +135,7 @@ describe('RestrictedGrafanaApis', () => {
       ),
     });
 
+    // @ts-expect-error No APIs are defined yet
     expect(result.current.addPanel).not.toBeDefined();
   });
 
@@ -149,6 +149,7 @@ describe('RestrictedGrafanaApis', () => {
         </RestrictedGrafanaApisContextProvider>
       ),
     });
+    // @ts-expect-error No APIs are defined yet
     expect(result.result.current.addPanel).not.toBeDefined();
 
     result = renderHook(() => useRestrictedGrafanaApis(), {
@@ -158,6 +159,7 @@ describe('RestrictedGrafanaApis', () => {
         </RestrictedGrafanaApisContextProvider>
       ),
     });
+    // @ts-expect-error No APIs are defined yet
     expect(result.result.current.addPanel).not.toBeDefined();
   });
 
@@ -173,6 +175,7 @@ describe('RestrictedGrafanaApis', () => {
         </RestrictedGrafanaApisContextProvider>
       ),
     });
+    // @ts-expect-error No APIs are defined yet
     expect(result.current.addPanel).not.toBeDefined();
   });
 
@@ -188,6 +191,7 @@ describe('RestrictedGrafanaApis', () => {
         </RestrictedGrafanaApisContextProvider>
       ),
     });
+    // @ts-expect-error No APIs are defined yet
     expect(result.current.addPanel).not.toBeDefined();
   });
 });
