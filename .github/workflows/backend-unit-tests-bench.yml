@@ -69,11 +69,14 @@ jobs:
         env:
           SHARD: ${{ matrix.shard }}
         run: |
-          set -euo pipefail
-          readarray -t PACKAGES <<< "$(./scripts/ci/backend-tests/shard.sh -N"$SHARD")"
-          grafana-bench test --test-runner go --grafana-version main \
-           --go-test-packages "${PACKAGES[@]}" \
-           --go-args "-short -timeout=30m"
+          apk add bash
+          bash -c '
+            set -euo pipefail
+            readarray -t PACKAGES <<< "$(./scripts/ci/backend-tests/shard.sh -N"$SHARD")"
+            grafana-bench test --test-runner go --grafana-version main \
+             --go-test-packages "${PACKAGES[@]}" \
+             --go-args "-short -timeout=30m"
+           '
 
   # This is the job that is actually required by rulesets.
   # We need to require EITHER the OSS or the Enterprise job to pass.
