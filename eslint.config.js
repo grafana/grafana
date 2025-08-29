@@ -40,6 +40,11 @@ const baseImportConfig = {
       message: 'Please import from @grafana/i18n instead',
     },
     {
+      group: ['@grafana/ui*', '*/Layout/*'],
+      importNames: ['Layout', 'HorizontalGroup', 'VerticalGroup'],
+      message: 'Use Stack component instead.',
+    },
+    {
       regex: '\\.test$',
       message:
         'Do not import test files. If you require reuse of constants/mocks across files, create a separate file with no tests',

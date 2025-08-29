@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event';
 import * as React from 'react';
 import { select, openMenu } from 'react-select-event';
 
+// eslint-disable-next-line no-restricted-imports
 import * as ui from '@grafana/ui';
 
 import createMockDatasource from '../../mocks/datasource';
