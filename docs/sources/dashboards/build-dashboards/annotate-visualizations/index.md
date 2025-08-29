@@ -210,6 +210,6 @@ The above configuration produces the following result in the Time series panel:
 
 {{< figure src="/media/docs/grafana/screenshot-grafana-10-0-timeseries-time-regions.png" max-width="600px" alt="Time series visualization with time regions business hours" >}}
 
-Toggle the **Advanced** switch and use [Cron syntax](https://crontab.run/) to set more granular time region controls. The following example sets a time region of 9:00 AM, Monday to Friday:
+Toggle the **Advanced** switch and use [Cron syntax](https://en.wikipedia.org/wiki/Cron) to set more granular time region controls. The following example sets a time region of 9:00 AM, Monday to Friday:
 
 {{< figure src="/media/docs/grafana/dashboards/screenshot-annotations-cron-option-v11.6.png" max-width="600px" alt="Time region query with cron syntax" >}}
