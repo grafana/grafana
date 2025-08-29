@@ -27,7 +27,6 @@ export const getStyles: TableCellStyles = (_theme, { textWrap, shouldOverflow, m
     }),
     ...(maxHeight != null &&
       textWrap && {
-        // :not(.rdg-cell:hover &):not([aria-selected=true] &)
         [`:not(${getActiveCellSelector(true)}`]: {
           height: 'auto',
           overflowY: 'hidden',
