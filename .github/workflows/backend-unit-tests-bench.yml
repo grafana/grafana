@@ -50,8 +50,6 @@ jobs:
 
     name: Grafana (${{ matrix.shard }})
     runs-on: ubuntu-latest
-    container:
-      image: 
     continue-on-error: true
     permissions:
       contents: read
