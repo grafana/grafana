@@ -133,7 +133,8 @@ export const getTreeItemElementId = (scopeNodeId?: string) => {
 const getStyles = (theme: GrafanaTheme2) => {
   return {
     highlighted: css({
-      textDecoration: 'underline',
+      background: theme.colors.action.focus,
+      borderRadius: theme.shape.radius.default,
     }),
     expandedContainer: css({
       display: 'flex',

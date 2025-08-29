@@ -87,7 +87,7 @@ export function useKeyboardInteraction(
   useEffect(() => {
     // Reset when doing a new query
     setHighlightedIndex(-1);
-  }, [searchQuery]);
+  }, [searchQuery, enabled]);
 
   return { highlightedIndex };
 }

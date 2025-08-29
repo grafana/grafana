@@ -76,6 +76,7 @@ export function ScopesTree({
 
   // Use the same highlighting for the two different lists
   const { highlightedIndex } = useKeyboardInteraction(
+    // Disable when you have expanded children
     searchFocused,
     [...selectedNodesToShow, ...childrenArray],
     searchFocused ? tree.query : '',
