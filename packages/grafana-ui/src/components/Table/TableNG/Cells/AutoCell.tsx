@@ -27,12 +27,17 @@ export const getStyles: TableCellStyles = (_theme, { textWrap, shouldOverflow, m
     }),
     ...(maxHeight != null &&
       textWrap && {
-        [`:not(${getActiveCellSelector(true)}`]: {
-          height: 'auto',
-          overflowY: 'hidden',
-          display: '-webkit-box',
-          WebkitBoxOrient: 'vertical',
-          WebkitLineClamp: Math.floor(maxHeight / TABLE.LINE_HEIGHT),
+        height: 'auto',
+        overflowY: 'hidden',
+        display: '-webkit-box',
+        WebkitBoxOrient: 'vertical',
+        WebkitLineClamp: Math.floor(maxHeight / TABLE.LINE_HEIGHT),
+        [getActiveCellSelector(true)]: {
+          display: 'flex',
+          WebkitLineClamp: 'none',
+          WebkitBoxOrient: 'unset',
+          overflowY: 'auto',
+          height: 'fit-content',
         },
       }),
   });
