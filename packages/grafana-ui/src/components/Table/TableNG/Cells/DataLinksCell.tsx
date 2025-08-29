@@ -22,9 +22,7 @@ export const getStyles: TableCellStyles = (theme, { textWrap, textAlign }) =>
     ...(textWrap && {
       flexDirection: 'column',
       justifyContent: 'center',
-      // we cannot guarantee the order of classes that will be applied to the cell content,
-      // and we need to override the default alignment which is `center` since the flex direction is `row`.
-      alignItems: `${getJustifyContent(textAlign)} !important`,
+      alignItems: getJustifyContent(textAlign),
     }),
     '> a': {
       flexWrap: 'nowrap',

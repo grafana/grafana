@@ -156,7 +156,7 @@ export const getMaxHeightCellStyles: TableCellStyles = (_theme, { textAlign, max
     maxHeight,
     overflowY: 'hidden',
     [getActiveCellSelector(true)]: {
-      maxHeight: 'none', // need important to override inline style which contains max height.
+      maxHeight: 'none',
       minHeight: '100%',
     },
   });
