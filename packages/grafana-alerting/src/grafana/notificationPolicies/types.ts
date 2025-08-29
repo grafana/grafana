@@ -16,4 +16,5 @@ export type Route = OverrideProperties<
 // Mostly used for searching / filtering.
 export interface RouteWithID extends Route {
   id: string;
+  routes: RouteWithID[];
 }
