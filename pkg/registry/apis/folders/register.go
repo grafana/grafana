@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/grafana/grafana/apps/iam/pkg/reconcilers"
+	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	"github.com/prometheus/client_golang/prometheus"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -55,6 +57,7 @@ type FolderAPIBuilder struct {
 	acService            accesscontrol.Service
 	ac                   accesscontrol.AccessControl
 	storage              grafanarest.Storage
+	permissionStore      reconcilers.PermissionStore
 
 	authorizer authorizer.Authorizer
 
@@ -72,6 +75,7 @@ func RegisterAPIService(cfg *setting.Cfg,
 	acService accesscontrol.Service,
 	registerer prometheus.Registerer,
 	unified resource.ResourceClient,
+	zanzanaClient zanzana.Client,
 ) *FolderAPIBuilder {
 	builder := &FolderAPIBuilder{
 		gv:                   resourceInfo.GroupVersion(),
@@ -84,6 +88,7 @@ func RegisterAPIService(cfg *setting.Cfg,
 		cfg:                  cfg,
 		authorizer:           newLegacyAuthorizer(accessControl),
 		searcher:             unified,
+		permissionStore:      reconcilers.NewZanzanaPermissionStore(zanzanaClient),
 	}
 	apiregistration.RegisterAPI(builder)
 	return builder
@@ -177,9 +182,9 @@ func (b *FolderAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.API
 		if err != nil {
 			return err
 		}
+
 		store.BeginCreate = b.beginCreate
 		store.BeginUpdate = b.beginUpdate
-		store.AfterDelete = b.afterDelete
 
 		dw, err := dualWriteBuilder(resourceInfo.GroupResource(), legacyStore, store)
 		if err != nil {

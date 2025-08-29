@@ -2,44 +2,73 @@ package folders
 
 import (
 	"context"
-	"fmt"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/generic/registry"
 
+	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
 
-// Almost nobody should use this style hook.
-func (b *FolderAPIBuilder) beginCreate(ctx context.Context, obj runtime.Object, options *metav1.CreateOptions) (registry.FinishFunc, error) {
+// "Almost nobody should use this hook" but we do because we need ctx and AfterCreate doesn't have it.
+func (b *FolderAPIBuilder) beginCreate(_ context.Context, obj runtime.Object, _ *metav1.CreateOptions) (registry.FinishFunc, error) {
 	meta, err := utils.MetaAccessor(obj)
 	if err != nil {
 		return nil, err
 	}
-	fmt.Printf("before create folder: %s, parent: %s\n", meta.GetName(), meta.GetFolder())
+
+	if isFolderAtRoot(meta) {
+		// Zanzana only cares about parent-child folder relationships; nothing to do if folder is at root.
+		return func(ctx context.Context, success bool) {}, nil
+	}
+
 	return func(ctx context.Context, success bool) {
-		fmt.Printf("created folder: %s: success: %v\n", meta.GetName(), success)
+		if success {
+			b.writeFolderToZanzana(ctx, meta)
+		}
 	}, nil
 }
 
-// Almost nobody should use this style hook.
-func (b *FolderAPIBuilder) beginUpdate(ctx context.Context, obj, old runtime.Object, options *metav1.UpdateOptions) (registry.FinishFunc, error) {
-	meta, err := utils.MetaAccessor(obj)
+// "Almost nobody should use this hook" but we do because we need ctx and AfterUpdate doesn't have it.
+func (b *FolderAPIBuilder) beginUpdate(_ context.Context, obj runtime.Object, old runtime.Object, _ *metav1.UpdateOptions) (registry.FinishFunc, error) {
+	updatedMeta, err := utils.MetaAccessor(obj)
 	if err != nil {
 		return nil, err
 	}
-	fmt.Printf("before update folder: %s, parent: %s\n", meta.GetName(), meta.GetFolder())
+	oldMeta, err := utils.MetaAccessor(old)
+	if err != nil {
+		return nil, err
+	}
+
+	if updatedMeta.GetFolder() == oldMeta.GetFolder() {
+		// No change to parent folder, nothing to do.
+		return func(ctx context.Context, success bool) {}, nil
+	}
+
 	return func(ctx context.Context, success bool) {
-		fmt.Printf("updated folder: %s: success: %v\n", meta.GetName(), success)
+		if success {
+			b.writeFolderToZanzana(ctx, updatedMeta)
+		}
 	}, nil
 }
 
-// no context????
-func (b *FolderAPIBuilder) afterDelete(obj runtime.Object, options *metav1.DeleteOptions) {
-	meta, err := utils.MetaAccessor(obj)
-	if err != nil {
-		return // ????
+func (b *FolderAPIBuilder) writeFolderToZanzana(ctx context.Context, folder utils.GrafanaMetaAccessor) {
+	log := logging.FromContext(ctx)
+	if isFolderAtRoot(folder) {
+		// Folder was moved to root, remove any existing parent relationships in Zanzana
+		err := b.permissionStore.DeleteFolderParents(ctx, folder.GetNamespace(), folder.GetName())
+		if err != nil {
+			log.Warn("failed to propagate folder to zanzana", "err", err)
+		}
+		return
 	}
-	fmt.Printf("after delete folder: %s, parent: %s\n", meta.GetName(), meta.GetFolder())
+	err := b.permissionStore.SetFolderParent(ctx, folder.GetNamespace(), folder.GetName(), folder.GetFolder())
+	if err != nil {
+		log.Warn("failed to propagate folder to zanzana", "err", err)
+	}
+}
+
+func isFolderAtRoot(folder utils.GrafanaMetaAccessor) bool {
+	return folder.GetFolder() == ""
 }
