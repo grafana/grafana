@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 
+import { isNodeExpandable } from './scopesTreeUtils';
 import { TreeNode } from './types';
 
 // Uses enum to enable extension in the future
@@ -52,7 +53,7 @@ export function useKeyboardInteraction(
           break;
         // Handle Expand action
         case 'ArrowRight':
-          // Check if item is expandable and if it is, expand it
+          // Let checking if an item actually is expandable be handled in onSelect
           if (highlightedIndex !== -1) {
             // Send an expand action here and let onSelect determine if the node actually is expandable
             event.preventDefault();

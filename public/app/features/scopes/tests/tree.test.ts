@@ -416,6 +416,26 @@ describe('Tree', () => {
       await user.keyboard('{Enter}');
       expectResultApplicationsCloudPresent();
     });
+
+    it('should not expand non-expandable items with ArrowRight key', async () => {
+      await openSelector();
+      await expandResultApplications();
+
+      const searchInput = screen.getByRole('combobox', { name: 'Search Applications' });
+      expect(searchInput).toHaveFocus();
+
+      // Navigate to a non-expandable item (like Grafana, Mimir, or Cloud)
+      await user.keyboard('{ArrowDown}');
+
+      // Verify we're on a non-expandable item (should not have aria-expanded attribute)
+      const selectedItem = screen.getByRole('treeitem', { selected: true });
+      expect(selectedItem).not.toHaveAttribute('aria-expanded');
+
+      // Try to expand with ArrowRight - should do nothing
+      await user.keyboard('{ArrowRight}');
+
+      expect(selectedItem).not.toHaveAttribute('aria-expanded', 'true');
+    });
   });
 
   describe('Accessibility Markup', () => {

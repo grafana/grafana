@@ -196,22 +196,6 @@ describe('useKeyboardInteraction', () => {
       expect(mockOnSelect).toHaveBeenCalledWith(1, KeyboardAction.EXPAND);
     });
 
-    it('should not call onSelect for non-expandable items', async () => {
-      const { result } = renderHook(() => useKeyboardInteraction(true, mockItems, '', mockOnSelect));
-
-      // Focus the input to enable keyboard events
-      await user.click(inputElement);
-
-      // Navigate to non-expandable item (index 0)
-      await user.keyboard('{ArrowDown}');
-      expect(result.current.highlightedIndex).toBe(0);
-
-      // Press ArrowRight
-      await user.keyboard('{ArrowRight}');
-
-      expect(mockOnSelect).not.toHaveBeenCalled();
-    });
-
     it('should not call onSelect when no item is highlighted', async () => {
       const { result } = renderHook(() => useKeyboardInteraction(true, mockItems, '', mockOnSelect));
 
