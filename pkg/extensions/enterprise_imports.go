@@ -27,6 +27,7 @@ import (
 	_ "github.com/robfig/cron/v3"
 	_ "github.com/russellhaering/goxmldsig"
 	_ "github.com/spf13/cobra" // used by the standalone apiserver cli
+	_ "github.com/spyzhov/ajson"
 	_ "github.com/stretchr/testify/require"
 	_ "gocloud.dev/secrets/awskms"
 	_ "gocloud.dev/secrets/azurekeyvault"
