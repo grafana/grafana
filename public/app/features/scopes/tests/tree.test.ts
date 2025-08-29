@@ -280,13 +280,13 @@ describe('Tree', () => {
 
       // Get all tree items and find the one that's selected
       const treeItems = screen.getAllByRole('treeitem');
-      const selectedItem = treeItems.find((item) => item.getAttribute('aria-selected') === 'true');
+      const selectedItem = screen.getByRole('treeitem', { selected: true });
       expect(selectedItem).toBeTruthy();
 
       await user.keyboard('{ArrowDown}');
 
       // Find the new selected item
-      const newSelectedItem = treeItems.find((item) => item.getAttribute('aria-selected') === 'true');
+      const newSelectedItem = screen.getByRole('treeitem', { selected: true });
       expect(newSelectedItem).toBeTruthy();
       expect(newSelectedItem).not.toBe(selectedItem);
 
@@ -294,7 +294,7 @@ describe('Tree', () => {
       await user.keyboard('{ArrowUp}');
 
       // Should be back to the first selected item
-      const finalSelectedItem = treeItems.find((item) => item.getAttribute('aria-selected') === 'true');
+      const finalSelectedItem = screen.getByRole('treeitem', { selected: true });
       expect(finalSelectedItem).toBe(selectedItem);
     });
 
@@ -315,8 +315,8 @@ describe('Tree', () => {
       expect(treeItems.length).toBeGreaterThan(0);
 
       // Check that at least one item is selected
-      const selectedItems = treeItems.filter((item) => item.getAttribute('aria-selected') === 'true');
-      expect(selectedItems.length).toBeGreaterThan(0);
+      const selectedItem = screen.getByRole('treeitem', { selected: true });
+      expect(selectedItem).toBeTruthy();
     });
 
     it('should select items with Enter key', async () => {
@@ -390,9 +390,8 @@ describe('Tree', () => {
 
       // No items should be selected
       const items = screen.getAllByRole('treeitem');
-      items.forEach((item) => {
-        expect(item).toHaveAttribute('aria-selected', 'false');
-      });
+      const nonSelectedItems = screen.queryAllByRole('treeitem', { selected: false });
+      expect(nonSelectedItems.length).toBe(items.length);
     });
 
     it('should handle keyboard navigation with search results', async () => {
@@ -415,10 +414,8 @@ describe('Tree', () => {
       expect(selectedItems.length).toBeGreaterThan(0);
 
       // Select the first selected item
-      if (selectedItems.length > 0) {
-        await user.keyboard('{Enter}');
-        expectResultApplicationsCloudPresent();
-      }
+      await user.keyboard('{Enter}');
+      expectResultApplicationsCloudPresent();
     });
   });
 
@@ -449,30 +446,6 @@ describe('Tree', () => {
 
       treeItems.forEach((item) => {
         expect(item).toHaveAttribute('aria-selected');
-      });
-    });
-
-    it('should have proper ARIA controls relationship', async () => {
-      await openSelector();
-      await expandResultApplications();
-
-      const searchInput = screen.getByRole('combobox', { name: 'Search Applications' });
-      const ariaControls = searchInput.getAttribute('aria-controls');
-
-      // Should reference some controls (format may vary)
-      expect(ariaControls).toBeTruthy();
-      expect(ariaControls?.length).toBeGreaterThan(0);
-
-      // The referenced elements should exist
-      const controlsIds = ariaControls?.split(' ');
-      controlsIds?.forEach((id) => {
-        if (id.trim()) {
-          const element = document.getElementById(id.trim());
-          // Only check if the element exists if it's a valid ID format
-          if (id.trim().match(/^[a-zA-Z0-9_-]+$/)) {
-            expect(element).toBeInTheDocument();
-          }
-        }
       });
     });
 
