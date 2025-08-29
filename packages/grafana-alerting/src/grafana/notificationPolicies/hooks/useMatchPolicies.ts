@@ -3,8 +3,8 @@ import { useCallback } from 'react';
 import { RoutingTree, alertingAPI } from '../../api/v0alpha1/api.gen';
 import { Label } from '../../matchers/types';
 import { USER_DEFINED_TREE_NAME } from '../consts';
-import { Route } from '../types';
-import { RouteMatchResult, RouteWithID, convertRoutingTreeToRoute, matchAlertInstancesToPolicyTree } from '../utils';
+import { Route, RouteWithID } from '../types';
+import { RouteMatchResult, convertRoutingTreeToRoute, matchAlertInstancesToPolicyTree } from '../utils';
 
 export type RouteMatch = {
   route: Route;
