@@ -334,8 +334,7 @@ export function getAlertingRoutes(cfg = config): RouteDescriptor[] {
     },
   ];
 
-  // Add triage route only when the alertingTriage feature toggle is disabled
-  if (!cfg.featureToggles.alertingTriage) {
+  if (cfg.featureToggles.alertingTriage) {
     routes.push({
       path: '/alerting/triage',
       roles: evaluateAccess([AccessControlAction.AlertingRuleRead, AccessControlAction.AlertingRuleExternalRead]),
