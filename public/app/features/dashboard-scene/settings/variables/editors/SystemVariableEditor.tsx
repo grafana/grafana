@@ -9,7 +9,7 @@ export function getSystemVariableOptions(variable: SceneVariable): OptionsPaneIt
 
   return [
     new OptionsPaneItemDescriptor({
-      title: '',
+      id: `variable-${variable.state.name}-value`,
       render: () => {
         return (
           <Stack direction="column">

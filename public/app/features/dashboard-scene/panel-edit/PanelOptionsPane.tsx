@@ -133,7 +133,6 @@ function PanelOptionsPaneComponent({ model }: SceneComponentProps<PanelOptionsPa
   const hasFieldConfig = !isSearching && !panel.getPlugin()?.fieldConfigRegistry.isEmpty();
   const [isSearchingOptions, setIsSearchingOptions] = useToggle(false);
   const onlyOverrides = listMode === OptionFilter.Overrides;
-
   const isScrollingLayout = useScrollReflowLimit();
 
   return (
@@ -208,9 +207,6 @@ function getStyles(theme: GrafanaTheme2) {
     }),
     searchWrapper: css({
       padding: theme.spacing(2, 2, 2, 0),
-    }),
-    vizField: css({
-      marginBottom: theme.spacing(0),
     }),
     rotateIcon: css({
       rotate: '180deg',

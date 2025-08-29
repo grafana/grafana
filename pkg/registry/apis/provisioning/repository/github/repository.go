@@ -10,10 +10,10 @@ import (
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/apps/provisioning/pkg/safepath"
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository/git"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/safepath"
 )
 
 // Make sure all public functions of this struct call the (*githubRepository).logger function, to ensure the GH repo details are included.
@@ -42,7 +42,7 @@ type GithubRepository interface {
 	Client() Client
 }
 
-func NewGitHub(
+func NewRepository(
 	ctx context.Context,
 	config *provisioning.Repository,
 	gitRepo git.GitRepository,
