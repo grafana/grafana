@@ -199,12 +199,7 @@
   "preload": false,
   "refresh": "",
   "schemaVersion": 41,
-  "tags": [
-    "gdev",
-    "panel-tests",
-    "graph-ng",
-    "trend"
-  ],
+  "tags": ["gdev", "panel-tests", "graph-ng", "trend"],
   "templating": {
     "list": []
   },
