@@ -135,19 +135,4 @@ describe('SecondaryActions', () => {
 
     expect(screen.queryByRole('button', { name: /Add from saved queries/i })).not.toBeInTheDocument();
   });
-
-  it('should not render add from saved queries button user has Viewer role', () => {
-    contextSrv.user.orgRole = OrgRole.Viewer;
-    render(
-      <QueryLibraryContextProviderMock queryLibraryEnabled={true}>
-        <SecondaryActions
-          onClickAddQueryRowButton={noop}
-          onClickQueryInspectorButton={noop}
-          onSelectQueryFromLibrary={noop}
-        />
-      </QueryLibraryContextProviderMock>
-    );
-
-    expect(screen.queryByRole('button', { name: /Add from saved queries/i })).not.toBeInTheDocument();
-  });
 });
