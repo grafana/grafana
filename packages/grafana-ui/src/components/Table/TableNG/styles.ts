@@ -152,8 +152,9 @@ export const getMaxHeightCellStyles: TableCellStyles = (_theme, { textAlign, max
     display: 'flex',
     alignItems: 'center',
     textAlign,
-    justifyContent: Boolean(maxHeight) ? 'flex-start' : getJustifyContent(textAlign),
+    justifyContent: getJustifyContent(textAlign),
     maxHeight,
+    width: '100%',
     overflowY: 'hidden',
     [getActiveCellSelector(true)]: {
       maxHeight: 'none',
