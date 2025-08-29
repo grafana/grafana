@@ -24,7 +24,7 @@ import {
   trackInfluxDBConfigV2URLInputField,
 } from './tracking';
 import { Props } from './types';
-import { INFLUXDB_VERSION_MAP } from './versions';
+import { INFLUXDB_VERSION_MAP, InfluxDBProduct } from './versions';
 
 const getQueryLanguageOptions = (productName: string): Array<{ value: string }> => {
   const product = INFLUXDB_VERSION_MAP.find(({ name }) => name === productName);
@@ -63,7 +63,73 @@ export const UrlAndAuthenticationSection = (props: Props) => {
     }
   };
 
-  const onUrlChange = (event: React.ChangeEvent<HTMLInputElement>) => onUpdateDatasourceOption(props, 'url')(event);
+  const onUrlChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    onUpdateDatasourceOption(props, 'url')(event);
+  };
+
+  const pingInfluxForProductDetection = async (urlValue: string) => {
+    const base = urlValue.replace(/\/$/, '');
+
+    try {
+      const res = await fetch(`${base}/ping`);
+      if (res.ok) {
+        const product = res.headers.get('x-influxdb-build') ?? undefined;
+        const version = res.headers.get('x-influxdb-version') ?? undefined;
+
+        if (product || version) {
+          return { product, version };
+        }
+      }
+    } catch (err) {
+      console.error('Failed to get InfluxDB version:', err);
+    }
+
+    return { product: undefined, version: undefined };
+  };
+
+  const matchUrlContains = async (urlValue: string) => {
+    let product: InfluxDBProduct | undefined;
+    product = INFLUXDB_VERSION_MAP.find((product: InfluxDBProduct) => {
+      if (product.detectionMethod?.urlContains) {
+        return product.detectionMethod.urlContains.some((url) => {
+          return urlValue.includes(url);
+        });
+      }
+      return false;
+    });
+
+    if (!product) {
+      const pingUrl = await pingInfluxForProductDetection(urlValue);
+
+      if (pingUrl) {
+        product = INFLUXDB_VERSION_MAP.find((product: InfluxDBProduct) => {
+          if (product.detectionMethod?.pingHeaderResponse) {
+            const productBuild = product.detectionMethod.pingHeaderResponse['x-influxdb-build'];
+            const productVersion = product.detectionMethod.pingHeaderResponse['x-influxdb-version'];
+            const pingUrlVersion = pingUrl.version ?? '';
+            const pingUrlBuild = pingUrl.product ?? '';
+            const versionMatch = new RegExp(productVersion).test(pingUrlVersion);
+            const buildMatch = pingUrlBuild.includes(productBuild);
+            return versionMatch && buildMatch;
+          }
+          return false;
+        });
+      }
+    }
+
+    onOptionsChange({
+      ...options,
+      jsonData: {
+        ...options.jsonData,
+        product: product ? product.name : undefined,
+        version: undefined,
+      },
+    });
+  };
+
+  const detectProductFromUrl = (event: React.ChangeEvent<HTMLInputElement>) => {
+    matchUrlContains(event.target.value);
+  };
 
   return (
     <Box
@@ -90,7 +156,10 @@ export const UrlAndAuthenticationSection = (props: Props) => {
               placeholder="example: http://localhost:8086/"
               onChange={onUrlChange}
               value={options.url || ''}
-              onBlur={trackInfluxDBConfigV2URLInputField}
+              onBlur={(e) => {
+                detectProductFromUrl(e);
+                trackInfluxDBConfigV2URLInputField();
+              }}
             />
           </Field>
 
