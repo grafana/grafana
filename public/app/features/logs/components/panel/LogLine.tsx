@@ -595,6 +595,7 @@ export const getStyles = (theme: GrafanaTheme2, virtualization?: LogLineVirtuali
       },
     }),
     fieldsWrapper: css({
+      minHeight: virtualization ? virtualization.getLineHeight() + virtualization.getPaddingBottom() : undefined,
       '&:hover': {
         background: hoverColor,
       },
