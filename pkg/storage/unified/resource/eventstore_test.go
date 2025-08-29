@@ -319,7 +319,7 @@ func TestEventStore_ListKeysSince(t *testing.T) {
 		retrievedEvents = append(retrievedEvents, eventKey)
 	}
 
-	// Should return events in descending order of resource version
+	// Should return events in ascending order of resource version
 	require.Len(t, retrievedEvents, 2)
 	evt1, err := ParseEventKey(retrievedEvents[0])
 	require.NoError(t, err)
