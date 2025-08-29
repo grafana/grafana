@@ -93,6 +93,7 @@ describe('sceneVariablesSetToVariables', () => {
       name: 'test',
       label: 'test-label',
       description: 'test-desc',
+      showInControlsMenu: true,
       value: ['selected-value'],
       text: ['selected-value-text'],
       datasource: { uid: 'fake-uid', type: 'fake-type' },
@@ -138,6 +139,7 @@ describe('sceneVariablesSetToVariables', () => {
       "query": "query",
       "refresh": 1,
       "regex": "",
+      "showInControlsMenu": true,
       "staticOptions": [
         {
           "text": "test",
@@ -155,6 +157,7 @@ describe('sceneVariablesSetToVariables', () => {
       name: 'test',
       label: 'test-label',
       description: 'test-desc',
+      showInControlsMenu: true,
       value: ['selected-value'],
       text: ['selected-value-text'],
       datasource: { uid: 'fake-uid', type: 'fake-type' },
@@ -200,6 +203,7 @@ describe('sceneVariablesSetToVariables', () => {
       "query": "query",
       "refresh": 1,
       "regex": "",
+      "showInControlsMenu": true,
       "staticOptions": [
         {
           "text": "test",
@@ -217,6 +221,7 @@ describe('sceneVariablesSetToVariables', () => {
       name: 'test',
       label: 'test-label',
       description: 'test-desc',
+      showInControlsMenu: true,
       value: ['selected-value'],
       text: ['selected-value-text'],
       datasource: { uid: 'fake-uid', type: 'fake-type' },
@@ -244,6 +249,7 @@ describe('sceneVariablesSetToVariables', () => {
       name: 'test',
       label: 'test-label',
       description: 'test-desc',
+      showInControlsMenu: true,
       value: ['test'],
       text: ['test'],
       datasource: { uid: 'fake-uid', type: 'fake-type' },
@@ -273,6 +279,7 @@ describe('sceneVariablesSetToVariables', () => {
       name: 'test',
       label: 'test-label',
       description: 'test-desc',
+      showInControlsMenu: true,
       value: ['selected-ds-1', 'selected-ds-2'],
       text: ['selected-ds-1-text', 'selected-ds-2-text'],
       pluginId: 'fake-std',
@@ -311,6 +318,7 @@ describe('sceneVariablesSetToVariables', () => {
       "query": "fake-std",
       "refresh": 1,
       "regex": "",
+      "showInControlsMenu": true,
       "type": "datasource",
     }
     `);
@@ -321,6 +329,7 @@ describe('sceneVariablesSetToVariables', () => {
       name: 'test',
       label: 'test-label',
       description: 'test-desc',
+      showInControlsMenu: true,
       value: ['test', 'test2'],
       text: ['test', 'test2'],
       query: 'test,test1,test2',
@@ -378,6 +387,7 @@ describe('sceneVariablesSetToVariables', () => {
         },
       ],
       "query": "test,test1,test2",
+      "showInControlsMenu": true,
       "type": "custom",
     }
     `);
@@ -388,6 +398,7 @@ describe('sceneVariablesSetToVariables', () => {
       name: 'test',
       label: 'test-label',
       description: 'test-desc',
+      showInControlsMenu: true,
       value: 'constant value',
       skipUrlSync: true,
     });
@@ -409,6 +420,7 @@ describe('sceneVariablesSetToVariables', () => {
       "label": "test-label",
       "name": "test",
       "query": "constant value",
+      "showInControlsMenu": true,
       "skipUrlSync": true,
       "type": "constant",
     }
@@ -420,6 +432,7 @@ describe('sceneVariablesSetToVariables', () => {
       name: 'test',
       label: 'test-label',
       description: 'test-desc',
+      showInControlsMenu: true,
       value: 'text value',
       skipUrlSync: true,
     });
@@ -447,6 +460,7 @@ describe('sceneVariablesSetToVariables', () => {
         },
       ],
       "query": "text value",
+      "showInControlsMenu": true,
       "skipUrlSync": true,
       "type": "textbox",
     }
@@ -458,6 +472,7 @@ describe('sceneVariablesSetToVariables', () => {
       intervals: ['1m', '2m', '3m', '1h', '1d'],
       value: '1m',
       refresh: VariableRefresh.onDashboardLoad,
+      showInControlsMenu: true,
     });
     const set = new SceneVariableSet({
       variables: [variable],
@@ -506,6 +521,7 @@ describe('sceneVariablesSetToVariables', () => {
       ],
       "query": "1m,2m,3m,1h,1d",
       "refresh": 1,
+      "showInControlsMenu": true,
       "type": "interval",
     }
     `);
@@ -517,6 +533,7 @@ describe('sceneVariablesSetToVariables', () => {
       allowCustomValue: true,
       label: 'test-label',
       description: 'test-desc',
+      showInControlsMenu: true,
       datasource: { uid: 'fake-uid', type: 'fake-type' },
       filters: [
         {
@@ -565,6 +582,7 @@ describe('sceneVariablesSetToVariables', () => {
       ],
       "label": "test-label",
       "name": "test",
+      "showInControlsMenu": true,
       "type": "adhoc",
     }
     `);
@@ -577,6 +595,7 @@ describe('sceneVariablesSetToVariables', () => {
         allowCustomValue: true,
         label: 'test-label',
         description: 'test-desc',
+        showInControlsMenu: true,
         datasource: { uid: 'fake-std', type: 'fake-std' },
         originFilters: [
           {
@@ -608,6 +627,7 @@ describe('sceneVariablesSetToVariables', () => {
         "filters": [],
         "label": "test-label",
         "name": "test",
+        "showInControlsMenu": true,
         "type": "adhoc",
       }
       `);
@@ -619,6 +639,7 @@ describe('sceneVariablesSetToVariables', () => {
         allowCustomValue: true,
         label: 'test-label',
         description: 'test-desc',
+        showInControlsMenu: true,
         datasource: { uid: 'fake-std', type: 'fake-std' },
         originFilters: [
           {
@@ -668,6 +689,7 @@ describe('sceneVariablesSetToVariables', () => {
         ],
         "label": "test-label",
         "name": "test",
+        "showInControlsMenu": true,
         "type": "adhoc",
       }
       `);
@@ -680,6 +702,7 @@ describe('sceneVariablesSetToVariables', () => {
       allowCustomValue: true,
       label: 'test-label',
       description: 'test-desc',
+      showInControlsMenu: true,
       datasource: { uid: 'fake-uid', type: 'fake-type' },
       defaultKeys: [
         {
@@ -755,6 +778,7 @@ describe('sceneVariablesSetToVariables', () => {
       ],
       "label": "test-label",
       "name": "test",
+      "showInControlsMenu": true,
       "type": "adhoc",
     }
     `);
@@ -775,6 +799,7 @@ describe('sceneVariablesSetToVariables', () => {
         label: 'test-label',
         description: 'test-desc',
         allowCustomValue: true,
+        showInControlsMenu: true,
         datasource: { uid: 'fake-uid', type: 'fake-type' },
         defaultOptions: [
           {
@@ -819,6 +844,7 @@ describe('sceneVariablesSetToVariables', () => {
             "value": "bar",
           },
         ],
+        "showInControlsMenu": true,
         "type": "groupby",
       }
       `);
@@ -831,6 +857,7 @@ describe('sceneVariablesSetToVariables', () => {
         name: 'test',
         label: 'test-label',
         description: 'test-desc',
+        showInControlsMenu: true,
         datasource: { uid: 'fake-uid', type: 'fake-type' },
         defaultOptions: [
           {
@@ -866,6 +893,7 @@ describe('sceneVariablesSetToVariables', () => {
         isMulti: true,
         staticOptions: [{ label: 'test', value: 'test' }],
         staticOptionsOrder: 'after',
+        showInControlsMenu: true,
       });
 
       const set = new SceneVariableSet({
@@ -910,6 +938,7 @@ describe('sceneVariablesSetToVariables', () => {
             },
             "refresh": "onDashboardLoad",
             "regex": "",
+            "showInControlsMenu": true,
             "skipUrlSync": false,
             "sort": "disabled",
             "staticOptions": [
@@ -932,6 +961,7 @@ describe('sceneVariablesSetToVariables', () => {
         value: ['test', 'test2'],
         text: ['test', 'test2'],
         query: 'test,test1,test2',
+        showInControlsMenu: true,
         options: [
           { label: 'test', value: 'test' },
           { label: 'test1', value: 'test1' },
@@ -988,6 +1018,7 @@ describe('sceneVariablesSetToVariables', () => {
           },
         ],
         "query": "test,test1,test2",
+        "showInControlsMenu": true,
         "skipUrlSync": false,
       },
     }
@@ -1005,6 +1036,7 @@ describe('sceneVariablesSetToVariables', () => {
         includeAll: true,
         allValue: 'test-all',
         isMulti: true,
+        showInControlsMenu: true,
       });
       const set = new SceneVariableSet({
         variables: [variable],
@@ -1039,6 +1071,7 @@ describe('sceneVariablesSetToVariables', () => {
         "pluginId": "fake-std",
         "refresh": "onDashboardLoad",
         "regex": "",
+        "showInControlsMenu": true,
         "skipUrlSync": false,
       },
     }
@@ -1051,6 +1084,7 @@ describe('sceneVariablesSetToVariables', () => {
         label: 'test-label',
         description: 'test-desc',
         value: 'constant value',
+        showInControlsMenu: true,
         skipUrlSync: true,
       });
       const set = new SceneVariableSet({
@@ -1073,6 +1107,7 @@ describe('sceneVariablesSetToVariables', () => {
         "label": "test-label",
         "name": "test",
         "query": "constant value",
+        "showInControlsMenu": true,
         "skipUrlSync": true,
       },
     }
@@ -1085,6 +1120,7 @@ describe('sceneVariablesSetToVariables', () => {
         label: 'test-label',
         description: 'test-desc',
         value: 'text value',
+        showInControlsMenu: true,
         skipUrlSync: true,
       });
       const set = new SceneVariableSet({
@@ -1107,6 +1143,7 @@ describe('sceneVariablesSetToVariables', () => {
         "label": "test-label",
         "name": "test",
         "query": "text value",
+        "showInControlsMenu": true,
         "skipUrlSync": true,
       },
     }
@@ -1117,6 +1154,7 @@ describe('sceneVariablesSetToVariables', () => {
       const variable = new IntervalVariable({
         intervals: ['1m', '2m', '3m', '1h', '1d'],
         value: '1m',
+        showInControlsMenu: true,
         refresh: VariableRefresh.onDashboardLoad,
       });
       const set = new SceneVariableSet({
@@ -1169,6 +1207,7 @@ describe('sceneVariablesSetToVariables', () => {
         ],
         "query": "1m,2m,3m,1h,1d",
         "refresh": "onTimeRangeChanged",
+        "showInControlsMenu": true,
         "skipUrlSync": false,
       },
     }
@@ -1180,6 +1219,7 @@ describe('sceneVariablesSetToVariables', () => {
         name: 'test',
         label: 'test-label',
         description: 'test-desc',
+        showInControlsMenu: true,
         datasource: { uid: 'fake-uid', type: 'fake-type' },
         filters: [
           {
@@ -1231,6 +1271,7 @@ describe('sceneVariablesSetToVariables', () => {
         "hide": "dontHide",
         "label": "test-label",
         "name": "test",
+        "showInControlsMenu": true,
         "skipUrlSync": false,
       },
     }
@@ -1242,6 +1283,7 @@ describe('sceneVariablesSetToVariables', () => {
         name: 'test',
         label: 'test-label',
         description: 'test-desc',
+        showInControlsMenu: true,
         datasource: { uid: 'fake-uid', type: 'fake-type' },
         defaultKeys: [
           {
@@ -1320,6 +1362,7 @@ describe('sceneVariablesSetToVariables', () => {
         "hide": "dontHide",
         "label": "test-label",
         "name": "test",
+        "showInControlsMenu": true,
         "skipUrlSync": false,
       },
     }
@@ -1340,6 +1383,7 @@ describe('sceneVariablesSetToVariables', () => {
           name: 'test',
           label: 'test-label',
           description: 'test-desc',
+          showInControlsMenu: true,
           datasource: { uid: 'fake-uid', type: 'fake-type' },
           defaultOptions: [
             {
@@ -1387,6 +1431,7 @@ describe('sceneVariablesSetToVariables', () => {
               "value": "bar",
             },
           ],
+          "showInControlsMenu": true,
           "skipUrlSync": false,
         },
       }
@@ -1400,6 +1445,7 @@ describe('sceneVariablesSetToVariables', () => {
           name: 'test',
           label: 'test-label',
           description: 'test-desc',
+          showInControlsMenu: true,
           datasource: { uid: 'fake-uid', type: 'fake-type' },
           defaultOptions: [
             {
