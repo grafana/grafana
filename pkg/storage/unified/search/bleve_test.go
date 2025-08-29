@@ -822,7 +822,6 @@ func TestBuildIndexExpiration(t *testing.T) {
 		require.Equal(t, int64(1), cnt)
 
 		checkOpenIndexes(t, reg, 0, 1)
-		backend.CloseAllIndexes()
 	})
 }
 
