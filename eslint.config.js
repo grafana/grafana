@@ -44,6 +44,11 @@ const baseImportConfig = {
       message: 'Please import from @grafana/i18n instead',
     },
     {
+      group: ['@grafana/ui*', '*/Layout/*'],
+      importNames: ['Layout', 'HorizontalGroup', 'VerticalGroup'],
+      message: 'Use Stack component instead.',
+    },
+    {
       regex: '\\.test$',
       message:
         'Do not import test files. If you require reuse of constants/mocks across files, create a separate file with no tests',
@@ -77,7 +82,7 @@ function withBaseRestrictedImportsConfig(config = {}) {
     patterns: [...baseImportConfig.patterns, ...(config?.patterns ?? [])],
     paths: [...baseImportConfig.paths, ...(config?.paths ?? [])],
   };
-
+  console.log(finalConfig);
   return finalConfig;
 }
 
@@ -505,6 +510,25 @@ module.exports = [
     ignores: commonTestIgnores,
     rules: {
       'no-barrel-files/no-barrel-files': 'error',
+    },
+  },
+  {
+    // custom rule for Table to avoid performance regressions
+    files: ['packages/grafana-ui/src/components/Table/TableNG/Cells/**/*.{ts,tsx}'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        withBaseRestrictedImportsConfig({
+          patterns: [
+            {
+              group: ['**/themes/ThemeContext'],
+              importNames: ['useStyles2', 'useTheme2'],
+              message:
+                'Do not use "useStyles2" or "useTheme2" in a cell directly. Instead, provide styles to cells via `getDefaultCellStyles` or `getCellSpecificStyles`.',
+            },
+          ],
+        }),
+      ],
     },
   },
 ];
