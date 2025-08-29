@@ -8,6 +8,11 @@ datasources:
     uid: PD8C576611E62080A
     type: grafana-testdata-datasource
 
+  - name: Prometheus Pmetrics
+    uid: fs-prometheus
+    type: prometheus
+    url: http://prometheus:9090
+
   - name: Loki Logs
     uid: fs-loki
     type: loki

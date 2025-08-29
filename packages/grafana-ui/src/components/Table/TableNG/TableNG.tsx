@@ -59,6 +59,7 @@ import {
   getGridStyles,
   getHeaderCellStyles,
   getLinkStyles,
+  getMaxHeightCellStyles,
   getTooltipStyles,
 } from './styles';
 import {
@@ -111,6 +112,7 @@ export function TableNG(props: TableNGProps) {
     getActions = () => [],
     height,
     initialSortBy,
+    maxRowHeight: _maxRowHeight,
     noHeader,
     onCellFilterAdded,
     onColumnResize,
@@ -200,6 +202,8 @@ export function TableNG(props: TableNGProps) {
     showTypeIcons: showTypeIcons ?? false,
     typographyCtx,
   });
+  // the minimum max row height we should honor is a single line of text.
+  const maxRowHeight = _maxRowHeight != null ? Math.max(TABLE.LINE_HEIGHT, _maxRowHeight) : undefined;
   const rowHeight = useRowHeight({
     columnWidths: widths,
     fields: visibleFields,
@@ -207,6 +211,7 @@ export function TableNG(props: TableNGProps) {
     defaultHeight: defaultRowHeight,
     expandedRows,
     typographyCtx,
+    maxHeight: maxRowHeight,
   });
 
   const {
@@ -418,17 +423,24 @@ export function TableNG(props: TableNGProps) {
           ? clsx('table-cell-actions', getCellActionStyles(theme, textAlign))
           : undefined;
 
-        const shouldOverflow = rowHeight !== 'auto' && shouldTextOverflow(field);
+        const shouldOverflow = rowHeight !== 'auto' && (shouldTextOverflow(field) || Boolean(maxRowHeight));
         const textWrap = rowHeight === 'auto' || shouldTextWrap(field);
         const withTooltip = withDataLinksActionsTooltip(field, cellType);
         const canBeColorized = canFieldBeColorized(cellType, applyToRowBgFn);
-        const cellStyleOptions: TableCellStyleOptions = { textAlign, textWrap, shouldOverflow };
+        const cellStyleOptions: TableCellStyleOptions = {
+          textAlign,
+          textWrap,
+          shouldOverflow,
+          maxHeight: maxRowHeight,
+        };
 
         result.colsWithTooltip[displayName] = withTooltip;
 
         const defaultCellStyles = getDefaultCellStyles(theme, cellStyleOptions);
         const cellSpecificStyles = getCellSpecificStyles(cellType, field, theme, cellStyleOptions);
         const linkStyles = getLinkStyles(theme, canBeColorized);
+        const cellParentStyles = clsx(defaultCellStyles, linkStyles);
+        const maxHeightClassName = maxRowHeight ? getMaxHeightCellStyles(theme, cellStyleOptions) : undefined;
 
         // TODO: in future extend this to ensure a non-classic color scheme is set with AutoCell
 
@@ -461,7 +473,11 @@ export function TableNG(props: TableNGProps) {
             <Cell
               key={key}
               {...props}
-              className={clsx(props.className, defaultCellStyles, cellSpecificStyles, linkStyles)}
+              className={clsx(
+                props.className,
+                cellParentStyles,
+                cellSpecificStyles != null && { [cellSpecificStyles]: maxRowHeight == null }
+              )}
               style={style}
             />
           );
@@ -479,7 +495,7 @@ export function TableNG(props: TableNGProps) {
           const height = rowHeightFn(props.row);
           const frame = data;
 
-          return (
+          let result = (
             <>
               <CellType
                 cellOptions={cellOptions}
@@ -512,6 +528,12 @@ export function TableNG(props: TableNGProps) {
               )}
             </>
           );
+
+          if (maxRowHeight != null) {
+            result = <div className={clsx(maxHeightClassName, cellSpecificStyles)}>{result}</div>;
+          }
+
+          return result;
         };
 
         // renderCellContent fires second.
@@ -524,10 +546,12 @@ export function TableNG(props: TableNGProps) {
             const tooltipDisplayName = getDisplayName(tooltipField);
             const tooltipCellOptions = getCellOptions(tooltipField);
             const tooltipFieldRenderer = getCellRenderer(tooltipField, tooltipCellOptions);
+
             const tooltipCellStyleOptions = {
               textAlign: getAlignment(tooltipField),
               textWrap: shouldTextWrap(tooltipField),
               shouldOverflow: false,
+              maxHeight: maxRowHeight,
             } satisfies TableCellStyleOptions;
             const tooltipCanBeColorized = canFieldBeColorized(tooltipCellOptions.type, applyToRowBgFn);
             const tooltipDefaultStyles = getDefaultCellStyles(theme, tooltipCellStyleOptions);
@@ -583,7 +607,12 @@ export function TableNG(props: TableNGProps) {
               }
 
               return (
-                <TableCellTooltip {...tooltipProps} height={tooltipHeight} rowIdx={props.rowIdx} style={tooltipStyle}>
+                <TableCellTooltip
+                  {...tooltipProps}
+                  height={tooltipHeight}
+                  rowIdx={props.row.__index}
+                  style={tooltipStyle}
+                >
                   {renderBasicCellContent(props)}
                 </TableCellTooltip>
               );
@@ -629,6 +658,7 @@ export function TableNG(props: TableNGProps) {
       getCellActions,
       getCellColorInlineStyles,
       getTextColorForBackground,
+      maxRowHeight,
       numFrozenColsFullyInView,
       onCellFilterAdded,
       rowHeight,

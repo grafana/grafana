@@ -203,6 +203,15 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(TablePanel)
           ],
         },
       })
+      .addNumberInput({
+        path: 'maxRowHeight',
+        name: t('table.name-max-height', 'Max row height'),
+        category,
+        settings: {
+          placeholder: t('table.placeholder-max-height', 'none'),
+          min: 0,
+        },
+      })
       .addCustomEditor({
         id: 'footer.enablePagination',
         path: 'footer.enablePagination',

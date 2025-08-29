@@ -79,6 +79,7 @@ export function TablePanel(props: Props) {
       frozenColumns={options.frozenColumns?.left}
       enablePagination={options.footer?.enablePagination}
       cellHeight={options.cellHeight}
+      maxRowHeight={options.maxRowHeight}
       timeRange={timeRange}
       enableSharedCrosshair={config.featureToggles.tableSharedCrosshair && enableSharedCrosshair}
       fieldConfig={fieldConfig}

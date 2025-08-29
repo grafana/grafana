@@ -1156,6 +1156,23 @@ describe('TableNG utils', () => {
       const measurers = buildCellHeightMeasurers(fields, ctx);
       expect(measurers).toBeUndefined();
     });
+
+    it('clamps by maxHeight if set', () => {
+      const fields: Field[] = [
+        {
+          name: 'Tags',
+          type: FieldType.string,
+          values: ['tag1,tag2', 'tag3', '["tag4","tag5","tag6"]'],
+          config: { custom: { wrapText: true, cellOptions: { type: TableCellDisplayMode.Pill } } },
+        },
+      ];
+      const measurers = buildCellHeightMeasurers(fields, ctx);
+      expect(measurers![0].measure!(fields[0].values[2], 20, fields[0], 2, 100)).toBeGreaterThan(50);
+
+      fields[0].config!.custom!.maxHeight = 50;
+      const measurersWithMax = buildCellHeightMeasurers(fields, ctx, 50);
+      expect(measurersWithMax![0].measure!(fields[0].values[2], 20, fields[0], 2, 100)).toBe(50);
+    });
   });
 
   describe('getRowHeight', () => {

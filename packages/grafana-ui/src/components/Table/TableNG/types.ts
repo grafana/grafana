@@ -123,6 +123,7 @@ export interface BaseTableProps {
   frozenColumns?: number;
   enablePagination?: boolean;
   cellHeight?: TableCellHeight;
+  maxRowHeight?: number;
   structureRev?: number;
   transparent?: boolean;
   /** @alpha Used by SparklineCell when provided */
@@ -249,6 +250,7 @@ export interface TableCellStyleOptions {
   textWrap: boolean;
   textAlign: TextAlign;
   shouldOverflow: boolean;
+  maxHeight?: number;
 }
 
 export type TableCellStyles = (theme: GrafanaTheme2, options: TableCellStyleOptions) => string;
