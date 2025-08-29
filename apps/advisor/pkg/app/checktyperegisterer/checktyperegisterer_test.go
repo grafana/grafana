@@ -10,10 +10,30 @@ import (
 	"github.com/grafana/grafana-app-sdk/resource"
 	advisorv0alpha1 "github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1"
 	"github.com/grafana/grafana/apps/advisor/pkg/app/checks"
+	k8sErrs "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
 func TestCheckTypesRegisterer_Run(t *testing.T) {
+	newMockCheck := &mockCheck{
+		id: "check1",
+		steps: []checks.Step{
+			&mockStep{id: "step1", title: "Step 1", description: "Description 1"},
+		},
+	}
+	existingObject := &advisorv0alpha1.CheckType{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "check1",
+			Annotations: map[string]string{
+				checks.NameAnnotation: "existing-name", // Different to trigger update
+			},
+		},
+		Spec: advisorv0alpha1.CheckTypeSpec{
+			Name:  "check1",
+			Steps: []advisorv0alpha1.CheckTypeStep{},
+		},
+	}
 	tests := []struct {
 		name        string
 		checks      []checks.Check
@@ -23,14 +43,10 @@ func TestCheckTypesRegisterer_Run(t *testing.T) {
 		expectedErr error
 	}{
 		{
-			name: "successful create",
-			checks: []checks.Check{
-				&mockCheck{
-					id: "check1",
-					steps: []checks.Step{
-						&mockStep{id: "step1", title: "Step 1", description: "Description 1"},
-					},
-				},
+			name:   "successful create",
+			checks: []checks.Check{newMockCheck},
+			getFunc: func(ctx context.Context, id resource.Identifier) (resource.Object, error) {
+				return nil, k8sErrs.NewNotFound(schema.GroupResource{}, id.Name)
 			},
 			createFunc: func(ctx context.Context, id resource.Identifier, obj resource.Object, opts resource.CreateOptions) (resource.Object, error) {
 				return obj, nil
@@ -39,28 +55,10 @@ func TestCheckTypesRegisterer_Run(t *testing.T) {
 			expectedErr: nil,
 		},
 		{
-			name: "resource exists, successful update",
-			checks: []checks.Check{
-				&mockCheck{
-					id: "check1",
-					steps: []checks.Step{
-						&mockStep{id: "step1", title: "Step 1", description: "Description 1"},
-					},
-				},
-			},
+			name:   "resource exists, successful update",
+			checks: []checks.Check{newMockCheck},
 			getFunc: func(ctx context.Context, id resource.Identifier) (resource.Object, error) {
-				return &advisorv0alpha1.CheckType{
-					ObjectMeta: metav1.ObjectMeta{
-						Name: "check1",
-						Annotations: map[string]string{
-							checks.NameAnnotation: "different-name", // Different to trigger update
-						},
-					},
-					Spec: advisorv0alpha1.CheckTypeSpec{
-						Name:  "check1",
-						Steps: []advisorv0alpha1.CheckTypeStep{},
-					},
-				}, nil
+				return existingObject, nil
 			},
 			updateFunc: func(ctx context.Context, id resource.Identifier, obj resource.Object, opts resource.UpdateOptions) (resource.Object, error) {
 				return obj, nil
@@ -68,28 +66,10 @@ func TestCheckTypesRegisterer_Run(t *testing.T) {
 			expectedErr: nil,
 		},
 		{
-			name: "resource exists, with custom annotations preserved",
-			checks: []checks.Check{
-				&mockCheck{
-					id: "check1",
-					steps: []checks.Step{
-						&mockStep{id: "step1", title: "Step 1", description: "Description 1"},
-					},
-				},
-			},
+			name:   "resource exists, with custom annotations preserved",
+			checks: []checks.Check{newMockCheck},
 			getFunc: func(ctx context.Context, id resource.Identifier) (resource.Object, error) {
-				return &advisorv0alpha1.CheckType{
-					ObjectMeta: metav1.ObjectMeta{
-						Name: "check1",
-						Annotations: map[string]string{
-							checks.IgnoreStepsAnnotationList: "step1",
-						},
-					},
-					Spec: advisorv0alpha1.CheckTypeSpec{
-						Name:  "check1",
-						Steps: []advisorv0alpha1.CheckTypeStep{},
-					},
-				}, nil
+				return existingObject, nil
 			},
 			updateFunc: func(ctx context.Context, id resource.Identifier, obj resource.Object, opts resource.UpdateOptions) (resource.Object, error) {
 				if obj.GetAnnotations()[checks.IgnoreStepsAnnotationList] != "step1" {
@@ -100,14 +80,10 @@ func TestCheckTypesRegisterer_Run(t *testing.T) {
 			expectedErr: nil,
 		},
 		{
-			name: "create error",
-			checks: []checks.Check{
-				&mockCheck{
-					id: "check1",
-					steps: []checks.Step{
-						&mockStep{id: "step1", title: "Step 1", description: "Description 1"},
-					},
-				},
+			name:   "create error",
+			checks: []checks.Check{newMockCheck},
+			getFunc: func(ctx context.Context, id resource.Identifier) (resource.Object, error) {
+				return nil, k8sErrs.NewNotFound(schema.GroupResource{}, id.Name)
 			},
 			createFunc: func(ctx context.Context, id resource.Identifier, obj resource.Object, opts resource.CreateOptions) (resource.Object, error) {
 				return nil, errors.New("create error")
@@ -116,28 +92,10 @@ func TestCheckTypesRegisterer_Run(t *testing.T) {
 			expectedErr: errors.New("create error"),
 		},
 		{
-			name: "update error",
-			checks: []checks.Check{
-				&mockCheck{
-					id: "check1",
-					steps: []checks.Step{
-						&mockStep{id: "step1", title: "Step 1", description: "Description 1"},
-					},
-				},
-			},
+			name:   "update error",
+			checks: []checks.Check{newMockCheck},
 			getFunc: func(ctx context.Context, id resource.Identifier) (resource.Object, error) {
-				return &advisorv0alpha1.CheckType{
-					ObjectMeta: metav1.ObjectMeta{
-						Name: "check1",
-						Annotations: map[string]string{
-							checks.NameAnnotation: "different-name", // Different to trigger update
-						},
-					},
-					Spec: advisorv0alpha1.CheckTypeSpec{
-						Name:  "check1",
-						Steps: []advisorv0alpha1.CheckTypeStep{},
-					},
-				}, nil
+				return existingObject, nil
 			},
 			updateFunc: func(ctx context.Context, id resource.Identifier, obj resource.Object, opts resource.UpdateOptions) (resource.Object, error) {
 				return nil, errors.New("update error")
@@ -145,28 +103,10 @@ func TestCheckTypesRegisterer_Run(t *testing.T) {
 			expectedErr: errors.New("update error"),
 		},
 		{
-			name: "shutting down error",
-			checks: []checks.Check{
-				&mockCheck{
-					id: "check1",
-					steps: []checks.Step{
-						&mockStep{id: "step1", title: "Step 1", description: "Description 1"},
-					},
-				},
-			},
+			name:   "shutting down error",
+			checks: []checks.Check{newMockCheck},
 			getFunc: func(ctx context.Context, id resource.Identifier) (resource.Object, error) {
-				return &advisorv0alpha1.CheckType{
-					ObjectMeta: metav1.ObjectMeta{
-						Name: "check1",
-						Annotations: map[string]string{
-							checks.NameAnnotation: "different-name", // Different to trigger update
-						},
-					},
-					Spec: advisorv0alpha1.CheckTypeSpec{
-						Name:  "check1",
-						Steps: []advisorv0alpha1.CheckTypeStep{},
-					},
-				}, nil
+				return existingObject, nil
 			},
 			updateFunc: func(ctx context.Context, id resource.Identifier, obj resource.Object, opts resource.UpdateOptions) (resource.Object, error) {
 				return nil, errors.New("apiserver is shutting down")
@@ -174,14 +114,10 @@ func TestCheckTypesRegisterer_Run(t *testing.T) {
 			expectedErr: nil,
 		},
 		{
-			name: "custom namespace",
-			checks: []checks.Check{
-				&mockCheck{
-					id: "check1",
-					steps: []checks.Step{
-						&mockStep{id: "step1", title: "Step 1", description: "Description 1"},
-					},
-				},
+			name:   "custom namespace",
+			checks: []checks.Check{newMockCheck},
+			getFunc: func(ctx context.Context, id resource.Identifier) (resource.Object, error) {
+				return existingObject, nil
 			},
 			createFunc: func(ctx context.Context, id resource.Identifier, obj resource.Object, opts resource.CreateOptions) (resource.Object, error) {
 				if obj.GetNamespace() != "custom-namespace" {
@@ -294,19 +230,19 @@ func (m *mockClient) Get(ctx context.Context, id resource.Identifier) (resource.
 	if m.getFunc != nil {
 		return m.getFunc(ctx, id)
 	}
-	return advisorv0alpha1.CheckTypeKind().ZeroValue(), nil
+	return nil, errors.New("not implemented")
 }
 
 func (m *mockClient) Create(ctx context.Context, id resource.Identifier, obj resource.Object, opts resource.CreateOptions) (resource.Object, error) {
 	if m.createFunc != nil {
 		return m.createFunc(ctx, id, obj, opts)
 	}
-	return obj, nil
+	return nil, errors.New("not implemented")
 }
 
 func (m *mockClient) Update(ctx context.Context, id resource.Identifier, obj resource.Object, opts resource.UpdateOptions) (resource.Object, error) {
 	if m.updateFunc != nil {
 		return m.updateFunc(ctx, id, obj, opts)
 	}
-	return obj, nil
+	return nil, errors.New("not implemented")
 }

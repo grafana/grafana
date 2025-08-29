@@ -110,14 +110,17 @@ func (r *Runner) registerCheckType(ctx context.Context, logger logging.Logger, c
 					if !r.shouldRetry(err, logger, i+1, checkType) {
 						return nil
 					}
+					// Retry
 					continue
 				}
+				// Success
 				logger.Debug("Check type created successfully", "check_type", checkType)
 				break
 			}
 			if !r.shouldRetry(err, logger, i+1, checkType) {
 				return nil
 			}
+			// Retry
 			continue
 		}
 
@@ -129,12 +132,16 @@ func (r *Runner) registerCheckType(ctx context.Context, logger logging.Logger, c
 				if !r.shouldRetry(err, logger, i+1, checkType) {
 					return nil
 				}
+				// Retry
 				continue
 			}
+			// Success
 			logger.Debug("Check type updated successfully", "check_type", checkType)
+			break
 		}
 
-		logger.Debug("Check type registered successfully", "check_type", checkType)
+		// Check type is the same, no need to update
+		logger.Debug("Check type already registered", "check_type", checkType)
 		break
 	}
 	return nil
