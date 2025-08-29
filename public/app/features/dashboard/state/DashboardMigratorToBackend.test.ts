@@ -159,54 +159,55 @@ const devDashboardDataSources = {
 };
 
 describe('Backend / Frontend result comparison', () => {
-  beforeEach(() => {
-    jest.clearAllMocks();
-    setupDataSources(...Object.values(dataSources));
-  });
+  describe('Manual mocks', () => {
+    beforeEach(() => {
+      jest.clearAllMocks();
+      setupDataSources(...Object.values(dataSources));
+    });
 
-  const inputDir = path.join(
-    __dirname,
-    '..',
-    '..',
-    '..',
-    '..',
-    '..',
-    'apps',
-    'dashboard',
-    'pkg',
-    'migration',
-    'testdata',
-    'input'
-  );
-  const outputDir = path.join(
-    __dirname,
-    '..',
-    '..',
-    '..',
-    '..',
-    '..',
-    'apps',
-    'dashboard',
-    'pkg',
-    'migration',
-    'testdata',
-    'output'
-  );
+    const inputDir = path.join(
+      __dirname,
+      '..',
+      '..',
+      '..',
+      '..',
+      '..',
+      'apps',
+      'dashboard',
+      'pkg',
+      'migration',
+      'testdata',
+      'input'
+    );
+    const outputDir = path.join(
+      __dirname,
+      '..',
+      '..',
+      '..',
+      '..',
+      '..',
+      'apps',
+      'dashboard',
+      'pkg',
+      'migration',
+      'testdata',
+      'output'
+    );
 
-  const jsonInputs = readdirSync(inputDir);
+    const jsonInputs = readdirSync(inputDir);
 
-  jsonInputs.forEach((inputFile) => {
-    it(`should migrate ${inputFile} correctly`, async () => {
-      const jsonInput = JSON.parse(readFileSync(path.join(inputDir, inputFile), 'utf8'));
-      const backendOutput = JSON.parse(readFileSync(path.join(outputDir, inputFile), 'utf8'));
+    jsonInputs.forEach((inputFile) => {
+      it(`should migrate ${inputFile} correctly`, async () => {
+        const jsonInput = JSON.parse(readFileSync(path.join(inputDir, inputFile), 'utf8'));
+        const backendOutput = JSON.parse(readFileSync(path.join(outputDir, inputFile), 'utf8'));
 
-      expect(backendOutput.schemaVersion).toEqual(DASHBOARD_SCHEMA_VERSION);
+        expect(backendOutput.schemaVersion).toEqual(DASHBOARD_SCHEMA_VERSION);
 
-      // Create dashboard models
-      const frontendModel = new DashboardModel(jsonInput);
-      const backendModel = new DashboardModel(backendOutput);
+        // Create dashboard models
+        const frontendModel = new DashboardModel(jsonInput);
+        const backendModel = new DashboardModel(backendOutput);
 
-      /* 
+        /* 
       Migration from schema V27 involves migrating angular singlestat panels to stat panels
       These panels are auto migrated where PanelModel.restoreModel() is called in the constructor,
       and the autoMigrateFrom is set and type is set to "stat". So this logic will not run.
@@ -225,85 +226,242 @@ describe('Backend / Frontend result comparison', () => {
       which means that the actual migration logic is not run.
       We need to manually run the pluginLoaded logic to ensure the panels are migrated correctly.
       */
-      if (jsonInput.schemaVersion <= 27) {
-        for (const panel of frontendModel.panels) {
-          if (panel.type === 'stat' && panel.autoMigrateFrom) {
-            // Set the plugin version if it doesn't exist
-            if (!statPanelPlugin.meta.info) {
-              statPanelPlugin.meta.info = {
-                author: {
-                  name: 'Grafana Labs',
-                  url: 'url/to/GrafanaLabs',
-                },
-                description: 'stat plugin',
-                links: [{ name: 'project', url: 'one link' }],
-                logos: { small: 'small/logo', large: 'large/logo' },
-                screenshots: [],
-                updated: '2024-01-01',
-                version: '1.0.0',
-              };
-            }
-            if (!statPanelPlugin.meta.info.version) {
-              statPanelPlugin.meta.info.version = '1.0.0';
-            }
+        if (jsonInput.schemaVersion <= 27) {
+          for (const panel of frontendModel.panels) {
+            if (panel.type === 'stat' && panel.autoMigrateFrom) {
+              // Set the plugin version if it doesn't exist
+              if (!statPanelPlugin.meta.info) {
+                statPanelPlugin.meta.info = {
+                  author: {
+                    name: 'Grafana Labs',
+                    url: 'url/to/GrafanaLabs',
+                  },
+                  description: 'stat plugin',
+                  links: [{ name: 'project', url: 'one link' }],
+                  logos: { small: 'small/logo', large: 'large/logo' },
+                  screenshots: [],
+                  updated: '2024-01-01',
+                  version: '1.0.0',
+                };
+              }
+              if (!statPanelPlugin.meta.info.version) {
+                statPanelPlugin.meta.info.version = '1.0.0';
+              }
 
-            await panel.pluginLoaded(statPanelPlugin);
-          }
-          if (panel.type === 'table' && panel.autoMigrateFrom === 'table-old') {
-            // Set the plugin version if it doesn't exist
-            if (!tablePanelPlugin.meta.info) {
-              tablePanelPlugin.meta.info = {
-                author: {
-                  name: 'Grafana Labs',
-                  url: 'url/to/GrafanaLabs',
-                },
-                description: 'table plugin',
-                links: [{ name: 'project', url: 'one link' }],
-                logos: { small: 'small/logo', large: 'large/logo' },
-                screenshots: [],
-                updated: '2024-01-01',
-                version: '1.0.0',
-              };
+              await panel.pluginLoaded(statPanelPlugin);
             }
-            if (!tablePanelPlugin.meta.info.version) {
-              tablePanelPlugin.meta.info.version = '1.0.0';
-            }
+            if (panel.type === 'table' && panel.autoMigrateFrom === 'table-old') {
+              // Ensure tablePanelPlugin.meta exists first
+              if (!tablePanelPlugin.meta) {
+                tablePanelPlugin.meta = {} as any;
+              }
 
-            await panel.pluginLoaded(tablePanelPlugin as any);
+              // Set the plugin version if it doesn't exist
+              if (!tablePanelPlugin.meta.info) {
+                tablePanelPlugin.meta.info = {
+                  author: {
+                    name: 'Grafana Labs',
+                    url: 'url/to/GrafanaLabs',
+                  },
+                  description: 'table plugin',
+                  links: [{ name: 'project', url: 'one link' }],
+                  logos: { small: 'small/logo', large: 'large/logo' },
+                  screenshots: [],
+                  updated: '2024-01-01',
+                  version: '1.0.0',
+                };
+              }
+              if (!tablePanelPlugin.meta.info.version) {
+                tablePanelPlugin.meta.info.version = '1.0.0';
+              }
+
+              await panel.pluginLoaded(tablePanelPlugin as any);
+            }
           }
         }
-      }
 
-      const frontendMigrationResult = frontendModel.getSaveModelClone();
-      const backendMigrationResult = backendModel.getSaveModelClone();
+        const frontendMigrationResult = frontendModel.getSaveModelClone();
+        const backendMigrationResult = backendModel.getSaveModelClone();
 
-      // Although getSaveModelClone() runs sortedDeepCloneWithoutNulls() internally,
-      // we run it again to ensure consistent handling of null values (like threshold -Infinity values)
-      // Because Go and TS handle -Infinity differently.
-      const cleanedFrontendResult = sortedDeepCloneWithoutNulls(frontendMigrationResult);
+        // Although getSaveModelClone() runs sortedDeepCloneWithoutNulls() internally,
+        // we run it again to ensure consistent handling of null values (like threshold -Infinity values)
+        // Because Go and TS handle -Infinity differently.
+        const cleanedFrontendResult = sortedDeepCloneWithoutNulls(frontendMigrationResult);
 
-      // Remove deprecated angular properties that backend shouldn't return, but DashboardModel will still set them
-      for (const panel of cleanedFrontendResult.panels ?? []) {
-        // Remove deprecated angular properties that may exist on panels
-        delete (panel as any).autoMigrateFrom;
-        delete (panel as any).styles;
-        delete (panel as any).transform; // Backend removes these deprecated table properties
-        delete (panel as any).columns; // Backend removes these deprecated table properties
-      }
+        // Remove deprecated angular properties that backend shouldn't return, but DashboardModel will still set them
+        for (const panel of cleanedFrontendResult.panels ?? []) {
+          // Remove deprecated angular properties that may exist on panels
+          delete (panel as any).autoMigrateFrom;
+          delete (panel as any).styles;
+          delete (panel as any).transform; // Backend removes these deprecated table properties
+          delete (panel as any).columns; // Backend removes these deprecated table properties
+        }
 
-      expect(backendMigrationResult).toMatchObject(cleanedFrontendResult);
+        expect(backendMigrationResult).toMatchObject(cleanedFrontendResult);
+      });
     });
+  });
+
+  describe('Dev-dashboards', () => {
+    beforeEach(() => {
+      jest.clearAllMocks();
+      setupDataSources(...Object.values(devDashboardDataSources));
+    });
+
+    const devDashboardsInputDir = path.join(__dirname, '..', '..', '..', '..', '..', 'devenv', 'dev-dashboards');
+    const devDashboardsOutputDir = path.join(
+      __dirname,
+      '..',
+      '..',
+      '..',
+      '..',
+      '..',
+      'apps',
+      'dashboard',
+      'pkg',
+      'migration',
+      'testdata',
+      'dev-dashboards-output'
+    );
+
+    const allDevDashboardFiles = findJSONFiles(devDashboardsInputDir);
+
+    // Filter out files that can't be parsed as JSON or don't have valid schemaVersion
+    const validDevDashboardFiles = allDevDashboardFiles.filter((filePath) => {
+      try {
+        const jsonContent = JSON.parse(readFileSync(filePath, 'utf8'));
+        // Require valid schemaVersion for migration testing
+        if (typeof jsonContent.schemaVersion !== 'number') {
+          console.error(`Dashboard ${filePath} has no schemaVersion - not valid for migration testing`);
+          return false;
+        }
+        // Check minimum version requirement (this should match backend MIN_VERSION = 13)
+        const MIN_SUPPORTED_SCHEMA_VERSION = 13;
+        if (jsonContent.schemaVersion < MIN_SUPPORTED_SCHEMA_VERSION) {
+          console.error(
+            `Dashboard ${filePath} has schema version ${jsonContent.schemaVersion} which is below minimum supported version ${MIN_SUPPORTED_SCHEMA_VERSION}`
+          );
+          return false;
+        }
+        return true;
+      } catch (error) {
+        console.error(`Failed to parse JSON for ${filePath}:`, error);
+        return false; // Skip files that can't be parsed
+      }
+    });
+
+    validDevDashboardFiles.forEach((inputFilePath) => {
+      const relativePath = path.relative(devDashboardsInputDir, inputFilePath);
+      const testName = `should migrate dev-dashboard ${relativePath} correctly`;
+
+      it(testName, async () => {
+        const jsonInput = JSON.parse(readFileSync(inputFilePath, 'utf8'));
+        const outputFilePath = getRelativeOutputPath(inputFilePath, devDashboardsInputDir, devDashboardsOutputDir);
+
+        // Backend output should exist since we now fail on unsupported dashboards
+        const backendOutput = JSON.parse(readFileSync(outputFilePath, 'utf8'));
+        await performDevDashboardMigrationComparison(jsonInput, backendOutput);
+      });
+    });
+  });
+
+  describe('Historical dashboards', () => {
+    beforeEach(() => {
+      jest.clearAllMocks();
+      setupDataSources(...Object.values(dataSources));
+    });
+
+    const historicalDashboardsInputDir = path.join(
+      __dirname,
+      '..',
+      '..',
+      '..',
+      '..',
+      '..',
+      'apps',
+      'dashboard',
+      'pkg',
+      'migration',
+      'testdata',
+      'historical-dashboards-input'
+    );
+    const historicalDashboardsOutputDir = path.join(
+      __dirname,
+      '..',
+      '..',
+      '..',
+      '..',
+      '..',
+      'apps',
+      'dashboard',
+      'pkg',
+      'migration',
+      'testdata',
+      'historical-dashboards-output'
+    );
+
+    // Find all historical dashboard files and create individual test cases
+    const allHistoricalFiles = readdirSync(historicalDashboardsInputDir)
+      .filter((file) => file.startsWith('historical-') && file.endsWith('.json'))
+      .sort();
+
+    // Filter out files that can't be parsed as JSON or don't have valid schemaVersion
+    const validHistoricalFiles = allHistoricalFiles.filter((fileName) => {
+      const filePath = path.join(historicalDashboardsInputDir, fileName);
+      try {
+        const jsonContent = JSON.parse(readFileSync(filePath, 'utf8'));
+        // Require valid schemaVersion for migration testing
+        if (typeof jsonContent.schemaVersion !== 'number') {
+          return false;
+        }
+        // Check minimum version requirement (this should match backend MIN_VERSION = 13)
+        const MIN_SUPPORTED_SCHEMA_VERSION = 13;
+        if (jsonContent.schemaVersion < MIN_SUPPORTED_SCHEMA_VERSION) {
+          return false;
+        }
+        return true;
+      } catch (error) {
+        return false; // Skip files that can't be parsed
+      }
+    });
+
+    validHistoricalFiles.forEach((fileName) => {
+      const testName = `should migrate historical dashboard ${fileName} correctly`;
+
+      it(testName, async () => {
+        const inputFilePath = path.join(historicalDashboardsInputDir, fileName);
+        const outputFilePath = path.join(historicalDashboardsOutputDir, fileName);
+
+        const jsonInput = JSON.parse(readFileSync(inputFilePath, 'utf8'));
+
+        // Backend output should exist since we now fail on unsupported dashboards
+        const backendOutput = JSON.parse(readFileSync(outputFilePath, 'utf8'));
+        await performHistoricalDashboardMigrationComparison(jsonInput, backendOutput);
+      });
+    });
+  });
+
+  describe('Community dashboards', () => {
+    beforeEach(() => {
+      jest.clearAllMocks();
+      setupDataSources(...Object.values(dataSources));
+    });
+
+    createCommunityDashboardTests();
+  });
+
+  describe('Oldest community dashboards', () => {
+    beforeEach(() => {
+      jest.clearAllMocks();
+      setupDataSources(...Object.values(dataSources));
+    });
+
+    createOldestHistoricalDashboardTests();
   });
 });
 
-describe('Dev-dashboards Backend / Frontend result comparison', () => {
-  beforeEach(() => {
-    jest.clearAllMocks();
-    setupDataSources(...Object.values(devDashboardDataSources));
-  });
-
-  const devDashboardsInputDir = path.join(__dirname, '..', '..', '..', '..', '..', 'devenv', 'dev-dashboards');
-  const devDashboardsOutputDir = path.join(
+function createCommunityDashboardTests() {
+  const communityDashboardsBaseInputDir = path.join(
     __dirname,
     '..',
     '..',
@@ -315,57 +473,92 @@ describe('Dev-dashboards Backend / Frontend result comparison', () => {
     'pkg',
     'migration',
     'testdata',
-    'dev-dashboards-output'
+    'community-dashboards-input'
+  );
+  const communityDashboardsBaseOutputDir = path.join(
+    __dirname,
+    '..',
+    '..',
+    '..',
+    '..',
+    '..',
+    'apps',
+    'dashboard',
+    'pkg',
+    'migration',
+    'testdata',
+    'community-dashboards-output'
   );
 
-  const allDevDashboardFiles = findJSONFiles(devDashboardsInputDir);
+  // Scan all category subdirectories (oldest, newest, average)
+  const categories = ['oldest', 'newest', 'average'];
+  const allValidFiles: Array<{ fileName: string; category: string; inputPath: string; outputPath: string }> = [];
 
-  // Filter out files that can't be parsed as JSON or don't have valid schemaVersion
-  const validDevDashboardFiles = allDevDashboardFiles.filter((filePath) => {
+  categories.forEach((category) => {
+    const inputDir = path.join(communityDashboardsBaseInputDir, category);
+    const outputDir = path.join(communityDashboardsBaseOutputDir, category);
+
     try {
-      const jsonContent = JSON.parse(readFileSync(filePath, 'utf8'));
-      // Require valid schemaVersion for migration testing
-      if (typeof jsonContent.schemaVersion !== 'number') {
-        console.error(`Dashboard ${filePath} has no schemaVersion - not valid for migration testing`);
-        return false;
+      const dirContents = readdirSync(inputDir);
+      if (!dirContents.length) {
+        return; // Skip empty directories
       }
-      // Check minimum version requirement (this should match backend MIN_VERSION = 13)
-      const MIN_SUPPORTED_SCHEMA_VERSION = 13;
-      if (jsonContent.schemaVersion < MIN_SUPPORTED_SCHEMA_VERSION) {
-        console.error(
-          `Dashboard ${filePath} has schema version ${jsonContent.schemaVersion} which is below minimum supported version ${MIN_SUPPORTED_SCHEMA_VERSION}`
-        );
-        return false;
-      }
-      return true;
     } catch (error) {
-      console.error(`Failed to parse JSON for ${filePath}:`, error);
-      return false; // Skip files that can't be parsed
+      return; // Skip if directory doesn't exist
     }
+
+    // Find all community dashboard files in this category
+    const allCommunityFiles = readdirSync(inputDir)
+      .filter((file) => file.startsWith('community-') && file.endsWith('.json'))
+      .sort();
+
+    // Filter out files that can't be parsed as JSON or don't have valid schemaVersion
+    const validCommunityFiles = allCommunityFiles.filter((fileName) => {
+      const filePath = path.join(inputDir, fileName);
+      try {
+        const jsonContent = JSON.parse(readFileSync(filePath, 'utf8'));
+        // Require valid schemaVersion for migration testing
+        if (typeof jsonContent.schemaVersion !== 'number') {
+          return false;
+        }
+        // Check minimum version requirement (this should match backend MIN_VERSION = 13)
+        const MIN_SUPPORTED_SCHEMA_VERSION = 13;
+        if (jsonContent.schemaVersion < MIN_SUPPORTED_SCHEMA_VERSION) {
+          return false;
+        }
+        return true;
+      } catch (error) {
+        return false; // Skip files that can't be parsed
+      }
+    });
+
+    // Add valid files from this category to the combined list
+    validCommunityFiles.forEach((fileName) => {
+      allValidFiles.push({
+        fileName,
+        category,
+        inputPath: path.join(inputDir, fileName),
+        outputPath: path.join(outputDir, fileName),
+      });
+    });
   });
 
-  validDevDashboardFiles.forEach((inputFilePath) => {
-    const relativePath = path.relative(devDashboardsInputDir, inputFilePath);
-    const testName = `should migrate dev-dashboard ${relativePath} correctly`;
+  // Create test cases for all valid community dashboards across all categories
+  allValidFiles.forEach(({ fileName, category, inputPath, outputPath }) => {
+    const testName = `should migrate community dashboard ${fileName} correctly`;
 
     it(testName, async () => {
-      const jsonInput = JSON.parse(readFileSync(inputFilePath, 'utf8'));
-      const outputFilePath = getRelativeOutputPath(inputFilePath, devDashboardsInputDir, devDashboardsOutputDir);
+      const jsonInput = JSON.parse(readFileSync(inputPath, 'utf8'));
 
       // Backend output should exist since we now fail on unsupported dashboards
-      const backendOutput = JSON.parse(readFileSync(outputFilePath, 'utf8'));
-      await performDevDashboardMigrationComparison(jsonInput, backendOutput);
+      const backendOutput = JSON.parse(readFileSync(outputPath, 'utf8'));
+      await performCommunityDashboardMigrationComparison(jsonInput, backendOutput);
     });
   });
-});
+}
 
-describe('Historical dashboards Backend / Frontend result comparison', () => {
-  beforeEach(() => {
-    jest.clearAllMocks();
-    setupDataSources(...Object.values(dataSources));
-  });
-
-  const historicalDashboardsInputDir = path.join(
+function createOldestHistoricalDashboardTests() {
+  const oldestHistoricalInputDir = path.join(
     __dirname,
     '..',
     '..',
@@ -377,9 +570,9 @@ describe('Historical dashboards Backend / Frontend result comparison', () => {
     'pkg',
     'migration',
     'testdata',
-    'historical-dashboards-input'
+    'oldest-historical-input'
   );
-  const historicalDashboardsOutputDir = path.join(
+  const oldestHistoricalOutputDir = path.join(
     __dirname,
     '..',
     '..',
@@ -391,17 +584,17 @@ describe('Historical dashboards Backend / Frontend result comparison', () => {
     'pkg',
     'migration',
     'testdata',
-    'historical-dashboards-output'
+    'oldest-historical-output'
   );
 
-  // Find all historical dashboard files and create individual test cases
-  const allHistoricalFiles = readdirSync(historicalDashboardsInputDir)
-    .filter((file) => file.startsWith('historical-') && file.endsWith('.json'))
+  // Find all oldest-historical dashboard files and create individual test cases
+  const allOldestHistoricalFiles = readdirSync(oldestHistoricalInputDir)
+    .filter((file) => file.startsWith('oldest-historical-') && file.endsWith('.json'))
     .sort();
 
   // Filter out files that can't be parsed as JSON or don't have valid schemaVersion
-  const validHistoricalFiles = allHistoricalFiles.filter((fileName) => {
-    const filePath = path.join(historicalDashboardsInputDir, fileName);
+  const validOldestHistoricalFiles = allOldestHistoricalFiles.filter((fileName) => {
+    const filePath = path.join(oldestHistoricalInputDir, fileName);
     try {
       const jsonContent = JSON.parse(readFileSync(filePath, 'utf8'));
       // Require valid schemaVersion for migration testing
@@ -419,27 +612,32 @@ describe('Historical dashboards Backend / Frontend result comparison', () => {
     }
   });
 
-  validHistoricalFiles.forEach((fileName) => {
-    const testName = `should migrate historical dashboard ${fileName} correctly`;
+  validOldestHistoricalFiles.forEach((fileName) => {
+    const testName = `should migrate oldest community dashboard ${fileName} correctly`;
 
     it(testName, async () => {
-      const inputFilePath = path.join(historicalDashboardsInputDir, fileName);
-      const outputFilePath = path.join(historicalDashboardsOutputDir, fileName);
+      const inputFilePath = path.join(oldestHistoricalInputDir, fileName);
+      const outputFilePath = path.join(oldestHistoricalOutputDir, fileName);
 
       const jsonInput = JSON.parse(readFileSync(inputFilePath, 'utf8'));
 
       // Backend output should exist since we now fail on unsupported dashboards
       const backendOutput = JSON.parse(readFileSync(outputFilePath, 'utf8'));
-      await performHistoricalDashboardMigrationComparison(jsonInput, backendOutput);
+      await performOldestHistoricalDashboardMigrationComparison(jsonInput, backendOutput);
     });
   });
-});
+}
 
 // Helper function to handle angular panel migration for old schema versions
 async function handleAngularPanelMigration(dashboardModel: DashboardModel, schemaVersion: number) {
   if (schemaVersion <= 27) {
     for (const panel of dashboardModel.panels) {
       if (panel.type === 'stat' && panel.autoMigrateFrom) {
+        // Ensure statPanelPlugin.meta exists first
+        if (!statPanelPlugin.meta) {
+          statPanelPlugin.meta = {} as any;
+        }
+
         // Set the plugin version if it doesn't exist
         if (!statPanelPlugin.meta.info) {
           statPanelPlugin.meta.info = {
@@ -462,6 +660,11 @@ async function handleAngularPanelMigration(dashboardModel: DashboardModel, schem
         await panel.pluginLoaded(statPanelPlugin);
       }
       if (panel.type === 'table' && panel.autoMigrateFrom === 'table-old') {
+        // Ensure tablePanelPlugin.meta exists first
+        if (!tablePanelPlugin.meta) {
+          tablePanelPlugin.meta = {} as any;
+        }
+
         // Set the plugin version if it doesn't exist
         if (!tablePanelPlugin.meta.info) {
           tablePanelPlugin.meta.info = {
@@ -527,6 +730,48 @@ async function performDevDashboardMigrationComparison(jsonInput: any, backendOut
 
 // Helper function to perform the historical dashboards migration comparison test
 async function performHistoricalDashboardMigrationComparison(jsonInput: any, backendOutput: any) {
+  expect(backendOutput.schemaVersion).toEqual(DASHBOARD_SCHEMA_VERSION);
+
+  // Create dashboard models
+  const frontendModel = new DashboardModel(jsonInput);
+  const backendModel = new DashboardModel(backendOutput);
+
+  // Handle angular panel migration for old schema versions (only if schemaVersion exists)
+  if (typeof jsonInput.schemaVersion === 'number') {
+    await handleAngularPanelMigration(frontendModel, jsonInput.schemaVersion);
+  }
+
+  const frontendMigrationResult = frontendModel.getSaveModelClone();
+  const backendMigrationResult = backendModel.getSaveModelClone();
+
+  // Clean up the frontend result to match backend behavior
+  const cleanedFrontendResult = cleanupFrontendResult(frontendMigrationResult);
+
+  expect(backendMigrationResult).toMatchObject(cleanedFrontendResult);
+}
+
+async function performCommunityDashboardMigrationComparison(jsonInput: any, backendOutput: any) {
+  expect(backendOutput.schemaVersion).toEqual(DASHBOARD_SCHEMA_VERSION);
+
+  // Create dashboard models
+  const frontendModel = new DashboardModel(jsonInput);
+  const backendModel = new DashboardModel(backendOutput);
+
+  // Handle angular panel migration for old schema versions (only if schemaVersion exists)
+  if (typeof jsonInput.schemaVersion === 'number') {
+    await handleAngularPanelMigration(frontendModel, jsonInput.schemaVersion);
+  }
+
+  const frontendMigrationResult = frontendModel.getSaveModelClone();
+  const backendMigrationResult = backendModel.getSaveModelClone();
+
+  // Clean up the frontend result to match backend behavior
+  const cleanedFrontendResult = cleanupFrontendResult(frontendMigrationResult);
+
+  expect(backendMigrationResult).toMatchObject(cleanedFrontendResult);
+}
+
+async function performOldestHistoricalDashboardMigrationComparison(jsonInput: any, backendOutput: any) {
   expect(backendOutput.schemaVersion).toEqual(DASHBOARD_SCHEMA_VERSION);
 
   // Create dashboard models

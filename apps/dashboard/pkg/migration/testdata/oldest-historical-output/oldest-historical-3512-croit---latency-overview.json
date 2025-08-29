@@ -1,0 +1,536 @@
+{
+  "__inputs": [
+    {
+      "description": "",
+      "label": "croit",
+      "name": "DS_CROIT",
+      "pluginId": "graphite",
+      "pluginName": "Graphite",
+      "type": "datasource"
+    }
+  ],
+  "__requires": [
+    {
+      "id": "grafana",
+      "name": "Grafana",
+      "type": "grafana",
+      "version": "4.5.1"
+    },
+    {
+      "id": "graph",
+      "name": "Graph",
+      "type": "panel",
+      "version": ""
+    },
+    {
+      "id": "graphite",
+      "name": "Graphite",
+      "type": "datasource",
+      "version": "1.0.0"
+    }
+  ],
+  "annotations": {
+    "list": []
+  },
+  "editable": true,
+  "gnetId": 3512,
+  "graphTooltip": 0,
+  "hideControls": false,
+  "id": null,
+  "links": [],
+  "panels": [
+    {
+      "alert": {
+        "conditions": [
+          {
+            "evaluator": {
+              "params": [
+                3000000
+              ],
+              "type": "gt"
+            },
+            "operator": {
+              "type": "and"
+            },
+            "query": {
+              "params": [
+                "C",
+                "5m",
+                "now"
+              ]
+            },
+            "reducer": {
+              "params": [],
+              "type": "avg"
+            },
+            "type": "query"
+          }
+        ],
+        "executionErrorState": "alerting",
+        "frequency": "30s",
+        "handler": 1,
+        "name": "Op Latency alert",
+        "noDataState": "no_data",
+        "notifications": []
+      },
+      "aliasColors": {},
+      "bars": false,
+      "dashLength": 10,
+      "dashes": false,
+      "datasource": {
+        "uid": "${DS_CROIT}"
+      },
+      "editable": true,
+      "error": false,
+      "fill": 0,
+      "grid": {},
+      "gridPos": {
+        "h": 7,
+        "w": 12,
+        "x": 0,
+        "y": 0
+      },
+      "id": 1,
+      "legend": {
+        "avg": false,
+        "current": false,
+        "max": false,
+        "min": false,
+        "show": true,
+        "total": false,
+        "values": false
+      },
+      "lines": true,
+      "linewidth": 2,
+      "links": [],
+      "nullPointMode": "connected",
+      "percentage": false,
+      "pointradius": 2,
+      "points": false,
+      "renderer": "flot",
+      "seriesOverrides": [],
+      "spaceLength": 10,
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
+        {
+          "datasource": {
+            "uid": "${DS_CROIT}"
+          },
+          "hide": false,
+          "refId": "C",
+          "target": "alias(percentileOfSeries(croit-ceph-mons.ceph-osd-*-op_latency.latency, 99), '99. Percentile')",
+          "textEditor": true
+        },
+        {
+          "datasource": {
+            "uid": "${DS_CROIT}"
+          },
+          "hide": false,
+          "refId": "B",
+          "target": "alias(percentileOfSeries(croit-ceph-mons.ceph-osd-*-op_latency.latency, 90), '90. Percentile')",
+          "textEditor": true
+        },
+        {
+          "datasource": {
+            "uid": "${DS_CROIT}"
+          },
+          "hide": false,
+          "refId": "D",
+          "target": "alias(percentileOfSeries(croit-ceph-mons.ceph-osd-*-op_latency.latency, 50), '50. Percentile')",
+          "textEditor": true
+        }
+      ],
+      "thresholds": [
+        {
+          "colorMode": "critical",
+          "fill": true,
+          "line": true,
+          "op": "gt",
+          "value": 3000000
+        }
+      ],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "Op Latency",
+      "tooltip": {
+        "msResolution": true,
+        "shared": true,
+        "sort": 0,
+        "value_type": "cumulative"
+      },
+      "type": "graph",
+      "xaxis": {
+        "buckets": null,
+        "mode": "time",
+        "name": null,
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "format": "µs",
+          "label": null,
+          "logBase": 10,
+          "max": null,
+          "min": "100",
+          "show": true
+        },
+        {
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        }
+      ]
+    },
+    {
+      "aliasColors": {},
+      "bars": false,
+      "dashLength": 10,
+      "dashes": false,
+      "datasource": {
+        "uid": "${DS_CROIT}"
+      },
+      "editable": true,
+      "error": false,
+      "fill": 0,
+      "grid": {},
+      "gridPos": {
+        "h": 7,
+        "w": 12,
+        "x": 12,
+        "y": 0
+      },
+      "id": 2,
+      "legend": {
+        "avg": false,
+        "current": false,
+        "max": false,
+        "min": false,
+        "show": true,
+        "total": false,
+        "values": false
+      },
+      "lines": true,
+      "linewidth": 2,
+      "links": [],
+      "nullPointMode": "connected",
+      "percentage": false,
+      "pointradius": 2,
+      "points": false,
+      "renderer": "flot",
+      "seriesOverrides": [],
+      "spaceLength": 10,
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
+        {
+          "datasource": {
+            "uid": "${DS_CROIT}"
+          },
+          "hide": false,
+          "refId": "C",
+          "target": "alias(percentileOfSeries(croit-ceph-mons.ceph-osd-*-subop_latency.latency, 99), '99. Percentile')",
+          "textEditor": true
+        },
+        {
+          "datasource": {
+            "uid": "${DS_CROIT}"
+          },
+          "hide": false,
+          "refId": "B",
+          "target": "alias(percentileOfSeries(croit-ceph-mons.ceph-osd-*-subop_latency.latency, 90), '90. Percentile')",
+          "textEditor": true
+        },
+        {
+          "datasource": {
+            "uid": "${DS_CROIT}"
+          },
+          "hide": false,
+          "refId": "D",
+          "target": "alias(percentileOfSeries(croit-ceph-mons.ceph-osd-*-subop_latency.latency, 50), '50. Percentile')",
+          "textEditor": true
+        }
+      ],
+      "thresholds": [],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "Subop Latency",
+      "tooltip": {
+        "msResolution": true,
+        "shared": true,
+        "sort": 0,
+        "value_type": "cumulative"
+      },
+      "type": "graph",
+      "xaxis": {
+        "buckets": null,
+        "mode": "time",
+        "name": null,
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "format": "µs",
+          "label": null,
+          "logBase": 10,
+          "max": null,
+          "min": 10,
+          "show": true
+        },
+        {
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        }
+      ]
+    },
+    {
+      "aliasColors": {},
+      "bars": false,
+      "dashLength": 10,
+      "dashes": false,
+      "datasource": {
+        "uid": "${DS_CROIT}"
+      },
+      "editable": true,
+      "error": false,
+      "fill": 0,
+      "grid": {},
+      "gridPos": {
+        "h": 7,
+        "w": 12,
+        "x": 0,
+        "y": 7
+      },
+      "id": 3,
+      "legend": {
+        "avg": false,
+        "current": false,
+        "max": false,
+        "min": false,
+        "show": true,
+        "total": false,
+        "values": false
+      },
+      "lines": true,
+      "linewidth": 2,
+      "links": [],
+      "nullPointMode": "connected",
+      "percentage": false,
+      "pointradius": 2,
+      "points": false,
+      "renderer": "flot",
+      "seriesOverrides": [],
+      "spaceLength": 10,
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
+        {
+          "datasource": {
+            "uid": "${DS_CROIT}"
+          },
+          "hide": false,
+          "refId": "C",
+          "target": "alias(percentileOfSeries(croit-ceph-mons.ceph-osd-*-op_w_latency.latency, 99), '99. Percentile')",
+          "textEditor": true
+        },
+        {
+          "datasource": {
+            "uid": "${DS_CROIT}"
+          },
+          "hide": false,
+          "refId": "B",
+          "target": "alias(percentileOfSeries(croit-ceph-mons.ceph-osd-*-op_w_latency.latency, 90), '90. Percentile')",
+          "textEditor": true
+        },
+        {
+          "datasource": {
+            "uid": "${DS_CROIT}"
+          },
+          "hide": false,
+          "refId": "D",
+          "target": "alias(percentileOfSeries(croit-ceph-mons.ceph-osd-*-op_w_latency.latency, 50), '50. Percentile')",
+          "textEditor": true
+        }
+      ],
+      "thresholds": [],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "Write Op Latency",
+      "tooltip": {
+        "msResolution": true,
+        "shared": true,
+        "sort": 0,
+        "value_type": "cumulative"
+      },
+      "type": "graph",
+      "xaxis": {
+        "buckets": null,
+        "mode": "time",
+        "name": null,
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "format": "µs",
+          "label": null,
+          "logBase": 10,
+          "max": null,
+          "min": 10,
+          "show": true
+        },
+        {
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        }
+      ]
+    },
+    {
+      "aliasColors": {},
+      "bars": false,
+      "dashLength": 10,
+      "dashes": false,
+      "datasource": {
+        "uid": "${DS_CROIT}"
+      },
+      "editable": true,
+      "error": false,
+      "fill": 0,
+      "grid": {},
+      "gridPos": {
+        "h": 7,
+        "w": 12,
+        "x": 12,
+        "y": 7
+      },
+      "id": 4,
+      "legend": {
+        "avg": false,
+        "current": false,
+        "max": false,
+        "min": false,
+        "show": true,
+        "total": false,
+        "values": false
+      },
+      "lines": true,
+      "linewidth": 2,
+      "links": [],
+      "nullPointMode": "connected",
+      "percentage": false,
+      "pointradius": 2,
+      "points": false,
+      "renderer": "flot",
+      "seriesOverrides": [],
+      "spaceLength": 10,
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
+        {
+          "datasource": {
+            "uid": "${DS_CROIT}"
+          },
+          "hide": false,
+          "refId": "C",
+          "target": "alias(percentileOfSeries(croit-ceph-mons.ceph-osd-*-op_r_latency.latency, 99), '99. Percentile')",
+          "textEditor": true
+        },
+        {
+          "datasource": {
+            "uid": "${DS_CROIT}"
+          },
+          "hide": false,
+          "refId": "B",
+          "target": "alias(percentileOfSeries(croit-ceph-mons.ceph-osd-*-op_r_latency.latency, 90), '90. Percentile')",
+          "textEditor": true
+        },
+        {
+          "datasource": {
+            "uid": "${DS_CROIT}"
+          },
+          "hide": false,
+          "refId": "D",
+          "target": "alias(percentileOfSeries(croit-ceph-mons.ceph-osd-*-op_r_latency.latency, 50), '50. Percentile')",
+          "textEditor": true
+        }
+      ],
+      "thresholds": [],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "Read Op Latency",
+      "tooltip": {
+        "msResolution": true,
+        "shared": true,
+        "sort": 0,
+        "value_type": "cumulative"
+      },
+      "type": "graph",
+      "xaxis": {
+        "buckets": null,
+        "mode": "time",
+        "name": null,
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "format": "µs",
+          "label": null,
+          "logBase": 10,
+          "max": null,
+          "min": 10,
+          "show": true
+        },
+        {
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        }
+      ]
+    }
+  ],
+  "refresh": "30s",
+  "schemaVersion": 41,
+  "style": "dark",
+  "tags": [],
+  "templating": {
+    "list": []
+  },
+  "time": {
+    "from": "now-12h",
+    "to": "now"
+  },
+  "timepicker": {
+    "refresh_intervals": [
+      "5s",
+      "10s",
+      "30s",
+      "1m",
+      "5m",
+      "15m",
+      "30m",
+      "1h",
+      "2h",
+      "1d"
+    ]
+  },
+  "timezone": "browser",
+  "title": "croit - Latency Overview",
+  "version": 2
+}

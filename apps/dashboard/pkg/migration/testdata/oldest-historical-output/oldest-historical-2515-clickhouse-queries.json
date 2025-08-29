@@ -1,0 +1,1247 @@
+{
+  "__inputs": [
+    {
+      "description": "",
+      "label": "ClickHouse",
+      "name": "DS_CLICKHOUSE",
+      "pluginId": "vertamedia-clickhouse-datasource",
+      "pluginName": "ClickHouse",
+      "type": "datasource"
+    }
+  ],
+  "__requires": [
+    {
+      "id": "grafana",
+      "name": "Grafana",
+      "type": "grafana",
+      "version": "4.3.2"
+    },
+    {
+      "id": "graph",
+      "name": "Graph",
+      "type": "panel",
+      "version": ""
+    },
+    {
+      "id": "table",
+      "name": "Table",
+      "type": "panel",
+      "version": ""
+    },
+    {
+      "id": "text",
+      "name": "Text",
+      "type": "panel",
+      "version": ""
+    },
+    {
+      "id": "vertamedia-clickhouse-datasource",
+      "name": "ClickHouse",
+      "type": "datasource",
+      "version": "0.0.2"
+    }
+  ],
+  "annotations": {
+    "list": []
+  },
+  "description": "Helps to visualize most frequent, slowest, failed queries.\r\nShows queries rate per second, table with last queries",
+  "editable": true,
+  "gnetId": 2515,
+  "graphTooltip": 1,
+  "hideControls": false,
+  "id": null,
+  "links": [],
+  "panels": [
+    {
+      "aliasColors": {},
+      "bars": false,
+      "dashLength": 10,
+      "dashes": false,
+      "datasource": {
+        "uid": "${DS_CLICKHOUSE}"
+      },
+      "fill": 1,
+      "gridPos": {
+        "h": 7,
+        "w": 20,
+        "x": 0,
+        "y": 1
+      },
+      "id": 15,
+      "legend": {
+        "alignAsTable": true,
+        "avg": true,
+        "current": false,
+        "max": true,
+        "min": false,
+        "rightSide": true,
+        "show": true,
+        "sort": "avg",
+        "sortDesc": true,
+        "total": false,
+        "values": true
+      },
+      "lines": true,
+      "linewidth": 1,
+      "links": [],
+      "nullPointMode": "null",
+      "percentage": false,
+      "pointradius": 5,
+      "points": false,
+      "renderer": "flot",
+      "seriesOverrides": [],
+      "spaceLength": 10,
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
+        {
+          "database": "system",
+          "datasource": {
+            "uid": "${DS_CLICKHOUSE}"
+          },
+          "dateColDataType": "event_date",
+          "dateLoading": false,
+          "dateTimeColDataType": "event_time",
+          "datetimeLoading": false,
+          "expr": "",
+          "formattedQuery": "\u003cfont color=\"darkcyan\"\u003e$rateColumns\u003c/font\u003e(\u003cbr /\u003e    \u003cfont color=\"navajowhite\"\u003esubstring\u003c/font\u003e(query,  \u003cfont color=\"cornflowerblue\"\u003e1\u003c/font\u003e,  \u003cfont color=\"cornflowerblue\"\u003e45\u003c/font\u003e) \u003cfont color=\"darkorange\"\u003eAS\u003c/font\u003e query,\u003cbr /\u003e    \u003cfont color=\"navajowhite\"\u003ecount\u003c/font\u003e() c)\u003cbr /\u003e\u003cfont color=\"darkorange\"\u003eFROM\u003c/font\u003e \u003cfont color=\"darkcyan\"\u003e$table\u003c/font\u003e\u003cbr /\u003e\u003cfont color=\"darkorange\"\u003eWHERE\u003c/font\u003e\u003cbr /\u003e    \u003cfont color=\"navajowhite\"\u003ecityHash64\u003c/font\u003e(query) \u003cfont color=\"darkorange\"\u003eglobal\u003c/font\u003e \u003cfont color=\"darkorange\"\u003ein\u003c/font\u003e (\u003cbr /\u003e    \u003cfont color=\"darkorange\"\u003eSELECT\u003c/font\u003e \u003cfont color=\"navajowhite\"\u003ecityHash64\u003c/font\u003e(\u003cfont color=\"navajowhite\"\u003esubstring\u003c/font\u003e(query,  \u003cfont color=\"cornflowerblue\"\u003e1\u003c/font\u003e,  \u003cfont color=\"cornflowerblue\"\u003e45\u003c/font\u003e)) \u003cfont color=\"darkorange\"\u003eAS\u003c/font\u003e h\u003cbr /\u003e    \u003cfont color=\"darkorange\"\u003eFROM\u003c/font\u003e \u003cfont color=\"darkcyan\"\u003e$table\u003c/font\u003e\u003cbr /\u003e    \u003cfont color=\"darkorange\"\u003eWHERE\u003c/font\u003e\u003cbr /\u003e        \u003cfont color=\"darkcyan\"\u003e$timeFilter\u003c/font\u003e\u003cbr /\u003e        \u003cfont color=\"yellow\"\u003eAND\u003c/font\u003e \u003cfont color=\"darkorange\"\u003etype\u003c/font\u003e \u003cfont color=\"darkorange\"\u003ein\u003c/font\u003e (\u003cfont color=\"darkcyan\"\u003e$type\u003c/font\u003e)\u003cbr /\u003e        \u003cfont color=\"yellow\"\u003eAND\u003c/font\u003e initial_user \u003cfont color=\"darkorange\"\u003ein\u003c/font\u003e (\u003cfont color=\"darkcyan\"\u003e$user\u003c/font\u003e)\u003cbr /\u003e        \u003cfont color=\"yellow\"\u003eAND\u003c/font\u003e(\u003cfont color=\"lightgreen\"\u003e'$query_type'\u003c/font\u003e \u003cfont color=\"yellow\"\u003e=\u003c/font\u003e \u003cfont color=\"lightgreen\"\u003e'all'\u003c/font\u003e \u003cfont color=\"yellow\"\u003eor\u003c/font\u003e(positionCaseInsensitive(query,  \u003cfont color=\"lightgreen\"\u003e'$query_type'\u003c/font\u003e) \u003cfont color=\"yellow\"\u003e=\u003c/font\u003e \u003cfont color=\"cornflowerblue\"\u003e1\u003c/font\u003e))\u003cbr /\u003e    \u003cfont color=\"darkorange\"\u003eGROUP BY\u003c/font\u003e h\u003cbr /\u003e    \u003cfont color=\"darkorange\"\u003eORDER BY\u003c/font\u003e \u003cfont color=\"navajowhite\"\u003ecount\u003c/font\u003e() \u003cfont color=\"darkorange\"\u003edesc\u003c/font\u003e\u003cbr /\u003e    \u003cfont color=\"darkorange\"\u003eLIMIT\u003c/font\u003e \u003cfont color=\"darkcyan\"\u003e$top\u003c/font\u003e)\u003cbr /\u003e    \u003cfont color=\"yellow\"\u003eAND\u003c/font\u003e \u003cfont color=\"darkorange\"\u003etype\u003c/font\u003e \u003cfont color=\"darkorange\"\u003ein\u003c/font\u003e (\u003cfont color=\"darkcyan\"\u003e$type\u003c/font\u003e)\u003cbr /\u003e    \u003cfont color=\"yellow\"\u003eAND\u003c/font\u003e initial_user \u003cfont color=\"darkorange\"\u003ein\u003c/font\u003e (\u003cfont color=\"darkcyan\"\u003e$user\u003c/font\u003e)\u003cbr /\u003e    \u003cfont color=\"yellow\"\u003eAND\u003c/font\u003e(\u003cfont color=\"lightgreen\"\u003e'$query_type'\u003c/font\u003e \u003cfont color=\"yellow\"\u003e=\u003c/font\u003e \u003cfont color=\"lightgreen\"\u003e'all'\u003c/font\u003e \u003cfont color=\"yellow\"\u003eor\u003c/font\u003e(positionCaseInsensitive(query,  \u003cfont color=\"lightgreen\"\u003e'$query_type'\u003c/font\u003e) \u003cfont color=\"yellow\"\u003e=\u003c/font\u003e \u003cfont color=\"cornflowerblue\"\u003e1\u003c/font\u003e))",
+          "intervalFactor": 2,
+          "query": "$rateColumns(\n    substring(query,  1,  45) AS query,\n    count() c)\nFROM $table\nWHERE\n    cityHash64(query) global in (\n    SELECT cityHash64(substring(query,  1,  45)) AS h\n    FROM $table\n    WHERE\n        $timeFilter\n        AND type in ($type)\n        AND initial_user in ($user)\n        AND('$query_type' = 'all' or(positionCaseInsensitive(query,  '$query_type') = 1))\n    GROUP BY h\n    ORDER BY count() desc\n    LIMIT $top)\n    AND type in ($type)\n    AND initial_user in ($user)\n    AND('$query_type' = 'all' or(positionCaseInsensitive(query,  '$query_type') = 1))",
+          "rawQuery": "SELECT t, arrayMap(a -\u003e (a.1, a.2/runningDifference( t/1000 )), groupArr) FROM (SELECT t, groupArray((query, c)) as groupArr FROM ( SELECT (intDiv(toUInt32(event_time), 2) * 2) * 1000 as t, substring(query,  1,  45) AS query, count() c FROM system.query_log WHERE event_date \u003e= toDate(1498209947) AND event_time \u003e= toDateTime(1498209947) AND      cityHash64(query) global in (     SELECT cityHash64(substring(query,  1,  45)) AS h     FROM system.query_log     WHERE         event_date \u003e= toDate(1498209947) AND event_time \u003e= toDateTime(1498209947)         AND type in (1,2,3,4)         AND initial_user in ('default')         AND('all' = 'all' or(positionCaseInsensitive(query,  'all') = 1))     GROUP BY h     ORDER BY count() desc     LIMIT 5)     AND type in (1,2,3,4)     AND initial_user in ('default')     AND('all' = 'all' or(positionCaseInsensitive(query,  'all') = 1)) GROUP BY t, query  ORDER BY t) GROUP BY t ORDER BY t)",
+          "refId": "A",
+          "resultFormat": "time_series",
+          "table": "query_log",
+          "tableLoading": false
+        }
+      ],
+      "thresholds": [],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "Top $top request's rate by type: $type; user: $user; query type: $query_type",
+      "tooltip": {
+        "shared": true,
+        "sort": 2,
+        "value_type": "individual"
+      },
+      "type": "graph",
+      "xaxis": {
+        "buckets": null,
+        "mode": "time",
+        "name": null,
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        },
+        {
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        }
+      ]
+    },
+    {
+      "content": "1 - successful start of query execution\n\n2 - successful end of query execution\n\n3 - exception before start of query execution\n\n4 - exception while query execution",
+      "datasource": {
+        "apiVersion": "v1",
+        "type": "prometheus",
+        "uid": "default-ds-uid"
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 4,
+        "x": 20,
+        "y": 1
+      },
+      "id": 17,
+      "links": [],
+      "mode": "markdown",
+      "targets": [
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "prometheus",
+            "uid": "default-ds-uid"
+          },
+          "refId": "A"
+        }
+      ],
+      "title": "Types",
+      "transparent": true,
+      "type": "text"
+    },
+    {
+      "datasource": {
+        "uid": "${DS_CLICKHOUSE}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "inspect": false
+          },
+          "decimals": 2,
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Time"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Time"
+              },
+              {
+                "id": "custom.hideFrom.viz",
+                "value": true
+              },
+              {
+                "id": "custom.align",
+                "value": ""
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "duration"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "duration"
+              },
+              {
+                "id": "unit",
+                "value": "ms"
+              },
+              {
+                "id": "decimals",
+                "value": 2
+              },
+              {
+                "id": "custom.align",
+                "value": ""
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "count"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "short"
+              },
+              {
+                "id": "custom.align",
+                "value": ""
+              }
+            ]
+          }
+        ]
+      },
+      "fontSize": "100%",
+      "gridPos": {
+        "h": 7,
+        "w": 8,
+        "x": 0,
+        "y": 8
+      },
+      "height": "400px",
+      "id": 18,
+      "links": [],
+      "options": {
+        "cellHeight": "sm",
+        "footer": {
+          "countRows": false,
+          "fields": "",
+          "reducer": [
+            "sum"
+          ],
+          "show": false
+        },
+        "showHeader": true
+      },
+      "pageSize": null,
+      "pluginVersion": "1.0.0",
+      "scroll": true,
+      "showHeader": true,
+      "sort": {
+        "col": 2,
+        "desc": true
+      },
+      "targets": [
+        {
+          "database": "system",
+          "datasource": {
+            "uid": "${DS_CLICKHOUSE}"
+          },
+          "dateColDataType": "event_date",
+          "dateLoading": false,
+          "dateTimeColDataType": "event_time",
+          "datetimeLoading": false,
+          "expr": "",
+          "format": "table",
+          "formattedQuery": "\u003cfont color=\"darkorange\"\u003eSELECT\u003c/font\u003e\u003cbr /\u003e    \u003cfont color=\"navajowhite\"\u003erand\u003c/font\u003e() \u003cfont color=\"darkorange\"\u003eas\u003c/font\u003e t,\u003cbr /\u003e    \u003cfont color=\"navajowhite\"\u003esubstring\u003c/font\u003e(query,  \u003cfont color=\"cornflowerblue\"\u003e1\u003c/font\u003e,  \u003cfont color=\"cornflowerblue\"\u003e70\u003c/font\u003e) \u003cfont color=\"darkorange\"\u003eAS\u003c/font\u003e query,\u003cbr /\u003e    \u003cfont color=\"navajowhite\"\u003eavg\u003c/font\u003e(query_duration_ms) duration,\u003cbr /\u003e    \u003cfont color=\"navajowhite\"\u003ecount\u003c/font\u003e() \u003cfont color=\"navajowhite\"\u003ecount\u003c/font\u003e\u003cbr /\u003e\u003cfont color=\"darkorange\"\u003eFROM\u003c/font\u003e \u003cfont color=\"darkcyan\"\u003e$table\u003c/font\u003e\u003cbr /\u003e\u003cfont color=\"darkorange\"\u003eWHERE\u003c/font\u003e\u003cbr /\u003e    \u003cfont color=\"darkcyan\"\u003e$timeFilter\u003c/font\u003e\u003cbr /\u003e    \u003cfont color=\"yellow\"\u003eAND\u003c/font\u003e \u003cfont color=\"darkorange\"\u003etype\u003c/font\u003e \u003cfont color=\"darkorange\"\u003ein\u003c/font\u003e (\u003cfont color=\"darkcyan\"\u003e$type\u003c/font\u003e)\u003cbr /\u003e    \u003cfont color=\"yellow\"\u003eand\u003c/font\u003e initial_user \u003cfont color=\"darkorange\"\u003ein\u003c/font\u003e (\u003cfont color=\"darkcyan\"\u003e$user\u003c/font\u003e)\u003cbr /\u003e    \u003cfont color=\"yellow\"\u003eand\u003c/font\u003e(\u003cfont color=\"lightgreen\"\u003e'$query_type'\u003c/font\u003e \u003cfont color=\"yellow\"\u003e=\u003c/font\u003e \u003cfont color=\"lightgreen\"\u003e'all'\u003c/font\u003e \u003cfont color=\"yellow\"\u003eor\u003c/font\u003e(positionCaseInsensitive(query,  \u003cfont color=\"lightgreen\"\u003e'$query_type'\u003c/font\u003e) \u003cfont color=\"yellow\"\u003e=\u003c/font\u003e \u003cfont color=\"cornflowerblue\"\u003e1\u003c/font\u003e))\u003cbr /\u003e\u003cfont color=\"darkorange\"\u003eGROUP BY\u003c/font\u003e query\u003cbr /\u003e\u003cfont color=\"darkorange\"\u003eORDER BY\u003c/font\u003e duration \u003cfont color=\"darkorange\"\u003edesc\u003c/font\u003e\u003cbr /\u003e\u003cfont color=\"darkorange\"\u003eLIMIT\u003c/font\u003e \u003cfont color=\"darkcyan\"\u003e$top\u003c/font\u003e",
+          "intervalFactor": 2,
+          "query": "SELECT\n    rand() as t,\n    substring(query,  1,  70) AS query,\n    avg(query_duration_ms) duration,\n    count() count\nFROM $table\nWHERE\n    $timeFilter\n    AND type in ($type)\n    and initial_user in ($user)\n    and('$query_type' = 'all' or(positionCaseInsensitive(query,  '$query_type') = 1))\nGROUP BY query\nORDER BY duration desc\nLIMIT $top",
+          "rawQuery": "SELECT     rand() as t,     substring(query,  1,  70) AS query,     avg(query_duration_ms) duration,     count() count FROM system.query_log WHERE     event_date \u003e= toDate(1498209947) AND event_time \u003e= toDateTime(1498209947)     AND type in (1,2,3,4)     and initial_user in ('default')     and('all' = 'all' or(positionCaseInsensitive(query,  'all') = 1)) GROUP BY query ORDER BY duration desc LIMIT 5",
+          "refId": "A",
+          "resultFormat": "time_series",
+          "table": "query_log",
+          "tableLoading": false
+        }
+      ],
+      "title": "Top slow queries by type: $type; user: $user; query type: $query_type",
+      "transformations": [
+        {
+          "id": "seriesToColumns",
+          "options": {
+            "reducers": []
+          }
+        }
+      ],
+      "type": "table"
+    },
+    {
+      "datasource": {
+        "uid": "${DS_CLICKHOUSE}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "inspect": false
+          },
+          "decimals": 2,
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Time"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Time"
+              },
+              {
+                "id": "custom.hideFrom.viz",
+                "value": true
+              },
+              {
+                "id": "custom.align",
+                "value": ""
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "usage"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "usage"
+              },
+              {
+                "id": "unit",
+                "value": "bytes"
+              },
+              {
+                "id": "decimals",
+                "value": 2
+              },
+              {
+                "id": "custom.align",
+                "value": ""
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "count"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "short"
+              },
+              {
+                "id": "custom.align",
+                "value": ""
+              }
+            ]
+          }
+        ]
+      },
+      "fontSize": "100%",
+      "gridPos": {
+        "h": 7,
+        "w": 8,
+        "x": 8,
+        "y": 8
+      },
+      "height": "400px",
+      "id": 19,
+      "links": [],
+      "options": {
+        "cellHeight": "sm",
+        "footer": {
+          "countRows": false,
+          "fields": "",
+          "reducer": [
+            "sum"
+          ],
+          "show": false
+        },
+        "showHeader": true
+      },
+      "pageSize": null,
+      "pluginVersion": "1.0.0",
+      "scroll": true,
+      "showHeader": true,
+      "sort": {
+        "col": 2,
+        "desc": true
+      },
+      "targets": [
+        {
+          "database": "system",
+          "datasource": {
+            "uid": "${DS_CLICKHOUSE}"
+          },
+          "dateColDataType": "event_date",
+          "dateLoading": false,
+          "dateTimeColDataType": "event_time",
+          "datetimeLoading": false,
+          "expr": "",
+          "format": "table",
+          "formattedQuery": "\u003cfont color=\"darkorange\"\u003eSELECT\u003c/font\u003e\u003cbr /\u003e    \u003cfont color=\"navajowhite\"\u003erand\u003c/font\u003e() \u003cfont color=\"darkorange\"\u003eas\u003c/font\u003e t,\u003cbr /\u003e    \u003cfont color=\"navajowhite\"\u003esubstring\u003c/font\u003e(query,  \u003cfont color=\"cornflowerblue\"\u003e1\u003c/font\u003e,  \u003cfont color=\"cornflowerblue\"\u003e70\u003c/font\u003e) \u003cfont color=\"darkorange\"\u003eAS\u003c/font\u003e query,\u003cbr /\u003e    \u003cfont color=\"navajowhite\"\u003eavg\u003c/font\u003e(memory_usage) usage,\u003cbr /\u003e    \u003cfont color=\"navajowhite\"\u003ecount\u003c/font\u003e() \u003cfont color=\"navajowhite\"\u003ecount\u003c/font\u003e\u003cbr /\u003e\u003cfont color=\"darkorange\"\u003eFROM\u003c/font\u003e \u003cfont color=\"darkcyan\"\u003e$table\u003c/font\u003e\u003cbr /\u003e\u003cfont color=\"darkorange\"\u003eWHERE\u003c/font\u003e\u003cbr /\u003e    \u003cfont color=\"darkcyan\"\u003e$timeFilter\u003c/font\u003e\u003cbr /\u003e    \u003cfont color=\"yellow\"\u003eAND\u003c/font\u003e \u003cfont color=\"darkorange\"\u003etype\u003c/font\u003e \u003cfont color=\"darkorange\"\u003ein\u003c/font\u003e (\u003cfont color=\"darkcyan\"\u003e$type\u003c/font\u003e)\u003cbr /\u003e    \u003cfont color=\"yellow\"\u003eand\u003c/font\u003e initial_user \u003cfont color=\"darkorange\"\u003ein\u003c/font\u003e (\u003cfont color=\"darkcyan\"\u003e$user\u003c/font\u003e)\u003cbr /\u003e    \u003cfont color=\"yellow\"\u003eand\u003c/font\u003e(\u003cfont color=\"lightgreen\"\u003e'$query_type'\u003c/font\u003e \u003cfont color=\"yellow\"\u003e=\u003c/font\u003e \u003cfont color=\"lightgreen\"\u003e'all'\u003c/font\u003e \u003cfont color=\"yellow\"\u003eor\u003c/font\u003e(positionCaseInsensitive(query,  \u003cfont color=\"lightgreen\"\u003e'$query_type'\u003c/font\u003e) \u003cfont color=\"yellow\"\u003e=\u003c/font\u003e \u003cfont color=\"cornflowerblue\"\u003e1\u003c/font\u003e))\u003cbr /\u003e\u003cfont color=\"darkorange\"\u003eGROUP BY\u003c/font\u003e query\u003cbr /\u003e\u003cfont color=\"darkorange\"\u003eORDER BY\u003c/font\u003e usage \u003cfont color=\"darkorange\"\u003edesc\u003c/font\u003e\u003cbr /\u003e\u003cfont color=\"darkorange\"\u003eLIMIT\u003c/font\u003e \u003cfont color=\"darkcyan\"\u003e$top\u003c/font\u003e",
+          "intervalFactor": 2,
+          "query": "SELECT\n    rand() as t,\n    substring(query,  1,  70) AS query,\n    avg(memory_usage) usage,\n    count() count\nFROM $table\nWHERE\n    $timeFilter\n    AND type in ($type)\n    and initial_user in ($user)\n    and('$query_type' = 'all' or(positionCaseInsensitive(query,  '$query_type') = 1))\nGROUP BY query\nORDER BY usage desc\nLIMIT $top",
+          "rawQuery": "SELECT     rand() as t,     substring(query,  1,  70) AS query,     avg(memory_usage) usage,     count() count FROM system.query_log WHERE     event_date \u003e= toDate(1498209947) AND event_time \u003e= toDateTime(1498209947)     AND type in (1,2,3,4)     and initial_user in ('default')     and('all' = 'all' or(positionCaseInsensitive(query,  'all') = 1)) GROUP BY query ORDER BY usage desc LIMIT 5",
+          "refId": "A",
+          "resultFormat": "time_series",
+          "table": "query_log",
+          "tableLoading": false
+        }
+      ],
+      "title": "Top memory consumers by type: $type; user: $user; query type: $query_type",
+      "transformations": [
+        {
+          "id": "seriesToColumns",
+          "options": {
+            "reducers": []
+          }
+        }
+      ],
+      "type": "table"
+    },
+    {
+      "datasource": {
+        "uid": "${DS_CLICKHOUSE}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "inspect": false
+          },
+          "decimals": 2,
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Time"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Time"
+              },
+              {
+                "id": "custom.hideFrom.viz",
+                "value": true
+              },
+              {
+                "id": "custom.align",
+                "value": ""
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "type"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "type"
+              },
+              {
+                "id": "unit",
+                "value": "none"
+              },
+              {
+                "id": "custom.align",
+                "value": ""
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "count"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "short"
+              },
+              {
+                "id": "custom.align",
+                "value": ""
+              }
+            ]
+          }
+        ]
+      },
+      "fontSize": "100%",
+      "gridPos": {
+        "h": 7,
+        "w": 8,
+        "x": 16,
+        "y": 8
+      },
+      "height": "400px",
+      "id": 20,
+      "links": [],
+      "options": {
+        "cellHeight": "sm",
+        "footer": {
+          "countRows": false,
+          "fields": "",
+          "reducer": [
+            "sum"
+          ],
+          "show": false
+        },
+        "showHeader": true
+      },
+      "pageSize": null,
+      "pluginVersion": "1.0.0",
+      "scroll": true,
+      "showHeader": true,
+      "sort": {
+        "col": 3,
+        "desc": true
+      },
+      "targets": [
+        {
+          "database": "system",
+          "datasource": {
+            "uid": "${DS_CLICKHOUSE}"
+          },
+          "dateColDataType": "event_date",
+          "dateLoading": false,
+          "dateTimeColDataType": "event_time",
+          "datetimeLoading": false,
+          "expr": "",
+          "format": "table",
+          "formattedQuery": "\u003cfont color=\"darkorange\"\u003eSELECT\u003c/font\u003e\u003cbr /\u003e    \u003cfont color=\"navajowhite\"\u003erand\u003c/font\u003e() \u003cfont color=\"darkorange\"\u003eas\u003c/font\u003e t,\u003cbr /\u003e    \u003cfont color=\"navajowhite\"\u003esubstring\u003c/font\u003e(query,  \u003cfont color=\"cornflowerblue\"\u003e1\u003c/font\u003e,  \u003cfont color=\"cornflowerblue\"\u003e70\u003c/font\u003e) \u003cfont color=\"darkorange\"\u003eAS\u003c/font\u003e query,\u003cbr /\u003e    \u003cfont color=\"darkorange\"\u003etype\u003c/font\u003e,\u003cbr /\u003e    \u003cfont color=\"navajowhite\"\u003ecount\u003c/font\u003e() \u003cfont color=\"navajowhite\"\u003ecount\u003c/font\u003e\u003cbr /\u003e\u003cfont color=\"darkorange\"\u003eFROM\u003c/font\u003e \u003cfont color=\"darkcyan\"\u003e$table\u003c/font\u003e\u003cbr /\u003e\u003cfont color=\"darkorange\"\u003eWHERE\u003c/font\u003e\u003cbr /\u003e    \u003cfont color=\"darkcyan\"\u003e$timeFilter\u003c/font\u003e\u003cbr /\u003e    \u003cfont color=\"yellow\"\u003eAND\u003c/font\u003e \u003cfont color=\"darkorange\"\u003etype\u003c/font\u003e \u003cfont color=\"darkorange\"\u003ein\u003c/font\u003e (\u003cfont color=\"cornflowerblue\"\u003e3\u003c/font\u003e,\u003cfont color=\"cornflowerblue\"\u003e4\u003c/font\u003e)\u003cbr /\u003e    \u003cfont color=\"yellow\"\u003eand\u003c/font\u003e initial_user \u003cfont color=\"darkorange\"\u003ein\u003c/font\u003e (\u003cfont color=\"darkcyan\"\u003e$user\u003c/font\u003e)\u003cbr /\u003e    \u003cfont color=\"yellow\"\u003eand\u003c/font\u003e(\u003cfont color=\"lightgreen\"\u003e'$query_type'\u003c/font\u003e \u003cfont color=\"yellow\"\u003e=\u003c/font\u003e \u003cfont color=\"lightgreen\"\u003e'all'\u003c/font\u003e \u003cfont color=\"yellow\"\u003eor\u003c/font\u003e(positionCaseInsensitive(query,  \u003cfont color=\"lightgreen\"\u003e'$query_type'\u003c/font\u003e) \u003cfont color=\"yellow\"\u003e=\u003c/font\u003e \u003cfont color=\"cornflowerblue\"\u003e1\u003c/font\u003e))\u003cbr /\u003e\u003cfont color=\"darkorange\"\u003eGROUP BY\u003c/font\u003e\u003cbr /\u003e    query,\u003cbr /\u003e    \u003cfont color=\"darkorange\"\u003etype\u003c/font\u003e\u003cbr /\u003e\u003cfont color=\"darkorange\"\u003eORDER BY\u003c/font\u003e \u003cfont color=\"navajowhite\"\u003ecount\u003c/font\u003e \u003cfont color=\"darkorange\"\u003edesc\u003c/font\u003e\u003cbr /\u003e\u003cfont color=\"darkorange\"\u003eLIMIT\u003c/font\u003e \u003cfont color=\"darkcyan\"\u003e$top\u003c/font\u003e",
+          "intervalFactor": 2,
+          "query": "SELECT\n    rand() as t,\n    substring(query,  1,  70) AS query,\n    type,\n    count() count\nFROM $table\nWHERE\n    $timeFilter\n    AND type in (3,4)\n    and initial_user in ($user)\n    and('$query_type' = 'all' or(positionCaseInsensitive(query,  '$query_type') = 1))\nGROUP BY\n    query,\n    type\nORDER BY count desc\nLIMIT $top",
+          "rawQuery": "SELECT     rand() as t,     substring(query,  1,  70) AS query,     type,     count() count FROM system.query_log WHERE     event_date \u003e= toDate(1498209947) AND event_time \u003e= toDateTime(1498209947)     AND type in (3,4)     and initial_user in ('default')     and('all' = 'all' or(positionCaseInsensitive(query,  'all') = 1)) GROUP BY     query,     type ORDER BY count desc LIMIT 5",
+          "refId": "A",
+          "resultFormat": "time_series",
+          "table": "query_log",
+          "tableLoading": false
+        }
+      ],
+      "title": "Top failed queries by user: $user; query type: $query_type",
+      "transformations": [
+        {
+          "id": "seriesToColumns",
+          "options": {
+            "reducers": []
+          }
+        }
+      ],
+      "type": "table"
+    },
+    {
+      "collapsed": false,
+      "datasource": {
+        "apiVersion": "v1",
+        "type": "prometheus",
+        "uid": "default-ds-uid"
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "id": 22,
+      "panels": [],
+      "repeat": "",
+      "targets": [
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "prometheus",
+            "uid": "default-ds-uid"
+          },
+          "refId": "A"
+        }
+      ],
+      "title": "Top charts",
+      "type": "row"
+    },
+    {
+      "collapsed": true,
+      "datasource": {
+        "apiVersion": "v1",
+        "type": "prometheus",
+        "uid": "default-ds-uid"
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 24,
+        "x": 0,
+        "y": 15
+      },
+      "id": 23,
+      "panels": [
+        {
+          "aliasColors": {},
+          "bars": false,
+          "dashLength": 10,
+          "dashes": false,
+          "datasource": {
+            "uid": "${DS_CLICKHOUSE}"
+          },
+          "fill": 1,
+          "gridPos": {
+            "h": 7,
+            "w": 12,
+            "x": 0,
+            "y": 16
+          },
+          "id": 14,
+          "legend": {
+            "avg": false,
+            "current": false,
+            "max": false,
+            "min": false,
+            "show": true,
+            "total": false,
+            "values": false
+          },
+          "lines": true,
+          "linewidth": 1,
+          "links": [],
+          "nullPointMode": "null",
+          "percentage": false,
+          "pointradius": 5,
+          "points": false,
+          "renderer": "flot",
+          "seriesOverrides": [],
+          "spaceLength": 10,
+          "stack": false,
+          "steppedLine": false,
+          "targets": [
+            {
+              "database": "system",
+              "datasource": {
+                "uid": "${DS_CLICKHOUSE}"
+              },
+              "dateColDataType": "event_date",
+              "dateLoading": false,
+              "dateTimeColDataType": "event_time",
+              "datetimeLoading": false,
+              "expr": "",
+              "formattedQuery": "\u003cfont color=\"darkcyan\"\u003e$rate\u003c/font\u003e(\u003cfont color=\"navajowhite\"\u003ecount\u003c/font\u003e() c)\u003cbr /\u003e\u003cfont color=\"darkorange\"\u003eFROM\u003c/font\u003e \u003cfont color=\"darkcyan\"\u003e$table\u003c/font\u003e\u003cbr /\u003e\u003cfont color=\"darkorange\"\u003ewhere\u003c/font\u003e  \u003cfont color=\"darkorange\"\u003etype\u003c/font\u003e \u003cfont color=\"darkorange\"\u003ein\u003c/font\u003e (\u003cfont color=\"darkcyan\"\u003e$type\u003c/font\u003e)\u003cbr /\u003e    \u003cfont color=\"yellow\"\u003eand\u003c/font\u003e initial_user \u003cfont color=\"darkorange\"\u003ein\u003c/font\u003e (\u003cfont color=\"darkcyan\"\u003e$user\u003c/font\u003e)\u003cbr /\u003e    \u003cfont color=\"yellow\"\u003eand\u003c/font\u003e(\u003cfont color=\"lightgreen\"\u003e'$query_type'\u003c/font\u003e \u003cfont color=\"yellow\"\u003e=\u003c/font\u003e \u003cfont color=\"lightgreen\"\u003e'all'\u003c/font\u003e \u003cfont color=\"yellow\"\u003eor\u003c/font\u003e(positionCaseInsensitive(query,  \u003cfont color=\"lightgreen\"\u003e'$query_type'\u003c/font\u003e) \u003cfont color=\"yellow\"\u003e=\u003c/font\u003e \u003cfont color=\"cornflowerblue\"\u003e1\u003c/font\u003e))",
+              "intervalFactor": 2,
+              "query": "$rate(count() c)\nFROM $table\nwhere  type in ($type)\n    and initial_user in ($user)\n    and('$query_type' = 'all' or(positionCaseInsensitive(query,  '$query_type') = 1))",
+              "rawQuery": "SELECT t, c/runningDifference(t/1000) cRate FROM ( SELECT (intDiv(toUInt32(event_time), 2) * 2) * 1000 as t, count() c FROM system.query_log WHERE event_date \u003e= toDate(1498209895) AND event_time \u003e= toDateTime(1498209895) AND   type in (1,2,3,4)     and initial_user in ('default')     and('all' = 'all' or(positionCaseInsensitive(query,  'all') = 1)) GROUP BY t ORDER BY t)",
+              "refId": "A",
+              "resultFormat": "time_series",
+              "table": "query_log",
+              "tableLoading": false
+            }
+          ],
+          "thresholds": [],
+          "timeFrom": null,
+          "timeShift": null,
+          "title": "Reqs/s by type: $type; user: $user; query type: $query_type",
+          "tooltip": {
+            "shared": true,
+            "sort": 0,
+            "value_type": "individual"
+          },
+          "type": "graph",
+          "xaxis": {
+            "buckets": null,
+            "mode": "time",
+            "name": null,
+            "show": true,
+            "values": []
+          },
+          "yaxes": [
+            {
+              "format": "short",
+              "label": null,
+              "logBase": 1,
+              "max": null,
+              "min": null,
+              "show": true
+            },
+            {
+              "format": "short",
+              "label": null,
+              "logBase": 1,
+              "max": null,
+              "min": null,
+              "show": true
+            }
+          ]
+        },
+        {
+          "aliasColors": {},
+          "bars": false,
+          "dashLength": 10,
+          "dashes": false,
+          "datasource": {
+            "uid": "${DS_CLICKHOUSE}"
+          },
+          "fill": 1,
+          "gridPos": {
+            "h": 7,
+            "w": 12,
+            "x": 12,
+            "y": 16
+          },
+          "id": 16,
+          "legend": {
+            "avg": false,
+            "current": false,
+            "max": false,
+            "min": false,
+            "show": true,
+            "total": false,
+            "values": false
+          },
+          "lines": true,
+          "linewidth": 1,
+          "links": [],
+          "nullPointMode": "null",
+          "percentage": false,
+          "pointradius": 5,
+          "points": false,
+          "renderer": "flot",
+          "seriesOverrides": [
+            {
+              "alias": "insert_duration",
+              "yaxis": 2
+            }
+          ],
+          "spaceLength": 10,
+          "stack": false,
+          "steppedLine": false,
+          "targets": [
+            {
+              "database": "system",
+              "datasource": {
+                "uid": "${DS_CLICKHOUSE}"
+              },
+              "dateColDataType": "event_date",
+              "dateLoading": false,
+              "dateTimeColDataType": "event_time",
+              "datetimeLoading": false,
+              "expr": "",
+              "formattedQuery": "\u003cfont color=\"darkorange\"\u003eSELECT\u003c/font\u003e\u003cbr /\u003e    \u003cfont color=\"darkcyan\"\u003e$timeSeries\u003c/font\u003e \u003cfont color=\"darkorange\"\u003eas\u003c/font\u003e t,\u003cbr /\u003e    \u003cfont color=\"navajowhite\"\u003eavg\u003c/font\u003e(query_duration_ms)  select_duration\u003cbr /\u003e\u003cfont color=\"darkorange\"\u003eFROM\u003c/font\u003e \u003cfont color=\"darkcyan\"\u003e$table\u003c/font\u003e\u003cbr /\u003e\u003cfont color=\"darkorange\"\u003eWHERE\u003c/font\u003e\u003cbr /\u003e    \u003cfont color=\"darkcyan\"\u003e$timeFilter\u003c/font\u003e\u003cbr /\u003e    \u003cfont color=\"yellow\"\u003eAND\u003c/font\u003e \u003cfont color=\"darkorange\"\u003etype\u003c/font\u003e \u003cfont color=\"yellow\"\u003e=\u003c/font\u003e \u003cfont color=\"cornflowerblue\"\u003e2\u003c/font\u003e\u003cbr /\u003e    \u003cfont color=\"yellow\"\u003eand\u003c/font\u003e positionCaseInsensitive(query,  \u003cfont color=\"lightgreen\"\u003e'select'\u003c/font\u003e) \u003cfont color=\"yellow\"\u003e=\u003c/font\u003e \u003cfont color=\"cornflowerblue\"\u003e1\u003c/font\u003e\u003cbr /\u003e    \u003cfont color=\"yellow\"\u003eand\u003c/font\u003e initial_user \u003cfont color=\"darkorange\"\u003ein\u003c/font\u003e (\u003cfont color=\"darkcyan\"\u003e$user\u003c/font\u003e)\u003cbr /\u003e\u003cfont color=\"darkorange\"\u003eGROUP BY\u003c/font\u003e t\u003cbr /\u003e\u003cfont color=\"darkorange\"\u003eORDER BY\u003c/font\u003e t",
+              "intervalFactor": 2,
+              "query": "SELECT\n    $timeSeries as t,\n    avg(query_duration_ms)  select_duration\nFROM $table\nWHERE\n    $timeFilter\n    AND type = 2\n    and positionCaseInsensitive(query,  'select') = 1\n    and initial_user in ($user)\nGROUP BY t\nORDER BY t",
+              "rawQuery": "SELECT     (intDiv(toUInt32(event_time), 2) * 2) * 1000 as t,     avg(query_duration_ms)  select_duration FROM system.query_log WHERE     event_date \u003e= toDate(1498209895) AND event_time \u003e= toDateTime(1498209895)     AND type = 2     and positionCaseInsensitive(query,  'select') = 1     and initial_user in ('default') GROUP BY t ORDER BY t",
+              "refId": "A",
+              "resultFormat": "time_series",
+              "table": "query_log",
+              "tableLoading": false
+            },
+            {
+              "database": "system",
+              "datasource": {
+                "uid": "${DS_CLICKHOUSE}"
+              },
+              "dateColDataType": "event_date",
+              "dateLoading": false,
+              "dateTimeColDataType": "event_time",
+              "datetimeLoading": false,
+              "expr": "",
+              "formattedQuery": "\u003cfont color=\"darkorange\"\u003eSELECT\u003c/font\u003e\u003cbr /\u003e    \u003cfont color=\"darkcyan\"\u003e$timeSeries\u003c/font\u003e \u003cfont color=\"darkorange\"\u003eas\u003c/font\u003e t,\u003cbr /\u003e    \u003cfont color=\"navajowhite\"\u003eavg\u003c/font\u003e(query_duration_ms) insert_duration\u003cbr /\u003e\u003cfont color=\"darkorange\"\u003eFROM\u003c/font\u003e \u003cfont color=\"darkcyan\"\u003e$table\u003c/font\u003e\u003cbr /\u003e\u003cfont color=\"darkorange\"\u003eWHERE\u003c/font\u003e\u003cbr /\u003e    \u003cfont color=\"darkcyan\"\u003e$timeFilter\u003c/font\u003e\u003cbr /\u003e    \u003cfont color=\"yellow\"\u003eAND\u003c/font\u003e \u003cfont color=\"darkorange\"\u003etype\u003c/font\u003e \u003cfont color=\"yellow\"\u003e=\u003c/font\u003e \u003cfont color=\"cornflowerblue\"\u003e2\u003c/font\u003e\u003cbr /\u003e\u003cfont color=\"yellow\"\u003eand\u003c/font\u003e positionCaseInsensitive(query,  \u003cfont color=\"lightgreen\"\u003e'insert into'\u003c/font\u003e) \u003cfont color=\"yellow\"\u003e=\u003c/font\u003e \u003cfont color=\"cornflowerblue\"\u003e1\u003c/font\u003e\u003cbr /\u003e    \u003cfont color=\"yellow\"\u003eand\u003c/font\u003e initial_user \u003cfont color=\"darkorange\"\u003ein\u003c/font\u003e (\u003cfont color=\"darkcyan\"\u003e$user\u003c/font\u003e)\u003cbr /\u003e\u003cfont color=\"darkorange\"\u003eGROUP BY\u003c/font\u003e t\u003cbr /\u003e\u003cfont color=\"darkorange\"\u003eORDER BY\u003c/font\u003e t",
+              "intervalFactor": 2,
+              "query": "SELECT\n    $timeSeries as t,\n    avg(query_duration_ms) insert_duration\nFROM $table\nWHERE\n    $timeFilter\n    AND type = 2\nand positionCaseInsensitive(query,  'insert into') = 1\n    and initial_user in ($user)\nGROUP BY t\nORDER BY t",
+              "rawQuery": "SELECT     (intDiv(toUInt32(event_time), 2) * 2) * 1000 as t,     avg(query_duration_ms) insert_duration FROM system.query_log WHERE     event_date \u003e= toDate(1498209895) AND event_time \u003e= toDateTime(1498209895)     AND type = 2 and positionCaseInsensitive(query,  'insert into') = 1     and initial_user in ('default') GROUP BY t ORDER BY t",
+              "refId": "B",
+              "resultFormat": "time_series",
+              "table": "query_log",
+              "tableLoading": false
+            }
+          ],
+          "thresholds": [],
+          "timeFrom": null,
+          "timeShift": null,
+          "title": "Query duration by type: $type; user: $user",
+          "tooltip": {
+            "shared": true,
+            "sort": 0,
+            "value_type": "individual"
+          },
+          "type": "graph",
+          "xaxis": {
+            "buckets": null,
+            "mode": "time",
+            "name": null,
+            "show": true,
+            "values": []
+          },
+          "yaxes": [
+            {
+              "format": "ms",
+              "label": null,
+              "logBase": 1,
+              "max": null,
+              "min": null,
+              "show": true
+            },
+            {
+              "format": "ms",
+              "label": null,
+              "logBase": 1,
+              "max": null,
+              "min": null,
+              "show": true
+            }
+          ]
+        }
+      ],
+      "repeat": "",
+      "targets": [
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "prometheus",
+            "uid": "default-ds-uid"
+          },
+          "refId": "A"
+        }
+      ],
+      "title": "Request charts",
+      "type": "row"
+    },
+    {
+      "collapsed": true,
+      "datasource": {
+        "apiVersion": "v1",
+        "type": "prometheus",
+        "uid": "default-ds-uid"
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 24,
+        "x": 0,
+        "y": 16
+      },
+      "id": 24,
+      "panels": [
+        {
+          "columns": [],
+          "datasource": {
+            "uid": "${DS_CLICKHOUSE}"
+          },
+          "fontSize": "100%",
+          "gridPos": {
+            "h": 7,
+            "w": 24,
+            "x": 0,
+            "y": 17
+          },
+          "id": 21,
+          "links": [],
+          "pageSize": null,
+          "scroll": true,
+          "showHeader": true,
+          "sort": {
+            "col": 0,
+            "desc": true
+          },
+          "styles": [
+            {
+              "alias": "Time",
+              "dateFormat": "YYYY-MM-DD HH:mm:ss",
+              "pattern": "Time",
+              "type": "date"
+            },
+            {
+              "alias": "",
+              "colorMode": null,
+              "colors": [
+                "rgba(245, 54, 54, 0.9)",
+                "rgba(237, 129, 40, 0.89)",
+                "rgba(50, 172, 45, 0.97)"
+              ],
+              "dateFormat": "YYYY-MM-DD HH:mm:ss",
+              "decimals": null,
+              "pattern": "duration",
+              "thresholds": [],
+              "type": "number",
+              "unit": "ms"
+            },
+            {
+              "alias": "",
+              "colorMode": null,
+              "colors": [
+                "rgba(245, 54, 54, 0.9)",
+                "rgba(237, 129, 40, 0.89)",
+                "rgba(50, 172, 45, 0.97)"
+              ],
+              "dateFormat": "YYYY-MM-DD HH:mm:ss",
+              "decimals": 2,
+              "pattern": "memory",
+              "thresholds": [],
+              "type": "number",
+              "unit": "bytes"
+            },
+            {
+              "alias": "",
+              "colorMode": null,
+              "colors": [
+                "rgba(245, 54, 54, 0.9)",
+                "rgba(237, 129, 40, 0.89)",
+                "rgba(50, 172, 45, 0.97)"
+              ],
+              "decimals": 2,
+              "pattern": "/.*/",
+              "thresholds": [],
+              "type": "number",
+              "unit": "short"
+            }
+          ],
+          "targets": [
+            {
+              "database": "system",
+              "datasource": {
+                "uid": "${DS_CLICKHOUSE}"
+              },
+              "dateColDataType": "event_date",
+              "dateLoading": false,
+              "dateTimeColDataType": "event_time",
+              "datetimeLoading": false,
+              "formattedQuery": "\u003cfont color=\"darkorange\"\u003eSELECT\u003c/font\u003e\u003cbr /\u003e    event_time,\u003cbr /\u003e    user,\u003cbr /\u003e    query_duration_ms duration,\u003cbr /\u003e    memory_usage memory,\u003cbr /\u003e    if(exception\u003cfont color=\"yellow\"\u003e!=\u003c/font\u003e\u003cfont color=\"lightgreen\"\u003e''\u003c/font\u003e, \u003cfont color=\"lightgreen\"\u003e'fail'\u003c/font\u003e, \u003cfont color=\"lightgreen\"\u003e'success'\u003c/font\u003e) result,\u003cbr /\u003e    \u003cfont color=\"navajowhite\"\u003econcat\u003c/font\u003e(\u003cfont color=\"navajowhite\"\u003esubstring\u003c/font\u003e(query,\u003cfont color=\"cornflowerblue\"\u003e1\u003c/font\u003e,\u003cfont color=\"cornflowerblue\"\u003e120\u003c/font\u003e), \u003cfont color=\"lightgreen\"\u003e'...'\u003c/font\u003e) query\u003cbr /\u003e\u003cfont color=\"darkorange\"\u003eFROM\u003c/font\u003e \u003cfont color=\"darkcyan\"\u003e$table\u003c/font\u003e\u003cbr /\u003e\u003cfont color=\"darkorange\"\u003eWHERE\u003c/font\u003e \u003cfont color=\"darkcyan\"\u003e$timeFilter\u003c/font\u003e\u003cbr /\u003e    \u003cfont color=\"yellow\"\u003eAND\u003c/font\u003e \u003cfont color=\"darkorange\"\u003etype\u003c/font\u003e \u003cfont color=\"darkorange\"\u003ein\u003c/font\u003e (\u003cfont color=\"darkcyan\"\u003e$type\u003c/font\u003e)\u003cbr /\u003e    \u003cfont color=\"yellow\"\u003eand\u003c/font\u003e initial_user \u003cfont color=\"darkorange\"\u003ein\u003c/font\u003e (\u003cfont color=\"darkcyan\"\u003e$user\u003c/font\u003e)\u003cbr /\u003e    \u003cfont color=\"yellow\"\u003eand\u003c/font\u003e(\u003cfont color=\"lightgreen\"\u003e'$query_type'\u003c/font\u003e \u003cfont color=\"yellow\"\u003e=\u003c/font\u003e \u003cfont color=\"lightgreen\"\u003e'all'\u003c/font\u003e \u003cfont color=\"yellow\"\u003eor\u003c/font\u003e(positionCaseInsensitive(query,  \u003cfont color=\"lightgreen\"\u003e'$query_type'\u003c/font\u003e) \u003cfont color=\"yellow\"\u003e=\u003c/font\u003e \u003cfont color=\"cornflowerblue\"\u003e1\u003c/font\u003e))\u003cbr /\u003e\u003cfont color=\"darkorange\"\u003eORDER BY\u003c/font\u003e event_time \u003cfont color=\"darkorange\"\u003eDESC\u003c/font\u003e\u003cbr /\u003e\u003cfont color=\"darkorange\"\u003eLIMIT\u003c/font\u003e \u003cfont color=\"cornflowerblue\"\u003e1000\u003c/font\u003e",
+              "intervalFactor": 1,
+              "query": "SELECT\n    event_time,\n    user,\n    query_duration_ms duration,\n    memory_usage memory,\n    if(exception!='', 'fail', 'success') result,\n    concat(substring(query,1,120), '...') query\nFROM $table\nWHERE $timeFilter\n    AND type in ($type)\n    and initial_user in ($user)\n    and('$query_type' = 'all' or(positionCaseInsensitive(query,  '$query_type') = 1))\nORDER BY event_time DESC\nLIMIT 1000",
+              "rawQuery": "SELECT     event_time,     user,     query_duration_ms duration,     memory_usage memory,     if(exception!='', 'fail', 'success') result,     concat(substring(query,1,120), '...') query FROM system.query_log WHERE event_date \u003e= toDate(1498209895) AND event_time \u003e= toDateTime(1498209895)     AND type in (1,2,3,4)     and initial_user in ('default')     and('all' = 'all' or(positionCaseInsensitive(query,  'all') = 1)) ORDER BY event_time DESC LIMIT 1000",
+              "refId": "A",
+              "resultFormat": "time_series",
+              "table": "query_log",
+              "tableLoading": false
+            }
+          ],
+          "title": "Query log by type: $type; user: $user; query type: $query_type",
+          "transform": "timeseries_to_columns",
+          "type": "table"
+        }
+      ],
+      "repeat": "",
+      "targets": [
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "prometheus",
+            "uid": "default-ds-uid"
+          },
+          "refId": "A"
+        }
+      ],
+      "title": "Query log table",
+      "type": "row"
+    }
+  ],
+  "refresh": "5s",
+  "schemaVersion": 41,
+  "style": "dark",
+  "tags": [
+    "clickhouse",
+    "performance"
+  ],
+  "templating": {
+    "list": [
+      {
+        "auto": true,
+        "auto_count": 100,
+        "auto_min": "1m",
+        "current": {
+          "text": "5m",
+          "value": "5m"
+        },
+        "hide": 2,
+        "label": null,
+        "name": "interval",
+        "options": [
+          {
+            "selected": false,
+            "text": "auto",
+            "value": "$__auto_interval"
+          },
+          {
+            "selected": true,
+            "text": "5m",
+            "value": "5m"
+          }
+        ],
+        "query": "5m",
+        "refresh": 2,
+        "type": "interval"
+      },
+      {
+        "allValue": null,
+        "current": {
+          "selected": true,
+          "tags": [],
+          "text": [
+            "All"
+          ],
+          "value": [
+            "$__all"
+          ]
+        },
+        "hide": 0,
+        "includeAll": true,
+        "label": "type",
+        "multi": true,
+        "name": "type",
+        "options": [
+          {
+            "selected": true,
+            "text": "All",
+            "value": "$__all"
+          },
+          {
+            "selected": false,
+            "text": "1",
+            "value": "1"
+          },
+          {
+            "selected": false,
+            "text": "2",
+            "value": "2"
+          },
+          {
+            "selected": false,
+            "text": "3",
+            "value": "3"
+          },
+          {
+            "selected": false,
+            "text": "4",
+            "value": "4"
+          }
+        ],
+        "query": "1,2,3,4",
+        "type": "custom"
+      },
+      {
+        "allValue": null,
+        "current": {
+          "selected": true,
+          "tags": [],
+          "text": "5",
+          "value": "5"
+        },
+        "hide": 0,
+        "includeAll": false,
+        "label": "top elements",
+        "multi": false,
+        "name": "top",
+        "options": [
+          {
+            "selected": true,
+            "text": "5",
+            "value": "5"
+          },
+          {
+            "selected": false,
+            "text": "10",
+            "value": "10"
+          },
+          {
+            "selected": false,
+            "text": "15",
+            "value": "15"
+          },
+          {
+            "selected": false,
+            "text": "20",
+            "value": "20"
+          },
+          {
+            "selected": false,
+            "text": "25",
+            "value": "25"
+          },
+          {
+            "selected": false,
+            "text": "30",
+            "value": "30"
+          }
+        ],
+        "query": "5,10,15,20,25,30",
+        "type": "custom"
+      },
+      {
+        "allValue": "",
+        "current": {},
+        "datasource": {
+          "uid": "${DS_CLICKHOUSE}"
+        },
+        "hide": 0,
+        "includeAll": true,
+        "label": "initial user",
+        "multi": true,
+        "name": "user",
+        "options": [],
+        "query": "select distinct initial_user from system.query_log where event_date \u003e= today()-3 and event_time \u003e toDateTime(today()-3)",
+        "refresh": 1,
+        "regex": "",
+        "sort": 0,
+        "type": "query"
+      },
+      {
+        "allValue": "",
+        "current": {
+          "selected": true,
+          "text": "all",
+          "value": "all"
+        },
+        "hide": 0,
+        "includeAll": false,
+        "label": "query type",
+        "multi": false,
+        "name": "query_type",
+        "options": [
+          {
+            "selected": true,
+            "text": "all",
+            "value": "all"
+          },
+          {
+            "selected": false,
+            "text": "select",
+            "value": "select"
+          },
+          {
+            "selected": false,
+            "text": "insert",
+            "value": "insert"
+          }
+        ],
+        "query": "all,select,insert",
+        "type": "custom"
+      }
+    ]
+  },
+  "time": {
+    "from": "now-30m",
+    "to": "now"
+  },
+  "timepicker": {
+    "refresh_intervals": [
+      "5s",
+      "10s",
+      "30s",
+      "1m",
+      "5m",
+      "15m",
+      "30m",
+      "1h",
+      "2h",
+      "1d"
+    ]
+  },
+  "timezone": "browser",
+  "title": "ClickHouse Queries",
+  "version": 2
+}
