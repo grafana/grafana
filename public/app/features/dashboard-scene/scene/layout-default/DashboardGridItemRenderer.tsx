@@ -14,7 +14,7 @@ export function DashboardGridItemRenderer({ model }: SceneComponentProps<Dashboa
   const soloPanelContext = useSoloPanelContext();
   const layoutStyle = useLayoutStyle(
     model.getRepeatDirection(),
-    model.getPanelCount(),
+    model.getChildCount(),
     model.getMaxPerRow(),
     itemHeight ?? 10
   );

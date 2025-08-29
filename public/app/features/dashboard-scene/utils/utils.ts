@@ -285,8 +285,8 @@ export function getLibraryPanelBehavior(vizPanel: VizPanel): LibraryPanelBehavio
 }
 
 export function calculateGridItemDimensions(repeater: DashboardGridItem) {
-  const rowCount = Math.ceil(repeater.getPanelCount() / repeater.getMaxPerRow());
-  const columnCount = Math.ceil(repeater.getPanelCount() / rowCount);
+  const rowCount = Math.ceil(repeater.getChildCount() / repeater.getMaxPerRow());
+  const columnCount = Math.ceil(repeater.getChildCount() / rowCount);
   const w = 24 / columnCount;
   const h = repeater.state.itemHeight ?? 10;
   return { h, w, columnCount };
