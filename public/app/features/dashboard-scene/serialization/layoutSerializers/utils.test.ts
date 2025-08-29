@@ -95,6 +95,7 @@ describe('buildVizPanel', () => {
         key: 'time-compare',
         compareWith: undefined,
         compareOptions: [],
+        alignTimeShifts: false,
       });
     });
 

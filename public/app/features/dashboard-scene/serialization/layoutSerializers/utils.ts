@@ -76,7 +76,14 @@ export function buildVizPanel(panel: PanelKind, id?: number): VizPanel {
     extendPanelContext: setDashboardPanelContext,
     // _UNSAFE_customMigrationHandler: getAngularPanelMigrationHandler(panel), //FIXME: Angular Migration
     headerActions: config.featureToggles.timeComparison
-      ? [new CustomTimeRangeCompare({ key: 'time-compare', compareWith: undefined, compareOptions: [] })]
+      ? [
+          new CustomTimeRangeCompare({
+            key: 'time-compare',
+            compareWith: undefined,
+            compareOptions: [],
+            alignTimeShifts: false,
+          }),
+        ]
       : undefined,
   };
 

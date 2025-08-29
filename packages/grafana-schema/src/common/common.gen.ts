@@ -864,10 +864,18 @@ export type TimeZoneBrowser = 'browser';
  */
 export interface TimeCompareOptions {
   /**
+   * Align time shifts for comparison series
+   */
+  alignTimeShifts?: boolean;
+  /**
    * Enable time comparison control
    */
   timeCompare?: boolean;
 }
+
+export const defaultTimeCompareOptions: Partial<TimeCompareOptions> = {
+  alignTimeShifts: true,
+};
 
 /**
  * Optional formats for the template variable replace functions
