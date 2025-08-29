@@ -1,15 +1,6 @@
-import type { ReactNode } from 'react';
-
 import { Trans } from '@grafana/i18n';
 
-interface BranchValidationErrorProps {
-  message?: ReactNode;
-}
-
-export function BranchValidationError({ message }: BranchValidationErrorProps) {
-  if (message) {
-    return <>{message}</>;
-  }
+export function BranchValidationError() {
   return (
     <>
       <Trans i18nKey="dashboard-scene.branch-validation-error.invalid-branch-name">Invalid branch name.</Trans>

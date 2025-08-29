@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { Dispatch, SetStateAction, useState } from 'react';
 
 import { RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
 import { useUrlParams } from 'app/core/navigation/hooks';
@@ -9,7 +9,6 @@ import { getIsReadOnlyRepo } from 'app/features/provisioning/utils/repository';
 import { DashboardMeta } from 'app/types/dashboard';
 
 import { getDefaultWorkflow, getWorkflowOptions } from '../components/defaults';
-import { generateNewBranchName } from '../components/utils/newBranchName';
 import { generatePath } from '../components/utils/path';
 import { generateTimestamp } from '../components/utils/timestamp';
 import { ProvisionedDashboardFormData } from '../types/form';
@@ -49,7 +48,7 @@ export function useDefaultValues({ meta, defaultTitle, defaultDescription, loade
 
   return {
     values: {
-      ref: defaultWorkflow === 'branch' ? generateNewBranchName('dashboard') : (repository?.branch ?? ''),
+      ref: defaultWorkflow === 'branch' ? `dashboard/${timestamp}` : (repository?.branch ?? ''),
       path: dashboardPath,
       repo: managerIdentity || repository?.name || '',
       comment: '',
@@ -69,7 +68,7 @@ export function useDefaultValues({ meta, defaultTitle, defaultDescription, loade
 export interface ProvisionedDashboardData {
   isReady: boolean;
   isLoading: boolean;
-  setIsLoading: React.Dispatch<React.SetStateAction<boolean>>;
+  setIsLoading: Dispatch<SetStateAction<boolean>>;
   defaultValues: ProvisionedDashboardFormData | null;
   repository?: RepositoryView;
   loadedFromRef?: string;

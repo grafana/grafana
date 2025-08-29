@@ -146,6 +146,7 @@ export const ResourceEditFormSharedFields = memo<DashboardEditFormSharedFieldsPr
             </Field>
             {(workflow === 'write' || workflow === 'branch') && (
               <Field
+                htmlFor="provisioned-ref"
                 noMargin
                 label={t('provisioned-resource-form.save-or-delete-resource-shared-fields.label-branch', 'Branch')}
                 description={t(
@@ -170,6 +171,7 @@ export const ResourceEditFormSharedFields = memo<DashboardEditFormSharedFieldsPr
                       <Combobox
                         {...field}
                         invalid={!!errors.ref}
+                        id="provisioned-ref"
                         onChange={(option) => onChange(option ? option.value : '')}
                         placeholder={t(
                           'provisioned-resource-form.save-or-delete-resource-shared-fields.placeholder-branch',
@@ -184,7 +186,7 @@ export const ResourceEditFormSharedFields = memo<DashboardEditFormSharedFieldsPr
                       <Input
                         {...field}
                         invalid={!!errors.ref}
-                        id="provisioned-resource-form-branch-input"
+                        id="provisioned-ref"
                         onChange={onChange}
                         placeholder={t(
                           'provisioned-resource-form.save-or-delete-resource-shared-fields.placeholder-new-branch',
