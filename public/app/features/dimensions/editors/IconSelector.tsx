@@ -14,14 +14,22 @@ interface Props {
 const IconSelector = ({ value, onChange }: Props) => {
   const [icons, setIcons] = useState<SelectableValue[]>(value ? [{ value, label: value }] : []);
   const [icon, setIcon] = useState<string>();
-  const iconRoot = `${window.__grafana_public_path__}${ResourceFolderName.Icon}`;
+
+  // NOTE: This value is only used to query the datasource, but not asset URLs.
+  //       We should remove this when we stop relying on `-- Grafana --` for
+  //       this file list, since it will not be in sync with CDN once
+  //       multi-tenancy rolls out.
+  // TODO: https://github.com/grafana/grafana/issues/110350
+  const LEGACY_DATASOURCE_ICON_ROOT = ResourceFolderName.Icon;
+
   const onChangeIcon = (value: string) => {
     onChange(value);
     setIcon(value);
   };
+
   useEffect(() => {
     getBackendSrv()
-      .get(`${iconRoot}/index.json`)
+      .get(`${LEGACY_DATASOURCE_ICON_ROOT}/index.json`)
       .then((data) => {
         setIcons(
           data.files.map((icon: string) => ({
@@ -30,7 +38,7 @@ const IconSelector = ({ value, onChange }: Props) => {
           }))
         );
       });
-  }, [iconRoot]);
+  }, [LEGACY_DATASOURCE_ICON_ROOT]);
   return (
     <Select
       options={icons}
