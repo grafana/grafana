@@ -120,7 +120,7 @@ export class LogListModel implements LogRowModel {
     // Unless this function is required outside of <LogLineDetailsLog />, we create a wrapped clone, so new lines are not stripped.
     clone._wrapLogMessage = true;
     clone._body = undefined;
-    clone._highlightedBody = undefined;
+    clone._highlightTokens = undefined;
     return clone;
   }
 
