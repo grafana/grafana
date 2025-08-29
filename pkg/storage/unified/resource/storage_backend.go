@@ -452,7 +452,7 @@ func applyPagination(keys []DataKey, lastSeenRV int64, sortAscending bool) []Dat
 }
 
 func (k *kvStorageBackend) ListModifiedSince(ctx context.Context, key NamespacedResource, sinceRv int64) (int64, iter.Seq2[*ModifiedResource, error]) {
-	if key.Group == "" || key.Resource == "" || key.Namespace == "" {
+	if !key.Valid() {
 		return 0, func(yield func(*ModifiedResource, error) bool) {
 			yield(nil, fmt.Errorf("group, resource, and namespace are required"))
 		}
