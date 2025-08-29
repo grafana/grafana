@@ -22,12 +22,12 @@ export function getWorkflowOptions(config?: RepositoryView) {
     switch (value) {
       case 'write':
         return {
-          label: t('provisioning.get-workflow-options.label.push-to-existing-branch', 'Push to existing branch'),
+          label: t('provisioning.workflow-options-label.push-to-existing-branch', 'Push to an existing branch'),
           value,
         };
       case 'branch':
         return {
-          label: t('dashboard-scene.get-workflow-options.label.push-to-a-new-branch', 'Push to a new branch'),
+          label: t('provisioning.workflow-options-label.push-to-a-new-branch', 'Push to a new branch'),
           value,
         };
     }

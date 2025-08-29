@@ -41,22 +41,41 @@ export const ResourceEditFormSharedFields = memo<DashboardEditFormSharedFieldsPr
     );
 
     const branchOptions = useMemo(() => {
-      if (!branchData?.items) {
-        return [];
+      const options: Array<{ label: string; value: string }> = [];
+
+      const configuredBranch = repository?.branch;
+      const prefix = t(
+        'provisioned-resource-form.save-or-delete-resource-shared-fields.suffix-configured-branch',
+        '(Configured branch)'
+      );
+      // Show the configured branch first in the list of
+      if (configuredBranch) {
+        options.push({
+          label: `${configuredBranch} ${prefix}`,
+          value: configuredBranch,
+        });
       }
 
-      return branchData.items.map((ref) => ({
-        label: ref.name,
-        value: ref.name,
-      }));
-    }, [branchData?.items]);
+      // Create combobox options
+      if (branchData?.items) {
+        for (const ref of branchData.items) {
+          if (ref.name !== configuredBranch) {
+            options.push({ label: ref.name, value: ref.name });
+          }
+        }
+      }
+
+      return options;
+    }, [branchData?.items, repository?.branch]);
 
     const selectedWorkflow = watch('workflow');
-    const newBranchDefaultRef = generateNewBranchName(resourceType);
+    // Create a default branch name outside the useEffect so it stays consistent in cases of workflow changes
+    const newBranchDefaultName = generateNewBranchName(resourceType);
+
     useEffect(() => {
       switch (selectedWorkflow) {
         case 'branch':
-          setValue('ref', newBranchDefaultRef);
+          setValue('ref', newBranchDefaultName);
           break;
         case 'write':
           if (repository?.branch) {
@@ -67,7 +86,7 @@ export const ResourceEditFormSharedFields = memo<DashboardEditFormSharedFieldsPr
           // Do nothing for read-only repositories
           break;
       }
-    }, [selectedWorkflow, repository?.branch, setValue, newBranchDefaultRef]);
+    }, [selectedWorkflow, repository?.branch, setValue, newBranchDefaultName]);
 
     const pathText =
       resourceType === 'dashboard'

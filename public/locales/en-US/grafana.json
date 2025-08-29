@@ -5840,12 +5840,6 @@
         "transparent-background": "Transparent background"
       }
     },
-    "get-workflow-options": {
-      "label": {
-        "existing-branch": "Existing branch",
-        "new-branch": "New branch"
-      }
-    },
     "group-by-variable-form": {
       "alert-not-supported": "This data source does not support group by variables",
       "description-enables-users-custom-values": "Enables users to add custom values to the list",
@@ -11163,11 +11157,12 @@
       "description-folder-path": "Folder path inside the repository",
       "description-inside-repository": "",
       "label-branch": "Branch",
-      "label-branch-workflow": "Branch",
       "label-comment": "Comment",
       "label-path": "Path",
+      "label-workflow": "Workflow",
       "placeholder-branch": "Select or enter branch name",
-      "placeholder-new-branch": "Enter new branch name"
+      "placeholder-new-branch": "Enter new branch name",
+      "suffix-configured-branch": "(Configured branch)"
     }
   },
   "provisioned-resource-preview-banner": {
@@ -11701,6 +11696,10 @@
       "button-previous": "Previous",
       "button-submitting": "Submitting...",
       "error-instance-repository-exists": "Instance repository already exists"
+    },
+    "workflow-options-label": {
+      "push-to-a-new-branch": "Push to a new branch",
+      "push-to-existing-branch": "Push to an existing branch"
     }
   },
   "public-dashboard": {
