@@ -110,11 +110,13 @@ export function preparePlotFrame(frames: DataFrame[], dimFields: XYFieldMatchers
         }
       }
 
-      if (!Number.isInteger(minXDeltaFrame)) {
-        minXDeltaFrame = roundDecimals(minXDeltaFrame, 6);
-      }
+      if (minXDeltaFrame !== Infinity) {
+        if (!Number.isInteger(minXDeltaFrame)) {
+          minXDeltaFrame = roundDecimals(minXDeltaFrame, 6);
+        }
 
-      minXDeltas.add(minXDeltaFrame);
+        minXDeltas.add(minXDeltaFrame);
+      }
     });
 
     if (minXDeltas.size > 1) {
