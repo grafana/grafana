@@ -28,6 +28,7 @@ export const ResourceEditFormSharedFields = memo<DashboardEditFormSharedFieldsPr
       control,
       register,
       setValue,
+      clearErrors,
       formState: { errors },
     } = useFormContext();
 
@@ -131,6 +132,7 @@ export const ResourceEditFormSharedFields = memo<DashboardEditFormSharedFieldsPr
                     {...field}
                     onChange={(nextWorkflow) => {
                       onChange(nextWorkflow);
+                      clearErrors('ref');
                       if (nextWorkflow === 'branch') {
                         setValue('ref', newBranchDefaultName);
                       } else if (nextWorkflow === 'write' && repository?.branch) {
@@ -159,15 +161,16 @@ export const ResourceEditFormSharedFields = memo<DashboardEditFormSharedFieldsPr
                   ) : undefined
                 }
               >
-                {workflow === 'write' ? (
-                  <Controller
-                    name="ref"
-                    control={control}
-                    rules={{ validate: validateBranchName }}
-                    render={({ field: { ref, onChange, ...field } }) => (
+                <Controller
+                  name="ref"
+                  control={control}
+                  rules={{ validate: validateBranchName }}
+                  render={({ field: { ref, onChange, ...field } }) =>
+                    workflow === 'write' ? (
                       <Combobox
+                        {...field}
                         invalid={!!errors.ref}
-                        onChange={(option) => onChange(option?.value || '')}
+                        onChange={(option) => onChange(option ? option.value : '')}
                         placeholder={t(
                           'provisioned-resource-form.save-or-delete-resource-shared-fields.placeholder-branch',
                           'Select or enter branch name'
@@ -176,20 +179,21 @@ export const ResourceEditFormSharedFields = memo<DashboardEditFormSharedFieldsPr
                         loading={branchLoading}
                         createCustomValue
                         isClearable
-                        {...field}
                       />
-                    )}
-                  />
-                ) : (
-                  <Input
-                    id="provisioned-resource-form-branch-input"
-                    placeholder={t(
-                      'provisioned-resource-form.save-or-delete-resource-shared-fields.placeholder-new-branch',
-                      'Enter new branch name'
-                    )}
-                    {...register('ref', { validate: validateBranchName })}
-                  />
-                )}
+                    ) : (
+                      <Input
+                        {...field}
+                        invalid={!!errors.ref}
+                        id="provisioned-resource-form-branch-input"
+                        onChange={onChange}
+                        placeholder={t(
+                          'provisioned-resource-form.save-or-delete-resource-shared-fields.placeholder-new-branch',
+                          'Enter new branch name'
+                        )}
+                      />
+                    )
+                  }
+                />
               </Field>
             )}
           </>
