@@ -1,5 +1,5 @@
 import { skipToken } from '@reduxjs/toolkit/query/react';
-import { memo, useEffect, useMemo } from 'react';
+import { memo, useMemo } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 
 import { t } from '@grafana/i18n';
@@ -27,7 +27,6 @@ export const ResourceEditFormSharedFields = memo<DashboardEditFormSharedFieldsPr
     const {
       control,
       register,
-      watch,
       setValue,
       formState: { errors },
     } = useFormContext();
@@ -68,25 +67,8 @@ export const ResourceEditFormSharedFields = memo<DashboardEditFormSharedFieldsPr
       return options;
     }, [branchData?.items, repository?.branch]);
 
-    const selectedWorkflow = watch('workflow');
     // Create a default branch name outside the useEffect so it stays consistent in cases of workflow changes
-    const newBranchDefaultName = generateNewBranchName(resourceType);
-
-    useEffect(() => {
-      switch (selectedWorkflow) {
-        case 'branch':
-          setValue('ref', newBranchDefaultName);
-          break;
-        case 'write':
-          if (repository?.branch) {
-            setValue('ref', repository.branch);
-          }
-          break;
-        default:
-          // Do nothing for read-only repositories
-          break;
-      }
-    }, [selectedWorkflow, repository?.branch, setValue, newBranchDefaultName]);
+    const newBranchDefaultName = useMemo(() => generateNewBranchName(resourceType), [resourceType]);
 
     const pathText =
       resourceType === 'dashboard'
@@ -143,8 +125,20 @@ export const ResourceEditFormSharedFields = memo<DashboardEditFormSharedFieldsPr
               <Controller
                 control={control}
                 name="workflow"
-                render={({ field: { ref: _, ...field } }) => (
-                  <RadioButtonGroup id="provisioned-resource-form-workflow" {...field} options={workflowOptions} />
+                render={({ field: { ref, onChange, ...field } }) => (
+                  <RadioButtonGroup
+                    id="provisioned-resource-form-workflow"
+                    {...field}
+                    onChange={(nextWorkflow) => {
+                      onChange(nextWorkflow);
+                      if (nextWorkflow === 'branch') {
+                        setValue('ref', newBranchDefaultName);
+                      } else if (nextWorkflow === 'write' && repository?.branch) {
+                        setValue('ref', repository.branch);
+                      }
+                    }}
+                    options={workflowOptions}
+                  />
                 )}
               />
             </Field>
@@ -158,14 +152,10 @@ export const ResourceEditFormSharedFields = memo<DashboardEditFormSharedFieldsPr
                 )}
                 invalid={Boolean(errors.ref || branchError)}
                 error={
-                  errors.ref || branchError ? (
-                    <BranchValidationError
-                      message={
-                        branchError
-                          ? t('provisioning.config-form.error-fetch-branches', 'Failed to fetch branches')
-                          : undefined
-                      }
-                    />
+                  errors.ref ? (
+                    <BranchValidationError />
+                  ) : branchError ? (
+                    t('provisioning.config-form.error-fetch-branches', 'Failed to fetch branches')
                   ) : undefined
                 }
               >
