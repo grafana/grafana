@@ -72,7 +72,7 @@
       "label-enable-basic-logs": "Włącz podstawowe dzienniki"
     },
     "config-editor": {
-      "description-additional-settings": "",
+      "description-additional-settings": "Dodatkowe ustawienia to opcje, które można skonfigurować, aby uzyskać większą kontrolę nad źródłem danych. Obejmują one Secure Socks Proxy, limit czasu żądania i przekazywane pliki cookie.",
       "title-additional-settings": "Ustawienia dodatkowe"
     },
     "current-user-fallback-credentials": {
@@ -113,12 +113,12 @@
       "aria-label-column": "Kolumna",
       "aria-label-column-value": "Wartość kolumny",
       "aria-label-operator": "Operator",
-      "aria-label-remove-filter": "",
+      "aria-label-remove-filter": "Usuń filtr",
       "label-or": "LUB"
     },
     "filter-section": {
-      "aria-label-add-filter": "",
-      "aria-label-add-or-filter": "",
+      "aria-label-add-filter": "Dodaj filtr",
+      "aria-label-add-or-filter": "Dodaj filtr LUB",
       "label-add-group": "Dodaj grupę",
       "label-and": "ORAZ",
       "label-filters": "Filtry",
@@ -131,8 +131,8 @@
       "label-format-as": "Formatuj jako"
     },
     "fuzzy-search": {
-      "aria-label-add-fuzzy-search": "",
-      "aria-label-remove-fuzzy-search": "",
+      "aria-label-add-fuzzy-search": "Dodaj wyszukiwanie przybliżone",
+      "aria-label-remove-fuzzy-search": "Usuń wyszukiwanie przybliżone",
       "aria-label-select-column": "Wybierz kolumnę",
       "label-fuzzy-search": "Wyszukiwanie przybliżone",
       "placeholder-search-team": "Wpisz wyszukiwane hasło",
@@ -147,7 +147,7 @@
       "aria-label-remove": "Usuń"
     },
     "group-by-section": {
-      "aria-label-add-group-by": "",
+      "aria-label-add-group-by": "Dodaj grupę według",
       "label-group-by": "Grupuj według",
       "tooltip-group-by": "Uporządkuj wyniki w kategoriach na podstawie określonych kolumn. Funkcja „Grupuj według” może być używana niezależnie do wyświetlania unikalnych wartości w wybranych kolumnach lub w połączeniu z funkcjami agregującymi do tworzenia statystyk podsumowujących dla każdej grupy. Funkcja użyta samodzielnie zwraca różne kombinacje określonych kolumn."
     },
@@ -190,10 +190,10 @@
       "text-loading": "Ładowanie…"
     },
     "order-by-section": {
-      "aria-label-add-order-by": "",
+      "aria-label-add-order-by": "Dodaj kolejność według",
       "aria-label-order-by-column": "Sortuj według kolumny",
       "aria-label-order-direction": "Kierunek sortowania",
-      "aria-label-remove-order-by": "",
+      "aria-label-remove-order-by": "Usuń kolejność według",
       "label-by": "WEDŁUG",
       "label-order-by": "Sortuj według",
       "tooltip-order-by": "Sortuj wyniki na podstawie jednej lub kilku kolumn w kolejności rosnącej lub malejącej."
@@ -256,7 +256,7 @@
       "label-table": "Tabela",
       "placeholder-select-columns": "Wybierz kolumny",
       "placeholder-select-table": "Wybierz tabelę",
-      "tooltip-remove-all-columns": ""
+      "tooltip-remove-all-columns": "Usuń wszystkie kolumny"
     },
     "time-grain-field": {
       "label-time-grain": "Rozdzielczość czasu"

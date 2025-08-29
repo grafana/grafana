@@ -72,7 +72,7 @@
       "label-enable-basic-logs": "Abilita registri di base"
     },
     "config-editor": {
-      "description-additional-settings": "",
+      "description-additional-settings": "Le impostazioni aggiuntive sono opzionali e possono essere configurate per un maggiore controllo sull'origine dei dati. Ciò include Proxy Socks sicuro, timeout della richiesta e cookie inoltrati.",
       "title-additional-settings": "Impostazioni aggiuntive"
     },
     "current-user-fallback-credentials": {
@@ -113,12 +113,12 @@
       "aria-label-column": "Colonna",
       "aria-label-column-value": "Valore colonna",
       "aria-label-operator": "Operatore",
-      "aria-label-remove-filter": "",
+      "aria-label-remove-filter": "Rimuovi filtro",
       "label-or": "O"
     },
     "filter-section": {
-      "aria-label-add-filter": "",
-      "aria-label-add-or-filter": "",
+      "aria-label-add-filter": "Aggiungi filtro",
+      "aria-label-add-or-filter": "Aggiungi filtro OR",
       "label-add-group": "Aggiungi gruppo",
       "label-and": "E",
       "label-filters": "Filtri",
@@ -131,8 +131,8 @@
       "label-format-as": "Formatta come"
     },
     "fuzzy-search": {
-      "aria-label-add-fuzzy-search": "",
-      "aria-label-remove-fuzzy-search": "",
+      "aria-label-add-fuzzy-search": "Aggiungi ricerca fuzzy",
+      "aria-label-remove-fuzzy-search": "Rimuovi ricerca fuzzy",
       "aria-label-select-column": "Seleziona colonna",
       "label-fuzzy-search": "Ricerca fuzzy",
       "placeholder-search-team": "Inserisci il termine da cercare",
@@ -147,7 +147,7 @@
       "aria-label-remove": "Rimuovi"
     },
     "group-by-section": {
-      "aria-label-add-group-by": "",
+      "aria-label-add-group-by": "Aggiungi raggruppa per",
       "label-group-by": "Raggruppa per",
       "tooltip-group-by": "Organizza i risultati in categorie in base alle colonne specificate. Raggruppa per può essere utilizzato in modo indipendente per elencare valori univoci nelle colonne selezionate o può essere combinato con funzioni di aggregazione per produrre statistiche di riepilogo per ciascun gruppo. Se usato da solo, restituisce combinazioni distinte delle colonne specificate."
     },
@@ -190,10 +190,10 @@
       "text-loading": "Caricamento in corso..."
     },
     "order-by-section": {
-      "aria-label-add-order-by": "",
+      "aria-label-add-order-by": "Aggiungi ordina per",
       "aria-label-order-by-column": "Ordina per colonna",
       "aria-label-order-direction": "Ordina direzione",
-      "aria-label-remove-order-by": "",
+      "aria-label-remove-order-by": "Rimuovi ordina per",
       "label-by": "PER",
       "label-order-by": "Ordina per",
       "tooltip-order-by": "Ordina i risultati in base a una o più colonne in ordine crescente o decrescente."
@@ -256,7 +256,7 @@
       "label-table": "Tabella",
       "placeholder-select-columns": "Seleziona colonne",
       "placeholder-select-table": "Seleziona una tabella",
-      "tooltip-remove-all-columns": ""
+      "tooltip-remove-all-columns": "Rimuovi tutte le colonne"
     },
     "time-grain-field": {
       "label-time-grain": "Intervallo di tempo"
