@@ -394,7 +394,11 @@ const LogLineBody = ({ log, styles }: { log: LogListModel; styles: LogLineStyles
     );
   }
 
-  return <span className="field log-syntax-highlight"><HighlightedLogRenderer log={log} /></span>;
+  return (
+    <span className="field log-syntax-highlight">
+      <HighlightedLogRenderer log={log} />
+    </span>
+  );
 };
 
 export function getGridTemplateColumns(dimensions: LogFieldDimension[], displayedFields: string[]) {
