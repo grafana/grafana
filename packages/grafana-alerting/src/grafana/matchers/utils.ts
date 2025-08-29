@@ -86,19 +86,13 @@ function isLabelMatchInSet(matcher: LabelMatcher, labels: Label[]): boolean {
   }
 
   const matchFunction = OperatorFunctions[type];
-  if (!matchFunction) {
-    throw new Error(`no such operator: ${type}`);
-  }
-
   try {
     // This can throw because the regex operators use the JavaScript regex engine
     // and "new RegExp()" throws on invalid regular expressions.
     //
     // This is usually a user-error (because matcher values are taken from user input)
-    // but we're still logging this as a warning because it _might_ be a programmer error.
     return matchFunction(labelValue, value);
   } catch (err) {
-    console.warn(err);
     return false;
   }
 }

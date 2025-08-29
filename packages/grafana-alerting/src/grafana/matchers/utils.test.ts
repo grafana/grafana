@@ -79,4 +79,15 @@ describe('matchLabelsSet', () => {
 
     expect(matchLabelsSet(matchers, labels)).toBe(true);
   });
+
+  it('should not throw for invalid regex input', () => {
+    const matchers: LabelMatcher[] = [{ label: 'foo', type: '=~', value: '(' }];
+    const labels: Array<[string, string]> = [['foo', 'bar']];
+
+    expect(() => {
+      matchLabelsSet(matchers, labels);
+    }).not.toThrow();
+
+    expect(matchLabelsSet(matchers, labels)).toBe(false);
+  });
 });
