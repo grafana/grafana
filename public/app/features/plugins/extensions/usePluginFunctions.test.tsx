@@ -10,6 +10,7 @@ import {
 import { config } from '@grafana/runtime';
 
 import { ExtensionRegistriesProvider } from './ExtensionRegistriesContext';
+import * as errors from './errors';
 import { log } from './logs/log';
 import { resetLogMock } from './logs/testUtils';
 import { AddedComponentsRegistry } from './registry/AddedComponentsRegistry';
@@ -496,5 +497,6 @@ describe('usePluginFunctions()', () => {
     const { result } = renderHook(() => usePluginFunctions({ extensionPointId }), { wrapper });
     expect(result.current.functions.length).toBe(0);
     expect(log.error).toHaveBeenCalled();
+    expect(log.error).toHaveBeenCalledWith(errors.EXTENSION_POINT_META_INFO_MISSING);
   });
 });
