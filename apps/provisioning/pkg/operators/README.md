@@ -46,52 +46,59 @@ This binary currently wires informers and emits job-create notifications. In the
 1. Build grafana:
    - `make build`
 2. Ensure the following services are running locally: provisioning API server, secrets service API server, repository controller, unified storage, and auth.
+3. Create a operator.ini file:
+```
+[operator]
+provisioning_server_url = https://localhost:6446
+tls_insecure = true
+
+[grpc_client_authentication]
+token = ProvisioningAdminToken
+token_exchange_url = http://localhost:6481/sign/access-token
+# Uncomment to enable history cleanup via Loki. First ensure the Provisioning API is configured with Loki for job history (see `createJobHistoryConfigFromSettings` in `pkg/registry/apis/provisioning/register.go`).
+# history_expiration = 24h  
+```
 3. Start the controller:
-   - Using Loki for job history:
-     - Ensure the Provisioning API is configured with Loki for job history (see `createJobHistoryConfigFromSettings` in `pkg/registry/apis/provisioning/register.go`).
-     - Run without history cleanup:
-       - `./bin/darwin-arm64/grafana server operator provisioning-jobs --token-exchange-url=http://localhost:6481/sign/access-token --token=ProvisioningAdminToken --provisioning-server-url=https://localhost:6446`
-   - Without Loki (local/dev or when Loki is unavailable):
-     - Run without cleanup:
-       - `./bin/darwin-arm64/grafana server operator provisioning-jobs --token-exchange-url=http://localhost:6481/sign/access-token --token=ProvisioningAdminToken --provisioning-server-url=https://localhost:6446`
-     - Or enable local HistoricJobs cleanup with a retention window:
-       - `./bin/darwin-arm64/grafana server operator provisioning-jobs --token-exchange-url=http://localhost:6481/sign/access-token --token=ProvisioningAdminToken --provisioning-server-url=https://localhost:6446 --history-expiration=30s`
+  - `GF_DEFAULT_TARGET=operator GF_OPERATOR_NAME=provisioning-jobs ./bin/darwin-arm64/grafana server target --config=conf/operator.ini`
 
 #### TLS Configuration Examples
 
 - **Production with proper TLS verification**:
+```
+[operator]
+provisioning_server_url = https://localhost:6446
+tls_insecure = false
+tls_ca_file = /path/to/ca-cert.pem
 
-  ```bash
-  ./bin/darwin-arm64/grafana server operator provisioning-jobs \
-    --token-exchange-url=http://localhost:6481/sign/access-token \
-    --token=ProvisioningAdminToken \
-    --provisioning-server-url=https://provisioning.example.com:6446 \
-    --tls-insecure=false \
-    --tls-ca-file=/path/to/ca-cert.pem
-  ```
+[grpc_client_authentication]
+token = ProvisioningAdminToken
+token_exchange_url = http://localhost:6481/sign/access-token
+```
 
 - **Mutual TLS authentication**:
+```
+[operator]
+provisioning_server_url = https://localhost:6446
+tls_insecure = false
+tls_ca_file = /path/to/ca-cert.pem
+tls_cert_file = /path/to/client-cert.pem 
+tls_key_file = /path/to/client-key.pem
 
-  ```bash
-  ./bin/darwin-arm64/grafana server operator provisioning-jobs \
-    --token-exchange-url=http://localhost:6481/sign/access-token \
-    --token=ProvisioningAdminToken \
-    --provisioning-server-url=https://provisioning.example.com:6446 \
-    --tls-insecure=false \
-    --tls-ca-file=/path/to/ca-cert.pem \
-    --tls-cert-file=/path/to/client-cert.pem \
-    --tls-key-file=/path/to/client-key.pem
-  ```
+[grpc_client_authentication]
+token = ProvisioningAdminToken
+token_exchange_url = http://localhost:6481/sign/access-token
+```
 
 - **Development with self-signed certificates (insecure)**:
+```
+[operator]
+provisioning_server_url = https://localhost:6446
+tls_insecure = true
 
-  ```bash
-  ./bin/darwin-arm64/grafana server operator provisioning-jobs \
-    --token-exchange-url=http://localhost:6481/sign/access-token \
-    --token=ProvisioningAdminToken \
-    --provisioning-server-url=https://localhost:6446 \
-    --tls-insecure=true
-  ```
+[grpc_client_authentication]
+token = ProvisioningAdminToken
+token_exchange_url = http://localhost:6481/sign/access-token
+```
 
 ### Expected behavior
 

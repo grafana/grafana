@@ -18,8 +18,9 @@ import (
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/transport"
 
-	"github.com/grafana/grafana/pkg/cmd/grafana-server/commands"
+	"github.com/grafana/grafana/pkg/operator"
 	"github.com/grafana/grafana/pkg/services/apiserver/standalone"
+	"github.com/grafana/grafana/pkg/setting"
 
 	authrt "github.com/grafana/grafana/apps/provisioning/pkg/auth"
 	"github.com/grafana/grafana/apps/provisioning/pkg/controller"
@@ -28,88 +29,27 @@ import (
 )
 
 func init() {
-	commands.RegisterOperator(commands.Operator{
+	operator.RegisterOperator(operator.Operator{
 		Name:        "provisioning-jobs",
 		Description: "Watch provisioning jobs and manage job history cleanup",
-		Flags: []cli.Flag{
-			&cli.StringFlag{
-				Name:  "token",
-				Usage: "Token to use for authentication",
-			},
-			&cli.StringFlag{
-				Name:  "token-exchange-url",
-				Usage: "Token exchange URL",
-			},
-			&cli.StringFlag{
-				Name:  "provisioning-server-url",
-				Usage: "Provisioning server URL",
-			},
-			&cli.BoolFlag{
-				Name:  "tls-insecure",
-				Usage: "Skip TLS certificate verification",
-				Value: true,
-			},
-			&cli.StringFlag{
-				Name:  "tls-cert-file",
-				Usage: "Path to TLS certificate file",
-			},
-			&cli.StringFlag{
-				Name:  "tls-key-file",
-				Usage: "Path to TLS private key file",
-			},
-			&cli.StringFlag{
-				Name:  "tls-ca-file",
-				Usage: "Path to TLS CA certificate file",
-			},
-			&cli.DurationFlag{
-				Name:  "history-expiration",
-				Usage: "Duration after which HistoricJobs are deleted; 0 disables cleanup. When the Provisioning API is configured to use Loki for job history, leave this at 0.",
-				Value: 0,
-			},
-		},
-		RunFunc: runJobController,
+		RunFunc:     runJobController,
 	})
 }
 
-func runJobController(opts standalone.BuildInfo, c *cli.Context) error {
+type controllerConfig struct {
+	provisioningClient *client.Clientset
+	historyExpiration  time.Duration
+}
+
+func runJobController(opts standalone.BuildInfo, c *cli.Context, cfg *setting.Cfg) error {
 	logger := logging.NewSLogLogger(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
 		Level: slog.LevelDebug,
 	})).With("logger", "provisioning-job-controller")
 	logger.Info("Starting provisioning job controller")
 
-	token := c.String("token")
-	tokenExchangeURL := c.String("token-exchange-url")
-	provisioningServerURL := c.String("provisioning-server-url")
-	tlsInsecure := c.Bool("tls-insecure")
-	tlsCertFile := c.String("tls-cert-file")
-	tlsKeyFile := c.String("tls-key-file")
-	tlsCAFile := c.String("tls-ca-file")
-
-	tokenExchangeClient, err := authn.NewTokenExchangeClient(authn.TokenExchangeConfig{
-		TokenExchangeURL: tokenExchangeURL,
-		Token:            token,
-	})
+	controllerCfg, err := setupFromConfig(cfg)
 	if err != nil {
-		return fmt.Errorf("failed to create token exchange client: %w", err)
-	}
-
-	tlsConfig, err := buildTLSConfig(tlsInsecure, tlsCertFile, tlsKeyFile, tlsCAFile)
-	if err != nil {
-		return fmt.Errorf("failed to build TLS configuration: %w", err)
-	}
-
-	config := &rest.Config{
-		APIPath: "/apis",
-		Host:    provisioningServerURL,
-		WrapTransport: transport.WrapperFunc(func(rt http.RoundTripper) http.RoundTripper {
-			return authrt.NewRoundTripper(tokenExchangeClient, rt)
-		}),
-		TLSClientConfig: tlsConfig,
-	}
-
-	provisioningClient, err := client.NewForConfig(config)
-	if err != nil {
-		return fmt.Errorf("failed to create provisioning client: %w", err)
+		return fmt.Errorf("failed to setup operator: %w", err)
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -125,7 +65,7 @@ func runJobController(opts standalone.BuildInfo, c *cli.Context) error {
 
 	// Jobs informer and controller (resync ~60s like in register.go)
 	jobInformerFactory := informer.NewSharedInformerFactoryWithOptions(
-		provisioningClient,
+		controllerCfg.provisioningClient,
 		60*time.Second,
 	)
 	jobInformer := jobInformerFactory.Provisioning().V0alpha1().Jobs()
@@ -147,25 +87,23 @@ func runJobController(opts standalone.BuildInfo, c *cli.Context) error {
 		}
 	}()
 
-	// Optionally enable history cleanup if a positive expiration is provided
-	historyExpiration := c.Duration("history-expiration")
 	var startHistoryInformers func()
-	if historyExpiration > 0 {
+	if controllerCfg.historyExpiration > 0 {
 		// History jobs informer and controller (separate factory with resync == expiration)
 		historyInformerFactory := informer.NewSharedInformerFactoryWithOptions(
-			provisioningClient,
-			historyExpiration,
+			controllerCfg.provisioningClient,
+			controllerCfg.historyExpiration,
 		)
 		historyJobInformer := historyInformerFactory.Provisioning().V0alpha1().HistoricJobs()
 		_, err = controller.NewHistoryJobController(
-			provisioningClient.ProvisioningV0alpha1(),
+			controllerCfg.provisioningClient.ProvisioningV0alpha1(),
 			historyJobInformer,
-			historyExpiration,
+			controllerCfg.historyExpiration,
 		)
 		if err != nil {
 			return fmt.Errorf("failed to create history job controller: %w", err)
 		}
-		logger.Info("history cleanup enabled", "expiration", historyExpiration.String())
+		logger.Info("history cleanup enabled", "expiration", controllerCfg.historyExpiration.String())
 		startHistoryInformers = func() { historyInformerFactory.Start(ctx.Done()) }
 	} else {
 		startHistoryInformers = func() {}
@@ -182,6 +120,64 @@ func runJobController(opts standalone.BuildInfo, c *cli.Context) error {
 
 	<-ctx.Done()
 	return nil
+}
+
+func setupFromConfig(cfg *setting.Cfg) (controllerCfg *controllerConfig, err error) {
+	if cfg == nil {
+		return nil, fmt.Errorf("no configuration available")
+	}
+
+	gRPCAuth := cfg.Raw.Section("grpc_client_authentication")
+	token := gRPCAuth.Key("token").String()
+	if token == "" {
+		return nil, fmt.Errorf("token is required in [grpc_client_authentication] section")
+	}
+	tokenExchangeURL := gRPCAuth.Key("token_exchange_url").String()
+	if tokenExchangeURL == "" {
+		return nil, fmt.Errorf("token_exchange_url is required in [grpc_client_authentication] section")
+	}
+
+	operatorSec := cfg.Raw.Section("operator")
+	provisioningServerURL := operatorSec.Key("provisioning_server_url").String()
+	if provisioningServerURL == "" {
+		return nil, fmt.Errorf("provisioning_server_url is required in [operator] section")
+	}
+	tlsInsecure := operatorSec.Key("tls_insecure").MustBool(false)
+	tlsCertFile := operatorSec.Key("tls_cert_file").String()
+	tlsKeyFile := operatorSec.Key("tls_key_file").String()
+	tlsCAFile := operatorSec.Key("tls_ca_file").String()
+
+	tokenExchangeClient, err := authn.NewTokenExchangeClient(authn.TokenExchangeConfig{
+		TokenExchangeURL: tokenExchangeURL,
+		Token:            token,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to create token exchange client: %w", err)
+	}
+
+	tlsConfig, err := buildTLSConfig(tlsInsecure, tlsCertFile, tlsKeyFile, tlsCAFile)
+	if err != nil {
+		return nil, fmt.Errorf("failed to build TLS configuration: %w", err)
+	}
+
+	config := &rest.Config{
+		APIPath: "/apis",
+		Host:    provisioningServerURL,
+		WrapTransport: transport.WrapperFunc(func(rt http.RoundTripper) http.RoundTripper {
+			return authrt.NewRoundTripper(tokenExchangeClient, rt)
+		}),
+		TLSClientConfig: tlsConfig,
+	}
+
+	provisioningClient, err := client.NewForConfig(config)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create provisioning client: %w", err)
+	}
+
+	return &controllerConfig{
+		provisioningClient: provisioningClient,
+		historyExpiration:  operatorSec.Key("history_expiration").MustDuration(0),
+	}, nil
 }
 
 func buildTLSConfig(insecure bool, certFile, keyFile, caFile string) (rest.TLSClientConfig, error) {

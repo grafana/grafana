@@ -40,10 +40,7 @@ func ServerCommand(version, commit, enterpriseCommit, buildBranch, buildstamp st
 				BuildStamp:       buildstamp,
 			}, context)
 		},
-		Subcommands: []*cli.Command{
-			TargetCommand(version, commit, buildBranch, buildstamp),
-			OperatorCommand(version, commit, buildBranch, buildstamp),
-		},
+		Subcommands: []*cli.Command{TargetCommand(version, commit, buildBranch, buildstamp)},
 	}
 }
 

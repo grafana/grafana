@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/dskit/ring"
 	ringclient "github.com/grafana/dskit/ring/client"
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/urfave/cli/v2"
 
 	"github.com/grafana/dskit/services"
 
@@ -21,6 +22,8 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/modules"
+	"github.com/grafana/grafana/pkg/operator"
+	"github.com/grafana/grafana/pkg/services/apiserver/standalone"
 	"github.com/grafana/grafana/pkg/services/authz"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/frontend"
@@ -196,9 +199,38 @@ func (s *ModuleServer) Run() error {
 		return frontend.ProvideFrontendService(s.cfg, s.features, s.promGatherer, s.registerer, s.license)
 	})
 
+	m.RegisterModule(modules.OperatorServer, s.initOperatorServer)
+
 	m.RegisterModule(modules.All, nil)
 
 	return m.Run(s.context)
+}
+
+func (s *ModuleServer) initOperatorServer() (services.Service, error) {
+	operatorName := os.Getenv("GF_OPERATOR_NAME")
+	if operatorName == "" {
+		s.log.Debug("GF_OPERATOR_NAME environment variable empty or unset, can't start operator")
+		return nil, nil
+	}
+
+	for _, op := range operator.GetRegisteredOperators() {
+		if op.Name == operatorName {
+			return services.NewBasicService(
+				nil,
+				func(ctx context.Context) error {
+					context := cli.NewContext(&cli.App{}, nil, nil)
+					return op.RunFunc(standalone.BuildInfo{
+						Version:     s.version,
+						Commit:      s.commit,
+						BuildBranch: s.buildBranch,
+					}, context, s.cfg)
+				},
+				nil,
+			).WithName("operator"), nil
+		}
+	}
+
+	return nil, fmt.Errorf("unknown operator: %s. available operators: %v", operatorName, operator.GetRegisteredOperators())
 }
 
 // Shutdown initiates Grafana graceful shutdown. This shuts down all
