@@ -6,6 +6,8 @@ import (
 
 	"github.com/google/go-github/v70/github"
 	"golang.org/x/oauth2"
+
+	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 )
 
 // Factory creates new GitHub clients.
@@ -20,16 +22,15 @@ func ProvideFactory() *Factory {
 	return &Factory{}
 }
 
-func (r *Factory) New(ctx context.Context, ghToken string) Client {
+func (r *Factory) New(ctx context.Context, ghToken common.RawSecureValue) Client {
 	if r.Client != nil {
 		return NewClient(github.NewClient(r.Client))
 	}
 
-	tokenSrc := oauth2.StaticTokenSource(
-		&oauth2.Token{AccessToken: ghToken},
-	)
-
-	if len(ghToken) > 0 {
+	if !ghToken.IsZero() {
+		tokenSrc := oauth2.StaticTokenSource(
+			&oauth2.Token{AccessToken: string(ghToken)},
+		)
 		tokenClient := oauth2.NewClient(ctx, tokenSrc)
 		return NewClient(github.NewClient(tokenClient))
 	}

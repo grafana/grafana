@@ -72,7 +72,7 @@
       "label-enable-basic-logs": "Ativar registos básicos"
     },
     "config-editor": {
-      "description-additional-settings": "",
+      "description-additional-settings": "As definições adicionais são definições opcionais que podem ser configuradas para obter mais controlo sobre a sua origem de dados. Isto inclui o Secure Socks Proxy, o tempo limite de pedido e os cookies encaminhados.",
       "title-additional-settings": "Definições adicionais"
     },
     "current-user-fallback-credentials": {
@@ -113,12 +113,12 @@
       "aria-label-column": "Coluna",
       "aria-label-column-value": "Valor da coluna",
       "aria-label-operator": "Operador",
-      "aria-label-remove-filter": "",
+      "aria-label-remove-filter": "Remover filtro",
       "label-or": "OU"
     },
     "filter-section": {
-      "aria-label-add-filter": "",
-      "aria-label-add-or-filter": "",
+      "aria-label-add-filter": "Adicionar filtro",
+      "aria-label-add-or-filter": "Adicionar OU filtrar",
       "label-add-group": "Adicionar grupo",
       "label-and": "E",
       "label-filters": "Filtros",
@@ -131,8 +131,8 @@
       "label-format-as": "Formatar como"
     },
     "fuzzy-search": {
-      "aria-label-add-fuzzy-search": "",
-      "aria-label-remove-fuzzy-search": "",
+      "aria-label-add-fuzzy-search": "Adicionar pesquisa difusa",
+      "aria-label-remove-fuzzy-search": "Remover pesquisa difusa",
       "aria-label-select-column": "Selecionar coluna",
       "label-fuzzy-search": "Pesquisa difusa",
       "placeholder-search-team": "Introduzir termo de pesquisa",
@@ -147,7 +147,7 @@
       "aria-label-remove": "Remover"
     },
     "group-by-section": {
-      "aria-label-add-group-by": "",
+      "aria-label-add-group-by": "Adicionar Agrupar por",
       "label-group-by": "Agrupar por",
       "tooltip-group-by": "Organize os resultados em categorias com base em colunas especificadas. A opção agrupar por pode ser utilizada de forma independente para listar valores únicos em colunas selecionadas ou combinada com funções agregadas para produzir estatísticas resumidas para cada grupo. Quando utilizada sozinha, devolve combinações distintas das colunas especificadas."
     },
@@ -190,10 +190,10 @@
       "text-loading": "A carregar..."
     },
     "order-by-section": {
-      "aria-label-add-order-by": "",
+      "aria-label-add-order-by": "Adicionar Ordenar por",
       "aria-label-order-by-column": "Ordenar por coluna",
       "aria-label-order-direction": "Sentido da ordem",
-      "aria-label-remove-order-by": "",
+      "aria-label-remove-order-by": "Remover Ordenar por",
       "label-by": "POR",
       "label-order-by": "Ordenar por",
       "tooltip-order-by": "Ordene os resultados com base numa ou mais colunas por ordem ascendente ou descendente."
@@ -256,7 +256,7 @@
       "label-table": "Tabela",
       "placeholder-select-columns": "Selecionar colunas",
       "placeholder-select-table": "Selecionar uma tabela",
-      "tooltip-remove-all-columns": ""
+      "tooltip-remove-all-columns": "Remover todas as colunas"
     },
     "time-grain-field": {
       "label-time-grain": "Granularidade de tempo"

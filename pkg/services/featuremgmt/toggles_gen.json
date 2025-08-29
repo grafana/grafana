@@ -216,6 +216,21 @@
     },
     {
       "metadata": {
+        "name": "alertingEnrichmentPerRule",
+        "resourceVersion": "1756206837948",
+        "creationTimestamp": "2025-08-26T11:13:57Z"
+      },
+      "spec": {
+        "description": "Enable enrichment per rule in the alerting UI.",
+        "stage": "experimental",
+        "codeowner": "@grafana/alerting-squad",
+        "hideFromAdminPage": true,
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "alertingFilterV2",
         "resourceVersion": "1753448760331",
         "creationTimestamp": "2024-09-11T11:29:26Z"
@@ -405,6 +420,22 @@
         "description": "Optimizes eligible queries in order to reduce load on datasources",
         "stage": "GA",
         "codeowner": "@grafana/alerting-squad",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "alertingRuleNotificationMessageSectionExtension",
+        "resourceVersion": "1756193222535",
+        "creationTimestamp": "2025-08-26T07:27:02Z",
+        "deletionTimestamp": "2025-08-26T11:13:57Z"
+      },
+      "spec": {
+        "description": "Enable rule notification message section extension.",
+        "stage": "experimental",
+        "codeowner": "@grafana/alerting-squad",
+        "hideFromAdminPage": true,
+        "hideFromDocs": true,
         "expression": "false"
       }
     },
@@ -1259,7 +1290,8 @@
       "metadata": {
         "name": "expressionParser",
         "resourceVersion": "1753448760331",
-        "creationTimestamp": "2024-02-17T00:59:11Z"
+        "creationTimestamp": "2024-02-17T00:59:11Z",
+        "deletionTimestamp": "2025-08-25T16:14:10Z"
       },
       "spec": {
         "description": "Enable new expression parser",
@@ -1470,6 +1502,37 @@
         "description": "Enables Advisor app",
         "stage": "privatePreview",
         "codeowner": "@grafana/plugins-platform-backend"
+      }
+    },
+    {
+      "metadata": {
+        "name": "grafanaAssistantInProfilesDrilldown",
+        "resourceVersion": "1754572610001",
+        "creationTimestamp": "2025-08-01T07:43:17Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-08-07 13:16:50.001205 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Enables integration with Grafana Assistant in Profiles Drilldown",
+        "stage": "GA",
+        "codeowner": "@grafana/observability-traces-and-profiling",
+        "frontend": true,
+        "expression": "true"
+      }
+    },
+    {
+      "metadata": {
+        "name": "grafanaAssistantInProfilesDrillfown",
+        "resourceVersion": "1754034112469",
+        "creationTimestamp": "2025-08-01T07:41:52Z",
+        "deletionTimestamp": "2025-08-01T07:43:17Z"
+      },
+      "spec": {
+        "description": "Enables interation with Grafana Assitant in Profiles Drilldown",
+        "stage": "experimental",
+        "codeowner": "@grafana/observability-traces-and-profiling",
+        "frontend": true
       }
     },
     {
@@ -2570,7 +2633,8 @@
       "metadata": {
         "name": "prometheusCodeModeMetricNamesSearch",
         "resourceVersion": "1753448760331",
-        "creationTimestamp": "2024-04-04T20:38:23Z"
+        "creationTimestamp": "2024-04-04T20:38:23Z",
+        "deletionTimestamp": "2025-08-01T07:53:50Z"
       },
       "spec": {
         "description": "Enables search for metric names in Code Mode, to improve performance when working with an enormous number of metric names",
@@ -2607,19 +2671,6 @@
     },
     {
       "metadata": {
-        "name": "provisioningSecretsService",
-        "resourceVersion": "1753448760331",
-        "creationTimestamp": "2025-07-25T13:06:00Z"
-      },
-      "spec": {
-        "description": "Experimental feature to use the secrets service for provisioning instead of the legacy secrets",
-        "stage": "experimental",
-        "codeowner": "@grafana/grafana-app-platform-squad",
-        "requiresRestart": true
-      }
-    },
-    {
-      "metadata": {
         "name": "publicDashboardsEmailSharing",
         "resourceVersion": "1753448760331",
         "creationTimestamp": "2023-01-03T19:45:15Z"
@@ -2649,12 +2700,15 @@
     {
       "metadata": {
         "name": "queryLibrary",
-        "resourceVersion": "1753448760331",
+        "resourceVersion": "1755721444487",
         "creationTimestamp": "2022-10-07T18:31:45Z",
-        "deletionTimestamp": "2023-03-20T16:00:14Z"
+        "deletionTimestamp": "2023-03-20T16:00:14Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-08-20 20:24:04.487598 +0000 UTC"
+        }
       },
       "spec": {
-        "description": "Enables Query Library feature in Explore",
+        "description": "Renamed feature toggle, enables Saved queries feature",
         "stage": "privatePreview",
         "codeowner": "@grafana/sharing-squad"
       }
@@ -2829,6 +2883,18 @@
         "description": "Enables the new role picker drawer design",
         "stage": "experimental",
         "codeowner": "@grafana/identity-access-team"
+      }
+    },
+    {
+      "metadata": {
+        "name": "savedQueries",
+        "resourceVersion": "1755721444487",
+        "creationTimestamp": "2025-08-20T20:24:04Z"
+      },
+      "spec": {
+        "description": "Enables Saved Queries feature",
+        "stage": "privatePreview",
+        "codeowner": "@grafana/sharing-squad"
       }
     },
     {
@@ -3021,7 +3087,8 @@
       "metadata": {
         "name": "tableNextGen",
         "resourceVersion": "1753448760331",
-        "creationTimestamp": "2025-03-26T03:57:57Z"
+        "creationTimestamp": "2025-03-26T03:57:57Z",
+        "deletionTimestamp": "2025-08-19T14:11:23Z"
       },
       "spec": {
         "description": "Allows access to the new react-data-grid based table component.",

@@ -6,24 +6,20 @@ import {
   VizPanel,
   SceneObjectBase,
   SceneGridLayout,
-  SceneVariableSet,
   SceneGridItemStateLike,
   SceneGridItemLike,
   sceneGraph,
   MultiValueVariable,
-  LocalValueVariable,
   CustomVariable,
-  VizPanelState,
   VariableValueSingle,
 } from '@grafana/scenes';
 import { GRID_COLUMN_COUNT } from 'app/core/constants';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 
-import { getCloneKey } from '../../utils/clone';
+import { getCloneKey, getLocalVariableValueSet } from '../../utils/clone';
 import { getMultiVariableValues } from '../../utils/utils';
 import { scrollCanvasElementIntoView, scrollIntoView } from '../layouts-shared/scrollCanvasElementIntoView';
 import { DashboardLayoutItem } from '../types/DashboardLayoutItem';
-import { DashboardRepeatsProcessedEvent } from '../types/DashboardRepeatsProcessedEvent';
 
 import { getDashboardGridItemOptions } from './DashboardGridItemEditor';
 import { DashboardGridItemRenderer } from './DashboardGridItemRenderer';
@@ -86,19 +82,22 @@ export class DashboardGridItem
       return;
     }
 
-    const itemCount = this.state.repeatedPanels?.length ?? 1;
     const stateChange: Partial<DashboardGridItemState> = {};
 
     if (this.getRepeatDirection() === 'v') {
-      stateChange.itemHeight = Math.ceil(newState.height! / itemCount);
+      stateChange.itemHeight = Math.ceil(newState.height! / this.getChildCount());
     } else {
-      const rowCount = Math.ceil(itemCount / this.getMaxPerRow());
+      const rowCount = Math.ceil(this.getChildCount() / this.getMaxPerRow());
       stateChange.itemHeight = Math.ceil(newState.height! / rowCount);
     }
 
     if (stateChange.itemHeight !== this.state.itemHeight) {
       this.setState(stateChange);
     }
+  }
+
+  public getChildCount() {
+    return (this.state.repeatedPanels?.length ?? 0) + 1;
   }
 
   public getClassName(): string {
@@ -116,13 +115,6 @@ export class DashboardGridItem
   public editingStarted() {
     if (!this.state.variableName) {
       return;
-    }
-
-    if (this.state.repeatedPanels?.length ?? 0 > 1) {
-      this.state.body.setState({
-        $variables: this.state.repeatedPanels![0].state.$variables?.clone(),
-        $data: this.state.repeatedPanels![0].state.$data?.clone(),
-      });
     }
   }
 
@@ -177,22 +169,19 @@ export class DashboardGridItem
 
     // Loop through variable values and create repeats
     for (let index = 0; index < variableValues.length; index++) {
-      const cloneState: Partial<VizPanelState> = {
-        $variables: new SceneVariableSet({
-          variables: [
-            new LocalValueVariable({
-              name: variable.state.name,
-              value: variableValues[index],
-              text: String(variableTexts[index]),
-              isMulti: variable.state.isMulti,
-              includeAll: variable.state.includeAll,
-            }),
-          ],
-        }),
-        key: getCloneKey(panelToRepeat.state.key!, index),
-      };
-      const clone = panelToRepeat.clone(cloneState);
-      repeatedPanels.push(clone);
+      const isSource = index === 0;
+      const clone = isSource
+        ? panelToRepeat
+        : panelToRepeat.clone({
+            key: getCloneKey(panelToRepeat.state.key!, index),
+            repeatSourceKey: panelToRepeat.state.key,
+          });
+
+      clone.setState({ $variables: getLocalVariableValueSet(variable, variableValues[index], variableTexts[index]) });
+
+      if (index > 0) {
+        repeatedPanels.push(clone);
+      }
     }
 
     const direction = this.getRepeatDirection();
@@ -200,12 +189,13 @@ export class DashboardGridItem
     const itemHeight = this.state.itemHeight ?? 10;
     const prevHeight = this.state.height;
     const maxPerRow = this.getMaxPerRow();
+    const panelCount = repeatedPanels.length + 1; // +1 for the source panel
 
     if (direction === 'h') {
-      const rowCount = Math.ceil(repeatedPanels.length / maxPerRow);
+      const rowCount = Math.ceil(panelCount / maxPerRow);
       stateChange.height = rowCount * itemHeight;
     } else {
-      stateChange.height = repeatedPanels.length * itemHeight;
+      stateChange.height = panelCount * itemHeight;
     }
 
     this.setState(stateChange);
@@ -218,8 +208,6 @@ export class DashboardGridItem
     }
 
     this._prevRepeatValues = values;
-
-    this.publishEvent(new DashboardRepeatsProcessedEvent({ source: this }), true);
   }
 
   public handleVariableName() {
