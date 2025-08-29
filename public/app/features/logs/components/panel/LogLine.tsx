@@ -10,6 +10,7 @@ import { Button, Icon, Tooltip } from '@grafana/ui';
 import { LOG_LINE_BODY_FIELD_NAME } from '../LogDetailsBody';
 import { LogMessageAnsi } from '../LogMessageAnsi';
 
+import { HighlightedLogRenderer } from './HighlightedLogRenderer';
 import { InlineLogLineDetails } from './LogLineDetails';
 import { LogLineMenu } from './LogLineMenu';
 import { useLogIsPermalinked, useLogIsPinned, useLogListContext } from './LogListContext';
@@ -156,6 +157,16 @@ const LogLineComponent = memo(
       [log, onClick]
     );
 
+    const handleLogDetailsResize = useCallback(() => {
+      if (!onOverflow || !logLineRef.current || !virtualization) {
+        return;
+      }
+      const actualHeight = hasUnderOrOverflow(virtualization, logLineRef.current, undefined, log.collapsed);
+      if (actualHeight) {
+        onOverflow(index, log.uid, actualHeight);
+      }
+    }, [index, log.collapsed, log.uid, onOverflow, virtualization]);
+
     const detailsShown = detailsDisplayed(log);
 
     return (
@@ -255,7 +266,13 @@ const LogLineComponent = memo(
           </div>
         )}
         {detailsMode === 'inline' && detailsShown && (
-          <InlineLogLineDetails logs={logs} log={log} timeRange={timeRange} timeZone={timeZone} />
+          <InlineLogLineDetails
+            logs={logs}
+            log={log}
+            onResize={handleLogDetailsResize}
+            timeRange={timeRange}
+            timeZone={timeZone}
+          />
         )}
       </>
     );
@@ -377,7 +394,11 @@ const LogLineBody = ({ log, styles }: { log: LogListModel; styles: LogLineStyles
     );
   }
 
-  return <span className="field log-syntax-highlight" dangerouslySetInnerHTML={{ __html: log.highlightedBody }} />;
+  return (
+    <span className="field log-syntax-highlight">
+      <HighlightedLogRenderer log={log} />
+    </span>
+  );
 };
 
 export function getGridTemplateColumns(dimensions: LogFieldDimension[], displayedFields: string[]) {
@@ -579,6 +600,7 @@ export const getStyles = (theme: GrafanaTheme2, virtualization?: LogLineVirtuali
       },
     }),
     fieldsWrapper: css({
+      minHeight: virtualization ? virtualization.getLineHeight() + virtualization.getPaddingBottom() : undefined,
       '&:hover': {
         background: hoverColor,
       },

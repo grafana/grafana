@@ -28,6 +28,7 @@ import { getTextColorForAlphaBackground } from '../../../utils/colors';
 import { TableCellOptions } from '../types';
 
 import { inferPills } from './Cells/PillCell';
+import { AutoCellRenderer, getCellRenderer } from './Cells/renderers';
 import { COLUMN, TABLE } from './constants';
 import {
   TableRow,
@@ -80,12 +81,17 @@ export function isCellInspectEnabled(field: Field): boolean {
  * Returns true if text wrapping should be applied to the cell.
  */
 export function shouldTextWrap(field: Field): boolean {
-  const cellOptions = getCellOptions(field);
-  // @ts-ignore - a handful of cellTypes have boolean wrapText, but not all of them.
-  // we should be very careful to only use boolean type for cellOptions.wrapText.
-  // TBH we will probably move this up to a field option which is showIf rendered anyway,
-  // but that'll be a migration to do, so it needs to happen post-GA.
-  return Boolean(cellOptions?.wrapText);
+  return Boolean(field.config.custom?.wrapText);
+}
+
+/**
+ * @internal wrap a cell height measurer to clamp its output to the maxHeight defined in the field, if any.
+ */
+function clampByMaxHeight(measurer: MeasureCellHeight, maxHeight = Infinity): MeasureCellHeight {
+  return (value, width, field, rowIdx, lineHeight) => {
+    const rawHeight = measurer(value, width, field, rowIdx, lineHeight);
+    return Math.min(rawHeight, maxHeight);
+  };
 }
 
 /**
@@ -253,7 +259,8 @@ const spaceRegex = /[\s-]/;
  */
 export function buildCellHeightMeasurers(
   fields: Field[],
-  typographyCtx: TypographyCtx
+  typographyCtx: TypographyCtx,
+  maxHeight?: number
 ): MeasureCellHeightEntry[] | undefined {
   const result: Record<string, MeasureCellHeightEntry> = {};
   let wrappedFields = 0;
@@ -283,8 +290,8 @@ export function buildCellHeightMeasurers(
     if (!result[measurerFactoryKey]) {
       const [measure, estimate] = measurerFactory[measurerFactoryKey]();
       result[measurerFactoryKey] = {
-        measure,
-        estimate,
+        measure: clampByMaxHeight(measure, maxHeight),
+        estimate: estimate != null ? clampByMaxHeight(estimate, maxHeight) : undefined,
         fieldIdxs: [],
       };
     }
@@ -301,8 +308,14 @@ export function buildCellHeightMeasurers(
         setupMeasurerForIdx(TableCellDisplayMode.DataLinks, fieldIdx);
       } else if (cellType === TableCellDisplayMode.Pill) {
         setupMeasurerForIdx(TableCellDisplayMode.Pill, fieldIdx);
-      } else if (field.type === FieldType.string) {
+      } else if (
+        field.type === FieldType.string &&
+        getCellRenderer(field, getCellOptions(field)) === AutoCellRenderer
+      ) {
         setupMeasurerForIdx(TableCellDisplayMode.Auto, fieldIdx);
+      } else {
+        // no measurer was configured for this cell type
+        wrappedFields--;
       }
     }
   }
@@ -849,7 +862,7 @@ export const predicateByName = (name: string) => (f: Field) => f.name === name |
  * returns only fields that are not nested tables and not explicitly hidden
  */
 export function getVisibleFields(fields: Field[]): Field[] {
-  return fields.filter((field) => field.type !== FieldType.nestedFrames && field.config.custom?.hidden !== true);
+  return fields.filter((field) => field.type !== FieldType.nestedFrames && field.config.custom?.hideFrom?.viz !== true);
 }
 
 /**

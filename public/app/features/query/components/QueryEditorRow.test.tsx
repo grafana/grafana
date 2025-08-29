@@ -1,7 +1,7 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import { PropsWithChildren } from 'react';
 
-import { DataQueryRequest, dateTime, LoadingState, PanelData, toDataFrame } from '@grafana/data';
+import { CoreApp, DataQueryRequest, dateTime, LoadingState, PanelData, toDataFrame } from '@grafana/data';
 import { DataQuery } from '@grafana/schema';
 import { mockDataSource } from 'app/features/alerting/unified/mocks';
 
@@ -454,6 +454,15 @@ describe('QueryEditorRow', () => {
       });
 
       expect(mockQueryLibraryContext.renderQueryLibraryEditingHeader).not.toHaveBeenCalled();
+    });
+
+    it('should not render saved queries buttons when app is unified alerting', async () => {
+      render(<QueryEditorRow {...props(testData)} app={CoreApp.UnifiedAlerting} />);
+
+      await waitFor(() => {
+        expect(screen.queryByText('Save query')).not.toBeInTheDocument();
+        expect(screen.queryByText('Replace with saved query')).not.toBeInTheDocument();
+      });
     });
   });
 });
