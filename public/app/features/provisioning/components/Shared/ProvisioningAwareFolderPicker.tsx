@@ -88,19 +88,28 @@ function getExcludeUIDs({
     if (!provisioningEnabled) {
       return [];
     }
-    // If provisioning is enabled, we want to exclude all provisionedfolders
+    // If provisioning is enabled, we want to exclude all provisioned folders
     return settingsData?.items.map((repo) => repo.name) || [];
   }
 
   return [];
 }
 
-function getRootFolderDisplayItem({ isProvisionedInstance, rootFolderUID, settingsDataItem }) {
+function getRootFolderDisplayItem({
+  isProvisionedInstance,
+  rootFolderUID,
+  settingsDataItem,
+}: {
+  isProvisionedInstance?: boolean;
+  rootFolderUID?: string;
+  settingsDataItem?: RepositoryView[];
+}) {
   if (isProvisionedInstance) {
-    return undefined; // If it's a provisioned instance, we don't want to show a specific folder display, root will be "Dashboards"
+    // If it's a provisioned instance, we use default root display ("Dashboards")
+    return undefined;
   }
 
-  const repoFolder: RepositoryView = settingsDataItem?.find((item: RepositoryView) => item.name === rootFolderUID);
+  const repoFolder = settingsDataItem?.find((item: RepositoryView) => item.name === rootFolderUID);
   return repoFolder
     ? getCustomRootFolderItem({ title: repoFolder.title, uid: repoFolder.name, managedBy: ManagerKind.Repo })
     : undefined;
