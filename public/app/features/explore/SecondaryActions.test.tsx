@@ -2,9 +2,6 @@ import { screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { noop } from 'lodash';
 
-import { OrgRole } from '@grafana/data';
-import { contextSrv } from 'app/core/services/context_srv';
-
 import { render } from '../../../test/test-utils';
 
 import { QueriesDrawerContextProviderMock } from './QueriesDrawer/mocks';
