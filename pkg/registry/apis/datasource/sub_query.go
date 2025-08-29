@@ -6,16 +6,18 @@ import (
 	"fmt"
 	"net/http"
 
-	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apiserver/pkg/registry/rest"
-
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	data "github.com/grafana/grafana-plugin-sdk-go/experimental/apis/data/v0alpha1"
 	query "github.com/grafana/grafana/pkg/apis/query/v0alpha1"
 	query_headers "github.com/grafana/grafana/pkg/registry/apis/query"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apiserver/pkg/registry/rest"
 
 	"github.com/grafana/grafana/pkg/web"
+
+	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 )
 
 type subQueryREST struct {
@@ -26,7 +28,6 @@ var (
 	_ rest.Storage         = (*subQueryREST)(nil)
 	_ rest.Connecter       = (*subQueryREST)(nil)
 	_ rest.StorageMetadata = (*subQueryREST)(nil)
-	_ rest.Scoper          = (*subQueryREST)(nil)
 )
 
 func (r *subQueryREST) New() runtime.Object {
@@ -35,10 +36,6 @@ func (r *subQueryREST) New() runtime.Object {
 }
 
 func (r *subQueryREST) Destroy() {}
-
-func (r *subQueryREST) NamespaceScoped() bool {
-	return true
-}
 
 func (r *subQueryREST) ProducesMIMETypes(verb string) []string {
 	return []string{"application/json"} // and parquet!
@@ -61,8 +58,15 @@ func (r *subQueryREST) Connect(ctx context.Context, name string, opts runtime.Ob
 
 	if err != nil {
 		if errors.Is(err, datasources.ErrDataSourceNotFound) {
-			return nil, r.builder.datasourceResourceInfo.NewNotFound(name)
+			return nil, k8serrors.NewNotFound(
+				schema.GroupResource{
+					Group:    r.builder.connectionResourceInfo.GroupResource().Group,
+					Resource: r.builder.connectionResourceInfo.GroupResource().Resource,
+				},
+				name,
+			)
 		}
+
 		return nil, err
 	}
 

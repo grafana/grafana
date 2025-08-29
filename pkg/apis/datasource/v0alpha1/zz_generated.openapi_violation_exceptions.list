@@ -1,2 +1,0 @@
-API rule violation: names_match,github.com/grafana/grafana/pkg/apis/datasource/v0alpha1,UnstructuredSpec,Object
-API rule violation: streaming_list_type_json_tags,github.com/grafana/grafana/pkg/apis/datasource/v0alpha1,DataSourceList,ListMeta

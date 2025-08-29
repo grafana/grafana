@@ -10,14 +10,13 @@ import (
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
-
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	datav0alpha1 "github.com/grafana/grafana-plugin-sdk-go/experimental/apis/data/v0alpha1"
 	"github.com/grafana/grafana/pkg/aggregator/apis/aggregation/v0alpha1"
 	"github.com/grafana/grafana/pkg/aggregator/apiserver/plugin/fakes"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestQueryDataHandler(t *testing.T) {
@@ -88,7 +87,7 @@ func TestQueryDataHandler(t *testing.T) {
 		buf := bytes.NewBuffer(nil)
 		assert.NoError(t, json.NewEncoder(buf).Encode(qdr))
 
-		req, err := http.NewRequest("POST", "/apis/testds.example.com/v1/namespaces/default/datasources/123/query", buf)
+		req, err := http.NewRequest("POST", "/apis/testds.example.com/v1/namespaces/default/connections/123/query", buf)
 		assert.NoError(t, err)
 
 		rr := httptest.NewRecorder()
@@ -114,7 +113,7 @@ func TestQueryDataHandler(t *testing.T) {
 		buf := bytes.NewBuffer(nil)
 		assert.NoError(t, json.NewEncoder(buf).Encode(qdr))
 
-		req, err := http.NewRequest("POST", "/apis/testds.example.com/v1/namespaces/default/datasources/123/query", buf)
+		req, err := http.NewRequest("POST", "/apis/testds.example.com/v1/namespaces/default/connections/123/query", buf)
 		assert.NoError(t, err)
 
 		rr := httptest.NewRecorder()
@@ -142,7 +141,7 @@ func TestQueryDataHandler(t *testing.T) {
 		buf := bytes.NewBuffer(nil)
 		assert.NoError(t, json.NewEncoder(buf).Encode(qdr))
 
-		req, err := http.NewRequest("POST", "/apis/testds.example.com/v1/namespaces/default/datasources/abc/query", buf)
+		req, err := http.NewRequest("POST", "/apis/testds.example.com/v1/namespaces/default/connections/abc/query", buf)
 		assert.NoError(t, err)
 
 		rr := httptest.NewRecorder()
@@ -166,7 +165,7 @@ func TestQueryDataHandler(t *testing.T) {
 	})
 
 	t.Run("should return delegate response if group does not match", func(t *testing.T) {
-		req, err := http.NewRequest("POST", "/apis/wrongds.example.com/v1/namespaces/default/datasources/abc/query", bytes.NewBuffer(nil))
+		req, err := http.NewRequest("POST", "/apis/wrongds.example.com/v1/namespaces/default/connections/abc/query", bytes.NewBuffer(nil))
 		assert.NoError(t, err)
 
 		rr := httptest.NewRecorder()
