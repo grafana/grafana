@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"math/rand/v2"
+	"slices"
 	"strings"
 	"testing"
 
@@ -14,6 +16,12 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
+
+var appsNamespace = NamespacedResource{
+	Namespace: "default",
+	Group:     "apps",
+	Resource:  "resource",
+}
 
 func setupTestStorageBackend(t *testing.T) *kvStorageBackend {
 	kv := setupTestKV(t)
@@ -341,7 +349,12 @@ func TestKvStorageBackend_ListIterator_Success(t *testing.T) {
 	}
 
 	for _, res := range resources {
-		testObj, err := createTestObjectWithName(res.name, res.group, res.value)
+		ns := NamespacedResource{
+			Group:     res.group,
+			Resource:  "resource",
+			Namespace: "default",
+		}
+		testObj, err := createTestObjectWithName(res.name, ns, res.value)
 		require.NoError(t, err)
 
 		metaAccessor, err := utils.MetaAccessor(testObj)
@@ -424,7 +437,7 @@ func TestKvStorageBackend_ListIterator_WithPagination(t *testing.T) {
 
 	// Create multiple test resources
 	for i := 1; i <= 5; i++ {
-		testObj, err := createTestObjectWithName(fmt.Sprintf("resource-%d", i), "apps", fmt.Sprintf("data-%d", i))
+		testObj, err := createTestObjectWithName(fmt.Sprintf("resource-%d", i), appsNamespace, fmt.Sprintf("data-%d", i))
 		require.NoError(t, err)
 
 		metaAccessor, err := utils.MetaAccessor(testObj)
@@ -603,7 +616,7 @@ func TestKvStorageBackend_ListIterator_SpecificResourceVersion(t *testing.T) {
 	ctx := context.Background()
 
 	// Create a resource
-	testObj, err := createTestObjectWithName("test-resource", "apps", "initial-data")
+	testObj, err := createTestObjectWithName("test-resource", appsNamespace, "initial-data")
 	require.NoError(t, err)
 
 	metaAccessor, err := utils.MetaAccessor(testObj)
@@ -663,7 +676,7 @@ func TestKvStorageBackend_ListIterator_SpecificResourceVersion(t *testing.T) {
 	require.Len(t, collectedItems, 1)
 
 	// Verify we got the original data, not the updated data
-	originalObj, err := createTestObjectWithName("test-resource", "apps", "initial-data")
+	originalObj, err := createTestObjectWithName("test-resource", appsNamespace, "initial-data")
 	require.NoError(t, err)
 	require.Equal(t, objectToJSONBytes(t, originalObj), collectedItems[0])
 }
@@ -674,26 +687,136 @@ func TestKvStorageBackend_ListModifiedSince(t *testing.T) {
 
 	ns := NamespacedResource{
 		Namespace: "default",
-		Group: "apps",
-		Resource: "resources",
+		Group:     "apps",
+		Resource:  "resources",
 	}
-	_, _ = addTestObject(t, backend, ctx, ns, "somename2", "initial-data1")
-	rv, testObj := addTestObject(t, backend, ctx, ns, "somename", "initial-data")
-	rv = updateTestObject(t, backend, ctx, testObj, rv, ns, "somename", "new-data")
-	rv = updateTestObject(t, backend, ctx, testObj, rv, ns, "somename", "new-data2")
-	fmt.Println("rv: ", rv)
 
-	listRV, seq := backend.ListModifiedSince(ctx, ns, 1)
+	expectations := seedBackend(t, backend, ctx, ns)
+	for _, expectation := range expectations {
+		_, seq := backend.ListModifiedSince(ctx, ns, expectation.rv)
 
-	fmt.Println("got listRV: ", listRV)
-	for thing, err := range seq {
-		fmt.Println("got thing: ", thing)
-		fmt.Println("got err: ", err)
+		for mr, err := range seq {
+			require.NoError(t, err)
+			require.Equal(t, mr.Key.Group, ns.Group)
+			require.Equal(t, mr.Key.Namespace, ns.Namespace)
+			require.Equal(t, mr.Key.Resource, ns.Resource)
+
+			expectedMr, ok := expectation.changes[mr.Key.Name]
+			require.True(t, ok, "ListModifiedSince yielded unexpected resource: ", mr.Key.String())
+			require.Equal(t, mr.ResourceVersion, expectedMr.ResourceVersion)
+			require.Equal(t, mr.Action, expectedMr.Action)
+			require.Equal(t, string(mr.Value), string(expectedMr.Value))
+		}
+	}
+}
+
+type expectation struct {
+	rv      int64
+	changes map[string]*ModifiedResource
+}
+
+func randomString() string {
+	const charset = "abcdefghijklmnopqrstuvwxyz0123456789"
+	result := make([]byte, 16)
+	for i := range result {
+		result[i] = charset[rand.IntN(len(charset))]
+	}
+	return string(result)
+}
+
+func randomStringGenerator() func() string {
+	generated := make([]string, 0)
+	return func() string {
+		var str string
+		for str == "" {
+			randString := randomString()
+			if !slices.Contains(generated, randString) {
+				str = randString
+			}
+		}
+		return str
+	}
+}
+
+// seedBackend seeds the kvstore with data and return the expected result for ListModifiedSince calls
+func seedBackend(t *testing.T, backend *kvStorageBackend, ctx context.Context, ns NamespacedResource) []expectation {
+	uniqueStringGen := randomStringGenerator()
+	nsDifferentNamespace := NamespacedResource{
+		Namespace: "uaoeueao",
+		Group:     ns.Group,
+		Resource:  ns.Resource,
+	}
+
+	expectations := make([]expectation, 0)
+	// initial test will contain the same "changes" as the second one (first one added by the for loop below
+	// this is done with rv 1 so it uses the event store to check for changes
+	expectations = append(expectations, expectation{
+		rv: 1,
+		changes: make(map[string]*ModifiedResource),
+	})
+
+	for _ = range 100 {
+		updates := rand.IntN(5)
+		shouldDelete := rand.IntN(100) < 10
+		mr := createAndSaveTestObject(t, backend, ctx, ns, uniqueStringGen, updates, shouldDelete)
+		expectations = append(expectations, expectation{
+			rv:      mr.ResourceVersion,
+			changes: make(map[string]*ModifiedResource),
+		})
+
+		for _, expect := range expectations {
+			expect.changes[mr.Key.Name] = mr
+		}
+
+		// also seed data to some random namespace to make sure we won't return this data
+		updates = rand.IntN(5)
+		shouldDelete = rand.IntN(100) < 10
+		_ = createAndSaveTestObject(t, backend, ctx, nsDifferentNamespace, uniqueStringGen, updates, shouldDelete)
+	}
+
+	// last test will simulate calling ListModifiedSince with a newer RV than all the updates above
+	rv, _ := backend.ListModifiedSince(ctx, ns, 1)
+	expectations = append(expectations, expectation{
+		rv: rv,
+		changes: make(map[string]*ModifiedResource), // empty
+	})
+
+	return expectations
+}
+
+func createAndSaveTestObject(t *testing.T, backend *kvStorageBackend, ctx context.Context, ns NamespacedResource, uniqueStringGen func() string, updates int, deleted bool) *ModifiedResource {
+	name := uniqueStringGen()
+	action := resourcepb.WatchEvent_ADDED
+	rv, testObj := addTestObject(t, backend, ctx, ns, name, uniqueStringGen())
+
+	for i := 0; i < updates; i += 1 {
+		rv = updateTestObject(t, backend, ctx, testObj, rv, ns, name, uniqueStringGen())
+		action = resourcepb.WatchEvent_MODIFIED
+	}
+
+	if deleted {
+		rv = deleteTestObject(t, backend, ctx, testObj, rv, ns, name)
+		action = resourcepb.WatchEvent_DELETED
+	}
+
+	value, err := testObj.MarshalJSON()
+	require.NoError(t, err)
+
+	return &ModifiedResource{
+		Key: resourcepb.ResourceKey{
+			Namespace: ns.Namespace,
+			Group:     ns.Group,
+			Resource:  ns.Resource,
+			Name:      name,
+		},
+		ResourceVersion: rv,
+		Action:          action,
+		Value:           value,
 	}
 }
 
 func addTestObject(t *testing.T, backend *kvStorageBackend, ctx context.Context, ns NamespacedResource, name, value string) (int64, *unstructured.Unstructured) {
-	testObj, err := createTestObjectWithName(name, ns.Group, value)
+	testObj, err := createTestObjectWithName(name, ns, value)
 	require.NoError(t, err)
 
 	metaAccessor, err := utils.MetaAccessor(testObj)
@@ -702,9 +825,9 @@ func addTestObject(t *testing.T, backend *kvStorageBackend, ctx context.Context,
 	writeEvent := WriteEvent{
 		Type: resourcepb.WatchEvent_ADDED,
 		Key: &resourcepb.ResourceKey{
-			Namespace: "default",
+			Namespace: ns.Namespace,
 			Group:     ns.Group,
-			Resource:  "resources",
+			Resource:  ns.Resource,
 			Name:      name,
 		},
 		Value:      objectToJSONBytes(t, testObj),
@@ -717,8 +840,31 @@ func addTestObject(t *testing.T, backend *kvStorageBackend, ctx context.Context,
 	return rv, testObj
 }
 
+func deleteTestObject(t *testing.T, backend *kvStorageBackend, ctx context.Context, originalObj *unstructured.Unstructured, previousRV int64, ns NamespacedResource, name string) int64 {
+	metaAccessor, err := utils.MetaAccessor(originalObj)
+	require.NoError(t, err)
+
+	writeEvent := WriteEvent{
+		Type: resourcepb.WatchEvent_DELETED,
+		Key: &resourcepb.ResourceKey{
+			Namespace: ns.Namespace,
+			Group:     ns.Group,
+			Resource:  ns.Resource,
+			Name:      name,
+		},
+		Value:      objectToJSONBytes(t, originalObj),
+		Object:     metaAccessor,
+		ObjectOld:  metaAccessor,
+		PreviousRV: previousRV,
+	}
+
+	rv, err := backend.WriteEvent(ctx, writeEvent)
+	require.NoError(t, err)
+	return rv
+}
+
 func updateTestObject(t *testing.T, backend *kvStorageBackend, ctx context.Context, originalObj *unstructured.Unstructured, previousRV int64, ns NamespacedResource, name, value string) int64 {
-	originalObj.Object["spec"].(map[string]any)["value"] = "updated-data"
+	originalObj.Object["spec"].(map[string]any)["value"] = value
 
 	metaAccessor, err := utils.MetaAccessor(originalObj)
 	require.NoError(t, err)
@@ -726,9 +872,9 @@ func updateTestObject(t *testing.T, backend *kvStorageBackend, ctx context.Conte
 	writeEvent := WriteEvent{
 		Type: resourcepb.WatchEvent_MODIFIED,
 		Key: &resourcepb.ResourceKey{
-			Namespace: "default",
+			Namespace: ns.Namespace,
 			Group:     ns.Group,
-			Resource:  "resources",
+			Resource:  ns.Resource,
 			Name:      name,
 		},
 		Value:      objectToJSONBytes(t, originalObj),
@@ -736,9 +882,8 @@ func updateTestObject(t *testing.T, backend *kvStorageBackend, ctx context.Conte
 		PreviousRV: previousRV,
 	}
 
-	writeEvent.Type = resourcepb.WatchEvent_MODIFIED
-
 	rv, err := backend.WriteEvent(ctx, writeEvent)
+	require.NoError(t, err)
 	return rv
 }
 
@@ -747,7 +892,7 @@ func TestKvStorageBackend_ListHistory_Success(t *testing.T) {
 	ctx := context.Background()
 
 	// Create initial resource
-	testObj, err := createTestObjectWithName("test-resource", "apps", "initial-data")
+	testObj, err := createTestObjectWithName("test-resource", appsNamespace, "initial-data")
 	require.NoError(t, err)
 
 	metaAccessor, err := utils.MetaAccessor(testObj)
@@ -831,15 +976,15 @@ func TestKvStorageBackend_ListHistory_Success(t *testing.T) {
 	require.Equal(t, rv1, historyItems[2].resourceVersion)
 
 	// Verify the content matches expectations for all versions
-	finalObj, err := createTestObjectWithName("test-resource", "apps", "final-data")
+	finalObj, err := createTestObjectWithName("test-resource", appsNamespace, "final-data")
 	require.NoError(t, err)
 	require.Equal(t, objectToJSONBytes(t, finalObj), historyItems[0].value)
 
-	updatedObj, err := createTestObjectWithName("test-resource", "apps", "updated-data")
+	updatedObj, err := createTestObjectWithName("test-resource", appsNamespace, "updated-data")
 	require.NoError(t, err)
 	require.Equal(t, objectToJSONBytes(t, updatedObj), historyItems[1].value)
 
-	initialObj, err := createTestObjectWithName("test-resource", "apps", "initial-data")
+	initialObj, err := createTestObjectWithName("test-resource", appsNamespace, "initial-data")
 	require.NoError(t, err)
 	require.Equal(t, objectToJSONBytes(t, initialObj), historyItems[2].value)
 }
@@ -849,7 +994,7 @@ func TestKvStorageBackend_ListTrash_Success(t *testing.T) {
 	ctx := context.Background()
 
 	// Create a resource
-	testObj, err := createTestObjectWithName("test-resource", "apps", "test-data")
+	testObj, err := createTestObjectWithName("test-resource", appsNamespace, "test-data")
 	require.NoError(t, err)
 
 	metaAccessor, err := utils.MetaAccessor(testObj)
@@ -947,7 +1092,12 @@ func TestKvStorageBackend_GetResourceStats_Success(t *testing.T) {
 	}
 
 	for _, res := range resources {
-		testObj, err := createTestObjectWithName(res.name, res.group, "test-data")
+		ns := NamespacedResource{
+			Group:     res.group,
+			Namespace: "default",
+			Resource:  "resource",
+		}
+		testObj, err := createTestObjectWithName(res.name, ns, "test-data")
 		require.NoError(t, err)
 
 		metaAccessor, err := utils.MetaAccessor(testObj)
@@ -1004,7 +1154,7 @@ func TestKvStorageBackend_GetResourceStats_Success(t *testing.T) {
 
 // createTestObject creates a test unstructured object with standard values
 func createTestObject() (*unstructured.Unstructured, error) {
-	return createTestObjectWithName("test-resource", "apps", "test data")
+	return createTestObjectWithName("test-resource", appsNamespace, "test data")
 }
 
 // objectToJSONBytes converts an unstructured object to JSON bytes
@@ -1015,14 +1165,14 @@ func objectToJSONBytes(t *testing.T, obj *unstructured.Unstructured) []byte {
 }
 
 // createTestObjectWithName creates a test unstructured object with specific name, group and value
-func createTestObjectWithName(name, group, value string) (*unstructured.Unstructured, error) {
+func createTestObjectWithName(name string, ns NamespacedResource, value string) (*unstructured.Unstructured, error) {
 	u := &unstructured.Unstructured{
 		Object: map[string]any{
-			"apiVersion": group + "/v1",
-			"kind":       "resource",
+			"apiVersion": ns.Group + "/v1",
+			"kind":       ns.Resource,
 			"metadata": map[string]any{
 				"name":      name,
-				"namespace": "default",
+				"namespace": ns.Namespace,
 			},
 			"spec": map[string]any{
 				"value": value,

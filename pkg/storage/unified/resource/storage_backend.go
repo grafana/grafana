@@ -495,13 +495,24 @@ func convertEventType(action DataAction) resourcepb.WatchEvent_Type {
 	panic("not possible")
 }
 
-// k.dataStore.Keys lists ALL objects under Namespace/Group/Resource
-// -> manually skip the ones that are older than sinceRv
-// -> assumes the objects are sorted by name AND resourceVersion (doesn't look like it's the case right now, but we could
-// change it?)
+func (k *kvStorageBackend) getValueFromDataStore(ctx context.Context, dataKey DataKey) ([]byte, error) {
+	raw, err := k.dataStore.Get(ctx, dataKey)
+	if err != nil {
+		return []byte{}, err
+	}
+
+	value, err := io.ReadAll(raw)
+	if err != nil {
+		return []byte{}, err
+	}
+
+	return value, nil
+}
+
 func (k *kvStorageBackend) listModifiedSinceDataStore(ctx context.Context, key NamespacedResource, sinceRv int64) iter.Seq2[*ModifiedResource, error] {
 	return func(yield func(*ModifiedResource, error) bool) {
-		var lastSeen *ModifiedResource
+		var lastSeenResource *ModifiedResource
+		var lastSeenDataKey DataKey
 		for dataKey, err := range k.dataStore.Keys(ctx, ListRequestKey{Namespace: key.Namespace, Group: key.Group, Resource: key.Resource}) {
 			if err != nil {
 				yield(&ModifiedResource{}, err)
@@ -512,8 +523,8 @@ func (k *kvStorageBackend) listModifiedSinceDataStore(ctx context.Context, key N
 				continue
 			}
 
-			if lastSeen == nil {
-				lastSeen = &ModifiedResource{
+			if lastSeenResource == nil {
+				lastSeenResource = &ModifiedResource{
 					Key: resourcepb.ResourceKey{
 						Namespace: dataKey.Namespace,
 						Group:     dataKey.Group,
@@ -523,17 +534,24 @@ func (k *kvStorageBackend) listModifiedSinceDataStore(ctx context.Context, key N
 					ResourceVersion: dataKey.ResourceVersion,
 					Action:          convertEventType(dataKey.Action),
 				}
+				lastSeenDataKey = dataKey
 			}
 
-			if lastSeen.Key.Name != dataKey.Name {
-				fmt.Println("yielding: ", dataKey)
-				// TODO get value from k.dataStore.Get so we can update ModifiedResource.Value before yielding
-				if !yield(lastSeen, nil) {
+			if lastSeenResource.Key.Name != dataKey.Name {
+				value, err := k.getValueFromDataStore(ctx, lastSeenDataKey)
+				if err != nil {
+					yield(&ModifiedResource{}, err)
+					return
+				}
+
+				lastSeenResource.Value = value
+
+				if !yield(lastSeenResource, nil) {
 					return
 				}
 			}
 
-			lastSeen = &ModifiedResource{
+			lastSeenResource = &ModifiedResource{
 				Key: resourcepb.ResourceKey{
 					Namespace: dataKey.Namespace,
 					Group:     dataKey.Group,
@@ -543,9 +561,20 @@ func (k *kvStorageBackend) listModifiedSinceDataStore(ctx context.Context, key N
 				ResourceVersion: dataKey.ResourceVersion,
 				Action:          convertEventType(dataKey.Action),
 			}
+			lastSeenDataKey = dataKey
 		}
 
-		yield(lastSeen, nil)
+		if lastSeenResource != nil {
+			value, err := k.getValueFromDataStore(ctx, lastSeenDataKey)
+			if err != nil {
+				yield(&ModifiedResource{}, err)
+				return
+			}
+
+			lastSeenResource.Value = value
+
+			yield(lastSeenResource, nil)
+		}
 	}
 }
 
