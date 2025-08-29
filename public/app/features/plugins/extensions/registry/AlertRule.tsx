@@ -1,4 +1,5 @@
-/* eslint-disable @grafana/i18n/no-untranslated-strings */
-export function AlertRule() {
-  return <div>Alert Rule tab registered by Grafana!</div>;
+import { CentralAlertHistoryScene } from 'app/features/alerting/unified/components/rules/central-state-history/CentralAlertHistoryScene';
+
+export function AlertRuleHistory({ defaultLabelsFilter }: { defaultLabelsFilter?: string }) {
+  return <CentralAlertHistoryScene defaultLabelsFilter={defaultLabelsFilter} />;
 }
