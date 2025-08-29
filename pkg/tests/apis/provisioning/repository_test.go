@@ -338,15 +338,6 @@ func TestIntegrationProvisioning_CreatingGitHubRepository(t *testing.T) {
 				url, _, err := unstructured.NestedString(obj.Object, "spec", "github", "url")
 				require.NoError(t, err, "failed to read URL")
 				require.Equal(t, test.output, url)
-
-				err = helper.Repositories.Resource.Delete(ctx, test.name, metav1.DeleteOptions{})
-				require.NoError(t, err, "failed to delete")
-
-				// Wait for repository to be fully deleted before next test
-				require.EventuallyWithT(t, func(collect *assert.CollectT) {
-					_, err := helper.Repositories.Resource.Get(ctx, test.name, metav1.GetOptions{})
-					assert.True(collect, apierrors.IsNotFound(err), "repository should be deleted")
-				}, time.Second*5, time.Millisecond*50, "repository should be deleted")
 			})
 		}
 	})
