@@ -168,7 +168,6 @@
         "label-disable-recording-rules-beta": "Aufnahmeregeln deaktivieren (Beta)",
         "label-http-method": "HTTP-Methode",
         "label-incremental-querying-beta": "Inkrementelle Abfrage (Beta)",
-        "label-metric-names-suggestion-limit": "Begrenzung der Vorschläge für Metriknamen",
         "label-prom-type-version": "{{promType}} Version",
         "label-prometheus-type": "Prometheus-Typ",
         "label-query-overlap-window": "Fenster der Abfrage-Überschneidung",
@@ -189,7 +188,6 @@
         "tooltip-disable-recording-rules-beta": "Diese Funktion deaktiviert die Aufnahmeregeln. Wenn Sie dies aktivieren, wird die Dashboard-Leistung verbessert",
         "tooltip-http-method": "Sie können entweder die HTTP-Methode POST oder GET für die Abfrage Ihrer Prometheus-Datenquelle verwenden. POST ist die empfohlene Methode, da sie größere Abfragen ermöglicht. Ändern Sie dies zu GET, wenn Ihre Prometheus-Version älter als 2.1 ist oder POST-Abfragen in Ihrem Netzwerk beschränkt sind.",
         "tooltip-incremental-querying-beta": "Diese Funktion ändert das Standardverhalten von relativen Abfragen, sodass immer neue Daten von der Prometheus-Instanz abgefragt werden. Stattdessen werden Abfrageergebnisse zwischengespeichert und nur neue Datensätze abgefragt. Wenn Sie dies aktivieren, wird die Datenbank- und Netzwerklast reduziert.",
-        "tooltip-metric-names-suggestion-limit": "Die maximale Anzahl an Metriknamen, die im Code-Modus des Abfrage-Editors als Vorschläge im Rahmen der Autovervollständigung angezeigt werden können.",
         "tooltip-prom-type-version": "Nutzen Sie diese Option, um die Version Ihrer Instanz von {{promType}} festzulegen, wenn sie nicht automatisch konfiguriert wird.",
         "tooltip-prometheus-type": "Stellen Sie dies auf den Typ Ihrer Prometheus-Datenbank ein, z. B. Prometheus, Cortex, Mimir oder Thanos. Wenn Sie dieses Feld ändern, werden Ihre aktuellen Einstellungen gespeichert. Bestimmte Typen von Prometheus unterstützen entweder verschiedene APIs oder nicht. Zum Beispiel unterstützen manche Typen Regex-Matching für Label-Abfragen, um die Leistung zu verbessern. Manche Typen haben eine API für Metadaten. Wenn Sie dies falsch einstellen, kann es bei der Abfrage von Metriken und Labels zu einem ungewöhnlichen Verhalten kommen. Bitte prüfen Sie Ihre Prometheus-Dokumentation, um sicherzugehen, dass Sie den richtigen Typ eingeben.",
         "tooltip-query-overlap-window": "Stellen Sie eine Dauer ein, zum Beispiel {{example1}} oder {{example2}} oder {{example3}}. Standardwert: {{default}}. Diese Dauer wird zur Dauer jeder inkrementellen Abfrage hinzugefügt.",
@@ -430,10 +428,6 @@
         "placeholder-auto": "Auto",
         "title-options": "Optionen",
         "tooltip-min-step": "Eine zusätzliche Untergrenze für den Schrittparameter der Prometheus-Abfrage und für die Variablen <2>{{interval}}</2> und <4>{{rateInterval}}</4>."
-      },
-      "prom-query-code-editor-autocomplete-info": {
-        "autocomplete-suggestions-limited": "Vorschläge der Autovervollständigung begrenzt",
-        "tooltip-autocomplete-suggestions-limited": "Die Anzahl der Metriknamen überschreitet die Grenze der Autovervollständigung. Es werden nur die für {{autocompleteLimit}} relevantesten Metriken angezeigt. Sie können die Grenze in den Datenquelleneinstellungen anpassen."
       },
       "prom-query-editor-selector": {
         "body-syntax-error": "Es liegt ein Syntaxfehler vor oder die Abfragestruktur kann beim Wechsel in den Builder-Modus nicht visualisiert werden. Teile der Abfrage können verlorengehen.",

@@ -1,3 +1,5 @@
+import { useId } from 'react';
+
 import { SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
@@ -5,8 +7,6 @@ import { TableCellBackgroundDisplayMode, TableColoredBackgroundCellOptions } fro
 import { Field, RadioButtonGroup, Switch } from '@grafana/ui';
 
 import { TableCellEditorProps } from '../TableCellOptionEditor';
-
-import { TextWrapOptionsEditor } from './TextWrapOptionsEditor';
 
 const colorBackgroundOpts: Array<SelectableValue<TableCellBackgroundDisplayMode>> = [
   { value: TableCellBackgroundDisplayMode.Basic, label: 'Basic' },
@@ -25,6 +25,8 @@ export const ColorBackgroundCellOptionsEditor = ({
     cellOptions.applyToRow = !cellOptions.applyToRow;
     onChange(cellOptions);
   };
+
+  const applyToRowSwitchId = useId();
 
   return (
     <>
@@ -47,19 +49,12 @@ export const ColorBackgroundCellOptionsEditor = ({
         )}
       >
         <Switch
+          id={applyToRowSwitchId}
           label={selectors.components.PanelEditor.OptionsPane.fieldLabel(`Apply to entire row`)}
           value={cellOptions.applyToRow}
           onChange={onColorRowChange}
         />
       </Field>
-
-      <TextWrapOptionsEditor
-        cellOptions={cellOptions}
-        onChange={(updatedCellOptions) => {
-          cellOptions.wrapText = updatedCellOptions.wrapText;
-          onChange(cellOptions);
-        }}
-      />
     </>
   );
 };

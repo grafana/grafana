@@ -58,12 +58,13 @@ export function getCustomVariableOptions(variable: SceneVariable): OptionsPaneIt
   return [
     new OptionsPaneItemDescriptor({
       title: t('dashboard.edit-pane.variable.custom-options.values', 'Values separated by comma'),
-      render: () => <ValuesTextField variable={variable} />,
+      id: 'custom-variable-values',
+      render: ({ props }) => <ValuesTextField id={props.id} variable={variable} />,
     }),
   ];
 }
 
-function ValuesTextField({ variable }: { variable: CustomVariable }) {
+function ValuesTextField({ variable, id }: { variable: CustomVariable; id?: string }) {
   const { query } = variable.useState();
 
   const onBlur = async (event: FormEvent<HTMLTextAreaElement>) => {
@@ -73,6 +74,7 @@ function ValuesTextField({ variable }: { variable: CustomVariable }) {
 
   return (
     <TextArea
+      id={id}
       rows={2}
       defaultValue={query}
       onBlur={onBlur}

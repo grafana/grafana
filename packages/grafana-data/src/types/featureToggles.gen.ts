@@ -301,6 +301,10 @@ export interface FeatureToggles {
   */
   queryService?: boolean;
   /**
+  * Adds datasource connections to the query service
+  */
+  queryServiceWithConnections?: boolean;
+  /**
   * Rewrite requests targeting /ds/query to the query service
   */
   queryServiceRewrite?: boolean;
@@ -320,10 +324,6 @@ export interface FeatureToggles {
   * If enabled, the caching backend gradually serializes query responses for the cache, comparing against the configured `[caching]max_value_mb` value as it goes. This can can help prevent Grafana from running out of memory while attempting to cache very large query responses.
   */
   cachingOptimizeSerializationMemoryUsage?: boolean;
-  /**
-  * Enables search for metric names in Code Mode, to improve performance when working with an enormous number of metric names
-  */
-  prometheusCodeModeMetricNamesSearch?: boolean;
   /**
   * Add cumulative and window functions to the add field from calculation transformation
   * @default true
@@ -751,6 +751,11 @@ export interface FeatureToggles {
   * @default false
   */
   alertingAIGenTemplates?: boolean;
+  /**
+  * Enable enrichment per rule in the alerting UI.
+  * @default false
+  */
+  alertingEnrichmentPerRule?: boolean;
   /**
   * Enable AI-analyze central state history.
   * @default false
