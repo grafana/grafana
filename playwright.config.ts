@@ -179,5 +179,9 @@ export default defineConfig<PluginOptions>({
       name: 'dashboard-new-layouts',
       testDir: path.join(testDirRoot, '/dashboard-new-layouts'),
     }),
+    withAuth({
+      name: 'enterprise',
+      testDir: path.join(testDirRoot, '/extensions'),
+    }),
   ],
 });
