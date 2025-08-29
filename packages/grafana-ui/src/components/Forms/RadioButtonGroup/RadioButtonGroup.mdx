@@ -9,13 +9,13 @@ import { RadioButtonGroup } from './RadioButtonGroup';
 
 ### When to use
 
-- When you have roughly three or more _mutually-exclusive_ options
+- When you have up to four _mutually-exclusive_ options; if you’re only displaying icons you may be able to safely display more options, but be mindful of space constraints and not overwhelm the end user with options.
 - When you are more constrained by vertical than horizontal space
 
 ### When not to use
 
 - When you are constrained by horizontal space
-- When you want to toggle between only two options; use [Switch](?path=/docs/inputs-switch--docs) instead
+- When you want to toggle between the two states of a boolean; use [Switch](?path=/docs/inputs-switch--docs) instead
 - When you have more than four options; consider using a [RadioButtonList](?path=/docs/inputs-radiobuttonlist--docs) or [Combobox](?path=/docs/inputs-combobox--docs) instead
 - When you have _mutually-inclusive_ options; use [Checkboxes](https://developers.grafana.com/ui/latest/index.html?path=/story/inputs-checkbox--stacked-list) instead
 - When you need a navigation device for updating the UI based on the selected option; use [Tabs](?path=/docs/navigation-tabs--docs) instead
