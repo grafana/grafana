@@ -301,6 +301,10 @@ export interface FeatureToggles {
   */
   queryService?: boolean;
   /**
+  * Adds datasource connections to the query service
+  */
+  queryServiceWithConnections?: boolean;
+  /**
   * Rewrite requests targeting /ds/query to the query service
   */
   queryServiceRewrite?: boolean;
@@ -747,6 +751,11 @@ export interface FeatureToggles {
   * @default false
   */
   alertingAIGenTemplates?: boolean;
+  /**
+  * Enable enrichment per rule in the alerting UI.
+  * @default false
+  */
+  alertingEnrichmentPerRule?: boolean;
   /**
   * Enable AI-analyze central state history.
   * @default false

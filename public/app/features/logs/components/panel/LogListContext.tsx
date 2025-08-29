@@ -721,7 +721,7 @@ async function handleOpenAssistant(openAssistant: (props: OpenAssistantProps) =>
     context.push(createAssistantContextItem('datasource', { datasourceUid: datasource.uid }));
   }
   openAssistant({
-    prompt: `${t('logs.log-line-menu.log-line-explainer', 'Explain this log line in a concise way')}:
+    prompt: `${t('logs.log-line-menu.log-line-explainer', 'Explain log line in a concise way')}:
     
     \`\`\`
     ${log.entry.replaceAll('`', '\\`')}

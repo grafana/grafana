@@ -8,6 +8,7 @@ ReceiverSpec: {
 #Integration: {
 	uid?:                   string
 	type:                   string
+	version: string
 	disableResolveMessage?: bool
 	settings: {
 		[string]: _
