@@ -66,7 +66,7 @@ func OrgRedirect(cfg *setting.Cfg, userSvc user.Service) web.Handler {
 }
 
 func validRedirectPath(p string) bool {
-	if !(p == "" || p == "/" || redirectRe.MatchString(p)) {
+	if p != "" && p != "/" && !redirectRe.MatchString(p) {
 		return false
 	}
 	cleanPath := path.Clean(p)
