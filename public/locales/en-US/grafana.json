@@ -1118,6 +1118,11 @@
       "new-alert-rule": "New alert rule",
       "new-recording-rule": "New recording rule"
     },
+    "enrichment": {
+      "error-boundary": {
+        "notification-message-section-extension": "Notification Message Section Extension failed to load"
+      }
+    },
     "error-modal": {
       "failed-to-update-your-configuration": "Failed to update your configuration:",
       "title-something-went-wrong": "Something went wrong"
@@ -2781,6 +2786,7 @@
           "time": "Time"
         }
       },
+      "error-message-prefix": "Error message:",
       "filter-group": "Filter group",
       "filter-group-tooltip": "Filter each state history group either by exact match or a regular expression, for example:",
       "placeholder-search": "Search",
@@ -4013,6 +4019,7 @@
       }
     },
     "tooltip-options": {
+      "label-disable-one-click": "Disable for one-click elements",
       "name-tooltip-mode": "Tooltip mode",
       "tooltip-mode-options": {
         "label-disabled": "Disabled",
@@ -4167,7 +4174,7 @@
         },
         "collector": {
           "subtitle": "Manage the configuration of Grafana Alloy, our distribution of the OpenTelemetry Collector",
-          "title": "Collector:"
+          "title": "Collector"
         },
         "data-sources": {
           "subtitle": "Manage your existing data source connections",
@@ -4554,6 +4561,12 @@
       "cancel": "Cancel",
       "overwrite": "Overwrite",
       "title-plugin-dashboard": "Plugin dashboard"
+    },
+    "controls": {
+      "menu": {
+        "aria-label": "",
+        "title": ""
+      }
     },
     "dash-nav": {
       "on-open-snapshot-original": {
@@ -6095,7 +6108,9 @@
       "save-timerange-description-current-range-default": "Will make current time range the new default",
       "save-timerange-label-update-default-time-range": "Update default time range",
       "save-variables-description-current-values-default": "Will make the current values the new default",
-      "save-variables-label-update-default-variable-values": "Update default variable values"
+      "save-variables-label-update-default-variable-values": "Update default variable values",
+      "show-variables-warning-alert-body": "Some variables failed to load. If you keep “Update default variable values” checked, the current (failed) values will become the dashboard defaults. You can save anyway or uncheck the option to avoid storing those (failed) values.",
+      "show-variables-warning-alert-title": "Variable queries failed"
     },
     "save-library-viz-panel-modal": {
       "affected-dashboards_one": "This update will affect <1>{{count}} dashboards.</1> The following dashboards using the panel will be affected:",
@@ -6373,7 +6388,7 @@
   },
   "dashboards": {
     "panel-queries": {
-      "add-query-from-library": "Add query from library"
+      "add-from-saved-queries": "Add from saved queries"
     },
     "settings": {
       "variables": {
@@ -6932,11 +6947,6 @@
       "dragging-a-divider": "Dragging a divider",
       "dragging-a-sub-region": "Dragging a sub-region",
       "value": "Value: {{ dividerPos }}"
-    },
-    "drilldownInfo": {
-      "action": "Go to Grafana Drilldown",
-      "description": "Looking for the Grafana Explore apps? They are now called the Grafana Drilldown apps and can be found under <1>Menu > Drilldown</1>",
-      "title": "Explore Metrics, Logs, Traces and Profiles have moved!"
     },
     "drop-down-menu": {
       "aria-label-links": "Links",
@@ -9039,6 +9049,7 @@
     "name-line-width": "Line width",
     "name-stacking": "Stacking"
   },
+  "inline-token-warning-badge-tooltip": "The method to save the token is to re-enter it in the repository settings.",
   "inspector": {
     "inspect-data-tab": {
       "loading": "Loading",
@@ -9525,7 +9536,7 @@
       "move-displayed-field-down": "Move down",
       "move-displayed-field-up": "Move up",
       "no-details": "No fields to display.",
-      "open-assistant": "Explain this log line in Assistant",
+      "open-assistant": "Explain log line in Assistant",
       "pin-line": "Pin log",
       "remove-displayed-field": "Remove field",
       "remove-log": "Remove log",
@@ -9551,8 +9562,8 @@
       "hide-details": "Show log details",
       "icon-label": "Log menu",
       "log-line": "Log line",
-      "log-line-explainer": "Explain this log line in a concise way",
-      "open-assistant": "Explain this log line in Assistant",
+      "log-line-explainer": "Explain log line in a concise way",
+      "open-assistant": "Explain log line in Assistant",
       "pin-to-outline": "Pin log",
       "show-context": "Show context",
       "show-details": "Hide log details",
@@ -9642,6 +9653,7 @@
       "show-timestamps": "Show timestamps",
       "show-unique-labels": "Show unique labels",
       "unwrap-lines": "Unwrap lines",
+      "wrap-json-lines": "Wrap lines and expand JSON",
       "wrap-lines": "Wrap lines"
     },
     "logs-navigation": {
@@ -11230,6 +11242,7 @@
       "description-enabled": "Once automatic pulling is enabled, the target cannot be changed.",
       "description-read-only": "Resources can't be modified through Grafana.",
       "description-title": "A human-readable name for the config",
+      "error-fetch-branches": "Failed to fetch branches",
       "error-required": "This field is required.",
       "error-save-repository": "Failed to save repository settings",
       "label-automatic-pulling": "Automatic pulling",
@@ -11442,6 +11455,16 @@
       "title-delete-all-configured-repositories": "Delete all configured repositories",
       "title-legacy-storage-detected": "Legacy storage detected"
     },
+    "http-utils": {
+      "access-denied": "Access denied. Please check your token permissions.",
+      "authentication-failed": "Authentication failed. Please check your access token.",
+      "http-error": "HTTP {{status}}: {{statusText}}",
+      "request-failed": "Request failed",
+      "resource-not-found": "Resource not found. Please check the URL or repository.",
+      "unsupported-repository-type": "Unsupported repository type: {{repositoryType}}"
+    },
+    "inline-secure-values-warning": "You need to save your access tokens again due to a system update",
+    "inline-token-warning-badge-text": "Token needs to be saved again",
     "job-status": {
       "label-view-details": "View details",
       "loading-finished-job": "Loading finished job...",
@@ -12708,10 +12731,6 @@
     "login": "Login"
   },
   "table": {
-    "auto-cell-options-editor": {
-      "description-wrap-text": "If selected text will be wrapped to the width of text in the configured column",
-      "label-wrap-text": "Wrap text"
-    },
     "bar-gauge-cell-options-editor": {
       "label-gauge-display-mode": "Gauge display mode",
       "label-value-display": "Value display"
@@ -12739,13 +12758,8 @@
     },
     "color-background-cell-options-editor": {
       "description-apply-to-entire-row": "If selected the entire row will be colored as this cell would be.",
-      "description-wrap-text": "If selected text will be wrapped to the width of text in the configured column",
-      "label": {
-        "text-alpha": "Alpha"
-      },
       "label-apply-to-entire-row": "Apply to entire row",
-      "label-background-display-mode": "Background display mode",
-      "wrap-text": "Wrap text"
+      "label-background-display-mode": "Background display mode"
     },
     "column-alignment-options": {
       "label-auto": "Auto",
@@ -12763,8 +12777,9 @@
     "description-column-filter": "Enables/disables field filters in table",
     "description-count-rows": "Display a single count for all data rows",
     "description-fields": "Select the fields that should be calculated",
+    "description-frozen-columns": "Columns are frozen from the left side of the table",
     "description-min-column-width": "The minimum width for column auto resizing",
-    "description-wrap-header-text": "Enables text wrapping for column headers",
+    "description-tooltip-from-field": "Render a cell from a field (hidden or visible) in a tooltip",
     "image-cell-options-editor": {
       "description-alt-text": "Alternative text that will be displayed if an image can't be displayed or for users who use a screen reader",
       "description-title-text": "Text that will be displayed when the image is hovered by a cursor",
@@ -12789,50 +12804,6 @@
     "name-column-filter": "Column filter",
     "name-column-width": "Column width",
     "name-count-rows": "Count rows",
-    "name-enable-paginations": "Enable pagination",
-    "name-fields": "Fields",
-    "name-hide-in-table": "Hide in table",
-    "name-min-column-width": "Minimum column width",
-    "name-show-table-footer": "Show table footer",
-    "name-show-table-header": "Show table header",
-    "name-wrap-header-text": "Wrap header text",
-    "placeholder-column-width": "auto",
-    "placeholder-fields": "All Numeric Fields",
-    "text-wrap-options": {
-      "label-wrap-text": "Wrap text"
-    }
-  },
-  "table-new": {
-    "category-cell-options": "Cell options",
-    "category-table": "Table",
-    "category-table-footer": "Table footer",
-    "cell-height-options": {
-      "label-large": "Large",
-      "label-medium": "Medium",
-      "label-small": "Small"
-    },
-    "column-alignment-options": {
-      "label-auto": "Auto",
-      "label-center": "Center",
-      "label-left": "Left",
-      "label-right": "Right"
-    },
-    "description-calculation": "Choose a reducer function / calculation",
-    "description-cell-value-inspect": "Enable cell value inspection in a modal window",
-    "description-column-filter": "Enables/disables field filters in table",
-    "description-count-rows": "Display a single count for all data rows",
-    "description-fields": "Select the fields that should be calculated",
-    "description-frozen-columns": "Columns are frozen from the left side of the table",
-    "description-min-column-width": "The minimum width for column auto resizing",
-    "description-tooltip-from-field": "Render a cell from a field (hidden or visible) in a tooltip",
-    "name-calculation": "Calculation",
-    "name-cell-height": "Cell height",
-    "name-cell-type": "Cell type",
-    "name-cell-value-inspect": "Cell value inspect",
-    "name-column-alignment": "Column alignment",
-    "name-column-filter": "Column filter",
-    "name-column-width": "Column width",
-    "name-count-rows": "Count rows",
     "name-enable-pagination": "Enable pagination",
     "name-fields": "Fields",
     "name-frozen-columns": "Frozen columns",
@@ -12842,6 +12813,8 @@
     "name-show-table-header": "Show table header",
     "name-tooltip-from-field": "Tooltip from field",
     "name-tooltip-placement": "Tooltip placement",
+    "name-wrap-header-text": "Wrap header text",
+    "name-wrap-text": "Wrap text",
     "placeholder-column-width": "auto",
     "placeholder-fields": "All Numeric Fields",
     "tooltip-placement-options": {

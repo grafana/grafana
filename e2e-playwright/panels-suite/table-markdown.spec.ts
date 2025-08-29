@@ -2,9 +2,6 @@ import { test, expect } from '@grafana/plugin-e2e';
 
 test.use({
   viewport: { width: 1280, height: 1080 },
-  featureToggles: {
-    tableNextGen: true,
-  },
 });
 
 test.describe(

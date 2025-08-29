@@ -73,7 +73,7 @@ The data is converted as follows:
 
 #### Basic numerical table
 
-| Gender | Height (kg) | Weight (lbs) |
+| Gender | Height (in) | Weight (lbs) |
 | ------ | ----------- | ------------ |
 | Male   | 73.8        | 242          |
 | Male   | 68.8        | 162          |

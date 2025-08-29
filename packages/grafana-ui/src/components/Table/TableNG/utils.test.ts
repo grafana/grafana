@@ -23,7 +23,7 @@ import {
   extractPixelValue,
   frameToRecords,
   getAlignmentFactor,
-  getCellColorInlineStyles,
+  getCellColorInlineStylesFactory,
   getCellLinks,
   getCellOptions,
   getComparator,
@@ -107,27 +107,103 @@ describe('TableNG utils', () => {
       },
     } as unknown as GrafanaTheme2;
 
-    it('should handle color background mode', () => {
-      const field = { type: TableCellDisplayMode.ColorBackground as const, mode: TableCellBackgroundDisplayMode.Basic };
+    it('should handle color text cell type', () => {
+      const cellOptions = {
+        type: TableCellDisplayMode.ColorText as const,
+      };
 
       const displayValue = { text: '100', numeric: 100, color: '#ff0000' };
 
-      const colors = getCellColorInlineStyles(theme, field, displayValue);
-      expect(colors.background).toBe('rgb(255, 0, 0)');
+      const getCellColorInlineStyles = getCellColorInlineStylesFactory(theme);
+      const colors = getCellColorInlineStyles(cellOptions, displayValue, false);
+      expect(colors.color).toBe('#ff0000');
+      expect(colors).not.toHaveProperty('background');
+    });
+
+    it('should pass thru color background cell type in basic mode', () => {
+      const cellOptions = {
+        type: TableCellDisplayMode.ColorBackground as const,
+        mode: TableCellBackgroundDisplayMode.Basic,
+      };
+
+      const displayValue = { text: '100', numeric: 100, color: '#ff0000' };
+
+      const getCellColorInlineStyles = getCellColorInlineStylesFactory(theme);
+      const colors = getCellColorInlineStyles(cellOptions, displayValue, false);
+      expect(colors.background).toBe('#ff0000');
       expect(colors.color).toBe('rgb(247, 248, 250)');
     });
 
-    it('should handle color background gradient mode', () => {
-      const field = {
+    it('should handle color background cell type in gradient mode', () => {
+      const cellOptions = {
         type: TableCellDisplayMode.ColorBackground as const,
         mode: TableCellBackgroundDisplayMode.Gradient,
       };
 
       const displayValue = { text: '100', numeric: 100, color: '#ff0000' };
 
-      const colors = getCellColorInlineStyles(theme, field, displayValue);
+      const getCellColorInlineStyles = getCellColorInlineStylesFactory(theme);
+      const colors = getCellColorInlineStyles(cellOptions, displayValue, false);
       expect(colors.background).toBe('linear-gradient(120deg, rgb(255, 54, 36), #ff0000)');
       expect(colors.color).toBe('rgb(247, 248, 250)');
+    });
+
+    it('does not set CSSProperties for un-mapped cell types', () => {
+      const cellOptions = { type: TableCellDisplayMode.JSONView as const };
+
+      const displayValue = { text: '100', numeric: 100, color: '#ff0000' };
+
+      const getCellColorInlineStyles = getCellColorInlineStylesFactory(theme);
+      const colors = getCellColorInlineStyles(cellOptions, displayValue, false);
+
+      expect(colors).toEqual({});
+    });
+
+    describe('applyToRow', () => {
+      it.each([
+        ['hex', '#ffffff00'],
+        ['rgba', 'rgba(255,255,255,0)'],
+        ['hsla', 'hsla(0,100%,100%,0)'],
+      ])(
+        'should not apply background color if the display value is transparent (%s) and applyToRow is on',
+        (_format, colorDisplayValue) => {
+          const cellOptions = {
+            type: TableCellDisplayMode.ColorBackground as const,
+            mode: TableCellBackgroundDisplayMode.Basic,
+          };
+
+          const displayValue = { text: '100', numeric: 100, color: colorDisplayValue };
+
+          const getCellColorInlineStyles = getCellColorInlineStylesFactory(theme);
+          const colors = getCellColorInlineStyles(cellOptions, displayValue, true);
+
+          expect(colors).toEqual({});
+        }
+      );
+
+      it.each([
+        ['hex', '#ffffff00'],
+        ['rgba', 'rgba(255,255,255,0)'],
+        ['hsla', 'hsla(0,100%,100%,0)'],
+      ])(
+        'should apply background color if the display value is transparent (%s) and applyToRow is off',
+        (_format, colorDisplayValue) => {
+          const cellOptions = {
+            type: TableCellDisplayMode.ColorBackground as const,
+            mode: TableCellBackgroundDisplayMode.Basic,
+          };
+
+          const displayValue = { text: '100', numeric: 100, color: colorDisplayValue };
+
+          const getCellColorInlineStyles = getCellColorInlineStylesFactory(theme);
+          const colors = getCellColorInlineStyles(cellOptions, displayValue, false);
+
+          expect(colors).toEqual({
+            background: colorDisplayValue,
+            color: 'rgb(32, 34, 38)',
+          });
+        }
+      );
     });
   });
 
@@ -471,14 +547,14 @@ describe('TableNG utils', () => {
         name: 'test',
         type: FieldType.string,
         config: {
-          custom: { cellOptions: { type: TableCellDisplayMode.ColorText, inspectEnabled: false, wrapText: true } },
+          custom: { cellOptions: { type: TableCellDisplayMode.ColorText, inspectEnabled: false } },
         },
         values: [],
       };
 
       const options = getCellOptions(field);
 
-      expect(options).toEqual({ type: TableCellDisplayMode.ColorText, inspectEnabled: false, wrapText: true });
+      expect(options).toEqual({ type: TableCellDisplayMode.ColorText, inspectEnabled: false });
     });
 
     it('should handle legacy displayMode property', () => {
@@ -998,12 +1074,12 @@ describe('TableNG utils', () => {
 
     it('sets up text height measurers for each text column if wrapping is on', () => {
       const fields: Field[] = [
-        { name: 'Name', type: FieldType.string, values: [], config: { custom: { cellOptions: { wrapText: true } } } },
+        { name: 'Name', type: FieldType.string, values: [], config: { custom: { wrapText: true } } },
         {
           name: 'Address',
           type: FieldType.string,
           values: [],
-          config: { custom: { cellOptions: { wrapText: true } } },
+          config: { custom: { wrapText: true } },
         },
       ];
       const measurers = buildCellHeightMeasurers(fields, ctx);
@@ -1018,7 +1094,7 @@ describe('TableNG utils', () => {
           name: 'Address',
           type: FieldType.string,
           values: [],
-          config: { custom: { cellOptions: { wrapText: true } } },
+          config: { custom: { wrapText: true } },
         },
       ];
 
@@ -1032,7 +1108,7 @@ describe('TableNG utils', () => {
           name: 'Tags',
           type: FieldType.string,
           values: ['tag1,tag2', 'tag3', '["tag4","tag5","tag6"]'],
-          config: { custom: { cellOptions: { type: TableCellDisplayMode.Pill, wrapText: true } } },
+          config: { custom: { wrapText: true, cellOptions: { type: TableCellDisplayMode.Pill } } },
         },
       ];
       const measurers = buildCellHeightMeasurers(fields, ctx);
@@ -1049,7 +1125,7 @@ describe('TableNG utils', () => {
           name: 'Links',
           type: FieldType.string,
           values: ['http://example.com/1', 'http://example.com/2'],
-          config: { custom: { cellOptions: { type: TableCellDisplayMode.DataLinks, wrapText: true } } },
+          config: { custom: { wrapText: true, cellOptions: { type: TableCellDisplayMode.DataLinks } } },
           getLinks: jest.fn((): LinkModel[] => [
             { title: 'Link 1', href: 'http://example.com/1', target: '_blank', origin: { datasourceUid: 'test' } },
             { title: 'Link 2', href: 'http://example.com/2', target: '_self', origin: { datasourceUid: 'test' } },
@@ -1065,12 +1141,12 @@ describe('TableNG utils', () => {
     it('does not enable text counting for non-string fields', () => {
       const fields: Field[] = [
         { name: 'Name', type: FieldType.string, values: [], config: { custom: {} } },
-        { name: 'Age', type: FieldType.number, values: [], config: { custom: { cellOptions: { wrapText: true } } } },
+        { name: 'Age', type: FieldType.number, values: [], config: { custom: { wrapText: true } } },
       ];
 
       const measurers = buildCellHeightMeasurers(fields, ctx);
       // empty array - we had one column that indicated it wraps, but it was numeric, so we just ignore it
-      expect(measurers).toEqual([]);
+      expect(measurers).toBeUndefined();
     });
 
     it('returns an undefined if no columns are wrapped', () => {
@@ -1094,13 +1170,13 @@ describe('TableNG utils', () => {
           name: 'Name',
           type: FieldType.string,
           values: ['foo', 'bar', 'baz', 'longer one here', 'shorter'],
-          config: { custom: { cellOptions: { wrapText: true } } },
+          config: { custom: { wrapText: true } },
         },
         {
           name: 'Age',
           type: FieldType.number,
           values: [1, 2, 3, 123456, 789122349932],
-          config: { custom: { cellOptions: { wrapText: true } } },
+          config: { custom: { wrapText: true } },
         },
       ];
       measurers = [

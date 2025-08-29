@@ -273,6 +273,7 @@ function createSceneVariableFromVariableModel(variable: TypedVariableModelV2): S
     name: variable.spec.name,
     label: variable.spec.label,
     description: variable.spec.description,
+    showInControlsMenu: variable.spec.showInControlsMenu,
   };
   if (variable.kind === defaultAdhocVariableKind().kind) {
     const ds = getDataSourceForQuery(
