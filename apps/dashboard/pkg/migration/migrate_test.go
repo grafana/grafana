@@ -199,7 +199,6 @@ func TestSchemaMigrationMetrics(t *testing.T) {
 			} else {
 				require.Error(t, err, "expected migration to fail")
 			}
-
 		})
 	}
 }
