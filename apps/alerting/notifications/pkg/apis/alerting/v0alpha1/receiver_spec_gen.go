@@ -6,6 +6,7 @@ package v0alpha1
 type ReceiverIntegration struct {
 	Uid                   *string                `json:"uid,omitempty"`
 	Type                  string                 `json:"type"`
+	Version               string                 `json:"version"`
 	DisableResolveMessage *bool                  `json:"disableResolveMessage,omitempty"`
 	Settings              map[string]interface{} `json:"settings"`
 	SecureFields          map[string]bool        `json:"secureFields,omitempty"`

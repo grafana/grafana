@@ -1118,6 +1118,11 @@
       "new-alert-rule": "Yeni uyarı kuralı",
       "new-recording-rule": "Yeni kayıt kuralı"
     },
+    "enrichment": {
+      "error-boundary": {
+        "notification-message-section-extension": ""
+      }
+    },
     "error-modal": {
       "failed-to-update-your-configuration": "Yapılandırmanız güncellenemedi:",
       "title-something-went-wrong": "Bir hata oluştu"
@@ -2781,6 +2786,7 @@
           "time": "Zaman"
         }
       },
+      "error-message-prefix": "",
       "filter-group": "Filtre grubu",
       "filter-group-tooltip": "Her durum geçmişi grubunu tam eşleşmeyle veya düzenli ifadeyle filtreleyin, örn.",
       "placeholder-search": "Ara",
@@ -4013,6 +4019,7 @@
       }
     },
     "tooltip-options": {
+      "label-disable-one-click": "",
       "name-tooltip-mode": "Araç ipucu modu",
       "tooltip-mode-options": {
         "label-disabled": "Devre dışı",
@@ -6095,7 +6102,9 @@
       "save-timerange-description-current-range-default": "Mevcut zaman aralığını yeni varsayılan yapacak",
       "save-timerange-label-update-default-time-range": "Varsayılan zaman aralığını güncelle",
       "save-variables-description-current-values-default": "Mevcut değerleri yeni varsayılan yapacak",
-      "save-variables-label-update-default-variable-values": "Varsayılan değişken değerlerini güncelle"
+      "save-variables-label-update-default-variable-values": "Varsayılan değişken değerlerini güncelle",
+      "show-variables-warning-alert-body": "",
+      "show-variables-warning-alert-title": ""
     },
     "save-library-viz-panel-modal": {
       "cancel": "İptal",
@@ -9039,6 +9048,7 @@
     "name-line-width": "Çizgi genişliği",
     "name-stacking": "İstifleme"
   },
+  "inline-token-warning-badge-tooltip": "",
   "inspector": {
     "inspect-data-tab": {
       "loading": "Yükleniyor",
@@ -9525,7 +9535,7 @@
       "move-displayed-field-down": "Aşağı taşı",
       "move-displayed-field-up": "Yukarı taşı",
       "no-details": "Görüntülenecek alan yok.",
-      "open-assistant": "Bu günlük satırını Asistan'da açıklayın",
+      "open-assistant": "",
       "pin-line": "Günlüğü sabitle",
       "remove-displayed-field": "Alanı kaldır",
       "remove-log": "Günlüğü kaldır",
@@ -9551,8 +9561,8 @@
       "hide-details": "Günlük ayrıntılarını göster",
       "icon-label": "Günlük menüsü",
       "log-line": "Günlük satırı",
-      "log-line-explainer": "Bu günlük satırını kısa ve öz bir şekilde açıklayın",
-      "open-assistant": "Bu günlük satırını Asistan'da açıklayın",
+      "log-line-explainer": "",
+      "open-assistant": "",
       "pin-to-outline": "Günlüğü sabitle",
       "show-context": "İçeriği göster",
       "show-details": "Günlük ayrıntılarını gizle",
@@ -9642,6 +9652,7 @@
       "show-timestamps": "Zaman damgalarını göster",
       "show-unique-labels": "Benzersiz etiketleri göster",
       "unwrap-lines": "Satırları çöz",
+      "wrap-json-lines": "",
       "wrap-lines": "Satırları kaydır"
     },
     "logs-navigation": {
@@ -11230,6 +11241,7 @@
       "description-enabled": "Otomatik çekme etkinleştirildikten sonra hedef değiştirilemez.",
       "description-read-only": "Kaynaklar Grafana aracılığıyla değiştirilemez.",
       "description-title": "Yapılandırma için okunabilir ad",
+      "error-fetch-branches": "",
       "error-required": "Bu alan gereklidir.",
       "error-save-repository": "Depo ayarları kaydedilemedi",
       "label-automatic-pulling": "Otomatik çekme",
@@ -11442,6 +11454,16 @@
       "title-delete-all-configured-repositories": "Yapılandırılmış tüm depoları sil",
       "title-legacy-storage-detected": "Eski depolama algılandı"
     },
+    "http-utils": {
+      "access-denied": "",
+      "authentication-failed": "",
+      "http-error": "",
+      "request-failed": "",
+      "resource-not-found": "",
+      "unsupported-repository-type": ""
+    },
+    "inline-secure-values-warning": "",
+    "inline-token-warning-badge-text": "",
     "job-status": {
       "label-view-details": "Ayrıntıları görüntüleyin",
       "loading-finished-job": "Tamamlanan iş yükleniyor...",
@@ -12757,7 +12779,6 @@
     "description-frozen-columns": "",
     "description-min-column-width": "Sütunların otomatik olarak yeniden boyutlandırılması için minimum genişlik",
     "description-tooltip-from-field": "",
-    "description-wrap-header-text": "Sütun başlıkları için metin kaydırmayı etkinleştirir",
     "image-cell-options-editor": {
       "description-alt-text": "Görsel görüntülenemediğinde veya ekran okuyucu kullanan kullanıcılar için gösterilecek alternatif metin",
       "description-title-text": "İmleç görselin üzerine getirildiğinde görüntülenecek metin",
@@ -12792,11 +12813,9 @@
     "name-tooltip-from-field": "",
     "name-tooltip-placement": "",
     "name-wrap-header-text": "Başlık metnini kaydır",
+    "name-wrap-text": "",
     "placeholder-column-width": "otomatik",
     "placeholder-fields": "Tüm Sayısal Alanlar",
-    "text-wrap-options": {
-      "label-wrap-text": ""
-    },
     "tooltip-placement-options": {
       "label-auto": "",
       "label-bottom": "",

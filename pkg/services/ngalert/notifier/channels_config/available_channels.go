@@ -2,6 +2,8 @@ package channels_config
 
 import (
 	"fmt"
+	"iter"
+	"maps"
 	"os"
 	"strings"
 
@@ -2082,12 +2084,37 @@ func getSecretFields(parentPath string, options []NotifierOption) []string {
 }
 
 // ConfigForIntegrationType returns the config for the given integration type. Returns error is integration type is not known.
-func ConfigForIntegrationType(contactPointType string) (*NotifierPlugin, error) {
-	notifiers := GetAvailableNotifiers()
-	for _, n := range notifiers {
+func ConfigForIntegrationType(contactPointType string) (VersionedNotifierPlugin, error) {
+	notifiers := GetAvailableNotifiersV2()
+	for n := range notifiers {
 		if strings.EqualFold(n.Type, contactPointType) {
 			return n, nil
 		}
 	}
-	return nil, fmt.Errorf("unknown integration type '%s'", contactPointType)
+	return VersionedNotifierPlugin{}, fmt.Errorf("unknown integration type '%s'", contactPointType)
+}
+
+func GetAvailableNotifiersV2() iter.Seq[VersionedNotifierPlugin] {
+	v1 := GetAvailableNotifiers()
+	m := make(map[string]VersionedNotifierPlugin, len(v1))
+	for _, n := range v1 {
+		pl := VersionedNotifierPlugin{
+			Type:           n.Type,
+			Name:           n.Name,
+			Description:    n.Description,
+			Heading:        n.Heading,
+			Info:           n.Info,
+			CurrentVersion: "v1",
+			Versions: []NotifierPluginVersion{
+				{
+					Version:   "v1",
+					CanCreate: true,
+					Options:   n.Options,
+					Info:      "",
+				},
+			},
+		}
+		m[n.Type] = pl
+	}
+	return maps.Values(m)
 }

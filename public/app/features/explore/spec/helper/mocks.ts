@@ -7,7 +7,7 @@ import { getTestQueryList } from './testdata/testQueryList';
 // Enterprise and so we cannot import it here.
 // We have some tests for testing QL inside Explore. The whole Explore setup is in OSS, and it needs these mocks but the
 // test itself is in Enterprise. Ideally we would inject the mocks in the tests somehow.
-export const BASE_URL = getAPIBaseURL('querylibrary.grafana.app', 'v0alpha1');
+export const BASE_URL = getAPIBaseURL('queries.grafana.app', 'v1beta1');
 
 export const mockData = {
   all: {
