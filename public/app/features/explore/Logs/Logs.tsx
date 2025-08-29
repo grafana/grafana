@@ -703,7 +703,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
 
   const visibilityChangedRef = useRef(true);
   const onLogOptionsChange = useCallback(
-    (option: keyof LogListControlOptions, value: string | string[] | boolean) => {
+    (option: LogListControlOptions, value: string | string[] | boolean) => {
       if (option === 'sortOrder' && isLogsSortOrder(value)) {
         sortOrderChanged(value);
       } else if (option === 'dedupStrategy' && isDedupStrategy(value)) {

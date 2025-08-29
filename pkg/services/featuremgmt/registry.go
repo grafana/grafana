@@ -500,6 +500,13 @@ var (
 			RequiresRestart: true, // Adds a route at startup
 		},
 		{
+			Name:            "queryServiceWithConnections",
+			Description:     "Adds datasource connections to the query service",
+			Stage:           FeatureStageExperimental,
+			Owner:           grafanaDatasourcesCoreServicesSquad,
+			RequiresRestart: true, // Adds a route at startup
+		},
+		{
 			Name:            "queryServiceRewrite",
 			Description:     "Rewrite requests targeting /ds/query to the query service",
 			Stage:           FeatureStageExperimental,
@@ -532,13 +539,6 @@ var (
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaOperatorExperienceSquad,
 			FrontendOnly: false,
-		},
-		{
-			Name:         "prometheusCodeModeMetricNamesSearch",
-			Description:  "Enables search for metric names in Code Mode, to improve performance when working with an enormous number of metric names",
-			FrontendOnly: true,
-			Stage:        FeatureStageExperimental,
-			Owner:        grafanaOSSBigTent,
 		},
 		{
 			Name:         "addFieldFromCalculationStatFunctions",
@@ -1285,6 +1285,15 @@ var (
 		{
 			Name:              "alertingAIGenTemplates",
 			Description:       "Enable AI-generated alerting templates.",
+			Stage:             FeatureStageExperimental,
+			Owner:             grafanaAlertingSquad,
+			HideFromAdminPage: true,
+			HideFromDocs:      true,
+			Expression:        "false",
+		},
+		{
+			Name:              "alertingEnrichmentPerRule",
+			Description:       "Enable enrichment per rule in the alerting UI.",
 			Stage:             FeatureStageExperimental,
 			Owner:             grafanaAlertingSquad,
 			HideFromAdminPage: true,

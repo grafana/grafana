@@ -168,7 +168,6 @@
         "label-disable-recording-rules-beta": "Felvételkészítési szabályok letiltása (béta)",
         "label-http-method": "HTTP-metódus",
         "label-incremental-querying-beta": "Növekményes lekérdezés (béta)",
-        "label-metric-names-suggestion-limit": "Metrikanevek javaslatának korlátja",
         "label-prom-type-version": "{{promType}} verziója",
         "label-prometheus-type": "Prometheus-típus",
         "label-query-overlap-window": "Lekérdezésátfedési ablak",
@@ -189,7 +188,6 @@
         "tooltip-disable-recording-rules-beta": "Ez a funkció letiltja a felvételkészítési szabályokat. Kapcsolja be az irányítópult teljesítményének javítása érdekében",
         "tooltip-http-method": "A Prometheus-adatforrás lekérdezéséhez használhatja a POST- vagy a GET HTTP-metódust. A POST az ajánlott metódus, mivel nagyobb lekérdezéseket tesz lehetővé. Módosítsa ezt GET-re, ha a Prometheus-verziója régebbi, mint a 2.1-es, vagy ha a POST-kérések korlátozva vannak a hálózatában.",
         "tooltip-incremental-querying-beta": "Ez a funkció megváltoztatja a relatív lekérdezések azon alapértelmezett viselkedését, hogy mindig friss adatokat kérjenek le a Prometheus-példányból, ehelyett a lekérdezési eredményeket a rendszer gyorsítótárazza, és csak új rekordok lesznek lekérve. Kapcsolja be az adatbázis és a hálózat terhelésének csökkentése érdekében.",
-        "tooltip-metric-names-suggestion-limit": "Azon metrikanevek maximális száma, amelyek automatikus kitöltési javaslatként jelenhetnek meg a lekérdezésszerkesztő Kód módjában.",
         "tooltip-prom-type-version": "Ezzel állíthatja be a(z) {{promType}}-példány verzióját, ha nincs automatikusan konfigurálva.",
         "tooltip-prometheus-type": "Állítsa be a Prometheus-adatbázis típusára, pl.: Prometheus, Cortex, Mimir vagy Thanos. A mező módosításával menti az aktuális beállításokat. A Prometheus bizonyos típusai támogatják vagy nem támogatják a különböző API-kat. Például egyes típusok támogatják a reguláris kifejezéses egyeztetést a címkelekérdezésekhez a teljesítmény javítása érdekében. Egyes típusok rendelkeznek API-val a metaadatokhoz. Ha ezt helytelenül állítja be, furcsa viselkedést tapasztalhat a metrikák és címkék lekérdezésekor. Ellenőrizze a Prometheus dokumentációját, hogy biztosan a megfelelő típust adja meg.",
         "tooltip-query-overlap-window": "Állítson be egy időtartamot, például: {{example1}}, vagy {{example2}}, vagy {{example3}}. A(z) {{default}} alapértelmezése. Ez az időtartam hozzáadódik az egyes növekményes kérések időtartamához.",
@@ -430,10 +428,6 @@
         "placeholder-auto": "automatikus",
         "title-options": "Beállítások",
         "tooltip-min-step": "További alsó határérték a Prometheus-lekérdezés léptékparaméteréhez, valamint a(z) <2>{{interval}}</2> és <4>{{rateInterval}}</4> változóhoz."
-      },
-      "prom-query-code-editor-autocomplete-info": {
-        "autocomplete-suggestions-limited": "Automatikus kitöltési javaslatok korlátozva",
-        "tooltip-autocomplete-suggestions-limited": "A metrikanevek száma meghaladja az automatikus kitöltés korlátját. Csak a(z) {{autocompleteLimit}} legrelevánsabb metrika jelenik meg. A küszöbértéket az adatforrás beállításai között módosíthatja."
       },
       "prom-query-editor-selector": {
         "body-syntax-error": "Szintaktikai hiba történt, vagy a lekérdezési struktúra nem jeleníthető meg szerkesztő módra való váltáskor. A lekérdezés egyes részei elveszhetnek.",

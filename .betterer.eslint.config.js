@@ -16,7 +16,7 @@ const grafanaI18nPlugin = require('@grafana/i18n/eslint-plugin');
 // as we just want to pull in all of the necessary configuration but not run the rules
 // (this should only be concerned with checking rules that we want to improve,
 // so there's no need to try and run the rules that will be linted properly anyway)
-const mappedBaseConfigs = grafanaConfig.map((config) => {
+const mappedBaseConfigs = grafanaConfig.map((/** @type {import('eslint').Linter.Config} */ config) => {
   const { rules, ...baseConfig } = config;
   return baseConfig;
 });
