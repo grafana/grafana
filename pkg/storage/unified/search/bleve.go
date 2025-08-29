@@ -1273,7 +1273,7 @@ func (b *bleveIndex) updateIndexWithLatestModifications(ctx context.Context, req
 
 	startTime := time.Now()
 	listRV, docs, err := b.updaterFn(ctx, b, sinceRV)
-	if err == nil && listRV > 0 {
+	if err == nil && listRV > 0 && listRV != sinceRV {
 		err = b.updateResourceVersion(listRV) // updates b.resourceVersion
 	}
 
