@@ -61,13 +61,14 @@ export class LogListModel implements LogRowModel {
   private _highlightedBody: string | undefined = undefined;
   private _fields: FieldDef[] | undefined = undefined;
   private _getFieldLinks: GetFieldLinksFn | undefined = undefined;
+  private _prettifyJSON: boolean;
   private _virtualization?: LogLineVirtualization;
   private _wrapLogMessage: boolean;
   private _json = false;
 
   constructor(
     log: LogRowModel,
-    { escape, getFieldLinks, grammar, timeZone, virtualization, wrapLogMessage }: PreProcessLogOptions
+    { escape, getFieldLinks, grammar, prettifyJSON, timeZone, virtualization, wrapLogMessage }: PreProcessLogOptions
   ) {
     // LogRowModel
     this.datasourceType = log.datasourceType;
@@ -98,6 +99,7 @@ export class LogListModel implements LogRowModel {
     this.displayLevel = logLevelToDisplayLevel(log.logLevel);
     this._getFieldLinks = getFieldLinks;
     this._grammar = grammar;
+    this._prettifyJSON = Boolean(prettifyJSON);
     this.timestamp = dateTimeFormat(log.timeEpochMs, {
       timeZone,
       // YYYY-MM-DD HH:mm:ss.SSS
@@ -129,7 +131,7 @@ export class LogListModel implements LogRowModel {
         if (typeof parsed === 'object' && parsed !== null && !(parsed instanceof LosslessNumber)) {
           this._json = true;
         }
-        const reStringified = this._wrapLogMessage ? stringify(parsed, undefined, 2) : this.raw;
+        const reStringified = this._wrapLogMessage && this._prettifyJSON ? stringify(parsed, undefined, 2) : this.raw;
         if (reStringified) {
           this.raw = reStringified;
         }
@@ -243,6 +245,7 @@ export interface PreProcessOptions {
   escape: boolean;
   getFieldLinks?: GetFieldLinksFn;
   order: LogsSortOrder;
+  prettifyJSON?: boolean;
   timeZone: string;
   virtualization?: LogLineVirtualization;
   wrapLogMessage: boolean;
@@ -250,7 +253,7 @@ export interface PreProcessOptions {
 
 export const preProcessLogs = (
   logs: LogRowModel[],
-  { escape, getFieldLinks, order, timeZone, virtualization, wrapLogMessage }: PreProcessOptions,
+  { escape, getFieldLinks, order, prettifyJSON, timeZone, virtualization, wrapLogMessage }: PreProcessOptions,
   grammar?: Grammar
 ): LogListModel[] => {
   const orderedLogs = sortLogRows(logs, order);
@@ -259,6 +262,7 @@ export const preProcessLogs = (
       escape,
       getFieldLinks,
       grammar,
+      prettifyJSON,
       timeZone,
       virtualization,
       wrapLogMessage,
@@ -270,6 +274,7 @@ interface PreProcessLogOptions {
   escape: boolean;
   getFieldLinks?: GetFieldLinksFn;
   grammar?: Grammar;
+  prettifyJSON?: boolean;
   timeZone: string;
   virtualization?: LogLineVirtualization;
   wrapLogMessage: boolean;

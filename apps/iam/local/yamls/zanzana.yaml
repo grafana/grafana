@@ -88,11 +88,7 @@ metadata:
     name: zanzana
 data:
   grafana.ini: |
-    app_mode = development
     target = zanzana-server
-
-    [log]
-    level = info
 
     [database]
     type = postgres
@@ -103,17 +99,27 @@ data:
 
     [feature_toggles]
     zanzana = true
-    authZGRPCServer = true
-
-    [zanzana.server]
-    allow_insecure = true
-    check_query_cache = true
-    http_addr = 0.0.0.0:8080
 
     [grpc_server]
     enabled = true
     address = 0.0.0.0:50051
     enable_logging = true
+    use_tls = false
+
+    [log]
+    level = debug
+
+    [server]
+    http_port = 8080
+
+    [zanzana.server]
+    check_query_cache = true
+    check_query_cache_enabled = true
+    check_query_cache_ttl = 10s
+    list_objects_deadline = 3s
+    list_objects_max_results = 1000
+    signing_keys_url = http://host.docker.internal:8080/v1/keys
+    use_streamed_list_objects = false
 ---
 apiVersion: v1
 kind: Service
@@ -124,10 +130,10 @@ metadata:
     name: zanzana
 spec:
   ports:
-    - name: http
+    - name: zanzana-http-metrics
       port: 8080
       targetPort: 8080
-    - name: grpc
+    - name: zanzana-grpc
       port: 50051
       targetPort: 50051
   selector:
@@ -159,19 +165,26 @@ spec:
           env:
             - name: GF_PATHS_CONFIG
               value: /etc/grafana-config/grafana.ini
-          image: grafana/grafana-oss-dev:12.2.0-257970
+          image: grafana/grafana-dev:12.2.0-257970
           imagePullPolicy: IfNotPresent
           name: zanzana
+          ports:
+            - containerPort: 50051
+              name: grpc
+            - containerPort: 8080
+              name: http-metrics
+          readinessProbe:
+            grpc:
+              port: 50051
+            initialDelaySeconds: 10
+            timeoutSeconds: 5
           volumeMounts:
             - mountPath: /etc/grafana-config
               name: zanzana-config
-            - mountPath: /var/lib/grafana
-              name: zanzana-storage
       serviceAccount: zanzana
       volumes:
         - configMap:
             name: zanzana-config
           name: zanzana-config
-        - emptyDir: {}
-          name: zanzana-storage
 ---
+
