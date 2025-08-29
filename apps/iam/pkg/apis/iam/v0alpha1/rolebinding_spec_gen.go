@@ -7,8 +7,7 @@ type RoleBindingspecSubject struct {
 	// kind of the identity getting the permission
 	Kind RoleBindingSpecSubjectKind `json:"kind"`
 	// uid of the identity
-	Name      string `json:"name"`
-	Namespace string `json:"namespace"`
+	Name string `json:"name"`
 }
 
 // NewRoleBindingspecSubject creates a new RoleBindingspecSubject object.

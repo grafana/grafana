@@ -627,15 +627,8 @@ func schema_pkg_apis_iam_v0alpha1_GlobalRoleBindingspecSubject(ref common.Refere
 							Format:      "",
 						},
 					},
-					"namespace": {
-						SchemaProps: spec.SchemaProps{
-							Default: "",
-							Type:    []string{"string"},
-							Format:  "",
-						},
-					},
 				},
-				Required: []string{"kind", "name", "namespace"},
+				Required: []string{"kind", "name"},
 			},
 		},
 	}
@@ -1501,15 +1494,8 @@ func schema_pkg_apis_iam_v0alpha1_RoleBindingspecSubject(ref common.ReferenceCal
 							Format:      "",
 						},
 					},
-					"namespace": {
-						SchemaProps: spec.SchemaProps{
-							Default: "",
-							Type:    []string{"string"},
-							Format:  "",
-						},
-					},
 				},
-				Required: []string{"kind", "name", "namespace"},
+				Required: []string{"kind", "name"},
 			},
 		},
 	}

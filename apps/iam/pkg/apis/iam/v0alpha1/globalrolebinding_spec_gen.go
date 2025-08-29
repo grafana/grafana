@@ -7,8 +7,7 @@ type GlobalRoleBindingspecSubject struct {
 	// kind of the identity getting the permission
 	Kind GlobalRoleBindingSpecSubjectKind `json:"kind"`
 	// uid of the identity
-	Name      string `json:"name"`
-	Namespace string `json:"namespace"`
+	Name string `json:"name"`
 }
 
 // NewGlobalRoleBindingspecSubject creates a new GlobalRoleBindingspecSubject object.
