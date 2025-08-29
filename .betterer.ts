@@ -3,7 +3,7 @@ import { promises as fs } from 'fs';
 
 // Avoid using functions that report the position of the issues, as this causes a lot of merge conflicts
 export default {
-  'no undocumented stories': () => countUndocumentedStories().include('**/!(*.internal).story.tsx'),
+  'no undocumented stories': () => countUndocumentedStories().include('**/*.story.tsx'),
   'no skipping a11y tests in stories': () => countSkippedA11yTestStories().include('**/*.story.tsx'),
   'no gf-form usage': () =>
     regexp(/gf-form/gm, 'gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.')
