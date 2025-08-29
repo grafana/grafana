@@ -13,13 +13,14 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/tracing"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana-plugin-sdk-go/live"
-	"github.com/grafana/grafana/pkg/tsdb/grafana-pyroscope-datasource/kinds/dataquery"
-	typesv1 "github.com/grafana/pyroscope/api/gen/proto/go/types/v1"
 	"github.com/xlab/treeprint"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
 	"golang.org/x/sync/errgroup"
+
+	"github.com/grafana/grafana/pkg/tsdb/grafana-pyroscope-datasource/annotation"
+	"github.com/grafana/grafana/pkg/tsdb/grafana-pyroscope-datasource/kinds/dataquery"
 )
 
 type queryModel struct {
@@ -454,19 +455,6 @@ func walkTree(tree *ProfileTree, fn func(tree *ProfileTree)) {
 	}
 }
 
-type TimedAnnotation struct {
-	Timestamp  int64                      `json:"timestamp"`
-	Annotation *typesv1.ProfileAnnotation `json:"annotation"`
-}
-
-func (ta *TimedAnnotation) getKey() string {
-	return ta.Annotation.Key
-}
-
-func (ta *TimedAnnotation) getValue() string {
-	return ta.Annotation.Value
-}
-
 // isCumulativeProfile determines if a profile type requires rate calculation using the metadata registry
 func isCumulativeProfile(profileTypeID string) bool {
 	registry := GetProfileMetadataRegistry()
@@ -500,7 +488,7 @@ func convertToRateUnit(originalUnit string) string {
 
 func seriesToDataFrames(resp *SeriesResponse, withAnnotations bool, stepDurationSec float64, profileTypeID string) ([]*data.Frame, error) {
 	frames := make([]*data.Frame, 0, len(resp.Series))
-	annotations := make([]*TimedAnnotation, 0)
+	annotations := make([]*annotation.TimedAnnotation, 0)
 
 	for _, series := range resp.Series {
 		// We create separate data frames as the series may not have the same length
@@ -555,7 +543,7 @@ func seriesToDataFrames(resp *SeriesResponse, withAnnotations bool, stepDuration
 			valueField.Append(value)
 			if withAnnotations {
 				for _, a := range point.Annotations {
-					annotations = append(annotations, &TimedAnnotation{
+					annotations = append(annotations, &annotation.TimedAnnotation{
 						Timestamp:  point.Timestamp,
 						Annotation: a,
 					})
@@ -568,7 +556,7 @@ func seriesToDataFrames(resp *SeriesResponse, withAnnotations bool, stepDuration
 	}
 
 	if len(annotations) > 0 {
-		frame, err := createAnnotationFrame(annotations)
+		frame, err := annotation.CreateAnnotationFrame(annotations)
 		if err != nil {
 			return nil, err
 		}

@@ -10,6 +10,8 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	typesv1 "github.com/grafana/pyroscope/api/gen/proto/go/types/v1"
+
+	"github.com/grafana/grafana/pkg/tsdb/grafana-pyroscope-datasource/annotation"
 )
 
 // This is where the tests for the datasource backend live.
@@ -313,7 +315,7 @@ func Test_seriesToDataFrameAnnotations(t *testing.T) {
 							Timestamp: int64(1609455600000),
 							Value:     30,
 							Annotations: []*typesv1.ProfileAnnotation{
-								{Key: string(profileAnnotationKeyThrottled), Value: rawAnnotation},
+								{Key: string(annotation.ProfileAnnotationKeyThrottled), Value: rawAnnotation},
 							},
 						},
 					},
@@ -337,7 +339,7 @@ func Test_seriesToDataFrameAnnotations(t *testing.T) {
 							Timestamp: int64(1609455600000),
 							Value:     30,
 							Annotations: []*typesv1.ProfileAnnotation{
-								{Key: string(profileAnnotationKeyThrottled), Value: rawAnnotation},
+								{Key: string(annotation.ProfileAnnotationKeyThrottled), Value: rawAnnotation},
 							},
 						},
 					},
