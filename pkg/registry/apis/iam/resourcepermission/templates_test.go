@@ -54,15 +54,15 @@ func TestListResourcePermissionsQuery(t *testing.T) {
 				{
 					Name: "with_actions",
 					Data: getListResourcePermissionsQuery(&ListResourcePermissionsQuery{
-						Actions:    "dashboards",
 						Pagination: common.Pagination{Limit: 10, Continue: 0},
 					}),
 				},
 				{
 					Name: "with_uid",
 					Data: getListResourcePermissionsQuery(&ListResourcePermissionsQuery{
-						ResourceUID: "user123",
-						Pagination:  common.Pagination{Limit: 10, Continue: 0},
+						Scope:      "123",
+						ActionSets: []string{"dashboards:admin", "dashboards:edit", "dashboards:view"},
+						Pagination: common.Pagination{Limit: 10, Continue: 0},
 					}),
 				},
 				{
@@ -75,11 +75,10 @@ func TestListResourcePermissionsQuery(t *testing.T) {
 				{
 					Name: "with_all_fields",
 					Data: getListResourcePermissionsQuery(&ListResourcePermissionsQuery{
-						ResourceUID:       "team456",
-						OrgID:             3,
-						Actions:           "folders",
-						ManagedRolePrefix: "managed:%",
-						Pagination:        common.Pagination{Limit: 20, Continue: 10},
+						Scope:      "123",
+						OrgID:      3,
+						ActionSets: []string{"folders:admin", "folders:edit", "folders:view"},
+						Pagination: common.Pagination{Limit: 20, Continue: 10},
 					}),
 				},
 			},

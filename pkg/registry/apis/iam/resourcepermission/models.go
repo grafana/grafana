@@ -9,12 +9,9 @@ import (
 
 	v0alpha1 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/common"
-	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
 var (
-	_ resource.ListIterator = (*listIterator)(nil)
-
 	errNotImplemented                = fmt.Errorf("not implemented")
 	errEmptyName                     = fmt.Errorf("name cannot be empty")
 	ErrDatabaseHelper                = fmt.Errorf("failed to get database")
@@ -26,10 +23,9 @@ var (
 )
 
 type ListResourcePermissionsQuery struct {
-	Scope   string
-	OrgID   int64
-	Actions string
-
+	Scope      string
+	OrgID      int64
+	ActionSets []string
 	Pagination common.Pagination
 }
 
@@ -45,51 +41,28 @@ type flatResourcePermission struct {
 	IsServiceAccount bool      `xorm:"is_service_account"`
 }
 
-func toV0ResourcePermission(flatPerms []flatResourcePermission) *v0alpha1.ResourcePermission {
-	if len(flatPerms) == 0 {
+func toV0ResourcePermission(permissionGroups map[string][]flatResourcePermission, name string) *v0alpha1.ResourcePermission {
+	if len(permissionGroups) == 0 {
 		return nil
 	}
 
-	first := flatPerms[0]
-
-	var name string
-	var permissionKind v0alpha1.ResourcePermissionSpecPermissionKind
-	var permissionName string
-
-	switch first.SubjectType {
-	case "user":
-		name = first.SubjectUID
-		permissionKind = v0alpha1.ResourcePermissionSpecPermissionKindUser
-		permissionName = first.SubjectUID
-	case "team":
-		name = first.SubjectUID
-		permissionKind = v0alpha1.ResourcePermissionSpecPermissionKindTeam
-		permissionName = first.SubjectUID
-	case "builtin_role":
-		name = first.SubjectUID
-		permissionKind = v0alpha1.ResourcePermissionSpecPermissionKindBasicRole
-		permissionName = first.SubjectUID
-	default:
-		// Default case, shouldn't happen but handle gracefully
-		name = "unknown"
-		permissionKind = v0alpha1.ResourcePermissionSpecPermissionKindUser
-		permissionName = "unknown"
+	var firstPerm flatResourcePermission
+	var found bool
+	for _, perms := range permissionGroups {
+		if len(perms) > 0 {
+			firstPerm = perms[0]
+			found = true
+			break
+		}
 	}
 
-	if first.IsServiceAccount {
-		permissionKind = v0alpha1.ResourcePermissionSpecPermissionKindServiceAccount
+	if !found {
+		return nil
 	}
 
-	verbs := make([]string, 0, len(flatPerms))
-	for _, perm := range flatPerms {
-		verbs = append(verbs, perm.Action)
-	}
-
-	// Parse the scope to get resource information
-	// Scope format is typically like "dashboards:*" or "dashboards:uid:abc123"
 	var apiGroup, resourceType, resourceName string
-	if len(flatPerms) > 0 && flatPerms[0].Scope != "" {
-		parts := strings.Split(flatPerms[0].Scope, ":")
+	if firstPerm.Scope != "" {
+		parts := strings.Split(firstPerm.Scope, ":")
 		if len(parts) >= 1 {
 			resourceType = parts[0]
 			apiGroup = getApiGroupForResource(resourceType)
@@ -105,12 +78,61 @@ func toV0ResourcePermission(flatPerms []flatResourcePermission) *v0alpha1.Resour
 		resourceName = "*"
 	}
 
+	// Build permissions array for all users/teams/roles
+	permissions := make([]v0alpha1.ResourcePermissionspecPermission, 0, len(permissionGroups))
+
+	for _, perms := range permissionGroups {
+		if len(perms) == 0 {
+			continue
+		}
+
+		first := perms[0]
+		var permissionKind v0alpha1.ResourcePermissionSpecPermissionKind
+
+		switch first.SubjectType {
+		case "user":
+			permissionKind = v0alpha1.ResourcePermissionSpecPermissionKindUser
+		case "team":
+			permissionKind = v0alpha1.ResourcePermissionSpecPermissionKindTeam
+		case "builtin_role":
+			permissionKind = v0alpha1.ResourcePermissionSpecPermissionKindBasicRole
+		default:
+			permissionKind = v0alpha1.ResourcePermissionSpecPermissionKindUser
+		}
+
+		if first.IsServiceAccount {
+			permissionKind = v0alpha1.ResourcePermissionSpecPermissionKindServiceAccount
+		}
+
+		actions := make([]string, 0, len(perms))
+		for _, perm := range perms {
+			actions = append(actions, strings.Split(perm.Action, ":")[1])
+		}
+
+		verbs := make([]string, 0, 1)
+		if contains(actions, "admin") {
+			verbs = append(verbs, "admin")
+		}
+		if contains(actions, "edit") {
+			verbs = append(verbs, "edit")
+		}
+		if contains(actions, "view") {
+			verbs = append(verbs, "view")
+		}
+
+		permissions = append(permissions, v0alpha1.ResourcePermissionspecPermission{
+			Kind:  permissionKind,
+			Name:  first.SubjectUID,
+			Verbs: verbs,
+		})
+	}
+
 	return &v0alpha1.ResourcePermission{
 		TypeMeta: v0alpha1.ResourcePermissionInfo.TypeMeta(),
 		ObjectMeta: metav1.ObjectMeta{
 			Name:              name,
-			ResourceVersion:   first.Updated.Format(time.RFC3339),
-			CreationTimestamp: metav1.NewTime(first.Created),
+			ResourceVersion:   firstPerm.Updated.Format(time.RFC3339),
+			CreationTimestamp: metav1.NewTime(firstPerm.Created),
 		},
 		Spec: v0alpha1.ResourcePermissionSpec{
 			Resource: v0alpha1.ResourcePermissionspecResource{
@@ -118,13 +140,7 @@ func toV0ResourcePermission(flatPerms []flatResourcePermission) *v0alpha1.Resour
 				Resource: resourceType,
 				Name:     resourceName,
 			},
-			Permissions: []v0alpha1.ResourcePermissionspecPermission{
-				{
-					Kind:  permissionKind,
-					Name:  permissionName,
-					Verbs: verbs,
-				},
-			},
+			Permissions: permissions,
 		},
 	}
 }
@@ -140,4 +156,13 @@ func getApiGroupForResource(resourceType string) string {
 	default:
 		return "core.grafana.app"
 	}
+}
+
+func contains(slice []string, item string) bool {
+	for _, s := range slice {
+		if s == item {
+			return true
+		}
+	}
+	return false
 }
