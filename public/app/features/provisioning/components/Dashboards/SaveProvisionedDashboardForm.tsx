@@ -210,7 +210,6 @@ export function SaveProvisionedDashboardForm({
                       <ProvisioningAwareFolderPicker
                         onChange={async (uid?: string, title?: string) => {
                           onChange({ uid, title });
-                          // Update folderUid URL param
                           updateURLParams('folderUid', uid);
                           const meta = await getProvisionedMeta(uid);
                           dashboard.setState({
@@ -284,7 +283,8 @@ async function validateTitle(title: string, formValues: ProvisionedDashboardForm
 
 // Update the URL params without reloading the page
 function updateURLParams(param: string, value?: string) {
-  if (!value) {
+  // only check undefine and null, empty string = root folder, we still want to update the URL
+  if (value === undefined || value === null) {
     return;
   }
   const url = new URL(window.location.href);
