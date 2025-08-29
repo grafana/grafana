@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
 
-import { isNodeExpandable } from './scopesTreeUtils';
 import { TreeNode } from './types';
 
 // Uses enum to enable extension in the future
