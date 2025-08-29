@@ -23,6 +23,7 @@ import (
 	dashv2alpha1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1"
 	dashv2beta1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1"
 	"github.com/grafana/grafana/apps/dashboard/pkg/migration"
+	"github.com/grafana/grafana/apps/dashboard/pkg/migration/schemaversion"
 	migrationtestutil "github.com/grafana/grafana/apps/dashboard/pkg/migration/testutil"
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -777,5 +778,124 @@ func TestConversionLoggingFields(t *testing.T) {
 				t.Log("✓ Structured logging fields populated")
 			})
 		}
+	})
+}
+
+func TestConvertAPIVersionToFuncName(t *testing.T) {
+	testCases := []struct {
+		name     string
+		input    string
+		expected string
+	}{
+		{
+			name:     "v0alpha1 with full API version",
+			input:    "dashboard.grafana.app/v0alpha1",
+			expected: "V0",
+		},
+		{
+			name:     "v1beta1 with full API version",
+			input:    "dashboard.grafana.app/v1beta1",
+			expected: "V1",
+		},
+		{
+			name:     "v2alpha1 with full API version",
+			input:    "dashboard.grafana.app/v2alpha1",
+			expected: "V2alpha1",
+		},
+		{
+			name:     "v2beta1 with full API version",
+			input:    "dashboard.grafana.app/v2beta1",
+			expected: "V2beta1",
+		},
+		{
+			name:     "v0alpha1 without group",
+			input:    "v0alpha1",
+			expected: "V0",
+		},
+		{
+			name:     "v1beta1 without group",
+			input:    "v1beta1",
+			expected: "V1",
+		},
+		{
+			name:     "v2alpha1 without group",
+			input:    "v2alpha1",
+			expected: "V2alpha1",
+		},
+		{
+			name:     "v2beta1 without group",
+			input:    "v2beta1",
+			expected: "V2beta1",
+		},
+		{
+			name:     "unknown version",
+			input:    "unknown/version",
+			expected: "version",
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			result := convertAPIVersionToFuncName(tc.input)
+			require.Equal(t, tc.expected, result)
+		})
+	}
+}
+
+func TestGetErroredConversionFunc(t *testing.T) {
+	testCases := []struct {
+		name           string
+		err            error
+		expectedResult string
+	}{
+		{
+			name:           "conversion error with function name",
+			err:            NewConversionError("test error", "v2alpha1", "v2beta1", "ConvertDashboard_V2alpha1_to_V2beta1"),
+			expectedResult: "ConvertDashboard_V2alpha1_to_V2beta1",
+		},
+		{
+			name:           "migration error with function name",
+			err:            schemaversion.NewMigrationError("test error", 1, 2, "migration.Migrate"),
+			expectedResult: "migration.Migrate",
+		},
+		{
+			name:           "regular error",
+			err:            fmt.Errorf("regular error"),
+			expectedResult: "",
+		},
+		{
+			name:           "nil error",
+			err:            nil,
+			expectedResult: "",
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			result := getErroredConversionFunc(tc.err)
+			require.Equal(t, tc.expectedResult, result)
+		})
+	}
+}
+
+func TestConversionError(t *testing.T) {
+	t.Run("conversion error creation and methods", func(t *testing.T) {
+		err := NewConversionError("test error message", "v0alpha1", "v1beta1", "TestFunction")
+
+		// Test Error() method
+		expectedErrorMsg := "conversion from v0alpha1 to v1beta1 failed in TestFunction: test error message"
+		require.Equal(t, expectedErrorMsg, err.Error())
+
+		// Test GetFunctionName() method
+		require.Equal(t, "TestFunction", err.GetFunctionName())
+
+		// Test GetCurrentAPIVersion() method
+		require.Equal(t, "v0alpha1", err.GetCurrentAPIVersion())
+
+		// Test GetTargetAPIVersion() method
+		require.Equal(t, "v1beta1", err.GetTargetAPIVersion())
+
+		// Test that it implements the error interface
+		var _ error = err
 	})
 }
