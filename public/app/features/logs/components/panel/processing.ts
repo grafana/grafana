@@ -58,7 +58,7 @@ export class LogListModel implements LogRowModel {
   private _currentSearch: string | undefined = undefined;
   private _grammar?: Grammar;
   private _highlightedBody: string | undefined = undefined;
-  private _tokens: Array<string | Token> | undefined = undefined;
+  private _highlightTokens: Array<string | Token> | undefined = undefined;
   private _fields: FieldDef[] | undefined = undefined;
   private _getFieldLinks: GetFieldLinksFn | undefined = undefined;
   private _prettifyJSON: boolean;
@@ -161,22 +161,23 @@ export class LogListModel implements LogRowModel {
   get highlightedBody() {
     if (this._highlightedBody === undefined) {
       // Body is accessed first to trigger the getter code before generateLogGrammar()
+      const body = this.body;
       this._grammar = this._grammar ?? generateLogGrammar(this);
       const extraGrammar = generateTextMatchGrammar(this.searchWords, this._currentSearch);
-      this._highlightedBody = Prism.highlight(this.body, { ...extraGrammar, ...this._grammar }, 'logs');
+      this._highlightedBody = Prism.highlight(body, { ...extraGrammar, ...this._grammar }, 'logs');
     }
     return this._highlightedBody;
   }
 
   get highlightedBodyTokens() {
-    if (this._tokens === undefined) {
+    if (this._highlightTokens === undefined) {
       // Body is accessed first to trigger the getter code before generateLogGrammar()
+      const body = this.body;
       this._grammar = this._grammar ?? generateLogGrammar(this);
       const extraGrammar = generateTextMatchGrammar(this.searchWords, this._currentSearch);
-      this._tokens = Prism.tokenize(this.body, { ...extraGrammar, ...this._grammar });
-      console.log(this._tokens);
+      this._highlightTokens = Prism.tokenize(body, { ...extraGrammar, ...this._grammar });
     }
-    return this._tokens;
+    return this._highlightTokens;
   }
 
   get isJSON() {
@@ -233,21 +234,21 @@ export class LogListModel implements LogRowModel {
     if (this.collapsed === undefined || collapsed === undefined) {
       this.collapsed = collapsed;
       this._body = undefined;
-      this._highlightedBody = undefined;
+      this._highlightTokens = undefined;
     }
   }
 
   setCollapsedState(collapsed: boolean) {
     if (this.collapsed !== collapsed) {
       this._body = undefined;
-      this._highlightedBody = undefined;
+      this._highlightTokens = undefined;
     }
     this.collapsed = collapsed;
   }
 
   setCurrentSearch(search: string | undefined) {
     this._currentSearch = search;
-    this._highlightedBody = undefined;
+    this._highlightTokens = undefined;
   }
 }
 
