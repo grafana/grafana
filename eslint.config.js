@@ -188,10 +188,6 @@ module.exports = [
           message: 'No bare anchor nodes containing only text. Use `TextLink` instead.',
         },
       ],
-      // FIXME: Fix these in follow up PR
-      'react/no-unescaped-entities': 'off',
-      // Turn off react-hooks/rules-of-hooks whilst present in betterer
-      'react-hooks/rules-of-hooks': 'off',
     },
   },
 
@@ -210,25 +206,6 @@ module.exports = [
             },
           ],
         }),
-      ],
-    },
-  },
-
-  {
-    name: 'grafana/no-extensions-imports',
-    files: ['**/*.{ts,tsx,js}'],
-    ignores: ['public/app/extensions/**/*'],
-    rules: {
-      'no-restricted-imports': [
-        'error',
-        {
-          patterns: [
-            {
-              group: ['app/extensions', 'app/extensions/*'],
-              message: 'Importing from app/extensions is not allowed',
-            },
-          ],
-        },
       ],
     },
   },
