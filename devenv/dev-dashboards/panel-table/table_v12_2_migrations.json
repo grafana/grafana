@@ -950,6 +950,21 @@
                 ]
               }
             ]
+          },
+          {
+            "matcher": {
+              "id": "byNames",
+              "options": {
+                "mode": "include",
+                "names": ["Min", "Max"]
+              }
+            },
+            "properties": [
+              {
+                "id": "custom.footer.reducer",
+                "value": ["max"]
+              }
+            ]
           }
         ]
       },
@@ -962,13 +977,6 @@
       "id": 2,
       "options": {
         "cellHeight": "sm",
-        "footer": {
-          "countRows": false,
-          "enablePagination": false,
-          "fields": ["Min", "Max"],
-          "reducer": ["max"],
-          "show": true
-        },
         "frameIndex": 0,
         "frozenColumns": {
           "left": 1

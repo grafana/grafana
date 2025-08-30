@@ -510,6 +510,9 @@ func migrateDefaults(prevDefaults map[string]interface{}) map[string]interface{}
 				"type": "auto",
 			},
 			"inspect": false,
+			"footer": map[string]interface{}{
+				"reducer": []interface{}{},
+			},
 		},
 		"mappings": []interface{}{},
 	}

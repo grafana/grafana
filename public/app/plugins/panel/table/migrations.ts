@@ -9,6 +9,7 @@ import {
   FieldConfig,
   DataFrame,
   FieldType,
+  ByNamesMatcherMode,
 } from '@grafana/data';
 import { ReduceTransformerOptions } from '@grafana/data/internal';
 
@@ -27,6 +28,7 @@ export const tableMigrationHandler = (panel: PanelModel<Options>): Partial<Optio
 
   migrateTextWrapToFieldLevel(panel);
   migrateHiddenFields(panel);
+  migrateFooterV2(panel);
 
   // Nothing changed
   return panel.options;
@@ -345,4 +347,44 @@ export const migrateHiddenFields = (panel: PanelModel<Partial<Options>>) => {
   });
 
   return panel;
+};
+
+export const migrateFooterV2 = (panel: PanelModel<Options>) => {
+  const oldFooter = panel.options?.footer;
+
+  if (oldFooter) {
+    if (oldFooter.show) {
+      const reducers = oldFooter.reducer;
+
+      panel.fieldConfig.defaults.custom = {
+        ...panel.fieldConfig.defaults.custom,
+        footer: {
+          reducer: reducers,
+        },
+      };
+
+      if (oldFooter.countRows && oldFooter.reducer[0] === 'count') {
+        panel.fieldConfig.defaults.custom.footer.reducer = ['countAll'];
+      }
+
+      if (oldFooter.fields && oldFooter.fields.length > 0) {
+        delete panel.fieldConfig.defaults.custom.footer;
+
+        // Fields is an array of field names, so push a byNames matcher
+        // on with the matched reducer.
+        panel.fieldConfig.overrides.push({
+          matcher: {
+            id: FieldMatcherID.byNames,
+            options: {
+              mode: ByNamesMatcherMode.include,
+              names: oldFooter.fields,
+            },
+          },
+          properties: [{ id: 'custom.footer.reducer', value: reducers }],
+        });
+      }
+
+      delete panel.options.footer;
+    }
+  }
 };
