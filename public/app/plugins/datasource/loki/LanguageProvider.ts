@@ -13,7 +13,14 @@ import {
   extractLogParserFromDataFrame,
   extractUnwrapLabelKeysFromDataFrame,
 } from './responseUtils';
-import { DetectedFieldsResult, LabelType, LokiQuery, LokiQueryType, ParserAndLabelKeysResult } from './types';
+import {
+  DetectedFieldsResult,
+  LabelType,
+  LokiGlobalConfig,
+  LokiQuery,
+  LokiQueryType,
+  ParserAndLabelKeysResult,
+} from './types';
 
 const NS_IN_MS = 1000000;
 const EMPTY_SELECTOR = '{}';
@@ -53,6 +60,25 @@ export default class LokiLanguageProvider extends LanguageProvider {
   ) => {
     try {
       return await this.datasource.metadataRequest(url, params, requestOptions);
+    } catch (error) {
+      if (throwError) {
+        throw error;
+      } else {
+        console.error(error);
+      }
+    }
+
+    return undefined;
+  };
+
+  configRequest = async (
+    url?: string,
+    params?: Record<string, string | number>,
+    throwError?: boolean,
+    requestOptions?: Partial<BackendSrvRequest>
+  ) => {
+    try {
+      return await this.datasource.configRequest(url, params, requestOptions);
     } catch (error) {
       if (throwError) {
         throw error;
@@ -254,6 +280,18 @@ export default class LokiLanguageProvider extends LanguageProvider {
   // Round nanoseconds epoch to nearest 5 minute interval
   private roundTime(nanoseconds: number): number {
     return nanoseconds ? Math.floor(nanoseconds / NS_IN_MS / 1000 / 60 / 5) : 0;
+  }
+
+  async getGlobalConfig(requestOptions?: Partial<BackendSrvRequest>): Promise<LokiGlobalConfig | Error> {
+    return new Promise(async (resolve, reject) => {
+      try {
+        const data = await this.configRequest(undefined, undefined, true, requestOptions);
+        resolve(data);
+      } catch (error) {
+        console.error('error', error);
+        reject(error);
+      }
+    });
   }
 
   async fetchDetectedFields(

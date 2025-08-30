@@ -108,4 +108,7 @@ export interface DetectedFieldsResult {
   limit: number;
 }
 
+export interface LokiGlobalConfig {}
+export interface LokiTenantConfig {}
+
 export type LokiGroupedRequest = { request: DataQueryRequest<LokiQuery>; partition: TimeRange[] };
