@@ -34,7 +34,7 @@ func (f fingerprint) writeString(s string) {
 		f.writeBytes(nil)
 		return
 	}
-	// #nosec G103
+	// #nosec G103 -- nosemgrep: use-of-unsafe-block
 	// avoid allocation when converting string to byte slice
 	f.writeBytes(unsafe.Slice(unsafe.StringData(s), len(s)))
 }
