@@ -998,4 +998,8 @@ const (
 	// FlagTeamFolders
 	// Enables team folders functionality
 	FlagTeamFolders = "teamFolders"
+
+	// FlagGrafanaPathfinder
+	// Enables Pathfinder app
+	FlagGrafanaPathfinder = "grafanaPathfinder"
 )

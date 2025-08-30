@@ -1106,4 +1106,8 @@ export interface FeatureToggles {
   * @default false
   */
   teamFolders?: boolean;
+  /**
+  * Enables Pathfinder app
+  */
+  grafanaPathfinder?: boolean;
 }
