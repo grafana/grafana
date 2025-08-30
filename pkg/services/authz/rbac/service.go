@@ -30,10 +30,8 @@ import (
 )
 
 const (
-	shortCacheTTL        = 30 * time.Second
-	shortCleanupInterval = 2 * time.Minute
-	longCacheTTL         = 2 * time.Minute
-	longCleanupInterval  = 4 * time.Minute
+	shortCacheTTL = 30 * time.Second
+	longCacheTTL  = 2 * time.Minute
 )
 
 type Service struct {
@@ -630,10 +628,16 @@ func (s *Service) checkInheritedPermissions(ctx context.Context, scopeMap map[st
 	defer span.End()
 	ctxLogger := s.logger.FromContext(ctx)
 
-	tree, err := s.buildFolderTree(ctx, req.Namespace)
-	if err != nil {
-		ctxLogger.Error("could not build folder and dashboard tree", "error", err)
-		return false, err
+	tree, ok := s.getCachedFolderTree(ctx, req.Namespace)
+
+	// Check cached tree is up to date
+	if !ok || !s.isFolderInTree(tree, req.ParentFolder) {
+		var err error
+		tree, err = s.buildFolderTree(ctx, req.Namespace)
+		if err != nil {
+			ctxLogger.Error("could not build folder and dashboard tree", "error", err)
+			return false, err
+		}
 	}
 
 	if scopeMap["folders:uid:"+req.ParentFolder] {
@@ -649,14 +653,28 @@ func (s *Service) checkInheritedPermissions(ctx context.Context, scopeMap map[st
 	return false, nil
 }
 
+// getCachedFolderTree returns the cached folder tree for the given namespace.
+func (s *Service) getCachedFolderTree(ctx context.Context, ns types.NamespaceInfo) (folderTree, bool) {
+	ctx, span := s.tracer.Start(ctx, "authz_direct_db.service.getCachedFolderTree")
+	defer span.End()
+	key := folderCacheKey(ns.Value)
+	return s.folderCache.Get(ctx, key)
+}
+
+// isFolderInTree checks if the given parent folder exists in the folder tree.
+func (s *Service) isFolderInTree(tree folderTree, folder string) bool {
+	// Special case for general folder, which is technically not in the tree
+	if folder == accesscontrol.GeneralFolderUID {
+		return true
+	}
+	_, exists := tree.Index[folder]
+	return exists
+}
+
+// buildFolderTree builds the folder tree for the given namespace and caches it.
 func (s *Service) buildFolderTree(ctx context.Context, ns types.NamespaceInfo) (folderTree, error) {
 	ctx, span := s.tracer.Start(ctx, "authz_direct_db.service.buildFolderTree")
 	defer span.End()
-
-	key := folderCacheKey(ns.Value)
-	if cached, ok := s.folderCache.Get(ctx, key); ok {
-		return cached, nil
-	}
 
 	res, err, _ := s.sf.Do(ns.Value+"_buildFolderTree", func() (interface{}, error) {
 		folders, err := s.folderStore.ListFolders(ctx, ns)
@@ -666,7 +684,8 @@ func (s *Service) buildFolderTree(ctx context.Context, ns types.NamespaceInfo) (
 		span.SetAttributes(attribute.Int("num_folders", len(folders)))
 
 		tree := newFolderTree(folders)
-		s.folderCache.Set(ctx, key, tree)
+
+		s.folderCache.Set(ctx, folderCacheKey(ns.Value), tree)
 		return tree, nil
 	})
 
@@ -695,10 +714,13 @@ func (s *Service) listPermission(ctx context.Context, scopeMap map[string]bool, 
 	var tree folderTree
 	if t.HasFolderSupport() {
 		var err error
-		tree, err = s.buildFolderTree(ctx, req.Namespace)
-		if err != nil {
-			ctxLogger.Error("could not build folder and dashboard tree", "error", err)
-			return nil, err
+		tree, ok = s.getCachedFolderTree(ctx, req.Namespace)
+		if !ok {
+			tree, err = s.buildFolderTree(ctx, req.Namespace)
+			if err != nil {
+				ctxLogger.Error("could not build folder and dashboard tree", "error", err)
+				return nil, err
+			}
 		}
 	}
 
