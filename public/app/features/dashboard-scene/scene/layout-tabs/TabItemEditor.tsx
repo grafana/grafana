@@ -16,8 +16,8 @@ import { useEditPaneInputAutoFocus } from '../layouts-shared/utils';
 
 import { TabItem } from './TabItem';
 
-export function useEditOptions(model: TabItem, isNewElement: boolean): OptionsPaneCategoryDescriptor[] {
-  const { layout } = model.useState();
+export function useEditOptions(this: TabItem, isNewElement: boolean): OptionsPaneCategoryDescriptor[] {
+  const { layout } = this.useState();
 
   const tabCategory = useMemo(
     () =>
@@ -25,40 +25,33 @@ export function useEditOptions(model: TabItem, isNewElement: boolean): OptionsPa
         new OptionsPaneItemDescriptor({
           title: t('dashboard.tabs-layout.tab-options.title-option', 'Title'),
           id: 'tab-options-title',
-          render: (descriptor) => <TabTitleInput id={descriptor.props.id} tab={model} isNewElement={isNewElement} />,
+          render: (descriptor) => <TabTitleInput id={descriptor.props.id} tab={this} isNewElement={isNewElement} />,
         })
       ),
-    [model, isNewElement]
+    [isNewElement]
   );
 
-  const repeatCategory = useMemo(
-    () =>
-      new OptionsPaneCategoryDescriptor({
-        title: t('dashboard.tabs-layout.tab-options.repeat.title', 'Repeat options'),
-        id: 'repeat-options',
-        isOpenDefault: false,
-      }).addItem(
-        new OptionsPaneItemDescriptor({
-          title: t('dashboard.tabs-layout.tab-options.repeat.variable.title', 'Repeat by variable'),
-          id: 'tab-options-repeat-variable',
-          description: t(
-            'dashboard.tabs-layout.tab-options.repeat.variable.description',
-            'Repeat this tab for each value in the selected variable.'
-          ),
-          render: (descriptor) => <TabRepeatSelect id={descriptor.props.id} tab={model} />,
-        })
+  const repeatCategory = new OptionsPaneCategoryDescriptor({
+    title: t('dashboard.tabs-layout.tab-options.repeat.title', 'Repeat options'),
+    id: 'repeat-options',
+    isOpenDefault: false,
+  }).addItem(
+    new OptionsPaneItemDescriptor({
+      title: t('dashboard.tabs-layout.tab-options.repeat.variable.title', 'Repeat by variable'),
+      id: 'tab-options-repeat-variable',
+      description: t(
+        'dashboard.tabs-layout.tab-options.repeat.variable.description',
+        'Repeat this tab for each value in the selected variable.'
       ),
-    [model]
+      render: (descriptor) => <TabRepeatSelect id={descriptor.props.id} tab={this} />,
+    })
   );
 
   const layoutCategory = useLayoutCategory(layout);
 
   const editOptions = [tabCategory, ...layoutCategory, repeatCategory];
 
-  const conditionalRenderingCategory = useMemo(
-    () => useConditionalRenderingEditor(model.state.conditionalRendering),
-    [model]
-  );
+  const conditionalRenderingCategory = useConditionalRenderingEditor(this.state.conditionalRendering);
 
   if (conditionalRenderingCategory) {
     editOptions.push(conditionalRenderingCategory);
