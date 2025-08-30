@@ -50,6 +50,9 @@ export function addNewRowTo(layout: DashboardLayoutManager): RowItem | SceneGrid
 
   if (layout instanceof TabsLayoutManager) {
     const currentTab = layout.getCurrentTab();
+    if (!currentTab) {
+      throw new Error('Could find currently active tab');
+    }
     return addNewRowTo(currentTab.state.layout);
   }
 
