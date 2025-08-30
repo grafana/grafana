@@ -58,14 +58,17 @@ func (r *subParentsREST) Connect(ctx context.Context, name string, opts runtime.
 		obj, err := r.getter.Get(ctx, name, &metav1.GetOptions{})
 		if storage.IsNotFound(err) {
 			responder.Object(http.StatusNotFound, nil)
+			return
 		}
 		if err != nil {
 			responder.Error(err)
+			return
 		}
 
 		folderObj, ok := obj.(*folders.Folder)
 		if !ok {
 			responder.Error(fmt.Errorf("expecting folder, found: %T", folderObj))
+			return
 		}
 
 		info := r.parents(ctx, folderObj)
