@@ -1,5 +1,7 @@
 import { throttle } from 'lodash';
 
+import { store } from '@grafana/data';
+
 type Args = Parameters<typeof console.log>;
 
 /**
@@ -19,24 +21,71 @@ export interface Logger {
   isEnabled: () => boolean;
 }
 
-/** @internal */
-export const createLogger = (name: string): Logger => {
-  let loggingEnabled = false;
+/**
+ * Configuration options for logger creation
+ * @internal
+ */
+interface LoggerOptions {
+  /** store key to check for enabling debug mode. Defaults to 'grafana.debug' */
+  storageKey?: string;
+  /** Whether to support enable/disable methods that modify internal state. Defaults to true */
+  enableToggle?: boolean;
+}
+
+/**
+ * Core logger creation function with flexible configuration
+ * @internal
+ */
+function createBaseLogger(name: string, options: LoggerOptions = {}) {
+  const { storageKey = 'grafana.debug', enableToggle = true } = options;
+
+  // For backward compatibility, createLogger uses internal state that can be toggled
+  let internalLoggingEnabled = false;
 
   if (typeof window !== 'undefined') {
-    loggingEnabled = window.localStorage.getItem('grafana.debug') === 'true';
+    internalLoggingEnabled = store.getObject(storageKey) === true;
   }
+
+  const isEnabled = () => {
+    if (enableToggle) {
+      // Legacy behavior: check internal state (can be overridden by enable/disable)
+      return internalLoggingEnabled;
+    } else {
+      // New behavior: always check store directly (more reliable)
+      return store.getObject(storageKey) === true;
+    }
+  };
+
+  const shouldLog = () => {
+    return !(process.env.NODE_ENV === 'production' || process.env.NODE_ENV === 'test' || !isEnabled());
+  };
+
+  return {
+    isEnabled,
+    shouldLog,
+    internalState: enableToggle
+      ? {
+          enable: () => (internalLoggingEnabled = true),
+          disable: () => (internalLoggingEnabled = false),
+        }
+      : null,
+  };
+}
+
+/** @internal */
+export const createLogger = (name: string, storageKey?: string): Logger => {
+  const base = createBaseLogger(name, { storageKey, enableToggle: true });
 
   return {
     logger: (id: string, throttle = false, ...t: Args) => {
-      if (process.env.NODE_ENV === 'production' || process.env.NODE_ENV === 'test' || !loggingEnabled) {
+      if (!base.shouldLog()) {
         return;
       }
       const fn = throttle ? throttledLog : console.log;
       fn(`[${name}: ${id}]:`, ...t);
     },
-    enable: () => (loggingEnabled = true),
-    disable: () => (loggingEnabled = false),
-    isEnabled: () => loggingEnabled,
+    enable: base.internalState!.enable,
+    disable: base.internalState!.disable,
+    isEnabled: base.isEnabled,
   };
 };

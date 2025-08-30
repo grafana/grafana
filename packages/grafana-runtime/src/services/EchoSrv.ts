@@ -91,6 +91,7 @@ export enum EchoEventType {
   Interaction = 'interaction',
   ExperimentView = 'experimentview',
   GrafanaJavascriptAgent = 'grafana-javascript-agent',
+  MemoryUsage = 'memory-usage',
 }
 
 /**

@@ -228,6 +228,8 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 		RudderstackIntegrationsUrl:          hs.Cfg.RudderstackIntegrationsURL,
 		AnalyticsConsoleReporting:           hs.Cfg.FrontendAnalyticsConsoleReporting,
 		DashboardPerformanceMetrics:         hs.Cfg.DashboardPerformanceMetrics,
+		DashboardMemoryMonitoring:           hs.Cfg.DashboardMemoryMonitoring,
+		DashboardMemoryMonitoringInterval:   hs.Cfg.DashboardMemoryMonitoringInterval,
 		PanelSeriesLimit:                    hs.Cfg.PanelSeriesLimit,
 		FeedbackLinksEnabled:                hs.Cfg.FeedbackLinksEnabled,
 		ApplicationInsightsConnectionString: hs.Cfg.ApplicationInsightsConnectionString,
