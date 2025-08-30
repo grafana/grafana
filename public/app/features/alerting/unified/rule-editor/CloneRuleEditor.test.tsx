@@ -24,7 +24,7 @@ import {
   mockRulerGrafanaRule,
   mockRulerRuleGroup,
 } from '../mocks';
-import { grafanaRulerRule } from '../mocks/grafanaRulerApi';
+import { grafanaRulerRule, mockPreviewApiResponse } from '../mocks/grafanaRulerApi';
 import { mockRulerRulesApiResponse, mockRulerRulesGroupApiResponse } from '../mocks/rulerApi';
 import { setFolderResponse } from '../mocks/server/configure';
 import { AlertingQueryRunner } from '../state/AlertingQueryRunner';
@@ -103,6 +103,7 @@ describe('CloneRuleEditor', function () {
     };
     setupDataSources(dataSources.default);
     setFolderResponse(mockFolder(folder));
+    mockPreviewApiResponse(server, []);
   });
 
   describe('Grafana-managed rules', function () {
