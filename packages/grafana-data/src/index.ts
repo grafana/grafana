@@ -841,6 +841,8 @@ export {
   defaultActionConfig,
   contentTypeOptions,
   httpMethodOptions,
+  type FetchOptions,
+  type InfinityOptions,
 } from './types/action';
 export { DataFrameType } from './types/dataFrameTypes';
 export {
