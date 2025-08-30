@@ -12,6 +12,7 @@ import {
 } from '../../dataquery.gen';
 import { AzureLogAnalyticsMetadataColumn } from '../../types/logAnalyticsMetadata';
 import { AzureMonitorQuery } from '../../types/query';
+import { AzureMonitorOption } from '../../types/types';
 
 import { GroupByItem } from './GroupByItem';
 import { BuildAndUpdateOptions } from './utils';
@@ -20,14 +21,14 @@ interface GroupBySectionProps {
   query: AzureMonitorQuery;
   allColumns: AzureLogAnalyticsMetadataColumn[];
   buildAndUpdateQuery: (options: Partial<BuildAndUpdateOptions>) => void;
-  templateVariableOptions: SelectableValue<string>;
+  variableOptionGroup: { label: string; options: AzureMonitorOption[] };
 }
 
 export const GroupBySection: React.FC<GroupBySectionProps> = ({
   query,
   buildAndUpdateQuery,
   allColumns,
-  templateVariableOptions,
+  variableOptionGroup,
 }) => {
   const builderQuery = query.azureLogAnalytics?.builderQuery;
   const prevTable = useRef<string | null>(builderQuery?.from?.property.name || null);
@@ -102,7 +103,7 @@ export const GroupBySection: React.FC<GroupBySectionProps> = ({
               <EditorList
                 items={groupBys}
                 onChange={handleGroupByChange}
-                renderItem={makeRenderGroupBy(availableColumns, onDeleteGroupBy, templateVariableOptions)}
+                renderItem={makeRenderGroupBy(availableColumns, onDeleteGroupBy, variableOptionGroup)}
               />
             ) : (
               <Button
@@ -129,7 +130,7 @@ export const GroupBySection: React.FC<GroupBySectionProps> = ({
 const makeRenderGroupBy = (
   columns: Array<SelectableValue<string>>,
   onDeleteGroupBy: (propertyName: string) => void,
-  templateVariableOptions: SelectableValue<string>
+  variableOptionGroup: { label: string; options: AzureMonitorOption[] }
 ) => {
   // eslint-disable-next-line react/display-name
   return (
@@ -149,7 +150,7 @@ const makeRenderGroupBy = (
         onDeleteItem();
       }}
       columns={columns}
-      templateVariableOptions={templateVariableOptions}
+      variableOptionGroup={variableOptionGroup}
     />
   );
 };

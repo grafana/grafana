@@ -1,6 +1,6 @@
 import React, { useMemo, useState, useCallback } from 'react';
 
-import { SelectableValue, TimeRange } from '@grafana/data';
+import { TimeRange } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { EditorRows } from '@grafana/plugin-ui';
 import { Alert } from '@grafana/ui';
@@ -17,9 +17,9 @@ import {
 } from '../../dataquery.gen';
 import Datasource from '../../datasource';
 import { selectors } from '../../e2e/selectors';
-import { AzureLogAnalyticsMetadataTable, AzureLogAnalyticsMetadataColumn } from '../../types/logAnalyticsMetadata';
+import { AzureLogAnalyticsMetadataColumn, AzureLogAnalyticsMetadataTable } from '../../types/logAnalyticsMetadata';
 import { AzureMonitorQuery } from '../../types/query';
-import { EngineSchema } from '../../types/types';
+import { AzureMonitorOption, EngineSchema } from '../../types/types';
 
 import { AggregateSection } from './AggregationSection';
 import { AzureMonitorKustoQueryBuilder } from './AzureMonitorKustoQueryBuilder';
@@ -36,7 +36,8 @@ interface LogsQueryBuilderProps {
   query: AzureMonitorQuery;
   basicLogsEnabled: boolean;
   onQueryChange: (newQuery: AzureMonitorQuery) => void;
-  schema?: EngineSchema;
+  schema: EngineSchema;
+  variableOptionGroup: { label: string; options: AzureMonitorOption[] };
   templateVariableOptions: SelectableValue<string>;
   datasource: Datasource;
   timeRange?: TimeRange;
@@ -44,7 +45,7 @@ interface LogsQueryBuilderProps {
 }
 
 export const LogsQueryBuilder: React.FC<LogsQueryBuilderProps> = (props) => {
-  const { query, onQueryChange, schema, datasource, timeRange, isLoadingSchema } = props;
+  const { query, onQueryChange, schema, datasource, timeRange } = props;
   const [isKQLPreviewHidden, setIsKQLPreviewHidden] = useState<boolean>(true);
 
   const tables: AzureLogAnalyticsMetadataTable[] = useMemo(() => {
@@ -142,13 +143,7 @@ export const LogsQueryBuilder: React.FC<LogsQueryBuilderProps> = (props) => {
             )}
           />
         )}
-        <TableSection
-          {...props}
-          tables={tables}
-          allColumns={allColumns}
-          buildAndUpdateQuery={buildAndUpdateQuery}
-          isLoadingSchema={isLoadingSchema}
-        />
+        <TableSection {...props} tables={tables} allColumns={allColumns} buildAndUpdateQuery={buildAndUpdateQuery} />
         <FilterSection
           {...props}
           allColumns={allColumns}
