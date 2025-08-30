@@ -58,7 +58,8 @@ func (r *SyncWorker) Process(ctx context.Context, repo repository.Repository, jo
 	cfg := repo.Config()
 	logger := logging.FromContext(ctx).With("job", job.GetName(), "namespace", job.GetNamespace())
 	// Check if we are onboarding from legacy storage
-	if dualwrite.IsReadingLegacyDashboardsAndFolders(ctx, r.storageStatus) {
+	// HACK -- this should be handled outside of this worker
+	if r.storageStatus != nil && dualwrite.IsReadingLegacyDashboardsAndFolders(ctx, r.storageStatus) {
 		return fmt.Errorf("sync not supported until storage has migrated")
 	}
 

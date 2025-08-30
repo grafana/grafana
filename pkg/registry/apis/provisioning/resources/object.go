@@ -34,6 +34,17 @@ type ResourceListerFromSearch struct {
 func NewResourceLister(
 	managed resourcepb.ManagedObjectIndexClient,
 	index resourcepb.ResourceIndexClient,
+) ResourceLister {
+	return &ResourceListerFromSearch{
+		index:   index,
+		managed: managed,
+	}
+}
+
+// FIXME: the logic about migration and storage should probably be separated from this
+func NewResourceListerForMigrations(
+	managed resourcepb.ManagedObjectIndexClient,
+	index resourcepb.ResourceIndexClient,
 	legacyMigrator legacy.LegacyMigrator,
 	storageStatus dualwrite.Service,
 ) ResourceLister {
@@ -126,7 +137,7 @@ func (o *ResourceListerFromSearch) Stats(ctx context.Context, namespace, reposit
 	}
 
 	// Get the stats based on what a migration could support
-	if dualwrite.IsReadingLegacyDashboardsAndFolders(ctx, o.storageStatus) {
+	if o.storageStatus != nil && o.legacyMigrator != nil && dualwrite.IsReadingLegacyDashboardsAndFolders(ctx, o.storageStatus) {
 		rsp, err := o.legacyMigrator.Migrate(ctx, legacy.MigrateOptions{
 			Namespace: namespace,
 			Resources: []schema.GroupResource{{

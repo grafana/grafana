@@ -23,6 +23,16 @@ import (
 	"github.com/grafana/grafana/apps/provisioning/pkg/controller"
 	client "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned"
 	informer "github.com/grafana/grafana/apps/provisioning/pkg/generated/informers/externalversions"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
+	deletepkg "github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/delete"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/export"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/migrate"
+	movepkg "github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/move"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/sync"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
+	"github.com/grafana/grafana/pkg/services/apiserver"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
 var (
@@ -34,6 +44,21 @@ var (
 	tlsKeyFile            = flag.String("tls-key-file", "", "Path to TLS private key file")
 	tlsCAFile             = flag.String("tls-ca-file", "", "Path to TLS CA certificate file")
 )
+
+// QUESTION: is this the right way to do this? will it work?
+// directConfigProvider always returns the provided rest.Config.
+// implements RestConfigProvider interface
+type directConfigProvider struct {
+	cfg *rest.Config
+}
+
+func NewDirectConfigProvider(cfg *rest.Config) apiserver.RestConfigProvider {
+	return &directConfigProvider{cfg: cfg}
+}
+
+func (r *directConfigProvider) GetRestConfig(ctx context.Context) (*rest.Config, error) {
+	return r.cfg, nil
+}
 
 func main() {
 	app := &cli.App{
@@ -98,8 +123,6 @@ func main() {
 }
 
 func runJobController(c *cli.Context) error {
-	// TODO: Wire notifications into a ConcurrentJobDriver when a client-backed Store and Workers are available.
-	// For now, just log notifications to verify events end-to-end.
 	logger := logging.NewSLogLogger(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
 		Level: slog.LevelDebug,
 	})).With("logger", "provisioning-job-controller")
@@ -127,7 +150,7 @@ func runJobController(c *cli.Context) error {
 		TLSClientConfig: tlsConfig,
 	}
 
-	provisioningClient, err := client.NewForConfig(config)
+	client, err := client.NewForConfig(config)
 	if err != nil {
 		return fmt.Errorf("failed to create provisioning client: %w", err)
 	}
@@ -145,7 +168,7 @@ func runJobController(c *cli.Context) error {
 
 	// Jobs informer and controller (resync ~60s like in register.go)
 	jobInformerFactory := informer.NewSharedInformerFactoryWithOptions(
-		provisioningClient,
+		client,
 		60*time.Second,
 	)
 	jobInformer := jobInformerFactory.Provisioning().V0alpha1().Jobs()
@@ -154,31 +177,18 @@ func runJobController(c *cli.Context) error {
 		return fmt.Errorf("failed to create job controller: %w", err)
 	}
 
-	logger.Info("jobs controller started")
-	notifications := jobController.InsertNotifications()
-	go func() {
-		for {
-			select {
-			case <-ctx.Done():
-				return
-			case <-notifications:
-				logger.Info("job create notification received")
-			}
-		}
-	}()
-
 	// Optionally enable history cleanup if a positive expiration is provided
 	historyExpiration := c.Duration("history-expiration")
 	var startHistoryInformers func()
 	if historyExpiration > 0 {
 		// History jobs informer and controller (separate factory with resync == expiration)
 		historyInformerFactory := informer.NewSharedInformerFactoryWithOptions(
-			provisioningClient,
+			client,
 			historyExpiration,
 		)
 		historyJobInformer := historyInformerFactory.Provisioning().V0alpha1().HistoricJobs()
 		_, err = controller.NewHistoryJobController(
-			provisioningClient.ProvisioningV0alpha1(),
+			client.ProvisioningV0alpha1(),
 			historyJobInformer,
 			historyExpiration,
 		)
@@ -190,6 +200,95 @@ func runJobController(c *cli.Context) error {
 	} else {
 		startHistoryInformers = func() {}
 	}
+
+	// HistoryWriter can be either Loki or the API server
+	// TODO: Loki support
+	// var jobHistoryWriter jobs.HistoryWriter
+	// if b.jobHistoryLoki != nil {
+	// 	jobHistoryWriter = b.jobHistoryLoki
+	// } else {
+	// 	jobHistoryWriter = jobs.NewAPIClientHistoryWriter(provisioningClient.ProvisioningV0alpha1())
+	// }
+	jobHistoryWriter := jobs.NewAPIClientHistoryWriter(client.ProvisioningV0alpha1())
+	jobStore, err := jobs.NewJobStore(client.ProvisioningV0alpha1(), 30*time.Second)
+	if err != nil {
+		return fmt.Errorf("create API client job store: %w", err)
+	}
+
+	configProvider := &directConfigProvider{cfg: config}
+	clients := resources.NewClientFactory(configProvider)
+	parsers := resources.NewParserFactory(clients)
+
+	// HACK: This is connecting to unified storage. It's ok for now as long as dashboards and folders are located in the
+	// same cluster and namespace
+	// This breaks when we start really trying to support any resource. This is on the search+storage roadmap to support federation at some level.
+	// TODO: unified
+	var (
+		unified      resourcepb.ManagedObjectIndexClient = nil
+		unifiedIndex resourcepb.ResourceIndexClient      = nil
+	)
+
+	resourceLister := resources.NewResourceLister(unified, unifiedIndex)
+	repositoryResources := resources.NewRepositoryResourcesFactory(parsers, clients, resourceLister)
+
+	stageIfPossible := repository.WrapWithStageAndPushIfPossible
+	exportWorker := export.NewExportWorker(
+		clients,
+		repositoryResources,
+		export.ExportAll,
+		stageIfPossible,
+	)
+
+	statusPatcher := controller.NewRepositoryStatusPatcher(client.ProvisioningV0alpha1())
+	syncer := sync.NewSyncer(sync.Compare, sync.FullSync, sync.IncrementalSync)
+	syncWorker := sync.NewSyncWorker(
+		clients,
+		repositoryResources,
+		nil, // HACK: we have updated the worker to check for nil
+		statusPatcher.Patch,
+		syncer,
+	)
+
+	cleaner := migrate.NewNamespaceCleaner(clients)
+	unifiedStorageMigrator := migrate.NewUnifiedStorageMigrator(
+		cleaner,
+		exportWorker,
+		syncWorker,
+	)
+
+	migrationWorker := migrate.NewMigrationWorkerFromUnified(unifiedStorageMigrator)
+	deleteWorker := deletepkg.NewWorker(syncWorker, stageIfPossible, repositoryResources)
+	moveWorker := movepkg.NewWorker(syncWorker, stageIfPossible, repositoryResources)
+
+	workers := []jobs.Worker{
+		deleteWorker,
+		exportWorker,
+		migrationWorker,
+		moveWorker,
+		syncWorker,
+	}
+
+	// This is basically our own JobQueue system
+	// TODO: Add repository getter
+	driver, err := jobs.NewConcurrentJobDriver(
+		3,              // 3 drivers for now
+		20*time.Minute, // Max time for each job
+		time.Minute,    // Cleanup jobs
+		30*time.Second, // Periodically look for new jobs
+		30*time.Second, // Lease renewal interval
+		jobStore,
+		nil, // TODO: add repository getter
+		jobHistoryWriter,
+		jobController.InsertNotifications(),
+		workers...,
+	)
+
+	go func() {
+		logger.Info("jobs controller started")
+		if err := driver.Run(ctx); err != nil {
+			logger.Error("job driver failed", "error", err)
+		}
+	}()
 
 	// Start informers
 	go jobInformerFactory.Start(ctx.Done())
