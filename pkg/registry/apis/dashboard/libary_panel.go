@@ -10,6 +10,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
 
+	dashboardV0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacy"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -57,15 +58,56 @@ func (s *LibraryPanelStore) ConvertToTable(ctx context.Context, object runtime.O
 }
 
 func (s *LibraryPanelStore) Create(ctx context.Context, obj runtime.Object, createValidation rest.ValidateObjectFunc, options *metav1.CreateOptions) (runtime.Object, error) {
-	return nil, fmt.Errorf("method not yet implemented")
+	ns, err := request.NamespaceInfoFrom(ctx, true)
+	if err != nil {
+		return nil, err
+	}
+
+	panel, ok := obj.(*dashboardV0.LibraryPanel)
+	if !ok {
+		return nil, fmt.Errorf("expected LibraryPanel object")
+	}
+
+	return s.Access.CreateLibraryPanel(ctx, ns.OrgID, panel)
 }
 
 func (s *LibraryPanelStore) Update(ctx context.Context, name string, objInfo rest.UpdatedObjectInfo, createValidation rest.ValidateObjectFunc, updateValidation rest.ValidateObjectUpdateFunc, forceAllowCreate bool, options *metav1.UpdateOptions) (runtime.Object, bool, error) {
-	return nil, false, fmt.Errorf("method not yet implemented")
+	ns, err := request.NamespaceInfoFrom(ctx, true)
+	if err != nil {
+		return nil, false, err
+	}
+
+	obj, err := objInfo.UpdatedObject(ctx, nil)
+	if err != nil {
+		return nil, false, err
+	}
+
+	panel, ok := obj.(*dashboardV0.LibraryPanel)
+	if !ok {
+		return nil, false, fmt.Errorf("expected LibraryPanel object")
+	}
+
+	result, err := s.Access.UpdateLibraryPanel(ctx, ns.OrgID, panel)
+	if err != nil {
+		return nil, false, err
+	}
+
+	return result, false, nil
 }
 
 func (s *LibraryPanelStore) Delete(ctx context.Context, name string, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions) (runtime.Object, bool, error) {
-	return nil, false, fmt.Errorf("method not yet implemented")
+	ns, err := request.NamespaceInfoFrom(ctx, true)
+	if err != nil {
+		return nil, false, err
+	}
+
+	if deleteValidation != nil {
+		if err := deleteValidation(ctx, options); err != nil {
+			return nil, false, err
+		}
+	}
+
+	return s.Access.DeleteLibraryPanel(ctx, ns.OrgID, name)
 }
 
 func (s *LibraryPanelStore) DeleteCollection(ctx context.Context, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions, listOptions *internalversion.ListOptions) (runtime.Object, error) {
