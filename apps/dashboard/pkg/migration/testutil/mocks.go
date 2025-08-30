@@ -24,7 +24,7 @@ func (m *TestDataSourceProvider) GetDataSourceInfo() []schemaversion.DataSourceI
 			Default:    false,
 			UID:        "non-default-test-ds-uid",
 			Type:       "loki",
-			APIVersion: "1",
+			APIVersion: "v1",
 			Name:       "Non Default Test Datasource Name",
 			ID:         2,
 		},

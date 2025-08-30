@@ -29,22 +29,8 @@
       "id": 4,
       "panels": [
         {
-          "datasource": {
-            "apiVersion": "v1",
-            "type": "prometheus",
-            "uid": "default-ds-uid"
-          },
+          "datasource": null,
           "id": 6,
-          "targets": [
-            {
-              "datasource": {
-                "apiVersion": "v1",
-                "type": "prometheus",
-                "uid": "default-ds-uid"
-              },
-              "refId": "A"
-            }
-          ],
           "title": "Normal nested panel",
           "type": "graph"
         }

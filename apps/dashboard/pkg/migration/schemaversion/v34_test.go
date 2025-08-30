@@ -460,7 +460,6 @@ func TestV34(t *testing.T) {
 								"namespace":        "AWS/EC2",
 								"region":           "us-east-1",
 								"metricName":       "CPUUtilization",
-								"statistics":       []interface{}{},
 								"metricEditorMode": 0,
 								"metricQueryType":  0,
 							},
