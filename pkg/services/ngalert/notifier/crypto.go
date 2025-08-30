@@ -107,7 +107,7 @@ func encryptReceiverConfigs(c []*definitions.PostableApiReceiver, encrypt defini
 						return fmt.Errorf("integration '%s' of receiver '%s' has settings that cannot be parsed as JSON: %w", gr.Type, gr.Name, err)
 					}
 
-					secretKeys, err := channels_config.GetSecretKeysForContactPointType(gr.Type)
+					secretKeys, err := channels_config.GetSecretKeysForContactPointType(gr.Type, "v1")
 					if err != nil {
 						return fmt.Errorf("failed to get secret keys for contact point type %s: %w", gr.Type, err)
 					}

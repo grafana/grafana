@@ -448,7 +448,7 @@ func TestRemoveSecretsForContactPoint(t *testing.T) {
 		settingsRaw, err := json.Marshal(integration.Settings)
 		require.NoError(t, err)
 
-		expectedFields, err := channels_config.GetSecretKeysForContactPointType(integrationType)
+		expectedFields, err := channels_config.GetSecretKeysForContactPointType(integrationType, "v1")
 		require.NoError(t, err)
 
 		t.Run(integrationType, func(t *testing.T) {
@@ -505,6 +505,7 @@ func createContactPointServiceSutWithConfigStore(t *testing.T, secretService sec
 		log.NewNopLogger(),
 		fakes.NewFakeReceiverPermissionsService(),
 		tracing.InitializeTracerForTest(),
+		false,
 	)
 
 	return NewContactPointService(

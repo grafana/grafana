@@ -1333,7 +1333,7 @@ func TestIntegrationCRUD(t *testing.T) {
 					expected := notify.AllKnownConfigsForTesting[strings.ToLower(integration.Type)]
 					var fields map[string]any
 					require.NoError(t, json.Unmarshal([]byte(expected.Config), &fields))
-					secretFields, err := channels_config.GetSecretKeysForContactPointType(integration.Type)
+					secretFields, err := channels_config.GetSecretKeysForContactPointType(integration.Type, "v1")
 					require.NoError(t, err)
 					for _, field := range secretFields {
 						if _, ok := fields[field]; !ok { // skip field that is not in the original setting
