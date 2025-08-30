@@ -21,6 +21,7 @@ import {
   applyNullInsertThreshold,
   nullToValue,
   SpecialValueMatch,
+  DisplayValue,
 } from '@grafana/data';
 import { maybeSortFrame, NULL_RETAIN } from '@grafana/data/internal';
 import { t } from '@grafana/i18n';
@@ -34,6 +35,10 @@ import {
   HideableFieldConfig,
   MappingType,
 } from '@grafana/schema';
+import {
+  StateTimelineLegendOptions,
+  StateTimelineLegendReducers,
+} from '@grafana/schema/dist/esm/raw/composable/statetimeline/panelcfg/x/StateTimelinePanelCfg_types.gen';
 import { FIXED_UNIT, UPlotConfigBuilder, UPlotConfigPrepFn, VizLegendItem } from '@grafana/ui';
 import { preparePlotData2, getStackingGroups } from '@grafana/ui/internal';
 
@@ -569,75 +574,223 @@ export function getValueMappingItems(mappings: ValueMapping[], theme: GrafanaThe
   return items;
 }
 
+interface StateDurationInfo {
+  duration: number;
+  percentage: number;
+  count: number;
+}
+
+interface DurationCalculationConfig {
+  fields: Field[];
+  timeRange: TimeRange;
+  frame: DataFrame;
+  reducers: StateTimelineLegendReducers[];
+}
+
+function calculateStateDurations(config: DurationCalculationConfig): Map<string, StateDurationInfo> | undefined {
+  const { fields, timeRange, reducers = [] } = config;
+
+  if (fields.length < 2 || reducers.length === 0) {
+    return undefined;
+  }
+
+  const durations = new Map<string, StateDurationInfo>();
+
+  const needsDuration = reducers.includes(StateTimelineLegendReducers.Duration);
+  const needsPercentage = reducers.includes(StateTimelineLegendReducers.Percentage);
+  const needsCount = reducers.includes(StateTimelineLegendReducers.Count);
+
+  const needsTimeProcessing = needsDuration || needsPercentage;
+  const timeValues = needsTimeProcessing ? fields[0].values : null;
+  const rangeEnd = needsTimeProcessing ? timeRange.to.valueOf() : 0;
+  const rangeStart = needsTimeProcessing ? timeRange.from.valueOf() : 0;
+  const totalTimeRange = needsPercentage ? rangeEnd - rangeStart : 0;
+
+  for (const field of fields) {
+    if (field.type === FieldType.time) {
+      continue;
+    }
+
+    const seriesName = getFieldDisplayName(field, config.frame);
+    const values = field.values;
+    let lastState: string | null = null;
+
+    for (let i = 0; i < values.length; i++) {
+      const value = values[i];
+      if (value == null) {
+        continue;
+      }
+
+      const displayProcessor = field.display;
+      const state = displayProcessor ? displayProcessor(value).text : String(value);
+      const stateKey = `${seriesName}:${state}`;
+
+      const currentInfo = durations.get(stateKey) ?? { duration: 0, percentage: 0, count: 0 };
+
+      let newDuration = currentInfo.duration;
+      let newPercentage = currentInfo.percentage;
+      let newCount = currentInfo.count;
+
+      if (needsTimeProcessing && timeValues) {
+        const startTime = timeValues[i];
+        const endTime = timeValues[i + 1] ?? rangeEnd;
+
+        if (startTime != null && endTime != null) {
+          const duration = endTime - startTime;
+          newDuration = currentInfo.duration + duration;
+
+          if (needsPercentage) {
+            newPercentage = (newDuration / totalTimeRange) * 100;
+          }
+        }
+      }
+
+      if (needsCount) {
+        newCount = lastState !== state ? currentInfo.count + 1 : currentInfo.count;
+      }
+
+      const updatedInfo: StateDurationInfo = {
+        duration: newDuration,
+        percentage: newPercentage,
+        count: newCount,
+      };
+
+      durations.set(stateKey, updatedInfo);
+      lastState = state;
+    }
+  }
+
+  return durations;
+}
+
+const REDUCER_DISPLAYS: Record<StateTimelineLegendReducers, (info: StateDurationInfo) => DisplayValue> = {
+  [StateTimelineLegendReducers.Duration]: (info) => ({
+    title: 'Duration',
+    description: 'Total time spent in this state',
+    numeric: info.duration,
+    text: fmtDuration(info.duration),
+  }),
+  [StateTimelineLegendReducers.Percentage]: (info) => ({
+    title: 'Percentage',
+    description: 'Percentage of time spent in this state relative to the entire time range',
+    numeric: info.percentage,
+    text: `${info.percentage.toFixed(2)}%`,
+  }),
+  [StateTimelineLegendReducers.Count]: (info) => ({
+    title: 'Count',
+    description: 'Number of times this state occurred',
+    numeric: info.count,
+    text: info.count.toString(),
+  }),
+};
+
+function createTableLegendValues(info: StateDurationInfo, reducers: StateTimelineLegendReducers[]): DisplayValue[] {
+  return reducers.map((reducer) => REDUCER_DISPLAYS[reducer](info));
+}
+
+function processSeriesGroups(
+  seriesGroups: Map<string, Field[]>,
+  durations: Map<string, StateDurationInfo> | undefined,
+  options: StateTimelineLegendOptions | VizLegendOptions,
+  theme: GrafanaTheme2,
+  multipleSeries: boolean
+): VizLegendItem[] {
+  const allLegendItems: VizLegendItem[] = [];
+
+  seriesGroups.forEach((fields, seriesName) => {
+    const stateColors = new Map<string, string>();
+
+    fields.forEach((field) => {
+      field.values.forEach((v) => {
+        const displayProcessor = field.display;
+        if (displayProcessor) {
+          const state = displayProcessor(v);
+          if (state.color) {
+            stateColors.set(state.text, state.color);
+          }
+        }
+      });
+    });
+
+    stateColors.forEach((color, stateLabel) => {
+      if (stateLabel.length > 0) {
+        const info = durations ? durations.get(`${seriesName}:${stateLabel}`) : undefined;
+        let label = multipleSeries ? `${seriesName}: ${stateLabel}` : stateLabel;
+
+        let getDisplayValues: (() => DisplayValue[]) | undefined;
+
+        if (
+          options.displayMode === 'table' &&
+          info &&
+          'reducers' in options &&
+          options.reducers &&
+          options.reducers.length > 0
+        ) {
+          getDisplayValues = () => createTableLegendValues(info, options.reducers || []);
+        }
+
+        allLegendItems.push({
+          label,
+          color: theme.visualization.getColorByName(color ?? FALLBACK_COLOR),
+          yAxis: 1,
+          ...(getDisplayValues && { getDisplayValues }),
+        });
+      }
+    });
+  });
+
+  return allLegendItems;
+}
+
 export function prepareTimelineLegendItems(
   frames: DataFrame[] | undefined,
-  options: VizLegendOptions,
-  theme: GrafanaTheme2
+  options: StateTimelineLegendOptions | VizLegendOptions,
+  theme: GrafanaTheme2,
+  timeRange?: TimeRange
 ): VizLegendItem[] | undefined {
   if (!frames || options.showLegend === false) {
     return undefined;
   }
 
-  return getFieldLegendItem(allNonTimeFields(frames), theme);
-}
+  const seriesGroups = new Map<string, Field[]>();
+  const durations = new Map<string, StateDurationInfo>();
 
-export function getFieldLegendItem(fields: Field[], theme: GrafanaTheme2): VizLegendItem[] | undefined {
-  if (!fields.length) {
-    return undefined;
-  }
-
-  const items: VizLegendItem[] = [];
-  const fieldConfig = fields[0].config;
-  const colorMode = fieldConfig.color?.mode ?? FieldColorModeId.Fixed;
-  const thresholds = fieldConfig.thresholds;
-
-  // If thresholds are enabled show each step in the legend
-  // This ignores the hide from legend since the range is valid
-  if (colorMode === FieldColorModeId.Thresholds && thresholds?.steps && thresholds.steps.length > 1) {
-    return getThresholdItems(fieldConfig, theme);
-  }
-
-  // If thresholds are enabled show each step in the legend
-  if (colorMode.startsWith('continuous')) {
-    return undefined; // eventually a color bar
-  }
-
-  const stateColors: Map<string, string | undefined> = new Map();
-
-  fields.forEach((field) => {
-    if (!field.config.custom?.hideFrom?.legend) {
-      field.values.forEach((v) => {
-        let state = field.display!(v);
-        if (state.color) {
-          stateColors.set(state.text, state.color!);
-        }
-      });
-    }
-  });
-
-  stateColors.forEach((color, label) => {
-    if (label.length > 0) {
-      items.push({
-        label: label!,
-        color: theme.visualization.getColorByName(color ?? FALLBACK_COLOR),
-        yAxis: 1,
-      });
-    }
-  });
-
-  return items;
-}
-
-function allNonTimeFields(frames: DataFrame[]): Field[] {
-  const fields: Field[] = [];
   for (const frame of frames) {
-    for (const field of frame.fields) {
-      if (field.type !== FieldType.time) {
-        fields.push(field);
+    let frameDurations: Map<string, StateDurationInfo> | undefined;
+    if (timeRange && 'reducers' in options && options.reducers && options.reducers.length > 0) {
+      frameDurations = calculateStateDurations({
+        fields: frame.fields,
+        timeRange,
+        frame,
+        reducers: options.reducers,
+      });
+    }
+
+    frame.fields.forEach((field) => {
+      if (field.type === FieldType.time || field.config.custom?.hideFrom?.legend) {
+        return;
       }
+
+      const seriesName = getFieldDisplayName(field, frame);
+      if (!seriesGroups.has(seriesName)) {
+        seriesGroups.set(seriesName, []);
+      }
+      const seriesFields = seriesGroups.get(seriesName);
+      if (seriesFields) {
+        seriesFields.push(field);
+      }
+    });
+
+    if (frameDurations) {
+      frameDurations.forEach((info, key) => {
+        durations.set(key, info);
+      });
     }
   }
-  return fields;
+
+  const multipleSeries = frames.length > 1 || seriesGroups.size > 1;
+  const allLegendItems = processSeriesGroups(seriesGroups, durations, options, theme, multipleSeries);
+  return allLegendItems.length > 0 ? allLegendItems : undefined;
 }
 
 export function findNextStateIndex(field: Field, datapointIdx: number) {
