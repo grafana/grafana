@@ -4,6 +4,7 @@ import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
 import { Button } from '@grafana/ui';
+import { contextSrv } from 'app/core/services/context_srv';
 import { useDispatch, useSelector } from 'app/types/store';
 
 import { useQueryLibraryContext } from '../QueryLibrary/QueryLibraryContext';
@@ -15,6 +16,10 @@ type Props = {
 };
 
 export const RichHistoryAddToLibrary = ({ query }: Props) => {
+  if (contextSrv.hasRole('Viewer')) {
+    return null;
+  }
+
   const [hasBeenSaved, setHasBeenSaved] = useState(false);
   const { openDrawer, queryLibraryEnabled } = useQueryLibraryContext();
   const dispatch = useDispatch();
