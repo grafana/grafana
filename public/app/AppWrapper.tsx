@@ -105,9 +105,6 @@ export class AppWrapper extends Component<AppWrapperProps, AppWrapperState> {
     };
 
     const MaybeTimeRangeProvider = config.featureToggles.timeRangeProvider ? TimeRangeProvider : Fragment;
-    const MaybeExtensionSidebarProvider = config.featureToggles.extensionSidebar
-      ? ExtensionSidebarContextProvider
-      : Fragment;
 
     return (
       <Provider store={store}>
@@ -122,7 +119,7 @@ export class AppWrapper extends Component<AppWrapperProps, AppWrapperState> {
                   <MaybeTimeRangeProvider>
                     <ScopesContextProvider>
                       <ExtensionRegistriesProvider registries={pluginExtensionRegistries}>
-                        <MaybeExtensionSidebarProvider>
+                        <ExtensionSidebarContextProvider>
                           <UNSAFE_PortalProvider getContainer={getPortalContainer}>
                             <GlobalStylesWrapper />
                             <div className="grafana-app">
@@ -131,7 +128,7 @@ export class AppWrapper extends Component<AppWrapperProps, AppWrapperState> {
                               <PortalContainer />
                             </div>
                           </UNSAFE_PortalProvider>
-                        </MaybeExtensionSidebarProvider>
+                        </ExtensionSidebarContextProvider>
                       </ExtensionRegistriesProvider>
                     </ScopesContextProvider>
                   </MaybeTimeRangeProvider>

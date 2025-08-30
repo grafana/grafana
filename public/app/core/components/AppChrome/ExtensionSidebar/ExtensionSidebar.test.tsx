@@ -44,7 +44,6 @@ const addedComponentConfigMock: ExtensionInfo = {
 
 const extensionSidebarContextMock: ExtensionSidebarContextType = {
   dockedComponentId: getComponentIdFromComponentMeta(pluginId, addedComponentConfigMock),
-  isEnabled: true,
   props: {},
   isOpen: true,
   setDockedComponentId: jest.fn(),
@@ -71,25 +70,9 @@ describe('ExtensionSidebar', () => {
     config.buildInfo.env = originalEnv;
   });
 
-  it('should render nothing when the extension sidebar is not enabled', () => {
-    mockUseExtensionSidebarContext.mockReturnValue({
-      ...extensionSidebarContextMock,
-      isEnabled: false,
-    });
-
-    mockUsePluginComponents.mockReturnValue({
-      components: [createComponentWithMeta(addedComponentRegistryItemMock, extensionPointId)],
-      isLoading: false,
-    });
-
-    const { container } = render(<ExtensionSidebar />);
-    expect(container.firstChild).toBeNull();
-  });
-
   it('should render nothing when the extension sidebar is enabled but no component is docked', () => {
     mockUseExtensionSidebarContext.mockReturnValue({
       ...extensionSidebarContextMock,
-      isEnabled: true,
       dockedComponentId: undefined,
     });
 
@@ -105,7 +88,6 @@ describe('ExtensionSidebar', () => {
   it('should render nothing when the extension sidebar is enabled but the component docked is not found in the available components', () => {
     mockUseExtensionSidebarContext.mockReturnValue({
       ...extensionSidebarContextMock,
-      isEnabled: true,
       dockedComponentId: 'test-component-id-not-found',
     });
 
@@ -121,7 +103,6 @@ describe('ExtensionSidebar', () => {
   it('should render nothing when the extension sidebar is enabled but the component docked is not found in the available components', () => {
     mockUseExtensionSidebarContext.mockReturnValue({
       ...extensionSidebarContextMock,
-      isEnabled: true,
       dockedComponentId: 'test-component-id-not-found',
     });
 
@@ -137,7 +118,6 @@ describe('ExtensionSidebar', () => {
   it('should render nothing when components are loading', () => {
     mockUseExtensionSidebarContext.mockReturnValue({
       ...extensionSidebarContextMock,
-      isEnabled: true,
     });
 
     mockUsePluginComponents.mockReturnValue({
@@ -152,7 +132,6 @@ describe('ExtensionSidebar', () => {
   it('should render the component when all conditions are met', () => {
     mockUseExtensionSidebarContext.mockReturnValue({
       ...extensionSidebarContextMock,
-      isEnabled: true,
     });
 
     mockUsePluginComponents.mockReturnValue({

@@ -823,10 +823,6 @@ const (
 	// Enables the unified storage grpc connection pool
 	FlagUnifiedStorageGrpcConnectionPool = "unifiedStorageGrpcConnectionPool"
 
-	// FlagExtensionSidebar
-	// Enables the extension sidebar
-	FlagExtensionSidebar = "extensionSidebar"
-
 	// FlagAlertingRulePermanentlyDelete
 	// Enables UI functionality to permanently delete alert rules
 	FlagAlertingRulePermanentlyDelete = "alertingRulePermanentlyDelete"
