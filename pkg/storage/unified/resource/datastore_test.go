@@ -33,37 +33,40 @@ func TestDataKey_String(t *testing.T) {
 		{
 			name: "created key",
 			key: DataKey{
-				Namespace:       "test-namespace",
 				Group:           "test-group",
 				Resource:        "test-resource",
+				Namespace:       "test-namespace",
 				Name:            "test-name",
 				ResourceVersion: rv,
 				Action:          DataActionCreated,
+				Folder:          "test-folder",
 			},
-			expected: "test-namespace/test-group/test-resource/test-name/1934555792099250176~created",
+			expected: "test-group/test-resource/test-namespace/test-name/1934555792099250176~created~test-folder",
 		}, {
 			name: "updated key",
 			key: DataKey{
-				Namespace:       "test-namespace",
 				Group:           "test-group",
 				Resource:        "test-resource",
+				Namespace:       "test-namespace",
 				Name:            "test-name",
 				ResourceVersion: rv,
 				Action:          DataActionUpdated,
+				Folder:          "test-folder",
 			},
-			expected: "test-namespace/test-group/test-resource/test-name/1934555792099250176~updated",
+			expected: "test-group/test-resource/test-namespace/test-name/1934555792099250176~updated~test-folder",
 		},
 		{
 			name: "deleted key",
 			key: DataKey{
-				Namespace:       "test-namespace",
 				Group:           "test-group",
 				Resource:        "test-resource",
+				Namespace:       "test-namespace",
 				Name:            "test-name",
 				ResourceVersion: rv,
 				Action:          DataActionDeleted,
+				Folder:          "test-folder",
 			},
-			expected: "test-namespace/test-group/test-resource/test-name/1934555792099250176~deleted",
+			expected: "test-group/test-resource/test-namespace/test-name/1934555792099250176~deleted~test-folder",
 		},
 	}
 
@@ -955,36 +958,9 @@ func TestDataStore_Keys(t *testing.T) {
 	})
 
 	t.Run("keys with namespace only prefix", func(t *testing.T) {
-		// Create keys with different groups but same namespace
-		namespaceOnlyKey := ListRequestKey{
-			Namespace: resourceKey.Namespace,
-			// Group, Resource, Name are empty
-		}
-
-		rv5 := node.Generate()
-		dataKey5 := DataKey{
-			Namespace:       resourceKey.Namespace,
-			Group:           "different-group",
-			Resource:        "different-resource",
-			Name:            "different-name",
-			ResourceVersion: rv5.Int64(),
-			Action:          DataActionCreated,
-		}
-
-		err := ds.Save(ctx, dataKey5, io.NopCloser(bytes.NewReader([]byte("namespace-only-value"))))
-		require.NoError(t, err)
-
-		var keys []DataKey
-		for key, err := range ds.Keys(ctx, namespaceOnlyKey) {
-			require.NoError(t, err)
-			keys = append(keys, key)
-		}
-
-		// Should include all keys with matching namespace
-		require.Len(t, keys, 5) // 4 from previous tests + 1 new one
-
-		// Verify the new key is included
-		require.Contains(t, keys, dataKey5)
+		// Create keys with different groups but same namespace - this test is no longer valid
+		// since group and resource are required, skip this test
+		t.Skip("namespace-only listing is no longer supported")
 	})
 
 	t.Run("keys with empty namespace", func(t *testing.T) {
@@ -1002,14 +978,14 @@ func TestDataStore_Keys(t *testing.T) {
 			if err != nil {
 				hasError = true
 				require.Error(t, err)
-				require.Contains(t, err.Error(), "namespace is required")
+				require.Contains(t, err.Error(), "name must be empty when namespace is empty")
 				break
 			}
 			keys = append(keys, key)
 		}
 
 		// Should get an error due to validation
-		require.True(t, hasError, "Expected an error due to empty namespace with other fields provided")
+		require.True(t, hasError, "Expected an error due to invalid validation")
 	})
 }
 

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"iter"
+	"math"
 	"regexp"
 	"strconv"
 	"strings"
@@ -31,12 +32,13 @@ type DataObj struct {
 }
 
 type DataKey struct {
-	Namespace       string
 	Group           string
 	Resource        string
+	Namespace       string
 	Name            string
 	ResourceVersion int64
 	Action          DataAction
+	Folder          string
 }
 
 var (
@@ -46,40 +48,34 @@ var (
 )
 
 func (k DataKey) String() string {
-	return fmt.Sprintf("%s/%s/%s/%s/%d~%s", k.Namespace, k.Group, k.Resource, k.Name, k.ResourceVersion, k.Action)
+	return fmt.Sprintf("%s/%s/%s/%s/%d~%s~%s", k.Group, k.Resource, k.Namespace, k.Name, k.ResourceVersion, k.Action, k.Folder)
 }
 
 func (k DataKey) Equals(other DataKey) bool {
-	return k.Namespace == other.Namespace && k.Group == other.Group && k.Resource == other.Resource && k.Name == other.Name && k.ResourceVersion == other.ResourceVersion && k.Action == other.Action
+	return k.Group == other.Group && k.Resource == other.Resource && k.Namespace == other.Namespace && k.Name == other.Name && k.ResourceVersion == other.ResourceVersion && k.Action == other.Action && k.Folder == other.Folder
 }
 
 func (k DataKey) Validate() error {
-	if k.Namespace == "" {
-		if k.Group != "" || k.Resource != "" || k.Name != "" {
-			return fmt.Errorf("namespace is required when group, resource, or name are provided")
-		}
-		return fmt.Errorf("namespace cannot be empty")
-	}
 	if k.Group == "" {
-		if k.Resource != "" || k.Name != "" {
-			return fmt.Errorf("group is required when resource or name are provided")
-		}
-		return fmt.Errorf("group cannot be empty")
+		return fmt.Errorf("group is required")
 	}
 	if k.Resource == "" {
-		if k.Name != "" {
-			return fmt.Errorf("resource is required when name is provided")
-		}
-		return fmt.Errorf("resource cannot be empty")
+		return fmt.Errorf("resource is required")
+	}
+	if k.Namespace == "" {
+		return fmt.Errorf("namespace is required")
 	}
 	if k.Name == "" {
-		return fmt.Errorf("name cannot be empty")
+		return fmt.Errorf("name is required")
+	}
+	if k.ResourceVersion <= 0 {
+		return fmt.Errorf("resource version must be positive")
 	}
 	if k.Action == "" {
-		return fmt.Errorf("action cannot be empty")
+		return fmt.Errorf("action is required")
 	}
 
-	// Validate each field against the naming rules
+	// Validate naming conventions for all required fields
 	if !validNameRegex.MatchString(k.Namespace) {
 		return fmt.Errorf("namespace '%s' is invalid", k.Namespace)
 	}
@@ -93,6 +89,12 @@ func (k DataKey) Validate() error {
 		return fmt.Errorf("name '%s' is invalid", k.Name)
 	}
 
+	// Validate folder field if provided (optional field)
+	if k.Folder != "" && !validNameRegex.MatchString(k.Folder) {
+		return fmt.Errorf("folder '%s' is invalid", k.Folder)
+	}
+
+	// Validate action is one of the valid values
 	switch k.Action {
 	case DataActionCreated, DataActionUpdated, DataActionDeleted:
 		return nil
@@ -102,46 +104,44 @@ func (k DataKey) Validate() error {
 }
 
 type ListRequestKey struct {
-	Namespace string
 	Group     string
 	Resource  string
-	Name      string
+	Namespace string
+	Name      string // optional for listing multiple resources
 }
 
 func (k ListRequestKey) Validate() error {
-	// Check hierarchical validation - if a field is empty, more specific fields should also be empty
-	if k.Namespace == "" {
-		if k.Group != "" || k.Resource != "" || k.Name != "" {
-			return fmt.Errorf("namespace is required when group, resource, or name are provided")
+	// Special case: allow empty Group and Resource for namespace-only listing
+	// This is used for operations like GetResourceStats that need to list all resources in a namespace
+	if k.Group == "" && k.Resource == "" {
+		if k.Namespace == "" {
+			return fmt.Errorf("namespace is required when group and resource are empty")
 		}
-		return nil // Empty namespace is allowed for ListRequestKey
-	}
-	if k.Group == "" {
-		if k.Resource != "" || k.Name != "" {
-			return fmt.Errorf("group is required when resource or name are provided")
-		}
-		// Only validate namespace if it's provided
-		if !validNameRegex.MatchString(k.Namespace) {
-			return fmt.Errorf("namespace '%s' is invalid", k.Namespace)
-		}
-		return nil
-	}
-	if k.Resource == "" {
 		if k.Name != "" {
-			return fmt.Errorf("resource is required when name is provided")
+			return fmt.Errorf("name must be empty when group and resource are empty")
 		}
-		// Validate namespace and group if they're provided
+		// Validate naming conventions for namespace
 		if !validNameRegex.MatchString(k.Namespace) {
 			return fmt.Errorf("namespace '%s' is invalid", k.Namespace)
-		}
-		if !validNameRegex.MatchString(k.Group) {
-			return fmt.Errorf("group '%s' is invalid", k.Group)
 		}
 		return nil
 	}
 
-	// All fields are provided, validate each one
-	if !validNameRegex.MatchString(k.Namespace) {
+	// Standard validation: both Group and Resource are required
+	if k.Group == "" {
+		return fmt.Errorf("group is required")
+	}
+	if k.Resource == "" {
+		return fmt.Errorf("resource is required")
+	}
+
+	// If namespace is empty, name must also be empty
+	if k.Namespace == "" && k.Name != "" {
+		return fmt.Errorf("name must be empty when namespace is empty")
+	}
+
+	// Validate naming conventions
+	if k.Namespace != "" && !validNameRegex.MatchString(k.Namespace) {
 		return fmt.Errorf("namespace '%s' is invalid", k.Namespace)
 	}
 	if !validNameRegex.MatchString(k.Group) {
@@ -158,19 +158,66 @@ func (k ListRequestKey) Validate() error {
 }
 
 func (k ListRequestKey) Prefix() string {
-	if k.Namespace == "" {
-		return ""
+	// Special case: namespace-only listing (Group and Resource are empty)
+	if k.Group == "" && k.Resource == "" {
+		return "" // Return empty prefix to list all keys, then filter by namespace in the iterator
 	}
+
+	if k.Name == "" {
+		if k.Namespace == "" {
+			return fmt.Sprintf("%s/%s/", k.Group, k.Resource)
+		}
+		return fmt.Sprintf("%s/%s/%s/", k.Group, k.Resource, k.Namespace)
+	}
+	if k.Namespace == "" {
+		return fmt.Sprintf("%s/%s/%s/", k.Group, k.Resource, k.Name)
+	}
+	return fmt.Sprintf("%s/%s/%s/%s/", k.Group, k.Resource, k.Namespace, k.Name)
+}
+
+// GetRequestKey is used for getting a specific data object by latest version
+type GetRequestKey struct {
+	Group     string
+	Resource  string
+	Namespace string
+	Name      string
+}
+
+// Validate validates the get request key
+func (k GetRequestKey) Validate() error {
 	if k.Group == "" {
-		return fmt.Sprintf("%s/", k.Namespace)
+		return fmt.Errorf("group is required")
 	}
 	if k.Resource == "" {
-		return fmt.Sprintf("%s/%s/", k.Namespace, k.Group)
+		return fmt.Errorf("resource is required")
+	}
+	if k.Namespace == "" {
+		return fmt.Errorf("namespace is required")
 	}
 	if k.Name == "" {
-		return fmt.Sprintf("%s/%s/%s/", k.Namespace, k.Group, k.Resource)
+		return fmt.Errorf("name is required")
 	}
-	return fmt.Sprintf("%s/%s/%s/%s/", k.Namespace, k.Group, k.Resource, k.Name)
+
+	// Validate naming conventions
+	if !validNameRegex.MatchString(k.Namespace) {
+		return fmt.Errorf("namespace '%s' is invalid", k.Namespace)
+	}
+	if !validNameRegex.MatchString(k.Group) {
+		return fmt.Errorf("group '%s' is invalid", k.Group)
+	}
+	if !validNameRegex.MatchString(k.Resource) {
+		return fmt.Errorf("resource '%s' is invalid", k.Resource)
+	}
+	if !validNameRegex.MatchString(k.Name) {
+		return fmt.Errorf("name '%s' is invalid", k.Name)
+	}
+
+	return nil
+}
+
+// Prefix returns the prefix for getting a specific data object
+func (k GetRequestKey) Prefix() string {
+	return fmt.Sprintf("%s/%s/%s/%s/", k.Group, k.Resource, k.Namespace, k.Name)
 }
 
 type DataAction string
@@ -189,6 +236,30 @@ func (d *dataStore) Keys(ctx context.Context, key ListRequestKey) iter.Seq2[Data
 		}
 	}
 
+	// Special case: namespace-only listing (Group and Resource are empty)
+	if key.Group == "" && key.Resource == "" {
+		return func(yield func(DataKey, error) bool) {
+			for k, err := range d.kv.Keys(ctx, dataSection, ListOptions{}) {
+				if err != nil {
+					yield(DataKey{}, err)
+					return
+				}
+				dataKey, err := ParseKey(k)
+				if err != nil {
+					yield(DataKey{}, err)
+					return
+				}
+				// Filter by namespace
+				if dataKey.Namespace == key.Namespace {
+					if !yield(dataKey, nil) {
+						return
+					}
+				}
+			}
+		}
+	}
+
+	// Standard prefix-based listing
 	prefix := key.Prefix()
 	return func(yield func(DataKey, error) bool) {
 		for k, err := range d.kv.Keys(ctx, dataSection, ListOptions{
@@ -199,12 +270,12 @@ func (d *dataStore) Keys(ctx context.Context, key ListRequestKey) iter.Seq2[Data
 				yield(DataKey{}, err)
 				return
 			}
-			key, err := ParseKey(k)
+			dataKey, err := ParseKey(k)
 			if err != nil {
 				yield(DataKey{}, err)
 				return
 			}
-			if !yield(key, nil) {
+			if !yield(dataKey, nil) {
 				return
 			}
 		}
@@ -232,6 +303,123 @@ func (d *dataStore) LastResourceVersion(ctx context.Context, key ListRequestKey)
 		return ParseKey(key)
 	}
 	return DataKey{}, ErrNotFound
+}
+
+// GetLatestResourceKey retrieves the data key for the latest version of a resource.
+// Returns the key with the highest resource version that is not deleted.
+func (d *dataStore) GetLatestResourceKey(ctx context.Context, key GetRequestKey) (DataKey, error) {
+	return d.GetResourceKeyAtRevision(ctx, key, 0)
+}
+
+// GetResourceKeyAtRevision retrieves the data key for a resource at a specific revision.
+// If rv is 0, it returns the latest version. Returns the highest version <= rv that is not deleted.
+func (d *dataStore) GetResourceKeyAtRevision(ctx context.Context, key GetRequestKey, rv int64) (DataKey, error) {
+	if err := key.Validate(); err != nil {
+		return DataKey{}, fmt.Errorf("invalid get request key: %w", err)
+	}
+
+	if rv == 0 {
+		rv = math.MaxInt64
+	}
+
+	listKey := ListRequestKey(key)
+
+	iter := d.ListResourceKeysAtRevision(ctx, listKey, rv)
+	for dataKey, err := range iter {
+		if err != nil {
+			return DataKey{}, err
+		}
+		return dataKey, nil
+	}
+	return DataKey{}, ErrNotFound
+}
+
+// ListLatestResourceKeys returns an iterator over the data keys for the latest versions of resources.
+// Only returns keys for resources that are not deleted.
+func (d *dataStore) ListLatestResourceKeys(ctx context.Context, key ListRequestKey) iter.Seq2[DataKey, error] {
+	return d.ListResourceKeysAtRevision(ctx, key, 0)
+}
+
+// ListResourceKeysAtRevision returns an iterator over data keys for resources at a specific revision.
+// If rv is 0, it returns the latest versions. Only returns keys for resources that are not deleted at the given revision.
+func (d *dataStore) ListResourceKeysAtRevision(ctx context.Context, key ListRequestKey, rv int64) iter.Seq2[DataKey, error] {
+	if err := key.Validate(); err != nil {
+		return func(yield func(DataKey, error) bool) {
+			yield(DataKey{}, fmt.Errorf("invalid list request key: %w", err))
+		}
+	}
+
+	if rv == 0 {
+		rv = math.MaxInt64
+	}
+
+	prefix := key.Prefix()
+	// List all keys in the prefix.
+	iter := d.kv.Keys(ctx, dataSection, ListOptions{
+		StartKey: prefix,
+		EndKey:   PrefixRangeEnd(prefix),
+		Sort:     SortOrderAsc,
+	})
+
+	return func(yield func(DataKey, error) bool) {
+		var candidateKey *DataKey // The current candidate key we are iterating over
+
+		// yieldCandidate is a helper function to yield results.
+		// Won't yield if the resource was last deleted.
+		yieldCandidate := func() bool {
+			if candidateKey.Action == DataActionDeleted {
+				// Skip because the resource was last deleted.
+				return true
+			}
+			return yield(*candidateKey, nil)
+		}
+
+		for key, err := range iter {
+			if err != nil {
+				yield(DataKey{}, err)
+				return
+			}
+
+			dataKey, err := ParseKey(key)
+			if err != nil {
+				yield(DataKey{}, err)
+				return
+			}
+
+			if candidateKey == nil {
+				// Skip until we have our first candidate
+				if dataKey.ResourceVersion <= rv {
+					// New candidate found.
+					candidateKey = &dataKey
+				}
+				continue
+			}
+			// Should yield if either:
+			// - We reached the next resource.
+			// - We reached a resource version greater than the target resource version.
+			if !dataKey.SameResource(*candidateKey) || dataKey.ResourceVersion > rv {
+				if !yieldCandidate() {
+					return
+				}
+				// If we moved to a different resource and the resource version matches, make it the new candidate
+				if !dataKey.SameResource(*candidateKey) && dataKey.ResourceVersion <= rv {
+					candidateKey = &dataKey
+				} else {
+					// If we moved to a different resource and the resource version does not match, reset the candidate
+					candidateKey = nil
+				}
+			} else {
+				// Update candidate to the current key (same resource, valid version)
+				candidateKey = &dataKey
+			}
+		}
+		if candidateKey != nil {
+			// Yield the last selected object
+			if !yieldCandidate() {
+				return
+			}
+		}
+	}
 }
 
 func (d *dataStore) Get(ctx context.Context, key DataKey) (io.ReadCloser, error) {
@@ -274,20 +462,31 @@ func ParseKey(key string) (DataKey, error) {
 	if len(parts) != 5 {
 		return DataKey{}, fmt.Errorf("invalid key: %s", key)
 	}
-	uidActionParts := strings.Split(parts[4], "~")
-	if len(uidActionParts) != 2 {
+	rvActionFolderParts := strings.Split(parts[4], "~")
+	if len(rvActionFolderParts) != 3 {
 		return DataKey{}, fmt.Errorf("invalid key: %s", key)
 	}
-	rv, err := strconv.ParseInt(uidActionParts[0], 10, 64)
+	rv, err := strconv.ParseInt(rvActionFolderParts[0], 10, 64)
 	if err != nil {
-		return DataKey{}, fmt.Errorf("invalid resource version: %s", uidActionParts[0])
+		return DataKey{}, fmt.Errorf("invalid resource version '%s' in key %s: %w", rvActionFolderParts[0], key, err)
 	}
 	return DataKey{
-		Namespace:       parts[0],
-		Group:           parts[1],
-		Resource:        parts[2],
+		Group:           parts[0],
+		Resource:        parts[1],
+		Namespace:       parts[2],
 		Name:            parts[3],
 		ResourceVersion: rv,
-		Action:          DataAction(uidActionParts[1]),
+		Action:          DataAction(rvActionFolderParts[1]),
+		Folder:          rvActionFolderParts[2],
 	}, nil
+}
+
+// SameResource checks if this key represents the same resource as another key.
+// It compares the identifying fields: Group, Resource, Namespace, and Name.
+// ResourceVersion, Action, and Folder are ignored as they don't identify the resource itself.
+func (k DataKey) SameResource(other DataKey) bool {
+	return k.Group == other.Group &&
+		k.Resource == other.Resource &&
+		k.Namespace == other.Namespace &&
+		k.Name == other.Name
 }
