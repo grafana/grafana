@@ -1088,7 +1088,7 @@ export class ElementState implements LayerElement {
           style={{ userSelect: 'none' }}
         >
           <item.display
-            key={`${this.UID}/${this.revId}`}
+            key={this.UID}
             config={this.options.config}
             data={this.data}
             isSelected={isSelected}
