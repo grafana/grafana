@@ -32,6 +32,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginexternal"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugininstaller"
 	pluginStore "github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
+	"github.com/grafana/grafana/pkg/services/promtypemigration"
 	"github.com/grafana/grafana/pkg/services/provisioning"
 	publicdashboardsmetric "github.com/grafana/grafana/pkg/services/publicdashboards/metric"
 	"github.com/grafana/grafana/pkg/services/rendering"
@@ -69,6 +70,7 @@ func ProvideBackgroundServiceRegistry(
 	appRegistry *appregistry.Service,
 	pluginDashboardUpdater *plugindashboardsservice.DashboardUpdater,
 	dashboardServiceImpl *service.DashboardServiceImpl,
+	promTypeMigrationProvider promtypemigration.PromTypeMigrationProvider,
 	// Need to make sure these are initialized, is there a better place to put them?
 	_ dashboardsnapshots.Service,
 	_ serviceaccounts.Service,
@@ -115,6 +117,7 @@ func ProvideBackgroundServiceRegistry(
 		appRegistry,
 		pluginDashboardUpdater,
 		dashboardServiceImpl,
+		promTypeMigrationProvider,
 	)
 }
 
