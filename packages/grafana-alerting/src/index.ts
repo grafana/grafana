@@ -9,3 +9,7 @@
 
 // This is a dummy export so typescript doesn't error importing an "empty module"
 export const index = {};
+
+import { CentralAlertHistoryScene } from '../../../public/app/features/alerting/unified/components/rules/central-state-history/CentralAlertHistoryScene';
+
+export { CentralAlertHistoryScene };
