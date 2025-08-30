@@ -127,7 +127,7 @@ func setupFromConfig(cfg *setting.Cfg) (controllerCfg *controllerConfig, err err
 		return nil, fmt.Errorf("no configuration available")
 	}
 
-	gRPCAuth := cfg.Raw.Section("grpc_client_authentication")
+	gRPCAuth := cfg.SectionWithEnvOverrides("grpc_client_authentication")
 	token := gRPCAuth.Key("token").String()
 	if token == "" {
 		return nil, fmt.Errorf("token is required in [grpc_client_authentication] section")
@@ -137,7 +137,7 @@ func setupFromConfig(cfg *setting.Cfg) (controllerCfg *controllerConfig, err err
 		return nil, fmt.Errorf("token_exchange_url is required in [grpc_client_authentication] section")
 	}
 
-	operatorSec := cfg.Raw.Section("operator")
+	operatorSec := cfg.SectionWithEnvOverrides("operator")
 	provisioningServerURL := operatorSec.Key("provisioning_server_url").String()
 	if provisioningServerURL == "" {
 		return nil, fmt.Errorf("provisioning_server_url is required in [operator] section")
