@@ -7,6 +7,7 @@ import (
 	"github.com/fatih/color"
 	"github.com/urfave/cli/v2"
 
+	_ "github.com/grafana/grafana/apps/provisioning/pkg/operators"
 	gcli "github.com/grafana/grafana/pkg/cmd/grafana-cli/commands"
 	"github.com/grafana/grafana/pkg/cmd/grafana-server/commands"
 	"github.com/grafana/grafana/pkg/server"

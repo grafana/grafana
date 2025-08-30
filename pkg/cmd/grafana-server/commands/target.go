@@ -21,7 +21,7 @@ import (
 func TargetCommand(version, commit, buildBranch, buildstamp string) *cli.Command {
 	return &cli.Command{
 		Name:  "target",
-		Usage: "target specific grafana dskit services",
+		Usage: "target specific grafana services",
 		Flags: commonFlags,
 		Action: func(context *cli.Context) error {
 			return RunTargetServer(standalone.BuildInfo{
