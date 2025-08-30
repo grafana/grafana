@@ -918,7 +918,9 @@
     "/apis/dashboard.grafana.app/v0alpha1/namespaces/{namespace}/search": {
       "get": {
         "tags": [
-          "Search"
+          "Search",
+          "Folder",
+          "Dashboard"
         ],
         "description": "Dashboard search",
         "parameters": [

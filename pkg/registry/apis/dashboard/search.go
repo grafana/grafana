@@ -63,7 +63,7 @@ func (s *SearchHandler) GetAPIRoutes(defs map[string]common.OpenAPIDefinition) *
 				Spec: &spec3.PathProps{
 					Get: &spec3.Operation{
 						OperationProps: spec3.OperationProps{
-							Tags:        []string{"Search"},
+							Tags:        []string{"Search", "Folder", "Dashboard"},
 							Description: "Dashboard search",
 							Parameters: []*spec3.Parameter{
 								{
