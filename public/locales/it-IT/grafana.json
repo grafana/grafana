@@ -4562,6 +4562,12 @@
       "overwrite": "Sovrascrivi",
       "title-plugin-dashboard": "Dashboard del componente aggiuntivo"
     },
+    "controls": {
+      "menu": {
+        "aria-label": "",
+        "title": ""
+      }
+    },
     "dash-nav": {
       "on-open-snapshot-original": {
         "confirmText": {
@@ -5840,11 +5846,6 @@
         "transparent-background": "Sfondo trasparente"
       }
     },
-    "get-workflow-options": {
-      "label": {
-        "push-to-a-new-branch": "Sposta in un nuovo ramo"
-      }
-    },
     "group-by-variable-form": {
       "alert-not-supported": "Questa origine dati non supporta il raggruppamento per variabili",
       "description-enables-users-custom-values": "Consente agli utenti di aggiungere valori personalizzati all'elenco",
@@ -6941,11 +6942,6 @@
       "dragging-a-divider": "Trascinamento di un divisore",
       "dragging-a-sub-region": "Trascinamento di una sotto-regione",
       "value": "Valore: {{ dividerPos }}"
-    },
-    "drilldownInfo": {
-      "action": "Vai a Grafana Drilldown",
-      "description": "Cerchi le app Grafana Explore? Ora si chiamano app Grafana Drilldown e sono disponibili in <1>Menu > Drilldown</1>",
-      "title": "Le metriche, i registri, le tracce e i profili di esplorazione sono stati spostati!"
     },
     "drop-down-menu": {
       "aria-label-links": "Link",
@@ -11158,11 +11154,16 @@
     "save-or-delete-resource-shared-fields": {
       "comment-placeholder-describe-changes-optional": "Aggiungi una nota per descrivere le modifiche (facoltativo)",
       "description-branch-name-in-git-hub": "Nome del ramo in GitHub",
+      "description-file-path": "",
+      "description-folder-path": "",
       "description-inside-repository": "",
       "label-branch": "Ramo",
       "label-comment": "Commento",
       "label-path": "Percorso",
-      "label-workflow": "Flusso di lavoro"
+      "label-workflow": "Flusso di lavoro",
+      "placeholder-branch": "",
+      "placeholder-new-branch": "",
+      "suffix-configured-branch": ""
     }
   },
   "provisioned-resource-preview-banner": {
@@ -11696,6 +11697,10 @@
       "button-previous": "Precedente",
       "button-submitting": "Invio in corso...",
       "error-instance-repository-exists": "Il repository delle istanze esiste già"
+    },
+    "workflow-options-label": {
+      "push-to-a-new-branch": "",
+      "push-to-existing-branch": ""
     }
   },
   "public-dashboard": {
@@ -12807,6 +12812,7 @@
     "name-fields": "Campi",
     "name-frozen-columns": "",
     "name-hide-in-table": "Nascondi nella tabella",
+    "name-max-height": "",
     "name-min-column-width": "Larghezza minima colonna",
     "name-show-table-footer": "Mostra piè di pagina tabella",
     "name-show-table-header": "Mostra intestazione tabella",
@@ -12816,6 +12822,7 @@
     "name-wrap-text": "",
     "placeholder-column-width": "automatica",
     "placeholder-fields": "Tutti i campi numerici",
+    "placeholder-max-height": "",
     "tooltip-placement-options": {
       "label-auto": "",
       "label-bottom": "",

@@ -4544,6 +4544,12 @@
       "overwrite": "Timpa",
       "title-plugin-dashboard": "Dasbor plugin"
     },
+    "controls": {
+      "menu": {
+        "aria-label": "",
+        "title": ""
+      }
+    },
     "dash-nav": {
       "on-open-snapshot-original": {
         "confirmText": {
@@ -5821,11 +5827,6 @@
         "transparent-background": "Latar belakang transparan"
       }
     },
-    "get-workflow-options": {
-      "label": {
-        "push-to-a-new-branch": "Dorong ke cabang baru"
-      }
-    },
     "group-by-variable-form": {
       "alert-not-supported": "Sumber data ini tidak mendukung grup berdasarkan variabel",
       "description-enables-users-custom-values": "Memungkinkan pengguna untuk menambahkan nilai kustom ke daftar",
@@ -6920,11 +6921,6 @@
       "dragging-a-divider": "Menarik pembagi",
       "dragging-a-sub-region": "Menarik subwilayah",
       "value": "Nilai: {{ dividerPos }}"
-    },
-    "drilldownInfo": {
-      "action": "Buka Grafana Drilldown",
-      "description": "Mencari aplikasi Grafana Explore? Aplikasi ini sekarang disebut sebagai aplikasi Grafana Drilldown dan dapat ditemukan dalam <1>Menu > Drilldown</1>",
-      "title": "Explore Metrics, Logs, Traces, dan Profiles telah dipindahkan!"
     },
     "drop-down-menu": {
       "aria-label-links": "Tautan",
@@ -11126,11 +11122,16 @@
     "save-or-delete-resource-shared-fields": {
       "comment-placeholder-describe-changes-optional": "Tambahkan catatan untuk menjelaskan perubahan Anda (opsional)",
       "description-branch-name-in-git-hub": "Nama cabang di GitHub",
+      "description-file-path": "",
+      "description-folder-path": "",
       "description-inside-repository": "",
       "label-branch": "Cabang",
       "label-comment": "Komentar",
       "label-path": "Jalur",
-      "label-workflow": "Alur kerja"
+      "label-workflow": "Alur kerja",
+      "placeholder-branch": "",
+      "placeholder-new-branch": "",
+      "suffix-configured-branch": ""
     }
   },
   "provisioned-resource-preview-banner": {
@@ -11661,6 +11662,10 @@
       "button-previous": "Sebelumnya",
       "button-submitting": "Mengirim...",
       "error-instance-repository-exists": "Repositori instans sudah ada"
+    },
+    "workflow-options-label": {
+      "push-to-a-new-branch": "",
+      "push-to-existing-branch": ""
     }
   },
   "public-dashboard": {
@@ -12766,6 +12771,7 @@
     "name-fields": "Bidang",
     "name-frozen-columns": "",
     "name-hide-in-table": "Sembunyikan di tabel",
+    "name-max-height": "",
     "name-min-column-width": "Lebar kolom minimum",
     "name-show-table-footer": "Tampilkan footer tabel",
     "name-show-table-header": "Tampilkan header tabel",
@@ -12775,6 +12781,7 @@
     "name-wrap-text": "",
     "placeholder-column-width": "otomatis",
     "placeholder-fields": "Semua Bidang Numerik",
+    "placeholder-max-height": "",
     "tooltip-placement-options": {
       "label-auto": "",
       "label-bottom": "",
