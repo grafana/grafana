@@ -84,10 +84,12 @@ const getStyles = (theme: GrafanaTheme2) => ({
   fullScreenPanel: css({
     '.react-grid-layout': {
       height: 'auto !important',
+      // eslint-disable-next-line @grafana/no-unreduced-motion
       transitionProperty: 'none',
     },
     '.react-grid-item': {
       display: 'none !important',
+      // eslint-disable-next-line @grafana/no-unreduced-motion
       transitionProperty: 'none !important',
 
       '&--fullscreen': {

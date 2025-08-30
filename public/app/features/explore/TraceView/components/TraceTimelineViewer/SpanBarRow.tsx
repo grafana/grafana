@@ -189,7 +189,9 @@ const getStyles = stylesFactory((theme: GrafanaTheme2, showSpanFilterMatchesOnly
       },
       [`& .${nameWrapperClassName}, .${viewClassName}, .${nameWrapperMatchingFilterClassName}`]: {
         backgroundColor: autoColor(theme, '#cbe7ff'),
-        animation: `${animations.flash} 1s cubic-bezier(0.12, 0, 0.39, 0)`,
+        [theme.transitions.handleMotion('no-preference')]: {
+          animation: `${animations.flash} 1s cubic-bezier(0.12, 0, 0.39, 0)`,
+        },
       },
       [`& .${spanBarClassName}`]: {
         opacity: 1,

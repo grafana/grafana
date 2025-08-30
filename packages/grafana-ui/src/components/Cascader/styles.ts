@@ -1,3 +1,5 @@
+/* eslint-disable @grafana/no-unreduced-motion */
+// TODO: Fix unreduced motion in this file
 import { css, keyframes } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
