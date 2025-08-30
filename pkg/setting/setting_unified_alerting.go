@@ -24,7 +24,6 @@ const (
 	alertmanagerDefaultConfigPollInterval = time.Minute
 	alertmanagerRedisDefaultMaxConns      = 5
 	// To start, the alertmanager needs at least one route defined.
-	// TODO: we should move this to Grafana settings and define this as the default.
 	alertmanagerDefaultConfiguration = `{
 	"alertmanager_config": {
 		"route": {
@@ -334,9 +333,7 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 	uaCfg.HARedisTLSConfig.InsecureSkipVerify = ua.Key("ha_redis_tls_insecure_skip_verify").MustBool(false)
 	uaCfg.HARedisTLSConfig.CipherSuites = ua.Key("ha_redis_tls_cipher_suites").MustString("")
 	uaCfg.HARedisTLSConfig.MinVersion = ua.Key("ha_redis_tls_min_version").MustString("")
-
-	// TODO load from ini file
-	uaCfg.DefaultConfiguration = alertmanagerDefaultConfiguration
+	uaCfg.DefaultConfiguration = valueAsString(ua, "default_configuration", alertmanagerDefaultConfiguration)
 
 	alerting := iniFile.Section("alerting")
 
@@ -557,6 +554,7 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 	return nil
 }
 
+// Does not respect custom config
 func GetAlertmanagerDefaultConfiguration() string {
 	return alertmanagerDefaultConfiguration
 }
