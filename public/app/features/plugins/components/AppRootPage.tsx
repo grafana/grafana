@@ -31,6 +31,7 @@ import {
   useAddedComponentsRegistry,
   useExposedComponentsRegistry,
   useAddedFunctionsRegistry,
+  useUrlRecognizersRegistry,
 } from '../extensions/ExtensionRegistriesContext';
 import { importAppPlugin } from '../pluginLoader';
 import { getPluginSettings } from '../pluginSettings';
@@ -64,6 +65,7 @@ export function AppRootPage({ pluginId, pluginNavSection }: Props) {
   const addedComponentsRegistry = useAddedComponentsRegistry();
   const exposedComponentsRegistry = useExposedComponentsRegistry();
   const addedFunctionsRegistry = useAddedFunctionsRegistry();
+  const urlRecognizersRegistry = useUrlRecognizersRegistry();
   const location = useLocation();
   const [state, dispatch] = useReducer(stateSlice.reducer, initialState);
   const currentUrl = config.appSubUrl + location.pathname + location.search;
@@ -122,6 +124,7 @@ export function AppRootPage({ pluginId, pluginNavSection }: Props) {
             addedComponentsRegistry: addedComponentsRegistry.readOnly(),
             exposedComponentsRegistry: exposedComponentsRegistry.readOnly(),
             addedFunctionsRegistry: addedFunctionsRegistry.readOnly(),
+            urlRecognizersRegistry: urlRecognizersRegistry.readOnly(),
           }}
         >
           <plugin.root

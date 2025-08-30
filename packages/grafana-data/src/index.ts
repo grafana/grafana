@@ -580,7 +580,9 @@ export {
   type PluginExtensionAddedComponentConfig,
   type PluginExtensionAddedLinkConfig,
   type PluginExtensionAddedFunctionConfig,
+  type PluginExtensionAddedUrlRecognizerConfig,
   type PluginExtensionResourceAttributesContext,
+  type UrlMetadata,
 } from './types/pluginExtensions';
 export {
   type ScopeDashboardBindingSpec,

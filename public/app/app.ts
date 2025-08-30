@@ -42,6 +42,7 @@ import {
   setFolderPicker,
   setCorrelationsService,
   setPluginFunctionsHook,
+  setGetUrlMetadataHook,
   setMegaMenuOpenHook,
 } from '@grafana/runtime';
 import {
@@ -96,6 +97,7 @@ import {
   getObservablePluginComponents,
   getObservablePluginLinks,
 } from './features/plugins/extensions/getPluginExtensions';
+import { getUrlMetadata } from './features/plugins/extensions/getUrlMetadata';
 import { usePluginComponent } from './features/plugins/extensions/usePluginComponent';
 import { usePluginComponents } from './features/plugins/extensions/usePluginComponents';
 import { usePluginFunctions } from './features/plugins/extensions/usePluginFunctions';
@@ -254,6 +256,7 @@ export class GrafanaApp {
       setPluginComponentHook(usePluginComponent);
       setPluginComponentsHook(usePluginComponents);
       setPluginFunctionsHook(usePluginFunctions);
+      setGetUrlMetadataHook(getUrlMetadata);
       setGetObservablePluginLinks(getObservablePluginLinks);
       setGetObservablePluginComponents(getObservablePluginComponents);
 
