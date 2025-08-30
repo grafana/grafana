@@ -22,9 +22,9 @@ function useStateHistoryModal() {
   const styles = useStyles2(getStyles);
 
   // can be "loki", "multiple" or "annotations"
-  const stateHistoryBackend = config.unifiedAlerting.alertStateHistoryBackend;
+  const stateHistoryBackend = config.unifiedAlerting.stateHistory?.backend;
   // can be "loki" or "annotations"
-  const stateHistoryPrimary = config.unifiedAlerting.alertStateHistoryPrimary;
+  const stateHistoryPrimary = config.unifiedAlerting.stateHistory?.primary;
 
   // if "loki" is either the backend or the primary, show the new state history implementation
   const usingNewAlertStateHistory = [stateHistoryBackend, stateHistoryPrimary].some(

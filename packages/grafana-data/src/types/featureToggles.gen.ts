@@ -1106,4 +1106,9 @@ export interface FeatureToggles {
   * @default false
   */
   teamFolders?: boolean;
+  /**
+  * Enables the alerting triage feature
+  * @default false
+  */
+  alertingTriage?: boolean;
 }

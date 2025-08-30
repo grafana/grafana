@@ -100,14 +100,17 @@ export interface GrafanaJavascriptAgentConfig {
   apiKey: string;
 }
 
+export interface UnifiedAlertingStateHistoryConfig {
+  backend?: string;
+  primary?: string;
+  prometheusTargetDatasourceUID?: string;
+  prometheusMetricName?: string;
+}
+
 export interface UnifiedAlertingConfig {
   minInterval: string;
-  // will be undefined if alerStateHistory is not enabled
-  alertStateHistoryBackend?: string;
-  // will be undefined if implementation is not "multiple"
-  alertStateHistoryPrimary?: string;
+  stateHistory?: UnifiedAlertingStateHistoryConfig;
   recordingRulesEnabled?: boolean;
-  // will be undefined if no default datasource is configured
   defaultRecordingRulesTargetDatasourceUID?: string;
 }
 

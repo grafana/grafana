@@ -186,8 +186,12 @@ export class GrafanaBootConfig {
   unifiedAlertingEnabled = false;
   unifiedAlerting: UnifiedAlertingConfig = {
     minInterval: '',
-    alertStateHistoryBackend: undefined,
-    alertStateHistoryPrimary: undefined,
+    stateHistory: {
+      backend: undefined,
+      primary: undefined,
+      prometheusTargetDatasourceUID: undefined,
+      prometheusMetricName: undefined,
+    },
     recordingRulesEnabled: false,
     defaultRecordingRulesTargetDatasourceUID: undefined,
   };
