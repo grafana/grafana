@@ -51,6 +51,23 @@ func (s *ServiceImpl) addAppLinks(treeRoot *navtree.NavTreeRoot, c *contextmodel
 		}
 	}
 
+	// Update select tree nodes for certain plugins
+	for _, plugin := range s.pluginStore.Plugins(c.Req.Context(), plugins.TypeApp) {
+		if !isPluginEnabled(plugin) {
+			continue
+		}
+
+		if plugin.ID == "grafana-adaptivetelemetry-app" {
+			adaptiveTelemetryNode := treeRoot.FindById(navtree.NavIDAdaptiveTelemetry)
+			if adaptiveTelemetryNode == nil {
+				continue
+			}
+			// If the adaptivetelemetry app is installed, updated the nav menu item accordingly
+			adaptiveTelemetryNode.Url = s.cfg.AppSubURL + "/a/grafana-adaptivetelemetry-app"
+			adaptiveTelemetryNode.PluginID = "grafana-adaptivetelemetry-app"
+		}
+	}
+
 	if len(appLinks) > 0 {
 		sort.SliceStable(appLinks, func(i, j int) bool {
 			return appLinks[i].Text < appLinks[j].Text
@@ -291,6 +308,19 @@ func (s *ServiceImpl) addPluginToSection(c *contextmodel.ReqContext, treeRoot *n
 				Children:   []*navtree.NavLink{appLink},
 				Url:        s.cfg.AppSubURL + "/testing-and-synthetics",
 			})
+		case navtree.NavIDAdaptiveTelemetry:
+			treeRoot.AddSection(&navtree.NavLink{
+				Text:       "Adaptive Telemetry",
+				Id:         navtree.NavIDAdaptiveTelemetry,
+				SubTitle:   "Reduce noise, cut costs, and accelerate troubleshooting by intelligently ingesting only the telemetry data that matters most.",
+				Icon:       "adaptive-telemetry",
+				SortWeight: navtree.WeightDataConnections + 1,
+				Children:   []*navtree.NavLink{appLink},
+				Url:        "adaptive-telemetry",
+				// Use the icon URL from the first "Adaptive Telemetry" plugin in the list (they will all be the same)
+				Img:   s.cfg.AppSubURL + plugin.Info.Logos.Large,
+				IsNew: true,
+			})
 		default:
 			s.log.Error("Plugin app nav id not found", "pluginId", plugin.ID, "navId", sectionID)
 		}
@@ -333,9 +363,10 @@ func (s *ServiceImpl) readNavigationSettings() {
 		"grafana-slo-app":                  {SectionID: navtree.NavIDAlertsAndIncidents, SortWeight: 7},
 		"grafana-cloud-link-app":           {SectionID: navtree.NavIDCfgPlugins, SortWeight: 3},
 		"grafana-costmanagementui-app":     {SectionID: navtree.NavIDCfg, Text: "Cost management"},
-		"grafana-adaptive-metrics-app":     {SectionID: navtree.NavIDCfg, Text: "Adaptive Metrics"},
-		"grafana-adaptivelogs-app":         {SectionID: navtree.NavIDCfg, Text: "Adaptive Logs"},
-		"grafana-adaptivetraces-app":       {SectionID: navtree.NavIDCfg, Text: "Adaptive Traces"},
+		"grafana-adaptive-metrics-app":     {SectionID: navtree.NavIDAdaptiveTelemetry, SortWeight: 1, Text: "Adaptive Metrics", SubTitle: "Analyzes and reduces unused metrics and cardinality to help you focus on your most valuable performance data."},
+		"grafana-adaptivelogs-app":         {SectionID: navtree.NavIDAdaptiveTelemetry, SortWeight: 2, Text: "Adaptive Logs", SubTitle: "Analyzes log patterns to drop repetitive lines and accelerate troubleshooting."},
+		"grafana-adaptivetraces-app":       {SectionID: navtree.NavIDAdaptiveTelemetry, SortWeight: 3, Text: "Adaptive Traces", SubTitle: "Analyzes and retains the most valuable traces, providing the performance insights needed to resolve issues faster."},
+		"grafana-adaptiveprofiles-app":     {SectionID: navtree.NavIDAdaptiveTelemetry, SortWeight: 4, Text: "Adaptive Profiles", SubTitle: "Analyzes application profiles to pinpoint the root cause of performance issues and accelerate resolution."},
 		"grafana-attributions-app":         {SectionID: navtree.NavIDCfg, Text: "Attributions"},
 		"grafana-logvolumeexplorer-app":    {SectionID: navtree.NavIDCfg, Text: "Log Volume Explorer"},
 		"grafana-easystart-app":            {SectionID: navtree.NavIDRoot, SortWeight: navtree.WeightApps + 1, Text: "Connections", Icon: "adjust-circle"},
