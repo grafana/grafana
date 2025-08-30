@@ -65,7 +65,7 @@ export const StateFilterValues = {
   recovering: 'Recovering',
 } as const;
 
-export const CentralAlertHistoryScene = () => {
+export const CentralAlertHistoryScene = ({ defaultLabelsFilter }: { defaultLabelsFilter?: string } = {}) => {
   //track the loading of the central alert state history
 
   useEffect(() => {
@@ -80,6 +80,7 @@ export const CentralAlertHistoryScene = () => {
     const labelsFilterVariable = new TextBoxVariable({
       name: LABELS_FILTER,
       label: t('alerting.central-alert-history-scene.scene.labels-filter-variable.label.labels', 'Labels: '),
+      ...(defaultLabelsFilter && { value: defaultLabelsFilter }),
     });
 
     //custom variable for filtering by the current state
@@ -139,7 +140,7 @@ export const CentralAlertHistoryScene = () => {
         ],
       }),
     });
-  }, []);
+  }, [defaultLabelsFilter]);
 
   // we need to call this to sync the url with the scene state
   const isUrlSyncInitialized = useUrlSync(scene);

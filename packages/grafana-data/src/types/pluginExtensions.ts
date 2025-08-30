@@ -208,6 +208,11 @@ export enum PluginExtensionPoints {
   ExtensionSidebar = 'grafana/extension-sidebar/v0-alpha',
 }
 
+// Extension Points available in plugins
+export enum PluginExtensionPointsInPlugins {
+  IrmAlertRule = 'grafana-irm-app/alert-rule/v1',
+}
+
 export type PluginExtensionPanelContext = {
   pluginId: string;
   id: number;
