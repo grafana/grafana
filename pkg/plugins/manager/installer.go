@@ -142,6 +142,10 @@ func (m *PluginInstaller) install(ctx context.Context, pluginID, version string,
 	if version != "" && extractedArchive.Version != version {
 		m.log.Error("Installed plugin version mismatch", "expected", version, "got", extractedArchive.Version)
 	}
+	// Ensure installed plugin directory inherits ownership from parent plugin dir
+	if err := matchOwnershipToParent(extractedArchive.Path, m.cfg.PluginsPath); err != nil {
+		m.log.Warn("failed to set plugin ownership", "path", extractedArchive.Path, "err", err)
+	}
 
 	return extractedArchive, nil
 }
