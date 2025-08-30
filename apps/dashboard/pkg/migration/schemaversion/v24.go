@@ -227,7 +227,7 @@ func (m *v24Migrator) migrate(dashboard map[string]interface{}) error {
 		// Find if the panel plugin exists
 		tablePanelPlugin := m.panelProvider.GetPanelPlugin("table")
 		if tablePanelPlugin.ID == "" {
-			return NewMigrationError("table panel plugin not found when migrating dashboard to schema version 24", 24, LATEST_VERSION)
+			return NewMigrationError("table panel plugin not found when migrating dashboard to schema version 24", 24, LATEST_VERSION, "V24")
 		}
 		panelMap["pluginVersion"] = tablePanelPlugin.Version
 		err := tablePanelChangedHandler(panelMap)

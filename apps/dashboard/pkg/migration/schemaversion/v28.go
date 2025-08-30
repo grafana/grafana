@@ -148,7 +148,7 @@ func (m *v28Migrator) migrateSinglestatPanel(panel map[string]interface{}) error
 
 	// Use cached stat panel version
 	if m.statPanelVersion == "" {
-		return NewMigrationError("stat panel plugin not found when migrating dashboard to schema version 28", 28, LATEST_VERSION)
+		return NewMigrationError("stat panel plugin not found when migrating dashboard to schema version 28", 28, LATEST_VERSION, "V28")
 	}
 
 	panel["pluginVersion"] = m.statPanelVersion
