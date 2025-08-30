@@ -23,14 +23,93 @@ import { ExternalAlertmanagerContactPointSelector } from './ContactPointSelector
 interface NotificationPoliciesFilterProps {
   onChangeMatchers: (labels: ObjectMatcher[]) => void;
   onChangeReceiver: (receiver: string | undefined) => void;
+  onChangeTestLabels: (labels: string | undefined) => void;
   matchingCount: number;
 }
+
+interface AlertRoutingTestProps {
+  onChangeTestLabels: (labels: string | undefined) => void;
+}
+
+const AlertRoutingTest = ({ onChangeTestLabels }: AlertRoutingTestProps) => {
+  const testLabelsInputRef = useRef<HTMLInputElement | null>(null);
+  const [searchParams, setSearchParams] = useURLSearchParams();
+
+  const testLabels = searchParams.get('testLabels') ?? undefined;
+
+  useEffect(() => {
+    onChangeTestLabels(testLabels);
+  }, [testLabels, onChangeTestLabels]);
+
+  let testLabelsInputValid = true;
+  try {
+    if (testLabels) {
+      parsePromQLStyleMatcherLoose(testLabels);
+    }
+  } catch (err) {
+    testLabelsInputValid = false;
+  }
+
+  const clearTestLabels = useCallback(() => {
+    if (testLabelsInputRef.current) {
+      testLabelsInputRef.current.value = '';
+    }
+    setSearchParams({ testLabels: undefined });
+  }, [setSearchParams]);
+
+  return (
+    <Field
+      noMargin
+      label={
+        <Label>
+          <Stack gap={0.5}>
+            <Trans i18nKey="alerting.common.test-alert-routing">Test alert routing</Trans>
+            <Tooltip
+              content={
+                <Trans i18nKey="alerting.policies.test-routing-description">
+                  Test how an alert with these labels would be routed through your notification policies:
+                  <pre>severity=critical, region=EMEA</pre>
+                </Trans>
+              }
+            >
+              <Icon name="info-circle" size="sm" />
+            </Tooltip>
+          </Stack>
+        </Label>
+      }
+      invalid={!testLabelsInputValid ? true : undefined}
+      error={!testLabelsInputValid ? 'Labels must use valid matcher syntax' : undefined}
+    >
+      <Stack direction="row" gap={1}>
+        <Input
+          ref={testLabelsInputRef}
+          data-testid="test-alert-routing-input"
+          placeholder={t(
+            'alerting.notification-policies-filter.test-alert-routing-placeholder',
+            'e.g., severity=critical, region=EMEA'
+          )}
+          width={60}
+          prefix={<Icon name="play" />}
+          onChange={(event) => {
+            setSearchParams({ testLabels: event.currentTarget.value });
+          }}
+          defaultValue={testLabels}
+        />
+        {testLabels && (
+          <Button variant="secondary" icon="times" onClick={clearTestLabels}>
+            <Trans i18nKey="alerting.common.clear">Clear</Trans>
+          </Button>
+        )}
+      </Stack>
+    </Field>
+  );
+};
 
 const NotificationPoliciesFilter = ({
   onChangeReceiver,
   onChangeMatchers,
   matchingCount,
-}: NotificationPoliciesFilterProps) => {
+}: Omit<NotificationPoliciesFilterProps, 'onChangeTestLabels'>) => {
   const [contactPointsSupported, canSeeContactPoints] = useAlertmanagerAbility(AlertmanagerAction.ViewContactPoint);
   const { isGrafanaAlertmanager } = useAlertmanager();
   const [searchParams, setSearchParams] = useURLSearchParams();
@@ -232,4 +311,4 @@ const getStyles = () => ({
   }),
 });
 
-export { NotificationPoliciesFilter };
+export { NotificationPoliciesFilter, AlertRoutingTest };
