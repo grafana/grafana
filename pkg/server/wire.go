@@ -77,6 +77,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	dashboardstore "github.com/grafana/grafana/pkg/services/dashboards/database"
 	dashboardservice "github.com/grafana/grafana/pkg/services/dashboards/service"
+	dashboardclient "github.com/grafana/grafana/pkg/services/dashboards/service/client"
 	"github.com/grafana/grafana/pkg/services/dashboardsnapshots"
 	dashsnapstore "github.com/grafana/grafana/pkg/services/dashboardsnapshots/database"
 	dashsnapsvc "github.com/grafana/grafana/pkg/services/dashboardsnapshots/service"
@@ -452,6 +453,8 @@ var wireBasicSet = wire.NewSet(
 	grafanaapiserver.WireSet,
 	apiregistry.WireSet,
 	appregistry.WireSet,
+	// Dashboard Kubernetes helpers
+	dashboardclient.ProvideK8sClientWithFallback,
 )
 
 var wireSet = wire.NewSet(

@@ -11,22 +11,18 @@ import (
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
-	dashv0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
+	dashboardv2alpha1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1"
+	dashboardv2beta1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/services/apiserver"
-	"github.com/grafana/grafana/pkg/services/apiserver/client"
-	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	dashboardclient "github.com/grafana/grafana/pkg/services/dashboards/service/client"
 	dashver "github.com/grafana/grafana/pkg/services/dashboardversion"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/search/sort"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
-	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
 const (
@@ -38,33 +34,28 @@ type Service struct {
 	cfg       *setting.Cfg
 	store     store
 	dashSvc   dashboards.DashboardService
-	k8sclient client.K8sHandler
+	k8sclient dashboardclient.K8sHandlerWithFallback
 	features  featuremgmt.FeatureToggles
 	log       log.Logger
 }
 
-func ProvideService(cfg *setting.Cfg, db db.DB, dashboardService dashboards.DashboardService, dashboardStore dashboards.Store, features featuremgmt.FeatureToggles,
-	restConfigProvider apiserver.RestConfigProvider, userService user.Service, unified resource.ResourceClient, dual dualwrite.Service, sorter sort.Service) dashver.Service {
+func ProvideService(
+	cfg *setting.Cfg,
+	db db.DB,
+	dashboardService dashboards.DashboardService,
+	features featuremgmt.FeatureToggles,
+	clientWithFallback dashboardclient.K8sHandlerWithFallback,
+) dashver.Service {
 	return &Service{
 		cfg: cfg,
 		store: &sqlStore{
 			db:      db,
 			dialect: db.GetDialect(),
 		},
-		features: features,
-		k8sclient: client.NewK8sHandler(
-			dual,
-			request.GetNamespaceMapper(cfg),
-			dashv0.DashboardResourceInfo.GroupVersionResource(),
-			restConfigProvider.GetRestConfig,
-			dashboardStore,
-			userService,
-			unified,
-			sorter,
-			features,
-		),
-		dashSvc: dashboardService,
-		log:     log.New("dashboard-version"),
+		features:  features,
+		k8sclient: clientWithFallback,
+		dashSvc:   dashboardService,
+		log:       log.New("dashboard-version"),
 	}
 }
 
@@ -292,25 +283,12 @@ func (s *Service) UnstructuredToLegacyDashboardVersionList(ctx context.Context, 
 }
 
 func (s *Service) unstructuredToLegacyDashboardVersionWithUsers(item *unstructured.Unstructured, users map[string]*user.User) (*dashver.DashboardVersionDTO, error) {
-	spec, ok := item.Object["spec"].(map[string]any)
-	if !ok {
-		return nil, errors.New("error parsing dashboard from k8s response")
-	}
-	obj, err := utils.MetaAccessor(item)
-	if err != nil {
+	var vspec DashboardVersionSpec
+	if err := UnstructuredToDashboardVersionSpec(item, &vspec); err != nil {
 		return nil, err
 	}
-	uid := obj.GetName()
-	spec["uid"] = uid
 
-	dashVersion := obj.GetGeneration()
-	parentVersion := dashVersion - 1
-	if parentVersion < 0 {
-		parentVersion = 0
-	}
-	if dashVersion > 0 {
-		spec["version"] = dashVersion
-	}
+	obj := vspec.MetaAccessor
 
 	var createdBy *user.User
 	if creator, ok := users[obj.GetCreatedBy()]; ok {
@@ -338,16 +316,16 @@ func (s *Service) unstructuredToLegacyDashboardVersionWithUsers(item *unstructur
 	}
 
 	return &dashver.DashboardVersionDTO{
-		ID:            dashVersion,
+		ID:            vspec.Version,
 		DashboardID:   obj.GetDeprecatedInternalID(), // nolint:staticcheck
-		DashboardUID:  uid,
+		DashboardUID:  vspec.UID,
 		Created:       created,
 		CreatedBy:     createdByID,
 		Message:       obj.GetMessage(),
 		RestoredFrom:  restoreVer,
-		Version:       int(dashVersion),
-		ParentVersion: int(parentVersion),
-		Data:          simplejson.NewFromAny(spec),
+		Version:       int(vspec.Version),
+		ParentVersion: int(vspec.ParentVersion),
+		Data:          simplejson.NewFromAny(vspec.Spec),
 	}, nil
 }
 
@@ -368,4 +346,74 @@ func getRestoreVersion(msg string) (int, error) {
 		return 0, err
 	}
 	return ver, nil
+}
+
+// DashboardVersionSpec contains the necessary fields to represent a dashboard version.
+type DashboardVersionSpec struct {
+	UID           string
+	Version       int64
+	ParentVersion int64
+	Spec          any
+	MetaAccessor  utils.GrafanaMetaAccessor
+}
+
+// UnstructuredToDashboardVersionSpec converts a k8s unstructured object to a DashboardVersionSpec.
+// It supports dashboard API versions v0alpha1 through v2beta1.
+func UnstructuredToDashboardVersionSpec(obj *unstructured.Unstructured, dst *DashboardVersionSpec) error {
+	if obj.GetAPIVersion() == dashboardv2alpha1.GroupVersion.String() ||
+		obj.GetAPIVersion() == dashboardv2beta1.GroupVersion.String() {
+		spec, ok := obj.Object["spec"]
+		if !ok {
+			return errors.New("error parsing dashboard from k8s response")
+		}
+
+		meta, err := utils.MetaAccessor(obj)
+		if err != nil {
+			return err
+		}
+
+		version := meta.GetGeneration()
+		parentVersion := version - 1
+		if parentVersion < 0 {
+			parentVersion = 0
+		}
+
+		dst.UID = obj.GetName()
+		dst.Version = version
+		dst.ParentVersion = parentVersion
+		dst.Spec = spec
+		dst.MetaAccessor = meta
+
+		return nil
+	}
+
+	// Otherwise we assume that we are dealing with a legacy dashboard API version (v0 / v1 / etc.)
+
+	spec, ok := obj.Object["spec"].(map[string]any)
+	if !ok {
+		return errors.New("error parsing dashboard from k8s response")
+	}
+	meta, err := utils.MetaAccessor(obj)
+	if err != nil {
+		return err
+	}
+	uid := meta.GetName()
+	spec["uid"] = uid
+
+	dashVersion := meta.GetGeneration()
+	parentVersion := dashVersion - 1
+	if parentVersion < 0 {
+		parentVersion = 0
+	}
+	if dashVersion > 0 {
+		spec["version"] = dashVersion
+	}
+
+	dst.UID = uid
+	dst.Version = dashVersion
+	dst.ParentVersion = parentVersion
+	dst.Spec = spec
+	dst.MetaAccessor = meta
+
+	return nil
 }
