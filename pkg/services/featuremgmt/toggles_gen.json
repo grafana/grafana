@@ -874,6 +874,20 @@
     },
     {
       "metadata": {
+        "name": "dashboardDropAndPaste",
+        "resourceVersion": "1756206550681",
+        "creationTimestamp": "2025-08-26T11:09:10Z"
+      },
+      "spec": {
+        "description": "Enables the drop and paste handlers on dashboards",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "dashboardDsAdHocFiltering",
         "resourceVersion": "1753448760331",
         "creationTimestamp": "2025-07-25T13:06:00Z"

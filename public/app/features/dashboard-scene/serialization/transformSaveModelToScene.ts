@@ -378,14 +378,7 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel,
   return dashboardScene;
 }
 
-export function buildGridItemForPanel(panel: PanelModel): DashboardGridItem {
-  const repeatOptions: Partial<{ variableName: string; repeatDirection: RepeatDirection }> = panel.repeat
-    ? {
-        variableName: panel.repeat,
-        repeatDirection: panel.repeatDirection === 'v' ? 'v' : 'h',
-      }
-    : {};
-
+export function buildVizPanelForPanel(panel: PanelModel): VizPanel {
   const titleItems: SceneObject[] = [];
 
   titleItems.push(
@@ -459,8 +452,18 @@ export function buildGridItemForPanel(panel: PanelModel): DashboardGridItem {
     });
   }
 
-  const body = new VizPanel(vizPanelState);
+  return new VizPanel(vizPanelState);
+}
 
+export function buildGridItemForPanel(panel: PanelModel): DashboardGridItem {
+  const repeatOptions: Partial<{ variableName: string; repeatDirection: RepeatDirection }> = panel.repeat
+    ? {
+        variableName: panel.repeat,
+        repeatDirection: panel.repeatDirection === 'v' ? 'v' : 'h',
+      }
+    : {};
+
+  const body = buildVizPanelForPanel(panel);
   return new DashboardGridItem({
     key: `grid-item-${panel.id}`,
     x: panel.gridPos.x,

@@ -203,6 +203,7 @@ type Cfg struct {
 	PluginAdminExternalManageEnabled bool
 	PluginForcePublicKeyDownload     bool
 	PluginSkipPublicKeyDownload      bool
+	PluginEnableDropAndPasteHook     []string
 	DisablePlugins                   []string
 	HideAngularDeprecation           []string
 	ForwardHostEnvVars               []string
