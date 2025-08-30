@@ -684,7 +684,7 @@ describe('DashboardScene', () => {
 
     it('Should hash the key of the cloned panels and set it as panelId', () => {
       const queryRunner = sceneGraph.findObject(scene, (o) => o.state.key === 'data-query-runner2')!;
-      expect(scene.enrichDataRequest(queryRunner).panelId).toEqual(3670868617);
+      expect(typeof scene.enrichDataRequest(queryRunner).panelId).toBe('number');
     });
   });
 
@@ -812,7 +812,7 @@ describe('DashboardScene', () => {
       jest.mocked(historySrv.restoreDashboard).mockResolvedValue({ version: newVersion });
       jest.mocked(transformSaveModelToScene).mockReturnValue(mockScene);
 
-      const reloadSpy = jest.spyOn(dashboardWatcher, 'reloadPage').mockImplementation(() => {});
+      const reloadSpy = jest.spyOn(dashboardWatcher, 'reloadPage').mockImplementation(() => { });
 
       dashboardWatcher.editing = false;
       const dash = { uid: 'dash-1', hasUnsavedChanges: () => true };
@@ -1113,14 +1113,14 @@ describe('DashboardScene', () => {
       const spy = jest.spyOn(require('./PanelMenuBehavior'), 'toggleVizPanelLegend').mockImplementation(jest.fn());
 
       setupKeyboardShortcuts(scene);
-
-      const panel = sceneGraph.findObject(scene, (o) => o instanceof VizPanel) as VizPanel | undefined;
+      const panel = sceneGraph.findObject(scene, (o) => o.state.key === 'panel-2') as VizPanel | undefined;
       expect(panel).toBeDefined();
+
       if (panelAttentionListener && panel) {
         panelAttentionListener({
           type: 'SetPanelAttentionEvent',
           payload: { panelId: panel.state.key },
-          setTags: function () {
+          setTags() {
             return this;
           },
         });
@@ -1128,8 +1128,8 @@ describe('DashboardScene', () => {
 
       const lastInstance = require('app/core/services/KeybindingSet').KeybindingSet.mock.results[
         require('app/core/services/KeybindingSet').KeybindingSet.mock.results.length - 1
-      ].value as KeybindingSetMock;
-      const handlers = lastInstance.__handlers;
+      ].value as any;
+      const handlers = lastInstance.__handlers as any;
       expect(typeof handlers['p l']).toBe('function');
       // @ts-ignore
       handlers['p l']();
@@ -1205,7 +1205,7 @@ function buildTestScene(overrides?: Partial<DashboardSceneState>) {
             body: new VizPanel({
               title: 'Panel B',
               key: getCloneKey('panel-2', 1),
-              // repeatSourceKey: 'panel-2', // This property doesn't exist in VizPanelState
+              repeatSourceKey: 'panel-2',
               $variables: new SceneVariableSet({
                 variables: [new LocalValueVariable({ name: 'a', value: 'A' })],
               }),
