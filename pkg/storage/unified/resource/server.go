@@ -954,7 +954,7 @@ func (s *server) List(ctx context.Context, req *resourcepb.ListRequest) (*resour
 	}
 
 	if req.Limit < 1 {
-		req.Limit = 50 // default max 50 items in a page
+		req.Limit = 500 // default max 500 items in a page
 	}
 	maxPageBytes := s.maxPageSizeBytes
 	pageBytes := 0
