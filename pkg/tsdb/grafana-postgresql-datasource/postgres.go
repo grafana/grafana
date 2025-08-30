@@ -329,8 +329,13 @@ func parseNetworkAddress(url string, logger log.Logger) (string, int, error) {
 }
 
 func buildBaseConnectionString(params connectionParams) string {
-	connStr := fmt.Sprintf("user='%s' password='%s' host='%s' dbname='%s'",
-		escape(params.user), escape(params.password), escape(params.host), escape(params.database))
+	connStr := fmt.Sprintf("user='%s' host='%s' dbname='%s'",
+		escape(params.user), escape(params.host), escape(params.database))
+
+	if params.password != "" {
+		connStr += fmt.Sprintf(" password='%s'", escape(params.password))
+	}
+
 	if params.port > 0 {
 		connStr += fmt.Sprintf(" port=%d", params.port)
 	}
