@@ -102,6 +102,5 @@ func (s *Service) Run(ctx context.Context) error {
 	if err := s.runner.Init(ctx); err != nil {
 		return err
 	}
-	s.log.Info("app registry initialized")
 	return s.runner.Run(ctx)
 }
