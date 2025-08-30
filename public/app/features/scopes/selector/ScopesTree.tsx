@@ -1,4 +1,5 @@
 import { css } from '@emotion/css';
+import { useId, useState } from 'react';
 import Skeleton from 'react-loading-skeleton';
 
 import { GrafanaTheme2, Scope } from '@grafana/data';
@@ -6,9 +7,12 @@ import { useStyles2 } from '@grafana/ui';
 
 import { RecentScopes } from './RecentScopes';
 import { ScopesTreeHeadline } from './ScopesTreeHeadline';
+import { getTreeItemElementId } from './ScopesTreeItem';
 import { ScopesTreeItemList } from './ScopesTreeItemList';
 import { ScopesTreeSearch } from './ScopesTreeSearch';
+import { isNodeExpandable, isNodeSelectable } from './scopesTreeUtils';
 import { NodesMap, SelectedScope, TreeNode } from './types';
+import { KeyboardAction, useKeyboardInteraction } from './useKeyboardInteractions';
 
 export interface ScopesTreeProps {
   tree: TreeNode;
@@ -39,6 +43,10 @@ export function ScopesTree({
 }: ScopesTreeProps) {
   const styles = useStyles2(getStyles);
 
+  // Used for a11y reference
+  const selectedNodesToShowId = useId();
+  const childrenArrayId = useId();
+
   const nodeLoading = loadingNodeName === tree.scopeNodeId;
 
   const children = tree.children;
@@ -63,6 +71,54 @@ export function ScopesTree({
     }
   }
 
+  // Only enable keyboard interaction when the search field is focused
+  const [searchFocused, setSearchFocused] = useState(false);
+
+  // Use the same highlighting for the two different lists
+  const { highlightedIndex } = useKeyboardInteraction(
+    searchFocused,
+    [...selectedNodesToShow, ...childrenArray],
+    searchFocused ? tree.query : '',
+    (index: number, action: KeyboardAction) => {
+      // The highlight index is for both lists, hence we need to do some trickery to get the correct item from the different lists
+      const nodeId =
+        index >= selectedNodesToShow.length
+          ? childrenArray[index - selectedNodesToShow.length].scopeNodeId
+          : selectedNodesToShow[index].scopeNodeId;
+
+      //Handle container expand/collapse
+
+      const isExpanding = action === KeyboardAction.EXPAND && isNodeExpandable(scopeNodes[nodeId]);
+      // Selecting a non-selectable node that is expandable, should expand it instead
+      const isSelectingAndExpandable =
+        action === KeyboardAction.SELECT &&
+        !isNodeSelectable(scopeNodes[nodeId]) &&
+        isNodeExpandable(scopeNodes[nodeId]);
+      if (isExpanding || isSelectingAndExpandable) {
+        onNodeUpdate(nodeId, true, tree.query);
+        setSearchFocused(false);
+        return;
+      }
+
+      // Toggle selection
+      if (selectedScopes.some((s) => s.scopeNodeId === nodeId)) {
+        deselectScope(nodeId);
+      } else {
+        selectScope(nodeId);
+      }
+    }
+  );
+
+  const getHighlightedId = (index: number) => {
+    if (index === -1) {
+      return undefined;
+    }
+    if (index >= selectedNodesToShow.length) {
+      return childrenArray[index - selectedNodesToShow.length]?.scopeNodeId;
+    }
+    return selectedNodesToShow[index]?.scopeNodeId;
+  };
+
   // Used as a label and placeholder for search field
   const nodeTitle = scopeNodes[tree.scopeNodeId]?.spec?.title || '';
   const searchArea = tree.scopeNodeId === '' ? '' : nodeTitle;
@@ -76,6 +132,10 @@ export function ScopesTree({
         searchArea={searchArea}
         onNodeUpdate={onNodeUpdate}
         treeNode={tree}
+        aria-controls={`${selectedNodesToShowId} ${childrenArrayId}`}
+        aria-activedescendant={getTreeItemElementId(getHighlightedId(highlightedIndex))}
+        onFocus={() => setSearchFocused(true)}
+        onBlur={() => setSearchFocused(false)}
       />
       {tree.scopeNodeId === '' &&
         !anyChildExpanded &&
@@ -99,6 +159,8 @@ export function ScopesTree({
             selectScope={selectScope}
             deselectScope={deselectScope}
             maxHeight={`${Math.min(5, selectedNodesToShow.length) * 30}px`}
+            highlightedIndex={highlightedIndex}
+            id={selectedNodesToShowId}
           />
 
           <ScopesTreeHeadline
@@ -119,6 +181,8 @@ export function ScopesTree({
             selectScope={selectScope}
             deselectScope={deselectScope}
             maxHeight={'100%'}
+            highlightedIndex={highlightedIndex - selectedNodesToShow.length}
+            id={childrenArrayId}
           />
         </>
       )}

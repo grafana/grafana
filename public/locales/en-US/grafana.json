@@ -12085,6 +12085,7 @@
     "selector": {
       "apply": "Apply",
       "cancel": "Cancel",
+      "error-title": "An unexpected error happened",
       "input": {
         "placeholder": "Select scopes...",
         "removeAll": "Remove all scopes"
