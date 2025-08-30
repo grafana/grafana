@@ -98,16 +98,26 @@ export function ImportDashboardOverviewV2() {
             }
           }
         } else if (variable.kind === 'DatasourceVariable') {
-          return {
-            ...variable,
-            spec: {
-              ...variable.spec,
-              current: {
-                text: '',
-                value: '',
-              },
-            },
-          };
+          const dsType = variable.spec.pluginId;
+          if (dsType) {
+            if (form[`datasource-${dsType}` as keyof typeof form]) {
+              const ds = form[`datasource-${dsType}` as keyof typeof form] as {
+                uid: string;
+                type: string;
+                name: string;
+              };
+              return {
+                ...variable,
+                spec: {
+                  ...variable.spec,
+                  current: {
+                    text: ds.name,
+                    value: ds.uid,
+                  },
+                },
+              };
+            }
+          }
         }
         return variable;
       }),
