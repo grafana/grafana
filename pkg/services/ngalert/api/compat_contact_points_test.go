@@ -31,7 +31,7 @@ func TestContactPointFromContactPointExports(t *testing.T) {
 				Settings:              definitions.RawMessage(integrationConfig.Settings),
 				SecureSettings:        integrationConfig.SecureSettings,
 			}
-			emb, err := provisioning.PostableGrafanaReceiverToEmbeddedContactPoint(
+			emb, _, err := provisioning.PostableGrafanaReceiverToEmbeddedContactPoint(
 				postable,
 				models.ProvenanceNone,
 				func(s string) string { // test configs are not encrypted but encoded
