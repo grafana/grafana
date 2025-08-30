@@ -302,6 +302,30 @@ var (
 			{Action: ActionUsageStatsRead},
 		},
 	}
+
+	resourcePermissionsReaderRole = RoleDTO{
+		Name:        "fixed:resourcepermissions:reader",
+		DisplayName: "Resource permissions reader",
+		Description: "Read resource permissions and roles",
+		Group:       "IAM",
+		Permissions: []Permission{
+			{Action: ActionResourcePermissionsRead, Scope: "resourcepermissions:*"},
+			{Action: ActionResourcePermissionsRead, Scope: "resourcepermissions:id:*"},
+			{Action: ActionResourcePermissionsRead, Scope: "resourcepermissions:uid:*"},
+		},
+	}
+
+	resourcePermissionsWriterRole = RoleDTO{
+		Name:        "fixed:resourcepermissions:writer",
+		DisplayName: "Resource permissions writer",
+		Description: "Create, read, update and delete resource permissions and roles",
+		Group:       "IAM",
+		Permissions: ConcatPermissions(resourcePermissionsReaderRole.Permissions, []Permission{
+			{Action: ActionResourcePermissionsCreate, Scope: "resourcepermissions:*"},
+			{Action: ActionResourcePermissionsWrite, Scope: "resourcepermissions:*"},
+			{Action: ActionResourcePermissionsDelete, Scope: "resourcepermissions:*"},
+		}),
+	}
 )
 
 // Declare OSS roles to the accesscontrol service
@@ -353,10 +377,21 @@ func DeclareFixedRoles(service Service, cfg *setting.Cfg) error {
 		Grants: []string{RoleGrafanaAdmin},
 	}
 
+	resourcePermissionsReader := RoleRegistration{
+		Role:   resourcePermissionsReaderRole,
+		Grants: []string{RoleGrafanaAdmin, string(org.RoleAdmin)},
+	}
+
+	resourcePermissionsWriter := RoleRegistration{
+		Role:   resourcePermissionsWriterRole,
+		Grants: []string{RoleGrafanaAdmin, string(org.RoleAdmin)},
+	}
+
 	return service.DeclareFixedRoles(
 		ldapReader, ldapWriter, orgUsersReader, orgUsersWriter,
 		settingsReader, statsReader, usersReader, usersWriter,
 		authenticationConfigWriter, generalAuthConfigWriter, usageStatsReader,
+		resourcePermissionsReader, resourcePermissionsWriter,
 	)
 }
 
