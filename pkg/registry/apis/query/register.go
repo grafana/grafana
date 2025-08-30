@@ -50,6 +50,7 @@ type QueryAPIBuilder struct {
 	converter              *expr.ResultConverter
 	queryTypes             *query.QueryTypeDefinitionList
 	legacyDatasourceLookup service.LegacyDataSourceLookup
+	connections            DataSourceConnectionProvider
 }
 
 func NewQueryAPIBuilder(
@@ -60,6 +61,7 @@ func NewQueryAPIBuilder(
 	registerer prometheus.Registerer,
 	tracer tracing.Tracer,
 	legacyDatasourceLookup service.LegacyDataSourceLookup,
+	connections DataSourceConnectionProvider,
 ) (*QueryAPIBuilder, error) {
 	// Include well typed query definitions
 	var queryTypes *query.QueryTypeDefinitionList
@@ -86,6 +88,7 @@ func NewQueryAPIBuilder(
 		tracer:               tracer,
 		features:             features,
 		queryTypes:           queryTypes,
+		connections:          connections,
 		converter: &expr.ResultConverter{
 			Features: features,
 			Tracer:   tracer,
@@ -127,6 +130,8 @@ func RegisterAPIService(
 			return authorizer.DecisionAllow, "", nil
 		})
 
+	reg := client.NewDataSourceRegistryFromStore(pluginStore, dataSourcesService)
+
 	builder, err := NewQueryAPIBuilder(
 		features,
 		client.NewSingleTenantInstanceProvider(cfg, features, pluginClient, pCtxProvider, accessControl),
@@ -135,6 +140,7 @@ func RegisterAPIService(
 		registerer,
 		tracer,
 		legacyDatasourceLookup,
+		&connectionsProvider{dsService: dataSourcesService, registry: reg},
 	)
 	apiregistration.RegisterAPI(builder)
 	return builder, err
@@ -148,6 +154,8 @@ func addKnownTypes(scheme *runtime.Scheme, gv schema.GroupVersion) {
 	scheme.AddKnownTypes(gv,
 		&query.DataSourceApiServer{},
 		&query.DataSourceApiServerList{},
+		&query.DataSourceConnection{},
+		&query.DataSourceConnectionList{},
 		&query.QueryDataRequest{},
 		&query.QueryDataResponse{},
 		&query.QueryTypeDefinition{},
@@ -169,6 +177,14 @@ func (b *QueryAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIG
 	gv := query.SchemeGroupVersion
 
 	storage := map[string]rest.Storage{}
+
+	// Get a list of all datasource instances
+	if b.features.IsEnabledGlobally(featuremgmt.FlagQueryServiceWithConnections) {
+		// Eventually this would be backed either by search or reconciler pattern
+		storage[query.ConnectionResourceInfo.StoragePath()] = &connectionAccess{
+			connections: b.connections,
+		}
+	}
 
 	plugins := newPluginsStorage(b.registry)
 	storage[plugins.resourceInfo.StoragePath()] = plugins

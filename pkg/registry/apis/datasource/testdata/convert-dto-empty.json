@@ -1,0 +1,8 @@
+{
+  "id": 456,
+  "version": 8,
+  "name": "Display name",
+  "uid": "unique-identifier",
+  "type": "grafana-testdata-datasource",
+  "created": "2002-03-04T01:00:00Z"
+}

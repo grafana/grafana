@@ -5,9 +5,9 @@ import (
 	"net/http"
 	"path"
 
-	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	aggregationv0alpha1 "github.com/grafana/grafana/pkg/aggregator/apis/aggregation/v0alpha1"
 	"github.com/grafana/grafana/pkg/aggregator/apiserver/plugin/admission"
 )
@@ -64,7 +64,7 @@ func (h *PluginHandler) registerRoutes() {
 		case aggregationv0alpha1.DataSourceProxyServiceType:
 			// TODO: implement in future PR
 		case aggregationv0alpha1.QueryServiceType:
-			h.mux.Handle(proxyPath("/namespaces/{namespace}/connections/{uid}/query"), h.QueryDataHandler())
+			h.mux.Handle(proxyPath("/namespaces/{namespace}/datasources/{uid}/query"), h.QueryDataHandler())
 		case aggregationv0alpha1.RouteServiceType:
 			// TODO: implement in future PR
 		case aggregationv0alpha1.StreamServiceType:
