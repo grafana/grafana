@@ -109,7 +109,7 @@ export const LogList = ({
   displayedFields,
   containerElement,
   logOptionsStorageKey,
-  detailsMode = logOptionsStorageKey ? (store.get(`${logOptionsStorageKey}.detailsMode`) ?? 'sidebar') : 'sidebar',
+  detailsMode = logOptionsStorageKey ? (store.get(`${logOptionsStorageKey}.detailsMode`) ?? 'inline') : 'inline',
   dedupStrategy,
   enableLogDetails,
   eventBus,
