@@ -87,6 +87,117 @@ describe('QueryEditorRows', () => {
     );
   });
 
+  it('Should call onUpdateDatasources when replacing query with different datasource creates mixed scenario', () => {
+    const onQueriesChangeMock = jest.fn();
+    const onUpdateDatasourcesMock = jest.fn();
+
+    const testProps = {
+      ...props,
+      onQueriesChange: onQueriesChangeMock,
+      onUpdateDatasources: onUpdateDatasourcesMock,
+      dsSettings: { ...props.dsSettings, uid: 'current-datasource' },
+      queries: [
+        { datasource: { uid: 'current-datasource', type: 'alertmanager' }, refId: 'A' },
+        { datasource: { uid: 'current-datasource', type: 'alertmanager' }, refId: 'B' },
+      ],
+    };
+
+    const component = new QueryEditorRows(testProps);
+    const replacementQuery = {
+      refId: 'A',
+      datasource: { uid: 'different-datasource', type: 'prometheus' },
+      expr: 'new query content',
+    };
+
+    component.onReplaceQuery(replacementQuery, 0);
+
+    expect(onUpdateDatasourcesMock).toHaveBeenCalledWith({
+      uid: MIXED_DATASOURCE_NAME,
+    });
+  });
+
+  it('Should call onUpdateDatasources when replacing query results in single different datasource', () => {
+    const onQueriesChangeMock = jest.fn();
+    const onUpdateDatasourcesMock = jest.fn();
+
+    const testProps = {
+      ...props,
+      onQueriesChange: onQueriesChangeMock,
+      onUpdateDatasources: onUpdateDatasourcesMock,
+      dsSettings: { ...props.dsSettings, uid: 'current-datasource' },
+      queries: [{ datasource: { uid: 'current-datasource', type: 'alertmanager' }, refId: 'A' }],
+    };
+
+    const component = new QueryEditorRows(testProps);
+    const replacementQuery = {
+      refId: 'A',
+      datasource: { uid: 'different-datasource', type: 'prometheus' },
+      expr: 'new query content',
+    };
+
+    component.onReplaceQuery(replacementQuery, 0);
+
+    expect(onUpdateDatasourcesMock).toHaveBeenCalledWith({
+      uid: 'different-datasource',
+    });
+  });
+
+  it('Should not call onUpdateDatasources when replacing query with same datasource', () => {
+    const onQueriesChangeMock = jest.fn();
+    const onUpdateDatasourcesMock = jest.fn();
+
+    const testProps = {
+      ...props,
+      onQueriesChange: onQueriesChangeMock,
+      onUpdateDatasources: onUpdateDatasourcesMock,
+      dsSettings: { ...props.dsSettings, uid: 'same-datasource' },
+      queries: [
+        { datasource: { uid: 'same-datasource', type: 'prometheus' }, refId: 'A' },
+        { datasource: { uid: 'same-datasource', type: 'prometheus' }, refId: 'B' },
+      ],
+    };
+
+    const component = new QueryEditorRows(testProps);
+    const replacementQuery = {
+      refId: 'A',
+      datasource: { uid: 'same-datasource', type: 'prometheus' },
+      expr: 'new query content',
+    };
+
+    component.onReplaceQuery(replacementQuery, 0);
+
+    expect(onUpdateDatasourcesMock).not.toHaveBeenCalled();
+  });
+
+  it('Should call onUpdateDatasources with mixed datasource when replacing creates mixed scenario', () => {
+    const onQueriesChangeMock = jest.fn();
+    const onUpdateDatasourcesMock = jest.fn();
+
+    const testProps = {
+      ...props,
+      onQueriesChange: onQueriesChangeMock,
+      onUpdateDatasources: onUpdateDatasourcesMock,
+      dsSettings: { ...props.dsSettings, uid: 'current-datasource' },
+      queries: [
+        { datasource: { uid: 'datasource-1', type: 'loki' }, refId: 'A' },
+        { datasource: { uid: 'datasource-2', type: 'test-data' }, refId: 'B' },
+      ],
+    };
+
+    const component = new QueryEditorRows(testProps);
+    const replacementQuery = {
+      refId: 'A',
+      datasource: { uid: 'datasource-3', type: 'prometheus' },
+      expr: 'new query content',
+    };
+
+    component.onReplaceQuery(replacementQuery, 0);
+
+    expect(onUpdateDatasourcesMock).toHaveBeenCalledWith({
+      uid: MIXED_DATASOURCE_NAME,
+    });
+  });
+
   it('Should render queries', async () => {
     const {
       renderResult: { rerender },

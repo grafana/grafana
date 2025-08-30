@@ -12,7 +12,7 @@ import {
   SceneObjectState,
   SceneDataQuery,
 } from '@grafana/scenes';
-import { DataQuery } from '@grafana/schema';
+import { DataQuery, DataSourceRef } from '@grafana/schema';
 import { Button, Stack, Tab } from '@grafana/ui';
 import { addQuery } from 'app/core/utils/query';
 import { getLastUsedDatasourceFromStorage } from 'app/features/dashboard/utils/dashboard';
@@ -315,6 +315,21 @@ export class PanelDataQueriesTab extends SceneObjectBase<PanelDataQueriesTabStat
   public get queryRunner(): SceneQueryRunner {
     return getQueryRunnerFor(this.state.panelRef.resolve())!;
   }
+
+  /**
+   * Updates panel datasource when saved queries from different datasources are used.
+   * Handles transition between single and mixed datasource modes.
+   */
+  public updateDatasourceIfNeeded = async (newDatasourceRef: DataSourceRef): Promise<void> => {
+    const { datasource } = this.state;
+    const shouldChangeDatasource = datasource?.uid !== newDatasourceRef.uid;
+    if (shouldChangeDatasource) {
+      const newDatasource = getDatasourceSrv().getInstanceSettings(newDatasourceRef);
+      if (newDatasource) {
+        await this.onChangeDataSource(newDatasource);
+      }
+    }
+  };
 }
 
 export function PanelDataQueriesTabRendered({ model }: SceneComponentProps<PanelDataQueriesTab>) {
@@ -339,6 +354,7 @@ export function PanelDataQueriesTabRendered({ model }: SceneComponentProps<Panel
     );
     const newQueries = addQuery(enrichedQueries, query);
     model.onQueriesChange(newQueries);
+
     if (query.datasource?.uid) {
       const uniqueDatasources = new Set(
         newQueries.map((q) => q.datasource?.uid).filter((uid) => uid !== ExpressionDatasourceUID)
@@ -347,13 +363,7 @@ export function PanelDataQueriesTabRendered({ model }: SceneComponentProps<Panel
       const newDatasourceRef = {
         uid: isMixed ? MIXED_DATASOURCE_NAME : query.datasource.uid,
       };
-      const shouldChangeDatasource = datasource.uid !== newDatasourceRef.uid;
-      if (shouldChangeDatasource) {
-        const newDatasource = getDatasourceSrv().getInstanceSettings(newDatasourceRef);
-        if (newDatasource) {
-          await model.onChangeDataSource(newDatasource);
-        }
-      }
+      await model.updateDatasourceIfNeeded(newDatasourceRef);
     }
   };
 
@@ -376,6 +386,7 @@ export function PanelDataQueriesTabRendered({ model }: SceneComponentProps<Panel
         onAddQuery={model.onAddQuery}
         onQueriesChange={model.onQueriesChange}
         onRunQueries={model.onRunQueries}
+        onUpdateDatasources={queryLibraryEnabled ? model.updateDatasourceIfNeeded : undefined}
         app={CoreApp.PanelEditor}
       />
 
