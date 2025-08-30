@@ -286,7 +286,7 @@ func Err(err error) *NormalResponse {
 // If the error provided is not an errutil.Error and is/wraps context.Canceled
 // the function returns an Err(errRequestCanceledBase).
 func ErrOrFallback(status int, message string, err error) *NormalResponse {
-	grafanaErr := errutil.Error{}
+	grafanaErr := &errutil.Error{}
 	if errors.As(err, &grafanaErr) {
 		return Err(err)
 	}
