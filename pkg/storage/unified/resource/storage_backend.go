@@ -452,8 +452,155 @@ func applyPagination(keys []DataKey, lastSeenRV int64, sortAscending bool) []Dat
 }
 
 func (k *kvStorageBackend) ListModifiedSince(ctx context.Context, key NamespacedResource, sinceRv int64) (int64, iter.Seq2[*ModifiedResource, error]) {
-	return 0, func(yield func(*ModifiedResource, error) bool) {
-		yield(nil, errors.New("not implemented"))
+	if !key.Valid() {
+		return 0, func(yield func(*ModifiedResource, error) bool) {
+			yield(nil, fmt.Errorf("group, resource, and namespace are required"))
+		}
+	}
+
+	if sinceRv <= 0 {
+		return 0, func(yield func(*ModifiedResource, error) bool) {
+			yield(nil, fmt.Errorf("sinceRv must be greater than 0"))
+		}
+	}
+
+	// Generate a new resource version for the list
+	listRV := k.snowflake.Generate().Int64()
+
+	// TODO
+	// sinceRvTimestamp := snowflake.ID(sinceRv).Time()
+	// sinceTime := time.Unix(0, (sinceRvTimestamp+snowflake.Epoch)*int64(time.Millisecond))
+	// age := time.Since(sinceTime)
+	// if age < time.Hour {
+	// 	// if yes -> listkeyssince (implement it) to get all events since sinceRv - loopback period
+	// 	k.eventStore.ListKeysSince(ctx, sinceRv)
+	// } else {
+	// 	// if no -> use datastore to get all objects since sinceRv - loopback period
+	// }
+
+	return listRV, k.listModifiedSinceDataStore(ctx, key, sinceRv)
+}
+
+func convertEventType(action DataAction) resourcepb.WatchEvent_Type {
+	switch action {
+	case DataActionCreated:
+		return resourcepb.WatchEvent_ADDED
+	case DataActionUpdated:
+		return resourcepb.WatchEvent_MODIFIED
+	case DataActionDeleted:
+		return resourcepb.WatchEvent_DELETED
+	}
+
+	// TODO what's best practice in go here?
+	panic("not possible")
+}
+
+func (k *kvStorageBackend) getValueFromDataStore(ctx context.Context, dataKey DataKey) ([]byte, error) {
+	raw, err := k.dataStore.Get(ctx, dataKey)
+	if err != nil {
+		return []byte{}, err
+	}
+
+	value, err := io.ReadAll(raw)
+	if err != nil {
+		return []byte{}, err
+	}
+
+	return value, nil
+}
+
+func (k *kvStorageBackend) listModifiedSinceDataStore(ctx context.Context, key NamespacedResource, sinceRv int64) iter.Seq2[*ModifiedResource, error] {
+	return func(yield func(*ModifiedResource, error) bool) {
+		var lastSeenResource *ModifiedResource
+		var lastSeenDataKey DataKey
+		for dataKey, err := range k.dataStore.Keys(ctx, ListRequestKey{Namespace: key.Namespace, Group: key.Group, Resource: key.Resource}) {
+			if err != nil {
+				yield(&ModifiedResource{}, err)
+				return
+			}
+
+			if dataKey.ResourceVersion < sinceRv {
+				continue
+			}
+
+			if lastSeenResource == nil {
+				lastSeenResource = &ModifiedResource{
+					Key: resourcepb.ResourceKey{
+						Namespace: dataKey.Namespace,
+						Group:     dataKey.Group,
+						Resource:  dataKey.Resource,
+						Name:      dataKey.Name,
+					},
+					ResourceVersion: dataKey.ResourceVersion,
+					Action:          convertEventType(dataKey.Action),
+				}
+				lastSeenDataKey = dataKey
+			}
+
+			if lastSeenResource.Key.Name != dataKey.Name {
+				value, err := k.getValueFromDataStore(ctx, lastSeenDataKey)
+				if err != nil {
+					yield(&ModifiedResource{}, err)
+					return
+				}
+
+				lastSeenResource.Value = value
+
+				if !yield(lastSeenResource, nil) {
+					return
+				}
+			}
+
+			lastSeenResource = &ModifiedResource{
+				Key: resourcepb.ResourceKey{
+					Namespace: dataKey.Namespace,
+					Group:     dataKey.Group,
+					Resource:  dataKey.Resource,
+					Name:      dataKey.Name,
+				},
+				ResourceVersion: dataKey.ResourceVersion,
+				Action:          convertEventType(dataKey.Action),
+			}
+			lastSeenDataKey = dataKey
+		}
+
+		if lastSeenResource != nil {
+			value, err := k.getValueFromDataStore(ctx, lastSeenDataKey)
+			if err != nil {
+				yield(&ModifiedResource{}, err)
+				return
+			}
+
+			lastSeenResource.Value = value
+
+			yield(lastSeenResource, nil)
+		}
+	}
+}
+
+// only returns events newer than sinceRv
+// will return events for ALL tenants. So manually filter out events that are not from Namespace/Group/Resource
+// results will be ordered by RV. Need to sort by Name->RV and then yield the latest one for each Name
+// k.eventStore.Get to retrieve the full JSON of the event
+// Event doesn't seem to have Value???
+func (k *kvStorageBackend) listModifiedSinceEventStore(ctx context.Context, key NamespacedResource, sinceRv int64) iter.Seq2[*ModifiedResource, error] {
+	return func(yield func(*ModifiedResource, error) bool) {
+		for evtKeyStr, err := range k.eventStore.ListKeysSince(ctx, sinceRv) {
+			if err != nil {
+				yield(&ModifiedResource{}, err)
+				return
+			}
+
+			evtKey, err := ParseEventKey(evtKeyStr)
+			if err != nil {
+				yield(&ModifiedResource{}, err)
+				return
+			}
+
+			if evtKey.Group != key.Group || evtKey.Resource != key.Resource || evtKey.Namespace != key.Namespace {
+				continue
+			}
+		}
 	}
 }
 
