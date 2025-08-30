@@ -1,4 +1,4 @@
-import { AsyncIterableX, empty, from } from 'ix/asynciterable';
+import { AsyncIterableX, from } from 'ix/asynciterable';
 import { merge } from 'ix/asynciterable/merge';
 import { catchError, concatMap, withAbort } from 'ix/asynciterable/operators';
 import { isEmpty } from 'lodash';
@@ -63,7 +63,7 @@ export function useFilteredRulesIteratorProvider() {
     const normalizedFilterState = normalizeFilterState(filterState);
     const hasDataSourceFilterActive = Boolean(filterState.dataSourceNames.length);
 
-    const grafanaRulesGenerator = from(
+    const grafanaRulesGenerator: AsyncIterableX<RuleWithOrigin> = from(
       grafanaGroupsGenerator(groupLimit, {
         contactPoint: filterState.contactPoint ?? undefined,
         health: filterState.ruleHealth ? [filterState.ruleHealth] : [],
@@ -74,11 +74,11 @@ export function useFilteredRulesIteratorProvider() {
       concatMap((groups) =>
         groups
           .filter((group) => groupFilter(group, normalizedFilterState))
-          .flatMap((group) => group.rules.map((rule) => [group, rule] as const))
-          .filter(([, rule]) => ruleFilter(rule, normalizedFilterState))
-          .map(([group, rule]) => mapGrafanaRuleToRuleWithOrigin(group, rule))
+          .flatMap((group) => group.rules.map((rule) => ({ group, rule })))
+          .filter(({ rule }) => ruleFilter(rule, normalizedFilterState))
+          .map(({ group, rule }) => mapGrafanaRuleToRuleWithOrigin(group, rule))
       ),
-      catchError(() => empty())
+      catchError(() => emptyRulesIterable())
     );
 
     // Determine which data sources to use
@@ -86,36 +86,68 @@ export function useFilteredRulesIteratorProvider() {
       ? getRulesSourcesFromFilter(filterState)
       : allExternalRulesSources;
 
-    // If no data sources, just return Grafana rules
-    if (isEmpty(externalRulesSourcesToFetchFrom)) {
+    if (filterState.ruleSource === 'grafana') {
       return { iterable: grafanaRulesGenerator, abortController };
     }
 
-    // Create a generator for each data source
-    const dataSourceGenerators = externalRulesSourcesToFetchFrom.map((dataSourceIdentifier) => {
-      const promGroupsGenerator = from(prometheusGroupsGenerator(dataSourceIdentifier, groupLimit)).pipe(
-        withAbort(abortController.signal),
-        concatMap((groups) =>
-          groups
-            .filter((group) => groupFilter(group, normalizedFilterState))
-            .flatMap((group) => group.rules.map((rule) => [group, rule] as const))
-            .filter(([, rule]) => ruleFilter(rule, normalizedFilterState))
-            .map(([group, rule]) => mapRuleToRuleWithOrigin(dataSourceIdentifier, group, rule))
-        ),
-        catchError(() => empty())
-      );
+    if (filterState.ruleSource === 'external') {
+      if (isEmpty(externalRulesSourcesToFetchFrom)) {
+        return { iterable: emptyRulesIterable(), abortController };
+      }
+    }
 
-      return promGroupsGenerator;
-    });
+    const dataSourceGenerators: Array<AsyncIterableX<RuleWithOrigin>> = externalRulesSourcesToFetchFrom.map(
+      (dataSourceIdentifier) => {
+        const promGroupsGenerator: AsyncIterableX<RuleWithOrigin> = from(
+          prometheusGroupsGenerator(dataSourceIdentifier, groupLimit)
+        ).pipe(
+          withAbort(abortController.signal),
+          concatMap((groups) =>
+            groups
+              .filter((group) => groupFilter(group, normalizedFilterState))
+              .flatMap((group) => group.rules.map((rule) => ({ group, rule })))
+              .filter(({ rule }) => ruleFilter(rule, normalizedFilterState))
+              .map(({ group, rule }) => mapRuleToRuleWithOrigin(dataSourceIdentifier, group, rule))
+          ),
+          catchError(() => emptyRulesIterable())
+        );
 
-    // Merge all generators
-    return {
-      iterable: merge<RuleWithOrigin>(grafanaRulesGenerator, ...dataSourceGenerators),
-      abortController,
-    };
+        return promGroupsGenerator;
+      }
+    );
+
+    const iterablesToMerge: Array<AsyncIterableX<RuleWithOrigin>> = [];
+    const includeGrafana = filterState.ruleSource !== 'external';
+    const includeExternal = true;
+
+    if (includeGrafana) {
+      iterablesToMerge.push(grafanaRulesGenerator);
+    }
+    if (includeExternal) {
+      iterablesToMerge.push(...dataSourceGenerators);
+    }
+
+    const iterable = mergeIterables(iterablesToMerge);
+
+    return { iterable, abortController };
   };
 
   return getFilteredRulesIterable;
+}
+
+function mergeIterables(iterables: Array<AsyncIterableX<RuleWithOrigin>>): AsyncIterableX<RuleWithOrigin> {
+  if (iterables.length === 0) {
+    return emptyRulesIterable();
+  }
+  let acc: AsyncIterableX<RuleWithOrigin> = iterables[0];
+  for (let i = 1; i < iterables.length; i++) {
+    acc = merge(acc, iterables[i]);
+  }
+  return acc;
+}
+
+function emptyRulesIterable(): AsyncIterableX<RuleWithOrigin> {
+  return from<RuleWithOrigin>([]);
 }
 
 /**

@@ -302,6 +302,7 @@ const FilterOptions = ({ onSubmit, onClear, pluginsFilterEnabled }: FilterOption
             />
             <DataSourceNamesField dataSourceOptions={dataSourceOptions} portalContainer={portalContainer} />
             {canRenderContactPointSelector && <ContactPointField portalContainer={portalContainer} />}
+            <RuleSourceField />
             <RuleStateField />
             <RuleTypeField />
             <RuleHealthField />
@@ -607,6 +608,32 @@ function RuleTypeField() {
               { label: t('common.all', 'All'), value: '*' },
               { label: t('alerting.rules.type.alert', 'Alert rule'), value: PromRuleType.Alerting },
               { label: t('alerting.rules.type.recording', 'Recording rule'), value: PromRuleType.Recording },
+            ]}
+            value={field.value}
+            onChange={field.onChange}
+          />
+        )}
+      />
+    </>
+  );
+}
+
+function RuleSourceField() {
+  const { control } = useFormContext<AdvancedFilters>();
+  return (
+    <>
+      <Label>
+        <Trans i18nKey="alerting.search.property.rule-source">Rule source</Trans>
+      </Label>
+      <Controller
+        name="ruleSource"
+        control={control}
+        render={({ field }) => (
+          <RadioButtonGroup<NonNullable<AdvancedFilters['ruleSource']>>
+            options={[
+              { label: t('common.all', 'All'), value: '*' },
+              { label: t('alerting.rules-filter.rule-source.grafana', 'Grafana managed'), value: 'grafana' },
+              { label: t('alerting.rules-filter.rule-source.external', 'External'), value: 'external' },
             ]}
             value={field.value}
             onChange={field.onChange}

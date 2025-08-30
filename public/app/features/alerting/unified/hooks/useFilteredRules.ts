@@ -24,8 +24,13 @@ export function useRulesFilter() {
   const searchQuery = queryParams.get('search') ?? '';
 
   const filterState = useMemo<RulesFilter>(() => {
-    return getSearchFilterFromQuery(searchQuery);
-  }, [searchQuery]);
+    const parsed = getSearchFilterFromQuery(searchQuery);
+    const ruleSourceParam = queryParams.get('ruleSource');
+    if (ruleSourceParam === 'grafana' || ruleSourceParam === 'external') {
+      parsed.ruleSource = ruleSourceParam;
+    }
+    return parsed;
+  }, [searchQuery, queryParams]);
   const hasActiveFilters = useMemo(() => Object.values(filterState).some((filter) => !isEmpty(filter)), [filterState]);
 
   const activeFilters = useMemo(() => {
@@ -35,7 +40,7 @@ export function useRulesFilter() {
   const updateFilters = useCallback(
     (newFilter: RulesFilter) => {
       const newSearchQuery = applySearchFilterToQuery(searchQuery, newFilter);
-      updateQueryParams({ search: newSearchQuery });
+      updateQueryParams({ search: newSearchQuery, ruleSource: newFilter.ruleSource });
     },
     [searchQuery, updateQueryParams]
   );
@@ -81,7 +86,7 @@ export function useRulesFilter() {
   }, [queryParams, updateFilters, filterState, updateQueryParams]);
 
   const clearAll = useCallback(() => {
-    updateQueryParams({ search: undefined });
+    updateQueryParams({ search: undefined, ruleSource: undefined });
   }, [updateQueryParams]);
 
   return { filterState, hasActiveFilters, searchQuery, setSearchQuery, updateFilters, clearAll, activeFilters };
@@ -181,6 +186,15 @@ const reduceGroups = (filterState: RulesFilter) => {
 
     if (ruleNameQuery) {
       filteredRules = fuzzyFilter(filteredRules, (r) => r.name, ruleNameQuery);
+    }
+
+    // Filter by rule source at rule-level (Grafana-managed vs external)
+    if (filterState.ruleSource) {
+      const wantGrafana = filterState.ruleSource === 'grafana';
+      filteredRules = filteredRules.filter((rule) => {
+        const isGrafana = !!(rule.rulerRule && rulerRuleType.grafana.rule(rule.rulerRule));
+        return wantGrafana ? isGrafana : !isGrafana;
+      });
     }
 
     filteredRules = filteredRules.filter((rule) => {
@@ -332,6 +346,7 @@ const RULES_FILTER_KEYS: Set<keyof RulesFilter> = new Set([
   'dashboardUid',
   'plugins',
   'contactPoint',
+  'ruleSource',
 ]);
 
 const isRuleFilterKey = (key: string): key is keyof RulesFilter => RULES_FILTER_KEYS.has(key as keyof RulesFilter);
