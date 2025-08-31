@@ -47,7 +47,10 @@ export const StateTimelinePanel = ({
 
   // temp range set for adding new annotation set by TooltipPlugin2, consumed by AnnotationPlugin2
   const [newAnnotationRange, setNewAnnotationRange] = useState<TimeRange2 | null>(null);
-  const { sync, eventsScope, canAddAnnotations, dataLinkPostProcessor, eventBus } = usePanelContext();
+  const { sync, eventsScope, canAddAnnotations, dataLinkPostProcessor, eventBus, canExecuteActions } =
+    usePanelContext();
+
+  const userCanExecuteActions = canExecuteActions ? canExecuteActions() : false;
   const cursorSync = sync?.() ?? DashboardCursorSync.Off;
 
   const { frames, warn } = useMemo(
@@ -137,6 +140,7 @@ export const StateTimelinePanel = ({
                         maxHeight={options.tooltip.maxHeight}
                         replaceVariables={replaceVariables}
                         dataLinks={dataLinks}
+                        canExecuteActions={userCanExecuteActions}
                       />
                     );
                   }}

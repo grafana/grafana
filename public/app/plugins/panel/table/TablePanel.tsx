@@ -35,9 +35,11 @@ export function TablePanel(props: Props) {
 
   const theme = useTheme2();
   const panelContext = usePanelContext();
+  const userCanExecuteActions = panelContext.canExecuteActions ? panelContext.canExecuteActions() : false;
   const _getActions = useCallback(
-    (frame: DataFrame, field: Field, rowIndex: number) => getCellActions(frame, field, rowIndex, replaceVariables),
-    [replaceVariables]
+    (frame: DataFrame, field: Field, rowIndex: number) =>
+      userCanExecuteActions ? getCellActions(frame, field, rowIndex, replaceVariables) : [],
+    [replaceVariables, userCanExecuteActions]
   );
   const frames = hasDeprecatedParentRowIndex(data.series)
     ? migrateFromParentRowIndexToNestedFrames(data.series)

@@ -52,7 +52,10 @@ export const CandlestickPanel = ({
     showThresholds,
     dataLinkPostProcessor,
     eventBus,
+    canExecuteActions,
   } = usePanelContext();
+
+  const userCanExecuteActions = canExecuteActions ? canExecuteActions() : false;
 
   const theme = useTheme2();
 
@@ -309,6 +312,7 @@ export const CandlestickPanel = ({
                       maxHeight={options.tooltip.maxHeight}
                       replaceVariables={replaceVariables}
                       dataLinks={dataLinks}
+                      canExecuteActions={userCanExecuteActions}
                     />
                   );
                 }}
