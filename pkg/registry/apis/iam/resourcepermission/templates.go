@@ -16,7 +16,8 @@ var (
 
 	sqlTemplates = template.Must(template.New("sql").ParseFS(sqlTemplatesFS, `*.sql`))
 
-	resourcePermissionsQueryTplt = mustTemplate("resource_permission_query.sql")
+	resourcePermissionsQueryTplt     = mustTemplate("resource_permission_query.sql")
+	resourcePermissionsListQueryTplt = mustTemplate("resource_permission_list_query.sql")
 )
 
 func mustTemplate(filename string) *template.Template {
@@ -51,6 +52,7 @@ func (r listResourcePermissionsQueryTemplate) Validate() error {
 	return nil
 }
 
+// LIST
 func buildListResourcePermissionsQueryFromTemplate(sql *legacysql.LegacyDatabaseHelper, query *ListResourcePermissionsQuery) (string, []interface{}, error) {
 	req := listResourcePermissionsQueryTemplate{
 		SQLTemplate:       sqltemplate.New(sql.DialectForDriver()),
@@ -73,7 +75,28 @@ func buildListResourcePermissionsQueryFromTemplate(sql *legacysql.LegacyDatabase
 	return rawQuery, req.GetArgs(), nil
 }
 
-//LIST
+// LIST - Get distinct resources
+func buildListResourcesQueryFromTemplate(sql *legacysql.LegacyDatabaseHelper, query *ListResourcePermissionsQuery) (string, []interface{}, error) {
+	req := listResourcePermissionsQueryTemplate{
+		SQLTemplate:       sqltemplate.New(sql.DialectForDriver()),
+		Query:             query,
+		PermissionTable:   sql.Table("permission"),
+		RoleTable:         sql.Table("role"),
+		UserTable:         sql.Table("user"),
+		TeamTable:         sql.Table("team"),
+		BuiltinRoleTable:  sql.Table("builtin_role"),
+		UserRoleTable:     sql.Table("user_role"),
+		TeamRoleTable:     sql.Table("team_role"),
+		ManagedRolePrefix: "managed:%",
+	}
+
+	rawQuery, err := sqltemplate.Execute(resourcePermissionsListQueryTplt, req)
+	if err != nil {
+		return "", nil, fmt.Errorf("execute template %q: %w", resourcePermissionsListQueryTplt.Name(), err)
+	}
+
+	return rawQuery, req.GetArgs(), nil
+}
 
 //CREATE
 

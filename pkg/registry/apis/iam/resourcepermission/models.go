@@ -41,6 +41,11 @@ type flatResourcePermission struct {
 	IsServiceAccount bool      `xorm:"is_service_account"`
 }
 
+type distinctResource struct {
+	Scope   string `xorm:"scope"`
+	Created string `xorm:"created"`
+}
+
 func toV0ResourcePermission(permissionGroups map[string][]flatResourcePermission, name string) *v0alpha1.ResourcePermission {
 	if len(permissionGroups) == 0 {
 		return nil

@@ -82,6 +82,14 @@ func TestListResourcePermissionsQuery(t *testing.T) {
 					}),
 				},
 			},
+			resourcePermissionsListQueryTplt: {
+				{
+					Name: "basic_query",
+					Data: getListResourcePermissionsQuery(&ListResourcePermissionsQuery{
+						Pagination: common.Pagination{Limit: 10, Continue: 0},
+					}),
+				},
+			},
 		},
 	})
 }
