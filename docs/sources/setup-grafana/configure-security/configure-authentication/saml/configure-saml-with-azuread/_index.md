@@ -30,7 +30,7 @@ Related links:
 
 Ensure you have permission to administer SAML authentication. For more information about roles and permissions in Grafana, refer to [Roles and permissions](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/).
 
-If you have users that belong to more than 150 groups, configure a registered application to provide an Entra ID Graph API to retrieve the groups. Refer to [Setup Entra ID Graph API applications](#configure-a-graph-api-application-in-azure-ad).
+If you have users that belong to more than 150 groups, configure a registered application to provide an Entra ID Graph API to retrieve the groups. Refer to [Setup Entra ID Graph API applications](#configure-a-graph-api-application-in-entra-id).
 
 ## Generate self-signed certificates
 
