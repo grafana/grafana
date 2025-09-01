@@ -30,6 +30,8 @@ const commonTestIgnores = [
   '**/spec/**/*.{ts,tsx}',
 ];
 
+const enterpriseIgnores = ['public/app/extensions/**/*', 'e2e/extensions/**/*'];
+
 // [FIXME] add comment about this applying everywhere
 const baseImportConfig = {
   patterns: [
@@ -450,9 +452,33 @@ module.exports = [
     },
   },
 
+  {
+    // custom rule for Table to avoid performance regressions
+    files: ['packages/grafana-ui/src/components/Table/TableNG/Cells/**/*.{ts,tsx}'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        withBaseRestrictedImportsConfig({
+          patterns: [
+            {
+              group: ['**/themes/ThemeContext'],
+              importNames: ['useStyles2', 'useTheme2'],
+              message:
+                'Do not use "useStyles2" or "useTheme2" in a cell directly. Instead, provide styles to cells via `getDefaultCellStyles` or `getCellSpecificStyles`.',
+            },
+          ],
+        }),
+      ],
+    },
+  },
+
   // Old betterer rules config:
   {
     files: ['**/*.{js,jsx,ts,tsx}'],
+    ignores:
+      // FIXME: Remove once all enterprise issues are fixed -
+      // we don't have a suppressions file/approach for enterprise code yet
+      enterpriseIgnores,
     rules: {
       '@typescript-eslint/no-explicit-any': 'error',
       '@grafana/no-aria-label-selectors': 'error',
@@ -460,15 +486,14 @@ module.exports = [
   },
   {
     files: ['**/*.{js,jsx,ts,tsx}'],
-    ignores: commonTestIgnores,
+    ignores: [
+      ...commonTestIgnores,
+      // FIXME: Remove once all enterprise issues are fixed -
+      // we don't have a suppressions file/approach for enterprise code yet
+      ...enterpriseIgnores,
+    ],
     rules: {
       '@typescript-eslint/consistent-type-assertions': ['error', { assertionStyle: 'never' }],
-    },
-  },
-  {
-    files: ['**/*.{js,jsx,ts,tsx}'],
-    ignores: commonTestIgnores,
-    rules: {
       'no-restricted-syntax': [
         'error',
         {
@@ -501,28 +526,14 @@ module.exports = [
   },
   {
     files: ['public/app/**/*.{ts,tsx}'],
-    ignores: commonTestIgnores,
+    ignores: [
+      ...commonTestIgnores,
+      // FIXME: Remove once all enterprise issues are fixed -
+      // we don't have a suppressions file/approach for enterprise code yet
+      ...enterpriseIgnores,
+    ],
     rules: {
       'no-barrel-files/no-barrel-files': 'error',
-    },
-  },
-  {
-    // custom rule for Table to avoid performance regressions
-    files: ['packages/grafana-ui/src/components/Table/TableNG/Cells/**/*.{ts,tsx}'],
-    rules: {
-      'no-restricted-imports': [
-        'error',
-        withBaseRestrictedImportsConfig({
-          patterns: [
-            {
-              group: ['**/themes/ThemeContext'],
-              importNames: ['useStyles2', 'useTheme2'],
-              message:
-                'Do not use "useStyles2" or "useTheme2" in a cell directly. Instead, provide styles to cells via `getDefaultCellStyles` or `getCellSpecificStyles`.',
-            },
-          ],
-        }),
-      ],
     },
   },
 ];
