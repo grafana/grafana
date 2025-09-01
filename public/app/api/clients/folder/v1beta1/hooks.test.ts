@@ -1,12 +1,35 @@
-import { renderHook, getWrapper, waitFor } from 'test/test-utils';
+import { renderHook, getWrapper, waitFor, screen } from 'test/test-utils';
 
+import { AppEvents } from '@grafana/data';
 import { config, setBackendSrv } from '@grafana/runtime';
 import { setupMockServer } from '@grafana/test-utils/server';
 import { getFolderFixtures } from '@grafana/test-utils/unstable';
 import { backendSrv } from 'app/core/services/backend_srv';
+import { useDeleteFoldersMutation as useDeleteFoldersMutationLegacy } from 'app/features/browse-dashboards/api/browseDashboardsAPI';
 
-import { useGetFolderQueryFacade } from './hooks';
+import { useGetFolderQueryFacade, useDeleteMultipleFoldersMutationFacade } from './hooks';
+import { setupCreateFolder } from './test-utils';
 
+import { useDeleteFolderMutation } from './index';
+
+// Mocks for the hooks used inside useGetFolderQueryFacade
+jest.mock('./index', () => ({
+  ...jest.requireActual('./index'),
+  useDeleteFolderMutation: jest.fn(),
+}));
+
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  getAppEvents: jest.fn(() => ({
+    publish: jest.fn(),
+  })),
+}));
+const mockGetAppEvents = jest.mocked(require('@grafana/runtime').getAppEvents);
+
+jest.mock('app/features/browse-dashboards/api/browseDashboardsAPI', () => ({
+  ...jest.requireActual('app/features/browse-dashboards/api/browseDashboardsAPI'),
+  useDeleteFoldersMutation: jest.fn(),
+}));
 setBackendSrv(backendSrv);
 setupMockServer();
 
@@ -102,6 +125,88 @@ describe('useGetFolderQueryFacade', () => {
         'dashboards.permissions:write': true,
         'dashboards:create': true,
       },
+    });
+  });
+});
+
+describe('useDeleteMultipleFoldersMutationFacade', () => {
+  const dispatchMock = jest.fn();
+  const mockDeleteFolder = jest.fn(() => ({ error: undefined }));
+  const mockDeleteFolderLegacy = jest.fn(() => ({ error: undefined }));
+  const publishMock = jest.fn();
+
+  const oldToggleValue = config.featureToggles.foldersAppPlatformAPI;
+
+  afterAll(() => {
+    config.featureToggles.foldersAppPlatformAPI = oldToggleValue;
+  });
+
+  beforeEach(() => {
+    mockDeleteFolder.mockClear();
+    mockDeleteFolderLegacy.mockClear();
+    (useDeleteFolderMutation as jest.Mock).mockReturnValue([mockDeleteFolder]);
+    (useDeleteFoldersMutationLegacy as jest.Mock).mockReturnValue([mockDeleteFolderLegacy]);
+
+    // Mock useDispatch
+    jest.spyOn(require('../../../../types/store'), 'useDispatch').mockReturnValue(dispatchMock);
+  });
+
+  it('deletes multiple folders and publishes success alert', async () => {
+    mockGetAppEvents.mockReturnValue({
+      publish: publishMock,
+    });
+    config.featureToggles.foldersAppPlatformAPI = true;
+    const folderUIDs = ['uid1', 'uid2'];
+    const deleteFolders = useDeleteMultipleFoldersMutationFacade();
+    await deleteFolders({ folderUIDs });
+
+    // Should call deleteFolder for each UID
+    expect(mockDeleteFolder).toHaveBeenCalledTimes(folderUIDs.length);
+    expect(mockDeleteFolder).toHaveBeenCalledWith({ name: 'uid1' });
+    expect(mockDeleteFolder).toHaveBeenCalledWith({ name: 'uid2' });
+
+    // Should publish success alert
+    expect(publishMock).toHaveBeenCalledWith({
+      type: AppEvents.alertSuccess.name,
+      payload: ['Folder deleted'],
+    });
+
+    // Should dispatch refreshParents
+    expect(dispatchMock).toHaveBeenCalled();
+  });
+
+  it('uses legacy call when flag is false', async () => {
+    config.featureToggles.foldersAppPlatformAPI = false;
+    const folderUIDs = ['uid1', 'uid2'];
+    const deleteFolders = useDeleteMultipleFoldersMutationFacade();
+    await deleteFolders({ folderUIDs });
+
+    // Should call deleteFolder for each UID
+    expect(mockDeleteFolderLegacy).toHaveBeenCalledTimes(1);
+    expect(mockDeleteFolderLegacy).toHaveBeenCalledWith({ folderUIDs });
+  });
+});
+
+describe('useCreateFolder', () => {
+  describe.each([
+    // app platform
+    true,
+    // legacy
+    false,
+  ])('folderAppPlatformAPI toggle set to: %s', (toggle) => {
+    beforeEach(() => {
+      config.featureToggles.foldersAppPlatformAPI = toggle;
+    });
+    afterEach(() => {
+      config.featureToggles = originalToggles;
+    });
+
+    it('creates a folder', async () => {
+      const { user } = setupCreateFolder();
+
+      await user.click(screen.getByText('Create Folder'));
+
+      expect(await screen.findByText('Folder created')).toBeInTheDocument();
     });
   });
 });

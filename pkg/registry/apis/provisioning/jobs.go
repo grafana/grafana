@@ -15,10 +15,22 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 )
 
+type JobQueueGetter interface {
+	GetJobQueue() jobs.Queue
+}
+
 type jobsConnector struct {
 	repoGetter RepoGetter
-	jobs       jobs.Queue
+	jobs       JobQueueGetter
 	historic   jobs.HistoryReader
+}
+
+func NewJobsConnector(repoGetter RepoGetter, jobs JobQueueGetter, historic jobs.HistoryReader) *jobsConnector {
+	return &jobsConnector{
+		repoGetter: repoGetter,
+		jobs:       jobs,
+		historic:   historic,
+	}
 }
 
 func (*jobsConnector) New() runtime.Object {
@@ -103,7 +115,7 @@ func (c *jobsConnector) Connect(
 		}
 		spec.Repository = name
 
-		job, err := c.jobs.Insert(ctx, cfg.Namespace, spec)
+		job, err := c.jobs.GetJobQueue().Insert(ctx, cfg.Namespace, spec)
 		if err != nil {
 			responder.Error(err)
 			return

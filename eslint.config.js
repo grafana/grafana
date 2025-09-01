@@ -8,8 +8,6 @@ const jsxA11yPlugin = require('eslint-plugin-jsx-a11y');
 const lodashPlugin = require('eslint-plugin-lodash');
 const barrelPlugin = require('eslint-plugin-no-barrel-files');
 const reactPlugin = require('eslint-plugin-react');
-// FIXME: Remove once eslint-config-grafana is updated to include correct plugin
-const hooksPlugin = require('eslint-plugin-react-hooks');
 const testingLibraryPlugin = require('eslint-plugin-testing-library');
 const unicornPlugin = require('eslint-plugin-unicorn');
 
@@ -27,6 +25,53 @@ const pluginsToTranslate = [
   'public/app/plugins/datasource/azuremonitor',
   'public/app/plugins/datasource/mssql',
 ];
+
+// [FIXME] add comment about this applying everywhere
+const baseImportConfig = {
+  patterns: [
+    {
+      group: ['react-i18next', 'i18next'],
+      importNames: ['t'],
+      message: 'Please import from @grafana/i18n instead',
+    },
+    {
+      group: ['react-i18next'],
+      importNames: ['Trans'],
+      message: 'Please import from @grafana/i18n instead',
+    },
+    {
+      group: ['@grafana/ui*', '*/Layout/*'],
+      importNames: ['Layout', 'HorizontalGroup', 'VerticalGroup'],
+      message: 'Use Stack component instead.',
+    },
+    {
+      regex: '\\.test$',
+      message:
+        'Do not import test files. If you require reuse of constants/mocks across files, create a separate file with no tests',
+    },
+  ],
+  paths: [
+    {
+      name: 'react-redux',
+      importNames: ['useDispatch', 'useSelector'],
+      message: 'Please import from app/types/store instead.',
+    },
+  ],
+};
+
+/**
+ *
+ * @param {{ patterns?: Array<object>, paths?: Array<object> }} config
+ * @returns
+ */
+function withBaseRestrictedImportsConfig(config = {}) {
+  const finalConfig = {
+    patterns: [...baseImportConfig.patterns, ...(config?.patterns ?? [])],
+    paths: [...baseImportConfig.paths, ...(config?.paths ?? [])],
+  };
+
+  return finalConfig;
+}
 
 /**
  * @type {Array<import('eslint').Linter.Config>}
@@ -60,17 +105,7 @@ module.exports = [
       'public/build-swagger', // swagger build output
     ],
   },
-  // FIXME: Remove once eslint-config-grafana is updated to include correct plugin
-  {
-    name: 'react-hooks-plugin',
-    plugins: {
-      'react-hooks': hooksPlugin,
-    },
-  },
-  // Conditionally run the betterer rules if enabled in dev's config
-  ...(enableBettererRules ? bettererConfig : []),
-  // FIXME: Remove filtering once eslint-config-grafana is updated to include correct plugin
-  ...grafanaConfig.filter(Boolean),
+  ...grafanaConfig,
   {
     name: 'react/jsx-runtime-rules',
     rules: reactPlugin.configs.flat['jsx-runtime'].rules,
@@ -130,35 +165,7 @@ module.exports = [
           pathGroupsExcludedImportTypes: ['builtin'],
         },
       ],
-      'no-restricted-imports': [
-        'error',
-        {
-          patterns: [
-            {
-              group: ['react-i18next', 'i18next'],
-              importNames: ['t'],
-              message: 'Please import from @grafana/i18n instead',
-            },
-            {
-              group: ['react-i18next'],
-              importNames: ['Trans'],
-              message: 'Please import from @grafana/i18n instead',
-            },
-            {
-              regex: '\\.test$',
-              message:
-                'Do not import test files. If you require reuse of constants/mocks across files, create a separate file with no tests',
-            },
-          ],
-          paths: [
-            {
-              name: 'react-redux',
-              importNames: ['useDispatch', 'useSelector'],
-              message: 'Please import from app/types instead.',
-            },
-          ],
-        },
-      ],
+      'no-restricted-imports': ['error', baseImportConfig],
       'no-restricted-globals': ['error'].concat(restrictedGlobals),
 
       // Use typescript's no-redeclare for compatibility with overrides
@@ -176,8 +183,30 @@ module.exports = [
       ],
       // FIXME: Fix these in follow up PR
       'react/no-unescaped-entities': 'off',
+      // Turn off react-hooks/rules-of-hooks whilst present in betterer
+      'react-hooks/rules-of-hooks': 'off',
     },
   },
+
+  {
+    name: 'grafana/no-extensions-imports',
+    files: ['public/**/*.{ts,tsx,js}'],
+    ignores: ['public/app/extensions/**/*'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        withBaseRestrictedImportsConfig({
+          patterns: [
+            {
+              group: ['app/extensions', 'app/extensions/*'],
+              message: 'Importing from app/extensions is not allowed',
+            },
+          ],
+        }),
+      ],
+    },
+  },
+
   {
     name: 'grafana/uplot-overrides',
     files: ['packages/grafana-ui/src/components/uPlot/**/*.{ts,tsx}'],
@@ -231,76 +260,58 @@ module.exports = [
       ],
     },
   },
+
   {
-    name: 'grafana/data-overrides',
-    files: ['packages/grafana-data/**/*.{ts,tsx}'],
-    ignores: ['packages/grafana-data/src/**/*.{spec,test}.{ts,tsx}'],
+    // No NPM package should import from @grafana/*/internal because it does not exist
+    // outside of this repo - they're not published to NPM.
+    name: 'grafana/packages-overrides',
+    files: ['packages/**/*.{ts,tsx}'],
+    ignores: [],
     rules: {
       'no-restricted-imports': [
         'error',
-        {
-          patterns: ['@grafana/runtime', '@grafana/ui', '@grafana/data'],
-        },
-      ],
-    },
-  },
-  {
-    name: 'grafana/ui-overrides',
-    files: ['packages/grafana-ui/**/*.{ts,tsx}'],
-    rules: {
-      'no-restricted-imports': [
-        'error',
-        {
-          patterns: ['@grafana/runtime', '@grafana/data/*', '@grafana/ui', '@grafana/e2e-selectors/*'],
-          paths: [
+        withBaseRestrictedImportsConfig({
+          patterns: [
             {
-              name: 'react-i18next',
-              importNames: ['Trans', 't'],
-              message: 'Please import from grafana-ui/src/utils/i18n instead',
+              group: ['@grafana/*/internal'],
+              message: "'internal' exports are not available in NPM packages because they are not published to NPM",
             },
           ],
-        },
+        }),
       ],
     },
   },
+
   {
-    name: 'grafana/schema-overrides',
-    files: ['packages/grafana-schema/**/*.{ts,tsx}'],
-    ignores: ['packages/grafana-schema/**/*.test.{ts,tsx}'],
+    // @grafana/runtime shouldn't be imported from our 'library' NPM packages
+    name: 'grafana/packages-that-cant-import-runtime',
+    files: [
+      'packages/grafana-ui/**/*.{ts,tsx}',
+      'packages/grafana-data/**/*.{ts,tsx}',
+      'packages/grafana-schema/**/*.{ts,tsx}',
+      'packages/grafana-e2e-selectors/**/*.{ts,tsx}',
+    ],
+    ignores: [],
     rules: {
       'no-restricted-imports': [
         'error',
-        {
-          patterns: ['@grafana/*'],
-        },
+        withBaseRestrictedImportsConfig({
+          patterns: [
+            {
+              // Duplicated because these rules override the previous grafana/packages-overrides
+              group: ['@grafana/*/internal'],
+              message: "'internal' exports are not available in NPM packages because they are not published to NPM",
+            },
+            {
+              group: ['@grafana/runtime'],
+              message: "'@grafana/runtime' should not be imported from library packages",
+            },
+          ],
+        }),
       ],
     },
   },
-  {
-    name: 'grafana/runtime-overrides',
-    files: ['packages/grafana-runtime/**/*.{ts,tsx}'],
-    rules: {
-      'no-restricted-imports': [
-        'error',
-        {
-          patterns: ['@grafana/runtime', '@grafana/data/*', '@grafana/ui/*', '@grafana/e2e/*'],
-        },
-      ],
-    },
-  },
-  {
-    name: 'grafana/flamegraph-overrides',
-    files: ['packages/grafana-flamegraph/**/*.{ts,tsx}'],
-    ignores: ['packages/grafana-flamegraph/**/*.{test,story}.{ts,tsx}'],
-    rules: {
-      'no-restricted-imports': [
-        'error',
-        {
-          patterns: ['@grafana/runtime', '@grafana/e2e', '@grafana/e2e-selectors/*'],
-        },
-      ],
-    },
-  },
+
   {
     name: 'grafana/alerting-overrides',
     plugins: {
@@ -437,22 +448,8 @@ module.exports = [
       ],
     },
   },
-  {
-    name: 'grafana/no-extensions-imports',
-    files: ['**/*.{ts,tsx,js}'],
-    ignores: ['public/app/extensions/**/*'],
-    rules: {
-      'no-restricted-imports': [
-        'error',
-        {
-          patterns: [
-            {
-              group: ['app/extensions', 'app/extensions/*'],
-              message: 'Importing from app/extensions is not allowed',
-            },
-          ],
-        },
-      ],
-    },
-  },
+
+  // Conditionally run the betterer rules if enabled in dev's config
+  // Should be last in the config so it can override any temporary disables in here
+  ...(enableBettererRules ? bettererConfig : []),
 ];

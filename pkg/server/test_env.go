@@ -7,7 +7,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository/github"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/secrets"
 	"github.com/grafana/grafana/pkg/registry/apis/secret"
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -37,7 +36,6 @@ func ProvideTestEnv(
 	idService auth.IDService,
 	githubFactory *github.Factory,
 	decryptService secret.DecryptService,
-	repositorySecrets secrets.RepositorySecrets, // TODO... remove
 ) (*TestEnv, error) {
 	return &TestEnv{
 		TestingT:            testingT,
@@ -54,7 +52,6 @@ func ProvideTestEnv(
 		IDService:           idService,
 		GitHubFactory:       githubFactory,
 		DecryptService:      decryptService,
-		RepositorySecrets:   repositorySecrets, // TODO, remove
 	}, nil
 }
 
@@ -77,5 +74,4 @@ type TestEnv struct {
 	IDService           auth.IDService
 	GitHubFactory       *github.Factory
 	DecryptService      secret.DecryptService
-	RepositorySecrets   secrets.RepositorySecrets // NOTE, this will be removed soon
 }

@@ -392,10 +392,10 @@ Instead of using the `annotate` flag, you can still use the `--record` flag. How
 
    For example:
    - From
-     - `yaml image: grafana/grafana-oss:10.0.1`
+     - `yaml image: grafana/grafana:12.1.0`
 
    - To
-     - `yaml image: grafana/grafana-oss-dev:10.1.0-124419pre`
+     - `yaml image: grafana/grafana-dev:12.2.0-17161637292`
 
 1. Save the changes.
 
@@ -421,7 +421,7 @@ Instead of using the `annotate` flag, you can still use the `--record` flag. How
    kubectl get all --namespace=my-grafana -o wide
    ```
 
-   You should see the newly deployed `grafana-oss-dev` image.
+   You should see the newly deployed `grafana-dev` image.
 
 1. To verify it, access the Grafana UI in the browser using the provided IP:Port from the command above.
 
@@ -435,7 +435,7 @@ Instead of using the `annotate` flag, you can still use the `--record` flag. How
 1. Add the `change cause` metadata to keep track of things using the commands:
 
    ```bash
-   kubectl annotate deployment grafana --namespace=my-grafana kubernetes.io/change-cause='using grafana-oss-dev:10.1.0-124419pre for testing'
+   kubectl annotate deployment grafana --namespace=my-grafana kubernetes.io/change-cause='using grafana-dev:12.2.0-17161637292 for testing'
    ```
 
 1. To verify, run the `kubectl rollout history` command:
@@ -450,7 +450,7 @@ Instead of using the `annotate` flag, you can still use the `--record` flag. How
    deployment.apps/grafana
    REVISION  CHANGE-CAUSE
    1         deploying the default yaml
-   2         using grafana-oss-dev:10.1.0-124419pre for testing
+   2         using grafana-dev:12.2.0-17161637292 for testing
    ```
 
 This means that `REVISION#2` is the current version.

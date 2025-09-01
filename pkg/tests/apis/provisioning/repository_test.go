@@ -49,12 +49,12 @@ func TestIntegrationProvisioning_CreatingAndGetting(t *testing.T) {
 			require.NoError(t, err, "failed to read back resource")
 
 			// Move encrypted token mutation
-			token, found, err := unstructured.NestedString(output.Object, "spec", "github", "encryptedToken")
-			require.NoError(t, err, "encryptedToken is not a string")
+			token, found, err := unstructured.NestedString(output.Object, "secure", "token", "name")
+			require.NoError(t, err, "secure token name is not a string")
 			if found {
-				unstructured.RemoveNestedField(input.Object, "spec", "github", "token")
-				err = unstructured.SetNestedField(input.Object, token, "spec", "github", "encryptedToken")
-				require.NoError(t, err, "unable to copy encrypted token")
+				require.True(t, strings.HasPrefix("inline-", token)) // name created automatically
+				err = unstructured.SetNestedField(input.Object, token, "secure", "token", "name")
+				require.NoError(t, err, "unable to copy secure token")
 			}
 
 			// Marshal as real objects to ",omitempty" values are tested properly
@@ -338,15 +338,6 @@ func TestIntegrationProvisioning_CreatingGitHubRepository(t *testing.T) {
 				url, _, err := unstructured.NestedString(obj.Object, "spec", "github", "url")
 				require.NoError(t, err, "failed to read URL")
 				require.Equal(t, test.output, url)
-
-				err = helper.Repositories.Resource.Delete(ctx, test.name, metav1.DeleteOptions{})
-				require.NoError(t, err, "failed to delete")
-
-				// Wait for repository to be fully deleted before next test
-				require.EventuallyWithT(t, func(collect *assert.CollectT) {
-					_, err := helper.Repositories.Resource.Get(ctx, test.name, metav1.GetOptions{})
-					assert.True(collect, apierrors.IsNotFound(err), "repository should be deleted")
-				}, time.Second*5, time.Millisecond*50, "repository should be deleted")
 			})
 		}
 	})

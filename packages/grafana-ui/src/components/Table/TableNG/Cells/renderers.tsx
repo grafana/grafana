@@ -17,7 +17,7 @@ import { MarkdownCell, getStyles as getMarkdownCellStyles } from './MarkdownCell
 import { PillCell, getStyles as getPillStyles } from './PillCell';
 import { SparklineCell, getStyles as getSparklineCellStyles } from './SparklineCell';
 
-const AutoCellRenderer = memo((props: TableCellRendererProps) => (
+export const AutoCellRenderer = memo((props: TableCellRendererProps) => (
   <AutoCell value={props.value} field={props.field} rowIdx={props.rowIdx} />
 ));
 AutoCellRenderer.displayName = 'AutoCellRenderer';
@@ -110,7 +110,12 @@ const CELL_REGISTRY: Record<TableCellOptions['type'], CellRegistryEntry> = {
   [TableCellDisplayMode.Pill]: {
     // eslint-disable-next-line react/display-name
     renderer: memo((props: TableCellRendererProps) => (
-      <PillCell rowIdx={props.rowIdx} field={props.field} theme={props.theme} />
+      <PillCell
+        rowIdx={props.rowIdx}
+        field={props.field}
+        theme={props.theme}
+        getTextColorForBackground={props.getTextColorForBackground}
+      />
     )),
     getStyles: getPillStyles,
     testField: (field: Field) => field.type === FieldType.string,
