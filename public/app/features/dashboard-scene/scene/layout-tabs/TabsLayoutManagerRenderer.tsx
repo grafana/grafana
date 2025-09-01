@@ -1,6 +1,6 @@
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import { DragDropContext, Droppable } from '@hello-pangea/dnd';
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -26,6 +26,7 @@ export function TabsLayoutManagerRenderer({ model }: SceneComponentProps<TabsLay
   const dashboard = getDashboardSceneFor(model);
   const { isEditing } = dashboard.useState();
   const { hasCopiedTab } = useClipboardState();
+  const isNestedInTab = useMemo(() => model.parent instanceof TabItem, [model.parent]);
   const soloPanelContext = useSoloPanelContext();
 
   useEffect(() => {
@@ -41,7 +42,7 @@ export function TabsLayoutManagerRenderer({ model }: SceneComponentProps<TabsLay
   const isClone = isRepeatCloneOrChildOf(model);
 
   return (
-    <div className={styles.tabLayoutContainer}>
+    <div className={cx(styles.tabLayoutContainer, { [styles.nestedTabsMargin]: isNestedInTab })}>
       <TabsBar className={styles.tabsBar}>
         <DragDropContext
           onBeforeDragStart={(start) => model.forceSelectTab(start.draggableId)}
@@ -135,5 +136,8 @@ const getStyles = (theme: GrafanaTheme2) => ({
     overflowY: 'hidden',
     paddingInline: theme.spacing(0.125),
     paddingTop: '1px',
+  }),
+  nestedTabsMargin: css({
+    marginLeft: theme.spacing(2),
   }),
 });

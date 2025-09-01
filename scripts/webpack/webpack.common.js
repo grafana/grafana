@@ -75,6 +75,14 @@ module.exports = {
           from: 'public/img',
           to: 'img',
         },
+        {
+          from: 'public/maps',
+          to: 'maps',
+        },
+        {
+          from: 'public/gazetteer',
+          to: 'gazetteer',
+        },
       ],
     }),
   ],

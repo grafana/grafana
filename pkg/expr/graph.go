@@ -9,6 +9,8 @@ import (
 	"time"
 
 	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
+	"go.opentelemetry.io/otel/trace"
 	"golang.org/x/exp/maps"
 	"gonum.org/v1/gonum/graph/simple"
 	"gonum.org/v1/gonum/graph/topo"
@@ -201,6 +203,26 @@ func (s *Service) buildPipeline(ctx context.Context, req *Request) (DataPipeline
 	if req != nil && len(req.Headers) == 0 {
 		req.Headers = map[string]string{}
 	}
+
+	instrumentSQLError := func(err error, span trace.Span) {
+		var sqlErr *sql.ErrorWithCategory
+		if errors.As(err, &sqlErr) {
+			// The SQL expression (and the entire pipeline) will not be executed, so we
+			// track the attempt to execute here.
+			s.metrics.SqlCommandCount.WithLabelValues("error", sqlErr.Category()).Inc()
+		}
+		if err != nil {
+			span.RecordError(err)
+			span.SetStatus(codes.Error, err.Error())
+		}
+	}
+
+	_, span := s.tracer.Start(ctx, "SSE.BuildPipeline")
+	var err error
+	defer func() {
+		instrumentSQLError(err, span)
+		span.End()
+	}()
 
 	graph, err := s.buildDependencyGraph(ctx, req)
 	if err != nil {
