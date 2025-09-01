@@ -331,6 +331,7 @@ jobs:
     runs-on: ubuntu-latest-8-cores
     permissions:
       contents: read
+      id-token: write
 
     steps:
       - uses: actions/checkout@v4
@@ -365,6 +366,7 @@ jobs:
     runs-on: ubuntu-latest-8-cores
     permissions:
       contents: read
+      id-token: write
 
     steps:
       - uses: actions/checkout@v4
