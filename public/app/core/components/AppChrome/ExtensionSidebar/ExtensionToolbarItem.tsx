@@ -19,9 +19,9 @@ type Props = {
 const compactAllowedComponents = ['grafana-assistant-app'];
 
 export function ExtensionToolbarItem({ compact }: Props) {
-  const { availableComponents, dockedComponentId, setDockedComponentId, isEnabled } = useExtensionSidebarContext();
+  const { availableComponents, dockedComponentId, setDockedComponentId } = useExtensionSidebarContext();
 
-  if (!isEnabled || availableComponents.size === 0) {
+  if (availableComponents.size === 0) {
     return null;
   }
 
