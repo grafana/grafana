@@ -17,8 +17,6 @@ import {
   MetricFindValue,
   getValueMatcher,
   ValueMatcherID,
-  FiltersApplicability,
-  DataSourceGetTagKeysOptions,
   DataSourceGetDrilldownsApplicabilityOptions,
   DrilldownsApplicability,
 } from '@grafana/data';
