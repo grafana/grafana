@@ -534,13 +534,6 @@ var (
 			FrontendOnly: false,
 		},
 		{
-			Name:         "prometheusCodeModeMetricNamesSearch",
-			Description:  "Enables search for metric names in Code Mode, to improve performance when working with an enormous number of metric names",
-			FrontendOnly: true,
-			Stage:        FeatureStageExperimental,
-			Owner:        grafanaOSSBigTent,
-		},
-		{
 			Name:         "addFieldFromCalculationStatFunctions",
 			Description:  "Add cumulative and window functions to the add field from calculation transformation",
 			Stage:        FeatureStageGeneralAvailability,
@@ -1292,6 +1285,15 @@ var (
 			Expression:        "false",
 		},
 		{
+			Name:              "alertingEnrichmentPerRule",
+			Description:       "Enable enrichment per rule in the alerting UI.",
+			Stage:             FeatureStageExperimental,
+			Owner:             grafanaAlertingSquad,
+			HideFromAdminPage: true,
+			HideFromDocs:      true,
+			Expression:        "false",
+		},
+		{
 			Name:              "alertingAIAnalyzeCentralStateHistory",
 			Description:       "Enable AI-analyze central state history.",
 			Stage:             FeatureStageExperimental,
@@ -1560,13 +1562,6 @@ var (
 			Owner:             grafanaSearchAndStorageSquad,
 			HideFromAdminPage: true,
 			HideFromDocs:      true,
-		},
-		{
-			Name:         "extensionSidebar",
-			Description:  "Enables the extension sidebar",
-			Stage:        FeatureStageExperimental,
-			FrontendOnly: true,
-			Owner:        grafanaObservabilityLogsSquad,
 		},
 		{
 			Name:              "alertingRulePermanentlyDelete",
@@ -1867,6 +1862,15 @@ var (
 			Owner:             grafanaAlertingSquad,
 			HideFromAdminPage: true,
 			HideFromDocs:      true,
+		},
+		{
+			Name:              "restrictedPluginApis",
+			Description:       "Enables sharing a list of APIs with a list of plugins",
+			Stage:             FeatureStageExperimental,
+			Owner:             grafanaPluginsPlatformSquad,
+			HideFromAdminPage: true,
+			HideFromDocs:      true,
+			FrontendOnly:      true,
 			Expression:        "false",
 		},
 		{
@@ -1915,6 +1919,16 @@ var (
 			FrontendOnly: false,
 			Owner:        grafanaFrontendSearchNavOrganise,
 			Expression:   "false",
+		},
+		{
+			Name:              "alertingTriage",
+			Description:       "Enables the alerting triage feature",
+			Stage:             FeatureStageExperimental,
+			FrontendOnly:      true,
+			Owner:             grafanaAlertingSquad,
+			HideFromDocs:      true,
+			HideFromAdminPage: true,
+			Expression:        "false",
 		},
 	}
 )

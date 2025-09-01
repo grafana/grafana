@@ -1,4 +1,4 @@
-import { renderHook, getWrapper, waitFor } from 'test/test-utils';
+import { renderHook, getWrapper, waitFor, screen } from 'test/test-utils';
 
 import { AppEvents } from '@grafana/data';
 import { config, setBackendSrv } from '@grafana/runtime';
@@ -17,6 +17,7 @@ import {
   useDeleteMultipleFoldersMutationFacade,
   useMoveMultipleFoldersMutationFacade,
 } from './hooks';
+import { setupCreateFolder } from './test-utils';
 
 import { useDeleteFolderMutation, useUpdateFolderMutation } from './index';
 
@@ -242,5 +243,29 @@ describe('useMoveMultipleFoldersMutationFacade', () => {
     // Should call deleteFolder for each UID
     expect(mockMoveFolders).toHaveBeenCalledTimes(1);
     expect(mockMoveFolders).toHaveBeenCalledWith({ folderUIDs, destinationUID: 'uid3' });
+  });
+});
+
+describe('useCreateFolder', () => {
+  describe.each([
+    // app platform
+    true,
+    // legacy
+    false,
+  ])('folderAppPlatformAPI toggle set to: %s', (toggle) => {
+    beforeEach(() => {
+      config.featureToggles.foldersAppPlatformAPI = toggle;
+    });
+    afterEach(() => {
+      config.featureToggles = originalToggles;
+    });
+
+    it('creates a folder', async () => {
+      const { user } = setupCreateFolder();
+
+      await user.click(screen.getByText('Create Folder'));
+
+      expect(await screen.findByText('Folder created')).toBeInTheDocument();
+    });
   });
 });

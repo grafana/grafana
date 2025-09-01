@@ -2,6 +2,8 @@ import { Page, Locator } from '@playwright/test';
 
 import { test, expect, E2ESelectorGroups } from '@grafana/plugin-e2e';
 
+import { getCell, getCellHeight } from './table-utils';
+
 const DASHBOARD_UID = 'dcb9f5e9-8066-4397-889e-864b99555dbb';
 
 test.use({ viewport: { width: 2000, height: 1080 } });
@@ -9,18 +11,6 @@ test.use({ viewport: { width: 2000, height: 1080 } });
 // helper utils
 const waitForTableLoad = async (loc: Page | Locator) => {
   await expect(loc.locator('.rdg')).toBeVisible();
-};
-
-const getCell = async (loc: Page | Locator, rowIdx: number, colIdx: number) =>
-  loc
-    .getByRole('row')
-    .nth(rowIdx)
-    .getByRole(rowIdx === 0 ? 'columnheader' : 'gridcell')
-    .nth(colIdx);
-
-const getCellHeight = async (loc: Page | Locator, rowIdx: number, colIdx: number) => {
-  const cell = await getCell(loc, rowIdx, colIdx);
-  return (await cell.boundingBox())?.height ?? 0;
 };
 
 const getColumnIdx = async (loc: Page | Locator, columnName: string) => {
@@ -43,21 +33,23 @@ const getColumnIdx = async (loc: Page | Locator, columnName: string) => {
 
 const disableAllTextWrap = async (loc: Page | Locator, selectors: E2ESelectorGroups) => {
   // disable text wrapping for all of the columns, since long text with links in them can push the links off the screen.
-  const wrapTextToggle = loc.locator(
-    `[aria-label="${selectors.components.PanelEditor.OptionsPane.fieldLabel('Wrap text')}"]`
-  );
+  const wrapTextToggle = loc.getByLabel('Wrap text');
   const count = await wrapTextToggle.count();
 
   for (let i = 0; i < count; i++) {
     const toggle = wrapTextToggle.nth(i);
-    if ((await toggle.locator('//preceding-sibling::input').getAttribute('checked')) !== null) {
-      await toggle.click();
+    if ((await toggle.getAttribute('checked')) !== null) {
+      await toggle.click({ force: true });
     }
   }
 };
 
 test.describe('Panels test: Table - Kitchen Sink', { tag: ['@panels', '@table'] }, () => {
-  test('Tests word wrap, hover overflow, and cell inspect', async ({ gotoDashboardPage, selectors, page }) => {
+  test('Tests word wrap, hover overflow, max cell height, and cell inspect', async ({
+    gotoDashboardPage,
+    selectors,
+    page,
+  }) => {
     const dashboardPage = await gotoDashboardPage({
       uid: DASHBOARD_UID,
       queryParams: new URLSearchParams({ editPanel: '1' }),
@@ -75,10 +67,19 @@ test.describe('Panels test: Table - Kitchen Sink', { tag: ['@panels', '@table'] 
     // text wrapping is enabled by default on this panel.
     await expect(getCellHeight(page, 1, longTextColIdx)).resolves.toBeGreaterThan(100);
 
+    // set a max row height, watch the height decrease, then clear it to continue.
+    const maxRowHeightInput = page.getByLabel('Max row height').last();
+    await maxRowHeightInput.fill('80');
+    await expect(async () => {
+      await expect(getCellHeight(page, 1, longTextColIdx)).resolves.toBeLessThan(100);
+    }).toPass();
+    await maxRowHeightInput.clear();
+
+    // toggle the lorem ipsum column's wrap text toggle and confirm that the height shrinks.
     await dashboardPage
       .getByGrafanaSelector(selectors.components.OptionsGroup.group('panel-options-override-12'))
-      .getByLabel(selectors.components.PanelEditor.OptionsPane.fieldLabel('Wrap text'))
-      .click();
+      .getByLabel('Wrap text')
+      .click({ force: true });
     await expect(getCellHeight(page, 1, longTextColIdx)).resolves.toBeLessThan(100);
 
     // test that hover overflow works.
