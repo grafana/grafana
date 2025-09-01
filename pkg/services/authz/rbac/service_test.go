@@ -229,7 +229,7 @@ func TestService_checkPermission(t *testing.T) {
 					Identifier: "parent",
 				},
 			},
-			folders: []store.Folder{{UID: "parent"}},
+			folders: []store.Folder{{UID: "parent"}, {UID: "other_parent"}},
 			check: CheckRequest{
 				Action:       "dashboards:create",
 				Group:        "dashboard.grafana.app",
@@ -295,6 +295,43 @@ func TestService_checkPermission(t *testing.T) {
 			assert.Equal(t, tc.expected, got)
 		})
 	}
+}
+
+func TestService_checkPermission_folderCacheMissRecovery(t *testing.T) {
+	s := setupService()
+	ctx := context.Background()
+
+	// User has root folder access
+	userPermissions := map[string]bool{
+		"folders:uid:root": true,
+	}
+
+	// Populate store with folders
+	folderStore := &fakeStore{
+		folders:        []store.Folder{{UID: "root"}, {UID: "sub", ParentUID: strPtr("root")}},
+		disableNsCheck: true,
+	}
+	s.folderStore = folderStore
+
+	// Sub folder is missing from the cache
+	s.folderCache.Set(ctx, folderCacheKey("default"), newFolderTree([]store.Folder{{UID: "root"}}))
+
+	// Perform check on sub folder
+	check := CheckRequest{
+		Action:       "dashboards:read",
+		Group:        "dashboard.grafana.app",
+		Resource:     "dashboards",
+		Name:         "dash1",
+		ParentFolder: "sub",
+		Namespace:    types.NamespaceInfo{Value: "default", OrgID: 1},
+	}
+
+	got, err := s.checkPermission(ctx, userPermissions, &check)
+	require.NoError(t, err)
+	assert.True(t, got)
+
+	// Check that folder store was queried despite the initial cache hit
+	assert.Equal(t, 1, folderStore.calls)
 }
 
 func TestService_getUserTeams(t *testing.T) {
