@@ -38,7 +38,7 @@ export function BrowseActions({ folderDTO }: Props) {
   const selectedItems = useActionSelectionState();
   const [deleteDashboards] = useDeleteDashboardsMutation();
   const deleteFolders = useDeleteMultipleFoldersMutationFacade();
-  const moveFolders = useMoveMultipleFoldersMutationFacade();
+  const [moveFolders] = useMoveMultipleFoldersMutationFacade();
   const [moveDashboards] = useMoveDashboardsMutation();
   const [, stateManager] = useSearchStateManager();
   const provisioningEnabled = config.featureToggles.provisioning;

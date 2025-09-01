@@ -233,7 +233,10 @@ export function useDeleteMultipleFoldersMutationFacade() {
   };
 }
 
-export function useMoveMultipleFoldersMutationFacade() {
+export function useMoveMultipleFoldersMutationFacade(): readonly [
+  (args: MoveFoldersArgs) => Promise<{ data?: unknown }>,
+  ReturnType<typeof useMoveFoldersMutationLegacy>[1] | ReturnType<typeof useUpdateFolderMutation>[1],
+] {
   const moveFoldersLegacyResult = useMoveFoldersMutationLegacy();
   const [updateFolder, updateFolderData] = useUpdateFolderMutation();
   const dispatch = useDispatch();

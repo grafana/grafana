@@ -210,7 +210,7 @@ describe('useMoveMultipleFoldersMutationFacade', () => {
   it('moves multiple folders and publishes success alert', async () => {
     config.featureToggles.foldersAppPlatformAPI = true;
     const folderUIDs = ['uid1', 'uid2'];
-    const moveFolders = useMoveMultipleFoldersMutationFacade();
+    const [moveFolders] = useMoveMultipleFoldersMutationFacade();
     await moveFolders({ folderUIDs, destinationUID: 'uid3' });
 
     // Should call deleteFolder for each UID
@@ -237,7 +237,7 @@ describe('useMoveMultipleFoldersMutationFacade', () => {
   it('uses legacy call when flag is false', async () => {
     config.featureToggles.foldersAppPlatformAPI = false;
     const folderUIDs = ['uid1', 'uid2'];
-    const moveFolders = useMoveMultipleFoldersMutationFacade();
+    const [moveFolders] = useMoveMultipleFoldersMutationFacade();
     await moveFolders({ folderUIDs, destinationUID: 'uid3' });
 
     // Should call deleteFolder for each UID
