@@ -348,8 +348,7 @@ jobs:
         uses: dagger/dagger-for-github@e47aba410ef9bb9ed81a4d2a97df31061e5e842e
         with:
           verb: run
-          # TODO
-          args: go run ./pkg/build/e2e-playwright --package=grafana.tar.gz --license=./e2e-playwright/extensions/oem/license.jwt --playwright-command="yarn e2e:playwright:enterprise:oem"
+          args: go run ./pkg/build/e2e-playwright --package=grafana.tar.gz --license="e2e-playwright/extensions/oem/license.jwt" --playwright-command="yarn e2e:playwright:enterprise:oem"
       - uses: actions/upload-artifact@v4
         if: success() || failure()
         with:
@@ -383,8 +382,7 @@ jobs:
         uses: dagger/dagger-for-github@e47aba410ef9bb9ed81a4d2a97df31061e5e842e
         with:
           verb: run
-          # TODO
-          args: go run ./pkg/build/e2e-playwright --package=grafana.tar.gz --license=./e2e-playwright/extensions/enterprise/license.jwt --playwright-command="yarn e2e:playwright:enterprise"
+          args: go run ./pkg/build/e2e-playwright --package=grafana.tar.gz --license="e2e-playwright/extensions/enterprise/license.jwt" --playwright-command="yarn e2e:playwright:enterprise"
       - uses: actions/upload-artifact@v4
         if: success() || failure()
         with:
