@@ -4544,6 +4544,12 @@
       "overwrite": "덮어쓰기",
       "title-plugin-dashboard": "플러그인 대시보드"
     },
+    "controls": {
+      "menu": {
+        "aria-label": "",
+        "title": ""
+      }
+    },
     "dash-nav": {
       "on-open-snapshot-original": {
         "confirmText": {
@@ -5821,11 +5827,6 @@
         "transparent-background": "투명 배경"
       }
     },
-    "get-workflow-options": {
-      "label": {
-        "push-to-a-new-branch": "새 브랜치로 푸시"
-      }
-    },
     "group-by-variable-form": {
       "alert-not-supported": "이 데이터 소스는 변수별 그룹화를 지원하지 않습니다.",
       "description-enables-users-custom-values": "사용자가 목록에 사용자 지정 값을 추가할 수 있습니다",
@@ -6920,11 +6921,6 @@
       "dragging-a-divider": "구분선 드래그하기",
       "dragging-a-sub-region": "하위 영역 드래그하기",
       "value": "값: {{ dividerPos }}"
-    },
-    "drilldownInfo": {
-      "action": "Grafana 드릴다운으로 이동",
-      "description": "Grafana 탐색 앱을 찾고 계신가요? 이제 Grafana 드릴다운 앱이라고 불리며, <1>메뉴 > 드릴다운</1>에서 찾을 수 있습니다.",
-      "title": "Explore Metrics, Logs, Traces 및 Profiles 위치가 변경되었습니다!"
     },
     "drop-down-menu": {
       "aria-label-links": "링크",
@@ -11126,11 +11122,16 @@
     "save-or-delete-resource-shared-fields": {
       "comment-placeholder-describe-changes-optional": "변경 사항을 설명하는 메모 추가(선택 사항)",
       "description-branch-name-in-git-hub": "GitHub의 브랜치 이름",
+      "description-file-path": "",
+      "description-folder-path": "",
       "description-inside-repository": "",
       "label-branch": "브랜치",
       "label-comment": "댓글",
       "label-path": "경로",
-      "label-workflow": "워크플로"
+      "label-workflow": "워크플로",
+      "placeholder-branch": "",
+      "placeholder-new-branch": "",
+      "suffix-configured-branch": ""
     }
   },
   "provisioned-resource-preview-banner": {
@@ -11661,6 +11662,10 @@
       "button-previous": "이전",
       "button-submitting": "제출 중…",
       "error-instance-repository-exists": "인스턴스 리포지토리가 이미 존재합니다"
+    },
+    "workflow-options-label": {
+      "push-to-a-new-branch": "",
+      "push-to-existing-branch": ""
     }
   },
   "public-dashboard": {
@@ -12766,6 +12771,7 @@
     "name-fields": "필드",
     "name-frozen-columns": "",
     "name-hide-in-table": "테이블에서 숨기기",
+    "name-max-height": "",
     "name-min-column-width": "열 최소 너비",
     "name-show-table-footer": "테이블 바닥글 표시",
     "name-show-table-header": "테이블 머리말 표시",
@@ -12775,6 +12781,7 @@
     "name-wrap-text": "",
     "placeholder-column-width": "자동",
     "placeholder-fields": "모든 숫자 필드",
+    "placeholder-max-height": "",
     "tooltip-placement-options": {
       "label-auto": "",
       "label-bottom": "",
