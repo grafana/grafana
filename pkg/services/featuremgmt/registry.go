@@ -1918,6 +1918,16 @@ var (
 			Owner:        grafanaFrontendSearchNavOrganise,
 			Expression:   "false",
 		},
+		{
+			Name:              "alertingTriage",
+			Description:       "Enables the alerting triage feature",
+			Stage:             FeatureStageExperimental,
+			FrontendOnly:      true,
+			Owner:             grafanaAlertingSquad,
+			HideFromDocs:      true,
+			HideFromAdminPage: true,
+			Expression:        "false",
+		},
 	}
 )
 
