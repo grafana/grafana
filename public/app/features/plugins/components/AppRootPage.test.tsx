@@ -15,6 +15,7 @@ import { AddedComponentsRegistry } from '../extensions/registry/AddedComponentsR
 import { AddedFunctionsRegistry } from '../extensions/registry/AddedFunctionsRegistry';
 import { AddedLinksRegistry } from '../extensions/registry/AddedLinksRegistry';
 import { ExposedComponentsRegistry } from '../extensions/registry/ExposedComponentsRegistry';
+import { UrlRecognizersRegistry } from '../extensions/registry/UrlRecognizersRegistry';
 import { importAppPlugin } from '../pluginLoader';
 import { getPluginSettings } from '../pluginSettings';
 
@@ -93,6 +94,7 @@ function renderUnderRouter(page = '') {
     exposedComponentsRegistry: new ExposedComponentsRegistry(),
     addedLinksRegistry: new AddedLinksRegistry(),
     addedFunctionsRegistry: new AddedFunctionsRegistry(),
+    urlRecognizersRegistry: new UrlRecognizersRegistry(),
   };
   const pagePath = page ? `/${page}` : '';
   const route = {

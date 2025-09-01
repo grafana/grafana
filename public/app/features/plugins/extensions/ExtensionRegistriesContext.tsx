@@ -4,6 +4,7 @@ import { AddedComponentsRegistry } from 'app/features/plugins/extensions/registr
 import { AddedFunctionsRegistry } from 'app/features/plugins/extensions/registry/AddedFunctionsRegistry';
 import { AddedLinksRegistry } from 'app/features/plugins/extensions/registry/AddedLinksRegistry';
 import { ExposedComponentsRegistry } from 'app/features/plugins/extensions/registry/ExposedComponentsRegistry';
+import { UrlRecognizersRegistry } from 'app/features/plugins/extensions/registry/UrlRecognizersRegistry';
 
 import { PluginExtensionRegistries } from './registry/types';
 
@@ -16,6 +17,7 @@ export const AddedLinksRegistryContext = createContext<AddedLinksRegistry | unde
 export const AddedComponentsRegistryContext = createContext<AddedComponentsRegistry | undefined>(undefined);
 export const AddedFunctionsRegistryContext = createContext<AddedFunctionsRegistry | undefined>(undefined);
 export const ExposedComponentsRegistryContext = createContext<ExposedComponentsRegistry | undefined>(undefined);
+export const UrlRecognizersRegistryContext = createContext<UrlRecognizersRegistry | undefined>(undefined);
 
 export function useAddedLinksRegistry(): AddedLinksRegistry {
   const context = useContext(AddedLinksRegistryContext);
@@ -49,6 +51,14 @@ export function useExposedComponentsRegistry(): ExposedComponentsRegistry {
   return context;
 }
 
+export function useUrlRecognizersRegistry(): UrlRecognizersRegistry {
+  const context = useContext(UrlRecognizersRegistryContext);
+  if (!context) {
+    throw new Error('No `UrlRecognizersRegistryContext` found.');
+  }
+  return context;
+}
+
 export const ExtensionRegistriesProvider = ({
   registries,
   children,
@@ -58,7 +68,9 @@ export const ExtensionRegistriesProvider = ({
       <AddedComponentsRegistryContext.Provider value={registries.addedComponentsRegistry}>
         <AddedFunctionsRegistryContext.Provider value={registries.addedFunctionsRegistry}>
           <ExposedComponentsRegistryContext.Provider value={registries.exposedComponentsRegistry}>
-            {children}
+            <UrlRecognizersRegistryContext.Provider value={registries.urlRecognizersRegistry}>
+              {children}
+            </UrlRecognizersRegistryContext.Provider>
           </ExposedComponentsRegistryContext.Provider>
         </AddedFunctionsRegistryContext.Provider>
       </AddedComponentsRegistryContext.Provider>
