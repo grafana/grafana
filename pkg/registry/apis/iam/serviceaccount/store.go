@@ -28,6 +28,8 @@ var (
 	_ rest.Lister               = (*LegacyStore)(nil)
 	_ rest.Storage              = (*LegacyStore)(nil)
 	_ rest.CreaterUpdater       = (*LegacyStore)(nil)
+	_ rest.GracefulDeleter      = (*LegacyStore)(nil)
+	_ rest.CollectionDeleter    = (*LegacyStore)(nil)
 )
 
 var resource = iamv0alpha1.ServiceAccountResourceInfo
@@ -41,6 +43,16 @@ type LegacyStore struct {
 	ac                  claims.AccessClient
 	enableAuthnMutation bool
 	cfg                 *setting.Cfg
+}
+
+// DeleteCollection implements rest.CollectionDeleter.
+func (s *LegacyStore) DeleteCollection(ctx context.Context, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions, listOptions *internalversion.ListOptions) (runtime.Object, error) {
+	return nil, apierrors.NewMethodNotSupported(resource.GroupResource(), "delete")
+}
+
+// Delete implements rest.GracefulDeleter.
+func (s *LegacyStore) Delete(ctx context.Context, name string, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions) (runtime.Object, bool, error) {
+	return nil, false, apierrors.NewMethodNotSupported(resource.GroupResource(), "delete")
 }
 
 // Update implements rest.Updater.
