@@ -113,7 +113,8 @@ describe('Backend / Frontend result comparison', () => {
     'pkg',
     'migration',
     'testdata',
-    'output'
+    'output',
+    'latest_version'
   );
 
   const jsonInputs = readdirSync(inputDir);
@@ -124,7 +125,10 @@ describe('Backend / Frontend result comparison', () => {
     .forEach((inputFile) => {
       it(`should migrate ${inputFile} correctly`, async () => {
         const jsonInput = JSON.parse(readFileSync(path.join(inputDir, inputFile), 'utf8'));
-        const backendOutput = JSON.parse(readFileSync(path.join(outputDir, inputFile), 'utf8'));
+
+        // Construct the backend output filename: v30.something.json -> v30.something.v41.json
+        const backendOutputFilename = inputFile.replace('.json', '.v41.json');
+        const backendOutput = JSON.parse(readFileSync(path.join(outputDir, backendOutputFilename), 'utf8'));
 
         expect(backendOutput.schemaVersion).toEqual(DASHBOARD_SCHEMA_VERSION);
 
