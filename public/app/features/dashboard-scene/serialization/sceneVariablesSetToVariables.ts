@@ -60,6 +60,7 @@ export function sceneVariablesSetToVariables(set: SceneVariables, keepQueryOptio
       skipUrlSync: Boolean(variable.state.skipUrlSync),
       hide: variable.state.hide || OldVariableHide.dontHide,
       type: variable.state.type,
+      showInControlsMenu: variable.state.showInControlsMenu,
     };
 
     if (sceneUtils.isQueryVariable(variable)) {
@@ -283,6 +284,7 @@ export function sceneVariablesSetToSchemaV2Variables(
       description: variable.state.description ?? undefined,
       skipUrlSync: Boolean(variable.state.skipUrlSync),
       hide: transformVariableHideToEnum(variable.state.hide) || defaultVariableHide(),
+      showInControlsMenu: variable.state.showInControlsMenu,
     };
 
     // current: VariableOption;
