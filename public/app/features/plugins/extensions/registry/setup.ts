@@ -37,7 +37,7 @@ addedComponentsRegistry.register({
     {
       title: 'Alert rule history for IRM',
       description: 'Alert rule history for IRM',
-      targets: [PluginExtensionPointsInPlugins.IrmAlertRule],
+      targets: [PluginExtensionPointsInPlugins.IrmAlertRuleHistory],
       component: CentralAlertHistoryScene,
     },
   ],

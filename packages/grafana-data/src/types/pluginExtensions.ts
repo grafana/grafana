@@ -210,7 +210,7 @@ export enum PluginExtensionPoints {
 
 // Extension Points available in plugins
 export enum PluginExtensionPointsInPlugins {
-  IrmAlertRule = 'grafana-irm-app/alert-rule/v1',
+  IrmAlertRuleHistory = 'grafana-irm-app/alert-rule-history/v1',
 }
 
 export type PluginExtensionPanelContext = {
