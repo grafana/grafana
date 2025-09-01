@@ -4544,6 +4544,12 @@
       "overwrite": "上書き",
       "title-plugin-dashboard": "プラグインダッシュボード"
     },
+    "controls": {
+      "menu": {
+        "aria-label": "",
+        "title": ""
+      }
+    },
     "dash-nav": {
       "on-open-snapshot-original": {
         "confirmText": {
@@ -5821,11 +5827,6 @@
         "transparent-background": "透明の背景"
       }
     },
-    "get-workflow-options": {
-      "label": {
-        "push-to-a-new-branch": "新しいブランチにプッシュ"
-      }
-    },
     "group-by-variable-form": {
       "alert-not-supported": "このデータソースは変数のグループ化をサポートしていません",
       "description-enables-users-custom-values": "ユーザーがリストにカスタム値を追加できるようにします",
@@ -6920,11 +6921,6 @@
       "dragging-a-divider": "区切り線をドラッグ中",
       "dragging-a-sub-region": "サブ領域をドラッグ中",
       "value": "値：{{ dividerPos }}"
-    },
-    "drilldownInfo": {
-      "action": "Grafanaドリルダウンに移動",
-      "description": "Grafana Exploreアプリをお探しですか？これらはGrafanaドリルダウンアプリと呼ばれるようになり、<1>メニュー > ドリルダウン</1>にあります",
-      "title": "メトリック、ログ、トレース、プロフィールの検索が移動しました！"
     },
     "drop-down-menu": {
       "aria-label-links": "リンク",
@@ -11126,11 +11122,16 @@
     "save-or-delete-resource-shared-fields": {
       "comment-placeholder-describe-changes-optional": "変更内容を説明するメモを追加（任意）",
       "description-branch-name-in-git-hub": "GitHubのブランチ名",
+      "description-file-path": "",
+      "description-folder-path": "",
       "description-inside-repository": "",
       "label-branch": "ブランチ",
       "label-comment": "コメント",
       "label-path": "パス",
-      "label-workflow": "ワークフロー"
+      "label-workflow": "ワークフロー",
+      "placeholder-branch": "",
+      "placeholder-new-branch": "",
+      "suffix-configured-branch": ""
     }
   },
   "provisioned-resource-preview-banner": {
@@ -11661,6 +11662,10 @@
       "button-previous": "前へ",
       "button-submitting": "送信中…",
       "error-instance-repository-exists": "インスタンスリポジトリはすでに存在します"
+    },
+    "workflow-options-label": {
+      "push-to-a-new-branch": "",
+      "push-to-existing-branch": ""
     }
   },
   "public-dashboard": {
@@ -12766,6 +12771,7 @@
     "name-fields": "フィールド",
     "name-frozen-columns": "",
     "name-hide-in-table": "テーブルで非表示",
+    "name-max-height": "",
     "name-min-column-width": "最小列幅",
     "name-show-table-footer": "テーブルフッターを表示",
     "name-show-table-header": "テーブルヘッダーを表示",
@@ -12775,6 +12781,7 @@
     "name-wrap-text": "",
     "placeholder-column-width": "自動",
     "placeholder-fields": "すべての数値フィールド",
+    "placeholder-max-height": "",
     "tooltip-placement-options": {
       "label-auto": "",
       "label-bottom": "",
