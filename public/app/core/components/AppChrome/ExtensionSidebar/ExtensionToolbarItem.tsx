@@ -13,9 +13,9 @@ import { ExtensionToolbarItemButton } from './ExtensionToolbarItemButton';
 type ComponentWithPluginId = ExtensionInfo & { pluginId: string };
 
 export function ExtensionToolbarItem() {
-  const { availableComponents, dockedComponentId, setDockedComponentId, isEnabled } = useExtensionSidebarContext();
+  const { availableComponents, dockedComponentId, setDockedComponentId } = useExtensionSidebarContext();
 
-  if (!isEnabled || availableComponents.size === 0) {
+  if (availableComponents.size === 0) {
     return null;
   }
 

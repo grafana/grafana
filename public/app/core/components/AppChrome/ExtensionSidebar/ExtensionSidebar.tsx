@@ -16,12 +16,12 @@ type ExtensionSidebarComponentProps = {
 
 export function ExtensionSidebar() {
   const styles = getStyles(useTheme2());
-  const { dockedComponentId, isEnabled, props = {} } = useExtensionSidebarContext();
+  const { dockedComponentId, props = {} } = useExtensionSidebarContext();
   const { components, isLoading } = usePluginComponents<ExtensionSidebarComponentProps>({
     extensionPointId: PluginExtensionPoints.ExtensionSidebar,
   });
 
-  if (isLoading || !dockedComponentId || !isEnabled) {
+  if (isLoading || !dockedComponentId) {
     return null;
   }
 
