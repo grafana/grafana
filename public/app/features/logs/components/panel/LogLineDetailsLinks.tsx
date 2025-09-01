@@ -116,6 +116,7 @@ const getFieldStyles = (theme: GrafanaTheme2) => ({
   label: css({
     overflowWrap: 'break-word',
     wordBreak: 'break-word',
+    paddingRight: theme.spacing(1),
   }),
   value: css({
     overflowWrap: 'break-word',
