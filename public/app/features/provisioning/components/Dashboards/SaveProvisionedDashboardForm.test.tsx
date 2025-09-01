@@ -296,7 +296,7 @@ describe('SaveProvisionedDashboardForm', () => {
     await user.click(submitButton);
     await waitFor(() => {
       expect(mockAction).toHaveBeenCalledWith({
-        ref: undefined,
+        ref: 'dashboard/2023-01-01-abcde',
         name: 'test-repo',
         path: 'test-dashboard.json',
         message: 'Update dashboard',
