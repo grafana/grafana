@@ -350,7 +350,7 @@ export class DashboardDatasource extends DataSourceApi<DashboardQuery> {
 
     const filters = options?.filters || [];
 
-    return filters.map((filter): FiltersApplicability => {
+    return filters.map((filter): DrilldownsApplicability => {
       // Check operator support
       if (filter.operator !== '=' && filter.operator !== '!=') {
         return {
