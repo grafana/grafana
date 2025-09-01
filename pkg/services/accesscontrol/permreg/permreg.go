@@ -93,7 +93,6 @@ func newPermissionRegistry() *permissionRegistry {
 		"global.users":        "global.users:id:",
 		"roles":               "roles:uid:",
 		"services":            "services:",
-		"resourcepermissions": "resourcepermissions:uid:",
 		"receivers":           "receivers:uid:",
 		"secret.securevalues": "secret.securevalues:uid:",
 		"secret.keepers":      "secret.keepers:uid:",
