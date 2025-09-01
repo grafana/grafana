@@ -684,7 +684,6 @@ export function TableNG(props: TableNGProps) {
       showTypeIcons,
       theme,
       timeRange,
-      userCanExecuteActions,
     ]
   );
 
