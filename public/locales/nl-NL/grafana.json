@@ -4562,6 +4562,12 @@
       "overwrite": "Overschrijven",
       "title-plugin-dashboard": "Plug-indashboard"
     },
+    "controls": {
+      "menu": {
+        "aria-label": "",
+        "title": ""
+      }
+    },
     "dash-nav": {
       "on-open-snapshot-original": {
         "confirmText": {
@@ -5840,11 +5846,6 @@
         "transparent-background": "Transparante achtergrond"
       }
     },
-    "get-workflow-options": {
-      "label": {
-        "push-to-a-new-branch": "Naar een nieuwe branch pushen"
-      }
-    },
     "group-by-variable-form": {
       "alert-not-supported": "Deze gegevensbron ondersteunt geen groeperen op variabelen",
       "description-enables-users-custom-values": "Stelt gebruikers in staat om aangepaste waarden aan de lijst toe te voegen",
@@ -6941,11 +6942,6 @@
       "dragging-a-divider": "Een scheidingslijn slepen",
       "dragging-a-sub-region": "Een subregio slepen",
       "value": "Waarde: {{ dividerPos }}"
-    },
-    "drilldownInfo": {
-      "action": "Naar Grafana Drilldown",
-      "description": "Op zoek naar de Grafana Explore-apps? Ze worden nu de Grafana Drilldown-apps genoemd en zijn te vinden onder <1>Menu> Drilldown</1>",
-      "title": "Explore Metrics, Logs, Traces en Profiles zijn verplaatst!"
     },
     "drop-down-menu": {
       "aria-label-links": "Links",
@@ -11158,11 +11154,16 @@
     "save-or-delete-resource-shared-fields": {
       "comment-placeholder-describe-changes-optional": "Een opmerking toevoegen om je wijzigingen te beschrijven (optioneel)",
       "description-branch-name-in-git-hub": "Filiaalnaam in GitHub",
+      "description-file-path": "",
+      "description-folder-path": "",
       "description-inside-repository": "",
       "label-branch": "Vestiging",
       "label-comment": "Opmerking",
       "label-path": "Path",
-      "label-workflow": "Werkstroom"
+      "label-workflow": "Werkstroom",
+      "placeholder-branch": "",
+      "placeholder-new-branch": "",
+      "suffix-configured-branch": ""
     }
   },
   "provisioned-resource-preview-banner": {
@@ -11696,6 +11697,10 @@
       "button-previous": "Vorige",
       "button-submitting": "Indienen...",
       "error-instance-repository-exists": "Er bestaat al een instantierepository"
+    },
+    "workflow-options-label": {
+      "push-to-a-new-branch": "",
+      "push-to-existing-branch": ""
     }
   },
   "public-dashboard": {
@@ -12807,6 +12812,7 @@
     "name-fields": "Velden",
     "name-frozen-columns": "",
     "name-hide-in-table": "In tabel verbergen",
+    "name-max-height": "",
     "name-min-column-width": "Minimale kolombreedte",
     "name-show-table-footer": "Voettekst tabel tonen",
     "name-show-table-header": "Header tabel tonen",
@@ -12816,6 +12822,7 @@
     "name-wrap-text": "",
     "placeholder-column-width": "automatisch",
     "placeholder-fields": "Alle numerieke velden",
+    "placeholder-max-height": "",
     "tooltip-placement-options": {
       "label-auto": "",
       "label-bottom": "",

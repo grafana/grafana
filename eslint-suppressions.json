@@ -34,6 +34,11 @@
       "count": 1
     }
   },
+  "packages/grafana-alerting/src/grafana/notificationPolicies/utils.ts": {
+    "@typescript-eslint/consistent-type-assertions": {
+      "count": 1
+    }
+  },
   "packages/grafana-data/src/dataframe/ArrayDataFrame.ts": {
     "@typescript-eslint/no-explicit-any": {
       "count": 1
@@ -930,14 +935,6 @@
   "packages/grafana-ui/src/utils/useAsyncDependency.ts": {
     "@typescript-eslint/no-explicit-any": {
       "count": 1
-    }
-  },
-  "public/app/api/clients/folder/v1beta1/hooks.ts": {
-    "@typescript-eslint/consistent-type-assertions": {
-      "count": 1
-    },
-    "react-hooks/rules-of-hooks": {
-      "count": 3
     }
   },
   "public/app/core/TableModel.ts": {
@@ -2407,25 +2404,12 @@
     }
   },
   "public/app/features/dashboard/components/ShareModal/SharePublicDashboard/ConfigPublicDashboard/ConfigPublicDashboard.tsx": {
-    "no-restricted-imports": {
-      "count": 1
-    },
     "no-restricted-syntax": {
       "count": 3
     }
   },
-  "public/app/features/dashboard/components/ShareModal/SharePublicDashboard/ConfigPublicDashboard/Configuration.tsx": {
-    "no-restricted-imports": {
-      "count": 1
-    }
-  },
   "public/app/features/dashboard/components/ShareModal/SharePublicDashboard/ConfigPublicDashboard/EmailSharingConfiguration.tsx": {
     "no-restricted-syntax": {
-      "count": 2
-    }
-  },
-  "public/app/features/dashboard/components/ShareModal/SharePublicDashboard/CreatePublicDashboard/AcknowledgeCheckboxes.tsx": {
-    "no-restricted-imports": {
       "count": 2
     }
   },
@@ -3097,11 +3081,6 @@
       "count": 1
     }
   },
-  "public/app/features/plugins/loader/sharedDependencies.ts": {
-    "no-restricted-imports": {
-      "count": 1
-    }
-  },
   "public/app/features/plugins/sandbox/distortions.ts": {
     "@typescript-eslint/consistent-type-assertions": {
       "count": 1
@@ -3660,11 +3639,6 @@
       "count": 1
     }
   },
-  "public/app/plugins/datasource/azuremonitor/components/QueryEditor/QueryEditor.test.tsx": {
-    "no-restricted-imports": {
-      "count": 1
-    }
-  },
   "public/app/plugins/datasource/azuremonitor/components/QueryEditor/QueryEditor.tsx": {
     "@typescript-eslint/consistent-type-assertions": {
       "count": 1
@@ -3692,11 +3666,6 @@
   },
   "public/app/plugins/datasource/azuremonitor/components/TracesQueryEditor/index.tsx": {
     "no-barrel-files/no-barrel-files": {
-      "count": 1
-    }
-  },
-  "public/app/plugins/datasource/azuremonitor/components/VariableEditor/VariableEditor.test.tsx": {
-    "no-restricted-imports": {
       "count": 1
     }
   },
@@ -3788,11 +3757,6 @@
   },
   "public/app/plugins/datasource/cloudwatch/components/ConfigEditor/XrayLinkConfig.tsx": {
     "no-restricted-syntax": {
-      "count": 1
-    }
-  },
-  "public/app/plugins/datasource/cloudwatch/components/QueryEditor/MetricsQueryEditor/MetricsQueryEditor.test.tsx": {
-    "no-restricted-imports": {
       "count": 1
     }
   },
@@ -4008,7 +3972,7 @@
       "count": 7
     },
     "@typescript-eslint/no-explicit-any": {
-      "count": 2
+      "count": 1
     }
   },
   "public/app/plugins/datasource/graphite/configuration/ConfigEditor.tsx": {
@@ -4489,11 +4453,6 @@
   },
   "public/app/plugins/panel/live/LivePanel.tsx": {
     "@typescript-eslint/consistent-type-assertions": {
-      "count": 1
-    }
-  },
-  "public/app/plugins/panel/logs/LogsPanel.test.tsx": {
-    "no-restricted-imports": {
       "count": 1
     }
   },
