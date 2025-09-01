@@ -1,0 +1,26 @@
+{
+  "panels": [
+    {
+      "id": 1,
+      "title": "Text2 Panel",
+      "type": "text"
+    },
+    {
+      "content": "# Angular Text Panel\n# $constant\n\nFor markdown syntax help: [commonmark.org/help](https://commonmark.org/help/)\n\n## $text\n\n",
+      "id": 2,
+      "mode": "markdown",
+      "title": "Angular Text Panel",
+      "type": "text"
+    },
+    {
+      "id": 3,
+      "options": {
+        "content": "# React Text Panel from Angular Panel\n# $constant\n\nFor markdown syntax help: [commonmark.org/help](https://commonmark.org/help/)\n\n## $text\n\n",
+        "mode": "markdown"
+      },
+      "title": "React Text Panel from Angular Panel",
+      "type": "text"
+    }
+  ],
+  "schemaVersion": 26
+}

@@ -1,0 +1,10 @@
+{
+  "panels": [],
+  "refresh": "",
+  "schemaVersion": 40,
+  "time": {
+    "from": "now-6h",
+    "to": "now"
+  },
+  "title": "Numeric Refresh Test Dashboard"
+}

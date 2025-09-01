@@ -1,0 +1,1120 @@
+{
+  "panels": [
+    {
+      "description": "Tests basic migration with default style pattern (/.*/) containing thresholds and colors. Should convert styles to fieldConfig.defaults with threshold steps.",
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "inspect": false
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 10
+              },
+              {
+                "color": "green",
+                "value": 20
+              },
+              {
+                "color": "red",
+                "value": 30
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "id": 1,
+      "legend": true,
+      "options": {
+        "cellHeight": "sm",
+        "footer": {
+          "countRows": false,
+          "fields": "",
+          "reducer": [
+            "sum"
+          ],
+          "show": false
+        },
+        "showHeader": true
+      },
+      "pluginVersion": "1.0.0",
+      "targets": [
+        {
+          "refId": "A"
+        },
+        {}
+      ],
+      "title": "Basic Angular Table with Defaults",
+      "transformations": [],
+      "type": "table"
+    },
+    {
+      "description": "Tests comprehensive migration including: default style with thresholds/colors/unit/decimals/align/colorMode, column overrides with exact name and regex patterns, date formatting, hidden columns, and links with tooltips.",
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "center",
+            "cellOptions": {
+              "type": "color-background"
+            },
+            "inspect": false
+          },
+          "decimals": 2,
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 100
+              },
+              {
+                "color": "red",
+                "value": 500
+              }
+            ]
+          },
+          "unit": "bytes"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Status"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Current Status"
+              },
+              {
+                "id": "unit",
+                "value": "short"
+              },
+              {
+                "id": "decimals",
+                "value": 0
+              },
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-text"
+                }
+              },
+              {
+                "id": "custom.align",
+                "value": "left"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": "/Error.*/"
+            },
+            "properties": [
+              {
+                "id": "links",
+                "value": [
+                  {
+                    "targetBlank": true,
+                    "title": "View error details",
+                    "url": "http://example.com/errors"
+                  }
+                ]
+              },
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-background"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Time"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Timestamp"
+              },
+              {
+                "id": "unit",
+                "value": "time: YYYY-MM-DD HH:mm:ss"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Hidden"
+            },
+            "properties": [
+              {
+                "id": "custom.hideFrom.viz",
+                "value": true
+              }
+            ]
+          }
+        ]
+      },
+      "id": 2,
+      "options": {
+        "cellHeight": "sm",
+        "footer": {
+          "countRows": false,
+          "fields": "",
+          "reducer": [
+            "sum"
+          ],
+          "show": false
+        },
+        "showHeader": true
+      },
+      "pluginVersion": "1.0.0",
+      "targets": [
+        {
+          "refId": "A"
+        }
+      ],
+      "title": "Complex Table with All Style Features",
+      "transformations": [],
+      "type": "table"
+    },
+    {
+      "description": "Tests migration of timeseries_aggregations transform to reduce transformation with column mappings (avg-\u003emean, max-\u003emax, min-\u003emin, total-\u003esum, current-\u003elastNotNull, count-\u003ecount).",
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "inspect": false
+          },
+          "decimals": 1,
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "percent"
+        },
+        "overrides": []
+      },
+      "id": 3,
+      "options": {
+        "cellHeight": "sm",
+        "footer": {
+          "countRows": false,
+          "fields": "",
+          "reducer": [
+            "sum"
+          ],
+          "show": false
+        },
+        "showHeader": true
+      },
+      "pluginVersion": "1.0.0",
+      "targets": [
+        {
+          "refId": "A"
+        }
+      ],
+      "title": "Table with Timeseries Aggregations Transform",
+      "transformations": [
+        {
+          "id": "reduce",
+          "options": {
+            "includeTimeField": false,
+            "reducers": [
+              "mean",
+              "max",
+              "min",
+              "sum",
+              "lastNotNull",
+              "count"
+            ]
+          }
+        }
+      ],
+      "type": "table"
+    },
+    {
+      "description": "Tests migration of timeseries_to_rows transform to seriesToRows transformation.",
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "inspect": false
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "id": 4,
+      "options": {
+        "cellHeight": "sm",
+        "footer": {
+          "countRows": false,
+          "fields": "",
+          "reducer": [
+            "sum"
+          ],
+          "show": false
+        },
+        "showHeader": true
+      },
+      "pluginVersion": "1.0.0",
+      "targets": [
+        {
+          "refId": "A"
+        }
+      ],
+      "title": "Table with Timeseries to Rows Transform",
+      "transformations": [
+        {
+          "id": "seriesToRows",
+          "options": {
+            "reducers": []
+          }
+        }
+      ],
+      "type": "table"
+    },
+    {
+      "description": "Tests migration of timeseries_to_columns transform to seriesToColumns transformation.",
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "inspect": false
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "bytes"
+        },
+        "overrides": []
+      },
+      "id": 5,
+      "options": {
+        "cellHeight": "sm",
+        "footer": {
+          "countRows": false,
+          "fields": "",
+          "reducer": [
+            "sum"
+          ],
+          "show": false
+        },
+        "showHeader": true
+      },
+      "pluginVersion": "1.0.0",
+      "targets": [
+        {
+          "refId": "A"
+        }
+      ],
+      "title": "Table with Timeseries to Columns Transform",
+      "transformations": [
+        {
+          "id": "seriesToColumns",
+          "options": {
+            "reducers": []
+          }
+        }
+      ],
+      "type": "table"
+    },
+    {
+      "description": "Tests migration of table transform to merge transformation. Also tests auto alignment conversion to empty string.",
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "inspect": false
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "id": 6,
+      "options": {
+        "cellHeight": "sm",
+        "footer": {
+          "countRows": false,
+          "fields": "",
+          "reducer": [
+            "sum"
+          ],
+          "show": false
+        },
+        "showHeader": true
+      },
+      "pluginVersion": "1.0.0",
+      "targets": [
+        {
+          "refId": "A"
+        }
+      ],
+      "title": "Table with Merge Transform",
+      "transformations": [
+        {
+          "id": "merge",
+          "options": {
+            "reducers": []
+          }
+        }
+      ],
+      "type": "table"
+    },
+    {
+      "description": "Tests that existing transformations are preserved and new transformation from old format is appended to the list.",
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "inspect": false
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "id": 7,
+      "options": {
+        "cellHeight": "sm",
+        "footer": {
+          "countRows": false,
+          "fields": "",
+          "reducer": [
+            "sum"
+          ],
+          "show": false
+        },
+        "showHeader": true
+      },
+      "pluginVersion": "1.0.0",
+      "targets": [
+        {
+          "refId": "A"
+        }
+      ],
+      "title": "Table with Existing Transformations",
+      "transformations": [
+        {
+          "id": "filterFieldsByName",
+          "options": {
+            "include": {
+              "names": [
+                "field1",
+                "field2"
+              ]
+            }
+          }
+        },
+        {
+          "id": "seriesToRows",
+          "options": {
+            "reducers": []
+          }
+        }
+      ],
+      "type": "table"
+    },
+    {
+      "description": "Tests handling of mixed numeric and string threshold values (int, string, float) with proper type conversion.",
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "inspect": false
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 10
+              },
+              {
+                "color": "orange",
+                "value": 20
+              },
+              {
+                "color": "red",
+                "value": 30.5
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "id": 8,
+      "options": {
+        "cellHeight": "sm",
+        "footer": {
+          "countRows": false,
+          "fields": "",
+          "reducer": [
+            "sum"
+          ],
+          "show": false
+        },
+        "showHeader": true
+      },
+      "pluginVersion": "1.0.0",
+      "targets": [
+        {
+          "refId": "A"
+        }
+      ],
+      "title": "Mixed Threshold Types",
+      "transformations": [],
+      "type": "table"
+    },
+    {
+      "description": "Tests all color mode mappings: cell-\u003ecolor-background, row-\u003ecolor-background, value-\u003ecolor-text.",
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "color-background"
+            },
+            "inspect": false
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "CellColumn"
+            },
+            "properties": [
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-background"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "RowColumn"
+            },
+            "properties": [
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-background"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "ValueColumn"
+            },
+            "properties": [
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-text"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "id": 9,
+      "options": {
+        "cellHeight": "sm",
+        "footer": {
+          "countRows": false,
+          "fields": "",
+          "reducer": [
+            "sum"
+          ],
+          "show": false
+        },
+        "showHeader": true
+      },
+      "pluginVersion": "1.0.0",
+      "targets": [
+        {
+          "refId": "A"
+        }
+      ],
+      "title": "All Color Modes Test",
+      "transformations": [],
+      "type": "table"
+    },
+    {
+      "description": "Tests all alignment options: left, center, right, and auto (should convert to empty string).",
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "center",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "inspect": false
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "LeftColumn"
+            },
+            "properties": [
+              {
+                "id": "custom.align",
+                "value": "left"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "RightColumn"
+            },
+            "properties": [
+              {
+                "id": "custom.align",
+                "value": "right"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "AutoColumn"
+            },
+            "properties": [
+              {
+                "id": "custom.align",
+                "value": ""
+              }
+            ]
+          }
+        ]
+      },
+      "id": 10,
+      "options": {
+        "cellHeight": "sm",
+        "footer": {
+          "countRows": false,
+          "fields": "",
+          "reducer": [
+            "sum"
+          ],
+          "show": false
+        },
+        "showHeader": true
+      },
+      "pluginVersion": "1.0.0",
+      "targets": [
+        {
+          "refId": "A"
+        }
+      ],
+      "title": "All Alignment Options",
+      "transformations": [],
+      "type": "table"
+    },
+    {
+      "description": "Tests both field matcher types: byName for exact matches and byRegexp for regex patterns.",
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "inspect": false
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "ExactColumnName"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Exact Match"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": "/Regex.*Pattern/"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Regex Match"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": "/^Start/"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Start Pattern"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": "/End$/"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "End Pattern"
+              }
+            ]
+          }
+        ]
+      },
+      "id": 11,
+      "options": {
+        "cellHeight": "sm",
+        "footer": {
+          "countRows": false,
+          "fields": "",
+          "reducer": [
+            "sum"
+          ],
+          "show": false
+        },
+        "showHeader": true
+      },
+      "pluginVersion": "1.0.0",
+      "targets": [
+        {
+          "refId": "A"
+        }
+      ],
+      "title": "Field Matcher Types Test",
+      "transformations": [],
+      "type": "table"
+    },
+    {
+      "description": "Tests various link configurations: with and without tooltip, with and without target blank.",
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "inspect": false
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "LinkWithTooltip"
+            },
+            "properties": [
+              {
+                "id": "links",
+                "value": [
+                  {
+                    "targetBlank": true,
+                    "title": "Click to view details",
+                    "url": "http://example.com/with-tooltip"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "LinkWithoutTooltip"
+            },
+            "properties": [
+              {
+                "id": "links",
+                "value": [
+                  {
+                    "targetBlank": false,
+                    "title": "",
+                    "url": "http://example.com/no-tooltip"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "LinkMinimal"
+            },
+            "properties": [
+              {
+                "id": "links",
+                "value": [
+                  {
+                    "targetBlank": false,
+                    "title": "",
+                    "url": "http://example.com/minimal"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "id": 12,
+      "options": {
+        "cellHeight": "sm",
+        "footer": {
+          "countRows": false,
+          "fields": "",
+          "reducer": [
+            "sum"
+          ],
+          "show": false
+        },
+        "showHeader": true
+      },
+      "pluginVersion": "1.0.0",
+      "targets": [
+        {
+          "refId": "A"
+        }
+      ],
+      "title": "Link Configuration Test",
+      "transformations": [],
+      "type": "table"
+    },
+    {
+      "description": "Tests various date format patterns and aliases.",
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "inspect": false
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "DateISO"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "ISO Date"
+              },
+              {
+                "id": "unit",
+                "value": "time: YYYY-MM-DD"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "DateTime"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Full DateTime"
+              },
+              {
+                "id": "unit",
+                "value": "time: YYYY-MM-DD HH:mm:ss"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "TimeOnly"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Time Only"
+              },
+              {
+                "id": "unit",
+                "value": "time: HH:mm:ss"
+              }
+            ]
+          }
+        ]
+      },
+      "id": 13,
+      "options": {
+        "cellHeight": "sm",
+        "footer": {
+          "countRows": false,
+          "fields": "",
+          "reducer": [
+            "sum"
+          ],
+          "show": false
+        },
+        "showHeader": true
+      },
+      "pluginVersion": "1.0.0",
+      "targets": [
+        {
+          "refId": "A"
+        }
+      ],
+      "title": "Date Format Variations",
+      "transformations": [],
+      "type": "table"
+    },
+    {
+      "description": "React table (table2) should not be migrated. Properties should remain unchanged.",
+      "id": 14,
+      "styles": [
+        {
+          "colors": [
+            "red",
+            "yellow",
+            "green"
+          ],
+          "pattern": "/.*/",
+          "thresholds": [
+            "10",
+            "20"
+          ],
+          "unit": "short"
+        }
+      ],
+      "table": "table2",
+      "targets": [
+        {
+          "refId": "A"
+        }
+      ],
+      "title": "React Table - Should NOT Migrate",
+      "type": "table"
+    },
+    {
+      "description": "Angular table without styles property should not be migrated.",
+      "id": 15,
+      "targets": [
+        {
+          "refId": "A"
+        }
+      ],
+      "title": "Angular Table without Styles - Should NOT Migrate",
+      "type": "table"
+    },
+    {
+      "description": "Non-table panels should remain completely unchanged.",
+      "id": 16,
+      "targets": [
+        {
+          "refId": "A"
+        }
+      ],
+      "title": "Non-Table Panel - Should NOT Migrate",
+      "type": "graph"
+    },
+    {
+      "description": "Other panel types should not be affected by table migration.",
+      "id": 17,
+      "targets": [
+        {
+          "refId": "A"
+        }
+      ],
+      "title": "Singlestat Panel - Should NOT Migrate",
+      "type": "singlestat"
+    }
+  ],
+  "schemaVersion": 24
+}

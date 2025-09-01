@@ -1,0 +1,139 @@
+{
+  "panels": [
+    {
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "axisPlacement": "hidden"
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byType",
+              "options": "time"
+            },
+            "properties": [
+              {
+                "id": "custom.axisPlacement",
+                "value": "auto"
+              }
+            ]
+          }
+        ]
+      },
+      "title": "Timeseries with Hidden Axis",
+      "type": "timeseries"
+    },
+    {
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "axisPlacement": "hidden"
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Series A"
+            },
+            "properties": [
+              {
+                "id": "color.mode",
+                "value": "palette-classic"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byType",
+              "options": "time"
+            },
+            "properties": [
+              {
+                "id": "custom.axisPlacement",
+                "value": "auto"
+              }
+            ]
+          }
+        ]
+      },
+      "title": "Timeseries with Hidden Axis and Existing Overrides",
+      "type": "timeseries"
+    },
+    {
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "axisPlacement": "auto"
+          }
+        },
+        "overrides": []
+      },
+      "title": "Timeseries with Auto Axis (No Change Expected)",
+      "type": "timeseries"
+    },
+    {
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "axisPlacement": "hidden"
+          }
+        },
+        "overrides": []
+      },
+      "title": "Stat Panel with Hidden Axis (No Change Expected)",
+      "type": "stat"
+    },
+    {
+      "id": 5,
+      "title": "Timeseries with Missing FieldConfig",
+      "type": "timeseries"
+    },
+    {
+      "fieldConfig": {
+        "overrides": []
+      },
+      "title": "Timeseries with Missing Defaults",
+      "type": "timeseries"
+    },
+    {
+      "fieldConfig": {
+        "defaults": {
+          "unit": "bytes"
+        },
+        "overrides": []
+      },
+      "title": "Timeseries with Missing Custom Config",
+      "type": "timeseries"
+    },
+    {
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "axisPlacement": "hidden"
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byType",
+              "options": "time"
+            },
+            "properties": [
+              {
+                "id": "custom.axisPlacement",
+                "value": "auto"
+              }
+            ]
+          }
+        ]
+      },
+      "title": "Timeseries with Missing Overrides Array",
+      "type": "timeseries"
+    }
+  ],
+  "schemaVersion": 35,
+  "title": "X-Axis Visibility Test Dashboard"
+}
