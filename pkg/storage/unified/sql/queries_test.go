@@ -129,6 +129,7 @@ func TestUnifiedStorageQueries(t *testing.T) {
 						Group:       "group",
 						Resource:    "res",
 						SinceRv:     10000,
+						LatestRv:    20000,
 					},
 				},
 			},
