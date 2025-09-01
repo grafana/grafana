@@ -216,7 +216,7 @@ func TestV24(t *testing.T) {
 										"options": "Hidden",
 									},
 									"properties": []interface{}{
-										map[string]interface{}{"id": "custom.hidden", "value": true},
+										map[string]interface{}{"id": "custom.hideFrom.viz", "value": true},
 									},
 								},
 							},

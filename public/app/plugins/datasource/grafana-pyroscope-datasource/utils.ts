@@ -1,7 +1,7 @@
 import { invert } from 'lodash';
 import Prism, { Grammar, Token } from 'prismjs';
 
-import { createContext, ItemDataType } from '@grafana/assistant';
+import { createAssistantContextItem } from '@grafana/assistant';
 import {
   AbstractLabelMatcher,
   AbstractLabelOperator,
@@ -158,12 +158,10 @@ export function enrichDataFrameWithAssistantContentMapper(
       }
 
       const context = [
-        createContext(ItemDataType.Datasource, {
-          datasourceName: datasourceName,
+        createAssistantContextItem('datasource', {
           datasourceUid: query.datasource.uid,
-          datasourceType: query.datasource.type,
         }),
-        createContext(ItemDataType.Structured, {
+        createAssistantContextItem('structured', {
           title: 'Analyze Flame Graph',
           data: {
             start: request.range.from.valueOf(),

@@ -1,4 +1,5 @@
 import { QueryStatus, skipToken } from '@reduxjs/toolkit/query';
+import { useEffect, useMemo } from 'react';
 
 import { AppEvents } from '@grafana/data';
 import { t } from '@grafana/i18n';
@@ -6,6 +7,7 @@ import { config, getAppEvents } from '@grafana/runtime';
 import {
   useDeleteFolderMutation as useDeleteFolderMutationLegacy,
   useGetFolderQuery as useGetFolderQueryLegacy,
+  useDeleteFoldersMutation as useDeleteFoldersMutationLegacy,
 } from 'app/features/browse-dashboards/api/browseDashboardsAPI';
 import { FolderDTO } from 'app/types/folders';
 
@@ -20,11 +22,12 @@ import {
   ManagerKind,
 } from '../../../../features/apiserver/types';
 import { PAGE_SIZE } from '../../../../features/browse-dashboards/api/services';
-import { refetchChildren } from '../../../../features/browse-dashboards/state/actions';
+import { refetchChildren, refreshParents } from '../../../../features/browse-dashboards/state/actions';
 import { GENERAL_FOLDER_UID } from '../../../../features/search/constants';
 import { useDispatch } from '../../../../types/store';
-import { useGetDisplayMappingQuery } from '../../iam/v0alpha1';
+import { useLazyGetDisplayMappingQuery } from '../../iam/v0alpha1';
 
+import { isProvisionedFolderCheck } from './utils';
 import { rootFolder, sharedWithMeFolder } from './virtualFolders';
 
 import { useGetFolderQuery, useGetFolderParentsQuery, useDeleteFolderMutation } from './index';
@@ -44,19 +47,35 @@ function getFolderUrl(uid: string, title: string): string {
  * @param uid
  */
 export function useGetFolderQueryFacade(uid?: string) {
+  const shouldUseAppPlatformAPI = Boolean(config.featureToggles.foldersAppPlatformAPI);
+  const isVirtualFolder = uid && [GENERAL_FOLDER_UID, config.sharedWithMeFolderUID].includes(uid);
+  const params = !uid ? skipToken : { name: uid };
+
   // This may look weird that we call the legacy folder anyway all the time, but the issue is we don't have good API
   // for the access control metadata yet, and so we still take it from the old api.
   // see https://github.com/grafana/identity-access-team/issues/1103
   const legacyFolderResult = useGetFolderQueryLegacy(uid || skipToken);
+  let resultFolder = useGetFolderQuery(shouldUseAppPlatformAPI && !isVirtualFolder ? params : skipToken);
+  // We get parents and folders for virtual folders too. Parents should just return empty array but it's easier to
+  // stitch the responses this way and access can actually return different response based on the grafana setup.
+  const resultParents = useGetFolderParentsQuery(shouldUseAppPlatformAPI ? params : skipToken);
+  const [triggerGetUserDisplayMapping, resultUserDisplay] = useLazyGetDisplayMappingQuery();
 
-  if (!config.featureToggles.foldersAppPlatformAPI) {
+  const needsUserData = useMemo(() => {
+    const userKeys = getUserKeys(resultFolder);
+    return !isVirtualFolder && Boolean(userKeys.length);
+  }, [isVirtualFolder, resultFolder]);
+
+  useEffect(() => {
+    const userKeys = getUserKeys(resultFolder);
+    if (needsUserData && userKeys.length) {
+      triggerGetUserDisplayMapping({ key: userKeys }, true);
+    }
+  }, [needsUserData, resultFolder, triggerGetUserDisplayMapping]);
+
+  if (!shouldUseAppPlatformAPI) {
     return legacyFolderResult;
   }
-
-  const isVirtualFolder = uid && [GENERAL_FOLDER_UID, config.sharedWithMeFolderUID].includes(uid);
-  const params = !uid ? skipToken : { name: uid };
-
-  let resultFolder = useGetFolderQuery(isVirtualFolder ? skipToken : params);
 
   // For virtual folders we simulate the response with hardcoded data.
   if (isVirtualFolder) {
@@ -74,15 +93,6 @@ export function useGetFolderQueryFacade(uid?: string) {
       currentData: GENERAL_FOLDER_UID === uid ? rootFolder : sharedWithMeFolder,
     };
   }
-
-  // We get parents and folders for virtual folders too. Parents should just return empty array but it's easier to
-  // stitch the responses this way and access can actually return different response based on the grafana setup.
-  const resultParents = useGetFolderParentsQuery(params);
-
-  // Load users info if needed.
-  const userKeys = getUserKeys(resultFolder);
-  const needsUserData = !isVirtualFolder && Boolean(userKeys.length);
-  const resultUserDisplay = useGetDisplayMappingQuery(needsUserData ? { key: userKeys } : skipToken);
 
   // Stitch together the responses to create a single FolderDTO object so on the outside this behaves as the legacy
   // api client.
@@ -110,6 +120,7 @@ export function useGetFolderQueryFacade(uid?: string) {
       hasAcl: false,
       id: parseInt(resultFolder.data.metadata.labels?.[DeprecatedInternalId] || '0', 10) || 0,
       parentUid: resultFolder.data.metadata.annotations?.[AnnoKeyFolder],
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
       managedBy: resultFolder.data.metadata.annotations?.[AnnoKeyManagerKind] as ManagerKind,
 
       title: resultFolder.data.spec.title,
@@ -145,14 +156,7 @@ export function useGetFolderQueryFacade(uid?: string) {
     ...resultFolder,
     ...combinedState(resultFolder, resultParents, legacyFolderResult, resultUserDisplay, needsUserData),
     refetch: async () => {
-      return Promise.all([
-        resultFolder.refetch(),
-        resultParents.refetch(),
-        legacyFolderResult.refetch(),
-        // TODO: Not sure about this, if we refetch this but the response from result change and this is dependant on
-        //  that result what are we refetching here? Maybe this is redundant.
-        resultUserDisplay.refetch(),
-      ]);
+      return Promise.all([resultFolder.refetch(), resultParents.refetch(), legacyFolderResult.refetch()]);
     },
     data: newData,
   };
@@ -190,11 +194,43 @@ export function useDeleteFolderMutationFacade() {
   };
 }
 
+export function useDeleteMultipleFoldersMutationFacade() {
+  const [deleteFolders] = useDeleteFoldersMutationLegacy();
+  const [deleteFolder] = useDeleteFolderMutation();
+  const dispatch = useDispatch();
+
+  if (!config.featureToggles.foldersAppPlatformAPI) {
+    return deleteFolders;
+  }
+
+  return async function deleteFolders({ folderUIDs }: { folderUIDs: string[] }) {
+    // Delete all the folders sequentially
+    // TODO error handling here
+    for (const folderUID of folderUIDs) {
+      // This also shows warning alert
+      if (await isProvisionedFolderCheck(dispatch, folderUID)) {
+        continue;
+      }
+      const result = await deleteFolder({ name: folderUID });
+      if (!result.error) {
+        // Before this was done in backend srv automatically because the old API sent a message wiht 200 request. see
+        // public/app/core/services/backend_srv.ts#L341-L361. New API does not do that so we do it here.
+        getAppEvents().publish({
+          type: AppEvents.alertSuccess.name,
+          payload: [t('folders.api.folder-deleted-success', 'Folder deleted')],
+        });
+        dispatch(refreshParents(folderUIDs));
+      }
+    }
+    return { data: undefined };
+  };
+}
+
 function combinedState(
   result: ReturnType<typeof useGetFolderQuery>,
   resultParents: ReturnType<typeof useGetFolderParentsQuery>,
   resultLegacyFolder: ReturnType<typeof useGetFolderQueryLegacy>,
-  resultUserDisplay: ReturnType<typeof useGetDisplayMappingQuery>,
+  resultUserDisplay: ReturnType<typeof useLazyGetDisplayMappingQuery>[1],
   needsUserData: boolean
 ) {
   const results = needsUserData

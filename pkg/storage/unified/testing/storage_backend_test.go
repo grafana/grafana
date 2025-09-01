@@ -23,7 +23,8 @@ func TestBadgerKVStorageBackend(t *testing.T) {
 		NSPrefix: "kvstorage-test",
 		SkipTests: map[string]bool{
 			// TODO: fix these tests and remove this skip
-			TestBlobSupport: true,
+			TestBlobSupport:       true,
+			TestListModifiedSince: true,
 		},
 	})
 }

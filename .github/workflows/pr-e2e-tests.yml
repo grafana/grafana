@@ -20,6 +20,8 @@ env:
 
 jobs:
   detect-changes:
+    # Run on `grafana/grafana` main branch, or on pull requests to prevent double-running on mirrors
+    if: (github.event_name == 'pull_request' || (github.event_name == 'push' && github.repository == 'grafana/grafana'))
     name: Detect whether code changed
     runs-on: ubuntu-latest
     permissions:
@@ -497,7 +499,49 @@ jobs:
         uses: dagger/dagger-for-github@e47aba410ef9bb9ed81a4d2a97df31061e5e842e
         with:
           verb: run
-          args: go run ./pkg/build/a11y --package=grafana.tar.gz --no-threshold-fail
+          args: go run ./pkg/build/a11y --package=grafana.tar.gz --no-threshold-fail --results=./pa11y-ci-results.json
+      - name: Upload pa11y results
+        if: github.event_name != 'pull_request'
+        uses: actions/upload-artifact@v4
+        with:
+          retention-days: 1
+          name: pa11y-ci-results
+          path: pa11y-ci-results.json
+
+  publish-metrics:
+    needs:
+      - run-a11y-test
+    name: Publish metrics
+    # Run on `grafana/grafana` main branch only
+    if: github.event_name == 'push' && github.repository == 'grafana/grafana' && github.ref_name == 'main'
+    permissions:
+      contents: read
+      id-token: write
+    runs-on: ubuntu-latest
+    steps:
+      - id: vault-secrets
+        uses: grafana/shared-workflows/actions/get-vault-secrets@main
+        with:
+          repo_secrets: |
+            GRAFANA_MISC_STATS_API_KEY=grafana-misc-stats:api_key
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: '.nvmrc'
+      - name: Install dependencies
+        run: yarn install --immutable
+      - name: Get pa11y results
+        uses: actions/download-artifact@v4
+        with:
+          name: pa11y-ci-results
+      - name: Extract and publish metrics
+        run: ./scripts/ci-frontend-metrics.sh | node --experimental-strip-types .github/workflows/scripts/publish-frontend-metrics.mts
+        env:
+          GRAFANA_MISC_STATS_API_KEY: ${{ env.GRAFANA_MISC_STATS_API_KEY}}
 
   # This is the job that is actually required by rulesets.
   # We want to only require one job instead of all the individual tests.

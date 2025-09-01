@@ -80,6 +80,7 @@ export enum ConnectionPath {
 
 export interface CanvasConnection {
   color?: ui.ColorDimensionConfig;
+  direction?: ui.DirectionDimensionConfig;
   path: ConnectionPath;
   size?: ui.ScaleDimensionConfig;
   source: ConnectionCoordinates;
@@ -113,6 +114,7 @@ export const defaultCanvasElementOptions: Partial<CanvasElementOptions> = {
 };
 
 export interface CanvasTooltip {
+  disableForOneClick?: boolean;
   mode: ui.TooltipDisplayMode;
 }
 

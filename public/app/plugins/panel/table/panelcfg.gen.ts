@@ -24,6 +24,16 @@ export interface Options {
    */
   frameIndex: number;
   /**
+   * Defines the number of columns to freeze on the left side of the table
+   */
+  frozenColumns?: {
+    left?: number;
+  };
+  /**
+   * limits the maximum height of a row, if text wrapping or dynamic height is enabled
+   */
+  maxRowHeight?: number;
+  /**
    * Controls whether the panel should show the header
    */
   showHeader: boolean;

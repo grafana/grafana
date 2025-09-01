@@ -2,7 +2,6 @@ package controller
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"time"
@@ -28,17 +27,6 @@ import (
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 )
 
-type RepoGetter interface {
-	// Given a repository configuration, return it as a repository instance
-	// This will only error for un-recoverable system errors
-	// the repository instance may or may not be valid/healthy
-	AsRepository(ctx context.Context, cfg *provisioning.Repository) (repository.Repository, error)
-}
-
-type RepositoryTester interface {
-	TestRepository(ctx context.Context, repo repository.Repository) (*provisioning.TestResults, error)
-}
-
 const loggerName = "provisioning-repository-controller"
 
 const (
@@ -61,12 +49,12 @@ type RepositoryController struct {
 	logger         logging.Logger
 	dualwrite      dualwrite.Service
 
-	jobs      jobs.Queue
-	finalizer *finalizer
+	jobs          jobs.Queue
+	finalizer     *finalizer
+	statusPatcher StatusPatcher
 
-	// Converts config to instance
-	repoGetter RepoGetter
-	tester     RepositoryTester
+	repoFactory   repository.Factory
+	healthChecker *HealthChecker
 	// To allow injection for testing.
 	processFn         func(item *queueItem) error
 	enqueueRepository func(obj any)
@@ -79,13 +67,15 @@ type RepositoryController struct {
 func NewRepositoryController(
 	provisioningClient client.ProvisioningV0alpha1Interface,
 	repoInformer informer.RepositoryInformer,
-	repoGetter RepoGetter,
+	repoFactory repository.Factory,
 	resourceLister resources.ResourceLister,
 	parsers resources.ParserFactory,
 	clients resources.ClientFactory,
 	tester RepositoryTester,
 	jobs jobs.Queue,
 	dualwrite dualwrite.Service,
+	healthChecker *HealthChecker,
+	statusPatcher StatusPatcher,
 ) (*RepositoryController, error) {
 	rc := &RepositoryController{
 		client:         provisioningClient,
@@ -98,13 +88,14 @@ func NewRepositoryController(
 				Name: "provisioningRepositoryController",
 			},
 		),
-		repoGetter: repoGetter,
-		parsers:    parsers,
+		repoFactory:   repoFactory,
+		healthChecker: healthChecker,
+		statusPatcher: statusPatcher,
+		parsers:       parsers,
 		finalizer: &finalizer{
 			lister:        resourceLister,
 			clientFactory: clients,
 		},
-		tester:    tester,
 		jobs:      jobs,
 		logger:    logging.DefaultLogger.With("logger", loggerName),
 		dualwrite: dualwrite,
@@ -224,7 +215,7 @@ func (rc *RepositoryController) handleDelete(ctx context.Context, obj *provision
 
 	// Process any finalizers
 	if len(obj.Finalizers) > 0 {
-		repo, err := rc.repoGetter.AsRepository(ctx, obj)
+		repo, err := rc.repoFactory.Build(ctx, obj)
 		if err != nil {
 			logger.Warn("unable to get repository for cleanup")
 		} else {
@@ -245,47 +236,6 @@ func (rc *RepositoryController) handleDelete(ctx context.Context, obj *provision
 	}
 
 	return nil
-}
-
-func (rc *RepositoryController) shouldCheckHealth(obj *provisioning.Repository) bool {
-	if obj.Status.Health.Checked == 0 || obj.Generation != obj.Status.ObservedGeneration {
-		return true
-	}
-
-	healthAge := time.Since(time.UnixMilli(obj.Status.Health.Checked))
-	if obj.Status.Health.Healthy {
-		return healthAge > time.Minute*5 // when healthy, check every 5 mins
-	}
-
-	return healthAge > time.Minute // otherwise within a minute
-}
-
-func (rc *RepositoryController) runHealthCheck(ctx context.Context, repo repository.Repository) provisioning.HealthStatus {
-	logger := logging.FromContext(ctx)
-	logger.Info("running health check")
-	res, err := rc.tester.TestRepository(ctx, repo)
-	if err != nil {
-		res = &provisioning.TestResults{
-			Success: false,
-			Errors: []provisioning.ErrorDetails{{
-				Detail: fmt.Sprintf("error running test repository: %s", err.Error()),
-			}},
-		}
-	}
-
-	healthStatus := provisioning.HealthStatus{
-		Healthy: res.Success,
-		Checked: time.Now().UnixMilli(),
-	}
-	for _, err := range res.Errors {
-		if err.Detail != "" {
-			healthStatus.Message = append(healthStatus.Message, err.Detail)
-		}
-	}
-
-	logger.Info("health check completed", "status", healthStatus)
-
-	return healthStatus
 }
 
 func (rc *RepositoryController) shouldResync(obj *provisioning.Repository) bool {
@@ -309,7 +259,7 @@ func (rc *RepositoryController) shouldResync(obj *provisioning.Repository) bool 
 func (rc *RepositoryController) runHooks(ctx context.Context, repo repository.Repository, obj *provisioning.Repository) ([]map[string]interface{}, error) {
 	logger := logging.FromContext(ctx)
 	hooks, _ := repo.(repository.Hooks)
-	if hooks == nil || obj.Generation == obj.Status.ObservedGeneration {
+	if hooks == nil {
 		return nil, nil
 	}
 
@@ -400,26 +350,7 @@ func (rc *RepositoryController) addSyncJob(ctx context.Context, obj *provisionin
 	return nil
 }
 
-func (rc *RepositoryController) patchStatus(ctx context.Context, obj *provisioning.Repository, patchOperations []map[string]interface{}) error {
-	if len(patchOperations) == 0 {
-		return nil
-	}
-
-	patch, err := json.Marshal(patchOperations)
-	if err != nil {
-		return fmt.Errorf("error encoding status patch: %w", err)
-	}
-
-	_, err = rc.client.Repositories(obj.GetNamespace()).
-		Patch(ctx, obj.Name, types.JSONPatchType, patch, v1.PatchOptions{}, "status")
-	if err != nil {
-		return fmt.Errorf("error applying status patch: %w", err)
-	}
-
-	return nil
-}
-
-func (rc *RepositoryController) determineSyncStatus(obj *provisioning.Repository, syncOptions *provisioning.SyncJobOptions) *provisioning.SyncStatus {
+func (rc *RepositoryController) determineSyncStatus(obj *provisioning.Repository, syncOptions *provisioning.SyncJobOptions, healthStatus provisioning.HealthStatus) *provisioning.SyncStatus {
 	const unhealthyMessage = "Repository is unhealthy"
 
 	hasUnhealthyMessage := len(obj.Status.Sync.Message) > 0 && obj.Status.Sync.Message[0] == unhealthyMessage
@@ -430,13 +361,13 @@ func (rc *RepositoryController) determineSyncStatus(obj *provisioning.Repository
 			LastRef: obj.Status.Sync.LastRef,
 			Started: time.Now().UnixMilli(),
 		}
-	case obj.Status.Health.Healthy && hasUnhealthyMessage: // if the repository is healthy and the message is set, clear it
+	case healthStatus.Healthy && hasUnhealthyMessage: // if the repository is healthy and the message is set, clear it
 		// FIXME: is this the clearest way to do this? Should we introduce another status or way of way of handling more
 		// specific errors?
 		return &provisioning.SyncStatus{
 			LastRef: obj.Status.Sync.LastRef,
 		}
-	case !obj.Status.Health.Healthy && !hasUnhealthyMessage: // if the repository is unhealthy and the message is not already set, set it
+	case !healthStatus.Healthy && !hasUnhealthyMessage: // if the repository is unhealthy and the message is not already set, set it
 		return &provisioning.SyncStatus{
 			State:   provisioning.JobStateError,
 			Message: []string{unhealthyMessage},
@@ -450,6 +381,7 @@ func (rc *RepositoryController) determineSyncStatus(obj *provisioning.Repository
 //nolint:gocyclo
 func (rc *RepositoryController) process(item *queueItem) error {
 	logger := rc.logger.With("key", item.key)
+	ctx := logging.Context(context.Background(), logger)
 
 	namespace, name, err := cache.SplitMetaNamespaceKey(item.key)
 	if err != nil {
@@ -464,7 +396,7 @@ func (rc *RepositoryController) process(item *queueItem) error {
 		return err
 	}
 
-	ctx, _, err := identity.WithProvisioningIdentity(context.Background(), namespace)
+	ctx, _, err = identity.WithProvisioningIdentity(ctx, namespace)
 	if err != nil {
 		return err
 	}
@@ -476,7 +408,7 @@ func (rc *RepositoryController) process(item *queueItem) error {
 	}
 
 	shouldResync := rc.shouldResync(obj)
-	shouldCheckHealth := rc.shouldCheckHealth(obj)
+	shouldCheckHealth := rc.healthChecker.ShouldCheckHealth(obj)
 	hasSpecChanged := obj.Generation != obj.Status.ObservedGeneration
 	patchOperations := []map[string]interface{}{}
 
@@ -498,33 +430,32 @@ func (rc *RepositoryController) process(item *queueItem) error {
 		return nil
 	}
 
-	repo, err := rc.repoGetter.AsRepository(ctx, obj)
+	repo, err := rc.repoFactory.Build(ctx, obj)
 	if err != nil {
 		return fmt.Errorf("unable to create repository from configuration: %w", err)
 	}
 
-	healthStatus := obj.Status.Health
-	if shouldCheckHealth {
-		healthStatus = rc.runHealthCheck(ctx, repo)
-		patchOperations = append(patchOperations, map[string]interface{}{
-			"op":    "replace",
-			"path":  "/status/health",
-			"value": healthStatus,
-		})
+	// Handle hooks - may return early if hooks fail
+	hookOps, shouldContinue, err := rc.processHooks(ctx, repo, obj)
+	if err != nil {
+		return fmt.Errorf("process hooks: %w", err)
+	}
+	if !shouldContinue {
+		return nil // Hook handling already updated status and returned early
+	}
+	if len(hookOps) > 0 {
+		patchOperations = append(patchOperations, hookOps...)
 	}
 
-	// Run hooks
-	hookOps, err := rc.runHooks(ctx, repo, obj)
-	switch {
-	case err != nil:
-		return err
-	case len(hookOps) > 0:
-		patchOperations = append(patchOperations, hookOps...)
+	// Handle health checks using the health checker
+	_, healthStatus, err := rc.healthChecker.RefreshHealth(ctx, repo)
+	if err != nil {
+		return fmt.Errorf("update health status: %w", err)
 	}
 
 	// determine the sync strategy and sync status to apply
 	syncOptions := rc.determineSyncStrategy(ctx, obj, repo, shouldResync, healthStatus)
-	if syncStatus := rc.determineSyncStatus(obj, syncOptions); syncStatus != nil {
+	if syncStatus := rc.determineSyncStatus(obj, syncOptions, healthStatus); syncStatus != nil {
 		patchOperations = append(patchOperations, map[string]interface{}{
 			"op":    "replace",
 			"path":  "/status/sync",
@@ -533,7 +464,7 @@ func (rc *RepositoryController) process(item *queueItem) error {
 	}
 
 	// Apply all patch operations
-	if err := rc.patchStatus(ctx, obj, patchOperations); err != nil {
+	if err := rc.statusPatcher.Patch(ctx, obj, patchOperations...); err != nil {
 		return err
 	}
 
@@ -545,4 +476,30 @@ func (rc *RepositoryController) process(item *queueItem) error {
 	}
 
 	return nil
+}
+
+// processHooks handles hook execution with intelligent retry logic
+// Returns hook operations, whether processing should continue, and any error
+func (rc *RepositoryController) processHooks(ctx context.Context, repo repository.Repository, obj *provisioning.Repository) ([]map[string]interface{}, bool, error) {
+	shouldRunHooks := obj.Generation != obj.Status.ObservedGeneration
+
+	// Skip hooks if status already indicates recent hook failure to avoid infinite retry
+	if shouldRunHooks && rc.healthChecker.HasRecentFailure(obj.Status.Health, provisioning.HealthFailureHook) {
+		shouldRunHooks = false
+	}
+
+	if !shouldRunHooks {
+		return nil, true, nil
+	}
+
+	hookOps, err := rc.runHooks(ctx, repo, obj)
+	if err != nil {
+		if err := rc.healthChecker.RecordFailure(ctx, provisioning.HealthFailureHook, err, obj); err != nil {
+			return nil, false, fmt.Errorf("update status after hook failure: %w", err)
+		}
+
+		return nil, false, err
+	}
+
+	return hookOps, true, nil
 }

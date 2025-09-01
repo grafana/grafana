@@ -9,8 +9,9 @@ import { MultiValueVariable, SceneComponentProps, sceneGraph, useSceneObjectStat
 import { Button, TabContent, TabsBar, useStyles2 } from '@grafana/ui';
 
 import { useIsConditionallyHidden } from '../../conditional-rendering/useIsConditionallyHidden';
-import { isInCloneChain } from '../../utils/clone';
+import { isRepeatCloneOrChildOf } from '../../utils/clone';
 import { getDashboardSceneFor } from '../../utils/utils';
+import { useSoloPanelContext } from '../SoloPanelContext';
 import { dashboardCanvasAddButtonHoverStyles } from '../layouts-shared/styles';
 import { useClipboardState } from '../layouts-shared/useClipboardState';
 
@@ -28,8 +29,13 @@ export function TabsLayoutManagerRenderer({ model }: SceneComponentProps<TabsLay
   const { hasCopiedTab } = useClipboardState();
   const [_, conditionalRenderingClass, conditionalRenderingOverlay] = useIsConditionallyHidden(currentTab);
   const isNestedInTab = useMemo(() => model.parent instanceof TabItem, [model.parent]);
+  const soloPanelContext = useSoloPanelContext();
 
-  const isClone = isInCloneChain(tabs[0]?.state.key || '');
+  if (soloPanelContext) {
+    return <layout.Component model={layout} />;
+  }
+
+  const isClone = isRepeatCloneOrChildOf(model);
 
   return (
     <div className={cx(styles.tabLayoutContainer, { [styles.nestedTabsMargin]: isNestedInTab })}>

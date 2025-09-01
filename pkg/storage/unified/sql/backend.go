@@ -5,12 +5,12 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"iter"
 	"math"
 	"sync"
 	"time"
 
 	"github.com/go-sql-driver/mysql"
-	"github.com/grafana/grafana/pkg/util/sqlite"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/lib/pq"
 	"github.com/prometheus/client_golang/prometheus"
@@ -18,6 +18,8 @@ import (
 	"go.opentelemetry.io/otel/trace/noop"
 	"google.golang.org/protobuf/proto"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+
+	"github.com/grafana/grafana/pkg/util/sqlite"
 
 	"github.com/grafana/grafana-app-sdk/logging"
 
@@ -629,6 +631,107 @@ func (b *backend) listLatest(ctx context.Context, req *resourcepb.ListRequest, c
 		return cb(iter)
 	})
 	return iter.listRV, err
+}
+
+// ListModifiedSince will return all resources that have changed since the given resource version.
+// If a resource has changes, only the latest change will be returned.
+func (b *backend) ListModifiedSince(ctx context.Context, key resource.NamespacedResource, sinceRv int64) (int64, iter.Seq2[*resource.ModifiedResource, error]) {
+	tx, err := b.db.BeginTx(ctx, RepeatableRead)
+	if err != nil {
+		return 0, func(yield func(*resource.ModifiedResource, error) bool) {
+			yield(nil, err)
+		}
+	}
+
+	rollbackOnDefer := true
+	defer func() {
+		if rollbackOnDefer {
+			if terr := tx.Rollback(); terr != nil {
+				b.log.Warn("Error rolling back transaction in ListModifiedSince", "error", terr)
+			}
+		}
+	}()
+
+	// Fetch latest RV within the transaction
+	latestRv, err := b.fetchLatestRV(ctx, tx, b.dialect, key.Group, key.Resource)
+	if err != nil {
+		return 0, func(yield func(*resource.ModifiedResource, error) bool) {
+			yield(nil, err)
+		}
+	}
+
+	// If latest RV is the same as request RV, there's nothing to report, and we can avoid running another query.
+	if latestRv == sinceRv {
+		return 0, func(yield func(*resource.ModifiedResource, error) bool) { /* nothing to return */ }
+	}
+
+	// since results are sorted by name ASC and rv DESC, we can get away with tracking the last seen
+	lastSeen := ""
+
+	// We will rollback after iteration has finished.
+	rollbackOnDefer = false
+
+	// rollback transaction if iterator not called within 30 seconds
+	rollbackTimer := time.AfterFunc(30*time.Second, func() {
+		if err := tx.Rollback(); err != nil && !errors.Is(err, sql.ErrTxDone) {
+			b.log.Warn("rollback timer error", "err", err)
+		}
+	})
+
+	seq := func(yield func(*resource.ModifiedResource, error) bool) {
+		rollbackTimer.Stop()
+
+		defer func() {
+			// Always rollback the read-only transaction when iterator is done
+			if rollbackErr := tx.Rollback(); rollbackErr != nil {
+				b.log.Warn("Error rolling back transaction in ListModifiedSince", "error", rollbackErr)
+			}
+		}()
+
+		query := sqlResourceListModifiedSinceRequest{
+			SQLTemplate: sqltemplate.New(b.dialect),
+			Namespace:   key.Namespace,
+			Group:       key.Group,
+			Resource:    key.Resource,
+			SinceRv:     sinceRv,
+		}
+
+		rows, err := dbutil.QueryRows(ctx, tx, sqlResourceHistoryListModifiedSince, query)
+		if err != nil {
+			yield(nil, err)
+			return
+		}
+		if rows != nil {
+			defer func() {
+				if cerr := rows.Close(); cerr != nil {
+					b.log.Warn("listSinceModified error closing rows", "error", cerr)
+				}
+			}()
+		}
+
+		for rows.Next() {
+			mr := &resource.ModifiedResource{}
+			if err := rows.Scan(&mr.Key.Namespace, &mr.Key.Group, &mr.Key.Resource, &mr.Key.Name, &mr.ResourceVersion, &mr.Action, &mr.Value); err != nil {
+				if !yield(nil, err) {
+					return
+				}
+				continue
+			}
+
+			// Deduplicate by name (namespace, group, and resource are always the same in the result set)
+			if mr.Key.Name == lastSeen {
+				continue
+			}
+
+			lastSeen = mr.Key.Name
+
+			if !yield(mr, nil) {
+				return
+			}
+		}
+	}
+
+	return latestRv, seq
 }
 
 // listAtRevision fetches the resources from the resource_history table at a specific revision.

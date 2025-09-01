@@ -18,7 +18,6 @@ import { getCloneKey, getLocalVariableValueSet } from '../../utils/clone';
 import { getMultiVariableValues } from '../../utils/utils';
 import { scrollCanvasElementIntoView } from '../layouts-shared/scrollCanvasElementIntoView';
 import { DashboardLayoutItem } from '../types/DashboardLayoutItem';
-import { DashboardRepeatsProcessedEvent } from '../types/DashboardRepeatsProcessedEvent';
 
 import { getOptions } from './AutoGridItemEditor';
 import { AutoGridItemRenderer } from './AutoGridItemRenderer';
@@ -116,7 +115,10 @@ export class AutoGridItem extends SceneObjectBase<AutoGridItemState> implements 
       const isSource = index === 0;
       const clone = isSource
         ? panelToRepeat
-        : panelToRepeat.clone({ key: getCloneKey(panelToRepeat.state.key!, index) });
+        : panelToRepeat.clone({
+            key: getCloneKey(panelToRepeat.state.key!, index),
+            repeatSourceKey: panelToRepeat.state.key,
+          });
 
       clone.setState({ $variables: getLocalVariableValueSet(variable, variableValues[index], variableTexts[index]) });
 
@@ -127,8 +129,6 @@ export class AutoGridItem extends SceneObjectBase<AutoGridItemState> implements 
 
     this.setState({ repeatedPanels });
     this._prevRepeatValues = values;
-
-    this.publishEvent(new DashboardRepeatsProcessedEvent({ source: this }), true);
   }
 
   public getPanelCount() {

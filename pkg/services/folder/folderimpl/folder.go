@@ -938,6 +938,19 @@ func (s *Service) DeleteLegacy(ctx context.Context, cmd *folder.DeleteFolderComm
 			if alertRulesInFolder > 0 {
 				return folder.ErrFolderNotEmpty.Errorf("folder contains %d alert rules", alertRulesInFolder)
 			}
+
+			libraryPanelSrv, ok := s.registry[entity.StandardKindLibraryPanel]
+			if !ok {
+				return folder.ErrInternal.Errorf("no library panel service found in registry")
+			}
+			libraryPanelsInFolder, err := libraryPanelSrv.CountInFolders(ctx, cmd.OrgID, folders, cmd.SignedInUser)
+			if err != nil {
+				s.log.Error("failed to count library panels in folder", "error", err)
+				return err
+			}
+			if libraryPanelsInFolder > 0 {
+				return folder.ErrFolderNotEmpty.Errorf("folder contains %d library panels", libraryPanelsInFolder)
+			}
 		}
 
 		err = s.store.Delete(ctx, []string{cmd.UID}, cmd.OrgID)
