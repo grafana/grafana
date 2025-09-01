@@ -15,7 +15,7 @@ import {
   PromRuleGroupDTO,
 } from 'app/types/unified-alerting-dto';
 
-import { RulesFilter } from '../../search/rulesSearchParser';
+import { RuleSource, RulesFilter } from '../../search/rulesSearchParser';
 import {
   getDataSourceByUid,
   getDatasourceAPIUid,
@@ -86,7 +86,7 @@ export function useFilteredRulesIteratorProvider() {
       ? getRulesSourcesFromFilter(filterState)
       : allExternalRulesSources;
 
-    if (filterState.ruleSource === 'grafana') {
+    if (filterState.ruleSource === RuleSource.Grafana) {
       return { iterable: grafanaRulesGenerator, abortController };
     }
 

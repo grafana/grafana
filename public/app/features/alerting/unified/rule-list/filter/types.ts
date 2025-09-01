@@ -1,6 +1,6 @@
 import { PromAlertingRuleState, PromRuleType } from 'app/types/unified-alerting-dto';
 
-import type { RuleHealth } from '../../search/rulesSearchParser';
+import type { RuleHealth, RuleSource } from '../../search/rulesSearchParser';
 
 export type AdvancedFilters = {
   namespace?: string | null;
@@ -14,5 +14,5 @@ export type AdvancedFilters = {
   dashboardUid?: string;
   plugins?: 'show' | 'hide';
   contactPoint?: string | null;
-  ruleSource?: '*' | 'grafana' | 'datasource';
+  ruleSource?: '*' | RuleSource;
 };

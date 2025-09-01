@@ -16,7 +16,7 @@ export function formAdvancedFiltersToRuleFilter(values: AdvancedFilters): RulesF
     ruleState: values.ruleState === '*' ? undefined : values.ruleState,
     ruleType: values.ruleType === '*' ? undefined : values.ruleType,
     plugins: values.plugins === 'show' ? undefined : 'hide',
-    ruleSource: values.ruleSource && values.ruleSource !== '*' ? values.ruleSource : undefined,
+    ruleSource: values.ruleSource === '*' ? undefined : values.ruleSource,
   };
 }
 

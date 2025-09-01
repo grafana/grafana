@@ -40,7 +40,7 @@ import {
   useNamespaceAndGroupOptions,
 } from '../../components/rules/Filter/useRuleFilterAutocomplete';
 import { useRulesFilter } from '../../hooks/useFilteredRules';
-import { RuleHealth, getSearchFilterFromQuery } from '../../search/rulesSearchParser';
+import { RuleHealth, RuleSource, getSearchFilterFromQuery } from '../../search/rulesSearchParser';
 
 import { RulesFilterProps } from './RulesFilter';
 import {
@@ -636,8 +636,11 @@ function RuleSourceField({ radioGroupClassName }: { radioGroupClassName?: string
           <RadioButtonGroup<NonNullable<AdvancedFilters['ruleSource']>>
             options={[
               { label: t('common.all', 'All'), value: '*' },
-              { label: t('alerting.rules-filter.rule-source.grafana', 'Grafana managed'), value: 'grafana' },
-              { label: t('alerting.rules-filter.rule-source.datasource', 'Data source managed'), value: 'datasource' },
+              { label: t('alerting.rules-filter.rule-source.grafana', 'Grafana managed'), value: RuleSource.Grafana },
+              {
+                label: t('alerting.rules-filter.rule-source.datasource', 'Data source managed'),
+                value: RuleSource.DataSource,
+              },
             ]}
             value={field.value}
             onChange={field.onChange}

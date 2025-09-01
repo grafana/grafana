@@ -8,7 +8,12 @@ import { CombinedRuleGroup, CombinedRuleNamespace, Rule } from 'app/types/unifie
 import { PromRuleType, RulerGrafanaRuleDTO, isPromAlertingRuleState } from 'app/types/unified-alerting-dto';
 
 import { logError } from '../Analytics';
-import { RulesFilter, applySearchFilterToQuery, getSearchFilterFromQuery } from '../search/rulesSearchParser';
+import {
+  RuleSource,
+  RulesFilter,
+  applySearchFilterToQuery,
+  getSearchFilterFromQuery,
+} from '../search/rulesSearchParser';
 import { labelsMatchMatchers, matcherToMatcherField } from '../utils/alertmanager';
 import { Annotation } from '../utils/constants';
 import { isCloudRulesSource } from '../utils/datasource';
@@ -183,12 +188,12 @@ const reduceGroups = (filterState: RulesFilter) => {
       filteredRules = fuzzyFilter(filteredRules, (r) => r.name, ruleNameQuery);
     }
 
-    // Filter by rule source at rule-level (Grafana-managed vs external)
+    // Filter by rule source at rule-level (Grafana-managed vs datasource-managed)
     if (filterState.ruleSource) {
-      const wantGrafana = filterState.ruleSource === 'grafana';
+      const grafanaSelected = filterState.ruleSource === RuleSource.Grafana;
       filteredRules = filteredRules.filter((rule) => {
         const isGrafana = !!(rule.rulerRule && rulerRuleType.grafana.rule(rule.rulerRule));
-        return wantGrafana ? isGrafana : !isGrafana;
+        return grafanaSelected ? isGrafana : !isGrafana;
       });
     }
 
@@ -210,6 +215,7 @@ const reduceGroups = (filterState: RulesFilter) => {
           'dashboardUid',
           'plugins',
           'contactPoint',
+          'ruleSource',
         ])
         .omitBy(isEmpty)
         .mapValues(() => false)
