@@ -12,14 +12,8 @@ import (
 )
 
 var (
-	errNotImplemented                = fmt.Errorf("not implemented")
-	errEmptyName                     = fmt.Errorf("name cannot be empty")
-	ErrDatabaseHelper                = fmt.Errorf("failed to get database")
-	ErrResourcePermissionNotFound    = fmt.Errorf("resource permission not found")
-	ErrEmptyResourcePermissionName   = fmt.Errorf("resource permission name cannot be empty")
-	ErrNameMismatch                  = fmt.Errorf("name mismatch")
-	ErrNamespaceMismatch             = fmt.Errorf("namespace mismatch")
-	ErrInvalidResourcePermissionSpec = fmt.Errorf("invalid resource permission spec")
+	errNotImplemented = fmt.Errorf("not implemented")
+	errEmptyName      = fmt.Errorf("name cannot be empty")
 )
 
 type ListResourcePermissionsQuery struct {
