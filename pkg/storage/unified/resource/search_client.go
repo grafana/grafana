@@ -134,12 +134,12 @@ func (s *searchWrapper) GetStats(ctx context.Context, in *resourcepb.ResourceSta
 		client = s.unifiedClient
 	}
 
-	shouldMakeBackgroundCall, err := shouldMakeBackgroundCall(ctx, s.features, s.dual, s.groupResource)
+	makeBackgroundCall, err := shouldMakeBackgroundCall(ctx, s.features, s.dual, s.groupResource)
 	if err != nil {
 		return nil, err
 	}
 
-	if shouldMakeBackgroundCall {
+	if makeBackgroundCall {
 		// Create background context with timeout but ignore parent cancelation
 		ctxBg := context.WithoutCancel(ctx)
 
@@ -170,12 +170,12 @@ func (s *searchWrapper) Search(ctx context.Context, in *resourcepb.ResourceSearc
 		client = s.unifiedClient
 	}
 
-	shouldMakeBackgroundCall, err := shouldMakeBackgroundCall(ctx, s.features, s.dual, s.groupResource)
+	makeBackgroundCall, err := shouldMakeBackgroundCall(ctx, s.features, s.dual, s.groupResource)
 	if err != nil {
 		return nil, err
 	}
 
-	if shouldMakeBackgroundCall {
+	if makeBackgroundCall {
 		// Get the legacy result first
 		legacyResponse, legacyErr := s.legacyClient.Search(ctx, in, opts...)
 		if legacyErr != nil {
