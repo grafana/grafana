@@ -226,7 +226,7 @@ export function useDeleteMultipleFoldersMutationFacade() {
 }
 
 export function useCreateFolder() {
-  const [trigger, result] = useCreateFolderMutation();
+  const [createFolder, result] = useCreateFolderMutation();
   const legacyHook = useLegacyNewFolderMutation();
 
   if (!config.featureToggles.foldersAppPlatformAPI) {
@@ -240,7 +240,7 @@ export function useCreateFolder() {
           title: folder.title,
         },
         metadata: {
-          generateName: folder.title,
+          generateName: 'f',
           annotations: {
             ...(folder.parentUid && { [AnnoKeyFolder]: folder.parentUid }),
           },
@@ -249,7 +249,7 @@ export function useCreateFolder() {
       },
     };
 
-    const result = await trigger(payload);
+    const result = await createFolder(payload);
     dispatchRefetchChildren(folder.parentUid);
 
     return {
@@ -297,15 +297,15 @@ const appPlatformFolderToLegacyFolder = (
   // In some cases, these properties aren't used on the response of the hook,
   // so it's best to discourage from using them anyway
 
-  const { annotations, name, creationTimestamp, generation, labels } = folder.metadata;
-  const { title } = folder.spec;
+  const { annotations, name = '', creationTimestamp, generation, labels } = folder.metadata;
+  const { title = '' } = folder.spec;
   return {
     id: parseInt(labels?.[DeprecatedInternalId] || '0', 10) || 0,
-    uid: name!,
+    uid: name,
     title,
     // general folder does not come with url
     // see https://github.com/grafana/grafana/blob/8a05378ef3ae5545c6f7429eae5c174d3c0edbfe/pkg/services/folder/folderimpl/folder_unifiedstorage.go#L88
-    url: name === GENERAL_FOLDER_UID ? '' : getFolderUrl(name!, title!),
+    url: name === GENERAL_FOLDER_UID ? '' : getFolderUrl(name, title),
     created: creationTimestamp || '0001-01-01T00:00:00Z',
     updated: annotations?.[AnnoKeyUpdatedTimestamp] || '0001-01-01T00:00:00Z',
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
