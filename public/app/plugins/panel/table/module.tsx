@@ -10,9 +10,9 @@ import {
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import {
+  defaultTableFieldOptions,
   TableCellOptions,
   TableCellDisplayMode,
-  defaultTableFieldOptions,
   TableCellHeight,
   TableCellTooltipPlacement,
 } from '@grafana/schema';
@@ -109,14 +109,17 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(TablePanel)
           defaultValue: defaultTableFieldOptions.filterable,
         })
         .addBooleanSwitch({
-          path: 'wrapHeaderText',
-          name: t('table.name-wrap-header-text', 'Wrap header text'),
-          description: t('table.description-wrap-header-text', 'Enables text wrapping for column headers'),
+          path: 'wrapText',
+          name: t('table.name-wrap-text', 'Wrap text'),
           category,
-          defaultValue: undefined,
         })
         .addBooleanSwitch({
-          path: 'hidden',
+          path: 'wrapHeaderText',
+          name: t('table.name-wrap-header-text', 'Wrap header text'),
+          category,
+        })
+        .addBooleanSwitch({
+          path: 'hideFrom.viz',
           name: t('table.name-hide-in-table', 'Hide in table'),
           category,
           defaultValue: undefined,
@@ -193,6 +196,15 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(TablePanel)
             { value: TableCellHeight.Md, label: t('table.cell-height-options.label-medium', 'Medium') },
             { value: TableCellHeight.Lg, label: t('table.cell-height-options.label-large', 'Large') },
           ],
+        },
+      })
+      .addNumberInput({
+        path: 'maxRowHeight',
+        name: t('table.name-max-height', 'Max row height'),
+        category,
+        settings: {
+          placeholder: t('table.placeholder-max-height', 'none'),
+          min: 0,
         },
       })
       .addBooleanSwitch({

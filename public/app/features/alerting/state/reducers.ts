@@ -8,7 +8,7 @@ import {
   NotificationChannelOption,
   NotificationChannelState,
   NotifierDTO,
-} from 'app/types/alerting';
+} from 'app/features/alerting/unified/types/alerting';
 
 import unifiedAlertingReducer from '../unified/state/reducers';
 
