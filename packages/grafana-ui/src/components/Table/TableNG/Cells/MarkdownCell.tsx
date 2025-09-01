@@ -3,6 +3,7 @@ import { css } from '@emotion/css';
 import { renderMarkdown } from '@grafana/data';
 
 import { MaybeWrapWithLink } from '../components/MaybeWrapWithLink';
+import { getActiveCellSelector } from '../styles';
 import { MarkdownCellProps, TableCellStyles } from '../types';
 
 export function MarkdownCell({ field, rowIdx, disableSanitizeHtml }: MarkdownCellProps) {
@@ -25,9 +26,9 @@ export function MarkdownCell({ field, rowIdx, disableSanitizeHtml }: MarkdownCel
   );
 }
 
-export const getStyles: TableCellStyles = (theme) =>
+export const getStyles: TableCellStyles = (theme, { maxHeight }) =>
   css({
-    '&, &:hover, &[aria-selected=true]': {
+    [`&, ${getActiveCellSelector(Boolean(maxHeight))}`]: {
       whiteSpace: 'normal',
     },
 

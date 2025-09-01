@@ -65,7 +65,6 @@ dashboardSchemaValidationLogging,experimental,@grafana/grafana-app-platform-squa
 scanRowInvalidDashboardParseFallbackEnabled,experimental,@grafana/search-and-storage,false,false,false
 datasourceQueryTypes,experimental,@grafana/grafana-app-platform-squad,false,true,false
 queryService,experimental,@grafana/grafana-datasources-core-services,false,true,false
-queryServiceWithConnections,experimental,@grafana/grafana-datasources-core-services,false,true,false
 queryServiceRewrite,experimental,@grafana/grafana-datasources-core-services,false,true,false
 queryServiceFromUI,experimental,@grafana/grafana-datasources-core-services,false,false,true
 queryServiceFromExplore,experimental,@grafana/grafana-datasources-core-services,false,false,true
@@ -248,3 +247,4 @@ newLogContext,experimental,@grafana/observability-logs,false,false,true
 newClickhouseConfigPageDesign,privatePreview,@grafana/partner-datasources,false,false,false
 unifiedStorageSearchAfterWriteExperimentalAPI,experimental,@grafana/search-and-storage,false,true,false
 teamFolders,experimental,@grafana/grafana-search-navigate-organise,false,false,false
+alertingTriage,experimental,@grafana/alerting-squad,false,false,true

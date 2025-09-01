@@ -500,13 +500,6 @@ var (
 			RequiresRestart: true, // Adds a route at startup
 		},
 		{
-			Name:            "queryServiceWithConnections",
-			Description:     "Adds datasource connections to the query service",
-			Stage:           FeatureStageExperimental,
-			Owner:           grafanaDatasourcesCoreServicesSquad,
-			RequiresRestart: true, // Adds a route at startup
-		},
-		{
 			Name:            "queryServiceRewrite",
 			Description:     "Rewrite requests targeting /ds/query to the query service",
 			Stage:           FeatureStageExperimental,
@@ -1924,6 +1917,16 @@ var (
 			FrontendOnly: false,
 			Owner:        grafanaFrontendSearchNavOrganise,
 			Expression:   "false",
+		},
+		{
+			Name:              "alertingTriage",
+			Description:       "Enables the alerting triage feature",
+			Stage:             FeatureStageExperimental,
+			FrontendOnly:      true,
+			Owner:             grafanaAlertingSquad,
+			HideFromDocs:      true,
+			HideFromAdminPage: true,
+			Expression:        "false",
 		},
 	}
 )

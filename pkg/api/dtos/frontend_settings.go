@@ -93,12 +93,22 @@ type FrontendSettingsAnalyticsDTO struct {
 	Enabled bool `json:"enabled"`
 }
 
+type FrontendSettingsUnifiedAlertingStateHistoryDTO struct {
+	Backend                       string `json:"backend,omitempty"`
+	Primary                       string `json:"primary,omitempty"`
+	PrometheusTargetDatasourceUID string `json:"prometheusTargetDatasourceUID,omitempty"`
+	PrometheusMetricName          string `json:"prometheusMetricName,omitempty"`
+}
+
 type FrontendSettingsUnifiedAlertingDTO struct {
-	MinInterval                              string `json:"minInterval"`
-	AlertStateHistoryBackend                 string `json:"alertStateHistoryBackend,omitempty"`
-	AlertStateHistoryPrimary                 string `json:"alertStateHistoryPrimary,omitempty"`
-	RecordingRulesEnabled                    bool   `json:"recordingRulesEnabled"`
-	DefaultRecordingRulesTargetDatasourceUID string `json:"defaultRecordingRulesTargetDatasourceUID,omitempty"`
+	MinInterval                              string                                          `json:"minInterval"`
+	StateHistory                             *FrontendSettingsUnifiedAlertingStateHistoryDTO `json:"stateHistory,omitempty"`
+	RecordingRulesEnabled                    bool                                            `json:"recordingRulesEnabled"`
+	DefaultRecordingRulesTargetDatasourceUID string                                          `json:"defaultRecordingRulesTargetDatasourceUID,omitempty"`
+
+	// Backward compatibility fields - deprecated
+	AlertStateHistoryBackend string `json:"alertStateHistoryBackend,omitempty"`
+	AlertStateHistoryPrimary string `json:"alertStateHistoryPrimary,omitempty"`
 }
 
 // Enterprise-only

@@ -4562,6 +4562,12 @@
       "overwrite": "Überschreiben",
       "title-plugin-dashboard": "Plugin-Dashboard"
     },
+    "controls": {
+      "menu": {
+        "aria-label": "",
+        "title": ""
+      }
+    },
     "dash-nav": {
       "on-open-snapshot-original": {
         "confirmText": {
@@ -5840,11 +5846,6 @@
         "transparent-background": "Transparenter Hintergrund"
       }
     },
-    "get-workflow-options": {
-      "label": {
-        "push-to-a-new-branch": "Zu einem neuen Branch pushen"
-      }
-    },
     "group-by-variable-form": {
       "alert-not-supported": "Diese Datenquelle unterstützt keine Gruppierung nach Variablen",
       "description-enables-users-custom-values": "Ermöglicht Nutzern, individuelle Werte zur Liste hinzuzufügen",
@@ -6941,11 +6942,6 @@
       "dragging-a-divider": "Einen Teiler ziehen",
       "dragging-a-sub-region": "Einen Unterbereich ziehen",
       "value": "Wert: {{ dividerPos }}"
-    },
-    "drilldownInfo": {
-      "action": "Zu Grafana Drilldown",
-      "description": "Sie sind auf der Suche nach den Grafana-Explore-Apps? Sie heißen jetzt Grafana-Drilldown-Apps und sind unter <1>Menü > Drilldown</1> zu finden",
-      "title": "Explore-Metriken, Protokolle, Traces und Profile wurden verschoben!"
     },
     "drop-down-menu": {
       "aria-label-links": "Links",
@@ -11158,11 +11154,16 @@
     "save-or-delete-resource-shared-fields": {
       "comment-placeholder-describe-changes-optional": "Fügen Sie eine Notiz hinzu, um Ihre Änderungen zu beschreiben (optional)",
       "description-branch-name-in-git-hub": "Branch-Name in GitHub",
+      "description-file-path": "",
+      "description-folder-path": "",
       "description-inside-repository": "",
       "label-branch": "Branch",
       "label-comment": "Kommentar",
       "label-path": "Pfad",
-      "label-workflow": "Workflow"
+      "label-workflow": "Workflow",
+      "placeholder-branch": "",
+      "placeholder-new-branch": "",
+      "suffix-configured-branch": ""
     }
   },
   "provisioned-resource-preview-banner": {
@@ -11696,6 +11697,10 @@
       "button-previous": "Zurück",
       "button-submitting": "Übertragen …",
       "error-instance-repository-exists": "Das Instanz-Repository existiert bereits"
+    },
+    "workflow-options-label": {
+      "push-to-a-new-branch": "",
+      "push-to-existing-branch": ""
     }
   },
   "public-dashboard": {
@@ -12807,6 +12812,7 @@
     "name-fields": "Felder",
     "name-frozen-columns": "",
     "name-hide-in-table": "In Tabelle ausblenden",
+    "name-max-height": "",
     "name-min-column-width": "Minimale Spaltenbreite",
     "name-show-table-footer": "Tabellenfußzeile anzeigen",
     "name-show-table-header": "Tabellenüberschirft anzeigen",
@@ -12816,6 +12822,7 @@
     "name-wrap-text": "",
     "placeholder-column-width": "auto",
     "placeholder-fields": "Alle numerischen Felder",
+    "placeholder-max-height": "",
     "tooltip-placement-options": {
       "label-auto": "",
       "label-bottom": "",
