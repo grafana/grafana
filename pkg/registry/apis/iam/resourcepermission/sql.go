@@ -6,7 +6,6 @@ import (
 	"strings"
 
 	v0alpha1 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
-	"github.com/grafana/grafana/pkg/registry/apis/iam/common"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
 )
 
@@ -49,8 +48,8 @@ func (s *ResourcePermSqlBackend) getResourcePermissions(ctx context.Context, sql
 }
 
 func (s *ResourcePermSqlBackend) getResourcePermission(ctx context.Context, sql *legacysql.LegacyDatabaseHelper, name string) (*v0alpha1.ResourcePermission, error) {
-	//dashboard.grafana.app-dashboards-ad5rwqs
-	parts := strings.Split(name, "-")
+	// e.g. dashboard.grafana.app-dashboards-ad5rwqs
+	parts := strings.SplitN(name, "-", 3)
 
 	if len(parts) != 3 {
 		return nil, fmt.Errorf("invalid resource name: %s", name)
@@ -63,10 +62,6 @@ func (s *ResourcePermSqlBackend) getResourcePermission(ctx context.Context, sql 
 		Scope:      scope,
 		OrgID:      1,
 		ActionSets: actionSets,
-		Pagination: common.Pagination{
-			Limit:    1000,
-			Continue: 0,
-		},
 	}
 
 	permissionGroups, err := s.getResourcePermissions(ctx, sql, resourceQuery)
