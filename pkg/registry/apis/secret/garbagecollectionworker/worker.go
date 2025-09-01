@@ -83,7 +83,7 @@ func (w *Worker) CleanupInactiveSecureValues(ctx context.Context) ([]secretv1bet
 		go func(i int, sv *secretv1beta1.SecureValue) {
 			defer sema.Release(1)
 			defer wg.Done()
-			errs[i] = w.cleanup(ctx, sv)
+			errs[i] = w.Cleanup(ctx, sv)
 		}(i, &sv)
 	}
 
@@ -92,7 +92,7 @@ func (w *Worker) CleanupInactiveSecureValues(ctx context.Context) ([]secretv1bet
 	return secureValues, errors.Join(errs...)
 }
 
-func (w *Worker) cleanup(ctx context.Context, sv *secretv1beta1.SecureValue) error {
+func (w *Worker) Cleanup(ctx context.Context, sv *secretv1beta1.SecureValue) error {
 	keeperCfg, err := w.keeperMetadataStorage.GetKeeperConfig(ctx, sv.Namespace, sv.Spec.Keeper, contracts.ReadOpts{ForUpdate: false})
 	if err != nil {
 		return fmt.Errorf("fetching keeper config: namespace=%+v keeperName=%+v %w", sv.Namespace, sv.Spec.Keeper, err)

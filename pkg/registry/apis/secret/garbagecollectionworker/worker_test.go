@@ -82,6 +82,22 @@ func TestBasic(t *testing.T) {
 		require.ErrorIs(t, err, encryption.ErrEncryptedValueNotFound)
 		require.Empty(t, exposedValue)
 	})
+
+	t.Run("cleaning up secure values is idempotent", func(t *testing.T) {
+		t.Parallel()
+
+		sut := testutils.Setup(t)
+
+		sv, err := sut.CreateSv(t.Context())
+		require.NoError(t, err)
+
+		_, err = sut.DeleteSv(t.Context(), sv.Namespace, sv.Name)
+		require.NoError(t, err)
+
+		// Clean up the same secure value twice and ensure it succeeds
+		require.NoError(t, sut.GarbageCollectionWorker.Cleanup(t.Context(), sv))
+		require.NoError(t, sut.GarbageCollectionWorker.Cleanup(t.Context(), sv))
+	})
 }
 
 var (
