@@ -1,4 +1,4 @@
-import { useId, useMemo, useState } from 'react';
+import { useId, useMemo, useRef } from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
@@ -86,7 +86,7 @@ export function useEditOptions(model: RowItem, isNewElement: boolean): OptionsPa
 
 function RowTitleInput({ row, isNewElement }: { row: RowItem; isNewElement: boolean }) {
   const { title } = row.useState();
-  const [prevTitle, setPrevTitle] = useState(row.state.title);
+  const prevTitle = useRef('');
 
   const ref = useEditPaneInputAutoFocus({ autoFocus: isNewElement });
   const hasUniqueTitle = row.hasUniqueTitle();
@@ -104,8 +104,8 @@ function RowTitleInput({ row, isNewElement }: { row: RowItem; isNewElement: bool
         ref={ref}
         title={t('dashboard.rows-layout.row-options.title-option', 'Title')}
         value={title}
-        onFocus={() => setPrevTitle(title)}
-        onBlur={() => editRowTitleAction(row, title || '', prevTitle || '')}
+        onFocus={() => (prevTitle.current = title || '')}
+        onBlur={() => editRowTitleAction(row, title || '', prevTitle.current || '')}
         onChange={(e) => row.onChangeTitle(e.currentTarget.value)}
       />
     </Field>
