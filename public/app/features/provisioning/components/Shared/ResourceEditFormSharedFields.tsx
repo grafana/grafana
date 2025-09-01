@@ -170,7 +170,6 @@ export const ResourceEditFormSharedFields = memo<DashboardEditFormSharedFieldsPr
                     workflow === 'write' ? (
                       <Combobox
                         {...field}
-                        disabled={!isNew}
                         invalid={!!errors.ref}
                         id="provisioned-ref"
                         onChange={(option) => onChange(option ? option.value : '')}
