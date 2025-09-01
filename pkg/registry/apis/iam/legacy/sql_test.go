@@ -88,6 +88,12 @@ func TestIdentityQueries(t *testing.T) {
 		return &v
 	}
 
+	createServiceAccounts := func(cmd *CreateServiceAccountCommand) sqltemplate.SQLTemplate {
+		v := newCreateServiceAccount(nodb, cmd)
+		v.SQLTemplate = mocks.NewTestingSQLTemplate()
+		return &v
+	}
+
 	listServiceAccountTokens := func(q *ListServiceAccountTokenQuery) sqltemplate.SQLTemplate {
 		v := newListServiceAccountTokens(nodb, q)
 		v.SQLTemplate = mocks.NewTestingSQLTemplate()
@@ -415,6 +421,36 @@ func TestIdentityQueries(t *testing.T) {
 						Updated:       time.Date(2023, 2, 1, 10, 30, 0, 0, time.UTC),
 						LastSeenAt:    time.Date(2013, 2, 1, 10, 30, 0, 0, time.UTC),
 						Role:          "Admin",
+					}),
+				},
+			},
+			sqlCreateServiceAccountTemplate: {
+				{
+					Name: "create_service_account_basic",
+					Data: createServiceAccounts(&CreateServiceAccountCommand{
+						UID:        "abcdef",
+						Name:       "Service Account 1",
+						Email:      "sa-1-service-account-1",
+						Login:      "sa-1-service-account-1",
+						IsDisabled: false,
+						OrgID:      1,
+						Created:    time.Date(2023, 1, 1, 12, 0, 0, 0, time.UTC),
+						Updated:    time.Date(2023, 1, 1, 12, 0, 0, 0, time.UTC),
+						LastSeenAt: time.Date(2013, 1, 1, 12, 0, 0, 0, time.UTC),
+					}),
+				},
+				{
+					Name: "create_service_account_disabled",
+					Data: createServiceAccounts(&CreateServiceAccountCommand{
+						UID:        "abcdef",
+						Name:       "Disabled Service Account",
+						Email:      "sa-2-disabled-service-account",
+						Login:      "sa-2-disabled-service-account",
+						IsDisabled: true,
+						OrgID:      2,
+						Created:    time.Date(2023, 2, 1, 10, 30, 0, 0, time.UTC),
+						Updated:    time.Date(2023, 2, 1, 10, 30, 0, 0, time.UTC),
+						LastSeenAt: time.Date(2013, 2, 1, 10, 30, 0, 0, time.UTC),
 					}),
 				},
 			},
