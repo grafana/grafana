@@ -8,6 +8,8 @@ import {
   useGetFolderQuery as useGetFolderQueryLegacy,
   useDeleteFoldersMutation as useDeleteFoldersMutationLegacy,
   useMoveFoldersMutation as useMoveFoldersMutationLegacy,
+  MoveFoldersArgs,
+  DeleteFoldersArgs,
 } from 'app/features/browse-dashboards/api/browseDashboardsAPI';
 import { FolderDTO } from 'app/types/folders';
 
@@ -202,7 +204,7 @@ export function useDeleteMultipleFoldersMutationFacade() {
     return deleteFolders;
   }
 
-  return async function deleteFolders({ folderUIDs }: { folderUIDs: string[] }) {
+  return async function deleteFolders({ folderUIDs }: DeleteFoldersArgs) {
     const successMessage = t('folders.api.folder-deleted-success', 'Folder deleted');
 
     // Delete all the folders sequentially
@@ -238,7 +240,7 @@ export function useMoveMultipleFoldersMutationFacade() {
     return moveFoldersLegacyResult;
   }
 
-  async function moveFolders({ folderUIDs, destinationUID }: { folderUIDs: string[]; destinationUID: string }) {
+  async function moveFolders({ folderUIDs, destinationUID }: MoveFoldersArgs) {
     const provisionedWarning = t(
       'folders.api.folder-move-error-provisioned',
       'Cannot move provisioned folder. To move it, move it in the repository and synchronise to apply the changes.'

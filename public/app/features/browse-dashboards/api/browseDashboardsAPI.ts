@@ -26,7 +26,7 @@ import { DashboardTreeSelection } from '../types';
 import { isProvisionedDashboard } from './isProvisioned';
 import { PAGE_SIZE } from './services';
 
-interface DeleteFoldersArgs {
+export interface DeleteFoldersArgs {
   folderUIDs: string[];
 }
 
@@ -39,7 +39,7 @@ interface MoveDashboardsArgs {
   dashboardUIDs: string[];
 }
 
-interface MoveFoldersArgs {
+export interface MoveFoldersArgs {
   destinationUID: string;
   folderUIDs: string[];
 }
