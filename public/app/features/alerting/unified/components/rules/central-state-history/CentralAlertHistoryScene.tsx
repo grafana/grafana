@@ -65,7 +65,14 @@ export const StateFilterValues = {
   recovering: 'Recovering',
 } as const;
 
-export const CentralAlertHistoryScene = ({ defaultLabelsFilter }: { defaultLabelsFilter?: string } = {}) => {
+export const CentralAlertHistoryScene = ({
+  defaultLabelsFilter,
+  defaultTimeRange = {
+    from: 'now-1h',
+    to: 'now',
+  },
+  hideFilters,
+}: { defaultLabelsFilter?: string; defaultTimeRange?: { from: string; to: string }; hideFilters?: boolean } = {}) => {
   //track the loading of the central alert state history
 
   useEffect(() => {
@@ -108,25 +115,24 @@ export const CentralAlertHistoryScene = ({ defaultLabelsFilter }: { defaultLabel
     });
 
     return new EmbeddedScene({
-      controls: [
-        new SceneReactObject({
-          component: LabelFilter,
-        }),
-        new SceneReactObject({
-          component: FilterInfo,
-        }),
-        new VariableValueSelectors({}),
-        new ClearFilterButtonScenesObject({}),
-        new SceneControlsSpacer(),
-        new SceneTimePicker({}),
-        new SceneRefreshPicker({}),
-      ],
+      controls: hideFilters
+        ? undefined
+        : [
+            new SceneReactObject({
+              component: LabelFilter,
+            }),
+            new SceneReactObject({
+              component: FilterInfo,
+            }),
+            new VariableValueSelectors({}),
+            new ClearFilterButtonScenesObject({}),
+            new SceneControlsSpacer(),
+            new SceneTimePicker({}),
+            new SceneRefreshPicker({}),
+          ],
       // use default time range as from 1 hour ago to now, as the limit of the history api is 5000 events,
       // and using a wider time range might lead to showing gaps in the events list and the chart.
-      $timeRange: new SceneTimeRange({
-        from: 'now-1h',
-        to: 'now',
-      }),
+      $timeRange: new SceneTimeRange(defaultTimeRange),
       $variables: new SceneVariableSet({
         variables: [labelsFilterVariable, transitionsFromFilterVariable, transitionsToFilterVariable],
       }),
@@ -140,7 +146,7 @@ export const CentralAlertHistoryScene = ({ defaultLabelsFilter }: { defaultLabel
         ],
       }),
     });
-  }, [defaultLabelsFilter]);
+  }, [defaultLabelsFilter, defaultTimeRange, hideFilters]);
 
   // we need to call this to sync the url with the scene state
   const isUrlSyncInitialized = useUrlSync(scene);
