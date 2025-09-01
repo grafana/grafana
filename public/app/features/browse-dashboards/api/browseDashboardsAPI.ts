@@ -100,7 +100,6 @@ export const browseDashboardsAPI = createApi({
       }),
       onQueryStarted: ({ parentUid }, { queryFulfilled, dispatch }) => {
         queryFulfilled.then(async ({ data: folder }) => {
-          await contextSrv.fetchUserPermissions();
           dispatch(
             refetchChildren({
               parentUID: parentUid,
