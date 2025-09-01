@@ -2,6 +2,7 @@ import { useCallback } from 'react';
 
 import { SelectableValue } from '@grafana/data';
 import { t } from '@grafana/i18n';
+import { config } from '@grafana/runtime';
 import { sceneGraph, SceneGridLayout } from '@grafana/scenes';
 import { RadioButtonGroup, Select } from '@grafana/ui';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
@@ -62,7 +63,13 @@ export function getDashboardGridItemOptions(gridItem: DashboardGridItem): Option
     )
   );
 
-  return [repeatCategory, conditionalRenderingCategory];
+  const options = [repeatCategory];
+
+  if (config.featureToggles.dashboardNewLayouts) {
+    options.push(conditionalRenderingCategory);
+  }
+
+  return options;
 }
 
 interface OptionComponentProps {
