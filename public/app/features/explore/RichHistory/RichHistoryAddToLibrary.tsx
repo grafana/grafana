@@ -16,10 +16,6 @@ type Props = {
 };
 
 export const RichHistoryAddToLibrary = ({ query }: Props) => {
-  if (contextSrv.hasRole('Viewer')) {
-    return null;
-  }
-
   const [hasBeenSaved, setHasBeenSaved] = useState(false);
   const { openDrawer, queryLibraryEnabled } = useQueryLibraryContext();
   const dispatch = useDispatch();
@@ -34,6 +30,10 @@ export const RichHistoryAddToLibrary = ({ query }: Props) => {
   };
 
   const buttonLabel = t('explore.rich-history-card.add-to-library', 'Save query');
+
+  if (contextSrv.hasRole('Viewer')) {
+    return null;
+  }
 
   return queryLibraryEnabled && !hasBeenSaved ? (
     <>
@@ -56,5 +56,5 @@ export const RichHistoryAddToLibrary = ({ query }: Props) => {
         {buttonLabel}
       </Button>
     </>
-  ) : undefined;
+  ) : null;
 };
