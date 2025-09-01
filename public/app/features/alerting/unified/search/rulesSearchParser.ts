@@ -1,5 +1,5 @@
 import { PromAlertingRuleState, PromRuleType, isPromAlertingRuleState } from '../../../../types/unified-alerting-dto';
-import { getRuleHealth, isPromRuleType } from '../utils/rules';
+import { getRuleHealth, getRuleSource, isPromRuleType } from '../utils/rules';
 
 import * as terms from './search.terms';
 import {
@@ -23,7 +23,7 @@ export interface RulesFilter {
   dashboardUid?: string;
   plugins?: 'hide';
   contactPoint?: string | null;
-  ruleSource?: 'grafana' | 'external';
+  ruleSource?: RuleSource;
 }
 
 const filterSupportedTerms: FilterSupportedTerm[] = [
@@ -38,6 +38,7 @@ const filterSupportedTerms: FilterSupportedTerm[] = [
   FilterSupportedTerm.dashboard,
   FilterSupportedTerm.plugins,
   FilterSupportedTerm.contactPoint,
+  FilterSupportedTerm.source,
 ];
 
 export enum RuleHealth {
@@ -45,6 +46,11 @@ export enum RuleHealth {
   Error = 'error',
   NoData = 'nodata',
   Unknown = 'unknown',
+}
+
+export enum RuleSource {
+  Grafana = 'grafana',
+  External = 'external',
 }
 
 // Define how to map parsed tokens into the filter object
@@ -63,18 +69,7 @@ export function getSearchFilterFromQuery(query: string): RulesFilter {
     [terms.DashboardToken]: (value) => (filter.dashboardUid = value),
     [terms.PluginsToken]: (value) => (filter.plugins = value === 'hide' ? value : undefined),
     [terms.ContactPointToken]: (value) => (filter.contactPoint = value),
-    [terms.FreeFormExpression]: (value) => {
-      const lower = value.toLowerCase();
-      if (lower === 'source:grafana') {
-        filter.ruleSource = 'grafana';
-        return;
-      }
-      if (lower === 'source:external') {
-        filter.ruleSource = 'external';
-        return;
-      }
-      filter.freeFormWords.push(value);
-    },
+    [terms.RuleSourceToken]: (value) => (filter.ruleSource = getRuleSource(value)),
   };
 
   parseQueryToFilter(query, filterSupportedTerms, tokenToFilterMap);
