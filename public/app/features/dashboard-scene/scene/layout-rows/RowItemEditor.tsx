@@ -17,7 +17,8 @@ import { useEditPaneInputAutoFocus } from '../layouts-shared/utils';
 import { RowItem } from './RowItem';
 
 export function useEditOptions(this: RowItem, isNewElement: boolean): OptionsPaneCategoryDescriptor[] {
-  const { layout } = this.useState();
+  const model = this;
+  const { layout } = model.useState();
 
   const rowCategory = useMemo(
     () =>
@@ -27,47 +28,54 @@ export function useEditOptions(this: RowItem, isNewElement: boolean): OptionsPan
             title: '',
             id: 'dash-row-title',
             skipField: true,
-            render: () => <RowTitleInput row={this} isNewElement={isNewElement} />,
+            render: () => <RowTitleInput row={model} isNewElement={isNewElement} />,
           })
         )
         .addItem(
           new OptionsPaneItemDescriptor({
             title: t('dashboard.rows-layout.row-options.row.fill-screen', 'Fill screen'),
             id: 'dash-row-fill-screen',
-            render: (descriptor) => <FillScreenSwitch id={descriptor.props.id} row={this} />,
+            render: (descriptor) => <FillScreenSwitch id={descriptor.props.id} row={model} />,
           })
         )
         .addItem(
           new OptionsPaneItemDescriptor({
             title: t('dashboard.rows-layout.row-options.row.hide-header', 'Hide row header'),
             id: 'dash-row-hide-header',
-            render: (descriptor) => <RowHeaderSwitch id={descriptor.props.id} row={this} />,
+            render: (descriptor) => <RowHeaderSwitch id={descriptor.props.id} row={model} />,
           })
         ),
-    [isNewElement]
+    [isNewElement, model]
   );
 
-  const repeatCategory = new OptionsPaneCategoryDescriptor({
-    title: t('dashboard.rows-layout.row-options.repeat.title', 'Repeat options'),
-    id: 'dash-row-repeat',
-    isOpenDefault: false,
-  }).addItem(
-    new OptionsPaneItemDescriptor({
-      title: t('dashboard.rows-layout.row-options.repeat.variable.title', 'Repeat by variable'),
-      id: 'dash-row-repeat-by-variable',
-      description: t(
-        'dashboard.rows-layout.row-options.repeat.variable.description',
-        'Repeat this row for each value in the selected variable.'
+  const repeatCategory = useMemo(
+    () =>
+      new OptionsPaneCategoryDescriptor({
+        title: t('dashboard.rows-layout.row-options.repeat.title', 'Repeat options'),
+        id: 'dash-row-repeat',
+        isOpenDefault: false,
+      }).addItem(
+        new OptionsPaneItemDescriptor({
+          title: t('dashboard.rows-layout.row-options.repeat.variable.title', 'Repeat by variable'),
+          id: 'dash-row-repeat-by-variable',
+          description: t(
+            'dashboard.rows-layout.row-options.repeat.variable.description',
+            'Repeat this row for each value in the selected variable.'
+          ),
+          render: (descriptor) => <RowRepeatSelect id={descriptor.props.id} row={model} />,
+        })
       ),
-      render: (descriptor) => <RowRepeatSelect id={descriptor.props.id} row={this} />,
-    })
+    [model]
   );
 
   const layoutCategory = useLayoutCategory(layout);
 
   const editOptions = [rowCategory, ...layoutCategory, repeatCategory];
 
-  const conditionalRenderingCategory = useConditionalRenderingEditor(this.state.conditionalRendering);
+  const conditionalRenderingCategory = useMemo(
+    () => useConditionalRenderingEditor(model.state.conditionalRendering),
+    [model]
+  );
 
   if (conditionalRenderingCategory) {
     editOptions.push(conditionalRenderingCategory);
