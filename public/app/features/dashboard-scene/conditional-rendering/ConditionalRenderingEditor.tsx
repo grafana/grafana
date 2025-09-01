@@ -54,6 +54,7 @@ export function useConditionalRenderingEditor(
   }).addItem(
     new OptionsPaneItemDescriptor({
       title,
+      id: 'conditional-rendering-options-item',
       render: () => <conditionalRenderingToRender.Component model={conditionalRenderingToRender} />,
     })
   );

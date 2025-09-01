@@ -86,7 +86,7 @@ func runTestSearchBackendBuildIndex(t *testing.T, backend resource.SearchBackend
 			return 0, err
 		}
 		return 1, nil
-	}, nil)
+	}, nil, false, false)
 	require.NoError(t, err)
 	require.NotNil(t, index)
 
@@ -152,7 +152,7 @@ func runTestResourceIndex(t *testing.T, backend resource.SearchBackend, nsPrefix
 		})
 		require.NoError(t, err)
 		return int64(2), nil
-	}, nil)
+	}, nil, false, false)
 	require.NoError(t, err)
 	require.NotNil(t, index)
 
@@ -294,7 +294,7 @@ func runTestResourceIndex(t *testing.T, backend resource.SearchBackend, nsPrefix
 			})
 			require.NoError(t, err)
 			return int64(3), nil
-		}, nil)
+		}, nil, false, false)
 		require.NoError(t, err)
 		require.NotNil(t, index)
 
