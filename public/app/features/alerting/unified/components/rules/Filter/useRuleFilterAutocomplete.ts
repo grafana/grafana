@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from 'react';
+import { useCallback } from 'react';
 
 import { DataSourceInstanceSettings } from '@grafana/data';
 import { t } from '@grafana/i18n';
@@ -7,10 +7,14 @@ import { ComboboxOption } from '@grafana/ui';
 import { GrafanaPromRuleGroupDTO } from 'app/types/unified-alerting-dto';
 
 import { alertRuleApi } from '../../../api/alertRuleApi';
-import { featureDiscoveryApi } from '../../../api/featureDiscoveryApi';
 import { prometheusApi } from '../../../api/prometheusApi';
-import { shouldUsePrometheusRulesPrimary } from '../../../featureToggles';
 import { GRAFANA_RULES_SOURCE_NAME, getRulesDataSources } from '../../../utils/datasource';
+
+// Module-scope utilities
+const collator = new Intl.Collator();
+function getExternalRuleDataSources() {
+  return getRulesDataSources().filter((ds: DataSourceInstanceSettings) => !!ds?.url);
+}
 
 export function useNamespaceAndGroupOptions(): {
   namespaceOptions: (inputValue: string) => Promise<Array<ComboboxOption<string>>>;
@@ -22,12 +26,7 @@ export function useNamespaceAndGroupOptions(): {
   const [fetchGrafanaGroups] = prometheusApi.useLazyGetGrafanaGroupsQuery();
   const [fetchExternalGroups] = prometheusApi.useLazyGetGroupsQuery();
 
-  const externalDataSources = useMemo(
-    () => getRulesDataSources().filter((ds: DataSourceInstanceSettings) => !!ds?.url),
-    []
-  );
-  const collator = useMemo(() => new Intl.Collator(), []);
-
+  // Formats a raw namespace string into a user-friendly combobox option.
   const formatNamespaceOption = useCallback((namespaceName: string): ComboboxOption<string> => {
     if (namespaceName.includes('/') && (namespaceName.endsWith('.yml') || namespaceName.endsWith('.yaml'))) {
       const filename = namespaceName.split('/').pop() || namespaceName;
@@ -66,7 +65,7 @@ export function useNamespaceAndGroupOptions(): {
 
       // External namespaces
       const namespaceNameSet = new Set<string>();
-      const calls = externalDataSources.map((ds) =>
+      const calls = getExternalRuleDataSources().map((ds) =>
         fetchExternalGroups({
           ruleSource: { uid: ds.uid },
           excludeAlerts: true,
@@ -88,7 +87,7 @@ export function useNamespaceAndGroupOptions(): {
       const filtered = filterBySearch(options, inputValue);
       return filtered;
     },
-    [fetchGrafanaGroups, fetchExternalGroups, externalDataSources, formatNamespaceOption, collator]
+    [fetchGrafanaGroups, fetchExternalGroups, formatNamespaceOption]
   );
 
   const allGroupNames: string[] = [];
@@ -103,11 +102,7 @@ export function useLabelOptions(): {
   labelOptions: (inputValue: string) => Promise<Array<ComboboxOption<string>>>;
 } {
   // Use lazy queries so we only fetch when the dropdown is opened or the user types
-  const prometheusRulesPrimary = shouldUsePrometheusRulesPrimary();
-  const [discoverDsFeatures] = featureDiscoveryApi.useLazyDiscoverDsFeaturesQuery();
   const [fetchPromNamespaces] = alertRuleApi.useLazyPrometheusRuleNamespacesQuery();
-  const [fetchRulerRules] = alertRuleApi.useLazyRulerRulesQuery();
-  const collator = useMemo(() => new Intl.Collator(), []);
 
   const createInfoOption = useCallback((): ComboboxOption<string> => {
     return {
@@ -117,41 +112,25 @@ export function useLabelOptions(): {
     };
   }, []);
 
-  const toOptions = useCallback(
-    (labelsMap: Map<string, Set<string>>): Array<ComboboxOption<string>> => {
-      const selectable: Array<ComboboxOption<string>> = Array.from(labelsMap.entries()).flatMap(([key, values]) =>
-        Array.from(values).map<ComboboxOption<string>>((value) => ({
-          label: `${key}=${value}`,
-          value: `${key}=${value}`,
-        }))
-      );
+  const toOptions = useCallback((labelsMap: Map<string, Set<string>>): Array<ComboboxOption<string>> => {
+    const selectable: Array<ComboboxOption<string>> = Array.from(labelsMap.entries()).flatMap(([key, values]) =>
+      Array.from(values).map<ComboboxOption<string>>((value) => ({
+        label: `${key}=${value}`,
+        value: `${key}=${value}`,
+      }))
+    );
 
-      selectable.sort((a, b) => collator.compare(a.label ?? '', b.label ?? ''));
-      return selectable;
-    },
-    [collator]
-  );
+    selectable.sort((a, b) => collator.compare(a.label ?? '', b.label ?? ''));
+    return selectable;
+  }, []);
 
   const labelOptions = useCallback(
     async (inputValue: string): Promise<Array<ComboboxOption<string>>> => {
       // Fetch labels from the appropriate source lazily
-      let labelsMap = new Map<string, Set<string>>();
-
-      if (prometheusRulesPrimary) {
-        const namespaces = await fetchPromNamespaces({
-          ruleSourceName: GRAFANA_RULES_SOURCE_NAME,
-        }).unwrap();
-        labelsMap = namespacesToLabels(namespaces);
-      } else {
-        const features = await discoverDsFeatures({ rulesSourceName: GRAFANA_RULES_SOURCE_NAME }, true).unwrap();
-        if (!features?.rulerConfig) {
-          return [];
-        }
-        const rulerRules = await fetchRulerRules({
-          rulerConfig: features.rulerConfig,
-        }).unwrap();
-        labelsMap = rulerRulesToLabels(rulerRules);
-      }
+      const namespaces = await fetchPromNamespaces({
+        ruleSourceName: GRAFANA_RULES_SOURCE_NAME,
+      }).unwrap();
+      const labelsMap = namespacesToLabels(namespaces);
 
       const selectable = toOptions(labelsMap);
       if (selectable.length === 0) {
@@ -161,7 +140,7 @@ export function useLabelOptions(): {
       const options = [...selectable, createInfoOption()];
       return filterBySearch(options, inputValue, true);
     },
-    [prometheusRulesPrimary, fetchPromNamespaces, discoverDsFeatures, fetchRulerRules, toOptions, createInfoOption]
+    [fetchPromNamespaces, toOptions, createInfoOption]
   );
 
   return { labelOptions };
@@ -205,31 +184,7 @@ function namespacesToLabels(
   }, new Map<string, Set<string>>());
 }
 
-function rulerRulesToLabels(rulerConfig: Record<string, Array<{ rules: Array<{ labels?: Record<string, string> }> }>>) {
-  const rules = Object.values(rulerConfig)
-    .flatMap((groups) => groups)
-    .flatMap((group) => group.rules);
-
-  return rules.reduce((result, rule) => {
-    if (!rule.labels) {
-      return result;
-    }
-
-    Object.entries(rule.labels).forEach(([labelKey, labelValue]) => {
-      if (!labelKey || !labelValue) {
-        return;
-      }
-      const existing = result.get(labelKey);
-      if (existing) {
-        existing.add(labelValue);
-      } else {
-        result.set(labelKey, new Set([labelValue]));
-      }
-    });
-
-    return result;
-  }, new Map<string, Set<string>>());
-}
+// Removed rulerRulesToLabels since label autocomplete only uses Prometheus namespaces for simplicity
 
 function filterBySearch(options: Array<ComboboxOption<string>>, inputValue: string, keepInfoOption = false) {
   const search = (inputValue ?? '').toLowerCase();
