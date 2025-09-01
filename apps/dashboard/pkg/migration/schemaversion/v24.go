@@ -165,7 +165,7 @@ import (
 //                     {
 //                         "matcher": { "id": "byName", "options": "Hidden" },
 //                         "properties": [
-//                             { "id": "custom.hidden", "value": true }
+//                             { "id": "custom.hideFrom.viz", "value": true }
 //                         ]
 //                     }
 //                 ]
@@ -227,7 +227,7 @@ func (m *v24Migrator) migrate(dashboard map[string]interface{}) error {
 		// Find if the panel plugin exists
 		tablePanelPlugin := m.panelProvider.GetPanelPlugin("table")
 		if tablePanelPlugin.ID == "" {
-			return NewMigrationError("table panel plugin not found when migrating dashboard to schema version 24", 24, LATEST_VERSION)
+			return NewMigrationError("table panel plugin not found when migrating dashboard to schema version 24", 24, LATEST_VERSION, "V24")
 		}
 		panelMap["pluginVersion"] = tablePanelPlugin.Version
 		err := tablePanelChangedHandler(panelMap)
@@ -436,7 +436,7 @@ func migrateTableStyleToOverride(style map[string]interface{}) map[string]interf
 	// Handle hidden type
 	if styleType, ok := style["type"].(string); ok && styleType == "hidden" {
 		properties = append(properties, map[string]interface{}{
-			"id":    "custom.hidden",
+			"id":    "custom.hideFrom.viz",
 			"value": true,
 		})
 	}

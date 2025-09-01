@@ -534,13 +534,6 @@ var (
 			FrontendOnly: false,
 		},
 		{
-			Name:         "prometheusCodeModeMetricNamesSearch",
-			Description:  "Enables search for metric names in Code Mode, to improve performance when working with an enormous number of metric names",
-			FrontendOnly: true,
-			Stage:        FeatureStageExperimental,
-			Owner:        grafanaOSSBigTent,
-		},
-		{
 			Name:         "addFieldFromCalculationStatFunctions",
 			Description:  "Add cumulative and window functions to the add field from calculation transformation",
 			Stage:        FeatureStageGeneralAvailability,
@@ -834,13 +827,6 @@ var (
 			RequiresRestart: true,
 		},
 		{
-			Name:            "expressionParser",
-			Description:     "Enable new expression parser",
-			Stage:           FeatureStageExperimental,
-			Owner:           grafanaAppPlatformSquad,
-			RequiresRestart: true,
-		},
-		{
 			Name:              "groupByVariable",
 			Description:       "Enable groupBy variable support in scenes dashboards",
 			Stage:             FeatureStageExperimental,
@@ -1068,13 +1054,6 @@ var (
 			Expression:  "true", // enabled by default
 		},
 		{
-			Name:         "tableNextGen",
-			Description:  "Allows access to the new react-data-grid based table component.",
-			Stage:        FeatureStagePublicPreview,
-			Owner:        grafanaDatavizSquad,
-			FrontendOnly: true,
-		},
-		{
 			Name:         "alertingPrometheusRulesPrimary",
 			Description:  "Uses Prometheus rules as the primary source of truth for ruler-enabled data sources",
 			Stage:        FeatureStageExperimental,
@@ -1299,6 +1278,15 @@ var (
 		{
 			Name:              "alertingAIGenTemplates",
 			Description:       "Enable AI-generated alerting templates.",
+			Stage:             FeatureStageExperimental,
+			Owner:             grafanaAlertingSquad,
+			HideFromAdminPage: true,
+			HideFromDocs:      true,
+			Expression:        "false",
+		},
+		{
+			Name:              "alertingEnrichmentPerRule",
+			Description:       "Enable enrichment per rule in the alerting UI.",
 			Stage:             FeatureStageExperimental,
 			Owner:             grafanaAlertingSquad,
 			HideFromAdminPage: true,
@@ -1574,13 +1562,6 @@ var (
 			Owner:             grafanaSearchAndStorageSquad,
 			HideFromAdminPage: true,
 			HideFromDocs:      true,
-		},
-		{
-			Name:         "extensionSidebar",
-			Description:  "Enables the extension sidebar",
-			Stage:        FeatureStageExperimental,
-			FrontendOnly: true,
-			Owner:        grafanaObservabilityLogsSquad,
 		},
 		{
 			Name:              "alertingRulePermanentlyDelete",
@@ -1881,6 +1862,15 @@ var (
 			Owner:             grafanaAlertingSquad,
 			HideFromAdminPage: true,
 			HideFromDocs:      true,
+		},
+		{
+			Name:              "restrictedPluginApis",
+			Description:       "Enables sharing a list of APIs with a list of plugins",
+			Stage:             FeatureStageExperimental,
+			Owner:             grafanaPluginsPlatformSquad,
+			HideFromAdminPage: true,
+			HideFromDocs:      true,
+			FrontendOnly:      true,
 			Expression:        "false",
 		},
 		{
@@ -1928,6 +1918,24 @@ var (
 			Stage:        FeatureStageExperimental,
 			FrontendOnly: false,
 			Owner:        grafanaFrontendSearchNavOrganise,
+			Expression:   "false",
+		},
+		{
+			Name:              "alertingTriage",
+			Description:       "Enables the alerting triage feature",
+			Stage:             FeatureStageExperimental,
+			FrontendOnly:      true,
+			Owner:             grafanaAlertingSquad,
+			HideFromDocs:      true,
+			HideFromAdminPage: true,
+			Expression:        "false",
+		},
+		{
+			Name:         "graphiteBackendMode",
+			Description:  "Enables the Graphite data source full backend mode",
+			Stage:        FeatureStagePrivatePreview,
+			FrontendOnly: false,
+			Owner:        grafanaPartnerPluginsSquad,
 			Expression:   "false",
 		},
 		{
