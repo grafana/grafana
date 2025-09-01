@@ -73,6 +73,7 @@ func runJobController(opts standalone.BuildInfo, c *cli.Context, cfg *setting.Cf
 	})).With("logger", "provisioning-job-controller")
 	logger.Info("Starting provisioning job controller")
 
+	// FIXME: we should create providers that can be used here, and API server
 	controllerCfg, err := setupFromConfig(cfg)
 	if err != nil {
 		return fmt.Errorf("failed to setup operator: %w", err)
@@ -203,7 +204,6 @@ func runJobController(opts standalone.BuildInfo, c *cli.Context, cfg *setting.Cf
 	}
 
 	// This is basically our own JobQueue system
-	// TODO: Add repository getter
 	driver, err := jobs.NewConcurrentJobDriver(
 		3,              // 3 drivers for now
 		20*time.Minute, // Max time for each job
