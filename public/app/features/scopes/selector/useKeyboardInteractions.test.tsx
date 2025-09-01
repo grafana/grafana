@@ -37,10 +37,10 @@ describe('useKeyboardInteraction', () => {
     jest.clearAllMocks();
   });
 
-  it('should initialize with highlightedIndex as -1', () => {
+  it('should initialize with no highlightedId', () => {
     const { result } = renderHook(() => useKeyboardInteraction(true, mockItems, '', mockOnSelect));
 
-    expect(result.current.highlightedIndex).toBe(-1);
+    expect(result.current.highlightedId).toBeUndefined();
   });
 
   it('should add and remove event listeners correctly', () => {
@@ -60,7 +60,7 @@ describe('useKeyboardInteraction', () => {
       // Try to navigate with arrow keys
       await user.keyboard('{ArrowDown}');
 
-      expect(result.current.highlightedIndex).toBe(-1);
+      expect(result.current.highlightedId).toBeUndefined();
     });
   });
 
@@ -74,74 +74,59 @@ describe('useKeyboardInteraction', () => {
       // Try to navigate with arrow keys
       await user.keyboard('{ArrowDown}');
 
-      expect(result.current.highlightedIndex).toBe(-1);
+      expect(result.current.highlightedId).toBeUndefined();
     });
   });
 
   describe('ArrowDown key', () => {
-    it('should increment highlighted index', async () => {
+    it('should move highlight to first item', async () => {
       const { result } = renderHook(() => useKeyboardInteraction(true, mockItems, '', mockOnSelect));
 
-      // Focus the input to enable keyboard events
       await user.click(inputElement);
-
-      // Press ArrowDown
       await user.keyboard('{ArrowDown}');
 
-      expect(result.current.highlightedIndex).toBe(0);
+      expect(result.current.highlightedId).toBe('item1');
     });
 
-    it('should wrap around to 0 when reaching the end', async () => {
+    it('should wrap around to first when reaching the end', async () => {
       const { result } = renderHook(() => useKeyboardInteraction(true, mockItems, '', mockOnSelect));
 
-      // Focus the input to enable keyboard events
       await user.click(inputElement);
+      await user.keyboard('{ArrowDown}');
+      await user.keyboard('{ArrowDown}');
+      await user.keyboard('{ArrowDown}');
+      expect(result.current.highlightedId).toBe('item3');
 
-      // Navigate to last item (need 3 ArrowDown presses: -1 -> 0 -> 1 -> 2)
-      await user.keyboard('{ArrowDown}');
-      await user.keyboard('{ArrowDown}');
-      await user.keyboard('{ArrowDown}');
-      expect(result.current.highlightedIndex).toBe(2);
-
-      // Press ArrowDown again to wrap around
       await user.keyboard('{ArrowDown}');
 
-      expect(result.current.highlightedIndex).toBe(0);
+      expect(result.current.highlightedId).toBe('item1');
     });
   });
 
   describe('ArrowUp key', () => {
-    it('should decrement highlighted index', async () => {
+    it('should decrement highlighted item', async () => {
       const { result } = renderHook(() => useKeyboardInteraction(true, mockItems, '', mockOnSelect));
 
-      // Focus the input to enable keyboard events
       await user.click(inputElement);
-
-      // Navigate to middle item first
       await user.keyboard('{ArrowDown}');
       await user.keyboard('{ArrowDown}');
-      expect(result.current.highlightedIndex).toBe(1);
+      expect(result.current.highlightedId).toBe('item2');
 
-      // Press ArrowUp
       await user.keyboard('{ArrowUp}');
 
-      expect(result.current.highlightedIndex).toBe(0);
+      expect(result.current.highlightedId).toBe('item1');
     });
 
-    it('should wrap around to last item when going below 0', async () => {
+    it('should wrap around to last item when going above first', async () => {
       const { result } = renderHook(() => useKeyboardInteraction(true, mockItems, '', mockOnSelect));
 
-      // Focus the input to enable keyboard events
       await user.click(inputElement);
-
-      // Navigate to first item
       await user.keyboard('{ArrowDown}');
-      expect(result.current.highlightedIndex).toBe(0);
+      expect(result.current.highlightedId).toBe('item1');
 
-      // Press ArrowUp to wrap around
       await user.keyboard('{ArrowUp}');
 
-      expect(result.current.highlightedIndex).toBe(2);
+      expect(result.current.highlightedId).toBe('item3');
     });
   });
 
@@ -149,29 +134,20 @@ describe('useKeyboardInteraction', () => {
     it('should call onSelect with SELECT action when item is highlighted', async () => {
       const { result } = renderHook(() => useKeyboardInteraction(true, mockItems, '', mockOnSelect));
 
-      // Focus the input to enable keyboard events
       await user.click(inputElement);
-
-      // Navigate to an item
       await user.keyboard('{ArrowDown}');
-      expect(result.current.highlightedIndex).toBe(0);
+      expect(result.current.highlightedId).toBe('item1');
 
-      // Press Enter
       await user.keyboard('{Enter}');
 
-      expect(mockOnSelect).toHaveBeenCalledWith(0, KeyboardAction.SELECT);
+      expect(mockOnSelect).toHaveBeenCalledWith('item1', KeyboardAction.SELECT);
     });
 
     it('should not call onSelect when no item is highlighted', async () => {
-      const { result } = renderHook(() => useKeyboardInteraction(true, mockItems, '', mockOnSelect));
+      renderHook(() => useKeyboardInteraction(true, mockItems, '', mockOnSelect));
 
-      // Focus the input to enable keyboard events
       await user.click(inputElement);
 
-      // Ensure no item is highlighted
-      expect(result.current.highlightedIndex).toBe(-1);
-
-      // Press Enter
       await user.keyboard('{Enter}');
 
       expect(mockOnSelect).not.toHaveBeenCalled();
@@ -182,30 +158,22 @@ describe('useKeyboardInteraction', () => {
     it('should call onSelect with EXPAND action for expandable items', async () => {
       const { result } = renderHook(() => useKeyboardInteraction(true, mockItems, '', mockOnSelect));
 
-      // Focus the input to enable keyboard events
       await user.click(inputElement);
 
-      // Navigate to expandable item (index 1)
       await user.keyboard('{ArrowDown}');
       await user.keyboard('{ArrowDown}');
-      expect(result.current.highlightedIndex).toBe(1);
+      expect(result.current.highlightedId).toBe('item2');
 
-      // Press ArrowRight
       await user.keyboard('{ArrowRight}');
 
-      expect(mockOnSelect).toHaveBeenCalledWith(1, KeyboardAction.EXPAND);
+      expect(mockOnSelect).toHaveBeenCalledWith('item2', KeyboardAction.EXPAND);
     });
 
     it('should not call onSelect when no item is highlighted', async () => {
-      const { result } = renderHook(() => useKeyboardInteraction(true, mockItems, '', mockOnSelect));
+      renderHook(() => useKeyboardInteraction(true, mockItems, '', mockOnSelect));
 
-      // Focus the input to enable keyboard events
       await user.click(inputElement);
 
-      // Ensure no item is highlighted
-      expect(result.current.highlightedIndex).toBe(-1);
-
-      // Press ArrowRight
       await user.keyboard('{ArrowRight}');
 
       expect(mockOnSelect).not.toHaveBeenCalled();
@@ -213,44 +181,38 @@ describe('useKeyboardInteraction', () => {
   });
 
   describe('Escape key', () => {
-    it('should reset highlighted index to -1', async () => {
+    it('should reset highlighted id to undefined', async () => {
       const { result } = renderHook(() => useKeyboardInteraction(true, mockItems, '', mockOnSelect));
 
-      // Focus the input to enable keyboard events
       await user.click(inputElement);
 
-      // Navigate to an item
       await user.keyboard('{ArrowDown}');
-      expect(result.current.highlightedIndex).toBe(0);
+      expect(result.current.highlightedId).toBe('item1');
 
-      // Press Escape
       await user.keyboard('{Escape}');
 
-      expect(result.current.highlightedIndex).toBe(-1);
+      expect(result.current.highlightedId).toBeUndefined();
     });
   });
 
   describe('other keys', () => {
-    it('should not affect highlighted index for non-handled keys', async () => {
+    it('should not affect highlight for non-handled keys', async () => {
       const { result } = renderHook(() => useKeyboardInteraction(true, mockItems, '', mockOnSelect));
 
-      // Focus the input to enable keyboard events
       await user.click(inputElement);
 
-      // Navigate to an item
       await user.keyboard('{ArrowDown}');
-      expect(result.current.highlightedIndex).toBe(0);
+      expect(result.current.highlightedId).toBe('item1');
 
-      // Press Tab (non-handled key)
       await user.keyboard('{Tab}');
 
-      expect(result.current.highlightedIndex).toBe(0);
+      expect(result.current.highlightedId).toBe('item1');
       expect(mockOnSelect).not.toHaveBeenCalled();
     });
   });
 
   describe('useEffect behaviors', () => {
-    it('should reset highlighted index when items length changes to 0', () => {
+    it('should reset highlighted id when items length changes to 0', () => {
       const { result, rerender } = renderHook(
         ({ items, enabled, searchQuery, onSelect }) => useKeyboardInteraction(enabled, items, searchQuery, onSelect),
         {
@@ -263,14 +225,6 @@ describe('useKeyboardInteraction', () => {
         }
       );
 
-      // Set highlighted index by simulating navigation
-      rerender({
-        items: mockItems,
-        enabled: true,
-        searchQuery: '',
-        onSelect: mockOnSelect,
-      });
-
       // Rerender with empty items
       rerender({
         items: [],
@@ -279,10 +233,10 @@ describe('useKeyboardInteraction', () => {
         onSelect: mockOnSelect,
       });
 
-      expect(result.current.highlightedIndex).toBe(-1);
+      expect(result.current.highlightedId).toBeUndefined();
     });
 
-    it('should reset highlighted index when search query changes', () => {
+    it('should reset highlighted id when search query changes', () => {
       const { result, rerender } = renderHook(
         ({ items, enabled, searchQuery, onSelect }) => useKeyboardInteraction(enabled, items, searchQuery, onSelect),
         {
@@ -303,7 +257,7 @@ describe('useKeyboardInteraction', () => {
         onSelect: mockOnSelect,
       });
 
-      expect(result.current.highlightedIndex).toBe(-1);
+      expect(result.current.highlightedId).toBeUndefined();
     });
   });
 
@@ -312,20 +266,16 @@ describe('useKeyboardInteraction', () => {
       const singleItem = [createMockTreeNode('single')];
       const { result } = renderHook(() => useKeyboardInteraction(true, singleItem, '', mockOnSelect));
 
-      // Focus the input to enable keyboard events
       await user.click(inputElement);
 
-      // Test ArrowDown
       await user.keyboard('{ArrowDown}');
-      expect(result.current.highlightedIndex).toBe(0);
+      expect(result.current.highlightedId).toBe('single');
 
-      // Test ArrowDown again (should wrap around)
       await user.keyboard('{ArrowDown}');
-      expect(result.current.highlightedIndex).toBe(0);
+      expect(result.current.highlightedId).toBe('single');
 
-      // Test ArrowUp (should wrap around)
       await user.keyboard('{ArrowUp}');
-      expect(result.current.highlightedIndex).toBe(0);
+      expect(result.current.highlightedId).toBe('single');
     });
   });
 });

@@ -10,12 +10,12 @@ export enum KeyboardAction {
 
 // Handles keyboard interactions for the scopes tree
 // onSelect is the function to call when an option is selected
-// Returns the highlighted index
+// Returns the highlighted node id
 export function useKeyboardInteraction(
   enabled: boolean,
   items: TreeNode[],
   searchQuery: string,
-  onSelect: (index: number, action: KeyboardAction) => void
+  onSelect: (nodeId: string | undefined, action: KeyboardAction) => void
 ) {
   const [highlightedIndex, setHighlightedIndex] = useState<number>(-1);
 
@@ -47,7 +47,7 @@ export function useKeyboardInteraction(
           event.preventDefault();
 
           if (highlightedIndex !== -1) {
-            onSelect(highlightedIndex, KeyboardAction.SELECT);
+            onSelect(items[highlightedIndex]?.scopeNodeId, KeyboardAction.SELECT);
           }
           break;
         // Handle Expand action
@@ -56,7 +56,7 @@ export function useKeyboardInteraction(
           if (highlightedIndex !== -1) {
             // Send an expand action here and let onSelect determine if the node actually is expandable
             event.preventDefault();
-            onSelect(highlightedIndex, KeyboardAction.EXPAND);
+            onSelect(items[highlightedIndex]?.scopeNodeId, KeyboardAction.EXPAND);
           }
 
           break;
@@ -89,5 +89,7 @@ export function useKeyboardInteraction(
     setHighlightedIndex(-1);
   }, [searchQuery, enabled]);
 
-  return { highlightedIndex };
+  const highlightedId = highlightedIndex === -1 ? undefined : items[highlightedIndex]?.scopeNodeId;
+
+  return { highlightedId };
 }

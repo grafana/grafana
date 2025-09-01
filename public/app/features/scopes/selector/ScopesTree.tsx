@@ -75,16 +75,14 @@ export function ScopesTree({
   const [searchFocused, setSearchFocused] = useState(false);
 
   // Use the same highlighting for the two different lists
-  const { highlightedIndex } = useKeyboardInteraction(
+  const { highlightedId } = useKeyboardInteraction(
     searchFocused,
     [...selectedNodesToShow, ...childrenArray],
     searchFocused ? tree.query : '',
-    (index: number, action: KeyboardAction) => {
-      // The highlight index is for both lists, hence we need to do some trickery to get the correct item from the different lists
-      const nodeId =
-        index >= selectedNodesToShow.length
-          ? childrenArray[index - selectedNodesToShow.length].scopeNodeId
-          : selectedNodesToShow[index].scopeNodeId;
+    (nodeId: string | undefined, action: KeyboardAction) => {
+      if (!nodeId) {
+        return;
+      }
 
       //Handle container expand/collapse
 
@@ -109,16 +107,6 @@ export function ScopesTree({
     }
   );
 
-  const getHighlightedId = (index: number) => {
-    if (index === -1) {
-      return undefined;
-    }
-    if (index >= selectedNodesToShow.length) {
-      return childrenArray[index - selectedNodesToShow.length]?.scopeNodeId;
-    }
-    return selectedNodesToShow[index]?.scopeNodeId;
-  };
-
   // Used as a label and placeholder for search field
   const nodeTitle = scopeNodes[tree.scopeNodeId]?.spec?.title || '';
   const searchArea = tree.scopeNodeId === '' ? '' : nodeTitle;
@@ -133,7 +121,7 @@ export function ScopesTree({
         onNodeUpdate={onNodeUpdate}
         treeNode={tree}
         aria-controls={`${selectedNodesToShowId} ${childrenArrayId}`}
-        aria-activedescendant={getTreeItemElementId(getHighlightedId(highlightedIndex))}
+        aria-activedescendant={getTreeItemElementId(highlightedId)}
         onFocus={() => setSearchFocused(true)}
         onBlur={() => setSearchFocused(false)}
       />
@@ -159,7 +147,7 @@ export function ScopesTree({
             selectScope={selectScope}
             deselectScope={deselectScope}
             maxHeight={`${Math.min(5, selectedNodesToShow.length) * 30}px`}
-            highlightedIndex={highlightedIndex}
+            highlightedId={highlightedId}
             id={selectedNodesToShowId}
           />
 
@@ -181,7 +169,7 @@ export function ScopesTree({
             selectScope={selectScope}
             deselectScope={deselectScope}
             maxHeight={'100%'}
-            highlightedIndex={highlightedIndex - selectedNodesToShow.length}
+            highlightedId={highlightedId}
             id={childrenArrayId}
           />
         </>
