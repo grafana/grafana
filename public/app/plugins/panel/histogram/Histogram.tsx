@@ -204,13 +204,7 @@ const prepConfig = (frame: DataFrame, theme: GrafanaTheme2) => {
       y: false,
       setScale: true,
     },
-    dataIdx: (u, _, closestIdx, xValue) => {
-      let xTiker = u.data[0][closestIdx];
-      if (xValue < xTiker) {
-        closestIdx -= 1;
-      }
-      return closestIdx;
-    },
+    dataIdx: (u, _, closestIdx, xValue) => (xValue < u.data[0][closestIdx] ? closestIdx - 1 : closestIdx),
   });
 
   let stackingGroups = getStackingGroups(xMinOnlyFrame(frame));
