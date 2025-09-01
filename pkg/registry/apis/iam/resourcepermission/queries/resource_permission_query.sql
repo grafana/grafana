@@ -13,7 +13,7 @@ LEFT JOIN {{ .Ident .UserTable }} u ON ur.user_id = u.id
 LEFT JOIN {{ .Ident .TeamRoleTable }} tr ON r.id = tr.role_id AND tr.org_id = r.org_id
 LEFT JOIN {{ .Ident .TeamTable }} t ON tr.team_id = t.id
 LEFT JOIN {{ .Ident .BuiltinRoleTable }} br ON r.id = br.role_id
-WHERE r.name LIKE {{ .Arg .ManagedRolePrefix }}
+WHERE r.name LIKE {{ .Arg .ManagedRolePattern }}
 {{ if .Query.ActionSets }}
 AND p.action IN ({{ .ArgList .Query.ActionSets }})
 {{ end }}

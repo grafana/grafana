@@ -19,16 +19,16 @@ func TestListResourcePermissionsQuery(t *testing.T) {
 
 	getListResourcePermissionsQuery := func(q *ListResourcePermissionsQuery) sqltemplate.SQLTemplate {
 		v := listResourcePermissionsQueryTemplate{
-			SQLTemplate:       sqltemplate.New(nodb.DialectForDriver()),
-			Query:             q,
-			PermissionTable:   nodb.Table("permission"),
-			RoleTable:         nodb.Table("role"),
-			UserTable:         nodb.Table("user"),
-			TeamTable:         nodb.Table("team"),
-			BuiltinRoleTable:  nodb.Table("builtin_role"),
-			UserRoleTable:     nodb.Table("user_role"),
-			TeamRoleTable:     nodb.Table("team_role"),
-			ManagedRolePrefix: "managed:%",
+			SQLTemplate:        sqltemplate.New(nodb.DialectForDriver()),
+			Query:              q,
+			PermissionTable:    nodb.Table("permission"),
+			RoleTable:          nodb.Table("role"),
+			UserTable:          nodb.Table("user"),
+			TeamTable:          nodb.Table("team"),
+			BuiltinRoleTable:   nodb.Table("builtin_role"),
+			UserRoleTable:      nodb.Table("user_role"),
+			TeamRoleTable:      nodb.Table("team_role"),
+			ManagedRolePattern: "managed:%",
 		}
 		v.SQLTemplate = mocks.NewTestingSQLTemplate()
 		return &v
