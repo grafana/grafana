@@ -112,6 +112,12 @@ export interface UnifiedAlertingConfig {
   stateHistory?: UnifiedAlertingStateHistoryConfig;
   recordingRulesEnabled?: boolean;
   defaultRecordingRulesTargetDatasourceUID?: string;
+
+  // Backward compatibility aliases - deprecated
+  /** @deprecated Use stateHistory.backend instead */
+  alertStateHistoryBackend?: string;
+  /** @deprecated Use stateHistory.primary instead */
+  alertStateHistoryPrimary?: string;
 }
 
 /** Supported OAuth services

@@ -101,10 +101,14 @@ type FrontendSettingsUnifiedAlertingStateHistoryDTO struct {
 }
 
 type FrontendSettingsUnifiedAlertingDTO struct {
-	MinInterval                              string `json:"minInterval"`
+	MinInterval                              string                                          `json:"minInterval"`
 	StateHistory                             *FrontendSettingsUnifiedAlertingStateHistoryDTO `json:"stateHistory,omitempty"`
-	RecordingRulesEnabled                    bool   `json:"recordingRulesEnabled"`
-	DefaultRecordingRulesTargetDatasourceUID string `json:"defaultRecordingRulesTargetDatasourceUID,omitempty"`
+	RecordingRulesEnabled                    bool                                            `json:"recordingRulesEnabled"`
+	DefaultRecordingRulesTargetDatasourceUID string                                          `json:"defaultRecordingRulesTargetDatasourceUID,omitempty"`
+
+	// Backward compatibility fields - deprecated
+	AlertStateHistoryBackend string `json:"alertStateHistoryBackend,omitempty"`
+	AlertStateHistoryPrimary string `json:"alertStateHistoryPrimary,omitempty"`
 }
 
 // Enterprise-only

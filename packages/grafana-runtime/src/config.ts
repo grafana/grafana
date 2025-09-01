@@ -194,6 +194,10 @@ export class GrafanaBootConfig {
     },
     recordingRulesEnabled: false,
     defaultRecordingRulesTargetDatasourceUID: undefined,
+
+    // Backward compatibility fields - populated by backend
+    alertStateHistoryBackend: undefined,
+    alertStateHistoryPrimary: undefined,
   };
   applicationInsightsConnectionString?: string;
   applicationInsightsEndpointUrl?: string;
