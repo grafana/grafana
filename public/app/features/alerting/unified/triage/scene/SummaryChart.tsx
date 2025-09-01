@@ -1,5 +1,5 @@
 import { PanelBuilders } from '@grafana/scenes';
-import { GraphDrawStyle, VisibilityMode } from '@grafana/schema';
+import { GraphDrawStyle, LineInterpolation, VisibilityMode } from '@grafana/schema';
 import { LegendDisplayMode, StackingMode, TooltipDisplayMode } from '@grafana/ui';
 
 import { overrideToFixedColor } from '../../home/Insights';
@@ -23,6 +23,7 @@ export const summaryChart = PanelBuilders.timeseries()
   .setCustomFieldConfig('fillOpacity', 30)
   .setCustomFieldConfig('stacking', { mode: StackingMode.None })
   .setCustomFieldConfig('showPoints', VisibilityMode.Never)
+  .setCustomFieldConfig('lineInterpolation', LineInterpolation.StepAfter)
   .setOption('legend', {
     showLegend: false,
     displayMode: LegendDisplayMode.Hidden,
