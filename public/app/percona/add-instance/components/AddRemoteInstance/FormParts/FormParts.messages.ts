@@ -29,6 +29,7 @@ export const Messages = {
         port: 'Port',
         username: 'Username',
         password: 'Password',
+        instanceID: 'Instance ID',
       },
       postgresqlDetails: {
         database: 'Database',
@@ -94,6 +95,7 @@ export const Messages = {
         serviceName: 'Service name (default: Hostname)',
         username: 'Username',
         password: 'Password',
+        instanceID: 'Instance ID',
       },
       postgresqlDetails: {
         database: 'Database (default: postgres)',
@@ -136,6 +138,7 @@ export const Messages = {
         port: 'Port your service is listening on',
         username: 'Your database user name',
         password: 'Your database password',
+        instanceID: 'Instance ID to use',
       },
       postgresqlDetails: {
         database: 'Database name',

@@ -31,7 +31,16 @@ export const MySQLConnectionDetails: FC<MainDetailsFormPartProps> = ({ form, rem
           tooltipText={Messages.form.tooltips.mainDetails.serviceName}
           placeholder={Messages.form.placeholders.mainDetails.serviceName}
         />
-        <div />
+        {remoteInstanceCredentials.isRDS ? (
+          <TextInputField
+            name="instance_id"
+            placeholder={Messages.form.placeholders.mainDetails.instanceID}
+            label={Messages.form.labels.mainDetails.instanceID}
+            tooltipText={Messages.form.tooltips.mainDetails.instanceID}
+          />
+        ) : (
+          <div />
+        )}
       </div>
       <NodesAgents form={form} />
       <div className={styles.group}>

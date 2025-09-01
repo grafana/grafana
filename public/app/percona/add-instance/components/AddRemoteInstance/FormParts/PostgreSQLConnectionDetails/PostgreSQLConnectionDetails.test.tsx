@@ -34,4 +34,42 @@ describe('PostgreSQL connection details:: ', () => {
 
     await waitFor(() => expect(screen.getByTestId('maxQueryLength-text-input')).toHaveValue('1000'));
   });
+
+  it('should show instance id field for RDS', async () => {
+    render(
+      <Provider store={configureStore()}>
+        <Form
+          onSubmit={jest.fn()}
+          render={() => (
+            <PostgreSQLConnectionDetails
+              remoteInstanceCredentials={{
+                isRDS: true,
+              }}
+            />
+          )}
+        />
+      </Provider>
+    );
+
+    await waitFor(() => expect(screen.queryByTestId('instance_id-text-input')).toBeDefined());
+  });
+
+  it("shouldn't show instance id field for non RDS", async () => {
+    render(
+      <Provider store={configureStore()}>
+        <Form
+          onSubmit={jest.fn()}
+          render={() => (
+            <PostgreSQLConnectionDetails
+              remoteInstanceCredentials={{
+                isRDS: false,
+              }}
+            />
+          )}
+        />
+      </Provider>
+    );
+
+    await waitFor(() => expect(screen.queryByTestId('instance_id-text-input')).toBeNull());
+  });
 });

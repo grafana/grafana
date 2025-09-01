@@ -143,10 +143,11 @@ export const toPayload = (values: any, discoverName?: string, type?: InstanceAva
     data.node_id = data.node.value;
   } else if (!values.isAzure && data.add_node === undefined) {
     data.add_node = {
-      node_name: data.service_name,
       node_type: 'NODE_TYPE_REMOTE_NODE',
     };
   }
+
+  data.node_name = data.service_name;
 
   if (values.isRDS && discoverName) {
     data.engine = discoverName;
