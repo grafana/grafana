@@ -3,7 +3,7 @@ import { UseFormRegister } from 'react-hook-form';
 import { TimeRange } from '@grafana/data';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors/src';
 import { Trans, t } from '@grafana/i18n';
-import { FieldSet, Label, Switch, TimeRangeInput, Stack, VerticalGroup } from '@grafana/ui';
+import { FieldSet, Label, Switch, TimeRangeInput, Stack } from '@grafana/ui';
 import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
 
 import { ConfigPublicDashboardForm } from './ConfigPublicDashboard';
@@ -24,7 +24,7 @@ export const Configuration = ({
   return (
     <>
       <FieldSet disabled={disabled}>
-        <VerticalGroup spacing="md">
+        <Stack direction="column" gap={1}>
           <Stack direction="column" gap={0.5} justifyContent="space-between">
             <Label
               description={t(
@@ -80,7 +80,7 @@ export const Configuration = ({
               <Trans i18nKey="public-dashboard.settings-configuration.show-annotations-label">Show annotations</Trans>
             </Label>
           </Stack>
-        </VerticalGroup>
+        </Stack>
       </FieldSet>
     </>
   );

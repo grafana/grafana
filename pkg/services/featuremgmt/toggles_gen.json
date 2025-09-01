@@ -2783,19 +2783,6 @@
     },
     {
       "metadata": {
-        "name": "queryServiceWithConnections",
-        "resourceVersion": "1756367172351",
-        "creationTimestamp": "2025-08-28T07:46:12Z"
-      },
-      "spec": {
-        "description": "Adds datasource connections to the query service",
-        "stage": "experimental",
-        "codeowner": "@grafana/grafana-datasources-core-services",
-        "requiresRestart": true
-      }
-    },
-    {
-      "metadata": {
         "name": "recordedQueriesMulti",
         "resourceVersion": "1753448760331",
         "creationTimestamp": "2023-06-14T12:34:22Z"
