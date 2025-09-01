@@ -323,6 +323,8 @@ jobs:
           retention-days: 1
 
   run-enterprise-oem-tests:
+    # Run this workflow for non-PR events (like pushes to `main` or `release-*`) OR for internal PRs (PRs not from forks)
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork == false
     needs:
       - build-grafana
     name: Enterprise OEM E2E tests
@@ -331,10 +333,13 @@ jobs:
       contents: read
 
     steps:
-      # TODO check out enterprise
       - uses: actions/checkout@v4
         with:
           persist-credentials: false
+      - name: Setup Enterprise
+        uses: ./.github/actions/setup-enterprise
+        with:
+          github-app-name: 'grafana-ci-bot'
       - uses: actions/download-artifact@v4
         with:
           name: grafana-tar-gz
@@ -352,6 +357,8 @@ jobs:
           retention-days: 1
 
   run-enterprise-tests:
+    # Run this workflow for non-PR events (like pushes to `main` or `release-*`) OR for internal PRs (PRs not from forks)
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork == false
     needs:
       - build-grafana
     name: Enterprise E2E tests
@@ -360,10 +367,13 @@ jobs:
       contents: read
 
     steps:
-      # TODO check out enterprise
       - uses: actions/checkout@v4
         with:
           persist-credentials: false
+      - name: Setup Enterprise
+        uses: ./.github/actions/setup-enterprise
+        with:
+          github-app-name: 'grafana-ci-bot'
       - uses: actions/download-artifact@v4
         with:
           name: grafana-tar-gz
@@ -376,7 +386,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         if: success() || failure()
         with:
-          name: playwright-enterprise-oem-${{ github.run_number }} --html-dir=./html-report
+          name: playwright-enterprise-${{ github.run_number }} --html-dir=./html-report
           path: ./html-report
           retention-days: 1
 
