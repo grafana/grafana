@@ -130,7 +130,7 @@ export class DashboardDatasource extends DataSourceApi<DashboardQuery> {
               ...field.config,
               // Enable AdHoc filtering for string and numeric fields only when feature toggle and per-panel setting are enabled
               filterable:
-                config.featureToggles.dashboardDsAdHocFiltering && query.useAdHocFilters
+                config.featureToggles.dashboardDsAdHocFiltering && query.adHocFiltersEnabled
                   ? field.type === FieldType.string || field.type === FieldType.number
                   : field.config.filterable,
             },
@@ -141,7 +141,7 @@ export class DashboardDatasource extends DataSourceApi<DashboardQuery> {
         };
       });
 
-      if (!config.featureToggles.dashboardDsAdHocFiltering || !query.useAdHocFilters || filters.length === 0) {
+      if (!config.featureToggles.dashboardDsAdHocFiltering || !query.adHocFiltersEnabled || filters.length === 0) {
         return [...series, ...annotations];
       }
 
@@ -350,7 +350,7 @@ export class DashboardDatasource extends DataSourceApi<DashboardQuery> {
     }
 
     // Check if any query has adhoc filters enabled
-    const hasAdHocFiltersEnabled = options?.queries?.some((query) => query.useAdHocFilters);
+    const hasAdHocFiltersEnabled = options?.queries?.some((query) => query.adHocFiltersEnabled);
 
     if (!hasAdHocFiltersEnabled) {
       return [];

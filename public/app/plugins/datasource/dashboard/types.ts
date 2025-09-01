@@ -4,7 +4,7 @@ export interface DashboardQuery extends DataQuery {
   panelId?: number;
   withTransforms?: boolean;
   topic?: DataTopic;
-  useAdHocFilters?: boolean;
+  adHocFiltersEnabled?: boolean;
 }
 
 export type ResultInfo = {

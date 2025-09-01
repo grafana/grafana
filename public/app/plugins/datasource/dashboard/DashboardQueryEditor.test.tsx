@@ -184,7 +184,7 @@ describe('DashboardQueryEditor', () => {
         config.featureToggles.dashboardDsAdHocFiltering = true;
       });
 
-      const query: DashboardQuery = { refId: 'A', panelId: 1, useAdHocFilters: false };
+      const query: DashboardQuery = { refId: 'A', panelId: 1, adHocFiltersEnabled: false };
 
       await act(async () => {
         render(
@@ -207,7 +207,7 @@ describe('DashboardQueryEditor', () => {
         config.featureToggles.dashboardDsAdHocFiltering = false;
       });
 
-      const query: DashboardQuery = { refId: 'A', panelId: 1, useAdHocFilters: false };
+      const query: DashboardQuery = { refId: 'A', panelId: 1, adHocFiltersEnabled: false };
 
       await act(async () => {
         render(

@@ -111,7 +111,7 @@ export function DashboardQueryEditor({ data, query, onChange, onRunQuery }: Prop
   const onAdHocFiltersToggle = useCallback(() => {
     onUpdateQuery({
       ...query,
-      useAdHocFilters: !query.useAdHocFilters,
+      adHocFiltersEnabled: !query.adHocFiltersEnabled,
     });
   }, [query, onUpdateQuery]);
 
@@ -206,8 +206,12 @@ export function DashboardQueryEditor({ data, query, onChange, onRunQuery }: Prop
           )}
 
           {config.featureToggles.dashboardDsAdHocFiltering && (
-            <Field label="AdHoc Filters" description="Allow dashboard adhoc filters to affect this panel" noMargin>
-              <InlineSwitch value={Boolean(query.useAdHocFilters)} onChange={onAdHocFiltersToggle} />
+            <Field
+              label="AdHoc Filters"
+              description="Apply ~~Dashboard~~ data source AdHoc filters to this panel"
+              noMargin
+            >
+              <InlineSwitch value={Boolean(query.adHocFiltersEnabled)} onChange={onAdHocFiltersToggle} />
             </Field>
           )}
         </Stack>
