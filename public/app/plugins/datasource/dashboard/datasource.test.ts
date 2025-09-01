@@ -340,6 +340,82 @@ describe('DashboardDatasource', () => {
         expect(result?.data[0].length).toBe(3);
       });
 
+      it('should apply filtering when useAdHocFilters is explicitly enabled', async () => {
+        const testFrame = createTestFrame([
+          { name: 'name', type: FieldType.string, values: ['John', 'Jane', 'Bob'] },
+          { name: 'age', type: FieldType.number, values: [25, 30, 35] },
+        ]);
+
+        const scene = new SceneFlexLayout({
+          children: [
+            new SceneFlexItem({
+              body: new VizPanel({
+                key: getVizPanelKeyForPanelId(1),
+                $data: new SceneDataNode({
+                  data: {
+                    series: [testFrame],
+                    state: LoadingState.Done,
+                    timeRange: getDefaultTimeRange(),
+                  },
+                }),
+              }),
+            }),
+          ],
+        });
+
+        const ds = new DashboardDatasource({} as DataSourceInstanceSettings);
+        const filters: AdHocVariableFilter[] = [{ key: 'name', operator: '=', value: 'John' }];
+
+        // Test with useAdHocFilters explicitly set to true
+        const observable = ds.query(createQueryRequest(filters, scene, true));
+
+        let result: DataQueryResponse | undefined;
+        observable.subscribe({ next: (data) => (result = data) });
+
+        // Should return filtered data since useAdHocFilters is enabled
+        expect(result?.data[0].fields[0].values).toEqual(['John']);
+        expect(result?.data[0].fields[1].values).toEqual([25]);
+        expect(result?.data[0].length).toBe(1);
+      });
+
+      it('should apply not-equal filtering when useAdHocFilters is enabled', async () => {
+        const testFrame = createTestFrame([
+          { name: 'name', type: FieldType.string, values: ['John', 'Jane', 'Bob'] },
+          { name: 'age', type: FieldType.number, values: [25, 30, 35] },
+        ]);
+
+        const scene = new SceneFlexLayout({
+          children: [
+            new SceneFlexItem({
+              body: new VizPanel({
+                key: getVizPanelKeyForPanelId(1),
+                $data: new SceneDataNode({
+                  data: {
+                    series: [testFrame],
+                    state: LoadingState.Done,
+                    timeRange: getDefaultTimeRange(),
+                  },
+                }),
+              }),
+            }),
+          ],
+        });
+
+        const ds = new DashboardDatasource({} as DataSourceInstanceSettings);
+        const filters: AdHocVariableFilter[] = [{ key: 'name', operator: '!=', value: 'John' }];
+
+        // Test with useAdHocFilters explicitly set to true
+        const observable = ds.query(createQueryRequest(filters, scene, true));
+
+        let result: DataQueryResponse | undefined;
+        observable.subscribe({ next: (data) => (result = data) });
+
+        // Should return filtered data excluding 'John'
+        expect(result?.data[0].fields[0].values).toEqual(['Jane', 'Bob']);
+        expect(result?.data[0].fields[1].values).toEqual([30, 35]);
+        expect(result?.data[0].length).toBe(2);
+      });
+
       it('should apply multiple filters with AND logic through public API', async () => {
         const testFrame = createTestFrame([
           { name: 'name', type: FieldType.string, values: ['John', 'Jane', 'Bob'] },

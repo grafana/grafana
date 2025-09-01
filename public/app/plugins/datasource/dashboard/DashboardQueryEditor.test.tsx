@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { getDefaultTimeRange, LoadingState } from '@grafana/data';
@@ -171,23 +171,60 @@ describe('DashboardQueryEditor', () => {
   });
 
   describe('AdHoc Filters Toggle', () => {
+    beforeEach(() => {
+      // Reset only the specific mocks we need, not all mocks
+      mockOnChange.mockClear();
+      mockOnRunQueries.mockClear();
+      // Re-establish the dashboard mock in case it was cleared
+      jest.spyOn(getDashboardSrv(), 'getCurrent').mockImplementation(() => mockDashboard);
+    });
+
     it('shows the AdHoc Filters toggle when feature toggle is enabled', async () => {
-      config.featureToggles.dashboardDsAdHocFiltering = true;
+      await act(async () => {
+        config.featureToggles.dashboardDsAdHocFiltering = true;
+      });
 
       const query: DashboardQuery = { refId: 'A', panelId: 1, useAdHocFilters: false };
 
-      render(
-        <DashboardQueryEditor
-          datasource={{} as DashboardDatasource}
-          query={query}
-          data={mockPanelData}
-          onChange={mockOnChange}
-          onRunQuery={mockOnRunQueries}
-        />
-      );
+      await act(async () => {
+        render(
+          <DashboardQueryEditor
+            datasource={{} as DashboardDatasource}
+            query={query}
+            data={mockPanelData}
+            onChange={mockOnChange}
+            onRunQuery={mockOnRunQueries}
+          />
+        );
+      });
 
       const adhocFiltersToggle = await screen.findByText('AdHoc Filters');
       expect(adhocFiltersToggle).toBeInTheDocument();
+    });
+
+    it('does not show the AdHoc Filters toggle when feature toggle is disabled', async () => {
+      await act(async () => {
+        config.featureToggles.dashboardDsAdHocFiltering = false;
+      });
+
+      const query: DashboardQuery = { refId: 'A', panelId: 1, useAdHocFilters: false };
+
+      await act(async () => {
+        render(
+          <DashboardQueryEditor
+            datasource={{} as DashboardDatasource}
+            query={query}
+            data={mockPanelData}
+            onChange={mockOnChange}
+            onRunQuery={mockOnRunQueries}
+          />
+        );
+      });
+
+      // Wait for any async operations to complete
+      await waitFor(() => {
+        expect(screen.queryByText('AdHoc Filters')).not.toBeInTheDocument();
+      });
     });
   });
 });
