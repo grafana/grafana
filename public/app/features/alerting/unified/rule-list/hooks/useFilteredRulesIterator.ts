@@ -1,4 +1,5 @@
 import { AsyncIterableX, from } from 'ix/asynciterable';
+import { empty } from 'ix/asynciterable/empty';
 import { merge } from 'ix/asynciterable/merge';
 import { catchError, concatMap, withAbort } from 'ix/asynciterable/operators';
 
@@ -77,7 +78,7 @@ export function useFilteredRulesIteratorProvider() {
           .filter(({ rule }) => ruleFilter(rule, normalizedFilterState))
           .map(({ group, rule }) => mapGrafanaRuleToRuleWithOrigin(group, rule))
       ),
-      catchError(() => emptyRulesIterable())
+      catchError(() => empty())
     );
 
     // Determine which data sources to use
@@ -102,7 +103,7 @@ export function useFilteredRulesIteratorProvider() {
               .filter(({ rule }) => ruleFilter(rule, normalizedFilterState))
               .map(({ group, rule }) => mapRuleToRuleWithOrigin(dataSourceIdentifier, group, rule))
           ),
-          catchError(() => emptyRulesIterable())
+          catchError(() => empty())
         );
 
         return promGroupsGenerator;
@@ -130,14 +131,10 @@ export function useFilteredRulesIteratorProvider() {
 
 function mergeIterables(iterables: Array<AsyncIterableX<RuleWithOrigin>>): AsyncIterableX<RuleWithOrigin> {
   if (iterables.length === 0) {
-    return emptyRulesIterable();
+    return empty();
   }
   const [firstIterable, ...rest] = iterables;
   return merge(firstIterable, ...rest);
-}
-
-function emptyRulesIterable(): AsyncIterableX<RuleWithOrigin> {
-  return from<RuleWithOrigin>([]);
 }
 
 /**
