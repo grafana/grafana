@@ -95,6 +95,7 @@ export const LogLineDetailsField = ({ field, log }: LogLineDetailsFieldProps) =>
           );
         })}
       </div>
+      {/** @todo: do we need to show the value? */}
       {false && (
         <div>
           <div className={styles.value}>
@@ -135,15 +136,6 @@ const getFieldStyles = (theme: GrafanaTheme2) => ({
   }),
   link: css({
     marginRight: theme.spacing(0.5),
-  }),
-  stats: css({
-    paddingRight: theme.spacing(1),
-    wordBreak: 'break-all',
-    width: '100%',
-    maxWidth: '50vh',
-  }),
-  statsColumn: css({
-    gridColumn: '2 / 4',
   }),
   valueContainer: css({
     display: 'flex',
