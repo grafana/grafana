@@ -74,6 +74,8 @@ refs:
 
 This tutorial is a continuation of the [Get started with Grafana Alerting - Grouping notifications](http://www.grafana.com/tutorials/alerting-get-started-pt3/) tutorial.
 
+{{< youtube id="9CSrQGKeZwQ" >}}
+
 In this tutorial, you will learn:
 
 - The two types of templates in Grafana Alerting: labels and annotations and notification templates.
