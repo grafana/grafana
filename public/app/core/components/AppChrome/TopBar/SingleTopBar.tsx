@@ -104,7 +104,7 @@ export const SingleTopBar = memo(function SingleTopBar({
             </Dropdown>
           )}
           <NavToolbarSeparator />
-          {!isSmallScreen && <ExtensionToolbarItem />}
+          {!isSmallScreen && <ExtensionToolbarItem compact={isSmallScreen} />}
           {!showToolbarLevel && actions}
           {!contextSrv.user.isSignedIn && <SignInLink />}
           <InviteUserButton />
