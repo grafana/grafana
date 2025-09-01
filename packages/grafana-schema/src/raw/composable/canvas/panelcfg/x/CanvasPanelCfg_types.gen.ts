@@ -114,6 +114,7 @@ export const defaultCanvasElementOptions: Partial<CanvasElementOptions> = {
 };
 
 export interface CanvasTooltip {
+  disableForOneClick?: boolean;
   mode: ui.TooltipDisplayMode;
 }
 

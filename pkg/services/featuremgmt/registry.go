@@ -1565,13 +1565,6 @@ var (
 			HideFromDocs:      true,
 		},
 		{
-			Name:         "extensionSidebar",
-			Description:  "Enables the extension sidebar",
-			Stage:        FeatureStageExperimental,
-			FrontendOnly: true,
-			Owner:        grafanaObservabilityLogsSquad,
-		},
-		{
 			Name:              "alertingRulePermanentlyDelete",
 			Description:       "Enables UI functionality to permanently delete alert rules",
 			FrontendOnly:      true,
@@ -1870,6 +1863,15 @@ var (
 			Owner:             grafanaAlertingSquad,
 			HideFromAdminPage: true,
 			HideFromDocs:      true,
+		},
+		{
+			Name:              "restrictedPluginApis",
+			Description:       "Enables sharing a list of APIs with a list of plugins",
+			Stage:             FeatureStageExperimental,
+			Owner:             grafanaPluginsPlatformSquad,
+			HideFromAdminPage: true,
+			HideFromDocs:      true,
+			FrontendOnly:      true,
 			Expression:        "false",
 		},
 		{
@@ -1918,6 +1920,16 @@ var (
 			FrontendOnly: false,
 			Owner:        grafanaFrontendSearchNavOrganise,
 			Expression:   "false",
+		},
+		{
+			Name:              "alertingTriage",
+			Description:       "Enables the alerting triage feature",
+			Stage:             FeatureStageExperimental,
+			FrontendOnly:      true,
+			Owner:             grafanaAlertingSquad,
+			HideFromDocs:      true,
+			HideFromAdminPage: true,
+			Expression:        "false",
 		},
 	}
 )
