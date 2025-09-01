@@ -24,7 +24,10 @@ func ProvideProvisioningOSSRepositoryExtras(
 	webhooksBuilder *webhooks.WebhookExtraBuilder,
 ) []repository.Extra {
 	return []repository.Extra{
-		local.Extra(cfg),
+		local.Extra(
+			cfg.HomePath,
+			cfg.PermittedProvisioningPaths,
+		),
 		github.Extra(
 			repository.DecryptService(decryptSvc),
 			ghFactory,
