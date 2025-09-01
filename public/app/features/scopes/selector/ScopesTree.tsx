@@ -7,10 +7,8 @@ import { useStyles2 } from '@grafana/ui';
 
 import { RecentScopes } from './RecentScopes';
 import { ScopesTreeHeadline } from './ScopesTreeHeadline';
-import { getTreeItemElementId } from './ScopesTreeItem';
 import { ScopesTreeItemList } from './ScopesTreeItemList';
 import { ScopesTreeSearch } from './ScopesTreeSearch';
-import { isNodeExpandable, isNodeSelectable } from './scopesTreeUtils';
 import { NodesMap, SelectedScope, TreeNode } from './types';
 import { useScopesHighlighting } from './useScopesHighlighting';
 
