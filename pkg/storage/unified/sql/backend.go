@@ -662,7 +662,7 @@ func (b *backend) ListModifiedSince(ctx context.Context, key resource.Namespaced
 
 	// If latest RV is the same as request RV, there's nothing to report, and we can avoid running another query.
 	if latestRv == sinceRv {
-		return 0, func(yield func(*resource.ModifiedResource, error) bool) { /* nothing to return */ }
+		return latestRv, func(yield func(*resource.ModifiedResource, error) bool) { /* nothing to return */ }
 	}
 
 	// since results are sorted by name ASC and rv DESC, we can get away with tracking the last seen
