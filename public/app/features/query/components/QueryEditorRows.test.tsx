@@ -1,9 +1,12 @@
-import { fireEvent, queryByLabelText, render, screen } from '@testing-library/react';
+import { fireEvent, queryByLabelText, render, screen, waitFor } from '@testing-library/react';
 
+import type { DataSourceApi } from '@grafana/data';
+import type { DataSourceSrv, GetDataSourceListFilters } from '@grafana/runtime';
 import { DataSourceRef, type DataQuery } from '@grafana/schema';
 import { mockDataSource } from 'app/features/alerting/unified/mocks';
 import { DataSourceType } from 'app/features/alerting/unified/utils/datasource';
 import createMockPanelData from 'app/plugins/datasource/azuremonitor/mocks/panelData';
+import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 
 import { QueryEditorRows, Props } from './QueryEditorRows';
 
@@ -17,20 +20,15 @@ const mockVariable = mockDataSource({
   type: 'datasource',
 });
 
+const dsSrvMock: Pick<DataSourceSrv, 'get' | 'getList' | 'getInstanceSettings'> = {
+  get: jest.fn(async () => ({ getDefaultQuery: undefined }) as unknown as DataSourceApi),
+  getList: jest.fn((filters?: GetDataSourceListFilters) => (filters?.variables ? [mockDS, mockVariable] : [mockDS])),
+  getInstanceSettings: jest.fn(() => mockDS),
+};
+
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
-  getDataSourceSrv: () => ({
-    get: () => Promise.resolve({ ...mockDS, getRef: () => {} }),
-    getList: ({ variables }: { variables: boolean }) => (variables ? [mockDS, mockVariable] : [mockDS]),
-    getInstanceSettings: () => ({
-      ...mockDS,
-      meta: {
-        ...mockDS.meta,
-        alerting: true,
-        mixed: true,
-      },
-    }),
-  }),
+  getDataSourceSrv: () => dsSrvMock,
 }));
 
 const props: Props = {
@@ -59,15 +57,6 @@ const props: Props = {
   },
   data: createMockPanelData(),
 };
-
-jest.mock('@grafana/runtime', () => ({
-  ...jest.requireActual('@grafana/runtime'),
-  getDataSourceSrv: () => ({
-    get: () => Promise.resolve(mockDS),
-    getList: ({ variables }: { variables: boolean }) => (variables ? [mockDS, mockVariable] : [mockDS]),
-    getInstanceSettings: () => mockDS,
-  }),
-}));
 
 describe('QueryEditorRows', () => {
   it('Should call onQueriesChange with skipAutoImport when replacing query', () => {
@@ -169,6 +158,36 @@ describe('QueryEditorRows', () => {
 
     expect(onQueriesChange).toHaveBeenCalledTimes(queryEditorRows.length);
     expect(onQueryRemoved).toHaveBeenCalledTimes(queryEditorRows.length);
+  });
+
+  it('Should call getDefaultQuery when changing datasource with mixed datasource enabled', async () => {
+    const onQueriesChangeMock = jest.fn();
+
+    const mixedDsSettings = mockDataSource(
+      { name: MIXED_DATASOURCE_NAME, uid: MIXED_DATASOURCE_NAME },
+      { mixed: true }
+    );
+
+    const component = new QueryEditorRows({
+      ...props,
+      dsSettings: mixedDsSettings,
+      onQueriesChange: onQueriesChangeMock,
+    });
+
+    const getDefaultQuery = jest.fn(() => ({ defaultFromDS: 'yes' }));
+    // Mutate singleton dsSrvMock to return a datasource that has getDefaultQuery
+    dsSrvMock.get = jest.fn(() => Promise.resolve({ getDefaultQuery } as unknown as DataSourceApi));
+    dsSrvMock.getInstanceSettings = jest.fn(() => ({ ...mockDS, type: 'alertmanager' }));
+
+    // Change to a different type than existing to trigger default query path
+    const newDS = mockDataSource({ uid: 'prom', name: 'Prometheus', type: 'prometheus' });
+    component.onDataSourceChange(newDS, 0);
+
+    await waitFor(() => expect(onQueriesChangeMock).toHaveBeenCalled());
+
+    const updatedQueries = onQueriesChangeMock.mock.calls[0][0] as Array<DataQuery & { defaultFromDS?: string }>;
+    expect(updatedQueries[0].defaultFromDS).toBe('yes');
+    expect(getDefaultQuery).toHaveBeenCalledTimes(1);
   });
 });
 
