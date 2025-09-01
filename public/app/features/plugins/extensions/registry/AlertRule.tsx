@@ -1,6 +1,6 @@
 import { CentralAlertHistoryScene } from 'app/features/alerting/unified/components/rules/central-state-history/CentralAlertHistoryScene';
 
-export function AlertRuleHistory({
+export default function AlertRuleHistory({
   defaultLabelsFilter,
   defaultTimeRange,
   hideFilters,
