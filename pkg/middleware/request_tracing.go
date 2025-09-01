@@ -45,6 +45,8 @@ var unnamedHandlers = []struct {
 	pathPattern *regexp.Regexp
 	handler     string
 }{
+	{handler: "plugin-assets", pathPattern: regexp.MustCompile("^/public/plugins/")},
+	{handler: "public-build-assets", pathPattern: regexp.MustCompile("^/public/build/")},
 	{handler: "public-assets", pathPattern: regexp.MustCompile("^/favicon.ico")},
 	{handler: "public-assets", pathPattern: regexp.MustCompile("^/public/")},
 	{handler: "/metrics", pathPattern: regexp.MustCompile("^/metrics")},
