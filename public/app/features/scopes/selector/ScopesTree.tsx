@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { useId, useState } from 'react';
+import { useId } from 'react';
 import Skeleton from 'react-loading-skeleton';
 
 import { GrafanaTheme2, Scope } from '@grafana/data';
@@ -12,7 +12,7 @@ import { ScopesTreeItemList } from './ScopesTreeItemList';
 import { ScopesTreeSearch } from './ScopesTreeSearch';
 import { isNodeExpandable, isNodeSelectable } from './scopesTreeUtils';
 import { NodesMap, SelectedScope, TreeNode } from './types';
-import { KeyboardAction, useKeyboardInteraction } from './useKeyboardInteractions';
+import { useScopesHighlighting } from './useScopesHighlighting';
 
 export interface ScopesTreeProps {
   tree: TreeNode;
@@ -71,41 +71,16 @@ export function ScopesTree({
     }
   }
 
-  // Only enable keyboard interaction when the search field is focused
-  const [searchFocused, setSearchFocused] = useState(false);
-
-  // Use the same highlighting for the two different lists
-  const { highlightedId } = useKeyboardInteraction(
-    searchFocused,
-    [...selectedNodesToShow, ...childrenArray],
-    searchFocused ? tree.query : '',
-    (nodeId: string | undefined, action: KeyboardAction) => {
-      if (!nodeId) {
-        return;
-      }
-
-      //Handle container expand/collapse
-
-      const isExpanding = action === KeyboardAction.EXPAND && isNodeExpandable(scopeNodes[nodeId]);
-      // Selecting a non-selectable node that is expandable, should expand it instead
-      const isSelectingAndExpandable =
-        action === KeyboardAction.SELECT &&
-        !isNodeSelectable(scopeNodes[nodeId]) &&
-        isNodeExpandable(scopeNodes[nodeId]);
-      if (isExpanding || isSelectingAndExpandable) {
-        onNodeUpdate(nodeId, true, tree.query);
-        setSearchFocused(false);
-        return;
-      }
-
-      // Toggle selection
-      if (selectedScopes.some((s) => s.scopeNodeId === nodeId)) {
-        deselectScope(nodeId);
-      } else {
-        selectScope(nodeId);
-      }
-    }
-  );
+  const { highlightedId, ariaActiveDescendant, enableHighlighting, disableHighlighting } = useScopesHighlighting({
+    selectedNodes: selectedNodesToShow,
+    resultNodes: childrenArray,
+    treeQuery: tree.query,
+    scopeNodes,
+    selectedScopes,
+    onNodeUpdate,
+    selectScope,
+    deselectScope,
+  });
 
   // Used as a label and placeholder for search field
   const nodeTitle = scopeNodes[tree.scopeNodeId]?.spec?.title || '';
@@ -121,9 +96,9 @@ export function ScopesTree({
         onNodeUpdate={onNodeUpdate}
         treeNode={tree}
         aria-controls={`${selectedNodesToShowId} ${childrenArrayId}`}
-        aria-activedescendant={getTreeItemElementId(highlightedId)}
-        onFocus={() => setSearchFocused(true)}
-        onBlur={() => setSearchFocused(false)}
+        aria-activedescendant={ariaActiveDescendant}
+        onFocus={enableHighlighting}
+        onBlur={disableHighlighting}
       />
       {tree.scopeNodeId === '' &&
         !anyChildExpanded &&
