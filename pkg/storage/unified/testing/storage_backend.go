@@ -538,7 +538,7 @@ func runTestIntegrationBackendListModifiedSince(t *testing.T, backend resource.S
 		isEmpty(t, seq)
 
 		latestRv2, seq := backend.ListModifiedSince(ctx, key, latestRv1)
-		require.GreaterOrEqual(t, latestRv1, latestRv2)
+		require.Equal(t, latestRv1, latestRv2)
 		isEmpty(t, seq)
 	})
 
