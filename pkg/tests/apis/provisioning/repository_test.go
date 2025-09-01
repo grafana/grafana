@@ -682,3 +682,11 @@ func TestIntegrationProvisioning_ImportAllPanelsFromLocalRepository(t *testing.T
 	require.Error(t, err, "should delete the internal resource")
 	require.True(t, apierrors.IsNotFound(err))
 }
+
+// TODO(ferruvich): write integration tests.
+//
+//	It should:
+//	 - Create a repository with some resources in it
+//	 - Delete the repository keeping the resources in place
+//	 - Verifying that resources have been released (annotations removed)
+func TestIntegrationProvisioning_DeleteRepositoryAndReleaseResources(t *testing.T) {}

@@ -123,20 +123,20 @@ func (f *finalizer) processExistingItems(
 
 func getPatchedAnnotations(item *provisioning.ResourceListItem) []byte {
 	annotations := []string{
-		`{"op": "remove", "path": "/metadata/annotations/"` + escapePatchString(utils.AnnoKeyManagerKind) + "}",
-		`{"op": "remove", "path": "/metadata/annotations/"` + escapePatchString(utils.AnnoKeyManagerIdentity) + "}",
+		`{"op": "remove", "path": "/metadata/annotations/` + escapePatchString(utils.AnnoKeyManagerKind) + `"}`,
+		`{"op": "remove", "path": "/metadata/annotations/` + escapePatchString(utils.AnnoKeyManagerIdentity) + `"}`,
 	}
 
 	if item.Path != "" {
 		annotations = append(
 			annotations,
-			`{"op": "remove", "path": "/metadata/annotations/"`+escapePatchString(utils.AnnoKeySourcePath)+"}",
+			`{"op": "remove", "path": "/metadata/annotations/`+escapePatchString(utils.AnnoKeySourcePath)+`"}`,
 		)
 	}
 	if item.Hash != "" {
 		annotations = append(
 			annotations,
-			`{"op": "remove", "path": "/metadata/annotations/"`+escapePatchString(utils.AnnoKeySourceChecksum)+"}",
+			`{"op": "remove", "path": "/metadata/annotations/`+escapePatchString(utils.AnnoKeySourceChecksum)+`"}`,
 		)
 	}
 
