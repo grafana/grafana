@@ -25,6 +25,9 @@ exports[`better eslint`] = {
     "e2e/utils/support/types.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
+    "packages/grafana-alerting/src/grafana/contactPoints/components/ContactPointSelector/ContactPointSelector.story.tsx:5381": [
+      [0, 0, 0, "Skipping a11y tests is not allowed. Please fix the component or story instead.", "0"]
+    ],
     "packages/grafana-alerting/src/grafana/notificationPolicies/utils.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
@@ -614,7 +617,8 @@ exports[`better eslint`] = {
       [0, 0, 0, "React Hook \\"useArgs\\" is called in function \\"render\\" that is neither a React function component nor a custom React Hook function. React component names must start with an uppercase letter. React Hook names must start with the word \\"use\\".", "1"],
       [0, 0, 0, "React Hook \\"useArgs\\" is called in function \\"render\\" that is neither a React function component nor a custom React Hook function. React component names must start with an uppercase letter. React Hook names must start with the word \\"use\\".", "2"],
       [0, 0, 0, "React Hook \\"useArgs\\" is called in function \\"render\\" that is neither a React function component nor a custom React Hook function. React component names must start with an uppercase letter. React Hook names must start with the word \\"use\\".", "3"],
-      [0, 0, 0, "React Hook \\"useArgs\\" is called in function \\"render\\" that is neither a React function component nor a custom React Hook function. React component names must start with an uppercase letter. React Hook names must start with the word \\"use\\".", "4"]
+      [0, 0, 0, "React Hook \\"useArgs\\" is called in function \\"render\\" that is neither a React function component nor a custom React Hook function. React component names must start with an uppercase letter. React Hook names must start with the word \\"use\\".", "4"],
+      [0, 0, 0, "Skipping a11y tests is not allowed. Please fix the component or story instead.", "5"]
     ],
     "packages/grafana-ui/src/components/Combobox/MultiCombobox.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
@@ -640,6 +644,15 @@ exports[`better eslint`] = {
       [0, 0, 0, "React Hook \\"useCallback\\" is called conditionally. React Hooks must be called in the exact same order in every component render. Did you accidentally call a React Hook after an early return?", "0"],
       [0, 0, 0, "React Hook \\"useCallback\\" is called conditionally. React Hooks must be called in the exact same order in every component render. Did you accidentally call a React Hook after an early return?", "1"],
       [0, 0, 0, "React Hook \\"useContext\\" is called conditionally. React Hooks must be called in the exact same order in every component render.", "2"]
+    ],
+    "packages/grafana-ui/src/components/FileDropzone/FileDropzone.story.tsx:5381": [
+      [0, 0, 0, "Skipping a11y tests is not allowed. Please fix the component or story instead.", "0"]
+    ],
+    "packages/grafana-ui/src/components/Forms/Checkbox.story.tsx:5381": [
+      [0, 0, 0, "Skipping a11y tests is not allowed. Please fix the component or story instead.", "0"]
+    ],
+    "packages/grafana-ui/src/components/Forms/FieldArray.story.tsx:5381": [
+      [0, 0, 0, "Skipping a11y tests is not allowed. Please fix the component or story instead.", "0"]
     ],
     "packages/grafana-ui/src/components/Forms/Form.story.tsx:5381": [
       [0, 0, 0, "React Hook \\"useId\\" is called in function \\"renderForm\\" that is neither a React function component nor a custom React Hook function. React component names must start with an uppercase letter. React Hook names must start with the word \\"use\\".", "0"],
@@ -684,12 +697,16 @@ exports[`better eslint`] = {
       [0, 0, 0, "Using localeCompare() can cause performance issues when sorting large datasets. Consider using Intl.Collator for better performance when sorting arrays, or add an eslint-disable comment if sorting a small, known dataset.", "0"]
     ],
     "packages/grafana-ui/src/components/InteractiveTable/InteractiveTable.story.tsx:5381": [
-      [0, 0, 0, "Using localeCompare() can cause performance issues when sorting large datasets. Consider using Intl.Collator for better performance when sorting arrays, or add an eslint-disable comment if sorting a small, known dataset.", "0"],
-      [0, 0, 0, "Using localeCompare() can cause performance issues when sorting large datasets. Consider using Intl.Collator for better performance when sorting arrays, or add an eslint-disable comment if sorting a small, known dataset.", "1"]
+      [0, 0, 0, "Skipping a11y tests is not allowed. Please fix the component or story instead.", "0"],
+      [0, 0, 0, "Using localeCompare() can cause performance issues when sorting large datasets. Consider using Intl.Collator for better performance when sorting arrays, or add an eslint-disable comment if sorting a small, known dataset.", "1"],
+      [0, 0, 0, "Using localeCompare() can cause performance issues when sorting large datasets. Consider using Intl.Collator for better performance when sorting arrays, or add an eslint-disable comment if sorting a small, known dataset.", "2"]
     ],
     "packages/grafana-ui/src/components/JSONFormatter/json_explorer/json_explorer.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
+    ],
+    "packages/grafana-ui/src/components/Layout/Stack/Stack.story.tsx:5381": [
+      [0, 0, 0, "Skipping a11y tests is not allowed. Please fix the component or story instead.", "0"]
     ],
     "packages/grafana-ui/src/components/MatchersUI/FieldValueMatcher.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
@@ -697,11 +714,23 @@ exports[`better eslint`] = {
     "packages/grafana-ui/src/components/MatchersUI/fieldMatchersUI.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
+    "packages/grafana-ui/src/components/Menu/Menu.story.tsx:5381": [
+      [0, 0, 0, "Skipping a11y tests is not allowed. Please fix the component or story instead.", "0"]
+    ],
+    "packages/grafana-ui/src/components/Modal/Modal.story.tsx:5381": [
+      [0, 0, 0, "Skipping a11y tests is not allowed. Please fix the component or story instead.", "0"]
+    ],
     "packages/grafana-ui/src/components/Modal/ModalsContext.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "2"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "3"]
+    ],
+    "packages/grafana-ui/src/components/PageLayout/PageToolbar.story.tsx:5381": [
+      [0, 0, 0, "Skipping a11y tests is not allowed. Please fix the component or story instead.", "0"]
+    ],
+    "packages/grafana-ui/src/components/PanelChrome/PanelChrome.story.tsx:5381": [
+      [0, 0, 0, "Skipping a11y tests is not allowed. Please fix the component or story instead.", "0"]
     ],
     "packages/grafana-ui/src/components/PanelChrome/PanelContext.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
@@ -710,8 +739,17 @@ exports[`better eslint`] = {
     "packages/grafana-ui/src/components/PanelChrome/index.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
+    "packages/grafana-ui/src/components/QueryField/QueryField.story.tsx:5381": [
+      [0, 0, 0, "Skipping a11y tests is not allowed. Please fix the component or story instead.", "0"]
+    ],
+    "packages/grafana-ui/src/components/ScrollContainer/ScrollContainer.story.tsx:5381": [
+      [0, 0, 0, "Skipping a11y tests is not allowed. Please fix the component or story instead.", "0"]
+    ],
     "packages/grafana-ui/src/components/Segment/SegmentSelect.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
+    ],
+    "packages/grafana-ui/src/components/Select/Select.story.tsx:5381": [
+      [0, 0, 0, "Skipping a11y tests is not allowed. Please fix the component or story instead.", "0"]
     ],
     "packages/grafana-ui/src/components/Select/SelectBase.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
@@ -753,11 +791,20 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "14"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "15"]
     ],
+    "packages/grafana-ui/src/components/Slider/RangeSlider.story.tsx:5381": [
+      [0, 0, 0, "Skipping a11y tests is not allowed. Please fix the component or story instead.", "0"]
+    ],
+    "packages/grafana-ui/src/components/Slider/Slider.story.tsx:5381": [
+      [0, 0, 0, "Skipping a11y tests is not allowed. Please fix the component or story instead.", "0"]
+    ],
     "packages/grafana-ui/src/components/Table/Cells/TableCell.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
       [0, 0, 0, "Do not use any type assertions.", "1"],
       [0, 0, 0, "Do not use any type assertions.", "2"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "3"]
+    ],
+    "packages/grafana-ui/src/components/Table/Table.story.tsx:5381": [
+      [0, 0, 0, "Skipping a11y tests is not allowed. Please fix the component or story instead.", "0"]
     ],
     "packages/grafana-ui/src/components/Table/TableCellInspector.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
@@ -826,6 +873,9 @@ exports[`better eslint`] = {
     ],
     "packages/grafana-ui/src/components/ValuePicker/ValuePicker.tsx:5381": [
       [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "0"]
+    ],
+    "packages/grafana-ui/src/components/VizLegend/VizLegend.story.tsx:5381": [
+      [0, 0, 0, "Skipping a11y tests is not allowed. Please fix the component or story instead.", "0"]
     ],
     "packages/grafana-ui/src/components/VizLegend/types.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
@@ -4213,65 +4263,6 @@ exports[`no undocumented stories`] = {
     ],
     "packages/grafana-ui/src/utils/useDelayedSwitch.story.tsx:5381": [
       [0, 0, 0, "No undocumented stories are allowed, please add an .mdx file with some documentation", "5381"]
-    ]
-  }`
-};
-
-exports[`no skipping a11y tests in stories`] = {
-  value: `{
-    "packages/grafana-alerting/src/grafana/contactPoints/components/ContactPointSelector/ContactPointSelector.story.tsx:5381": [
-      [0, 0, 0, "No skipping of a11y tests in stories. Please fix the component or story instead.", "5381"]
-    ],
-    "packages/grafana-ui/src/components/Combobox/MultiCombobox.story.tsx:5381": [
-      [0, 0, 0, "No skipping of a11y tests in stories. Please fix the component or story instead.", "5381"]
-    ],
-    "packages/grafana-ui/src/components/FileDropzone/FileDropzone.story.tsx:5381": [
-      [0, 0, 0, "No skipping of a11y tests in stories. Please fix the component or story instead.", "5381"]
-    ],
-    "packages/grafana-ui/src/components/Forms/Checkbox.story.tsx:5381": [
-      [0, 0, 0, "No skipping of a11y tests in stories. Please fix the component or story instead.", "5381"]
-    ],
-    "packages/grafana-ui/src/components/Forms/FieldArray.story.tsx:5381": [
-      [0, 0, 0, "No skipping of a11y tests in stories. Please fix the component or story instead.", "5381"]
-    ],
-    "packages/grafana-ui/src/components/InteractiveTable/InteractiveTable.story.tsx:5381": [
-      [0, 0, 0, "No skipping of a11y tests in stories. Please fix the component or story instead.", "5381"]
-    ],
-    "packages/grafana-ui/src/components/Layout/Stack/Stack.story.tsx:5381": [
-      [0, 0, 0, "No skipping of a11y tests in stories. Please fix the component or story instead.", "5381"]
-    ],
-    "packages/grafana-ui/src/components/Menu/Menu.story.tsx:5381": [
-      [0, 0, 0, "No skipping of a11y tests in stories. Please fix the component or story instead.", "5381"]
-    ],
-    "packages/grafana-ui/src/components/Modal/Modal.story.tsx:5381": [
-      [0, 0, 0, "No skipping of a11y tests in stories. Please fix the component or story instead.", "5381"]
-    ],
-    "packages/grafana-ui/src/components/PageLayout/PageToolbar.story.tsx:5381": [
-      [0, 0, 0, "No skipping of a11y tests in stories. Please fix the component or story instead.", "5381"]
-    ],
-    "packages/grafana-ui/src/components/PanelChrome/PanelChrome.story.tsx:5381": [
-      [0, 0, 0, "No skipping of a11y tests in stories. Please fix the component or story instead.", "5381"]
-    ],
-    "packages/grafana-ui/src/components/QueryField/QueryField.story.tsx:5381": [
-      [0, 0, 0, "No skipping of a11y tests in stories. Please fix the component or story instead.", "5381"]
-    ],
-    "packages/grafana-ui/src/components/ScrollContainer/ScrollContainer.story.tsx:5381": [
-      [0, 0, 0, "No skipping of a11y tests in stories. Please fix the component or story instead.", "5381"]
-    ],
-    "packages/grafana-ui/src/components/Select/Select.story.tsx:5381": [
-      [0, 0, 0, "No skipping of a11y tests in stories. Please fix the component or story instead.", "5381"]
-    ],
-    "packages/grafana-ui/src/components/Slider/RangeSlider.story.tsx:5381": [
-      [0, 0, 0, "No skipping of a11y tests in stories. Please fix the component or story instead.", "5381"]
-    ],
-    "packages/grafana-ui/src/components/Slider/Slider.story.tsx:5381": [
-      [0, 0, 0, "No skipping of a11y tests in stories. Please fix the component or story instead.", "5381"]
-    ],
-    "packages/grafana-ui/src/components/Table/Table.story.tsx:5381": [
-      [0, 0, 0, "No skipping of a11y tests in stories. Please fix the component or story instead.", "5381"]
-    ],
-    "packages/grafana-ui/src/components/VizLegend/VizLegend.story.tsx:5381": [
-      [0, 0, 0, "No skipping of a11y tests in stories. Please fix the component or story instead.", "5381"]
     ]
   }`
 };

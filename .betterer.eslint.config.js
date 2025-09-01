@@ -145,6 +145,11 @@ module.exports = [
           message:
             'Using localeCompare() can cause performance issues when sorting large datasets. Consider using Intl.Collator for better performance when sorting arrays, or add an eslint-disable comment if sorting a small, known dataset.',
         },
+        {
+          selector:
+            "Property[key.name='a11y'][value.type='ObjectExpression'] Property[key.name='test'][value.value='off']",
+          message: 'Skipping a11y tests is not allowed. Please fix the component or story instead.',
+        },
       ],
     },
   },
