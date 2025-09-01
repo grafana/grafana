@@ -1,7 +1,6 @@
 import { uniqueId } from 'lodash';
 import { HttpResponse, http } from 'msw';
 import { Route, Routes } from 'react-router-dom-v5-compat';
-import { Props } from 'react-virtualized-auto-sizer';
 import { render, screen, waitFor, within } from 'test/test-utils';
 import { byRole, byTestId } from 'testing-library-selector';
 
@@ -23,15 +22,6 @@ import { alertingFactory } from '../mocks/server/db';
 
 import GroupDetailsPage from './GroupDetailsPage';
 
-jest.mock('react-virtualized-auto-sizer', () => {
-  return ({ children }: Props) =>
-    children({
-      height: 600,
-      scaledHeight: 600,
-      scaledWidth: 1,
-      width: 1,
-    });
-});
 jest.mock('@grafana/ui', () => ({
   ...jest.requireActual('@grafana/ui'),
   CodeEditor: ({ value }: { value: string }) => <textarea data-testid="code-editor" value={value} readOnly />,

@@ -1,22 +1,11 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { ComponentProps } from 'react';
-import { Props } from 'react-virtualized-auto-sizer';
 
 import { DataFrame, FieldType } from '@grafana/data';
 import { config } from '@grafana/runtime';
 
 import { InspectDataTab } from './InspectDataTab';
-
-jest.mock('react-virtualized-auto-sizer', () => {
-  return ({ children }: Props) =>
-    children({
-      height: 1,
-      scaledHeight: 1,
-      scaledWidth: 1,
-      width: 1,
-    });
-});
 
 const createProps = (propsOverride?: Partial<ComponentProps<typeof InspectDataTab>>) => {
   const defaultProps = {

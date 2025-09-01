@@ -1,5 +1,4 @@
 import { render, screen } from '@testing-library/react';
-import { Props as AutoSizerProps } from 'react-virtualized-auto-sizer';
 import { TestProvider } from 'test/helpers/TestProvider';
 
 import {
@@ -130,17 +129,6 @@ jest.mock('app/core/core', () => ({
     getValidIntervals: (defaultIntervals: string[]) => defaultIntervals,
   },
 }));
-
-// for the AutoSizer component to have a width
-jest.mock('react-virtualized-auto-sizer', () => {
-  return ({ children }: AutoSizerProps) =>
-    children({
-      height: 1,
-      scaledHeight: 1,
-      scaledWidth: 1,
-      width: 1,
-    });
-});
 
 const usePluginLinksMock = jest.mocked(usePluginLinks);
 

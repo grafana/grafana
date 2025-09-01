@@ -1,5 +1,3 @@
-import { Props } from 'react-virtualized-auto-sizer';
-
 import { DataQueryRequest, EventBusSrv, serializeStateToUrlParam } from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
 
@@ -22,15 +20,6 @@ jest.mock('app/core/core', () => ({
     getValidIntervals: (defaultIntervals: string[]) => defaultIntervals,
   },
 }));
-
-jest.mock('react-virtualized-auto-sizer', () => {
-  return {
-    __esModule: true,
-    default(props: Props) {
-      return <div>{props.children({ height: 1, scaledHeight: 1, scaledWidth: 1000, width: 1000 })}</div>;
-    },
-  };
-});
 
 jest.mock('../hooks/useExplorePageTitle', () => ({
   useExplorePageTitle: jest.fn(),

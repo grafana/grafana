@@ -1,6 +1,5 @@
 import * as React from 'react';
 import { Route, Routes } from 'react-router-dom-v5-compat';
-import { Props } from 'react-virtualized-auto-sizer';
 import { render, userEvent, waitFor, waitForElementToBeRemoved } from 'test/test-utils';
 import { byRole, byTestId, byText } from 'testing-library-selector';
 
@@ -15,15 +14,6 @@ jest.mock('app/core/components/AppChrome/AppChromeUpdate', () => ({
   AppChromeUpdate: ({ actions }: { actions: React.ReactNode }) => <div>{actions}</div>,
 }));
 
-jest.mock('react-virtualized-auto-sizer', () => {
-  return ({ children }: Props) =>
-    children({
-      height: 600,
-      scaledHeight: 600,
-      scaledWidth: 1,
-      width: 1,
-    });
-});
 jest.mock('@grafana/ui', () => ({
   ...jest.requireActual('@grafana/ui'),
   CodeEditor: ({ value }: { value: string }) => <textarea data-testid="code-editor" value={value} readOnly />,

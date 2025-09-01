@@ -1,6 +1,5 @@
 import { render, screen, fireEvent } from '@testing-library/react';
 import { ComponentProps } from 'react';
-import AutoSizer from 'react-virtualized-auto-sizer';
 import { Observable } from 'rxjs';
 
 import { LoadingState, InternalTimeZones, getDefaultTimeRange } from '@grafana/data';
@@ -35,15 +34,6 @@ jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   reportInteraction: () => null,
 }));
-
-jest.mock('react-virtualized-auto-sizer', () => {
-  return {
-    __esModule: true,
-    default(props: ComponentProps<typeof AutoSizer>) {
-      return <div>{props.children({ height: 1000, width: 1000, scaledHeight: 1000, scaledWidth: 1000 })}</div>;
-    },
-  };
-});
 
 const setup = (propOverrides = {}) => {
   const props: ExploreQueryInspectorProps = {

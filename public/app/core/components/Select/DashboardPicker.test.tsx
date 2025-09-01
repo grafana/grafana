@@ -30,16 +30,6 @@ jest.mock('app/features/dashboard/api/dashboard_api', () => ({
   }),
 }));
 
-jest.mock('react-virtualized-auto-sizer', () => {
-  return ({ children }: Props) =>
-    children({
-      height: 600,
-      scaledHeight: 600,
-      scaledWidth: 1,
-      width: 1,
-    });
-});
-
 jest.mocked(backendSrv.search).mockResolvedValue([
   {
     uid: 'dash-1',
