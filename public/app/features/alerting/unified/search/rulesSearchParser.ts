@@ -63,7 +63,18 @@ export function getSearchFilterFromQuery(query: string): RulesFilter {
     [terms.DashboardToken]: (value) => (filter.dashboardUid = value),
     [terms.PluginsToken]: (value) => (filter.plugins = value === 'hide' ? value : undefined),
     [terms.ContactPointToken]: (value) => (filter.contactPoint = value),
-    [terms.FreeFormExpression]: (value) => filter.freeFormWords.push(value),
+    [terms.FreeFormExpression]: (value) => {
+      const lower = value.toLowerCase();
+      if (lower === 'source:grafana') {
+        filter.ruleSource = 'grafana';
+        return;
+      }
+      if (lower === 'source:external') {
+        filter.ruleSource = 'external';
+        return;
+      }
+      filter.freeFormWords.push(value);
+    },
   };
 
   parseQueryToFilter(query, filterSupportedTerms, tokenToFilterMap);
@@ -107,6 +118,9 @@ export function applySearchFilterToQuery(query: string, filter: RulesFilter): st
   }
   if (filter.plugins) {
     filterStateArray.push({ type: terms.PluginsToken, value: filter.plugins });
+  }
+  if (filter.ruleSource) {
+    filterStateArray.push({ type: terms.FreeFormExpression, value: `source:${filter.ruleSource}` });
   }
   if (filter.freeFormWords) {
     filterStateArray.push(...filter.freeFormWords.map((word) => ({ type: terms.FreeFormExpression, value: word })));

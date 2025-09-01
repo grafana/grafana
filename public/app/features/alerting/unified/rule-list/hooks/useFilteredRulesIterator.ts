@@ -1,7 +1,6 @@
 import { AsyncIterableX, from } from 'ix/asynciterable';
 import { merge } from 'ix/asynciterable/merge';
 import { catchError, concatMap, withAbort } from 'ix/asynciterable/operators';
-import { isEmpty } from 'lodash';
 
 import {
   DataSourceRuleGroupIdentifier,
@@ -90,12 +89,6 @@ export function useFilteredRulesIteratorProvider() {
       return { iterable: grafanaRulesGenerator, abortController };
     }
 
-    if (filterState.ruleSource === 'external') {
-      if (isEmpty(externalRulesSourcesToFetchFrom)) {
-        return { iterable: emptyRulesIterable(), abortController };
-      }
-    }
-
     const dataSourceGenerators: Array<AsyncIterableX<RuleWithOrigin>> = externalRulesSourcesToFetchFrom.map(
       (dataSourceIdentifier) => {
         const promGroupsGenerator: AsyncIterableX<RuleWithOrigin> = from(
@@ -139,11 +132,8 @@ function mergeIterables(iterables: Array<AsyncIterableX<RuleWithOrigin>>): Async
   if (iterables.length === 0) {
     return emptyRulesIterable();
   }
-  let acc: AsyncIterableX<RuleWithOrigin> = iterables[0];
-  for (let i = 1; i < iterables.length; i++) {
-    acc = merge(acc, iterables[i]);
-  }
-  return acc;
+  const [firstIterable, ...rest] = iterables;
+  return merge(firstIterable, ...rest);
 }
 
 function emptyRulesIterable(): AsyncIterableX<RuleWithOrigin> {

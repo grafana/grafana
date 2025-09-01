@@ -24,13 +24,8 @@ export function useRulesFilter() {
   const searchQuery = queryParams.get('search') ?? '';
 
   const filterState = useMemo<RulesFilter>(() => {
-    const parsed = getSearchFilterFromQuery(searchQuery);
-    const ruleSourceParam = queryParams.get('ruleSource');
-    if (ruleSourceParam === 'grafana' || ruleSourceParam === 'external') {
-      parsed.ruleSource = ruleSourceParam;
-    }
-    return parsed;
-  }, [searchQuery, queryParams]);
+    return getSearchFilterFromQuery(searchQuery);
+  }, [searchQuery]);
   const hasActiveFilters = useMemo(() => Object.values(filterState).some((filter) => !isEmpty(filter)), [filterState]);
 
   const activeFilters = useMemo(() => {
@@ -40,7 +35,7 @@ export function useRulesFilter() {
   const updateFilters = useCallback(
     (newFilter: RulesFilter) => {
       const newSearchQuery = applySearchFilterToQuery(searchQuery, newFilter);
-      updateQueryParams({ search: newSearchQuery, ruleSource: newFilter.ruleSource });
+      updateQueryParams({ search: newSearchQuery });
     },
     [searchQuery, updateQueryParams]
   );
@@ -86,7 +81,7 @@ export function useRulesFilter() {
   }, [queryParams, updateFilters, filterState, updateQueryParams]);
 
   const clearAll = useCallback(() => {
-    updateQueryParams({ search: undefined, ruleSource: undefined });
+    updateQueryParams({ search: undefined });
   }, [updateQueryParams]);
 
   return { filterState, hasActiveFilters, searchQuery, setSearchQuery, updateFilters, clearAll, activeFilters };
