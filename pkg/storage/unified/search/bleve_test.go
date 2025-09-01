@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log/slog"
 	"math"
 	"os"
 	"path/filepath"
@@ -24,6 +25,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/infra/log/logtest"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -190,7 +192,7 @@ func TestBleveBackend(t *testing.T) {
 				return 0, err
 			}
 			return rv, nil
-		}, nil)
+		}, nil, false, false)
 		require.NoError(t, err)
 		require.NotNil(t, index)
 		dashboardsIndex = index
@@ -419,7 +421,7 @@ func TestBleveBackend(t *testing.T) {
 				return 0, err
 			}
 			return rv, nil
-		}, nil)
+		}, nil, false, false)
 		require.NoError(t, err)
 		require.NotNil(t, index)
 		foldersIndex = index
@@ -766,6 +768,7 @@ func setupBleveBackend(t *testing.T, fileThreshold int, cacheTTL time.Duration, 
 		Root:          dir,
 		FileThreshold: int64(fileThreshold),
 		IndexCacheTTL: cacheTTL,
+		Logger:        slog.New(logtest.NewNopHandler(t)),
 	}, tracing.NewNoopTracerService(), featuremgmt.WithFeatures(), metrics)
 	require.NoError(t, err)
 	require.NotNil(t, backend)
@@ -773,147 +776,83 @@ func setupBleveBackend(t *testing.T, fileThreshold int, cacheTTL time.Duration, 
 	return backend, reg
 }
 
-func TestBleveInMemoryIndexExpiration(t *testing.T) {
-	backend, reg := setupBleveBackend(t, 5, time.Nanosecond, "")
-
+func TestBuildIndexExpiration(t *testing.T) {
 	ns := resource.NamespacedResource{
 		Namespace: "test",
 		Group:     "group",
 		Resource:  "resource",
 	}
 
-	builtIndex, err := backend.BuildIndex(context.Background(), ns, 1 /* below FileThreshold */, 100, nil, "test", indexTestDocs(ns, 1, 100), nil)
-	require.NoError(t, err)
+	t.Run("memory based indexes should expire", func(t *testing.T) {
+		backend, reg := setupBleveBackend(t, 5, time.Nanosecond, "")
 
-	// Wait for index expiration, which is 1ns
-	time.Sleep(10 * time.Millisecond)
-	idx, err := backend.GetIndex(context.Background(), ns)
-	require.NoError(t, err)
-	require.Nil(t, idx)
+		builtIndex, err := backend.BuildIndex(context.Background(), ns, 1 /* below FileThreshold */, 100, nil, "test", indexTestDocs(ns, 1, 100), nil, false, false)
+		require.NoError(t, err)
 
-	// Verify that builtIndex is now closed.
-	_, err = builtIndex.DocCount(context.Background(), "")
-	require.ErrorIs(t, err, bleve.ErrorIndexClosed)
+		// Wait for index expiration, which is 1ns
+		time.Sleep(10 * time.Millisecond)
+		idx, err := backend.GetIndex(context.Background(), ns)
+		require.NoError(t, err)
+		require.Nil(t, idx)
 
-	// Verify that there are no open indexes.
-	require.NoError(t, testutil.GatherAndCompare(reg, bytes.NewBufferString(`
-		# HELP index_server_open_indexes Number of open indexes per storage type. An open index corresponds to single resource group.
-		# TYPE index_server_open_indexes gauge
-		index_server_open_indexes{index_storage="memory"} 0
-		index_server_open_indexes{index_storage="file"} 0
-	`), "index_server_open_indexes"))
+		// Verify that builtIndex is now closed.
+		_, err = builtIndex.DocCount(context.Background(), "")
+		require.ErrorIs(t, err, bleve.ErrorIndexClosed)
+
+		// Verify that there are no open indexes.
+		checkOpenIndexes(t, reg, 0, 0)
+	})
+
+	t.Run("file based indexes should NOT expire", func(t *testing.T) {
+		backend, reg := setupBleveBackend(t, 5, time.Nanosecond, "")
+
+		// size=100 is above FileThreshold, this will be file-based index
+		builtIndex, err := backend.BuildIndex(context.Background(), ns, 100, 100, nil, "test", indexTestDocs(ns, 1, 100), nil, false, false)
+		require.NoError(t, err)
+
+		// Wait for index expiration, which is 1ns
+		time.Sleep(10 * time.Millisecond)
+		idx, err := backend.GetIndex(context.Background(), ns)
+		require.NoError(t, err)
+		require.NotNil(t, idx)
+
+		// Verify that builtIndex is still open.
+		cnt, err := builtIndex.DocCount(context.Background(), "")
+		require.NoError(t, err)
+		require.Equal(t, int64(1), cnt)
+
+		checkOpenIndexes(t, reg, 0, 1)
+	})
 }
 
-func TestBleveFileIndexExpiration(t *testing.T) {
-	backend, reg := setupBleveBackend(t, 5, time.Nanosecond, "")
-
+func TestCloseAllIndexes(t *testing.T) {
 	ns := resource.NamespacedResource{
 		Namespace: "test",
 		Group:     "group",
 		Resource:  "resource",
 	}
-
-	// size=100 is above FileThreshold, this will be file-based index
-	builtIndex, err := backend.BuildIndex(context.Background(), ns, 100, 100, nil, "test", indexTestDocs(ns, 1, 100), nil)
-	require.NoError(t, err)
-
-	// Wait for index expiration, which is 1ns
-	time.Sleep(10 * time.Millisecond)
-	idx, err := backend.GetIndex(context.Background(), ns)
-	require.NoError(t, err)
-	require.NotNil(t, idx)
-
-	// Verify that builtIndex is still open.
-	cnt, err := builtIndex.DocCount(context.Background(), "")
-	require.NoError(t, err)
-	require.Equal(t, int64(1), cnt)
-
-	require.NoError(t, testutil.GatherAndCompare(reg, bytes.NewBufferString(`
-		# HELP index_server_open_indexes Number of open indexes per storage type. An open index corresponds to single resource group.
-		# TYPE index_server_open_indexes gauge
-		index_server_open_indexes{index_storage="memory"} 0
-		index_server_open_indexes{index_storage="file"} 1
-	`), "index_server_open_indexes"))
-}
-
-func TestFileIndexIsReusedOnSameSizeAndRVLessThanIndexRV(t *testing.T) {
-	ns := resource.NamespacedResource{
-		Namespace: "test",
+	ns2 := resource.NamespacedResource{
+		Namespace: "test2",
 		Group:     "group",
 		Resource:  "resource",
 	}
 
 	tmpDir := t.TempDir()
-
-	backend1, reg1 := setupBleveBackend(t, 5, time.Nanosecond, tmpDir)
-	_, err := backend1.BuildIndex(context.Background(), ns, 10 /* file based */, 100, nil, "test", indexTestDocs(ns, 10, 100), nil)
+	backend1, reg := setupBleveBackend(t, 5, time.Nanosecond, tmpDir)
+	_, err := backend1.BuildIndex(context.Background(), ns, 10 /* file based */, 100, nil, "test", indexTestDocs(ns, 10, 100), nil, false, false)
+	require.NoError(t, err)
+	_, err = backend1.BuildIndex(context.Background(), ns2, 1 /* memory based */, 100, nil, "test", indexTestDocs(ns, 10, 100), nil, false, false)
 	require.NoError(t, err)
 
-	// Verify one open index.
-	require.NoError(t, testutil.GatherAndCompare(reg1, bytes.NewBufferString(`
-		# HELP index_server_open_indexes Number of open indexes per storage type. An open index corresponds to single resource group.
-		# TYPE index_server_open_indexes gauge
-		index_server_open_indexes{index_storage="memory"} 0
-		index_server_open_indexes{index_storage="file"} 1
-	`), "index_server_open_indexes"))
-
+	// Verify two open indexes.
+	checkOpenIndexes(t, reg, 1, 1)
 	backend1.CloseAllIndexes()
 
 	// Verify that there are no open indexes after CloseAllIndexes call.
-	require.NoError(t, testutil.GatherAndCompare(reg1, bytes.NewBufferString(`
-		# HELP index_server_open_indexes Number of open indexes per storage type. An open index corresponds to single resource group.
-		# TYPE index_server_open_indexes gauge
-		index_server_open_indexes{index_storage="memory"} 0
-		index_server_open_indexes{index_storage="file"} 0
-	`), "index_server_open_indexes"))
-
-	// We open new backend using same directory, and run indexing with same size (10) and RV (100). This should reuse existing index, and skip indexing.
-	backend2, reg2 := setupBleveBackend(t, 5, time.Nanosecond, tmpDir)
-	idx, err := backend2.BuildIndex(context.Background(), ns, 10 /* file based */, 100, nil, "test", indexTestDocs(ns, 1000, 100), nil)
-	require.NoError(t, err)
-
-	// Verify that we're reusing existing index and there is only 10 documents in it, not 1000.
-	cnt, err := idx.DocCount(context.Background(), "")
-	require.NoError(t, err)
-	require.Equal(t, int64(10), cnt)
-
-	require.NoError(t, testutil.GatherAndCompare(reg2, bytes.NewBufferString(`
-		# HELP index_server_open_indexes Number of open indexes per storage type. An open index corresponds to single resource group.
-		# TYPE index_server_open_indexes gauge
-		index_server_open_indexes{index_storage="memory"} 0
-		index_server_open_indexes{index_storage="file"} 1
-	`), "index_server_open_indexes"))
-
-	backend2.CloseAllIndexes()
-	// Verify that there are no open indexes after closeAllIndexes call.
-	require.NoError(t, testutil.GatherAndCompare(reg2, bytes.NewBufferString(`
-		# HELP index_server_open_indexes Number of open indexes per storage type. An open index corresponds to single resource group.
-		# TYPE index_server_open_indexes gauge
-		index_server_open_indexes{index_storage="memory"} 0
-		index_server_open_indexes{index_storage="file"} 0
-	`), "index_server_open_indexes"))
-
-	// We repeat with backend3 and RV 99. This should also reuse existing index and skip indexing
-	backend3, reg3 := setupBleveBackend(t, 5, time.Nanosecond, tmpDir)
-	idx, err = backend3.BuildIndex(context.Background(), ns, 10 /* file based */, 99, nil, "test", indexTestDocs(ns, 1000, 99), nil)
-	require.NoError(t, err)
-
-	// Verify that we're reusing existing index and there is only 10 documents in it, not 1000.
-	cnt, err = idx.DocCount(context.Background(), "")
-	require.NoError(t, err)
-	require.Equal(t, int64(10), cnt)
-
-	require.NoError(t, testutil.GatherAndCompare(reg3, bytes.NewBufferString(`
-		# HELP index_server_open_indexes Number of open indexes per storage type. An open index corresponds to single resource group.
-		# TYPE index_server_open_indexes gauge
-		index_server_open_indexes{index_storage="memory"} 0
-		index_server_open_indexes{index_storage="file"} 1
-	`), "index_server_open_indexes"))
-
-	backend3.CloseAllIndexes()
+	checkOpenIndexes(t, reg, 0, 0)
 }
 
-func TestFileIndexIsNotReusedOnDifferentSize(t *testing.T) {
+func TestBuildIndex(t *testing.T) {
 	ns := resource.NamespacedResource{
 		Namespace: "test",
 		Group:     "group",
@@ -922,45 +861,93 @@ func TestFileIndexIsNotReusedOnDifferentSize(t *testing.T) {
 
 	tmpDir := t.TempDir()
 
-	backend1, _ := setupBleveBackend(t, 5, time.Nanosecond, tmpDir)
-	_, err := backend1.BuildIndex(context.Background(), ns, 10, 100, nil, "test", indexTestDocs(ns, 10, 100), nil)
-	require.NoError(t, err)
-	backend1.CloseAllIndexes()
+	type RV string
+	const (
+		RVLessThan   RV = "less"
+		RVBiggerThan RV = "more"
+		RVSame       RV = "same"
+	)
+	for _, searchAfterWrite := range []bool{false, true} {
+		for _, rebuild := range []bool{false, true} {
+			for _, sameSize := range []bool{false, true} {
+				for _, documentRV := range []RV{RVLessThan, RVSame, RVBiggerThan} {
+					shouldRebuild := false
+					if rebuild || !sameSize || (!searchAfterWrite && documentRV == RVBiggerThan) {
+						shouldRebuild = true
+					}
 
-	// We open new backend using same directory, but with different size. Index should be rebuilt.
-	backend2, _ := setupBleveBackend(t, 5, time.Nanosecond, tmpDir)
-	idx, err := backend2.BuildIndex(context.Background(), ns, 100, 100, nil, "test", indexTestDocs(ns, 100, 100), nil)
-	require.NoError(t, err)
+					testName := ""
+					if shouldRebuild {
+						testName += "should NOT reuse index "
+					} else {
+						testName += "should reuse index "
+					}
 
-	// Verify that index has updated number of documents.
-	cnt, err := idx.DocCount(context.Background(), "")
-	require.NoError(t, err)
-	require.Equal(t, int64(100), cnt)
+					if sameSize {
+						testName += "on same size "
+					} else {
+						testName += "on different size "
+					}
+
+					switch documentRV {
+					case RVLessThan:
+						testName += "and documentRV < indexRV "
+					case RVBiggerThan:
+						testName += "and documentRV > indexRV "
+					case RVSame:
+						testName += "and documentRV = indexRV "
+					}
+
+					if rebuild {
+						testName += "when rebuild is true "
+					} else {
+						testName += "when rebuild is false "
+					}
+
+					if searchAfterWrite {
+						testName += "and searchAfterWrite is true"
+					} else {
+						testName += "and searchAfterWrite is false"
+					}
+
+					t.Run(testName, func(t *testing.T) {
+						var size int64 = 10
+						var rv int64 = 100
+						backend1, _ := createBleveBackendAndIndex(t, tmpDir, ns, size, rv, 10, rebuild, searchAfterWrite)
+						backend1.CloseAllIndexes()
+
+						if !sameSize {
+							size = 11
+						}
+						switch documentRV {
+						case RVBiggerThan:
+							rv = 101
+						case RVLessThan:
+							rv = 99
+						case RVSame:
+						}
+						backend2, idx := createBleveBackendAndIndex(t, tmpDir, ns, size, rv, 1000, rebuild, searchAfterWrite)
+
+						cnt, err := idx.DocCount(context.Background(), "")
+						require.NoError(t, err)
+						if shouldRebuild {
+							require.Equal(t, int64(1000), cnt)
+						} else {
+							require.Equal(t, int64(10), cnt)
+						}
+						backend2.CloseAllIndexes()
+					})
+				}
+			}
+		}
+	}
 }
 
-func TestFileIndexIsNotReusedOnDifferentRV(t *testing.T) {
-	ns := resource.NamespacedResource{
-		Namespace: "test",
-		Group:     "group",
-		Resource:  "resource",
-	}
-
-	tmpDir := t.TempDir()
-
-	backend1, _ := setupBleveBackend(t, 5, time.Nanosecond, tmpDir)
-	_, err := backend1.BuildIndex(context.Background(), ns, 10, 100, nil, "test", indexTestDocs(ns, 10, 100), nil)
+func createBleveBackendAndIndex(t *testing.T, tmpDir string, ns resource.NamespacedResource, size, rv int64, docCount int, rebuild, searchAfterWrite bool) (*bleveBackend, resource.ResourceIndex) {
+	backend, _ := setupBleveBackend(t, 5, time.Nanosecond, tmpDir)
+	idx, err := backend.BuildIndex(context.Background(), ns, size /* file based */, rv, nil, "test", indexTestDocs(ns, docCount, rv), nil, rebuild, searchAfterWrite)
 	require.NoError(t, err)
-	backend1.CloseAllIndexes()
-
-	// We open new backend using same directory, but with different RV. Index should be rebuilt.
-	backend2, _ := setupBleveBackend(t, 5, time.Nanosecond, tmpDir)
-	idx, err := backend2.BuildIndex(context.Background(), ns, 10 /* file based */, 999999, nil, "test", indexTestDocs(ns, 100, 999999), nil)
-	require.NoError(t, err)
-
-	// Verify that index has updated number of documents.
-	cnt, err := idx.DocCount(context.Background(), "")
-	require.NoError(t, err)
-	require.Equal(t, int64(100), cnt)
+	return backend, idx
 }
 
 func TestRebuildingIndexClosesPreviousCachedIndex(t *testing.T) {
@@ -986,7 +973,7 @@ func TestRebuildingIndexClosesPreviousCachedIndex(t *testing.T) {
 			if testCase.firstInMemory {
 				firstSize = 1
 			}
-			firstIndex, err := backend.BuildIndex(context.Background(), ns, int64(firstSize), 100, nil, "test", indexTestDocs(ns, firstSize, 100), nil)
+			firstIndex, err := backend.BuildIndex(context.Background(), ns, int64(firstSize), 100, nil, "test", indexTestDocs(ns, firstSize, 100), nil, false, false)
 			require.NoError(t, err)
 
 			if testCase.firstInMemory {
@@ -1002,7 +989,7 @@ func TestRebuildingIndexClosesPreviousCachedIndex(t *testing.T) {
 				secondSize = 1
 				openInMemoryIndexes = 1
 			}
-			secondIndex, err := backend.BuildIndex(context.Background(), ns, int64(secondSize), 100, nil, "test", indexTestDocs(ns, secondSize, 100), nil)
+			secondIndex, err := backend.BuildIndex(context.Background(), ns, int64(secondSize), 100, nil, "test", indexTestDocs(ns, secondSize, 100), nil, false, false)
 			require.NoError(t, err)
 
 			if testCase.secondInMemory {
@@ -1021,14 +1008,18 @@ func TestRebuildingIndexClosesPreviousCachedIndex(t *testing.T) {
 			require.NoError(t, err)
 			require.Equal(t, int64(secondSize), cnt)
 
-			require.NoError(t, testutil.GatherAndCompare(reg, bytes.NewBufferString(fmt.Sprintf(`
-				# HELP index_server_open_indexes Number of open indexes per storage type. An open index corresponds to single resource group.
-				# TYPE index_server_open_indexes gauge
-				index_server_open_indexes{index_storage="memory"} %d
-				index_server_open_indexes{index_storage="file"} %d
-			`, openInMemoryIndexes, 1-openInMemoryIndexes)), "index_server_open_indexes"))
+			checkOpenIndexes(t, reg, openInMemoryIndexes, 1-openInMemoryIndexes)
 		})
 	}
+}
+
+func checkOpenIndexes(t *testing.T, reg prometheus.Gatherer, memory, file int) {
+	require.NoError(t, testutil.GatherAndCompare(reg, bytes.NewBufferString(fmt.Sprintf(`
+		# HELP index_server_open_indexes Number of open indexes per storage type. An open index corresponds to single resource group.
+		# TYPE index_server_open_indexes gauge
+		index_server_open_indexes{index_storage="memory"} %d
+		index_server_open_indexes{index_storage="file"} %d
+	`, memory, file)), "index_server_open_indexes"))
 }
 
 func verifyDirEntriesCount(t *testing.T, dir string, count int) {
@@ -1149,11 +1140,11 @@ func testBleveIndexWithFailures(t *testing.T, fileBased bool) {
 	}
 	_, err := backend.BuildIndex(context.Background(), ns, size, 100, nil, "test", func(index resource.ResourceIndex) (int64, error) {
 		return 0, fmt.Errorf("fail")
-	}, nil)
+	}, nil, false, false)
 	require.Error(t, err)
 
 	// Even though previous build of the index failed, new building of the index should work.
-	_, err = backend.BuildIndex(context.Background(), ns, size, 100, nil, "test", indexTestDocs(ns, int(size), 100), nil)
+	_, err = backend.BuildIndex(context.Background(), ns, size, 100, nil, "test", indexTestDocs(ns, int(size), 100), nil, false, false)
 	require.NoError(t, err)
 }
 
@@ -1165,7 +1156,7 @@ func TestIndexUpdate(t *testing.T) {
 	}
 
 	be, _ := setupBleveBackend(t, 5, 1*time.Minute, "")
-	idx, err := be.BuildIndex(t.Context(), ns, 10 /* file based */, 100, nil, "test", indexTestDocs(ns, 10, 100), updateTestDocs(ns, 5))
+	idx, err := be.BuildIndex(t.Context(), ns, 10 /* file based */, 100, nil, "test", indexTestDocs(ns, 10, 100), updateTestDocs(ns, 5), false, false)
 	require.NoError(t, err)
 
 	resp := searchTitle(t, idx, "gen", 10, ns)
@@ -1219,7 +1210,7 @@ func TestConcurrentIndexUpdateAndBuildIndex(t *testing.T) {
 		return sinceRV + int64(5), 5, err
 	}
 
-	idx, err := be.BuildIndex(t.Context(), ns, 10 /* file based */, 100, nil, "test", indexTestDocs(ns, 10, 100), updaterFn)
+	idx, err := be.BuildIndex(t.Context(), ns, 10 /* file based */, 100, nil, "test", indexTestDocs(ns, 10, 100), updaterFn, false, false)
 	require.NoError(t, err)
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -1227,7 +1218,7 @@ func TestConcurrentIndexUpdateAndBuildIndex(t *testing.T) {
 	_, err = idx.UpdateIndex(ctx, "test")
 	require.NoError(t, err)
 
-	_, err = be.BuildIndex(t.Context(), ns, 10 /* file based */, 100, nil, "test", indexTestDocs(ns, 10, 100), updaterFn)
+	_, err = be.BuildIndex(t.Context(), ns, 10 /* file based */, 100, nil, "test", indexTestDocs(ns, 10, 100), updaterFn, false, false)
 	require.NoError(t, err)
 
 	_, err = idx.UpdateIndex(ctx, "test")
@@ -1243,7 +1234,7 @@ func TestConcurrentIndexUpdateSearchAndRebuild(t *testing.T) {
 
 	be, _ := setupBleveBackend(t, 5, 1*time.Minute, "")
 
-	_, err := be.BuildIndex(t.Context(), ns, 10, 0, nil, "test", indexTestDocs(ns, 10, 100), updateTestDocs(ns, 5))
+	_, err := be.BuildIndex(t.Context(), ns, 10, 0, nil, "test", indexTestDocs(ns, 10, 100), updateTestDocs(ns, 5), false, false)
 	require.NoError(t, err)
 
 	wg := sync.WaitGroup{}
@@ -1306,7 +1297,7 @@ func TestConcurrentIndexUpdateSearchAndRebuild(t *testing.T) {
 	go func() {
 		defer wg.Done()
 		for ctx.Err() == nil {
-			_, err := be.BuildIndex(t.Context(), ns, 10, 0, nil, "test", indexTestDocs(ns, 10, 100), updateTestDocs(ns, 5))
+			_, err := be.BuildIndex(t.Context(), ns, 10, 0, nil, "test", indexTestDocs(ns, 10, 100), updateTestDocs(ns, 5), false, false)
 			require.NoError(t, err)
 			rebuilds.Inc()
 		}
@@ -1329,7 +1320,7 @@ func TestConcurrentIndexUpdateAndSearch(t *testing.T) {
 
 	be, _ := setupBleveBackend(t, 5, 1*time.Minute, "")
 
-	idx, err := be.BuildIndex(t.Context(), ns, 10 /* file based */, 100, nil, "test", indexTestDocs(ns, 10, 100), updateTestDocs(ns, 5))
+	idx, err := be.BuildIndex(t.Context(), ns, 10 /* file based */, 100, nil, "test", indexTestDocs(ns, 10, 100), updateTestDocs(ns, 5), false, false)
 	require.NoError(t, err)
 
 	wg := sync.WaitGroup{}
@@ -1393,7 +1384,7 @@ func TestIndexUpdateWithErrors(t *testing.T) {
 		time.Sleep(100 * time.Millisecond)
 		return 0, 0, updateErr
 	}
-	idx, err := be.BuildIndex(t.Context(), ns, 10 /* file based */, 100, nil, "test", indexTestDocs(ns, 10, 100), updaterFn)
+	idx, err := be.BuildIndex(t.Context(), ns, 10 /* file based */, 100, nil, "test", indexTestDocs(ns, 10, 100), updaterFn, false, false)
 	require.NoError(t, err)
 
 	t.Run("update fail", func(t *testing.T) {

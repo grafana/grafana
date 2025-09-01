@@ -1,6 +1,6 @@
 import ansicolor from 'ansicolor';
 import { LosslessNumber, parse, stringify } from 'lossless-json';
-import Prism, { Grammar } from 'prismjs';
+import Prism, { Grammar, Token } from 'prismjs';
 
 import {
   DataFrame,
@@ -10,7 +10,6 @@ import {
   LogRowModel,
   LogsSortOrder,
   systemDateFormats,
-  textUtil,
 } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { GetFieldLinksFn } from 'app/plugins/panel/logs/types';
@@ -59,15 +58,17 @@ export class LogListModel implements LogRowModel {
   private _currentSearch: string | undefined = undefined;
   private _grammar?: Grammar;
   private _highlightedBody: string | undefined = undefined;
+  private _highlightTokens: Array<string | Token> | undefined = undefined;
   private _fields: FieldDef[] | undefined = undefined;
   private _getFieldLinks: GetFieldLinksFn | undefined = undefined;
+  private _prettifyJSON: boolean;
   private _virtualization?: LogLineVirtualization;
   private _wrapLogMessage: boolean;
   private _json = false;
 
   constructor(
     log: LogRowModel,
-    { escape, getFieldLinks, grammar, timeZone, virtualization, wrapLogMessage }: PreProcessLogOptions
+    { escape, getFieldLinks, grammar, prettifyJSON, timeZone, virtualization, wrapLogMessage }: PreProcessLogOptions
   ) {
     // LogRowModel
     this.datasourceType = log.datasourceType;
@@ -98,6 +99,7 @@ export class LogListModel implements LogRowModel {
     this.displayLevel = logLevelToDisplayLevel(log.logLevel);
     this._getFieldLinks = getFieldLinks;
     this._grammar = grammar;
+    this._prettifyJSON = Boolean(prettifyJSON);
     this.timestamp = dateTimeFormat(log.timeEpochMs, {
       timeZone,
       // YYYY-MM-DD HH:mm:ss.SSS
@@ -118,7 +120,7 @@ export class LogListModel implements LogRowModel {
     // Unless this function is required outside of <LogLineDetailsLog />, we create a wrapped clone, so new lines are not stripped.
     clone._wrapLogMessage = true;
     clone._body = undefined;
-    clone._highlightedBody = undefined;
+    clone._highlightTokens = undefined;
     return clone;
   }
 
@@ -129,7 +131,7 @@ export class LogListModel implements LogRowModel {
         if (typeof parsed === 'object' && parsed !== null && !(parsed instanceof LosslessNumber)) {
           this._json = true;
         }
-        const reStringified = this._wrapLogMessage ? stringify(parsed, undefined, 2) : this.raw;
+        const reStringified = this._wrapLogMessage && this._prettifyJSON ? stringify(parsed, undefined, 2) : this.raw;
         if (reStringified) {
           this.raw = reStringified;
         }
@@ -159,12 +161,23 @@ export class LogListModel implements LogRowModel {
   get highlightedBody() {
     if (this._highlightedBody === undefined) {
       // Body is accessed first to trigger the getter code before generateLogGrammar()
-      const sanitizedBody = textUtil.sanitize(this.body);
+      const body = this.body;
       this._grammar = this._grammar ?? generateLogGrammar(this);
       const extraGrammar = generateTextMatchGrammar(this.searchWords, this._currentSearch);
-      this._highlightedBody = Prism.highlight(sanitizedBody, { ...extraGrammar, ...this._grammar }, 'lokiql');
+      this._highlightedBody = Prism.highlight(body, { ...extraGrammar, ...this._grammar }, 'logs');
     }
     return this._highlightedBody;
+  }
+
+  get highlightedBodyTokens() {
+    if (this._highlightTokens === undefined) {
+      // Body is accessed first to trigger the getter code before generateLogGrammar()
+      const body = this.body;
+      this._grammar = this._grammar ?? generateLogGrammar(this);
+      const extraGrammar = generateTextMatchGrammar(this.searchWords, this._currentSearch);
+      this._highlightTokens = Prism.tokenize(body, { ...extraGrammar, ...this._grammar });
+    }
+    return this._highlightTokens;
   }
 
   get isJSON() {
@@ -221,21 +234,21 @@ export class LogListModel implements LogRowModel {
     if (this.collapsed === undefined || collapsed === undefined) {
       this.collapsed = collapsed;
       this._body = undefined;
-      this._highlightedBody = undefined;
+      this._highlightTokens = undefined;
     }
   }
 
   setCollapsedState(collapsed: boolean) {
     if (this.collapsed !== collapsed) {
       this._body = undefined;
-      this._highlightedBody = undefined;
+      this._highlightTokens = undefined;
     }
     this.collapsed = collapsed;
   }
 
   setCurrentSearch(search: string | undefined) {
     this._currentSearch = search;
-    this._highlightedBody = undefined;
+    this._highlightTokens = undefined;
   }
 }
 
@@ -243,6 +256,7 @@ export interface PreProcessOptions {
   escape: boolean;
   getFieldLinks?: GetFieldLinksFn;
   order: LogsSortOrder;
+  prettifyJSON?: boolean;
   timeZone: string;
   virtualization?: LogLineVirtualization;
   wrapLogMessage: boolean;
@@ -250,7 +264,7 @@ export interface PreProcessOptions {
 
 export const preProcessLogs = (
   logs: LogRowModel[],
-  { escape, getFieldLinks, order, timeZone, virtualization, wrapLogMessage }: PreProcessOptions,
+  { escape, getFieldLinks, order, prettifyJSON, timeZone, virtualization, wrapLogMessage }: PreProcessOptions,
   grammar?: Grammar
 ): LogListModel[] => {
   const orderedLogs = sortLogRows(logs, order);
@@ -259,6 +273,7 @@ export const preProcessLogs = (
       escape,
       getFieldLinks,
       grammar,
+      prettifyJSON,
       timeZone,
       virtualization,
       wrapLogMessage,
@@ -270,6 +285,7 @@ interface PreProcessLogOptions {
   escape: boolean;
   getFieldLinks?: GetFieldLinksFn;
   grammar?: Grammar;
+  prettifyJSON?: boolean;
   timeZone: string;
   virtualization?: LogLineVirtualization;
   wrapLogMessage: boolean;
