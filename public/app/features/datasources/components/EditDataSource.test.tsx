@@ -2,7 +2,12 @@ import { screen, render } from '@testing-library/react';
 import { useEffect } from 'react';
 import { Provider } from 'react-redux';
 
-import { DataSourceJsonData, PluginExtensionDataSourceConfigContext, PluginState } from '@grafana/data';
+import {
+  DataSourceJsonData,
+  DataSourceSettings,
+  PluginExtensionDataSourceConfigContext,
+  PluginState,
+} from '@grafana/data';
 import { setPluginComponentsHook, setPluginLinksHook } from '@grafana/runtime';
 import { createComponentWithMeta } from 'app/features/plugins/extensions/usePluginComponents';
 import { configureStore } from 'app/store/configureStore';
@@ -107,6 +112,14 @@ describe('<EditDataSource>', () => {
       });
 
       expect(screen.queryByText(readOnlyMessage)).toBeVisible();
+    });
+
+    it('should render a message if the datasource is not found', () => {
+      setup({
+        dataSource: getMockDataSource({ uid: undefined, id: 0 }),
+      });
+
+      expect(screen.queryByText('Data source not found')).toBeVisible();
     });
   });
 

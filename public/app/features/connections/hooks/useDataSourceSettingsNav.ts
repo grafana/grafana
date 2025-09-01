@@ -37,8 +37,7 @@ export function useDataSourceSettingsNav(pageIdParam?: string) {
 
   if (loadError) {
     const node: NavModelItem = {
-      text: loadError,
-      subTitle: t('connections.use-data-source-settings-nav.node.subTitle.data-source-error', 'Data Source Error'),
+      text: t('connections.use-data-source-settings-nav.node.subTitle.data-source-error', 'Data Source Error'),
       icon: 'exclamation-triangle',
     };
 
@@ -50,6 +49,18 @@ export function useDataSourceSettingsNav(pageIdParam?: string) {
 
   if (loading || !plugin) {
     pageNav = getNavModel(navIndex, navIndexId, getDataSourceLoadingNav('settings'));
+  }
+
+  if (!datasource.uid) {
+    const node: NavModelItem = {
+      text: t('connections.use-data-source-settings-nav.node.subTitle.data-source-error', 'Data Source Error'),
+      icon: 'exclamation-triangle',
+    };
+
+    pageNav = {
+      node: node,
+      main: node,
+    };
   }
 
   if (plugin) {
@@ -64,8 +75,8 @@ export function useDataSourceSettingsNav(pageIdParam?: string) {
     ...pageNav.main,
     dataSourcePluginName: datasourcePlugin?.name || plugin?.meta.name || '',
     active: true,
-    text: datasource.name,
-    subTitle: `Type: ${dataSourceMeta.name}`,
+    text: datasource.name || '',
+    subTitle: dataSourceMeta.name ? `Type: ${dataSourceMeta.name}` : '',
     children: (pageNav.main.children || []).map((navModelItem) => ({
       ...navModelItem,
       url: navModelItem.url?.replace('datasources/edit/', '/connections/datasources/edit/'),
