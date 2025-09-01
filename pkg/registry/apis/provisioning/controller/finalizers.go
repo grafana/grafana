@@ -52,16 +52,9 @@ func (f *finalizer) process(ctx context.Context,
 		case ReleaseOrphanResourcesFinalizer:
 			err := f.processExistingItems(ctx, repo.Config(),
 				func(client dynamic.ResourceInterface, item *provisioning.ResourceListItem) error {
-					_, err := client.Patch(ctx, item.Name, types.MergePatchType, []byte(`{
-						"metadata": {
-							"annotations": {
-								"`+utils.AnnoKeyManagerKind+`": null,
-								"`+utils.AnnoKeyManagerIdentity+`": null,
-								"`+utils.AnnoKeySourcePath+`": null,
-								"`+utils.AnnoKeySourceChecksum+`": null
-							}
-						}
-					}`), v1.PatchOptions{})
+					_, err := client.Patch(
+						ctx, item.Name, types.JSONPatchType, getPatchedAnnotations(item), v1.PatchOptions{},
+					)
 					return err
 				})
 			if err != nil {
@@ -126,6 +119,34 @@ func (f *finalizer) processExistingItems(
 	}
 	logger.Info("processed orphan items", "items", count, "errors", errors)
 	return nil
+}
+
+func getPatchedAnnotations(item *provisioning.ResourceListItem) []byte {
+	annotations := []string{
+		`{"op": "remove", "path": "/metadata/annotations/"` + escapePatchString(utils.AnnoKeyManagerKind) + "}",
+		`{"op": "remove", "path": "/metadata/annotations/"` + escapePatchString(utils.AnnoKeyManagerIdentity) + "}",
+	}
+
+	if item.Path != "" {
+		annotations = append(
+			annotations,
+			`{"op": "remove", "path": "/metadata/annotations/"`+escapePatchString(utils.AnnoKeySourcePath)+"}",
+		)
+	}
+	if item.Hash != "" {
+		annotations = append(
+			annotations,
+			`{"op": "remove", "path": "/metadata/annotations/"`+escapePatchString(utils.AnnoKeySourceChecksum)+"}",
+		)
+	}
+
+	return []byte("[" + strings.Join(annotations, ",") + "]")
+}
+
+func escapePatchString(s string) string {
+	s = strings.ReplaceAll(s, "~", "~0")
+	s = strings.ReplaceAll(s, "/", "~1")
+	return s
 }
 
 func sortResourceListForDeletion(list *provisioning.ResourceList) {
