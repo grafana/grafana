@@ -70,6 +70,7 @@ export function getSearchFilterFromQuery(query: string): RulesFilter {
     [terms.PluginsToken]: (value) => (filter.plugins = value === 'hide' ? value : undefined),
     [terms.ContactPointToken]: (value) => (filter.contactPoint = value),
     [terms.RuleSourceToken]: (value) => (filter.ruleSource = getRuleSource(value)),
+    [terms.FreeFormExpression]: (value) => filter.freeFormWords.push(value),
   };
 
   parseQueryToFilter(query, filterSupportedTerms, tokenToFilterMap);
