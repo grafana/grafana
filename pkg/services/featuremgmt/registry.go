@@ -1564,13 +1564,6 @@ var (
 			HideFromDocs:      true,
 		},
 		{
-			Name:         "extensionSidebar",
-			Description:  "Enables the extension sidebar",
-			Stage:        FeatureStageExperimental,
-			FrontendOnly: true,
-			Owner:        grafanaObservabilityLogsSquad,
-		},
-		{
 			Name:              "alertingRulePermanentlyDelete",
 			Description:       "Enables UI functionality to permanently delete alert rules",
 			FrontendOnly:      true,
