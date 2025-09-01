@@ -204,7 +204,12 @@ const prepConfig = (frame: DataFrame, theme: GrafanaTheme2) => {
       y: false,
       setScale: true,
     },
-    dataIdx: (u, _, closestIdx, xValue) => (xValue < u.data[0][closestIdx] ? closestIdx - 1 : closestIdx),
+    dataIdx: (u, _, closestIdx, xValue) =>
+      isOrdinalX ? Math.floor(xValue) : xValue < u.data[0][closestIdx] ? closestIdx - 1 : closestIdx,
+    focus: {
+      prox: 1e6,
+      bias: 1,
+    },
   });
 
   let stackingGroups = getStackingGroups(xMinOnlyFrame(frame));
