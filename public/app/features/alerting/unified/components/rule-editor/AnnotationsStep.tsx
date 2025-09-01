@@ -19,7 +19,7 @@ import DashboardAnnotationField from './DashboardAnnotationField';
 import { DashboardPicker, PanelDTO, getVisualPanels } from './DashboardPicker';
 import { NeedHelpInfo } from './NeedHelpInfo';
 import { RuleEditorSection } from './RuleEditorSection';
-import { NotificationMessageSectionExtension } from './alert-rule-form/notificationMessageSectionExtensions/extensions';
+import { NotificationMessageSectionExtension } from './alert-rule-form/extensions/NotificationMessageSectionExtension';
 import { useDashboardQuery } from './useDashboardQuery';
 
 const AnnotationsStep = () => {
@@ -212,10 +212,10 @@ const AnnotationsStep = () => {
             </div>
           );
         })}
-        
+
         {/* Notification Message Section Extension - rendered once outside the annotation loop */}
         <NotificationMessageSectionExtension />
-        
+
         <Stack direction="row" gap={1}>
           <div className={styles.addAnnotationsButtonContainer}>
             <Button
@@ -244,6 +244,7 @@ const AnnotationsStep = () => {
             onDismiss={() => setShowPanelSelector(false)}
           />
         )}
+        <NotificationMessageSectionExtension />
       </Stack>
     </RuleEditorSection>
   );

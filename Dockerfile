@@ -102,6 +102,7 @@ COPY apps/investigations apps/investigations
 COPY apps/advisor apps/advisor
 COPY apps/dashboard apps/dashboard
 COPY apps/folder apps/folder
+COPY apps/preferences apps/preferences
 COPY apps/iam apps/iam
 COPY apps apps
 COPY kindsv2 kindsv2
