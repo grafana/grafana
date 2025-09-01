@@ -1,5 +1,6 @@
 #!/bin/bash
 
+# TODO is there a better way to do this?
 # Change to the Grafana root directory
 cd "$(dirname "$0")/.."
 
