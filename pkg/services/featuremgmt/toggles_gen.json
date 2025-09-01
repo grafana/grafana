@@ -517,6 +517,22 @@
     },
     {
       "metadata": {
+        "name": "alertingTriage",
+        "resourceVersion": "1756386724059",
+        "creationTimestamp": "2025-08-28T13:12:04Z"
+      },
+      "spec": {
+        "description": "Enables the alerting triage feature",
+        "stage": "experimental",
+        "codeowner": "@grafana/alerting-squad",
+        "frontend": true,
+        "hideFromAdminPage": true,
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "alertingUIOptimizeReducer",
         "resourceVersion": "1753448760331",
         "creationTimestamp": "2024-11-18T10:59:00Z"
