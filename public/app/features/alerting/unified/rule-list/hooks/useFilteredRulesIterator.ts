@@ -110,7 +110,7 @@ export function useFilteredRulesIteratorProvider() {
     );
 
     const iterablesToMerge: Array<AsyncIterableX<RuleWithOrigin>> = [];
-    const includeGrafana = filterState.ruleSource !== 'external';
+    const includeGrafana = filterState.ruleSource !== 'datasource';
     const includeExternal = true;
 
     if (includeGrafana) {

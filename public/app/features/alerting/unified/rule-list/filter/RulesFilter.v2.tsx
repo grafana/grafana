@@ -637,7 +637,7 @@ function RuleSourceField({ radioGroupClassName }: { radioGroupClassName?: string
             options={[
               { label: t('common.all', 'All'), value: '*' },
               { label: t('alerting.rules-filter.rule-source.grafana', 'Grafana managed'), value: 'grafana' },
-              { label: t('alerting.rules-filter.rule-source.external', 'Data source managed'), value: 'external' },
+              { label: t('alerting.rules-filter.rule-source.datasource', 'Data source managed'), value: 'datasource' },
             ]}
             value={field.value}
             onChange={field.onChange}

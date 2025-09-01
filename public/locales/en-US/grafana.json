@@ -2646,7 +2646,7 @@
       "placeholder-labels": "Select labels",
       "plugin-rules": "Plugin rules",
       "rule-source": {
-        "external": "Data source managed",
+        "datasource": "Data source managed",
         "grafana": "Grafana managed"
       },
       "rule-type": "Rule type",

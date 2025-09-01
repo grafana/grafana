@@ -50,7 +50,7 @@ export enum RuleHealth {
 
 export enum RuleSource {
   Grafana = 'grafana',
-  External = 'external',
+  DataSource = 'datasource',
 }
 
 // Define how to map parsed tokens into the filter object

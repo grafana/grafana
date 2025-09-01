@@ -193,10 +193,13 @@ export function getRuleHealth(health: string): RuleHealth | undefined {
 }
 
 export function getRuleSource(source: string): RuleSource | undefined {
-  if (source === ' grafana') {
+  if (source === 'grafana') {
     return RuleSource.Grafana;
   }
-  return RuleSource.External;
+  if (source === 'datasource') {
+    return RuleSource.DataSource;
+  }
+  return undefined;
 }
 
 export function getPendingPeriod(rule: CombinedRule): string | undefined {
