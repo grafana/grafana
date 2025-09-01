@@ -1111,4 +1111,9 @@ export interface FeatureToggles {
   * @default false
   */
   alertingTriage?: boolean;
+  /**
+  * Enables the Graphite data source full backend mode
+  * @default false
+  */
+  graphiteBackendMode?: boolean;
 }
