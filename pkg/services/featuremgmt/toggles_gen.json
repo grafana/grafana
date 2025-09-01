@@ -572,16 +572,18 @@
     {
       "metadata": {
         "name": "alertmanagerRemoteSecondaryWithRemoteState",
-        "resourceVersion": "1753448760331",
-        "creationTimestamp": "2025-07-25T13:06:00Z"
+        "resourceVersion": "1753776005753",
+        "creationTimestamp": "2025-07-25T13:06:00Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-07-29 08:00:05.753498 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Starts Grafana in remote secondary mode pulling the latest state from the remote Alertmanager to avoid duplicate notifications.",
         "stage": "experimental",
         "codeowner": "@grafana/alerting-squad",
         "hideFromAdminPage": true,
-        "hideFromDocs": true,
-        "expression": "false"
+        "hideFromDocs": true
       }
     },
     {
@@ -2886,6 +2888,25 @@
         "stage": "experimental",
         "codeowner": "@grafana/grafana-frontend-platform",
         "hideFromAdminPage": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "restrictedPluginApis",
+        "resourceVersion": "1753776783657",
+        "creationTimestamp": "2025-07-25T07:46:26Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-07-29 08:13:03.657209 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Enables sharing a list of APIs with a list of plugins",
+        "stage": "experimental",
+        "codeowner": "@grafana/plugins-platform-backend",
+        "frontend": true,
+        "hideFromAdminPage": true,
+        "hideFromDocs": true,
         "expression": "false"
       }
     },
