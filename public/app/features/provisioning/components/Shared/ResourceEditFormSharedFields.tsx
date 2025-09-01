@@ -41,18 +41,19 @@ export const ResourceEditFormSharedFields = memo<DashboardEditFormSharedFieldsPr
     );
 
     const branchOptions = useMemo(() => {
-      const options: Array<{ label: string; value: string }> = [];
+      const options: Array<{ label: string; value: string; description?: string }> = [];
 
       const configuredBranch = repository?.branch;
       const prefix = t(
         'provisioned-resource-form.save-or-delete-resource-shared-fields.suffix-configured-branch',
-        '(Configured branch)'
+        'Configured branch'
       );
       // Show the configured branch first in the list
       if (configuredBranch) {
         options.push({
-          label: `${configuredBranch} ${prefix}`,
+          label: `${configuredBranch}`,
           value: configuredBranch,
+          description: prefix,
         });
       }
 
@@ -129,6 +130,7 @@ export const ResourceEditFormSharedFields = memo<DashboardEditFormSharedFieldsPr
                   <RadioButtonGroup
                     id="provisioned-resource-form-workflow"
                     {...field}
+                    options={workflowOptions}
                     onChange={(nextWorkflow) => {
                       onChange(nextWorkflow);
                       clearErrors('ref');
@@ -138,7 +140,6 @@ export const ResourceEditFormSharedFields = memo<DashboardEditFormSharedFieldsPr
                         setValue('ref', repository.branch);
                       }
                     }}
-                    options={workflowOptions}
                   />
                 )}
               />
@@ -169,6 +170,7 @@ export const ResourceEditFormSharedFields = memo<DashboardEditFormSharedFieldsPr
                     workflow === 'write' ? (
                       <Combobox
                         {...field}
+                        disabled={!isNew}
                         invalid={!!errors.ref}
                         id="provisioned-ref"
                         onChange={(option) => onChange(option ? option.value : '')}
@@ -178,7 +180,6 @@ export const ResourceEditFormSharedFields = memo<DashboardEditFormSharedFieldsPr
                         )}
                         options={branchOptions}
                         loading={branchLoading}
-                        createCustomValue
                         isClearable
                       />
                     ) : (

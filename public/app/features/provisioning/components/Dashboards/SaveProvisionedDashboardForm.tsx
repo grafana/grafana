@@ -136,8 +136,8 @@ export function SaveProvisionedDashboardForm({
       return;
     }
 
-    // If user is writing to the original branch, override ref with whatever we loaded from
-    if (workflow === 'write') {
+    // If user is updating a dashboard in the original branch, override ref with whatever we loaded from
+    if (workflow === 'write' && !isNew) {
       ref = loadedFromRef;
     }
 
