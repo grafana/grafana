@@ -42,6 +42,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/controller"
 
 	appcontroller "github.com/grafana/grafana/apps/provisioning/pkg/controller"
+	"github.com/grafana/grafana/apps/provisioning/pkg/loki"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	deletepkg "github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/delete"
@@ -49,7 +50,6 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/migrate"
 	movepkg "github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/move"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/sync"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/loki"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources/signature"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/usage"

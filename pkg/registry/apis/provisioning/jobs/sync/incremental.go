@@ -4,10 +4,13 @@ import (
 	"context"
 	"fmt"
 
+<<<<<<< HEAD
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
+=======
+	"github.com/grafana/grafana/apps/provisioning/pkg/safepath"
+>>>>>>> origin/main
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/safepath"
 )
 
 // Convert git changes into resource file changes

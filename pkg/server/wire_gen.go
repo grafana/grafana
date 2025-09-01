@@ -59,6 +59,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/iam"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/noopstorage"
 	"github.com/grafana/grafana/pkg/registry/apis/ofrep"
+	"github.com/grafana/grafana/pkg/registry/apis/preferences"
 	provisioning2 "github.com/grafana/grafana/pkg/registry/apis/provisioning"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/extras"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/webhooks"
@@ -589,7 +590,7 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts Options, apiOpts api
 	deleteExpiredService := image.ProvideDeleteExpiredService(dBstore)
 	tempuserService := tempuserimpl.ProvideService(sqlStore, cfg)
 	cleanupServiceImpl := annotationsimpl.ProvideCleanupService(sqlStore, cfg)
-	cleanUpService := cleanup.ProvideService(cfg, serverLockService, shortURLService, sqlStore, queryHistoryService, dashverService, serviceImpl, deleteExpiredService, tempuserService, tracingService, cleanupServiceImpl, dashboardService, dBstore)
+	cleanUpService := cleanup.ProvideService(cfg, featureToggles, serverLockService, shortURLService, sqlStore, queryHistoryService, dashverService, serviceImpl, deleteExpiredService, tempuserService, tracingService, cleanupServiceImpl, dBstore, eventualRestConfigProvider, orgService)
 	secretsKVStore, err := kvstore2.ProvideService(sqlStore, secretsService)
 	if err != nil {
 		return nil, err
@@ -802,6 +803,7 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts Options, apiOpts api
 		return nil, err
 	}
 	userStorageAPIBuilder := userstorage.RegisterAPIService(featureToggles, apiserverService, registerer)
+	apiBuilder := preferences.RegisterAPIService(cfg, featureToggles, sqlStore, prefService, apiserverService)
 	legacyMigrator := legacy.ProvideLegacyMigrator(sqlStore, provisioningServiceImpl, libraryPanelService, dashboardPermissionsService, accessControl, featureToggles)
 	webhookExtraBuilder := webhooks.ProvideWebhooks(cfg, renderingService, resourceClient, eventualRestConfigProvider)
 	v3 := extras.ProvideProvisioningOSSExtras(webhookExtraBuilder)
@@ -820,7 +822,7 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts Options, apiOpts api
 	if err != nil {
 		return nil, err
 	}
-	apiBuilder, err := provisioning2.RegisterAPIService(cfg, featureToggles, apiserverService, registerer, resourceClient, eventualRestConfigProvider, accessClient, legacyMigrator, dualwriteService, usageStats, tracingService, v3, repositoryFactory)
+	provisioningAPIBuilder, err := provisioning2.RegisterAPIService(cfg, featureToggles, apiserverService, registerer, resourceClient, eventualRestConfigProvider, accessClient, legacyMigrator, dualwriteService, usageStats, tracingService, v3, repositoryFactory)
 	if err != nil {
 		return nil, err
 	}
@@ -833,7 +835,7 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts Options, apiOpts api
 	if err != nil {
 		return nil, err
 	}
-	apiregistryService := apiregistry.ProvideRegistryServiceSink(dashboardsAPIBuilder, snapshotsAPIBuilder, featureFlagAPIBuilder, dataSourceAPIBuilder, folderAPIBuilder, identityAccessManagementAPIBuilder, queryAPIBuilder, userStorageAPIBuilder, apiBuilder, ofrepAPIBuilder, dependencyRegisterer)
+	apiregistryService := apiregistry.ProvideRegistryServiceSink(dashboardsAPIBuilder, snapshotsAPIBuilder, featureFlagAPIBuilder, dataSourceAPIBuilder, folderAPIBuilder, identityAccessManagementAPIBuilder, queryAPIBuilder, userStorageAPIBuilder, apiBuilder, provisioningAPIBuilder, ofrepAPIBuilder, dependencyRegisterer)
 	teamPermissionsService, err := ossaccesscontrol.ProvideTeamPermissions(cfg, featureToggles, routeRegisterImpl, sqlStore, accessControl, ossLicensingService, acimplService, teamService, userService, actionSetService)
 	if err != nil {
 		return nil, err
@@ -1163,7 +1165,7 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	deleteExpiredService := image.ProvideDeleteExpiredService(dBstore)
 	tempuserService := tempuserimpl.ProvideService(sqlStore, cfg)
 	cleanupServiceImpl := annotationsimpl.ProvideCleanupService(sqlStore, cfg)
-	cleanUpService := cleanup.ProvideService(cfg, serverLockService, shortURLService, sqlStore, queryHistoryService, dashverService, serviceImpl, deleteExpiredService, tempuserService, tracingService, cleanupServiceImpl, dashboardService, dBstore)
+	cleanUpService := cleanup.ProvideService(cfg, featureToggles, serverLockService, shortURLService, sqlStore, queryHistoryService, dashverService, serviceImpl, deleteExpiredService, tempuserService, tracingService, cleanupServiceImpl, dBstore, eventualRestConfigProvider, orgService)
 	secretsKVStore, err := kvstore2.ProvideService(sqlStore, secretsService)
 	if err != nil {
 		return nil, err
@@ -1383,6 +1385,7 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 		return nil, err
 	}
 	userStorageAPIBuilder := userstorage.RegisterAPIService(featureToggles, apiserverService, registerer)
+	apiBuilder := preferences.RegisterAPIService(cfg, featureToggles, sqlStore, prefService, apiserverService)
 	legacyMigrator := legacy.ProvideLegacyMigrator(sqlStore, provisioningServiceImpl, libraryPanelService, dashboardPermissionsService, accessControl, featureToggles)
 	webhookExtraBuilder := webhooks.ProvideWebhooks(cfg, renderingService, resourceClient, eventualRestConfigProvider)
 	v3 := extras.ProvideProvisioningOSSExtras(webhookExtraBuilder)
@@ -1401,7 +1404,7 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	if err != nil {
 		return nil, err
 	}
-	apiBuilder, err := provisioning2.RegisterAPIService(cfg, featureToggles, apiserverService, registerer, resourceClient, eventualRestConfigProvider, accessClient, legacyMigrator, dualwriteService, usageStats, tracingService, v3, repositoryFactory)
+	provisioningAPIBuilder, err := provisioning2.RegisterAPIService(cfg, featureToggles, apiserverService, registerer, resourceClient, eventualRestConfigProvider, accessClient, legacyMigrator, dualwriteService, usageStats, tracingService, v3, repositoryFactory)
 	if err != nil {
 		return nil, err
 	}
@@ -1414,7 +1417,7 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	if err != nil {
 		return nil, err
 	}
-	apiregistryService := apiregistry.ProvideRegistryServiceSink(dashboardsAPIBuilder, snapshotsAPIBuilder, featureFlagAPIBuilder, dataSourceAPIBuilder, folderAPIBuilder, identityAccessManagementAPIBuilder, queryAPIBuilder, userStorageAPIBuilder, apiBuilder, ofrepAPIBuilder, dependencyRegisterer)
+	apiregistryService := apiregistry.ProvideRegistryServiceSink(dashboardsAPIBuilder, snapshotsAPIBuilder, featureFlagAPIBuilder, dataSourceAPIBuilder, folderAPIBuilder, identityAccessManagementAPIBuilder, queryAPIBuilder, userStorageAPIBuilder, apiBuilder, provisioningAPIBuilder, ofrepAPIBuilder, dependencyRegisterer)
 	teamPermissionsService, err := ossaccesscontrol.ProvideTeamPermissions(cfg, featureToggles, routeRegisterImpl, sqlStore, accessControl, ossLicensingService, acimplService, teamService, userService, actionSetService)
 	if err != nil {
 		return nil, err
