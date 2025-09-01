@@ -1,7 +1,7 @@
 package resourcepermission
 
 import (
-	"fmt"
+	"errors"
 	"strings"
 	"time"
 
@@ -12,8 +12,8 @@ import (
 )
 
 var (
-	errNotImplemented = fmt.Errorf("not implemented")
-	errEmptyName      = fmt.Errorf("name cannot be empty")
+	errNotImplemented = errors.New("not supported by this storage backend")
+	errEmptyName      = errors.New("name cannot be empty")
 )
 
 type ListResourcePermissionsQuery struct {
