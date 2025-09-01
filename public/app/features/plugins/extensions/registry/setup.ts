@@ -9,7 +9,9 @@ import { AddedLinksRegistry } from './AddedLinksRegistry';
 import { ExposedComponentsRegistry } from './ExposedComponentsRegistry';
 import { PluginExtensionRegistries } from './types';
 
-const AlertRuleHistory = lazy(() => import('./AlertRule'));
+const CentralAlertHistoryScene = lazy(
+  () => import('app/features/alerting/unified/components/rules/central-state-history/CentralAlertHistoryScene')
+);
 
 export const addedComponentsRegistry = new AddedComponentsRegistry();
 export const exposedComponentsRegistry = new ExposedComponentsRegistry();
@@ -22,21 +24,21 @@ export const pluginExtensionRegistries: PluginExtensionRegistries = {
   addedFunctionsRegistry,
 };
 
-// Registering core extensions
+// Registering core extension links
 addedLinksRegistry.register({
   pluginId: 'grafana',
   configs: getCoreExtensionConfigurations(),
 });
 
-// Registering core components
+// Registering core extension components
 addedComponentsRegistry.register({
   pluginId: 'grafana',
   configs: [
     {
-      title: 'Alert Rule for IRM',
-      description: 'Alert Rule for IRM',
+      title: 'Alert rule history for IRM',
+      description: 'Alert rule history for IRM',
       targets: [PluginExtensionPointsInPlugins.IrmAlertRule],
-      component: AlertRuleHistory,
+      component: CentralAlertHistoryScene,
     },
   ],
 });
