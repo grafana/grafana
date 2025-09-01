@@ -812,7 +812,7 @@ describe('DashboardScene', () => {
       jest.mocked(historySrv.restoreDashboard).mockResolvedValue({ version: newVersion });
       jest.mocked(transformSaveModelToScene).mockReturnValue(mockScene);
 
-      const reloadSpy = jest.spyOn(dashboardWatcher, 'reloadPage').mockImplementation(() => { });
+      const reloadSpy = jest.spyOn(dashboardWatcher, 'reloadPage').mockImplementation(() => {});
 
       dashboardWatcher.editing = false;
       const dash = { uid: 'dash-1', hasUnsavedChanges: () => true };
