@@ -32,7 +32,7 @@ Observability as Code works with all versions of the JSON model, and it's fully 
 
 ## Before you begin
 
-Schema v2 is automatically enabled with the Dynamic Dashboards feature toggle.
+Schema v2 is automatically enabled with the Dynamic Dashboards (`dashboardNewLayouts`) feature toggle.
 To get early access to this feature, request it through [this form](https://docs.google.com/forms/d/e/1FAIpQLSd73nQzuhzcHJOrLFK4ef_uMxHAQiPQh1-rsQUT2MRqbeMLpg/viewform?usp=dialog).
 It also requires the new dashboards API feature toggle, `kubernetesDashboards`, to be enabled as well.
 
