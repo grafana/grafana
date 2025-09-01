@@ -1392,6 +1392,72 @@ func TestV16(t *testing.T) {
 				},
 			},
 		},
+		{
+			name: "should preserve existing panels when rows array is empty",
+			input: map[string]interface{}{
+				"schemaVersion": 15,
+				"rows":          []interface{}{},
+				"panels": []interface{}{
+					map[string]interface{}{
+						"id":    1,
+						"type":  "graph",
+						"title": "Existing Panel",
+						"datasource": map[string]interface{}{
+							"uid": "test-ds",
+						},
+						"gridPos": map[string]interface{}{
+							"h": 8,
+							"w": 12,
+							"x": 0,
+							"y": 0,
+						},
+					},
+					map[string]interface{}{
+						"id":    2,
+						"type":  "stat",
+						"title": "Another Panel",
+						"gridPos": map[string]interface{}{
+							"h": 8,
+							"w": 12,
+							"x": 12,
+							"y": 0,
+						},
+					},
+				},
+			},
+			expected: map[string]interface{}{
+				"schemaVersion": 16,
+				// panels should be preserved exactly as they were
+				"panels": []interface{}{
+					map[string]interface{}{
+						"id":    1,
+						"type":  "graph",
+						"title": "Existing Panel",
+						"datasource": map[string]interface{}{
+							"uid": "test-ds",
+						},
+						"gridPos": map[string]interface{}{
+							"h": 8,
+							"w": 12,
+							"x": 0,
+							"y": 0,
+						},
+					},
+					map[string]interface{}{
+						"id":    2,
+						"type":  "stat",
+						"title": "Another Panel",
+						"gridPos": map[string]interface{}{
+							"h": 8,
+							"w": 12,
+							"x": 12,
+							"y": 0,
+						},
+					},
+				},
+				// rows field should be removed
+			},
+		},
 	}
 
 	runMigrationTests(t, tests, schemaversion.V16)

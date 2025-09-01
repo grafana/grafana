@@ -37,7 +37,6 @@ func upgradeToGridLayout(dashboard map[string]interface{}) {
 
 	// Handle empty rows
 	if len(rows) == 0 {
-		dashboard["panels"] = []interface{}{}
 		delete(dashboard, "rows")
 		return
 	}
