@@ -3,6 +3,7 @@ import { Navigate } from 'react-router-dom-v5-compat';
 import { SafeDynamicImport } from 'app/core/components/DynamicImports/SafeDynamicImport';
 import { config } from 'app/core/config';
 import { GrafanaRouteComponent, RouteDescriptor } from 'app/core/navigation/types';
+import { AlertingPageWrapper } from 'app/features/alerting/unified/components/AlertingPageWrapper';
 import { AccessControlAction } from 'app/types/accessControl';
 
 import { PERMISSIONS_CONTACT_POINTS } from './unified/components/contact-points/permissions';
@@ -232,7 +233,10 @@ export function getAlertingRoutes(cfg = config): RouteDescriptor[] {
     },
     {
       path: '/alerting/import-datasource-managed-rules',
-      roles: () => ['Admin'],
+      roles: evaluateAccess([
+        AccessControlAction.AlertingRuleCreate,
+        AccessControlAction.AlertingProvisioningSetStatus,
+      ]),
       component: config.featureToggles.alertingMigrationUI
         ? importAlertingComponent(
             () =>
@@ -335,6 +339,14 @@ export function getAlertingRoutes(cfg = config): RouteDescriptor[] {
       ),
     },
   ];
+
+  if (cfg.featureToggles.alertingTriage) {
+    routes.push({
+      path: '/alerting/triage',
+      roles: evaluateAccess([AccessControlAction.AlertingRuleRead, AccessControlAction.AlertingRuleExternalRead]),
+      component: () => <AlertingPageWrapper />,
+    });
+  }
 
   return routes;
 }

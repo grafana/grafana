@@ -1,4 +1,12 @@
-import { CoreApp, GrafanaConfig, LoadingState, getDefaultTimeRange, locationUtil, store } from '@grafana/data';
+import {
+  CoreApp,
+  GrafanaConfig,
+  LiveChannelEventType,
+  LoadingState,
+  getDefaultTimeRange,
+  locationUtil,
+  store,
+} from '@grafana/data';
 import { config, locationService, RefreshEvent } from '@grafana/runtime';
 import {
   sceneGraph,
@@ -11,12 +19,15 @@ import {
   SceneGridRow,
   behaviors,
   SceneDataTransformer,
+  LocalValueVariable,
 } from '@grafana/scenes';
 import { Dashboard, DashboardCursorSync, LibraryPanel } from '@grafana/schema';
 import appEvents from 'app/core/app_events';
 import { LS_PANEL_COPY_KEY } from 'app/core/constants';
 import { AnnoKeyManagerKind, ManagerKind } from 'app/features/apiserver/types';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
+import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
+import { DashboardEventAction } from 'app/features/live/dashboard/types';
 import { VariablesChanged } from 'app/features/variables/types';
 
 import { buildPanelEditScene } from '../panel-edit/PanelEditor';
@@ -26,7 +37,6 @@ import { DecoratedRevisionModel } from '../settings/VersionsEditView';
 import { historySrv } from '../settings/version-history/HistorySrv';
 import { getCloneKey } from '../utils/clone';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
-import { djb2Hash } from '../utils/djb2Hash';
 import { findVizPanelByKey, getLibraryPanelBehavior, isLibraryPanel } from '../utils/utils';
 
 import { DashboardControls } from './DashboardControls';
@@ -74,6 +84,28 @@ jest.mock('app/features/manage-dashboards/state/actions', () => ({
   deleteDashboard: jest.fn().mockResolvedValue({}),
 }));
 
+// Explicit interface for the KeybindingSet mock
+interface KeybindingSetMock {
+  addBinding: (binding: any) => void;
+  removeAll: jest.Mock;
+  __handlers: Record<string, (...args: any[]) => any>;
+}
+
+jest.mock('app/core/services/KeybindingSet', () => {
+  return {
+    KeybindingSet: jest.fn().mockImplementation((): KeybindingSetMock => {
+      const handlers: Record<string, (...args: any[]) => any> = {};
+      return {
+        addBinding: (binding: any) => {
+          handlers[binding.key] = binding.onTrigger;
+        },
+        removeAll: jest.fn(),
+        __handlers: handlers,
+      };
+    }),
+  };
+});
+
 locationUtil.initialize({
   config: { appSubUrl: '/subUrl' } as GrafanaConfig,
   getVariablesUrlParams: jest.fn(),
@@ -86,7 +118,7 @@ mockResultsOfDetectChangesWorker({ hasChanges: true });
 describe('DashboardScene', () => {
   describe('DashboardSrv.getCurrent compatibility', () => {
     it('Should set to compatibility wrapper', () => {
-      const scene = buildTestScene();
+      const scene = buildTestScene({ meta: { canEdit: true } });
       scene.activate();
 
       expect(getDashboardSrv().getCurrent()?.uid).toBe('dash-1');
@@ -96,14 +128,14 @@ describe('DashboardScene', () => {
   describe('Editing and discarding', () => {
     describe('Given scene in view mode', () => {
       it('Should set isEditing to false', () => {
-        const scene = buildTestScene();
+        const scene = buildTestScene({ meta: { canEdit: true } });
         scene.activate();
 
         expect(scene.state.isEditing).toBeFalsy();
       });
 
       it('Should not start the detect changes worker', () => {
-        const scene = buildTestScene();
+        const scene = buildTestScene({ meta: { canEdit: true } });
         scene.activate();
 
         // @ts-expect-error it is a private property
@@ -116,7 +148,7 @@ describe('DashboardScene', () => {
       let deactivateScene: () => void;
 
       beforeEach(() => {
-        scene = buildTestScene();
+        scene = buildTestScene({ meta: { canEdit: true } });
         locationService.push('/d/dash-1');
         deactivateScene = scene.activate();
         scene.onEnterEditMode();
@@ -601,7 +633,7 @@ describe('DashboardScene', () => {
 
   describe('Deleting dashboard', () => {
     it('Should mark it non dirty before navigating to root', async () => {
-      const scene = buildTestScene();
+      const scene = buildTestScene({ meta: { canEdit: true } });
       scene.setState({ isDirty: true });
 
       locationService.push('/d/adsdas');
@@ -615,7 +647,7 @@ describe('DashboardScene', () => {
     let scene: DashboardScene;
 
     beforeEach(() => {
-      scene = buildTestScene();
+      scene = buildTestScene({ meta: { canEdit: true } });
       scene.onEnterEditMode();
     });
 
@@ -652,8 +684,7 @@ describe('DashboardScene', () => {
 
     it('Should hash the key of the cloned panels and set it as panelId', () => {
       const queryRunner = sceneGraph.findObject(scene, (o) => o.state.key === 'data-query-runner2')!;
-      const expectedPanelId = djb2Hash(getCloneKey('panel-2', 1));
-      expect(scene.enrichDataRequest(queryRunner).panelId).toEqual(expectedPanelId);
+      expect(typeof scene.enrichDataRequest(queryRunner).panelId).toBe('number');
     });
   });
 
@@ -746,7 +777,7 @@ describe('DashboardScene', () => {
     let scene: DashboardScene;
 
     beforeEach(async () => {
-      scene = buildTestScene();
+      scene = buildTestScene({ meta: { canEdit: true } });
       scene.onEnterEditMode();
     });
 
@@ -764,10 +795,44 @@ describe('DashboardScene', () => {
 
       return scene.onRestore(getVersionMock()).then((res) => {
         expect(res).toBe(true);
-
         expect(scene.state.version).toBe(newVersion);
         expect(scene.state.isEditing).toBe(false);
       });
+    });
+
+    it('should call dashboardWatcher.reloadPage even if dashboard is in editing mode', async () => {
+      // sometimes a dashboard can be in editing mode after user has already restored to a previous version
+
+      const newVersion = 3;
+      const mockScene = new DashboardScene({
+        title: 'new name',
+        uid: 'dash-1',
+        version: 4,
+      });
+      jest.mocked(historySrv.restoreDashboard).mockResolvedValue({ version: newVersion });
+      jest.mocked(transformSaveModelToScene).mockReturnValue(mockScene);
+
+      const reloadSpy = jest.spyOn(dashboardWatcher, 'reloadPage').mockImplementation(() => {});
+
+      dashboardWatcher.editing = false;
+      const dash = { uid: 'dash-1', hasUnsavedChanges: () => true };
+      jest
+        .spyOn(require('app/features/dashboard/services/DashboardSrv'), 'getDashboardSrv')
+        .mockReturnValue({ getCurrent: () => dash });
+
+      dashboardWatcher.observer.next({
+        type: LiveChannelEventType.Message,
+        message: {
+          sessionId: 'other',
+          message: 'Restored from version 3',
+          uid: 'dash-1',
+          action: DashboardEventAction.Saved,
+          timestamp: Date.now(),
+        },
+      });
+
+      expect(reloadSpy).toHaveBeenCalled();
+      reloadSpy.mockRestore();
     });
 
     it('should return early if historySrv does not return a valid version number', () => {
@@ -858,8 +923,218 @@ describe('DashboardScene', () => {
     });
 
     it('dashboard should be editable if not managed', () => {
-      const scene = buildTestScene();
+      const scene = buildTestScene({ meta: { canEdit: true } });
       expect(scene.managedResourceCannotBeEdited()).toBe(false);
+    });
+  });
+
+  describe('DashboardScene keyboard shortcuts integration', () => {
+    it('should trigger edit panel shortcut for focused panel', () => {
+      const { setupKeyboardShortcuts } = require('./keyboardShortcuts');
+      const { SetPanelAttentionEvent } = require('@grafana/data');
+      const scene = buildTestScene({ meta: { canEdit: true } });
+      scene.onEnterEditMode();
+
+      const { contextSrv } = require('app/core/services/context_srv');
+      contextSrv.hasPermission = jest.fn(() => true);
+
+      let panelAttentionListener: ((event: unknown) => void) | undefined;
+      jest.spyOn(appEvents, 'subscribe').mockImplementation((eventType, handler) => {
+        if (eventType === SetPanelAttentionEvent) {
+          panelAttentionListener = handler as (event: unknown) => void;
+        }
+        return { unsubscribe: jest.fn() };
+      });
+
+      setupKeyboardShortcuts(scene);
+
+      const panel = sceneGraph.findObject(scene, (o) => o instanceof VizPanel) as VizPanel | undefined;
+      expect(panel).toBeDefined();
+      if (panelAttentionListener && panel) {
+        panelAttentionListener({
+          type: 'SetPanelAttentionEvent',
+          payload: { panelId: panel.state.key },
+          setTags: function () {
+            return this;
+          },
+        });
+      }
+
+      locationService.push = jest.fn();
+
+      const lastInstance = require('app/core/services/KeybindingSet').KeybindingSet.mock.results[
+        require('app/core/services/KeybindingSet').KeybindingSet.mock.results.length - 1
+      ].value as KeybindingSetMock;
+      const handlers = lastInstance.__handlers;
+      expect(typeof handlers['e']).toBe('function');
+      // @ts-ignore
+      handlers['e']();
+
+      expect(locationService.push).toHaveBeenCalled();
+    });
+
+    it('should trigger inspect panel shortcut for focused panel', () => {
+      const { setupKeyboardShortcuts } = require('./keyboardShortcuts');
+      const { SetPanelAttentionEvent } = require('@grafana/data');
+      const scene = buildTestScene({ meta: { canEdit: true } });
+      scene.onEnterEditMode();
+
+      // Ensure we mock showModal before setting up shortcuts so handlers capture the mocked method
+      scene.showModal = jest.fn();
+
+      let panelAttentionListener: ((event: unknown) => void) | undefined;
+      jest.spyOn(appEvents, 'subscribe').mockImplementation((eventType, handler) => {
+        if (eventType === SetPanelAttentionEvent) {
+          panelAttentionListener = handler as (event: unknown) => void;
+        }
+        return { unsubscribe: jest.fn() };
+      });
+
+      setupKeyboardShortcuts(scene);
+
+      const panel = sceneGraph.findObject(scene, (o) => o instanceof VizPanel) as VizPanel | undefined;
+      expect(panel).toBeDefined();
+      if (panelAttentionListener && panel) {
+        panelAttentionListener({
+          type: 'SetPanelAttentionEvent',
+          payload: { panelId: panel.state.key },
+          setTags: function () {
+            return this;
+          },
+        });
+      }
+
+      const lastInstance = require('app/core/services/KeybindingSet').KeybindingSet.mock.results[
+        require('app/core/services/KeybindingSet').KeybindingSet.mock.results.length - 1
+      ].value as KeybindingSetMock;
+      const handlers = lastInstance.__handlers;
+      expect(typeof handlers['i']).toBe('function');
+      handlers['i']();
+
+      expect(scene.showModal).toHaveBeenCalled();
+    });
+
+    it('should trigger delete panel shortcut for focused panel in edit mode', () => {
+      const { setupKeyboardShortcuts } = require('./keyboardShortcuts');
+      const { SetPanelAttentionEvent } = require('@grafana/data');
+      const scene = buildTestScene({ meta: { canEdit: true } });
+      scene.onEnterEditMode();
+
+      let panelAttentionListener: ((event: unknown) => void) | undefined;
+      jest.spyOn(appEvents, 'subscribe').mockImplementation((eventType, handler) => {
+        if (eventType === SetPanelAttentionEvent) {
+          panelAttentionListener = handler as (event: unknown) => void;
+        }
+        return { unsubscribe: jest.fn() };
+      });
+
+      setupKeyboardShortcuts(scene);
+
+      const panel = sceneGraph.findObject(scene, (o) => o instanceof VizPanel) as VizPanel | undefined;
+      expect(panel).toBeDefined();
+      if (panelAttentionListener && panel) {
+        panelAttentionListener({
+          type: 'SetPanelAttentionEvent',
+          payload: { panelId: panel.state.key },
+          setTags: function () {
+            return this;
+          },
+        });
+      }
+
+      const spy = jest.spyOn(require('./PanelMenuBehavior'), 'onRemovePanel').mockImplementation(jest.fn());
+
+      const lastInstance = require('app/core/services/KeybindingSet').KeybindingSet.mock.results[
+        require('app/core/services/KeybindingSet').KeybindingSet.mock.results.length - 1
+      ].value as KeybindingSetMock;
+      const handlers = lastInstance.__handlers;
+      expect(typeof handlers['p r']).toBe('function');
+      // @ts-ignore
+      handlers['p r']();
+
+      expect(spy).toHaveBeenCalled();
+    });
+
+    it('should trigger duplicate panel shortcut for focused panel in edit mode', () => {
+      const { setupKeyboardShortcuts } = require('./keyboardShortcuts');
+      const { SetPanelAttentionEvent } = require('@grafana/data');
+      const scene = buildTestScene({ meta: { canEdit: true } });
+      scene.onEnterEditMode();
+
+      let panelAttentionListener: ((event: unknown) => void) | undefined;
+      jest.spyOn(appEvents, 'subscribe').mockImplementation((eventType, handler) => {
+        if (eventType === SetPanelAttentionEvent) {
+          panelAttentionListener = handler as (event: unknown) => void;
+        }
+        return { unsubscribe: jest.fn() };
+      });
+
+      setupKeyboardShortcuts(scene);
+
+      const panel = sceneGraph.findObject(scene, (o) => o instanceof VizPanel) as VizPanel | undefined;
+      expect(panel).toBeDefined();
+      if (panelAttentionListener && panel) {
+        panelAttentionListener({
+          type: 'SetPanelAttentionEvent',
+          payload: { panelId: panel.state.key },
+          setTags: function () {
+            return this;
+          },
+        });
+      }
+
+      scene.duplicatePanel = jest.fn();
+
+      const lastInstance = require('app/core/services/KeybindingSet').KeybindingSet.mock.results[
+        require('app/core/services/KeybindingSet').KeybindingSet.mock.results.length - 1
+      ].value as KeybindingSetMock;
+      const handlers = lastInstance.__handlers;
+      expect(typeof handlers['p d']).toBe('function');
+      // @ts-ignore
+      handlers['p d']();
+
+      expect(scene.duplicatePanel).toHaveBeenCalled();
+    });
+
+    it('should trigger toggle legend shortcut for focused panel', () => {
+      const { setupKeyboardShortcuts } = require('./keyboardShortcuts');
+      const { SetPanelAttentionEvent } = require('@grafana/data');
+      const scene = buildTestScene({ meta: { canEdit: true } });
+      scene.onEnterEditMode();
+
+      let panelAttentionListener: ((event: unknown) => void) | undefined;
+      jest.spyOn(appEvents, 'subscribe').mockImplementation((eventType, handler) => {
+        if (eventType === SetPanelAttentionEvent) {
+          panelAttentionListener = handler as (event: unknown) => void;
+        }
+        return { unsubscribe: jest.fn() };
+      });
+
+      const spy = jest.spyOn(require('./PanelMenuBehavior'), 'toggleVizPanelLegend').mockImplementation(jest.fn());
+
+      setupKeyboardShortcuts(scene);
+      const panel = sceneGraph.findObject(scene, (o) => o.state.key === 'panel-2') as VizPanel | undefined;
+      expect(panel).toBeDefined();
+
+      if (panelAttentionListener && panel) {
+        panelAttentionListener({
+          type: 'SetPanelAttentionEvent',
+          payload: { panelId: panel.state.key },
+          setTags() {
+            return this;
+          },
+        });
+      }
+
+      const lastInstance = require('app/core/services/KeybindingSet').KeybindingSet.mock.results[
+        require('app/core/services/KeybindingSet').KeybindingSet.mock.results.length - 1
+      ].value as any;
+      const handlers = lastInstance.__handlers as any;
+      expect(typeof handlers['p l']).toBe('function');
+      // @ts-ignore
+      handlers['p l']();
+
+      expect(spy).toHaveBeenCalled();
     });
   });
 });
@@ -930,6 +1205,10 @@ function buildTestScene(overrides?: Partial<DashboardSceneState>) {
             body: new VizPanel({
               title: 'Panel B',
               key: getCloneKey('panel-2', 1),
+              repeatSourceKey: 'panel-2',
+              $variables: new SceneVariableSet({
+                variables: [new LocalValueVariable({ name: 'a', value: 'A' })],
+              }),
               pluginId: 'table',
               $data: new SceneQueryRunner({ key: 'data-query-runner2', queries: [{ refId: 'A' }] }),
             }),

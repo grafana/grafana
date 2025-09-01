@@ -316,13 +316,6 @@ var (
 			Owner:           grafanaAppPlatformSquad,
 		},
 		{
-			Name:            "provisioningSecretsService",
-			Description:     "Experimental feature to use the secrets service for provisioning instead of the legacy secrets",
-			Stage:           FeatureStageExperimental,
-			RequiresRestart: true,
-			Owner:           grafanaAppPlatformSquad,
-		},
-		{
 			Name:            "grafanaAPIServerEnsureKubectlAccess",
 			Description:     "Start an additional https handler and write kubectl options",
 			Stage:           FeatureStageExperimental,
@@ -539,13 +532,6 @@ var (
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaOperatorExperienceSquad,
 			FrontendOnly: false,
-		},
-		{
-			Name:         "prometheusCodeModeMetricNamesSearch",
-			Description:  "Enables search for metric names in Code Mode, to improve performance when working with an enormous number of metric names",
-			FrontendOnly: true,
-			Stage:        FeatureStageExperimental,
-			Owner:        grafanaOSSBigTent,
 		},
 		{
 			Name:         "addFieldFromCalculationStatFunctions",
@@ -841,13 +827,6 @@ var (
 			RequiresRestart: true,
 		},
 		{
-			Name:            "expressionParser",
-			Description:     "Enable new expression parser",
-			Stage:           FeatureStageExperimental,
-			Owner:           grafanaAppPlatformSquad,
-			RequiresRestart: true,
-		},
-		{
 			Name:              "groupByVariable",
 			Description:       "Enable groupBy variable support in scenes dashboards",
 			Stage:             FeatureStageExperimental,
@@ -912,7 +891,15 @@ var (
 		},
 		{
 			Name:           "queryLibrary",
-			Description:    "Enables Query Library feature in Explore",
+			Description:    "Renamed feature toggle, enables Saved queries feature",
+			Stage:          FeatureStagePrivatePreview,
+			Owner:          grafanaSharingSquad,
+			FrontendOnly:   false,
+			AllowSelfServe: false,
+		},
+		{
+			Name:           "savedQueries",
+			Description:    "Enables Saved Queries feature",
 			Stage:          FeatureStagePrivatePreview,
 			Owner:          grafanaSharingSquad,
 			FrontendOnly:   false,
@@ -1065,13 +1052,6 @@ var (
 			Stage:       FeatureStageGeneralAvailability,
 			Owner:       grafanaDashboardsSquad,
 			Expression:  "true", // enabled by default
-		},
-		{
-			Name:         "tableNextGen",
-			Description:  "Allows access to the new react-data-grid based table component.",
-			Stage:        FeatureStagePublicPreview,
-			Owner:        grafanaDatavizSquad,
-			FrontendOnly: true,
 		},
 		{
 			Name:         "alertingPrometheusRulesPrimary",
@@ -1298,6 +1278,15 @@ var (
 		{
 			Name:              "alertingAIGenTemplates",
 			Description:       "Enable AI-generated alerting templates.",
+			Stage:             FeatureStageExperimental,
+			Owner:             grafanaAlertingSquad,
+			HideFromAdminPage: true,
+			HideFromDocs:      true,
+			Expression:        "false",
+		},
+		{
+			Name:              "alertingEnrichmentPerRule",
+			Description:       "Enable enrichment per rule in the alerting UI.",
 			Stage:             FeatureStageExperimental,
 			Owner:             grafanaAlertingSquad,
 			HideFromAdminPage: true,
@@ -1639,6 +1628,14 @@ var (
 			FrontendOnly: true,
 		},
 		{
+			Name:         "grafanaAssistantInProfilesDrilldown",
+			Description:  "Enables integration with Grafana Assistant in Profiles Drilldown",
+			Stage:        FeatureStageGeneralAvailability,
+			Owner:        grafanaObservabilityTracesAndProfilingSquad,
+			FrontendOnly: true,
+			Expression:   "true",
+		},
+		{
 			Name:        "postgresDSUsePGX",
 			Description: "Enables using PGX instead of libpq for PostgreSQL datasource",
 			Stage:       FeatureStageExperimental,
@@ -1920,6 +1917,16 @@ var (
 			FrontendOnly: false,
 			Owner:        grafanaFrontendSearchNavOrganise,
 			Expression:   "false",
+		},
+		{
+			Name:              "alertingTriage",
+			Description:       "Enables the alerting triage feature",
+			Stage:             FeatureStageExperimental,
+			FrontendOnly:      true,
+			Owner:             grafanaAlertingSquad,
+			HideFromDocs:      true,
+			HideFromAdminPage: true,
+			Expression:        "false",
 		},
 	}
 )
