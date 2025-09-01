@@ -1,6 +1,13 @@
 import { uniq, without } from 'lodash';
 
-import { SceneComponentProps, SceneObjectBase, SceneObjectState, sceneGraph, sceneUtils } from '@grafana/scenes';
+import {
+  SceneComponentProps,
+  SceneObjectBase,
+  SceneObjectRef,
+  SceneObjectState,
+  sceneGraph,
+  sceneUtils,
+} from '@grafana/scenes';
 
 import { Workbench } from '../Workbench';
 import {
@@ -13,7 +20,7 @@ import {
   WorkbenchRow,
 } from '../types';
 
-import { getAlertInstanceScene } from './AlertInstanceScene';
+import { getAlertInstanceScene, getAlertRuleScene } from './AlertInstanceScene';
 
 interface WorkbenchState extends SceneObjectState {
   groupBy: string[];
@@ -218,6 +225,7 @@ export function createAlertRuleRowsFromDataPoints(
         ruleUID: group.ruleUID,
       },
       timeline,
+      rowSummaryScene: new SceneObjectRef(getAlertRuleScene(group.ruleUID)).resolve(),
       instancesScene: getAlertInstanceScene(group.ruleUID),
       rows: [],
     };

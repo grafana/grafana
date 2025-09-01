@@ -4,6 +4,15 @@ import { useMeasure } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
+import {
+  EmbeddedScene,
+  PanelBuilders,
+  SceneDataProvider,
+  SceneDataState,
+  SceneDataTransformer,
+  VizPanel,
+  sceneGraph,
+} from '@grafana/scenes';
 import { Stack, Text, TextLink, useSplitter, useStyles2 } from '@grafana/ui';
 
 import { Label } from '../components/Label';
@@ -13,6 +22,7 @@ import { EditorColumnHeader } from '../components/contact-points/templates/Edito
 import { GroupRow } from './GroupRow';
 import { TimelineHeader } from './Timeline';
 import { WorkbenchProvider } from './WorkbenchContext';
+import { triageScene } from './scene/TriageScene';
 import { StateChangeChart } from './stateChangeChart/StateChangeChart';
 import { AlertRuleRow, Domain, Filter, GenericGroupedRow, WorkbenchRow } from './types';
 
@@ -149,7 +159,7 @@ function renderWorkbenchRow(
             </Text>
           </Stack>
         }
-        content={<StateChangeChart domain={domain} timeline={row.timeline} />}
+        content={<row.rowSummaryScene.Component model={row.rowSummaryScene} />}
       >
         <row.instancesScene.Component model={row.instancesScene} />
       </GroupRow>

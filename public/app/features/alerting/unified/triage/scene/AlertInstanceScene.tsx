@@ -1,6 +1,13 @@
 import { DataFrame, Field, Labels, PanelData, findCommonLabels } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
-import { SceneComponentProps, SceneObjectBase, SceneObjectState, sceneGraph } from '@grafana/scenes';
+import {
+  EmbeddedScene,
+  PanelBuilders,
+  SceneDataTransformer,
+  SceneObjectBase,
+  SceneObjectState,
+  sceneGraph,
+} from '@grafana/scenes';
 
 import { AlertLabels } from '../../components/AlertLabels';
 import { GroupRow } from '../GroupRow';
@@ -8,6 +15,7 @@ import { useWorkbenchContext } from '../WorkbenchContext';
 import { StateChangeChart } from '../stateChangeChart/StateChangeChart';
 import { TimelineEntry } from '../types';
 
+import { triageScene } from './TriageScene';
 import { METRIC_NAME, getQueryRunner } from './utils';
 
 interface AlertInstanceSceneState extends SceneObjectState {
@@ -187,4 +195,53 @@ export function getAlertInstanceScene(ruleUID: string): AlertInstanceScene {
     ),
     ruleUID,
   });
+}
+
+export const getAlertRuleScene = (ruleUID: string) => {
+  return new EmbeddedScene({
+    $data: new SceneDataTransformer({
+      $data: sceneGraph.getData(triageScene.clone()),
+      transformations: [
+        {
+          id: 'filterByValue',
+          options: {
+            filters: [
+              {
+                config: {
+                  id: 'equal',
+                  options: {
+                    value: ruleUID,
+                  },
+                },
+                fieldName: 'grafana_rule_uid',
+              },
+            ],
+            match: 'any',
+            type: 'include',
+          },
+        },
+        {
+          id: 'partitionByValues',
+          options: {
+            fields: ['alertstate'],
+            keepFields: false,
+            naming: {
+              asLabels: true,
+            },
+          },
+        },
+      ],
+    }),
+    body: PanelBuilders.timeseries().setTitle('Alert Rule State Chart').build(),
+  });
+};
+
+export function AlertRuleStateChart({ ruleUID }: { ruleUID: string }) {
+  const alertRuleScene = getAlertRuleScene(ruleUID);
+
+  if (!alertRuleScene) {
+    return null;
+  }
+
+  return <alertRuleScene.Component model={alertRuleScene} />;
 }
