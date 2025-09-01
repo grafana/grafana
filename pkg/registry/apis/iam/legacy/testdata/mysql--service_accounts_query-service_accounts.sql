@@ -2,6 +2,7 @@ SELECT
   u.id,
   u.uid,
   u.name,
+  u.login,
   u.is_disabled,
   u.created,
   u.updated

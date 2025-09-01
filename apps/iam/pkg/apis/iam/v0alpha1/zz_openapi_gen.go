@@ -1877,7 +1877,7 @@ func schema_pkg_apis_iam_v0alpha1_ServiceAccountSpec(ref common.ReferenceCallbac
 			SchemaProps: spec.SchemaProps{
 				Type: []string{"object"},
 				Properties: map[string]spec.Schema{
-					"title": {
+					"avatarUrl": {
 						SchemaProps: spec.SchemaProps{
 							Default: "",
 							Type:    []string{"string"},
@@ -1891,8 +1891,29 @@ func schema_pkg_apis_iam_v0alpha1_ServiceAccountSpec(ref common.ReferenceCallbac
 							Format:  "",
 						},
 					},
+					"login": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"external": {
+						SchemaProps: spec.SchemaProps{
+							Default: false,
+							Type:    []string{"boolean"},
+							Format:  "",
+						},
+					},
+					"title": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
 				},
-				Required: []string{"title", "disabled"},
+				Required: []string{"avatarUrl", "disabled", "login", "external", "title"},
 			},
 		},
 	}

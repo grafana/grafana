@@ -3,7 +3,6 @@ package serviceaccount
 import (
 	"context"
 	"fmt"
-	"strings"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
@@ -13,10 +12,13 @@ import (
 
 	claims "github.com/grafana/authlib/types"
 	iamv0alpha1 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
+	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/common"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/legacy"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
+	"github.com/grafana/grafana/pkg/services/serviceaccounts"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 var (
@@ -30,14 +32,15 @@ var (
 
 var resource = iamv0alpha1.ServiceAccountResourceInfo
 
-func NewLegacyStore(store legacy.LegacyIdentityStore, ac claims.AccessClient, enableAuthnMutation bool) *LegacyStore {
-	return &LegacyStore{store, ac, enableAuthnMutation}
+func NewLegacyStore(store legacy.LegacyIdentityStore, ac claims.AccessClient, enableAuthnMutation bool, cfg *setting.Cfg) *LegacyStore {
+	return &LegacyStore{store, ac, enableAuthnMutation, cfg}
 }
 
 type LegacyStore struct {
 	store               legacy.LegacyIdentityStore
 	ac                  claims.AccessClient
 	enableAuthnMutation bool
+	cfg                 *setting.Cfg
 }
 
 // Update implements rest.Updater.
@@ -75,6 +78,7 @@ func (s *LegacyStore) Create(ctx context.Context, obj runtime.Object, createVali
 		UID:        saObj.Name,
 		Name:       saObj.Spec.Title,
 		IsDisabled: saObj.Spec.Disabled,
+		Login:      saObj.Spec.Login,
 	}
 
 	result, err := s.store.CreateServiceAccount(ctx, ns, createCmd)
@@ -82,7 +86,7 @@ func (s *LegacyStore) Create(ctx context.Context, obj runtime.Object, createVali
 		return nil, err
 	}
 
-	iamSA := toSAItem(result.ServiceAccount, ns.Value)
+	iamSA := s.toSAItem(result.ServiceAccount, ns.Value)
 	return &iamSA, nil
 }
 
@@ -122,7 +126,7 @@ func (s *LegacyStore) List(ctx context.Context, options *internalversion.ListOpt
 
 			items := make([]iamv0alpha1.ServiceAccount, 0, len(found.Items))
 			for _, sa := range found.Items {
-				items = append(items, toSAItem(sa, ns.Value))
+				items = append(items, s.toSAItem(sa, ns.Value))
 			}
 
 			return &common.ListResponse[iamv0alpha1.ServiceAccount]{
@@ -143,7 +147,7 @@ func (s *LegacyStore) List(ctx context.Context, options *internalversion.ListOpt
 	return obj, nil
 }
 
-func toSAItem(sa legacy.ServiceAccount, ns string) iamv0alpha1.ServiceAccount {
+func (s *LegacyStore) toSAItem(sa legacy.ServiceAccount, ns string) iamv0alpha1.ServiceAccount {
 	item := iamv0alpha1.ServiceAccount{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:              sa.UID,
@@ -152,8 +156,11 @@ func toSAItem(sa legacy.ServiceAccount, ns string) iamv0alpha1.ServiceAccount {
 			CreationTimestamp: metav1.NewTime(sa.Created),
 		},
 		Spec: iamv0alpha1.ServiceAccountSpec{
-			Title:    sa.Name,
-			Disabled: sa.Disabled,
+			AvatarUrl: dtos.GetGravatarUrlWithDefault(s.cfg, "", sa.Name),
+			External:  serviceaccounts.IsExternalServiceAccount(sa.Login),
+			Login:     sa.Login,
+			Title:     sa.Name,
+			Disabled:  sa.Disabled,
 		},
 	}
 	obj, _ := utils.MetaAccessor(&item)
@@ -180,19 +187,6 @@ func (s *LegacyStore) Get(ctx context.Context, name string, options *metav1.GetO
 		return nil, resource.NewNotFound(name)
 	}
 
-	res := toSAItem(found.Items[0], ns.Value)
+	res := s.toSAItem(found.Items[0], ns.Value)
 	return &res, nil
-}
-
-// generateLogin makes a generated string to have a ID for the service account across orgs and it's name
-// this causes you to create a service account with the same name in different orgs
-// not the same name in the same org
-// -- WARNING:
-// -- if you change this function you need to change the ExtSvcLoginPrefix as well
-// -- to make sure they are not considered as regular service accounts
-func generateLogin(prefix string, orgId int64, name string) string {
-	generatedLogin := fmt.Sprintf("%v-%v-%v", prefix, orgId, strings.ToLower(name))
-	// in case the name has multiple spaces or dashes in the prefix or otherwise, replace them with a single dash
-	generatedLogin = strings.Replace(generatedLogin, "--", "-", 1)
-	return strings.ReplaceAll(generatedLogin, " ", "-")
 }

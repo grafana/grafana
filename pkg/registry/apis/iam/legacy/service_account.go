@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore/session"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 type GetServiceAccountInternalIDQuery struct {
@@ -108,6 +109,7 @@ type ServiceAccount struct {
 	UID      string
 	Name     string
 	Disabled bool
+	Login    string
 	Created  time.Time
 	Updated  time.Time
 }
@@ -115,6 +117,8 @@ type ServiceAccount struct {
 type CreateServiceAccountCommand struct {
 	UID        string
 	Name       string
+	Email      string
+	Login      string
 	IsDisabled bool
 	OrgID      int64
 	Created    time.Time
@@ -182,7 +186,7 @@ func (s *legacySQLStore) ListServiceAccounts(ctx context.Context, ns claims.Name
 	var lastID int64
 	for rows.Next() {
 		var s ServiceAccount
-		err := rows.Scan(&s.ID, &s.UID, &s.Name, &s.Disabled, &s.Created, &s.Updated)
+		err := rows.Scan(&s.ID, &s.UID, &s.Name, &s.Login, &s.Disabled, &s.Created, &s.Updated)
 		if err != nil {
 			return res, err
 		}
@@ -326,8 +330,10 @@ func (r createServiceAccountQuery) Validate() error {
 
 func (s *legacySQLStore) CreateServiceAccount(ctx context.Context, ns claims.NamespaceInfo, cmd CreateServiceAccountCommand) (*CreateServiceAccountResult, error) {
 	cmd.OrgID = ns.OrgID
+	cmd.Email = cmd.Login
+	cmd.UID = util.GenerateShortUID()
 
-	now := time.Now()
+	now := time.Now().UTC().Truncate(time.Second)
 	lastSeenAt := now.AddDate(-10, 0, 0) // Set last seen 10 years ago like in user service
 
 	cmd.Created = now
@@ -380,6 +386,7 @@ func (s *legacySQLStore) CreateServiceAccount(ctx context.Context, ns claims.Nam
 			ID:       serviceAccountID,
 			UID:      cmd.UID,
 			Name:     cmd.Name,
+			Login:    cmd.Login,
 			Disabled: cmd.IsDisabled,
 			Created:  cmd.Created,
 			Updated:  cmd.Updated,
