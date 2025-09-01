@@ -4691,6 +4691,7 @@
       "panel-title": "Change panel title",
       "paste-panel": "Paste panel",
       "remove": "Remove {{typeName}}",
+      "row-title": "Change row title",
       "switch-layout": "Switch layout"
     },
     "edit-pane": {
