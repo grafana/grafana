@@ -148,7 +148,7 @@ func (r *Runner) registerCheckType(ctx context.Context, logger logging.Logger, c
 }
 
 func (r *Runner) shouldRetry(err error, logger logging.Logger, attempt int, checkType string) bool {
-	logger.Debug("Error storing check type, retrying", "error", err, "attempt", attempt)
+	logger.Debug("Error storing check type", "error", err, "attempt", attempt)
 	if isAPIServerShuttingDown(err, logger) {
 		return false
 	}

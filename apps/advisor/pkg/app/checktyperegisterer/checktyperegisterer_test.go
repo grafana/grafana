@@ -22,7 +22,7 @@ func TestCheckTypesRegisterer_Run(t *testing.T) {
 			&mockStep{id: "step1", title: "Step 1", description: "Description 1"},
 		},
 	}
-	existingObject := &advisorv0alpha1.CheckType{
+	existingObjectDifferentAnnotations := &advisorv0alpha1.CheckType{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "check1",
 			Annotations: map[string]string{
@@ -30,8 +30,38 @@ func TestCheckTypesRegisterer_Run(t *testing.T) {
 			},
 		},
 		Spec: advisorv0alpha1.CheckTypeSpec{
-			Name:  "check1",
-			Steps: []advisorv0alpha1.CheckTypeStep{},
+			Name: "check1",
+			Steps: []advisorv0alpha1.CheckTypeStep{
+				{StepID: "step1", Title: "Step 1", Description: "Description 1"},
+			},
+		},
+	}
+	existingObjectDifferentSteps := &advisorv0alpha1.CheckType{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "check1",
+			Annotations: map[string]string{
+				checks.NameAnnotation: "mock", // Same as check name
+			},
+		},
+		Spec: advisorv0alpha1.CheckTypeSpec{
+			Name: "check1",
+			Steps: []advisorv0alpha1.CheckTypeStep{
+				{StepID: "step2", Title: "Step 2", Description: "Description 2"}, // Different step
+			},
+		},
+	}
+	existingObjectSameContent := &advisorv0alpha1.CheckType{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "check1",
+			Annotations: map[string]string{
+				checks.NameAnnotation: "mock", // Same as check name
+			},
+		},
+		Spec: advisorv0alpha1.CheckTypeSpec{
+			Name: "check1",
+			Steps: []advisorv0alpha1.CheckTypeStep{
+				{StepID: "step1", Title: "Step 1", Description: "Description 1"},
+			},
 		},
 	}
 	tests := []struct {
@@ -55,10 +85,10 @@ func TestCheckTypesRegisterer_Run(t *testing.T) {
 			expectedErr: nil,
 		},
 		{
-			name:   "resource exists, successful update",
+			name:   "resource exists with different annotations, should update",
 			checks: []checks.Check{newMockCheck},
 			getFunc: func(ctx context.Context, id resource.Identifier) (resource.Object, error) {
-				return existingObject, nil
+				return existingObjectDifferentAnnotations, nil
 			},
 			updateFunc: func(ctx context.Context, id resource.Identifier, obj resource.Object, opts resource.UpdateOptions) (resource.Object, error) {
 				return obj, nil
@@ -66,10 +96,32 @@ func TestCheckTypesRegisterer_Run(t *testing.T) {
 			expectedErr: nil,
 		},
 		{
+			name:   "resource exists with different steps, should update",
+			checks: []checks.Check{newMockCheck},
+			getFunc: func(ctx context.Context, id resource.Identifier) (resource.Object, error) {
+				return existingObjectDifferentSteps, nil
+			},
+			updateFunc: func(ctx context.Context, id resource.Identifier, obj resource.Object, opts resource.UpdateOptions) (resource.Object, error) {
+				return obj, nil
+			},
+			expectedErr: nil,
+		},
+		{
+			name:   "resource exists with same annotations and steps, should not update",
+			checks: []checks.Check{newMockCheck},
+			getFunc: func(ctx context.Context, id resource.Identifier) (resource.Object, error) {
+				return existingObjectSameContent, nil
+			},
+			updateFunc: func(ctx context.Context, id resource.Identifier, obj resource.Object, opts resource.UpdateOptions) (resource.Object, error) {
+				return nil, errors.New("updateFunc should not be called")
+			},
+			expectedErr: nil,
+		},
+		{
 			name:   "resource exists, with custom annotations preserved",
 			checks: []checks.Check{newMockCheck},
 			getFunc: func(ctx context.Context, id resource.Identifier) (resource.Object, error) {
-				return existingObject, nil
+				return existingObjectDifferentAnnotations, nil
 			},
 			updateFunc: func(ctx context.Context, id resource.Identifier, obj resource.Object, opts resource.UpdateOptions) (resource.Object, error) {
 				if obj.GetAnnotations()[checks.IgnoreStepsAnnotationList] != "step1" {
@@ -95,7 +147,7 @@ func TestCheckTypesRegisterer_Run(t *testing.T) {
 			name:   "update error",
 			checks: []checks.Check{newMockCheck},
 			getFunc: func(ctx context.Context, id resource.Identifier) (resource.Object, error) {
-				return existingObject, nil
+				return existingObjectDifferentAnnotations, nil
 			},
 			updateFunc: func(ctx context.Context, id resource.Identifier, obj resource.Object, opts resource.UpdateOptions) (resource.Object, error) {
 				return nil, errors.New("update error")
@@ -106,7 +158,7 @@ func TestCheckTypesRegisterer_Run(t *testing.T) {
 			name:   "shutting down error",
 			checks: []checks.Check{newMockCheck},
 			getFunc: func(ctx context.Context, id resource.Identifier) (resource.Object, error) {
-				return existingObject, nil
+				return existingObjectDifferentAnnotations, nil
 			},
 			updateFunc: func(ctx context.Context, id resource.Identifier, obj resource.Object, opts resource.UpdateOptions) (resource.Object, error) {
 				return nil, errors.New("apiserver is shutting down")
@@ -117,7 +169,7 @@ func TestCheckTypesRegisterer_Run(t *testing.T) {
 			name:   "custom namespace",
 			checks: []checks.Check{newMockCheck},
 			getFunc: func(ctx context.Context, id resource.Identifier) (resource.Object, error) {
-				return existingObject, nil
+				return existingObjectDifferentAnnotations, nil
 			},
 			createFunc: func(ctx context.Context, id resource.Identifier, obj resource.Object, opts resource.CreateOptions) (resource.Object, error) {
 				if obj.GetNamespace() != "custom-namespace" {
