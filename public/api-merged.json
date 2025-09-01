@@ -1661,6 +1661,7 @@
         ],
         "description": "If you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `users.quotas:list` and scope `global.users:1` (userIDScope).",
         "tags": [
+          "quota",
           "admin_users"
         ],
         "summary": "Fetch user quota.",
@@ -1702,6 +1703,7 @@
         ],
         "description": "If you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `users.quotas:update` and scope `global.users:1` (userIDScope).",
         "tags": [
+          "quota",
           "admin_users"
         ],
         "summary": "Update user quota.",
@@ -3312,6 +3314,7 @@
     "/dashboard/snapshots": {
       "get": {
         "tags": [
+          "dashboards",
           "snapshots"
         ],
         "summary": "List snapshots.",
@@ -3463,9 +3466,10 @@
     },
     "/dashboards/id/{DashboardID}/permissions": {
       "get": {
-        "description": "Please refer to [updated API](#/dashboard_permissions/getDashboardPermissionsListByUID) instead",
+        "description": "Please refer to [updated API](#/dashboards/getDashboardPermissionsListByUID) instead",
         "tags": [
-          "dashboard_permissions"
+          "dashboards",
+          "permissions"
         ],
         "summary": "Gets all existing permissions for the given dashboard.",
         "operationId": "getDashboardPermissionsListByID",
@@ -3498,9 +3502,10 @@
         }
       },
       "post": {
-        "description": "Please refer to [updated API](#/dashboard_permissions/updateDashboardPermissionsByUID) instead\n\nThis operation will remove existing permissions if they’re not included in the request.",
+        "description": "Please refer to [updated API](#/dashboards/updateDashboardPermissionsByUID) instead\n\nThis operation will remove existing permissions if they’re not included in the request.",
         "tags": [
-          "dashboard_permissions"
+          "dashboards",
+          "permissions"
         ],
         "summary": "Updates permissions for a dashboard.",
         "operationId": "updateDashboardPermissionsByID",
@@ -3546,9 +3551,10 @@
     },
     "/dashboards/id/{DashboardID}/restore": {
       "post": {
-        "description": "Please refer to [updated API](#/dashboard_versions/restoreDashboardVersionByUID) instead",
+        "description": "Please refer to [updated API](#/dashboards/restoreDashboardVersionByUID) instead",
         "tags": [
-          "dashboard_versions"
+          "dashboards",
+          "versions"
         ],
         "summary": "Restore a dashboard to a given dashboard version.",
         "operationId": "restoreDashboardVersionByID",
@@ -3591,9 +3597,10 @@
     },
     "/dashboards/id/{DashboardID}/versions": {
       "get": {
-        "description": "Please refer to [updated API](#/dashboard_versions/getDashboardVersionsByUID) instead",
+        "description": "Please refer to [updated API](#/dashboards/getDashboardVersionsByUID) instead",
         "tags": [
-          "dashboard_versions"
+          "dashboards",
+          "versions"
         ],
         "summary": "Gets all existing versions for the dashboard.",
         "operationId": "getDashboardVersionsByID",
@@ -3628,9 +3635,10 @@
     },
     "/dashboards/id/{DashboardID}/versions/{DashboardVersionID}": {
       "get": {
-        "description": "Please refer to [updated API](#/dashboard_versions/getDashboardVersionByUID) instead",
+        "description": "Please refer to [updated API](#/dashboards/getDashboardVersionByUID) instead",
         "tags": [
-          "dashboard_versions"
+          "dashboards",
+          "versions"
         ],
         "summary": "Get a specific dashboard version.",
         "operationId": "getDashboardVersionByID",
@@ -3713,6 +3721,7 @@
       "get": {
         "description": "Get list of public dashboards",
         "tags": [
+          "dashboards",
           "dashboard_public"
         ],
         "operationId": "listPublicDashboards",
@@ -3756,6 +3765,7 @@
       "get": {
         "description": "Get public dashboard by dashboardUid",
         "tags": [
+          "dashboards",
           "dashboard_public"
         ],
         "operationId": "getPublicDashboard",
@@ -3794,6 +3804,7 @@
           "application/json"
         ],
         "tags": [
+          "dashboards",
           "dashboard_public"
         ],
         "operationId": "createPublicDashboard",
@@ -3836,6 +3847,7 @@
       "delete": {
         "description": "Delete public dashboard for a dashboard",
         "tags": [
+          "dashboards",
           "dashboard_public"
         ],
         "operationId": "deletePublicDashboard",
@@ -3877,6 +3889,7 @@
           "application/json"
         ],
         "tags": [
+          "dashboards",
           "dashboard_public"
         ],
         "operationId": "updatePublicDashboard",
@@ -3995,7 +4008,8 @@
     "/dashboards/uid/{uid}/permissions": {
       "get": {
         "tags": [
-          "dashboard_permissions"
+          "dashboards",
+          "permissions"
         ],
         "summary": "Gets all existing permissions for the given dashboard.",
         "operationId": "getDashboardPermissionsListByUID",
@@ -4028,7 +4042,8 @@
       "post": {
         "description": "This operation will remove existing permissions if they’re not included in the request.",
         "tags": [
-          "dashboard_permissions"
+          "dashboards",
+          "permissions"
         ],
         "summary": "Updates permissions for a dashboard.",
         "operationId": "updateDashboardPermissionsByUID",
@@ -4073,7 +4088,8 @@
     "/dashboards/uid/{uid}/restore": {
       "post": {
         "tags": [
-          "dashboard_versions"
+          "dashboards",
+          "versions"
         ],
         "summary": "Restore a dashboard to a given dashboard version using UID.",
         "operationId": "restoreDashboardVersionByUID",
@@ -4115,7 +4131,8 @@
     "/dashboards/uid/{uid}/versions": {
       "get": {
         "tags": [
-          "dashboard_versions"
+          "dashboards",
+          "versions"
         ],
         "summary": "Gets all existing versions for the dashboard using UID.",
         "operationId": "getDashboardVersionsByUID",
@@ -4165,7 +4182,8 @@
     "/dashboards/uid/{uid}/versions/{DashboardVersionID}": {
       "get": {
         "tags": [
-          "dashboard_versions"
+          "dashboards",
+          "versions"
         ],
         "summary": "Get a specific dashboard version using UID.",
         "operationId": "getDashboardVersionByUID",
@@ -4265,6 +4283,7 @@
     "/datasources/correlations": {
       "get": {
         "tags": [
+          "datasources",
           "correlations"
         ],
         "summary": "Gets all correlations.",
@@ -4694,6 +4713,7 @@
     "/datasources/uid/{sourceUID}/correlations": {
       "get": {
         "tags": [
+          "datasources",
           "correlations"
         ],
         "summary": "Gets all correlations originating from the given data source.",
@@ -4723,6 +4743,7 @@
       },
       "post": {
         "tags": [
+          "datasources",
           "correlations"
         ],
         "summary": "Add correlation.",
@@ -4768,6 +4789,7 @@
     "/datasources/uid/{sourceUID}/correlations/{correlationUID}": {
       "get": {
         "tags": [
+          "datasources",
           "correlations"
         ],
         "summary": "Gets a correlation.",
@@ -4803,6 +4825,7 @@
       },
       "patch": {
         "tags": [
+          "datasources",
           "correlations"
         ],
         "summary": "Updates a correlation.",
@@ -4965,6 +4988,7 @@
     "/datasources/uid/{uid}/correlations/{correlationUID}": {
       "delete": {
         "tags": [
+          "datasources",
           "correlations"
         ],
         "summary": "Delete a correlation.",
@@ -5005,7 +5029,8 @@
     "/datasources/uid/{uid}/health": {
       "get": {
         "tags": [
-          "datasources"
+          "datasources",
+          "health"
         ],
         "summary": "Sends a health check request to the plugin datasource identified by the UID.",
         "operationId": "checkDatasourceHealthWithUID",
@@ -5423,7 +5448,8 @@
       "get": {
         "description": "Please refer to [updated API](#/datasources/checkDatasourceHealthWithUID) instead",
         "tags": [
-          "datasources"
+          "datasources",
+          "health"
         ],
         "summary": "Sends a health check request to the plugin datasource identified by the ID.",
         "operationId": "checkDatasourceHealthByID",
@@ -5504,7 +5530,7 @@
       "post": {
         "description": "If you are running Grafana Enterprise and have Fine-grained access control enabled\nyou need to have a permission with action: `datasources:query`.",
         "tags": [
-          "ds"
+          "datasources"
         ],
         "summary": "DataSource query metrics with expressions.",
         "operationId": "queryMetricsWithExpressions",
@@ -5877,7 +5903,8 @@
     "/folders/{folder_uid}/permissions": {
       "get": {
         "tags": [
-          "folder_permissions"
+          "folders",
+          "permissions"
         ],
         "summary": "Gets all existing permissions for the folder with the given `uid`.",
         "operationId": "getFolderPermissionList",
@@ -5909,7 +5936,8 @@
       },
       "post": {
         "tags": [
-          "folder_permissions"
+          "folders",
+          "permissions"
         ],
         "summary": "Updates permissions for a folder. This operation will remove existing permissions if they’re not included in the request.",
         "operationId": "updateFolderPermissions",
@@ -6758,7 +6786,8 @@
     "/org/invites": {
       "get": {
         "tags": [
-          "org_invites"
+          "org",
+          "invites"
         ],
         "summary": "Get pending invites.",
         "operationId": "getPendingOrgInvites",
@@ -6779,7 +6808,8 @@
       },
       "post": {
         "tags": [
-          "org_invites"
+          "org",
+          "invites"
         ],
         "summary": "Add invite.",
         "operationId": "addOrgInvite",
@@ -6818,7 +6848,8 @@
     "/org/invites/{invitation_code}/revoke": {
       "delete": {
         "tags": [
-          "org_invites"
+          "org",
+          "invites"
         ],
         "summary": "Revoke invite.",
         "operationId": "revokeInvite",
@@ -6852,7 +6883,8 @@
     "/org/preferences": {
       "get": {
         "tags": [
-          "org_preferences"
+          "org",
+          "preferences"
         ],
         "summary": "Get Current Org Prefs.",
         "operationId": "getOrgPreferences",
@@ -6873,7 +6905,8 @@
       },
       "put": {
         "tags": [
-          "org_preferences"
+          "org",
+          "preferences"
         ],
         "summary": "Update Current Org Prefs.",
         "operationId": "updateOrgPreferences",
@@ -6907,7 +6940,8 @@
       },
       "patch": {
         "tags": [
-          "org_preferences"
+          "org",
+          "preferences"
         ],
         "summary": "Patch Current Org Prefs.",
         "operationId": "patchOrgPreferences",
@@ -6944,7 +6978,8 @@
       "get": {
         "description": "If you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `orgs.quotas:read` and scope `org:id:1` (orgIDScope).",
         "tags": [
-          "getCurrentOrg"
+          "quota",
+          "org"
         ],
         "summary": "Fetch Organization quota.",
         "operationId": "getCurrentOrgQuota",
@@ -7255,7 +7290,7 @@
         "tags": [
           "orgs"
         ],
-        "summary": "Get Organization by ID.",
+        "summary": "Get Organization by Name.",
         "operationId": "getOrgByName",
         "parameters": [
           {
@@ -7452,6 +7487,7 @@
       "get": {
         "description": "If you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `orgs.quotas:read` and scope `org:id:1` (orgIDScope).",
         "tags": [
+          "quota",
           "orgs"
         ],
         "summary": "Fetch Organization quota.",
@@ -7493,6 +7529,7 @@
         ],
         "description": "If you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `orgs.quotas:write` and scope `org:id:1` (orgIDScope).",
         "tags": [
+          "quota",
           "orgs"
         ],
         "summary": "Update user quota.",
@@ -7955,6 +7992,7 @@
       "get": {
         "description": "Get public dashboard for view",
         "tags": [
+          "dashboards",
           "dashboard_public"
         ],
         "operationId": "viewPublicDashboard",
@@ -7992,6 +8030,8 @@
       "get": {
         "description": "Get annotations for a public dashboard",
         "tags": [
+          "dashboards",
+          "annotations",
           "dashboard_public"
         ],
         "operationId": "getPublicAnnotations",
@@ -8029,6 +8069,7 @@
       "post": {
         "description": "Get results for a given panel on a public dashboard",
         "tags": [
+          "dashboards",
           "dashboard_public"
         ],
         "operationId": "queryPublicDashboard",
@@ -9709,6 +9750,7 @@
       "post": {
         "description": "Snapshot public mode should be enabled or authentication is required.",
         "tags": [
+          "dashboards",
           "snapshots"
         ],
         "summary": "When creating a snapshot using the API, you have to provide the full dashboard payload including the snapshot data. This endpoint is designed for the Grafana UI.",
@@ -9743,6 +9785,7 @@
       "get": {
         "description": "Snapshot public mode should be enabled or authentication is required.",
         "tags": [
+          "dashboards",
           "snapshots"
         ],
         "summary": "Delete Snapshot by deleteKey.",
@@ -9777,6 +9820,7 @@
     "/snapshots/{key}": {
       "get": {
         "tags": [
+          "dashboards",
           "snapshots"
         ],
         "summary": "Get Snapshot by Key.",
@@ -9806,6 +9850,7 @@
       },
       "delete": {
         "tags": [
+          "dashboards",
           "snapshots"
         ],
         "summary": "Delete Snapshot by Key.",
@@ -10425,7 +10470,8 @@
     "/teams/{team_id}/preferences": {
       "get": {
         "tags": [
-          "teams"
+          "teams",
+          "preferences"
         ],
         "summary": "Get Team Preferences.",
         "operationId": "getTeamPreferences",
@@ -10451,7 +10497,8 @@
       },
       "put": {
         "tags": [
-          "teams"
+          "teams",
+          "preferences"
         ],
         "summary": "Update Team Preferences.",
         "operationId": "updateTeamPreferences",
@@ -10716,7 +10763,8 @@
     "/user/preferences": {
       "get": {
         "tags": [
-          "user_preferences"
+          "signed_in_user",
+          "preferences"
         ],
         "summary": "Get user preferences.",
         "operationId": "getUserPreferences",
@@ -10735,7 +10783,8 @@
       "put": {
         "description": "Omitting a key (`theme`, `homeDashboardUID`, `timezone`) will cause the current value to be replaced with the system default value.",
         "tags": [
-          "user_preferences"
+          "signed_in_user",
+          "preferences"
         ],
         "summary": "Update user preferences.",
         "operationId": "updateUserPreferences",
@@ -10766,7 +10815,8 @@
       },
       "patch": {
         "tags": [
-          "user_preferences"
+          "signed_in_user",
+          "preferences"
         ],
         "summary": "Patch user preferences.",
         "operationId": "patchUserPreferences",
@@ -10799,6 +10849,7 @@
     "/user/quotas": {
       "get": {
         "tags": [
+          "quota",
           "signed_in_user"
         ],
         "summary": "Fetch user quota.",
@@ -25741,19 +25792,11 @@
     },
     {
       "description": "Permissions with `folderId=-1` are the default permissions for users with the Viewer and Editor roles. Permissions can be set for a user, a team or a role (Viewer or Editor). Permissions cannot be set for Admins - they always have access to everything.",
-      "name": "folder_permissions"
+      "name": "permissions"
     },
     {
       "description": "The Admin HTTP API does not currently work with an API Token. API Tokens are currently only linked to an organization and an organization role. They cannot be given the permission of server admin, only users can be given that permission. So in order to use these API calls you will have to use Basic Auth and the Grafana user must have the Grafana Admin permission. (The default admin user is called admin and has permission to use this API.)",
       "name": "admin"
-    },
-    {
-      "description": "You can use the Alerting API to get information about legacy dashboard alerts and their states but this API cannot be used to modify the alert. To create new alerts or modify them you need to update the dashboard JSON that contains the alerts.\nThis topic is relevant for the legacy dashboard alerts only.\nYou can find Grafana 8 alerts API specification details [here](https://editor.swagger.io/?url=https://raw.githubusercontent.com/grafana/grafana/main/pkg/services/ngalert/api/tooling/post.json).",
-      "name": "legacy_alerts"
-    },
-    {
-      "description": "The identifier (id) of a notification channel is an auto-incrementing numeric value and is only unique per Grafana install.\nThe unique identifier (uid) of a notification channel can be used for uniquely identify a notification channel between multiple Grafana installs. It’s automatically generated if not provided when creating a notification channel. The uid allows having consistent URLs for accessing notification channels and when syncing notification channels between multiple Grafana installations, refer to alert notification channel provisioning.\nThe uid can have a maximum length of 40 characters.",
-      "name": "legacy_alerts_notification_channels"
     },
     {
       "description": "Grafana Annotations feature released in Grafana 4.6. Annotations are saved in the Grafana database (sqlite, mysql or postgres). Annotations can be organization annotations that can be shown on any dashboard by configuring an annotation data source - they are filtered by tags. Or they can be tied to a panel on a dashboard and are then only shown on that panel.",
@@ -25780,10 +25823,6 @@
       "name": "teams"
     },
     {
-      "description": "This API can be used to enable, disable, list, add and remove permissions for a data source.\nPermissions can be set for a user or a team. Permissions cannot be set for Admins - they always have access to everything.\nThis is only available in Grafana Enterprise\nIf you are running Grafana Enterprise and have Fine-grained access control enabled, for some endpoints you would need to have relevant permissions. Refer to specific resources to understand what permissions are required.",
-      "name": "datasource_permissions"
-    },
-    {
       "description": "These are only available in Grafana Enterprise",
       "name": "enterprise"
     },
@@ -25798,22 +25837,6 @@
     {
       "description": "This API allows you to interact programmatically with the Reporting feature.\nReporting is only available in Grafana Enterprise. Read more about Grafana Enterprise.\nIf you have Fine-grained access Control enabled, for some endpoints you would need to have relevant permissions. Refer to specific resources to understand what permissions are required.",
       "name": "reports"
-    },
-    {
-      "description": "Grafana Alerting Alertmanager-compatible endpoints",
-      "name": "alertmanager"
-    },
-    {
-      "description": "Grafana Alerting endpoints for managing rules",
-      "name": "ruler"
-    },
-    {
-      "description": "Grafana Alerting testing endpoints",
-      "name": "testing"
-    },
-    {
-      "description": "Grafana Alerting Prometheus-compatible endpoints",
-      "name": "prometheus"
     },
     {
       "description": "If you are running Grafana Enterprise, for some endpoints you'll need to have specific permissions. Refer to [Role-based access control permissions](https://grafana.com/docs/grafana/latest/administration/roles-and-permissions/access-control/custom-role-actions-scopes/) for more information.",

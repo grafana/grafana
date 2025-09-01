@@ -11,7 +11,6 @@ import (
 	"time"
 
 	"github.com/go-sql-driver/mysql"
-	"github.com/grafana/grafana/pkg/util/sqlite"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/lib/pq"
 	"github.com/prometheus/client_golang/prometheus"
@@ -19,6 +18,8 @@ import (
 	"go.opentelemetry.io/otel/trace/noop"
 	"google.golang.org/protobuf/proto"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+
+	"github.com/grafana/grafana/pkg/util/sqlite"
 
 	"github.com/grafana/grafana-app-sdk/logging"
 
@@ -642,20 +643,33 @@ func (b *backend) ListModifiedSince(ctx context.Context, key resource.Namespaced
 		}
 	}
 
+	rollbackOnDefer := true
+	defer func() {
+		if rollbackOnDefer {
+			if terr := tx.Rollback(); terr != nil {
+				b.log.Warn("Error rolling back transaction in ListModifiedSince", "error", terr)
+			}
+		}
+	}()
+
 	// Fetch latest RV within the transaction
 	latestRv, err := b.fetchLatestRV(ctx, tx, b.dialect, key.Group, key.Resource)
 	if err != nil {
-		terr := tx.Rollback()
-		if terr != nil {
-			b.log.Warn("Error rolling back transaction in ListModifiedSince", "error", terr)
-		}
 		return 0, func(yield func(*resource.ModifiedResource, error) bool) {
 			yield(nil, err)
 		}
 	}
 
+	// If latest RV is the same as request RV, there's nothing to report, and we can avoid running another query.
+	if latestRv == sinceRv {
+		return latestRv, func(yield func(*resource.ModifiedResource, error) bool) { /* nothing to return */ }
+	}
+
 	// since results are sorted by name ASC and rv DESC, we can get away with tracking the last seen
 	lastSeen := ""
+
+	// We will rollback after iteration has finished.
+	rollbackOnDefer = false
 
 	// rollback transaction if iterator not called within 30 seconds
 	rollbackTimer := time.AfterFunc(30*time.Second, func() {
