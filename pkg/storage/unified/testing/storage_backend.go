@@ -3,6 +3,7 @@ package test
 import (
 	"context"
 	"fmt"
+	"iter"
 	"net/http"
 	"slices"
 	"strings"
@@ -523,11 +524,22 @@ func runTestIntegrationBackendListModifiedSince(t *testing.T, backend resource.S
 		latestRv, seq := backend.ListModifiedSince(ctx, key, rvDeleted)
 		require.GreaterOrEqual(t, latestRv, rvDeleted)
 
-		counter := 0
-		for range seq {
-			counter++
+		isEmpty(t, seq)
+	})
+
+	t.Run("no events for subsequent listModifiedSince calls", func(t *testing.T) {
+		key := resource.NamespacedResource{
+			Namespace: ns,
+			Group:     "group",
+			Resource:  "resource",
 		}
-		require.Equal(t, 0, counter) // no events should be returned
+		latestRv1, seq := backend.ListModifiedSince(ctx, key, rvDeleted)
+		require.GreaterOrEqual(t, latestRv1, rvDeleted)
+		isEmpty(t, seq)
+
+		latestRv2, seq := backend.ListModifiedSince(ctx, key, latestRv1)
+		require.GreaterOrEqual(t, latestRv1, latestRv2)
+		isEmpty(t, seq)
 	})
 
 	t.Run("will only return modified events for the given key", func(t *testing.T) {
@@ -580,6 +592,14 @@ func runTestIntegrationBackendListModifiedSince(t *testing.T, backend resource.S
 		}
 		require.Equal(t, 3, counter)
 	})
+}
+
+func isEmpty(t *testing.T, seq iter.Seq2[*resource.ModifiedResource, error]) {
+	counter := 0
+	for range seq {
+		counter++
+	}
+	require.Equal(t, 0, counter)
 }
 
 func runTestIntegrationBackendListHistory(t *testing.T, backend resource.StorageBackend, nsPrefix string) {
