@@ -302,11 +302,11 @@ const FilterOptions = ({ onSubmit, onClear, pluginsFilterEnabled }: FilterOption
             />
             <DataSourceNamesField dataSourceOptions={dataSourceOptions} portalContainer={portalContainer} />
             {canRenderContactPointSelector && <ContactPointField portalContainer={portalContainer} />}
-            <RuleSourceField />
-            <RuleStateField />
-            <RuleTypeField />
-            <RuleHealthField />
-            {pluginsFilterEnabled && <PluginsField />}
+            <RuleSourceField radioGroupClassName={styles.radioGroupCompact} />
+            <RuleStateField radioGroupClassName={styles.radioGroupCompact} />
+            <RuleTypeField radioGroupClassName={styles.radioGroupCompact} />
+            <RuleHealthField radioGroupClassName={styles.radioGroupCompact} />
+            {pluginsFilterEnabled && <PluginsField radioGroupClassName={styles.radioGroupCompact} />}
           </div>
           <Stack direction="row" alignItems="center">
             <Button type="reset" variant="secondary" data-testid="filter-clear-button">
@@ -563,7 +563,7 @@ function ContactPointField({ portalContainer }: { portalContainer?: HTMLElement 
   );
 }
 
-function RuleStateField() {
+function RuleStateField({ radioGroupClassName }: { radioGroupClassName?: string }) {
   const { control } = useFormContext<AdvancedFilters>();
   return (
     <>
@@ -585,6 +585,8 @@ function RuleStateField() {
             ]}
             value={field.value}
             onChange={field.onChange}
+            fullWidth={false}
+            className={radioGroupClassName}
           />
         )}
       />
@@ -592,7 +594,7 @@ function RuleStateField() {
   );
 }
 
-function RuleTypeField() {
+function RuleTypeField({ radioGroupClassName }: { radioGroupClassName?: string }) {
   const { control } = useFormContext<AdvancedFilters>();
   return (
     <>
@@ -611,6 +613,8 @@ function RuleTypeField() {
             ]}
             value={field.value}
             onChange={field.onChange}
+            fullWidth={false}
+            className={radioGroupClassName}
           />
         )}
       />
@@ -618,7 +622,7 @@ function RuleTypeField() {
   );
 }
 
-function RuleSourceField() {
+function RuleSourceField({ radioGroupClassName }: { radioGroupClassName?: string }) {
   const { control } = useFormContext<AdvancedFilters>();
   return (
     <>
@@ -633,10 +637,12 @@ function RuleSourceField() {
             options={[
               { label: t('common.all', 'All'), value: '*' },
               { label: t('alerting.rules-filter.rule-source.grafana', 'Grafana managed'), value: 'grafana' },
-              { label: t('alerting.rules-filter.rule-source.external', 'External'), value: 'external' },
+              { label: t('alerting.rules-filter.rule-source.external', 'Data source managed'), value: 'external' },
             ]}
             value={field.value}
             onChange={field.onChange}
+            fullWidth={false}
+            className={radioGroupClassName}
           />
         )}
       />
@@ -644,7 +650,7 @@ function RuleSourceField() {
   );
 }
 
-function RuleHealthField() {
+function RuleHealthField({ radioGroupClassName }: { radioGroupClassName?: string }) {
   const { control } = useFormContext<AdvancedFilters>();
   return (
     <>
@@ -664,6 +670,8 @@ function RuleHealthField() {
             ]}
             value={field.value}
             onChange={field.onChange}
+            fullWidth={false}
+            className={radioGroupClassName}
           />
         )}
       />
@@ -671,7 +679,7 @@ function RuleHealthField() {
   );
 }
 
-function PluginsField() {
+function PluginsField({ radioGroupClassName }: { radioGroupClassName?: string }) {
   const { control } = useFormContext<AdvancedFilters>();
   return (
     <>
@@ -689,6 +697,8 @@ function PluginsField() {
             ]}
             value={field.value}
             onChange={field.onChange}
+            fullWidth={false}
+            className={radioGroupClassName}
           />
         )}
       />
@@ -775,6 +785,9 @@ function getStyles(theme: GrafanaTheme2) {
       gridTemplateColumns: 'auto 1fr',
       alignItems: 'center',
       gap: theme.spacing(2),
+    }),
+    radioGroupCompact: css({
+      width: 'max-content',
     }),
   };
 }
