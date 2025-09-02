@@ -1623,6 +1623,8 @@ func newPermissionScopedQuery(q query.Query, checkers map[string]authlib.ItemChe
 }
 
 func (q *permissionScopedQuery) Searcher(ctx context.Context, i index.IndexReader, m mapping.IndexMapping, options search.SearcherOptions) (search.Searcher, error) {
+	// Get a new logger from context, to pass traceIDs etc.
+	logger := q.log.FromContext(ctx)
 	searcher, err := q.Query.Searcher(ctx, i, m, options)
 	if err != nil {
 		return nil, err
@@ -1631,7 +1633,6 @@ func (q *permissionScopedQuery) Searcher(ctx context.Context, i index.IndexReade
 	if err != nil {
 		return nil, err
 	}
-
 	filteringSearcher := bleveSearch.NewFilteringSearcher(ctx, searcher, func(d *search.DocumentMatch) bool {
 		// The doc ID has the format: <namespace>/<group>/<resourceType>/<name>
 		// IndexInternalID will be the same as the doc ID when using an in-memory index, but when using a file-based
@@ -1639,14 +1640,14 @@ func (q *permissionScopedQuery) Searcher(ctx context.Context, i index.IndexReade
 		// correct doc ID regardless of the index type.
 		d.ID, err = i.ExternalID(d.IndexInternalID)
 		if err != nil {
-			q.log.Debug("Error getting external ID", "error", err)
+			logger.Debug("Error getting external ID", "error", err)
 			return false
 		}
 
 		parts := strings.Split(d.ID, "/")
 		// Exclude doc if id isn't expected format
 		if len(parts) != 4 {
-			q.log.Debug("Unexpected document ID format", "id", d.ID)
+			logger.Debug("Unexpected document ID format", "id", d.ID)
 			return false
 		}
 		ns := parts[0]
@@ -1659,16 +1660,16 @@ func (q *permissionScopedQuery) Searcher(ctx context.Context, i index.IndexReade
 			}
 		})
 		if err != nil {
-			q.log.Debug("Error reading doc values", "error", err)
+			logger.Debug("Error reading doc values", "error", err)
 			return false
 		}
 		if _, ok := q.checkers[resource]; !ok {
-			q.log.Debug("No resource checker found", "resource", resource)
+			logger.Debug("No resource checker found", "resource", resource)
 			return false
 		}
 		allowed := q.checkers[resource](name, folder)
 		if !allowed {
-			q.log.Debug("Denying access", "ns", ns, "name", name, "folder", folder)
+			logger.Debug("Denying access", "ns", ns, "name", name, "folder", folder)
 		}
 		return allowed
 	})
