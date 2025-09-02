@@ -6,9 +6,8 @@ import { getDataSourceSrv } from '@grafana/runtime';
 import { ComboboxOption } from '@grafana/ui';
 import { GrafanaPromRuleGroupDTO } from 'app/types/unified-alerting-dto';
 
-import { alertRuleApi } from '../../../api/alertRuleApi';
 import { prometheusApi } from '../../../api/prometheusApi';
-import { GRAFANA_RULES_SOURCE_NAME, getRulesDataSources } from '../../../utils/datasource';
+import { getRulesDataSources } from '../../../utils/datasource';
 
 // Module-scope utilities
 const collator = new Intl.Collator();
@@ -102,7 +101,7 @@ export function useLabelOptions(): {
   labelOptions: (inputValue: string) => Promise<Array<ComboboxOption<string>>>;
 } {
   // Use lazy queries so we only fetch when the dropdown is opened or the user types
-  const [fetchPromNamespaces] = alertRuleApi.useLazyPrometheusRuleNamespacesQuery();
+  const [fetchGrafanaGroups] = prometheusApi.useLazyGetGrafanaGroupsQuery();
 
   const createInfoOption = useCallback((): ComboboxOption<string> => {
     return {
@@ -126,11 +125,9 @@ export function useLabelOptions(): {
 
   const labelOptions = useCallback(
     async (inputValue: string): Promise<Array<ComboboxOption<string>>> => {
-      // Fetch labels from the appropriate source lazily
-      const namespaces = await fetchPromNamespaces({
-        ruleSourceName: GRAFANA_RULES_SOURCE_NAME,
-      }).unwrap();
-      const labelsMap = namespacesToLabels(namespaces);
+      // Fetch grafana groups and prefer cache when available
+      const response = await fetchGrafanaGroups({ limitAlerts: 0, groupLimit: 1000 }, true).unwrap();
+      const labelsMap = groupsToLabels(response.data.groups);
 
       const selectable = toOptions(labelsMap);
       if (selectable.length === 0) {
@@ -140,7 +137,7 @@ export function useLabelOptions(): {
       const options = [...selectable, createInfoOption()];
       return filterBySearch(options, inputValue, true);
     },
-    [fetchPromNamespaces, toOptions, createInfoOption]
+    [fetchGrafanaGroups, toOptions, createInfoOption]
   );
 
   return { labelOptions };
@@ -155,13 +152,8 @@ export function useAlertingDataSourceOptions(): (inputValue: string) => Promise<
   }, []);
 }
 
-// Helpers to build labels map from namespaces / ruler rules
-function namespacesToLabels(
-  promNamespaces: Array<{
-    groups: Array<{ rules: Array<{ labels?: Record<string, string> }> }>;
-  }>
-) {
-  const rules = promNamespaces.flatMap((ns) => ns.groups).flatMap((group) => group.rules);
+function groupsToLabels(groups: Array<{ rules: Array<{ labels?: Record<string, string> }> }>) {
+  const rules = groups.flatMap((group) => group.rules);
 
   return rules.reduce((result, rule) => {
     if (!rule.labels) {
