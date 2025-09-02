@@ -75,55 +75,55 @@ jobs:
           echo "version=$(cat VERSION)" >> "$GITHUB_OUTPUT"
           echo "grafana_commit=$(git rev-parse HEAD)" | tee -a "$GITHUB_OUTPUT"
   # Triggers the same workflow in `grafana-enterprise` on the same ref
-  downstream:
-    runs-on: github-hosted-ubuntu-x64-small
-    needs: [setup]
-    permissions:
-      contents: read
-      id-token: write
-    name: Dispatch grafana-enterprise build
-    steps:
-      - id: vault-secrets
-        uses: grafana/shared-workflows/actions/get-vault-secrets@main
-        with:
-          repo_secrets: |
-            GRAFANA_DELIVERY_BOT_APP_PEM=delivery-bot-app:PRIVATE_KEY
-      - name: Generate token
-        id: generate_token
-        uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a
-        with:
-          app_id: ${{ vars.DELIVERY_BOT_APP_ID }}
-          private_key: ${{ env.GRAFANA_DELIVERY_BOT_APP_PEM }}
-          repositories: '["grafana-enterprise"]'
-          permissions: '{"actions": "write"}'
-      - uses: actions/github-script@v7
-        env:
-          REF: ${{ github.ref_name }}
-          VERSION: ${{ needs.setup.outputs.version }}
-          BUILD_ID: ${{ github.run_id }}
-          BUCKET: grafana-prerelease
-          GRAFANA_COMMIT: ${{ needs.setup.outputs.grafana-commit }}
-          SOURCE_EVENT: ${{ inputs.source-event || github.event_name }}
-          REPO: ${{ github.repository }}
-        with:
-          github-token: ${{ steps.generate_token.outputs.token }}
-          script: |
-            const {REF, VERSION, BUILD_ID, BUCKET, GRAFANA_COMMIT, SOURCE_EVENT, REPO} = process.env;
+  # downstream:
+  #   runs-on: github-hosted-ubuntu-x64-small
+  #   needs: [setup]
+  #   permissions:
+  #     contents: read
+  #     id-token: write
+  #   name: Dispatch grafana-enterprise build
+  #   steps:
+  #     - id: vault-secrets
+  #       uses: grafana/shared-workflows/actions/get-vault-secrets@main
+  #       with:
+  #         repo_secrets: |
+  #           GRAFANA_DELIVERY_BOT_APP_PEM=delivery-bot-app:PRIVATE_KEY
+  #     - name: Generate token
+  #       id: generate_token
+  #       uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a
+  #       with:
+  #         app_id: ${{ vars.DELIVERY_BOT_APP_ID }}
+  #         private_key: ${{ env.GRAFANA_DELIVERY_BOT_APP_PEM }}
+  #         repositories: '["grafana-enterprise"]'
+  #         permissions: '{"actions": "write"}'
+  #     - uses: actions/github-script@v7
+  #       env:
+  #         REF: ${{ github.ref_name }}
+  #         VERSION: ${{ needs.setup.outputs.version }}
+  #         BUILD_ID: ${{ github.run_id }}
+  #         BUCKET: grafana-prerelease
+  #         GRAFANA_COMMIT: ${{ needs.setup.outputs.grafana-commit }}
+  #         SOURCE_EVENT: ${{ inputs.source-event || github.event_name }}
+  #         REPO: ${{ github.repository }}
+  #       with:
+  #         github-token: ${{ steps.generate_token.outputs.token }}
+  #         script: |
+  #           const {REF, VERSION, BUILD_ID, BUCKET, GRAFANA_COMMIT, SOURCE_EVENT, REPO} = process.env;
 
-            await github.rest.actions.createWorkflowDispatch({
-                owner: 'grafana',
-                repo: 'grafana-enterprise',
-                workflow_id: 'release-build.yml',
-                ref:  REF,
-                inputs: {
-                  "version": VERSION,
-                  "build-id": String(BUILD_ID),
-                  "bucket": BUCKET,
-                  "grafana-commit": GRAFANA_COMMIT,
-                  "source-event": SOURCE_EVENT,
-                  "upstream": REPO,
-                }
-            })
+  #           await github.rest.actions.createWorkflowDispatch({
+  #               owner: 'grafana',
+  #               repo: 'grafana-enterprise',
+  #               workflow_id: 'release-build.yml',
+  #               ref:  REF,
+  #               inputs: {
+  #                 "version": VERSION,
+  #                 "build-id": String(BUILD_ID),
+  #                 "bucket": BUCKET,
+  #                 "grafana-commit": GRAFANA_COMMIT,
+  #                 "source-event": SOURCE_EVENT,
+  #                 "upstream": REPO,
+  #               }
+  #           })
 
   build:
     runs-on: github-hosted-ubuntu-x64-large
@@ -140,33 +140,33 @@ jobs:
         # The downside to this is that the frontend will be built for each one when it could be reused for all of them.
         # This could be a future improvement.
         include:
-          - name: linux-amd64
-            artifacts: targz:grafana:linux/amd64,deb:grafana:linux/amd64,rpm:grafana:linux/amd64,docker:grafana:linux/amd64,docker:grafana:linux/amd64:ubuntu,npm:grafana,storybook
+          - name: linux-amd64 # publish-npm relies on this step building npm packages
+            artifacts: npm:grafana,storybook
             verify: true
-          - name: linux-arm64
-            artifacts: targz:grafana:linux/arm64,deb:grafana:linux/arm64,rpm:grafana:linux/arm64,docker:grafana:linux/arm64,docker:grafana:linux/arm64:ubuntu
-            verify: false
-          - name: linux-s390x
-            artifacts: targz:grafana:linux/s390x,deb:grafana:linux/s390x,rpm:grafana:linux/s390x,docker:grafana:linux/s390x,docker:grafana:linux/s390x:ubuntu
-            verify: true
-          - name: linux-armv7
-            artifacts: targz:grafana:linux/arm/v7,deb:grafana:linux/arm/v7,docker:grafana:linux/arm/v7,docker:grafana:linux/arm/v7:ubuntu
-            verify: true
-          - name: linux-armv6
-            artifacts: targz:grafana:linux/arm/v6,deb:grafana:linux/arm/v6
-            verify: true
-          - name: windows-amd64
-            artifacts: targz:grafana:windows/amd64,zip:grafana:windows/amd64,msi:grafana:windows/amd64
-            verify: true
-          - name: windows-arm64
-            artifacts: targz:grafana:windows/arm64,zip:grafana:windows/arm64
-            verify: true
-          - name: darwin-amd64
-            artifacts: targz:grafana:darwin/amd64
-            verify: true
-          - name: darwin-arm64
-            artifacts: targz:grafana:darwin/arm64
-            verify: true
+          # - name: linux-arm64
+          #   artifacts: targz:grafana:linux/arm64,deb:grafana:linux/arm64,rpm:grafana:linux/arm64,docker:grafana:linux/arm64,docker:grafana:linux/arm64:ubuntu
+          #   verify: false
+          # - name: linux-s390x
+          #   artifacts: targz:grafana:linux/s390x,deb:grafana:linux/s390x,rpm:grafana:linux/s390x,docker:grafana:linux/s390x,docker:grafana:linux/s390x:ubuntu
+          #   verify: true
+          # - name: linux-armv7
+          #   artifacts: targz:grafana:linux/arm/v7,deb:grafana:linux/arm/v7,docker:grafana:linux/arm/v7,docker:grafana:linux/arm/v7:ubuntu
+          #   verify: true
+          # - name: linux-armv6
+          #   artifacts: targz:grafana:linux/arm/v6,deb:grafana:linux/arm/v6
+          #   verify: true
+          # - name: windows-amd64
+          #   artifacts: targz:grafana:windows/amd64,zip:grafana:windows/amd64,msi:grafana:windows/amd64
+          #   verify: true
+          # - name: windows-arm64
+          #   artifacts: targz:grafana:windows/arm64,zip:grafana:windows/arm64
+          #   verify: true
+          # - name: darwin-amd64
+          #   artifacts: targz:grafana:darwin/amd64
+          #   verify: true
+          # - name: darwin-arm64
+          #   artifacts: targz:grafana:darwin/arm64
+          #   verify: true
     steps:
       - uses: grafana/shared-workflows/actions/dockerhub-login@dockerhub-login/v1.0.2
       - uses: actions/checkout@v5
@@ -197,20 +197,22 @@ jobs:
           name: artifacts-${{ matrix.name }}
           path: ${{ steps.build.outputs.dist-dir }}
           retention-days: 1
-  publish-artifacts:
-    name: Upload artifacts
-    uses: grafana/grafana/.github/workflows/publish-artifact.yml@main
-    permissions:
-      id-token: write
-    needs:
-      - setup
-      - build
-    with:
-      bucket: grafana-prerelease
-      pattern: artifacts-*
-      run-id: ${{ github.run_id }}
-      bucket-path: ${{ needs.setup.outputs.version }}_${{ github.run_id }}
-      environment: prod
+
+  # publish-artifacts:
+  #   name: Upload artifacts
+  #   uses: grafana/grafana/.github/workflows/publish-artifact.yml@main
+  #   permissions:
+  #     id-token: write
+  #   needs:
+  #     - setup
+  #     - build
+  #   with:
+  #     bucket: grafana-prerelease
+  #     pattern: artifacts-*
+  #     run-id: ${{ github.run_id }}
+  #     bucket-path: ${{ needs.setup.outputs.version }}_${{ github.run_id }}
+  #     environment: prod
+
   publish-dockerhub:
     if: github.ref_name == 'main'
     permissions:
@@ -268,3 +270,61 @@ jobs:
           docker manifest push grafana/grafana:main-ubuntu
           docker manifest push "grafana/grafana-dev:${VERSION}"
           docker manifest push "grafana/grafana-dev:${VERSION}-ubuntu"
+
+  publish-npm:
+    # if: github.ref_name == 'main'
+    permissions:
+      contents: read
+      id-token: write
+    runs-on: ubuntu-x64-small
+    needs:
+      - setup
+      - build
+    env:
+      PACKAGES_VERSION: ${{ needs.setup.outputs.version }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      # - name: Setup Node.js
+      #   uses: ./.github/actions/setup-node
+
+      # - name: Yarn install
+      #   run: yarn install --immutable
+      #   env:
+      #     PUPPETEER_SKIP_DOWNLOAD: true
+      #     CYPRESS_INSTALL_BINARY: 0
+
+      # - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+      #   with:
+      #     name: artifacts-list-linux-amd64
+      #     path: .
+
+      - run: echo "publishing as version ${PACKAGES_VERSION}"
+
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: artifacts-linux-amd64
+          path: dist
+
+      - run: mv dist/"${PACKAGES_VERSION}"/npm-artifacts npm-artifacts
+
+      - run: ls -lah npm-artifacts
+
+      - name: Publish
+        env:
+          NPM_TOKEN: "oidc"
+        run: ./scripts/publish-npm-packages.sh --dist-tag 'canary' --registry 'https://registry.npmjs.org/'
+
+      # - name: Publish
+      #   env:
+      #     DIST_TAG: "canary"
+      #     REGISTRY: "https://registry.npmjs.org/"
+      #   run: |
+      #     for file in ./npm-artifacts/*.tgz; do
+      #         npm publish "$file" --tag "$DIST_TAG" --registry "$REGISTRY"
+      #     done
+
+

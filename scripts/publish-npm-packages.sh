@@ -36,9 +36,11 @@ done
 
 echo "Starting to release $dist_tag version"
 
-registry_without_protocol=${registry#*:}
 
-echo "$registry_without_protocol/:_authToken=${NPM_TOKEN}" >> ~/.npmrc
+if [[ "$NPM_TOKEN" != "oidc" ]]; then
+  registry_without_protocol=${registry#*:}
+  echo "$registry_without_protocol/:_authToken=${NPM_TOKEN}" >> ~/.npmrc
+fi
 
 # Loop over .tar files in directory and publish them to npm registry
 for file in ./npm-artifacts/*.tgz; do
