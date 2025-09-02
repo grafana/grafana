@@ -1116,4 +1116,9 @@ export interface FeatureToggles {
   * @default false
   */
   graphiteBackendMode?: boolean;
+  /**
+  * Enables the updated Azure Monitor resource picker
+  * @default false
+  */
+  azureResourcePickerUpdates?: boolean;
 }

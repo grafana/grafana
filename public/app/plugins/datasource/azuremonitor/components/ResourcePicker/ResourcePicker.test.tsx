@@ -2,8 +2,12 @@ import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { omit } from 'lodash';
 
+import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
+import { config } from '@grafana/runtime';
+
 import Datasource from '../../datasource';
-import createMockDatasource from '../../mocks/datasource';
+import { selectors } from '../../e2e/selectors';
+import createMockDatasource, { createMockLocations, createMockMetricsNamespaces } from '../../mocks/datasource';
 import { createMockInstanceSetttings } from '../../mocks/instanceSettings';
 import {
   createMockResourceGroupsBySubscription,
@@ -14,7 +18,8 @@ import {
 import { DeepPartial } from '../../mocks/utils';
 import ResourcePickerData, { ResourcePickerQueryType } from '../../resourcePicker/resourcePickerData';
 
-import { ResourceRowType } from './types';
+import { RECENT_RESOURCES_KEY } from './ResourcePicker';
+import { ResourceRowGroup, ResourceRowType } from './types';
 
 import ResourcePicker from '.';
 
@@ -25,6 +30,11 @@ jest.mock('@grafana/runtime', () => ({
       return val;
     },
   }),
+  config: {
+    featureToggles: {
+      azureResourcePickerUpdates: true,
+    },
+  },
 }));
 
 const noResourceURI = '';
@@ -61,11 +71,19 @@ function createMockResourcePickerData(
 }
 
 const queryType: ResourcePickerQueryType = 'logs';
-
+const resourcePickerData = createMockResourcePickerData();
 const defaultProps = {
   templateVariables: [],
   resources: [],
-  resourcePickerData: createMockResourcePickerData(),
+  resourcePickerData,
+  datasource: createMockDatasource({
+    resourcePickerData,
+    getSubscriptions: jest
+      .fn()
+      .mockResolvedValue(createMockSubscriptions().map((sub) => ({ label: sub.name, value: sub.id }))),
+    getLocations: jest.fn().mockResolvedValue(createMockLocations()),
+    getMetricNamespaces: jest.fn().mockResolvedValue(createMockMetricsNamespaces()),
+  }),
   onCancel: noop,
   onApply: noop,
   selectableEntryTypes: [
@@ -82,6 +100,7 @@ const defaultProps = {
 describe('AzureMonitor ResourcePicker', () => {
   beforeEach(() => {
     window.HTMLElement.prototype.scrollIntoView = jest.fn();
+    config.featureToggles.azureResourcePickerUpdates = false;
   });
   it('should pre-load subscriptions when there is no existing selection', async () => {
     render(<ResourcePicker {...defaultProps} resources={[noResourceURI]} />);
@@ -386,6 +405,449 @@ describe('AzureMonitor ResourcePicker', () => {
       });
       const checkboxes = screen.queryAllByRole('checkbox');
       expect(checkboxes.length).toBe(0);
+    });
+  });
+
+  describe('filters', () => {
+    beforeEach(() => {
+      config.featureToggles.azureResourcePickerUpdates = true;
+    });
+    it('should not render filters if feature toggle disabled', async () => {
+      config.featureToggles.azureResourcePickerUpdates = false;
+      await act(async () => render(<ResourcePicker {...defaultProps} queryType="metrics" />));
+
+      expect(
+        screen.queryByTestId(selectors.components.queryEditor.resourcePicker.filters.subscription.input)
+      ).not.toBeInTheDocument();
+      expect(
+        screen.queryByTestId(selectors.components.queryEditor.resourcePicker.filters.type.input)
+      ).not.toBeInTheDocument();
+      expect(
+        screen.queryByTestId(selectors.components.queryEditor.resourcePicker.filters.location.input)
+      ).not.toBeInTheDocument();
+    });
+
+    it('should render subscription filter and load subscription options', async () => {
+      await act(async () => render(<ResourcePicker {...defaultProps} />));
+
+      await waitFor(() => {
+        expect(defaultProps.datasource.getSubscriptions).toHaveBeenCalled();
+      });
+
+      const subscriptionFilter = screen.getByTestId(
+        selectors.components.queryEditor.resourcePicker.filters.subscription.input
+      );
+      expect(subscriptionFilter).toBeInTheDocument();
+    });
+
+    it('should render resource type filter for metrics query type', async () => {
+      await act(async () => render(<ResourcePicker {...defaultProps} queryType="metrics" />));
+
+      await waitFor(() => {
+        expect(defaultProps.datasource.getMetricNamespaces).toHaveBeenCalled();
+      });
+
+      const resourceTypeFilter = screen.getByTestId(selectors.components.queryEditor.resourcePicker.filters.type.input);
+      expect(resourceTypeFilter).toBeInTheDocument();
+    });
+
+    it('should not render resource type filter for logs query type', async () => {
+      await act(async () => render(<ResourcePicker {...defaultProps} />));
+
+      const resourceTypeFilter = screen.queryByTestId(
+        selectors.components.queryEditor.resourcePicker.filters.type.input
+      );
+      expect(resourceTypeFilter).not.toBeInTheDocument();
+    });
+
+    it('should render location filter and load location options', async () => {
+      await act(async () => render(<ResourcePicker {...defaultProps} />));
+
+      await waitFor(() => {
+        expect(defaultProps.datasource.getLocations).toHaveBeenCalled();
+      });
+
+      const locationFilter = screen.getByTestId(selectors.components.queryEditor.resourcePicker.filters.location.input);
+      expect(locationFilter).toBeInTheDocument();
+    });
+
+    // Combobox tests seem to be quite finnicky when it comes to selecting options
+    // I've had to add multiple {ArrowDown} key-presses as sometimes the expected option isn't
+    // at the top of the list
+    it('should call fetchInitialRows when subscription filter changes', async () => {
+      const user = userEvent.setup();
+      const mockFetchInitialRows = jest.spyOn(resourcePickerData, 'fetchInitialRows');
+
+      await act(async () => render(<ResourcePicker {...defaultProps} />));
+
+      const subscriptionFilter = await screen.getByTestId(
+        selectors.components.queryEditor.resourcePicker.filters.subscription.input
+      );
+      await act(async () => {
+        await user.click(subscriptionFilter);
+        await user.type(subscriptionFilter, 'Primary Subscription {ArrowDown}{ArrowDown}{ArrowDown}{Enter}');
+      });
+
+      await waitFor(() => {
+        expect(mockFetchInitialRows).toHaveBeenCalledWith(
+          'logs',
+          undefined,
+          expect.objectContaining({
+            subscriptions: ['def-456'],
+            types: [],
+            locations: [],
+          })
+        );
+      });
+    });
+
+    it('should call fetchInitialRows when location filter changes', async () => {
+      const user = userEvent.setup();
+      const mockFetchInitialRows = jest.spyOn(resourcePickerData, 'fetchInitialRows');
+
+      await act(async () => render(<ResourcePicker {...defaultProps} />));
+
+      const locationFilter = await screen.getByTestId(
+        selectors.components.queryEditor.resourcePicker.filters.location.input
+      );
+      await act(async () => {
+        await user.click(locationFilter);
+      });
+      await user.type(locationFilter, 'North Europe{ArrowDown}{Enter}');
+
+      await waitFor(() => {
+        expect(mockFetchInitialRows).toHaveBeenCalledWith(
+          'logs',
+          undefined,
+          expect.objectContaining({
+            subscriptions: [],
+            types: [],
+            locations: ['northeurope'],
+          })
+        );
+      });
+    });
+
+    it('should call fetchInitialRows when resource type filter changes for metrics', async () => {
+      const user = userEvent.setup();
+      const mockFetchInitialRows = jest.spyOn(resourcePickerData, 'fetchInitialRows');
+
+      await act(async () => render(<ResourcePicker {...defaultProps} queryType="metrics" />));
+
+      const typeFilter = await screen.getByTestId(selectors.components.queryEditor.resourcePicker.filters.type.input);
+      await act(async () => {
+        await user.click(typeFilter);
+      });
+
+      await user.type(typeFilter, 'Kubernetes services {ArrowDown}{Enter}');
+      await waitFor(() => {
+        expect(mockFetchInitialRows).toHaveBeenCalledWith(
+          'metrics',
+          undefined,
+          expect.objectContaining({
+            subscriptions: [],
+            types: ['microsoft.containerservice/managedclusters'],
+            locations: [],
+          })
+        );
+      });
+    });
+  });
+
+  describe('recent resources', () => {
+    beforeEach(() => {
+      config.featureToggles.azureResourcePickerUpdates = true;
+      window.localStorage.clear();
+    });
+    it('should not render tabbed view if feature toggle disabled', async () => {
+      config.featureToggles.azureResourcePickerUpdates = false;
+      await act(async () => render(<ResourcePicker {...defaultProps} />));
+
+      expect(screen.queryByTestId(e2eSelectors.components.Tab.title('Browse'))).not.toBeInTheDocument();
+      expect(screen.queryByTestId(e2eSelectors.components.Tab.title('Recent'))).not.toBeInTheDocument();
+    });
+
+    it('should render tabbed view', async () => {
+      await act(async () => render(<ResourcePicker {...defaultProps} />));
+
+      expect(screen.queryByTestId(e2eSelectors.components.Tab.title('Browse'))).toBeInTheDocument();
+      expect(screen.queryByTestId(e2eSelectors.components.Tab.title('Recent'))).toBeInTheDocument();
+    });
+
+    it('should render tabbed view with no recent resources', async () => {
+      await act(async () => render(<ResourcePicker {...defaultProps} />));
+
+      const recent = await screen.getByTestId(e2eSelectors.components.Tab.title('Recent'));
+      await userEvent.click(recent);
+
+      expect(screen.getByText('No recent resources found')).toBeInTheDocument();
+    });
+
+    it('should render tabbed view with recent resources', async () => {
+      const recentResources = [
+        {
+          id: 'aks-agentpool',
+          name: 'aks-agentpool',
+          type: 'Resource',
+          uri: '/subscriptions/def-123/resourceGroups/main-rg/providers/Microsoft.Compute/virtualMachineScaleSets/aks-agentpool',
+          typeLabel: 'Virtual machine scale sets',
+          location: 'eastus2',
+        },
+        {
+          id: 'aks-systempool',
+          name: 'aks-systempool',
+          type: 'Resource',
+          uri: '/subscriptions/def-123/resourceGroups/main-rg/providers/Microsoft.Compute/virtualMachineScaleSets/aks-systempool',
+          typeLabel: 'Virtual machine scale sets',
+          location: 'eastus2',
+        },
+        {
+          name: 'grafanadb',
+          id: 'datasources-sqlserver/grafanadb',
+          uri: '/subscriptions/def-123/resourceGroups/main-rg/providers/Microsoft.Sql/servers/datasources-sqlserver/databases/grafanadb',
+          resourceGroupName: 'main-rg',
+          type: 'Resource',
+          typeLabel: 'SQL databases',
+          location: 'eastus2',
+        },
+      ];
+      window.localStorage.setItem(RECENT_RESOURCES_KEY(defaultProps.queryType), JSON.stringify(recentResources));
+      await act(async () => render(<ResourcePicker {...defaultProps} />));
+
+      const recent = await screen.getByTestId(e2eSelectors.components.Tab.title('Recent'));
+      await userEvent.click(recent);
+
+      expect(screen.getByText(recentResources[0].name)).toBeInTheDocument();
+      expect(screen.getByText(recentResources[1].name)).toBeInTheDocument();
+      expect(screen.getByText(recentResources[2].name)).toBeInTheDocument();
+    });
+
+    it('should call onApply when recent resource is selected (metrics)', async () => {
+      const recentResources = [
+        {
+          id: 'aks-agentpool',
+          name: 'aks-agentpool',
+          type: 'Resource',
+          uri: '/subscriptions/def-123/resourceGroups/main-rg/providers/Microsoft.Compute/virtualMachineScaleSets/aks-agentpool',
+          typeLabel: 'Virtual machine scale sets',
+          location: 'eastus2',
+        },
+        {
+          id: 'aks-systempool',
+          name: 'aks-systempool',
+          type: 'Resource',
+          uri: '/subscriptions/def-123/resourceGroups/main-rg/providers/Microsoft.Compute/virtualMachineScaleSets/aks-systempool',
+          typeLabel: 'Virtual machine scale sets',
+          location: 'eastus2',
+        },
+        {
+          name: 'grafanadb',
+          id: 'datasources-sqlserver/grafanadb',
+          uri: '/subscriptions/def-123/resourceGroups/main-rg/providers/Microsoft.Sql/servers/datasources-sqlserver/databases/grafanadb',
+          resourceGroupName: 'main-rg',
+          type: 'Resource',
+          typeLabel: 'SQL databases',
+          location: 'eastus2',
+        },
+      ];
+      const queryType = 'metrics';
+      window.localStorage.setItem(RECENT_RESOURCES_KEY(queryType), JSON.stringify(recentResources));
+      const onApply = jest.fn();
+      await act(async () => render(<ResourcePicker {...defaultProps} queryType={queryType} onApply={onApply} />));
+
+      const recent = await screen.getByTestId(e2eSelectors.components.Tab.title('Recent'));
+      await userEvent.click(recent);
+
+      const checkbox = await screen.findByLabelText(recentResources[0].name);
+      await userEvent.click(checkbox);
+      expect(checkbox).toBeChecked();
+      const applyButton = screen.getByRole('button', { name: 'Apply' });
+      await userEvent.click(applyButton);
+
+      expect(onApply).toHaveBeenCalledTimes(1);
+      expect(onApply).toHaveBeenCalledWith([
+        {
+          metricNamespace: 'Microsoft.Compute/virtualMachineScaleSets',
+          region: 'eastus2',
+          resourceGroup: 'main-rg',
+          resourceName: 'aks-agentpool',
+          subscription: 'def-123',
+        },
+      ]);
+    });
+
+    it('should call onApply when multiple recent resources are selected (metrics)', async () => {
+      const recentResources = [
+        {
+          id: 'aks-agentpool',
+          name: 'aks-agentpool',
+          type: 'Resource',
+          uri: '/subscriptions/def-123/resourceGroups/main-rg/providers/Microsoft.Compute/virtualMachineScaleSets/aks-agentpool',
+          typeLabel: 'Virtual machine scale sets',
+          location: 'eastus2',
+        },
+        {
+          id: 'aks-systempool',
+          name: 'aks-systempool',
+          type: 'Resource',
+          uri: '/subscriptions/def-123/resourceGroups/main-rg/providers/Microsoft.Compute/virtualMachineScaleSets/aks-systempool',
+          typeLabel: 'Virtual machine scale sets',
+          location: 'eastus2',
+        },
+        {
+          name: 'grafanadb',
+          id: 'datasources-sqlserver/grafanadb',
+          uri: '/subscriptions/def-123/resourceGroups/main-rg/providers/Microsoft.Sql/servers/datasources-sqlserver/databases/grafanadb',
+          resourceGroupName: 'main-rg',
+          type: 'Resource',
+          typeLabel: 'SQL databases',
+          location: 'eastus2',
+        },
+      ];
+      const queryType = 'metrics';
+      window.localStorage.setItem(RECENT_RESOURCES_KEY(queryType), JSON.stringify(recentResources));
+      const onApply = jest.fn();
+      await act(async () => render(<ResourcePicker {...defaultProps} queryType={queryType} onApply={onApply} />));
+
+      const recent = await screen.getByTestId(e2eSelectors.components.Tab.title('Recent'));
+      await userEvent.click(recent);
+
+      const checkbox = await screen.findByLabelText(recentResources[0].name);
+      await userEvent.click(checkbox);
+      expect(checkbox).toBeChecked();
+      const checkbox2 = await screen.findByLabelText(recentResources[1].name);
+      await userEvent.click(checkbox2);
+      expect(checkbox2).toBeChecked();
+      const applyButton = screen.getByRole('button', { name: 'Apply' });
+      await userEvent.click(applyButton);
+
+      expect(onApply).toHaveBeenCalledTimes(1);
+      expect(onApply).toHaveBeenCalledWith([
+        {
+          metricNamespace: 'Microsoft.Compute/virtualMachineScaleSets',
+          region: 'eastus2',
+          resourceGroup: 'main-rg',
+          resourceName: 'aks-agentpool',
+          subscription: 'def-123',
+        },
+        {
+          metricNamespace: 'Microsoft.Compute/virtualMachineScaleSets',
+          region: 'eastus2',
+          resourceGroup: 'main-rg',
+          resourceName: 'aks-systempool',
+          subscription: 'def-123',
+        },
+      ]);
+    });
+
+    it('should not duplicate recent resources', async () => {
+      const recentResources = [
+        {
+          id: 'aks-agentpool',
+          name: 'aks-agentpool',
+          type: 'Resource',
+          uri: '/subscriptions/def-123/resourceGroups/main-rg/providers/Microsoft.Compute/virtualMachineScaleSets/aks-agentpool',
+          typeLabel: 'Virtual machine scale sets',
+          location: 'eastus2',
+        },
+        {
+          id: 'aks-systempool',
+          name: 'aks-systempool',
+          type: 'Resource',
+          uri: '/subscriptions/def-123/resourceGroups/main-rg/providers/Microsoft.Compute/virtualMachineScaleSets/aks-systempool',
+          typeLabel: 'Virtual machine scale sets',
+          location: 'eastus2',
+        },
+        {
+          name: 'grafanadb',
+          id: 'datasources-sqlserver/grafanadb',
+          uri: '/subscriptions/def-123/resourceGroups/main-rg/providers/Microsoft.Sql/servers/datasources-sqlserver/databases/grafanadb',
+          resourceGroupName: 'main-rg',
+          type: 'Resource',
+          typeLabel: 'SQL databases',
+          location: 'eastus2',
+        },
+      ];
+      const queryType = 'metrics';
+      window.localStorage.setItem(RECENT_RESOURCES_KEY(queryType), JSON.stringify(recentResources));
+      const onApply = jest.fn();
+      await act(async () => render(<ResourcePicker {...defaultProps} queryType={queryType} onApply={onApply} />));
+
+      const recent = await screen.getByTestId(e2eSelectors.components.Tab.title('Recent'));
+      await userEvent.click(recent);
+
+      const checkbox = await screen.findByLabelText(recentResources[0].name);
+      await userEvent.click(checkbox);
+      expect(checkbox).toBeChecked();
+      const applyButton = screen.getByRole('button', { name: 'Apply' });
+      await userEvent.click(applyButton);
+
+      expect(onApply).toHaveBeenCalledTimes(1);
+      expect(onApply).toHaveBeenCalledWith([
+        {
+          metricNamespace: 'Microsoft.Compute/virtualMachineScaleSets',
+          region: 'eastus2',
+          resourceGroup: 'main-rg',
+          resourceName: 'aks-agentpool',
+          subscription: 'def-123',
+        },
+      ]);
+      expect(window.localStorage.getItem(RECENT_RESOURCES_KEY(queryType))).not.toBeNull();
+      const recentResourcesFromStorage = JSON.parse(
+        window.localStorage.getItem(RECENT_RESOURCES_KEY(queryType)) || '[]'
+      );
+      expect(recentResourcesFromStorage.length).toBe(3);
+    });
+
+    it('should not exceed 30 recent resources', async () => {
+      const recentResources = [];
+      for (let i = 0; i < 30; i++) {
+        recentResources.push({
+          id: `aks-agentpool-${i}`,
+          name: `aks-agentpool-${i}`,
+          type: 'Resource',
+          uri: `/subscriptions/def-123/resourceGroups/main-rg/providers/Microsoft.Compute/virtualMachineScaleSets/aks-agentpool-${i}`,
+          typeLabel: 'Virtual machine scale sets',
+          location: 'eastus2',
+        });
+      }
+      const queryType = 'metrics';
+      window.localStorage.setItem(RECENT_RESOURCES_KEY(queryType), JSON.stringify(recentResources));
+      expect(JSON.parse(window.localStorage.getItem(RECENT_RESOURCES_KEY(queryType)) || '[]')).toHaveLength(30);
+
+      const onApply = jest.fn();
+      await act(async () => render(<ResourcePicker {...defaultProps} queryType={queryType} onApply={onApply} />));
+
+      const subscriptionButton = await screen.findByRole('button', { name: 'Expand Primary Subscription' });
+      expect(subscriptionButton).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: 'Expand A Great Resource Group' })).not.toBeInTheDocument();
+      await userEvent.click(subscriptionButton);
+
+      const resourceGroupButton = await screen.findByRole('button', { name: 'Expand A Great Resource Group' });
+      await userEvent.click(resourceGroupButton);
+      const checkbox = await screen.findByLabelText('web-server');
+      await userEvent.click(checkbox);
+      expect(checkbox).toBeChecked();
+      const applyButton = screen.getByRole('button', { name: 'Apply' });
+      await userEvent.click(applyButton);
+
+      expect(onApply).toHaveBeenCalledTimes(1);
+      expect(onApply).toHaveBeenCalledWith([
+        {
+          metricNamespace: 'Microsoft.Compute/virtualMachines',
+          region: 'northeurope',
+          resourceGroup: 'dev-3',
+          resourceName: 'web-server',
+          subscription: 'def-456',
+        },
+      ]);
+      expect(window.localStorage.getItem(RECENT_RESOURCES_KEY(queryType))).not.toBeNull();
+      const recentResourcesFromStorage: ResourceRowGroup = JSON.parse(
+        window.localStorage.getItem(RECENT_RESOURCES_KEY(queryType)) || '[]'
+      );
+      expect(recentResourcesFromStorage.length).toBe(30);
+      expect(recentResourcesFromStorage.find((resource) => resource.id === 'web-server')).toBeDefined();
+      expect(recentResourcesFromStorage.find((resource) => resource.id === 'aks-agentpool-29')).not.toBeDefined();
     });
   });
 });

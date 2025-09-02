@@ -528,3 +528,9 @@ export function instanceOfLogAnalyticsTableError(
   }
   return response.hasOwnProperty('error');
 }
+
+export interface ResourceGraphFilters {
+  subscriptions: string[];
+  types: string[];
+  locations: string[];
+}
