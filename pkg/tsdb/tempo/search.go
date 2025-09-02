@@ -148,7 +148,7 @@ func createSearchRequest(ctx context.Context, dsInfo *DatasourceInfo, model *dat
 	query := parsedURL.Query()
 
 	if model.Query != nil && *model.Query != "" {
-		query.Set("q", fmt.Sprintf("%s", *model.Query))
+		query.Set("q", *model.Query)
 	}
 
 	if model.Limit != nil && *model.Limit > 0 {
