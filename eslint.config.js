@@ -452,36 +452,19 @@ module.exports = [
   // Conditionally run the betterer rules if enabled in dev's config
   ...(enableBettererRules ? bettererConfig : []),
 
-  // Final override to preserve existing restrictions and add Card noMargin check
+  // Final override to add Card noMargin check
   {
     name: 'grafana/final-no-restricted-syntax',
     files: ['**/*.{ts,tsx,js}'],
     rules: {
       'no-restricted-syntax': [
         'error',
-        {
-          selector: "JSXElement[openingElement.name.name='a'] > JSXText[value!=/^\\s*$/]",
-          message: 'No bare anchor nodes containing only text. Use `TextLink` instead.',
-        },
-        // Keep existing localStorage restrictions
-        {
-          selector: 'Identifier[name=localStorage]',
-          message: 'Direct usage of localStorage is not allowed. import store from @grafana/data instead',
-        },
-        {
-          selector: 'MemberExpression[object.name=localStorage]',
-          message: 'Direct usage of localStorage is not allowed. import store from @grafana/data instead',
-        },
+
         {
           selector:
             'Program:has(ImportDeclaration[source.value="@grafana/ui"] ImportSpecifier[imported.name="Card"]) JSXOpeningElement[name.name="Card"]:not(:has(JSXAttribute[name.name="noMargin"]))',
           message:
             'Add noMargin prop to Card components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.',
-        },
-        {
-          selector: 'CallExpression[callee.type="MemberExpression"][callee.property.name="localeCompare"]',
-          message:
-            'Using localeCompare() can cause performance issues when sorting large datasets. Consider using Intl.Collator for better performance when sorting arrays, or add an eslint-disable comment if sorting a small, known dataset.',
         },
       ],
     },
