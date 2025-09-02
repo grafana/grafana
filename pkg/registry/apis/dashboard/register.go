@@ -20,6 +20,7 @@ import (
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
 	claims "github.com/grafana/authlib/types"
+
 	internal "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard"
 	dashv0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	dashv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
@@ -82,6 +83,7 @@ type DashboardsAPIBuilder struct {
 	unified                      resource.ResourceClient
 	dashboardProvisioningService dashboards.DashboardProvisioningService
 	dashboardPermissions         dashboards.PermissionsRegistrationService
+	dashboardPermissionsSvc      accesscontrol.DashboardPermissionsService
 	scheme                       *runtime.Scheme
 	search                       *SearchHandler
 	dashStore                    dashboards.Store
@@ -105,6 +107,7 @@ func RegisterAPIService(
 	pluginStore pluginstore.Store,
 	datasourceService datasources.DataSourceService,
 	dashboardPermissions dashboards.PermissionsRegistrationService,
+	dashboardPermissionsSvc accesscontrol.DashboardPermissionsService,
 	accessControl accesscontrol.AccessControl,
 	accessClient claims.AccessClient,
 	provisioning provisioning.ProvisioningService,
@@ -130,6 +133,7 @@ func RegisterAPIService(
 
 		dashboardService:             dashboardService,
 		dashboardPermissions:         dashboardPermissions,
+		dashboardPermissionsSvc:      dashboardPermissionsSvc,
 		features:                     features,
 		accessControl:                accessControl,
 		accessClient:                 accessClient,
@@ -145,11 +149,13 @@ func RegisterAPIService(
 		folderClient:                 folderClient,
 
 		legacy: &DashboardStorage{
-			Access:           legacy.NewDashboardAccess(dbp, namespacer, dashStore, provisioning, libraryPanelSvc, sorter, accessControl, features),
+			Access:           legacy.NewDashboardAccess(dbp, namespacer, dashStore, provisioning, libraryPanelSvc, sorter, dashboardPermissionsSvc, accessControl, features),
 			DashboardService: dashboardService,
 		},
 		reg: reg,
 	}
+
+	migration.RegisterMetrics(reg)
 	migration.Initialize(&datasourceInfoProvider{
 		datasourceService: datasourceService,
 	}, &PluginStorePanelProvider{
@@ -530,9 +536,13 @@ func (b *DashboardsAPIBuilder) storageForVersion(
 	}
 
 	gr := dashboards.GroupResource()
-	storage[dashboards.StoragePath()], err = opts.DualWriteBuilder(gr, legacyStore, store)
+	dw, err := opts.DualWriteBuilder(gr, legacyStore, store)
 	if err != nil {
 		return err
+	}
+	storage[dashboards.StoragePath()] = dashboardStoragePermissionWrapper{
+		dashboardPermissionsSvc: b.dashboardPermissionsSvc,
+		Storage:                 dw,
 	}
 
 	// Register the DTO endpoint that will consolidate all dashboard bits

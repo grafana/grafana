@@ -17,11 +17,11 @@ import (
 	"github.com/grafana/grafana-app-sdk/logging"
 	dashboard "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
+	"github.com/grafana/grafana/apps/provisioning/pkg/safepath"
 	"github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/safepath"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -65,6 +65,7 @@ func (f *parserFactory) GetParser(ctx context.Context, repo repository.Reader) (
 		},
 		urls:    urls,
 		clients: clients,
+		config:  config,
 	}, nil
 }
 
@@ -74,6 +75,8 @@ type parser struct {
 
 	// for repositories that have URL support
 	urls repository.RepositoryWithURLs
+
+	config *provisioning.Repository
 
 	// ResourceClients give access to k8s apis
 	clients ResourceClients
@@ -87,7 +90,7 @@ type ParsedResource struct {
 	Repo provisioning.ResourceRepositoryInfo
 
 	// Resource URLs
-	URLs *provisioning.ResourceURLs
+	URLs *provisioning.RepositoryURLs
 
 	// Check for classic file types (dashboard.json, etc)
 	Classic provisioning.ClassicFileType
@@ -168,8 +171,8 @@ func (r *parser) Parse(ctx context.Context, info *repository.FileInfo) (parsed *
 	if obj.GetNamespace() != "" && obj.GetNamespace() != r.repo.Namespace {
 		return nil, apierrors.NewBadRequest("the file namespace does not match target namespace")
 	}
-
 	obj.SetNamespace(r.repo.Namespace)
+
 	parsed.Meta.SetManagerProperties(utils.ManagerProperties{
 		Kind:     utils.ManagerKindRepo,
 		Identity: r.repo.Name,
@@ -192,6 +195,8 @@ func (r *parser) Parse(ctx context.Context, info *repository.FileInfo) (parsed *
 		dirPath := safepath.Dir(info.Path)
 		if dirPath != "" {
 			parsed.Meta.SetFolder(ParseFolder(dirPath, r.repo.Name).ID)
+		} else {
+			parsed.Meta.SetFolder(RootFolder(r.config))
 		}
 	}
 	obj.SetUID("")             // clear identifiers
@@ -232,9 +237,48 @@ func (f *ParsedResource) DryRun(ctx context.Context) error {
 		fieldValidation = "Ignore" // FIXME: temporary while we improve validation
 	}
 
+	// Handle deletion action separately
+	if f.Action == provisioning.ResourceActionDelete {
+		// For delete, we need the existing resource to validate deletion
+		f.Existing, err = f.Client.Get(ctx, f.Obj.GetName(), metav1.GetOptions{})
+		if err != nil {
+			if apierrors.IsNotFound(err) {
+				// Resource doesn't exist, nothing to delete - this is fine for dry run
+				return nil
+			}
+			return fmt.Errorf("failed to get existing resource for delete dry run: %w", err)
+		}
+
+		// Check for ownership conflicts
+		requestingManager := utils.ManagerProperties{
+			Kind:     utils.ManagerKindRepo,
+			Identity: f.Repo.Name,
+		}
+		if err := CheckResourceOwnership(f.Existing, f.Obj.GetName(), requestingManager); err != nil {
+			return err
+		}
+
+		// For delete dry run, we simulate the delete operation
+		// The dry run response will be the existing resource that would be deleted
+		f.DryRunResponse = f.Existing.DeepCopy()
+		return nil
+	}
+
 	// FIXME: shouldn't we check for the specific error?
 	// Dry run CREATE or UPDATE
 	f.Existing, _ = f.Client.Get(ctx, f.Obj.GetName(), metav1.GetOptions{})
+
+	// Check for ownership conflicts after fetching existing resource
+	requestingManager := utils.ManagerProperties{
+		Kind:     utils.ManagerKindRepo,
+		Identity: f.Repo.Name,
+	}
+
+	// Check for ownership conflicts after fetching existing resource
+	if err := CheckResourceOwnership(f.Existing, f.Obj.GetName(), requestingManager); err != nil {
+		return err
+	}
+
 	if f.Existing == nil {
 		f.Action = provisioning.ResourceActionCreate
 		f.DryRunResponse, err = f.Client.Create(ctx, f.Obj, metav1.CreateOptions{
@@ -266,6 +310,55 @@ func (f *ParsedResource) Run(ctx context.Context) error {
 	fieldValidation := "Strict"
 	if f.GVR == DashboardResource {
 		fieldValidation = "Ignore" // FIXME: temporary while we improve validation
+	}
+
+	// Check for ownership conflicts
+	requestingManager := utils.ManagerProperties{
+		Kind:     utils.ManagerKindRepo,
+		Identity: f.Repo.Name,
+	}
+
+	// Handle deletion action
+	if f.Action == provisioning.ResourceActionDelete {
+		// If we don't have existing resource from DryRun, fetch it now
+		if f.DryRunResponse == nil {
+			f.Existing, err = f.Client.Get(ctx, f.Obj.GetName(), metav1.GetOptions{})
+			if err != nil {
+				if apierrors.IsNotFound(err) {
+					// Resource doesn't exist, nothing to delete - this is fine
+					return nil
+				}
+				return fmt.Errorf("failed to get existing resource for delete: %w", err)
+			}
+		}
+
+		// Check ownership with the existing resource
+		if err := CheckResourceOwnership(f.Existing, f.Obj.GetName(), requestingManager); err != nil {
+			return err
+		}
+
+		// Perform the actual delete
+		err = f.Client.Delete(ctx, f.Obj.GetName(), metav1.DeleteOptions{})
+		if apierrors.IsNotFound(err) {
+			err = nil // ignorable - resource was already deleted
+		}
+
+		// Set the deleted resource as the result
+		if err == nil && f.Existing != nil {
+			f.Upsert = f.Existing.DeepCopy()
+		}
+
+		return err
+	}
+
+	// If we don't have existing resource from DryRun, fetch it now
+	if f.DryRunResponse == nil {
+		f.Existing, _ = f.Client.Get(ctx, f.Obj.GetName(), metav1.GetOptions{})
+	}
+
+	// Check ownership with the existing resource (if any)
+	if err := CheckResourceOwnership(f.Existing, f.Obj.GetName(), requestingManager); err != nil {
+		return err
 	}
 
 	// If we have already tried loading existing, start with create

@@ -52,7 +52,7 @@
       "button-use-query": "Gebruik deze query",
       "label-categories": "Categorieën",
       "label-query-results": "Resultaten van query: {{numResults}}",
-      "noOptionsMessage-unable-to-list-categories": "",
+      "noOptionsMessage-unable-to-list-categories": "Kan niet alle categorieën weergeven",
       "placeholder-all-categories": "Alle categorieën",
       "placeholder-search-logs": "Querylogboeken zoeken",
       "text-loading": "Laden..."
@@ -72,7 +72,7 @@
       "label-enable-basic-logs": "Basislogboeken inschakelen"
     },
     "config-editor": {
-      "description-additional-settings": "",
+      "description-additional-settings": "Aanvullende instellingen zijn optioneel en geven je meer controle over je databron. Denk hierbij aan Secure Socks Proxy, request timeout en doorgestuurde cookies.",
       "title-additional-settings": "Aanvullende instellingen"
     },
     "current-user-fallback-credentials": {
@@ -113,12 +113,12 @@
       "aria-label-column": "Kolom",
       "aria-label-column-value": "Kolomwaarde",
       "aria-label-operator": "Operator",
-      "aria-label-remove-filter": "",
+      "aria-label-remove-filter": "Filter verwijderen",
       "label-or": "OF"
     },
     "filter-section": {
-      "aria-label-add-filter": "",
-      "aria-label-add-or-filter": "",
+      "aria-label-add-filter": "Filter toevoegen",
+      "aria-label-add-or-filter": "OF-filter toevoegen",
       "label-add-group": "Groep toevoegen",
       "label-and": "EN",
       "label-filters": "Filters",
@@ -131,8 +131,8 @@
       "label-format-as": "Opmaak als"
     },
     "fuzzy-search": {
-      "aria-label-add-fuzzy-search": "",
-      "aria-label-remove-fuzzy-search": "",
+      "aria-label-add-fuzzy-search": "Fuzzy search toevoegen",
+      "aria-label-remove-fuzzy-search": "Fuzzy search verwijderen",
       "aria-label-select-column": "Kolom selecteren",
       "label-fuzzy-search": "Vage zoekopdracht",
       "placeholder-search-team": "Geef zoekterm op",
@@ -147,7 +147,7 @@
       "aria-label-remove": "Verwijderen"
     },
     "group-by-section": {
-      "aria-label-add-group-by": "",
+      "aria-label-add-group-by": "Group by toevoegen",
       "label-group-by": "Groeperen op",
       "tooltip-group-by": "Organiseer resultaten in categorieën op basis van gespecificeerde kolommen. Groeperen op kan onafhankelijk worden gebruikt om unieke waarden in geselecteerde kolommen weer te geven, of worden gecombineerd met aggregaatfuncties om samenvattende statistieken voor elke groep te produceren. Wanneer deze optie afzonderlijk wordt gebruikt, retourneert het verschillende combinaties van de gespecificeerde kolommen."
     },
@@ -166,8 +166,8 @@
       "tooltip-limit": "Beperk het aantal geretourneerde rijen (standaard is 1000)."
     },
     "logs-management": {
-      "body-basic-logs-queries": "",
-      "confirmText-confirm": "",
+      "body-basic-logs-queries": "Weet je zeker dat je wilt overschakelen naar Basislogs?",
+      "confirmText-confirm": "Bevestigen",
       "description-basic-logs-queries": "Basislogquery's brengen kosten met zich mee op basis van de hoeveelheid gescande gegevens.",
       "label-logs": "Logs",
       "title-basic-logs-queries": "Basislogquery's",
@@ -190,10 +190,10 @@
       "text-loading": "Laden..."
     },
     "order-by-section": {
-      "aria-label-add-order-by": "",
+      "aria-label-add-order-by": "Order by toevoegen",
       "aria-label-order-by-column": "Sorteren op kolom",
       "aria-label-order-direction": "Volgorde sortering",
-      "aria-label-remove-order-by": "",
+      "aria-label-remove-order-by": "Order by verwijderen",
       "label-by": "OP",
       "label-order-by": "Sorteren op",
       "tooltip-order-by": "Sorteer resultaten op basis van een of meer kolommen in oplopende of aflopende volgorde."
@@ -203,14 +203,14 @@
     },
     "query-header": {
       "aria-label-kick-start": "Knop Start query met Azure-logboeken",
-      "body-switching-to-builder": "",
-      "body-switching-to-kql": "",
+      "body-switching-to-builder": "Als je overschakelt naar Bouwer, wordt je huidige KQL-query verwijderd en wordt de KQL-editor gewist. Weet je het zeker?",
+      "body-switching-to-kql": "Als je overschakelt naar KQL, worden je huidige bouwerinstellingen verwijderd. Weet je het zeker?",
       "button-kick-start-your-query": "Start je query",
       "button-run-query": "Query uitvoeren",
-      "confirmText-switch-to": "",
+      "confirmText-switch-to": "Overschakelen naar {{newMode}}",
       "editor-modes": {
-        "label-builder": "",
-        "label-kql": ""
+        "label-builder": "Bouwer",
+        "label-kql": "KQL"
       },
       "label-service": "Service",
       "placeholder-service": "Service...",
@@ -256,7 +256,7 @@
       "label-table": "Tabel",
       "placeholder-select-columns": "Selecteer kolommen",
       "placeholder-select-table": "Selecteer een tabel",
-      "tooltip-remove-all-columns": ""
+      "tooltip-remove-all-columns": "Alle kolommen verwijderen"
     },
     "time-grain-field": {
       "label-time-grain": "Tijdsinterval"

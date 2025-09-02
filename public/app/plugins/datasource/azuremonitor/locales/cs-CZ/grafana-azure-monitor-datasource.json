@@ -52,7 +52,7 @@
       "button-use-query": "Použít tento dotaz",
       "label-categories": "Kategorie",
       "label-query-results": "Výsledky dotazu: {{numResults}}",
-      "noOptionsMessage-unable-to-list-categories": "",
+      "noOptionsMessage-unable-to-list-categories": "Nelze vypsat všechny kategorie",
       "placeholder-all-categories": "Všechny kategorie",
       "placeholder-search-logs": "Hledat dotazy protokolů",
       "text-loading": "Načítání…"
@@ -72,7 +72,7 @@
       "label-enable-basic-logs": "Povolit základní protokoly"
     },
     "config-editor": {
-      "description-additional-settings": "",
+      "description-additional-settings": "Další nastavení jsou volitelná nastavení, která lze nakonfigurovat pro větší kontrolu nad zdrojem dat. Patří sem zabezpečený proxy server Socks, časový limit požadavku a přeposlané soubory cookie.",
       "title-additional-settings": "Další nastavení"
     },
     "current-user-fallback-credentials": {
@@ -113,12 +113,12 @@
       "aria-label-column": "Sloupec",
       "aria-label-column-value": "Hodnota sloupce",
       "aria-label-operator": "Operátor",
-      "aria-label-remove-filter": "",
+      "aria-label-remove-filter": "Odebrat filtr",
       "label-or": "NEBO"
     },
     "filter-section": {
-      "aria-label-add-filter": "",
-      "aria-label-add-or-filter": "",
+      "aria-label-add-filter": "Přidat filtr",
+      "aria-label-add-or-filter": "Přidat filtr NEBO",
       "label-add-group": "Přidat skupinu",
       "label-and": "A",
       "label-filters": "Filtry",
@@ -131,8 +131,8 @@
       "label-format-as": "Formátovat jako"
     },
     "fuzzy-search": {
-      "aria-label-add-fuzzy-search": "",
-      "aria-label-remove-fuzzy-search": "",
+      "aria-label-add-fuzzy-search": "Přidat hledání s přibližnými výsledky",
+      "aria-label-remove-fuzzy-search": "Odebrat hledání s přibližnými výsledky",
       "aria-label-select-column": "Vybrat sloupec",
       "label-fuzzy-search": "Hledání s přibližnými výsledky",
       "placeholder-search-team": "Zadejte hledaný výraz",
@@ -147,7 +147,7 @@
       "aria-label-remove": "Odebrat"
     },
     "group-by-section": {
-      "aria-label-add-group-by": "",
+      "aria-label-add-group-by": "Přidat skupinu podle",
       "label-group-by": "Seřadit podle",
       "tooltip-group-by": "Uspořádejte výsledky do kategorií na základě zadaných sloupců. Funkci Seřadit podle lze použít nezávisle k výpisu jedinečných hodnot ve vybraných sloupcích nebo v kombinaci s agregovanými funkcemi k vytvoření souhrnných statistik pro každou skupinu. Při samostatném použití vrátí odlišné kombinace zadaných sloupců."
     },
@@ -166,8 +166,8 @@
       "tooltip-limit": "Omezte počet vrácených řádků (výchozí hodnota je 1 000)."
     },
     "logs-management": {
-      "body-basic-logs-queries": "",
-      "confirmText-confirm": "",
+      "body-basic-logs-queries": "Opravdu chcete přepnout na Základní protokoly?",
+      "confirmText-confirm": "Potvrdit",
       "description-basic-logs-queries": "Dotazy na základní protokoly jsou zpoplatněny na základě množství naskenovaných dat.",
       "label-logs": "Protokoly",
       "title-basic-logs-queries": "Dotazy na základní protokoly",
@@ -190,10 +190,10 @@
       "text-loading": "Načítání…"
     },
     "order-by-section": {
-      "aria-label-add-order-by": "",
+      "aria-label-add-order-by": "Přidat řazení podle",
       "aria-label-order-by-column": "Seřazení podle sloupce",
       "aria-label-order-direction": "Směr řazení",
-      "aria-label-remove-order-by": "",
+      "aria-label-remove-order-by": "Odebrat řazení podle",
       "label-by": "PODLE",
       "label-order-by": "Seřadit podle",
       "tooltip-order-by": "Seřadit výsledky podle jednoho nebo více sloupců ve vzestupném nebo sestupném pořadí."
@@ -203,14 +203,14 @@
     },
     "query-header": {
       "aria-label-kick-start": "Tlačítko Spustit dotaz protokolů Azure",
-      "body-switching-to-builder": "",
-      "body-switching-to-kql": "",
+      "body-switching-to-builder": "Přepnutím na nástroj pro tvorbu zahodíte aktuální dotaz KQL a vymažete editor KQL. Opravdu chcete pokračovat?",
+      "body-switching-to-kql": "Přepnutím na KQL zahodíte aktuální nastavení nástroje pro tvorbu. Opravdu chcete pokračovat?",
       "button-kick-start-your-query": "Spustit dotaz",
       "button-run-query": "Spustit dotaz",
-      "confirmText-switch-to": "",
+      "confirmText-switch-to": "Přepnout na {{newMode}}",
       "editor-modes": {
-        "label-builder": "",
-        "label-kql": ""
+        "label-builder": "Nástroj pro tvorbu",
+        "label-kql": "KQL"
       },
       "label-service": "Služba",
       "placeholder-service": "Služba…",
@@ -256,7 +256,7 @@
       "label-table": "Tabulka",
       "placeholder-select-columns": "Zvolte sloupce",
       "placeholder-select-table": "Vyberte tabulku",
-      "tooltip-remove-all-columns": ""
+      "tooltip-remove-all-columns": "Odebrat všechny sloupce"
     },
     "time-grain-field": {
       "label-time-grain": "Časové zrno"

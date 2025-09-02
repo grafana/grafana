@@ -1,18 +1,37 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import { PropsWithChildren } from 'react';
 
-import { DataQueryRequest, dateTime, LoadingState, PanelData, toDataFrame } from '@grafana/data';
+import { CoreApp, DataQueryRequest, dateTime, LoadingState, PanelData, toDataFrame } from '@grafana/data';
 import { DataQuery } from '@grafana/schema';
 import { mockDataSource } from 'app/features/alerting/unified/mocks';
-
-import { DataSourceType } from '../../alerting/unified/utils/datasource';
 
 import { filterPanelDataToQuery, Props, QueryEditorRow } from './QueryEditorRow';
 
 const mockDS = mockDataSource({
   name: 'test',
-  type: DataSourceType.Alertmanager,
+  type: 'testdata',
 });
+
+// Mock the QueryLibraryContext
+const mockQueryLibraryContext = {
+  queryLibraryEnabled: true,
+  renderQueryLibraryEditingHeader: jest.fn(),
+  renderSaveQueryButton: jest.fn(() => null),
+  openDrawer: jest.fn(),
+  closeDrawer: jest.fn(),
+  isDrawerOpen: false,
+  context: 'test',
+};
+
+jest.mock('app/features/explore/QueryLibrary/QueryLibraryContext', () => ({
+  useQueryLibraryContext: () => mockQueryLibraryContext,
+}));
+
+// Mock the internationalization function
+jest.mock('@grafana/i18n', () => ({
+  ...jest.requireActual('@grafana/i18n'),
+  t: (key: string, defaultValue: string) => defaultValue,
+}));
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
@@ -389,6 +408,61 @@ describe('QueryEditorRow', () => {
     render(<QueryEditorRow {...props(data)} />);
     await waitFor(() => {
       expect(screen.queryByText('Error!!')).not.toBeInTheDocument();
+    });
+  });
+
+  describe('Query Library Integration', () => {
+    let testData: PanelData;
+    let mockOnCancelEdit: jest.MockedFunction<() => void>;
+
+    beforeEach(() => {
+      jest.clearAllMocks();
+      mockQueryLibraryContext.renderQueryLibraryEditingHeader.mockReturnValue(null);
+      mockOnCancelEdit = jest.fn();
+
+      // Standard test data for QueryEditorRow
+      testData = {
+        series: [],
+        timeRange: { from: dateTime(), to: dateTime(), raw: { from: 'now-1d', to: 'now' } },
+        state: LoadingState.Done,
+      };
+    });
+
+    it('should render query library editing header when queryLibraryRef is provided', async () => {
+      render(
+        <QueryEditorRow {...props(testData)} queryLibraryRef="test-ref" onCancelQueryLibraryEdit={mockOnCancelEdit} />
+      );
+
+      // Wait for async datasource loading and component rendering
+      await waitFor(() => {
+        expect(mockQueryLibraryContext.renderQueryLibraryEditingHeader).toHaveBeenCalledWith(
+          expect.objectContaining({ refId: 'B' }),
+          undefined, // app
+          'test-ref', // queryLibraryRef
+          mockOnCancelEdit, // onCancelEdit
+          expect.any(Function), // onUpdateSuccess
+          expect.any(Function) // onSelectQuery
+        );
+      });
+    });
+
+    it('should not render query library editing header when queryLibraryRef is not provided', async () => {
+      render(<QueryEditorRow {...props(testData)} />);
+
+      await waitFor(() => {
+        expect(screen.getByTestId('query-editor-row')).toBeInTheDocument();
+      });
+
+      expect(mockQueryLibraryContext.renderQueryLibraryEditingHeader).not.toHaveBeenCalled();
+    });
+
+    it('should not render saved queries buttons when app is unified alerting', async () => {
+      render(<QueryEditorRow {...props(testData)} app={CoreApp.UnifiedAlerting} />);
+
+      await waitFor(() => {
+        expect(screen.queryByText('Save query')).not.toBeInTheDocument();
+        expect(screen.queryByText('Replace with saved query')).not.toBeInTheDocument();
+      });
     });
   });
 });

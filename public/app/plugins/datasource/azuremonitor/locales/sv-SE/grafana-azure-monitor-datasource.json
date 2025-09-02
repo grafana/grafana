@@ -52,7 +52,7 @@
       "button-use-query": "Använd denna fråga",
       "label-categories": "Kategorier",
       "label-query-results": "Resultat av fråga: {{numResults}}",
-      "noOptionsMessage-unable-to-list-categories": "",
+      "noOptionsMessage-unable-to-list-categories": "Det gick inte att lista alla kategorier",
       "placeholder-all-categories": "Alla kategorier",
       "placeholder-search-logs": "Sök loggfrågor",
       "text-loading": "Laddar …"
@@ -72,7 +72,7 @@
       "label-enable-basic-logs": "Aktivera basloggar"
     },
     "config-editor": {
-      "description-additional-settings": "",
+      "description-additional-settings": "Ytterligare inställningar är valfria inställningar som kan konfigureras för att få mer kontroll över din datakälla. Detta inkluderar Secure Socks Proxy, tidsgräns för begäran och vidarebefordrade cookies.",
       "title-additional-settings": "Ytterligare inställningar"
     },
     "current-user-fallback-credentials": {
@@ -113,12 +113,12 @@
       "aria-label-column": "Kolumn",
       "aria-label-column-value": "Kolumnvärde",
       "aria-label-operator": "Operatör",
-      "aria-label-remove-filter": "",
+      "aria-label-remove-filter": "Ta bort filter",
       "label-or": "ELLER"
     },
     "filter-section": {
-      "aria-label-add-filter": "",
-      "aria-label-add-or-filter": "",
+      "aria-label-add-filter": "Lägg till filter",
+      "aria-label-add-or-filter": "Lägg till OR-filter",
       "label-add-group": "Skapa grupp",
       "label-and": "OCH",
       "label-filters": "Filter",
@@ -131,8 +131,8 @@
       "label-format-as": "Formatera som"
     },
     "fuzzy-search": {
-      "aria-label-add-fuzzy-search": "",
-      "aria-label-remove-fuzzy-search": "",
+      "aria-label-add-fuzzy-search": "Lägg till fuzzy-sökning",
+      "aria-label-remove-fuzzy-search": "Ta bort fuzzy-sökning",
       "aria-label-select-column": "Välj kolumn",
       "label-fuzzy-search": "Fuzzy-sökning",
       "placeholder-search-team": "Ange en sökterm",
@@ -147,7 +147,7 @@
       "aria-label-remove": "Ta bort"
     },
     "group-by-section": {
-      "aria-label-add-group-by": "",
+      "aria-label-add-group-by": "Lägg till gruppera efter",
       "label-group-by": "Gruppera efter",
       "tooltip-group-by": "Organisera resultat i kategorier baserat på angivna kolumner. Gruppera efter kan användas fristående för att lista unika värden i valda kolumner, eller kombineras med aggregeringsfunktioner för att skapa sammanfattande statistik för varje grupp. Vid fristående användning returnerar den unika kombinationer av de angivna kolumnerna."
     },
@@ -166,8 +166,8 @@
       "tooltip-limit": "Begränsa antalet rader som returneras (standard är 1 000)."
     },
     "logs-management": {
-      "body-basic-logs-queries": "",
-      "confirmText-confirm": "",
+      "body-basic-logs-queries": "Är du säker på att du vill byta till grundläggande loggar?",
+      "confirmText-confirm": "Bekräfta",
       "description-basic-logs-queries": "Grundläggande loggfrågor medför kostnader baserat på mängden data som skannas.",
       "label-logs": "Loggar",
       "title-basic-logs-queries": "Grundläggande loggfrågor",
@@ -190,10 +190,10 @@
       "text-loading": "Laddar …"
     },
     "order-by-section": {
-      "aria-label-add-order-by": "",
+      "aria-label-add-order-by": "Lägg till sortera efter",
       "aria-label-order-by-column": "Ordna efter kolumn",
       "aria-label-order-direction": "Sorteringsordning",
-      "aria-label-remove-order-by": "",
+      "aria-label-remove-order-by": "Ta bort ordna efter",
       "label-by": "AV",
       "label-order-by": "Ordnad efter",
       "tooltip-order-by": "Sortera resultat baserat på en eller flera kolumner i stigande eller fallande ordning."
@@ -203,14 +203,14 @@
     },
     "query-header": {
       "aria-label-kick-start": "Knapp för att kickstarta Azure-loggfrågor",
-      "body-switching-to-builder": "",
-      "body-switching-to-kql": "",
+      "body-switching-to-builder": "Om du byter till Builder kommer din nuvarande KQL-förfrågan att kasseras och KQL-redigeraren att rensas. Är du säker på att du vill göra det?",
+      "body-switching-to-kql": "Om du byter till KQL kommer dina nuvarande byggarinställningar att kasseras. Är du säker?",
       "button-kick-start-your-query": "Kickstarta din fråga",
       "button-run-query": "Kör fråga",
-      "confirmText-switch-to": "",
+      "confirmText-switch-to": "Byt till {{newMode}}",
       "editor-modes": {
-        "label-builder": "",
-        "label-kql": ""
+        "label-builder": "Builder",
+        "label-kql": "KQL"
       },
       "label-service": "Service",
       "placeholder-service": "Service …",
@@ -239,7 +239,7 @@
       "title-error-occurred": "Ett fel uppstod vid begäran av resurser från Azure Monitor"
     },
     "scope-selector": {
-      "label": ""
+      "label": "Omfattning"
     },
     "search": {
       "aria-label-resource-search": "Resurssökning",
@@ -256,7 +256,7 @@
       "label-table": "Tabell",
       "placeholder-select-columns": "Välj kolumner",
       "placeholder-select-table": "Välj en tabell",
-      "tooltip-remove-all-columns": ""
+      "tooltip-remove-all-columns": "Ta bort alla kolumner"
     },
     "time-grain-field": {
       "label-time-grain": "Tidsgranularitet"

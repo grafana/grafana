@@ -1,7 +1,7 @@
 import { CoreApp, DataSourceApi, DataSourceInstanceSettings, getDataSourceRef } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
-import { config, getDataSourceSrv, locationService } from '@grafana/runtime';
+import { config, getDataSourceSrv } from '@grafana/runtime';
 import {
   SceneObjectBase,
   SceneComponentProps,
@@ -12,7 +12,7 @@ import {
   SceneObjectState,
   SceneDataQuery,
 } from '@grafana/scenes';
-import { DataQuery } from '@grafana/schema';
+import { DataQuery, DataSourceRef } from '@grafana/schema';
 import { Button, Stack, Tab } from '@grafana/ui';
 import { addQuery } from 'app/core/utils/query';
 import { getLastUsedDatasourceFromStorage } from 'app/features/dashboard/utils/dashboard';
@@ -21,6 +21,7 @@ import { dataSource as expressionDatasource } from 'app/features/expressions/Exp
 import { ExpressionTypeDropdown } from 'app/features/expressions/components/ExpressionTypeDropdown';
 import { ExpressionQueryType } from 'app/features/expressions/types';
 import { getDefaults } from 'app/features/expressions/utils/expressionTypes';
+import { InspectTab } from 'app/features/inspector/types';
 import { GroupActionComponents } from 'app/features/query/components/QueryActionComponent';
 import { QueryEditorRows } from 'app/features/query/components/QueryEditorRows';
 import { QueryGroupTopSection } from 'app/features/query/components/QueryGroup';
@@ -32,8 +33,9 @@ import { MIXED_DATASOURCE_NAME } from '../../../../plugins/datasource/mixed/Mixe
 import { useQueryLibraryContext } from '../../../explore/QueryLibrary/QueryLibraryContext';
 import { ExpressionDatasourceUID } from '../../../expressions/types';
 import { getDatasourceSrv } from '../../../plugins/datasource_srv';
+import { PanelInspectDrawer } from '../../inspect/PanelInspectDrawer';
 import { PanelTimeRange } from '../../scene/PanelTimeRange';
-import { getDashboardSceneFor, getPanelIdForVizPanel, getQueryRunnerFor } from '../../utils/utils';
+import { getDashboardSceneFor, getQueryRunnerFor } from '../../utils/utils';
 import { getUpdatedHoverHeader } from '../getPanelFrameOptions';
 
 import { PanelDataPaneTab, TabId, PanelDataTabHeaderProps } from './types';
@@ -171,10 +173,8 @@ export class PanelDataQueriesTab extends SceneObjectBase<PanelDataQueriesTabStat
   }
 
   public onOpenInspector = () => {
-    const panel = this.state.panelRef.resolve();
-    const panelId = getPanelIdForVizPanel(panel);
-
-    locationService.partial({ inspect: panelId, inspectTab: 'query' });
+    const dashboard = getDashboardSceneFor(this);
+    dashboard.showModal(new PanelInspectDrawer({ panelRef: this.state.panelRef, currentTab: InspectTab.Query }));
   };
 
   public onChangeDataSource = async (newSettings: DataSourceInstanceSettings, defaultQueries?: SceneDataQuery[]) => {
@@ -315,6 +315,21 @@ export class PanelDataQueriesTab extends SceneObjectBase<PanelDataQueriesTabStat
   public get queryRunner(): SceneQueryRunner {
     return getQueryRunnerFor(this.state.panelRef.resolve())!;
   }
+
+  /**
+   * Updates panel datasource when saved queries from different datasources are used.
+   * Handles transition between single and mixed datasource modes.
+   */
+  public updateDatasourceIfNeeded = async (newDatasourceRef: DataSourceRef): Promise<void> => {
+    const { datasource } = this.state;
+    const shouldChangeDatasource = datasource?.uid !== newDatasourceRef.uid;
+    if (shouldChangeDatasource) {
+      const newDatasource = getDatasourceSrv().getInstanceSettings(newDatasourceRef);
+      if (newDatasource) {
+        await this.onChangeDataSource(newDatasource);
+      }
+    }
+  };
 }
 
 export function PanelDataQueriesTabRendered({ model }: SceneComponentProps<PanelDataQueriesTab>) {
@@ -339,6 +354,7 @@ export function PanelDataQueriesTabRendered({ model }: SceneComponentProps<Panel
     );
     const newQueries = addQuery(enrichedQueries, query);
     model.onQueriesChange(newQueries);
+
     if (query.datasource?.uid) {
       const uniqueDatasources = new Set(
         newQueries.map((q) => q.datasource?.uid).filter((uid) => uid !== ExpressionDatasourceUID)
@@ -347,13 +363,7 @@ export function PanelDataQueriesTabRendered({ model }: SceneComponentProps<Panel
       const newDatasourceRef = {
         uid: isMixed ? MIXED_DATASOURCE_NAME : query.datasource.uid,
       };
-      const shouldChangeDatasource = datasource.uid !== newDatasourceRef.uid;
-      if (shouldChangeDatasource) {
-        const newDatasource = getDatasourceSrv().getInstanceSettings(newDatasourceRef);
-        if (newDatasource) {
-          await model.onChangeDataSource(newDatasource);
-        }
-      }
+      await model.updateDatasourceIfNeeded(newDatasourceRef);
     }
   };
 
@@ -376,6 +386,7 @@ export function PanelDataQueriesTabRendered({ model }: SceneComponentProps<Panel
         onAddQuery={model.onAddQuery}
         onQueriesChange={model.onQueriesChange}
         onRunQueries={model.onRunQueries}
+        onUpdateDatasources={queryLibraryEnabled ? model.updateDatasourceIfNeeded : undefined}
         app={CoreApp.PanelEditor}
       />
 
@@ -394,14 +405,18 @@ export function PanelDataQueriesTabRendered({ model }: SceneComponentProps<Panel
               <Button
                 icon="plus"
                 onClick={() =>
-                  openQueryLibraryDrawer(getDatasourceNames(datasource, queries), onSelectQueryFromLibrary, {
-                    context: CoreApp.PanelEditor,
+                  openQueryLibraryDrawer({
+                    datasourceFilters: getDatasourceNames(datasource, queries),
+                    onSelectQuery: onSelectQueryFromLibrary,
+                    options: {
+                      context: CoreApp.PanelEditor,
+                    },
                   })
                 }
                 variant="secondary"
                 data-testid={selectors.components.QueryTab.addQueryFromLibrary}
               >
-                <Trans i18nKey={'dashboards.panel-queries.add-query-from-library'}>Add query from library</Trans>
+                <Trans i18nKey={'dashboards.panel-queries.add-from-saved-queries'}>Add from saved queries</Trans>
               </Button>
             )}
           </>

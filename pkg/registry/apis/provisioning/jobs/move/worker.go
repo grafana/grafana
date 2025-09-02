@@ -10,10 +10,10 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
+	"github.com/grafana/grafana/apps/provisioning/pkg/safepath"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/safepath"
 )
 
 type Worker struct {
@@ -87,6 +87,15 @@ func (w *Worker) Process(ctx context.Context, repo repository.Repository, job pr
 	err := w.wrapFn(ctx, repo, stageOptions, fn)
 	if err != nil {
 		return fmt.Errorf("move files in repository: %w", err)
+	}
+
+	// Set RefURLs if the repository supports it and we have a target ref
+	if opts.Ref != "" {
+		if repoWithURLs, ok := repo.(repository.RepositoryWithURLs); ok {
+			if refURLs, urlErr := repoWithURLs.RefURLs(ctx, opts.Ref); urlErr == nil && refURLs != nil {
+				progress.SetRefURLs(ctx, refURLs)
+			}
+		}
 	}
 
 	if opts.Ref == "" {

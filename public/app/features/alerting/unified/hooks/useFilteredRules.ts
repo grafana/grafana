@@ -8,7 +8,12 @@ import { CombinedRuleGroup, CombinedRuleNamespace, Rule } from 'app/types/unifie
 import { PromRuleType, RulerGrafanaRuleDTO, isPromAlertingRuleState } from 'app/types/unified-alerting-dto';
 
 import { logError } from '../Analytics';
-import { RulesFilter, applySearchFilterToQuery, getSearchFilterFromQuery } from '../search/rulesSearchParser';
+import {
+  RuleSource,
+  RulesFilter,
+  applySearchFilterToQuery,
+  getSearchFilterFromQuery,
+} from '../search/rulesSearchParser';
 import { labelsMatchMatchers, matcherToMatcherField } from '../utils/alertmanager';
 import { Annotation } from '../utils/constants';
 import { isCloudRulesSource } from '../utils/datasource';
@@ -80,7 +85,11 @@ export function useRulesFilter() {
     }
   }, [queryParams, updateFilters, filterState, updateQueryParams]);
 
-  return { filterState, hasActiveFilters, activeFilters, searchQuery, setSearchQuery, updateFilters };
+  const clearAll = useCallback(() => {
+    updateQueryParams({ search: undefined });
+  }, [updateQueryParams]);
+
+  return { filterState, hasActiveFilters, searchQuery, setSearchQuery, updateFilters, clearAll, activeFilters };
 }
 
 export const useFilteredRules = (namespaces: CombinedRuleNamespace[], filterState: RulesFilter) => {
@@ -179,6 +188,15 @@ const reduceGroups = (filterState: RulesFilter) => {
       filteredRules = fuzzyFilter(filteredRules, (r) => r.name, ruleNameQuery);
     }
 
+    // Filter by rule source at rule-level (Grafana-managed vs datasource-managed)
+    if (filterState.ruleSource) {
+      const grafanaSelected = filterState.ruleSource === RuleSource.Grafana;
+      filteredRules = filteredRules.filter((rule) => {
+        const isGrafana = !!(rule.rulerRule && rulerRuleType.grafana.rule(rule.rulerRule));
+        return grafanaSelected && isGrafana;
+      });
+    }
+
     filteredRules = filteredRules.filter((rule) => {
       const promRuleDefition = rule.promRule;
 
@@ -197,6 +215,7 @@ const reduceGroups = (filterState: RulesFilter) => {
           'dashboardUid',
           'plugins',
           'contactPoint',
+          'ruleSource',
         ])
         .omitBy(isEmpty)
         .mapValues(() => false)
@@ -328,6 +347,7 @@ const RULES_FILTER_KEYS: Set<keyof RulesFilter> = new Set([
   'dashboardUid',
   'plugins',
   'contactPoint',
+  'ruleSource',
 ]);
 
 const isRuleFilterKey = (key: string): key is keyof RulesFilter => RULES_FILTER_KEYS.has(key as keyof RulesFilter);
