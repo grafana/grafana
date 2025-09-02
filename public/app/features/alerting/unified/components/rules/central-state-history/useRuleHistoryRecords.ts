@@ -8,7 +8,7 @@ import { parsePromQLStyleMatcherLooseSafe } from '../../../utils/matchers';
 import { LogRecord } from '../state-history/common';
 import { isLine, isNumbers } from '../state-history/useRuleHistoryRecords';
 
-import { StateFilterValues } from './CentralAlertHistoryScene';
+import { StateFilterValues } from './constants';
 
 type StateFilter = (typeof StateFilterValues)[keyof typeof StateFilterValues];
 
@@ -37,7 +37,7 @@ export function useRuleHistoryRecords(stateHistory?: DataFrameJSON, filters: His
 }
 
 export function ruleHistoryToRecords(stateHistory?: DataFrameJSON, filters: HistoryRecordFilters = emptyFilters) {
-  const { labels, stateFrom = 'all', stateTo = 'all' } = filters;
+  const { labels, stateFrom = StateFilterValues.all, stateTo = StateFilterValues.all } = filters;
 
   if (!stateHistory?.data) {
     return { historyRecords: [] };

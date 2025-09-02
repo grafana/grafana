@@ -18,7 +18,8 @@ import { parsePromQLStyleMatcherLooseSafe } from '../../../utils/matchers';
 import { LogRecord } from '../state-history/common';
 import { isLine, isNumbers } from '../state-history/useRuleHistoryRecords';
 
-import { LABELS_FILTER, STATE_FILTER_FROM, STATE_FILTER_TO, StateFilterValues } from './CentralAlertHistoryScene';
+import { LABELS_FILTER, STATE_FILTER_FROM, STATE_FILTER_TO } from './CentralAlertHistoryScene';
+import { StateFilterValues } from './constants';
 
 const GROUPING_INTERVAL = 10 * 1000; // 10 seconds
 const QUERY_PARAM_PREFIX = 'var-'; // Prefix used by Grafana to sync variables in the URL
