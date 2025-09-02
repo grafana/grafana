@@ -603,6 +603,7 @@ func runGrafana(t *testing.T, options ...grafanaOption) *provisioningTestHelper 
 	opts := testinfra.GrafanaOpts{
 		EnableFeatureToggles: []string{
 			featuremgmt.FlagProvisioning,
+			featuremgmt.FlagZanzana,
 		},
 		UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
 			"dashboards.dashboard.grafana.app": {
