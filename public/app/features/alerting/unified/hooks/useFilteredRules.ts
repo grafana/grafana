@@ -193,7 +193,7 @@ const reduceGroups = (filterState: RulesFilter) => {
       const grafanaSelected = filterState.ruleSource === RuleSource.Grafana;
       filteredRules = filteredRules.filter((rule) => {
         const isGrafana = !!(rule.rulerRule && rulerRuleType.grafana.rule(rule.rulerRule));
-        return grafanaSelected ? isGrafana : !isGrafana;
+        return grafanaSelected && isGrafana;
       });
     }
 

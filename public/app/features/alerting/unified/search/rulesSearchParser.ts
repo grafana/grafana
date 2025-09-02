@@ -116,7 +116,7 @@ export function applySearchFilterToQuery(query: string, filter: RulesFilter): st
     filterStateArray.push({ type: terms.PluginsToken, value: filter.plugins });
   }
   if (filter.ruleSource) {
-    filterStateArray.push({ type: terms.FreeFormExpression, value: `source:${filter.ruleSource}` });
+    filterStateArray.push({ type: terms.RuleSourceToken, value: filter.ruleSource });
   }
   if (filter.freeFormWords) {
     filterStateArray.push(...filter.freeFormWords.map((word) => ({ type: terms.FreeFormExpression, value: word })));

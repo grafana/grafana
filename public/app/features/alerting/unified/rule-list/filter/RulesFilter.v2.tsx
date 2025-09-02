@@ -53,6 +53,8 @@ import {
 
 const canRenderContactPointSelector = contextSrv.hasPermission(AccessControlAction.AlertingReceiversRead);
 
+const radioGroupCompactClass = css({ width: 'max-content' });
+
 type SearchQueryForm = {
   query: string;
 };
@@ -302,11 +304,11 @@ const FilterOptions = ({ onSubmit, onClear, pluginsFilterEnabled }: FilterOption
             />
             <DataSourceNamesField dataSourceOptions={dataSourceOptions} portalContainer={portalContainer} />
             {canRenderContactPointSelector && <ContactPointField portalContainer={portalContainer} />}
-            <RuleSourceField radioGroupClassName={styles.radioGroupCompact} />
-            <RuleStateField radioGroupClassName={styles.radioGroupCompact} />
-            <RuleTypeField radioGroupClassName={styles.radioGroupCompact} />
-            <RuleHealthField radioGroupClassName={styles.radioGroupCompact} />
-            {pluginsFilterEnabled && <PluginsField radioGroupClassName={styles.radioGroupCompact} />}
+            <RuleSourceField />
+            <RuleStateField />
+            <RuleTypeField />
+            <RuleHealthField />
+            {pluginsFilterEnabled && <PluginsField />}
           </div>
           <Stack direction="row" alignItems="center">
             <Button type="reset" variant="secondary" data-testid="filter-clear-button">
@@ -563,7 +565,7 @@ function ContactPointField({ portalContainer }: { portalContainer?: HTMLElement 
   );
 }
 
-function RuleStateField({ radioGroupClassName }: { radioGroupClassName?: string }) {
+function RuleStateField() {
   const { control } = useFormContext<AdvancedFilters>();
   return (
     <>
@@ -586,7 +588,7 @@ function RuleStateField({ radioGroupClassName }: { radioGroupClassName?: string 
             value={field.value}
             onChange={field.onChange}
             fullWidth={false}
-            className={radioGroupClassName}
+            className={radioGroupCompactClass}
           />
         )}
       />
@@ -594,7 +596,7 @@ function RuleStateField({ radioGroupClassName }: { radioGroupClassName?: string 
   );
 }
 
-function RuleTypeField({ radioGroupClassName }: { radioGroupClassName?: string }) {
+function RuleTypeField() {
   const { control } = useFormContext<AdvancedFilters>();
   return (
     <>
@@ -614,7 +616,7 @@ function RuleTypeField({ radioGroupClassName }: { radioGroupClassName?: string }
             value={field.value}
             onChange={field.onChange}
             fullWidth={false}
-            className={radioGroupClassName}
+            className={radioGroupCompactClass}
           />
         )}
       />
@@ -622,7 +624,7 @@ function RuleTypeField({ radioGroupClassName }: { radioGroupClassName?: string }
   );
 }
 
-function RuleSourceField({ radioGroupClassName }: { radioGroupClassName?: string }) {
+function RuleSourceField() {
   const { control } = useFormContext<AdvancedFilters>();
   return (
     <>
@@ -645,7 +647,7 @@ function RuleSourceField({ radioGroupClassName }: { radioGroupClassName?: string
             value={field.value}
             onChange={field.onChange}
             fullWidth={false}
-            className={radioGroupClassName}
+            className={radioGroupCompactClass}
           />
         )}
       />
@@ -653,7 +655,7 @@ function RuleSourceField({ radioGroupClassName }: { radioGroupClassName?: string
   );
 }
 
-function RuleHealthField({ radioGroupClassName }: { radioGroupClassName?: string }) {
+function RuleHealthField() {
   const { control } = useFormContext<AdvancedFilters>();
   return (
     <>
@@ -674,7 +676,7 @@ function RuleHealthField({ radioGroupClassName }: { radioGroupClassName?: string
             value={field.value}
             onChange={field.onChange}
             fullWidth={false}
-            className={radioGroupClassName}
+            className={radioGroupCompactClass}
           />
         )}
       />
@@ -682,7 +684,7 @@ function RuleHealthField({ radioGroupClassName }: { radioGroupClassName?: string
   );
 }
 
-function PluginsField({ radioGroupClassName }: { radioGroupClassName?: string }) {
+function PluginsField() {
   const { control } = useFormContext<AdvancedFilters>();
   return (
     <>
@@ -701,7 +703,7 @@ function PluginsField({ radioGroupClassName }: { radioGroupClassName?: string })
             value={field.value}
             onChange={field.onChange}
             fullWidth={false}
-            className={radioGroupClassName}
+            className={radioGroupCompactClass}
           />
         )}
       />
@@ -788,9 +790,6 @@ function getStyles(theme: GrafanaTheme2) {
       gridTemplateColumns: 'auto 1fr',
       alignItems: 'center',
       gap: theme.spacing(2),
-    }),
-    radioGroupCompact: css({
-      width: 'max-content',
     }),
   };
 }
