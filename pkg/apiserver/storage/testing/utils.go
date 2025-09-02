@@ -197,7 +197,8 @@ func testCheckStop(t *testing.T, w watch.Interface) {
 
 func testCheckResultsInStrictOrder(t *testing.T, w watch.Interface, expectedEvents []watch.Event) {
 	fmt.Printf("expectedEvents: %+v\n", expectedEvents)
-	for _, expectedEvent := range expectedEvents {
+	for i, expectedEvent := range expectedEvents {
+		fmt.Printf("expectedEvent[%d]: %+v\n", i, expectedEvent)
 		testCheckResult(t, w, expectedEvent)
 	}
 }
