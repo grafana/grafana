@@ -4544,6 +4544,12 @@
       "overwrite": "覆盖",
       "title-plugin-dashboard": "插件数据面板"
     },
+    "controls": {
+      "menu": {
+        "aria-label": "",
+        "title": ""
+      }
+    },
     "dash-nav": {
       "on-open-snapshot-original": {
         "confirmText": {
@@ -5821,11 +5827,6 @@
         "transparent-background": "透明背景"
       }
     },
-    "get-workflow-options": {
-      "label": {
-        "push-to-a-new-branch": "推送到新分支"
-      }
-    },
     "group-by-variable-form": {
       "alert-not-supported": "此数据源不支持按变量分组",
       "description-enables-users-custom-values": "允许用户向列表中添加自定义值",
@@ -6920,11 +6921,6 @@
       "dragging-a-divider": "拖动分隔线",
       "dragging-a-sub-region": "拖动子区域",
       "value": "值：{{ dividerPos }}"
-    },
-    "drilldownInfo": {
-      "action": "前往 Grafana Drilldown",
-      "description": "在寻找 Grafana Explore 应用？它们现在称为 Grafana Drilldown 应用，可以在 <1>菜单 > Drilldown</1> 下找到",
-      "title": "Explore Metrics、Logs、Traces 和 Profiles 已移动！"
     },
     "drop-down-menu": {
       "aria-label-links": "链接",
@@ -11126,11 +11122,16 @@
     "save-or-delete-resource-shared-fields": {
       "comment-placeholder-describe-changes-optional": "添加备注以描述您的更改（可选）",
       "description-branch-name-in-git-hub": "GitHub 中的分支名称",
+      "description-file-path": "",
+      "description-folder-path": "",
       "description-inside-repository": "",
       "label-branch": "分支",
       "label-comment": "评论",
       "label-path": "路径",
-      "label-workflow": "工作流程"
+      "label-workflow": "工作流程",
+      "placeholder-branch": "",
+      "placeholder-new-branch": "",
+      "suffix-configured-branch": ""
     }
   },
   "provisioned-resource-preview-banner": {
@@ -11661,6 +11662,10 @@
       "button-previous": "上一个",
       "button-submitting": "正在提交...",
       "error-instance-repository-exists": "实例存储库已存在"
+    },
+    "workflow-options-label": {
+      "push-to-a-new-branch": "",
+      "push-to-existing-branch": ""
     }
   },
   "public-dashboard": {
@@ -12041,6 +12046,7 @@
     "selector": {
       "apply": "应用",
       "cancel": "取消",
+      "error-title": "",
       "input": {
         "placeholder": "选择范围…",
         "removeAll": "移除所有范围"
@@ -12766,6 +12772,7 @@
     "name-fields": "字段",
     "name-frozen-columns": "",
     "name-hide-in-table": "在表格中隐藏",
+    "name-max-height": "",
     "name-min-column-width": "最小列宽",
     "name-show-table-footer": "显示表格页脚",
     "name-show-table-header": "显示表格表头",
@@ -12775,6 +12782,7 @@
     "name-wrap-text": "",
     "placeholder-column-width": "自动",
     "placeholder-fields": "所有数字字段",
+    "placeholder-max-height": "",
     "tooltip-placement-options": {
       "label-auto": "",
       "label-bottom": "",

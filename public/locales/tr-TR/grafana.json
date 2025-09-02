@@ -4562,6 +4562,12 @@
       "overwrite": "Üzerine yaz",
       "title-plugin-dashboard": "Eklenti panosu"
     },
+    "controls": {
+      "menu": {
+        "aria-label": "",
+        "title": ""
+      }
+    },
     "dash-nav": {
       "on-open-snapshot-original": {
         "confirmText": {
@@ -5840,11 +5846,6 @@
         "transparent-background": "Şeffaf arka plan"
       }
     },
-    "get-workflow-options": {
-      "label": {
-        "push-to-a-new-branch": "Yeni bir dala gönder"
-      }
-    },
     "group-by-variable-form": {
       "alert-not-supported": "Bu veri kaynağı değişkenlere göre gruplamayı desteklemiyor",
       "description-enables-users-custom-values": "Kullanıcıların listeye özel değerler eklemesine olanak tanır",
@@ -6941,11 +6942,6 @@
       "dragging-a-divider": "Ayırıcıyı sürükleme",
       "dragging-a-sub-region": "Bir alt bölgeyi sürükleme",
       "value": "Değer: {{ dividerPos }}"
-    },
-    "drilldownInfo": {
-      "action": "Grafana Drilldown'a git",
-      "description": "Grafana Explore uygulamalarını mı arıyorsunuz? Artık Grafana Drilldown uygulamaları olarak adlandırılıyor ve <1>Menü > Drilldown</1> altında bulunabilir.",
-      "title": "Explore Metrics, Logs, Traces ve Profiles taşındı!"
     },
     "drop-down-menu": {
       "aria-label-links": "Bağlantılar",
@@ -11158,11 +11154,16 @@
     "save-or-delete-resource-shared-fields": {
       "comment-placeholder-describe-changes-optional": "Değişikliklerinizi açıklayan bir not ekleyin (isteğe bağlı)",
       "description-branch-name-in-git-hub": "GitHub'daki dal adı",
+      "description-file-path": "",
+      "description-folder-path": "",
       "description-inside-repository": "",
       "label-branch": "Dal",
       "label-comment": "Yorum",
       "label-path": "Yol",
-      "label-workflow": "İş akışı"
+      "label-workflow": "İş akışı",
+      "placeholder-branch": "",
+      "placeholder-new-branch": "",
+      "suffix-configured-branch": ""
     }
   },
   "provisioned-resource-preview-banner": {
@@ -11696,6 +11697,10 @@
       "button-previous": "Önceki",
       "button-submitting": "Gönderiliyor...",
       "error-instance-repository-exists": "Örnek deposu zaten var"
+    },
+    "workflow-options-label": {
+      "push-to-a-new-branch": "",
+      "push-to-existing-branch": ""
     }
   },
   "public-dashboard": {
@@ -12080,6 +12085,7 @@
     "selector": {
       "apply": "Uygula",
       "cancel": "İptal",
+      "error-title": "",
       "input": {
         "placeholder": "Kapsam seçin...",
         "removeAll": "Tüm kapsamları kaldır"
@@ -12807,6 +12813,7 @@
     "name-fields": "Alanlar",
     "name-frozen-columns": "",
     "name-hide-in-table": "Tabloda gizle",
+    "name-max-height": "",
     "name-min-column-width": "Minimum sütun genişliği",
     "name-show-table-footer": "Tablo alt bilgisini göster",
     "name-show-table-header": "Tablo başlığını göster",
@@ -12816,6 +12823,7 @@
     "name-wrap-text": "",
     "placeholder-column-width": "otomatik",
     "placeholder-fields": "Tüm Sayısal Alanlar",
+    "placeholder-max-height": "",
     "tooltip-placement-options": {
       "label-auto": "",
       "label-bottom": "",
