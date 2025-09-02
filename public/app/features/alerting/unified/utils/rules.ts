@@ -44,7 +44,7 @@ import {
 
 import { CombinedRuleNamespace } from '../../../../types/unified-alerting';
 import { State } from '../components/StateTag';
-import { RuleHealth } from '../search/rulesSearchParser';
+import { RuleHealth, RuleSource } from '../search/rulesSearchParser';
 import { RuleFormType, RuleFormValues } from '../types/rule-form';
 
 import { RULER_NOT_SUPPORTED_MSG } from './constants';
@@ -190,6 +190,16 @@ export function getRuleHealth(health: string): RuleHealth | undefined {
     default:
       return undefined;
   }
+}
+
+export function getRuleSource(source: string): RuleSource | undefined {
+  if (source === 'grafana') {
+    return RuleSource.Grafana;
+  }
+  if (source === 'datasource') {
+    return RuleSource.DataSource;
+  }
+  return undefined;
 }
 
 export function getPendingPeriod(rule: CombinedRule): string | undefined {

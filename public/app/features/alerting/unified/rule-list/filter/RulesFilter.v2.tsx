@@ -40,7 +40,7 @@ import {
   useNamespaceAndGroupOptions,
 } from '../../components/rules/Filter/useRuleFilterAutocomplete';
 import { useRulesFilter } from '../../hooks/useFilteredRules';
-import { RuleHealth, getSearchFilterFromQuery } from '../../search/rulesSearchParser';
+import { RuleHealth, RuleSource, getSearchFilterFromQuery } from '../../search/rulesSearchParser';
 
 import { RulesFilterProps } from './RulesFilter';
 import {
@@ -52,6 +52,8 @@ import {
 } from './utils';
 
 const canRenderContactPointSelector = contextSrv.hasPermission(AccessControlAction.AlertingReceiversRead);
+
+const radioGroupCompactClass = css({ width: 'max-content' });
 
 type SearchQueryForm = {
   query: string;
@@ -298,6 +300,7 @@ const FilterOptions = ({ onSubmit, onClear, pluginsFilterEnabled }: FilterOption
             />
             <DataSourceNamesField dataSourceOptions={dataSourceOptions} portalContainer={portalContainer} />
             {canRenderContactPointSelector && <ContactPointField portalContainer={portalContainer} />}
+            <RuleSourceField />
             <RuleStateField />
             <RuleTypeField />
             <RuleHealthField />
@@ -570,6 +573,8 @@ function RuleStateField() {
             ]}
             value={field.value}
             onChange={field.onChange}
+            fullWidth={false}
+            className={radioGroupCompactClass}
           />
         )}
       />
@@ -596,6 +601,39 @@ function RuleTypeField() {
             ]}
             value={field.value}
             onChange={field.onChange}
+            fullWidth={false}
+            className={radioGroupCompactClass}
+          />
+        )}
+      />
+    </>
+  );
+}
+
+function RuleSourceField() {
+  const { control } = useFormContext<AdvancedFilters>();
+  return (
+    <>
+      <Label>
+        <Trans i18nKey="alerting.search.property.rule-source">Rule source</Trans>
+      </Label>
+      <Controller
+        name="ruleSource"
+        control={control}
+        render={({ field }) => (
+          <RadioButtonGroup<AdvancedFilters['ruleSource']>
+            options={[
+              { label: t('common.all', 'All'), value: null },
+              { label: t('alerting.rules-filter.rule-source.grafana', 'Grafana managed'), value: RuleSource.Grafana },
+              {
+                label: t('alerting.rules-filter.rule-source.datasource', 'Data source managed'),
+                value: RuleSource.DataSource,
+              },
+            ]}
+            value={field.value}
+            onChange={field.onChange}
+            fullWidth={false}
+            className={radioGroupCompactClass}
           />
         )}
       />
@@ -623,6 +661,8 @@ function RuleHealthField() {
             ]}
             value={field.value}
             onChange={field.onChange}
+            fullWidth={false}
+            className={radioGroupCompactClass}
           />
         )}
       />
@@ -648,6 +688,8 @@ function PluginsField() {
             ]}
             value={field.value}
             onChange={field.onChange}
+            fullWidth={false}
+            className={radioGroupCompactClass}
           />
         )}
       />
