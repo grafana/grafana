@@ -1847,6 +1847,7 @@ var (
 			Stage:        FeatureStageGeneralAvailability,
 			Owner:        grafanaDataProSquad,
 			FrontendOnly: true,
+			Expression:   "true",
 		},
 		{
 			Name:         "dashboardLevelTimeMacros",
@@ -1879,6 +1880,7 @@ var (
 			Stage:        FeatureStageGeneralAvailability,
 			Owner:        grafanaDataProSquad,
 			FrontendOnly: true,
+			Expression:   "true",
 		},
 		{
 			Name:         "favoriteDatasources",
