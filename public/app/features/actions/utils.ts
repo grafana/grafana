@@ -133,7 +133,7 @@ const processActionConfig = (action: Action, replaceVariables: InterpolateFuncti
   }
 
   const url = new URL(getUrl(replaceVariables(config.url)));
-  const data = getData(action, replaceVariables);
+  const data = config.method === HttpRequestMethod.GET ? undefined : config.body ? replaceVariables(config.body) : '{}';
 
   const processedHeaders: Array<[string, string]> = [];
   const processedQueryParams: Array<[string, string]> = [];
@@ -213,21 +213,6 @@ const getUrl = (endpoint: string) => {
   }
 
   return endpoint;
-};
-
-/** @internal */
-const getData = (action: Action, replaceVariables: InterpolateFunction) => {
-  const config = action[action.type];
-  if (!config) {
-    return '{}';
-  }
-
-  let data: string | undefined = config.body ? replaceVariables(config.body) : '{}';
-  if (config.method === HttpRequestMethod.GET) {
-    data = undefined;
-  }
-
-  return data;
 };
 
 /** @internal */
