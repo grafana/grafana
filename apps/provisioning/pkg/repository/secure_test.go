@@ -10,7 +10,6 @@ import (
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	secretv1beta1 "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1"
 	"github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
-	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 )
 
 func TestRepositorySecureValues(t *testing.T) {
@@ -35,11 +34,11 @@ func TestRepositorySecureValues(t *testing.T) {
 					},
 				},
 			},
-			decrypt: func(t *testing.T, names ...string) (map[string]contracts.DecryptResult, error) {
+			decrypt: func(t *testing.T, names ...string) (map[string]DecryptResult, error) {
 				require.Equal(t, []string{"secret"}, names)
 				val := secretv1beta1.NewExposedSecureValue(names[0])
-				return map[string]contracts.DecryptResult{
-					names[0]: contracts.NewDecryptResultValue(&val),
+				return map[string]DecryptResult{
+					names[0]: {Val: &val},
 				}, nil
 			},
 			token: expectedDecryptedResult{
@@ -55,7 +54,7 @@ func TestRepositorySecureValues(t *testing.T) {
 					},
 				},
 			},
-			decrypt: func(t *testing.T, names ...string) (map[string]contracts.DecryptResult, error) {
+			decrypt: func(t *testing.T, names ...string) (map[string]DecryptResult, error) {
 				t.Fatal("decrypt should not be called when Create is set")
 				return nil, nil
 			},
@@ -68,7 +67,7 @@ func TestRepositorySecureValues(t *testing.T) {
 			config: &provisioning.Repository{
 				Secure: provisioning.SecureValues{},
 			},
-			decrypt: func(t *testing.T, names ...string) (map[string]contracts.DecryptResult, error) {
+			decrypt: func(t *testing.T, names ...string) (map[string]DecryptResult, error) {
 				t.Fatal("decrypt should not be called when no values are configured")
 				return nil, nil
 			},
@@ -82,10 +81,10 @@ func TestRepositorySecureValues(t *testing.T) {
 					},
 				},
 			},
-			decrypt: func(t *testing.T, names ...string) (map[string]contracts.DecryptResult, error) {
+			decrypt: func(t *testing.T, names ...string) (map[string]DecryptResult, error) {
 				require.Equal(t, []string{"secret"}, names)
-				return map[string]contracts.DecryptResult{
-					names[0]: contracts.NewDecryptResultErr(fmt.Errorf("error for name")),
+				return map[string]DecryptResult{
+					names[0]: {Err: fmt.Errorf("error for name")},
 				}, nil
 			},
 			webhook: expectedDecryptedResult{
@@ -101,8 +100,8 @@ func TestRepositorySecureValues(t *testing.T) {
 					},
 				},
 			},
-			decrypt: func(t *testing.T, names ...string) (map[string]contracts.DecryptResult, error) {
-				return map[string]contracts.DecryptResult{}, nil
+			decrypt: func(t *testing.T, names ...string) (map[string]DecryptResult, error) {
+				return map[string]DecryptResult{}, nil
 			},
 			token: expectedDecryptedResult{
 				error: "not found", // it is not in the results above
@@ -117,7 +116,7 @@ func TestRepositorySecureValues(t *testing.T) {
 					},
 				},
 			},
-			decrypt: func(t *testing.T, names ...string) (map[string]contracts.DecryptResult, error) {
+			decrypt: func(t *testing.T, names ...string) (map[string]DecryptResult, error) {
 				return nil, fmt.Errorf("explode")
 			},
 			webhook: expectedDecryptedResult{
@@ -127,7 +126,7 @@ func TestRepositorySecureValues(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			decrypter := DecryptService(&dummyDecryptService{t: t, fn: tt.decrypt})
+			decrypter := ProvideDecrypter(&dummyDecryptService{t: t, fn: tt.decrypt})
 			decrypted := decrypter(tt.config)
 
 			token, err := decrypted.Token(context.Background())
@@ -149,13 +148,13 @@ func TestRepositorySecureValues(t *testing.T) {
 	}
 }
 
-type decryptFn = func(t *testing.T, names ...string) (map[string]contracts.DecryptResult, error)
+type decryptFn = func(t *testing.T, names ...string) (map[string]DecryptResult, error)
 
 type dummyDecryptService struct {
 	t  *testing.T
 	fn decryptFn
 }
 
-func (d *dummyDecryptService) Decrypt(_ context.Context, _ string, _ string, names ...string) (map[string]contracts.DecryptResult, error) {
+func (d *dummyDecryptService) Decrypt(_ context.Context, _ string, _ string, names ...string) (map[string]DecryptResult, error) {
 	return d.fn(d.t, names...)
 }

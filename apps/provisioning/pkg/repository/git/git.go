@@ -1,6 +1,6 @@
 package git
 
-import "github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
+import "github.com/grafana/grafana/apps/provisioning/pkg/repository"
 
 // GitRepository is an interface that combines all repository capabilities
 // needed for Git repositories.

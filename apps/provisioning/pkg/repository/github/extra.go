@@ -6,19 +6,22 @@ import (
 
 	"github.com/grafana/grafana-app-sdk/logging"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository/git"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/webhooks"
+	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
+	"github.com/grafana/grafana/apps/provisioning/pkg/repository/git"
 	"k8s.io/apimachinery/pkg/runtime"
 )
+
+type WebhookURLBuilder interface {
+	WebhookURL(ctx context.Context, r *provisioning.Repository) string
+}
 
 type extra struct {
 	factory        *Factory
 	decrypter      repository.Decrypter
-	webhookBuilder *webhooks.WebhookExtraBuilder
+	webhookBuilder WebhookURLBuilder
 }
 
-func Extra(decrypter repository.Decrypter, factory *Factory, webhookBuilder *webhooks.WebhookExtraBuilder) repository.Extra {
+func Extra(decrypter repository.Decrypter, factory *Factory, webhookBuilder WebhookURLBuilder) repository.Extra {
 	return &extra{
 		decrypter:      decrypter,
 		factory:        factory,
