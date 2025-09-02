@@ -94,6 +94,7 @@
     "rows-to-fields": (import '../dev-dashboards/transforms/rows-to-fields.json'),
     "shared_queries": (import '../dev-dashboards/panel-common/shared_queries.json'),
     "slow_queries_and_annotations": (import '../dev-dashboards/scenarios/slow_queries_and_annotations.json'),
+    "table_footer_migration": (import '../dev-dashboards/panel-table/table_footer_migration.json'),
     "table_kitchen_sink": (import '../dev-dashboards/panel-table/table_kitchen_sink.json'),
     "table_markdown": (import '../dev-dashboards/panel-table/table_markdown.json'),
     "table_pagination": (import '../dev-dashboards/panel-table/table_pagination.json'),
