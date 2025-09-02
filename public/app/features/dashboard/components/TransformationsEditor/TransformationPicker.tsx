@@ -4,7 +4,7 @@ import { FormEventHandler, KeyboardEventHandler, ReactNode } from 'react';
 import { DocsId, GrafanaTheme2, LocalStorageValueProvider, TransformerRegistryItem } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
-import { Card, Container, Alert, Input, useStyles2, Stack } from '@grafana/ui';
+import { Alert, Card, Container, Input, Stack, useStyles2 } from '@grafana/ui';
 import { getDocsLink } from 'app/core/utils/docsLinks';
 import { PluginStateInfo } from 'app/features/plugins/components/PluginStateInfo';
 
@@ -107,6 +107,7 @@ function TransformationCard({ transform, onClick }: TransformationCardProps) {
   const styles = useStyles2(getStyles);
   return (
     <Card
+      noMargin
       className={styles.card}
       data-testid={selectors.components.TransformTab.newTransform(transform.name)}
       onClick={onClick}

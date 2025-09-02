@@ -12,7 +12,7 @@ interface Props {
 export function NavLandingPageCard({ description, text, url }: Props) {
   const styles = useStyles2(getStyles);
   return (
-    <Card className={styles.card} href={url}>
+    <Card noMargin className={styles.card} href={url}>
       <Card.Heading>{text}</Card.Heading>
       <Card.Description className={styles.description}>{description}</Card.Description>
     </Card>

@@ -192,7 +192,7 @@ const AzureCheatSheet = (props: AzureCheatSheetProps) => {
                   >
                     {visibleQueries[category]!.map((query) => {
                       return (
-                        <Card className={styles.card} key={query.id}>
+                        <Card noMargin className={styles.card} key={query.id}>
                           <Card.Heading>{query.displayName}</Card.Heading>
                           <ScrollContainer showScrollIndicators maxHeight="100px">
                             <RawQuery

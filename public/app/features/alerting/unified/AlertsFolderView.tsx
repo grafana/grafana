@@ -83,10 +83,11 @@ export const AlertsFolderView = ({ folder, rules }: Props) => {
           />
         </Stack>
 
-        <Stack direction="column" gap={1}>
+        <Stack direction="column" gap={2}>
           {pageItems.map(({ grafana_alert, labels = {} }) => (
             <Card
               key={grafana_alert.uid}
+              noMargin
               href={createGrafanaRuleViewLink(grafana_alert)}
               className={styles.card}
               data-testid="alert-card-row"

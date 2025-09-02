@@ -23,7 +23,7 @@ export const EmptyCorrelationsCTA = ({ onClick, canWriteCorrelations }: Props) =
       </Trans>
     </EmptyState>
   ) : (
-    <Card>
+    <Card noMargin>
       <Card.Heading>
         <Trans i18nKey="correlations.empty-correlations-cta.there-are-no-correlations-configured-yet">
           There are no correlations configured yet.

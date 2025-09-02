@@ -1,7 +1,7 @@
 import { css, cx } from '@emotion/css';
 
 import { DataSourceInstanceSettings, GrafanaTheme2 } from '@grafana/data';
-import { Card, TagList, useTheme2, Icon } from '@grafana/ui';
+import { Card, Icon, TagList, useTheme2 } from '@grafana/ui';
 
 interface DataSourceCardProps {
   ds: DataSourceInstanceSettings;
@@ -27,6 +27,7 @@ export function DataSourceCard({
   return (
     <Card
       key={ds.uid}
+      noMargin
       onClick={onClick}
       className={cx(styles.card, selected ? styles.selected : undefined)}
       {...htmlProps}

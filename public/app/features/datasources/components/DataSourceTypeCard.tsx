@@ -19,7 +19,7 @@ export function DataSourceTypeCard({ onClick, dataSourcePlugin }: Props) {
   const styles = useStyles2(getStyles);
 
   return (
-    <Card className={cx(styles.card, 'card-parent')} onClick={isClickable ? onClick : () => {}}>
+    <Card noMargin className={cx(styles.card, 'card-parent')} onClick={isClickable ? onClick : () => {}}>
       {/* Name */}
       <Card.Heading
         className={styles.heading}

@@ -6,7 +6,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { SceneVariable, SceneVariableSet } from '@grafana/scenes';
-import { Stack, Button, useStyles2, Text, Box, Card } from '@grafana/ui';
+import { Box, Button, Card, Stack, Text, useStyles2 } from '@grafana/ui';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
@@ -130,6 +130,7 @@ function VariableTypeSelection({ onAddVariable }: VariableTypeSelectionProps) {
       {options.map((option) => (
         <Card
           isCompact
+          noMargin
           onClick={() => onAddVariable(option.value!)}
           key={option.value}
           title={t('dashboard.edit-pane.variables.select-type-card-tooltip', 'Click to select type')}
