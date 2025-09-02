@@ -10,12 +10,10 @@ import {
 import { UsePluginComponentsOptions, UsePluginComponentsResult } from '@grafana/runtime';
 
 import { useAddedComponentsRegistry } from './ExtensionRegistriesContext';
-import * as errors from './errors';
-import { log } from './logs/log';
+import { getExtensionValidationResults } from './getExtensionValidationResults';
 import { AddedComponentRegistryItem } from './registry/AddedComponentsRegistry';
 import { useLoadAppPlugins } from './useLoadAppPlugins';
-import { generateExtensionId, getExtensionPointPluginDependencies, isGrafanaDevMode } from './utils';
-import { isExtensionPointIdValid, isExtensionPointMetaInfoMissing } from './validators';
+import { generateExtensionId, getExtensionPointPluginDependencies } from './utils';
 
 // Returns an array of component extensions for the given extension point
 export function usePluginComponents<Props extends object = {}>({
@@ -28,47 +26,17 @@ export function usePluginComponents<Props extends object = {}>({
   const { isLoading: isLoadingAppPlugins } = useLoadAppPlugins(getExtensionPointPluginDependencies(extensionPointId));
 
   return useMemo(() => {
-    const isInsidePlugin = Boolean(pluginContext);
-    const isCoreGrafanaPlugin = pluginContext?.meta.module.startsWith('core:') ?? false;
+    const { result } = getExtensionValidationResults({ extensionPointId, pluginContext, isLoadingAppPlugins });
+
+    if (result) {
+      return {
+        isLoading: result.isLoading,
+        components: result.results,
+      };
+    }
+
     const components: Array<ComponentTypeWithExtensionMeta<Props>> = [];
     const extensionsByPlugin: Record<string, number> = {};
-    const pluginId = pluginContext?.meta.id ?? '';
-    const pointLog = log.child({
-      pluginId,
-      extensionPointId,
-    });
-
-    // Don't show extensions if the extension-point id is invalid in DEV mode
-    if (
-      isGrafanaDevMode() &&
-      !isExtensionPointIdValid({ extensionPointId, pluginId, isInsidePlugin, isCoreGrafanaPlugin, log: pointLog })
-    ) {
-      return {
-        isLoading: false,
-        components: [],
-      };
-    }
-
-    // Don't show extensions if the extension-point misses meta info (plugin.json) in DEV mode
-    if (
-      isGrafanaDevMode() &&
-      !isCoreGrafanaPlugin &&
-      pluginContext &&
-      isExtensionPointMetaInfoMissing(extensionPointId, pluginContext)
-    ) {
-      pointLog.error(errors.EXTENSION_POINT_META_INFO_MISSING);
-      return {
-        isLoading: false,
-        components: [],
-      };
-    }
-
-    if (isLoadingAppPlugins) {
-      return {
-        isLoading: true,
-        components: [],
-      };
-    }
 
     for (const registryItem of registryState?.[extensionPointId] ?? []) {
       const { pluginId } = registryItem;
