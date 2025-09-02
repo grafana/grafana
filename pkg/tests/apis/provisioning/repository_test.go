@@ -753,16 +753,8 @@ func TestIntegrationProvisioning_DeleteRepositoryAndReleaseResources(t *testing.
 		for _, v := range foundFolders.Items {
 			assert.NotContains(t, v.GetAnnotations(), utils.AnnoKeyManagerKind)
 			assert.NotContains(t, v.GetAnnotations(), utils.AnnoKeyManagerIdentity)
+			assert.NotContains(t, v.GetAnnotations(), utils.AnnoKeySourcePath)
+			assert.NotContains(t, v.GetAnnotations(), utils.AnnoKeySourceChecksum)
 		}
 	}, time.Second*20, time.Millisecond*10, "Expected folders to be released")
-
-	// Cleanup resources
-	for _, v := range foundDashboards.Items {
-		err = helper.DashboardsV1.Resource.Delete(ctx, v.GetName(), metav1.DeleteOptions{})
-		require.NoError(t, err, "should delete dashboard")
-	}
-	for _, v := range foundFolders.Items {
-		err = helper.Folders.Resource.Delete(ctx, v.GetName(), metav1.DeleteOptions{})
-		require.NoError(t, err, "should delete folder")
-	}
 }
