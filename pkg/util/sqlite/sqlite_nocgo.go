@@ -14,6 +14,8 @@ import (
 	sqlite3 "modernc.org/sqlite/lib"
 )
 
+type Driver = sqlite.Driver
+
 // The errors below are used in tests to simulate specific SQLite errors. It's a temporary solution
 // until we rewrite the tests not to depend on the sqlite3 package internals directly.
 // Note: Since modernc.org/sqlite driver does not expose error codes like sqlite3, we cannot use the same approach.
