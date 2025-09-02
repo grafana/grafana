@@ -13,10 +13,10 @@ import {
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config, locationService } from '@grafana/runtime';
-import grafanaConfig from 'app/core/config';
 import { LocalValueVariable, sceneGraph, VizPanel, VizPanelMenu } from '@grafana/scenes';
 import { DataQuery, OptionsWithLegend } from '@grafana/schema';
 import appEvents from 'app/core/app_events';
+import grafanaConfig from 'app/core/config';
 import { createErrorNotification } from 'app/core/copy/appNotification';
 import { notifyApp } from 'app/core/reducers/appNotification';
 import { contextSrv } from 'app/core/services/context_srv';
