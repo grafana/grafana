@@ -812,13 +812,13 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts Options, apiOpts api
 	if err != nil {
 		return nil, err
 	}
-	v4, err := decrypt.ProvideDecryptService(cfg, tracer, decryptStorage)
+	decryptService, err := decrypt.ProvideDecryptService(cfg, tracer, decryptStorage)
 	if err != nil {
 		return nil, err
 	}
 	factory := github.ProvideFactory()
-	v5 := extras.ProvideProvisioningOSSRepositoryExtras(cfg, v4, factory, webhookExtraBuilder)
-	repositoryFactory, err := repository.ProvideFactory(v5)
+	v4 := extras.ProvideProvisioningOSSRepositoryExtras(cfg, decryptService, factory, webhookExtraBuilder)
+	repositoryFactory, err := repository.ProvideFactory(v4)
 	if err != nil {
 		return nil, err
 	}
@@ -1394,13 +1394,13 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	if err != nil {
 		return nil, err
 	}
-	v4, err := decrypt.ProvideDecryptService(cfg, tracer, decryptStorage)
+	decryptService, err := decrypt.ProvideDecryptService(cfg, tracer, decryptStorage)
 	if err != nil {
 		return nil, err
 	}
 	factory := github.ProvideFactory()
-	v5 := extras.ProvideProvisioningOSSRepositoryExtras(cfg, v4, factory, webhookExtraBuilder)
-	repositoryFactory, err := repository.ProvideFactory(v5)
+	v4 := extras.ProvideProvisioningOSSRepositoryExtras(cfg, decryptService, factory, webhookExtraBuilder)
+	repositoryFactory, err := repository.ProvideFactory(v4)
 	if err != nil {
 		return nil, err
 	}
@@ -1439,7 +1439,7 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	if err != nil {
 		return nil, err
 	}
-	testEnv, err := ProvideTestEnv(testingT, server, sqlStore, cfg, notificationServiceMock, grpcserverProvider, inMemory, httpclientProvider, oauthtokentestService, featureToggles, resourceClient, idimplService, factory, v4)
+	testEnv, err := ProvideTestEnv(testingT, server, sqlStore, cfg, notificationServiceMock, grpcserverProvider, inMemory, httpclientProvider, oauthtokentestService, featureToggles, resourceClient, idimplService, factory, decryptService)
 	if err != nil {
 		return nil, err
 	}

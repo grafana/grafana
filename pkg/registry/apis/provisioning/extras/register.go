@@ -4,10 +4,9 @@ import (
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository/github"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository/local"
+	"github.com/grafana/grafana/apps/secret/pkg/decrypt"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/secure"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/webhooks"
-	"github.com/grafana/grafana/pkg/registry/apis/secret"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -20,21 +19,17 @@ func ProvideProvisioningOSSExtras(webhook *webhooks.WebhookExtraBuilder) []provi
 
 func ProvideProvisioningOSSRepositoryExtras(
 	cfg *setting.Cfg,
-	decryptSvc secret.DecryptService,
+	decryptSvc decrypt.DecryptService,
 	ghFactory *github.Factory,
 	webhooksBuilder *webhooks.WebhookExtraBuilder,
 ) []repository.Extra {
-	// HACK: this interface and struct are used to avoid the dependency on the secret contracts
-	// "github.com/grafana/grafana/pkg/registry/apis/secret/contracts" which creates a circular dependency
-	// between the apps/provisioning and root modules.
-	wrapper := secure.ProvideDecryptService(decryptSvc)
 	return []repository.Extra{
 		local.Extra(
 			cfg.HomePath,
 			cfg.PermittedProvisioningPaths,
 		),
 		github.Extra(
-			repository.ProvideDecrypter(wrapper),
+			repository.ProvideDecrypter(decryptSvc),
 			ghFactory,
 			webhooksBuilder,
 		),
