@@ -12085,6 +12085,7 @@
     "selector": {
       "apply": "Appliquer",
       "cancel": "Annuler",
+      "error-title": "",
       "input": {
         "placeholder": "Sélectionner les portées...",
         "removeAll": "Supprimer toutes les portées"

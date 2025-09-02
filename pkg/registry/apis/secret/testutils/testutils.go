@@ -14,6 +14,7 @@ import (
 	"k8s.io/utils/ptr"
 
 	secretv1beta1 "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1"
+	decryptcontracts "github.com/grafana/grafana/apps/secret/pkg/decrypt"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
@@ -180,7 +181,7 @@ type Sut struct {
 	SecureValueService          contracts.SecureValueService
 	SecureValueMetadataStorage  contracts.SecureValueMetadataStorage
 	DecryptStorage              contracts.DecryptStorage
-	DecryptService              contracts.DecryptService
+	DecryptService              decryptcontracts.DecryptService
 	EncryptedValueStorage       contracts.EncryptedValueStorage
 	GlobalEncryptedValueStorage contracts.GlobalEncryptedValueStorage
 	SQLKeeper                   *sqlkeeper.SQLKeeper

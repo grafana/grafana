@@ -13,6 +13,7 @@ import (
 	"pgregory.net/rapid"
 
 	secretv1beta1 "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1"
+	"github.com/grafana/grafana/apps/secret/pkg/decrypt"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/testutils"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
@@ -114,24 +115,24 @@ func (m *model) list(namespace string) (*secretv1beta1.SecureValueList, error) {
 	return &secretv1beta1.SecureValueList{Items: out}, nil
 }
 
-func (m *model) decrypt(decrypter, namespace, name string) (map[string]contracts.DecryptResult, error) {
+func (m *model) decrypt(decrypter, namespace, name string) (map[string]decrypt.DecryptResult, error) {
 	for _, v := range m.secureValues {
 		if v.Namespace == namespace &&
 			v.Name == name &&
 			v.active {
 			if slices.ContainsFunc(v.Spec.Decrypters, func(d string) bool { return d == decrypter }) {
-				return map[string]contracts.DecryptResult{
-					name: contracts.NewDecryptResultValue(deepCopy(v).Spec.Value),
+				return map[string]decrypt.DecryptResult{
+					name: decrypt.NewDecryptResultValue(deepCopy(v).Spec.Value),
 				}, nil
 			}
 
-			return map[string]contracts.DecryptResult{
-				name: contracts.NewDecryptResultErr(contracts.ErrDecryptNotAuthorized),
+			return map[string]decrypt.DecryptResult{
+				name: decrypt.NewDecryptResultErr(contracts.ErrDecryptNotAuthorized),
 			}, nil
 		}
 	}
-	return map[string]contracts.DecryptResult{
-		name: contracts.NewDecryptResultErr(contracts.ErrDecryptNotFound),
+	return map[string]decrypt.DecryptResult{
+		name: decrypt.NewDecryptResultErr(contracts.ErrDecryptNotFound),
 	}, nil
 }
 

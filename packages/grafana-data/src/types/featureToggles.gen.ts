@@ -1111,4 +1111,14 @@ export interface FeatureToggles {
   * @default false
   */
   alertingTriage?: boolean;
+  /**
+  * Enables the Graphite data source full backend mode
+  * @default false
+  */
+  graphiteBackendMode?: boolean;
+  /**
+  * Enables the updated Azure Monitor resource picker
+  * @default false
+  */
+  azureResourcePickerUpdates?: boolean;
 }

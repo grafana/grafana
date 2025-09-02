@@ -4691,6 +4691,7 @@
       "panel-title": "Change panel title",
       "paste-panel": "Paste panel",
       "remove": "Remove {{typeName}}",
+      "row-title": "Change row title",
       "switch-layout": "Switch layout"
     },
     "edit-pane": {
@@ -7565,7 +7566,9 @@
   "folders": {
     "api": {
       "folder-delete-error-provisioned": "Cannot delete provisioned folder. To remove it, delete it from the repository and synchronise to apply the changes.",
-      "folder-deleted-success": "Folder deleted"
+      "folder-deleted-success": "Folder deleted",
+      "folder-move-error-provisioned": "Cannot move provisioned folder. To move it, move it in the repository and synchronise to apply the changes.",
+      "folder-moved-success": "Folder moved"
     },
     "get-loading-nav": {
       "main": {
@@ -11163,7 +11166,7 @@
       "label-workflow": "Workflow",
       "placeholder-branch": "Select or enter branch name",
       "placeholder-new-branch": "Enter new branch name",
-      "suffix-configured-branch": "(Configured branch)"
+      "suffix-configured-branch": "Configured branch"
     }
   },
   "provisioned-resource-preview-banner": {
@@ -12085,6 +12088,7 @@
     "selector": {
       "apply": "Apply",
       "cancel": "Cancel",
+      "error-title": "An unexpected error happened",
       "input": {
         "placeholder": "Select scopes...",
         "removeAll": "Remove all scopes"

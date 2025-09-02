@@ -1930,6 +1930,22 @@ var (
 			HideFromAdminPage: true,
 			Expression:        "false",
 		},
+		{
+			Name:         "graphiteBackendMode",
+			Description:  "Enables the Graphite data source full backend mode",
+			Stage:        FeatureStagePrivatePreview,
+			FrontendOnly: false,
+			Owner:        grafanaPartnerPluginsSquad,
+			Expression:   "false",
+		},
+		{
+			Name:         "azureResourcePickerUpdates",
+			Description:  "Enables the updated Azure Monitor resource picker",
+			Stage:        FeatureStagePublicPreview,
+			FrontendOnly: true,
+			Owner:        grafanaPartnerPluginsSquad,
+			Expression:   "false",
+		},
 	}
 )
 
