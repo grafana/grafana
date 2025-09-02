@@ -314,7 +314,7 @@ func (a *AlertRuleMutators) WithIntervalSeconds(seconds int64) AlertRuleMutator 
 	}
 }
 
-// WithIntervalMatching mutator that generates random interval and `for` duration that are times of the provided base interval.
+// WithIntervalMatching mutator that generates random interval and `for` duration that are multiples of the provided base interval.
 func (a *AlertRuleMutators) WithIntervalMatching(baseInterval time.Duration) AlertRuleMutator {
 	return func(rule *AlertRule) {
 		rule.IntervalSeconds = int64(baseInterval.Seconds()) * (rand.Int63n(10) + 1)

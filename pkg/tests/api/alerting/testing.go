@@ -511,6 +511,19 @@ func (a apiClient) DeleteRulesGroup(t *testing.T, folder string, group string, p
 	return status, string(resp)
 }
 
+func (a apiClient) DeleteRulesGroupProvisioning(t *testing.T, folder string, group string) (int, string) {
+	t.Helper()
+
+	u := fmt.Sprintf("%s/api/v1/provisioning/folder/%s/rule-groups/%s", a.url, folder, group)
+	req, err := http.NewRequest(http.MethodDelete, u, nil)
+	require.NoError(t, err)
+
+	resp, status, err := sendRequestRaw(t, req)
+	require.NoError(t, err)
+
+	return status, string(resp)
+}
+
 func (a apiClient) PostSilence(t *testing.T, s apimodels.PostableSilence) (apimodels.PostSilencesOKBody, int, string) {
 	t.Helper()
 

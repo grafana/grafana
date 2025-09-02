@@ -186,7 +186,7 @@ func (f *RuleStore) GetAlertRulesGroupByRuleUID(_ context.Context, q *models.Get
 	return ruleList, nil
 }
 
-func (f *RuleStore) ListAlertRulesByGroup(_ context.Context, q *models.ListAlertRulesByGroupQuery) (models.RulesGroup, string, error) {
+func (f *RuleStore) ListAlertRulesByGroup(_ context.Context, q *models.ListAlertRulesExtendedQuery) (models.RulesGroup, string, error) {
 	f.mtx.Lock()
 	defer f.mtx.Unlock()
 	f.RecordedOps = append(f.RecordedOps, *q)
@@ -228,13 +228,13 @@ func (f *RuleStore) ListAlertRulesByGroup(_ context.Context, q *models.ListAlert
 
 	var nextToken string
 	var cursor models.GroupCursor
-	if q.GroupContinueToken != "" {
-		if cur, err := models.DecodeGroupCursor(q.GroupContinueToken); err == nil {
+	if q.ContinueToken != "" {
+		if cur, err := models.DecodeGroupCursor(q.ContinueToken); err == nil {
 			cursor = cur
 		}
 	}
 
-	if q.GroupLimit < 0 {
+	if q.Limit < 0 {
 		return ruleList, "", nil
 	}
 
@@ -254,7 +254,7 @@ func (f *RuleStore) ListAlertRulesByGroup(_ context.Context, q *models.ListAlert
 			RuleGroup:    r.RuleGroup,
 		}
 		if key != cursor {
-			if q.GroupLimit > 0 && groupsFetched == q.GroupLimit {
+			if q.Limit > 0 && groupsFetched == q.Limit {
 				nextToken = models.EncodeGroupCursor(cursor)
 				break
 			}
