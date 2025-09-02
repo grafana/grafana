@@ -505,13 +505,21 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
           if (this.isStreamingSearchEnabled()) {
             subQueries.push(this.handleStreamingQuery(options, traceqlSearchTargets, queryFromFilters));
           } else {
-            if (true) {
-              const queries = traceqlSearchTargets.map((t) => ({ ...t, query: queryFromFilters }));
+            const startTime = performance.now();
+            const queries = traceqlSearchTargets.map((t) => ({ ...t, query: queryFromFilters }));
 
-              return super.query({ ...options, targets: queries }).pipe(
+            subQueries.push(
+              super.query({ ...options, targets: queries }).pipe(
                 map((response: DataQueryResponse) => {
                   if (queries[0].tableType === SearchTableType.Traces && response.data && response.data.length > 0) {
                     response.data.forEach((frame) => {
+                      reportTempoQueryMetrics('grafana_traces_traceql_response', options, {
+                        success: true,
+                        streaming: false,
+                        latencyMs: Math.round(performance.now() - startTime),
+                        query: queryFromFilters ?? '',
+                      });
+
                       // The backend does not support nested data frames directly, so we return
                       // what should be nested as a JSON array in a column: e.g. "[{dataframe}]".
                       // Here, we take the frames from that column, and change the type to "nestedFrames"
@@ -547,48 +555,21 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
                     });
                   }
                   return response;
+                }),
+                catchError((err) => {
+                  reportTempoQueryMetrics('grafana_traces_traceql_response', options, {
+                    success: false,
+                    streaming: false,
+                    latencyMs: Math.round(performance.now() - startTime),
+                    query: queryFromFilters ?? '',
+                    error: getErrorMessage(err.message),
+                    statusCode: err.status,
+                    statusText: err.statusText,
+                  });
+                  return of({ error: { message: getErrorMessage(err?.data?.message) }, data: [] });
                 })
-              );
-            } else {
-              const startTime = performance.now();
-              subQueries.push(
-                this._request('/api/search', {
-                  q: queryFromFilters,
-                  limit: options.targets[0].limit ?? DEFAULT_LIMIT,
-                  spss: options.targets[0].spss ?? DEFAULT_SPSS,
-                  start: options.range.from.unix(),
-                  end: options.range.to.unix(),
-                }).pipe(
-                  map((response) => {
-                    reportTempoQueryMetrics('grafana_traces_traceql_response', options, {
-                      success: true,
-                      streaming: false,
-                      latencyMs: Math.round(performance.now() - startTime), // rounded to nearest millisecond
-                      query: queryFromFilters ?? '',
-                    });
-                    return {
-                      data: formatTraceQLResponse(
-                        response.data.traces,
-                        this.instanceSettings,
-                        targets.traceqlSearch[0].tableType
-                      ),
-                    };
-                  }),
-                  catchError((err) => {
-                    reportTempoQueryMetrics('grafana_traces_traceql_response', options, {
-                      success: false,
-                      streaming: false,
-                      latencyMs: Math.round(performance.now() - startTime), // rounded to nearest millisecond
-                      query: queryFromFilters ?? '',
-                      error: getErrorMessage(err.message),
-                      statusCode: err.status,
-                      statusText: err.statusText,
-                    });
-                    return of({ error: { message: getErrorMessage(err?.data?.message) }, data: [] });
-                  })
-                )
-              );
-            }
+              )
+            );
           }
         }
       } catch (error) {
@@ -1737,9 +1718,9 @@ export function buildExpr(
     return query.includes('span_name')
       ? metric.params.concat(query)
       : metric.params
-        .concat(query)
-        .concat(extraParams)
-        .filter((item: string) => item);
+          .concat(query)
+          .concat(extraParams)
+          .filter((item: string) => item);
   });
   const exprs = metricParamsArray.map((params) => metric.expr.replace('{}', '{' + params.join(',') + '}'));
   const expr = exprs.join(' OR ');
