@@ -180,12 +180,6 @@ module.exports = [
           selector: "JSXElement[openingElement.name.name='a'] > JSXText[value!=/^\\s*$/]",
           message: 'No bare anchor nodes containing only text. Use `TextLink` instead.',
         },
-        {
-          selector:
-            'Program:has(ImportDeclaration[source.value="@grafana/ui"] ImportSpecifier[imported.name="Card"]) JSXOpeningElement[name.name="Card"]:not(:has(JSXAttribute[name.name="noMargin"]))',
-          message:
-            'Add noMargin prop to Card components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.',
-        },
       ],
       // FIXME: Fix these in follow up PR
       'react/no-unescaped-entities': 'off',
@@ -455,17 +449,16 @@ module.exports = [
     },
   },
 
-  // Conditionally run the betterer rules if enabled in dev's config (kept minimal)
+  // Conditionally run the betterer rules if enabled in dev's config
   ...(enableBettererRules ? bettererConfig : []),
 
-  // Minimal final override to preserve existing restrictions and add Card noMargin check
+  // Final override to preserve existing restrictions and add Card noMargin check
   {
     name: 'grafana/final-no-restricted-syntax',
     files: ['**/*.{ts,tsx,js}'],
     rules: {
       'no-restricted-syntax': [
         'error',
-        // Keep existing anchor text rule
         {
           selector: "JSXElement[openingElement.name.name='a'] > JSXText[value!=/^\\s*$/]",
           message: 'No bare anchor nodes containing only text. Use `TextLink` instead.',
@@ -479,21 +472,18 @@ module.exports = [
           selector: 'MemberExpression[object.name=localStorage]',
           message: 'Direct usage of localStorage is not allowed. import store from @grafana/data instead',
         },
-        // Keep existing Field noMargin restriction
         {
           selector:
             'Program:has(ImportDeclaration[source.value="@grafana/ui"] ImportSpecifier[imported.name="Field"]) JSXOpeningElement[name.name="Field"]:not(:has(JSXAttribute[name.name="noMargin"]))',
           message:
             'Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.',
         },
-        // New: Card noMargin restriction (same message as Betterer)
         {
           selector:
             'Program:has(ImportDeclaration[source.value="@grafana/ui"] ImportSpecifier[imported.name="Card"]) JSXOpeningElement[name.name="Card"]:not(:has(JSXAttribute[name.name="noMargin"]))',
           message:
             'Add noMargin prop to Card components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.',
         },
-        // Keep existing localeCompare performance restriction
         {
           selector: 'CallExpression[callee.type="MemberExpression"][callee.property.name="localeCompare"]',
           message:
