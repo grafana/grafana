@@ -9,11 +9,11 @@ interface Props {
 }
 
 export const Sidebar = ({ steps, currentStep, onStepClick }: Props) => {
+  const stepItemStyles = useStyles2(getStepItemStyles);
+
   if (steps.length === 0 || steps.length === 1) {
     return null;
   }
-
-  const stepItemStyles = useStyles2(getStepItemStyles);
 
   return (
     <Box width={'260px'} padding={1}>
