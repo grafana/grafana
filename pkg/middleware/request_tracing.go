@@ -46,9 +46,9 @@ var unnamedHandlers = []struct {
 	handler     string
 }{
 	{handler: "plugin-assets", pathPattern: regexp.MustCompile("^/public/plugins/")},
-	{handler: "public-build-assets", pathPattern: regexp.MustCompile("^/public/build/")},
+	{handler: "public-build-assets", pathPattern: regexp.MustCompile("^/public/build/")}, // All Grafana core assets should come from this path
 	{handler: "public-assets", pathPattern: regexp.MustCompile("^/favicon.ico")},
-	{handler: "public-assets", pathPattern: regexp.MustCompile("^/public/")},
+	{handler: "public-assets", pathPattern: regexp.MustCompile("^/public/")}, // Fallback for other assets, this should go down to 0
 	{handler: "/metrics", pathPattern: regexp.MustCompile("^/metrics")},
 	{handler: "/healthz", pathPattern: regexp.MustCompile("^/healthz")},
 	{handler: "/api/health", pathPattern: regexp.MustCompile("^/api/health")},
