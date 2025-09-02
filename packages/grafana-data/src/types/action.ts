@@ -56,7 +56,9 @@ export interface InfinityOptions extends FetchOptions {
 
 export enum HttpRequestMethod {
   POST = 'POST',
+  PUT = 'PUT',
   GET = 'GET',
+  DELETE = 'DELETE',
 }
 
 export const httpMethodOptions: SelectableValue[] = [
