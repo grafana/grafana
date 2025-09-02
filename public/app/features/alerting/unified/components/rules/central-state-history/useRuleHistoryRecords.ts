@@ -10,6 +10,8 @@ import { isLine, isNumbers } from '../state-history/useRuleHistoryRecords';
 
 import { StateFilterValues } from './CentralAlertHistoryScene';
 
+type StateFilter = (typeof StateFilterValues)[keyof typeof StateFilterValues];
+
 const emptyFilters = {
   labels: '',
   stateFrom: 'all',
@@ -18,8 +20,8 @@ const emptyFilters = {
 
 interface HistoryRecordFilters {
   labels: string;
-  stateFrom?: string;
-  stateTo?: string;
+  stateFrom?: StateFilter;
+  stateTo?: StateFilter;
 }
 
 /**
