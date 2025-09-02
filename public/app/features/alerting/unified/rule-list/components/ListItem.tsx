@@ -31,7 +31,7 @@ export const ListItem = (props: ListItemProps) => {
         {/* icon */}
         <span className={styles.statusIcon}>{icon}</span>
 
-        <Stack direction="column" gap={0} flex="1" minWidth={0}>
+        <Stack direction="column" gap={0.5} flex="1" minWidth={0}>
           {/* title */}
           <Stack direction="column" gap={0}>
             <div className={styles.textOverflow}>{title}</div>
