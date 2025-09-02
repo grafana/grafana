@@ -460,11 +460,50 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
             subQueries.push(this.handleStreamingQuery(options, traceqlSearchTargets, queryFromFilters));
           } else {
             if (true) {
-              console.log('BACKEND SEARCH QUERY');
               const queries = traceqlSearchTargets.map((t) => ({ ...t, query: queryFromFilters }));
-              return super.query({ ...options, targets: queries });
+
+              return super.query({ ...options, targets: queries }).pipe(
+                map((response: DataQueryResponse) => {
+                  if (response.data && response.data.length > 0) {
+                    response.data.forEach((frame) => {
+                      // The backend does not support nested data frames directly, so we return
+                      // what should be nested as a JSON array in a column: e.g. "[{dataframe}]".
+                      // Here, we take the frames from that column, and change the type to "nestedFrames"
+                      // This allows the frontend to render the nested frames as intended.
+                      const nested = frame.fields[5];
+                      nested.type = 'nestedFrames';
+                      nested.typeInfo.frame = 'nestedFrames';
+
+                      // The returned JSON data frame structure does not fully match what the frontend expects for
+                      // rendering nested frames. Here, we transform each nested frame array to the correct format:
+                      //
+                      // - For each row in the main data frame, there is an array of nested frames (nestedFrameArray).
+                      // - Each nested frame (nestedFrame) contains a 'schema' (with 'fields' and 'meta') and 'data' (with 'values').
+                      // - We create a new frame object (newNestedFrame) with the expected 'fields' and 'meta' properties.
+                      // - For each field, we copy its definition and assign the corresponding values from nestedFrame.data.values.
+                      // - We also set the 'length' property on the new frame, which is required by the frontend to know how many rows it contains.
+                      // - Finally, we replace the original nestedFrame in the array with the transformed newNestedFrame.
+                      nested.values.forEach((nestedFrameArray: any) => {
+                        nestedFrameArray.forEach((nestedFrame: any, nestedFrameIndex: number) => {
+                          const newNestedFrame: any = {
+                            fields: nestedFrame.schema.fields,
+                            meta: nestedFrame.schema.meta,
+                          };
+                          newNestedFrame.fields = newNestedFrame.fields.map((field: any, fieldIndex: number) => {
+                            return { ...field, values: nestedFrame.data.values[fieldIndex] };
+                          });
+
+                          const firstCol = nestedFrame.data.values?.[0];
+                          newNestedFrame.length = Array.isArray(firstCol) ? firstCol.length : 0;
+                          nestedFrameArray[nestedFrameIndex] = newNestedFrame;
+                        });
+                      });
+                    });
+                  }
+                  return response;
+                })
+              );
             } else {
-              console.log('FRONTEND SEARCH QUERY');
               const startTime = performance.now();
               subQueries.push(
                 this._request('/api/search', {
