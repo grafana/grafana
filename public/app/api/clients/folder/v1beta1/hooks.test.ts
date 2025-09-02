@@ -17,7 +17,7 @@ import {
   useDeleteMultipleFoldersMutationFacade,
   useMoveMultipleFoldersMutationFacade,
 } from './hooks';
-import { setupCreateFolder } from './test-utils';
+import { setupCreateFolder, setupUpdateFolder } from './test-utils';
 
 import { useDeleteFolderMutation, useUpdateFolderMutation } from './index';
 
@@ -246,26 +246,37 @@ describe('useMoveMultipleFoldersMutationFacade', () => {
   });
 });
 
-describe('useCreateFolder', () => {
-  describe.each([
-    // app platform
-    true,
-    // legacy
-    false,
-  ])('folderAppPlatformAPI toggle set to: %s', (toggle) => {
-    beforeEach(() => {
-      config.featureToggles.foldersAppPlatformAPI = toggle;
-    });
-    afterEach(() => {
-      config.featureToggles = originalToggles;
-    });
+describe.each([
+  // app platform
+  true,
+  // legacy
+  false,
+])('folderAppPlatformAPI toggle set to: %s', (toggle) => {
+  beforeEach(() => {
+    config.featureToggles.foldersAppPlatformAPI = toggle;
+  });
+  afterEach(() => {
+    config.featureToggles = originalToggles;
+  });
 
+  describe('useCreateFolder', () => {
     it('creates a folder', async () => {
       const { user } = setupCreateFolder();
 
       await user.click(screen.getByText('Create Folder'));
 
       expect(await screen.findByText('Folder created')).toBeInTheDocument();
+    });
+  });
+
+  describe('useUpdateFolder', () => {
+    it('updates a folder', async () => {
+      const { user } = await setupUpdateFolder(folderA_folderA.item.uid);
+
+      await user.type(screen.getByLabelText('Folder Title'), 'Updated Folder');
+      await user.click(screen.getByText('Update Folder'));
+
+      expect(await screen.findByText('Folder updated')).toBeInTheDocument();
     });
   });
 });
