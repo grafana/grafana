@@ -35,7 +35,7 @@ export function TablePanel(props: Props) {
 
   const theme = useTheme2();
   const panelContext = usePanelContext();
-  const userCanExecuteActions = panelContext.canExecuteActions ? panelContext.canExecuteActions() : false;
+  const userCanExecuteActions = useMemo(() => panelContext.canExecuteActions?.() ?? false, [panelContext]);
   const _getActions = useCallback(
     (frame: DataFrame, field: Field, rowIndex: number) =>
       userCanExecuteActions ? getCellActions(frame, field, rowIndex, replaceVariables) : [],

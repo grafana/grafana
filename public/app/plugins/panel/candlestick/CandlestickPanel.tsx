@@ -55,7 +55,7 @@ export const CandlestickPanel = ({
     canExecuteActions,
   } = usePanelContext();
 
-  const userCanExecuteActions = canExecuteActions ? canExecuteActions() : false;
+  const userCanExecuteActions = useMemo(() => canExecuteActions?.() ?? false, [canExecuteActions]);
 
   const theme = useTheme2();
 

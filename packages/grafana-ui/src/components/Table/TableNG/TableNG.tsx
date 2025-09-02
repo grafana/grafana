@@ -128,7 +128,7 @@ export function TableNG(props: TableNGProps) {
   const theme = useTheme2();
   const styles = useStyles2(getGridStyles, enablePagination, transparent);
   const panelContext = usePanelContext();
-  const userCanExecuteActions = panelContext.canExecuteActions ? panelContext.canExecuteActions() : false;
+  const userCanExecuteActions = useMemo(() => panelContext.canExecuteActions?.() ?? false, [panelContext]);
 
   const getCellActions = useCallback(
     (field: Field, rowIdx: number) => {

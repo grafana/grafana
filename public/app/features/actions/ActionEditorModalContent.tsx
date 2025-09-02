@@ -26,6 +26,11 @@ export const ActionEditorModalContent = ({
 }: ActionEditorModalContentProps) => {
   const [dirtyAction, setDirtyAction] = useState(action);
 
+  const isSaveButtonDisabled =
+    dirtyAction.title.trim() === '' ||
+    !dirtyAction[dirtyAction.type]?.url?.trim() ||
+    (dirtyAction.type === ActionType.Infinity && !dirtyAction[ActionType.Infinity]?.datasourceUid);
+
   return (
     <>
       <ActionEditor
@@ -45,11 +50,7 @@ export const ActionEditorModalContent = ({
           onClick={() => {
             onSave(index, dirtyAction);
           }}
-          disabled={
-            dirtyAction.title.trim() === '' ||
-            !dirtyAction[dirtyAction.type]?.url?.trim() ||
-            (dirtyAction.type === ActionType.Infinity && !dirtyAction[ActionType.Infinity]?.datasourceUid)
-          }
+          disabled={isSaveButtonDisabled}
         >
           <Trans i18nKey="action-editor.modal.save-button">Save</Trans>
         </Button>

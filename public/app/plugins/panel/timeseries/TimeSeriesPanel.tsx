@@ -43,7 +43,7 @@ export const TimeSeriesPanel = ({
     canExecuteActions,
   } = usePanelContext();
 
-  const userCanExecuteActions = canExecuteActions ? canExecuteActions() : false;
+  const userCanExecuteActions = useMemo(() => canExecuteActions?.() ?? false, [canExecuteActions]);
   // Vertical orientation is not available for users through config.
   // It is simplified version of horizontal time series panel and it does not support all plugins.
   const isVerticallyOriented = options.orientation === VizOrientation.Vertical;

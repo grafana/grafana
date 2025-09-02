@@ -643,7 +643,7 @@ export class ElementState implements LayerElement {
     } else if (this.options.actions?.some((action) => action.oneClick === true)) {
       const scene = this.getScene();
       const canExecuteActions = scene?.panel?.panelContext?.canExecuteActions;
-      const userCanExecuteActions = canExecuteActions ? canExecuteActions() : false;
+      const userCanExecuteActions = canExecuteActions?.() ?? false;
 
       this.oneClickMode = userCanExecuteActions ? OneClickMode.Action : OneClickMode.Off;
     } else {
@@ -907,7 +907,7 @@ export class ElementState implements LayerElement {
   getPrimaryAction = () => {
     const scene = this.getScene();
     const canExecuteActions = scene?.panel?.panelContext?.canExecuteActions;
-    const userCanExecuteActions = canExecuteActions ? canExecuteActions() : false;
+    const userCanExecuteActions = canExecuteActions?.() ?? false;
 
     if (!userCanExecuteActions) {
       return undefined;

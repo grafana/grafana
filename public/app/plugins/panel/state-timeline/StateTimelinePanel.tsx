@@ -50,7 +50,7 @@ export const StateTimelinePanel = ({
   const { sync, eventsScope, canAddAnnotations, dataLinkPostProcessor, eventBus, canExecuteActions } =
     usePanelContext();
 
-  const userCanExecuteActions = canExecuteActions ? canExecuteActions() : false;
+  const userCanExecuteActions = useMemo(() => canExecuteActions?.() ?? false, [canExecuteActions]);
   const cursorSync = sync?.() ?? DashboardCursorSync.Off;
 
   const { frames, warn } = useMemo(

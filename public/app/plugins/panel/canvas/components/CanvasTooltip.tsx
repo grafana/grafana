@@ -1,7 +1,7 @@
 import { css, cx } from '@emotion/css';
 import { useDialog } from '@react-aria/dialog';
 import { useOverlay } from '@react-aria/overlays';
-import { createRef } from 'react';
+import { createRef, useMemo } from 'react';
 
 import {
   Field,
@@ -36,7 +36,7 @@ export const CanvasTooltip = ({ scene }: Props) => {
   const theme = useTheme2();
   const styles = useStyles2(getStyles);
   const { canExecuteActions } = usePanelContext();
-  const userCanExecuteActions = canExecuteActions ? canExecuteActions() : false;
+  const userCanExecuteActions = useMemo(() => canExecuteActions?.() ?? false, [canExecuteActions]);
 
   const onClose = () => {
     if (scene?.tooltipCallback && scene.tooltipPayload) {
