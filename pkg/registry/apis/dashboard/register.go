@@ -80,12 +80,7 @@ type DashboardsAPIBuilder struct {
 	dashboardService dashboards.DashboardService
 	features         featuremgmt.FeatureToggles
 
-<<<<<<< HEAD
-	authorizer authorizer.Authorizer
-
-=======
 	authorizer                   authorizer.Authorizer
->>>>>>> 21d9b6180a9 (feat: wire up cloud-config and refactor migrator to run on MT)
 	accessControl                accesscontrol.AccessControl
 	accessClient                 claims.AccessClient
 	legacy                       *DashboardStorage
@@ -164,8 +159,7 @@ func RegisterAPIService(
 			Access:           legacy.NewDashboardAccess(dbp, namespacer, dashStore, provisioning, libraryPanelSvc, sorter, dashboardPermissionsSvc, accessControl, features),
 			DashboardService: dashboardService,
 		},
-		reg:        reg,
-		authorizer: newLegacyAuthorizer(accessControl, log.New("grafana-apiserver.dashboards")),
+		reg: reg,
 	}
 
 	migration.RegisterMetrics(reg)
@@ -179,13 +173,14 @@ func RegisterAPIService(
 	return builder
 }
 
-func NewAPIService(ac claims.AccessClient, cloudconfigClient datasourceext.CloudConfigClient, pluginStore *pluginstore.Service, features featuremgmt.FeatureToggles) *DashboardsAPIBuilder {
-
+func NewAPIService(ac claims.AccessClient, features featuremgmt.FeatureToggles, dual dualwrite.Service, sorter sort.Service, getRestConfig func(context.Context) (*clientrest.Config, error), cloudconfigClient datasourceext.CloudConfigClient, pluginStore *pluginstore.Service) *DashboardsAPIBuilder {
 	// TODO: Plugin store will soon be removed,
 	// as the cases for plugin fetching is not needed. Keeping it now to not break implementation
 	if pluginStore == nil {
 		panic("pluginStore is nil")
 	}
+
+	folderClient := client.NewK8sHandler(dual, request.GetNamespaceMapper(setting.NewCfg()), folders.FolderResourceInfo.GroupVersionResource(), getRestConfig, nil, nil, nil, sorter, features)
 
 	logger := log.New("grafana-apiserver.dashboards")
 
@@ -199,8 +194,6 @@ func NewAPIService(ac claims.AccessClient, cloudconfigClient datasourceext.Cloud
 
 	return &DashboardsAPIBuilder{
 		log: logger,
-		reg: prometheus.NewRegistry(),
-
 		reg: prometheus.NewRegistry(),
 
 		cfg: &setting.Cfg{
@@ -481,8 +474,6 @@ func (b *DashboardsAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver
 	// this is for ignoreLegacy
 	if b.dashboardPermissions != nil {
 		// Sets default root permissions
-<<<<<<< HEAD
-=======
 		// Permissions:
 		//  b.dashboardPermissions.SetDefaultPermissionsAfterCreate,
 	}
@@ -490,7 +481,6 @@ func (b *DashboardsAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver
 	// this is for ignoreLegacy
 	if b.dashboardPermissions != nil {
 		// Sets default root permissions
->>>>>>> 21d9b6180a9 (feat: wire up cloud-config and refactor migrator to run on MT)
 		storageOpts.Permissions = b.dashboardPermissions.SetDefaultPermissionsAfterCreate
 	}
 
@@ -594,8 +584,6 @@ func (b *DashboardsAPIBuilder) storageForVersion(
 			return err
 		}
 		storage[dashboards.StoragePath()] = store
-<<<<<<< HEAD
-=======
 
 		// !!!!!!Make writes work!!!!!
 		// gr := dashboards.GroupResource()
@@ -609,7 +597,6 @@ func (b *DashboardsAPIBuilder) storageForVersion(
 		// 	Storage:                 dw,
 		// }
 
->>>>>>> 21d9b6180a9 (feat: wire up cloud-config and refactor migrator to run on MT)
 		return nil
 	}
 
