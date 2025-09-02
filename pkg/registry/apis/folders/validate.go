@@ -25,6 +25,7 @@ func validateOnCreate(ctx context.Context, f *folders.Folder, getter parentsGett
 	if slices.Contains([]string{
 		folder.GeneralFolderUID,
 		folder.SharedWithMeFolderUID,
+		// "namespace" is not valid based on owner parsing
 	}, id) {
 		return dashboards.ErrFolderInvalidUID
 	}
@@ -104,6 +105,9 @@ func validateOwnerReference(name utils2.OwnerReference, folder utils.GrafanaMeta
 	}
 	if strings.ToLower(ref.Kind) != string(name.Owner) {
 		return fmt.Errorf("owner reference kind must match the name")
+	}
+	if !strings.HasPrefix(ref.APIVersion, "iam.grafana.app/") {
+		return fmt.Errorf("owner reference should be iam.grafana.app")
 	}
 	return nil
 }
