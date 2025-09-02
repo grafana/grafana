@@ -5,7 +5,9 @@ import { withErrorBoundary } from '@grafana/ui';
 
 import { logError } from '../../../../Analytics';
 
-export interface NotificationMessageSectionExtensionProps {}
+export interface NotificationMessageSectionExtensionProps {
+  ruleUid: string;
+}
 
 // Internal variable to store the extension component, for now only one component is supported
 let InternalNotificationMessageSectionExtension: ComponentType<NotificationMessageSectionExtensionProps> | null = null;
