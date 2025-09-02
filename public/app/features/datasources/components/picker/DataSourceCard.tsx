@@ -65,8 +65,6 @@ function getStyles(theme: GrafanaTheme2, builtIn = false) {
     card: css({
       cursor: 'pointer',
       backgroundColor: 'transparent',
-      // Move to list component
-      marginBottom: 0,
       padding: theme.spacing(1),
 
       '&:hover': {
@@ -76,7 +74,7 @@ function getStyles(theme: GrafanaTheme2, builtIn = false) {
     heading: css({
       width: '100%',
       overflow: 'hidden',
-      // This is needed to enable ellipsis when text overlfows
+      // This is needed to enable ellipsis when text overflows
       '> button': {
         width: '100%',
       },
