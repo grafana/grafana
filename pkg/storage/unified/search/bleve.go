@@ -1255,7 +1255,7 @@ func (b *bleveIndex) runUpdater(ctx context.Context) {
 		}
 
 		// Build reasons map
-		reasons := map[string]int{}
+		reasons := make(map[string]int, len(batch))
 		for _, req := range batch {
 			reasons[req.reason]++
 		}
@@ -1308,7 +1308,7 @@ func safeInt64ToInt(i64 int64) (int, error) {
 }
 
 func getSortFields(req *resourcepb.ResourceSearchRequest) []string {
-	sorting := []string{}
+	sorting := make([]string, 0, len(req.SortBy))
 	for _, sort := range req.SortBy {
 		input := sort.Field
 		if field, ok := textSortFields[input]; ok {
