@@ -1,7 +1,6 @@
 #!/bin/bash
 
-# TODO is there a better way to do this?
-# Change to the Grafana root directory
+# Ensure we're in the Grafana root directory
 cd "$(dirname "$0")/.."
 
 . scripts/grafana-server/variables
