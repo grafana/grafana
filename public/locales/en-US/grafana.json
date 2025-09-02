@@ -1121,7 +1121,8 @@
     },
     "enrichment": {
       "error-boundary": {
-        "notification-message-section-extension": "Notification Message Section Extension failed to load"
+        "notification-message-section-extension": "Notification Message Section Extension failed to load",
+        "rule-viewer-section-extension": "Rule Viewer Enrichment Section failed to load"
       }
     },
     "error-modal": {
