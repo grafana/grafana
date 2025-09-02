@@ -12,7 +12,7 @@ import (
 // List
 
 // Get
-func (s *ResourcePermSqlBackend) getResourcePermissions(ctx context.Context, sql *legacysql.LegacyDatabaseHelper, query *ListResourcePermissionsQuery) (map[string][]flatResourcePermission, error) {
+func (s *ResourcePermSqlBackend) getResourcePermissions(ctx context.Context, sql *legacysql.LegacyDatabaseHelper, query *ListResourcePermissionsQuery) (map[groupResourceName][]flatResourcePermission, error) {
 	rawQuery, args, err := buildListResourcePermissionsQueryFromTemplate(sql, query)
 	if err != nil {
 		return nil, err
@@ -29,7 +29,7 @@ func (s *ResourcePermSqlBackend) getResourcePermissions(ctx context.Context, sql
 		_ = rows.Close()
 	}()
 
-	permissions := make(map[string][]flatResourcePermission)
+	permissions := make(map[groupResourceName][]flatResourcePermission)
 	for rows.Next() {
 		var perm flatResourcePermission
 		if err := rows.Scan(
@@ -39,7 +39,21 @@ func (s *ResourcePermSqlBackend) getResourcePermissions(ctx context.Context, sql
 			return nil, fmt.Errorf("scanning resource permission: %w", err)
 		}
 
-		key := fmt.Sprintf("%s:%s", perm.SubjectType, perm.SubjectUID)
+		scopeParts := strings.SplitN(perm.Scope, ":", 3)
+		if len(scopeParts) != 3 {
+			s.logger.Warn("invalid scope format", "scope", perm.Scope)
+			continue // skip invalid scope
+		}
+		gr, ok := s.reverseMapper[scopeParts[0]]
+		if !ok {
+			s.logger.Warn("unknown scope prefix", "scope", perm.Scope)
+			continue // skip unknown scope prefix
+		}
+		key := groupResourceName{
+			Group:    gr.Group,
+			Resource: gr.Resource,
+			Name:     scopeParts[2],
+		}
 
 		permissions[key] = append(permissions[key], perm)
 	}
@@ -55,30 +69,36 @@ func (s *ResourcePermSqlBackend) getResourcePermission(ctx context.Context, sql 
 		return nil, fmt.Errorf("invalid resource name: %s", name)
 	}
 
-	resourceType, uid := parts[1], parts[2]
-	scope := resourceType + ":uid:" + uid
-	actionSets := []string{resourceType + ":admin", resourceType + ":edit", resourceType + ":view"}
-	resourceQuery := &ListResourcePermissionsQuery{
-		Scope:      scope,
-		OrgID:      1,
-		ActionSets: actionSets,
+	group, resourceType, uid := parts[0], parts[1], parts[2]
+	mapper, ok := s.getMapper(group, resourceType)
+	if !ok {
+		return nil, fmt.Errorf("%w: %s/%s", errUnknownGroupResource, group, resourceType)
 	}
 
-	permissionGroups, err := s.getResourcePermissions(ctx, sql, resourceQuery)
+	resourceQuery := &ListResourcePermissionsQuery{
+		Scope:      mapper.Scope(uid),
+		OrgID:      1,
+		ActionSets: mapper.ActionSets(),
+	}
+
+	permsByResource, err := s.getResourcePermissions(ctx, sql, resourceQuery)
 	if err != nil {
 		return nil, err
 	}
 
-	if len(permissionGroups) == 0 {
-		return nil, fmt.Errorf("resource permission %q not found", scope)
+	if len(permsByResource) == 0 {
+		return nil, fmt.Errorf("resource permission %q not found", resourceQuery.Scope)
 	}
 
-	resourcePermission := toV0ResourcePermission(permissionGroups, name)
+	resourcePermission, err := s.toV0ResourcePermissions(permsByResource)
+	if err != nil {
+		return nil, err
+	}
 	if resourcePermission == nil {
-		return nil, fmt.Errorf("resource permission %q not found", scope)
+		return nil, fmt.Errorf("resource permission %q: %w", resourceQuery.Scope, errNotFound)
 	}
 
-	return resourcePermission, nil
+	return &resourcePermission[0], nil
 }
 
 // Create

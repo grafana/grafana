@@ -12,9 +12,31 @@ import (
 )
 
 var (
-	errNotImplemented = errors.New("not supported by this storage backend")
-	errEmptyName      = errors.New("name cannot be empty")
+	errNotImplemented       = errors.New("not supported by this storage backend")
+	errEmptyName            = errors.New("name cannot be empty")
+	errUnknownGroupResource = errors.New("unknown group/resource")
+	errNotFound             = errors.New("not found")
+
+	defaultLevels = []string{"view", "edit", "admin"}
 )
+
+type groupResourceName struct {
+	Group    string
+	Resource string
+	Name     string
+}
+
+func (g *groupResourceName) string() string {
+	return g.Group + "-" + g.Resource + "-" + g.Name
+}
+
+func (g *groupResourceName) v0alpha1() v0alpha1.ResourcePermissionspecResource {
+	return v0alpha1.ResourcePermissionspecResource{
+		ApiGroup: g.Group,
+		Resource: g.Resource,
+		Name:     g.Name,
+	}
+}
 
 type ListResourcePermissionsQuery struct {
 	Scope      string
@@ -35,103 +57,60 @@ type flatResourcePermission struct {
 	IsServiceAccount bool      `xorm:"is_service_account"`
 }
 
-func toV0ResourcePermission(permissionGroups map[string][]flatResourcePermission, name string) *v0alpha1.ResourcePermission {
-	if len(permissionGroups) == 0 {
-		return nil
+func (s *ResourcePermSqlBackend) toV0ResourcePermissions(permsByResource map[groupResourceName][]flatResourcePermission) ([]v0alpha1.ResourcePermission, error) {
+	if len(permsByResource) == 0 {
+		return nil, nil
 	}
 
-	var firstPerm flatResourcePermission
-	var found bool
-	for _, perms := range permissionGroups {
-		if len(perms) > 0 {
-			firstPerm = perms[0]
-			found = true
-			break
-		}
-	}
+	resourcePermissions := make([]v0alpha1.ResourcePermission, 0, len(permsByResource))
+	for resource, perms := range permsByResource {
+		specs := make([]v0alpha1.ResourcePermissionspecPermission, 0, len(perms))
 
-	if !found {
-		return nil
-	}
+		var (
+			updated        time.Time = time.Now()
+			permissionKind v0alpha1.ResourcePermissionSpecPermissionKind
+		)
+		for i := range perms {
+			if i == 0 || perms[i].Updated.Before(updated) {
+				updated = perms[i].Updated
+			}
+			perm := perms[i]
+			switch perm.SubjectType {
+			case "user":
+				if perm.IsServiceAccount {
+					permissionKind = v0alpha1.ResourcePermissionSpecPermissionKindServiceAccount
+				} else {
+					permissionKind = v0alpha1.ResourcePermissionSpecPermissionKindUser
+				}
+			case "team":
+				permissionKind = v0alpha1.ResourcePermissionSpecPermissionKindTeam
+			case "builtin_role":
+				permissionKind = v0alpha1.ResourcePermissionSpecPermissionKindBasicRole
+			default:
+				return nil, errors.New("unknown subject type: " + perm.SubjectType)
+			}
 
-	var apiGroup, resourceType, resourceName string
-	if firstPerm.Scope != "" {
-		parts := strings.Split(firstPerm.Scope, ":")
-		if len(parts) >= 1 {
-			resourceType = parts[0]
-			apiGroup = getApiGroupForResource(resourceType)
-		}
-		if len(parts) >= 3 {
-			resourceName = parts[2]
-		} else {
-			resourceName = "*"
-		}
-	} else {
-		apiGroup = "core.grafana.app"
-		resourceType = "unknown"
-		resourceName = "*"
-	}
-
-	permissions := make([]v0alpha1.ResourcePermissionspecPermission, 0, 1)
-
-	for _, perms := range permissionGroups {
-		if len(perms) == 0 {
-			continue
+			verb := strings.Split(perm.Action, ":")[1]
+			specs = append(specs, v0alpha1.ResourcePermissionspecPermission{
+				Kind: permissionKind,
+				Name: perm.SubjectUID,
+				Verb: verb,
+			})
 		}
 
-		first := perms[0]
-		var permissionKind v0alpha1.ResourcePermissionSpecPermissionKind
-
-		switch first.SubjectType {
-		case "user":
-			permissionKind = v0alpha1.ResourcePermissionSpecPermissionKindUser
-		case "team":
-			permissionKind = v0alpha1.ResourcePermissionSpecPermissionKindTeam
-		case "builtin_role":
-			permissionKind = v0alpha1.ResourcePermissionSpecPermissionKindBasicRole
-		default:
-			permissionKind = v0alpha1.ResourcePermissionSpecPermissionKindUser
-		}
-
-		if first.IsServiceAccount {
-			permissionKind = v0alpha1.ResourcePermissionSpecPermissionKindServiceAccount
-		}
-
-		verb := strings.Split(first.Action, ":")[1]
-		permissions = append(permissions, v0alpha1.ResourcePermissionspecPermission{
-			Kind: permissionKind,
-			Name: first.SubjectUID,
-			Verb: verb,
+		resourcePermissions = append(resourcePermissions, v0alpha1.ResourcePermission{
+			TypeMeta: v0alpha1.ResourcePermissionInfo.TypeMeta(),
+			ObjectMeta: metav1.ObjectMeta{
+				Name:              resource.string(),
+				ResourceVersion:   updated.Format(time.RFC3339),
+				CreationTimestamp: metav1.NewTime(updated),
+			},
+			Spec: v0alpha1.ResourcePermissionSpec{
+				Resource:    resource.v0alpha1(),
+				Permissions: specs,
+			},
 		})
 	}
 
-	return &v0alpha1.ResourcePermission{
-		TypeMeta: v0alpha1.ResourcePermissionInfo.TypeMeta(),
-		ObjectMeta: metav1.ObjectMeta{
-			Name:              name,
-			ResourceVersion:   firstPerm.Updated.Format(time.RFC3339),
-			CreationTimestamp: metav1.NewTime(firstPerm.Created),
-		},
-		Spec: v0alpha1.ResourcePermissionSpec{
-			Resource: v0alpha1.ResourcePermissionspecResource{
-				ApiGroup: apiGroup,
-				Resource: resourceType,
-				Name:     resourceName,
-			},
-			Permissions: permissions,
-		},
-	}
-}
-
-func getApiGroupForResource(resourceType string) string {
-	switch resourceType {
-	case "dashboards":
-		return "dashboard.grafana.app"
-	case "folders":
-		return "folder.grafana.app"
-	case "datasources":
-		return "datasource.grafana.app"
-	default:
-		return "core.grafana.app"
-	}
+	return resourcePermissions, nil
 }
