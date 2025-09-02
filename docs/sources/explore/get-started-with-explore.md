@@ -73,7 +73,7 @@ Explore consists of a toolbar, outline, query editor, the ability to add multipl
 - **Query editor** - Interface where you construct the query for a specific data source. Query editor elements differ based on data source. In order to run queries across multiple data sources you need to select **Mixed** from the data source picker.
 
 - **+ Add query** - Add additional queries.
-- **+ Add saved query** - Add a saved query. If you've already written a query, you can click the **Replace with saved query** icon to use a previously saved query instead. To [save the query](ref:save-query) for reuse, click the **Save query** icon.
+- **+ Add from saved queries** - Add a saved query. If you've already written a query, you can click the **Replace with saved query** icon to use a previously saved query instead. To [save the query](ref:save-query) for reuse, click the **Save query** icon.
 
    {{< admonition type="note" >}}
    [Saved queries](ref:saved-queries) is in [public preview](https://grafana.com/docs/release-life-cycle/) in Grafana Enterprise and Cloud only.
