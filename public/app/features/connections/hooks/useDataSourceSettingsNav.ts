@@ -37,7 +37,8 @@ export function useDataSourceSettingsNav(pageIdParam?: string) {
 
   if (loadError) {
     const node: NavModelItem = {
-      text: t('connections.use-data-source-settings-nav.node.subTitle.data-source-error', 'Data Source Error'),
+      text: loadError,
+      subTitle: t('connections.use-data-source-settings-nav.node.subTitle.data-source-error', 'Data Source Error'),
       icon: 'exclamation-triangle',
     };
 
