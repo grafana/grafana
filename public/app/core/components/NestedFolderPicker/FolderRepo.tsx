@@ -17,7 +17,7 @@ export function FolderRepo({ folder }: Props) {
   // folder have parentUID
   // folder is not managed
   // if whole instance is provisioned
-  const isProvisionedInstance = useIsProvisionedInstance(undefined);
+  const isProvisionedInstance = useIsProvisionedInstance();
   const skipRender =
     !folder ||
     Boolean('parentUID' in folder && folder.parentUID) ||
