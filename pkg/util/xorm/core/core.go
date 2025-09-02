@@ -1734,7 +1734,6 @@ func (db *DB) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) {
 
 func (db *DB) Begin() (*Tx, error) {
 	tx, err := db.DB.Begin()
-	fmt.Println("   xorm Begin", "err:", err)
 	if err != nil {
 		return nil, err
 	}
