@@ -9,6 +9,7 @@ import (
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	secretv1beta1 "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1"
+	"github.com/grafana/grafana/apps/secret/pkg/decrypt"
 	"github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 )
 
@@ -34,11 +35,11 @@ func TestRepositorySecureValues(t *testing.T) {
 					},
 				},
 			},
-			decrypt: func(t *testing.T, names ...string) (map[string]DecryptResult, error) {
+			decrypt: func(t *testing.T, names ...string) (map[string]decrypt.DecryptResult, error) {
 				require.Equal(t, []string{"secret"}, names)
 				val := secretv1beta1.NewExposedSecureValue(names[0])
-				return map[string]DecryptResult{
-					names[0]: {Val: &val},
+				return map[string]decrypt.DecryptResult{
+					names[0]: decrypt.NewDecryptResultValue(&val),
 				}, nil
 			},
 			token: expectedDecryptedResult{
@@ -54,7 +55,7 @@ func TestRepositorySecureValues(t *testing.T) {
 					},
 				},
 			},
-			decrypt: func(t *testing.T, names ...string) (map[string]DecryptResult, error) {
+			decrypt: func(t *testing.T, names ...string) (map[string]decrypt.DecryptResult, error) {
 				t.Fatal("decrypt should not be called when Create is set")
 				return nil, nil
 			},
@@ -67,7 +68,7 @@ func TestRepositorySecureValues(t *testing.T) {
 			config: &provisioning.Repository{
 				Secure: provisioning.SecureValues{},
 			},
-			decrypt: func(t *testing.T, names ...string) (map[string]DecryptResult, error) {
+			decrypt: func(t *testing.T, names ...string) (map[string]decrypt.DecryptResult, error) {
 				t.Fatal("decrypt should not be called when no values are configured")
 				return nil, nil
 			},
@@ -81,10 +82,10 @@ func TestRepositorySecureValues(t *testing.T) {
 					},
 				},
 			},
-			decrypt: func(t *testing.T, names ...string) (map[string]DecryptResult, error) {
+			decrypt: func(t *testing.T, names ...string) (map[string]decrypt.DecryptResult, error) {
 				require.Equal(t, []string{"secret"}, names)
-				return map[string]DecryptResult{
-					names[0]: {Err: fmt.Errorf("error for name")},
+				return map[string]decrypt.DecryptResult{
+					names[0]: decrypt.NewDecryptResultErr(fmt.Errorf("error for name")),
 				}, nil
 			},
 			webhook: expectedDecryptedResult{
@@ -100,8 +101,8 @@ func TestRepositorySecureValues(t *testing.T) {
 					},
 				},
 			},
-			decrypt: func(t *testing.T, names ...string) (map[string]DecryptResult, error) {
-				return map[string]DecryptResult{}, nil
+			decrypt: func(t *testing.T, names ...string) (map[string]decrypt.DecryptResult, error) {
+				return map[string]decrypt.DecryptResult{}, nil
 			},
 			token: expectedDecryptedResult{
 				error: "not found", // it is not in the results above
@@ -116,7 +117,7 @@ func TestRepositorySecureValues(t *testing.T) {
 					},
 				},
 			},
-			decrypt: func(t *testing.T, names ...string) (map[string]DecryptResult, error) {
+			decrypt: func(t *testing.T, names ...string) (map[string]decrypt.DecryptResult, error) {
 				return nil, fmt.Errorf("explode")
 			},
 			webhook: expectedDecryptedResult{
@@ -148,13 +149,13 @@ func TestRepositorySecureValues(t *testing.T) {
 	}
 }
 
-type decryptFn = func(t *testing.T, names ...string) (map[string]DecryptResult, error)
+type decryptFn = func(t *testing.T, names ...string) (map[string]decrypt.DecryptResult, error)
 
 type dummyDecryptService struct {
 	t  *testing.T
 	fn decryptFn
 }
 
-func (d *dummyDecryptService) Decrypt(_ context.Context, _ string, _ string, names ...string) (map[string]DecryptResult, error) {
+func (d *dummyDecryptService) Decrypt(_ context.Context, _ string, _ string, names ...string) (map[string]decrypt.DecryptResult, error) {
 	return d.fn(d.t, names...)
 }
