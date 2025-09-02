@@ -18,7 +18,7 @@ export function getDefaultValues(repository?: RepositorySpec): RepositoryFormDat
       path: 'grafana/',
       sync: {
         enabled: false,
-        target: 'instance',
+        target: 'folder', // start with folder so we can shift to instance later (without an error)
         intervalSeconds: 60,
       },
     };

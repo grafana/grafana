@@ -2,12 +2,6 @@ import { test, expect } from '@grafana/plugin-e2e';
 
 const PANEL_UNDER_TEST = 'Lines 500 data points';
 
-test.use({
-  featureToggles: {
-    tableNextGen: true,
-  },
-});
-
 test.describe(
   'Panels test: Panel edit base',
   {
