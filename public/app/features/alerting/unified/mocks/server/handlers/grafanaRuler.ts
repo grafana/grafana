@@ -219,18 +219,21 @@ const filterHistoryByState = (
     normal: 'Normal',
     pending: 'Pending',
   };
-  const filteredRecords: unknown[] = [];
-  const filteredTimes: number[] = [];
-  const filteredLabels: unknown[] = [];
 
-  (data.data.values[1] as Array<Record<string, unknown>>).forEach((record: Record<string, unknown>, index: number) => {
-    const matchesPrevious = !previous || record.previous === (stateMap[previous.toLowerCase()] || previous);
-    const matchesCurrent = !current || record.current === (stateMap[current.toLowerCase()] || current);
+  const [timeValues, lineValues, labelsValues] = data.data.values;
+
+  const filteredRecords: typeof lineValues = [];
+  const filteredTimes: typeof timeValues = [];
+  const filteredLabels: typeof labelsValues = [];
+
+  lineValues.forEach((record, index: number) => {
+    const matchesPrevious = !previous || record.previous === (stateMap[previous] || previous);
+    const matchesCurrent = !current || record.current === (stateMap[current] || current);
 
     if (matchesPrevious && matchesCurrent) {
       filteredRecords.push(record);
-      filteredTimes.push((data.data.values[0] as number[])[index]);
-      filteredLabels.push((data.data.values[2] as unknown[])[index]);
+      filteredTimes.push(timeValues[index]);
+      filteredLabels.push(labelsValues[index]);
     }
   });
 
