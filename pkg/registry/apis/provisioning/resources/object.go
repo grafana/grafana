@@ -24,33 +24,29 @@ type ResourceLister interface {
 	Stats(ctx context.Context, namespace, repository string) (*provisioning.ResourceStats, error)
 }
 
+type ResourceStore interface {
+	resourcepb.ManagedObjectIndexClient
+	resourcepb.ResourceIndexClient
+}
+
 type ResourceListerFromSearch struct {
-	managed        resourcepb.ManagedObjectIndexClient
-	index          resourcepb.ResourceIndexClient
+	store          ResourceStore
 	legacyMigrator legacy.LegacyMigrator
 	storageStatus  dualwrite.Service
 }
 
-func NewResourceLister(
-	managed resourcepb.ManagedObjectIndexClient,
-	index resourcepb.ResourceIndexClient,
-) ResourceLister {
-	return &ResourceListerFromSearch{
-		index:   index,
-		managed: managed,
-	}
+func NewResourceLister(store ResourceStore) ResourceLister {
+	return &ResourceListerFromSearch{store: store}
 }
 
 // FIXME: the logic about migration and storage should probably be separated from this
 func NewResourceListerForMigrations(
-	managed resourcepb.ManagedObjectIndexClient,
-	index resourcepb.ResourceIndexClient,
+	store ResourceStore,
 	legacyMigrator legacy.LegacyMigrator,
 	storageStatus dualwrite.Service,
 ) ResourceLister {
 	return &ResourceListerFromSearch{
-		index:          index,
-		managed:        managed,
+		store:          store,
 		legacyMigrator: legacyMigrator,
 		storageStatus:  storageStatus,
 	}
@@ -58,7 +54,7 @@ func NewResourceListerForMigrations(
 
 // List implements ResourceLister.
 func (o *ResourceListerFromSearch) List(ctx context.Context, namespace, repository string) (*provisioning.ResourceList, error) {
-	objects, err := o.managed.ListManagedObjects(ctx, &resourcepb.ListManagedObjectsRequest{
+	objects, err := o.store.ListManagedObjects(ctx, &resourcepb.ListManagedObjectsRequest{
 		Namespace: namespace,
 		Kind:      string(utils.ManagerKindRepo),
 		Id:        repository,
@@ -96,7 +92,7 @@ func (o *ResourceListerFromSearch) Stats(ctx context.Context, namespace, reposit
 		req.Id = repository
 	}
 
-	counts, err := o.managed.CountManagedObjects(ctx, req)
+	counts, err := o.store.CountManagedObjects(ctx, req)
 	if err != nil {
 		return nil, err
 	}
@@ -168,7 +164,7 @@ func (o *ResourceListerFromSearch) Stats(ctx context.Context, namespace, reposit
 	}
 
 	// Get full instance stats
-	info, err := o.index.GetStats(ctx, &resourcepb.ResourceStatsRequest{
+	info, err := o.store.GetStats(ctx, &resourcepb.ResourceStatsRequest{
 		Namespace: namespace,
 	})
 	if err != nil {

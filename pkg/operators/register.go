@@ -14,22 +14,24 @@ import (
 	"github.com/grafana/authlib/authn"
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/urfave/cli/v2"
+	grpc "google.golang.org/grpc"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/transport"
 
+	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	deletepkg "github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/delete"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/export"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/migrate"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/move"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/sync"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/grafana/grafana/pkg/server"
 	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/apiserver/standalone"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 
 	authrt "github.com/grafana/grafana/apps/provisioning/pkg/auth"
@@ -65,6 +67,55 @@ func NewDirectConfigProvider(cfg *rest.Config) apiserver.RestConfigProvider {
 
 func (r *directConfigProvider) GetRestConfig(ctx context.Context) (*rest.Config, error) {
 	return r.cfg, nil
+}
+
+// unifiedStorageFactory implements resources.ResourceStore
+// and provides a new unified storage client for each request
+// HACK: wrap around unified storage client
+// We don't reuse connections as clients get dumped on each request
+type unifiedStorageFactory struct{}
+
+func NewUnifiedStorageClientFactory() resources.ResourceStore {
+	return &unifiedStorageFactory{}
+}
+
+func (s *unifiedStorageFactory) getClient(ctx context.Context) (resource.ResourceClient, error) {
+	return resource.NewRemoteResourceClient()
+}
+
+func (s *unifiedStorageFactory) CountManagedObjects(ctx context.Context, in *resourcepb.CountManagedObjectsRequest, opts ...grpc.CallOption) (*resourcepb.CountManagedObjectsResponse, error) {
+	client, err := s.getClient(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("get unified storage client: %w", err)
+	}
+	return client.CountManagedObjects(ctx, in, opts...)
+}
+
+func (s *unifiedStorageFactory) ListManagedObjects(ctx context.Context, in *resourcepb.ListManagedObjectsRequest, opts ...grpc.CallOption) (*resourcepb.ListManagedObjectsResponse, error) {
+	client, err := s.getClient(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("get unified storage client: %w", err)
+	}
+
+	return client.ListManagedObjects(ctx, in, opts...)
+}
+
+func (s *unifiedStorageFactory) Search(ctx context.Context, in *resourcepb.ResourceSearchRequest, opts ...grpc.CallOption) (*resourcepb.ResourceSearchResponse, error) {
+	client, err := s.getClient(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("get unified storage client: %w", err)
+	}
+
+	return client.Search(ctx, in, opts...)
+}
+
+func (s *unifiedStorageFactory) GetStats(ctx context.Context, in *resourcepb.ResourceStatsRequest, opts ...grpc.CallOption) (*resourcepb.ResourceStatsResponse, error) {
+	client, err := s.getClient(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("get unified storage client: %w", err)
+	}
+
+	return client.GetStats(ctx, in, opts...)
 }
 
 func runJobController(opts standalone.BuildInfo, c *cli.Context, cfg *setting.Cfg) error {
@@ -157,13 +208,9 @@ func runJobController(opts standalone.BuildInfo, c *cli.Context, cfg *setting.Cf
 	// HACK: This is connecting to unified storage. It's ok for now as long as dashboards and folders are located in the
 	// same cluster and namespace
 	// This breaks when we start really trying to support any resource. This is on the search+storage roadmap to support federation at some level.
-	// TODO: unified
-	var (
-		unified      resourcepb.ManagedObjectIndexClient = nil
-		unifiedIndex resourcepb.ResourceIndexClient      = nil
-	)
+	unified := NewUnifiedStorageClientFactory()
 
-	resourceLister := resources.NewResourceLister(unified, unifiedIndex)
+	resourceLister := resources.NewResourceLister(unified)
 	repositoryResources := resources.NewRepositoryResourcesFactory(parsers, clients, resourceLister)
 
 	stageIfPossible := repository.WrapWithStageAndPushIfPossible

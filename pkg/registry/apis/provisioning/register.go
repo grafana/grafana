@@ -130,7 +130,7 @@ func NewAPIBuilder(
 ) *APIBuilder {
 	clients := resources.NewClientFactory(configProvider)
 	parsers := resources.NewParserFactory(clients)
-	resourceLister := resources.NewResourceListerForMigrations(unified, unified, legacyMigrator, storageStatus)
+	resourceLister := resources.NewResourceListerForMigrations(unified, legacyMigrator, storageStatus)
 
 	b := &APIBuilder{
 		onlyApiServer:       onlyApiServer,
