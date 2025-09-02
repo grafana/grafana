@@ -183,6 +183,10 @@ export class RowRepeaterBehavior extends SceneObjectBase<RowRepeaterBehaviorStat
     // Remove behavior and the scoped local variable
     row.setState({ $behaviors: row.state.$behaviors!.filter((b) => b !== this), $variables: undefined });
   }
+
+  public resetPrevRepeatValues() {
+    this._prevRepeatValues = undefined;
+  }
 }
 
 function getRowContentHeight(panels: SceneGridItemLike[]): number {
