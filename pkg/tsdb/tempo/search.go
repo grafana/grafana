@@ -148,6 +148,16 @@ func (s *Service) Search(ctx context.Context, pCtx backend.PluginContext, query 
 		return result, nil
 	}
 
+	if *model.TableType == dataquery.SearchTableTypeRaw {
+		frames, err := transformRawSearchResponse(&response)
+		if err != nil {
+			ctxLogger.Error("Failed to convert SearchResponse to frames", "error", err, "function", logEntrypoint())
+			return nil, err
+		}
+		result.Frames = frames
+		return result, nil
+	}
+
 	return result, nil
 }
 
@@ -540,6 +550,19 @@ func transformSpanSearchResponse(pCtx backend.PluginContext, response *SearchRes
 	}
 
 	return []*data.Frame{spansFrame}, nil
+}
+
+func transformRawSearchResponse(response *SearchResponse) ([]*data.Frame, error) {
+	rawFrame := data.NewFrame("Raw response")
+	rawFrame.Fields = append(rawFrame.Fields, data.NewField("response", nil, []string{}))
+
+	raw, err := json.MarshalIndent(response, "", "  ")
+	if err != nil {
+		return nil, err
+	}
+
+	rawFrame.Fields[0].Append(string(raw))
+	return []*data.Frame{rawFrame}, nil
 }
 
 func transformSpanToTraceData(span *Span, spanSet *SpanSet, trace *TraceSearchMetadata) *TraceTableData {
