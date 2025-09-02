@@ -17,6 +17,19 @@ export type TestScope = {
   addLinks?: boolean;
 };
 
+type ScopeDashboardBinding = {
+  kind: string;
+  apiVersion: string;
+  metadata: { name?: string };
+  spec: {
+    dashboard: string;
+    scope: string;
+  };
+  status: {
+    dashboardTitle: string;
+  };
+};
+
 export async function scopeNodeChildrenRequest(
   page: Page,
   scopes: TestScope[],
@@ -159,7 +172,7 @@ export async function applyScopes(page: Page, scopes?: TestScope[]) {
       body: JSON.stringify({
         apiVersion: 'scope.grafana.app/v0alpha1',
         items: scopes.flatMap((scope) => {
-          const bindings: any = [];
+          const bindings: ScopeDashboardBinding[] = [];
 
           for (let i = 0; i < 10; i++) {
             const selectedGroup = groups[Math.floor(Math.random() * groups.length)];
