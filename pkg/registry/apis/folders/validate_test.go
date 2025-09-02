@@ -78,25 +78,6 @@ func TestValidateCreate(t *testing.T) {
 			expectedErr: "folder cannot be parent of itself",
 		},
 		{
-			name: "can not create with cyclic reference",
-			folder: &folders.Folder{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:        "p1",
-					Annotations: map[string]string{"grafana.app/folder": "p2"},
-				},
-				Spec: folders.FolderSpec{
-					Title: "some title",
-				},
-			},
-			getter: &folders.FolderInfoList{
-				Items: []folders.FolderInfo{
-					{Name: "p2", Parent: "p3"},
-					{Name: "p3", Parent: "p1"}, // NOTE the cycle
-				},
-			},
-			expectedErr: "folder cannot be parent of itself",
-		},
-		{
 			name: "can not create a tree that is too deep",
 			folder: &folders.Folder{
 				ObjectMeta: metav1.ObjectMeta{
