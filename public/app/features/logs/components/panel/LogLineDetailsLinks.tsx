@@ -3,7 +3,7 @@ import { memo, useMemo } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { DataLinkButton, useStyles2 } from '@grafana/ui';
+import { DataLinkButton, Icon, Toggletip, useStyles2 } from '@grafana/ui';
 
 import { FieldDef } from '../logParser';
 
@@ -42,7 +42,7 @@ const getFieldsStyles = (theme: GrafanaTheme2) => ({
   linksTable: css({
     display: 'grid',
     gap: theme.spacing(1),
-    gridTemplateColumns: `auto 1fr`,
+    gridTemplateColumns: `minmax(auto, 40%) 1fr`,
     marginBottom: theme.spacing(1),
   }),
 });
@@ -60,9 +60,29 @@ export const LogLineDetailsField = ({ field, log }: LogLineDetailsFieldProps) =>
   const singleKey = field.keys.length === 1;
   const singleValue = field.values.length === 1;
 
+  const tooltip = useMemo(
+    () => (
+      <div className={styles.value}>
+        <div className={styles.valueContainer}>
+          {singleValue ? (
+            <SingleValue value={field.values[0]} syntaxHighlighting={syntaxHighlighting} />
+          ) : (
+            <MultipleValue showCopy={true} values={field.values} />
+          )}
+        </div>
+      </div>
+    ),
+    [field.values, singleValue, styles.value, styles.valueContainer, syntaxHighlighting]
+  );
+
   return (
     <>
-      <div className={styles.label}>{singleKey ? field.keys[0] : <MultipleValue values={field.keys} />}</div>
+      <div className={styles.label}>
+        {singleKey ? field.keys[0] : <MultipleValue values={field.keys} />}
+        <Toggletip fitContent content={tooltip}>
+          <Icon className={styles.labelIcon} name="info-circle" />
+        </Toggletip>
+      </div>
       <div className={styles.links}>
         {field.links?.map((link, i) => {
           if (link.onClick && onPinLine) {
@@ -95,20 +115,6 @@ export const LogLineDetailsField = ({ field, log }: LogLineDetailsFieldProps) =>
           );
         })}
       </div>
-      {/** @todo: do we need to show the value? */}
-      {false && (
-        <div>
-          <div className={styles.value}>
-            <div className={styles.valueContainer}>
-              {singleValue ? (
-                <SingleValue value={field.values[0]} syntaxHighlighting={syntaxHighlighting} />
-              ) : (
-                <MultipleValue showCopy={true} values={field.values} />
-              )}
-            </div>
-          </div>
-        </div>
-      )}
     </>
   );
 };
@@ -119,9 +125,10 @@ const getFieldStyles = (theme: GrafanaTheme2) => ({
     wordBreak: 'break-word',
     paddingRight: theme.spacing(1),
   }),
+  labelIcon: css({
+    marginLeft: theme.spacing(1),
+  }),
   value: css({
-    overflowWrap: 'break-word',
-    wordBreak: 'break-word',
     button: {
       visibility: 'hidden',
     },
