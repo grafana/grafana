@@ -10,8 +10,6 @@ import (
 
 type Driver = sqlite3.SQLiteDriver
 
-const DriverName = "sqlite3"
-
 // The errors below are used in tests to simulate specific SQLite errors. It's a temporary solution
 // until we rewrite the tests not to depend on the sqlite3 package internals directly.
 var (
