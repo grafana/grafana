@@ -135,8 +135,9 @@ You can see a list of these queries in the **Saved queries** drawer:
 When you first open the drawer, the list of queries in the **All** tab is filtered by the data source of the panel.
 However, you can clear that filter to display all saved queries.
 
-The list in the **Favorites** tab is also filtered by data source, by default, but the one in the **Recent** tab is not.
-It includes all queries you've created in Explore in the past [how long?].
+The list in the **Favorites** tab is also filtered by data source, by default.
+The **Recent** tab displays the last 20 queries across all data sources from your **Query history** in Explore.
+From this tab, you can save queries for reuse as well.
 
 In the **Saved queries** drawer, you can:
 
