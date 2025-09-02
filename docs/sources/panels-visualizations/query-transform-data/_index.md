@@ -136,7 +136,7 @@ When you first open the drawer, the list of queries in the **All** tab is filter
 However, you can clear that filter to display all saved queries.
 
 The list in the **Favorites** tab is also filtered by data source, by default, but the one in the **Recent** tab is not.
-<!--how much history is the Recent tab showing? And is it just ones from the Saved queries? -->
+It includes all queries you've created in Explore in the past [how long?].
 
 In the **Saved queries** drawer, you can:
 
