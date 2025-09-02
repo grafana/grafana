@@ -15,7 +15,7 @@ import (
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 )
 
-func TestSubParent(t *testing.T) {
+func TestParents(t *testing.T) {
 	type input struct {
 		name   string
 		folder string

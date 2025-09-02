@@ -11,10 +11,13 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
-func validateOnCreate(ctx context.Context, f *folders.Folder, getter parentsGetter) error {
+func validateOnCreate(ctx context.Context, f *folders.Folder, getter parentsGetter, maxDepth int) error {
 	id := f.Name
 
-	for _, invalidName := range folderValidationRules.invalidNames {
+	for _, invalidName := range []string{
+		folder.GeneralFolderUID,
+		folder.SharedWithMeFolderUID,
+	} {
 		if id == invalidName {
 			return dashboards.ErrFolderInvalidUID
 		}
@@ -53,14 +56,14 @@ func validateOnCreate(ctx context.Context, f *folders.Folder, getter parentsGett
 
 	// Avoid cycles
 	for _, obj := range parents.Items {
-		if obj.Name == id {
+		if obj.Name == id || obj.Parent == id {
 			return folder.ErrFolderCannotBeParentOfItself
 		}
 	}
 
 	// Can not create a folder that will be too deep
-	if len(parents.Items)+1 > folderValidationRules.maxDepth {
-		return fmt.Errorf("folder max depth exceeded, max depth is %d", folderValidationRules.maxDepth)
+	if len(parents.Items)+1 > maxDepth {
+		return fmt.Errorf("folder max depth exceeded, max depth is %d", maxDepth)
 	}
 
 	return nil

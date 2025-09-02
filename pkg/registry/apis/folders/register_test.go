@@ -41,7 +41,7 @@ func TestFolderAPIBuilder_Validate_Create(t *testing.T) {
 						Title: "foo",
 					},
 				},
-				name: folderValidationRules.invalidNames[0],
+				name: "general",
 			},
 			err: dashboards.ErrFolderInvalidUID,
 		},

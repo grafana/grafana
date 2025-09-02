@@ -223,14 +223,9 @@ func (b *FolderAPIBuilder) GetAuthorizer() authorizer.Authorizer {
 }
 
 var folderValidationRules = struct {
-	maxDepth     int
-	invalidNames []string
+	maxDepth int
 }{
 	maxDepth: 5, // why different than folder.MaxNestedFolderDepth?? (4)
-	invalidNames: []string{
-		folder.GeneralFolderUID,
-		folder.SharedWithMeFolderUID,
-	},
 }
 
 func (b *FolderAPIBuilder) Mutate(ctx context.Context, a admission.Attributes, _ admission.ObjectInterfaces) error {
@@ -260,7 +255,7 @@ func (b *FolderAPIBuilder) Validate(ctx context.Context, a admission.Attributes,
 
 	switch a.GetOperation() {
 	case admission.Create:
-		return validateOnCreate(ctx, f, b.parents)
+		return validateOnCreate(ctx, f, b.parents, folderValidationRules.maxDepth)
 	case admission.Delete:
 		return b.validateOnDelete(ctx, f)
 	case admission.Update:
