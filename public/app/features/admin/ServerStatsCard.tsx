@@ -50,7 +50,6 @@ const getStyles = (theme: GrafanaTheme2) => {
       display: 'flex',
       flexDirection: 'column',
       gap: theme.spacing(2),
-      margin: 0,
       padding: theme.spacing(2),
     }),
     indent: css({
