@@ -29,33 +29,6 @@ type DBSession struct {
 	events          []any
 }
 
-// Begin starts a transaction and sets the transactionOpen flag
-func (sess *DBSession) Begin() error {
-	err := sess.Session.Begin()
-	if err == nil {
-		sess.transactionOpen = true
-	}
-	return err
-}
-
-// Commit commits the transaction and resets the transactionOpen flag
-func (sess *DBSession) Commit() error {
-	err := sess.Session.Commit()
-	if err == nil {
-		sess.transactionOpen = false
-	}
-	return err
-}
-
-// Rollback rolls back the transaction and resets the transactionOpen flag
-func (sess *DBSession) Rollback() error {
-	err := sess.Session.Rollback()
-	if err == nil {
-		sess.transactionOpen = false
-	}
-	return err
-}
-
 type DBTransactionFunc func(sess *DBSession) error
 
 func (sess *DBSession) publishAfterCommit(msg any) {
@@ -64,11 +37,6 @@ func (sess *DBSession) publishAfterCommit(msg any) {
 
 func (sess *DBSession) PublishAfterCommit(msg any) {
 	sess.events = append(sess.events, msg)
-}
-
-// TransactionOpen returns whether this session has an active transaction
-func (sess *DBSession) TransactionOpen() bool {
-	return sess.transactionOpen
 }
 
 func startSessionOrUseExisting(ctx context.Context, engine *xorm.Engine, beginTran bool, tracer tracing.Tracer) (*DBSession, bool, trace.Span, error) {
@@ -80,27 +48,6 @@ func startSessionOrUseExisting(ctx context.Context, engine *xorm.Engine, beginTr
 		ctxLogger := sessionLogger.FromContext(ctx)
 		ctxLogger.Debug("reusing existing session", "transaction", sess.transactionOpen)
 		sess.Session = sess.Context(ctx)
-
-		// If we found an existing session and it has a transaction open,
-		// reuse it regardless of the beginTran parameter
-		if sess.transactionOpen {
-			// This is a noop span to simplify later operations. purposefully not using existing context
-			_, span := noop.NewTracerProvider().Tracer("integrationtests").Start(ctx, "sqlstore.startSessionOrUseExisting")
-			return sess, false, span, nil
-		}
-
-		// If there's an existing session but no transaction, and we need a transaction,
-		// we need to start one on the existing session to avoid nested transaction issues
-		if beginTran {
-			err := sess.Begin()
-			if err != nil {
-				return nil, false, nil, err
-			}
-			sess.transactionOpen = true
-			// This is a noop span to simplify later operations. purposefully not using existing context
-			_, span := noop.NewTracerProvider().Tracer("integrationtests").Start(ctx, "sqlstore.startSessionOrUseExisting")
-			return sess, false, span, nil
-		}
 
 		// This is a noop span to simplify later operations. purposefully not using existing context
 		_, span := noop.NewTracerProvider().Tracer("integrationtests").Start(ctx, "sqlstore.startSessionOrUseExisting")
