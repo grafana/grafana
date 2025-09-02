@@ -96,7 +96,7 @@ func convertSQLite3URL(dsn string) (string, error) {
 
 // moderncDriver is a wrapper for modernc.org/sqlite driver to convert DSN.
 type moderncDriver struct {
-	sqlite.Driver
+	sql.Driver
 }
 
 // Open converts a dsn from sqlite3 to modernc.org/sqlite format and opens a connection.
