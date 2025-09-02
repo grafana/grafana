@@ -20,6 +20,24 @@ func TestValidateCreate(t *testing.T) {
 		maxDepth    int // defaults to 5 unless set
 	}{
 		{
+			name: "ok",
+			folder: &folders.Folder{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:        "p1",
+					Annotations: map[string]string{"grafana.app/folder": "p2"},
+				},
+				Spec: folders.FolderSpec{
+					Title: "some title",
+				},
+			},
+			getter: &folders.FolderInfoList{
+				Items: []folders.FolderInfo{
+					{Name: "p2", Parent: "p3"},
+					{Name: "p3"},
+				},
+			},
+		},
+		{
 			name: "reserved name",
 			folder: &folders.Folder{
 				ObjectMeta: metav1.ObjectMeta{
