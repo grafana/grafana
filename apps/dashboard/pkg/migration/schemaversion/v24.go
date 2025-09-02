@@ -210,7 +210,7 @@ func V24(dashboard map[string]interface{}) error {
 			continue
 		}
 
-		panelMap["pluginVersion"] = "10.X.???" // FIXME: what was the grafanaVersion at schema v24?
+		panelMap["pluginVersion"] = "1.0.0" // FIXME: what was the grafanaVersion at schema v24?
 		err := tablePanelChangedHandler(panelMap)
 		if err != nil {
 			return err

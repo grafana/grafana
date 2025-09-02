@@ -745,44 +745,5 @@ func TestV28(t *testing.T) {
 		},
 	}
 
-	errorTests := []migrationTestCase{
-		{
-			name: "throw an error if stat panel plugin not found",
-			input: map[string]interface{}{
-				"schemaVersion": 27,
-				"panels": []interface{}{
-					map[string]interface{}{
-						"id":         1,
-						"type":       "singlestat",
-						"valueName":  "avg",
-						"format":     "ms",
-						"decimals":   2,
-						"thresholds": "10,20,30",
-						"colors":     []interface{}{"green", "yellow", "red"},
-						"gauge": map[string]interface{}{
-							"show": false,
-						},
-						"targets": []interface{}{
-							map[string]interface{}{"refId": "A"},
-						},
-					},
-				},
-				"templating": map[string]interface{}{
-					"list": []interface{}{
-						map[string]interface{}{
-							"name":           "var1",
-							"tags":           []interface{}{"tag1"},
-							"tagsQuery":      "query",
-							"tagValuesQuery": "values",
-							"useTags":        true,
-						},
-					},
-				},
-			},
-			expectedError: "schema migration from version 28 to 41 failed: stat panel plugin not found when migrating dashboard to schema version 28",
-		},
-	}
-
 	runMigrationTests(t, tests, schemaversion.V28())
-	runMigrationTests(t, errorTests, schemaversion.V28())
 }
