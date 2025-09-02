@@ -144,9 +144,6 @@ func buildCMDNode(ctx context.Context, rn *rawNode, toggles featuremgmt.FeatureT
 		node.Command, err = UnmarshalReduceCommand(rn)
 	case TypeResample:
 		node.Command, err = UnmarshalResampleCommand(rn)
-		if err != nil {
-			err = MakeParseError(rn.RefID, err)
-		}
 	case TypeClassicConditions:
 		node.Command, err = classic.UnmarshalConditionsCmd(rn.Query, rn.RefID)
 	case TypeThreshold:
@@ -157,7 +154,8 @@ func buildCMDNode(ctx context.Context, rn *rawNode, toggles featuremgmt.FeatureT
 		return nil, fmt.Errorf("expression command type '%v' in expression '%v' not implemented", commandType, rn.RefID)
 	}
 	if err != nil {
-		return nil, fmt.Errorf("failed to parse expression '%v': %w", rn.RefID, err)
+		return nil, MakeParseError(rn.RefID, err)
+	
 	}
 
 	return node, nil
