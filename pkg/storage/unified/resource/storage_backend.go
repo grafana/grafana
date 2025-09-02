@@ -81,7 +81,32 @@ func (k *kvStorageBackend) initPruner(ctx context.Context) error {
 		MinWait:    time.Second * 30,
 		MaxWait:    time.Minute * 5,
 		ProcessHandler: func(ctx context.Context, key PruningKey) error {
-			// TODO
+			versionCounter := 0
+
+			// iterate over all keys for the resource and delete versions beyond the latest 20
+			// this assumes keys are returned in descending order of resource version
+			for datakey, err := range k.dataStore.Keys(ctx, ListRequestKey{
+				Namespace: key.Namespace,
+				Group:     key.Group,
+				Resource:  key.Resource,
+				Name:      key.Name,
+			}) {
+				if err != nil {
+					return err
+				}
+
+				if versionCounter < 20 {
+					versionCounter++
+					continue
+				} else {
+					err := k.dataStore.Delete(ctx, datakey)
+					if err != nil {
+						return err
+					}
+					continue
+				}
+			}
+
 			return nil
 		},
 		ErrorHandler: func(key PruningKey, err error) {
@@ -195,6 +220,14 @@ func (k *kvStorageBackend) WriteEvent(ctx context.Context, event WriteEvent) (in
 	if err != nil {
 		return 0, fmt.Errorf("failed to save event: %w", err)
 	}
+
+	_ = k.historyPruner.Add(PruningKey{
+		Namespace: event.Key.Namespace,
+		Group:     event.Key.Group,
+		Resource:  event.Key.Resource,
+		Name:      event.Key.Name,
+	})
+
 	return rv, nil
 }
 
