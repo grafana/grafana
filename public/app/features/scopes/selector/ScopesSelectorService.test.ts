@@ -17,9 +17,6 @@ describe('ScopesSelectorService', () => {
     },
     spec: {
       title: 'test-scope',
-      type: 'scope',
-      description: 'test scope',
-      category: 'scope',
       filters: [],
     },
   };
@@ -30,9 +27,6 @@ describe('ScopesSelectorService', () => {
     },
     spec: {
       title: 'test-scope',
-      type: 'scope',
-      category: 'scope',
-      description: 'test scope',
       filters: [],
     },
   };
