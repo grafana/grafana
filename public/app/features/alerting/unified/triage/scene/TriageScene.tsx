@@ -21,6 +21,8 @@ import { summaryChart } from './SummaryChart';
 import { WorkbenchSceneObject } from './Workbench';
 import { DEFAULT_FIELDS, DS_UID, METRIC_NAME, defaultTimeRange, getQueryRunner } from './utils';
 
+export const triageQuery = getTriageQuery();
+
 export const triageScene = new EmbeddedScene({
   $behaviors: [registerAlertsGroupByMacro],
   controls: [
@@ -29,7 +31,7 @@ export const triageScene = new EmbeddedScene({
     new SceneTimePicker({}),
     new SceneRefreshPicker({}),
   ],
-  $data: getTriageQuery(),
+  $data: triageQuery,
   $timeRange: new SceneTimeRange(defaultTimeRange),
   $variables: new SceneVariableSet({
     variables: [

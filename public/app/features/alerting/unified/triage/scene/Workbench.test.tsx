@@ -16,8 +16,9 @@ describe('convertToWorkbenchRows', () => {
       [key: string]: any; // Allow additional fields for grouping tests
     }>
   ): AlertRuleQueryData => {
+    type FieldType = AlertRuleQueryData['data']['series'][number]['fields'][number];
     // Create field definitions
-    const fields = [
+    const fields: FieldType[] = [
       { name: 'Time', type: 'time', config: {}, values: [], state: null },
       { name: 'alertname', type: 'string', config: {}, values: [], state: null },
       { name: 'alertstate', type: 'string', config: {}, values: [], state: null },

@@ -1,13 +1,31 @@
-import { DataFrame, Field, Labels, PanelData, findCommonLabels } from '@grafana/data';
+import { DataFrame, Field, Labels, PanelData, ThresholdsMode, findCommonLabels } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
 import {
+  DataProviderProxy,
   EmbeddedScene,
   PanelBuilders,
+  SceneComponentProps,
   SceneDataTransformer,
+  SceneFlexItem,
+  SceneFlexLayout,
   SceneObjectBase,
+  SceneObjectRef,
   SceneObjectState,
   sceneGraph,
 } from '@grafana/scenes';
+import {
+  AxisColorMode,
+  AxisPlacement,
+  BarAlignment,
+  GraphDrawStyle,
+  GraphGradientMode,
+  GraphThresholdsStyleMode,
+  LineInterpolation,
+  ScaleDistribution,
+  StackingMode,
+  TooltipDisplayMode,
+  VisibilityMode,
+} from '@grafana/schema';
 
 import { AlertLabels } from '../../components/AlertLabels';
 import { GroupRow } from '../GroupRow';
@@ -200,7 +218,7 @@ export function getAlertInstanceScene(ruleUID: string): AlertInstanceScene {
 export const getAlertRuleScene = (ruleUID: string) => {
   return new EmbeddedScene({
     $data: new SceneDataTransformer({
-      $data: sceneGraph.getData(triageScene.clone()),
+      $data: new DataProviderProxy({ source: new SceneObjectRef(sceneGraph.getData(triageScene)) }),
       transformations: [
         {
           id: 'filterByValue',
@@ -232,7 +250,48 @@ export const getAlertRuleScene = (ruleUID: string) => {
         },
       ],
     }),
-    body: PanelBuilders.timeseries().setTitle('Alert Rule State Chart').build(),
+    body: new SceneFlexLayout({
+      direction: 'column',
+      children: [
+        new SceneFlexItem({
+          minHeight: 200,
+          body: PanelBuilders.timeseries()
+            .setCustomFieldConfig('drawStyle', GraphDrawStyle.Line)
+            .setCustomFieldConfig('lineInterpolation', LineInterpolation.StepBefore)
+            .setCustomFieldConfig('barAlignment', BarAlignment.Center)
+            .setCustomFieldConfig('barWidthFactor', 0.6)
+            .setCustomFieldConfig('lineWidth', 0)
+            .setCustomFieldConfig('fillOpacity', 100)
+            .setCustomFieldConfig('gradientMode', GraphGradientMode.None)
+            .setCustomFieldConfig('spanNulls', false)
+            .setCustomFieldConfig('insertNulls', false)
+            .setCustomFieldConfig('showPoints', VisibilityMode.Auto)
+            .setCustomFieldConfig('showValues', false)
+            .setCustomFieldConfig('pointSize', 5)
+            .setCustomFieldConfig('stacking', { mode: StackingMode.Normal, group: 'A' })
+            .setCustomFieldConfig('axisPlacement', AxisPlacement.Auto)
+            .setCustomFieldConfig('axisLabel', '')
+            .setCustomFieldConfig('axisColorMode', AxisColorMode.Text)
+            .setCustomFieldConfig('axisBorderShow', false)
+            .setCustomFieldConfig('scaleDistribution', { type: ScaleDistribution.Linear })
+            .setCustomFieldConfig('axisCenteredZero', false)
+            .setCustomFieldConfig('hideFrom', { tooltip: false, viz: false, legend: false })
+            .setCustomFieldConfig('thresholdsStyle', { mode: GraphThresholdsStyleMode.Off })
+            .setColor({ mode: 'palette-classic' })
+            .setMappings([])
+            .setThresholds({
+              mode: ThresholdsMode.Absolute,
+              steps: [
+                { color: 'green', value: -Infinity },
+                { color: 'red', value: 80 },
+              ],
+            })
+            .setOption('tooltip', { mode: TooltipDisplayMode.Multi })
+            .setNoValue('0')
+            .build(),
+        }),
+      ],
+    }),
   });
 };
 
