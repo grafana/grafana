@@ -12,6 +12,7 @@ import {
   MultiValueVariable,
   CustomVariable,
   VariableValueSingle,
+  SceneGridRow,
 } from '@grafana/scenes';
 import { GRID_COLUMN_COUNT } from 'app/core/constants';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
@@ -24,6 +25,7 @@ import { DashboardLayoutItem } from '../types/DashboardLayoutItem';
 import { getDashboardGridItemOptions } from './DashboardGridItemEditor';
 import { DashboardGridItemRenderer } from './DashboardGridItemRenderer';
 import { DashboardGridItemVariableDependencyHandler } from './DashboardGridItemVariableDependencyHandler';
+import { RowRepeaterBehavior } from './RowRepeaterBehavior';
 
 export interface DashboardGridItemState extends SceneGridItemStateLike {
   body: VizPanel;
@@ -121,6 +123,12 @@ export class DashboardGridItem
   public editingCompleted(withChanges: boolean) {
     if (withChanges) {
       this._prevRepeatValues = undefined;
+      if (this.parent instanceof SceneGridRow) {
+        const repeater = this.parent.state.$behaviors?.find((b) => b instanceof RowRepeaterBehavior);
+        if (repeater) {
+          repeater.resetPrevRepeatValues();
+        }
+      }
     }
 
     if (this.state.variableName && this.state.repeatDirection === 'h' && this.state.width !== GRID_COLUMN_COUNT) {

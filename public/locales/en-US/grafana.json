@@ -549,6 +549,7 @@
     },
     "alert-rules": {
       "firing-for": "Firing for",
+      "multiple-sources": "{{numSources}} data sources",
       "next-evaluation": "Next evaluation",
       "next-evaluation-in": "next evaluation in",
       "rule-definition": "Rule definition"
@@ -2638,13 +2639,15 @@
         "show": "Show"
       },
       "manage-alerts": "In these data sources, you can select Manage alerts via Alerting UI to be able to manage these alert rules in the Grafana UI as well as in the data source where they were configured.",
-      "no-groups": "No groups available",
-      "no-namespaces": "No folders available",
       "placeholder-all-data-sources": "All data sources",
       "placeholder-contact-point": "Select contact point",
       "placeholder-data-sources": "Select data sources",
       "placeholder-labels": "Select labels",
       "plugin-rules": "Plugin rules",
+      "rule-source": {
+        "datasource": "Data source managed",
+        "grafana": "Grafana managed"
+      },
       "rule-type": "Rule type",
       "rulesSearchInput-placeholder-search": "Search",
       "search": "Search",
@@ -2666,6 +2669,7 @@
         "namespace": "Folder / Namespace",
         "rule-health": "Health",
         "rule-name": "Rule name",
+        "rule-source": "Rule source",
         "rule-type": "Type",
         "state": "State"
       }
@@ -3393,9 +3397,6 @@
       "text-badge-enabled": "Enabled",
       "text-badge-not-enabled": "Not enabled"
     },
-    "scim-banner": {
-      "message": "SCIM is currently in development and not recommended for production use. Please use with caution and expect potential changes."
-    },
     "server-discovery-modal": {
       "label-the-wellknownopenidconfiguration-endpoint-for-your-id-p": "The .well-known/openid-configuration endpoint for your IdP",
       "title-open-id-connect-discovery-url": "OpenID Connect Discovery URL"
@@ -3565,7 +3566,9 @@
       },
       "error-moving-resources": "Error moving resources",
       "error-no-target-folder-path": "Target folder path is invalid or empty, please select again.",
-      "move-warning": "This will move selected folders and their descendants. In total, this will affect:",
+      "move-total": "In total, this will affect:",
+      "move-warning": "This will move selected folders and their descendants. Available target folders depend on the selected resources.",
+      "move-warning-tooltip": "You can only move provisioned resources within their provisioned folder, and local resources to local folders.",
       "target-folder": "Target Folder"
     },
     "counts": {
@@ -9533,6 +9536,7 @@
       "fields-section": "Fields",
       "hide-log-line": "Hide log line",
       "inline-mode": "Display inline",
+      "link-value-tooltip": "Link value",
       "links-section": "Links",
       "log-line-field": "Log line",
       "log-line-section": "Log line",
