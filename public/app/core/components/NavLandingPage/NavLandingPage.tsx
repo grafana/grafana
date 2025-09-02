@@ -1,5 +1,6 @@
 import { css } from '@emotion/css';
 import * as React from 'react';
+import { useLocation } from 'react-router-dom-v5-compat';
 
 import { GrafanaTheme2, NavModelItem } from '@grafana/data';
 import { usePluginComponent } from '@grafana/runtime';
@@ -17,6 +18,7 @@ interface Props {
 export function NavLandingPage({ navId, header }: Props) {
   const { node } = useNavModel(navId);
   const styles = useStyles2(getStyles);
+  const { pathname } = useLocation();
   const children = node.children?.filter((child) => !child.hideFromTabs);
 
   const { component: ObservabilityLandingPage, isLoading: isObservabilityLandingPageLoading } = usePluginComponent<{
@@ -26,7 +28,7 @@ export function NavLandingPage({ navId, header }: Props) {
     return null;
   }
 
-  if (ObservabilityLandingPage) {
+  if (pathname === '/observability' && ObservabilityLandingPage) {
     return <ObservabilityLandingPage childrenNodes={children ?? []} />;
   }
 
