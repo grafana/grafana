@@ -1,5 +1,6 @@
 import { t } from '@grafana/i18n';
 import { Badge, Stack } from '@grafana/ui';
+import { ManagerKind } from 'app/features/apiserver/types';
 import { useGetResourceRepositoryView } from 'app/features/provisioning/hooks/useGetResourceRepositoryView';
 import { useIsProvisionedInstance } from 'app/features/provisioning/hooks/useIsProvisionedInstance';
 import { getReadOnlyTooltipText } from 'app/features/provisioning/utils/repository';
@@ -16,12 +17,16 @@ export function FolderRepo({ folder }: Props) {
   // folder have parentUID
   // folder is not managed
   // if whole instance is provisioned
-  const isProvisionedInstance = useIsProvisionedInstance();
+  const isProvisionedInstance = useIsProvisionedInstance(undefined);
   const skipRender =
-    !folder || ('parentUID' in folder && folder.parentUID) || !folder.managedBy || isProvisionedInstance;
+    !folder ||
+    Boolean('parentUID' in folder && folder.parentUID) ||
+    folder.managedBy !== ManagerKind.Repo ||
+    isProvisionedInstance;
 
   const { isReadOnlyRepo, repoType } = useGetResourceRepositoryView({
     folderName: skipRender ? undefined : folder?.uid,
+    skipQuery: skipRender,
   });
 
   if (skipRender) {
