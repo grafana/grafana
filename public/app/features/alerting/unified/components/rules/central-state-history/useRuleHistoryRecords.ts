@@ -12,10 +12,10 @@ import { StateFilterValues } from './CentralAlertHistoryScene';
 
 type StateFilter = (typeof StateFilterValues)[keyof typeof StateFilterValues];
 
-const emptyFilters = {
+const emptyFilters: HistoryRecordFilters = {
   labels: '',
-  stateFrom: 'all',
-  stateTo: 'all',
+  stateFrom: StateFilterValues.all,
+  stateTo: StateFilterValues.all,
 };
 
 interface HistoryRecordFilters {
