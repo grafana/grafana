@@ -438,7 +438,6 @@ func transformSpanToTraceData(span *Span, spanSet *SpanSet, trace *TraceSearchMe
 		} else if attribute.Value.BytesValue != "" {
 			attributes[attribute.Key] = attribute.Value.BytesValue
 		}
-
 	}
 
 	return &TraceTableData{
