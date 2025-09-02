@@ -580,16 +580,11 @@ func (k *kvStorageBackend) listModifiedSinceDataStore(ctx context.Context, key N
 	}
 }
 
-// only returns events newer than sinceRv
-// will return events for ALL tenants. So manually filter out events that are not from Namespace/Group/Resource
-// results will be ordered by RV. Need to sort by Name->RV and then yield the latest one for each Name
-// k.eventStore.Get to retrieve the full JSON of the event
-// Event doesn't seem to have Value???
 func (k *kvStorageBackend) listModifiedSinceEventStore(ctx context.Context, key NamespacedResource, sinceRv int64) iter.Seq2[*ModifiedResource, error] {
 	return func(yield func(*ModifiedResource, error) bool) {
 		// store all events ordered by RV for the given tenant here
-		evts := make([]*ModifiedResource, 0)
-		for evtKeyStr, err := range k.eventStore.ListKeysSince(ctx, sinceRv) {
+		evts := make([]EventKey, 0)
+		for evtKeyStr, err := range k.eventStore.ListKeysSince(ctx, sinceRv - 1) {
 			if err != nil {
 				yield(&ModifiedResource{}, err)
 				return
@@ -605,35 +600,27 @@ func (k *kvStorageBackend) listModifiedSinceEventStore(ctx context.Context, key 
 				continue
 			}
 
-			evts = append(evts, &ModifiedResource{
-				Key: resourcepb.ResourceKey{
-					Group:     key.Group,
-					Resource:  key.Resource,
-					Namespace: key.Namespace,
-					Name:      evtKey.Name,
-				},
-				ResourceVersion: evtKey.ResourceVersion,
-				// Action:          convertEventType(evtKey.Action),
-			})
+			evts = append(evts, evtKey)
 		}
 
 		// we only care about the latest revision of every resource in the list
 		seen := make(map[string]struct{})
 		for i := len(evts) - 1; i >= 0; i -= 1 {
-			evt := evts[i]
+			evtKey := evts[i]
 
-			if _, ok := seen[evt.Key.Name]; ok {
+			if _, ok := seen[evtKey.Name]; ok {
 				continue
 			}
 
-			seen[evt.Key.Name] = struct{}{}
+			seen[evtKey.Name] = struct{}{}
 
 			value, err := k.getValueFromDataStore(ctx, DataKey{
-				Namespace:       evt.Key.Namespace,
-				Group:           evt.Key.Group,
-				Resource:        evt.Key.Resource,
-				ResourceVersion: evt.ResourceVersion,
-				Name:            evt.Key.Name,
+				Namespace:       evtKey.Namespace,
+				Group:           evtKey.Group,
+				Resource:        evtKey.Resource,
+				ResourceVersion: evtKey.ResourceVersion,
+				Name:            evtKey.Name,
+				Action:          evtKey.Action,
 			})
 
 			if err != nil {
@@ -641,8 +628,17 @@ func (k *kvStorageBackend) listModifiedSinceEventStore(ctx context.Context, key 
 				return
 			}
 
-			evt.Value = value
-			if !yield(evt, nil) {
+			if !yield(&ModifiedResource{
+				Key: resourcepb.ResourceKey{
+					Group:     evtKey.Group,
+					Resource:  evtKey.Resource,
+					Namespace: evtKey.Namespace,
+					Name:      evtKey.Name,
+				},
+				Action:          convertEventType(evtKey.Action),
+				ResourceVersion: evtKey.ResourceVersion,
+				Value:           value,
+			}, nil) {
 				return
 			}
 		}

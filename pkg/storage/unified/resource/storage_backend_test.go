@@ -685,7 +685,6 @@ func TestKvStorageBackend_ListIterator_SpecificResourceVersion(t *testing.T) {
 }
 
 func TestKvStorageBackend_ListModifiedSince(t *testing.T) {
-	t.Skip()
 	backend := setupTestStorageBackend(t)
 	ctx := context.Background()
 
@@ -697,10 +696,8 @@ func TestKvStorageBackend_ListModifiedSince(t *testing.T) {
 
 	expectations := seedBackend(t, backend, ctx, ns)
 	for _, expectation := range expectations {
-		fmt.Println("listing with rv: ", expectation.rv)
 		_, seq := backend.ListModifiedSince(ctx, ns, expectation.rv)
 
-		fmt.Println("started listing. len: ", len(expectation.changes))
 		for mr, err := range seq {
 			require.NoError(t, err)
 			require.Equal(t, mr.Key.Group, ns.Group)
@@ -715,7 +712,7 @@ func TestKvStorageBackend_ListModifiedSince(t *testing.T) {
 			delete(expectation.changes, mr.Key.Name)
 		}
 
-		require.Equal(t, 0, len(expectation.changes))
+		require.Equal(t, 0, len(expectation.changes), "ListModifiedSince failed to return one or more expected items")
 	}
 }
 
