@@ -15,11 +15,13 @@ import (
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/urfave/cli/v2"
 	grpc "google.golang.org/grpc"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/transport"
 
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
+	"github.com/grafana/grafana/apps/provisioning/pkg/repository/github"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	deletepkg "github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/delete"
@@ -28,6 +30,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/move"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/sync"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
+	secretdecrypt "github.com/grafana/grafana/pkg/registry/apis/secret/decrypt"
 	"github.com/grafana/grafana/pkg/server"
 	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/apiserver/standalone"
@@ -41,6 +44,7 @@ import (
 	authrt "github.com/grafana/grafana/apps/provisioning/pkg/auth"
 	"github.com/grafana/grafana/apps/provisioning/pkg/controller"
 	client "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned"
+	provisioningv0alpha1 "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned/typed/provisioning/v0alpha1"
 	informer "github.com/grafana/grafana/apps/provisioning/pkg/generated/informers/externalversions"
 )
 
@@ -84,11 +88,8 @@ type unifiedStorageFactory struct {
 	indexConn grpc.ClientConnInterface
 }
 
-func NewUnifiedStorageClientFactory() (resources.ResourceStore, error) {
-	// TODO: create connections
+func NewUnifiedStorageClientFactory(tracer tracing.Tracer) (resources.ResourceStore, error) {
 	// TODO: read config from operator.ini
-	// FIXME: add a proper tracer
-	tracer := tracing.NewNoopTracerService()
 	registry := prometheus.NewPedanticRegistry()
 	// TODO: talk to s&s about using this method recommended only for tests
 	conn, err := unified.GrpcConn("TODO", registry)
@@ -109,10 +110,9 @@ func NewUnifiedStorageClientFactory() (resources.ResourceStore, error) {
 }
 
 func (s *unifiedStorageFactory) getClient(ctx context.Context) (resource.ResourceClient, error) {
-	cfg := s.cfg
-	// TODO: set namespace or is there something else in the middle?
-	// do we need to?
-	return resource.NewRemoteResourceClient(s.tracer, s.conn, s.indexConn, cfg)
+	// TODO: set namespace or is there something else in the middle? do we need to? or is it fine with the context and
+	// provisioning identity we set in driver?
+	return resource.NewRemoteResourceClient(s.tracer, s.conn, s.indexConn, s.cfg)
 }
 
 func (s *unifiedStorageFactory) CountManagedObjects(ctx context.Context, in *resourcepb.CountManagedObjectsRequest, opts ...grpc.CallOption) (*resourcepb.CountManagedObjectsResponse, error) {
@@ -150,11 +150,37 @@ func (s *unifiedStorageFactory) GetStats(ctx context.Context, in *resourcepb.Res
 	return client.GetStats(ctx, in, opts...)
 }
 
+type repositoryGetter struct {
+	factory repository.Factory
+	client  provisioningv0alpha1.ProvisioningV0alpha1Interface
+}
+
+func newRepositoryGetter(
+	factory repository.Factory,
+	client provisioningv0alpha1.ProvisioningV0alpha1Interface,
+) jobs.RepoGetter {
+	return &repositoryGetter{
+		factory: factory,
+		client:  client,
+	}
+}
+
+func (r *repositoryGetter) GetRepository(ctx context.Context, repoName string) (repository.Repository, error) {
+	repo, err := r.client.Repositories("TODO").Get(ctx, repoName, metav1.GetOptions{})
+	if err != nil {
+		return nil, fmt.Errorf("get repository %q: %w", repoName, err)
+	}
+
+	return r.factory.Build(ctx, repo)
+}
+
 func runJobController(opts standalone.BuildInfo, c *cli.Context, cfg *setting.Cfg) error {
 	logger := logging.NewSLogLogger(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
 		Level: slog.LevelDebug,
 	})).With("logger", "provisioning-job-controller")
 	logger.Info("Starting provisioning job controller")
+
+	tracer := tracing.NewNoopTracerService()
 
 	// FIXME: we should create providers that can be used here, and API server
 	controllerCfg, err := setupFromConfig(cfg)
@@ -240,7 +266,7 @@ func runJobController(opts standalone.BuildInfo, c *cli.Context, cfg *setting.Cf
 	// HACK: This is connecting to unified storage. It's ok for now as long as dashboards and folders are located in the
 	// same cluster and namespace
 	// This breaks when we start really trying to support any resource. This is on the search+storage roadmap to support federation at some level.
-	unified, err := NewUnifiedStorageClientFactory()
+	unified, err := NewUnifiedStorageClientFactory(tracer)
 	if err != nil {
 		return fmt.Errorf("create unified storage client: %w", err)
 	}
@@ -285,6 +311,33 @@ func runJobController(opts standalone.BuildInfo, c *cli.Context, cfg *setting.Cf
 		syncWorker,
 	}
 
+	// TODO: check how the config is used
+	decryptService, err := secretdecrypt.ProvideDecryptService(
+		cfg,
+		tracer,
+		nil, // DecryptStorage not needed for unified storage
+	)
+	if err != nil {
+		return fmt.Errorf("create decrypt service: %w", err)
+	}
+
+	// TODO: This depends on the different flavor of Grafana
+	extras := []repository.Extra{
+		// TODO: should we have local?
+		github.Extra(
+			repository.ProvideDecrypter(decryptService),
+			github.ProvideFactory(),
+			nil, // We don't need the WebhookURL for the execution of jobs, only for the repository controller
+		),
+	}
+
+	repoFactory, err := repository.ProvideFactory(extras)
+	if err != nil {
+		return fmt.Errorf("create repository factory: %w", err)
+	}
+
+	repoGetter := newRepositoryGetter(repoFactory, controllerCfg.client.ProvisioningV0alpha1())
+
 	// This is basically our own JobQueue system
 	driver, err := jobs.NewConcurrentJobDriver(
 		3,              // 3 drivers for now
@@ -293,7 +346,7 @@ func runJobController(opts standalone.BuildInfo, c *cli.Context, cfg *setting.Cf
 		30*time.Second, // Periodically look for new jobs
 		30*time.Second, // Lease renewal interval
 		jobStore,
-		nil, // TODO: add repository getter
+		repoGetter,
 		jobHistoryWriter,
 		jobController.InsertNotifications(),
 		workers...,
