@@ -474,12 +474,10 @@ func (k *kvStorageBackend) ListModifiedSince(ctx context.Context, key Namespaced
 
 	if sinceRvAge > time.Hour {
 		k.log.Debug("ListModifiedSince using data store", "sinceRv", sinceRv, "sinceRvAge", sinceRvAge)
-		// Recent changes: use data store for efficiency
 		return listRV, k.listModifiedSinceDataStore(ctx, key, sinceRv)
 	}
 
 	k.log.Debug("ListModifiedSince using event store", "sinceRv", sinceRv, "sinceRvAge", sinceRvAge)
-	// if no -> use datastore to get all objects since sinceRv - loopback period
 	return listRV, k.listModifiedSinceEventStore(ctx, key, sinceRv)
 }
 
@@ -491,10 +489,9 @@ func convertEventType(action DataAction) resourcepb.WatchEvent_Type {
 		return resourcepb.WatchEvent_MODIFIED
 	case DataActionDeleted:
 		return resourcepb.WatchEvent_DELETED
+	default:
+		panic(fmt.Sprintf("unknown DataAction: %v", action))
 	}
-
-	// TODO what's best practice in go here?
-	panic("not possible")
 }
 
 func (k *kvStorageBackend) getValueFromDataStore(ctx context.Context, dataKey DataKey) ([]byte, error) {
@@ -583,8 +580,8 @@ func (k *kvStorageBackend) listModifiedSinceDataStore(ctx context.Context, key N
 func (k *kvStorageBackend) listModifiedSinceEventStore(ctx context.Context, key NamespacedResource, sinceRv int64) iter.Seq2[*ModifiedResource, error] {
 	return func(yield func(*ModifiedResource, error) bool) {
 		// store all events ordered by RV for the given tenant here
-		evts := make([]EventKey, 0)
-		for evtKeyStr, err := range k.eventStore.ListKeysSince(ctx, sinceRv - 1) {
+		eventKeys := make([]EventKey, 0)
+		for evtKeyStr, err := range k.eventStore.ListKeysSince(ctx, sinceRv - defaultLookbackPeriod.Nanoseconds()) {
 			if err != nil {
 				yield(&ModifiedResource{}, err)
 				return
@@ -596,18 +593,21 @@ func (k *kvStorageBackend) listModifiedSinceEventStore(ctx context.Context, key 
 				return
 			}
 
+			if evtKey.ResourceVersion < sinceRv {
+				continue
+			}
+
 			if evtKey.Group != key.Group || evtKey.Resource != key.Resource || evtKey.Namespace != key.Namespace {
 				continue
 			}
 
-			evts = append(evts, evtKey)
+			eventKeys = append(eventKeys, evtKey)
 		}
 
 		// we only care about the latest revision of every resource in the list
 		seen := make(map[string]struct{})
-		for i := len(evts) - 1; i >= 0; i -= 1 {
-			evtKey := evts[i]
-
+		for i := len(eventKeys) - 1; i >= 0; i -= 1 {
+			evtKey := eventKeys[i]
 			if _, ok := seen[evtKey.Name]; ok {
 				continue
 			}
