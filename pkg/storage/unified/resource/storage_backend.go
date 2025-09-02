@@ -611,18 +611,9 @@ func (k *kvStorageBackend) listModifiedSinceEventStore(ctx context.Context, key 
 			if _, ok := seen[evtKey.Name]; ok {
 				continue
 			}
-
 			seen[evtKey.Name] = struct{}{}
 
-			value, err := k.getValueFromDataStore(ctx, DataKey{
-				Namespace:       evtKey.Namespace,
-				Group:           evtKey.Group,
-				Resource:        evtKey.Resource,
-				ResourceVersion: evtKey.ResourceVersion,
-				Name:            evtKey.Name,
-				Action:          evtKey.Action,
-			})
-
+			value, err := k.getValueFromDataStore(ctx, DataKey(evtKey))
 			if err != nil {
 				yield(&ModifiedResource{}, err)
 				return
