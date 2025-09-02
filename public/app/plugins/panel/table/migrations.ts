@@ -363,11 +363,9 @@ export const migrateFooterV2 = (panel: PanelModel<Options>) => {
         },
       };
 
-      if (oldFooter.countRows && oldFooter.reducer[0] === 'count') {
+      if (oldFooter.countRows && reducers[0] === 'count') {
         panel.fieldConfig.defaults.custom.footer.reducer = ['countAll'];
-      }
-
-      if (oldFooter.fields && oldFooter.fields.length > 0) {
+      } else if (oldFooter.fields && oldFooter.fields.length > 0) {
         delete panel.fieldConfig.defaults.custom.footer;
 
         // Fields is an array of field names, so push a byNames matcher

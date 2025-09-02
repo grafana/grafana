@@ -9,6 +9,7 @@ import {
   reduceField,
   fieldReducers,
   formattedValueToString,
+  ReducerID,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 
@@ -32,27 +33,29 @@ interface FooterFieldState extends FieldState {
   lastProcessedRowCount: number;
 }
 
-const nonMathReducers = new Set([
-  'allValues',
-  'changeCount',
-  'count',
-  'countAll',
-  'distinctCount',
-  'first',
-  'firstNotNull',
-  'last',
-  'lastNotNull',
-  'uniqueValues',
+const nonMathReducers = new Set<ReducerID>([
+  ReducerID.allValues,
+  ReducerID.changeCount,
+  ReducerID.count,
+  ReducerID.countAll,
+  ReducerID.distinctCount,
+  ReducerID.first,
+  ReducerID.firstNotNull,
+  ReducerID.last,
+  ReducerID.lastNotNull,
+  ReducerID.uniqueValues,
 ]);
+const isNonMathReducer = (reducer: ReducerID) => nonMathReducers.has(reducer);
 
-const isNonMathReducer = (reducer: string) => nonMathReducers.has(reducer);
+const noFormattingReducers = new Set<ReducerID>([ReducerID.count, ReducerID.countAll]);
+const shouldReducerSkipFormatting = (reducer: ReducerID) => noFormattingReducers.has(reducer);
 
 export const SummaryCell = ({ rows, field, omitCountAll = false }: SummaryCellProps) => {
   const styles = useStyles2(getStyles);
   const displayName = getDisplayName(field);
 
   const reducerResultsEntries = useMemo<Array<[string, ReducerResult | null]>>(() => {
-    const reducers: string[] = field.config.custom?.footer?.reducer ?? [];
+    const reducers: ReducerID[] = field.config.custom?.footer?.reducer ?? [];
 
     if (
       reducers.length === 0 ||
@@ -84,7 +87,7 @@ export const SummaryCell = ({ rows, field, omitCountAll = false }: SummaryCellPr
     }
 
     // Calculate all specified reducers
-    const results: Record<string, number | null> = reduceField({
+    const results: Record<ReducerID, number | null> = reduceField({
       field: {
         ...field,
         values: rows.map((row) => row[displayName]),
@@ -101,7 +104,10 @@ export const SummaryCell = ({ rows, field, omitCountAll = false }: SummaryCellPr
 
       const value = results[reducerId];
       const reducerName = fieldReducers.get(reducerId)?.name || reducerId;
-      const formattedValue = field.display ? formattedValueToString(field.display(value)) : String(value);
+      const formattedValue =
+        field.display && !shouldReducerSkipFormatting(reducerId)
+          ? formattedValueToString(field.display(value))
+          : String(value);
 
       return [
         reducerId,
@@ -127,7 +133,7 @@ export const SummaryCell = ({ rows, field, omitCountAll = false }: SummaryCellPr
   return (
     <div className={styles.footerCell}>
       {reducerResultsEntries.map(([reducerId, reducerResultEntry]) => {
-        const isCountAll = reducerId === 'countAll';
+        const isCountAll = reducerId === ReducerID.countAll;
 
         // empty reducer entry, but there may be more after - render a spacer.
         if ((isCountAll && omitCountAll) || reducerResultEntry === null) {
