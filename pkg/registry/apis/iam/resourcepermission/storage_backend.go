@@ -26,8 +26,8 @@ type ResourcePermSqlBackend struct {
 	dbProvider legacysql.LegacyDatabaseProvider
 	logger     log.Logger
 
-	mappers       map[string]map[string]Mapper    // resource -> type -> rbac mapper
-	reverseMapper map[string]schema.GroupResource // rbac scope prefix -> group/resource
+	mappers        map[schema.GroupResource]Mapper // group/resource -> rbac mapper
+	reverseMappers map[string]schema.GroupResource // rbac kind -> group/resource
 
 	subscribers []chan *resource.WrittenEvent
 	mutex       sync.Mutex
@@ -38,12 +38,11 @@ func ProvideStorageBackend(dbProvider legacysql.LegacyDatabaseProvider) *Resourc
 		dbProvider: dbProvider,
 		logger:     log.New("resourceperm_storage_backend"),
 
-		// TODO refine there must be a better structure to hold this. It's very repetitive.
-		mappers: map[string]map[string]Mapper{
-			"folder.grafana.app":    {"folders": NewMapper("folders", defaultLevels)},
-			"dashboard.grafana.app": {"dashboards": NewMapper("dashboards", defaultLevels)},
+		mappers: map[schema.GroupResource]Mapper{
+			schema.GroupResource{Group: "folder.grafana.app", Resource: "folders"}:       NewMapper("folders", defaultLevels),
+			schema.GroupResource{Group: "dashboard.grafana.app", Resource: "dashboards"}: NewMapper("dashboards", defaultLevels),
 		},
-		reverseMapper: map[string]schema.GroupResource{
+		reverseMappers: map[string]schema.GroupResource{
 			"folders":    {Group: "folder.grafana.app", Resource: "folders"},
 			"dashboards": {Group: "dashboard.grafana.app", Resource: "dashboards"},
 		},
@@ -139,14 +138,4 @@ func (s *ResourcePermSqlBackend) WriteEvent(ctx context.Context, event resource.
 	default:
 		return 0, fmt.Errorf("unsupported event type: %v", event.Type)
 	}
-}
-
-func (s *ResourcePermSqlBackend) getMapper(group, resource string) (Mapper, bool) {
-	resources, ok := s.mappers[group]
-	if !ok {
-		return nil, false
-	}
-
-	mapper, ok := resources[resource]
-	return mapper, ok
 }

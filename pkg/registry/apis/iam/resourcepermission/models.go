@@ -16,6 +16,7 @@ var (
 	errEmptyName            = errors.New("name cannot be empty")
 	errUnknownGroupResource = errors.New("unknown group/resource")
 	errNotFound             = errors.New("not found")
+	errInvalidScope         = errors.New("invalid scope")
 
 	defaultLevels = []string{"view", "edit", "admin"}
 )

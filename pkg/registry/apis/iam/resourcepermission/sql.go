@@ -7,11 +7,28 @@ import (
 
 	v0alpha1 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
 // List
 
 // Get
+func (s *ResourcePermSqlBackend) parseScope(scope string) (*groupResourceName, error) {
+	parts := strings.SplitN(scope, ":", 3)
+	if len(parts) != 3 {
+		return nil, fmt.Errorf("%w: %s", errInvalidScope, scope)
+	}
+	gr, ok := s.reverseMappers[parts[0]]
+	if !ok {
+		return nil, fmt.Errorf("%w: %s", errUnknownGroupResource, parts[0])
+	}
+	return &groupResourceName{
+		Group:    gr.Group,
+		Resource: gr.Resource,
+		Name:     parts[2],
+	}, nil
+}
+
 func (s *ResourcePermSqlBackend) getResourcePermissions(ctx context.Context, sql *legacysql.LegacyDatabaseHelper, query *ListResourcePermissionsQuery) (map[groupResourceName][]flatResourcePermission, error) {
 	rawQuery, args, err := buildListResourcePermissionsQueryFromTemplate(sql, query)
 	if err != nil {
@@ -39,23 +56,13 @@ func (s *ResourcePermSqlBackend) getResourcePermissions(ctx context.Context, sql
 			return nil, fmt.Errorf("scanning resource permission: %w", err)
 		}
 
-		scopeParts := strings.SplitN(perm.Scope, ":", 3)
-		if len(scopeParts) != 3 {
-			s.logger.Warn("invalid scope format", "scope", perm.Scope)
-			continue // skip invalid scope
-		}
-		gr, ok := s.reverseMapper[scopeParts[0]]
-		if !ok {
-			s.logger.Warn("unknown scope prefix", "scope", perm.Scope)
-			continue // skip unknown scope prefix
-		}
-		key := groupResourceName{
-			Group:    gr.Group,
-			Resource: gr.Resource,
-			Name:     scopeParts[2],
+		key, err := s.parseScope(perm.Scope)
+		if err != nil {
+			s.logger.Warn("skipping", "scope", perm.Scope, "err", err)
+			continue
 		}
 
-		permissions[key] = append(permissions[key], perm)
+		permissions[*key] = append(permissions[*key], perm)
 	}
 
 	return permissions, nil
@@ -70,7 +77,7 @@ func (s *ResourcePermSqlBackend) getResourcePermission(ctx context.Context, sql 
 	}
 
 	group, resourceType, uid := parts[0], parts[1], parts[2]
-	mapper, ok := s.getMapper(group, resourceType)
+	mapper, ok := s.mappers[schema.GroupResource{Group: group, Resource: resourceType}]
 	if !ok {
 		return nil, fmt.Errorf("%w: %s/%s", errUnknownGroupResource, group, resourceType)
 	}
