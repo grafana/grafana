@@ -24,10 +24,11 @@ type EventKey struct {
 	Resource        string
 	Name            string
 	ResourceVersion int64
+	Action          DataAction
 }
 
 func (k EventKey) String() string {
-	return fmt.Sprintf("%d~%s~%s~%s~%s", k.ResourceVersion, k.Namespace, k.Group, k.Resource, k.Name)
+	return fmt.Sprintf("%d~%s~%s~%s~%s~%s", k.ResourceVersion, k.Namespace, k.Group, k.Resource, k.Name, k.Action)
 }
 
 func (k EventKey) Validate() error {
@@ -46,6 +47,9 @@ func (k EventKey) Validate() error {
 	if k.ResourceVersion < 0 {
 		return fmt.Errorf("resource version must be non-negative")
 	}
+	if k.Action == "" {
+		return fmt.Errorf("action cannot be empty")
+	}
 
 	// Validate each field against the naming rules (reusing the regex from datastore.go)
 	if !validNameRegex.MatchString(k.Namespace) {
@@ -59,6 +63,12 @@ func (k EventKey) Validate() error {
 	}
 	if !validNameRegex.MatchString(k.Name) {
 		return fmt.Errorf("name '%s' is invalid", k.Name)
+	}
+
+	switch k.Action {
+	case DataActionCreated, DataActionUpdated, DataActionDeleted:
+	default:
+		return fmt.Errorf("action '%s' is invalid: must be one of 'created', 'updated', or 'deleted'", k.Action)
 	}
 
 	return nil
@@ -84,8 +94,8 @@ func newEventStore(kv KV) *eventStore {
 // ParseEventKey parses a key string back into an EventKey struct
 func ParseEventKey(key string) (EventKey, error) {
 	parts := strings.Split(key, "~")
-	if len(parts) != 5 {
-		return EventKey{}, fmt.Errorf("invalid key format: expected 5 parts, got %d", len(parts))
+	if len(parts) != 6 {
+		return EventKey{}, fmt.Errorf("invalid key format: expected 6 parts, got %d", len(parts))
 	}
 
 	rv, err := strconv.ParseInt(parts[0], 10, 64)
@@ -99,6 +109,7 @@ func ParseEventKey(key string) (EventKey, error) {
 		Group:           parts[2],
 		Resource:        parts[3],
 		Name:            parts[4],
+		Action:          DataAction(parts[5]),
 	}, nil
 }
 
@@ -127,6 +138,7 @@ func (n *eventStore) Save(ctx context.Context, event Event) error {
 		Resource:        event.Resource,
 		Name:            event.Name,
 		ResourceVersion: event.ResourceVersion,
+		Action:          event.Action,
 	}
 
 	if err := eventKey.Validate(); err != nil {

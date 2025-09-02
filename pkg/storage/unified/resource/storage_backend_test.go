@@ -145,6 +145,7 @@ func TestKvStorageBackend_WriteEvent_Success(t *testing.T) {
 				Resource:        "resources",
 				Name:            "test-resource",
 				ResourceVersion: rv,
+				Action:          expectedAction,
 			}
 
 			_, err = backend.eventStore.Get(ctx, eventKey)
