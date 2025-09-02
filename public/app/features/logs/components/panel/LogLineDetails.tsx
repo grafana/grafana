@@ -184,7 +184,7 @@ export const InlineLogLineDetails = memo(({ logs, log, onResize, timeRange, time
 
   return (
     <div className={`${styles.inlineWrapper} log-line-inline-details`} style={{ maxWidth: detailsWidth }}>
-      <div className={styles.container}>
+      <div className={styles.inlineContainer}>
         <div className={styles.scrollContainer} ref={scrollRef} onScroll={saveScroll}>
           <LogLineDetailsComponent log={log} logs={logs} timeRange={timeRange} timeZone={timeZone} />
         </div>
@@ -203,12 +203,23 @@ const getStyles = (theme: GrafanaTheme2, mode: LogLineDetailsMode, showControls?
     padding: theme.spacing(1, 2, 1.5, 2),
     marginRight: 1,
   }),
-  container: css({
-    overflow: 'auto',
+  inlineContainer: css({
+    backgroundColor: theme.colors.background.elevated,
+    border: `1px solid ${theme.colors.border.weak}`,
+    borderRadius: theme.shape.radius.default,
+    boxShadow: theme.shadows.z2,
     height: '100%',
-    boxShadow: theme.shadows.z1,
+    overflow: 'auto',
+  }),
+  container: css({
+    backgroundColor: theme.colors.background.elevated,
     border: `1px solid ${theme.colors.border.medium}`,
+    borderBottomRightRadius: showControls ? undefined : theme.shape.radius.default,
     borderRight: mode === 'sidebar' && showControls ? 'none' : undefined,
+    borderTopRightRadius: showControls ? undefined : theme.shape.radius.default,
+    boxShadow: theme.shadows.z3,
+    height: '100%',
+    overflow: 'auto',
   }),
   scrollContainer: css({
     overflow: 'auto',
