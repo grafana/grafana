@@ -37,7 +37,6 @@ jobs:
         uses: ./.github/actions/change-detection
         with:
           self: .github/workflows/pr-test-integration.yml
-
   sqlite:
     needs: detect-changes
     if: needs.detect-changes.outputs.changed == 'true'
@@ -70,6 +69,39 @@ jobs:
           set -euo pipefail
           readarray -t PACKAGES <<< "$(./scripts/ci/backend-tests/pkgs-with-tests-named.sh -b TestIntegration | ./scripts/ci/backend-tests/shard.sh -N"$SHARD" -d-)"
           go test -tags=sqlite -timeout=8m -run '^TestIntegration' "${PACKAGES[@]}"
+
+  sqlite_nocgo:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.changed == 'true'
+    strategy:
+      matrix:
+        # We don't need more than this since it has to wait for the other tests.
+        shard: [
+          1/4, 2/4, 3/4, 4/4,
+        ]
+      fail-fast: false
+
+    name: Sqlite Without CGo (${{ matrix.shard }})
+    runs-on: ubuntu-x64-large-io
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Setup Go
+        uses: actions/setup-go@v5.5.0
+        with:
+          go-version-file: go.mod
+          cache: true
+      - name: Run tests
+        env:
+          SHARD: ${{ matrix.shard }}
+        run: |
+          set -euo pipefail
+          readarray -t PACKAGES <<< "$(./scripts/ci/backend-tests/pkgs-with-tests-named.sh -b TestIntegration | ./scripts/ci/backend-tests/shard.sh -N"$SHARD" -d-)"
+          CGO_ENABLED=0 go test -tags=sqlite -timeout=8m -run '^TestIntegration' "${PACKAGES[@]}"
   mysql:
     needs: detect-changes
     if: needs.detect-changes.outputs.changed == 'true'
