@@ -4,7 +4,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 
-	"github.com/grafana/grafana/pkg/util/ticker"
+	"github.com/grafana/grafana/pkg/services/ngalert/schedule/ticker"
 )
 
 const (

@@ -72,6 +72,7 @@
 
 # Git Sync / App Platform Provisioning
 /apps/provisioning/ @grafana/grafana-git-ui-sync-team
+/pkg/operators @grafana/grafana-git-ui-sync-team
 /public/app/features/provisioning @grafana/grafana-git-ui-sync-team
 /pkg/registry/apis/provisioning @grafana/grafana-git-ui-sync-team
 /pkg/tests/apis/provisioning @grafana/grafana-git-ui-sync-team
@@ -464,6 +465,7 @@
 /e2e-playwright/panels-suite/table-kitchenSink.spec.ts @grafana/dataviz-squad
 /e2e-playwright/panels-suite/table-markdown.spec.ts @grafana/dataviz-squad
 /e2e-playwright/panels-suite/table-sparkline.spec.ts @grafana/dataviz-squad
+/e2e-playwright/panels-suite/table-utils.ts @grafana/dataviz-squad
 /e2e-playwright/plugin-e2e/ @grafana/oss-big-tent @grafana/partner-datasources
 /e2e-playwright/plugin-e2e/plugin-e2e-api-tests/ @grafana/plugins-platform-frontend
 /e2e-playwright/smoke-tests-suite/ @grafana/grafana-frontend-platform
@@ -969,7 +971,6 @@ playwright.storybook.config.ts @grafana/grafana-frontend-platform
 /public/app/routes/ @grafana/grafana-search-navigate-organise
 /public/app/store/ @grafana/grafana-frontend-platform
 /public/app/types/ @grafana/grafana-frontend-platform
-/public/app/types/alerting.ts @grafana/alerting-frontend
 /public/app/types/unified-alerting-dto.ts @grafana/alerting-frontend
 /public/app/types/unified-alerting.ts @grafana/alerting-frontend
 /public/dashboards/ @grafana/dashboards-squad
@@ -1235,6 +1236,7 @@ embed.go @grafana/grafana-as-code
 /.github/workflows/i18n-verify.yml @grafana/grafana-frontend-platform
 /.github/workflows/deploy-storybook-preview.yml @grafana/grafana-frontend-platform
 /.github/workflows/scripts/crowdin/create-tasks.ts @grafana/grafana-frontend-platform
+/.github/workflows/scripts/publish-frontend-metrics.mts @grafana/grafana-frontend-platform
 /.github/workflows/pr-go-workspace-check.yml @grafana/grafana-app-platform-squad
 /.github/workflows/pr-dependabot-update-go-workspace.yml @grafana/grafana-app-platform-squad
 /.github/workflows/pr-k8s-codegen-check.yml @grafana/grafana-app-platform-squad
@@ -1256,6 +1258,7 @@ embed.go @grafana/grafana-as-code
 /.github/zizmor.yml @grafana/grafana-developer-enablement-squad
 /.github/license_finder.yaml @bergquist
 /.github/actionlint.yaml @grafana/grafana-developer-enablement-squad
+/.github/workflows/pr-test-docker.yml @grafana/grafana-developer-enablement-squad
 
 # Generated files not requiring owner approval
 /packages/grafana-data/src/types/featureToggles.gen.ts @grafanabot

@@ -11,12 +11,6 @@ TableCellDisplayMode: "auto" | "color-text" | "color-background" | "color-backgr
 // or a gradient.
 TableCellBackgroundDisplayMode: "basic" | "gradient" @cuetsy(kind="enum",memberNames="Basic|Gradient")
 
-// Whenever we add text wrapping, we should add all text wrapping options at once
-TableWrapTextOptions: {
-  // if true, wrap the text content of the cell
-  wrapText?: bool
-} @cuetsy(kind="interface")
-
 // Sort by field state
 TableSortByFieldState: {
 	// Sets the display name of the field to sort by
@@ -37,12 +31,12 @@ TableFooterOptions: {
 // Auto mode table cell options
 TableAutoCellOptions: {
 	type: TableCellDisplayMode & "auto"
-} & TableWrapTextOptions @cuetsy(kind="interface")
+} @cuetsy(kind="interface")
 
 // Colored text cell options
 TableColorTextCellOptions: {
 	type: TableCellDisplayMode & "color-text"
-} & TableWrapTextOptions @cuetsy(kind="interface")
+} @cuetsy(kind="interface")
 
 // Json view cell options
 TableJsonViewCellOptions: {
@@ -59,7 +53,7 @@ TableImageCellOptions: {
 // Show data links in the cell
 TableDataLinksCellOptions: {
 	type: TableCellDisplayMode & "data-links"
-} & TableWrapTextOptions @cuetsy(kind="interface")
+} @cuetsy(kind="interface")
 
 // Show actions in the cell
 TableActionsCellOptions: {
@@ -85,11 +79,11 @@ TableColoredBackgroundCellOptions: {
 	type: TableCellDisplayMode & "color-background"
 	mode?: TableCellBackgroundDisplayMode
 	applyToRow?: bool
-} & TableWrapTextOptions @cuetsy(kind="interface")
+} @cuetsy(kind="interface")
 
 TablePillCellOptions: {
   type: TableCellDisplayMode & "pill"
-} & TableWrapTextOptions @cuetsy(kind="interface")
+} @cuetsy(kind="interface")
 
 TableMarkdownCellOptions: {
 	type: TableCellDisplayMode & "markdown"
@@ -119,7 +113,7 @@ TableCellTooltipOptions: {
   // The name of the field to get the tooltip content from
   field: string
   // placement of the tooltip
-  placement?: TableCellTooltipPlacement & (*"auto" | _)
+  placement?: TableCellTooltipPlacement
 }
 
 // Field options for each field within a table (e.g 10, "The String", 64.20, etc.)
@@ -131,13 +125,14 @@ TableFieldOptions: {
 	// This field is deprecated in favor of using cellOptions
 	displayMode?: TableCellDisplayMode
 	cellOptions: TableCellOptions
-	hidden?:     bool // ?? default is missing or false ??
 	inspect: bool | *false
 	filterable?: bool
 	// Hides any header for a column, useful for columns that show some static content or buttons.
 	hideHeader?: bool
+  // if true, wrap the text content of the cell
+  wrapText?: bool
   // Enables text wrapping for column headers
   wrapHeaderText?: bool
   // Selecting or hovering this field will show a tooltip containing the content within the target field
   tooltip?: TableCellTooltipOptions
-} @cuetsy(kind="interface")
+} & HideableFieldConfig @cuetsy(kind="interface")

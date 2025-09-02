@@ -68,9 +68,12 @@ dc_resource("frontend-service",
   labels=["services"],
 )
 dc_resource("alloy", labels=["observability"])
+dc_resource("prometheus", labels=["observability"])
 dc_resource("loki", labels=["observability"])
-dc_resource("tempo-init", labels=["observability"])
 dc_resource("tempo", labels=["observability"])
+
+dc_resource("postgres", labels=["misc"])
+dc_resource("tempo-init", labels=["misc"])
 
 # paths in tilt files are confusing....
 # - if tilt is dealing the the path, it is relative to the Tiltfile
@@ -90,6 +93,10 @@ docker_build('grafana-fs-dev',
     'public/dashboards',
     'public/app/plugins',
     'public/build/assets-manifest.json',
+    'public/gazetteer',
+    'public/maps',
+    'public/img/bg',
+    'public/img/icons',
   ],
 
   # Sync paths are relative to the Tiltfile

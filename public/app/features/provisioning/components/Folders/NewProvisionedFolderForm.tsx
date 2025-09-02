@@ -162,7 +162,7 @@ function FormContent({ initialValues, repository, workflowOptions, folder, onDis
 
           <ResourceEditFormSharedFields
             resourceType="folder"
-            isNew={false}
+            isNew
             workflow={workflow}
             workflowOptions={workflowOptions}
             repository={repository}
@@ -205,7 +205,6 @@ function FormContent({ initialValues, repository, workflowOptions, folder, onDis
 export function NewProvisionedFolderForm({ parentFolder, onDismiss }: Props) {
   const { workflowOptions, repository, folder, initialValues, isReadOnlyRepo } = useProvisionedFolderFormData({
     folderUid: parentFolder?.uid,
-    action: 'create',
     title: '', // Empty title for new folders
   });
 
