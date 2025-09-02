@@ -20,50 +20,53 @@ export interface Props {
   timeRange: TimeRange;
   timeZone: string;
   onResize(): void;
+  showControls: boolean;
 }
 
 export type LogLineDetailsMode = 'inline' | 'sidebar';
 
-export const LogLineDetails = memo(({ containerElement, focusLogLine, logs, timeRange, timeZone, onResize }: Props) => {
-  const { detailsWidth, noInteractions, setDetailsWidth } = useLogListContext();
-  const styles = useStyles2(getStyles, 'sidebar');
-  const dragStyles = useStyles2(getDragStyles);
-  const containerRef = useRef<HTMLDivElement | null>(null);
+export const LogLineDetails = memo(
+  ({ containerElement, focusLogLine, logs, timeRange, timeZone, onResize, showControls }: Props) => {
+    const { detailsWidth, noInteractions, setDetailsWidth } = useLogListContext();
+    const styles = useStyles2(getStyles, 'sidebar', showControls);
+    const dragStyles = useStyles2(getDragStyles);
+    const containerRef = useRef<HTMLDivElement | null>(null);
 
-  const handleResize = useCallback(() => {
-    if (containerRef.current) {
-      setDetailsWidth(containerRef.current.clientWidth);
-    }
-    onResize();
-  }, [onResize, setDetailsWidth]);
+    const handleResize = useCallback(() => {
+      if (containerRef.current) {
+        setDetailsWidth(containerRef.current.clientWidth);
+      }
+      onResize();
+    }, [onResize, setDetailsWidth]);
 
-  const reportResize = useCallback(() => {
-    if (containerRef.current && !noInteractions) {
-      reportInteraction('logs_log_line_details_sidebar_resized', {
-        width: Math.round(containerRef.current.clientWidth),
-      });
-    }
-  }, [noInteractions]);
+    const reportResize = useCallback(() => {
+      if (containerRef.current && !noInteractions) {
+        reportInteraction('logs_log_line_details_sidebar_resized', {
+          width: Math.round(containerRef.current.clientWidth),
+        });
+      }
+    }, [noInteractions]);
 
-  const maxWidth = containerElement.clientWidth - LOG_LIST_MIN_WIDTH;
+    const maxWidth = containerElement.clientWidth - LOG_LIST_MIN_WIDTH;
 
-  return (
-    <Resizable
-      onResize={handleResize}
-      onResizeStop={reportResize}
-      handleClasses={{ left: dragStyles.dragHandleVertical }}
-      defaultSize={{ width: detailsWidth, height: containerElement.clientHeight }}
-      size={{ width: detailsWidth, height: containerElement.clientHeight }}
-      enable={{ left: true }}
-      minWidth={40}
-      maxWidth={maxWidth}
-    >
-      <div className={styles.container} ref={containerRef}>
-        <LogLineDetailsTabs focusLogLine={focusLogLine} logs={logs} timeRange={timeRange} timeZone={timeZone} />
-      </div>
-    </Resizable>
-  );
-});
+    return (
+      <Resizable
+        onResize={handleResize}
+        onResizeStop={reportResize}
+        handleClasses={{ left: dragStyles.dragHandleVertical }}
+        defaultSize={{ width: detailsWidth, height: containerElement.clientHeight }}
+        size={{ width: detailsWidth, height: containerElement.clientHeight }}
+        enable={{ left: true }}
+        minWidth={40}
+        maxWidth={maxWidth}
+      >
+        <div className={styles.container} ref={containerRef}>
+          <LogLineDetailsTabs focusLogLine={focusLogLine} logs={logs} timeRange={timeRange} timeZone={timeZone} />
+        </div>
+      </Resizable>
+    );
+  }
+);
 LogLineDetails.displayName = 'LogLineDetails';
 
 const LogLineDetailsTabs = memo(
@@ -193,7 +196,7 @@ InlineLogLineDetails.displayName = 'InlineLogLineDetails';
 
 export const LOG_LINE_DETAILS_HEIGHT = 35;
 
-const getStyles = (theme: GrafanaTheme2, mode: LogLineDetailsMode) => ({
+const getStyles = (theme: GrafanaTheme2, mode: LogLineDetailsMode, showControls?: boolean) => ({
   inlineWrapper: css({
     gridColumn: '1 / -1',
     height: `${LOG_LINE_DETAILS_HEIGHT}vh`,
@@ -205,7 +208,7 @@ const getStyles = (theme: GrafanaTheme2, mode: LogLineDetailsMode) => ({
     height: '100%',
     boxShadow: theme.shadows.z1,
     border: `1px solid ${theme.colors.border.medium}`,
-    borderRight: mode === 'sidebar' ? 'none' : undefined,
+    borderRight: mode === 'sidebar' && showControls ? 'none' : undefined,
   }),
   scrollContainer: css({
     overflow: 'auto',
