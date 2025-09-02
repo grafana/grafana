@@ -8,6 +8,7 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 	semconv "go.opentelemetry.io/otel/semconv/v1.17.0"
@@ -132,9 +133,52 @@ func (gr *SQLCommand) Execute(ctx context.Context, now time.Time, vars mathexp.V
 		}
 		span.End()
 
-		metrics.SqlCommandCount.WithLabelValues(statusLabel, errorType).Inc()
-		metrics.SqlCommandDuration.WithLabelValues(statusLabel).Observe(duration)
-		metrics.SqlCommandCellCount.WithLabelValues(statusLabel).Observe(float64(tc))
+		// --- Exemplar labels from the current span ---
+		sc := span.SpanContext()
+		var ex prometheus.Labels
+		if sc.IsValid() {
+			ex = prometheus.Labels{
+				"trace_id": sc.TraceID().String(),
+				"span_id":  sc.SpanID().String(),
+			}
+		}
+
+		// --- Counter with exemplar (if supported) ---
+		cnt := metrics.SqlCommandCount.WithLabelValues(statusLabel, errorType)
+		if ex != nil {
+			if ce, ok := cnt.(prometheus.ExemplarAdder); ok {
+				ce.AddWithExemplar(1, ex)
+			} else {
+				cnt.Inc()
+			}
+		} else {
+			cnt.Inc()
+		}
+
+		// --- Duration histogram with exemplar (if supported) ---
+		obs := metrics.SqlCommandDuration.WithLabelValues(statusLabel)
+		if ex != nil {
+			if eo, ok := obs.(prometheus.ExemplarObserver); ok {
+				eo.ObserveWithExemplar(duration, ex)
+			} else {
+				obs.Observe(duration)
+			}
+		} else {
+			obs.Observe(duration)
+		}
+
+		// --- Cell count histogram with exemplar (if supported) ---
+		obsCells := metrics.SqlCommandCellCount.WithLabelValues(statusLabel)
+		if ex != nil {
+			if eo, ok := obsCells.(prometheus.ExemplarObserver); ok {
+				eo.ObserveWithExemplar(float64(tc), ex)
+			} else {
+				obsCells.Observe(float64(tc))
+			}
+		} else {
+			obsCells.Observe(float64(tc))
+		}
+
 	}()
 
 	allFrames := []*data.Frame{}
