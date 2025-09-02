@@ -3397,9 +3397,6 @@
       "text-badge-enabled": "Enabled",
       "text-badge-not-enabled": "Not enabled"
     },
-    "scim-banner": {
-      "message": "SCIM is currently in development and not recommended for production use. Please use with caution and expect potential changes."
-    },
     "server-discovery-modal": {
       "label-the-wellknownopenidconfiguration-endpoint-for-your-id-p": "The .well-known/openid-configuration endpoint for your IdP",
       "title-open-id-connect-discovery-url": "OpenID Connect Discovery URL"
