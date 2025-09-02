@@ -37,7 +37,6 @@ type Props = {
   matchedLabels?: Set<string>;
   setRangeMin: (range: number) => void;
   setRangeMax: (range: number) => void;
-  style?: React.CSSProperties;
   onItemFocused: (data: ClickedItemData) => void;
   focusedItemData?: ClickedItemData;
   textAlign: TextAlign;
