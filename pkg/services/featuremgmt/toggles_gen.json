@@ -20,12 +20,15 @@
     {
       "metadata": {
         "name": "adhocFiltersInTooltips",
-        "resourceVersion": "1753712755564",
-        "creationTimestamp": "2025-07-28T14:25:55Z"
+        "resourceVersion": "1756811533749",
+        "creationTimestamp": "2025-07-28T14:25:55Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-09-02 11:12:13.749848 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enable adhoc filter buttons in visualization tooltips",
-        "stage": "experimental",
+        "stage": "GA",
         "codeowner": "@grafana/datapro",
         "frontend": true
       }
@@ -907,12 +910,15 @@
     {
       "metadata": {
         "name": "dashboardDsAdHocFiltering",
-        "resourceVersion": "1753448760331",
-        "creationTimestamp": "2025-07-25T13:06:00Z"
+        "resourceVersion": "1756811533749",
+        "creationTimestamp": "2025-07-25T13:06:00Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-09-02 11:12:13.749848 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables adhoc filtering support for the dashboard datasource",
-        "stage": "experimental",
+        "stage": "GA",
         "codeowner": "@grafana/datapro",
         "frontend": true
       }
