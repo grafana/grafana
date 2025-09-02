@@ -94,57 +94,59 @@ export default function Browse() {
   );
 
   return (
-    <Page navModel={navModel} actions={updateAllButton} subTitle={subTitle}>
+    <Page navModel={navModel} actions={updateAllButton} subTitle={subTitle} className={styles.pageContainer}>
       <Page.Contents>
         <AdvisorRedirectNotice />
-        <HorizontalGroup wrap>
-          <Field label={t('plugins.browse.label-search', 'Search')}>
-            <SearchField value={keyword} onSearch={onSearch} />
-          </Field>
-          <HorizontalGroup wrap className={styles.actionBar}>
-            {/* Filter by type */}
-            <Field label={t('plugins.browse.label-type', 'Type')}>
-              <Select
-                aria-label={t('plugins.browse.aria-label-plugin-type-filter', 'Plugin type filter')}
-                value={filterByType}
-                onChange={onFilterByTypeChange}
-                width={18}
-                options={[
-                  { value: 'all', label: t('plugins.browse.label.all', 'All') },
-                  { value: 'datasource', label: t('plugins.browse.label.data-sources', 'Data sources') },
-                  { value: 'panel', label: t('plugins.browse.label.panels', 'Panels') },
-                  { value: 'app', label: t('plugins.browse.label.applications', 'Applications') },
-                ]}
-              />
+        <div className={styles.searchContainer}>
+          <HorizontalGroup wrap>
+            <Field label={t('plugins.browse.label-search', 'Search')}>
+              <SearchField value={keyword} onSearch={onSearch} />
             </Field>
-
-            {/* Filter by installed / all */}
-            {remotePluginsAvailable ? (
-              <Field label={t('plugins.browse.label-state', 'State')}>
-                <RadioButtonGroup value={filterBy} onChange={onFilterByChange} options={filterByOptions} />
+            <HorizontalGroup wrap className={styles.actionBar}>
+              {/* Filter by type */}
+              <Field label={t('plugins.browse.label-type', 'Type')}>
+                <Select
+                  aria-label={t('plugins.browse.aria-label-plugin-type-filter', 'Plugin type filter')}
+                  value={filterByType}
+                  onChange={onFilterByTypeChange}
+                  width={18}
+                  options={[
+                    { value: 'all', label: t('plugins.browse.label.all', 'All') },
+                    { value: 'datasource', label: t('plugins.browse.label.data-sources', 'Data sources') },
+                    { value: 'panel', label: t('plugins.browse.label.panels', 'Panels') },
+                    { value: 'app', label: t('plugins.browse.label.applications', 'Applications') },
+                  ]}
+                />
               </Field>
-            ) : (
-              <Tooltip
-                content={t(
-                  'plugins.browse.tooltip-filter-disabled',
-                  'This filter has been disabled because the Grafana server cannot access grafana.com'
-                )}
-                placement="top"
-              >
-                <div>
-                  <Field label={t('plugins.browse.label-state', 'State')}>
-                    <RadioButtonGroup
-                      disabled={true}
-                      value={filterBy}
-                      onChange={onFilterByChange}
-                      options={filterByOptions}
-                    />
-                  </Field>
-                </div>
-              </Tooltip>
-            )}
+
+              {/* Filter by installed / all */}
+              {remotePluginsAvailable ? (
+                <Field label={t('plugins.browse.label-state', 'State')}>
+                  <RadioButtonGroup value={filterBy} onChange={onFilterByChange} options={filterByOptions} />
+                </Field>
+              ) : (
+                <Tooltip
+                  content={t(
+                    'plugins.browse.tooltip-filter-disabled',
+                    'This filter has been disabled because the Grafana server cannot access grafana.com'
+                  )}
+                  placement="top"
+                >
+                  <div>
+                    <Field label={t('plugins.browse.label-state', 'State')}>
+                      <RadioButtonGroup
+                        disabled={true}
+                        value={filterBy}
+                        onChange={onFilterByChange}
+                        options={filterByOptions}
+                      />
+                    </Field>
+                  </div>
+                </Tooltip>
+              )}
+            </HorizontalGroup>
           </HorizontalGroup>
-        </HorizontalGroup>
+        </div>
         <div className={styles.listWrap}>
           <PluginList plugins={plugins} isLoading={isLoading} />
         </div>
@@ -161,13 +163,25 @@ export default function Browse() {
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
+  pageContainer: css({
+    height: '100vh',
+    overflow: 'hidden',
+  }),
+  searchContainer: css({
+    backgroundColor: theme.colors.background.primary,
+    paddingTop: theme.spacing(2),
+    paddingBottom: theme.spacing(2),
+    borderBottom: `1px solid ${theme.colors.border.weak}`,
+    marginBottom: theme.spacing(2),
+  }),
+  listWrap: css({
+    height: 'calc(100vh - 350px)',
+    overflowY: 'auto',
+  }),
   actionBar: css({
     [theme.breakpoints.up('xl')]: {
       marginLeft: 'auto',
     },
-  }),
-  listWrap: css({
-    marginTop: theme.spacing(2),
   }),
   displayAs: css({
     svg: {

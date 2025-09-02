@@ -430,6 +430,10 @@ export interface FeatureToggles {
   */
   secretsManagementAppPlatform?: boolean;
   /**
+  * Enable the secrets management app platform UI
+  */
+  secretsManagementAppPlatformUI?: boolean;
+  /**
   * Writes the state periodically to the database, asynchronous to rule evaluation
   */
   alertingSaveStatePeriodic?: boolean;
@@ -748,6 +752,11 @@ export interface FeatureToggles {
   */
   alertingAIGenTemplates?: boolean;
   /**
+  * Enable enrichment per rule in the alerting UI.
+  * @default false
+  */
+  alertingEnrichmentPerRule?: boolean;
+  /**
   * Enable AI-analyze central state history.
   * @default false
   */
@@ -901,10 +910,6 @@ export interface FeatureToggles {
   * Enables the unified storage grpc connection pool
   */
   unifiedStorageGrpcConnectionPool?: boolean;
-  /**
-  * Enables the extension sidebar
-  */
-  extensionSidebar?: boolean;
   /**
   * Enables UI functionality to permanently delete alert rules
   * @default true
@@ -1071,9 +1076,13 @@ export interface FeatureToggles {
   dashboardLevelTimeMacros?: boolean;
   /**
   * Starts Grafana in remote secondary mode pulling the latest state from the remote Alertmanager to avoid duplicate notifications.
-  * @default false
   */
   alertmanagerRemoteSecondaryWithRemoteState?: boolean;
+  /**
+  * Enables sharing a list of APIs with a list of plugins
+  * @default false
+  */
+  restrictedPluginApis?: boolean;
   /**
   * Enable adhoc filter buttons in visualization tooltips
   */
@@ -1101,4 +1110,19 @@ export interface FeatureToggles {
   * @default false
   */
   teamFolders?: boolean;
+  /**
+  * Enables the alerting triage feature
+  * @default false
+  */
+  alertingTriage?: boolean;
+  /**
+  * Enables the Graphite data source full backend mode
+  * @default false
+  */
+  graphiteBackendMode?: boolean;
+  /**
+  * Enables the updated Azure Monitor resource picker
+  * @default false
+  */
+  azureResourcePickerUpdates?: boolean;
 }

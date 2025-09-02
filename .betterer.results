@@ -25,6 +25,12 @@ exports[`better eslint`] = {
     "e2e/utils/support/types.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
+    "packages/grafana-alerting/src/grafana/notificationPolicies/utils.ts:5381": [
+      [0, 0, 0, "Do not use any type assertions.", "0"]
+    ],
+    "packages/grafana-data/src/context/plugins/RestrictedGrafanaApis.tsx:5381": [
+      [0, 0, 0, "Do not use any type assertions.", "0"]
+    ],
     "packages/grafana-data/src/dataframe/ArrayDataFrame.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
@@ -904,12 +910,6 @@ exports[`better eslint`] = {
     "packages/grafana-ui/src/utils/useAsyncDependency.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
-    "public/app/api/clients/folder/v1beta1/hooks.ts:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"],
-      [0, 0, 0, "React Hook \\"useGetDisplayMappingQuery\\" is called conditionally. React Hooks must be called in the exact same order in every component render. Did you accidentally call a React Hook after an early return?", "1"],
-      [0, 0, 0, "React Hook \\"useGetFolderParentsQuery\\" is called conditionally. React Hooks must be called in the exact same order in every component render. Did you accidentally call a React Hook after an early return?", "2"],
-      [0, 0, 0, "React Hook \\"useGetFolderQuery\\" is called conditionally. React Hooks must be called in the exact same order in every component render. Did you accidentally call a React Hook after an early return?", "3"]
-    ],
     "public/app/core/TableModel.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
@@ -1534,6 +1534,13 @@ exports[`better eslint`] = {
     "public/app/features/alerting/unified/rule-list/StateView.tsx:5381": [
       [0, 0, 0, "Using localeCompare() can cause performance issues when sorting large datasets. Consider using Intl.Collator for better performance when sorting arrays, or add an eslint-disable comment if sorting a small, known dataset.", "0"]
     ],
+    "public/app/features/alerting/unified/types/alerting.ts:5381": [
+      [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "2"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "3"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "4"]
+    ],
     "public/app/features/alerting/unified/types/receiver-form.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
@@ -1727,8 +1734,7 @@ exports[`better eslint`] = {
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
     "public/app/features/dashboard-scene/inspect/InspectJsonTab.tsx:5381": [
-      [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "0"],
-      [0, 0, 0, "React Hook \\"useStyles2\\" cannot be called in a class component. React Hooks must be called in a React function component or a custom React Hook function.", "1"]
+      [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "0"]
     ],
     "public/app/features/dashboard-scene/pages/DashboardScenePage.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
@@ -1745,9 +1751,7 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
     "public/app/features/dashboard-scene/panel-edit/PanelOptionsPane.tsx:5381": [
-      [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "0"],
-      [0, 0, 0, "React Hook \\"useStyles2\\" cannot be called in a class component. React Hooks must be called in a React function component or a custom React Hook function.", "1"],
-      [0, 0, 0, "React Hook \\"useToggle\\" cannot be called in a class component. React Hooks must be called in a React function component or a custom React Hook function.", "2"]
+      [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "0"]
     ],
     "public/app/features/dashboard-scene/panel-edit/PanelVizTypePicker.tsx:5381": [
       [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "0"]
@@ -1757,9 +1761,6 @@ exports[`better eslint`] = {
       [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "1"],
       [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "2"],
       [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "3"]
-    ],
-    "public/app/features/dashboard-scene/saving/SaveDashboardDrawer.tsx:5381": [
-      [0, 0, 0, "React Hook \\"useIsProvisionedNG\\" cannot be called in a class component. React Hooks must be called in a React function component or a custom React Hook function.", "0"]
     ],
     "public/app/features/dashboard-scene/saving/SaveDashboardForm.tsx:5381": [
       [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "0"]
@@ -1858,15 +1859,6 @@ exports[`better eslint`] = {
     ],
     "public/app/features/dashboard-scene/serialization/transformToV1TypesUtils.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
-    ],
-    "public/app/features/dashboard-scene/settings/GeneralSettingsEditView.tsx:5381": [
-      [0, 0, 0, "React Hook \\"useDashboardEditPageNav\\" cannot be called in a class component. React Hooks must be called in a React function component or a custom React Hook function.", "0"]
-    ],
-    "public/app/features/dashboard-scene/settings/JsonModelEditView.tsx:5381": [
-      [0, 0, 0, "React Hook \\"useDashboardEditPageNav\\" cannot be called in a class component. React Hooks must be called in a React function component or a custom React Hook function.", "0"],
-      [0, 0, 0, "React Hook \\"useSaveDashboard\\" cannot be called in a class component. React Hooks must be called in a React function component or a custom React Hook function.", "1"],
-      [0, 0, 0, "React Hook \\"useState\\" cannot be called in a class component. React Hooks must be called in a React function component or a custom React Hook function.", "2"],
-      [0, 0, 0, "React Hook \\"useStyles2\\" cannot be called in a class component. React Hooks must be called in a React function component or a custom React Hook function.", "3"]
     ],
     "public/app/features/dashboard-scene/settings/annotations/AnnotationSettingsEdit.tsx:5381": [
       [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "0"],
@@ -2159,21 +2151,13 @@ exports[`better eslint`] = {
       [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "2"]
     ],
     "public/app/features/dashboard/components/ShareModal/SharePublicDashboard/ConfigPublicDashboard/ConfigPublicDashboard.tsx:5381": [
-      [0, 0, 0, "\'HorizontalGroup\' import from \'@grafana/ui\' is restricted from being used by a pattern. Use Stack component instead.", "0"],
+      [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "0"],
       [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "1"],
-      [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "2"],
-      [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "3"]
-    ],
-    "public/app/features/dashboard/components/ShareModal/SharePublicDashboard/ConfigPublicDashboard/Configuration.tsx:5381": [
-      [0, 0, 0, "\'VerticalGroup\' import from \'@grafana/ui\' is restricted from being used by a pattern. Use Stack component instead.", "0"]
+      [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "2"]
     ],
     "public/app/features/dashboard/components/ShareModal/SharePublicDashboard/ConfigPublicDashboard/EmailSharingConfiguration.tsx:5381": [
       [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "0"],
       [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "1"]
-    ],
-    "public/app/features/dashboard/components/ShareModal/SharePublicDashboard/CreatePublicDashboard/AcknowledgeCheckboxes.tsx:5381": [
-      [0, 0, 0, "\'HorizontalGroup\' import from \'@grafana/ui\' is restricted from being used by a pattern. Use Stack component instead.", "0"],
-      [0, 0, 0, "\'VerticalGroup\' import from \'@grafana/ui\' is restricted from being used by a pattern. Use Stack component instead.", "1"]
     ],
     "public/app/features/dashboard/components/ShareModal/ShareSnapshot.tsx:5381": [
       [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "0"],
@@ -2717,9 +2701,6 @@ exports[`better eslint`] = {
     "public/app/features/plugins/extensions/usePluginFunctions.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
-    "public/app/features/plugins/loader/sharedDependencies.ts:5381": [
-      [0, 0, 0, "* import is invalid because \'Layout,HorizontalGroup,VerticalGroup\' from \'@grafana/ui\' is restricted from being used by a pattern. Use Stack component instead.", "0"]
-    ],
     "public/app/features/plugins/sandbox/distortions.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
@@ -2754,18 +2735,6 @@ exports[`better eslint`] = {
     "public/app/features/provisioning/File/FileStatusPage.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
       [0, 0, 0, "Do not use any type assertions.", "1"]
-    ],
-    "public/app/features/provisioning/GettingStarted/Sidebar.tsx:5381": [
-      [0, 0, 0, "React Hook \\"useStyles2\\" is called conditionally. React Hooks must be called in the exact same order in every component render. Did you accidentally call a React Hook after an early return?", "0"]
-    ],
-    "public/app/features/provisioning/GettingStarted/SidebarItem.tsx:5381": [
-      [0, 0, 0, "Add noMargin prop to Card components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "0"]
-    ],
-    "public/app/features/provisioning/Job/JobContent.tsx:5381": [
-      [0, 0, 0, "React Hook \\"useEffect\\" is called conditionally. React Hooks must be called in the exact same order in every component render. Did you accidentally call a React Hook after an early return?", "0"]
-    ],
-    "public/app/features/provisioning/Job/RecentJobs.tsx:5381": [
-      [0, 0, 0, "React Hook \\"useMemo\\" is called conditionally. React Hooks must be called in the exact same order in every component render.", "0"]
     ],
     "public/app/features/query/components/QueryEditorRow.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
@@ -3161,9 +3130,6 @@ exports[`better eslint`] = {
     "public/app/plugins/datasource/azuremonitor/components/LogsQueryEditor/index.tsx:5381": [
       [0, 0, 0, "Do not re-export imported variable (\`./LogsQueryEditor\`)", "0"]
     ],
-    "public/app/plugins/datasource/azuremonitor/components/QueryEditor/QueryEditor.test.tsx:5381": [
-      [0, 0, 0, "* import is invalid because \'Layout,HorizontalGroup,VerticalGroup\' from \'@grafana/ui\' is restricted from being used by a pattern. Use Stack component instead.", "0"]
-    ],
     "public/app/plugins/datasource/azuremonitor/components/QueryEditor/QueryEditor.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
@@ -3181,9 +3147,6 @@ exports[`better eslint`] = {
     ],
     "public/app/plugins/datasource/azuremonitor/components/TracesQueryEditor/index.tsx:5381": [
       [0, 0, 0, "Do not re-export imported variable (\`./TracesQueryEditor\`)", "0"]
-    ],
-    "public/app/plugins/datasource/azuremonitor/components/VariableEditor/VariableEditor.test.tsx:5381": [
-      [0, 0, 0, "* import is invalid because \'Layout,HorizontalGroup,VerticalGroup\' from \'@grafana/ui\' is restricted from being used by a pattern. Use Stack component instead.", "0"]
     ],
     "public/app/plugins/datasource/azuremonitor/components/VariableEditor/VariableEditor.tsx:5381": [
       [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "0"],
@@ -3254,9 +3217,6 @@ exports[`better eslint`] = {
     ],
     "public/app/plugins/datasource/cloudwatch/components/ConfigEditor/XrayLinkConfig.tsx:5381": [
       [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "0"]
-    ],
-    "public/app/plugins/datasource/cloudwatch/components/QueryEditor/MetricsQueryEditor/MetricsQueryEditor.test.tsx:5381": [
-      [0, 0, 0, "* import is invalid because \'Layout,HorizontalGroup,VerticalGroup\' from \'@grafana/ui\' is restricted from being used by a pattern. Use Stack component instead.", "0"]
     ],
     "public/app/plugins/datasource/cloudwatch/components/QueryEditor/MetricsQueryEditor/SQLBuilderEditor/index.tsx:5381": [
       [0, 0, 0, "Do not re-export imported variable (\`./SQLBuilderEditor\`)", "0"]
@@ -3440,8 +3400,7 @@ exports[`better eslint`] = {
       [0, 0, 0, "Do not use any type assertions.", "4"],
       [0, 0, 0, "Do not use any type assertions.", "5"],
       [0, 0, 0, "Do not use any type assertions.", "6"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "7"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "8"]
+      [0, 0, 0, "Unexpected any. Specify a different type.", "7"]
     ],
     "public/app/plugins/datasource/graphite/configuration/ConfigEditor.tsx:5381": [
       [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "0"],
@@ -3928,9 +3887,6 @@ exports[`better eslint`] = {
     "public/app/plugins/panel/live/LivePanel.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
-    "public/app/plugins/panel/logs/LogsPanel.test.tsx:5381": [
-      [0, 0, 0, "* import is invalid because \'Layout,HorizontalGroup,VerticalGroup\' from \'@grafana/ui\' is restricted from being used by a pattern. Use Stack component instead.", "0"]
-    ],
     "public/app/plugins/panel/logs/types.ts:5381": [
       [0, 0, 0, "Do not re-export imported variable (\`./panelcfg.gen\`)", "0"]
     ],
@@ -3986,9 +3942,6 @@ exports[`better eslint`] = {
       [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "0"]
     ],
     "public/app/plugins/panel/table/cells/SparklineCellOptionsEditor.tsx:5381": [
-      [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "0"]
-    ],
-    "public/app/plugins/panel/table/cells/TextWrapOptionsEditor.tsx:5381": [
       [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "0"]
     ],
     "public/app/plugins/panel/table/migrations.ts:5381": [
@@ -4066,13 +4019,6 @@ exports[`better eslint`] = {
     "public/app/store/store.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
-    ],
-    "public/app/types/alerting.ts:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "2"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "3"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "4"]
     ],
     "public/app/types/dashboard.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]

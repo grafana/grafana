@@ -114,7 +114,12 @@ export function getColumns(
 
   for (const [fieldIndex, field] of data.fields.entries()) {
     const fieldTableOptions: TableFieldOptions = field.config.custom || {};
-    if (fieldTableOptions.hidden || field.type === FieldType.nestedFrames) {
+    if (
+      // @ts-ignore this was the former hidden option; we support it for legacy use cases while TableRT is being sunset.
+      fieldTableOptions.hidden ||
+      fieldTableOptions.hideFrom?.viz ||
+      field.type === FieldType.nestedFrames
+    ) {
       continue;
     }
 
