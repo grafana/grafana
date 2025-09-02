@@ -468,7 +468,6 @@ func TestFolderAPIBuilder_Mutate_Create(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			s := (grafanarest.Storage)(nil)
 			m := &mock.Mock{}
-			m.On("Get", context.Background(), tt.input.Name, &metav1.GetOptions{}).Return(tt.input, nil)
 			us := storageMock{m, s}
 			sm := searcherMock{Mock: m}
 			b := &FolderAPIBuilder{
