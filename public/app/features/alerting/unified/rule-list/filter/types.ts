@@ -14,5 +14,5 @@ export type AdvancedFilters = {
   dashboardUid?: string;
   plugins?: 'show' | 'hide';
   contactPoint?: string | null;
-  ruleSource?: '*' | RuleSource;
+  ruleSource?: RuleSource | null;
 };

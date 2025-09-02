@@ -633,9 +633,9 @@ function RuleSourceField({ radioGroupClassName }: { radioGroupClassName?: string
         name="ruleSource"
         control={control}
         render={({ field }) => (
-          <RadioButtonGroup<NonNullable<AdvancedFilters['ruleSource']>>
+          <RadioButtonGroup<AdvancedFilters['ruleSource']>
             options={[
-              { label: t('common.all', 'All'), value: '*' },
+              { label: t('common.all', 'All'), value: null },
               { label: t('alerting.rules-filter.rule-source.grafana', 'Grafana managed'), value: RuleSource.Grafana },
               {
                 label: t('alerting.rules-filter.rule-source.datasource', 'Data source managed'),

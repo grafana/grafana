@@ -16,7 +16,7 @@ export function formAdvancedFiltersToRuleFilter(values: AdvancedFilters): RulesF
     ruleState: values.ruleState === '*' ? undefined : values.ruleState,
     ruleType: values.ruleType === '*' ? undefined : values.ruleType,
     plugins: values.plugins === 'show' ? undefined : 'hide',
-    ruleSource: values.ruleSource === '*' ? undefined : values.ruleSource,
+    ruleSource: values.ruleSource ?? undefined,
   };
 }
 
@@ -32,7 +32,7 @@ export const emptyAdvancedFilters: AdvancedFilters = {
   dashboardUid: undefined,
   plugins: 'show',
   contactPoint: null,
-  ruleSource: '*',
+  ruleSource: null,
 };
 
 export function searchQueryToDefaultValues(filterState: RulesFilter): AdvancedFilters {
@@ -48,7 +48,7 @@ export function searchQueryToDefaultValues(filterState: RulesFilter): AdvancedFi
     dashboardUid: filterState.dashboardUid,
     plugins: filterState.plugins ?? 'show',
     contactPoint: filterState.contactPoint ?? null,
-    ruleSource: filterState.ruleSource ?? '*',
+    ruleSource: filterState.ruleSource ?? null,
   };
 }
 
