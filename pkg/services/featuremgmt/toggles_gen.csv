@@ -95,6 +95,7 @@ alertingQueryOptimization,GA,@grafana/alerting-squad,false,false,false
 jitterAlertRulesWithinGroups,preview,@grafana/alerting-squad,false,true,false
 onPremToCloudMigrations,GA,@grafana/grafana-operator-experience-squad,false,false,false
 secretsManagementAppPlatform,experimental,@grafana/grafana-operator-experience-squad,false,false,false
+secretsManagementAppPlatformUI,experimental,@grafana/grafana-operator-experience-squad,false,false,false
 alertingSaveStatePeriodic,privatePreview,@grafana/alerting-squad,false,false,false
 alertingSaveStateCompressed,preview,@grafana/alerting-squad,false,false,false
 scopeApi,experimental,@grafana/grafana-app-platform-squad,false,false,false

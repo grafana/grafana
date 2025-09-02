@@ -430,6 +430,10 @@ export interface FeatureToggles {
   */
   secretsManagementAppPlatform?: boolean;
   /**
+  * Enable the secrets management app platform UI
+  */
+  secretsManagementAppPlatformUI?: boolean;
+  /**
   * Writes the state periodically to the database, asynchronous to rule evaluation
   */
   alertingSaveStatePeriodic?: boolean;
