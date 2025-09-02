@@ -130,22 +130,28 @@ It also helps you avoid having several users build the same queries for the same
 
 You can see a list of these queries in the **Saved queries** drawer:
 
-{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-query-library-v11.6.png" max-width="550px" alt="" >}}
-<!-- To be updated -->
+{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-saved-queries-v12.2png.png" max-width="550px" alt="" >}}
+
+When you first open the drawer, the list of queries in the **All** tab is filtered by the data source of the panel.
+However, you can clear that filter to display all saved queries.
+
+The list in the **Favorites** tab is also filtered by data source, by default, but the one in the **Recent** tab is not.
+<!--how much history is the Recent tab showing? And is it just ones from the Saved queries? -->
 
 In the **Saved queries** drawer, you can:
 
-- Search for queries by data source name, query content, title, and description.
-- Filter by data source name, author name, and tags (filters use the `OR` operator).
+- Search for queries by data source name, query content, title, or description.
 - Sort queries alphabetically or by creation date.
-- Set saved queries as favorites.
-- Edit a query title, description, or tags, or the availability of the query to other users in your organization.
-- Duplicate, lock, or delete a saved query.
+- Filter by data source name, author name, and tags (filters use the `OR` operator).
+- Set queries as favorites.
+- Duplicate, lock and unlock a query for editing, or delete a saved query.
+- Edit a query title, description, tags, or the availability of the query to other users in your organization. By default, saved queries are locked for editing.
 
-To view your saved queries, click **+ Add saved query** from the query editor:
+Access the duplicate, lock, unlock, and delete query options through the menu in the top-right corner of the query form next to the **Edit** button.
 
-{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-query-from-library-v11.6.png" max-width="750px" alt="" >}}
-<!-- To be updated -->
+To view your saved queries, click **+ Add from saved queries** in the query editor:
+
+{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-add-from-saved-v12.2.png" max-width="750px" alt="" >}}
 
 #### Save a query
 
@@ -153,15 +159,14 @@ To save a query you've created:
 
 1. From the query editor, click the **Save query** icon:
 
-   {{< figure src="/media/docs/grafana/panels-visualizations/screenshot-save-query-library-v11.6.png" max-width="750px" alt="" >}}
-   <!-- To be updated -->
+   {{< figure src="/media/docs/grafana/panels-visualizations/screensho-save-query-v12.2.png" max-width="750px" alt="" >}}
 
 1. In the **Saved queries** drawer, enter a title for the query that will make it easy to find later.
 1. (Optional) Enter a description.
 1. (Optional) Add relevant tags.
-1. Clear the **Share query with all users** checkbox if you want the saved query to only be available to you.
+1. Clear the **Share query with all users** checkbox if you only want the saved query to be available to you.
 1. Click **Save**.
-1. (Optional) To make the query editable, click the **Unlock query** icon.
+1. (Optional) To make the query editable, click the menu icon in the top-right corner of the query form and click **Unlock query**.
 
 #### Known limitations
 
