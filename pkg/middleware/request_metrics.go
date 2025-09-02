@@ -29,8 +29,6 @@ var (
 func RequestMetrics(features featuremgmt.FeatureToggles, cfg *setting.Cfg, promRegister prometheus.Registerer) web.Middleware {
 	log := log.New("middleware.request-metrics")
 
-	log.Info("initializing request metrics middleware", "size_buckets", sizeDefBuckets)
-
 	httpRequestsInFlight := prometheus.NewGauge(
 		prometheus.GaugeOpts{
 			Namespace: "grafana",
