@@ -641,7 +641,7 @@ export function TableNG(props: TableNGProps) {
               showTypeIcons={showTypeIcons}
             />
           ),
-          renderSummaryCell: () => <SummaryCell rows={sortedRows} field={field} omitCountAll={i > 0} />,
+          renderSummaryCell: () => <SummaryCell rows={rows} field={field} omitCountAll={i > 0} />,
         });
       });
 
@@ -665,7 +665,6 @@ export function TableNG(props: TableNGProps) {
       rowHeightFn,
       rows,
       setFilter,
-      sortedRows,
       showTypeIcons,
       theme,
       timeRange,
