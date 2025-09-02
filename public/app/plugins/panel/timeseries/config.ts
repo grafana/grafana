@@ -41,6 +41,7 @@ export const defaultGraphConfig: GraphFieldConfig = {
   axisGridShow: true,
   axisCenteredZero: false,
   axisBorderShow: false,
+  showValues: false,
 };
 
 export type NullEditorSettings = { isTime: boolean };
@@ -207,6 +208,13 @@ export function getGraphFieldConfig(cfg: GraphFieldConfig, isTime = true): SetFi
             options: graphFieldOptions.showPoints,
           },
           showIf: (config) => config.drawStyle !== GraphDrawStyle.Points,
+        })
+        .addBooleanSwitch({
+          path: 'showValues',
+          name: t('timeseries.config.get-graph-field-config.name-show-values', 'Show values'),
+          category: categoryStyles,
+          defaultValue: false,
+          showIf: (config) => config.showPoints !== VisibilityMode.Never || config.drawStyle === GraphDrawStyle.Points,
         })
         .addSliderInput({
           path: 'pointSize',

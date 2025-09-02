@@ -1,5 +1,4 @@
 import { useMemo } from 'react';
-import { v4 as uuidv4 } from 'uuid';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
@@ -47,7 +46,7 @@ export class SceneGridRowEditableElement implements EditableDashboardElement, Bu
       }).addItem(
         new OptionsPaneItemDescriptor({
           title: t('dashboard.default-layout.row-options.form.title', 'Title'),
-          id: uuidv4(),
+          id: 'row-options-title',
           render: (descriptor) => <RowTitleInput id={descriptor.props.id} row={row} />,
         })
       );
@@ -63,7 +62,7 @@ export class SceneGridRowEditableElement implements EditableDashboardElement, Bu
       }).addItem(
         new OptionsPaneItemDescriptor({
           title: t('dashboard.default-layout.row-options.repeat.variable.title', 'Variable'),
-          id: uuidv4(),
+          id: 'row-options-repeat-variable',
           render: (descriptor) => <RowRepeatSelect id={descriptor.props.id} row={row} dashboard={dashboard} />,
         })
       );

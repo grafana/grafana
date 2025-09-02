@@ -9,7 +9,6 @@ import { Spinner, Tooltip, useStyles2 } from '@grafana/ui';
 import { DashboardStateChangedEvent } from '../../edit-pane/shared';
 import { getCloneKey, getLocalVariableValueSet } from '../../utils/clone';
 import { dashboardLog, getMultiVariableValues } from '../../utils/utils';
-import { DashboardRepeatsProcessedEvent } from '../types/DashboardRepeatsProcessedEvent';
 
 import { TabItem } from './TabItem';
 import { TabsLayoutManager } from './TabsLayoutManager';
@@ -99,7 +98,6 @@ export function performTabRepeats(variable: MultiValueVariable, tab: TabItem, co
   const clonedTabs = createTabRepeats({ values, texts, variable, tab });
 
   tab.setState({ repeatedTabs: clonedTabs });
-  tab.publishEvent(new DashboardRepeatsProcessedEvent({ source: tab }), true);
 }
 
 /**
@@ -152,12 +150,17 @@ export function createTabRepeats({
     const tabCloneKey = getCloneKey(tab.state.key!, tabIndex);
     const tabClone = isSourceTab
       ? tab
-      : tab.clone({ repeatByVariable: undefined, repeatedTabs: undefined, layout: undefined });
+      : tab.clone({
+          key: tabCloneKey,
+          repeatSourceKey: tab.state.key,
+          repeatByVariable: undefined,
+          repeatedTabs: undefined,
+          layout: undefined,
+        });
 
     const layout = isSourceTab ? tab.getLayout() : tab.getLayout().cloneLayout(tabCloneKey, false);
 
     tabClone.setState({
-      key: tabCloneKey,
       $variables: getLocalVariableValueSet(variable, variableValues[tabIndex], variableTexts[tabIndex]),
       layout,
     });

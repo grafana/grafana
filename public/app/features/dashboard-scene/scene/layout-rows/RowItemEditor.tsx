@@ -1,5 +1,4 @@
-import { useId, useMemo } from 'react';
-import { v4 as uuidv4 } from 'uuid';
+import { useId, useMemo, useRef } from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
@@ -11,6 +10,7 @@ import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard/constan
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 
 import { useConditionalRenderingEditor } from '../../conditional-rendering/ConditionalRenderingEditor';
+import { dashboardEditActions } from '../../edit-pane/shared';
 import { getQueryRunnerFor, useDashboard } from '../../utils/utils';
 import { useLayoutCategory } from '../layouts-shared/DashboardLayoutSelector';
 import { useEditPaneInputAutoFocus } from '../layouts-shared/utils';
@@ -22,10 +22,11 @@ export function useEditOptions(model: RowItem, isNewElement: boolean): OptionsPa
 
   const rowCategory = useMemo(
     () =>
-      new OptionsPaneCategoryDescriptor({ title: '', id: 'row-options' })
+      new OptionsPaneCategoryDescriptor({ title: '', id: 'dash-row-edit' })
         .addItem(
           new OptionsPaneItemDescriptor({
             title: '',
+            id: 'dash-row-title',
             skipField: true,
             render: () => <RowTitleInput row={model} isNewElement={isNewElement} />,
           })
@@ -33,14 +34,14 @@ export function useEditOptions(model: RowItem, isNewElement: boolean): OptionsPa
         .addItem(
           new OptionsPaneItemDescriptor({
             title: t('dashboard.rows-layout.row-options.row.fill-screen', 'Fill screen'),
-            id: uuidv4(),
+            id: 'dash-row-fill-screen',
             render: (descriptor) => <FillScreenSwitch id={descriptor.props.id} row={model} />,
           })
         )
         .addItem(
           new OptionsPaneItemDescriptor({
             title: t('dashboard.rows-layout.row-options.row.hide-header', 'Hide row header'),
-            id: uuidv4(),
+            id: 'dash-row-hide-header',
             render: (descriptor) => <RowHeaderSwitch id={descriptor.props.id} row={model} />,
           })
         ),
@@ -51,12 +52,12 @@ export function useEditOptions(model: RowItem, isNewElement: boolean): OptionsPa
     () =>
       new OptionsPaneCategoryDescriptor({
         title: t('dashboard.rows-layout.row-options.repeat.title', 'Repeat options'),
-        id: 'repeat-options',
+        id: 'dash-row-repeat',
         isOpenDefault: false,
       }).addItem(
         new OptionsPaneItemDescriptor({
           title: t('dashboard.rows-layout.row-options.repeat.variable.title', 'Repeat by variable'),
-          id: uuidv4(),
+          id: `dash-row-repeat-by-variable`,
           description: t(
             'dashboard.rows-layout.row-options.repeat.variable.description',
             'Repeat this row for each value in the selected variable.'
@@ -85,6 +86,7 @@ export function useEditOptions(model: RowItem, isNewElement: boolean): OptionsPa
 
 function RowTitleInput({ row, isNewElement }: { row: RowItem; isNewElement: boolean }) {
   const { title } = row.useState();
+  const prevTitle = useRef('');
 
   const ref = useEditPaneInputAutoFocus({ autoFocus: isNewElement });
   const hasUniqueTitle = row.hasUniqueTitle();
@@ -102,6 +104,8 @@ function RowTitleInput({ row, isNewElement }: { row: RowItem; isNewElement: bool
         ref={ref}
         title={t('dashboard.rows-layout.row-options.title-option', 'Title')}
         value={title}
+        onFocus={() => (prevTitle.current = title || '')}
+        onBlur={() => editRowTitleAction(row, title || '', prevTitle.current || '')}
         onChange={(e) => row.onChangeTitle(e.currentTarget.value)}
       />
     </Field>
@@ -167,4 +171,17 @@ function RowRepeatSelect({ row, id }: { row: RowItem; id?: string }) {
       ) : undefined}
     </>
   );
+}
+
+function editRowTitleAction(row: RowItem, title: string, prevTitle: string) {
+  if (title === prevTitle) {
+    return;
+  }
+
+  dashboardEditActions.edit({
+    description: t('dashboard.edit-actions.row-title', 'Change row title'),
+    source: row,
+    perform: () => row.onChangeTitle(title),
+    undo: () => row.onChangeTitle(prevTitle),
+  });
 }

@@ -11,7 +11,7 @@ import (
 )
 
 // The maximum size of a secure value in bytes when written as raw input.
-const SECURE_VALUE_RAW_INPUT_MAX_SIZE_BYTES = 24576 // 24 KiB
+const SecureValueRawInputMaxSizeBytes = 24576 // 24 KiB
 
 type DecryptSecureValue struct {
 	Keeper     *string

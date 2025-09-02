@@ -345,13 +345,14 @@ func (e *DataSourceHandler) newProcessCfgPGX(queryContext context.Context, query
 	qm.TimeRange.From = query.TimeRange.From.UTC()
 	qm.TimeRange.To = query.TimeRange.To.UTC()
 
+	// Default to time_series if no format is provided
 	switch queryJSON.Format {
-	case "time_series":
-		qm.Format = dataQueryFormatSeries
 	case "table":
 		qm.Format = dataQueryFormatTable
+	case "time_series":
+		fallthrough
 	default:
-		panic(fmt.Sprintf("Unrecognized query model format: %q", queryJSON.Format))
+		qm.Format = dataQueryFormatSeries
 	}
 
 	for i, col := range qm.columnNames {
