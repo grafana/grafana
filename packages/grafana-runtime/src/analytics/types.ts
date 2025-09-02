@@ -156,3 +156,52 @@ export const isInteractionEvent = (event: EchoEvent): event is InteractionEchoEv
 export const isExperimentViewEvent = (event: EchoEvent): event is ExperimentViewEchoEvent => {
   return Boolean(event.payload.experimentId);
 };
+
+/**
+ * Describes performance metrics for an individual panel during dashboard rendering.
+ * Used to track fine-grained performance data at the panel level.
+ *
+ * @public
+ */
+export interface PanelPerformanceData {
+  /** Legacy panel ID from the dashboard model */
+  panelId: string;
+  /** Scene object key for the panel */
+  panelKey: string;
+  /** Panel plugin type (e.g., 'timeseries', 'table', 'gauge') */
+  pluginId: string;
+  /** Version of the panel plugin */
+  pluginVersion?: string;
+
+  // Timing metrics (all in milliseconds)
+  /** Time taken to load the panel plugin */
+  pluginLoadTime: number;
+  /** Whether the plugin was loaded from cache rather than fetched/imported */
+  pluginLoadedFromCache: boolean;
+  /** Time spent executing data queries */
+  queryTime: number;
+  /** Time spent processing data (field config, transformations) */
+  dataProcessingTime: number;
+  /** Time spent rendering the panel to DOM */
+  renderTime: number;
+  /** Total time for all panel operations */
+  totalTime: number;
+
+  // Performance metrics
+  /** Number of long frames (>50ms) during panel operations */
+  longFramesCount: number;
+  /** Total time of all long frames for this panel */
+  longFramesTotalTime: number;
+  /** Number of times this panel was rendered during the interaction */
+  renderCount: number;
+
+  // Additional context
+  /** Number of data points processed by the panel */
+  dataPointsCount?: number;
+  /** Number of series/fields in the panel data */
+  seriesCount?: number;
+  /** Error message if panel failed to load or render */
+  error?: string;
+  /** Memory increase during panel operations (bytes) */
+  memoryIncrease?: number;
+}
