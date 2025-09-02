@@ -11,6 +11,7 @@ import (
 	"fmt"
 	"path"
 	"reflect"
+	"runtime/debug"
 	"sync"
 	"sync/atomic"
 	"testing"
@@ -110,6 +111,7 @@ func expectNoDiff(t *testing.T, msg string, expected, actual interface{}) {
 	t.Helper()
 	if !reflect.DeepEqual(expected, actual) {
 		if diff := cmp.Diff(expected, actual); diff != "" {
+			debug.PrintStack()
 			t.Errorf("%s: %s", msg, diff)
 		} else {
 			t.Errorf("%s:\nexpected: %#v\ngot: %#v", msg, expected, actual)
