@@ -636,24 +636,11 @@ func (b *backend) listLatest(ctx context.Context, req *resourcepb.ListRequest, c
 // ListModifiedSince will return all resources that have changed since the given resource version.
 // If a resource has changes, only the latest change will be returned.
 func (b *backend) ListModifiedSince(ctx context.Context, key resource.NamespacedResource, sinceRv int64) (int64, iter.Seq2[*resource.ModifiedResource, error]) {
-	tx, err := b.db.BeginTx(ctx, RepeatableRead)
-	if err != nil {
-		return 0, func(yield func(*resource.ModifiedResource, error) bool) {
-			yield(nil, err)
-		}
-	}
+	// We don't use an explicit transaction for fetching LatestRV and subsequent fetching of resources.
+	// To guarantee that we don't include events with RV > LatestRV, we include the check in SQL query.
 
-	rollbackOnDefer := true
-	defer func() {
-		if rollbackOnDefer {
-			if terr := tx.Rollback(); terr != nil {
-				b.log.Warn("Error rolling back transaction in ListModifiedSince", "error", terr)
-			}
-		}
-	}()
-
-	// Fetch latest RV within the transaction
-	latestRv, err := b.fetchLatestRV(ctx, tx, b.dialect, key.Group, key.Resource)
+	// Fetch latest RV.
+	latestRv, err := b.fetchLatestRV(ctx, b.db, b.dialect, key.Group, key.Resource)
 	if err != nil {
 		return 0, func(yield func(*resource.ModifiedResource, error) bool) {
 			yield(nil, err)
@@ -662,41 +649,23 @@ func (b *backend) ListModifiedSince(ctx context.Context, key resource.Namespaced
 
 	// If latest RV is the same as request RV, there's nothing to report, and we can avoid running another query.
 	if latestRv == sinceRv {
-		return 0, func(yield func(*resource.ModifiedResource, error) bool) { /* nothing to return */ }
+		return latestRv, func(yield func(*resource.ModifiedResource, error) bool) { /* nothing to return */ }
 	}
 
 	// since results are sorted by name ASC and rv DESC, we can get away with tracking the last seen
 	lastSeen := ""
 
-	// We will rollback after iteration has finished.
-	rollbackOnDefer = false
-
-	// rollback transaction if iterator not called within 30 seconds
-	rollbackTimer := time.AfterFunc(30*time.Second, func() {
-		if err := tx.Rollback(); err != nil && !errors.Is(err, sql.ErrTxDone) {
-			b.log.Warn("rollback timer error", "err", err)
-		}
-	})
-
 	seq := func(yield func(*resource.ModifiedResource, error) bool) {
-		rollbackTimer.Stop()
-
-		defer func() {
-			// Always rollback the read-only transaction when iterator is done
-			if rollbackErr := tx.Rollback(); rollbackErr != nil {
-				b.log.Warn("Error rolling back transaction in ListModifiedSince", "error", rollbackErr)
-			}
-		}()
-
 		query := sqlResourceListModifiedSinceRequest{
 			SQLTemplate: sqltemplate.New(b.dialect),
 			Namespace:   key.Namespace,
 			Group:       key.Group,
 			Resource:    key.Resource,
 			SinceRv:     sinceRv,
+			LatestRv:    latestRv,
 		}
 
-		rows, err := dbutil.QueryRows(ctx, tx, sqlResourceHistoryListModifiedSince, query)
+		rows, err := dbutil.QueryRows(ctx, b.db, sqlResourceHistoryListModifiedSince, query)
 		if err != nil {
 			yield(nil, err)
 			return

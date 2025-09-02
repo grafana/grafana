@@ -12046,6 +12046,7 @@
     "selector": {
       "apply": "Terapkan",
       "cancel": "Batalkan",
+      "error-title": "",
       "input": {
         "placeholder": "Pilih cakupan...",
         "removeAll": "Hapus semua cakupan"

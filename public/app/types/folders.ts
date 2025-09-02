@@ -32,6 +32,9 @@ export interface FolderDTO extends WithAccessControlMetadata {
   version?: number;
 }
 
+/** Minimal data required to create a new folder */
+export type NewFolder = Pick<FolderDTO, 'title' | 'parentUid'>;
+
 export interface FolderState {
   id: number;
   uid: string;

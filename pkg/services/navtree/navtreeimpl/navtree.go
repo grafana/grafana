@@ -428,6 +428,14 @@ func (s *ServiceImpl) buildAlertNavLinks(c *contextmodel.ReqContext) *navtree.Na
 	hasAccess := ac.HasAccess(s.accessControl, c)
 	var alertChildNavs []*navtree.NavLink
 
+	if s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagAlertingTriage) {
+		if hasAccess(ac.EvalAny(ac.EvalPermission(ac.ActionAlertingRuleRead), ac.EvalPermission(ac.ActionAlertingRuleExternalRead))) {
+			alertChildNavs = append(alertChildNavs, &navtree.NavLink{
+				Text: "Triage", SubTitle: "Triage alerts", Id: "alert-triage", Url: s.cfg.AppSubURL + "/alerting/triage", Icon: "medkit",
+			})
+		}
+	}
+
 	if hasAccess(ac.EvalAny(ac.EvalPermission(ac.ActionAlertingRuleRead), ac.EvalPermission(ac.ActionAlertingRuleExternalRead))) {
 		alertChildNavs = append(alertChildNavs, &navtree.NavLink{
 			Text: "Alert rules", SubTitle: "Rules that determine whether an alert will fire", Id: "alert-list", Url: s.cfg.AppSubURL + "/alerting/list", Icon: "list-ul",

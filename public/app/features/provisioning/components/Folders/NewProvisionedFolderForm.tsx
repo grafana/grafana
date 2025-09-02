@@ -162,7 +162,7 @@ function FormContent({ initialValues, repository, workflowOptions, folder, onDis
 
           <ResourceEditFormSharedFields
             resourceType="folder"
-            isNew={false}
+            isNew
             workflow={workflow}
             workflowOptions={workflowOptions}
             repository={repository}
