@@ -214,7 +214,6 @@ To add a query, follow these steps:
    For more information about query options, refer to [Query options](#query-options).
 
 1. To add a query, do one of the following:
-
    - Write or construct a query in the query language of your data source.
    - Click **+ Add from saved queries** to add a previously saved query.
    - If you've already written a query, you can click the **Replace with saved query** icon to use a previously saved query instead.

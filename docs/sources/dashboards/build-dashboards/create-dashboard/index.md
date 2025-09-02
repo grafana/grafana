@@ -123,7 +123,6 @@ Dashboards and panels allow you to show your data in visual form. Each panel nee
    For more information about data sources, refer to [Data sources](ref:data-sources) for specific guidelines.
 
 1. To add a query, do one of the following:
-
    - Write or construct a query in the query language of your data source.
    - Click **+ Add from saved queries** to add a previously saved query.
    - If you've already written a query, you can click the **Replace with saved query** icon to use a previously saved query instead.
