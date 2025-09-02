@@ -10,7 +10,7 @@ import (
 
 	repository "github.com/grafana/grafana/apps/provisioning/pkg/repository"
 
-	resources "github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
+	resources "github.com/grafana/grafana/apps/provisioning/pkg/resources"
 
 	v0alpha1 "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 )
