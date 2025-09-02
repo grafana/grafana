@@ -11,26 +11,28 @@ export const useDataSourceInfo = (dataSourceInfo: DataSourceInfo): PageInfoItem[
   const info: PageInfoItem[] = [];
   const alertingEnabled = dataSourceInfo.alertingSupported;
 
-  if (dataSourceInfo.dataSourcePluginName) {
-    info.push({
-      label: t('datasources.use-data-source-info.label.type', 'Type'),
-      value: dataSourceInfo.dataSourcePluginName,
-    });
-
-    info.push({
-      label: t('datasources.use-data-source-info.label.alerting', 'Alerting'),
-      value: (
-        <Badge
-          color={alertingEnabled ? 'green' : 'red'}
-          text={
-            alertingEnabled
-              ? t('datasources.use-data-source-info.badge-text-supported', 'Supported')
-              : t('datasources.use-data-source-info.badge-text-not-supported', 'Not supported')
-          }
-        ></Badge>
-      ),
-    });
+  if (!dataSourceInfo.dataSourcePluginName) {
+    return info;
   }
+
+  info.push({
+    label: t('datasources.use-data-source-info.label.type', 'Type'),
+    value: dataSourceInfo.dataSourcePluginName,
+  });
+
+  info.push({
+    label: t('datasources.use-data-source-info.label.alerting', 'Alerting'),
+    value: (
+      <Badge
+        color={alertingEnabled ? 'green' : 'red'}
+        text={
+          alertingEnabled
+            ? t('datasources.use-data-source-info.badge-text-supported', 'Supported')
+            : t('datasources.use-data-source-info.badge-text-not-supported', 'Not supported')
+        }
+      ></Badge>
+    ),
+  });
 
   return info;
 };
