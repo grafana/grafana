@@ -22,6 +22,7 @@ import (
 	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/dskit/backoff"
 	"github.com/grafana/dskit/ring"
+
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	secrets "github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
@@ -1277,6 +1278,7 @@ func (s *server) Watch(req *resourcepb.WatchRequest, srv resourcepb.ResourceStor
 
 func (s *server) Search(ctx context.Context, req *resourcepb.ResourceSearchRequest) (*resourcepb.ResourceSearchResponse, error) {
 	if s.search == nil {
+		panic("search index not configured")
 		return nil, fmt.Errorf("search index not configured")
 	}
 
@@ -1295,6 +1297,7 @@ func (s *server) GetStats(ctx context.Context, req *resourcepb.ResourceStatsRequ
 		if ok {
 			return srv.GetStats(ctx, req)
 		}
+		panic("search index not configured")
 		return nil, fmt.Errorf("search index not configured")
 	}
 	return s.search.GetStats(ctx, req)
