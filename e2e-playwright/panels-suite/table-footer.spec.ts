@@ -1,0 +1,116 @@
+import { Page, Locator } from '@playwright/test';
+
+import { test, expect } from '@grafana/plugin-e2e';
+
+import { getCell, getColumnIdx } from './table-utils';
+
+const DASHBOARD_UID = '677402ba-f392-4a67-ab46-fffc0e4b39a2';
+
+const waitForTableLoad = async (loc: Page | Locator) => {
+  await expect(loc.locator('.rdg')).toBeVisible();
+};
+
+test.describe('Panels test: Table - Footer', { tag: ['@panels', '@table'] }, () => {
+  test('Footer unaffected by filtering', async ({ gotoDashboardPage, selectors, page }) => {
+    const dashboardPage = await gotoDashboardPage({
+      uid: DASHBOARD_UID,
+      queryParams: new URLSearchParams({ editPanel: '2' }),
+    });
+
+    await expect(
+      dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('Global footer, last not null'))
+    ).toBeVisible();
+
+    await waitForTableLoad(page);
+
+    const minColumnIdx = await getColumnIdx(page, 'Min');
+
+    // this is the footer cell for the "Min" column.
+    await expect(
+      dashboardPage
+        .getByGrafanaSelector(selectors.components.Panels.Visualization.TableNG.Footer.ReducerLabel)
+        .nth(minColumnIdx)
+    ).toHaveText('Last *');
+
+    const minReducerValue = await dashboardPage
+      .getByGrafanaSelector(selectors.components.Panels.Visualization.TableNG.Footer.Value)
+      .nth(minColumnIdx)
+      .innerText();
+
+    const minColumnHeader = page.getByRole('columnheader').nth(minColumnIdx);
+
+    // get the first value in the "State" column, filter it out, then check that it went away.
+    await minColumnHeader.getByTestId(selectors.components.Panels.Visualization.TableNG.Filters.HeaderButton).click();
+    const filterContainer = dashboardPage.getByGrafanaSelector(
+      selectors.components.Panels.Visualization.TableNG.Filters.Container
+    );
+
+    await expect(filterContainer).toBeVisible();
+
+    // select all, then click the first value to unselect it, filtering it out.
+    await filterContainer.getByTestId(selectors.components.Panels.Visualization.TableNG.Filters.SelectAll).click();
+    await filterContainer.getByTitle('Filter values').fill(minReducerValue);
+    await filterContainer.getByTitle(minReducerValue, { exact: true }).locator('label').click();
+    await filterContainer.getByRole('button', { name: 'Ok' }).click();
+
+    await expect(
+      dashboardPage
+        .getByGrafanaSelector(selectors.components.Panels.Visualization.TableNG.Footer.Value)
+        .nth(minColumnIdx)
+    ).toHaveText(minReducerValue);
+  });
+
+  test('Footer unaffected by sorting', async ({ gotoDashboardPage, selectors, page }) => {
+    const dashboardPage = await gotoDashboardPage({
+      uid: DASHBOARD_UID,
+      queryParams: new URLSearchParams({ editPanel: '2' }),
+    });
+
+    await expect(
+      dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('Global footer, last not null'))
+    ).toBeVisible();
+
+    await waitForTableLoad(page);
+
+    const minColumnIdx = await getColumnIdx(page, 'Min');
+
+    // this is the footer cell for the "Min" column.
+    await expect(
+      dashboardPage
+        .getByGrafanaSelector(selectors.components.Panels.Visualization.TableNG.Footer.ReducerLabel)
+        .nth(minColumnIdx)
+    ).toHaveText('Last *');
+
+    const minReducerValue = await dashboardPage
+      .getByGrafanaSelector(selectors.components.Panels.Visualization.TableNG.Footer.Value)
+      .nth(minColumnIdx)
+      .innerText();
+
+    const minColumnHeader = page.getByRole('columnheader').nth(minColumnIdx);
+
+    // get the first value in the "State" column, filter it out, then check that it went away.
+    await minColumnHeader.getByText('Min').click();
+    await expect(minColumnHeader).toHaveAttribute('aria-sort', 'ascending');
+    await expect(
+      dashboardPage
+        .getByGrafanaSelector(selectors.components.Panels.Visualization.TableNG.Footer.Value)
+        .nth(minColumnIdx)
+    ).toHaveText(minReducerValue);
+
+    await minColumnHeader.getByText('Min').click();
+    await expect(minColumnHeader).toHaveAttribute('aria-sort', 'descending');
+    await expect(
+      dashboardPage
+        .getByGrafanaSelector(selectors.components.Panels.Visualization.TableNG.Footer.Value)
+        .nth(minColumnIdx)
+    ).toHaveText(minReducerValue);
+
+    await minColumnHeader.getByText('Min').click();
+    await expect(minColumnHeader).not.toHaveAttribute('aria-sort');
+    await expect(
+      dashboardPage
+        .getByGrafanaSelector(selectors.components.Panels.Visualization.TableNG.Footer.Value)
+        .nth(minColumnIdx)
+    ).toHaveText(minReducerValue);
+  });
+});

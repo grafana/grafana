@@ -635,8 +635,8 @@
         "footer": {
           "countRows": true,
           "enablePagination": false,
-          "fields": ["A", "Min"],
-          "reducer": ["lastNotNull"],
+          "fields": ["Min"],
+          "reducer": ["sum"],
           "show": true
         },
         "frameIndex": 0,
@@ -669,7 +669,7 @@
           "scenarioId": "csv_content"
         }
       ],
-      "title": "Scoped footer, last not null",
+      "title": "Single sum reducer",
       "transformations": [
         {
           "id": "joinByField",

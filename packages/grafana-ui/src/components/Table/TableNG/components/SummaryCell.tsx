@@ -11,6 +11,7 @@ import {
   formattedValueToString,
   ReducerID,
 } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 
 import { useStyles2 } from '../../../../themes/ThemeContext';
@@ -150,8 +151,20 @@ export const SummaryCell = ({ rows, field, omitCountAll = false }: SummaryCellPr
 
         return (
           <div key={reducerId} className={cx(styles.footerItem, isSingleSumReducer && styles.sumReducer)}>
-            {!isSingleSumReducer && <div className={styles.footerItemLabel}>{canonicalReducerName}</div>}
-            <div className={styles.footerItemValue}>{formattedValue}</div>
+            {!isSingleSumReducer && (
+              <div
+                data-testid={selectors.components.Panels.Visualization.TableNG.Footer.ReducerLabel}
+                className={styles.footerItemLabel}
+              >
+                {canonicalReducerName}
+              </div>
+            )}
+            <div
+              data-testid={selectors.components.Panels.Visualization.TableNG.Footer.Value}
+              className={styles.footerItemValue}
+            >
+              {formattedValue}
+            </div>
           </div>
         );
       })}

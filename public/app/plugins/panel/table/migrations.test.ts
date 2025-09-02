@@ -557,6 +557,40 @@ describe('Table Migrations', () => {
       );
     });
 
+    it('migrates a single-field footer', () => {
+      const panel = {
+        options: {
+          footer: {
+            show: true,
+            reducer: ['sum'],
+            fields: ['field1'],
+          },
+        },
+        fieldConfig: {
+          defaults: {
+            custom: {},
+          },
+          overrides: [],
+        },
+      } as unknown as PanelModel;
+
+      migrateFooterV2(panel);
+
+      expect(panel.options.footer).toBeUndefined();
+      expect(panel.fieldConfig.defaults.custom.footer).toBeUndefined();
+      expect(panel.fieldConfig.overrides).toEqual(
+        expect.arrayContaining([
+          {
+            matcher: {
+              id: FieldMatcherID.byName,
+              options: 'field1',
+            },
+            properties: [{ id: 'custom.footer.reducer', value: ['sum'] }],
+          },
+        ])
+      );
+    });
+
     it('handles the countAll case', () => {
       const panel = {
         options: {

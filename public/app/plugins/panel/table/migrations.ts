@@ -365,7 +365,7 @@ export const migrateFooterV2 = (panel: PanelModel<Options>) => {
 
       if (oldFooter.countRows && reducers[0] === 'count') {
         panel.fieldConfig.defaults.custom.footer.reducer = ['countAll'];
-      } else if (oldFooter.fields && oldFooter.fields.length > 0) {
+      } else if (oldFooter.fields && oldFooter.fields.length > 1) {
         delete panel.fieldConfig.defaults.custom.footer;
 
         // Fields is an array of field names, so push a byNames matcher
@@ -377,6 +377,17 @@ export const migrateFooterV2 = (panel: PanelModel<Options>) => {
               mode: ByNamesMatcherMode.include,
               names: oldFooter.fields,
             },
+          },
+          properties: [{ id: 'custom.footer.reducer', value: reducers }],
+        });
+      } else if (oldFooter.fields && oldFooter.fields.length === 1) {
+        delete panel.fieldConfig.defaults.custom.footer;
+
+        // Single field, so we can use a byName matcher
+        panel.fieldConfig.overrides.push({
+          matcher: {
+            id: FieldMatcherID.byName,
+            options: oldFooter.fields[0],
           },
           properties: [{ id: 'custom.footer.reducer', value: reducers }],
         });
