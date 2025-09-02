@@ -80,7 +80,11 @@ export const LogLineDetailsField = ({ field, log }: LogLineDetailsFieldProps) =>
       <div className={styles.label}>
         {singleKey ? field.keys[0] : <MultipleValue values={field.keys} />}
         <Toggletip fitContent content={tooltip}>
-          <Icon className={styles.labelIcon} name="info-circle" />
+          <Icon
+            aria-label={t('logs.log-line-details.link-value-tooltip', 'Link value')}
+            className={styles.labelIcon}
+            name="info-circle"
+          />
         </Toggletip>
       </div>
       <div className={styles.links}>
