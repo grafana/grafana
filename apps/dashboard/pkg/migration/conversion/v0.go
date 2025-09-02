@@ -1,9 +1,6 @@
 package conversion
 
 import (
-	"errors"
-	"fmt"
-
 	"k8s.io/apimachinery/pkg/conversion"
 	"k8s.io/utils/ptr"
 
@@ -29,44 +26,8 @@ func Convert_V0_to_V1(in *dashv0.Dashboard, out *dashv1.Dashboard, scope convers
 	if err := migration.Migrate(out.Spec.Object, schemaversion.LATEST_VERSION); err != nil {
 		out.Status.Conversion.Failed = true
 		out.Status.Conversion.Error = ptr.To(err.Error())
-
-		// Classify error type for metrics
-		errorType := "conversion_error"
-		var migrationErr *schemaversion.MigrationError
-		var minVersionErr *schemaversion.MinimumVersionError
-		if errors.As(err, &migrationErr) {
-			errorType = "schema_version_migration_error"
-		} else if errors.As(err, &minVersionErr) {
-			errorType = "schema_minimum_version_error"
-		}
-
-		// Record failure metrics
-		migration.MDashboardConversionFailureTotal.WithLabelValues(
-			dashv0.APIVERSION,
-			dashv1.APIVERSION,
-			fmt.Sprintf("%v", in.Spec.Object["schemaVersion"]),
-			fmt.Sprintf("%d", schemaversion.LATEST_VERSION),
-			errorType,
-		).Inc()
-
-		logger.Error("Dashboard conversion failed",
-			"sourceVersionAPI", dashv0.APIVERSION,
-			"targetVersionAPI", dashv1.APIVERSION,
-			"dashboardUID", in.UID,
-			"sourceSchemaVersion", in.Spec.Object["schemaVersion"],
-			"targetSchemaVersion", schemaversion.LATEST_VERSION,
-			"errorType", errorType,
-			"error", err)
-
 		return nil
 	}
-
-	migration.MDashboardConversionSuccessTotal.WithLabelValues(
-		dashv0.APIVERSION,
-		dashv1.APIVERSION,
-		fmt.Sprintf("%v", in.Spec.Object["schemaVersion"]),
-		fmt.Sprintf("%d", schemaversion.LATEST_VERSION),
-	).Inc()
 
 	return nil
 }

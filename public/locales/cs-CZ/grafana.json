@@ -4598,6 +4598,12 @@
       "overwrite": "Přepsat",
       "title-plugin-dashboard": "Plugin nástěnky"
     },
+    "controls": {
+      "menu": {
+        "aria-label": "",
+        "title": ""
+      }
+    },
     "dash-nav": {
       "on-open-snapshot-original": {
         "confirmText": {
@@ -5878,11 +5884,6 @@
         "transparent-background": "Průhledné pozadí"
       }
     },
-    "get-workflow-options": {
-      "label": {
-        "push-to-a-new-branch": "Přesunout do nové větve"
-      }
-    },
     "group-by-variable-form": {
       "alert-not-supported": "Tento zdroj dat nepodporuje seskupení podle proměnných",
       "description-enables-users-custom-values": "Umožňuje uživatelům přidávat vlastní hodnoty do seznamu",
@@ -6983,11 +6984,6 @@
       "dragging-a-divider": "Přetažení děliče",
       "dragging-a-sub-region": "Přetažení podoblasti",
       "value": "Hodnota: {{ dividerPos }}"
-    },
-    "drilldownInfo": {
-      "action": "Přejít na Grafana Drilldown",
-      "description": "Hledáte aplikace Grafana Explore? Teď se nazývají aplikace Grafana Drilldown a najdete je v <1>Nabídka > Drilldown</1>",
-      "title": "Explore Metrics, Logs, Traces a Profiles byly přesunuty!"
     },
     "drop-down-menu": {
       "aria-label-links": "Odkazy",
@@ -11222,11 +11218,16 @@
     "save-or-delete-resource-shared-fields": {
       "comment-placeholder-describe-changes-optional": "Přidat poznámku k popisu změn (nepovinné)",
       "description-branch-name-in-git-hub": "Název větvě v GitHubu",
+      "description-file-path": "",
+      "description-folder-path": "",
       "description-inside-repository": "",
       "label-branch": "Větev",
       "label-comment": "Komentář",
       "label-path": "Cesta",
-      "label-workflow": "Pracovní tok"
+      "label-workflow": "Pracovní tok",
+      "placeholder-branch": "",
+      "placeholder-new-branch": "",
+      "suffix-configured-branch": ""
     }
   },
   "provisioned-resource-preview-banner": {
@@ -11766,6 +11767,10 @@
       "button-previous": "Předchozí",
       "button-submitting": "Odesílání…",
       "error-instance-repository-exists": "Instance úložiště už existuje"
+    },
+    "workflow-options-label": {
+      "push-to-a-new-branch": "",
+      "push-to-existing-branch": ""
     }
   },
   "public-dashboard": {
@@ -12158,6 +12163,7 @@
     "selector": {
       "apply": "Použít",
       "cancel": "Zrušit",
+      "error-title": "",
       "input": {
         "placeholder": "Vyberte rozsahy…",
         "removeAll": "Odebrat všechny rozsahy"
@@ -12889,6 +12895,7 @@
     "name-fields": "Pole",
     "name-frozen-columns": "",
     "name-hide-in-table": "Skrýt v tabulce",
+    "name-max-height": "",
     "name-min-column-width": "Minimální šířka sloupce",
     "name-show-table-footer": "Zobrazit zápatí tabulky",
     "name-show-table-header": "Zobrazit záhlaví tabulky",
@@ -12898,6 +12905,7 @@
     "name-wrap-text": "",
     "placeholder-column-width": "auto.",
     "placeholder-fields": "Všechna číselná pole",
+    "placeholder-max-height": "",
     "tooltip-placement-options": {
       "label-auto": "",
       "label-bottom": "",

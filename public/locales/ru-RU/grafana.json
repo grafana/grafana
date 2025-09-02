@@ -4598,6 +4598,12 @@
       "overwrite": "Перезаписать",
       "title-plugin-dashboard": "Дашборд плагинов"
     },
+    "controls": {
+      "menu": {
+        "aria-label": "",
+        "title": ""
+      }
+    },
     "dash-nav": {
       "on-open-snapshot-original": {
         "confirmText": {
@@ -5878,11 +5884,6 @@
         "transparent-background": "Прозрачный фон"
       }
     },
-    "get-workflow-options": {
-      "label": {
-        "push-to-a-new-branch": "Переместить в новую ветвь"
-      }
-    },
     "group-by-variable-form": {
       "alert-not-supported": "Этот источник данных не поддерживает группировку по переменным",
       "description-enables-users-custom-values": "Позволяет пользователям добавлять пользовательские значения в список.",
@@ -6983,11 +6984,6 @@
       "dragging-a-divider": "Перетаскивание разделителя",
       "dragging-a-sub-region": "Перетаскивание подобласти",
       "value": "Значение: {{ dividerPos }}"
-    },
-    "drilldownInfo": {
-      "action": "Перейти в Grafana Drilldown",
-      "description": "Ищете приложения Grafana Explore? Теперь они называются приложениями Grafana Drilldown и находятся в разделе <1>Меню > Drilldown</1>",
-      "title": "Explore Metrics, Logs, Traces и Profiles переехали!"
     },
     "drop-down-menu": {
       "aria-label-links": "Ссылки",
@@ -11222,11 +11218,16 @@
     "save-or-delete-resource-shared-fields": {
       "comment-placeholder-describe-changes-optional": "Добавить примечание с описанием изменений (необязательно)",
       "description-branch-name-in-git-hub": "Имя ветви в GitHub",
+      "description-file-path": "",
+      "description-folder-path": "",
       "description-inside-repository": "",
       "label-branch": "Ветвь",
       "label-comment": "Комментарий",
       "label-path": "Путь",
-      "label-workflow": "Рабочий процесс"
+      "label-workflow": "Рабочий процесс",
+      "placeholder-branch": "",
+      "placeholder-new-branch": "",
+      "suffix-configured-branch": ""
     }
   },
   "provisioned-resource-preview-banner": {
@@ -11766,6 +11767,10 @@
       "button-previous": "Назад",
       "button-submitting": "Отправка...",
       "error-instance-repository-exists": "Репозиторий экземпляров уже существует"
+    },
+    "workflow-options-label": {
+      "push-to-a-new-branch": "",
+      "push-to-existing-branch": ""
     }
   },
   "public-dashboard": {
@@ -12158,6 +12163,7 @@
     "selector": {
       "apply": "Применить",
       "cancel": "Отмена",
+      "error-title": "",
       "input": {
         "placeholder": "Выбрать области...",
         "removeAll": "Удалить все области"
@@ -12889,6 +12895,7 @@
     "name-fields": "Поля",
     "name-frozen-columns": "",
     "name-hide-in-table": "Скрыть в таблице",
+    "name-max-height": "",
     "name-min-column-width": "Минимальная ширина столбца",
     "name-show-table-footer": "Показать футер таблицы",
     "name-show-table-header": "Показать заголовок таблицы",
@@ -12898,6 +12905,7 @@
     "name-wrap-text": "",
     "placeholder-column-width": "авто",
     "placeholder-fields": "Все числовые поля",
+    "placeholder-max-height": "",
     "tooltip-placement-options": {
       "label-auto": "",
       "label-bottom": "",

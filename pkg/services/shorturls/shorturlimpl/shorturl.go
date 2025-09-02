@@ -12,7 +12,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/shorturls"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/util"
-	"github.com/teris-io/shortid"
 )
 
 var getTime = time.Now
@@ -53,11 +52,7 @@ func (s ShortURLService) CreateShortURL(ctx context.Context, user *user.SignedIn
 
 	uid := cmd.UID
 	if uid == "" {
-		var err error
-		uid, err = shortid.Generate()
-		if err != nil {
-			return nil, shorturls.ErrShortURLInternal.Errorf("failed to generate uid: %w", err)
-		}
+		uid = util.GenerateShortUID()
 	} else {
 		// Ensure the UID is valid
 		if !util.IsValidShortUID(uid) {
