@@ -36,16 +36,6 @@ jest.mock('../../hooks/useProvisionedRequestHandler', () => {
   };
 });
 
-jest.mock('app/core/components/Select/FolderPicker', () => {
-  const actual = jest.requireActual('app/core/components/Select/FolderPicker');
-  return {
-    ...actual,
-    FolderPicker: function MockFolderPicker() {
-      return <div data-testid="folder-picker">Folder Picker</div>;
-    },
-  };
-});
-
 jest.mock('app/features/provisioning/hooks/useCreateOrUpdateRepositoryFile', () => {
   return {
     useCreateOrUpdateRepositoryFile: jest.fn(),
@@ -55,6 +45,12 @@ jest.mock('app/features/provisioning/hooks/useCreateOrUpdateRepositoryFile', () 
 jest.mock('app/features/provisioning/hooks/useGetResourceRepositoryView', () => {
   return {
     useGetResourceRepositoryView: jest.fn(),
+  };
+});
+
+jest.mock('app/features/provisioning/components/Shared/ProvisioningAwareFolderPicker', () => {
+  return {
+    ProvisioningAwareFolderPicker: () => <div data-testid="folder-picker">Mocked Folder Picker</div>,
   };
 });
 

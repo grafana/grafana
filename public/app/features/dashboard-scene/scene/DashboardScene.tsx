@@ -36,6 +36,7 @@ import { ShowConfirmModalEvent } from 'app/types/events';
 
 import {
   AnnoKeyManagerAllowsEdits,
+  AnnoKeyManagerIdentity,
   AnnoKeyManagerKind,
   AnnoKeySourcePath,
   ManagerKind,
@@ -771,6 +772,11 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
 
   getManagerKind(): ManagerKind | undefined {
     return this.state.meta.k8s?.annotations?.[AnnoKeyManagerKind];
+  }
+
+  getManagerIdentity(): string | undefined {
+    // get repo name if any
+    return this.state.meta.k8s?.annotations?.[AnnoKeyManagerIdentity];
   }
 
   isManaged() {
