@@ -155,7 +155,6 @@ func buildCMDNode(ctx context.Context, rn *rawNode, toggles featuremgmt.FeatureT
 	}
 	if err != nil {
 		return nil, MakeParseError(rn.RefID, err)
-	
 	}
 
 	return node, nil
