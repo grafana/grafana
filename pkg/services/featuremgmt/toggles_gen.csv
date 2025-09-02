@@ -203,7 +203,6 @@ unifiedStorageHistoryPruner,GA,@grafana/search-and-storage,false,false,false
 azureMonitorLogsBuilderEditor,preview,@grafana/partner-datasources,false,false,false
 localeFormatPreference,preview,@grafana/grafana-frontend-platform,false,false,false
 unifiedStorageGrpcConnectionPool,experimental,@grafana/search-and-storage,false,false,false
-extensionSidebar,experimental,@grafana/observability-logs,false,false,true
 alertingRulePermanentlyDelete,GA,@grafana/alerting-squad,false,false,true
 alertingRuleRecoverDeleted,GA,@grafana/alerting-squad,false,false,true
 multiTenantTempCredentials,experimental,@grafana/aws-datasources,false,false,false
@@ -241,9 +240,13 @@ unifiedStorageSearchDualReaderEnabled,experimental,@grafana/search-and-storage,f
 dashboardDsAdHocFiltering,experimental,@grafana/datapro,false,false,true
 dashboardLevelTimeMacros,experimental,@grafana/dashboards-squad,false,false,true
 alertmanagerRemoteSecondaryWithRemoteState,experimental,@grafana/alerting-squad,false,false,false
+restrictedPluginApis,experimental,@grafana/plugins-platform-backend,false,false,true
 adhocFiltersInTooltips,experimental,@grafana/datapro,false,false,true
 favoriteDatasources,experimental,@grafana/plugins-platform-backend,false,false,true
 newLogContext,experimental,@grafana/observability-logs,false,false,true
 newClickhouseConfigPageDesign,privatePreview,@grafana/partner-datasources,false,false,false
 unifiedStorageSearchAfterWriteExperimentalAPI,experimental,@grafana/search-and-storage,false,true,false
 teamFolders,experimental,@grafana/grafana-search-navigate-organise,false,false,false
+alertingTriage,experimental,@grafana/alerting-squad,false,false,true
+graphiteBackendMode,privatePreview,@grafana/partner-datasources,false,false,false
+azureResourcePickerUpdates,preview,@grafana/partner-datasources,false,false,true

@@ -403,6 +403,7 @@ interface UseRowHeightOptions {
   defaultHeight: NonNullable<CSSProperties['height']>;
   expandedRows: Set<number>;
   typographyCtx: TypographyCtx;
+  maxHeight?: number;
 }
 
 export function useRowHeight({
@@ -412,8 +413,12 @@ export function useRowHeight({
   defaultHeight,
   expandedRows,
   typographyCtx,
+  maxHeight,
 }: UseRowHeightOptions): NonNullable<CSSProperties['height']> | ((row: TableRow) => number) {
-  const measurers = useMemo(() => buildCellHeightMeasurers(fields, typographyCtx), [fields, typographyCtx]);
+  const measurers = useMemo(
+    () => buildCellHeightMeasurers(fields, typographyCtx, maxHeight),
+    [fields, typographyCtx, maxHeight]
+  );
   const hasWrappedCols = useMemo(() => measurers?.length ?? 0 > 0, [measurers]);
 
   const colWidths = useMemo(() => {

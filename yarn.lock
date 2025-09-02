@@ -3090,6 +3090,7 @@ __metadata:
     type-fest: "npm:^4.40.0"
     typescript: "npm:5.9.2"
   peerDependencies:
+    "@grafana/data": ">=11.6 <= 12.x"
     "@grafana/runtime": ">=11.6 <= 12.x"
     "@grafana/ui": ">=11.6 <= 12.x"
     "@reduxjs/toolkit": ^2.8.0
