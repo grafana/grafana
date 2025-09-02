@@ -89,6 +89,9 @@ func validateOwnerReference(name utils2.OwnerReference, folder utils.GrafanaMeta
 	if folder.GetFolder() != "" {
 		return fmt.Errorf("%s folder must be a root", name.Owner)
 	}
+	if folder.GetAnnotation(utils.AnnoKeyGrantPermissions) != "" {
+		return fmt.Errorf("%s folders do not support: %s", name.Owner, utils.AnnoKeyGrantPermissions)
+	}
 
 	// Make sure a team/root
 	refs := folder.GetOwnerReferences()
@@ -174,7 +177,7 @@ func validateOnUpdate(ctx context.Context,
 	}
 
 	// if by moving a folder we exceed the max depth, return an error
-	if len(info.Items)+1 >= folderValidationRules.maxDepth {
+	if len(info.Items)+1 >= maxDepth {
 		return folder.ErrMaximumDepthReached
 	}
 	return nil

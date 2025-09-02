@@ -194,13 +194,23 @@ func TestValidateCreate(t *testing.T) {
 			},
 			expectedErr: "folder must be a root",
 		}, {
-			name: "namespace is not valid",
+			name: "team folder must be root",
 			folder: &folders.Folder{
 				ObjectMeta: metav1.ObjectMeta{
-					Name: "namespace",
+					Name:        "user:xyz",
+					Annotations: map[string]string{"grafana.app/folder": "p1"},
 				},
 			},
-			expectedErr: "folder may not be a namespace",
+			expectedErr: "folder must be a root",
+		}, {
+			name: "team folder with grant permissions",
+			folder: &folders.Folder{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:        "team:abc",
+					Annotations: map[string]string{"grafana.app/grant-permissions": "default"},
+				},
+			},
+			expectedErr: "team folders do not support:",
 		},
 	}
 
