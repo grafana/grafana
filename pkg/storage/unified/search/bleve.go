@@ -314,7 +314,7 @@ func (b *bleveBackend) BuildIndex(
 			defer closeIndexOnExit(index, indexDir) // Close index, and delete new index directory.
 		}
 	} else {
-		index, err = bleve.NewMemOnly(mapper)
+		index, err = bleve.NewUsing("", mapper, bleve.Config.DefaultIndexType, bleve.Config.DefaultMemKVStore, nil)
 		if err != nil {
 			return nil, fmt.Errorf("error creating new in-memory bleve index: %w", err)
 		}
