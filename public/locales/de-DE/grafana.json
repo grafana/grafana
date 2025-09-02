@@ -12085,6 +12085,7 @@
     "selector": {
       "apply": "Anwenden",
       "cancel": "Abbrechen",
+      "error-title": "",
       "input": {
         "placeholder": "Bereiche auswählen …",
         "removeAll": "Alle Bereiche entfernen"
