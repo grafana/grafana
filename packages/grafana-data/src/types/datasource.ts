@@ -307,9 +307,11 @@ abstract class DataSourceApi<
   metricFindQuery?(query: any, options?: LegacyMetricFindQueryOptions): Promise<MetricFindValue[]>;
 
   /**
-   * Verify adhoc filters applicability based on queries and current filters
+   * Verify adhoc filters and groupBy keys applicability based on queries and current selected values
    */
-  getFiltersApplicability?(options?: DataSourceGetTagKeysOptions<TQuery>): Promise<FiltersApplicability[]>;
+  getDrilldownsApplicability?(
+    options?: DataSourceGetDrilldownsApplicabilityOptions<TQuery>
+  ): Promise<DrilldownsApplicability[]>;
 
   /**
    * Get tag keys for adhoc filters
@@ -643,7 +645,15 @@ export interface MetricFindValue {
   expandable?: boolean;
 }
 
-export interface FiltersApplicability {
+export interface DataSourceGetDrilldownsApplicabilityOptions<TQuery extends DataQuery = DataQuery> {
+  filters: AdHocVariableFilter[];
+  groupByKeys?: string[];
+  timeRange?: TimeRange;
+  queries?: TQuery[];
+  scopes?: Scope[] | undefined;
+}
+
+export interface DrilldownsApplicability {
   key: string;
   applicable: boolean;
   // message explaining why the filter is not applicable

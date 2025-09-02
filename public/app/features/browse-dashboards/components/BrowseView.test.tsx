@@ -1,42 +1,21 @@
-import { getByLabelText, render as rtlRender, screen } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
-import { TestProvider } from 'test/helpers/TestProvider';
+import { getByLabelText, render, screen, userEvent } from 'test/test-utils';
 
 import { selectors } from '@grafana/e2e-selectors';
+import { setBackendSrv } from '@grafana/runtime';
+import { setupMockServer } from '@grafana/test-utils/server';
 import { getFolderFixtures } from '@grafana/test-utils/unstable';
+import { backendSrv } from 'app/core/services/backend_srv';
+import { contextSrv } from 'app/core/services/context_srv';
 import { DashboardViewItem } from 'app/features/search/types';
+import { AccessControlAction } from 'app/types/accessControl';
 
 import { BrowseView } from './BrowseView';
 
 const [mockTree, { folderA, folderA_folderA, folderA_folderB, folderA_folderB_dashbdB, dashbdD, folderB_empty }] =
   getFolderFixtures();
 
-function render(...[ui, options]: Parameters<typeof rtlRender>) {
-  rtlRender(<TestProvider>{ui}</TestProvider>, options);
-}
-
-jest.mock('app/features/browse-dashboards/api/services', () => {
-  const orig = jest.requireActual('app/features/browse-dashboards/api/services');
-
-  return {
-    ...orig,
-    listFolders(parentUID?: string) {
-      const childrenForUID = mockTree
-        .filter((v) => v.item.kind === 'folder' && v.item.parentUID === parentUID)
-        .map((v) => v.item);
-
-      return Promise.resolve(childrenForUID);
-    },
-
-    listDashboards(parentUID?: string) {
-      const childrenForUID = mockTree
-        .filter((v) => v.item.kind === 'dashboard' && v.item.parentUID === parentUID)
-        .map((v) => v.item);
-
-      return Promise.resolve(childrenForUID);
-    },
-  };
-});
+setBackendSrv(backendSrv);
+setupMockServer();
 
 describe('browse-dashboards BrowseView', () => {
   const WIDTH = 800;
@@ -48,13 +27,12 @@ describe('browse-dashboards BrowseView', () => {
     canDeleteDashboards: true,
   };
 
-  afterEach(() => {
-    // Reset permissions back to defaults
-    Object.assign(mockPermissions, {
-      canEditFolders: true,
-      canEditDashboards: true,
-      canDeleteFolders: true,
-      canDeleteDashboards: true,
+  beforeEach(() => {
+    jest.spyOn(contextSrv, 'hasPermission').mockImplementation((permission: string) => {
+      if (permission === AccessControlAction.FoldersRead) {
+        return true;
+      }
+      return false;
     });
   });
 
@@ -63,7 +41,7 @@ describe('browse-dashboards BrowseView', () => {
     await screen.findByText(folderA.item.title);
 
     await expandFolder(folderA.item);
-    expect(screen.queryByText(folderA_folderA.item.title)).toBeInTheDocument();
+    expect(screen.getByText(folderA_folderA.item.title)).toBeInTheDocument();
 
     await collapseFolder(folderA.item);
     expect(screen.queryByText(folderA_folderA.item.title)).not.toBeInTheDocument();
@@ -169,13 +147,20 @@ describe('browse-dashboards BrowseView', () => {
     });
 
     it('shows a simple message if the user has viewer rights', async () => {
-      mockPermissions.canEditFolders = false;
-      mockPermissions.canEditDashboards = false;
-      mockPermissions.canDeleteFolders = false;
-      mockPermissions.canDeleteDashboards = false;
+      const mockPermissionsDisabled = {
+        canEditFolders: false,
+        canEditDashboards: false,
+        canDeleteFolders: false,
+        canDeleteDashboards: false,
+      };
 
       render(
-        <BrowseView permissions={mockPermissions} folderUID={folderB_empty.item.uid} width={WIDTH} height={HEIGHT} />
+        <BrowseView
+          permissions={mockPermissionsDisabled}
+          folderUID={folderB_empty.item.uid}
+          width={WIDTH}
+          height={HEIGHT}
+        />
       );
       expect(await screen.findByText('This folder is empty')).toBeInTheDocument();
     });

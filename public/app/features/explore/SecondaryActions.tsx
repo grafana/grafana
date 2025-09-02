@@ -74,17 +74,19 @@ export function SecondaryActions({
           {queryLibraryEnabled && (
             <ToolbarButton
               data-testid={selectors.pages.Explore.General.addFromQueryLibrary}
-              aria-label={t('explore.secondary-actions.add-from-query-library', 'Add query from library')}
+              aria-label={t('explore.secondary-actions.add-from-query-library', 'Add from saved queries')}
               variant="canvas"
               onClick={() =>
-                openQueryLibraryDrawer(activeDatasources, onSelectQueryFromLibrary, {
-                  context: CoreApp.Explore,
+                openQueryLibraryDrawer({
+                  datasourceFilters: activeDatasources,
+                  onSelectQuery: onSelectQueryFromLibrary,
+                  options: { context: CoreApp.Explore },
                 })
               }
               icon="plus"
               disabled={addQueryRowButtonDisabled}
             >
-              <Trans i18nKey="explore.secondary-actions.add-from-query-library">Add query from library</Trans>
+              <Trans i18nKey="explore.secondary-actions.add-from-query-library">Add from saved queries</Trans>
             </ToolbarButton>
           )}
         </>
