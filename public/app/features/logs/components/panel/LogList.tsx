@@ -27,7 +27,7 @@ import { InfiniteScrollMode, InfiniteScroll, LoadMoreLogsType } from './Infinite
 import { getGridTemplateColumns, LogLineTimestampResolution } from './LogLine';
 import { LogLineDetails, LogLineDetailsMode } from './LogLineDetails';
 import { GetRowContextQueryFn, LogLineMenuCustomItem } from './LogLineMenu';
-import { LogListContextProvider, LogListState, useLogListContext } from './LogListContext';
+import { getDefaultDetailsMode, LogListContextProvider, LogListState, useLogListContext } from './LogListContext';
 import { LogListControls } from './LogListControls';
 import { LOG_LIST_SEARCH_HEIGHT, LogListSearch } from './LogListSearch';
 import { LogListSearchContextProvider, useLogListSearchContext } from './LogListSearchContext';
@@ -109,7 +109,9 @@ export const LogList = ({
   displayedFields,
   containerElement,
   logOptionsStorageKey,
-  detailsMode = logOptionsStorageKey ? (store.get(`${logOptionsStorageKey}.detailsMode`) ?? 'inline') : 'inline',
+  detailsMode = logOptionsStorageKey
+    ? (store.get(`${logOptionsStorageKey}.detailsMode`) ?? getDefaultDetailsMode())
+    : getDefaultDetailsMode(),
   dedupStrategy,
   enableLogDetails,
   eventBus,

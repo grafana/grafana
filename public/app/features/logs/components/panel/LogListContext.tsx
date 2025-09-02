@@ -258,7 +258,7 @@ export const LogListContextProvider = ({
   const [detailsWidth, setDetailsWidthState] = useState(
     getDetailsWidth(containerElement, logOptionsStorageKey, undefined, detailsModeProp, showControls)
   );
-  const [detailsMode, setDetailsMode] = useState<LogLineDetailsMode>(detailsModeProp ?? 'sidebar');
+  const [detailsMode, setDetailsMode] = useState<LogLineDetailsMode>(detailsModeProp ?? getDefaultDetailsMode());
   const [isAssistantAvailable, openAssistant] = useAssistant();
   const [prettifyJSON, setPrettifyJSONState] = useState(prettifyJSONProp);
   const [wrapLogMessage, setWrapLogMessageState] = useState(wrapLogMessageProp);
@@ -744,4 +744,8 @@ ${log.entry.replaceAll('`', '\\`')}
       }),
     ],
   });
+}
+
+export function getDefaultDetailsMode(): LogLineDetailsMode {
+  return window.innerWidth > 1440 ? 'sidebar' : 'inline';
 }
