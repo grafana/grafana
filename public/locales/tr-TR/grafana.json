@@ -12085,6 +12085,7 @@
     "selector": {
       "apply": "Uygula",
       "cancel": "İptal",
+      "error-title": "",
       "input": {
         "placeholder": "Kapsam seçin...",
         "removeAll": "Tüm kapsamları kaldır"
