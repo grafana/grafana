@@ -83,7 +83,7 @@ export const AlertsFolderView = ({ folder, rules }: Props) => {
           />
         </Stack>
 
-        <Stack direction="column" gap={2}>
+        <Stack direction="column">
           {pageItems.map(({ grafana_alert, labels = {} }) => (
             <Card
               key={grafana_alert.uid}
@@ -201,7 +201,6 @@ export const getStyles = (theme: GrafanaTheme2) => ({
   }),
   card: css({
     gridTemplateColumns: 'auto 1fr 2fr',
-    margin: 0,
   }),
   pagination: css({
     alignSelf: 'center',
