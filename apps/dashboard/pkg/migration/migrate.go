@@ -1,8 +1,8 @@
 package migration
 
 import (
-	"fmt"
 	"context"
+	"fmt"
 	"sync"
 
 	"github.com/grafana/grafana/apps/dashboard/pkg/migration/schemaversion"
