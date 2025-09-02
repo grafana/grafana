@@ -4562,6 +4562,12 @@
       "overwrite": "Skriv över",
       "title-plugin-dashboard": "Tilläggsinstrumentpanel"
     },
+    "controls": {
+      "menu": {
+        "aria-label": "",
+        "title": ""
+      }
+    },
     "dash-nav": {
       "on-open-snapshot-original": {
         "confirmText": {
@@ -5840,11 +5846,6 @@
         "transparent-background": "Genomskinlig bakgrund"
       }
     },
-    "get-workflow-options": {
-      "label": {
-        "push-to-a-new-branch": "Skicka till en ny gren"
-      }
-    },
     "group-by-variable-form": {
       "alert-not-supported": "Denna datakälla stöder inte gruppering efter variabler",
       "description-enables-users-custom-values": "Gör det möjligt för användare att lägga till anpassade värden i listan",
@@ -6941,11 +6942,6 @@
       "dragging-a-divider": "Dra en avdelare",
       "dragging-a-sub-region": "Dra en underregion",
       "value": "Värde: {{ dividerPos }}"
-    },
-    "drilldownInfo": {
-      "action": "Gå till Grafana Drilldown",
-      "description": "Letar du efter Grafana Explore-apparna? De kallas nu Grafana Drilldown och finns under <1>Meny > Drilldown</1>",
-      "title": "Utforska statistik, loggar, spår och profiler har flyttats!"
     },
     "drop-down-menu": {
       "aria-label-links": "Länkar",
@@ -11158,11 +11154,16 @@
     "save-or-delete-resource-shared-fields": {
       "comment-placeholder-describe-changes-optional": "Lägg till en anteckning för att beskriva dina ändringar (valfritt)",
       "description-branch-name-in-git-hub": "Grennamn i GitHub",
+      "description-file-path": "",
+      "description-folder-path": "",
       "description-inside-repository": "",
       "label-branch": "Gren",
       "label-comment": "Kommentar",
       "label-path": "Sökväg",
-      "label-workflow": "Arbetsflöde"
+      "label-workflow": "Arbetsflöde",
+      "placeholder-branch": "",
+      "placeholder-new-branch": "",
+      "suffix-configured-branch": ""
     }
   },
   "provisioned-resource-preview-banner": {
@@ -11696,6 +11697,10 @@
       "button-previous": "Föregående",
       "button-submitting": "Skickar …",
       "error-instance-repository-exists": "Instanslagringsplatsen finns redan"
+    },
+    "workflow-options-label": {
+      "push-to-a-new-branch": "",
+      "push-to-existing-branch": ""
     }
   },
   "public-dashboard": {
@@ -12080,6 +12085,7 @@
     "selector": {
       "apply": "Tillämpa",
       "cancel": "Avbryt",
+      "error-title": "",
       "input": {
         "placeholder": "Välj omfattningar …",
         "removeAll": "Ta bort alla omfattningar"
@@ -12807,6 +12813,7 @@
     "name-fields": "Fält",
     "name-frozen-columns": "",
     "name-hide-in-table": "Dölj i tabell",
+    "name-max-height": "",
     "name-min-column-width": "Minsta kolumnbredd",
     "name-show-table-footer": "Visa tabellsidfot",
     "name-show-table-header": "Visa tabellsidhuvud",
@@ -12816,6 +12823,7 @@
     "name-wrap-text": "",
     "placeholder-column-width": "auto",
     "placeholder-fields": "Alla numeriska fält",
+    "placeholder-max-height": "",
     "tooltip-placement-options": {
       "label-auto": "",
       "label-bottom": "",
