@@ -149,9 +149,13 @@ In the **Saved queries** drawer, you can:
 
 Access the duplicate, lock, unlock, and delete query options through the menu in the top-right corner of the query form next to the **Edit** button.
 
-To view your saved queries, click **+ Add from saved queries** in the query editor:
+To access your saved queries, click **+ Add from saved queries** in the query editor:
 
 {{< figure src="/media/docs/grafana/panels-visualizations/screenshot-add-from-saved-v12.2.png" max-width="750px" alt="" >}}
+
+If you've already entered a query, you also have the option to replace it with a saved one:
+
+{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-replace-query-v12.2.png" max-width="750px" alt="" >}}
 
 #### Save a query
 
@@ -162,11 +166,9 @@ To save a query you've created:
    {{< figure src="/media/docs/grafana/panels-visualizations/screensho-save-query-v12.2.png" max-width="750px" alt="" >}}
 
 1. In the **Saved queries** drawer, enter a title for the query that will make it easy to find later.
-1. (Optional) Enter a description.
-1. (Optional) Add relevant tags.
+1. (Optional) Enter a description and relevant tags.
 1. Clear the **Share query with all users** checkbox if you only want the saved query to be available to you.
 1. Click **Save**.
-1. (Optional) To make the query editable, click the menu icon in the top-right corner of the query form and click **Unlock query**.
 
 #### Known limitations
 
