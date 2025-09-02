@@ -51,6 +51,7 @@ func startSessionOrUseExisting(ctx context.Context, engine *xorm.Engine, beginTr
 
 		// This is a noop span to simplify later operations. purposefully not using existing context
 		_, span := noop.NewTracerProvider().Tracer("integrationtests").Start(ctx, "sqlstore.startSessionOrUseExisting")
+
 		return sess, false, span, nil
 	}
 
@@ -69,7 +70,9 @@ func startSessionOrUseExisting(ctx context.Context, engine *xorm.Engine, beginTr
 	newSess.Session = newSess.Context(tctx)
 
 	return newSess, true, span, nil
-} // WithDbSession calls the callback with the session in the context (if exists).
+}
+
+// WithDbSession calls the callback with the session in the context (if exists).
 // Otherwise it creates a new one that is closed upon completion.
 // A session is stored in the context if sqlstore.InTransaction() has been previously called with the same context (and it's not committed/rolledback yet).
 // In case of retryable errors, callback will be retried at most five times before giving up.
