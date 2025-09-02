@@ -216,6 +216,21 @@
     },
     {
       "metadata": {
+        "name": "alertingEnrichmentPerRule",
+        "resourceVersion": "1756206837948",
+        "creationTimestamp": "2025-08-26T11:13:57Z"
+      },
+      "spec": {
+        "description": "Enable enrichment per rule in the alerting UI.",
+        "stage": "experimental",
+        "codeowner": "@grafana/alerting-squad",
+        "hideFromAdminPage": true,
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "alertingFilterV2",
         "resourceVersion": "1753448760331",
         "creationTimestamp": "2024-09-11T11:29:26Z"
@@ -410,6 +425,22 @@
     },
     {
       "metadata": {
+        "name": "alertingRuleNotificationMessageSectionExtension",
+        "resourceVersion": "1756193222535",
+        "creationTimestamp": "2025-08-26T07:27:02Z",
+        "deletionTimestamp": "2025-08-26T11:13:57Z"
+      },
+      "spec": {
+        "description": "Enable rule notification message section extension.",
+        "stage": "experimental",
+        "codeowner": "@grafana/alerting-squad",
+        "hideFromAdminPage": true,
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "alertingRulePermanentlyDelete",
         "resourceVersion": "1753448760331",
         "creationTimestamp": "2025-04-03T11:18:25Z"
@@ -486,6 +517,22 @@
     },
     {
       "metadata": {
+        "name": "alertingTriage",
+        "resourceVersion": "1756386724059",
+        "creationTimestamp": "2025-08-28T13:12:04Z"
+      },
+      "spec": {
+        "description": "Enables the alerting triage feature",
+        "stage": "experimental",
+        "codeowner": "@grafana/alerting-squad",
+        "frontend": true,
+        "hideFromAdminPage": true,
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "alertingUIOptimizeReducer",
         "resourceVersion": "1753448760331",
         "creationTimestamp": "2024-11-18T10:59:00Z"
@@ -525,16 +572,18 @@
     {
       "metadata": {
         "name": "alertmanagerRemoteSecondaryWithRemoteState",
-        "resourceVersion": "1753448760331",
-        "creationTimestamp": "2025-07-25T13:06:00Z"
+        "resourceVersion": "1753776005753",
+        "creationTimestamp": "2025-07-25T13:06:00Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-07-29 08:00:05.753498 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Starts Grafana in remote secondary mode pulling the latest state from the remote Alertmanager to avoid duplicate notifications.",
         "stage": "experimental",
         "codeowner": "@grafana/alerting-squad",
         "hideFromAdminPage": true,
-        "hideFromDocs": true,
-        "expression": "false"
+        "hideFromDocs": true
       }
     },
     {
@@ -1259,7 +1308,8 @@
       "metadata": {
         "name": "expressionParser",
         "resourceVersion": "1753448760331",
-        "creationTimestamp": "2024-02-17T00:59:11Z"
+        "creationTimestamp": "2024-02-17T00:59:11Z",
+        "deletionTimestamp": "2025-08-25T16:14:10Z"
       },
       "spec": {
         "description": "Enable new expression parser",
@@ -1272,7 +1322,8 @@
       "metadata": {
         "name": "extensionSidebar",
         "resourceVersion": "1753448760331",
-        "creationTimestamp": "2025-04-03T10:16:35Z"
+        "creationTimestamp": "2025-04-03T10:16:35Z",
+        "deletionTimestamp": "2025-08-20T11:59:44Z"
       },
       "spec": {
         "description": "Enables the extension sidebar",
@@ -1532,6 +1583,19 @@
         "hideFromAdminPage": true,
         "hideFromDocs": true,
         "expression": "true"
+      }
+    },
+    {
+      "metadata": {
+        "name": "graphiteBackendMode",
+        "resourceVersion": "1755870507537",
+        "creationTimestamp": "2025-08-22T13:48:27Z"
+      },
+      "spec": {
+        "description": "Enables the Graphite data source full backend mode",
+        "stage": "privatePreview",
+        "codeowner": "@grafana/partner-datasources",
+        "expression": "false"
       }
     },
     {
@@ -2601,7 +2665,8 @@
       "metadata": {
         "name": "prometheusCodeModeMetricNamesSearch",
         "resourceVersion": "1753448760331",
-        "creationTimestamp": "2024-04-04T20:38:23Z"
+        "creationTimestamp": "2024-04-04T20:38:23Z",
+        "deletionTimestamp": "2025-08-01T07:53:50Z"
       },
       "spec": {
         "description": "Enables search for metric names in Code Mode, to improve performance when working with an enormous number of metric names",
@@ -2842,6 +2907,25 @@
     },
     {
       "metadata": {
+        "name": "restrictedPluginApis",
+        "resourceVersion": "1753776783657",
+        "creationTimestamp": "2025-07-25T07:46:26Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-07-29 08:13:03.657209 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Enables sharing a list of APIs with a list of plugins",
+        "stage": "experimental",
+        "codeowner": "@grafana/plugins-platform-backend",
+        "frontend": true,
+        "hideFromAdminPage": true,
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "rolePickerDrawer",
         "resourceVersion": "1753448760331",
         "creationTimestamp": "2024-09-26T12:51:38Z"
@@ -3054,7 +3138,8 @@
       "metadata": {
         "name": "tableNextGen",
         "resourceVersion": "1753448760331",
-        "creationTimestamp": "2025-03-26T03:57:57Z"
+        "creationTimestamp": "2025-03-26T03:57:57Z",
+        "deletionTimestamp": "2025-08-19T14:11:23Z"
       },
       "spec": {
         "description": "Allows access to the new react-data-grid based table component.",

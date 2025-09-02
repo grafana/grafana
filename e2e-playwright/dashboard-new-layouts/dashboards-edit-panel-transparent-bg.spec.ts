@@ -34,7 +34,7 @@ test.describe(
       const initialBackground = await panelTitle.evaluate((el) => getComputedStyle(el).background);
       expect(initialBackground).not.toMatch(/rgba\(0, 0, 0, 0\)/);
 
-      await page.locator('#transparent-background').click({ force: true });
+      await page.getByRole('switch', { name: 'Transparent background' }).click({ force: true });
 
       const transparentBackground = await panelTitle.evaluate((el) => getComputedStyle(el).background);
       expect(transparentBackground).toMatch(/rgba\(0, 0, 0, 0\)/);

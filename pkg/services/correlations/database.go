@@ -30,7 +30,7 @@ func (s CorrelationsService) createCorrelation(ctx context.Context, cmd CreateCo
 	if correlation.Config.Type == CorrelationType("query") {
 		correlation.Type = CorrelationType("query")
 	} else if correlation.Config.Type != "" {
-		return correlation, ErrInvalidConfigType
+		return correlation, ErrConfigTypeDeprecated
 	}
 
 	err := s.SQLStore.WithTransactionalDbSession(ctx, func(session *db.Session) error {

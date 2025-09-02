@@ -3,6 +3,7 @@ package test
 import (
 	"context"
 	"fmt"
+	"iter"
 	"net/http"
 	"slices"
 	"strings"
@@ -523,11 +524,22 @@ func runTestIntegrationBackendListModifiedSince(t *testing.T, backend resource.S
 		latestRv, seq := backend.ListModifiedSince(ctx, key, rvDeleted)
 		require.GreaterOrEqual(t, latestRv, rvDeleted)
 
-		counter := 0
-		for _, _ = range seq {
-			counter++
+		isEmpty(t, seq)
+	})
+
+	t.Run("no events for subsequent listModifiedSince calls", func(t *testing.T) {
+		key := resource.NamespacedResource{
+			Namespace: ns,
+			Group:     "group",
+			Resource:  "resource",
 		}
-		require.Equal(t, 0, counter) // no events should be returned
+		latestRv1, seq := backend.ListModifiedSince(ctx, key, rvDeleted)
+		require.GreaterOrEqual(t, latestRv1, rvDeleted)
+		isEmpty(t, seq)
+
+		latestRv2, seq := backend.ListModifiedSince(ctx, key, latestRv1)
+		require.Equal(t, latestRv1, latestRv2)
+		isEmpty(t, seq)
 	})
 
 	t.Run("will only return modified events for the given key", func(t *testing.T) {
@@ -553,6 +565,41 @@ func runTestIntegrationBackendListModifiedSince(t *testing.T, backend resource.S
 		}
 		require.Equal(t, 1, counter) // only one event should be returned
 	})
+
+	t.Run("will order events by resource version ascending and name descending", func(t *testing.T) {
+		key := resource.NamespacedResource{
+			Namespace: ns,
+			Group:     "group",
+			Resource:  "resource",
+		}
+
+		rvCreated1, _ := writeEvent(ctx, backend, "cItem", resourcepb.WatchEvent_ADDED, WithNamespace(ns))
+		rvCreated2, _ := writeEvent(ctx, backend, "aItem", resourcepb.WatchEvent_ADDED, WithNamespace(ns))
+		rvCreated3, _ := writeEvent(ctx, backend, "bItem", resourcepb.WatchEvent_ADDED, WithNamespace(ns))
+
+		latestRv, seq := backend.ListModifiedSince(ctx, key, rvCreated1-1)
+		require.Greater(t, latestRv, rvCreated3)
+
+		counter := 0
+		names := []string{"aItem", "bItem", "cItem"}
+		rvs := []int64{rvCreated2, rvCreated3, rvCreated1}
+		for res, err := range seq {
+			require.NoError(t, err)
+			require.Equal(t, key.Namespace, res.Key.Namespace)
+			require.Equal(t, names[counter], res.Key.Name)
+			require.Equal(t, rvs[counter], res.ResourceVersion)
+			counter++
+		}
+		require.Equal(t, 3, counter)
+	})
+}
+
+func isEmpty(t *testing.T, seq iter.Seq2[*resource.ModifiedResource, error]) {
+	counter := 0
+	for range seq {
+		counter++
+	}
+	require.Equal(t, 0, counter)
 }
 
 func runTestIntegrationBackendListHistory(t *testing.T, backend resource.StorageBackend, nsPrefix string) {

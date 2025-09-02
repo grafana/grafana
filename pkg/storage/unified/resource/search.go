@@ -24,6 +24,7 @@ import (
 
 	dashboardv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
@@ -109,6 +110,8 @@ type SearchBackend interface {
 		indexBuildReason string,
 		builder BuildFn,
 		updater UpdateFn,
+		rebuild bool,
+		searchAfterWrite bool,
 	) (ResourceIndex, error)
 
 	// TotalDocs returns the total number of documents across all indexes.
@@ -475,7 +478,7 @@ func (s *searchSupport) buildIndexes(ctx context.Context, rebuild bool) (int, er
 			if rebuild {
 				reason = "rebuild"
 			}
-			_, _, err := s.build(ctx, info.NamespacedResource, info.Count, info.ResourceVersion, reason)
+			_, _, err := s.build(ctx, info.NamespacedResource, info.Count, info.ResourceVersion, reason, rebuild)
 			return err
 		})
 	}
@@ -657,13 +660,20 @@ func (s *searchSupport) getOrCreateIndex(ctx context.Context, key NamespacedReso
 
 	ctx, span := s.tracer.Start(ctx, tracingPrexfixSearch+"GetOrCreateIndex")
 	defer span.End()
+	span.SetAttributes(
+		attribute.String("namespace", key.Namespace),
+		attribute.String("group", key.Group),
+		attribute.String("resource", key.Resource),
+		attribute.String("namespace", key.Namespace),
+	)
 
 	idx, err := s.search.GetIndex(ctx, key)
 	if err != nil {
-		return nil, err
+		return nil, tracing.Error(span, err)
 	}
 
 	if idx == nil {
+		span.AddEvent("Building index")
 		ch := s.buildIndex.DoChan(key.String(), func() (interface{}, error) {
 			// We want to finish building of the index even if original context is canceled.
 			// We reuse original context without cancel to keep the tracing spans correct.
@@ -693,7 +703,7 @@ func (s *searchSupport) getOrCreateIndex(ctx context.Context, key NamespacedReso
 				}
 			}
 
-			idx, _, err = s.build(ctx, key, size, rv, reason)
+			idx, _, err = s.build(ctx, key, size, rv, reason, false)
 			if err != nil {
 				return nil, fmt.Errorf("error building search index, %w", err)
 			}
@@ -706,30 +716,33 @@ func (s *searchSupport) getOrCreateIndex(ctx context.Context, key NamespacedReso
 		select {
 		case res := <-ch:
 			if res.Err != nil {
-				return nil, res.Err
+				return nil, tracing.Error(span, res.Err)
 			}
 			idx = res.Val.(ResourceIndex)
 		case <-ctx.Done():
-			return nil, fmt.Errorf("failed to get index: %w", ctx.Err())
+			return nil, tracing.Error(span, fmt.Errorf("failed to get index: %w", ctx.Err()))
 		}
 	}
 
 	if s.searchAfterWrite {
+		span.AddEvent("Updating index")
 		start := time.Now()
-		_, err := idx.UpdateIndex(ctx, reason)
+		rv, err := idx.UpdateIndex(ctx, reason)
 		if err != nil {
-			return nil, fmt.Errorf("failed to update index to guarantee strong consistency: %w", err)
+			return nil, tracing.Error(span, fmt.Errorf("failed to update index to guarantee strong consistency: %w", err))
 		}
 		elapsed := time.Since(start)
 		if s.indexMetrics != nil {
 			s.indexMetrics.SearchUpdateWaitTime.WithLabelValues(reason).Observe(elapsed.Seconds())
 		}
+		s.log.Debug("Index updated before search", "namespace", key.Namespace, "group", key.Group, "resource", key.Resource, "reason", reason, "duration", elapsed, "rv", rv)
+		span.AddEvent("Index updated")
 	}
 
 	return idx, nil
 }
 
-func (s *searchSupport) build(ctx context.Context, nsr NamespacedResource, size int64, documentStatsRV int64, indexBuildReason string) (ResourceIndex, int64, error) {
+func (s *searchSupport) build(ctx context.Context, nsr NamespacedResource, size int64, documentStatsRV int64, indexBuildReason string, rebuild bool) (ResourceIndex, int64, error) {
 	ctx, span := s.tracer.Start(ctx, tracingPrexfixSearch+"Build")
 	defer span.End()
 
@@ -897,7 +910,7 @@ func (s *searchSupport) build(ctx context.Context, nsr NamespacedResource, size 
 		return rv, docs, nil
 	}
 
-	index, err := s.search.BuildIndex(ctx, nsr, size, documentStatsRV, fields, indexBuildReason, builderFn, updaterFn)
+	index, err := s.search.BuildIndex(ctx, nsr, size, documentStatsRV, fields, indexBuildReason, builderFn, updaterFn, rebuild, s.searchAfterWrite)
 
 	if err != nil {
 		return nil, 0, err
@@ -931,7 +944,7 @@ func (s *searchSupport) buildEmptyIndex(ctx context.Context, nsr NamespacedResou
 	}, func(context context.Context, index ResourceIndex, sinceRV int64) (int64, int, error) {
 		// No update is performed.
 		return 0, 0, nil
-	})
+	}, false, s.searchAfterWrite)
 }
 
 type builderCache struct {
