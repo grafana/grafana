@@ -202,7 +202,7 @@ describe('QueryEditorRows', () => {
     const {
       renderResult: { rerender },
     } = renderScenario();
-    expect((await screen.findByTestId('query-editor-rows')).children.length).toBe(2);
+    expect(await screen.findAllByTestId('query-editor-row')).toHaveLength(2);
 
     rerender(
       <QueryEditorRows
@@ -216,7 +216,7 @@ describe('QueryEditorRows', () => {
       />
     );
 
-    expect((await screen.findByTestId('query-editor-rows')).children.length).toBe(1);
+    expect(await screen.findAllByTestId('query-editor-row')).toHaveLength(1);
   });
 
   it('Should be able to expand and collapse queries', async () => {

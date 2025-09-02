@@ -244,7 +244,7 @@ const FilterOptions = ({ onSubmit, onClear, pluginsFilterEnabled }: FilterOption
   const { namespaceOptions, allGroupNames, isLoadingNamespaces, namespacePlaceholder, groupPlaceholder } =
     useNamespaceAndGroupOptions();
 
-  const { labelOptions, isLoadingGrafanaLabels } = useLabelOptions();
+  const { labelOptions } = useLabelOptions();
 
   // Create label options for the multi-select dropdown
   const dataSourceOptions = useAlertingDataSourceOptions();
@@ -283,11 +283,7 @@ const FilterOptions = ({ onSubmit, onClear, pluginsFilterEnabled }: FilterOption
         <Stack direction="column" alignItems="end" gap={2}>
           <div className={styles.grid}>
             <RuleNameField />
-            <LabelsField
-              labelOptions={labelOptions}
-              isLoadingGrafanaLabels={isLoadingGrafanaLabels}
-              portalContainer={portalContainer}
-            />
+            <LabelsField labelOptions={labelOptions} portalContainer={portalContainer} />
             <NamespaceField
               namespaceOptions={namespaceOptions}
               namespacePlaceholder={namespacePlaceholder}
@@ -335,11 +331,9 @@ function RuleNameField() {
 
 function LabelsField({
   labelOptions,
-  isLoadingGrafanaLabels,
   portalContainer,
 }: {
-  labelOptions: Array<{ label?: string; value: string; infoOption?: boolean }>;
-  isLoadingGrafanaLabels: boolean;
+  labelOptions: (inputValue: string) => Promise<Array<{ label?: string; value: string; infoOption?: boolean }>>;
   portalContainer?: HTMLElement;
 }) {
   const { control } = useFormContext<AdvancedFilters>();
@@ -356,13 +350,7 @@ function LabelsField({
             options={labelOptions}
             value={field.value}
             onChange={(selections) => field.onChange(selections.map((s) => s.value))}
-            placeholder={
-              isLoadingGrafanaLabels
-                ? t('common.loading', 'Loading...')
-                : t('alerting.rules-filter.placeholder-labels', 'Select labels')
-            }
-            loading={isLoadingGrafanaLabels}
-            disabled={isLoadingGrafanaLabels || labelOptions.filter((option) => !option.infoOption).length === 0}
+            placeholder={t('alerting.rules-filter.placeholder-labels', 'Select labels')}
             portalContainer={portalContainer}
             width="auto"
             minWidth={40}
@@ -380,7 +368,7 @@ function NamespaceField({
   isLoadingNamespaces,
   portalContainer,
 }: {
-  namespaceOptions: Array<{ label?: string; value: string; description?: string }>;
+  namespaceOptions: (inputValue: string) => Promise<Array<{ label?: string; value: string; description?: string }>>;
   namespacePlaceholder: string;
   isLoadingNamespaces: boolean;
   portalContainer?: HTMLElement;
@@ -402,7 +390,6 @@ function NamespaceField({
               onChange={(option) => field.onChange(option?.value || null)}
               value={field.value}
               loading={isLoadingNamespaces}
-              disabled={isLoadingNamespaces || namespaceOptions.length === 0}
               isClearable
               portalContainer={portalContainer}
             />
@@ -441,7 +428,6 @@ function GroupField({
               onChange={(option) => field.onChange(option?.value || null)}
               value={field.value}
               loading={isLoadingNamespaces}
-              disabled={isLoadingNamespaces || allGroupNames.length === 0}
               isClearable
               portalContainer={portalContainer}
             />
@@ -456,7 +442,7 @@ function DataSourceNamesField({
   dataSourceOptions,
   portalContainer,
 }: {
-  dataSourceOptions: Array<{ label?: string; value: string }>;
+  dataSourceOptions: (inputValue: string) => Promise<Array<{ label?: string; value: string }>>;
   portalContainer?: HTMLElement;
 }) {
   const { control } = useFormContext<AdvancedFilters>();
