@@ -10,31 +10,28 @@ import (
 
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	"github.com/grafana/grafana/pkg/services/folder"
+	folderLegacy "github.com/grafana/grafana/pkg/services/folder"
 )
 
-type parentsGetter = func(ctx context.Context, id string) (*folders.FolderInfoList, error)
+type parentsGetter = func(ctx context.Context, folder *folders.Folder) (*folders.FolderInfoList, error)
 
 func newParentsGetter(getter rest.Getter, maxDepth int) parentsGetter {
-	return func(ctx context.Context, id string) (*folders.FolderInfoList, error) {
+	return func(ctx context.Context, folder *folders.Folder) (*folders.FolderInfoList, error) {
 		info := &folders.FolderInfoList{
 			Items: []folders.FolderInfo{},
 		}
-		if id == folder.GeneralFolderUID || id == folder.SharedWithMeFolderUID {
-			return info, nil // empty items
+		id := folder.Name
+		if id == folderLegacy.GeneralFolderUID || id == folderLegacy.SharedWithMeFolderUID {
+			info.Items = []folders.FolderInfo{{
+				Name:  folder.Name,
+				Title: folder.Spec.Title,
+			}}
+			return info, nil
 		}
 
-		obj, err := getter.Get(ctx, id, &metav1.GetOptions{})
-		if err != nil {
-			return nil, err
-		}
-
-		folder, ok := obj.(*folders.Folder)
-		if !ok {
-			return nil, fmt.Errorf("expecting folder, found: %T", obj)
-		}
 		found := make(map[string]bool)
 		found[folder.Name] = true
+		var err error
 
 		for folder != nil {
 			meta, _ := utils.MetaAccessor(folder)
@@ -51,12 +48,12 @@ func newParentsGetter(getter rest.Getter, maxDepth int) parentsGetter {
 				break
 			}
 
-			obj, err := getter.Get(ctx, item.Parent, &metav1.GetOptions{})
-			if err != nil {
+			obj, e2 := getter.Get(ctx, item.Parent, &metav1.GetOptions{})
+			if e2 != nil {
 				info.Items = append(info.Items, folders.FolderInfo{
 					Name:        item.Parent,
 					Detached:    true,
-					Description: err.Error(),
+					Description: e2.Error(),
 				})
 				break
 			}
@@ -75,12 +72,17 @@ func newParentsGetter(getter rest.Getter, maxDepth int) parentsGetter {
 				return nil, fmt.Errorf("cyclic folder references found")
 			}
 
+			if len(info.Items) >= maxDepth {
+				err = folderLegacy.ErrMaximumDepthReached
+				break
+			}
+
 			found[parentFolder.Name] = true
 			folder = parentFolder
 		}
 
 		// Start from the root
 		slices.Reverse(info.Items)
-		return info, nil
+		return info, err
 	}
 }

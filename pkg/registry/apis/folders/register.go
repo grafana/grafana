@@ -18,7 +18,6 @@ import (
 	"k8s.io/kube-openapi/pkg/spec3"
 
 	authtypes "github.com/grafana/authlib/types"
-
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -57,6 +56,7 @@ type FolderAPIBuilder struct {
 	storage              grafanarest.Storage
 
 	authorizer authorizer.Authorizer
+	parents    parentsGetter
 
 	searcher     resourcepb.ResourceIndexClient
 	cfg          *setting.Cfg
@@ -187,8 +187,10 @@ func (b *FolderAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.API
 	}
 	storage[resourceInfo.StoragePath()] = folderStore
 
+	b.parents = newParentsGetter(folderStore, folderValidationRules.maxDepth) // used for validation
 	storage[resourceInfo.StoragePath("parents")] = &subParentsREST{
-		getter: newParentsGetter(folderStore, folderValidationRules.maxDepth),
+		getter:  folderStore,
+		parents: b.parents,
 	}
 	storage[resourceInfo.StoragePath("counts")] = &subCountREST{searcher: b.searcher}
 	storage[resourceInfo.StoragePath("access")] = &subAccessREST{b.folderSvc, b.ac}
@@ -225,8 +227,11 @@ var folderValidationRules = struct {
 	maxDepth     int
 	invalidNames []string
 }{
-	maxDepth:     5,
-	invalidNames: []string{"general"},
+	maxDepth: 5, // why different than folder.MaxNestedFolderDepth?? (4)
+	invalidNames: []string{
+		folder.GeneralFolderUID,
+		folder.SharedWithMeFolderUID,
+	},
 }
 
 func (b *FolderAPIBuilder) Mutate(ctx context.Context, a admission.Attributes, _ admission.ObjectInterfaces) error {
@@ -323,7 +328,7 @@ func (b *FolderAPIBuilder) validateOnCreate(ctx context.Context, id string, obj 
 		return folder.ErrFolderCannotBeParentOfItself
 	}
 
-	_, err := b.checkFolderMaxDepth(ctx, obj)
+	_, err := b.parents(ctx, f)
 	if err != nil {
 		return err
 	}
@@ -337,27 +342,6 @@ func getParent(o runtime.Object) string {
 		return ""
 	}
 	return meta.GetFolder()
-}
-
-func (b *FolderAPIBuilder) checkFolderMaxDepth(ctx context.Context, obj runtime.Object) ([]string, error) {
-	var parents = []string{}
-	for i := 0; i < folderValidationRules.maxDepth; i++ {
-		parent := getParent(obj)
-		if parent == "" {
-			break
-		}
-		parents = append(parents, parent)
-		if i+1 == folderValidationRules.maxDepth {
-			return parents, folder.ErrMaximumDepthReached
-		}
-
-		parentObj, err := b.storage.Get(ctx, parent, &metav1.GetOptions{})
-		if err != nil {
-			return parents, err
-		}
-		obj = parentObj
-	}
-	return parents, nil
 }
 
 func (b *FolderAPIBuilder) validateOnUpdate(ctx context.Context, obj, old runtime.Object) error {
@@ -388,15 +372,24 @@ func (b *FolderAPIBuilder) validateMove(ctx context.Context, obj runtime.Object,
 		return fmt.Errorf("k6 project may not be moved")
 	}
 
+	parentObj, err := b.storage.Get(ctx, newParent, &metav1.GetOptions{})
+	if err != nil {
+		return fmt.Errorf("move target not found %w", err)
+	}
+	parent, ok := parentObj.(*folders.Folder)
+	if !ok {
+		return fmt.Errorf("expected folder, found %T", parentObj)
+	}
+
 	//FIXME: until we have a way to represent the tree, we can only
 	// look at folder parents to check how deep the new folder tree will be
-	parents, err := b.checkFolderMaxDepth(ctx, obj)
+	parents, err := b.parents(ctx, parent)
 	if err != nil {
 		return err
 	}
 
 	// if by moving a folder we exceed the max depth, return an error
-	if len(parents)+1 >= folderValidationRules.maxDepth {
+	if len(parents.Items)+1 >= folderValidationRules.maxDepth {
 		return folder.ErrMaximumDepthReached
 	}
 	return nil

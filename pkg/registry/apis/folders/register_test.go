@@ -27,9 +27,6 @@ func TestFolderAPIBuilder_Validate_Create(t *testing.T) {
 		name        string
 	}
 
-	initialMaxDepth := folderValidationRules.maxDepth
-	folderValidationRules.maxDepth = 2
-	defer func() { folderValidationRules.maxDepth = initialMaxDepth }()
 	deepFolder := &folders.Folder{
 		Spec: folders.FolderSpec{
 			Title: "foo",
@@ -121,20 +118,21 @@ func TestFolderAPIBuilder_Validate_Create(t *testing.T) {
 		},
 	}
 
-	s := (grafanarest.Storage)(nil)
-	m := &mock.Mock{}
-	us := storageMock{m, s}
-
-	b := &FolderAPIBuilder{
-		gv:         resourceInfo.GroupVersion(),
-		features:   nil,
-		namespacer: func(_ int64) string { return "123" },
-		folderSvc:  foldertest.NewFakeService(),
-		storage:    us,
-	}
-
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			s := (grafanarest.Storage)(nil)
+			m := &mock.Mock{}
+			us := storageMock{m, s}
+
+			b := &FolderAPIBuilder{
+				gv:         resourceInfo.GroupVersion(),
+				features:   nil,
+				namespacer: func(_ int64) string { return "123" },
+				folderSvc:  foldertest.NewFakeService(),
+				storage:    us,
+				parents:    newParentsGetter(us, 2), // Max Depth of 2
+			}
+
 			tt.input.obj.Name = tt.input.name
 			tt.input.obj.Annotations = tt.input.annotations
 
@@ -353,11 +351,6 @@ func TestFolderAPIBuilder_Validate_Update(t *testing.T) {
 		},
 	}
 
-	s := (grafanarest.Storage)(nil)
-	m := &mock.Mock{}
-	us := storageMock{m, s}
-	sm := searcherMock{Mock: m}
-
 	obj := &folders.Folder{
 		Spec: folders.FolderSpec{
 			Title: "foo",
@@ -370,10 +363,15 @@ func TestFolderAPIBuilder_Validate_Update(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		if tt.setupFn != nil {
-			tt.setupFn(m)
-		}
 		t.Run(tt.name, func(t *testing.T) {
+			s := (grafanarest.Storage)(nil)
+			m := &mock.Mock{}
+			us := storageMock{m, s}
+			sm := searcherMock{Mock: m}
+			if tt.setupFn != nil {
+				tt.setupFn(m)
+			}
+
 			b := &FolderAPIBuilder{
 				gv:         resourceInfo.GroupVersion(),
 				features:   nil,
@@ -381,6 +379,7 @@ func TestFolderAPIBuilder_Validate_Update(t *testing.T) {
 				folderSvc:  foldertest.NewFakeService(),
 				storage:    us,
 				searcher:   sm,
+				parents:    newParentsGetter(us, 2), // Max Depth of 2
 			}
 
 			err := b.Validate(context.Background(), admission.NewAttributesRecord(
@@ -465,20 +464,22 @@ func TestFolderAPIBuilder_Mutate_Create(t *testing.T) {
 			wantErr: true,
 		},
 	}
-	s := (grafanarest.Storage)(nil)
-	m := &mock.Mock{}
-	us := storageMock{m, s}
-	sm := searcherMock{Mock: m}
-	b := &FolderAPIBuilder{
-		gv:         resourceInfo.GroupVersion(),
-		features:   nil,
-		namespacer: func(_ int64) string { return "123" },
-		folderSvc:  foldertest.NewFakeService(),
-		storage:    us,
-		searcher:   sm,
-	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			s := (grafanarest.Storage)(nil)
+			m := &mock.Mock{}
+			m.On("Get", context.Background(), tt.input.Name, &metav1.GetOptions{}).Return(tt.input, nil)
+			us := storageMock{m, s}
+			sm := searcherMock{Mock: m}
+			b := &FolderAPIBuilder{
+				gv:         resourceInfo.GroupVersion(),
+				features:   nil,
+				namespacer: func(_ int64) string { return "123" },
+				folderSvc:  foldertest.NewFakeService(),
+				storage:    us,
+				searcher:   sm,
+				parents:    newParentsGetter(us, 2), // Max Depth of 2
+			}
 			admAttr := admission.NewAttributesRecord(
 				tt.input,
 				nil,
@@ -587,6 +588,7 @@ func TestFolderAPIBuilder_Mutate_Update(t *testing.T) {
 		folderSvc:  foldertest.NewFakeService(),
 		storage:    us,
 		searcher:   sm,
+		parents:    newParentsGetter(us, 2), // Max Depth of 2
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
