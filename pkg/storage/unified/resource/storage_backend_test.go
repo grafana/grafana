@@ -783,7 +783,7 @@ func seedBackend(t *testing.T, backend *kvStorageBackend, ctx context.Context, n
 		changes: make(map[string]*ModifiedResource),
 	})
 
-	for _ = range 100 {
+	for range 100 {
 		updates := rand.IntN(5)
 		shouldDelete := rand.IntN(100) < 10
 		mr := createAndSaveTestObject(t, backend, ctx, ns, uniqueStringGen, updates, shouldDelete)
