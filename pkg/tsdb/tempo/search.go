@@ -69,6 +69,15 @@ type Field struct {
 	Config data.FieldConfig
 }
 
+type TraceTableData struct {
+	traceIdHidden string
+	spanID        string
+	time          time.Time
+	name          string
+	duration      float64
+	attributes    map[string]interface{}
+}
+
 func (s *Service) Search(ctx context.Context, pCtx backend.PluginContext, query backend.DataQuery) (*backend.DataResponse, error) {
 	ctxLogger := s.logger.FromContext(ctx)
 	model := &dataquery.TempoQuery{}
@@ -266,7 +275,7 @@ func transformTraceSearchResponse(pCtx backend.PluginContext, response *SearchRe
 		nestedFrames := []json.RawMessage{}
 
 		if trace.SpanSet != nil {
-			subFrame := traceSearchRepsonseSubFrame(trace, trace.SpanSet, pCtx)
+			subFrame := transformTraceSearchResponseSubFrame(trace, trace.SpanSet, pCtx)
 			subFrameJSON, err := json.Marshal(subFrame)
 			if err != nil {
 				backend.Logger.Error("Failed to marshal subFrame", "error", err)
@@ -276,7 +285,7 @@ func transformTraceSearchResponse(pCtx backend.PluginContext, response *SearchRe
 			}
 		} else if len(trace.SpanSets) > 0 {
 			for _, spanSet := range trace.SpanSets {
-				subFrame := traceSearchRepsonseSubFrame(trace, spanSet, pCtx)
+				subFrame := transformTraceSearchResponseSubFrame(trace, spanSet, pCtx)
 				subFrameJSON, err := json.Marshal(subFrame)
 				if err != nil {
 					backend.Logger.Error("Failed to marshal subFrame", "error", err)
@@ -300,7 +309,7 @@ func transformTraceSearchResponse(pCtx backend.PluginContext, response *SearchRe
 	return []*data.Frame{tracesFrame}, nil
 }
 
-func traceSearchRepsonseSubFrame(trace *TraceSearchMetadata, spanSet *SpanSet, pCtx backend.PluginContext) *data.Frame {
+func transformTraceSearchResponseSubFrame(trace *TraceSearchMetadata, spanSet *SpanSet, pCtx backend.PluginContext) *data.Frame {
 	spanDynamicAttributes := make(map[string]*Field)
 	hasNameAttribute := false
 
@@ -399,67 +408,6 @@ func traceSearchRepsonseSubFrame(trace *TraceSearchMetadata, spanSet *SpanSet, p
 	return frame
 }
 
-type TraceTableData struct {
-	traceIdHidden string
-	spanID        string
-	time          time.Time
-	name          string
-	duration      float64
-	attributes    map[string]interface{}
-}
-
-func transformSpanToTraceData(span *Span, spanSet *SpanSet, trace *TraceSearchMetadata) *TraceTableData {
-	spanStartTimeUnixNano, err := strconv.ParseInt(span.StartTimeUnixNano, 10, 64)
-	var spanStartTime time.Time
-	if err != nil {
-		spanStartTime = time.Time{}
-	} else {
-		spanStartTime = time.Unix(0, spanStartTimeUnixNano)
-	}
-
-	spanDuration, err := strconv.ParseInt(span.DurationNanos, 10, 64)
-	var duration float64
-	if err != nil {
-		duration = 0
-	} else {
-		duration = float64(spanDuration)
-	}
-
-	attributes := make(map[string]interface{})
-	allAttributes := make([]Attribute, 0, len(spanSet.Attributes)+len(span.Attributes))
-
-	if spanSet.Attributes != nil {
-		allAttributes = append(allAttributes, spanSet.Attributes...)
-	}
-
-	if span.Attributes != nil {
-		allAttributes = append(allAttributes, span.Attributes...)
-	}
-
-	for _, attribute := range allAttributes {
-		if attribute.Value.StringValue != "" {
-			attributes[attribute.Key] = attribute.Value.StringValue
-		} else if attribute.Value.IntValue != "" {
-			attributes[attribute.Key] = attribute.Value.IntValue
-		} else if attribute.Value.DoubleValue != 0 {
-			attributes[attribute.Key] = attribute.Value.DoubleValue
-		} else if attribute.Value.BoolValue {
-			attributes[attribute.Key] = attribute.Value.BoolValue
-		} else if attribute.Value.BytesValue != "" {
-			attributes[attribute.Key] = attribute.Value.BytesValue
-		}
-	}
-
-	return &TraceTableData{
-		traceIdHidden: trace.TraceID,
-		spanID:        span.SpanID,
-		time:          spanStartTime,
-		name:          span.Name,
-		duration:      duration,
-		attributes:    attributes,
-	}
-}
-
 func transformSpanSearchResponse(pCtx backend.PluginContext, response *SearchResponse) ([]*data.Frame, error) {
 	spanDynamicAttributes := make(map[string]*Field)
 	hasNameAttribute := false
@@ -501,11 +449,11 @@ func transformSpanSearchResponse(pCtx backend.PluginContext, response *SearchRes
 	}))
 	spansFrame.Fields = append(spansFrame.Fields, data.NewField("traceService", nil, []string{}).SetConfig(&data.FieldConfig{
 		DisplayNameFromDS: "Trace Service",
-		Custom: map[string]interface{}{"width": 200},
+		Custom:            map[string]interface{}{"width": 200},
 	}))
 	spansFrame.Fields = append(spansFrame.Fields, data.NewField("traceName", nil, []string{}).SetConfig(&data.FieldConfig{
 		DisplayNameFromDS: "Trace Name",
-		Custom: map[string]interface{}{"width": 200},
+		Custom:            map[string]interface{}{"width": 200},
 	}))
 	spansFrame.Fields = append(spansFrame.Fields, data.NewField("spanID", nil, []string{}).SetConfig(&data.FieldConfig{
 		DisplayNameFromDS: "Span ID",
@@ -594,3 +542,54 @@ func transformSpanSearchResponse(pCtx backend.PluginContext, response *SearchRes
 	return []*data.Frame{spansFrame}, nil
 }
 
+func transformSpanToTraceData(span *Span, spanSet *SpanSet, trace *TraceSearchMetadata) *TraceTableData {
+	spanStartTimeUnixNano, err := strconv.ParseInt(span.StartTimeUnixNano, 10, 64)
+	var spanStartTime time.Time
+	if err != nil {
+		spanStartTime = time.Time{}
+	} else {
+		spanStartTime = time.Unix(0, spanStartTimeUnixNano)
+	}
+
+	spanDuration, err := strconv.ParseInt(span.DurationNanos, 10, 64)
+	var duration float64
+	if err != nil {
+		duration = 0
+	} else {
+		duration = float64(spanDuration)
+	}
+
+	attributes := make(map[string]interface{})
+	allAttributes := make([]Attribute, 0, len(spanSet.Attributes)+len(span.Attributes))
+
+	if spanSet.Attributes != nil {
+		allAttributes = append(allAttributes, spanSet.Attributes...)
+	}
+
+	if span.Attributes != nil {
+		allAttributes = append(allAttributes, span.Attributes...)
+	}
+
+	for _, attribute := range allAttributes {
+		if attribute.Value.StringValue != "" {
+			attributes[attribute.Key] = attribute.Value.StringValue
+		} else if attribute.Value.IntValue != "" {
+			attributes[attribute.Key] = attribute.Value.IntValue
+		} else if attribute.Value.DoubleValue != 0 {
+			attributes[attribute.Key] = attribute.Value.DoubleValue
+		} else if attribute.Value.BoolValue {
+			attributes[attribute.Key] = attribute.Value.BoolValue
+		} else if attribute.Value.BytesValue != "" {
+			attributes[attribute.Key] = attribute.Value.BytesValue
+		}
+	}
+
+	return &TraceTableData{
+		traceIdHidden: trace.TraceID,
+		spanID:        span.SpanID,
+		time:          spanStartTime,
+		name:          span.Name,
+		duration:      duration,
+		attributes:    attributes,
+	}
+}
