@@ -3,23 +3,16 @@
 package sqlite
 
 import (
-	"context"
 	"database/sql"
 	"database/sql/driver"
 	"errors"
 	"fmt"
-	"log"
 	"net/url"
-	"os"
-	"runtime"
 	"strings"
-	"sync"
 
 	"modernc.org/sqlite"
 	sqlite3 "modernc.org/sqlite/lib"
 )
-
-type Driver = sqlite.Driver
 
 // The errors below are used in tests to simulate specific SQLite errors. It's a temporary solution
 // until we rewrite the tests not to depend on the sqlite3 package internals directly.
@@ -28,41 +21,6 @@ var (
 	TestErrUniqueConstraintViolation = errors.New("unique constraint violation (simulated)")
 	TestErrBusy                      = errors.New("database is busy (simulated)")
 	TestErrLocked                    = errors.New("database is locked (simulated)")
-)
-
-// TransactionTracer wraps a SQL driver to trace all transaction operations
-type TransactionTracer struct {
-	driver.Driver
-	connID int
-	name   string
-	logger *log.Logger
-}
-
-type tracedConn struct {
-	driver.Conn
-	tracer *TransactionTracer
-	connID string
-}
-
-type tracedTx struct {
-	driver.Tx
-	tracer *TransactionTracer
-	connID string
-	txID   string
-}
-
-// tracedStmt wraps statements to intercept SQL execution
-type tracedStmt struct {
-	driver.Stmt
-	tracer *TransactionTracer
-	connID string
-	query  string
-}
-
-var (
-	txCounter int64
-	txMutex   sync.Mutex
-	logFile   *os.File
 )
 
 var dsnAlias = map[string]string{
@@ -134,207 +92,22 @@ func convertSQLite3URL(dsn string) (string, error) {
 	return newDSN, nil
 }
 
-// NewTransactionTracer creates a new transaction tracer wrapper
-func NewTransactionTracer(name string, underlying driver.Driver) *TransactionTracer {
-	logger := log.New(os.Stdout, fmt.Sprintf("[TX-TRACE-%s] ", name), log.LstdFlags|log.Lmicroseconds)
-	if logFile != nil {
-		logger = log.New(logFile, fmt.Sprintf("[TX-TRACE-%s] ", name), log.LstdFlags|log.Lmicroseconds)
-	}
-
-	return &TransactionTracer{
-		Driver: underlying,
-		name:   name,
-		logger: logger,
-	}
+// moderncDriver is a wrapper for modernc.org/sqlite driver to convert DSN.
+type moderncDriver struct {
+	sqlite.Driver
 }
 
-func (t *TransactionTracer) Open(name string) (driver.Conn, error) {
-	url, err := convertSQLite3URL(name)
+// Open converts a dsn from sqlite3 to modernc.org/sqlite format and opens a connection.
+func (d *moderncDriver) Open(name string) (driver.Conn, error) {
+	convertedName, err := convertSQLite3URL(name)
 	if err != nil {
 		return nil, err
 	}
-	conn, err := t.Driver.Open(url)
-	if err != nil {
-		return nil, err
-	}
-
-	connID := fmt.Sprintf("conn-%d", t.connID)
-	t.connID++
-	t.logger.Printf("CONN_OPEN %s [g%d] %s %s", connID, getGoroutineID(), name, url)
-
-	return &tracedConn{
-		Conn:   conn,
-		tracer: t,
-		connID: connID,
-	}, nil
-}
-
-func (c *tracedConn) Begin() (driver.Tx, error) {
-	return c.BeginTx(context.Background(), driver.TxOptions{})
-}
-
-func (c *tracedConn) BeginTx(ctx context.Context, opts driver.TxOptions) (driver.Tx, error) {
-	txMutex.Lock()
-	txCounter++
-	txID := fmt.Sprintf("tx-%d", txCounter)
-	txMutex.Unlock()
-
-	// Get compact caller info
-	caller := getCompactCaller()
-	goroutineID := getGoroutineID()
-
-	var tx driver.Tx
-	var err error
-
-	if connTx, ok := c.Conn.(driver.ConnBeginTx); ok {
-		tx, err = connTx.BeginTx(ctx, opts)
-	} else {
-		tx, err = c.Conn.Begin()
-	}
-
-	if err != nil {
-		c.tracer.logger.Printf("BEGIN_FAILED %s %s [g%d] %s: %v", c.connID, txID, goroutineID, caller, err)
-		return nil, err
-	}
-
-	c.tracer.logger.Printf("BEGIN %s %s [g%d] %s", c.connID, txID, goroutineID, caller)
-
-	return &tracedTx{
-		Tx:     tx,
-		tracer: c.tracer,
-		connID: c.connID,
-		txID:   txID,
-	}, nil
-}
-
-func (t *tracedTx) Commit() error {
-	caller := getCompactCaller()
-	goroutineID := getGoroutineID()
-	err := t.Tx.Commit()
-	if err != nil {
-		t.tracer.logger.Printf("COMMIT_FAILED %s %s [g%d] %s: %v", t.connID, t.txID, goroutineID, caller, err)
-	} else {
-		t.tracer.logger.Printf("COMMIT %s %s [g%d] %s", t.connID, t.txID, goroutineID, caller)
-	}
-	return err
-}
-
-func (t *tracedTx) Rollback() error {
-	caller := getCompactCaller()
-	goroutineID := getGoroutineID()
-	err := t.Tx.Rollback()
-	if err != nil {
-		t.tracer.logger.Printf("ROLLBACK_FAILED %s %s [g%d] %s: %v", t.connID, t.txID, goroutineID, caller, err)
-	} else {
-		t.tracer.logger.Printf("ROLLBACK %s %s [g%d] %s", t.connID, t.txID, goroutineID, caller)
-	}
-	return err
-}
-
-func getCompactCaller() string {
-	pc, file, line, ok := runtime.Caller(3)
-	if !ok {
-		return "unknown"
-	}
-
-	fn := runtime.FuncForPC(pc)
-	name := "unknown"
-	if fn != nil {
-		name = fn.Name()
-		// Shorten function name - just keep the last part after the last dot
-		if idx := strings.LastIndex(name, "."); idx >= 0 {
-			name = name[idx+1:]
-		}
-	}
-
-	// Shorten file path - just keep the filename
-	if idx := strings.LastIndex(file, "/"); idx >= 0 {
-		file = file[idx+1:]
-	}
-
-	return fmt.Sprintf("%s:%d(%s)", file, line, name)
-}
-
-// getGoroutineID extracts the goroutine ID from the stack trace
-func getGoroutineID() int {
-	buf := make([]byte, 64)
-	buf = buf[:runtime.Stack(buf, false)]
-	// Extract goroutine ID from "goroutine 123 [running]:"
-	if idx := strings.Index(string(buf), "goroutine "); idx >= 0 {
-		start := idx + 10
-		if end := strings.Index(string(buf[start:]), " "); end >= 0 {
-			if idStr := string(buf[start : start+end]); idStr != "" {
-				var goroutineID int
-				if _, err := fmt.Sscanf(idStr, "%d", &goroutineID); err == nil {
-					return goroutineID
-				}
-			}
-		}
-	}
-	return -1
-}
-
-// Intercept Prepare to capture SQL statements
-func (c *tracedConn) Prepare(query string) (driver.Stmt, error) {
-	stmt, err := c.Conn.Prepare(query)
-	if err != nil {
-		return nil, err
-	}
-	return &tracedStmt{
-		Stmt:   stmt,
-		tracer: c.tracer,
-		connID: c.connID,
-		query:  query,
-	}, nil
-}
-
-// Intercept Exec to capture direct SQL execution
-func (c *tracedConn) Exec(query string, args []driver.Value) (driver.Result, error) {
-	goroutineID := getGoroutineID()
-	queryUpper := strings.ToUpper(strings.TrimSpace(query))
-
-	if strings.HasPrefix(queryUpper, "BEGIN") {
-		c.tracer.logger.Printf("SQL_BEGIN %s [g%d]: %s", c.connID, goroutineID, query)
-	} else if strings.HasPrefix(queryUpper, "COMMIT") {
-		c.tracer.logger.Printf("SQL_COMMIT %s [g%d]: %s", c.connID, goroutineID, query)
-	} else if strings.HasPrefix(queryUpper, "ROLLBACK") {
-		c.tracer.logger.Printf("SQL_ROLLBACK %s [g%d]: %s", c.connID, goroutineID, query)
-	}
-
-	if execer, ok := c.Conn.(driver.Execer); ok {
-		return execer.Exec(query, args)
-	}
-	return nil, driver.ErrSkip
-}
-
-// Intercept statement execution
-func (s *tracedStmt) Exec(args []driver.Value) (driver.Result, error) {
-	goroutineID := getGoroutineID()
-	queryUpper := strings.ToUpper(strings.TrimSpace(s.query))
-
-	if strings.HasPrefix(queryUpper, "BEGIN") {
-		s.tracer.logger.Printf("STMT_BEGIN %s [g%d]: %s", s.connID, goroutineID, s.query)
-	} else if strings.HasPrefix(queryUpper, "COMMIT") {
-		s.tracer.logger.Printf("STMT_COMMIT %s [g%d]: %s", s.connID, goroutineID, s.query)
-	} else if strings.HasPrefix(queryUpper, "ROLLBACK") {
-		s.tracer.logger.Printf("STMT_ROLLBACK %s [g%d]: %s", s.connID, goroutineID, s.query)
-	}
-
-	return s.Stmt.Exec(args)
+	return d.Driver.Open(convertedName)
 }
 
 func init() {
-	// Open a log file for transaction tracing
-	var err error
-	logFile, err = os.OpenFile("/tmp/grafana_tx_trace.log", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0644)
-	if err != nil {
-		fmt.Printf("Failed to open transaction trace log: %v\n", err)
-		logFile = nil
-	}
-
-	// Register a transaction-traced version of the SQLite driver instead of the bare driver
-	// This will help us debug nested transaction issues
-	sql.Register("sqlite3", NewTransactionTracer("SQLite", &Driver{}))
+	sql.Register("sqlite3", &moderncDriver{Driver: &Driver{}})
 }
 
 func IsBusyOrLocked(err error) bool {
