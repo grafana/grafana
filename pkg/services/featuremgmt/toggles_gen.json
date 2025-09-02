@@ -1587,6 +1587,19 @@
     },
     {
       "metadata": {
+        "name": "graphiteBackendMode",
+        "resourceVersion": "1755870507537",
+        "creationTimestamp": "2025-08-22T13:48:27Z"
+      },
+      "spec": {
+        "description": "Enables the Graphite data source full backend mode",
+        "stage": "privatePreview",
+        "codeowner": "@grafana/partner-datasources",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "groupAttributeSync",
         "resourceVersion": "1753448760331",
         "creationTimestamp": "2024-09-09T15:29:43Z"

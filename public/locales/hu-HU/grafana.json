@@ -12085,6 +12085,7 @@
     "selector": {
       "apply": "Alkalmaz",
       "cancel": "Mégse",
+      "error-title": "",
       "input": {
         "placeholder": "Hatókörök kijelölése...",
         "removeAll": "Összes hatókör eltávolítása"
