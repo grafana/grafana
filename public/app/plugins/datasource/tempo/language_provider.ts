@@ -30,7 +30,6 @@ interface GetOptionsV2 {
 
 export default class TempoLanguageProvider extends LanguageProvider {
   datasource: TempoDatasource;
-  tagsV1?: string[];
   tagsV2?: Scope[];
   private previousRange?: TimeRange;
 
@@ -42,8 +41,7 @@ export default class TempoLanguageProvider extends LanguageProvider {
   }
 
   request = async (url: string, params = {}) => {
-    const res = await this.datasource.metadataRequest(url, params);
-    return res?.data;
+    return await this.datasource.metadataRequest(url, params);
   };
 
   start = async (range?: TimeRange, timeRangeForTags?: number) => {
@@ -86,32 +84,20 @@ export default class TempoLanguageProvider extends LanguageProvider {
   };
 
   async fetchTags(timeRangeForTags?: number, range?: TimeRange) {
-    let v1Resp, v2Resp;
-
-    try {
-      const params: { limit: number; start?: number; end?: number } = {
-        limit: this.getTagsLimit(),
-      };
-      if (timeRangeForTags && range && timeRangeForTags !== DEFAULT_TIME_RANGE_FOR_TAGS) {
-        const { start, end } = this.getTimeRangeForTags(timeRangeForTags, range);
-        params.start = start;
-        params.end = end;
-      }
-      v2Resp = await this.request(`/api/v2/search/tags`, params);
-    } catch (error) {
-      v1Resp = await this.request('/api/search/tags', []);
+    const params: { limit: number; start?: number; end?: number } = {
+      limit: this.getTagsLimit(),
+    };
+    if (timeRangeForTags && range && timeRangeForTags !== DEFAULT_TIME_RANGE_FOR_TAGS) {
+      const { start, end } = this.getTimeRangeForTags(timeRangeForTags, range);
+      params.start = start;
+      params.end = end;
     }
+    const v2Resp = await this.request(`api/v2/search/tags`, params);
 
     if (v2Resp && v2Resp.scopes) {
       this.setV2Tags(v2Resp.scopes);
-    } else if (v1Resp) {
-      this.setV1Tags(v1Resp.tagNames);
     }
   }
-
-  setV1Tags = (tags: string[]) => {
-    this.tagsV1 = tags;
-  };
 
   setV2Tags = (tags: Scope[]) => {
     this.tagsV2 = tags;
@@ -130,13 +116,6 @@ export default class TempoLanguageProvider extends LanguageProvider {
         return getUnscopedTags(this.tagsV2);
       }
       return getTagsByScope(this.tagsV2, scope);
-    } else if (this.tagsV1) {
-      // This is needed because the /api/v2/search/tag/${tag}/values API expects "status" and the v1 API expects "status.code"
-      // so Tempo doesn't send anything and we inject it here for the autocomplete
-      if (!this.tagsV1.find((t) => t === 'status')) {
-        this.tagsV1.push('status');
-      }
-      return this.tagsV1;
     }
     return [];
   };
@@ -150,13 +129,6 @@ export default class TempoLanguageProvider extends LanguageProvider {
         return getUnscopedTags(this.tagsV2);
       }
       return getTagsByScope(this.tagsV2, scope);
-    } else if (this.tagsV1) {
-      // This is needed because the /api/v2/search/tag/${tag}/values API expects "status" and the v1 API expects "status.code"
-      // so Tempo doesn't send anything and we inject it here for the autocomplete
-      if (!this.tagsV1.find((t) => t === 'status')) {
-        this.tagsV1.push('status');
-      }
-      return this.tagsV1;
     }
     return [];
   };
@@ -164,29 +136,9 @@ export default class TempoLanguageProvider extends LanguageProvider {
   getAutocompleteTags = () => {
     if (this.tagsV2) {
       return getAllTags(this.tagsV2);
-    } else if (this.tagsV1) {
-      // This is needed because the /api/search/tag/${tag}/values API expects "status.code" and the v2 API expects "status"
-      // so Tempo doesn't send anything and we inject it here for the autocomplete
-      if (!this.tagsV1.find((t) => t === 'status.code')) {
-        this.tagsV1.push('status.code');
-      }
-      return this.tagsV1;
     }
     return [];
   };
-
-  async getOptionsV1(tag: string): Promise<Array<SelectableValue<string>>> {
-    const encodedTag = this.encodeTag(tag);
-    const response = await this.request(`/api/search/tag/${encodedTag}/values`);
-    let options: Array<SelectableValue<string>> = [];
-    if (response && response.tagValues) {
-      options = response.tagValues.map((v: string) => ({
-        value: v,
-        label: v,
-      }));
-    }
-    return options;
-  }
 
   async getOptionsV2({ tag, query, timeRangeForTags, range }: GetOptionsV2): Promise<Array<SelectableValue<string>>> {
     const encodedTag = this.encodeTag(tag);
@@ -204,7 +156,8 @@ export default class TempoLanguageProvider extends LanguageProvider {
       params.end = end;
     }
 
-    const response = await this.request(`/api/v2/search/tag/${encodedTag}/values`, params);
+    const response = await this.request(`api/v2/search/tag/${encodedTag}/values`, params);
+
     let options: Array<SelectableValue<string>> = [];
     if (response && response.tagValues) {
       response.tagValues.forEach((v: { type: string; value?: string }) => {

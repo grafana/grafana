@@ -3,9 +3,17 @@ package tempo
 import (
 	"context"
 	"fmt"
+	"io"
 	"net/http"
+	"net/url"
+	"path"
 	"runtime"
 	"strings"
+	"time"
+
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
+	"go.opentelemetry.io/otel/trace"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
@@ -16,9 +24,15 @@ import (
 	"github.com/grafana/tempo/pkg/tempopb"
 )
 
+var (
+	_ backend.QueryDataHandler    = (*Service)(nil)
+	_ backend.CallResourceHandler = (*Service)(nil)
+)
+
 type Service struct {
 	im     instancemgmt.InstanceManager
 	logger log.Logger
+	tracer trace.Tracer
 }
 
 type DatasourceInfo struct {
@@ -27,10 +41,11 @@ type DatasourceInfo struct {
 	URL             string
 }
 
-func ProvideService(httpClientProvider *httpclient.Provider) *Service {
+func ProvideService(httpClientProvider *httpclient.Provider, tracer trace.Tracer) *Service {
 	return &Service{
 		im:     datasource.NewInstanceManager(newInstanceSettings(httpClientProvider)),
 		logger: backend.NewLoggerWith("logger", "tsdb.tempo"),
+		tracer: tracer,
 	}
 }
 
@@ -42,6 +57,8 @@ func newInstanceSettings(httpClientProvider *httpclient.Provider) datasource.Ins
 			ctxLogger.Error("Failed to get HTTP client options", "error", err, "function", logEntrypoint())
 			return nil, err
 		}
+
+		opts.ForwardHTTPHeaders = true
 
 		client, err := httpClientProvider.New(opts)
 		if err != nil {
@@ -121,6 +138,89 @@ func (s *Service) getDSInfo(ctx context.Context, pluginCtx backend.PluginContext
 	}
 
 	return instance, nil
+}
+
+func (s *Service) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
+	dsInfo, err := s.getDSInfo(ctx, req.PluginContext)
+	logger := s.logger.FromContext(ctx)
+	if err != nil {
+		logger.Error("Failed to get data source info", "error", err)
+		return err
+	}
+	return callResource(ctx, req, sender, dsInfo, logger, s.tracer)
+}
+
+func callResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender, dsInfo *DatasourceInfo, plog log.Logger, tracer trace.Tracer) error {
+	tempoURL := "/" + req.URL
+
+	ctx, span := tracer.Start(ctx, "datasource.tempo.CallResource", trace.WithAttributes(
+		attribute.String("url", tempoURL),
+	))
+	defer span.End()
+
+	// Build the full URL
+	parsedURL, err := url.Parse(dsInfo.URL)
+	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+		plog.Error("Failed to parse datasource URL", "error", err, "url", dsInfo.URL)
+		return err
+	}
+
+	resourceURL, err := url.Parse(req.URL)
+	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+		plog.Error("Failed to parse resource URL", "error", err, "url", req.URL)
+		return err
+	}
+
+	// Join the paths and preserve query parameters
+	parsedURL.RawQuery = resourceURL.RawQuery
+	parsedURL.Path = path.Join(parsedURL.Path, resourceURL.Path)
+
+	plog.Debug("Making resource request to Tempo", "url", parsedURL.String())
+	start := time.Now()
+
+	httpReq, err := http.NewRequestWithContext(ctx, "GET", parsedURL.String(), nil)
+	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+		plog.Error("Failed to create HTTP request", "error", err)
+		return err
+	}
+
+	resp, err := dsInfo.HTTPClient.Do(httpReq)
+	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+		plog.Error("Failed resource call to Tempo", "error", err, "url", parsedURL.String(), "duration", time.Since(start))
+		return err
+	}
+	defer resp.Body.Close()
+
+	plog.Debug("Response received from Tempo", "statusCode", resp.StatusCode, "contentLength", resp.Header.Get("Content-Length"), "duration", time.Since(start))
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+		plog.Error("Failed to read response body", "error", err)
+		return err
+	}
+
+	respHeaders := map[string][]string{
+		"content-type": {"application/json"},
+	}
+	if encoding := resp.Header.Get("Content-Encoding"); encoding != "" {
+		respHeaders["content-encoding"] = []string{encoding}
+	}
+
+	return sender.Send(&backend.CallResourceResponse{
+		Status:  resp.StatusCode,
+		Headers: respHeaders,
+		Body:    body,
+	})
 }
 
 // Return the file, line, and (full-path) function name of the caller

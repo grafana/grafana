@@ -358,7 +358,7 @@ describe('Tempo data source', () => {
     it('should return the last value from the observed stream', async () => {
       mockObservable = () => of('321', '123', '456');
       const ds = new TempoDatasource(defaultSettings);
-      const response = await ds.metadataRequest('/api/search/tags');
+      const response = await ds.metadataRequest('api/v2/search/tags');
       expect(response).toBe('456');
     });
   });
