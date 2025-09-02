@@ -12,7 +12,8 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
 
-	authlib "github.com/grafana/authlib/types"
+	"github.com/grafana/grafana/pkg/registry/apis/preferences/utils"
+
 	dashboardsV1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
 	preferences "github.com/grafana/grafana/apps/preferences/pkg/apis/preferences/v1alpha1"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
@@ -95,15 +96,15 @@ func (s *starsStorage) Get(ctx context.Context, name string, options *metav1.Get
 		return nil, err
 	}
 
-	ut, uid, err := authlib.ParseTypeID(name)
-	if err != nil {
+	owner, ok := utils.ParseOwnerFromName(name)
+	if !ok {
 		return nil, fmt.Errorf("invalid name %w", err)
 	}
-	if ut != authlib.TypeUser {
-		return nil, fmt.Errorf("expecting name with prefix: %s", authlib.TypeUser)
+	if owner.Owner != utils.UserResourceOwner {
+		return nil, fmt.Errorf("expecting name with prefix: %s-", utils.UserResourceOwner)
 	}
 
-	found, _, err := s.sql.GetStars(ctx, info.OrgID, uid)
+	found, _, err := s.sql.GetStars(ctx, info.OrgID, owner.Name)
 	if err != nil || len(found) == 0 {
 		return nil, err
 	}
@@ -114,7 +115,7 @@ func (s *starsStorage) Get(ctx context.Context, name string, options *metav1.Get
 func asStarsResource(ns string, v *dashboardStars) preferences.Stars {
 	return preferences.Stars{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:              fmt.Sprintf("user:%s", v.UserUID),
+			Name:              fmt.Sprintf("user-%s", v.UserUID),
 			Namespace:         ns,
 			ResourceVersion:   strconv.FormatInt(v.Last, 10),
 			CreationTimestamp: metav1.NewTime(time.UnixMilli(v.First)),
