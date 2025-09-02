@@ -1064,6 +1064,7 @@ export interface FeatureToggles {
   unifiedStorageSearchDualReaderEnabled?: boolean;
   /**
   * Enables adhoc filtering support for the dashboard datasource
+  * @default true
   */
   dashboardDsAdHocFiltering?: boolean;
   /**
@@ -1081,6 +1082,7 @@ export interface FeatureToggles {
   restrictedPluginApis?: boolean;
   /**
   * Enable adhoc filter buttons in visualization tooltips
+  * @default true
   */
   adhocFiltersInTooltips?: boolean;
   /**

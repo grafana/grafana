@@ -78,8 +78,8 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `unifiedNavbars`                       | Enables unified navbars                                                                                                                                       |                    |
 | `grafanaAssistantInProfilesDrilldown`  | Enables integration with Grafana Assistant in Profiles Drilldown                                                                                              | Yes                |
 | `tabularNumbers`                       | Use fixed-width numbers globally in the UI                                                                                                                    |                    |
-| `dashboardDsAdHocFiltering`            | Enables adhoc filtering support for the dashboard datasource                                                                                                  |                    |
-| `adhocFiltersInTooltips`               | Enable adhoc filter buttons in visualization tooltips                                                                                                         |                    |
+| `dashboardDsAdHocFiltering`            | Enables adhoc filtering support for the dashboard datasource                                                                                                  | Yes                |
+| `adhocFiltersInTooltips`               | Enable adhoc filter buttons in visualization tooltips                                                                                                         | Yes                |
 
 ## Public preview feature toggles
 
