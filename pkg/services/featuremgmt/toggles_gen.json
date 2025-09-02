@@ -3410,6 +3410,25 @@
     },
     {
       "metadata": {
+        "name": "unifiedStorageSearchBadgerStoreExperimentalAPI",
+        "resourceVersion": "1756731201692",
+        "creationTimestamp": "2025-09-01T12:52:46Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-09-01 12:53:21.692804 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Enable experimental badger memory store for unified-storage bleve backend",
+        "stage": "experimental",
+        "codeowner": "@grafana/search-and-storage",
+        "requiresRestart": true,
+        "hideFromAdminPage": true,
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "unifiedStorageSearchDualReaderEnabled",
         "resourceVersion": "1753448760331",
         "creationTimestamp": "2025-07-25T13:06:00Z"

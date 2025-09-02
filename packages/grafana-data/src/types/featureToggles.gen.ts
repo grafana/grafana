@@ -1102,6 +1102,11 @@ export interface FeatureToggles {
   */
   unifiedStorageSearchAfterWriteExperimentalAPI?: boolean;
   /**
+  * Enable experimental badger memory store for unified-storage bleve backend
+  * @default false
+  */
+  unifiedStorageSearchBadgerStoreExperimentalAPI?: boolean;
+  /**
   * Enables team folders functionality
   * @default false
   */

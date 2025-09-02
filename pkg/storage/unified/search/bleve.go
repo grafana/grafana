@@ -314,7 +314,12 @@ func (b *bleveBackend) BuildIndex(
 			defer closeIndexOnExit(index, indexDir) // Close index, and delete new index directory.
 		}
 	} else {
-		index, err = bleve.NewMemOnly(mapper)
+		if b.features.IsEnabledGlobally(featuremgmt.FlagUnifiedStorageSearchBadgerStoreExperimentalAPI) {
+			index, err = bleve.NewUsing("", mapper, "upside_down", "badger", nil)
+			logWithDetails.Info("Building index using badger memory store")
+		} else {
+			index, err = bleve.NewMemOnly(mapper)
+		}
 		if err != nil {
 			return nil, fmt.Errorf("error creating new in-memory bleve index: %w", err)
 		}

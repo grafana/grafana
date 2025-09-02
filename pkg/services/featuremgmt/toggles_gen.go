@@ -995,6 +995,10 @@ const (
 	// Enable experimental search-after-write guarantees to unified-storage search endpoints
 	FlagUnifiedStorageSearchAfterWriteExperimentalAPI = "unifiedStorageSearchAfterWriteExperimentalAPI"
 
+	// FlagUnifiedStorageSearchBadgerStoreExperimentalAPI
+	// Enable experimental badger memory store for unified-storage bleve backend
+	FlagUnifiedStorageSearchBadgerStoreExperimentalAPI = "unifiedStorageSearchBadgerStoreExperimentalAPI"
+
 	// FlagTeamFolders
 	// Enables team folders functionality
 	FlagTeamFolders = "teamFolders"

@@ -1913,6 +1913,16 @@ var (
 			Expression:        "false",
 		},
 		{
+			Name:              "unifiedStorageSearchBadgerStoreExperimentalAPI",
+			Description:       "Enable experimental badger memory store for unified-storage bleve backend",
+			Stage:             FeatureStageExperimental,
+			Owner:             grafanaSearchAndStorageSquad,
+			HideFromAdminPage: true,
+			HideFromDocs:      true,
+			RequiresRestart:   true,
+			Expression:        "false",
+		},
+		{
 			Name:         "teamFolders",
 			Description:  "Enables team folders functionality",
 			Stage:        FeatureStageExperimental,
