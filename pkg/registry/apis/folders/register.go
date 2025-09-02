@@ -33,7 +33,6 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/apistore"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
-	"github.com/grafana/grafana/pkg/util"
 )
 
 var _ builder.APIGroupBuilder = (*FolderAPIBuilder)(nil)
@@ -249,7 +248,6 @@ func (b *FolderAPIBuilder) Mutate(ctx context.Context, a admission.Attributes, _
 }
 
 func (b *FolderAPIBuilder) Validate(ctx context.Context, a admission.Attributes, _ admission.ObjectInterfaces) error {
-	id := a.GetName()
 	obj := a.GetObject()
 	if obj == nil || a.GetOperation() == admission.Connect {
 		return nil // This is normal for sub-resource
@@ -259,11 +257,10 @@ func (b *FolderAPIBuilder) Validate(ctx context.Context, a admission.Attributes,
 	if !ok {
 		return fmt.Errorf("obj is not folders.Folder")
 	}
-	verb := a.GetOperation()
 
-	switch verb {
+	switch a.GetOperation() {
 	case admission.Create:
-		return b.validateOnCreate(ctx, id, obj)
+		return validateOnCreate(ctx, f, b.parents)
 	case admission.Delete:
 		return b.validateOnDelete(ctx, f)
 	case admission.Update:
@@ -272,10 +269,9 @@ func (b *FolderAPIBuilder) Validate(ctx context.Context, a admission.Attributes,
 			return fmt.Errorf("old object is nil")
 		}
 		return b.validateOnUpdate(ctx, obj, old)
-	case admission.Connect:
+	default:
 		return nil
 	}
-	return nil
 }
 
 func (b *FolderAPIBuilder) validateOnDelete(ctx context.Context, f *folders.Folder) error {
@@ -299,41 +295,6 @@ func (b *FolderAPIBuilder) validateOnDelete(ctx context.Context, f *folders.Fold
 	}
 
 	return nil
-}
-
-func (b *FolderAPIBuilder) validateOnCreate(ctx context.Context, id string, obj runtime.Object) error {
-	for _, invalidName := range folderValidationRules.invalidNames {
-		if id == invalidName {
-			return dashboards.ErrFolderInvalidUID
-		}
-	}
-
-	if !util.IsValidShortUID(id) {
-		return dashboards.ErrDashboardInvalidUid
-	}
-
-	if util.IsShortUIDTooLong(id) {
-		return dashboards.ErrDashboardUidTooLong
-	}
-
-	f, ok := obj.(*folders.Folder)
-	if !ok {
-		return fmt.Errorf("obj is not folders.Folder")
-	}
-	if f.Spec.Title == "" {
-		return dashboards.ErrFolderTitleEmpty
-	}
-
-	if f.Name == getParent(obj) {
-		return folder.ErrFolderCannotBeParentOfItself
-	}
-
-	_, err := b.parents(ctx, f)
-	if err != nil {
-		return err
-	}
-
-	return err
 }
 
 func getParent(o runtime.Object) string {

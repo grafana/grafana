@@ -48,6 +48,10 @@ func newParentsGetter(getter rest.Getter, maxDepth int) parentsGetter {
 				break
 			}
 
+			if found[item.Parent] {
+				return nil, fmt.Errorf("cyclic folder references found: %s", item.Parent)
+			}
+
 			obj, e2 := getter.Get(ctx, item.Parent, &metav1.GetOptions{})
 			if e2 != nil {
 				info.Items = append(info.Items, folders.FolderInfo{
@@ -66,10 +70,6 @@ func newParentsGetter(getter rest.Getter, maxDepth int) parentsGetter {
 					Description: fmt.Sprintf("expected folder, found: %T", obj),
 				})
 				break
-			}
-
-			if found[parentFolder.Name] {
-				return nil, fmt.Errorf("cyclic folder references found")
 			}
 
 			if len(info.Items) >= maxDepth {

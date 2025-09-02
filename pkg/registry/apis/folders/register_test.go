@@ -27,20 +27,6 @@ func TestFolderAPIBuilder_Validate_Create(t *testing.T) {
 		name        string
 	}
 
-	deepFolder := &folders.Folder{
-		Spec: folders.FolderSpec{
-			Title: "foo",
-		},
-	}
-	deepFolder.Name = "valid-parent"
-	deepFolder.Annotations = map[string]string{"grafana.app/folder": "valid-grandparent"}
-	parentFolder := &folders.Folder{
-		Spec: folders.FolderSpec{
-			Title: "foo-grandparent",
-		},
-	}
-	deepFolder.Name = "valid-grandparent"
-
 	tests := []struct {
 		name    string
 		input   input
@@ -78,16 +64,24 @@ func TestFolderAPIBuilder_Validate_Create(t *testing.T) {
 						Title: "foo",
 					},
 				},
-				annotations: map[string]string{"grafana.app/folder": "valid-parent"},
+				annotations: map[string]string{"grafana.app/folder": "p1"}, // already max depth
 				name:        "valid-name",
 			},
 			setupFn: func(m *mock.Mock) {
-				m.On("Get", mock.Anything, "valid-parent", mock.Anything).Return(
-					deepFolder,
-					nil)
-				m.On("Get", mock.Anything, "valid-grandparent", mock.Anything).Return(
-					parentFolder,
-					nil)
+				m.On("Get", mock.Anything, "p1", mock.Anything).Return(
+					&folders.Folder{
+						ObjectMeta: metav1.ObjectMeta{
+							Name:        "p1",
+							Annotations: map[string]string{"grafana.app/folder": "p2"},
+						},
+					}, nil)
+				m.On("Get", mock.Anything, "p2", mock.Anything).Return(
+					&folders.Folder{
+						ObjectMeta: metav1.ObjectMeta{
+							Name:        "p2",
+							Annotations: map[string]string{"grafana.app/folder": "p3"},
+						},
+					}, nil)
 			},
 			err: folder.ErrMaximumDepthReached,
 		},
@@ -241,14 +235,6 @@ func TestFolderAPIBuilder_Validate_Delete(t *testing.T) {
 }
 
 func TestFolderAPIBuilder_Validate_Update(t *testing.T) {
-	var circularObj = &folders.Folder{
-		ObjectMeta: metav1.ObjectMeta{
-			Namespace:   "stacks-123",
-			Name:        "new-parent",
-			Annotations: map[string]string{"grafana.app/folder": "new-parent"},
-		},
-	}
-
 	tests := []struct {
 		name       string
 		updatedObj *folders.Folder
@@ -331,7 +317,7 @@ func TestFolderAPIBuilder_Validate_Update(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			name: "should not allow moving to a folder that is too deep",
+			name: "should not allow moving to a folder that will become too deep",
 			updatedObj: &folders.Folder{
 				Spec: folders.FolderSpec{
 					Title: "foo",
@@ -344,8 +330,26 @@ func TestFolderAPIBuilder_Validate_Update(t *testing.T) {
 			},
 			setupFn: func(m *mock.Mock) {
 				m.On("Get", mock.Anything, "new-parent", mock.Anything).Return(
-					circularObj,
-					nil)
+					&folders.Folder{
+						ObjectMeta: metav1.ObjectMeta{
+							Name:        "p1",
+							Annotations: map[string]string{"grafana.app/folder": "p2"},
+						},
+					}, nil)
+				m.On("Get", mock.Anything, "p2", mock.Anything).Return(
+					&folders.Folder{
+						ObjectMeta: metav1.ObjectMeta{
+							Name:        "p2",
+							Annotations: map[string]string{"grafana.app/folder": "p3"},
+						},
+					}, nil)
+				m.On("Get", mock.Anything, "p3", mock.Anything).Return(
+					&folders.Folder{
+						ObjectMeta: metav1.ObjectMeta{
+							Name:        "p3",
+							Annotations: map[string]string{"grafana.app/folder": "p4"},
+						},
+					}, nil)
 			},
 			wantErr: true,
 		},
