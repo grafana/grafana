@@ -14,7 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/web"
 )
 
-// Only allow redirects that start with an alphanumerical character, a dash or an underscore.
+// Only allow redirects that start with a slash followed by an alphanumerical character, a dash or an underscore.
 var redirectRe = regexp.MustCompile(`^/?[a-zA-Z0-9-_].*`)
 
 // OrgRedirect changes org and redirects users if the
@@ -67,6 +67,9 @@ func OrgRedirect(cfg *setting.Cfg, userSvc user.Service) web.Handler {
 }
 
 func validRedirectPath(p string) bool {
+	if p != "" && p != "/" && !redirectRe.MatchString(p) {
+		return false
+	}
 	cleanPath := path.Clean(p)
 	return cleanPath == "." || cleanPath == "/" || redirectRe.MatchString(cleanPath)
 }
