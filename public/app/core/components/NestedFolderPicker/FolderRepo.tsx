@@ -4,11 +4,11 @@ import { ManagerKind } from 'app/features/apiserver/types';
 import { useGetResourceRepositoryView } from 'app/features/provisioning/hooks/useGetResourceRepositoryView';
 import { useIsProvisionedInstance } from 'app/features/provisioning/hooks/useIsProvisionedInstance';
 import { getReadOnlyTooltipText } from 'app/features/provisioning/utils/repository';
-import { NestedFolderDTO } from 'app/features/search/service/types';
-import { FolderDTO, FolderListItemDTO } from 'app/types/folders';
+import { DashboardViewItem } from 'app/features/search/types';
+import { FolderDTO } from 'app/types/folders';
 
 export interface Props {
-  folder?: FolderListItemDTO | NestedFolderDTO | FolderDTO;
+  folder?: FolderDTO | DashboardViewItem;
 }
 
 export function FolderRepo({ folder }: Props) {
@@ -43,7 +43,12 @@ export function FolderRepo({ folder }: Props) {
           tooltip={getReadOnlyTooltipText({ isLocal: repoType === 'local' })}
         />
       )}
-      <Badge color="purple" icon="exchange-alt" tooltip={t('folder-repo.provisioned-badge', 'Provisioned')} />
+      <Badge
+        title={t('folder-repo.provisioned-badge', 'Provisioned')}
+        color="purple"
+        icon="exchange-alt"
+        tooltip={t('folder-repo.provisioned-badge', 'Provisioned')}
+      />
     </Stack>
   );
 }
