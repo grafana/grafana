@@ -12,7 +12,6 @@ import {
   DataQueryRequest,
   DataQueryResponse,
   DataSourceWithQueryExportSupport,
-  DataSourceWithQueryImportSupport,
   dateMath,
   DateTime,
   dateTime,
@@ -76,7 +75,7 @@ function convertGlobToRegEx(text: string): string {
 
 export class GraphiteDatasource
   extends DataSourceWithBackend<GraphiteQuery, GraphiteOptions>
-  implements DataSourceWithQueryImportSupport<GraphiteQuery>, DataSourceWithQueryExportSupport<GraphiteQuery>
+  implements DataSourceWithQueryExportSupport<GraphiteQuery>
 {
   basicAuth: string;
   url: string;
