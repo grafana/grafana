@@ -20,13 +20,11 @@ import (
 	authtypes "github.com/grafana/authlib/types"
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
-	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/setting"
@@ -257,96 +255,14 @@ func (b *FolderAPIBuilder) Validate(ctx context.Context, a admission.Attributes,
 	case admission.Create:
 		return validateOnCreate(ctx, f, b.parents, folderValidationRules.maxDepth)
 	case admission.Delete:
-		return b.validateOnDelete(ctx, f)
+		return validateOnDelete(ctx, f, b.searcher)
 	case admission.Update:
-		old := a.GetOldObject()
-		if old == nil {
-			return fmt.Errorf("old object is nil")
+		old, ok := a.GetOldObject().(*folders.Folder)
+		if !ok {
+			return fmt.Errorf("obj is not folders.Folder")
 		}
-		return b.validateOnUpdate(ctx, obj, old)
+		return validateOnUpdate(ctx, f, old, b.storage, b.parents, folderValidationRules.maxDepth)
 	default:
 		return nil
 	}
-}
-
-func (b *FolderAPIBuilder) validateOnDelete(ctx context.Context, f *folders.Folder) error {
-	resp, err := b.searcher.GetStats(ctx, &resourcepb.ResourceStatsRequest{Namespace: f.Namespace, Folder: f.Name})
-	if err != nil {
-		return err
-	}
-
-	if resp != nil && resp.Error != nil {
-		return fmt.Errorf("could not verify if folder is empty: %v", resp.Error)
-	}
-
-	if resp.Stats == nil {
-		return fmt.Errorf("could not verify if folder is empty: %v", resp.Error)
-	}
-
-	for _, v := range resp.Stats {
-		if v.Count > 0 {
-			return folder.ErrFolderNotEmpty
-		}
-	}
-
-	return nil
-}
-
-func getParent(o runtime.Object) string {
-	meta, err := utils.MetaAccessor(o)
-	if err != nil {
-		return ""
-	}
-	return meta.GetFolder()
-}
-
-func (b *FolderAPIBuilder) validateOnUpdate(ctx context.Context, obj, old runtime.Object) error {
-	f, ok := obj.(*folders.Folder)
-	if !ok {
-		return fmt.Errorf("obj is not folders.Folder")
-	}
-
-	fOld, ok := old.(*folders.Folder)
-	if !ok {
-		return fmt.Errorf("obj is not folders.Folder")
-	}
-	var newParent = getParent(obj)
-	if newParent != getParent(fOld) {
-		// it's a move operation
-		return b.validateMove(ctx, obj, newParent)
-	}
-	// it's a spec update
-	if f.Spec.Title == "" {
-		return dashboards.ErrFolderTitleEmpty
-	}
-	return nil
-}
-
-func (b *FolderAPIBuilder) validateMove(ctx context.Context, obj runtime.Object, newParent string) error {
-	// folder cannot be moved to a k6 folder
-	if newParent == accesscontrol.K6FolderUID {
-		return fmt.Errorf("k6 project may not be moved")
-	}
-
-	parentObj, err := b.storage.Get(ctx, newParent, &metav1.GetOptions{})
-	if err != nil {
-		return fmt.Errorf("move target not found %w", err)
-	}
-	parent, ok := parentObj.(*folders.Folder)
-	if !ok {
-		return fmt.Errorf("expected folder, found %T", parentObj)
-	}
-
-	//FIXME: until we have a way to represent the tree, we can only
-	// look at folder parents to check how deep the new folder tree will be
-	parents, err := b.parents(ctx, parent)
-	if err != nil {
-		return err
-	}
-
-	// if by moving a folder we exceed the max depth, return an error
-	if len(parents.Items)+1 >= folderValidationRules.maxDepth {
-		return folder.ErrMaximumDepthReached
-	}
-	return nil
 }
