@@ -8,7 +8,11 @@ import { useDispatch } from '../../../../types/store';
 
 import { folderAPIv1beta1 as folderAPI } from './index';
 
-export async function isProvisionedFolderCheck(dispatch: ReturnType<typeof useDispatch>, folderUID: string) {
+export async function isProvisionedFolderCheck(
+  dispatch: ReturnType<typeof useDispatch>,
+  folderUID: string,
+  options?: { warning?: string }
+) {
   if (config.featureToggles.provisioning) {
     const folder = await dispatch(folderAPI.endpoints.getFolder.initiate({ name: folderUID }));
     // TODO: taken from browseDashboardAPI as it is, but this error handling should be moved up to UI code.
@@ -16,10 +20,11 @@ export async function isProvisionedFolderCheck(dispatch: ReturnType<typeof useDi
       appEvents.publish({
         type: AppEvents.alertWarning.name,
         payload: [
-          t(
-            'folders.api.folder-delete-error-provisioned',
-            'Cannot delete provisioned folder. To remove it, delete it from the repository and synchronise to apply the changes.'
-          ),
+          options?.warning ||
+            t(
+              'folders.api.folder-delete-error-provisioned',
+              'Cannot delete provisioned folder. To remove it, delete it from the repository and synchronise to apply the changes.'
+            ),
         ],
       });
       return true;
