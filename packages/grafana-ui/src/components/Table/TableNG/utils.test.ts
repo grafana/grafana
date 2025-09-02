@@ -18,12 +18,12 @@ import { BarGaugeDisplayMode, TableCellBackgroundDisplayMode, TableCellHeight } 
 import { TableCellDisplayMode } from '../types';
 
 import { COLUMN, TABLE } from './constants';
-import { LineCounterEntry } from './types';
+import { MeasureCellHeightEntry } from './types';
 import {
   extractPixelValue,
   frameToRecords,
   getAlignmentFactor,
-  getCellColorInlineStyles,
+  getCellColorInlineStylesFactory,
   getCellLinks,
   getCellOptions,
   getComparator,
@@ -34,15 +34,15 @@ import {
   getColumnTypes,
   computeColWidths,
   getRowHeight,
-  buildRowLineCounters,
-  buildHeaderLineCounters,
-  getTextLineEstimator,
+  buildCellHeightMeasurers,
+  buildHeaderHeightMeasurers,
+  getTextHeightEstimator,
   createTypographyContext,
   applySort,
   SINGLE_LINE_ESTIMATE_THRESHOLD,
-  wrapUwrapCount,
-  getDataLinksCounter,
-  getPillLineCounter,
+  getTextHeightMeasurerFromUwrapCount,
+  getDataLinksHeightMeasurer,
+  getPillCellHeightMeasurer,
   getDefaultRowHeight,
   getDisplayName,
   predicateByName,
@@ -107,27 +107,103 @@ describe('TableNG utils', () => {
       },
     } as unknown as GrafanaTheme2;
 
-    it('should handle color background mode', () => {
-      const field = { type: TableCellDisplayMode.ColorBackground as const, mode: TableCellBackgroundDisplayMode.Basic };
+    it('should handle color text cell type', () => {
+      const cellOptions = {
+        type: TableCellDisplayMode.ColorText as const,
+      };
 
       const displayValue = { text: '100', numeric: 100, color: '#ff0000' };
 
-      const colors = getCellColorInlineStyles(theme, field, displayValue);
-      expect(colors.background).toBe('rgb(255, 0, 0)');
+      const getCellColorInlineStyles = getCellColorInlineStylesFactory(theme);
+      const colors = getCellColorInlineStyles(cellOptions, displayValue, false);
+      expect(colors.color).toBe('#ff0000');
+      expect(colors).not.toHaveProperty('background');
+    });
+
+    it('should pass thru color background cell type in basic mode', () => {
+      const cellOptions = {
+        type: TableCellDisplayMode.ColorBackground as const,
+        mode: TableCellBackgroundDisplayMode.Basic,
+      };
+
+      const displayValue = { text: '100', numeric: 100, color: '#ff0000' };
+
+      const getCellColorInlineStyles = getCellColorInlineStylesFactory(theme);
+      const colors = getCellColorInlineStyles(cellOptions, displayValue, false);
+      expect(colors.background).toBe('#ff0000');
       expect(colors.color).toBe('rgb(247, 248, 250)');
     });
 
-    it('should handle color background gradient mode', () => {
-      const field = {
+    it('should handle color background cell type in gradient mode', () => {
+      const cellOptions = {
         type: TableCellDisplayMode.ColorBackground as const,
         mode: TableCellBackgroundDisplayMode.Gradient,
       };
 
       const displayValue = { text: '100', numeric: 100, color: '#ff0000' };
 
-      const colors = getCellColorInlineStyles(theme, field, displayValue);
+      const getCellColorInlineStyles = getCellColorInlineStylesFactory(theme);
+      const colors = getCellColorInlineStyles(cellOptions, displayValue, false);
       expect(colors.background).toBe('linear-gradient(120deg, rgb(255, 54, 36), #ff0000)');
       expect(colors.color).toBe('rgb(247, 248, 250)');
+    });
+
+    it('does not set CSSProperties for un-mapped cell types', () => {
+      const cellOptions = { type: TableCellDisplayMode.JSONView as const };
+
+      const displayValue = { text: '100', numeric: 100, color: '#ff0000' };
+
+      const getCellColorInlineStyles = getCellColorInlineStylesFactory(theme);
+      const colors = getCellColorInlineStyles(cellOptions, displayValue, false);
+
+      expect(colors).toEqual({});
+    });
+
+    describe('applyToRow', () => {
+      it.each([
+        ['hex', '#ffffff00'],
+        ['rgba', 'rgba(255,255,255,0)'],
+        ['hsla', 'hsla(0,100%,100%,0)'],
+      ])(
+        'should not apply background color if the display value is transparent (%s) and applyToRow is on',
+        (_format, colorDisplayValue) => {
+          const cellOptions = {
+            type: TableCellDisplayMode.ColorBackground as const,
+            mode: TableCellBackgroundDisplayMode.Basic,
+          };
+
+          const displayValue = { text: '100', numeric: 100, color: colorDisplayValue };
+
+          const getCellColorInlineStyles = getCellColorInlineStylesFactory(theme);
+          const colors = getCellColorInlineStyles(cellOptions, displayValue, true);
+
+          expect(colors).toEqual({});
+        }
+      );
+
+      it.each([
+        ['hex', '#ffffff00'],
+        ['rgba', 'rgba(255,255,255,0)'],
+        ['hsla', 'hsla(0,100%,100%,0)'],
+      ])(
+        'should apply background color if the display value is transparent (%s) and applyToRow is off',
+        (_format, colorDisplayValue) => {
+          const cellOptions = {
+            type: TableCellDisplayMode.ColorBackground as const,
+            mode: TableCellBackgroundDisplayMode.Basic,
+          };
+
+          const displayValue = { text: '100', numeric: 100, color: colorDisplayValue };
+
+          const getCellColorInlineStyles = getCellColorInlineStylesFactory(theme);
+          const colors = getCellColorInlineStyles(cellOptions, displayValue, false);
+
+          expect(colors).toEqual({
+            background: colorDisplayValue,
+            color: 'rgb(32, 34, 38)',
+          });
+        }
+      );
     });
   });
 
@@ -471,14 +547,14 @@ describe('TableNG utils', () => {
         name: 'test',
         type: FieldType.string,
         config: {
-          custom: { cellOptions: { type: TableCellDisplayMode.ColorText, inspectEnabled: false, wrapText: true } },
+          custom: { cellOptions: { type: TableCellDisplayMode.ColorText, inspectEnabled: false } },
         },
         values: [],
       };
 
       const options = getCellOptions(field);
 
-      expect(options).toEqual({ type: TableCellDisplayMode.ColorText, inspectEnabled: false, wrapText: true });
+      expect(options).toEqual({ type: TableCellDisplayMode.ColorText, inspectEnabled: false });
     });
 
     it('should handle legacy displayMode property', () => {
@@ -850,49 +926,49 @@ describe('TableNG utils', () => {
           ctx: expect.any(CanvasRenderingContext2D),
           fontFamily: 'sans-serif',
           letterSpacing: 0.15,
-          wrappedCount: expect.any(Function),
-          estimateLines: expect.any(Function),
+          measureHeight: expect.any(Function),
+          estimateHeight: expect.any(Function),
           avgCharWidth: expect.any(Number),
         })
       );
-      expect(ctx.wrappedCount('the quick brown fox jumps over the lazy dog', 100, field, 0)).toEqual(
+      expect(ctx.measureHeight('the quick brown fox jumps over the lazy dog', 100, field, 0, 20)).toEqual(
         expect.any(Number)
       );
-      expect(ctx.estimateLines('the quick brown fox jumps over the lazy dog', 100, field, 0)).toEqual(
+      expect(ctx.estimateHeight('the quick brown fox jumps over the lazy dog', 100, field, 0, 20)).toEqual(
         expect.any(Number)
       );
     });
   });
 
-  describe('wrapUwrapCount', () => {
+  describe('getTextHeightMeasurerFromUwrapCount', () => {
     const field: Field = { name: 'test', type: FieldType.string, config: {}, values: ['foo', 'bar', 'baz'] };
 
     it('wraps the uwrap count function', () => {
-      const wrappedCount = wrapUwrapCount(jest.fn(() => 2));
-      expect(wrappedCount('test string', 100, field, 0)).toBe(2);
+      const measureHeight = getTextHeightMeasurerFromUwrapCount(jest.fn(() => 2));
+      expect(measureHeight('test string', 100, field, 0, 20)).toBe(40);
     });
 
-    it('returns 1 for null or undefined values', () => {
-      const wrappedCount = wrapUwrapCount(jest.fn(() => 2));
-      expect(wrappedCount(null, 100, field, 0)).toBe(1);
-      expect(wrappedCount(undefined, 100, field, 0)).toBe(1);
+    it("returns a single line's height for null or undefined values", () => {
+      const measureHeight = getTextHeightMeasurerFromUwrapCount(jest.fn(() => 2));
+      expect(measureHeight(null, 100, field, 0, 20)).toBe(20);
+      expect(measureHeight(undefined, 100, field, 0, 20)).toBe(20);
     });
   });
 
-  describe('getTextLineEstimator', () => {
-    const counter = getTextLineEstimator(10);
+  describe('getTextHeightEstimator', () => {
+    const estimator = getTextHeightEstimator(10);
     const field: Field = { name: 'test', type: FieldType.string, config: {}, values: ['foo', 'bar', 'baz'] };
 
     it('returns -1 if there are no strings or dashes within the string', () => {
-      expect(counter('asdfasdfasdfasdfasdfasdfasdfasdfasdfasdfasdf', 5, field, 0)).toBe(-1);
+      expect(estimator('asdfasdfasdfasdfasdfasdfasdfasdfasdfasdfasdf', 5, field, 0, 22)).toBe(-1);
     });
 
     it('calculates an approximate rendered height for the text based on the width and avgCharWidth', () => {
-      expect(counter('asdfas dfasdfasdf asdfasdfasdfa sdfasdfasdfasdf 23', 200, field, 0)).toBe(2.5);
+      expect(estimator('asdfas dfasdfasdf asdfasdfasdfa sdfasdfasdfasdf 23', 200, field, 0, 20)).toBe(60);
     });
   });
 
-  describe('getDataLinksCounter', () => {
+  describe('getDataLinksHeightMeasurer', () => {
     it('counts number of valid links using getCellLinks', () => {
       const field: Field = {
         name: 'test',
@@ -911,58 +987,58 @@ describe('TableNG utils', () => {
         values: ['value1'],
       };
 
-      const counter = getDataLinksCounter();
-      expect(counter('my value', 100, field, 0)).toBe(2);
+      const measurer = getDataLinksHeightMeasurer();
+      expect(measurer('my value', 100, field, 0, 20)).toBe(40);
     });
   });
 
-  describe('getPillLineCounter', () => {
+  describe('getPillCellHeightMeasurer', () => {
     it('counts up the number of lines using the pill measuring method', () => {
-      const counter = getPillLineCounter(jest.fn((str) => str.length * 5));
-      expect(counter('tag1,tag2', 100, {} as Field, 0)).toBe(1);
-      expect(counter('tag1,tag2,tag3,tag4,tag5,tag6', 100, {} as Field, 0)).toBe(3);
+      const measurer = getPillCellHeightMeasurer(jest.fn((str) => str.length * 5));
+      expect(measurer('tag1,tag2', 100, {} as Field, 0, 20)).toBe(20);
+      expect(measurer('tag1,tag2,tag3,tag4,tag5,tag6', 100, {} as Field, 0, 20)).toBe(68);
     });
 
     it('returns 0 if value is null', () => {
-      const counter = getPillLineCounter(jest.fn((str) => str.length * 5));
-      expect(counter(null, 100, {} as Field, 0)).toBe(0);
+      const measurer = getPillCellHeightMeasurer(jest.fn((str) => str.length * 5));
+      expect(measurer(null, 100, {} as Field, 0, 20)).toBe(0);
     });
 
     it('returns 0 if no pills are inferred', () => {
-      const counter = getPillLineCounter(jest.fn((str) => str.length * 5));
-      expect(counter('', 100, {} as Field, 0)).toBe(0);
+      const measurer = getPillCellHeightMeasurer(jest.fn((str) => str.length * 5));
+      expect(measurer('', 100, {} as Field, 0, 20)).toBe(0);
     });
 
     it('caches the width measurement for the same value', () => {
       const widthMeasurement = jest.fn((str) => str.length * 5);
-      const counter = getPillLineCounter(widthMeasurement);
-      counter('tag1,tag2,tag3,tag4,tag5,tag6', 100, {} as Field, 0);
-      counter('tag1,tag2', 100, {} as Field, 0);
-      counter('tag2', 200, {} as Field, 0);
-      counter('tag2,tag3,tag2,tag4,tag4,tag2,tag5', 300, {} as Field, 0);
+      const measurer = getPillCellHeightMeasurer(widthMeasurement);
+      measurer('tag1,tag2,tag3,tag4,tag5,tag6', 100, {} as Field, 0, 20);
+      measurer('tag1,tag2', 100, {} as Field, 0, 20);
+      measurer('tag2', 200, {} as Field, 0, 20);
+      measurer('tag2,tag3,tag2,tag4,tag4,tag2,tag5', 300, {} as Field, 0, 20);
       expect(widthMeasurement).toHaveBeenCalledTimes(6); // Should only call for unique values
     });
   });
 
-  describe('buildHeaderLineCounters', () => {
+  describe('buildHeaderHeightMeasurers', () => {
     const ctx = {
       fontFamily: 'sans-serif',
       letterSpacing: 0.15,
       ctx: {} as CanvasRenderingContext2D,
       count: jest.fn(() => 2),
       avgCharWidth: 7,
-      wrappedCount: jest.fn(() => 2),
-      estimateLines: jest.fn(() => 2),
+      measureHeight: jest.fn(() => 2),
+      estimateHeight: jest.fn(() => 2),
     };
 
-    it('returns an array of line counters for each column', () => {
+    it('returns an array of measurers for each column', () => {
       const fields: Field[] = [
         { name: 'Name', type: FieldType.string, values: [], config: { custom: { wrapHeaderText: true } } },
         { name: 'Age', type: FieldType.number, values: [], config: { custom: { wrapHeaderText: true } } },
       ];
-      const counters = buildHeaderLineCounters(fields, ctx);
-      expect(counters![0].counter).toEqual(expect.any(Function));
-      expect(counters![0].fieldIdxs).toEqual([0, 1]);
+      const measurers = buildHeaderHeightMeasurers(fields, ctx);
+      expect(measurers![0].measure).toEqual(expect.any(Function));
+      expect(measurers![0].fieldIdxs).toEqual([0, 1]);
     });
 
     it('does not return the index of columns which are not wrapped', () => {
@@ -971,8 +1047,8 @@ describe('TableNG utils', () => {
         { name: 'Age', type: FieldType.number, values: [], config: { custom: { wrapHeaderText: true } } },
       ];
 
-      const counters = buildHeaderLineCounters(fields, ctx);
-      expect(counters![0].fieldIdxs).toEqual([1]);
+      const measurers = buildHeaderHeightMeasurers(fields, ctx);
+      expect(measurers![0].fieldIdxs).toEqual([1]);
     });
 
     it('returns undefined if no columns are wrapped', () => {
@@ -981,34 +1057,34 @@ describe('TableNG utils', () => {
         { name: 'Age', type: FieldType.number, values: [], config: { custom: {} } },
       ];
 
-      const counters = buildHeaderLineCounters(fields, ctx);
-      expect(counters).toBeUndefined();
+      const measurers = buildHeaderHeightMeasurers(fields, ctx);
+      expect(measurers).toBeUndefined();
     });
   });
 
-  describe('buildRowLineCounters', () => {
+  describe('buildCellHeightMeasurers', () => {
     const ctx = {
       fontFamily: 'sans-serif',
       letterSpacing: 0.15,
       ctx: {} as CanvasRenderingContext2D,
-      wrappedCount: jest.fn(() => 2),
-      estimateLines: jest.fn(() => 2),
+      measureHeight: jest.fn(() => 2),
+      estimateHeight: jest.fn(() => 2),
       avgCharWidth: 7,
     };
 
-    it('sets up text line counters for each text column if wrapping is on', () => {
+    it('sets up text height measurers for each text column if wrapping is on', () => {
       const fields: Field[] = [
-        { name: 'Name', type: FieldType.string, values: [], config: { custom: { cellOptions: { wrapText: true } } } },
+        { name: 'Name', type: FieldType.string, values: [], config: { custom: { wrapText: true } } },
         {
           name: 'Address',
           type: FieldType.string,
           values: [],
-          config: { custom: { cellOptions: { wrapText: true } } },
+          config: { custom: { wrapText: true } },
         },
       ];
-      const counters = buildRowLineCounters(fields, ctx);
-      expect(counters![0].counter).toEqual(expect.any(Function));
-      expect(counters![0].fieldIdxs).toEqual([0, 1]);
+      const measurers = buildCellHeightMeasurers(fields, ctx);
+      expect(measurers![0].measure).toEqual(expect.any(Function));
+      expect(measurers![0].fieldIdxs).toEqual([0, 1]);
     });
 
     it('does not return the index of columns which are not wrapped', () => {
@@ -1018,12 +1094,12 @@ describe('TableNG utils', () => {
           name: 'Address',
           type: FieldType.string,
           values: [],
-          config: { custom: { cellOptions: { wrapText: true } } },
+          config: { custom: { wrapText: true } },
         },
       ];
 
-      const counters = buildRowLineCounters(fields, ctx);
-      expect(counters![0].fieldIdxs).toEqual([1]);
+      const measurers = buildCellHeightMeasurers(fields, ctx);
+      expect(measurers![0].fieldIdxs).toEqual([1]);
     });
 
     it('sets up line counting for pills if present and wrapping is on', () => {
@@ -1032,15 +1108,15 @@ describe('TableNG utils', () => {
           name: 'Tags',
           type: FieldType.string,
           values: ['tag1,tag2', 'tag3', '["tag4","tag5","tag6"]'],
-          config: { custom: { cellOptions: { type: TableCellDisplayMode.Pill, wrapText: true } } },
+          config: { custom: { wrapText: true, cellOptions: { type: TableCellDisplayMode.Pill } } },
         },
       ];
-      const counters = buildRowLineCounters(fields, ctx);
-      expect(counters![0].estimate).toEqual(expect.any(Function));
-      expect(counters![0].estimate!('tag1,tag2', 100, fields[0], 0)).toEqual(expect.any(Number));
-      expect(counters![0].counter).toEqual(expect.any(Function));
-      expect(counters![0].counter('tag1,tag2', 100, fields[0], 0)).toEqual(expect.any(Number));
-      expect(counters![0].fieldIdxs).toEqual([0]);
+      const measurers = buildCellHeightMeasurers(fields, ctx);
+      expect(measurers![0].estimate).toEqual(expect.any(Function));
+      expect(measurers![0].estimate!('tag1,tag2', 100, fields[0], 0, 22)).toEqual(expect.any(Number));
+      expect(measurers![0].measure).toEqual(expect.any(Function));
+      expect(measurers![0].measure('tag1,tag2', 100, fields[0], 0, 22)).toEqual(expect.any(Number));
+      expect(measurers![0].fieldIdxs).toEqual([0]);
     });
 
     it('sets up line counting for datalinks if present and wrapping is on', () => {
@@ -1049,28 +1125,28 @@ describe('TableNG utils', () => {
           name: 'Links',
           type: FieldType.string,
           values: ['http://example.com/1', 'http://example.com/2'],
-          config: { custom: { cellOptions: { type: TableCellDisplayMode.DataLinks, wrapText: true } } },
+          config: { custom: { wrapText: true, cellOptions: { type: TableCellDisplayMode.DataLinks } } },
           getLinks: jest.fn((): LinkModel[] => [
             { title: 'Link 1', href: 'http://example.com/1', target: '_blank', origin: { datasourceUid: 'test' } },
             { title: 'Link 2', href: 'http://example.com/2', target: '_self', origin: { datasourceUid: 'test' } },
           ]),
         },
       ];
-      const counters = buildRowLineCounters(fields, ctx);
-      expect(counters![0].counter).toEqual(expect.any(Function));
-      expect(counters![0].counter('http://example.com/1', 100, fields[0], 0)).toEqual(expect.any(Number));
-      expect(counters![0].fieldIdxs).toEqual([0]);
+      const measurers = buildCellHeightMeasurers(fields, ctx);
+      expect(measurers![0].measure).toEqual(expect.any(Function));
+      expect(measurers![0].measure('http://example.com/1', 100, fields[0], 0, 22)).toEqual(expect.any(Number));
+      expect(measurers![0].fieldIdxs).toEqual([0]);
     });
 
     it('does not enable text counting for non-string fields', () => {
       const fields: Field[] = [
         { name: 'Name', type: FieldType.string, values: [], config: { custom: {} } },
-        { name: 'Age', type: FieldType.number, values: [], config: { custom: { cellOptions: { wrapText: true } } } },
+        { name: 'Age', type: FieldType.number, values: [], config: { custom: { wrapText: true } } },
       ];
 
-      const counters = buildRowLineCounters(fields, ctx);
+      const measurers = buildCellHeightMeasurers(fields, ctx);
       // empty array - we had one column that indicated it wraps, but it was numeric, so we just ignore it
-      expect(counters).toEqual([]);
+      expect(measurers).toBeUndefined();
     });
 
     it('returns an undefined if no columns are wrapped', () => {
@@ -1079,14 +1155,31 @@ describe('TableNG utils', () => {
         { name: 'Age', type: FieldType.number, values: [], config: { custom: {} } },
       ];
 
-      const counters = buildRowLineCounters(fields, ctx);
-      expect(counters).toBeUndefined();
+      const measurers = buildCellHeightMeasurers(fields, ctx);
+      expect(measurers).toBeUndefined();
+    });
+
+    it('clamps by maxHeight if set', () => {
+      const fields: Field[] = [
+        {
+          name: 'Tags',
+          type: FieldType.string,
+          values: ['tag1,tag2', 'tag3', '["tag4","tag5","tag6"]'],
+          config: { custom: { wrapText: true, cellOptions: { type: TableCellDisplayMode.Pill } } },
+        },
+      ];
+      const measurers = buildCellHeightMeasurers(fields, ctx);
+      expect(measurers![0].measure!(fields[0].values[2], 20, fields[0], 2, 100)).toBeGreaterThan(50);
+
+      fields[0].config!.custom!.maxHeight = 50;
+      const measurersWithMax = buildCellHeightMeasurers(fields, ctx, 50);
+      expect(measurersWithMax![0].measure!(fields[0].values[2], 20, fields[0], 2, 100)).toBe(50);
     });
   });
 
   describe('getRowHeight', () => {
     let fields: Field[];
-    let counters: LineCounterEntry[];
+    let measurers: MeasureCellHeightEntry[];
 
     beforeEach(() => {
       fields = [
@@ -1094,100 +1187,118 @@ describe('TableNG utils', () => {
           name: 'Name',
           type: FieldType.string,
           values: ['foo', 'bar', 'baz', 'longer one here', 'shorter'],
-          config: { custom: { cellOptions: { wrapText: true } } },
+          config: { custom: { wrapText: true } },
         },
         {
           name: 'Age',
           type: FieldType.number,
           values: [1, 2, 3, 123456, 789122349932],
-          config: { custom: { cellOptions: { wrapText: true } } },
+          config: { custom: { wrapText: true } },
         },
       ];
-      counters = [
-        { counter: jest.fn((value, _length: number) => String(value).split(' ').length), fieldIdxs: [0] }, // Mocked to count words as lines
-        { counter: jest.fn((value, _length: number) => Math.ceil(String(value).length / 3)), fieldIdxs: [1] }, // Mocked to return a line for every 3 digits of a number
+      measurers = [
+        {
+          measure: jest.fn(
+            (value, _length, _field, _rowIdx, lineHeight) => String(value).split(' ').length * lineHeight
+          ),
+          fieldIdxs: [0],
+        }, // Mocked to count words as lines
+        {
+          measure: jest.fn(
+            (value, _length, _field, _rowIdx, lineHeight) => Math.ceil(String(value).length / 3) * lineHeight
+          ),
+          fieldIdxs: [1],
+        }, // Mocked to return a line for every 3 digits of a number
       ];
     });
 
     it('should use the default height for single-line rows', () => {
       // 1 line @ 20px, 10px vertical padding = 30, minimum is 36
-      expect(getRowHeight(fields, 0, [30, 30], 36, counters, 20, 10)).toBe(36);
+      expect(getRowHeight(fields, 0, [30, 30], 36, measurers, 20, 10)).toBe(36);
     });
 
     it('should use the default height for multi-line rows which are shorter than the default height', () => {
       // 3 lines @ 5px, 5px vertical padding = 20, minimum is 36
-      expect(getRowHeight(fields, 3, [30, 30], 36, counters, 5, 5)).toBe(36);
+      expect(getRowHeight(fields, 3, [30, 30], 36, measurers, 5, 5)).toBe(36);
     });
 
-    it('should return the row height using line counters for multi-line', () => {
+    it('should return the row height using line measurers for multi-line', () => {
       // 3 lines @ 20px ('longer', 'one', 'here'), 10px vertical padding
-      expect(getRowHeight(fields, 3, [30, 30], 36, counters, 20, 10)).toBe(70);
+      expect(getRowHeight(fields, 3, [30, 30], 36, measurers, 20, 10)).toBe(70);
 
       // 4 lines @ 15px (789 122 349 932), 15px vertical padding
-      expect(getRowHeight(fields, 4, [30, 30], 36, counters, 15, 15)).toBe(75);
+      expect(getRowHeight(fields, 4, [30, 30], 36, measurers, 15, 15)).toBe(75);
     });
 
     it('should take colWidths into account when calculating max wrap cell', () => {
-      getRowHeight(fields, 3, [50, 60], 36, counters, 20, 10);
-      expect(counters[0].counter).toHaveBeenCalledWith('longer one here', 50, fields[0], 3);
-      expect(counters[1].counter).toHaveBeenCalledWith(123456, 60, fields[1], 3);
+      getRowHeight(fields, 3, [50, 60], 36, measurers, 20, 10);
+      expect(measurers[0].measure).toHaveBeenCalledWith('longer one here', 50, fields[0], 3, 20);
+      expect(measurers[1].measure).toHaveBeenCalledWith(123456, 60, fields[1], 3, 20);
     });
 
     // this is used to calc wrapped header height
     it('should use the display name if the rowIdx is -1', () => {
-      getRowHeight(fields, -1, [50, 60], 36, counters, 20, 10);
-      expect(counters[0].counter).toHaveBeenCalledWith('Name', 50, fields[0], -1);
-      expect(counters[1].counter).toHaveBeenCalledWith('Age', 60, fields[1], -1);
+      getRowHeight(fields, -1, [50, 60], 36, measurers, 20, 10);
+      expect(measurers[0].measure).toHaveBeenCalledWith('Name', 50, fields[0], -1, 20);
+      expect(measurers[1].measure).toHaveBeenCalledWith('Age', 60, fields[1], -1, 20);
     });
 
-    it('should ignore columns which do not have line counters', () => {
-      const height = getRowHeight(fields, 3, [30, 30], 36, [counters[1]], 20, 10);
+    it('should ignore columns which do not have measurers', () => {
+      const height = getRowHeight(fields, 3, [30, 30], 36, [measurers[1]], 20, 10);
       // 2 lines @ 20px, 10px vertical padding (not 3 lines, since we don't line count Name)
       expect(height).toBe(50);
     });
 
-    it('should return the default height if there are no counters to apply', () => {
+    it('should return the default height if there are no measurers to apply', () => {
       const height = getRowHeight(fields, 3, [30, 30], 36, [], 20, 10);
       expect(height).toBe(36);
     });
 
     describe('estimations vs. precise counts', () => {
       beforeEach(() => {
-        counters = [
-          { counter: jest.fn((value, _length: number) => String(value).split(' ').length), fieldIdxs: [0] }, // Mocked to count words as lines
+        measurers = [
           {
-            estimate: jest.fn((value) => String(value).length), // Mocked to return a line for every digits of a number
-            counter: jest.fn((value, _length: number) => Math.ceil(String(value).length / 3)),
+            measure: jest.fn(
+              (value, _length, _field, _rowIdx, lineHeight) => String(value).split(' ').length * lineHeight
+            ),
+            fieldIdxs: [0],
+          }, // Mocked to count words as lines
+          {
+            measure: jest.fn(
+              (value, _length, _field, _rowIdx, lineHeight) => Math.ceil(String(value).length / 3) * lineHeight
+            ),
+            estimate: jest.fn((value, _length, _field, _rowIdx, lineHeight) => String(value).length * lineHeight), // Mocked to return a line for every digits of a number
             fieldIdxs: [1],
-          },
+          }, // Mocked to return a line for every 3 digits of a number
         ];
       });
 
       // 2 lines @ 20px (123,456), 10px vertical padding. when we did this before, 'longer one here' would win, making it 70px.
-      // the `estimate` function is picking `123456` as the longer one now (6 lines), then the `counter` function is used
+      // the `estimate` function is picking `123456` as the longer one now (6 lines), then the `measure` function is used
       // to calculate the height (2 lines). this is a very forced case, but we just want to prove that it actually works.
       it('uses the estimate value rather than the precise value to select the row height', () => {
-        expect(getRowHeight(fields, 3, [30, 30], 36, counters, 20, 10)).toBe(50);
+        expect(getRowHeight(fields, 3, [30, 30], 36, measurers, 20, 10)).toBe(50);
       });
 
       it('returns doesnt bother getting the precise count if the estimates are all below the threshold', () => {
-        jest.mocked(counters[0].counter).mockReturnValue(SINGLE_LINE_ESTIMATE_THRESHOLD - 0.3);
-        jest.mocked(counters[1].estimate!).mockReturnValue(SINGLE_LINE_ESTIMATE_THRESHOLD - 0.1);
+        jest.mocked(measurers[0].measure).mockReturnValue(SINGLE_LINE_ESTIMATE_THRESHOLD - 0.3);
+        jest.mocked(measurers[1].estimate!).mockReturnValue(SINGLE_LINE_ESTIMATE_THRESHOLD - 0.1);
 
-        expect(getRowHeight(fields, 3, [30, 30], 36, counters, 20, 10)).toBe(36);
+        expect(getRowHeight(fields, 3, [30, 30], 36, measurers, 20, 10)).toBe(36);
 
-        // this is what we really care about - we want to save on performance by not calling the counter in this case.
-        expect(counters[1].counter).not.toHaveBeenCalled();
+        // this is what we really care about - we want to save on performance by not calling the measure in this case.
+        expect(measurers[1].measure).not.toHaveBeenCalled();
       });
 
       it('uses the precise count if the estimate is above the threshold, even if its below 1', () => {
-        // NOTE: if this fails, just change the test to use a different value besides 0.1
-        expect(SINGLE_LINE_ESTIMATE_THRESHOLD + 0.1).toBeLessThan(1);
+        // NOTE: if this fails, just change the test to use a different value besides 1
+        const thresholdOffset = 1;
+        expect(SINGLE_LINE_ESTIMATE_THRESHOLD + thresholdOffset).toBeLessThan(TABLE.LINE_HEIGHT);
 
-        jest.mocked(counters[0].counter).mockReturnValue(SINGLE_LINE_ESTIMATE_THRESHOLD - 0.3);
-        jest.mocked(counters[1].estimate!).mockReturnValue(SINGLE_LINE_ESTIMATE_THRESHOLD + 0.1);
+        jest.mocked(measurers[0].measure).mockReturnValue(SINGLE_LINE_ESTIMATE_THRESHOLD - thresholdOffset);
+        jest.mocked(measurers[1].estimate!).mockReturnValue(SINGLE_LINE_ESTIMATE_THRESHOLD + thresholdOffset);
 
-        expect(getRowHeight(fields, 3, [30, 30], 36, counters, 20, 10)).toBe(50);
+        expect(getRowHeight(fields, 3, [30, 30], 36, measurers, 20, 10)).toBe(50);
       });
     });
   });

@@ -19,6 +19,7 @@ import (
 
 	decryptv1beta1 "github.com/grafana/grafana/apps/secret/decrypt/v1beta1"
 	secretv1beta1 "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1"
+	decryptcontracts "github.com/grafana/grafana/apps/secret/pkg/decrypt"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/decrypt"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/testutils"
@@ -39,8 +40,8 @@ func TestDecryptService(t *testing.T) {
 		mockErr := errors.New("mock error")
 		mockStorage := &mockDecryptStorage{}
 		mockStorage.On("Decrypt", mock.Anything, mock.Anything, mock.Anything).Return(secretv1beta1.ExposedSecureValue(""), mockErr)
-		decryptedValuesResp := map[string]contracts.DecryptResult{
-			"secure-value-1": contracts.NewDecryptResultErr(mockErr),
+		decryptedValuesResp := map[string]decryptcontracts.DecryptResult{
+			"secure-value-1": decryptcontracts.NewDecryptResultErr(mockErr),
 		}
 
 		cfg := setting.NewCfg()
@@ -66,9 +67,9 @@ func TestDecryptService(t *testing.T) {
 		mockStorage.On("Decrypt", mock.Anything, xkube.Namespace("default"), "secure-value-2").
 			Return(exposedSecureValue2, nil)
 
-		decryptedValuesResp := map[string]contracts.DecryptResult{
-			"secure-value-1": contracts.NewDecryptResultValue(&exposedSecureValue1),
-			"secure-value-2": contracts.NewDecryptResultValue(&exposedSecureValue2),
+		decryptedValuesResp := map[string]decryptcontracts.DecryptResult{
+			"secure-value-1": decryptcontracts.NewDecryptResultValue(&exposedSecureValue1),
+			"secure-value-2": decryptcontracts.NewDecryptResultValue(&exposedSecureValue2),
 		}
 
 		cfg := setting.NewCfg()
@@ -93,9 +94,9 @@ func TestDecryptService(t *testing.T) {
 		mockStorage.On("Decrypt", mock.Anything, xkube.Namespace("default"), "secure-value-2").
 			Return(secretv1beta1.ExposedSecureValue(""), mockErr)
 
-		decryptedValuesResp := map[string]contracts.DecryptResult{
-			"secure-value-1": contracts.NewDecryptResultValue(&exposedSecureValue),
-			"secure-value-2": contracts.NewDecryptResultErr(mockErr),
+		decryptedValuesResp := map[string]decryptcontracts.DecryptResult{
+			"secure-value-1": decryptcontracts.NewDecryptResultValue(&exposedSecureValue),
+			"secure-value-2": decryptcontracts.NewDecryptResultErr(mockErr),
 		}
 
 		cfg := setting.NewCfg()
@@ -207,10 +208,6 @@ func TestDecryptService(t *testing.T) {
 		require.NoError(t, err)
 
 		apiServer := cfg.Raw.Section("grafana-apiserver")
-		_, err = apiServer.NewKey("proxy_client_cert_file", certPaths.ClientCert)
-		require.NoError(t, err)
-		_, err = apiServer.NewKey("proxy_client_key_file", certPaths.ClientKey)
-		require.NoError(t, err)
 		_, err = apiServer.NewKey("apiservice_ca_bundle_file", certPaths.CA)
 		require.NoError(t, err)
 

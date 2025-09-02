@@ -195,6 +195,7 @@ func TestSQLExpressionCellLimitFromConfig(t *testing.T) {
 				converter: &ResultConverter{
 					Features: features,
 				},
+				tracer: &testTracer{},
 			}
 
 			req := &Request{Queries: queries, User: &user.SignedInUser{}}
