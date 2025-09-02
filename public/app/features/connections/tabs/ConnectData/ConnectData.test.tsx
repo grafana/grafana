@@ -167,11 +167,4 @@ describe('Add new connection', () => {
     await userEvent.click(await screen.findByText('Sample data source'));
     expect(screen.queryByText(new RegExp(exampleSentenceInModal))).toBeInTheDocument();
   });
-
-  test('Show request data source and roadmap links', async () => {
-    renderPage([getCatalogPluginMock(), mockCatalogDataSourcePlugin]);
-
-    expect(await screen.findByText('Request a new data source')).toBeInTheDocument();
-    expect(await screen.findByText('View roadmap')).toBeInTheDocument();
-  });
 });

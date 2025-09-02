@@ -9,7 +9,6 @@ import { LoadingPlaceholder, EmptyState, Field, RadioButtonGroup, Tooltip, Combo
 import { contextSrv } from 'app/core/core';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import { HorizontalGroup } from 'app/features/plugins/admin/components/HorizontalGroup';
-import { RoadmapLinks } from 'app/features/plugins/admin/components/RoadmapLinks';
 import { SearchField } from 'app/features/plugins/admin/components/SearchField';
 import { Sorters } from 'app/features/plugins/admin/helpers';
 import { useHistory } from 'app/features/plugins/admin/hooks/useHistory';
@@ -23,6 +22,17 @@ import { CategoryHeader } from './CategoryHeader';
 import { NoAccessModal } from './NoAccessModal';
 
 const getStyles = (theme: GrafanaTheme2) => ({
+  searchContainer: css({
+    backgroundColor: theme.colors.background.primary,
+    paddingTop: theme.spacing(2),
+    paddingBottom: theme.spacing(2),
+    borderBottom: `1px solid ${theme.colors.border.weak}`,
+    marginBottom: theme.spacing(2),
+  }),
+  contentWrap: css({
+    height: 'calc(100vh - 350px)',
+    overflowY: 'auto',
+  }),
   spacer: css({
     height: theme.spacing(2),
   }),
@@ -145,99 +155,105 @@ export function AddNewConnection() {
   return (
     <>
       {focusedItem && <NoAccessModal item={focusedItem} isOpen={isNoAccessModalOpen} onDismiss={closeModal} />}
-      <HorizontalGroup wrap>
-        <Field label={t('common.search', 'Search')}>
-          <SearchField value={searchTerm} onSearch={handleSearchChange} />
-        </Field>
-        <HorizontalGroup className={styles.actionBar}>
-          {/* Filter by installed / all */}
-          {remotePluginsAvailable ? (
-            <Field label={t('plugins.filter.state', 'State')}>
-              <RadioButtonGroup value={filterBy} onChange={onFilterByChange} options={filterByOptions} />
-            </Field>
-          ) : (
-            <Tooltip
-              content={t(
-                'plugins.filter.disabled',
-                'This filter has been disabled because the Grafana server cannot access grafana.com'
-              )}
-              placement="top"
-            >
-              <div>
-                <Field label={t('plugins.filter.state', 'State')}>
-                  <RadioButtonGroup
-                    disabled={true}
-                    value={filterBy}
-                    onChange={onFilterByChange}
-                    options={filterByOptions}
-                  />
-                </Field>
-              </div>
-            </Tooltip>
-          )}
 
-          {/* Sorting */}
-          <Field label={t('plugins.filter.sort', 'Sort')}>
-            <Combobox
-              aria-label={t('plugins.filter.sort-list', 'Sort Plugins List')}
-              width={24}
-              value={sortBy?.toString()}
-              onChange={onSortByChange}
-              options={[
-                { value: 'nameAsc', label: t('connections.add-new-connection.label.by-name-az', 'By name (A-Z)') },
-                { value: 'nameDesc', label: t('connections.add-new-connection.label.by-name-za', 'By name (Z-A)') },
-                {
-                  value: 'updated',
-                  label: t('connections.add-new-connection.label.by-updated-date', 'By updated date'),
-                },
-                {
-                  value: 'published',
-                  label: t('connections.add-new-connection.label.by-published-date', 'By published date'),
-                },
-                { value: 'downloads', label: t('connections.add-new-connection.label.by-downloads', 'By downloads') },
-              ]}
-            />
+      <div className={styles.searchContainer}>
+        <HorizontalGroup wrap>
+          <Field label={t('common.search', 'Search')}>
+            <SearchField value={searchTerm} onSearch={handleSearchChange} />
           </Field>
-        </HorizontalGroup>
-      </HorizontalGroup>
+          <HorizontalGroup className={styles.actionBar}>
+            {/* Filter by installed / all */}
+            {remotePluginsAvailable ? (
+              <Field label={t('plugins.filter.state', 'State')}>
+                <RadioButtonGroup value={filterBy} onChange={onFilterByChange} options={filterByOptions} />
+              </Field>
+            ) : (
+              <Tooltip
+                content={t(
+                  'plugins.filter.disabled',
+                  'This filter has been disabled because the Grafana server cannot access grafana.com'
+                )}
+                placement="top"
+              >
+                <div>
+                  <Field label={t('plugins.filter.state', 'State')}>
+                    <RadioButtonGroup
+                      disabled={true}
+                      value={filterBy}
+                      onChange={onFilterByChange}
+                      options={filterByOptions}
+                    />
+                  </Field>
+                </div>
+              </Tooltip>
+            )}
 
-      {isLoading ? (
-        <LoadingPlaceholder text={t('common.loading', 'Loading...')} />
-      ) : !!error ? (
-        <Trans i18nKey="alerting.policies.update-errors.error-code" values={{ error: error.message }}>
-          Error message: "{{ error: error.message }}"
-        </Trans>
-      ) : (
-        <>
-          {/* Data Sources Section */}
-          {dataSourcesPlugins.length > 0 && (
-            <>
-              <CategoryHeader
-                iconName="database"
-                label={t('connections.connect-data.datasources-header', 'Data Sources')}
+            {/* Sorting */}
+            <Field label={t('plugins.filter.sort', 'Sort')}>
+              <Combobox
+                aria-label={t('plugins.filter.sort-list', 'Sort Plugins List')}
+                width={24}
+                value={sortBy?.toString()}
+                onChange={onSortByChange}
+                options={[
+                  { value: 'nameAsc', label: t('connections.add-new-connection.label.by-name-az', 'By name (A-Z)') },
+                  { value: 'nameDesc', label: t('connections.add-new-connection.label.by-name-za', 'By name (Z-A)') },
+                  {
+                    value: 'updated',
+                    label: t('connections.add-new-connection.label.by-updated-date', 'By updated date'),
+                  },
+                  {
+                    value: 'published',
+                    label: t('connections.add-new-connection.label.by-published-date', 'By published date'),
+                  },
+                  {
+                    value: 'downloads',
+                    label: t('connections.add-new-connection.label.by-downloads', 'By downloads'),
+                  },
+                ]}
               />
-              <CardGrid items={datasourceCardGridItems} onClickItem={onClickCardGridItem} />
-            </>
-          )}
+            </Field>
+          </HorizontalGroup>
+        </HorizontalGroup>
+      </div>
+      <div className={styles.contentWrap}>
+        {isLoading ? (
+          <LoadingPlaceholder text={t('common.loading', 'Loading...')} />
+        ) : !!error ? (
+          <Trans i18nKey="alerting.policies.update-errors.error-code" values={{ error: error.message }}>
+            Error message: "{{ error: error.message }}"
+          </Trans>
+        ) : (
+          <>
+            {/* Data Sources Section */}
+            {dataSourcesPlugins.length > 0 && (
+              <>
+                <CategoryHeader
+                  iconName="database"
+                  label={t('connections.connect-data.datasources-header', 'Data Sources')}
+                />
+                <CardGrid items={datasourceCardGridItems} onClickItem={onClickCardGridItem} />
+              </>
+            )}
 
-          {/* Apps Section */}
-          {appsPlugins.length > 0 && (
-            <>
-              <div className={styles.spacer} />
-              <CategoryHeader iconName="apps" label={t('connections.connect-data.apps-header', 'Apps')} />
-              <CardGrid items={appsCardGridItems} onClickItem={onClickCardGridItem} />
-            </>
-          )}
-        </>
-      )}
+            {/* Apps Section */}
+            {appsPlugins.length > 0 && (
+              <>
+                <div className={styles.spacer} />
+                <CategoryHeader iconName="apps" label={t('connections.connect-data.apps-header', 'Apps')} />
+                <CardGrid items={appsCardGridItems} onClickItem={onClickCardGridItem} />
+              </>
+            )}
+          </>
+        )}
 
-      {showNoResults && (
-        <EmptyState
-          variant="not-found"
-          message={t('connections.connect-data.empty-message', 'No results matching your query were found')}
-        />
-      )}
-      <RoadmapLinks />
+        {showNoResults && (
+          <EmptyState
+            variant="not-found"
+            message={t('connections.connect-data.empty-message', 'No results matching your query were found')}
+          />
+        )}
+      </div>
     </>
   );
 }
