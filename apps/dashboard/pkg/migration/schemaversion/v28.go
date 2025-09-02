@@ -116,6 +116,10 @@ func (m *v28Migrator) processPanels(panels []interface{}) error {
 func (m *v28Migrator) migrateSinglestatPanel(panel map[string]interface{}) error {
 	targetType := "stat"
 
+	// NOTE: The legacy types "singlestat" and "gauge" are both angular only
+	// This are not supported by any version that could run this migration, so there is
+	// no need to maintain a distinction or fallback to the non-stat version
+
 	// NOTE: DashboardMigrator's migrateSinglestat function has some logic that never gets called
 	// migrateSinglestat will only run if (panel.type === 'singlestat')
 	// but this will not be the case because PanelModel runs restoreModel in the constructor
