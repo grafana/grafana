@@ -4562,6 +4562,12 @@
       "overwrite": "Felülírás",
       "title-plugin-dashboard": "Bővítmény-irányítópult"
     },
+    "controls": {
+      "menu": {
+        "aria-label": "",
+        "title": ""
+      }
+    },
     "dash-nav": {
       "on-open-snapshot-original": {
         "confirmText": {
@@ -5840,11 +5846,6 @@
         "transparent-background": "Áttetsző háttér"
       }
     },
-    "get-workflow-options": {
-      "label": {
-        "push-to-a-new-branch": "Küldés új ágra"
-      }
-    },
     "group-by-variable-form": {
       "alert-not-supported": "Ez az adatforrás nem támogatja a változók szerinti csoportosítást",
       "description-enables-users-custom-values": "Lehetővé teszi a felhasználók számára, hogy egyéni értékeket adjanak a listához",
@@ -6941,11 +6942,6 @@
       "dragging-a-divider": "Elválasztó húzása",
       "dragging-a-sub-region": "Alrégió húzása",
       "value": "Érték: {{ dividerPos }}"
-    },
-    "drilldownInfo": {
-      "action": "Ugrás a Grafana Drilldownhoz",
-      "description": "Grafana Explore-alkalmazásokat keres? Mostantól Grafana Drilldown-alkalmazásoknak hívják őket, és a <1>Menü > Drilldown</1> menüpontban találhatók",
-      "title": "Az Explore Metrics, Logs, Traces és Profiles új helyre költözött!"
     },
     "drop-down-menu": {
       "aria-label-links": "Hivatkozások",
@@ -11158,11 +11154,16 @@
     "save-or-delete-resource-shared-fields": {
       "comment-placeholder-describe-changes-optional": "Megjegyzés hozzáadása a módosítások leírásához (nem kötelező)",
       "description-branch-name-in-git-hub": "Ág neve a GitHubon",
+      "description-file-path": "",
+      "description-folder-path": "",
       "description-inside-repository": "",
       "label-branch": "Ág",
       "label-comment": "Megjegyzés",
       "label-path": "Útvonal",
-      "label-workflow": "Munkafolyamat"
+      "label-workflow": "Munkafolyamat",
+      "placeholder-branch": "",
+      "placeholder-new-branch": "",
+      "suffix-configured-branch": ""
     }
   },
   "provisioned-resource-preview-banner": {
@@ -11696,6 +11697,10 @@
       "button-previous": "Előző",
       "button-submitting": "Küldés…",
       "error-instance-repository-exists": "A példánytár már létezik"
+    },
+    "workflow-options-label": {
+      "push-to-a-new-branch": "",
+      "push-to-existing-branch": ""
     }
   },
   "public-dashboard": {
@@ -12080,6 +12085,7 @@
     "selector": {
       "apply": "Alkalmaz",
       "cancel": "Mégse",
+      "error-title": "",
       "input": {
         "placeholder": "Hatókörök kijelölése...",
         "removeAll": "Összes hatókör eltávolítása"
@@ -12807,6 +12813,7 @@
     "name-fields": "Mezők",
     "name-frozen-columns": "",
     "name-hide-in-table": "Elrejtés a táblázatban",
+    "name-max-height": "",
     "name-min-column-width": "Minimális oszlopszélesség",
     "name-show-table-footer": "Táblázatlábléc megjelenítése",
     "name-show-table-header": "Táblázatfejléc megjelenítése",
@@ -12816,6 +12823,7 @@
     "name-wrap-text": "",
     "placeholder-column-width": "automatikus",
     "placeholder-fields": "Numerikus mezők",
+    "placeholder-max-height": "",
     "tooltip-placement-options": {
       "label-auto": "",
       "label-bottom": "",

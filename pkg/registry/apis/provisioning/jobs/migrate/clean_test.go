@@ -12,8 +12,8 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
 
+	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 )
 
