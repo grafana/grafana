@@ -68,7 +68,7 @@ const renderFolderHook = async () => {
     wrapper: getWrapper({}),
   });
   await waitFor(() => {
-    expect(result.current.isLoading).toBe(false);
+    expect(result.current.data).toBeDefined();
   });
   return result;
 };
