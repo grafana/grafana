@@ -10,7 +10,7 @@ import (
 )
 
 func init() {
-	registry.RegisterKVStore("badger", newBadgerKVStore)
+	_ = registry.RegisterKVStore("badger", newBadgerKVStore)
 }
 
 func newBadgerKVStore(mo store.MergeOperator, config map[string]interface{}) (store.KVStore, error) {
