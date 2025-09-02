@@ -21,13 +21,9 @@ export interface JobContentProps {
 export function JobContent({ jobType, job, isFinishedJob = false, onStatusChange }: JobContentProps) {
   const errorSetRef = useRef(false);
 
-  if (!job?.status) {
-    return null;
-  }
-
-  const { state, message, progress, summary, errors } = job.status;
-  const repoName = job.metadata?.labels?.['provisioning.grafana.app/repository'];
-  const pullRequestURL = job.status?.url?.newPullRequestURL;
+  const { state, message, progress, summary, errors } = job?.status || {};
+  const repoName = job?.metadata?.labels?.['provisioning.grafana.app/repository'];
+  const pullRequestURL = job?.status?.url?.newPullRequestURL;
 
   // Update step status based on job state
   useEffect(() => {
@@ -71,6 +67,10 @@ export function JobContent({ jobType, job, isFinishedJob = false, onStatusChange
         break;
     }
   }, [state, message, errors, onStatusChange]);
+
+  if (!job?.status) {
+    return null;
+  }
 
   return (
     <Stack direction="column" gap={2}>
