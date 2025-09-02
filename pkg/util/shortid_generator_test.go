@@ -34,10 +34,6 @@ func TestCaseInsensitiveCollisionsUIDs(t *testing.T) {
 	history := make(map[string]bool, 0)
 	for i := range 100000 {
 		v := GenerateShortUID()
-		// if false {
-		// 	"github.com/teris-io/shortid"
-		// 	v, _ = shortid.Generate() // collides in less then 500 iterations
-		// }
 
 		lower := strings.ToLower(v)
 		_, exists := history[lower]
