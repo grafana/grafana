@@ -194,10 +194,20 @@ func transformSearchResponse(pCtx backend.PluginContext, response *SearchRespons
 			},
 		},
 	}))
-	tracesFrame.Fields = append(tracesFrame.Fields, data.NewField("startTime", nil, []time.Time{}).SetConfig(&data.FieldConfig{DisplayNameFromDS: "Start time"}))
-	tracesFrame.Fields = append(tracesFrame.Fields, data.NewField("traceService", nil, []string{}).SetConfig(&data.FieldConfig{DisplayNameFromDS: "Service"}))
-	tracesFrame.Fields = append(tracesFrame.Fields, data.NewField("traceName", nil, []string{}).SetConfig(&data.FieldConfig{DisplayNameFromDS: "Name"}))
-	tracesFrame.Fields = append(tracesFrame.Fields, data.NewField("traceDuration", nil, []*float64{}).SetConfig(&data.FieldConfig{DisplayNameFromDS: "Duration", Unit: "ms", NoValue: "<1 ms"}))
+	tracesFrame.Fields = append(tracesFrame.Fields, data.NewField("startTime", nil, []time.Time{}).SetConfig(&data.FieldConfig{
+		DisplayNameFromDS: "Start time",
+	}))
+	tracesFrame.Fields = append(tracesFrame.Fields, data.NewField("traceService", nil, []string{}).SetConfig(&data.FieldConfig{
+		DisplayNameFromDS: "Service",
+	}))
+	tracesFrame.Fields = append(tracesFrame.Fields, data.NewField("traceName", nil, []string{}).SetConfig(&data.FieldConfig{
+		DisplayNameFromDS: "Name",
+	}))
+	tracesFrame.Fields = append(tracesFrame.Fields, data.NewField("traceDuration", nil, []*float64{}).SetConfig(&data.FieldConfig{
+		DisplayNameFromDS: "Duration",
+		Unit:              "ms",
+		NoValue:           "<1 ms",
+	}))
 	tracesFrame.Fields = append(tracesFrame.Fields, data.NewField("nested", nil, []json.RawMessage{}))
 
 	tracesFrame.Meta = &data.FrameMeta{
@@ -310,15 +320,46 @@ func searchRepsonseSubFrame(trace *TraceSearchMetadata, spanSet *SpanSet, pCtx b
 
 	frame := data.NewFrame("Spans")
 	panelsState := data.ExplorePanelsState(map[string]interface{}{"trace": map[string]interface{}{"spanId": "${__value.raw}"}})
-	frame.Fields = append(frame.Fields, data.NewField("traceIdHidden", nil, []string{}).SetConfig(&data.FieldConfig{Custom: map[string]interface{}{"hidden": true}}))
-	frame.Fields = append(frame.Fields, data.NewField("spanID", nil, []string{}).SetConfig(&data.FieldConfig{DisplayNameFromDS: "Span ID", Unit: "string", Custom: map[string]interface{}{"width": 200}, Links: []data.DataLink{{Title: "Span: ${__value.raw}", URL: "", Internal: &data.InternalDataLink{DatasourceUID: pCtx.DataSourceInstanceSettings.UID, DatasourceName: pCtx.DataSourceInstanceSettings.Name, Query: map[string]interface{}{"query": "${__data.fields.traceIdHidden}", "queryType": "traceql"}, ExplorePanelsState: &panelsState}}}}))
-	frame.Fields = append(frame.Fields, data.NewField("time", nil, []time.Time{}).SetConfig(&data.FieldConfig{DisplayNameFromDS: "Start time", Custom: map[string]interface{}{"width": 200}}))
-	frame.Fields = append(frame.Fields, data.NewField("name", nil, []string{}).SetConfig(&data.FieldConfig{DisplayNameFromDS: "Name", Custom: map[string]interface{}{"hidden": !hasNameAttribute}}))
+	frame.Fields = append(frame.Fields, data.NewField("traceIdHidden", nil, []string{}).SetConfig(&data.FieldConfig{
+		Custom: map[string]interface{}{"hidden": true},
+	}))
+	frame.Fields = append(frame.Fields, data.NewField("spanID", nil, []string{}).SetConfig(&data.FieldConfig{
+		DisplayNameFromDS: "Span ID",
+		Unit:              "string",
+		Custom:            map[string]interface{}{"width": 200},
+		Links: []data.DataLink{
+			{
+				Title: "Span: ${__value.raw}",
+				URL:   "",
+				Internal: &data.InternalDataLink{
+					DatasourceUID:  pCtx.DataSourceInstanceSettings.UID,
+					DatasourceName: pCtx.DataSourceInstanceSettings.Name,
+					Query: map[string]interface{}{
+						"query":     "${__data.fields.traceIdHidden}",
+						"queryType": "traceql",
+					},
+					ExplorePanelsState: &panelsState,
+				},
+			},
+		},
+	}))
+	frame.Fields = append(frame.Fields, data.NewField("time", nil, []time.Time{}).SetConfig(&data.FieldConfig{
+		DisplayNameFromDS: "Start time",
+		Custom:            map[string]interface{}{"width": 200},
+	}))
+	frame.Fields = append(frame.Fields, data.NewField("name", nil, []string{}).SetConfig(&data.FieldConfig{
+		DisplayNameFromDS: "Name",
+		Custom:            map[string]interface{}{"hidden": !hasNameAttribute},
+	}))
 	for _, attributeName := range spanAttributeNames {
 		field := spanDynamicAttributes[attributeName]
 		frame.Fields = append(frame.Fields, data.NewField(field.Name, nil, field.Type).SetConfig(&field.Config))
 	}
-	frame.Fields = append(frame.Fields, data.NewField("duration", nil, []float64{}).SetConfig(&data.FieldConfig{DisplayNameFromDS: "Duration", Unit: "ns", Custom: map[string]interface{}{"width": 120}}))
+	frame.Fields = append(frame.Fields, data.NewField("duration", nil, []float64{}).SetConfig(&data.FieldConfig{
+		DisplayNameFromDS: "Duration",
+		Unit:              "ns",
+		Custom:            map[string]interface{}{"width": 120},
+	}))
 
 	frame.Meta = &data.FrameMeta{
 		PreferredVisualization: data.VisTypeTable,
@@ -334,7 +375,7 @@ func searchRepsonseSubFrame(trace *TraceSearchMetadata, spanSet *SpanSet, pCtx b
 		attributeIndex := 4
 		for _, attributeName := range spanAttributeNames {
 			if attribute, ok := spanData.attributes[attributeName]; ok {
-				frame.Fields[attributeIndex].Append(attribute) // fmt.Sprint
+				frame.Fields[attributeIndex].Append(attribute)
 			} else {
 				frame.Fields[attributeIndex].Append("")
 			}
