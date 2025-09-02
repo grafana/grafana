@@ -18,8 +18,24 @@ import (
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
+	"github.com/grafana/grafana/pkg/util/debouncer"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
+
+// Small abstraction to allow for different Pruner implementations.
+// This can be removed once the debouncer is deployed.
+type Pruner interface {
+	Add(key PruningKey) error
+	Start(ctx context.Context)
+}
+
+// PruningKey is a comparable key for pruning history.
+type PruningKey struct {
+	Namespace string
+	Group     string
+	Resource  string
+	Name      string
+}
 
 const (
 	defaultListBufferSize = 100
@@ -27,14 +43,15 @@ const (
 
 // Unified storage backend based on KV storage.
 type kvStorageBackend struct {
-	snowflake  *snowflake.Node
-	kv         KV
-	dataStore  *dataStore
-	metaStore  *metadataStore
-	eventStore *eventStore
-	notifier   *notifier
-	builder    DocumentBuilder
-	log        logging.Logger
+	snowflake     *snowflake.Node
+	kv            KV
+	dataStore     *dataStore
+	metaStore     *metadataStore
+	eventStore    *eventStore
+	notifier      *notifier
+	builder       DocumentBuilder
+	log           logging.Logger
+	historyPruner Pruner
 }
 
 var _ StorageBackend = &kvStorageBackend{}
@@ -55,6 +72,34 @@ func NewKvStorageBackend(kv KV) *kvStorageBackend {
 		builder:    StandardDocumentBuilder(), // For now we use the standard document builder.
 		log:        &logging.NoOpLogger{},     // Make this configurable
 	}
+}
+
+func (k *kvStorageBackend) initPruner(ctx context.Context) error {
+	pruner, err := debouncer.NewGroup(debouncer.DebouncerOpts[PruningKey]{
+		Name:       "history_pruner",
+		BufferSize: 1000,
+		MinWait:    time.Second * 30,
+		MaxWait:    time.Minute * 5,
+		ProcessHandler: func(ctx context.Context, key PruningKey) error {
+			// TODO
+			return nil
+		},
+		ErrorHandler: func(key PruningKey, err error) {
+			k.log.Error("failed to prune history",
+				"namespace", key.Namespace,
+				"group", key.Group,
+				"resource", key.Resource,
+				"name", key.Name,
+				"error", err)
+		},
+	})
+	if err != nil {
+		return err
+	}
+
+	k.historyPruner = pruner
+	k.historyPruner.Start(ctx)
+	return nil
 }
 
 // WriteEvent writes a resource event (create/update/delete) to the storage backend.
