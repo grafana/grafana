@@ -1,5 +1,4 @@
 import { css, cx } from '@emotion/css';
-import { Global, css as cssReact } from '@emotion/react';
 import { useEffect } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -43,25 +42,6 @@ export function PanelEditorRenderer({ model }: SceneComponentProps<PanelEditor>)
 
   return (
     <>
-      {isScrollingLayout && (
-        <Global
-          styles={cssReact({
-            // we need to override top level styles for the screen to scroll
-
-            '.main-view': {
-              // the main view needs to be what scrolls, otherwise modals don't block scrolling the screen
-              // behind them.
-              overflow: 'auto',
-
-              '> header': {
-                // the header is normally fixed, so we can just change it to absolute and that's all we need
-                // since the inset and width/height properties are already set.
-                position: 'absolute',
-              },
-            },
-          })}
-        />
-      )}
       <NavToolbarActions dashboard={dashboard} />
       <div
         {...containerProps}
