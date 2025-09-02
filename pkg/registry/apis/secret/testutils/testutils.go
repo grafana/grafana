@@ -3,6 +3,7 @@ package testutils
 import (
 	"context"
 	"testing"
+	"time"
 
 	"github.com/grafana/authlib/authn"
 	"github.com/grafana/authlib/types"
@@ -21,6 +22,7 @@ import (
 	cipher "github.com/grafana/grafana/pkg/registry/apis/secret/encryption/cipher/service"
 	osskmsproviders "github.com/grafana/grafana/pkg/registry/apis/secret/encryption/kmsproviders"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/encryption/manager"
+	"github.com/grafana/grafana/pkg/registry/apis/secret/garbagecollectionworker"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/mutator"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/secretkeeper/sqlkeeper"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/service"
@@ -32,6 +34,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/secret/database"
 	encryptionstorage "github.com/grafana/grafana/pkg/storage/secret/encryption"
+
 	"github.com/grafana/grafana/pkg/storage/secret/metadata"
 	"github.com/grafana/grafana/pkg/storage/secret/migrator"
 )
@@ -71,7 +74,9 @@ func Setup(t *testing.T, opts ...func(*SetupConfig)) Sut {
 	keeperMetadataStorage, err := metadata.ProvideKeeperMetadataStorage(database, tracer, nil)
 	require.NoError(t, err)
 
-	secureValueMetadataStorage, err := metadata.ProvideSecureValueMetadataStorage(database, tracer, nil)
+	clock := NewFakeClock()
+
+	secureValueMetadataStorage, err := metadata.ProvideSecureValueMetadataStorage(clock, database, tracer, nil)
 	require.NoError(t, err)
 
 	// Initialize access client + access control
@@ -84,8 +89,11 @@ func Setup(t *testing.T, opts ...func(*SetupConfig)) Sut {
 	defaultKey := "SdlklWklckeLS"
 	cfg := setting.NewCfg()
 	cfg.SecretsManagement = setting.SecretsManagerSettings{
-		CurrentEncryptionProvider: "secret_key.v1",
-		ConfiguredKMSProviders:    map[string]map[string]string{"secret_key.v1": {"secret_key": defaultKey}},
+		CurrentEncryptionProvider:     "secret_key.v1",
+		ConfiguredKMSProviders:        map[string]map[string]string{"secret_key.v1": {"secret_key": defaultKey}},
+		GCWorkerEnabled:               false,
+		GCWorkerMaxBatchSize:          2,
+		GCWorkerMaxConcurrentCleanups: 2,
 	}
 	store, err := encryptionstorage.ProvideDataKeyStorage(database, tracer, nil)
 	require.NoError(t, err)
@@ -143,6 +151,12 @@ func Setup(t *testing.T, opts ...func(*SetupConfig)) Sut {
 
 	consolidationService := service.ProvideConsolidationService(tracer, globalDataKeyStore, encryptedValueStorage, globalEncryptedValueStorage, encryptionManager)
 
+	garbageCollectionWorker := garbagecollectionworker.ProvideWorker(
+		cfg,
+		secureValueMetadataStorage,
+		keeperMetadataStorage,
+		keeperService)
+
 	return Sut{
 		SecureValueService:          secureValueService,
 		SecureValueMetadataStorage:  secureValueMetadataStorage,
@@ -156,6 +170,10 @@ func Setup(t *testing.T, opts ...func(*SetupConfig)) Sut {
 		ConsolidationService:        consolidationService,
 		EncryptionManager:           encryptionManager,
 		GlobalDataKeyStore:          globalDataKeyStore,
+		GarbageCollectionWorker:     garbageCollectionWorker,
+		Clock:                       clock,
+		KeeperService:               keeperService,
+		KeeperMetadataStorage:       keeperMetadataStorage,
 	}
 }
 
@@ -172,6 +190,11 @@ type Sut struct {
 	ConsolidationService        contracts.ConsolidationService
 	EncryptionManager           contracts.EncryptionManager
 	GlobalDataKeyStore          contracts.GlobalDataKeyStorage
+	GarbageCollectionWorker     *garbagecollectionworker.Worker
+	// The fake clock passed to implementations to make testing easier
+	Clock                 *FakeClock
+	KeeperService         contracts.KeeperService
+	KeeperMetadataStorage contracts.KeeperMetadataStorage
 }
 
 type CreateSvConfig struct {
@@ -326,4 +349,20 @@ func CreateX509TestDir(t *testing.T) TestCertPaths {
 		ServerKey:  serverKeyFile.Name(),
 		CA:         caCertFile.Name(),
 	}
+}
+
+type FakeClock struct {
+	Current time.Time
+}
+
+func NewFakeClock() *FakeClock {
+	return &FakeClock{Current: time.Now()}
+}
+
+func (c *FakeClock) Now() time.Time {
+	return c.Current
+}
+
+func (c *FakeClock) AdvanceBy(duration time.Duration) {
+	c.Current = c.Current.Add(duration)
 }

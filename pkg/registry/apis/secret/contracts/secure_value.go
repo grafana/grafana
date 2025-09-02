@@ -37,6 +37,8 @@ type SecureValueMetadataStorage interface {
 	SetVersionToActive(ctx context.Context, namespace xkube.Namespace, name string, version int64) error
 	SetVersionToInactive(ctx context.Context, namespace xkube.Namespace, name string, version int64) error
 	SetExternalID(ctx context.Context, namespace xkube.Namespace, name string, version int64, externalID ExternalID) error
+	Delete(ctx context.Context, namespace xkube.Namespace, name string, version int64) error
+	LeaseInactiveSecureValues(ctx context.Context, maxBatchSize uint16) ([]secretv1beta1.SecureValue, error)
 }
 
 type SecureValueService interface {
