@@ -236,6 +236,17 @@ func TestHandleSqlInput(t *testing.T) {
 			expectFrame: true,
 			converted:   true,
 		},
+		{
+			name: "supported type (timeseries-multi) but malformed returns error",
+			frames: data.Frames{
+				data.NewFrame("",
+					data.NewField("time", nil, []string{"1"}), // string is not valid for time field
+					data.NewField("value", data.Labels{"host": "a"}, []*float64{fp(2)}),
+				).SetMeta(&data.FrameMeta{Type: data.FrameTypeTimeSeriesMulti}),
+			},
+			expectErr: "missing time field",
+			converted: true,
+		},
 	}
 
 	for _, tc := range tests {

@@ -378,6 +378,7 @@ func handleSqlInput(ctx context.Context, tracer trace.Tracer, refID string, forR
 		convertedFrames, err := ConvertToFullLong(dataFrames)
 		if err != nil {
 			result.Error = sql.MakeInputConvertError(err, refID, forRefIDs, dsType)
+			return result, true
 		}
 
 		if len(convertedFrames) == 0 {
