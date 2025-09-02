@@ -49,10 +49,10 @@ export interface ScopeSpecFilter {
 
 export interface ScopeSpec {
   title: string;
-  description: string;
-  // Used if the desired parent node is something other than the one being selected
-  defaultParent?: string;
-  filters: ScopeSpecFilter[];
+  // Used to display the title next to the selected scope and expand the selector to the proper path.
+  // This will override whichever is selected from in the selector.
+  defaultPath?: string[];
+  filters?: ScopeSpecFilter[];
 }
 
 // TODO: Use Resource from apiserver when we export the types
