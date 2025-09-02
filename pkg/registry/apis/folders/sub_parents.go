@@ -67,6 +67,7 @@ func (r *subParentsREST) Connect(ctx context.Context, name string, opts runtime.
 		folderObj, ok := obj.(*folders.Folder)
 		if !ok {
 			responder.Error(fmt.Errorf("expecting folder, found: %T", folderObj))
+			return
 		}
 
 		info, err := r.parents(ctx, folderObj)

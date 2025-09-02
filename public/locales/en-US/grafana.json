@@ -3565,7 +3565,9 @@
       },
       "error-moving-resources": "Error moving resources",
       "error-no-target-folder-path": "Target folder path is invalid or empty, please select again.",
-      "move-warning": "This will move selected folders and their descendants. In total, this will affect:",
+      "move-total": "In total, this will affect:",
+      "move-warning": "This will move selected folders and their descendants. Available target folders depend on the selected resources.",
+      "move-warning-tooltip": "You can only move provisioned resources within their provisioned folder, and local resources to local folders.",
       "target-folder": "Target Folder"
     },
     "counts": {
