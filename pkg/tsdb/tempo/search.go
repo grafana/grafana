@@ -71,6 +71,8 @@ type Field struct {
 
 func (s *Service) Search(ctx context.Context, pCtx backend.PluginContext, query backend.DataQuery) (*backend.DataResponse, error) {
 	ctxLogger := s.logger.FromContext(ctx)
+	model := &dataquery.TempoQuery{}
+	result := &backend.DataResponse{}
 
 	dsInfo, err := s.getDSInfo(ctx, pCtx)
 	if err != nil {
@@ -78,7 +80,6 @@ func (s *Service) Search(ctx context.Context, pCtx backend.PluginContext, query 
 		return nil, err
 	}
 
-	model := &dataquery.TempoQuery{}
 	err = json.Unmarshal(query.JSON, model)
 	if err != nil {
 		ctxLogger.Error("Failed to unmarshall Tempo query model", "error", err, "function", logEntrypoint())
@@ -118,14 +119,26 @@ func (s *Service) Search(ctx context.Context, pCtx backend.PluginContext, query 
 		return nil, err
 	}
 
-	frames, err := transformSearchResponse(pCtx, &response)
-	if err != nil {
-		ctxLogger.Error("Failed to convert SearchResponse to frames", "error", err, "function", logEntrypoint())
-		return nil, err
+	if *model.TableType == dataquery.SearchTableTypeTraces {
+		frames, err := transformTraceSearchResponse(pCtx, &response)
+		if err != nil {
+			ctxLogger.Error("Failed to convert SearchResponse to frames", "error", err, "function", logEntrypoint())
+			return nil, err
+		}
+		result.Frames = frames
+		return result, nil
 	}
 
-	result := &backend.DataResponse{}
-	result.Frames = frames
+	if *model.TableType == dataquery.SearchTableTypeSpans {
+		frames, err := transformSpanSearchResponse(pCtx, &response)
+		if err != nil {
+			ctxLogger.Error("Failed to convert SearchResponse to frames", "error", err, "function", logEntrypoint())
+			return nil, err
+		}
+		result.Frames = frames
+		return result, nil
+	}
+
 	return result, nil
 }
 
@@ -175,7 +188,7 @@ func createSearchRequest(ctx context.Context, dsInfo *DatasourceInfo, model *dat
 	return req, nil
 }
 
-func transformSearchResponse(pCtx backend.PluginContext, response *SearchResponse) ([]*data.Frame, error) {
+func transformTraceSearchResponse(pCtx backend.PluginContext, response *SearchResponse) ([]*data.Frame, error) {
 	tracesFrame := data.NewFrame("Traces")
 	tracesFrame.Fields = append(tracesFrame.Fields, data.NewField("traceID", nil, []string{}).SetConfig(&data.FieldConfig{
 		DisplayNameFromDS: "Trace ID",
@@ -253,7 +266,7 @@ func transformSearchResponse(pCtx backend.PluginContext, response *SearchRespons
 		nestedFrames := []json.RawMessage{}
 
 		if trace.SpanSet != nil {
-			subFrame := searchRepsonseSubFrame(trace, trace.SpanSet, pCtx)
+			subFrame := traceSearchRepsonseSubFrame(trace, trace.SpanSet, pCtx)
 			subFrameJSON, err := json.Marshal(subFrame)
 			if err != nil {
 				backend.Logger.Error("Failed to marshal subFrame", "error", err)
@@ -263,7 +276,7 @@ func transformSearchResponse(pCtx backend.PluginContext, response *SearchRespons
 			}
 		} else if len(trace.SpanSets) > 0 {
 			for _, spanSet := range trace.SpanSets {
-				subFrame := searchRepsonseSubFrame(trace, spanSet, pCtx)
+				subFrame := traceSearchRepsonseSubFrame(trace, spanSet, pCtx)
 				subFrameJSON, err := json.Marshal(subFrame)
 				if err != nil {
 					backend.Logger.Error("Failed to marshal subFrame", "error", err)
@@ -287,7 +300,7 @@ func transformSearchResponse(pCtx backend.PluginContext, response *SearchRespons
 	return []*data.Frame{tracesFrame}, nil
 }
 
-func searchRepsonseSubFrame(trace *TraceSearchMetadata, spanSet *SpanSet, pCtx backend.PluginContext) *data.Frame {
+func traceSearchRepsonseSubFrame(trace *TraceSearchMetadata, spanSet *SpanSet, pCtx backend.PluginContext) *data.Frame {
 	spanDynamicAttributes := make(map[string]*Field)
 	hasNameAttribute := false
 
@@ -366,24 +379,21 @@ func searchRepsonseSubFrame(trace *TraceSearchMetadata, spanSet *SpanSet, pCtx b
 	}
 
 	for _, span := range spanSet.Spans {
-		spanData := transformSpanToTraceData(span, spanSet, trace)
-		frame.Fields[0].Append(spanData.traceIdHidden)
-		frame.Fields[1].Append(spanData.spanID)
-		frame.Fields[2].Append(spanData.time)
-		frame.Fields[3].Append(spanData.name)
-
+		traceData := transformSpanToTraceData(span, spanSet, trace)
+		frame.Fields[0].Append(traceData.traceIdHidden)
+		frame.Fields[1].Append(traceData.spanID)
+		frame.Fields[2].Append(traceData.time)
+		frame.Fields[3].Append(traceData.name)
 		attributeIndex := 4
 		for _, attributeName := range spanAttributeNames {
-			if attribute, ok := spanData.attributes[attributeName]; ok {
+			if attribute, ok := traceData.attributes[attributeName]; ok {
 				frame.Fields[attributeIndex].Append(attribute)
 			} else {
 				frame.Fields[attributeIndex].Append("")
 			}
-
 			attributeIndex++
 		}
-
-		frame.Fields[attributeIndex].Append(spanData.duration)
+		frame.Fields[attributeIndex].Append(traceData.duration)
 	}
 
 	return frame
@@ -449,3 +459,138 @@ func transformSpanToTraceData(span *Span, spanSet *SpanSet, trace *TraceSearchMe
 		attributes:    attributes,
 	}
 }
+
+func transformSpanSearchResponse(pCtx backend.PluginContext, response *SearchResponse) ([]*data.Frame, error) {
+	spanDynamicAttributes := make(map[string]*Field)
+	hasNameAttribute := false
+
+	for _, trace := range response.Traces {
+		for _, spanSet := range trace.SpanSets {
+			for _, attribute := range spanSet.Attributes {
+				spanDynamicAttributes[attribute.Key] = &Field{
+					Name:   attribute.Key,
+					Type:   []string{},
+					Config: data.FieldConfig{DisplayNameFromDS: attribute.Key},
+				}
+			}
+			for _, span := range spanSet.Spans {
+				if span.Name != "" {
+					hasNameAttribute = true
+				}
+				for _, attribute := range span.Attributes {
+					spanDynamicAttributes[attribute.Key] = &Field{
+						Name:   attribute.Key,
+						Type:   []string{},
+						Config: data.FieldConfig{DisplayNameFromDS: attribute.Key},
+					}
+				}
+			}
+		}
+	}
+
+	spanAttributeNames := make([]string, 0, len(spanDynamicAttributes))
+	for name := range spanDynamicAttributes {
+		spanAttributeNames = append(spanAttributeNames, name)
+	}
+	sort.Strings(spanAttributeNames)
+
+	spansFrame := data.NewFrame("Spans")
+	panelsState := data.ExplorePanelsState(map[string]interface{}{"trace": map[string]interface{}{"spanId": "${__value.raw}"}})
+	spansFrame.Fields = append(spansFrame.Fields, data.NewField("traceIdHidden", nil, []string{}).SetConfig(&data.FieldConfig{
+		Custom: map[string]interface{}{"hidden": false},
+	}))
+	spansFrame.Fields = append(spansFrame.Fields, data.NewField("traceService", nil, []string{}).SetConfig(&data.FieldConfig{
+		DisplayNameFromDS: "Trace Service",
+		Custom: map[string]interface{}{"width": 200},
+	}))
+	spansFrame.Fields = append(spansFrame.Fields, data.NewField("traceName", nil, []string{}).SetConfig(&data.FieldConfig{
+		DisplayNameFromDS: "Trace Name",
+		Custom: map[string]interface{}{"width": 200},
+	}))
+	spansFrame.Fields = append(spansFrame.Fields, data.NewField("spanID", nil, []string{}).SetConfig(&data.FieldConfig{
+		DisplayNameFromDS: "Span ID",
+		Unit:              "string",
+		Custom:            map[string]interface{}{"width": 200},
+		Links: []data.DataLink{
+			{
+				Title: "Span: ${__value.raw}",
+				URL:   "",
+				Internal: &data.InternalDataLink{
+					DatasourceUID:  pCtx.DataSourceInstanceSettings.UID,
+					DatasourceName: pCtx.DataSourceInstanceSettings.Name,
+					Query: map[string]interface{}{
+						"query":     "${__data.fields.traceIdHidden}",
+						"queryType": "traceql",
+					},
+					ExplorePanelsState: &panelsState,
+				},
+			},
+		},
+	}))
+	spansFrame.Fields = append(spansFrame.Fields, data.NewField("time", nil, []time.Time{}).SetConfig(&data.FieldConfig{
+		DisplayNameFromDS: "Start time",
+	}))
+	spansFrame.Fields = append(spansFrame.Fields, data.NewField("name", nil, []string{}).SetConfig(&data.FieldConfig{
+		DisplayNameFromDS: "Name",
+		Custom:            map[string]interface{}{"hidden": !hasNameAttribute},
+	}))
+	for _, attributeName := range spanAttributeNames {
+		field := spanDynamicAttributes[attributeName]
+		spansFrame.Fields = append(spansFrame.Fields, data.NewField(field.Name, nil, field.Type).SetConfig(&field.Config))
+	}
+	spansFrame.Fields = append(spansFrame.Fields, data.NewField("duration", nil, []float64{}).SetConfig(&data.FieldConfig{
+		DisplayNameFromDS: "Duration",
+		Unit:              "ns",
+		Custom:            map[string]interface{}{"width": 120},
+	}))
+
+	spansFrame.Meta = &data.FrameMeta{
+		PreferredVisualization: data.VisTypeTable,
+	}
+
+	if response == nil {
+		return []*data.Frame{spansFrame}, nil
+	}
+
+	if len(response.Traces) == 0 {
+		return []*data.Frame{spansFrame}, nil
+	}
+
+	traces := make([]*TraceSearchMetadata, len(response.Traces))
+	copy(traces, response.Traces)
+
+	for i := 0; i < len(traces)-1; i++ {
+		for j := i + 1; j < len(traces); j++ {
+			if traces[i].StartTimeUnixNano < traces[j].StartTimeUnixNano {
+				traces[i], traces[j] = traces[j], traces[i]
+			}
+		}
+	}
+
+	for _, trace := range traces {
+		for _, spanSet := range trace.SpanSets {
+			for _, span := range spanSet.Spans {
+				traceData := transformSpanToTraceData(span, spanSet, trace)
+				spansFrame.Fields[0].Append(traceData.traceIdHidden)
+				spansFrame.Fields[1].Append(trace.RootServiceName)
+				spansFrame.Fields[2].Append(trace.RootTraceName)
+				spansFrame.Fields[3].Append(traceData.spanID)
+				spansFrame.Fields[4].Append(traceData.time)
+				spansFrame.Fields[5].Append(traceData.name)
+				attributeIndex := 6
+				for _, attributeName := range spanAttributeNames {
+					if attribute, ok := traceData.attributes[attributeName]; ok {
+						spansFrame.Fields[attributeIndex].Append(attribute)
+					} else {
+						spansFrame.Fields[attributeIndex].Append("")
+					}
+					attributeIndex++
+				}
+				spansFrame.Fields[attributeIndex].Append(traceData.duration)
+			}
+		}
+	}
+
+	return []*data.Frame{spansFrame}, nil
+}
+

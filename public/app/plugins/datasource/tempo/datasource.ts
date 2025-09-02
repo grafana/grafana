@@ -510,7 +510,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
 
               return super.query({ ...options, targets: queries }).pipe(
                 map((response: DataQueryResponse) => {
-                  if (response.data && response.data.length > 0) {
+                  if (queries[0].tableType === SearchTableType.Traces && response.data && response.data.length > 0) {
                     response.data.forEach((frame) => {
                       // The backend does not support nested data frames directly, so we return
                       // what should be nested as a JSON array in a column: e.g. "[{dataframe}]".
@@ -1737,9 +1737,9 @@ export function buildExpr(
     return query.includes('span_name')
       ? metric.params.concat(query)
       : metric.params
-          .concat(query)
-          .concat(extraParams)
-          .filter((item: string) => item);
+        .concat(query)
+        .concat(extraParams)
+        .filter((item: string) => item);
   });
   const exprs = metricParamsArray.map((params) => metric.expr.replace('{}', '{' + params.join(',') + '}'));
   const expr = exprs.join(' OR ');
