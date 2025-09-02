@@ -2,12 +2,18 @@ package folders
 
 import (
 	"context"
+	"fmt"
 	"testing"
 
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+	"google.golang.org/grpc"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
 func TestValidateCreate(t *testing.T) {
@@ -118,4 +124,203 @@ func TestValidateCreate(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestValidateUpdate(t *testing.T) {
+	tests := []struct {
+		name         string
+		folder       *folders.Folder
+		old          *folders.Folder
+		parents      *folders.FolderInfoList
+		parentsError error
+		expectedErr  string
+		maxDepth     int // defaults to 5 unless set
+	}{{
+		name: "change title",
+		folder: &folders.Folder{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "nnn",
+			},
+			Spec: folders.FolderSpec{
+				Title: "changed",
+			},
+		},
+		old: &folders.Folder{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "nnn",
+			},
+			Spec: folders.FolderSpec{
+				Title: "old title",
+			},
+		},
+	}, {
+		name: "error to move into k6 folder",
+		folder: &folders.Folder{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "nnn",
+				Annotations: map[string]string{
+					utils.AnnoKeyFolder: "k6-app",
+				},
+			},
+			Spec: folders.FolderSpec{
+				Title: "changed",
+			},
+		},
+		old: &folders.Folder{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "nnn",
+			},
+			Spec: folders.FolderSpec{
+				Title: "old title",
+			},
+		},
+		expectedErr: "k6 project may not be moved",
+	}}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			maxDepth := tt.maxDepth
+			if maxDepth == 0 {
+				maxDepth = 5
+			}
+			s := (grafanarest.Storage)(nil)
+			m := &mock.Mock{}
+			if tt.parents != nil {
+				for _, v := range tt.parents.Items {
+					m.On("Get", context.TODO(), v.Name, &metav1.GetOptions{}).Return(&folders.Folder{
+						ObjectMeta: metav1.ObjectMeta{
+							Name: v.Name,
+						}, Spec: folders.FolderSpec{
+							Title: v.Title,
+						},
+					}, nil)
+				}
+			}
+
+			err := validateOnUpdate(context.Background(), tt.folder, tt.old, storageMock{m, s},
+				func(ctx context.Context, folder *folders.Folder) (*folders.FolderInfoList, error) {
+					return tt.parents, tt.parentsError
+				}, maxDepth)
+
+			if tt.expectedErr == "" {
+				require.NoError(t, err)
+			} else {
+				require.Error(t, err)
+				require.Contains(t, err.Error(), tt.expectedErr)
+			}
+		})
+	}
+}
+
+func TestValidateDelete(t *testing.T) {
+	tests := []struct {
+		name        string
+		folder      *folders.Folder
+		searcher    *mockSearchClient
+		expectedErr string
+	}{{
+		name: "simple delete",
+		folder: &folders.Folder{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "nnn",
+			},
+		},
+		searcher: &mockSearchClient{
+			stats: &resourcepb.ResourceStatsResponse{
+				// Empty stats
+				Stats: []*resourcepb.ResourceStatsResponse_Stats{},
+			},
+		},
+	}, {
+		name: "stats error",
+		folder: &folders.Folder{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "nnn",
+			},
+		},
+		searcher: &mockSearchClient{
+			stats: &resourcepb.ResourceStatsResponse{},
+		},
+		expectedErr: "could not verify if folder is empty",
+	}, {
+		name: "stats error",
+		folder: &folders.Folder{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "nnn",
+			},
+		},
+		searcher: &mockSearchClient{
+			statsErr: fmt.Errorf("error running stats"),
+		},
+		expectedErr: "error running stats",
+	}, {
+		name: "stats error",
+		folder: &folders.Folder{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "nnn",
+			},
+		},
+		searcher: &mockSearchClient{
+			stats: &resourcepb.ResourceStatsResponse{
+				Error: &resourcepb.ErrorResult{
+					Reason: "error",
+				},
+			},
+		},
+		expectedErr: "could not verify if folder is empty",
+	}, {
+		name: "folder not empty",
+		folder: &folders.Folder{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "nnn",
+			},
+		},
+		searcher: &mockSearchClient{
+			stats: &resourcepb.ResourceStatsResponse{
+				Stats: []*resourcepb.ResourceStatsResponse_Stats{
+					{
+						Group:    "folders.grafana.app",
+						Resource: "folders",
+						Count:    10, // not empty
+					},
+				},
+			},
+		},
+		expectedErr: "[folder.not-empty]",
+	}}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := validateOnDelete(context.Background(), tt.folder, tt.searcher)
+
+			if tt.expectedErr == "" {
+				require.NoError(t, err)
+			} else {
+				require.Error(t, err)
+				require.Contains(t, err.Error(), tt.expectedErr)
+			}
+		})
+	}
+}
+
+var (
+	_ = resourcepb.ResourceIndexClient(&mockSearchClient{})
+)
+
+type mockSearchClient struct {
+	stats    *resourcepb.ResourceStatsResponse
+	statsErr error
+
+	search    *resourcepb.ResourceSearchResponse
+	searchErr error
+}
+
+// GetStats implements resourcepb.ResourceIndexClient.
+func (m *mockSearchClient) GetStats(ctx context.Context, in *resourcepb.ResourceStatsRequest, opts ...grpc.CallOption) (*resourcepb.ResourceStatsResponse, error) {
+	return m.stats, m.statsErr
+}
+
+// Search implements resourcepb.ResourceIndexClient.
+func (m *mockSearchClient) Search(ctx context.Context, in *resourcepb.ResourceSearchRequest, opts ...grpc.CallOption) (*resourcepb.ResourceSearchResponse, error) {
+	return m.search, m.searchErr
 }

@@ -549,6 +549,7 @@
     },
     "alert-rules": {
       "firing-for": "Firing for",
+      "multiple-sources": "{{numSources}} data sources",
       "next-evaluation": "Next evaluation",
       "next-evaluation-in": "next evaluation in",
       "rule-definition": "Rule definition"
@@ -9534,6 +9535,7 @@
       "fields-section": "Fields",
       "hide-log-line": "Hide log line",
       "inline-mode": "Display inline",
+      "link-value-tooltip": "Link value",
       "links-section": "Links",
       "log-line-field": "Log line",
       "log-line-section": "Log line",
