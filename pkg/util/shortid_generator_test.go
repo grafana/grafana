@@ -6,7 +6,6 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
-	"github.com/teris-io/shortid"
 	"k8s.io/apimachinery/pkg/util/validation"
 )
 
@@ -35,9 +34,10 @@ func TestCaseInsensitiveCollisionsUIDs(t *testing.T) {
 	history := make(map[string]bool, 0)
 	for i := 0; i < 100000; i++ {
 		v := GenerateShortUID()
-		if false {
-			v, _ = shortid.Generate() // collides in less then 500 iterations
-		}
+		// if false {
+		// 	"github.com/teris-io/shortid"
+		// 	v, _ = shortid.Generate() // collides in less then 500 iterations
+		// }
 
 		lower := strings.ToLower(v)
 		_, exists := history[lower]
