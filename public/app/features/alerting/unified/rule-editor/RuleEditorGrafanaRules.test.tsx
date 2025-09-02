@@ -4,6 +4,7 @@ import { clickSelectOption, selectOptionInTest } from 'test/helpers/selectOption
 import { screen, waitFor } from 'test/test-utils';
 import { byRole } from 'testing-library-selector';
 
+import { setPluginLinksHook } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
 import { setupMswServer } from 'app/features/alerting/unified/mockApi';
 import { PROMETHEUS_DATASOURCE_UID } from 'app/features/alerting/unified/mocks/server/constants';
@@ -40,6 +41,9 @@ const dataSources = {
 
 setupDataSources(dataSources.default);
 
+// Setup plugin extensions hook to prevent setPluginLinksHook errors
+setPluginLinksHook(() => ({ links: [], isLoading: false }));
+
 describe('RuleEditor grafana managed rules', () => {
   beforeEach(() => {
     jest.clearAllMocks();
@@ -67,7 +71,7 @@ describe('RuleEditor grafana managed rules', () => {
 
     await user.type(await ui.inputs.name.find(), 'my great new rule');
     await user.click(await screen.findByRole('button', { name: /select folder/i }));
-    await user.click(await screen.findByLabelText(/folder a/i));
+    await user.click(await screen.findByLabelText('Folder A'));
     const groupInput = await ui.inputs.group.find();
     await user.click(await byRole('combobox').find(groupInput));
     await clickSelectOption(groupInput, grafanaRulerGroup.name);
@@ -148,7 +152,7 @@ describe('RuleEditor grafana managed rules', () => {
 
     await user.type(await ui.inputs.name.find(), 'my great new rule');
     await user.click(await screen.findByRole('button', { name: /select folder/i }));
-    await user.click(await screen.findByLabelText(/folder a/i));
+    await user.click(await screen.findByLabelText('Folder A'));
 
     // Select the existing group with 5m interval
     const groupInput = await ui.inputs.group.find();

@@ -48,24 +48,6 @@ func GetCoreKinds() ([]CoreKind, error) {
 		CueFile: librarypanelCue,
 	})
 
-	preferencesCue, err := loadCueFile(ctx, filepath.Join(root, "./kinds/preferences/preferences_kind.cue"))
-	if err != nil {
-		return nil, err
-	}
-	kinds = append(kinds, CoreKind{
-		Name:    "preferences",
-		CueFile: preferencesCue,
-	})
-
-	publicdashboardCue, err := loadCueFile(ctx, filepath.Join(root, "./kinds/publicdashboard/public_dashboard_kind.cue"))
-	if err != nil {
-		return nil, err
-	}
-	kinds = append(kinds, CoreKind{
-		Name:    "publicdashboard",
-		CueFile: publicdashboardCue,
-	})
-
 	return kinds, nil
 }
 

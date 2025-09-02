@@ -30,7 +30,7 @@ export interface ControlledLogRowsProps extends Omit<Props, 'scrollElement'> {
   logsMeta?: LogsMetaItem[];
   loadMoreLogs?: (range: AbsoluteTimeRange) => void;
   logOptionsStorageKey?: string;
-  onLogOptionsChange?: (option: keyof LogListControlOptions, value: string | boolean | string[]) => void;
+  onLogOptionsChange?: (option: LogListControlOptions, value: string | boolean | string[]) => void;
   range: TimeRange;
   filterLevels?: LogLevel[];
 

@@ -792,7 +792,7 @@ describe('transformSceneToSaveModel', () => {
 
         activateFullSceneTree(scene);
 
-        expect(repeater.state.repeatedPanels?.length).toBe(2);
+        expect(repeater.state.repeatedPanels?.length).toBe(1);
         const result = panelRepeaterToPanels(repeater, true);
 
         expect(result).toHaveLength(2);

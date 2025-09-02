@@ -13,10 +13,10 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
+	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
+	"github.com/grafana/grafana/apps/provisioning/pkg/safepath"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/slugify"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/safepath"
 )
 
 var (
@@ -24,6 +24,19 @@ var (
 	ErrDuplicateName       = errors.New("duplicate name in repository")
 	ErrMissingName         = field.Required(field.NewPath("name", "metadata", "name"), "missing name in resource")
 )
+
+// NewResourceOwnershipConflictError creates a BadRequest error for when a resource
+// is owned by a different repository or manager and cannot be modified
+func NewResourceOwnershipConflictError(resourceName string, currentManager utils.ManagerProperties, requestingManager utils.ManagerProperties) error {
+	message := fmt.Sprintf("resource '%s' is managed by %s '%s' and cannot be modified by %s '%s'",
+		resourceName,
+		currentManager.Kind,
+		currentManager.Identity,
+		requestingManager.Kind,
+		requestingManager.Identity)
+
+	return apierrors.NewBadRequest(message)
+}
 
 type WriteOptions struct {
 	Path string
@@ -52,6 +65,45 @@ func NewResourcesManager(repo repository.ReaderWriter, folders *FolderManager, p
 		clients:         clients,
 		resourcesLookup: map[resourceID]string{},
 	}
+}
+
+// CheckResourceOwnership validates that the requesting manager can modify the existing resource
+// Returns an error if the existing resource is owned by a different manager that doesn't allow edits
+// If existingResource is nil, no ownership conflict exists (new resource)
+// This is a package-level function that can be used without a ResourcesManager instance
+func CheckResourceOwnership(existingResource *unstructured.Unstructured, resourceName string, requestingManager utils.ManagerProperties) error {
+	if existingResource == nil {
+		// Resource doesn't exist, so no ownership conflict
+		return nil
+	}
+
+	// Check if the existing resource has manager properties
+	existingMeta, err := utils.MetaAccessor(existingResource)
+	if err != nil {
+		// If we can't get metadata, allow the operation
+		return nil
+	}
+
+	currentManager, hasManager := existingMeta.GetManagerProperties()
+	if !hasManager {
+		// No manager information, so no ownership conflict
+		return nil
+	}
+
+	// Check if this is the same manager
+	if currentManager.Kind == requestingManager.Kind && currentManager.Identity == requestingManager.Identity {
+		// Same manager, no conflict
+		return nil
+	}
+
+	// Check if the current manager allows edits
+	if currentManager.AllowsEdits {
+		// Manager allows edits from others, no conflict
+		return nil
+	}
+
+	// Different manager and edits not allowed - return ownership conflict error
+	return NewResourceOwnershipConflictError(resourceName, currentManager, requestingManager)
 }
 
 // CreateResource writes an object to the repository
@@ -92,19 +144,29 @@ func (r *ResourcesManager) WriteResourceFileFromObject(ctx context.Context, obj 
 	if title == "" {
 		title = name
 	}
-	folder := meta.GetFolder()
 
+	folder := meta.GetFolder()
 	// Get the absolute path of the folder
 	rootFolder := RootFolder(r.repo.Config())
-	fid, ok := r.folders.Tree().DirPath(folder, rootFolder)
-	if !ok {
-		return "", fmt.Errorf("folder not found in tree: %s", folder)
+
+	// If no folder is specified in the file, set it to the root to ensure everything is written under it
+	var fid Folder
+	if folder == "" {
+		fid = Folder{ID: rootFolder}
+		meta.SetFolder(rootFolder) // Set the folder in the metadata to the root folder
+	} else {
+		var ok bool
+		fid, ok = r.folders.Tree().DirPath(folder, rootFolder)
+		if !ok {
+			return "", fmt.Errorf("folder %s NOT found in tree with root: %s", folder, rootFolder)
+		}
 	}
 
 	fileName := slugify.Slugify(title) + ".json"
 	if fid.Path != "" {
 		fileName = safepath.Join(fid.Path, fileName)
 	}
+
 	if options.Path != "" {
 		fileName = safepath.Join(options.Path, fileName)
 	}

@@ -4,9 +4,9 @@ import (
 	"context"
 	"errors"
 
-	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
+	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 )
 
@@ -52,6 +52,13 @@ func (w *MigrationWorker) Process(ctx context.Context, repo repository.Repositor
 	if options.History {
 		if repo.Config().Spec.Type != provisioning.GitHubRepositoryType {
 			return errors.New("history is only supported for github repositories")
+		}
+	}
+
+	// Block migrate for legacy resources if repository type is folder
+	if repo.Config().Spec.Sync.Target == provisioning.SyncTargetTypeFolder {
+		if dualwrite.IsReadingLegacyDashboardsAndFolders(ctx, w.storageStatus) {
+			return errors.New("migration of legacy resources is not supported for folder-type repositories")
 		}
 	}
 

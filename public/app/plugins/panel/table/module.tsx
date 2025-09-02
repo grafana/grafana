@@ -9,7 +9,13 @@ import {
   FieldConfigProperty,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { TableCellOptions, TableCellDisplayMode, defaultTableFieldOptions, TableCellHeight } from '@grafana/schema';
+import {
+  defaultTableFieldOptions,
+  TableCellOptions,
+  TableCellDisplayMode,
+  TableCellHeight,
+  TableCellTooltipPlacement,
+} from '@grafana/schema';
 
 import { PaginationEditor } from './PaginationEditor';
 import { TableCellOptionEditor } from './TableCellOptionEditor';
@@ -103,23 +109,81 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(TablePanel)
           defaultValue: defaultTableFieldOptions.filterable,
         })
         .addBooleanSwitch({
-          path: 'hidden',
+          path: 'wrapText',
+          name: t('table.name-wrap-text', 'Wrap text'),
+          category,
+        })
+        .addBooleanSwitch({
+          path: 'wrapHeaderText',
+          name: t('table.name-wrap-header-text', 'Wrap header text'),
+          category,
+        })
+        .addBooleanSwitch({
+          path: 'hideFrom.viz',
           name: t('table.name-hide-in-table', 'Hide in table'),
           category,
           defaultValue: undefined,
           hideFromDefaults: true,
+        })
+        .addFieldNamePicker({
+          path: 'tooltip.field',
+          name: t('table.name-tooltip-from-field', 'Tooltip from field'),
+          description: t(
+            'table.description-tooltip-from-field',
+            'Render a cell from a field (hidden or visible) in a tooltip'
+          ),
+          category: cellCategory,
+        })
+        .addSelect({
+          path: 'tooltip.placement',
+          name: t('table.name-tooltip-placement', 'Tooltip placement'),
+          category: cellCategory,
+          settings: {
+            options: [
+              {
+                label: t('table.tooltip-placement-options.label-auto', 'Auto'),
+                value: TableCellTooltipPlacement.Auto,
+              },
+              {
+                label: t('table.tooltip-placement-options.label-top', 'Top'),
+                value: TableCellTooltipPlacement.Top,
+              },
+              {
+                label: t('table.tooltip-placement-options.label-right', 'Right'),
+                value: TableCellTooltipPlacement.Right,
+              },
+              {
+                label: t('table.tooltip-placement-options.label-bottom', 'Bottom'),
+                value: TableCellTooltipPlacement.Bottom,
+              },
+              {
+                label: t('table.tooltip-placement-options.label-left', 'Left'),
+                value: TableCellTooltipPlacement.Left,
+              },
+            ],
+          },
+          showIf: (cfg) => cfg.tooltip?.field !== undefined,
         });
     },
   })
   .setPanelOptions((builder) => {
-    const category = [t('table.category-table', 'Table')];
     const footerCategory = [t('table.category-table-footer', 'Table footer')];
+    const category = [t('table.category-table', 'Table')];
     builder
       .addBooleanSwitch({
         path: 'showHeader',
         name: t('table.name-show-table-header', 'Show table header'),
         category,
         defaultValue: defaultOptions.showHeader,
+      })
+      .addNumberInput({
+        path: 'frozenColumns.left',
+        name: t('table.name-frozen-columns', 'Frozen columns'),
+        description: t('table.description-frozen-columns', 'Columns are frozen from the left side of the table'),
+        settings: {
+          placeholder: 'none',
+        },
+        category,
       })
       .addRadio({
         path: 'cellHeight',
@@ -132,6 +196,15 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(TablePanel)
             { value: TableCellHeight.Md, label: t('table.cell-height-options.label-medium', 'Medium') },
             { value: TableCellHeight.Lg, label: t('table.cell-height-options.label-large', 'Large') },
           ],
+        },
+      })
+      .addNumberInput({
+        path: 'maxRowHeight',
+        name: t('table.name-max-height', 'Max row height'),
+        category,
+        settings: {
+          placeholder: t('table.placeholder-max-height', 'none'),
+          min: 0,
         },
       })
       .addBooleanSwitch({
@@ -188,7 +261,7 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(TablePanel)
       .addCustomEditor({
         id: 'footer.enablePagination',
         path: 'footer.enablePagination',
-        name: t('table.name-enable-paginations', 'Enable pagination'),
+        name: t('table.name-enable-pagination', 'Enable pagination'),
         category,
         editor: PaginationEditor,
       });

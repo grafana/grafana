@@ -1,5 +1,5 @@
-import { Component } from 'react';
 import * as React from 'react';
+import { Component } from 'react';
 import { ReplaySubject, Subscription } from 'rxjs';
 
 import { PanelProps } from '@grafana/data';
@@ -8,7 +8,6 @@ import { PanelContext, PanelContextRoot } from '@grafana/ui';
 import { CanvasFrameOptions } from 'app/features/canvas/frame';
 import { ElementState } from 'app/features/canvas/runtime/element';
 import { Scene } from 'app/features/canvas/runtime/scene';
-import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { PanelEditEnteredEvent, PanelEditExitedEvent } from 'app/types/events';
 
 import { SetBackground } from './components/SetBackground';
@@ -50,6 +49,7 @@ export class CanvasPanel extends Component<Props, State> {
 
   readonly scene: Scene;
   private subs = new Subscription();
+  private queryEditorLoaded = false;
   needsReload = false;
   isEditing = locationService.getSearchObject().editPanel !== undefined;
 
@@ -63,22 +63,9 @@ export class CanvasPanel extends Component<Props, State> {
       moveableAction: false,
     };
 
-    // TODO: Will need to update this approach for dashboard scenes
-    // migration (new dashboard edit experience)
-    const dashboard = getDashboardSrv().getCurrent();
-    const allowEditing = this.props.options.inlineEditing && dashboard?.editable;
-
     // Only the initial options are ever used.
     // later changes are all controlled by the scene
-    this.scene = new Scene(
-      this.props.options.root,
-      allowEditing,
-      this.props.options.showAdvancedTypes,
-      this.props.options.panZoom,
-      this.props.options.infinitePan,
-      this.onUpdateScene,
-      this
-    );
+    this.scene = new Scene(this.props.options, this.onUpdateScene, this);
     this.scene.updateSize(props.width, props.height);
     this.scene.updateData(props.data);
     this.scene.inlineEditingCallback = this.openInlineEdit;
@@ -111,10 +98,7 @@ export class CanvasPanel extends Component<Props, State> {
 
     this.panelContext = this.context;
     if (this.panelContext.onInstanceStateChange) {
-      this.panelContext.onInstanceStateChange({
-        scene: this.scene,
-        layer: this.scene.root,
-      });
+      this.panelContext.onInstanceStateChange({ scene: this.scene, layer: this.scene.root });
 
       this.subs.add(
         this.scene.selection.subscribe({
@@ -131,11 +115,7 @@ export class CanvasPanel extends Component<Props, State> {
               }
             });
 
-            this.panelContext?.onInstanceStateChange!({
-              scene: this.scene,
-              selected: v,
-              layer: this.scene.root,
-            });
+            this.panelContext?.onInstanceStateChange!({ scene: this.scene, selected: v, layer: this.scene.root });
           },
         })
       );
@@ -174,7 +154,27 @@ export class CanvasPanel extends Component<Props, State> {
       );
     }
 
+    // Reset the size update flag when entering edit mode
+    if (this.isEditing) {
+      this.queryEditorLoaded = false;
+    }
+
     canvasInstances.push(this);
+  }
+
+  componentDidUpdate(prevProps: Props) {
+    // Check if we're in edit mode and dimensions have changed (indicating query editor loaded)
+    if (this.isEditing && !this.queryEditorLoaded) {
+      const dimensionsChanged = prevProps.width !== this.props.width || prevProps.height !== this.props.height;
+
+      if (dimensionsChanged) {
+        this.queryEditorLoaded = true;
+        // Small delay to ensure layout is completely settled
+        requestAnimationFrame(() => {
+          this.scene.updateSize(this.props.width, this.props.height);
+        });
+      }
+    }
   }
 
   componentWillUnmount() {
@@ -189,10 +189,7 @@ export class CanvasPanel extends Component<Props, State> {
   // even the editor gets current state from the same scene instance!
   onUpdateScene = (root: CanvasFrameOptions) => {
     const { onOptionsChange, options } = this.props;
-    onOptionsChange({
-      ...options,
-      root,
-    });
+    onOptionsChange({ ...options, root });
 
     this.setState({ refresh: this.state.refresh + 1 });
     activePanelSubject.next({ panel: this });
@@ -238,13 +235,18 @@ export class CanvasPanel extends Component<Props, State> {
     const shouldShowAdvancedTypesSwitched =
       this.props.options.showAdvancedTypes !== nextProps.options.showAdvancedTypes;
     const panZoomSwitched = this.props.options.panZoom !== nextProps.options.panZoom;
-    const infinitePanSwitched = this.props.options.infinitePan !== nextProps.options.infinitePan;
+    const zoomToContentSwitched = this.props.options.zoomToContent !== nextProps.options.zoomToContent;
+    const tooltipModeSwitched = this.props.options.tooltip?.mode !== nextProps.options.tooltip?.mode;
+    const tooltipDisableForOneClickSwitched =
+      this.props.options.tooltip?.disableForOneClick !== nextProps.options.tooltip?.disableForOneClick;
     if (
       this.needsReload ||
       inlineEditingSwitched ||
       shouldShowAdvancedTypesSwitched ||
       panZoomSwitched ||
-      infinitePanSwitched
+      zoomToContentSwitched ||
+      tooltipModeSwitched ||
+      tooltipDisableForOneClickSwitched
     ) {
       if (inlineEditingSwitched) {
         // Replace scene div to prevent selecto instance leaks
@@ -252,13 +254,7 @@ export class CanvasPanel extends Component<Props, State> {
       }
 
       this.needsReload = false;
-      this.scene.load(
-        nextProps.options.root,
-        nextProps.options.inlineEditing,
-        nextProps.options.showAdvancedTypes,
-        nextProps.options.panZoom,
-        nextProps.options.infinitePan
-      );
+      this.scene.load(nextProps.options, nextProps.options.inlineEditing);
       this.scene.updateSize(nextProps.width, nextProps.height);
       this.scene.updateData(nextProps.data);
       changed = true;
@@ -294,7 +290,7 @@ export class CanvasPanel extends Component<Props, State> {
   };
 
   tooltipCallback = (tooltip: CanvasTooltipPayload | undefined) => {
-    this.scene.tooltip = tooltip;
+    this.scene.tooltipPayload = tooltip;
     this.forceUpdate();
   };
 

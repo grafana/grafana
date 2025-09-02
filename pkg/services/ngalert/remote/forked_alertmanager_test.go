@@ -84,6 +84,75 @@ func TestForkedAlertmanager_ModeRemoteSecondary(t *testing.T) {
 		}
 	})
 
+	t.Run("ApplyConfig - with remote state", func(tt *testing.T) {
+		{
+			// During the first ApplyConfig call, we should:
+			// 1. Apply the configuration to the remote Alertmanager
+			// 2. Merge the remote state
+			// 3. Apply the configuration to the internal Alertmanager
+			internal, remote, forked := genTestAlertmanagers(tt, modeRemoteSecondary, withRemoteState)
+			readyCall := remote.EXPECT().Ready().Return(false).Once()
+			remote.EXPECT().ApplyConfig(ctx, mock.Anything).Return(nil).Once().NotBefore(readyCall)
+			remote.EXPECT().Ready().Return(true).Once()
+			remoteStateCall := remote.EXPECT().GetRemoteState(mock.Anything).Return(notifier.ExternalState{}, nil).Once()
+			internal.EXPECT().ApplyConfig(ctx, mock.Anything).Return(nil).Once().NotBefore(remoteStateCall)
+			require.NoError(tt, forked.ApplyConfig(ctx, &models.AlertConfiguration{}))
+			require.True(tt, internal.mergeStateCalled)
+
+			// We shouldn't attempt to merge the remote state again on the next sync loop iteration.
+			internal.mergeStateCalled = false
+			remote.EXPECT().Ready().Return(true).Once()
+			internal.EXPECT().ApplyConfig(ctx, mock.Anything).Return(nil).Once()
+			remote.EXPECT().CompareAndSendConfiguration(ctx, mock.Anything).Return(nil).Once()
+			require.NoError(tt, forked.ApplyConfig(ctx, &models.AlertConfiguration{}))
+			require.False(tt, internal.mergeStateCalled)
+		}
+
+		{
+			// If we fail to apply the configuration in the remote Alertmanager, we should get an error and not start the internal Alertmanager.
+			internal, remote, forked := genTestAlertmanagers(tt, modeRemoteSecondary, withSyncInterval(10*time.Minute), withRemoteState)
+			readyCall := remote.EXPECT().Ready().Return(false).Once()
+			remote.EXPECT().ApplyConfig(ctx, mock.Anything).Return(expErr).Once().NotBefore(readyCall)
+			remote.EXPECT().Ready().Return(false).Once()
+			err := forked.ApplyConfig(ctx, &models.AlertConfiguration{})
+			require.Equal(tt, "remote Alertmanager not ready, can't fetch remote state", err.Error())
+			require.False(tt, internal.mergeStateCalled)
+
+			// Calling ApplyConfig again should result in the forked Alertmanager calling ApplyConfig on both
+			// Alertmanagers and merging the remote state, even if the sync interval has not elapsed.
+			remote.EXPECT().Ready().Return(true).Twice()
+			remote.EXPECT().CompareAndSendConfiguration(ctx, mock.Anything).Return(nil).Once()
+			remoteStateCall := remote.EXPECT().GetRemoteState(mock.Anything).Return(notifier.ExternalState{}, nil).Once()
+			internal.EXPECT().ApplyConfig(ctx, mock.Anything).Return(nil).Once().NotBefore(remoteStateCall)
+			require.NoError(tt, forked.ApplyConfig(ctx, &models.AlertConfiguration{}))
+			require.True(tt, internal.mergeStateCalled)
+		}
+
+		{
+			// An error in the remote Alertmanager should be returned.
+			// The internal Alertmanager shouldn't be started.
+			internal, remote, forked := genTestAlertmanagers(tt, modeRemotePrimary)
+			remote.EXPECT().ApplyConfig(ctx, mock.Anything).Return(expErr).Once()
+			require.ErrorIs(tt, forked.ApplyConfig(ctx, &models.AlertConfiguration{}), expErr)
+			require.False(t, internal.mergeStateCalled)
+		}
+
+		{
+			// An error in the internal Alertmanager should be returned.
+			internal, remote, forked := genTestAlertmanagers(tt, modeRemoteSecondary, withRemoteState)
+			internal.EXPECT().ApplyConfig(ctx, mock.Anything).Return(expErr).Once()
+
+			// Simulate starting the remote Alertmanager and merging the remote state.
+			readyCall := remote.EXPECT().Ready().Return(false).Once()
+			remote.EXPECT().ApplyConfig(ctx, mock.Anything).Return(nil).Once().NotBefore(readyCall)
+			remote.EXPECT().Ready().Return(true).Once()
+			remote.EXPECT().GetRemoteState(mock.Anything).Return(notifier.ExternalState{}, nil).Once()
+
+			require.ErrorIs(tt, forked.ApplyConfig(ctx, &models.AlertConfiguration{}), expErr)
+			require.True(t, internal.mergeStateCalled)
+		}
+	})
+
 	t.Run("SaveAndApplyConfig", func(tt *testing.T) {
 		// SaveAndApplyConfig should only be called on the remote Alertmanager.
 		// State and configuration are updated on an interval.
@@ -707,6 +776,11 @@ func (m *internalAlertmanagerMock) MergeState(notifier.ExternalState) error {
 	return nil
 }
 
+func withRemoteState(rsc RemoteSecondaryConfig) RemoteSecondaryConfig {
+	rsc.WithRemoteState = true
+	return rsc
+}
+
 func withSyncInterval(syncInterval time.Duration) func(RemoteSecondaryConfig) RemoteSecondaryConfig {
 	return func(rsc RemoteSecondaryConfig) RemoteSecondaryConfig {
 		rsc.SyncInterval = syncInterval
@@ -736,11 +810,11 @@ func genTestAlertmanagers(t *testing.T, mode int, options ...func(RemoteSecondar
 			cfg = opt(cfg)
 		}
 
-		forked, err := NewRemoteSecondaryForkedAlertmanager(cfg, internal, remote)
+		forked, err := newRemoteSecondaryForkedAlertmanager(cfg, internal, remote)
 		require.NoError(t, err)
 		return internal, remote, forked
 	}
-	return internal, remote, NewRemotePrimaryForkedAlertmanager(log.NewNopLogger(), internal, remote)
+	return internal, remote, newRemotePrimaryForkedAlertmanager(log.NewNopLogger(), internal, remote)
 }
 
 // errConfigStore returns an error when a method is called.

@@ -110,17 +110,3 @@ export type {
 //
 // TODO generate code such that tsc enforces type compatibility between raw and veneer decls
 export type { LibraryPanel } from './veneer/librarypanel.types';
-
-// Raw generated types from Preferences kind.
-export type {
-  Preferences,
-  QueryHistoryPreference,
-  CookiePreferences,
-  NavbarPreference
-} from './raw/preferences/x/preferences_types.gen';
-
-// Raw generated enums and default consts from preferences kind.
-export { defaultNavbarPreference } from './raw/preferences/x/preferences_types.gen';
-
-// Raw generated types from PublicDashboard kind.
-export type { PublicDashboard } from './raw/publicdashboard/x/publicdashboard_types.gen';

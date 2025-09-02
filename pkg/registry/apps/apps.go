@@ -14,6 +14,8 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apps/alerting/notifications"
 	"github.com/grafana/grafana/pkg/registry/apps/investigations"
 	"github.com/grafana/grafana/pkg/registry/apps/playlist"
+	"github.com/grafana/grafana/pkg/registry/apps/plugins"
+	"github.com/grafana/grafana/pkg/registry/apps/shorturl"
 	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder/runner"
@@ -24,9 +26,19 @@ import (
 // ProvideAppInstallers returns a list of app installers that can be used to install apps.
 // This is the pattern that should be used to provide app installers in the app registry.
 func ProvideAppInstallers(
+	features featuremgmt.FeatureToggles,
 	playlistAppInstaller *playlist.PlaylistAppInstaller,
+	pluginsApplInstaller *plugins.PluginsAppInstaller,
+	shorturlAppInstaller *shorturl.ShortURLAppInstaller,
 ) []appsdkapiserver.AppInstaller {
-	return []appsdkapiserver.AppInstaller{playlistAppInstaller}
+	installers := []appsdkapiserver.AppInstaller{
+		playlistAppInstaller,
+		pluginsApplInstaller,
+	}
+	if features.IsEnabledGlobally(featuremgmt.FlagKubernetesShortURLs) {
+		installers = append(installers, shorturlAppInstaller)
+	}
+	return installers
 }
 
 var (

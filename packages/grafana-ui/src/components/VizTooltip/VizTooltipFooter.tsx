@@ -11,10 +11,16 @@ import { DataLinkButton } from '../DataLinks/DataLinkButton';
 import { Icon } from '../Icon/Icon';
 import { Stack } from '../Layout/Stack/Stack';
 import { ResponsiveProp } from '../Layout/utils/responsiveness';
+import { AdHocFilterItem } from '../Table/TableNG/types';
+
+export interface AdHocFilterModel extends AdHocFilterItem {
+  onClick: () => void;
+}
 
 interface VizTooltipFooterProps {
   dataLinks: Array<LinkModel<Field>>;
   actions?: Array<ActionModel<Field>>;
+  adHocFilters?: AdHocFilterModel[];
   annotate?: () => void;
 }
 
@@ -41,7 +47,7 @@ function makeRenderLinksOrActions<T extends LinkModel | ActionModel>(
 
     if (oneClickItem != null) {
       return (
-        <div className={styles.dataLinks}>
+        <div className={styles.footerSection}>
           <Stack direction="column" justifyContent="flex-start" gap={0.5}>
             <span className={styles.oneClickWrapper}>
               <Icon name="info-circle" size="lg" className={styles.infoIcon} />
@@ -53,7 +59,7 @@ function makeRenderLinksOrActions<T extends LinkModel | ActionModel>(
     }
 
     return (
-      <div className={styles.dataLinks}>
+      <div className={styles.footerSection}>
         <Stack direction="column" justifyContent="flex-start" gap={itemGap}>
           {items.map((item, i) => renderItem(item, i, styles))}
         </Stack>
@@ -79,7 +85,7 @@ const renderActions = makeRenderLinksOrActions<ActionModel>(
   (item, i) => <ActionButton key={i} action={item} variant="secondary" />
 );
 
-export const VizTooltipFooter = ({ dataLinks, actions = [], annotate }: VizTooltipFooterProps) => {
+export const VizTooltipFooter = ({ dataLinks, actions = [], annotate, adHocFilters = [] }: VizTooltipFooterProps) => {
   const styles = useStyles2(getStyles);
   const hasOneClickLink = useMemo(() => dataLinks.some((link) => link.oneClick === true), [dataLinks]);
   const hasOneClickAction = useMemo(() => actions.some((action) => action.oneClick === true), [actions]);
@@ -88,8 +94,19 @@ export const VizTooltipFooter = ({ dataLinks, actions = [], annotate }: VizToolt
     <div className={styles.wrapper}>
       {!hasOneClickAction && renderDataLinks(dataLinks, styles)}
       {!hasOneClickLink && renderActions(actions, styles)}
+      {!hasOneClickLink && !hasOneClickAction && adHocFilters.length > 0 && (
+        <div className={styles.footerSection}>
+          {adHocFilters.map((item, index) => (
+            <Button key={index} icon="filter" variant="secondary" size="sm" onClick={item.onClick}>
+              <Trans i18nKey="grafana-ui.viz-tooltip.footer-filter-for-value">
+                Filter for '{{ value: item.value }}'
+              </Trans>
+            </Button>
+          ))}
+        </div>
+      )}
       {!hasOneClickLink && !hasOneClickAction && annotate != null && (
-        <div className={styles.addAnnotations}>
+        <div className={styles.footerSection}>
           <Button icon="comment-alt" variant="secondary" size="sm" id={ADD_ANNOTATION_ID} onClick={annotate}>
             <Trans i18nKey="grafana-ui.viz-tooltip.footer-add-annotation">Add annotation</Trans>
           </Button>
@@ -106,11 +123,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     flex: 1,
     padding: theme.spacing(0),
   }),
-  dataLinks: css({
-    borderTop: `1px solid ${theme.colors.border.medium}`,
-    padding: theme.spacing(1),
-  }),
-  addAnnotations: css({
+  footerSection: css({
     borderTop: `1px solid ${theme.colors.border.medium}`,
     padding: theme.spacing(1),
   }),

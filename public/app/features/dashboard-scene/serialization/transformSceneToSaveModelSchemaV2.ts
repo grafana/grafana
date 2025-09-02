@@ -41,9 +41,10 @@ import {
   LibraryPanelKind,
   Element,
   DashboardCursorSync,
-  FieldConfig,
   FieldColor,
-} from '../../../../../packages/grafana-schema/src/schema/dashboard/v2alpha1/types.spec.gen';
+  defaultFieldConfig,
+  defaultDataQueryKind,
+} from '../../../../../packages/grafana-schema/src/schema/dashboard/v2';
 import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
 import { DashboardScene, DashboardSceneState } from '../scene/DashboardScene';
 import { PanelTimeRange } from '../scene/PanelTimeRange';
@@ -51,6 +52,7 @@ import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { getLibraryPanelBehavior, getPanelIdForVizPanel, getQueryRunnerFor, isLibraryPanel } from '../utils/utils';
 
 import { DSReferencesMapping } from './DashboardSceneSerializer';
+import { transformV1ToV2AnnotationQuery } from './annotations';
 import { sceneVariablesSetToSchemaV2Variables } from './sceneVariablesSetToVariables';
 import { colorIdEnumToColorIdV2, transformCursorSynctoEnum } from './transformToV2TypesUtils';
 
@@ -173,40 +175,7 @@ export function vizPanelToSchemaV2(
     return elementSpec;
   }
 
-  // Handle type conversion for color mode
-  const rawColor = vizPanel.state.fieldConfig.defaults.color;
-  let color: FieldColor | undefined;
-
-  if (rawColor) {
-    const convertedMode = colorIdEnumToColorIdV2(rawColor.mode);
-
-    if (convertedMode) {
-      color = {
-        ...rawColor,
-        mode: convertedMode,
-      };
-    }
-  }
-
-  // Remove null from the defaults because schema V2 doesn't support null for these fields
-  const decimals = vizPanel.state.fieldConfig.defaults.decimals ?? undefined;
-  const min = vizPanel.state.fieldConfig.defaults.min ?? undefined;
-  const max = vizPanel.state.fieldConfig.defaults.max ?? undefined;
-
-  const defaults: FieldConfig = Object.fromEntries(
-    Object.entries({
-      ...vizPanel.state.fieldConfig.defaults,
-      decimals,
-      min,
-      max,
-      color,
-    }).filter(([_, value]) => {
-      if (Array.isArray(value)) {
-        return value.length > 0;
-      }
-      return value !== undefined;
-    })
-  );
+  const defaults = handleFieldConfigDefaultsConversion(vizPanel);
 
   const vizFieldConfig: FieldConfigSource = {
     ...vizPanel.state.fieldConfig,
@@ -230,9 +199,10 @@ export function vizPanelToSchemaV2(
         },
       },
       vizConfig: {
-        kind: vizPanel.state.pluginId,
+        kind: 'VizConfig',
+        group: vizPanel.state.pluginId,
+        version: vizPanel.state.pluginVersion ?? '',
         spec: {
-          pluginVersion: vizPanel.state.pluginVersion ?? '',
           options: vizPanel.state.options,
           fieldConfig: vizFieldConfig ?? defaultFieldConfigSource(),
         },
@@ -240,6 +210,49 @@ export function vizPanelToSchemaV2(
     },
   };
   return elementSpec;
+}
+
+function handleFieldConfigDefaultsConversion(vizPanel: VizPanel) {
+  if (!vizPanel.state.fieldConfig || !vizPanel.state.fieldConfig.defaults) {
+    return defaultFieldConfig();
+  }
+
+  // Handle type conversion for color mode
+  const rawColor = vizPanel.state.fieldConfig.defaults.color;
+  let color: FieldColor | undefined;
+
+  if (rawColor) {
+    const convertedMode = colorIdEnumToColorIdV2(rawColor.mode);
+
+    if (convertedMode) {
+      color = {
+        ...rawColor,
+        mode: convertedMode,
+      };
+    }
+  }
+
+  // Remove null from the defaults because schema V2 doesn't support null for these fields
+  const decimals = vizPanel.state.fieldConfig.defaults.decimals ?? undefined;
+  const min = vizPanel.state.fieldConfig.defaults.min ?? undefined;
+  const max = vizPanel.state.fieldConfig.defaults.max ?? undefined;
+
+  const defaults = Object.fromEntries(
+    Object.entries({
+      ...vizPanel.state.fieldConfig.defaults,
+      decimals,
+      min,
+      max,
+      color,
+    }).filter(([_, value]) => {
+      if (Array.isArray(value)) {
+        return value.length > 0;
+      }
+      return value !== undefined;
+    })
+  );
+
+  return defaults;
 }
 
 function getPanelLinks(panel: VizPanel): DataLink[] {
@@ -250,7 +263,7 @@ function getPanelLinks(panel: VizPanel): DataLink[] {
   return [];
 }
 
-function getVizPanelQueries(vizPanel: VizPanel, dsReferencesMapping?: DSReferencesMapping): PanelQueryKind[] {
+export function getVizPanelQueries(vizPanel: VizPanel, dsReferencesMapping?: DSReferencesMapping): PanelQueryKind[] {
   const queries: PanelQueryKind[] = [];
   const queryRunner = getQueryRunnerFor(vizPanel);
   const vizPanelQueries = queryRunner?.state.queries;
@@ -258,12 +271,22 @@ function getVizPanelQueries(vizPanel: VizPanel, dsReferencesMapping?: DSReferenc
   if (vizPanelQueries) {
     vizPanelQueries.forEach((query) => {
       const queryDatasource = getElementDatasource(vizPanel, query, 'panel', queryRunner, dsReferencesMapping);
+
       const dataQuery: DataQueryKind = {
-        kind: getDataQueryKind(query, queryRunner),
+        kind: 'DataQuery',
+        version: defaultDataQueryKind().version,
+        group: getDataQueryKind(query, queryRunner),
+        datasource: {
+          name: queryDatasource?.uid,
+        },
         spec: omit(query, 'datasource', 'refId', 'hide'),
       };
+
+      if (!dataQuery.datasource?.name) {
+        delete dataQuery.datasource;
+      }
+
       const querySpec: PanelQuerySpec = {
-        datasource: queryDatasource,
         query: dataQuery,
         refId: query.refId,
         hidden: Boolean(query.hide),
@@ -407,78 +430,46 @@ function getAnnotations(state: DashboardSceneState, dsReferencesMapping?: DSRefe
     if (!(layer instanceof dataLayers.AnnotationsDataLayer)) {
       continue;
     }
-    const result: AnnotationQueryKind = {
-      kind: 'AnnotationQuery',
-      spec: {
-        builtIn: Boolean(layer.state.query.builtIn),
-        name: layer.state.query.name,
-        datasource: getElementDatasource(layer, layer.state.query, 'annotation', undefined, dsReferencesMapping),
-        enable: Boolean(layer.state.isEnabled),
-        hide: Boolean(layer.state.isHidden),
-        iconColor: layer.state.query.iconColor,
-      },
-    };
 
-    // Transform v1 dashboard (using target) to v2 structure
-    // adds extra condition to prioritize query over target
-    // if query is defined, use it
-    if (layer.state.query.target && !layer.state.query.query) {
-      // Handle built-in annotations
-      if (layer.state.query.builtIn) {
-        result.spec.query = {
-          kind: 'grafana', // built-in annotations are always of type grafana
-          spec: {
-            ...layer.state.query.target,
-          },
-        };
-      } else {
-        result.spec.query = {
-          kind: getAnnotationQueryKind(layer.state.query),
-          spec: {
-            ...layer.state.query.target,
-          },
-        };
-      }
-    }
-    // For annotations without query.query defined (e.g., grafana annotations without tags)
-    else if (layer.state.query.query?.kind) {
-      result.spec.query = {
-        kind: layer.state.query.query.kind,
-        spec: {
-          ...layer.state.query.query.spec,
-        },
-      };
-    }
-    // Collect datasource-specific properties not in standard annotation spec
-    let otherProps = omit(
-      layer.state.query,
-      'type',
-      'target',
-      'builtIn',
-      'name',
-      'datasource',
-      'iconColor',
-      'enable',
-      'hide',
-      'filter',
-      'query'
-    );
+    const datasource = getElementDatasource(layer, layer.state.query, 'annotation', undefined, dsReferencesMapping);
 
-    // Store extra properties in the legacyOptions field instead of directly in the spec
-    if (Object.keys(otherProps).length > 0) {
-      // Extract options property and get the rest of the properties
-      const { legacyOptions, ...restProps } = otherProps;
-      // Merge options with the rest of the properties
-      result.spec.legacyOptions = { ...legacyOptions, ...restProps };
+    let layerDs = layer.state.query.datasource;
+
+    if (!layerDs) {
+      // This can happen only if we are transforming a scene that was created
+      // from a v1 spec. In v1 annotation layer can contain no datasource ref, which is guaranteed
+      // for layers created for v2 schema. See transform transformSaveModelSchemaV2ToScene.ts.
+      // In this case we will resolve default data source
+      layerDs = getDefaultDataSourceRef();
+      console.error(
+        'Misconfigured AnnotationsDataLayer: Data source is required for annotations. Resolving default data source',
+        layer,
+        layerDs
+      );
     }
+
+    const result = transformV1ToV2AnnotationQuery(layer.state.query, layerDs.type!, layerDs.uid!, {
+      enable: layer.state.isEnabled,
+      hide: layer.state.isHidden,
+    });
+
+    const annotationQuery = layer.state.query;
 
     // If filter is an empty array, don't save it
-    if (layer.state.query.filter?.ids?.length) {
-      result.spec.filter = layer.state.query.filter;
+    if (annotationQuery.filter?.ids?.length) {
+      result.spec.filter = annotationQuery.filter;
+    }
+
+    // Finally, if the datasource references mapping did not containt data source ref,
+    // this means that the original model that was fetched did not contain it. In such scenario we don't want to save
+    // the explicit data source reference, so lets remove it from the save model.
+    if (!datasource) {
+      delete result.spec.query.datasource;
     }
 
     annotations.push(result);
   }
+
   return annotations;
 }
 
@@ -497,10 +488,10 @@ export function getAnnotationQueryKind(annotationQuery: AnnotationQuery): string
 
 export function getDefaultDataSourceRef(): DataSourceRef {
   // we need to return the default datasource configured in the BootConfig
-  const defaultDatasource = config.bootData.settings.defaultDatasource;
+  const defaultDatasource = config.defaultDatasource;
 
   // get default datasource type
-  const dsList = config.bootData.settings.datasources;
+  const dsList = config.datasources;
   const ds = dsList[defaultDatasource];
 
   return { type: ds.meta.id, uid: ds.name }; // in the datasource list from bootData "id" is the type

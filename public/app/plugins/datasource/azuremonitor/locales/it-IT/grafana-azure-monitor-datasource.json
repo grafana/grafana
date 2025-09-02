@@ -52,7 +52,7 @@
       "button-use-query": "Utilizza questa query",
       "label-categories": "Categorie",
       "label-query-results": "Risultati della query: {{numResults}}",
-      "noOptionsMessage-unable-to-list-categories": "",
+      "noOptionsMessage-unable-to-list-categories": "Impossibile elencare tutte le categorie",
       "placeholder-all-categories": "Tutte le categorie",
       "placeholder-search-logs": "Cerca query dei registri",
       "text-loading": "Caricamento in corso..."
@@ -72,10 +72,8 @@
       "label-enable-basic-logs": "Abilita registri di base"
     },
     "config-editor": {
-      "description-additional-settings": "Le impostazioni aggiuntive sono impostazioni facoltative che possono essere configurate per un maggiore controllo sull'origine dei dati. Ciò include il proxy Secure Socks.",
-      "description-request-timeout": "Imposta il timeout della richiesta in secondi. Il valore predefinito è 30 secondi.",
-      "title-additional-settings": "Impostazioni aggiuntive",
-      "title-request-timeout": "Timeout della richiesta"
+      "description-additional-settings": "Le impostazioni aggiuntive sono opzionali e possono essere configurate per un maggiore controllo sull'origine dei dati. Ciò include Proxy Socks sicuro, timeout della richiesta e cookie inoltrati.",
+      "title-additional-settings": "Impostazioni aggiuntive"
     },
     "current-user-fallback-credentials": {
       "alert-fallback-credentials-disabled": "Le credenziali di fallback sono state disabilitate. Poiché l'autenticazione basata sull'utente supporta solo richieste con un utente nell'ambito, funzionalità come avvisi, query registrate o report non funzioneranno come previsto. Consulta la <2>documentazione</2> per ulteriori dettagli.",
@@ -115,9 +113,12 @@
       "aria-label-column": "Colonna",
       "aria-label-column-value": "Valore colonna",
       "aria-label-operator": "Operatore",
+      "aria-label-remove-filter": "Rimuovi filtro",
       "label-or": "O"
     },
     "filter-section": {
+      "aria-label-add-filter": "Aggiungi filtro",
+      "aria-label-add-or-filter": "Aggiungi filtro OR",
       "label-add-group": "Aggiungi gruppo",
       "label-and": "E",
       "label-filters": "Filtri",
@@ -130,6 +131,8 @@
       "label-format-as": "Formatta come"
     },
     "fuzzy-search": {
+      "aria-label-add-fuzzy-search": "Aggiungi ricerca fuzzy",
+      "aria-label-remove-fuzzy-search": "Rimuovi ricerca fuzzy",
       "aria-label-select-column": "Seleziona colonna",
       "label-fuzzy-search": "Ricerca fuzzy",
       "placeholder-search-team": "Inserisci il termine da cercare",
@@ -144,6 +147,7 @@
       "aria-label-remove": "Rimuovi"
     },
     "group-by-section": {
+      "aria-label-add-group-by": "Aggiungi raggruppa per",
       "label-group-by": "Raggruppa per",
       "tooltip-group-by": "Organizza i risultati in categorie in base alle colonne specificate. Raggruppa per può essere utilizzato in modo indipendente per elencare valori univoci nelle colonne selezionate o può essere combinato con funzioni di aggregazione per produrre statistiche di riepilogo per ciascun gruppo. Se usato da solo, restituisce combinazioni distinte delle colonne specificate."
     },
@@ -162,8 +166,8 @@
       "tooltip-limit": "Limita il numero di righe restituite (il valore predefinito è 1000)."
     },
     "logs-management": {
-      "body-basic-logs-queries": "",
-      "confirmText-confirm": "",
+      "body-basic-logs-queries": "Vuoi davvero passare ai registri di base?",
+      "confirmText-confirm": "Conferma",
       "description-basic-logs-queries": "Le query dei registri di base comportano un costo in base alla quantità di dati analizzati.",
       "label-logs": "Registri",
       "title-basic-logs-queries": "Query sui registri di base",
@@ -186,8 +190,10 @@
       "text-loading": "Caricamento in corso..."
     },
     "order-by-section": {
+      "aria-label-add-order-by": "Aggiungi ordina per",
       "aria-label-order-by-column": "Ordina per colonna",
       "aria-label-order-direction": "Ordina direzione",
+      "aria-label-remove-order-by": "Rimuovi ordina per",
       "label-by": "PER",
       "label-order-by": "Ordina per",
       "tooltip-order-by": "Ordina i risultati in base a una o più colonne in ordine crescente o decrescente."
@@ -197,14 +203,14 @@
     },
     "query-header": {
       "aria-label-kick-start": "I registri di Azure avviano il pulsante della query",
-      "body-switching-to-builder": "",
-      "body-switching-to-kql": "",
+      "body-switching-to-builder": "Il passaggio a Builder eliminerà la query KQL corrente e cancellerà l'editor KQL. Vuoi davvero continuare?",
+      "body-switching-to-kql": "Il passaggio a KQL annullerà le impostazioni correnti del generatore. Vuoi davvero continuare?",
       "button-kick-start-your-query": "Avvia la query",
       "button-run-query": "Esegui query",
-      "confirmText-switch-to": "",
+      "confirmText-switch-to": "Passa a {{newMode}}",
       "editor-modes": {
-        "label-builder": "",
-        "label-kql": ""
+        "label-builder": "Builder",
+        "label-kql": "KQL"
       },
       "label-service": "Servizio",
       "placeholder-service": "Servizio...",
@@ -233,7 +239,7 @@
       "title-error-occurred": "Si è verificato un errore durante la richiesta di risorse da Azure Monitor"
     },
     "scope-selector": {
-      "label": ""
+      "label": "Ambito"
     },
     "search": {
       "aria-label-resource-search": "Ricerca delle risorse",
@@ -249,7 +255,8 @@
       "label-columns": "Colonne",
       "label-table": "Tabella",
       "placeholder-select-columns": "Seleziona colonne",
-      "placeholder-select-table": "Seleziona una tabella"
+      "placeholder-select-table": "Seleziona una tabella",
+      "tooltip-remove-all-columns": "Rimuovi tutte le colonne"
     },
     "time-grain-field": {
       "label-time-grain": "Intervallo di tempo"

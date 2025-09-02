@@ -1,4 +1,4 @@
-import { GrafanaNotifierType, NotifierDTO } from 'app/types/alerting';
+import { GrafanaNotifierType, NotifierDTO } from 'app/features/alerting/unified/types/alerting';
 
 export const grafanaAlertNotifiers: Record<GrafanaNotifierType, NotifierDTO> = {
   dingding: {

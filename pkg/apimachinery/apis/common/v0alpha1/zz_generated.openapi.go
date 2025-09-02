@@ -11,12 +11,11 @@ import (
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	common "k8s.io/kube-openapi/pkg/common"
 	spec "k8s.io/kube-openapi/pkg/validation/spec"
-	ptr "k8s.io/utils/ptr"
 )
 
 func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition {
 	return map[string]common.OpenAPIDefinition{
-		"github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1.InlineSecureValue": schema_apimachinery_apis_common_v0alpha1_InlineSecureValue(ref),
+		"github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1.InlineSecureValue": InlineSecureValue{}.OpenAPIDefinition(),
 		"github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1.ObjectReference":   schema_apimachinery_apis_common_v0alpha1_ObjectReference(ref),
 		"github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1.Scope":             schema_apimachinery_apis_common_v0alpha1_Scope(ref),
 		"github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1.ScopeFilter":       schema_apimachinery_apis_common_v0alpha1_ScopeFilter(ref),
@@ -75,42 +74,6 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		"k8s.io/apimachinery/pkg/runtime.TypeMeta":                                           schema_k8sio_apimachinery_pkg_runtime_TypeMeta(ref),
 		"k8s.io/apimachinery/pkg/runtime.Unknown":                                            schema_k8sio_apimachinery_pkg_runtime_Unknown(ref),
 		"k8s.io/apimachinery/pkg/version.Info":                                               schema_k8sio_apimachinery_pkg_version_Info(ref),
-	}
-}
-
-func schema_apimachinery_apis_common_v0alpha1_InlineSecureValue(ref common.ReferenceCallback) common.OpenAPIDefinition {
-	return common.OpenAPIDefinition{
-		Schema: spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Description: "Allow access to a secure value inside",
-				Type:        []string{"object"},
-				Properties: map[string]spec.Schema{
-					"create": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Create a secure value -- this is only used for POST/PUT",
-							MinLength:   ptr.To[int64](1),
-							MaxLength:   ptr.To[int64](24576),
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"name": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Name in the secret service (reference)",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"remove": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Remove this value from the secure value map Values owned by this resource will be deleted if necessary",
-							Type:        []string{"boolean"},
-							Format:      "",
-						},
-					},
-				},
-			},
-		},
 	}
 }
 

@@ -1,8 +1,12 @@
 import { t } from '@grafana/i18n';
 import { isFetchError } from '@grafana/runtime';
+import { clearFolders } from 'app/features/browse-dashboards/state/slice';
+import { getState } from 'app/store/store';
 
 import { notifyApp } from '../../../../core/actions';
 import { createSuccessNotification, createErrorNotification } from '../../../../core/copy/appNotification';
+import { PAGE_SIZE } from '../../../../features/browse-dashboards/api/services';
+import { refetchChildren } from '../../../../features/browse-dashboards/state/actions';
 import { createOnCacheEntryAdded } from '../utils/createOnCacheEntryAdded';
 
 import {
@@ -59,6 +63,12 @@ export const provisioningAPIv0alpha1 = generatedAPI.enhanceEndpoints({
             );
           }
         }
+        // Refetch dashboards and folders after deleting a provisioned repository.
+        // We need to add timeout to ensure that the deletion is processed before refetching since the deletion is done
+        // via a background job.
+        setTimeout(() => {
+          dispatch(refetchChildren({ parentUID: undefined, pageSize: PAGE_SIZE }));
+        }, 1000);
       },
     },
     deletecollectionRepository: {
@@ -84,6 +94,9 @@ export const provisioningAPIv0alpha1 = generatedAPI.enhanceEndpoints({
             );
           }
         }
+        setTimeout(() => {
+          dispatch(refetchChildren({ parentUID: undefined, pageSize: PAGE_SIZE }));
+        }, 1000);
       },
     },
     createRepositoryTest: {
@@ -121,12 +134,17 @@ export const provisioningAPIv0alpha1 = generatedAPI.enhanceEndpoints({
       },
     },
     createRepositoryJobs: {
-      onQueryStarted: async (_, { queryFulfilled, dispatch }) => {
+      onQueryStarted: async ({ jobSpec }, { queryFulfilled, dispatch }) => {
         try {
+          const showMsg = jobSpec.action === 'pull' || jobSpec.action === 'migrate';
           await queryFulfilled;
-          dispatch(
-            notifyApp(createSuccessNotification(t('provisioning.sync-repository.success-pull-started', 'Pull started')))
-          );
+          if (showMsg) {
+            dispatch(
+              notifyApp(
+                createSuccessNotification(t('provisioning.sync-repository.success-pull-started', 'Pull started'))
+              )
+            );
+          }
         } catch (e) {
           if (e instanceof Error) {
             dispatch(
@@ -188,6 +206,26 @@ export const provisioningAPIv0alpha1 = generatedAPI.enhanceEndpoints({
               )
             );
           }
+        }
+        // Refetch dashboards and folders after creating/updating a provisioned repository
+        dispatch(refetchChildren({ parentUID: undefined, pageSize: PAGE_SIZE }));
+      },
+    },
+    getRepositoryJobsWithPath: {
+      onQueryStarted: async (_, { queryFulfilled, dispatch }) => {
+        try {
+          const result = await queryFulfilled;
+          const job = result.data;
+
+          // Clear folder cache after successful move/delete jobs
+          // We use clearFolders here to clear cached data and closes folders (immediate visual feedback)
+          // Force a refetch of subfolders if user has opened them, so user see latest data
+          if (job.status?.state === 'success' && (job.spec?.action === 'delete' || job.spec?.action === 'move')) {
+            const state = getState().browseDashboards;
+            dispatch(clearFolders(Object.keys(state.childrenByParentUID)));
+          }
+        } catch (e) {
+          console.error('Error in getRepositoryJobsWithPath:', e);
         }
       },
     },

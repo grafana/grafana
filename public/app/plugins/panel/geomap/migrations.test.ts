@@ -76,7 +76,7 @@ describe('Worldmap Migrations', () => {
                     "min": 2,
                   },
                   "symbol": {
-                    "fixed": "img/icons/marker/circle.svg",
+                    "fixed": "build/img/icons/marker/circle.svg",
                     "mode": "fixed",
                   },
                   "symbolAlign": {
@@ -247,5 +247,32 @@ describe('geomap migrations', () => {
         "type": "geomap",
       }
     `);
+  });
+  it('should handle migration when noRepeat is not set', () => {
+    const panel = {
+      id: 2,
+      type: 'geomap',
+      options: {
+        view: {
+          id: 'coords',
+          zoom: 5,
+        },
+        layers: [
+          {
+            type: 'markers',
+            config: {
+              showLegend: false,
+            },
+          },
+        ],
+      },
+      pluginVersion: '8.2.0',
+    } as PanelModel;
+
+    panel.options = mapMigrationHandler(panel);
+
+    expect(panel.options.view.noRepeat).toBeUndefined();
+    expect(panel.options.view.id).toBe('coords');
+    expect(panel.options.view.zoom).toBe(5);
   });
 });

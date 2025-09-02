@@ -1,0 +1,16 @@
+{
+  "kind": "Dashboard",
+  "apiVersion": "dashboard.grafana.app/v0alpha1",
+  "metadata": {
+    "name": "test-v2alpha1-groupby-adhoc-vars",
+    "creationTimestamp": null
+  },
+  "spec": null,
+  "status": {
+    "conversion": {
+      "failed": true,
+      "error": "backend conversion not yet implemented",
+      "storedVersion": "v2alpha1"
+    }
+  }
+}

@@ -4,7 +4,7 @@ package common
 // in the table such as colored text, JSON, gauge, etc.
 // The color-background-solid, gradient-gauge, and lcd-gauge
 // modes are deprecated in favor of new cell subOptions
-TableCellDisplayMode: "auto" | "color-text" | "color-background" | "color-background-solid" | "gradient-gauge" | "lcd-gauge" | "json-view" | "basic" | "image" | "gauge" | "sparkline" | "data-links" | "custom" | "actions" | "pill" @cuetsy(kind="enum",memberNames="Auto|ColorText|ColorBackground|ColorBackgroundSolid|GradientGauge|LcdGauge|JSONView|BasicGauge|Image|Gauge|Sparkline|DataLinks|Custom|Actions|Pill")
+TableCellDisplayMode: "auto" | "color-text" | "color-background" | "color-background-solid" | "gradient-gauge" | "lcd-gauge" | "json-view" | "basic" | "image" | "gauge" | "sparkline" | "data-links" | "custom" | "actions" | "pill" | "markdown" | "geo" @cuetsy(kind="enum",memberNames="Auto|ColorText|ColorBackground|ColorBackgroundSolid|GradientGauge|LcdGauge|JSONView|BasicGauge|Image|Gauge|Sparkline|DataLinks|Custom|Actions|Pill|Markdown|Geo")
 
 // Display mode to the "Colored Background" display
 // mode for table cells. Either displays a solid color (basic mode)
@@ -31,13 +31,11 @@ TableFooterOptions: {
 // Auto mode table cell options
 TableAutoCellOptions: {
 	type: TableCellDisplayMode & "auto"
-	wrapText?: bool
 } @cuetsy(kind="interface")
 
 // Colored text cell options
 TableColorTextCellOptions: {
 	type: TableCellDisplayMode & "color-text"
-	wrapText?: bool
 } @cuetsy(kind="interface")
 
 // Json view cell options
@@ -81,15 +79,42 @@ TableColoredBackgroundCellOptions: {
 	type: TableCellDisplayMode & "color-background"
 	mode?: TableCellBackgroundDisplayMode
 	applyToRow?: bool
-	wrapText?: bool
 } @cuetsy(kind="interface")
+
+TablePillCellOptions: {
+  type: TableCellDisplayMode & "pill"
+} @cuetsy(kind="interface")
+
+TableMarkdownCellOptions: {
+	type: TableCellDisplayMode & "markdown"
+  dynamicHeight?: bool
+} @cuetsy(kind="interface")
+
+TableMarkdownCellOptions: {
+	type: TableCellDisplayMode & "markdown"
+} @cuetsy(kind="interface")
+
+TableGeoCellOptions: {
+  type: TableCellDisplayMode & "geo"
+}
 
 // Height of a table cell
 TableCellHeight: "sm" | "md" | "lg" | "auto" @cuetsy(kind="enum")
 
+
+
 // Table cell options. Each cell has a display mode
 // and other potential options for that display.
-TableCellOptions: TableAutoCellOptions | TableSparklineCellOptions | TableBarGaugeCellOptions | TableColoredBackgroundCellOptions | TableColorTextCellOptions | TableImageCellOptions | TablePillCellOptions | TableDataLinksCellOptions | TableActionsCellOptions | TableJsonViewCellOptions @cuetsy(kind="type")
+TableCellOptions: TableAutoCellOptions | TableSparklineCellOptions | TableBarGaugeCellOptions | TableColoredBackgroundCellOptions | TableColorTextCellOptions | TableImageCellOptions | TablePillCellOptions | TableDataLinksCellOptions | TableActionsCellOptions | TableJsonViewCellOptions | TableMarkdownCellOptions | TableGeoCellOptions @cuetsy(kind="type")
+
+TableCellTooltipPlacement: "top" | "bottom" | "left" | "right" | "auto" @cuetsy(kind="enum")
+
+TableCellTooltipOptions: {
+  // The name of the field to get the tooltip content from
+  field: string
+  // placement of the tooltip
+  placement?: TableCellTooltipPlacement
+}
 
 // Field options for each field within a table (e.g 10, "The String", 64.20, etc.)
 // Generally defines alignment, filtering capabilties, display options, etc.
@@ -100,15 +125,14 @@ TableFieldOptions: {
 	// This field is deprecated in favor of using cellOptions
 	displayMode?: TableCellDisplayMode
 	cellOptions: TableCellOptions
-	hidden?:     bool // ?? default is missing or false ??
 	inspect: bool | *false
 	filterable?: bool
 	// Hides any header for a column, useful for columns that show some static content or buttons.
 	hideHeader?: bool
+  // if true, wrap the text content of the cell
+  wrapText?: bool
   // Enables text wrapping for column headers
   wrapHeaderText?: bool
-} @cuetsy(kind="interface")
-
-TablePillCellOptions: {
-  type: TableCellDisplayMode & "pill"
-} @cuetsy(kind="interface")
+  // Selecting or hovering this field will show a tooltip containing the content within the target field
+  tooltip?: TableCellTooltipOptions
+} & HideableFieldConfig @cuetsy(kind="interface")

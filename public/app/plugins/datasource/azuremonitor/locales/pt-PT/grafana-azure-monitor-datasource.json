@@ -52,7 +52,7 @@
       "button-use-query": "Utilizar esta consulta",
       "label-categories": "Categorias",
       "label-query-results": "Resultados da consulta: {{numResults}}",
-      "noOptionsMessage-unable-to-list-categories": "",
+      "noOptionsMessage-unable-to-list-categories": "Não é possível listar todas as categorias",
       "placeholder-all-categories": "Todas as categorias",
       "placeholder-search-logs": "Pesquisar consultas de registos",
       "text-loading": "A carregar..."
@@ -72,10 +72,8 @@
       "label-enable-basic-logs": "Ativar registos básicos"
     },
     "config-editor": {
-      "description-additional-settings": "As definições adicionais são definições opcionais que podem ser configuradas para obter mais controlo sobre a sua fonte de dados. Isto inclui um proxy Socks seguro.",
-      "description-request-timeout": "Defina o tempo limite do pedido em segundos. A predefinição é de 30 segundos.",
-      "title-additional-settings": "Definições adicionais",
-      "title-request-timeout": "Tempo limite do pedido"
+      "description-additional-settings": "As definições adicionais são definições opcionais que podem ser configuradas para obter mais controlo sobre a sua origem de dados. Isto inclui o Secure Socks Proxy, o tempo limite de pedido e os cookies encaminhados.",
+      "title-additional-settings": "Definições adicionais"
     },
     "current-user-fallback-credentials": {
       "alert-fallback-credentials-disabled": "As credenciais alternativas foram desativadas. Uma vez que a autenticação baseada no utilizador suporta apenas inerentemente pedidos que incluam um utilizador, funcionalidades como alertas, consultas gravadas ou relatórios não funcionarão conforme o esperado. Consulte a <2>documentação</2> para obter mais detalhes.",
@@ -115,9 +113,12 @@
       "aria-label-column": "Coluna",
       "aria-label-column-value": "Valor da coluna",
       "aria-label-operator": "Operador",
+      "aria-label-remove-filter": "Remover filtro",
       "label-or": "OU"
     },
     "filter-section": {
+      "aria-label-add-filter": "Adicionar filtro",
+      "aria-label-add-or-filter": "Adicionar OU filtrar",
       "label-add-group": "Adicionar grupo",
       "label-and": "E",
       "label-filters": "Filtros",
@@ -130,6 +131,8 @@
       "label-format-as": "Formatar como"
     },
     "fuzzy-search": {
+      "aria-label-add-fuzzy-search": "Adicionar pesquisa difusa",
+      "aria-label-remove-fuzzy-search": "Remover pesquisa difusa",
       "aria-label-select-column": "Selecionar coluna",
       "label-fuzzy-search": "Pesquisa difusa",
       "placeholder-search-team": "Introduzir termo de pesquisa",
@@ -144,6 +147,7 @@
       "aria-label-remove": "Remover"
     },
     "group-by-section": {
+      "aria-label-add-group-by": "Adicionar Agrupar por",
       "label-group-by": "Agrupar por",
       "tooltip-group-by": "Organize os resultados em categorias com base em colunas especificadas. A opção agrupar por pode ser utilizada de forma independente para listar valores únicos em colunas selecionadas ou combinada com funções agregadas para produzir estatísticas resumidas para cada grupo. Quando utilizada sozinha, devolve combinações distintas das colunas especificadas."
     },
@@ -162,8 +166,8 @@
       "tooltip-limit": "Restrinja o número de linhas devolvidas (a predefinição é 1000)."
     },
     "logs-management": {
-      "body-basic-logs-queries": "",
-      "confirmText-confirm": "",
+      "body-basic-logs-queries": "Tem a certeza de que pretende mudar para Registos básicos?",
+      "confirmText-confirm": "Confirmar",
       "description-basic-logs-queries": "As consultas de registos básicos incorrem em custos com base na quantidade de dados lidos.",
       "label-logs": "Registos",
       "title-basic-logs-queries": "Consultas de registos básicos",
@@ -186,8 +190,10 @@
       "text-loading": "A carregar..."
     },
     "order-by-section": {
+      "aria-label-add-order-by": "Adicionar Ordenar por",
       "aria-label-order-by-column": "Ordenar por coluna",
       "aria-label-order-direction": "Sentido da ordem",
+      "aria-label-remove-order-by": "Remover Ordenar por",
       "label-by": "POR",
       "label-order-by": "Ordenar por",
       "tooltip-order-by": "Ordene os resultados com base numa ou mais colunas por ordem ascendente ou descendente."
@@ -197,14 +203,14 @@
     },
     "query-header": {
       "aria-label-kick-start": "Botão de início de consulta de registos do Azure",
-      "body-switching-to-builder": "",
-      "body-switching-to-kql": "",
+      "body-switching-to-builder": "Mudar para o Construtor descartará a sua consulta KQL atual e limpará o editor KQL. Tem a certeza?",
+      "body-switching-to-kql": "Mudar para KQL descartará as suas definições atuais do construtor. Tem a certeza?",
       "button-kick-start-your-query": "Dê início à sua consulta",
       "button-run-query": "Executar consulta",
-      "confirmText-switch-to": "",
+      "confirmText-switch-to": "Mudar para {{newMode}}",
       "editor-modes": {
-        "label-builder": "",
-        "label-kql": ""
+        "label-builder": "Construtor",
+        "label-kql": "KQL"
       },
       "label-service": "Serviço",
       "placeholder-service": "Serviço...",
@@ -233,7 +239,7 @@
       "title-error-occurred": "Ocorreu um erro ao solicitar recursos do Azure Monitor"
     },
     "scope-selector": {
-      "label": ""
+      "label": "Âmbito"
     },
     "search": {
       "aria-label-resource-search": "Pesquisa de recursos",
@@ -249,7 +255,8 @@
       "label-columns": "Colunas",
       "label-table": "Tabela",
       "placeholder-select-columns": "Selecionar colunas",
-      "placeholder-select-table": "Selecionar uma tabela"
+      "placeholder-select-table": "Selecionar uma tabela",
+      "tooltip-remove-all-columns": "Remover todas as colunas"
     },
     "time-grain-field": {
       "label-time-grain": "Granularidade de tempo"

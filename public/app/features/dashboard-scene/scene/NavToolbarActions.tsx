@@ -5,7 +5,17 @@ import { GrafanaTheme2, store } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { config, locationService } from '@grafana/runtime';
-import { Button, ButtonGroup, Dropdown, Icon, Menu, ToolbarButton, ToolbarButtonRow, useStyles2 } from '@grafana/ui';
+import {
+  Badge,
+  Button,
+  ButtonGroup,
+  Dropdown,
+  Icon,
+  Menu,
+  ToolbarButton,
+  ToolbarButtonRow,
+  useStyles2,
+} from '@grafana/ui';
 import { AppChromeUpdate } from 'app/core/components/AppChrome/AppChromeUpdate';
 import { NavToolbarSeparator } from 'app/core/components/AppChrome/NavToolbar/NavToolbarSeparator';
 import grafanaConfig from 'app/core/config';
@@ -13,6 +23,8 @@ import { LS_PANEL_COPY_KEY } from 'app/core/constants';
 import { contextSrv } from 'app/core/core';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
+import { useGetResourceRepositoryView } from 'app/features/provisioning/hooks/useGetResourceRepositoryView';
+import { getReadOnlyTooltipText } from 'app/features/provisioning/utils/repository';
 import { useSelector } from 'app/types/store';
 
 import { shareDashboardType } from '../../dashboard/components/ShareModal/utils';
@@ -54,7 +66,7 @@ NavToolbarActions.displayName = 'NavToolbarActions';
  * This part is split into a separate component to help test this
  */
 export function ToolbarActions({ dashboard }: Props) {
-  const { isEditing, viewPanelScene, isDirty, uid, meta, editview, editPanel, editable } = dashboard.useState();
+  const { isEditing, viewPanel, isDirty, uid, meta, editview, editPanel, editable } = dashboard.useState();
 
   const { isPlaying } = playlistSrv.useState();
   const [isAddPanelMenuOpen, setIsAddPanelMenuOpen] = useState(false);
@@ -63,7 +75,7 @@ export function ToolbarActions({ dashboard }: Props) {
   const toolbarActions: ToolbarAction[] = [];
   const styles = useStyles2(getStyles);
   const isEditingPanel = Boolean(editPanel);
-  const isViewingPanel = Boolean(viewPanelScene);
+  const isViewingPanel = Boolean(viewPanel);
   const isEditedPanelDirty = usePanelEditDirty(editPanel);
 
   const isEditingLibraryPanel = editPanel && isLibraryPanel(editPanel.state.panelRef.resolve());
@@ -73,8 +85,12 @@ export function ToolbarActions({ dashboard }: Props) {
   // Means we are not in settings view, fullscreen panel or edit panel
   const isShowingDashboard = !editview && !isViewingPanel && !isEditingPanel;
   const isEditingAndShowingDashboard = isEditing && isShowingDashboard;
-  const folderRepo = useSelector((state) => selectFolderRepository(state, meta.folderUid));
+  const folderRepo = useSelector((state) => selectFolderRepository()(state, meta.folderUid));
   const isManaged = Boolean(dashboard.isManagedRepository() || folderRepo);
+  // Get the repository for the dashboard's folder
+  const { isReadOnlyRepo, repoType } = useGetResourceRepositoryView({
+    folderName: meta.folderUid,
+  });
 
   // Internal only;
   // allows viewer editing without ability to save
@@ -117,6 +133,22 @@ export function ToolbarActions({ dashboard }: Props) {
       return <PublicDashboardBadge key="public-dashboard-badge" dashboard={dashboard} />;
     },
   });
+
+  if (isReadOnlyRepo) {
+    toolbarActions.push({
+      group: 'icon-actions',
+      condition: true,
+      render: () => {
+        return (
+          <Badge
+            color="darkgrey"
+            text={t('dashboard.toolbar.read-only', 'Read only')}
+            tooltip={getReadOnlyTooltipText({ isLocal: repoType === 'local' })}
+          />
+        );
+      },
+    });
+  }
 
   if (dashboard.isManaged() && meta.canEdit) {
     toolbarActions.push({
@@ -325,12 +357,17 @@ export function ToolbarActions({ dashboard }: Props) {
         onClick={() => {
           dashboard.onEnterEditMode();
         }}
-        tooltip={t('dashboard.toolbar.edit.tooltip', 'Enter edit mode')}
+        tooltip={
+          isReadOnlyRepo
+            ? getReadOnlyTooltipText({ isLocal: repoType === 'local' })
+            : t('dashboard.toolbar.edit.tooltip', 'Enter edit mode')
+        }
         key="edit"
         className={styles.buttonWithExtraMargin}
         variant={config.featureToggles.newDashboardSharingComponent ? 'secondary' : 'primary'}
         size="sm"
         data-testid={selectors.components.NavToolbar.editDashboard.editButton}
+        disabled={isReadOnlyRepo}
       >
         <Trans i18nKey="dashboard.toolbar.edit.label">Edit</Trans>
       </Button>

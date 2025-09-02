@@ -10,9 +10,10 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/client-go/dynamic"
 
-	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
+	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 )
 
@@ -54,9 +55,9 @@ func ExportResources(ctx context.Context, options provisioning.ExportJobOptions,
 						return v2clientAlphaV1.Get(ctx, item.GetName(), metav1.GetOptions{})
 					}
 
-					if strings.HasPrefix(storedVersion, "v2alpha2") {
+					if strings.HasPrefix(storedVersion, "v2beta1") {
 						if v2clientAlphaV2 == nil {
-							v2clientAlphaV2, _, err = clients.ForResource(resources.DashboardResourceV2alpha2)
+							v2clientAlphaV2, _, err = clients.ForResource(resources.DashboardResourceV2beta1)
 							if err != nil {
 								return nil, err
 							}
@@ -103,6 +104,23 @@ func exportResource(ctx context.Context,
 			Action:   repository.FileActionCreated,
 		}
 
+		// Check if resource is already managed by a repository
+		meta, err := utils.MetaAccessor(item)
+		if err != nil {
+			result.Action = repository.FileActionIgnored
+			result.Error = fmt.Errorf("extracting meta accessor for resource %s: %w", result.Name, err)
+			progress.Record(ctx, result)
+			return nil
+		}
+
+		manager, _ := meta.GetManagerProperties()
+		// Skip if already managed by any manager (repository, file provisioning, etc.)
+		if manager.Identity != "" {
+			result.Action = repository.FileActionIgnored
+			progress.Record(ctx, result)
+			return nil
+		}
+
 		if shim != nil {
 			item, err = shim(ctx, item)
 		}
@@ -118,7 +136,7 @@ func exportResource(ctx context.Context,
 			result.Action = repository.FileActionIgnored
 		} else if err != nil {
 			result.Action = repository.FileActionIgnored
-			result.Error = err
+			result.Error = fmt.Errorf("writing resource file for %s: %w", result.Name, err)
 		}
 
 		progress.Record(ctx, result)

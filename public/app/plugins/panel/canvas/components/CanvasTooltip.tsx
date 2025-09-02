@@ -14,7 +14,7 @@ import {
   ValueLinkConfig,
   ActionModel,
 } from '@grafana/data';
-import { Portal, useStyles2, VizTooltipContainer } from '@grafana/ui';
+import { Portal, useStyles2, useTheme2, VizTooltipContainer } from '@grafana/ui';
 import {
   VizTooltipContent,
   VizTooltipFooter,
@@ -33,10 +33,11 @@ interface Props {
 }
 
 export const CanvasTooltip = ({ scene }: Props) => {
+  const theme = useTheme2();
   const styles = useStyles2(getStyles);
 
   const onClose = () => {
-    if (scene?.tooltipCallback && scene.tooltip) {
+    if (scene?.tooltipCallback && scene.tooltipPayload) {
       scene.tooltipCallback(undefined);
     }
   };
@@ -45,7 +46,7 @@ export const CanvasTooltip = ({ scene }: Props) => {
   const { overlayProps } = useOverlay({ onClose: onClose, isDismissable: true }, ref);
   const { dialogProps } = useDialog({}, ref);
 
-  const element = scene.tooltip?.element;
+  const element = scene.tooltipPayload?.element;
   if (!element) {
     return <></>;
   }
@@ -56,7 +57,7 @@ export const CanvasTooltip = ({ scene }: Props) => {
   const shouldDisplayTimeContentItem =
     timeField && lastTimeValue && element.data.field && getFieldDisplayName(timeField) !== element.data.field;
 
-  const headerItem: VizTooltipItem | null = {
+  const headerItem: VizTooltipItem = {
     label: element.getName(),
     value: '',
   };
@@ -138,18 +139,18 @@ export const CanvasTooltip = ({ scene }: Props) => {
 
   return (
     <>
-      {scene.tooltip?.element && scene.tooltip.anchorPoint && (
-        <Portal>
+      {scene.tooltipPayload?.element && scene.tooltipPayload.anchorPoint && (
+        <Portal zIndex={theme.zIndex.tooltip}>
           <VizTooltipContainer
-            className={cx(styles.tooltipWrapper, scene.tooltip.isOpen && styles.pinned)}
-            position={{ x: scene.tooltip.anchorPoint.x, y: scene.tooltip.anchorPoint.y }}
+            className={cx(styles.tooltipWrapper, scene.tooltipPayload.isOpen && styles.pinned)}
+            position={{ x: scene.tooltipPayload.anchorPoint.x, y: scene.tooltipPayload.anchorPoint.y }}
             offset={{ x: 5, y: 0 }}
-            allowPointerEvents={scene.tooltip.isOpen}
+            allowPointerEvents={scene.tooltipPayload.isOpen}
           >
             <section ref={ref} {...overlayProps} {...dialogProps}>
-              {scene.tooltip.isOpen && <CloseButton style={{ zIndex: 1 }} onClick={onClose} />}
-              <VizTooltipHeader item={headerItem} isPinned={scene.tooltip.isOpen!} />
-              {element.data.text && <VizTooltipContent items={contentItems} isPinned={scene.tooltip.isOpen!} />}
+              {scene.tooltipPayload.isOpen && <CloseButton style={{ zIndex: 1 }} onClick={onClose} />}
+              <VizTooltipHeader item={headerItem} isPinned={scene.tooltipPayload.isOpen!} />
+              {element.data.text && <VizTooltipContent items={contentItems} isPinned={scene.tooltipPayload.isOpen!} />}
               {(links.length > 0 || actions.length > 0) && <VizTooltipFooter dataLinks={links} actions={actions} />}
             </section>
           </VizTooltipContainer>
@@ -167,7 +168,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
   tooltipWrapper: css({
     top: 0,
     left: 0,
-    zIndex: theme.zIndex.portal,
     whiteSpace: 'pre',
     borderRadius: theme.shape.radius.default,
     position: 'fixed',
