@@ -2,6 +2,7 @@ package search
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 
 	"github.com/blevesearch/bleve/v2/registry"
@@ -67,7 +68,7 @@ type badgerKVReader struct {
 func (r *badgerKVReader) Get(key []byte) ([]byte, error) {
 	var val []byte
 	item, err := r.txn.Get(key)
-	if err == badger.ErrKeyNotFound {
+	if errors.Is(err, badger.ErrKeyNotFound) {
 		return nil, nil
 	} else if err != nil {
 		return nil, err
@@ -87,7 +88,7 @@ func (r *badgerKVReader) MultiGet(keys [][]byte) ([][]byte, error) {
 	results := make([][]byte, len(keys))
 	for i, key := range keys {
 		item, err := r.txn.Get(key)
-		if err == badger.ErrKeyNotFound {
+		if errors.Is(err, badger.ErrKeyNotFound) {
 			results[i] = nil
 			continue
 		} else if err != nil {
@@ -163,7 +164,7 @@ func (w *badgerKVWriter) ExecuteBatch(b store.KVBatch) error {
 		kb := []byte(k)
 		var existingVal []byte
 		existingItem, err := txn.Get(kb)
-		if err == badger.ErrKeyNotFound {
+		if errors.Is(err, badger.ErrKeyNotFound) {
 			existingVal = nil
 		} else if err != nil {
 			return err
