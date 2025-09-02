@@ -50,6 +50,7 @@ export {
   isTimeSeriesField,
   getRowUniqueId,
   addRow,
+  alignTimeRangeCompareData,
 } from './dataframe/utils';
 export {
   StreamingDataFrame,

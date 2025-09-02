@@ -8,8 +8,6 @@ import {
   InterpolateFunction,
   LinkModel,
   dateTime,
-  TimeRange,
-  TimeZone,
 } from '@grafana/data';
 import { SortOrder, TooltipDisplayMode } from '@grafana/schema/dist/esm/common/common.gen';
 import {
@@ -56,9 +54,8 @@ export interface TimeSeriesTooltipProps {
 
 function getTooltipTimeText(timestamp: number, field: Field) {
   const tc = field.config.custom?.timeCompare;
-  console.log(tc);
-  if (tc?.isTimeShifted) {
-    timestamp -= tc.diffMs;
+  if (tc?.isTimeShiftQuery) {
+    timestamp += tc.diffMs;
   }
   return dateTime(timestamp).utc().format('YYYY-MM-DD HH:mm:ss');
 }

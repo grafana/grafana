@@ -123,3 +123,35 @@ export function addRow(dataFrame: DataFrame, row: Record<string, unknown> | unkn
     // does not need any external updating.
   }
 }
+
+/**
+ * Aligns time range comparison data by adjusting timestamps and applying compare-specific styling
+ * @param series - The DataFrame containing the comparison data
+ * @param diff - The time difference in milliseconds to align the timestamps
+ * @param compareColor - Optional color to use for the comparison series (defaults to 'gray')
+ */
+export function alignTimeRangeCompareData(series: DataFrame, diff: number, compareColor = 'gray') {
+  series.fields.forEach((field: Field) => {
+    // Align compare series time stamps with reference series
+    if (field.type === FieldType.time) {
+      field.values = field.values.map((v: number) => {
+        return diff < 0 ? v - diff : v + diff;
+      });
+    }
+
+    field.config = {
+      ...field.config,
+      color: {
+        mode: 'fixed',
+        fixedColor: compareColor,
+      },
+      custom: {
+        ...(field.config.custom ?? {}),
+        timeCompare: {
+          diffMs: diff,
+          isTimeShiftQuery: true,
+        },
+      },
+    };
+  });
+}
