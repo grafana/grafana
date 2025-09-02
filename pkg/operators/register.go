@@ -20,6 +20,7 @@ import (
 	"k8s.io/client-go/transport"
 
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	deletepkg "github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/delete"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/export"
@@ -31,8 +32,11 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/apiserver/standalone"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/unified"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
+	"github.com/prometheus/client_golang/prometheus"
+	"go.opentelemetry.io/otel/trace"
 
 	authrt "github.com/grafana/grafana/apps/provisioning/pkg/auth"
 	"github.com/grafana/grafana/apps/provisioning/pkg/controller"
@@ -73,14 +77,42 @@ func (r *directConfigProvider) GetRestConfig(ctx context.Context) (*rest.Config,
 // and provides a new unified storage client for each request
 // HACK: wrap around unified storage client
 // We don't reuse connections as clients get dumped on each request
-type unifiedStorageFactory struct{}
+type unifiedStorageFactory struct {
+	cfg       resource.RemoteResourceClientConfig
+	tracer    trace.Tracer
+	conn      grpc.ClientConnInterface
+	indexConn grpc.ClientConnInterface
+}
 
-func NewUnifiedStorageClientFactory() resources.ResourceStore {
-	return &unifiedStorageFactory{}
+func NewUnifiedStorageClientFactory() (resources.ResourceStore, error) {
+	// TODO: create connections
+	// TODO: read config from operator.ini
+	// FIXME: add a proper tracer
+	tracer := tracing.NewNoopTracerService()
+	registry := prometheus.NewPedanticRegistry()
+	// TODO: talk to s&s about using this method recommended only for tests
+	conn, err := unified.GrpcConn("TODO", registry)
+	if err != nil {
+		return nil, fmt.Errorf("create unified storage gRPC connection: %w", err)
+	}
+
+	indexConn, err := unified.GrpcConn("TODO", registry)
+	if err != nil {
+		return nil, fmt.Errorf("create unified storage index gRPC connection: %w", err)
+	}
+
+	return &unifiedStorageFactory{
+		tracer:    tracer,
+		conn:      conn,
+		indexConn: indexConn,
+	}, nil
 }
 
 func (s *unifiedStorageFactory) getClient(ctx context.Context) (resource.ResourceClient, error) {
-	return resource.NewRemoteResourceClient()
+	cfg := s.cfg
+	// TODO: set namespace or is there something else in the middle?
+	// do we need to?
+	return resource.NewRemoteResourceClient(s.tracer, s.conn, s.indexConn, cfg)
 }
 
 func (s *unifiedStorageFactory) CountManagedObjects(ctx context.Context, in *resourcepb.CountManagedObjectsRequest, opts ...grpc.CallOption) (*resourcepb.CountManagedObjectsResponse, error) {
@@ -208,7 +240,10 @@ func runJobController(opts standalone.BuildInfo, c *cli.Context, cfg *setting.Cf
 	// HACK: This is connecting to unified storage. It's ok for now as long as dashboards and folders are located in the
 	// same cluster and namespace
 	// This breaks when we start really trying to support any resource. This is on the search+storage roadmap to support federation at some level.
-	unified := NewUnifiedStorageClientFactory()
+	unified, err := NewUnifiedStorageClientFactory()
+	if err != nil {
+		return fmt.Errorf("create unified storage client: %w", err)
+	}
 
 	resourceLister := resources.NewResourceLister(unified)
 	repositoryResources := resources.NewRepositoryResourcesFactory(parsers, clients, resourceLister)
