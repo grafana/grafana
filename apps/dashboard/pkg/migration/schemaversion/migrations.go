@@ -2,6 +2,8 @@ package schemaversion
 
 import (
 	"strconv"
+
+	"golang.org/x/net/context"
 )
 
 const (
@@ -9,7 +11,7 @@ const (
 	LATEST_VERSION = 41
 )
 
-type SchemaVersionMigrationFunc func(map[string]interface{}) error
+type SchemaVersionMigrationFunc func(context.Context, map[string]interface{}) error
 
 type DataSourceInfo struct {
 	Default    bool
@@ -21,7 +23,9 @@ type DataSourceInfo struct {
 }
 
 type DataSourceInfoProvider interface {
-	GetDataSourceInfo() []DataSourceInfo
+	// GetDataSourceInfo returns a list of all data sources with their info
+	// Request ctx is needed only for MT implementation to grab the namespace
+	GetDataSourceInfo(ctx context.Context) []DataSourceInfo
 }
 
 type PanelPluginInfo struct {

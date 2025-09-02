@@ -2,6 +2,7 @@ package migration
 
 import (
 	"fmt"
+	"context"
 	"sync"
 
 	"github.com/grafana/grafana/apps/dashboard/pkg/migration/schemaversion"
@@ -14,8 +15,8 @@ func Initialize(dsInfoProvider schemaversion.DataSourceInfoProvider, panelProvid
 
 // Migrate migrates the given dashboard to the target version.
 // This will block until the migrator is initialized.
-func Migrate(dash map[string]interface{}, targetVersion int) error {
-	return migratorInstance.migrate(dash, targetVersion)
+func Migrate(ctx context.Context, dash map[string]interface{}, targetVersion int) error {
+	return migratorInstance.migrate(ctx, dash, targetVersion)
 }
 
 var (
@@ -38,7 +39,7 @@ func (m *migrator) init(dsInfoProvider schemaversion.DataSourceInfoProvider, pan
 	})
 }
 
-func (m *migrator) migrate(dash map[string]interface{}, targetVersion int) error {
+func (m *migrator) migrate(ctx context.Context, dash map[string]interface{}, targetVersion int) error {
 	if dash == nil {
 		return schemaversion.NewMigrationError("dashboard is nil", 0, targetVersion, "")
 	}
@@ -57,7 +58,7 @@ func (m *migrator) migrate(dash map[string]interface{}, targetVersion int) error
 
 	for nextVersion := inputVersion + 1; nextVersion <= targetVersion; nextVersion++ {
 		if migration, ok := m.migrations[nextVersion]; ok {
-			if err := migration(dash); err != nil {
+			if err := migration(ctx, dash); err != nil {
 				functionName := fmt.Sprintf("V%d", nextVersion)
 				return schemaversion.NewMigrationError("migration failed: "+err.Error(), inputVersion, nextVersion, functionName)
 			}

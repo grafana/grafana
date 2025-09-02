@@ -1,5 +1,10 @@
 package schemaversion
 
+import (
+	"context"
+	"fmt"
+)
+
 // V33 migrates panel datasource references from string names to UIDs.
 //
 // This migration addresses datasource references in dashboard panels and their targets
@@ -57,8 +62,8 @@ package schemaversion
 //	  ]
 //	}
 func V33(dsInfo DataSourceInfoProvider) SchemaVersionMigrationFunc {
-	datasources := dsInfo.GetDataSourceInfo()
-	return func(dashboard map[string]interface{}) error {
+	return func(ctx context.Context, dashboard map[string]interface{}) error {
+		datasources := dsInfo.GetDataSourceInfo(ctx)
 		if dashboard == nil {
 			dashboard = map[string]interface{}{}
 		}
@@ -106,6 +111,7 @@ func migratePanelsV33(dashboard map[string]interface{}, datasources []DataSource
 
 // migratePanelDatasourcesV33 updates datasource references in a single panel and its targets for V33 migration
 func migratePanelDatasourcesV33(panelMap map[string]interface{}, datasources []DataSourceInfo) {
+	fmt.Println("Datasources available for migration:", datasources)
 	// Handle panel datasource - always set result (even if nil)
 	if result := MigrateDatasourceNameToRef(panelMap["datasource"], map[string]bool{"returnDefaultAsNull": true}, datasources); result != nil {
 		panelMap["datasource"] = result

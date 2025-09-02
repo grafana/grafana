@@ -1,6 +1,8 @@
 package conversion
 
 import (
+	"context"
+
 	"k8s.io/apimachinery/pkg/conversion"
 	"k8s.io/utils/ptr"
 
@@ -10,6 +12,7 @@ import (
 	dashv2beta1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1"
 	"github.com/grafana/grafana/apps/dashboard/pkg/migration"
 	"github.com/grafana/grafana/apps/dashboard/pkg/migration/schemaversion"
+	"k8s.io/apiserver/pkg/endpoints/request"
 )
 
 func Convert_V0_to_V1(in *dashv0.Dashboard, out *dashv1.Dashboard, scope conversion.Scope) error {
@@ -23,7 +26,11 @@ func Convert_V0_to_V1(in *dashv0.Dashboard, out *dashv1.Dashboard, scope convers
 		},
 	}
 
-	if err := migration.Migrate(out.Spec.Object, schemaversion.LATEST_VERSION); err != nil {
+	// Hack, generate "request" context with namespace info injected,
+	// not sure if there are other implications of doing this
+	ctx := request.WithNamespace(context.Background(), in.GetNamespace())
+
+	if err := migration.Migrate(ctx, out.Spec.Object, schemaversion.LATEST_VERSION); err != nil {
 		out.Status.Conversion.Failed = true
 		out.Status.Conversion.Error = ptr.To(err.Error())
 		return nil

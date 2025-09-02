@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"maps"
 
+	datasourceext "github.com/grafana/grafana/pkg/extensions/datasource"
 	"github.com/prometheus/client_golang/prometheus"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -21,7 +22,6 @@ import (
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
 	claims "github.com/grafana/authlib/types"
-
 	internal "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard"
 	dashv0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	dashv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
@@ -80,8 +80,12 @@ type DashboardsAPIBuilder struct {
 	dashboardService dashboards.DashboardService
 	features         featuremgmt.FeatureToggles
 
+<<<<<<< HEAD
 	authorizer authorizer.Authorizer
 
+=======
+	authorizer                   authorizer.Authorizer
+>>>>>>> 21d9b6180a9 (feat: wire up cloud-config and refactor migrator to run on MT)
 	accessControl                accesscontrol.AccessControl
 	accessClient                 claims.AccessClient
 	legacy                       *DashboardStorage
@@ -160,7 +164,8 @@ func RegisterAPIService(
 			Access:           legacy.NewDashboardAccess(dbp, namespacer, dashStore, provisioning, libraryPanelSvc, sorter, dashboardPermissionsSvc, accessControl, features),
 			DashboardService: dashboardService,
 		},
-		reg: reg,
+		reg:        reg,
+		authorizer: newLegacyAuthorizer(accessControl, log.New("grafana-apiserver.dashboards")),
 	}
 
 	migration.RegisterMetrics(reg)
@@ -174,11 +179,28 @@ func RegisterAPIService(
 	return builder
 }
 
-func NewAPIService(ac claims.AccessClient, features featuremgmt.FeatureToggles, dual dualwrite.Service, sorter sort.Service, getRestConfig func(context.Context) (*clientrest.Config, error)) *DashboardsAPIBuilder {
-	folderClient := client.NewK8sHandler(dual, request.GetNamespaceMapper(setting.NewCfg()), folders.FolderResourceInfo.GroupVersionResource(), getRestConfig, nil, nil, nil, sorter, features)
+func NewAPIService(ac claims.AccessClient, cloudconfigClient datasourceext.CloudConfigClient, pluginStore *pluginstore.Service, features featuremgmt.FeatureToggles) *DashboardsAPIBuilder {
+
+	// TODO: Plugin store will soon be removed,
+	// as the cases for plugin fetching is not needed. Keeping it now to not break implementation
+	if pluginStore == nil {
+		panic("pluginStore is nil")
+	}
+
+	logger := log.New("grafana-apiserver.dashboards")
+
+	migration.Initialize(&multiTenantDatasourceProvider{
+		log:               logger,
+		cloudConfigClient: cloudconfigClient,
+	}, &PluginStorePanelProvider{
+		pluginStore:  pluginStore,
+		buildVersion: "unknown",
+	})
 
 	return &DashboardsAPIBuilder{
-		log: log.New("grafana-apiserver.dashboards"),
+		log: logger,
+		reg: prometheus.NewRegistry(),
+
 		reg: prometheus.NewRegistry(),
 
 		cfg: &setting.Cfg{
@@ -459,6 +481,16 @@ func (b *DashboardsAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver
 	// this is for ignoreLegacy
 	if b.dashboardPermissions != nil {
 		// Sets default root permissions
+<<<<<<< HEAD
+=======
+		// Permissions:
+		//  b.dashboardPermissions.SetDefaultPermissionsAfterCreate,
+	}
+
+	// this is for ignoreLegacy
+	if b.dashboardPermissions != nil {
+		// Sets default root permissions
+>>>>>>> 21d9b6180a9 (feat: wire up cloud-config and refactor migrator to run on MT)
 		storageOpts.Permissions = b.dashboardPermissions.SetDefaultPermissionsAfterCreate
 	}
 
@@ -562,6 +594,22 @@ func (b *DashboardsAPIBuilder) storageForVersion(
 			return err
 		}
 		storage[dashboards.StoragePath()] = store
+<<<<<<< HEAD
+=======
+
+		// !!!!!!Make writes work!!!!!
+		// gr := dashboards.GroupResource()
+		// dw, err := opts.DualWriteBuilder(gr, nil, store)
+		// if err != nil {
+		// 	return err
+		// }
+
+		// storage[dashboards.StoragePath()] = dashboardStoragePermissionWrapper{
+		// 	dashboardPermissionsSvc: b.dashboardPermissionsSvc,
+		// 	Storage:                 dw,
+		// }
+
+>>>>>>> 21d9b6180a9 (feat: wire up cloud-config and refactor migrator to run on MT)
 		return nil
 	}
 
