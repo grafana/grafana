@@ -41,7 +41,7 @@ For other languages, refer to the Grafana Foundation SDK documentation for insta
 {{< code >}}
 
 ```go
-go get github.com/grafana/grafana-foundation-sdk/go
+go get github.com/grafana/grafana-foundation-sdk/go@next+cog-v0.0.x
 ```
 
 ```typescript

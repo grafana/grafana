@@ -1,7 +1,14 @@
-import { useState, useMemo, useCallback, useRef, useLayoutEffect, RefObject, CSSProperties } from 'react';
+import { useState, useMemo, useCallback, useRef, useLayoutEffect, RefObject, CSSProperties, useEffect } from 'react';
 import { Column, DataGridHandle, DataGridProps, SortColumn } from 'react-data-grid';
 
-import { Field, fieldReducers, FieldType, formattedValueToString, reduceField } from '@grafana/data';
+import {
+  compareArrayValues,
+  Field,
+  fieldReducers,
+  FieldType,
+  formattedValueToString,
+  reduceField,
+} from '@grafana/data';
 
 import { TableColumnResizeActionCallback } from '../types';
 
@@ -13,6 +20,7 @@ import {
   applySort,
   getColumnTypes,
   getRowHeight,
+  computeColWidths,
   buildHeaderHeightMeasurers,
   buildCellHeightMeasurers,
 } from './utils';
@@ -183,16 +191,17 @@ export function usePaginatedRows(
     return rows.slice(0, 100).reduce((avg, row, _, { length }) => avg + rowHeight(row) / length, 0);
   }, [rows, rowHeight, enabled]);
 
+  const smallPagination = useMemo(() => enabled && width < TABLE.PAGINATION_LIMIT, [enabled, width]);
+
   // using dimensions of the panel, calculate pagination parameters
-  const { numPages, rowsPerPage, pageRangeStart, pageRangeEnd, smallPagination } = useMemo((): {
+  const { numPages, rowsPerPage, pageRangeStart, pageRangeEnd } = useMemo((): {
     numPages: number;
     rowsPerPage: number;
     pageRangeStart: number;
     pageRangeEnd: number;
-    smallPagination: boolean;
   } => {
     if (!enabled) {
-      return { numPages: 0, rowsPerPage: 0, pageRangeStart: 1, pageRangeEnd: numRows, smallPagination: false };
+      return { numPages: 0, rowsPerPage: 0, pageRangeStart: 1, pageRangeEnd: numRows };
     }
 
     // calculate number of rowsPerPage based on height stack
@@ -207,16 +216,15 @@ export function usePaginatedRows(
     if (pageRangeEnd > numRows) {
       pageRangeEnd = numRows;
     }
-    const smallPagination = width < TABLE.PAGINATION_LIMIT;
+
     const numPages = Math.ceil(numRows / rowsPerPage);
     return {
       numPages,
       rowsPerPage,
       pageRangeStart,
       pageRangeEnd,
-      smallPagination,
     };
-  }, [width, height, headerHeight, footerHeight, avgRowHeight, enabled, numRows, page]);
+  }, [height, headerHeight, footerHeight, avgRowHeight, enabled, numRows, page]);
 
   // safeguard against page overflow on panel resize or other factors
   useLayoutEffect(() => {
@@ -345,13 +353,19 @@ export function useHeaderHeight({
   const columnAvailableWidths = useMemo(
     () =>
       columnWidths.map((c, idx) => {
+        if (idx >= fields.length) {
+          return 0; // no width available for this column yet
+        }
+
         let width = c - 2 * TABLE.CELL_PADDING - TABLE.BORDER_RIGHT;
+        const field = fields[idx];
+
         // filtering icon
-        if (fields[idx]?.config?.custom?.filterable) {
+        if (field.config?.custom?.filterable) {
           width -= perIconSpace;
         }
         // sorting icon
-        if (sortColumns.some((col) => col.columnKey === getDisplayName(fields[idx]))) {
+        if (sortColumns.some((col) => col.columnKey === getDisplayName(field))) {
           width -= perIconSpace;
         }
         // type icon
@@ -368,7 +382,15 @@ export function useHeaderHeight({
     if (!enabled) {
       return 0;
     }
-    return getRowHeight(fields, -1, columnAvailableWidths, TABLE.HEADER_HEIGHT, measurers, TABLE.CELL_PADDING);
+    return getRowHeight(
+      fields,
+      -1,
+      columnAvailableWidths,
+      TABLE.HEADER_HEIGHT,
+      measurers,
+      TABLE.LINE_HEIGHT,
+      TABLE.CELL_PADDING
+    );
   }, [fields, enabled, columnAvailableWidths, measurers]);
 
   return headerHeight;
@@ -381,6 +403,7 @@ interface UseRowHeightOptions {
   defaultHeight: NonNullable<CSSProperties['height']>;
   expandedRows: Set<number>;
   typographyCtx: TypographyCtx;
+  maxHeight?: number;
 }
 
 export function useRowHeight({
@@ -390,8 +413,12 @@ export function useRowHeight({
   defaultHeight,
   expandedRows,
   typographyCtx,
+  maxHeight,
 }: UseRowHeightOptions): NonNullable<CSSProperties['height']> | ((row: TableRow) => number) {
-  const measurers = useMemo(() => buildCellHeightMeasurers(fields, typographyCtx), [fields, typographyCtx]);
+  const measurers = useMemo(
+    () => buildCellHeightMeasurers(fields, typographyCtx, maxHeight),
+    [fields, typographyCtx, maxHeight]
+  );
   const hasWrappedCols = useMemo(() => measurers?.length ?? 0 > 0, [measurers]);
 
   const colWidths = useMemo(() => {
@@ -533,4 +560,46 @@ export function useScrollbarWidth(ref: RefObject<DataGridHandle>, height: number
   }, [ref, height]);
 
   return scrollbarWidth;
+}
+
+const numIsEqual = (a: number, b: number) => a === b;
+
+export function useColWidths(
+  visibleFields: Field[],
+  availableWidth: number,
+  frozenColumns?: number
+): [number[], number] {
+  const [widths, setWidths] = useState<number[]>(computeColWidths(visibleFields, availableWidth));
+
+  // only replace the widths array if something actually changed
+  useEffect(() => {
+    const newWidths = computeColWidths(visibleFields, availableWidth);
+    if (!compareArrayValues(widths, newWidths, numIsEqual)) {
+      setWidths(newWidths);
+    }
+  }, [availableWidth, widths, visibleFields]);
+
+  // this is to avoid buggy situations where all visible columns are frozen
+  const numFrozenColsFullyInView = useMemo(() => {
+    if (!frozenColumns || frozenColumns <= 0) {
+      return -1;
+    }
+
+    const fullyVisibleCols = widths.reduce(
+      ([count, remainingWidth], nextWidth) => {
+        if (remainingWidth - nextWidth >= 0) {
+          return [count + 1, remainingWidth - nextWidth];
+        }
+        return [count, 0];
+      },
+      [0, availableWidth]
+    )[0];
+
+    // de-noise memoized changes to the columns array, and only change this
+    // number when the number of frozen columns changes or once there are fewer
+    // visible columns than the number of frozen columns.
+    return Math.min(fullyVisibleCols, frozenColumns);
+  }, [widths, availableWidth, frozenColumns]);
+
+  return [widths, numFrozenColsFullyInView];
 }

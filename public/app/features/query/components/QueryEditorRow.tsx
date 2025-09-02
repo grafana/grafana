@@ -379,29 +379,30 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
   };
 
   renderActions = (props: QueryOperationRowRenderProps) => {
-    const { query, hideHideQueryButton: hideHideQueryButton = false, queryLibraryRef } = this.props;
+    const { query, hideHideQueryButton: hideHideQueryButton = false, queryLibraryRef, app } = this.props;
     const { datasource, showingHelp } = this.state;
     const isHidden = !!query.hide;
 
     const hasEditorHelp = datasource?.components?.QueryEditorHelp;
     const isEditingQueryLibrary = queryLibraryRef !== undefined;
+    const isUnifiedAlerting = app === CoreApp.UnifiedAlerting;
 
     return (
       <>
-        {!isEditingQueryLibrary && (
+        {!isEditingQueryLibrary && !isUnifiedAlerting && (
           <MaybeQueryLibrarySaveButton
             query={query}
-            app={this.props.app}
+            app={app}
             onSelectQuery={this.onSelectQueryFromLibrary}
             onUpdateSuccess={this.onExitQueryLibraryEditingMode}
           />
         )}
 
-        {!isEditingQueryLibrary && (
+        {!isEditingQueryLibrary && !isUnifiedAlerting && (
           <ReplaceQueryFromLibrary
             datasourceFilters={datasource?.name ? [datasource.name] : []}
             onSelectQuery={this.onSelectQueryFromLibrary}
-            app={this.props.app}
+            app={app}
           />
         )}
 
@@ -637,7 +638,7 @@ function ReplaceQueryFromLibrary<TQuery extends DataQuery>({
 
   return queryLibraryEnabled ? (
     <QueryOperationAction
-      title={t('query-operation.header.replace-query-from-library', 'Replace with query from library')}
+      title={t('query-operation.header.replace-query-from-library', 'Replace with saved query')}
       icon="book"
       onClick={onReplaceQueryFromLibrary}
       isGroupEnd

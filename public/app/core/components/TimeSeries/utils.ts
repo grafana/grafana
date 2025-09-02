@@ -27,6 +27,7 @@ import {
   AxisColorMode,
   GraphGradientMode,
   VizOrientation,
+  ScaleDistributionConfig,
 } from '@grafana/schema';
 
 // unit lookup needed to determine if we want power-of-2 or power-of-10 axis ticks
@@ -59,6 +60,7 @@ for (let i = 0; i < BIN_INCRS.length; i++) {
   BIN_INCRS[i] = 2 ** i;
 }
 
+import { DrawStyle } from '@grafana/ui';
 import {
   UPlotConfigBuilder,
   UPlotConfigPrepFn,
@@ -74,6 +76,7 @@ const defaultConfig: GraphFieldConfig = {
   drawStyle: GraphDrawStyle.Line,
   showPoints: VisibilityMode.Auto,
   axisPlacement: AxisPlacement.Auto,
+  showValues: false,
 };
 
 export const preparePlotConfigBuilder: UPlotConfigPrepFn = ({
@@ -178,20 +181,33 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn = ({
       });
     }
   } else {
+    let custom = xField.config.custom;
+    let scaleDistr: ScaleDistributionConfig = { ...custom?.scaleDistribution };
+
     builder.addScale({
       scaleKey: xScaleKey,
       orientation: isHorizontal ? ScaleOrientation.Horizontal : ScaleOrientation.Vertical,
       direction: isHorizontal ? ScaleDirection.Right : ScaleDirection.Up,
-      range: (u, dataMin, dataMax) => [xField.config.min ?? dataMin, xField.config.max ?? dataMax],
+      distribution: scaleDistr?.type,
+      log: scaleDistr?.log,
+      linearThreshold: scaleDistr?.linearThreshold,
+      min: xField.config.min,
+      max: xField.config.max,
+      softMin: custom?.axisSoftMin,
+      softMax: custom?.axisSoftMax,
+      centeredZero: custom?.axisCenteredZero,
+      decimals: xField.config.decimals,
+      padMinBy: 0,
+      padMaxBy: 0,
     });
 
     builder.addAxis({
       scaleKey: xScaleKey,
       placement: xFieldAxisPlacement,
       show: xFieldAxisShow,
-      label: xField.config.custom?.axisLabel,
+      label: custom?.axisLabel,
       theme,
-      grid: { show: xField.config.custom?.axisGridShow },
+      grid: { show: custom?.axisGridShow },
       formatValue: (v, decimals) => formattedValueToString(xField.display!(v, decimals)),
     });
   }
@@ -529,6 +545,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn = ({
       softMax: customConfig.axisSoftMax,
       // The following properties are not used in the uPlot config, but are utilized as transport for legend config
       dataFrameFieldIndex: field.state?.origin,
+      showValues: customConfig.showValues,
     });
 
     // Render thresholds in graph
@@ -552,6 +569,79 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn = ({
   let stackingGroups = getStackingGroups(frame);
 
   builder.setStackingGroups(stackingGroups);
+
+  const mightShowValues = frame.fields.some((field, i) => {
+    if (i === 0) {
+      return false;
+    }
+
+    const customConfig = field.config.custom ?? {};
+
+    return (
+      customConfig.showValues &&
+      (customConfig.drawStyle === GraphDrawStyle.Points || customConfig.showPoints !== VisibilityMode.Never)
+    );
+  });
+
+  if (mightShowValues) {
+    // since bars style doesnt show points in Auto mode, we can't piggyback on series.points.show()
+    // so we make a simple density-based callback to use here
+    const barsShowValues = (u: uPlot) => {
+      let width = u.bbox.width / uPlot.pxRatio;
+      let count = u.data[0].length;
+
+      // render values when each has at least 30px of width available
+      return width / count >= 30;
+    };
+
+    builder.addHook('draw', (u: uPlot) => {
+      const baseFontSize = 12;
+      const font = `${baseFontSize * uPlot.pxRatio}px ${theme.typography.fontFamily}`;
+
+      const { ctx } = u;
+
+      ctx.save();
+      ctx.fillStyle = theme.colors.text.primary;
+      ctx.font = font;
+      ctx.textAlign = 'center';
+
+      for (let seriesIdx = 1; seriesIdx < u.data.length; seriesIdx++) {
+        const series = u.series[seriesIdx];
+        const field = frame.fields[seriesIdx];
+
+        if (
+          field.config.custom?.showValues &&
+          // @ts-ignore points.show() is always callable on the instance (but may be boolean when passed to uPlot as init option)
+          (series.points?.show?.(u, seriesIdx) ||
+            (field.config.custom?.drawStyle === DrawStyle.Bars && barsShowValues(u)))
+        ) {
+          const xData = u.data[0];
+          const yData = u.data[seriesIdx];
+          const yScale = series.scale!;
+
+          for (let dataIdx = 0; dataIdx < yData.length; dataIdx++) {
+            const yVal = yData[dataIdx];
+
+            if (yVal != null) {
+              const text = formattedValueToString(field.display!(yVal));
+
+              const isNegative = yVal < 0;
+              const textOffset = isNegative ? 15 : -5;
+              ctx.textBaseline = isNegative ? 'top' : 'bottom';
+
+              const xVal = xData[dataIdx];
+              const x = u.valToPos(xVal, 'x', true);
+              const y = u.valToPos(yVal, yScale, true);
+
+              ctx.fillText(text, x, y + textOffset);
+            }
+          }
+        }
+      }
+
+      ctx.restore();
+    });
+  }
 
   // hook up custom/composite renderers
   renderers?.forEach((r) => {

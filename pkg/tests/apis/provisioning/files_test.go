@@ -25,27 +25,25 @@ func TestIntegrationProvisioning_DeleteResources(t *testing.T) {
 	ctx := context.Background()
 
 	const repo = "delete-test-repo"
-	localTmp := helper.RenderObject(t, "testdata/local-write.json.tmpl", map[string]any{
-		"Name":        repo,
-		"SyncEnabled": true,
-		"SyncTarget":  "instance",
+	helper.CreateRepo(t, TestRepo{
+		Name:   repo,
+		Path:   helper.ProvisioningPath,
+		Target: "instance",
+		Copies: map[string]string{
+			"testdata/all-panels.json":    "dashboard1.json",
+			"testdata/text-options.json":  "folder/dashboard2.json",
+			"testdata/timeline-demo.json": "folder/nested/dashboard3.json",
+			"testdata/.keep":              "folder/nested/.keep",
+		},
+		ExpectedDashboards: 3,
+		ExpectedFolders:    2,
 	})
-	_, err := helper.Repositories.Resource.Create(ctx, localTmp, metav1.CreateOptions{})
-	require.NoError(t, err)
-
-	// Copy the dashboards to the repository path
-	helper.CopyToProvisioningPath(t, "testdata/all-panels.json", "dashboard1.json")
-	helper.CopyToProvisioningPath(t, "testdata/text-options.json", "folder/dashboard2.json")
-	helper.CopyToProvisioningPath(t, "testdata/timeline-demo.json", "folder/nested/dashboard3.json")
-	// make sure we don't fail when there is a .keep file in a folder
-	helper.CopyToProvisioningPath(t, "testdata/.keep", "folder/nested/.keep")
-
-	// Trigger and wait for a sync job to finish
-	helper.SyncAndWait(t, repo, nil)
 
 	dashboards, err := helper.DashboardsV1.Resource.List(ctx, metav1.ListOptions{})
 	require.NoError(t, err)
 	require.Equal(t, 3, len(dashboards.Items))
+
+	helper.validateManagedDashboardsFolderMetadata(t, ctx, repo, dashboards.Items)
 
 	folders, err := helper.Folders.Resource.List(ctx, metav1.ListOptions{})
 	require.NoError(t, err)
@@ -118,21 +116,24 @@ func TestIntegrationProvisioning_MoveResources(t *testing.T) {
 
 	helper := runGrafana(t)
 	ctx := context.Background()
-	const repo = "move-test-repo"
-	localTmp := helper.RenderObject(t, "testdata/local-write.json.tmpl", map[string]any{
-		"Name":        repo,
-		"SyncEnabled": true,
-		"SyncTarget":  "instance",
+	repo := "move-test-repo"
+	helper.CreateRepo(t, TestRepo{
+		Name:   repo,
+		Path:   helper.ProvisioningPath,
+		Target: "instance",
+		Copies: map[string]string{
+			"testdata/all-panels.json": "all-panels.json",
+		},
+		ExpectedDashboards: 1,
+		ExpectedFolders:    0,
 	})
-	_, err := helper.Repositories.Resource.Create(ctx, localTmp, metav1.CreateOptions{})
+
+	// Validate the dashboard metadata
+	dashboards, err := helper.DashboardsV1.Resource.List(ctx, metav1.ListOptions{})
 	require.NoError(t, err)
+	require.Equal(t, 1, len(dashboards.Items))
 
-	// Copy test dashboards to the repository path for initial setup
-	const originalDashboard = "all-panels.json"
-	helper.CopyToProvisioningPath(t, "testdata/all-panels.json", originalDashboard)
-
-	// Wait for sync to ensure the dashboard is created in Grafana
-	helper.SyncAndWait(t, repo, nil)
+	helper.validateManagedDashboardsFolderMetadata(t, ctx, repo, dashboards.Items)
 
 	// Verify the original dashboard exists in Grafana (using the UID from all-panels.json)
 	const allPanelsUID = "n1jR8vnnz" // This is the UID from the all-panels.json file
@@ -146,7 +147,7 @@ func TestIntegrationProvisioning_MoveResources(t *testing.T) {
 		// Perform the move operation using helper function
 		resp := helper.postFilesRequest(t, repo, filesPostOptions{
 			targetPath:   targetPath,
-			originalPath: originalDashboard,
+			originalPath: "all-panels.json",
 			message:      "move file without content change",
 		})
 		// nolint:errcheck
@@ -167,7 +168,7 @@ func TestIntegrationProvisioning_MoveResources(t *testing.T) {
 		require.Equal(t, "Panel tests - All panels", title, "content should be preserved")
 
 		// Verify original file no longer exists
-		_, err = helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", originalDashboard)
+		_, err = helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", "all-panels.json")
 		require.Error(t, err, "original file should no longer exist")
 
 		// Verify dashboard still exists in Grafana with same content but may have updated path references
@@ -427,6 +428,17 @@ func TestIntegrationProvisioning_FilesOwnershipProtection(t *testing.T) {
 		ExpectedDashboards: 2, // Total across both repos
 		ExpectedFolders:    2, // Total across both repos
 	})
+
+	allDashboards, err := helper.DashboardsV1.Resource.List(ctx, metav1.ListOptions{})
+	require.NoError(t, err)
+	for _, dashboard := range allDashboards.Items {
+		annotations := dashboard.GetAnnotations()
+		// Expect to be managed by repo1 or repo2
+		managerID := annotations["grafana.app/managerId"]
+		if managerID != repo1 && managerID != repo2 {
+			t.Fatalf("dashboard %s is not managed by repo1 or repo2", dashboard.GetName())
+		}
+	}
 
 	t.Run("CREATE file with UID already owned by different repository - should fail", func(t *testing.T) {
 		// Try to create a dashboard in repo2 that has the same UID as the one in repo1
