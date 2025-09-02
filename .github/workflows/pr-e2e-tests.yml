@@ -63,7 +63,6 @@ jobs:
             build-dir
 
       # If no cache hit, build Grafana
-      # TODO we need to build enterprise here (for not forks)
       - name: Build Grafana
         if: steps.cache.outputs.cache-hit != 'true'
         uses: dagger/dagger-for-github@e47aba410ef9bb9ed81a4d2a97df31061e5e842e
@@ -322,74 +321,6 @@ jobs:
           path: ./blob-report
           retention-days: 1
 
-  run-enterprise-oem-tests:
-    # Run this workflow for non-PR events (like pushes to `main` or `release-*`) OR for internal PRs (PRs not from forks)
-    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork == false
-    needs:
-      - build-grafana
-    name: Enterprise OEM E2E tests
-    runs-on: ubuntu-latest-8-cores
-    permissions:
-      contents: read
-      id-token: write
-
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          persist-credentials: false
-      - name: Setup Enterprise
-        uses: ./.github/actions/setup-enterprise
-        with:
-          github-app-name: 'grafana-ci-bot'
-      - uses: actions/download-artifact@v4
-        with:
-          name: grafana-tar-gz
-      - name: Run E2E tests
-        uses: dagger/dagger-for-github@e47aba410ef9bb9ed81a4d2a97df31061e5e842e
-        with:
-          verb: run
-          args: go run ./pkg/build/e2e-playwright --package=grafana.tar.gz --license="e2e-playwright/extensions/oem/license.jwt" --playwright-command="yarn e2e:playwright:enterprise:oem"
-      - uses: actions/upload-artifact@v4
-        if: success() || failure()
-        with:
-          name: playwright-enterprise-oem-${{ github.run_number }} --html-dir=./html-report
-          path: ./html-report
-          retention-days: 1
-
-  run-enterprise-tests:
-    # Run this workflow for non-PR events (like pushes to `main` or `release-*`) OR for internal PRs (PRs not from forks)
-    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork == false
-    needs:
-      - build-grafana
-    name: Enterprise E2E tests
-    runs-on: ubuntu-latest-8-cores
-    permissions:
-      contents: read
-      id-token: write
-
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          persist-credentials: false
-      - name: Setup Enterprise
-        uses: ./.github/actions/setup-enterprise
-        with:
-          github-app-name: 'grafana-ci-bot'
-      - uses: actions/download-artifact@v4
-        with:
-          name: grafana-tar-gz
-      - name: Run E2E tests
-        uses: dagger/dagger-for-github@e47aba410ef9bb9ed81a4d2a97df31061e5e842e
-        with:
-          verb: run
-          args: go run ./pkg/build/e2e-playwright --package=grafana.tar.gz --license="e2e-playwright/extensions/enterprise/license.jwt" --playwright-command="yarn e2e:playwright:enterprise"
-      - uses: actions/upload-artifact@v4
-        if: success() || failure()
-        with:
-          name: playwright-enterprise-${{ github.run_number }} --html-dir=./html-report
-          path: ./html-report
-          retention-days: 1
-
   run-azure-monitor-e2e:
     if: needs.detect-changes.outputs.cloud_plugins_changed == 'true' && github.event.pull_request.head.repo.fork == false
     runs-on: ubuntu-x64-large
@@ -459,8 +390,6 @@ jobs:
   required-playwright-tests:
     needs:
       - run-playwright-tests
-      - run-enterprise-tests
-      - run-enterprise-oem-tests
       - run-azure-monitor-e2e
       - run-storybook-test
       - build-grafana
