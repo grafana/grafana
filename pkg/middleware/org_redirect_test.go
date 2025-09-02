@@ -72,13 +72,18 @@ func TestOrgRedirectMiddleware(t *testing.T) {
 	})
 
 	middlewareScenario(t, "when redirecting to an invalid path", func(t *testing.T, sc *scenarioContext) {
-		sc.withIdentity(&authn.Identity{})
+		testPaths := []string{
+			url.QueryEscape(`/\example.com`),
+			`/%2fexample.com`,
+		}
+		for _, path := range testPaths {
+			sc.withIdentity(&authn.Identity{})
 
-		path := url.QueryEscape(`/\example.com`)
-		sc.m.Get(url.QueryEscape(path), sc.defaultHandler)
-		sc.fakeReq("GET", fmt.Sprintf("%s?orgId=3", path)).exec()
+			sc.m.Get(url.QueryEscape(path), sc.defaultHandler)
+			sc.fakeReq("GET", fmt.Sprintf("%s?orgId=3", path)).exec()
 
-		require.Equal(t, 404, sc.resp.Code)
+			require.Equal(t, 404, sc.resp.Code, "path: %s", path)
+		}
 	})
 
 	middlewareScenario(t, "works correctly when grafana is served under a subpath", func(t *testing.T, sc *scenarioContext) {
