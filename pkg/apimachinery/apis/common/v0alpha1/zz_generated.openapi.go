@@ -237,6 +237,11 @@ func schema_apimachinery_apis_common_v0alpha1_ScopeFilter(ref common.ReferenceCa
 						},
 					},
 					"values": {
+						VendorExtensible: spec.VendorExtensible{
+							Extensions: spec.Extensions{
+								"x-kubernetes-list-type": "atomic",
+							},
+						},
 						SchemaProps: spec.SchemaProps{
 							Description: "Values is used for operators that require multiple values (e.g. one-of and not-one-of).",
 							Type:        []string{"array"},
@@ -280,18 +285,24 @@ func schema_apimachinery_apis_common_v0alpha1_ScopeSpec(ref common.ReferenceCall
 							Format:  "",
 						},
 					},
-					"description": {
-						SchemaProps: spec.SchemaProps{
-							Default: "",
-							Type:    []string{"string"},
-							Format:  "",
+					"defaultPath": {
+						VendorExtensible: spec.VendorExtensible{
+							Extensions: spec.Extensions{
+								"x-kubernetes-list-type": "atomic",
+							},
 						},
-					},
-					"defaultParent": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Provides a default parent for the scope. This refers to a node in the selector. This is used to display the title next to the selected scope.",
-							Type:        []string{"string"},
-							Format:      "",
+							Description: "Provides a default path for the scope. This refers to a list of nodes in the selector. This is used to display the title next to the selected scope and expand the selector to the proper path. This will override whichever is selected from in the selector. The path is a list of node ids, starting at the direct parent of the selected node towards the root.",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: "",
+										Type:    []string{"string"},
+										Format:  "",
+									},
+								},
+							},
 						},
 					},
 					"filters": {
@@ -313,7 +324,7 @@ func schema_apimachinery_apis_common_v0alpha1_ScopeSpec(ref common.ReferenceCall
 						},
 					},
 				},
-				Required: []string{"title", "description", "filters"},
+				Required: []string{"title"},
 			},
 		},
 		Dependencies: []string{

@@ -52,19 +52,22 @@ type Scope struct {
 }
 
 type ScopeSpec struct {
-	Title       string `json:"title"`
-	Description string `json:"description"`
-	// Provides a default parent for the scope. This refers to a node in the selector. This is used to display the title next to the selected scope.
-	DefaultParent string `json:"defaultParent,omitempty"`
+	Title string `json:"title"`
+	// Provides a default path for the scope. This refers to a list of nodes in the selector. This is used to display the title next to the selected scope and expand the selector to the proper path.
+	// This will override whichever is selected from in the selector.
+	// The path is a list of node ids, starting at the direct parent of the selected node towards the root.
+	// +listType=atomic
+	DefaultPath []string `json:"defaultPath,omitempty"`
 
 	// +listType=atomic
-	Filters []ScopeFilter `json:"filters"`
+	Filters []ScopeFilter `json:"filters,omitempty"`
 }
 
 type ScopeFilter struct {
 	Key   string `json:"key"`
 	Value string `json:"value"`
 	// Values is used for operators that require multiple values (e.g. one-of and not-one-of).
+	// +listType=atomic
 	Values   []string       `json:"values,omitempty"`
 	Operator FilterOperator `json:"operator"`
 }
