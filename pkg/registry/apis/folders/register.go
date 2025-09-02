@@ -188,7 +188,7 @@ func (b *FolderAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.API
 	storage[resourceInfo.StoragePath()] = folderStore
 
 	storage[resourceInfo.StoragePath("parents")] = &subParentsREST{
-		getter: storage[resourceInfo.StoragePath()].(rest.Getter), // Get the parents
+		getter: newParentsGetter(folderStore, folderValidationRules.maxDepth),
 	}
 	storage[resourceInfo.StoragePath("counts")] = &subCountREST{searcher: b.searcher}
 	storage[resourceInfo.StoragePath("access")] = &subAccessREST{b.folderSvc, b.ac}
