@@ -12085,6 +12085,7 @@
     "selector": {
       "apply": "Tillämpa",
       "cancel": "Avbryt",
+      "error-title": "",
       "input": {
         "placeholder": "Välj omfattningar …",
         "removeAll": "Ta bort alla omfattningar"

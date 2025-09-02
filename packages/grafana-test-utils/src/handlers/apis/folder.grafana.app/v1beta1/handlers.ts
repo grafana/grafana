@@ -1,8 +1,17 @@
+import { Chance } from 'chance';
 import { HttpResponse, http } from 'msw';
 
 import { wellFormedTree } from '../../../../fixtures/folders';
+import { getErrorResponse } from '../../../helpers';
 
 const [mockTree] = wellFormedTree();
+
+const baseResponse = {
+  kind: 'Folder',
+  apiVersion: 'folder.grafana.app/v1beta1',
+};
+
+const folderNotFoundError = getErrorResponse('folder not found', 404);
 
 const getFolderHandler = () =>
   http.get<{ folderUid: string; namespace: string }>(
@@ -14,22 +23,11 @@ const getFolderHandler = () =>
       });
 
       if (!response) {
-        return HttpResponse.json(
-          {
-            kind: 'Status',
-            apiVersion: 'v1',
-            metadata: {},
-            status: 'Failure',
-            message: 'folder not found',
-            code: 404,
-          },
-          { status: 404 }
-        );
+        return HttpResponse.json(folderNotFoundError, { status: 404 });
       }
 
       return HttpResponse.json({
-        kind: 'Folder',
-        apiVersion: 'folder.grafana.app/v1beta1',
+        ...baseResponse,
         metadata: {
           name: response.item.uid,
           namespace,
@@ -63,14 +61,7 @@ const getFolderParentsHandler = () =>
         return item.kind === 'folder' && item.uid === folderUid;
       });
       if (!folder || folder.item.kind !== 'folder') {
-        return HttpResponse.json({
-          kind: 'Status',
-          apiVersion: 'v1',
-          metadata: {},
-          status: 'Failure',
-          message: 'folder not found',
-          code: 404,
-        });
+        return HttpResponse.json(folderNotFoundError, { status: 404 });
       }
 
       const findParents = (parents: Array<(typeof mockTree)[number]>, folderUid?: string) => {
@@ -106,12 +97,59 @@ const getFolderParentsHandler = () =>
       }
 
       return HttpResponse.json({
+        ...baseResponse,
         kind: 'FolderInfoList',
-        apiVersion: 'folder.grafana.app/v1beta1',
         metadata: {},
         items: mapped,
       });
     }
   );
 
-export default [getFolderHandler(), getFolderParentsHandler()];
+// TODO: Pull this from common API types rather than partially redefining here
+type PartialFolderPayload = { spec: { title: string }; metadata: { annotations: Record<string, string> } };
+
+const createFolderHandler = () =>
+  http.post<{ namespace: string }, PartialFolderPayload>(
+    '/apis/folder.grafana.app/v1beta1/namespaces/:namespace/folders',
+    async ({ params, request }) => {
+      const { namespace } = params;
+      const body = await request.json();
+      const title = body?.spec?.title;
+      if (!body || !title) {
+        return HttpResponse.json(getErrorResponse('folder title cannot be empty', 400), { status: 400 });
+      }
+
+      const parentUid = body?.metadata?.annotations?.['grafana.app/folder'];
+      const random = Chance(title);
+      const name = random.string({ length: 10 });
+      const uid = random.string({ length: 45 });
+      const id = random.integer({ min: 1, max: 1000 });
+
+      return HttpResponse.json({
+        ...baseResponse,
+        metadata: {
+          name,
+          namespace,
+          uid,
+          resourceVersion: '1756207979831',
+          generation: 1,
+          creationTimestamp: '2025-08-26T11:32:59Z',
+          labels: {
+            'grafana.app/deprecatedInternalID': id,
+          },
+          annotations: {
+            'grafana.app/createdBy': 'user:1',
+            'grafana.app/folder': parentUid,
+            'grafana.app/updatedBy': 'user:1',
+            'grafana.app/updatedTimestamp': '2025-08-26T11:32:59Z',
+          },
+        },
+        spec: {
+          title,
+          description: '',
+        },
+        status: {},
+      });
+    }
+  );
+export default [getFolderHandler(), getFolderParentsHandler(), createFolderHandler()];

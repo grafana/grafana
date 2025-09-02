@@ -4691,6 +4691,7 @@
       "panel-title": "Change panel title",
       "paste-panel": "Paste panel",
       "remove": "Remove {{typeName}}",
+      "row-title": "Change row title",
       "switch-layout": "Switch layout"
     },
     "edit-pane": {
@@ -11163,7 +11164,7 @@
       "label-workflow": "Workflow",
       "placeholder-branch": "Select or enter branch name",
       "placeholder-new-branch": "Enter new branch name",
-      "suffix-configured-branch": "(Configured branch)"
+      "suffix-configured-branch": "Configured branch"
     }
   },
   "provisioned-resource-preview-banner": {
@@ -12085,6 +12086,7 @@
     "selector": {
       "apply": "Apply",
       "cancel": "Cancel",
+      "error-title": "An unexpected error happened",
       "input": {
         "placeholder": "Select scopes...",
         "removeAll": "Remove all scopes"

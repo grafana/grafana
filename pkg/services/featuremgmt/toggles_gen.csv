@@ -248,3 +248,5 @@ newClickhouseConfigPageDesign,privatePreview,@grafana/partner-datasources,false,
 unifiedStorageSearchAfterWriteExperimentalAPI,experimental,@grafana/search-and-storage,false,true,false
 teamFolders,experimental,@grafana/grafana-search-navigate-organise,false,false,false
 alertingTriage,experimental,@grafana/alerting-squad,false,false,true
+graphiteBackendMode,privatePreview,@grafana/partner-datasources,false,false,false
+azureResourcePickerUpdates,preview,@grafana/partner-datasources,false,false,true

@@ -12163,6 +12163,7 @@
     "selector": {
       "apply": "Použít",
       "cancel": "Zrušit",
+      "error-title": "",
       "input": {
         "placeholder": "Vyberte rozsahy…",
         "removeAll": "Odebrat všechny rozsahy"

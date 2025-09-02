@@ -1002,4 +1002,12 @@ const (
 	// FlagAlertingTriage
 	// Enables the alerting triage feature
 	FlagAlertingTriage = "alertingTriage"
+
+	// FlagGraphiteBackendMode
+	// Enables the Graphite data source full backend mode
+	FlagGraphiteBackendMode = "graphiteBackendMode"
+
+	// FlagAzureResourcePickerUpdates
+	// Enables the updated Azure Monitor resource picker
+	FlagAzureResourcePickerUpdates = "azureResourcePickerUpdates"
 )

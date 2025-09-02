@@ -5,8 +5,8 @@ import (
 	"fmt"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/apps/secret/pkg/decrypt"
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
-	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 )
 
 type Decrypter = func(r *provisioning.Repository) SecureValues
@@ -17,7 +17,7 @@ type SecureValues interface {
 }
 
 type secureValues struct {
-	svc       contracts.DecryptService
+	svc       decrypt.DecryptService
 	names     provisioning.SecureValues
 	namespace string
 }
@@ -52,7 +52,7 @@ func (s *secureValues) WebhookSecret(ctx context.Context) (common.RawSecureValue
 	return s.get(ctx, s.names.WebhookSecret)
 }
 
-func DecryptService(svc contracts.DecryptService) Decrypter {
+func ProvideDecrypter(svc decrypt.DecryptService) Decrypter {
 	return func(r *provisioning.Repository) SecureValues {
 		return &secureValues{svc: svc, names: r.Secure, namespace: r.Namespace}
 	}
