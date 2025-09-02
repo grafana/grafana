@@ -183,8 +183,10 @@ func (b *FolderAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.API
 			return err
 		}
 
-		store.BeginCreate = b.beginCreate
-		store.BeginUpdate = b.beginUpdate
+		if b.features.IsEnabledGlobally(featuremgmt.FlagZanzana) {
+			store.BeginCreate = b.beginCreate
+			store.BeginUpdate = b.beginUpdate
+		}
 
 		dw, err := dualWriteBuilder(resourceInfo.GroupResource(), legacyStore, store)
 		if err != nil {
