@@ -22,20 +22,14 @@ export const stateHistoryApi = alertingApi.injectEndpoints({
           from,
           to,
           limit,
+          previous,
+          current,
         };
 
         if (labels) {
           Object.entries(labels).forEach(([key, value]) => {
             params[`labels_${key}`] = value;
           });
-        }
-
-        if (previous) {
-          params.previous = previous;
-        }
-
-        if (current) {
-          params.current = current;
         }
 
         return {
