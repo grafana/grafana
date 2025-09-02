@@ -1,14 +1,6 @@
 import { ReactNode } from 'react';
 
-import {
-  DataFrame,
-  Field,
-  FieldType,
-  formattedValueToString,
-  InterpolateFunction,
-  LinkModel,
-  dateTime,
-} from '@grafana/data';
+import { DataFrame, Field, FieldType, formattedValueToString, InterpolateFunction, LinkModel } from '@grafana/data';
 import { SortOrder, TooltipDisplayMode } from '@grafana/schema/dist/esm/common/common.gen';
 import {
   VizTooltipContent,
@@ -52,12 +44,12 @@ export interface TimeSeriesTooltipProps {
   adHocFilters?: AdHocFilterModel[];
 }
 
-function getTooltipTimeText(timestamp: number, field: Field) {
+function getTooltipTimeText(timestamp: number, field: Field, xField: Field) {
   const tc = field.config.custom?.timeCompare;
   if (tc?.isTimeShiftQuery) {
     timestamp += tc.diffMs;
   }
-  return dateTime(timestamp).utc().format('YYYY-MM-DD HH:mm:ss');
+  return formattedValueToString(xField.display!(timestamp));
 }
 
 export const TimeSeriesTooltip = ({
@@ -80,7 +72,7 @@ export const TimeSeriesTooltip = ({
   const hoveredField = series.fields[seriesIdx ?? 1];
   const xVal =
     xField.type === FieldType.time
-      ? getTooltipTimeText(timestamp, hoveredField)
+      ? getTooltipTimeText(timestamp, hoveredField, xField)
       : formattedValueToString(xField.display!(timestamp));
 
   const contentItems = getContentItems(
