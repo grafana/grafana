@@ -288,7 +288,7 @@
     "@grafana/llm": "0.22.1",
     "@grafana/monaco-logql": "^0.0.8",
     "@grafana/o11y-ds-frontend": "workspace:*",
-    "@grafana/plugin-ui": "0.10.9",
+    "@grafana/plugin-ui": "^0.10.10",
     "@grafana/prometheus": "workspace:*",
     "@grafana/runtime": "workspace:*",
     "@grafana/scenes": "6.32.0",
