@@ -4,7 +4,6 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana/apps/dashboard/pkg/migration/schemaversion"
-	"github.com/grafana/grafana/apps/dashboard/pkg/migration/testutil"
 )
 
 func TestV24(t *testing.T) {
@@ -819,5 +818,5 @@ func TestV24(t *testing.T) {
 		},
 	}
 
-	runMigrationTests(t, tests, schemaversion.V24(testutil.GetTestPanelProvider()))
+	runMigrationTests(t, tests, schemaversion.V24)
 }

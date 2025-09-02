@@ -47,23 +47,14 @@ import (
 //	  ]
 //	}
 type v28Migrator struct {
-	panelProvider    PanelPluginInfoProvider
-	panelPlugins     []PanelPluginInfo
+	// panelProvider    PanelPluginInfoProvider
+	// panelPlugins     []PanelPluginInfo
 	statPanelVersion string // Cached stat panel version
 }
 
-func V28(panelProvider PanelPluginInfoProvider) SchemaVersionMigrationFunc {
-	// Get stat panel version once during initialization
-	statPanelPlugin := panelProvider.GetPanelPlugin("stat")
-	statPanelVersion := ""
-	if statPanelPlugin.ID != "" {
-		statPanelVersion = statPanelPlugin.Version
-	}
-
+func V28() SchemaVersionMigrationFunc {
 	migrator := &v28Migrator{
-		panelProvider:    panelProvider,
-		panelPlugins:     panelProvider.GetPanels(),
-		statPanelVersion: statPanelVersion,
+		statPanelVersion: "", // FIXME: what is the fixed version at 28
 	}
 
 	return func(dashboard map[string]interface{}) error {

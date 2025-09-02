@@ -8,8 +8,8 @@ import (
 )
 
 // Initialize provides the migrator singleton with required dependencies and builds the map of migrations.
-func Initialize(dsInfoProvider schemaversion.DataSourceInfoProvider, panelProvider schemaversion.PanelPluginInfoProvider) {
-	migratorInstance.init(dsInfoProvider, panelProvider)
+func Initialize(dsInfoProvider schemaversion.DataSourceInfoProvider) {
+	migratorInstance.init(dsInfoProvider)
 }
 
 // Migrate migrates the given dashboard to the target version.
@@ -31,9 +31,9 @@ type migrator struct {
 	migrations map[int]schemaversion.SchemaVersionMigrationFunc
 }
 
-func (m *migrator) init(dsInfoProvider schemaversion.DataSourceInfoProvider, panelProvider schemaversion.PanelPluginInfoProvider) {
+func (m *migrator) init(dsInfoProvider schemaversion.DataSourceInfoProvider) {
 	initOnce.Do(func() {
-		m.migrations = schemaversion.GetMigrations(dsInfoProvider, panelProvider)
+		m.migrations = schemaversion.GetMigrations(dsInfoProvider)
 		close(m.ready)
 	})
 }

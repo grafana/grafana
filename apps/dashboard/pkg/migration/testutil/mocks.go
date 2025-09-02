@@ -6,10 +6,6 @@ import (
 
 type TestDataSourceProvider struct{}
 
-type TestPanelProvider struct {
-	customPanels []schemaversion.PanelPluginInfo
-}
-
 func (m *TestDataSourceProvider) GetDataSourceInfo() []schemaversion.DataSourceInfo {
 	return []schemaversion.DataSourceInfo{
 		{
@@ -63,54 +59,7 @@ func (m *TestDataSourceProvider) GetDataSourceInfo() []schemaversion.DataSourceI
 	}
 }
 
-func (m *TestPanelProvider) GetPanels() []schemaversion.PanelPluginInfo {
-	if len(m.customPanels) > 0 {
-		return m.customPanels
-	}
-
-	// Default panels
-	return []schemaversion.PanelPluginInfo{
-		{
-			ID:      "gauge",
-			Version: "1.0.0",
-		},
-		{
-			ID:      "stat",
-			Version: "1.0.0",
-		},
-		{
-			ID:      "table",
-			Version: "1.0.0",
-		},
-		// Note: grafana-singlestat-panel is not included to match frontend test environment
-		// This ensures both frontend and backend migrations produce the same result
-	}
-}
-
-func (m *TestPanelProvider) GetPanelPlugin(id string) schemaversion.PanelPluginInfo {
-	// check if it exists in the list of mocked panels
-	for _, panel := range m.GetPanels() {
-		if panel.ID == id {
-			return panel
-		}
-	}
-
-	return schemaversion.PanelPluginInfo{}
-}
-
 // GetTestDataSourceProvider returns a singleton instance of the test provider
 func GetTestDataSourceProvider() *TestDataSourceProvider {
 	return &TestDataSourceProvider{}
-}
-
-// GetTestPanelProvider returns a singleton instance of the test panel provider
-func GetTestPanelProvider() *TestPanelProvider {
-	return &TestPanelProvider{}
-}
-
-// GetTestPanelProviderWithCustomPanels returns a test panel provider with custom panels
-func GetTestPanelProviderWithCustomPanels(customPanels []schemaversion.PanelPluginInfo) *TestPanelProvider {
-	return &TestPanelProvider{
-		customPanels: customPanels,
-	}
 }

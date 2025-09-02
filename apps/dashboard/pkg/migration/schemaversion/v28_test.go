@@ -4,7 +4,6 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana/apps/dashboard/pkg/migration/schemaversion"
-	"github.com/grafana/grafana/apps/dashboard/pkg/migration/testutil"
 )
 
 func TestV28(t *testing.T) {
@@ -784,8 +783,6 @@ func TestV28(t *testing.T) {
 		},
 	}
 
-	runMigrationTests(t, tests, schemaversion.V28(testutil.GetTestPanelProvider()))
-	runMigrationTests(t, errorTests, schemaversion.V28(testutil.GetTestPanelProviderWithCustomPanels([]schemaversion.PanelPluginInfo{
-		{ID: "fake-plugin", Version: "1.0.0"},
-	})))
+	runMigrationTests(t, tests, schemaversion.V28())
+	runMigrationTests(t, errorTests, schemaversion.V28())
 }
