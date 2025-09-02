@@ -19,7 +19,7 @@
     "@grafana/data": "12.2.0-pre",
     "@grafana/e2e-selectors": "12.2.0-pre",
     "@grafana/i18n": "12.2.0-pre",
-    "@grafana/plugin-ui": "0.10.9",
+    "@grafana/plugin-ui": "^0.10.10",
     "@grafana/runtime": "12.2.0-pre",
     "@grafana/ui": "12.2.0-pre",
     "@react-awesome-query-builder/ui": "6.6.15",
