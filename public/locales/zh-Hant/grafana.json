@@ -12046,6 +12046,7 @@
     "selector": {
       "apply": "套用",
       "cancel": "取消",
+      "error-title": "",
       "input": {
         "placeholder": "選取範圍…",
         "removeAll": "移除所有範圍"

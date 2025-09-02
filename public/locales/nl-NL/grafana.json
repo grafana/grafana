@@ -12085,6 +12085,7 @@
     "selector": {
       "apply": "Toepassen",
       "cancel": "Annuleren",
+      "error-title": "",
       "input": {
         "placeholder": "Scopes selecteren ...",
         "removeAll": "Alle scopes verwijderen"

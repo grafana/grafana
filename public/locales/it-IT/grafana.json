@@ -12085,6 +12085,7 @@
     "selector": {
       "apply": "Applica",
       "cancel": "Annulla",
+      "error-title": "",
       "input": {
         "placeholder": "Seleziona gli ambiti...",
         "removeAll": "Rimuovi tutti gli ambiti"

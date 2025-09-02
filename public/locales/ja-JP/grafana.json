@@ -12046,6 +12046,7 @@
     "selector": {
       "apply": "適用",
       "cancel": "キャンセル",
+      "error-title": "",
       "input": {
         "placeholder": "スコープを選択...",
         "removeAll": "すべてのスコープを削除"

@@ -12163,6 +12163,7 @@
     "selector": {
       "apply": "Применить",
       "cancel": "Отмена",
+      "error-title": "",
       "input": {
         "placeholder": "Выбрать области...",
         "removeAll": "Удалить все области"

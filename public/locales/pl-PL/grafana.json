@@ -12163,6 +12163,7 @@
     "selector": {
       "apply": "Zastosuj",
       "cancel": "Anuluj",
+      "error-title": "",
       "input": {
         "placeholder": "Wybierz zakresy…",
         "removeAll": "Usuń wszystkie zakresy"

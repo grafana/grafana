@@ -12085,6 +12085,7 @@
     "selector": {
       "apply": "Aplicar",
       "cancel": "Cancelar",
+      "error-title": "",
       "input": {
         "placeholder": "Selecionar âmbitos...",
         "removeAll": "Remover todos os âmbitos"
