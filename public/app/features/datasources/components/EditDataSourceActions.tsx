@@ -90,6 +90,10 @@ export function EditDataSourceActions({ uid }: Props) {
     </Menu>
   );
 
+  if (!dataSource.uid) {
+    return null;
+  }
+
   return (
     <>
       <FavoriteButton uid={uid} />
