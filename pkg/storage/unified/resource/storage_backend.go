@@ -467,18 +467,20 @@ func (k *kvStorageBackend) ListModifiedSince(ctx context.Context, key Namespaced
 	// Generate a new resource version for the list
 	listRV := k.snowflake.Generate().Int64()
 
-	// TODO
-	// sinceRvTimestamp := snowflake.ID(sinceRv).Time()
-	// sinceTime := time.Unix(0, (sinceRvTimestamp+snowflake.Epoch)*int64(time.Millisecond))
-	// age := time.Since(sinceTime)
-	// if age < time.Hour {
-	// 	// if yes -> listkeyssince (implement it) to get all events since sinceRv - loopback period
-	// 	k.eventStore.ListKeysSince(ctx, sinceRv)
-	// } else {
-	// 	// if no -> use datastore to get all objects since sinceRv - loopback period
-	// }
+	// Check if sinceRv is older than 1 hour
+	sinceRvTimestamp := snowflake.ID(sinceRv).Time()
+	sinceTime := time.Unix(0, sinceRvTimestamp*int64(time.Millisecond))
+	sinceRvAge := time.Since(sinceTime)
 
-	return listRV, k.listModifiedSinceDataStore(ctx, key, sinceRv)
+	if sinceRvAge > time.Hour {
+		k.log.Debug("ListModifiedSince using data store", "sinceRv", sinceRv, "sinceRvAge", sinceRvAge)
+		// Recent changes: use data store for efficiency
+		return listRV, k.listModifiedSinceDataStore(ctx, key, sinceRv)
+	}
+
+	k.log.Debug("ListModifiedSince using event store", "sinceRv", sinceRv, "sinceRvAge", sinceRvAge)
+	// if no -> use datastore to get all objects since sinceRv - loopback period
+	return listRV, k.listModifiedSinceEventStore(ctx, key, sinceRv)
 }
 
 func convertEventType(action DataAction) resourcepb.WatchEvent_Type {
@@ -585,6 +587,8 @@ func (k *kvStorageBackend) listModifiedSinceDataStore(ctx context.Context, key N
 // Event doesn't seem to have Value???
 func (k *kvStorageBackend) listModifiedSinceEventStore(ctx context.Context, key NamespacedResource, sinceRv int64) iter.Seq2[*ModifiedResource, error] {
 	return func(yield func(*ModifiedResource, error) bool) {
+		// store all events ordered by RV for the given tenant here
+		evts := make([]*ModifiedResource, 0)
 		for evtKeyStr, err := range k.eventStore.ListKeysSince(ctx, sinceRv) {
 			if err != nil {
 				yield(&ModifiedResource{}, err)
@@ -599,6 +603,47 @@ func (k *kvStorageBackend) listModifiedSinceEventStore(ctx context.Context, key 
 
 			if evtKey.Group != key.Group || evtKey.Resource != key.Resource || evtKey.Namespace != key.Namespace {
 				continue
+			}
+
+			evts = append(evts, &ModifiedResource{
+				Key: resourcepb.ResourceKey{
+					Group:     key.Group,
+					Resource:  key.Resource,
+					Namespace: key.Namespace,
+					Name:      evtKey.Name,
+				},
+				ResourceVersion: evtKey.ResourceVersion,
+				// Action:          convertEventType(evtKey.Action),
+			})
+		}
+
+		// we only care about the latest revision of every resource in the list
+		seen := make(map[string]struct{})
+		for i := len(evts) - 1; i >= 0; i -= 1 {
+			evt := evts[i]
+
+			if _, ok := seen[evt.Key.Name]; ok {
+				continue
+			}
+
+			seen[evt.Key.Name] = struct{}{}
+
+			value, err := k.getValueFromDataStore(ctx, DataKey{
+				Namespace:       evt.Key.Namespace,
+				Group:           evt.Key.Group,
+				Resource:        evt.Key.Resource,
+				ResourceVersion: evt.ResourceVersion,
+				Name:            evt.Key.Name,
+			})
+
+			if err != nil {
+				yield(&ModifiedResource{}, err)
+				return
+			}
+
+			evt.Value = value
+			if !yield(evt, nil) {
+				return
 			}
 		}
 	}
