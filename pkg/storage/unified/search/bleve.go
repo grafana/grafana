@@ -203,12 +203,12 @@ func (b *bleveBackend) updateIndexSizeMetric(indexPath string) {
 // If path is empty, creates an in-memory index.
 // If path is not empty, creates a file-based index at the specified path.
 func newBleveIndex(path string, mapper mapping.IndexMapping) (bleve.Index, error) {
+	kvstore := bleve.Config.DefaultKVStore
 	if path == "" {
-		// Create in-memory index
-		return bleve.NewUsing("", mapper, bleve.Config.DefaultIndexType, bleve.Config.DefaultMemKVStore, nil)
+		// use in-memory kvstore
+		kvstore = bleve.Config.DefaultMemKVStore
 	}
-	// Create file-based index with explicit configuration to match in-memory version
-	return bleve.NewUsing(path, mapper, bleve.Config.DefaultIndexType, bleve.Config.DefaultKVStore, nil)
+	return bleve.NewUsing(path, mapper, bleve.Config.DefaultIndexType, kvstore, nil)
 }
 
 // BuildIndex builds an index from scratch or retrieves it from the filesystem.
