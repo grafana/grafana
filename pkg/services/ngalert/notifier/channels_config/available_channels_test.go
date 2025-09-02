@@ -54,6 +54,7 @@ func TestGetSecretKeysForContactPointType(t *testing.T) {
 		{receiverType: "sns", version: "v1", expectedSecretFields: []string{"sigv4.access_key", "sigv4.secret_key"}},
 		{receiverType: "mqtt", version: "v1", expectedSecretFields: []string{"password", "tlsConfig.caCertificate", "tlsConfig.clientCertificate", "tlsConfig.clientKey"}},
 		{receiverType: "jira", version: "v1", expectedSecretFields: []string{"user", "password", "api_token"}},
+		// Mimir integrations
 		{receiverType: "victorops", version: "v0", expectedSecretFields: append([]string{"api_key"}, httpConfigSecrets...)},
 		{receiverType: "sns", version: "v0", expectedSecretFields: append([]string{"sigv4.SecretKey"}, httpConfigSecrets...)},
 		{receiverType: "telegram", version: "v0", expectedSecretFields: append([]string{"token"}, httpConfigSecrets...)},
@@ -155,9 +156,12 @@ func TestPostableMimirReceiverToIntegrations(t *testing.T) {
 
 			require.NoError(t, err)
 			var secrets []string
+			// Trying all available http configs to ensure that we extract as many secrets as possible.
 			for option := range maps.Keys(notifytest.ValidMimirHTTPConfigs) {
 				cfg, err := notifytest.GetMimirIntegrationForType(configType, option)
 				require.NoError(t, err)
+
+				// leverage the fact that secret fields are always masked with "<secret>"
 				data, err := json.Marshal(cfg)
 				require.NoError(t, err)
 				m := map[string]any{}
