@@ -4544,6 +4544,12 @@
       "overwrite": "覆寫",
       "title-plugin-dashboard": "外掛程式儀表板"
     },
+    "controls": {
+      "menu": {
+        "aria-label": "",
+        "title": ""
+      }
+    },
     "dash-nav": {
       "on-open-snapshot-original": {
         "confirmText": {
@@ -5821,11 +5827,6 @@
         "transparent-background": "透明背景"
       }
     },
-    "get-workflow-options": {
-      "label": {
-        "push-to-a-new-branch": "推送至新分支"
-      }
-    },
     "group-by-variable-form": {
       "alert-not-supported": "此資料來源不支援依變數分組",
       "description-enables-users-custom-values": "使用者能夠將自訂值新增至清單",
@@ -6920,11 +6921,6 @@
       "dragging-a-divider": "拖曳分隔線",
       "dragging-a-sub-region": "拖曳子區域",
       "value": "數值：{{ dividerPos }}"
-    },
-    "drilldownInfo": {
-      "action": "前往 Grafana Drilldown",
-      "description": "正在尋找 Grafana Explore 應用程式嗎？現在稱之為 Grafana Drilldown 應用程式，可在<1>功能表 > 詳細資料</1>下方找到",
-      "title": "Explore 指標、日誌、追蹤和設定檔已移動！"
     },
     "drop-down-menu": {
       "aria-label-links": "連結",
@@ -11126,11 +11122,16 @@
     "save-or-delete-resource-shared-fields": {
       "comment-placeholder-describe-changes-optional": "新增備註以描述您的變更（選填）",
       "description-branch-name-in-git-hub": "GitHub 中的分支名稱",
+      "description-file-path": "",
+      "description-folder-path": "",
       "description-inside-repository": "",
       "label-branch": "分支",
       "label-comment": "評論",
       "label-path": "路徑",
-      "label-workflow": "工作流程"
+      "label-workflow": "工作流程",
+      "placeholder-branch": "",
+      "placeholder-new-branch": "",
+      "suffix-configured-branch": ""
     }
   },
   "provisioned-resource-preview-banner": {
@@ -11661,6 +11662,10 @@
       "button-previous": "上一個",
       "button-submitting": "正在提交…",
       "error-instance-repository-exists": "執行個體儲存庫已存在"
+    },
+    "workflow-options-label": {
+      "push-to-a-new-branch": "",
+      "push-to-existing-branch": ""
     }
   },
   "public-dashboard": {
@@ -12041,6 +12046,7 @@
     "selector": {
       "apply": "套用",
       "cancel": "取消",
+      "error-title": "",
       "input": {
         "placeholder": "選取範圍…",
         "removeAll": "移除所有範圍"
@@ -12766,6 +12772,7 @@
     "name-fields": "欄位",
     "name-frozen-columns": "",
     "name-hide-in-table": "在表格中隱藏",
+    "name-max-height": "",
     "name-min-column-width": "最小欄寬",
     "name-show-table-footer": "顯示表格頁尾",
     "name-show-table-header": "顯示表格頁首",
@@ -12775,6 +12782,7 @@
     "name-wrap-text": "",
     "placeholder-column-width": "自動",
     "placeholder-fields": "所有數值欄位",
+    "placeholder-max-height": "",
     "tooltip-placement-options": {
       "label-auto": "",
       "label-bottom": "",
