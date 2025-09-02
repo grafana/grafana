@@ -106,3 +106,52 @@ func TestToV0ResourcePermissions(t *testing.T) {
 		require.Equal(t, "view", perm.Verb)
 	})
 }
+
+func TestParseScope(t *testing.T) {
+	backend := setupBackendNoDB(t)
+
+	tests := []struct {
+		name        string
+		scope       string
+		expected    *groupResourceName
+		expectError error
+	}{
+		{
+			name:  "valid scope",
+			scope: "dashboards:uid:dash1",
+			expected: &groupResourceName{
+				Group:    "dashboard.grafana.app",
+				Resource: "dashboards",
+				Name:     "dash1",
+			},
+		},
+		{
+			name:        "invalid scope format",
+			scope:       "dashboards:someotherformat",
+			expected:    nil,
+			expectError: errInvalidScope,
+		},
+		{
+			name:        "unknown group resource",
+			scope:       "unknown:uid:u1",
+			expected:    nil,
+			expectError: errUnknownGroupResource,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result, err := backend.parseScope(tt.scope)
+			if tt.expectError != nil {
+				require.ErrorIs(t, err, tt.expectError)
+				return
+			}
+
+			require.NoError(t, err)
+			require.NotNil(t, result)
+			require.Equal(t, tt.expected.Group, result.Group)
+			require.Equal(t, tt.expected.Resource, result.Resource)
+			require.Equal(t, tt.expected.Name, result.Name)
+		})
+	}
+}

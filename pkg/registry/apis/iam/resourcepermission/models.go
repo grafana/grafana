@@ -2,6 +2,7 @@ package resourcepermission
 
 import (
 	"errors"
+	"fmt"
 	"strings"
 	"time"
 
@@ -20,24 +21,6 @@ var (
 
 	defaultLevels = []string{"view", "edit", "admin"}
 )
-
-type groupResourceName struct {
-	Group    string
-	Resource string
-	Name     string
-}
-
-func (g *groupResourceName) string() string {
-	return g.Group + "-" + g.Resource + "-" + g.Name
-}
-
-func (g *groupResourceName) v0alpha1() v0alpha1.ResourcePermissionspecResource {
-	return v0alpha1.ResourcePermissionspecResource{
-		ApiGroup: g.Group,
-		Resource: g.Resource,
-		Name:     g.Name,
-	}
-}
 
 type ListResourcePermissionsQuery struct {
 	Scope      string
@@ -114,4 +97,38 @@ func (s *ResourcePermSqlBackend) toV0ResourcePermissions(permsByResource map[gro
 	}
 
 	return resourcePermissions, nil
+}
+
+type groupResourceName struct {
+	Group    string
+	Resource string
+	Name     string
+}
+
+func (g *groupResourceName) string() string {
+	return g.Group + "-" + g.Resource + "-" + g.Name
+}
+
+func (g *groupResourceName) v0alpha1() v0alpha1.ResourcePermissionspecResource {
+	return v0alpha1.ResourcePermissionspecResource{
+		ApiGroup: g.Group,
+		Resource: g.Resource,
+		Name:     g.Name,
+	}
+}
+
+func (s *ResourcePermSqlBackend) parseScope(scope string) (*groupResourceName, error) {
+	parts := strings.SplitN(scope, ":", 3)
+	if len(parts) != 3 {
+		return nil, fmt.Errorf("%w: %s", errInvalidScope, scope)
+	}
+	gr, ok := s.reverseMappers[parts[0]]
+	if !ok {
+		return nil, fmt.Errorf("%w: %s", errUnknownGroupResource, parts[0])
+	}
+	return &groupResourceName{
+		Group:    gr.Group,
+		Resource: gr.Resource,
+		Name:     parts[2],
+	}, nil
 }

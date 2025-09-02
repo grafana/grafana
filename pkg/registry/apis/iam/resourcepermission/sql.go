@@ -13,22 +13,6 @@ import (
 // List
 
 // Get
-func (s *ResourcePermSqlBackend) parseScope(scope string) (*groupResourceName, error) {
-	parts := strings.SplitN(scope, ":", 3)
-	if len(parts) != 3 {
-		return nil, fmt.Errorf("%w: %s", errInvalidScope, scope)
-	}
-	gr, ok := s.reverseMappers[parts[0]]
-	if !ok {
-		return nil, fmt.Errorf("%w: %s", errUnknownGroupResource, parts[0])
-	}
-	return &groupResourceName{
-		Group:    gr.Group,
-		Resource: gr.Resource,
-		Name:     parts[2],
-	}, nil
-}
-
 func (s *ResourcePermSqlBackend) getResourcePermissions(ctx context.Context, sql *legacysql.LegacyDatabaseHelper, query *ListResourcePermissionsQuery) (map[groupResourceName][]flatResourcePermission, error) {
 	rawQuery, args, err := buildListResourcePermissionsQueryFromTemplate(sql, query)
 	if err != nil {
