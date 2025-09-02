@@ -2,12 +2,7 @@ import { screen, render } from '@testing-library/react';
 import { useEffect } from 'react';
 import { Provider } from 'react-redux';
 
-import {
-  DataSourceJsonData,
-  DataSourceSettings,
-  PluginExtensionDataSourceConfigContext,
-  PluginState,
-} from '@grafana/data';
+import { DataSourceJsonData, PluginExtensionDataSourceConfigContext, PluginState } from '@grafana/data';
 import { setPluginComponentsHook, setPluginLinksHook } from '@grafana/runtime';
 import { createComponentWithMeta } from 'app/features/plugins/extensions/usePluginComponents';
 import { configureStore } from 'app/store/configureStore';
