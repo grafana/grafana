@@ -99,9 +99,8 @@ export class DashboardMigrator {
     const oldVersion = this.dashboard.schemaVersion;
     const panelUpgrades: PanelSchemeUpgradeHandler[] = [];
     const finalTargetVersion = targetSchemaVersion || DASHBOARD_SCHEMA_VERSION;
-    this.dashboard.schemaVersion = finalTargetVersion;
 
-    if (oldVersion === this.dashboard.schemaVersion) {
+    if (oldVersion === finalTargetVersion) {
       return;
     }
 
@@ -937,6 +936,12 @@ export class DashboardMigrator {
      * Your migration should go below the previous
      * block and above this (hopefully) helpful message.
      */
+
+    // Update schema version after all migrations (both dashboard-level and panel-level)
+    // Only update if we're migrating to a higher version
+    if (finalTargetVersion > oldVersion) {
+      this.dashboard.schemaVersion = finalTargetVersion;
+    }
 
     if (panelUpgrades.length === 0) {
       return;

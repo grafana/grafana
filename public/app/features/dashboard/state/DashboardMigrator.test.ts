@@ -2533,16 +2533,16 @@ describe('when migrating to specific target versions', () => {
     expect(model.schemaVersion).toBe(DASHBOARD_SCHEMA_VERSION);
   });
 
-  it('should always set schema version to target version even when lower than current', () => {
-    const dashboard = {
-      panels: [],
-      schemaVersion: 25,
-    };
-
+  it('should not change schema version when target version equals current schema version', () => {
+    const dashboard = { panels: [], schemaVersion: 20 };
     const model = new DashboardModel(dashboard, undefined, { targetSchemaVersion: 20 });
-
-    // Note: Current implementation always sets schema version to target version
-    // This might be intentional for testing purposes
     expect(model.schemaVersion).toBe(20);
+  });
+
+  it('should not change schema version when target version is lower than current', () => {
+    const dashboard = { panels: [], schemaVersion: 25 };
+    const model = new DashboardModel(dashboard, undefined, { targetSchemaVersion: 20 });
+    // Schema version should remain unchanged when no migrations are needed
+    expect(model.schemaVersion).toBe(25);
   });
 });

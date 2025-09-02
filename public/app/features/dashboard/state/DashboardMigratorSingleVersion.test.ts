@@ -1,15 +1,18 @@
-import { readdirSync, readFileSync } from 'fs';
+import { readFileSync } from 'fs';
 import path from 'path';
-
-import { sortedDeepCloneWithoutNulls } from 'app/core/utils/object';
-import { mockDataSource } from 'app/features/alerting/unified/mocks';
-import { setupDataSources } from 'app/features/alerting/unified/testSetup/datasources';
-import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
-import { plugin as statPanelPlugin } from 'app/plugins/panel/stat/module';
-import { plugin as tablePanelPlugin } from 'app/plugins/panel/table/module';
 
 import { DASHBOARD_SCHEMA_VERSION } from './DashboardMigrator';
 import { DashboardModel } from './DashboardModel';
+import {
+  setupTestDataSources,
+  getTestDirectories,
+  getOutputDirectory,
+  getJsonInputFiles,
+  extractTargetVersionFromFilename,
+  constructBackendOutputFilename,
+  handleAngularPanelMigration,
+  cleanDashboardModel,
+} from './__tests__/migrationTestUtils';
 
 /*
  * Single Version Migration Test Design Explanation:
@@ -38,102 +41,25 @@ import { DashboardModel } from './DashboardModel';
  *    - Avoids test brittleness from comparing raw JSON with different default value representations
  */
 
-// Set up the same datasources as backend test provider to ensure consistency
-const dataSources = {
-  default: mockDataSource({
-    name: 'Default Test Datasource Name',
-    uid: 'default-ds-uid',
-    type: 'prometheus',
-    isDefault: true,
-    apiVersion: 'v1',
-  }),
-  nonDefault: mockDataSource({
-    name: 'Non Default Test Datasource Name',
-    uid: 'non-default-test-ds-uid',
-    type: 'loki',
-    isDefault: false,
-    apiVersion: 'v1',
-  }),
-  existingRef: mockDataSource({
-    name: 'Existing Ref Name',
-    uid: 'existing-ref-uid',
-    type: 'prometheus',
-    isDefault: false,
-    apiVersion: 'v1',
-  }),
-  existingTarget: mockDataSource({
-    name: 'Existing Target Name',
-    uid: 'existing-target-uid',
-    type: 'elasticsearch',
-    isDefault: false,
-    apiVersion: 'v2',
-  }),
-  existingRefAlt: mockDataSource({
-    name: 'Existing Ref Name',
-    uid: 'existing-ref',
-    type: 'prometheus',
-    isDefault: false,
-    apiVersion: 'v1',
-  }),
-  mixed: mockDataSource({
-    name: MIXED_DATASOURCE_NAME,
-    type: 'mixed',
-    uid: MIXED_DATASOURCE_NAME,
-    isDefault: false,
-    apiVersion: 'v1',
-  }),
-};
-
 describe('Backend / Frontend single version migration result comparison', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    setupDataSources(...Object.values(dataSources));
+    setupTestDataSources();
   });
 
-  const inputDir = path.join(
-    __dirname,
-    '..',
-    '..',
-    '..',
-    '..',
-    '..',
-    'apps',
-    'dashboard',
-    'pkg',
-    'migration',
-    'testdata',
-    'input'
-  );
-  const outputDir = path.join(
-    __dirname,
-    '..',
-    '..',
-    '..',
-    '..',
-    '..',
-    'apps',
-    'dashboard',
-    'pkg',
-    'migration',
-    'testdata',
-    'output',
-    'single_version'
-  );
-
-  const jsonInputs = readdirSync(inputDir);
+  const { inputDir } = getTestDirectories();
+  const outputDir = getOutputDirectory('single_version');
+  const jsonInputs = getJsonInputFiles(inputDir);
 
   jsonInputs
     // TODO: remove this filter when we fixed all inconsistencies
     .filter((inputFile) => parseInt(inputFile.split('.')[0].replace('v', ''), 10) > 29)
-    .filter((inputFile) => inputFile.endsWith('.json'))
     .forEach((inputFile) => {
       // Extract target version from filename (e.g., v16.grid_layout_upgrade.json -> target v16)
-      const versionMatch = inputFile.match(/^v(\d+)\.(.+)\.json$/);
-      if (!versionMatch) {
+      const targetVersion = extractTargetVersionFromFilename(inputFile);
+      if (!targetVersion) {
         return; // Skip files that don't match the expected pattern
       }
-
-      const targetVersion = parseInt(versionMatch[1], 10);
 
       // Skip if target version exceeds latest version
       if (targetVersion > DASHBOARD_SCHEMA_VERSION) {
@@ -148,7 +74,7 @@ describe('Backend / Frontend single version migration result comparison', () => 
         expect(jsonInput.schemaVersion).toBe(expectedSchemaVersion);
 
         // Generate the expected output filename for single version migration
-        const singleVersionOutputFile = `${inputFile.replace('.json', '')}.v${targetVersion}.json`;
+        const singleVersionOutputFile = constructBackendOutputFilename(inputFile, targetVersion);
         const singleVersionOutputPath = path.join(outputDir, singleVersionOutputFile);
 
         // Check if the single version output file exists
@@ -172,72 +98,9 @@ describe('Backend / Frontend single version migration result comparison', () => 
           targetSchemaVersion: targetVersion,
         });
 
-        /* 
-        Migration from schema V27 involves migrating angular singlestat panels to stat panels
-        These panels are auto migrated where PanelModel.restoreModel() is called in the constructor,
-        and the autoMigrateFrom is set and type is set to "stat". So this logic will not run.
-        if (oldVersion < 28) {
-          panelUpgrades.push((panel: PanelModel) => {
-            if (panel.type === 'singlestat') {
-              return migrateSinglestat(panel);
-            }
-          });
-        }
-      
-        Furthermore, the PanelModel.pluginLoaded is run in the old architecture through a redux action so it will not run in this test.
-        In the scenes architecture the angular migration logic runs through a migration handler inside transformSaveModelToScene.ts
-         _UNSAFE_customMigrationHandler: getAngularPanelMigrationHandler(panel),
-        We need to manually run the pluginLoaded logic to ensure the panels are migrated correctly. 
-        which means that the actual migration logic is not run.
-        We need to manually run the pluginLoaded logic to ensure the panels are migrated correctly.
-        */
+        // Handle angular panel migration if needed
         if (jsonInput.schemaVersion <= 27) {
-          for (const panel of frontendModel.panels) {
-            if (panel.type === 'stat' && panel.autoMigrateFrom) {
-              // Set the plugin version if it doesn't exist
-              if (!statPanelPlugin.meta.info) {
-                statPanelPlugin.meta.info = {
-                  author: {
-                    name: 'Grafana Labs',
-                    url: 'url/to/GrafanaLabs',
-                  },
-                  description: 'stat plugin',
-                  links: [{ name: 'project', url: 'one link' }],
-                  logos: { small: 'small/logo', large: 'large/logo' },
-                  screenshots: [],
-                  updated: '2024-01-01',
-                  version: '1.0.0',
-                };
-              }
-              if (!statPanelPlugin.meta.info.version) {
-                statPanelPlugin.meta.info.version = '1.0.0';
-              }
-
-              await panel.pluginLoaded(statPanelPlugin);
-            }
-            if (panel.type === 'table' && panel.autoMigrateFrom === 'table-old') {
-              // Set the plugin version if it doesn't exist
-              if (!tablePanelPlugin.meta.info) {
-                tablePanelPlugin.meta.info = {
-                  author: {
-                    name: 'Grafana Labs',
-                    url: 'url/to/GrafanaLabs',
-                  },
-                  description: 'table plugin',
-                  links: [{ name: 'project', url: 'one link' }],
-                  logos: { small: 'small/logo', large: 'large/logo' },
-                  screenshots: [],
-                  updated: '2024-01-01',
-                  version: '1.0.0',
-                };
-              }
-              if (!tablePanelPlugin.meta.info.version) {
-                tablePanelPlugin.meta.info.version = '1.0.0';
-              }
-
-              await panel.pluginLoaded(tablePanelPlugin as any);
-            }
-          }
+          await handleAngularPanelMigration(frontendModel);
         }
 
         const frontendMigrationResult = cleanDashboardModel(frontendModel);
@@ -247,24 +110,3 @@ describe('Backend / Frontend single version migration result comparison', () => 
       });
     });
 });
-
-function cleanDashboardModel(dashboard: DashboardModel) {
-  // Although getSaveModelClone() runs sortedDeepCloneWithoutNulls() internally,
-  // we run it again to ensure consistent handling of null values (like threshold -Infinity values)
-  // Because Go and TS handle -Infinity differently.
-  const dashboardWithoutNulls = sortedDeepCloneWithoutNulls(dashboard.getSaveModelClone());
-
-  // Remove deprecated angular properties that backend shouldn't return, but DashboardModel will still set them
-  for (const panel of dashboardWithoutNulls.panels ?? []) {
-    // @ts-expect-error
-    delete panel.autoMigrateFrom;
-    // @ts-expect-error
-    delete panel.styles;
-    // @ts-expect-error - Backend removes these deprecated table properties
-    delete panel.transform;
-    // @ts-expect-error - Backend removes these deprecated table properties
-    delete panel.columns;
-  }
-
-  return dashboardWithoutNulls;
-}
