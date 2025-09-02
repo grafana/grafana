@@ -32,7 +32,7 @@ func TestRandomUIDs(t *testing.T) {
 
 func TestCaseInsensitiveCollisionsUIDs(t *testing.T) {
 	history := make(map[string]bool, 0)
-	for i := 0; i < 100000; i++ {
+	for i := range 100000 {
 		v := GenerateShortUID()
 		// if false {
 		// 	"github.com/teris-io/shortid"
