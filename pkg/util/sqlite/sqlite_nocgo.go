@@ -97,34 +97,29 @@ var dsnMapping = map[string]string{
 	"_time_format":         "_time_format",
 }
 
-func convertSQLite3URL(oldDSN string) (string, error) {
-	if !strings.HasPrefix(oldDSN, "file:") {
-		return "", fmt.Errorf("unsupported DSN format")
+func convertSQLite3URL(dsn string) (string, error) {
+	pos := strings.IndexRune(dsn, '?')
+	if pos < 1 {
+		return dsn, nil // no parameters to convert
 	}
-
-	u, err := url.Parse(oldDSN)
+	params, err := url.ParseQuery(dsn[pos+1:])
 	if err != nil {
 		return "", err
 	}
+	newDSN := dsn[:pos]
 
-	// start with file path
-	newDSN := u.Scheme + ":" + u.Path
-
-	// collect new query parameters
 	q := url.Values{}
 	q.Add("_pragma", "busy_timeout(5000)")
 
-	for key, values := range u.Query() {
+	for key, values := range params {
 		if alias, ok := dsnAlias[strings.ToLower(key)]; ok {
 			key = alias
 		}
 		mapped, ok := dsnMapping[key]
 		if !ok || len(values) == 0 {
-			continue // unsupported or empty, skip
+			continue
 		}
-
 		value := values[0]
-
 		switch mapped {
 		case "_pragma":
 			value = strings.TrimPrefix(value, "_")
@@ -135,11 +130,9 @@ func convertSQLite3URL(oldDSN string) (string, error) {
 			q.Set("_time_format", value)
 		}
 	}
-
 	if len(q) > 0 {
 		newDSN += "?" + q.Encode()
 	}
-
 	return newDSN, nil
 }
 
