@@ -1254,16 +1254,10 @@ func (b *bleveIndex) runUpdater(ctx context.Context) {
 			return
 		}
 
-		// Build reasons map
-		reasons := make(map[string]int, len(batch))
-		for _, req := range batch {
-			reasons[req.reason]++
-		}
-
 		var rv int64
 		var err = ctx.Err()
 		if err == nil {
-			rv, err = b.updateIndexWithLatestModifications(ctx, len(batch), reasons)
+			rv, err = b.updateIndexWithLatestModifications(ctx, len(batch))
 		}
 		for _, req := range batch {
 			req.callback <- updateResult{rv: rv, err: err}
@@ -1271,12 +1265,12 @@ func (b *bleveIndex) runUpdater(ctx context.Context) {
 	}
 }
 
-func (b *bleveIndex) updateIndexWithLatestModifications(ctx context.Context, requests int, reasons map[string]int) (int64, error) {
+func (b *bleveIndex) updateIndexWithLatestModifications(ctx context.Context, requests int) (int64, error) {
 	ctx, span := b.tracing.Start(ctx, tracingPrexfixBleve+"updateIndexWithLatestModifications")
 	defer span.End()
 
 	sinceRV := b.resourceVersion
-	b.logger.Debug("Updating index", "sinceRV", sinceRV, "requests", requests, "reasons", reasons)
+	b.logger.Debug("Updating index", "sinceRV", sinceRV, "requests", requests)
 
 	startTime := time.Now()
 	listRV, docs, err := b.updaterFn(ctx, b, sinceRV)
@@ -1286,7 +1280,7 @@ func (b *bleveIndex) updateIndexWithLatestModifications(ctx context.Context, req
 
 	elapsed := time.Since(startTime)
 	if err == nil {
-		b.logger.Debug("Finished updating index", "sinceRV", sinceRV, "listRV", listRV, "duration", elapsed, "docs", docs, "reasons", reasons)
+		b.logger.Debug("Finished updating index", "sinceRV", sinceRV, "listRV", listRV, "duration", elapsed, "docs", docs)
 
 		if b.updateLatency != nil {
 			b.updateLatency.Observe(elapsed.Seconds())
