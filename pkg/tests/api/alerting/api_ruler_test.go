@@ -361,7 +361,6 @@ func TestIntegrationAlertRuleNestedPermissions(t *testing.T) {
 	testinfra.SQLiteIntegrationTest(t)
 
 	dir, p := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
-		EnableFeatureToggles:  []string{featuremgmt.FlagNestedFolders},
 		DisableLegacyAlerting: true,
 		EnableUnifiedAlerting: true,
 		DisableAnonymous:      true,
@@ -1762,42 +1761,42 @@ func TestIntegrationRuleUpdate(t *testing.T) {
 	t.Run("missing_series_evals_to_resolve", func(t *testing.T) {
 		testCases := []struct {
 			name           string
-			initialValue   *int
-			updatedValue   *int
-			expectedValue  *int
+			initialValue   *int64
+			updatedValue   *int64
+			expectedValue  *int64
 			expectedStatus int
 		}{
 			{
 				name:           "should be able to set missing_series_evals_to_resolve to 5",
 				initialValue:   nil,
-				updatedValue:   util.Pointer(5),
-				expectedValue:  util.Pointer(5),
+				updatedValue:   util.Pointer[int64](5),
+				expectedValue:  util.Pointer[int64](5),
 				expectedStatus: http.StatusAccepted,
 			},
 			{
 				name:           "should be able to update missing_series_evals_to_resolve",
-				initialValue:   util.Pointer(1),
-				updatedValue:   util.Pointer(2),
-				expectedValue:  util.Pointer(2),
+				initialValue:   util.Pointer[int64](1),
+				updatedValue:   util.Pointer[int64](2),
+				expectedValue:  util.Pointer[int64](2),
 				expectedStatus: http.StatusAccepted,
 			},
 			{
 				name:           "should preserve missing_series_evals_to_resolve when it's set nil",
-				initialValue:   util.Pointer(5),
+				initialValue:   util.Pointer[int64](5),
 				updatedValue:   nil,
-				expectedValue:  util.Pointer(5),
+				expectedValue:  util.Pointer[int64](5),
 				expectedStatus: http.StatusAccepted,
 			},
 			{
 				name:           "should reject missing_series_evals_to_resolve < 0",
-				initialValue:   util.Pointer(1),
-				updatedValue:   util.Pointer(-1),
+				initialValue:   util.Pointer[int64](1),
+				updatedValue:   util.Pointer[int64](-1),
 				expectedStatus: http.StatusBadRequest,
 			},
 			{
 				name:           "should be able to reset missing_series_evals_to_resolve by setting it to 0",
-				initialValue:   util.Pointer(1),
-				updatedValue:   util.Pointer(0),
+				initialValue:   util.Pointer[int64](1),
+				updatedValue:   util.Pointer[int64](0),
 				expectedValue:  nil,
 				expectedStatus: http.StatusAccepted,
 			},
@@ -3475,7 +3474,7 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 						},
 						NoDataState:                 apimodels.NoDataState(ngmodels.Alerting),
 						ExecErrState:                apimodels.ExecutionErrorState(ngmodels.AlertingErrState),
-						MissingSeriesEvalsToResolve: util.Pointer(2), // If UID is specified, this field is required
+						MissingSeriesEvalsToResolve: util.Pointer[int64](2), // If UID is specified, this field is required
 					},
 				},
 			},

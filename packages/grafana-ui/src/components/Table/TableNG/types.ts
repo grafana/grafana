@@ -1,6 +1,5 @@
-import { Property } from 'csstype';
-import { SyntheticEvent } from 'react';
-import { Column } from 'react-data-grid';
+import { FC, SyntheticEvent } from 'react';
+import { CellRendererProps, Column } from 'react-data-grid';
 
 import {
   DataFrame,
@@ -18,6 +17,8 @@ import { TableCellHeight, TableFieldOptions } from '@grafana/schema';
 
 import { TableCellInspectorMode } from '../TableCellInspector';
 import { TableCellOptions } from '../types';
+
+import { TextAlign } from './utils';
 
 export const FILTER_FOR_OPERATOR = '=';
 export const FILTER_OUT_OPERATOR = '!=';
@@ -128,8 +129,10 @@ export interface BaseTableProps {
   onCellFilterAdded?: TableFilterActionCallback;
   footerOptions?: TableFooterCalc;
   footerValues?: FooterItem[];
+  frozenColumns?: number;
   enablePagination?: boolean;
   cellHeight?: TableCellHeight;
+  maxRowHeight?: number;
   structureRev?: number;
   transparent?: boolean;
   /** @alpha Used by SparklineCell when provided */
@@ -148,6 +151,8 @@ export interface BaseTableProps {
 /* ---------------------------- Table cell props ---------------------------- */
 export interface TableNGProps extends BaseTableProps {}
 
+export type TableCellRenderer = FC<TableCellRendererProps>;
+
 export interface TableCellRendererProps {
   rowIdx: number;
   frame: DataFrame;
@@ -161,17 +166,15 @@ export interface TableCellRendererProps {
   theme: GrafanaTheme2;
   cellInspect: boolean;
   showFilters: boolean;
-  justifyContent: Property.JustifyContent;
   getActions?: GetActionsFunctionLocal;
   disableSanitizeHtml?: boolean;
+  getTextColorForBackground: (color: string) => string;
 }
 
-export type ContextMenuProps = {
+export type InspectCellProps = {
   rowIdx?: number;
   value: string;
   mode?: TableCellInspectorMode.code | TableCellInspectorMode.text;
-  top?: number;
-  left?: number;
 };
 
 export interface TableCellActionsProps {
@@ -181,8 +184,7 @@ export interface TableCellActionsProps {
   displayName: string;
   cellInspect: boolean;
   showFilters: boolean;
-  setIsInspecting: React.Dispatch<React.SetStateAction<boolean>>;
-  setContextMenuProps: React.Dispatch<React.SetStateAction<ContextMenuProps | null>>;
+  setInspectCell: React.Dispatch<React.SetStateAction<InspectCellProps | null>>;
   className?: string;
   onCellFilterAdded?: TableFilterActionCallback;
 }
@@ -195,7 +197,6 @@ export interface RowExpanderNGProps {
 
 export interface SparklineCellProps {
   field: Field;
-  justifyContent: Property.JustifyContent;
   rowIdx: number;
   theme: GrafanaTheme2;
   timeRange?: TimeRange;
@@ -215,8 +216,6 @@ export interface BarGaugeCellProps {
 export interface ImageCellProps {
   cellOptions: TableCellOptions;
   field: Field;
-  height: number;
-  justifyContent: Property.JustifyContent;
   value: TableCellValue;
   rowIdx: number;
 }
@@ -228,14 +227,7 @@ export interface DataLinksCellProps {
 
 export interface GeoCellProps {
   value: TableCellValue;
-  justifyContent: Property.JustifyContent;
   height: number;
-}
-
-export interface CellColors {
-  textColor?: string;
-  bgColor?: string;
-  bgHoverColor?: string;
 }
 
 export interface AutoCellProps {
@@ -260,7 +252,17 @@ export interface PillCellProps {
   theme: GrafanaTheme2;
   field: Field;
   rowIdx: number;
+  getTextColorForBackground: (color: string) => string;
 }
+
+export interface TableCellStyleOptions {
+  textWrap: boolean;
+  textAlign: TextAlign;
+  shouldOverflow: boolean;
+  maxHeight?: number;
+}
+
+export type TableCellStyles = (theme: GrafanaTheme2, options: TableCellStyleOptions) => string;
 
 // Comparator for sorting table values
 export type Comparator = (a: TableCellValue, b: TableCellValue) => number;
@@ -281,24 +283,38 @@ export interface TypographyCtx {
   fontFamily: string;
   letterSpacing: number;
   avgCharWidth: number;
-  estimateLines: LineCounter;
-  wrappedCount: LineCounter;
+  estimateHeight: MeasureCellHeight;
+  measureHeight: MeasureCellHeight;
 }
 
-export type LineCounter = (value: unknown, width: number, field: Field, rowIdx: number) => number;
-export interface LineCounterEntry {
+export type MeasureCellHeight = (
+  value: unknown,
+  width: number,
+  field: Field,
+  rowIdx: number,
+  lineHeight: number
+) => number;
+export interface MeasureCellHeightEntry {
   /**
    * given a values and the available width, returns the line count for that value
    */
-  counter: LineCounter;
+  measure: MeasureCellHeight;
   /**
    * if getting an accurate line count is expensive, you can provide an estimate method
-   * which will be used when looping over the row. the counter method will only be invoked
+   * which will be used when looping over the row. the method will only be invoked
    * for the cell which is the maximum line count for the row.
    */
-  estimate?: LineCounter;
+  estimate?: MeasureCellHeight;
   /**
-   * indicates which field indexes of the visible fields this line counter applies to.
+   * indicates which field indexes of the visible fields this measurer applies to.
    */
   fieldIdxs: number[];
+}
+
+export type CellRootRenderer = (key: React.Key, props: CellRendererProps<TableRow, TableSummaryRow>) => React.ReactNode;
+
+export interface FromFieldsResult {
+  columns: TableColumn[];
+  cellRootRenderers: Record<string, CellRootRenderer>;
+  colsWithTooltip: Record<string, boolean>;
 }

@@ -25,14 +25,13 @@ interface LogLineDetailsFieldsProps {
 }
 
 export const LogLineDetailsFields = memo(({ disableActions, fields, log, logs, search }: LogLineDetailsFieldsProps) => {
-  if (!fields.length) {
-    return null;
-  }
   const styles = useStyles2(getFieldsStyles);
   const getLogs = useCallback(() => logs, [logs]);
   const filteredFields = useMemo(() => (search ? filterFields(fields, search) : fields), [fields, search]);
 
-  if (filteredFields.length === 0) {
+  if (!fields.length) {
+    return null;
+  } else if (filteredFields.length === 0) {
     return t('logs.log-line-details.search.no-results', 'No results to display.');
   }
 
@@ -73,14 +72,13 @@ interface LogLineDetailsLabelFieldsProps {
 }
 
 export const LogLineDetailsLabelFields = ({ fields, log, logs, search }: LogLineDetailsLabelFieldsProps) => {
-  if (!fields.length) {
-    return null;
-  }
   const styles = useStyles2(getFieldsStyles);
   const getLogs = useCallback(() => logs, [logs]);
   const filteredFields = useMemo(() => (search ? filterLabels(fields, search) : fields), [fields, search]);
 
-  if (filteredFields.length === 0) {
+  if (!fields.length) {
+    return null;
+  } else if (filteredFields.length === 0) {
     return t('logs.log-line-details.search.no-results', 'No results to display.');
   }
 
@@ -105,7 +103,7 @@ const getFieldsStyles = (theme: GrafanaTheme2) => ({
   fieldsTable: css({
     display: 'grid',
     gap: theme.spacing(1),
-    gridTemplateColumns: `${theme.spacing(11.5)} auto 1fr`,
+    gridTemplateColumns: `${theme.spacing(11.5)} minmax(auto, 40%) 1fr`,
   }),
   fieldsTableNoActions: css({
     display: 'grid',
@@ -361,7 +359,6 @@ export const LogLineDetailsField = ({
       })}
       {showFieldsStats && fieldStats && (
         <div className={styles.row}>
-          <div />
           <div className={disableActions ? undefined : styles.statsColumn}>
             <LogLabelStats
               className={styles.stats}
@@ -402,10 +399,11 @@ const getFieldStyles = (theme: GrafanaTheme2) => ({
     },
   }),
   link: css({
-    gridColumn: 'span 3',
+    gridColumn: '2 / 4',
   }),
   linkNoActions: css({
     gridColumn: 'span 2',
+    paddingBottom: theme.spacing(0.5),
   }),
   stats: css({
     paddingRight: theme.spacing(1),
@@ -414,7 +412,7 @@ const getFieldStyles = (theme: GrafanaTheme2) => ({
     maxWidth: '50vh',
   }),
   statsColumn: css({
-    gridColumn: 'span 2',
+    gridColumn: '2 / 4',
   }),
   valueContainer: css({
     display: 'flex',

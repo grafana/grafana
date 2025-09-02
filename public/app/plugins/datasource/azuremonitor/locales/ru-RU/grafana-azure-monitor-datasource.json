@@ -52,7 +52,7 @@
       "button-use-query": "Использовать запрос",
       "label-categories": "Категории",
       "label-query-results": "Результатов запроса: {{numResults}}",
-      "noOptionsMessage-unable-to-list-categories": "",
+      "noOptionsMessage-unable-to-list-categories": "Невозможно перечислить все категории",
       "placeholder-all-categories": "Все категории",
       "placeholder-search-logs": "Поиск запросов журналов",
       "text-loading": "Загрузка…"
@@ -72,10 +72,8 @@
       "label-enable-basic-logs": "Включить базовые журналы"
     },
     "config-editor": {
-      "description-additional-settings": "Дополнительные параметры — это необязательные параметры, которые можно настроить для получения большего контроля над источником данных. Сюда входит безопасный Socks-прокси.",
-      "description-request-timeout": "Установите время ожидания запроса (в секундах). Настройка по умолчанию — 30 секунд.",
-      "title-additional-settings": "Дополнительные параметры",
-      "title-request-timeout": "Превышено время ожидания запроса"
+      "description-additional-settings": "Дополнительные параметры — это необязательные настройки, которые позволяют получить больший контроль над источником данных. К таким параметрам относятся Secure Socks Proxy, время ожидания запроса и пересылаемые файлы cookie.",
+      "title-additional-settings": "Дополнительные параметры"
     },
     "current-user-fallback-credentials": {
       "alert-fallback-credentials-disabled": "Резервные учетные данные отключены. Поскольку аутентификация на основе пользователей по своей сути поддерживает только запросы, в область действия которых входит пользователь, то такие функции, как оповещение, записанные запросы или создание отчетов, не будут работать должным образом. Подробнее — в <2>документации</2>.",
@@ -115,9 +113,12 @@
       "aria-label-column": "Столбец",
       "aria-label-column-value": "Значение столбца",
       "aria-label-operator": "Оператор",
+      "aria-label-remove-filter": "Удалить фильтр",
       "label-or": "ИЛИ"
     },
     "filter-section": {
+      "aria-label-add-filter": "Добавить фильтр",
+      "aria-label-add-or-filter": "Добавить фильтр «ИЛИ»",
       "label-add-group": "Добавить группу",
       "label-and": "И",
       "label-filters": "Фильтры",
@@ -130,6 +131,8 @@
       "label-format-as": "Форматировать как"
     },
     "fuzzy-search": {
+      "aria-label-add-fuzzy-search": "Добавить нечеткий поиск",
+      "aria-label-remove-fuzzy-search": "Удалить нечеткий поиск",
       "aria-label-select-column": "Выбрать столбец",
       "label-fuzzy-search": "Нечеткий поиск",
       "placeholder-search-team": "Введите ключевое слово",
@@ -144,6 +147,7 @@
       "aria-label-remove": "Удалить"
     },
     "group-by-section": {
+      "aria-label-add-group-by": "Добавить группировку по",
       "label-group-by": "Группировать по",
       "tooltip-group-by": "Упорядочите результаты по категориям на основе указанных столбцов. Функцию группировки можно использовать отдельно для перечисления уникальных значений в выбранных столбцах или в сочетании с агрегатными функциями для получения сводной статистики по каждой группе. При использовании в отдельности она возвращает различные комбинации указанных столбцов."
     },
@@ -162,8 +166,8 @@
       "tooltip-limit": "Установите ограничение по количеству возвращаемых строк (по умолчанию — 1000)."
     },
     "logs-management": {
-      "body-basic-logs-queries": "",
-      "confirmText-confirm": "",
+      "body-basic-logs-queries": "Действительно перейти на базовые журналы?",
+      "confirmText-confirm": "Подтвердить",
       "description-basic-logs-queries": "Запросы базовых журналов являются платными. Затраты зависят от объема сканируемых данных.",
       "label-logs": "Журналы",
       "title-basic-logs-queries": "Запросы базовых журналов",
@@ -186,8 +190,10 @@
       "text-loading": "Загрузка…"
     },
     "order-by-section": {
+      "aria-label-add-order-by": "Добавить сортировку по",
       "aria-label-order-by-column": "Упорядочить по столбцу",
       "aria-label-order-direction": "Направление упорядочивания",
+      "aria-label-remove-order-by": "Удалить сортировку по",
       "label-by": "ПО",
       "label-order-by": "Упорядочить по",
       "tooltip-order-by": "Сортируйте результаты по одному или нескольким столбцам в порядке возрастания или убывания"
@@ -197,14 +203,14 @@
     },
     "query-header": {
       "aria-label-kick-start": "Кнопка запуска запроса журналов Azure",
-      "body-switching-to-builder": "",
-      "body-switching-to-kql": "",
+      "body-switching-to-builder": "Переключение на конструктор приведет к отмене текущего KQL-запроса и очистке редактора KQL. Вы уверены?",
+      "body-switching-to-kql": "Переключение на KQL приведет к отмене текущих настроек конструктора. Вы уверены?",
       "button-kick-start-your-query": "Запустить запрос",
       "button-run-query": "Выполнить запрос",
-      "confirmText-switch-to": "",
+      "confirmText-switch-to": "Переключиться на {{newMode}}",
       "editor-modes": {
-        "label-builder": "",
-        "label-kql": ""
+        "label-builder": "Конструктор",
+        "label-kql": "KQL"
       },
       "label-service": "Служба",
       "placeholder-service": "Служба...",
@@ -233,7 +239,7 @@
       "title-error-occurred": "Ошибка при запросе ресурсов из Azure Monitor"
     },
     "scope-selector": {
-      "label": ""
+      "label": "Область"
     },
     "search": {
       "aria-label-resource-search": "Поиск ресурсов",
@@ -249,7 +255,8 @@
       "label-columns": "Столбцы",
       "label-table": "Таблица",
       "placeholder-select-columns": "Выберите столбцы",
-      "placeholder-select-table": "Выберите таблицу"
+      "placeholder-select-table": "Выберите таблицу",
+      "tooltip-remove-all-columns": "Удалить все столбцы"
     },
     "time-grain-field": {
       "label-time-grain": "Интервал времени"

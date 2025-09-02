@@ -31,8 +31,6 @@ type RenderingService struct {
 	plugin              Plugin
 	renderAction        renderFunc
 	renderCSVAction     renderCSVFunc
-	sanitizeSVGAction   sanitizeFunc
-	sanitizeURL         string
 	domain              string
 	inProgressCount     int32
 	version             string
@@ -75,21 +73,14 @@ func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, remot
 
 	logger := log.New("rendering")
 
-	// URL for HTTP sanitize API
-	var sanitizeURL string
-
 	//  value used for domain attribute of renderKey cookie
 	var domain string
 
 	// value used by the image renderer to make requests to Grafana
 	rendererCallbackURL := cfg.RendererCallbackUrl
-	if cfg.RendererServerUrl != "" {
-		sanitizeURL = getSanitizerURL(cfg.RendererServerUrl)
-
-		// Default value for callback URL using a remote renderer should be AppURL
-		if rendererCallbackURL == "" {
-			rendererCallbackURL = cfg.AppURL
-		}
+	// Default value for callback URL using a remote renderer should be AppURL
+	if cfg.RendererServerUrl != "" && rendererCallbackURL == "" {
+		rendererCallbackURL = cfg.AppURL
 	}
 
 	switch {
@@ -141,10 +132,6 @@ func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, remot
 				semverConstraint: ">= 3.4.0",
 			},
 			{
-				name:             SVGSanitization,
-				semverConstraint: ">= 3.5.0",
-			},
-			{
 				name:             PDFRendering,
 				semverConstraint: ">= 3.10.0",
 			},
@@ -155,7 +142,6 @@ func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, remot
 		RendererPluginManager: rm,
 		log:                   logger,
 		domain:                domain,
-		sanitizeURL:           sanitizeURL,
 		pluginAvailable:       exists,
 		rendererCallbackURL:   rendererCallbackURL,
 	}
@@ -163,11 +149,6 @@ func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, remot
 	gob.Register(&RenderUser{})
 
 	return s, nil
-}
-
-func getSanitizerURL(rendererURL string) string {
-	rendererBaseURL := strings.TrimSuffix(rendererURL, "/render")
-	return rendererBaseURL + "/sanitize"
 }
 
 func (rs *RenderingService) Run(ctx context.Context) error {
@@ -188,7 +169,6 @@ func (rs *RenderingService) Run(ctx context.Context) error {
 		})
 		rs.renderAction = rs.renderViaHTTP
 		rs.renderCSVAction = rs.renderCSVViaHTTP
-		rs.sanitizeSVGAction = rs.sanitizeViaHTTP
 
 		refreshTicker := time.NewTicker(remoteVersionRefreshInterval)
 
@@ -213,7 +193,6 @@ func (rs *RenderingService) Run(ctx context.Context) error {
 		rs.version = rp.Version()
 		rs.renderAction = rs.renderViaPlugin
 		rs.renderCSVAction = rs.renderCSVViaPlugin
-		rs.sanitizeSVGAction = rs.sanitizeSVGViaPlugin
 		<-ctx.Done()
 
 		return nil
@@ -365,24 +344,6 @@ func (rs *RenderingService) RenderCSV(ctx context.Context, opts CSVOpts, session
 	saveMetrics(elapsedTime, err, RenderCSV)
 
 	return result, err
-}
-
-func (rs *RenderingService) SanitizeSVG(ctx context.Context, req *SanitizeSVGRequest) (*SanitizeSVGResponse, error) {
-	capability, err := rs.HasCapability(ctx, SVGSanitization)
-	if err != nil {
-		return nil, err
-	}
-
-	if !capability.IsSupported {
-		return nil, fmt.Errorf("svg sanitization unsupported, requires image renderer version: %s", capability.SemverConstraint)
-	}
-
-	start := time.Now()
-
-	action, err := rs.sanitizeSVGAction(ctx, req)
-	rs.log.Info("svg sanitization finished", "duration", time.Since(start), "filename", req.Filename, "isError", err != nil)
-
-	return action, err
 }
 
 func (rs *RenderingService) renderCSV(ctx context.Context, opts CSVOpts, renderKeyProvider renderKeyProvider) (*RenderCSVResult, error) {

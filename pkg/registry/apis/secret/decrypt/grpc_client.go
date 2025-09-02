@@ -6,19 +6,22 @@ import (
 	"crypto/x509"
 	"errors"
 	"fmt"
+	"maps"
 	"os"
+	"slices"
 
 	"github.com/fullstorydev/grpchan"
-	authnlib "github.com/grafana/authlib/authn"
-	"github.com/grafana/authlib/types"
 	"go.opentelemetry.io/otel/trace"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/metadata"
 
+	authnlib "github.com/grafana/authlib/authn"
+	"github.com/grafana/authlib/types"
 	decryptv1beta1 "github.com/grafana/grafana/apps/secret/decrypt/v1beta1"
 	secretv1beta1 "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1"
+	"github.com/grafana/grafana/apps/secret/pkg/decrypt"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 )
 
@@ -28,12 +31,10 @@ type GRPCDecryptClient struct {
 	tokenExchanger authnlib.TokenExchanger
 }
 
-var _ contracts.DecryptService = &GRPCDecryptClient{}
+var _ decrypt.DecryptService = &GRPCDecryptClient{}
 
 type TLSConfig struct {
 	UseTLS             bool
-	CertFile           string
-	KeyFile            string
 	CAFile             string
 	ServerName         string
 	InsecureSkipVerify bool
@@ -89,14 +90,6 @@ func createTLSCredentials(config TLSConfig) (credentials.TransportCredentials, e
 		tlsConfig.RootCAs = caCertPool
 	}
 
-	if config.CertFile != "" && config.KeyFile != "" {
-		cert, err := tls.LoadX509KeyPair(config.CertFile, config.KeyFile)
-		if err != nil {
-			return nil, fmt.Errorf("failed to load client certificate: %w", err)
-		}
-		tlsConfig.Certificates = []tls.Certificate{cert}
-	}
-
 	if config.ServerName != "" {
 		tlsConfig.ServerName = config.ServerName
 	}
@@ -108,19 +101,21 @@ func createTLSCredentials(config TLSConfig) (credentials.TransportCredentials, e
 	return credentials.NewTLS(tlsConfig), nil
 }
 
-// Close will close the underlying gRPC connection. After it is closed, the client cannot be used anymore.
-func (g *GRPCDecryptClient) Close() error {
-	if g.conn != nil {
-		return g.conn.Close()
-	}
-	return nil
-}
-
 // Decrypt a set of secure value names in a given namespace for a specific service name.
-func (g *GRPCDecryptClient) Decrypt(ctx context.Context, serviceName string, namespace string, names []string) (map[string]contracts.DecryptResult, error) {
+func (g *GRPCDecryptClient) Decrypt(ctx context.Context, serviceName string, namespace string, names ...string) (map[string]decrypt.DecryptResult, error) {
 	_, err := types.ParseNamespace(namespace)
 	if err != nil {
 		return nil, err
+	}
+
+	unique := make(map[string]bool, len(names))
+	for _, v := range names {
+		if v != "" {
+			unique[v] = true
+		}
+	}
+	if len(unique) < 1 {
+		return map[string]decrypt.DecryptResult{}, nil
 	}
 
 	tokenExchangerInterceptor := authnlib.NewGrpcClientInterceptor(
@@ -140,7 +135,7 @@ func (g *GRPCDecryptClient) Decrypt(ctx context.Context, serviceName string, nam
 
 	req := &decryptv1beta1.SecureValueDecryptRequest{
 		Namespace: namespace,
-		Names:     names,
+		Names:     slices.Collect(maps.Keys(unique)),
 	}
 
 	// Decryption will still use the service identity from the auth token,
@@ -155,14 +150,14 @@ func (g *GRPCDecryptClient) Decrypt(ctx context.Context, serviceName string, nam
 		return nil, fmt.Errorf("grpc decrypt failed: %w", err)
 	}
 
-	results := make(map[string]contracts.DecryptResult, len(resp.GetDecryptedValues()))
+	results := make(map[string]decrypt.DecryptResult, len(resp.GetDecryptedValues()))
 
 	for name, result := range resp.GetDecryptedValues() {
 		if result.GetErrorMessage() != "" {
-			results[name] = contracts.NewDecryptResultErr(errors.New(result.GetErrorMessage()))
+			results[name] = decrypt.NewDecryptResultErr(errors.New(result.GetErrorMessage()))
 		} else {
 			exposedSecureValue := secretv1beta1.NewExposedSecureValue(result.GetValue())
-			results[name] = contracts.NewDecryptResultValue(&exposedSecureValue)
+			results[name] = decrypt.NewDecryptResultValue(&exposedSecureValue)
 		}
 	}
 

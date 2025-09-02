@@ -17,7 +17,20 @@ type Repository struct {
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
 	Spec   RepositorySpec   `json:"spec,omitempty"`
+	Secure SecureValues     `json:"secure,omitzero,omitempty"`
 	Status RepositoryStatus `json:"status,omitempty"`
+}
+
+type SecureValues struct {
+	// Token used to connect the configured repository
+	Token common.InlineSecureValue `json:"token,omitzero,omitempty"`
+
+	// Some webhooks (including github) require a secret key value
+	WebhookSecret common.InlineSecureValue `json:"webhookSecret,omitzero,omitempty"`
+}
+
+func (v SecureValues) IsZero() bool {
+	return v.Token.IsZero() && v.WebhookSecret.IsZero()
 }
 
 type LocalRepositoryConfig struct {
@@ -41,11 +54,6 @@ type GitHubRepositoryConfig struct {
 
 	// The branch to use in the repository.
 	Branch string `json:"branch"`
-	// Token for accessing the repository. If set, it will be encrypted into encryptedToken, then set to an empty string again.
-	Token string `json:"token,omitempty"`
-	// Token for accessing the repository, but encrypted. This is not possible to read back to a user decrypted.
-	// +listType=atomic
-	EncryptedToken []byte `json:"encryptedToken,omitempty"`
 
 	// Whether we should show dashboard previews for pull requests.
 	// By default, this is false (i.e. we will not create previews).
@@ -66,11 +74,6 @@ type GitRepositoryConfig struct {
 	Branch string `json:"branch"`
 	// TokenUser is the user that will be used to access the repository if it's a personal access token.
 	TokenUser string `json:"tokenUser,omitempty"`
-	// Token for accessing the repository. If set, it will be encrypted into encryptedToken, then set to an empty string again.
-	Token string `json:"token,omitempty"`
-	// Token for accessing the repository, but encrypted. This is not possible to read back to a user decrypted.
-	// +listType=atomic
-	EncryptedToken []byte `json:"encryptedToken,omitempty"`
 	// Path is the subdirectory for the Grafana data. If specified, Grafana will ignore anything that is outside this directory in the repository.
 	// This is usually something like `grafana/`. Trailing and leading slash are not required. They are always added when needed.
 	// The path is relative to the root of the repository, regardless of the leading slash.
@@ -86,11 +89,6 @@ type BitbucketRepositoryConfig struct {
 	Branch string `json:"branch"`
 	// TokenUser is the user that will be used to access the repository if it's a personal access token.
 	TokenUser string `json:"tokenUser,omitempty"`
-	// Token for accessing the repository. If set, it will be encrypted into encryptedToken, then set to an empty string again.
-	Token string `json:"token,omitempty"`
-	// Token for accessing the repository, but encrypted. This is not possible to read back to a user decrypted.
-	// +listType=atomic
-	EncryptedToken []byte `json:"encryptedToken,omitempty"`
 	// Path is the subdirectory for the Grafana data. If specified, Grafana will ignore anything that is outside this directory in the repository.
 	// This is usually something like `grafana/`. Trailing and leading slash are not required. They are always added when needed.
 	// The path is relative to the root of the repository, regardless of the leading slash.
@@ -104,11 +102,6 @@ type GitLabRepositoryConfig struct {
 	URL string `json:"url,omitempty"`
 	// The branch to use in the repository.
 	Branch string `json:"branch"`
-	// Token for accessing the repository. If set, it will be encrypted into encryptedToken, then set to an empty string again.
-	Token string `json:"token,omitempty"`
-	// Token for accessing the repository, but encrypted. This is not possible to read back to a user decrypted.
-	// +listType=atomic
-	EncryptedToken []byte `json:"encryptedToken,omitempty"`
 	// Path is the subdirectory for the Grafana data. If specified, Grafana will ignore anything that is outside this directory in the repository.
 	// This is usually something like `grafana/`. Trailing and leading slash are not required. They are always added when needed.
 	// The path is relative to the root of the repository, regardless of the leading slash.
@@ -228,9 +221,21 @@ type RepositoryStatus struct {
 	Webhook *WebhookStatus `json:"webhook"`
 }
 
+// HealthFailureType represents different types of repository failures
+// +enum
+type HealthFailureType string
+
+const (
+	HealthFailureHook   HealthFailureType = "hook"
+	HealthFailureHealth HealthFailureType = "health"
+)
+
 type HealthStatus struct {
 	// When not healthy, requests will not be executed
 	Healthy bool `json:"healthy"`
+
+	// The type of the error
+	Error HealthFailureType `json:"error,omitempty"`
 
 	// When the health was checked last time
 	Checked int64 `json:"checked,omitempty"`
@@ -271,8 +276,6 @@ type SyncStatus struct {
 type WebhookStatus struct {
 	ID               int64    `json:"id,omitempty"`
 	URL              string   `json:"url,omitempty"`
-	Secret           string   `json:"secret,omitempty"`
-	EncryptedSecret  []byte   `json:"encryptedSecret,omitempty"`
 	SubscribedEvents []string `json:"subscribedEvents,omitempty"`
 	LastEvent        int64    `json:"lastEvent,omitempty"`
 }
@@ -316,7 +319,7 @@ type ResourceWrapper struct {
 	Repository ResourceRepositoryInfo `json:"repository"`
 
 	// Typed links for this file (only supported by external systems, github etc)
-	URLs *ResourceURLs `json:"urls,omitempty"`
+	URLs *RepositoryURLs `json:"urls,omitempty"`
 
 	// The modified time in the remote file system
 	Timestamp *metav1.Time `json:"timestamp,omitempty"`
@@ -374,14 +377,14 @@ type ResourceRepositoryInfo struct {
 	Name string `json:"name"`
 }
 
-type ResourceURLs struct {
-	// A URL pointing to the this file in the repository
-	SourceURL string `json:"sourceURL,omitempty"`
-
+type RepositoryURLs struct {
 	// A URL pointing to the repository this lives in
 	RepositoryURL string `json:"repositoryURL,omitempty"`
 
-	// A URL that will create a new pull requeset for this branch
+	// A URL pointing to the file or ref in the repository
+	SourceURL string `json:"sourceURL,omitempty"`
+
+	// A URL that will create a new pull request for this branch
 	NewPullRequestURL string `json:"newPullRequestURL,omitempty"`
 
 	// Compare this version to the target branch
@@ -438,6 +441,11 @@ type ResourceStats struct {
 	// When legacy storage is still used, this will offer a shim
 	// +listType=atomic
 	Instance []ResourceCount `json:"instance,omitempty"`
+
+	// Stats across all unified storage
+	// When legacy storage is still used, this will offer a shim
+	// +listType=atomic
+	Unmanaged []ResourceCount `json:"unmanaged,omitempty"`
 
 	// Stats for each manager
 	// +listType=atomic

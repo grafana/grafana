@@ -80,11 +80,6 @@ export interface FeatureToggles {
   */
   mysqlAnsiQuotes?: boolean;
   /**
-  * Enable folder nesting
-  * @default true
-  */
-  nestedFolders?: boolean;
-  /**
   * Rule backtesting API for alerting
   */
   alertingBacktesting?: boolean;
@@ -166,10 +161,6 @@ export interface FeatureToggles {
   */
   pluginsFrontendSandbox?: boolean;
   /**
-  * Enables previous SQL data source dataset dropdown behavior
-  */
-  sqlDatasourceDatabaseSelection?: boolean;
-  /**
   * Enables writing multiple items from a single query within Recorded Queries
   * @default true
   */
@@ -205,10 +196,6 @@ export interface FeatureToggles {
   * Next generation provisioning... and git
   */
   provisioning?: boolean;
-  /**
-  * Experimental feature to use the secrets service for provisioning instead of the legacy secrets
-  */
-  provisioningSecretsService?: boolean;
   /**
   * Start an additional https handler and write kubectl options
   */
@@ -334,10 +321,6 @@ export interface FeatureToggles {
   */
   cachingOptimizeSerializationMemoryUsage?: boolean;
   /**
-  * Enables search for metric names in Code Mode, to improve performance when working with an enormous number of metric names
-  */
-  prometheusCodeModeMetricNamesSearch?: boolean;
-  /**
   * Add cumulative and window functions to the add field from calculation transformation
   * @default true
   */
@@ -447,12 +430,16 @@ export interface FeatureToggles {
   */
   secretsManagementAppPlatform?: boolean;
   /**
+  * Enable the secrets management app platform UI
+  */
+  secretsManagementAppPlatformUI?: boolean;
+  /**
   * Writes the state periodically to the database, asynchronous to rule evaluation
   */
   alertingSaveStatePeriodic?: boolean;
   /**
   * Enables the compressed protobuf-based alert state storage
-  * @default false
+  * @default true
   */
   alertingSaveStateCompressed?: boolean;
   /**
@@ -507,10 +494,6 @@ export interface FeatureToggles {
   */
   kubernetesAggregatorCapTokenAuth?: boolean;
   /**
-  * Enable new expression parser
-  */
-  expressionParser?: boolean;
-  /**
   * Enable groupBy variable support in scenes dashboards
   */
   groupByVariable?: boolean;
@@ -540,9 +523,13 @@ export interface FeatureToggles {
   */
   grafanaManagedRecordingRules?: boolean;
   /**
-  * Enables Query Library feature in Explore
+  * Renamed feature toggle, enables Saved queries feature
   */
   queryLibrary?: boolean;
+  /**
+  * Enables Saved Queries feature
+  */
+  savedQueries?: boolean;
   /**
   * Sets the logs table as default visualisation in logs explore
   */
@@ -629,10 +616,6 @@ export interface FeatureToggles {
   */
   newFiltersUI?: boolean;
   /**
-  * Allows access to the new react-data-grid based table component.
-  */
-  tableNextGen?: boolean;
-  /**
   * Uses Prometheus rules as the primary source of truth for ruler-enabled data sources
   */
   alertingPrometheusRulesPrimary?: boolean;
@@ -683,11 +666,6 @@ export interface FeatureToggles {
   * Enable sprinkles on unified storage search
   */
   unifiedStorageSearchSprinkles?: boolean;
-  /**
-  * Enable permission filtering on unified storage search
-  * @default true
-  */
-  unifiedStorageSearchPermissionFiltering?: boolean;
   /**
   * Pick the dual write mode from database configs
   */
@@ -774,6 +752,11 @@ export interface FeatureToggles {
   */
   alertingAIGenTemplates?: boolean;
   /**
+  * Enable enrichment per rule in the alerting UI.
+  * @default false
+  */
+  alertingEnrichmentPerRule?: boolean;
+  /**
   * Enable AI-analyze central state history.
   * @default false
   */
@@ -824,11 +807,6 @@ export interface FeatureToggles {
   * @default true
   */
   improvedExternalSessionHandlingSAML?: boolean;
-  /**
-  * Enables LBAC for datasources for Mimir to apply LBAC filtering of metrics to the client requests for users in teams
-  * @default true
-  */
-  teamHttpHeadersMimir?: boolean;
   /**
   * Enables LBAC for datasources for Tempo to apply LBAC filtering of traces to the client requests for users in teams
   */
@@ -933,10 +911,6 @@ export interface FeatureToggles {
   */
   unifiedStorageGrpcConnectionPool?: boolean;
   /**
-  * Enables the extension sidebar
-  */
-  extensionSidebar?: boolean;
-  /**
   * Enables UI functionality to permanently delete alert rules
   * @default true
   */
@@ -968,6 +942,11 @@ export interface FeatureToggles {
   * Enables creating metrics from profiles and storing them as recording rules
   */
   metricsFromProfiles?: boolean;
+  /**
+  * Enables integration with Grafana Assistant in Profiles Drilldown
+  * @default true
+  */
+  grafanaAssistantInProfilesDrilldown?: boolean;
   /**
   * Enables using PGX instead of libpq for PostgreSQL datasource
   */
@@ -1003,6 +982,10 @@ export interface FeatureToggles {
   */
   kubernetesAuthzApis?: boolean;
   /**
+  * Registers AuthZ resource permission /apis endpoints
+  */
+  kubernetesAuthzResourcePermissionApis?: boolean;
+  /**
   * Enables create, delete, and update mutations for resources owned by IAM identity
   */
   kubernetesAuthnMutation?: boolean;
@@ -1026,6 +1009,11 @@ export interface FeatureToggles {
   * @default false
   */
   alertingImportAlertmanagerAPI?: boolean;
+  /**
+  * Enables the UI to see imported Alertmanager configuration
+  * @default false
+  */
+  alertingImportAlertmanagerUI?: boolean;
   /**
   * Enables image sharing functionality for dashboards
   */
@@ -1088,13 +1076,21 @@ export interface FeatureToggles {
   dashboardLevelTimeMacros?: boolean;
   /**
   * Starts Grafana in remote secondary mode pulling the latest state from the remote Alertmanager to avoid duplicate notifications.
-  * @default false
   */
   alertmanagerRemoteSecondaryWithRemoteState?: boolean;
+  /**
+  * Enables sharing a list of APIs with a list of plugins
+  * @default false
+  */
+  restrictedPluginApis?: boolean;
   /**
   * Enable adhoc filter buttons in visualization tooltips
   */
   adhocFiltersInTooltips?: boolean;
+  /**
+  * Enable favorite datasources
+  */
+  favoriteDatasources?: boolean;
   /**
   * New Log Context component
   */
@@ -1104,4 +1100,29 @@ export interface FeatureToggles {
   * @default false
   */
   newClickhouseConfigPageDesign?: boolean;
+  /**
+  * Enable experimental search-after-write guarantees to unified-storage search endpoints
+  * @default false
+  */
+  unifiedStorageSearchAfterWriteExperimentalAPI?: boolean;
+  /**
+  * Enables team folders functionality
+  * @default false
+  */
+  teamFolders?: boolean;
+  /**
+  * Enables the alerting triage feature
+  * @default false
+  */
+  alertingTriage?: boolean;
+  /**
+  * Enables the Graphite data source full backend mode
+  * @default false
+  */
+  graphiteBackendMode?: boolean;
+  /**
+  * Enables the updated Azure Monitor resource picker
+  * @default false
+  */
+  azureResourcePickerUpdates?: boolean;
 }

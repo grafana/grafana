@@ -71,7 +71,7 @@ export function useSaveDashboard(isCopy = false) {
             url: resultData.url,
           });
         } else {
-          reportInteraction(`grafana_dashboard_${resultData.uid ? 'saved' : 'created'}`, {
+          reportInteraction(`grafana_dashboard_${options.isNew ? 'created' : 'saved'}`, {
             name: saveModel.title,
             url: resultData.url,
           });

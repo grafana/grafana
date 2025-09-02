@@ -52,7 +52,7 @@
       "button-use-query": "使用此查詢",
       "label-categories": "分類",
       "label-query-results": "查詢結果：{{numResults}}",
-      "noOptionsMessage-unable-to-list-categories": "",
+      "noOptionsMessage-unable-to-list-categories": "無法列出所有類別",
       "placeholder-all-categories": "所有分類",
       "placeholder-search-logs": "搜尋「紀錄查詢」",
       "text-loading": "正在載入…"
@@ -72,10 +72,8 @@
       "label-enable-basic-logs": "啟用基本紀錄"
     },
     "config-editor": {
-      "description-additional-settings": "附加設定為可選設定，可進行設定以便更妥善掌控您的資料來源，其中包括安全 Socks 代理。",
-      "description-request-timeout": "設定請求逾時時間（秒）。預設為 30 秒。",
-      "title-additional-settings": "附加設定",
-      "title-request-timeout": "請求逾時"
+      "description-additional-settings": "附加設定為選擇性設定，可進行設定以便更妥善掌控您的資料來源。這包括安全 Socks 代理伺服器、要求逾時和轉寄的 Cookie。",
+      "title-additional-settings": "附加設定"
     },
     "current-user-fallback-credentials": {
       "alert-fallback-credentials-disabled": "備用憑證已停用。由於使用者型驗證本質上僅支援範圍內的使用者請求，因此警報、已記錄查詢或報告等功能將無法按預期運作。請查看<2>文件</2>，了解更多詳細資訊。",
@@ -115,9 +113,12 @@
       "aria-label-column": "欄位",
       "aria-label-column-value": "欄值",
       "aria-label-operator": "運算子",
+      "aria-label-remove-filter": "移除篩選條件",
       "label-or": "或"
     },
     "filter-section": {
+      "aria-label-add-filter": "新增篩選條件",
+      "aria-label-add-or-filter": "新增「或」篩選條件",
       "label-add-group": "新增群組",
       "label-and": "以及",
       "label-filters": "篩選條件",
@@ -130,6 +131,8 @@
       "label-format-as": "格式化為"
     },
     "fuzzy-search": {
+      "aria-label-add-fuzzy-search": "新增模糊搜尋",
+      "aria-label-remove-fuzzy-search": "移除模糊搜尋",
       "aria-label-select-column": "選取欄",
       "label-fuzzy-search": "模糊搜尋",
       "placeholder-search-team": "輸入搜尋內容說明",
@@ -144,6 +147,7 @@
       "aria-label-remove": "移除"
     },
     "group-by-section": {
+      "aria-label-add-group-by": "新增群組依據",
       "label-group-by": "分組依據",
       "tooltip-group-by": "根據指定欄位將結果組織成類別。分組依據可單獨用於列出所選欄中的唯一值，或與彙總函數結合，以產生每個群組的摘要統計資料。單獨使用時，它會傳回指定欄位的不同組合。"
     },
@@ -162,8 +166,8 @@
       "tooltip-limit": "限制傳回的列數（預設為 1000）。"
     },
     "logs-management": {
-      "body-basic-logs-queries": "",
-      "confirmText-confirm": "",
+      "body-basic-logs-queries": "確定要切換至基本紀錄嗎？",
+      "confirmText-confirm": "確認",
       "description-basic-logs-queries": "基本紀錄查詢會根據掃描的資料量產生費用。",
       "label-logs": "紀錄",
       "title-basic-logs-queries": "基本紀錄查詢",
@@ -186,8 +190,10 @@
       "text-loading": "正在載入…"
     },
     "order-by-section": {
+      "aria-label-add-order-by": "新增排序依據",
       "aria-label-order-by-column": "按欄排序",
       "aria-label-order-direction": "排序方向",
+      "aria-label-remove-order-by": "移除排序依據",
       "label-by": "作者",
       "label-order-by": "排序依據",
       "tooltip-order-by": "以一或多欄為依據，按遞增或遞減順序將結果排序。"
@@ -197,14 +203,14 @@
     },
     "query-header": {
       "aria-label-kick-start": "Azure 紀錄會啟動您的查詢按鈕",
-      "body-switching-to-builder": "",
-      "body-switching-to-kql": "",
+      "body-switching-to-builder": "切換到建立器將捨棄您目前的 KQL 查詢並清除 KQL 編輯器。您確定嗎？",
+      "body-switching-to-kql": "切換到 KQL 將捨棄您目前的建立器設定。您確定嗎？",
       "button-kick-start-your-query": "啟動您的查詢",
       "button-run-query": "執行查詢",
-      "confirmText-switch-to": "",
+      "confirmText-switch-to": "切換到 {{newMode}}",
       "editor-modes": {
-        "label-builder": "",
-        "label-kql": ""
+        "label-builder": "建立器",
+        "label-kql": "KQL"
       },
       "label-service": "服務",
       "placeholder-service": "服務…",
@@ -249,7 +255,8 @@
       "label-columns": "欄",
       "label-table": "表格",
       "placeholder-select-columns": "選取欄",
-      "placeholder-select-table": "選取表格"
+      "placeholder-select-table": "選取表格",
+      "tooltip-remove-all-columns": "移除所有欄"
     },
     "time-grain-field": {
       "label-time-grain": "時間粒度"

@@ -155,7 +155,7 @@ To filter column values, follow these steps:
 
    Grafana displays the filter options for that column.
 
-   {{< figure src="/static/img/docs/tables/filter-column-values.png" max-width="300px" alt="Filter column values" class="docs-image--no-shadow" >}}
+   {{< figure src="/media/docs/grafana/panels-visualizations/filter-column-values_12.2.png" max-width="300px" alt="Filter column values" >}}
 
 1. Click the checkbox next to the values that you want to display or click **Select all**.
 1. Enter text in the search field at the top to show those values in the display so that you can select them rather than scroll to find them.
@@ -178,7 +178,8 @@ To remove the filter, click the blue filter icon and then click **Clear filter**
 
 Click a column title to change the sort order from default to descending to ascending.
 Each time you click, the sort order changes to the next option in the cycle.
-You can sort multiple columns by holding the `Shift` key and clicking the column name.
+You can sort multiple columns by holding the `Cmd` or `Ctrl` key
+and clicking the column name.
 
 {{< figure src="/static/img/docs/tables/sort-descending.png" max-width="350px" alt="Sort descending" class="docs-image--no-shadow" >}}
 
@@ -197,15 +198,21 @@ This option is only available when you're editing the panel.
 
 ### Table options
 
-| Option               | Description                                                                                                                                                                                                                                                                 |
-| -------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Show table header    | Show or hide column names imported from your data source.                                                                                                                                                                                                                   |
-| Cell height          | Set the height of the cell. Choose from **Small**, **Medium**, or **Large**.                                                                                                                                                                                                |
-| Enable pagination    | Toggle the switch to control how many table rows are visible at once. When switched on, the page size automatically adjusts to the height of the table. This option doesn't affect queries.                                                                                 |
+<!-- prettier-ignore-start -->
+| Option               | Description                                               |
+| -------------------- | --------------------------------------------------------- |
+| Show table header    | Show or hide column names imported from your data source. |
+| Frozen columns       | Freeze columns starting from the left side of the table. Enter a value to set how many columns are frozen. |
+| Cell height          | Set the height of the cell. Choose from **Small**, **Medium**, or **Large**. |
+| Max row height       | Define the maximum height for a row in the table. This can be useful when **Wrap text** is enabled for one or more columns. |
+| Enable pagination    | Toggle the switch to control how many table rows are visible at once. When switched on, the page size automatically adjusts to the height of the table. This option doesn't affect queries. |
 | Minimum column width | Define the lower limit of the column width, in pixels. By default, the minimum width of the table column is 150 pixels. For small-screen devices, such as mobile phones or tablets, reduce the value to `50` to allow table-based panels to render correctly in dashboards. |
-| Column width         | Define a column width, in pixels, rather than allowing the width to be set automatically. By default, Grafana calculates the column width based on the table size and the minimum column width.                                                                             |
-| Column alignment     | Set how Grafana should align cell contents. Choose from: **Auto** (default), **Left**, **Center**, or **Right**.                                                                                                                                                            |
-| Column filter        | Temporarily change how column data is displayed. For example, show or hide specific values. For more information, refer to [Column filtering](#column-filtering).                                                                                                           |
+| Column width         | Define a column width, in pixels, rather than allowing the width to be set automatically. By default, Grafana calculates the column width based on the table size and the minimum column width. |
+| Column alignment     | Set how Grafana should align cell contents. Choose from: **Auto** (default), **Left**, **Center**, or **Right**.  |
+| Column filter        | Temporarily change how column data is displayed. For example, show or hide specific values. For more information, refer to [Column filtering](#column-filtering). |
+| Wrap text            | Enables text wrapping for cell content. |
+| Wrap header text     | Enables text wrapping for column headers. |
+<!-- prettier-ignore-end -->
 
 ### Table footer options
 
@@ -238,10 +245,12 @@ If you want to apply a cell type to only some fields instead of all fields, you 
 | [Auto](#auto)                             | A basic text and number cell. |
 | [Colored text](#colored-text)             | If thresholds, value mappings, or color schemes are set, then the cell text is displayed in the appropriate color. |
 | [Colored background](#colored-background) | If thresholds, value mappings, or color schemes are set, then the cell background is displayed in the appropriate color. |
-| Data links                                | If you've configured data links, when the cell type is **Auto**, the cell text becomes clickable. If you change the cell type to **Data links**, the cell text reflects the titles of the configured data links. To control the application of data link text more granularly, use a **Cell option > Cell type > Data links** field override. |
+| [Data links](#data-links)                 | The cell text reflects the titles of the configured data links.|
 | [Gauge](#gauge)                           | Values are displayed as a horizontal bar gauge. You can set the [Gauge display mode](#gauge-display-mode) and the [Value display](#value-display) options. |
 | [Sparkline](#sparkline)                   | Shows values rendered as a sparkline. |
 | [JSON View](#json-view)                   | Shows values formatted as code. |
+| [Pill](#pill)                             | Displays each item in a comma-separated string in a colored block. |
+| [Markdown + HTML](#markdown--html)        | Displays rich markdown or HTML content. |
 | [Image](#image)                           | Displays an image when the value is a URL or a base64 encoded image. |
 | [Actions](#actions)                       | The cell displays a button that triggers a basic, unauthenticated API call when clicked. |
 <!-- prettier-ignore-end -->
@@ -281,15 +290,30 @@ The colored background cell type has the following options:
 | ------ | ----------- |
 | Background display mode | Choose between **Basic** and **Gradient**. |
 | Apply to entire row | Toggle the switch on to apply the background color that's configured for the cell to the whole row. |
-| Wrap text | <p>Toggle the **Wrap text** switch to wrap text in the cell that contains the longest content in your table. To wrap the text _in a specific column only_, use a **Fields with name** [field override](ref:field-override), select the **Cell options > Cell type** override property, and toggle on the **Wrap text** switch.</p><p>Text wrapping is in [public preview](https://grafana.com/docs/release-life-cycle/#public-preview), however, it’s available to use by default.</p> |
 | Cell value inspect | <p>Enables value inspection from table cells. When the switch is toggled on, clicking the inspect icon in a cell opens the **Inspect value** drawer which contains two tabs: **Plain text** and **Code editor**.</p><p>Grafana attempts to automatically detect the type of data in the cell and opens the drawer with the associated tab showing. However, you can switch back and forth between tabs.</p> |
+| Tooltip from field | Toggle on the **Tooltip from field** switch to use the values from another field (or column) in a tooltip. For more information, refer to the [Tooltip from field](#tooltip-from-field). |
 <!-- prettier-ignore-end -->
 
-<!-- The wrap text and cell value inspect descriptions above should be copied from docs/sources/shared/visualizations/cell-options.md -->
+<!-- The cell value inspect and tooltip from field descriptions above should be copied from docs/sources/shared/visualizations/cell-options.md -->
+
+#### Data links
+
+If you've configured data links, when the cell type is **Auto**, the cell text becomes clickable.
+If you change the cell type to **Data links**, the cell text reflects the titles of the configured data links. To control the application of data link text more granularly, use a **Cell option > Cell type > Data links** field override.
 
 #### Gauge
 
-With this cell type, cells can be displayed as a graphical gauge, with several different presentation types controlled by the [gauge display mode](#gauge-display-mode) and the [value display](#value-display).
+With this cell type, cells can be displayed as a graphical gauge, with several different presentation types.
+
+The gauge cell type has the following options:
+
+<!-- prettier-ignore-start -->
+| Option             | Description                                                                                                    |
+| ------------------ | -------------------------------------------------------------------------------------------------------------- |
+| Gauge display mode | Controls the type of gauge used. For more information, refer to the [Gauge display mode](#gauge-display-mode). |
+| Value display      | Controls how the value is displayed. For more information, refer to the [Value display](#value-display). |
+| Tooltip from field | Toggle on the **Tooltip from field** switch to use the values from another field (or column) in a tooltip. For more information, refer to [Tooltip from field](#tooltip-from-field). |
+<!-- prettier-ignore-end -->
 
 {{< admonition type="note" >}}
 The maximum and minimum values of the gauges are configured automatically from the smallest and largest values in your whole dataset.
@@ -344,6 +368,7 @@ For more detailed information about all of the sparkline styling options (except
 | Show points         | Whether to show data points to lines or bars. Choose from: <ul><li>**Auto** - Grafana determines a point's visibility based on the density of the data. If the density is low, then points appear.</li><li>**Always** - Show the points regardless of how dense the dataset is.</li><li>**Never** - Don't show points.</li></ul> |
 | Point size          | Set the size of the points, from 1 to 40 pixels in diameter. |
 | Bar alignment       | Set the position of the bar relative to a data point. |
+| Tooltip from field | Toggle on the **Tooltip from field** switch to use the values from another field (or column) in a tooltip. For more information, refer to [Tooltip from field](#tooltip-from-field). |
 <!-- prettier-ignore-end -->
 
 #### JSON View
@@ -357,8 +382,46 @@ For the JSON view cell type, you can set enable **Cell value inspect**.
 This enables value inspection from table cells.
 When the switch is toggled on, clicking the inspect icon in a cell opens the **Inspect value** drawer which contains two tabs: **Plain text** and **Code editor**.
 
+Toggle on the **Tooltip from field** switch to use the values from another field (or column) in a tooltip.
+For more information, refer to [Tooltip from field](#tooltip-from-field).
+
 Grafana attempts to automatically detect the type of data in the cell and opens the drawer with the associated tab showing.
-However, you can switch back and forth between tabs
+However, you can switch back and forth between tabs.
+
+#### Pill
+
+The **Pill** cell type displays each item in a comma-separated string in a colored block.
+
+{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-table-pills-v12.1.png" max-width="750px" alt="Table using the pill cell type" >}}
+
+The colors applied to each piece of text are maintained throughout the table.
+For example, if the word "test" is first displayed in a red pill, it will always be displayed in a red pill.
+
+The following data formats are supported for the pill cell type:
+
+- Comma-separated values (`cows,chickens,goats`)
+- JSON arrays of uniform (`(["cows","chickens","goats"])`) or mixed (`[1,2,3,"foo",42,"bar"]`) types
+
+Toggle on the **Tooltip from field** switch to use the values from another field (or column) in a tooltip.
+For more information, refer to [Tooltip from field](#tooltip-from-field).
+
+#### Markdown + HTML
+
+The **Markdown + HTML** cell type displays rich Markdown or HTML content, rendered using the
+[GitHub-Flavored Markdown](https://github.github.com/gfm/) spec. This is useful if you need to display
+customized, pre-formatted information alongside tabular data, such as formatted strings,
+lists of links, or other dynamic cases.
+
+For this cell type, you can toggle the **Dynamic height** switch, which allows the cell to resize
+dynamically based on the cell content. If you use dynamic height, we strongly recommend that you
+also toggle on **Pagination** to avoid performance issues in larger tables, since enabling
+Dynamic height disables table {{< term "virtualization" >}}virtualization{{< /term >}}.
+
+By default, the HTML rendered is sanitized, and un-sanitized HTML can only be rendered
+in these cells if the [`disable_sanitize_html`](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#disable_sanitize_html) option is set to true for your Grafana instance.
+
+Toggle on the **Tooltip from field** switch to use the values from another field (or column) in a tooltip.
+For more information, refer to [Tooltip from field](#tooltip-from-field).
 
 #### Image
 
@@ -368,10 +431,13 @@ If you have a field value that is an image URL or a base64 encoded image, this c
 
 It has the following options:
 
-| Option     | Description                                                                                                                   |
-| ---------- | ----------------------------------------------------------------------------------------------------------------------------- |
-| Alt text   | Set the alternative text of an image. The text will be available for screen readers and in cases when images can't be loaded. |
-| Title text | Set the text that's displayed when the image is hovered over with a cursor.                                                   |
+<!-- prettier-ignore-start -->
+| Option             | Description                                                                                                                   |
+| ------------------ |  ---------------------------------------------------------------------------------------------------------------------------- |
+| Alt text           | Set the alternative text of an image. The text will be available for screen readers and in cases when images can't be loaded. |
+| Title text         | Set the text that's displayed when the image is hovered over with a cursor. |
+| Tooltip from field | Toggle on the **Tooltip from field** switch to use the values from another field (or column) in a tooltip. For more information, refer to [Tooltip from field](#tooltip-from-field). |
+<!-- prettier-ignore-end -->
 
 #### Actions
 
@@ -379,15 +445,71 @@ The cell displays a button that triggers a basic, unauthenticated API call when 
 Configure the API call with the following options:
 
 <!-- prettier-ignore-start -->
-| Option  | Description  |
-| ------- | ------------ |
-| Endpoint | Enter the endpoint URL. |
-| Method | Choose from **GET**, **POST**, and **PUT**. |
-| Content-Type | Select an option in the drop-down list. Choose from: JSON, Text, JavaScript, HTML, XML, and x-www-form-urlencoded. |
-| Query parameters | Enter as many **Key**, **Value** pairs as you need. |
-| Header parameters | Enter as many **Key**, **Value** pairs as you need. |
-| Payload | Enter the body of the API call. |
+| Option             | Description  |
+| ------------------ | ------------ |
+| Endpoint           | Enter the endpoint URL. |
+| Method             | Choose from **GET**, **POST**, and **PUT**. |
+| Content-Type       | Select an option in the drop-down list. Choose from: JSON, Text, JavaScript, HTML, XML, and x-www-form-urlencoded. |
+| Query parameters   | Enter as many **Key**, **Value** pairs as you need. |
+| Header parameters  | Enter as many **Key**, **Value** pairs as you need. |
+| Payload            | Enter the body of the API call. |
+| Tooltip from field | Toggle on the **Tooltip from field** switch to use the values from another field (or column) in a tooltip. For more information, refer to [Tooltip from field](#tooltip-from-field). |
 <!-- prettier-ignore-end -->
+
+#### Tooltip from field
+
+Toggle on the **Tooltip from field** switch to use the values from another field (or column) in a tooltip.
+
+When you toggle the switch on, you can select from a drop-down list any of the fields in the table to be used as the source of the tooltip content.
+All table fields are included in the drop-down list, whether visible or hidden.
+
+When a tooltip from a field has been added to a cell, a chip is displayed in the top-right or top-left corner of the cell:
+
+{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-tooltip-chip-1-v12.2.png" max-width="500px" alt="Tooltip chip" >}}
+
+Hover your mouse over the chip to display the tooltip.
+
+When you toggle on the switch, the **Tooltip placement** option, which controls where the tooltip box opens upon hover, is also displayed.
+Select one of the following options: **Auto**, **Top**, **Right**, **Bottom**, and **Left**.
+
+The content of the tooltip is determined by the values of the source field and can't be directly edited.
+However, you can affect the display of the value using overrides like value mappings, as shown in the [Example: Tooltip from field with value mappings](#example-tooltip-from-field-with-value-mappings) section.
+
+While you can turn on this option under **Cell options**, and have it applied to all cells in the table, it's typically used as an override on a sub-set of cells instead.
+This is demonstrated in the example in the following section.
+
+##### Example: Tooltip from field using overrides
+
+The following table has five visible fields (columns) as well as a hidden field called "Info":
+
+{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-tooltip-table-1-v12.2.png" max-width="750px" alt="Table that includes a hidden column" >}}
+
+- The "Info" field is hidden using the **Table > Hide in table** override property.
+- The following overrides have been applied to the "Short text" field:
+  - The values from the "Info" field are used as tooltip text for the "Short text" cells using the **Cell options > Tooltip from field** override property.
+  - The **Cell options > Tooltip placement** override property is set to control the placement of the tooltip.
+
+{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-tooltip-override-2-v12.2.png" max-width="300px" alt="Override to use the Info field values as tooltips for the Short text column" >}}
+
+Now, when you hover the cursor over the chip in the "Short text" column, the corresponding values from the "Info" column appear in the tooltip:
+
+{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-tooltip-on-hover-v12.2.png" max-width="750px" alt="Info field value in the tooltip of the Short text cell upon hover" >}}
+
+##### Example: Tooltip from field with value mappings
+
+While the content of the tooltip is determined by the values of the source field and can't be directly edited, you can use field overrides on the source field to manipulate the display of that value.
+
+For example, if the "Info" column is being used as the source field for the tooltip values, you could set up a value mapping.
+In this case, the value "up" is mapped to the word "Good":
+
+{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-tooltip-value-map-v12.2.png" max-width="750px" alt="Info field value up being mapped to the value Good in an override" >}}
+
+Now, when you hover the cursor over the chip in the "Short text" cell, the mapped value appears in the tooltip:
+
+{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-tooltip-on-hover-2-v12.2.png" max-width="750px" alt="Info field mapped to a new value in the tooltip of the Short text cell upon hover" >}}
+
+You can use all field overrides to affect the display of the tooltip.
+For example, the **Table > Column width** or **Cell options > Cell type** overrides can change the cell width or visual display of the data.
 
 ### Standard options
 

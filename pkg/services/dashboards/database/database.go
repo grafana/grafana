@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics"
+	"github.com/grafana/grafana/pkg/infra/slugify"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	dashver "github.com/grafana/grafana/pkg/services/dashboardversion"
@@ -588,14 +589,20 @@ func (d *dashboardStore) deleteDashboard(cmd *dashboards.DeleteDashboardCommand,
 			return err
 		}
 
-		// remove all access control permission with folder scope
-		err := d.deleteResourcePermissions(sess, dashboard.OrgID, dashboards.ScopeFoldersProvider.GetResourceScopeUID(dashboard.UID))
-		if err != nil {
-			return err
+		// While migrating to unified storage, we might execute commands in both stores, so we delete the permissions
+		// only when the command is executed on both stores, thus we can skip it here.
+		if cmd.RemovePermissions {
+			if err := d.deleteResourcePermissions(sess, dashboard.OrgID, dashboards.ScopeFoldersProvider.GetResourceScopeUID(dashboard.UID)); err != nil {
+				return err
+			}
 		}
 	} else {
-		if err := d.deleteResourcePermissions(sess, dashboard.OrgID, ac.GetResourceScopeUID("dashboards", dashboard.UID)); err != nil {
-			return err
+		// While migrating to unified storage, we might execute commands in both stores, so we delete the permissions
+		// only when the command is executed on both stores, thus we can skip it here.
+		if cmd.RemovePermissions {
+			if err := d.deleteResourcePermissions(sess, dashboard.OrgID, ac.GetResourceScopeUID("dashboards", dashboard.UID)); err != nil {
+				return err
+			}
 		}
 	}
 
@@ -831,10 +838,9 @@ func (d *dashboardStore) FindDashboards(ctx context.Context, query *dashboards.F
 
 	if len(query.FolderUIDs) > 0 {
 		filters = append(filters, searchstore.FolderUIDFilter{
-			Dialect:              d.store.GetDialect(),
-			OrgID:                orgID,
-			UIDs:                 query.FolderUIDs,
-			NestedFoldersEnabled: d.features.IsEnabled(ctx, featuremgmt.FlagNestedFolders),
+			Dialect: d.store.GetDialect(),
+			OrgID:   orgID,
+			UIDs:    query.FolderUIDs,
 		})
 	}
 
@@ -899,6 +905,9 @@ func (d *dashboardStore) FindDashboards(ctx context.Context, query *dashboards.F
 		}
 		if item.Term != "" {
 			item.Tags = append(item.Tags, item.Term)
+		}
+		if item.FolderTitle != "" {
+			item.FolderSlug = slugify.Slugify(item.FolderTitle)
 		}
 		seen[item.ID] = len(uniqueRes)
 		uniqueRes = append(uniqueRes, item)
