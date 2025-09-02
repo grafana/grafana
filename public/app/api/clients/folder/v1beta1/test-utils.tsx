@@ -29,7 +29,7 @@ const TestUpdateComponent = ({ folderUID }: { folderUID: string }) => {
       <AppNotificationList />
       <label htmlFor="title">Folder Title</label>
       <input id="title" type="text" value={title} onChange={(e) => setTitle(e.target.value)} />
-      <button onClick={() => updateFolder({ title, uid: folderA.item.uid })}>Update Folder</button>
+      <button onClick={() => updateFolder({ title, uid: folderUID })}>Update Folder</button>
       <div>{result.isSuccess ? 'Folder updated' : 'Error updating folder'}</div>
     </>
   );
