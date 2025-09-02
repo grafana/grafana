@@ -46,16 +46,10 @@ import (
 //	    { "name": "var1" }
 //	  ]
 //	}
-type v28Migrator struct {
-	// panelProvider    PanelPluginInfoProvider
-	// panelPlugins     []PanelPluginInfo
-	statPanelVersion string // Cached stat panel version
-}
+type v28Migrator struct{}
 
 func V28() SchemaVersionMigrationFunc {
-	migrator := &v28Migrator{
-		statPanelVersion: "", // FIXME: what is the fixed version at 28
-	}
+	migrator := &v28Migrator{}
 
 	return func(dashboard map[string]interface{}) error {
 		return migrator.migrate(dashboard)

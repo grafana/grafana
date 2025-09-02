@@ -158,9 +158,6 @@ func RegisterAPIService(
 	migration.RegisterMetrics(reg)
 	migration.Initialize(&datasourceInfoProvider{
 		datasourceService: datasourceService,
-	}, &PluginStorePanelProvider{
-		pluginStore:  pluginStore,
-		buildVersion: cfg.BuildVersion,
 	})
 	apiregistration.RegisterAPI(builder)
 	return builder
