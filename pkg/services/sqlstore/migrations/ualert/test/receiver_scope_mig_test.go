@@ -15,10 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-func TestIntegrationScopeMigration(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test in short mode")
-	}
+func TestScopeMigration(t *testing.T) {
 	x := setupTestDB(t)
 	now := time.Now()
 
