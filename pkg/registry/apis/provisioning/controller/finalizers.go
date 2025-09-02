@@ -2,6 +2,7 @@ package controller
 
 import (
 	"context"
+	"encoding/json"
 	"sort"
 	"strings"
 
@@ -52,8 +53,13 @@ func (f *finalizer) process(ctx context.Context,
 		case ReleaseOrphanResourcesFinalizer:
 			err := f.processExistingItems(ctx, repo.Config(),
 				func(client dynamic.ResourceInterface, item *provisioning.ResourceListItem) error {
-					_, err := client.Patch(
-						ctx, item.Name, types.JSONPatchType, getPatchedAnnotations(item), v1.PatchOptions{},
+					patchAnnotations, err := getPatchedAnnotations(item)
+					if err != nil {
+						return err
+					}
+
+					_, err = client.Patch(
+						ctx, item.Name, types.JSONPatchType, patchAnnotations, v1.PatchOptions{},
 					)
 					return err
 				})
@@ -121,26 +127,35 @@ func (f *finalizer) processExistingItems(
 	return nil
 }
 
-func getPatchedAnnotations(item *provisioning.ResourceListItem) []byte {
-	annotations := []string{
-		`{"op": "remove", "path": "/metadata/annotations/` + escapePatchString(utils.AnnoKeyManagerKind) + `"}`,
-		`{"op": "remove", "path": "/metadata/annotations/` + escapePatchString(utils.AnnoKeyManagerIdentity) + `"}`,
+type jsonPatchOperation struct {
+	Op   string `json:"op"`
+	Path string `json:"path"`
+}
+
+func getPatchedAnnotations(item *provisioning.ResourceListItem) ([]byte, error) {
+	annotations := []jsonPatchOperation{
+		{Op: "remove", Path: "/metadata/annotations/" + escapePatchString(utils.AnnoKeyManagerKind)},
+		{Op: "remove", Path: "/metadata/annotations/" + escapePatchString(utils.AnnoKeyManagerIdentity)},
 	}
 
 	if item.Path != "" {
 		annotations = append(
 			annotations,
-			`{"op": "remove", "path": "/metadata/annotations/`+escapePatchString(utils.AnnoKeySourcePath)+`"}`,
+			jsonPatchOperation{
+				Op: "remove", Path: "/metadata/annotations/" + escapePatchString(utils.AnnoKeySourcePath),
+			},
 		)
 	}
 	if item.Hash != "" {
 		annotations = append(
 			annotations,
-			`{"op": "remove", "path": "/metadata/annotations/`+escapePatchString(utils.AnnoKeySourceChecksum)+`"}`,
+			jsonPatchOperation{
+				Op: "remove", Path: "/metadata/annotations/" + escapePatchString(utils.AnnoKeySourceChecksum),
+			},
 		)
 	}
 
-	return []byte("[" + strings.Join(annotations, ",") + "]")
+	return json.Marshal(annotations)
 }
 
 func escapePatchString(s string) string {
