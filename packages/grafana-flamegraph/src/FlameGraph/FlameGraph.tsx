@@ -18,7 +18,6 @@
 // THIS SOFTWARE.
 import { css, cx } from '@emotion/css';
 import { useEffect, useState } from 'react';
-import * as React from 'react';
 
 import { Icon } from '@grafana/ui';
 
