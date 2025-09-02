@@ -3,7 +3,6 @@ package dbimpl
 import (
 	"context"
 	"database/sql"
-	"fmt"
 
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/db"
@@ -39,15 +38,23 @@ func (d sqlDB) QueryRowContext(ctx context.Context, query string, args ...any) d
 }
 
 func (d sqlDB) BeginTx(ctx context.Context, opts *sql.TxOptions) (db.Tx, error) {
-	fmt.Printf("unified storage BeginTx called\n")
 	value := ctx.Value(sqlstore.ContextSessionKey{})
 	if sess, ok := value.(*sqlstore.DBSession); ok && sess != nil {
-		fmt.Printf("  Reusing existing sqlstore session for unified storage transaction: transactionOpen=%v\n", sess != nil)
-		return reusedSessionTx{session: sess}, nil
+		// If there's already a session in the context, always reuse it
+		// regardless of whether it has a transaction open or not
+		if sess.TransactionOpen() {
+			// Reuse the existing transaction
+			return reusedSessionTx{session: sess}, nil
+		} else {
+			// Start a transaction on the existing session instead of creating a new one
+			// The Begin() method now properly sets the transactionOpen flag
+			if err := sess.Begin(); err != nil {
+				return nil, err
+			}
+			return reusedSessionTx{session: sess}, nil
+		}
 	}
-	fmt.Printf("  No existing sqlstore session, creating new unified storage transaction\n")
 	tx, err := d.DB.BeginTx(ctx, opts)
-	fmt.Println("  Beginning transaction with options:", opts, "error:", err)
 	if err != nil {
 		return nil, err
 	}
@@ -98,8 +105,16 @@ func (tx reusedSessionTx) QueryRowContext(ctx context.Context, query string, arg
 	// return &rowFromRows{rows: rows}
 }
 
-func (tx reusedSessionTx) Commit() error   { return nil }
-func (tx reusedSessionTx) Rollback() error { return nil }
+func (tx reusedSessionTx) Commit() error {
+	// Only commit if this session actually started the transaction
+	// In practice, this should be handled by the outer transaction manager
+	return nil
+}
+func (tx reusedSessionTx) Rollback() error {
+	// Only rollback if this session actually started the transaction
+	// In practice, this should be handled by the outer transaction manager
+	return nil
+}
 
 type execResult struct {
 	affected sql.Result

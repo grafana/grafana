@@ -37,11 +37,9 @@ func (ss *SQLStore) inTransactionWithRetryCtx(ctx context.Context, engine *xorm.
 		return err
 	}
 
-	// With the updated startSessionOrUseExisting logic, if we request a transaction (beginTran=true),
-	// the session should always have transactionOpen=true, either from reusing an existing
-	// transaction or starting a new one
-	if !sess.transactionOpen {
-		return fmt.Errorf("session should have transaction open but doesn't - this indicates a logic error")
+	if !sess.transactionOpen && !isNew {
+		// this should not happen because the only place that creates reusable session begins a new transaction.
+		return fmt.Errorf("cannot reuse existing session that did not start transaction")
 	}
 
 	if isNew { // if this call initiated the session, it should be responsible for closing it.
