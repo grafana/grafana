@@ -199,6 +199,18 @@ func (b *bleveBackend) updateIndexSizeMetric(indexPath string) {
 	}
 }
 
+// newBleveIndex creates a new bleve index with consistent configuration.
+// If path is empty, creates an in-memory index.
+// If path is not empty, creates a file-based index at the specified path.
+func newBleveIndex(path string, mapper mapping.IndexMapping) (bleve.Index, error) {
+	if path == "" {
+		// Create in-memory index
+		return bleve.NewUsing("", mapper, bleve.Config.DefaultIndexType, bleve.Config.DefaultMemKVStore, nil)
+	}
+	// Create file-based index with explicit configuration to match in-memory version
+	return bleve.NewUsing(path, mapper, bleve.Config.DefaultIndexType, bleve.Config.DefaultKVStore, nil)
+}
+
 // BuildIndex builds an index from scratch or retrieves it from the filesystem.
 // If built successfully, the new index replaces the old index in the cache (if there was any).
 // An index in the file system is considered to be valid if the requested resourceVersion is smaller than or equal to
@@ -299,7 +311,7 @@ func (b *bleveBackend) BuildIndex(
 					return nil, fmt.Errorf("invalid path %s", indexDir)
 				}
 
-				index, err = bleve.New(indexDir, mapper)
+				index, err = newBleveIndex(indexDir, mapper)
 				if errors.Is(err, bleve.ErrorIndexPathExists) {
 					now = now.Add(time.Second) // Bump time for next try
 					index = nil                // Bleve actually returns non-nil value with ErrorIndexPathExists
@@ -314,7 +326,7 @@ func (b *bleveBackend) BuildIndex(
 			defer closeIndexOnExit(index, indexDir) // Close index, and delete new index directory.
 		}
 	} else {
-		index, err = bleve.NewUsing("", mapper, bleve.Config.DefaultIndexType, bleve.Config.DefaultMemKVStore, nil)
+		index, err = newBleveIndex("", mapper)
 		if err != nil {
 			return nil, fmt.Errorf("error creating new in-memory bleve index: %w", err)
 		}
