@@ -72,6 +72,7 @@ import { InstancesList } from './tabs/Instances';
 import { QueryResults } from './tabs/Query';
 import { Routing } from './tabs/Routing';
 
+// TO DO: Add tab for enrichment
 export enum ActiveTab {
   Query = 'query',
   Instances = 'instances',
@@ -171,6 +172,7 @@ const RuleViewer = () => {
           {activeTab === ActiveTab.VersionHistory && rulerRuleType.grafana.rule(rule.rulerRule) && (
             <AlertVersionHistory rule={rule.rulerRule} />
           )}
+          {/* TO DO: Add tab for enrichment */}
         </TabContent>
       </Stack>
       {duplicateRuleIdentifier && (
@@ -483,6 +485,7 @@ function usePageNav(rule: CombinedRule) {
         },
         hideFromTabs: !isGrafanaAlertRule && !isGrafanaRecordingRule,
       },
+      // TO DO: Add tab for enrichment, hideFromTabs if alertingEnrichmentPerRule feature toggle is off
     ],
     parentItem: {
       text: groupName,
