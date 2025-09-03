@@ -12,7 +12,13 @@ import { ExtensionToolbarItemButton } from './ExtensionToolbarItemButton';
 
 type ComponentWithPluginId = ExtensionInfo & { pluginId: string };
 
-export function ExtensionToolbarItem() {
+type Props = {
+  compact?: boolean;
+};
+
+const compactAllowedComponents = ['grafana-assistant-app'];
+
+export function ExtensionToolbarItem({ compact }: Props) {
   const { availableComponents, dockedComponentId, setDockedComponentId } = useExtensionSidebarContext();
 
   if (availableComponents.size === 0) {
@@ -26,6 +32,12 @@ export function ExtensionToolbarItem() {
       const component = components[0];
       const componentId = getComponentIdFromComponentMeta(pluginId, component);
       const isActive = dockedComponentId === componentId;
+
+      // we now allow more components in the extension sidebar
+      // in compact mode we only want to allow the Assistant app right now
+      if (compact && !compactAllowedComponents.includes(pluginId)) {
+        return null;
+      }
 
       return (
         <ExtensionToolbarItemButton

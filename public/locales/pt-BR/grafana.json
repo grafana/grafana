@@ -549,6 +549,7 @@
     },
     "alert-rules": {
       "firing-for": "Acionamento para",
+      "multiple-sources": "",
       "next-evaluation": "Próxima avaliação",
       "next-evaluation-in": "próxima avaliação em",
       "rule-definition": "Definição de regras"
@@ -2638,13 +2639,15 @@
         "show": "Exibir"
       },
       "manage-alerts": "Nessas fontes de dados, você pode selecionar Gerenciar alertas via Interface de Envio de Alertas para gerenciar essas regras de alerta na interface da Grafana, bem como na fonte de dados onde foram configuradas.",
-      "no-groups": "Nenhum grupo disponível",
-      "no-namespaces": "Nenhuma pasta disponível",
       "placeholder-all-data-sources": "Todas as fontes de dados",
       "placeholder-contact-point": "Selecionar ponto de contato",
       "placeholder-data-sources": "Selecionar fontes de dados",
       "placeholder-labels": "Selecionar rótulos",
       "plugin-rules": "Regras de plug-in",
+      "rule-source": {
+        "datasource": "",
+        "grafana": ""
+      },
       "rule-type": "Tipo de regra",
       "rulesSearchInput-placeholder-search": "Pesquisar",
       "search": "Pesquisar",
@@ -2666,6 +2669,7 @@
         "namespace": "Pasta/Nomenclatura",
         "rule-health": "Integridade",
         "rule-name": "Nome da regra",
+        "rule-source": "",
         "rule-type": "Tipo",
         "state": "Estado"
       }
@@ -3393,9 +3397,6 @@
       "text-badge-enabled": "Ativado",
       "text-badge-not-enabled": "Não ativado"
     },
-    "scim-banner": {
-      "message": "Atualmente, o SCIM se encontra em desenvolvimento, por isso, não é recomendável seu uso para produção. Use-o com cautela e leve em conta a possibilidade de ocorrer alterações."
-    },
     "server-discovery-modal": {
       "label-the-wellknownopenidconfiguration-endpoint-for-your-id-p": "O endpoint .well-known/openid-configuration para seu IdP",
       "title-open-id-connect-discovery-url": "URL de descoberta do OpenID Connect"
@@ -3565,7 +3566,9 @@
       },
       "error-moving-resources": "Erro ao mover recursos",
       "error-no-target-folder-path": "O caminho da pasta de destino é inválido ou está vazio. Selecione outra.",
-      "move-warning": "Isso moverá as pastas selecionadas e as subpastas delas. No total, isso afetará:",
+      "move-total": "",
+      "move-warning": "",
+      "move-warning-tooltip": "",
       "target-folder": "Pasta de destino"
     },
     "counts": {
@@ -4691,6 +4694,7 @@
       "panel-title": "Alterar título do painel",
       "paste-panel": "Colar painel",
       "remove": "Remover {{typeName}}",
+      "row-title": "",
       "switch-layout": "Alternar layout"
     },
     "edit-pane": {
@@ -6542,7 +6546,8 @@
     },
     "data-source-load-error": {
       "back": "Voltar",
-      "delete": "Excluir"
+      "delete": "Excluir",
+      "not-found": ""
     },
     "data-source-missing-rights-message": {
       "title-missing-rights": "Faltam direitos"
@@ -7565,7 +7570,9 @@
   "folders": {
     "api": {
       "folder-delete-error-provisioned": "",
-      "folder-deleted-success": "Pasta excluída"
+      "folder-deleted-success": "Pasta excluída",
+      "folder-move-error-provisioned": "",
+      "folder-moved-success": ""
     },
     "get-loading-nav": {
       "main": {
@@ -9525,6 +9532,7 @@
       "fields-section": "Campos",
       "hide-log-line": "Ocultar linha de log",
       "inline-mode": "Exibir em linha",
+      "link-value-tooltip": "",
       "links-section": "Links",
       "log-line-field": "Linha de registro",
       "log-line-section": "Linha de log",
@@ -12085,6 +12093,7 @@
     "selector": {
       "apply": "Aplicar",
       "cancel": "Cancelar",
+      "error-title": "",
       "input": {
         "placeholder": "Selecione os escopos...",
         "removeAll": "Remover todos os escopos"

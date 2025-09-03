@@ -549,6 +549,7 @@
     },
     "alert-rules": {
       "firing-for": "Aktiválás ehhez:",
+      "multiple-sources": "",
       "next-evaluation": "Következő értékelés",
       "next-evaluation-in": "következő értékelés ennyi idő múlva:",
       "rule-definition": "Szabálydefiníció"
@@ -2638,13 +2639,15 @@
         "show": "Megjelenítés"
       },
       "manage-alerts": "Ezekben az adatforrásokban kiválaszthatja a Riasztások kezelése az Alerting felületén keresztül lehetőséget, hogy kezelhesse ezeket a riasztási szabályokat a Grafana kezelőfelületén, valamint abban az adatforrásban, ahol konfigurálták őket.",
-      "no-groups": "Nincs elérhető csoport",
-      "no-namespaces": "Nincs elérhető mappa",
       "placeholder-all-data-sources": "Összes adatforrás",
       "placeholder-contact-point": "Kapcsolattartási pont kiválasztása",
       "placeholder-data-sources": "Adatforrások kiválasztása",
       "placeholder-labels": "Címkék kiválasztása",
       "plugin-rules": "Bővítményszabályok",
+      "rule-source": {
+        "datasource": "",
+        "grafana": ""
+      },
       "rule-type": "Szabálytípus",
       "rulesSearchInput-placeholder-search": "Keresés",
       "search": "Keresés",
@@ -2666,6 +2669,7 @@
         "namespace": "Mappa/névtér",
         "rule-health": "Állapot",
         "rule-name": "Szabálynév",
+        "rule-source": "",
         "rule-type": "Típus",
         "state": "Állapot"
       }
@@ -3393,9 +3397,6 @@
       "text-badge-enabled": "Engedélyezve",
       "text-badge-not-enabled": "Nem engedélyezett"
     },
-    "scim-banner": {
-      "message": "A SCIM jelenleg fejlesztés alatt áll, ezért nem javasolt éles környezetben. Használja körültekintéssel, és számítson esetleges változásokra."
-    },
     "server-discovery-modal": {
       "label-the-wellknownopenidconfiguration-endpoint-for-your-id-p": "Az identitásszolgáltató .well-known/openid-configuration végpontja",
       "title-open-id-connect-discovery-url": "Az OpenID Connect Discovery URL-címe"
@@ -3565,7 +3566,9 @@
       },
       "error-moving-resources": "Hiba történt az erőforrások áthelyezésekor",
       "error-no-target-folder-path": "A célmappa elérési útvonala érvénytelen vagy üres. Kérjük, válassza ki újra.",
-      "move-warning": "Ezzel a művelettel áthelyezi a kijelölt mappákat és minden almappájukat. Összességében ez a következőket érinti:",
+      "move-total": "",
+      "move-warning": "",
+      "move-warning-tooltip": "",
       "target-folder": "Célmappa"
     },
     "counts": {
@@ -4691,6 +4694,7 @@
       "panel-title": "Panel címének módosítása",
       "paste-panel": "Panel beillesztése",
       "remove": "{{typeName}} eltávolítása",
+      "row-title": "",
       "switch-layout": "Kiosztás váltása"
     },
     "edit-pane": {
@@ -6542,7 +6546,8 @@
     },
     "data-source-load-error": {
       "back": "Vissza",
-      "delete": "Törlés"
+      "delete": "Törlés",
+      "not-found": ""
     },
     "data-source-missing-rights-message": {
       "title-missing-rights": "Hiányzó jogok"
@@ -7565,7 +7570,9 @@
   "folders": {
     "api": {
       "folder-delete-error-provisioned": "",
-      "folder-deleted-success": "Mappa törölve"
+      "folder-deleted-success": "Mappa törölve",
+      "folder-move-error-provisioned": "",
+      "folder-moved-success": ""
     },
     "get-loading-nav": {
       "main": {
@@ -9525,6 +9532,7 @@
       "fields-section": "Mezők",
       "hide-log-line": "Naplósor elrejtése",
       "inline-mode": "Megjelenítés sorban",
+      "link-value-tooltip": "",
       "links-section": "Hivatkozások",
       "log-line-field": "Naplósor",
       "log-line-section": "Naplósor",
@@ -12085,6 +12093,7 @@
     "selector": {
       "apply": "Alkalmaz",
       "cancel": "Mégse",
+      "error-title": "",
       "input": {
         "placeholder": "Hatókörök kijelölése...",
         "removeAll": "Összes hatókör eltávolítása"

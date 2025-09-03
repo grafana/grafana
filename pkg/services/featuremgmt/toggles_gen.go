@@ -391,6 +391,10 @@ const (
 	// Enable the secrets management API and services under app platform
 	FlagSecretsManagementAppPlatform = "secretsManagementAppPlatform"
 
+	// FlagSecretsManagementAppPlatformUI
+	// Enable the secrets management app platform UI
+	FlagSecretsManagementAppPlatformUI = "secretsManagementAppPlatformUI"
+
 	// FlagAlertingSaveStatePeriodic
 	// Writes the state periodically to the database, asynchronous to rule evaluation
 	FlagAlertingSaveStatePeriodic = "alertingSaveStatePeriodic"
@@ -1002,4 +1006,12 @@ const (
 	// FlagAlertingTriage
 	// Enables the alerting triage feature
 	FlagAlertingTriage = "alertingTriage"
+
+	// FlagGraphiteBackendMode
+	// Enables the Graphite data source full backend mode
+	FlagGraphiteBackendMode = "graphiteBackendMode"
+
+	// FlagAzureResourcePickerUpdates
+	// Enables the updated Azure Monitor resource picker
+	FlagAzureResourcePickerUpdates = "azureResourcePickerUpdates"
 )
