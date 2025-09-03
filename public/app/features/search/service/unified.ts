@@ -261,7 +261,7 @@ export class UnifiedSearcher implements GrafanaSearcher {
     uri += `&limit=${query.limit ?? pageSize}`;
 
     if (query.offset) {
-      uri += `&offset=${query.offset}`
+      uri += `&offset=${query.offset}`;
     }
 
     if (!isEmpty(query.location)) {
