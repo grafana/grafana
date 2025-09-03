@@ -314,6 +314,10 @@ func (b *IdentityAccessManagementAPIBuilder) validateCreateServiceAccount(ctx co
 		return nil
 	}
 
+	if saObj.Spec.Title == "" {
+		return apierrors.NewBadRequest("service account must have a title")
+	}
+
 	requester, err := identity.GetRequester(ctx)
 	if err != nil {
 		return apierrors.NewBadRequest("no identity found")
@@ -364,13 +368,12 @@ func (b *IdentityAccessManagementAPIBuilder) validateCreateUser(ctx context.Cont
 func (b *IdentityAccessManagementAPIBuilder) Mutate(ctx context.Context, a admission.Attributes, o admission.ObjectInterfaces) (err error) {
 	switch a.GetOperation() {
 	case admission.Create:
-		if a.GetKind() == iamv0.UserResourceInfo.GroupVersionKind() {
+		switch a.GetKind() {
+		case iamv0.UserResourceInfo.GroupVersionKind():
 			return b.mutateUser(ctx, a, o)
-		}
-		if a.GetKind() == iamv0.ServiceAccountResourceInfo.GroupVersionKind() {
+		case iamv0.ServiceAccountResourceInfo.GroupVersionKind():
 			return b.mutateServiceAccount(ctx, a, o)
 		}
-		return nil
 	case admission.Update:
 		return nil
 	case admission.Delete:

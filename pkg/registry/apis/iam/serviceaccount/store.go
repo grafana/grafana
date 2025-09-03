@@ -82,10 +82,6 @@ func (s *LegacyStore) Create(ctx context.Context, obj runtime.Object, createVali
 		}
 	}
 
-	if saObj.Spec.Title == "" {
-		return nil, fmt.Errorf("service account must have a title")
-	}
-
 	createCmd := legacy.CreateServiceAccountCommand{
 		IsDisabled: saObj.Spec.Disabled,
 		Name:       saObj.Spec.Title,
