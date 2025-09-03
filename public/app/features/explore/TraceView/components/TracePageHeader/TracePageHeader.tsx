@@ -127,7 +127,7 @@ export const TracePageHeader = memo((props: TracePageHeaderProps) => {
     limitPerPlugin: 2,
   });
 
-  // TODO: Remove ina couple of days, once new assistant is released that does not use extension link
+  // TODO: Remove this filtering in a month. More info in https://github.com/grafana/grafana/issues/110541.
   // This is to prevent showing 2 buttons for the same feature
   const extensionLinksToShow = extensionLinks.filter(
     (link) => link.pluginId !== 'grafana-assistant-app' && link.title !== 'Explain in Assistant'
@@ -236,7 +236,6 @@ export const TracePageHeader = memo((props: TracePageHeaderProps) => {
               ]}
             />
           )}
-
           {config.feedbackLinksEnabled && (
             <Tooltip
               content={t(
