@@ -97,7 +97,7 @@ type DashboardsAPIBuilder struct {
 	cfg                          *setting.Cfg
 	dualWriter                   dualwrite.Service
 
-	// only one of the two is required to be set, folderClientProvider is used when ignoreLegacy is true
+	// only one of the two is required to be set, folderClientProvider is used when isStandalone is true
 	folderClient         client.K8sHandler
 	folderClientProvider client.K8sHandlerProvider
 
