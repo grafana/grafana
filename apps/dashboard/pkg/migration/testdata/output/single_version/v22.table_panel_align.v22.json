@@ -1,0 +1,22 @@
+{
+  "panels": [
+    {
+      "id": 1,
+      "styles": [
+        {
+          "align": "auto",
+          "pattern": "Time",
+          "type": "number"
+        },
+        {
+          "align": "auto",
+          "pattern": "Value",
+          "type": "string"
+        }
+      ],
+      "type": "table"
+    }
+  ],
+  "schemaVersion": 22,
+  "title": "V22 Table Panel Styles Test"
+}

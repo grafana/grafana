@@ -1,0 +1,69 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "datasource": "grafana",
+        "enable": true,
+        "name": "Annotations \u0026 Alerts"
+      }
+    ]
+  },
+  "panels": [
+    {
+      "id": 1,
+      "title": "CPU Usage",
+      "type": "graph",
+      "yAxes": [
+        {
+          "max": null,
+          "min": null,
+          "show": true
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "title": "Memory Usage",
+      "type": "singlestat",
+      "valueMaps": [
+        {
+          "op": "=",
+          "text": "N/A",
+          "value": "null"
+        }
+      ]
+    }
+  ],
+  "schemaVersion": 15,
+  "templating": {
+    "list": [
+      {
+        "datasource": "prometheus",
+        "name": "server",
+        "options": [],
+        "query": "label_values(server)",
+        "refresh": 1,
+        "type": "query"
+      }
+    ]
+  },
+  "time": {
+    "from": "now-6h",
+    "to": "now"
+  },
+  "timepicker": {
+    "refresh_intervals": [
+      "5s",
+      "10s",
+      "30s",
+      "1m",
+      "5m",
+      "15m",
+      "30m",
+      "1h",
+      "2h",
+      "1d"
+    ]
+  },
+  "title": "V15 No-Op Migration Test Dashboard"
+}
