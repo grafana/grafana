@@ -87,6 +87,8 @@ docker_build('grafana-fs-dev',
   only=[
     'devenv/frontend-service/build/grafana',
     'devenv/frontend-service/provisioning',
+    'devenv/frontend-service/configs/grafana-api.local.ini',
+    'devenv/frontend-service/configs/frontend-service.local.ini',
     'conf/defaults.ini',
     'public/emails',
     'public/views',
@@ -109,6 +111,8 @@ docker_build('grafana-fs-dev',
     sync('../../public/app/plugins', '/grafana/public/app/plugins'),
     sync('../../public/build/assets-manifest.json', '/grafana/public/build/assets-manifest.json'),
     sync('./provisioning', '/ignore/provisioning'),  # Just to trigger a restart instead of rebuild
+    sync('./configs/grafana-api.local.ini', '/ignore/grafana-api.local.ini'),  # Just to trigger a restart instead of rebuild
+    sync('./configs/frontend-service.local.ini', '/ignore/frontend-service.local.ini'),  # Just to trigger a restart instead of rebuild
     restart_container()
   ]
 )
