@@ -497,8 +497,8 @@ describe('GroupBy transformer', () => {
     const testSeries = toDataFrame({
       name: 'A',
       fields: [
-        { name: 'category', type: FieldType.string, values: ['A', 'A', 'B', 'B'], config: {} },
-        { name: 'values', type: FieldType.number, values: [1, 2, 3, 4], config: {} },
+        { name: 'category', type: FieldType.string, values: ['A', 'A', 'B', 'B', 'B'], config: {} },
+        { name: 'values', type: FieldType.number, values: [1, 2, 3, 4, 5], config: {} },
       ],
     });
 
@@ -529,7 +529,7 @@ describe('GroupBy transformer', () => {
         {
           name: 'category (count)',
           type: FieldType.number,
-          values: [2, 2],
+          values: [2, 3],
           config: {},
         },
       ];
