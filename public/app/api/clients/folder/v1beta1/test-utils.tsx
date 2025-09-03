@@ -38,7 +38,7 @@ const TestUpdateComponent = ({ folderUID }: { folderUID: string }) => {
 /** Renders test component with a button that will create a new folder */
 export const setupCreateFolder = () => render(<TestCreationComponent />);
 
-/** Renders test component with a button that will allows updating a folder */
+/** Renders test component with a button that allows updating a folder */
 export const setupUpdateFolder = async (folderUID: string) => {
   const view = render(<TestUpdateComponent folderUID={folderUID} />);
   await screen.findByText('Update Folder');
