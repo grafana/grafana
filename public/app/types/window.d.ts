@@ -21,4 +21,13 @@ export declare global {
   interface DOMParser {
     parseFromString(string: string | TrustedType, type: DOMParserSupportedType): Document;
   }
+
+  // Chrome Performance API extensions
+  interface Performance {
+    memory?: {
+      usedJSHeapSize: number;
+      totalJSHeapSize: number;
+      jsHeapSizeLimit: number;
+    };
+  }
 }
