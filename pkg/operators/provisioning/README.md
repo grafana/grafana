@@ -1,4 +1,8 @@
-# Jobs Controller
+# Provisioning Controllers
+
+Git sync has two different controllers: the jobs controller and the repo controller.
+
+## Jobs Controller
 
 > [!WARNING]
 > This controller has current limitations:
@@ -143,3 +147,9 @@ curl -X POST https://localhost:6446/apis/provisioning.grafana.app/v0alpha1/names
 
 3. In a full setup with the concurrent driver, workers claim and process jobs, updating status and writing history.
 4. Entries move to `HistoricJobs`; if cleanup is enabled, older entries are pruned based on `--history-expiration`.
+
+## [WIP] Repository Controller
+
+This controller is responsible for watching repositories. It will eventually do health checks, queue sync jobs, and create/delete github hooks.
+
+To run locally, run `GF_DEFAULT_TARGET=operator GF_OPERATOR_NAME=provisioning-repo ./bin/darwin-arm64/grafana server target --config=conf/operator.ini`
