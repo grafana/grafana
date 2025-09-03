@@ -13,7 +13,7 @@ import (
 
 func TestCreateSearchRequest(t *testing.T) {
 	datasource := &DatasourceInfo{URL: "http://localhost:3200"}
-	var qstring string = "{service.name=\"svc\"}"
+	var qstring = "{service.name=\"svc\"}"
 	var limit int64 = 10
 	var spss int64 = 3
 
