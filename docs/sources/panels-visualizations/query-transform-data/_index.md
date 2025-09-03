@@ -174,7 +174,7 @@ To save a query you've created:
 #### Known limitations
 
 - No validation is performed when you save a query, so it's possible to save an invalid query. You should confirm the query is working properly before you save it.
-- Saved queries aren't accessible from all instances of the query editor. <!-- can we explicitly name where it's available?? -->
+- Saved queries are currently accessible from the query editors in Dashboards and Explore.
 - You can save a maximum of 1000 queries.
 
 ### Special data sources
