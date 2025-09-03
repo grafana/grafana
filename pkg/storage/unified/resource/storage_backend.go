@@ -41,20 +41,22 @@ type KvStorageBackend struct {
 	log           logging.Logger
 	withPruner    bool
 	historyPruner Pruner
+	tracer        trace.Tracer
+	reg           prometheus.Registerer
 }
 
 var _ StorageBackend = &KvStorageBackend{}
 
 type KvBackendOptions struct {
-	kvStore    KV
-	withPruner bool
-	Tracer     trace.Tracer
-	Reg        prometheus.Registerer
+	KvStore    KV
+	WithPruner bool
+	Tracer     trace.Tracer          // TODO add tracing
+	Reg        prometheus.Registerer // TODO add metrics
 }
 
 func NewKvStorageBackend(opts KvBackendOptions) (*KvStorageBackend, error) {
 	ctx := context.Background()
-	kv := opts.kvStore
+	kv := opts.KvStore
 
 	s, err := snowflake.NewNode(rand.Int64N(1024))
 	if err != nil {
@@ -82,7 +84,6 @@ func (k *KvStorageBackend) pruneEvents(ctx context.Context, key PruningKey) erro
 	keepEvents := make([]DataKey, 0, prunerMaxEvents)
 
 	// iterate over all keys for the resource and delete versions beyond the latest 20
-	// this assumes keys are returned in descending order of resource version
 	for datakey, err := range k.dataStore.Keys(ctx, ListRequestKey{
 		Namespace: key.Namespace,
 		Group:     key.Group,
@@ -111,7 +112,7 @@ func (k *KvStorageBackend) pruneEvents(ctx context.Context, key PruningKey) erro
 
 func (k *KvStorageBackend) initPruner(ctx context.Context) error {
 	if !k.withPruner {
-		k.log.Debug("Pruner disabled, not initializing")
+		k.log.Debug("Pruner disabled, using noop pruner")
 		k.historyPruner = &NoopPruner{}
 		return nil
 	}
