@@ -1,4 +1,4 @@
-package iamoperator
+package iam
 
 import (
 	"context"
@@ -30,11 +30,11 @@ func init() {
 	server.RegisterOperator(server.Operator{
 		Name:        "iam-folder-reconciler",
 		Description: "Watch folder resources and manage IAM permissions with Zanzana",
-		RunFunc:     runIAMFolderReconciler,
+		RunFunc:     RunIAMFolderReconciler,
 	})
 }
 
-func runIAMFolderReconciler(opts standalone.BuildInfo, c *cli.Context, cfg *setting.Cfg) error {
+func RunIAMFolderReconciler(opts standalone.BuildInfo, c *cli.Context, cfg *setting.Cfg) error {
 	logger := logging.NewSLogLogger(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
 		Level: slog.LevelDebug,
 	})).With("logger", "iam-folder-reconciler")
@@ -63,7 +63,6 @@ func runIAMFolderReconciler(opts standalone.BuildInfo, c *cli.Context, cfg *sett
 		cancel()
 	}()
 
-	// Run the operator
 	logger.Info("Starting IAM folder reconciler")
 	err = runner.Run(ctx, app.Provider(iamConfig.AppConfig))
 	if err != nil && !errors.Is(err, context.Canceled) {
