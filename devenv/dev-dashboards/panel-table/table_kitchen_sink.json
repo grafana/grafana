@@ -250,6 +250,10 @@
                   "fixedColor": "blue",
                   "mode": "continuous-YlRd"
                 }
+              },
+              {
+                "id": "unit",
+                "value": "areaM2"
               }
             ]
           },
