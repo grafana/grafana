@@ -18,7 +18,9 @@ func TestBadgerKVStorageBackend(t *testing.T) {
 		t.Cleanup(func() {
 			_ = db.Close()
 		})
-		return resource.NewKvStorageBackend(resource.NewBadgerKV(db))
+		backend, err := resource.NewKvStorageBackend(resource.NewBadgerKV(db))
+		require.NoError(t, err)
+		return backend
 	}, &TestOptions{
 		NSPrefix: "kvstorage-test",
 		SkipTests: map[string]bool{

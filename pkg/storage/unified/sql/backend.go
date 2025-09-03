@@ -91,14 +91,6 @@ func NewBackend(opts BackendOptions) (Backend, error) {
 	}, nil
 }
 
-type noopPruner struct{}
-
-func (p *noopPruner) Add(key resource.PruningKey) error {
-	return nil
-}
-
-func (p *noopPruner) Start(ctx context.Context) {}
-
 type backend struct {
 	//general
 	isHA bool

@@ -19,30 +19,18 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/util/debouncer"
+	"github.com/prometheus/client_golang/prometheus"
+	"go.opentelemetry.io/otel/trace"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-// Small abstraction to allow for different Pruner implementations.
-// This can be removed once the debouncer is deployed.
-type Pruner interface {
-	Add(key PruningKey) error
-	Start(ctx context.Context)
-}
-
-// PruningKey is a comparable key for pruning history.
-type PruningKey struct {
-	Namespace string
-	Group     string
-	Resource  string
-	Name      string
-}
-
 const (
 	defaultListBufferSize = 100
+	prunerMaxEvents       = 20 // number of events to keep per resource
 )
 
-// Unified storage backend based on KV storage.
-type kvStorageBackend struct {
+// KvStorageBackend Unified storage backend based on KV storage.
+type KvStorageBackend struct {
 	snowflake     *snowflake.Node
 	kv            KV
 	dataStore     *dataStore
@@ -51,18 +39,29 @@ type kvStorageBackend struct {
 	notifier      *notifier
 	builder       DocumentBuilder
 	log           logging.Logger
+	withPruner    bool
 	historyPruner Pruner
 }
 
-var _ StorageBackend = &kvStorageBackend{}
+var _ StorageBackend = &KvStorageBackend{}
 
-func NewKvStorageBackend(kv KV) *kvStorageBackend {
+type KvBackendOptions struct {
+	kvStore    KV
+	withPruner bool
+	Tracer     trace.Tracer
+	Reg        prometheus.Registerer
+}
+
+func NewKvStorageBackend(opts KvBackendOptions) (*KvStorageBackend, error) {
+	ctx := context.Background()
+	kv := opts.kvStore
+
 	s, err := snowflake.NewNode(rand.Int64N(1024))
 	if err != nil {
-		panic(err)
+		return nil, fmt.Errorf("failed to create snowflake node: %w", err)
 	}
 	eventStore := newEventStore(kv)
-	return &kvStorageBackend{
+	backend := &KvStorageBackend{
 		kv:         kv,
 		dataStore:  newDataStore(kv),
 		metaStore:  newMetadataStore(kv),
@@ -72,43 +71,58 @@ func NewKvStorageBackend(kv KV) *kvStorageBackend {
 		builder:    StandardDocumentBuilder(), // For now we use the standard document builder.
 		log:        &logging.NoOpLogger{},     // Make this configurable
 	}
+	err = backend.initPruner(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to initialize pruner: %w", err)
+	}
+	return backend, nil
 }
 
-func (k *kvStorageBackend) initPruner(ctx context.Context) error {
+func (k *KvStorageBackend) pruneEvents(ctx context.Context, key PruningKey) error {
+	keepEvents := make([]DataKey, 0, prunerMaxEvents)
+
+	// iterate over all keys for the resource and delete versions beyond the latest 20
+	// this assumes keys are returned in descending order of resource version
+	for datakey, err := range k.dataStore.Keys(ctx, ListRequestKey{
+		Namespace: key.Namespace,
+		Group:     key.Group,
+		Resource:  key.Resource,
+		Name:      key.Name,
+	}) {
+		if err != nil {
+			return err
+		}
+
+		if len(keepEvents) < prunerMaxEvents {
+			keepEvents = append(keepEvents, datakey)
+			continue
+		}
+
+		// If we already have 20 versions, delete the oldest one and append the new one
+		err := k.dataStore.Delete(ctx, keepEvents[0])
+		if err != nil {
+			return err
+		}
+		keepEvents = append(keepEvents[1:], datakey)
+	}
+
+	return nil
+}
+
+func (k *KvStorageBackend) initPruner(ctx context.Context) error {
+	if !k.withPruner {
+		k.log.Debug("Pruner disabled, not initializing")
+		k.historyPruner = &NoopPruner{}
+		return nil
+	}
+
+	k.log.Debug("Initializing history pruner")
 	pruner, err := debouncer.NewGroup(debouncer.DebouncerOpts[PruningKey]{
-		Name:       "history_pruner",
-		BufferSize: 1000,
-		MinWait:    time.Second * 30,
-		MaxWait:    time.Minute * 5,
-		ProcessHandler: func(ctx context.Context, key PruningKey) error {
-			versionCounter := 0
-
-			// iterate over all keys for the resource and delete versions beyond the latest 20
-			// this assumes keys are returned in descending order of resource version
-			for datakey, err := range k.dataStore.Keys(ctx, ListRequestKey{
-				Namespace: key.Namespace,
-				Group:     key.Group,
-				Resource:  key.Resource,
-				Name:      key.Name,
-			}) {
-				if err != nil {
-					return err
-				}
-
-				if versionCounter < 20 {
-					versionCounter++
-					continue
-				} else {
-					err := k.dataStore.Delete(ctx, datakey)
-					if err != nil {
-						return err
-					}
-					continue
-				}
-			}
-
-			return nil
-		},
+		Name:           "history_pruner",
+		BufferSize:     1000,
+		MinWait:        time.Second * 30,
+		MaxWait:        time.Minute * 5,
+		ProcessHandler: k.pruneEvents,
 		ErrorHandler: func(key PruningKey, err error) {
 			k.log.Error("failed to prune history",
 				"namespace", key.Namespace,
@@ -128,7 +142,7 @@ func (k *kvStorageBackend) initPruner(ctx context.Context) error {
 }
 
 // WriteEvent writes a resource event (create/update/delete) to the storage backend.
-func (k *kvStorageBackend) WriteEvent(ctx context.Context, event WriteEvent) (int64, error) {
+func (k *KvStorageBackend) WriteEvent(ctx context.Context, event WriteEvent) (int64, error) {
 	if err := event.Validate(); err != nil {
 		return 0, fmt.Errorf("invalid event: %w", err)
 	}
@@ -231,7 +245,7 @@ func (k *kvStorageBackend) WriteEvent(ctx context.Context, event WriteEvent) (in
 	return rv, nil
 }
 
-func (k *kvStorageBackend) ReadResource(ctx context.Context, req *resourcepb.ReadRequest) *BackendReadResponse {
+func (k *KvStorageBackend) ReadResource(ctx context.Context, req *resourcepb.ReadRequest) *BackendReadResponse {
 	if req.Key == nil {
 		return &BackendReadResponse{Error: &resourcepb.ErrorResult{Code: http.StatusBadRequest, Message: "missing key"}}
 	}
@@ -270,7 +284,7 @@ func (k *kvStorageBackend) ReadResource(ctx context.Context, req *resourcepb.Rea
 }
 
 // ListIterator returns an iterator for listing resources.
-func (k *kvStorageBackend) ListIterator(ctx context.Context, req *resourcepb.ListRequest, cb func(ListIterator) error) (int64, error) {
+func (k *KvStorageBackend) ListIterator(ctx context.Context, req *resourcepb.ListRequest, cb func(ListIterator) error) (int64, error) {
 	if req.Options == nil || req.Options.Key == nil {
 		return 0, fmt.Errorf("missing options or key in ListRequest")
 	}
@@ -529,14 +543,14 @@ func applyPagination(keys []DataKey, lastSeenRV int64, sortAscending bool) []Dat
 	return pagedKeys
 }
 
-func (k *kvStorageBackend) ListModifiedSince(ctx context.Context, key NamespacedResource, sinceRv int64) (int64, iter.Seq2[*ModifiedResource, error]) {
+func (k *KvStorageBackend) ListModifiedSince(ctx context.Context, key NamespacedResource, sinceRv int64) (int64, iter.Seq2[*ModifiedResource, error]) {
 	return 0, func(yield func(*ModifiedResource, error) bool) {
 		yield(nil, errors.New("not implemented"))
 	}
 }
 
 // ListHistory is like ListIterator, but it returns the history of a resource.
-func (k *kvStorageBackend) ListHistory(ctx context.Context, req *resourcepb.ListRequest, fn func(ListIterator) error) (int64, error) {
+func (k *KvStorageBackend) ListHistory(ctx context.Context, req *resourcepb.ListRequest, fn func(ListIterator) error) (int64, error) {
 	if err := validateListHistoryRequest(req); err != nil {
 		return 0, err
 	}
@@ -615,7 +629,7 @@ func (k *kvStorageBackend) ListHistory(ctx context.Context, req *resourcepb.List
 }
 
 // processTrashEntries handles the special case of listing deleted items (trash)
-func (k *kvStorageBackend) processTrashEntries(ctx context.Context, req *resourcepb.ListRequest, fn func(ListIterator) error, historyKeys []DataKey, lastSeenRV int64, sortAscending bool, listRV int64) (int64, error) {
+func (k *KvStorageBackend) processTrashEntries(ctx context.Context, req *resourcepb.ListRequest, fn func(ListIterator) error, historyKeys []DataKey, lastSeenRV int64, sortAscending bool, listRV int64) (int64, error) {
 	// Filter to only deleted entries
 	var deletedKeys []DataKey
 	for _, key := range historyKeys {
@@ -781,7 +795,7 @@ func (i *kvHistoryIterator) Value() []byte {
 }
 
 // WatchWriteEvents returns a channel that receives write events.
-func (k *kvStorageBackend) WatchWriteEvents(ctx context.Context) (<-chan *WrittenEvent, error) {
+func (k *KvStorageBackend) WatchWriteEvents(ctx context.Context) (<-chan *WrittenEvent, error) {
 	// Create a channel to receive events
 	events := make(chan *WrittenEvent, 10000) // TODO: make this configurable
 
@@ -838,7 +852,7 @@ func (k *kvStorageBackend) WatchWriteEvents(ctx context.Context) (<-chan *Writte
 
 // GetResourceStats returns resource stats within the storage backend.
 // TODO: this isn't very efficient, we should use a more efficient algorithm.
-func (k *kvStorageBackend) GetResourceStats(ctx context.Context, namespace string, minCount int) ([]ResourceStats, error) {
+func (k *KvStorageBackend) GetResourceStats(ctx context.Context, namespace string, minCount int) ([]ResourceStats, error) {
 	stats := make([]ResourceStats, 0)
 	res := make(map[string]map[string]bool)
 	rvs := make(map[string]int64)

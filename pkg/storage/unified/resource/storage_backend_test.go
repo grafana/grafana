@@ -15,9 +15,15 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
-func setupTestStorageBackend(t *testing.T) *kvStorageBackend {
+func setupTestStorageBackend(t *testing.T) *KvStorageBackend {
 	kv := setupTestKV(t)
-	return NewKvStorageBackend(kv)
+	opts := KvBackendOptions{
+		kvStore:    kv,
+		withPruner: true,
+	}
+	backend, err := NewKvStorageBackend(opts)
+	require.NoError(t, err)
+	return backend
 }
 
 func TestNewKvStorageBackend(t *testing.T) {
@@ -928,6 +934,145 @@ func TestKvStorageBackend_GetResourceStats_Success(t *testing.T) {
 	require.Equal(t, int64(2), filteredStats[0].Count)
 }
 
+func TestKvStorageBackend_PruneEvents(t *testing.T) {
+	t.Run("will prune oldest events when exceeding limit", func(t *testing.T) {
+		backend := setupTestStorageBackend(t)
+		ctx := context.Background()
+
+		// Create a resource
+		testObj, err := createTestObjectWithName("test-resource", "apps", "test-data")
+		require.NoError(t, err)
+		metaAccessor, err := utils.MetaAccessor(testObj)
+		require.NoError(t, err)
+		writeEvent := WriteEvent{
+			Type: resourcepb.WatchEvent_ADDED,
+			Key: &resourcepb.ResourceKey{
+				Namespace: "default",
+				Group:     "apps",
+				Resource:  "resources",
+				Name:      "test-resource",
+			},
+			Value:      objectToJSONBytes(t, testObj),
+			Object:     metaAccessor,
+			PreviousRV: 0,
+		}
+		rv1, err := backend.WriteEvent(ctx, writeEvent)
+		require.NoError(t, err)
+
+		// Update the resource prunerMaxEvents times. This will create one more event than the pruner limit.
+		previousRV := rv1
+		updateRvs := []int64{}
+		for i := 0; i < prunerMaxEvents; i++ {
+			testObj.Object["spec"].(map[string]any)["value"] = fmt.Sprintf("update-%d", i)
+			writeEvent.Type = resourcepb.WatchEvent_MODIFIED
+			writeEvent.Value = objectToJSONBytes(t, testObj)
+			writeEvent.PreviousRV = previousRV
+			newRv, err := backend.WriteEvent(ctx, writeEvent)
+			updateRvs = append(updateRvs, newRv)
+			require.NoError(t, err)
+			previousRV = newRv
+		}
+
+		pruningKey := PruningKey{
+			Namespace: "default",
+			Group:     "apps",
+			Resource:  "resources",
+			Name:      "test-resource",
+		}
+
+		err = backend.pruneEvents(ctx, pruningKey)
+		require.NoError(t, err)
+
+		// Verify the first event has been pruned (rv1)
+		eventKey1 := DataKey{
+			Namespace:       "default",
+			Group:           "apps",
+			Resource:        "resources",
+			Name:            "test-resource",
+			ResourceVersion: rv1,
+		}
+
+		_, err = backend.dataStore.Get(ctx, eventKey1)
+		require.Error(t, err) // Should return error as event is pruned
+
+		// assert prunerMaxEvents most recent events exist
+		counter := 0
+		for datakey, err := range backend.dataStore.Keys(ctx, ListRequestKey{
+			Namespace: "default",
+			Group:     "apps",
+			Resource:  "resources",
+			Name:      "test-resource",
+		}) {
+			require.NoError(t, err)
+			require.NotEqual(t, rv1, datakey.ResourceVersion)
+			counter++
+		}
+		require.Equal(t, prunerMaxEvents, counter)
+	})
+
+	t.Run("will not prune events when less than limit", func(t *testing.T) {
+		backend := setupTestStorageBackend(t)
+		ctx := context.Background()
+
+		// Create a resource
+		testObj, err := createTestObjectWithName("test-resource", "apps", "test-data")
+		require.NoError(t, err)
+		metaAccessor, err := utils.MetaAccessor(testObj)
+		require.NoError(t, err)
+		writeEvent := WriteEvent{
+			Type: resourcepb.WatchEvent_ADDED,
+			Key: &resourcepb.ResourceKey{
+				Namespace: "default",
+				Group:     "apps",
+				Resource:  "resources",
+				Name:      "test-resource",
+			},
+			Value:      objectToJSONBytes(t, testObj),
+			Object:     metaAccessor,
+			PreviousRV: 0,
+		}
+		rv1, err := backend.WriteEvent(ctx, writeEvent)
+		require.NoError(t, err)
+
+		// Update the resource prunerMaxEvents-1 times. This will create same number of events as the pruner limit.
+		previousRV := rv1
+		updateRvs := []int64{}
+		for i := 0; i < prunerMaxEvents-1; i++ {
+			testObj.Object["spec"].(map[string]any)["value"] = fmt.Sprintf("update-%d", i)
+			writeEvent.Type = resourcepb.WatchEvent_MODIFIED
+			writeEvent.Value = objectToJSONBytes(t, testObj)
+			writeEvent.PreviousRV = previousRV
+			newRv, err := backend.WriteEvent(ctx, writeEvent)
+			updateRvs = append(updateRvs, newRv)
+			require.NoError(t, err)
+			previousRV = newRv
+		}
+
+		pruningKey := PruningKey{
+			Namespace: "default",
+			Group:     "apps",
+			Resource:  "resources",
+			Name:      "test-resource",
+		}
+
+		err = backend.pruneEvents(ctx, pruningKey)
+		require.NoError(t, err)
+
+		// assert all events exist
+		counter := 0
+		for _, err := range backend.dataStore.Keys(ctx, ListRequestKey{
+			Namespace: "default",
+			Group:     "apps",
+			Resource:  "resources",
+			Name:      "test-resource",
+		}) {
+			require.NoError(t, err)
+			counter++
+		}
+		require.Equal(t, prunerMaxEvents, counter)
+	})
+}
+
 // createTestObject creates a test unstructured object with standard values
 func createTestObject() (*unstructured.Unstructured, error) {
 	return createTestObjectWithName("test-resource", "apps", "test data")
@@ -959,7 +1104,7 @@ func createTestObjectWithName(name, group, value string) (*unstructured.Unstruct
 }
 
 // writeObject writes an unstructured object to the backend using the provided event type and previous resource version
-func writeObject(t *testing.T, backend *kvStorageBackend, obj *unstructured.Unstructured, eventType resourcepb.WatchEvent_Type, previousRV int64) (int64, error) {
+func writeObject(t *testing.T, backend *KvStorageBackend, obj *unstructured.Unstructured, eventType resourcepb.WatchEvent_Type, previousRV int64) (int64, error) {
 	metaAccessor, err := utils.MetaAccessor(obj)
 	require.NoError(t, err)
 
@@ -1003,7 +1148,7 @@ func writeObject(t *testing.T, backend *kvStorageBackend, obj *unstructured.Unst
 }
 
 // createAndWriteTestObject creates a basic test object and writes it to the backend
-func createAndWriteTestObject(t *testing.T, backend *kvStorageBackend) (*unstructured.Unstructured, int64) {
+func createAndWriteTestObject(t *testing.T, backend *KvStorageBackend) (*unstructured.Unstructured, int64) {
 	testObj, err := createTestObject()
 	require.NoError(t, err)
 
