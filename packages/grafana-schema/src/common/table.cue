@@ -21,11 +21,7 @@ TableSortByFieldState: {
 
 // Footer options
 TableFooterOptions: {
-	show: bool
-  reducer: [...string] // actually 1 value
-  fields?: [...string]
   enablePagination?: bool
-  countRows?: bool
 } @cuetsy(kind="interface")
 
 // Auto mode table cell options
@@ -101,8 +97,6 @@ TableGeoCellOptions: {
 // Height of a table cell
 TableCellHeight: "sm" | "md" | "lg" | "auto" @cuetsy(kind="enum")
 
-
-
 // Table cell options. Each cell has a display mode
 // and other potential options for that display.
 TableCellOptions: TableAutoCellOptions | TableSparklineCellOptions | TableBarGaugeCellOptions | TableColoredBackgroundCellOptions | TableColorTextCellOptions | TableImageCellOptions | TablePillCellOptions | TableDataLinksCellOptions | TableActionsCellOptions | TableJsonViewCellOptions | TableMarkdownCellOptions | TableGeoCellOptions @cuetsy(kind="type")
@@ -135,4 +129,6 @@ TableFieldOptions: {
   wrapHeaderText?: bool
   // Selecting or hovering this field will show a tooltip containing the content within the target field
   tooltip?: TableCellTooltipOptions
+  // footer reducers to apply to this field
+  reducers?: [...string]
 } & HideableFieldConfig @cuetsy(kind="interface")

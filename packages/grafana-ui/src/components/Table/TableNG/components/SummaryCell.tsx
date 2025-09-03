@@ -56,7 +56,7 @@ export const SummaryCell = ({ rows, field, omitCountAll = false }: SummaryCellPr
   const displayName = getDisplayName(field);
 
   const reducerResultsEntries = useMemo<Array<[string, ReducerResult | null]>>(() => {
-    const reducers: ReducerID[] = field.config.custom?.footer?.reducer ?? [];
+    const reducers: ReducerID[] = field.config.custom?.footer?.reducers ?? [];
 
     if (
       reducers.length === 0 ||

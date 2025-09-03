@@ -516,7 +516,7 @@ describe('Table Migrations', () => {
 
       expect(panel.options.footer).toBeUndefined();
       expect(panel.fieldConfig.defaults.custom.footer).toEqual({
-        reducer: ['sum'],
+        reducers: ['sum'],
       });
     });
 
@@ -551,7 +551,7 @@ describe('Table Migrations', () => {
                 names: ['field1', 'field2'],
               },
             },
-            properties: [{ id: 'custom.footer.reducer', value: ['sum'] }],
+            properties: [{ id: 'custom.footer.reducers', value: ['sum'] }],
           },
         ])
       );
@@ -585,7 +585,7 @@ describe('Table Migrations', () => {
               id: FieldMatcherID.byName,
               options: 'field1',
             },
-            properties: [{ id: 'custom.footer.reducer', value: ['sum'] }],
+            properties: [{ id: 'custom.footer.reducers', value: ['sum'] }],
           },
         ])
       );
@@ -612,8 +612,57 @@ describe('Table Migrations', () => {
 
       expect(panel.options.footer).toBeUndefined();
       expect(panel.fieldConfig.defaults.custom.footer).toEqual({
-        reducer: ['countAll'],
+        reducers: ['countAll'],
       });
+    });
+
+    it('destroys an existing footer if it was hidden', () => {
+      const panel = {
+        options: {
+          footer: {
+            show: false,
+            reducer: ['sum'],
+            fields: ['field1'],
+          },
+        },
+        fieldConfig: {
+          defaults: {
+            custom: {},
+          },
+          overrides: [],
+        },
+      } as unknown as PanelModel;
+
+      migrateFooterV2(panel);
+
+      expect(panel.options.footer).toBeUndefined();
+      expect(panel.fieldConfig.defaults.custom.footer).toBeUndefined();
+      expect(panel.fieldConfig.overrides).toEqual([]);
+    });
+
+    it('retains the enablePagination setting if it exists', () => {
+      const panel = {
+        options: {
+          footer: {
+            show: false,
+            reducer: ['sum'],
+            fields: ['field1'],
+            enablePagination: true,
+          },
+        },
+        fieldConfig: {
+          defaults: {
+            custom: {},
+          },
+          overrides: [],
+        },
+      } as unknown as PanelModel;
+
+      migrateFooterV2(panel);
+
+      expect(panel.options.footer.enablePagination).toBe(true);
+      expect(panel.fieldConfig.defaults.custom.footer).toBeUndefined();
+      expect(panel.fieldConfig.overrides).toEqual([]);
     });
   });
 });

@@ -125,7 +125,7 @@ export function TableNG(props: TableNGProps) {
   } = props;
 
   const hasFooter = useMemo(
-    () => data.fields.some((field) => field.config?.custom?.footer?.reducer?.length ?? false),
+    () => data.fields.some((field) => field.config?.custom?.footer?.reducers?.length ?? false),
     [data.fields]
   );
   const footerHeight = hasFooter ? calculateFooterHeight(data, fieldConfig) : 0;

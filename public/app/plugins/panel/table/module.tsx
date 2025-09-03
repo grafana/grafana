@@ -91,9 +91,9 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(TablePanel)
           hideFromDefaults: true,
         })
         .addCustomEditor({
-          id: 'footer.reducer',
+          id: 'footer.reducers',
           category: [t('table.category-table-footer', 'Table footer')],
-          path: 'footer.reducer',
+          path: 'footer.reducers',
           name: t('table.name-calculation', 'Calculation'),
           description: t('table.description-calculation', 'Choose a reducer function / calculation'),
           editor: standardEditorsRegistry.get('stats-picker').editor,

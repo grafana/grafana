@@ -763,17 +763,8 @@ export interface TableSortByFieldState {
  * Footer options
  */
 export interface TableFooterOptions {
-  countRows?: boolean;
   enablePagination?: boolean;
-  fields?: Array<string>;
-  reducer: Array<string>; // actually 1 value
-  show: boolean;
 }
-
-export const defaultTableFooterOptions: Partial<TableFooterOptions> = {
-  fields: [],
-  reducer: [],
-};
 
 /**
  * Auto mode table cell options
@@ -1011,6 +1002,10 @@ export interface TableFieldOptions extends HideableFieldConfig {
   inspect: boolean;
   minWidth?: number;
   /**
+   * footer reducers to apply to this field
+   */
+  reducers?: Array<string>;
+  /**
    * Selecting or hovering this field will show a tooltip containing the content within the target field
    */
   tooltip?: {
@@ -1037,6 +1032,7 @@ export interface TableFieldOptions extends HideableFieldConfig {
 export const defaultTableFieldOptions: Partial<TableFieldOptions> = {
   align: 'auto',
   inspect: false,
+  reducers: [],
 };
 
 /**

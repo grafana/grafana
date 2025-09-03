@@ -858,7 +858,7 @@ const getMaxReducerCount = (dataFrame: DataFrame, fieldConfig?: FieldConfigSourc
   // Map each field to its reducer count (direct config or override)
   const reducerCounts = numericFields.map((field) => {
     // Get the direct reducer count from the field config
-    const directReducers = field.config?.custom?.footer?.reducer ?? [];
+    const directReducers = field.config?.custom?.footer?.reducers ?? [];
     let reducerCount = directReducers.length;
 
     // Check for overrides if field config is available
@@ -869,7 +869,7 @@ const getMaxReducerCount = (dataFrame: DataFrame, fieldConfig?: FieldConfigSourc
       );
 
       // Check if there's a footer reducer property in the override
-      const footerProperty = override?.properties?.find(({ id }) => id === 'custom.footer.reducer');
+      const footerProperty = override?.properties?.find(({ id }) => id === 'custom.footer.reducers');
       if (footerProperty?.value && Array.isArray(footerProperty.value)) {
         // If override exists, it takes precedence over direct config
         reducerCount = footerProperty.value.length;

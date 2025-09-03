@@ -471,7 +471,7 @@ describe('TableNG', () => {
           config: {
             ...field.config,
             custom: {
-              footer: { reducer: ['sum'] },
+              footer: { reducers: ['sum'] },
             },
           },
         })),
@@ -1135,7 +1135,7 @@ describe('TableNG', () => {
               },
             },
           },
-          config: { ...field.config, custom: { footer: { reducer: ['sum'] } } },
+          config: { ...field.config, custom: { footer: { reducers: ['sum'] } } },
         })),
       };
 
@@ -1144,7 +1144,7 @@ describe('TableNG', () => {
         fields: baseFrame.fields.map((field) => ({
           ...field,
           values: field.name === 'Column A' ? ['A1'] : field.name === 'Column B' ? [1] : field.values.slice(0, 1),
-          config: { ...field.config, custom: { footer: { reducer: ['sum'] } } },
+          config: { ...field.config, custom: { footer: { reducers: ['sum'] } } },
         })),
       };
 

@@ -34,14 +34,7 @@ composableKinds: PanelCfg: {
 					// Used to control row sorting
 					sortBy?: [...ui.TableSortByFieldState]
 					// Controls footer options
-					footer?: ui.TableFooterOptions | *{
-						// Controls whether the footer should be shown
-						show: false
-						// Controls whether the footer should show the total number of rows on Count calculation
-						countRows: false
-						// Represents the selected calculations
-						reducer: []
-					}
+					footer?: ui.TableFooterOptions
 					// Controls the height of the rows
 					cellHeight?: ui.TableCellHeight & (*"sm" | _)
 					// limits the maximum height of a row, if text wrapping or dynamic height is enabled

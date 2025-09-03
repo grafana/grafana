@@ -349,22 +349,34 @@ export const migrateHiddenFields = (panel: PanelModel<Partial<Options>>) => {
   return panel;
 };
 
-export const migrateFooterV2 = (panel: PanelModel<Options>) => {
-  const oldFooter = panel.options?.footer;
+interface LegacyTableFooterOptions {
+  show: boolean;
+  reducer: string[];
+  fields?: string[];
+  countRows?: boolean;
+  enablePagination?: boolean;
+}
 
-  if (oldFooter) {
+function isLegacyTableFooter(obj: Options['footer'] | LegacyTableFooterOptions): obj is LegacyTableFooterOptions {
+  return !!obj && 'show' in obj;
+}
+
+export const migrateFooterV2 = (panel: PanelModel<Options>) => {
+  const oldFooter: Options['footer'] | LegacyTableFooterOptions = panel.options?.footer;
+
+  if (isLegacyTableFooter(oldFooter)) {
     if (oldFooter.show) {
       const reducers = oldFooter.reducer;
 
       panel.fieldConfig.defaults.custom = {
         ...panel.fieldConfig.defaults.custom,
         footer: {
-          reducer: reducers,
+          reducers: reducers,
         },
       };
 
       if (oldFooter.countRows && reducers[0] === 'count') {
-        panel.fieldConfig.defaults.custom.footer.reducer = ['countAll'];
+        panel.fieldConfig.defaults.custom.footer.reducers = ['countAll'];
       } else if (oldFooter.fields && oldFooter.fields.length > 1) {
         delete panel.fieldConfig.defaults.custom.footer;
 
@@ -378,7 +390,7 @@ export const migrateFooterV2 = (panel: PanelModel<Options>) => {
               names: oldFooter.fields,
             },
           },
-          properties: [{ id: 'custom.footer.reducer', value: reducers }],
+          properties: [{ id: 'custom.footer.reducers', value: reducers }],
         });
       } else if (oldFooter.fields && oldFooter.fields.length === 1) {
         delete panel.fieldConfig.defaults.custom.footer;
@@ -389,10 +401,16 @@ export const migrateFooterV2 = (panel: PanelModel<Options>) => {
             id: FieldMatcherID.byName,
             options: oldFooter.fields[0],
           },
-          properties: [{ id: 'custom.footer.reducer', value: reducers }],
+          properties: [{ id: 'custom.footer.reducers', value: reducers }],
         });
       }
+    }
 
+    if (oldFooter.enablePagination != null) {
+      panel.options.footer = {
+        enablePagination: oldFooter.enablePagination,
+      };
+    } else {
       delete panel.options.footer;
     }
   }

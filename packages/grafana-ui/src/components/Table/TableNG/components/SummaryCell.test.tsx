@@ -18,7 +18,7 @@ describe('SummaryCell', () => {
     config: {
       custom: {
         footer: {
-          reducer: ['sum'],
+          reducers: ['sum'],
         },
       },
     },
@@ -40,7 +40,7 @@ describe('SummaryCell', () => {
     config: {
       custom: {
         footer: {
-          reducer: ['sum'],
+          reducers: ['sum'],
         },
       },
     },
@@ -61,7 +61,7 @@ describe('SummaryCell', () => {
     values: ['a', 'b', 'c'],
     config: {
       custom: {
-        reducer: ['sum'],
+        reducers: ['sum'],
       },
     },
     display: (value: unknown) => ({
@@ -91,7 +91,7 @@ describe('SummaryCell', () => {
       ...numericField,
       config: {
         ...numericField.config,
-        custom: { ...numericField.config.custom, footer: { reducer: ['sum', 'mean'] } },
+        custom: { ...numericField.config.custom, footer: { reducers: ['sum', 'mean'] } },
       },
     };
     render(<SummaryCell rows={rows} field={numericFieldWithMultipleReducers} />);
@@ -106,7 +106,7 @@ describe('SummaryCell', () => {
       ...numericField,
       config: {
         ...numericField.config,
-        custom: { ...numericField.config.custom, footer: { reducer: ['mean'] } },
+        custom: { ...numericField.config.custom, footer: { reducers: ['mean'] } },
       },
     };
     render(<SummaryCell rows={rows} field={newNumericField} />);
@@ -122,7 +122,7 @@ describe('SummaryCell', () => {
   it('should render the summary cell if a non-numeric reducer is set for a non-numeric field', () => {
     const textFieldNonNumericReducer = {
       ...textField,
-      config: { ...textField.config, custom: { ...textField.config.custom, footer: { reducer: ['last'] } } },
+      config: { ...textField.config, custom: { ...textField.config.custom, footer: { reducers: ['last'] } } },
     };
     render(<SummaryCell rows={rows} field={textFieldNonNumericReducer} />);
     expect(screen.getByText('Last')).toBeInTheDocument();
@@ -132,7 +132,7 @@ describe('SummaryCell', () => {
   it('should render an empty summary cell if no reducers are set', () => {
     const numericFieldNoReducers = {
       ...numericField,
-      config: { ...numericField.config, custom: { ...numericField.config.custom, footer: { reducer: [] } } },
+      config: { ...numericField.config, custom: { ...numericField.config.custom, footer: { reducers: [] } } },
     };
     render(<SummaryCell rows={rows} field={numericFieldNoReducers} />);
     expect(screen.getByTestId('summary-cell-empty')).toBeInTheDocument();
@@ -151,13 +151,13 @@ describe('SummaryCell', () => {
   });
 
   it('should render summary cells with a mix of numeric-and non-numeric reducers and fields', () => {
-    const fields = [numericField, numericField2, textField].map((field, index) => ({
+    const fields = [numericField, numericField2, textField].map((field) => ({
       ...field,
       config: {
         ...field.config,
         custom: {
           ...field.config.custom,
-          footer: { reducer: ['sum', 'mean', 'last'] },
+          footer: { reducers: ['sum', 'mean', 'last'] },
         },
       },
     }));
@@ -172,4 +172,6 @@ describe('SummaryCell', () => {
     expect(screen.getByText('6.5')).toBeInTheDocument(); // mean
     expect(screen.getByText('efghi')).toBeInTheDocument(); // last
   });
+
+  // TODO: add test for noFormattingReducers
 });
