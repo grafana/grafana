@@ -227,16 +227,26 @@
       "select-resource": "Bir kaynak seçin"
     },
     "resource-picker": {
+      "browse-tab": "",
       "button-apply": "Uygula",
       "button-cancel": "İptal et",
       "header-location": "Konum",
+      "header-resource-group": "",
       "header-scope": "Kapsam",
       "header-type": "Tür",
       "heading-selection": "Seçim",
+      "locations-filter": "",
+      "locations-filter-placeholder": "",
+      "recent-tab": "",
       "result-limit": "İlk {{numResults}} sonuç gösteriliyor",
+      "subscriptions-filter": "",
+      "subscriptions-filter-placeholder": "",
       "text-loading": "Yükleniyor...",
+      "text-no-recent-resources": "",
       "text-no-resources": "Hiçbir kaynak bulunmadı",
-      "title-error-occurred": "Azure Monitor'dan kaynaklar istenirken bir hata oluştu"
+      "title-error-occurred": "Azure Monitor'dan kaynaklar istenirken bir hata oluştu",
+      "types-filter": "",
+      "types-filter-placeholder": ""
     },
     "scope-selector": {
       "label": "Kapsam"

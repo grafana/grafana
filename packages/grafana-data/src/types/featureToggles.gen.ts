@@ -270,6 +270,7 @@ export interface FeatureToggles {
   kubernetesLibraryPanels?: boolean;
   /**
   * Use the kubernetes API in the frontend for dashboards
+  * @default true
   */
   kubernetesDashboards?: boolean;
   /**
@@ -429,6 +430,10 @@ export interface FeatureToggles {
   * Enable the secrets management API and services under app platform
   */
   secretsManagementAppPlatform?: boolean;
+  /**
+  * Enable the secrets management app platform UI
+  */
+  secretsManagementAppPlatformUI?: boolean;
   /**
   * Writes the state periodically to the database, asynchronous to rule evaluation
   */
@@ -1111,4 +1116,14 @@ export interface FeatureToggles {
   * @default false
   */
   alertingTriage?: boolean;
+  /**
+  * Enables the Graphite data source full backend mode
+  * @default false
+  */
+  graphiteBackendMode?: boolean;
+  /**
+  * Enables the updated Azure Monitor resource picker
+  * @default false
+  */
+  azureResourcePickerUpdates?: boolean;
 }
