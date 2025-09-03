@@ -31,25 +31,6 @@ const getReducerName = (reducerId: string): string => {
   return fieldReducers.get(reducerId)?.name || reducerId;
 };
 
-const SummaryCellItem = ({ children, styles }: { children: ReactNode; styles: ReturnType<typeof getStyles> }) => (
-  <div className={styles.footerItem}>{children}</div>
-);
-
-const SummaryCellLabel = ({ children, styles }: { children: ReactNode; styles: ReturnType<typeof getStyles> }) => (
-  <div
-    data-testid={selectors.components.Panels.Visualization.TableNG.Footer.ReducerLabel}
-    className={styles.footerItemLabel}
-  >
-    {children}
-  </div>
-);
-
-const SummaryCellValue = ({ children, styles }: { children: ReactNode; styles: ReturnType<typeof getStyles> }) => (
-  <div data-testid={selectors.components.Panels.Visualization.TableNG.Footer.Value} className={styles.footerItemValue}>
-    {children}
-  </div>
-);
-
 export const SummaryCell = ({
   rows,
   footers,
@@ -79,6 +60,26 @@ export const SummaryCell = ({
   }, [footers]);
   const renderRowLabel = rowLabel && reducerResultsEntries.length === 0 && Boolean(firstFooterReducers);
 
+  const SummaryCellItem = ({ children }: { children: ReactNode }) => (
+    <div className={styles.footerItem}>{children}</div>
+  );
+  const SummaryCellLabel = ({ children }: { children: ReactNode }) => (
+    <div
+      data-testid={selectors.components.Panels.Visualization.TableNG.Footer.ReducerLabel}
+      className={styles.footerItemLabel}
+    >
+      {children}
+    </div>
+  );
+  const SummaryCellValue = ({ children }: { children: ReactNode }) => (
+    <div
+      data-testid={selectors.components.Panels.Visualization.TableNG.Footer.Value}
+      className={styles.footerItemValue}
+    >
+      {children}
+    </div>
+  );
+
   // Render each reducer in the footer
   return (
     <div
@@ -88,17 +89,13 @@ export const SummaryCell = ({
       {reducerResultsEntries.map(([reducerId, reducerResult]) => {
         // empty reducer entry, but there may be more after - render a spacer.
         if (reducerResult === null) {
-          return (
-            <SummaryCellItem styles={styles} key={reducerId}>
-              &nbsp;
-            </SummaryCellItem>
-          );
+          return <SummaryCellItem key={reducerId}>&nbsp;</SummaryCellItem>;
         }
 
         return (
-          <SummaryCellItem key={reducerId} styles={styles}>
-            {!hideLabel && <SummaryCellLabel styles={styles}>{getReducerName(reducerId)}</SummaryCellLabel>}
-            <SummaryCellValue styles={styles}>{reducerResult}</SummaryCellValue>
+          <SummaryCellItem key={reducerId}>
+            {!hideLabel && <SummaryCellLabel>{getReducerName(reducerId)}</SummaryCellLabel>}
+            <SummaryCellValue>{reducerResult}</SummaryCellValue>
           </SummaryCellItem>
         );
       })}
@@ -106,8 +103,8 @@ export const SummaryCell = ({
       {renderRowLabel && (
         <div className={cellClass}>
           {firstFooterReducers!.map((reducerId) => (
-            <SummaryCellItem styles={styles} key={reducerId}>
-              <SummaryCellLabel styles={styles}>{getReducerName(reducerId)}</SummaryCellLabel>
+            <SummaryCellItem key={reducerId}>
+              <SummaryCellLabel>{getReducerName(reducerId)}</SummaryCellLabel>
             </SummaryCellItem>
           ))}
         </div>
