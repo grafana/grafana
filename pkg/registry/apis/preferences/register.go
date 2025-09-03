@@ -19,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	pref "github.com/grafana/grafana/pkg/services/preference"
+	"github.com/grafana/grafana/pkg/services/star"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
 )
@@ -29,6 +30,7 @@ type APIBuilder struct {
 	namespacer request.NamespaceMapper
 	sql        *legacy.LegacySQL
 
+	stars      star.Service
 	prefs      pref.Service
 	calculator *calculator // joins all preferences
 }
@@ -38,6 +40,7 @@ func RegisterAPIService(
 	features featuremgmt.FeatureToggles,
 	db db.DB,
 	prefs pref.Service,
+	stars star.Service,
 	apiregistration builder.APIRegistrar,
 ) *APIBuilder {
 	// Requires development settings and clearly experimental
@@ -48,6 +51,7 @@ func RegisterAPIService(
 	sql := legacy.NewLegacySQL(legacysql.NewDatabaseProvider(db))
 	builder := &APIBuilder{
 		prefs:      prefs, // for writing
+		stars:      stars, // for writing
 		namespacer: request.GetNamespaceMapper(cfg),
 		sql:        sql,
 		calculator: newCalculator(cfg, sql),
@@ -79,7 +83,7 @@ func (b *APIBuilder) InstallSchema(scheme *runtime.Scheme) error {
 func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupInfo, opts builder.APIGroupOptions) error {
 	storage := map[string]rest.Storage{}
 
-	legacyStars := legacy.NewStarsStorage(b.namespacer, b.sql)
+	legacyStars := legacy.NewStarsStorage(b.stars, b.namespacer, b.sql)
 	stars := preferences.StarsResourceInfo
 	storage[stars.StoragePath()] = legacyStars
 	storage[stars.StoragePath("write")] = &starsREST{getter: legacyStars}

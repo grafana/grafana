@@ -28,7 +28,6 @@ func mustTemplate(filename string) *template.Template {
 var (
 	sqlStarsQuery       = mustTemplate("sql_stars_query.sql")
 	sqlStarsRV          = mustTemplate("sql_stars_rv.sql")
-	sqlStarsDelete      = mustTemplate("sql_stars_delete.sql")
 	sqlPreferencesQuery = mustTemplate("sql_preferences_query.sql")
 	sqlPreferencesRV    = mustTemplate("sql_preferences_rv.sql")
 	sqlTeams            = mustTemplate("sql_teams.sql")
@@ -42,20 +41,11 @@ type starQuery struct {
 
 	StarTable string
 	UserTable string
-
-	// For Create/Update
-	Dashboards []string
-
-	// For Delete
-	IDsForDelete []int64
 }
 
 func (r starQuery) Validate() error {
 	if r.UserUID != "" && r.OrgID < 1 {
 		return fmt.Errorf("requests with a userid, must include an orgID")
-	}
-	if len(r.Dashboards) > 0 && len(r.IDsForDelete) > 0 {
-		return fmt.Errorf("dashboards and delete should not both be set")
 	}
 	return nil
 }

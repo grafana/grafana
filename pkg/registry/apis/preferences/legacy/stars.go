@@ -12,11 +12,12 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
 
-	"github.com/grafana/grafana/pkg/registry/apis/preferences/utils"
-
+	authlib "github.com/grafana/authlib/types"
 	dashboardsV1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
 	preferences "github.com/grafana/grafana/apps/preferences/pkg/apis/preferences/v1alpha1"
+	"github.com/grafana/grafana/pkg/registry/apis/preferences/utils"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
+	"github.com/grafana/grafana/pkg/services/star"
 )
 
 var (
@@ -30,8 +31,9 @@ var (
 	_ rest.GracefulDeleter      = (*starsStorage)(nil)
 )
 
-func NewStarsStorage(namespacer request.NamespaceMapper, sql *LegacySQL) *starsStorage {
+func NewStarsStorage(service star.Service, namespacer request.NamespaceMapper, sql *LegacySQL) *starsStorage {
 	return &starsStorage{
+		service:        service,
 		namespacer:     namespacer,
 		sql:            sql,
 		tableConverter: preferences.StarsResourceInfo.TableConverter(),
@@ -42,6 +44,7 @@ type starsStorage struct {
 	namespacer     request.NamespaceMapper
 	tableConverter rest.TableConvertor
 	sql            *LegacySQL
+	service        star.Service
 }
 
 func (s *starsStorage) New() runtime.Object {
@@ -90,41 +93,88 @@ func (s *starsStorage) List(ctx context.Context, options *internalversion.ListOp
 	return list, nil
 }
 
-func (s *starsStorage) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
+func getNamespaceAndOwner(ctx context.Context, name string) (authlib.NamespaceInfo, utils.OwnerReference, error) {
 	info, err := request.NamespaceInfoFrom(ctx, true)
+	if err != nil {
+		return info, utils.OwnerReference{}, err
+	}
+	owner, ok := utils.ParseOwnerFromName(name)
+	if !ok {
+		return info, owner, fmt.Errorf("invalid name %w", err)
+	}
+	if owner.Owner != utils.UserResourceOwner {
+		return info, owner, fmt.Errorf("expecting name with prefix: %s-", utils.UserResourceOwner)
+	}
+	return info, owner, nil
+}
+
+func (s *starsStorage) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
+	ns, owner, err := getNamespaceAndOwner(ctx, name)
 	if err != nil {
 		return nil, err
 	}
 
-	owner, ok := utils.ParseOwnerFromName(name)
-	if !ok {
-		return nil, fmt.Errorf("invalid name %w", err)
-	}
-	if owner.Owner != utils.UserResourceOwner {
-		return nil, fmt.Errorf("expecting name with prefix: %s-", utils.UserResourceOwner)
-	}
-
-	found, _, err := s.sql.GetStars(ctx, info.OrgID, owner.Name)
+	found, _, err := s.sql.GetStars(ctx, ns.OrgID, owner.Name)
 	if err != nil || len(found) == 0 {
 		return nil, err
 	}
-	obj := asStarsResource(info.Value, &found[0])
+	obj := asStarsResource(ns.Value, &found[0])
 	return &obj, nil
 }
 
 // Create implements rest.Creater.
 func (s *starsStorage) Create(ctx context.Context, obj runtime.Object, createValidation rest.ValidateObjectFunc, options *metav1.CreateOptions) (runtime.Object, error) {
-	panic("unimplemented")
+	stars, ok := obj.(*preferences.Stars)
+	if !ok {
+		return nil, fmt.Errorf("expected stars object")
+	}
+
+	ns, owner, err := getNamespaceAndOwner(ctx, stars.Name)
+	if err != nil {
+		return nil, err
+	}
+
+	fmt.Print("TODO: create: %+v / %v / %v", stars, ns, owner)
+
+	return s.Get(ctx, stars.Name, &metav1.GetOptions{})
 }
 
 // Update implements rest.Updater.
 func (s *starsStorage) Update(ctx context.Context, name string, objInfo rest.UpdatedObjectInfo, createValidation rest.ValidateObjectFunc, updateValidation rest.ValidateObjectUpdateFunc, forceAllowCreate bool, options *metav1.UpdateOptions) (runtime.Object, bool, error) {
-	panic("unimplemented")
+	ns, owner, err := getNamespaceAndOwner(ctx, name)
+	if err != nil {
+		return nil, false, err
+	}
+
+	old, err := s.Get(ctx, name, &metav1.GetOptions{})
+	if err != nil {
+		return nil, false, err
+	}
+
+	obj, err := objInfo.UpdatedObject(ctx, old)
+	if err != nil {
+		return nil, false, err
+	}
+
+	stars, ok := obj.(*preferences.Stars)
+	if !ok {
+		return nil, false, fmt.Errorf("expected stars object")
+	}
+
+	fmt.Print("TODO: update: %+v / %v / %v", stars, ns, owner)
+
+	obj, err = s.Get(ctx, stars.Name, &metav1.GetOptions{})
+	return obj, false, err
 }
 
 // Delete implements rest.GracefulDeleter.
 func (s *starsStorage) Delete(ctx context.Context, name string, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions) (runtime.Object, bool, error) {
-	panic("unimplemented")
+	_, _, err := getNamespaceAndOwner(ctx, name)
+	if err != nil {
+		return nil, false, err
+	}
+
+	return nil, false, fmt.Errorf("TODO...")
 }
 
 func asStarsResource(ns string, v *dashboardStars) preferences.Stars {
