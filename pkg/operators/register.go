@@ -55,9 +55,12 @@ func init() {
 }
 
 type controllerConfig struct {
-	restCfg           *rest.Config
-	client            *client.Clientset
-	historyExpiration time.Duration
+	tokenExchangeClient      *authn.TokenExchangeClient
+	restCfg                  *rest.Config
+	client                   *client.Clientset
+	historyExpiration        time.Duration
+	secretsTls               secretdecrypt.TLSConfig
+	secretsGrpcServerAddress string
 }
 
 // directConfigProvider is a simple RestConfigProvider that always returns the same rest.Config
@@ -292,11 +295,11 @@ func runJobController(opts standalone.BuildInfo, c *cli.Context, cfg *setting.Cf
 		syncWorker,
 	}
 
-	// TODO: check how the config is used
-	decryptService, err := secretdecrypt.ProvideDecryptService(
-		cfg,
+	decryptSvc, err := secretdecrypt.NewGRPCDecryptClientWithTLS(
+		controllerCfg.tokenExchangeClient,
 		tracer,
-		nil, // DecryptStorage not needed for unified storage
+		controllerCfg.secretsGrpcServerAddress,
+		controllerCfg.secretsTls,
 	)
 	if err != nil {
 		return fmt.Errorf("create decrypt service: %w", err)
@@ -307,7 +310,7 @@ func runJobController(opts standalone.BuildInfo, c *cli.Context, cfg *setting.Cf
 	extras := []repository.Extra{
 		// TODO: should we have local?
 		github.Extra(
-			repository.ProvideDecrypter(decryptService),
+			repository.ProvideDecrypter(decryptSvc),
 			github.ProvideFactory(),
 			nil, // We don't need the WebhookURL for the execution of jobs, only for the repository controller
 		),
@@ -412,10 +415,22 @@ func setupFromConfig(cfg *setting.Cfg) (controllerCfg *controllerConfig, err err
 		return nil, fmt.Errorf("failed to create provisioning client: %w", err)
 	}
 
+	// Decrypt Service
+	secretsSec := cfg.SectionWithEnvOverrides("secrets_manager")
+	secretsTls := secretdecrypt.TLSConfig{
+		UseTLS:             secretsSec.Key("grpc_server_use_tls").MustBool(true),
+		CAFile:             secretsSec.Key("grpc_server_tls_ca_file").String(),
+		ServerName:         secretsSec.Key("grpc_server_tls_server_name").String(),
+		InsecureSkipVerify: secretsSec.Key("grpc_server_tls_skip_verify").MustBool(false),
+	}
+
 	return &controllerConfig{
-		restCfg:           config,
-		client:            client,
-		historyExpiration: operatorSec.Key("history_expiration").MustDuration(0),
+		tokenExchangeClient:      tokenExchangeClient,
+		restCfg:                  config,
+		client:                   client,
+		secretsTls:               secretsTls,
+		secretsGrpcServerAddress: secretsSec.Key("grpc_server_address").String(),
+		historyExpiration:        operatorSec.Key("history_expiration").MustDuration(0),
 	}, nil
 }
 
