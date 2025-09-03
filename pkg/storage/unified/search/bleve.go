@@ -528,17 +528,19 @@ func (b *bleveBackend) findPreviousFileBasedIndex(resourceDir string, resourceVe
 			continue
 		}
 
-		cnt, err := idx.DocCount()
-		if err != nil {
-			b.log.Debug("error getting count from index", "indexDir", indexDir, "err", err)
-			_ = idx.Close()
-			continue
-		}
+		if !searchAfterWrite {
+			cnt, err := idx.DocCount()
+			if err != nil {
+				b.log.Debug("error getting count from index", "indexDir", indexDir, "err", err)
+				_ = idx.Close()
+				continue
+			}
 
-		if uint64(size) != cnt {
-			b.log.Debug("index count mismatch. ignoring index", "indexDir", indexDir, "size", size, "cnt", cnt)
-			_ = idx.Close()
-			continue
+			if uint64(size) != cnt {
+				b.log.Debug("index count mismatch. ignoring index", "indexDir", indexDir, "size", size, "cnt", cnt)
+				_ = idx.Close()
+				continue
+			}
 		}
 
 		indexRV, err := getRV(idx)
@@ -1144,20 +1146,19 @@ func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resourcepb.R
 
 	// Add the sort fields
 	sorting := getSortFields(req)
-	searchrequest.SortBy(sorting)
-
-	// When no sort fields are provided, sort by score if there is a query, otherwise sort by title
-	if len(sorting) == 0 {
+	if len(sorting) > 0 {
+		searchrequest.SortBy(sorting)
+	} else {
+		// When no sort fields are provided, sort by score first if there is a query, otherwise sort only by title
 		if req.Query != "" && req.Query != "*" {
 			searchrequest.Sort = append(searchrequest.Sort, &search.SortScore{
 				Desc: true,
 			})
-		} else {
-			searchrequest.Sort = append(searchrequest.Sort, &search.SortField{
-				Field: resource.SEARCH_FIELD_TITLE_PHRASE,
-				Desc:  false,
-			})
 		}
+		searchrequest.Sort = append(searchrequest.Sort, &search.SortField{
+			Field: resource.SEARCH_FIELD_TITLE_PHRASE,
+			Desc:  false,
+		})
 	}
 
 	return searchrequest, nil
