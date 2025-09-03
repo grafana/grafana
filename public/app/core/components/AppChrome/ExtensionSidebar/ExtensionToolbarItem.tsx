@@ -25,9 +25,21 @@ export function ExtensionToolbarItem({ compact }: Props) {
     return null;
   }
 
+  // Don't render the toolbar if the only available plugin is Grafana Pathfinder.
+  // It's opened by the help menu.
+  if (availableComponents.size === 1 && availableComponents.has('grafana-grafanadocsplugin-app')) {
+    return null;
+  }
+
   const dockedMeta = dockedComponentId ? getComponentMetaFromComponentId(dockedComponentId) : null;
 
   const renderPluginButton = (pluginId: string, components: ComponentWithPluginId[]) => {
+    // Don't render the Grafana Pathfinder button.
+    // It's opened by the help menu button.
+    if (pluginId === 'grafana-grafanadocsplugin-app') {
+      return null;
+    }
+
     if (components.length === 1) {
       const component = components[0];
       const componentId = getComponentIdFromComponentMeta(pluginId, component);

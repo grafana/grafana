@@ -1,11 +1,11 @@
 import { css } from '@emotion/css';
 import { cloneDeep } from 'lodash';
-import { memo } from 'react';
+import React, { memo } from 'react';
 
 import { GrafanaTheme2, NavModelItem } from '@grafana/data';
 import { Components } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
-import { ScopesContextValue } from '@grafana/runtime';
+import { ScopesContextValue, getAppEvents } from '@grafana/runtime';
 import { Dropdown, Icon, Stack, ToolbarButton, useStyles2 } from '@grafana/ui';
 import { config } from 'app/core/config';
 import { MEGA_MENU_TOGGLE_ID } from 'app/core/constants';
@@ -13,11 +13,16 @@ import { useGrafana } from 'app/core/context/GrafanaContext';
 import { contextSrv } from 'app/core/core';
 import { useMediaQueryMinWidth } from 'app/core/hooks/useMediaQueryMinWidth';
 import { HOME_NAV_ID } from 'app/core/reducers/navModel';
+import { OpenExtensionSidebarEvent } from 'app/types/events';
 import { useSelector } from 'app/types/store';
 
 import { Branding } from '../../Branding/Branding';
 import { Breadcrumbs } from '../../Breadcrumbs/Breadcrumbs';
 import { buildBreadcrumbs } from '../../Breadcrumbs/utils';
+import {
+  useExtensionSidebarContext,
+  getComponentIdFromComponentMeta,
+} from '../ExtensionSidebar/ExtensionSidebarProvider';
 import { ExtensionToolbarItem } from '../ExtensionSidebar/ExtensionToolbarItem';
 import { HistoryContainer } from '../History/HistoryContainer';
 import { enrichHelpItem } from '../MegaMenu/utils';
@@ -55,6 +60,7 @@ export const SingleTopBar = memo(function SingleTopBar({
 }: Props) {
   const { chrome } = useGrafana();
   const state = chrome.useState();
+  const { setDockedComponentId, dockedComponentId, availableComponents } = useExtensionSidebarContext();
   const menuDockedAndOpen = !state.chromeless && state.megaMenuDocked && state.megaMenuOpen;
   const styles = useStyles2(getStyles, menuDockedAndOpen);
   const navIndex = useSelector((state) => state.navIndex);
@@ -98,11 +104,40 @@ export const SingleTopBar = memo(function SingleTopBar({
           <TopSearchBarCommandPaletteTrigger />
           {unifiedHistoryEnabled && !isSmallScreen && <HistoryContainer />}
           {!isSmallScreen && <QuickAdd />}
-          {enrichedHelpNode && (
-            <Dropdown overlay={() => <TopNavBarMenu node={enrichedHelpNode} />} placement="bottom-end">
-              <ToolbarButton iconOnly icon="question-circle" aria-label={t('navigation.help.aria-label', 'Help')} />
-            </Dropdown>
-          )}
+          {enrichedHelpNode &&
+            (enrichedHelpNode.hideFromTabs && availableComponents.has('grafana-grafanadocsplugin-app') ? (
+              (() => {
+                const componentId = getComponentIdFromComponentMeta('grafana-grafanadocsplugin-app', {
+                  title: 'Grafana Pathfinder',
+                } as any);
+                const isOpen = dockedComponentId === componentId;
+                return (
+                  <ToolbarButton
+                    iconOnly
+                    icon="question-circle"
+                    aria-label={t('navigation.help.aria-label', 'Help')}
+                    className={isOpen ? styles.helpButtonActive : undefined}
+                    onClick={() => {
+                      if (isOpen) {
+                        setDockedComponentId(undefined);
+                      } else {
+                        const appEvents = getAppEvents();
+                        appEvents.publish(
+                          new OpenExtensionSidebarEvent({
+                            pluginId: 'grafana-grafanadocsplugin-app',
+                            componentTitle: 'Grafana Pathfinder',
+                          })
+                        );
+                      }
+                    }}
+                  />
+                );
+              })()
+            ) : (
+              <Dropdown overlay={() => <TopNavBarMenu node={enrichedHelpNode} />} placement="bottom-end">
+                <ToolbarButton iconOnly icon="question-circle" aria-label={t('navigation.help.aria-label', 'Help')} />
+              </Dropdown>
+            ))}
           <NavToolbarSeparator />
           {!isSmallScreen && <ExtensionToolbarItem compact={isSmallScreen} />}
           {!showToolbarLevel && actions}
@@ -145,5 +180,11 @@ const getStyles = (theme: GrafanaTheme2, menuDockedAndOpen: boolean) => ({
     [theme.breakpoints.down('lg')]: {
       display: 'none',
     },
+  }),
+  helpButtonActive: css({
+    borderRadius: theme.shape.radius.circle,
+    backgroundColor: theme.colors.primary.transparent,
+    border: `1px solid ${theme.colors.primary.borderTransparent}`,
+    color: theme.colors.text.primary,
   }),
 });
