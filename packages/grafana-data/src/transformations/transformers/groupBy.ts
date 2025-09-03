@@ -144,13 +144,21 @@ export const groupByTransformer: DataTransformerInfo<GroupByTransformerOptions> 
     ),
 };
 
-const shouldCalculateField = (field: Field, options: GroupByTransformerOptions): boolean => {
+// exported for test
+export const shouldCalculateField = (field: Field, options: GroupByTransformerOptions): boolean => {
   const fieldName = getFieldDisplayName(field);
-  return (
-    options?.fields[fieldName]?.operation === GroupByOperationID.aggregate &&
-    Array.isArray(options?.fields[fieldName]?.aggregations) &&
-    options?.fields[fieldName].aggregations.length > 0
-  );
+  if (!Array.isArray(options?.fields[fieldName]?.aggregations)) {
+    return false;
+  } else if (options?.fields[fieldName]?.operation === GroupByOperationID.aggregate) {
+    return options?.fields[fieldName].aggregations.length > 0;
+  } else if (options?.fields[fieldName]?.operation === GroupByOperationID.groupBy) {
+    return (
+      options?.fields[fieldName].aggregations.length === 1 &&
+      options?.fields[fieldName]?.aggregations[0] === ReducerID.count
+    );
+  } else {
+    return false;
+  }
 };
 
 /**
