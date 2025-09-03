@@ -109,7 +109,7 @@ function VizAndDataPane({ model }: SceneComponentProps<PanelEditor>) {
         </div>
       )}
       <div {...containerProps}>
-        <div {...primaryProps} className={cx(primaryProps.className, isScrollingLayout && styles.fixedSizePanel)}>
+        <div {...primaryProps} className={cx(primaryProps.className, isScrollingLayout && styles.fixedSizeViz)}>
           <VizWrapper panel={panel} tableView={tableView} />
         </div>
         {showLibraryPanelSaveModal && libraryPanel && (
@@ -132,7 +132,7 @@ function VizAndDataPane({ model }: SceneComponentProps<PanelEditor>) {
             <div {...splitterProps} />
             <div
               {...secondaryProps}
-              className={cx(secondaryProps.className, isScrollingLayout && styles.fixedSizePanel)}
+              className={cx(secondaryProps.className, isScrollingLayout && styles.fullSizeEditor)}
             >
               {splitterState.collapsed && (
                 <div className={styles.expandDataPane}>
@@ -270,8 +270,11 @@ function getStyles(theme: GrafanaTheme2) {
       width: '100%',
       paddingLeft: theme.spacing(2),
     }),
-    fixedSizePanel: css({
+    fixedSizeViz: css({
       height: '100vh',
+    }),
+    fullSizeEditor: css({
+      height: 'max-content',
     }),
   };
 }
