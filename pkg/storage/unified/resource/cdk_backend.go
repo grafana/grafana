@@ -146,7 +146,7 @@ func (s *cdkBackend) WriteEvent(ctx context.Context, event WriteEvent) (rv int64
 		})
 	}
 
-	// Async notify all subscribers
+	// notify all subscribers
 	if s.stream != nil {
 		write := &WrittenEvent{
 			Type:            event.Type,
