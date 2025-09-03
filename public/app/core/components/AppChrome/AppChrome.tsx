@@ -33,7 +33,6 @@ export function AppChrome({ children }: Props) {
   const { chrome } = useGrafana();
   const {
     isOpen: isExtensionSidebarOpen,
-    isEnabled: isExtensionSidebarEnabled,
     extensionSidebarWidth,
     setExtensionSidebarWidth,
   } = useExtensionSidebarContext();
@@ -138,7 +137,7 @@ export function AppChrome({ children }: Props) {
           >
             {children}
           </main>
-          {!state.chromeless && isExtensionSidebarEnabled && isExtensionSidebarOpen && (
+          {!state.chromeless && isExtensionSidebarOpen && (
             <Resizable
               className={styles.sidebarContainer}
               defaultSize={{ width: extensionSidebarWidth }}

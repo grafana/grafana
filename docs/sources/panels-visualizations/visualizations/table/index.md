@@ -204,11 +204,13 @@ This option is only available when you're editing the panel.
 | Show table header    | Show or hide column names imported from your data source. |
 | Frozen columns       | Freeze columns starting from the left side of the table. Enter a value to set how many columns are frozen. |
 | Cell height          | Set the height of the cell. Choose from **Small**, **Medium**, or **Large**. |
+| Max row height       | Define the maximum height for a row in the table. This can be useful when **Wrap text** is enabled for one or more columns. |
 | Enable pagination    | Toggle the switch to control how many table rows are visible at once. When switched on, the page size automatically adjusts to the height of the table. This option doesn't affect queries. |
 | Minimum column width | Define the lower limit of the column width, in pixels. By default, the minimum width of the table column is 150 pixels. For small-screen devices, such as mobile phones or tablets, reduce the value to `50` to allow table-based panels to render correctly in dashboards. |
 | Column width         | Define a column width, in pixels, rather than allowing the width to be set automatically. By default, Grafana calculates the column width based on the table size and the minimum column width. |
 | Column alignment     | Set how Grafana should align cell contents. Choose from: **Auto** (default), **Left**, **Center**, or **Right**.  |
 | Column filter        | Temporarily change how column data is displayed. For example, show or hide specific values. For more information, refer to [Column filtering](#column-filtering). |
+| Wrap text            | Enables text wrapping for cell content. |
 | Wrap header text     | Enables text wrapping for column headers. |
 <!-- prettier-ignore-end -->
 
@@ -288,23 +290,16 @@ The colored background cell type has the following options:
 | ------ | ----------- |
 | Background display mode | Choose between **Basic** and **Gradient**. |
 | Apply to entire row | Toggle the switch on to apply the background color that's configured for the cell to the whole row. |
-| Wrap text | Toggle the **Wrap text** switch to wrap text in the cell that contains the longest content in your table. To wrap the text _in a specific column only_, use a **Fields with name** [field override](ref:field-override), select the **Cell options > Cell type** override property, and toggle on the **Wrap text** switch. |
 | Cell value inspect | <p>Enables value inspection from table cells. When the switch is toggled on, clicking the inspect icon in a cell opens the **Inspect value** drawer which contains two tabs: **Plain text** and **Code editor**.</p><p>Grafana attempts to automatically detect the type of data in the cell and opens the drawer with the associated tab showing. However, you can switch back and forth between tabs.</p> |
 | Tooltip from field | Toggle on the **Tooltip from field** switch to use the values from another field (or column) in a tooltip. For more information, refer to the [Tooltip from field](#tooltip-from-field). |
 <!-- prettier-ignore-end -->
 
-<!-- The wrap text, cell value inspect, and tooltip from field descriptions above should be copied from docs/sources/shared/visualizations/cell-options.md -->
+<!-- The cell value inspect and tooltip from field descriptions above should be copied from docs/sources/shared/visualizations/cell-options.md -->
 
 #### Data links
 
 If you've configured data links, when the cell type is **Auto**, the cell text becomes clickable.
 If you change the cell type to **Data links**, the cell text reflects the titles of the configured data links. To control the application of data link text more granularly, use a **Cell option > Cell type > Data links** field override.
-
-Data links cells also support text wrapping.
-Toggle the **Wrap text** switch to wrap text in the cell that contains the longest content in your table.
-To wrap the text _in a specific column only_, use a **Fields with name** [field override](ref:field-override), select the **Cell options > Cell type** override property, and toggle on the **Wrap text** switch.
-
-<!-- The wrap text description above should be copied from docs/sources/shared/visualizations/cell-options.md -->
 
 #### Gauge
 
@@ -401,12 +396,6 @@ The **Pill** cell type displays each item in a comma-separated string in a color
 
 The colors applied to each piece of text are maintained throughout the table.
 For example, if the word "test" is first displayed in a red pill, it will always be displayed in a red pill.
-
-Pill cells also support text wrapping.
-Toggle the **Wrap text** switch to wrap text in the cell that contains the longest content in your table.
-To wrap the text _in a specific column only_, use a **Fields with name** [field override](ref:field-override), select the **Cell options > Cell type** override property, and toggle on the **Wrap text** switch.
-
-<!-- The wrap text description above should be copied from docs/sources/shared/visualizations/cell-options.md -->
 
 The following data formats are supported for the pill cell type:
 

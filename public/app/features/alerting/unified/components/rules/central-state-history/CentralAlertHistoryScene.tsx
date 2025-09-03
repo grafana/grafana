@@ -44,6 +44,7 @@ import { LogMessages, logInfo } from '../../../Analytics';
 
 import { alertStateHistoryDatasource, useRegisterHistoryRuntimeDataSource } from './CentralHistoryRuntimeDataSource';
 import { HistoryEventsListObject } from './EventListSceneObject';
+import { StateFilterValues } from './constants';
 
 export const LABELS_FILTER = 'LABELS_FILTER';
 export const STATE_FILTER_TO = 'STATE_FILTER_TO';
@@ -57,14 +58,6 @@ export const STATE_FILTER_FROM = 'STATE_FILTER_FROM';
  * Main scene renders two children scene objects, one for the timeseries panel and one for the list of events.
  * Both share time range and filter variable from the parent scene.
  */
-
-export const StateFilterValues = {
-  all: 'all',
-  firing: 'Alerting',
-  normal: 'Normal',
-  pending: 'Pending',
-  recovering: 'Recovering',
-} as const;
 
 export const CentralAlertHistoryScene = ({
   defaultLabelsFilter,

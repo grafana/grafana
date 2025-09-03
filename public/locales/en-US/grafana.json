@@ -549,6 +549,7 @@
     },
     "alert-rules": {
       "firing-for": "Firing for",
+      "multiple-sources": "{{numSources}} data sources",
       "next-evaluation": "Next evaluation",
       "next-evaluation-in": "next evaluation in",
       "rule-definition": "Rule definition"
@@ -1117,6 +1118,11 @@
       "edit-recording-rule": "Edit recording rule",
       "new-alert-rule": "New alert rule",
       "new-recording-rule": "New recording rule"
+    },
+    "enrichment": {
+      "error-boundary": {
+        "notification-message-section-extension": "Notification Message Section Extension failed to load"
+      }
     },
     "error-modal": {
       "failed-to-update-your-configuration": "Failed to update your configuration:",
@@ -2633,13 +2639,15 @@
         "show": "Show"
       },
       "manage-alerts": "In these data sources, you can select Manage alerts via Alerting UI to be able to manage these alert rules in the Grafana UI as well as in the data source where they were configured.",
-      "no-groups": "No groups available",
-      "no-namespaces": "No folders available",
       "placeholder-all-data-sources": "All data sources",
       "placeholder-contact-point": "Select contact point",
       "placeholder-data-sources": "Select data sources",
       "placeholder-labels": "Select labels",
       "plugin-rules": "Plugin rules",
+      "rule-source": {
+        "datasource": "Data source managed",
+        "grafana": "Grafana managed"
+      },
       "rule-type": "Rule type",
       "rulesSearchInput-placeholder-search": "Search",
       "search": "Search",
@@ -2661,6 +2669,7 @@
         "namespace": "Folder / Namespace",
         "rule-health": "Health",
         "rule-name": "Rule name",
+        "rule-source": "Rule source",
         "rule-type": "Type",
         "state": "State"
       }
@@ -2781,6 +2790,7 @@
           "time": "Time"
         }
       },
+      "error-message-prefix": "Error message:",
       "filter-group": "Filter group",
       "filter-group-tooltip": "Filter each state history group either by exact match or a regular expression, for example:",
       "placeholder-search": "Search",
@@ -3387,9 +3397,6 @@
       "text-badge-enabled": "Enabled",
       "text-badge-not-enabled": "Not enabled"
     },
-    "scim-banner": {
-      "message": "SCIM is currently in development and not recommended for production use. Please use with caution and expect potential changes."
-    },
     "server-discovery-modal": {
       "label-the-wellknownopenidconfiguration-endpoint-for-your-id-p": "The .well-known/openid-configuration endpoint for your IdP",
       "title-open-id-connect-discovery-url": "OpenID Connect Discovery URL"
@@ -3559,7 +3566,9 @@
       },
       "error-moving-resources": "Error moving resources",
       "error-no-target-folder-path": "Target folder path is invalid or empty, please select again.",
-      "move-warning": "This will move selected folders and their descendants. In total, this will affect:",
+      "move-total": "In total, this will affect:",
+      "move-warning": "This will move selected folders and their descendants. Available target folders depend on the selected resources.",
+      "move-warning-tooltip": "You can only move provisioned resources within their provisioned folder, and local resources to local folders.",
       "target-folder": "Target Folder"
     },
     "counts": {
@@ -4013,6 +4022,7 @@
       }
     },
     "tooltip-options": {
+      "label-disable-one-click": "Disable for one-click elements",
       "name-tooltip-mode": "Tooltip mode",
       "tooltip-mode-options": {
         "label-disabled": "Disabled",
@@ -4555,6 +4565,12 @@
       "overwrite": "Overwrite",
       "title-plugin-dashboard": "Plugin dashboard"
     },
+    "controls": {
+      "menu": {
+        "aria-label": "",
+        "title": ""
+      }
+    },
     "dash-nav": {
       "on-open-snapshot-original": {
         "confirmText": {
@@ -4678,6 +4694,7 @@
       "panel-title": "Change panel title",
       "paste-panel": "Paste panel",
       "remove": "Remove {{typeName}}",
+      "row-title": "Change row title",
       "switch-layout": "Switch layout"
     },
     "edit-pane": {
@@ -5833,11 +5850,6 @@
         "transparent-background": "Transparent background"
       }
     },
-    "get-workflow-options": {
-      "label": {
-        "push-to-a-new-branch": "Push to a new branch"
-      }
-    },
     "group-by-variable-form": {
       "alert-not-supported": "This data source does not support group by variables",
       "description-enables-users-custom-values": "Enables users to add custom values to the list",
@@ -6095,7 +6107,9 @@
       "save-timerange-description-current-range-default": "Will make current time range the new default",
       "save-timerange-label-update-default-time-range": "Update default time range",
       "save-variables-description-current-values-default": "Will make the current values the new default",
-      "save-variables-label-update-default-variable-values": "Update default variable values"
+      "save-variables-label-update-default-variable-values": "Update default variable values",
+      "show-variables-warning-alert-body": "Some variables failed to load. If you keep “Update default variable values” checked, the current (failed) values will become the dashboard defaults. You can save anyway or uncheck the option to avoid storing those (failed) values.",
+      "show-variables-warning-alert-title": "Variable queries failed"
     },
     "save-library-viz-panel-modal": {
       "affected-dashboards_one": "This update will affect <1>{{count}} dashboards.</1> The following dashboards using the panel will be affected:",
@@ -6532,7 +6546,8 @@
     },
     "data-source-load-error": {
       "back": "Back",
-      "delete": "Delete"
+      "delete": "Delete",
+      "not-found": "Data source not found"
     },
     "data-source-missing-rights-message": {
       "title-missing-rights": "Missing rights"
@@ -6932,11 +6947,6 @@
       "dragging-a-divider": "Dragging a divider",
       "dragging-a-sub-region": "Dragging a sub-region",
       "value": "Value: {{ dividerPos }}"
-    },
-    "drilldownInfo": {
-      "action": "Go to Grafana Drilldown",
-      "description": "Looking for the Grafana Explore apps? They are now called the Grafana Drilldown apps and can be found under <1>Menu > Drilldown</1>",
-      "title": "Explore Metrics, Logs, Traces and Profiles have moved!"
     },
     "drop-down-menu": {
       "aria-label-links": "Links",
@@ -7560,7 +7570,9 @@
   "folders": {
     "api": {
       "folder-delete-error-provisioned": "Cannot delete provisioned folder. To remove it, delete it from the repository and synchronise to apply the changes.",
-      "folder-deleted-success": "Folder deleted"
+      "folder-deleted-success": "Folder deleted",
+      "folder-move-error-provisioned": "Cannot move provisioned folder. To move it, move it in the repository and synchronise to apply the changes.",
+      "folder-moved-success": "Folder moved"
     },
     "get-loading-nav": {
       "main": {
@@ -9434,9 +9446,9 @@
       "type": {
         "loki": {
           "indexed-label_one": "Indexed label",
-          "indexed-label_other": "Indexed label",
+          "indexed-label_other": "Indexed labels",
           "parsedl-label_one": "Parsed field",
-          "parsedl-label_other": "Parsed field",
+          "parsedl-label_other": "Parsed fields",
           "structured-metadata_one": "Structured metadata",
           "structured-metadata_other": "Structured metadata"
         }
@@ -9520,13 +9532,14 @@
       "fields-section": "Fields",
       "hide-log-line": "Hide log line",
       "inline-mode": "Display inline",
+      "link-value-tooltip": "Link value",
       "links-section": "Links",
       "log-line-field": "Log line",
       "log-line-section": "Log line",
       "move-displayed-field-down": "Move down",
       "move-displayed-field-up": "Move up",
       "no-details": "No fields to display.",
-      "open-assistant": "Explain this log line in Assistant",
+      "open-assistant": "Explain log line in Assistant",
       "pin-line": "Pin log",
       "remove-displayed-field": "Remove field",
       "remove-log": "Remove log",
@@ -9552,8 +9565,8 @@
       "hide-details": "Show log details",
       "icon-label": "Log menu",
       "log-line": "Log line",
-      "log-line-explainer": "Explain this log line in a concise way",
-      "open-assistant": "Explain this log line in Assistant",
+      "log-line-explainer": "Explain log line in a concise way",
+      "open-assistant": "Explain log line in Assistant",
       "pin-to-outline": "Pin log",
       "show-context": "Show context",
       "show-details": "Hide log details",
@@ -9643,6 +9656,7 @@
       "show-timestamps": "Show timestamps",
       "show-unique-labels": "Show unique labels",
       "unwrap-lines": "Unwrap lines",
+      "wrap-json-lines": "Wrap lines and expand JSON",
       "wrap-lines": "Wrap lines"
     },
     "logs-navigation": {
@@ -11148,11 +11162,16 @@
     "save-or-delete-resource-shared-fields": {
       "comment-placeholder-describe-changes-optional": "Add a note to describe your changes (optional)",
       "description-branch-name-in-git-hub": "Branch name in GitHub",
+      "description-file-path": "File path inside the repository (.json or .yaml)",
+      "description-folder-path": "Folder path inside the repository",
       "description-inside-repository": "",
       "label-branch": "Branch",
       "label-comment": "Comment",
       "label-path": "Path",
-      "label-workflow": "Workflow"
+      "label-workflow": "Workflow",
+      "placeholder-branch": "Select or enter branch name",
+      "placeholder-new-branch": "Enter new branch name",
+      "suffix-configured-branch": "Configured branch"
     }
   },
   "provisioned-resource-preview-banner": {
@@ -11231,6 +11250,7 @@
       "description-enabled": "Once automatic pulling is enabled, the target cannot be changed.",
       "description-read-only": "Resources can't be modified through Grafana.",
       "description-title": "A human-readable name for the config",
+      "error-fetch-branches": "Failed to fetch branches",
       "error-required": "This field is required.",
       "error-save-repository": "Failed to save repository settings",
       "label-automatic-pulling": "Automatic pulling",
@@ -11442,6 +11462,14 @@
       "tab-repositories-title": "List of repositories",
       "title-delete-all-configured-repositories": "Delete all configured repositories",
       "title-legacy-storage-detected": "Legacy storage detected"
+    },
+    "http-utils": {
+      "access-denied": "Access denied. Please check your token permissions.",
+      "authentication-failed": "Authentication failed. Please check your access token.",
+      "http-error": "HTTP {{status}}: {{statusText}}",
+      "request-failed": "Request failed",
+      "resource-not-found": "Resource not found. Please check the URL or repository.",
+      "unsupported-repository-type": "Unsupported repository type: {{repositoryType}}"
     },
     "inline-secure-values-warning": "You need to save your access tokens again due to a system update",
     "inline-token-warning-badge-text": "Token needs to be saved again",
@@ -11677,6 +11705,10 @@
       "button-previous": "Previous",
       "button-submitting": "Submitting...",
       "error-instance-repository-exists": "Instance repository already exists"
+    },
+    "workflow-options-label": {
+      "push-to-a-new-branch": "Push to a new branch",
+      "push-to-existing-branch": "Push to an existing branch"
     }
   },
   "public-dashboard": {
@@ -12061,6 +12093,7 @@
     "selector": {
       "apply": "Apply",
       "cancel": "Cancel",
+      "error-title": "An unexpected error happened",
       "input": {
         "placeholder": "Select scopes...",
         "removeAll": "Remove all scopes"
@@ -12760,7 +12793,6 @@
     "description-frozen-columns": "Columns are frozen from the left side of the table",
     "description-min-column-width": "The minimum width for column auto resizing",
     "description-tooltip-from-field": "Render a cell from a field (hidden or visible) in a tooltip",
-    "description-wrap-header-text": "Enables text wrapping for column headers",
     "image-cell-options-editor": {
       "description-alt-text": "Alternative text that will be displayed if an image can't be displayed or for users who use a screen reader",
       "description-title-text": "Text that will be displayed when the image is hovered by a cursor",
@@ -12789,17 +12821,17 @@
     "name-fields": "Fields",
     "name-frozen-columns": "Frozen columns",
     "name-hide-in-table": "Hide in table",
+    "name-max-height": "Max row height",
     "name-min-column-width": "Minimum column width",
     "name-show-table-footer": "Show table footer",
     "name-show-table-header": "Show table header",
     "name-tooltip-from-field": "Tooltip from field",
     "name-tooltip-placement": "Tooltip placement",
     "name-wrap-header-text": "Wrap header text",
+    "name-wrap-text": "Wrap text",
     "placeholder-column-width": "auto",
     "placeholder-fields": "All Numeric Fields",
-    "text-wrap-options": {
-      "label-wrap-text": "Wrap text"
-    },
+    "placeholder-max-height": "none",
     "tooltip-placement-options": {
       "label-auto": "Auto",
       "label-bottom": "Bottom",

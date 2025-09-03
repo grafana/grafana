@@ -10,6 +10,7 @@ import { Button, Icon, Tooltip } from '@grafana/ui';
 import { LOG_LINE_BODY_FIELD_NAME } from '../LogDetailsBody';
 import { LogMessageAnsi } from '../LogMessageAnsi';
 
+import { HighlightedLogRenderer } from './HighlightedLogRenderer';
 import { InlineLogLineDetails } from './LogLineDetails';
 import { LogLineMenu } from './LogLineMenu';
 import { useLogIsPermalinked, useLogIsPinned, useLogListContext } from './LogListContext';
@@ -149,20 +150,35 @@ const LogLineComponent = memo(
 
     const handleClick = useCallback(
       (e: MouseEvent<HTMLElement>) => {
-        onClick(e, log);
+        if (isLogLineClick(e.target)) {
+          onClick(e, log);
+        }
       },
       [log, onClick]
     );
+
+    const handleLogDetailsResize = useCallback(() => {
+      if (!onOverflow || !logLineRef.current || !virtualization) {
+        return;
+      }
+      const actualHeight = hasUnderOrOverflow(virtualization, logLineRef.current, undefined, log.collapsed);
+      if (actualHeight) {
+        onOverflow(index, log.uid, actualHeight);
+      }
+    }, [index, log.collapsed, log.uid, onOverflow, virtualization]);
 
     const detailsShown = detailsDisplayed(log);
 
     return (
       <>
+        {/* A button element could be used but in Safari it prevents text selection. Fallback available for a11y in LogLineMenu  */}
+        {/* eslint-disable-next-line jsx-a11y/no-static-element-interactions, jsx-a11y/click-events-have-key-events */}
         <div
-          className={`${styles.logLine} ${variant ?? ''} ${pinned ? styles.pinnedLogLine : ''} ${permalinked ? styles.permalinkedLogLine : ''} ${detailsShown ? styles.detailsDisplayed : ''} ${fontSize === 'small' ? styles.fontSizeSmall : ''}`}
+          className={`${styles.logLine} ${variant ?? ''} ${pinned ? styles.pinnedLogLine : ''} ${permalinked ? styles.permalinkedLogLine : ''} ${detailsShown ? styles.detailsDisplayed : ''} ${fontSize === 'small' ? styles.fontSizeSmall : ''} ${enableLogDetails ? styles.clickable : ''}`}
           ref={onOverflow ? logLineRef : undefined}
           onMouseEnter={handleMouseOver}
           onFocus={handleMouseOver}
+          onClick={handleClick}
         >
           <LogLineMenu styles={styles} log={log} />
           {dedupStrategy !== LogsDedupStrategy.none && (
@@ -204,16 +220,13 @@ const LogLineComponent = memo(
               )}
             </div>
           )}
-          {/* A button element could be used but in Safari it prevents text selection. Fallback available for a11y in LogLineMenu  */}
-          {/* eslint-disable-next-line jsx-a11y/no-static-element-interactions, jsx-a11y/click-events-have-key-events */}
           <div
-            className={`${styles.fieldsWrapper} ${detailsShown ? styles.detailsDisplayed : ''} ${wrapLogMessage ? styles.wrappedLogLine : `${styles.unwrappedLogLine} unwrapped-log-line`} ${collapsed === true ? styles.collapsedLogLine : ''} ${enableLogDetails ? styles.clickable : ''}`}
+            className={`${styles.fieldsWrapper} ${detailsShown ? styles.detailsDisplayed : ''} ${wrapLogMessage ? styles.wrappedLogLine : `${styles.unwrappedLogLine} unwrapped-log-line`} ${collapsed === true ? styles.collapsedLogLine : ''}`}
             style={
               collapsed && virtualization
                 ? { maxHeight: `${virtualization.getTruncationLineCount() * virtualization.getLineHeight()}px` }
                 : undefined
             }
-            onClick={handleClick}
           >
             <Log
               collapsed={collapsed}
@@ -253,7 +266,13 @@ const LogLineComponent = memo(
           </div>
         )}
         {detailsMode === 'inline' && detailsShown && (
-          <InlineLogLineDetails logs={logs} log={log} timeRange={timeRange} timeZone={timeZone} />
+          <InlineLogLineDetails
+            logs={logs}
+            log={log}
+            onResize={handleLogDetailsResize}
+            timeRange={timeRange}
+            timeZone={timeZone}
+          />
         )}
       </>
     );
@@ -375,7 +394,11 @@ const LogLineBody = ({ log, styles }: { log: LogListModel; styles: LogLineStyles
     );
   }
 
-  return <span className="field log-syntax-highlight" dangerouslySetInnerHTML={{ __html: log.highlightedBody }} />;
+  return (
+    <span className="field log-syntax-highlight">
+      <HighlightedLogRenderer log={log} />
+    </span>
+  );
 };
 
 export function getGridTemplateColumns(dimensions: LogFieldDimension[], displayedFields: string[]) {
@@ -577,6 +600,7 @@ export const getStyles = (theme: GrafanaTheme2, virtualization?: LogLineVirtuali
       },
     }),
     fieldsWrapper: css({
+      minHeight: virtualization ? virtualization.getLineHeight() + virtualization.getPaddingBottom() : undefined,
       '&:hover': {
         background: hoverColor,
       },
@@ -595,3 +619,8 @@ export const getStyles = (theme: GrafanaTheme2, virtualization?: LogLineVirtuali
     }),
   };
 };
+
+function isLogLineClick(target: EventTarget) {
+  const targetIsButton = target instanceof HTMLButtonElement || (target instanceof Element && target.closest('button'));
+  return !targetIsButton;
+}

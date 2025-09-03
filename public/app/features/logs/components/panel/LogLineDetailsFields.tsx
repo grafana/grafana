@@ -339,7 +339,7 @@ export const LogLineDetailsField = ({
         }
         return (
           <div className={styles.row} key={`${link.title}-${i}`}>
-            <div className={disableActions ? undefined : styles.link}>
+            <div className={disableActions ? styles.linkNoActions : styles.link}>
               <DataLinkButton
                 buttonProps={{
                   // Show tooltip message if max number of pinned lines has been reached
@@ -401,6 +401,10 @@ const getFieldStyles = (theme: GrafanaTheme2) => ({
   link: css({
     gridColumn: '2 / 4',
   }),
+  linkNoActions: css({
+    gridColumn: 'span 2',
+    paddingBottom: theme.spacing(0.5),
+  }),
   stats: css({
     paddingRight: theme.spacing(1),
     wordBreak: 'break-all',
@@ -460,7 +464,7 @@ const getClipboardButtonStyles = (theme: GrafanaTheme2) => ({
   }),
 });
 
-const MultipleValue = ({ showCopy, values = [] }: { showCopy?: boolean; values: string[] }) => {
+export const MultipleValue = ({ showCopy, values = [] }: { showCopy?: boolean; values: string[] }) => {
   if (values.every((val) => val === '')) {
     return null;
   }
@@ -480,7 +484,13 @@ const MultipleValue = ({ showCopy, values = [] }: { showCopy?: boolean; values: 
   );
 };
 
-const SingleValue = ({ value: originalValue, syntaxHighlighting }: { value: string; syntaxHighlighting?: boolean }) => {
+export const SingleValue = ({
+  value: originalValue,
+  syntaxHighlighting,
+}: {
+  value: string;
+  syntaxHighlighting?: boolean;
+}) => {
   const value = useMemo(() => {
     if (!syntaxHighlighting) {
       return originalValue;
@@ -519,7 +529,7 @@ const AsyncIconButton = ({ isActive, tooltipSuffix, ...rest }: AsyncIconButtonPr
   return <IconButton {...rest} variant={active ? 'primary' : undefined} tooltip={tooltip + tooltipSuffix} />;
 };
 
-function filterFields(fields: FieldDef[], search: string) {
+export function filterFields(fields: FieldDef[], search: string) {
   const keys = fields.map((field) => field.keys.join(' '));
   const keysIdx = fuzzySearch(keys, search);
   const values = fields.map((field) => field.values.join(' '));
