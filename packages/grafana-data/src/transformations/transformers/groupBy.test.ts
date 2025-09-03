@@ -494,7 +494,7 @@ describe('GroupBy transformer', () => {
   });
 });
 
-describe('should calculate field', () => {
+describe('shouldCalculateField()', () => {
   it.each([
     [GroupByOperationID.aggregate, [], false],
     [GroupByOperationID.aggregate, [ReducerID.count], true],
@@ -503,7 +503,7 @@ describe('should calculate field', () => {
     [GroupByOperationID.groupBy, [ReducerID.count], true],
     [GroupByOperationID.groupBy, [ReducerID.sum], false],
     [GroupByOperationID.groupBy, [ReducerID.sum, ReducerID.count], false],
-  ])('formats with the supplied time zone %s', (operation, aggregations, expected) => {
+  ])('when provided operation %s and aggregations %s, should return %s', (operation, aggregations, expected) => {
     const field: Field = {
       name: 'testField',
       type: FieldType.string,
