@@ -1,79 +1,44 @@
-import { SceneComponentProps, SceneObjectBase, SceneObjectState, sceneGraph, sceneUtils } from '@grafana/scenes';
+import { PanelData } from '@grafana/data';
+import { SceneObjectBase, SceneObjectState } from '@grafana/scenes';
+import { useQueryRunner, useTimeRange, useVariableValues } from '@grafana/scenes-react';
 
 import { Workbench } from '../Workbench';
-import { AlertRuleQueryData, AlertRuleRow, Domain, GenericGroupedRow, TimelineEntry, WorkbenchRow } from '../types';
+import { AlertRuleRow, GenericGroupedRow, TimelineEntry, WorkbenchRow } from '../types';
 
-import { convertTimeRangeToDomain } from './utils';
-import { useTimeRange } from '@grafana/scenes-react';
+import { useQueryFilter } from './SummaryChart';
+import { VARIABLES } from './constants';
+import { DEFAULT_FIELDS, METRIC_NAME, convertTimeRangeToDomain, getDataQuery } from './utils';
 
-interface WorkbenchState extends SceneObjectState {
-  domain: Domain;
-  rows: WorkbenchRow[];
-}
-
-export class WorkbenchSceneObject extends SceneObjectBase<WorkbenchState> {
+export class WorkbenchSceneObject extends SceneObjectBase<SceneObjectState> {
   public static Component = WorkbenchRenderer;
-
-  constructor(state: Partial<WorkbenchState> = {}) {
-    super({
-      domain: [new Date(), new Date()],
-      rows: [],
-      ...state,
-    });
-
-    this.addActivationHandler(() => this.activationHandler());
-  }
-
-  private activationHandler() {
-    this._subs.add(
-      sceneGraph.getData(this).subscribeToState((newState, prevState) => {
-        if (newState !== prevState) {
-          this.setState({
-            rows: convertToWorkbenchRows(newState as unknown as AlertRuleQueryData, this.getGroupByKeys()),
-          });
-        }
-      })
-    );
-
-    this.setState({
-      domain: convertTimeRangeToDomain(sceneGraph.getTimeRange(this).state.value),
-    });
-    this._subs.add(
-      sceneGraph.getTimeRange(this).subscribeToState((newState, prevState) => {
-        if (newState !== prevState) {
-          this.setState({
-            domain: convertTimeRangeToDomain(newState.value),
-          });
-        }
-      })
-    );
-  }
-
-  public getGroupByKeys(): string[] {
-    const groupBy = sceneGraph.getVariables(this).getByName('groupBy');
-
-    if (groupBy && sceneUtils.isGroupByVariable(groupBy)) {
-      const groupByValue = groupBy.getValue();
-
-      if (Array.isArray(groupByValue)) {
-        return groupByValue.filter((key): key is string => typeof key === 'string');
-      }
-    }
-
-    return [];
-  }
 }
 
-export function WorkbenchRenderer({ model }: SceneComponentProps<WorkbenchSceneObject>) {
+export function WorkbenchRenderer() {
   const [timeRange] = useTimeRange();
   const domain = convertTimeRangeToDomain(timeRange);
-  const { rows } = model.useState();
+
+  const [groupByKeys = []] = useVariableValues<string>(VARIABLES.groupBy);
+
+  const countBy = DEFAULT_FIELDS.concat(groupByKeys).join(',');
+  const queryFilter = useQueryFilter();
+
+  const runner = useQueryRunner({
+    queries: [
+      getDataQuery(`count by (${countBy}) (${METRIC_NAME}{${queryFilter}})`, {
+        format: 'table',
+      }),
+    ],
+  });
+  const { data } = runner.useState();
+
+  const rows = data ? convertToWorkbenchRows(data, groupByKeys) : [];
 
   return <Workbench data={rows} domain={domain} />;
 }
 
-export function convertToWorkbenchRows(data: AlertRuleQueryData, groupBy: string[] = []): WorkbenchRow[] {
-  const series = data.data.series[0];
+// @TODO narrower types for PanelData! (if possible)
+export function convertToWorkbenchRows(data: PanelData, groupBy: string[] = []): WorkbenchRow[] {
+  const series = data.series[0];
   const fields = series.fields;
 
   // Find required fields

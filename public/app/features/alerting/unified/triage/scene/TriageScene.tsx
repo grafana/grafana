@@ -19,19 +19,16 @@ import { EmbeddedSceneWithContext } from '@grafana/scenes-react';
 
 import { SummaryChartScene } from './SummaryChart';
 import { WorkbenchSceneObject } from './Workbench';
-import { DEFAULT_FIELDS, DS_UID, METRIC_NAME, defaultTimeRange, getQueryRunner } from './utils';
-
-export const triageQuery = getTriageQuery();
+import { DEFAULT_FIELDS, DS_UID, defaultTimeRange } from './utils';
 
 export const triageScene = new EmbeddedSceneWithContext({
-  $behaviors: [registerAlertsGroupByMacro],
+  $behaviors: [],
   controls: [
     new VariableValueSelectors({}),
     new SceneControlsSpacer(),
     new SceneTimePicker({}),
     new SceneRefreshPicker({}),
   ],
-  $data: triageQuery,
   $timeRange: new SceneTimeRange(defaultTimeRange),
   $variables: new SceneVariableSet({
     variables: [
@@ -77,12 +74,6 @@ export const triageScene = new EmbeddedSceneWithContext({
 });
 
 export const TriageScene = () => <triageScene.Component model={triageScene} />;
-
-function getTriageQuery(): SceneQueryRunner {
-  return getQueryRunner(`count by (\${__alertsGroupBy}) (${METRIC_NAME}{\${__alertsGroupBy.filters}})`, {
-    format: 'table',
-  });
-}
 
 class AlertsGroupByMacro implements FormatVariable {
   public state: { name: string; type: string };
