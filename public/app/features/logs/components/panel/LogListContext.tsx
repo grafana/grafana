@@ -718,16 +718,20 @@ async function handleOpenAssistant(openAssistant: (props: OpenAssistantProps) =>
   const datasource = await getDataSourceSrv().get(log.datasourceUid);
   const context = [];
   if (datasource) {
-    context.push(createAssistantContextItem('datasource', { datasourceUid: datasource.uid }));
+    context.push(
+      createAssistantContextItem('datasource', {
+        datasourceUid: datasource.uid,
+      })
+    );
   }
   openAssistant({
+    origin: 'grafana/explain-log-line',
     prompt: `${t('logs.log-line-menu.log-line-explainer', 'Explain log line in a concise way')}:
-    
-    \`\`\`
-    ${log.entry.replaceAll('`', '\\`')}
-    \`\`\`
-    `,
-    origin: 'explain-log-line',
+
+      \`\`\`
+${log.entry.replaceAll('`', '\\`')}
+      \`\`\`
+      `,
     context: [
       ...context,
       createAssistantContextItem('structured', {
