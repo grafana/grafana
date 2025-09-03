@@ -7,7 +7,12 @@ const { camelCase } = lodash;
  *
  * i.e. so we can report `reactHooksRulesOfHooks` instead of `reactHookFooIsCalledConditionallyReactHooksMust...`
  */
-const rulesToCombine = ['react-hooks/rules-of-hooks', 'no-barrel-files/no-barrel-files'];
+const rulesToCombine = ['react-hooks/rules-of-hooks', 'react/no-unescaped-entities', 'no-barrel-files/no-barrel-files'];
+
+const legacyChecksToTransform = [
+  { messageRegex: /gfFormUsage/i, prefix: 'noGfFormUsage' },
+  { messageRegex: /skippingA11Y/i, prefix: 'noSkippingA11YTestsInStories' },
+];
 
 /**
  * Custom formatter that outputs suppressed rule violations in a format suitable for
@@ -44,7 +49,8 @@ export default function statsReporter(results) {
 
   return Object.entries(countByMessage)
     .map(([key, value]) => {
-      return `betterEslint_${key} ${value}`;
+      const prefix = legacyChecksToTransform.find((v) => v.messageRegex.test(key))?.prefix || 'betterEslint';
+      return `${prefix}_${key} ${value}`;
     })
     .join('\n');
 }
