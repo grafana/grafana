@@ -81,7 +81,7 @@ type PanelSchemeUpgradeHandler = (panel: PanelModel) => PanelModel;
  * kinds/dashboard/dashboard_kind.cue
  * Example PR: #87712
  */
-export const DASHBOARD_SCHEMA_VERSION = 41;
+export const DASHBOARD_SCHEMA_VERSION = 42;
 export class DashboardMigrator {
   dashboard: DashboardModel;
 

@@ -25,7 +25,7 @@ import { DashboardModel } from './DashboardModel';
  *
  * 3. Why DashboardMigrator doesn't run on backendOutput:
  *    - DashboardMigrator.updateSchema() has an early return: `if (oldVersion === this.dashboard.schemaVersion) return;`
- *    - Since backendOutput.schemaVersion is already 41 (latest), no migration occurs
+ *    - Since backendOutput.schemaVersion is already 42 (latest), no migration occurs
  *    - This ensures we compare the final migrated state from both paths
  *
  * 4. Benefits of this approach:

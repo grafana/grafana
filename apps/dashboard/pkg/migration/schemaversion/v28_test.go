@@ -780,7 +780,7 @@ func TestV28(t *testing.T) {
 					},
 				},
 			},
-			expectedError: "schema migration from version 28 to 41 failed: stat panel plugin not found when migrating dashboard to schema version 28",
+			expectedError: "schema migration from version 28 to 42 failed: stat panel plugin not found when migrating dashboard to schema version 28",
 		},
 	}
 

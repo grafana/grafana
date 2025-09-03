@@ -6,7 +6,7 @@ import (
 
 const (
 	MIN_VERSION    = 13
-	LATEST_VERSION = 41
+	LATEST_VERSION = 42
 )
 
 type SchemaVersionMigrationFunc func(map[string]interface{}) error
@@ -66,6 +66,7 @@ func GetMigrations(dsInfoProvider DataSourceInfoProvider, panelProvider PanelPlu
 		39: V39,
 		40: V40,
 		41: V41,
+		42: V42,
 	}
 }
 
