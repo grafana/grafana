@@ -157,6 +157,22 @@ describe('preProcessLogs', () => {
       expect(logListModel.body).toBe(entry);
     });
 
+    test('Does not modify wrapped JSON', () => {
+      const entry = '{"key": "value", "otherKey": "otherValue"}';
+      const logListModel = createLogLine(
+        { entry },
+        {
+          escape: false,
+          order: LogsSortOrder.Descending,
+          timeZone: 'browser',
+          wrapLogMessage: false, // unwrapped
+          prettifyJSON: false,
+        }
+      );
+      expect(logListModel.entry).toBe(entry);
+      expect(logListModel.body).toBe(entry);
+    });
+
     test('Prettifies wrapped JSON', () => {
       const entry = '{"key": "value", "otherKey": "otherValue"}';
       const logListModel = createLogLine(
@@ -166,6 +182,7 @@ describe('preProcessLogs', () => {
           order: LogsSortOrder.Descending,
           timeZone: 'browser',
           wrapLogMessage: true, // wrapped
+          prettifyJSON: true,
         }
       );
       expect(logListModel.entry).toBe(entry);
@@ -266,21 +283,47 @@ describe('preProcessLogs', () => {
   });
 
   test('Highlights tokens in log lines', () => {
-    expect(processedLogs[0].highlightedBody).toContain('log-token-label');
-    expect(processedLogs[0].highlightedBody).toContain('log-token-key');
-    expect(processedLogs[0].highlightedBody).toContain('log-token-string');
-    expect(processedLogs[0].highlightedBody).toContain('log-token-uuid');
-    expect(processedLogs[0].highlightedBody).not.toContain('log-token-method');
-    expect(processedLogs[0].highlightedBody).not.toContain('log-token-json-key');
+    expect(processedLogs[0].highlightedBodyTokens).toEqual(
+      expect.arrayContaining([expect.objectContaining({ type: 'log-token-label' })])
+    );
+    expect(processedLogs[0].highlightedBodyTokens).toEqual(
+      expect.arrayContaining([expect.objectContaining({ type: 'log-token-key' })])
+    );
+    expect(processedLogs[0].highlightedBodyTokens).toEqual(
+      expect.arrayContaining([expect.objectContaining({ type: 'log-token-string' })])
+    );
+    expect(processedLogs[0].highlightedBodyTokens).toEqual(
+      expect.arrayContaining([expect.objectContaining({ type: 'log-token-uuid' })])
+    );
+    expect(processedLogs[0].highlightedBodyTokens).not.toEqual(
+      expect.arrayContaining([expect.objectContaining({ type: 'log-token-method' })])
+    );
+    expect(processedLogs[0].highlightedBodyTokens).not.toEqual(
+      expect.arrayContaining([expect.objectContaining({ type: 'log-token-json-key' })])
+    );
 
-    expect(processedLogs[1].highlightedBody).toContain('log-token-method');
-    expect(processedLogs[1].highlightedBody).toContain('log-token-key');
-    expect(processedLogs[1].highlightedBody).toContain('log-token-string');
-    expect(processedLogs[1].highlightedBody).not.toContain('log-token-json-key');
+    expect(processedLogs[1].highlightedBodyTokens).toEqual(
+      expect.arrayContaining([expect.objectContaining({ type: 'log-token-method' })])
+    );
+    expect(processedLogs[1].highlightedBodyTokens).toEqual(
+      expect.arrayContaining([expect.objectContaining({ type: 'log-token-key' })])
+    );
+    expect(processedLogs[1].highlightedBodyTokens).toEqual(
+      expect.arrayContaining([expect.objectContaining({ type: 'log-token-string' })])
+    );
+    expect(processedLogs[1].highlightedBodyTokens).not.toEqual(
+      expect.arrayContaining([expect.objectContaining({ type: 'log-token-json-key' })])
+    );
 
-    expect(processedLogs[2].highlightedBody).toContain('log-token-json-key');
-    expect(processedLogs[2].highlightedBody).toContain('log-token-string');
-    expect(processedLogs[2].highlightedBody).not.toContain('log-token-method');
+    expect(processedLogs[2].highlightedBodyTokens).toEqual(
+      expect.arrayContaining([expect.objectContaining({ type: 'log-token-json-key' })])
+    );
+    expect(processedLogs[2].highlightedBodyTokens).toEqual(
+      expect.arrayContaining([expect.objectContaining({ type: 'log-token-string' })])
+    );
+    expect(processedLogs[2].highlightedBodyTokens).not.toEqual(
+      expect.arrayContaining([expect.objectContaining({ type: 'log-token-method' })])
+    );
   });
 
   test('Returns displayed field values', () => {

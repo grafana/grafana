@@ -98,6 +98,7 @@ export function performTabRepeats(variable: MultiValueVariable, tab: TabItem, co
   const clonedTabs = createTabRepeats({ values, texts, variable, tab });
 
   tab.setState({ repeatedTabs: clonedTabs });
+  tab.parent?.forceRender();
 }
 
 /**

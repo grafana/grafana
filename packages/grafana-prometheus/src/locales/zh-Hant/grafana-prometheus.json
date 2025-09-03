@@ -168,7 +168,6 @@
         "label-disable-recording-rules-beta": "停用錄製規則（測試版）",
         "label-http-method": "HTTP 方法",
         "label-incremental-querying-beta": "增量查詢（測試版）",
-        "label-metric-names-suggestion-limit": "指標名稱建議限制",
         "label-prom-type-version": "{{promType}} 版本",
         "label-prometheus-type": "Prometheus 類型",
         "label-query-overlap-window": "查詢重疊視窗",
@@ -189,7 +188,6 @@
         "tooltip-disable-recording-rules-beta": "此功能將停用錄製規則。開啟此功能以改善儀表板效能",
         "tooltip-http-method": "您可以使用 POST 或 GET HTTP 方法，來查詢您的 Prometheus 資料來源。POST 是建議的方法，因為它可以處理更大規模的查詢。如果您的 Prometheus 版本早於 2.1，或您的網路中限制了 POST 請求，請將此更改為 GET。",
         "tooltip-incremental-querying-beta": "此功能將變更相對時間查詢的預設行為，以便隨時從 Prometheus 實例要求新資料，而不會快取查詢結果，並且只會請求新紀錄。開啟此功能以減少資料庫和網路負載。",
-        "tooltip-metric-names-suggestion-limit": "在查詢編輯器的程式碼模式中，可能會顯示為自動完成建議的指標名稱之最大數量。",
         "tooltip-prom-type-version": "如果您的{{promType}}實例未自動設定版本，請使用此功能進行設定。",
         "tooltip-prometheus-type": "將此設定為 Prometheus 資料庫的類型，例如 Prometheus、Cortex、Mimir 或 Thanos。變更此欄位將儲存您目前的設定。特定類型的 Prometheus 支援或無法支援各種 API。例如，某些類型支援對標籤查詢使用正規表達式匹配，以提高效能。部分類型具有元資料的 API。若您設定錯誤，在查詢指標和標籤時可能會遇到異常行為。請檢查您的 Prometheus 文件，以確保您輸入正確的類型。",
         "tooltip-query-overlap-window": "設定持續時間，例如 {{example1}} 或 {{example2}} 或 {{example3}}。預設為{{default}}。將新增此持續時間至每個增量請求的持續時間。",
@@ -430,10 +428,6 @@
         "placeholder-auto": "自動",
         "title-options": "選項",
         "tooltip-min-step": "Prometheus 查詢的步驟參數以及 <2>{{interval}}</2> 和 <4>{{rateInterval}}</4> 變數的其他下限。"
-      },
-      "prom-query-code-editor-autocomplete-info": {
-        "autocomplete-suggestions-limited": "自動完成建議有所限制",
-        "tooltip-autocomplete-suggestions-limited": "指標名稱的數量超過自動完成限制。僅顯示與{{autocompleteLimit}}最相關的指標。您可以在資料來源設定中調整臨界值。"
       },
       "prom-query-editor-selector": {
         "body-syntax-error": "存在語法錯誤，或在切換至編輯器模式時無法將查詢結構視覺化。查詢的部分可能會遺失。",

@@ -39,8 +39,14 @@ export const folderAPIv1beta1 = generatedAPI.enhanceEndpoints({
   },
 });
 
-export const { useGetFolderQuery, useGetFolderParentsQuery, useDeleteFolderMutation, useUpdateFolderMutation } =
-  folderAPIv1beta1;
+export const {
+  useGetFolderQuery,
+  useGetFolderParentsQuery,
+  useDeleteFolderMutation,
+  useCreateFolderMutation,
+  useUpdateFolderMutation,
+  useReplaceFolderMutation,
+} = folderAPIv1beta1;
 
 // eslint-disable-next-line no-barrel-files/no-barrel-files
-export { type Folder, type FolderList } from './endpoints.gen';
+export { type Folder, type FolderList, type CreateFolderApiArg, type ReplaceFolderApiArg } from './endpoints.gen';

@@ -26,7 +26,7 @@ import { DashboardTreeSelection } from '../types';
 import { isProvisionedDashboard } from './isProvisioned';
 import { PAGE_SIZE } from './services';
 
-interface DeleteFoldersArgs {
+export interface DeleteFoldersArgs {
   folderUIDs: string[];
 }
 
@@ -39,7 +39,7 @@ interface MoveDashboardsArgs {
   dashboardUIDs: string[];
 }
 
-interface MoveFoldersArgs {
+export interface MoveFoldersArgs {
   destinationUID: string;
   folderUIDs: string[];
 }
@@ -104,7 +104,6 @@ export const browseDashboardsAPI = createApi({
       }),
       onQueryStarted: ({ parentUid }, { queryFulfilled, dispatch }) => {
         queryFulfilled.then(async ({ data: folder }) => {
-          await contextSrv.fetchUserPermissions();
           dispatch(
             refetchChildren({
               parentUID: parentUid,
@@ -116,7 +115,7 @@ export const browseDashboardsAPI = createApi({
     }),
 
     // save an existing folder (e.g. rename)
-    saveFolder: builder.mutation<FolderDTO, FolderDTO>({
+    saveFolder: builder.mutation<FolderDTO, Pick<FolderDTO, 'uid' | 'title' | 'version' | 'parentUid'>>({
       // because the getFolder calls contain the parents, renaming a parent/grandparent/etc needs to invalidate all child folders
       // we could do something smart and recursively invalidate these child folders but it doesn't seem worth it
       // instead let's just invalidate all the getFolder calls

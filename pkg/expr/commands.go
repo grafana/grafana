@@ -58,7 +58,7 @@ func UnmarshalMathCommand(rn *rawNode) (*MathCommand, error) {
 
 	gm, err := NewMathCommand(rn.RefID, exprString)
 	if err != nil {
-		return nil, fmt.Errorf("invalid math command type: %w", err)
+		return nil, fmt.Errorf("invalid math command: %w", err)
 	}
 	return gm, nil
 }

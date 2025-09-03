@@ -72,7 +72,7 @@
       "label-enable-basic-logs": "기본 로그 활성화"
     },
     "config-editor": {
-      "description-additional-settings": "",
+      "description-additional-settings": "추가 설정은 데이터 소스를 보다 세부적으로 제어하기 위해 구성할 수 있는 선택적 설정입니다. 여기에는 보안 Socks 프록시, 요청 시간 제한, 요청 위임(forwarded) 쿠키가 포함됩니다.",
       "title-additional-settings": "추가 설정"
     },
     "current-user-fallback-credentials": {
@@ -113,12 +113,12 @@
       "aria-label-column": "열",
       "aria-label-column-value": "열 값",
       "aria-label-operator": "작업 수행자",
-      "aria-label-remove-filter": "",
+      "aria-label-remove-filter": "필터 제거",
       "label-or": "또는"
     },
     "filter-section": {
-      "aria-label-add-filter": "",
-      "aria-label-add-or-filter": "",
+      "aria-label-add-filter": "필터 추가",
+      "aria-label-add-or-filter": "OR 필터 추가",
       "label-add-group": "그룹 추가",
       "label-and": "그리고",
       "label-filters": "필터",
@@ -131,8 +131,8 @@
       "label-format-as": "형식:"
     },
     "fuzzy-search": {
-      "aria-label-add-fuzzy-search": "",
-      "aria-label-remove-fuzzy-search": "",
+      "aria-label-add-fuzzy-search": "퍼지 검색 추가",
+      "aria-label-remove-fuzzy-search": "퍼지 검색 제거",
       "aria-label-select-column": "열 선택",
       "label-fuzzy-search": "퍼지 검색",
       "placeholder-search-team": "검색어 입력",
@@ -147,7 +147,7 @@
       "aria-label-remove": "제거"
     },
     "group-by-section": {
-      "aria-label-add-group-by": "",
+      "aria-label-add-group-by": "다음 기준으로 그룹 추가:",
       "label-group-by": "그룹화 기준",
       "tooltip-group-by": "지정된 열을 기준으로 결과를 카테고리별로 분류합니다. 그룹화 기준은 선택한 열의 고유 값을 나열하는 데 독립적으로 사용하거나 집계 함수와 결합하여 각 그룹에 대한 요약 통계를 생성하는 데 사용할 수 있습니다. 단독으로 사용하면 지정된 열의 고유한 조합을 반환합니다."
     },
@@ -190,10 +190,10 @@
       "text-loading": "로딩 중..."
     },
     "order-by-section": {
-      "aria-label-add-order-by": "",
+      "aria-label-add-order-by": "다음 기준으로 정렬 추가:",
       "aria-label-order-by-column": "열을 기준으로 정렬",
       "aria-label-order-direction": "정렬 방향",
-      "aria-label-remove-order-by": "",
+      "aria-label-remove-order-by": "다음 기준으로 정렬 제거:",
       "label-by": "기준",
       "label-order-by": "정렬 기준",
       "tooltip-order-by": "하나 이상의 열을 기준으로 결과를 오름차순 또는 내림차순으로 정렬합니다."
@@ -227,16 +227,26 @@
       "select-resource": "리소스 선택"
     },
     "resource-picker": {
+      "browse-tab": "",
       "button-apply": "적용",
       "button-cancel": "취소",
       "header-location": "위치",
+      "header-resource-group": "",
       "header-scope": "적용 범위",
       "header-type": "유형",
       "heading-selection": "선택",
+      "locations-filter": "",
+      "locations-filter-placeholder": "",
+      "recent-tab": "",
       "result-limit": "처음 {{numResults}}건의 결과 표시 중",
+      "subscriptions-filter": "",
+      "subscriptions-filter-placeholder": "",
       "text-loading": "로딩 중...",
+      "text-no-recent-resources": "",
       "text-no-resources": "리소스를 찾을 수 없음",
-      "title-error-occurred": "Azure Monitor에서 리소스를 요청하는 동안 오류가 발생했습니다."
+      "title-error-occurred": "Azure Monitor에서 리소스를 요청하는 동안 오류가 발생했습니다.",
+      "types-filter": "",
+      "types-filter-placeholder": ""
     },
     "scope-selector": {
       "label": "범위"
@@ -256,7 +266,7 @@
       "label-table": "표",
       "placeholder-select-columns": "열 선택",
       "placeholder-select-table": "테이블 선택",
-      "tooltip-remove-all-columns": ""
+      "tooltip-remove-all-columns": "모든 열 제거"
     },
     "time-grain-field": {
       "label-time-grain": "시간 단위"

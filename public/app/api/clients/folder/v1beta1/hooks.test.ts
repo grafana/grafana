@@ -1,4 +1,4 @@
-import { renderHook, getWrapper, waitFor } from 'test/test-utils';
+import { renderHook, getWrapper, waitFor, screen } from 'test/test-utils';
 
 import { AppEvents } from '@grafana/data';
 import { config, setBackendSrv } from '@grafana/runtime';
@@ -17,6 +17,7 @@ import {
   useDeleteMultipleFoldersMutationFacade,
   useMoveMultipleFoldersMutationFacade,
 } from './hooks';
+import { setupCreateFolder, setupUpdateFolder } from './test-utils';
 
 import { useDeleteFolderMutation, useUpdateFolderMutation } from './index';
 
@@ -67,7 +68,7 @@ const renderFolderHook = async () => {
     wrapper: getWrapper({}),
   });
   await waitFor(() => {
-    expect(result.current.isLoading).toBe(false);
+    expect(result.current.data).toBeDefined();
   });
   return result;
 };
@@ -209,7 +210,7 @@ describe('useMoveMultipleFoldersMutationFacade', () => {
   it('moves multiple folders and publishes success alert', async () => {
     config.featureToggles.foldersAppPlatformAPI = true;
     const folderUIDs = ['uid1', 'uid2'];
-    const moveFolders = useMoveMultipleFoldersMutationFacade();
+    const [moveFolders] = useMoveMultipleFoldersMutationFacade();
     await moveFolders({ folderUIDs, destinationUID: 'uid3' });
 
     // Should call deleteFolder for each UID
@@ -236,11 +237,46 @@ describe('useMoveMultipleFoldersMutationFacade', () => {
   it('uses legacy call when flag is false', async () => {
     config.featureToggles.foldersAppPlatformAPI = false;
     const folderUIDs = ['uid1', 'uid2'];
-    const moveFolders = useMoveMultipleFoldersMutationFacade();
+    const [moveFolders] = useMoveMultipleFoldersMutationFacade();
     await moveFolders({ folderUIDs, destinationUID: 'uid3' });
 
     // Should call deleteFolder for each UID
     expect(mockMoveFolders).toHaveBeenCalledTimes(1);
     expect(mockMoveFolders).toHaveBeenCalledWith({ folderUIDs, destinationUID: 'uid3' });
+  });
+});
+
+describe.each([
+  // app platform
+  true,
+  // legacy
+  false,
+])('folderAppPlatformAPI toggle set to: %s', (toggle) => {
+  beforeEach(() => {
+    config.featureToggles.foldersAppPlatformAPI = toggle;
+  });
+  afterEach(() => {
+    config.featureToggles = originalToggles;
+  });
+
+  describe('useCreateFolder', () => {
+    it('creates a folder', async () => {
+      const { user } = setupCreateFolder();
+
+      await user.click(screen.getByText('Create Folder'));
+
+      expect(await screen.findByText('Folder created')).toBeInTheDocument();
+    });
+  });
+
+  describe('useUpdateFolder', () => {
+    it('updates a folder', async () => {
+      const { user } = await setupUpdateFolder(folderA_folderA.item.uid);
+
+      await user.type(screen.getByLabelText('Folder Title'), 'Updated Folder');
+      await user.click(screen.getByText('Update Folder'));
+
+      expect(await screen.findByText('Folder updated')).toBeInTheDocument();
+    });
   });
 });
