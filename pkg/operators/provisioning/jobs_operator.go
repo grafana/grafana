@@ -17,14 +17,8 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 
 	"github.com/grafana/grafana/apps/provisioning/pkg/controller"
-	client "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned"
 	informer "github.com/grafana/grafana/apps/provisioning/pkg/generated/informers/externalversions"
 )
-
-type jobControllerConfig struct {
-	provisioningClient *client.Clientset
-	historyExpiration  time.Duration
-}
 
 func RunJobController(opts standalone.BuildInfo, c *cli.Context, cfg *setting.Cfg) error {
 	logger := logging.NewSLogLogger(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
