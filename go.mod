@@ -276,6 +276,8 @@ replace (
 	github.com/grafana/grafana/pkg/apiserver => ./pkg/apiserver
 )
 
+require github.com/grafana/grafana-app-sdk/plugin v0.40.3
+
 require (
 	cel.dev/expr v0.24.0 // indirect
 	cloud.google.com/go v0.121.1 // indirect
