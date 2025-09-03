@@ -16,6 +16,7 @@ test.use({
   featureToggles: {
     dashboardDsAdHocFiltering: true,
     adhocFiltersInTooltips: true,
+    tableNextGen: true,
     kubernetesDashboards: process.env.KUBERNETES_DASHBOARDS === 'true',
   },
 });
