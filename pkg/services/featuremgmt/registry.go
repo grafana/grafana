@@ -450,9 +450,10 @@ var (
 		{
 			Name:         "kubernetesDashboards",
 			Description:  "Use the kubernetes API in the frontend for dashboards",
-			Stage:        FeatureStageExperimental,
-			Owner:        grafanaAppPlatformSquad,
+			Stage:        FeatureStageGeneralAvailability,
+			Owner:        grafanaDashboardsSquad,
 			FrontendOnly: true,
+			Expression:   "true", // enabled by default
 		},
 		{
 			Name:            "kubernetesShortURLs",
@@ -784,7 +785,7 @@ var (
 		{
 			Name:         "sqlExpressions",
 			Description:  "Enables SQL Expressions, which can execute SQL queries against data source results.",
-			Stage:        FeatureStagePrivatePreview,
+			Stage:        FeatureStagePublicPreview,
 			FrontendOnly: false,
 			Owner:        grafanaDatasourcesCoreServicesSquad,
 		},
@@ -1850,9 +1851,10 @@ var (
 		{
 			Name:         "dashboardDsAdHocFiltering",
 			Description:  "Enables adhoc filtering support for the dashboard datasource",
-			Stage:        FeatureStageExperimental,
+			Stage:        FeatureStageGeneralAvailability,
 			Owner:        grafanaDataProSquad,
 			FrontendOnly: true,
+			Expression:   "true",
 		},
 		{
 			Name:         "dashboardLevelTimeMacros",
@@ -1882,9 +1884,10 @@ var (
 		{
 			Name:         "adhocFiltersInTooltips",
 			Description:  "Enable adhoc filter buttons in visualization tooltips",
-			Stage:        FeatureStageExperimental,
+			Stage:        FeatureStageGeneralAvailability,
 			Owner:        grafanaDataProSquad,
 			FrontendOnly: true,
+			Expression:   "true",
 		},
 		{
 			Name:         "favoriteDatasources",

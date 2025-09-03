@@ -68,6 +68,9 @@ export const HistoryEventsList = ({
 
   const labelFilters = parseBackendLabelFilters(valueInLabelFilter.toString());
 
+  const stateTo = valueInStateToFilter.toString();
+  const stateFrom = valueInStateFromFilter.toString();
+
   const {
     data: stateHistory,
     isLoading,
@@ -78,12 +81,12 @@ export const HistoryEventsList = ({
     to: to,
     limit: LIMIT_EVENTS,
     labels: labelFilters,
+    current: stateTo !== 'all' ? stateTo : undefined,
+    previous: stateFrom !== 'all' ? stateFrom : undefined,
   });
 
   const { historyRecords: historyRecordsNotSorted } = useRuleHistoryRecords(stateHistory, {
     labels: valueInLabelFilter.toString(),
-    stateFrom: valueInStateFromFilter.toString(),
-    stateTo: valueInStateToFilter.toString(),
   });
 
   const historyRecords = historyRecordsNotSorted.sort((a, b) => b.timestamp - a.timestamp);
