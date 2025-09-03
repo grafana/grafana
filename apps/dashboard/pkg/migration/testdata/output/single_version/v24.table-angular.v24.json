@@ -1,11 +1,6 @@
 {
   "panels": [
     {
-      "datasource": {
-        "apiVersion": "v1",
-        "type": "prometheus",
-        "uid": "default-ds-uid"
-      },
       "description": "Tests basic migration with default style pattern (/.*/) containing thresholds and colors. Should convert styles to fieldConfig.defaults with threshold steps.",
       "fieldConfig": {
         "defaults": {
@@ -58,31 +53,15 @@
       "pluginVersion": "1.0.0",
       "targets": [
         {
-          "datasource": {
-            "apiVersion": "v1",
-            "type": "prometheus",
-            "uid": "default-ds-uid"
-          },
           "refId": "A"
         },
-        {
-          "datasource": {
-            "apiVersion": "v1",
-            "type": "prometheus",
-            "uid": "default-ds-uid"
-          }
-        }
+        {}
       ],
       "title": "Basic Angular Table with Defaults",
       "transformations": [],
       "type": "table"
     },
     {
-      "datasource": {
-        "apiVersion": "v1",
-        "type": "prometheus",
-        "uid": "default-ds-uid"
-      },
       "description": "Tests comprehensive migration including: default style with thresholds/colors/unit/decimals/align/colorMode, column overrides with exact name and regex patterns, date formatting, hidden columns, and links with tooltips.",
       "fieldConfig": {
         "defaults": {
@@ -215,11 +194,6 @@
       "pluginVersion": "1.0.0",
       "targets": [
         {
-          "datasource": {
-            "apiVersion": "v1",
-            "type": "prometheus",
-            "uid": "default-ds-uid"
-          },
           "refId": "A"
         }
       ],
@@ -228,11 +202,6 @@
       "type": "table"
     },
     {
-      "datasource": {
-        "apiVersion": "v1",
-        "type": "prometheus",
-        "uid": "default-ds-uid"
-      },
       "description": "Tests migration of timeseries_aggregations transform to reduce transformation with column mappings (avg-\u003emean, max-\u003emax, min-\u003emin, total-\u003esum, current-\u003elastNotNull, count-\u003ecount).",
       "fieldConfig": {
         "defaults": {
@@ -277,11 +246,6 @@
       "pluginVersion": "1.0.0",
       "targets": [
         {
-          "datasource": {
-            "apiVersion": "v1",
-            "type": "prometheus",
-            "uid": "default-ds-uid"
-          },
           "refId": "A"
         }
       ],
@@ -305,11 +269,6 @@
       "type": "table"
     },
     {
-      "datasource": {
-        "apiVersion": "v1",
-        "type": "prometheus",
-        "uid": "default-ds-uid"
-      },
       "description": "Tests migration of timeseries_to_rows transform to seriesToRows transformation.",
       "fieldConfig": {
         "defaults": {
@@ -353,11 +312,6 @@
       "pluginVersion": "1.0.0",
       "targets": [
         {
-          "datasource": {
-            "apiVersion": "v1",
-            "type": "prometheus",
-            "uid": "default-ds-uid"
-          },
           "refId": "A"
         }
       ],
@@ -373,11 +327,6 @@
       "type": "table"
     },
     {
-      "datasource": {
-        "apiVersion": "v1",
-        "type": "prometheus",
-        "uid": "default-ds-uid"
-      },
       "description": "Tests migration of timeseries_to_columns transform to seriesToColumns transformation.",
       "fieldConfig": {
         "defaults": {
@@ -421,11 +370,6 @@
       "pluginVersion": "1.0.0",
       "targets": [
         {
-          "datasource": {
-            "apiVersion": "v1",
-            "type": "prometheus",
-            "uid": "default-ds-uid"
-          },
           "refId": "A"
         }
       ],
@@ -441,11 +385,6 @@
       "type": "table"
     },
     {
-      "datasource": {
-        "apiVersion": "v1",
-        "type": "prometheus",
-        "uid": "default-ds-uid"
-      },
       "description": "Tests migration of table transform to merge transformation. Also tests auto alignment conversion to empty string.",
       "fieldConfig": {
         "defaults": {
@@ -488,11 +427,6 @@
       "pluginVersion": "1.0.0",
       "targets": [
         {
-          "datasource": {
-            "apiVersion": "v1",
-            "type": "prometheus",
-            "uid": "default-ds-uid"
-          },
           "refId": "A"
         }
       ],
@@ -508,11 +442,6 @@
       "type": "table"
     },
     {
-      "datasource": {
-        "apiVersion": "v1",
-        "type": "prometheus",
-        "uid": "default-ds-uid"
-      },
       "description": "Tests that existing transformations are preserved and new transformation from old format is appended to the list.",
       "fieldConfig": {
         "defaults": {
@@ -556,11 +485,6 @@
       "pluginVersion": "1.0.0",
       "targets": [
         {
-          "datasource": {
-            "apiVersion": "v1",
-            "type": "prometheus",
-            "uid": "default-ds-uid"
-          },
           "refId": "A"
         }
       ],
@@ -587,11 +511,6 @@
       "type": "table"
     },
     {
-      "datasource": {
-        "apiVersion": "v1",
-        "type": "prometheus",
-        "uid": "default-ds-uid"
-      },
       "description": "Tests handling of mixed numeric and string threshold values (int, string, float) with proper type conversion.",
       "fieldConfig": {
         "defaults": {
@@ -643,11 +562,6 @@
       "pluginVersion": "1.0.0",
       "targets": [
         {
-          "datasource": {
-            "apiVersion": "v1",
-            "type": "prometheus",
-            "uid": "default-ds-uid"
-          },
           "refId": "A"
         }
       ],
@@ -656,11 +570,6 @@
       "type": "table"
     },
     {
-      "datasource": {
-        "apiVersion": "v1",
-        "type": "prometheus",
-        "uid": "default-ds-uid"
-      },
       "description": "Tests all color mode mappings: cell-\u003ecolor-background, row-\u003ecolor-background, value-\u003ecolor-text.",
       "fieldConfig": {
         "defaults": {
@@ -746,11 +655,6 @@
       "pluginVersion": "1.0.0",
       "targets": [
         {
-          "datasource": {
-            "apiVersion": "v1",
-            "type": "prometheus",
-            "uid": "default-ds-uid"
-          },
           "refId": "A"
         }
       ],
@@ -759,11 +663,6 @@
       "type": "table"
     },
     {
-      "datasource": {
-        "apiVersion": "v1",
-        "type": "prometheus",
-        "uid": "default-ds-uid"
-      },
       "description": "Tests all alignment options: left, center, right, and auto (should convert to empty string).",
       "fieldConfig": {
         "defaults": {
@@ -843,11 +742,6 @@
       "pluginVersion": "1.0.0",
       "targets": [
         {
-          "datasource": {
-            "apiVersion": "v1",
-            "type": "prometheus",
-            "uid": "default-ds-uid"
-          },
           "refId": "A"
         }
       ],
@@ -856,11 +750,6 @@
       "type": "table"
     },
     {
-      "datasource": {
-        "apiVersion": "v1",
-        "type": "prometheus",
-        "uid": "default-ds-uid"
-      },
       "description": "Tests both field matcher types: byName for exact matches and byRegexp for regex patterns.",
       "fieldConfig": {
         "defaults": {
@@ -953,11 +842,6 @@
       "pluginVersion": "1.0.0",
       "targets": [
         {
-          "datasource": {
-            "apiVersion": "v1",
-            "type": "prometheus",
-            "uid": "default-ds-uid"
-          },
           "refId": "A"
         }
       ],
@@ -966,11 +850,6 @@
       "type": "table"
     },
     {
-      "datasource": {
-        "apiVersion": "v1",
-        "type": "prometheus",
-        "uid": "default-ds-uid"
-      },
       "description": "Tests various link configurations: with and without tooltip, with and without target blank.",
       "fieldConfig": {
         "defaults": {
@@ -1069,11 +948,6 @@
       "pluginVersion": "1.0.0",
       "targets": [
         {
-          "datasource": {
-            "apiVersion": "v1",
-            "type": "prometheus",
-            "uid": "default-ds-uid"
-          },
           "refId": "A"
         }
       ],
@@ -1082,11 +956,6 @@
       "type": "table"
     },
     {
-      "datasource": {
-        "apiVersion": "v1",
-        "type": "prometheus",
-        "uid": "default-ds-uid"
-      },
       "description": "Tests various date format patterns and aliases.",
       "fieldConfig": {
         "defaults": {
@@ -1179,11 +1048,6 @@
       "pluginVersion": "1.0.0",
       "targets": [
         {
-          "datasource": {
-            "apiVersion": "v1",
-            "type": "prometheus",
-            "uid": "default-ds-uid"
-          },
           "refId": "A"
         }
       ],
@@ -1192,11 +1056,6 @@
       "type": "table"
     },
     {
-      "datasource": {
-        "apiVersion": "v1",
-        "type": "prometheus",
-        "uid": "default-ds-uid"
-      },
       "description": "React table (table2) should not be migrated. Properties should remain unchanged.",
       "id": 14,
       "styles": [
@@ -1217,11 +1076,6 @@
       "table": "table2",
       "targets": [
         {
-          "datasource": {
-            "apiVersion": "v1",
-            "type": "prometheus",
-            "uid": "default-ds-uid"
-          },
           "refId": "A"
         }
       ],
@@ -1229,20 +1083,10 @@
       "type": "table"
     },
     {
-      "datasource": {
-        "apiVersion": "v1",
-        "type": "prometheus",
-        "uid": "default-ds-uid"
-      },
       "description": "Angular table without styles property should not be migrated.",
       "id": 15,
       "targets": [
         {
-          "datasource": {
-            "apiVersion": "v1",
-            "type": "prometheus",
-            "uid": "default-ds-uid"
-          },
           "refId": "A"
         }
       ],
@@ -1250,20 +1094,10 @@
       "type": "table"
     },
     {
-      "datasource": {
-        "apiVersion": "v1",
-        "type": "prometheus",
-        "uid": "default-ds-uid"
-      },
       "description": "Non-table panels should remain completely unchanged.",
       "id": 16,
       "targets": [
         {
-          "datasource": {
-            "apiVersion": "v1",
-            "type": "prometheus",
-            "uid": "default-ds-uid"
-          },
           "refId": "A"
         }
       ],
@@ -1271,64 +1105,16 @@
       "type": "graph"
     },
     {
-      "datasource": {
-        "apiVersion": "v1",
-        "type": "prometheus",
-        "uid": "default-ds-uid"
-      },
       "description": "Other panel types should not be affected by table migration.",
-      "fieldConfig": {
-        "defaults": {
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              },
-              {
-                "color": "red",
-                "value": 80
-              }
-            ]
-          }
-        },
-        "overrides": []
-      },
       "id": 17,
-      "options": {
-        "colorMode": "none",
-        "graphMode": "none",
-        "justifyMode": "auto",
-        "orientation": "horizontal",
-        "percentChangeColorMode": "standard",
-        "reduceOptions": {
-          "calcs": [
-            "mean"
-          ],
-          "fields": "",
-          "values": false
-        },
-        "showPercentChange": false,
-        "textMode": "auto",
-        "wideLayout": true
-      },
-      "pluginVersion": "1.0.0",
       "targets": [
         {
-          "datasource": {
-            "apiVersion": "v1",
-            "type": "prometheus",
-            "uid": "default-ds-uid"
-          },
           "refId": "A"
         }
       ],
       "title": "Singlestat Panel - Should NOT Migrate",
-      "type": "stat"
+      "type": "singlestat"
     }
   ],
-  "refresh": "",
-  "schemaVersion": 41
+  "schemaVersion": 24
 }

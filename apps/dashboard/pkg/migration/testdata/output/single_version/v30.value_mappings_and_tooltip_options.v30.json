@@ -1,22 +1,15 @@
 {
   "panels": [
     {
-      "datasource": {
-        "apiVersion": "v1",
-        "type": "prometheus",
-        "uid": "default-ds-uid"
-      },
       "fieldConfig": {
         "defaults": {
           "mappings": [
             {
               "options": {
                 "0": {
-                  "color": "green",
                   "text": "Down"
                 },
                 "1": {
-                  "color": "green",
                   "text": "Up"
                 }
               },
@@ -26,7 +19,6 @@
               "options": {
                 "from": 10,
                 "result": {
-                  "color": "green",
                   "text": "Medium"
                 },
                 "to": 20
@@ -37,7 +29,6 @@
               "options": {
                 "match": "null",
                 "result": {
-                  "color": "green",
                   "text": "Null Value"
                 }
               },
@@ -88,50 +79,20 @@
           "mode": "multi"
         }
       },
-      "targets": [
-        {
-          "datasource": {
-            "apiVersion": "v1",
-            "type": "prometheus",
-            "uid": "default-ds-uid"
-          },
-          "refId": "A"
-        }
-      ],
       "title": "Panel with legacy value mappings and tooltip options",
       "type": "timeseries"
     },
     {
-      "datasource": {
-        "apiVersion": "v1",
-        "type": "prometheus",
-        "uid": "default-ds-uid"
-      },
       "id": 2,
       "options": {
         "tooltip": {
           "mode": "single"
         }
       },
-      "targets": [
-        {
-          "datasource": {
-            "apiVersion": "v1",
-            "type": "prometheus",
-            "uid": "default-ds-uid"
-          },
-          "refId": "A"
-        }
-      ],
       "title": "XY Chart with tooltip options only",
       "type": "xychart"
     },
     {
-      "datasource": {
-        "apiVersion": "v1",
-        "type": "prometheus",
-        "uid": "default-ds-uid"
-      },
       "id": 3,
       "options": {
         "tooltip": {
@@ -139,50 +100,20 @@
           "sort": "none"
         }
       },
-      "targets": [
-        {
-          "datasource": {
-            "apiVersion": "v1",
-            "type": "prometheus",
-            "uid": "default-ds-uid"
-          },
-          "refId": "A"
-        }
-      ],
       "title": "XY Chart2 with tooltip options",
       "type": "xychart2"
     },
     {
-      "datasource": {
-        "apiVersion": "v1",
-        "type": "prometheus",
-        "uid": "default-ds-uid"
-      },
       "id": 4,
       "options": {
         "tooltip": {
           "mode": "single"
         }
       },
-      "targets": [
-        {
-          "datasource": {
-            "apiVersion": "v1",
-            "type": "prometheus",
-            "uid": "default-ds-uid"
-          },
-          "refId": "A"
-        }
-      ],
       "title": "Graph panel gets migrated to timeseries and tooltip",
       "type": "graph"
     },
     {
-      "datasource": {
-        "apiVersion": "v1",
-        "type": "prometheus",
-        "uid": "default-ds-uid"
-      },
       "fieldConfig": {
         "defaults": {
           "mappings": [
@@ -218,34 +149,14 @@
         }
       },
       "id": 5,
-      "targets": [
-        {
-          "datasource": {
-            "apiVersion": "v1",
-            "type": "prometheus",
-            "uid": "default-ds-uid"
-          },
-          "refId": "A"
-        }
-      ],
       "title": "Panel with complex value mappings",
       "type": "stat"
     },
     {
       "collapsed": true,
-      "datasource": {
-        "apiVersion": "v1",
-        "type": "prometheus",
-        "uid": "default-ds-uid"
-      },
       "id": 6,
       "panels": [
         {
-          "datasource": {
-            "apiVersion": "v1",
-            "type": "prometheus",
-            "uid": "default-ds-uid"
-          },
           "fieldConfig": {
             "defaults": {
               "mappings": [
@@ -269,39 +180,14 @@
               "mode": "multi"
             }
           },
-          "targets": [
-            {
-              "datasource": {
-                "apiVersion": "v1",
-                "type": "prometheus",
-                "uid": "default-ds-uid"
-              },
-              "refId": "A"
-            }
-          ],
           "title": "Nested panel with both migrations",
           "type": "timeseries"
-        }
-      ],
-      "targets": [
-        {
-          "datasource": {
-            "apiVersion": "v1",
-            "type": "prometheus",
-            "uid": "default-ds-uid"
-          },
-          "refId": "A"
         }
       ],
       "title": "Collapsed Row with nested panels",
       "type": "row"
     },
     {
-      "datasource": {
-        "apiVersion": "v1",
-        "type": "prometheus",
-        "uid": "default-ds-uid"
-      },
       "fieldConfig": {
         "defaults": {
           "unit": "bytes"
@@ -310,29 +196,13 @@
       "id": 8,
       "options": {
         "legend": {
-          "displayMode": "list",
-          "showLegend": true
+          "displayMode": "list"
         }
       },
-      "targets": [
-        {
-          "datasource": {
-            "apiVersion": "v1",
-            "type": "prometheus",
-            "uid": "default-ds-uid"
-          },
-          "refId": "A"
-        }
-      ],
       "title": "Panel with no relevant configurations",
       "type": "timeseries"
     },
     {
-      "datasource": {
-        "apiVersion": "v1",
-        "type": "prometheus",
-        "uid": "default-ds-uid"
-      },
       "fieldConfig": {
         "defaults": {
           "mappings": []
@@ -353,21 +223,10 @@
         ]
       },
       "id": 9,
-      "targets": [
-        {
-          "datasource": {
-            "apiVersion": "v1",
-            "type": "prometheus",
-            "uid": "default-ds-uid"
-          },
-          "refId": "A"
-        }
-      ],
       "title": "Panel with empty mappings array - should return null",
       "type": "stat"
     }
   ],
-  "refresh": "",
-  "schemaVersion": 41,
+  "schemaVersion": 30,
   "title": "V30 Value Mappings and Tooltip Options Migration Test Dashboard"
 }

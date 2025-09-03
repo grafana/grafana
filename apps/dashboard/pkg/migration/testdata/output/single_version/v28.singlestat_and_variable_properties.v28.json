@@ -1,0 +1,262 @@
+{
+  "panels": [
+    {
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "#FF0000",
+                "value": null
+              },
+              {
+                "color": "green",
+                "value": 10
+              },
+              {
+                "color": "orange",
+                "value": 20
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "grid": {
+        "max": 10,
+        "min": 1
+      },
+      "legend": true,
+      "options": {
+        "colorMode": "none",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "horizontal",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "mean"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "1.0.0",
+      "targets": [
+        {
+          "refId": "A"
+        },
+        {}
+      ],
+      "type": "stat"
+    },
+    {
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [],
+          "max": null,
+          "min": null,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "#FF0000",
+                "value": null
+              },
+              {
+                "color": "green",
+                "value": 10
+              },
+              {
+                "color": "orange",
+                "value": 20
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "grid": {
+        "max": 10,
+        "min": 1
+      },
+      "options": {
+        "colorMode": "none",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "horizontal",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "mean"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "1.0.0",
+      "type": "stat"
+    },
+    {
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [
+            {
+              "options": {
+                "20": {
+                  "color": "orange",
+                  "text": "test"
+                }
+              },
+              "type": "value"
+            },
+            {
+              "options": {
+                "30": {
+                  "color": "orange",
+                  "text": "test1"
+                }
+              },
+              "type": "value"
+            },
+            {
+              "options": {
+                "40": {
+                  "color": "orange",
+                  "text": "50"
+                }
+              },
+              "type": "value"
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "#FF0000",
+                "value": null
+              },
+              {
+                "color": "green",
+                "value": 10
+              },
+              {
+                "color": "orange",
+                "value": 20
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "grid": {
+        "max": 10,
+        "min": 1
+      },
+      "legend": true,
+      "mappingTypes": [
+        {
+          "name": "value to text",
+          "value": 1
+        }
+      ],
+      "options": {
+        "colorMode": "none",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "horizontal",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "mean"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "1.0.0",
+      "targets": [
+        {
+          "refId": "A"
+        },
+        {}
+      ],
+      "type": "stat"
+    },
+    {
+      "targets": [
+        {
+          "expr": "rate(http_requests_total[5m])",
+          "refId": "A"
+        }
+      ],
+      "type": "timeseries"
+    }
+  ],
+  "schemaVersion": 28,
+  "templating": {
+    "list": [
+      {
+        "datasource": "prometheus",
+        "name": "query_variable_with_tags",
+        "query": "label_values(up, instance)",
+        "refresh": 1,
+        "type": "query"
+      },
+      {
+        "name": "custom_variable_with_tags",
+        "options": [
+          {
+            "text": "Option 1",
+            "value": "opt1"
+          },
+          {
+            "text": "Option 2",
+            "value": "opt2"
+          }
+        ],
+        "type": "custom"
+      },
+      {
+        "name": "clean_variable",
+        "options": [
+          {
+            "text": "Hello",
+            "value": "World"
+          }
+        ],
+        "type": "textbox"
+      }
+    ]
+  },
+  "time": {
+    "from": "now-6h",
+    "to": "now"
+  },
+  "timepicker": {
+    "refresh_intervals": [
+      "5s",
+      "10s",
+      "30s",
+      "1m",
+      "5m",
+      "15m",
+      "30m",
+      "1h",
+      "2h",
+      "1d"
+    ]
+  },
+  "title": "V28 Singlestat and Variable Properties Migration Test Dashboard"
+}

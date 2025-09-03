@@ -1,0 +1,71 @@
+{
+  "panels": [
+    {
+      "id": 1,
+      "links": [
+        {
+          "targetBlank": false,
+          "title": "Dashboard Link",
+          "url": "dashboard/db/my-dashboard?$__url_time_range"
+        }
+      ],
+      "title": "Panel with legacy dashboard link",
+      "type": "graph"
+    },
+    {
+      "id": 2,
+      "links": [
+        {
+          "targetBlank": false,
+          "title": "DashUri Link",
+          "url": "dashboard/my-dashboard-uid?$__all_variables"
+        }
+      ],
+      "title": "Panel with dashUri link",
+      "type": "stat"
+    },
+    {
+      "id": 3,
+      "links": [
+        {
+          "targetBlank": false,
+          "title": "Custom Params Link",
+          "url": "http://example.com?customParam=value"
+        }
+      ],
+      "title": "Panel with custom params",
+      "type": "table"
+    },
+    {
+      "id": 4,
+      "links": [
+        {
+          "targetBlank": true,
+          "title": "Complex Link",
+          "url": "dashboard/db/complex-dashboard?$__url_time_range\u0026$__all_variables\u0026param1=value1\u0026param2=value2"
+        }
+      ],
+      "title": "Panel with complex link",
+      "type": "timeseries"
+    },
+    {
+      "id": 5,
+      "links": [
+        {
+          "targetBlank": false,
+          "title": "Existing URL Link",
+          "url": "http://existing-url.com"
+        }
+      ],
+      "title": "Panel with existing URL",
+      "type": "gauge"
+    },
+    {
+      "id": 6,
+      "title": "Panel with no links",
+      "type": "singlestat"
+    }
+  ],
+  "schemaVersion": 19,
+  "title": "V19 Panel Links Migration Test Dashboard"
+}

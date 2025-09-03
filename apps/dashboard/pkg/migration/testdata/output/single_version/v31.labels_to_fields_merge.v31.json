@@ -1,0 +1,154 @@
+{
+  "panels": [
+    {
+      "id": 1,
+      "title": "Panel with basic labelsToFields transformation",
+      "transformations": [
+        {
+          "id": "labelsToFields",
+          "options": {}
+        },
+        {
+          "id": "merge",
+          "options": {}
+        }
+      ],
+      "type": "timeseries"
+    },
+    {
+      "id": 9,
+      "title": "Panel with labelsToFields options preserved",
+      "transformations": [
+        {
+          "id": "labelsToFields",
+          "options": {
+            "keepLabels": [
+              "job",
+              "instance",
+              "region"
+            ],
+            "mode": "rows",
+            "valueLabel": "value"
+          }
+        },
+        {
+          "id": "merge",
+          "options": {}
+        }
+      ],
+      "type": "timeseries"
+    },
+    {
+      "id": 2,
+      "title": "Panel with multiple labelsToFields transformations",
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {}
+        },
+        {
+          "id": "labelsToFields",
+          "options": {}
+        },
+        {
+          "id": "merge",
+          "options": {}
+        },
+        {
+          "id": "calculateField",
+          "options": {}
+        },
+        {
+          "id": "labelsToFields",
+          "options": {
+            "mode": "rows"
+          }
+        },
+        {
+          "id": "merge",
+          "options": {}
+        }
+      ],
+      "type": "timeseries"
+    },
+    {
+      "id": 3,
+      "title": "Panel with no transformations",
+      "type": "timeseries"
+    },
+    {
+      "id": 4,
+      "title": "Panel with other transformations only",
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {}
+        },
+        {
+          "id": "reduce",
+          "options": {}
+        }
+      ],
+      "type": "timeseries"
+    },
+    {
+      "collapsed": false,
+      "id": 5,
+      "panels": [
+        {
+          "id": 6,
+          "title": "Nested panel with labelsToFields",
+          "transformations": [
+            {
+              "id": "labelsToFields",
+              "options": {}
+            },
+            {
+              "id": "merge",
+              "options": {}
+            }
+          ],
+          "type": "timeseries"
+        },
+        {
+          "id": 7,
+          "title": "Nested panel without labelsToFields",
+          "transformations": [
+            {
+              "id": "organize",
+              "options": {}
+            }
+          ],
+          "type": "timeseries"
+        }
+      ],
+      "title": "Row with nested panels",
+      "type": "row"
+    },
+    {
+      "id": 8,
+      "title": "Panel with labelsToFields and existing merge",
+      "transformations": [
+        {
+          "id": "labelsToFields",
+          "options": {}
+        },
+        {
+          "id": "merge",
+          "options": {}
+        },
+        {
+          "id": "merge",
+          "options": {}
+        },
+        {
+          "id": "reduce",
+          "options": {}
+        }
+      ],
+      "type": "timeseries"
+    }
+  ],
+  "schemaVersion": 31,
+  "title": "V31 LabelsToFields Merge Migration Test Dashboard"
+}
