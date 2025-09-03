@@ -6,7 +6,7 @@ require (
 	github.com/go-jose/go-jose/v3 v3.0.4 // @grafana/identity-access-team
 	github.com/grafana/authlib v0.0.0-20250710201142-9542f2f28d43 // @grafana/identity-access-team
 	github.com/grafana/authlib/types v0.0.0-20250710201142-9542f2f28d43 // @grafana/identity-access-team
-	github.com/stretchr/testify v1.10.0
+	github.com/stretchr/testify v1.11.0
 	gopkg.in/yaml.v3 v3.0.1
 	k8s.io/apimachinery v0.33.3
 	k8s.io/apiserver v0.33.3

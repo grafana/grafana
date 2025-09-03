@@ -63,6 +63,7 @@ require (
 	github.com/puzpuzpuz/xsync/v2 v2.5.1 // indirect
 	github.com/rogpeppe/go-internal v1.14.1 // indirect
 	github.com/spf13/pflag v1.0.7 // indirect
+	github.com/stretchr/testify v1.11.0 // indirect
 	github.com/x448/float16 v0.8.4 // indirect
 	go.etcd.io/bbolt v1.4.0 // indirect
 	go.etcd.io/etcd/api/v3 v3.5.21 // indirect

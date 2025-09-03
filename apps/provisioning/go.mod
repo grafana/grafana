@@ -11,7 +11,7 @@ require (
 	github.com/grafana/grafana/pkg/apimachinery v0.0.0-20250804150913-990f1c69ecc2
 	github.com/grafana/nanogit v0.0.0-20250723104447-68f58f5ecec0
 	github.com/migueleliasweb/go-github-mock v1.1.0
-	github.com/stretchr/testify v1.10.0
+	github.com/stretchr/testify v1.11.0
 	golang.org/x/oauth2 v0.30.0
 	k8s.io/apimachinery v0.33.3
 	k8s.io/apiserver v0.33.3

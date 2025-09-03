@@ -8,7 +8,7 @@ require (
 	github.com/grafana/grafana/pkg/apimachinery v0.0.0-20250514132646-acbc7b54ed9e
 	github.com/grafana/grafana/pkg/semconv v0.0.0-20250514132646-acbc7b54ed9e
 	github.com/mattbaird/jsonpatch v0.0.0-20240118010651-0ba75a80ca38
-	github.com/stretchr/testify v1.10.0
+	github.com/stretchr/testify v1.11.0
 	go.opentelemetry.io/otel v1.37.0
 	k8s.io/api v0.33.3
 	k8s.io/apimachinery v0.33.3
