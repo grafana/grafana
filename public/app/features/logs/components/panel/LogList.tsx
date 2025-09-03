@@ -423,6 +423,7 @@ const LogListComponent = ({
           timeRange={timeRange}
           timeZone={timeZone}
           onResize={handleLogDetailsResize}
+          showControls={showControls}
         />
       )}
       <div className={styles.logListWrapper} ref={wrapperRef}>
