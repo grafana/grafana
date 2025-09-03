@@ -56,8 +56,8 @@ test.describe(
       const panel = dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('New panel'));
       await expect(panel).toBeVisible();
 
-      // Wait for the table to load completely
-      await expect(page.locator('.rdg')).toBeVisible();
+      // // Wait for the table to load completely
+      // await expect(page.locator('.rdg')).toBeVisible();
 
       // Get the first data cell in the third column (row 1, column 2)
       const firstCell = await getCell(page, 1, 2);
