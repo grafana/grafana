@@ -3112,12 +3112,15 @@
     {
       "metadata": {
         "name": "sqlExpressions",
-        "resourceVersion": "1753448760331",
-        "creationTimestamp": "2024-02-27T21:16:00Z"
+        "resourceVersion": "1756828051955",
+        "creationTimestamp": "2024-02-27T21:16:00Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-09-02 15:47:31.955288671 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables SQL Expressions, which can execute SQL queries against data source results.",
-        "stage": "privatePreview",
+        "stage": "preview",
         "codeowner": "@grafana/grafana-datasources-core-services"
       }
     },
