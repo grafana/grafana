@@ -6,6 +6,17 @@ function logStat(name: string, value: number) {
   // which expects the two values to be separated by a space
   console.log(`${name} ${value}`);
 }
+/**
+ * Array of regexes + name overrides for legacy checks that have been moved to ESLint
+ *
+ * This is so we can still report things like "gfFormUsage..." as "noGfFormUsage_gfFormUsage..."
+ * rather than "betterEslint_gfFormUsage..." for continuity on our dashboards
+ */
+const legacyChecksToTransform = [
+  { messageRegex: /gfFormUsage/i, prefix: 'noGfFormUsage' },
+  { messageRegex: /noUndocumentedStories/i, prefix: 'noUndocumentedStories' },
+  { messageRegex: /noSkippingOfA11YTests/i, prefix: 'noSkippingA11YTestsInStories' },
+];
 
 async function main() {
   const results = await betterer.results();
@@ -17,7 +28,13 @@ async function main() {
       .flatMap((v) => v)
       .forEach((detail) => {
         const message = camelCase(detail.message);
-        const metricName = `${name}_${message}`;
+        const nameToUse =
+          legacyChecksToTransform.find((v) => {
+            return v.messageRegex.test(message);
+          })?.prefix || name;
+
+        const metricName = `${nameToUse}_${message}`;
+
         if (metricName in countByMessage) {
           countByMessage[metricName]++;
         } else {

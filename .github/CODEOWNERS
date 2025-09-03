@@ -1005,7 +1005,6 @@ playwright.storybook.config.ts @grafana/grafana-frontend-platform
 /public/app/index.ts @grafana/frontend-ops
 /public/app/initApp.ts @grafana/frontend-ops
 /public/app/AppWrapper.tsx @grafana/frontend-ops
-/public/app/partials/ @grafana/grafana-frontend-platform
 
 /scripts/benchmark-access-control.sh @grafana/access-squad
 /scripts/check-breaking-changes.sh @grafana/plugins-platform-frontend
