@@ -132,6 +132,7 @@ export interface BaseTableProps {
   frozenColumns?: number;
   enablePagination?: boolean;
   cellHeight?: TableCellHeight;
+  maxRowHeight?: number;
   structureRev?: number;
   transparent?: boolean;
   /** @alpha Used by SparklineCell when provided */
@@ -167,6 +168,7 @@ export interface TableCellRendererProps {
   showFilters: boolean;
   getActions?: GetActionsFunctionLocal;
   disableSanitizeHtml?: boolean;
+  getTextColorForBackground: (color: string) => string;
 }
 
 export type InspectCellProps = {
@@ -250,12 +252,14 @@ export interface PillCellProps {
   theme: GrafanaTheme2;
   field: Field;
   rowIdx: number;
+  getTextColorForBackground: (color: string) => string;
 }
 
 export interface TableCellStyleOptions {
   textWrap: boolean;
   textAlign: TextAlign;
   shouldOverflow: boolean;
+  maxHeight?: number;
 }
 
 export type TableCellStyles = (theme: GrafanaTheme2, options: TableCellStyleOptions) => string;

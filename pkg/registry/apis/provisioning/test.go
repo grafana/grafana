@@ -15,8 +15,8 @@ import (
 	"k8s.io/apiserver/pkg/registry/rest"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/controller"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 )
 
 type StatusPatcherProvider interface {
@@ -29,12 +29,19 @@ type HealthCheckerProvider interface {
 
 type testConnector struct {
 	getter         RepoGetter
+	factory        repository.Factory
 	tester         controller.RepositoryTester
 	healthProvider HealthCheckerProvider
 }
 
-func NewTestConnector(getter RepoGetter, tester controller.RepositoryTester, healthProvider HealthCheckerProvider) *testConnector {
+func NewTestConnector(
+	getter RepoGetter,
+	factory repository.Factory,
+	tester controller.RepositoryTester,
+	healthProvider HealthCheckerProvider,
+) *testConnector {
 	return &testConnector{
+		factory:        factory,
 		getter:         getter,
 		tester:         tester,
 		healthProvider: healthProvider,
@@ -113,7 +120,7 @@ func (s *testConnector) Connect(ctx context.Context, name string, opts runtime.O
 				}
 
 				// Create a temporary repository
-				tmp, err := s.getter.RepositoryFromConfig(ctx, &cfg)
+				tmp, err := s.factory.Build(ctx, &cfg)
 				if err != nil {
 					responder.Error(err)
 					return

@@ -20,19 +20,12 @@ import (
 	client "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned/typed/provisioning/v0alpha1"
 	informer "github.com/grafana/grafana/apps/provisioning/pkg/generated/informers/externalversions/provisioning/v0alpha1"
 	listers "github.com/grafana/grafana/apps/provisioning/pkg/generated/listers/provisioning/v0alpha1"
+	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 )
-
-type RepoGetter interface {
-	// Given a repository configuration, return it as a repository instance
-	// This will only error for un-recoverable system errors
-	// the repository instance may or may not be valid/healthy
-	RepositoryFromConfig(ctx context.Context, r *provisioning.Repository) (repository.Repository, error)
-}
 
 const loggerName = "provisioning-repository-controller"
 
@@ -60,8 +53,7 @@ type RepositoryController struct {
 	finalizer     *finalizer
 	statusPatcher StatusPatcher
 
-	// Converts config to instance
-	repoGetter    RepoGetter
+	repoFactory   repository.Factory
 	healthChecker *HealthChecker
 	// To allow injection for testing.
 	processFn         func(item *queueItem) error
@@ -75,7 +67,7 @@ type RepositoryController struct {
 func NewRepositoryController(
 	provisioningClient client.ProvisioningV0alpha1Interface,
 	repoInformer informer.RepositoryInformer,
-	repoGetter RepoGetter,
+	repoFactory repository.Factory,
 	resourceLister resources.ResourceLister,
 	parsers resources.ParserFactory,
 	clients resources.ClientFactory,
@@ -96,7 +88,7 @@ func NewRepositoryController(
 				Name: "provisioningRepositoryController",
 			},
 		),
-		repoGetter:    repoGetter,
+		repoFactory:   repoFactory,
 		healthChecker: healthChecker,
 		statusPatcher: statusPatcher,
 		parsers:       parsers,
@@ -223,7 +215,7 @@ func (rc *RepositoryController) handleDelete(ctx context.Context, obj *provision
 
 	// Process any finalizers
 	if len(obj.Finalizers) > 0 {
-		repo, err := rc.repoGetter.RepositoryFromConfig(ctx, obj)
+		repo, err := rc.repoFactory.Build(ctx, obj)
 		if err != nil {
 			logger.Warn("unable to get repository for cleanup")
 		} else {
@@ -438,7 +430,7 @@ func (rc *RepositoryController) process(item *queueItem) error {
 		return nil
 	}
 
-	repo, err := rc.repoGetter.RepositoryFromConfig(ctx, obj)
+	repo, err := rc.repoFactory.Build(ctx, obj)
 	if err != nil {
 		return fmt.Errorf("unable to create repository from configuration: %w", err)
 	}

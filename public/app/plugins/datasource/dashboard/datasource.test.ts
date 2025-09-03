@@ -722,7 +722,7 @@ describe('DashboardDatasource', () => {
       });
     });
 
-    describe('getFiltersApplicability', () => {
+    describe('getDrilldownsApplicability', () => {
       const originalToggleValue = config.featureToggles.dashboardDsAdHocFiltering;
       const ds = new DashboardDatasource({} as DataSourceInstanceSettings);
 
@@ -737,15 +737,15 @@ describe('DashboardDatasource', () => {
       it('should return empty array when feature toggle is disabled', async () => {
         config.featureToggles.dashboardDsAdHocFiltering = false;
 
-        const result = await ds.getFiltersApplicability({
+        const result = await ds.getDrilldownsApplicability({
           filters: [{ key: 'name', operator: '=', value: 'test' }],
         });
 
         expect(result).toEqual([]);
       });
 
-      it('should mark supported operators as applicable when adHocFiltersEnabled is enabled', async () => {
-        const result = await ds.getFiltersApplicability({
+      it('should mark supported operators as applicable', async () => {
+        const result = await ds.getDrilldownsApplicability({
           filters: [
             { key: 'name', operator: '=', value: 'John' },
             { key: 'age', operator: '!=', value: '25' },
@@ -760,7 +760,7 @@ describe('DashboardDatasource', () => {
       });
 
       it('should return empty array when no query has adHocFiltersEnabled enabled', async () => {
-        const result = await ds.getFiltersApplicability({
+        const result = await ds.getDrilldownsApplicability({
           filters: [
             { key: 'name', operator: '=', value: 'John' },
             { key: 'age', operator: '!=', value: '25' },
@@ -772,7 +772,7 @@ describe('DashboardDatasource', () => {
       });
 
       it('should return empty array when queries is undefined', async () => {
-        const result = await ds.getFiltersApplicability({
+        const result = await ds.getDrilldownsApplicability({
           filters: [
             { key: 'name', operator: '=', value: 'John' },
             { key: 'age', operator: '!=', value: '25' },
@@ -783,7 +783,7 @@ describe('DashboardDatasource', () => {
       });
 
       it('should mark unsupported operators as not applicable with reason', async () => {
-        const result = await ds.getFiltersApplicability({
+        const result = await ds.getDrilldownsApplicability({
           filters: [
             { key: 'name', operator: '>', value: 'John' },
             { key: 'age', operator: '<', value: '25' },
@@ -812,7 +812,7 @@ describe('DashboardDatasource', () => {
       });
 
       it('should handle mixed applicable and non-applicable filters', async () => {
-        const result = await ds.getFiltersApplicability({
+        const result = await ds.getDrilldownsApplicability({
           filters: [
             { key: 'name', operator: '=', value: 'John' },
             { key: 'age', operator: '>', value: '25' },
@@ -833,12 +833,12 @@ describe('DashboardDatasource', () => {
       });
 
       it('should handle empty filters array', async () => {
-        const result = await ds.getFiltersApplicability({ filters: [] });
+        const result = await ds.getDrilldownsApplicability({ filters: [] });
         expect(result).toEqual([]);
       });
 
       it('should handle missing options', async () => {
-        const result = await ds.getFiltersApplicability();
+        const result = await ds.getDrilldownsApplicability();
         expect(result).toEqual([]);
       });
     });

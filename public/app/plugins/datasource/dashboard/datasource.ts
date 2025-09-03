@@ -17,8 +17,8 @@ import {
   MetricFindValue,
   getValueMatcher,
   ValueMatcherID,
-  FiltersApplicability,
-  DataSourceGetTagKeysOptions,
+  DataSourceGetDrilldownsApplicabilityOptions,
+  DrilldownsApplicability,
 } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { SceneDataProvider, SceneDataTransformer, SceneObject } from '@grafana/scenes';
@@ -342,9 +342,9 @@ export class DashboardDatasource extends DataSourceApi<DashboardQuery> {
   /**
    * Check which AdHoc filters are applicable based on operator and field type support
    */
-  async getFiltersApplicability(
-    options?: DataSourceGetTagKeysOptions<DashboardQuery>
-  ): Promise<FiltersApplicability[]> {
+  async getDrilldownsApplicability(
+    options?: DataSourceGetDrilldownsApplicabilityOptions<DashboardQuery>
+  ): Promise<DrilldownsApplicability[]> {
     if (!config.featureToggles.dashboardDsAdHocFiltering) {
       return [];
     }
@@ -358,7 +358,7 @@ export class DashboardDatasource extends DataSourceApi<DashboardQuery> {
 
     const filters = options?.filters || [];
 
-    return filters.map((filter): FiltersApplicability => {
+    return filters.map((filter): DrilldownsApplicability => {
       // Check operator support
       if (filter.operator !== '=' && filter.operator !== '!=') {
         return {

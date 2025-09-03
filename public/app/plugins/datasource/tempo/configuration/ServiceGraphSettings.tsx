@@ -94,6 +94,7 @@ export function ServiceGraphSettings({ options, onOptionsChange }: Props) {
         ) : null}
       </InlineFieldRow>
       <InlineFieldRow className={styles.row}>
+        {/* TODO: Remove this in favor of automatic detection of native histograms https://github.com/grafana/grafana/issues/109709 */}
         <InlineField tooltip={nativeHistogramDocs} label="Histogram type" labelWidth={26} interactive={true}>
           <Combobox
             id="histogram-type-select"

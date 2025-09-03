@@ -131,13 +131,13 @@ function FormContent({ initialValues, parentFolder, repository, workflowOptions,
 
           {/* Delete / Cancel button */}
           <Stack gap={2}>
+            <Button variant="secondary" fill="outline" onClick={onDismiss}>
+              <Trans i18nKey="browse-dashboards.delete-provisioned-folder-form.button-cancel">Cancel</Trans>
+            </Button>
             <Button type="submit" disabled={request.isLoading} variant="destructive">
               {request.isLoading
                 ? t('browse-dashboards.delete-provisioned-folder-form.button-deleting', 'Deleting...')
                 : t('browse-dashboards.delete-provisioned-folder-form.button-delete', 'Delete')}
-            </Button>
-            <Button variant="secondary" fill="outline" onClick={onDismiss}>
-              <Trans i18nKey="browse-dashboards.delete-provisioned-folder-form.button-cancel">Cancel</Trans>
             </Button>
           </Stack>
         </Stack>
@@ -149,7 +149,6 @@ function FormContent({ initialValues, parentFolder, repository, workflowOptions,
 export function DeleteProvisionedFolderForm({ parentFolder, onDismiss }: DeleteProvisionedFolderFormProps) {
   const { workflowOptions, repository, folder, initialValues, isReadOnlyRepo } = useProvisionedFolderFormData({
     folderUid: parentFolder?.uid,
-    action: 'delete',
     title: parentFolder?.title,
   });
 

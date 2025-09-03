@@ -28,15 +28,17 @@ ENV NODE_OPTIONS=--max_old_space_size=8000
 
 WORKDIR /tmp/grafana
 
+RUN apk add --no-cache make build-base python3
+
 COPY package.json project.json nx.json yarn.lock .yarnrc.yml ./
 COPY .yarn .yarn
 COPY packages packages
+COPY e2e-playwright e2e-playwright
 COPY public public
 COPY LICENSE ./
 COPY conf/defaults.ini ./conf/defaults.ini
 COPY e2e e2e
 
-RUN apk add --no-cache make build-base python3
 #
 # Set the node env according to defaults or argument passed
 #
@@ -93,16 +95,19 @@ COPY pkg/aggregator pkg/aggregator
 COPY apps/playlist apps/playlist
 COPY apps/plugins apps/plugins
 COPY apps/shorturl apps/shorturl
+COPY apps/preferences apps/preferences
 COPY apps/provisioning apps/provisioning
 COPY apps/secret apps/secret
 COPY apps/investigations apps/investigations
 COPY apps/advisor apps/advisor
 COPY apps/dashboard apps/dashboard
 COPY apps/folder apps/folder
+COPY apps/preferences apps/preferences
 COPY apps/iam apps/iam
 COPY apps apps
 COPY kindsv2 kindsv2
 COPY apps/alerting/notifications apps/alerting/notifications
+COPY apps/alerting/alertenrichment apps/alerting/alertenrichment
 COPY pkg/codegen pkg/codegen
 COPY pkg/plugins/codegen pkg/plugins/codegen
 
