@@ -26,6 +26,8 @@ func mustTemplate(filename string) *template.Template {
 	panic(fmt.Sprintf("template file not found: %s", filename))
 }
 
+// List
+
 type listResourcePermissionsQueryTemplate struct {
 	sqltemplate.SQLTemplate
 	Query              *ListResourcePermissionsQuery
@@ -73,10 +75,8 @@ func buildListResourcePermissionsQueryFromTemplate(sql *legacysql.LegacyDatabase
 	return rawQuery, req.GetArgs(), nil
 }
 
-//LIST
+// Create
 
-//CREATE
+// Update
 
-//UPDATE
-
-//DELETE
+// Delete
