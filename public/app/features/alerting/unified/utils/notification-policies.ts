@@ -1,18 +1,8 @@
-import {
-  RouteWithID as AlertingRouteWithID,
-  type LabelMatcher,
-  findMatchingRoutes,
-  getInheritedProperties,
-} from '@grafana/alerting/unstable';
-import { AlertmanagerGroup, Route, RouteWithID } from 'app/plugins/datasource/alertmanager/types';
+import { findMatchingRoutes, getInheritedProperties } from '@grafana/alerting/unstable';
+import { AlertmanagerGroup, Route } from 'app/plugins/datasource/alertmanager/types';
 
-import {
-  convertObjectMatcherToAlertingPackageMatcher,
-  matcherToObjectMatcher,
-  normalizeMatchers,
-  parseMatcherToArray,
-  unquoteWithUnescape,
-} from './matchers';
+import { normalizeMatchers, unquoteWithUnescape } from './matchers';
+import { routeAdapter } from './routeAdapter';
 
 // This is a performance improvement to normalize matchers only once and use the normalized version later on
 export function normalizeRoute<T extends Route>(rootRoute: T): T {
@@ -59,7 +49,11 @@ function findMatchingAlertGroups(
     // find matching alerts in the current group
     const matchingAlerts = group.alerts.filter((alert) => {
       const labels = Object.entries(alert.labels);
-      return findMatchingRoutes(routeTree, labels).some((matchingRoute) => matchingRoute.route === route);
+      const alertingRouteTree = routeAdapter.toPackage(routeTree);
+      const alertingRoute = routeAdapter.toPackage(route);
+      return findMatchingRoutes(alertingRouteTree, labels).some(
+        (matchingRoute) => matchingRoute.route === alertingRoute
+      );
     });
 
     // if the groups has any alerts left after matching, add it to the results
@@ -91,39 +85,4 @@ function renameReceiverInRoute(route: Route, oldName: string, newName: string) {
   return updated;
 }
 
-/**
- * Converts a RouteWithID from the alertmanager types to the alerting package RouteWithID format.
- * This handles the conversion between different matcher formats.
- */
-function convertRouteWithIDToAlertingFormat(route: RouteWithID): AlertingRouteWithID {
-  let matchers: LabelMatcher[] = [];
-
-  if (route.object_matchers) {
-    matchers = route.object_matchers.map(convertObjectMatcherToAlertingPackageMatcher);
-  } else if (route.matchers) {
-    route.matchers.forEach((matcher) => {
-      const parsedMatchers = parseMatcherToArray(matcher)
-        .map(matcherToObjectMatcher)
-        .map(convertObjectMatcherToAlertingPackageMatcher);
-      matchers.push(...parsedMatchers);
-    });
-  }
-
-  const convertedRoute: AlertingRouteWithID = {
-    ...route,
-    receiver: route.receiver ?? undefined,
-    continue: route.continue ?? false,
-    matchers,
-    routes: route.routes ? route.routes.map(convertRouteWithIDToAlertingFormat) : [],
-  };
-
-  return convertedRoute;
-}
-
-export {
-  findMatchingAlertGroups,
-  findMatchingRoutes,
-  getInheritedProperties,
-  renameReceiverInRoute,
-  convertRouteWithIDToAlertingFormat,
-};
+export { findMatchingAlertGroups, findMatchingRoutes, getInheritedProperties, renameReceiverInRoute, routeAdapter };

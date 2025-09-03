@@ -4,9 +4,9 @@ import { AlertmanagerGroup, RouteWithID } from '../../../plugins/datasource/aler
 import { Labels } from '../../../types/unified-alerting-dto';
 
 import {
-  convertRouteWithIDToAlertingFormat,
   findMatchingAlertGroups,
   normalizeRoute,
+  routeAdapter,
   unquoteRouteMatchers,
 } from './utils/notification-policies';
 
@@ -54,7 +54,7 @@ export const routeGroupsMatcher = {
 
         // Match this single instance against the route tree
         // Convert the RouteWithID to the alerting package format to ensure compatibility
-        const convertedRoute = convertRouteWithIDToAlertingFormat(rootRoute);
+        const convertedRoute = routeAdapter.toPackage(rootRoute);
         const { expandedTree, matchedPolicies } = matchAlertInstancesToPolicyTree([labels], convertedRoute);
 
         // Process each matched route from the tree

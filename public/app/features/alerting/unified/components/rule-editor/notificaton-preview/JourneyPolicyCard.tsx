@@ -4,8 +4,9 @@ import { RouteWithID } from '@grafana/alerting/unstable';
 import { GrafanaTheme2 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
 import { Icon, Stack, Text, Tooltip, useStyles2 } from '@grafana/ui';
-import { MatcherOperator, ObjectMatcher } from 'app/plugins/datasource/alertmanager/types';
+import { ObjectMatcher } from 'app/plugins/datasource/alertmanager/types';
 
+import { labelMatcherToObjectMatcher } from '../../../utils/routeAdapter';
 import { Matchers } from '../../notification-policies/Matchers';
 import { DefaultPolicyIndicator } from '../../notification-policies/Policy';
 
@@ -19,8 +20,7 @@ export function JourneyPolicyCard({ route, isRoot = false, isFinalRoute = false 
   const styles = useStyles2(getStyles);
 
   // Convert route matchers to ObjectMatcher format
-  const matchers: ObjectMatcher[] =
-    route.matchers?.map((matcher) => [matcher.label, matcher.type as MatcherOperator, matcher.value]) ?? [];
+  const matchers: ObjectMatcher[] = route.matchers?.map(labelMatcherToObjectMatcher) ?? [];
 
   const hasMatchers = matchers.length > 0;
   const continueMatching = route.continue ?? false;

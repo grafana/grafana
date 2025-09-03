@@ -16,6 +16,7 @@ import { ObjectMatcher, ROUTES_META_SYMBOL, RouteWithID } from 'app/plugins/data
 import { anyOfRequestState, isError } from '../../hooks/useAsync';
 import { useAlertmanager } from '../../state/AlertmanagerContext';
 import { ERROR_NEWER_CONFIGURATION } from '../../utils/k8s/errors';
+import { routeAdapter } from '../../utils/routeAdapter';
 
 import { alertmanagerApi } from './../../api/alertmanagerApi';
 import { useGetContactPointsState } from './../../api/receiversApi';
@@ -297,7 +298,10 @@ export const findRoutesMatchingFilters = (rootRoute: RouteWithID, filters: Route
   const matchedRoutes: RouteWithID[][] = [];
 
   // compute fully inherited tree so all policies have their inherited receiver
-  const fullRoute = computeInheritedTree(rootRoute);
+  const adaptedRootRoute = routeAdapter.toPackage(rootRoute);
+  const adaptedFullTree = computeInheritedTree(adaptedRootRoute);
+
+  const fullRoute = routeAdapter.fromPackage(adaptedFullTree);
 
   // find all routes for our contact point filter
   const matchingRoutesForContactPoint = contactPointFilter
