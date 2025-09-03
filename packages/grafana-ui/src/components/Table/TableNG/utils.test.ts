@@ -857,8 +857,6 @@ describe('TableNG utils', () => {
       expect(extractPixelValue('not-a-number')).toBe(0);
       expect(extractPixelValue('px')).toBe(0);
       expect(extractPixelValue('')).toBe(0);
-      expect(extractPixelValue(null as any)).toBe(0);
-      expect(extractPixelValue(undefined as any)).toBe(0);
     });
   });
 

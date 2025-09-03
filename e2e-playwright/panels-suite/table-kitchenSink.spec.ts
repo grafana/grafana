@@ -2,7 +2,7 @@ import { Page, Locator } from '@playwright/test';
 
 import { test, expect, E2ESelectorGroups } from '@grafana/plugin-e2e';
 
-import { getCell, getCellHeight } from './table-utils';
+import { getCell, getCellHeight, getColumnIdx } from './table-utils';
 
 const DASHBOARD_UID = 'dcb9f5e9-8066-4397-889e-864b99555dbb';
 
@@ -11,24 +11,6 @@ test.use({ viewport: { width: 2000, height: 1080 } });
 // helper utils
 const waitForTableLoad = async (loc: Page | Locator) => {
   await expect(loc.locator('.rdg')).toBeVisible();
-};
-
-const getColumnIdx = async (loc: Page | Locator, columnName: string) => {
-  // find the index of the column "Long text." The kitchen sink table will change over time, but
-  // we can just find the column programatically and use it throughout the test.
-  let result = -1;
-  const colCount = await loc.getByRole('columnheader').count();
-  for (let colIdx = 0; colIdx < colCount; colIdx++) {
-    const cell = await getCell(loc, 0, colIdx);
-    if ((await cell.textContent()) === columnName) {
-      result = colIdx;
-      break;
-    }
-  }
-  if (result === -1) {
-    throw new Error(`Could not find the "${columnName}" column in the table`);
-  }
-  return result;
 };
 
 const disableAllTextWrap = async (loc: Page | Locator, selectors: E2ESelectorGroups) => {

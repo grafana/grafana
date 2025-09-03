@@ -462,6 +462,7 @@
 /e2e-playwright/panels-suite/panelEdit_base.spec.ts @grafana/dashboards-squad
 /e2e-playwright/panels-suite/panelEdit_queries.spec.ts @grafana/dashboards-squad
 /e2e-playwright/panels-suite/panelEdit_transforms.spec.ts @grafana/datapro
+/e2e-playwright/panels-suite/table-footer.spec.ts @grafana/dataviz-squad
 /e2e-playwright/panels-suite/table-kitchenSink.spec.ts @grafana/dataviz-squad
 /e2e-playwright/panels-suite/table-markdown.spec.ts @grafana/dataviz-squad
 /e2e-playwright/panels-suite/table-sparkline.spec.ts @grafana/dataviz-squad

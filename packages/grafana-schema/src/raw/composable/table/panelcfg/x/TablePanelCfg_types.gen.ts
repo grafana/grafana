@@ -18,9 +18,9 @@ export interface Options {
    */
   cellHeight?: ui.TableCellHeight;
   /**
-   * Controls footer options
+   * Enable pagination on the table
    */
-  footer?: ui.TableFooterOptions;
+  enablePagination?: boolean;
   /**
    * Represents the index of the selected frame
    */
@@ -51,20 +51,6 @@ export interface Options {
 
 export const defaultOptions: Partial<Options> = {
   cellHeight: ui.TableCellHeight.Sm,
-  footer: {
-    /**
-     * Controls whether the footer should be shown
-     */
-    show: false,
-    /**
-     * Controls whether the footer should show the total number of rows on Count calculation
-     */
-    countRows: false,
-    /**
-     * Represents the selected calculations
-     */
-    reducer: [],
-  },
   frameIndex: 0,
   showHeader: true,
   showTypeIcons: false,

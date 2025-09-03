@@ -1,7 +1,8 @@
-import { createDataFrame, FieldType, PanelModel } from '@grafana/data';
+import { ByNamesMatcherMode, createDataFrame, FieldMatcherID, FieldType, PanelModel } from '@grafana/data';
 import { TableCellDisplayMode } from '@grafana/ui';
 
 import {
+  migrateFooterV2,
   migrateFromParentRowIndexToNestedFrames,
   migrateHiddenFields,
   migrateTextWrapToFieldLevel,
@@ -472,6 +473,196 @@ describe('Table Migrations', () => {
       expect(panel.fieldConfig.overrides[0].properties).not.toEqual(
         expect.arrayContaining([{ id: 'custom.hidden', value: true }])
       );
+    });
+  });
+
+  describe('migrateFooterV2', () => {
+    it('is a no-op for panels without footer v1 settings', () => {
+      const panel = {
+        fieldConfig: {
+          defaults: {
+            custom: {},
+          },
+          overrides: [],
+        },
+      } as unknown as PanelModel;
+
+      // create a clone pre-migration to compare
+      const origPanel = JSON.parse(JSON.stringify(panel));
+
+      migrateFooterV2(panel);
+
+      // panel should be unchanged
+      expect(origPanel).toEqual(panel);
+    });
+
+    it('migrates a global footer', () => {
+      const panel = {
+        options: {
+          footer: {
+            show: true,
+            reducer: ['sum'],
+          },
+        },
+        fieldConfig: {
+          defaults: {
+            custom: {},
+          },
+          overrides: [],
+        },
+      } as unknown as PanelModel;
+
+      migrateFooterV2(panel);
+
+      expect(panel.options.footer).toBeUndefined();
+      expect(panel.fieldConfig.defaults.custom.footer).toEqual({
+        reducers: ['sum'],
+      });
+    });
+
+    it('migrates a field-specific footer', () => {
+      const panel = {
+        options: {
+          footer: {
+            show: true,
+            reducer: ['sum'],
+            fields: ['field1', 'field2'],
+          },
+        },
+        fieldConfig: {
+          defaults: {
+            custom: {},
+          },
+          overrides: [],
+        },
+      } as unknown as PanelModel;
+
+      migrateFooterV2(panel);
+
+      expect(panel.options.footer).toBeUndefined();
+      expect(panel.fieldConfig.defaults.custom.footer).toBeUndefined();
+      expect(panel.fieldConfig.overrides).toEqual(
+        expect.arrayContaining([
+          {
+            matcher: {
+              id: FieldMatcherID.byNames,
+              options: {
+                mode: ByNamesMatcherMode.include,
+                names: ['field1', 'field2'],
+              },
+            },
+            properties: [{ id: 'custom.footer.reducers', value: ['sum'] }],
+          },
+        ])
+      );
+    });
+
+    it('migrates a single-field footer', () => {
+      const panel = {
+        options: {
+          footer: {
+            show: true,
+            reducer: ['sum'],
+            fields: ['field1'],
+          },
+        },
+        fieldConfig: {
+          defaults: {
+            custom: {},
+          },
+          overrides: [],
+        },
+      } as unknown as PanelModel;
+
+      migrateFooterV2(panel);
+
+      expect(panel.options.footer).toBeUndefined();
+      expect(panel.fieldConfig.defaults.custom.footer).toBeUndefined();
+      expect(panel.fieldConfig.overrides).toEqual(
+        expect.arrayContaining([
+          {
+            matcher: {
+              id: FieldMatcherID.byName,
+              options: 'field1',
+            },
+            properties: [{ id: 'custom.footer.reducers', value: ['sum'] }],
+          },
+        ])
+      );
+    });
+
+    it('handles the countAll case', () => {
+      const panel = {
+        options: {
+          footer: {
+            show: true,
+            countRows: true,
+            reducer: ['count'],
+          },
+        },
+        fieldConfig: {
+          defaults: {
+            custom: {},
+          },
+          overrides: [],
+        },
+      } as unknown as PanelModel;
+
+      migrateFooterV2(panel);
+
+      expect(panel.options.footer).toBeUndefined();
+      expect(panel.fieldConfig.defaults.custom.footer).toEqual({
+        reducers: ['countAll'],
+      });
+    });
+
+    it('destroys an existing footer if it was hidden', () => {
+      const panel = {
+        options: {
+          footer: {
+            show: false,
+            reducer: ['sum'],
+            fields: ['field1'],
+          },
+        },
+        fieldConfig: {
+          defaults: {
+            custom: {},
+          },
+          overrides: [],
+        },
+      } as unknown as PanelModel;
+
+      migrateFooterV2(panel);
+
+      expect(panel.options.footer).toBeUndefined();
+      expect(panel.fieldConfig.defaults.custom.footer).toBeUndefined();
+      expect(panel.fieldConfig.overrides).toEqual([]);
+    });
+
+    it('retains the enablePagination setting if it exists', () => {
+      const panel = {
+        options: {
+          footer: {
+            show: false,
+            reducer: ['sum'],
+            fields: ['field1'],
+            enablePagination: true,
+          },
+        },
+        fieldConfig: {
+          defaults: {
+            custom: {},
+          },
+          overrides: [],
+        },
+      } as unknown as PanelModel;
+
+      migrateFooterV2(panel);
+
+      expect(panel.options.enablePagination).toBe(true);
+      expect(panel.fieldConfig.defaults.custom.footer).toBeUndefined();
+      expect(panel.fieldConfig.overrides).toEqual([]);
     });
   });
 });
