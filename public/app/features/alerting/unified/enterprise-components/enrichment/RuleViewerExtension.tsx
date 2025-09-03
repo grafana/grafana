@@ -2,18 +2,19 @@ import { ComponentType } from 'react';
 
 import { t } from '@grafana/i18n';
 import { withErrorBoundary } from '@grafana/ui';
-import { RulePageEnrichmentSectionProps } from 'app/extensions/alerting/enrichment/ruleViewPageExtensions/EnrichmentSection';
+import {
+  RulePageEnrichmentSection,
+  RulePageEnrichmentSectionProps,
+} from 'app/extensions/alerting/enrichment/ruleViewPageExtensions/EnrichmentSection';
 
 import { logError } from '../../Analytics';
 
 let InternalRulePageEnrichmentSection: ComponentType<RulePageEnrichmentSectionProps> | null = null;
 
 export const RulePageEnrichmentSectionExtension: ComponentType<RulePageEnrichmentSectionProps> = (props) => {
-  if (!InternalRulePageEnrichmentSection) {
-    return null;
-  }
+  const BaseComponent = InternalRulePageEnrichmentSection ?? RulePageEnrichmentSection;
 
-  const WrappedComponent = withErrorBoundary(InternalRulePageEnrichmentSection, {
+  const WrappedComponent = withErrorBoundary(BaseComponent, {
     title: t(
       'alerting.enrichment.error-boundary.rule-viewer-section-extension',
       'Rule Viewer Enrichment Section failed to load'
