@@ -521,8 +521,6 @@ func (b *DashboardsAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver
 				dto.Dashboard = *dash
 			}
 			if access != nil {
-				fmt.Println(obj)
-				fmt.Println(access)
 				err = b.scheme.Convert(access, &dto.Access, nil)
 			}
 			return dto, err
