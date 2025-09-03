@@ -26,7 +26,7 @@ import (
 
 const (
 	defaultListBufferSize = 100
-	prunerMaxEvents       = 20 // number of events to keep per resource
+	prunerMaxEvents       = 20
 )
 
 // KvStorageBackend Unified storage backend based on KV storage.
