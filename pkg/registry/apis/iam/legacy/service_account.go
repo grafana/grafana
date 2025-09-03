@@ -110,6 +110,7 @@ type ServiceAccount struct {
 	Name     string
 	Disabled bool
 	Login    string
+	Role     string
 	Created  time.Time
 	Updated  time.Time
 }
@@ -119,10 +120,11 @@ type CreateServiceAccountCommand struct {
 	Name       string
 	Email      string
 	Login      string
+	Role       string
 	IsDisabled bool
 	OrgID      int64
-	Created    time.Time
-	Updated    time.Time
+	Created    DBTime
+	Updated    DBTime
 	LastSeenAt time.Time
 }
 
@@ -186,7 +188,7 @@ func (s *legacySQLStore) ListServiceAccounts(ctx context.Context, ns claims.Name
 	var lastID int64
 	for rows.Next() {
 		var s ServiceAccount
-		err := rows.Scan(&s.ID, &s.UID, &s.Name, &s.Login, &s.Disabled, &s.Created, &s.Updated)
+		err := rows.Scan(&s.ID, &s.UID, &s.Name, &s.Login, &s.Disabled, &s.Role, &s.Created, &s.Updated)
 		if err != nil {
 			return res, err
 		}
@@ -336,8 +338,8 @@ func (s *legacySQLStore) CreateServiceAccount(ctx context.Context, ns claims.Nam
 	now := time.Now().UTC().Truncate(time.Second)
 	lastSeenAt := now.AddDate(-10, 0, 0) // Set last seen 10 years ago like in user service
 
-	cmd.Created = now
-	cmd.Updated = now
+	cmd.Created = NewDBTime(now)
+	cmd.Updated = NewDBTime(now)
 	cmd.LastSeenAt = lastSeenAt
 
 	if ns.OrgID == 0 {
@@ -366,7 +368,7 @@ func (s *legacySQLStore) CreateServiceAccount(ctx context.Context, ns claims.Nam
 		orgUserCmd := &CreateOrgUserCommand{
 			OrgID:   ns.OrgID,
 			UserID:  serviceAccountID,
-			Role:    "Viewer", // TODO: Default role for service accounts for now
+			Role:    cmd.Role,
 			Created: cmd.Created,
 			Updated: cmd.Updated,
 		}
@@ -387,9 +389,10 @@ func (s *legacySQLStore) CreateServiceAccount(ctx context.Context, ns claims.Nam
 			UID:      cmd.UID,
 			Name:     cmd.Name,
 			Login:    cmd.Login,
+			Role:     cmd.Role,
 			Disabled: cmd.IsDisabled,
-			Created:  cmd.Created,
-			Updated:  cmd.Updated,
+			Created:  cmd.Created.Time,
+			Updated:  cmd.Updated.Time,
 		}
 
 		return nil

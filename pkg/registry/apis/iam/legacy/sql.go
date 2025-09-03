@@ -2,9 +2,11 @@ package legacy
 
 import (
 	"context"
+	"database/sql/driver"
 	"embed"
 	"fmt"
 	"text/template"
+	"time"
 
 	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
@@ -57,4 +59,34 @@ func mustTemplate(filename string) *template.Template {
 		return t
 	}
 	panic(fmt.Sprintf("template file not found: %s", filename))
+}
+
+type DBTime struct {
+	time.Time
+}
+
+func NewDBTime(t time.Time) DBTime {
+	return DBTime{Time: t}
+}
+
+func (t DBTime) Value() (driver.Value, error) {
+	return t.Time.Format(time.DateTime), nil
+}
+
+func (t *DBTime) Scan(value interface{}) error {
+	if value == nil {
+		t.Time = time.Time{}
+		return nil
+	}
+	switch v := value.(type) {
+	case string:
+		parsedTime, err := time.Parse(time.DateTime, v)
+		if err != nil {
+			return err
+		}
+		t.Time = parsedTime
+		return nil
+	default:
+		return fmt.Errorf("unsupported type for DBTime scan: %T", value)
+	}
 }

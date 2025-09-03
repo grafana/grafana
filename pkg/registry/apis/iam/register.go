@@ -294,15 +294,42 @@ func (b *IdentityAccessManagementAPIBuilder) GetAuthorizer() authorizer.Authoriz
 func (b *IdentityAccessManagementAPIBuilder) Validate(ctx context.Context, a admission.Attributes, o admission.ObjectInterfaces) (err error) {
 	switch a.GetOperation() {
 	case admission.Create:
-		if a.GetKind() == iamv0.UserResourceInfo.GroupVersionKind() {
+		switch a.GetKind() {
+		case iamv0.UserResourceInfo.GroupVersionKind():
 			return b.validateCreateUser(ctx, a, o)
+		case iamv0.ServiceAccountResourceInfo.GroupVersionKind():
+			return b.validateCreateServiceAccount(ctx, a, o)
 		}
-		return nil
 	case admission.Connect:
 	case admission.Delete:
 	case admission.Update:
 		return nil
 	}
+	return nil
+}
+
+func (b *IdentityAccessManagementAPIBuilder) validateCreateServiceAccount(ctx context.Context, a admission.Attributes, o admission.ObjectInterfaces) error {
+	saObj, ok := a.GetObject().(*iamv0.ServiceAccount)
+	if !ok {
+		return nil
+	}
+
+	requester, err := identity.GetRequester(ctx)
+	if err != nil {
+		return apierrors.NewBadRequest("no identity found")
+	}
+
+	requestedRole := identity.RoleType(saObj.Spec.Role)
+	if !requestedRole.IsValid() {
+		return apierrors.NewBadRequest(fmt.Sprintf("invalid role: %s", requestedRole))
+	}
+
+	if !requester.HasRole(requestedRole) {
+		return apierrors.NewForbidden(iamv0.ServiceAccountResourceInfo.GroupResource(),
+			saObj.Name,
+			fmt.Errorf("can not assign a role higher than user's role"))
+	}
+
 	return nil
 }
 

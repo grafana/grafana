@@ -87,10 +87,11 @@ func (s *LegacyStore) Create(ctx context.Context, obj runtime.Object, createVali
 	}
 
 	createCmd := legacy.CreateServiceAccountCommand{
-		UID:        saObj.Name,
-		Name:       saObj.Spec.Title,
 		IsDisabled: saObj.Spec.Disabled,
+		Name:       saObj.Spec.Title,
+		UID:        saObj.Name,
 		Login:      saObj.Spec.Login,
+		Role:       string(saObj.Spec.Role),
 	}
 
 	result, err := s.store.CreateServiceAccount(ctx, ns, createCmd)
@@ -173,6 +174,7 @@ func (s *LegacyStore) toSAItem(sa legacy.ServiceAccount, ns string) iamv0alpha1.
 			Login:     sa.Login,
 			Title:     sa.Name,
 			Disabled:  sa.Disabled,
+			Role:      iamv0alpha1.ServiceAccountOrgRole(sa.Role),
 		},
 	}
 	obj, _ := utils.MetaAccessor(&item)

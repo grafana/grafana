@@ -4,6 +4,7 @@ SELECT
   u.name,
   u.login,
   u.is_disabled,
+  o.role,
   u.created,
   u.updated
   FROM "grafana"."user" as u JOIN "grafana"."org_user" as o ON u.id = o.user_id

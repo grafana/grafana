@@ -8,7 +8,9 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/grafana/grafana/pkg/apiserver/rest"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/apis"
@@ -118,6 +120,48 @@ func doServiceAccountCRUDTestsUsingTheNewAPIs(t *testing.T, helper *apis.K8sTest
 				require.Equal(t, int32(403), statusErr.ErrStatus.Code)
 			})
 		}
+	})
+
+	t.Run("should not be able to create service account with invalid role", func(t *testing.T) {
+		ctx := context.Background()
+		saClient := helper.GetResourceClient(apis.ResourceClientArgs{
+			User:      helper.Org1.Admin,
+			Namespace: helper.Namespacer(helper.Org1.Admin.Identity.GetOrgID()),
+			GVR:       gvrServiceAccounts,
+		})
+
+		saToCreate := helper.LoadYAMLOrJSONFile("testdata/serviceaccount-test-invalid-role-v0.yaml")
+
+		_, err := saClient.Resource.Create(ctx, saToCreate, metav1.CreateOptions{})
+		require.Error(t, err)
+		var statusErr *errors.StatusError
+		require.ErrorAs(t, err, &statusErr)
+		require.Equal(t, int32(400), statusErr.ErrStatus.Code)
+		require.Contains(t, statusErr.ErrStatus.Message, "invalid role: InvalidRole")
+	})
+
+	t.Run("should not be able to create service account with higher role than the user", func(t *testing.T) {
+		ctx := context.Background()
+
+		editorWithSACreate := helper.CreateUser("custom-editor", apis.Org1, org.RoleEditor,
+			[]resourcepermissions.SetResourcePermissionCommand{
+				{Actions: []string{serviceaccounts.ActionCreate}},
+			})
+
+		saClient := helper.GetResourceClient(apis.ResourceClientArgs{
+			User:      editorWithSACreate,
+			Namespace: helper.Namespacer(editorWithSACreate.Identity.GetOrgID()),
+			GVR:       gvrServiceAccounts,
+		})
+
+		saToCreate := helper.LoadYAMLOrJSONFile("testdata/serviceaccount-test-higher-role-v0.yaml")
+
+		_, err := saClient.Resource.Create(ctx, saToCreate, metav1.CreateOptions{})
+		require.Error(t, err)
+		var statusErr *errors.StatusError
+		require.ErrorAs(t, err, &statusErr)
+		require.Equal(t, int32(403), statusErr.ErrStatus.Code)
+		require.Contains(t, statusErr.ErrStatus.Message, "can not assign a role higher than user's role")
 	})
 }
 
