@@ -64,6 +64,23 @@ describe('SecondaryActions', () => {
     expect(screen.getByRole('button', { name: /Query inspector/i })).toBeInTheDocument();
   });
 
+  it('should disable both add query buttons when addQueryRowButtonDisabled=true and saved queries is enabled', () => {
+    render(
+      <QueryLibraryContextProviderMock queryLibraryEnabled={true}>
+        <SecondaryActions
+          addQueryRowButtonDisabled={true}
+          onClickAddQueryRowButton={noop}
+          onClickQueryInspectorButton={noop}
+          onSelectQueryFromLibrary={noop}
+        />
+      </QueryLibraryContextProviderMock>
+    );
+
+    expect(screen.getByRole('button', { name: /Add query$/i })).toBeDisabled();
+    expect(screen.getByRole('button', { name: /Add from saved queries/i })).toBeDisabled();
+    expect(screen.getByRole('button', { name: /Query inspector/i })).toBeInTheDocument();
+  });
+
   it('should map click handlers correctly', async () => {
     const user = userEvent.setup();
 
@@ -86,5 +103,33 @@ describe('SecondaryActions', () => {
 
     await user.click(screen.getByRole('button', { name: /Query inspector/i }));
     expect(onClickQueryInspector).toBeCalledTimes(1);
+  });
+
+  it('should render add from saved queries button when saved queries is enabled', () => {
+    render(
+      <QueryLibraryContextProviderMock queryLibraryEnabled={true}>
+        <SecondaryActions
+          onClickAddQueryRowButton={noop}
+          onClickQueryInspectorButton={noop}
+          onSelectQueryFromLibrary={noop}
+        />
+      </QueryLibraryContextProviderMock>
+    );
+
+    expect(screen.getByRole('button', { name: /Add from saved queries/i })).toBeInTheDocument();
+  });
+
+  it('should not render add from saved queries button when saved queries is disabled', () => {
+    render(
+      <QueryLibraryContextProviderMock queryLibraryEnabled={false}>
+        <SecondaryActions
+          onClickAddQueryRowButton={noop}
+          onClickQueryInspectorButton={noop}
+          onSelectQueryFromLibrary={noop}
+        />
+      </QueryLibraryContextProviderMock>
+    );
+
+    expect(screen.queryByRole('button', { name: /Add from saved queries/i })).not.toBeInTheDocument();
   });
 });

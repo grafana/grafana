@@ -4,8 +4,9 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -45,8 +46,24 @@ func (c *namespaceCleaner) Clean(ctx context.Context, namespace string, progress
 				Action:   repository.FileActionDeleted,
 			}
 
+			// Skip provisioned resources - only delete unprovisioned (unmanaged) resources
+			meta, err := utils.MetaAccessor(item)
+			if err != nil {
+				result.Error = fmt.Errorf("extracting meta accessor for resource %s: %w", result.Name, err)
+				progress.Record(ctx, result)
+				return nil // Continue with next resource
+			}
+
+			manager, _ := meta.GetManagerProperties()
+			// Skip if resource is managed by any provisioning system
+			if manager.Identity != "" {
+				result.Action = repository.FileActionIgnored
+				progress.Record(ctx, result)
+				return nil // Skip this resource
+			}
+
 			if err := client.Delete(ctx, item.GetName(), metav1.DeleteOptions{}); err != nil {
-				result.Error = err
+				result.Error = fmt.Errorf("deleting resource %s/%s %s: %w", result.Group, result.Resource, result.Name, err)
 				progress.Record(ctx, result)
 				return fmt.Errorf("delete resource: %w", err)
 			}

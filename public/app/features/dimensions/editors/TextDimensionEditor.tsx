@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback, useId } from 'react';
 
 import {
   FieldNamePickerConfigSettings,
@@ -74,6 +74,10 @@ export const TextDimensionEditor = ({ value, context, onChange }: Props) => {
     onFixedChange('');
   };
 
+  const fieldInputId = useId();
+  const valueInputId = useId();
+  const templateInputId = useId();
+
   const mode = value?.mode ?? TextDimensionMode.Fixed;
   return (
     <>
@@ -94,6 +98,7 @@ export const TextDimensionEditor = ({ value, context, onChange }: Props) => {
             grow={true}
           >
             <FieldNamePicker
+              id={fieldInputId}
               context={context}
               value={value.field ?? ''}
               onChange={onFieldChange}
@@ -110,12 +115,22 @@ export const TextDimensionEditor = ({ value, context, onChange }: Props) => {
             grow={true}
           >
             <StringValueEditor
+              id={valueInputId}
               context={context}
               value={value?.fixed}
               onChange={onFixedChange}
               item={dummyStringSettings}
               suffix={
-                value?.fixed && <Button icon="times" variant="secondary" fill="text" size="sm" onClick={onClearFixed} />
+                value?.fixed && (
+                  <Button
+                    aria-label={t('dimensions.text-dimension-editor.aria-label-clear-value', 'Clear value')}
+                    icon="times"
+                    variant="secondary"
+                    fill="text"
+                    size="sm"
+                    onClick={onClearFixed}
+                  />
+                )
               }
             />
           </InlineField>
@@ -129,6 +144,7 @@ export const TextDimensionEditor = ({ value, context, onChange }: Props) => {
             grow={true}
           >
             <StringValueEditor // This could be a code editor
+              id={templateInputId}
               context={context}
               value={value?.fixed}
               onChange={onFixedChange}

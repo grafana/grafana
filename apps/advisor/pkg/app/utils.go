@@ -7,6 +7,7 @@ import (
 	"slices"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana-app-sdk/resource"
@@ -14,6 +15,8 @@ import (
 	"github.com/grafana/grafana/apps/advisor/pkg/app/checks"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
 )
+
+var retryAnnotationPollingInterval = 1 * time.Second
 
 func getCheck(obj resource.Object, checkMap map[string]checks.Check) (checks.Check, error) {
 	labels := obj.GetLabels()
@@ -100,13 +103,17 @@ func processCheckRetry(ctx context.Context, log logging.Logger, client resource.
 	status := checks.GetStatusAnnotation(obj)
 	if status == "" || status == checks.StatusAnnotationError {
 		// Check not processed yet or errored
+		log.Debug("Check not processed yet or errored, skipping retry", "check", obj.GetName(), "status", status)
 		return nil
 	}
 	// Get the item to retry from the annotation
 	itemToRetry := checks.GetRetryAnnotation(obj)
 	if itemToRetry == "" {
 		// No item to retry, nothing to do
+		log.Debug("No item to retry, skipping retry", "check", obj.GetName())
 		return nil
+	} else {
+		log.Debug("Item to retry found", "check", obj.GetName(), "item", itemToRetry)
 	}
 	c, ok := obj.(*advisorv0alpha1.Check)
 	if !ok {
@@ -165,14 +172,23 @@ func processCheckRetry(ctx context.Context, log logging.Logger, client resource.
 		// Failure not in the list of items to retry, keep it
 		return false
 	})
+	// Wait for the retry annotation to be persisted before patching the object
+	err = waitForRetryAnnotation(ctx, log, client, obj, itemToRetry)
+	if err != nil {
+		return err
+	}
+	// Set the status
 	err = checks.SetStatus(ctx, client, obj, c.Status)
+	log.Debug("Status set", "check", obj.GetName(), "status.count", c.Status.Report.Count)
 	if err != nil {
 		return err
 	}
 	// Delete the retry annotation to mark the check as processed
 	annotations := checks.DeleteAnnotations(ctx, obj, []string{checks.RetryAnnotation})
+	err = checks.SetAnnotations(ctx, client, obj, annotations)
+	log.Debug("Annotations set", "check", obj.GetName(), "annotations", annotations)
 
-	return checks.SetAnnotations(ctx, client, obj, annotations)
+	return err
 }
 
 func runStepsInParallel(ctx context.Context, log logging.Logger, spec *advisorv0alpha1.CheckSpec, steps []checks.Step, items []any) ([]advisorv0alpha1.CheckReportFailure, error) {
@@ -233,4 +249,48 @@ func filterSteps(checkType resource.Object, steps []checks.Step) ([]checks.Step,
 		return filteredSteps, nil
 	}
 	return steps, nil
+}
+
+// retryAnnotationChanged compares the retry annotation between old and new objects
+func retryAnnotationChanged(oldObj, newObj resource.Object) bool {
+	if oldObj == nil || newObj == nil {
+		return true // If either is nil, consider it changed
+	}
+
+	// Compare annotations
+	oldAnnotations := oldObj.GetAnnotations()
+	newAnnotations := newObj.GetAnnotations()
+	return newAnnotations[checks.RetryAnnotation] != "" &&
+		oldAnnotations[checks.RetryAnnotation] != newAnnotations[checks.RetryAnnotation]
+}
+
+// waitForRetryAnnotation waits for the retry annotation to match the item to retry
+func waitForRetryAnnotation(ctx context.Context, log logging.Logger, client resource.Client, obj resource.Object, itemToRetry string) error {
+	currentObj, err := client.Get(ctx, resource.Identifier{
+		Namespace: obj.GetNamespace(),
+		Name:      obj.GetName(),
+	})
+	if err != nil {
+		return err
+	}
+	retries := 0
+	currentRetryAnnotation := checks.GetRetryAnnotation(currentObj)
+	for currentRetryAnnotation != itemToRetry {
+		log.Debug("Waiting for retry annotation to be persisted", "check", obj.GetName(), "item", itemToRetry, "currentRetryAnnotation", currentRetryAnnotation)
+		time.Sleep(retryAnnotationPollingInterval)
+		retries++
+		if retries > 5 {
+			return fmt.Errorf("timeout waiting for retry annotation to be persisted")
+		}
+		currentObj, err = client.Get(ctx, resource.Identifier{
+			Namespace: obj.GetNamespace(),
+			Name:      obj.GetName(),
+		})
+		if err != nil {
+			return err
+		}
+		currentRetryAnnotation = checks.GetRetryAnnotation(currentObj)
+	}
+	log.Debug("Retry annotation persisted", "check", obj.GetName(), "item", itemToRetry)
+	return nil
 }

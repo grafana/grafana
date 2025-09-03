@@ -7,6 +7,7 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	data "github.com/grafana/grafana-plugin-sdk-go/experimental/apis/data/v0alpha1"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
 
@@ -20,19 +21,22 @@ type QueryDataClient interface {
 }
 
 type InstanceConfigurationSettings struct {
-	StackID                      uint32
-	FeatureToggles               featuremgmt.FeatureToggles
-	FullConfig                   map[string]map[string]string // configuration file settings
-	Options                      map[string]string            // additional settings related to an instance as set by grafana
-	SQLExpressionCellLimit       int64
-	SQLExpressionOutputCellLimit int64
-	SQLExpressionTimeout         time.Duration
-	ExpressionsEnabled           bool
+	FeatureToggles                featuremgmt.FeatureToggles
+	SQLExpressionCellLimit        int64
+	SQLExpressionOutputCellLimit  int64
+	SQLExpressionQueryLengthLimit int64
+	SQLExpressionTimeout          time.Duration
+	ExpressionsEnabled            bool
 }
 
-type DataSourceClientSupplier interface {
-	// Get a client for a given datasource
-	GetDataSourceClient(ctx context.Context, ref data.DataSourceRef, headers map[string]string, instanceConfig InstanceConfigurationSettings) (QueryDataClient, error)
+type Instance interface {
+	GetDataSourceClient(ctx context.Context, ref data.DataSourceRef) (QueryDataClient, error)
 	// fetch information on the grafana instance (e.g. feature toggles)
-	GetInstanceConfigurationSettings(ctx context.Context) (InstanceConfigurationSettings, error)
+	GetSettings() InstanceConfigurationSettings
+	GetLogger(parent log.Logger) log.Logger
+	ReportMetrics() // some metrics are only reported at the end
+}
+
+type InstanceProvider interface {
+	GetInstance(ctx context.Context, headers map[string]string) (Instance, error)
 }

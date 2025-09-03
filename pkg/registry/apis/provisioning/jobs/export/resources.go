@@ -10,10 +10,10 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/client-go/dynamic"
 
+	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 )
 
@@ -108,7 +108,7 @@ func exportResource(ctx context.Context,
 		meta, err := utils.MetaAccessor(item)
 		if err != nil {
 			result.Action = repository.FileActionIgnored
-			result.Error = fmt.Errorf("extract meta accessor: %w", err)
+			result.Error = fmt.Errorf("extracting meta accessor for resource %s: %w", result.Name, err)
 			progress.Record(ctx, result)
 			return nil
 		}
@@ -136,7 +136,7 @@ func exportResource(ctx context.Context,
 			result.Action = repository.FileActionIgnored
 		} else if err != nil {
 			result.Action = repository.FileActionIgnored
-			result.Error = err
+			result.Error = fmt.Errorf("writing resource file for %s: %w", result.Name, err)
 		}
 
 		progress.Record(ctx, result)

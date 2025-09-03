@@ -19,13 +19,10 @@ import (
 	"time"
 
 	"github.com/go-openapi/strfmt"
-	"github.com/google/go-cmp/cmp"
-	"github.com/google/go-cmp/cmp/cmpopts"
 	amv2 "github.com/prometheus/alertmanager/api/v2/models"
 	"github.com/prometheus/alertmanager/config"
 	"github.com/prometheus/alertmanager/pkg/labels"
 	"github.com/prometheus/client_golang/prometheus"
-	common_config "github.com/prometheus/common/config"
 	"github.com/stretchr/testify/require"
 
 	alertingClusterPB "github.com/grafana/alerting/cluster/clusterpb"
@@ -185,8 +182,8 @@ func TestGetRemoteState(t *testing.T) {
 
 	state := alertingClusterPB.FullState{
 		Parts: []alertingClusterPB.Part{
-			{Key: "nfl:test", Data: []byte("test-nflog")},
-			{Key: "sil:test", Data: []byte("test-silences")},
+			{Key: "nfl:otherID", Data: []byte("test-nflog")},
+			{Key: "sil:otherID", Data: []byte("test-silences")},
 		},
 	}
 	rawState, err := state.Marshal()
@@ -504,6 +501,15 @@ func TestCompareAndSendConfiguration(t *testing.T) {
 		AlertmanagerConfig: testAutogenRoutes.AlertmanagerConfig,
 	}
 
+	// Calculate hashes for expected configurations
+	cfgWithDecryptedSecretBytes, err := json.Marshal(cfgWithDecryptedSecret)
+	require.NoError(t, err)
+	cfgWithDecryptedSecretHash := fmt.Sprintf("%x", md5.Sum(cfgWithDecryptedSecretBytes))
+
+	cfgWithAutogenRoutesBytes, err := json.Marshal(cfgWithAutogenRoutes)
+	require.NoError(t, err)
+	cfgWithAutogenRoutesHash := fmt.Sprintf("%x", md5.Sum(cfgWithAutogenRoutesBytes))
+
 	cfgWithExtraUnmergedBytes, err := testData.ReadFile(path.Join("test-data", "config-with-extra.json"))
 	require.NoError(t, err)
 	cfgWithExtraUnmerged, err := notifier.Load(cfgWithExtraUnmergedBytes)
@@ -515,6 +521,9 @@ func TestCompareAndSendConfiguration(t *testing.T) {
 		AlertmanagerConfig: r.Config,
 		Templates:          definition.TemplatesMapToPostableAPITemplates(cfgWithExtraUnmerged.ExtraConfigs[0].TemplateFiles, definition.MimirTemplateKind),
 	}
+	cfgWithExtraMergedBytes, err := json.Marshal(cfgWithExtraMerged)
+	require.NoError(t, err)
+	cfgWithExtraMergedHash := fmt.Sprintf("%x", md5.Sum(cfgWithExtraMergedBytes))
 
 	tests := []struct {
 		name           string
@@ -557,6 +566,7 @@ func TestCompareAndSendConfiguration(t *testing.T) {
 			NoopAutogenFn,
 			&client.UserGrafanaConfig{
 				GrafanaAlertmanagerConfig: cfgWithDecryptedSecret,
+				Hash:                      cfgWithDecryptedSecretHash,
 			},
 			nil,
 		},
@@ -566,6 +576,7 @@ func TestCompareAndSendConfiguration(t *testing.T) {
 			testAutogenFn,
 			&client.UserGrafanaConfig{
 				GrafanaAlertmanagerConfig: cfgWithAutogenRoutes,
+				Hash:                      cfgWithAutogenRoutesHash,
 			},
 			nil,
 		},
@@ -575,6 +586,7 @@ func TestCompareAndSendConfiguration(t *testing.T) {
 			autogenFn: NoopAutogenFn,
 			expCfg: &client.UserGrafanaConfig{
 				GrafanaAlertmanagerConfig: cfgWithExtraMerged,
+				Hash:                      cfgWithExtraMergedHash,
 			},
 		},
 	}
@@ -602,26 +614,9 @@ func TestCompareAndSendConfiguration(t *testing.T) {
 			err = am.CompareAndSendConfiguration(ctx, &cfg)
 			if len(test.expErrContains) == 0 {
 				require.NoError(tt, err)
-
-				var gotCfg client.UserGrafanaConfig
-				require.NoError(tt, json.Unmarshal([]byte(got), &gotCfg))
-
-				require.NotEmpty(tt, gotCfg.Hash)
-				require.Empty(tt, cmp.Diff(test.expCfg, &gotCfg,
-					cmpopts.IgnoreFields(client.UserGrafanaConfig{}, "Hash"), // do not compare hashes because the config is processed slightly different: empty maps are nils.
-					cmpopts.EquateEmpty(),
-					cmpopts.IgnoreUnexported(
-						time.Location{},
-						labels.Matcher{},
-						common_config.ProxyConfig{})))
-
-				got1 := got
-				got = ""
-				err = am.CompareAndSendConfiguration(ctx, &cfg)
+				rawCfg, err := json.Marshal(test.expCfg)
 				require.NoError(tt, err)
-
-				got2 := got
-				require.Equalf(tt, got1, got2, "Configuration is not idempotent")
+				require.JSONEq(tt, string(rawCfg), got)
 				return
 			}
 			for _, expErr := range test.expErrContains {
@@ -820,7 +815,12 @@ receivers:
 	require.NotNil(t, extraReceiver)
 	require.Len(t, extraReceiver.EmailConfigs, 1)
 	require.Equal(t, "alerts@grafana.com", extraReceiver.EmailConfigs[0].To)
-	require.NotEmpty(t, configSent.Hash)
+
+	// Verify the config hash
+	expectedConfigBytes, err := json.Marshal(configSent.GrafanaAlertmanagerConfig)
+	require.NoError(t, err)
+	expectedHash := fmt.Sprintf("%x", md5.Sum(expectedConfigBytes))
+	require.Equal(t, expectedHash, configSent.Hash)
 }
 
 func TestCompareAndSendConfigurationWithExtraConfigs(t *testing.T) {
@@ -934,7 +934,10 @@ receivers:
 	require.True(t, found)
 
 	// Verify the config hash
-	require.NotEmpty(t, configSent.Hash)
+	expectedConfigBytes, err := json.Marshal(configSent.GrafanaAlertmanagerConfig)
+	require.NoError(t, err)
+	expectedHash := fmt.Sprintf("%x", md5.Sum(expectedConfigBytes))
+	require.Equal(t, expectedHash, configSent.Hash)
 }
 
 func TestIntegrationRemoteAlertmanagerConfiguration(t *testing.T) {
@@ -958,10 +961,11 @@ func TestIntegrationRemoteAlertmanagerConfiguration(t *testing.T) {
 		DefaultConfig:     defaultGrafanaConfig,
 	}
 
+	testConfigHash := fmt.Sprintf("%x", md5.Sum([]byte(testGrafanaConfig)))
 	testConfigCreatedAt := time.Now().Unix()
 	testConfig := &ngmodels.AlertConfiguration{
 		AlertmanagerConfiguration: testGrafanaConfig,
-		ConfigurationHash:         "",
+		ConfigurationHash:         testConfigHash,
 		ConfigurationVersion:      "v2",
 		CreatedAt:                 testConfigCreatedAt,
 		OrgID:                     1,
@@ -1008,6 +1012,7 @@ func TestIntegrationRemoteAlertmanagerConfiguration(t *testing.T) {
 		rawCfg, err := json.Marshal(config.GrafanaAlertmanagerConfig)
 		require.NoError(t, err)
 		require.JSONEq(t, testGrafanaConfig, string(rawCfg))
+		require.Equal(t, testConfigHash, config.Hash)
 		require.Equal(t, testConfigCreatedAt, config.CreatedAt)
 		require.Equal(t, testConfig.Default, config.Default)
 
@@ -1033,6 +1038,7 @@ func TestIntegrationRemoteAlertmanagerConfiguration(t *testing.T) {
 		rawCfg, err := json.Marshal(config.GrafanaAlertmanagerConfig)
 		require.NoError(t, err)
 		require.JSONEq(t, testGrafanaConfig, string(rawCfg))
+		require.Equal(t, testConfigHash, config.Hash)
 		require.Equal(t, testConfigCreatedAt, config.CreatedAt)
 		require.False(t, config.Default)
 
@@ -1079,6 +1085,9 @@ func TestIntegrationRemoteAlertmanagerConfiguration(t *testing.T) {
 
 		require.JSONEq(t, testGrafanaConfigWithSecret, string(got))
 
+		// Verify that the hash is calculated from the final configuration, including simplified routing
+		expectedHash := fmt.Sprintf("%x", md5.Sum(got))
+		require.Equal(t, expectedHash, config.Hash, "Hash should be calculated from the final processed configuration")
 		require.False(t, config.Default)
 
 		// An error while adding auto-generated rutes should be returned.
@@ -1105,6 +1114,7 @@ func TestIntegrationRemoteAlertmanagerConfiguration(t *testing.T) {
 		require.NoError(t, err)
 
 		require.JSONEq(t, string(want), string(got))
+		require.Equal(t, fmt.Sprintf("%x", md5.Sum(want)), config.Hash)
 		require.True(t, config.Default)
 
 		// An error while adding auto-generated rutes should be returned.

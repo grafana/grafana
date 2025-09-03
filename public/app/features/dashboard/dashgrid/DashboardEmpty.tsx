@@ -4,7 +4,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
-import { Button, useStyles2, Text, Box, Stack } from '@grafana/ui';
+import { Button, useStyles2, Text, Box, Stack, TextLink } from '@grafana/ui';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import {
   onAddLibraryPanel as onAddLibraryPanelImpl,
@@ -115,7 +115,11 @@ const DashboardEmpty = ({ dashboard, canCreate }: Props) => {
                 <Box marginBottom={2}>
                   <Text element="p" textAlignment="center" color="secondary">
                     <Trans i18nKey="dashboard.empty.import-a-dashboard-body">
-                      Import dashboards from files or <a href="https://grafana.com/grafana/dashboards/">grafana.com</a>.
+                      Import dashboards from files or{' '}
+                      <TextLink external href="https://grafana.com/grafana/dashboards/">
+                        grafana.com
+                      </TextLink>
+                      .
                     </Trans>
                   </Text>
                 </Box>

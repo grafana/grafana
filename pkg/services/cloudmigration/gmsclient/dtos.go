@@ -51,6 +51,7 @@ type EventRequestDTO struct {
 	Error              string         `json:"error"`
 	DurationIfFinished time.Duration  `json:"duration"`
 	UserUID            string         `json:"userUid"`
+	GrafanaVersion     string         `json:"grafanaVersion"`
 }
 
 type LocalEventType string

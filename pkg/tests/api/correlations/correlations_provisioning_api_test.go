@@ -175,6 +175,6 @@ func TestIntegrationCreateOrUpdateCorrelation(t *testing.T) {
 		})
 
 		require.Error(t, err)
-		require.ErrorIs(t, err, correlations.ErrInvalidConfigType)
+		require.ErrorIs(t, err, correlations.ErrConfigTypeDeprecated)
 	})
 }

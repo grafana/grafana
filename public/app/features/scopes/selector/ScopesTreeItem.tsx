@@ -15,6 +15,7 @@ export interface ScopesTreeItemProps {
   scopeNodes: NodesMap;
   selected: boolean;
   selectedScopes: SelectedScope[];
+  highlighted: boolean;
 
   onNodeUpdate: (scopeNodeId: string, expanded: boolean, query: string) => void;
   selectScope: (scopeNodeId: string) => void;
@@ -31,6 +32,7 @@ export function ScopesTreeItem({
   selectedScopes,
   selectScope,
   deselectScope,
+  highlighted,
 }: ScopesTreeItemProps) {
   const styles = useStyles2(getStyles);
 
@@ -52,11 +54,20 @@ export function ScopesTreeItem({
   return (
     <div
       key={treeNode.scopeNodeId}
+      id={getTreeItemElementId(treeNode.scopeNodeId)}
       role="treeitem"
-      aria-selected={treeNode.expanded}
+      // aria-selected refers to the highlighted item in the tree, not the selected checkbox/radio button
+      aria-selected={highlighted}
+      aria-expanded={isExpandable ? treeNode.expanded : undefined}
       className={anyChildExpanded ? styles.expandedContainer : undefined}
     >
-      <div className={cx(styles.title, isSelectable && !treeNode.expanded && styles.titlePadding)}>
+      <div
+        className={cx(
+          styles.title,
+          isSelectable && !treeNode.expanded && styles.titlePadding,
+          highlighted && styles.highlighted
+        )}
+      >
         {isSelectable && !treeNode.expanded ? (
           disableMultiSelect ? (
             <RadioButtonDot
@@ -71,6 +82,7 @@ export function ScopesTreeItem({
             />
           ) : (
             <Checkbox
+              id={treeNode.scopeNodeId}
               checked={selected}
               data-testid={`scopes-tree-${treeNode.scopeNodeId}-checkbox`}
               label={isExpandable ? '' : scopeNode.spec.title}
@@ -114,8 +126,16 @@ export function ScopesTreeItem({
   );
 }
 
+export const getTreeItemElementId = (scopeNodeId?: string) => {
+  return scopeNodeId ? `scopes-tree-item-${scopeNodeId}` : undefined;
+};
+
 const getStyles = (theme: GrafanaTheme2) => {
   return {
+    highlighted: css({
+      background: theme.colors.action.focus,
+      borderRadius: theme.shape.radius.default,
+    }),
     expandedContainer: css({
       display: 'flex',
       flexDirection: 'column',

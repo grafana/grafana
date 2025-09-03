@@ -44,7 +44,7 @@
     "@grafana/data": "12.2.0-pre",
     "@grafana/e2e-selectors": "12.2.0-pre",
     "@grafana/i18n": "12.2.0-pre",
-    "@grafana/plugin-ui": "0.10.7",
+    "@grafana/plugin-ui": "^0.10.10",
     "@grafana/runtime": "12.2.0-pre",
     "@grafana/schema": "12.2.0-pre",
     "@grafana/ui": "12.2.0-pre",
@@ -78,12 +78,11 @@
     "uuid": "11.1.0"
   },
   "devDependencies": {
-    "@grafana/tsconfig": "^2.0.0",
     "@rollup/plugin-dynamic-import-vars": "2.1.5",
     "@rollup/plugin-image": "3.0.3",
     "@rollup/plugin-json": "6.1.0",
     "@rollup/plugin-node-resolve": "16.0.1",
-    "@testing-library/jest-dom": "6.6.3",
+    "@testing-library/jest-dom": "6.6.4",
     "@testing-library/react": "16.3.0",
     "@testing-library/user-event": "14.6.1",
     "@types/jest": "29.5.14",

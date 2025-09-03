@@ -5,8 +5,10 @@ import (
 	"errors"
 	"fmt"
 	"strconv"
+	"sync"
 	"sync/atomic"
 
+	"github.com/Masterminds/semver/v3"
 	claims "github.com/grafana/authlib/types"
 	"go.opentelemetry.io/otel/attribute"
 	"golang.org/x/sync/singleflight"
@@ -128,6 +130,7 @@ type UserSync struct {
 	scimUtil                  *scimutil.SCIMUtil
 	staticConfig              *StaticSCIMConfig
 	scimSuccessfulLogin       atomic.Bool
+	samlCatalogStats          sync.Map
 }
 
 // GetUsageStats implements registry.ProvidesUsageStats
@@ -138,7 +141,41 @@ func (s *UserSync) GetUsageStats(ctx context.Context) map[string]any {
 	} else {
 		stats["stats.features.scim.has_successful_login.count"] = 0
 	}
+
+	s.samlCatalogStats.Range(func(key, value interface{}) bool {
+		version := key.(string)
+		flag := value.(*atomic.Bool)
+		if flag.Load() {
+			stats[fmt.Sprintf("stats.features.saml.catalog_version_%s.count", version)] = 1
+		} else {
+			stats[fmt.Sprintf("stats.features.saml.catalog_version_%s.count", version)] = 0
+		}
+		return true
+	})
 	return stats
+}
+
+func (s *UserSync) setSamlCatalogVersion(version string) {
+	value, loaded := s.samlCatalogStats.LoadOrStore(version, &atomic.Bool{})
+	flag := value.(*atomic.Bool)
+	flag.Store(true)
+
+	if !loaded {
+		s.log.Info("New SAML catalog version detected", "version", version)
+	}
+}
+
+func (s *UserSync) CatalogLoginHook(_ context.Context, identity *authn.Identity, r *authn.Request, err error) {
+	if err != nil || identity == nil || !identity.ClientParams.SyncUser || r == nil {
+		return
+	}
+	catalogVersion := r.GetMeta("catalog_version")
+	if _, err := semver.NewVersion(catalogVersion); err != nil {
+		s.log.Warn("The SAML catalog used for this login has an incorrect version format", "catalogVersion", catalogVersion)
+		return
+	}
+
+	s.setSamlCatalogVersion(catalogVersion)
 }
 
 // ValidateUserProvisioningHook validates if a user should be allowed access based on provisioning status and configuration

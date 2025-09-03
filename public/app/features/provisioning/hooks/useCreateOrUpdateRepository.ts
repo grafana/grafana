@@ -13,7 +13,9 @@ export function useCreateOrUpdateRepository(name?: string) {
   const [testConfig, testRequest] = useCreateRepositoryTestMutation();
 
   const updateOrCreate = useCallback(
-    async (data: RepositorySpec) => {
+    async (data: RepositorySpec, token?: string) => {
+      const secure = token?.length ? { token: { create: token } } : undefined;
+
       // First test the config and wait for the result
       // unwrap will throw an error if the test fails
       await testConfig({
@@ -21,6 +23,7 @@ export function useCreateOrUpdateRepository(name?: string) {
         name: name || 'new',
         body: {
           spec: data,
+          secure,
         },
       }).unwrap();
 
@@ -36,10 +39,11 @@ export function useCreateOrUpdateRepository(name?: string) {
               finalizers: ['cleanup', 'remove-orphan-resources'],
             },
             spec: data,
+            secure,
           },
         });
       }
-      return create({ repository: { metadata: generateRepositoryMetadata(data), spec: data } });
+      return create({ repository: { metadata: generateRepositoryMetadata(data), spec: data, secure } });
     },
     [create, name, update, testConfig]
   );

@@ -9,7 +9,7 @@ import { ConfirmModal } from '../ConfirmModal/ConfirmModal';
 
 import { VariablesInputModal } from './VariablesInputModal';
 
-type ActionButtonProps = ButtonProps & {
+type ActionButtonProps = Omit<ButtonProps, 'children'> & {
   action: ActionModel<Field>;
 };
 
