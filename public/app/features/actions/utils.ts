@@ -21,6 +21,7 @@ import { appEvents } from 'app/core/core';
 
 import { HttpRequestMethod } from '../../plugins/panel/canvas/panelcfg.gen';
 import { createAbsoluteUrl, RelativeUrl } from '../alerting/unified/utils/url';
+import { getTimeSrv } from '../dashboard/services/TimeSrv';
 import { getNextRequestId } from '../query/state/PanelQueryRunner';
 
 /** @internal */
@@ -246,6 +247,7 @@ class InfinityRequestBuilder {
   ): BackendSrvRequest {
     const requestId = getNextRequestId();
     const infinityUrl = `api/ds/query?ds_type=${INFINITY_DATASOURCE_TYPE}&requestId=${requestId}`;
+    const timeRange = getTimeSrv().timeRange();
 
     const requestHeaders: KeyValuePair[] = [];
     headers.forEach(([name, value]) => {
@@ -285,8 +287,8 @@ class InfinityRequestBuilder {
             url_options: infinityUrlOptions,
           },
         ],
-        from: Date.now().toString(),
-        to: Date.now().toString(),
+        from: timeRange.from.valueOf().toString(),
+        to: timeRange.to.valueOf().toString(),
       },
     };
   }
