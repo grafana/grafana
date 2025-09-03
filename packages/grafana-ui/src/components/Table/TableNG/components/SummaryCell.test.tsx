@@ -88,12 +88,12 @@ describe('SummaryCell', () => {
   };
 
   it('should calculate sum for numeric fields', () => {
-    render(<SummaryCell footers={footers} rows={rows} field={numericField} textAlign="left" />);
+    render(<SummaryCell footers={footers} rows={rows} field={numericField} textAlign="left" colIdx={1} />);
     expect(screen.getByText('6')).toBeInTheDocument(); // 1 + 2 + 3
   });
 
   it('should hide the label for the sum reducer if hideLabel is true', () => {
-    render(<SummaryCell footers={footers} rows={rows} field={numericField} textAlign="left" hideLabel />);
+    render(<SummaryCell footers={footers} rows={rows} field={numericField} textAlign="left" colIdx={1} hideLabel />);
     expect(screen.queryByText('Total')).not.toBeInTheDocument();
     expect(screen.getByText('6')).toBeInTheDocument(); // 1 + 2 + 3
   });
@@ -106,7 +106,9 @@ describe('SummaryCell', () => {
         custom: { ...numericField.config.custom, footer: { reducers: ['sum', 'mean'] } },
       },
     };
-    render(<SummaryCell footers={footers} rows={rows} field={numericFieldWithMultipleReducers} textAlign="left" />);
+    render(
+      <SummaryCell footers={footers} rows={rows} field={numericFieldWithMultipleReducers} textAlign="left" colIdx={1} />
+    );
     expect(screen.getByText('Total')).toBeInTheDocument();
     expect(screen.getByText('6')).toBeInTheDocument(); // 1 + 2 + 3
     expect(screen.getByText('Mean')).toBeInTheDocument();
@@ -121,13 +123,13 @@ describe('SummaryCell', () => {
         custom: { ...numericField.config.custom, footer: { reducers: ['mean'] } },
       },
     };
-    render(<SummaryCell footers={footers} rows={rows} field={newNumericField} textAlign="left" />);
+    render(<SummaryCell footers={footers} rows={rows} field={newNumericField} textAlign="left" colIdx={1} />);
     expect(screen.getByText('Mean')).toBeInTheDocument();
     expect(screen.getByText('2')).toBeInTheDocument(); // (1 + 2 + 3) / 3
   });
 
   it('should render an empty summary cell for non-numeric fields with numeric reducers', () => {
-    render(<SummaryCell footers={footers} rows={rows} field={textField} textAlign="left" />);
+    render(<SummaryCell footers={footers} rows={rows} field={textField} textAlign="left" colIdx={1} />);
     expect(screen.getByTestId('summary-cell-empty')).toBeInTheDocument();
   });
 
@@ -136,7 +138,9 @@ describe('SummaryCell', () => {
       ...textField,
       config: { ...textField.config, custom: { ...textField.config.custom, footer: { reducers: ['last'] } } },
     };
-    render(<SummaryCell footers={footers} rows={rows} field={textFieldNonNumericReducer} textAlign="left" />);
+    render(
+      <SummaryCell footers={footers} rows={rows} field={textFieldNonNumericReducer} textAlign="left" colIdx={1} />
+    );
     expect(screen.getByText('Last')).toBeInTheDocument();
     expect(screen.getByText('efghi')).toBeInTheDocument();
   });
@@ -146,15 +150,15 @@ describe('SummaryCell', () => {
       ...numericField,
       config: { ...numericField.config, custom: { ...numericField.config.custom, footer: { reducers: [] } } },
     };
-    render(<SummaryCell footers={footers} rows={rows} field={numericFieldNoReducers} textAlign="left" />);
+    render(<SummaryCell footers={footers} rows={rows} field={numericFieldNoReducers} textAlign="left" colIdx={1} />);
     expect(screen.getByTestId('summary-cell-empty')).toBeInTheDocument();
   });
 
   it('should correctly calculate sum for numeric fields based on selected fields', () => {
     render(
       <>
-        <SummaryCell footers={footers} rows={rows} field={numericField} textAlign="left" />
-        <SummaryCell footers={footers} rows={rows} field={numericField2} textAlign="left" />
+        <SummaryCell footers={footers} rows={rows} field={numericField} textAlign="left" colIdx={1} />
+        <SummaryCell footers={footers} rows={rows} field={numericField2} textAlign="left" colIdx={1} />
       </>
     );
 
@@ -176,7 +180,7 @@ describe('SummaryCell', () => {
     render(
       <>
         {fields.map((field, index) => (
-          <SummaryCell footers={footers} key={index} rows={rows} field={field} textAlign="left" />
+          <SummaryCell footers={footers} key={index} rows={rows} field={field} textAlign="left" colIdx={1} />
         ))}
       </>
     );
@@ -184,6 +188,4 @@ describe('SummaryCell', () => {
     expect(screen.getByText('6.5')).toBeInTheDocument(); // mean
     expect(screen.getByText('efghi')).toBeInTheDocument(); // last
   });
-
-  // TODO: add test for noFormattingReducers
 });

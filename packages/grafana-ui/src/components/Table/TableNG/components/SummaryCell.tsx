@@ -2,21 +2,13 @@ import { css } from '@emotion/css';
 import clsx from 'clsx';
 import { CSSProperties, ReactNode, useMemo } from 'react';
 
-import {
-  GrafanaTheme2,
-  Field,
-  FieldState,
-  FieldType,
-  reduceField,
-  fieldReducers,
-  formattedValueToString,
-  ReducerID,
-} from '@grafana/data';
+import { GrafanaTheme2, Field, fieldReducers, ReducerID } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { TableFooterOptions } from '@grafana/schema';
 
 import { useStyles2, useTheme2 } from '../../../../themes/ThemeContext';
+import { useReducerEntries } from '../hooks';
 import { getDefaultCellStyles } from '../styles';
 import { TableRow } from '../types';
 import { getDisplayName, getJustifyContent, TextAlign } from '../utils';
@@ -26,117 +18,17 @@ interface SummaryCellProps {
   field: Field;
   footers: Array<TableFooterOptions | undefined>;
   textAlign: TextAlign;
-  omitCountAll?: boolean;
+  colIdx: number;
   rowLabel?: boolean;
   hideLabel?: boolean;
   justifyContent?: CSSProperties['justifyContent'];
 }
 
-export interface ReducerResult {
-  value: number | null;
-  formattedValue: string;
-  reducerName: string;
-}
-
-interface FooterFieldState extends FieldState {
-  lastProcessedRowCount: number;
-}
-
-const isReducer = (maybeReducer: string): maybeReducer is ReducerID => maybeReducer in ReducerID;
 const getReducerName = (reducerId: string): string => {
   if (reducerId === ReducerID.countAll) {
     return t('grafana-ui.table.footer.reducer.count', 'Count');
   }
   return fieldReducers.get(reducerId)?.name || reducerId;
-};
-
-const nonMathReducers = new Set<ReducerID>([
-  ReducerID.allValues,
-  ReducerID.changeCount,
-  ReducerID.count,
-  ReducerID.countAll,
-  ReducerID.distinctCount,
-  ReducerID.first,
-  ReducerID.firstNotNull,
-  ReducerID.last,
-  ReducerID.lastNotNull,
-  ReducerID.uniqueValues,
-]);
-const isNonMathReducer = (reducer: string) => isReducer(reducer) && nonMathReducers.has(reducer);
-
-const noFormattingReducers = new Set<ReducerID>([ReducerID.count, ReducerID.countAll]);
-const shouldReducerSkipFormatting = (reducer: string) => isReducer(reducer) && noFormattingReducers.has(reducer);
-
-export const useReducerEntries = (
-  field: Field,
-  rows: TableRow[],
-  displayName: string
-): Array<[string, ReducerResult | null]> => {
-  return useMemo<Array<[string, ReducerResult | null]>>(() => {
-    const reducers: string[] = field.config.custom?.footer?.reducers ?? [];
-
-    if (
-      reducers.length === 0 ||
-      (field.type !== FieldType.number && reducers.every((reducerId) => !isNonMathReducer(reducerId)))
-    ) {
-      return [];
-    }
-
-    // Create a new state object that matches the original behavior exactly
-    const newState: FooterFieldState = {
-      lastProcessedRowCount: 0,
-      ...(field.state || {}), // Preserve any existing state properties
-    };
-
-    // Assign back to field
-    field.state = newState;
-
-    const currentRowCount = rows.length;
-    const lastRowCount = newState.lastProcessedRowCount;
-
-    // Check if we need to invalidate the cache
-    if (lastRowCount !== currentRowCount) {
-      // Cache should be invalidated as row count has changed
-      if (newState.calcs) {
-        delete newState.calcs;
-      }
-      // Update the row count tracker
-      newState.lastProcessedRowCount = currentRowCount;
-    }
-
-    // Calculate all specified reducers
-    const results: Record<string, number | null> = reduceField({
-      field: {
-        ...field,
-        values: rows.map((row) => row[displayName]),
-      },
-      reducers,
-    });
-
-    return reducers.map((reducerId) => {
-      // For number fields, show all reducers
-      // For non-number fields, only show special count reducers
-      if (results[reducerId] === undefined || (field.type !== FieldType.number && !isNonMathReducer(reducerId))) {
-        return [reducerId, null];
-      }
-
-      const value = results[reducerId];
-      const reducerName = getReducerName(reducerId);
-      const formattedValue =
-        field.display && !shouldReducerSkipFormatting(reducerId)
-          ? formattedValueToString(field.display(value))
-          : String(value);
-
-      return [
-        reducerId,
-        {
-          value,
-          formattedValue,
-          reducerName,
-        },
-      ];
-    });
-  }, [field, rows, displayName]);
 };
 
 const SummaryCellItem = ({ children, styles }: { children: ReactNode; styles: ReturnType<typeof getStyles> }) => (
@@ -162,7 +54,7 @@ export const SummaryCell = ({
   rows,
   footers,
   field,
-  omitCountAll = false,
+  colIdx,
   hideLabel = false,
   rowLabel = false,
   textAlign,
@@ -175,7 +67,7 @@ export const SummaryCell = ({
     textWrap: false,
   });
   const displayName = getDisplayName(field);
-  const reducerResultsEntries = useReducerEntries(field, rows, displayName);
+  const reducerResultsEntries = useReducerEntries(field, rows, displayName, colIdx);
   const cellClass = clsx(styles.footerCell, defaultFooterCellStyles);
   const firstFooterReducers = useMemo(() => {
     for (const footer of footers) {
@@ -193,11 +85,9 @@ export const SummaryCell = ({
       className={cellClass}
       data-testid={reducerResultsEntries.length === 0 && !renderRowLabel ? 'summary-cell-empty' : undefined}
     >
-      {reducerResultsEntries.map(([reducerId, reducerResultEntry]) => {
-        const isCountAll = reducerId === ReducerID.countAll;
-
+      {reducerResultsEntries.map(([reducerId, reducerResult]) => {
         // empty reducer entry, but there may be more after - render a spacer.
-        if ((isCountAll && omitCountAll) || reducerResultEntry === null) {
+        if (reducerResult === null) {
           return (
             <SummaryCellItem styles={styles} key={reducerId}>
               &nbsp;
@@ -205,12 +95,10 @@ export const SummaryCell = ({
           );
         }
 
-        const { reducerName, formattedValue } = reducerResultEntry;
-
         return (
           <SummaryCellItem key={reducerId} styles={styles}>
-            {!hideLabel && <SummaryCellLabel styles={styles}>{reducerName}</SummaryCellLabel>}
-            <SummaryCellValue styles={styles}>{formattedValue}</SummaryCellValue>
+            {!hideLabel && <SummaryCellLabel styles={styles}>{getReducerName(reducerId)}</SummaryCellLabel>}
+            <SummaryCellValue styles={styles}>{reducerResult}</SummaryCellValue>
           </SummaryCellItem>
         );
       })}

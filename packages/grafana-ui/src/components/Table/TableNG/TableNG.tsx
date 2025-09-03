@@ -95,6 +95,7 @@ import {
   shouldTextOverflow,
   shouldTextWrap,
   withDataLinksActionsTooltip,
+  getSummaryCellTextAlign,
 } from './utils';
 
 const EXPANDED_COLUMN_KEY = 'expanded';
@@ -673,8 +674,8 @@ export function TableNG(props: TableNGProps) {
               rows={rows}
               footers={footers}
               field={field}
-              omitCountAll={i > 0}
-              textAlign={textAlign}
+              colIdx={i}
+              textAlign={getSummaryCellTextAlign(textAlign, cellType)}
               rowLabel={isUniformFooter && i === 0}
               hideLabel={isUniformFooter && i !== 0}
             />

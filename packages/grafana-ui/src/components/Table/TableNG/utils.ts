@@ -16,6 +16,7 @@ import {
   DisplayValueAlignmentFactors,
   DataFrame,
   DisplayProcessor,
+  ReducerID,
 } from '@grafana/data';
 import {
   BarGaugeDisplayMode,
@@ -1031,3 +1032,19 @@ export const displayJsonValue: DisplayProcessor = (value: unknown): DisplayValue
 
   return { text: displayValue, numeric: Number.NaN };
 };
+
+export function getSummaryCellTextAlign(textAlign: TextAlign, cellType: TableCellDisplayMode): TextAlign {
+  // gauge is weird. left-aligned gauge has the viz on the left and its numbers on the right, and vice-versa.
+  // if you center-aligned your gauge... ok.
+  if (cellType === TableCellDisplayMode.Gauge) {
+    return (
+      {
+        left: 'right',
+        right: 'left',
+        center: 'center',
+      } as const
+    )[textAlign];
+  }
+
+  return textAlign;
+}

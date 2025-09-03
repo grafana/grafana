@@ -581,4 +581,12 @@ describe('TableNG hooks', () => {
       });
     });
   });
+
+  describe('useReducerEntries', () => {
+    it.todo('should return the correct reducers for a field');
+    it.todo('should return an empty array if all of the reducers are numeric and the field non-numeric');
+    it.todo('should return an empty array if no reducers are configured');
+    it.todo('should return null for non-numeric fields for non-numeric reducers');
+    it.todo('should return null when the colIdx is not 0 for the countAll reducer');
+  });
 });
