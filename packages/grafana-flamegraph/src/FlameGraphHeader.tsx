@@ -88,7 +88,7 @@ const FlameGraphHeader = ({
       </div>
 
       <div className={styles.rightContainer}>
-        {(assistantContext ?? []).length > 0 && 
+        {!!assistantContext?.length
           <div className={styles.buttonSpacing}>
             <OpenAssistantButton
               origin="grafana/flame-graph"
