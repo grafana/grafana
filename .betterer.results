@@ -1750,9 +1750,6 @@ exports[`better eslint`] = {
     "public/app/features/dashboard-scene/panel-edit/PanelOptionsPane.test.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
-    "public/app/features/dashboard-scene/panel-edit/PanelOptionsPane.tsx:5381": [
-      [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "0"]
-    ],
     "public/app/features/dashboard-scene/panel-edit/PanelVizTypePicker.tsx:5381": [
       [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "0"]
     ],
