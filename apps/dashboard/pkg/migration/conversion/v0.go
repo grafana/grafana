@@ -3,6 +3,8 @@ package conversion
 import (
 	"context"
 
+	"github.com/grafana/authlib/types"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"k8s.io/apimachinery/pkg/conversion"
 	"k8s.io/utils/ptr"
 
@@ -27,8 +29,16 @@ func Convert_V0_to_V1(in *dashv0.Dashboard, out *dashv1.Dashboard, scope convers
 	}
 
 	// Hack, generate "request" context with namespace info injected,
-	// not sure if there are other implications of doing this
+	// that migrate.Migrate will use
 	ctx := request.WithNamespace(context.Background(), in.GetNamespace())
+	nsInfo, err := types.ParseNamespace(in.GetNamespace())
+	if err != nil {
+		out.Status.Conversion.Failed = true
+		out.Status.Conversion.Error = ptr.To(err.Error())
+		return nil
+	}
+
+	ctx, _ = identity.WithServiceIdentity(ctx, nsInfo.OrgID)
 
 	if err := migration.Migrate(ctx, out.Spec.Object, schemaversion.LATEST_VERSION); err != nil {
 		out.Status.Conversion.Failed = true

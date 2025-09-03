@@ -17,7 +17,6 @@ import (
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 	"k8s.io/apiserver/pkg/registry/rest"
 	genericapiserver "k8s.io/apiserver/pkg/server"
-	clientrest "k8s.io/client-go/rest"
 	"k8s.io/kube-openapi/pkg/common"
 	"k8s.io/kube-openapi/pkg/spec3"
 	"k8s.io/kube-openapi/pkg/validation/spec"
@@ -76,6 +75,8 @@ const (
 	dashboardSpecRefreshInterval = "refresh"
 )
 
+type k8sClientGetter func(namespace string) client.K8sHandler
+
 // This is used just so wire has something unique to return
 type DashboardsAPIBuilder struct {
 	dashboardService dashboards.DashboardService
@@ -100,7 +101,7 @@ type DashboardsAPIBuilder struct {
 
 	// only one of the two is required to be set, folderClientGetter is used when ignoreLegacy is true
 	folderClient       client.K8sHandler
-	folderClientGetter func(namespace string) client.K8sHandler
+	folderClientGetter k8sClientGetter
 
 	log          log.Logger
 	reg          prometheus.Registerer
@@ -177,15 +178,11 @@ func RegisterAPIService(
 	return builder
 }
 
-func NewAPIService(ac claims.AccessClient, features featuremgmt.FeatureToggles, dual dualwrite.Service, sorter sort.Service, getRestConfig func(context.Context) (*clientrest.Config, error), cloudconfigClient datasourceext.CloudConfigClient, pluginStore *pluginstore.Service) *DashboardsAPIBuilder {
+func NewAPIService(ac claims.AccessClient, features featuremgmt.FeatureToggles, folderClientGetter k8sClientGetter, cloudconfigClient datasourceext.CloudConfigClient, pluginStore *pluginstore.Service) *DashboardsAPIBuilder {
 	// TODO: Plugin store will soon be removed,
 	// as the cases for plugin fetching is not needed. Keeping it now to not break implementation
 	if pluginStore == nil {
 		panic("pluginStore is nil")
-	}
-
-	folderClientGetter := func(namespace string) client.K8sHandler {
-		return client.NewK8sHandler(dual, func(int64) string { return namespace }, folders.FolderResourceInfo.GroupVersionResource(), getRestConfig, nil, nil, nil, sorter, features)
 	}
 
 	logger := log.New("grafana-apiserver.dashboards")
@@ -491,6 +488,7 @@ func getDashboardProperties(obj runtime.Object) (string, string, error) {
 }
 
 func (b *DashboardsAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupInfo, opts builder.APIGroupOptions) error {
+	b.log.Warn("🫡🫡🫡🫡🫡🫡🫡🫡🫡🫡🫡🫡🫡🫡🫡🫡🫡🫡🫡🫡🫡🫡🫡🫡🫡🫡🫡🫡")
 	storageOpts := apistore.StorageOptions{
 		EnableFolderSupport:         true,
 		RequireDeprecatedInternalID: true,
@@ -527,6 +525,8 @@ func (b *DashboardsAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver
 				dto.Dashboard = *dash
 			}
 			if access != nil {
+				fmt.Println(obj)
+				fmt.Println(access)
 				err = b.scheme.Convert(access, &dto.Access, nil)
 			}
 			return dto, err
@@ -545,6 +545,8 @@ func (b *DashboardsAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver
 				dto.Dashboard = *dash
 			}
 			if access != nil {
+				fmt.Println(obj)
+				fmt.Println(access)
 				err = b.scheme.Convert(access, &dto.Access, nil)
 			}
 			return dto, err
@@ -563,6 +565,8 @@ func (b *DashboardsAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver
 				dto.Dashboard = *dash
 			}
 			if access != nil {
+				fmt.Println(obj)
+				fmt.Println(access)
 				err = b.scheme.Convert(access, &dto.Access, nil)
 			}
 			return dto, err
@@ -580,6 +584,8 @@ func (b *DashboardsAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver
 				dto.Dashboard = *dash
 			}
 			if access != nil {
+				fmt.Println(obj)
+				fmt.Println(access)
 				err = b.scheme.Convert(access, &dto.Access, nil)
 			}
 			return dto, err
