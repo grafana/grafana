@@ -39,3 +39,8 @@ export function addEnrichmentSection() {
     };
   });
 }
+
+// ONLY FOR TESTS: resets the registered tabs between tests
+export function __clearRuleViewTabsForTests() {
+  ruleViewTabBuilders.splice(0, ruleViewTabBuilders.length);
+}
