@@ -5,9 +5,9 @@ import { usePluginContext, PluginExtensionFunction, PluginExtensionTypes } from 
 import { UsePluginFunctionsOptions, UsePluginFunctionsResult } from '@grafana/runtime';
 
 import { useAddedFunctionsRegistry } from './ExtensionRegistriesContext';
-import { getExtensionValidationResults } from './getExtensionValidationResults';
 import { useLoadAppPlugins } from './useLoadAppPlugins';
 import { generateExtensionId, getExtensionPointPluginDependencies } from './utils';
+import { validateExtensionPoint } from './validateExtensionPoint';
 
 // Returns an array of component extensions for the given extension point
 export function usePluginFunctions<Signature>({
@@ -21,12 +21,12 @@ export function usePluginFunctions<Signature>({
   const { isLoading: isLoadingAppPlugins } = useLoadAppPlugins(deps);
 
   return useMemo(() => {
-    const { result } = getExtensionValidationResults({ extensionPointId, pluginContext, isLoadingAppPlugins });
+    const { result } = validateExtensionPoint({ extensionPointId, pluginContext, isLoadingAppPlugins });
 
     if (result) {
       return {
         isLoading: result.isLoading,
-        functions: result.results,
+        functions: [],
       };
     }
 

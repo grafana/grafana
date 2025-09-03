@@ -6,7 +6,6 @@ import { PluginExtensionLink, PluginExtensionTypes, usePluginContext } from '@gr
 import { UsePluginLinksOptions, UsePluginLinksResult } from '@grafana/runtime';
 
 import { useAddedLinksRegistry } from './ExtensionRegistriesContext';
-import { getExtensionValidationResults } from './getExtensionValidationResults';
 import { useLoadAppPlugins } from './useLoadAppPlugins';
 import {
   generateExtensionId,
@@ -16,6 +15,7 @@ import {
   getLinkExtensionPathWithTracking,
   getReadOnlyProxy,
 } from './utils';
+import { validateExtensionPoint } from './validateExtensionPoint';
 
 // Returns an array of component extensions for the given extension point
 export function usePluginLinks({
@@ -29,7 +29,7 @@ export function usePluginLinks({
   const { isLoading: isLoadingAppPlugins } = useLoadAppPlugins(getExtensionPointPluginDependencies(extensionPointId));
 
   return useMemo(() => {
-    const { result, pointLog } = getExtensionValidationResults({
+    const { result, pointLog } = validateExtensionPoint({
       extensionPointId,
       pluginContext,
       isLoadingAppPlugins,
@@ -38,7 +38,7 @@ export function usePluginLinks({
     if (result) {
       return {
         isLoading: result.isLoading,
-        links: result.results,
+        links: [],
       };
     }
 

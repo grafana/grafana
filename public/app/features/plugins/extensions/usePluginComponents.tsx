@@ -10,10 +10,10 @@ import {
 import { UsePluginComponentsOptions, UsePluginComponentsResult } from '@grafana/runtime';
 
 import { useAddedComponentsRegistry } from './ExtensionRegistriesContext';
-import { getExtensionValidationResults } from './getExtensionValidationResults';
 import { AddedComponentRegistryItem } from './registry/AddedComponentsRegistry';
 import { useLoadAppPlugins } from './useLoadAppPlugins';
 import { generateExtensionId, getExtensionPointPluginDependencies } from './utils';
+import { validateExtensionPoint } from './validateExtensionPoint';
 
 // Returns an array of component extensions for the given extension point
 export function usePluginComponents<Props extends object = {}>({
@@ -26,12 +26,12 @@ export function usePluginComponents<Props extends object = {}>({
   const { isLoading: isLoadingAppPlugins } = useLoadAppPlugins(getExtensionPointPluginDependencies(extensionPointId));
 
   return useMemo(() => {
-    const { result } = getExtensionValidationResults({ extensionPointId, pluginContext, isLoadingAppPlugins });
+    const { result } = validateExtensionPoint({ extensionPointId, pluginContext, isLoadingAppPlugins });
 
     if (result) {
       return {
         isLoading: result.isLoading,
-        components: result.results,
+        components: [],
       };
     }
 

@@ -1,9 +1,9 @@
 import { PluginContextType } from '@grafana/data';
 
 import * as errors from './errors';
-import { getExtensionValidationResults } from './getExtensionValidationResults';
 import { ExtensionsLog } from './logs/log';
 import { isGrafanaDevMode } from './utils';
+import { validateExtensionPoint } from './validateExtensionPoint';
 import * as validators from './validators';
 
 jest.mock('./utils', () => ({
@@ -49,20 +49,20 @@ describe('getExtensionValidationResults', () => {
     it('should return isLoading:true while loading app plugins', () => {
       const { extensionPointId, pluginContext } = setup();
 
-      const actual = getExtensionValidationResults({
+      const actual = validateExtensionPoint({
         extensionPointId,
         isLoadingAppPlugins: true,
         pluginContext,
       });
 
-      expect(actual.result).toEqual({ isLoading: true, results: [] });
+      expect(actual.result).toEqual({ isLoading: true });
       expect(actual.pointLog).toBeDefined();
     });
 
     it('should return null when all validations pass', () => {
       const { extensionPointId, pluginContext } = setup();
 
-      const actual = getExtensionValidationResults({
+      const actual = validateExtensionPoint({
         extensionPointId,
         isLoadingAppPlugins: false,
         pluginContext,
@@ -89,13 +89,13 @@ describe('getExtensionValidationResults', () => {
         spyisExtensionPointMetaInfoMissing,
       } = setup({ pointValid: false });
 
-      const actual = getExtensionValidationResults({
+      const actual = validateExtensionPoint({
         extensionPointId,
         isLoadingAppPlugins: true,
         pluginContext,
       });
 
-      expect(actual.result).toEqual({ isLoading: false, results: [] });
+      expect(actual.result).toEqual({ isLoading: false });
       expect(actual.pointLog).toBeDefined();
       expect(spyisExtensionPointMetaInfoMissing).not.toHaveBeenCalled();
       expect(spyIsExtensionPointIdValid).toHaveBeenCalledTimes(1);
@@ -113,13 +113,13 @@ describe('getExtensionValidationResults', () => {
         metaMissing: true,
       });
 
-      const actual = getExtensionValidationResults({
+      const actual = validateExtensionPoint({
         extensionPointId,
         isLoadingAppPlugins: true,
         pluginContext,
       });
 
-      expect(actual.result).toEqual({ isLoading: false, results: [] });
+      expect(actual.result).toEqual({ isLoading: false });
       expect(actual.pointLog).toBeDefined();
       expect(spyisExtensionPointMetaInfoMissing).toHaveBeenCalled();
       expect(spyisExtensionPointMetaInfoMissing).toHaveBeenCalledWith(extensionPointId, pluginContext);
@@ -133,7 +133,7 @@ describe('getExtensionValidationResults', () => {
         corePlugin: true,
       });
 
-      const actual = getExtensionValidationResults({
+      const actual = validateExtensionPoint({
         extensionPointId,
         isLoadingAppPlugins: false,
         pluginContext,
@@ -148,20 +148,20 @@ describe('getExtensionValidationResults', () => {
     it('should return isLoading:true while loading app plugins', () => {
       const { extensionPointId, pluginContext } = setup();
 
-      const actual = getExtensionValidationResults({
+      const actual = validateExtensionPoint({
         extensionPointId,
         isLoadingAppPlugins: true,
         pluginContext,
       });
 
-      expect(actual.result).toEqual({ isLoading: true, results: [] });
+      expect(actual.result).toEqual({ isLoading: true });
       expect(actual.pointLog).toBeDefined();
     });
 
     it('should return null when all validations pass', () => {
       const { extensionPointId, pluginContext } = setup();
 
-      const actual = getExtensionValidationResults({
+      const actual = validateExtensionPoint({
         extensionPointId,
         isLoadingAppPlugins: false,
         pluginContext,
