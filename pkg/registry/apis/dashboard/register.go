@@ -75,8 +75,6 @@ const (
 	dashboardSpecRefreshInterval = "refresh"
 )
 
-type k8sClientGetter func(namespace string) client.K8sHandler
-
 // This is used just so wire has something unique to return
 type DashboardsAPIBuilder struct {
 	dashboardService dashboards.DashboardService
@@ -99,9 +97,9 @@ type DashboardsAPIBuilder struct {
 	cfg                          *setting.Cfg
 	dualWriter                   dualwrite.Service
 
-	// only one of the two is required to be set, folderClientGetter is used when ignoreLegacy is true
-	folderClient       client.K8sHandler
-	folderClientGetter k8sClientGetter
+	// only one of the two is required to be set, folderClientProvider is used when ignoreLegacy is true
+	folderClient         client.K8sHandler
+	folderClientProvider client.K8sHandlerProvider
 
 	log           log.Logger
 	reg           prometheus.Registerer
@@ -178,7 +176,7 @@ func RegisterAPIService(
 	return builder
 }
 
-func NewAPIService(ac claims.AccessClient, features featuremgmt.FeatureToggles, folderClientGetter k8sClientGetter, datasourceProvider schemaversion.DataSourceInfoProvider, pluginStore *pluginstore.Service) *DashboardsAPIBuilder {
+func NewAPIService(ac claims.AccessClient, features featuremgmt.FeatureToggles, folderClientProvider client.K8sHandlerProvider, datasourceProvider schemaversion.DataSourceInfoProvider, pluginStore *pluginstore.Service) *DashboardsAPIBuilder {
 	// TODO: Plugin store will soon be removed,
 	// as the cases for plugin fetching is not needed. Keeping it now to not break implementation
 	if pluginStore == nil {
@@ -199,11 +197,11 @@ func NewAPIService(ac claims.AccessClient, features featuremgmt.FeatureToggles, 
 		cfg: &setting.Cfg{
 			MinRefreshInterval: "10s",
 		},
-		accessClient:       ac,
-		authorizer:         authsvc.NewResourceAuthorizer(ac),
-		features:           features,
-		dashboardService:   &dashsvc.DashboardServiceImpl{}, // for validation helpers only
-		folderClientGetter: folderClientGetter,
+		accessClient:         ac,
+		authorizer:           authsvc.NewResourceAuthorizer(ac),
+		features:             features,
+		dashboardService:     &dashsvc.DashboardServiceImpl{}, // for validation helpers only
+		folderClientProvider: folderClientProvider,
 
 		isMultiTenant: true,
 	}
@@ -437,7 +435,7 @@ func (b *DashboardsAPIBuilder) validateFolderExists(ctx context.Context, folderU
 		if err != nil {
 			return err
 		}
-		folderClient = b.folderClientGetter(ns.Value)
+		folderClient = b.folderClientProvider.GetOrCreateHandler(ns.Value)
 	} else {
 		folderClient = b.folderClient
 	}
