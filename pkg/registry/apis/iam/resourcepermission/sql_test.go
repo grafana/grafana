@@ -52,7 +52,7 @@ func setupTestRoles(t *testing.T, store db.DB) {
 	// Permissions
 	_, err = sess.Exec(context.Background(),
 		`INSERT INTO permission (role_id, action, scope, created, updated)
-		VALUES (?, ?, ?, ?, ?), (?, ?, ?, ?, ?), (?, ?, ?, ?, ?), (?, ?, ?, ?, ?), (?, ?, ?, ?, ?)`,
+		VALUES (?, ?, ?, ?, ?), (?, ?, ?, ?, ?), (?, ?, ?, ?, ?), (?, ?, ?, ?, ?), (?, ?, ?, ?, ?), (?, ?, ?, ?, ?)`,
 		// Permissions for managed:users:1:permissions
 		1, "folders:view", "folders:uid:fold1", "2025-09-02", "2025-09-02",
 		1, "dashboards:edit", "dashboards:uid:dash1", "2025-09-02", "2025-09-02",
@@ -100,6 +100,14 @@ func setupTestRoles(t *testing.T, store db.DB) {
 		`INSERT INTO team_role (org_id, team_id, role_id, created)
 	VALUES (?, ?, ?, ?)`,
 		1, 1, 5, "2025-09-02 00:00:00", // Team-1 -> managed:teams:1:permissions
+	)
+	require.NoError(t, err)
+
+	// basic role bindings
+	_, err = sess.Exec(context.Background(),
+		`INSERT INTO builtin_role (org_id, role, role_id, created, updated)
+	VALUES (?, ?, ?, ?, ?)`,
+		1, "Editor", 4, "2025-09-02 00:00:00", "2025-09-02 00:00:00", // Builtin Editor -> managed:builtins:editor:permissions
 	)
 	require.NoError(t, err)
 }

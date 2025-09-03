@@ -5,7 +5,7 @@ SELECT
   CASE WHEN u.uid IS NOT NULL THEN 'user' 
        WHEN t.uid IS NOT NULL THEN 'team'
        ELSE 'builtin_role' END as subject_type,
-  COALESCE(u.is_service_account, 0) as is_service_account
+  COALESCE(u.is_service_account, TRUE) as is_service_account
 FROM `grafana`.`permission` p
 INNER JOIN `grafana`.`role` r ON p.role_id = r.id
 LEFT JOIN `grafana`.`user_role` ur ON r.id = ur.role_id AND ur.org_id = r.org_id
@@ -19,5 +19,3 @@ AND (u.uid IS NOT NULL OR t.uid IS NOT NULL OR br.role IS NOT NULL)
 AND COALESCE(ur.org_id, tr.org_id, r.org_id) = 3
 AND p.scope LIKE '123'
 ORDER BY p.id
-LIMIT 20
-OFFSET 10

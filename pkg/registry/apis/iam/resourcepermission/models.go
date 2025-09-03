@@ -9,7 +9,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	v0alpha1 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
-	"github.com/grafana/grafana/pkg/registry/apis/iam/common"
 )
 
 var (
@@ -27,7 +26,7 @@ type ListResourcePermissionsQuery struct {
 	Scope      string
 	OrgID      int64
 	ActionSets []string
-	Pagination common.Pagination
+	// TODO Pagination common.Pagination
 }
 
 type flatResourcePermission struct {
