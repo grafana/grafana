@@ -13,14 +13,15 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/alerting/lokiclient"
+	"github.com/grafana/alerting/notify/historian/lokiclient"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/alerting/client"
+	alertingInstrument "github.com/grafana/alerting/http/instrument"
+	"github.com/grafana/alerting/http/instrument/instrumenttest"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -625,7 +626,7 @@ func TestMerge(t *testing.T) {
 
 func TestRecordStates(t *testing.T) {
 	t.Run("writes state transitions to loki", func(t *testing.T) {
-		req := lokiclient.NewFakeRequester()
+		req := instrumenttest.NewFakeRequester()
 		loki := createTestLokiBackend(t, req, metrics.NewHistorianMetrics(prometheus.NewRegistry(), metrics.Subsystem))
 		rule := createTestRule()
 		states := singleFromNormal(&state.State{
@@ -642,8 +643,8 @@ func TestRecordStates(t *testing.T) {
 	t.Run("emits expected write metrics", func(t *testing.T) {
 		reg := prometheus.NewRegistry()
 		met := metrics.NewHistorianMetrics(reg, metrics.Subsystem)
-		loki := createTestLokiBackend(t, lokiclient.NewFakeRequester(), met)
-		errLoki := createTestLokiBackend(t, lokiclient.NewFakeRequester().WithResponse(lokiclient.BadResponse()), met) //nolint:bodyclose
+		loki := createTestLokiBackend(t, instrumenttest.NewFakeRequester(), met)
+		errLoki := createTestLokiBackend(t, instrumenttest.NewFakeRequester().WithResponse(instrumenttest.BadResponse()), met) //nolint:bodyclose
 		rule := createTestRule()
 		states := singleFromNormal(&state.State{
 			State:  eval.Alerting,
@@ -677,7 +678,7 @@ grafana_alerting_state_history_writes_total{backend="loki",org="1"} 2
 	})
 
 	t.Run("elides request if nothing to send", func(t *testing.T) {
-		req := lokiclient.NewFakeRequester()
+		req := instrumenttest.NewFakeRequester()
 		loki := createTestLokiBackend(t, req, metrics.NewHistorianMetrics(prometheus.NewRegistry(), metrics.Subsystem))
 		rule := createTestRule()
 		states := []state.StateTransition{}
@@ -689,7 +690,7 @@ grafana_alerting_state_history_writes_total{backend="loki",org="1"} 2
 	})
 
 	t.Run("succeeds with special chars in labels", func(t *testing.T) {
-		req := lokiclient.NewFakeRequester()
+		req := instrumenttest.NewFakeRequester()
 		loki := createTestLokiBackend(t, req, metrics.NewHistorianMetrics(prometheus.NewRegistry(), metrics.Subsystem))
 		rule := createTestRule()
 		states := singleFromNormal(&state.State{
@@ -712,7 +713,7 @@ grafana_alerting_state_history_writes_total{backend="loki",org="1"} 2
 	})
 
 	t.Run("adds external labels to log lines", func(t *testing.T) {
-		req := lokiclient.NewFakeRequester()
+		req := instrumenttest.NewFakeRequester()
 		loki := createTestLokiBackend(t, req, metrics.NewHistorianMetrics(prometheus.NewRegistry(), metrics.Subsystem))
 		rule := createTestRule()
 		states := singleFromNormal(&state.State{
@@ -740,7 +741,7 @@ func TestGetFolderUIDsForFilter(t *testing.T) {
 	usr := accesscontrol.BackgroundUser("test", 1, org.RoleNone, nil)
 
 	createLoki := func(ac AccessControl) *RemoteLokiBackend {
-		req := lokiclient.NewFakeRequester()
+		req := instrumenttest.NewFakeRequester()
 		loki := createTestLokiBackend(t, req, metrics.NewHistorianMetrics(prometheus.NewRegistry(), metrics.Subsystem))
 		rules := fakes.NewRuleStore(t)
 		f := make([]*folder.Folder, 0, len(folders))
@@ -880,7 +881,7 @@ func TestGetFolderUIDsForFilter(t *testing.T) {
 	})
 }
 
-func createTestLokiBackend(t *testing.T, req client.Requester, met *metrics.Historian) *RemoteLokiBackend {
+func createTestLokiBackend(t *testing.T, req alertingInstrument.Requester, met *metrics.Historian) *RemoteLokiBackend {
 	url, _ := url.Parse("http://some.url")
 	cfg := lokiclient.LokiConfig{
 		WritePathURL:   url,

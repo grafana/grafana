@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"net/url"
 
-	"github.com/grafana/alerting/lokiclient"
+	"github.com/grafana/alerting/notify/historian/lokiclient"
 	"github.com/grafana/grafana/pkg/setting"
 )
 

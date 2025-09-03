@@ -8,7 +8,7 @@ import (
 	"time"
 
 	httptransport "github.com/go-openapi/runtime/client"
-	"github.com/grafana/alerting/client"
+	alertingInstrument "github.com/grafana/alerting/http/instrument"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
@@ -29,7 +29,7 @@ type AlertmanagerConfig struct {
 
 type Alertmanager struct {
 	*amclient.AlertmanagerAPI
-	httpClient client.Requester
+	httpClient alertingInstrument.Requester
 	url        *url.URL
 	logger     log.Logger
 }
@@ -45,8 +45,8 @@ func NewAlertmanager(cfg *AlertmanagerConfig, metrics *metrics.RemoteAlertmanage
 		Timeout: cfg.Timeout,
 	}
 
-	tc := client.NewTimedClient(c, metrics.RequestLatency)
-	trc := client.NewTracedClient(tc, tracer, "remote.alertmanager.client")
+	tc := alertingInstrument.NewTimedClient(c, metrics.RequestLatency)
+	trc := alertingInstrument.NewTracedClient(tc, tracer, "remote.alertmanager.client")
 	apiEndpoint := *cfg.URL
 
 	// Next, make sure you set the right path.
@@ -66,7 +66,7 @@ func NewAlertmanager(cfg *AlertmanagerConfig, metrics *metrics.RemoteAlertmanage
 
 // GetAuthedClient returns a client.Requester that includes a configured MimirAuthRoundTripper.
 // Requests using this client are fully authenticated.
-func (am *Alertmanager) GetAuthedClient() client.Requester {
+func (am *Alertmanager) GetAuthedClient() alertingInstrument.Requester {
 	return am.httpClient
 }
 

@@ -14,7 +14,8 @@ import (
 
 	alertingNotify "github.com/grafana/alerting/notify"
 
-	"github.com/grafana/alerting/client"
+	alertingInstrument "github.com/grafana/alerting/http/instrument"
+
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
@@ -43,7 +44,7 @@ type MimirClient interface {
 }
 
 type Mimir struct {
-	client        client.Requester
+	client        alertingInstrument.Requester
 	endpoint      *url.URL
 	logger        log.Logger
 	metrics       *metrics.RemoteAlertmanager
@@ -106,8 +107,8 @@ func New(cfg *Config, metrics *metrics.RemoteAlertmanager, tracer tracing.Tracer
 	c := &http.Client{
 		Transport: rt,
 	}
-	tc := client.NewTimedClient(c, metrics.RequestLatency)
-	trc := client.NewTracedClient(tc, tracer, "remote.alertmanager.client")
+	tc := alertingInstrument.NewTimedClient(c, metrics.RequestLatency)
+	trc := alertingInstrument.NewTracedClient(tc, tracer, "remote.alertmanager.client")
 
 	return &Mimir{
 		endpoint:      cfg.URL,

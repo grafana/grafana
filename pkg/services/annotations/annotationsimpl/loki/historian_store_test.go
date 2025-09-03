@@ -10,12 +10,14 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/alerting/lokiclient"
+	"github.com/grafana/alerting/notify/historian/lokiclient"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/exp/maps"
 
-	"github.com/grafana/alerting/client"
+	alertingInstrument "github.com/grafana/alerting/http/instrument"
+	"github.com/grafana/alerting/http/instrument/instrumenttest"
+
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -811,7 +813,7 @@ func compareAnnotationItem(t *testing.T, expected, actual *annotations.ItemDTO) 
 }
 
 type FakeLokiClient struct {
-	client        client.Requester
+	client        alertingInstrument.Requester
 	cfg           lokiclient.LokiConfig
 	metrics       *metrics.Historian
 	log           log.Logger
@@ -820,11 +822,11 @@ type FakeLokiClient struct {
 
 func NewFakeLokiClient() *FakeLokiClient {
 	url, _ := url.Parse("http://some.url")
-	req := lokiclient.NewFakeRequester()
+	req := instrumenttest.NewFakeRequester()
 	metrics := metrics.NewHistorianMetrics(prometheus.NewRegistry(), "annotations_test")
 
 	return &FakeLokiClient{
-		client: client.NewTimedClient(req, metrics.WriteDuration),
+		client: alertingInstrument.NewTimedClient(req, metrics.WriteDuration),
 		cfg: lokiclient.LokiConfig{
 			WritePathURL:   url,
 			ReadPathURL:    url,

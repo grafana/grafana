@@ -8,7 +8,7 @@ import (
 	"sort"
 	"time"
 
-	"github.com/grafana/alerting/lokiclient"
+	"github.com/grafana/alerting/notify/historian/lokiclient"
 	"github.com/grafana/grafana/pkg/services/ngalert/lokiconfig"
 	"golang.org/x/exp/constraints"
 
