@@ -549,6 +549,7 @@
     },
     "alert-rules": {
       "firing-for": "Activando para",
+      "multiple-sources": "",
       "next-evaluation": "Siguiente evaluación",
       "next-evaluation-in": "siguiente evaluación en",
       "rule-definition": "Definición de la regla"
@@ -2638,13 +2639,15 @@
         "show": "Mostrar"
       },
       "manage-alerts": "En estas fuentes de datos, puedes seleccionar Gestionar alertas a través de la interfaz de usuario de Alerting para poder administrar estas reglas de alerta en la interfaz de usuario de Grafana, así como en la fuente de datos donde se configuraron.",
-      "no-groups": "No hay ningún grupo disponible",
-      "no-namespaces": "No hay ninguna carpeta disponible",
       "placeholder-all-data-sources": "Todas las fuentes de datos",
       "placeholder-contact-point": "Seleccionar punto de contacto",
       "placeholder-data-sources": "Seleccionar fuentes de datos",
       "placeholder-labels": "Seleccionar etiquetas",
       "plugin-rules": "Reglas del plugin",
+      "rule-source": {
+        "datasource": "",
+        "grafana": ""
+      },
       "rule-type": "Tipo de regla",
       "rulesSearchInput-placeholder-search": "Buscar",
       "search": "Buscar",
@@ -2666,6 +2669,7 @@
         "namespace": "Carpeta/espacio de nombre",
         "rule-health": "Salud",
         "rule-name": "Nombre de la regla",
+        "rule-source": "",
         "rule-type": "Tipo",
         "state": "Estado"
       }
@@ -3393,9 +3397,6 @@
       "text-badge-enabled": "Activado",
       "text-badge-not-enabled": "No habilitada"
     },
-    "scim-banner": {
-      "message": "SCIM se encuentra actualmente en fase de desarrollo y no se recomienda para su uso en producción. Úsalo con precaución y ten en cuenta que puede sufrir cambios."
-    },
     "server-discovery-modal": {
       "label-the-wellknownopenidconfiguration-endpoint-for-your-id-p": "El punto final .well-known/openid-configuration para tu IdP",
       "title-open-id-connect-discovery-url": "URL de OpenID Connect Discovery"
@@ -3565,7 +3566,9 @@
       },
       "error-moving-resources": "Error al mover los recursos",
       "error-no-target-folder-path": "La ruta de la carpeta de destino no es válida o está vacía. Selecciona otra.",
-      "move-warning": "Esto moverá las carpetas seleccionadas y sus subcarpetas. En total, esto afectará a:",
+      "move-total": "",
+      "move-warning": "",
+      "move-warning-tooltip": "",
       "target-folder": "Carpeta de destino"
     },
     "counts": {
@@ -4691,6 +4694,7 @@
       "panel-title": "Cambiar título del panel",
       "paste-panel": "Pegar panel",
       "remove": "Eliminar {{typeName}}",
+      "row-title": "",
       "switch-layout": "Cambiar diseño"
     },
     "edit-pane": {
@@ -6542,7 +6546,8 @@
     },
     "data-source-load-error": {
       "back": "Atrás",
-      "delete": "Eliminar"
+      "delete": "Eliminar",
+      "not-found": ""
     },
     "data-source-missing-rights-message": {
       "title-missing-rights": "Faltan derechos"
@@ -7565,7 +7570,9 @@
   "folders": {
     "api": {
       "folder-delete-error-provisioned": "",
-      "folder-deleted-success": "Carpeta eliminada"
+      "folder-deleted-success": "Carpeta eliminada",
+      "folder-move-error-provisioned": "",
+      "folder-moved-success": ""
     },
     "get-loading-nav": {
       "main": {
@@ -9525,6 +9532,7 @@
       "fields-section": "Campos",
       "hide-log-line": "Ocultar línea de log",
       "inline-mode": "Mostrar en línea",
+      "link-value-tooltip": "",
       "links-section": "Enlaces",
       "log-line-field": "Línea de log",
       "log-line-section": "Línea de log",

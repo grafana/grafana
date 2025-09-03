@@ -227,16 +227,26 @@
       "select-resource": "Seleccionar un recurso"
     },
     "resource-picker": {
+      "browse-tab": "",
       "button-apply": "Aplicar",
       "button-cancel": "Cancelar",
       "header-location": "Ubicación",
+      "header-resource-group": "",
       "header-scope": "Alcance",
       "header-type": "Tipo",
       "heading-selection": "Selección",
+      "locations-filter": "",
+      "locations-filter-placeholder": "",
+      "recent-tab": "",
       "result-limit": "Mostrando los primeros {{numResults}} resultados",
+      "subscriptions-filter": "",
+      "subscriptions-filter-placeholder": "",
       "text-loading": "Cargando...",
+      "text-no-recent-resources": "",
       "text-no-resources": "No se han encontrado recursos",
-      "title-error-occurred": "Se ha producido un error al solicitar recursos de Azure Monitor"
+      "title-error-occurred": "Se ha producido un error al solicitar recursos de Azure Monitor",
+      "types-filter": "",
+      "types-filter-placeholder": ""
     },
     "scope-selector": {
       "label": "Alcance"

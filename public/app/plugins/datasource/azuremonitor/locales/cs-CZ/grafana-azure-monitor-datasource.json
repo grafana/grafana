@@ -227,16 +227,26 @@
       "select-resource": "Vyberte zdroj"
     },
     "resource-picker": {
+      "browse-tab": "",
       "button-apply": "Použít",
       "button-cancel": "Zrušit",
       "header-location": "Poloha",
+      "header-resource-group": "",
       "header-scope": "Rozsah",
       "header-type": "Typ",
       "heading-selection": "Výběr",
+      "locations-filter": "",
+      "locations-filter-placeholder": "",
+      "recent-tab": "",
       "result-limit": "Zobrazují se první {{numResults}} výsledky",
+      "subscriptions-filter": "",
+      "subscriptions-filter-placeholder": "",
       "text-loading": "Načítání…",
+      "text-no-recent-resources": "",
       "text-no-resources": "Nebyly nalezeny žádné zdroje",
-      "title-error-occurred": "Při požadování zdrojů ze služby Azure Monitor došlo k chybě"
+      "title-error-occurred": "Při požadování zdrojů ze služby Azure Monitor došlo k chybě",
+      "types-filter": "",
+      "types-filter-placeholder": ""
     },
     "scope-selector": {
       "label": "Rozsah"

@@ -227,16 +227,26 @@
       "select-resource": "Válasszon ki egy erőforrást"
     },
     "resource-picker": {
+      "browse-tab": "",
       "button-apply": "Alkalmaz",
       "button-cancel": "Mégse",
       "header-location": "Hely",
+      "header-resource-group": "",
       "header-scope": "Hatókör",
       "header-type": "Típus",
       "heading-selection": "Kiválasztás",
+      "locations-filter": "",
+      "locations-filter-placeholder": "",
+      "recent-tab": "",
       "result-limit": "Az első {{numResults}} találat megjelenítése",
+      "subscriptions-filter": "",
+      "subscriptions-filter-placeholder": "",
       "text-loading": "Betöltés…",
+      "text-no-recent-resources": "",
       "text-no-resources": "Nem található erőforrás",
-      "title-error-occurred": "Hiba történt az erőforrások Azure Monitor szolgáltatásból történő lekérése során"
+      "title-error-occurred": "Hiba történt az erőforrások Azure Monitor szolgáltatásból történő lekérése során",
+      "types-filter": "",
+      "types-filter-placeholder": ""
     },
     "scope-selector": {
       "label": "Hatókör"

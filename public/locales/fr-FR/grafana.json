@@ -549,6 +549,7 @@
     },
     "alert-rules": {
       "firing-for": "Déclenchement pour",
+      "multiple-sources": "",
       "next-evaluation": "Prochaine évaluation",
       "next-evaluation-in": "prochaine évaluation dans",
       "rule-definition": "Définition de la règle"
@@ -2638,13 +2639,15 @@
         "show": "Afficher"
       },
       "manage-alerts": "Dans ces sources de données, vous pouvez sélectionner Gérer les alertes via l’interface utilisateur d’alerte pour pouvoir gérer ces règles d’alerte dans l’interface utilisateur Grafana, ainsi que dans la source de données où elles ont été configurées.",
-      "no-groups": "Aucun groupe disponible",
-      "no-namespaces": "Aucun dossier disponible",
       "placeholder-all-data-sources": "Toutes les sources de données",
       "placeholder-contact-point": "Sélectionner un point de contact",
       "placeholder-data-sources": "Sélectionner des sources de données",
       "placeholder-labels": "Sélectionner des étiquettes",
       "plugin-rules": "Règles de plugin",
+      "rule-source": {
+        "datasource": "",
+        "grafana": ""
+      },
       "rule-type": "Type de règle",
       "rulesSearchInput-placeholder-search": "Rechercher",
       "search": "Rechercher",
@@ -2666,6 +2669,7 @@
         "namespace": "Dossier/Espace de noms",
         "rule-health": "Santé",
         "rule-name": "Nom de la règle",
+        "rule-source": "",
         "rule-type": "Type",
         "state": "État"
       }
@@ -3393,9 +3397,6 @@
       "text-badge-enabled": "Activé",
       "text-badge-not-enabled": "Non activé"
     },
-    "scim-banner": {
-      "message": "SCIM est actuellement en développement et n’est pas recommandé pour un usage en production. Veuillez l’utiliser avec précaution et vous attendre à d’éventuels changements."
-    },
     "server-discovery-modal": {
       "label-the-wellknownopenidconfiguration-endpoint-for-your-id-p": "Le point de terminaison .well-known/openid-configuration pour votre IdP",
       "title-open-id-connect-discovery-url": "URL de découverte de connexion OpenID"
@@ -3565,7 +3566,9 @@
       },
       "error-moving-resources": "Erreur lors du déplacement des ressources",
       "error-no-target-folder-path": "Le chemin du dossier cible est invalide ou vide ; veuillez sélectionner à nouveau.",
-      "move-warning": "Cette opération déplacera les dossiers sélectionnés ainsi que leur contenu. Au total, cela affectera :",
+      "move-total": "",
+      "move-warning": "",
+      "move-warning-tooltip": "",
       "target-folder": "Dossier de destination"
     },
     "counts": {
@@ -4691,6 +4694,7 @@
       "panel-title": "Modifier le titre du panneau",
       "paste-panel": "Coller le panneau",
       "remove": "Supprimer {{typeName}}",
+      "row-title": "",
       "switch-layout": "Changer la disposition"
     },
     "edit-pane": {
@@ -6542,7 +6546,8 @@
     },
     "data-source-load-error": {
       "back": "Précédent",
-      "delete": "Supprimer"
+      "delete": "Supprimer",
+      "not-found": ""
     },
     "data-source-missing-rights-message": {
       "title-missing-rights": "Droits manquants"
@@ -7565,7 +7570,9 @@
   "folders": {
     "api": {
       "folder-delete-error-provisioned": "",
-      "folder-deleted-success": "Dossier supprimé"
+      "folder-deleted-success": "Dossier supprimé",
+      "folder-move-error-provisioned": "",
+      "folder-moved-success": ""
     },
     "get-loading-nav": {
       "main": {
@@ -9525,6 +9532,7 @@
       "fields-section": "Champs",
       "hide-log-line": "Masquer cette ligne de log",
       "inline-mode": "Afficher en ligne",
+      "link-value-tooltip": "",
       "links-section": "Liens",
       "log-line-field": "Ligne de journal",
       "log-line-section": "Ligne de log",

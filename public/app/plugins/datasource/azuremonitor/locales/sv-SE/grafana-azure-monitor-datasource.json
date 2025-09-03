@@ -227,16 +227,26 @@
       "select-resource": "Välj en resurs"
     },
     "resource-picker": {
+      "browse-tab": "",
       "button-apply": "Tillämpa",
       "button-cancel": "Avbryt",
       "header-location": "Plats",
+      "header-resource-group": "",
       "header-scope": "Omfattning",
       "header-type": "Typ",
       "heading-selection": "Urval",
+      "locations-filter": "",
+      "locations-filter-placeholder": "",
+      "recent-tab": "",
       "result-limit": "Visar de första {{numResults}} resultaten",
+      "subscriptions-filter": "",
+      "subscriptions-filter-placeholder": "",
       "text-loading": "Laddar …",
+      "text-no-recent-resources": "",
       "text-no-resources": "Inga resurser hittades",
-      "title-error-occurred": "Ett fel uppstod vid begäran av resurser från Azure Monitor"
+      "title-error-occurred": "Ett fel uppstod vid begäran av resurser från Azure Monitor",
+      "types-filter": "",
+      "types-filter-placeholder": ""
     },
     "scope-selector": {
       "label": "Omfattning"

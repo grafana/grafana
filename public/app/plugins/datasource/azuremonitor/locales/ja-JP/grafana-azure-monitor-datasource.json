@@ -227,16 +227,26 @@
       "select-resource": "リソースを選択"
     },
     "resource-picker": {
+      "browse-tab": "",
       "button-apply": "適用",
       "button-cancel": "キャンセル",
       "header-location": "場所",
+      "header-resource-group": "",
       "header-scope": "スコープ",
       "header-type": "種類",
       "heading-selection": "選択",
+      "locations-filter": "",
+      "locations-filter-placeholder": "",
+      "recent-tab": "",
       "result-limit": "最初の{{numResults}}件の結果を表示",
+      "subscriptions-filter": "",
+      "subscriptions-filter-placeholder": "",
       "text-loading": "読み込み中...",
+      "text-no-recent-resources": "",
       "text-no-resources": "リソースが見つかりません",
-      "title-error-occurred": "Azure Monitorからリソースをリクエスト中にエラーが発生しました"
+      "title-error-occurred": "Azure Monitorからリソースをリクエスト中にエラーが発生しました",
+      "types-filter": "",
+      "types-filter-placeholder": ""
     },
     "scope-selector": {
       "label": "スコープ"
