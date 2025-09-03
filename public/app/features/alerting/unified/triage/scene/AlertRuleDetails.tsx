@@ -27,7 +27,7 @@ const chartConfig = VizConfigBuilders.timeseries()
   .setCustomFieldConfig('barWidthFactor', 1)
   .setCustomFieldConfig('barAlignment', BarAlignment.After)
   .setCustomFieldConfig('showPoints', VisibilityMode.Never)
-  .setCustomFieldConfig('fillOpacity', 50)
+  .setCustomFieldConfig('fillOpacity', 60)
   .setCustomFieldConfig('lineWidth', 0)
   .setCustomFieldConfig('stacking', { mode: StackingMode.None })
   .setCustomFieldConfig('axisPlacement', AxisPlacement.Hidden)
@@ -119,7 +119,7 @@ export function AlertRuleDetails({ ruleUID }: { ruleUID: string }) {
           <GroupRow
             key={JSON.stringify(instance.labels)}
             width={leftColumnWidth}
-            title={<AlertLabels labels={labels} commonLabels={commonLabels} />}
+            title={<AlertLabels size="xs" labels={labels} commonLabels={commonLabels} />}
             content={
               <VizPanel
                 title=""

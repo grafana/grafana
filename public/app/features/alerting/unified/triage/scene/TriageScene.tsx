@@ -1,3 +1,4 @@
+import { DashboardCursorSync } from '@grafana/data';
 import {
   AdHocFiltersVariable,
   GroupByVariable,
@@ -9,6 +10,7 @@ import {
   SceneTimeRange,
   SceneVariableSet,
   VariableValueSelectors,
+  behaviors,
 } from '@grafana/scenes';
 import { EmbeddedSceneWithContext } from '@grafana/scenes-react';
 
@@ -16,8 +18,11 @@ import { SummaryChartScene } from './SummaryChart';
 import { WorkbenchSceneObject } from './Workbench';
 import { DS_UID, defaultTimeRange } from './utils';
 
+const cursorSync = new behaviors.CursorSync({ key: 'triage-cursor-sync', sync: DashboardCursorSync.Crosshair });
+
 export const triageScene = new EmbeddedSceneWithContext({
-  $behaviors: [],
+  // this will allow us to share the cursor between all vizualizations
+  $behaviors: [cursorSync],
   controls: [
     new VariableValueSelectors({}),
     new SceneControlsSpacer(),
