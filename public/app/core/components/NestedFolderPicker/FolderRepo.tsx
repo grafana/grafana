@@ -18,11 +18,7 @@ export function FolderRepo({ folder }: Props) {
   // folder is not managed
   // if whole instance is provisioned
   const isProvisionedInstance = useIsProvisionedInstance();
-  const skipRender =
-    !folder ||
-    Boolean('parentUID' in folder && folder.parentUID) ||
-    folder.managedBy !== ManagerKind.Repo ||
-    isProvisionedInstance;
+  const skipRender = getShouldSkipRender(folder, isProvisionedInstance);
 
   const { isReadOnlyRepo, repoType } = useGetResourceRepositoryView({
     folderName: skipRender ? undefined : folder?.uid,
@@ -51,4 +47,13 @@ export function FolderRepo({ folder }: Props) {
       />
     </Stack>
   );
+}
+
+function getShouldSkipRender(folder: FolderDTO | DashboardViewItem | undefined, isProvisionedInstance?: boolean) {
+  // Skip render if parentUID is present, then we should skip rendering. we only display icon for root folders
+  const hasParent = folder && Boolean('parentUID' in folder && folder.parentUID);
+  // Skip render if folder is not managed by Repo
+  const isNotManaged = folder && folder.managedBy !== ManagerKind.Repo;
+
+  return !folder || hasParent || isNotManaged || isProvisionedInstance;
 }
