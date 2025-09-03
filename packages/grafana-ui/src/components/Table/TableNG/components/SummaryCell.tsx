@@ -19,7 +19,7 @@ import { TableFooterOptions } from '@grafana/schema';
 import { useStyles2, useTheme2 } from '../../../../themes/ThemeContext';
 import { getDefaultCellStyles } from '../styles';
 import { TableRow } from '../types';
-import { getDisplayName, TextAlign } from '../utils';
+import { getDisplayName, getJustifyContent, TextAlign } from '../utils';
 
 interface SummaryCellProps {
   rows: TableRow[];
@@ -167,7 +167,7 @@ export const SummaryCell = ({
   rowLabel = false,
   textAlign,
 }: SummaryCellProps) => {
-  const styles = useStyles2(getStyles);
+  const styles = useStyles2(getStyles, textAlign, hideLabel);
   const theme = useTheme2();
   const defaultFooterCellStyles = getDefaultCellStyles(theme, {
     textAlign,
@@ -177,10 +177,22 @@ export const SummaryCell = ({
   const displayName = getDisplayName(field);
   const reducerResultsEntries = useReducerEntries(field, rows, displayName);
   const cellClass = clsx(styles.footerCell, defaultFooterCellStyles);
+  const firstFooterReducers = useMemo(() => {
+    for (const footer of footers) {
+      if (footer?.reducers?.length ?? 0 > 0) {
+        return footer!.reducers!;
+      }
+    }
+    return;
+  }, [footers]);
+  const renderRowLabel = rowLabel && reducerResultsEntries.length === 0 && Boolean(firstFooterReducers);
 
   // Render each reducer in the footer
   return (
-    <div className={cellClass}>
+    <div
+      className={cellClass}
+      data-testid={reducerResultsEntries.length === 0 && !renderRowLabel ? 'summary-cell-empty' : undefined}
+    >
       {reducerResultsEntries.map(([reducerId, reducerResultEntry]) => {
         const isCountAll = reducerId === ReducerID.countAll;
 
@@ -202,38 +214,33 @@ export const SummaryCell = ({
           </SummaryCellItem>
         );
       })}
-      {reducerResultsEntries.length === 0 &&
-        (rowLabel && footers.some((f) => f) ? (
-          <div className={cellClass}>
-            {footers
-              .find((f) => (f?.reducers?.length ?? 0) > 0)
-              ?.reducers?.map((reducerId) => {
-                const reducerName = getReducerName(reducerId);
-                return (
-                  <SummaryCellItem styles={styles} key={reducerId}>
-                    <SummaryCellLabel styles={styles}>{reducerName}</SummaryCellLabel>
-                  </SummaryCellItem>
-                );
-              })}
-          </div>
-        ) : (
-          <div data-testid="summary-cell-empty" className={cellClass} />
-        ))}
+
+      {renderRowLabel && (
+        <div className={cellClass}>
+          {firstFooterReducers!.map((reducerId) => (
+            <SummaryCellItem styles={styles} key={reducerId}>
+              <SummaryCellLabel styles={styles}>{getReducerName(reducerId)}</SummaryCellLabel>
+            </SummaryCellItem>
+          ))}
+        </div>
+      )}
     </div>
   );
 };
 
-export const getStyles = (theme: GrafanaTheme2) => ({
+export const getStyles = (theme: GrafanaTheme2, textAlign: TextAlign, hideLabel: boolean) => ({
   footerCell: css({
     flexDirection: 'column',
     minHeight: '100%',
+    width: '100%',
   }),
   footerItem: css({
     display: 'flex',
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    justifyContent: hideLabel ? getJustifyContent(textAlign) : 'space-between',
     alignItems: 'flex-start',
     width: '100%',
+    gap: theme.spacing(0.5),
   }),
   footerItemLabel: css({
     flexShrink: 0,
@@ -244,6 +251,7 @@ export const getStyles = (theme: GrafanaTheme2) => ({
     fontSize: theme.typography.bodySmall.fontSize,
     fontWeight: theme.typography.fontWeightLight,
     textTransform: 'uppercase',
+    lineHeight: '22px',
   }),
   footerItemValue: css({
     overflow: 'hidden',
