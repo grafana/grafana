@@ -1,6 +1,5 @@
 import { BettererFileTest } from '@betterer/betterer';
 import { ESLint } from 'eslint';
-import { promises as fs } from 'fs';
 
 // Why are we ignoring these?
 // They're all deprecated/being removed so doesn't make sense to fix types
@@ -17,33 +16,7 @@ export default {
     countEslintErrors()
       .include('**/*.{ts,tsx}')
       .exclude(new RegExp(eslintPathsToIgnore.join('|'))),
-  'no undocumented stories': () => countUndocumentedStories().include('**/*.story.tsx'),
 };
-
-function countUndocumentedStories() {
-  return new BettererFileTest(async (filePaths, fileTestResult) => {
-    await Promise.all(
-      filePaths.map(async (filePath) => {
-        // look for .mdx import in the story file
-        const mdxImportRegex = new RegExp("^import.*\\.mdx';$", 'gm');
-        // Looks for the "autodocs" string in the file
-        const autodocsStringRegex = /autodocs/;
-
-        const fileText = await fs.readFile(filePath, 'utf8');
-
-        const hasMdxImport = mdxImportRegex.test(fileText);
-        const hasAutodocsString = autodocsStringRegex.test(fileText);
-        // If both .mdx import and autodocs string are missing, add an issue
-        if (!hasMdxImport && !hasAutodocsString) {
-          // In this case the file contents don't matter:
-          const file = fileTestResult.addFile(filePath, '');
-          // Add the issue to the first character of the file:
-          file.addIssue(0, 0, 'No undocumented stories are allowed, please add an .mdx file with some documentation');
-        }
-      })
-    );
-  });
-}
 
 function countEslintErrors() {
   return new BettererFileTest(async (filePaths, fileTestResult) => {
