@@ -60,9 +60,8 @@ type controllerConfig struct {
 	historyExpiration time.Duration
 }
 
-// QUESTION: is this the right way to do this? will it work?
-// directConfigProvider always returns the provided rest.Config.
-// implements RestConfigProvider interface
+// directConfigProvider is a simple RestConfigProvider that always returns the same rest.Config
+// it implements apiserver.RestConfigProvider
 type directConfigProvider struct {
 	cfg *rest.Config
 }
