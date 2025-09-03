@@ -1,3 +1,5 @@
+import createCache from "@emotion/cache";
+import { CacheProvider as EmotionCacheProvider } from "@emotion/react";
 import { Action, KBarProvider } from 'kbar';
 import { Component, ComponentType, Fragment, ReactNode } from 'react';
 import CacheProvider from 'react-inlinesvg/provider';
@@ -111,6 +113,13 @@ export class AppWrapper extends Component<AppWrapperProps, AppWrapperState> {
       providers: enterpriseProviders,
     };
 
+    // NI fork: Disable Emotion's "speedy" stylesheets optimization, due to
+    // incorrect resolution of relative paths in Global styles in iframe in Firefox.
+    const emotionCache = createCache({
+      key: 'ni-emotion-cache-disable-speedy-stylesheets',
+      speedy: false
+    });
+
     const MaybeTimeRangeProvider = config.featureToggles.timeRangeProvider ? TimeRangeProvider : Fragment;
 
     return (
@@ -118,29 +127,31 @@ export class AppWrapper extends Component<AppWrapperProps, AppWrapperState> {
         <ErrorBoundaryAlert style="page">
           <GrafanaContext.Provider value={app.context}>
             <ThemeProvider value={config.theme2}>
-              <CacheProvider name={this.iconCacheID}>
-                <KBarProvider
-                  actions={[]}
-                  options={{ enableHistory: true, callbacks: { onSelectAction: commandPaletteActionSelected } }}
-                >
-                  <GlobalStyles />
-                  <MaybeTimeRangeProvider>
-                    <SidecarContext_EXPERIMENTAL.Provider value={sidecarServiceSingleton_EXPERIMENTAL}>
-                      <ExtensionRegistriesProvider registries={pluginExtensionRegistries}>
-                        <div className="grafana-app">
-                          {config.featureToggles.appSidecar ? (
-                            <ExperimentalSplitPaneRouterWrapper {...routerWrapperProps} />
-                          ) : (
-                            <RouterWrapper {...routerWrapperProps} />
-                          )}
-                          <LiveConnectionWarning />
-                          <PortalContainer />
-                        </div>
-                      </ExtensionRegistriesProvider>
-                    </SidecarContext_EXPERIMENTAL.Provider>
-                  </MaybeTimeRangeProvider>
-                </KBarProvider>
-              </CacheProvider>
+              <EmotionCacheProvider value={emotionCache}>
+                <CacheProvider name={this.iconCacheID}>
+                  <KBarProvider
+                    actions={[]}
+                    options={{ enableHistory: true, callbacks: { onSelectAction: commandPaletteActionSelected } }}
+                  >
+                    <GlobalStyles />
+                    <MaybeTimeRangeProvider>
+                      <SidecarContext_EXPERIMENTAL.Provider value={sidecarServiceSingleton_EXPERIMENTAL}>
+                        <ExtensionRegistriesProvider registries={pluginExtensionRegistries}>
+                          <div className="grafana-app">
+                            {config.featureToggles.appSidecar ? (
+                              <ExperimentalSplitPaneRouterWrapper {...routerWrapperProps} />
+                            ) : (
+                              <RouterWrapper {...routerWrapperProps} />
+                            )}
+                            <LiveConnectionWarning />
+                            <PortalContainer />
+                          </div>
+                        </ExtensionRegistriesProvider>
+                      </SidecarContext_EXPERIMENTAL.Provider>
+                    </MaybeTimeRangeProvider>
+                  </KBarProvider>
+                </CacheProvider>
+              </EmotionCacheProvider>
             </ThemeProvider>
           </GrafanaContext.Provider>
         </ErrorBoundaryAlert>
