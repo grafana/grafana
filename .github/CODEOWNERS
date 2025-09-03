@@ -411,7 +411,7 @@
 /e2e-playwright/cloud-plugins-suite/ @grafana/partner-datasources
 /e2e-playwright/dashboard-new-layouts/ @grafana/dashboards-squad
 /e2e-playwright/dashboards-search-suite/ @grafana/dashboards-squad
-/e2e-playwright/dashboards/AdHocFiltersTest.json @grafana/datapro
+/e2e-playwright/dashboards/AdHocFilterTest.json @grafana/datapro
 /e2e-playwright/dashboards/DashboardLiveTest.json @grafana/dashboards-squad
 /e2e-playwright/dashboards/DataLinkWithoutSlugTest.json @grafana/dashboards-squad
 /e2e-playwright/dashboards/PanelSandboxDashboard.json @grafana/plugins-platform-frontend
