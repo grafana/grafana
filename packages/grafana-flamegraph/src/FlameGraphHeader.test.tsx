@@ -9,7 +9,8 @@ import { ColorScheme, SelectedView } from './types';
 
 jest.mock('@grafana/assistant', () => ({
   useAssistant: jest.fn(() => [false, null]), // [isAvailable, openAssistant]
-  createContext: jest.fn(),
+  createAssistantContextItem: jest.fn(),
+  OpenAssistantButton: () => <div>OpenAssistantButton</div>,
 }));
 
 describe('FlameGraphHeader', () => {
