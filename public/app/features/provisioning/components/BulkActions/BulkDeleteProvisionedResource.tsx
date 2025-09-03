@@ -96,13 +96,13 @@ function FormContent({ initialValues, selectedItems, repository, workflowOptions
                 hidePath
               />
               <Stack gap={2}>
+                <Button variant="secondary" fill="outline" onClick={onDismiss} disabled={isCreatingJob}>
+                  <Trans i18nKey="browse-dashboards.bulk-delete-resources-form.button-cancel">Cancel</Trans>
+                </Button>
                 <Button type="submit" disabled={disableBtn} variant="destructive">
                   {job?.status?.state === 'working' || job?.status?.state === 'pending'
                     ? t('browse-dashboards.bulk-delete-resources-form.button-deleting', 'Deleting...')
                     : t('browse-dashboards.bulk-delete-resources-form.button-delete', 'Delete')}
-                </Button>
-                <Button variant="secondary" fill="outline" onClick={onDismiss} disabled={isCreatingJob}>
-                  <Trans i18nKey="browse-dashboards.bulk-delete-resources-form.button-cancel">Cancel</Trans>
                 </Button>
               </Stack>
             </>
