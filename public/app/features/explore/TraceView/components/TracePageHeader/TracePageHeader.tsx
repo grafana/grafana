@@ -50,6 +50,7 @@ import { Trace, TraceViewPluginExtensionContext } from '../types/trace';
 import { formatDuration } from '../utils/date';
 
 import { SpanFilters } from './SpanFilters/SpanFilters';
+import { createAssistantContextItem, OpenAssistantButton } from '@grafana/assistant';
 
 export type TracePageHeaderProps = {
   trace: Trace | null;
@@ -126,6 +127,12 @@ export const TracePageHeader = memo((props: TracePageHeaderProps) => {
     limitPerPlugin: 2,
   });
 
+  // TODO: Remove ina couple of days, once new assistant is released that does not use extension link
+  // This is to prevent showing 2 buttons for the same feature
+  const extensionLinksToShow = extensionLinks.filter(
+    (link) => link.pluginId !== 'grafana-assistant-app' && link.title !== 'Explain in Assistant'
+  );
+
   let statusColor: BadgeColor = 'green';
   if (status && status.length > 0) {
     if (status[0].value.toString().charAt(0) === '4') {
@@ -189,7 +196,7 @@ export const TracePageHeader = memo((props: TracePageHeaderProps) => {
         {/* Action buttons */}
         <div className={styles.actions}>
           {/* Plugin extension actions */}
-          {extensionLinks.length > 0 && (
+          {extensionLinksToShow.length > 0 && (
             <div className={styles.actions}>
               {extensionLinks.map((link) => (
                 <Tooltip key={link.id} content={link.description || link.title}>
@@ -210,6 +217,24 @@ export const TracePageHeader = memo((props: TracePageHeaderProps) => {
                 </Tooltip>
               ))}
             </div>
+          )}
+          {datasourceType === 'tempo' && (
+            <OpenAssistantButton
+              title="Explain in Assistant"
+              origin="grafana/trace-view"
+              prompt="Analyze this trace"
+              context={[
+                createAssistantContextItem('structured', {
+                  title: 'Trace View Query',
+                  data: {
+                    query: trace.traceID,
+                  },
+                }),
+                createAssistantContextItem('datasource', {
+                  datasourceUid: datasourceUid,
+                }),
+              ]}
+            />
           )}
 
           {config.feedbackLinksEnabled && (

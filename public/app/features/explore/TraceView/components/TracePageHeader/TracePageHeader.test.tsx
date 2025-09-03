@@ -53,6 +53,11 @@ jest.mock('../../../../../core/config', () => ({
   },
 }));
 
+jest.mock('@grafana/assistant', () => ({
+  createAssistantContextItem: jest.fn(),
+  OpenAssistantButton: () => <div>OpenAssistantButton</div>,
+}));
+
 // Mock navigator.clipboard
 Object.assign(navigator, {
   clipboard: {
@@ -485,6 +490,43 @@ describe('TracePageHeader test', () => {
       // Check for icon
       const iconElement = buttonElement?.querySelector('svg');
       expect(iconElement).toBeInTheDocument();
+    });
+  });
+
+  describe('Assistant Button', () => {
+    it('renders assistant button for Tempo datasource', () => {
+      setup();
+
+      expect(screen.getByText('OpenAssistantButton')).toBeInTheDocument();
+    });
+
+    it('does not render assistant button for Jaeger datasource', () => {
+      const mockUsePluginLinks = usePluginLinks as jest.MockedFunction<typeof usePluginLinks>;
+      mockUsePluginLinks.mockReturnValue({ links: [], isLoading: false });
+
+      const props = {
+        trace,
+        timeZone: '',
+        search: DEFAULT_SPAN_FILTERS,
+        setSearch: jest.fn(),
+        showSpanFilters: true,
+        setShowSpanFilters: jest.fn(),
+        showSpanFilterMatchesOnly: false,
+        setShowSpanFilterMatchesOnly: jest.fn(),
+        showCriticalPathSpansOnly: false,
+        setShowCriticalPathSpansOnly: jest.fn(),
+        spanFilterMatches: undefined,
+        setFocusedSpanIdForSearch: jest.fn(),
+        datasourceType: 'jaeger',
+        setHeaderHeight: jest.fn(),
+        data: new MutableDataFrame(),
+        datasourceName: 'test-datasource',
+        datasourceUid: 'test-datasource-uid',
+      };
+
+      render(<TracePageHeader {...props} />);
+
+      expect(screen.queryByText('OpenAssistantButton')).not.toBeInTheDocument();
     });
   });
 });
