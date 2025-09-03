@@ -84,4 +84,75 @@ describe('NestedRow', () => {
     const box = screen.queryByRole('checkbox');
     expect(box).toBeChecked();
   });
+
+  it('should display the resource group if available', () => {
+    render(
+      <table>
+        <tbody>
+          <NestedRow
+            {...defaultProps}
+            row={{
+              id: '1',
+              uri: '/subscriptions/1/resourceGroups/test-rg/providers/Microsoft.Compute/virtualMachines/test-vm',
+              name: '1',
+              type: ResourceRowType.Resource,
+              typeLabel: '1',
+            }}
+            selectableEntryTypes={[ResourceRowType.Resource]}
+            selectedRows={[{ ...defaultProps.row, uri: defaultProps.row.uri.toUpperCase() }]}
+          />
+        </tbody>
+      </table>
+    );
+
+    expect(screen.getByText('test-rg')).toBeInTheDocument();
+  });
+
+  it('should not display the resource group if row is a subscription', () => {
+    render(
+      <table>
+        <tbody>
+          <NestedRow
+            {...defaultProps}
+            row={{
+              id: '1',
+              uri: '/subscriptions/1',
+              name: '1',
+              type: ResourceRowType.Subscription,
+              typeLabel: '1',
+            }}
+            selectableEntryTypes={[ResourceRowType.Resource]}
+            selectedRows={[{ ...defaultProps.row, uri: defaultProps.row.uri.toUpperCase() }]}
+          />
+        </tbody>
+      </table>
+    );
+
+    const rg = screen.queryByText('test-rg');
+    expect(rg).not.toBeInTheDocument();
+  });
+
+  it('should not display the resource group if row is a resource group', () => {
+    render(
+      <table>
+        <tbody>
+          <NestedRow
+            {...defaultProps}
+            row={{
+              id: '1',
+              uri: '/subscriptions/1/resourceGrops/test-rg',
+              name: '1',
+              type: ResourceRowType.ResourceGroup,
+              typeLabel: '1',
+            }}
+            selectableEntryTypes={[ResourceRowType.Resource]}
+            selectedRows={[{ ...defaultProps.row, uri: defaultProps.row.uri.toUpperCase() }]}
+          />
+        </tbody>
+      </table>
+    );
+
+    const rg = screen.queryByText('test-rg');
+    expect(rg).not.toBeInTheDocument();
+  });
 });

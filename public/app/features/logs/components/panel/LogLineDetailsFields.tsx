@@ -464,7 +464,7 @@ const getClipboardButtonStyles = (theme: GrafanaTheme2) => ({
   }),
 });
 
-const MultipleValue = ({ showCopy, values = [] }: { showCopy?: boolean; values: string[] }) => {
+export const MultipleValue = ({ showCopy, values = [] }: { showCopy?: boolean; values: string[] }) => {
   if (values.every((val) => val === '')) {
     return null;
   }
@@ -484,7 +484,13 @@ const MultipleValue = ({ showCopy, values = [] }: { showCopy?: boolean; values: 
   );
 };
 
-const SingleValue = ({ value: originalValue, syntaxHighlighting }: { value: string; syntaxHighlighting?: boolean }) => {
+export const SingleValue = ({
+  value: originalValue,
+  syntaxHighlighting,
+}: {
+  value: string;
+  syntaxHighlighting?: boolean;
+}) => {
   const value = useMemo(() => {
     if (!syntaxHighlighting) {
       return originalValue;
@@ -523,7 +529,7 @@ const AsyncIconButton = ({ isActive, tooltipSuffix, ...rest }: AsyncIconButtonPr
   return <IconButton {...rest} variant={active ? 'primary' : undefined} tooltip={tooltip + tooltipSuffix} />;
 };
 
-function filterFields(fields: FieldDef[], search: string) {
+export function filterFields(fields: FieldDef[], search: string) {
   const keys = fields.map((field) => field.keys.join(' '));
   const keysIdx = fuzzySearch(keys, search);
   const values = fields.map((field) => field.values.join(' '));
