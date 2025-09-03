@@ -495,7 +495,7 @@ func (b *DashboardsAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver
 		RequireDeprecatedInternalID: true,
 	}
 
-	if b.isMultiTenant {
+	if b.isStandalone {
 		// TODO: Sets default root permissions
 	} else {
 		// Sets default root permissions
