@@ -16,7 +16,6 @@ import { config, locationService } from '@grafana/runtime';
 import { LocalValueVariable, sceneGraph, VizPanel, VizPanelMenu } from '@grafana/scenes';
 import { DataQuery, OptionsWithLegend } from '@grafana/schema';
 import appEvents from 'app/core/app_events';
-import grafanaConfig from 'app/core/config';
 import { createErrorNotification } from 'app/core/copy/appNotification';
 import { notifyApp } from 'app/core/reducers/appNotification';
 import { contextSrv } from 'app/core/services/context_srv';
@@ -99,7 +98,6 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
       });
     }
 
-    // Include viewersCanEdit config for Grafana Play compatibility
     if (dashboard.canEditDashboard() && dashboard.state.editable && !isReadOnlyRepeat && !isEditingPanel) {
       // We could check isEditing here but I kind of think this should always be in the menu,
       // and going into panel edit should make the dashboard go into edit mode is it's not already
