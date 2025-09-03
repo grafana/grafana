@@ -62,9 +62,8 @@ type localConfig struct {
 }
 
 type controllerConfig struct {
-	availableRepositoryTypes map[provisioning.RepositoryType]struct{}
+	repositoryTypes          map[provisioning.RepositoryType]struct{}
 	localConfig              localConfig
-	repositoryTypes          []string
 	tokenExchangeClient      *authn.TokenExchangeClient
 	restCfg                  *rest.Config
 	client                   *client.Clientset
@@ -329,8 +328,8 @@ func runJobController(opts standalone.BuildInfo, c *cli.Context, cfg *setting.Cf
 
 	// TODO: This depends on the different flavor of Grafana
 	// https://github.com/grafana/git-ui-sync-project/issues/495
-	extras := make([]repository.Extra, 0, len(controllerCfg.availableRepositoryTypes))
-	for t := range controllerCfg.availableRepositoryTypes {
+	extras := make([]repository.Extra, 0, len(controllerCfg.repositoryTypes))
+	for t := range controllerCfg.repositoryTypes {
 		switch t {
 		case provisioning.GitHubRepositoryType:
 			extras = append(extras, github.Extra(
@@ -496,7 +495,7 @@ func setupFromConfig(cfg *setting.Cfg) (controllerCfg *controllerConfig, err err
 	}
 
 	return &controllerConfig{
-		availableRepositoryTypes: availableRepositoryTypes,
+		repositoryTypes:          availableRepositoryTypes,
 		localConfig:              localCfg,
 		tokenExchangeClient:      tokenExchangeClient,
 		restCfg:                  config,
