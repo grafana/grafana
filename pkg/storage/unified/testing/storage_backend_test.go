@@ -18,7 +18,10 @@ func TestBadgerKVStorageBackend(t *testing.T) {
 		t.Cleanup(func() {
 			_ = db.Close()
 		})
-		backend, err := resource.NewKvStorageBackend(resource.NewBadgerKV(db))
+		kvOpts := resource.KvBackendOptions{
+			KvStore: resource.NewBadgerKV(db),
+		}
+		backend, err := resource.NewKvStorageBackend(kvOpts)
 		require.NoError(t, err)
 		return backend
 	}, &TestOptions{
