@@ -1,3 +1,5 @@
+import createCache from "@emotion/cache";
+import { CacheProvider as EmotionCacheProvider } from "@emotion/react";
 import { UNSAFE_PortalProvider } from '@react-aria/overlays';
 import { Action, KBarProvider } from 'kbar';
 import { Component, ComponentType, Fragment, ReactNode } from 'react';
@@ -106,6 +108,13 @@ export class AppWrapper extends Component<AppWrapperProps, AppWrapperState> {
       providers: enterpriseProviders,
     };
 
+    // NI fork: Disable Emotion's "speedy" stylesheets optimization, due to
+    // incorrect resolution of relative paths in Global styles in iframe in Firefox.
+    const emotionCache = createCache({
+      key: 'ni-emotion-cache-disable-speedy-stylesheets',
+      speedy: false
+    });
+
     const MaybeTimeRangeProvider = config.featureToggles.timeRangeProvider ? TimeRangeProvider : Fragment;
 
     return (
@@ -113,29 +122,31 @@ export class AppWrapper extends Component<AppWrapperProps, AppWrapperState> {
         <ErrorBoundaryAlert boundaryName="app-wrapper" style="page">
           <GrafanaContext.Provider value={app.context}>
             <ThemeProvider value={config.theme2}>
-              <CacheProvider name={this.iconCacheID}>
-                <KBarProvider
-                  actions={[]}
-                  options={{ enableHistory: true, callbacks: { onSelectAction: commandPaletteActionSelected } }}
-                >
-                  <MaybeTimeRangeProvider>
-                    <ScopesContextProvider>
-                      <ExtensionRegistriesProvider registries={pluginExtensionRegistries}>
-                        <ExtensionSidebarContextProvider>
-                          <UNSAFE_PortalProvider getContainer={getPortalContainer}>
-                            <GlobalStyles />
-                            <div className="grafana-app">
-                              <RouterWrapper {...routerWrapperProps} />
-                              <LiveConnectionWarning />
-                              <PortalContainer />
-                            </div>
-                          </UNSAFE_PortalProvider>
-                        </ExtensionSidebarContextProvider>
-                      </ExtensionRegistriesProvider>
-                    </ScopesContextProvider>
-                  </MaybeTimeRangeProvider>
-                </KBarProvider>
-              </CacheProvider>
+              <EmotionCacheProvider value={emotionCache}>
+                <CacheProvider name={this.iconCacheID}>
+                  <KBarProvider
+                    actions={[]}
+                    options={{ enableHistory: true, callbacks: { onSelectAction: commandPaletteActionSelected } }}
+                  >
+                    <MaybeTimeRangeProvider>
+                      <ScopesContextProvider>
+                        <ExtensionRegistriesProvider registries={pluginExtensionRegistries}>
+                          <ExtensionSidebarContextProvider>
+                            <UNSAFE_PortalProvider getContainer={getPortalContainer}>
+                              <GlobalStyles />
+                              <div className="grafana-app">
+                                <RouterWrapper {...routerWrapperProps} />
+                                <LiveConnectionWarning />
+                                <PortalContainer />
+                              </div>
+                            </UNSAFE_PortalProvider>
+                          </ExtensionSidebarContextProvider>
+                        </ExtensionRegistriesProvider>
+                      </ScopesContextProvider>
+                    </MaybeTimeRangeProvider>
+                  </KBarProvider>
+                </CacheProvider>
+              </EmotionCacheProvider>
             </ThemeProvider>
           </GrafanaContext.Provider>
         </ErrorBoundaryAlert>
