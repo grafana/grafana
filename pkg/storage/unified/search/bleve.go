@@ -528,17 +528,19 @@ func (b *bleveBackend) findPreviousFileBasedIndex(resourceDir string, resourceVe
 			continue
 		}
 
-		cnt, err := idx.DocCount()
-		if err != nil {
-			b.log.Debug("error getting count from index", "indexDir", indexDir, "err", err)
-			_ = idx.Close()
-			continue
-		}
+		if !searchAfterWrite {
+			cnt, err := idx.DocCount()
+			if err != nil {
+				b.log.Debug("error getting count from index", "indexDir", indexDir, "err", err)
+				_ = idx.Close()
+				continue
+			}
 
-		if uint64(size) != cnt {
-			b.log.Debug("index count mismatch. ignoring index", "indexDir", indexDir, "size", size, "cnt", cnt)
-			_ = idx.Close()
-			continue
+			if uint64(size) != cnt {
+				b.log.Debug("index count mismatch. ignoring index", "indexDir", indexDir, "size", size, "cnt", cnt)
+				_ = idx.Close()
+				continue
+			}
 		}
 
 		indexRV, err := getRV(idx)

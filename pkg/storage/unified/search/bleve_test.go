@@ -859,8 +859,6 @@ func TestBuildIndex(t *testing.T) {
 		Resource:  "resource",
 	}
 
-	tmpDir := t.TempDir()
-
 	type RV string
 	const (
 		RVLessThan   RV = "less"
@@ -872,7 +870,11 @@ func TestBuildIndex(t *testing.T) {
 			for _, sameSize := range []bool{false, true} {
 				for _, documentRV := range []RV{RVLessThan, RVSame, RVBiggerThan} {
 					shouldRebuild := false
-					if rebuild || !sameSize || (!searchAfterWrite && documentRV == RVBiggerThan) {
+					if rebuild {
+						shouldRebuild = true
+					} else if !searchAfterWrite && !sameSize {
+						shouldRebuild = true
+					} else if !searchAfterWrite && documentRV == RVBiggerThan {
 						shouldRebuild = true
 					}
 
@@ -911,6 +913,8 @@ func TestBuildIndex(t *testing.T) {
 					}
 
 					t.Run(testName, func(t *testing.T) {
+						tmpDir := t.TempDir()
+
 						var size int64 = 10
 						var rv int64 = 100
 						backend1, _ := createBleveBackendAndIndex(t, tmpDir, ns, size, rv, 10, rebuild, searchAfterWrite)
@@ -931,9 +935,9 @@ func TestBuildIndex(t *testing.T) {
 						cnt, err := idx.DocCount(context.Background(), "")
 						require.NoError(t, err)
 						if shouldRebuild {
-							require.Equal(t, int64(1000), cnt)
+							require.Equal(t, int64(1000), cnt, "Index has been not rebuilt")
 						} else {
-							require.Equal(t, int64(10), cnt)
+							require.Equal(t, int64(10), cnt, "Index has not been reused")
 						}
 						backend2.CloseAllIndexes()
 					})
