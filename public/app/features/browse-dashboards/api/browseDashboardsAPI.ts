@@ -76,7 +76,7 @@ export const browseDashboardsAPI = createApi({
           ? result.map((folder) => ({ type: 'getFolder', id: folder.uid }))
           : [{ type: 'getFolder', id: 'EMPTY_RESULT' }],
       query: ({ parentUid, limit, page, permission }) => ({
-        url: '/folders',
+        url: { foo: '/folders' } as any,
         params: { parentUid, limit, page, permission },
       }),
     }),
