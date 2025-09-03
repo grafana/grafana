@@ -91,12 +91,12 @@ func (api *API) StarDashboardByUID(c *contextmodel.ReqContext) response.Response
 		return response.Error(http.StatusBadRequest, "Only users and service accounts can star dashboards", nil)
 	}
 
-	_, rsp := api.getDashboardHelper(c.Req.Context(), c.GetOrgID(), 0, uid)
+	dash, rsp := api.getDashboardHelper(c.Req.Context(), c.GetOrgID(), 0, uid)
 	if rsp != nil {
 		return rsp
 	}
 
-	cmd := star.StarDashboardCommand{UserID: userID, DashboardUID: uid, OrgID: c.GetOrgID(), Updated: time.Now()}
+	cmd := star.StarDashboardCommand{UserID: userID, DashboardID: dash.ID, DashboardUID: uid, OrgID: c.GetOrgID(), Updated: time.Now()}
 
 	if err := api.starService.Add(c.Req.Context(), &cmd); err != nil {
 		return response.Error(http.StatusInternalServerError, "Failed to star dashboard", err)

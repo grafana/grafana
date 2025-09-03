@@ -31,10 +31,16 @@ func (s *sqlStore) Get(ctx context.Context, query *star.IsStarredByUserQuery) (b
 
 func (s *sqlStore) Insert(ctx context.Context, cmd *star.StarDashboardCommand) error {
 	return s.db.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
+		// nolint:staticcheck
+		if cmd.DashboardID == 0 {
+			cmd.DashboardID = time.Now().UnixMicro() + rand.Int63n(5000) // random unique value
+		}
+
 		entity := star.Star{
-			UserID:       cmd.UserID,
+			UserID: cmd.UserID,
+			// nolint:staticcheck
+			DashboardID:  cmd.DashboardID,
 			DashboardUID: cmd.DashboardUID,
-			DashboardID:  time.Now().UnixMicro() + rand.Int63n(5000), // random unique value
 			OrgID:        cmd.OrgID,
 			Updated:      cmd.Updated,
 		}
