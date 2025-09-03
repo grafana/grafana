@@ -2,8 +2,9 @@ import { createContext, ReactNode, useContext } from 'react';
 
 import { CoreApp } from '@grafana/data';
 import { DataQuery } from '@grafana/schema';
+import { QueryTemplate } from 'app/features/explore/QueryLibrary/types';
 
-import { OnSelectQueryType, QueryTemplate, QueryLibraryEventsPropertyMap } from './types';
+import { OnSelectQueryType, QueryLibraryEventsPropertyMap } from './types';
 
 export type QueryLibraryDrawerOptions = {
   datasourceFilters?: string[];
