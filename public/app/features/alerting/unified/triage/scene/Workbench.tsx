@@ -37,6 +37,11 @@ export function WorkbenchRenderer() {
 
 // @TODO narrower types for PanelData! (if possible)
 export function convertToWorkbenchRows(data: PanelData, groupBy: string[] = []): WorkbenchRow[] {
+  // @TODO don't know why we need this but seems to crash sometimes
+  if (!data.series.at(0)?.fields) {
+    return [];
+  }
+
   const series = data.series[0];
   const fields = series.fields;
 

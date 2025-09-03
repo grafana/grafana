@@ -14,12 +14,21 @@ interface GroupRowProps {
   metadata?: ReactNode;
   actions?: ReactNode;
   content?: ReactNode;
+  isOpenByDefault?: boolean;
   children?: ReactNode;
 }
 
-export const GroupRow = ({ width, title, metadata, actions, content, children }: GroupRowProps) => {
+export const GroupRow = ({
+  width,
+  title,
+  metadata,
+  actions,
+  content,
+  isOpenByDefault = false,
+  children,
+}: GroupRowProps) => {
   const styles = useStyles2(getStyles);
-  const [isOpen, handleToggle] = useToggle(false);
+  const [isOpen, handleToggle] = useToggle(isOpenByDefault);
 
   const hasChildren = Boolean(children);
   const showChildContent = isOpen && hasChildren;

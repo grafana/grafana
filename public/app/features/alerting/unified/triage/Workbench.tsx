@@ -13,10 +13,10 @@ import { EditorColumnHeader } from '../components/contact-points/templates/Edito
 import { GroupRow } from './GroupRow';
 import { TimelineHeader } from './Timeline';
 import { WorkbenchProvider } from './WorkbenchContext';
-import { StateChangeChart } from './stateChangeChart/StateChangeChart';
-import { AlertRuleRow, Domain, Filter, GenericGroupedRow, WorkbenchRow } from './types';
 import { AlertRuleDetails } from './scene/AlertRuleDetails';
 import { AlertRuleSummary } from './scene/AlertRuleSummary';
+import { StateChangeChart } from './stateChangeChart/StateChangeChart';
+import { AlertRuleRow, Domain, Filter, GenericGroupedRow, WorkbenchRow } from './types';
 
 type WorkbenchProps = {
   domain: Domain;
@@ -166,6 +166,7 @@ function renderWorkbenchRow(
         title={groupedRow.metadata.value}
         actions={<Label size="sm" value={groupedRow.metadata.label} />}
         content={<StateChangeChart domain={domain} />}
+        isOpenByDefault={true}
       >
         {groupedRow.rows.map((childRow, childIndex) =>
           renderWorkbenchRow(childRow, leftColumnWidth, domain, `${key}-${generateRowKey(childRow, childIndex)}`)
