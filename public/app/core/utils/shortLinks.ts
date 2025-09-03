@@ -10,12 +10,17 @@ import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScen
 import { getDashboardUrl } from 'app/features/dashboard-scene/utils/getDashboardUrl';
 import { dispatch } from 'app/store/store';
 
+import { BASE_URL as k8sShortURLBaseAPI } from '../../api/clients/shorturl/v1alpha1/baseAPI';
 import { ShareLinkConfiguration } from '../../features/dashboard-scene/sharing/ShareButton/utils';
 
 import { copyStringToClipboard } from './explore';
 
 function buildHostUrl() {
   return `${window.location.protocol}//${window.location.host}${config.appSubUrl}`;
+}
+
+function buildShortUrl(key?: string) {
+  return `${window.location.protocol}//${window.location.host}${config.appSubUrl}/goto/${key}`;
 }
 
 function getRelativeURLPath(url: string) {
@@ -25,10 +30,23 @@ function getRelativeURLPath(url: string) {
 
 export const createShortLink = memoizeOne(async function (path: string) {
   try {
-    const shortLink = await getBackendSrv().post(`/api/short-urls`, {
-      path: getRelativeURLPath(path),
-    });
-    return shortLink.url;
+    if (config.featureToggles.useKubernetesShortURLsAPI) {
+      // TODO: this is not ideal, we should use the RTK API but we can't call a hook from here and
+      // this util function is being called from several places, will require a bigger refactor including some code that
+      // is deprecated.
+      const k8sShortUrl = await getBackendSrv().post(`${k8sShortURLBaseAPI}/shorturls`, {
+        spec: {
+          path: getRelativeURLPath(path),
+        },
+      });
+      return buildShortUrl(k8sShortUrl?.metadata?.name);
+    } else {
+      // Old short URL API
+      const shortLink = await getBackendSrv().post(`/api/short-urls`, {
+        path: getRelativeURLPath(path),
+      });
+      return shortLink.url;
+    }
   } catch (err) {
     console.error('Error when creating shortened link: ', err);
     dispatch(notifyApp(createErrorNotification('Error generating shortened link')));

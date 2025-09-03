@@ -3,6 +3,7 @@ import { AnyAction, combineReducers } from 'redux';
 
 import { alertingAPI as alertingPackageAPI } from '@grafana/alerting/unstable';
 import { dashboardAPIv0alpha1 } from 'app/api/clients/dashboard/v0alpha1';
+import { shortURLAPIv1alpha1 } from 'app/api/clients/shorturl/v1alpha1';
 import sharedReducers from 'app/core/reducers';
 import ldapReducers from 'app/features/admin/state/reducers';
 import alertingReducers from 'app/features/alerting/state/reducers';
@@ -73,6 +74,7 @@ const rootReducers = {
   [folderAPIv1beta1.reducerPath]: folderAPIv1beta1.reducer,
   [advisorAPIv0alpha1.reducerPath]: advisorAPIv0alpha1.reducer,
   [dashboardAPIv0alpha1.reducerPath]: dashboardAPIv0alpha1.reducer,
+  [shortURLAPIv1alpha1.reducerPath]: shortURLAPIv1alpha1.reducer,
   // PLOP_INJECT_REDUCER
   // Used by the API client generator
 };

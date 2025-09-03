@@ -273,9 +273,13 @@ export interface FeatureToggles {
   */
   kubernetesDashboards?: boolean;
   /**
-  * Routes short url requests from /api to the /apis endpoint
+  * Enables k8s short url api and uses it under the hood when handling legacy /api
   */
   kubernetesShortURLs?: boolean;
+  /**
+  * Routes short url requests from /api to the /apis endpoint in the frontend. Depends on kubernetesShortURLs
+  */
+  useKubernetesShortURLsAPI?: boolean;
   /**
   * Disable schema validation for dashboards/v1
   */
