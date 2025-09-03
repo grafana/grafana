@@ -135,6 +135,7 @@ func RequestMetrics(features featuremgmt.FeatureToggles, cfg *setting.Cfg, promR
 				WithLabelValues(labelValues...)
 
 			elapsedTime := time.Since(now).Seconds()
+			responseSize := float64(rw.Size())
 
 			if traceID := tracing.TraceIDFromContext(r.Context(), true); traceID != "" {
 				// Need to type-convert the Observer to an
@@ -143,11 +144,13 @@ func RequestMetrics(features featuremgmt.FeatureToggles, cfg *setting.Cfg, promR
 				durationHistogram.(prometheus.ExemplarObserver).ObserveWithExemplar(
 					elapsedTime, prometheus.Labels{"traceID": traceID},
 				)
+				sizeHistogram.(prometheus.ExemplarObserver).ObserveWithExemplar(
+					responseSize, prometheus.Labels{"traceID": traceID},
+				)
 			} else {
 				durationHistogram.Observe(elapsedTime)
+				sizeHistogram.Observe(responseSize)
 			}
-
-			sizeHistogram.Observe(float64(rw.Size()))
 
 			switch {
 			case strings.HasPrefix(r.RequestURI, "/api/datasources/proxy"):
