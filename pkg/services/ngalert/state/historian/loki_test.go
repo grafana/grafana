@@ -206,13 +206,13 @@ func TestRemoteLokiBackend(t *testing.T) {
 }
 
 func TestBuildLogQuery(t *testing.T) {
-	maxQuerySize := 110
 	cases := []struct {
-		name       string
-		query      models.HistoryQuery
-		folderUIDs []string
-		exp        []string
-		expErr     error
+		name         string
+		query        models.HistoryQuery
+		folderUIDs   []string
+		maxQuerySize int
+		exp          []string
+		expErr       error
 	}{
 		{
 			name:  "default includes state history label and orgID label",
@@ -328,11 +328,54 @@ func TestBuildLogQuery(t *testing.T) {
 			folderUIDs: []string{"folder-1", "folder-2", "folder-" + strings.Repeat("!", 14)},
 			expErr:     ErrLokiQueryTooLong,
 		},
+		{
+			name: "filters by previous state",
+			query: models.HistoryQuery{
+				OrgID:    123,
+				Previous: "Normal",
+			},
+			exp: []string{`{orgID="123",from="state-history"} | json | previous=~"^Normal.*"`},
+		},
+		{
+			name: "filters by current state",
+			query: models.HistoryQuery{
+				OrgID:   123,
+				Current: "Alerting",
+			},
+			exp: []string{`{orgID="123",from="state-history"} | json | current=~"^Alerting.*"`},
+		},
+		{
+			name: "filters by both previous and current state",
+			query: models.HistoryQuery{
+				OrgID:    123,
+				Previous: "Normal",
+				Current:  "Alerting",
+			},
+			exp: []string{`{orgID="123",from="state-history"} | json | previous=~"^Normal.*" | current=~"^Alerting.*"`},
+		},
+		{
+			name: "combines state filters with other filters",
+			query: models.HistoryQuery{
+				OrgID:    123,
+				RuleUID:  "rule-uid",
+				Previous: "Pending",
+				Current:  "Alerting",
+				Labels: map[string]string{
+					"instance": "localhost:9090",
+				},
+			},
+			maxQuerySize: 200,
+			exp:          []string{`{orgID="123",from="state-history"} | json | ruleUID="rule-uid" | previous=~"^Pending.*" | current=~"^Alerting.*" | labels_instance="localhost:9090"`},
+		},
 	}
 
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			res, err := BuildLogQuery(tc.query, tc.folderUIDs, maxQuerySize)
+			querySize := tc.maxQuerySize
+			if querySize == 0 {
+				querySize = 110 // default size
+			}
+			res, err := BuildLogQuery(tc.query, tc.folderUIDs, querySize)
 			if tc.expErr != nil {
 				require.ErrorIs(t, err, tc.expErr)
 				return
@@ -340,7 +383,7 @@ func TestBuildLogQuery(t *testing.T) {
 			require.NoError(t, err)
 			assert.EqualValues(t, tc.exp, res)
 			for i, q := range res {
-				assert.LessOrEqualf(t, len(q), maxQuerySize, "query at index %d exceeded max query size. Query: %s", i, q)
+				assert.LessOrEqualf(t, len(q), querySize, "query at index %d exceeded max query size. Query: %s", i, q)
 			}
 		})
 	}

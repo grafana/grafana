@@ -465,6 +465,20 @@ func buildQueryTail(query models.HistoryQuery) (string, error) {
 		b.WriteString(" | panelID=")
 		b.WriteString(strconv.FormatInt(query.PanelID, 10))
 	}
+	if query.Previous != "" {
+		b.WriteString(" | previous=~")
+		_, err := fmt.Fprintf(&b, "%q", "^"+regexp.QuoteMeta(query.Previous)+".*")
+		if err != nil {
+			return "", err
+		}
+	}
+	if query.Current != "" {
+		b.WriteString(" | current=~")
+		_, err := fmt.Fprintf(&b, "%q", "^"+regexp.QuoteMeta(query.Current)+".*")
+		if err != nil {
+			return "", err
+		}
+	}
 
 	requiredSize := 0
 	labelKeys := make([]string, 0, len(query.Labels))
@@ -491,6 +505,8 @@ func queryHasLogFilters(query models.HistoryQuery) bool {
 	return query.RuleUID != "" ||
 		query.DashboardUID != "" ||
 		query.PanelID != 0 ||
+		query.Previous != "" ||
+		query.Current != "" ||
 		len(query.Labels) > 0
 }
 

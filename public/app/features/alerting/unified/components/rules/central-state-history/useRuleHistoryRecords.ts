@@ -8,13 +8,21 @@ import { parsePromQLStyleMatcherLooseSafe } from '../../../utils/matchers';
 import { LogRecord } from '../state-history/common';
 import { isLine, isNumbers } from '../state-history/useRuleHistoryRecords';
 
-import { StateFilterValues } from './CentralAlertHistoryScene';
+import { StateFilterValues } from './constants';
 
-const emptyFilters = {
+type StateFilter = (typeof StateFilterValues)[keyof typeof StateFilterValues];
+
+const emptyFilters: HistoryRecordFilters = {
   labels: '',
-  stateFrom: 'all',
-  stateTo: 'all',
+  stateFrom: StateFilterValues.all,
+  stateTo: StateFilterValues.all,
 };
+
+interface HistoryRecordFilters {
+  labels: string;
+  stateFrom?: StateFilter;
+  stateTo?: StateFilter;
+}
 
 /**
  * This hook filters the history records based on the label, stateTo and stateFrom filters.
@@ -24,12 +32,12 @@ const emptyFilters = {
  * @param stateHistory the original history records
  * @returns the filtered history records
  */
-export function useRuleHistoryRecords(stateHistory?: DataFrameJSON, filters = emptyFilters) {
+export function useRuleHistoryRecords(stateHistory?: DataFrameJSON, filters: HistoryRecordFilters = emptyFilters) {
   return useMemo(() => ruleHistoryToRecords(stateHistory, filters), [filters, stateHistory]);
 }
 
-export function ruleHistoryToRecords(stateHistory?: DataFrameJSON, filters = emptyFilters) {
-  const { labels, stateFrom, stateTo } = filters;
+export function ruleHistoryToRecords(stateHistory?: DataFrameJSON, filters: HistoryRecordFilters = emptyFilters) {
+  const { labels, stateFrom = StateFilterValues.all, stateTo = StateFilterValues.all } = filters;
 
   if (!stateHistory?.data) {
     return { historyRecords: [] };
