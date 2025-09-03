@@ -10,10 +10,13 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana/pkg/services/ngalert/lokiclient"
+	"github.com/grafana/alerting/notify/historian/lokiclient"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/exp/maps"
+
+	alertingInstrument "github.com/grafana/alerting/http/instrument"
+	"github.com/grafana/alerting/http/instrument/instrumenttest"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/db"
@@ -23,7 +26,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/annotations/testutil"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/ngalert/client"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -811,7 +813,7 @@ func compareAnnotationItem(t *testing.T, expected, actual *annotations.ItemDTO) 
 }
 
 type FakeLokiClient struct {
-	client        client.Requester
+	client        alertingInstrument.Requester
 	cfg           lokiclient.LokiConfig
 	metrics       *metrics.Historian
 	log           log.Logger
@@ -820,15 +822,15 @@ type FakeLokiClient struct {
 
 func NewFakeLokiClient() *FakeLokiClient {
 	url, _ := url.Parse("http://some.url")
-	req := lokiclient.NewFakeRequester()
+	req := instrumenttest.NewFakeRequester()
 	metrics := metrics.NewHistorianMetrics(prometheus.NewRegistry(), "annotations_test")
 
 	return &FakeLokiClient{
-		client: client.NewTimedClient(req, metrics.WriteDuration),
+		client: alertingInstrument.NewTimedClient(req, metrics.WriteDuration),
 		cfg: lokiclient.LokiConfig{
 			WritePathURL:   url,
 			ReadPathURL:    url,
-			Encoder:        lokiclient.JsonEncoder{},
+			Encoder:        lokiclient.JSONEncoder{},
 			MaxQueryLength: 721 * time.Hour,
 			MaxQuerySize:   65536,
 		},
