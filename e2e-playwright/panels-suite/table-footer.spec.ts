@@ -2,9 +2,9 @@ import { Page, Locator } from '@playwright/test';
 
 import { test, expect } from '@grafana/plugin-e2e';
 
-import { getCell, getColumnIdx } from './table-utils';
+import { getColumnIdx } from './table-utils';
 
-const DASHBOARD_UID = '677402ba-f392-4a67-ab46-fffc0e4b39a2';
+const DASHBOARD_UID = '1ea31838-e4e8-4aa0-9333-1d4c3fa95641';
 
 const waitForTableLoad = async (loc: Page | Locator) => {
   await expect(loc.locator('.rdg')).toBeVisible();
@@ -14,7 +14,7 @@ test.describe('Panels test: Table - Footer', { tag: ['@panels', '@table'] }, () 
   test('Footer unaffected by filtering', async ({ gotoDashboardPage, selectors, page }) => {
     const dashboardPage = await gotoDashboardPage({
       uid: DASHBOARD_UID,
-      queryParams: new URLSearchParams({ editPanel: '2' }),
+      queryParams: new URLSearchParams({ editPanel: '4' }),
     });
 
     await expect(
@@ -63,7 +63,7 @@ test.describe('Panels test: Table - Footer', { tag: ['@panels', '@table'] }, () 
   test('Footer unaffected by sorting', async ({ gotoDashboardPage, selectors, page }) => {
     const dashboardPage = await gotoDashboardPage({
       uid: DASHBOARD_UID,
-      queryParams: new URLSearchParams({ editPanel: '2' }),
+      queryParams: new URLSearchParams({ editPanel: '4' }),
     });
 
     await expect(
@@ -117,7 +117,7 @@ test.describe('Panels test: Table - Footer', { tag: ['@panels', '@table'] }, () 
   test('Single-sum reducer label is hidden', async ({ gotoDashboardPage, selectors, page }) => {
     const dashboardPage = await gotoDashboardPage({
       uid: DASHBOARD_UID,
-      queryParams: new URLSearchParams({ editPanel: '4' }),
+      queryParams: new URLSearchParams({ editPanel: '6' }),
     });
 
     await expect(
@@ -137,7 +137,7 @@ test.describe('Panels test: Table - Footer', { tag: ['@panels', '@table'] }, () 
   test('Count rows for normal case', async ({ gotoDashboardPage, selectors, page }) => {
     const dashboardPage = await gotoDashboardPage({
       uid: DASHBOARD_UID,
-      queryParams: new URLSearchParams({ editPanel: '5' }),
+      queryParams: new URLSearchParams({ editPanel: '7' }),
     });
 
     await expect(
@@ -157,7 +157,7 @@ test.describe('Panels test: Table - Footer', { tag: ['@panels', '@table'] }, () 
   test('Count rows with a few hidden columns', async ({ gotoDashboardPage, selectors, page }) => {
     const dashboardPage = await gotoDashboardPage({
       uid: DASHBOARD_UID,
-      queryParams: new URLSearchParams({ editPanel: '6' }),
+      queryParams: new URLSearchParams({ editPanel: '8' }),
     });
 
     await expect(
