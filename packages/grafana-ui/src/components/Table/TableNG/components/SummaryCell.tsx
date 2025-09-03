@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import clsx from 'clsx';
-import { CSSProperties, useMemo } from 'react';
+import { CSSProperties, ReactNode, useMemo } from 'react';
 
 import {
   GrafanaTheme2,
@@ -16,18 +16,20 @@ import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { TableFooterOptions } from '@grafana/schema';
 
-import { useStyles2 } from '../../../../themes/ThemeContext';
+import { useStyles2, useTheme2 } from '../../../../themes/ThemeContext';
+import { getDefaultCellStyles } from '../styles';
 import { TableRow } from '../types';
-import { getDisplayName } from '../utils';
+import { getDisplayName, TextAlign } from '../utils';
 
 interface SummaryCellProps {
   rows: TableRow[];
   field: Field;
   footers: Array<TableFooterOptions | undefined>;
+  textAlign: TextAlign;
   omitCountAll?: boolean;
   rowLabel?: boolean;
   hideLabel?: boolean;
-  textAlign: CSSProperties['textAlign'];
+  justifyContent?: CSSProperties['justifyContent'];
 }
 
 export interface ReducerResult {
@@ -65,19 +67,12 @@ const isNonMathReducer = (reducer: string) => isReducer(reducer) && nonMathReduc
 const noFormattingReducers = new Set<ReducerID>([ReducerID.count, ReducerID.countAll]);
 const shouldReducerSkipFormatting = (reducer: string) => isReducer(reducer) && noFormattingReducers.has(reducer);
 
-export const SummaryCell = ({
-  rows,
-  footers,
-  field,
-  omitCountAll = false,
-  hideLabel = false,
-  rowLabel = false,
-  textAlign,
-}: SummaryCellProps) => {
-  const styles = useStyles2(getStyles);
-  const displayName = getDisplayName(field);
-
-  const reducerResultsEntries = useMemo<Array<[string, ReducerResult | null]>>(() => {
+export const useReducerEntries = (
+  field: Field,
+  rows: TableRow[],
+  displayName: string
+): Array<[string, ReducerResult | null]> => {
+  return useMemo<Array<[string, ReducerResult | null]>>(() => {
     const reducers: string[] = field.config.custom?.footer?.reducers ?? [];
 
     if (
@@ -142,87 +137,102 @@ export const SummaryCell = ({
       ];
     });
   }, [field, rows, displayName]);
+};
 
-  if (reducerResultsEntries.length === 0) {
-    // if labelled and there are some footers, we will show the label for the first footer we find in the list of footers.
-    if (rowLabel && footers.some((f) => f)) {
-      const firstFooter = footers.find((f) => (f?.reducers?.length ?? 0) > 0);
-      return (
-        <div className={styles.footerCell}>
-          {firstFooter?.reducers?.map((reducerId) => {
-            const reducerName = getReducerName(reducerId);
-            return (
-              <div key={reducerId} className={styles.footerItem}>
-                <div
-                  data-testid={selectors.components.Panels.Visualization.TableNG.Footer.ReducerLabel}
-                  className={styles.footerItemLabel}
-                >
-                  {reducerName}
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      );
-    }
+const SummaryCellItem = ({ children, styles }: { children: ReactNode; styles: ReturnType<typeof getStyles> }) => (
+  <div className={styles.footerItem}>{children}</div>
+);
 
-    return <div data-testid="summary-cell-empty" className={styles.footerCell} />;
-  }
+const SummaryCellLabel = ({ children, styles }: { children: ReactNode; styles: ReturnType<typeof getStyles> }) => (
+  <div
+    data-testid={selectors.components.Panels.Visualization.TableNG.Footer.ReducerLabel}
+    className={styles.footerItemLabel}
+  >
+    {children}
+  </div>
+);
+
+const SummaryCellValue = ({ children, styles }: { children: ReactNode; styles: ReturnType<typeof getStyles> }) => (
+  <div data-testid={selectors.components.Panels.Visualization.TableNG.Footer.Value} className={styles.footerItemValue}>
+    {children}
+  </div>
+);
+
+export const SummaryCell = ({
+  rows,
+  footers,
+  field,
+  omitCountAll = false,
+  hideLabel = false,
+  rowLabel = false,
+  textAlign,
+}: SummaryCellProps) => {
+  const styles = useStyles2(getStyles);
+  const theme = useTheme2();
+  const defaultFooterCellStyles = getDefaultCellStyles(theme, {
+    textAlign,
+    shouldOverflow: true,
+    textWrap: false,
+  });
+  const displayName = getDisplayName(field);
+  const reducerResultsEntries = useReducerEntries(field, rows, displayName);
+  const cellClass = clsx(styles.footerCell, defaultFooterCellStyles);
 
   // Render each reducer in the footer
   return (
-    <div className={styles.footerCell}>
+    <div className={cellClass}>
       {reducerResultsEntries.map(([reducerId, reducerResultEntry]) => {
         const isCountAll = reducerId === ReducerID.countAll;
 
         // empty reducer entry, but there may be more after - render a spacer.
         if ((isCountAll && omitCountAll) || reducerResultEntry === null) {
           return (
-            <div key={reducerId} className={styles.footerItem}>
+            <SummaryCellItem styles={styles} key={reducerId}>
               &nbsp;
-            </div>
+            </SummaryCellItem>
           );
         }
 
         const { reducerName, formattedValue } = reducerResultEntry;
 
         return (
-          <div key={reducerId} className={styles.footerItem}>
-            {!hideLabel && (
-              <div
-                data-testid={selectors.components.Panels.Visualization.TableNG.Footer.ReducerLabel}
-                className={styles.footerItemLabel}
-              >
-                {reducerName}
-              </div>
-            )}
-            <div
-              data-testid={selectors.components.Panels.Visualization.TableNG.Footer.Value}
-              className={clsx(styles.footerItemValue, { [styles.footerItemAligned]: !hideLabel })}
-              style={{ textAlign: !hideLabel ? textAlign : undefined }}
-            >
-              {formattedValue}
-            </div>
-          </div>
+          <SummaryCellItem key={reducerId} styles={styles}>
+            {!hideLabel && <SummaryCellLabel styles={styles}>{reducerName}</SummaryCellLabel>}
+            <SummaryCellValue styles={styles}>{formattedValue}</SummaryCellValue>
+          </SummaryCellItem>
         );
       })}
+      {reducerResultsEntries.length === 0 &&
+        (rowLabel && footers.some((f) => f) ? (
+          <div className={cellClass}>
+            {footers
+              .find((f) => (f?.reducers?.length ?? 0) > 0)
+              ?.reducers?.map((reducerId) => {
+                const reducerName = getReducerName(reducerId);
+                return (
+                  <SummaryCellItem styles={styles} key={reducerId}>
+                    <SummaryCellLabel styles={styles}>{reducerName}</SummaryCellLabel>
+                  </SummaryCellItem>
+                );
+              })}
+          </div>
+        ) : (
+          <div data-testid="summary-cell-empty" className={cellClass} />
+        ))}
     </div>
   );
 };
 
 export const getStyles = (theme: GrafanaTheme2) => ({
   footerCell: css({
-    boxSizing: 'border-box',
-    display: 'flex',
     flexDirection: 'column',
-    height: '100%',
-    width: '100%',
+    minHeight: '100%',
   }),
   footerItem: css({
-    alignItems: 'center',
     display: 'flex',
     flexDirection: 'row',
     justifyContent: 'space-between',
+    alignItems: 'flex-start',
     width: '100%',
   }),
   footerItemLabel: css({
@@ -233,17 +243,11 @@ export const getStyles = (theme: GrafanaTheme2) => ({
     color: theme.colors.text.secondary,
     fontSize: theme.typography.bodySmall.fontSize,
     fontWeight: theme.typography.fontWeightLight,
-    marginRight: theme.spacing(1),
     textTransform: 'uppercase',
-    lineHeight: '22px',
   }),
   footerItemValue: css({
     overflow: 'hidden',
     textOverflow: 'ellipsis',
     fontWeight: theme.typography.fontWeightMedium,
-  }),
-  footerItemAligned: css({
-    display: 'block',
-    width: '100%',
   }),
 });

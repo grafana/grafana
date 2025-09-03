@@ -70,6 +70,16 @@ export const getGridStyles = (theme: GrafanaTheme2, enablePagination?: boolean, 
           },
         },
       },
+
+      '.rdg-summary-row >': {
+        [getActiveCellSelector()]: {
+          whiteSpace: 'pre-line',
+          height: '100%',
+          minHeight: 'fit-content',
+          overflowY: 'visible',
+          boxShadow: theme.shadows.z2,
+        },
+      },
     }),
     gridNested: css({
       height: '100%',

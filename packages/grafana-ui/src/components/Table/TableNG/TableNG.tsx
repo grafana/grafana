@@ -468,8 +468,6 @@ export function TableNG(props: TableNGProps) {
         const linkStyles = getLinkStyles(theme, canBeColorized);
         const cellParentStyles = clsx(defaultCellStyles, linkStyles);
         const maxHeightClassName = maxRowHeight ? getMaxHeightCellStyles(theme, cellStyleOptions) : undefined;
-        const isSumOnlyFooter =
-          field.config.custom?.footer?.reducers?.length === 1 && field.config.custom?.footer?.reducers[0] === 'sum';
 
         // TODO: in future extend this to ensure a non-classic color scheme is set with AutoCell
 
@@ -678,7 +676,7 @@ export function TableNG(props: TableNGProps) {
               omitCountAll={i > 0}
               textAlign={textAlign}
               rowLabel={isUniformFooter && i === 0}
-              hideLabel={isUniformFooter || isSumOnlyFooter}
+              hideLabel={isUniformFooter && i !== 0}
             />
           ),
         });
