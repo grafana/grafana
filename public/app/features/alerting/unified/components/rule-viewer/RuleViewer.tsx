@@ -3,11 +3,10 @@ import { chain, truncate } from 'lodash';
 import { useEffect, useState } from 'react';
 import { useMeasure } from 'react-use';
 
-import { FeatureState, NavModelItem, UrlQueryValue } from '@grafana/data';
+import { NavModelItem, UrlQueryValue } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import {
   Alert,
-  FeatureBadge,
   LinkButton,
   LoadingBar,
   Stack,
@@ -34,6 +33,7 @@ import { PromAlertingRuleState, PromRuleType } from 'app/types/unified-alerting-
 import { logError } from '../../Analytics';
 import { defaultPageNav } from '../../RuleViewer';
 import { RulePageEnrichmentSectionExtension } from '../../enterprise-components/enrichment/RuleViewerExtension';
+import { useRuleViewExtensionsNav } from '../../enterprise-components/rule-view-page/navigation';
 import { shouldUseAlertingListViewV2, shouldUsePrometheusRulesPrimary } from '../../featureToggles';
 import { isError, useAsync } from '../../hooks/useAsync';
 import { useRuleLocation } from '../../hooks/useCombinedRule';
@@ -91,6 +91,7 @@ const alertingListViewV2 = shouldUseAlertingListViewV2();
 const RuleViewer = () => {
   const { rule, identifier } = useAlertRule();
   const { pageNav, activeTab } = usePageNav(rule);
+  const styles = useStyles2(getStyles);
 
   // GMA /api/v1/rules endpoint is strongly consistent, so we don't need to check for consistency
   const shouldUseConsistencyCheck = isGrafanaRuleIdentifier(identifier)
@@ -132,7 +133,7 @@ const RuleViewer = () => {
         />
       )}
       actions={<RuleActionsButtons rule={rule} rulesSource={rule.namespace.rulesSource} />}
-      info={createMetadata(rule)}
+      info={createMetadata(rule, styles)}
       subTitle={
         <Stack direction="column">
           {summary}
@@ -190,7 +191,7 @@ const RuleViewer = () => {
   );
 };
 
-const createMetadata = (rule: CombinedRule): PageInfoItem[] => {
+const createMetadata = (rule: CombinedRule, styles: ReturnType<typeof getStyles>): PageInfoItem[] => {
   const { labels, annotations, group, rulerRule } = rule;
   const metadata: PageInfoItem[] = [];
 
@@ -203,7 +204,6 @@ const createMetadata = (rule: CombinedRule): PageInfoItem[] => {
   const hasLabels = labelsSize(labels) > 0;
 
   const interval = group.interval;
-  const styles = useStyles2(getStyles);
 
   // if the alert rule uses simplified routing, we'll show a link to the contact point
   if (rulerRuleType.grafana.alertingRule(rulerRule)) {
@@ -481,19 +481,6 @@ function usePageNav(rule: CombinedRule) {
         },
       },
       {
-        text: t('alerting.use-page-nav.page-nav.text.enrichment', 'Alert Enrichment'),
-        active: activeTab === ActiveTab.Enrichment,
-        onClick: () => {
-          setActiveTab(ActiveTab.Enrichment);
-        },
-        // hideFromTabs: !config.featureToggles.alertingEnrichmentPerRule,
-        tabSuffix: () => (
-          <span style={{ marginLeft: 8 }}>
-            <FeatureBadge featureState={FeatureState.new} />
-          </span>
-        ),
-      },
-      {
         text: t('alerting.use-page-nav.page-nav.text.versions', 'Versions'),
         active: activeTab === ActiveTab.VersionHistory,
         onClick: () => {
@@ -501,6 +488,8 @@ function usePageNav(rule: CombinedRule) {
         },
         hideFromTabs: !isGrafanaAlertRule && !isGrafanaRecordingRule,
       },
+      // Enterprise extensions can append additional tabs here
+      ...useRuleViewExtensionsNav(activeTab, (tab) => setActiveTab(tab as ActiveTab)),
     ],
     parentItem: {
       text: groupName,
