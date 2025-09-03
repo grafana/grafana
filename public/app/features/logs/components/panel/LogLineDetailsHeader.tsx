@@ -247,7 +247,7 @@ export const LogLineDetailsHeader = ({ focusLogLine, log, search, onSearch }: Pr
         />
         <IconButton
           name="times"
-          aria-label={t('logs.log-line-details.close', 'Close log details')}
+          tooltip={t('logs.log-line-details.close', 'Close log details')}
           onClick={closeDetails}
         />
       </div>
