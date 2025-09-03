@@ -256,7 +256,7 @@ export class GrafanaDatasource extends DataSourceWithBackend<GrafanaQuery> {
 
 /** Get the GrafanaDatasource instance */
 export async function getGrafanaDatasource() {
-  return (await getDataSourceSrv().get('-- Grafana --')) as GrafanaDatasource;
+  return await getDataSourceSrv().get('-- Grafana --');
 }
 
 export interface FileElement {
