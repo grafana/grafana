@@ -411,11 +411,13 @@
 /e2e-playwright/cloud-plugins-suite/ @grafana/partner-datasources
 /e2e-playwright/dashboard-new-layouts/ @grafana/dashboards-squad
 /e2e-playwright/dashboards-search-suite/ @grafana/dashboards-squad
+/e2e-playwright/dashboards/AdHocFiltersTest.json @grafana/datapro
 /e2e-playwright/dashboards/DashboardLiveTest.json @grafana/dashboards-squad
 /e2e-playwright/dashboards/DataLinkWithoutSlugTest.json @grafana/dashboards-squad
 /e2e-playwright/dashboards/PanelSandboxDashboard.json @grafana/plugins-platform-frontend
 /e2e-playwright/dashboards/TestDashboard.json @grafana/dashboards-squad @grafana/grafana-search-navigate-organise
 /e2e-playwright/dashboards/TestV2Dashboard.json @grafana/dashboards-squad
+/e2e-playwright/dashboards-suite/dashboard-adhoc-filters.spec.ts @grafana/datapro
 /e2e-playwright/dashboards-suite/dashboard-browse-nested.spec.ts @grafana/grafana-search-navigate-organise
 /e2e-playwright/dashboards-suite/dashboard-browse.spec.ts @grafana/grafana-search-navigate-organise
 /e2e-playwright/dashboards-suite/dashboard-export-image.spec.ts @grafana/sharing-squad
