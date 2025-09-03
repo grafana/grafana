@@ -7,7 +7,7 @@ import (
 	"maps"
 	"net"
 
-	datasourceext "github.com/grafana/grafana/pkg/extensions/datasource"
+	"github.com/grafana/grafana/apps/dashboard/pkg/migration/schemaversion"
 	"github.com/prometheus/client_golang/prometheus"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -178,7 +178,7 @@ func RegisterAPIService(
 	return builder
 }
 
-func NewAPIService(ac claims.AccessClient, features featuremgmt.FeatureToggles, folderClientGetter k8sClientGetter, cloudconfigClient datasourceext.CloudConfigClient, pluginStore *pluginstore.Service) *DashboardsAPIBuilder {
+func NewAPIService(ac claims.AccessClient, features featuremgmt.FeatureToggles, folderClientGetter k8sClientGetter, datasourceProvider schemaversion.DataSourceInfoProvider, pluginStore *pluginstore.Service) *DashboardsAPIBuilder {
 	// TODO: Plugin store will soon be removed,
 	// as the cases for plugin fetching is not needed. Keeping it now to not break implementation
 	if pluginStore == nil {
@@ -187,10 +187,7 @@ func NewAPIService(ac claims.AccessClient, features featuremgmt.FeatureToggles, 
 
 	logger := log.New("grafana-apiserver.dashboards")
 
-	migration.Initialize(&multiTenantDatasourceProvider{
-		log:               logger,
-		cloudConfigClient: cloudconfigClient,
-	}, &PluginStorePanelProvider{
+	migration.Initialize(datasourceProvider, &PluginStorePanelProvider{
 		pluginStore:  pluginStore,
 		buildVersion: "unknown",
 	})
