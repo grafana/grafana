@@ -263,9 +263,12 @@ func runJobController(opts standalone.BuildInfo, c *cli.Context, cfg *setting.Cf
 	clients := resources.NewClientFactory(configProvider)
 	parsers := resources.NewParserFactory(clients)
 
-	// HACK: This is connecting to unified storage. It's ok for now as long as dashboards and folders are located in the
-	// same cluster and namespace
-	// This breaks when we start really trying to support any resource. This is on the search+storage roadmap to support federation at some level.
+	// HACK: This logic directly connects to unified storage. It works for now as long as dashboards and folders
+	// reside within the same cluster and namespace. However, this approach is considered suboptimal and
+	// is not recommended for broader use. It will fail when we expand support for additional resources.
+	// Future improvements on the search and storage roadmap, such as introducing resource federation,
+	// should eliminate the need for this workaround. Once global search capabilities are available,
+	// they should replace this implementation.
 	unified, err := NewUnifiedStorageClientFactory(tracer)
 	if err != nil {
 		return fmt.Errorf("create unified storage client: %w", err)
