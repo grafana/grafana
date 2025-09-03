@@ -103,7 +103,7 @@ type DashboardsAPIBuilder struct {
 
 	log           log.Logger
 	reg           prometheus.Registerer
-	isMultiTenant bool // skips any handling including anything to do with legacy storage
+	isStandalone bool // skips any handling including anything to do with legacy storage
 }
 
 func RegisterAPIService(
