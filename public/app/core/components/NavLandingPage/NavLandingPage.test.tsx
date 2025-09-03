@@ -20,6 +20,11 @@ describe('NavLandingPage', () => {
     }));
   });
 
+  afterEach(() => {
+    jest.clearAllMocks();
+    jest.restoreAllMocks();
+  });
+
   const mockSectionTitle = 'Section title';
   const mockId = 'section';
   const mockSectionUrl = 'mock-section-url';
