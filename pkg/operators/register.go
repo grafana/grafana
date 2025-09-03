@@ -271,7 +271,7 @@ func runJobController(opts standalone.BuildInfo, c *cli.Context, cfg *setting.Cf
 	// Future improvements on the search and storage roadmap, such as introducing resource federation,
 	// should eliminate the need for this workaround. Once global search capabilities are available,
 	// they should replace this implementation.
-	unified, err := NewUnifiedStorageClientFactory(tracer)
+	unified, err := NewUnifiedStorageClientFactory(controllerCfg.unifiedCfg, tracer)
 	if err != nil {
 		return fmt.Errorf("create unified storage client: %w", err)
 	}
