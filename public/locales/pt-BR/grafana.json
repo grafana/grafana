@@ -549,6 +549,7 @@
     },
     "alert-rules": {
       "firing-for": "Acionamento para",
+      "multiple-sources": "",
       "next-evaluation": "Próxima avaliação",
       "next-evaluation-in": "próxima avaliação em",
       "rule-definition": "Definição de regras"
@@ -2638,13 +2639,15 @@
         "show": "Exibir"
       },
       "manage-alerts": "Nessas fontes de dados, você pode selecionar Gerenciar alertas via Interface de Envio de Alertas para gerenciar essas regras de alerta na interface da Grafana, bem como na fonte de dados onde foram configuradas.",
-      "no-groups": "Nenhum grupo disponível",
-      "no-namespaces": "Nenhuma pasta disponível",
       "placeholder-all-data-sources": "Todas as fontes de dados",
       "placeholder-contact-point": "Selecionar ponto de contato",
       "placeholder-data-sources": "Selecionar fontes de dados",
       "placeholder-labels": "Selecionar rótulos",
       "plugin-rules": "Regras de plug-in",
+      "rule-source": {
+        "datasource": "",
+        "grafana": ""
+      },
       "rule-type": "Tipo de regra",
       "rulesSearchInput-placeholder-search": "Pesquisar",
       "search": "Pesquisar",
@@ -2666,6 +2669,7 @@
         "namespace": "Pasta/Nomenclatura",
         "rule-health": "Integridade",
         "rule-name": "Nome da regra",
+        "rule-source": "",
         "rule-type": "Tipo",
         "state": "Estado"
       }
@@ -3393,9 +3397,6 @@
       "text-badge-enabled": "Ativado",
       "text-badge-not-enabled": "Não ativado"
     },
-    "scim-banner": {
-      "message": "Atualmente, o SCIM se encontra em desenvolvimento, por isso, não é recomendável seu uso para produção. Use-o com cautela e leve em conta a possibilidade de ocorrer alterações."
-    },
     "server-discovery-modal": {
       "label-the-wellknownopenidconfiguration-endpoint-for-your-id-p": "O endpoint .well-known/openid-configuration para seu IdP",
       "title-open-id-connect-discovery-url": "URL de descoberta do OpenID Connect"
@@ -3565,7 +3566,9 @@
       },
       "error-moving-resources": "Erro ao mover recursos",
       "error-no-target-folder-path": "O caminho da pasta de destino é inválido ou está vazio. Selecione outra.",
-      "move-warning": "Isso moverá as pastas selecionadas e as subpastas delas. No total, isso afetará:",
+      "move-total": "",
+      "move-warning": "",
+      "move-warning-tooltip": "",
       "target-folder": "Pasta de destino"
     },
     "counts": {
@@ -4562,6 +4565,12 @@
       "overwrite": "Sobrescrever",
       "title-plugin-dashboard": "Painel de plug-ins"
     },
+    "controls": {
+      "menu": {
+        "aria-label": "",
+        "title": ""
+      }
+    },
     "dash-nav": {
       "on-open-snapshot-original": {
         "confirmText": {
@@ -4685,6 +4694,7 @@
       "panel-title": "Alterar título do painel",
       "paste-panel": "Colar painel",
       "remove": "Remover {{typeName}}",
+      "row-title": "",
       "switch-layout": "Alternar layout"
     },
     "edit-pane": {
@@ -5840,11 +5850,6 @@
         "transparent-background": "Fundo transparente"
       }
     },
-    "get-workflow-options": {
-      "label": {
-        "push-to-a-new-branch": "Enviar a uma nova branch"
-      }
-    },
     "group-by-variable-form": {
       "alert-not-supported": "Esta fonte de dados não é compatível com agrupamento por variáveis",
       "description-enables-users-custom-values": "Permite que os usuários adicionem valores personalizados à lista",
@@ -6541,7 +6546,8 @@
     },
     "data-source-load-error": {
       "back": "Voltar",
-      "delete": "Excluir"
+      "delete": "Excluir",
+      "not-found": ""
     },
     "data-source-missing-rights-message": {
       "title-missing-rights": "Faltam direitos"
@@ -6941,11 +6947,6 @@
       "dragging-a-divider": "Como arrastar um divisor",
       "dragging-a-sub-region": "Como arrastar uma sub-região",
       "value": "Valor: {{ dividerPos }}"
-    },
-    "drilldownInfo": {
-      "action": "Ir para Grafana Aprofundar",
-      "description": "Você está procurando os aplicativos Grafana Explore? Agora eles são chamados de aplicativos Grafana Drilldown e podem ser encontrados em <1>Menu > Drilldown</1>",
-      "title": "Explore Metrics, Logs, Traces e Profiles foram movidos!"
     },
     "drop-down-menu": {
       "aria-label-links": "Links",
@@ -7569,7 +7570,9 @@
   "folders": {
     "api": {
       "folder-delete-error-provisioned": "",
-      "folder-deleted-success": "Pasta excluída"
+      "folder-deleted-success": "Pasta excluída",
+      "folder-move-error-provisioned": "",
+      "folder-moved-success": ""
     },
     "get-loading-nav": {
       "main": {
@@ -9529,6 +9532,7 @@
       "fields-section": "Campos",
       "hide-log-line": "Ocultar linha de log",
       "inline-mode": "Exibir em linha",
+      "link-value-tooltip": "",
       "links-section": "Links",
       "log-line-field": "Linha de registro",
       "log-line-section": "Linha de log",
@@ -11158,11 +11162,16 @@
     "save-or-delete-resource-shared-fields": {
       "comment-placeholder-describe-changes-optional": "Adicione uma observação para descrever suas alterações (opcional)",
       "description-branch-name-in-git-hub": "Nome do branch no GitHub",
+      "description-file-path": "",
+      "description-folder-path": "",
       "description-inside-repository": "",
       "label-branch": "Branch",
       "label-comment": "Comentário",
       "label-path": "Caminho",
-      "label-workflow": "Fluxo de trabalho"
+      "label-workflow": "Fluxo de trabalho",
+      "placeholder-branch": "",
+      "placeholder-new-branch": "",
+      "suffix-configured-branch": ""
     }
   },
   "provisioned-resource-preview-banner": {
@@ -11696,6 +11705,10 @@
       "button-previous": "Voltar",
       "button-submitting": "Enviando…",
       "error-instance-repository-exists": "O repositório de instâncias já existe"
+    },
+    "workflow-options-label": {
+      "push-to-a-new-branch": "",
+      "push-to-existing-branch": ""
     }
   },
   "public-dashboard": {
@@ -12080,6 +12093,7 @@
     "selector": {
       "apply": "Aplicar",
       "cancel": "Cancelar",
+      "error-title": "",
       "input": {
         "placeholder": "Selecione os escopos...",
         "removeAll": "Remover todos os escopos"
@@ -12807,6 +12821,7 @@
     "name-fields": "Campos",
     "name-frozen-columns": "",
     "name-hide-in-table": "Ocultar na tabela",
+    "name-max-height": "",
     "name-min-column-width": "Largura mínima da coluna",
     "name-show-table-footer": "Mostrar rodapé da tabela",
     "name-show-table-header": "Mostrar cabeçalho da tabela",
@@ -12816,6 +12831,7 @@
     "name-wrap-text": "",
     "placeholder-column-width": "automático",
     "placeholder-fields": "Todos os campos numéricos",
+    "placeholder-max-height": "",
     "tooltip-placement-options": {
       "label-auto": "",
       "label-bottom": "",

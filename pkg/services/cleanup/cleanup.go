@@ -97,7 +97,7 @@ func (j cleanUpJob) String() string {
 func (srv *CleanUpService) Run(ctx context.Context) error {
 	srv.cleanUpTmpFiles(ctx)
 
-	ticker := time.NewTicker(time.Minute * 1)
+	ticker := time.NewTicker(time.Minute * 10)
 	for {
 		select {
 		case <-ticker.C:

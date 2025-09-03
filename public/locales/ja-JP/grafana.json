@@ -545,6 +545,7 @@
     },
     "alert-rules": {
       "firing-for": "発生の理由：",
+      "multiple-sources": "",
       "next-evaluation": "次の評価",
       "next-evaluation-in": "次の評価まで",
       "rule-definition": "ルールの定義"
@@ -2625,13 +2626,15 @@
         "show": "表示"
       },
       "manage-alerts": "これらのデータソースでは、「アラートUI経由で管理」を選択すると、Grafana UIとアラートルールが設定されたデータソースの両方でこれらのアラートルールを管理できます。",
-      "no-groups": "利用可能なグループはありません",
-      "no-namespaces": "利用可能なフォルダはありません",
       "placeholder-all-data-sources": "すべてのデータソース",
       "placeholder-contact-point": "コンタクトポイントを選択してください",
       "placeholder-data-sources": "データソースを選択してください",
       "placeholder-labels": "ラベルを選択してください",
       "plugin-rules": "プラグインルール",
+      "rule-source": {
+        "datasource": "",
+        "grafana": ""
+      },
       "rule-type": "ルールタイプ",
       "rulesSearchInput-placeholder-search": "検索",
       "search": "検索",
@@ -2653,6 +2656,7 @@
         "namespace": "フォルダ/名前空間",
         "rule-health": "健康",
         "rule-name": "ルール名",
+        "rule-source": "",
         "rule-type": "タイプ",
         "state": "ステート"
       }
@@ -3380,9 +3384,6 @@
       "text-badge-enabled": "有効化",
       "text-badge-not-enabled": "有効になっていません"
     },
-    "scim-banner": {
-      "message": "SCIMは現在開発中であり、本番環境での使用は推奨されていません。ご注意ください。また、変更される可能性があります。"
-    },
     "server-discovery-modal": {
       "label-the-wellknownopenidconfiguration-endpoint-for-your-id-p": "IdPの.well-known/openid-configurationエンドポイント",
       "title-open-id-connect-discovery-url": "OpenID Connect Discovery URL"
@@ -3552,7 +3553,9 @@
       },
       "error-moving-resources": "リソースの移動中にエラーが発生しました",
       "error-no-target-folder-path": "ターゲットフォルダパスが無効または空です。もう一度選択してください。",
-      "move-warning": "これにより、選択したフォルダとその子フォルダが移動されます。影響のある項目は次のとおりです。",
+      "move-total": "",
+      "move-warning": "",
+      "move-warning-tooltip": "",
       "target-folder": "移動先フォルダ"
     },
     "counts": {
@@ -4544,6 +4547,12 @@
       "overwrite": "上書き",
       "title-plugin-dashboard": "プラグインダッシュボード"
     },
+    "controls": {
+      "menu": {
+        "aria-label": "",
+        "title": ""
+      }
+    },
     "dash-nav": {
       "on-open-snapshot-original": {
         "confirmText": {
@@ -4667,6 +4676,7 @@
       "panel-title": "パネルのタイトルを変更",
       "paste-panel": "パネルを貼り付け",
       "remove": "{{typeName}}を削除",
+      "row-title": "",
       "switch-layout": "レイアウトを切り替え"
     },
     "edit-pane": {
@@ -5821,11 +5831,6 @@
         "transparent-background": "透明の背景"
       }
     },
-    "get-workflow-options": {
-      "label": {
-        "push-to-a-new-branch": "新しいブランチにプッシュ"
-      }
-    },
     "group-by-variable-form": {
       "alert-not-supported": "このデータソースは変数のグループ化をサポートしていません",
       "description-enables-users-custom-values": "ユーザーがリストにカスタム値を追加できるようにします",
@@ -6520,7 +6525,8 @@
     },
     "data-source-load-error": {
       "back": "戻る",
-      "delete": "削除"
+      "delete": "削除",
+      "not-found": ""
     },
     "data-source-missing-rights-message": {
       "title-missing-rights": "権限が不足しています"
@@ -6920,11 +6926,6 @@
       "dragging-a-divider": "区切り線をドラッグ中",
       "dragging-a-sub-region": "サブ領域をドラッグ中",
       "value": "値：{{ dividerPos }}"
-    },
-    "drilldownInfo": {
-      "action": "Grafanaドリルダウンに移動",
-      "description": "Grafana Exploreアプリをお探しですか？これらはGrafanaドリルダウンアプリと呼ばれるようになり、<1>メニュー > ドリルダウン</1>にあります",
-      "title": "メトリック、ログ、トレース、プロフィールの検索が移動しました！"
     },
     "drop-down-menu": {
       "aria-label-links": "リンク",
@@ -7548,7 +7549,9 @@
   "folders": {
     "api": {
       "folder-delete-error-provisioned": "",
-      "folder-deleted-success": "フォルダは削除されました"
+      "folder-deleted-success": "フォルダは削除されました",
+      "folder-move-error-provisioned": "",
+      "folder-moved-success": ""
     },
     "get-loading-nav": {
       "main": {
@@ -9500,6 +9503,7 @@
       "fields-section": "フィールド",
       "hide-log-line": "ログ行を非表示",
       "inline-mode": "インラインで表示",
+      "link-value-tooltip": "",
       "links-section": "リンク",
       "log-line-field": "ログ行",
       "log-line-section": "ログ行",
@@ -11126,11 +11130,16 @@
     "save-or-delete-resource-shared-fields": {
       "comment-placeholder-describe-changes-optional": "変更内容を説明するメモを追加（任意）",
       "description-branch-name-in-git-hub": "GitHubのブランチ名",
+      "description-file-path": "",
+      "description-folder-path": "",
       "description-inside-repository": "",
       "label-branch": "ブランチ",
       "label-comment": "コメント",
       "label-path": "パス",
-      "label-workflow": "ワークフロー"
+      "label-workflow": "ワークフロー",
+      "placeholder-branch": "",
+      "placeholder-new-branch": "",
+      "suffix-configured-branch": ""
     }
   },
   "provisioned-resource-preview-banner": {
@@ -11661,6 +11670,10 @@
       "button-previous": "前へ",
       "button-submitting": "送信中…",
       "error-instance-repository-exists": "インスタンスリポジトリはすでに存在します"
+    },
+    "workflow-options-label": {
+      "push-to-a-new-branch": "",
+      "push-to-existing-branch": ""
     }
   },
   "public-dashboard": {
@@ -12041,6 +12054,7 @@
     "selector": {
       "apply": "適用",
       "cancel": "キャンセル",
+      "error-title": "",
       "input": {
         "placeholder": "スコープを選択...",
         "removeAll": "すべてのスコープを削除"
@@ -12766,6 +12780,7 @@
     "name-fields": "フィールド",
     "name-frozen-columns": "",
     "name-hide-in-table": "テーブルで非表示",
+    "name-max-height": "",
     "name-min-column-width": "最小列幅",
     "name-show-table-footer": "テーブルフッターを表示",
     "name-show-table-header": "テーブルヘッダーを表示",
@@ -12775,6 +12790,7 @@
     "name-wrap-text": "",
     "placeholder-column-width": "自動",
     "placeholder-fields": "すべての数値フィールド",
+    "placeholder-max-height": "",
     "tooltip-placement-options": {
       "label-auto": "",
       "label-bottom": "",

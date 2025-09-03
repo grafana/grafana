@@ -549,6 +549,7 @@
     },
     "alert-rules": {
       "firing-for": "Şunun için tetikleniyor:",
+      "multiple-sources": "",
       "next-evaluation": "Sonraki değerlendirme",
       "next-evaluation-in": "Sonraki değerlendirme için kalan süre:",
       "rule-definition": "Kural tanımı"
@@ -2638,13 +2639,15 @@
         "show": "Göster"
       },
       "manage-alerts": "Bu veri kaynaklarında hem Grafana arayüzünde hem de yapılandırıldıkları veri kaynağında bu uyarı kurallarını yönetebilmek için \"Uyarı Yönetimi\" arayüzü üzerinden yönetimi seçebilirsiniz.",
-      "no-groups": "",
-      "no-namespaces": "",
       "placeholder-all-data-sources": "Tüm veri kaynakları",
       "placeholder-contact-point": "",
       "placeholder-data-sources": "",
       "placeholder-labels": "",
       "plugin-rules": "Eklenti kuralları",
+      "rule-source": {
+        "datasource": "",
+        "grafana": ""
+      },
       "rule-type": "Kural türü",
       "rulesSearchInput-placeholder-search": "Ara",
       "search": "Ara",
@@ -2666,6 +2669,7 @@
         "namespace": "Klasör/Ad alanı",
         "rule-health": "Sağlık",
         "rule-name": "",
+        "rule-source": "",
         "rule-type": "Tür",
         "state": "Durum"
       }
@@ -3393,9 +3397,6 @@
       "text-badge-enabled": "Etkin",
       "text-badge-not-enabled": "Devre dışı"
     },
-    "scim-banner": {
-      "message": "SCIM şu anda geliştirme aşamasındadır ve üretim kullanımı için önerilmez. Lütfen dikkatli kullanın ve olası değişiklikler olabileceğini unutmayın."
-    },
     "server-discovery-modal": {
       "label-the-wellknownopenidconfiguration-endpoint-for-your-id-p": "Kimlik sağlayıcınız (IdP) için .well-known/openid-configuration uç noktası",
       "title-open-id-connect-discovery-url": "OpenID Connect Discovery URL'sini girin"
@@ -3565,7 +3566,9 @@
       },
       "error-moving-resources": "",
       "error-no-target-folder-path": "",
-      "move-warning": "Bu işlem, seçilen klasörleri ve alt öğelerini taşıyacaktır. Bu işlem toplamda şunları etkileyecektir:",
+      "move-total": "",
+      "move-warning": "",
+      "move-warning-tooltip": "",
       "target-folder": "Hedef Klasör"
     },
     "counts": {
@@ -4562,6 +4565,12 @@
       "overwrite": "Üzerine yaz",
       "title-plugin-dashboard": "Eklenti panosu"
     },
+    "controls": {
+      "menu": {
+        "aria-label": "",
+        "title": ""
+      }
+    },
     "dash-nav": {
       "on-open-snapshot-original": {
         "confirmText": {
@@ -4685,6 +4694,7 @@
       "panel-title": "Panel başlığını değiştir",
       "paste-panel": "Paneli yapıştır",
       "remove": "{{typeName}} ögesini kaldır",
+      "row-title": "",
       "switch-layout": "Düzeni değiştir"
     },
     "edit-pane": {
@@ -5840,11 +5850,6 @@
         "transparent-background": "Şeffaf arka plan"
       }
     },
-    "get-workflow-options": {
-      "label": {
-        "push-to-a-new-branch": "Yeni bir dala gönder"
-      }
-    },
     "group-by-variable-form": {
       "alert-not-supported": "Bu veri kaynağı değişkenlere göre gruplamayı desteklemiyor",
       "description-enables-users-custom-values": "Kullanıcıların listeye özel değerler eklemesine olanak tanır",
@@ -6541,7 +6546,8 @@
     },
     "data-source-load-error": {
       "back": "Geri",
-      "delete": "Sil"
+      "delete": "Sil",
+      "not-found": ""
     },
     "data-source-missing-rights-message": {
       "title-missing-rights": "Eksik haklar"
@@ -6941,11 +6947,6 @@
       "dragging-a-divider": "Ayırıcıyı sürükleme",
       "dragging-a-sub-region": "Bir alt bölgeyi sürükleme",
       "value": "Değer: {{ dividerPos }}"
-    },
-    "drilldownInfo": {
-      "action": "Grafana Drilldown'a git",
-      "description": "Grafana Explore uygulamalarını mı arıyorsunuz? Artık Grafana Drilldown uygulamaları olarak adlandırılıyor ve <1>Menü > Drilldown</1> altında bulunabilir.",
-      "title": "Explore Metrics, Logs, Traces ve Profiles taşındı!"
     },
     "drop-down-menu": {
       "aria-label-links": "Bağlantılar",
@@ -7569,7 +7570,9 @@
   "folders": {
     "api": {
       "folder-delete-error-provisioned": "",
-      "folder-deleted-success": ""
+      "folder-deleted-success": "",
+      "folder-move-error-provisioned": "",
+      "folder-moved-success": ""
     },
     "get-loading-nav": {
       "main": {
@@ -9529,6 +9532,7 @@
       "fields-section": "Alanlar",
       "hide-log-line": "Günlük satırını gizle",
       "inline-mode": "Satır içi görüntüle",
+      "link-value-tooltip": "",
       "links-section": "Bağlantılar",
       "log-line-field": "Günlük satırı",
       "log-line-section": "Günlük satırı",
@@ -11158,11 +11162,16 @@
     "save-or-delete-resource-shared-fields": {
       "comment-placeholder-describe-changes-optional": "Değişikliklerinizi açıklayan bir not ekleyin (isteğe bağlı)",
       "description-branch-name-in-git-hub": "GitHub'daki dal adı",
+      "description-file-path": "",
+      "description-folder-path": "",
       "description-inside-repository": "",
       "label-branch": "Dal",
       "label-comment": "Yorum",
       "label-path": "Yol",
-      "label-workflow": "İş akışı"
+      "label-workflow": "İş akışı",
+      "placeholder-branch": "",
+      "placeholder-new-branch": "",
+      "suffix-configured-branch": ""
     }
   },
   "provisioned-resource-preview-banner": {
@@ -11696,6 +11705,10 @@
       "button-previous": "Önceki",
       "button-submitting": "Gönderiliyor...",
       "error-instance-repository-exists": "Örnek deposu zaten var"
+    },
+    "workflow-options-label": {
+      "push-to-a-new-branch": "",
+      "push-to-existing-branch": ""
     }
   },
   "public-dashboard": {
@@ -12080,6 +12093,7 @@
     "selector": {
       "apply": "Uygula",
       "cancel": "İptal",
+      "error-title": "",
       "input": {
         "placeholder": "Kapsam seçin...",
         "removeAll": "Tüm kapsamları kaldır"
@@ -12807,6 +12821,7 @@
     "name-fields": "Alanlar",
     "name-frozen-columns": "",
     "name-hide-in-table": "Tabloda gizle",
+    "name-max-height": "",
     "name-min-column-width": "Minimum sütun genişliği",
     "name-show-table-footer": "Tablo alt bilgisini göster",
     "name-show-table-header": "Tablo başlığını göster",
@@ -12816,6 +12831,7 @@
     "name-wrap-text": "",
     "placeholder-column-width": "otomatik",
     "placeholder-fields": "Tüm Sayısal Alanlar",
+    "placeholder-max-height": "",
     "tooltip-placement-options": {
       "label-auto": "",
       "label-bottom": "",

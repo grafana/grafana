@@ -557,6 +557,7 @@
     },
     "alert-rules": {
       "firing-for": "Aktivní pro",
+      "multiple-sources": "",
       "next-evaluation": "Další hodnocení",
       "next-evaluation-in": "další hodnocení v",
       "rule-definition": "Definice pravidla"
@@ -2664,13 +2665,15 @@
         "show": "Zobrazit"
       },
       "manage-alerts": "V těchto zdrojích dat můžete prostřednictvím uživatelského rozhraní upozorňování vybrat možnost Správa upozorňování. Odtud můžete spravovat tato pravidla výstrah v uživatelském rozhraní Grafana i ve zdroji dat, kde byla nakonfigurována.",
-      "no-groups": "Nejsou k dispozici žádné skupiny",
-      "no-namespaces": "Nejsou k dispozici žádné složky",
       "placeholder-all-data-sources": "Všechny zdroje dat",
       "placeholder-contact-point": "Vyberte kontaktní bod",
       "placeholder-data-sources": "Vyberte zdroje dat",
       "placeholder-labels": "Vyberte štítky",
       "plugin-rules": "Pravidla pluginu",
+      "rule-source": {
+        "datasource": "",
+        "grafana": ""
+      },
       "rule-type": "Typ pravidla",
       "rulesSearchInput-placeholder-search": "Hledat",
       "search": "Hledat",
@@ -2692,6 +2695,7 @@
         "namespace": "Složka / jmenný prostor",
         "rule-health": "Kondice",
         "rule-name": "Název pravidla",
+        "rule-source": "",
         "rule-type": "Typ",
         "state": "Stav"
       }
@@ -3419,9 +3423,6 @@
       "text-badge-enabled": "Povoleno",
       "text-badge-not-enabled": "Není povoleno"
     },
-    "scim-banner": {
-      "message": "SCIM je momentálně ve vývoji a není doporučeno ho používat v produkčním prostředí. Používejte ho opatrně a počítejte s možnými změnami."
-    },
     "server-discovery-modal": {
       "label-the-wellknownopenidconfiguration-endpoint-for-your-id-p": "Koncový bod .well-known / openid-configuration pro vašeho poskytovatele identity",
       "title-open-id-connect-discovery-url": "Adresa URL OpenID Connect Discovery"
@@ -3591,7 +3592,9 @@
       },
       "error-moving-resources": "Chyba při přesouvání zdrojů",
       "error-no-target-folder-path": "Cesta k cílové složce je neplatná nebo prázdná, vyberte ji znovu.",
-      "move-warning": "Tímto se přesunou vybrané složky a všechny jejich podsložky. Celkem to ovlivní:",
+      "move-total": "",
+      "move-warning": "",
+      "move-warning-tooltip": "",
       "target-folder": "Cílová složka"
     },
     "counts": {
@@ -4598,6 +4601,12 @@
       "overwrite": "Přepsat",
       "title-plugin-dashboard": "Plugin nástěnky"
     },
+    "controls": {
+      "menu": {
+        "aria-label": "",
+        "title": ""
+      }
+    },
     "dash-nav": {
       "on-open-snapshot-original": {
         "confirmText": {
@@ -4721,6 +4730,7 @@
       "panel-title": "Změnit název panelu",
       "paste-panel": "Vložit panel",
       "remove": "Odebrat {{typeName}}",
+      "row-title": "",
       "switch-layout": "Přepnout rozvržení"
     },
     "edit-pane": {
@@ -5878,11 +5888,6 @@
         "transparent-background": "Průhledné pozadí"
       }
     },
-    "get-workflow-options": {
-      "label": {
-        "push-to-a-new-branch": "Přesunout do nové větve"
-      }
-    },
     "group-by-variable-form": {
       "alert-not-supported": "Tento zdroj dat nepodporuje seskupení podle proměnných",
       "description-enables-users-custom-values": "Umožňuje uživatelům přidávat vlastní hodnoty do seznamu",
@@ -6583,7 +6588,8 @@
     },
     "data-source-load-error": {
       "back": "Zpět",
-      "delete": "Odstranit"
+      "delete": "Odstranit",
+      "not-found": ""
     },
     "data-source-missing-rights-message": {
       "title-missing-rights": "Chybějící práva"
@@ -6983,11 +6989,6 @@
       "dragging-a-divider": "Přetažení děliče",
       "dragging-a-sub-region": "Přetažení podoblasti",
       "value": "Hodnota: {{ dividerPos }}"
-    },
-    "drilldownInfo": {
-      "action": "Přejít na Grafana Drilldown",
-      "description": "Hledáte aplikace Grafana Explore? Teď se nazývají aplikace Grafana Drilldown a najdete je v <1>Nabídka > Drilldown</1>",
-      "title": "Explore Metrics, Logs, Traces a Profiles byly přesunuty!"
     },
     "drop-down-menu": {
       "aria-label-links": "Odkazy",
@@ -7611,7 +7612,9 @@
   "folders": {
     "api": {
       "folder-delete-error-provisioned": "",
-      "folder-deleted-success": "Složka byla odstraněna"
+      "folder-deleted-success": "Složka byla odstraněna",
+      "folder-move-error-provisioned": "",
+      "folder-moved-success": ""
     },
     "get-loading-nav": {
       "main": {
@@ -9587,6 +9590,7 @@
       "fields-section": "Pole",
       "hide-log-line": "Skrýt řádek protokolu",
       "inline-mode": "Zobrazit v řádku",
+      "link-value-tooltip": "",
       "links-section": "Odkazy",
       "log-line-field": "Řádek protokolu",
       "log-line-section": "Řádek protokolu",
@@ -11222,11 +11226,16 @@
     "save-or-delete-resource-shared-fields": {
       "comment-placeholder-describe-changes-optional": "Přidat poznámku k popisu změn (nepovinné)",
       "description-branch-name-in-git-hub": "Název větvě v GitHubu",
+      "description-file-path": "",
+      "description-folder-path": "",
       "description-inside-repository": "",
       "label-branch": "Větev",
       "label-comment": "Komentář",
       "label-path": "Cesta",
-      "label-workflow": "Pracovní tok"
+      "label-workflow": "Pracovní tok",
+      "placeholder-branch": "",
+      "placeholder-new-branch": "",
+      "suffix-configured-branch": ""
     }
   },
   "provisioned-resource-preview-banner": {
@@ -11766,6 +11775,10 @@
       "button-previous": "Předchozí",
       "button-submitting": "Odesílání…",
       "error-instance-repository-exists": "Instance úložiště už existuje"
+    },
+    "workflow-options-label": {
+      "push-to-a-new-branch": "",
+      "push-to-existing-branch": ""
     }
   },
   "public-dashboard": {
@@ -12158,6 +12171,7 @@
     "selector": {
       "apply": "Použít",
       "cancel": "Zrušit",
+      "error-title": "",
       "input": {
         "placeholder": "Vyberte rozsahy…",
         "removeAll": "Odebrat všechny rozsahy"
@@ -12889,6 +12903,7 @@
     "name-fields": "Pole",
     "name-frozen-columns": "",
     "name-hide-in-table": "Skrýt v tabulce",
+    "name-max-height": "",
     "name-min-column-width": "Minimální šířka sloupce",
     "name-show-table-footer": "Zobrazit zápatí tabulky",
     "name-show-table-header": "Zobrazit záhlaví tabulky",
@@ -12898,6 +12913,7 @@
     "name-wrap-text": "",
     "placeholder-column-width": "auto.",
     "placeholder-fields": "Všechna číselná pole",
+    "placeholder-max-height": "",
     "tooltip-placement-options": {
       "label-auto": "",
       "label-bottom": "",

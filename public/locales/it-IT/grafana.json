@@ -549,6 +549,7 @@
     },
     "alert-rules": {
       "firing-for": "Attivazione per",
+      "multiple-sources": "",
       "next-evaluation": "Prossima valutazione",
       "next-evaluation-in": "prossima valutazione tra",
       "rule-definition": "Definizione regola"
@@ -2638,13 +2639,15 @@
         "show": "Mostra"
       },
       "manage-alerts": "In queste origini dei dati, è possibile selezionare Gestisci avvisi tramite l'interfaccia utente di avviso per poter gestire queste regole di avviso nell'interfaccia utente di Grafana e nell'origine dei dati in cui sono state configurate.",
-      "no-groups": "Nessun gruppo disponibile",
-      "no-namespaces": "Nessuna cartella disponibile",
       "placeholder-all-data-sources": "Tutte le fonti dei dati",
       "placeholder-contact-point": "Seleziona punto di contatto",
       "placeholder-data-sources": "Seleziona origini dati",
       "placeholder-labels": "Seleziona etichette",
       "plugin-rules": "Regole dei componenti aggiuntivi",
+      "rule-source": {
+        "datasource": "",
+        "grafana": ""
+      },
       "rule-type": "Tipo di regola",
       "rulesSearchInput-placeholder-search": "Cerca",
       "search": "Cerca",
@@ -2666,6 +2669,7 @@
         "namespace": "Cartella/Spazio dei nomi",
         "rule-health": "Stato",
         "rule-name": "Nome regola",
+        "rule-source": "",
         "rule-type": "Tipo",
         "state": "Stato"
       }
@@ -3393,9 +3397,6 @@
       "text-badge-enabled": "Abilitato",
       "text-badge-not-enabled": "Non abilitato"
     },
-    "scim-banner": {
-      "message": "SCIM è attualmente in fase di sviluppo e non è consigliato per l'uso in produzione. Utilizzalo con cautela e prevedi potenziali modifiche."
-    },
     "server-discovery-modal": {
       "label-the-wellknownopenidconfiguration-endpoint-for-your-id-p": "L'endpoint .well-known/openid-configuration per il tuo IdP",
       "title-open-id-connect-discovery-url": "URL di OpenID Connect Discovery"
@@ -3565,7 +3566,9 @@
       },
       "error-moving-resources": "Errore durante lo spostamento delle risorse",
       "error-no-target-folder-path": "Il percorso della cartella di destinazione non è valido o è vuoto, prova a selezionarlo di nuovo.",
-      "move-warning": "Questa operazione sposterà le cartelle selezionate e i relativi discendenti. In totale, questo influenzerà:",
+      "move-total": "",
+      "move-warning": "",
+      "move-warning-tooltip": "",
       "target-folder": "Cartella di destinazione"
     },
     "counts": {
@@ -4562,6 +4565,12 @@
       "overwrite": "Sovrascrivi",
       "title-plugin-dashboard": "Dashboard del componente aggiuntivo"
     },
+    "controls": {
+      "menu": {
+        "aria-label": "",
+        "title": ""
+      }
+    },
     "dash-nav": {
       "on-open-snapshot-original": {
         "confirmText": {
@@ -4685,6 +4694,7 @@
       "panel-title": "Modifica il titolo del pannello",
       "paste-panel": "Incolla pannello",
       "remove": "Rimuovi {{typeName}}",
+      "row-title": "",
       "switch-layout": "Cambia layout"
     },
     "edit-pane": {
@@ -5840,11 +5850,6 @@
         "transparent-background": "Sfondo trasparente"
       }
     },
-    "get-workflow-options": {
-      "label": {
-        "push-to-a-new-branch": "Sposta in un nuovo ramo"
-      }
-    },
     "group-by-variable-form": {
       "alert-not-supported": "Questa origine dati non supporta il raggruppamento per variabili",
       "description-enables-users-custom-values": "Consente agli utenti di aggiungere valori personalizzati all'elenco",
@@ -6541,7 +6546,8 @@
     },
     "data-source-load-error": {
       "back": "Indietro",
-      "delete": "Elimina"
+      "delete": "Elimina",
+      "not-found": ""
     },
     "data-source-missing-rights-message": {
       "title-missing-rights": "Diritti mancanti"
@@ -6941,11 +6947,6 @@
       "dragging-a-divider": "Trascinamento di un divisore",
       "dragging-a-sub-region": "Trascinamento di una sotto-regione",
       "value": "Valore: {{ dividerPos }}"
-    },
-    "drilldownInfo": {
-      "action": "Vai a Grafana Drilldown",
-      "description": "Cerchi le app Grafana Explore? Ora si chiamano app Grafana Drilldown e sono disponibili in <1>Menu > Drilldown</1>",
-      "title": "Le metriche, i registri, le tracce e i profili di esplorazione sono stati spostati!"
     },
     "drop-down-menu": {
       "aria-label-links": "Link",
@@ -7569,7 +7570,9 @@
   "folders": {
     "api": {
       "folder-delete-error-provisioned": "",
-      "folder-deleted-success": "Cartella eliminata"
+      "folder-deleted-success": "Cartella eliminata",
+      "folder-move-error-provisioned": "",
+      "folder-moved-success": ""
     },
     "get-loading-nav": {
       "main": {
@@ -9529,6 +9532,7 @@
       "fields-section": "Campi",
       "hide-log-line": "Nascondi riga registro",
       "inline-mode": "Visualizza in linea",
+      "link-value-tooltip": "",
       "links-section": "Collegamenti",
       "log-line-field": "Riga registro",
       "log-line-section": "Riga registro",
@@ -11158,11 +11162,16 @@
     "save-or-delete-resource-shared-fields": {
       "comment-placeholder-describe-changes-optional": "Aggiungi una nota per descrivere le modifiche (facoltativo)",
       "description-branch-name-in-git-hub": "Nome del ramo in GitHub",
+      "description-file-path": "",
+      "description-folder-path": "",
       "description-inside-repository": "",
       "label-branch": "Ramo",
       "label-comment": "Commento",
       "label-path": "Percorso",
-      "label-workflow": "Flusso di lavoro"
+      "label-workflow": "Flusso di lavoro",
+      "placeholder-branch": "",
+      "placeholder-new-branch": "",
+      "suffix-configured-branch": ""
     }
   },
   "provisioned-resource-preview-banner": {
@@ -11696,6 +11705,10 @@
       "button-previous": "Precedente",
       "button-submitting": "Invio in corso...",
       "error-instance-repository-exists": "Il repository delle istanze esiste già"
+    },
+    "workflow-options-label": {
+      "push-to-a-new-branch": "",
+      "push-to-existing-branch": ""
     }
   },
   "public-dashboard": {
@@ -12080,6 +12093,7 @@
     "selector": {
       "apply": "Applica",
       "cancel": "Annulla",
+      "error-title": "",
       "input": {
         "placeholder": "Seleziona gli ambiti...",
         "removeAll": "Rimuovi tutti gli ambiti"
@@ -12807,6 +12821,7 @@
     "name-fields": "Campi",
     "name-frozen-columns": "",
     "name-hide-in-table": "Nascondi nella tabella",
+    "name-max-height": "",
     "name-min-column-width": "Larghezza minima colonna",
     "name-show-table-footer": "Mostra piè di pagina tabella",
     "name-show-table-header": "Mostra intestazione tabella",
@@ -12816,6 +12831,7 @@
     "name-wrap-text": "",
     "placeholder-column-width": "automatica",
     "placeholder-fields": "Tutti i campi numerici",
+    "placeholder-max-height": "",
     "tooltip-placement-options": {
       "label-auto": "",
       "label-bottom": "",

@@ -557,6 +557,7 @@
     },
     "alert-rules": {
       "firing-for": "Отправка для",
+      "multiple-sources": "",
       "next-evaluation": "Следующая оценка",
       "next-evaluation-in": "следующая оценка через",
       "rule-definition": "Определение правил"
@@ -2664,13 +2665,15 @@
         "show": "Показать"
       },
       "manage-alerts": "В этих источниках данных можно выбрать параметр «Управление оповещениями через пользовательский интерфейс Alerting», чтобы иметь возможность управлять этими правилами оповещения в пользовательском интерфейсе Grafana, а также в источнике данных, где они были установлены.",
-      "no-groups": "Нет доступных групп",
-      "no-namespaces": "Нет доступных папок",
       "placeholder-all-data-sources": "Все источники данных",
       "placeholder-contact-point": "Выбрать точку контакта",
       "placeholder-data-sources": "Выбрать источники данных",
       "placeholder-labels": "Выбрать метки",
       "plugin-rules": "Правила плагинов",
+      "rule-source": {
+        "datasource": "",
+        "grafana": ""
+      },
       "rule-type": "Тип правила",
       "rulesSearchInput-placeholder-search": "Поиск",
       "search": "Поиск",
@@ -2692,6 +2695,7 @@
         "namespace": "Папка / пространство имен",
         "rule-health": "Работоспособность",
         "rule-name": "Имя правила",
+        "rule-source": "",
         "rule-type": "Тип",
         "state": "Состояние"
       }
@@ -3419,9 +3423,6 @@
       "text-badge-enabled": "Включено",
       "text-badge-not-enabled": "Не включена"
     },
-    "scim-banner": {
-      "message": "Стандарт SCIM в настоящее время находится в разработке и не рекомендуется для использования в производстве. Используйте его с осторожностью и учитывайте возможные изменения."
-    },
     "server-discovery-modal": {
       "label-the-wellknownopenidconfiguration-endpoint-for-your-id-p": "Конечная точка .well-known/openid-configuration для вашего поставщика удостоверений (IdP)",
       "title-open-id-connect-discovery-url": "URL-адрес обнаружения OpenID Connect"
@@ -3591,7 +3592,9 @@
       },
       "error-moving-resources": "Ошибка при перемещении ресурсов",
       "error-no-target-folder-path": "Недопустимый или пустой путь к целевой папке. Повторите попытку.",
-      "move-warning": "Будут перемещены выбранные папки и их дочерние элементы. В общей сложности будет перемещено:",
+      "move-total": "",
+      "move-warning": "",
+      "move-warning-tooltip": "",
       "target-folder": "Целевая папка"
     },
     "counts": {
@@ -4598,6 +4601,12 @@
       "overwrite": "Перезаписать",
       "title-plugin-dashboard": "Дашборд плагинов"
     },
+    "controls": {
+      "menu": {
+        "aria-label": "",
+        "title": ""
+      }
+    },
     "dash-nav": {
       "on-open-snapshot-original": {
         "confirmText": {
@@ -4721,6 +4730,7 @@
       "panel-title": "Изменить заголовок панели",
       "paste-panel": "Вставка панели",
       "remove": "Удалить {{typeName}}",
+      "row-title": "",
       "switch-layout": "Переключить макет"
     },
     "edit-pane": {
@@ -5878,11 +5888,6 @@
         "transparent-background": "Прозрачный фон"
       }
     },
-    "get-workflow-options": {
-      "label": {
-        "push-to-a-new-branch": "Переместить в новую ветвь"
-      }
-    },
     "group-by-variable-form": {
       "alert-not-supported": "Этот источник данных не поддерживает группировку по переменным",
       "description-enables-users-custom-values": "Позволяет пользователям добавлять пользовательские значения в список.",
@@ -6583,7 +6588,8 @@
     },
     "data-source-load-error": {
       "back": "Назад",
-      "delete": "Удалить"
+      "delete": "Удалить",
+      "not-found": ""
     },
     "data-source-missing-rights-message": {
       "title-missing-rights": "Отсутствующие права"
@@ -6983,11 +6989,6 @@
       "dragging-a-divider": "Перетаскивание разделителя",
       "dragging-a-sub-region": "Перетаскивание подобласти",
       "value": "Значение: {{ dividerPos }}"
-    },
-    "drilldownInfo": {
-      "action": "Перейти в Grafana Drilldown",
-      "description": "Ищете приложения Grafana Explore? Теперь они называются приложениями Grafana Drilldown и находятся в разделе <1>Меню > Drilldown</1>",
-      "title": "Explore Metrics, Logs, Traces и Profiles переехали!"
     },
     "drop-down-menu": {
       "aria-label-links": "Ссылки",
@@ -7611,7 +7612,9 @@
   "folders": {
     "api": {
       "folder-delete-error-provisioned": "",
-      "folder-deleted-success": "Папка удалена"
+      "folder-deleted-success": "Папка удалена",
+      "folder-move-error-provisioned": "",
+      "folder-moved-success": ""
     },
     "get-loading-nav": {
       "main": {
@@ -9587,6 +9590,7 @@
       "fields-section": "Поля",
       "hide-log-line": "Скрыть строку журнала",
       "inline-mode": "Показать встроенные",
+      "link-value-tooltip": "",
       "links-section": "Ссылки",
       "log-line-field": "Строка журнала",
       "log-line-section": "Строка журнала",
@@ -11222,11 +11226,16 @@
     "save-or-delete-resource-shared-fields": {
       "comment-placeholder-describe-changes-optional": "Добавить примечание с описанием изменений (необязательно)",
       "description-branch-name-in-git-hub": "Имя ветви в GitHub",
+      "description-file-path": "",
+      "description-folder-path": "",
       "description-inside-repository": "",
       "label-branch": "Ветвь",
       "label-comment": "Комментарий",
       "label-path": "Путь",
-      "label-workflow": "Рабочий процесс"
+      "label-workflow": "Рабочий процесс",
+      "placeholder-branch": "",
+      "placeholder-new-branch": "",
+      "suffix-configured-branch": ""
     }
   },
   "provisioned-resource-preview-banner": {
@@ -11766,6 +11775,10 @@
       "button-previous": "Назад",
       "button-submitting": "Отправка...",
       "error-instance-repository-exists": "Репозиторий экземпляров уже существует"
+    },
+    "workflow-options-label": {
+      "push-to-a-new-branch": "",
+      "push-to-existing-branch": ""
     }
   },
   "public-dashboard": {
@@ -12158,6 +12171,7 @@
     "selector": {
       "apply": "Применить",
       "cancel": "Отмена",
+      "error-title": "",
       "input": {
         "placeholder": "Выбрать области...",
         "removeAll": "Удалить все области"
@@ -12889,6 +12903,7 @@
     "name-fields": "Поля",
     "name-frozen-columns": "",
     "name-hide-in-table": "Скрыть в таблице",
+    "name-max-height": "",
     "name-min-column-width": "Минимальная ширина столбца",
     "name-show-table-footer": "Показать футер таблицы",
     "name-show-table-header": "Показать заголовок таблицы",
@@ -12898,6 +12913,7 @@
     "name-wrap-text": "",
     "placeholder-column-width": "авто",
     "placeholder-fields": "Все числовые поля",
+    "placeholder-max-height": "",
     "tooltip-placement-options": {
       "label-auto": "",
       "label-bottom": "",

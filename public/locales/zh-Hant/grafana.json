@@ -545,6 +545,7 @@
     },
     "alert-rules": {
       "firing-for": "已觸發達",
+      "multiple-sources": "",
       "next-evaluation": "下一個評估",
       "next-evaluation-in": "下一個評估於",
       "rule-definition": "規則定義"
@@ -2625,13 +2626,15 @@
         "show": "顯示"
       },
       "manage-alerts": "在這些資料來源中，您可以選擇透過警報 UI 管理警報，以便在 Grafana UI 以及在其設定的資料來源中管理這些警報規則。",
-      "no-groups": "沒有可用的群組",
-      "no-namespaces": "沒有可用的資料夾",
       "placeholder-all-data-sources": "所有資料來源",
       "placeholder-contact-point": "選擇聯絡點",
       "placeholder-data-sources": "選擇資料來源",
       "placeholder-labels": "選擇標籤",
       "plugin-rules": "外掛程式規則",
+      "rule-source": {
+        "datasource": "",
+        "grafana": ""
+      },
       "rule-type": "規則類型",
       "rulesSearchInput-placeholder-search": "搜尋",
       "search": "搜尋",
@@ -2653,6 +2656,7 @@
         "namespace": "資料夾／命名空間",
         "rule-health": "使用情況",
         "rule-name": "規則名稱",
+        "rule-source": "",
         "rule-type": "類型",
         "state": "狀態"
       }
@@ -3380,9 +3384,6 @@
       "text-badge-enabled": "已啟用",
       "text-badge-not-enabled": "未啟用"
     },
-    "scim-banner": {
-      "message": "SCIM 目前正在開發中，不建議用於生產。請謹慎使用，並做好可能發生變更的準備。"
-    },
     "server-discovery-modal": {
       "label-the-wellknownopenidconfiguration-endpoint-for-your-id-p": "您的 IdP 的 .well-known/openid-configuration 端點",
       "title-open-id-connect-discovery-url": "OpenID Connect 探索網址"
@@ -3552,7 +3553,9 @@
       },
       "error-moving-resources": "移動資源時發生錯誤",
       "error-no-target-folder-path": "目標資料夾路徑無效或空白，請再選擇一次。",
-      "move-warning": "這將移動所選資料夾及其子資料夾。總體而言，這將影響：",
+      "move-total": "",
+      "move-warning": "",
+      "move-warning-tooltip": "",
       "target-folder": "目標資料夾"
     },
     "counts": {
@@ -4544,6 +4547,12 @@
       "overwrite": "覆寫",
       "title-plugin-dashboard": "外掛程式儀表板"
     },
+    "controls": {
+      "menu": {
+        "aria-label": "",
+        "title": ""
+      }
+    },
     "dash-nav": {
       "on-open-snapshot-original": {
         "confirmText": {
@@ -4667,6 +4676,7 @@
       "panel-title": "變更面板標題",
       "paste-panel": "貼上面板",
       "remove": "移除 {{typeName}}",
+      "row-title": "",
       "switch-layout": "切換版面配置"
     },
     "edit-pane": {
@@ -5821,11 +5831,6 @@
         "transparent-background": "透明背景"
       }
     },
-    "get-workflow-options": {
-      "label": {
-        "push-to-a-new-branch": "推送至新分支"
-      }
-    },
     "group-by-variable-form": {
       "alert-not-supported": "此資料來源不支援依變數分組",
       "description-enables-users-custom-values": "使用者能夠將自訂值新增至清單",
@@ -6520,7 +6525,8 @@
     },
     "data-source-load-error": {
       "back": "返回",
-      "delete": "刪除"
+      "delete": "刪除",
+      "not-found": ""
     },
     "data-source-missing-rights-message": {
       "title-missing-rights": "缺少權限"
@@ -6920,11 +6926,6 @@
       "dragging-a-divider": "拖曳分隔線",
       "dragging-a-sub-region": "拖曳子區域",
       "value": "數值：{{ dividerPos }}"
-    },
-    "drilldownInfo": {
-      "action": "前往 Grafana Drilldown",
-      "description": "正在尋找 Grafana Explore 應用程式嗎？現在稱之為 Grafana Drilldown 應用程式，可在<1>功能表 > 詳細資料</1>下方找到",
-      "title": "Explore 指標、日誌、追蹤和設定檔已移動！"
     },
     "drop-down-menu": {
       "aria-label-links": "連結",
@@ -7548,7 +7549,9 @@
   "folders": {
     "api": {
       "folder-delete-error-provisioned": "",
-      "folder-deleted-success": "資料夾已刪除"
+      "folder-deleted-success": "資料夾已刪除",
+      "folder-move-error-provisioned": "",
+      "folder-moved-success": ""
     },
     "get-loading-nav": {
       "main": {
@@ -9500,6 +9503,7 @@
       "fields-section": "欄位",
       "hide-log-line": "隱藏紀錄行",
       "inline-mode": "顯示內嵌",
+      "link-value-tooltip": "",
       "links-section": "連結",
       "log-line-field": "紀錄行",
       "log-line-section": "紀錄行",
@@ -11126,11 +11130,16 @@
     "save-or-delete-resource-shared-fields": {
       "comment-placeholder-describe-changes-optional": "新增備註以描述您的變更（選填）",
       "description-branch-name-in-git-hub": "GitHub 中的分支名稱",
+      "description-file-path": "",
+      "description-folder-path": "",
       "description-inside-repository": "",
       "label-branch": "分支",
       "label-comment": "評論",
       "label-path": "路徑",
-      "label-workflow": "工作流程"
+      "label-workflow": "工作流程",
+      "placeholder-branch": "",
+      "placeholder-new-branch": "",
+      "suffix-configured-branch": ""
     }
   },
   "provisioned-resource-preview-banner": {
@@ -11661,6 +11670,10 @@
       "button-previous": "上一個",
       "button-submitting": "正在提交…",
       "error-instance-repository-exists": "執行個體儲存庫已存在"
+    },
+    "workflow-options-label": {
+      "push-to-a-new-branch": "",
+      "push-to-existing-branch": ""
     }
   },
   "public-dashboard": {
@@ -12041,6 +12054,7 @@
     "selector": {
       "apply": "套用",
       "cancel": "取消",
+      "error-title": "",
       "input": {
         "placeholder": "選取範圍…",
         "removeAll": "移除所有範圍"
@@ -12766,6 +12780,7 @@
     "name-fields": "欄位",
     "name-frozen-columns": "",
     "name-hide-in-table": "在表格中隱藏",
+    "name-max-height": "",
     "name-min-column-width": "最小欄寬",
     "name-show-table-footer": "顯示表格頁尾",
     "name-show-table-header": "顯示表格頁首",
@@ -12775,6 +12790,7 @@
     "name-wrap-text": "",
     "placeholder-column-width": "自動",
     "placeholder-fields": "所有數值欄位",
+    "placeholder-max-height": "",
     "tooltip-placement-options": {
       "label-auto": "",
       "label-bottom": "",
