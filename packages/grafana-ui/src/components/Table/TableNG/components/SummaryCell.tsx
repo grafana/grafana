@@ -62,7 +62,7 @@ export const SummaryCell = ({
   const styles = useStyles2(getStyles, textAlign, hideLabel);
   const theme = useTheme2();
   const defaultFooterCellStyles = getDefaultCellStyles(theme, {
-    textAlign,
+    textAlign: 'left', // alignment is set in footerItem
     shouldOverflow: true,
     textWrap: false,
   });
