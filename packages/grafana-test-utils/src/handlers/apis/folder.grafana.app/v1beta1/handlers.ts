@@ -11,6 +11,32 @@ const baseResponse = {
   apiVersion: 'folder.grafana.app/v1beta1',
 };
 
+const folderToAppPlatform = (folder: (typeof mockTree)[number]['item'], id?: number, namespace?: string) => {
+  return {
+    ...baseResponse,
+
+    metadata: {
+      name: folder.uid,
+      namespace: namespace ?? 'default',
+      uid: folder.uid,
+      creationTimestamp: '2023-01-01T00:00:00Z',
+      annotations: {
+        // TODO: Generalise annotations in fixture data
+        'grafana.app/createdBy': 'user:1',
+        'grafana.app/updatedBy': 'user:2',
+        'grafana.app/managedBy': 'user',
+        'grafana.app/updatedTimestamp': '2024-01-01T00:00:00Z',
+        'grafana.app/folder': folder.kind === 'folder' ? folder.parentUID : undefined,
+      },
+      labels: {
+        'grafana.app/deprecatedInternalID': id ?? '123',
+      },
+    },
+    spec: { title: folder.title, description: '' },
+    status: {},
+  };
+};
+
 const folderNotFoundError = getErrorResponse('folder not found', 404);
 
 const getFolderHandler = () =>
@@ -26,28 +52,9 @@ const getFolderHandler = () =>
         return HttpResponse.json(folderNotFoundError, { status: 404 });
       }
 
-      return HttpResponse.json({
-        ...baseResponse,
-        metadata: {
-          name: response.item.uid,
-          namespace,
-          uid: response.item.uid,
-          creationTimestamp: '2023-01-01T00:00:00Z',
-          annotations: {
-            // TODO: Generalise annotations in fixture data
-            'grafana.app/createdBy': 'user:1',
-            'grafana.app/updatedBy': 'user:2',
-            'grafana.app/managedBy': 'user',
-            'grafana.app/updatedTimestamp': '2024-01-01T00:00:00Z',
-            'grafana.app/folder': response.item.kind === 'folder' ? response.item.parentUID : undefined,
-          },
-          labels: {
-            'grafana.app/deprecatedInternalID': '123',
-          },
-        },
-        spec: { title: response.item.title, description: '' },
-        status: {},
-      });
+      const appPlatformFolder = folderToAppPlatform(response.item, undefined, namespace);
+
+      return HttpResponse.json(appPlatformFolder);
     }
   );
 
@@ -121,35 +128,40 @@ const createFolderHandler = () =>
 
       const parentUid = body?.metadata?.annotations?.['grafana.app/folder'];
       const random = Chance(title);
-      const name = random.string({ length: 10 });
       const uid = random.string({ length: 45 });
       const id = random.integer({ min: 1, max: 1000 });
 
-      return HttpResponse.json({
-        ...baseResponse,
-        metadata: {
-          name,
-          namespace,
-          uid,
-          resourceVersion: '1756207979831',
-          generation: 1,
-          creationTimestamp: '2025-08-26T11:32:59Z',
-          labels: {
-            'grafana.app/deprecatedInternalID': id,
-          },
-          annotations: {
-            'grafana.app/createdBy': 'user:1',
-            'grafana.app/folder': parentUid,
-            'grafana.app/updatedBy': 'user:1',
-            'grafana.app/updatedTimestamp': '2025-08-26T11:32:59Z',
-          },
-        },
-        spec: {
-          title,
-          description: '',
-        },
-        status: {},
-      });
+      const appPlatformFolder = folderToAppPlatform(
+        { uid, title, parentUID: parentUid, kind: 'folder' },
+        id,
+        namespace
+      );
+      return HttpResponse.json(appPlatformFolder);
     }
   );
-export default [getFolderHandler(), getFolderParentsHandler(), createFolderHandler()];
+
+const replaceFolderHandler = () =>
+  http.put<{ folderUid: string; namespace: string }, PartialFolderPayload>(
+    '/apis/folder.grafana.app/v1beta1/namespaces/:namespace/folders/:folderUid',
+    async ({ params, request }) => {
+      const body = await request.json();
+      const { folderUid } = params;
+      const response = mockTree.find(({ item }) => {
+        return item.uid === folderUid;
+      });
+
+      if (!response) {
+        return HttpResponse.json(folderNotFoundError, { status: 404 });
+      }
+
+      const modifiedFolder = {
+        ...response.item,
+        title: body.spec.title,
+      };
+
+      const appPlatformFolder = folderToAppPlatform(modifiedFolder);
+
+      return HttpResponse.json(appPlatformFolder);
+    }
+  );
+export default [getFolderHandler(), getFolderParentsHandler(), createFolderHandler(), replaceFolderHandler()];

@@ -11,6 +11,7 @@ const collator = new Intl.Collator();
 const mockAccessControl = {
   'dashboards.permissions:write': true,
   'dashboards:create': true,
+  'folders:write': true,
 };
 const additionalProperties = {
   canAdmin: true,
@@ -108,6 +109,19 @@ const createFolderHandler = () =>
     });
   });
 
-const handlers = [listFoldersHandler(), getFolderHandler(), createFolderHandler()];
+const saveFolderHandler = () =>
+  http.put<{ uid: string }, { title: string; version: number }>('/api/folders/:uid', async ({ params, request }) => {
+    const { uid } = params;
+    const body = await request.json();
+    const folder = mockTree.find((v) => v.item.uid === uid);
+
+    if (!folder) {
+      return HttpResponse.json({ message: 'folder not found' }, { status: 404 });
+    }
+
+    return HttpResponse.json({ ...folder.item, title: body.title });
+  });
+
+const handlers = [listFoldersHandler(), getFolderHandler(), createFolderHandler(), saveFolderHandler()];
 
 export default handlers;

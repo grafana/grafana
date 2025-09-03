@@ -45,7 +45,8 @@ export const {
   useDeleteFolderMutation,
   useCreateFolderMutation,
   useUpdateFolderMutation,
+  useReplaceFolderMutation,
 } = folderAPIv1beta1;
 
 // eslint-disable-next-line no-barrel-files/no-barrel-files
-export { type Folder, type FolderList, type CreateFolderApiArg } from './endpoints.gen';
+export { type Folder, type FolderList, type CreateFolderApiArg, type ReplaceFolderApiArg } from './endpoints.gen';

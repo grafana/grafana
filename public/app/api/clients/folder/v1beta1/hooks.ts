@@ -11,6 +11,7 @@ import {
   useDeleteFoldersMutation as useDeleteFoldersMutationLegacy,
   useNewFolderMutation as useLegacyNewFolderMutation,
   useMoveFoldersMutation as useMoveFoldersMutationLegacy,
+  useSaveFolderMutation as useLegacySaveFolderMutation,
   MoveFoldersArgs,
   DeleteFoldersArgs,
 } from 'app/features/browse-dashboards/api/browseDashboardsAPI';
@@ -44,6 +45,8 @@ import {
   useUpdateFolderMutation,
   Folder,
   CreateFolderApiArg,
+  useReplaceFolderMutation,
+  ReplaceFolderApiArg,
 } from './index';
 
 /** Trigger necessary actions to ensure legacy folder stores are updated */
@@ -318,6 +321,38 @@ export function useCreateFolder() {
   };
 
   return [createFolderAppPlatform, result] as const;
+}
+
+export function useUpdateFolder() {
+  const [updateFolder, result] = useReplaceFolderMutation();
+  const legacyHook = useLegacySaveFolderMutation();
+
+  if (!config.featureToggles.foldersAppPlatformAPI) {
+    return legacyHook;
+  }
+
+  const updateFolderAppPlatform = async (folder: Pick<FolderDTO, 'uid' | 'title' | 'version' | 'parentUid'>) => {
+    const payload: ReplaceFolderApiArg = {
+      name: folder.uid,
+      folder: {
+        spec: { title: folder.title },
+        metadata: {
+          name: folder.uid,
+        },
+        status: {},
+      },
+    };
+
+    const result = await updateFolder(payload);
+    dispatchRefetchChildren(folder.parentUid);
+
+    return {
+      ...result,
+      data: result.data ? appPlatformFolderToLegacyFolder(result.data) : undefined,
+    };
+  };
+
+  return [updateFolderAppPlatform, result] as const;
 }
 
 function combinedState(
