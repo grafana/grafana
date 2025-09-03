@@ -231,6 +231,7 @@
       "button-apply": "Apply",
       "button-cancel": "Cancel",
       "header-location": "Location",
+      "header-resource-group": "Resource Group",
       "header-scope": "Scope",
       "header-type": "Type",
       "heading-selection": "Selection",
