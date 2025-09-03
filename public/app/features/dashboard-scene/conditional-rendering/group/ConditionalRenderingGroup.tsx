@@ -53,12 +53,21 @@ export class ConditionalRenderingGroup extends SceneObjectBase<ConditionalRender
   }
 
   public check() {
-    let result =
-      this.state.conditions.length === 0
-        ? true
-        : this._shouldMatchAll
-          ? this.state.conditions.every((condition) => this._evaluateCondition(condition))
-          : this.state.conditions.some((condition) => this._evaluateCondition(condition));
+    // Filter out undefined results
+    // Because we negate the result if shouldShow is false, we can use `condition.state.result ?? true` directly below
+    const validConditions = this.state.conditions.filter((condition) => condition.state.result !== undefined);
+
+    let result = true;
+
+    if (validConditions.length > 0) {
+      result = this._shouldMatchAll
+        ? validConditions.every((condition) => condition.state.result)
+        : validConditions.some((condition) => condition.state.result);
+
+      if (!this._shouldShow) {
+        result = !result;
+      }
+    }
 
     if (result !== this.state.result) {
       this.setState({ ...this.state, result });
@@ -148,17 +157,6 @@ export class ConditionalRenderingGroup extends SceneObjectBase<ConditionalRender
         items: this.state.conditions.map((condition) => condition.serialize()),
       },
     };
-  }
-
-  private _evaluateCondition(condition: ConditionalRenderingConditions): boolean {
-    const { result } = condition.state;
-
-    // When the result is undefined, we consider it to be truthy
-    if (result === undefined) {
-      return true;
-    }
-
-    return result === this._shouldShow;
   }
 
   public static createEmpty(): ConditionalRenderingGroup {
