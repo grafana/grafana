@@ -39,6 +39,9 @@ func Convert_V0_to_V1(in *dashv0.Dashboard, out *dashv1.Dashboard, scope convers
 		return nil
 	}
 
+	// a background service identity is used here because the user who is reading the specific dashboard
+	// may not have access to all the datasources in the dashboard, but the migration still needs to take place
+	// in order to be able to convert between k8s versions (so that we have a guaranteed structure to convert between)
 	ctx, _ = identity.WithServiceIdentity(ctx, nsInfo.OrgID)
 
 	if err := migration.Migrate(ctx, out.Spec.Object, schemaversion.LATEST_VERSION); err != nil {
