@@ -102,7 +102,7 @@ func (s *ResourcePermSqlBackend) ReadResource(ctx context.Context, req *resource
 		return rsp
 	}
 
-	rsp.ResourceVersion = resourcePermission.CreationTimestamp.UnixMilli()
+	rsp.ResourceVersion = resourcePermission.GetUpdateTimestamp().UnixMilli()
 	rsp.Value, err = json.Marshal(resourcePermission)
 	if err != nil {
 		rsp.Error = resource.AsErrorResult(err)

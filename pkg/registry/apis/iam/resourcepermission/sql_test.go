@@ -2,6 +2,7 @@ package resourcepermission
 
 import (
 	"context"
+	"fmt"
 	"testing"
 	"time"
 
@@ -63,7 +64,7 @@ func setupTestRoles(t *testing.T, store db.DB) {
 		// Permissions for managed:builtins:editor:permissions
 		4, "dashboards:edit", "dashboards:uid:dash1", "2025-09-02", "2025-09-02",
 		// Permissions for managed:teams:1:permissions
-		5, "dashboards:admin", "dashboards:uid:dash1", "2025-09-02", "2025-09-02",
+		5, "dashboards:admin", "dashboards:uid:dash1", "2025-09-02", "2025-09-03", // Recently updated
 	)
 	require.NoError(t, err)
 
@@ -139,7 +140,7 @@ func TestResourcePermSqlBackend_getResourcePermission(t *testing.T) {
 				ObjectMeta: metaV1.ObjectMeta{
 					Name:              "folder.grafana.app-folders-fold1",
 					CreationTimestamp: metaV1.Time{Time: created},
-					ResourceVersion:   created.Format(time.RFC3339),
+					ResourceVersion:   fmt.Sprint(created.UnixMilli()),
 				},
 				TypeMeta: v0alpha1.ResourcePermissionInfo.TypeMeta(),
 				Spec: v0alpha1.ResourcePermissionSpec{
@@ -184,7 +185,13 @@ func TestResourcePermSqlBackend_getResourcePermission(t *testing.T) {
 				return
 			}
 			require.NoError(t, err)
-			require.Equal(t, &tt.want, got)
+
+			require.Equal(t, tt.want.Name, got.Name)
+			require.Equal(t, tt.want.CreationTimestamp, got.CreationTimestamp)
+			require.Equal(t, tt.want.ResourceVersion, got.ResourceVersion)
+			require.NotZero(t, got.GetUpdateTimestamp())
+			require.Equal(t, tt.want.TypeMeta, got.TypeMeta)
+			require.Equal(t, tt.want.Spec, got.Spec)
 		})
 	}
 }

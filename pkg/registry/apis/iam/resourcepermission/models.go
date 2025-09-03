@@ -51,12 +51,18 @@ func (s *ResourcePermSqlBackend) toV0ResourcePermissions(permsByResource map[gro
 		specs := make([]v0alpha1.ResourcePermissionspecPermission, 0, len(perms))
 
 		var (
-			updated        = time.Now() // TODO incorrect
+			created        = time.Now()
+			updated        = time.Now()
 			permissionKind v0alpha1.ResourcePermissionSpecPermissionKind
 		)
 		for i := range perms {
-			if i == 0 || perms[i].Updated.Before(updated) {
+			// Find the most recent updated time
+			if i == 0 || perms[i].Updated.After(updated) {
 				updated = perms[i].Updated
+			}
+			// Find the oldest created time
+			if i == 0 || perms[i].Created.Before(created) {
+				created = perms[i].Created
 			}
 			perm := perms[i]
 			switch perm.SubjectType {
@@ -81,19 +87,20 @@ func (s *ResourcePermSqlBackend) toV0ResourcePermissions(permsByResource map[gro
 				Verb: verb,
 			})
 		}
-
-		resourcePermissions = append(resourcePermissions, v0alpha1.ResourcePermission{
+		r := v0alpha1.ResourcePermission{
 			TypeMeta: v0alpha1.ResourcePermissionInfo.TypeMeta(),
 			ObjectMeta: metav1.ObjectMeta{
 				Name:              resource.string(),
-				ResourceVersion:   updated.UTC().Format(time.RFC3339),
-				CreationTimestamp: metav1.NewTime(updated.UTC()),
+				ResourceVersion:   fmt.Sprint(updated.UnixMilli()),
+				CreationTimestamp: metav1.NewTime(created.UTC()),
 			},
 			Spec: v0alpha1.ResourcePermissionSpec{
 				Resource:    resource.v0alpha1(),
 				Permissions: specs,
 			},
-		})
+		}
+		r.SetUpdateTimestamp(updated.UTC())
+		resourcePermissions = append(resourcePermissions, r)
 	}
 
 	return resourcePermissions, nil

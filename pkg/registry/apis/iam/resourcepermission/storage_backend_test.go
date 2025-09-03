@@ -22,7 +22,8 @@ func TestResourcePermSqlBackend_ReadResource(t *testing.T) {
 	require.NoError(t, err)
 	setupTestRoles(t, sql.DB)
 
-	created := time.Date(2025, 9, 2, 0, 0, 0, 0, time.UTC)
+	updated1 := time.Date(2025, 9, 2, 0, 0, 0, 0, time.UTC)
+	updated2 := time.Date(2025, 9, 3, 0, 0, 0, 0, time.UTC) // managed role for team 1 has a later updated permission
 
 	t.Run("ReadResource - Invalid namespace", func(t *testing.T) {
 		resp := backend.ReadResource(context.Background(), &resourcepb.ReadRequest{
@@ -42,7 +43,7 @@ func TestResourcePermSqlBackend_ReadResource(t *testing.T) {
 		require.NotNil(t, resp)
 		require.Nil(t, resp.Error)
 		require.NotNil(t, resp.Value)
-		require.Equal(t, created.UnixMilli(), resp.ResourceVersion)
+		require.Equal(t, updated1.UnixMilli(), resp.ResourceVersion)
 
 		var permission v0alpha1.ResourcePermission
 		err := json.Unmarshal(resp.Value, &permission)
@@ -62,7 +63,7 @@ func TestResourcePermSqlBackend_ReadResource(t *testing.T) {
 		require.NotNil(t, resp)
 		require.Nil(t, resp.Error)
 		require.NotNil(t, resp.Value)
-		require.Equal(t, created.UnixMilli(), resp.ResourceVersion)
+		require.Equal(t, updated1.UnixMilli(), resp.ResourceVersion)
 
 		var permission v0alpha1.ResourcePermission
 		err := json.Unmarshal(resp.Value, &permission)
@@ -82,7 +83,7 @@ func TestResourcePermSqlBackend_ReadResource(t *testing.T) {
 		require.NotNil(t, resp)
 		require.Nil(t, resp.Error)
 		require.NotNil(t, resp.Value)
-		require.Equal(t, created.UnixMilli(), resp.ResourceVersion)
+		require.Equal(t, updated2.UnixMilli(), resp.ResourceVersion)
 
 		var permission v0alpha1.ResourcePermission
 		err := json.Unmarshal(resp.Value, &permission)
