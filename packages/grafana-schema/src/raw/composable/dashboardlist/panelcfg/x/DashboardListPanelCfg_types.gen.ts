@@ -20,6 +20,7 @@ export interface Options {
   keepTime: boolean;
   maxItems: number;
   query: string;
+  showDescriptions: boolean;
   showFolderNames: boolean;
   showHeadings: boolean;
   showRecentlyViewed: boolean;
@@ -33,6 +34,7 @@ export const defaultOptions: Partial<Options> = {
   keepTime: false,
   maxItems: 10,
   query: '',
+  showDescriptions: false,
   showFolderNames: true,
   showHeadings: true,
   showRecentlyViewed: false,

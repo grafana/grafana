@@ -48,6 +48,7 @@ export interface DashboardSearchItem {
   type: string; // dash-db, dash-home
   tags: string[];
   isStarred: boolean;
+  description?: string;
 
   // Only on dashboards in folders results
   folderUid?: string;

@@ -53,6 +53,12 @@ export const plugin = new PanelPlugin<Options>(DashList)
         category,
         defaultValue: defaultOptions.showFolderNames,
       })
+      .addBooleanSwitch({
+        path: 'showDescriptions',
+        name: t('dashlist.name-show-descriptions', 'Show descriptions'),
+        category,
+        defaultValue: defaultOptions.showDescriptions,
+      })
       .addNumberInput({
         path: 'maxItems',
         name: t('dashlist.name-max-items', 'Max items'),

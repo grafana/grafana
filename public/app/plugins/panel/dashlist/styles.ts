@@ -32,6 +32,18 @@ export const getStyles = (theme: GrafanaTheme2) => {
       fontSize: theme.typography.bodySmall.fontSize,
       lineHeight: theme.typography.body.lineHeight,
     }),
+    dashlistDescription: css({
+      color: theme.colors.text.secondary,
+      fontSize: theme.typography.bodySmall.fontSize,
+      lineHeight: theme.typography.body.lineHeight,
+      marginTop: theme.spacing(0.5),
+      wordBreak: 'break-word',
+      overflow: 'hidden',
+      textOverflow: 'ellipsis',
+      display: '-webkit-box',
+      WebkitLineClamp: 2,
+      WebkitBoxOrient: 'vertical',
+    }),
     dashlistTitle: css({
       '&::after': {
         position: 'absolute',
