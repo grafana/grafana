@@ -6,7 +6,7 @@
   "version": "12.2.0-pre",
   "repository": "github:grafana/grafana",
   "scripts": {
-    "predev": "./scripts/check-frontend-dev.sh",
+    "check-frontend-dev": "./scripts/check-frontend-dev.sh",
     "build": "NODE_ENV=production nx exec --verbose -- webpack --config scripts/webpack/webpack.prod.js",
     "build:nominify": "yarn run build -- --env noMinify=1",
     "build:stats": "NODE_ENV=production webpack --progress --config scripts/webpack/webpack.stats.js",
@@ -48,7 +48,7 @@
     "prettier:check": "prettier --check --ignore-path .prettierignore --list-different=false --log-level=warn \"**/*.{ts,tsx,scss,md,mdx,json,js,cjs}\"",
     "prettier:checkDocs": "prettier --check --list-different=false --log-level=warn \"docs/**/*.md\" \"*.md\" \"packages/**/*.{ts,tsx,scss,md,mdx,json,js,cjs}\"",
     "prettier:write": "prettier --ignore-path .prettierignore --list-different \"**/*.{js,ts,tsx,scss,md,mdx,json,cjs}\" --write",
-    "start": "yarn predev && NODE_ENV=dev nx exec -- webpack --config scripts/webpack/webpack.dev.js --watch $@",
+    "start": "NODE_ENV=dev nx exec -- webpack --config scripts/webpack/webpack.dev.js --watch",
     "start:liveReload": "yarn start -- --env liveReload=1",
     "start:noTsCheck": "yarn start -- --env noTsCheck=1",
     "start:noLint": "yarn start -- --env noTsCheck=1 --env noLint=1",
