@@ -31,7 +31,7 @@ const getSimpleGroupByConfig = (
   };
 };
 
-describe.skip('GroupBy transformer', () => {
+describe('GroupBy transformer', () => {
   beforeAll(() => {
     mockTransformationsRegistry([groupByTransformer]);
   });
