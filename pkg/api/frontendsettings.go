@@ -250,6 +250,8 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 		QuickRanges:                      hs.Cfg.QuickRanges,
 		SecureSocksDSProxyEnabled:        hs.Cfg.SecureSocksDSProxy.Enabled && hs.Cfg.SecureSocksDSProxy.ShowUI,
 		EnableFrontendSandboxForPlugins:  hs.Cfg.EnableFrontendSandboxForPlugins,
+		PluginRestrictedAPIsAllowList:    hs.Cfg.PluginRestrictedAPIsAllowList,
+		PluginRestrictedAPIsBlockList:    hs.Cfg.PluginRestrictedAPIsBlockList,
 		PublicDashboardAccessToken:       c.PublicDashboardAccessToken,
 		PublicDashboardsEnabled:          hs.Cfg.PublicDashboardsEnabled,
 		CloudMigrationIsTarget:           isCloudMigrationTarget,
@@ -348,6 +350,18 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 	}
 
 	if hs.Cfg.UnifiedAlerting.StateHistory.Enabled {
+		frontendSettings.UnifiedAlerting.StateHistory = &dtos.FrontendSettingsUnifiedAlertingStateHistoryDTO{
+			Backend: hs.Cfg.UnifiedAlerting.StateHistory.Backend,
+			Primary: hs.Cfg.UnifiedAlerting.StateHistory.MultiPrimary,
+		}
+		if hs.Cfg.UnifiedAlerting.StateHistory.PrometheusTargetDatasourceUID != "" {
+			frontendSettings.UnifiedAlerting.StateHistory.PrometheusTargetDatasourceUID = hs.Cfg.UnifiedAlerting.StateHistory.PrometheusTargetDatasourceUID
+		}
+		if hs.Cfg.UnifiedAlerting.StateHistory.PrometheusMetricName != "" {
+			frontendSettings.UnifiedAlerting.StateHistory.PrometheusMetricName = hs.Cfg.UnifiedAlerting.StateHistory.PrometheusMetricName
+		}
+
+		// Populate deprecated fields for backward compatibility
 		frontendSettings.UnifiedAlerting.AlertStateHistoryBackend = hs.Cfg.UnifiedAlerting.StateHistory.Backend
 		frontendSettings.UnifiedAlerting.AlertStateHistoryPrimary = hs.Cfg.UnifiedAlerting.StateHistory.MultiPrimary
 	}

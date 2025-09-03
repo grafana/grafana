@@ -17,14 +17,14 @@ import {
   MetricFindValue,
   getValueMatcher,
   ValueMatcherID,
-  FiltersApplicability,
-  DataSourceGetTagKeysOptions,
+  DataSourceGetDrilldownsApplicabilityOptions,
+  DrilldownsApplicability,
 } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { SceneDataProvider, SceneDataTransformer, SceneObject } from '@grafana/scenes';
 import {
   activateSceneObjectAndParentTree,
-  findOriginalVizPanelByKey,
+  findVizPanelByKey,
   getVizPanelKeyForPanelId,
 } from 'app/features/dashboard-scene/utils/utils';
 
@@ -63,7 +63,7 @@ export class DashboardDatasource extends DataSourceApi<DashboardQuery> {
       return of({ data: [] });
     }
 
-    let sourcePanel = this.findSourcePanel(scene, panelId);
+    let sourcePanel = findVizPanelByKey(scene, getVizPanelKeyForPanelId(panelId));
 
     if (!sourcePanel) {
       return of({ data: [], error: { message: 'Could not find source panel' } });
@@ -295,11 +295,6 @@ export class DashboardDatasource extends DataSourceApi<DashboardQuery> {
     };
   }
 
-  private findSourcePanel(scene: SceneObject, panelId: number) {
-    // We're trying to find the original panel, not a cloned one, since `panelId` alone cannot resolve clones
-    return findOriginalVizPanelByKey(scene, getVizPanelKeyForPanelId(panelId));
-  }
-
   private emitFirstLoadedDataIfMixedDS(
     requestId: string
   ): (source: Observable<DataQueryResponse>) => Observable<DataQueryResponse> {
@@ -346,16 +341,16 @@ export class DashboardDatasource extends DataSourceApi<DashboardQuery> {
   /**
    * Check which AdHoc filters are applicable based on operator and field type support
    */
-  async getFiltersApplicability(
-    options?: DataSourceGetTagKeysOptions<DashboardQuery>
-  ): Promise<FiltersApplicability[]> {
+  async getDrilldownsApplicability(
+    options?: DataSourceGetDrilldownsApplicabilityOptions<DashboardQuery>
+  ): Promise<DrilldownsApplicability[]> {
     if (!config.featureToggles.dashboardDsAdHocFiltering) {
       return [];
     }
 
     const filters = options?.filters || [];
 
-    return filters.map((filter): FiltersApplicability => {
+    return filters.map((filter): DrilldownsApplicability => {
       // Check operator support
       if (filter.operator !== '=' && filter.operator !== '!=') {
         return {

@@ -1,5 +1,4 @@
 import { get as lodashGet } from 'lodash';
-import { v4 as uuiv4 } from 'uuid';
 
 import {
   EventBus,
@@ -94,7 +93,7 @@ export function getVisualizationOptions(props: OptionPaneRenderProps): OptionsPa
   };
 
   // Load the options into categories
-  fillOptionsPaneItems(plugin.getPanelOptionsSupplier(), access, getOptionsPaneCategory, context);
+  fillOptionsPaneItems(plugin.meta.id, plugin.getPanelOptionsSupplier(), access, getOptionsPaneCategory, context);
 
   /**
    * Field options
@@ -131,8 +130,7 @@ export function getVisualizationOptions(props: OptionPaneRenderProps): OptionsPa
       category.props.itemsCount = fieldOption.getItemsCount(value);
     }
 
-    const htmlId = uuiv4();
-
+    const htmlId = `${plugin.meta.id}-${fieldOption.path}`;
     category.addItem(
       new OptionsPaneItemDescriptor({
         title: fieldOption.name,
@@ -169,7 +167,7 @@ export function getLibraryVizPanelOptionsCategory(libraryPanel: LibraryPanelBeha
     .addItem(
       new OptionsPaneItemDescriptor({
         title: t('dashboard.get-library-viz-panel-options-category.title.name', 'Name'),
-        id: uuiv4(),
+        id: 'library-panel-name',
         value: libraryPanel,
         popularRank: 1,
         render: function renderName(descriptor) {
@@ -187,6 +185,7 @@ export function getLibraryVizPanelOptionsCategory(libraryPanel: LibraryPanelBeha
     .addItem(
       new OptionsPaneItemDescriptor({
         title: t('dashboard.get-library-viz-panel-options-category.title.information', 'Information'),
+        id: 'library-panel-information',
         render: function renderLibraryPanelInformation() {
           return <LibraryVizPanelInfo libraryPanel={libraryPanel} />;
         },
@@ -241,7 +240,7 @@ export function getVisualizationOptions2(props: OptionPaneRenderProps2): Options
   });
 
   // Load the options into categories
-  fillOptionsPaneItems(plugin.getPanelOptionsSupplier(), access, getOptionsPaneCategory, context);
+  fillOptionsPaneItems(plugin.meta.id, plugin.getPanelOptionsSupplier(), access, getOptionsPaneCategory, context);
 
   // Field options
   const currentFieldConfig = panel.state.fieldConfig;
@@ -269,8 +268,7 @@ export function getVisualizationOptions2(props: OptionPaneRenderProps2): Options
       category.props.itemsCount = fieldOption.getItemsCount(value);
     }
 
-    const htmlId = uuiv4();
-
+    const htmlId = `${plugin.meta.id}-${fieldOption.path}`;
     category.addItem(
       new OptionsPaneItemDescriptor({
         title: fieldOption.name,
@@ -300,6 +298,7 @@ export function getVisualizationOptions2(props: OptionPaneRenderProps2): Options
  * @internal
  */
 export function fillOptionsPaneItems(
+  idPrefix: string,
   supplier: PanelOptionsSupplier<any>,
   access: NestedValueAccess,
   getOptionsPaneCategory: categoryGetter,
@@ -313,6 +312,8 @@ export function fillOptionsPaneItems(
     if (pluginOption.showIf && !pluginOption.showIf(context.options, context.data, context.annotations)) {
       continue;
     }
+
+    const htmlId = `${idPrefix}-${pluginOption.id}`;
 
     let category = parentCategory;
     if (!category) {
@@ -329,6 +330,7 @@ export function fillOptionsPaneItems(
         : { ...context, options: access.getValue(pluginOption.path) };
 
       fillOptionsPaneItems(
+        htmlId,
         pluginOption.getBuilder(),
         subAccess,
         getOptionsPaneCategory,
@@ -337,8 +339,6 @@ export function fillOptionsPaneItems(
       );
       continue;
     }
-
-    const htmlId = uuiv4();
 
     const Editor = pluginOption.editor;
     category.addItem(

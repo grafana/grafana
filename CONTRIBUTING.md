@@ -2,7 +2,7 @@
 
 Thank you for your interest in contributing to Grafana! We welcome all people who want to contribute in a healthy and constructive manner within our community. To help us create a safe and positive community experience for all, we require all participants to adhere to the [Code of Conduct](CODE_OF_CONDUCT.md).
 
-This document is a guide to help you through the process of making technical contributions to Grafana.
+This document is a guide to help you through the process of contributing to Grafana. Be sure to check out the [Grafana Champions program](https://grafana.com/community/champions/?src=github&camp=community-cross-platform-engagement) as you start to contribute- it’s designed to recognize and empower individuals who are actively contributing to the growth and success of the Grafana ecosystem.
 
 Whether you're a new contributer or a seasoned veteran we hope these resources help you connect with the community:
 
