@@ -2,7 +2,7 @@ import { createContext, ReactNode, useContext } from 'react';
 
 import { CoreApp } from '@grafana/data';
 import { DataQuery } from '@grafana/schema';
-import { QueryTemplate } from 'app/features/explore/QueryLibrary/types';
+import { SavedQuery } from 'app/features/explore/QueryLibrary/types';
 
 import { OnSelectQueryType, QueryLibraryEventsPropertyMap } from './types';
 
@@ -70,7 +70,7 @@ export type QueryLibraryContextType = {
     properties?: QueryLibraryEventsPropertyMap,
     contextOverride?: string
   ) => void;
-  setNewQuery: (query?: QueryTemplate) => void;
+  setNewQuery: (query?: SavedQuery) => void;
 };
 
 export const QueryLibraryContext = createContext<QueryLibraryContextType>({

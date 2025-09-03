@@ -11,7 +11,7 @@ export type OnSelectQueryType = (query: DataQuery) => void;
 export type QueryLibraryEventsPropertyMap = Record<string, string | boolean | undefined>;
 
 // map from API response to facilitate structs
-export type QueryTemplateDTO = {
+export type SavedQueryDTO = {
   uid: string;
   title: string;
   description: string;
@@ -25,11 +25,11 @@ export type QueryTemplateDTO = {
 // this should actually be like this, but not posssible due to enterprise Spec
 // & Required<Pick<QuerySpec, 'title' | 'description' | 'tags' | 'isLocked' | 'isVisible'>>;
 
-// our model of QueryTemplate to use throughout the frontend
-export type QueryTemplate = {
+// our model of SavedQuery to use throughout the frontend
+export type SavedQuery = {
   query: DataQuery;
   datasourceName?: string;
   queryText?: string;
   datasourceRef?: DataSourceRef | null;
   datasourceType?: string;
-} & Omit<Partial<QueryTemplateDTO>, 'targets'>;
+} & Omit<Partial<SavedQueryDTO>, 'targets'>;
