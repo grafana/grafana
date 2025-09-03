@@ -3049,6 +3049,7 @@
       "page-nav": {
         "text": {
           "details": "Details",
+          "enrichment": "Alert enrichment",
           "history": "History",
           "instances": "Instances",
           "query-and-conditions": "Query and conditions",
