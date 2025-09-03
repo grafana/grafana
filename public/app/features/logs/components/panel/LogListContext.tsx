@@ -11,11 +11,7 @@ import {
   useState,
 } from 'react';
 
-import {
-  createAssistantContextItem,
-  OpenAssistantProps,
-  useAssistant,
-} from '@grafana/assistant';
+import { createAssistantContextItem, OpenAssistantProps, useAssistant } from '@grafana/assistant';
 import {
   CoreApp,
   DataFrame,
@@ -726,7 +722,7 @@ async function handleOpenAssistant(openAssistant: (props: OpenAssistantProps) =>
       createAssistantContextItem('datasource', {
         datasourceUid: datasource.uid,
       })
-    )
+    );
   }
   openAssistant({
     origin: 'grafana/explain-log-line',

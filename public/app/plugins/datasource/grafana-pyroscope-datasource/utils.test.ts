@@ -14,10 +14,12 @@ import { enrichDataFrameWithAssistantContentMapper } from './utils';
 
 // Mock the createContext function
 jest.mock('@grafana/assistant', () => ({
-  createAssistantContextItem: jest.fn()
+  createAssistantContextItem: jest.fn(),
 }));
 
-const mockCreateAssistantContextItem = createAssistantContextItem as jest.MockedFunction<typeof createAssistantContextItem>;
+const mockCreateAssistantContextItem = createAssistantContextItem as jest.MockedFunction<
+  typeof createAssistantContextItem
+>;
 
 describe('enrichDataFrameWithAssistantContentMapper', () => {
   beforeEach(() => {
