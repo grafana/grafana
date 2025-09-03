@@ -260,6 +260,10 @@ export class UnifiedSearcher implements GrafanaSearcher {
     uri += `?query=${encodeURIComponent(query.query ?? '*')}`;
     uri += `&limit=${query.limit ?? pageSize}`;
 
+    if (query.offset) {
+      uri += `&offset=${query.offset}`
+    }
+
     if (!isEmpty(query.location)) {
       uri += `&folder=${query.location}`;
     }
