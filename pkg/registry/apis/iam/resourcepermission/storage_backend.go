@@ -39,8 +39,8 @@ func ProvideStorageBackend(dbProvider legacysql.LegacyDatabaseProvider) *Resourc
 		logger:     log.New("resourceperm_storage_backend"),
 
 		mappers: map[schema.GroupResource]Mapper{
-			schema.GroupResource{Group: "folder.grafana.app", Resource: "folders"}:       NewMapper("folders", defaultLevels),
-			schema.GroupResource{Group: "dashboard.grafana.app", Resource: "dashboards"}: NewMapper("dashboards", defaultLevels),
+			{Group: "folder.grafana.app", Resource: "folders"}:       NewMapper("folders", defaultLevels),
+			{Group: "dashboard.grafana.app", Resource: "dashboards"}: NewMapper("dashboards", defaultLevels),
 		},
 		reverseMappers: map[string]schema.GroupResource{
 			"folders":    {Group: "folder.grafana.app", Resource: "folders"},

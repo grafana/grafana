@@ -30,7 +30,7 @@ func TestToV0ResourcePermissions(t *testing.T) {
 	now := time.Now()
 	t.Run("multiple permission", func(t *testing.T) {
 		permissions := map[groupResourceName][]flatResourcePermission{
-			groupResourceName{
+			{
 				Group:    "dashboard.grafana.app",
 				Resource: "dashboards",
 				Name:     "test123",
