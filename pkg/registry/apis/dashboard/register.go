@@ -203,7 +203,7 @@ func NewAPIService(ac claims.AccessClient, features featuremgmt.FeatureToggles, 
 		dashboardService:     &dashsvc.DashboardServiceImpl{}, // for validation helpers only
 		folderClientProvider: folderClientProvider,
 
-		isMultiTenant: true,
+		isStandalone: true,
 	}
 }
 
