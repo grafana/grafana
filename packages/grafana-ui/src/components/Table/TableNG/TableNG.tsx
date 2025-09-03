@@ -25,7 +25,7 @@ import {
   getDisplayProcessor,
 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
-import { FieldColorModeId, TableCellTooltipPlacement } from '@grafana/schema';
+import { FieldColorModeId, TableCellTooltipPlacement, TableFooterOptions } from '@grafana/schema';
 
 import { useStyles2, useTheme2 } from '../../../themes/ThemeContext';
 import { getTextColorForBackground as _getTextColorForBackground } from '../../../utils/colors';
@@ -230,6 +230,33 @@ export function TableNG(props: TableNGProps) {
     headerHeight: hasHeader ? TABLE.HEADER_ROW_HEIGHT : 0,
     rowHeight,
   });
+
+  const [footers, isUniformFooter] = useMemo(() => {
+    const footers: Array<TableFooterOptions | undefined> = [];
+    let isUniformFooter = true;
+    let firstReducers: string[] | undefined;
+    for (const field of visibleFields) {
+      const footer = field.config?.custom?.footer;
+      footers.push(footer);
+
+      if (firstReducers === undefined && (footer?.reducers?.length ?? 0) > 0) {
+        firstReducers = footer?.reducers; // store the reducers for the first visible array with a footer.
+      } else if (firstReducers !== undefined) {
+        // once we have a list of reducers, compare each subsequent footer's reducers to the first.
+        const reducers: string[] | undefined = footer?.reducers;
+
+        // ignore fields with no footer reducers.
+        if (reducers?.length ?? 0 > 0) {
+          // isUniformFooter is false if there are different numbers of reducers or if the reducers are not identical.
+          if (reducers!.length !== firstReducers!.length || reducers!.some((r, idx) => firstReducers?.[idx] !== r)) {
+            isUniformFooter = false;
+            break;
+          }
+        }
+      }
+    }
+    return [footers, isUniformFooter];
+  }, [visibleFields]);
 
   // normalize the row height into a function which returns a number, so we avoid a bunch of conditionals during rendering.
   const rowHeightFn = useMemo((): ((row: TableRow) => number) => {
@@ -441,6 +468,8 @@ export function TableNG(props: TableNGProps) {
         const linkStyles = getLinkStyles(theme, canBeColorized);
         const cellParentStyles = clsx(defaultCellStyles, linkStyles);
         const maxHeightClassName = maxRowHeight ? getMaxHeightCellStyles(theme, cellStyleOptions) : undefined;
+        const isSumOnlyFooter =
+          field.config.custom?.footer?.reducers?.length === 1 && field.config.custom?.footer?.reducers[0] === 'sum';
 
         // TODO: in future extend this to ensure a non-classic color scheme is set with AutoCell
 
@@ -641,7 +670,17 @@ export function TableNG(props: TableNGProps) {
               showTypeIcons={showTypeIcons}
             />
           ),
-          renderSummaryCell: () => <SummaryCell rows={rows} field={field} omitCountAll={i > 0} />,
+          renderSummaryCell: () => (
+            <SummaryCell
+              rows={rows}
+              footers={footers}
+              field={field}
+              omitCountAll={i > 0}
+              textAlign={textAlign}
+              rowLabel={isUniformFooter && i === 0}
+              hideLabel={isUniformFooter || isSumOnlyFooter}
+            />
+          ),
         });
       });
 
@@ -654,10 +693,12 @@ export function TableNG(props: TableNGProps) {
       data,
       disableSanitizeHtml,
       filter,
+      footers,
       frozenColumns,
       getCellActions,
       getCellColorInlineStyles,
       getTextColorForBackground,
+      isUniformFooter,
       maxRowHeight,
       numFrozenColsFullyInView,
       onCellFilterAdded,
