@@ -33,21 +33,20 @@ import (
 
 var (
 	_ builder.APIGroupBuilder = (*DataSourceAPIBuilder)(nil)
-	// _ builder.APIGroupMutation   = (*DataSourceAPIBuilder)(nil)
-	// _ builder.APIGroupValidation = (*DataSourceAPIBuilder)(nil)
 )
 
 // DataSourceAPIBuilder is used just so wire has something unique to return
 type DataSourceAPIBuilder struct {
 	datasourceResourceInfo utils.ResourceInfo
 
-	pluginJSON      plugins.JSONData
-	client          PluginClient // will only ever be called with the same plugin id!
-	datasources     PluginDatasourceProvider
-	contextProvider PluginContextWrapper
-	accessControl   accesscontrol.AccessControl
-	queryTypes      *queryV0.QueryTypeDefinitionList
-	log             log.Logger
+	pluginJSON           plugins.JSONData
+	client               PluginClient // will only ever be called with the same plugin id!
+	datasources          PluginDatasourceProvider
+	contextProvider      PluginContextWrapper
+	accessControl        accesscontrol.AccessControl
+	queryTypes           *queryV0.QueryTypeDefinitionList
+	log                  log.Logger
+	configCrudUseNewApis bool
 }
 
 func RegisterAPIService(
@@ -92,15 +91,11 @@ func RegisterAPIService(
 			contextProvider,
 			accessControl,
 			features.IsEnabledGlobally(featuremgmt.FlagDatasourceQueryTypes),
+			false,
 		)
 		if err != nil {
 			return nil, err
 		}
-
-		// TODO: load the schema provider from a static manifest
-		// if ds.ID == "grafana-testdata-datasource" {
-		// 	builder.schemaProvider = hardcoded.TestdataOpenAPIExtension
-		// }
 
 		apiRegistrar.RegisterAPI(builder)
 	}
@@ -123,6 +118,7 @@ func NewDataSourceAPIBuilder(
 	contextProvider PluginContextWrapper,
 	accessControl accesscontrol.AccessControl,
 	loadQueryTypes bool,
+	configCrudUseNewApis bool,
 ) (*DataSourceAPIBuilder, error) {
 	group, err := plugins.GetDatasourceGroupNameFromPluginID(plugin.ID)
 	if err != nil {
@@ -137,6 +133,7 @@ func NewDataSourceAPIBuilder(
 		contextProvider:        contextProvider,
 		accessControl:          accessControl,
 		log:                    log.New("grafana-apiserver.datasource"),
+		configCrudUseNewApis:   configCrudUseNewApis,
 	}
 	if loadQueryTypes {
 		// In the future, this will somehow come from the plugin
@@ -215,19 +212,6 @@ func (b *DataSourceAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver
 
 	// Register the raw datasource connection
 	ds := b.datasourceResourceInfo
-	legacyStore := &legacyStorage{
-		datasources:  b.datasources,
-		resourceInfo: &ds,
-	}
-	unified, err := grafanaregistry.NewRegistryStore(opts.Scheme, ds, opts.OptsGetter)
-	if err != nil {
-		return err
-	}
-	storage[ds.StoragePath()], err = opts.DualWriteBuilder(ds.GroupResource(), legacyStore, unified)
-	if err != nil {
-		return err
-	}
-
 	storage[ds.StoragePath("query")] = &subQueryREST{builder: b}
 	storage[ds.StoragePath("health")] = &subHealthREST{builder: b}
 	storage[ds.StoragePath("resource")] = &subResourceREST{builder: b}
@@ -238,13 +222,34 @@ func (b *DataSourceAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver
 	storage["connections"] = &noopREST{}                            // hidden from openapi
 	storage["connections/query"] = storage[ds.StoragePath("query")] // deprecated in openapi
 
+	if b.configCrudUseNewApis {
+		legacyStore := &legacyStorage{
+			datasources:  b.datasources,
+			resourceInfo: &ds,
+		}
+		unified, err := grafanaregistry.NewRegistryStore(opts.Scheme, ds, opts.OptsGetter)
+		if err != nil {
+			return err
+		}
+		storage[ds.StoragePath()], err = opts.DualWriteBuilder(ds.GroupResource(), legacyStore, unified)
+		if err != nil {
+			return err
+		}
+	} else {
+		storage[ds.StoragePath()] = &connectionAccess{
+			datasources:    b.datasources,
+			resourceInfo:   ds,
+			tableConverter: ds.TableConverter(),
+		}
+	}
+
 	// Frontend proxy
 	if len(b.pluginJSON.Routes) > 0 {
 		storage[ds.StoragePath("proxy")] = &subProxyREST{pluginJSON: b.pluginJSON}
 	}
 
 	// Register hardcoded query schemas
-	err = queryschema.RegisterQueryTypes(b.queryTypes, storage)
+	err := queryschema.RegisterQueryTypes(b.queryTypes, storage)
 	if err != nil {
 		return err
 	}
