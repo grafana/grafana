@@ -27,6 +27,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
+	"github.com/grafana/grafana/pkg/services/promtypemigration"
 	prov_alerting "github.com/grafana/grafana/pkg/services/provisioning/alerting"
 	"github.com/grafana/grafana/pkg/services/provisioning/dashboards"
 	"github.com/grafana/grafana/pkg/services/provisioning/datasources"
@@ -59,6 +60,7 @@ func ProvideService(
 	resourcePermissions accesscontrol.ReceiverPermissionsService,
 	tracer tracing.Tracer,
 	dual dualwrite.Service,
+	promTypeMigrationProvider promtypemigration.PromTypeMigrationProvider,
 ) (*ProvisioningServiceImpl, error) {
 	s := &ProvisioningServiceImpl{
 		Cfg:                          cfg,
@@ -85,6 +87,7 @@ func ProvideService(
 		folderService:                folderService,
 		resourcePermissions:          resourcePermissions,
 		tracer:                       tracer,
+		promTypeMigrationProvider:    promTypeMigrationProvider,
 	}
 
 	if err := s.setDashboardProvisioner(); err != nil {
@@ -167,6 +170,7 @@ type ProvisioningServiceImpl struct {
 	resourcePermissions          accesscontrol.ReceiverPermissionsService
 	tracer                       tracing.Tracer
 	dual                         dualwrite.Service
+	promTypeMigrationProvider    promtypemigration.PromTypeMigrationProvider
 	onceInitProvisioners         sync.Once
 }
 
@@ -252,6 +256,7 @@ func (ps *ProvisioningServiceImpl) ProvisionDatasources(ctx context.Context) err
 		ps.log.Error("Failed to provision data sources", "error", err)
 		return err
 	}
+	ps.promTypeMigrationProvider.Run(ctx)
 	return nil
 }
 
