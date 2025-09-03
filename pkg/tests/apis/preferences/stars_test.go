@@ -127,5 +127,38 @@ func TestIntegrationStars(t *testing.T) {
 					]
 				}
 			]}`, string(jj)) // note that 3 was removed :tada:
+
+		// Change stars via k8s update
+		star, err = starsClient.Resource.Update(ctx, &unstructured.Unstructured{
+			Object: map[string]interface{}{
+				"metadata": map[string]any{
+					"name":      "user-" + starsClient.Args.User.Identity.GetIdentifier(),
+					"namespace": "default",
+				},
+				"spec": map[string]any{
+					"resource": []map[string]any{
+						{
+							"group": "dashboard.grafana.app",
+							"kind":  "Dashboard",
+							"names": []string{"test-2", "aaa", "bbb"},
+						},
+					},
+				},
+			},
+		}, metav1.UpdateOptions{})
+		require.NoError(t, err)
+		jj, err = json.MarshalIndent(star.Object["spec"], "", "  ")
+		require.NoError(t, err)
+		// fmt.Printf("stars: %s\n", string(jj))
+		require.JSONEq(t, `{
+			"resource": [
+				{
+					"group": "dashboard.grafana.app",
+					"kind": "Dashboard",
+					"names": [
+						"test-2", "aaa", "bbb"
+					]
+				}
+			]}`, string(jj)) // note that 3 was removed :tada:
 	})
 }

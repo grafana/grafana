@@ -4,16 +4,14 @@ import (
 	"context"
 	"fmt"
 	"net/http"
-	"slices"
 	"strings"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
-	"k8s.io/apiserver/pkg/storage"
 
 	preferences "github.com/grafana/grafana/apps/preferences/pkg/apis/preferences/v1alpha1"
+	"github.com/grafana/grafana/pkg/registry/apis/preferences/legacy"
 )
 
 type starItem struct {
@@ -23,8 +21,7 @@ type starItem struct {
 }
 
 type starsREST struct {
-	getter rest.Getter
-	writer rest.CreaterUpdater
+	store *legacy.DashboardStarsStorage
 }
 
 var (
@@ -63,72 +60,26 @@ func (r *starsREST) Connect(ctx context.Context, name string, _ runtime.Object, 
 			return
 		}
 
-		obj, err := r.getter.Get(ctx, name, &metav1.GetOptions{})
-		if err != nil {
-			if storage.IsNotFound(err) {
-				obj = &preferences.Stars{ObjectMeta: metav1.ObjectMeta{Name: name}}
-				if req.Method == "Delete" {
-					responder.Object(http.StatusNoContent, obj)
-					return
-				}
-			} else {
-				responder.Error(err)
-				return
-			}
-		}
-		stars, ok := obj.(*preferences.Stars)
-		if !ok {
-			responder.Error(fmt.Errorf("expected stars"))
+		if item.group != "dashboard.grafana.app" || item.kind != "Dashboard" {
+			responder.Error(fmt.Errorf("only dashboards are supported right now"))
 			return
 		}
 
-		status := http.StatusAccepted
-		changed := updateStars(stars, item, req.Method == "DELETE")
-		if changed {
-			// TODO... actually write it!
-			status = http.StatusOK
+		var obj runtime.Object
+		switch req.Method {
+		case "DELETE":
+			obj, err = r.store.UnstarDashboard(ctx, name, item.id)
+		case "PUT":
+			obj, err = r.store.StarDashboard(ctx, name, item.id)
+		default:
+			err = fmt.Errorf("unsupported method")
 		}
-		responder.Object(status, stars)
+		if err != nil {
+			responder.Error(err)
+			return
+		}
+		responder.Object(200, obj)
 	}), nil
-}
-
-func updateStars(stars *preferences.Stars, item starItem, remove bool) bool {
-	idx := slices.IndexFunc(stars.Spec.Resource, func(v preferences.StarsResource) bool {
-		return v.Group == item.group && v.Kind == item.kind
-	})
-	if idx < 0 {
-		if remove {
-			return false
-		}
-		stars.Spec.Resource = append(stars.Spec.Resource, preferences.StarsResource{
-			Group: item.group,
-			Kind:  item.kind,
-		})
-		idx = len(stars.Spec.Resource) - 1
-	}
-
-	if remove {
-		found := false
-		shorter := slices.DeleteFunc(stars.Spec.Resource[idx].Names, func(v string) bool {
-			if v == item.id {
-				found = true
-				return true
-			}
-			return false
-		})
-		if found {
-			stars.Spec.Resource[idx].Names = shorter
-		}
-		return found
-	}
-
-	found := slices.Contains(stars.Spec.Resource[idx].Names, item.id)
-	if found {
-		return false
-	}
-	stars.Spec.Resource[idx].Names = append(stars.Spec.Resource[idx].Names, item.id)
-	slices.Sort(stars.Spec.Resource[idx].Names)
-	return true
 }
 
 func itemFromPath(urlPath, prefix string) (starItem, error) {

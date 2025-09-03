@@ -13,6 +13,7 @@ import (
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
 	preferences "github.com/grafana/grafana/apps/preferences/pkg/apis/preferences/v1alpha1"
+	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/registry/apis/preferences/legacy"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
@@ -20,6 +21,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	pref "github.com/grafana/grafana/pkg/services/preference"
 	"github.com/grafana/grafana/pkg/services/star"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
 )
@@ -32,6 +34,7 @@ type APIBuilder struct {
 
 	stars      star.Service
 	prefs      pref.Service
+	users      user.Service
 	calculator *calculator // joins all preferences
 }
 
@@ -41,6 +44,7 @@ func RegisterAPIService(
 	db db.DB,
 	prefs pref.Service,
 	stars star.Service,
+	users user.Service,
 	apiregistration builder.APIRegistrar,
 ) *APIBuilder {
 	// Requires development settings and clearly experimental
@@ -52,6 +56,7 @@ func RegisterAPIService(
 	builder := &APIBuilder{
 		prefs:      prefs, // for writing
 		stars:      stars, // for writing
+		users:      users, // for writing
 		namespacer: request.GetNamespaceMapper(cfg),
 		sql:        sql,
 		calculator: newCalculator(cfg, sql),
@@ -83,17 +88,26 @@ func (b *APIBuilder) InstallSchema(scheme *runtime.Scheme) error {
 func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupInfo, opts builder.APIGroupOptions) error {
 	storage := map[string]rest.Storage{}
 
-	legacyStars := legacy.NewStarsStorage(b.stars, b.namespacer, b.sql)
+	// Configure Stars Dual writer
 	stars := preferences.StarsResourceInfo
-	storage[stars.StoragePath()] = legacyStars
-	storage[stars.StoragePath("write")] = &starsREST{getter: legacyStars}
+	unified, err := grafanaregistry.NewRegistryStore(opts.Scheme, stars, opts.OptsGetter)
+	if err != nil {
+		return err
+	}
+	storage[stars.StoragePath()] = unified
+	if b.stars != nil {
+		legacy := legacy.NewDashboardStarsStorage(b.stars, b.users, b.namespacer, b.sql)
+		storage[stars.StoragePath()], err = opts.DualWriteBuilder(stars.GroupResource(), legacy, unified)
+		if err != nil {
+			return err
+		}
+		storage[stars.StoragePath("write")] = &starsREST{
+			store: legacy, // TODO, only supports legacy right now
+		}
+	}
 
+	// Configure Preferences
 	prefs := preferences.PreferencesResourceInfo
-	// Unified storage
-	// store, err := grafanaregistry.NewRegistryStore(opts.Scheme, resourceInfo, opts.OptsGetter)
-	// if err != nil {
-	// 	return err
-	// }
 	storage[prefs.StoragePath()] = legacy.NewPreferencesStorage(b.namespacer, b.sql)
 
 	apiGroupInfo.VersionedResourcesStorageMap[preferences.APIVersion] = storage

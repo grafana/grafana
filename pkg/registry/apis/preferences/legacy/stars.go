@@ -3,6 +3,7 @@ package legacy
 import (
 	"context"
 	"fmt"
+	"math/rand"
 	"strconv"
 	"strings"
 	"time"
@@ -11,6 +12,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
+	"k8s.io/utils/ptr"
 
 	authlib "github.com/grafana/authlib/types"
 	dashboardsV1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
@@ -18,58 +20,67 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/preferences/utils"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/star"
+	"github.com/grafana/grafana/pkg/services/user"
 )
 
 var (
-	_ rest.Scoper               = (*starsStorage)(nil)
-	_ rest.SingularNameProvider = (*starsStorage)(nil)
-	_ rest.Getter               = (*starsStorage)(nil)
-	_ rest.Lister               = (*starsStorage)(nil)
-	_ rest.Storage              = (*starsStorage)(nil)
-	_ rest.Creater              = (*starsStorage)(nil)
-	_ rest.Updater              = (*starsStorage)(nil)
-	_ rest.GracefulDeleter      = (*starsStorage)(nil)
+	_ rest.Scoper               = (*DashboardStarsStorage)(nil)
+	_ rest.SingularNameProvider = (*DashboardStarsStorage)(nil)
+	_ rest.Getter               = (*DashboardStarsStorage)(nil)
+	_ rest.Lister               = (*DashboardStarsStorage)(nil)
+	_ rest.Storage              = (*DashboardStarsStorage)(nil)
+	_ rest.Creater              = (*DashboardStarsStorage)(nil)
+	_ rest.Updater              = (*DashboardStarsStorage)(nil)
+	_ rest.GracefulDeleter      = (*DashboardStarsStorage)(nil)
+	_ rest.CollectionDeleter    = (*DashboardStarsStorage)(nil)
 )
 
-func NewStarsStorage(service star.Service, namespacer request.NamespaceMapper, sql *LegacySQL) *starsStorage {
-	return &starsStorage{
-		service:        service,
+func NewDashboardStarsStorage(
+	stars star.Service,
+	users user.Service,
+	namespacer request.NamespaceMapper,
+	sql *LegacySQL,
+) *DashboardStarsStorage {
+	return &DashboardStarsStorage{
+		stars:          stars,
+		users:          users,
 		namespacer:     namespacer,
 		sql:            sql,
 		tableConverter: preferences.StarsResourceInfo.TableConverter(),
 	}
 }
 
-type starsStorage struct {
+type DashboardStarsStorage struct {
 	namespacer     request.NamespaceMapper
 	tableConverter rest.TableConvertor
 	sql            *LegacySQL
-	service        star.Service
+	stars          star.Service
+	users          user.Service
 }
 
-func (s *starsStorage) New() runtime.Object {
+func (s *DashboardStarsStorage) New() runtime.Object {
 	return preferences.StarsKind().ZeroValue()
 }
 
-func (s *starsStorage) Destroy() {}
+func (s *DashboardStarsStorage) Destroy() {}
 
-func (s *starsStorage) NamespaceScoped() bool {
+func (s *DashboardStarsStorage) NamespaceScoped() bool {
 	return true // namespace == org
 }
 
-func (s *starsStorage) GetSingularName() string {
+func (s *DashboardStarsStorage) GetSingularName() string {
 	return strings.ToLower(preferences.StarsKind().Kind())
 }
 
-func (s *starsStorage) NewList() runtime.Object {
+func (s *DashboardStarsStorage) NewList() runtime.Object {
 	return preferences.StarsKind().ZeroListValue()
 }
 
-func (s *starsStorage) ConvertToTable(ctx context.Context, object runtime.Object, tableOptions runtime.Object) (*metav1.Table, error) {
+func (s *DashboardStarsStorage) ConvertToTable(ctx context.Context, object runtime.Object, tableOptions runtime.Object) (*metav1.Table, error) {
 	return s.tableConverter.ConvertToTable(ctx, object, tableOptions)
 }
 
-func (s *starsStorage) List(ctx context.Context, options *internalversion.ListOptions) (runtime.Object, error) {
+func (s *DashboardStarsStorage) List(ctx context.Context, options *internalversion.ListOptions) (runtime.Object, error) {
 	ns, err := request.NamespaceInfoFrom(ctx, false)
 	if err != nil {
 		return nil, err
@@ -108,7 +119,7 @@ func getNamespaceAndOwner(ctx context.Context, name string) (authlib.NamespaceIn
 	return info, owner, nil
 }
 
-func (s *starsStorage) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
+func (s *DashboardStarsStorage) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
 	ns, owner, err := getNamespaceAndOwner(ctx, name)
 	if err != nil {
 		return nil, err
@@ -122,30 +133,109 @@ func (s *starsStorage) Get(ctx context.Context, name string, options *metav1.Get
 	return &obj, nil
 }
 
+func (s *DashboardStarsStorage) StarDashboard(ctx context.Context, name string, uid string) (runtime.Object, error) {
+	return nil, fmt.Errorf("TODO")
+}
+
+func (s *DashboardStarsStorage) UnstarDashboard(ctx context.Context, name string, uid string) (runtime.Object, error) {
+	return nil, fmt.Errorf("TODO")
+}
+
+func getDashboardStars(stars *preferences.Stars) []string {
+	if stars == nil || len(stars.Spec.Resource) == 0 {
+		return []string{}
+	}
+	for _, r := range stars.Spec.Resource {
+		if r.Group == "dashboard.grafana.app" && r.Kind == "Dashboard" {
+			return r.Names
+		}
+	}
+	return []string{}
+}
+
 // Create implements rest.Creater.
-func (s *starsStorage) Create(ctx context.Context, obj runtime.Object, createValidation rest.ValidateObjectFunc, options *metav1.CreateOptions) (runtime.Object, error) {
+func (s *DashboardStarsStorage) write(ctx context.Context, obj *preferences.Stars, old *preferences.Stars) (runtime.Object, error) {
+	ns, owner, err := getNamespaceAndOwner(ctx, obj.Name)
+	if err != nil {
+		return nil, err
+	}
+
+	user, err := s.users.GetByUID(ctx, &user.GetUserByUIDQuery{
+		UID: owner.Name,
+	})
+	if err != nil {
+		return nil, err
+	}
+	if user.OrgID != ns.OrgID {
+		return nil, fmt.Errorf("namespace mismatch")
+	}
+
+	stars := getDashboardStars(obj)
+	if len(stars) == 0 {
+		err = s.stars.DeleteByUser(ctx, user.ID)
+		return &preferences.Stars{ObjectMeta: metav1.ObjectMeta{
+			Name:              obj.Name,
+			Namespace:         obj.Namespace,
+			DeletionTimestamp: ptr.To(metav1.Now()),
+		}}, err
+	}
+
+	changed := false
+	now := time.Now()
+	randID := now.UnixNano() + rand.Int63n(5000)
+	previous := make(map[string]bool)
+	for _, v := range getDashboardStars(obj) {
+		previous[v] = true
+	}
+	for _, dashboard := range stars {
+		if previous[dashboard] {
+			delete(previous, dashboard)
+			continue // nothing needed
+		}
+		err = s.stars.Add(ctx, &star.StarDashboardCommand{
+			UserID:       user.ID,
+			OrgID:        user.OrgID,
+			DashboardUID: dashboard,
+			DashboardID:  randID,
+			Updated:      now,
+		})
+		if err != nil {
+			return nil, err
+		}
+		changed = true
+		randID++
+	}
+
+	for k := range previous {
+		err = s.stars.Delete(ctx, &star.UnstarDashboardCommand{
+			UserID:       user.ID,
+			OrgID:        user.OrgID,
+			DashboardUID: k,
+		})
+		if err != nil {
+			return nil, err
+		}
+		changed = true
+	}
+
+	if changed {
+		return s.Get(ctx, obj.Name, &metav1.GetOptions{})
+	}
+	return obj, nil // nothing required
+}
+
+// Create implements rest.Creater.
+func (s *DashboardStarsStorage) Create(ctx context.Context, obj runtime.Object, createValidation rest.ValidateObjectFunc, options *metav1.CreateOptions) (runtime.Object, error) {
 	stars, ok := obj.(*preferences.Stars)
 	if !ok {
 		return nil, fmt.Errorf("expected stars object")
 	}
 
-	ns, owner, err := getNamespaceAndOwner(ctx, stars.Name)
-	if err != nil {
-		return nil, err
-	}
-
-	fmt.Print("TODO: create: %+v / %v / %v", stars, ns, owner)
-
-	return s.Get(ctx, stars.Name, &metav1.GetOptions{})
+	return s.write(ctx, stars, nil)
 }
 
 // Update implements rest.Updater.
-func (s *starsStorage) Update(ctx context.Context, name string, objInfo rest.UpdatedObjectInfo, createValidation rest.ValidateObjectFunc, updateValidation rest.ValidateObjectUpdateFunc, forceAllowCreate bool, options *metav1.UpdateOptions) (runtime.Object, bool, error) {
-	ns, owner, err := getNamespaceAndOwner(ctx, name)
-	if err != nil {
-		return nil, false, err
-	}
-
+func (s *DashboardStarsStorage) Update(ctx context.Context, name string, objInfo rest.UpdatedObjectInfo, createValidation rest.ValidateObjectFunc, updateValidation rest.ValidateObjectUpdateFunc, forceAllowCreate bool, options *metav1.UpdateOptions) (runtime.Object, bool, error) {
 	old, err := s.Get(ctx, name, &metav1.GetOptions{})
 	if err != nil {
 		return nil, false, err
@@ -161,20 +251,22 @@ func (s *starsStorage) Update(ctx context.Context, name string, objInfo rest.Upd
 		return nil, false, fmt.Errorf("expected stars object")
 	}
 
-	fmt.Print("TODO: update: %+v / %v / %v", stars, ns, owner)
-
-	obj, err = s.Get(ctx, stars.Name, &metav1.GetOptions{})
+	obj, err = s.write(ctx, stars, old.(*preferences.Stars))
 	return obj, false, err
 }
 
 // Delete implements rest.GracefulDeleter.
-func (s *starsStorage) Delete(ctx context.Context, name string, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions) (runtime.Object, bool, error) {
-	_, _, err := getNamespaceAndOwner(ctx, name)
+func (s *DashboardStarsStorage) Delete(ctx context.Context, name string, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions) (runtime.Object, bool, error) {
+	obj, err := s.write(ctx, &preferences.Stars{ObjectMeta: metav1.ObjectMeta{Name: name}}, nil)
 	if err != nil {
 		return nil, false, err
 	}
+	return obj, true, err
+}
 
-	return nil, false, fmt.Errorf("TODO...")
+// DeleteCollection implements rest.CollectionDeleter.
+func (s *DashboardStarsStorage) DeleteCollection(ctx context.Context, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions, listOptions *internalversion.ListOptions) (runtime.Object, error) {
+	return nil, fmt.Errorf("not implemented yet")
 }
 
 func asStarsResource(ns string, v *dashboardStars) preferences.Stars {
