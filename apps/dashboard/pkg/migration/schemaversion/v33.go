@@ -2,7 +2,6 @@ package schemaversion
 
 import (
 	"context"
-	"fmt"
 )
 
 // V33 migrates panel datasource references from string names to UIDs.
