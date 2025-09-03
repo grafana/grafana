@@ -1,9 +1,7 @@
 import { css } from '@emotion/css';
 import * as React from 'react';
-import { useLocation } from 'react-use';
 
-import { GrafanaTheme2, NavModelItem } from '@grafana/data';
-import { usePluginComponent } from '@grafana/runtime';
+import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { useNavModel } from 'app/core/hooks/useNavModel';
@@ -18,19 +16,7 @@ interface Props {
 export function NavLandingPage({ navId, header }: Props) {
   const { node } = useNavModel(navId);
   const styles = useStyles2(getStyles);
-  const { pathname } = useLocation();
   const children = node.children?.filter((child) => !child.hideFromTabs);
-
-  const { component: ObservabilityLandingPage, isLoading: isObservabilityLandingPageLoading } = usePluginComponent<{
-    childrenNodes: NavModelItem[];
-  }>('grafana-asserts-app/landing-page-extension/v1');
-  if (isObservabilityLandingPageLoading) {
-    return null;
-  }
-
-  if (pathname === '/observability' && ObservabilityLandingPage) {
-    return <ObservabilityLandingPage childrenNodes={children ?? []} />;
-  }
 
   return (
     <Page navId={node.id}>
