@@ -100,8 +100,7 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
     }
 
     // Include viewersCanEdit config for Grafana Play compatibility
-    const canEdit = grafanaConfig.viewersCanEdit;
-    if ((dashboard.canEditDashboard() || canEdit) && dashboard.state.editable && !isReadOnlyRepeat && !isEditingPanel) {
+    if (dashboard.canEditDashboard() && dashboard.state.editable && !isReadOnlyRepeat && !isEditingPanel) {
       // We could check isEditing here but I kind of think this should always be in the menu,
       // and going into panel edit should make the dashboard go into edit mode is it's not already
       items.push({

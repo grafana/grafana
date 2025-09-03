@@ -92,11 +92,6 @@ export function ToolbarActions({ dashboard }: Props) {
     folderName: meta.folderUid,
   });
 
-  // Internal only;
-  // allows viewer editing without ability to save
-  // used for grafana play
-  const canEdit = grafanaConfig.viewersCanEdit;
-
   if (!isEditingPanel) {
     // This adds the presence indicators in enterprise
     addDynamicActions(toolbarActions, dynamicDashNavActions.left, 'left-actions');
@@ -351,7 +346,7 @@ export function ToolbarActions({ dashboard }: Props) {
 
   toolbarActions.push({
     group: 'main-buttons',
-    condition: !isEditing && (dashboard.canEditDashboard() || canEdit) && !isViewingPanel && !isPlaying && editable,
+    condition: !isEditing && dashboard.canEditDashboard() && !isViewingPanel && !isPlaying && editable,
     render: () => (
       <Button
         onClick={() => {
