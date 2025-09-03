@@ -15,7 +15,6 @@ import (
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/urfave/cli/v2"
 	grpc "google.golang.org/grpc"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/transport"
@@ -44,7 +43,6 @@ import (
 	authrt "github.com/grafana/grafana/apps/provisioning/pkg/auth"
 	"github.com/grafana/grafana/apps/provisioning/pkg/controller"
 	client "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned"
-	provisioningv0alpha1 "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned/typed/provisioning/v0alpha1"
 	informer "github.com/grafana/grafana/apps/provisioning/pkg/generated/informers/externalversions"
 )
 
@@ -148,30 +146,6 @@ func (s *unifiedStorageFactory) GetStats(ctx context.Context, in *resourcepb.Res
 	}
 
 	return client.GetStats(ctx, in, opts...)
-}
-
-type repositoryGetter struct {
-	factory repository.Factory
-	client  provisioningv0alpha1.ProvisioningV0alpha1Interface
-}
-
-func newRepositoryGetter(
-	factory repository.Factory,
-	client provisioningv0alpha1.ProvisioningV0alpha1Interface,
-) jobs.RepoGetter {
-	return &repositoryGetter{
-		factory: factory,
-		client:  client,
-	}
-}
-
-func (r *repositoryGetter) GetRepository(ctx context.Context, repoName string) (repository.Repository, error) {
-	repo, err := r.client.Repositories("TODO").Get(ctx, repoName, metav1.GetOptions{})
-	if err != nil {
-		return nil, fmt.Errorf("get repository %q: %w", repoName, err)
-	}
-
-	return r.factory.Build(ctx, repo)
 }
 
 func runJobController(opts standalone.BuildInfo, c *cli.Context, cfg *setting.Cfg) error {
@@ -339,7 +313,10 @@ func runJobController(opts standalone.BuildInfo, c *cli.Context, cfg *setting.Cf
 		return fmt.Errorf("create repository factory: %w", err)
 	}
 
-	repoGetter := newRepositoryGetter(repoFactory, controllerCfg.client.ProvisioningV0alpha1())
+	repoGetter := resources.NewRepositoryGetter(
+		repoFactory,
+		controllerCfg.client.ProvisioningV0alpha1(),
+	)
 
 	// This is basically our own JobQueue system
 	driver, err := jobs.NewConcurrentJobDriver(

@@ -731,6 +731,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				jobHistoryWriter = jobs.NewAPIClientHistoryWriter(b.GetClient())
 			}
 
+			repoGetter := resources.NewRepositoryGetter(b.repoFactory, b.client)
 			// This is basically our own JobQueue system
 			driver, err := jobs.NewConcurrentJobDriver(
 				3,              // 3 drivers for now
@@ -738,7 +739,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				time.Minute,    // Cleanup jobs
 				30*time.Second, // Periodically look for new jobs
 				30*time.Second, // Lease renewal interval
-				b.jobs, b, jobHistoryWriter,
+				b.jobs, repoGetter, jobHistoryWriter,
 				jobController.InsertNotifications(),
 				workers...,
 			)
