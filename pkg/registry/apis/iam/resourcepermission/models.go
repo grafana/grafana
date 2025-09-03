@@ -52,7 +52,7 @@ func (s *ResourcePermSqlBackend) toV0ResourcePermissions(permsByResource map[gro
 		specs := make([]v0alpha1.ResourcePermissionspecPermission, 0, len(perms))
 
 		var (
-			updated        = time.Now()
+			updated        = time.Now() // TODO incorrect
 			permissionKind v0alpha1.ResourcePermissionSpecPermissionKind
 		)
 		for i := range perms {
@@ -87,8 +87,8 @@ func (s *ResourcePermSqlBackend) toV0ResourcePermissions(permsByResource map[gro
 			TypeMeta: v0alpha1.ResourcePermissionInfo.TypeMeta(),
 			ObjectMeta: metav1.ObjectMeta{
 				Name:              resource.string(),
-				ResourceVersion:   updated.Format(time.RFC3339),
-				CreationTimestamp: metav1.NewTime(updated),
+				ResourceVersion:   updated.UTC().Format(time.RFC3339),
+				CreationTimestamp: metav1.NewTime(updated.UTC()),
 			},
 			Spec: v0alpha1.ResourcePermissionSpec{
 				Resource:    resource.v0alpha1(),

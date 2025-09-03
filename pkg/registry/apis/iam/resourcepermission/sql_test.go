@@ -90,7 +90,7 @@ func setupTestRoles(t *testing.T, store db.DB) {
 		`INSERT INTO user_role (org_id, user_id, role_id, created)
 	VALUES (?, ?, ?, ?), (?, ?, ?, ?), (?, ?, ?, ?)`,
 		1, 1, 1, "2025-09-02 00:00:00", // User-1 -> managed:users:1:permissions
-		1, 2, 2, "2025-09-02 00:00:00", // User-2 -> managed:users:2:permissions
+		2, 2, 2, "2025-09-02 00:00:00", // User-2 -> managed:users:2:permissions
 		1, 3, 3, "2025-09-02 00:00:00", // ServiceAccount -> managed:users:3:permissions
 	)
 	require.NoError(t, err)

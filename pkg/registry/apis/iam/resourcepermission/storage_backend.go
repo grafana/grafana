@@ -71,15 +71,14 @@ func (s *ResourcePermSqlBackend) ListModifiedSince(ctx context.Context, key reso
 }
 
 func (s *ResourcePermSqlBackend) ReadResource(ctx context.Context, req *resourcepb.ReadRequest) *resource.BackendReadResponse {
-	version := int64(0)
 	if req.ResourceVersion > 0 {
-		version = req.ResourceVersion
+		return &resource.BackendReadResponse{
+			Key:   req.GetKey(),
+			Error: resource.AsErrorResult(apierrors.NewBadRequest("resourceVersion is not supported")),
+		}
 	}
 
-	rsp := &resource.BackendReadResponse{
-		Key:             req.GetKey(),
-		ResourceVersion: version,
-	}
+	rsp := &resource.BackendReadResponse{Key: req.GetKey()}
 
 	sql, err := s.dbProvider(ctx)
 	if err != nil {
@@ -103,6 +102,7 @@ func (s *ResourcePermSqlBackend) ReadResource(ctx context.Context, req *resource
 		return rsp
 	}
 
+	rsp.ResourceVersion = resourcePermission.CreationTimestamp.UnixMilli()
 	rsp.Value, err = json.Marshal(resourcePermission)
 	if err != nil {
 		rsp.Error = resource.AsErrorResult(err)
