@@ -32,10 +32,13 @@ export const convertFrameTypeTransformer: DataTransformerInfo<ConvertFrameTypeTr
   name: 'Convert frame type',
   description: 'Convert data frame(s) to another type.',
 
-  operator: (options, ctx) => (source) => source.pipe(map((data) => {
-    // console.log(data);
-    return convertFrameTypes(options, data);
-  })),
+  operator: (options, ctx) => (source) =>
+    source.pipe(
+      map((data) => {
+        // console.log(data);
+        return convertFrameTypes(options, data);
+      })
+    ),
 };
 
 /**
