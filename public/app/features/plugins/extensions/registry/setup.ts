@@ -1,6 +1,6 @@
 import CentralAlertHistorySceneExposedComponent from 'app/features/alerting/unified/components/rules/central-state-history/CentralAlertHistorySceneExposedComponent';
 
-import { PluginExtensionPointsInPlugins } from '../../../../../../packages/grafana-data/src/types/pluginExtensions';
+import { PluginExtensionExposedComponents } from '../../../../../../packages/grafana-data/src/types/pluginExtensions';
 import { getCoreExtensionConfigurations } from '../getCoreExtensionConfigurations';
 
 import { AddedComponentsRegistry } from './AddedComponentsRegistry';
@@ -31,7 +31,7 @@ exposedComponentsRegistry.register({
   pluginId: 'grafana',
   configs: [
     {
-      id: PluginExtensionPointsInPlugins.IrmAlertRuleHistory,
+      id: PluginExtensionExposedComponents.AlertRuleHistory,
       title: 'Alert rule history for IRM',
       description: 'Alert rule history for IRM',
       component: CentralAlertHistorySceneExposedComponent,
