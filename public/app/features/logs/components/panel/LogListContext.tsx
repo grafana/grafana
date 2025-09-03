@@ -199,7 +199,10 @@ export const LogListContextProvider = ({
   children,
   containerElement,
   enableLogDetails,
-  detailsMode: detailsModeProp,
+  logOptionsStorageKey,
+  detailsMode: detailsModeProp = logOptionsStorageKey
+    ? store.get(`${logOptionsStorageKey}.detailsMode`)
+    : getDefaultDetailsMode(containerElement),
   dedupStrategy,
   displayedFields,
   filterLevels,
@@ -209,7 +212,6 @@ export const LogListContextProvider = ({
   logs,
   logLineMenuCustomItems,
   logsMeta,
-  logOptionsStorageKey,
   logSupportsContext,
   noInteractions,
   onClickFilterLabel,
@@ -258,7 +260,9 @@ export const LogListContextProvider = ({
   const [detailsWidth, setDetailsWidthState] = useState(
     getDetailsWidth(containerElement, logOptionsStorageKey, undefined, detailsModeProp, showControls)
   );
-  const [detailsMode, setDetailsMode] = useState<LogLineDetailsMode>(detailsModeProp ?? getDefaultDetailsMode());
+  const [detailsMode, setDetailsMode] = useState<LogLineDetailsMode>(
+    detailsModeProp ?? getDefaultDetailsMode(containerElement)
+  );
   const [isAssistantAvailable, openAssistant] = useAssistant();
   const [prettifyJSON, setPrettifyJSONState] = useState(prettifyJSONProp);
   const [wrapLogMessage, setWrapLogMessageState] = useState(wrapLogMessageProp);
@@ -746,6 +750,7 @@ ${log.entry.replaceAll('`', '\\`')}
   });
 }
 
-export function getDefaultDetailsMode(): LogLineDetailsMode {
-  return window.innerWidth > 1440 ? 'sidebar' : 'inline';
+export function getDefaultDetailsMode(container: HTMLDivElement | undefined): LogLineDetailsMode {
+  const width = container?.clientWidth ?? window.innerWidth;
+  return width > 1440 ? 'sidebar' : 'inline';
 }
