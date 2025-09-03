@@ -430,7 +430,7 @@ func (b *DashboardsAPIBuilder) validateUpdate(ctx context.Context, a admission.A
 func (b *DashboardsAPIBuilder) validateFolderExists(ctx context.Context, folderUID string, orgID int64) error {
 	// Check if folder exists using the folder store
 	var folderClient client.K8sHandler
-	if b.isMultiTenant {
+	if b.isStandalone {
 		ns, err := request.NamespaceInfoFrom(ctx, false)
 		if err != nil {
 			return err
