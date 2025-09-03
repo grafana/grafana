@@ -1,29 +1,88 @@
-import { DataFrame, Field, Labels, PanelData, findCommonLabels } from '@grafana/data';
+import { omit } from 'lodash';
+import { useMemo } from 'react';
+
+import { DataFrame, Labels, LoadingState, findCommonLabels } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
-import { useQueryRunner } from '@grafana/scenes-react';
+import { SceneDataNode, VizConfigBuilders } from '@grafana/scenes';
+import { VizPanel, useQueryRunner, useTimeRange } from '@grafana/scenes-react';
+import {
+  AxisPlacement,
+  GraphDrawStyle,
+  LegendDisplayMode,
+  LineInterpolation,
+  StackingMode,
+  TooltipDisplayMode,
+  VisibilityMode,
+} from '@grafana/schema';
 
 import { AlertLabels } from '../../components/AlertLabels';
+import { overrideToFixedColor } from '../../home/Insights';
 import { GroupRow } from '../GroupRow';
 import { useWorkbenchContext } from '../WorkbenchContext';
-import { StateChangeChart } from '../stateChangeChart/StateChangeChart';
-import { TimelineEntry } from '../types';
 
-import { METRIC_NAME, getDataQuery } from './utils';
+import { DEFAULT_FIELDS, METRIC_NAME, getDataQuery } from './utils';
+
+const barChartConfig = VizConfigBuilders.timeseries()
+  .setCustomFieldConfig('drawStyle', GraphDrawStyle.Line)
+  .setCustomFieldConfig('lineInterpolation', LineInterpolation.StepBefore)
+  .setCustomFieldConfig('showPoints', VisibilityMode.Never)
+  .setCustomFieldConfig('fillOpacity', 50)
+  .setCustomFieldConfig('lineWidth', 0)
+  .setCustomFieldConfig('stacking', { mode: StackingMode.None })
+  .setCustomFieldConfig('axisPlacement', AxisPlacement.Hidden)
+  .setCustomFieldConfig('axisGridShow', false)
+  .setOption('tooltip', { mode: TooltipDisplayMode.Multi })
+  .setOption('legend', {
+    showLegend: false,
+    displayMode: LegendDisplayMode.Hidden,
+  })
+  .setMin(0)
+  .setOverrides((builder) =>
+    builder
+      .matchFieldsWithName('firing')
+      .overrideColor(overrideToFixedColor('firing'))
+      .matchFieldsWithName('pending')
+      .overrideColor(overrideToFixedColor('pending'))
+  )
+  .build();
 
 export function AlertRuleDetails({ ruleUID }: { ruleUID: string }) {
-  const { leftColumnWidth, domain } = useWorkbenchContext();
+  const { leftColumnWidth } = useWorkbenchContext();
+  const [timeRange] = useTimeRange();
 
   const query = getDataQuery(
     `count without (alertname, grafana_alertstate, grafana_folder, grafana_rule_uid) (${METRIC_NAME}{grafana_rule_uid="${ruleUID}"})`,
-    { format: 'timeseries' }
+    { format: 'timeseries', legendFormat: '{{alertstate}}' }
   );
   const queryRunner = useQueryRunner({ queries: [query] });
   const { data } = queryRunner.useState();
 
-  const alertInstances = data ? extractAlertInstances(data) : [];
-  const commonLabels = findCommonLabels(alertInstances.map((instance) => instance.labels));
+  const instances = useMemo(() => {
+    if (!data?.series.length) {
+      return [];
+    }
 
-  if (alertInstances.length === 0) {
+    // 1. Group series by labels, ignoring alertstate
+    const groups = new Map<string, { labels: Labels; series: DataFrame[] }>();
+    data.series.forEach((series) => {
+      const valueField = series.fields.find((f) => f.type !== 'time');
+      if (!valueField) {
+        return;
+      }
+
+      const keyLabels = omit(valueField.labels ?? {}, 'alertstate');
+      const key = JSON.stringify(keyLabels);
+
+      if (!groups.has(key)) {
+        groups.set(key, { labels: keyLabels, series: [] });
+      }
+      groups.get(key)!.series.push(series);
+    });
+
+    return Array.from(groups.values());
+  }, [data]);
+
+  if (!instances.length) {
     return (
       <GroupRow
         width={leftColumnWidth}
@@ -36,132 +95,31 @@ export function AlertRuleDetails({ ruleUID }: { ruleUID: string }) {
     );
   }
 
+  const allSeriesLabels: Labels[] = instances.map((instance) => instance.labels);
+  const commonLabels = findCommonLabels(allSeriesLabels);
+
   return (
     <>
-      {alertInstances.map((instance, index) => {
+      {instances.map((instance) => {
+        const dataProvider = new SceneDataNode({
+          data: {
+            series: instance.series,
+            state: LoadingState.Done,
+            timeRange,
+          },
+        });
+        const labels = omit(instance.labels, DEFAULT_FIELDS);
+        console.log(instance.series);
+
         return (
           <GroupRow
-            key={index}
+            key={JSON.stringify(instance.labels)}
             width={leftColumnWidth}
-            title={<AlertLabels labels={instance.labels} commonLabels={commonLabels} />}
-            content={<StateChangeChart domain={domain} timeline={instance.timeline} />}
+            title={<AlertLabels labels={labels} commonLabels={commonLabels} />}
+            content={<VizPanel title="" viz={barChartConfig} dataProvider={dataProvider} displayMode="transparent" />}
           />
         );
       })}
     </>
   );
-}
-
-interface AlertInstance {
-  labels: Labels;
-  fieldName: string;
-  hasData: boolean;
-  timeline: TimelineEntry[];
-}
-
-export function extractAlertInstances(data: PanelData): AlertInstance[] {
-  if (!data?.series?.length) {
-    return [];
-  }
-
-  type Group = {
-    labels: Labels;
-    fieldName: string;
-    hasData: boolean;
-    dataPoints: Array<{ timestamp: number; state: 'firing' | 'pending' }>;
-  };
-
-  const groups: Map<string, Group> = new Map();
-
-  const normalizeLabels = (labels: Labels): Labels => {
-    const result: Labels = {};
-    const source = labels || {};
-    for (const key of Object.keys(source)) {
-      if (key === 'alertstate' || key === 'grafana_alertstate') {
-        continue;
-      }
-      result[key] = source[key] as string;
-    }
-    return result;
-  };
-
-  const labelsKey = (labels: Labels): string => {
-    const keys = Object.keys(labels).sort();
-    return keys.map((k) => `${k}=${labels[k]}`).join('|');
-  };
-
-  // Process each DataFrame (series)
-  data.series.forEach((frame: DataFrame) => {
-    const timeField = frame.fields.find((field) => field.type === 'time');
-    if (!timeField) {
-      return;
-    }
-
-    frame.fields.forEach((field: Field) => {
-      if (field.type === 'time') {
-        return;
-      }
-
-      const rawLabels = field.labels || {};
-      const baseLabels = normalizeLabels(rawLabels);
-      const key = labelsKey(baseLabels);
-
-      let group = groups.get(key);
-      if (!group) {
-        group = { labels: baseLabels, fieldName: field.name, hasData: false, dataPoints: [] };
-        groups.set(key, group);
-      }
-
-      const hasData = !!(field.values && field.values.length > 0);
-      group.hasData = group.hasData || hasData;
-
-      if (hasData && timeField.values.length === field.values.length) {
-        const stateFromLabel = (rawLabels.alertstate as 'firing' | 'pending') || 'pending';
-        for (let i = 0; i < field.values.length; i++) {
-          const timestamp = timeField.values[i] as number;
-          group.dataPoints.push({ timestamp, state: stateFromLabel });
-        }
-      }
-    });
-  });
-
-  const instances: AlertInstance[] = [];
-  for (const group of groups.values()) {
-    const timeline = convertDataPointsToTimeline(group.dataPoints);
-    instances.push({
-      labels: group.labels,
-      fieldName: group.fieldName,
-      hasData: group.hasData,
-      timeline,
-    });
-  }
-
-  return instances;
-}
-
-function convertDataPointsToTimeline(
-  dataPoints: Array<{ timestamp: number; state: 'firing' | 'pending' }>
-): TimelineEntry[] {
-  const timestampStateMap = new Map<number, 'firing' | 'pending'>();
-
-  dataPoints.forEach((dataPoint) => {
-    const { timestamp, state } = dataPoint;
-    const existingState = timestampStateMap.get(timestamp);
-
-    // Set the state if:
-    // 1. No state exists for this timestamp yet, OR
-    // 2. Current state is 'firing' and existing state is 'pending' (firing takes precedence)
-    const shouldUpdateState = !existingState || (state === 'firing' && existingState === 'pending');
-
-    if (shouldUpdateState) {
-      timestampStateMap.set(timestamp, state);
-    }
-  });
-
-  // Create timeline as array of [timestamp, state] tuples, sorted by time
-  const timeline: TimelineEntry[] = Array.from(timestampStateMap.entries()).sort(
-    ([timestampA], [timestampB]) => timestampA - timestampB
-  );
-
-  return timeline;
 }

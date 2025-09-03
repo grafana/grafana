@@ -45,6 +45,7 @@ describe('AlertInstanceScene', () => {
       // Expect a single merged instance with common labels only (without alertstate/grafana_alertstate)
       expect(result.length).toBe(1);
       expect(result[0].labels).toEqual({ node: 'cpu1' });
+      expect(result[0].labelSelector).toEqual('node="cpu1"');
 
       // Expect combined timeline containing both pending and firing states
       const timeline = result[0].timeline;
@@ -68,6 +69,7 @@ describe('AlertInstanceScene', () => {
 
       expect(result.length).toBe(1);
       expect(result[0].labels).toEqual({ node: 'cpu1' });
+      expect(result[0].labelSelector).toEqual('node="cpu1"');
       expect(result[0].timeline).toEqual([[overlappingTime, 'firing']]);
     });
 

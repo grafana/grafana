@@ -13,7 +13,8 @@ import { METRIC_NAME, getDataQuery, stringifyGroupFilter } from './utils';
  */
 export const summaryChartVizConfig = VizConfigBuilders.timeseries()
   .setCustomFieldConfig('drawStyle', GraphDrawStyle.Line)
-  .setCustomFieldConfig('fillOpacity', 30)
+  .setCustomFieldConfig('fillOpacity', 50)
+  .setCustomFieldConfig('lineWidth', 0)
   .setCustomFieldConfig('stacking', { mode: StackingMode.None })
   .setCustomFieldConfig('showPoints', VisibilityMode.Never)
   .setCustomFieldConfig('lineInterpolation', LineInterpolation.StepAfter)
@@ -22,6 +23,7 @@ export const summaryChartVizConfig = VizConfigBuilders.timeseries()
     displayMode: LegendDisplayMode.Hidden,
   })
   .setOption('tooltip', { mode: TooltipDisplayMode.Multi })
+  .setMin(0)
   .setOverrides((builder) =>
     builder
       .matchFieldsWithName('firing')

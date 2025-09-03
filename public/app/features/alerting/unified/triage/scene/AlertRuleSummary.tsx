@@ -25,6 +25,7 @@ export const alertRuleSummaryVizConfig = VizConfigBuilders.timeseries()
   .setCustomFieldConfig('lineWidth', 0)
   .setCustomFieldConfig('stacking', { mode: StackingMode.None })
   .setCustomFieldConfig('axisPlacement', AxisPlacement.Hidden)
+  .setCustomFieldConfig('axisGridShow', false)
   .setMin(0)
   .setOption('tooltip', { mode: TooltipDisplayMode.Multi })
   .setOption('legend', {
