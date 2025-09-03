@@ -1,6 +1,23 @@
-import { Action, ActionType, ActionVariableInput, ActionVariableType, HttpRequestMethod } from '@grafana/data';
+import {
+  Action,
+  ActionType,
+  ActionVariableInput,
+  ActionVariableType,
+  HttpRequestMethod,
+  DataFrame,
+  Field,
+  FieldType,
+} from '@grafana/data';
+import { config } from '@grafana/runtime';
 
-import { buildActionRequest, buildActionProxyRequest, genReplaceActionVars, INFINITY_DATASOURCE_TYPE } from './utils';
+import {
+  buildActionRequest,
+  buildActionProxyRequest,
+  genReplaceActionVars,
+  isInfinityActionWithAuth,
+  getActions,
+  INFINITY_DATASOURCE_TYPE,
+} from './utils';
 
 jest.mock('../query/state/PanelQueryRunner', () => ({
   getNextRequestId: jest.fn(() => 'test-request-id-123'),
@@ -152,7 +169,7 @@ describe('interpolateActionVariables', () => {
   });
 });
 
-describe('Infinity connections', () => {
+describe('Infinity request', () => {
   const mockReplaceVariables = jest.fn((str) => str);
 
   beforeEach(() => {
@@ -160,7 +177,7 @@ describe('Infinity connections', () => {
   });
 
   describe('buildActionProxyRequest', () => {
-    const createProxyConnectionAction = (overrides = {}): Action => ({
+    const infinityActionMock = (overrides = {}): Action => ({
       title: 'Infinity API Call',
       type: ActionType.Infinity,
       [ActionType.Infinity]: {
@@ -181,7 +198,7 @@ describe('Infinity connections', () => {
     });
 
     it('should build Infinity proxy request with all parameters', () => {
-      const action = createProxyConnectionAction();
+      const action = infinityActionMock();
 
       const request = buildActionProxyRequest(action, mockReplaceVariables);
 
@@ -223,7 +240,7 @@ describe('Infinity connections', () => {
     });
 
     it('should handle GET requests without body', () => {
-      const action = createProxyConnectionAction({
+      const action = infinityActionMock({
         method: HttpRequestMethod.GET,
         body: '',
       });
@@ -235,7 +252,7 @@ describe('Infinity connections', () => {
     });
 
     it('should throw error for missing datasource UID', () => {
-      const action = createProxyConnectionAction({
+      const action = infinityActionMock({
         datasourceUid: '',
       });
 
@@ -243,5 +260,66 @@ describe('Infinity connections', () => {
         buildActionProxyRequest(action, mockReplaceVariables);
       }).toThrow('Datasource not configured for Infinity action');
     });
+  });
+});
+
+describe('isInfinityActionWithAuth', () => {
+  const originalFeatureToggles = config.featureToggles;
+  const infinityAction: Action = { title: 'Infinity action', type: ActionType.Infinity };
+  const fetchAction: Action = { title: 'Fetch action', type: ActionType.Fetch };
+
+  afterEach(() => {
+    config.featureToggles = originalFeatureToggles;
+  });
+
+  it.each([
+    [true, true],
+    [false, false],
+    [undefined, false],
+  ])('returns %s when toggle is %s', (toggle, expected) => {
+    config.featureToggles = { ...originalFeatureToggles, vizActionsAuth: toggle };
+    expect(isInfinityActionWithAuth(infinityAction)).toBe(expected);
+  });
+
+  it('returns false for Fetch action', () => {
+    config.featureToggles = { ...originalFeatureToggles, vizActionsAuth: true };
+    expect(isInfinityActionWithAuth(fetchAction)).toBe(false);
+  });
+});
+
+describe('getActions filtering', () => {
+  const originalFeatureToggles = config.featureToggles;
+  const mockFrame: DataFrame = { name: 'test', fields: [], length: 0 };
+  const mockField: Field = { name: 'test-field', type: FieldType.string, values: [], config: {} };
+  const mockReplaceVariables = jest.fn((str) => str);
+
+  const fetchAction: Action = {
+    title: 'Fetch action',
+    type: ActionType.Fetch,
+    [ActionType.Fetch]: { url: '', method: HttpRequestMethod.GET },
+  };
+  const infinityAction: Action = {
+    title: 'Infinity action',
+    type: ActionType.Infinity,
+    [ActionType.Infinity]: { url: '', method: HttpRequestMethod.GET, datasourceUid: 'uid' },
+  };
+
+  afterEach(() => {
+    config.featureToggles = originalFeatureToggles;
+    jest.clearAllMocks();
+  });
+
+  it.each([
+    [true, [infinityAction, fetchAction], 2, ['Infinity action', 'Fetch action']],
+    [false, [infinityAction, fetchAction], 1, ['Fetch action']],
+    [false, [infinityAction], 0, []],
+    [false, [fetchAction], 1, ['Fetch action']],
+  ])('filters correctly when toggle=%s', (toggle, actions, expectedCount, expectedActionTitles) => {
+    config.featureToggles = { ...originalFeatureToggles, vizActionsAuth: toggle };
+
+    const result = getActions(mockFrame, mockField, {}, mockReplaceVariables, actions, {});
+
+    expect(result).toHaveLength(expectedCount);
+    expect(result.map((a) => a.title)).toEqual(expectedActionTitles);
   });
 });
