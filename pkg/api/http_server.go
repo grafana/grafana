@@ -86,7 +86,6 @@ import (
 	pluginSettings "github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	pref "github.com/grafana/grafana/pkg/services/preference"
-	"github.com/grafana/grafana/pkg/services/promtypemigration"
 	"github.com/grafana/grafana/pkg/services/provisioning"
 	publicdashboardsApi "github.com/grafana/grafana/pkg/services/publicdashboards/api"
 	"github.com/grafana/grafana/pkg/services/query"
@@ -173,7 +172,6 @@ type HTTPServer struct {
 	secretsStore                 secretsKV.SecretsKVStore
 	SecretsMigrator              secrets.Migrator
 	secretMigrationProvider      spm.SecretMigrationProvider
-	promTypeMigrationProvider    promtypemigration.PromTypeMigrationProvider
 	DataSourcesService           datasources.DataSourceService
 	cleanUpService               *cleanup.CleanUpService
 	tracer                       tracing.Tracer
@@ -273,7 +271,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	annotationRepo annotations.Repository, tagService tag.Service, searchv2HTTPService searchV2.SearchHTTPService, oauthTokenService oauthtoken.OAuthTokenService,
 	statsService stats.Service, authnService authn.Service, pluginsCDNService *pluginscdn.Service, promGatherer prometheus.Gatherer,
 	starApi *starApi.API, promRegister prometheus.Registerer, clientConfigProvider grafanaapiserver.DirectRestConfigProvider, anonService anonymous.Service,
-	userVerifier user.Verifier, pluginPreinstall pluginchecker.Preinstall, promTypeMigrationProvider promtypemigration.PromTypeMigrationProvider,
+	userVerifier user.Verifier, pluginPreinstall pluginchecker.Preinstall,
 ) (*HTTPServer, error) {
 	web.Env = cfg.Env
 	m := web.New()
