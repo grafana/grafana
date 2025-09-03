@@ -354,6 +354,9 @@ func runJobController(opts standalone.BuildInfo, c *cli.Context, cfg *setting.Cf
 		jobController.InsertNotifications(),
 		workers...,
 	)
+	if err != nil {
+		return fmt.Errorf("create concurrent job driver: %w", err)
+	}
 
 	go func() {
 		logger.Info("jobs controller started")
