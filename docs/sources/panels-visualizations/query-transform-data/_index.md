@@ -125,7 +125,7 @@ This feature is only available on Grafana Enterprise and Grafana Cloud.
 {{< /admonition >}}
 
 You can save queries that you've created so they can be reused by you and others in your organization.
-This helps users across your organization create dashboards, find insights in Explore, or set up alerts without having to create their own queries or know a query language.
+This helps users across your organization create dashboards or find insights in Explore without having to create their own queries or know a query language.
 It also helps you avoid having several users build the same queries for the same data sources multiple times.
 
 You can see a list of these queries in the **Saved queries** drawer:
@@ -143,7 +143,7 @@ In the **Saved queries** drawer, you can:
 
 - Search for queries by data source name, query content, title, or description.
 - Sort queries alphabetically or by creation date.
-- Filter by data source name, author name, and tags (filters use the `OR` operator).
+- Filter by data source name, author name, and tags (the tag filter uses the `OR` operator, while the others use the `AND` operator).
 - Set queries as favorites.
 - Duplicate, lock and unlock a query for editing, or delete a saved query.
 - Edit a query title, description, tags, or the availability of the query to other users in your organization. By default, saved queries are locked for editing.
