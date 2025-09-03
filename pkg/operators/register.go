@@ -397,6 +397,7 @@ func runJobController(opts standalone.BuildInfo, c *cli.Context, cfg *setting.Cf
 }
 
 func setupFromConfig(cfg *setting.Cfg) (controllerCfg *controllerConfig, err error) {
+	// TODO: enforce required settings
 	if cfg == nil {
 		return nil, fmt.Errorf("no configuration available")
 	}
@@ -410,6 +411,8 @@ func setupFromConfig(cfg *setting.Cfg) (controllerCfg *controllerConfig, err err
 	if tokenExchangeURL == "" {
 		return nil, fmt.Errorf("token_exchange_url is required in [grpc_client_authentication] section")
 	}
+
+	tokenNamespace := gRPCAuth.Key("token_namespace").String()
 
 	operatorSec := cfg.SectionWithEnvOverrides("operator")
 	provisioningServerURL := operatorSec.Key("provisioning_server_url").String()
@@ -450,7 +453,7 @@ func setupFromConfig(cfg *setting.Cfg) (controllerCfg *controllerConfig, err err
 
 	// TODO: This depends on the different flavor of Grafana
 	// https://github.com/grafana/git-ui-sync-project/issues/495
-	repositoryTypes := operatorSec.Key("repository_types").Strings(",")
+	repositoryTypes := operatorSec.Key("repository_types").Strings("|")
 	availableRepositoryTypes := make(map[provisioning.RepositoryType]struct{})
 	for _, t := range repositoryTypes {
 		if t != string(provisioning.LocalRepositoryType) && t != string(provisioning.GitHubRepositoryType) {
@@ -462,20 +465,22 @@ func setupFromConfig(cfg *setting.Cfg) (controllerCfg *controllerConfig, err err
 
 	// local
 	localCfg := localConfig{
-		homePath:          operatorSec.Key("local_home_path").String(),
-		permittedPrefixes: operatorSec.Key("local_permitted_prefixes").Strings(","),
+		homePath:          operatorSec.Key("home_path").String(),
+		permittedPrefixes: operatorSec.Key("local_permitted_prefixes").Strings("|"),
 	}
 
 	// Decrypt Service
 	secretsSec := cfg.SectionWithEnvOverrides("secrets_manager")
 	secretsTls := secretdecrypt.TLSConfig{
-		UseTLS:             secretsSec.Key("grpc_server_use_tls").MustBool(true),
-		CAFile:             secretsSec.Key("grpc_server_tls_ca_file").String(),
-		ServerName:         secretsSec.Key("grpc_server_tls_server_name").String(),
+		UseTLS: secretsSec.Key("grpc_server_use_tls").MustBool(true),
+		CAFile: secretsSec.Key("grpc_server_tls_ca_file").String(),
+		// TODO: do we need this one?
+		// ServerName:         secretsSec.Key("grpc_server_tls_server_name").String(),
 		InsecureSkipVerify: secretsSec.Key("grpc_server_tls_skip_verify").MustBool(false),
 	}
 
 	// Unified Storage
+	allowInsecure := gRPCAuth.Key("allow_insecure").MustBool(false)
 	unifiedStorageSec := cfg.SectionWithEnvOverrides("unified_storage")
 	unifiedCfg := unifiedStorageConfig{
 		GrpcAddress:      unifiedStorageSec.Key("grpc_address").String(),
@@ -483,9 +488,10 @@ func setupFromConfig(cfg *setting.Cfg) (controllerCfg *controllerConfig, err err
 		ClientConfig: resource.RemoteResourceClientConfig{
 			Token:            token,
 			TokenExchangeURL: tokenExchangeURL,
-			Audiences:        unifiedStorageSec.Key("grpc_client_authentication_audiences").Strings(","),
-			Namespace:        "", // TODO: will this work?
-			AllowInsecure:    unifiedStorageSec.Key("grpc_server_tls_skip_verify").MustBool(false),
+			// TODO: why do we get this?
+			// Audiences:     unifiedStorageSec.Key("grpc_client_authentication_audiences").Strings(","),
+			Namespace:     tokenNamespace,
+			AllowInsecure: allowInsecure,
 		},
 	}
 
