@@ -1,4 +1,4 @@
-import { createContext, ItemDataType } from '@grafana/assistant';
+import { createAssistantContextItem } from '@grafana/assistant';
 import {
   DataFrame,
   DataQueryResponse,
@@ -14,19 +14,15 @@ import { enrichDataFrameWithAssistantContentMapper } from './utils';
 
 // Mock the createContext function
 jest.mock('@grafana/assistant', () => ({
-  createContext: jest.fn(),
-  ItemDataType: {
-    Datasource: 'datasource',
-    Structured: 'structured',
-  },
+  createAssistantContextItem: jest.fn()
 }));
 
-const mockCreateContext = createContext as jest.MockedFunction<typeof createContext>;
+const mockCreateAssistantContextItem = createAssistantContextItem as jest.MockedFunction<typeof createAssistantContextItem>;
 
 describe('enrichDataFrameWithAssistantContentMapper', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    mockCreateContext.mockImplementation((type, data) => ({
+    mockCreateAssistantContextItem.mockImplementation((type, data) => ({
       type,
       data,
       node: { id: 'test-id', type: 'test', name: 'test-node', navigable: true },
@@ -110,17 +106,15 @@ describe('enrichDataFrameWithAssistantContentMapper', () => {
 
       expect(result.data).toHaveLength(1);
       expect(result.data[0].meta?.custom?.assistantContext).toBeDefined();
-      expect(mockCreateContext).toHaveBeenCalledTimes(2);
+      expect(mockCreateAssistantContextItem).toHaveBeenCalledTimes(2);
 
       // Verify datasource context
-      expect(mockCreateContext).toHaveBeenCalledWith(ItemDataType.Datasource, {
-        datasourceName: 'PyroscopeDatasource',
+      expect(mockCreateAssistantContextItem).toHaveBeenCalledWith('datasource', {
         datasourceUid: 'test-uid',
-        datasourceType: 'grafana-pyroscope-datasource',
       });
 
       // Verify structured context
-      expect(mockCreateContext).toHaveBeenCalledWith(ItemDataType.Structured, {
+      expect(mockCreateAssistantContextItem).toHaveBeenCalledWith('structured', {
         title: 'Analyze Flame Graph',
         data: {
           start: request.range.from.valueOf(),
@@ -179,7 +173,7 @@ describe('enrichDataFrameWithAssistantContentMapper', () => {
       expect(result.data).toHaveLength(2);
       expect(result.data[0].meta?.custom?.assistantContext).toBeDefined();
       expect(result.data[1].meta?.custom?.assistantContext).toBeDefined();
-      expect(mockCreateContext).toHaveBeenCalledTimes(4); // 2 contexts per frame
+      expect(mockCreateAssistantContextItem).toHaveBeenCalledTimes(4); // 2 contexts per frame
     });
   });
 
@@ -199,7 +193,7 @@ describe('enrichDataFrameWithAssistantContentMapper', () => {
       const result = mapper(response);
 
       expect(result.data[0].meta?.custom?.assistantContext).toBeUndefined();
-      expect(mockCreateContext).not.toHaveBeenCalled();
+      expect(mockCreateAssistantContextItem).not.toHaveBeenCalled();
     });
   });
 
@@ -219,7 +213,7 @@ describe('enrichDataFrameWithAssistantContentMapper', () => {
       const result = mapper(response);
 
       expect(result.data[0]).toBe(dataFrame); // Should remain unchanged
-      expect(mockCreateContext).not.toHaveBeenCalled();
+      expect(mockCreateAssistantContextItem).not.toHaveBeenCalled();
     });
 
     it('should not add context when query has no datasource information', () => {
@@ -238,7 +232,7 @@ describe('enrichDataFrameWithAssistantContentMapper', () => {
       const result = mapper(response);
 
       expect(result.data[0]).toBe(dataFrame); // Should remain unchanged
-      expect(mockCreateContext).not.toHaveBeenCalled();
+      expect(mockCreateAssistantContextItem).not.toHaveBeenCalled();
     });
 
     it('should not add context if query has incomplete datasource information', () => {
@@ -260,7 +254,7 @@ describe('enrichDataFrameWithAssistantContentMapper', () => {
       const result = mapper(response);
 
       expect(result.data[0]).toBe(dataFrame); // Should remain unchanged
-      expect(mockCreateContext).not.toHaveBeenCalled();
+      expect(mockCreateAssistantContextItem).not.toHaveBeenCalled();
     });
 
     it('should not add context with empty response data', () => {
@@ -271,7 +265,7 @@ describe('enrichDataFrameWithAssistantContentMapper', () => {
       const result = mapper(response);
 
       expect(result.data).toHaveLength(0);
-      expect(mockCreateContext).not.toHaveBeenCalled();
+      expect(mockCreateAssistantContextItem).not.toHaveBeenCalled();
     });
 
     it('should handle mixed data frame types', () => {
@@ -302,7 +296,7 @@ describe('enrichDataFrameWithAssistantContentMapper', () => {
       expect(result.data[0].meta?.custom?.assistantContext).toBeDefined(); // Flamegraph
       expect(result.data[1].meta?.custom?.assistantContext).toBeUndefined(); // Table
       expect(result.data[2].meta?.custom?.assistantContext).toBeDefined(); // Flamegraph
-      expect(mockCreateContext).toHaveBeenCalledTimes(4); // 2 contexts for each flamegraph
+      expect(mockCreateAssistantContextItem).toHaveBeenCalledTimes(4); // 2 contexts for each flamegraph
     });
   });
 
@@ -327,7 +321,7 @@ describe('enrichDataFrameWithAssistantContentMapper', () => {
       const mapper = enrichDataFrameWithAssistantContentMapper(request, 'TestDatasource');
       mapper(response);
 
-      expect(mockCreateContext).toHaveBeenCalledWith(ItemDataType.Structured, {
+      expect(mockCreateAssistantContextItem).toHaveBeenCalledWith('structured', {
         title: 'Analyze Flame Graph',
         data: {
           start: fromTime.valueOf(),

@@ -3,11 +3,10 @@ import { useEffect, useState } from 'react';
 import * as React from 'react';
 import { useDebounce, usePrevious } from 'react-use';
 
-import { ChatContextItem } from '@grafana/assistant';
+import { ChatContextItem, OpenAssistantButton } from '@grafana/assistant';
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { Button, ButtonGroup, Dropdown, Input, Menu, RadioButtonGroup, useStyles2 } from '@grafana/ui';
 
-import { AnalyzeFlameGraphButton } from './AnalyzeFlameGraphButton';
 import { byPackageGradient, byValueGradient, diffColorBlindGradient, diffDefaultGradient } from './FlameGraph/colors';
 import { CollapsedMap } from './FlameGraph/dataTransform';
 import { MIN_WIDTH_TO_SHOW_BOTH_TOPTABLE_AND_FLAMEGRAPH } from './constants';
@@ -89,9 +88,15 @@ const FlameGraphHeader = ({
       </div>
 
       <div className={styles.rightContainer}>
-        {assistantContext && (
-          <AnalyzeFlameGraphButton className={styles.buttonSpacing} assistantContext={assistantContext} />
-        )}
+        {(assistantContext ?? []).length > 0 && 
+          <div className={styles.buttonSpacing}>
+            <OpenAssistantButton
+              origin="grafana/flame_graph"
+              prompt="Analyze Flame Graph"
+              context={assistantContext}
+            />
+          </div>
+          }
         {showResetButton && (
           <Button
             variant={'secondary'}

@@ -12,8 +12,7 @@ import {
 } from 'react';
 
 import {
-  createContext as createAssistantContext,
-  ItemDataType,
+  createAssistantContextItem,
   OpenAssistantProps,
   useAssistant,
 } from '@grafana/assistant';
@@ -729,15 +728,13 @@ async function handleOpenAssistant(openAssistant: (props: OpenAssistantProps) =>
   const context = [];
   if (datasource) {
     context.push(
-      createAssistantContext(ItemDataType.Datasource, {
+      createAssistantContextItem('datasource', {
         datasourceUid: datasource.uid,
-        datasourceName: datasource.name,
-        datasourceType: datasource.type,
-        img: datasource.meta?.info?.logos?.small,
       })
-    );
+    )
   }
   openAssistant({
+    origin: 'grafana/logs_panel',
     prompt: `${t('logs.log-line-menu.log-line-explainer', 'Explain this log line in a concise way')}:
 
       \`\`\`
@@ -746,7 +743,7 @@ ${log.entry.replaceAll('`', '\\`')}
       `,
     context: [
       ...context,
-      createAssistantContext(ItemDataType.Structured, {
+      createAssistantContextItem('structured', {
         title: t('logs.log-line-menu.log-line', 'Log line'),
         data: {
           labels: log.labels,
