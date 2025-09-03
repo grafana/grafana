@@ -11,6 +11,7 @@ import {
   OneClickMode,
   ActionModel,
   ActionVariableInput,
+  ActionType,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { TooltipDisplayMode } from '@grafana/schema';
@@ -34,7 +35,7 @@ import {
   removeStyles,
 } from 'app/plugins/panel/canvas/utils';
 
-import { getActions, getActionsDefaultField } from '../../actions/utils';
+import { getActions, getActionsDefaultField, isInfinityActionWithAuth } from '../../actions/utils';
 import { CanvasElementItem, CanvasElementOptions } from '../element';
 import { canvasElementRegistry } from '../registry';
 
@@ -640,7 +641,11 @@ export class ElementState implements LayerElement {
 
     if (this.options.links?.some((link) => link.oneClick === true)) {
       this.oneClickMode = OneClickMode.Link;
-    } else if (this.options.actions?.some((action) => action.oneClick === true)) {
+    } else if (
+      this.options.actions
+        ?.filter((action) => action.type === ActionType.Fetch || isInfinityActionWithAuth(action))
+        .some((action) => action.oneClick)
+    ) {
       const scene = this.getScene();
       const canExecuteActions = scene?.panel?.panelContext?.canExecuteActions;
       const userCanExecuteActions = canExecuteActions?.() ?? false;

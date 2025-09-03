@@ -24,6 +24,11 @@ import { createAbsoluteUrl, RelativeUrl } from '../alerting/unified/utils/url';
 import { getNextRequestId } from '../query/state/PanelQueryRunner';
 
 /** @internal */
+export const isInfinityActionWithAuth = (action: Action): boolean => {
+  return (grafanaConfig.featureToggles.vizActionsAuth ?? false) && action.type === ActionType.Infinity;
+};
+
+/** @internal */
 export const genReplaceActionVars = (
   boundReplaceVariables: InterpolateFunction,
   action: Action,
@@ -59,68 +64,74 @@ export const getActions = (
     return [];
   }
 
-  const actionModels = actions.map((action: Action) => {
-    const dataContext: DataContextScopedVar = getFieldDataContextClone(frame, field, fieldScopedVars);
-    const actionScopedVars = {
-      ...fieldScopedVars,
-      __dataContext: dataContext,
-    };
+  const actionModels = actions
+    .filter((action) => {
+      return action.type === ActionType.Fetch || isInfinityActionWithAuth(action);
+    })
+    .map((action: Action) => {
+      const dataContext: DataContextScopedVar = getFieldDataContextClone(frame, field, fieldScopedVars);
+      const actionScopedVars = {
+        ...fieldScopedVars,
+        __dataContext: dataContext,
+      };
 
-    const boundReplaceVariables: InterpolateFunction = (value, scopedVars, format) => {
-      return replaceVariables(value, { ...actionScopedVars, ...scopedVars }, format);
-    };
+      const boundReplaceVariables: InterpolateFunction = (value, scopedVars, format) => {
+        return replaceVariables(value, { ...actionScopedVars, ...scopedVars }, format);
+      };
 
-    // We are not displaying reduction result
-    if (config.valueRowIndex !== undefined && !isNaN(config.valueRowIndex)) {
-      dataContext.value.rowIndex = config.valueRowIndex;
-    } else {
-      dataContext.value.calculatedValue = config.calculatedValue;
-    }
+      // We are not displaying reduction result
+      if (config.valueRowIndex !== undefined && !isNaN(config.valueRowIndex)) {
+        dataContext.value.rowIndex = config.valueRowIndex;
+      } else {
+        dataContext.value.calculatedValue = config.calculatedValue;
+      }
 
-    const actionModel: ActionModel<Field> = {
-      title: replaceVariables(action.title, actionScopedVars),
-      confirmation: (actionVars?: ActionVariableInput) =>
-        genReplaceActionVars(
-          boundReplaceVariables,
-          action,
-          actionVars
-        )(action.confirmation || `Are you sure you want to ${action.title}?`),
-      onClick: (evt: MouseEvent, origin: Field, actionVars?: ActionVariableInput) => {
-        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-        let request = {} as BackendSrvRequest;
-        if (grafanaConfig.featureToggles.vizActionsAuth && action.type === ActionType.Infinity) {
-          request = buildActionProxyRequest(action, genReplaceActionVars(boundReplaceVariables, action, actionVars));
-        } else if (action.type === ActionType.Fetch) {
-          request = buildActionRequest(action, genReplaceActionVars(boundReplaceVariables, action, actionVars));
-        }
+      const actionModel: ActionModel<Field> = {
+        title: replaceVariables(action.title, actionScopedVars),
+        confirmation: (actionVars?: ActionVariableInput) =>
+          genReplaceActionVars(
+            boundReplaceVariables,
+            action,
+            actionVars
+          )(action.confirmation || `Are you sure you want to ${action.title}?`),
+        onClick: (evt: MouseEvent, origin: Field, actionVars?: ActionVariableInput) => {
+          // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+          let request = {} as BackendSrvRequest;
+          if (isInfinityActionWithAuth(action)) {
+            request = buildActionProxyRequest(action, genReplaceActionVars(boundReplaceVariables, action, actionVars));
+          } else if (action.type === ActionType.Fetch) {
+            request = buildActionRequest(action, genReplaceActionVars(boundReplaceVariables, action, actionVars));
+          }
 
-        try {
-          getBackendSrv()
-            .fetch(request)
-            .subscribe({
-              error: (error) => {
-                appEvents.emit(AppEvents.alertError, ['An error has occurred. Check console output for more details.']);
-                console.error(error);
-              },
-              complete: () => {
-                appEvents.emit(AppEvents.alertSuccess, ['API call was successful']);
-              },
-            });
-        } catch (error) {
-          appEvents.emit(AppEvents.alertError, ['An error has occurred. Check console output for more details.']);
-          console.error(error);
-          return;
-        }
-      },
-      oneClick: action.oneClick ?? false,
-      style: {
-        backgroundColor: action.style?.backgroundColor ?? grafanaConfig.theme2.colors.secondary.main,
-      },
-      variables: action.variables,
-    };
+          try {
+            getBackendSrv()
+              .fetch(request)
+              .subscribe({
+                error: (error) => {
+                  appEvents.emit(AppEvents.alertError, [
+                    'An error has occurred. Check console output for more details.',
+                  ]);
+                  console.error(error);
+                },
+                complete: () => {
+                  appEvents.emit(AppEvents.alertSuccess, ['API call was successful']);
+                },
+              });
+          } catch (error) {
+            appEvents.emit(AppEvents.alertError, ['An error has occurred. Check console output for more details.']);
+            console.error(error);
+            return;
+          }
+        },
+        oneClick: action.oneClick ?? false,
+        style: {
+          backgroundColor: action.style?.backgroundColor ?? grafanaConfig.theme2.colors.secondary.main,
+        },
+        variables: action.variables,
+      };
 
-    return actionModel;
-  });
+      return actionModel;
+    });
 
   return actionModels.filter((action): action is ActionModel => !!action);
 };
