@@ -208,7 +208,7 @@ export function DashboardQueryEditor({ data, query, onChange, onRunQuery }: Prop
           {config.featureToggles.dashboardDsAdHocFiltering && (
             <Field
               label="AdHoc Filters"
-              description="Apply ~~Dashboard~~ data source AdHoc filters to this panel"
+              description="Apply --Dashboard-- data source AdHoc filters to this panel"
               noMargin
             >
               <InlineSwitch value={Boolean(query.adHocFiltersEnabled)} onChange={onAdHocFiltersToggle} />
