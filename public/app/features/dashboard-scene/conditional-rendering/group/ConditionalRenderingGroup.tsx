@@ -7,6 +7,7 @@ import { ConditionalRenderingGroupKind } from '@grafana/schema/dist/esm/schema/d
 import { Stack } from '@grafana/ui';
 
 import { ConditionalRenderingChangedEvent, dashboardEditActions } from '../../edit-pane/shared';
+import { getDashboardSceneFor } from '../../utils/utils';
 import { ConditionalRenderingData } from '../conditions/ConditionalRenderingData';
 import { ConditionalRenderingTimeRangeSize } from '../conditions/ConditionalRenderingTimeRangeSize';
 import { ConditionalRenderingVariable } from '../conditions/ConditionalRenderingVariable';
@@ -90,7 +91,9 @@ export class ConditionalRenderingGroup extends SceneObjectBase<ConditionalRender
         return ConditionalRenderingTimeRangeSize.createEmpty();
 
       case 'variable':
-        return ConditionalRenderingVariable.createEmpty(sceneGraph.getVariables(this).state.variables[0].state.name);
+        return ConditionalRenderingVariable.createEmpty(
+          sceneGraph.getVariables(getDashboardSceneFor(this)).state.variables[0].state.name
+        );
     }
   }
 

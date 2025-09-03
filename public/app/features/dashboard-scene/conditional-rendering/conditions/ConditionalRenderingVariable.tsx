@@ -15,6 +15,7 @@ import {
 import { Box, Combobox, ComboboxOption, Field, Input, Stack } from '@grafana/ui';
 
 import { dashboardEditActions } from '../../edit-pane/shared';
+import { getDashboardSceneFor } from '../../utils/utils';
 import { getLowerTranslatedObjectType } from '../object';
 
 import { ConditionalRenderingConditionWrapper } from './ConditionalRenderingConditionWrapper';
@@ -196,7 +197,7 @@ function ConditionalRenderingVariableRenderer({ model }: SceneComponentProps<Con
 
   useEffect(() => setNewValue(value), [value]);
 
-  const variables = useMemo(() => sceneGraph.getVariables(model), [model]);
+  const variables = sceneGraph.getVariables(getDashboardSceneFor(model));
 
   const variableNames: ComboboxOption[] = useMemo(
     () => variables.state.variables.map((v) => ({ value: v.state.name, label: v.state.label ?? v.state.name })),
