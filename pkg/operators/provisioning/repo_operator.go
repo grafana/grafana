@@ -47,10 +47,14 @@ func RunRepoController(opts standalone.BuildInfo, c *cli.Context, cfg *setting.C
 	)
 
 	repoInformer := informerFactory.Provisioning().V0alpha1().Repositories()
-	controller := controller.NewRepositoryController(
+	controller, err := controller.NewRepositoryController(
 		controllerCfg.provisioningClient.ProvisioningV0alpha1(),
 		repoInformer,
 	)
+	if err != nil {
+		return fmt.Errorf("failed to create repository controller: %w", err)
+	}
+
 	informerFactory.Start(ctx.Done())
 	if !cache.WaitForCacheSync(ctx.Done(), repoInformer.Informer().HasSynced) {
 		return fmt.Errorf("failed to sync informer cache")

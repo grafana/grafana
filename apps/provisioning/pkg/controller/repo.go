@@ -23,13 +23,13 @@ type RepositoryController struct {
 	repoLister listers.RepositoryLister
 	repoSynced cache.InformerSynced
 	logger     logging.Logger
-	queue      workqueue.RateLimitingInterface
+	queue      workqueue.TypedRateLimitingInterface[string]
 }
 
 func NewRepositoryController(
 	provisioningClient typedclient.ProvisioningV0alpha1Interface,
 	repoInformer informerv0alpha1.RepositoryInformer,
-) *RepositoryController {
+) (*RepositoryController, error) {
 	controller := &RepositoryController{
 		client:     provisioningClient,
 		repoLister: repoInformer.Lister(),
@@ -37,18 +37,21 @@ func NewRepositoryController(
 		logger: logging.NewSLogLogger(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
 			Level: slog.LevelDebug,
 		})),
-		queue: workqueue.NewRateLimitingQueue(workqueue.DefaultControllerRateLimiter()),
+		queue: workqueue.NewTypedRateLimitingQueue[string](workqueue.DefaultTypedControllerRateLimiter[string]()),
 	}
 
-	repoInformer.Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{
+	_, err := repoInformer.Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{
 		AddFunc: controller.enqueue,
 		UpdateFunc: func(oldObj, newObj interface{}) {
 			controller.enqueue(newObj)
 		},
 		DeleteFunc: controller.enqueue,
 	})
+	if err != nil {
+		return nil, err
+	}
 
-	return controller
+	return controller, nil
 }
 
 func (c *RepositoryController) Run(ctx context.Context) {
@@ -73,11 +76,9 @@ func (c *RepositoryController) enqueue(obj interface{}) {
 		c.logger.Error("Couldn't get key for object", "error", err)
 		return
 	}
-
-	eventType := "unknown"
-	switch obj.(type) {
+	switch repo := obj.(type) {
 	case *provisioning.Repository:
-		repo := obj.(*provisioning.Repository)
+		var eventType string
 		if repo.DeletionTimestamp != nil {
 			eventType = "delete"
 		} else {
@@ -109,7 +110,7 @@ func (c *RepositoryController) processNextWorkItem(ctx context.Context) bool {
 	logger := c.logger.With("key", key)
 	logger.Debug("Processing work item from queue")
 
-	err := c.processRepository(ctx, key.(string))
+	err := c.processRepository(ctx, key)
 	if err == nil {
 		c.queue.Forget(key)
 		logger.Debug("Successfully processed work item")
