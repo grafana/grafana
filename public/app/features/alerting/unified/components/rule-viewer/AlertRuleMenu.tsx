@@ -2,6 +2,7 @@ import { PropsOf } from '@emotion/react';
 
 import { AppEvents } from '@grafana/data';
 import { t } from '@grafana/i18n';
+import { config, featureEnabled } from '@grafana/runtime';
 import { Button, ComponentSize, Dropdown, Menu } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
 import MenuItemPauseRule from 'app/features/alerting/unified/components/MenuItemPauseRule';
@@ -14,7 +15,9 @@ import {
   AlertRuleAction,
   skipToken,
   useGrafanaPromRuleAbilities,
+  useGrafanaPromRuleAbility,
   useRulerRuleAbilities,
+  useRulerRuleAbility,
 } from '../../hooks/useAbilities';
 import { createShareLink, isLocalDevEnv, isOpenSourceEdition } from '../../utils/misc';
 import * as ruleId from '../../utils/rule-id';
@@ -34,6 +37,7 @@ interface Props {
   identifier: RuleIdentifier;
   groupIdentifier: RuleGroupIdentifierV2;
   handleSilence: () => void;
+  handleManageEnrichments?: () => void;
   handleDelete: (identifier: EditableRuleIdentifier, groupIdentifier: RuleGroupIdentifierV2) => void;
   handleDuplicateRule: (identifier: RuleIdentifier) => void;
   onPauseChange?: () => void;
@@ -53,6 +57,7 @@ const AlertRuleMenu = ({
   identifier,
   groupIdentifier,
   handleSilence,
+  handleManageEnrichments,
   handleDelete,
   handleDuplicateRule,
   onPauseChange,
@@ -83,6 +88,16 @@ const AlertRuleMenu = ({
     AlertRuleAction.Silence,
     AlertRuleAction.ModifyExport,
   ]);
+
+  const [editRuleSupported, editRuleAllowed] = useRulerRuleAbility(rulerRule, groupIdentifier, AlertRuleAction.Update);
+  // If the consumer of this component comes from the alert list view, we need to use promRule to check abilities and permissions,
+  // as we have removed all requests to the ruler API in the list view.
+  const [grafanaEditRuleSupported, grafanaEditRuleAllowed] = useGrafanaPromRuleAbility(
+    prometheusRuleType.grafana.rule(promRule) ? promRule : skipToken,
+    AlertRuleAction.Update
+  );
+
+  const canEditRule = (editRuleSupported && editRuleAllowed) || (grafanaEditRuleSupported && grafanaEditRuleAllowed);
 
   const [pauseSupported, pauseAllowed] = rulerPauseAbility;
   const [grafanaPauseSupported, grafanaPauseAllowed] = grafanaPauseAbility;
@@ -131,8 +146,23 @@ const AlertRuleMenu = ({
     (rulerRuleType.grafana.rule(rulerRule) && isPausedRule(rulerRule)) ||
     (prometheusRuleType.grafana.rule(promRule) && promRule.isPaused);
 
+  // todo: make this new menu item for enrichments an extension of the alertrulemenu items. For first iteration, we'll keep it here.
+  const canManageEnrichments =
+    canEditRule &&
+    ruleUid &&
+    handleManageEnrichments &&
+    config.featureToggles.alertingEnrichmentPerRule &&
+    config.featureToggles.alertEnrichment;
+
   const menuItems = (
     <>
+      {canManageEnrichments && (
+        <Menu.Item
+          label={t('alerting.alert-menu.manage-enrichments', 'Manage enrichments')}
+          icon="edit"
+          onClick={handleManageEnrichments}
+        />
+      )}
       {canPause && ruleUid && groupIdentifier.groupOrigin === 'grafana' && (
         <MenuItemPauseRule
           uid={ruleUid}

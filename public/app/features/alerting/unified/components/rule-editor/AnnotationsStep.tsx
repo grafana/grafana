@@ -2,7 +2,6 @@ import { css, cx } from '@emotion/css';
 import { produce } from 'immer';
 import { useEffect, useState } from 'react';
 import { useFieldArray, useFormContext } from 'react-hook-form';
-import { useParams } from 'react-router-dom-v5-compat';
 import { useToggle } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -13,7 +12,6 @@ import { DashboardModel } from '../../../../dashboard/state/DashboardModel';
 import { AIImproveAnnotationsButtonComponent } from '../../enterprise-components/AI/AIGenImproveAnnotationsButton/addAIImproveAnnotationsButton';
 import { RuleFormValues } from '../../types/rule-form';
 import { Annotation, annotationLabels } from '../../utils/constants';
-import { getRuleIdFromPathname } from '../../utils/rule-id';
 import { isGrafanaManagedRuleByType } from '../../utils/rules';
 
 import AnnotationHeaderField from './AnnotationHeaderField';
@@ -21,15 +19,11 @@ import DashboardAnnotationField from './DashboardAnnotationField';
 import { DashboardPicker, PanelDTO, getVisualPanels } from './DashboardPicker';
 import { NeedHelpInfo } from './NeedHelpInfo';
 import { RuleEditorSection } from './RuleEditorSection';
-import { NotificationMessageSectionExtension } from './alert-rule-form/extensions/NotificationMessageSectionExtension';
 import { useDashboardQuery } from './useDashboardQuery';
 
 const AnnotationsStep = () => {
   const styles = useStyles2(getStyles);
   const [showPanelSelector, setShowPanelSelector] = useToggle(false);
-  // only available when editing an existing rule
-  const params = useParams();
-  const ruleUid = getRuleIdFromPathname(params);
 
   const {
     control,
@@ -246,8 +240,6 @@ const AnnotationsStep = () => {
             onDismiss={() => setShowPanelSelector(false)}
           />
         )}
-        {/* Only render the enrichment extension when editing an existing rule (ruleUid is available) */}
-        {ruleUid && <NotificationMessageSectionExtension ruleUid={ruleUid} />}
       </Stack>
     </RuleEditorSection>
   );
