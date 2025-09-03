@@ -25,9 +25,9 @@ var (
 	_ rest.Getter               = (*starsStorage)(nil)
 	_ rest.Lister               = (*starsStorage)(nil)
 	_ rest.Storage              = (*starsStorage)(nil)
-	// _ rest.Creater              = (*starsStorage)(nil)
-	// _ rest.Updater              = (*starsStorage)(nil)
-	// _ rest.GracefulDeleter      = (*starsStorage)(nil)
+	_ rest.Creater              = (*starsStorage)(nil)
+	_ rest.Updater              = (*starsStorage)(nil)
+	_ rest.GracefulDeleter      = (*starsStorage)(nil)
 )
 
 func NewStarsStorage(namespacer request.NamespaceMapper, sql *LegacySQL) *starsStorage {
@@ -110,6 +110,21 @@ func (s *starsStorage) Get(ctx context.Context, name string, options *metav1.Get
 	}
 	obj := asStarsResource(info.Value, &found[0])
 	return &obj, nil
+}
+
+// Create implements rest.Creater.
+func (s *starsStorage) Create(ctx context.Context, obj runtime.Object, createValidation rest.ValidateObjectFunc, options *metav1.CreateOptions) (runtime.Object, error) {
+	panic("unimplemented")
+}
+
+// Update implements rest.Updater.
+func (s *starsStorage) Update(ctx context.Context, name string, objInfo rest.UpdatedObjectInfo, createValidation rest.ValidateObjectFunc, updateValidation rest.ValidateObjectUpdateFunc, forceAllowCreate bool, options *metav1.UpdateOptions) (runtime.Object, bool, error) {
+	panic("unimplemented")
+}
+
+// Delete implements rest.GracefulDeleter.
+func (s *starsStorage) Delete(ctx context.Context, name string, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions) (runtime.Object, bool, error) {
+	panic("unimplemented")
 }
 
 func asStarsResource(ns string, v *dashboardStars) preferences.Stars {

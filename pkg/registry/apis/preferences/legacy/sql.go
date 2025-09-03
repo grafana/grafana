@@ -22,7 +22,8 @@ type dashboardStars struct {
 	First   int64
 	Last    int64
 
-	Dashboards []string
+	Dashboards   []string
+	IDsForDelete []int64
 }
 
 type preferenceModel struct {
@@ -73,13 +74,14 @@ func (s *LegacySQL) GetStars(ctx context.Context, orgId int64, user string) ([]d
 
 	stars := []dashboardStars{}
 	current := &dashboardStars{}
+	var starID int64
 	var orgID int64
 	var userUID string
 	var dashboardUID string
 	var updated time.Time
 
 	for rows.Next() {
-		err := rows.Scan(&orgID, &userUID, &dashboardUID, &updated)
+		err := rows.Scan(&starID, &orgID, &userUID, &dashboardUID, &updated)
 		if err != nil {
 			return nil, 0, err
 		}
@@ -101,6 +103,7 @@ func (s *LegacySQL) GetStars(ctx context.Context, orgId int64, user string) ([]d
 			current.First = ts
 		}
 		current.Dashboards = append(current.Dashboards, dashboardUID)
+		current.IDsForDelete = append(current.IDsForDelete, starID)
 	}
 
 	// Add the last value
