@@ -202,7 +202,7 @@ export class UnifiedSearcher implements GrafanaSearcher {
       totalRows: meta.count ?? first.length,
       view,
       loadMoreItems: async (startIndex: number, stopIndex: number): Promise<void> => {
-        loadMax = Math.max(loadMax, stopIndex);
+        loadMax = Math.max(loadMax, stopIndex + 1);
         if (!pending) {
           pending = getNextPage();
         }
