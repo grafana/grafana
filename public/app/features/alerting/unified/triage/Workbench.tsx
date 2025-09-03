@@ -16,6 +16,7 @@ import { WorkbenchProvider } from './WorkbenchContext';
 import { StateChangeChart } from './stateChangeChart/StateChangeChart';
 import { AlertRuleRow, Domain, Filter, GenericGroupedRow, WorkbenchRow } from './types';
 import { AlertRuleDetails } from './scene/AlertRuleDetails';
+import { AlertRuleSummary } from './scene/AlertRuleSummary';
 
 type WorkbenchProps = {
   domain: Domain;
@@ -150,9 +151,8 @@ function renderWorkbenchRow(
             </Text>
           </Stack>
         }
-        content={<row.rowSummaryScene.Component model={row.rowSummaryScene} />}
+        content={<AlertRuleSummary ruleUID={row.metadata.ruleUID} />}
       >
-        {/* <row.instancesScene.Component model={row.instancesScene} /> */}
         <AlertRuleDetails ruleUID={row.metadata.ruleUID} />
       </GroupRow>
     );

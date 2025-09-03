@@ -3,7 +3,6 @@ import { SceneComponentProps, SceneObjectBase, SceneObjectState, sceneGraph, sce
 import { Workbench } from '../Workbench';
 import { AlertRuleQueryData, AlertRuleRow, Domain, GenericGroupedRow, TimelineEntry, WorkbenchRow } from '../types';
 
-import { getAlertRuleScene } from './AlertInstanceScene';
 import { convertTimeRangeToDomain } from './utils';
 import { useTimeRange } from '@grafana/scenes-react';
 
@@ -215,7 +214,6 @@ export function createAlertRuleRowsFromDataPoints(
         ruleUID: group.ruleUID,
       },
       timeline,
-      rowSummaryScene: getAlertRuleScene(group.ruleUID),
       rows: [],
     };
 

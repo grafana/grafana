@@ -1,4 +1,4 @@
-import { EmbeddedScene } from '@grafana/scenes';
+
 
 export type Domain = [Date, Date];
 export type Filter = [key: string, operator: '=' | '=!', value: string];
@@ -14,7 +14,6 @@ export interface AlertRuleRow {
     ruleUID: string;
   };
   timeline: TimelineEntry[];
-  rowSummaryScene: EmbeddedScene;
   rows: unknown[];
 }
 
