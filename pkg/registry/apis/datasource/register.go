@@ -215,28 +215,35 @@ func (b *DataSourceAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver
 
 	// Register the raw datasource connection
 	ds := b.datasourceResourceInfo
-	legacyStore := &legacyStorage{
-		datasources:  b.datasources,
-		resourceInfo: &ds,
-	}
-	unified, err := grafanaregistry.NewRegistryStore(opts.Scheme, ds, opts.OptsGetter)
-	if err != nil {
-		return err
-	}
-	storage[ds.StoragePath()], err = opts.DualWriteBuilder(ds.GroupResource(), legacyStore, unified)
-	if err != nil {
-		return err
-	}
-
 	storage[ds.StoragePath("query")] = &subQueryREST{builder: b}
 	storage[ds.StoragePath("health")] = &subHealthREST{builder: b}
 	storage[ds.StoragePath("resource")] = &subResourceREST{builder: b}
 
-	// FIXME: temporarily register both "datasources" and "connections" query paths
-	// This lets us deploy both datasources/{uid}/query and connections/{uid}/query
-	// while we transition requests to the new path
-	storage["connections"] = &noopREST{}                            // hidden from openapi
-	storage["connections/query"] = storage[ds.StoragePath("query")] // deprecated in openapi
+	if opts.OptsGetter != nil {
+		legacyStore := &legacyStorage{
+			datasources:  b.datasources,
+			resourceInfo: &ds,
+		}
+		unified, err := grafanaregistry.NewRegistryStore(opts.Scheme, ds, opts.OptsGetter)
+		if err != nil {
+			return err
+		}
+		storage[ds.StoragePath()], err = opts.DualWriteBuilder(ds.GroupResource(), legacyStore, unified)
+		if err != nil {
+			return err
+		}
+		// FIXME: temporarily register both "datasources" and "connections" query paths
+		// This lets us deploy both datasources/{uid}/query and connections/{uid}/query
+		// while we transition requests to the new path
+		storage["connections"] = &noopREST{}                            // hidden from openapi
+		storage["connections/query"] = storage[ds.StoragePath("query")] // deprecated in openapi
+	} else {
+		storage[ds.StoragePath()] = &connectionAccess{
+			datasources:    b.datasources,
+			resourceInfo:   ds,
+			tableConverter: ds.TableConverter(),
+		}
+	}
 
 	// Frontend proxy
 	if len(b.pluginJSON.Routes) > 0 {
@@ -244,7 +251,7 @@ func (b *DataSourceAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver
 	}
 
 	// Register hardcoded query schemas
-	err = queryschema.RegisterQueryTypes(b.queryTypes, storage)
+	err := queryschema.RegisterQueryTypes(b.queryTypes, storage)
 	if err != nil {
 		return err
 	}
