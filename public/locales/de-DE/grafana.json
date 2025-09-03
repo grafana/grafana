@@ -549,6 +549,7 @@
     },
     "alert-rules": {
       "firing-for": "Auslösen für",
+      "multiple-sources": "",
       "next-evaluation": "Nächste Evaluierung",
       "next-evaluation-in": "nächste Evaluierung in",
       "rule-definition": "Regeldefinition"
@@ -2638,13 +2639,15 @@
         "show": "Anzeigen"
       },
       "manage-alerts": "In diesen Datenquellen können Sie über die Alerting-Benutzeroberfläche „Warnungen verwalten“ auswählen, um diese Warnregeln sowohl in der Grafana-Benutzeroberfläche als auch in der Datenquelle, in der sie konfiguriert wurden, verwalten zu können.",
-      "no-groups": "Keine Gruppen verfügbar",
-      "no-namespaces": "Keine Ordner verfügbar",
       "placeholder-all-data-sources": "Alle Datenquellen",
       "placeholder-contact-point": "Kontaktpunkt auswählen",
       "placeholder-data-sources": "Datenquellen auswählen",
       "placeholder-labels": "Labels auswählen",
       "plugin-rules": "Plugin-Regeln",
+      "rule-source": {
+        "datasource": "",
+        "grafana": ""
+      },
       "rule-type": "Regelart",
       "rulesSearchInput-placeholder-search": "Suche",
       "search": "Suche",
@@ -2666,6 +2669,7 @@
         "namespace": "Ordner / Namensraum",
         "rule-health": "Zustand",
         "rule-name": "Regelname",
+        "rule-source": "",
         "rule-type": "Typ",
         "state": "Status"
       }
@@ -3393,9 +3397,6 @@
       "text-badge-enabled": "Aktiviert",
       "text-badge-not-enabled": "Nicht aktiviert"
     },
-    "scim-banner": {
-      "message": "SCIM befindet sich zurzeit in der Entwicklung und wird nicht für den Produktionseinsatz empfohlen. Bitte nutzen Sie es mit Vorsicht und rechnen Sie mit möglichen Änderungen."
-    },
     "server-discovery-modal": {
       "label-the-wellknownopenidconfiguration-endpoint-for-your-id-p": "Der Endpunkt .well-known/openid-configuration für Ihren IdP",
       "title-open-id-connect-discovery-url": "OpenID-Connect-Discovery-URL"
@@ -3565,7 +3566,9 @@
       },
       "error-moving-resources": "Fehler beim Verschieben von Ressourcen",
       "error-no-target-folder-path": "Der Zielordnerpfad ist ungültig oder leer, bitte wählen Sie ihn erneut aus.",
-      "move-warning": "Dadurch werden ausgewählte Ordner und deren Unterordner verschoben. Insgesamt betrifft dies:",
+      "move-total": "",
+      "move-warning": "",
+      "move-warning-tooltip": "",
       "target-folder": "Zielordner"
     },
     "counts": {
@@ -4691,6 +4694,7 @@
       "panel-title": "Panel-Titel ändern",
       "paste-panel": "Panel einfügen",
       "remove": "{{typeName}} entfernen",
+      "row-title": "",
       "switch-layout": "Layout wechseln"
     },
     "edit-pane": {
@@ -6542,7 +6546,8 @@
     },
     "data-source-load-error": {
       "back": "Zurück",
-      "delete": "Löschen"
+      "delete": "Löschen",
+      "not-found": ""
     },
     "data-source-missing-rights-message": {
       "title-missing-rights": "Fehlende Rechte"
@@ -7565,7 +7570,9 @@
   "folders": {
     "api": {
       "folder-delete-error-provisioned": "",
-      "folder-deleted-success": "Ordner gelöscht"
+      "folder-deleted-success": "Ordner gelöscht",
+      "folder-move-error-provisioned": "",
+      "folder-moved-success": ""
     },
     "get-loading-nav": {
       "main": {
@@ -9525,6 +9532,7 @@
       "fields-section": "Felder",
       "hide-log-line": "Log-Linie ausblenden",
       "inline-mode": "Inline anzeigen",
+      "link-value-tooltip": "",
       "links-section": "Links",
       "log-line-field": "Log-Zeile",
       "log-line-section": "Log-Linie",
@@ -12085,6 +12093,7 @@
     "selector": {
       "apply": "Anwenden",
       "cancel": "Abbrechen",
+      "error-title": "",
       "input": {
         "placeholder": "Bereiche auswählen …",
         "removeAll": "Alle Bereiche entfernen"

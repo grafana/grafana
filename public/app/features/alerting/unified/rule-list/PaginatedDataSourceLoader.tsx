@@ -111,7 +111,7 @@ function PaginatedGroupsLoader({ rulesSourceIdentifier, application, groupFilter
             ))}
           </ListSection>
         ))}
-        {hasMoreGroups && (
+        {hasMoreGroups && !hasNoRules && (
           // this div will make the button not stretch
           <div>
             <LoadMoreButton loading={isLoading} onClick={fetchMoreGroups} />

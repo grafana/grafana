@@ -557,6 +557,7 @@
     },
     "alert-rules": {
       "firing-for": "Uruchamianie dla",
+      "multiple-sources": "",
       "next-evaluation": "Następna ocena",
       "next-evaluation-in": "następna ocena za",
       "rule-definition": "Definicja reguły"
@@ -2664,13 +2665,15 @@
         "show": "Pokaż"
       },
       "manage-alerts": "W tych źródłach danych możesz wybrać „Zarządzaj alertami za pośrednictwem interfejsu alertów”, aby móc zarządzać tymi regułami alertów w interfejsie Grafany, a także w źródle danych, w którym zostały skonfigurowane.",
-      "no-groups": "Brak dostępnych grup",
-      "no-namespaces": "Brak dostępnych folderów",
       "placeholder-all-data-sources": "Wszystkie źródła danych",
       "placeholder-contact-point": "Wybierz punkt kontaktowy",
       "placeholder-data-sources": "Wybierz źródła danych",
       "placeholder-labels": "Wybierz etykiety",
       "plugin-rules": "Reguły dotyczące wtyczek",
+      "rule-source": {
+        "datasource": "",
+        "grafana": ""
+      },
       "rule-type": "Typ reguły",
       "rulesSearchInput-placeholder-search": "Szukaj",
       "search": "Szukaj",
@@ -2692,6 +2695,7 @@
         "namespace": "Folder / przestrzeń nazw",
         "rule-health": "Zdrowie",
         "rule-name": "Nazwa reguły",
+        "rule-source": "",
         "rule-type": "Typ",
         "state": "Stan"
       }
@@ -3419,9 +3423,6 @@
       "text-badge-enabled": "Włączone",
       "text-badge-not-enabled": "Niewłączone"
     },
-    "scim-banner": {
-      "message": "Standard SCIM jest obecnie w trakcie rozwoju i nie jest zalecany do użytku produkcyjnego. Należy stosować go ostrożnie i spodziewać się potencjalnych zmian."
-    },
     "server-discovery-modal": {
       "label-the-wellknownopenidconfiguration-endpoint-for-your-id-p": "Punkt końcowy konfiguracji .well-known/openid-configuration dla Twojego dostawcy tożsamości",
       "title-open-id-connect-discovery-url": "Adres URL wykrywania OpenID Connect"
@@ -3591,7 +3592,9 @@
       },
       "error-moving-resources": "Błąd przenoszenia zasobów",
       "error-no-target-folder-path": "Ścieżka do folderu docelowego jest nieprawidłowa lub pusta. Wybierz ponownie.",
-      "move-warning": "Spowoduje to przeniesienie wybranych folderów i ich elementów podrzędnych. Wpłynie to na następujące elementy:",
+      "move-total": "",
+      "move-warning": "",
+      "move-warning-tooltip": "",
       "target-folder": "Folder docelowy"
     },
     "counts": {
@@ -4727,6 +4730,7 @@
       "panel-title": "Zmień tytuł panelu",
       "paste-panel": "Wklej panel",
       "remove": "Usuń: {{typeName}}",
+      "row-title": "",
       "switch-layout": "Przełącz układ"
     },
     "edit-pane": {
@@ -6584,7 +6588,8 @@
     },
     "data-source-load-error": {
       "back": "Wstecz",
-      "delete": "Usuń"
+      "delete": "Usuń",
+      "not-found": ""
     },
     "data-source-missing-rights-message": {
       "title-missing-rights": "Brak uprawnień"
@@ -7607,7 +7612,9 @@
   "folders": {
     "api": {
       "folder-delete-error-provisioned": "",
-      "folder-deleted-success": "Folder usunięty"
+      "folder-deleted-success": "Folder usunięty",
+      "folder-move-error-provisioned": "",
+      "folder-moved-success": ""
     },
     "get-loading-nav": {
       "main": {
@@ -9583,6 +9590,7 @@
       "fields-section": "Pola",
       "hide-log-line": "Ukryj wiersz logu",
       "inline-mode": "Wyświetl bezpośrednio",
+      "link-value-tooltip": "",
       "links-section": "Linki",
       "log-line-field": "Wiersz logu",
       "log-line-section": "Wiersz logu",
@@ -12163,6 +12171,7 @@
     "selector": {
       "apply": "Zastosuj",
       "cancel": "Anuluj",
+      "error-title": "",
       "input": {
         "placeholder": "Wybierz zakresy…",
         "removeAll": "Usuń wszystkie zakresy"

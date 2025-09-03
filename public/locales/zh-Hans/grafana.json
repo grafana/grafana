@@ -545,6 +545,7 @@
     },
     "alert-rules": {
       "firing-for": "触发原因",
+      "multiple-sources": "",
       "next-evaluation": "下一次评估",
       "next-evaluation-in": "下一次评估将于此时间后进行：",
       "rule-definition": "规则定义"
@@ -2625,13 +2626,15 @@
         "show": "显示"
       },
       "manage-alerts": "在这些数据源中，您可以选择通过警报用户界面管理警报，以便能够在 Grafana 用户界面以及在其配置所在的数据源中管理这些警报规则。",
-      "no-groups": "没有可用的小组",
-      "no-namespaces": "没有可用的文件夹",
       "placeholder-all-data-sources": "所有数据源",
       "placeholder-contact-point": "选择联络点",
       "placeholder-data-sources": "选择数据源",
       "placeholder-labels": "选择标签",
       "plugin-rules": "插件规则",
+      "rule-source": {
+        "datasource": "",
+        "grafana": ""
+      },
       "rule-type": "规则类型",
       "rulesSearchInput-placeholder-search": "搜索",
       "search": "搜索",
@@ -2653,6 +2656,7 @@
         "namespace": "文件夹/命名空间",
         "rule-health": "健康",
         "rule-name": "规则名称",
+        "rule-source": "",
         "rule-type": "类型",
         "state": "状态"
       }
@@ -3380,9 +3384,6 @@
       "text-badge-enabled": "已启用",
       "text-badge-not-enabled": "未启用"
     },
-    "scim-banner": {
-      "message": "SCIM 目前正在开发中，不建议用于生产。请谨慎使用并注意可能出现的变化。"
-    },
     "server-discovery-modal": {
       "label-the-wellknownopenidconfiguration-endpoint-for-your-id-p": "IdP 的 .well-known/openid-configuration 端点",
       "title-open-id-connect-discovery-url": "OpenID Connect 发现 URL"
@@ -3552,7 +3553,9 @@
       },
       "error-moving-resources": "移动资源时出错",
       "error-no-target-folder-path": "目标文件夹路径无效或为空，请再次选择。",
-      "move-warning": "此操作将移动所选文件夹及其子文件夹。总体而言，这将影响：",
+      "move-total": "",
+      "move-warning": "",
+      "move-warning-tooltip": "",
       "target-folder": "目标文件夹"
     },
     "counts": {
@@ -4673,6 +4676,7 @@
       "panel-title": "更改面板标题",
       "paste-panel": "粘贴面板",
       "remove": "移除{{typeName}}",
+      "row-title": "",
       "switch-layout": "切换布局"
     },
     "edit-pane": {
@@ -6521,7 +6525,8 @@
     },
     "data-source-load-error": {
       "back": "上一步",
-      "delete": "删除"
+      "delete": "删除",
+      "not-found": ""
     },
     "data-source-missing-rights-message": {
       "title-missing-rights": "缺少权限"
@@ -7544,7 +7549,9 @@
   "folders": {
     "api": {
       "folder-delete-error-provisioned": "",
-      "folder-deleted-success": "文件夹已删除"
+      "folder-deleted-success": "文件夹已删除",
+      "folder-move-error-provisioned": "",
+      "folder-moved-success": ""
     },
     "get-loading-nav": {
       "main": {
@@ -9496,6 +9503,7 @@
       "fields-section": "字段",
       "hide-log-line": "隐藏日志行",
       "inline-mode": "内联显示",
+      "link-value-tooltip": "",
       "links-section": "关联",
       "log-line-field": "日志行",
       "log-line-section": "日志行",
@@ -12046,6 +12054,7 @@
     "selector": {
       "apply": "应用",
       "cancel": "取消",
+      "error-title": "",
       "input": {
         "placeholder": "选择范围…",
         "removeAll": "移除所有范围"
