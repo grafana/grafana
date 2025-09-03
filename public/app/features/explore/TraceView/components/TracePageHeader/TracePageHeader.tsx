@@ -26,7 +26,7 @@ import {
   PluginExtensionPoints,
 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { reportInteraction, usePluginLinks } from '@grafana/runtime';
+import { reportInteraction, renderLimitedComponents, usePluginComponents, usePluginLinks } from '@grafana/runtime';
 import { TimeZone } from '@grafana/schema';
 import {
   Badge,
@@ -126,6 +126,10 @@ export const TracePageHeader = memo((props: TracePageHeaderProps) => {
     limitPerPlugin: 2,
   });
 
+  const { components: extensionComponents } = usePluginComponents<TraceViewPluginExtensionContext>({
+    extensionPointId: PluginExtensionPoints.TraceViewHeaderActions,
+  });
+
   let statusColor: BadgeColor = 'green';
   if (status && status.length > 0) {
     if (status[0].value.toString().charAt(0) === '4') {
@@ -211,6 +215,10 @@ export const TracePageHeader = memo((props: TracePageHeaderProps) => {
               ))}
             </div>
           )}
+
+          <div className={styles.actions}>
+            {renderLimitedComponents({ props: traceContext, components: extensionComponents, limit: 2 })}
+          </div>
 
           {config.feedbackLinksEnabled && (
             <Tooltip
