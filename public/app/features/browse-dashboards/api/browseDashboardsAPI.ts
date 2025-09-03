@@ -44,6 +44,11 @@ export interface MoveFoldersArgs {
   folderUIDs: string[];
 }
 
+export interface MoveFolderArgs {
+  folderUID: string;
+  destinationUID: string;
+}
+
 export interface ImportInputs {
   name: string;
   type: string;
@@ -141,7 +146,7 @@ export const browseDashboardsAPI = createApi({
     }),
 
     // move an *individual* folder. used in the folder actions menu.
-    moveFolder: builder.mutation<void, { folderUID: string; destinationUID: string }>({
+    moveFolder: builder.mutation<void, MoveFolderArgs>({
       invalidatesTags: ['getFolder'],
       query: ({ folderUID, destinationUID }) => ({
         url: `/folders/${folderUID}/move`,

@@ -29,7 +29,7 @@ export function FolderActionsButton({ folder, repoType, isReadOnlyRepo }: Props)
   const [isOpen, setIsOpen] = useState(false);
   const [showPermissionsDrawer, setShowPermissionsDrawer] = useState(false);
   const [showDeleteProvisionedFolderDrawer, setShowDeleteProvisionedFolderDrawer] = useState(false);
-  const moveFolder = useMoveFolderMutationFacade();
+  const [moveFolder] = useMoveFolderMutationFacade();
 
   const deleteFolder = useDeleteFolderMutationFacade();
 
@@ -39,7 +39,7 @@ export function FolderActionsButton({ folder, repoType, isReadOnlyRepo }: Props)
   const canMoveFolder = canEditFolders && !isProvisionedFolder;
 
   const onMove = async (destinationUID: string) => {
-    await moveFolder(folder.uid, destinationUID);
+    await moveFolder({ folderUID: folder.uid, destinationUID: destinationUID });
     reportInteraction('grafana_manage_dashboards_item_moved', {
       item_counts: {
         folder: 1,
