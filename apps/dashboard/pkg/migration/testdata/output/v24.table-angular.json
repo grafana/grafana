@@ -15,7 +15,7 @@
               "type": "auto"
             },
             "footer": {
-              "reducer": []
+              "reducers": []
             },
             "inspect": false
           },
@@ -95,7 +95,7 @@
               "type": "color-background"
             },
             "footer": {
-              "reducer": []
+              "reducers": []
             },
             "inspect": false
           },
@@ -248,7 +248,7 @@
               "type": "auto"
             },
             "footer": {
-              "reducer": []
+              "reducers": []
             },
             "inspect": false
           },
@@ -328,7 +328,7 @@
               "type": "auto"
             },
             "footer": {
-              "reducer": []
+              "reducers": []
             },
             "inspect": false
           },
@@ -399,7 +399,7 @@
               "type": "auto"
             },
             "footer": {
-              "reducer": []
+              "reducers": []
             },
             "inspect": false
           },
@@ -470,7 +470,7 @@
               "type": "auto"
             },
             "footer": {
-              "reducer": []
+              "reducers": []
             },
             "inspect": false
           },
@@ -540,7 +540,7 @@
               "type": "auto"
             },
             "footer": {
-              "reducer": []
+              "reducers": []
             },
             "inspect": false
           },
@@ -622,7 +622,7 @@
               "type": "auto"
             },
             "footer": {
-              "reducer": []
+              "reducers": []
             },
             "inspect": false
           },
@@ -694,7 +694,7 @@
               "type": "color-background"
             },
             "footer": {
-              "reducer": []
+              "reducers": []
             },
             "inspect": false
           },
@@ -800,7 +800,7 @@
               "type": "auto"
             },
             "footer": {
-              "reducer": []
+              "reducers": []
             },
             "inspect": false
           },
@@ -900,7 +900,7 @@
               "type": "auto"
             },
             "footer": {
-              "reducer": []
+              "reducers": []
             },
             "inspect": false
           },
@@ -1013,7 +1013,7 @@
               "type": "auto"
             },
             "footer": {
-              "reducer": []
+              "reducers": []
             },
             "inspect": false
           },
@@ -1132,7 +1132,7 @@
               "type": "auto"
             },
             "footer": {
-              "reducer": []
+              "reducers": []
             },
             "inspect": false
           },

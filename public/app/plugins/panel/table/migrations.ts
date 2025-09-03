@@ -357,14 +357,12 @@ interface LegacyTableFooterOptions {
   enablePagination?: boolean;
 }
 
-function isLegacyTableFooter(obj: Options['footer'] | LegacyTableFooterOptions): obj is LegacyTableFooterOptions {
-  return !!obj && 'show' in obj;
-}
-
 export const migrateFooterV2 = (panel: PanelModel<Options>) => {
-  const oldFooter: Options['footer'] | LegacyTableFooterOptions = panel.options?.footer;
+  if (panel.options && 'footer' in panel.options) {
+    // we need to cast the footer to the old type to work with it here.
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+    const oldFooter = panel.options.footer as LegacyTableFooterOptions;
 
-  if (isLegacyTableFooter(oldFooter)) {
     if (oldFooter.show) {
       const reducers = oldFooter.reducer;
 
@@ -407,11 +405,9 @@ export const migrateFooterV2 = (panel: PanelModel<Options>) => {
     }
 
     if (oldFooter.enablePagination != null) {
-      panel.options.footer = {
-        enablePagination: oldFooter.enablePagination,
-      };
-    } else {
-      delete panel.options.footer;
+      panel.options.enablePagination = oldFooter.enablePagination;
     }
+
+    delete panel.options.footer;
   }
 };

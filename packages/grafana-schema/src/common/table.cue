@@ -19,11 +19,6 @@ TableSortByFieldState: {
 	desc?:       bool
 } @cuetsy(kind="interface")
 
-// Footer options
-TableFooterOptions: {
-  enablePagination?: bool
-} @cuetsy(kind="interface")
-
 // Auto mode table cell options
 TableAutoCellOptions: {
 	type: TableCellDisplayMode & "auto"
@@ -110,6 +105,11 @@ TableCellTooltipOptions: {
   placement?: TableCellTooltipPlacement
 }
 
+TableFooterOptions: {
+  // footer reducers to apply to this field
+  reducers?: [...string]
+} @cuetsy(kind="interface")
+
 // Field options for each field within a table (e.g 10, "The String", 64.20, etc.)
 // Generally defines alignment, filtering capabilties, display options, etc.
 TableFieldOptions: {
@@ -129,6 +129,6 @@ TableFieldOptions: {
   wrapHeaderText?: bool
   // Selecting or hovering this field will show a tooltip containing the content within the target field
   tooltip?: TableCellTooltipOptions
-  // footer reducers to apply to this field
-  reducers?: [...string]
+  // options for the footer for this field
+  footer?: TableFooterOptions
 } & HideableFieldConfig @cuetsy(kind="interface")

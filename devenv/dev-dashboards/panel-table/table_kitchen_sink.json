@@ -36,9 +36,6 @@
               "type": "auto"
             },
             "filterable": true,
-            "footer": {
-              "reducer": []
-            },
             "inspect": false,
             "wrapText": false
           },
@@ -86,7 +83,7 @@
                 "value": true
               },
               {
-                "id": "custom.footer.reducer",
+                "id": "custom.footer.reducers",
                 "value": ["sum"]
               }
             ]
@@ -163,7 +160,7 @@
                 "value": "dateTimeFromNow"
               },
               {
-                "id": "custom.footer.reducer",
+                "id": "custom.footer.reducers",
                 "value": ["countAll"]
               }
             ]
@@ -322,7 +319,7 @@
                 "value": "left"
               },
               {
-                "id": "custom.footer.reducer",
+                "id": "custom.footer.reducers",
                 "value": ["last"]
               }
             ]
@@ -456,7 +453,7 @@
             },
             "properties": [
               {
-                "id": "custom.footer.reducer",
+                "id": "custom.footer.reducers",
                 "value": ["min", "max"]
               }
             ]
@@ -622,13 +619,7 @@
       "maxDataPoints": 100,
       "options": {
         "cellHeight": "sm",
-        "footer": {
-          "countRows": false,
-          "enablePagination": false,
-          "fields": "",
-          "reducer": ["max"],
-          "show": false
-        },
+        "enablePagination": false,
         "showHeader": true,
         "sortBy": [
           {
@@ -695,9 +686,6 @@
             "align": "auto",
             "cellOptions": {
               "type": "auto"
-            },
-            "footer": {
-              "reducer": []
             },
             "inspect": false,
             "minWidth": 50
@@ -850,12 +838,6 @@
       "id": 2,
       "options": {
         "cellHeight": "sm",
-        "footer": {
-          "countRows": false,
-          "fields": "",
-          "reducer": ["sum"],
-          "show": false
-        },
         "showHeader": true,
         "sortBy": []
       },
@@ -887,9 +869,6 @@
             "align": "auto",
             "cellOptions": {
               "type": "auto"
-            },
-            "footer": {
-              "reducer": []
             },
             "inspect": false,
             "width": 100,
@@ -1016,12 +995,6 @@
       "id": 10,
       "options": {
         "cellHeight": "sm",
-        "footer": {
-          "countRows": false,
-          "fields": "",
-          "reducer": ["sum"],
-          "show": false
-        },
         "showHeader": true,
         "sortBy": []
       },
@@ -1049,9 +1022,6 @@
             "align": "auto",
             "cellOptions": {
               "type": "auto"
-            },
-            "footer": {
-              "reducer": []
             },
             "inspect": false
           },
@@ -1168,12 +1138,6 @@
       "maxDataPoints": 10,
       "options": {
         "cellHeight": "sm",
-        "footer": {
-          "countRows": false,
-          "fields": "",
-          "reducer": ["sum"],
-          "show": false
-        },
         "showHeader": true
       },
       "pluginVersion": "12.2.0",
@@ -1200,9 +1164,6 @@
             "align": "auto",
             "cellOptions": {
               "type": "auto"
-            },
-            "footer": {
-              "reducer": []
             },
             "inspect": false
           },
@@ -1318,12 +1279,6 @@
       "maxDataPoints": 10,
       "options": {
         "cellHeight": "sm",
-        "footer": {
-          "countRows": false,
-          "fields": "",
-          "reducer": ["sum"],
-          "show": false
-        },
         "showHeader": true
       },
       "pluginVersion": "12.2.0",
@@ -1350,9 +1305,6 @@
             "align": "auto",
             "cellOptions": {
               "type": "auto"
-            },
-            "footer": {
-              "reducer": []
             },
             "inspect": false
           },
@@ -1468,12 +1420,6 @@
       "maxDataPoints": 10,
       "options": {
         "cellHeight": "sm",
-        "footer": {
-          "countRows": false,
-          "fields": "",
-          "reducer": ["sum"],
-          "show": false
-        },
         "showHeader": true
       },
       "pluginVersion": "12.2.0",
@@ -1500,9 +1446,6 @@
             "align": "auto",
             "cellOptions": {
               "type": "auto"
-            },
-            "footer": {
-              "reducer": []
             },
             "inspect": false
           },
@@ -1612,12 +1555,6 @@
       "maxDataPoints": 10,
       "options": {
         "cellHeight": "sm",
-        "footer": {
-          "countRows": false,
-          "fields": "",
-          "reducer": ["sum"],
-          "show": false
-        },
         "showHeader": true,
         "sortBy": [
           {
@@ -1650,9 +1587,6 @@
             "align": "auto",
             "cellOptions": {
               "type": "auto"
-            },
-            "footer": {
-              "reducer": []
             },
             "inspect": false
           },
@@ -1802,12 +1736,6 @@
       "maxDataPoints": 10,
       "options": {
         "cellHeight": "sm",
-        "footer": {
-          "countRows": false,
-          "fields": "",
-          "reducer": ["sum"],
-          "show": false
-        },
         "showHeader": true,
         "sortBy": []
       },
@@ -1835,9 +1763,6 @@
             "align": "auto",
             "cellOptions": {
               "type": "auto"
-            },
-            "footer": {
-              "reducer": []
             },
             "inspect": false
           },
@@ -1867,12 +1792,6 @@
       "id": 3,
       "options": {
         "cellHeight": "sm",
-        "footer": {
-          "countRows": false,
-          "fields": "",
-          "reducer": ["sum"],
-          "show": false
-        },
         "showHeader": true
       },
       "pluginVersion": "12.2.0",

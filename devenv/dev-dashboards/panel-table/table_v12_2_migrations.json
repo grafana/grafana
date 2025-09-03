@@ -1175,7 +1175,7 @@
           "countRows": true,
           "enablePagination": false,
           "fields": [],
-          "reducer": ["mean"],
+          "reducer": ["sum"],
           "show": true
         },
         "frameIndex": 0,
@@ -1205,7 +1205,7 @@
           "scenarioId": "csv_content"
         }
       ],
-      "title": "Global footer, average",
+      "title": "Global footer, sum",
       "transformations": [
         {
           "id": "joinByField",

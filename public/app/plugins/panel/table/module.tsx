@@ -213,12 +213,12 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(TablePanel)
         },
       })
       .addCustomEditor({
-        id: 'footer.enablePagination',
-        path: 'footer.enablePagination',
+        id: 'enablePagination',
+        path: 'enablePagination',
         name: t('table.name-enable-pagination', 'Enable pagination'),
         category,
         editor: PaginationEditor,
-        defaultValue: defaultOptions?.footer?.enablePagination,
+        defaultValue: defaultOptions?.enablePagination,
       });
   })
   .setSuggestionsSupplier(new TableSuggestionsSupplier());

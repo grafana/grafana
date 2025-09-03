@@ -34,6 +34,10 @@ interface FooterFieldState extends FieldState {
   lastProcessedRowCount: number;
 }
 
+function isReducer(maybeReducer: string): maybeReducer is ReducerID {
+  return maybeReducer in ReducerID;
+}
+
 const nonMathReducers = new Set<ReducerID>([
   ReducerID.allValues,
   ReducerID.changeCount,
@@ -46,17 +50,17 @@ const nonMathReducers = new Set<ReducerID>([
   ReducerID.lastNotNull,
   ReducerID.uniqueValues,
 ]);
-const isNonMathReducer = (reducer: ReducerID) => nonMathReducers.has(reducer);
+const isNonMathReducer = (reducer: string) => isReducer(reducer) && nonMathReducers.has(reducer);
 
 const noFormattingReducers = new Set<ReducerID>([ReducerID.count, ReducerID.countAll]);
-const shouldReducerSkipFormatting = (reducer: ReducerID) => noFormattingReducers.has(reducer);
+const shouldReducerSkipFormatting = (reducer: string) => isReducer(reducer) && noFormattingReducers.has(reducer);
 
 export const SummaryCell = ({ rows, field, omitCountAll = false }: SummaryCellProps) => {
   const styles = useStyles2(getStyles);
   const displayName = getDisplayName(field);
 
   const reducerResultsEntries = useMemo<Array<[string, ReducerResult | null]>>(() => {
-    const reducers: ReducerID[] = field.config.custom?.footer?.reducers ?? [];
+    const reducers: string[] = field.config.custom?.footer?.reducers ?? [];
 
     if (
       reducers.length === 0 ||
@@ -88,7 +92,7 @@ export const SummaryCell = ({ rows, field, omitCountAll = false }: SummaryCellPr
     }
 
     // Calculate all specified reducers
-    const results: Record<ReducerID, number | null> = reduceField({
+    const results: Record<string, number | null> = reduceField({
       field: {
         ...field,
         values: rows.map((row) => row[displayName]),

@@ -77,7 +77,7 @@ export function TablePanel(props: Props) {
       onColumnResize={(displayName, resizedWidth) => onColumnResize(displayName, resizedWidth, props)}
       onCellFilterAdded={panelContext.onAddAdHocFilter}
       frozenColumns={options.frozenColumns?.left}
-      enablePagination={options.footer?.enablePagination}
+      enablePagination={options.enablePagination}
       cellHeight={options.cellHeight}
       maxRowHeight={options.maxRowHeight}
       timeRange={timeRange}

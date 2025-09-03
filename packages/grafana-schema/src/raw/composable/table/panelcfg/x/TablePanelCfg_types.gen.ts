@@ -18,9 +18,9 @@ export interface Options {
    */
   cellHeight?: ui.TableCellHeight;
   /**
-   * Controls footer options
+   * Enable pagination on the table
    */
-  footer?: ui.TableFooterOptions;
+  enablePagination?: boolean;
   /**
    * Represents the index of the selected frame
    */

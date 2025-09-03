@@ -48,7 +48,7 @@ func TestV24(t *testing.T) {
 										"type": "auto",
 									},
 									"footer": map[string]interface{}{
-										"reducer": []interface{}{},
+										"reducers": []interface{}{},
 									},
 									"inspect": false,
 								},
@@ -159,7 +159,7 @@ func TestV24(t *testing.T) {
 										"type": "color-background",
 									},
 									"footer": map[string]interface{}{
-										"reducer": []interface{}{},
+										"reducers": []interface{}{},
 									},
 									"inspect": false,
 								},
@@ -294,7 +294,7 @@ func TestV24(t *testing.T) {
 										"type": "auto",
 									},
 									"footer": map[string]interface{}{
-										"reducer": []interface{}{},
+										"reducers": []interface{}{},
 									},
 									"inspect": false,
 								},
@@ -374,7 +374,7 @@ func TestV24(t *testing.T) {
 										"type": "auto",
 									},
 									"footer": map[string]interface{}{
-										"reducer": []interface{}{},
+										"reducers": []interface{}{},
 									},
 									"inspect": false,
 								},
@@ -453,7 +453,7 @@ func TestV24(t *testing.T) {
 										"type": "auto",
 									},
 									"footer": map[string]interface{}{
-										"reducer": []interface{}{},
+										"reducers": []interface{}{},
 									},
 									"inspect": false,
 								},
@@ -531,7 +531,7 @@ func TestV24(t *testing.T) {
 										"type": "auto",
 									},
 									"footer": map[string]interface{}{
-										"reducer": []interface{}{},
+										"reducers": []interface{}{},
 									},
 									"inspect": false,
 								},
@@ -620,7 +620,7 @@ func TestV24(t *testing.T) {
 										"type": "auto",
 									},
 									"footer": map[string]interface{}{
-										"reducer": []interface{}{},
+										"reducers": []interface{}{},
 									},
 									"inspect": false,
 								},
@@ -805,7 +805,7 @@ func TestV24(t *testing.T) {
 										"type": "auto",
 									},
 									"footer": map[string]interface{}{
-										"reducer": []interface{}{},
+										"reducers": []interface{}{},
 									},
 									"inspect": false,
 								},

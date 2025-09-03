@@ -760,13 +760,6 @@ export interface TableSortByFieldState {
 }
 
 /**
- * Footer options
- */
-export interface TableFooterOptions {
-  enablePagination?: boolean;
-}
-
-/**
  * Auto mode table cell options
  */
 export interface TableAutoCellOptions {
@@ -983,6 +976,17 @@ export enum TableCellTooltipPlacement {
   Top = 'top',
 }
 
+export interface TableFooterOptions {
+  /**
+   * footer reducers to apply to this field
+   */
+  reducers?: Array<string>;
+}
+
+export const defaultTableFooterOptions: Partial<TableFooterOptions> = {
+  reducers: [],
+};
+
 /**
  * Field options for each field within a table (e.g 10, "The String", 64.20, etc.)
  * Generally defines alignment, filtering capabilties, display options, etc.
@@ -996,15 +1000,15 @@ export interface TableFieldOptions extends HideableFieldConfig {
   displayMode?: TableCellDisplayMode;
   filterable?: boolean;
   /**
+   * options for the footer for this field
+   */
+  footer?: TableFooterOptions;
+  /**
    * Hides any header for a column, useful for columns that show some static content or buttons.
    */
   hideHeader?: boolean;
   inspect: boolean;
   minWidth?: number;
-  /**
-   * footer reducers to apply to this field
-   */
-  reducers?: Array<string>;
   /**
    * Selecting or hovering this field will show a tooltip containing the content within the target field
    */
@@ -1032,7 +1036,6 @@ export interface TableFieldOptions extends HideableFieldConfig {
 export const defaultTableFieldOptions: Partial<TableFieldOptions> = {
   align: 'auto',
   inspect: false,
-  reducers: [],
 };
 
 /**

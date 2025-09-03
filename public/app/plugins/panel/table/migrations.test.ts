@@ -660,7 +660,7 @@ describe('Table Migrations', () => {
 
       migrateFooterV2(panel);
 
-      expect(panel.options.footer.enablePagination).toBe(true);
+      expect(panel.options.enablePagination).toBe(true);
       expect(panel.fieldConfig.defaults.custom.footer).toBeUndefined();
       expect(panel.fieldConfig.overrides).toEqual([]);
     });

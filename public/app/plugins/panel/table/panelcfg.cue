@@ -33,8 +33,8 @@ composableKinds: PanelCfg: {
 					showTypeIcons?: bool | *false
 					// Used to control row sorting
 					sortBy?: [...ui.TableSortByFieldState]
-					// Controls footer options
-					footer?: ui.TableFooterOptions
+					// Enable pagination on the table
+					enablePagination?: bool
 					// Controls the height of the rows
 					cellHeight?: ui.TableCellHeight & (*"sm" | _)
 					// limits the maximum height of a row, if text wrapping or dynamic height is enabled
