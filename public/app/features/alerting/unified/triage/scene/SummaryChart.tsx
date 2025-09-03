@@ -1,6 +1,6 @@
 import { SceneObjectBase, SceneObjectState, VizConfigBuilders } from '@grafana/scenes';
 import { VizPanel, useQueryRunner, useVariableValue, useVariableValues } from '@grafana/scenes-react';
-import { GraphDrawStyle, LineInterpolation, VisibilityMode } from '@grafana/schema';
+import { BarAlignment, GraphDrawStyle, VisibilityMode } from '@grafana/schema';
 import { LegendDisplayMode, StackingMode, TooltipDisplayMode } from '@grafana/ui';
 
 import { overrideToFixedColor } from '../../home/Insights';
@@ -12,12 +12,13 @@ import { METRIC_NAME, getDataQuery, stringifyGroupFilter } from './utils';
  * Viz config for the summary chart - used by the React component
  */
 export const summaryChartVizConfig = VizConfigBuilders.timeseries()
-  .setCustomFieldConfig('drawStyle', GraphDrawStyle.Line)
+  .setCustomFieldConfig('drawStyle', GraphDrawStyle.Bars)
+  .setCustomFieldConfig('barWidthFactor', 1)
+  .setCustomFieldConfig('barAlignment', BarAlignment.Center)
   .setCustomFieldConfig('fillOpacity', 50)
   .setCustomFieldConfig('lineWidth', 0)
   .setCustomFieldConfig('stacking', { mode: StackingMode.None })
   .setCustomFieldConfig('showPoints', VisibilityMode.Never)
-  .setCustomFieldConfig('lineInterpolation', LineInterpolation.StepAfter)
   .setOption('legend', {
     showLegend: false,
     displayMode: LegendDisplayMode.Hidden,

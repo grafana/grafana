@@ -7,9 +7,9 @@ import { SceneDataNode, VizConfigBuilders } from '@grafana/scenes';
 import { VizPanel, useQueryRunner, useTimeRange } from '@grafana/scenes-react';
 import {
   AxisPlacement,
+  BarAlignment,
   GraphDrawStyle,
   LegendDisplayMode,
-  LineInterpolation,
   StackingMode,
   TooltipDisplayMode,
   VisibilityMode,
@@ -22,9 +22,10 @@ import { useWorkbenchContext } from '../WorkbenchContext';
 
 import { DEFAULT_FIELDS, METRIC_NAME, getDataQuery } from './utils';
 
-const barChartConfig = VizConfigBuilders.timeseries()
-  .setCustomFieldConfig('drawStyle', GraphDrawStyle.Line)
-  .setCustomFieldConfig('lineInterpolation', LineInterpolation.StepBefore)
+const chartConfig = VizConfigBuilders.timeseries()
+  .setCustomFieldConfig('drawStyle', GraphDrawStyle.Bars)
+  .setCustomFieldConfig('barWidthFactor', 1)
+  .setCustomFieldConfig('barAlignment', BarAlignment.After)
   .setCustomFieldConfig('showPoints', VisibilityMode.Never)
   .setCustomFieldConfig('fillOpacity', 50)
   .setCustomFieldConfig('lineWidth', 0)
@@ -37,6 +38,7 @@ const barChartConfig = VizConfigBuilders.timeseries()
     displayMode: LegendDisplayMode.Hidden,
   })
   .setMin(0)
+  .setMax(1)
   .setOverrides((builder) =>
     builder
       .matchFieldsWithName('firing')
@@ -45,6 +47,31 @@ const barChartConfig = VizConfigBuilders.timeseries()
       .overrideColor(overrideToFixedColor('pending'))
   )
   .build();
+
+function extractInstancesFromData(series: DataFrame[] | undefined) {
+  if (!series) {
+    return [];
+  }
+
+  // 1. Group series by labels, ignoring alertstate
+  const groups = new Map<string, { labels: Labels; series: DataFrame[] }>();
+  series.forEach((series) => {
+    const valueField = series.fields.find((f) => f.type !== 'time');
+    if (!valueField) {
+      return;
+    }
+
+    const keyLabels = omit(valueField.labels ?? {}, 'alertstate');
+    const key = JSON.stringify(keyLabels);
+
+    if (!groups.has(key)) {
+      groups.set(key, { labels: keyLabels, series: [] });
+    }
+    groups.get(key)!.series.push(series);
+  });
+
+  return Array.from(groups.values());
+}
 
 export function AlertRuleDetails({ ruleUID }: { ruleUID: string }) {
   const { leftColumnWidth } = useWorkbenchContext();
@@ -57,30 +84,7 @@ export function AlertRuleDetails({ ruleUID }: { ruleUID: string }) {
   const queryRunner = useQueryRunner({ queries: [query] });
   const { data } = queryRunner.useState();
 
-  const instances = useMemo(() => {
-    if (!data?.series.length) {
-      return [];
-    }
-
-    // 1. Group series by labels, ignoring alertstate
-    const groups = new Map<string, { labels: Labels; series: DataFrame[] }>();
-    data.series.forEach((series) => {
-      const valueField = series.fields.find((f) => f.type !== 'time');
-      if (!valueField) {
-        return;
-      }
-
-      const keyLabels = omit(valueField.labels ?? {}, 'alertstate');
-      const key = JSON.stringify(keyLabels);
-
-      if (!groups.has(key)) {
-        groups.set(key, { labels: keyLabels, series: [] });
-      }
-      groups.get(key)!.series.push(series);
-    });
-
-    return Array.from(groups.values());
-  }, [data]);
+  const instances = useMemo(() => extractInstancesFromData(data?.series), [data]);
 
   if (!instances.length) {
     return (
@@ -116,7 +120,15 @@ export function AlertRuleDetails({ ruleUID }: { ruleUID: string }) {
             key={JSON.stringify(instance.labels)}
             width={leftColumnWidth}
             title={<AlertLabels labels={labels} commonLabels={commonLabels} />}
-            content={<VizPanel title="" viz={barChartConfig} dataProvider={dataProvider} displayMode="transparent" />}
+            content={
+              <VizPanel
+                title=""
+                hoverHeader={true}
+                viz={chartConfig}
+                dataProvider={dataProvider}
+                displayMode="transparent"
+              />
+            }
           />
         );
       })}

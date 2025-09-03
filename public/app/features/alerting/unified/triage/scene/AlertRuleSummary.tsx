@@ -2,9 +2,9 @@ import { VizConfigBuilders } from '@grafana/scenes';
 import { VizPanel, useQueryRunner } from '@grafana/scenes-react';
 import {
   AxisPlacement,
+  BarAlignment,
   GraphDrawStyle,
   LegendDisplayMode,
-  LineInterpolation,
   StackingMode,
   TooltipDisplayMode,
   VisibilityMode,
@@ -18,8 +18,9 @@ import { METRIC_NAME, getDataQuery } from './utils';
  * Viz config for the alert rule summary chart - used by the React component
  */
 export const alertRuleSummaryVizConfig = VizConfigBuilders.timeseries()
-  .setCustomFieldConfig('drawStyle', GraphDrawStyle.Line)
-  .setCustomFieldConfig('lineInterpolation', LineInterpolation.StepBefore)
+  .setCustomFieldConfig('drawStyle', GraphDrawStyle.Bars)
+  .setCustomFieldConfig('barWidthFactor', 1)
+  .setCustomFieldConfig('barAlignment', BarAlignment.After)
   .setCustomFieldConfig('showPoints', VisibilityMode.Never)
   .setCustomFieldConfig('fillOpacity', 50)
   .setCustomFieldConfig('lineWidth', 0)
