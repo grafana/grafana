@@ -1,52 +1,15 @@
 import { omit } from 'lodash';
 import { useMemo } from 'react';
 
-import { DataFrame, Labels, LoadingState, findCommonLabels } from '@grafana/data';
+import { DataFrame, Labels, findCommonLabels } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
-import { SceneDataNode, VizConfigBuilders } from '@grafana/scenes';
-import { VizPanel, useQueryRunner, useTimeRange } from '@grafana/scenes-react';
-import {
-  AxisPlacement,
-  BarAlignment,
-  GraphDrawStyle,
-  LegendDisplayMode,
-  StackingMode,
-  TooltipDisplayMode,
-  VisibilityMode,
-} from '@grafana/schema';
+import { useQueryRunner, useTimeRange } from '@grafana/scenes-react';
 
-import { AlertLabels } from '../../components/AlertLabels';
-import { overrideToFixedColor } from '../../home/Insights';
 import { GroupRow } from '../GroupRow';
 import { useWorkbenchContext } from '../WorkbenchContext';
 
-import { DEFAULT_FIELDS, METRIC_NAME, getDataQuery } from './utils';
-
-const chartConfig = VizConfigBuilders.timeseries()
-  .setCustomFieldConfig('drawStyle', GraphDrawStyle.Bars)
-  .setCustomFieldConfig('barWidthFactor', 1)
-  .setCustomFieldConfig('barAlignment', BarAlignment.After)
-  .setCustomFieldConfig('showPoints', VisibilityMode.Never)
-  .setCustomFieldConfig('fillOpacity', 60)
-  .setCustomFieldConfig('lineWidth', 0)
-  .setCustomFieldConfig('stacking', { mode: StackingMode.None })
-  .setCustomFieldConfig('axisPlacement', AxisPlacement.Hidden)
-  .setCustomFieldConfig('axisGridShow', false)
-  .setOption('tooltip', { mode: TooltipDisplayMode.Multi })
-  .setOption('legend', {
-    showLegend: false,
-    displayMode: LegendDisplayMode.Hidden,
-  })
-  .setMin(0)
-  .setMax(1)
-  .setOverrides((builder) =>
-    builder
-      .matchFieldsWithName('firing')
-      .overrideColor(overrideToFixedColor('firing'))
-      .matchFieldsWithName('pending')
-      .overrideColor(overrideToFixedColor('pending'))
-  )
-  .build();
+import { InstanceRow } from './InstanceRow';
+import { METRIC_NAME, getDataQuery } from './utils';
 
 function extractInstancesFromData(series: DataFrame[] | undefined) {
   if (!series) {
@@ -81,12 +44,15 @@ export function AlertRuleDetails({ ruleUID }: { ruleUID: string }) {
     `count without (alertname, grafana_alertstate, grafana_folder, grafana_rule_uid) (${METRIC_NAME}{grafana_rule_uid="${ruleUID}"})`,
     { format: 'timeseries', legendFormat: '{{alertstate}}' }
   );
+
   const queryRunner = useQueryRunner({ queries: [query] });
+
+  const isLoading = !queryRunner.isDataReadyToDisplay();
   const { data } = queryRunner.useState();
 
   const instances = useMemo(() => extractInstancesFromData(data?.series), [data]);
 
-  if (!instances.length) {
+  if (!instances.length && !isLoading) {
     return (
       <GroupRow
         width={leftColumnWidth}
@@ -104,34 +70,15 @@ export function AlertRuleDetails({ ruleUID }: { ruleUID: string }) {
 
   return (
     <>
-      {instances.map((instance) => {
-        const dataProvider = new SceneDataNode({
-          data: {
-            series: instance.series,
-            state: LoadingState.Done,
-            timeRange,
-          },
-        });
-        const labels = omit(instance.labels, DEFAULT_FIELDS);
-        console.log(instance.series);
-
-        return (
-          <GroupRow
-            key={JSON.stringify(instance.labels)}
-            width={leftColumnWidth}
-            title={<AlertLabels size="xs" labels={labels} commonLabels={commonLabels} />}
-            content={
-              <VizPanel
-                title=""
-                hoverHeader={true}
-                viz={chartConfig}
-                dataProvider={dataProvider}
-                displayMode="transparent"
-              />
-            }
-          />
-        );
-      })}
+      {instances.map((instance) => (
+        <InstanceRow
+          key={JSON.stringify(instance.labels)}
+          instance={instance}
+          commonLabels={commonLabels}
+          leftColumnWidth={leftColumnWidth}
+          timeRange={timeRange}
+        />
+      ))}
     </>
   );
 }
