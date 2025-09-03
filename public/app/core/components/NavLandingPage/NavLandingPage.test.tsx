@@ -1,11 +1,19 @@
 import { render, screen } from '@testing-library/react';
 import { TestProvider } from 'test/helpers/TestProvider';
 
-import { config } from '@grafana/runtime';
+import { config, setPluginComponentHook } from '@grafana/runtime';
 
 import { NavLandingPage } from './NavLandingPage';
 
 describe('NavLandingPage', () => {
+  beforeEach(() => {
+    // Mock the plugin component hook to prevent the error
+    setPluginComponentHook(() => ({
+      component: () => <div>ObservabilityLandingPage</div>,
+      isLoading: false,
+    }));
+  });
+
   const mockSectionTitle = 'Section title';
   const mockId = 'section';
   const mockSectionUrl = 'mock-section-url';
