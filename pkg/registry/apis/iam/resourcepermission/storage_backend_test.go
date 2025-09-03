@@ -12,7 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
-func TestResourcePermSqlBackend_ReadResource(t *testing.T) {
+func TestIntegration_ResourcePermSqlBackend_ReadResource(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test in short mode")
 	}
