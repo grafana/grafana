@@ -492,6 +492,50 @@ describe('GroupBy transformer', () => {
       expect(result[0].fields).toEqual(expected);
     });
   });
+
+  it.only('should calculate count on a grouped field when selected', async () => {
+    const testSeries = toDataFrame({
+      name: 'A',
+      fields: [
+        { name: 'category', type: FieldType.string, values: ['A', 'A', 'B', 'B'], config: {} },
+        { name: 'values', type: FieldType.number, values: [1, 2, 3, 4], config: {} },
+      ],
+    });
+
+    let cfg = {
+      id: DataTransformerID.groupBy,
+      options: {
+        fields: {
+          category: {
+            operation: GroupByOperationID.groupBy,
+            aggregations: [ReducerID.count],
+          },
+          values: {
+            operation: undefined,
+          },
+        },
+      },
+    };
+
+    await expect(transformDataFrame([cfg], [testSeries])).toEmitValuesWith((received) => {
+      const result = received[0];
+      const expected: Field[] = [
+        {
+          name: 'category',
+          type: FieldType.string,
+          values: ['A', 'B'],
+          config: {},
+        },
+        {
+          name: 'category (count)',
+          type: FieldType.number,
+          values: [2, 2],
+          config: {},
+        },
+      ];
+      expect(result[0].fields).toEqual(expected);
+    });
+  });
 });
 
 describe('shouldCalculateField()', () => {

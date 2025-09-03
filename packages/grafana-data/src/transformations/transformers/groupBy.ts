@@ -147,15 +147,14 @@ export const groupByTransformer: DataTransformerInfo<GroupByTransformerOptions> 
 // exported for test
 export const shouldCalculateField = (field: Field, options: GroupByTransformerOptions): boolean => {
   const fieldName = getFieldDisplayName(field);
-  if (!Array.isArray(options?.fields[fieldName]?.aggregations)) {
+  const { operation, aggregations = [] } = options?.fields[fieldName];
+
+  if (!Array.isArray(aggregations)) {
     return false;
-  } else if (options?.fields[fieldName]?.operation === GroupByOperationID.aggregate) {
-    return options?.fields[fieldName].aggregations.length > 0;
-  } else if (options?.fields[fieldName]?.operation === GroupByOperationID.groupBy) {
-    return (
-      options?.fields[fieldName].aggregations.length === 1 &&
-      options?.fields[fieldName]?.aggregations[0] === ReducerID.count
-    );
+  } else if (operation === GroupByOperationID.aggregate) {
+    return aggregations.length > 0;
+  } else if (operation === GroupByOperationID.groupBy) {
+    return aggregations.length === 1 && aggregations[0] === ReducerID.count;
   } else {
     return false;
   }
