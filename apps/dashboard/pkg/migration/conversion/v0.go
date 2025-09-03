@@ -28,8 +28,9 @@ func Convert_V0_to_V1(in *dashv0.Dashboard, out *dashv1.Dashboard, scope convers
 		},
 	}
 
-	// Hack, generate "request" context with namespace info injected,
-	// that migrate.Migrate will use
+	// the scope passed into this function is used in k8s apimachinery for migrations, but we also need the context
+	// to have what grafana expects in the request context, so that we can retrieve datasources for migrating
+	// some of the old dashboard schemas (these migrations used to be run in the frontend)
 	ctx := request.WithNamespace(context.Background(), in.GetNamespace())
 	nsInfo, err := types.ParseNamespace(in.GetNamespace())
 	if err != nil {
