@@ -1,6 +1,5 @@
 import {
   AdHocFiltersVariable,
-  EmbeddedScene,
   FormatVariable,
   GroupByVariable,
   SceneControlsSpacer,
@@ -17,13 +16,14 @@ import {
   sceneUtils,
 } from '@grafana/scenes';
 
-import { summaryChart } from './SummaryChart';
+import { SumamryChartScene } from './SummaryChart';
 import { WorkbenchSceneObject } from './Workbench';
 import { DEFAULT_FIELDS, DS_UID, METRIC_NAME, defaultTimeRange, getQueryRunner } from './utils';
+import { EmbeddedSceneWithContext } from '@grafana/scenes-react';
 
 export const triageQuery = getTriageQuery();
 
-export const triageScene = new EmbeddedScene({
+export const triageScene = new EmbeddedSceneWithContext({
   $behaviors: [registerAlertsGroupByMacro],
   controls: [
     new VariableValueSelectors({}),
@@ -67,8 +67,9 @@ export const triageScene = new EmbeddedScene({
     children: [
       // this is the summary bar chart we show above the workbench
       new SceneFlexItem({
-        minHeight: 250,
-        body: summaryChart,
+        // minHeight: 250,
+        height: 250,
+        body: new SumamryChartScene({}),
       }),
       // this is the main workbench component
       new WorkbenchSceneObject({}),

@@ -218,6 +218,7 @@ export const getAlertRuleScene = (ruleUID: string) => {
   const headerlessPanel = PanelBuilders.timeseries()
     .setTitle('')
     .setHoverHeader(true)
+    .setDisplayMode('transparent')
     .setCustomFieldConfig('drawStyle', GraphDrawStyle.Line)
     .setCustomFieldConfig('lineInterpolation', LineInterpolation.StepBefore)
     .setCustomFieldConfig('showPoints', VisibilityMode.Never)

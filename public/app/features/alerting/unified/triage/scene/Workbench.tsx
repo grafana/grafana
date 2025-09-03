@@ -5,6 +5,7 @@ import { AlertRuleQueryData, AlertRuleRow, Domain, GenericGroupedRow, TimelineEn
 
 import { getAlertInstanceScene, getAlertRuleScene } from './AlertInstanceScene';
 import { convertTimeRangeToDomain } from './utils';
+import { useTimeRange } from '@grafana/scenes-react';
 
 interface WorkbenchState extends SceneObjectState {
   domain: Domain;
@@ -65,7 +66,9 @@ export class WorkbenchSceneObject extends SceneObjectBase<WorkbenchState> {
 }
 
 export function WorkbenchRenderer({ model }: SceneComponentProps<WorkbenchSceneObject>) {
-  const { rows, domain } = model.useState();
+  const [timeRange] = useTimeRange();
+  const domain = convertTimeRangeToDomain(timeRange);
+  const { rows } = model.useState();
 
   return <Workbench data={rows} domain={domain} />;
 }
