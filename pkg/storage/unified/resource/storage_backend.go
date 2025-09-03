@@ -41,8 +41,8 @@ type KvStorageBackend struct {
 	log           logging.Logger
 	withPruner    bool
 	historyPruner Pruner
-	tracer        trace.Tracer
-	reg           prometheus.Registerer
+	//tracer        trace.Tracer
+	//reg           prometheus.Registerer
 }
 
 var _ StorageBackend = &KvStorageBackend{}
@@ -84,12 +84,7 @@ func (k *KvStorageBackend) pruneEvents(ctx context.Context, key PruningKey) erro
 	keepEvents := make([]DataKey, 0, prunerMaxEvents)
 
 	// iterate over all keys for the resource and delete versions beyond the latest 20
-	for datakey, err := range k.dataStore.Keys(ctx, ListRequestKey{
-		Namespace: key.Namespace,
-		Group:     key.Group,
-		Resource:  key.Resource,
-		Name:      key.Name,
-	}) {
+	for datakey, err := range k.dataStore.Keys(ctx, ListRequestKey(key)) {
 		if err != nil {
 			return err
 		}

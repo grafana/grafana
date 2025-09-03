@@ -961,14 +961,12 @@ func TestKvStorageBackend_PruneEvents(t *testing.T) {
 
 		// Update the resource prunerMaxEvents times. This will create one more event than the pruner limit.
 		previousRV := rv1
-		updateRvs := []int64{}
 		for i := 0; i < prunerMaxEvents; i++ {
 			testObj.Object["spec"].(map[string]any)["value"] = fmt.Sprintf("update-%d", i)
 			writeEvent.Type = resourcepb.WatchEvent_MODIFIED
 			writeEvent.Value = objectToJSONBytes(t, testObj)
 			writeEvent.PreviousRV = previousRV
 			newRv, err := backend.WriteEvent(ctx, writeEvent)
-			updateRvs = append(updateRvs, newRv)
 			require.NoError(t, err)
 			previousRV = newRv
 		}
@@ -1036,14 +1034,12 @@ func TestKvStorageBackend_PruneEvents(t *testing.T) {
 
 		// Update the resource prunerMaxEvents-1 times. This will create same number of events as the pruner limit.
 		previousRV := rv1
-		updateRvs := []int64{}
 		for i := 0; i < prunerMaxEvents-1; i++ {
 			testObj.Object["spec"].(map[string]any)["value"] = fmt.Sprintf("update-%d", i)
 			writeEvent.Type = resourcepb.WatchEvent_MODIFIED
 			writeEvent.Value = objectToJSONBytes(t, testObj)
 			writeEvent.PreviousRV = previousRV
 			newRv, err := backend.WriteEvent(ctx, writeEvent)
-			updateRvs = append(updateRvs, newRv)
 			require.NoError(t, err)
 			previousRV = newRv
 		}
