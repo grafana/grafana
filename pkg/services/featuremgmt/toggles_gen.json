@@ -3524,13 +3524,17 @@
     {
       "metadata": {
         "name": "vizActionsAuth",
-        "resourceVersion": "1754679558247",
-        "creationTimestamp": "2025-08-08T18:59:18Z"
+        "resourceVersion": "1756904995830",
+        "creationTimestamp": "2025-08-08T18:59:18Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-09-03 13:09:55.830412 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Allows authenticated API calls in actions",
-        "stage": "privatePreview",
+        "stage": "preview",
         "codeowner": "@grafana/dataviz-squad",
+        "frontend": true,
         "hideFromAdminPage": true,
         "hideFromDocs": true
       }

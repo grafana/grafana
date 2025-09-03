@@ -1062,8 +1062,9 @@ var (
 		{
 			Name:              "vizActionsAuth",
 			Description:       "Allows authenticated API calls in actions",
-			Stage:             FeatureStagePrivatePreview,
+			Stage:             FeatureStagePublicPreview,
 			Owner:             grafanaDatavizSquad,
+			FrontendOnly:      true,
 			HideFromAdminPage: true,
 			HideFromDocs:      true,
 		},
