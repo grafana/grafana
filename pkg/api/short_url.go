@@ -5,8 +5,6 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/teris-io/shortid"
-
 	"k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -212,13 +210,7 @@ func (sk8s *shortURLK8sHandler) createKubernetesShortURLsHandler(c *contextmodel
 
 	c.Logger.Debug("Creating short URL", "path", cmd.Path)
 	obj := shorturl.LegacyCreateCommandToUnstructured(cmd)
-
-	uid, err := shortid.Generate()
-	if err != nil {
-		c.JsonApiErr(http.StatusInternalServerError, "failed to generate uid", err)
-		return
-	}
-	obj.SetGenerateName(uid)
+	obj.SetGenerateName("u") // becomes a prefix
 
 	out, err := client.Create(c.Req.Context(), &obj, v1.CreateOptions{})
 	if err != nil {
