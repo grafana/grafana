@@ -1,9 +1,15 @@
 import { render, screen } from '@testing-library/react';
+import { useLocation } from 'react-use';
 import { TestProvider } from 'test/helpers/TestProvider';
 
 import { config, setPluginComponentHook } from '@grafana/runtime';
 
 import { NavLandingPage } from './NavLandingPage';
+
+jest.mock('react-use', () => ({
+  ...jest.requireActual('react-use'),
+  useLocation: jest.fn().mockReturnValue({ pathname: '/', trigger: '', search: '' }),
+}));
 
 describe('NavLandingPage', () => {
   beforeEach(() => {
@@ -90,5 +96,11 @@ describe('NavLandingPage', () => {
   it('renders the custom header when supplied', () => {
     setup(true);
     expect(screen.getByRole('heading', { name: 'Custom Header' })).toBeInTheDocument();
+  });
+
+  it('renders the ObservabilityLandingPage when the path is /observability', () => {
+    jest.mocked(useLocation).mockReturnValue({ pathname: '/observability', trigger: '', search: '' });
+    setup();
+    expect(screen.getByText('ObservabilityLandingPage')).toBeInTheDocument();
   });
 });

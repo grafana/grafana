@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import * as React from 'react';
-import { useLocation } from 'react-router-dom-v5-compat';
+import { useLocation } from 'react-use';
 
 import { GrafanaTheme2, NavModelItem } from '@grafana/data';
 import { usePluginComponent } from '@grafana/runtime';
