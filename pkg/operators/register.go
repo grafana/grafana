@@ -21,6 +21,7 @@ import (
 
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository/github"
+	"github.com/grafana/grafana/apps/provisioning/pkg/repository/local"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	deletepkg "github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/delete"
@@ -40,6 +41,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel/trace"
 
+	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	authrt "github.com/grafana/grafana/apps/provisioning/pkg/auth"
 	"github.com/grafana/grafana/apps/provisioning/pkg/controller"
 	client "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned"
@@ -54,13 +56,22 @@ func init() {
 	})
 }
 
+type localConfig struct {
+	homePath          string
+	permittedPrefixes []string
+}
+
 type controllerConfig struct {
+	availableRepositoryTypes map[provisioning.RepositoryType]struct{}
+	localConfig              localConfig
+	repositoryTypes          []string
 	tokenExchangeClient      *authn.TokenExchangeClient
 	restCfg                  *rest.Config
 	client                   *client.Clientset
 	historyExpiration        time.Duration
 	secretsTls               secretdecrypt.TLSConfig
 	secretsGrpcServerAddress string
+	unifiedCfg               unifiedStorageConfig
 }
 
 // directConfigProvider is a simple RestConfigProvider that always returns the same rest.Config
@@ -75,12 +86,6 @@ func NewDirectConfigProvider(cfg *rest.Config) apiserver.RestConfigProvider {
 
 func (r *directConfigProvider) GetRestConfig(ctx context.Context) (*rest.Config, error) {
 	return r.cfg, nil
-}
-
-type unifiedStorageConfig struct {
-	GrpcAddress      string
-	GrpcIndexAddress string
-	ClientConfig     resource.RemoteResourceClientConfig
 }
 
 // unifiedStorageFactory implements resources.ResourceStore
@@ -159,6 +164,12 @@ func (s *unifiedStorageFactory) GetStats(ctx context.Context, in *resourcepb.Res
 	}
 
 	return client.GetStats(ctx, in, opts...)
+}
+
+type unifiedStorageConfig struct {
+	GrpcAddress      string
+	GrpcIndexAddress string
+	ClientConfig     resource.RemoteResourceClientConfig
 }
 
 func runJobController(opts standalone.BuildInfo, c *cli.Context, cfg *setting.Cfg) error {
@@ -314,16 +325,28 @@ func runJobController(opts standalone.BuildInfo, c *cli.Context, cfg *setting.Cf
 	if err != nil {
 		return fmt.Errorf("create decrypt service: %w", err)
 	}
+	decrypter := repository.ProvideDecrypter(decryptSvc)
 
 	// TODO: This depends on the different flavor of Grafana
 	// https://github.com/grafana/git-ui-sync-project/issues/495
-	extras := []repository.Extra{
-		// TODO: should we have local?
-		github.Extra(
-			repository.ProvideDecrypter(decryptSvc),
-			github.ProvideFactory(),
-			nil, // We don't need the WebhookURL for the execution of jobs, only for the repository controller
-		),
+	extras := make([]repository.Extra, 0, len(controllerCfg.availableRepositoryTypes))
+	for t := range controllerCfg.availableRepositoryTypes {
+		switch t {
+		case provisioning.GitHubRepositoryType:
+			extras = append(extras, github.Extra(
+				decrypter,
+				github.ProvideFactory(),
+				nil, // We don't need the WebhookURL for the execution of jobs, only for the repository controller
+			),
+			)
+		case provisioning.LocalRepositoryType:
+			extras = append(extras, local.Extra(
+				controllerCfg.localConfig.homePath,
+				controllerCfg.localConfig.permittedPrefixes,
+			))
+		default:
+			return fmt.Errorf("unsupported repository type: %s", t)
+		}
 	}
 
 	repoFactory, err := repository.ProvideFactory(extras)
@@ -425,6 +448,24 @@ func setupFromConfig(cfg *setting.Cfg) (controllerCfg *controllerConfig, err err
 		return nil, fmt.Errorf("failed to create provisioning client: %w", err)
 	}
 
+	// TODO: This depends on the different flavor of Grafana
+	// https://github.com/grafana/git-ui-sync-project/issues/495
+	repositoryTypes := operatorSec.Key("repository_types").Strings(",")
+	availableRepositoryTypes := make(map[provisioning.RepositoryType]struct{})
+	for _, t := range repositoryTypes {
+		if t != string(provisioning.LocalRepositoryType) && t != string(provisioning.GitHubRepositoryType) {
+			return nil, fmt.Errorf("unsupported repository type: %s", t)
+		}
+
+		availableRepositoryTypes[provisioning.RepositoryType(t)] = struct{}{}
+	}
+
+	// local
+	localCfg := localConfig{
+		homePath:          operatorSec.Key("local_home_path").String(),
+		permittedPrefixes: operatorSec.Key("local_permitted_prefixes").Strings(","),
+	}
+
 	// Decrypt Service
 	secretsSec := cfg.SectionWithEnvOverrides("secrets_manager")
 	secretsTls := secretdecrypt.TLSConfig{
@@ -434,11 +475,28 @@ func setupFromConfig(cfg *setting.Cfg) (controllerCfg *controllerConfig, err err
 		InsecureSkipVerify: secretsSec.Key("grpc_server_tls_skip_verify").MustBool(false),
 	}
 
+	// Unified Storage
+	unifiedStorageSec := cfg.SectionWithEnvOverrides("unified_storage")
+	unifiedCfg := unifiedStorageConfig{
+		GrpcAddress:      unifiedStorageSec.Key("grpc_address").String(),
+		GrpcIndexAddress: unifiedStorageSec.Key("grpc_index_address").String(),
+		ClientConfig: resource.RemoteResourceClientConfig{
+			Token:            token,
+			TokenExchangeURL: tokenExchangeURL,
+			Audiences:        unifiedStorageSec.Key("grpc_client_authentication_audiences").Strings(","),
+			Namespace:        "", // TODO: will this work?
+			AllowInsecure:    unifiedStorageSec.Key("grpc_server_tls_skip_verify").MustBool(false),
+		},
+	}
+
 	return &controllerConfig{
+		availableRepositoryTypes: availableRepositoryTypes,
+		localConfig:              localCfg,
 		tokenExchangeClient:      tokenExchangeClient,
 		restCfg:                  config,
 		client:                   client,
 		secretsTls:               secretsTls,
+		unifiedCfg:               unifiedCfg,
 		secretsGrpcServerAddress: secretsSec.Key("grpc_server_address").String(),
 		historyExpiration:        operatorSec.Key("history_expiration").MustDuration(0),
 	}, nil
