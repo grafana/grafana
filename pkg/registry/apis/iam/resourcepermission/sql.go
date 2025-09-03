@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/grafana/authlib/types"
 	v0alpha1 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -52,7 +53,7 @@ func (s *ResourcePermSqlBackend) getResourcePermissions(ctx context.Context, sql
 	return permissions, nil
 }
 
-func (s *ResourcePermSqlBackend) getResourcePermission(ctx context.Context, sql *legacysql.LegacyDatabaseHelper, name string) (*v0alpha1.ResourcePermission, error) {
+func (s *ResourcePermSqlBackend) getResourcePermission(ctx context.Context, sql *legacysql.LegacyDatabaseHelper, ns types.NamespaceInfo, name string) (*v0alpha1.ResourcePermission, error) {
 	// e.g. dashboard.grafana.app-dashboards-ad5rwqs
 	parts := strings.SplitN(name, "-", 3)
 
@@ -68,7 +69,7 @@ func (s *ResourcePermSqlBackend) getResourcePermission(ctx context.Context, sql 
 
 	resourceQuery := &ListResourcePermissionsQuery{
 		Scope:      mapper.Scope(uid),
-		OrgID:      1,
+		OrgID:      ns.OrgID,
 		ActionSets: mapper.ActionSets(),
 	}
 
@@ -78,7 +79,7 @@ func (s *ResourcePermSqlBackend) getResourcePermission(ctx context.Context, sql 
 	}
 
 	if len(permsByResource) == 0 {
-		return nil, fmt.Errorf("resource permission %q not found", resourceQuery.Scope)
+		return nil, fmt.Errorf("resource permission %q: %w", resourceQuery.Scope, errNotFound)
 	}
 
 	resourcePermission, err := s.toV0ResourcePermissions(permsByResource)

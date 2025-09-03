@@ -18,6 +18,7 @@ var (
 	errUnknownGroupResource = errors.New("unknown group/resource")
 	errNotFound             = errors.New("not found")
 	errInvalidScope         = errors.New("invalid scope")
+	errInvalidNamespace     = errors.New("invalid namespace")
 
 	defaultLevels = []string{"view", "edit", "admin"}
 )

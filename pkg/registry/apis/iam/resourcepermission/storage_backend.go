@@ -87,7 +87,17 @@ func (s *ResourcePermSqlBackend) ReadResource(ctx context.Context, req *resource
 		return rsp
 	}
 
-	resourcePermission, err := s.getResourcePermission(ctx, sql, req.Key.Name)
+	ns, err := types.ParseNamespace(req.Key.Namespace)
+	if err != nil {
+		rsp.Error = resource.AsErrorResult(err)
+		return rsp
+	}
+	if ns.OrgID <= 0 {
+		rsp.Error = resource.AsErrorResult(apierrors.NewBadRequest(errInvalidNamespace.Error()))
+		return rsp
+	}
+
+	resourcePermission, err := s.getResourcePermission(ctx, sql, ns, req.Key.Name)
 	if err != nil {
 		rsp.Error = resource.AsErrorResult(err)
 		return rsp

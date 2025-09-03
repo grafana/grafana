@@ -5,6 +5,10 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/authlib/types"
+	"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
+	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
@@ -113,48 +117,60 @@ func TestResourcePermSqlBackend_getResourcePermission(t *testing.T) {
 	created := time.Date(2025, 9, 2, 0, 0, 0, 0, time.UTC)
 
 	tests := []struct {
-		name  string
-		query *ListResourcePermissionsQuery
-		want  map[groupResourceName][]flatResourcePermission
-		err   error
+		name     string
+		resource string
+		orgID    int64
+		want     v0alpha1.ResourcePermission
+		err      error
 	}{
 		{
-			name: "list fold1 permissions",
-			query: &ListResourcePermissionsQuery{
-				OrgID:      1,
-				Scope:      "folders:uid:fold1",
-				ActionSets: []string{"folders:admin", "folders:edit", "folders:view"},
-			},
-			want: map[groupResourceName][]flatResourcePermission{
-				{Group: "folder.grafana.app", Resource: "folders", Name: "fold1"}: {
-					{
-						ID:               1,
-						Action:           "folders:view",
-						Scope:            "folders:uid:fold1",
-						Created:          created,
-						Updated:          created,
-						RoleName:         "managed:users:1:permissions",
-						SubjectUID:       "user-1",
-						SubjectType:      "user",
-						IsServiceAccount: false,
+			name:     "should return only org-1 permissions for fold1",
+			resource: "folder.grafana.app-folders-fold1",
+			orgID:    1,
+			want: v0alpha1.ResourcePermission{
+				ObjectMeta: metaV1.ObjectMeta{
+					Name:              "folder.grafana.app-folders-fold1",
+					CreationTimestamp: metaV1.Time{Time: created},
+					ResourceVersion:   created.Format(time.RFC3339),
+				},
+				TypeMeta: v0alpha1.ResourcePermissionInfo.TypeMeta(),
+				Spec: v0alpha1.ResourcePermissionSpec{
+					Resource: v0alpha1.ResourcePermissionspecResource{
+						ApiGroup: "folder.grafana.app",
+						Resource: "folders",
+						Name:     "fold1",
+					},
+					Permissions: []v0alpha1.ResourcePermissionspecPermission{
+						{
+							Kind: v0alpha1.ResourcePermissionSpecPermissionKindUser,
+							Name: "user-1",
+							Verb: "view",
+						},
 					},
 				},
 			},
+			err: nil,
+		},
+		{
+			name:     "should return empty for org-2",
+			orgID:    2,
+			resource: "dashboard.grafana.app-dashboards-dash1",
+			err:      errNotFound,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := backend.getResourcePermissions(context.Background(), sql, tt.query)
+			ns := types.NamespaceInfo{
+				OrgID: tt.orgID,
+			}
+			got, err := backend.getResourcePermission(context.Background(), sql, ns, tt.resource)
 			if tt.err != nil {
 				require.Error(t, err)
 				require.ErrorIs(t, err, tt.err)
 				return
 			}
 			require.NoError(t, err)
-			require.Len(t, got, len(tt.want))
-			for grn, flatPermissions := range tt.want {
-				require.ElementsMatch(t, flatPermissions, got[grn])
-			}
+			require.Equal(t, &tt.want, got)
 		})
 	}
 }
