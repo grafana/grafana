@@ -10,6 +10,7 @@ import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScen
 import { getDashboardUrl } from 'app/features/dashboard-scene/utils/getDashboardUrl';
 import { dispatch } from 'app/store/store';
 
+import { ShortURL } from '../../../../apps/shorturl/plugin/src/generated/shorturl/v1alpha1/shorturl_object_gen';
 import { BASE_URL as k8sShortURLBaseAPI } from '../../api/clients/shorturl/v1alpha1/baseAPI';
 import { ShareLinkConfiguration } from '../../features/dashboard-scene/sharing/ShareButton/utils';
 
@@ -19,8 +20,10 @@ function buildHostUrl() {
   return `${window.location.protocol}//${window.location.host}${config.appSubUrl}`;
 }
 
-function buildShortUrl(key?: string) {
-  return `${window.location.protocol}//${window.location.host}${config.appSubUrl}/goto/${key}`;
+export function buildShortUrl(k8sShortUrl: ShortURL) {
+  const key = k8sShortUrl.metadata.name;
+  const orgId = k8sShortUrl.metadata.namespace;
+  return `${window.location.protocol}//${window.location.host}${config.appSubUrl}/goto/${key}?orgId=${orgId}`;
 }
 
 function getRelativeURLPath(url: string) {
@@ -34,12 +37,12 @@ export const createShortLink = memoizeOne(async function (path: string) {
       // TODO: this is not ideal, we should use the RTK API but we can't call a hook from here and
       // this util function is being called from several places, will require a bigger refactor including some code that
       // is deprecated.
-      const k8sShortUrl = await getBackendSrv().post(`${k8sShortURLBaseAPI}/shorturls`, {
+      const k8sShortUrl: ShortURL = await getBackendSrv().post(`${k8sShortURLBaseAPI}/shorturls`, {
         spec: {
           path: getRelativeURLPath(path),
         },
       });
-      return buildShortUrl(k8sShortUrl?.metadata?.name);
+      return buildShortUrl(k8sShortUrl);
     } else {
       // Old short URL API
       const shortLink = await getBackendSrv().post(`/api/short-urls`, {
