@@ -74,7 +74,6 @@ import { InstancesList } from './tabs/Instances';
 import { QueryResults } from './tabs/Query';
 import { Routing } from './tabs/Routing';
 
-// TO DO: Add tab for enrichment
 export enum ActiveTab {
   Query = 'query',
   Instances = 'instances',
