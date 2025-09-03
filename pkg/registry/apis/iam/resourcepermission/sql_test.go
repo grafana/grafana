@@ -157,5 +157,4 @@ func TestResourcePermSqlBackend_getResourcePermission(t *testing.T) {
 			}
 		})
 	}
-
 }

@@ -51,7 +51,7 @@ func (s *ResourcePermSqlBackend) toV0ResourcePermissions(permsByResource map[gro
 		specs := make([]v0alpha1.ResourcePermissionspecPermission, 0, len(perms))
 
 		var (
-			updated        time.Time = time.Now()
+			updated        = time.Now()
 			permissionKind v0alpha1.ResourcePermissionSpecPermissionKind
 		)
 		for i := range perms {
