@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"maps"
-	"net"
 
 	"github.com/grafana/grafana/apps/dashboard/pkg/migration/schemaversion"
 	"github.com/prometheus/client_golang/prometheus"
@@ -442,17 +441,6 @@ func (b *DashboardsAPIBuilder) validateFolderExists(ctx context.Context, folderU
 	_, err := folderClient.Get(ctx, folderUID, orgID, metav1.GetOptions{})
 	// Check if the error is a context deadline exceeded error
 	if err != nil {
-		// dial error only applies in context of a remote folder service
-		var netErr *net.OpError = nil
-		if errors.As(err, &netErr) && netErr.Op == "dial" {
-			return apierrors.NewInternalError(fmt.Errorf("timeout while checking folder existence: %w", err))
-		}
-
-		// deadline exceeded error only applies in context of a remote folder service
-		if errors.Is(err, context.DeadlineExceeded) {
-			return apierrors.NewInternalError(fmt.Errorf("timeout while checking folder existence: %w", err))
-		}
-
 		// historically, we returned a more verbose error with folder name when its not found, below just keeps that behavior
 		if apierrors.IsNotFound(err) {
 			return apierrors.NewNotFound(folders.FolderResourceInfo.GroupResource(), folderUID)
@@ -602,18 +590,6 @@ func (b *DashboardsAPIBuilder) storageForVersion(
 			return err
 		}
 		storage[dashboards.StoragePath()] = store
-
-		// !!!!!!Make writes work!!!!!
-		// gr := dashboards.GroupResource()
-		// dw, err := opts.DualWriteBuilder(gr, nil, store)
-		// if err != nil {
-		// 	return err
-		// }
-
-		// storage[dashboards.StoragePath()] = dashboardStoragePermissionWrapper{
-		// 	dashboardPermissionsSvc: b.dashboardPermissionsSvc,
-		// 	Storage:                 dw,
-		// }
 
 		return nil
 	}
