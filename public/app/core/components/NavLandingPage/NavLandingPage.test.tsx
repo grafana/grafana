@@ -1,30 +1,11 @@
 import { render, screen } from '@testing-library/react';
-import { useLocation } from 'react-use';
 import { TestProvider } from 'test/helpers/TestProvider';
 
-import { config, setPluginComponentHook } from '@grafana/runtime';
+import { config } from '@grafana/runtime';
 
 import { NavLandingPage } from './NavLandingPage';
 
-jest.mock('react-use', () => ({
-  ...jest.requireActual('react-use'),
-  useLocation: jest.fn().mockReturnValue({ pathname: '/', trigger: '', search: '' }),
-}));
-
 describe('NavLandingPage', () => {
-  beforeEach(() => {
-    // Mock the plugin component hook to prevent the error
-    setPluginComponentHook(() => ({
-      component: () => <div>ObservabilityLandingPage</div>,
-      isLoading: false,
-    }));
-  });
-
-  afterEach(() => {
-    jest.clearAllMocks();
-    jest.restoreAllMocks();
-  });
-
   const mockSectionTitle = 'Section title';
   const mockId = 'section';
   const mockSectionUrl = 'mock-section-url';
@@ -101,11 +82,5 @@ describe('NavLandingPage', () => {
   it('renders the custom header when supplied', () => {
     setup(true);
     expect(screen.getByRole('heading', { name: 'Custom Header' })).toBeInTheDocument();
-  });
-
-  it('renders the ObservabilityLandingPage when the path is /observability', () => {
-    jest.mocked(useLocation).mockReturnValue({ pathname: '/observability', trigger: '', search: '' });
-    setup();
-    expect(screen.getByText('ObservabilityLandingPage')).toBeInTheDocument();
   });
 });
