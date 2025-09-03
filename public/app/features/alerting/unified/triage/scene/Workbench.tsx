@@ -1,23 +1,14 @@
-import { uniq, without } from 'lodash';
-
 import { SceneComponentProps, SceneObjectBase, SceneObjectState, sceneGraph, sceneUtils } from '@grafana/scenes';
 
 import { Workbench } from '../Workbench';
-import {
-  AlertRuleQueryData,
-  AlertRuleRow,
-  Domain,
-  Filter,
-  GenericGroupedRow,
-  TimelineEntry,
-  WorkbenchRow,
-} from '../types';
+import { AlertRuleQueryData, AlertRuleRow, Domain, GenericGroupedRow, TimelineEntry, WorkbenchRow } from '../types';
 
 import { getAlertInstanceScene, getAlertRuleScene } from './AlertInstanceScene';
+import { convertTimeRangeToDomain } from './utils';
 
 interface WorkbenchState extends SceneObjectState {
-  groupBy: string[];
-  filterBy: Filter[];
+  domain: Domain;
+  rows: WorkbenchRow[];
 }
 
 export class WorkbenchSceneObject extends SceneObjectBase<WorkbenchState> {
@@ -25,22 +16,37 @@ export class WorkbenchSceneObject extends SceneObjectBase<WorkbenchState> {
 
   constructor(state: Partial<WorkbenchState> = {}) {
     super({
-      groupBy: [],
-      filterBy: [],
+      domain: [new Date(), new Date()],
+      rows: [],
       ...state,
     });
+
+    this.addActivationHandler(() => this.activationHandler());
   }
 
-  public addGroupByKey(key: string) {
-    this.setState({
-      groupBy: uniq([...this.state.groupBy, key]),
-    });
-  }
+  private activationHandler() {
+    this._subs.add(
+      sceneGraph.getData(this).subscribeToState((newState, prevState) => {
+        if (newState !== prevState) {
+          this.setState({
+            rows: convertToWorkbenchRows(newState as unknown as AlertRuleQueryData, this.getGroupByKeys()),
+          });
+        }
+      })
+    );
 
-  public removeGroupByKey(key: string) {
     this.setState({
-      groupBy: without(this.state.groupBy, key),
+      domain: convertTimeRangeToDomain(sceneGraph.getTimeRange(this).state.value),
     });
+    this._subs.add(
+      sceneGraph.getTimeRange(this).subscribeToState((newState, prevState) => {
+        if (newState !== prevState) {
+          this.setState({
+            domain: convertTimeRangeToDomain(newState.value),
+          });
+        }
+      })
+    );
   }
 
   public getGroupByKeys(): string[] {
@@ -59,21 +65,9 @@ export class WorkbenchSceneObject extends SceneObjectBase<WorkbenchState> {
 }
 
 export function WorkbenchRenderer({ model }: SceneComponentProps<WorkbenchSceneObject>) {
-  const $timeRange = sceneGraph.getTimeRange(model).useState();
-  const $data = sceneGraph.getData(model).useState();
+  const { rows, domain } = model.useState();
 
-  const groupByKeys = model.getGroupByKeys();
-  let data: WorkbenchRow[] = [];
-
-  if ($data?.data?.series?.length ?? 0 > 0) {
-    data = convertToWorkbenchRows($data as unknown as AlertRuleQueryData, groupByKeys);
-  }
-
-  // convert timeRange to a domain for the workbench
-  // @TODO why can't the types infer timerange is not undefined?
-  const domain: Domain = [$timeRange.value.from.toDate(), $timeRange.value.to.toDate()];
-
-  return <Workbench data={data} domain={domain} />;
+  return <Workbench data={rows} domain={domain} />;
 }
 
 export function convertToWorkbenchRows(data: AlertRuleQueryData, groupBy: string[] = []): WorkbenchRow[] {

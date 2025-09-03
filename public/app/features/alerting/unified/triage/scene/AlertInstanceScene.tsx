@@ -1,4 +1,4 @@
-import { DataFrame, Field, Labels, PanelData, ThresholdsMode, findCommonLabels } from '@grafana/data';
+import { DataFrame, Field, Labels, PanelData, findCommonLabels } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
 import {
   DataProviderProxy,
@@ -14,20 +14,17 @@ import {
   sceneGraph,
 } from '@grafana/scenes';
 import {
-  AxisColorMode,
   AxisPlacement,
-  BarAlignment,
   GraphDrawStyle,
-  GraphGradientMode,
-  GraphThresholdsStyleMode,
+  LegendDisplayMode,
   LineInterpolation,
-  ScaleDistribution,
   StackingMode,
   TooltipDisplayMode,
   VisibilityMode,
 } from '@grafana/schema';
 
 import { AlertLabels } from '../../components/AlertLabels';
+import { overrideToFixedColor } from '../../home/Insights';
 import { GroupRow } from '../GroupRow';
 import { useWorkbenchContext } from '../WorkbenchContext';
 import { StateChangeChart } from '../stateChangeChart/StateChangeChart';
@@ -169,7 +166,8 @@ export function extractAlertInstances(data: PanelData): AlertInstance[] {
 function AlertInstanceSceneRenderer({ model }: SceneComponentProps<AlertInstanceScene>) {
   const { ruleUID } = model.useState();
   const dataState = sceneGraph.getData(model).useState();
-  const { domain, leftColumnWidth } = useWorkbenchContext();
+
+  const { leftColumnWidth, domain } = useWorkbenchContext();
 
   // Extract unique alert instances from timeseries data
   const alertInstances = dataState.data ? extractAlertInstances(dataState.data) : [];
@@ -216,6 +214,31 @@ export function getAlertInstanceScene(ruleUID: string): AlertInstanceScene {
 }
 
 export const getAlertRuleScene = (ruleUID: string) => {
+  // Build the timeseries panel and hide its header (hover-only)
+  const headerlessPanel = PanelBuilders.timeseries()
+    .setTitle('')
+    .setHoverHeader(true)
+    .setCustomFieldConfig('drawStyle', GraphDrawStyle.Line)
+    .setCustomFieldConfig('lineInterpolation', LineInterpolation.StepBefore)
+    .setCustomFieldConfig('showPoints', VisibilityMode.Never)
+    .setCustomFieldConfig('fillOpacity', 30)
+    .setCustomFieldConfig('stacking', { mode: StackingMode.None })
+    .setCustomFieldConfig('axisPlacement', AxisPlacement.Hidden)
+    .setOption('tooltip', { mode: TooltipDisplayMode.Multi })
+    .setOption('legend', {
+      showLegend: false,
+      displayMode: LegendDisplayMode.Hidden,
+    })
+    .setOverrides((builder) =>
+      builder
+        .matchFieldsWithName('firing')
+        .overrideColor(overrideToFixedColor('firing'))
+        .matchFieldsWithName('pending')
+        .overrideColor(overrideToFixedColor('pending'))
+    )
+    .setNoValue('0')
+    .build();
+
   return new EmbeddedScene({
     $data: new SceneDataTransformer({
       $data: new DataProviderProxy({ source: new SceneObjectRef(sceneGraph.getData(triageScene)) }),
@@ -254,41 +277,8 @@ export const getAlertRuleScene = (ruleUID: string) => {
       direction: 'column',
       children: [
         new SceneFlexItem({
-          minHeight: 200,
-          body: PanelBuilders.timeseries()
-            .setCustomFieldConfig('drawStyle', GraphDrawStyle.Line)
-            .setCustomFieldConfig('lineInterpolation', LineInterpolation.StepBefore)
-            .setCustomFieldConfig('barAlignment', BarAlignment.Center)
-            .setCustomFieldConfig('barWidthFactor', 0.6)
-            .setCustomFieldConfig('lineWidth', 0)
-            .setCustomFieldConfig('fillOpacity', 100)
-            .setCustomFieldConfig('gradientMode', GraphGradientMode.None)
-            .setCustomFieldConfig('spanNulls', false)
-            .setCustomFieldConfig('insertNulls', false)
-            .setCustomFieldConfig('showPoints', VisibilityMode.Auto)
-            .setCustomFieldConfig('showValues', false)
-            .setCustomFieldConfig('pointSize', 5)
-            .setCustomFieldConfig('stacking', { mode: StackingMode.Normal, group: 'A' })
-            .setCustomFieldConfig('axisPlacement', AxisPlacement.Auto)
-            .setCustomFieldConfig('axisLabel', '')
-            .setCustomFieldConfig('axisColorMode', AxisColorMode.Text)
-            .setCustomFieldConfig('axisBorderShow', false)
-            .setCustomFieldConfig('scaleDistribution', { type: ScaleDistribution.Linear })
-            .setCustomFieldConfig('axisCenteredZero', false)
-            .setCustomFieldConfig('hideFrom', { tooltip: false, viz: false, legend: false })
-            .setCustomFieldConfig('thresholdsStyle', { mode: GraphThresholdsStyleMode.Off })
-            .setColor({ mode: 'palette-classic' })
-            .setMappings([])
-            .setThresholds({
-              mode: ThresholdsMode.Absolute,
-              steps: [
-                { color: 'green', value: -Infinity },
-                { color: 'red', value: 80 },
-              ],
-            })
-            .setOption('tooltip', { mode: TooltipDisplayMode.Multi })
-            .setNoValue('0')
-            .build(),
+          minHeight: 60,
+          body: headerlessPanel,
         }),
       ],
     }),

@@ -1,7 +1,10 @@
 import { uniqueId } from 'lodash';
 
+import { TimeRange } from '@grafana/data';
 import { SceneDataQuery, SceneQueryRunner } from '@grafana/scenes';
 import { DataSourceRef } from '@grafana/schema';
+
+import { Domain } from '../types';
 
 export const DS_UID = 'gdev-prometheus';
 export const METRIC_NAME = 'GRAFANA_ALERTS';
@@ -33,3 +36,7 @@ export const defaultTimeRange = {
   from: 'now-4h',
   to: 'now',
 } as const;
+
+export function convertTimeRangeToDomain(timeRange: TimeRange): Domain {
+  return [timeRange.from.toDate(), timeRange.to.toDate()];
+}
