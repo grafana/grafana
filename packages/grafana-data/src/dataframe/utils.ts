@@ -140,13 +140,13 @@ export function alignTimeRangeCompareData(series: DataFrame, diff: number, compa
     }
 
     field.config = {
-      ...field.config,
+      ...(field.config ?? {}),
       color: {
         mode: 'fixed',
         fixedColor: compareColor,
       },
       custom: {
-        ...(field.config.custom ?? {}),
+        ...(field.config?.custom ?? {}),
         timeCompare: {
           diffMs: diff,
           isTimeShiftQuery: true,
