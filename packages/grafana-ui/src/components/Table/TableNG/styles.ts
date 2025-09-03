@@ -7,10 +7,7 @@ import { COLUMN, TABLE } from './constants';
 import { TableCellStyles } from './types';
 import { getJustifyContent, TextAlign } from './utils';
 
-export const getGridStyles = (
-  theme: GrafanaTheme2,
-  { enablePagination, transparent }: { enablePagination?: boolean; transparent?: boolean }
-) => {
+export const getGridStyles = (theme: GrafanaTheme2, enablePagination?: boolean, transparent?: boolean) => {
   const bgColor = transparent ? theme.colors.background.canvas : theme.colors.background.primary;
   // this needs to be pre-calc'd since the theme colors have alpha and the border color becomes
   // unpredictable for background color cells
@@ -52,7 +49,7 @@ export const getGridStyles = (
 
       // add a box shadow on hover and selection for all body cells
       '& > :not(.rdg-summary-row, .rdg-header-row) > .rdg-cell': {
-        '&:hover, &[aria-selected=true]': { boxShadow: theme.shadows.z2 },
+        [getActiveCellSelector()]: { boxShadow: theme.shadows.z2 },
         // selected cells should appear below hovered cells.
         '&:hover': { zIndex: theme.zIndex.tooltip - 7 },
         '&[aria-selected=true]': { zIndex: theme.zIndex.tooltip - 6 },
@@ -91,19 +88,6 @@ export const getGridStyles = (
       color: theme.colors.text.secondary,
       fontSize: theme.typography.h4.fontSize,
     }),
-    cellActions: css({
-      display: 'none',
-      position: 'absolute',
-      top: 0,
-      margin: 'auto',
-      height: '100%',
-      color: theme.colors.text.primary,
-      background: theme.isDark ? 'rgba(0, 0, 0, 0.7)' : 'rgba(255, 255, 255, 0.7)',
-      padding: theme.spacing.x0_5,
-      paddingInlineStart: theme.spacing.x1,
-    }),
-    cellActionsEnd: css({ left: 0 }),
-    cellActionsStart: css({ right: 0 }),
     headerRow: css({
       paddingBlockStart: 0,
       fontWeight: 'normal',
@@ -144,14 +128,16 @@ export const getHeaderCellStyles = (theme: GrafanaTheme2, justifyContent: Proper
     '&:last-child': { borderInlineEnd: 'none' },
   });
 
-export const getDefaultCellStyles: TableCellStyles = (theme, { textAlign, shouldOverflow }) =>
+export const getDefaultCellStyles: TableCellStyles = (theme, { textAlign, shouldOverflow, maxHeight }) =>
   css({
     display: 'flex',
     alignItems: 'center',
     textAlign,
-    justifyContent: getJustifyContent(textAlign),
+    justifyContent: Boolean(maxHeight) ? 'flex-start' : getJustifyContent(textAlign),
+    ...(maxHeight && { overflowY: 'hidden' }),
     ...(shouldOverflow && { minHeight: '100%' }),
-    '&:hover, &[aria-selected=true]': {
+
+    [getActiveCellSelector()]: {
       '.table-cell-actions': { display: 'flex' },
       ...(shouldOverflow && {
         zIndex: theme.zIndex.tooltip - 2,
@@ -159,6 +145,35 @@ export const getDefaultCellStyles: TableCellStyles = (theme, { textAlign, should
         minWidth: 'fit-content',
       }),
     },
+  });
+
+export const getMaxHeightCellStyles: TableCellStyles = (_theme, { textAlign, maxHeight }) =>
+  css({
+    display: 'flex',
+    alignItems: 'center',
+    textAlign,
+    justifyContent: getJustifyContent(textAlign),
+    maxHeight,
+    width: '100%',
+    overflowY: 'hidden',
+    [getActiveCellSelector(true)]: {
+      maxHeight: 'none',
+      minHeight: '100%',
+    },
+  });
+
+export const getCellActionStyles = (theme: GrafanaTheme2, textAlign: TextAlign) =>
+  css({
+    display: 'none',
+    position: 'absolute',
+    top: 0,
+    margin: 'auto',
+    height: '100%',
+    color: theme.colors.text.primary,
+    background: theme.isDark ? 'rgba(0, 0, 0, 0.7)' : 'rgba(255, 255, 255, 0.7)',
+    padding: theme.spacing.x0_5,
+    paddingInlineStart: theme.spacing.x1,
+    [textAlign === 'right' ? 'left' : 'right']: 0,
   });
 
 export const getLinkStyles = (theme: GrafanaTheme2, canBeColorized: boolean) =>
@@ -185,6 +200,8 @@ export const getTooltipStyles = (theme: GrafanaTheme2, textAlign: TextAlign) => 
   tooltipContent: css({
     height: '100%',
     width: '100%',
+    display: 'flex',
+    alignItems: 'center',
   }),
   tooltipWrapper: css({
     background: theme.colors.background.primary,
@@ -208,3 +225,6 @@ export const getTooltipStyles = (theme: GrafanaTheme2, textAlign: TextAlign) => 
     },
   }),
 });
+
+export const getActiveCellSelector = (isNested?: boolean) =>
+  isNested ? '.rdg-cell:hover &, [aria-selected=true] &' : '&:hover, &[aria-selected=true]';

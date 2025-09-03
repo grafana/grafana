@@ -9,18 +9,15 @@ import (
 	"time"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/selection"
-	"k8s.io/apiserver/pkg/endpoints/request"
-	"k8s.io/apiserver/pkg/registry/rest"
 
 	"github.com/grafana/grafana-app-sdk/logging"
+	"github.com/grafana/grafana/apps/provisioning/pkg/apifmt"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	client "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned/typed/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/apifmt"
 )
 
 const (
@@ -34,26 +31,19 @@ const (
 	LabelJobOriginalUID = "provisioning.grafana.app/original-uid"
 )
 
-var (
-	ErrNoJobs = &apierrors.StatusError{
-		ErrStatus: metav1.Status{
-			Status:  metav1.StatusFailure,
-			Reason:  metav1.StatusReasonConflict,
-			Message: "no jobs are available to claim, try again later",
-			Code:    http.StatusNoContent,
-			Details: &metav1.StatusDetails{
-				Group:             provisioning.GROUP,
-				Kind:              provisioning.JobResourceInfo.GetName(),
-				RetryAfterSeconds: 3,
-			},
+var ErrNoJobs = &apierrors.StatusError{
+	ErrStatus: metav1.Status{
+		Status:  metav1.StatusFailure,
+		Reason:  metav1.StatusReasonConflict,
+		Message: "no jobs are available to claim, try again later",
+		Code:    http.StatusNoContent,
+		Details: &metav1.StatusDetails{
+			Group:             provisioning.GROUP,
+			Kind:              provisioning.JobResourceInfo.GetName(),
+			RetryAfterSeconds: 3,
 		},
-	}
-
-	errWouldCreate                         = errors.New("this call would have created a new resource; it is rejected")
-	failCreation   rest.ValidateObjectFunc = func(_ context.Context, _ runtime.Object) error {
-		return errWouldCreate
-	}
-)
+	},
+}
 
 // Queue is a job queue abstraction.
 //
@@ -67,21 +57,14 @@ type Queue interface {
 	Insert(ctx context.Context, namespace string, spec provisioning.JobSpec) (*provisioning.Job, error)
 }
 
-var _ Queue = (*persistentStore)(nil)
+var (
+	_ Queue = (*persistentStore)(nil)
+	_ Store = (*persistentStore)(nil)
+)
 
-type jobStorage interface {
-	rest.Creater
-	rest.Lister
-	rest.Patcher
-	rest.GracefulDeleter
-}
-
-// persistentStore is a job queue abstraction.
-// It calls out to a real storage implementation to store the jobs, and a separate storage for historic jobs that have been completed.
-// When persistentStore claims a job, it will update the status of it. This does a ResourceVersion check to ensure it is atomic; if the job has been claimed by another worker, the claim will fail.
-// When a job is completed, it is moved to the historic job store by first deleting it from the job store and then creating it in the historic job store. We are fine with the job being lost if the historic job store fails to create it.
+// persistentStore is a job queue implementation that uses the API client instead of rest.Storage.
 type persistentStore struct {
-	jobStore jobStorage
+	client client.ProvisioningV0alpha1Interface
 
 	// clock is a function that returns the current time.
 	clock func() time.Time
@@ -91,15 +74,16 @@ type persistentStore struct {
 	expiry time.Duration
 }
 
-func NewJobStore(jobStore jobStorage, expiry time.Duration) (*persistentStore, error) {
+// NewJobStore creates a new job queue implementation using the API client.
+func NewJobStore(provisioningClient client.ProvisioningV0alpha1Interface, expiry time.Duration) (*persistentStore, error) {
 	if expiry <= 0 {
 		expiry = time.Second * 30
 	}
 
 	return &persistentStore{
-		jobStore: jobStore,
-		clock:    time.Now,
-		expiry:   expiry,
+		client: provisioningClient,
+		clock:  time.Now,
+		expiry: expiry,
 	}, nil
 }
 
@@ -115,16 +99,12 @@ func (s *persistentStore) Claim(ctx context.Context) (job *provisioning.Job, rol
 		return nil, nil, apifmt.Errorf("could not create requirement: %w", err)
 	}
 
-	jobsObj, err := s.jobStore.List(ctx, &internalversion.ListOptions{
-		LabelSelector: labels.NewSelector().Add(*requirement),
+	jobs, err := s.client.Jobs("").List(ctx, metav1.ListOptions{
+		LabelSelector: labels.NewSelector().Add(*requirement).String(),
 		Limit:         16,
 	})
 	if err != nil {
 		return nil, nil, apifmt.Errorf("failed to list jobs: %w", err)
-	}
-	jobs, ok := jobsObj.(*provisioning.JobList)
-	if !ok {
-		return nil, nil, apifmt.Errorf("unexpected object type %T", jobsObj)
 	}
 
 	if len(jobs.Items) == 0 {
@@ -137,9 +117,7 @@ func (s *persistentStore) Claim(ctx context.Context) (job *provisioning.Job, rol
 		}
 		job.Labels[LabelJobClaim] = strconv.FormatInt(s.clock().UnixMilli(), 10)
 
-		// We list jobs from all namespaces. So when we want to update a specific job, we also need its namespace in the context.
-		ctx := request.WithNamespace(ctx, job.GetNamespace())
-		// Likewise, we should use the provisioning identity now that we have the namespace we are operating within.
+		// Set up the provisioning identity for this namespace
 		ctx, _, err = identity.WithProvisioningIdentity(ctx, job.GetNamespace())
 		if err != nil {
 			// This should never happen, as it is already a valid namespace from the job existing... but better be safe.
@@ -149,15 +127,8 @@ func (s *persistentStore) Claim(ctx context.Context) (job *provisioning.Job, rol
 		// This relies on the resource version being updated for us.
 		// If the resource version we pass in via the current job is not the same as the one currently in the store, it will fail with Conflict.
 		// This is the desired behavior, as it ensures that claims are atomic.
-		updated, _, err := s.jobStore.Update(ctx,
-			job.GetName(),                       // name
-			rest.DefaultUpdatedObjectInfo(&job), // objInfo
-			failCreation,                        // createValidation
-			nil,                                 // updateValidation
-			false,                               // forceAllowCreate
-			&metav1.UpdateOptions{},             // options
-		)
-		if apierrors.IsConflict(err) || errors.Is(err, errWouldCreate) {
+		updatedJob, err := s.client.Jobs(job.GetNamespace()).Update(ctx, &job, metav1.UpdateOptions{})
+		if apierrors.IsConflict(err) {
 			// On conflict: another worker claimed the job before us.
 			// On would create: the job was completed and deleted before we could claim it.
 			// We'll just move on to the next job.
@@ -165,10 +136,6 @@ func (s *persistentStore) Claim(ctx context.Context) (job *provisioning.Job, rol
 		}
 		if err != nil {
 			return nil, nil, apifmt.Errorf("failed to claim job '%s' in '%s': %w", job.GetName(), job.GetNamespace(), err)
-		}
-		updatedJob, ok := updated.(*provisioning.Job)
-		if !ok {
-			return nil, nil, apifmt.Errorf("unexpected object type %T", updated)
 		}
 
 		return updatedJob.DeepCopy(), func() {
@@ -179,8 +146,8 @@ func (s *persistentStore) Claim(ctx context.Context) (job *provisioning.Job, rol
 			logger := logging.FromContext(ctx).With("namespace", updatedJob.GetNamespace(), "job", updatedJob.GetName())
 
 			timeoutCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
-			refetched, err := s.jobStore.Get(timeoutCtx, updatedJob.GetName(), &metav1.GetOptions{})
-			cancel() // we have no response body to read (the obj already contains all of it), so just cancel immediately
+			refetched, err := s.client.Jobs(updatedJob.GetNamespace()).Get(timeoutCtx, updatedJob.GetName(), metav1.GetOptions{})
+			cancel()
 			if apierrors.IsNotFound(err) {
 				// The job was probably completed already. Nothing to roll back!
 				return
@@ -189,28 +156,16 @@ func (s *persistentStore) Claim(ctx context.Context) (job *provisioning.Job, rol
 				logger.Warn("failed to roll back job claim; letting periodic cleaner deal with it", "error", err)
 				return
 			}
-			refetchedJob, ok := refetched.(*provisioning.Job)
-			if !ok {
-				logger.Warn("failed to roll back job claim: the job we got is not a *provisioning.Job?", "got", refetched)
-				return
-			}
 
 			// Rollback the claim.
-			refetchedJob = refetchedJob.DeepCopy()
+			refetchedJob := refetched.DeepCopy()
 			delete(refetchedJob.Labels, LabelJobClaim)
 			refetchedJob.Status.State = provisioning.JobStatePending
 
 			timeoutCtx, cancel = context.WithTimeout(ctx, 5*time.Second)
-			_, _, err = s.jobStore.Update(timeoutCtx,
-				refetchedJob.GetName(),                      // name
-				rest.DefaultUpdatedObjectInfo(refetchedJob), // objInfo
-				failCreation,            // createValidation
-				nil,                     // updateValidation
-				false,                   // forceAllowCreate
-				&metav1.UpdateOptions{}, // options
-			)
-			cancel() // we have no response body to read (the obj already contains all of it), so just cancel immediately
-			if err != nil && !apierrors.IsConflict(err) && !errors.Is(err, errWouldCreate) {
+			_, err = s.client.Jobs(updatedJob.GetNamespace()).Update(timeoutCtx, refetchedJob, metav1.UpdateOptions{})
+			cancel()
+			if err != nil && !apierrors.IsConflict(err) {
 				logger.Warn("failed to roll back job claim; letting periodic cleaner deal with it", "error", err)
 			} else if err != nil {
 				logger.Debug("failed to roll back job claim; got an OK error", "error", err)
@@ -224,39 +179,32 @@ func (s *persistentStore) Claim(ctx context.Context) (job *provisioning.Job, rol
 
 // Update saves the job back to the store.
 func (s *persistentStore) Update(ctx context.Context, job *provisioning.Job) (*provisioning.Job, error) {
-	obj, _, err := s.jobStore.Update(ctx,
-		job.GetName(),                      // name
-		rest.DefaultUpdatedObjectInfo(job), // objInfo
-		failCreation,                       // createValidation
-		nil,                                // updateValidation
-		false,                              // forceAllowCreate
-		&metav1.UpdateOptions{},            // options
-	)
+	// Set up the provisioning identity for this namespace
+	ctx, _, err := identity.WithProvisioningIdentity(ctx, job.GetNamespace())
 	if err != nil {
-		return nil, apifmt.Errorf("failed to update job '%s' in '%s': %w", job.GetName(), job.GetNamespace(), err)
+		return nil, apifmt.Errorf("failed to get provisioning identity for '%s': %w", job.GetNamespace(), err)
 	}
 
-	updatedJob, ok := obj.(*provisioning.Job)
-	if !ok {
-		return nil, apifmt.Errorf("unexpected object type %T", obj)
+	updatedJob, err := s.client.Jobs(job.GetNamespace()).Update(ctx, job, metav1.UpdateOptions{})
+	if err != nil {
+		return nil, apifmt.Errorf("failed to update job '%s' in '%s': %w", job.GetName(), job.GetNamespace(), err)
 	}
 
 	return updatedJob, nil
 }
 
 // Get retrieves a job by name for conflict resolution.
-func (s *persistentStore) Get(ctx context.Context, name string) (*provisioning.Job, error) {
-	obj, err := s.jobStore.Get(ctx, name, &metav1.GetOptions{})
+func (s *persistentStore) Get(ctx context.Context, namespace, name string) (*provisioning.Job, error) {
+	// Set up provisioning identity to access jobs across all namespaces
+	ctx, _, err := identity.WithProvisioningIdentity(ctx, namespace)
 	if err != nil {
-		if apierrors.IsNotFound(err) {
-			return nil, apifmt.Errorf("job '%s' not found", name)
-		}
-		return nil, apifmt.Errorf("failed to get job '%s': %w", name, err)
+		return nil, apifmt.Errorf("failed to grant provisioning identity for job lookup: %w", err)
 	}
 
-	job, ok := obj.(*provisioning.Job)
-	if !ok {
-		return nil, apifmt.Errorf("unexpected object type %T", obj)
+	// Use Get to directly fetch the job by name
+	job, err := s.client.Jobs(namespace).Get(ctx, name, metav1.GetOptions{})
+	if err != nil {
+		return nil, apifmt.Errorf("failed to get job by name '%s': %w", name, err)
 	}
 
 	return job, nil
@@ -267,12 +215,18 @@ func (s *persistentStore) Get(ctx context.Context, name string) (*provisioning.J
 func (s *persistentStore) Complete(ctx context.Context, job *provisioning.Job) error {
 	logger := logging.FromContext(ctx).With("namespace", job.GetNamespace(), "job", job.GetName())
 
+	// Set up the provisioning identity for this namespace
+	ctx, _, err := identity.WithProvisioningIdentity(ctx, job.GetNamespace())
+	if err != nil {
+		return apifmt.Errorf("failed to get provisioning identity for '%s': %w", job.GetNamespace(), err)
+	}
+
 	// We need to delete the job from the job store and create it in the historic job store.
 	// We are fine with the job being lost if the historic job store fails to create it.
 	//
 	// We will assume that the caller is the claimant. If this is not true, an error is returned.
 	// This is a best-effort operation; if the job is not in the claimed state, we will still attempt to move it to the historic job store.
-	_, _, err := s.jobStore.Delete(ctx, job.GetName(), nil, &metav1.DeleteOptions{})
+	err = s.client.Jobs(job.GetNamespace()).Delete(ctx, job.GetName(), metav1.DeleteOptions{})
 	if err != nil {
 		return apifmt.Errorf("failed to delete job '%s' in '%s': %w", job.GetName(), job.GetNamespace(), err)
 	}
@@ -295,18 +249,19 @@ func (s *persistentStore) RenewLease(ctx context.Context, job *provisioning.Job)
 		return apifmt.Errorf("job '%s' in '%s' is not claimed", job.GetName(), job.GetNamespace())
 	}
 
+	// Set up the provisioning identity for this namespace
+	ctx, _, err := identity.WithProvisioningIdentity(ctx, job.GetNamespace())
+	if err != nil {
+		return apifmt.Errorf("failed to get provisioning identity for '%s': %w", job.GetNamespace(), err)
+	}
+
 	// Fetch the latest version to avoid conflicts
-	latestObj, err := s.jobStore.Get(ctx, job.GetName(), &metav1.GetOptions{})
+	latestJob, err := s.client.Jobs(job.GetNamespace()).Get(ctx, job.GetName(), metav1.GetOptions{})
 	if err != nil {
 		if apierrors.IsNotFound(err) {
 			return apifmt.Errorf("failed to renew lease for job '%s' in '%s': job no longer exists", job.GetName(), job.GetNamespace())
 		}
 		return apifmt.Errorf("failed to fetch job for lease renewal '%s' in '%s': %w", job.GetName(), job.GetNamespace(), err)
-	}
-
-	latestJob, ok := latestObj.(*provisioning.Job)
-	if !ok {
-		return apifmt.Errorf("unexpected object type %T", latestObj)
 	}
 
 	// Verify we still own the lease
@@ -319,18 +274,11 @@ func (s *persistentStore) RenewLease(ctx context.Context, job *provisioning.Job)
 	updatedJob.Labels[LabelJobClaim] = strconv.FormatInt(s.clock().UnixMilli(), 10)
 
 	// Update the job in storage with the latest resource version
-	_, _, err = s.jobStore.Update(ctx,
-		updatedJob.GetName(),                      // name
-		rest.DefaultUpdatedObjectInfo(updatedJob), // objInfo
-		failCreation,                              // createValidation
-		nil,                                       // updateValidation
-		false,                                     // forceAllowCreate
-		&metav1.UpdateOptions{},                   // options
-	)
+	_, err = s.client.Jobs(job.GetNamespace()).Update(ctx, updatedJob, metav1.UpdateOptions{})
 	if apierrors.IsConflict(err) {
 		return apifmt.Errorf("failed to renew lease for job '%s' in '%s': lease conflict", job.GetName(), job.GetNamespace())
 	}
-	if apierrors.IsNotFound(err) || errors.Is(err, errWouldCreate) {
+	if apierrors.IsNotFound(err) {
 		return apifmt.Errorf("failed to renew lease for job '%s' in '%s': job no longer exists", job.GetName(), job.GetNamespace())
 	}
 	if err != nil {
@@ -360,17 +308,13 @@ func (s *persistentStore) Cleanup(ctx context.Context) error {
 	}
 
 	timeoutCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
-	jobsObj, err := s.jobStore.List(timeoutCtx, &internalversion.ListOptions{
-		LabelSelector: labels.NewSelector().Add(*requirement),
+	jobs, err := s.client.Jobs("").List(timeoutCtx, metav1.ListOptions{
+		LabelSelector: labels.NewSelector().Add(*requirement).String(),
 		Limit:         100, // Process in batches
 	})
 	cancel()
 	if err != nil {
 		return apifmt.Errorf("failed to list jobs with expired leases: %w", err)
-	}
-	jobs, ok := jobsObj.(*provisioning.JobList)
-	if !ok {
-		return apifmt.Errorf("unexpected object type %T", jobsObj)
 	}
 
 	// If no jobs found, cleanup is complete
@@ -385,7 +329,6 @@ func (s *persistentStore) Cleanup(ctx context.Context) error {
 		job.Status.Message = "Job failed due to lease expiry - worker may have crashed or lost connection"
 
 		// Set namespace context for the completion
-		ctx := request.WithNamespace(ctx, job.GetNamespace())
 		ctx, _, err = identity.WithProvisioningIdentity(ctx, job.GetNamespace())
 		if err != nil {
 			return apifmt.Errorf("failed to get provisioning identity for '%s': %w", job.GetNamespace(), err)
@@ -409,6 +352,12 @@ func (s *persistentStore) Insert(ctx context.Context, namespace string, spec pro
 		return nil, errors.New("missing repository in job")
 	}
 
+	// Set up the provisioning identity for this namespace
+	ctx, _, err := identity.WithProvisioningIdentity(ctx, namespace)
+	if err != nil {
+		return nil, apifmt.Errorf("failed to get provisioning identity for '%s': %w", namespace, err)
+	}
+
 	job := &provisioning.Job{
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace: namespace,
@@ -421,10 +370,8 @@ func (s *persistentStore) Insert(ctx context.Context, namespace string, spec pro
 	if err := mutateJobAction(job); err != nil {
 		return nil, err
 	}
-	s.generateJobName(job) // Side-effect: updates the job's name.
-
-	ctx = request.WithNamespace(ctx, job.GetNamespace())
-	obj, err := s.jobStore.Create(ctx, job, nil, &metav1.CreateOptions{})
+	generateJobName(job) // Side-effect: updates the job's name.
+	created, err := s.client.Jobs(namespace).Create(ctx, job, metav1.CreateOptions{})
 	if apierrors.IsAlreadyExists(err) {
 		return nil, apifmt.Errorf("job '%s' in '%s' already exists: %w", job.GetName(), job.GetNamespace(), err)
 	}
@@ -432,16 +379,11 @@ func (s *persistentStore) Insert(ctx context.Context, namespace string, spec pro
 		return nil, apifmt.Errorf("failed to create job '%s' in '%s': %w", job.GetName(), job.GetNamespace(), err)
 	}
 
-	created, ok := obj.(*provisioning.Job)
-	if !ok {
-		return nil, apifmt.Errorf("unexpected object type %T", obj)
-	}
-
 	return created, nil
 }
 
 // generateJobName creates and updates the job's name to one that fits it.
-func (s *persistentStore) generateJobName(job *provisioning.Job) {
+func generateJobName(job *provisioning.Job) {
 	switch job.Spec.Action {
 	case provisioning.JobActionMigrate, provisioning.JobActionPull:
 		// Pull and migrate jobs should never run at the same time. Hence, the name encapsulates them both (and the spec differentiates them).

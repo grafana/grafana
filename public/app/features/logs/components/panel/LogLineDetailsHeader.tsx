@@ -154,7 +154,7 @@ export const LogLineDetailsHeader = ({ focusLogLine, log, search, onSearch }: Pr
       <div className={styles.icons}>
         {isAssistantAvailable && (
           <IconButton
-            tooltip={t('logs.log-line-details.open-assistant', 'Explain this log line in Assistant')}
+            tooltip={t('logs.log-line-details.open-assistant', 'Explain log line in Assistant')}
             tooltipPlacement="top"
             size="md"
             name="ai-sparkle"

@@ -28,7 +28,7 @@ import {
   store,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { config, getDataSourceSrv, reportInteraction } from '@grafana/runtime';
+import { config, getDataSourceSrv } from '@grafana/runtime';
 import { PopoverContent } from '@grafana/ui';
 
 import { checkLogsError, checkLogsSampled, downloadLogs as download, DownloadFormat } from '../../utils';
@@ -37,7 +37,8 @@ import { getDisplayedFieldsForLogs } from '../otel/formats';
 import { LogLineTimestampResolution } from './LogLine';
 import { LogLineDetailsMode } from './LogLineDetails';
 import { GetRowContextQueryFn, LogLineMenuCustomItem } from './LogLineMenu';
-import { LogListFontSize } from './LogList';
+import { LogListControlOptions, LogListFontSize } from './LogList';
+import { reportInteractionOnce } from './analytics';
 import { LogListModel } from './processing';
 import { getScrollbarWidth, LOG_LIST_CONTROLS_WIDTH, LOG_LIST_MIN_WIDTH } from './virtualization';
 
@@ -143,14 +144,14 @@ export type LogListState = Pick<
   | 'forceEscape'
   | 'filterLevels'
   | 'pinnedLogs'
-  | 'prettifyJSON'
   | 'showUniqueLabels'
   | 'showTime'
   | 'sortOrder'
   | 'syntaxHighlighting'
   | 'timestampResolution'
-  | 'wrapLogMessage'
 >;
+
+export type LogListOption = keyof LogListState | 'wrapLogMessage' | 'prettifyJSON';
 
 export interface Props {
   app: CoreApp;
@@ -177,7 +178,7 @@ export interface Props {
   onClickFilterOutString?: (value: string, refId?: string) => void;
   onClickShowField?: (key: string) => void;
   onClickHideField?: (key: string) => void;
-  onLogOptionsChange?: (option: keyof LogListState, value: string | boolean | string[]) => void;
+  onLogOptionsChange?: (option: LogListControlOptions, value: string | boolean | string[]) => void;
   onLogLineHover?: (row?: LogRowModel) => void;
   onPermalinkClick?: (row: LogRowModel) => Promise<void>;
   onPinLine?: (row: LogRowModel) => void;
@@ -230,7 +231,9 @@ export const LogListContextProvider = ({
   permalinkedLogId,
   pinLineButtonTooltipTitle,
   pinnedLogs,
-  prettifyJSON,
+  prettifyJSON: prettifyJSONProp = logOptionsStorageKey
+    ? store.getBool(`${logOptionsStorageKey}.prettifyLogMessage`, true)
+    : true,
   setDisplayedFields,
   showControls,
   showTime,
@@ -240,7 +243,7 @@ export const LogListContextProvider = ({
   timestampResolution = logOptionsStorageKey
     ? (store.get(`${logOptionsStorageKey}.timestampResolution`) ?? 'ms')
     : 'ms',
-  wrapLogMessage,
+  wrapLogMessage: wrapLogMessageProp,
 }: Props) => {
   const [logListState, setLogListState] = useState<LogListState>({
     dedupStrategy,
@@ -249,13 +252,11 @@ export const LogListContextProvider = ({
     fontSize,
     forceEscape: logOptionsStorageKey ? store.getBool(`${logOptionsStorageKey}.forceEscape`, false) : false,
     pinnedLogs,
-    prettifyJSON,
     showTime,
     showUniqueLabels,
     sortOrder,
     syntaxHighlighting,
     timestampResolution,
-    wrapLogMessage,
   });
   const [showDetails, setShowDetails] = useState<LogListModel[]>([]);
   const [detailsWidth, setDetailsWidthState] = useState(
@@ -263,6 +264,8 @@ export const LogListContextProvider = ({
   );
   const [detailsMode, setDetailsMode] = useState<LogLineDetailsMode>(detailsModeProp ?? 'sidebar');
   const [isAssistantAvailable, openAssistant] = useAssistant();
+  const [prettifyJSON, setPrettifyJSONState] = useState(prettifyJSONProp);
+  const [wrapLogMessage, setWrapLogMessageState] = useState(wrapLogMessageProp);
 
   useEffect(() => {
     if (noInteractions) {
@@ -409,8 +412,9 @@ export const LogListContextProvider = ({
         store.set(`${logOptionsStorageKey}.fontSize`, fontSize);
       }
       setLogListState((logListState) => ({ ...logListState, fontSize }));
+      onLogOptionsChange?.('fontSize', fontSize);
     },
-    [logOptionsStorageKey]
+    [logOptionsStorageKey, onLogOptionsChange]
   );
 
   const setForceEscape = useCallback(
@@ -466,13 +470,13 @@ export const LogListContextProvider = ({
 
   const setPrettifyJSON = useCallback(
     (prettifyJSON: boolean) => {
-      setLogListState({ ...logListState, prettifyJSON });
-      onLogOptionsChange?.('prettifyJSON', prettifyJSON);
+      setPrettifyJSONState(prettifyJSON);
       if (logOptionsStorageKey) {
         store.set(`${logOptionsStorageKey}.prettifyLogMessage`, prettifyJSON);
       }
+      onLogOptionsChange?.('prettifyJSON', prettifyJSON);
     },
-    [logListState, logOptionsStorageKey, onLogOptionsChange]
+    [logOptionsStorageKey, onLogOptionsChange]
   );
 
   const setSyntaxHighlighting = useCallback(
@@ -499,13 +503,13 @@ export const LogListContextProvider = ({
 
   const setWrapLogMessage = useCallback(
     (wrapLogMessage: boolean) => {
-      setLogListState({ ...logListState, wrapLogMessage });
-      onLogOptionsChange?.('wrapLogMessage', wrapLogMessage);
+      setWrapLogMessageState(wrapLogMessage);
       if (logOptionsStorageKey) {
         store.set(`${logOptionsStorageKey}.wrapLogMessage`, wrapLogMessage);
       }
+      onLogOptionsChange?.('wrapLogMessage', wrapLogMessage);
     },
-    [logListState, logOptionsStorageKey, onLogOptionsChange]
+    [logOptionsStorageKey, onLogOptionsChange]
   );
 
   const downloadLogs = useCallback(
@@ -623,7 +627,7 @@ export const LogListContextProvider = ({
         permalinkedLogId,
         pinLineButtonTooltipTitle,
         pinnedLogs: logListState.pinnedLogs,
-        prettifyJSON: logListState.prettifyJSON,
+        prettifyJSON,
         setDedupStrategy,
         setDetailsMode,
         setDetailsWidth,
@@ -647,7 +651,7 @@ export const LogListContextProvider = ({
         syntaxHighlighting: logListState.syntaxHighlighting,
         timestampResolution: logListState.timestampResolution,
         toggleDetails,
-        wrapLogMessage: logListState.wrapLogMessage,
+        wrapLogMessage,
         isAssistantAvailable,
         openAssistantByLog,
       }}
@@ -713,15 +717,6 @@ export function getDetailsScrollPosition(log: LogListModel) {
 export function removeDetailsScrollPosition(log: LogListModel) {
   detailsScrollMap.delete(log.uid);
 }
-
-const reportInteractionOnce = (interactionName: string, properties?: Record<string, unknown>) => {
-  const key = `logs.log-list-context.events.${interactionName}`;
-  if (sessionStorage.getItem(key)) {
-    return;
-  }
-  sessionStorage.setItem(key, '1');
-  reportInteraction(interactionName, properties);
-};
 
 async function handleOpenAssistant(openAssistant: (props: OpenAssistantProps) => void, log: LogListModel) {
   const datasource = await getDataSourceSrv().get(log.datasourceUid);

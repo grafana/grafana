@@ -42,6 +42,7 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `dashgpt`                              | Enable AI powered features in dashboards                                                                                                                      | Yes                |
 | `panelMonitoring`                      | Enables panel monitoring through logs and measurements                                                                                                        | Yes                |
 | `formatString`                         | Enable format string transformer                                                                                                                              | Yes                |
+| `kubernetesDashboards`                 | Use the kubernetes API in the frontend for dashboards                                                                                                         | Yes                |
 | `addFieldFromCalculationStatFunctions` | Add cumulative and window functions to the add field from calculation transformation                                                                          | Yes                |
 | `annotationPermissionUpdate`           | Change the way annotation permissions work by scoping them to folders and dashboards.                                                                         | Yes                |
 | `dashboardSceneForViewers`             | Enables dashboard rendering using Scenes for viewer roles                                                                                                     | Yes                |
@@ -98,13 +99,13 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `canvasPanelPanZoom`              | Allow pan and zoom in canvas panel                                                                     |
 | `regressionTransformation`        | Enables regression analysis transformation                                                             |
 | `alertingSaveStateCompressed`     | Enables the compressed protobuf-based alert state storage                                              |
-| `tableNextGen`                    | Allows access to the new react-data-grid based table component.                                        |
 | `enableSCIM`                      | Enables SCIM support for user and group management                                                     |
 | `elasticsearchCrossClusterSearch` | Enables cross cluster search in the Elasticsearch datasource                                           |
 | `alertRuleRestore`                | Enables the alert rule restore feature                                                                 |
 | `azureMonitorLogsBuilderEditor`   | Enables the logs builder mode for the Azure Monitor data source                                        |
 | `localeFormatPreference`          | Specifies the locale so the correct format for numbers and dates can be shown                          |
 | `logsPanelControls`               | Enables a control component for the logs panel in Explore                                              |
+| `azureResourcePickerUpdates`      | Enables the updated Azure Monitor resource picker                                                      |
 
 ## Development feature toggles
 

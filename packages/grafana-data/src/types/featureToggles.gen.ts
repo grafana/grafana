@@ -197,10 +197,6 @@ export interface FeatureToggles {
   */
   provisioning?: boolean;
   /**
-  * Experimental feature to use the secrets service for provisioning instead of the legacy secrets
-  */
-  provisioningSecretsService?: boolean;
-  /**
   * Start an additional https handler and write kubectl options
   */
   grafanaAPIServerEnsureKubectlAccess?: boolean;
@@ -274,6 +270,7 @@ export interface FeatureToggles {
   kubernetesLibraryPanels?: boolean;
   /**
   * Use the kubernetes API in the frontend for dashboards
+  * @default true
   */
   kubernetesDashboards?: boolean;
   /**
@@ -324,10 +321,6 @@ export interface FeatureToggles {
   * If enabled, the caching backend gradually serializes query responses for the cache, comparing against the configured `[caching]max_value_mb` value as it goes. This can can help prevent Grafana from running out of memory while attempting to cache very large query responses.
   */
   cachingOptimizeSerializationMemoryUsage?: boolean;
-  /**
-  * Enables search for metric names in Code Mode, to improve performance when working with an enormous number of metric names
-  */
-  prometheusCodeModeMetricNamesSearch?: boolean;
   /**
   * Add cumulative and window functions to the add field from calculation transformation
   * @default true
@@ -438,6 +431,10 @@ export interface FeatureToggles {
   */
   secretsManagementAppPlatform?: boolean;
   /**
+  * Enable the secrets management app platform UI
+  */
+  secretsManagementAppPlatformUI?: boolean;
+  /**
   * Writes the state periodically to the database, asynchronous to rule evaluation
   */
   alertingSaveStatePeriodic?: boolean;
@@ -498,10 +495,6 @@ export interface FeatureToggles {
   */
   kubernetesAggregatorCapTokenAuth?: boolean;
   /**
-  * Enable new expression parser
-  */
-  expressionParser?: boolean;
-  /**
   * Enable groupBy variable support in scenes dashboards
   */
   groupByVariable?: boolean;
@@ -531,9 +524,13 @@ export interface FeatureToggles {
   */
   grafanaManagedRecordingRules?: boolean;
   /**
-  * Enables Query Library feature in Explore
+  * Renamed feature toggle, enables Saved queries feature
   */
   queryLibrary?: boolean;
+  /**
+  * Enables Saved Queries feature
+  */
+  savedQueries?: boolean;
   /**
   * Sets the logs table as default visualisation in logs explore
   */
@@ -619,10 +616,6 @@ export interface FeatureToggles {
   * @default true
   */
   newFiltersUI?: boolean;
-  /**
-  * Allows access to the new react-data-grid based table component.
-  */
-  tableNextGen?: boolean;
   /**
   * Uses Prometheus rules as the primary source of truth for ruler-enabled data sources
   */
@@ -759,6 +752,11 @@ export interface FeatureToggles {
   * @default false
   */
   alertingAIGenTemplates?: boolean;
+  /**
+  * Enable enrichment per rule in the alerting UI.
+  * @default false
+  */
+  alertingEnrichmentPerRule?: boolean;
   /**
   * Enable AI-analyze central state history.
   * @default false
@@ -913,10 +911,6 @@ export interface FeatureToggles {
   * Enables the unified storage grpc connection pool
   */
   unifiedStorageGrpcConnectionPool?: boolean;
-  /**
-  * Enables the extension sidebar
-  */
-  extensionSidebar?: boolean;
   /**
   * Enables UI functionality to permanently delete alert rules
   * @default true
@@ -1083,9 +1077,13 @@ export interface FeatureToggles {
   dashboardLevelTimeMacros?: boolean;
   /**
   * Starts Grafana in remote secondary mode pulling the latest state from the remote Alertmanager to avoid duplicate notifications.
-  * @default false
   */
   alertmanagerRemoteSecondaryWithRemoteState?: boolean;
+  /**
+  * Enables sharing a list of APIs with a list of plugins
+  * @default false
+  */
+  restrictedPluginApis?: boolean;
   /**
   * Enable adhoc filter buttons in visualization tooltips
   */
@@ -1113,4 +1111,19 @@ export interface FeatureToggles {
   * @default false
   */
   teamFolders?: boolean;
+  /**
+  * Enables the alerting triage feature
+  * @default false
+  */
+  alertingTriage?: boolean;
+  /**
+  * Enables the Graphite data source full backend mode
+  * @default false
+  */
+  graphiteBackendMode?: boolean;
+  /**
+  * Enables the updated Azure Monitor resource picker
+  * @default false
+  */
+  azureResourcePickerUpdates?: boolean;
 }

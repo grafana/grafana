@@ -1,6 +1,7 @@
 import { t } from '@grafana/i18n';
 import { Badge, Stack } from '@grafana/ui';
 import { useGetResourceRepositoryView } from 'app/features/provisioning/hooks/useGetResourceRepositoryView';
+import { useIsProvisionedInstance } from 'app/features/provisioning/hooks/useIsProvisionedInstance';
 import { getReadOnlyTooltipText } from 'app/features/provisioning/utils/repository';
 import { NestedFolderDTO } from 'app/features/search/service/types';
 import { FolderDTO, FolderListItemDTO } from 'app/types/folders';
@@ -14,7 +15,10 @@ export function FolderRepo({ folder }: Props) {
   // folder is not present
   // folder have parentUID
   // folder is not managed
-  const skipRender = !folder || ('parentUID' in folder && folder.parentUID) || !folder.managedBy;
+  // if whole instance is provisioned
+  const isProvisionedInstance = useIsProvisionedInstance();
+  const skipRender =
+    !folder || ('parentUID' in folder && folder.parentUID) || !folder.managedBy || isProvisionedInstance;
 
   const { isReadOnlyRepo, repoType } = useGetResourceRepositoryView({
     folderName: skipRender ? undefined : folder?.uid,

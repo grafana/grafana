@@ -1,9 +1,10 @@
 import { clsx } from 'clsx';
+import { memo, MemoExoticComponent } from 'react';
 
 import { Field, FieldType, GrafanaTheme2, isDataFrame, isTimeSeriesFrame } from '@grafana/data';
 
 import { TableCellDisplayMode, TableCellOptions, TableCustomCellOptions } from '../../types';
-import { TableCellRenderer, TableCellStyleOptions, TableCellStyles } from '../types';
+import { TableCellRenderer, TableCellRendererProps, TableCellStyleOptions, TableCellStyles } from '../types';
 import { getCellOptions } from '../utils';
 
 import { ActionsCell, getStyles as getActionsCellStyles } from './ActionsCell';
@@ -16,49 +17,10 @@ import { MarkdownCell, getStyles as getMarkdownCellStyles } from './MarkdownCell
 import { PillCell, getStyles as getPillStyles } from './PillCell';
 import { SparklineCell, getStyles as getSparklineCellStyles } from './SparklineCell';
 
-const GAUGE_RENDERER: TableCellRenderer = (props) => (
-  <BarGaugeCell
-    field={props.field}
-    value={props.value}
-    theme={props.theme}
-    height={props.height}
-    width={props.width}
-    rowIdx={props.rowIdx}
-  />
-);
-
-const AUTO_RENDERER: TableCellRenderer = (props) => (
+export const AutoCellRenderer = memo((props: TableCellRendererProps) => (
   <AutoCell value={props.value} field={props.field} rowIdx={props.rowIdx} />
-);
-
-const SPARKLINE_RENDERER: TableCellRenderer = (props) => (
-  <SparklineCell
-    value={props.value}
-    field={props.field}
-    timeRange={props.timeRange}
-    rowIdx={props.rowIdx}
-    theme={props.theme}
-    width={props.width}
-  />
-);
-
-const GEO_RENDERER: TableCellRenderer = (props) => <GeoCell value={props.value} height={props.height} />;
-
-const IMAGE_RENDERER: TableCellRenderer = (props) => (
-  <ImageCell cellOptions={props.cellOptions} field={props.field} value={props.value} rowIdx={props.rowIdx} />
-);
-
-const DATA_LINKS_RENDERER: TableCellRenderer = (props) => <DataLinksCell field={props.field} rowIdx={props.rowIdx} />;
-
-const ACTIONS_RENDERER: TableCellRenderer = ({ field, rowIdx, getActions = () => [] }) => (
-  <ActionsCell field={field} rowIdx={rowIdx} getActions={getActions} />
-);
-
-const MARKDOWN_RENDERER: TableCellRenderer = (props) => (
-  <MarkdownCell field={props.field} rowIdx={props.rowIdx} disableSanitizeHtml={props.disableSanitizeHtml} />
-);
-
-const PILL_RENDERER: TableCellRenderer = (props) => <PillCell {...props} />;
+));
+AutoCellRenderer.displayName = 'AutoCellRenderer';
 
 function isCustomCellOptions(options: TableCellOptions): options is TableCustomCellOptions {
   return options.type === TableCellDisplayMode.Custom;
@@ -71,72 +33,114 @@ function mixinAutoCellStyles(fn: TableCellStyles): TableCellStyles {
   };
 }
 
-const CUSTOM_RENDERER: TableCellRenderer = (props) => {
-  if (!isCustomCellOptions(props.cellOptions) || !props.cellOptions.cellComponent) {
-    return null; // nonsensical case, but better to typeguard it than throw.
-  }
-  const CustomCellComponent = props.cellOptions.cellComponent;
-  return <CustomCellComponent field={props.field} rowIndex={props.rowIdx} frame={props.frame} value={props.value} />;
-};
+interface CellRegistryEntry {
+  renderer: MemoExoticComponent<TableCellRenderer>;
+  getStyles?: TableCellStyles;
+  testField?: (field: Field) => boolean;
+}
 
-const CELL_RENDERERS: Record<TableCellOptions['type'], { renderer: TableCellRenderer; getStyles?: TableCellStyles }> = {
-  [TableCellDisplayMode.Actions]: {
-    renderer: ACTIONS_RENDERER,
-    getStyles: getActionsCellStyles,
-  },
+const CELL_REGISTRY: Record<TableCellOptions['type'], CellRegistryEntry> = {
   [TableCellDisplayMode.Auto]: {
-    renderer: AUTO_RENDERER,
+    renderer: AutoCellRenderer,
     getStyles: getAutoCellStyles,
   },
   [TableCellDisplayMode.ColorBackground]: {
-    renderer: AUTO_RENDERER,
+    renderer: AutoCellRenderer,
     getStyles: getAutoCellStyles,
   },
   [TableCellDisplayMode.ColorText]: {
-    renderer: AUTO_RENDERER,
+    renderer: AutoCellRenderer,
     getStyles: getAutoCellStyles,
   },
-  [TableCellDisplayMode.Custom]: {
-    renderer: CUSTOM_RENDERER,
+  [TableCellDisplayMode.JSONView]: {
+    renderer: AutoCellRenderer,
+    getStyles: mixinAutoCellStyles(getJsonCellStyles),
+  },
+  [TableCellDisplayMode.Actions]: {
+    // eslint-disable-next-line react/display-name
+    renderer: memo((props: TableCellRendererProps) => (
+      <ActionsCell field={props.field} rowIdx={props.rowIdx} getActions={props.getActions ?? (() => [])} />
+    )),
+    getStyles: getActionsCellStyles,
   },
   [TableCellDisplayMode.DataLinks]: {
-    renderer: DATA_LINKS_RENDERER,
+    // eslint-disable-next-line react/display-name
+    renderer: memo((props: TableCellRendererProps) => <DataLinksCell field={props.field} rowIdx={props.rowIdx} />),
     getStyles: getDataLinksStyles,
   },
   [TableCellDisplayMode.Gauge]: {
-    renderer: GAUGE_RENDERER,
+    // eslint-disable-next-line react/display-name
+    renderer: memo((props: TableCellRendererProps) => (
+      <BarGaugeCell
+        field={props.field}
+        value={props.value}
+        theme={props.theme}
+        height={props.height}
+        width={props.width}
+        rowIdx={props.rowIdx}
+      />
+    )),
+  },
+  [TableCellDisplayMode.Sparkline]: {
+    // eslint-disable-next-line react/display-name
+    renderer: memo((props: TableCellRendererProps) => (
+      <SparklineCell
+        value={props.value}
+        field={props.field}
+        timeRange={props.timeRange}
+        rowIdx={props.rowIdx}
+        theme={props.theme}
+        width={props.width}
+      />
+    )),
+    getStyles: getSparklineCellStyles,
   },
   [TableCellDisplayMode.Geo]: {
-    renderer: GEO_RENDERER,
+    // eslint-disable-next-line react/display-name
+    renderer: memo((props: TableCellRendererProps) => <GeoCell value={props.value} height={props.height} />),
     getStyles: getGeoCellStyles,
   },
   [TableCellDisplayMode.Image]: {
-    renderer: IMAGE_RENDERER,
+    // eslint-disable-next-line react/display-name
+    renderer: memo((props: TableCellRendererProps) => (
+      <ImageCell cellOptions={props.cellOptions} field={props.field} value={props.value} rowIdx={props.rowIdx} />
+    )),
     getStyles: getImageStyles,
   },
-  [TableCellDisplayMode.JSONView]: {
-    renderer: AUTO_RENDERER,
-    getStyles: mixinAutoCellStyles(getJsonCellStyles),
-  },
   [TableCellDisplayMode.Pill]: {
-    renderer: PILL_RENDERER,
+    // eslint-disable-next-line react/display-name
+    renderer: memo((props: TableCellRendererProps) => (
+      <PillCell
+        rowIdx={props.rowIdx}
+        field={props.field}
+        theme={props.theme}
+        getTextColorForBackground={props.getTextColorForBackground}
+      />
+    )),
     getStyles: getPillStyles,
-  },
-  [TableCellDisplayMode.Sparkline]: {
-    renderer: SPARKLINE_RENDERER,
-    getStyles: getSparklineCellStyles,
+    testField: (field: Field) => field.type === FieldType.string,
   },
   [TableCellDisplayMode.Markdown]: {
-    renderer: MARKDOWN_RENDERER,
+    // eslint-disable-next-line react/display-name
+    renderer: memo((props: TableCellRendererProps) => (
+      <MarkdownCell field={props.field} rowIdx={props.rowIdx} disableSanitizeHtml={props.disableSanitizeHtml} />
+    )),
     getStyles: getMarkdownCellStyles,
+    testField: (field: Field) => field.type === FieldType.string,
+  },
+  [TableCellDisplayMode.Custom]: {
+    // eslint-disable-next-line react/display-name
+    renderer: memo((props: TableCellRendererProps) => {
+      if (!isCustomCellOptions(props.cellOptions) || !props.cellOptions.cellComponent) {
+        return null; // nonsensical case, but better to typeguard it than throw.
+      }
+      const CustomCellComponent = props.cellOptions.cellComponent;
+      return (
+        <CustomCellComponent field={props.field} rowIndex={props.rowIdx} frame={props.frame} value={props.value} />
+      );
+    }),
   },
 };
-
-// TODO: come up with a more elegant way to handle this.
-const STRING_ONLY_RENDERERS = new Set<TableCellOptions['type']>([
-  TableCellDisplayMode.Markdown,
-  TableCellDisplayMode.Pill,
-]);
 
 /** @internal */
 export function getCellRenderer(
@@ -145,15 +149,16 @@ export function getCellRenderer(
 ): TableCellRenderer {
   const cellType = cellOptions?.type ?? TableCellDisplayMode.Auto;
   if (cellType === TableCellDisplayMode.Auto) {
-    return CELL_RENDERERS[getAutoRendererDisplayMode(field)].renderer;
+    return CELL_REGISTRY[getAutoRendererDisplayMode(field)].renderer;
   }
 
-  if (STRING_ONLY_RENDERERS.has(cellType) && field.type !== FieldType.string) {
-    return AUTO_RENDERER;
+  // if the field fails the test for a specific renderer, fallback to Auto
+  if (CELL_REGISTRY[cellType]?.testField && CELL_REGISTRY[cellType].testField(field) !== true) {
+    return AutoCellRenderer;
   }
 
   // cautious fallback to Auto renderer in case some garbage cell type has been provided.
-  return CELL_RENDERERS[cellType]?.renderer ?? AUTO_RENDERER;
+  return CELL_REGISTRY[cellType]?.renderer ?? AutoCellRenderer;
 }
 
 /** @internal */
@@ -166,7 +171,7 @@ export function getCellSpecificStyles(
   if (cellType === TableCellDisplayMode.Auto) {
     return getAutoRendererStyles(theme, options, field);
   }
-  return CELL_RENDERERS[cellType]?.getStyles?.(theme, options);
+  return CELL_REGISTRY[cellType]?.getStyles?.(theme, options);
 }
 
 /** @internal */
@@ -177,7 +182,7 @@ export function getAutoRendererStyles(
 ): string | undefined {
   const impliedDisplayMode = getAutoRendererDisplayMode(field);
   if (impliedDisplayMode !== TableCellDisplayMode.Auto) {
-    return CELL_RENDERERS[impliedDisplayMode]?.getStyles?.(theme, options);
+    return CELL_REGISTRY[impliedDisplayMode]?.getStyles?.(theme, options);
   }
   return getAutoCellStyles(theme, options);
 }

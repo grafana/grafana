@@ -15,10 +15,22 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 )
 
+type JobQueueGetter interface {
+	GetJobQueue() jobs.Queue
+}
+
 type jobsConnector struct {
 	repoGetter RepoGetter
-	jobs       jobs.Queue
-	historic   jobs.History
+	jobs       JobQueueGetter
+	historic   jobs.HistoryReader
+}
+
+func NewJobsConnector(repoGetter RepoGetter, jobs JobQueueGetter, historic jobs.HistoryReader) *jobsConnector {
+	return &jobsConnector{
+		repoGetter: repoGetter,
+		jobs:       jobs,
+		historic:   historic,
+	}
 }
 
 func (*jobsConnector) New() runtime.Object {
@@ -49,17 +61,17 @@ func (c *jobsConnector) Connect(
 	opts runtime.Object,
 	responder rest.Responder,
 ) (http.Handler, error) {
-	repo, err := c.repoGetter.GetHealthyRepository(ctx, name)
-	if err != nil {
-		return nil, err
-	}
-	cfg := repo.Config()
-
 	return WithTimeout(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		ctx = r.Context()
 		prefix := fmt.Sprintf("/%s/jobs/", name)
 		idx := strings.Index(r.URL.Path, prefix)
 		if r.Method == http.MethodGet {
+			// GET operations: allow even for unhealthy repositories
+			repo, err := c.repoGetter.GetRepository(ctx, name)
+			if err != nil {
+				responder.Error(err)
+				return
+			}
+			cfg := repo.Config()
 			if idx > 0 {
 				jobUID := r.URL.Path[idx+len(prefix):]
 				if !ValidUUID(jobUID) {
@@ -82,6 +94,15 @@ func (c *jobsConnector) Connect(
 			responder.Object(http.StatusOK, recent)
 			return
 		}
+
+		// POST operations: require healthy repository
+		repo, err := c.repoGetter.GetHealthyRepository(ctx, name)
+		if err != nil {
+			responder.Error(err)
+			return
+		}
+		cfg := repo.Config()
+
 		if idx > 0 {
 			responder.Error(apierrors.NewBadRequest("can not post to a job UID"))
 			return
@@ -94,7 +115,7 @@ func (c *jobsConnector) Connect(
 		}
 		spec.Repository = name
 
-		job, err := c.jobs.Insert(ctx, cfg.Namespace, spec)
+		job, err := c.jobs.GetJobQueue().Insert(ctx, cfg.Namespace, spec)
 		if err != nil {
 			responder.Error(err)
 			return

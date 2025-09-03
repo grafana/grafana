@@ -7,6 +7,7 @@ package server
 import (
 	"github.com/google/wire"
 
+	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/pkg/configprovider"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -69,7 +70,9 @@ import (
 
 var provisioningExtras = wire.NewSet(
 	webhooks.ProvideWebhooks,
+	repository.ProvideFactory,
 	extras.ProvideProvisioningOSSExtras,
+	extras.ProvideProvisioningOSSRepositoryExtras,
 )
 
 var configProviderExtras = wire.NewSet(
