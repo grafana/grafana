@@ -42,6 +42,7 @@ func (m *mockPluginInstaller) Remove(ctx context.Context, pluginID, version stri
 }
 
 type mockDataSourcesService struct {
+	datasources.DataSourceService
 	dataSources []*datasources.DataSource
 	err         error
 }
