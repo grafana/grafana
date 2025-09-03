@@ -2,35 +2,23 @@ package provisioning
 
 import (
 	"context"
-	"crypto/x509"
 	"fmt"
 	"log/slog"
-	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
 
-	"github.com/grafana/authlib/authn"
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/urfave/cli/v2"
-	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/cache"
-	"k8s.io/client-go/transport"
 
 	"github.com/grafana/grafana/pkg/services/apiserver/standalone"
 	"github.com/grafana/grafana/pkg/setting"
 
-	authrt "github.com/grafana/grafana/apps/provisioning/pkg/auth"
 	"github.com/grafana/grafana/apps/provisioning/pkg/controller"
-	client "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned"
 	informer "github.com/grafana/grafana/apps/provisioning/pkg/generated/informers/externalversions"
 )
-
-type controllerConfig struct {
-	provisioningClient *client.Clientset
-	historyExpiration  time.Duration
-}
 
 func RunJobController(opts standalone.BuildInfo, c *cli.Context, cfg *setting.Cfg) error {
 	logger := logging.NewSLogLogger(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
@@ -38,7 +26,7 @@ func RunJobController(opts standalone.BuildInfo, c *cli.Context, cfg *setting.Cf
 	})).With("logger", "provisioning-job-controller")
 	logger.Info("Starting provisioning job controller")
 
-	controllerCfg, err := setupFromConfig(cfg)
+	controllerCfg, err := getJobsControllerConfig(cfg)
 	if err != nil {
 		return fmt.Errorf("failed to setup operator: %w", err)
 	}
@@ -57,7 +45,7 @@ func RunJobController(opts standalone.BuildInfo, c *cli.Context, cfg *setting.Cf
 	// Jobs informer and controller (resync ~60s like in register.go)
 	jobInformerFactory := informer.NewSharedInformerFactoryWithOptions(
 		controllerCfg.provisioningClient,
-		60*time.Second,
+		controllerCfg.resyncInterval,
 	)
 	jobInformer := jobInformerFactory.Provisioning().V0alpha1().Jobs()
 	jobController, err := controller.NewJobController(jobInformer)
@@ -113,89 +101,18 @@ func RunJobController(opts standalone.BuildInfo, c *cli.Context, cfg *setting.Cf
 	return nil
 }
 
-func setupFromConfig(cfg *setting.Cfg) (controllerCfg *controllerConfig, err error) {
-	if cfg == nil {
-		return nil, fmt.Errorf("no configuration available")
-	}
-
-	gRPCAuth := cfg.SectionWithEnvOverrides("grpc_client_authentication")
-	token := gRPCAuth.Key("token").String()
-	if token == "" {
-		return nil, fmt.Errorf("token is required in [grpc_client_authentication] section")
-	}
-	tokenExchangeURL := gRPCAuth.Key("token_exchange_url").String()
-	if tokenExchangeURL == "" {
-		return nil, fmt.Errorf("token_exchange_url is required in [grpc_client_authentication] section")
-	}
-
-	operatorSec := cfg.SectionWithEnvOverrides("operator")
-	provisioningServerURL := operatorSec.Key("provisioning_server_url").String()
-	if provisioningServerURL == "" {
-		return nil, fmt.Errorf("provisioning_server_url is required in [operator] section")
-	}
-	tlsInsecure := operatorSec.Key("tls_insecure").MustBool(false)
-	tlsCertFile := operatorSec.Key("tls_cert_file").String()
-	tlsKeyFile := operatorSec.Key("tls_key_file").String()
-	tlsCAFile := operatorSec.Key("tls_ca_file").String()
-
-	tokenExchangeClient, err := authn.NewTokenExchangeClient(authn.TokenExchangeConfig{
-		TokenExchangeURL: tokenExchangeURL,
-		Token:            token,
-	})
-	if err != nil {
-		return nil, fmt.Errorf("failed to create token exchange client: %w", err)
-	}
-
-	tlsConfig, err := buildTLSConfig(tlsInsecure, tlsCertFile, tlsKeyFile, tlsCAFile)
-	if err != nil {
-		return nil, fmt.Errorf("failed to build TLS configuration: %w", err)
-	}
-
-	config := &rest.Config{
-		APIPath: "/apis",
-		Host:    provisioningServerURL,
-		WrapTransport: transport.WrapperFunc(func(rt http.RoundTripper) http.RoundTripper {
-			return authrt.NewRoundTripper(tokenExchangeClient, rt)
-		}),
-		TLSClientConfig: tlsConfig,
-	}
-
-	provisioningClient, err := client.NewForConfig(config)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create provisioning client: %w", err)
-	}
-
-	return &controllerConfig{
-		provisioningClient: provisioningClient,
-		historyExpiration:  operatorSec.Key("history_expiration").MustDuration(0),
-	}, nil
+type jobsControllerConfig struct {
+	provisioningControllerConfig
+	historyExpiration time.Duration
 }
 
-func buildTLSConfig(insecure bool, certFile, keyFile, caFile string) (rest.TLSClientConfig, error) {
-	tlsConfig := rest.TLSClientConfig{
-		Insecure: insecure,
+func getJobsControllerConfig(cfg *setting.Cfg) (*jobsControllerConfig, error) {
+	controllerCfg, err := setupFromConfig(cfg)
+	if err != nil {
+		return nil, err
 	}
-
-	if certFile != "" && keyFile != "" {
-		tlsConfig.CertFile = certFile
-		tlsConfig.KeyFile = keyFile
-	}
-
-	if caFile != "" {
-		// caFile is set in operator.ini file
-		// nolint:gosec
-		caCert, err := os.ReadFile(caFile)
-		if err != nil {
-			return tlsConfig, fmt.Errorf("failed to read CA certificate file: %w", err)
-		}
-
-		caCertPool := x509.NewCertPool()
-		if !caCertPool.AppendCertsFromPEM(caCert) {
-			return tlsConfig, fmt.Errorf("failed to parse CA certificate")
-		}
-
-		tlsConfig.CAData = caCert
-	}
-
-	return tlsConfig, nil
+	return &jobsControllerConfig{
+		provisioningControllerConfig: *controllerCfg,
+		historyExpiration:            cfg.SectionWithEnvOverrides("operator").Key("history_expiration").MustDuration(0),
+	}, nil
 }

@@ -1,5 +1,7 @@
 package schemaversion
 
+import "context"
+
 // V38 migrates table panel configuration from displayMode to the structured cellOptions format.
 //
 // This migration addresses limitations in the original table panel cell display configuration where
@@ -70,7 +72,7 @@ package schemaversion
 //	    }
 //	  }]
 //	}]
-func V38(dashboard map[string]interface{}) error {
+func V38(_ context.Context, dashboard map[string]interface{}) error {
 	dashboard["schemaVersion"] = int(38)
 
 	panels, ok := dashboard["panels"].([]interface{})
