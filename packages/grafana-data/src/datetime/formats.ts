@@ -105,7 +105,33 @@ export function localTimeFormat(
   }
 
   // https://momentjs.com/docs/#/displaying/format/
-  const dateTimeFormat = new Intl.DateTimeFormat(locale || undefined, options);
+  // Use safe locale handling to prevent crashes with invalid locales like 'c'
+  let safeLocale = locale;
+  if (Array.isArray(locale)) {
+    // Filter out invalid locales like 'c' and provide fallback
+    safeLocale = locale.filter(loc => {
+      if (!loc || typeof loc !== 'string') return false;
+      try {
+        new Intl.DateTimeFormat(loc);
+        return true;
+      } catch {
+        return false;
+      }
+    });
+    // If no valid locales remain, use default
+    if (safeLocale.length === 0) {
+      safeLocale = undefined;
+    }
+  } else if (typeof locale === 'string') {
+    // Check if single locale is valid
+    try {
+      new Intl.DateTimeFormat(locale);
+    } catch {
+      safeLocale = undefined;
+    }
+  }
+
+  const dateTimeFormat = new Intl.DateTimeFormat(safeLocale || undefined, options);
   const parts = dateTimeFormat.formatToParts(new Date());
   const hour12 = dateTimeFormat.resolvedOptions().hour12;
 
