@@ -390,12 +390,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
     return (
       <>
         {!isEditingQueryLibrary && !isUnifiedAlerting && (
-          <MaybeQueryLibrarySaveButton
-            query={query}
-            app={app}
-            onSelectQuery={this.onSelectQueryFromLibrary}
-            onUpdateSuccess={this.onExitQueryLibraryEditingMode}
-          />
+          <MaybeQueryLibrarySaveButton query={query} app={app} onUpdateSuccess={this.onExitQueryLibraryEditingMode} />
         )}
 
         {!isEditingQueryLibrary && !isUnifiedAlerting && (
@@ -534,7 +529,6 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
             queryLibraryRef={queryLibraryRef}
             onCancelEdit={onCancelQueryLibraryEdit}
             onUpdateSuccess={this.onExitQueryLibraryEditingMode}
-            onSelectQuery={this.onSelectQueryFromLibrary}
           />
         )}
         {queryLibraryRef ? (
@@ -589,14 +583,9 @@ export function filterPanelDataToQuery(data: PanelData, refId: string): PanelDat
 }
 
 // Will render anything only if query library is enabled
-function MaybeQueryLibrarySaveButton(props: {
-  query: DataQuery;
-  app?: CoreApp;
-  onUpdateSuccess?: () => void;
-  onSelectQuery: (query: DataQuery) => void;
-}) {
+function MaybeQueryLibrarySaveButton(props: { query: DataQuery; app?: CoreApp; onUpdateSuccess?: () => void }) {
   const { renderSaveQueryButton } = useQueryLibraryContext();
-  return renderSaveQueryButton(props.query, props.app, props.onUpdateSuccess, props.onSelectQuery);
+  return renderSaveQueryButton(props.query, props.app, props.onUpdateSuccess);
 }
 
 // Will render editing header only if query library is enabled
@@ -606,7 +595,6 @@ function MaybeQueryLibraryEditingHeader(props: {
   queryLibraryRef?: string;
   onCancelEdit?: () => void;
   onUpdateSuccess?: () => void;
-  onSelectQuery?: (query: DataQuery) => void;
 }) {
   const { renderQueryLibraryEditingHeader } = useQueryLibraryContext();
   return renderQueryLibraryEditingHeader(
@@ -614,8 +602,7 @@ function MaybeQueryLibraryEditingHeader(props: {
     props.app,
     props.queryLibraryRef,
     props.onCancelEdit,
-    props.onUpdateSuccess,
-    props.onSelectQuery
+    props.onUpdateSuccess
   );
 }
 

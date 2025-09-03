@@ -58,8 +58,7 @@ export type QueryLibraryContextType = {
     app?: CoreApp,
     queryLibraryRef?: string,
     onCancelEdit?: () => void,
-    onUpdateSuccess?: () => void,
-    onSelectQuery?: (query: DataQuery) => void
+    onUpdateSuccess?: () => void
   ) => ReactNode;
 
   queryLibraryEnabled: boolean;
@@ -70,6 +69,7 @@ export type QueryLibraryContextType = {
     contextOverride?: string
   ) => void;
   setNewQuery: (query?: QueryTemplate) => void;
+  onSelectQuery: (query: DataQuery) => void;
 };
 
 export const QueryLibraryContext = createContext<QueryLibraryContextType>({
@@ -91,6 +91,7 @@ export const QueryLibraryContext = createContext<QueryLibraryContextType>({
   queryLibraryEnabled: false,
   context: 'unknown',
   triggerAnalyticsEvent: () => {},
+  onSelectQuery: () => {},
 });
 
 export function useQueryLibraryContext() {
