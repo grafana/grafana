@@ -1,13 +1,14 @@
 import { t } from '@grafana/i18n';
 import { Badge, Stack } from '@grafana/ui';
+import { ManagerKind } from 'app/features/apiserver/types';
 import { useGetResourceRepositoryView } from 'app/features/provisioning/hooks/useGetResourceRepositoryView';
 import { useIsProvisionedInstance } from 'app/features/provisioning/hooks/useIsProvisionedInstance';
 import { getReadOnlyTooltipText } from 'app/features/provisioning/utils/repository';
-import { NestedFolderDTO } from 'app/features/search/service/types';
-import { FolderDTO, FolderListItemDTO } from 'app/types/folders';
+import { DashboardViewItem } from 'app/features/search/types';
+import { FolderDTO } from 'app/types/folders';
 
 export interface Props {
-  folder?: FolderListItemDTO | NestedFolderDTO | FolderDTO;
+  folder?: FolderDTO | DashboardViewItem;
 }
 
 export function FolderRepo({ folder }: Props) {
@@ -17,11 +18,11 @@ export function FolderRepo({ folder }: Props) {
   // folder is not managed
   // if whole instance is provisioned
   const isProvisionedInstance = useIsProvisionedInstance();
-  const skipRender =
-    !folder || ('parentUID' in folder && folder.parentUID) || !folder.managedBy || isProvisionedInstance;
+  const skipRender = getShouldSkipRender(folder, isProvisionedInstance);
 
   const { isReadOnlyRepo, repoType } = useGetResourceRepositoryView({
     folderName: skipRender ? undefined : folder?.uid,
+    skipQuery: skipRender,
   });
 
   if (skipRender) {
@@ -38,7 +39,21 @@ export function FolderRepo({ folder }: Props) {
           tooltip={getReadOnlyTooltipText({ isLocal: repoType === 'local' })}
         />
       )}
-      <Badge color="purple" icon="exchange-alt" tooltip={t('folder-repo.provisioned-badge', 'Provisioned')} />
+      <Badge
+        title={t('folder-repo.provisioned-badge', 'Provisioned')}
+        color="purple"
+        icon="exchange-alt"
+        tooltip={t('folder-repo.provisioned-badge', 'Provisioned')}
+      />
     </Stack>
   );
+}
+
+function getShouldSkipRender(folder: FolderDTO | DashboardViewItem | undefined, isProvisionedInstance?: boolean) {
+  // Skip render if parentUID is present, then we should skip rendering. we only display icon for root folders
+  const hasParent = folder && Boolean('parentUID' in folder && folder.parentUID);
+  // Skip render if folder is not managed by Repo
+  const isNotManaged = folder && folder.managedBy !== ManagerKind.Repo;
+
+  return !folder || hasParent || isNotManaged || isProvisionedInstance;
 }
