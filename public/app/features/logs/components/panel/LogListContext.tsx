@@ -729,7 +729,7 @@ async function handleOpenAssistant(openAssistant: (props: OpenAssistantProps) =>
     )
   }
   openAssistant({
-    origin: 'grafana/logs-panel',
+    origin: 'grafana/explain-log-line',
     prompt: `${t('logs.log-line-menu.log-line-explainer', 'Explain this log line in a concise way')}:
 
       \`\`\`
