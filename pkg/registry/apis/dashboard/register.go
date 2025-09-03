@@ -350,7 +350,7 @@ func (b *DashboardsAPIBuilder) validateCreate(ctx context.Context, a admission.A
 	}
 
 	// Validate quota
-	if !b.isMultiTenant && !a.IsDryRun() {
+	if !b.isStandalone && !a.IsDryRun() {
 		params := &quota.ScopeParameters{}
 		params.OrgID = id.GetOrgID()
 		internalId, err := id.GetInternalID()
