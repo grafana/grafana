@@ -19,10 +19,8 @@ func setupBackendNoDB(t *testing.T) *ResourcePermSqlBackend {
 }
 
 func TestToV0ResourcePermissions(t *testing.T) {
-	s := setupBackendNoDB(t)
-
 	t.Run("empty permissions", func(t *testing.T) {
-		result, err := s.toV0ResourcePermissions(map[groupResourceName][]flatResourcePermission{})
+		result, err := toV0ResourcePermissions(map[groupResourceName][]flatResourcePermission{})
 		require.NoError(t, err)
 		require.Nil(t, result)
 	})
@@ -82,7 +80,7 @@ func TestToV0ResourcePermissions(t *testing.T) {
 			},
 		}
 
-		result, err := s.toV0ResourcePermissions(permissions)
+		result, err := toV0ResourcePermissions(permissions)
 		require.NoError(t, err)
 		require.NotNil(t, result)
 		require.Len(t, result, 1)

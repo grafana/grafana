@@ -83,7 +83,7 @@ func (s *ResourcePermSqlBackend) getResourcePermission(ctx context.Context, sql 
 		return nil, fmt.Errorf("resource permission %q: %w", resourceQuery.Scope, errNotFound)
 	}
 
-	resourcePermission, err := s.toV0ResourcePermissions(permsByResource)
+	resourcePermission, err := toV0ResourcePermissions(permsByResource)
 	if err != nil {
 		return nil, err
 	}

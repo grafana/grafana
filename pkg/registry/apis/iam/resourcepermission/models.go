@@ -44,7 +44,7 @@ type flatResourcePermission struct {
 }
 
 // toV0ResourcePermissions converts flatResourcePermission grouped by resource (e.g. {folder.grafana.app, folders, fold1}) to a list of v0alpha1.ResourcePermission
-func (s *ResourcePermSqlBackend) toV0ResourcePermissions(permsByResource map[groupResourceName][]flatResourcePermission) ([]v0alpha1.ResourcePermission, error) {
+func toV0ResourcePermissions(permsByResource map[groupResourceName][]flatResourcePermission) ([]v0alpha1.ResourcePermission, error) {
 	if len(permsByResource) == 0 {
 		return nil, nil
 	}
