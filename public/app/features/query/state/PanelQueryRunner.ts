@@ -1,5 +1,5 @@
 import { cloneDeep, isEqual } from 'lodash';
-import { merge, Observable, of, ReplaySubject, Unsubscribable } from 'rxjs';
+import { forkJoin, Observable, of, ReplaySubject, Unsubscribable } from 'rxjs';
 import { map, mergeMap, catchError } from 'rxjs/operators';
 
 import {
@@ -240,16 +240,18 @@ export class PanelQueryRunner {
     let series: DataFrame[] = [];
     let annotations: DataFrame[] = [];
 
-    return merge(seriesStream, annotationsStream).pipe(
-      map((frames) => {
+    return forkJoin([seriesStream, annotationsStream]).pipe(
+      map((results) => {
         // this strategy allows transformations to take in series frames and produce anno frames
         // we look at each transformation's result and put it in the correct place
-        frames.forEach((frame) => {
-          if (frame.meta?.dataTopic === DataTopic.Annotations) {
-            annotations.push(frame);
-          } else {
-            series.push(frame);
-          }
+        results.forEach((frames) => {
+          frames.forEach((frame) => {
+            if (frame.meta?.dataTopic === DataTopic.Annotations) {
+              annotations.push(frame);
+            } else {
+              series.push(frame);
+            }
+          });
         });
 
         return { ...data, series, annotations };
