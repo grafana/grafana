@@ -1,0 +1,189 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "type": "grafana",
+          "uid": "-- Grafana --"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations \u0026 Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "gnetId": null,
+  "graphTooltip": 0,
+  "links": [],
+  "meta": {
+    "canDelete": true,
+    "canEdit": true,
+    "canMakeEditable": false,
+    "canSave": true,
+    "canShare": true,
+    "canStar": true,
+    "hasUnsavedFolderChange": false,
+    "showSettings": true
+  },
+  "panels": [
+    {
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "axisPlacement": "hidden"
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byType",
+              "options": "time"
+            },
+            "properties": [
+              {
+                "id": "custom.axisPlacement",
+                "value": "auto"
+              }
+            ]
+          }
+        ]
+      },
+      "id": 6,
+      "title": "Timeseries with Hidden Axis",
+      "type": "timeseries"
+    },
+    {
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "axisPlacement": "hidden"
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Series A"
+            },
+            "properties": [
+              {
+                "id": "color.mode",
+                "value": "palette-classic"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byType",
+              "options": "time"
+            },
+            "properties": [
+              {
+                "id": "custom.axisPlacement",
+                "value": "auto"
+              }
+            ]
+          }
+        ]
+      },
+      "id": 7,
+      "title": "Timeseries with Hidden Axis and Existing Overrides",
+      "type": "timeseries"
+    },
+    {
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "axisPlacement": "auto"
+          }
+        },
+        "overrides": []
+      },
+      "id": 8,
+      "title": "Timeseries with Auto Axis (No Change Expected)",
+      "type": "timeseries"
+    },
+    {
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "axisPlacement": "hidden"
+          }
+        },
+        "overrides": []
+      },
+      "id": 9,
+      "title": "Stat Panel with Hidden Axis (No Change Expected)",
+      "type": "stat"
+    },
+    {
+      "id": 5,
+      "title": "Timeseries with Missing FieldConfig",
+      "type": "timeseries"
+    },
+    {
+      "fieldConfig": {
+        "overrides": []
+      },
+      "id": 10,
+      "title": "Timeseries with Missing Defaults",
+      "type": "timeseries"
+    },
+    {
+      "fieldConfig": {
+        "defaults": {
+          "unit": "bytes"
+        },
+        "overrides": []
+      },
+      "id": 11,
+      "title": "Timeseries with Missing Custom Config",
+      "type": "timeseries"
+    },
+    {
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "axisPlacement": "hidden"
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byType",
+              "options": "time"
+            },
+            "properties": [
+              {
+                "id": "custom.axisPlacement",
+                "value": "auto"
+              }
+            ]
+          }
+        ]
+      },
+      "id": 12,
+      "title": "Timeseries with Missing Overrides Array",
+      "type": "timeseries"
+    }
+  ],
+  "schemaVersion": 35,
+  "tags": [],
+  "templating": {
+    "list": []
+  },
+  "time": {
+    "from": "now-6h",
+    "to": "now"
+  },
+  "timepicker": {},
+  "timezone": "",
+  "title": "X-Axis Visibility Test Dashboard",
+  "version": 0,
+  "weekStart": ""
+}

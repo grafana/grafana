@@ -1,0 +1,245 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "type": "grafana",
+          "uid": "-- Grafana --"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations \u0026 Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "gnetId": null,
+  "graphTooltip": 0,
+  "links": [],
+  "meta": {
+    "canDelete": true,
+    "canEdit": true,
+    "canMakeEditable": false,
+    "canSave": true,
+    "canShare": true,
+    "canStar": true,
+    "hasUnsavedFolderChange": false,
+    "showSettings": true
+  },
+  "panels": [
+    {
+      "gridPos": {
+        "h": 7,
+        "w": 12,
+        "x": 0,
+        "y": 1
+      },
+      "id": 1,
+      "title": "CPU Usage",
+      "type": "graph"
+    },
+    {
+      "gridPos": {
+        "h": 7,
+        "w": 12,
+        "x": 12,
+        "y": 1
+      },
+      "id": 2,
+      "title": "Memory Usage",
+      "type": "singlestat"
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 7,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "id": 13,
+      "panels": [],
+      "repeat": "",
+      "title": "",
+      "type": "row"
+    },
+    {
+      "collapsed": true,
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 8
+      },
+      "id": 14,
+      "panels": [
+        {
+          "gridPos": {
+            "h": 8,
+            "w": 24,
+            "x": 0,
+            "y": 9
+          },
+          "id": 3,
+          "title": "Process List",
+          "type": "table"
+        },
+        {
+          "gridPos": {
+            "h": 6,
+            "w": 12,
+            "x": 0,
+            "y": 17
+          },
+          "height": 200,
+          "id": 4,
+          "title": "Network I/O",
+          "type": "graph"
+        },
+        {
+          "gridPos": {
+            "h": 6,
+            "w": 12,
+            "x": 12,
+            "y": 17
+          },
+          "height": 200,
+          "id": 5,
+          "title": "Disk I/O",
+          "type": "graph"
+        }
+      ],
+      "repeat": "",
+      "title": "Collapsed Row",
+      "type": "row"
+    },
+    {
+      "gridPos": {
+        "h": 6,
+        "w": 8,
+        "x": 0,
+        "y": 18
+      },
+      "id": 6,
+      "minSpan": 4,
+      "title": "Temperature",
+      "type": "gauge"
+    },
+    {
+      "gridPos": {
+        "h": 6,
+        "w": 8,
+        "x": 8,
+        "y": 18
+      },
+      "id": 7,
+      "title": "Uptime",
+      "type": "stat"
+    },
+    {
+      "gridPos": {
+        "h": 6,
+        "w": 8,
+        "x": 16,
+        "y": 18
+      },
+      "id": 8,
+      "title": "Load Average",
+      "type": "bargauge"
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 6,
+        "w": 24,
+        "x": 0,
+        "y": 17
+      },
+      "id": 15,
+      "panels": [],
+      "repeat": "",
+      "title": "Visible Row Title",
+      "type": "row"
+    },
+    {
+      "gridPos": {
+        "h": 4,
+        "w": 16,
+        "x": 0,
+        "y": 25
+      },
+      "id": 9,
+      "title": "Description Panel",
+      "type": "text"
+    },
+    {
+      "gridPos": {
+        "h": 3,
+        "w": 8,
+        "x": 16,
+        "y": 25
+      },
+      "height": 100,
+      "id": 10,
+      "title": "System Logs",
+      "type": "logs"
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 4,
+        "w": 24,
+        "x": 0,
+        "y": 24
+      },
+      "id": 16,
+      "panels": [],
+      "repeat": "",
+      "title": "",
+      "type": "row"
+    },
+    {
+      "gridPos": {
+        "h": 7,
+        "w": 24,
+        "x": 0,
+        "y": 30
+      },
+      "id": 11,
+      "title": "Server Metrics",
+      "type": "graph"
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 7,
+        "w": 24,
+        "x": 0,
+        "y": 29
+      },
+      "id": 17,
+      "panels": [],
+      "repeat": "server",
+      "title": "",
+      "type": "row"
+    }
+  ],
+  "schemaVersion": 16,
+  "tags": [],
+  "templating": {
+    "list": []
+  },
+  "time": {
+    "from": "now-6h",
+    "to": "now"
+  },
+  "timepicker": {},
+  "timezone": "",
+  "title": "V16 Grid Layout Migration Test Dashboard",
+  "version": 0,
+  "weekStart": ""
+}

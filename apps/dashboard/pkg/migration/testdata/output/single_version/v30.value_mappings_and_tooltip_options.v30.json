@@ -1,0 +1,275 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "type": "grafana",
+          "uid": "-- Grafana --"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations \u0026 Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "gnetId": null,
+  "graphTooltip": 0,
+  "links": [],
+  "meta": {
+    "canDelete": true,
+    "canEdit": true,
+    "canMakeEditable": false,
+    "canSave": true,
+    "canShare": true,
+    "canStar": true,
+    "hasUnsavedFolderChange": false,
+    "showSettings": true
+  },
+  "panels": [
+    {
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [
+            {
+              "options": {
+                "0": {
+                  "text": "Down"
+                },
+                "1": {
+                  "text": "Up"
+                }
+              },
+              "type": "value"
+            },
+            {
+              "options": {
+                "from": 10,
+                "result": {
+                  "text": "Medium"
+                },
+                "to": 20
+              },
+              "type": "range"
+            },
+            {
+              "options": {
+                "match": "null",
+                "result": {
+                  "text": "Null Value"
+                }
+              },
+              "type": "special"
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "test-field"
+            },
+            "properties": [
+              {
+                "id": "mappings",
+                "value": [
+                  {
+                    "options": {
+                      "1": {
+                        "text": "Override Up"
+                      }
+                    },
+                    "type": "value"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "id": 1,
+      "options": {
+        "tooltip": {
+          "mode": "multi"
+        }
+      },
+      "title": "Panel with legacy value mappings and tooltip options",
+      "type": "timeseries"
+    },
+    {
+      "id": 2,
+      "options": {
+        "tooltip": {
+          "mode": "single"
+        }
+      },
+      "title": "XY Chart with tooltip options only",
+      "type": "xychart"
+    },
+    {
+      "id": 3,
+      "options": {
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "title": "XY Chart2 with tooltip options",
+      "type": "xychart2"
+    },
+    {
+      "id": 4,
+      "options": {
+        "tooltip": {
+          "mode": "single"
+        }
+      },
+      "title": "Graph panel gets migrated to timeseries and tooltip",
+      "type": "graph"
+    },
+    {
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [
+            {
+              "options": {
+                "100": {
+                  "text": "Critical"
+                }
+              },
+              "type": "value"
+            },
+            {
+              "options": {
+                "from": 50,
+                "result": {
+                  "text": "Warning"
+                },
+                "to": 99
+              },
+              "type": "range"
+            },
+            {
+              "options": {
+                "from": 0,
+                "result": {
+                  "text": "OK"
+                },
+                "to": 49
+              },
+              "type": "range"
+            }
+          ]
+        }
+      },
+      "id": 5,
+      "title": "Panel with complex value mappings",
+      "type": "stat"
+    },
+    {
+      "collapsed": true,
+      "id": 6,
+      "panels": [
+        {
+          "fieldConfig": {
+            "defaults": {
+              "mappings": [
+                {
+                  "options": {
+                    "0": {
+                      "text": "Off"
+                    },
+                    "1": {
+                      "text": "On"
+                    }
+                  },
+                  "type": "value"
+                }
+              ]
+            }
+          },
+          "id": 7,
+          "options": {
+            "tooltip": {
+              "mode": "multi"
+            }
+          },
+          "title": "Nested panel with both migrations",
+          "type": "timeseries"
+        }
+      ],
+      "title": "Collapsed Row with nested panels",
+      "type": "row"
+    },
+    {
+      "fieldConfig": {
+        "defaults": {
+          "unit": "bytes"
+        }
+      },
+      "id": 8,
+      "options": {
+        "legend": {
+          "displayMode": "list"
+        }
+      },
+      "title": "Panel with no relevant configurations",
+      "type": "timeseries"
+    },
+    {
+      "fieldConfig": {
+        "defaults": {
+          "mappings": []
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "empty-field"
+            },
+            "properties": [
+              {
+                "id": "mappings",
+                "value": []
+              }
+            ]
+          }
+        ]
+      },
+      "id": 9,
+      "title": "Panel with empty mappings array - should return null",
+      "type": "stat"
+    }
+  ],
+  "schemaVersion": 30,
+  "tags": [],
+  "templating": {
+    "list": []
+  },
+  "time": {
+    "from": "now-6h",
+    "to": "now"
+  },
+  "timepicker": {},
+  "timezone": "",
+  "title": "V30 Value Mappings and Tooltip Options Migration Test Dashboard",
+  "version": 0,
+  "weekStart": ""
+}

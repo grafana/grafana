@@ -1,0 +1,173 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "type": "grafana",
+          "uid": "-- Grafana --"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations \u0026 Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "gnetId": null,
+  "graphTooltip": 0,
+  "links": [],
+  "meta": {
+    "canDelete": true,
+    "canEdit": true,
+    "canMakeEditable": false,
+    "canSave": true,
+    "canShare": true,
+    "canStar": true,
+    "hasUnsavedFolderChange": false,
+    "showSettings": true
+  },
+  "panels": [
+    {
+      "id": 1,
+      "options": {
+        "legend": true
+      },
+      "title": "Panel with Boolean Legend True",
+      "type": "timeseries"
+    },
+    {
+      "id": 2,
+      "options": {
+        "legend": false
+      },
+      "title": "Panel with Boolean Legend False",
+      "type": "timeseries"
+    },
+    {
+      "id": 3,
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "showLegend": false
+        }
+      },
+      "title": "Panel with Hidden DisplayMode",
+      "type": "graph"
+    },
+    {
+      "id": 4,
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "showLegend": false
+        }
+      },
+      "title": "Panel with ShowLegend False",
+      "type": "stat"
+    },
+    {
+      "id": 5,
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        }
+      },
+      "title": "Panel with Table Legend",
+      "type": "barchart"
+    },
+    {
+      "id": 6,
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "right",
+          "showLegend": true
+        }
+      },
+      "title": "Panel with List Legend",
+      "type": "histogram"
+    },
+    {
+      "id": 7,
+      "title": "Panel with No Options",
+      "type": "text"
+    },
+    {
+      "id": 8,
+      "options": {
+        "reduceOptions": {
+          "fields": "/.*temperature.*/"
+        }
+      },
+      "title": "Panel with No Legend Config",
+      "type": "gauge"
+    },
+    {
+      "id": 9,
+      "options": {
+        "legend": null
+      },
+      "title": "Panel with Null Legend",
+      "type": "piechart"
+    },
+    {
+      "collapsed": false,
+      "id": 10,
+      "panels": [
+        {
+          "id": 11,
+          "options": {
+            "legend": true
+          },
+          "title": "Nested Panel with Boolean Legend",
+          "type": "timeseries"
+        },
+        {
+          "id": 12,
+          "options": {
+            "legend": {
+              "displayMode": "list",
+              "showLegend": false
+            }
+          },
+          "title": "Nested Panel with Hidden DisplayMode",
+          "type": "graph"
+        },
+        {
+          "id": 13,
+          "options": {
+            "legend": {
+              "displayMode": "list",
+              "showLegend": false
+            }
+          },
+          "title": "Nested Panel with Conflicting Properties",
+          "type": "stat"
+        }
+      ],
+      "title": "Row with Nested Panels Having Various Legend Configs",
+      "type": "row"
+    }
+  ],
+  "refresh": "",
+  "schemaVersion": 41,
+  "tags": [],
+  "templating": {
+    "list": []
+  },
+  "time": {
+    "from": "now-6h",
+    "to": "now"
+  },
+  "timepicker": {},
+  "timezone": "",
+  "title": "V37 Legend Normalization Test Dashboard",
+  "version": 0,
+  "weekStart": ""
+}

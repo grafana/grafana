@@ -94,18 +94,18 @@ export class DashboardMigrator {
     }
   }
 
-  updateSchema(old: any) {
+  updateSchema(old: any, targetSchemaVersion?: number) {
     let i, j, k, n;
     const oldVersion = this.dashboard.schemaVersion;
     const panelUpgrades: PanelSchemeUpgradeHandler[] = [];
-    this.dashboard.schemaVersion = DASHBOARD_SCHEMA_VERSION;
+    const finalTargetVersion = targetSchemaVersion || DASHBOARD_SCHEMA_VERSION;
 
-    if (oldVersion === this.dashboard.schemaVersion) {
+    if (oldVersion === finalTargetVersion) {
       return;
     }
 
     // version 2 schema changes
-    if (oldVersion < 2) {
+    if (oldVersion < 2 && finalTargetVersion >= 2) {
       if (old.services) {
         if (old.services.filter) {
           this.dashboard.time = old.services.filter.time;
@@ -160,7 +160,7 @@ export class DashboardMigrator {
     }
 
     // schema version 3 changes
-    if (oldVersion < 3) {
+    if (oldVersion < 3 && finalTargetVersion >= 3) {
       // ensure panel IDs
       let maxId = this.dashboard.getNextPanelId();
       panelUpgrades.push((panel: PanelModel) => {
@@ -174,7 +174,7 @@ export class DashboardMigrator {
     }
 
     // schema version 4 changes
-    if (oldVersion < 4) {
+    if (oldVersion < 4 && finalTargetVersion >= 4) {
       // move aliasYAxis changes
       panelUpgrades.push((panel: any) => {
         if (panel.type !== 'graph') {
@@ -191,7 +191,7 @@ export class DashboardMigrator {
       });
     }
 
-    if (oldVersion < 6) {
+    if (oldVersion < 6 && finalTargetVersion >= 6) {
       // move drop-downs to new schema
       const annotations = find(old.pulldowns, { type: 'annotations' });
 
@@ -219,7 +219,7 @@ export class DashboardMigrator {
       }
     }
 
-    if (oldVersion < 7) {
+    if (oldVersion < 7 && finalTargetVersion >= 7) {
       if (old.nav && old.nav.length) {
         this.dashboard.timepicker = old.nav[0];
       }
@@ -236,7 +236,7 @@ export class DashboardMigrator {
       });
     }
 
-    if (oldVersion < 8) {
+    if (oldVersion < 8 && finalTargetVersion >= 8) {
       panelUpgrades.push((panel: any) => {
         each(panel.targets, (target) => {
           // update old influxdb query schema
@@ -282,7 +282,7 @@ export class DashboardMigrator {
     }
 
     // schema version 9 changes
-    if (oldVersion < 9) {
+    if (oldVersion < 9 && finalTargetVersion >= 9) {
       // move aliasYAxis changes
       panelUpgrades.push((panel: PanelModel) => {
         if (panel.type !== 'singlestat' && panel.thresholds !== '') {
@@ -303,7 +303,7 @@ export class DashboardMigrator {
     }
 
     // schema version 10 changes
-    if (oldVersion < 10) {
+    if (oldVersion < 10 && finalTargetVersion >= 10) {
       // move aliasYAxis changes
       panelUpgrades.push((panel: any) => {
         if (panel.type !== 'table') {
@@ -322,7 +322,7 @@ export class DashboardMigrator {
       });
     }
 
-    if (oldVersion < 12) {
+    if (oldVersion < 12 && finalTargetVersion >= 12) {
       // update template variables
       each(this.dashboard.getVariables(), (templateVariable) => {
         if ('refresh' in templateVariable) {
@@ -341,7 +341,7 @@ export class DashboardMigrator {
       });
     }
 
-    if (oldVersion < 12) {
+    if (oldVersion < 12 && finalTargetVersion >= 12) {
       // update graph yaxes changes
       panelUpgrades.push((panel: any) => {
         if (panel.type !== 'graph') {
@@ -392,7 +392,7 @@ export class DashboardMigrator {
       });
     }
 
-    if (oldVersion < 13) {
+    if (oldVersion < 13 && finalTargetVersion >= 13) {
       // update graph yaxes changes
       panelUpgrades.push((panel: any) => {
         if (panel.type !== 'graph') {
@@ -461,15 +461,15 @@ export class DashboardMigrator {
       });
     }
 
-    if (oldVersion < 14) {
+    if (oldVersion < 14 && finalTargetVersion >= 14) {
       this.dashboard.graphTooltip = old.sharedCrosshair ? 1 : 0;
     }
 
-    if (oldVersion < 16) {
+    if (oldVersion < 16 && finalTargetVersion >= 16) {
       this.upgradeToGridLayout(old);
     }
 
-    if (oldVersion < 17) {
+    if (oldVersion < 17 && finalTargetVersion >= 17) {
       panelUpgrades.push((panel: any) => {
         if (panel.minSpan) {
           const max = GRID_COLUMN_COUNT / panel.minSpan;
@@ -490,7 +490,7 @@ export class DashboardMigrator {
       });
     }
 
-    if (oldVersion < 18) {
+    if (oldVersion < 18 && finalTargetVersion >= 18) {
       // migrate change to gauge options
       panelUpgrades.push((panel: any) => {
         if (panel['options-gauge']) {
@@ -522,7 +522,7 @@ export class DashboardMigrator {
       });
     }
 
-    if (oldVersion < 19) {
+    if (oldVersion < 19 && finalTargetVersion >= 19) {
       // migrate change to gauge options
       panelUpgrades.push((panel: any) => {
         if (panel.links && isArray(panel.links)) {
@@ -533,7 +533,7 @@ export class DashboardMigrator {
       });
     }
 
-    if (oldVersion < 20) {
+    if (oldVersion < 20 && finalTargetVersion >= 20) {
       const updateLinks = (link: DataLink) => {
         return {
           ...link,
@@ -562,7 +562,7 @@ export class DashboardMigrator {
       });
     }
 
-    if (oldVersion < 21) {
+    if (oldVersion < 21 && finalTargetVersion >= 21) {
       const updateLinks = (link: DataLink) => {
         return {
           ...link,
@@ -586,7 +586,7 @@ export class DashboardMigrator {
       });
     }
 
-    if (oldVersion < 22) {
+    if (oldVersion < 22 && finalTargetVersion >= 22) {
       panelUpgrades.push((panel: any) => {
         if (panel.type !== 'table') {
           return panel;
@@ -600,7 +600,7 @@ export class DashboardMigrator {
       });
     }
 
-    if (oldVersion < 23) {
+    if (oldVersion < 23 && finalTargetVersion >= 23) {
       for (const variable of this.dashboard.templating.list) {
         if (!isMulti(variable)) {
           continue;
@@ -613,7 +613,7 @@ export class DashboardMigrator {
       }
     }
 
-    if (oldVersion < 24) {
+    if (oldVersion < 24 && finalTargetVersion >= 24) {
       // 7.0
       // - migrate existing tables to 'table-old'
       panelUpgrades.push((panel: any) => {
@@ -638,11 +638,11 @@ export class DashboardMigrator {
       });
     }
 
-    if (oldVersion < 25) {
+    if (oldVersion < 25 && finalTargetVersion >= 25) {
       // tags are removed in version 28
     }
 
-    if (oldVersion < 26) {
+    if (oldVersion < 26 && finalTargetVersion >= 26) {
       panelUpgrades.push((panel: PanelModel) => {
         const wasReactText = panel.type === 'text2';
         if (!wasReactText) {
@@ -655,7 +655,7 @@ export class DashboardMigrator {
       });
     }
 
-    if (oldVersion < 27) {
+    if (oldVersion < 27 && finalTargetVersion >= 27) {
       // remove old repeated panel left-overs
       this.removeRepeatedPanels();
 
@@ -682,7 +682,7 @@ export class DashboardMigrator {
       });
     }
 
-    if (oldVersion < 28) {
+    if (oldVersion < 28 && finalTargetVersion >= 28) {
       panelUpgrades.push((panel: PanelModel) => {
         if (panel.type === 'singlestat') {
           return migrateSinglestat(panel);
@@ -710,7 +710,7 @@ export class DashboardMigrator {
       }
     }
 
-    if (oldVersion < 29) {
+    if (oldVersion < 29 && finalTargetVersion >= 29) {
       for (const variable of this.dashboard.templating.list) {
         if (variable.type !== 'query') {
           continue;
@@ -726,12 +726,12 @@ export class DashboardMigrator {
       }
     }
 
-    if (oldVersion < 30) {
+    if (oldVersion < 30 && finalTargetVersion >= 30) {
       panelUpgrades.push(upgradeValueMappingsForPanel);
       panelUpgrades.push(migrateTooltipOptions);
     }
 
-    if (oldVersion < 31) {
+    if (oldVersion < 31 && finalTargetVersion >= 31) {
       panelUpgrades.push((panel: PanelModel) => {
         if (panel.transformations) {
           for (const t of panel.transformations) {
@@ -747,12 +747,12 @@ export class DashboardMigrator {
       });
     }
 
-    if (oldVersion < 32) {
+    if (oldVersion < 32 && finalTargetVersion >= 32) {
       // CloudWatch migrations have been moved to version 34
     }
 
     // Replace datasource name with reference, uid and type
-    if (oldVersion < 33) {
+    if (oldVersion < 33 && finalTargetVersion >= 33) {
       panelUpgrades.push((panel) => {
         panel.datasource = migrateDatasourceNameToRef(panel.datasource, { returnDefaultAsNull: true });
 
@@ -771,7 +771,7 @@ export class DashboardMigrator {
       });
     }
 
-    if (oldVersion < 34) {
+    if (oldVersion < 34 && finalTargetVersion >= 34) {
       panelUpgrades.push((panel: PanelModel) => {
         this.migrateCloudWatchQueries(panel);
         return panel;
@@ -780,11 +780,11 @@ export class DashboardMigrator {
       this.migrateCloudWatchAnnotationQuery();
     }
 
-    if (oldVersion < 35) {
+    if (oldVersion < 35 && finalTargetVersion >= 35) {
       panelUpgrades.push(ensureXAxisVisibility);
     }
 
-    if (oldVersion < 36) {
+    if (oldVersion < 36 && finalTargetVersion >= 36) {
       // Migrate datasource to refs in annotations
       for (const query of this.dashboard.annotations.list) {
         query.datasource = migrateDatasourceNameToRef(query.datasource, { returnDefaultAsNull: false });
@@ -828,7 +828,7 @@ export class DashboardMigrator {
       }
     }
 
-    if (oldVersion < 37) {
+    if (oldVersion < 37 && finalTargetVersion >= 37) {
       panelUpgrades.push((panel: PanelModel) => {
         if (panel.options?.legend && typeof panel.options.legend === 'object') {
           // There were two ways to hide the legend, this normalizes to `legend.showLegend`
@@ -846,7 +846,7 @@ export class DashboardMigrator {
 
     // Update old table cell display configuration to the new
     // format which uses an object for configuration
-    if (oldVersion < 38) {
+    if (oldVersion < 38 && finalTargetVersion >= 38) {
       panelUpgrades.push((panel: PanelModel) => {
         if (panel.type === 'table' && panel.fieldConfig !== undefined) {
           const displayMode = panel.fieldConfig.defaults?.custom?.displayMode;
@@ -880,7 +880,7 @@ export class DashboardMigrator {
 
     // Update the configuration of the Timeseries to table transformation
     // to support multiple options per query
-    if (oldVersion < 39) {
+    if (oldVersion < 39 && finalTargetVersion >= 39) {
       panelUpgrades.push((panel: PanelModel) => {
         panel.transformations?.forEach((transformation) => {
           // If we run into a timeSeriesTable transformation
@@ -912,14 +912,14 @@ export class DashboardMigrator {
       });
     }
 
-    if (oldVersion < 40) {
+    if (oldVersion < 40 && finalTargetVersion >= 40) {
       // In old dashboards refresh property can be a boolean
       if (typeof this.dashboard.refresh !== 'string') {
         this.dashboard.refresh = '';
       }
     }
 
-    if (oldVersion < 41) {
+    if (oldVersion < 41 && finalTargetVersion >= 41) {
       // time_options is a legacy property that was not used since grafana version 5
       //  therefore deprecating this property from the schema
       if ('time_options' in this.dashboard.timepicker) {
@@ -927,7 +927,7 @@ export class DashboardMigrator {
       }
     }
 
-    if (oldVersion < 42) {
+    if (oldVersion < 42 && finalTargetVersion >= 42) {
       panelUpgrades.push(migrateHideFromFunctionality);
     }
 
@@ -937,20 +937,25 @@ export class DashboardMigrator {
      * block and above this (hopefully) helpful message.
      */
 
-    if (panelUpgrades.length === 0) {
-      return;
-    }
-
-    for (j = 0; j < this.dashboard.panels.length; j++) {
-      for (k = 0; k < panelUpgrades.length; k++) {
-        this.dashboard.panels[j] = panelUpgrades[k].call(this, this.dashboard.panels[j]);
-        const rowPanels = this.dashboard.panels[j].panels;
-        if (rowPanels) {
-          for (n = 0; n < rowPanels.length; n++) {
-            rowPanels[n] = panelUpgrades[k].call(this, rowPanels[n]);
+    // Apply panel upgrades if any exist
+    if (panelUpgrades.length > 0) {
+      for (j = 0; j < this.dashboard.panels.length; j++) {
+        for (k = 0; k < panelUpgrades.length; k++) {
+          this.dashboard.panels[j] = panelUpgrades[k].call(this, this.dashboard.panels[j]);
+          const rowPanels = this.dashboard.panels[j].panels;
+          if (rowPanels) {
+            for (n = 0; n < rowPanels.length; n++) {
+              rowPanels[n] = panelUpgrades[k].call(this, rowPanels[n]);
+            }
           }
         }
       }
+    }
+
+    // Always update schema version after migrations, regardless of panel upgrades
+    // Only update schema version if migrations were actually needed
+    if (oldVersion < finalTargetVersion) {
+      this.dashboard.schemaVersion = finalTargetVersion;
     }
   }
 

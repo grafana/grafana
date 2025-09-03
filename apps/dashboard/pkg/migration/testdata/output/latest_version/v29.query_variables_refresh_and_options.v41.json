@@ -1,0 +1,211 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "type": "grafana",
+          "uid": "-- Grafana --"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations \u0026 Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "gnetId": null,
+  "graphTooltip": 0,
+  "links": [],
+  "meta": {
+    "canDelete": true,
+    "canEdit": true,
+    "canMakeEditable": false,
+    "canSave": true,
+    "canShare": true,
+    "canStar": true,
+    "hasUnsavedFolderChange": false,
+    "showSettings": true
+  },
+  "panels": [
+    {
+      "datasource": {
+        "uid": "prometheus"
+      },
+      "id": 1,
+      "targets": [
+        {
+          "datasource": {
+            "uid": "prometheus"
+          },
+          "expr": "up",
+          "refId": "A"
+        }
+      ],
+      "title": "Test Panel",
+      "type": "timeseries"
+    }
+  ],
+  "refresh": "",
+  "schemaVersion": 41,
+  "tags": [],
+  "templating": {
+    "list": [
+      {
+        "datasource": {
+          "uid": "prometheus"
+        },
+        "name": "never_refresh_with_options",
+        "options": [],
+        "refresh": 1,
+        "type": "query"
+      },
+      {
+        "datasource": {
+          "uid": "prometheus"
+        },
+        "name": "never_refresh_without_options",
+        "options": [],
+        "refresh": 1,
+        "type": "query"
+      },
+      {
+        "datasource": {
+          "uid": "prometheus"
+        },
+        "name": "dashboard_refresh_with_options",
+        "options": [],
+        "refresh": 1,
+        "type": "query"
+      },
+      {
+        "datasource": {
+          "uid": "prometheus"
+        },
+        "name": "dashboard_refresh_without_options",
+        "options": [],
+        "refresh": 1,
+        "type": "query"
+      },
+      {
+        "datasource": {
+          "uid": "prometheus"
+        },
+        "name": "timerange_refresh_with_options",
+        "options": [],
+        "refresh": 1,
+        "type": "query"
+      },
+      {
+        "datasource": {
+          "uid": "prometheus"
+        },
+        "name": "timerange_refresh_without_options",
+        "options": [],
+        "refresh": 1,
+        "type": "query"
+      },
+      {
+        "datasource": {
+          "uid": "prometheus"
+        },
+        "name": "no_refresh_with_options",
+        "options": [],
+        "refresh": 1,
+        "type": "query"
+      },
+      {
+        "datasource": {
+          "uid": "prometheus"
+        },
+        "name": "no_refresh_without_options",
+        "options": [],
+        "refresh": 1,
+        "type": "query"
+      },
+      {
+        "datasource": {
+          "uid": "prometheus"
+        },
+        "name": "unknown_refresh_with_options",
+        "options": [],
+        "refresh": 1,
+        "type": "query"
+      },
+      {
+        "datasource": {
+          "uid": "prometheus"
+        },
+        "name": "unknown_refresh_without_options",
+        "options": [],
+        "refresh": 1,
+        "type": "query"
+      },
+      {
+        "name": "custom_variable",
+        "options": [
+          {
+            "text": "custom",
+            "value": "custom"
+          }
+        ],
+        "type": "custom"
+      },
+      {
+        "name": "textbox_variable",
+        "options": [
+          {
+            "text": "Hello",
+            "value": "World"
+          }
+        ],
+        "type": "textbox"
+      },
+      {
+        "name": "datasource_variable",
+        "options": [
+          {
+            "text": "ds",
+            "value": "ds"
+          }
+        ],
+        "type": "datasource"
+      },
+      {
+        "name": "interval_variable",
+        "options": [
+          {
+            "text": "1m",
+            "value": "1m"
+          }
+        ],
+        "type": "interval"
+      }
+    ]
+  },
+  "time": {
+    "from": "now-6h",
+    "to": "now"
+  },
+  "timepicker": {
+    "refresh_intervals": [
+      "5s",
+      "10s",
+      "30s",
+      "1m",
+      "5m",
+      "15m",
+      "30m",
+      "1h",
+      "2h",
+      "1d"
+    ]
+  },
+  "timezone": "",
+  "title": "V29 Query Variables Refresh and Options Migration Test Dashboard",
+  "version": 0,
+  "weekStart": ""
+}

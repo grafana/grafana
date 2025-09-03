@@ -1,0 +1,85 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "type": "grafana",
+          "uid": "-- Grafana --"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations \u0026 Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "gnetId": null,
+  "graphTooltip": 0,
+  "links": [],
+  "meta": {
+    "canDelete": true,
+    "canEdit": true,
+    "canMakeEditable": false,
+    "canSave": true,
+    "canShare": true,
+    "canStar": true,
+    "hasUnsavedFolderChange": false,
+    "showSettings": true
+  },
+  "panels": [
+    {
+      "id": 2,
+      "title": "Normal Panel",
+      "type": "graph"
+    },
+    {
+      "id": 4,
+      "panels": [
+        {
+          "id": 6,
+          "title": "Normal nested panel",
+          "type": "graph"
+        }
+      ],
+      "title": "Row with repeated panels",
+      "type": "row"
+    }
+  ],
+  "schemaVersion": 27,
+  "tags": [],
+  "templating": {
+    "list": [
+      {
+        "current": {
+          "selected": true,
+          "text": "default_value",
+          "value": "default_value"
+        },
+        "hide": 0,
+        "name": "constant_var",
+        "options": [
+          {
+            "selected": true,
+            "text": "default_value",
+            "value": "default_value"
+          }
+        ],
+        "query": "default_value",
+        "type": "textbox"
+      }
+    ]
+  },
+  "time": {
+    "from": "now-6h",
+    "to": "now"
+  },
+  "timepicker": {},
+  "timezone": "",
+  "title": "V27 Repeated Panels and Constant Variable Migration Test Dashboard",
+  "version": 0,
+  "weekStart": ""
+}
