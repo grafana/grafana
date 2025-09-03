@@ -100,8 +100,8 @@ type DashboardsAPIBuilder struct {
 	folderClient         client.K8sHandler
 	folderClientProvider client.K8sHandlerProvider
 
-	log           log.Logger
-	reg           prometheus.Registerer
+	log          log.Logger
+	reg          prometheus.Registerer
 	isStandalone bool // skips any handling including anything to do with legacy storage
 }
 
