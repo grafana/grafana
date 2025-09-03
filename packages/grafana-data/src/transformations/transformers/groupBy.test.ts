@@ -493,7 +493,7 @@ describe('GroupBy transformer', () => {
     });
   });
 
-  it.only('should calculate count on a grouped field when selected', async () => {
+  it('should calculate count on a grouped field when selected', async () => {
     const testSeries = toDataFrame({
       name: 'A',
       fields: [

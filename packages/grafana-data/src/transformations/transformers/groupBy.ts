@@ -147,7 +147,8 @@ export const groupByTransformer: DataTransformerInfo<GroupByTransformerOptions> 
 // exported for test
 export const shouldCalculateField = (field: Field, options: GroupByTransformerOptions): boolean => {
   const fieldName = getFieldDisplayName(field);
-  const { operation, aggregations = [] } = options?.fields[fieldName];
+  const operation = options?.fields[fieldName]?.operation;
+  const aggregations = options?.fields[fieldName]?.aggregations ?? [];
 
   if (!Array.isArray(aggregations)) {
     return false;
