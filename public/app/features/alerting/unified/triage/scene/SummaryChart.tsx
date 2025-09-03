@@ -1,11 +1,12 @@
-import { PanelBuilders, VizConfigBuilders, SceneObjectState, SceneObjectBase } from '@grafana/scenes';
+import { PanelBuilders, SceneObjectBase, SceneObjectState, VizConfigBuilders } from '@grafana/scenes';
+import { VizPanel, useQueryRunner, useVariableValue, useVariableValues } from '@grafana/scenes-react';
 import { GraphDrawStyle, LineInterpolation, VisibilityMode } from '@grafana/schema';
 import { LegendDisplayMode, StackingMode, TooltipDisplayMode } from '@grafana/ui';
 
 import { overrideToFixedColor } from '../../home/Insights';
 
-import { DS_UID, METRIC_NAME, getQueryRunner } from './utils';
-import { useQueryRunner, VizPanel } from '@grafana/scenes-react';
+import { VARIABLES } from './constants';
+import { METRIC_NAME, getDataQuery, getQueryRunner, stringifyGroupFilter } from './utils';
 
 /**
  * This function creates a SceneFlexItem with a timeseries panel that shows the events.
@@ -63,25 +64,23 @@ export const summaryChartVizConfig = VizConfigBuilders.timeseries()
   )
   .build();
 
-export class SumamryChartScene extends SceneObjectBase<SceneObjectState> {
+export class SummaryChartScene extends SceneObjectBase<SceneObjectState> {
   static Component = SummaryChartReact;
 }
 
 export function SummaryChartReact() {
+  const [groupBy = []] = useVariableValues<string>(VARIABLES.groupBy);
+  const [filters = ''] = useVariableValue<string>(VARIABLES.filters);
+
+  const groupByFilter = stringifyGroupFilter(groupBy);
+  const queryFilter = [groupByFilter, filters].filter((s) => Boolean(s)).join(',');
+
+  const query = getDataQuery(`count by (alertstate) (${METRIC_NAME}{${queryFilter}})`, {
+    legendFormat: '{{alertstate}}', // we need this so we can map states to the correct color in the vizConfig
+  });
   const dataProvider = useQueryRunner({
-    queries: [
-      {
-        expr: `count by (alertstate) (${METRIC_NAME}{\${__alertsGroupBy.filters}})`,
-        legendFormat: '__auto',
-        interval: '1m',
-        refId: 'A',
-        datasource: {
-          type: 'prometheus',
-          uid: DS_UID,
-        },
-      },
-    ],
+    queries: [query],
   });
 
-  return <VizPanel title="Summary Chart" viz={summaryChartVizConfig} dataProvider={dataProvider} collapsible={true} />;
+  return <VizPanel title="" viz={summaryChartVizConfig} dataProvider={dataProvider} collapsible={true} />;
 }

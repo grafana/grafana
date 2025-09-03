@@ -15,11 +15,11 @@ import {
   sceneGraph,
   sceneUtils,
 } from '@grafana/scenes';
+import { EmbeddedSceneWithContext } from '@grafana/scenes-react';
 
-import { SumamryChartScene } from './SummaryChart';
+import { SummaryChartScene } from './SummaryChart';
 import { WorkbenchSceneObject } from './Workbench';
 import { DEFAULT_FIELDS, DS_UID, METRIC_NAME, defaultTimeRange, getQueryRunner } from './utils';
-import { EmbeddedSceneWithContext } from '@grafana/scenes-react';
 
 export const triageQuery = getTriageQuery();
 
@@ -52,7 +52,7 @@ export const triageScene = new EmbeddedSceneWithContext({
           type: 'prometheus',
           uid: DS_UID,
         },
-        applyMode: 'auto',
+        applyMode: 'manual',
         allowCustomValue: true,
         useQueriesAsFilterForOptions: true,
         supportsMultiValueOperators: true,
@@ -67,9 +67,8 @@ export const triageScene = new EmbeddedSceneWithContext({
     children: [
       // this is the summary bar chart we show above the workbench
       new SceneFlexItem({
-        // minHeight: 250,
         height: 250,
-        body: new SumamryChartScene({}),
+        body: new SummaryChartScene({}),
       }),
       // this is the main workbench component
       new WorkbenchSceneObject({}),
