@@ -30,7 +30,6 @@ export function WorkbenchRenderer() {
     ],
   });
   const { data } = runner.useState();
-
   const rows = data ? convertToWorkbenchRows(data, groupByKeys) : [];
 
   return <Workbench data={rows} domain={domain} />;
