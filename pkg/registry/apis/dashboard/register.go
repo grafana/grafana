@@ -103,9 +103,9 @@ type DashboardsAPIBuilder struct {
 	folderClient       client.K8sHandler
 	folderClientGetter k8sClientGetter
 
-	log          log.Logger
-	reg          prometheus.Registerer
-	ignoreLegacy bool // skip legacy storage and only use unified storage
+	log           log.Logger
+	reg           prometheus.Registerer
+	isMultiTenant bool // skips any handling including anything to do with legacy storage
 }
 
 func RegisterAPIService(
@@ -205,7 +205,7 @@ func NewAPIService(ac claims.AccessClient, features featuremgmt.FeatureToggles, 
 		dashboardService:   &dashsvc.DashboardServiceImpl{}, // for validation helpers only
 		folderClientGetter: folderClientGetter,
 
-		ignoreLegacy: true,
+		isMultiTenant: true,
 	}
 }
 
@@ -352,7 +352,7 @@ func (b *DashboardsAPIBuilder) validateCreate(ctx context.Context, a admission.A
 	}
 
 	// Validate quota
-	if !b.ignoreLegacy && !a.IsDryRun() {
+	if !b.isMultiTenant && !a.IsDryRun() {
 		params := &quota.ScopeParameters{}
 		params.OrgID = id.GetOrgID()
 		internalId, err := id.GetInternalID()
@@ -432,7 +432,7 @@ func (b *DashboardsAPIBuilder) validateUpdate(ctx context.Context, a admission.A
 func (b *DashboardsAPIBuilder) validateFolderExists(ctx context.Context, folderUID string, orgID int64) error {
 	// Check if folder exists using the folder store
 	var folderClient client.K8sHandler
-	if b.ignoreLegacy {
+	if b.isMultiTenant {
 		ns, err := request.NamespaceInfoFrom(ctx, false)
 		if err != nil {
 			return err
@@ -497,14 +497,9 @@ func (b *DashboardsAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver
 		RequireDeprecatedInternalID: true,
 	}
 
-	if !b.ignoreLegacy && b.dashboardPermissions != nil {
-		// Sets default root permissions
-		// Permissions:
-		//  b.dashboardPermissions.SetDefaultPermissionsAfterCreate,
-	}
-
-	// this is for ignoreLegacy
-	if b.dashboardPermissions != nil {
+	if b.isMultiTenant {
+		// TODO: Sets default root permissions
+	} else {
 		// Sets default root permissions
 		storageOpts.Permissions = b.dashboardPermissions.SetDefaultPermissionsAfterCreate
 	}
@@ -611,7 +606,7 @@ func (b *DashboardsAPIBuilder) storageForVersion(
 	storage := map[string]rest.Storage{}
 	apiGroupInfo.VersionedResourcesStorageMap[dashboards.GroupVersion().Version] = storage
 
-	if b.ignoreLegacy {
+	if b.isMultiTenant {
 		store, err := grafanaregistry.NewRegistryStore(opts.Scheme, dashboards, opts.OptsGetter)
 		if err != nil {
 			return err
