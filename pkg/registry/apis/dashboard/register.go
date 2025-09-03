@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"maps"
+	"net"
 
 	datasourceext "github.com/grafana/grafana/pkg/extensions/datasource"
 	"github.com/prometheus/client_golang/prometheus"
@@ -96,7 +97,10 @@ type DashboardsAPIBuilder struct {
 	ProvisioningService          provisioning.ProvisioningService
 	cfg                          *setting.Cfg
 	dualWriter                   dualwrite.Service
-	folderClient                 client.K8sHandler
+
+	// only one of the two is required to be set, folderClientGetter is used when ignoreLegacy is true
+	folderClient       client.K8sHandler
+	folderClientGetter func(namespace string) client.K8sHandler
 
 	log          log.Logger
 	reg          prometheus.Registerer
@@ -180,7 +184,9 @@ func NewAPIService(ac claims.AccessClient, features featuremgmt.FeatureToggles, 
 		panic("pluginStore is nil")
 	}
 
-	folderClient := client.NewK8sHandler(dual, request.GetNamespaceMapper(setting.NewCfg()), folders.FolderResourceInfo.GroupVersionResource(), getRestConfig, nil, nil, nil, sorter, features)
+	folderClientGetter := func(namespace string) client.K8sHandler {
+		return client.NewK8sHandler(dual, func(int64) string { return namespace }, folders.FolderResourceInfo.GroupVersionResource(), getRestConfig, nil, nil, nil, sorter, features)
+	}
 
 	logger := log.New("grafana-apiserver.dashboards")
 
@@ -199,11 +205,11 @@ func NewAPIService(ac claims.AccessClient, features featuremgmt.FeatureToggles, 
 		cfg: &setting.Cfg{
 			MinRefreshInterval: "10s",
 		},
-		accessClient:     ac,
-		authorizer:       authsvc.NewResourceAuthorizer(ac),
-		features:         features,
-		dashboardService: &dashsvc.DashboardServiceImpl{}, // for validation helpers only
-		folderClient:     folderClient,
+		accessClient:       ac,
+		authorizer:         authsvc.NewResourceAuthorizer(ac),
+		features:           features,
+		dashboardService:   &dashsvc.DashboardServiceImpl{}, // for validation helpers only
+		folderClientGetter: folderClientGetter,
 
 		ignoreLegacy: true,
 	}
@@ -347,12 +353,12 @@ func (b *DashboardsAPIBuilder) validateCreate(ctx context.Context, a admission.A
 	// Validate folder existence if specified
 	if !a.IsDryRun() && accessor.GetFolder() != "" {
 		if err := b.validateFolderExists(ctx, accessor.GetFolder(), id.GetOrgID()); err != nil {
-			return apierrors.NewNotFound(folders.FolderResourceInfo.GroupResource(), accessor.GetFolder())
+			return err
 		}
 	}
 
 	// Validate quota
-	/* if !a.IsDryRun() {
+	if !b.ignoreLegacy && !a.IsDryRun() {
 		params := &quota.ScopeParameters{}
 		params.OrgID = id.GetOrgID()
 		internalId, err := id.GetInternalID()
@@ -367,7 +373,7 @@ func (b *DashboardsAPIBuilder) validateCreate(ctx context.Context, a admission.A
 		if quotaReached {
 			return apierrors.NewForbidden(dashv1.DashboardResourceInfo.GroupResource(), a.GetName(), dashboards.ErrQuotaReached)
 		}
-	} */
+	}
 
 	return nil
 }
@@ -431,9 +437,28 @@ func (b *DashboardsAPIBuilder) validateUpdate(ctx context.Context, a admission.A
 // validateFolderExists checks if a folder exists
 func (b *DashboardsAPIBuilder) validateFolderExists(ctx context.Context, folderUID string, orgID int64) error {
 	// Check if folder exists using the folder store
-	_, err := b.folderClient.Get(ctx, folderUID, orgID, metav1.GetOptions{})
-
+	var folderClient client.K8sHandler
+	if b.ignoreLegacy {
+		ns, err := request.NamespaceInfoFrom(ctx, false)
+		if err != nil {
+			return err
+		}
+		folderClient = b.folderClientGetter(ns.Value)
+	} else {
+		folderClient = b.folderClient
+	}
+	_, err := folderClient.Get(ctx, folderUID, orgID, metav1.GetOptions{})
+	// Check if the error is a context deadline exceeded error
 	if err != nil {
+		var netErr *net.OpError = nil
+		if errors.As(err, &netErr) && netErr.Op == "dial" {
+			return apierrors.NewInternalError(fmt.Errorf("timeout while checking folder existence: %w", err))
+		}
+
+		// TODO: this error is not being returned, so the lower level net.OpError logic above
+		if errors.Is(err, context.DeadlineExceeded) {
+			return apierrors.NewInternalError(fmt.Errorf("timeout while checking folder existence: %w", err))
+		}
 		return err
 	}
 
@@ -471,8 +496,7 @@ func (b *DashboardsAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver
 		RequireDeprecatedInternalID: true,
 	}
 
-	// this is for ignoreLegacy
-	if b.dashboardPermissions != nil {
+	if !b.ignoreLegacy && b.dashboardPermissions != nil {
 		// Sets default root permissions
 		// Permissions:
 		//  b.dashboardPermissions.SetDefaultPermissionsAfterCreate,
