@@ -18,8 +18,8 @@ import (
 func setupTestStorageBackend(t *testing.T) *KvStorageBackend {
 	kv := setupTestKV(t)
 	opts := KvBackendOptions{
-		kvStore:    kv,
-		withPruner: true,
+		KvStore:    kv,
+		WithPruner: true,
 	}
 	backend, err := NewKvStorageBackend(opts)
 	require.NoError(t, err)
