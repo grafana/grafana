@@ -178,7 +178,6 @@ func (gr *SQLCommand) Execute(ctx context.Context, now time.Time, vars mathexp.V
 		} else {
 			obsCells.Observe(float64(tc))
 		}
-
 	}()
 
 	allFrames := []*data.Frame{}
