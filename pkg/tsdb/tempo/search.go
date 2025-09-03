@@ -422,24 +422,26 @@ func transformSpanSearchResponse(pCtx backend.PluginContext, response *SearchRes
 	spanDynamicAttributes := make(map[string]*Field)
 	hasNameAttribute := false
 
-	for _, trace := range response.Traces {
-		for _, spanSet := range trace.SpanSets {
-			for _, attribute := range spanSet.Attributes {
-				spanDynamicAttributes[attribute.Key] = &Field{
-					Name:   attribute.Key,
-					Type:   []string{},
-					Config: data.FieldConfig{DisplayNameFromDS: attribute.Key},
-				}
-			}
-			for _, span := range spanSet.Spans {
-				if span.Name != "" {
-					hasNameAttribute = true
-				}
-				for _, attribute := range span.Attributes {
+	if response != nil {
+		for _, trace := range response.Traces {
+			for _, spanSet := range trace.SpanSets {
+				for _, attribute := range spanSet.Attributes {
 					spanDynamicAttributes[attribute.Key] = &Field{
 						Name:   attribute.Key,
 						Type:   []string{},
 						Config: data.FieldConfig{DisplayNameFromDS: attribute.Key},
+					}
+				}
+				for _, span := range spanSet.Spans {
+					if span.Name != "" {
+						hasNameAttribute = true
+					}
+					for _, attribute := range span.Attributes {
+						spanDynamicAttributes[attribute.Key] = &Field{
+							Name:   attribute.Key,
+							Type:   []string{},
+							Config: data.FieldConfig{DisplayNameFromDS: attribute.Key},
+						}
 					}
 				}
 			}
