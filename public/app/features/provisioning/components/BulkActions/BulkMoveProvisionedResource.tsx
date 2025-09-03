@@ -149,6 +149,9 @@ function FormContent({ initialValues, selectedItems, repository, workflowOptions
               />
 
               <Stack gap={2}>
+                <Button variant="secondary" fill="outline" onClick={onDismiss} disabled={isCreatingJob}>
+                  <Trans i18nKey="browse-dashboards.bulk-move-resources-form.button-cancel">Cancel</Trans>
+                </Button>
                 <Button
                   type="submit"
                   disabled={!!job || isCreatingJob || hasSubmitted || targetFolderUID === undefined}
@@ -156,9 +159,6 @@ function FormContent({ initialValues, selectedItems, repository, workflowOptions
                   {isCreatingJob
                     ? t('browse-dashboards.bulk-move-resources-form.button-moving', 'Moving...')
                     : t('browse-dashboards.bulk-move-resources-form.button-move', 'Move')}
-                </Button>
-                <Button variant="secondary" fill="outline" onClick={onDismiss} disabled={isCreatingJob}>
-                  <Trans i18nKey="browse-dashboards.bulk-move-resources-form.button-cancel">Cancel</Trans>
                 </Button>
               </Stack>
             </>

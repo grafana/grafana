@@ -136,13 +136,13 @@ export function DeleteProvisionedDashboardForm({
 
             {/* Save / Cancel button */}
             <Stack gap={2}>
+              <Button variant="secondary" onClick={onDismiss} fill="outline">
+                <Trans i18nKey="dashboard-scene.delete-provisioned-dashboard-form.cancel-action">Cancel</Trans>
+              </Button>
               <Button variant="destructive" type="submit" disabled={request.isLoading || readOnly}>
                 {request.isLoading
                   ? t('dashboard-scene.delete-provisioned-dashboard-form.deleting', 'Deleting...')
                   : t('dashboard-scene.delete-provisioned-dashboard-form.delete-action', 'Delete dashboard')}
-              </Button>
-              <Button variant="secondary" onClick={onDismiss} fill="outline">
-                <Trans i18nKey="dashboard-scene.delete-provisioned-dashboard-form.cancel-action">Cancel</Trans>
               </Button>
             </Stack>
           </Stack>
