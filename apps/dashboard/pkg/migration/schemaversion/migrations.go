@@ -24,7 +24,7 @@ type DataSourceInfo struct {
 
 type DataSourceInfoProvider interface {
 	// GetDataSourceInfo returns a list of all data sources with their info
-	// Request ctx is needed only for MT implementation to grab the namespace
+	// The context must have the namespace in it
 	GetDataSourceInfo(ctx context.Context) []DataSourceInfo
 }
 
