@@ -27,10 +27,9 @@ export type QueryTemplateDTO = {
 
 // our model of QueryTemplate to use throughout the frontend
 export type QueryTemplate = {
-  uid?: string;
   query: DataQuery;
   datasourceName?: string;
   queryText?: string;
   datasourceRef?: DataSourceRef | null;
   datasourceType?: string;
-} & Omit<QueryTemplateDTO, 'targets' | 'uid'>;
+} & Omit<Partial<QueryTemplateDTO>, 'targets'>;
