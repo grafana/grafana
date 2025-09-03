@@ -77,6 +77,12 @@ func (r *directConfigProvider) GetRestConfig(ctx context.Context) (*rest.Config,
 	return r.cfg, nil
 }
 
+type unifiedStorageConfig struct {
+	GrpcAddress      string
+	GrpcIndexAddress string
+	ClientConfig     resource.RemoteResourceClientConfig
+}
+
 // unifiedStorageFactory implements resources.ResourceStore
 // and provides a new unified storage client for each request
 // HACK: This logic directly connects to unified storage. It works for now as long as dashboards and folders
@@ -92,15 +98,19 @@ type unifiedStorageFactory struct {
 	indexConn grpc.ClientConnInterface
 }
 
-func NewUnifiedStorageClientFactory(tracer tracing.Tracer) (resources.ResourceStore, error) {
-	// TODO: read config from operator.ini
+func NewUnifiedStorageClientFactory(cfg unifiedStorageConfig, tracer tracing.Tracer) (resources.ResourceStore, error) {
 	registry := prometheus.NewPedanticRegistry()
-	conn, err := unified.GrpcConn("TODO", registry)
+	conn, err := unified.GrpcConn(cfg.GrpcAddress, registry)
 	if err != nil {
 		return nil, fmt.Errorf("create unified storage gRPC connection: %w", err)
 	}
 
-	indexConn, err := unified.GrpcConn("TODO", registry)
+	indexAddress := cfg.GrpcIndexAddress
+	if indexAddress == "" {
+		indexAddress = cfg.GrpcAddress
+	}
+
+	indexConn, err := unified.GrpcConn(indexAddress, registry)
 	if err != nil {
 		return nil, fmt.Errorf("create unified storage index gRPC connection: %w", err)
 	}
