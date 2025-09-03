@@ -204,16 +204,15 @@ const getStyles = (theme: GrafanaTheme2, mode: LogLineDetailsMode, showControls?
     marginRight: 1,
   }),
   inlineContainer: css({
-    backgroundColor: theme.colors.background.elevated,
+    backgroundColor: theme.colors.background.secondary,
     border: `1px solid ${theme.colors.border.weak}`,
     borderRadius: theme.shape.radius.default,
-    boxShadow: theme.shadows.z2,
     height: '100%',
     overflow: 'auto',
   }),
   container: css({
     backgroundColor: theme.colors.background.elevated,
-    border: `1px solid ${theme.colors.border.medium}`,
+    border: `1px solid ${theme.colors.border.weak}`,
     borderBottomRightRadius: showControls ? undefined : theme.shape.radius.default,
     borderRight: mode === 'sidebar' && showControls ? 'none' : undefined,
     borderTopRightRadius: showControls ? undefined : theme.shape.radius.default,
