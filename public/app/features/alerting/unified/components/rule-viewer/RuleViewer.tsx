@@ -3,10 +3,11 @@ import { chain, truncate } from 'lodash';
 import { useEffect, useState } from 'react';
 import { useMeasure } from 'react-use';
 
-import { NavModelItem, UrlQueryValue } from '@grafana/data';
+import { FeatureState, NavModelItem, UrlQueryValue } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import {
   Alert,
+  FeatureBadge,
   LinkButton,
   LoadingBar,
   Stack,
@@ -32,6 +33,7 @@ import { PromAlertingRuleState, PromRuleType } from 'app/types/unified-alerting-
 
 import { logError } from '../../Analytics';
 import { defaultPageNav } from '../../RuleViewer';
+import { RulePageEnrichmentSectionExtension } from '../../enterprise-components/enrichment/RuleViewerExtension';
 import { shouldUseAlertingListViewV2, shouldUsePrometheusRulesPrimary } from '../../featureToggles';
 import { isError, useAsync } from '../../hooks/useAsync';
 import { useRuleLocation } from '../../hooks/useCombinedRule';
@@ -80,6 +82,7 @@ export enum ActiveTab {
   Routing = 'routing',
   Details = 'details',
   VersionHistory = 'version-history',
+  Enrichment = 'enrichment',
 }
 
 const prometheusRulesPrimary = shouldUsePrometheusRulesPrimary();
@@ -172,7 +175,7 @@ const RuleViewer = () => {
           {activeTab === ActiveTab.VersionHistory && rulerRuleType.grafana.rule(rule.rulerRule) && (
             <AlertVersionHistory rule={rule.rulerRule} />
           )}
-          {/* TO DO: Add tab for enrichment */}
+          {activeTab === ActiveTab.Enrichment && <RulePageEnrichmentSectionExtension />}
         </TabContent>
       </Stack>
       {duplicateRuleIdentifier && (
@@ -478,6 +481,19 @@ function usePageNav(rule: CombinedRule) {
         },
       },
       {
+        text: t('alerting.use-page-nav.page-nav.text.enrichment', 'Alert Enrichment'),
+        active: activeTab === ActiveTab.Enrichment,
+        onClick: () => {
+          setActiveTab(ActiveTab.Enrichment);
+        },
+        // hideFromTabs: !config.featureToggles.alertingEnrichmentPerRule,
+        tabSuffix: () => (
+          <span style={{ marginLeft: 8 }}>
+            <FeatureBadge featureState={FeatureState.new} />
+          </span>
+        ),
+      },
+      {
         text: t('alerting.use-page-nav.page-nav.text.versions', 'Versions'),
         active: activeTab === ActiveTab.VersionHistory,
         onClick: () => {
@@ -485,7 +501,6 @@ function usePageNav(rule: CombinedRule) {
         },
         hideFromTabs: !isGrafanaAlertRule && !isGrafanaRecordingRule,
       },
-      // TO DO: Add tab for enrichment, hideFromTabs if alertingEnrichmentPerRule feature toggle is off
     ],
     parentItem: {
       text: groupName,
