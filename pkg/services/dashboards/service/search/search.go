@@ -50,6 +50,7 @@ func ParseResults(result *resourcepb.ResourceSearchResponse, offset int64) (v0al
 	titleIDX := -1
 	folderIDX := -1
 	tagsIDX := -1
+	descriptionIDX := -1
 	scoreIDX := -1
 	explainIDX := -1
 
@@ -65,6 +66,8 @@ func ParseResults(result *resourcepb.ResourceSearchResponse, offset int64) (v0al
 			folderIDX = i
 		case resource.SEARCH_FIELD_TAGS:
 			tagsIDX = i
+		case resource.SEARCH_FIELD_DESCRIPTION:
+			descriptionIDX = i
 		}
 	}
 
@@ -112,6 +115,9 @@ func ParseResults(result *resourcepb.ResourceSearchResponse, offset int64) (v0al
 
 		if folderIDX >= 0 && row.Cells[folderIDX] != nil {
 			hit.Folder = string(row.Cells[folderIDX])
+		}
+		if descriptionIDX >= 0 && row.Cells[descriptionIDX] != nil {
+			hit.Description = string(row.Cells[descriptionIDX])
 		}
 		if tagsIDX >= 0 && row.Cells[tagsIDX] != nil {
 			_ = json.Unmarshal(row.Cells[tagsIDX], &hit.Tags)

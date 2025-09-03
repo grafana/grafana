@@ -63,6 +63,8 @@ type DashboardHit struct {
 	Name string `json:"name"`
 	// The display nam
 	Title string `json:"title"`
+	// Dashboard description
+	Description string `json:"description,omitempty"`
 	// Filter tags
 	Tags []string `json:"tags,omitempty"`
 	// The k8s name (eg, grafana UID) for the parent folder
