@@ -9,7 +9,7 @@ import { isProvisionedFolderCheck } from 'app/api/clients/folder/v1beta1/utils';
 import { createBaseQuery, handleRequestError } from 'app/api/createBaseQuery';
 import appEvents from 'app/core/app_events';
 import { contextSrv } from 'app/core/core';
-import { Resource, ResourceList } from 'app/features/apiserver/types';
+import { AnnoKeyFolder, Resource, ResourceList } from 'app/features/apiserver/types';
 import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
 import { isDashboardV2Resource, isV1DashboardCommand, isV2DashboardCommand } from 'app/features/dashboard/api/utils';
 import { SaveDashboardCommand } from 'app/features/dashboard/components/SaveDashboard/types';
@@ -20,6 +20,7 @@ import { SaveDashboardResponseDTO, ImportDashboardResponseDTO } from 'app/types/
 import { FolderListItemDTO, FolderDTO, DescendantCount, DescendantCountDTO } from 'app/types/folders';
 
 import { getDashboardScenePageStateManager } from '../../dashboard-scene/pages/DashboardScenePageStateManager';
+import { deletedDashboardsCache } from '../../search/service/deletedDashboardsCache';
 import { refetchChildren, refreshParents } from '../state/actions';
 import { DashboardTreeSelection } from '../types';
 
@@ -324,6 +325,8 @@ export const browseDashboardsAPI = createApi({
               forceDeleteRules: false,
             },
           });
+          // Clear the deleted dashboards cache since deleting a folder also deletes its dashboards
+          deletedDashboardsCache.clear();
         }
         return { data: undefined };
       },
@@ -472,6 +475,7 @@ export const browseDashboardsAPI = createApi({
 
     // RTK wrapper for the dashboard API
     listDeletedDashboards: builder.query<ResourceList<Dashboard | DashboardV2Spec>, void>({
+      providesTags: ['getFolder'],
       queryFn: async () => {
         try {
           const api = getDashboardAPI();
@@ -486,17 +490,27 @@ export const browseDashboardsAPI = createApi({
 
     // restore a dashboard that got deleted
     restoreDashboard: builder.mutation<void, RestoreDashboardArgs>({
+      invalidatesTags: ['getFolder'],
       queryFn: async ({ dashboard }) => {
         try {
           const api = getDashboardAPI();
           const response = await api.restoreDashboard(dashboard);
           const name = response.spec.title;
+          const parentFolder = response.metadata?.annotations?.[AnnoKeyFolder];
 
           if (name) {
             appEvents.publish({
               type: AppEvents.alertSuccess.name,
               payload: [t('browse-dashboards.restore.success', 'Dashboard {{name}} restored', { name })],
             });
+
+            // Refresh the contents of the folder a dashboard was restored to
+            dispatch(
+              refetchChildren({
+                parentUID: parentFolder,
+                pageSize: PAGE_SIZE,
+              })
+            );
           }
 
           return { data: undefined };
