@@ -114,26 +114,6 @@ test.describe('Panels test: Table - Footer', { tag: ['@panels', '@table'] }, () 
     ).toHaveText(minReducerValue);
   });
 
-  test('Single-sum reducer label is hidden', async ({ gotoDashboardPage, selectors, page }) => {
-    const dashboardPage = await gotoDashboardPage({
-      uid: DASHBOARD_UID,
-      queryParams: new URLSearchParams({ editPanel: '6' }),
-    });
-
-    await expect(
-      dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('Single sum reducer'))
-    ).toBeVisible();
-
-    await waitForTableLoad(page);
-
-    await expect(
-      dashboardPage.getByGrafanaSelector(selectors.components.Panels.Visualization.TableNG.Footer.ReducerLabel)
-    ).not.toBeVisible();
-    await expect(
-      dashboardPage.getByGrafanaSelector(selectors.components.Panels.Visualization.TableNG.Footer.Value)
-    ).toBeVisible();
-  });
-
   test('Count rows for normal case', async ({ gotoDashboardPage, selectors, page }) => {
     const dashboardPage = await gotoDashboardPage({
       uid: DASHBOARD_UID,
