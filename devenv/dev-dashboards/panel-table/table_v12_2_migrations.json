@@ -961,7 +961,7 @@
             },
             "properties": [
               {
-                "id": "custom.footer.reducer",
+                "id": "custom.footer.reducers",
                 "value": ["max"]
               }
             ]
