@@ -1500,11 +1500,64 @@ func (dr *DashboardServiceImpl) fetchFolderNames(ctx context.Context, query *das
 	return folderNames, nil
 }
 
+// enrichWithDescriptions populates the Description field in DashboardSearchProjection by reading the dashboard data
+func (dr *DashboardServiceImpl) enrichWithDescriptions(ctx context.Context, projections []dashboards.DashboardSearchProjection) error {
+	if len(projections) == 0 {
+		return nil
+	}
+
+	// Collect all dashboard UIDs that need descriptions
+	uids := make([]string, 0, len(projections))
+	uidToIndex := make(map[string][]int)
+
+	for i, proj := range projections {
+		if !proj.IsFolder && proj.UID != "" {
+			if _, exists := uidToIndex[proj.UID]; !exists {
+				uids = append(uids, proj.UID)
+			}
+			uidToIndex[proj.UID] = append(uidToIndex[proj.UID], i)
+		}
+	}
+
+	if len(uids) == 0 {
+		return nil
+	}
+
+	// Batch fetch dashboards with their data
+	// We need to get the org_id from one of the projections since all are from same org
+	orgID := projections[0].OrgID
+
+	for uid, indices := range uidToIndex {
+		dash, err := dr.dashboardStore.GetDashboard(ctx, &dashboards.GetDashboardQuery{
+			UID:   uid,
+			OrgID: orgID,
+		})
+		if err != nil {
+			// Log error but don't fail the entire search
+			dr.log.Warn("Failed to get dashboard description", "uid", uid, "error", err)
+			continue
+		}
+
+		description := dash.GetDescription()
+		for _, idx := range indices {
+			projections[idx].Description = description
+		}
+	}
+
+	return nil
+}
+
 func (dr *DashboardServiceImpl) SearchDashboards(ctx context.Context, query *dashboards.FindPersistedDashboardsQuery) (model.HitList, error) {
 	ctx, span := tracer.Start(ctx, "dashboards.service.SearchDashboards")
 	defer span.End()
 
 	res, err := dr.FindDashboards(ctx, query)
+	if err != nil {
+		return nil, err
+	}
+
+	// Enrich with descriptions
+	err = dr.enrichWithDescriptions(ctx, res)
 	if err != nil {
 		return nil, err
 	}

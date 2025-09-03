@@ -94,6 +94,11 @@ func (d *Dashboard) GetTags() []string {
 	return d.Data.Get("tags").MustStringArray()
 }
 
+// GetDescription returns the description from the dashboard json data
+func (d *Dashboard) GetDescription() string {
+	return d.Data.Get("description").MustString()
+}
+
 func NewDashboardFromJson(data *simplejson.Json) *Dashboard {
 	dash := &Dashboard{}
 	dash.Data = data
