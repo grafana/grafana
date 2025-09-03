@@ -39,6 +39,7 @@ import {
   useStyles2,
 } from '@grafana/ui';
 
+import { CentralAlertHistorySceneProps } from '../../../../../../../../packages/grafana-data/src/types/pluginExtensions';
 import { LogMessages, logInfo } from '../../../Analytics';
 
 import { alertStateHistoryDatasource, useRegisterHistoryRuntimeDataSource } from './CentralHistoryRuntimeDataSource';
@@ -72,7 +73,7 @@ export const CentralAlertHistoryScene = ({
     to: 'now',
   },
   hideFilters,
-}: { defaultLabelsFilter?: string; defaultTimeRange?: { from: string; to: string }; hideFilters?: boolean } = {}) => {
+}: CentralAlertHistorySceneProps = {}) => {
   //track the loading of the central alert state history
 
   useEffect(() => {

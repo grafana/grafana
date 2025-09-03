@@ -210,7 +210,7 @@ export enum PluginExtensionPoints {
 
 // Extension Points available in plugins
 export enum PluginExtensionPointsInPlugins {
-  IrmAlertRuleHistory = 'grafana-irm-app/alert-rule-history/v1',
+  IrmAlertRuleHistory = 'grafana/alert-rule-history/v1',
 }
 
 export type PluginExtensionPanelContext = {
@@ -223,6 +223,12 @@ export type PluginExtensionPanelContext = {
   targets: DataQuery[];
   scopedVars?: ScopedVars;
   data?: PanelData;
+};
+
+export type CentralAlertHistorySceneProps = {
+  defaultLabelsFilter?: string;
+  defaultTimeRange?: { from: string; to: string };
+  hideFilters?: boolean;
 };
 
 export type PluginExtensionQueryEditorRowAdaptiveTelemetryV1Context = {
