@@ -2992,8 +2992,9 @@
         "required": [
           "avatarUrl",
           "disabled",
-          "login",
           "external",
+          "login",
+          "role",
           "title"
         ],
         "properties": {
@@ -3010,6 +3011,10 @@
             "default": false
           },
           "login": {
+            "type": "string",
+            "default": ""
+          },
+          "role": {
             "type": "string",
             "default": ""
           },
@@ -5113,8 +5118,9 @@
         "required": [
           "avatarUrl",
           "disabled",
-          "login",
           "external",
+          "login",
+          "role",
           "title"
         ],
         "properties": {
@@ -5131,6 +5137,10 @@
             "default": false
           },
           "login": {
+            "type": "string",
+            "default": ""
+          },
+          "role": {
             "type": "string",
             "default": ""
           },
