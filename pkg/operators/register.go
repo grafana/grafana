@@ -77,8 +77,12 @@ func (r *directConfigProvider) GetRestConfig(ctx context.Context) (*rest.Config,
 
 // unifiedStorageFactory implements resources.ResourceStore
 // and provides a new unified storage client for each request
-// HACK: wrap around unified storage client
-// We don't reuse connections as clients get dumped on each request
+// HACK: This logic directly connects to unified storage. It works for now as long as dashboards and folders
+// reside within the same cluster and namespace. However, this approach is considered suboptimal and
+// is not recommended for broader use. It will fail when we expand support for additional resources.
+// Future improvements on the search and storage roadmap, such as introducing resource federation,
+// should eliminate the need for this workaround. Once global search capabilities are available,
+// they should replace this implementation.
 type unifiedStorageFactory struct {
 	cfg       resource.RemoteResourceClientConfig
 	tracer    trace.Tracer
@@ -89,7 +93,6 @@ type unifiedStorageFactory struct {
 func NewUnifiedStorageClientFactory(tracer tracing.Tracer) (resources.ResourceStore, error) {
 	// TODO: read config from operator.ini
 	registry := prometheus.NewPedanticRegistry()
-	// TODO: talk to s&s about using this method recommended only for tests
 	conn, err := unified.GrpcConn("TODO", registry)
 	if err != nil {
 		return nil, fmt.Errorf("create unified storage gRPC connection: %w", err)
@@ -108,8 +111,6 @@ func NewUnifiedStorageClientFactory(tracer tracing.Tracer) (resources.ResourceSt
 }
 
 func (s *unifiedStorageFactory) getClient(ctx context.Context) (resource.ResourceClient, error) {
-	// TODO: set namespace or is there something else in the middle? do we need to? or is it fine with the context and
-	// provisioning identity we set in driver?
 	return resource.NewRemoteResourceClient(s.tracer, s.conn, s.indexConn, s.cfg)
 }
 
@@ -154,9 +155,12 @@ func runJobController(opts standalone.BuildInfo, c *cli.Context, cfg *setting.Cf
 	})).With("logger", "provisioning-job-controller")
 	logger.Info("Starting provisioning job controller")
 
+	// TODO: we should setup tracing properly
+	// https://github.com/grafana/git-ui-sync-project/issues/507
 	tracer := tracing.NewNoopTracerService()
 
 	// FIXME: we should create providers that can be used here, and API server
+	// https://github.com/grafana/git-ui-sync-project/issues/468
 	controllerCfg, err := setupFromConfig(cfg)
 	if err != nil {
 		return fmt.Errorf("failed to setup operator: %w", err)
@@ -220,7 +224,8 @@ func runJobController(opts standalone.BuildInfo, c *cli.Context, cfg *setting.Cf
 	}
 
 	// HistoryWriter can be either Loki or the API server
-	// TODO: Loki support
+	// TODO: Loki configuration and setup in the same way we do for the API server
+	// https://github.com/grafana/git-ui-sync-project/issues/508
 	// var jobHistoryWriter jobs.HistoryWriter
 	// if b.jobHistoryLoki != nil {
 	// 	jobHistoryWriter = b.jobHistoryLoki
@@ -299,6 +304,7 @@ func runJobController(opts standalone.BuildInfo, c *cli.Context, cfg *setting.Cf
 	}
 
 	// TODO: This depends on the different flavor of Grafana
+	// https://github.com/grafana/git-ui-sync-project/issues/495
 	extras := []repository.Extra{
 		// TODO: should we have local?
 		github.Extra(
