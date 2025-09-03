@@ -172,6 +172,12 @@ func TestResourcePermSqlBackend_getResourcePermission(t *testing.T) {
 			resource: "unknown.grafana.app-unknown-u1",
 			err:      errUnknownGroupResource,
 		},
+		{
+			name:     "should return an error for invalid resource name",
+			orgID:    1,
+			resource: "invalid.grafana.app-invalid",
+			err:      errInvalidName,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

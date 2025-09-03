@@ -14,6 +14,7 @@ import (
 // List
 
 // Get
+// getResourcePermissions queries resource permissions based on the provided ListResourcePermissionsQuery and groups them by resource (e.g. {folder.grafana.app, folders, fold1})
 func (s *ResourcePermSqlBackend) getResourcePermissions(ctx context.Context, sql *legacysql.LegacyDatabaseHelper, query *ListResourcePermissionsQuery) (map[groupResourceName][]flatResourcePermission, error) {
 	rawQuery, args, err := buildListResourcePermissionsQueryFromTemplate(sql, query)
 	if err != nil {
@@ -53,12 +54,12 @@ func (s *ResourcePermSqlBackend) getResourcePermissions(ctx context.Context, sql
 	return permissions, nil
 }
 
+// getResourcePermission retrieves a single ResourcePermission by its name in the format <group>.<resource>.<name> (e.g. dashboard.grafana.app-dashboards-ad5rwqs)
 func (s *ResourcePermSqlBackend) getResourcePermission(ctx context.Context, sql *legacysql.LegacyDatabaseHelper, ns types.NamespaceInfo, name string) (*v0alpha1.ResourcePermission, error) {
 	// e.g. dashboard.grafana.app-dashboards-ad5rwqs
 	parts := strings.SplitN(name, "-", 3)
-
 	if len(parts) != 3 {
-		return nil, fmt.Errorf("invalid resource name: %s", name)
+		return nil, fmt.Errorf("%w: %s", errInvalidName, name)
 	}
 
 	group, resourceType, uid := parts[0], parts[1], parts[2]

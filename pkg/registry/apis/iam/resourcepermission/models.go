@@ -12,10 +12,12 @@ import (
 )
 
 var (
+	errDatabaseHelper       = errors.New("failed to get database")
 	errNotImplemented       = errors.New("not supported by this storage backend")
 	errEmptyName            = errors.New("name cannot be empty")
 	errUnknownGroupResource = errors.New("unknown group/resource")
 	errNotFound             = errors.New("not found")
+	errInvalidName          = errors.New("invalid name")
 	errInvalidScope         = errors.New("invalid scope")
 	errInvalidNamespace     = errors.New("invalid namespace")
 
@@ -41,6 +43,7 @@ type flatResourcePermission struct {
 	IsServiceAccount bool      `xorm:"is_service_account"`
 }
 
+// toV0ResourcePermissions converts flatResourcePermission grouped by resource (e.g. {folder.grafana.app, folders, fold1}) to a list of v0alpha1.ResourcePermission
 func (s *ResourcePermSqlBackend) toV0ResourcePermissions(permsByResource map[groupResourceName][]flatResourcePermission) ([]v0alpha1.ResourcePermission, error) {
 	if len(permsByResource) == 0 {
 		return nil, nil
@@ -124,6 +127,7 @@ func (g *groupResourceName) v0alpha1() v0alpha1.ResourcePermissionspecResource {
 	}
 }
 
+// parseScope parses a scope string (e.g. folders:uid:1) into a groupResourceName (e.g. {folder.grafana.app, folders, fold1}).
 func (s *ResourcePermSqlBackend) parseScope(scope string) (*groupResourceName, error) {
 	parts := strings.SplitN(scope, ":", 3)
 	if len(parts) != 3 {

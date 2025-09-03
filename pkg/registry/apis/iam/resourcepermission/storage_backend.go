@@ -3,6 +3,7 @@ package resourcepermission
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"iter"
 	"sync"
@@ -71,20 +72,7 @@ func (s *ResourcePermSqlBackend) ListModifiedSince(ctx context.Context, key reso
 }
 
 func (s *ResourcePermSqlBackend) ReadResource(ctx context.Context, req *resourcepb.ReadRequest) *resource.BackendReadResponse {
-	if req.ResourceVersion > 0 {
-		return &resource.BackendReadResponse{
-			Key:   req.GetKey(),
-			Error: resource.AsErrorResult(apierrors.NewBadRequest("resourceVersion is not supported")),
-		}
-	}
-
 	rsp := &resource.BackendReadResponse{Key: req.GetKey()}
-
-	sql, err := s.dbProvider(ctx)
-	if err != nil {
-		rsp.Error = resource.AsErrorResult(err)
-		return rsp
-	}
 
 	ns, err := types.ParseNamespace(req.Key.Namespace)
 	if err != nil {
@@ -96,9 +84,31 @@ func (s *ResourcePermSqlBackend) ReadResource(ctx context.Context, req *resource
 		return rsp
 	}
 
-	resourcePermission, err := s.getResourcePermission(ctx, sql, ns, req.Key.Name)
+	if req.ResourceVersion > 0 {
+		rsp.Error = resource.AsErrorResult(apierrors.NewBadRequest("resourceVersion is not supported"))
+		return rsp
+	}
+
+	dbHelper, err := s.dbProvider(ctx)
 	if err != nil {
-		rsp.Error = resource.AsErrorResult(err)
+		// Hide the error from the user, but log it
+		logger := s.logger.FromContext(ctx)
+		logger.Error("Failed to get database helper", "error", err)
+		rsp.Error = resource.AsErrorResult(errDatabaseHelper)
+		return rsp
+	}
+
+	resourcePermission, err := s.getResourcePermission(ctx, dbHelper, ns, req.Key.Name)
+	if err != nil {
+		if errors.Is(err, errNotFound) {
+			rsp.Error = resource.AsErrorResult(
+				apierrors.NewNotFound(v0alpha1.ResourcePermissionInfo.GroupResource(), req.Key.Name),
+			)
+		} else if errors.Is(err, errUnknownGroupResource) || errors.Is(err, errInvalidName) {
+			rsp.Error = resource.AsErrorResult(apierrors.NewBadRequest(err.Error()))
+		} else {
+			rsp.Error = resource.AsErrorResult(err)
+		}
 		return rsp
 	}
 
