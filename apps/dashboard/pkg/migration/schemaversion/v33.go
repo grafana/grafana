@@ -111,7 +111,6 @@ func migratePanelsV33(dashboard map[string]interface{}, datasources []DataSource
 
 // migratePanelDatasourcesV33 updates datasource references in a single panel and its targets for V33 migration
 func migratePanelDatasourcesV33(panelMap map[string]interface{}, datasources []DataSourceInfo) {
-	fmt.Println("Datasources available for migration:", datasources)
 	// Handle panel datasource - always set result (even if nil)
 	if result := MigrateDatasourceNameToRef(panelMap["datasource"], map[string]bool{"returnDefaultAsNull": true}, datasources); result != nil {
 		panelMap["datasource"] = result
