@@ -1,6 +1,6 @@
 import { DataFrame, Labels, PanelData } from '@grafana/data';
 
-import { extractAlertInstances } from './AlertInstanceScene';
+import { extractAlertInstances } from './AlertRuleDetails';
 
 function makeFrame(times: number[], state: 'firing' | 'pending', otherLabels: Labels = { node: 'cpu1' }): DataFrame {
   const valueLabels: Labels = {
