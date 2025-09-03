@@ -18633,6 +18633,8 @@ __metadata:
     yargs: "npm:^18.0.0"
     zod: "npm:^4.0.0"
   dependenciesMeta:
+    cypress:
+      built: true
     nx:
       built: false
     prettier@3.6.2:

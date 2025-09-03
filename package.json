@@ -465,6 +465,9 @@
   },
   "packageManager": "yarn@4.9.2",
   "dependenciesMeta": {
+    "cypress": {
+      "built": true
+    },
     "nx": {
       "built": false
     },
