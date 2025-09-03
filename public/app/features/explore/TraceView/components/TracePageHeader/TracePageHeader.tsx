@@ -16,6 +16,7 @@ import { css, cx } from '@emotion/css';
 import { memo, useEffect, useMemo, useState } from 'react';
 import * as React from 'react';
 
+import { createAssistantContextItem, OpenAssistantButton } from '@grafana/assistant';
 import {
   CoreApp,
   TraceSearchProps,
@@ -50,7 +51,6 @@ import { Trace, TraceViewPluginExtensionContext } from '../types/trace';
 import { formatDuration } from '../utils/date';
 
 import { SpanFilters } from './SpanFilters/SpanFilters';
-import { createAssistantContextItem, OpenAssistantButton } from '@grafana/assistant';
 
 export type TracePageHeaderProps = {
   trace: Trace | null;
@@ -220,12 +220,12 @@ export const TracePageHeader = memo((props: TracePageHeaderProps) => {
           )}
           {datasourceType === 'tempo' && (
             <OpenAssistantButton
-              title="Explain in Assistant"
+              title={t('explore.trace-page-header.explain-in-assistant', 'Explain in Assistant')}
               origin="grafana/trace-view"
               prompt="Analyze this trace"
               context={[
                 createAssistantContextItem('structured', {
-                  title: 'Trace View Query',
+                  title: t('explore.trace-page-header.trace-view-query', 'Trace View Query'),
                   data: {
                     query: trace.traceID,
                   },
