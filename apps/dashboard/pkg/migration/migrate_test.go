@@ -1,4 +1,4 @@
-package migration_test
+package migration
 
 import (
 	"encoding/json"
@@ -11,7 +11,6 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/apps/dashboard/pkg/migration"
 	"github.com/grafana/grafana/apps/dashboard/pkg/migration/schemaversion"
 	"github.com/grafana/grafana/apps/dashboard/pkg/migration/testutil"
 )
@@ -26,10 +25,10 @@ func TestMigrate(t *testing.T) {
 	require.NoError(t, err)
 
 	// Use the same datasource provider as the frontend test to ensure consistency
-	migration.Initialize(testutil.GetTestDataSourceProvider(), testutil.GetTestPanelProvider())
+	Initialize(testutil.GetTestDataSourceProvider(), testutil.GetTestPanelProvider())
 
 	t.Run("minimum version check", func(t *testing.T) {
-		err := migration.Migrate(map[string]interface{}{
+		err := Migrate(map[string]interface{}{
 			"schemaVersion": schemaversion.MIN_VERSION - 1,
 		}, schemaversion.LATEST_VERSION)
 
@@ -79,7 +78,7 @@ func TestMigrateSingleVersion(t *testing.T) {
 	require.NoError(t, err)
 
 	// Use the same datasource provider as the frontend test to ensure consistency
-	migration.Initialize(testutil.GetTestDataSourceProvider(), testutil.GetTestPanelProvider())
+	Initialize(testutil.GetTestDataSourceProvider(), testutil.GetTestPanelProvider())
 
 	for _, f := range files {
 		if f.IsDir() {
@@ -133,7 +132,7 @@ func testSingleMigration(t *testing.T, dash map[string]interface{}, inputFileNam
 	require.Equal(t, inputVersion, actualInputVersion, "input version mismatch for %s", inputFileName)
 
 	// 2. Run migration to target version (next version: schemaVersion + 1)
-	require.NoError(t, migration.Migrate(dash, targetVersion), "single version migration from v%d to v%d failed", inputVersion, targetVersion)
+	require.NoError(t, Migrate(dash, targetVersion), "single version migration from v%d to v%d failed", inputVersion, targetVersion)
 
 	// 3. Verify final schema version
 	finalVersion := getSchemaVersion(t, dash)
@@ -168,7 +167,7 @@ func testMigration(t *testing.T, dash map[string]interface{}, inputFileName stri
 	t.Helper()
 
 	// 1. Run migration to target version
-	require.NoError(t, migration.Migrate(dash, targetVersion), "migration to v%d failed", targetVersion)
+	require.NoError(t, Migrate(dash, targetVersion), "migration to v%d failed", targetVersion)
 
 	// 2. Verify final schema version
 	finalVersion := getSchemaVersion(t, dash)
