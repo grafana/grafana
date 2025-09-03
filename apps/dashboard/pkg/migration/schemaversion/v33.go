@@ -1,5 +1,9 @@
 package schemaversion
 
+import (
+	"context"
+)
+
 // V33 migrates panel datasource references from string names to UIDs.
 //
 // This migration addresses datasource references in dashboard panels and their targets
@@ -57,8 +61,8 @@ package schemaversion
 //	  ]
 //	}
 func V33(dsInfo DataSourceInfoProvider) SchemaVersionMigrationFunc {
-	datasources := dsInfo.GetDataSourceInfo()
-	return func(dashboard map[string]interface{}) error {
+	return func(ctx context.Context, dashboard map[string]interface{}) error {
+		datasources := dsInfo.GetDataSourceInfo(ctx)
 		if dashboard == nil {
 			dashboard = map[string]interface{}{}
 		}

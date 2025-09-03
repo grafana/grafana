@@ -1,6 +1,7 @@
 package schemaversion
 
 import (
+	"context"
 	"math"
 	"sort"
 )
@@ -36,7 +37,7 @@ import (
 //	]
 //
 // The minSpan property is removed after conversion.
-func V17(dashboard map[string]interface{}) error {
+func V17(_ context.Context, dashboard map[string]interface{}) error {
 	dashboard["schemaVersion"] = 17
 
 	panels, ok := dashboard["panels"].([]interface{})

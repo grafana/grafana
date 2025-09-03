@@ -1,5 +1,7 @@
 package schemaversion
 
+import "context"
+
 // V32 is a no-op migration that serves as a placeholder for consistency.
 //
 // The migration performs no modifications to the dashboard structure and simply
@@ -21,7 +23,7 @@ package schemaversion
 //	  "schemaVersion": 32,
 //	  "panels": [...] // unchanged
 //	}
-func V32(dashboard map[string]interface{}) error {
+func V32(_ context.Context, dashboard map[string]interface{}) error {
 	dashboard["schemaVersion"] = int(32)
 	return nil
 }

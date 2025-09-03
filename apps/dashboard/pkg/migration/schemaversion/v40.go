@@ -1,5 +1,7 @@
 package schemaversion
 
+import "context"
+
 // V40 normalizes the dashboard refresh property to ensure consistent string typing.
 //
 // This migration addresses type inconsistencies in dashboard refresh configuration that could
@@ -33,7 +35,7 @@ package schemaversion
 //	refresh: ""           // normalized to empty string
 //	refresh: ""           // normalized to empty string
 //	refresh: ""           // property added with empty string
-func V40(dash map[string]interface{}) error {
+func V40(_ context.Context, dash map[string]interface{}) error {
 	dash["schemaVersion"] = int(40)
 	if _, ok := dash["refresh"].(string); !ok {
 		dash["refresh"] = ""

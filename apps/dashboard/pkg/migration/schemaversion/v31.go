@@ -1,5 +1,7 @@
 package schemaversion
 
+import "context"
+
 // V31 adds a merge transformer after any labelsToFields transformer in panel transformations.
 //
 // This migration addresses data processing workflow optimization by automatically inserting
@@ -48,7 +50,7 @@ package schemaversion
 //	    { "id": "merge", "options": {} }
 //	  ]
 //	}
-func V31(dashboard map[string]interface{}) error {
+func V31(_ context.Context, dashboard map[string]interface{}) error {
 	dashboard["schemaVersion"] = int(31)
 
 	panels, ok := dashboard["panels"].([]interface{})

@@ -70,7 +70,7 @@ func authorizerFunc(ctx context.Context, attr authorizer.Attributes) (*authorize
 	return &authorizerParams{evaluator: eval, user: user}, nil
 }
 
-// newMultiTenantAuthorizer creates an authorizer sutiable to multi-tenant setup.
+// newMultiTenantAuthorizer creates an authorizer suitable to multi-tenant setup.
 // For now it only allow authorization of access tokens.
 func newMultiTenantAuthorizer(ac types.AccessClient) authorizer.Authorizer {
 	return authorizer.AuthorizerFunc(func(ctx context.Context, a authorizer.Attributes) (authorizer.Decision, string, error) {

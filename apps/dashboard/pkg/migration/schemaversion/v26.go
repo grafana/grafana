@@ -1,5 +1,7 @@
 package schemaversion
 
+import "context"
+
 // V26 migration performs two main tasks:
 // 1. Converts all text2 panels to text panels by changing the type field
 // 2. Removes the angular field from panel options if it exists
@@ -80,7 +82,7 @@ package schemaversion
 //	    "title": "Graph Panel"
 //	  }
 //	]
-func V26(dashboard map[string]interface{}) error {
+func V26(_ context.Context, dashboard map[string]interface{}) error {
 	dashboard["schemaVersion"] = 26
 
 	panels, ok := dashboard["panels"].([]interface{})

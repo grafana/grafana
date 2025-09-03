@@ -14,7 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/libraryelements"
 )
 
-func GetAuthorizer(ac accesscontrol.AccessControl, l log.Logger) authorizer.Authorizer {
+func newLegacyAuthorizer(ac accesscontrol.AccessControl, l log.Logger) authorizer.Authorizer {
 	return authorizer.AuthorizerFunc(
 		func(ctx context.Context, attr authorizer.Attributes) (authorized authorizer.Decision, reason string, err error) {
 			// Note that we will return Allow more than expected.
