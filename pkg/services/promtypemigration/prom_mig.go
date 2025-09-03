@@ -17,12 +17,6 @@ type PromMigrationHandler interface {
 	Migrate(context.Context, *promMigrationService) error
 }
 
-type dataSourceService interface {
-	DecryptedValues(ctx context.Context, ds *datasources.DataSource) (map[string]string, error)
-	UpdateDataSource(ctx context.Context, cmd *datasources.UpdateDataSourceCommand) (*datasources.DataSource, error)
-	GetDataSourcesByType(ctx context.Context, query *datasources.GetDataSourcesByTypeQuery) ([]*datasources.DataSource, error)
-}
-
 type promMigrationService struct {
 	cfg                *setting.Cfg
 	dataSourcesService datasources.DataSourceService
