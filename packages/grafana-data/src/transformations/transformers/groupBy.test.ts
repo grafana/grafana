@@ -5,7 +5,7 @@ import { mockTransformationsRegistry } from '../../utils/tests/mockTransformatio
 import { ReducerID } from '../fieldReducer';
 import { transformDataFrame } from '../transformDataFrame';
 
-import { GroupByOperationID, groupByTransformer, GroupByTransformerOptions } from './groupBy';
+import { GroupByOperationID, groupByTransformer, GroupByTransformerOptions, shouldCalculateField } from './groupBy';
 import { DataTransformerID } from './ids';
 
 // returns a simple group by / reducer pair
@@ -491,5 +491,72 @@ describe('GroupBy transformer', () => {
       ];
       expect(result[0].fields).toEqual(expected);
     });
+  });
+
+  it('should calculate count on a grouped field when selected', async () => {
+    const testSeries = toDataFrame({
+      name: 'A',
+      fields: [
+        { name: 'category', type: FieldType.string, values: ['A', 'A', 'B', 'B', 'B'], config: {} },
+        { name: 'values', type: FieldType.number, values: [1, 2, 3, 4, 5], config: {} },
+      ],
+    });
+
+    let cfg = {
+      id: DataTransformerID.groupBy,
+      options: {
+        fields: {
+          category: {
+            operation: GroupByOperationID.groupBy,
+            aggregations: [ReducerID.count],
+          },
+          values: {
+            operation: undefined,
+          },
+        },
+      },
+    };
+
+    await expect(transformDataFrame([cfg], [testSeries])).toEmitValuesWith((received) => {
+      const result = received[0];
+      const expected: Field[] = [
+        {
+          name: 'category',
+          type: FieldType.string,
+          values: ['A', 'B'],
+          config: {},
+        },
+        {
+          name: 'category (count)',
+          type: FieldType.number,
+          values: [2, 3],
+          config: {},
+        },
+      ];
+      expect(result[0].fields).toEqual(expected);
+    });
+  });
+});
+
+describe('shouldCalculateField()', () => {
+  it.each([
+    [GroupByOperationID.aggregate, [], false],
+    [GroupByOperationID.aggregate, [ReducerID.count], true],
+    [GroupByOperationID.aggregate, [ReducerID.sum, ReducerID.count], true],
+    [GroupByOperationID.groupBy, [], false],
+    [GroupByOperationID.groupBy, [ReducerID.count], true],
+    [GroupByOperationID.groupBy, [ReducerID.sum], false],
+    [GroupByOperationID.groupBy, [ReducerID.sum, ReducerID.count], false],
+  ])('when provided operation %s and aggregations %s, should return %s', (operation, aggregations, expected) => {
+    const field: Field = {
+      name: 'testField',
+      type: FieldType.string,
+      config: {},
+      values: [],
+    };
+    const options: GroupByTransformerOptions = {
+      fields: { testField: { aggregations, operation } },
+    };
+    expect(shouldCalculateField(field, options)).toBe(expected);
   });
 });
