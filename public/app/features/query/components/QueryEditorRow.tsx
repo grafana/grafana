@@ -390,19 +390,12 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
     return (
       <>
         {!isEditingQueryLibrary && !isUnifiedAlerting && (
-          <MaybeQueryLibrarySaveButton
+          <MaybeQueryLibraryButtons
             query={query}
             app={app}
             onUpdateSuccess={this.onExitQueryLibraryEditingMode}
             onSelectQuery={this.onSelectQueryFromLibrary}
-          />
-        )}
-
-        {!isEditingQueryLibrary && !isUnifiedAlerting && (
-          <ReplaceQueryFromLibrary
             datasourceFilters={datasource?.name ? [datasource.name] : []}
-            onSelectQuery={this.onSelectQueryFromLibrary}
-            app={app}
           />
         )}
 
@@ -589,14 +582,21 @@ export function filterPanelDataToQuery(data: PanelData, refId: string): PanelDat
 }
 
 // Will render anything only if query library is enabled
-function MaybeQueryLibrarySaveButton(props: {
+function MaybeQueryLibraryButtons(props: {
   query: DataQuery;
   app?: CoreApp;
   onUpdateSuccess?: () => void;
   onSelectQuery: (query: DataQuery) => void;
+  datasourceFilters: string[];
 }) {
-  const { renderSaveQueryButton } = useQueryLibraryContext();
-  return renderSaveQueryButton(props.query, props.app, props.onUpdateSuccess, props.onSelectQuery);
+  const { renderSavedQueryButtons } = useQueryLibraryContext();
+  return renderSavedQueryButtons(
+    props.query,
+    props.app,
+    props.onUpdateSuccess,
+    props.onSelectQuery,
+    props.datasourceFilters
+  );
 }
 
 // Will render editing header only if query library is enabled
@@ -617,34 +617,6 @@ function MaybeQueryLibraryEditingHeader(props: {
     props.onUpdateSuccess,
     props.onSelectQuery
   );
-}
-
-interface ReplaceQueryFromLibraryProps<TQuery extends DataQuery> {
-  datasourceFilters: string[];
-  onSelectQuery: (query: DataQuery) => void;
-  app?: CoreApp;
-}
-
-function ReplaceQueryFromLibrary<TQuery extends DataQuery>({
-  datasourceFilters,
-  onSelectQuery,
-  app,
-}: ReplaceQueryFromLibraryProps<TQuery>) {
-  const { openDrawer, queryLibraryEnabled } = useQueryLibraryContext();
-
-  const onReplaceQueryFromLibrary = () => {
-    openDrawer({ datasourceFilters, onSelectQuery, options: { isReplacingQuery: true, context: app } });
-  };
-
-  return queryLibraryEnabled ? (
-    <QueryOperationAction
-      title={t('query-operation.header.replace-query-from-library', 'Replace with saved query')}
-      icon="book"
-      onClick={onReplaceQueryFromLibrary}
-      isGroupEnd
-      isHighlighted
-    />
-  ) : null;
 }
 
 function AdaptiveTelemetryQueryActions({ query }: { query: DataQuery }) {
