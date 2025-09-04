@@ -208,6 +208,11 @@ export enum PluginExtensionPoints {
   ExtensionSidebar = 'grafana/extension-sidebar/v0-alpha',
 }
 
+// Extension Points available in plugins
+export enum PluginExtensionExposedComponents {
+  CentralAlertHistorySceneV1 = 'grafana/central-alert-history-scene/v1',
+}
+
 export type PluginExtensionPanelContext = {
   pluginId: string;
   id: number;
@@ -218,6 +223,12 @@ export type PluginExtensionPanelContext = {
   targets: DataQuery[];
   scopedVars?: ScopedVars;
   data?: PanelData;
+};
+
+export type CentralAlertHistorySceneV1Props = {
+  defaultLabelsFilter?: string;
+  defaultTimeRange?: { from: string; to: string };
+  hideFilters?: boolean;
 };
 
 export type PluginExtensionQueryEditorRowAdaptiveTelemetryV1Context = {

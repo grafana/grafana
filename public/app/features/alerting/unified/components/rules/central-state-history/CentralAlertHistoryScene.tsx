@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import { useEffect, useMemo } from 'react';
 
-import { GrafanaTheme2, VariableHide } from '@grafana/data';
+import { CentralAlertHistorySceneV1Props, GrafanaTheme2, VariableHide } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import {
   CustomVariable,
@@ -58,7 +58,14 @@ export const STATE_FILTER_FROM = 'STATE_FILTER_FROM';
  * Both share time range and filter variable from the parent scene.
  */
 
-export const CentralAlertHistoryScene = () => {
+export const CentralAlertHistoryScene = ({
+  defaultLabelsFilter,
+  defaultTimeRange = {
+    from: 'now-1h',
+    to: 'now',
+  },
+  hideFilters,
+}: CentralAlertHistorySceneV1Props = {}) => {
   //track the loading of the central alert state history
 
   useEffect(() => {
@@ -73,6 +80,7 @@ export const CentralAlertHistoryScene = () => {
     const labelsFilterVariable = new TextBoxVariable({
       name: LABELS_FILTER,
       label: t('alerting.central-alert-history-scene.scene.labels-filter-variable.label.labels', 'Labels: '),
+      ...(defaultLabelsFilter && { value: defaultLabelsFilter }),
     });
 
     //custom variable for filtering by the current state
@@ -100,25 +108,24 @@ export const CentralAlertHistoryScene = () => {
     });
 
     return new EmbeddedScene({
-      controls: [
-        new SceneReactObject({
-          component: LabelFilter,
-        }),
-        new SceneReactObject({
-          component: FilterInfo,
-        }),
-        new VariableValueSelectors({}),
-        new ClearFilterButtonScenesObject({}),
-        new SceneControlsSpacer(),
-        new SceneTimePicker({}),
-        new SceneRefreshPicker({}),
-      ],
+      controls: hideFilters
+        ? undefined
+        : [
+            new SceneReactObject({
+              component: LabelFilter,
+            }),
+            new SceneReactObject({
+              component: FilterInfo,
+            }),
+            new VariableValueSelectors({}),
+            new ClearFilterButtonScenesObject({}),
+            new SceneControlsSpacer(),
+            new SceneTimePicker({}),
+            new SceneRefreshPicker({}),
+          ],
       // use default time range as from 1 hour ago to now, as the limit of the history api is 5000 events,
       // and using a wider time range might lead to showing gaps in the events list and the chart.
-      $timeRange: new SceneTimeRange({
-        from: 'now-1h',
-        to: 'now',
-      }),
+      $timeRange: new SceneTimeRange(defaultTimeRange),
       $variables: new SceneVariableSet({
         variables: [labelsFilterVariable, transitionsFromFilterVariable, transitionsToFilterVariable],
       }),
@@ -132,7 +139,7 @@ export const CentralAlertHistoryScene = () => {
         ],
       }),
     });
-  }, []);
+  }, [defaultLabelsFilter, defaultTimeRange, hideFilters]);
 
   // we need to call this to sync the url with the scene state
   const isUrlSyncInitialized = useUrlSync(scene);
@@ -297,3 +304,5 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
   };
 };
+
+export default CentralAlertHistoryScene;
