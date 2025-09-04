@@ -290,7 +290,9 @@ describe('<DataSourceTestingStatus />', () => {
       }> = {}
     ) => {
       const text = overrides.text ?? 'Test Component';
-      const Comp = (() => <div>{text}</div>) as unknown as ComponentTypeWithExtensionMeta<PluginExtensionDataSourceConfigStatusContext>;
+      const Comp = (() => (
+        <div>{text}</div>
+      )) as unknown as ComponentTypeWithExtensionMeta<PluginExtensionDataSourceConfigStatusContext>;
       (Comp as any).meta = {
         id: overrides.id ?? 'test-component',
         type: PluginExtensionTypes.component,
@@ -306,7 +308,10 @@ describe('<DataSourceTestingStatus />', () => {
     });
 
     it('should render plugin component from allowed plugin', () => {
-      const AllowedComponent = createMockComponent({ pluginId: 'grafana-monitoring-app', text: 'Allowed Component' }) as unknown as ComponentTypeWithExtensionMeta<{}>;
+      const AllowedComponent = createMockComponent({
+        pluginId: 'grafana-monitoring-app',
+        text: 'Allowed Component',
+      }) as unknown as ComponentTypeWithExtensionMeta<{}>;
       setPluginComponentsHook(() => ({ components: [AllowedComponent], isLoading: false }));
 
       render(<DataSourceTestingStatus {...getProps()} />);
@@ -315,7 +320,10 @@ describe('<DataSourceTestingStatus />', () => {
     });
 
     it('should NOT render plugin component from non-allowed plugin', () => {
-      const BlockedComponent = createMockComponent({ pluginId: 'not-allowed-plugin', text: 'Blocked Component' }) as unknown as ComponentTypeWithExtensionMeta<{}>;
+      const BlockedComponent = createMockComponent({
+        pluginId: 'not-allowed-plugin',
+        text: 'Blocked Component',
+      }) as unknown as ComponentTypeWithExtensionMeta<{}>;
       setPluginComponentsHook(() => ({ components: [BlockedComponent], isLoading: false }));
 
       render(<DataSourceTestingStatus {...getProps()} />);
