@@ -15,6 +15,7 @@ func init() {
 	})
 
 	server.RegisterOperator(server.Operator{
+		// FIXME: plural or singular naming?
 		Name:        "provisioning-repo",
 		Description: "Watch provisioning repositories",
 		RunFunc:     provisioning.RunRepoController,
