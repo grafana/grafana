@@ -34,11 +34,6 @@
       "count": 1
     }
   },
-  "packages/grafana-alerting/src/grafana/contactPoints/components/ContactPointSelector/ContactPointSelector.story.tsx": {
-    "no-restricted-syntax": {
-      "count": 1
-    }
-  },
   "packages/grafana-alerting/src/grafana/notificationPolicies/utils.ts": {
     "@typescript-eslint/consistent-type-assertions": {
       "count": 1
@@ -680,11 +675,6 @@
       "count": 1
     }
   },
-  "packages/grafana-ui/src/components/Forms/FieldArray.story.tsx": {
-    "no-restricted-syntax": {
-      "count": 1
-    }
-  },
   "packages/grafana-ui/src/components/Forms/Form.story.tsx": {
     "react-hooks/rules-of-hooks": {
       "count": 9
@@ -807,11 +797,6 @@
       "count": 1
     }
   },
-  "packages/grafana-ui/src/components/ScrollContainer/ScrollContainer.story.tsx": {
-    "no-restricted-syntax": {
-      "count": 1
-    }
-  },
   "packages/grafana-ui/src/components/SecretFormField/SecretFormField.tsx": {
     "no-restricted-syntax": {
       "count": 2
@@ -839,11 +824,6 @@
   },
   "packages/grafana-ui/src/components/Segment/SegmentSelect.tsx": {
     "@typescript-eslint/consistent-type-assertions": {
-      "count": 1
-    }
-  },
-  "packages/grafana-ui/src/components/Select/Select.story.tsx": {
-    "no-restricted-syntax": {
       "count": 1
     }
   },
@@ -2942,7 +2922,7 @@
   },
   "public/app/features/explore/TraceView/components/TracePageHeader/TracePageHeader.tsx": {
     "react-hooks/rules-of-hooks": {
-      "count": 2
+      "count": 1
     }
   },
   "public/app/features/explore/TraceView/components/TracePageHeader/index.tsx": {
