@@ -1,14 +1,17 @@
 import { css, cx } from '@emotion/css';
-import React from 'react';
+import { take } from 'lodash';
+import React, { useState } from 'react';
 import { useMeasure } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { ScrollContainer, Stack, Text, TextLink, useSplitter, useStyles2 } from '@grafana/ui';
+import { DEFAULT_PER_PAGE_PAGINATION } from 'app/core/constants';
 
 import { Label } from '../components/Label';
 import { MetaText } from '../components/MetaText';
 import { EditorColumnHeader } from '../components/contact-points/templates/EditorColumnHeader';
+import LoadMoreHelper from '../rule-list/LoadMoreHelper';
 
 import { GroupRow } from './GroupRow';
 import { TimelineHeader } from './Timeline';
@@ -69,6 +72,7 @@ const initialSize = 1 / 3;
 export function Workbench({ domain, data }: WorkbenchProps) {
   const styles = useStyles2(getStyles);
 
+  const [pageIndex, setPageIndex] = useState<number>(1);
   // splitter for template and payload editor
   const splitter = useSplitter({
     direction: 'row',
@@ -80,6 +84,9 @@ export function Workbench({ domain, data }: WorkbenchProps) {
   // this will measure the size of the left most column of the splitter, so we can use it to set the width of the group items
   const [ref, rect] = useMeasure<HTMLDivElement>();
   const leftColumnWidth = rect.width + 2; // +2 for the border
+
+  const dataSlice = take(data, pageIndex * 10);
+  const hasMore = data.length > pageIndex * 10;
 
   return (
     <div style={{ position: 'relative', display: 'flex', flexGrow: 1, width: '100%', height: '100%' }}>
@@ -109,7 +116,10 @@ export function Workbench({ domain, data }: WorkbenchProps) {
         <div className={styles.virtualizedContainer}>
           <WorkbenchProvider leftColumnWidth={leftColumnWidth} domain={domain}>
             <ScrollContainer height="100%" width="100%" scrollbarWidth="none" showScrollIndicators>
-              {data.map((row, index) => renderWorkbenchRow(row, leftColumnWidth, domain, generateRowKey(row, index)))}
+              {dataSlice.map((row, index) =>
+                renderWorkbenchRow(row, leftColumnWidth, domain, generateRowKey(row, index))
+              )}
+              {hasMore && <LoadMoreHelper handleLoad={() => setPageIndex((prevIndex) => prevIndex + 1)} />}
             </ScrollContainer>
           </WorkbenchProvider>
         </div>
