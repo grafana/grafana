@@ -1,4 +1,4 @@
-import { PanelData } from '@grafana/data';
+import { DataFrame, PanelData } from '@grafana/data';
 import { SceneObjectBase, SceneObjectState } from '@grafana/scenes';
 import { useQueryRunner, useTimeRange, useVariableValues } from '@grafana/scenes-react';
 
@@ -34,174 +34,93 @@ export function WorkbenchRenderer() {
   return <Workbench data={rows} domain={domain} />;
 }
 
-// @TODO narrower types for PanelData! (if possible)
-export function convertToWorkbenchRows(data: PanelData, groupBy: string[] = []): WorkbenchRow[] {
-  // @TODO don't know why we need this but seems to crash sometimes
-  if (!data.series.at(0)?.fields) {
-    return [];
-  }
-
-  const series = data.series[0];
-  const fields = series.fields;
-
-  // Find required fields
-  const timeField = fields.find((f) => f.name === 'Time');
-  const alertnameField = fields.find((f) => f.name === 'alertname');
-  const alertstateField = fields.find((f) => f.name === 'alertstate');
-  const folderField = fields.find((f) => f.name === 'grafana_folder');
-  const ruleUidField = fields.find((f) => f.name === 'grafana_rule_uid');
-
-  if (!timeField || !alertnameField || !alertstateField || !folderField || !ruleUidField) {
-    return [];
-  }
-
-  // Create a map of all available fields for grouping
-  const fieldMap = new Map<string, any>();
-  fields.forEach((field) => {
-    fieldMap.set(field.name, field);
-  });
-
-  // Collect all data with their field values
-  const allDataPoints: Array<{
-    timestamp: number;
-    alertname: string;
-    alertstate: 'firing' | 'pending';
-    folder: string;
-    ruleUID: string;
-    fieldValues: Map<string, any>;
-  }> = [];
-
-  for (let i = 0; i < timeField.values.length; i++) {
-    const fieldValues = new Map<string, any>();
-
-    // Collect all field values for this data point
-    fields.forEach((field) => {
-      fieldValues.set(field.name, field.values[i]);
-    });
-
-    allDataPoints.push({
-      timestamp: timeField.values[i] as number,
-      alertname: alertnameField.values[i] as string,
-      alertstate: alertstateField.values[i] as 'firing' | 'pending',
-      folder: folderField.values[i] as string,
-      ruleUID: ruleUidField.values[i] as string,
-      fieldValues,
-    });
-  }
-
-  // If no grouping is specified, return the original flat structure
-  if (groupBy.length === 0) {
-    return createAlertRuleRowsFromDataPoints(allDataPoints);
-  }
-
-  // Build hierarchical structure based on groupBy
-  return buildHierarchicalGroups(allDataPoints, groupBy, 0);
-}
-
-export function createAlertRuleRowsFromDataPoints(
-  dataPoints: Array<{
-    timestamp: number;
-    alertname: string;
-    alertstate: 'firing' | 'pending';
-    folder: string;
-    ruleUID: string;
-    fieldValues: Map<string, any>;
-  }>
-): AlertRuleRow[] {
-  // Group data points by rule UID
-  const ruleGroups = new Map<
+function createAlertRuleRows(dataPoints: Array<Record<string, any>>): AlertRuleRow[] {
+  const rules = new Map<
     string,
     {
       alertname: string;
       folder: string;
       ruleUID: string;
-      dataPoints: Array<{ timestamp: number; state: 'firing' | 'pending' }>;
     }
   >();
 
-  dataPoints.forEach((dp) => {
-    if (!ruleGroups.has(dp.ruleUID)) {
-      ruleGroups.set(dp.ruleUID, {
+  for (const dp of dataPoints) {
+    const ruleUID = dp.grafana_rule_uid;
+    if (!rules.has(ruleUID)) {
+      rules.set(ruleUID, {
         alertname: dp.alertname,
-        folder: dp.folder,
-        ruleUID: dp.ruleUID,
-        dataPoints: [],
+        folder: dp.grafana_folder,
+        ruleUID: ruleUID,
       });
     }
-
-    ruleGroups.get(dp.ruleUID)!.dataPoints.push({
-      timestamp: dp.timestamp,
-      state: dp.alertstate,
-    });
-  });
-
-  // Convert to AlertRuleRow format
-  const alertRuleRows: AlertRuleRow[] = [];
-
-  for (const [_ruleUID, group] of ruleGroups) {
-    const alertRuleRow: AlertRuleRow = {
-      metadata: {
-        title: group.alertname,
-        folder: group.folder,
-        ruleUID: group.ruleUID,
-      },
-    };
-
-    alertRuleRows.push(alertRuleRow);
   }
 
-  return alertRuleRows;
+  const result: AlertRuleRow[] = [];
+  for (const rule of rules.values()) {
+    result.push({
+      metadata: {
+        title: rule.alertname,
+        folder: rule.folder,
+        ruleUID: rule.ruleUID,
+      },
+    });
+  }
+  return result;
 }
 
-export function buildHierarchicalGroups(
-  dataPoints: Array<{
-    timestamp: number;
-    alertname: string;
-    alertstate: 'firing' | 'pending';
-    folder: string;
-    ruleUID: string;
-    fieldValues: Map<string, any>;
-  }>,
-  groupBy: string[],
-  currentDepth: number
-): WorkbenchRow[] {
-  // If we've reached the end of groupBy array, create AlertRuleRows
-  if (currentDepth >= groupBy.length) {
-    return createAlertRuleRowsFromDataPoints(dataPoints);
+function groupData(dataPoints: Array<Record<string, unknown>>, groupBy: string[], depth: number): WorkbenchRow[] {
+  if (depth >= groupBy.length) {
+    return createAlertRuleRows(dataPoints);
   }
 
-  const currentGroupField = groupBy[currentDepth];
+  const groupByKey = groupBy[depth];
+  const grouped = new Map<string, Array<Record<string, any>>>();
 
-  // Group data points by the current field value
-  const groups = new Map<string, typeof dataPoints>();
-
-  dataPoints.forEach((dp) => {
-    const groupValue = dp.fieldValues.get(currentGroupField);
-    const groupKey = String(groupValue ?? 'undefined');
-
-    if (!groups.has(groupKey)) {
-      groups.set(groupKey, []);
+  for (const dp of dataPoints) {
+    const key = String(dp[groupByKey] ?? 'undefined');
+    if (!grouped.has(key)) {
+      grouped.set(key, []);
     }
-    groups.get(groupKey)!.push(dp);
-  });
+    grouped.get(key)?.push(dp);
+  }
 
-  // Create GenericGroupedRow for each group
-  const result: WorkbenchRow[] = [];
-
-  for (const [groupValue, groupDataPoints] of groups) {
-    // Recursively build the next level
-    const childRows = buildHierarchicalGroups(groupDataPoints, groupBy, currentDepth + 1);
-
-    const genericGroupedRow: GenericGroupedRow = {
+  const result: GenericGroupedRow[] = [];
+  for (const [value, rows] of grouped.entries()) {
+    result.push({
       metadata: {
-        label: currentGroupField,
-        value: groupValue,
+        label: groupByKey,
+        value: value,
       },
-      rows: childRows,
-    };
-
-    result.push(genericGroupedRow);
+      rows: groupData(rows, groupBy, depth + 1),
+    });
   }
 
   return result;
+}
+
+// @TODO narrower types for PanelData! (if possible)
+export function convertToWorkbenchRows(data: PanelData, groupBy: string[] = []): WorkbenchRow[] {
+  if (!data.series.at(0)?.fields.length) {
+    return [];
+  }
+
+  const frame = data.series[0];
+  if (!isValidFrame(frame)) {
+    return [];
+  }
+
+  const allDataPoints = Array.from({ length: frame.length }, (_, i) =>
+    frame.fields.reduce<Record<string, unknown>>((acc, field) => {
+      acc[field.name] = field.values[i];
+      return acc;
+    }, {})
+  );
+
+  return groupData(allDataPoints, groupBy, 0);
+}
+
+function isValidFrame(frame: DataFrame) {
+  const requiredFieldNames = ['Time', 'alertname', 'alertstate', 'grafana_folder', 'grafana_rule_uid'];
+  const fieldNames = new Set(frame.fields.map((f) => f.name));
+  return requiredFieldNames.every((name) => fieldNames.has(name));
 }
