@@ -82,7 +82,7 @@ func NewKvStorageBackend(opts KvBackendOptions) (StorageBackend, error) {
 
 func (k *kvStorageBackend) pruneEvents(ctx context.Context, key PruningKey) error {
 	if !key.Validate() {
-		return fmt.Errorf("invalid pruning key: %+v", key)
+		return fmt.Errorf("invalid pruning key, all fields must be set: %+v", key)
 	}
 
 	keepEvents := make([]DataKey, 0, prunerMaxEvents)
