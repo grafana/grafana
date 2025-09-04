@@ -29,7 +29,6 @@ services:
       - ./provisioning/datasources:/grafana/conf/provisioning/datasources
       - ./provisioning/dashboards:/grafana/conf/provisioning/dashboards
       - ../dev-dashboards:/grafana/conf/dev-dashboards
-      - ./configs/grafana-api.local.ini:/grafana/conf/custom.ini
     environment:
       OTEL_BSP_SCHEDULE_DELAY: 500
       GF_DEFAULT_APP_MODE: development
@@ -54,8 +53,6 @@ services:
       context: ../..
       dockerfile: devenv/frontend-service/grafana-fs-dev.dockerfile
     entrypoint: ['bin/grafana', 'server', 'target']
-    volumes:
-      - ./configs/frontend-service.local.ini:/grafana/conf/custom.ini
     ports:
       - '3012:3000'
     labels:

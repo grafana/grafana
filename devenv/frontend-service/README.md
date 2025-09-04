@@ -17,14 +17,6 @@ To start the stack, from the root of the Grafana project run `make frontend-serv
 
 Quitting the process will not stop the service from running. Run `make frontend-service-down` when done to shut down the docker containers.
 
-### Grafana config
-
-The Grafana API and frontend-service containers are configured in two places:
-
-- `GF_` environment variables in the docker-compose file. Config specific to this development stack, that should be the same for everyone, is set here.
-
-- `configs/{frontend-service,grafana-api}.local.ini` file is where you can set your own personal config values, such as feature toggles. This file is git-ignored.
-
 ### Bootdata unavailable
 
 To simulate the `/bootdata` endpoint being available, there are special control URLs you can visit that use cookies to control behaviour:
@@ -34,7 +26,3 @@ To simulate the `/bootdata` endpoint being available, there are special control 
 - `/-/up` - Restores the endpoint to being available.
 
 When unavailable, the API will return `HTTP 503 Service Unavailable` with a JSON payload.
-
-### Leave service running
-
-By default, Tilt services stay running after you close the CLI, but `make frontend-service` wraps Tilt and auto shuts down the services. Set the environment variable `AUTO_DOWN=false` when running `make frontend-service` to leave the services running after quitting make. This is useful if you're restarting tilt often in quick succession for developing it.
