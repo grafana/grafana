@@ -321,9 +321,14 @@ func TestHandleMetricsFind(t *testing.T) {
 				assert.NotNil(t, respBody)
 
 				if tt.expectedMetrics != nil {
-					var result map[string][]GraphiteMetricsFindResponse
+					var result []GraphiteMetricsFindResponse
 					require.NoError(t, json.Unmarshal(respBody, &result))
-					assert.Equal(t, tt.expectedMetrics, result["data"])
+					assert.Equal(t, tt.expectedMetrics, result)
+				}
+			}
+		})
+	}
+}
 				}
 			}
 		})
