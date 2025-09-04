@@ -139,6 +139,7 @@
 /pkg/apimachinery @grafana/grafana-app-platform-squad
 /pkg/apimachinery/identity/ @grafana/identity-squad
 /pkg/apimachinery/errutil/ @grafana/grafana-backend-group
+/pkg/operators/iam @grafana/access-squad
 /pkg/promlib @grafana/oss-big-tent
 /pkg/storage/ @grafana/grafana-search-and-storage
 /pkg/storage/secret/ @grafana/grafana-operator-experience-squad
@@ -410,7 +411,9 @@
 /e2e/ @grafana/grafana-frontend-platform
 /e2e-playwright/cloud-plugins-suite/ @grafana/partner-datasources
 /e2e-playwright/dashboard-new-layouts/ @grafana/dashboards-squad
+/e2e-playwright/dashboard-cujs/ @grafana/dashboards-squad
 /e2e-playwright/dashboards-search-suite/ @grafana/dashboards-squad
+/e2e-playwright/dashboards/cujs/ @grafana/dashboards-squad
 /e2e-playwright/dashboards/DashboardLiveTest.json @grafana/dashboards-squad
 /e2e-playwright/dashboards/DataLinkWithoutSlugTest.json @grafana/dashboards-squad
 /e2e-playwright/dashboards/PanelSandboxDashboard.json @grafana/plugins-platform-frontend
@@ -755,6 +758,7 @@ playwright.storybook.config.ts @grafana/grafana-frontend-platform
 
 # public folder
 /public/app/api/ @grafana/grafana-frontend-platform
+/public/app/api/clients/folder/ @grafana/grafana-search-navigate-organise
 /public/app/core/actions/ @grafana/grafana-frontend-platform
 /public/app/core/app_events.ts @grafana/grafana-frontend-platform
 /public/app/core/components/AccessControl/ @grafana/identity-access-team
