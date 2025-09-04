@@ -1,6 +1,6 @@
 const applyFieldOverridesMock = jest.fn(); // needs to be first in this file
 
-import { Subject } from 'rxjs';
+import { Subject, of } from 'rxjs';
 
 // Importing this way to be able to spy on grafana/data
 
@@ -323,10 +323,28 @@ describe('PanelQueryRunner', () => {
   describeQueryRunnerScenario(
     'transformations',
     (ctx) => {
-      it('should re-categorize any anno frames returned by series transformations', async () => {
+      it('should re-categorize any anno frames returned by series transformations', (done) => {
+        const spy = jest.spyOn(grafanaData, 'transformDataFrame');
+        spy.mockImplementation((transformations, frames) => {
+          if (transformations.some((t) => 'topic' in t && t.topic === grafanaData.DataTopic.Series)) {
+            return of([
+              {
+                name: 'exemplar',
+                meta: { custom: { resultType: 'exemplar' }, dataTopic: 'annotations' },
+                length: 2,
+                fields: [
+                  { config: {}, name: 'Time', type: 'time', values: [1000, 2000] },
+                  { config: {}, name: 'Value', type: 'number', values: [1, 2] },
+                ],
+              },
+            ] as grafanaData.DataFrame[]);
+          }
+
+          return of([]);
+        });
+
         ctx.runner.getData({ withTransforms: true, withFieldConfig: true }).subscribe({
           next: (data: grafanaData.PanelData) => {
-            // expect(data.series).toEqual([]);
             expect(data.annotations).toEqual([
               {
                 name: 'exemplar',
@@ -338,8 +356,10 @@ describe('PanelQueryRunner', () => {
                 ],
               },
             ]);
+            done();
             return data;
           },
+          error: (err) => done(err),
         });
       });
     },
