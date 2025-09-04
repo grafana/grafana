@@ -22,7 +22,7 @@ import {
   PluginExtensionPoints,
   PluginExtensionTypes,
 } from '@grafana/data';
-import { usePluginLinks } from '@grafana/runtime';
+import { usePluginLinks, usePluginComponents } from '@grafana/runtime';
 import { DEFAULT_SPAN_FILTERS } from 'app/features/explore/state/constants';
 
 import { TraceViewPluginExtensionContext } from '../types/trace';
@@ -34,6 +34,7 @@ import { trace } from './mocks';
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   usePluginLinks: jest.fn(),
+  usePluginComponents: jest.fn(),
   reportInteraction: jest.fn(),
 }));
 
@@ -92,6 +93,9 @@ const setup = (pluginLinks: { links: PluginExtensionLink[]; isLoading: boolean }
   const mockUsePluginLinks = usePluginLinks as jest.MockedFunction<typeof usePluginLinks>;
   mockUsePluginLinks.mockReturnValue(pluginLinks);
 
+  const mockUsePluginComponents = usePluginComponents as jest.MockedFunction<typeof usePluginComponents>;
+  mockUsePluginComponents.mockReturnValue({ components: [], isLoading: false });
+
   const defaultProps = {
     trace,
     timeZone: '',
@@ -115,6 +119,7 @@ const setup = (pluginLinks: { links: PluginExtensionLink[]; isLoading: boolean }
   return {
     ...render(<TracePageHeader {...defaultProps} />),
     mockUsePluginLinks,
+    mockUsePluginComponents,
   };
 };
 
