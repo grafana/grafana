@@ -12,6 +12,7 @@ import (
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/transport"
 
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
@@ -19,6 +20,10 @@ import (
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	authrt "github.com/grafana/grafana/apps/provisioning/pkg/auth"
 	client "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned"
+	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
+	"github.com/grafana/grafana/apps/provisioning/pkg/repository/github"
+	"github.com/grafana/grafana/apps/provisioning/pkg/repository/local"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	secretdecrypt "github.com/grafana/grafana/pkg/registry/apis/secret/decrypt"
 )
 
@@ -49,16 +54,13 @@ func (r *directConfigProvider) GetRestConfig(ctx context.Context) (*rest.Config,
 
 // provisioningControllerConfig contains the configuration that overlaps for the jobs and repo controllers
 type provisioningControllerConfig struct {
-	provisioningClient       *client.Clientset
-	resyncInterval           time.Duration
-	repositoryTypes          map[provisioning.RepositoryType]struct{}
-	localConfig              localConfig
-	tokenExchangeClient      *authn.TokenExchangeClient
-	restCfg                  *rest.Config
-	historyExpiration        time.Duration
-	secretsTls               secretdecrypt.TLSConfig
-	secretsGrpcServerAddress string
-	unifiedCfg               unifiedStorageConfig
+	provisioningClient *client.Clientset
+	resyncInterval     time.Duration
+	tracer             tracing.Tracer
+	repoGetter         *resources.RepositoryGetter
+	decrypter          repository.Decrypter
+	restCfg            *rest.Config
+	historyExpiration  time.Duration
 }
 
 // expects:
@@ -77,6 +79,9 @@ func setupFromConfig(cfg *setting.Cfg) (controllerCfg *provisioningControllerCon
 	if cfg == nil {
 		return nil, fmt.Errorf("no configuration available")
 	}
+	// TODO: we should setup tracing properly
+	// https://github.com/grafana/git-ui-sync-project/issues/507
+	tracer := tracing.NewNoopTracerService()
 
 	gRPCAuth := cfg.SectionWithEnvOverrides("grpc_client_authentication")
 	token := gRPCAuth.Key("token").String()
@@ -87,8 +92,6 @@ func setupFromConfig(cfg *setting.Cfg) (controllerCfg *provisioningControllerCon
 	if tokenExchangeURL == "" {
 		return nil, fmt.Errorf("token_exchange_url is required in [grpc_client_authentication] section")
 	}
-
-	tokenNamespace := gRPCAuth.Key("token_namespace").String()
 
 	operatorSec := cfg.SectionWithEnvOverrides("operator")
 	provisioningServerURL := operatorSec.Key("provisioning_server_url").String()
@@ -127,6 +130,28 @@ func setupFromConfig(cfg *setting.Cfg) (controllerCfg *provisioningControllerCon
 		return nil, fmt.Errorf("failed to create provisioning client: %w", err)
 	}
 
+	// Decrypt Service
+	secretsSec := cfg.SectionWithEnvOverrides("secrets_manager")
+	secretsTls := secretdecrypt.TLSConfig{
+		UseTLS: secretsSec.Key("grpc_server_use_tls").MustBool(true),
+		CAFile: secretsSec.Key("grpc_server_tls_ca_file").String(),
+		// TODO: do we need this one?
+		// ServerName:         secretsSec.Key("grpc_server_tls_server_name").String(),
+		InsecureSkipVerify: secretsSec.Key("grpc_server_tls_skip_verify").MustBool(false),
+	}
+
+	decryptSvc, err := secretdecrypt.NewGRPCDecryptClientWithTLS(
+		tokenExchangeClient,
+		tracer,
+		secretsSec.Key("grpc_server_address").String(),
+		secretsTls,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("create decrypt service: %w", err)
+	}
+	decrypter := repository.ProvideDecrypter(decryptSvc)
+
+	// Repository Types
 	// TODO: This depends on the different flavor of Grafana
 	// https://github.com/grafana/git-ui-sync-project/issues/495
 	repositoryTypes := operatorSec.Key("repository_types").Strings("|")
@@ -145,43 +170,60 @@ func setupFromConfig(cfg *setting.Cfg) (controllerCfg *provisioningControllerCon
 		permittedPrefixes: operatorSec.Key("local_permitted_prefixes").Strings("|"),
 	}
 
-	// Decrypt Service
-	secretsSec := cfg.SectionWithEnvOverrides("secrets_manager")
-	secretsTls := secretdecrypt.TLSConfig{
-		UseTLS: secretsSec.Key("grpc_server_use_tls").MustBool(true),
-		CAFile: secretsSec.Key("grpc_server_tls_ca_file").String(),
-		// TODO: do we need this one?
-		// ServerName:         secretsSec.Key("grpc_server_tls_server_name").String(),
-		InsecureSkipVerify: secretsSec.Key("grpc_server_tls_skip_verify").MustBool(false),
-	}
-
-	// Unified Storage
-	allowInsecure := gRPCAuth.Key("allow_insecure").MustBool(false)
-	unifiedStorageSec := cfg.SectionWithEnvOverrides("unified_storage")
-	unifiedCfg := unifiedStorageConfig{
-		GrpcAddress:      unifiedStorageSec.Key("grpc_address").String(),
-		GrpcIndexAddress: unifiedStorageSec.Key("grpc_index_address").String(),
-		ClientConfig: resource.RemoteResourceClientConfig{
-			Token:            token,
-			TokenExchangeURL: tokenExchangeURL,
-			// TODO: why do we get this?
-			// Audiences:     unifiedStorageSec.Key("grpc_client_authentication_audiences").Strings(","),
-			Namespace:     tokenNamespace,
-			AllowInsecure: allowInsecure,
-		},
+	repoGetter, err := buildRepoGetter(availableRepositoryTypes, decrypter, localCfg, provisioningClient)
+	if err != nil {
+		return nil, fmt.Errorf("build repository getter: %w", err)
 	}
 
 	return &provisioningControllerConfig{
-		provisioningClient:       provisioningClient,
-		resyncInterval:           operatorSec.Key("resync_interval").MustDuration(60 * time.Second),
-		repositoryTypes:          availableRepositoryTypes,
-		localConfig:              localCfg,
-		tokenExchangeClient:      tokenExchangeClient,
-		restCfg:                  config,
-		secretsTls:               secretsTls,
-		unifiedCfg:               unifiedCfg,
-		secretsGrpcServerAddress: secretsSec.Key("grpc_server_address").String(),
+		provisioningClient: provisioningClient,
+		resyncInterval:     operatorSec.Key("resync_interval").MustDuration(60 * time.Second),
+		tracer:             tracer,
+		repoGetter:         repoGetter,
+		decrypter:          decrypter,
+		restCfg:            config,
 	}, nil
+}
+
+func buildRepoGetter(
+	repoTypes map[provisioning.RepositoryType]struct{},
+	decrypter repository.Decrypter,
+	localCfg localConfig,
+	provisioningClient *client.Clientset,
+) (*resources.RepositoryGetter, error) {
+	// TODO: This depends on the different flavor of Grafana
+	// https://github.com/grafana/git-ui-sync-project/issues/495
+	extras := make([]repository.Extra, 0, len(repoTypes))
+	for t := range repoTypes {
+		switch t {
+		case provisioning.GitHubRepositoryType:
+			extras = append(extras, github.Extra(
+				decrypter,
+				github.ProvideFactory(),
+				nil, // We don't need the WebhookURL for the execution of jobs, only for the repository controller
+			),
+			)
+		case provisioning.LocalRepositoryType:
+			extras = append(extras, local.Extra(
+				localCfg.homePath,
+				localCfg.permittedPrefixes,
+			))
+		default:
+			return nil, fmt.Errorf("unsupported repository type: %s", t)
+		}
+	}
+
+	repoFactory, err := repository.ProvideFactory(extras)
+	if err != nil {
+		return nil, fmt.Errorf("create repository factory: %w", err)
+	}
+
+	repoGetter := resources.NewRepositoryGetter(
+		repoFactory,
+		provisioningClient.ProvisioningV0alpha1(),
+	)
+
+	return repoGetter, nil
 }
 
 func buildTLSConfig(insecure bool, certFile, keyFile, caFile string) (rest.TLSClientConfig, error) {

@@ -13,7 +13,6 @@ import (
 	"github.com/urfave/cli/v2"
 	"k8s.io/client-go/tools/cache"
 
-	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/export"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/migrate"
@@ -22,15 +21,12 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/grafana/grafana/pkg/services/apiserver/standalone"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
 
-	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/controller"
 	informer "github.com/grafana/grafana/apps/provisioning/pkg/generated/informers/externalversions"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
-	"github.com/grafana/grafana/apps/provisioning/pkg/repository/github"
-	"github.com/grafana/grafana/apps/provisioning/pkg/repository/local"
 	deletepkg "github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/delete"
-	secretdecrypt "github.com/grafana/grafana/pkg/registry/apis/secret/decrypt"
 )
 
 func RunJobController(opts standalone.BuildInfo, c *cli.Context, cfg *setting.Cfg) error {
@@ -38,10 +34,6 @@ func RunJobController(opts standalone.BuildInfo, c *cli.Context, cfg *setting.Cf
 		Level: slog.LevelDebug,
 	})).With("logger", "provisioning-job-controller")
 	logger.Info("Starting provisioning job controller")
-
-	// TODO: we should setup tracing properly
-	// https://github.com/grafana/git-ui-sync-project/issues/507
-	tracer := tracing.NewNoopTracerService()
 
 	controllerCfg, err := getJobsControllerConfig(cfg)
 	if err != nil {
@@ -71,7 +63,6 @@ func RunJobController(opts standalone.BuildInfo, c *cli.Context, cfg *setting.Cf
 	}
 
 	logger.Info("jobs controller started")
-	// notifications := jobController.InsertNotifications()
 
 	var startHistoryInformers func()
 	if controllerCfg.historyExpiration > 0 {
@@ -117,7 +108,7 @@ func RunJobController(opts standalone.BuildInfo, c *cli.Context, cfg *setting.Cf
 	// HACK: This logic directly connects to unified storage. We are doing this for now as there is no global
 	// search endpoint. But controllers, in general, should not connect directly to unified storage and instead
 	// go through the api server. Once there is a global search endpoint, we will switch to that here as well.
-	unified, err := NewUnifiedStorageClientFactory(controllerCfg.unifiedCfg, tracer)
+	unified, err := NewUnifiedStorageClientFactory(controllerCfg.unifiedCfg, controllerCfg.tracer)
 	if err != nil {
 		return fmt.Errorf("create unified storage client: %w", err)
 	}
@@ -162,49 +153,6 @@ func RunJobController(opts standalone.BuildInfo, c *cli.Context, cfg *setting.Cf
 		syncWorker,
 	}
 
-	decryptSvc, err := secretdecrypt.NewGRPCDecryptClientWithTLS(
-		controllerCfg.tokenExchangeClient,
-		tracer,
-		controllerCfg.secretsGrpcServerAddress,
-		controllerCfg.secretsTls,
-	)
-	if err != nil {
-		return fmt.Errorf("create decrypt service: %w", err)
-	}
-	decrypter := repository.ProvideDecrypter(decryptSvc)
-
-	// TODO: This depends on the different flavor of Grafana
-	// https://github.com/grafana/git-ui-sync-project/issues/495
-	extras := make([]repository.Extra, 0, len(controllerCfg.repositoryTypes))
-	for t := range controllerCfg.repositoryTypes {
-		switch t {
-		case provisioning.GitHubRepositoryType:
-			extras = append(extras, github.Extra(
-				decrypter,
-				github.ProvideFactory(),
-				nil, // We don't need the WebhookURL for the execution of jobs, only for the repository controller
-			),
-			)
-		case provisioning.LocalRepositoryType:
-			extras = append(extras, local.Extra(
-				controllerCfg.localConfig.homePath,
-				controllerCfg.localConfig.permittedPrefixes,
-			))
-		default:
-			return fmt.Errorf("unsupported repository type: %s", t)
-		}
-	}
-
-	repoFactory, err := repository.ProvideFactory(extras)
-	if err != nil {
-		return fmt.Errorf("create repository factory: %w", err)
-	}
-
-	repoGetter := resources.NewRepositoryGetter(
-		repoFactory,
-		controllerCfg.provisioningClient.ProvisioningV0alpha1(),
-	)
-
 	// This is basically our own JobQueue system
 	driver, err := jobs.NewConcurrentJobDriver(
 		3,              // 3 drivers for now
@@ -213,7 +161,7 @@ func RunJobController(opts standalone.BuildInfo, c *cli.Context, cfg *setting.Cf
 		30*time.Second, // Periodically look for new jobs
 		30*time.Second, // Lease renewal interval
 		jobStore,
-		repoGetter,
+		controllerCfg.repoGetter,
 		jobHistoryWriter,
 		jobController.InsertNotifications(),
 		workers...,
@@ -245,6 +193,7 @@ func RunJobController(opts standalone.BuildInfo, c *cli.Context, cfg *setting.Cf
 type jobsControllerConfig struct {
 	provisioningControllerConfig
 	historyExpiration time.Duration
+	unifiedCfg        unifiedStorageConfig
 }
 
 func getJobsControllerConfig(cfg *setting.Cfg) (*jobsControllerConfig, error) {
@@ -252,8 +201,39 @@ func getJobsControllerConfig(cfg *setting.Cfg) (*jobsControllerConfig, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	// Unified Storage
+	// TODO: This is duplicate
+	gRPCAuth := cfg.SectionWithEnvOverrides("grpc_client_authentication")
+	token := gRPCAuth.Key("token").String()
+	if token == "" {
+		return nil, fmt.Errorf("token is required in [grpc_client_authentication] section")
+	}
+	tokenExchangeURL := gRPCAuth.Key("token_exchange_url").String()
+	if tokenExchangeURL == "" {
+		return nil, fmt.Errorf("token_exchange_url is required in [grpc_client_authentication] section")
+	}
+
+	tokenNamespace := gRPCAuth.Key("token_namespace").String()
+	allowInsecure := gRPCAuth.Key("allow_insecure").MustBool(false)
+	// TODO: enforce this
+	unifiedStorageSec := cfg.SectionWithEnvOverrides("unified_storage")
+	unifiedCfg := unifiedStorageConfig{
+		GrpcAddress:      unifiedStorageSec.Key("grpc_address").String(),
+		GrpcIndexAddress: unifiedStorageSec.Key("grpc_index_address").String(),
+		ClientConfig: resource.RemoteResourceClientConfig{
+			Token:            token,
+			TokenExchangeURL: tokenExchangeURL,
+			// TODO: why do we get this?
+			// Audiences:     unifiedStorageSec.Key("grpc_client_authentication_audiences").Strings(","),
+			Namespace:     tokenNamespace,
+			AllowInsecure: allowInsecure,
+		},
+	}
+
 	return &jobsControllerConfig{
 		provisioningControllerConfig: *controllerCfg,
 		historyExpiration:            cfg.SectionWithEnvOverrides("operator").Key("history_expiration").MustDuration(0),
+		unifiedCfg:                   unifiedCfg,
 	}, nil
 }
