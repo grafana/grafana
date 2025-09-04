@@ -41,6 +41,7 @@ import { getRollupNotice, getRuntimeConsolidationNotice } from './meta';
 import { prepareAnnotation } from './migrations';
 // Types
 import {
+  GraphiteEventsRequest,
   GraphiteLokiMapping,
   GraphiteMetricLokiMatcher,
   GraphiteOptions,
@@ -482,23 +483,26 @@ export class GraphiteDatasource
     }
   }
 
-  events(options: { range: TimeRange; tags: string; timezone?: TimeZone }) {
+  async events(options: { range: TimeRange; tags: string; timezone?: TimeZone }): Promise<any> {
     try {
-      let tags = '';
-      if (options.tags) {
-        tags = '&tags=' + options.tags;
+      const tags = options.tags || '';
+      const from = this.translateTime(options.range.raw.from, false, options.timezone);
+      const until = this.translateTime(options.range.raw.to, true, options.timezone);
+      if (config.featureToggles.graphiteBackendMode) {
+        return await this.postResource<GraphiteEventsRequest>('events', {
+          from: typeof from === 'string' ? from : `${from}`,
+          until: typeof until === 'string' ? until : `${until}`,
+          tags,
+        });
+      } else {
+        const tagsQueryParam = tags === '' ? '' : `&tags=${tags}`;
+        return lastValueFrom(
+          this.doGraphiteRequest({
+            method: 'GET',
+            url: `/events/get_data?from=${from}&until=${until}${tagsQueryParam}`,
+          })
+        );
       }
-      return lastValueFrom(
-        this.doGraphiteRequest({
-          method: 'GET',
-          url:
-            '/events/get_data?from=' +
-            this.translateTime(options.range.raw.from, false, options.timezone) +
-            '&until=' +
-            this.translateTime(options.range.raw.to, true, options.timezone) +
-            tags,
-        })
-      );
     } catch (err) {
       return Promise.reject(err);
     }

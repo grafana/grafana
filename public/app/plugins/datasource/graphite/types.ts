@@ -102,3 +102,9 @@ export type GraphiteQueryEditorDependencies = {
 export interface GraphiteQueryRequest extends DataQueryRequest {
   format: string;
 }
+
+export interface GraphiteEventsRequest {
+  from: number;
+  until: number;
+  tags: string;
+}
