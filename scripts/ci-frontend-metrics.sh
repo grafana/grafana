@@ -32,6 +32,17 @@ do
   BETTERER_STATS+="\"grafana.ci-code.betterer.${name}\": \"${value}\","
 done <<< "$(yarn betterer:stats)"
 
+ESLINT_STATS=""
+yarn lint:ts --format ./scripts/cli/eslint-stats-reporter.mjs -o eslint-stats.txt
+while read -r name value
+do
+  ESLINT_STATS+=$'\n  '
+  # We still report these as "betterer" as the dashboards/other scripts will still look for it there
+  ESLINT_STATS+="\"grafana.ci-code.betterer.${name}\": \"${value}\","
+done <<< "$(cat eslint-stats.txt)"
+
+rm eslint-stats.txt
+
 I18N_STATS=""
 while read -r name value
 do
@@ -49,6 +60,7 @@ done <<< "$(yarn themes:usage | awk '$4 == "@grafana/theme-token-usage" {print $
 echo "Metrics: {
   $THEME_TOKEN_USAGE
   $BETTERER_STATS
+  $ESLINT_STATS
   $I18N_STATS
   \"grafana.ci-code.strictErrors\": \"${ERROR_COUNT}\",
   \"grafana.ci-code.accessibilityErrors\": \"${ACCESSIBILITY_ERRORS}\",

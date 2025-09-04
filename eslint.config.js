@@ -15,16 +15,22 @@ const grafanaConfig = require('@grafana/eslint-config/flat');
 const grafanaPlugin = require('@grafana/eslint-plugin');
 const grafanaI18nPlugin = require('@grafana/i18n/eslint-plugin');
 
-const bettererConfig = require('./.betterer.eslint.config');
-const getEnvConfig = require('./scripts/webpack/env-util');
-
-const envConfig = getEnvConfig();
-const enableBettererRules = envConfig.frontend_dev_betterer_eslint_rules;
 const pluginsToTranslate = [
   'public/app/plugins/panel',
   'public/app/plugins/datasource/azuremonitor',
   'public/app/plugins/datasource/mssql',
 ];
+
+const commonTestIgnores = [
+  '**/*.{test,spec}.{ts,tsx}',
+  '**/__mocks__/**',
+  '**/mocks/**/*.{ts,tsx}',
+  '**/public/test/**',
+  '**/mocks.{ts,tsx}',
+  '**/spec/**/*.{ts,tsx}',
+];
+
+const enterpriseIgnores = ['public/app/extensions/**/*', 'e2e/extensions/**/*'];
 
 // [FIXME] add comment about this applying everywhere
 const baseImportConfig = {
@@ -49,6 +55,10 @@ const baseImportConfig = {
       message:
         'Do not import test files. If you require reuse of constants/mocks across files, create a separate file with no tests',
     },
+    {
+      group: ['@grafana/ui/src/*', '@grafana/runtime/src/*', '@grafana/data/src/*'],
+      message: 'Import from the public export instead.',
+    },
   ],
   paths: [
     {
@@ -69,7 +79,6 @@ function withBaseRestrictedImportsConfig(config = {}) {
     patterns: [...baseImportConfig.patterns, ...(config?.patterns ?? [])],
     paths: [...baseImportConfig.paths, ...(config?.paths ?? [])],
   };
-
   return finalConfig;
 }
 
@@ -100,7 +109,6 @@ module.exports = [
       'public/locales/**/*.js',
       'public/vendor/',
       'scripts/grafana-server/tmp',
-      '!.betterer.eslint.config.js',
       'packages/grafana-ui/src/graveyard', // deprecated UI components slated for removal
       'public/build-swagger', // swagger build output
     ],
@@ -181,10 +189,6 @@ module.exports = [
           message: 'No bare anchor nodes containing only text. Use `TextLink` instead.',
         },
       ],
-      // FIXME: Fix these in follow up PR
-      'react/no-unescaped-entities': 'off',
-      // Turn off react-hooks/rules-of-hooks whilst present in betterer
-      'react-hooks/rules-of-hooks': 'off',
     },
   },
 
@@ -206,7 +210,6 @@ module.exports = [
       ],
     },
   },
-
   {
     name: 'grafana/uplot-overrides',
     files: ['packages/grafana-ui/src/components/uPlot/**/*.{ts,tsx}'],
@@ -449,7 +452,99 @@ module.exports = [
     },
   },
 
-  // Conditionally run the betterer rules if enabled in dev's config
-  // Should be last in the config so it can override any temporary disables in here
-  ...(enableBettererRules ? bettererConfig : []),
+  {
+    // custom rule for Table to avoid performance regressions
+    files: ['packages/grafana-ui/src/components/Table/TableNG/Cells/**/*.{ts,tsx}'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        withBaseRestrictedImportsConfig({
+          patterns: [
+            {
+              group: ['**/themes/ThemeContext'],
+              importNames: ['useStyles2', 'useTheme2'],
+              message:
+                'Do not use "useStyles2" or "useTheme2" in a cell directly. Instead, provide styles to cells via `getDefaultCellStyles` or `getCellSpecificStyles`.',
+            },
+          ],
+        }),
+      ],
+    },
+  },
+
+  // Old betterer rules config:
+  {
+    files: ['**/*.{js,jsx,ts,tsx}'],
+    ignores:
+      // FIXME: Remove once all enterprise issues are fixed -
+      // we don't have a suppressions file/approach for enterprise code yet
+      enterpriseIgnores,
+    rules: {
+      '@typescript-eslint/no-explicit-any': 'error',
+      '@grafana/no-aria-label-selectors': 'error',
+    },
+  },
+  {
+    files: ['**/*.{js,jsx,ts,tsx}'],
+    ignores: [
+      ...commonTestIgnores,
+      // FIXME: Remove once all enterprise issues are fixed -
+      // we don't have a suppressions file/approach for enterprise code yet
+      ...enterpriseIgnores,
+    ],
+    rules: {
+      '@typescript-eslint/consistent-type-assertions': ['error', { assertionStyle: 'never' }],
+      'no-restricted-syntax': [
+        'error',
+        {
+          selector: 'Identifier[name=localStorage]',
+          message: 'Direct usage of localStorage is not allowed. import store from @grafana/data instead',
+        },
+        {
+          selector: 'MemberExpression[object.name=localStorage]',
+          message: 'Direct usage of localStorage is not allowed. import store from @grafana/data instead',
+        },
+        {
+          selector:
+            'Program:has(ImportDeclaration[source.value="@grafana/ui"] ImportSpecifier[imported.name="Card"]) JSXOpeningElement[name.name="Card"]:not(:has(JSXAttribute[name.name="noMargin"]))',
+          message:
+            'Add noMargin prop to Card components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.',
+        },
+        {
+          selector:
+            'Program:has(ImportDeclaration[source.value="@grafana/ui"] ImportSpecifier[imported.name="Field"]) JSXOpeningElement[name.name="Field"]:not(:has(JSXAttribute[name.name="noMargin"]))',
+          message:
+            'Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.',
+        },
+        {
+          selector: 'CallExpression[callee.type="MemberExpression"][callee.property.name="localeCompare"]',
+          message:
+            'Using localeCompare() can cause performance issues when sorting large datasets. Consider using Intl.Collator for better performance when sorting arrays, or add an eslint-disable comment if sorting a small, known dataset.',
+        },
+        {
+          // eslint-disable-next-line no-restricted-syntax
+          selector: 'Literal[value=/gf-form/], TemplateElement[value.cooked=/gf-form/]',
+          // eslint-disable-next-line no-restricted-syntax
+          message: 'gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.',
+        },
+        {
+          selector:
+            "Property[key.name='a11y'][value.type='ObjectExpression'] Property[key.name='test'][value.value='off']",
+          message: 'Skipping a11y tests is not allowed. Please fix the component or story instead.',
+        },
+      ],
+    },
+  },
+  {
+    files: ['public/app/**/*.{ts,tsx}'],
+    ignores: [
+      ...commonTestIgnores,
+      // FIXME: Remove once all enterprise issues are fixed -
+      // we don't have a suppressions file/approach for enterprise code yet
+      ...enterpriseIgnores,
+    ],
+    rules: {
+      'no-barrel-files/no-barrel-files': 'error',
+    },
+  },
 ];
