@@ -5,7 +5,8 @@ import { LegendDisplayMode } from '@grafana/ui';
 
 import { overrideToFixedColor } from '../../home/Insights';
 
-import { METRIC_NAME, getDataQuery, useQueryFilter } from './utils';
+import { METRIC_NAME } from './constants';
+import { getDataQuery, useQueryFilter } from './utils';
 
 const summaryStatVizConfig = VizConfigBuilders.bargauge()
   .setOption('orientation', VizOrientation.Horizontal)

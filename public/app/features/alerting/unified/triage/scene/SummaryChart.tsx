@@ -5,7 +5,8 @@ import { LegendDisplayMode, StackingMode, TooltipDisplayMode } from '@grafana/ui
 
 import { overrideToFixedColor } from '../../home/Insights';
 
-import { METRIC_NAME, getDataQuery, useQueryFilter } from './utils';
+import { METRIC_NAME } from './constants';
+import { getDataQuery, useQueryFilter } from './utils';
 
 /**
  * Viz config for the summary chart - used by the React component

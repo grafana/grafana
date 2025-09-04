@@ -5,8 +5,8 @@ import { useQueryRunner, useTimeRange, useVariableValues } from '@grafana/scenes
 import { Workbench } from '../Workbench';
 import { AlertRuleRow, GenericGroupedRow, WorkbenchRow } from '../types';
 
-import { VARIABLES } from './constants';
-import { DEFAULT_FIELDS, METRIC_NAME, convertTimeRangeToDomain, getDataQuery, useQueryFilter } from './utils';
+import { DEFAULT_FIELDS, METRIC_NAME, VARIABLES } from './constants';
+import { convertTimeRangeToDomain, getDataQuery, useQueryFilter } from './utils';
 
 export class WorkbenchSceneObject extends SceneObjectBase<SceneObjectState> {
   public static Component = WorkbenchRenderer;
@@ -120,7 +120,7 @@ export function convertToWorkbenchRows(data: PanelData, groupBy: string[] = []):
 }
 
 function isValidFrame(frame: DataFrame) {
-  const requiredFieldNames = ['Time', 'alertname', 'alertstate', 'grafana_folder', 'grafana_rule_uid'];
+  const requiredFieldNames = ['Time', ...DEFAULT_FIELDS];
   const fieldNames = new Set(frame.fields.map((f) => f.name));
   return requiredFieldNames.every((name) => fieldNames.has(name));
 }

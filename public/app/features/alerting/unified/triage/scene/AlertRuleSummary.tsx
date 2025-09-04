@@ -12,7 +12,8 @@ import {
 
 import { overrideToFixedColor } from '../../home/Insights';
 
-import { METRIC_NAME, getDataQuery } from './utils';
+import { METRIC_NAME } from './constants';
+import { getDataQuery } from './utils';
 
 /**
  * Viz config for the alert rule summary chart - used by the React component

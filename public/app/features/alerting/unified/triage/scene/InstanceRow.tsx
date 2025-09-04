@@ -20,7 +20,7 @@ import { AlertLabels } from '../../components/AlertLabels';
 import { overrideToFixedColor } from '../../home/Insights';
 import { GroupRow } from '../GroupRow';
 
-import { DEFAULT_FIELDS } from './utils';
+import { DEFAULT_FIELDS } from './constants';
 
 interface Instance {
   labels: Labels;

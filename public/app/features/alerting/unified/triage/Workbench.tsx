@@ -20,7 +20,6 @@ import { AlertRuleDetails } from './scene/AlertRuleDetails';
 import { AlertRuleSummary } from './scene/AlertRuleSummary';
 import { SummaryChartReact } from './scene/SummaryChart';
 import { SummaryStatsReact } from './scene/SummaryStats';
-import { StateChangeChart } from './stateChangeChart/StateChangeChart';
 import { AlertRuleRow, Domain, Filter, WorkbenchRow } from './types';
 
 type WorkbenchProps = {
@@ -184,7 +183,7 @@ function renderWorkbenchRow(
         width={leftColumnWidth}
         title={groupedRow.metadata.value}
         actions={<Label size="sm" value={groupedRow.metadata.label} />}
-        content={<StateChangeChart domain={domain} />}
+        content={null}
         isOpenByDefault={true}
       >
         {groupedRow.rows.map((childRow, childIndex) =>

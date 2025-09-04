@@ -9,7 +9,8 @@ import { GroupRow } from '../GroupRow';
 import { useWorkbenchContext } from '../WorkbenchContext';
 
 import { InstanceRow } from './InstanceRow';
-import { METRIC_NAME, getDataQuery } from './utils';
+import { METRIC_NAME } from './constants';
+import { getDataQuery } from './utils';
 
 function extractInstancesFromData(series: DataFrame[] | undefined) {
   if (!series) {

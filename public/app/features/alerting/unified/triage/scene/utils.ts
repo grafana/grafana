@@ -1,30 +1,16 @@
-import { uniqueId } from 'lodash';
-
 import { TimeRange } from '@grafana/data';
-import { SceneDataQuery, SceneQueryRunner } from '@grafana/scenes';
+import { SceneDataQuery } from '@grafana/scenes';
 import { useVariableValue, useVariableValues } from '@grafana/scenes-react';
 import { DataSourceRef } from '@grafana/schema';
 
 import { Domain } from '../types';
 
-import { VARIABLES } from './constants';
-
-export const DS_UID = 'gdev-prometheus';
-export const METRIC_NAME = 'GRAFANA_ALERTS';
-export const DEFAULT_FIELDS = ['alertname', 'grafana_folder', 'grafana_rule_uid', 'alertstate'];
-
-// @TODO figure out how we can grab the datasource ref from the Grafana config
-export function getQueryRunner(expression: string, options?: Partial<SceneDataQuery>): SceneQueryRunner {
-  return new SceneQueryRunner({
-    key: uniqueId('triage-request-'),
-    queries: [getDataQuery(expression, options)],
-  });
-}
+import { DATASOURCE_UID, VARIABLES } from './constants';
 
 export function getDataQuery(expression: string, options?: Partial<SceneDataQuery>): SceneDataQuery {
   const datasourceRef: DataSourceRef = {
     type: 'prometheus',
-    uid: DS_UID,
+    uid: DATASOURCE_UID,
   };
 
   const query: SceneDataQuery = {

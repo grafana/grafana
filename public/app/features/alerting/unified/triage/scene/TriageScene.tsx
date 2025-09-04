@@ -14,7 +14,8 @@ import {
 import { EmbeddedSceneWithContext } from '@grafana/scenes-react';
 
 import { WorkbenchSceneObject } from './Workbench';
-import { DS_UID, defaultTimeRange } from './utils';
+import { DATASOURCE_UID } from './constants';
+import { defaultTimeRange } from './utils';
 
 const cursorSync = new behaviors.CursorSync({ key: 'triage-cursor-sync', sync: DashboardCursorSync.Crosshair });
 
@@ -35,7 +36,7 @@ export const triageScene = new EmbeddedSceneWithContext({
         label: 'Group by',
         datasource: {
           type: 'prometheus',
-          uid: DS_UID,
+          uid: DATASOURCE_UID,
         },
         allowCustomValue: true,
         applyMode: 'manual',
@@ -45,7 +46,7 @@ export const triageScene = new EmbeddedSceneWithContext({
         label: 'Filters',
         datasource: {
           type: 'prometheus',
-          uid: DS_UID,
+          uid: DATASOURCE_UID,
         },
         applyMode: 'manual', // we will construct the label matchers for the PromQL queries ourselves
         allowCustomValue: true,
@@ -59,23 +60,7 @@ export const triageScene = new EmbeddedSceneWithContext({
   }),
   body: new SceneFlexLayout({
     direction: 'column',
-    children: [
-      // new SceneFlexLayout({
-      //   direction: 'row',
-      //   children: [
-      //     new SceneFlexItem({
-      //       minHeight: 120,
-      //       body: new SummaryStatsScene({}),
-      //     }),
-      //     new SceneFlexItem({
-      //       minHeight: 120,
-      //       body: new SummaryChartScene({}),
-      //     }),
-      //   ],
-      // }),
-      // this is the main workbench component
-      new WorkbenchSceneObject({}),
-    ],
+    children: [new WorkbenchSceneObject({})],
   }),
 });
 
