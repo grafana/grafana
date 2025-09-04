@@ -549,6 +549,7 @@
     },
     "alert-rules": {
       "firing-for": "Firing for",
+      "multiple-sources": "{{numSources}} data sources",
       "next-evaluation": "Next evaluation",
       "next-evaluation-in": "next evaluation in",
       "rule-definition": "Rule definition"
@@ -2638,13 +2639,15 @@
         "show": "Show"
       },
       "manage-alerts": "In these data sources, you can select Manage alerts via Alerting UI to be able to manage these alert rules in the Grafana UI as well as in the data source where they were configured.",
-      "no-groups": "No groups available",
-      "no-namespaces": "No folders available",
       "placeholder-all-data-sources": "All data sources",
       "placeholder-contact-point": "Select contact point",
       "placeholder-data-sources": "Select data sources",
       "placeholder-labels": "Select labels",
       "plugin-rules": "Plugin rules",
+      "rule-source": {
+        "datasource": "Data source managed",
+        "grafana": "Grafana managed"
+      },
       "rule-type": "Rule type",
       "rulesSearchInput-placeholder-search": "Search",
       "search": "Search",
@@ -2666,6 +2669,7 @@
         "namespace": "Folder / Namespace",
         "rule-health": "Health",
         "rule-name": "Rule name",
+        "rule-source": "Rule source",
         "rule-type": "Type",
         "state": "State"
       }
@@ -3393,9 +3397,6 @@
       "text-badge-enabled": "Enabled",
       "text-badge-not-enabled": "Not enabled"
     },
-    "scim-banner": {
-      "message": "SCIM is currently in development and not recommended for production use. Please use with caution and expect potential changes."
-    },
     "server-discovery-modal": {
       "label-the-wellknownopenidconfiguration-endpoint-for-your-id-p": "The .well-known/openid-configuration endpoint for your IdP",
       "title-open-id-connect-discovery-url": "OpenID Connect Discovery URL"
@@ -3565,7 +3566,9 @@
       },
       "error-moving-resources": "Error moving resources",
       "error-no-target-folder-path": "Target folder path is invalid or empty, please select again.",
-      "move-warning": "This will move selected folders and their descendants. In total, this will affect:",
+      "move-total": "In total, this will affect:",
+      "move-warning": "This will move selected folders and their descendants. Available target folders depend on the selected resources.",
+      "move-warning-tooltip": "You can only move provisioned resources within their provisioned folder, and local resources to local folders.",
       "target-folder": "Target Folder"
     },
     "counts": {
@@ -4692,7 +4695,8 @@
       "paste-panel": "Paste panel",
       "remove": "Remove {{typeName}}",
       "row-title": "Change row title",
-      "switch-layout": "Switch layout"
+      "switch-layout": "Switch layout",
+      "tab-title": "Change tab title"
     },
     "edit-pane": {
       "elements": {
@@ -6543,7 +6547,8 @@
     },
     "data-source-load-error": {
       "back": "Back",
-      "delete": "Delete"
+      "delete": "Delete",
+      "not-found": "Data source not found"
     },
     "data-source-missing-rights-message": {
       "title-missing-rights": "Missing rights"
@@ -8344,6 +8349,10 @@
         "action-title": "Title",
         "action-title-placeholder": "Action title",
         "action-variables": "Variables",
+        "connection": "Connection",
+        "connection-direct-description": "Make request directly from browser",
+        "connection-direct-label": "Direct from browser",
+        "connection-placeholder": "Select connection",
         "one-click-description": "Only one link or action can have one click enabled at a time"
       }
     },
@@ -8768,7 +8777,6 @@
       "cell-inspect": "Inspect value",
       "cell-inspect-tooltip": "Inspect value",
       "copy": "Copy to Clipboard",
-      "count": "Count",
       "csv-counts": "Rows:{{rows}}, Columns:{{columns}}  <5></5>",
       "csv-placeholder": "Enter CSV here...",
       "filter-placeholder": "Filter values",
@@ -8779,6 +8787,11 @@
       "filter-popup-heading": "Filter by values:",
       "filter-popup-input-placeholder": "Filter values",
       "filter-popup-match-case": "Match case",
+      "footer": {
+        "reducer": {
+          "count": "Count"
+        }
+      },
       "inspect-drawer-title": "Inspect value",
       "nested-table": {
         "no-data": "No data"
@@ -9442,9 +9455,9 @@
       "type": {
         "loki": {
           "indexed-label_one": "Indexed label",
-          "indexed-label_other": "Indexed label",
+          "indexed-label_other": "Indexed labels",
           "parsedl-label_one": "Parsed field",
-          "parsedl-label_other": "Parsed field",
+          "parsedl-label_other": "Parsed fields",
           "structured-metadata_one": "Structured metadata",
           "structured-metadata_other": "Structured metadata"
         }
@@ -9528,6 +9541,7 @@
       "fields-section": "Fields",
       "hide-log-line": "Hide log line",
       "inline-mode": "Display inline",
+      "link-value-tooltip": "Link value",
       "links-section": "Links",
       "log-line-field": "Log line",
       "log-line-section": "Log line",
@@ -9718,30 +9732,6 @@
     "un-themed-log-label-stats": {
       "field-log-stats": "{{label}}: {{total}} of {{rowCount}} rows have that field",
       "label-log-stats": "{{label}}: {{total}} of {{rowCount}} rows have that label"
-    }
-  },
-  "logs-new": {
-    "category-logs": "Logs",
-    "deduplication-options": {
-      "label-exact": "Exact",
-      "label-none": "None",
-      "label-numbers": "Numbers",
-      "label-signature": "Signature"
-    },
-    "description-infinite-scrolling": "Experimental. Request more results by scrolling to the bottom of the logs list.",
-    "description-show-controls": "Display controls to jump to the last or first log line, and filters by log level",
-    "description-syntax-highlighting": "Use a predefined syntax coloring grammar to highlight relevant parts of the log lines",
-    "name-deduplication": "Deduplication",
-    "name-enable-log-details": "Enable log details",
-    "name-infinite-scrolling": "Enable infinite scrolling",
-    "name-order": "Order",
-    "name-show-controls": "Show controls",
-    "name-syntax-highlighting": "Enable syntax highlighting",
-    "name-time": "Time",
-    "name-wrap-lines": "Wrap lines",
-    "order-options": {
-      "label-newest-first": "Newest first",
-      "label-oldest-first": "Oldest first"
     }
   },
   "manage-dashbaords": {
@@ -12783,8 +12773,6 @@
     "description-calculation": "Choose a reducer function / calculation",
     "description-cell-value-inspect": "Enable cell value inspection in a modal window",
     "description-column-filter": "Enables/disables field filters in table",
-    "description-count-rows": "Display a single count for all data rows",
-    "description-fields": "Select the fields that should be calculated",
     "description-frozen-columns": "Columns are frozen from the left side of the table",
     "description-min-column-width": "The minimum width for column auto resizing",
     "description-tooltip-from-field": "Render a cell from a field (hidden or visible) in a tooltip",
@@ -12811,21 +12799,17 @@
     "name-column-alignment": "Column alignment",
     "name-column-filter": "Column filter",
     "name-column-width": "Column width",
-    "name-count-rows": "Count rows",
     "name-enable-pagination": "Enable pagination",
-    "name-fields": "Fields",
     "name-frozen-columns": "Frozen columns",
     "name-hide-in-table": "Hide in table",
     "name-max-height": "Max row height",
     "name-min-column-width": "Minimum column width",
-    "name-show-table-footer": "Show table footer",
     "name-show-table-header": "Show table header",
     "name-tooltip-from-field": "Tooltip from field",
     "name-tooltip-placement": "Tooltip placement",
     "name-wrap-header-text": "Wrap header text",
     "name-wrap-text": "Wrap text",
     "placeholder-column-width": "auto",
-    "placeholder-fields": "All Numeric Fields",
     "placeholder-max-height": "none",
     "tooltip-placement-options": {
       "label-auto": "Auto",
