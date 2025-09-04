@@ -85,8 +85,9 @@ export function Workbench({ domain, data }: WorkbenchProps) {
   const [ref, rect] = useMeasure<HTMLDivElement>();
   const leftColumnWidth = rect.width + 2; // +2 for the border
 
-  const dataSlice = take(data, pageIndex * 10);
-  const hasMore = data.length > pageIndex * 10;
+  const itemsToRender = pageIndex * DEFAULT_PER_PAGE_PAGINATION;
+  const dataSlice = take(data, itemsToRender);
+  const hasMore = data.length > itemsToRender;
 
   return (
     <div style={{ position: 'relative', display: 'flex', flexGrow: 1, width: '100%', height: '100%' }}>
