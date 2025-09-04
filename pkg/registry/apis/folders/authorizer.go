@@ -6,6 +6,7 @@ import (
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 
 	"github.com/grafana/authlib/types"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 )
 
 // newMultiTenantAuthorizer creates an authorizer suitable to multi-tenant setup.
@@ -15,6 +16,12 @@ func newAuthorizer(ac types.AccessClient) authorizer.Authorizer {
 		info, ok := types.AuthInfoFrom(ctx)
 		if !ok {
 			return authorizer.DecisionDeny, "missing auth info", nil
+		}
+
+		// Check grafana admin
+		user, _ := identity.GetRequester(ctx)
+		if user != nil && user.GetIsGrafanaAdmin() {
+			return authorizer.DecisionAllow, "", nil
 		}
 
 		// For now we only allow access policy to authorize with multi-tenant setup
