@@ -15,7 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
-func setupTestStorageBackend(t *testing.T) *KvStorageBackend {
+func setupTestStorageBackend(t *testing.T) *kvStorageBackend {
 	kv := setupTestKV(t)
 	opts := KvBackendOptions{
 		KvStore:    kv,
@@ -1100,7 +1100,7 @@ func createTestObjectWithName(name, group, value string) (*unstructured.Unstruct
 }
 
 // writeObject writes an unstructured object to the backend using the provided event type and previous resource version
-func writeObject(t *testing.T, backend *KvStorageBackend, obj *unstructured.Unstructured, eventType resourcepb.WatchEvent_Type, previousRV int64) (int64, error) {
+func writeObject(t *testing.T, backend *kvStorageBackend, obj *unstructured.Unstructured, eventType resourcepb.WatchEvent_Type, previousRV int64) (int64, error) {
 	metaAccessor, err := utils.MetaAccessor(obj)
 	require.NoError(t, err)
 
@@ -1144,7 +1144,7 @@ func writeObject(t *testing.T, backend *KvStorageBackend, obj *unstructured.Unst
 }
 
 // createAndWriteTestObject creates a basic test object and writes it to the backend
-func createAndWriteTestObject(t *testing.T, backend *KvStorageBackend) (*unstructured.Unstructured, int64) {
+func createAndWriteTestObject(t *testing.T, backend *kvStorageBackend) (*unstructured.Unstructured, int64) {
 	testObj, err := createTestObject()
 	require.NoError(t, err)
 

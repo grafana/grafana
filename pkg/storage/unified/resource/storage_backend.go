@@ -29,8 +29,8 @@ const (
 	prunerMaxEvents       = 20
 )
 
-// KvStorageBackend Unified storage backend based on KV storage.
-type KvStorageBackend struct {
+// kvStorageBackend Unified storage backend based on KV storage.
+type kvStorageBackend struct {
 	snowflake     *snowflake.Node
 	kv            KV
 	dataStore     *dataStore
@@ -45,7 +45,7 @@ type KvStorageBackend struct {
 	//reg           prometheus.Registerer
 }
 
-var _ StorageBackend = &KvStorageBackend{}
+var _ StorageBackend = &kvStorageBackend{}
 
 type KvBackendOptions struct {
 	KvStore    KV
@@ -54,7 +54,7 @@ type KvBackendOptions struct {
 	Reg        prometheus.Registerer // TODO add metrics
 }
 
-func NewKvStorageBackend(opts KvBackendOptions) (*KvStorageBackend, error) {
+func NewKvStorageBackend(opts KvBackendOptions) (StorageBackend, error) {
 	ctx := context.Background()
 	kv := opts.KvStore
 
@@ -63,7 +63,7 @@ func NewKvStorageBackend(opts KvBackendOptions) (*KvStorageBackend, error) {
 		return nil, fmt.Errorf("failed to create snowflake node: %w", err)
 	}
 	eventStore := newEventStore(kv)
-	backend := &KvStorageBackend{
+	backend := &kvStorageBackend{
 		kv:         kv,
 		dataStore:  newDataStore(kv),
 		metaStore:  newMetadataStore(kv),
@@ -80,7 +80,7 @@ func NewKvStorageBackend(opts KvBackendOptions) (*KvStorageBackend, error) {
 	return backend, nil
 }
 
-func (k *KvStorageBackend) pruneEvents(ctx context.Context, key PruningKey) error {
+func (k *kvStorageBackend) pruneEvents(ctx context.Context, key PruningKey) error {
 	keepEvents := make([]DataKey, 0, prunerMaxEvents)
 
 	// iterate over all keys for the resource and delete versions beyond the latest 20
@@ -105,7 +105,7 @@ func (k *KvStorageBackend) pruneEvents(ctx context.Context, key PruningKey) erro
 	return nil
 }
 
-func (k *KvStorageBackend) initPruner(ctx context.Context) error {
+func (k *kvStorageBackend) initPruner(ctx context.Context) error {
 	if !k.withPruner {
 		k.log.Debug("Pruner disabled, using noop pruner")
 		k.historyPruner = &NoopPruner{}
@@ -138,7 +138,7 @@ func (k *KvStorageBackend) initPruner(ctx context.Context) error {
 }
 
 // WriteEvent writes a resource event (create/update/delete) to the storage backend.
-func (k *KvStorageBackend) WriteEvent(ctx context.Context, event WriteEvent) (int64, error) {
+func (k *kvStorageBackend) WriteEvent(ctx context.Context, event WriteEvent) (int64, error) {
 	if err := event.Validate(); err != nil {
 		return 0, fmt.Errorf("invalid event: %w", err)
 	}
@@ -241,7 +241,7 @@ func (k *KvStorageBackend) WriteEvent(ctx context.Context, event WriteEvent) (in
 	return rv, nil
 }
 
-func (k *KvStorageBackend) ReadResource(ctx context.Context, req *resourcepb.ReadRequest) *BackendReadResponse {
+func (k *kvStorageBackend) ReadResource(ctx context.Context, req *resourcepb.ReadRequest) *BackendReadResponse {
 	if req.Key == nil {
 		return &BackendReadResponse{Error: &resourcepb.ErrorResult{Code: http.StatusBadRequest, Message: "missing key"}}
 	}
@@ -280,7 +280,7 @@ func (k *KvStorageBackend) ReadResource(ctx context.Context, req *resourcepb.Rea
 }
 
 // ListIterator returns an iterator for listing resources.
-func (k *KvStorageBackend) ListIterator(ctx context.Context, req *resourcepb.ListRequest, cb func(ListIterator) error) (int64, error) {
+func (k *kvStorageBackend) ListIterator(ctx context.Context, req *resourcepb.ListRequest, cb func(ListIterator) error) (int64, error) {
 	if req.Options == nil || req.Options.Key == nil {
 		return 0, fmt.Errorf("missing options or key in ListRequest")
 	}
@@ -539,14 +539,14 @@ func applyPagination(keys []DataKey, lastSeenRV int64, sortAscending bool) []Dat
 	return pagedKeys
 }
 
-func (k *KvStorageBackend) ListModifiedSince(ctx context.Context, key NamespacedResource, sinceRv int64) (int64, iter.Seq2[*ModifiedResource, error]) {
+func (k *kvStorageBackend) ListModifiedSince(ctx context.Context, key NamespacedResource, sinceRv int64) (int64, iter.Seq2[*ModifiedResource, error]) {
 	return 0, func(yield func(*ModifiedResource, error) bool) {
 		yield(nil, errors.New("not implemented"))
 	}
 }
 
 // ListHistory is like ListIterator, but it returns the history of a resource.
-func (k *KvStorageBackend) ListHistory(ctx context.Context, req *resourcepb.ListRequest, fn func(ListIterator) error) (int64, error) {
+func (k *kvStorageBackend) ListHistory(ctx context.Context, req *resourcepb.ListRequest, fn func(ListIterator) error) (int64, error) {
 	if err := validateListHistoryRequest(req); err != nil {
 		return 0, err
 	}
@@ -625,7 +625,7 @@ func (k *KvStorageBackend) ListHistory(ctx context.Context, req *resourcepb.List
 }
 
 // processTrashEntries handles the special case of listing deleted items (trash)
-func (k *KvStorageBackend) processTrashEntries(ctx context.Context, req *resourcepb.ListRequest, fn func(ListIterator) error, historyKeys []DataKey, lastSeenRV int64, sortAscending bool, listRV int64) (int64, error) {
+func (k *kvStorageBackend) processTrashEntries(ctx context.Context, req *resourcepb.ListRequest, fn func(ListIterator) error, historyKeys []DataKey, lastSeenRV int64, sortAscending bool, listRV int64) (int64, error) {
 	// Filter to only deleted entries
 	var deletedKeys []DataKey
 	for _, key := range historyKeys {
@@ -791,7 +791,7 @@ func (i *kvHistoryIterator) Value() []byte {
 }
 
 // WatchWriteEvents returns a channel that receives write events.
-func (k *KvStorageBackend) WatchWriteEvents(ctx context.Context) (<-chan *WrittenEvent, error) {
+func (k *kvStorageBackend) WatchWriteEvents(ctx context.Context) (<-chan *WrittenEvent, error) {
 	// Create a channel to receive events
 	events := make(chan *WrittenEvent, 10000) // TODO: make this configurable
 
@@ -848,7 +848,7 @@ func (k *KvStorageBackend) WatchWriteEvents(ctx context.Context) (<-chan *Writte
 
 // GetResourceStats returns resource stats within the storage backend.
 // TODO: this isn't very efficient, we should use a more efficient algorithm.
-func (k *KvStorageBackend) GetResourceStats(ctx context.Context, namespace string, minCount int) ([]ResourceStats, error) {
+func (k *kvStorageBackend) GetResourceStats(ctx context.Context, namespace string, minCount int) ([]ResourceStats, error) {
 	stats := make([]ResourceStats, 0)
 	res := make(map[string]map[string]bool)
 	rvs := make(map[string]int64)
