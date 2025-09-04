@@ -10,5 +10,6 @@
     "compilerOptions": {
       "module": "commonjs"
     }
-  }
+  },
+  "include": ["./**/*.ts", "./**/*.mts", "./**/*.js", "./**/*.mjs"]
 }
