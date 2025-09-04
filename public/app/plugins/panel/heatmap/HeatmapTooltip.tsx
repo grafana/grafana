@@ -51,6 +51,7 @@ interface HeatmapTooltipProps {
   maxHeight?: number;
   maxWidth?: number;
   replaceVariables: InterpolateFunction;
+  canExecuteActions?: boolean;
 }
 
 export const HeatmapTooltip = (props: HeatmapTooltipProps) => {
@@ -93,6 +94,7 @@ const HeatmapHoverCell = ({
   maxHeight,
   maxWidth,
   replaceVariables,
+  canExecuteActions,
 }: HeatmapTooltipProps) => {
   const index = dataIdxs[1]!;
   const data = dataRef.current;
@@ -323,7 +325,7 @@ const HeatmapHoverCell = ({
         links = getDataLinks(linksField, xValueIdx);
       }
 
-      actions = getFieldActions(data.series!, linksField, replaceVariables, xValueIdx);
+      actions = canExecuteActions ? getFieldActions(data.series!, linksField, replaceVariables, xValueIdx) : [];
     }
 
     footer = <VizTooltipFooter dataLinks={links} annotate={annotate} actions={actions} />;
