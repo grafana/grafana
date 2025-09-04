@@ -1,13 +1,4 @@
-import {
-  FieldOverrideContext,
-  FieldType,
-  getFieldDisplayName,
-  PanelPlugin,
-  ReducerID,
-  standardEditorsRegistry,
-  identityOverrideProcessor,
-  FieldConfigProperty,
-} from '@grafana/data';
+import { PanelPlugin, standardEditorsRegistry, identityOverrideProcessor, FieldConfigProperty } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import {
   defaultTableFieldOptions,
@@ -75,6 +66,45 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(TablePanel)
           },
           defaultValue: defaultTableFieldOptions.align,
         })
+        .addBooleanSwitch({
+          path: 'filterable',
+          name: t('table.name-column-filter', 'Column filter'),
+          category,
+          description: t('table.description-column-filter', 'Enables/disables field filters in table'),
+          defaultValue: defaultTableFieldOptions.filterable,
+        })
+        .addBooleanSwitch({
+          path: 'wrapText',
+          name: t('table.name-wrap-text', 'Wrap text'),
+          category,
+        })
+        .addBooleanSwitch({
+          path: 'wrapHeaderText',
+          name: t('table.name-wrap-header-text', 'Wrap header text'),
+          category,
+        })
+        .addBooleanSwitch({
+          path: 'hideFrom.viz',
+          name: t('table.name-hide-in-table', 'Hide in table'),
+          category,
+          defaultValue: undefined,
+          hideFromDefaults: true,
+        })
+        .addCustomEditor({
+          id: 'footer.reducers',
+          category: [t('table.category-table-footer', 'Table footer')],
+          path: 'footer.reducers',
+          name: t('table.name-calculation', 'Calculation'),
+          description: t('table.description-calculation', 'Choose a reducer function / calculation'),
+          editor: standardEditorsRegistry.get('stats-picker').editor,
+          override: standardEditorsRegistry.get('stats-picker').editor,
+          defaultValue: [],
+          process: identityOverrideProcessor,
+          shouldApply: () => true,
+          settings: {
+            allowMultiple: true,
+          },
+        })
         .addCustomEditor<void, TableCellOptions>({
           id: 'cellOptions',
           path: 'cellOptions',
@@ -100,30 +130,6 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(TablePanel)
               cfg.cellOptions.type === TableCellDisplayMode.ColorBackground
             );
           },
-        })
-        .addBooleanSwitch({
-          path: 'filterable',
-          name: t('table.name-column-filter', 'Column filter'),
-          category,
-          description: t('table.description-column-filter', 'Enables/disables field filters in table'),
-          defaultValue: defaultTableFieldOptions.filterable,
-        })
-        .addBooleanSwitch({
-          path: 'wrapText',
-          name: t('table.name-wrap-text', 'Wrap text'),
-          category,
-        })
-        .addBooleanSwitch({
-          path: 'wrapHeaderText',
-          name: t('table.name-wrap-header-text', 'Wrap header text'),
-          category,
-        })
-        .addBooleanSwitch({
-          path: 'hideFrom.viz',
-          name: t('table.name-hide-in-table', 'Hide in table'),
-          category,
-          defaultValue: undefined,
-          hideFromDefaults: true,
         })
         .addFieldNamePicker({
           path: 'tooltip.field',
@@ -167,7 +173,6 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(TablePanel)
     },
   })
   .setPanelOptions((builder) => {
-    const footerCategory = [t('table.category-table-footer', 'Table footer')];
     const category = [t('table.category-table', 'Table')];
     builder
       .addBooleanSwitch({
@@ -207,63 +212,13 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(TablePanel)
           min: 0,
         },
       })
-      .addBooleanSwitch({
-        path: 'footer.show',
-        category: footerCategory,
-        name: t('table.name-show-table-footer', 'Show table footer'),
-        defaultValue: defaultOptions.footer?.show,
-      })
       .addCustomEditor({
-        id: 'footer.reducer',
-        category: footerCategory,
-        path: 'footer.reducer',
-        name: t('table.name-calculation', 'Calculation'),
-        description: t('table.description-calculation', 'Choose a reducer function / calculation'),
-        editor: standardEditorsRegistry.get('stats-picker').editor,
-        defaultValue: [ReducerID.sum],
-        showIf: (cfg) => cfg.footer?.show,
-      })
-      .addBooleanSwitch({
-        path: 'footer.countRows',
-        category: footerCategory,
-        name: t('table.name-count-rows', 'Count rows'),
-        description: t('table.description-count-rows', 'Display a single count for all data rows'),
-        defaultValue: defaultOptions.footer?.countRows,
-        showIf: (cfg) => cfg.footer?.reducer?.length === 1 && cfg.footer?.reducer[0] === ReducerID.count,
-      })
-      .addMultiSelect({
-        path: 'footer.fields',
-        category: footerCategory,
-        name: t('table.name-fields', 'Fields'),
-        description: t('table.description-fields', 'Select the fields that should be calculated'),
-        settings: {
-          allowCustomValue: false,
-          options: [],
-          placeholder: t('table.placeholder-fields', 'All Numeric Fields'),
-          getOptions: async (context: FieldOverrideContext) => {
-            const options = [];
-            if (context && context.data && context.data.length > 0) {
-              const frame = context.data[0];
-              for (const field of frame.fields) {
-                if (field.type === FieldType.number) {
-                  const name = getFieldDisplayName(field, frame, context.data);
-                  const value = field.name;
-                  options.push({ value, label: name });
-                }
-              }
-            }
-            return options;
-          },
-        },
-        defaultValue: '',
-        showIf: (cfg) => cfg.footer?.show && !(cfg.footer?.countRows && cfg.footer?.reducer.includes(ReducerID.count)),
-      })
-      .addCustomEditor({
-        id: 'footer.enablePagination',
-        path: 'footer.enablePagination',
+        id: 'enablePagination',
+        path: 'enablePagination',
         name: t('table.name-enable-pagination', 'Enable pagination'),
         category,
         editor: PaginationEditor,
+        defaultValue: defaultOptions?.enablePagination,
       });
   })
   .setSuggestionsSupplier(new TableSuggestionsSupplier());

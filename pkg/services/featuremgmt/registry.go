@@ -785,7 +785,7 @@ var (
 		{
 			Name:         "sqlExpressions",
 			Description:  "Enables SQL Expressions, which can execute SQL queries against data source results.",
-			Stage:        FeatureStagePrivatePreview,
+			Stage:        FeatureStagePublicPreview,
 			FrontendOnly: false,
 			Owner:        grafanaDatasourcesCoreServicesSquad,
 		},
@@ -1059,6 +1059,15 @@ var (
 			Stage:       FeatureStageGeneralAvailability,
 			Owner:       grafanaDashboardsSquad,
 			Expression:  "true", // enabled by default
+		},
+		{
+			Name:              "vizActionsAuth",
+			Description:       "Allows authenticated API calls in actions",
+			Stage:             FeatureStagePublicPreview,
+			Owner:             grafanaDatavizSquad,
+			FrontendOnly:      true,
+			HideFromAdminPage: true,
+			HideFromDocs:      true,
 		},
 		{
 			Name:         "alertingPrometheusRulesPrimary",

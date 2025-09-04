@@ -8772,7 +8772,6 @@
       "cell-inspect": "Érték ellenőrzése",
       "cell-inspect-tooltip": "Érték ellenőrzése",
       "copy": "Másolás a vágólapra",
-      "count": "Szám",
       "csv-counts": "Sorok:{{rows}}, Oszlopok:{{columns}}  <5></5>",
       "csv-placeholder": "Itt adja meg a CSV-t...",
       "filter-placeholder": "Értékek szűrése",
@@ -8783,6 +8782,11 @@
       "filter-popup-heading": "Szűrési mód értékek alapján:",
       "filter-popup-input-placeholder": "Értékek szűrése",
       "filter-popup-match-case": "Nagybetűérzékeny",
+      "footer": {
+        "reducer": {
+          "count": ""
+        }
+      },
       "inspect-drawer-title": "Érték ellenőrzése",
       "nested-table": {
         "no-data": "Nincs adat"
@@ -12788,8 +12792,6 @@
     "description-calculation": "Válasszon egy szűkítőfüggvényt/-számítást",
     "description-cell-value-inspect": "A cellaérték ellenőrzésének engedélyezése egy modális ablakban",
     "description-column-filter": "Engedélyezi/letiltja a mezőszűrőket a táblázatban",
-    "description-count-rows": "Egyetlen szám megjelenítése az összes adatsorhoz",
-    "description-fields": "Válassza ki a kiszámítandó mezőket",
     "description-frozen-columns": "",
     "description-min-column-width": "Az oszlop automatikus átméretezésének minimális szélessége",
     "description-tooltip-from-field": "",
@@ -12816,21 +12818,17 @@
     "name-column-alignment": "Oszlop igazítása",
     "name-column-filter": "Oszlopszűrő",
     "name-column-width": "Oszlopszélesség",
-    "name-count-rows": "Sorok számlálása",
     "name-enable-pagination": "",
-    "name-fields": "Mezők",
     "name-frozen-columns": "",
     "name-hide-in-table": "Elrejtés a táblázatban",
     "name-max-height": "",
     "name-min-column-width": "Minimális oszlopszélesség",
-    "name-show-table-footer": "Táblázatlábléc megjelenítése",
     "name-show-table-header": "Táblázatfejléc megjelenítése",
     "name-tooltip-from-field": "",
     "name-tooltip-placement": "",
     "name-wrap-header-text": "Fejléc szövegének tördelése",
     "name-wrap-text": "",
     "placeholder-column-width": "automatikus",
-    "placeholder-fields": "Numerikus mezők",
     "placeholder-max-height": "",
     "tooltip-placement-options": {
       "label-auto": "",
