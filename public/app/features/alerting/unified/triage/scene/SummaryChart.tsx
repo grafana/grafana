@@ -1,12 +1,11 @@
 import { SceneObjectBase, SceneObjectState, VizConfigBuilders } from '@grafana/scenes';
-import { VizPanel, useQueryRunner, useVariableValue, useVariableValues } from '@grafana/scenes-react';
+import { VizPanel, useQueryRunner } from '@grafana/scenes-react';
 import { BarAlignment, GraphDrawStyle, VisibilityMode } from '@grafana/schema';
 import { LegendDisplayMode, StackingMode, TooltipDisplayMode } from '@grafana/ui';
 
 import { overrideToFixedColor } from '../../home/Insights';
 
-import { VARIABLES } from './constants';
-import { METRIC_NAME, getDataQuery, stringifyGroupFilter, useQueryFilter } from './utils';
+import { METRIC_NAME, getDataQuery, useQueryFilter } from './utils';
 
 /**
  * Viz config for the summary chart - used by the React component

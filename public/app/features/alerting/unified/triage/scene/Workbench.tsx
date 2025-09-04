@@ -3,7 +3,7 @@ import { SceneObjectBase, SceneObjectState } from '@grafana/scenes';
 import { useQueryRunner, useTimeRange, useVariableValues } from '@grafana/scenes-react';
 
 import { Workbench } from '../Workbench';
-import { AlertRuleRow, GenericGroupedRow, TimelineEntry, WorkbenchRow } from '../types';
+import { AlertRuleRow, GenericGroupedRow, WorkbenchRow } from '../types';
 
 import { VARIABLES } from './constants';
 import { DEFAULT_FIELDS, METRIC_NAME, convertTimeRangeToDomain, getDataQuery, useQueryFilter } from './utils';
