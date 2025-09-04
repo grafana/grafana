@@ -19,7 +19,8 @@ pre-commit:
     frontend-lint:
       glob: '*.{js,ts,tsx}'
       run: |
-        yarn eslint --ext .js,.tsx,.ts --cache --fix {staged_files}
+        yarn eslint --ext .js,.tsx,.ts --cache --prune-suppressions --fix {staged_files} &&
+        git add eslint-suppressions.json &&
         yarn prettier --write {staged_files}
       stage_fixed: true
 
