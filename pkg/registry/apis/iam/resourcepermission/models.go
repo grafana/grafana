@@ -84,7 +84,11 @@ func toV0ResourcePermissions(permsByResource map[groupResourceName][]flatResourc
 				return nil, errors.New("unknown subject type: " + perm.SubjectType)
 			}
 
-			verb := strings.Split(perm.Action, ":")[1]
+			actionParts := strings.SplitN(perm.Action, ":", 2)
+			if len(actionParts) < 2 || actionParts[1] == "" {
+				return nil, fmt.Errorf("invalid action format: %s", perm.Action)
+			}
+			verb := actionParts[1]
 			specs = append(specs, v0alpha1.ResourcePermissionspecPermission{
 				Kind: permissionKind,
 				Name: perm.SubjectUID,
