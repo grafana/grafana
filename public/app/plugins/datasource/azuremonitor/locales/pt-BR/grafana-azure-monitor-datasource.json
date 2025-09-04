@@ -52,7 +52,7 @@
       "button-use-query": "Usar esta consulta",
       "label-categories": "Categorias",
       "label-query-results": "Resultados da consulta: {{numResults}}",
-      "noOptionsMessage-unable-to-list-categories": "",
+      "noOptionsMessage-unable-to-list-categories": "Não é possível listar todas as categorias",
       "placeholder-all-categories": "Todas as categorias",
       "placeholder-search-logs": "Fazer buscas nas consultas de logs",
       "text-loading": "Carregando..."
@@ -72,10 +72,8 @@
       "label-enable-basic-logs": "Ativar logs básicos"
     },
     "config-editor": {
-      "description-additional-settings": "As configurações adicionais são opcionais, e você pode defini-las para ter mais controle sobre sua fonte de dados. Isso inclui o proxy SOCKS seguro.",
-      "description-request-timeout": "Defina o tempo limite de solicitação em segundos. O tempo limite padrão é de 30 segundos.",
-      "title-additional-settings": "Configurações adicionais",
-      "title-request-timeout": "Tempo limite de solicitação"
+      "description-additional-settings": "As configurações adicionais são opcionais, e você pode defini-las para ter mais controle sobre sua fonte de dados. Isso inclui o Secure Socks Proxy, o tempo limite de solicitação e os cookies encaminhados.",
+      "title-additional-settings": "Configurações adicionais"
     },
     "current-user-fallback-credentials": {
       "alert-fallback-credentials-disabled": "As credenciais de fallback foram desativadas. Como a autenticação baseada no usuário é compatível apenas com solicitações que apresentem um usuário no escopo, recursos como alertas, consultas gravadas ou relatórios não funcionarão como esperado. Consulte a <2>documentação</2> para saber mais.",
@@ -115,12 +113,12 @@
       "aria-label-column": "Coluna",
       "aria-label-column-value": "Valor da coluna",
       "aria-label-operator": "Operador",
-      "aria-label-remove-filter": "",
+      "aria-label-remove-filter": "Remover filtro",
       "label-or": "OU"
     },
     "filter-section": {
-      "aria-label-add-filter": "",
-      "aria-label-add-or-filter": "",
+      "aria-label-add-filter": "Adicionar filtro",
+      "aria-label-add-or-filter": "Adicionar OU filtrar",
       "label-add-group": "Adicionar grupo",
       "label-and": "E",
       "label-filters": "Filtros",
@@ -133,8 +131,8 @@
       "label-format-as": "Formatar como"
     },
     "fuzzy-search": {
-      "aria-label-add-fuzzy-search": "",
-      "aria-label-remove-fuzzy-search": "",
+      "aria-label-add-fuzzy-search": "Adicionar pesquisa difusa",
+      "aria-label-remove-fuzzy-search": "Remover pesquisa difusa",
       "aria-label-select-column": "Selecionar a coluna",
       "label-fuzzy-search": "Pesquisa difusa",
       "placeholder-search-team": "Digite o termo de pesquisa",
@@ -149,7 +147,7 @@
       "aria-label-remove": "Remover"
     },
     "group-by-section": {
-      "aria-label-add-group-by": "",
+      "aria-label-add-group-by": "Adicionar \"agrupar por\"",
       "label-group-by": "Agrupar por",
       "tooltip-group-by": "Organize os resultados em categorias com base nas colunas especificadas. O recurso \"Agrupar por\" pode ser usado de forma independente para listar valores exclusivos em colunas selecionadas ou em conjunto com funções de agregação para produzir estatísticas resumidas para cada grupo. Ao usá-lo sozinho, ele retorna combinações distintas das colunas especificadas."
     },
@@ -168,8 +166,8 @@
       "tooltip-limit": "Restrinja a quantidade de linhas retornadas (o valor padrão é 1.000)."
     },
     "logs-management": {
-      "body-basic-logs-queries": "",
-      "confirmText-confirm": "",
+      "body-basic-logs-queries": "Tem certeza de que deseja mudar para os registros básicos?",
+      "confirmText-confirm": "Confirmar",
       "description-basic-logs-queries": "As consultas de logs básicos incorrem em custos com base na quantidade de dados verificados.",
       "label-logs": "Logs",
       "title-basic-logs-queries": "Consultas de logs básicos",
@@ -192,10 +190,10 @@
       "text-loading": "Carregando..."
     },
     "order-by-section": {
-      "aria-label-add-order-by": "",
+      "aria-label-add-order-by": "Adicionar \"ordenar por\"",
       "aria-label-order-by-column": "Ordenar por coluna",
       "aria-label-order-direction": "Direção do pedido",
-      "aria-label-remove-order-by": "",
+      "aria-label-remove-order-by": "Remover \"ordenar por\"",
       "label-by": "POR",
       "label-order-by": "Ordenar por",
       "tooltip-order-by": "Classifique os resultados com base em uma ou mais colunas em ordem crescente ou decrescente."
@@ -205,14 +203,14 @@
     },
     "query-header": {
       "aria-label-kick-start": "Botão de iniciar consulta de logs do Azure",
-      "body-switching-to-builder": "",
-      "body-switching-to-kql": "",
+      "body-switching-to-builder": "Mudar para o construtor descartará sua consulta KQL atual e limpará o editor KQL. Tem certeza de que deseja continuar?",
+      "body-switching-to-kql": "Mudar para o KQL descartará suas configurações atuais do construtor. Tem certeza de que deseja continuar?",
       "button-kick-start-your-query": "Iniciar sua consulta",
       "button-run-query": "Executar consulta",
-      "confirmText-switch-to": "",
+      "confirmText-switch-to": "Alternar para {{newMode}}",
       "editor-modes": {
-        "label-builder": "",
-        "label-kql": ""
+        "label-builder": "Construtor",
+        "label-kql": "KQL"
       },
       "label-service": "Serviço",
       "placeholder-service": "Serviço...",
@@ -229,19 +227,29 @@
       "select-resource": "Selecionar um recurso"
     },
     "resource-picker": {
+      "browse-tab": "",
       "button-apply": "Aplicar",
       "button-cancel": "Cancelar",
       "header-location": "Localização",
+      "header-resource-group": "",
       "header-scope": "Escopo",
       "header-type": "Tipo",
       "heading-selection": "Seleção",
+      "locations-filter": "",
+      "locations-filter-placeholder": "",
+      "recent-tab": "",
       "result-limit": "Exibindo os primeiros {{numResults}} resultados",
+      "subscriptions-filter": "",
+      "subscriptions-filter-placeholder": "",
       "text-loading": "Carregando...",
+      "text-no-recent-resources": "",
       "text-no-resources": "Nenhum recurso encontrado",
-      "title-error-occurred": "Ocorreu um erro ao solicitar recursos do Azure Monitor"
+      "title-error-occurred": "Ocorreu um erro ao solicitar recursos do Azure Monitor",
+      "types-filter": "",
+      "types-filter-placeholder": ""
     },
     "scope-selector": {
-      "label": ""
+      "label": "Escopo"
     },
     "search": {
       "aria-label-resource-search": "Pesquisa de recursos",
@@ -258,7 +266,7 @@
       "label-table": "Tabela",
       "placeholder-select-columns": "Selecionar colunas",
       "placeholder-select-table": "Selecionar uma tabela",
-      "tooltip-remove-all-columns": ""
+      "tooltip-remove-all-columns": "Remover todas as colunas"
     },
     "time-grain-field": {
       "label-time-grain": "Granularidade de tempo"

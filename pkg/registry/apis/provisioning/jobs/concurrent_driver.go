@@ -11,41 +11,61 @@ import (
 
 // ConcurrentJobDriver manages multiple jobDriver instances for concurrent job processing.
 type ConcurrentJobDriver struct {
-	numDrivers      int
-	jobTimeout      time.Duration
-	cleanupInterval time.Duration
-	jobInterval     time.Duration
-	store           Store
-	repoGetter      RepoGetter
-	historicJobs    History
-	workers         []Worker
+	numDrivers           int
+	jobTimeout           time.Duration
+	cleanupInterval      time.Duration
+	jobInterval          time.Duration
+	leaseRenewalInterval time.Duration
+	store                Store
+	repoGetter           RepoGetter
+	historicJobs         HistoryWriter
+	workers              []Worker
+	notifications        chan struct{}
 }
 
 // NewConcurrentJobDriver creates a new concurrent job driver that spawns multiple job drivers.
 func NewConcurrentJobDriver(
 	numDrivers int,
-	jobTimeout, cleanupInterval, jobInterval time.Duration,
+	jobTimeout, cleanupInterval, jobInterval, leaseRenewalInterval time.Duration,
 	store Store,
 	repoGetter RepoGetter,
-	historicJobs History,
+	historicJobs HistoryWriter,
+	notifications chan struct{},
 	workers ...Worker,
 ) (*ConcurrentJobDriver, error) {
 	if numDrivers <= 0 {
 		return nil, fmt.Errorf("numWorkers must be greater than 0, got %d", numDrivers)
 	}
-	if cleanupInterval < jobTimeout {
-		return nil, fmt.Errorf("the cleanup interval must be larger than the jobTimeout (cleanup:%s < job:%s)",
-			cleanupInterval.String(), jobTimeout.String())
+	// Default lease renewal interval to 1/3 of job timeout, minimum 5 seconds
+	if leaseRenewalInterval <= 0 {
+		leaseRenewalInterval = jobTimeout / 3
 	}
+	if leaseRenewalInterval < 5*time.Second {
+		leaseRenewalInterval = 5 * time.Second
+	}
+	// For lease-based cleanup, run at most every 3-4 lease renewal intervals
+	// to detect expired leases promptly but not too aggressively
+	if cleanupInterval <= 0 {
+		cleanupInterval = leaseRenewalInterval * 3
+	}
+	if cleanupInterval < 30*time.Second {
+		cleanupInterval = 30 * time.Second // Minimum cleanup interval
+	}
+	if cleanupInterval > 5*time.Minute {
+		cleanupInterval = 5 * time.Minute // Maximum cleanup interval
+	}
+
 	return &ConcurrentJobDriver{
-		numDrivers:      numDrivers,
-		jobTimeout:      jobTimeout,
-		cleanupInterval: cleanupInterval,
-		jobInterval:     jobInterval,
-		store:           store,
-		repoGetter:      repoGetter,
-		historicJobs:    historicJobs,
-		workers:         workers,
+		numDrivers:           numDrivers,
+		jobTimeout:           jobTimeout,
+		cleanupInterval:      cleanupInterval,
+		jobInterval:          jobInterval,
+		leaseRenewalInterval: leaseRenewalInterval,
+		store:                store,
+		repoGetter:           repoGetter,
+		historicJobs:         historicJobs,
+		workers:              workers,
+		notifications:        notifications,
 	}, nil
 }
 
@@ -53,9 +73,9 @@ func NewConcurrentJobDriver(
 // This is a blocking function that will run until the context is canceled or an error occurs.
 func (c *ConcurrentJobDriver) Run(ctx context.Context) error {
 	logger := logging.FromContext(ctx).With("logger", "concurrent-job-driver", "num_drivers", c.numDrivers)
-	logger.Info("starting concurrent job driver")
+	logger.Info("starting concurrent job driver with lease-based cleanup", "cleanup_interval", c.cleanupInterval)
 
-	// Set up cleanup ticker - only one cleanup process for all workers
+	// Set up cleanup ticker - runs more frequently with lease-based approach
 	cleanupTicker := time.NewTicker(c.cleanupInterval)
 	defer cleanupTicker.Stop()
 
@@ -96,9 +116,11 @@ func (c *ConcurrentJobDriver) Run(ctx context.Context) error {
 			driver, err := NewJobDriver(
 				c.jobTimeout,
 				c.jobInterval,
+				c.leaseRenewalInterval,
 				c.store,
 				c.repoGetter,
 				c.historicJobs,
+				c.notifications,
 				c.workers...,
 			)
 			if err != nil {

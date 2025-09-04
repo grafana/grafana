@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import * as React from 'react';
 import { useDebounce, usePrevious } from 'react-use';
 
+import { ChatContextItem, OpenAssistantButton } from '@grafana/assistant';
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { Button, ButtonGroup, Dropdown, Input, Menu, RadioButtonGroup, useStyles2 } from '@grafana/ui';
 
@@ -30,6 +31,8 @@ type Props = {
   collapsedMap: CollapsedMap;
 
   extraHeaderElements?: React.ReactNode;
+
+  assistantContext?: ChatContextItem[];
 };
 
 const FlameGraphHeader = ({
@@ -50,6 +53,7 @@ const FlameGraphHeader = ({
   isDiffMode,
   setCollapsedMap,
   collapsedMap,
+  assistantContext,
 }: Props) => {
   const styles = useStyles2(getStyles);
   const [localSearch, setLocalSearch] = useSearchInput(search, setSearch);
@@ -84,6 +88,11 @@ const FlameGraphHeader = ({
       </div>
 
       <div className={styles.rightContainer}>
+        {!!assistantContext?.length && (
+          <div className={styles.buttonSpacing}>
+            <OpenAssistantButton origin="grafana/flame-graph" prompt="Analyze Flame Graph" context={assistantContext} />
+          </div>
+        )}
         {showResetButton && (
           <Button
             variant={'secondary'}

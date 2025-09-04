@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/safepath"
+	"github.com/grafana/grafana/apps/provisioning/pkg/safepath"
 )
 
 // sanitiseKubeName removes all characters that don't fulfil the DNS subdomain name rules: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#dns-subdomain-names

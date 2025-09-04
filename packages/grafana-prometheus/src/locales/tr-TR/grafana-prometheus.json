@@ -2,496 +2,490 @@
   "grafana-prometheus": {
     "components": {
       "annotation-query-editor": {
-        "annotation-data-load-error": "",
-        "aria-label-lower-limit-parameter": "",
-        "label-min-step": "",
-        "label-series-value-as-timestamp": "",
+        "annotation-data-load-error": "Ek açıklama verisi yükleme hatası!",
+        "aria-label-lower-limit-parameter": "Adım parametresi için alt sınırı ayarlayın",
+        "label-min-step": "Min. adım",
+        "label-series-value-as-timestamp": "Zaman damgası olarak seri değeri",
         "label-tags": "Etiketler",
-        "label-text": "",
+        "label-text": "Metin",
         "label-title": "Başlık",
-        "placeholder-auto": "",
-        "tooltip-either-pattern-example-instance-replaced-label": "",
-        "tooltip-min-step": "",
-        "tooltip-timestamp-milliseconds-series-value-seconds-multiply": ""
+        "placeholder-auto": "otomatik",
+        "tooltip-either-pattern-example-instance-replaced-label": "Adı ya da bir deseni kullanın. Örneğin {{labelTemplate}}, {{labelName}} etiketinin değeriyle değiştirilir.",
+        "tooltip-min-step": "Prometheus sorgusunun step (adım) parametresi ve <2>{{intervalVar}}</2> ile <4>{{rateIntervalVar}}</4> değişkenleri için ek bir alt sınırdır.",
+        "tooltip-timestamp-milliseconds-series-value-seconds-multiply": "Zaman damgasının birimi milisaniyedir. Seri değeri saniye cinsindense aralık vektörünü 1000 ile çarpın."
       },
       "get-query-type-options": {
         "description": {
-          "instant-query-range": ""
+          "instant-query-range": "Anlık (Instant) ve Aralık (Range) sorgusu çalıştırın"
         },
         "label": {
-          "both": ""
+          "both": "Her ikisi de"
         },
         "range-options": {
           "description": {
-            "query-range": ""
+            "query-range": "Sorguyu belirli bir zaman aralığında çalıştırın"
           },
           "label": {
-            "instant": "",
-            "range": ""
+            "instant": "Anlık",
+            "range": "Aralık"
           }
         }
       },
       "label-selector": {
-        "aria-label-filter-expression-for-label": "",
-        "description-select-labels": "",
-        "select-labels-to-search-in": ""
+        "aria-label-filter-expression-for-label": "Etiket için ifadeyi filtrele",
+        "description-select-labels": "Etiket değerleri seçildikten sonra yalnızca olası etiket kombinasyonları gösterilir.",
+        "select-labels-to-search-in": "2. Arama yapılacak etiketleri seçin"
       },
       "metric-selector": {
-        "aria-label-filter-expression-for-metric": "",
-        "aria-label-limit-results-from-series-endpoint": "",
-        "description-series-limit": "",
-        "label-select-metric": "",
-        "select-a-metric": "",
-        "series-limit": ""
+        "aria-label-filter-expression-for-metric": "Metrik için ifadeyi filtrele",
+        "aria-label-limit-results-from-series-endpoint": "Seri uç noktasından gelen sonuçları sınırla",
+        "description-series-limit": "Sınır, tüm metrikler, etiketler ve değerlere uygulanır. Varsayılan sınırı kullanmak için alanı boş bırakın. Sınırı devre dışı bırakmak ve tüm verileri getirmek için 0 olarak ayarlayın, bu ayar performans sorunlarına yol açabilir.",
+        "label-select-metric": "Bir metrik seçildiğinde yalnızca olası etiketler gösterilir. Etiketler, aşağıdaki seri sınırıyla sınırlıdır.",
+        "select-a-metric": "1. Bir metrik seçin",
+        "series-limit": "Seri sınırı"
       },
       "prom-cheat-sheet": {
-        "prom-ql-cheat-sheet": ""
+        "prom-ql-cheat-sheet": "PromQL Hızlı Referans"
       },
       "prom-exemplar-field": {
-        "exemplars": "",
-        "tooltip-disable-query": "",
-        "tooltip-enable-query": ""
+        "exemplars": "Örnekler",
+        "tooltip-disable-query": "Örnek içeren sorguyu devre dışı bırak",
+        "tooltip-enable-query": "Örnek içeren sorguyu etkinleştir"
       },
       "prom-explore-extra-field": {
-        "aria-label-prometheus-extra-field": "",
-        "aria-label-query-type-field": "",
-        "aria-label-step-field": "",
-        "min-step": "",
-        "query-type": "",
-        "tooltip-units-builtin-variables-example-interval-rateinterval": ""
+        "aria-label-prometheus-extra-field": "Prometheus ekstra alanı",
+        "aria-label-query-type-field": "Sorgu türü alanı",
+        "aria-label-step-field": "Adım alanı",
+        "min-step": "Min. adım",
+        "query-type": "Sorgu türü",
+        "tooltip-units-builtin-variables-example-interval-rateinterval": "Burada zaman birimleri ve yerleşik değişkenler kullanılabilir. Örneğin: {{example1}}, {{example2}}, {{example3}}, {{example4}}, {{example5}}, {{example6}}, {{example7}} (Bir birim belirtilmezse varsayılan: {{default}})"
       },
       "prom-query-field": {
-        "placeholder-enter-a-prom-ql-query": ""
+        "placeholder-enter-a-prom-ql-query": "Bir PromQL sorgusu girin…"
       },
       "prom-variable-query-editor": {
-        "aria-label-classic-query": "",
-        "aria-label-metric-regex": "",
-        "aria-label-metric-selector": "",
-        "aria-label-prometheus-query": "",
-        "aria-label-query-type": "",
-        "aria-label-series-query": "",
-        "label-classic-query": "",
+        "aria-label-classic-query": "Klasik Sorgu",
+        "aria-label-metric-regex": "Metrik düzenli ifadesi",
+        "aria-label-metric-selector": "Metrik seçici",
+        "aria-label-prometheus-query": "Prometheus Sorgusu",
+        "aria-label-query-type": "Sorgu türü",
+        "aria-label-series-query": "Seri Sorgusu",
+        "label-classic-query": "Klasik Sorgu",
         "label-label": "Etiket",
-        "label-metric-regex": "",
+        "label-metric-regex": "Metrik düzenli ifadesi",
         "label-query": "Sorgu",
-        "label-query-type": "",
-        "label-series-query": "",
-        "placeholder-classic-query": "",
-        "placeholder-metric-regex": "",
-        "placeholder-prometheus-query": "",
+        "label-query-type": "Sorgu türü",
+        "label-series-query": "Seri Sorgusu",
+        "placeholder-classic-query": "Klasik Sorgu",
+        "placeholder-metric-regex": "Metrik düzenli ifadesi",
+        "placeholder-prometheus-query": "Prometheus Sorgusu",
         "placeholder-select-query-type": "Sorgu türünü seçin",
-        "placeholder-series-query": "",
-        "returns-metrics-matching-specified-metric-regex": "",
-        "tooltip-classic-query": "",
-        "tooltip-label": "",
-        "tooltip-metric-regex": "",
-        "tooltip-query": "",
-        "tooltip-query-type": "",
-        "tooltip-series-query": ""
+        "placeholder-series-query": "Seri Sorgusu",
+        "returns-metrics-matching-specified-metric-regex": "Belirtilen metrik düzenli ifadesiyle eşleşen metriklerin listesi.",
+        "tooltip-classic-query": "Prometheus değişken sorgu düzenleyicisinin orijinal uygulaması. Bu belgelerde açıklanan doğru sorgu türü ve parametrelerle bir dize girin. Örneğin {{exampleQuery}}.",
+        "tooltip-label": "Bir metrik belirtilmedikçe tüm metriklerdeki etiket adı için etiket değerlerinin bir listesini döndürür.",
+        "tooltip-metric-regex": "Belirtilen metrik düzenli ifadesine göre isteğe bağlı filtreleme yaparak etiket adlarının bir listesini döndürür.",
+        "tooltip-query": "Sorgu için Prometheus sorgu sonuçlarının bir listesini döndürür. Bu sorgular Prometheus işlevlerini içerebilir, örneğin {{exampleQuery}}.",
+        "tooltip-query-type": "Prometheus veri kaynağı eklentisi, şablon değişkenleri için aşağıdaki sorgu türlerini sağlar.",
+        "tooltip-series-query": "Bir metrik ve etiketlerle, yalnızca metrik ya da yalnızca etiketlerle birlikte bir değer girin. Örneğin {{example1}}, {{example2}} veya {{example3}}. Girilen verilerle ilişkili zaman serilerinin bir listesini döndürür."
       },
       "selector-actions": {
-        "aria-label-selector": "",
-        "aria-label-selector-clear-button": "",
-        "aria-label-use-selector-as-metrics-button": "",
-        "aria-label-use-selector-for-query-button": "",
-        "aria-label-validate-submit-button": "",
+        "aria-label-selector": "seçici",
+        "aria-label-selector-clear-button": "Seçici temizleme düğmesi",
+        "aria-label-use-selector-as-metrics-button": "Seçiciyi metrik olarak kullan düğmesi",
+        "aria-label-use-selector-for-query-button": "Sorgu için seçiciyi kullan düğmesi",
+        "aria-label-validate-submit-button": "Gönder düğmesini doğrula",
         "clear": "Temizle",
-        "resulting-selector": "",
-        "use-as-rate-query": "",
-        "use-query": "",
-        "validate-selector": ""
+        "resulting-selector": "4. Oluşan seçici",
+        "use-as-rate-query": "Oran (rate) sorgusu olarak kullan",
+        "use-query": "Sorguyu kullan",
+        "validate-selector": "Seçiciyi doğrula"
       },
       "value-selector": {
-        "aria-label-filter-expression-for-label-values": "",
-        "aria-label-values-for": "",
-        "description-search-field-values-across-selected-labels": "",
-        "select-multiple-values-for-your-labels": ""
+        "aria-label-filter-expression-for-label-values": "Etiket değerleri için ifadeyi filtreleyin",
+        "aria-label-values-for": "{{labelKey}} değerleri",
+        "description-search-field-values-across-selected-labels": "Seçilen etiketler arasında değer bulmak için arama alanını kullanın.",
+        "select-multiple-values-for-your-labels": "3. Etiketleriniz için (birden fazla) değer seçin"
       }
     },
     "configuration": {
       "alerting-settings-overhaul": {
-        "label-allow-as-recording-rules-target": "",
-        "label-manage-alerts-via-alerting-ui": "",
+        "label-allow-as-recording-rules-target": "Kayıt kuralları hedefi olarak seçilmesine izin ver",
+        "label-manage-alerts-via-alerting-ui": "Uyarıları, Uyarı Sistemi Arayüzü üzerinden yönetin",
         "title-alerting": "Uyarı sistemi",
-        "tooltip-allow-as-recording-rules-target": "",
+        "tooltip-allow-as-recording-rules-target": "Kayıt kuralları yazmak için bu veri kaynağının hedef olarak seçilmesine izin verin.",
         "tooltip-manage-alerts-via-alerting-ui": "Bu veri kaynağı için uyarı kurallarını yönetin. Diğer Alerting kaynaklarını yönetmek için bir Alertmanager veri kaynağı ekleyin."
       },
       "config-editor": {
-        "browser-access-mode-error": "",
-        "description-advanced-settings": "",
+        "browser-access-mode-error": "Prometheus veri kaynağında tarayıcı erişim modu artık kullanılamamaktadır. Sunucu erişim moduna geçin.",
+        "description-advanced-settings": "Ek ayarlar, veri kaynağınız üzerinde daha fazla kontrol sağlamak için yapılandırılabilen isteğe bağlı ayarlardır.",
         "title-advanced-settings": "Gelişmiş ayarlar",
         "title-error": "Hata"
       },
       "data-source-http-settings-overhaul": {
         "tooltip-browser-access-mode": "Erişim yönteminizin <1>Browser</1> olması, URL'nin tarayıcıdan erişilebilir olması gerektiği anlamına gelir.",
-        "tooltip-http-url": "",
+        "tooltip-http-url": "Tam bir HTTP URL'si belirtin (örneğin {{exampleURL}})",
         "tooltip-server-access-mode": "Erişim yönteminizin <1>Server</1> olması URL'nin Grafana arka uç/sunucusundan erişilebilir olması gerektiği anlamına gelir."
       },
       "docs-tip": {
-        "visit-docs-for-more-details-here": ""
+        "visit-docs-for-more-details-here": "Daha fazla ayrıntı için belgelere göz atın."
       },
       "exemplar-setting": {
         "label-data-source": "Veri kaynağı",
-        "label-internal-link": "",
+        "label-internal-link": "Dâhilî bağlantı",
         "label-label-name": "Etiket adı",
-        "label-remove-exemplar-link": "",
+        "label-remove-exemplar-link": "Örnek bağlantıyı kaldır",
         "label-url": "URL",
-        "label-url-label": "",
-        "placeholder-go-to-examplecom": "",
-        "placeholder-httpsexamplecomvalueraw": "",
-        "placeholder-trace-id": "",
-        "title-remove-exemplar-link": "",
-        "tooltip-data-source": "",
-        "tooltip-internal-link": "",
-        "tooltip-label-name": "",
-        "tooltip-url": "",
-        "tooltip-url-label": ""
+        "label-url-label": "URL Etiketi",
+        "placeholder-go-to-examplecom": "example.com adresine gidin",
+        "placeholder-httpsexamplecomvalueraw": "https://example.com/${__value.raw}",
+        "placeholder-trace-id": "izleme kimliği",
+        "title-remove-exemplar-link": "Örnek bağlantıyı kaldır",
+        "tooltip-data-source": "Örneğin yönlendireceği veri kaynağı.",
+        "tooltip-internal-link": "Dâhilî bir bağlantınız varsa bu seçeneği etkinleştirin. Etkinleştirildiğinde veri kaynağı seçici görünür hâle gelir. Örnek veriniz için arka uç izleme veri deposunu seçin.",
+        "tooltip-label-name": "İzleme kimliğimi almak için kullanılacak etiketler nesnesindeki alanın adı.",
+        "tooltip-url": "Kullanıcının izlemeyi görebileceği izleme arka ucunun URL'si",
+        "tooltip-url-label": "Örnek izleme kimliği alanındaki düğme etiketini geçersiz kılmak için kullanılır."
       },
       "exemplars-settings": {
         "add": "Ekle",
-        "no-exemplars-configurations": "",
-        "title-exemplars": ""
+        "no-exemplars-configurations": "Örnek yapılandırma yok",
+        "title-exemplars": "Örnekler"
       },
       "prom-settings": {
-        "aria-label-default-editor": "",
-        "aria-label-prom-type-type": "",
-        "aria-label-prometheus-type": "",
-        "aria-label-select-http-method": "",
+        "aria-label-default-editor": "Varsayılan Düzenleyici (Kod veya Oluşturucu)",
+        "aria-label-prom-type-type": "{{promType}} tür",
+        "aria-label-prometheus-type": "Prometheus türü",
+        "aria-label-select-http-method": "HTTP yöntemini seçin",
         "editor-options": {
-          "label-builder": "",
-          "label-code": ""
+          "label-builder": "Oluşturucu",
+          "label-code": "Kod"
         },
-        "label-cache-level": "",
-        "label-custom-query-parameters": "",
-        "label-default-editor": "",
-        "label-disable-metrics-lookup": "",
-        "label-disable-recording-rules-beta": "",
-        "label-http-method": "",
-        "label-incremental-querying-beta": "",
-        "label-metric-names-suggestion-limit": "",
-        "label-prom-type-version": "",
-        "label-prometheus-type": "",
-        "label-query-overlap-window": "",
-        "label-query-timeout": "",
-        "label-scrape-interval": "",
-        "label-series-limit": "",
-        "label-use-series-endpoint": "",
-        "more-info": "",
-        "placeholder-example-maxsourceresolutionmtimeout": "",
-        "title-interval-behaviour": "",
-        "title-other": "",
+        "label-cache-level": "Önbellek seviyesi",
+        "label-custom-query-parameters": "Özel sorgu parametreleri",
+        "label-default-editor": "Varsayılan düzenleyici",
+        "label-disable-metrics-lookup": "Metrik aramayı devre dışı bırak",
+        "label-disable-recording-rules-beta": "Kayıt kurallarını devre dışı bırak (beta)",
+        "label-http-method": "HTTP yöntemi",
+        "label-incremental-querying-beta": "Artımlı sorgulama (beta)",
+        "label-prom-type-version": "{{promType}} sürümü",
+        "label-prometheus-type": "Prometheus türü",
+        "label-query-overlap-window": "Sorgu çakışma penceresi",
+        "label-query-timeout": "Sorgu zaman aşımı",
+        "label-scrape-interval": "Kazıma aralığı",
+        "label-series-limit": "Seri sınırı",
+        "label-use-series-endpoint": "Seri uç noktasını kullan",
+        "more-info": "Prometheus türü ve sürümünü veri kaynaklarında yapılandırma hakkında daha fazla bilgi için <2>sağlama belgelerine</2> bakın.",
+        "placeholder-example-maxsourceresolutionmtimeout": "Örnek: {{example}}",
+        "title-interval-behaviour": "Aralık davranışı",
+        "title-other": "Diğer",
         "title-performance": "Performans",
-        "title-query-editor": "",
-        "tooltip-cache-level": "",
-        "tooltip-custom-query-parameters": "",
-        "tooltip-default-editor": "",
-        "tooltip-disable-metrics-lookup": "",
-        "tooltip-disable-recording-rules-beta": "",
-        "tooltip-http-method": "",
-        "tooltip-incremental-querying-beta": "",
-        "tooltip-metric-names-suggestion-limit": "",
-        "tooltip-prom-type-version": "",
-        "tooltip-prometheus-type": "",
-        "tooltip-query-overlap-window": "",
-        "tooltip-query-timeout": "",
-        "tooltip-scrape-interval": "",
-        "tooltip-series-limit": "",
-        "tooltip-use-series-endpoint": ""
+        "title-query-editor": "Sorgu düzenleyicisi",
+        "tooltip-cache-level": "Düzenleyici sorguları için tarayıcı önbelleğe alma düzeyini ayarlar. Yüksek ayırt ediciliğe sahip veri kaynakları için daha yüksek önbellek ayarları önerilir.",
+        "tooltip-custom-query-parameters": "Prometheus sorgu URL'sine özel parametreler ekleyin. Örneğin {{example1}}, {{example2}}, {{example3}} veya {{example4}}. Birden fazla parametre, {{concatenationChar}} karakteri ile birleştirilmelidir.",
+        "tooltip-default-editor": "Bu veri kaynağının tüm kullanıcıları için varsayılan düzenleyici seçeneğini ayarlayın.",
+        "tooltip-disable-metrics-lookup": "Bu seçeneği işaretlemek, metrik seçicisini ve sorgu alanındaki metrik/etiket desteğini otomatik tamamlama özelliğinde devre dışı bırakır. Bu, büyük Prometheus örneklerinde yaşanan performans sorunlarına yardımcı olabilir. ",
+        "tooltip-disable-recording-rules-beta": "Bu özellik, kayıt kurallarını devre dışı bırakacaktır. Pano performansını artırmak için bu seçeneği etkinleştirin",
+        "tooltip-http-method": "Prometheus veri kaynağınızı sorgulamak için POST veya GET HTTP yöntemini kullanabilirsiniz. POST, daha büyük sorgulara izin verdiği için önerilen yöntemdir. Prometheus sürümünüz 2.1'den eskiyse ya da ağınızda POST istekleri kısıtlıysa bunu GET olarak değiştirin.",
+        "tooltip-incremental-querying-beta": "Bu özellik, göreli sorguların varsayılan davranışını değiştirerek Prometheus örneğinden her zaman güncel veri istenmesini sağlar. Bunun yerine, sorgu sonuçları önbelleğe alınır ve yalnızca yeni kayıtlar istenir. Veri tabanı ve ağ yükünü azaltmak için bu özelliği etkinleştirin.",
+        "tooltip-prom-type-version": "{{promType}} örneğinizin sürümü otomatik olarak yapılandırılmamışsa bunu burada ayarlayın.",
+        "tooltip-prometheus-type": "Veri tabanınızın türünü burada belirtin, örneğin: Prometheus, Cortex, Mimir veya Thanos. Bu alanı değiştirdiğinizde mevcut ayarlarınız kaydedilecektir. Bazı Prometheus türleri çeşitli API'leri destekler veya desteklemez. Örneğin bazı türler, etiket sorgularında performansı artırmak için düzenli ifade eşlemesini destekler. Bazı türlerin meta veriler için bir API'si vardır. Bu ayarı yanlış yaparsanız metrik ve etiket sorgularında beklenmedik davranışlarla karşılaşabilirsiniz. Lütfen doğru türü girdiğinizden emin olmak için Prometheus belgelerinizi kontrol edin.",
+        "tooltip-query-overlap-window": "Süreyi {{example1}}, {{example2}} veya {{example3}} biçiminde ayarlayın. Varsayılan ayar {{default}}. Bu süre, her artımlı isteğin süresine eklenecektir.",
+        "tooltip-query-timeout": "Prometheus sorgu zaman aşımını ayarlayın.",
+        "tooltip-scrape-interval": "Bu aralık, Prometheus'un hedefleri ne sıklıkla sorguladığını belirtir. Bunu, Prometheus yapılandırma dosyanızda tanımlanan tipik sorgulama ve değerlendirme aralığına göre ayarlayın. Bu değeri Prometheus yapılandırma dosyasındaki aralıktan daha büyük ayarlarsanız Grafana verileri bu aralığa göre değerlendirir ve daha az veri noktası görürsünüz. Varsayılan ayar {{default}}.",
+        "tooltip-series-limit": "Sınır, her iki uç nokta (seri ve etiketler) için tüm kaynaklara (metrikler, etiketler ve değerler) uygulanır. Bu alanı boş bırakırsanız varsayılan sınır olan 40000 kullanılır. Sınırı devre dışı bırakmak ve tüm verileri getirmek için 0 olarak ayarlayın; bu ayar performans sorunlarına yol açabilir. Varsayılan sınır 40000'dir.",
+        "tooltip-use-series-endpoint": "Bu seçeneği işaretlemek, {{exampleParameter}} parametresine sahip seri uç noktasını, {{exampleParameter}} parametresine sahip etiket değerleri uç noktası yerine tercih eder. Etiket değerleri uç noktası genellikle daha yüksek performanslı kabul edilirken, bazı kullanıcılar seri uç noktasını tercih edebilir çünkü bu uç nokta POST yöntemini desteklerken etiket değerleri yalnızca GET yöntemini destekler."
       }
     },
     "metrics-browser": {
-      "disabled-label": "",
-      "enabled-label": ""
+      "disabled-label": "(Devre dışı)",
+      "enabled-label": "Metrik tarayıcı"
     },
     "prom-query-legend-editor": {
       "get-legend-mode-options": {
-        "description-auto": "",
-        "description-custom": "",
-        "description-verbose": "",
-        "label-auto": "",
-        "label-custom": "",
-        "label-verbose": ""
+        "description-auto": "Yalnızca benzersiz etiketleri içerir",
+        "description-custom": "Bir adlandırma şablonu sağlayın",
+        "description-verbose": "Tüm etiket adları ve değerleri",
+        "label-auto": "Otomatik",
+        "label-custom": "Özel",
+        "label-verbose": "Ayrıntılı"
       }
     },
     "promql": {
       "getAggregationOptions": {
-        "documentation-avg": "",
-        "documentation-bottomk": "",
-        "documentation-count": "",
-        "documentation-count-values": "",
-        "documentation-group": "",
-        "documentation-max": "",
-        "documentation-min": "",
-        "documentation-quantile": "",
-        "documentation-stddev": "",
-        "documentation-stdvar": "",
-        "documentation-sum": "",
-        "documentation-topk": ""
+        "documentation-avg": "Boyutlar üzerinden ortalamayı hesaplayın",
+        "documentation-bottomk": "Örnek değere göre en küçük k öğeleri",
+        "documentation-count": "Vektördeki öğe sayısını say",
+        "documentation-count-values": "Aynı değere sahip öğelerin sayısını say",
+        "documentation-group": "Ortaya çıkan vektördeki tüm değerler 1'dir",
+        "documentation-max": "Boyutlar üzerinden maksimumu seçin",
+        "documentation-min": "Boyutlar üzerinden minimumu seçin",
+        "documentation-quantile": "Boyutlar üzerinden φ-kuantili (0 ≤ φ ≤ 1) hesaplayın",
+        "documentation-stddev": "Boyutlar üzerinden popülasyon standart sapmasını hesaplayın",
+        "documentation-stdvar": "Boyutlar üzerinden popülasyon standart varyansını hesaplayın",
+        "documentation-sum": "Boyutlar üzerinden toplamı hesaplayın",
+        "documentation-topk": "Örnek değere göre en büyük k öğeleri"
       },
       "getFunctions": {
-        "documentation-abs": "",
-        "documentation-absent": "",
-        "documentation-absent-over-time": "",
-        "documentation-avg-over-time": "",
-        "documentation-ceil": "",
-        "documentation-changes": "",
-        "documentation-clamp": "",
-        "documentation-clamp-max": "",
-        "documentation-clamp-min": "",
-        "documentation-count-over-time": "",
-        "documentation-count-scalar": "",
-        "documentation-day-of-month": "",
-        "documentation-day-of-week": "",
-        "documentation-day-of-year": "",
-        "documentation-days-in-month": "",
-        "documentation-deg": "",
-        "documentation-delta": "",
-        "documentation-deriv": "",
-        "documentation-double-exponential-smoothing": "",
-        "documentation-drop-common-labels": "",
-        "documentation-exp": "",
-        "documentation-floor": "",
-        "documentation-histogram-avg": "",
-        "documentation-histogram-count": "",
-        "documentation-histogram-fraction": "",
-        "documentation-histogram-quantile": "",
-        "documentation-histogram-stddev": "",
-        "documentation-histogram-stdvar": "",
-        "documentation-histogram-sum": "",
-        "documentation-holt-winters": "",
-        "documentation-hour": "",
-        "documentation-idelta": "",
-        "documentation-increase": "",
-        "documentation-info": "",
-        "documentation-irate": "",
-        "documentation-label-join": "",
-        "documentation-label-replace": "",
-        "documentation-last-over-time": "",
-        "documentation-ln": "",
-        "documentation-log10": "",
-        "documentation-log2": "",
-        "documentation-max-over-time": "",
-        "documentation-min-over-time": "",
-        "documentation-minute": "",
-        "documentation-month": "",
-        "documentation-pi": "",
-        "documentation-predict-linear": "",
-        "documentation-present-over-time": "",
-        "documentation-quantile-over-time": "",
-        "documentation-rad": "",
-        "documentation-rate": "",
-        "documentation-resets": "",
-        "documentation-round": "",
-        "documentation-scalar": "",
-        "documentation-sgn": "",
-        "documentation-sort": "",
-        "documentation-sort-desc": "",
-        "documentation-sqrt": "",
-        "documentation-stddev-over-time": "",
-        "documentation-stdvar-over-time": "",
-        "documentation-sum-over-time": "",
-        "documentation-time": "",
-        "documentation-timestamp": "",
-        "documentation-vector": "",
-        "documentation-year": ""
+        "documentation-abs": "Tüm örnek değerleri mutlak değerlerine dönüştürülmüş girdi vektörünü verir.",
+        "documentation-absent": "Kendisine geçirilen vektörün herhangi bir öğesi varsa boş bir vektör ve kendisine geçirilen vektörün hiçbir öğesi yoksa değeri 1 olan 1 öğeli bir vektör verir. Bu, belirli bir metrik adı ve etiket kombinasyonu için zaman serisi olmadığında uyarı vermek için kullanışlıdır.",
+        "documentation-absent-over-time": "Kendisine geçirilen aralık vektörünün herhangi bir öğesi varsa boş bir vektör ve kendisine geçirilen aralık vektörünün hiçbir öğesi yoksa değeri 1 olan 1 öğeli bir vektör verir.",
+        "documentation-avg-over-time": "Belirtilen aralıktaki tüm noktaların ortalama değeri.",
+        "documentation-ceil": "`v` içindeki tüm öğelerin örnek değerlerini bir üst tam sayıya yuvarlar.",
+        "documentation-changes": "Her bir girdi zaman serisi için `changes(v range-vector)`, değerinin belirtilen zaman aralığında anlık bir vektör olarak kaç kez değiştiğini verir.",
+        "documentation-clamp": "`v` içindeki tüm öğelerin örnek değerlerini `min` alt sınırına ve `max` üst sınırına sahip olacak şekilde sabitler.",
+        "documentation-clamp-max": "`v` içindeki tüm öğelerin örnek değerlerini `max` üst sınırına sahip olacak şekilde sabitler.",
+        "documentation-clamp-min": "`v` içindeki tüm öğelerin örnek değerlerini `min` alt sınırına sahip olacak şekilde sabitler.",
+        "documentation-count-over-time": "Belirtilen aralıktaki tüm değerlerin sayısı.",
+        "documentation-count-scalar": "Bir zaman serisi vektöründeki öğelerin sayısını bir skaler olarak verir. Bu, her zaman bir vektör (giriş vektörü boşsa boş bir vektör) döndüren ve bir `by` maddesi aracılığıyla etiketlere göre gruplandırmaya izin veren `count()` toplama operatörünün tersidir.",
+        "documentation-day-of-month": "UTC'de verilen saatlerin her biri için ayın gününü verir. Döndürülen değerler 1 ile 31 arasındadır.",
+        "documentation-day-of-week": "UTC'de verilen saatlerin her biri için haftanın gününü verir. Döndürülen değerler 0 ile 6 arasındadır, burada 0 Pazar vb. anlamına gelir.",
+        "documentation-day-of-year": "UTC'de verilen saatlerin her biri için yılın gününü verir. Döndürülen değerler, artık olmayan yıllar için 1 ile 365, artık yıllarda 1 ile 366 arasındadır.",
+        "documentation-days-in-month": "UTC'de verilen saatlerin her biri için ay içindeki gün sayısını verir. Döndürülen değerler 28 ile 31 arasındadır.",
+        "documentation-deg": "v içindeki tüm öğeler için radyanları dereceye dönüştürür",
+        "documentation-delta": "Bir `v` aralık vektöründeki her bir zaman serisi öğesinin ilk ve son değeri arasındaki farkı hesaplar ve verilen deltalar ve eşdeğer etiketlerle bir anlık vektör verir. Delta, aralık vektör seçicisinde belirtildiği gibi tam zaman aralığını kapsayacak şekilde tahmin edilir, böylece örnek değerlerin tümü tam sayı olsa bile tam sayı olmayan bir sonuç elde etmek mümkün olur.",
+        "documentation-deriv": "Basit doğrusal regresyon kullanarak bir `v` aralık vektöründeki zaman serisinin saniye başına türevini hesaplar.",
+        "documentation-double-exponential-smoothing": "`v` içindeki aralığa dayalı olarak zaman serileri için düzeltilmiş bir değer üretir. Düzeltme faktörü `sf` ne kadar düşükse eski verilere o kadar fazla önem verilir. Eğilim faktörü `tf` ne kadar yüksekse verilerdeki eğilimler o kadar fazla dikkate alınır. Hem `sf` hem de `tf` 0 ile 1 arasında olmalıdır.",
+        "documentation-drop-common-labels": "Girdi vektöründeki tüm serilerde aynı ada ve değere sahip tüm etiketleri bırakır.",
+        "documentation-exp": "`v` içindeki tüm öğeler için üstel fonksiyonu hesaplar.\nÖzel durumlar şunlardır:\n* `Exp(+Inf) = +Inf` \n* `Exp(NaN) = NaN`",
+        "documentation-floor": "`v` içindeki tüm öğelerin örnek değerlerini bir üst tam sayıya yuvarlar.",
+        "documentation-histogram-avg": "Yerel bir histogramda saklanan gözlemlenen değerlerin aritmetik ortalamasını verir. Yerel histogram olmayan örnekler yok sayılır ve döndürülen vektörde görünmez.",
+        "documentation-histogram-count": "Yerel bir histogramda saklanan gözlemlerin sayısını verir.",
+        "documentation-histogram-fraction": "Sağlanan alt ve üst değerler arasındaki gözlemlerin tahmini kısmını verir.",
+        "documentation-histogram-quantile": "Bir histogramın `b` demetlerinden φ-kuantili (0 ≤ φ ≤ 1) hesaplar. `b` içindeki örnekler, her demetteki gözlemlerin sayısıdır. Her örnek, etiket değerinin demetin kapsayıcı üst sınırını belirttiği bir `le` etiketine sahip olmalıdır. (Böyle bir etiketi olmayan örnekler sessizce göz ardı edilir.) Histogram metrik türü, otomatik olarak zaman serilerine `_bucket` son eki ve uygun etiketler sağlar.",
+        "documentation-histogram-stddev": "Gözlemlerin bulunduğu demetlerin geometrik ortalamasına dayalı olarak yerel bir histogramdaki gözlemlerin tahmini standart sapmasını verir.",
+        "documentation-histogram-stdvar": "Yerel bir histogramdaki gözlemlerin tahmini standart varyansını verir.",
+        "documentation-histogram-sum": "Yerel bir histogramda saklanan gözlemlerin toplamını verir.",
+        "documentation-holt-winters": "Prometheus v3.x'te double_exponential_smoothing olarak yeniden adlandırıldı. v3.0'a eşit ve daha büyük prometheus sürümleri için lütfen double_exponential_smoothing kullanın.\n\n`v` içindeki aralığa dayalı olarak zaman serileri için düzeltilmiş bir değer üretir. Düzeltme faktörü `sf` ne kadar düşükse eski verilere o kadar fazla önem verilir. Eğilim faktörü `tf` ne kadar yüksekse verilerdeki eğilimler o kadar fazla dikkate alınır. Hem `sf` hem de `tf` 0 ile 1 arasında olmalıdır.",
+        "documentation-hour": "UTC'de verilen saatlerin her biri için günün saatini verir. Verilen değerler 0 ile 23 arasındadır.",
+        "documentation-idelta": "`v` aralık vektöründeki son iki örnek arasındaki farkı hesaplar ve verilen deltalar ve eşdeğer etiketlerle bir anlık vektör verir.",
+        "documentation-increase": "Aralık vektöründeki zaman serilerindeki artışı hesaplar. Tekdüzelikteki kesintiler (hedef yeniden başlatmalar nedeniyle sayaç sıfırlamaları gibi) için otomatik olarak ayarlanır. Artış, aralık vektör seçicisinde belirtildiği gibi tam zaman aralığını kapsayacak şekilde tahmin edilir, böylece bir sayaç yalnızca tam sayı artışlarıyla artsa bile tam sayı olmayan bir sonuç elde etmek mümkün olur.",
+        "documentation-info": "Herhangi bir hesaplama yapmadan, bir metrik grubu hakkında etiketleri ve mevcut değerleri gibi en son ayrıntıları ve meta verileri döndürür",
+        "documentation-irate": "Aralık vektöründeki zaman serisinin saniye başına anlık artış oranını hesaplar. Bu, son iki veri noktasına dayanır. Tekdüzelikteki kesintiler (hedef yeniden başlatmalar nedeniyle sayaç sıfırlamaları gibi) için otomatik olarak ayarlanır.",
+        "documentation-label-join": "`v` içindeki her bir zaman serisi için, `separator`kullanarak tüm `src_labels` değerlerini birleştirir ve birleştirilen değeri içeren `dst_label` etiketine sahip zaman serisini döndürür. Bu fonksiyonda herhangi bir sayıda `src_labels` olabilir.",
+        "documentation-label-replace": "`v` içindeki her zaman serisi için, `label_replace(v instant-vector, dst_label string, replacement string, src_label string, regex string)` `regex` düzenli ifadesini `src_label` etiketine karşı eşleştirir. Zaman serisi eşleşirse, `replacement` genişlemesi ile değiştirilen `dst_label` etiketiyle döndürülür. `$1`, eşleşen ilk alt grup ile, `$2` ikinci alt grup ile değiştirilir. Düzenli ifade eşleşmezse zaman serisi değişmeden döndürülür.",
+        "documentation-last-over-time": "Belirtilen aralıktaki en son nokta değeri.",
+        "documentation-ln": "`v`içindeki tüm öğeler için doğal logaritmayı hesaplar.\nÖzel durumlar şunlardır:\n * `ln(+Inf) = +Inf`\n * `ln(0) = -Inf`\n * `ln(x < 0) = NaN`\n * `ln(NaN) = NaN`",
+        "documentation-log10": "`v` içindeki tüm öğeler için ondalık logaritmayı hesaplar. Özel durumlar `ln` içindeki durumlara eşdeğerdir.",
+        "documentation-log2": "`v` içindeki tüm öğeler için ikili logaritmayı hesaplar. Özel durumlar `ln` içindeki durumlara eşdeğerdir.",
+        "documentation-max-over-time": "Belirtilen aralıktaki tüm noktaların maksimum değeri.",
+        "documentation-min-over-time": "Belirtilen aralıktaki tüm noktaların minimum değeri.",
+        "documentation-minute": "UTC'de verilen saatlerin her biri için saatin dakikasını verir. Verilen değerler 0 ile 59 arasındadır.",
+        "documentation-month": "UTC'de verilen saatlerin her biri için yılın ayını verir. Verilen değerler 1 ile 12 arasındadır, burada 1 rakamı Ocak vb. anlamına gelir.",
+        "documentation-pi": "Pi değerini verir",
+        "documentation-predict-linear": "Basit doğrusal regresyon kullanarak, `v` aralık vektörüne dayalı olarak şu andan itibaren `t` saniyelik zaman serisinin değerini tahmin eder.",
+        "documentation-present-over-time": "Belirtilen aralıktaki herhangi bir seri için 1 değeri.",
+        "documentation-quantile-over-time": "Belirtilen aralıktaki değerlerin φ-kuantili (0 ≤ φ ≤ 1).",
+        "documentation-rad": "v içindeki tüm öğeler için dereceleri radyana dönüştürür",
+        "documentation-rate": "Aralık vektöründeki zaman serisinin saniye başına ortalama artış oranını hesaplar. Tekdüzelikteki kesintiler (hedef yeniden başlatmalar nedeniyle sayaç sıfırlamaları gibi) için otomatik olarak ayarlanır. Ayrıca hesaplama, zaman aralığının uçlarına dış değerleme yaparak kaçırılan kazımalar veya kazıma döngülerinin aralığın zaman periyodu ile kusurlu hizalanmasına izin verir.",
+        "documentation-resets": "Her bir girdi zaman serisi için `resets(v range-vector)`, belirtilen zaman aralığındaki sayaç sıfırlama sayısını anlık bir vektör olarak verir. Ardışık iki örnek arasındaki değerdeki herhangi bir düşüş, sayaç sıfırlaması olarak yorumlanır.",
+        "documentation-round": "`v` içindeki tüm öğelerin örnek değerlerini en yakın tam sayıya yuvarlar. Eşitlikler yukarı yönde yuvarlanarak çözülür. İsteğe bağlı `to_nearest` bağımsız değişkeni, örnek değerlerin yuvarlanması gereken en yakın katın belirlenmesini sağlar. Bu kat bir kesir de olabilir.",
+        "documentation-scalar": "Tek öğeli bir girdi vektörü verildiğinde, `scalar(v instant-vector)` bu tek öğenin örnek değerini bir skaler olarak verir. Girdi vektörünün tam olarak bir öğesi yoksa `scalar`, `NaN` verir.",
+        "documentation-sgn": "Tüm örnek değerleri işaretlerine dönüştürülmüş bir vektör verir, şu şekilde tanımlanır: v pozitifse 1, v negatifse -1 ve v sıfıra eşitse 0.",
+        "documentation-sort": "Örnek değerlerine göre artan sırada sıralanmış vektör öğelerini verir.",
+        "documentation-sort-desc": "Örnek değerlerine göre azalan sırada sıralanmış vektör öğelerini verir.",
+        "documentation-sqrt": "`v` içindeki tüm öğelerin karekökünü hesaplar.",
+        "documentation-stddev-over-time": "Belirtilen aralıktaki değerlerin popülasyon standart sapması.",
+        "documentation-stdvar-over-time": "Belirtilen aralıktaki değerlerin popülasyon standart varyansı.",
+        "documentation-sum-over-time": "Belirtilen aralıktaki tüm değerlerin toplamı.",
+        "documentation-time": "1 Ocak 1970 UTC'den bu yana geçen saniye sayısını verir. Bunun aslında geçerli zamanı değil, ifadenin değerlendirileceği zamanı verdiğini unutmayın.",
+        "documentation-timestamp": "Verilen vektörün her bir örneğinin zaman damgasını 1 Ocak 1970 UTC'den bu yana geçen saniye sayısı olarak verir.",
+        "documentation-vector": "Skalerleri etiketsiz bir vektör olarak verir.",
+        "documentation-year": "UTC'de verilen saatlerin her biri için yılı verir."
       },
       "getTrigonometricFunctions": {
-        "documentation-acos": "",
-        "documentation-acosh": "",
-        "documentation-asin": "",
-        "documentation-asinh": "",
-        "documentation-atan": "",
-        "documentation-atanh": "",
-        "documentation-cos": "",
-        "documentation-cosh": "",
-        "documentation-sin": "",
-        "documentation-sinh": "",
-        "documentation-tan": "",
-        "documentation-tanh": ""
+        "documentation-acos": "{{argument}} içindeki tüm öğelerin ark kosinüsünü hesaplar",
+        "documentation-acosh": "{{argument}} içindeki tüm öğelerin ters hiperbolik kosinüsünü hesaplar",
+        "documentation-asin": "{{argument}} içindeki tüm öğelerin ark sinüsünü hesaplar",
+        "documentation-asinh": "{{argument}} içindeki tüm öğelerin ters hiperbolik sinüsünü hesaplar",
+        "documentation-atan": "{{argument}} içindeki tüm öğelerin ark tanjantını hesaplar",
+        "documentation-atanh": "{{argument}} içindeki tüm öğelerin ters hiperbolik tanjantını hesaplar",
+        "documentation-cos": "{{argument}} içindeki tüm öğelerin kosinüsünü hesaplar",
+        "documentation-cosh": "{{argument}} içindeki tüm öğelerin hiperbolik kosinüsünü hesaplar",
+        "documentation-sin": "{{argument}} içindeki tüm öğelerin sinüsünü hesaplar",
+        "documentation-sinh": "{{argument}} içindeki tüm öğelerin hiperbolik sinüsünü hesaplar",
+        "documentation-tan": "{{argument}} içindeki tüm öğelerin tanjantını hesaplar",
+        "documentation-tanh": "{{argument}} içindeki tüm öğelerin hiperbolik tanjantını hesaplar"
       }
     },
     "querybuilder": {
       "feedback-link": {
         "give-feedback": "Geri bildirim gönder",
-        "title-give-feedback": ""
+        "title-give-feedback": "Metrik gezgini yeni olduğundan lütfen gelişime açık alanlarını bize bildirin"
       },
       "get-collapsed-info": {
-        "exemplars": "",
-        "format": "",
-        "legend": "",
-        "step": "",
-        "type": ""
+        "exemplars": "Örnekler: {{value}}",
+        "format": "Biçim: {{value}}",
+        "legend": "Gösterge: {{value}}",
+        "step": "Adım: {{value}}",
+        "type": "Tür: {{value}}"
       },
       "get-placeholders": {
-        "browse": "",
-        "type": ""
+        "browse": "Metrikleri ada göre ara",
+        "type": "Türe göre filtrele"
       },
       "get-prom-types": {
-        "description-counter": "",
-        "description-gauge": "",
-        "description-histogram": "",
-        "description-native-histogram": "",
-        "description-no-type": "",
-        "description-summary": "",
-        "description-unknown": "",
-        "label-counter": "",
-        "label-gauge": "",
-        "label-histogram": "",
-        "label-native-histogram": "",
-        "label-no-type": "",
-        "label-summary": "",
-        "label-unknown": ""
+        "description-counter": "Değeri yalnızca yeniden başlatıldığında artabilen veya sıfırlanabilen tek bir monoton artan sayacı temsil eden kümülatif bir metrik.",
+        "description-gauge": "İsteğe bağlı olarak yukarı ve aşağı gidebilen tek bir sayısal değeri temsil eden bir metrik.",
+        "description-histogram": "Bir histogram, gözlemleri örnekler (genellikle istek süreleri veya yanıt boyutları gibi) ve bunları yapılandırılabilir demetlerde sayar.",
+        "description-native-histogram": "Yerel histogramlar, klasik Prometheus histogramlarından çeşitli şekillerde farklıdır: Yerel histogram küme sınırları, yerel histogramın ölçeğine (çözünürlüğüne) bağlı olan ve kullanıcı tarafından tanımlanmayan bir formülle hesaplanır.",
+        "description-no-type": "Bu metriklerin meta verilerde tanımlanmış bir türü yoktur.",
+        "description-summary": "Bir özet, gözlemleri örnekler (genellikle istek süreleri ve yanıt boyutları gibi) ve kayan bir zaman aralığında yapılandırılabilir nicelikleri hesaplayabilir.",
+        "description-unknown": "Bu metrikler, meta verilerde bilinmeyen tür olarak verilmiştir.",
+        "label-counter": "Sayaç",
+        "label-gauge": "Ölçü",
+        "label-histogram": "Histogram",
+        "label-native-histogram": "Yerel histogram",
+        "label-no-type": "Tür yok",
+        "label-summary": "Özet",
+        "label-unknown": "Bilinmeyen"
       },
       "handle-function": {
         "text": {
-          "query-parsing-is-ambiguous": ""
+          "query-parsing-is-ambiguous": "Sorgu ayrıştırma belirsiz."
         }
       },
       "label-filter-item": {
-        "aria-label-remove": "",
-        "placeholder-select-label": "",
+        "aria-label-remove": "{{name}} ögesini kaldır",
+        "placeholder-select-label": "Etiket seçin",
         "placeholder-select-value": "Değer seçin"
       },
       "label-filters": {
-        "label-filters": "",
-        "label-label-filters": "",
-        "tooltip-label-filters": ""
+        "label-filters": "Etiket filtreleri",
+        "label-label-filters": "Etiket filtreleri",
+        "tooltip-label-filters": "İsteğe bağlı: Bu sorgu türü için metrik seçimini filtrelemek amacıyla kullanılır."
       },
       "label-param-editor": {
-        "loadingMessage-loading-labels": "",
-        "noOptionsMessage-no-labels-found": ""
+        "loadingMessage-loading-labels": "Etiketler yükleniyor",
+        "noOptionsMessage-no-labels-found": "Etiket bulunamadı"
       },
       "metric-combobox": {
         "async-select": {
-          "aria-label-open-metrics-explorer": "",
-          "placeholder-select-metric": "",
-          "tooltip-open-metrics-explorer": ""
+          "aria-label-open-metrics-explorer": "Metrik gezginini aç",
+          "placeholder-select-metric": "Metrik seçin",
+          "tooltip-open-metrics-explorer": "Metrik gezginini aç"
         },
         "label-metric": "Metrik",
-        "tooltip-metric": ""
+        "tooltip-metric": "İsteğe bağlı: Belirtilen metrikteki etiket adı için etiket değerlerinin bir listesini döndürür."
       },
       "metrics-modal": {
-        "aria-label-browse-metrics": "",
-        "currently-selected": "",
-        "metrics-pre-filtered": "",
-        "title-metrics-explorer": ""
+        "aria-label-browse-metrics": "Metrikleri gözden geçir",
+        "currently-selected": "Şu anda seçili olan: {{selected}}",
+        "metrics-pre-filtered": "Bu metrikler, etiket filtrelerinde seçilen etiketlere göre önceden filtrelenmiştir.",
+        "title-metrics-explorer": "Metrik gezgini"
       },
       "nested-query": {
         "label": {
-          "ignoring": "",
+          "ignoring": "Yok sayılıyor",
           "on": "Açık"
         },
         "operator": "İşleç",
-        "tooltip-remove-match": "",
-        "vector-matches": ""
+        "tooltip-remove-match": "Eşleşmeyi kaldır",
+        "vector-matches": "Vektör eşleşmeleri"
       },
       "operation-editor": {
-        "not-found": "",
-        "title-remove": ""
+        "not-found": "{{id}} işlemi bulunamadı",
+        "title-remove": "{{name}} ögesini kaldır"
       },
       "operation-header": {
         "placeholder-replace-with": "Bununla değiştir:",
-        "title-click-to-view-alternative-operations": "",
-        "title-remove-operation": ""
+        "title-click-to-view-alternative-operations": "Alternatif işlemleri görüntülemek için tıklayın",
+        "title-remove-operation": "İşlemi kaldır"
       },
       "operation-info-button": {
-        "title-click-to-show-description": "",
-        "title-remove-operation": ""
+        "title-click-to-show-description": "Açıklamayı görüntülemek için tıklayın",
+        "title-remove-operation": "İşlemi kaldır"
       },
       "operation-list": {
-        "operations": "",
+        "operations": "İşlemler",
         "placeholder-search": "Ara",
-        "title-add-operation": ""
+        "title-add-operation": "İşlem ekle"
       },
       "operation-param-editor": {
-        "title-add": "",
-        "title-remove": ""
+        "title-add": "{{name}} ekle",
+        "title-remove": "{{name}} ögesini kaldır"
       },
       "operation-utils": {
         "getAggregationExplainer": {
-          "label-by": "",
-          "label-default": "",
-          "label-without": ""
+          "label-by": "{{labelWord}} {{labels}} korunurken boyutlar üzerinden {{aggregationName}} hesaplar.",
+          "label-default": "Boyutlar üzerinden {{aggregationName}} hesaplar.",
+          "label-without": "{{labels}} boyutları üzerinden {{aggregationName}} hesaplar. Diğer tüm etiketler korunur."
         }
       },
       "prom-query-builder-options": {
-        "aria-label-lower-limit-parameter": "",
-        "aria-label-select-resolution": "",
+        "aria-label-lower-limit-parameter": "Adım parametresi için alt sınırı ayarlayın",
+        "aria-label-select-resolution": "Çözüm seçin",
         "format-options": {
-          "label-heatmap": "",
-          "label-table": "",
-          "label-time-series": ""
+          "label-heatmap": "Isı Haritası",
+          "label-table": "Tablo",
+          "label-time-series": "Zaman serileri"
         },
-        "label-exemplars": "",
+        "label-exemplars": "Örnekler",
         "label-format": "Biçim",
-        "label-min-step": "",
-        "label-resolution": "",
+        "label-min-step": "Min. adım",
+        "label-resolution": "Çözünürlük",
         "label-type": "Tür",
-        "placeholder-auto": "",
+        "placeholder-auto": "otomatik",
         "title-options": "Seçenekler",
-        "tooltip-min-step": ""
-      },
-      "prom-query-code-editor-autocomplete-info": {
-        "autocomplete-suggestions-limited": "",
-        "tooltip-autocomplete-suggestions-limited": ""
+        "tooltip-min-step": "Prometheus sorgusunun step (adım) parametresi ve <2>{{interval}}</2> ile <4>{{rateInterval}}</4> değişkenleri için ek bir alt sınırdır."
       },
       "prom-query-editor-selector": {
-        "body-syntax-error": "",
-        "confirmText-continue": "",
+        "body-syntax-error": "Bir sözdizimi hatası var veya oluşturucu moduna geçerken sorgu yapısı görselleştirilemiyor. Sorgunun bazı kısımları kaybolabilir.",
+        "confirmText-continue": "Devam et",
         "kick-start-your-query": "Sorgunuzu hızlı başlatın",
-        "label-explain": "",
-        "run-queries": "",
-        "title-parsing-error-switch-builder": ""
+        "label-explain": "Açıkla",
+        "run-queries": "Sorguları çalıştır",
+        "title-parsing-error-switch-builder": "Ayrıştırma hatası: Oluşturucu moduna geçilsin mi?"
       },
       "prom-query-legend-editor": {
-        "label-legend": "",
-        "placeholder-select-legend-mode": "",
-        "tooltip-legend": ""
+        "label-legend": "Gösterge",
+        "placeholder-select-legend-mode": "Gösterge modunu seçin",
+        "tooltip-legend": "Seri adı geçersiz kılma veya şablon. Ör: {{templateExample}}, {{labelName}} etiketinin değeriyle değiştirilecektir."
       },
       "query-builder-hints": {
-        "hint-details": ""
+        "hint-details": "ipucu: {{hintDetails}}"
       },
       "query-editor-mode-toggle": {
         "editor-modes": {
-          "label-builder": "",
-          "label-code": ""
+          "label-builder": "Oluşturucu",
+          "label-code": "Kod"
         }
       },
       "query-pattern": {
-        "apply-query": "",
-        "aria-label-apply-query-starter-button": "",
-        "aria-label-back-button": "",
-        "aria-label-create-new-query-button": "",
-        "aria-label-raw-query": "",
-        "aria-label-use-this-query-button": "",
+        "apply-query": "Sorguyu uygula",
+        "aria-label-apply-query-starter-button": "sorguyu uygula başlatma düğmesi",
+        "aria-label-back-button": "geri düğmesi",
+        "aria-label-create-new-query-button": "yeni sorgu oluştur düğmesi",
+        "aria-label-raw-query": "{{patternName}} ham sorgusu",
+        "aria-label-use-this-query-button": "bu sorgu düğmesini kullanın",
         "back": "Geri",
-        "create-new-query": "",
+        "create-new-query": "Yeni sorgu oluştur",
         "use-this-query": "Bu sorguyu kullanın"
       },
       "query-patterns-modal": {
-        "aria-label-close-kick-start-your-query-modal": "",
+        "aria-label-close-kick-start-your-query-modal": "sorgunuzu hızlı başlatma modülünü kapat",
         "aria-label-kick-start-your-query-modal": "Sorgu modülünüzü hızlı başlatın",
-        "aria-label-toggle-query-starter": "",
+        "aria-label-toggle-query-starter": "{{patternType}} sorgu başlatıcı kartını aç ve kapat",
         "close": "Kapat",
-        "description-kick-start-your-query": "",
-        "label-toggle-query-starter": "",
+        "description-kick-start-your-query": "Bu sorgulardan birini seçerek sorgunuzu hızlı başlatın. Ardından sorgunuzu tamamlamaya devam edebilirsiniz.",
+        "label-toggle-query-starter": "{{patternType}} sorgu başlatıcıları",
         "title-kick-start-your-query": "Sorgunuzu hızlı başlatın"
       },
       "raw-query": {
-        "aria-label-selector": ""
+        "aria-label-selector": "seçici"
       },
       "results-table": {
-        "content-descriptive-type": "",
+        "content-descriptive-type": "Bir {{descriptiveType}} oluşturulduğunda, Prometheus sayaç türünde birden fazla seri sunar. ",
         "description": "Açıklama",
-        "message-expand-label-filters": "",
-        "message-expand-search": "",
-        "message-no-metrics-found": "",
+        "message-expand-label-filters": "Metrik bulunamadı. Etiket filtrelerinizi genişletmeyi deneyin.",
+        "message-expand-search": "Metrik bulunamadı. Aramanızı ve filtrelerinizi genişletmeyi deneyin.",
+        "message-no-metrics-found": "Veri kaynağında metrik bulunamadı.",
         "name": "Ad",
         "type": "Tür"
       },
       "update-function-args": {
         "text": {
-          "query-parsing-is-ambiguous": ""
+          "query-parsing-is-ambiguous": "Sorgu ayrıştırma belirsiz."
         }
       }
     }

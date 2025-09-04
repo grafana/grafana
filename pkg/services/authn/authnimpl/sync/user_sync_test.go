@@ -3,6 +3,7 @@ package sync
 import (
 	"context"
 	"errors"
+	"fmt"
 	"strconv"
 	"testing"
 
@@ -971,6 +972,93 @@ func TestUserSync_FetchSyncedUserHook(t *testing.T) {
 			}
 			err := s.FetchSyncedUserHook(context.Background(), tt.identity, tt.req)
 			require.ErrorIs(t, err, tt.expectedErr)
+		})
+	}
+}
+
+func TestUserSync_CatalogLoginHook(t *testing.T) {
+	type testCase struct {
+		name           string
+		identity       *authn.Identity
+		expectFlagSet  bool
+		catalogVersion string
+	}
+
+	tests := []testCase{
+		{
+			name: "should skip hook when SyncUser flag is not enabled",
+			identity: &authn.Identity{
+				ClientParams: authn.ClientParams{
+					SyncUser: false,
+				},
+			},
+			expectFlagSet: false,
+		},
+		{
+			name: "should skip hook when request is nil",
+			identity: &authn.Identity{
+				ClientParams: authn.ClientParams{
+					SyncUser: true,
+				},
+			},
+		},
+		{
+			name: "should skip hook when catalog version is not set",
+			identity: &authn.Identity{
+				ClientParams: authn.ClientParams{
+					SyncUser: true,
+				},
+			},
+			expectFlagSet: false,
+		},
+		{
+			name: "should not set loginflag when catalog version is set incorrectly",
+			identity: &authn.Identity{
+				ClientParams: authn.ClientParams{
+					SyncUser: true,
+				},
+			},
+			catalogVersion: "v0aplha1",
+			expectFlagSet:  false,
+		},
+		{
+			name: "should not set loginflag when catalog version is empty",
+			identity: &authn.Identity{
+				ClientParams: authn.ClientParams{
+					SyncUser: true,
+				},
+			},
+			expectFlagSet: false,
+		},
+		{
+			name: "should set successful loginflag when catalog version is set correctly",
+			identity: &authn.Identity{
+				ClientParams: authn.ClientParams{
+					SyncUser: true,
+				},
+			},
+			catalogVersion: "1.0.0",
+			expectFlagSet:  true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			s := UserSync{
+				tracer: tracing.InitializeTracerForTest(),
+				log:    log.New("test"),
+			}
+
+			req := authn.Request{}
+			if tt.catalogVersion != "" {
+				req.SetMeta("catalog_version", tt.catalogVersion)
+			}
+
+			s.CatalogLoginHook(context.Background(), tt.identity, &req, nil)
+			usageStats := s.GetUsageStats(context.Background())
+			countIndex := fmt.Sprintf("stats.features.saml.catalog_version_%s.count", tt.catalogVersion)
+			countResult := usageStats[countIndex] != nil && usageStats[countIndex].(int) == 1
+			assert.Equal(t, tt.expectFlagSet, countResult)
 		})
 	}
 }

@@ -1,4 +1,4 @@
-import { isEmpty } from 'lodash';
+import { pickBy } from 'lodash';
 
 import { config, createMonitoringLogger, reportInteraction } from '@grafana/runtime';
 import { contextSrv } from 'app/core/core';
@@ -8,7 +8,8 @@ import { RulerRulesConfigDTO } from '../../../types/unified-alerting-dto';
 
 import { Origin } from './components/rule-viewer/tabs/version-history/ConfirmVersionRestoreModal';
 import { FilterType } from './components/rules/central-state-history/EventListSceneObject';
-import { RulesFilter, getSearchFilterFromQuery } from './search/rulesSearchParser';
+import { AdvancedFilters } from './rule-list/filter/types';
+import { RulesFilter } from './search/rulesSearchParser';
 import { RuleFormType } from './types/rule-form';
 
 export const LogMessages = {
@@ -244,44 +245,6 @@ export const trackImportToGMAError = async (payload: { importSource: 'yaml' | 'd
   reportInteraction('grafana_alerting_import_to_gma_error', { ...payload });
 };
 
-interface RulesSearchInteractionPayload {
-  filter: string;
-  triggeredBy: 'typing' | 'component';
-}
-
-function trackRulesSearchInteraction(payload: RulesSearchInteractionPayload) {
-  reportInteraction('grafana_alerting_rules_search', { ...payload });
-}
-
-export function trackRulesSearchInputInteraction({ oldQuery, newQuery }: { oldQuery: string; newQuery: string }) {
-  try {
-    const oldFilter = getSearchFilterFromQuery(oldQuery);
-    const newFilter = getSearchFilterFromQuery(newQuery);
-
-    const oldFilterTerms = extractFilterKeys(oldFilter);
-    const newFilterTerms = extractFilterKeys(newFilter);
-
-    const newTerms = newFilterTerms.filter((term) => !oldFilterTerms.includes(term));
-    newTerms.forEach((term) => {
-      trackRulesSearchInteraction({ filter: term, triggeredBy: 'typing' });
-    });
-  } catch (e: unknown) {
-    if (e instanceof Error) {
-      logError(e);
-    }
-  }
-}
-
-function extractFilterKeys(filter: RulesFilter) {
-  return Object.entries(filter)
-    .filter(([_, value]) => !isEmpty(value))
-    .map(([key]) => key);
-}
-
-export function trackRulesSearchComponentInteraction(filter: keyof RulesFilter) {
-  trackRulesSearchInteraction({ filter, triggeredBy: 'component' });
-}
-
 export function trackRulesListViewChange(payload: { view: string }) {
   reportInteraction('grafana_alerting_rules_list_mode', { ...payload });
 }
@@ -328,6 +291,70 @@ export function trackFolderBulkActionsPauseFail() {
 
 export function trackFolderBulkActionsUnpauseFail() {
   reportInteraction('grafana_alerting_folder_bulk_actions_unpause_fail');
+}
+
+export function trackFilterButtonClick() {
+  reportInteraction('grafana_alerting_filter_button_click');
+}
+
+export function trackAlertRuleFilterEvent(
+  payload:
+    | { filterMethod: 'search-input'; filter: RulesFilter }
+    | { filterMethod: 'filter-component'; filter: keyof RulesFilter }
+) {
+  if (payload.filterMethod === 'search-input') {
+    const meaningfulValues = filterMeaningfulValues(payload.filter);
+    reportInteraction('grafana_alerting_rules_filter', { ...meaningfulValues, filterMethod: 'search-input' });
+    return;
+  }
+  reportInteraction('grafana_alerting_rules_filter', { filter: payload.filter, filterMethod: 'filter-component' });
+}
+
+export function trackRulesSearchInputCleared(prev: string, next: string) {
+  // Only report an explicit clear action when transitioning from non-empty to empty
+  if (prev !== '' && next === '') {
+    reportInteraction('grafana_alerting_rules_filter_cleared', { filterMethod: 'search-input' });
+  }
+}
+
+export function trackFilterButtonApplyClick(payload: AdvancedFilters, pluginsFilterEnabled: boolean) {
+  // Filter out empty/default values before tracking
+  const meaningfulValues = filterMeaningfulValues(payload, { pluginsFilterEnabled });
+
+  reportInteraction('grafana_alerting_rules_filter', {
+    ...meaningfulValues,
+    filterMethod: 'filter-component',
+  });
+}
+
+function filterMeaningfulValues(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  obj: Record<string, any>,
+  opts?: { pluginsFilterEnabled?: boolean }
+) {
+  const { pluginsFilterEnabled = true } = opts ?? {};
+  return pickBy(obj, (value, key) => {
+    if (value === null || value === undefined || value === '') {
+      return false;
+    }
+    if (Array.isArray(value) && value.length === 0) {
+      return false;
+    }
+    if (value === '*') {
+      return false;
+    }
+    if (key === 'plugins' && !pluginsFilterEnabled) {
+      return false;
+    }
+    if (key === 'plugins' && value === 'show') {
+      return false;
+    }
+    return true;
+  });
+}
+
+export function trackFilterButtonClearClick() {
+  reportInteraction('grafana_alerting_rules_filter_cleared', { filterMethod: 'filter-component' });
 }
 
 export type AlertRuleTrackingProps = {

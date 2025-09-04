@@ -1,9 +1,12 @@
 import { readdirSync, readFileSync } from 'fs';
 import path from 'path';
 
+import { sortedDeepCloneWithoutNulls } from 'app/core/utils/object';
 import { mockDataSource } from 'app/features/alerting/unified/mocks';
 import { setupDataSources } from 'app/features/alerting/unified/testSetup/datasources';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
+import { plugin as statPanelPlugin } from 'app/plugins/panel/stat/module';
+import { plugin as tablePanelPlugin } from 'app/plugins/panel/table/module';
 
 import { DASHBOARD_SCHEMA_VERSION } from './DashboardMigrator';
 import { DashboardModel } from './DashboardModel';
@@ -72,9 +75,12 @@ const dataSources = {
   }),
 };
 
-setupDataSources(...Object.values(dataSources));
-
 describe('Backend / Frontend result comparison', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    setupDataSources(...Object.values(dataSources));
+  });
+
   const inputDir = path.join(
     __dirname,
     '..',
@@ -109,17 +115,103 @@ describe('Backend / Frontend result comparison', () => {
   jsonInputs.forEach((inputFile) => {
     it(`should migrate ${inputFile} correctly`, async () => {
       const jsonInput = JSON.parse(readFileSync(path.join(inputDir, inputFile), 'utf8'));
-
       const backendOutput = JSON.parse(readFileSync(path.join(outputDir, inputFile), 'utf8'));
 
-      // Make sure the backend output always migrates to the latest version
       expect(backendOutput.schemaVersion).toEqual(DASHBOARD_SCHEMA_VERSION);
 
-      // Compare both migrations, when mounted in dashboard model, after serializing to JSON are the same.
-      // This avoid issues with the default values in the frontend, wheter they were set in the input JSON or not.
-      const frontendMigrationResult = new DashboardModel(jsonInput).getSaveModelClone();
-      const backendMigrationResult = new DashboardModel(backendOutput).getSaveModelClone();
-      expect(backendMigrationResult).toMatchObject(frontendMigrationResult);
+      // Create dashboard models
+      const frontendModel = new DashboardModel(jsonInput);
+      const backendModel = new DashboardModel(backendOutput);
+
+      /* 
+      Migration from schema V27 involves migrating angular singlestat panels to stat panels
+      These panels are auto migrated where PanelModel.restoreModel() is called in the constructor,
+      and the autoMigrateFrom is set and type is set to "stat". So this logic will not run.
+      if (oldVersion < 28) {
+        panelUpgrades.push((panel: PanelModel) => {
+          if (panel.type === 'singlestat') {
+            return migrateSinglestat(panel);
+          }
+        });
+      }
+    
+      Furthermore, the PanelModel.pluginLoaded is run in the old architecture through a redux action so it will not run in this test.
+      In the scenes architecture the angular migration logic runs through a migration handler inside transformSaveModelToScene.ts
+       _UNSAFE_customMigrationHandler: getAngularPanelMigrationHandler(panel),
+      We need to manually run the pluginLoaded logic to ensure the panels are migrated correctly. 
+      which means that the actual migration logic is not run.
+      We need to manually run the pluginLoaded logic to ensure the panels are migrated correctly.
+      */
+      if (jsonInput.schemaVersion <= 27) {
+        for (const panel of frontendModel.panels) {
+          if (panel.type === 'stat' && panel.autoMigrateFrom) {
+            // Set the plugin version if it doesn't exist
+            if (!statPanelPlugin.meta.info) {
+              statPanelPlugin.meta.info = {
+                author: {
+                  name: 'Grafana Labs',
+                  url: 'url/to/GrafanaLabs',
+                },
+                description: 'stat plugin',
+                links: [{ name: 'project', url: 'one link' }],
+                logos: { small: 'small/logo', large: 'large/logo' },
+                screenshots: [],
+                updated: '2024-01-01',
+                version: '1.0.0',
+              };
+            }
+            if (!statPanelPlugin.meta.info.version) {
+              statPanelPlugin.meta.info.version = '1.0.0';
+            }
+
+            await panel.pluginLoaded(statPanelPlugin);
+          }
+          if (panel.type === 'table' && panel.autoMigrateFrom === 'table-old') {
+            // Set the plugin version if it doesn't exist
+            if (!tablePanelPlugin.meta.info) {
+              tablePanelPlugin.meta.info = {
+                author: {
+                  name: 'Grafana Labs',
+                  url: 'url/to/GrafanaLabs',
+                },
+                description: 'table plugin',
+                links: [{ name: 'project', url: 'one link' }],
+                logos: { small: 'small/logo', large: 'large/logo' },
+                screenshots: [],
+                updated: '2024-01-01',
+                version: '1.0.0',
+              };
+            }
+            if (!tablePanelPlugin.meta.info.version) {
+              tablePanelPlugin.meta.info.version = '1.0.0';
+            }
+
+            await panel.pluginLoaded(tablePanelPlugin as any);
+          }
+        }
+      }
+
+      const frontendMigrationResult = frontendModel.getSaveModelClone();
+      const backendMigrationResult = backendModel.getSaveModelClone();
+
+      // Although getSaveModelClone() runs sortedDeepCloneWithoutNulls() internally,
+      // we run it again to ensure consistent handling of null values (like threshold -Infinity values)
+      // Because Go and TS handle -Infinity differently.
+      const cleanedFrontendResult = sortedDeepCloneWithoutNulls(frontendMigrationResult);
+
+      // Remove deprecated angular properties that backend shouldn't return, but DashboardModel will still set them
+      for (const panel of cleanedFrontendResult.panels ?? []) {
+        // @ts-expect-error
+        delete panel.autoMigrateFrom;
+        // @ts-expect-error
+        delete panel.styles;
+        // @ts-expect-error - Backend removes these deprecated table properties
+        delete panel.transform;
+        // @ts-expect-error - Backend removes these deprecated table properties
+        delete panel.columns;
+      }
+
+      expect(backendMigrationResult).toMatchObject(cleanedFrontendResult);
     });
   });
 });

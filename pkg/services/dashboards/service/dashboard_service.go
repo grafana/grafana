@@ -39,8 +39,6 @@ import (
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacysearcher"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/apiserver"
-	"github.com/grafana/grafana/pkg/services/apiserver/client"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
@@ -52,7 +50,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/publicdashboards"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/search/model"
-	"github.com/grafana/grafana/pkg/services/search/sort"
 	"github.com/grafana/grafana/pkg/services/sqlstore/searchstore"
 	"github.com/grafana/grafana/pkg/services/store/entity"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -94,7 +91,7 @@ type DashboardServiceImpl struct {
 	dashboardPermissions   accesscontrol.DashboardPermissionsService
 	ac                     accesscontrol.AccessControl
 	acService              accesscontrol.Service
-	k8sclient              client.K8sHandler
+	k8sclient              dashboardclient.K8sHandlerWithFallback
 	metrics                *dashboardsMetrics
 	publicDashboardService publicdashboards.ServiceWrapper
 	serverLockService      *serverlock.ServerLockService
@@ -374,16 +371,23 @@ var _ registry.BackgroundService = (*DashboardServiceImpl)(nil)
 
 // This is the uber service that implements a three smaller services
 func ProvideDashboardServiceImpl(
-	cfg *setting.Cfg, dashboardStore dashboards.Store, folderStore folder.FolderStore,
-	features featuremgmt.FeatureToggles, folderPermissionsService accesscontrol.FolderPermissionsService,
-	ac accesscontrol.AccessControl, acService accesscontrol.Service, folderSvc folder.Service, r prometheus.Registerer,
-	restConfigProvider apiserver.RestConfigProvider, userService user.Service,
-	quotaService quota.Service, orgService org.Service, publicDashboardService publicdashboards.ServiceWrapper,
-	resourceClient resource.ResourceClient, dual dualwrite.Service, sorter sort.Service,
+	cfg *setting.Cfg,
+	dashboardStore dashboards.Store,
+	folderStore folder.FolderStore,
+	features featuremgmt.FeatureToggles,
+	folderPermissionsService accesscontrol.FolderPermissionsService,
+	ac accesscontrol.AccessControl,
+	acService accesscontrol.Service,
+	folderSvc folder.Service,
+	r prometheus.Registerer,
+	quotaService quota.Service,
+	orgService org.Service,
+	publicDashboardService publicdashboards.ServiceWrapper,
+	dual dualwrite.Service,
 	serverLockService *serverlock.ServerLockService,
 	kvstore kvstore.KVStore,
+	k8sClient dashboardclient.K8sHandlerWithFallback,
 ) (*DashboardServiceImpl, error) {
-	k8sclient := dashboardclient.NewK8sClientWithFallback(cfg, restConfigProvider, dashboardStore, userService, resourceClient, sorter, dual, r, features)
 	dashSvc := &DashboardServiceImpl{
 		cfg:                       cfg,
 		log:                       log.New("dashboard-service"),
@@ -395,7 +399,7 @@ func ProvideDashboardServiceImpl(
 		folderStore:               folderStore,
 		folderService:             folderSvc,
 		orgService:                orgService,
-		k8sclient:                 k8sclient,
+		k8sclient:                 k8sClient,
 		metrics:                   newDashboardsMetrics(r),
 		dashboardPermissionsReady: make(chan struct{}),
 		publicDashboardService:    publicDashboardService,
@@ -1162,7 +1166,7 @@ func (dr *DashboardServiceImpl) SetDefaultPermissionsAfterCreate(ctx context.Con
 	isNested := obj.GetFolder() != ""
 	if !dr.features.IsEnabledGlobally(featuremgmt.FlagKubernetesDashboards) {
 		// legacy behavior
-		if !isNested || !dr.features.IsEnabled(ctx, featuremgmt.FlagNestedFolders) {
+		if !isNested {
 			permissions = append(permissions, []accesscontrol.SetResourcePermissionCommand{
 				{BuiltinRole: string(org.RoleEditor), Permission: dashboardaccess.PERMISSION_EDIT.String()},
 				{BuiltinRole: string(org.RoleViewer), Permission: dashboardaccess.PERMISSION_VIEW.String()},
@@ -1392,7 +1396,7 @@ func (dr *DashboardServiceImpl) FindDashboards(ctx context.Context, query *dashb
 	ctx, span := tracer.Start(ctx, "dashboards.service.FindDashboards")
 	defer span.End()
 
-	if dr.features.IsEnabled(ctx, featuremgmt.FlagNestedFolders) && len(query.FolderUIDs) > 0 && slices.Contains(query.FolderUIDs, folder.SharedWithMeFolderUID) {
+	if len(query.FolderUIDs) > 0 && slices.Contains(query.FolderUIDs, folder.SharedWithMeFolderUID) {
 		start := time.Now()
 		userDashboardUIDs, err := dr.getUserSharedDashboardUIDs(ctx, query.SignedInUser)
 		if err != nil {

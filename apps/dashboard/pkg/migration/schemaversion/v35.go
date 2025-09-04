@@ -1,5 +1,7 @@
 package schemaversion
 
+import "context"
+
 // V35 ensures x-axis visibility in timeseries panels to prevent dashboard breakage.
 //
 // This migration addresses a specific issue where timeseries panels with all axes
@@ -33,7 +35,7 @@ package schemaversion
 //	    properties: [{ id: "custom.axisPlacement", value: "auto" }]
 //	  }]
 //	}
-func V35(dashboard map[string]interface{}) error {
+func V35(_ context.Context, dashboard map[string]interface{}) error {
 	dashboard["schemaVersion"] = int(35)
 
 	panels, ok := dashboard["panels"].([]interface{})

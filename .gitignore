@@ -94,6 +94,8 @@ example-apiserver/
 /devenv/docker/blocks/auth/openldap/certs/
 
 conf/custom.ini
+conf/operator.ini
+conf/storage.ini
 
 /conf/provisioning/**/*.yaml
 !/conf/provisioning/**/sample.yaml
@@ -117,6 +119,9 @@ profile.cov
 /pkg/server/wireexts_enterprise.go
 /pkg/server/enterprise_wire_gen.go
 /pkg/build/cmd/enterprise.go
+/pkg/build/cmd/artifactspage.go
+/pkg/build/cmd/artifactspage.tmpl.html
+/pkg/build/cmd/exportversion.go
 /pkg/extensions/*
 !/pkg/extensions/.keep
 !/pkg/extensions/main.go
@@ -186,6 +191,8 @@ compilation-stats.json
 /e2e/build_results.zip
 /e2e/extensions
 !/e2e/extensions/.keep
+/e2e-playwright/extensions
+!/e2e-playwright/extensions/.keep
 /e2e/extensions-suite
 /test-results/
 /playwright-report/
@@ -238,3 +245,4 @@ public/app/plugins/**/dist/
 public/mockServiceWorker.js
 
 /e2e-playwright/test-plugins/*/dist
+/apps/provisioning/cmd/job-controller/bin/

@@ -11,10 +11,11 @@ import PageLoader from 'app/core/components/PageLoader/PageLoader';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { DashboardPageError } from 'app/features/dashboard/containers/DashboardPageError';
 import { DashboardPageRouteParams, DashboardPageRouteSearchParams } from 'app/features/dashboard/containers/types';
+import { getDashboardSceneProfiler } from 'app/features/dashboard/services/DashboardProfiler';
+import { DashboardPreviewBanner } from 'app/features/provisioning/components/Dashboards/DashboardPreviewBanner';
 import { DashboardRoutes } from 'app/types/dashboard';
 
 import { DashboardPrompt } from '../saving/DashboardPrompt';
-import { DashboardPreviewBanner } from '../saving/provisioned/DashboardPreviewBanner';
 import { preserveDashboardSceneStateInLocalStorage } from '../utils/dashboardSessionState';
 
 import { getDashboardScenePageStateManager } from './DashboardScenePageStateManager';
@@ -48,6 +49,7 @@ export function DashboardScenePage({ route, queryParams, location }: Props) {
     }
 
     return () => {
+      getDashboardSceneProfiler().cancelProfile();
       preserveDashboardSceneStateInLocalStorage(locationService.getSearch(), uid);
       stateManager.clearState();
       stateManager.resetActiveManager();

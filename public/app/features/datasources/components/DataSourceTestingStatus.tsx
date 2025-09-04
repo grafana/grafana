@@ -1,7 +1,12 @@
 import { css, cx } from '@emotion/css';
 import { HTMLAttributes } from 'react';
 
-import { DataSourceSettings as DataSourceSettingsType, GrafanaTheme2, PluginExtensionPoints } from '@grafana/data';
+import {
+  DataSourceSettings as DataSourceSettingsType,
+  GrafanaTheme2,
+  PluginExtensionPoints,
+  PluginExtensionLink,
+} from '@grafana/data';
 import { sanitizeUrl } from '@grafana/data/internal';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
@@ -9,6 +14,7 @@ import { TestingStatus, config, usePluginLinks } from '@grafana/runtime';
 import { AlertVariant, Alert, useTheme2, Link, useStyles2 } from '@grafana/ui';
 
 import { contextSrv } from '../../../core/core';
+import { ALLOWED_DATASOURCE_EXTENSION_PLUGINS } from '../constants';
 import { trackCreateDashboardClicked } from '../tracking';
 
 export type Props = {
@@ -23,6 +29,7 @@ interface AlertMessageProps extends HTMLAttributes<HTMLDivElement> {
   exploreUrl: string;
   dataSourceId: string;
   onDashboardLinkClicked: () => void;
+  extensionLinks?: PluginExtensionLink[];
 }
 
 const getStyles = (theme: GrafanaTheme2, hasTitle: boolean) => {
@@ -36,6 +43,11 @@ const getStyles = (theme: GrafanaTheme2, hasTitle: boolean) => {
     disabled: css({
       pointerEvents: 'none',
       color: theme.colors.text.secondary,
+    }),
+    extensionLinks: css({
+      display: 'inline-flex',
+      marginTop: theme.spacing(0.5),
+      gap: theme.spacing(1),
     }),
   };
 };
@@ -148,7 +160,24 @@ export function DataSourceTestingStatus({ testingStatus, exploreUrl, dataSource 
     });
   };
   const styles = useStyles2(getTestingStatusStyles);
-  const { links } = usePluginLinks({
+
+  const { links: allStatusLinks } = usePluginLinks({
+    extensionPointId: PluginExtensionPoints.DataSourceConfigStatus,
+    context: {
+      dataSource: {
+        type: dataSource.type,
+        uid: dataSource.uid,
+        name: dataSource.name,
+        typeName: dataSource.typeName,
+      },
+      testingStatus,
+      severity,
+    },
+    limitPerPlugin: 1,
+  });
+
+  // Existing error-specific extensions (backward compatibility)
+  const { links: allErrorLinks } = usePluginLinks({
     extensionPointId: PluginExtensionPoints.DataSourceConfigErrorStatus,
     context: {
       dataSource: {
@@ -160,6 +189,13 @@ export function DataSourceTestingStatus({ testingStatus, exploreUrl, dataSource 
     },
     limitPerPlugin: 3,
   });
+
+  // Filter to only allow grafana-owned plugins
+  const statusLinks = allStatusLinks.filter((link) => ALLOWED_DATASOURCE_EXTENSION_PLUGINS.includes(link.pluginId));
+  const errorLinks = allErrorLinks.filter((link) => ALLOWED_DATASOURCE_EXTENSION_PLUGINS.includes(link.pluginId));
+
+  // Combine links: show error-specific only for errors, status-general for all
+  const extensionLinks = severity === 'error' ? [...statusLinks, ...errorLinks] : statusLinks;
 
   if (message) {
     return (
@@ -182,15 +218,16 @@ export function DataSourceTestingStatus({ testingStatus, exploreUrl, dataSource 
               ) : null}
             </>
           )}
-          {severity === 'error' && links.length > 0 && (
+          {extensionLinks.length > 0 && (
             <div className={styles.linksContainer}>
-              {links.map((link) => {
+              {extensionLinks.map((link) => {
                 return (
                   <a
                     key={link.id}
                     href={link.path ? sanitizeUrl(link.path) : undefined}
                     onClick={link.onClick}
                     className={styles.pluginLink}
+                    title={link.description}
                   >
                     {link.title}
                   </a>

@@ -2,14 +2,16 @@ package schemaversion
 
 import (
 	"strconv"
+
+	"golang.org/x/net/context"
 )
 
 const (
-	MIN_VERSION    = 28
+	MIN_VERSION    = 13
 	LATEST_VERSION = 41
 )
 
-type SchemaVersionMigrationFunc func(map[string]interface{}) error
+type SchemaVersionMigrationFunc func(context.Context, map[string]interface{}) error
 
 type DataSourceInfo struct {
 	Default    bool
@@ -21,11 +23,40 @@ type DataSourceInfo struct {
 }
 
 type DataSourceInfoProvider interface {
-	GetDataSourceInfo() []DataSourceInfo
+	// GetDataSourceInfo returns a list of all data sources with their info
+	// The context must have the namespace in it
+	GetDataSourceInfo(ctx context.Context) []DataSourceInfo
 }
 
-func GetMigrations(dsInfoProvider DataSourceInfoProvider) map[int]SchemaVersionMigrationFunc {
+type PanelPluginInfo struct {
+	ID      string
+	Version string
+}
+
+type PanelPluginInfoProvider interface {
+	// Gets all the panels from the plugin store.
+	// Equivalent to grafanaBootData.settings.panels on the frontend.
+	GetPanels() []PanelPluginInfo
+	GetPanelPlugin(id string) PanelPluginInfo
+}
+
+func GetMigrations(dsInfoProvider DataSourceInfoProvider, panelProvider PanelPluginInfoProvider) map[int]SchemaVersionMigrationFunc {
 	return map[int]SchemaVersionMigrationFunc{
+		14: V14,
+		15: V15,
+		16: V16,
+		17: V17,
+		18: V18,
+		19: V19,
+		20: V20,
+		21: V21,
+		22: V22,
+		23: V23,
+		24: V24(panelProvider),
+		25: V25,
+		26: V26,
+		27: V27,
+		28: V28(panelProvider),
 		29: V29,
 		30: V30,
 		31: V31,

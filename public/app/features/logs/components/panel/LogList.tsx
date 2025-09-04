@@ -24,7 +24,7 @@ import { PopoverMenu } from 'app/features/explore/Logs/PopoverMenu';
 import { GetFieldLinksFn } from 'app/plugins/panel/logs/types';
 
 import { InfiniteScrollMode, InfiniteScroll, LoadMoreLogsType } from './InfiniteScroll';
-import { getGridTemplateColumns } from './LogLine';
+import { getGridTemplateColumns, LogLineTimestampResolution } from './LogLine';
 import { LogLineDetails, LogLineDetailsMode } from './LogLineDetails';
 import { GetRowContextQueryFn, LogLineMenuCustomItem } from './LogLineMenu';
 import { LogListContextProvider, LogListState, useLogListContext } from './LogListContext';
@@ -66,7 +66,7 @@ export interface Props {
   onClickFilterOutString?: (value: string, refId?: string) => void;
   onClickShowField?: (key: string) => void;
   onClickHideField?: (key: string) => void;
-  onLogOptionsChange?: (option: keyof LogListControlOptions, value: string | boolean | string[]) => void;
+  onLogOptionsChange?: (option: LogListControlOptions, value: string | boolean | string[]) => void;
   onLogLineHover?: (row?: LogRowModel) => void;
   onPermalinkClick?: (row: LogRowModel) => Promise<void>;
   onPinLine?: (row: LogRowModel) => void;
@@ -80,6 +80,7 @@ export interface Props {
   showTime: boolean;
   sortOrder: LogsSortOrder;
   timeRange: TimeRange;
+  timestampResolution?: LogLineTimestampResolution;
   timeZone: string;
   syntaxHighlighting?: boolean;
   wrapLogMessage: boolean;
@@ -87,7 +88,7 @@ export interface Props {
 
 export type LogListFontSize = 'default' | 'small';
 
-export type LogListControlOptions = LogListState;
+export type LogListControlOptions = keyof LogListState | 'wrapLogMessage' | 'prettifyJSON';
 
 type LogListComponentProps = Omit<
   Props,
@@ -108,7 +109,7 @@ export const LogList = ({
   displayedFields,
   containerElement,
   logOptionsStorageKey,
-  detailsMode = logOptionsStorageKey ? (store.get(`${logOptionsStorageKey}.detailsMode`) ?? 'sidebar') : 'sidebar',
+  detailsMode,
   dedupStrategy,
   enableLogDetails,
   eventBus,
@@ -148,6 +149,7 @@ export const LogList = ({
   sortOrder,
   syntaxHighlighting = logOptionsStorageKey ? store.getBool(`${logOptionsStorageKey}.syntaxHighlighting`, true) : true,
   timeRange,
+  timestampResolution,
   timeZone,
   wrapLogMessage,
 }: Props) => {
@@ -189,6 +191,7 @@ export const LogList = ({
       showTime={showTime}
       sortOrder={sortOrder}
       syntaxHighlighting={syntaxHighlighting}
+      timestampResolution={timestampResolution}
       wrapLogMessage={wrapLogMessage}
     >
       <LogListSearchContextProvider>
@@ -238,9 +241,11 @@ const LogListComponent = ({
     onClickFilterString,
     onClickFilterOutString,
     permalinkedLogId,
+    prettifyJSON,
     showDetails,
     showTime,
     sortOrder,
+    timestampResolution,
     toggleDetails,
     wrapLogMessage,
   } = useLogListContext();
@@ -253,8 +258,11 @@ const LogListComponent = ({
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const virtualization = useMemo(() => new LogLineVirtualization(theme, fontSize), [theme, fontSize]);
   const dimensions = useMemo(
-    () => (wrapLogMessage ? [] : virtualization.calculateFieldDimensions(processedLogs, displayedFields)),
-    [displayedFields, processedLogs, virtualization, wrapLogMessage]
+    () =>
+      wrapLogMessage
+        ? []
+        : virtualization.calculateFieldDimensions(processedLogs, displayedFields, timestampResolution),
+    [displayedFields, processedLogs, timestampResolution, virtualization, wrapLogMessage]
   );
   const styles = useStyles2(getStyles, dimensions, displayedFields, { showTime });
   const widthContainer = wrapperRef.current ?? containerElement;
@@ -305,19 +313,24 @@ const LogListComponent = ({
   }, [eventBus, filteredLogs]);
 
   useEffect(() => {
-    if (loading) {
-      return;
-    }
     setProcessedLogs(
       preProcessLogs(
         logs,
-        { getFieldLinks, escape: forceEscape ?? false, order: sortOrder, timeZone, virtualization, wrapLogMessage },
+        {
+          getFieldLinks,
+          escape: forceEscape ?? false,
+          prettifyJSON,
+          order: sortOrder,
+          timeZone,
+          virtualization,
+          wrapLogMessage,
+        },
         grammar
       )
     );
     virtualization.resetLogLineSizes();
     listRef.current?.resetAfterIndex(0);
-  }, [forceEscape, getFieldLinks, grammar, loading, logs, sortOrder, timeZone, virtualization, wrapLogMessage]);
+  }, [forceEscape, getFieldLinks, grammar, logs, prettifyJSON, sortOrder, timeZone, virtualization, wrapLogMessage]);
 
   useEffect(() => {
     listRef.current?.resetAfterIndex(0);
@@ -369,11 +382,6 @@ const LogListComponent = ({
     [initialScrollPosition, permalinkedLogId, processedLogs]
   );
 
-  if (!containerElement || listHeight == null) {
-    // Wait for container to be rendered
-    return null;
-  }
-
   const handleLogLineClick = useCallback(
     (e: MouseEvent<HTMLElement>, log: LogListModel) => {
       if (handleTextSelection(e, log)) {
@@ -391,13 +399,18 @@ const LogListComponent = ({
 
   const focusLogLine = useCallback(
     (log: LogListModel) => {
-      const index = filteredLogs.indexOf(log);
+      const index = filteredLogs.findIndex((filteredLog) => filteredLog.uid === log.uid);
       if (index >= 0) {
         debouncedScrollToItem(index, 'start');
       }
     },
     [debouncedScrollToItem, filteredLogs]
   );
+
+  if (!containerElement || listHeight == null) {
+    // Wait for container to be rendered
+    return null;
+  }
 
   return (
     <div className={styles.logListContainer}>
@@ -407,7 +420,10 @@ const LogListComponent = ({
           containerElement={containerElement}
           focusLogLine={focusLogLine}
           logs={filteredLogs}
+          timeRange={timeRange}
+          timeZone={timeZone}
           onResize={handleLogDetailsResize}
+          showControls={showControls}
         />
       )}
       <div className={styles.logListWrapper} ref={wrapperRef}>
@@ -449,6 +465,7 @@ const LogListComponent = ({
           displayedFields={displayedFields}
           handleOverflow={handleOverflow}
           infiniteScrollMode={infiniteScrollMode}
+          loading={loading}
           logs={filteredLogs}
           loadMore={loadMore}
           onClick={handleLogLineClick}

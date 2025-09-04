@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"iter"
 	"net/http"
 	"sort"
 	"strconv"
@@ -74,6 +75,12 @@ type cdkBackend struct {
 	stream      chan<- *WrittenEvent
 }
 
+func (s *cdkBackend) ListModifiedSince(ctx context.Context, key NamespacedResource, sinceRv int64) (int64, iter.Seq2[*ModifiedResource, error]) {
+	return 0, func(yield func(*ModifiedResource, error) bool) {
+		yield(nil, errors.New("not implemented"))
+	}
+}
+
 func (s *cdkBackend) getPath(key *resourcepb.ResourceKey, rv int64) string {
 	var buffer bytes.Buffer
 	buffer.WriteString(s.root)
@@ -139,19 +146,17 @@ func (s *cdkBackend) WriteEvent(ctx context.Context, event WriteEvent) (rv int64
 		})
 	}
 
-	// Async notify all subscribers
+	// notify all subscribers
 	if s.stream != nil {
-		go func() {
-			write := &WrittenEvent{
-				Type:            event.Type,
-				Key:             event.Key,
-				PreviousRV:      event.PreviousRV,
-				Value:           event.Value,
-				Timestamp:       time.Now().UnixMilli(),
-				ResourceVersion: rv,
-			}
-			s.stream <- write
-		}()
+		write := &WrittenEvent{
+			Type:            event.Type,
+			Key:             event.Key,
+			PreviousRV:      event.PreviousRV,
+			Value:           event.Value,
+			Timestamp:       time.Now().UnixMilli(),
+			ResourceVersion: rv,
+		}
+		s.stream <- write
 	}
 	return rv, err
 }

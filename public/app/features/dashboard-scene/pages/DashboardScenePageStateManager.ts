@@ -8,6 +8,7 @@ import { StateManagerBase } from 'app/core/services/StateManagerBase';
 import { getMessageFromError, getMessageIdFromError, getStatusFromError } from 'app/core/utils/errors';
 import { startMeasure, stopMeasure } from 'app/core/utils/metrics';
 import {
+  AnnoKeyEmbedded,
   AnnoKeyFolder,
   AnnoKeyManagerIdentity,
   AnnoKeyManagerKind,
@@ -36,7 +37,7 @@ import { transformSaveModelSchemaV2ToScene } from '../serialization/transformSav
 import { transformSaveModelToScene } from '../serialization/transformSaveModelToScene';
 import { restoreDashboardStateFromLocalStorage } from '../utils/dashboardSessionState';
 
-import { updateNavModel } from './utils';
+import { processQueryParamsForDashboardLoad, updateNavModel } from './utils';
 
 export interface LoadError {
   status?: number;
@@ -447,7 +448,14 @@ export class DashboardScenePageStateManager extends DashboardScenePageStateManag
           return await dashboardLoaderSrv.loadDashboard('public', '', uid);
         }
         default:
-          rsp = await dashboardLoaderSrv.loadDashboard(type || 'db', slug || '', uid);
+          // If reloadDashboardsOnParamsChange is on, we need to process query params for dashboard load
+          // Since the scene is not yet there, we need to process whatever came through URL
+          if (config.featureToggles.reloadDashboardsOnParamsChange) {
+            const queryParamsObject = processQueryParamsForDashboardLoad();
+            rsp = await dashboardLoaderSrv.loadDashboard(type || 'db', slug || '', uid, queryParamsObject);
+          } else {
+            rsp = await dashboardLoaderSrv.loadDashboard(type || 'db', slug || '', uid);
+          }
 
           if (route === DashboardRoutes.Embedded) {
             rsp.meta.isEmbedded = true;
@@ -632,8 +640,8 @@ export class DashboardScenePageStateManagerV2 extends DashboardScenePageStateMan
           rsp = await this.dashboardLoader.loadDashboard(type || 'db', slug || '', uid);
 
           if (route === DashboardRoutes.Embedded) {
-            throw new Error('Method not implemented.');
-            // rsp.meta.isEmbedded = true;
+            rsp.metadata.annotations = rsp.metadata.annotations || {};
+            rsp.metadata.annotations[AnnoKeyEmbedded] = 'embedded';
           }
       }
       if (rsp.access.url && route === DashboardRoutes.Normal) {

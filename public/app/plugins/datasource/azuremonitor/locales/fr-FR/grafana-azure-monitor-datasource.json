@@ -52,7 +52,7 @@
       "button-use-query": "Utiliser cette requête",
       "label-categories": "Catégories",
       "label-query-results": "Résultats de la requête : {{numResults}}",
-      "noOptionsMessage-unable-to-list-categories": "",
+      "noOptionsMessage-unable-to-list-categories": "Impossible d’afficher toutes les catégories",
       "placeholder-all-categories": "Toutes les catégories",
       "placeholder-search-logs": "Rechercher des requêtes de journaux",
       "text-loading": "Chargement en cours..."
@@ -72,10 +72,8 @@
       "label-enable-basic-logs": "Activer les journaux de base"
     },
     "config-editor": {
-      "description-additional-settings": "Les paramètres supplémentaires sont des paramètres facultatifs qui peuvent être configurés pour un meilleur contrôle de votre source de données. Cela inclut le proxy Socks sécurisé.",
-      "description-request-timeout": "Définissez le délai d’expiration de la demande en secondes. La valeur par défaut est de 30 secondes.",
-      "title-additional-settings": "Paramètres supplémentaires",
-      "title-request-timeout": "Délai d’expiration de la demande"
+      "description-additional-settings": "Les paramètres supplémentaires sont des options facultatives que vous pouvez configurer pour un meilleur contrôle de votre source de données. Cela inclut le proxy Secure Socks, le délai d’expiration des requêtes et les cookies transférés.",
+      "title-additional-settings": "Paramètres supplémentaires"
     },
     "current-user-fallback-credentials": {
       "alert-fallback-credentials-disabled": "Les identifiants de secours ont été désactivés. Étant donné que l’authentification basée sur l’utilisateur ne prend en charge que les demandes avec un utilisateur dans la portée, les fonctionnalités telles que les alertes, les requêtes enregistrées ou les rapports ne fonctionneront pas comme prévu. Veuillez consulter la <2>documentation</2> pour en savoir plus.",
@@ -115,12 +113,12 @@
       "aria-label-column": "Colonne",
       "aria-label-column-value": "Valeur de la colonne",
       "aria-label-operator": "Opérateur",
-      "aria-label-remove-filter": "",
+      "aria-label-remove-filter": "Supprimer le filtre",
       "label-or": "OU"
     },
     "filter-section": {
-      "aria-label-add-filter": "",
-      "aria-label-add-or-filter": "",
+      "aria-label-add-filter": "Ajouter un filtre",
+      "aria-label-add-or-filter": "Ajouter un filtre OU",
       "label-add-group": "Ajouter un groupe",
       "label-and": "ET",
       "label-filters": "Filtres",
@@ -133,8 +131,8 @@
       "label-format-as": "Formater en tant que"
     },
     "fuzzy-search": {
-      "aria-label-add-fuzzy-search": "",
-      "aria-label-remove-fuzzy-search": "",
+      "aria-label-add-fuzzy-search": "Ajouter une recherche approximative",
+      "aria-label-remove-fuzzy-search": "Supprimer la recherche approximative",
       "aria-label-select-column": "Sélectionner une colonne",
       "label-fuzzy-search": "Recherche approximative",
       "placeholder-search-team": "Saisir le terme de recherche",
@@ -149,7 +147,7 @@
       "aria-label-remove": "Supprimer"
     },
     "group-by-section": {
-      "aria-label-add-group-by": "",
+      "aria-label-add-group-by": "Ajouter un regroupement par",
       "label-group-by": "Regrouper par",
       "tooltip-group-by": "Organisez les résultats en catégories en fonction des colonnes spécifiées. La fonction « Regrouper par » peut être utilisée de manière indépendante pour répertorier les valeurs uniques dans les colonnes sélectionnées, ou combinée avec des fonctions d’agrégation pour produire des statistiques récapitulatives pour chaque groupe. Lorsqu’elle est utilisée seule, elle renvoie des combinaisons distinctes des colonnes spécifiées."
     },
@@ -168,8 +166,8 @@
       "tooltip-limit": "Limitez le nombre de lignes renvoyées (la valeur par défaut est 1 000)."
     },
     "logs-management": {
-      "body-basic-logs-queries": "",
-      "confirmText-confirm": "",
+      "body-basic-logs-queries": "Voulez-vous vraiment passer aux journaux de base ?",
+      "confirmText-confirm": "Confirmer",
       "description-basic-logs-queries": "Les requêtes de journaux de base entraînent des coûts en fonction de la quantité de données analysées.",
       "label-logs": "Journaux",
       "title-basic-logs-queries": "Requêtes de journaux de base",
@@ -192,10 +190,10 @@
       "text-loading": "Chargement en cours..."
     },
     "order-by-section": {
-      "aria-label-add-order-by": "",
+      "aria-label-add-order-by": "Ajouter un tri par",
       "aria-label-order-by-column": "Classer par colonne",
       "aria-label-order-direction": "Sens du classement",
-      "aria-label-remove-order-by": "",
+      "aria-label-remove-order-by": "Supprimer le tri par",
       "label-by": "PAR",
       "label-order-by": "Classer par",
       "tooltip-order-by": "Triez les résultats en fonction d’une ou plusieurs colonne(s) par ordre croissant ou décroissant."
@@ -205,14 +203,14 @@
     },
     "query-header": {
       "aria-label-kick-start": "Bouton Lancer votre requête des journaux Azure",
-      "body-switching-to-builder": "",
-      "body-switching-to-kql": "",
+      "body-switching-to-builder": "Passer en mode Builder supprimera votre requête KQL actuelle et réinitialisera l’éditeur KQL. Voulez-vous continuer ?",
+      "body-switching-to-kql": "Passer en mode KQL supprimera vos paramètres Builder actuels. Voulez-vous continuer ?",
       "button-kick-start-your-query": "Lancer votre requête",
       "button-run-query": "Exécuter la requête",
-      "confirmText-switch-to": "",
+      "confirmText-switch-to": "Passer en mode {{newMode}}",
       "editor-modes": {
-        "label-builder": "",
-        "label-kql": ""
+        "label-builder": "Builder",
+        "label-kql": "KQL"
       },
       "label-service": "Service",
       "placeholder-service": "Service...",
@@ -229,16 +227,26 @@
       "select-resource": "Sélectionner une ressource"
     },
     "resource-picker": {
+      "browse-tab": "",
       "button-apply": "Appliquer",
       "button-cancel": "Annuler",
       "header-location": "Emplacement",
+      "header-resource-group": "",
       "header-scope": "Portée",
       "header-type": "Type",
       "heading-selection": "Sélection",
+      "locations-filter": "",
+      "locations-filter-placeholder": "",
+      "recent-tab": "",
       "result-limit": "Afficher les {{numResults}} premiers résultats",
+      "subscriptions-filter": "",
+      "subscriptions-filter-placeholder": "",
       "text-loading": "Chargement en cours...",
+      "text-no-recent-resources": "",
       "text-no-resources": "Aucune ressource trouvée",
-      "title-error-occurred": "Une erreur s’est produite lors de la demande de ressources à Azure Monitor"
+      "title-error-occurred": "Une erreur s’est produite lors de la demande de ressources à Azure Monitor",
+      "types-filter": "",
+      "types-filter-placeholder": ""
     },
     "scope-selector": {
       "label": "Portée"
@@ -258,7 +266,7 @@
       "label-table": "Tableau",
       "placeholder-select-columns": "Sélectionner les colonnes",
       "placeholder-select-table": "Sélectionner un tableau",
-      "tooltip-remove-all-columns": ""
+      "tooltip-remove-all-columns": "Supprimer toutes les colonnes"
     },
     "time-grain-field": {
       "label-time-grain": "Fragment de temps"

@@ -52,7 +52,7 @@
       "button-use-query": "Diese Abfrage nutzen",
       "label-categories": "Kategorien",
       "label-query-results": "Abfrageergebnisse: {{numResults}}",
-      "noOptionsMessage-unable-to-list-categories": "",
+      "noOptionsMessage-unable-to-list-categories": "Es können nicht alle Kategorien aufgelistet werden",
       "placeholder-all-categories": "Alle Kategorien",
       "placeholder-search-logs": "Logs-Abfragen durchsuchen",
       "text-loading": "Wird geladen ..."
@@ -72,10 +72,8 @@
       "label-enable-basic-logs": "Basis-Logs aktivieren"
     },
     "config-editor": {
-      "description-additional-settings": "Zusätzliche Einstellungen sind optionale Einstellungen, die für mehr Kontrolle über Ihre Datenquelle konfiguriert werden können. Dazu gehört auch der sichere SOCKS-Proxy.",
-      "description-request-timeout": "Legen Sie das Anfrage-Timeout in Sekunden fest. Der Standardwert ist 30 Sekunden.",
-      "title-additional-settings": "Zusätzliche Einstellungen",
-      "title-request-timeout": "Anfrage-Timeout"
+      "description-additional-settings": "Zusätzliche Einstellungen sind optionale Einstellungen, die Sie für mehr Kontrolle über Ihre Datenquelle konfiguriert können. Dazu gehören Secure Socks Proxy, Request Timeout und weitergeleitete Cookies.",
+      "title-additional-settings": "Zusätzliche Einstellungen"
     },
     "current-user-fallback-credentials": {
       "alert-fallback-credentials-disabled": "Fallback-Anmeldedaten wurden deaktiviert. Da die nutzerbasierte Authentifizierung grundsätzlich nur Anfragen mit einem Nutzer im Geltungsbereich unterstützt, funktionieren Funktionen wie Warnungen, aufgezeichnete Abfragen oder die Berichtserstellung nicht wie erwartet. Weitere Informationen finden Sie in der <2>Dokumentation</2>.",
@@ -115,12 +113,12 @@
       "aria-label-column": "Spalte",
       "aria-label-column-value": "Spaltenwert",
       "aria-label-operator": "Bediener",
-      "aria-label-remove-filter": "",
+      "aria-label-remove-filter": "Filter entfernen",
       "label-or": "ODER"
     },
     "filter-section": {
-      "aria-label-add-filter": "",
-      "aria-label-add-or-filter": "",
+      "aria-label-add-filter": "Filter hinzufügen",
+      "aria-label-add-or-filter": "OR-Filter hinzufügen",
       "label-add-group": "Gruppe hinzufügen",
       "label-and": "UND",
       "label-filters": "Filter",
@@ -133,8 +131,8 @@
       "label-format-as": "Formatieren als"
     },
     "fuzzy-search": {
-      "aria-label-add-fuzzy-search": "",
-      "aria-label-remove-fuzzy-search": "",
+      "aria-label-add-fuzzy-search": "Unscharfe Suche hinzufügen",
+      "aria-label-remove-fuzzy-search": "Unscharfe Suche entfernen",
       "aria-label-select-column": "Spalte auswählen",
       "label-fuzzy-search": "Unscharfe Suche",
       "placeholder-search-team": "Suchbegriff eingeben",
@@ -149,7 +147,7 @@
       "aria-label-remove": "Entfernen"
     },
     "group-by-section": {
-      "aria-label-add-group-by": "",
+      "aria-label-add-group-by": "Gruppieren nach hinzufügen",
       "label-group-by": "Gruppieren nach",
       "tooltip-group-by": "Organisieren Sie die Ergebnisse in Kategorien, basierend auf den angegebenen Spalten. „Gruppieren nach“ kann unabhängig verwendet werden, um eindeutige Werte in ausgewählten Spalten aufzulisten, oder mit Aggregatfunktionen kombiniert werden, um zusammenfassende Statistiken für jede Gruppe zu erstellen. Wenn es allein verwendet wird, gibt es unterschiedliche Kombinationen der angegebenen Spalten zurück."
     },
@@ -168,8 +166,8 @@
       "tooltip-limit": "Beschränken Sie die Zahl der zurückgegebenen Zeilen (Standard ist 1000)."
     },
     "logs-management": {
-      "body-basic-logs-queries": "",
-      "confirmText-confirm": "",
+      "body-basic-logs-queries": "Sind Sie sicher, dass Sie zu Basic-Logs wechseln möchten?",
+      "confirmText-confirm": "Bestätigen",
       "description-basic-logs-queries": "Für Abfragen von Basis-Logs fallen Kosten an, je nach der Menge der gescannten Daten.",
       "label-logs": "Logs",
       "title-basic-logs-queries": "Abfragen von Basis-Logs",
@@ -192,10 +190,10 @@
       "text-loading": "Wird geladen ..."
     },
     "order-by-section": {
-      "aria-label-add-order-by": "",
+      "aria-label-add-order-by": "Sortieren nach hinzufügen",
       "aria-label-order-by-column": "Nach Spalte ordnen",
       "aria-label-order-direction": "Ordnungsrichtung",
-      "aria-label-remove-order-by": "",
+      "aria-label-remove-order-by": "Sortieren nach entfernen",
       "label-by": "NACH",
       "label-order-by": "Ordnen nach",
       "tooltip-order-by": "Sortieren Sie die Ergebnisse auf der Grundlage einer oder mehrerer Spalten in aufsteigender oder absteigender Reihenfolge."
@@ -205,14 +203,14 @@
     },
     "query-header": {
       "aria-label-kick-start": "Azure-Logs starten Ihre Abfrage-Schaltfläche",
-      "body-switching-to-builder": "",
-      "body-switching-to-kql": "",
+      "body-switching-to-builder": "Wenn Sie zum Builder wechseln, wird Ihre aktuelle KQL-Abfrage verworfen und der KQL-Editor gelöscht. Sind Sie sicher?",
+      "body-switching-to-kql": "Wenn Sie zu KQL wechseln, werden Ihre aktuellen Builder-Einstellungen verworfen. Sind Sie sicher?",
       "button-kick-start-your-query": "Starten Sie Ihre Abfrage",
       "button-run-query": "Abfrage ausführen",
-      "confirmText-switch-to": "",
+      "confirmText-switch-to": "Wechseln zu {{newMode}}",
       "editor-modes": {
-        "label-builder": "",
-        "label-kql": ""
+        "label-builder": "Builder",
+        "label-kql": "KQL"
       },
       "label-service": "Dienst",
       "placeholder-service": "Dienst …",
@@ -229,16 +227,26 @@
       "select-resource": "Ressource auswählen"
     },
     "resource-picker": {
+      "browse-tab": "",
       "button-apply": "Anwenden",
       "button-cancel": "Abbrechen",
       "header-location": "Standort",
+      "header-resource-group": "",
       "header-scope": "Bereich",
       "header-type": "Typ",
       "heading-selection": "Auswahl",
+      "locations-filter": "",
+      "locations-filter-placeholder": "",
+      "recent-tab": "",
       "result-limit": "Die ersten {{numResults}} Ergebnisse werden angezeigt",
+      "subscriptions-filter": "",
+      "subscriptions-filter-placeholder": "",
       "text-loading": "Wird geladen ...",
+      "text-no-recent-resources": "",
       "text-no-resources": "Keine Ressourcen gefunden",
-      "title-error-occurred": "Bei der Anforderung von Ressourcen von Azure Monitor ist ein Fehler aufgetreten"
+      "title-error-occurred": "Bei der Anforderung von Ressourcen von Azure Monitor ist ein Fehler aufgetreten",
+      "types-filter": "",
+      "types-filter-placeholder": ""
     },
     "scope-selector": {
       "label": "Bereich"
@@ -258,7 +266,7 @@
       "label-table": "Tabelle",
       "placeholder-select-columns": "Spalten auswählen",
       "placeholder-select-table": "Tabelle auswählen",
-      "tooltip-remove-all-columns": ""
+      "tooltip-remove-all-columns": "Alle Spalten entfernen"
     },
     "time-grain-field": {
       "label-time-grain": "Zeitgranularität"
