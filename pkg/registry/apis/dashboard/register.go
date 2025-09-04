@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"maps"
 
-	"github.com/grafana/grafana/apps/dashboard/pkg/migration/schemaversion"
 	"github.com/prometheus/client_golang/prometheus"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -19,6 +18,8 @@ import (
 	"k8s.io/kube-openapi/pkg/common"
 	"k8s.io/kube-openapi/pkg/spec3"
 	"k8s.io/kube-openapi/pkg/validation/spec"
+
+	"github.com/grafana/grafana/apps/dashboard/pkg/migration/schemaversion"
 
 	claims "github.com/grafana/authlib/types"
 	internal "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard"
@@ -181,10 +182,7 @@ func NewAPIService(ac claims.AccessClient, features featuremgmt.FeatureToggles, 
 
 	logger := log.New("grafana-apiserver.dashboards")
 
-	migration.Initialize(datasourceProvider, &PluginStorePanelProvider{
-		pluginStore:  pluginStore,
-		buildVersion: "unknown",
-	})
+	migration.Initialize(datasourceProvider)
 
 	return &DashboardsAPIBuilder{
 		log: logger,
