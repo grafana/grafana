@@ -3,12 +3,12 @@ package modules
 import (
 	"context"
 	"errors"
-	"strings"
 
 	"github.com/grafana/dskit/modules"
 	"github.com/grafana/dskit/services"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/modules/tracing"
 )
 
 type Engine interface {
@@ -68,8 +68,9 @@ func NewWithManager(
 
 // Run starts all registered modules.
 func (m *service) Run(ctx context.Context) error {
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
 	var err error
-
 	for mod, targets := range m.dependencyMap {
 		if !m.moduleManager.IsModuleRegistered(mod) {
 			continue
@@ -90,7 +91,8 @@ func (m *service) Run(ctx context.Context) error {
 	}
 
 	svcs := make([]services.Service, 0, len(m.serviceMap))
-	for _, s := range m.serviceMap {
+	for name, s := range m.serviceMap {
+		s.AddListener(tracing.NewListener(ctx, name))
 		svcs = append(svcs, s)
 	}
 
@@ -110,9 +112,6 @@ func (m *service) Run(ctx context.Context) error {
 
 	listener := newServiceListener(m.log, m)
 	m.serviceManager.AddListener(listener)
-
-	m.log.Debug("Starting module service manager", "targets", strings.Join(m.targets, ","))
-	// wait until a service fails or stop signal was received
 	err = m.serviceManager.StartAsync(ctx)
 	if err != nil {
 		return err

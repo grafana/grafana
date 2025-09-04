@@ -29,11 +29,13 @@ import (
 
 	"github.com/go-kit/log/level"
 
+	"github.com/grafana/dskit/services"
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/infra/log"
 )
 
 const (
+	ServiceName        = "tracing"
 	envJaegerAgentHost = "JAEGER_AGENT_HOST"
 	envJaegerAgentPort = "JAEGER_AGENT_PORT"
 )
@@ -48,6 +50,8 @@ const (
 )
 
 type TracingService struct {
+	services.NamedService
+
 	cfg *TracingConfig
 	log log.Logger
 
@@ -93,6 +97,7 @@ func ProvideService(tracingCfg *TracingConfig) (*TracingService, error) {
 		cfg: tracingCfg,
 		log: log.New("tracing"),
 	}
+	ots.NamedService = services.NewBasicService(ots.start, ots.run, ots.stop).WithName(ServiceName)
 
 	if err := ots.initOpentelemetryTracer(); err != nil {
 		return nil, err
@@ -305,28 +310,35 @@ func (ots *TracingService) initOpentelemetryTracer() error {
 
 	return nil
 }
-
-func (ots *TracingService) Run(ctx context.Context) error {
+func (ots *TracingService) start(ctx context.Context) error {
 	otel.SetErrorHandler(otel.ErrorHandlerFunc(func(err error) {
 		err = level.Error(ots.log).Log("msg", "OpenTelemetry handler returned an error", "err", err)
 		if err != nil {
 			ots.log.Error("OpenTelemetry log returning error", err)
 		}
 	}))
-	<-ctx.Done()
+	return nil
+}
 
-	ots.log.Info("Closing tracing")
+func (ots *TracingService) Run(ctx context.Context) error {
+	if err := ots.StartAsync(ctx); err != nil {
+		return err
+	}
+	return ots.AwaitTerminated(ctx)
+}
+
+func (ots *TracingService) run(ctx context.Context) error {
+	<-ctx.Done()
+	return nil
+}
+
+func (ots *TracingService) stop(_ error) error {
 	if ots.tracerProvider == nil {
 		return nil
 	}
-	ctxShutdown, cancel := context.WithTimeout(ctx, time.Second*5)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 	defer cancel()
-
-	if err := ots.tracerProvider.Shutdown(ctxShutdown); err != nil {
-		return err
-	}
-
-	return nil
+	return ots.tracerProvider.Shutdown(ctx)
 }
 
 func (ots *TracingService) Inject(ctx context.Context, header http.Header, _ trace.Span) {
