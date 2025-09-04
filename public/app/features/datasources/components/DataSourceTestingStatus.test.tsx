@@ -290,16 +290,19 @@ describe('<DataSourceTestingStatus />', () => {
       }> = {}
     ) => {
       const text = overrides.text ?? 'Test Component';
-      const Comp = (() => (
+      const Comp = ((_props: PluginExtensionDataSourceConfigStatusContext) => (
         <div>{text}</div>
-      )) as unknown as ComponentTypeWithExtensionMeta<PluginExtensionDataSourceConfigStatusContext>;
-      (Comp as any).meta = {
-        id: overrides.id ?? 'test-component',
-        type: PluginExtensionTypes.component,
-        title: overrides.title ?? 'Test Component',
-        description: overrides.description ?? 'Test component description',
-        pluginId: overrides.pluginId ?? 'grafana-monitoring-app',
-      };
+      )) as ComponentTypeWithExtensionMeta<PluginExtensionDataSourceConfigStatusContext>;
+      Object.assign(Comp, {
+        meta: {
+          id: overrides.id ?? 'test-component',
+          type: PluginExtensionTypes.component,
+          title: overrides.title ?? 'Test Component',
+          description: overrides.description ?? 'Test component description',
+          pluginId: overrides.pluginId ?? 'grafana-monitoring-app',
+        }
+      });
+      
       return Comp;
     };
 
