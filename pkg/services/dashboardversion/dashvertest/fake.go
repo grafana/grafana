@@ -3,6 +3,7 @@ package dashvertest
 import (
 	"context"
 
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	dashver "github.com/grafana/grafana/pkg/services/dashboardversion"
 )
 
@@ -13,6 +14,10 @@ type FakeDashboardVersionService struct {
 	ExpectedContinueToken        string
 	counter                      int
 	ExpectedError                error
+	// New fields for RestoreVersion testing
+	ExpectedRestoreResult *dashboards.Dashboard
+	RestoreVersionCalled  bool
+	LastRestoreCommand    *dashver.RestoreVersionCommand
 }
 
 func NewDashboardVersionServiceFake() *FakeDashboardVersionService {
@@ -36,4 +41,10 @@ func (f *FakeDashboardVersionService) List(ctx context.Context, query *dashver.L
 		ContinueToken: f.ExpectedContinueToken,
 		Versions:      f.ExpectedListDashboarVersions,
 	}, f.ExpectedError
+}
+
+func (f *FakeDashboardVersionService) RestoreVersion(ctx context.Context, cmd *dashver.RestoreVersionCommand) (*dashboards.Dashboard, error) {
+	f.RestoreVersionCalled = true
+	f.LastRestoreCommand = cmd
+	return f.ExpectedRestoreResult, f.ExpectedError
 }
