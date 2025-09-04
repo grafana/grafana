@@ -108,3 +108,10 @@ export interface GraphiteEventsRequest {
   until: number;
   tags: string;
 }
+
+export interface GraphiteEvents {
+  when: number;
+  what: string;
+  tags: string[];
+  data: string;
+}

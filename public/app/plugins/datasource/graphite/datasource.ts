@@ -41,7 +41,7 @@ import { getRollupNotice, getRuntimeConsolidationNotice } from './meta';
 import { prepareAnnotation } from './migrations';
 // Types
 import {
-  GraphiteEventsRequest,
+  GraphiteEvents,
   GraphiteLokiMapping,
   GraphiteMetricLokiMatcher,
   GraphiteOptions,
@@ -458,7 +458,7 @@ export class GraphiteDatasource
       return this.events({ range: range, tags: tags }).then((results) => {
         const list = [];
         if (!isArray(results.data)) {
-          console.error(`Unable to get annotations from ${results.url}.`);
+          console.error(`Unable to get annotations.`);
           return [];
         }
         for (let i = 0; i < results.data.length; i++) {
@@ -483,13 +483,17 @@ export class GraphiteDatasource
     }
   }
 
-  async events(options: { range: TimeRange; tags: string; timezone?: TimeZone }): Promise<any> {
+  async events(options: {
+    range: TimeRange;
+    tags: string;
+    timezone?: TimeZone;
+  }): Promise<{ data: GraphiteEvents[] } | FetchResponse<GraphiteEvents>> {
     try {
       const tags = options.tags || '';
       const from = this.translateTime(options.range.raw.from, false, options.timezone);
       const until = this.translateTime(options.range.raw.to, true, options.timezone);
       if (config.featureToggles.graphiteBackendMode) {
-        return await this.postResource<GraphiteEventsRequest>('events', {
+        return await this.postResource<{ data: GraphiteEvents[] }>('events', {
           from: typeof from === 'string' ? from : `${from}`,
           until: typeof until === 'string' ? until : `${until}`,
           tags,
@@ -497,7 +501,7 @@ export class GraphiteDatasource
       } else {
         const tagsQueryParam = tags === '' ? '' : `&tags=${tags}`;
         return lastValueFrom(
-          this.doGraphiteRequest({
+          this.doGraphiteRequest<GraphiteEvents[]>({
             method: 'GET',
             url: `/events/get_data?from=${from}&until=${until}${tagsQueryParam}`,
           })
@@ -989,7 +993,7 @@ export class GraphiteDatasource
     return lastValueFrom(this.query(query)).then(() => ({ status: 'success', message: 'Data source is working' }));
   }
 
-  doGraphiteRequest(
+  doGraphiteRequest<T>(
     options: BackendSrvRequest & {
       inspect?: any;
     }
@@ -1006,7 +1010,7 @@ export class GraphiteDatasource
     options.inspect = { type: 'graphite' };
 
     return getBackendSrv()
-      .fetch(options)
+      .fetch<T>(options)
       .pipe(
         catchError((err) => {
           return throwError(() => {
