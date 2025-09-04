@@ -2,7 +2,6 @@ package folders
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"strings"
 
@@ -17,7 +16,7 @@ import (
 	"k8s.io/kube-openapi/pkg/common"
 	"k8s.io/kube-openapi/pkg/spec3"
 
-	authtypes "github.com/grafana/authlib/types"
+	authlib "github.com/grafana/authlib/types"
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
@@ -37,9 +36,6 @@ var _ builder.APIGroupBuilder = (*FolderAPIBuilder)(nil)
 var _ builder.APIGroupValidation = (*FolderAPIBuilder)(nil)
 
 var resourceInfo = folders.FolderResourceInfo
-
-var errNoUser = errors.New("valid user is required")
-var errNoResource = errors.New("resource name is required")
 
 // This is used just so wire has something unique to return
 type FolderAPIBuilder struct {
@@ -63,6 +59,7 @@ type FolderAPIBuilder struct {
 func RegisterAPIService(cfg *setting.Cfg,
 	features featuremgmt.FeatureToggles,
 	apiregistration builder.APIRegistrar,
+	accessClient authlib.AccessClient,
 	folderSvc folder.Service,
 	folderPermissionsSvc accesscontrol.FolderPermissionsService,
 	accessControl accesscontrol.AccessControl,
@@ -79,18 +76,18 @@ func RegisterAPIService(cfg *setting.Cfg,
 		acService:            acService,
 		ac:                   accessControl,
 		cfg:                  cfg,
-		authorizer:           newLegacyAuthorizer(accessControl),
+		authorizer:           newAuthorizer(accessClient),
 		searcher:             unified,
 	}
 	apiregistration.RegisterAPI(builder)
 	return builder
 }
 
-func NewAPIService(ac authtypes.AccessClient) *FolderAPIBuilder {
+func NewAPIService(ac authlib.AccessClient) *FolderAPIBuilder {
 	return &FolderAPIBuilder{
 		gv:           resourceInfo.GroupVersion(),
 		namespacer:   request.GetNamespaceMapper(nil),
-		authorizer:   newMultiTenantAuthorizer(ac),
+		authorizer:   newAuthorizer(ac),
 		ignoreLegacy: true,
 	}
 }
