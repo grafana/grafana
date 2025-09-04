@@ -1,11 +1,12 @@
 import { VizPanel } from '@grafana/scenes';
+
 import { dashboardEditActions } from '../../edit-pane/shared';
+import { DefaultGridLayoutManager } from '../layout-default/DefaultGridLayoutManager';
 import { RowItem } from '../layout-rows/RowItem';
 import { RowsLayoutManager } from '../layout-rows/RowsLayoutManager';
 
 import { TabItem } from './TabItem';
 import { TabsLayoutManager } from './TabsLayoutManager';
-import { DefaultGridLayoutManager } from '../layout-default/DefaultGridLayoutManager';
 
 let lastUndo: (() => void) | undefined;
 
