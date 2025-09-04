@@ -1,4 +1,4 @@
-package v0alpha1
+package v1beta1
 
 import "k8s.io/apimachinery/pkg/runtime/schema"
 
@@ -6,7 +6,7 @@ const (
 	// APIGroup is the API group used by all kinds in this package
 	APIGroup = "alertenrichment.grafana.app"
 	// APIVersion is the API version used by all kinds in this package
-	APIVersion = "v0alpha1"
+	APIVersion = "v1beta1"
 )
 
 var (

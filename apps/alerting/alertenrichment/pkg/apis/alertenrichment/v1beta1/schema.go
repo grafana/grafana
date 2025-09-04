@@ -1,4 +1,4 @@
-package v0alpha1
+package v1beta1
 
 import (
 	"github.com/grafana/grafana-app-sdk/resource"
