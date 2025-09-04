@@ -39,6 +39,7 @@ export interface PanelContext {
   canAddAnnotations?: () => boolean;
   canEditAnnotations?: (dashboardUID?: string) => boolean;
   canDeleteAnnotations?: (dashboardUID?: string) => boolean;
+  canExecuteActions?: () => boolean;
   onAnnotationCreate?: (annotation: AnnotationEventUIModel) => void;
   onAnnotationUpdate?: (annotation: AnnotationEventUIModel) => void;
   onAnnotationDelete?: (id: string) => void;

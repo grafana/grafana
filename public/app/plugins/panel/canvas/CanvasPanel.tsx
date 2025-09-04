@@ -97,6 +97,11 @@ export class CanvasPanel extends Component<Props, State> {
     activePanelSubject.next({ panel: this });
 
     this.panelContext = this.context;
+
+    if (this.scene.data) {
+      this.scene.updateData(this.scene.data);
+    }
+
     if (this.panelContext.onInstanceStateChange) {
       this.panelContext.onInstanceStateChange({ scene: this.scene, layer: this.scene.root });
 

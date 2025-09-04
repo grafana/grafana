@@ -1267,6 +1267,10 @@ export class DashboardModel implements TimeModel {
     return Boolean(this.meta.canEdit || this.meta.canMakeEditable);
   }
 
+  canExecuteActions() {
+    return this.canEditDashboard();
+  }
+
   shouldUpdateDashboardPanelFromJSON(updatedPanel: PanelModel, panel: PanelModel) {
     const shouldUpdateGridPositionLayout = !isEqual(updatedPanel?.gridPos, panel?.gridPos);
     if (shouldUpdateGridPositionLayout) {
