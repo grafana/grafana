@@ -5,7 +5,8 @@ import { Subject } from 'rxjs';
 // Importing this way to be able to spy on grafana/data
 
 import * as grafanaData from '@grafana/data';
-import { DataSourceApi, dateTime, TypedVariableModel } from '@grafana/data';
+import { DataSourceApi, DataTransformerID, dateTime, TypedVariableModel } from '@grafana/data';
+import { FrameType } from '@grafana/data/internal';
 import { DataSourceSrv, setDataSourceSrv, setEchoSrv } from '@grafana/runtime';
 import { TemplateSrvMock } from 'app/features/templating/template_srv.mock';
 
@@ -316,6 +317,44 @@ describe('PanelQueryRunner', () => {
       // @ts-ignore
       getTransformations: () => [{} as unknown as grafanaData.DataTransformerConfig],
       getDataSupport: () => ({ annotations: false, alertStates: false }),
+    }
+  );
+
+  describeQueryRunnerScenario(
+    'transformations',
+    (ctx) => {
+      it('should re-categorize any anno frames returned by series transformations', async () => {
+        ctx.runner.getData({ withTransforms: true, withFieldConfig: true }).subscribe({
+          next: (data: grafanaData.PanelData) => {
+            expect(data.series).toEqual([]);
+            expect(data.annotations).toEqual([
+              {
+                name: 'exemplar',
+                meta: { custom: { resultType: 'exemplar' }, dataTopic: 'annotations' },
+                length: 2,
+                fields: [
+                  { config: {}, name: 'Time', type: 'time', values: [1, 2] },
+                  { config: {}, name: 'Value', type: 'number', values: [1000, 2000] },
+                ],
+              },
+            ]);
+            return data;
+          },
+        });
+      });
+    },
+    {
+      getFieldOverrideOptions: () => undefined,
+      getTransformations: () => [
+        {
+          id: DataTransformerID.convertFrameType,
+          // topic: grafanaData.DataTopic.Series,
+          options: {
+            targetType: FrameType.Exemplar,
+          },
+        },
+      ],
+      getDataSupport: () => ({ annotations: true, alertStates: false }),
     }
   );
 
