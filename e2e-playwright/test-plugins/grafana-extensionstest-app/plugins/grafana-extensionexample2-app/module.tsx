@@ -11,6 +11,7 @@ export const plugin = new AppPlugin<{}>()
     targets: 'plugins/grafana-extensionstest-app/addComponent/v1',
     title: 'Added component from B',
     description: 'A component that can be reused by other app plugins. Shared using addComponent api',
+    minWidth: 400, // Set minimum width to 400px for sidebar extensions
     component: ({ name }: { name: string }) => (
       <div data-testid={testIds.appB.reusableAddedComponent}>Hello {name}!</div>
     ),
