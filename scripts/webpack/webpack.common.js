@@ -34,6 +34,8 @@ module.exports = {
       '@locker/near-membrane-dom/custom-devtools-formatter': require.resolve(
         '@locker/near-membrane-dom/custom-devtools-formatter.js'
       ),
+      // Fix flot package resolution issues (alias the whole directory)
+      'vendor/flot': path.resolve(__dirname, '../../public/vendor/flot'),
     },
     modules: [
       // default value
