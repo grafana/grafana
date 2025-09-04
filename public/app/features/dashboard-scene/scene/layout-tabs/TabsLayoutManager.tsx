@@ -94,7 +94,7 @@ export class TabsLayoutManager extends SceneObjectBase<TabsLayoutManagerState> i
   }
 
   public getCurrentTab(): TabItem | undefined {
-    const tabs = this.getTabs();
+    const tabs = this.getTabsIncludingRepeats();
     const selectedTab = tabs.find((tab) => tab.getSlug() === this.state.currentTabSlug);
     if (selectedTab) {
       return selectedTab;
@@ -114,7 +114,7 @@ export class TabsLayoutManager extends SceneObjectBase<TabsLayoutManagerState> i
     return tabs[0];
   }
 
-  public getTabs(): TabItem[] {
+  public getTabsIncludingRepeats(): TabItem[] {
     return this.state.tabs.reduce<TabItem[]>((acc, tab) => {
       acc.push(tab, ...(tab.state.repeatedTabs ?? []));
 
@@ -133,7 +133,7 @@ export class TabsLayoutManager extends SceneObjectBase<TabsLayoutManagerState> i
   public getVizPanels(): VizPanel[] {
     const panels: VizPanel[] = [];
 
-    for (const tab of this.getTabs()) {
+    for (const tab of this.state.tabs) {
       const innerPanels = tab.getLayout().getVizPanels();
       panels.push(...innerPanels);
     }
@@ -164,7 +164,7 @@ export class TabsLayoutManager extends SceneObjectBase<TabsLayoutManagerState> i
   public addNewTab(tab?: TabItem) {
     const newTab = tab ?? new TabItem({});
     const existingNames = new Set(
-      this.getTabs()
+      this.getTabsIncludingRepeats()
         .map((tab) => tab.state.title)
         .filter((title) => title !== undefined)
     );
@@ -200,7 +200,7 @@ export class TabsLayoutManager extends SceneObjectBase<TabsLayoutManagerState> i
   }
 
   public shouldUngroup(): boolean {
-    return this.getTabs().length === 1;
+    return this.state.tabs.length === 1;
   }
 
   public removeTab(tabToRemove: TabItem) {
@@ -237,7 +237,7 @@ export class TabsLayoutManager extends SceneObjectBase<TabsLayoutManagerState> i
 
   public moveTab(fromIndex: number, toIndex: number) {
     // fromIndex and toIndex include repeated tab so we need to find original indexes
-    const allTabs = this.getTabs();
+    const allTabs = this.getTabsIncludingRepeats();
     const objectToMove = allTabs[fromIndex];
     let destinationTab = allTabs[toIndex];
     let selectionIndex = toIndex;
@@ -282,8 +282,8 @@ export class TabsLayoutManager extends SceneObjectBase<TabsLayoutManagerState> i
   }
 
   public forceSelectTab(tabKey: string) {
-    const tabIndex = this.getTabs().findIndex((tab) => tab.state.key === tabKey);
-    const tab = this.getTabs()[tabIndex];
+    const tabIndex = this.getTabsIncludingRepeats().findIndex((tab) => tab.state.key === tabKey);
+    const tab = this.getTabsIncludingRepeats()[tabIndex];
 
     if (!tab) {
       return;
@@ -352,7 +352,7 @@ export class TabsLayoutManager extends SceneObjectBase<TabsLayoutManagerState> i
     const titleCounts = new Map<string | undefined, number>();
     const duplicateTitles = new Set<string | undefined>();
 
-    this.getTabs().forEach((tab) => {
+    this.getTabsIncludingRepeats().forEach((tab) => {
       const title = sceneGraph.interpolate(tab, tab.state.title);
       const count = (titleCounts.get(title) ?? 0) + 1;
       titleCounts.set(title, count);

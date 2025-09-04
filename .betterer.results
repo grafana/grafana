@@ -25,9 +25,6 @@ exports[`better eslint`] = {
     "e2e/utils/support/types.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
-    "packages/grafana-alerting/src/grafana/contactPoints/components/ContactPointSelector/ContactPointSelector.story.tsx:5381": [
-      [0, 0, 0, "Skipping a11y tests is not allowed. Please fix the component or story instead.", "0"]
-    ],
     "packages/grafana-alerting/src/grafana/notificationPolicies/utils.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
@@ -725,9 +722,6 @@ exports[`better eslint`] = {
     "packages/grafana-ui/src/components/Forms/Checkbox.story.tsx:5381": [
       [0, 0, 0, "Skipping a11y tests is not allowed. Please fix the component or story instead.", "0"]
     ],
-    "packages/grafana-ui/src/components/Forms/FieldArray.story.tsx:5381": [
-      [0, 0, 0, "Skipping a11y tests is not allowed. Please fix the component or story instead.", "0"]
-    ],
     "packages/grafana-ui/src/components/Forms/Form.story.tsx:5381": [
       [0, 0, 0, "React Hook \\"useId\\" is called in function \\"renderForm\\" that is neither a React function component nor a custom React Hook function. React component names must start with an uppercase letter. React Hook names must start with the word \\"use\\".", "0"],
       [0, 0, 0, "React Hook \\"useId\\" is called in function \\"renderForm\\" that is neither a React function component nor a custom React Hook function. React component names must start with an uppercase letter. React Hook names must start with the word \\"use\\".", "1"],
@@ -836,9 +830,6 @@ exports[`better eslint`] = {
     "packages/grafana-ui/src/components/QueryField/QueryField.story.tsx:5381": [
       [0, 0, 0, "Skipping a11y tests is not allowed. Please fix the component or story instead.", "0"]
     ],
-    "packages/grafana-ui/src/components/ScrollContainer/ScrollContainer.story.tsx:5381": [
-      [0, 0, 0, "Skipping a11y tests is not allowed. Please fix the component or story instead.", "0"]
-    ],
     "packages/grafana-ui/src/components/SecretFormField/SecretFormField.tsx:5381": [
       [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "0"],
       [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "1"]
@@ -859,9 +850,6 @@ exports[`better eslint`] = {
     ],
     "packages/grafana-ui/src/components/Segment/SegmentSelect.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
-    ],
-    "packages/grafana-ui/src/components/Select/Select.story.tsx:5381": [
-      [0, 0, 0, "Skipping a11y tests is not allowed. Please fix the component or story instead.", "0"]
     ],
     "packages/grafana-ui/src/components/Select/SelectBase.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
@@ -2674,8 +2662,7 @@ exports[`better eslint`] = {
       [0, 0, 0, "Do not use any type assertions.", "1"]
     ],
     "public/app/features/explore/TraceView/components/TracePageHeader/TracePageHeader.tsx:5381": [
-      [0, 0, 0, "React Hook \\"useMemo\\" is called conditionally. React Hooks must be called in the exact same order in every component render.", "0"],
-      [0, 0, 0, "React Hook \\"usePluginLinks\\" is called conditionally. React Hooks must be called in the exact same order in every component render.", "1"]
+      [0, 0, 0, "React Hook \\"useMemo\\" is called conditionally. React Hooks must be called in the exact same order in every component render.", "0"]
     ],
     "public/app/features/explore/TraceView/components/TracePageHeader/index.tsx:5381": [
       [0, 0, 0, "Do not re-export imported variable (\`./TracePageHeader\`)", "0"]

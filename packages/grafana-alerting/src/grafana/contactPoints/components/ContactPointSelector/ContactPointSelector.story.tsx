@@ -1,8 +1,11 @@
-import type { Meta, StoryObj } from '@storybook/react';
+import type { Meta, StoryFn, StoryObj } from '@storybook/react';
+import { useId } from 'react';
+
+import { Field } from '@grafana/ui';
 
 import { defaultDecorators } from '../../../../../tests/story-utils';
 
-import { ContactPointSelector } from './ContactPointSelector';
+import { ContactPointSelector, ContactPointSelectorProps } from './ContactPointSelector';
 import mdx from './ContactPointSelector.mdx';
 import { simpleContactPointsListScenario, withErrorScenario } from './ContactPointSelector.test.scenario';
 
@@ -14,9 +17,16 @@ const meta: Meta<typeof ContactPointSelector> = {
     docs: {
       page: mdx,
     },
-    // TODO fix a11y issue in story and remove this
-    a11y: { test: 'off' },
   },
+};
+
+const StoryRenderFn: StoryFn<ContactPointSelectorProps> = (args) => {
+  const id = useId();
+  return (
+    <Field noMargin label="Select contact point">
+      <ContactPointSelector {...args} id={id} />
+    </Field>
+  );
 };
 
 export default meta;
@@ -28,6 +38,7 @@ export const Basic: Story = {
       handlers: simpleContactPointsListScenario,
     },
   },
+  render: StoryRenderFn,
 };
 
 export const WithError: Story = {
@@ -36,4 +47,5 @@ export const WithError: Story = {
       handlers: withErrorScenario,
     },
   },
+  render: StoryRenderFn,
 };
