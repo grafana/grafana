@@ -1,5 +1,5 @@
 import { isNumber, set, unset, get, cloneDeep } from 'lodash';
-import { useMemo, useRef } from 'react';
+import { createContext, useContext, useMemo, useRef } from 'react';
 import { usePrevious } from 'react-use';
 
 import { ThresholdsMode, VariableFormatID } from '@grafana/schema';
@@ -583,12 +583,13 @@ export function useFieldOverrides(
   data: PanelData | undefined,
   timeZone: string,
   theme: GrafanaTheme2,
-  replace: InterpolateFunction,
-  dataLinkPostProcessor?: DataLinkPostProcessor
+  replace: InterpolateFunction
 ): PanelData | undefined {
   const fieldConfigRegistry = plugin?.fieldConfigRegistry;
   const structureRev = useRef(0);
   const prevSeries = usePrevious(data?.series);
+
+  const { dataLinkPostProcessor } = useDataLinksContext();
 
   return useMemo(() => {
     if (!fieldConfigRegistry || !fieldConfig || !data) {
@@ -650,3 +651,9 @@ export function getFieldDataContextClone(frame: DataFrame, field: Field, fieldSc
 
   return { value: { frame, field, data: [frame] } };
 }
+
+export const DataLinksContext = createContext<{
+  dataLinkPostProcessor: DataLinkPostProcessor;
+}>({ dataLinkPostProcessor: defaultInternalLinkPostProcessor });
+
+export const useDataLinksContext = () => useContext(DataLinksContext);
