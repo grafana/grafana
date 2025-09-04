@@ -11,8 +11,6 @@ export interface AlertRuleRow {
     folder: string;
     ruleUID: string;
   };
-  timeline: TimelineEntry[];
-  rows: unknown[];
 }
 
 export interface GenericGroupedRow {

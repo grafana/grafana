@@ -5,9 +5,8 @@ import { useQueryRunner, useTimeRange, useVariableValues } from '@grafana/scenes
 import { Workbench } from '../Workbench';
 import { AlertRuleRow, GenericGroupedRow, TimelineEntry, WorkbenchRow } from '../types';
 
-import { useQueryFilter } from './SummaryChart';
 import { VARIABLES } from './constants';
-import { DEFAULT_FIELDS, METRIC_NAME, convertTimeRangeToDomain, getDataQuery } from './utils';
+import { DEFAULT_FIELDS, METRIC_NAME, convertTimeRangeToDomain, getDataQuery, useQueryFilter } from './utils';
 
 export class WorkbenchSceneObject extends SceneObjectBase<SceneObjectState> {
   public static Component = WorkbenchRenderer;
@@ -99,39 +98,6 @@ export function convertToWorkbenchRows(data: PanelData, groupBy: string[] = []):
   return buildHierarchicalGroups(allDataPoints, groupBy, 0);
 }
 
-/**
- * Deduplicates data points by timestamp, ensuring that 'firing' state takes precedence over 'pending' state.
- *
- * @param dataPoints Array of data points with timestamp and state
- * @returns Map where keys are timestamps and values are the final state for that timestamp
- */
-function convertDataPointsToTimeline(
-  dataPoints: Array<{ timestamp: number; state: 'firing' | 'pending' }>
-): TimelineEntry[] {
-  const timestampStateMap = new Map<number, 'firing' | 'pending'>();
-
-  dataPoints.forEach((dataPoint) => {
-    const { timestamp, state } = dataPoint;
-    const existingState = timestampStateMap.get(timestamp);
-
-    // Set the state if:
-    // 1. No state exists for this timestamp yet, OR
-    // 2. Current state is 'firing' and existing state is 'pending' (firing takes precedence)
-    const shouldUpdateState = !existingState || (state === 'firing' && existingState === 'pending');
-
-    if (shouldUpdateState) {
-      timestampStateMap.set(timestamp, state);
-    }
-  });
-
-  // Create timeline as array of [timestamp, state] tuples, sorted by time
-  const timeline: TimelineEntry[] = Array.from(timestampStateMap.entries()).sort(
-    ([timestampA], [timestampB]) => timestampA - timestampB
-  );
-
-  return timeline;
-}
-
 export function createAlertRuleRowsFromDataPoints(
   dataPoints: Array<{
     timestamp: number;
@@ -173,17 +139,12 @@ export function createAlertRuleRowsFromDataPoints(
   const alertRuleRows: AlertRuleRow[] = [];
 
   for (const [_ruleUID, group] of ruleGroups) {
-    // Deduplicate data points by timestamp, with firing state taking precedence over pending
-    const timeline = convertDataPointsToTimeline(group.dataPoints);
-
     const alertRuleRow: AlertRuleRow = {
       metadata: {
         title: group.alertname,
         folder: group.folder,
         ruleUID: group.ruleUID,
       },
-      timeline,
-      rows: [],
     };
 
     alertRuleRows.push(alertRuleRow);

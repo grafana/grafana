@@ -4,7 +4,7 @@ import { useMeasure } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { Stack, Text, TextLink, useSplitter, useStyles2 } from '@grafana/ui';
+import { ScrollContainer, Stack, Text, TextLink, useSplitter, useStyles2 } from '@grafana/ui';
 
 import { Label } from '../components/Label';
 import { MetaText } from '../components/MetaText';
@@ -106,9 +106,13 @@ export function Workbench({ domain, data }: WorkbenchProps) {
           </EditorColumnHeader>
         </div>
         {/* Render actual data */}
-        <WorkbenchProvider leftColumnWidth={leftColumnWidth} domain={domain}>
-          {data.map((row, index) => renderWorkbenchRow(row, leftColumnWidth, domain, generateRowKey(row, index)))}
-        </WorkbenchProvider>
+        <div className={styles.virtualizedContainer}>
+          <WorkbenchProvider leftColumnWidth={leftColumnWidth} domain={domain}>
+            <ScrollContainer height="100%" width="100%" scrollbarWidth="none" showScrollIndicators>
+              {data.map((row, index) => renderWorkbenchRow(row, leftColumnWidth, domain, generateRowKey(row, index)))}
+            </ScrollContainer>
+          </WorkbenchProvider>
+        </div>
       </div>
     </div>
   );
@@ -116,7 +120,7 @@ export function Workbench({ domain, data }: WorkbenchProps) {
 
 // Helper function to determine if a row is an AlertRuleRow
 function isAlertRuleRow(row: WorkbenchRow): row is AlertRuleRow {
-  return 'timeline' in row;
+  return 'ruleUID' in row.metadata;
 }
 
 // Generate unique keys for WorkbenchRow items
@@ -195,8 +199,6 @@ export const getStyles = (theme: GrafanaTheme2) => {
 
       display: 'flex',
       flexDirection: 'column',
-
-      overflow: 'scroll',
     }),
     groupItemWrapper: (width: number) =>
       css({
@@ -204,6 +206,11 @@ export const getStyles = (theme: GrafanaTheme2) => {
         gridTemplateColumns: `${width}px auto`,
         gap: theme.spacing(2),
       }),
+    virtualizedContainer: css({
+      display: 'flex',
+      flex: 1,
+      overflow: 'hidden', // Let AutoSizer handle the overflow
+    }),
     summaryContainer: css({
       gridTemplateRows: summaryHeight,
     }),
