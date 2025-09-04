@@ -227,16 +227,26 @@
       "select-resource": "Seleziona una risorsa"
     },
     "resource-picker": {
+      "browse-tab": "",
       "button-apply": "Applica",
       "button-cancel": "Annulla",
       "header-location": "Posizione",
+      "header-resource-group": "",
       "header-scope": "Ambito",
       "header-type": "Tipo",
       "heading-selection": "Selezione",
+      "locations-filter": "",
+      "locations-filter-placeholder": "",
+      "recent-tab": "",
       "result-limit": "Visualizzazione dei primi {{numResults}} risultati",
+      "subscriptions-filter": "",
+      "subscriptions-filter-placeholder": "",
       "text-loading": "Caricamento in corso...",
+      "text-no-recent-resources": "",
       "text-no-resources": "Nessuna risorsa trovata",
-      "title-error-occurred": "Si è verificato un errore durante la richiesta di risorse da Azure Monitor"
+      "title-error-occurred": "Si è verificato un errore durante la richiesta di risorse da Azure Monitor",
+      "types-filter": "",
+      "types-filter-placeholder": ""
     },
     "scope-selector": {
       "label": "Ambito"
