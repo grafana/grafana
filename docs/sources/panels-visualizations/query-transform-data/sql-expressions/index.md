@@ -202,3 +202,19 @@ During conversion:
 2. Add the SQL expression `SELECT * from A`. After you add a SQL expression that selects from RefID A, Grafana converts it to a table response:
 
    ![Add the SQL expression](/media/docs/sql-expressions/add-the-sql-expression.png)
+
+## LLM integration
+
+The Grafana LLM plugin seamlessly integrates AI-powered assistance into your SQL expressions workflow.
+
+{{< admonition type="note" >}}
+The Grafana LLM plugin is currently in public preview, meaning Grafana offers limited support, and breaking changes might occur prior to the feature being made generally available.
+{{< /admonition >}}
+
+To use this integration, first [install and configure the LLM plugin](https://grafana.com/grafana/plugins/grafana-llm-app/). After installation, open your dashboard and select **Edit** to open the panel editor. Navigate to the **Queries** tab and scroll to the bottom where you'll find two new buttons positioned to the right of the **Run query** button.
+
+{{< figure src="/media/docs/sql-expressions/sqlexpressions-LLM-integration-v12.2.png" caption="LLM integration" >}}
+
+Click **Explain query** to open a drawer that displays a detailed explanation of your query, including its business meaning and performance statistics. Once the explanation is generated, the button changes to **View explanation**.
+
+Click **Improve query** to open a suggestions drawer that contains performance and reliability enhancements, column naming best practices, and guidance on panel optimization. Click **Apply** to implement a suggestion. After you’ve interacted with the interface, you'll see a **Suggestions** button for quick access. Newer suggestions appear at the top, with older ones listed below, creating a history of improvements. If your SQL query has a parsing error, such as a syntax issue, the LLM provides a corrected version. The LLM automatically identifies errors and helps you rewrite the query correctly.
