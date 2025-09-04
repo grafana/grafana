@@ -65,9 +65,9 @@ func TestIntegrationStars(t *testing.T) {
 		require.Len(t, found.Items, 5, "should be 5 dashboards")
 
 		// List is empty when we start
-		stars, err := starsClient.Resource.List(ctx, metav1.ListOptions{})
+		rsp, err := starsClient.Resource.List(ctx, metav1.ListOptions{})
 		require.NoError(t, err)
-		require.Empty(t, stars.Items, "no stars saved yet")
+		require.Empty(t, rsp.Items, "no stars saved yet")
 
 		raw := make(map[string]any)
 		legacyResponse := apis.DoRequest(helper, apis.RequestParams{
@@ -84,25 +84,18 @@ func TestIntegrationStars(t *testing.T) {
 		require.Equal(t, http.StatusOK, legacyResponse.Response.StatusCode, "add dashboard star")
 
 		// List values and compare results
-		stars, err = starsClient.Resource.List(ctx, metav1.ListOptions{})
+		rsp, err = starsClient.Resource.List(ctx, metav1.ListOptions{})
 		require.NoError(t, err)
+		stars := typed(t, rsp, &preferences.StarsList{})
+
 		require.Len(t, stars.Items, 1, "user stars should exist")
 		require.Equal(t, "user-"+starsClient.Args.User.Identity.GetIdentifier(),
 			stars.Items[0].GetName(), "star resource for user")
-		jj, err := json.MarshalIndent(stars.Items[0].Object["spec"], "", "  ")
-		require.NoError(t, err)
-		// fmt.Printf("stars: %s\n", string(jj))
-		require.JSONEq(t, `{
-			"resource": [
-				{
-					"group": "dashboard.grafana.app",
-					"kind": "Dashboard",
-					"names": [
-						"test-2", 
-						"test-3"
-					]
-				}
-			]}`, string(jj))
+		resources := stars.Items[0].Spec.Resource
+		require.Len(t, resources, 1)
+		require.Equal(t, "dashboard.grafana.app", resources[0].Group)
+		require.Equal(t, "Dashboard", resources[0].Kind)
+		require.ElementsMatch(t, []string{"test-2", "test-3"}, resources[0].Names)
 
 		// Remove one star
 		legacyResponse = apis.DoRequest(helper, apis.RequestParams{
@@ -112,24 +105,18 @@ func TestIntegrationStars(t *testing.T) {
 		}, &raw)
 		require.Equal(t, http.StatusOK, legacyResponse.Response.StatusCode, "removed dashboard star")
 
-		star, err := starsClient.Resource.Get(ctx, "user-"+starsClient.Args.User.Identity.GetIdentifier(), metav1.GetOptions{})
+		rspObj, err := starsClient.Resource.Get(ctx, "user-"+starsClient.Args.User.Identity.GetIdentifier(), metav1.GetOptions{})
 		require.NoError(t, err)
-		jj, err = json.MarshalIndent(star.Object["spec"], "", "  ")
-		require.NoError(t, err)
-		// fmt.Printf("stars: %s\n", string(jj))
-		require.JSONEq(t, `{
-			"resource": [
-				{
-					"group": "dashboard.grafana.app",
-					"kind": "Dashboard",
-					"names": [
-						"test-2"
-					]
-				}
-			]}`, string(jj)) // note that 3 was removed :tada:
+
+		after := typed(t, rspObj, &preferences.Stars{})
+		resources = after.Spec.Resource
+		require.Len(t, resources, 1)
+		require.Equal(t, "dashboard.grafana.app", resources[0].Group)
+		require.Equal(t, "Dashboard", resources[0].Kind)
+		require.Equal(t, []string{"test-2"}, resources[0].Names)
 
 		// Change stars via k8s update
-		star, err = starsClient.Resource.Update(ctx, &unstructured.Unstructured{
+		rspObj, err = starsClient.Resource.Update(ctx, &unstructured.Unstructured{
 			Object: map[string]interface{}{
 				"metadata": map[string]any{
 					"name":      "user-" + starsClient.Args.User.Identity.GetIdentifier(),
@@ -147,18 +134,22 @@ func TestIntegrationStars(t *testing.T) {
 			},
 		}, metav1.UpdateOptions{})
 		require.NoError(t, err)
-		jj, err = json.MarshalIndent(star.Object["spec"], "", "  ")
-		require.NoError(t, err)
-		// fmt.Printf("stars: %s\n", string(jj))
-		require.JSONEq(t, `{
-			"resource": [
-				{
-					"group": "dashboard.grafana.app",
-					"kind": "Dashboard",
-					"names": [
-						"test-2", "aaa", "bbb"
-					]
-				}
-			]}`, string(jj)) // note that 3 was removed :tada:
+
+		after = typed(t, rspObj, &preferences.Stars{})
+		resources = after.Spec.Resource
+		require.Len(t, resources, 1)
+		require.Equal(t, "dashboard.grafana.app", resources[0].Group)
+		require.Equal(t, "Dashboard", resources[0].Kind)
+		require.ElementsMatch(t,
+			[]string{"test-2", "aaa", "bbb"}, // NOTE 2 stays, 3 removed, added aaa+bbb
+			resources[0].Names)
 	})
+}
+
+func typed[T any](t *testing.T, obj any, out T) T {
+	jj, err := json.Marshal(obj)
+	require.NoError(t, err)
+	err = json.Unmarshal(jj, out)
+	require.NoError(t, err)
+	return out
 }
