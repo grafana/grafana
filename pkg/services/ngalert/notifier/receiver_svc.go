@@ -36,6 +36,11 @@ var (
 		"Receiver cannot be renamed because it is used by provisioned {{ if .Public.UsedByRules }}alert rules{{ end }}{{ if .Public.UsedByRoutes }}{{ if .Public.UsedByRules }} and {{ end }}notification policies{{ end }}",
 		errutil.WithPublic(`Receiver cannot be renamed because it is used by provisioned {{ if .Public.UsedByRules }}alert rules{{ end }}{{ if .Public.UsedByRoutes }}{{ if .Public.UsedByRules }} and {{ end }}notification policies{{ end }}. You must update those resources first using the original provision method.`),
 	)
+
+	ErrReceiverOrigin = errutil.BadRequest("alerting.notifications.receivers.originInvalid").MustTemplate(
+		"Receiver '{{ .Public.Name }} cannot be {{ .Public.Action }}ed because it belongs to a configuration in staging mode.",
+		errutil.WithPublic("Receiver '{{ .Public.Name }} cannot be {{ .Public.Action }}ed because it belongs to a configuration in staging mode. Commit the staged configuration first."),
+	)
 )
 
 // ReceiverService is the service for managing alertmanager receivers.
@@ -271,6 +276,10 @@ func (rs *ReceiverService) DeleteReceiver(ctx context.Context, uid string, calle
 		return err
 	}
 
+	if existing.Origin != models.ResourceOriginGrafana {
+		return makeErrReceiverOrigin(existing, "delete")
+	}
+
 	logger := rs.log.FromContext(ctx).New("receiver", existing.Name, "uid", uid, "version", version, "integrations", existing.GetIntegrationTypes())
 
 	// Check optimistic concurrency.
@@ -427,6 +436,10 @@ func (rs *ReceiverService) UpdateReceiver(ctx context.Context, r *models.Receive
 	err = rs.checkOptimisticConcurrency(existing, r.Version)
 	if err != nil {
 		return nil, err
+	}
+
+	if existing.Origin != models.ResourceOriginGrafana {
+		return nil, makeErrReceiverOrigin(existing, "update")
 	}
 
 	if err := rs.provenanceValidator(existing.Provenance, r.Provenance); err != nil {
@@ -683,6 +696,10 @@ func makeErrReceiverDependentResourcesProvenance(usedByRoutes bool, rules []mode
 	return ErrReceiverDependentResourcesProvenance.Build(errutil.TemplateData{
 		Public: data,
 	})
+}
+
+func makeErrReceiverOrigin(r *models.Receiver, action string) error {
+	return ErrReceiverOrigin.Build(errutil.TemplateData{Public: map[string]interface{}{"Action": action, "Name": r.Name}})
 }
 
 func (rs *ReceiverService) RenameReceiverInDependentResources(ctx context.Context, orgID int64, revision *legacy_storage.ConfigRevision, oldName, newName string, receiverProvenance models.Provenance) error {
