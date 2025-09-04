@@ -11,9 +11,10 @@ import (
 	"strconv"
 	"sync"
 
-	"golang.org/x/sync/errgroup"
-
+	"github.com/grafana/dskit/modules"
 	"github.com/prometheus/client_golang/prometheus"
+	"go.opentelemetry.io/otel/trace"
+	"golang.org/x/sync/errgroup"
 
 	"github.com/grafana/grafana/pkg/api"
 	_ "github.com/grafana/grafana/pkg/extensions"
@@ -23,6 +24,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/usagestats/statscollector"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/registry/backgroundsvcs/adapter"
+	"github.com/grafana/grafana/pkg/semconv"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/provisioning"
@@ -94,7 +96,7 @@ func newServer(opts Options, cfg *setting.Cfg, httpServer *api.HTTPServer, roleR
 // ModuleServer to launch specific modules.
 type Server struct {
 	context          context.Context
-	shutdownFn       context.CancelFunc
+	shutdownFn       func()
 	childRoutines    *errgroup.Group
 	log              log.Logger
 	cfg              *setting.Cfg
@@ -152,18 +154,32 @@ func (s *Server) Run() error {
 }
 
 func (s *Server) dskitRun() error {
-	defer close(s.shutdownFinished)
-
 	if err := s.Init(); err != nil {
 		return err
 	}
 	managerAdapter := adapter.NewManagerAdapter(s.backgroundServiceRegistry)
 	s.notifySystemd("READY=1")
 
-	return managerAdapter.Run(s.context)
+	ctx, span := s.tracerProvider.Start(s.context, "server.dskitRun")
+	defer span.End()
+
+	cancelFn := s.shutdownFn
+	s.shutdownFn = func() {
+		defer close(s.shutdownFinished)
+		s.log.Debug("Shutting down background services")
+		if err := managerAdapter.Shutdown(s.context, modules.ErrStopProcess.Error()); err != nil {
+			s.log.Error("Failed to shutdown background services", "error", err)
+		}
+		s.log.Debug("Background services shutdown complete")
+		cancelFn()
+	}
+
+	return managerAdapter.Run(ctx)
 }
 
 func (s *Server) backgroundServicesRun() error {
+	ctx, span := s.tracerProvider.Start(s.context, "server.backgroundServicesRun")
+	defer span.End()
 	defer close(s.shutdownFinished)
 
 	if err := s.Init(); err != nil {
@@ -187,7 +203,8 @@ func (s *Server) backgroundServicesRun() error {
 			default:
 			}
 			s.log.Debug("Starting background service", "service", serviceName)
-			err := service.Run(s.context)
+			span.AddEvent(fmt.Sprintf("%s start", serviceName), trace.WithAttributes(semconv.GrafanaServiceName(serviceName)))
+			err := service.Run(ctx)
 			// Do not return context.Canceled error since errgroup.Group only
 			// returns the first error to the caller - thus we can miss a more
 			// interesting error.
