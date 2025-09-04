@@ -6,7 +6,7 @@ import { LegendDisplayMode, StackingMode, TooltipDisplayMode } from '@grafana/ui
 import { overrideToFixedColor } from '../../home/Insights';
 
 import { VARIABLES } from './constants';
-import { METRIC_NAME, getDataQuery, stringifyGroupFilter } from './utils';
+import { METRIC_NAME, getDataQuery, stringifyGroupFilter, useQueryFilter } from './utils';
 
 /**
  * Viz config for the summary chart - used by the React component
@@ -45,20 +45,7 @@ export function SummaryChartReact() {
     ],
   });
 
-  return <VizPanel title="" viz={summaryChartVizConfig} dataProvider={dataProvider} collapsible={true} />;
-}
-
-/**
- * This hook will create a Prometheus label matcher string from the "groupBy" and "filters" variables
- */
-export function useQueryFilter(): string {
-  const [groupBy = []] = useVariableValues<string>(VARIABLES.groupBy);
-  const [filters = ''] = useVariableValue<string>(VARIABLES.filters);
-
-  const groupByFilter = stringifyGroupFilter(groupBy);
-  const queryFilter = [groupByFilter, filters].filter((s) => Boolean(s)).join(',');
-
-  return queryFilter;
+  return <VizPanel title="" viz={summaryChartVizConfig} dataProvider={dataProvider} hoverHeader={true} />;
 }
 
 // simple wrapper so we can render the Chart using a Scene parent

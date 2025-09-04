@@ -15,8 +15,10 @@ import { TimelineHeader } from './Timeline';
 import { WorkbenchProvider } from './WorkbenchContext';
 import { AlertRuleDetails } from './scene/AlertRuleDetails';
 import { AlertRuleSummary } from './scene/AlertRuleSummary';
+import { SummaryChartReact } from './scene/SummaryChart';
+import { SummaryStatsReact } from './scene/SummaryStats';
 import { StateChangeChart } from './stateChangeChart/StateChangeChart';
-import { AlertRuleRow, Domain, Filter, GenericGroupedRow, WorkbenchRow } from './types';
+import { AlertRuleRow, Domain, Filter, WorkbenchRow } from './types';
 
 type WorkbenchProps = {
   domain: Domain;
@@ -91,10 +93,13 @@ export function Workbench({ domain, data }: WorkbenchProps) {
           <div className={cx(styles.containerWithBorderAndRadius, styles.flexFull, styles.minColumnWidth)} />
         </div>
       </div>
-
       {/* content goes here */}
       <div data-testid="groups-container" className={cx(splitter.containerProps.className, styles.groupsContainer)}>
-        <div className={cx(styles.groupItemWrapper(leftColumnWidth), styles.stickyHeader)}>
+        <div className={cx(styles.groupItemWrapper(leftColumnWidth), styles.stickyHeader, styles.summaryContainer)}>
+          <SummaryStatsReact />
+          <SummaryChartReact />
+        </div>
+        <div className={cx(styles.groupItemWrapper(leftColumnWidth), styles.stickyHeader, styles.headerContainer)}>
           <EditorColumnHeader label={t('alerting.left-column.label-instances', 'Instances')} />
           <EditorColumnHeader>
             <TimelineHeader domain={domain} />
@@ -121,7 +126,7 @@ function generateRowKey(row: WorkbenchRow, fallbackIndex: number): string {
     return `alert-${row.metadata.ruleUID}`;
   } else {
     // For GenericGroupedRow, create key from label and value
-    const groupedRow = row as GenericGroupedRow;
+    const groupedRow = row;
     return `group-${groupedRow.metadata.label}-${groupedRow.metadata.value}`;
   }
 }
@@ -157,8 +162,7 @@ function renderWorkbenchRow(
       </GroupRow>
     );
   } else {
-    // GenericGroupedRow
-    const groupedRow = row as GenericGroupedRow;
+    const groupedRow = row;
     return (
       <GroupRow
         key={key}
@@ -177,6 +181,7 @@ function renderWorkbenchRow(
 }
 
 export const getStyles = (theme: GrafanaTheme2) => {
+  const summaryHeight = 200;
   return {
     stickyHeader: css({
       position: 'sticky',
@@ -199,6 +204,12 @@ export const getStyles = (theme: GrafanaTheme2) => {
         gridTemplateColumns: `${width}px auto`,
         gap: theme.spacing(2),
       }),
+    summaryContainer: css({
+      gridTemplateRows: summaryHeight,
+    }),
+    headerContainer: css({
+      top: summaryHeight,
+    }),
     flexFull: css({
       flex: 1,
     }),

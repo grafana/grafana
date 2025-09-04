@@ -3,7 +3,6 @@ import {
   AdHocFiltersVariable,
   GroupByVariable,
   SceneControlsSpacer,
-  SceneFlexItem,
   SceneFlexLayout,
   SceneRefreshPicker,
   SceneTimePicker,
@@ -14,7 +13,6 @@ import {
 } from '@grafana/scenes';
 import { EmbeddedSceneWithContext } from '@grafana/scenes-react';
 
-import { SummaryChartScene } from './SummaryChart';
 import { WorkbenchSceneObject } from './Workbench';
 import { DS_UID, defaultTimeRange } from './utils';
 
@@ -40,7 +38,7 @@ export const triageScene = new EmbeddedSceneWithContext({
           uid: DS_UID,
         },
         allowCustomValue: true,
-        applyMode: 'auto',
+        applyMode: 'manual',
       }),
       new AdHocFiltersVariable({
         name: 'filters',
@@ -62,11 +60,19 @@ export const triageScene = new EmbeddedSceneWithContext({
   body: new SceneFlexLayout({
     direction: 'column',
     children: [
-      // this is the summary bar chart we show above the workbench
-      new SceneFlexItem({
-        height: 250,
-        body: new SummaryChartScene({}),
-      }),
+      // new SceneFlexLayout({
+      //   direction: 'row',
+      //   children: [
+      //     new SceneFlexItem({
+      //       minHeight: 120,
+      //       body: new SummaryStatsScene({}),
+      //     }),
+      //     new SceneFlexItem({
+      //       minHeight: 120,
+      //       body: new SummaryChartScene({}),
+      //     }),
+      //   ],
+      // }),
       // this is the main workbench component
       new WorkbenchSceneObject({}),
     ],

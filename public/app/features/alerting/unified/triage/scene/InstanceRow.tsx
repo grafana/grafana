@@ -12,7 +12,6 @@ import {
   BarAlignment,
   LegendDisplayMode,
   StackingMode,
-  Text,
   TooltipDisplayMode,
   useStyles2,
 } from '@grafana/ui';
