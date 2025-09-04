@@ -18,7 +18,7 @@ var appManifestData = app.ManifestData{
 }
 
 type AppConfig struct {
-	ZanzanaCfg                authz.ZanzanaClientConfig
+	ZanzanaClientCfg          authz.ZanzanaClientConfig
 	FolderReconcilerNamespace string
 }
 
@@ -33,7 +33,7 @@ func New(cfg app.Config) (app.App, error) {
 	}
 
 	folderReconciler, err := reconcilers.NewFolderReconciler(reconcilers.ReconcilerConfig{
-		ZanzanaCfg:                appSpecificConfig.ZanzanaCfg,
+		ZanzanaCfg:                appSpecificConfig.ZanzanaClientCfg,
 		KubeConfig:                &cfg.KubeConfig,
 		FolderReconcilerNamespace: appSpecificConfig.FolderReconcilerNamespace,
 	})
