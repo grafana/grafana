@@ -90,7 +90,7 @@ func (nps *NotificationPolicyService) UpdatePolicyTree(ctx context.Context, orgI
 
 	receivers := revision.GetReceiversNames()
 	receivers[""] = struct{}{} // Allow empty receiver (inheriting from parent)
-	
+
 	err = tree.ValidateReceivers(receivers)
 	if err != nil {
 		return definitions.Route{}, "", MakeErrRouteInvalidFormat(err)
