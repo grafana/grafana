@@ -3285,14 +3285,18 @@
     {
       "metadata": {
         "name": "timeComparison",
-        "resourceVersion": "1753448760331",
-        "creationTimestamp": "2025-07-24T20:07:28Z"
+        "resourceVersion": "1757004399797",
+        "creationTimestamp": "2025-07-24T20:07:28Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-09-04 16:46:39.797094 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables time comparison option in supported panels",
-        "stage": "experimental",
+        "stage": "GA",
         "codeowner": "@grafana/dataviz-squad",
-        "frontend": true
+        "frontend": true,
+        "expression": "true"
       }
     },
     {
