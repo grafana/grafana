@@ -35,6 +35,9 @@
             "cellOptions": {
               "type": "auto"
             },
+            "footer": {
+              "reducers": []
+            },
             "inspect": false
           },
           "mappings": [],
@@ -80,7 +83,7 @@
           },
           "editorMode": "code",
           "exemplar": false,
-          "expr": "sum without(instance, job) (prometheus_engine_query_duration_seconds)",
+          "expr": "topk(2, sum by(slice) (prometheus_engine_query_duration_seconds))",
           "format": "table",
           "instant": true,
           "legendFormat": "__auto",
@@ -88,7 +91,7 @@
           "refId": "A"
         }
       ],
-      "title": "New panel",
+      "title": "Table powered by Prometheus",
       "type": "table"
     }
   ],
@@ -118,6 +121,6 @@
   "timepicker": {},
   "timezone": "browser",
   "title": "AdHoc filter test",
-  "uid": "bb9d8ddc-3f9b-4a29-ae74-d1a4a1285177",
-  "version": 1
+  "uid": "adhoch-filter-test",
+  "version": 3
 }
