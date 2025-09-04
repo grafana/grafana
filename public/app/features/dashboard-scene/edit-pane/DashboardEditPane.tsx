@@ -84,18 +84,19 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> {
     );
 
     if (this.panelEditAction) {
-      // The changes done in panel edit are published here as when panel edit is active
-      // the main dashboard undo/redo is not active (controlled by DashboardEditPane), which is by design
-      // as we want all panel edit changes to be seen as one single action that can be undone/redone
-      this.panelEditAction.payload.source.publishEvent(this.panelEditAction, true);
-
-      // Because the layout item is not active yet we have to call this directly
-      if (isDashboardLayoutItem(this.panelEditAction.payload.source)) {
-        this.panelEditAction.payload.source.handleEditChange();
-      }
-
+      this.performPanelEditAction(this.panelEditAction);
       this.panelEditAction = undefined;
     }
+  }
+
+  private performPanelEditAction(action: DashboardEditActionEvent) {
+    // Some layout items are not yet active when leaving panel edit, let's wait for them to activate
+    if (!action.payload.source.isActive) {
+      setTimeout(() => this.performPanelEditAction(action));
+      return;
+    }
+
+    action.payload.source.publishEvent(action, true);
   }
 
   /**
