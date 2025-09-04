@@ -18,7 +18,7 @@ func (b *FolderAPIBuilder) beginCreate(_ context.Context, obj runtime.Object, _ 
 		return nil, err
 	}
 
-	if isFolderAtRoot(meta) {
+	if meta.GetFolder() == "" {
 		// Zanzana only cares about parent-child folder relationships; nothing to do if folder is at root.
 		return func(ctx context.Context, success bool) {}, nil
 	}
@@ -54,21 +54,8 @@ func (b *FolderAPIBuilder) beginUpdate(_ context.Context, obj runtime.Object, ol
 }
 
 func (b *FolderAPIBuilder) writeFolderToZanzana(ctx context.Context, folder utils.GrafanaMetaAccessor) {
-	log := logging.FromContext(ctx)
-	if isFolderAtRoot(folder) {
-		// Folder was moved to root, remove any existing parent relationships in Zanzana
-		err := b.permissionStore.DeleteFolderParents(ctx, folder.GetNamespace(), folder.GetName())
-		if err != nil {
-			log.Warn("failed to propagate folder to zanzana", "err", err)
-		}
-		return
-	}
 	err := b.permissionStore.SetFolderParent(ctx, folder.GetNamespace(), folder.GetName(), folder.GetFolder())
 	if err != nil {
-		log.Warn("failed to propagate folder to zanzana", "err", err)
+		logging.FromContext(ctx).Warn("failed to propagate folder to zanzana", "err", err)
 	}
-}
-
-func isFolderAtRoot(folder utils.GrafanaMetaAccessor) bool {
-	return folder.GetFolder() == ""
 }
