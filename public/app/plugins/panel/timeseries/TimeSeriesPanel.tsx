@@ -1,6 +1,13 @@
 import { useMemo, useState } from 'react';
 
-import { PanelProps, DataFrameType, DashboardCursorSync, DataFrame, alignTimeRangeCompareData } from '@grafana/data';
+import {
+  PanelProps,
+  DataFrameType,
+  DashboardCursorSync,
+  DataFrame,
+  alignTimeRangeCompareData,
+  shouldAlignTimeCompare,
+} from '@grafana/data';
 import { PanelDataErrorView } from '@grafana/runtime';
 import { TooltipDisplayMode, VizOrientation } from '@grafana/schema';
 import { EventBusPlugin, KeyboardPlugin, TooltipPlugin2, usePanelContext } from '@grafana/ui';
@@ -40,7 +47,10 @@ export const TimeSeriesPanel = ({
     showThresholds,
     dataLinkPostProcessor,
     eventBus,
+    canExecuteActions,
   } = usePanelContext();
+
+  const userCanExecuteActions = useMemo(() => canExecuteActions?.() ?? false, [canExecuteActions]);
   // Vertical orientation is not available for users through config.
   // It is simplified version of horizontal time series panel and it does not support all plugins.
   const isVerticallyOriented = options.orientation === VizOrientation.Vertical;
@@ -50,7 +60,12 @@ export const TimeSeriesPanel = ({
       frames.forEach((frame: DataFrame) => {
         const tc = frame.meta?.timeCompare;
         if (tc?.isTimeShiftQuery && tc.diffMs != null) {
-          alignTimeRangeCompareData(frame, tc.diffMs, config.theme2);
+          // Check if the compared frame needs time alignment
+          // Apply alignment when time ranges match (no shift applied yet)
+          const needsAlignment = shouldAlignTimeCompare(frame, frames);
+          if (needsAlignment) {
+            alignTimeRangeCompareData(frame, tc.diffMs, config.theme2);
+          }
         }
       });
     }
@@ -148,6 +163,7 @@ export const TimeSeriesPanel = ({
                       maxHeight={options.tooltip.maxHeight}
                       replaceVariables={replaceVariables}
                       dataLinks={dataLinks}
+                      canExecuteActions={userCanExecuteActions}
                     />
                   );
                 }}

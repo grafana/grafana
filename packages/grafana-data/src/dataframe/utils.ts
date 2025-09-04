@@ -177,3 +177,46 @@ export function alignTimeRangeCompareData(series: DataFrame, diff: number, theme
     }
   });
 }
+
+/**
+ * Checks if a time comparison frame needs alignment with its original frame.
+ * Returns true when time ranges match, indicating no time shift has been applied yet by an older version of scenes.
+ * @param compareFrame - The frame with time comparison data
+ * @param allFrames - Array of all frames to find the matching original frame
+ * @returns true if alignment is needed (time ranges match), false if already shifted
+ */
+export function shouldAlignTimeCompare(compareFrame: DataFrame, allFrames: DataFrame[]): boolean {
+  // Find the matching original frame by removing '-compare' from refId
+  const compareRefId = compareFrame.refId;
+  if (!compareRefId || !compareRefId.endsWith('-compare')) {
+    return false;
+  }
+
+  const originalRefId = compareRefId.replace('-compare', '');
+  const originalFrame = allFrames.find(
+    (frame) => frame.refId === originalRefId && !frame.meta?.timeCompare?.isTimeShiftQuery
+  );
+
+  if (!originalFrame) {
+    return false;
+  }
+
+  // Find time fields
+  const compareTimeField = compareFrame.fields.find((field) => field.type === FieldType.time);
+  const originalTimeField = originalFrame.fields.find((field) => field.type === FieldType.time);
+
+  if (!compareTimeField?.values.length || !originalTimeField?.values.length) {
+    return false;
+  }
+
+  // Find first non-null time value from each frame
+  const compareFirstTime = compareTimeField.values.find((value) => value != null);
+  const originalFirstTime = originalTimeField.values.find((value) => value != null);
+
+  if (compareFirstTime == null || originalFirstTime == null) {
+    return false;
+  }
+
+  // Check if first non-null time values match exactly
+  return compareFirstTime === originalFirstTime;
+}
