@@ -105,7 +105,7 @@ type APIBuilder struct {
 	repoFactory      repository.Factory
 	client           client.ProvisioningV0alpha1Interface
 	access           authlib.AccessChecker
-	statusPatcher    *controller.RepositoryStatusPatcher
+	statusPatcher    *appcontroller.RepositoryStatusPatcher
 	healthChecker    *controller.HealthChecker
 	// Extras provides additional functionality to the API.
 	extras []Extra
@@ -130,7 +130,7 @@ func NewAPIBuilder(
 ) *APIBuilder {
 	clients := resources.NewClientFactory(configProvider)
 	parsers := resources.NewParserFactory(clients)
-	resourceLister := resources.NewResourceLister(unified, unified, legacyMigrator, storageStatus)
+	resourceLister := resources.NewResourceListerForMigrations(unified, legacyMigrator, storageStatus)
 
 	b := &APIBuilder{
 		onlyApiServer:       onlyApiServer,
@@ -363,7 +363,7 @@ func (b *APIBuilder) GetJobQueue() jobs.Queue {
 	return b.jobs
 }
 
-func (b *APIBuilder) GetStatusPatcher() *controller.RepositoryStatusPatcher {
+func (b *APIBuilder) GetStatusPatcher() *appcontroller.RepositoryStatusPatcher {
 	return b.statusPatcher
 }
 
@@ -636,7 +636,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				return fmt.Errorf("create API client job store: %w", err)
 			}
 
-			b.statusPatcher = controller.NewRepositoryStatusPatcher(b.GetClient())
+			b.statusPatcher = appcontroller.NewRepositoryStatusPatcher(b.GetClient())
 			b.healthChecker = controller.NewHealthChecker(&repository.Tester{}, b.statusPatcher)
 
 			// if running solely CRUD, skip the rest of the setup
@@ -731,6 +731,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				jobHistoryWriter = jobs.NewAPIClientHistoryWriter(b.GetClient())
 			}
 
+			repoGetter := resources.NewRepositoryGetter(b.repoFactory, b.client)
 			// This is basically our own JobQueue system
 			driver, err := jobs.NewConcurrentJobDriver(
 				3,              // 3 drivers for now
@@ -738,7 +739,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				time.Minute,    // Cleanup jobs
 				30*time.Second, // Periodically look for new jobs
 				30*time.Second, // Lease renewal interval
-				b.jobs, b, jobHistoryWriter,
+				b.jobs, repoGetter, jobHistoryWriter,
 				jobController.InsertNotifications(),
 				workers...,
 			)
