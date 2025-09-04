@@ -5,7 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -29,7 +29,7 @@ func (m *mockRoundTripper) RoundTrip(req *http.Request) (*http.Response, error) 
 	}
 	resp := &http.Response{
 		StatusCode: m.status,
-		Body:       ioutil.NopCloser(bytes.NewBuffer(m.respBody)),
+		Body:       io.NopCloser(bytes.NewBuffer(m.respBody)),
 		Header:     make(http.Header),
 	}
 	return resp, nil
