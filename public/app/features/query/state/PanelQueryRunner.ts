@@ -245,13 +245,13 @@ export class PanelQueryRunner {
         // this strategy allows transformations to take in series frames and produce anno frames
         // we look at each transformation's result and put it in the correct place
         results.forEach((frames) => {
-          frames.forEach((frame) => {
+          for (const frame of frames) {
             if (frame.meta?.dataTopic === DataTopic.Annotations) {
               annotations.push(frame);
             } else {
               series.push(frame);
             }
-          });
+          }
         });
 
         return { ...data, series, annotations };

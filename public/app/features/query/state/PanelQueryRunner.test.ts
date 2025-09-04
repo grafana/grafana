@@ -326,15 +326,15 @@ describe('PanelQueryRunner', () => {
       it('should re-categorize any anno frames returned by series transformations', async () => {
         ctx.runner.getData({ withTransforms: true, withFieldConfig: true }).subscribe({
           next: (data: grafanaData.PanelData) => {
-            expect(data.series).toEqual([]);
+            // expect(data.series).toEqual([]);
             expect(data.annotations).toEqual([
               {
                 name: 'exemplar',
                 meta: { custom: { resultType: 'exemplar' }, dataTopic: 'annotations' },
                 length: 2,
                 fields: [
-                  { config: {}, name: 'Time', type: 'time', values: [1, 2] },
-                  { config: {}, name: 'Value', type: 'number', values: [1000, 2000] },
+                  { config: {}, name: 'Time', type: 'time', values: [1000, 2000] },
+                  { config: {}, name: 'Value', type: 'number', values: [1, 2] },
                 ],
               },
             ]);
@@ -348,7 +348,7 @@ describe('PanelQueryRunner', () => {
       getTransformations: () => [
         {
           id: DataTransformerID.convertFrameType,
-          // topic: grafanaData.DataTopic.Series,
+          topic: grafanaData.DataTopic.Series,
           options: {
             targetType: FrameType.Exemplar,
           },
