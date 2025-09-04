@@ -390,7 +390,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
     return (
       <>
         {!isEditingQueryLibrary && !isUnifiedAlerting && (
-          <MaybeQueryLibraryButtons
+          <MaybeSavedQueryButtons
             query={query}
             app={app}
             onUpdateSuccess={this.onExitQueryLibraryEditingMode}
@@ -581,8 +581,8 @@ export function filterPanelDataToQuery(data: PanelData, refId: string): PanelDat
   };
 }
 
-// Will render anything only if query library is enabled
-function MaybeQueryLibraryButtons(props: {
+// Will render anything only if saved query is enabled
+function MaybeSavedQueryButtons(props: {
   query: DataQuery;
   app?: CoreApp;
   onUpdateSuccess?: () => void;
