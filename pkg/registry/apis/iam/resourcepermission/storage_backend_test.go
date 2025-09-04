@@ -91,20 +91,20 @@ func TestIntegration_ResourcePermSqlBackend_ReadResource(t *testing.T) {
 		require.Equal(t, "dashboard.grafana.app-dashboards-dash1", permission.Name)
 		require.Len(t, permission.Spec.Permissions, 4)
 
-		require.Equal(t, "user-1", permission.Spec.Permissions[0].Name)
-		require.Equal(t, v0alpha1.ResourcePermissionSpecPermissionKindUser, permission.Spec.Permissions[0].Kind)
+		require.Equal(t, "Editor", permission.Spec.Permissions[0].Name)
+		require.Equal(t, v0alpha1.ResourcePermissionSpecPermissionKindBasicRole, permission.Spec.Permissions[0].Kind)
 		require.Equal(t, "edit", permission.Spec.Permissions[0].Verb)
 
 		require.Equal(t, "sa-1", permission.Spec.Permissions[1].Name)
 		require.Equal(t, v0alpha1.ResourcePermissionSpecPermissionKindServiceAccount, permission.Spec.Permissions[1].Kind)
 		require.Equal(t, "view", permission.Spec.Permissions[1].Verb)
 
-		require.Equal(t, "Editor", permission.Spec.Permissions[2].Name)
-		require.Equal(t, v0alpha1.ResourcePermissionSpecPermissionKindBasicRole, permission.Spec.Permissions[2].Kind)
-		require.Equal(t, "edit", permission.Spec.Permissions[2].Verb)
+		require.Equal(t, "team-1", permission.Spec.Permissions[2].Name)
+		require.Equal(t, v0alpha1.ResourcePermissionSpecPermissionKindTeam, permission.Spec.Permissions[2].Kind)
+		require.Equal(t, "admin", permission.Spec.Permissions[2].Verb)
 
-		require.Equal(t, "team-1", permission.Spec.Permissions[3].Name)
-		require.Equal(t, v0alpha1.ResourcePermissionSpecPermissionKindTeam, permission.Spec.Permissions[3].Kind)
-		require.Equal(t, "admin", permission.Spec.Permissions[3].Verb)
+		require.Equal(t, "user-1", permission.Spec.Permissions[3].Name)
+		require.Equal(t, v0alpha1.ResourcePermissionSpecPermissionKindUser, permission.Spec.Permissions[3].Kind)
+		require.Equal(t, "edit", permission.Spec.Permissions[3].Verb)
 	})
 }

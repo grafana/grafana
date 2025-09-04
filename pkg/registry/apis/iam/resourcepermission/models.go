@@ -3,6 +3,7 @@ package resourcepermission
 import (
 	"errors"
 	"fmt"
+	"sort"
 	"strings"
 	"time"
 
@@ -90,6 +91,17 @@ func toV0ResourcePermissions(permsByResource map[groupResourceName][]flatResourc
 				Verb: verb,
 			})
 		}
+
+		sort.Slice(specs, func(i, j int) bool {
+			if specs[i].Kind != specs[j].Kind {
+				return specs[i].Kind < specs[j].Kind
+			}
+			if specs[i].Name != specs[j].Name {
+				return specs[i].Name < specs[j].Name
+			}
+			return specs[i].Verb < specs[j].Verb
+		})
+
 		r := v0alpha1.ResourcePermission{
 			TypeMeta: v0alpha1.ResourcePermissionInfo.TypeMeta(),
 			ObjectMeta: metav1.ObjectMeta{

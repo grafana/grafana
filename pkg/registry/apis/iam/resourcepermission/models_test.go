@@ -26,7 +26,7 @@ func TestToV0ResourcePermissions(t *testing.T) {
 	})
 
 	now := time.Now()
-	t.Run("multiple permission", func(t *testing.T) {
+	t.Run("multiple permission are sorted by kind, name, verb", func(t *testing.T) {
 		permissions := map[groupResourceName][]flatResourcePermission{
 			{
 				Group:    "dashboard.grafana.app",
@@ -87,9 +87,9 @@ func TestToV0ResourcePermissions(t *testing.T) {
 		require.Len(t, result[0].Spec.Permissions, 4)
 
 		perm := result[0].Spec.Permissions[0]
-		require.Equal(t, v0alpha1.ResourcePermissionSpecPermissionKindUser, perm.Kind)
-		require.Equal(t, "testuser", perm.Name)
-		require.Equal(t, "admin", perm.Verb)
+		require.Equal(t, v0alpha1.ResourcePermissionSpecPermissionKindBasicRole, perm.Kind)
+		require.Equal(t, "Viewer", perm.Name)
+		require.Equal(t, "view", perm.Verb)
 		perm = result[0].Spec.Permissions[1]
 		require.Equal(t, v0alpha1.ResourcePermissionSpecPermissionKindServiceAccount, perm.Kind)
 		require.Equal(t, "sa1", perm.Name)
@@ -99,9 +99,9 @@ func TestToV0ResourcePermissions(t *testing.T) {
 		require.Equal(t, "testteam", perm.Name)
 		require.Equal(t, "view", perm.Verb)
 		perm = result[0].Spec.Permissions[3]
-		require.Equal(t, v0alpha1.ResourcePermissionSpecPermissionKindBasicRole, perm.Kind)
-		require.Equal(t, "Viewer", perm.Name)
-		require.Equal(t, "view", perm.Verb)
+		require.Equal(t, v0alpha1.ResourcePermissionSpecPermissionKindUser, perm.Kind)
+		require.Equal(t, "testuser", perm.Name)
+		require.Equal(t, "admin", perm.Verb)
 	})
 }
 
