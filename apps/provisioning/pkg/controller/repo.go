@@ -16,24 +16,28 @@ import (
 	typedclient "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned/typed/provisioning/v0alpha1"
 	informerv0alpha1 "github.com/grafana/grafana/apps/provisioning/pkg/generated/informers/externalversions/provisioning/v0alpha1"
 	listers "github.com/grafana/grafana/apps/provisioning/pkg/generated/listers/provisioning/v0alpha1"
+	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 )
 
 type RepositoryController struct {
-	client     typedclient.ProvisioningV0alpha1Interface
-	repoLister listers.RepositoryLister
-	repoSynced cache.InformerSynced
-	logger     logging.Logger
-	queue      workqueue.TypedRateLimitingInterface[string]
+	client      typedclient.ProvisioningV0alpha1Interface
+	repoLister  listers.RepositoryLister
+	repoSynced  cache.InformerSynced
+	logger      logging.Logger
+	queue       workqueue.TypedRateLimitingInterface[string]
+	repoFactory repository.Factory
 }
 
 func NewRepositoryController(
 	provisioningClient typedclient.ProvisioningV0alpha1Interface,
 	repoInformer informerv0alpha1.RepositoryInformer,
+	repoFactory repository.Factory,
 ) (*RepositoryController, error) {
 	controller := &RepositoryController{
-		client:     provisioningClient,
-		repoLister: repoInformer.Lister(),
-		repoSynced: repoInformer.Informer().HasSynced,
+		repoFactory: repoFactory,
+		client:      provisioningClient,
+		repoLister:  repoInformer.Lister(),
+		repoSynced:  repoInformer.Informer().HasSynced,
 		logger: logging.NewSLogLogger(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
 			Level: slog.LevelDebug,
 		})),
@@ -138,6 +142,19 @@ func (c *RepositoryController) processRepository(ctx context.Context, key string
 		"type", repo.Spec.Type,
 		"generation", repo.Generation,
 		"observedGeneration", repo.Status.ObservedGeneration)
+
+	// These lines are here only for testing purposes until we use the real controller
+	built, err := c.repoFactory.Build(ctx, repo)
+	if err != nil {
+		c.logger.Error("Failed to build repository instance", "error", err, "namespace", repo.Namespace, "name", repo.Name)
+	} else {
+		results, err := built.Test(ctx)
+		if err != nil {
+			c.logger.Error("Repository test failed", "error", err, "namespace", repo.Namespace, "name", repo.Name)
+		} else {
+			c.logger.Debug("Repository test results", "results", results, "namespace", repo.Namespace, "name", repo.Name)
+		}
+	}
 
 	if repo.Generation != repo.Status.ObservedGeneration {
 		repo.Status.ObservedGeneration = repo.Generation
