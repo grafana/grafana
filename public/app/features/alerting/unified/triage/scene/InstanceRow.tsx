@@ -1,11 +1,21 @@
-import { omit } from 'lodash';
+import { css } from '@emotion/css';
+import { isEmpty, omit } from 'lodash';
 import { useMemo } from 'react';
 
-import { DataFrame, Labels, LoadingState, TimeRange } from '@grafana/data';
+import { DataFrame, GrafanaTheme2, Labels, LoadingState, TimeRange } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
 import { SceneDataNode, VizConfigBuilders } from '@grafana/scenes';
 import { VizPanel } from '@grafana/scenes-react';
 import { GraphDrawStyle, VisibilityMode } from '@grafana/schema';
-import { AxisPlacement, BarAlignment, LegendDisplayMode, StackingMode, TooltipDisplayMode } from '@grafana/ui';
+import {
+  AxisPlacement,
+  BarAlignment,
+  LegendDisplayMode,
+  StackingMode,
+  Text,
+  TooltipDisplayMode,
+  useStyles2,
+} from '@grafana/ui';
 
 import { AlertLabels } from '../../components/AlertLabels';
 import { overrideToFixedColor } from '../../home/Insights';
@@ -53,6 +63,7 @@ const chartConfig = VizConfigBuilders.timeseries()
 
 export function InstanceRow({ instance, commonLabels, leftColumnWidth, timeRange }: InstanceRowProps) {
   console.log(instance);
+  const styles = useStyles2(getStyles);
 
   const dataProvider = useMemo(
     () =>
@@ -71,10 +82,28 @@ export function InstanceRow({ instance, commonLabels, leftColumnWidth, timeRange
   return (
     <GroupRow
       width={leftColumnWidth}
-      title={<AlertLabels size="xs" labels={labels} commonLabels={commonLabels} />}
+      title={
+        isEmpty(labels) ? (
+          <div className={styles.wrapper}>
+            <Trans i18nKey="alerting.triage.no-labels">No labels</Trans>
+          </div>
+        ) : (
+          <AlertLabels labels={labels} commonLabels={commonLabels} />
+        )
+      }
       content={
         <VizPanel title="" hoverHeader={true} viz={chartConfig} dataProvider={dataProvider} displayMode="transparent" />
       }
     />
   );
 }
+
+const getStyles = (theme: GrafanaTheme2) => {
+  return {
+    wrapper: css({
+      minHeight: theme.spacing(5),
+      display: 'flex',
+      alignItems: 'center',
+    }),
+  };
+};
