@@ -285,7 +285,6 @@ const getStyles = (theme: GrafanaTheme2) => {
       gap: theme.spacing(1),
       marginLeft: theme.spacing(2),
       color: theme.colors.text.secondary,
-      opacity: 0.7,
     }),
     description: css({
       ...theme.typography.bodySmall,
