@@ -4,6 +4,8 @@ import { test, expect } from '@grafana/plugin-e2e';
 
 import testDashboard from '../dashboards/AdHocFilterTest.json';
 
+import jsonData from './dashboard-adhoch-filters-data.json';
+
 // Helper function to get a specific cell in a table
 const getCell = async (loc: Page | Locator, rowIdx: number, colIdx: number) =>
   loc
@@ -51,6 +53,15 @@ test.describe(
     });
 
     test('Should show adhoc filters', async ({ page, gotoDashboardPage, selectors }) => {
+      // Handle query and query_range API calls
+      await page.route(/\/api\/ds\/query/, async (route) => {
+        await route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify(jsonData),
+        });
+      });
+
       const dashboardPage = await gotoDashboardPage({ uid: dashboardUID });
 
       const panel = dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('New panel'));
