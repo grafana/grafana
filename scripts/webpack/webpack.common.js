@@ -36,6 +36,19 @@ module.exports = {
       ),
       // Fix flot package resolution issues (alias the whole directory)
       'vendor/flot': path.resolve(__dirname, '../../public/vendor/flot'),
+      // And explicitly alias individual files to be robust in CI resolvers
+      'vendor/flot/jquery.flot': path.resolve(__dirname, '../../public/vendor/flot/jquery.flot.js'),
+      'vendor/flot/jquery.flot.selection': path.resolve(__dirname, '../../public/vendor/flot/jquery.flot.selection.js'),
+      'vendor/flot/jquery.flot.time': path.resolve(__dirname, '../../public/vendor/flot/jquery.flot.time.js'),
+      'vendor/flot/jquery.flot.stack': path.resolve(__dirname, '../../public/vendor/flot/jquery.flot.stack.js'),
+      'vendor/flot/jquery.flot.stackpercent': path.resolve(
+        __dirname,
+        '../../public/vendor/flot/jquery.flot.stackpercent.js'
+      ),
+      'vendor/flot/jquery.flot.fillbelow': path.resolve(__dirname, '../../public/vendor/flot/jquery.flot.fillbelow.js'),
+      'vendor/flot/jquery.flot.crosshair': path.resolve(__dirname, '../../public/vendor/flot/jquery.flot.crosshair.js'),
+      'vendor/flot/jquery.flot.dashes': path.resolve(__dirname, '../../public/vendor/flot/jquery.flot.dashes.js'),
+      'vendor/flot/jquery.flot.gauge': path.resolve(__dirname, '../../public/vendor/flot/jquery.flot.gauge.js'),
     },
     modules: [
       // default value
