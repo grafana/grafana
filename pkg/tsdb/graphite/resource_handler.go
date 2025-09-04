@@ -197,10 +197,7 @@ func (s *Service) handleMetricsFind(ctx context.Context, dsInfo *datasourceInfo,
 		return nil, http.StatusInternalServerError, fmt.Errorf("failed to parse metrics find response: %v", err)
 	}
 
-	// We construct this struct to avoid frontend changes.
-	metricsFindResponse, err := json.Marshal(map[string][]GraphiteMetricsFindResponse{
-		"data": *metrics,
-	})
+	metricsFindResponse, err := json.Marshal(*metrics)
 	if err != nil {
 		return nil, http.StatusInternalServerError, fmt.Errorf("failed to marshal metrics find response: %s", err)
 	}

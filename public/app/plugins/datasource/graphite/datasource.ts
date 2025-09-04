@@ -703,12 +703,11 @@ export class GraphiteDatasource
     }
 
     if (config.featureToggles.graphiteBackendMode) {
-      const metrics = await this.postResource<{ data: MetricFindValue[] }>('metrics/find', {
+      return await this.postResource<MetricFindValue[]>('metrics/find', {
         from: typeof params.from === 'string' ? params.from : `${params.from}`,
         until: typeof params.until === 'string' ? params.until : `${params.until}`,
         query,
       });
-      return metrics.data;
     }
 
     const httpOptions: BackendSrvRequest = {
