@@ -907,7 +907,7 @@ var (
 		{
 			Name:           "savedQueries",
 			Description:    "Enables Saved Queries feature",
-			Stage:          FeatureStagePrivatePreview,
+			Stage:          FeatureStagePublicPreview,
 			Owner:          grafanaSharingSquad,
 			FrontendOnly:   false,
 			AllowSelfServe: false,
