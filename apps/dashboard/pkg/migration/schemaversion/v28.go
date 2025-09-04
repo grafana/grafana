@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 // V28 migrates singlestat panels to stat/gauge panels and removes deprecated variable properties.
@@ -135,7 +137,14 @@ func (m *v28Migrator) migrateSinglestatPanel(panel map[string]interface{}) error
 	originalType := panel["type"].(string)
 	panel["autoMigrateFrom"] = panel["type"]
 	panel["type"] = targetType
-	panel["pluginVersion"] = "1.0.0" // FIXME... static version at this time
+	// Use dynamic Grafana version for pluginVersion
+	// In production: setting.BuildVersion contains actual build version
+	// In tests: setting.BuildVersion is empty, so we use fallback
+	pluginVersion := setting.BuildVersion
+	if pluginVersion == "" {
+		pluginVersion = "12.2.0-pre" // fallback for development/test environments
+	}
+	panel["pluginVersion"] = pluginVersion
 
 	// Migrate panel options and field config
 	m.migrateSinglestatOptions(panel, originalType)

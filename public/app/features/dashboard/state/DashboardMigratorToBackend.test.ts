@@ -157,11 +157,11 @@ describe('Backend / Frontend result comparison', () => {
                 logos: { small: 'small/logo', large: 'large/logo' },
                 screenshots: [],
                 updated: '2024-01-01',
-                version: '1.0.0',
+                version: '12.2.0-pre',
               };
             }
             if (!statPanelPlugin.meta.info.version) {
-              statPanelPlugin.meta.info.version = '1.0.0';
+              statPanelPlugin.meta.info.version = '12.2.0-pre';
             }
 
             await panel.pluginLoaded(statPanelPlugin);
@@ -179,11 +179,11 @@ describe('Backend / Frontend result comparison', () => {
                 logos: { small: 'small/logo', large: 'large/logo' },
                 screenshots: [],
                 updated: '2024-01-01',
-                version: '1.0.0',
+                version: '12.2.0-pre',
               };
             }
             if (!tablePanelPlugin.meta.info.version) {
-              tablePanelPlugin.meta.info.version = '1.0.0';
+              tablePanelPlugin.meta.info.version = '12.2.0-pre';
             }
 
             await panel.pluginLoaded(tablePanelPlugin as any);

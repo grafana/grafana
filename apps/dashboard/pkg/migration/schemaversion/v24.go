@@ -3,6 +3,8 @@ package schemaversion
 import (
 	"context"
 	"strconv"
+
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 // V24 migration migrates the angular table panel to the standard table panel
@@ -65,7 +67,7 @@ import (
 //             },
 //             "transformations": [],
 //             "targets": [{ "refId": "A" }],
-//             "pluginVersion": "1.0.0"
+//             "pluginVersion": "{current_grafana_version}"
 //         }
 //     ]
 // }
@@ -181,7 +183,7 @@ import (
 //                 }
 //             ],
 //             "targets": [{ "refId": "A" }],
-//             "pluginVersion": "1.0.0"
+//             "pluginVersion": "{current_grafana_version}"
 //         }
 //     ]
 // }
@@ -211,7 +213,14 @@ func V24(_ context.Context, dashboard map[string]interface{}) error {
 			continue
 		}
 
-		panelMap["pluginVersion"] = "1.0.0" // FIXME: what was the grafanaVersion at schema v24?
+		// Use dynamic Grafana version for pluginVersion
+		// In production: setting.BuildVersion contains actual build version
+		// In tests: setting.BuildVersion is empty, so we use fallback
+		pluginVersion := setting.BuildVersion
+		if pluginVersion == "" {
+			pluginVersion = "12.2.0-pre" // fallback for development/test environments
+		}
+		panelMap["pluginVersion"] = pluginVersion
 		err := tablePanelChangedHandler(panelMap)
 		if err != nil {
 			return err

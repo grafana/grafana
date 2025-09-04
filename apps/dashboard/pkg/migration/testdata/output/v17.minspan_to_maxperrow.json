@@ -77,7 +77,7 @@
         "textMode": "auto",
         "wideLayout": true
       },
-      "pluginVersion": "1.0.0",
+      "pluginVersion": "12.2.0-pre",
       "targets": [
         {
           "datasource": {

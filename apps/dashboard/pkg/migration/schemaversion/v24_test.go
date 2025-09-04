@@ -78,7 +78,7 @@ func TestV24(t *testing.T) {
 						"targets": []interface{}{
 							map[string]interface{}{"refId": "A"},
 						},
-						"pluginVersion": "1.0.0",
+						"pluginVersion": "12.2.0-pre",
 					},
 				},
 			},
@@ -240,7 +240,7 @@ func TestV24(t *testing.T) {
 						"targets": []interface{}{
 							map[string]interface{}{"refId": "A"},
 						},
-						"pluginVersion": "1.0.0",
+						"pluginVersion": "12.2.0-pre",
 					},
 				},
 			},
@@ -330,7 +330,7 @@ func TestV24(t *testing.T) {
 						"targets": []interface{}{
 							map[string]interface{}{"refId": "A"},
 						},
-						"pluginVersion": "1.0.0",
+						"pluginVersion": "12.2.0-pre",
 					},
 				},
 			},
@@ -409,7 +409,7 @@ func TestV24(t *testing.T) {
 						"targets": []interface{}{
 							map[string]interface{}{"refId": "A"},
 						},
-						"pluginVersion": "1.0.0",
+						"pluginVersion": "12.2.0-pre",
 					},
 				},
 			},
@@ -488,7 +488,7 @@ func TestV24(t *testing.T) {
 						"targets": []interface{}{
 							map[string]interface{}{"refId": "A"},
 						},
-						"pluginVersion": "1.0.0",
+						"pluginVersion": "12.2.0-pre",
 					},
 				},
 			},
@@ -566,7 +566,7 @@ func TestV24(t *testing.T) {
 						"targets": []interface{}{
 							map[string]interface{}{"refId": "A"},
 						},
-						"pluginVersion": "1.0.0",
+						"pluginVersion": "12.2.0-pre",
 					},
 				},
 			},
@@ -663,7 +663,7 @@ func TestV24(t *testing.T) {
 						"targets": []interface{}{
 							map[string]interface{}{"refId": "A"},
 						},
-						"pluginVersion": "1.0.0",
+						"pluginVersion": "12.2.0-pre",
 					},
 				},
 			},
@@ -835,7 +835,7 @@ func TestV24(t *testing.T) {
 						"targets": []interface{}{
 							map[string]interface{}{"refId": "A"},
 						},
-						"pluginVersion": "1.0.0",
+						"pluginVersion": "12.2.0-pre",
 					},
 				},
 			},
