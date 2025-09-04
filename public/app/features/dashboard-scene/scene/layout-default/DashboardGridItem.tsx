@@ -118,8 +118,6 @@ export class DashboardGridItem
   }
 
   public handleEditChange() {
-    console.log('DashboardGridItem: handleEditChange');
-
     this._prevRepeatValues = undefined;
 
     if (this.parent instanceof SceneGridRow) {
