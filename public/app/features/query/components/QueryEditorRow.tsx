@@ -390,7 +390,12 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
     return (
       <>
         {!isEditingQueryLibrary && !isUnifiedAlerting && (
-          <MaybeQueryLibrarySaveButton query={query} app={app} onUpdateSuccess={this.onExitQueryLibraryEditingMode} />
+          <MaybeQueryLibrarySaveButton
+            query={query}
+            app={app}
+            onUpdateSuccess={this.onExitQueryLibraryEditingMode}
+            onSelectQuery={this.onSelectQueryFromLibrary}
+          />
         )}
 
         {!isEditingQueryLibrary && !isUnifiedAlerting && (
@@ -583,9 +588,14 @@ export function filterPanelDataToQuery(data: PanelData, refId: string): PanelDat
 }
 
 // Will render anything only if query library is enabled
-function MaybeQueryLibrarySaveButton(props: { query: DataQuery; app?: CoreApp; onUpdateSuccess?: () => void }) {
+function MaybeQueryLibrarySaveButton(props: {
+  query: DataQuery;
+  app?: CoreApp;
+  onUpdateSuccess?: () => void;
+  onSelectQuery?: (query: DataQuery) => void;
+}) {
   const { renderSaveQueryButton } = useQueryLibraryContext();
-  return renderSaveQueryButton(props.query, props.app, props.onUpdateSuccess);
+  return renderSaveQueryButton(props.query, props.app, props.onUpdateSuccess, props.onSelectQuery);
 }
 
 // Will render editing header only if query library is enabled
