@@ -50,6 +50,7 @@ func RunRepoController(opts standalone.BuildInfo, c *cli.Context, cfg *setting.C
 	controller, err := controller.NewRepositoryController(
 		controllerCfg.provisioningClient.ProvisioningV0alpha1(),
 		repoInformer,
+		controllerCfg.repoFactory,
 	)
 	if err != nil {
 		return fmt.Errorf("failed to create repository controller: %w", err)
