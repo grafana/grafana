@@ -2717,14 +2717,18 @@
     {
       "metadata": {
         "name": "prometheusTypeMigration",
-        "resourceVersion": "1756158796334",
-        "creationTimestamp": "2025-08-25T21:53:16Z"
+        "resourceVersion": "1757089774247",
+        "creationTimestamp": "2025-08-25T21:53:16Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-09-05 16:29:34.247055837 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Checks for deprecated Prometheus authentication methods (SigV4 and Azure), installs the relevant data source, and migrates the Prometheus data sources",
         "stage": "experimental",
         "codeowner": "@grafana/partner-datasources",
-        "requiresRestart": true
+        "requiresRestart": true,
+        "expression": "false"
       }
     },
     {

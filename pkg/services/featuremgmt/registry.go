@@ -1970,6 +1970,7 @@ var (
 			Stage:           FeatureStageExperimental,
 			RequiresRestart: true,
 			Owner:           grafanaPartnerPluginsSquad,
+			Expression:      "false",
 		},
 	}
 )
