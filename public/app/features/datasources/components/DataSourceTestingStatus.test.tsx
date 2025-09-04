@@ -300,9 +300,9 @@ describe('<DataSourceTestingStatus />', () => {
           title: overrides.title ?? 'Test Component',
           description: overrides.description ?? 'Test component description',
           pluginId: overrides.pluginId ?? 'grafana-monitoring-app',
-        }
+        },
       });
-      
+
       return Comp;
     };
 
