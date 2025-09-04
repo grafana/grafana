@@ -34,16 +34,16 @@ module.exports = {
       '@locker/near-membrane-dom/custom-devtools-formatter': require.resolve(
         '@locker/near-membrane-dom/custom-devtools-formatter.js'
       ),
-      // Fix flot package resolution issues
-      'vendor/flot/jquery.flot': path.resolve(__dirname, '../../public/vendor/flot/jquery.flot.js'),
-      'vendor/flot/jquery.flot.selection': path.resolve(__dirname, '../../public/vendor/flot/jquery.flot.selection.js'),
-      'vendor/flot/jquery.flot.time': path.resolve(__dirname, '../../public/vendor/flot/jquery.flot.time.js'),
-      'vendor/flot/jquery.flot.stack': path.resolve(__dirname, '../../public/vendor/flot/jquery.flot.stack.js'),
-      'vendor/flot/jquery.flot.stackpercent': path.resolve(__dirname, '../../public/vendor/flot/jquery.flot.stackpercent.js'),
-      'vendor/flot/jquery.flot.fillbelow': path.resolve(__dirname, '../../public/vendor/flot/jquery.flot.fillbelow.js'),
-      'vendor/flot/jquery.flot.crosshair': path.resolve(__dirname, '../../public/vendor/flot/jquery.flot.crosshair.js'),
-      'vendor/flot/jquery.flot.dashes': path.resolve(__dirname, '../../public/vendor/flot/jquery.flot.dashes.js'),
-      'vendor/flot/jquery.flot.gauge': path.resolve(__dirname, '../../public/vendor/flot/jquery.flot.gauge.js'),
+      // Fix flot package resolution issues - use absolute paths from working directory
+      'vendor/flot/jquery.flot': path.resolve(process.cwd(), 'public/vendor/flot/jquery.flot.js'),
+      'vendor/flot/jquery.flot.selection': path.resolve(process.cwd(), 'public/vendor/flot/jquery.flot.selection.js'),
+      'vendor/flot/jquery.flot.time': path.resolve(process.cwd(), 'public/vendor/flot/jquery.flot.time.js'),
+      'vendor/flot/jquery.flot.stack': path.resolve(process.cwd(), 'public/vendor/flot/jquery.flot.stack.js'),
+      'vendor/flot/jquery.flot.stackpercent': path.resolve(process.cwd(), 'public/vendor/flot/jquery.flot.stackpercent.js'),
+      'vendor/flot/jquery.flot.fillbelow': path.resolve(process.cwd(), 'public/vendor/flot/jquery.flot.fillbelow.js'),
+      'vendor/flot/jquery.flot.crosshair': path.resolve(process.cwd(), 'public/vendor/flot/jquery.flot.crosshair.js'),
+      'vendor/flot/jquery.flot.dashes': path.resolve(process.cwd(), 'public/vendor/flot/jquery.flot.dashes.js'),
+      'vendor/flot/jquery.flot.gauge': path.resolve(process.cwd(), 'public/vendor/flot/jquery.flot.gauge.js'),
     },
     modules: [
       // default value
