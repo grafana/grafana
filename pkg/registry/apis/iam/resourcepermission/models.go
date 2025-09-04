@@ -32,6 +32,11 @@ type ListResourcePermissionsQuery struct {
 	// TODO Pagination common.Pagination
 }
 
+type DeleteResourcePermissionsQuery struct {
+	Scope string
+	OrgID int64
+}
+
 type flatResourcePermission struct {
 	ID               int64     `xorm:"id"`
 	Action           string    `xorm:"action"`

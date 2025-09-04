@@ -16,7 +16,8 @@ var (
 
 	sqlTemplates = template.Must(template.New("sql").ParseFS(sqlTemplatesFS, `queries/*.sql`))
 
-	resourcePermissionsQueryTplt = mustTemplate("resource_permission_query.sql")
+	resourcePermissionsQueryTplt        = mustTemplate("resource_permission_query.sql")
+	resourcePermissionDeletionQueryTplt = mustTemplate("resource_permission_deletion_query.sql")
 )
 
 func mustTemplate(filename string) *template.Template {
@@ -80,3 +81,32 @@ func buildListResourcePermissionsQueryFromTemplate(sql *legacysql.LegacyDatabase
 // Update
 
 // Delete
+
+type deleteResourcePermissionsQueryTemplate struct {
+	sqltemplate.SQLTemplate
+	Query              *DeleteResourcePermissionsQuery
+	PermissionTable    string
+	RoleTable          string
+	ManagedRolePattern string
+}
+
+func (r deleteResourcePermissionsQueryTemplate) Validate() error {
+	return nil
+}
+
+func buildDeleteResourcePermissionsQueryFromTemplate(sql *legacysql.LegacyDatabaseHelper, query *DeleteResourcePermissionsQuery) (string, []interface{}, error) {
+	req := deleteResourcePermissionsQueryTemplate{
+		SQLTemplate:        sqltemplate.New(sql.DialectForDriver()),
+		Query:              query,
+		PermissionTable:    sql.Table("permission"),
+		RoleTable:          sql.Table("role"),
+		ManagedRolePattern: "managed:%",
+	}
+
+	rawQuery, err := sqltemplate.Execute(resourcePermissionDeletionQueryTplt, req)
+	if err != nil {
+		return "", nil, fmt.Errorf("execute template %q: %w", resourcePermissionDeletionQueryTplt.Name(), err)
+	}
+
+	return rawQuery, req.GetArgs(), nil
+}

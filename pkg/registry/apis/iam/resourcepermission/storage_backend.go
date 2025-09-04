@@ -154,8 +154,20 @@ func (s *ResourcePermSqlBackend) WriteEvent(ctx context.Context, event resource.
 		return 0, apierrors.NewBadRequest(fmt.Sprintf("invalid key %q: %v", event.Key, err.Error()))
 	}
 
+	dbHelper, err := s.dbProvider(ctx)
+	if err != nil {
+		// Hide the error from the user, but log it
+		logger := s.logger.FromContext(ctx)
+		logger.Error("Failed to get database helper", "error", err)
+		return 0, err
+	}
+
 	switch event.Type {
+	case resourcepb.WatchEvent_DELETED:
+		err = s.deleteResourcePermission(ctx, dbHelper, ns, event.Key.Name)
 	default:
 		return 0, fmt.Errorf("unsupported event type: %v", event.Type)
 	}
+
+	return rv, err
 }

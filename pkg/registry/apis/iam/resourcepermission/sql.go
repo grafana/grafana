@@ -99,3 +99,36 @@ func (s *ResourcePermSqlBackend) getResourcePermission(ctx context.Context, sql 
 // Update
 
 // Delete
+
+// deleteResourcePermission deletes resource permissions for a single ResourcePermission resource referenced by its name in the format <group>-<resource>-<name> (e.g. dashboard.grafana.app-dashboards-ad5rwqs)
+func (s *ResourcePermSqlBackend) deleteResourcePermission(ctx context.Context, sql *legacysql.LegacyDatabaseHelper, ns types.NamespaceInfo, name string) error {
+	// e.g. dashboard.grafana.app-dashboards-ad5rwqs
+	parts := strings.SplitN(name, "-", 3)
+	if len(parts) != 3 {
+		return fmt.Errorf("%w: %s", errInvalidName, name)
+	}
+
+	group, resourceType, uid := parts[0], parts[1], parts[2]
+	mapper, ok := s.mappers[schema.GroupResource{Group: group, Resource: resourceType}]
+	if !ok {
+		return fmt.Errorf("%w: %s/%s", errUnknownGroupResource, group, resourceType)
+	}
+
+	resourceQuery := &DeleteResourcePermissionsQuery{
+		Scope: mapper.Scope(uid),
+		OrgID: ns.OrgID,
+	}
+
+	rawQuery, args, err := buildDeleteResourcePermissionsQueryFromTemplate(sql, resourceQuery)
+	if err != nil {
+		return err
+	}
+
+	// run delete query
+	_, err = sql.DB.GetSqlxSession().Exec(ctx, rawQuery, args...)
+	if err != nil {
+		return fmt.Errorf("deleting resource permissions: %w", err)
+	}
+
+	return nil
+}
