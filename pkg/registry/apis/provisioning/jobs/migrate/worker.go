@@ -64,13 +64,13 @@ func (w *MigrationWorker) Process(ctx context.Context, repo repository.Repositor
 
 	// Block migrate for legacy resources if repository type is folder
 	if repo.Config().Spec.Sync.Target == provisioning.SyncTargetTypeFolder {
-		// HACK: we should not have to check for storage existance here
+		// HACK: we should not have to check for storage existence here
 		if w.storageStatus != nil && dualwrite.IsReadingLegacyDashboardsAndFolders(ctx, w.storageStatus) {
 			return errors.New("migration of legacy resources is not supported for folder-type repositories")
 		}
 	}
 
-	// HACK: we should not have to check for storage existance here
+	// HACK: we should not have to check for storage existence here
 	if w.storageStatus != nil && dualwrite.IsReadingLegacyDashboardsAndFolders(ctx, w.storageStatus) {
 		return w.legacyMigrator.Migrate(ctx, rw, *options, progress)
 	}
