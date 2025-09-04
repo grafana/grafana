@@ -2389,9 +2389,6 @@
   "public/app/features/dashboard-scene/v2schema/ImportDashboardOverviewV2.tsx": {
     "@typescript-eslint/consistent-type-assertions": {
       "count": 10
-    },
-    "@typescript-eslint/no-explicit-any": {
-      "count": 1
     }
   },
   "public/app/features/dashboard-scene/v2schema/test-helpers.ts": {
@@ -3495,11 +3492,6 @@
     },
     "@typescript-eslint/no-explicit-any": {
       "count": 9
-    }
-  },
-  "public/app/features/transformers/FilterByValueTransformer/ValueMatchers/BasicMatcherEditor.tsx": {
-    "@typescript-eslint/no-explicit-any": {
-      "count": 1
     }
   },
   "public/app/features/transformers/FilterByValueTransformer/ValueMatchers/types.ts": {
