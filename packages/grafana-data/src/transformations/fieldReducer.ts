@@ -527,7 +527,7 @@ export function doStandardCalcs(field: Field, ignoreNulls: boolean, nullAsZero: 
       }
 
       if (isNumberField) {
-        calcs.sum += currentValue;
+        calcs.sum += currentValue || 0;
         calcs.allIsNull = false;
         calcs.nonNullCount++;
 
