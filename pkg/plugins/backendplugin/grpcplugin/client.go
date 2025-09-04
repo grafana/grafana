@@ -130,21 +130,16 @@ type PluginDescriptor struct {
 
 // NewBackendPlugin creates a new backend plugin factory used for registering a backend plugin.
 func NewBackendPlugin(pluginID, executablePath string, skipHostEnvVars bool, executableArgs ...string) backendplugin.PluginFactoryFunc {
-	return newBackendPlugin(pluginID, executablePath, true, skipHostEnvVars, false, executableArgs...)
-}
-
-// NewBackendPluginWithContainerMode creates a new backend plugin factory used for registering a backend plugin that runs in a container.
-func NewBackendPluginWithContainerMode(pluginID, executablePath string, skipHostEnvVars bool, executableArgs ...string) backendplugin.PluginFactoryFunc {
-	return newBackendPlugin(pluginID, executablePath, true, skipHostEnvVars, true, executableArgs...)
+	return newBackendPlugin(pluginID, executablePath, true, skipHostEnvVars, executableArgs...)
 }
 
 // NewUnmanagedBackendPlugin creates a new backend plugin factory used for registering an unmanaged backend plugin.
 func NewUnmanagedBackendPlugin(pluginID, executablePath string, skipHostEnvVars bool, executableArgs ...string) backendplugin.PluginFactoryFunc {
-	return newBackendPlugin(pluginID, executablePath, false, skipHostEnvVars, false, executableArgs...)
+	return newBackendPlugin(pluginID, executablePath, false, skipHostEnvVars, executableArgs...)
 }
 
 // NewBackendPlugin creates a new backend plugin factory used for registering a backend plugin.
-func newBackendPlugin(pluginID, executablePath string, managed bool, skipHostEnvVars bool, containerMode bool, executableArgs ...string) backendplugin.PluginFactoryFunc {
+func newBackendPlugin(pluginID, executablePath string, managed bool, skipHostEnvVars bool, executableArgs ...string) backendplugin.PluginFactoryFunc {
 	return newPlugin(PluginDescriptor{
 		pluginID:         pluginID,
 		executablePath:   executablePath,
@@ -152,7 +147,6 @@ func newBackendPlugin(pluginID, executablePath string, managed bool, skipHostEnv
 		skipHostEnvVars:  skipHostEnvVars,
 		managed:          managed,
 		versionedPlugins: pluginSet,
-		containerMode:    containerMode,
 	})
 }
 
