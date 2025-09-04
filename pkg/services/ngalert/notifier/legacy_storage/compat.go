@@ -65,19 +65,7 @@ func ReceiverToPostableApiReceiver(r *models.Receiver) (*apimodels.PostableApiRe
 	}, nil
 }
 
-func PostableApiReceiversToReceivers(postables []*apimodels.PostableApiReceiver, storedProvenances map[string]models.Provenance) ([]*models.Receiver, error) {
-	receivers := make([]*models.Receiver, 0, len(postables))
-	for _, postable := range postables {
-		r, err := PostableApiReceiverToReceiver(postable, GetReceiverProvenance(storedProvenances, postable))
-		if err != nil {
-			return nil, err
-		}
-		receivers = append(receivers, r)
-	}
-	return receivers, nil
-}
-
-func PostableApiReceiverToReceiver(postable *apimodels.PostableApiReceiver, provenance models.Provenance) (*models.Receiver, error) {
+func PostableApiReceiverToReceiver(postable *apimodels.PostableApiReceiver, provenance models.Provenance, origin models.ResourceOrigin) (*models.Receiver, error) {
 	integrations, err := PostableGrafanaReceiversToIntegrations(postable.GrafanaManagedReceivers)
 	if err != nil {
 		return nil, err
@@ -87,6 +75,7 @@ func PostableApiReceiverToReceiver(postable *apimodels.PostableApiReceiver, prov
 		Name:         postable.GetName(),
 		Integrations: integrations,
 		Provenance:   provenance,
+		Origin:       origin,
 	}
 	r.Version = r.Fingerprint()
 	return r, nil

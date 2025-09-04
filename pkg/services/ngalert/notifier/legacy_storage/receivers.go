@@ -43,7 +43,7 @@ func (rev *ConfigRevision) CreateReceiver(receiver *models.Receiver) (*models.Re
 		return nil, err
 	}
 
-	return PostableApiReceiverToReceiver(postable, receiver.Provenance)
+	return PostableApiReceiverToReceiver(postable, receiver.Provenance, receiver.Origin)
 }
 
 func (rev *ConfigRevision) UpdateReceiver(receiver *models.Receiver) (*models.Receiver, error) {
@@ -69,7 +69,7 @@ func (rev *ConfigRevision) UpdateReceiver(receiver *models.Receiver) (*models.Re
 		return nil, err
 	}
 
-	return PostableApiReceiverToReceiver(newReceiver, receiver.Provenance)
+	return PostableApiReceiverToReceiver(newReceiver, receiver.Provenance, receiver.Origin)
 }
 
 // ReceiverNameUsedByRoutes checks if a receiver name is used in any routes.
@@ -89,7 +89,7 @@ func (rev *ConfigRevision) GetReceiver(uid string, prov Provenances) (*models.Re
 		if NameToUid(r.GetName()) != uid {
 			continue
 		}
-		recv, err := PostableApiReceiverToReceiver(r, GetReceiverProvenance(prov, r))
+		recv, err := PostableApiReceiverToReceiver(r, GetReceiverProvenance(prov, r), models.ResourceOriginGrafana)
 		if err != nil {
 			return nil, fmt.Errorf("failed to convert receiver %q: %w", r.Name, err)
 		}
@@ -109,7 +109,7 @@ func (rev *ConfigRevision) GetReceivers(uids []string, prov Provenances) ([]*mod
 		if len(uids) > 0 && !slices.Contains(uids, uid) {
 			continue
 		}
-		recv, err := PostableApiReceiverToReceiver(r, GetReceiverProvenance(prov, r))
+		recv, err := PostableApiReceiverToReceiver(r, GetReceiverProvenance(prov, r), models.ResourceOriginGrafana)
 		if err != nil {
 			return nil, fmt.Errorf("failed to convert receiver %q: %w", r.Name, err)
 		}
@@ -131,7 +131,7 @@ func DecryptedReceivers(receivers []*definitions.PostableApiReceiver, decryptFn 
 	decrypted := make([]*definitions.PostableApiReceiver, len(receivers))
 	for i, r := range receivers {
 		// We don't care about the provenance here, so we pass ProvenanceNone.
-		rcv, err := PostableApiReceiverToReceiver(r, models.ProvenanceNone)
+		rcv, err := PostableApiReceiverToReceiver(r, models.ProvenanceNone, models.ResourceOriginGrafana)
 		if err != nil {
 			return nil, err
 		}
@@ -154,7 +154,7 @@ func EncryptedReceivers(receivers []*definitions.PostableApiReceiver, encryptFn 
 	encrypted := make([]*definitions.PostableApiReceiver, len(receivers))
 	for i, r := range receivers {
 		// We don't care about the provenance here, so we pass ProvenanceNone.
-		rcv, err := PostableApiReceiverToReceiver(r, models.ProvenanceNone)
+		rcv, err := PostableApiReceiverToReceiver(r, models.ProvenanceNone, models.ResourceOriginGrafana)
 		if err != nil {
 			return nil, err
 		}
