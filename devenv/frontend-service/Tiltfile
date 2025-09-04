@@ -1,8 +1,3 @@
-config.define_bool("use-zig")
-cfg = config.parse()
-
-use_zig = cfg.get('docker-builder', False)
-
 # --- Frontend processes
 local_resource(
   'yarn install',
@@ -30,10 +25,6 @@ local_resource(
   labels=["local"]
 )
 
-build_backend_env = {}
-if use_zig:
-  build_backend_env['USE_ZIG'] = "true"
-
 local_resource(
   'backend-build',
   "bash ./build-grafana.sh",
@@ -48,7 +39,6 @@ local_resource(
     '../../go.sum',
     '../../go.mod',
   ],
-  env=build_backend_env,
   allow_parallel=True,
   labels=["local"]
 )
