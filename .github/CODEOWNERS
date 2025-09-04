@@ -730,7 +730,6 @@
 /scripts/tsconfig.base.json @grafana/frontend-ops
 /.editorconfig @grafana/frontend-ops
 /eslint.config.js @grafana/frontend-ops
-/.betterer.eslint.config.js @grafana/frontend-ops
 /.gitattributes @grafana/frontend-ops
 /.gitignore @grafana/frontend-ops
 /.ignore @grafana/frontend-ops
@@ -1012,7 +1011,7 @@ playwright.storybook.config.ts @grafana/grafana-frontend-platform
 /scripts/circle-* @grafana/grafana-developer-enablement-squad
 /scripts/publish-npm-packages.sh @grafana/grafana-developer-enablement-squad @grafana/plugins-platform-frontend
 /scripts/validate-npm-packages.sh @grafana/grafana-developer-enablement-squad @grafana/plugins-platform-frontend
-/scripts/ci-frontend-metrics.sh @grafana/grafana-frontend-platform @grafana/plugins-platform-frontend @grafana/dataviz-squad @grafana/datapro
+/scripts/ci-frontend-metrics.sh @grafana/grafana-frontend-platform @grafana/frontend-ops
 /scripts/cli/ @grafana/grafana-frontend-platform
 /scripts/clean-git-or-error.sh @grafana/grafana-as-code
 /scripts/grafana-server/ @grafana/grafana-frontend-platform
@@ -1041,8 +1040,8 @@ playwright.storybook.config.ts @grafana/grafana-frontend-platform
 /scripts/**/generate-transformations* @grafana/datapro
 /scripts/webpack/ @grafana/frontend-ops
 /scripts/generate-a11y-report.sh @grafana/grafana-frontend-platform
-.betterer.results @grafanabot
 .betterer.ts @grafana/grafana-frontend-platform
+eslint-suppressions.json @grafanabot
 
 # Design system
 /public/img/icons/unicons/ @grafana/design-system
