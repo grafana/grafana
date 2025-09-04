@@ -1,3 +1,4 @@
+import { OpenFeature } from '@openfeature/web-sdk';
 import { lastValueFrom, merge, Observable, of } from 'rxjs';
 import { catchError, switchMap } from 'rxjs/operators';
 
@@ -22,6 +23,7 @@ import {
 
 import { reportInteraction } from '../analytics/utils';
 import { config } from '../config';
+import { toggles } from '../internal/openFeature/toggles';
 import {
   BackendSrvRequest,
   FetchResponse,

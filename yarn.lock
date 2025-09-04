@@ -5752,6 +5752,42 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@openfeature/core@npm:^1.9.0":
+  version: 1.9.0
+  resolution: "@openfeature/core@npm:1.9.0"
+  checksum: 10/c6d20edc09053afd99752fe46d8328158680950bca4b86679f67f79249d7226eea127b31fffdc38e26ecb729f2bab5a4a5a7c1db708ae76b7fbbac68cd56f094
+  languageName: node
+  linkType: hard
+
+"@openfeature/ofrep-core@npm:^1.0.0":
+  version: 1.1.0
+  resolution: "@openfeature/ofrep-core@npm:1.1.0"
+  peerDependencies:
+    "@openfeature/core": ^1.6.0
+  checksum: 10/4198f2f1abf974822bf14530a7f514292d8235552d6e61465d29ffe42d092f675e7f56a9e9da5aa7d45dfbd98cc36316efbdaadaf83e8f510f35865612f5f24f
+  languageName: node
+  linkType: hard
+
+"@openfeature/ofrep-web-provider@npm:^0.3.3":
+  version: 0.3.3
+  resolution: "@openfeature/ofrep-web-provider@npm:0.3.3"
+  dependencies:
+    "@openfeature/ofrep-core": "npm:^1.0.0"
+  peerDependencies:
+    "@openfeature/web-sdk": ^1.4.0
+  checksum: 10/85f362e3ebaa9d421be91e4d966284e28850649e417d5db81181960b95ac693c9faa4a0bdc84eeb03fa694a8cd1e1f5d9de9bf0fba62f8e2669f9637836f0884
+  languageName: node
+  linkType: hard
+
+"@openfeature/web-sdk@npm:^1.6.1":
+  version: 1.6.1
+  resolution: "@openfeature/web-sdk@npm:1.6.1"
+  peerDependencies:
+    "@openfeature/core": ^1.9.0
+  checksum: 10/8bd7d1ea386e21cdd7492cab2fd1d2b138b4e6a376a4c0a40244633e5955f6452039bc2633fc5230bd7b494506a4137ba7210d40850634f9618f77a0ee435f9d
+  languageName: node
+  linkType: hard
+
 "@opentelemetry/api-logs@npm:0.202.0":
   version: 0.202.0
   resolution: "@opentelemetry/api-logs@npm:0.202.0"
@@ -18218,6 +18254,9 @@ __metadata:
     "@msagl/core": "npm:^1.1.19"
     "@msagl/parser": "npm:^1.1.19"
     "@npmcli/package-json": "npm:^6.0.0"
+    "@openfeature/core": "npm:^1.9.0"
+    "@openfeature/ofrep-web-provider": "npm:^0.3.3"
+    "@openfeature/web-sdk": "npm:^1.6.1"
     "@opentelemetry/api": "npm:1.9.0"
     "@opentelemetry/exporter-collector": "npm:0.25.0"
     "@opentelemetry/semantic-conventions": "npm:1.37.0"
