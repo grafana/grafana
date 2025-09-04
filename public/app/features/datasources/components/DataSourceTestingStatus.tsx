@@ -200,7 +200,9 @@ export function DataSourceTestingStatus({ testingStatus, exploreUrl, dataSource 
 
   // Filter to only allow grafana-owned plugins
   const statusLinks = allStatusLinks.filter((link) => ALLOWED_DATASOURCE_EXTENSION_PLUGINS.includes(link.pluginId));
-  const statusComponents = extensionComponents.filter((c) => ALLOWED_DATASOURCE_EXTENSION_PLUGINS.includes(c.meta.pluginId));
+  const statusComponents = extensionComponents.filter((c) =>
+    ALLOWED_DATASOURCE_EXTENSION_PLUGINS.includes(c.meta.pluginId)
+  );
   const errorLinks = allErrorLinks.filter((link) => ALLOWED_DATASOURCE_EXTENSION_PLUGINS.includes(link.pluginId));
 
   // Combine links: show error-specific only for errors, status-general for all
