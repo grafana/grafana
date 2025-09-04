@@ -51,7 +51,7 @@
         "textMode": "auto",
         "wideLayout": true
       },
-      "pluginVersion": "12.2.0-pre",
+      "pluginVersion": "12.1.0",
       "targets": [
         {
           "datasource": {
@@ -123,7 +123,7 @@
         "textMode": "auto",
         "wideLayout": true
       },
-      "pluginVersion": "12.2.0-pre",
+      "pluginVersion": "12.1.0",
       "targets": [
         {
           "datasource": {
@@ -221,7 +221,7 @@
         "textMode": "auto",
         "wideLayout": true
       },
-      "pluginVersion": "12.2.0-pre",
+      "pluginVersion": "12.1.0",
       "targets": [
         {
           "datasource": {
