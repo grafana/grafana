@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -204,8 +203,7 @@ func TestValidateUpdate(t *testing.T) {
 			if maxDepth == 0 {
 				maxDepth = 5
 			}
-			s := (grafanarest.Storage)(nil)
-			m := &mock.Mock{}
+			m := grafanarest.NewMockStorage(t)
 			if tt.parents != nil {
 				for _, v := range tt.parents.Items {
 					m.On("Get", context.Background(), v.Name, &metav1.GetOptions{}).Return(&folders.Folder{
@@ -218,7 +216,7 @@ func TestValidateUpdate(t *testing.T) {
 				}
 			}
 
-			err := validateOnUpdate(context.Background(), tt.folder, tt.old, storageMock{m, s},
+			err := validateOnUpdate(context.Background(), tt.folder, tt.old, m,
 				func(ctx context.Context, folder *folders.Folder) (*folders.FolderInfoList, error) {
 					return tt.parents, tt.parentsError
 				}, maxDepth)

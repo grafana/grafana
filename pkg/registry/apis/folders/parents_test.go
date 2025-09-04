@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -27,7 +26,7 @@ func TestParents(t *testing.T) {
 			folder string
 		}
 		getter      map[string]*folders.Folder
-		setupFn     func(*mock.Mock) // called after the getter is registered
+		setupFn     func(*grafanarest.MockStorage) // called after the getter is registered
 		expected    *folders.FolderInfoList
 		expectedErr string
 		maxDepth    int // defaults to 5 unless set
@@ -68,7 +67,7 @@ func TestParents(t *testing.T) {
 				name:   "test",
 				folder: "parent", // NOTE that parent is not found
 			},
-			setupFn: func(m *mock.Mock) {
+			setupFn: func(m *grafanarest.MockStorage) {
 				var nothing *folders.Folder // needs to be an object
 				m.On("Get", context.TODO(), "parent", &metav1.GetOptions{}).Return(
 					nothing, fmt.Errorf("custom error message")).Once()
@@ -84,7 +83,7 @@ func TestParents(t *testing.T) {
 				name:   "test",
 				folder: "parent", // not a folder
 			},
-			setupFn: func(m *mock.Mock) {
+			setupFn: func(m *grafanarest.MockStorage) {
 				m.On("Get", context.TODO(), "parent", &metav1.GetOptions{}).Return(
 					&unstructured.Unstructured{}, // not a folder
 					nil).Once()
@@ -100,7 +99,7 @@ func TestParents(t *testing.T) {
 				name:   "test",
 				folder: "test",
 			},
-			setupFn: func(m *mock.Mock) {
+			setupFn: func(m *grafanarest.MockStorage) {
 				m.On("Get", context.TODO(), "test", &metav1.GetOptions{}).Return(
 					&folders.Folder{
 						ObjectMeta: metav1.ObjectMeta{
@@ -131,8 +130,7 @@ func TestParents(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			s := (grafanarest.Storage)(nil)
-			m := &mock.Mock{}
+			m := grafanarest.NewMockStorage(t)
 			if tt.getter == nil && tt.setupFn == nil {
 				// Default to filling the getter with expected results
 				for _, item := range tt.expected.Items {
@@ -160,7 +158,7 @@ func TestParents(t *testing.T) {
 				}
 			}
 
-			gm := storageMock{m, s}
+			gm := grafanarest.NewMockStorage(t)
 			maxDepth := tt.maxDepth
 			if maxDepth == 0 {
 				maxDepth = 5
