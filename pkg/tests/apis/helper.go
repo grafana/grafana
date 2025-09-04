@@ -787,7 +787,7 @@ func VerifyOpenAPISnapshots(t *testing.T, dir string, gv schema.GroupVersion, h 
 		return // skip invalid groups
 	}
 	path := fmt.Sprintf("/openapi/v3/apis/%s/%s", gv.Group, gv.Version)
-	t.Run(path, func(t *testing.T) {
+	t.Run(path[1:], func(t *testing.T) {
 		rsp := DoRequest(h, RequestParams{
 			Method: http.MethodGet,
 			Path:   path,
@@ -795,7 +795,9 @@ func VerifyOpenAPISnapshots(t *testing.T, dir string, gv schema.GroupVersion, h 
 		}, &AnyResource{})
 
 		require.NotNil(t, rsp.Response)
-		require.Equal(t, 200, rsp.Response.StatusCode, path)
+		if rsp.Response.StatusCode != 200 {
+			require.Failf(t, "Not OK", "Code[%d] %s", rsp.Response.StatusCode, string(rsp.Body))
+		}
 
 		var prettyJSON bytes.Buffer
 		err := json.Indent(&prettyJSON, rsp.Body, "", "  ")

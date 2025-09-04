@@ -96,8 +96,8 @@ func TestIntegrationPreferences(t *testing.T) {
 		}
 		require.Equal(t, []string{
 			"namespace",
-			fmt.Sprintf("team:%s", helper.Org1.Staff.UID),
-			clientAdmin.Args.User.Identity.GetUID(),
+			fmt.Sprintf("team-%s", helper.Org1.Staff.UID),
+			fmt.Sprintf("user-%s", clientAdmin.Args.User.Identity.GetIdentifier()),
 		}, names)
 
 		// The viewer should only have namespace (eg org level) permissions
