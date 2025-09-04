@@ -3,8 +3,6 @@ package schemaversion
 import (
 	"context"
 	"strconv"
-
-	"github.com/grafana/grafana/pkg/setting"
 )
 
 // V24 migration migrates the angular table panel to the standard table panel
@@ -213,14 +211,8 @@ func V24(_ context.Context, dashboard map[string]interface{}) error {
 			continue
 		}
 
-		// Use dynamic Grafana version for pluginVersion
-		// In production: setting.BuildVersion contains actual build version
-		// In tests: setting.BuildVersion is empty, so we use fallback
-		pluginVersion := setting.BuildVersion
-		if pluginVersion == "" {
-			pluginVersion = "12.2.0-pre" // fallback for development/test environments
-		}
-		panelMap["pluginVersion"] = pluginVersion
+		// The grafana version that matches the hardcoded autoMigrate plugins
+		panelMap["pluginVersion"] = pluginVersionForAutoMigrate
 		err := tablePanelChangedHandler(panelMap)
 		if err != nil {
 			return err

@@ -88,7 +88,7 @@ func TestV28(t *testing.T) {
 							"overrides": []interface{}{},
 						},
 
-						"pluginVersion": "12.2.0-pre",
+						"pluginVersion": pluginVersionForAutoMigrate,
 						"targets": []interface{}{
 							map[string]interface{}{"refId": "A"},
 						},
@@ -176,7 +176,7 @@ func TestV28(t *testing.T) {
 							},
 							"overrides": []interface{}{},
 						},
-						"pluginVersion": "12.2.0-pre",
+						"pluginVersion": pluginVersionForAutoMigrate,
 						"targets": []interface{}{
 							map[string]interface{}{"refId": "A"},
 						},
@@ -257,7 +257,7 @@ func TestV28(t *testing.T) {
 							},
 							"overrides": []interface{}{},
 						},
-						"pluginVersion": "12.2.0-pre",
+						"pluginVersion": pluginVersionForAutoMigrate,
 						"targets": []interface{}{
 							map[string]interface{}{"refId": "A"},
 						},
@@ -324,7 +324,7 @@ func TestV28(t *testing.T) {
 							},
 							"overrides": []interface{}{},
 						},
-						"pluginVersion": "12.2.0-pre",
+						"pluginVersion": pluginVersionForAutoMigrate,
 						"targets": []interface{}{
 							map[string]interface{}{"refId": "A"},
 						},
@@ -391,7 +391,7 @@ func TestV28(t *testing.T) {
 							},
 							"overrides": []interface{}{},
 						},
-						"pluginVersion": "12.2.0-pre",
+						"pluginVersion": pluginVersionForAutoMigrate,
 						"targets": []interface{}{
 							map[string]interface{}{"refId": "A"},
 						},
@@ -491,7 +491,7 @@ func TestV28(t *testing.T) {
 							},
 							"overrides": []interface{}{},
 						},
-						"pluginVersion": "12.2.0-pre",
+						"pluginVersion": pluginVersionForAutoMigrate,
 						"targets": []interface{}{
 							map[string]interface{}{"refId": "A"},
 						},
@@ -556,7 +556,7 @@ func TestV28(t *testing.T) {
 							},
 							"overrides": []interface{}{},
 						},
-						"pluginVersion": "12.2.0-pre",
+						"pluginVersion": pluginVersionForAutoMigrate,
 						"targets": []interface{}{
 							map[string]interface{}{"refId": "A"},
 						},
@@ -621,7 +621,7 @@ func TestV28(t *testing.T) {
 							},
 							"overrides": []interface{}{},
 						},
-						"pluginVersion": "12.2.0-pre",
+						"pluginVersion": pluginVersionForAutoMigrate,
 						"targets": []interface{}{
 							map[string]interface{}{"refId": "A"},
 						},
@@ -696,7 +696,7 @@ func TestV28(t *testing.T) {
 									},
 									"overrides": []interface{}{},
 								},
-								"pluginVersion": "12.2.0-pre",
+								"pluginVersion": pluginVersionForAutoMigrate,
 								"targets": []interface{}{
 									map[string]interface{}{"refId": "A"},
 								},

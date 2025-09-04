@@ -9,6 +9,9 @@ import (
 const (
 	MIN_VERSION    = 13
 	LATEST_VERSION = 41
+
+	// The pluginVersion to set after simulating auto-migrate for angular panels
+	pluginVersionForAutoMigrate = "12.1.0"
 )
 
 type SchemaVersionMigrationFunc func(context.Context, map[string]interface{}) error
