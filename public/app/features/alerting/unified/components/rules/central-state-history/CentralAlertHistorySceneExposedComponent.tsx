@@ -1,10 +1,10 @@
 import { Suspense, lazy } from 'react';
 
-import { CentralAlertHistorySceneProps } from '@grafana/data';
+import { CentralAlertHistorySceneV1Props } from '@grafana/data';
 
 const CentralAlertHistoryScene = lazy(() => import('./CentralAlertHistoryScene'));
 
-const CentralAlertHistorySceneExposedComponent = (props: CentralAlertHistorySceneProps) => (
+const CentralAlertHistorySceneExposedComponent = (props: CentralAlertHistorySceneV1Props) => (
   <Suspense fallback={'Loading...'}>
     <CentralAlertHistoryScene {...props} />
   </Suspense>

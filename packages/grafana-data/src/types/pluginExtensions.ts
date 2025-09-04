@@ -210,7 +210,7 @@ export enum PluginExtensionPoints {
 
 // Extension Points available in plugins
 export enum PluginExtensionExposedComponents {
-  AlertRuleHistory = 'grafana/alert-rule-history/v1',
+  CentralAlertHistorySceneV1 = 'grafana/central-alert-history-scene/v1',
 }
 
 export type PluginExtensionPanelContext = {
@@ -225,7 +225,7 @@ export type PluginExtensionPanelContext = {
   data?: PanelData;
 };
 
-export type CentralAlertHistorySceneProps = {
+export type CentralAlertHistorySceneV1Props = {
   defaultLabelsFilter?: string;
   defaultTimeRange?: { from: string; to: string };
   hideFilters?: boolean;

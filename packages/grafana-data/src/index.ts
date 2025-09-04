@@ -589,7 +589,7 @@ export {
   type PluginExtensionAddedLinkConfig,
   type PluginExtensionAddedFunctionConfig,
   type PluginExtensionResourceAttributesContext,
-  type CentralAlertHistorySceneProps,
+  type CentralAlertHistorySceneV1Props,
 } from './types/pluginExtensions';
 export {
   type ScopeDashboardBindingSpec,

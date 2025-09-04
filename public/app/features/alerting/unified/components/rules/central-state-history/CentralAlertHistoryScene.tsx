@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import { useEffect, useMemo } from 'react';
 
-import { CentralAlertHistorySceneProps, GrafanaTheme2, VariableHide } from '@grafana/data';
+import { CentralAlertHistorySceneV1Props, GrafanaTheme2, VariableHide } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import {
   CustomVariable,
@@ -65,7 +65,7 @@ export const CentralAlertHistoryScene = ({
     to: 'now',
   },
   hideFilters,
-}: CentralAlertHistorySceneProps = {}) => {
+}: CentralAlertHistorySceneV1Props = {}) => {
   //track the loading of the central alert state history
 
   useEffect(() => {

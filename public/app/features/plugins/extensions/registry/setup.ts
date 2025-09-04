@@ -31,9 +31,9 @@ exposedComponentsRegistry.register({
   pluginId: 'grafana',
   configs: [
     {
-      id: PluginExtensionExposedComponents.AlertRuleHistory,
-      title: 'Alert rule history for IRM',
-      description: 'Alert rule history for IRM',
+      id: PluginExtensionExposedComponents.CentralAlertHistorySceneV1,
+      title: 'Central alert history scene',
+      description: 'Central alert history scene',
       component: CentralAlertHistorySceneExposedComponent,
     },
   ],
