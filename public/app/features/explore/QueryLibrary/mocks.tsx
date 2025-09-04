@@ -19,6 +19,7 @@ export function QueryLibraryContextProviderMock(props: PropsWithChildren<Props>)
         context: 'explore',
         triggerAnalyticsEvent: jest.fn(),
         setNewQuery: jest.fn(),
+        onSelectQuery: jest.fn(),
       }}
     >
       {props.children}

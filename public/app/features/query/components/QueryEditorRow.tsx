@@ -393,8 +393,8 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
           <MaybeQueryLibrarySaveButton
             query={query}
             app={app}
-            onSelectQuery={this.onSelectQueryFromLibrary}
             onUpdateSuccess={this.onExitQueryLibraryEditingMode}
+            onSelectQuery={this.onSelectQueryFromLibrary}
           />
         )}
 
