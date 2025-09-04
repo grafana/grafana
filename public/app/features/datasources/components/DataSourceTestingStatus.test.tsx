@@ -1,7 +1,12 @@
 import { render, screen, fireEvent } from '@testing-library/react';
 
-import { PluginExtensionTypes, PluginExtensionLink } from '@grafana/data';
-import { setPluginLinksHook, UsePluginLinksOptions } from '@grafana/runtime';
+import {
+  PluginExtensionTypes,
+  PluginExtensionLink,
+  ComponentTypeWithExtensionMeta,
+  PluginExtensionDataSourceConfigStatusContext,
+} from '@grafana/data';
+import { setPluginLinksHook, UsePluginLinksOptions, setPluginComponentsHook } from '@grafana/runtime';
 
 import { getMockDataSource } from '../mocks/dataSourcesMocks';
 
@@ -15,6 +20,7 @@ jest.mock('../../../core/core', () => ({
 }));
 
 setPluginLinksHook(() => ({ links: [], isLoading: false }));
+setPluginComponentsHook(() => ({ components: [], isLoading: false }));
 
 const getProps = (partialProps?: Partial<Props>): Props => ({
   testingStatus: {
@@ -140,6 +146,7 @@ describe('<DataSourceTestingStatus />', () => {
     afterEach(() => {
       // Reset the hook to default empty state
       setPluginLinksHook(() => ({ links: [], isLoading: false }));
+      setPluginComponentsHook(() => ({ components: [], isLoading: false }));
     });
 
     it('should render plugin links when severity is error and links exist', () => {
@@ -269,6 +276,51 @@ describe('<DataSourceTestingStatus />', () => {
       render(<DataSourceTestingStatus {...props} />);
 
       expect(screen.queryByText('Help Documentation')).not.toBeInTheDocument();
+    });
+  });
+
+  describe('Plugin components', () => {
+    const createMockComponent = (
+      overrides: Partial<{
+        id: string;
+        title: string;
+        description: string;
+        pluginId: string;
+        text: string;
+      }> = {}
+    ) => {
+      const text = overrides.text ?? 'Test Component';
+      const Comp = (() => <div>{text}</div>) as unknown as ComponentTypeWithExtensionMeta<PluginExtensionDataSourceConfigStatusContext>;
+      (Comp as any).meta = {
+        id: overrides.id ?? 'test-component',
+        type: PluginExtensionTypes.component,
+        title: overrides.title ?? 'Test Component',
+        description: overrides.description ?? 'Test component description',
+        pluginId: overrides.pluginId ?? 'grafana-monitoring-app',
+      };
+      return Comp;
+    };
+
+    afterEach(() => {
+      setPluginComponentsHook(() => ({ components: [], isLoading: false }));
+    });
+
+    it('should render plugin component from allowed plugin', () => {
+      const AllowedComponent = createMockComponent({ pluginId: 'grafana-monitoring-app', text: 'Allowed Component' }) as unknown as ComponentTypeWithExtensionMeta<{}>;
+      setPluginComponentsHook(() => ({ components: [AllowedComponent], isLoading: false }));
+
+      render(<DataSourceTestingStatus {...getProps()} />);
+
+      expect(screen.getByText('Allowed Component')).toBeInTheDocument();
+    });
+
+    it('should NOT render plugin component from non-allowed plugin', () => {
+      const BlockedComponent = createMockComponent({ pluginId: 'not-allowed-plugin', text: 'Blocked Component' }) as unknown as ComponentTypeWithExtensionMeta<{}>;
+      setPluginComponentsHook(() => ({ components: [BlockedComponent], isLoading: false }));
+
+      render(<DataSourceTestingStatus {...getProps()} />);
+
+      expect(screen.queryByText('Blocked Component')).not.toBeInTheDocument();
     });
   });
 });
