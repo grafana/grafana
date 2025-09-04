@@ -90,7 +90,9 @@ describe('Backend / Frontend single version migration result comparison', () => 
 
         expect(backendOutput.schemaVersion).toEqual(targetVersion);
 
-        // Create dashboard models
+        // Create dashboard models.
+        // We use dashboard model for the backend too because when loading a v1 dashboards in all scenarios we use DashboardModel.
+        // So if both frontend and backend outputs the same save model, we can ensure the migration is correct.
         const frontendModel = new DashboardModel(jsonInput, undefined, {
           targetSchemaVersion: targetVersion,
         });
