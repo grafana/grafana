@@ -115,7 +115,7 @@ test.describe(
         await expect(markdownContent).toContainText(`GroupByVar: dev\n\nAdHocVar: ${processedPills}`);
       });
 
-      await test.step('4.See filter/groupby selection persisting when navigating from dashboard to dashboard', async () => {
+      await test.step('4.Unmodified default filters and groupBy keys are not propagated to a different dashboard', async () => {
         const dashboardPage = await gotoDashboardPage({ uid: DASHBOARD_UNDER_TEST });
 
         await setScopes(page, { title: 'CUJ Dashboard 2', uid: 'cuj-dashboard-2' });

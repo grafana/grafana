@@ -584,6 +584,7 @@ export {
 } from './types/pluginExtensions';
 export {
   type ScopeDashboardBindingSpec,
+  type ScopeDashboardBindingStatus,
   type ScopeDashboardBinding,
   type ScopeFilterOperator,
   type ScopeSpecFilter,

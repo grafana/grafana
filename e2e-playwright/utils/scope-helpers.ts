@@ -1,5 +1,9 @@
 import { Page, Response } from '@playwright/test';
 
+import { ScopeDashboardBindingSpec, ScopeDashboardBindingStatus } from '@grafana/data';
+
+import { Resource } from '../../public/app/features/apiserver/types';
+
 import { testScopes } from './scopes';
 
 const USE_LIVE_DATA = Boolean(process.env.API_CALLS_CONFIG_PATH);
@@ -17,18 +21,7 @@ export type TestScope = {
   addLinks?: boolean;
 };
 
-type ScopeDashboardBinding = {
-  kind: string;
-  apiVersion: string;
-  metadata: { name?: string };
-  spec: {
-    dashboard: string;
-    scope: string;
-  };
-  status: {
-    dashboardTitle: string;
-  };
-};
+type ScopeDashboardBinding = Resource<ScopeDashboardBindingSpec, ScopeDashboardBindingStatus, 'ScopeDashboardBinding'>;
 
 export async function scopeNodeChildrenRequest(
   page: Page,
@@ -163,7 +156,7 @@ export async function applyScopes(page: Page, scopes?: TestScope[]) {
     '**/apis/scope.grafana.app/v0alpha1/namespaces/*/find/scope_dashboard_bindings?' +
     scopes.map((scope) => `scope=scope-${scope.name}`).join('&');
 
-  const groups = ['Most relevant', 'Dashboards', 'Something else', ''];
+  const groups: string[] = ['Most relevant', 'Dashboards', 'Something else', ''];
 
   await page.route(url, async (route) => {
     await route.fulfill({
@@ -179,7 +172,11 @@ export async function applyScopes(page: Page, scopes?: TestScope[]) {
             bindings.push({
               kind: 'ScopeDashboardBinding',
               apiVersion: 'scope.grafana.app/v0alpha1',
-              metadata: {},
+              metadata: {
+                name: 'scope',
+                resourceVersion: '1',
+                creationTimestamp: 'stamp',
+              },
               spec: {
                 dashboard: (scope.dashboardUid ?? 'edediimbjhdz4b') + '/' + Math.random().toString(),
                 scope: `scope-${scope.name}`,
@@ -195,7 +192,11 @@ export async function applyScopes(page: Page, scopes?: TestScope[]) {
           bindings.push({
             kind: 'ScopeDashboardBinding',
             apiVersion: 'scope.grafana.app/v0alpha1',
-            metadata: {},
+            metadata: {
+              name: 'scope',
+              resourceVersion: '1',
+              creationTimestamp: 'stamp',
+            },
             spec: {
               dashboard: (scope.dashboardUid ?? 'edediimbjhdz4b') + '/' + Math.random().toString(),
               scope: `scope-${scope.name}`,
@@ -211,15 +212,15 @@ export async function applyScopes(page: Page, scopes?: TestScope[]) {
   });
 
   const responsePromise = page.waitForResponse((response) => response.url().includes(`/find/scope_dashboard_bindings`));
-  const x: Array<Promise<Response>> = [];
+  const scopeRequestPromises: Array<Promise<Response>> = [];
 
   for (const scope of scopes) {
-    x.push(scopeSelectRequest(page, scope));
+    scopeRequestPromises.push(scopeSelectRequest(page, scope));
   }
 
   await click();
   await responsePromise;
-  await Promise.all(x);
+  await Promise.all(scopeRequestPromises);
 }
 
 export async function searchScopes(page: Page, value: string, resultScopes: TestScope[]) {

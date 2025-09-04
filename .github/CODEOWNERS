@@ -410,6 +410,7 @@
 /e2e/ @grafana/grafana-frontend-platform
 /e2e-playwright/cloud-plugins-suite/ @grafana/partner-datasources
 /e2e-playwright/dashboard-new-layouts/ @grafana/dashboards-squad
+/e2e-playwright/dashboard-cujs/ @grafana/dashboards-squad
 /e2e-playwright/dashboards-search-suite/ @grafana/dashboards-squad
 /e2e-playwright/dashboards/DashboardLiveTest.json @grafana/dashboards-squad
 /e2e-playwright/dashboards/DataLinkWithoutSlugTest.json @grafana/dashboards-squad
