@@ -1,6 +1,6 @@
 //go:build windows
 
-package manager
+package storage
 
 // no-op for Windows
 func matchOwnershipToParent(_ , _ string) error {
