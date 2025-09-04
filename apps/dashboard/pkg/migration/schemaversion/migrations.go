@@ -9,6 +9,9 @@ import (
 const (
 	MIN_VERSION    = 13
 	LATEST_VERSION = 41
+
+	// The pluginVersion to set after simulating auto-migrate for angular panels
+	pluginVersionForAutoMigrate = "12.1.0"
 )
 
 type SchemaVersionMigrationFunc func(context.Context, map[string]interface{}) error
@@ -33,14 +36,7 @@ type PanelPluginInfo struct {
 	Version string
 }
 
-type PanelPluginInfoProvider interface {
-	// Gets all the panels from the plugin store.
-	// Equivalent to grafanaBootData.settings.panels on the frontend.
-	GetPanels() []PanelPluginInfo
-	GetPanelPlugin(id string) PanelPluginInfo
-}
-
-func GetMigrations(dsInfoProvider DataSourceInfoProvider, panelProvider PanelPluginInfoProvider) map[int]SchemaVersionMigrationFunc {
+func GetMigrations(dsInfoProvider DataSourceInfoProvider) map[int]SchemaVersionMigrationFunc {
 	return map[int]SchemaVersionMigrationFunc{
 		14: V14,
 		15: V15,
@@ -52,11 +48,11 @@ func GetMigrations(dsInfoProvider DataSourceInfoProvider, panelProvider PanelPlu
 		21: V21,
 		22: V22,
 		23: V23,
-		24: V24(panelProvider),
+		24: V24,
 		25: V25,
 		26: V26,
 		27: V27,
-		28: V28(panelProvider),
+		28: V28,
 		29: V29,
 		30: V30,
 		31: V31,

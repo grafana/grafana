@@ -75,6 +75,8 @@ const dataSources = {
   }),
 };
 
+const pluginVersionForAutoMigrate = '12.1.0';
+
 describe('Backend / Frontend result comparison', () => {
   beforeEach(() => {
     jest.clearAllMocks();
@@ -157,11 +159,11 @@ describe('Backend / Frontend result comparison', () => {
                 logos: { small: 'small/logo', large: 'large/logo' },
                 screenshots: [],
                 updated: '2024-01-01',
-                version: '1.0.0',
+                version: pluginVersionForAutoMigrate,
               };
             }
             if (!statPanelPlugin.meta.info.version) {
-              statPanelPlugin.meta.info.version = '1.0.0';
+              statPanelPlugin.meta.info.version = pluginVersionForAutoMigrate;
             }
 
             await panel.pluginLoaded(statPanelPlugin);
@@ -179,11 +181,11 @@ describe('Backend / Frontend result comparison', () => {
                 logos: { small: 'small/logo', large: 'large/logo' },
                 screenshots: [],
                 updated: '2024-01-01',
-                version: '1.0.0',
+                version: pluginVersionForAutoMigrate,
               };
             }
             if (!tablePanelPlugin.meta.info.version) {
-              tablePanelPlugin.meta.info.version = '1.0.0';
+              tablePanelPlugin.meta.info.version = pluginVersionForAutoMigrate;
             }
 
             await panel.pluginLoaded(tablePanelPlugin as any);
