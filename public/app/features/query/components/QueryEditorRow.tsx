@@ -534,6 +534,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
             queryLibraryRef={queryLibraryRef}
             onCancelEdit={onCancelQueryLibraryEdit}
             onUpdateSuccess={this.onExitQueryLibraryEditingMode}
+            onSelectQuery={this.onSelectQueryFromLibrary}
           />
         )}
         {queryLibraryRef ? (
@@ -592,7 +593,7 @@ function MaybeQueryLibrarySaveButton(props: {
   query: DataQuery;
   app?: CoreApp;
   onUpdateSuccess?: () => void;
-  onSelectQuery?: (query: DataQuery) => void;
+  onSelectQuery: (query: DataQuery) => void;
 }) {
   const { renderSaveQueryButton } = useQueryLibraryContext();
   return renderSaveQueryButton(props.query, props.app, props.onUpdateSuccess, props.onSelectQuery);
@@ -605,6 +606,7 @@ function MaybeQueryLibraryEditingHeader(props: {
   queryLibraryRef?: string;
   onCancelEdit?: () => void;
   onUpdateSuccess?: () => void;
+  onSelectQuery?: (query: DataQuery) => void;
 }) {
   const { renderQueryLibraryEditingHeader } = useQueryLibraryContext();
   return renderQueryLibraryEditingHeader(
@@ -612,7 +614,8 @@ function MaybeQueryLibraryEditingHeader(props: {
     props.app,
     props.queryLibraryRef,
     props.onCancelEdit,
-    props.onUpdateSuccess
+    props.onUpdateSuccess,
+    props.onSelectQuery
   );
 }
 

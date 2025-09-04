@@ -58,7 +58,8 @@ export type QueryLibraryContextType = {
     app?: CoreApp,
     queryLibraryRef?: string,
     onCancelEdit?: () => void,
-    onUpdateSuccess?: () => void
+    onUpdateSuccess?: () => void,
+    onSelectQuery?: (query: DataQuery) => void
   ) => ReactNode;
 
   queryLibraryEnabled: boolean;
