@@ -42,6 +42,7 @@ func (fs *FS) Extract(ctx context.Context, pluginID string, dirNameFunc DirNameG
 	if err != nil {
 		return nil, fmt.Errorf("%v: %w", "failed to extract plugin archive", err)
 	}
+	
 
 	pluginJSON, err := readPluginJSON(pluginDir)
 	if err != nil {
@@ -56,6 +57,12 @@ func (fs *FS) Extract(ctx context.Context, pluginID string, dirNameFunc DirNameG
 			ID: plugin.ID,
 		})
 	}
+		// Ensure installed plugin directory inherits ownership from parent plugin dir.
+	// Do not fail extraction on error; just warn.
+	if err := matchOwnershipToParent(pluginDir, fs.pluginsDir); err != nil {
+		fs.log.Warn("Failed to set plugin ownership", "path", pluginDir, "err", err)
+	}
+
 
 	return &ExtractedPluginArchive{
 		ID:           pluginJSON.ID,

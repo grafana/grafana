@@ -133,20 +133,13 @@ func (m *PluginInstaller) install(ctx context.Context, pluginID, version string,
 		return nil, err
 	}
 
-	// Check that the extracted plugin archive has the expected ID and version
-	// but avoid a hard error for backwards compatibility with older plugins
-	// and because in the case of an update, the previous version has been already uninstalled
+    // Check that the extracted plugin archive has the expected ID and version
 	if extractedArchive.ID != pluginID {
 		m.log.Error("Installed plugin ID mismatch", "expected", pluginID, "got", extractedArchive.ID)
 	}
 	if version != "" && extractedArchive.Version != version {
 		m.log.Error("Installed plugin version mismatch", "expected", version, "got", extractedArchive.Version)
 	}
-	// Ensure installed plugin directory inherits ownership from parent plugin dir
-	if err := matchOwnershipToParent(extractedArchive.Path, m.cfg.PluginsPath); err != nil {
-		m.log.Warn("failed to set plugin ownership", "path", extractedArchive.Path, "err", err)
-	}
-
 	return extractedArchive, nil
 }
 
