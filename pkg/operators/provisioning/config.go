@@ -60,7 +60,6 @@ type provisioningControllerConfig struct {
 	repoGetter         *resources.RepositoryGetter
 	decrypter          repository.Decrypter
 	restCfg            *rest.Config
-	historyExpiration  time.Duration
 }
 
 // expects:
