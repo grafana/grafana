@@ -1,23 +1,20 @@
-import { css } from '@emotion/css';
-import { capitalize } from 'lodash';
 import { useMemo } from 'react';
 
 import { SelectableValue } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { Field, RadioButtonGroup, useStyles2 } from '@grafana/ui';
+import { Field, RadioButtonGroup } from '@grafana/ui';
 
-import { GroupConditionVisibility, ItemsWithConditionalRendering } from './types';
-import { translatedItemType } from './utils';
+import { getTranslatedObjectType, ObjectsWithConditionalRendering } from '../object';
+
+import { GroupConditionVisibility } from './types';
 
 interface Props {
-  itemType: ItemsWithConditionalRendering;
+  objectType: ObjectsWithConditionalRendering;
   value: GroupConditionVisibility;
   onChange: (value: GroupConditionVisibility) => void;
 }
 
-export const ConditionalRenderingGroupVisibility = ({ itemType, value, onChange }: Props) => {
-  const styles = useStyles2(getStyles);
-
+export const ConditionalRenderingGroupVisibility = ({ objectType, value, onChange }: Props) => {
   const options: Array<SelectableValue<GroupConditionVisibility>> = useMemo(
     () => [
       { label: t('dashboard.conditional-rendering.conditions.group.visibility.show', 'Show'), value: 'show' },
@@ -29,17 +26,11 @@ export const ConditionalRenderingGroupVisibility = ({ itemType, value, onChange 
   return (
     <Field
       label={t('dashboard.conditional-rendering.conditions.group.visibility.label', '{{type}} visibility', {
-        type: capitalize(translatedItemType(itemType)),
+        type: getTranslatedObjectType(objectType),
       })}
-      className={styles.container}
+      noMargin
     >
       <RadioButtonGroup fullWidth options={options} value={value} onChange={onChange} />
     </Field>
   );
 };
-
-const getStyles = () => ({
-  container: css({
-    margin: 0,
-  }),
-});

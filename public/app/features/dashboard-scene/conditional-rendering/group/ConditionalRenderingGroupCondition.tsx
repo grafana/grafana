@@ -1,9 +1,8 @@
-import { css } from '@emotion/css';
 import { useMemo } from 'react';
 
 import { SelectableValue } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { Field, RadioButtonGroup, useStyles2 } from '@grafana/ui';
+import { Field, RadioButtonGroup } from '@grafana/ui';
 
 import { GroupConditionCondition } from './types';
 
@@ -13,8 +12,6 @@ interface Props {
 }
 
 export const ConditionalRenderingGroupCondition = ({ value, onChange }: Props) => {
-  const styles = useStyles2(getStyles);
-
   const options: Array<SelectableValue<GroupConditionCondition>> = useMemo(
     () => [
       { label: t('dashboard.conditional-rendering.conditions.group.condition.all', 'Match all'), value: 'and' },
@@ -24,17 +21,8 @@ export const ConditionalRenderingGroupCondition = ({ value, onChange }: Props) =
   );
 
   return (
-    <Field
-      label={t('dashboard.conditional-rendering.conditions.group.condition.label', 'Match rules')}
-      className={styles.container}
-    >
+    <Field label={t('dashboard.conditional-rendering.conditions.group.condition.label', 'Match rules')} noMargin>
       <RadioButtonGroup fullWidth options={options} value={value} onChange={onChange} />
     </Field>
   );
 };
-
-const getStyles = () => ({
-  container: css({
-    margin: 0,
-  }),
-});
