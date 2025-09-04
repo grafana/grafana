@@ -22,7 +22,7 @@ import (
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository/github"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository/local"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
+	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	secretdecrypt "github.com/grafana/grafana/pkg/registry/apis/secret/decrypt"
 )
 
@@ -45,7 +45,7 @@ type provisioningControllerConfig struct {
 	provisioningClient *client.Clientset
 	resyncInterval     time.Duration
 	tracer             tracing.Tracer
-	repoGetter         *resources.RepositoryGetter
+	repoFactory        repository.Factory
 	restCfg            *rest.Config
 }
 
@@ -60,6 +60,9 @@ type provisioningControllerConfig struct {
 // tls_key_file =
 // tls_ca_file =
 // resync_interval =
+// repository_types =
+// home_path =
+// local_permitted_prefixes =
 func setupFromConfig(cfg *setting.Cfg) (controllerCfg *provisioningControllerConfig, err error) {
 	if cfg == nil {
 		return nil, fmt.Errorf("no configuration available")
@@ -120,16 +123,16 @@ func setupFromConfig(cfg *setting.Cfg) (controllerCfg *provisioningControllerCon
 		return nil, fmt.Errorf("build decrypter: %w", err)
 	}
 
-	repoGetter, err := setupRepoGetter(cfg, decrypter, provisioningClient)
+	repoFactory, err := setupRepoFactory(cfg, decrypter, provisioningClient)
 	if err != nil {
-		return nil, fmt.Errorf("build repository getter: %w", err)
+		return nil, fmt.Errorf("failed to setup repository getter: %w", err)
 	}
 
 	return &provisioningControllerConfig{
 		provisioningClient: provisioningClient,
+		repoFactory:        repoFactory,
 		resyncInterval:     operatorSec.Key("resync_interval").MustDuration(60 * time.Second),
 		tracer:             tracer,
-		repoGetter:         repoGetter,
 		restCfg:            config,
 	}, nil
 }
@@ -165,11 +168,60 @@ func setupDecrypter(cfg *setting.Cfg, tracer tracing.Tracer, tokenExchangeClient
 	return repository.ProvideDecrypter(decryptSvc), nil
 }
 
-func setupRepoGetter(
+func buildTLSConfig(insecure bool, certFile, keyFile, caFile string) (rest.TLSClientConfig, error) {
+	tlsConfig := rest.TLSClientConfig{
+		Insecure: insecure,
+	}
+
+	if certFile != "" && keyFile != "" {
+		tlsConfig.CertFile = certFile
+		tlsConfig.KeyFile = keyFile
+	}
+
+	if caFile != "" {
+		// caFile is set in operator.ini file
+		// nolint:gosec
+		caCert, err := os.ReadFile(caFile)
+		if err != nil {
+			return tlsConfig, fmt.Errorf("failed to read CA certificate file: %w", err)
+		}
+
+		caCertPool := x509.NewCertPool()
+		if !caCertPool.AppendCertsFromPEM(caCert) {
+			return tlsConfig, fmt.Errorf("failed to parse CA certificate")
+		}
+
+		tlsConfig.CAData = caCert
+	}
+
+	return tlsConfig, nil
+}
+
+// emptyValuesDecrypter is a decrypter that always returns empty values.
+// This is a temporary implementation and should be replaced with a real decrypter.
+// TODO: remove this and use a real decrypter that uses the Grafana secret service
+func emptyValuesDecrypter(r *provisioning.Repository) repository.SecureValues {
+	return &emptyValues{}
+}
+
+// emptyValues is a that always returns empty values.
+// This is a temporary implementation and should be replaced with a real decrypter.
+// TODO: remove this and use a real decrypter that uses the Grafana secret service
+type emptyValues struct{}
+
+func (s *emptyValues) Token(ctx context.Context) (common.RawSecureValue, error) {
+	return common.NewSecretValue(""), nil
+}
+
+func (s *emptyValues) WebhookSecret(ctx context.Context) (common.RawSecureValue, error) {
+	return common.NewSecretValue(""), nil
+}
+
+func setupRepoFactory(
 	cfg *setting.Cfg,
 	decrypter repository.Decrypter,
 	provisioningClient *client.Clientset,
-) (*resources.RepositoryGetter, error) {
+) (repository.Factory, error) {
 	operatorSec := cfg.SectionWithEnvOverrides("operator")
 	repoTypes := operatorSec.Key("repository_types").Strings("|")
 
@@ -178,7 +230,7 @@ func setupRepoGetter(
 	extras := make([]repository.Extra, 0)
 	alreadyRegistered := make(map[provisioning.RepositoryType]struct{})
 
-	for t := range repoTypes {
+	for _, t := range repoTypes {
 		if _, ok := alreadyRegistered[provisioning.RepositoryType(t)]; ok {
 			continue
 		}
@@ -219,39 +271,5 @@ func setupRepoGetter(
 		return nil, fmt.Errorf("create repository factory: %w", err)
 	}
 
-	repoGetter := resources.NewRepositoryGetter(
-		repoFactory,
-		provisioningClient.ProvisioningV0alpha1(),
-	)
-
-	return repoGetter, nil
-}
-
-func buildTLSConfig(insecure bool, certFile, keyFile, caFile string) (rest.TLSClientConfig, error) {
-	tlsConfig := rest.TLSClientConfig{
-		Insecure: insecure,
-	}
-
-	if certFile != "" && keyFile != "" {
-		tlsConfig.CertFile = certFile
-		tlsConfig.KeyFile = keyFile
-	}
-
-	if caFile != "" {
-		// caFile is set in operator.ini file
-		// nolint:gosec
-		caCert, err := os.ReadFile(caFile)
-		if err != nil {
-			return tlsConfig, fmt.Errorf("failed to read CA certificate file: %w", err)
-		}
-
-		caCertPool := x509.NewCertPool()
-		if !caCertPool.AppendCertsFromPEM(caCert) {
-			return tlsConfig, fmt.Errorf("failed to parse CA certificate")
-		}
-
-		tlsConfig.CAData = caCert
-	}
-
-	return tlsConfig, nil
+	return repoFactory, nil
 }

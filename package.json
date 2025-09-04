@@ -38,6 +38,7 @@
     "lint:ts": "eslint ./ ./public/app/extensions/ --cache --no-error-on-unmatched-pattern",
     "lint:sass": "yarn stylelint '{public/sass,packages}/**/*.scss' --cache",
     "lint:fix": "yarn lint:ts --fix",
+    "lint:prune": "yarn lint:ts --prune-suppressions",
     "packages:build": "nx run-many -t build --projects='tag:scope:package'",
     "packages:clean": "rimraf ./npm-artifacts && nx run-many -t clean --projects='tag:scope:package' --maxParallel=100",
     "packages:i18n-extract": "nx run-many -t i18n-extract --projects='tag:scope:package'",

@@ -11,11 +11,11 @@ echo "running go work sync"
 go work sync
 popd
 
-for mod in $(go run scripts/go-workspace/main.go list-submodules --path "${REPO_ROOT}/go.work"); do
-    pushd "${mod}"
-    echo "Running go mod tidy in ${mod}"
-    go mod tidy || true
-    popd
+for mod in $(GOWORK=off go run scripts/go-workspace/main.go list-submodules --path "${REPO_ROOT}/go.work"); do
+  pushd "${mod}"
+  echo "Running go mod tidy in ${mod}"
+  go mod tidy || true
+  popd
 done
 
 pushd "${REPO_ROOT}"

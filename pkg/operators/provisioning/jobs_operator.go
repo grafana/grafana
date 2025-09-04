@@ -105,6 +105,11 @@ func RunJobController(opts standalone.BuildInfo, c *cli.Context, cfg *setting.Cf
 		return fmt.Errorf("setup workers: %w", err)
 	}
 
+	repoGetter := resources.NewRepositoryGetter(
+		controllerCfg.repoFactory,
+		controllerCfg.provisioningClient.ProvisioningV0alpha1(),
+	)
+
 	// This is basically our own JobQueue system
 	driver, err := jobs.NewConcurrentJobDriver(
 		3,              // 3 drivers for now
@@ -113,7 +118,7 @@ func RunJobController(opts standalone.BuildInfo, c *cli.Context, cfg *setting.Cf
 		30*time.Second, // Periodically look for new jobs
 		30*time.Second, // Lease renewal interval
 		jobStore,
-		controllerCfg.repoGetter,
+		repoGetter,
 		jobHistoryWriter,
 		jobController.InsertNotifications(),
 		workers...,

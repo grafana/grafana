@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"maps"
 
-	"github.com/grafana/grafana/apps/dashboard/pkg/migration/schemaversion"
 	"github.com/prometheus/client_golang/prometheus"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -28,6 +27,8 @@ import (
 	dashv2beta1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1"
 	"github.com/grafana/grafana/apps/dashboard/pkg/migration"
 	"github.com/grafana/grafana/apps/dashboard/pkg/migration/conversion"
+	"github.com/grafana/grafana/apps/dashboard/pkg/migration/schemaversion"
+	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
@@ -37,8 +38,10 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacy"
 	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacysearcher"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/apiserver"
 	authsvc "github.com/grafana/grafana/pkg/services/apiserver/auth/authorizer"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
+	"github.com/grafana/grafana/pkg/services/apiserver/client"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	dashsvc "github.com/grafana/grafana/pkg/services/dashboards/service"
@@ -56,10 +59,6 @@ import (
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/storage/unified/apistore"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
-
-	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
-	"github.com/grafana/grafana/pkg/services/apiserver"
-	"github.com/grafana/grafana/pkg/services/apiserver/client"
 )
 
 var (
@@ -167,9 +166,6 @@ func RegisterAPIService(
 	migration.RegisterMetrics(reg)
 	migration.Initialize(&datasourceInfoProvider{
 		datasourceService: datasourceService,
-	}, &PluginStorePanelProvider{
-		pluginStore:  pluginStore,
-		buildVersion: cfg.BuildVersion,
 	})
 	apiregistration.RegisterAPI(builder)
 	return builder
@@ -184,10 +180,7 @@ func NewAPIService(ac claims.AccessClient, features featuremgmt.FeatureToggles, 
 
 	logger := log.New("grafana-apiserver.dashboards")
 
-	migration.Initialize(datasourceProvider, &PluginStorePanelProvider{
-		pluginStore:  pluginStore,
-		buildVersion: "unknown",
-	})
+	migration.Initialize(datasourceProvider)
 
 	return &DashboardsAPIBuilder{
 		log: logger,
