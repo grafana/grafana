@@ -45,7 +45,8 @@ func SetupTestEnv(tb testing.TB, baseInterval time.Duration) (*ngalert.AlertNG, 
 
 	cfg := setting.NewCfg()
 	cfg.UnifiedAlerting = setting.UnifiedAlertingSettings{
-		BaseInterval: setting.SchedulerBaseInterval,
+		BaseInterval:          setting.SchedulerBaseInterval,
+		InitializationTimeout: 30 * time.Second, // LOGZ.IO GRAFANA CHANGE :: DEV-48976 - Make context deadline on AlertNG service startup configurable - cherrypick from: 1fdc48fabafe8b8480a58fb4a169d01ebb535fb2
 	}
 	// AlertNG database migrations run and the relative database tables are created only when it's enabled
 	cfg.UnifiedAlerting.Enabled = new(bool)

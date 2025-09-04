@@ -485,6 +485,7 @@ func setupEnv(t *testing.T, sqlStore *sqlstore.SQLStore, b bus.Bus, quotaService
 	ac := acimpl.ProvideAccessControl(sqlStore.Cfg)
 	ruleStore, err := ngstore.ProvideDBStore(sqlStore.Cfg, featuremgmt.WithFeatures(), sqlStore, &foldertest.FakeService{}, &dashboards.FakeDashboardService{}, ac)
 	require.NoError(t, err)
+	sqlStore.Cfg.UnifiedAlerting.InitializationTimeout = 30 * time.Second // LOGZ.IO GRAFANA CHANGE :: DEV-48976 - Make context deadline on AlertNG service startup configurable - cherrypick from: 1fdc48fabafe8b8480a58fb4a169d01ebb535fb2
 	_, err = ngalert.ProvideService(
 		sqlStore.Cfg, featuremgmt.WithFeatures(), nil, nil, routing.NewRouteRegister(), sqlStore, nil, nil, nil, quotaService,
 		secretsService, nil, m, &foldertest.FakeService{}, &acmock.Mock{}, &dashboards.FakeDashboardService{}, nil, b, &acmock.Mock{},
