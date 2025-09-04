@@ -24,7 +24,7 @@ func MutateOnCreate(ctx context.Context, obj *iamv0alpha1.ServiceAccount, cfg *s
 	}
 
 	obj.Spec.Login = strings.ToLower(login)
-	obj.ObjectMeta.Name = obj.Spec.Login
+	obj.Name = obj.Spec.Login
 
 	// External service accounts have None org role by default
 	if obj.Spec.External {

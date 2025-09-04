@@ -39,7 +39,7 @@ func TestMutateOnCreate_RoleAvatarUrl(t *testing.T) {
 				Spec: iamv0alpha1.ServiceAccountSpec{
 					Title:    "grafana-plugin-name",
 					External: true,
-					Role:     iamv0alpha1.ServiceAccountOrgRoleAdmin, // This should be overridden
+					Role:     iamv0alpha1.ServiceAccountOrgRoleAdmin,
 				},
 			},
 			expectedRole:      iamv0alpha1.ServiceAccountOrgRoleNone,
@@ -52,7 +52,7 @@ func TestMutateOnCreate_RoleAvatarUrl(t *testing.T) {
 					Title: "Another SA",
 				},
 			},
-			expectedRole:      "", // Role is not mutated if not present and not external
+			expectedRole:      "", // Role is not mutated if not present and not external, however validate would return with an error
 			expectedAvatarUrl: dtos.GetGravatarUrlWithDefault(cfg, "", "Another SA"),
 		},
 	}
@@ -79,7 +79,7 @@ func TestMutateOnCreate_LoginNameTitle(t *testing.T) {
 		expectedLogin string
 	}{
 		{
-			name: "non-external sa with title",
+			name: "non-external service account with title",
 			inputSA: &iamv0alpha1.ServiceAccount{
 				ObjectMeta: metav1.ObjectMeta{Name: "my-test-sa"},
 				Spec:       iamv0alpha1.ServiceAccountSpec{Title: "My Test SA"},
@@ -89,7 +89,7 @@ func TestMutateOnCreate_LoginNameTitle(t *testing.T) {
 			expectedLogin: "sa-1-my-test-sa",
 		},
 		{
-			name: "external sa with title",
+			name: "external service account with title",
 			inputSA: &iamv0alpha1.ServiceAccount{
 				ObjectMeta: metav1.ObjectMeta{Name: "grafana-plugin-name"},
 				Spec: iamv0alpha1.ServiceAccountSpec{
@@ -102,7 +102,7 @@ func TestMutateOnCreate_LoginNameTitle(t *testing.T) {
 			expectedLogin: "sa-1-extsvc-grafana-plugin-name",
 		},
 		{
-			name: "non-external sa with spaces in title",
+			name: "non-external service account with spaces in title",
 			inputSA: &iamv0alpha1.ServiceAccount{
 				ObjectMeta: metav1.ObjectMeta{Name: "sa-1-sa-with-spaces"},
 				Spec:       iamv0alpha1.ServiceAccountSpec{Title: "SA With Spaces"},
@@ -117,7 +117,7 @@ func TestMutateOnCreate_LoginNameTitle(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			err := MutateOnCreate(ctx, tc.inputSA, cfg)
 			require.NoError(t, err)
-			require.Equal(t, tc.expectedName, tc.inputSA.ObjectMeta.Name)
+			require.Equal(t, tc.expectedName, tc.inputSA.Name)
 			require.Equal(t, tc.expectedTitle, tc.inputSA.Spec.Title)
 			require.Equal(t, tc.expectedLogin, tc.inputSA.Spec.Login)
 		})
