@@ -652,8 +652,14 @@ export function getFieldDataContextClone(frame: DataFrame, field: Field, fieldSc
   return { value: { frame, field, data: [frame] } };
 }
 
+/**
+ * @internal
+ */
 export const DataLinksContext = createContext<{
   dataLinkPostProcessor: DataLinkPostProcessor;
 }>({ dataLinkPostProcessor: defaultInternalLinkPostProcessor });
 
+/**
+ * @internal
+ */
 export const useDataLinksContext = () => useContext(DataLinksContext);
