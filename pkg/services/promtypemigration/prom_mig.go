@@ -2,9 +2,9 @@ package promtypemigration
 
 import (
 	"context"
-	"fmt"
 	"runtime"
 
+	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 	"github.com/grafana/grafana/pkg/plugins/repo"
@@ -58,7 +58,8 @@ func (s *promMigrationService) updateDataSourceType(ctx context.Context, ds *dat
 		return err
 	}
 	if ds.JsonData == nil {
-		return fmt.Errorf("no JsonData found for data source ID %d", ds.ID)
+		logger.Debug("no JsonData found", "data source ID", ds.ID)
+		ds.JsonData = &simplejson.Json{}
 	}
 	ds.JsonData.Set("prometheus-type-migration", true)
 	_, err = s.dataSourcesService.UpdateDataSource(ctx, &datasources.UpdateDataSourceCommand{
