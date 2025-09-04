@@ -323,6 +323,12 @@ func (b *IdentityAccessManagementAPIBuilder) validateCreateServiceAccount(ctx co
 		return apierrors.NewBadRequest("no identity found")
 	}
 
+	if saObj.Spec.External && !requester.IsIdentityType(types.TypeAccessPolicy) {
+		return apierrors.NewForbidden(iamv0.ServiceAccountResourceInfo.GroupResource(),
+			saObj.Name,
+			fmt.Errorf("only service identities can create external service accounts"))
+	}
+
 	requestedRole := identity.RoleType(saObj.Spec.Role)
 	if !requestedRole.IsValid() {
 		return apierrors.NewBadRequest(fmt.Sprintf("invalid role: %s", requestedRole))
@@ -413,6 +419,11 @@ func (b *IdentityAccessManagementAPIBuilder) mutateServiceAccount(ctx context.Co
 	ns, err := request.NamespaceInfoFrom(ctx, true)
 	if err != nil {
 		return err
+	}
+
+	// External service accounts have None org role by default
+	if saObj.Spec.External {
+		saObj.Spec.Role = iamv0.ServiceAccountOrgRoleNone
 	}
 
 	prefix := serviceaccounts.ServiceAccountPrefix
