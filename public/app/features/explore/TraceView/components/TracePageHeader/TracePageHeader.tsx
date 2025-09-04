@@ -95,6 +95,28 @@ export const TracePageHeader = memo((props: TracePageHeaderProps) => {
     setHeaderHeight(document.querySelector('.' + styles.header)?.scrollHeight ?? 0);
   }, [setHeaderHeight, showSpanFilters, styles.header]);
 
+  // Build context for plugin extensions if trace is available
+  const traceContext: TraceViewPluginExtensionContext | undefined = trace
+    ? {
+        ...trace,
+        datasource: {
+          name: datasourceName,
+          uid: datasourceUid,
+          type: datasourceType,
+        },
+      }
+    : undefined;
+
+  const { links: extensionLinks } = usePluginLinks({
+    extensionPointId: PluginExtensionPoints.TraceViewHeaderActions,
+    context: traceContext,
+    limitPerPlugin: 2,
+  });
+
+  const { components: extensionComponents } = usePluginComponents<TraceViewPluginExtensionContext>({
+    extensionPointId: PluginExtensionPoints.TraceViewHeaderActions,
+  });
+
   if (!trace) {
     return null;
   }
@@ -109,26 +131,6 @@ export const TracePageHeader = memo((props: TracePageHeaderProps) => {
   const serviceCount = useMemo(() => {
     return new Set(trace.spans.map((span) => span.process?.serviceName)).size;
   }, [trace.spans]);
-
-  // Get plugin extensions for trace view header actions
-  const traceContext: TraceViewPluginExtensionContext = {
-    ...trace,
-    datasource: {
-      name: datasourceName,
-      uid: datasourceUid,
-      type: datasourceType,
-    },
-  };
-
-  const { links: extensionLinks } = usePluginLinks({
-    extensionPointId: PluginExtensionPoints.TraceViewHeaderActions,
-    context: traceContext,
-    limitPerPlugin: 2,
-  });
-
-  const { components: extensionComponents } = usePluginComponents<TraceViewPluginExtensionContext>({
-    extensionPointId: PluginExtensionPoints.TraceViewHeaderActions,
-  });
 
   let statusColor: BadgeColor = 'green';
   if (status && status.length > 0) {
@@ -217,7 +219,11 @@ export const TracePageHeader = memo((props: TracePageHeaderProps) => {
           )}
 
           <div className={styles.actions}>
-            {renderLimitedComponents({ props: traceContext, components: extensionComponents, limit: 2 })}
+            {renderLimitedComponents<TraceViewPluginExtensionContext>({
+              props: traceContext as TraceViewPluginExtensionContext,
+              components: extensionComponents,
+              limit: 2,
+            })}
           </div>
 
           {config.feedbackLinksEnabled && (
