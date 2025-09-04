@@ -133,7 +133,13 @@ func (rs *ReceiverService) GetReceiver(ctx context.Context, q models.GetReceiver
 	if err != nil {
 		return nil, err
 	}
-	postable, err := revision.GetReceiver(legacy_storage.NameToUid(q.Name))
+
+	prov, err := rs.loadProvenances(ctx, q.OrgID)
+	if err != nil {
+		return nil, err
+	}
+
+	rcv, err := revision.GetReceiver(legacy_storage.NameToUid(q.Name), prov)
 	if err != nil {
 		return nil, err
 	}
@@ -141,15 +147,6 @@ func (rs *ReceiverService) GetReceiver(ctx context.Context, q models.GetReceiver
 	span.AddEvent("Loaded receiver", trace.WithAttributes(
 		attribute.String("concurrency_token", revision.ConcurrencyToken),
 	))
-
-	storedProvenances, err := rs.provisioningStore.GetProvenances(ctx, q.OrgID, (&definitions.EmbeddedContactPoint{}).ResourceType())
-	if err != nil {
-		return nil, err
-	}
-	rcv, err := legacy_storage.PostableApiReceiverToReceiver(postable, legacy_storage.GetReceiverProvenance(storedProvenances, postable))
-	if err != nil {
-		return nil, err
-	}
 
 	auth := rs.authz.AuthorizeReadDecrypted
 	if !q.Decrypt {
@@ -195,21 +192,21 @@ func (rs *ReceiverService) GetReceivers(ctx context.Context, q models.GetReceive
 	if err != nil {
 		return nil, err
 	}
-	postables := revision.GetReceivers(uids)
+
+	prov, err := rs.loadProvenances(ctx, q.OrgID)
+	if err != nil {
+		return nil, err
+	}
+
+	receivers, err := revision.GetReceivers(uids, prov)
+	if err != nil {
+		return nil, err
+	}
 
 	span.AddEvent("Loaded receivers", trace.WithAttributes(
 		attribute.String("concurrency_token", revision.ConcurrencyToken),
-		attribute.Int("count", len(postables)),
+		attribute.Int("count", len(receivers)),
 	))
-
-	storedProvenances, err := rs.provisioningStore.GetProvenances(ctx, q.OrgID, (&definitions.EmbeddedContactPoint{}).ResourceType())
-	if err != nil {
-		return nil, err
-	}
-	receivers, err := legacy_storage.PostableApiReceiversToReceivers(postables, storedProvenances)
-	if err != nil {
-		return nil, err
-	}
 
 	filterFn := rs.authz.FilterReadDecrypted
 	if !q.Decrypt {
@@ -257,20 +254,17 @@ func (rs *ReceiverService) DeleteReceiver(ctx context.Context, uid string, calle
 	if err != nil {
 		return err
 	}
-	postable, err := revision.GetReceiver(uid)
+
+	prov, err := rs.loadProvenances(ctx, orgID)
+	if err != nil {
+		return err
+	}
+
+	existing, err := revision.GetReceiver(uid, prov)
 	if err != nil {
 		if errors.Is(err, legacy_storage.ErrReceiverNotFound) {
 			return nil
 		}
-		return err
-	}
-
-	storedProvenances, err := rs.provisioningStore.GetProvenances(ctx, orgID, (&definitions.EmbeddedContactPoint{}).ResourceType())
-	if err != nil {
-		return err
-	}
-	existing, err := legacy_storage.PostableApiReceiverToReceiver(postable, legacy_storage.GetReceiverProvenance(storedProvenances, postable))
-	if err != nil {
 		return err
 	}
 
@@ -354,7 +348,7 @@ func (rs *ReceiverService) CreateReceiver(ctx context.Context, r *models.Receive
 	// Generate UID from name.
 	createdReceiver.UID = legacy_storage.NameToUid(createdReceiver.Name)
 
-	created, err := revision.CreateReceiver(&createdReceiver)
+	result, err = revision.CreateReceiver(&createdReceiver)
 	if err != nil {
 		return nil, err
 	}
@@ -371,10 +365,6 @@ func (rs *ReceiverService) CreateReceiver(ctx context.Context, r *models.Receive
 		return nil, err
 	}
 
-	result, err = legacy_storage.PostableApiReceiverToReceiver(created, createdReceiver.Provenance)
-	if err != nil {
-		return nil, err
-	}
 	span.AddEvent("Created a new receiver", trace.WithAttributes(
 		attribute.String("uid", result.UID),
 		attribute.String("version", result.Version),
@@ -403,16 +393,13 @@ func (rs *ReceiverService) UpdateReceiver(ctx context.Context, r *models.Receive
 	if err != nil {
 		return nil, err
 	}
-	postable, err := revision.GetReceiver(r.GetUID())
+
+	prov, err := rs.loadProvenances(ctx, orgID)
 	if err != nil {
 		return nil, err
 	}
 
-	storedProvenances, err := rs.provisioningStore.GetProvenances(ctx, orgID, (&definitions.EmbeddedContactPoint{}).ResourceType())
-	if err != nil {
-		return nil, err
-	}
-	existing, err := legacy_storage.PostableApiReceiverToReceiver(postable, legacy_storage.GetReceiverProvenance(storedProvenances, postable))
+	existing, err := revision.GetReceiver(r.GetUID(), prov)
 	if err != nil {
 		return nil, err
 	}
@@ -460,7 +447,7 @@ func (rs *ReceiverService) UpdateReceiver(ctx context.Context, r *models.Receive
 		return nil, legacy_storage.MakeErrReceiverInvalid(err)
 	}
 
-	updated, err := revision.UpdateReceiver(&updatedReceiver)
+	result, err := revision.UpdateReceiver(&updatedReceiver)
 	if err != nil {
 		return nil, err
 	}
@@ -499,10 +486,6 @@ func (rs *ReceiverService) UpdateReceiver(ctx context.Context, r *models.Receive
 		return nil, err
 	}
 
-	result, err := legacy_storage.PostableApiReceiverToReceiver(updated, updatedReceiver.Provenance)
-	if err != nil {
-		return nil, err
-	}
 	logger.Info("Updated receiver", "new_version", result.Version)
 	return result, nil
 }
