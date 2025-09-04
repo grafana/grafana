@@ -19,6 +19,7 @@ import { TickSpacingEditor } from './TickSpacingEditor';
 import { changeToBarChartPanelMigrationHandler } from './migrations';
 import { FieldConfig, Options, defaultFieldConfig, defaultOptions } from './panelcfg.gen';
 import { BarChartSuggestionsSupplier } from './suggestions';
+// import { Data } from 'ol/DataTile';
 
 export const plugin = new PanelPlugin<Options, FieldConfig>(BarChartPanel)
   .setPanelChangeHandler(changeToBarChartPanelMigrationHandler)
@@ -201,6 +202,12 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(BarChartPanel)
         },
         defaultValue: defaultOptions.stacking,
       })
+      .addFieldNamePicker({
+        path: 'groupByField',
+        name: 'Group by',
+        description: 'Select field to group bars by',
+        defaultValue: '',
+      })
       .addSliderInput({
         path: 'groupWidth',
         name: t('barchart.config.name-group-width', 'Group width'),
@@ -223,7 +230,7 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(BarChartPanel)
         defaultValue: defaultOptions.barWidth,
         settings: {
           min: 0,
-          max: 1,
+          max: 2,
           step: 0.01,
         },
       })

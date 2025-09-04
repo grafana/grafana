@@ -50,10 +50,12 @@ composableKinds: PanelCfg: {
 					stacking: common.StackingMode & (*"none" | _)
 					// This controls whether values are shown on top or to the left of bars.
 					showValue: common.VisibilityMode & (*"auto" | _)
-					// Controls the width of bars. 1 = Max width, 0 = Min width.
-					barWidth: float64 & >=0 & <=1 | *0.97
+					// Controls the width of bars. 2 = Max width, 0 = Min width.
+					barWidth: float64 & >=0 & <=3 | *0.97
 					// Controls the width of groups. 1 = max with, 0 = min width.
 					groupWidth: float64 & >=0 & <=1 | *0.7
+					// What field is being grouped by.
+					groupByField?: string
 					// Enables mode which highlights the entire bar area and shows tooltip when cursor
 					// hovers over highlighted area
 					fullHighlight: bool | *false

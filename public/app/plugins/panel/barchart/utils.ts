@@ -49,6 +49,48 @@ interface BarSeries {
   warn?: string | null;
 }
 
+export function preprocessFrames(
+  frames: DataFrame[],
+  groupByFieldName?: string,
+  xFieldName?: string
+): DataFrame[] {
+  return frames.map(frame => {
+    const timeFieldIdx = frame.fields.findIndex((f) => f.type === FieldType.time);
+
+    if (timeFieldIdx >= 0 && frames.length > 1) {
+      frame = outerJoinDataFrames({ frames, keepDisplayNames: true }) ?? frame;
+    }
+
+    const xField =
+      frame.fields.find((field) => field.state?.displayName === xFieldName || field.name === xFieldName) ??
+      frame.fields.find((field) => field.type === FieldType.string) ??
+      frame.fields[timeFieldIdx];
+
+    
+    const groupField = groupByFieldName ? frame.fields.find(f => f.name === groupByFieldName) : undefined;
+
+    if (!groupField) {
+      return frame;
+    }
+
+    const compositeValues = xField.values.map((v, i) => {
+      const curGroupVal = groupField.values[i];
+      return `${v}|${curGroupVal}`
+    });
+
+    const compositeXField: Field = {
+      ...xField,
+      name: `${xFieldName}_${groupByFieldName}`,
+      values: compositeValues,
+    };
+
+    return {
+      ...frame,
+      fields: [compositeXField, ...frame.fields.filter(f => f !== xField && f !== groupField)], //newly constructed fields
+    };
+  });
+}
+
 export function prepSeries(
   frames: DataFrame[],
   fieldConfig: FieldConfigSource,

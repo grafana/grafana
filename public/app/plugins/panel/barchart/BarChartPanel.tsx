@@ -19,7 +19,7 @@ import { TimeSeriesTooltip } from '../timeseries/TimeSeriesTooltip';
 
 import { BarChartLegend, hasVisibleLegendSeries } from './BarChartLegend';
 import { Options } from './panelcfg.gen';
-import { prepConfig, prepSeries } from './utils';
+import { prepConfig, preprocessFrames, prepSeries } from './utils';
 
 const charWidth = measureText('M', UPLOT_AXIS_FONT_SIZE).width;
 const toRads = Math.PI / 180;
@@ -38,6 +38,7 @@ export const BarChartPanel = (props: PanelProps<Options>) => {
     barRadius = 0,
     showValue,
     groupWidth,
+    groupByField,
     stacking,
     legend,
     tooltip,
@@ -68,11 +69,17 @@ export const BarChartPanel = (props: PanelProps<Options>) => {
         // auto max length clamps to half viz height, subracts 3 chars for ... ellipsis
         Math.floor(height / 2 / Math.sin(Math.abs(xTickLabelRotation * toRads)) / charWidth - 3);
 
-  // TODO: config data links
+  const processedFrames = preprocessFrames(data.series, groupByField, xField);
   const info = useMemo(
-    () => prepSeries(data.series, fieldConfig, stacking, theme, xField, colorByField),
-    [data.series, fieldConfig, stacking, theme, xField, colorByField]
+    () => prepSeries(processedFrames, fieldConfig, stacking, theme, xField, colorByField),
+    [processedFrames, fieldConfig, stacking, theme, xField, colorByField]
   );
+  
+  // // TODO: config data links
+  // const info = useMemo(
+  //   () => prepSeries(data.series, fieldConfig, stacking, theme, xField, colorByField),
+  //   [data.series, fieldConfig, stacking, theme, xField, colorByField]
+  // );
 
   const vizSeries = useMemo(
     () =>
