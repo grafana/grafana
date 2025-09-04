@@ -40,7 +40,7 @@ import {
   useNamespaceAndGroupOptions,
 } from '../../components/rules/Filter/useRuleFilterAutocomplete';
 import { useRulesFilter } from '../../hooks/useFilteredRules';
-import { RuleHealth, getSearchFilterFromQuery } from '../../search/rulesSearchParser';
+import { RuleHealth, RuleSource, getSearchFilterFromQuery } from '../../search/rulesSearchParser';
 
 import { RulesFilterProps } from './RulesFilter';
 import {
@@ -52,6 +52,8 @@ import {
 } from './utils';
 
 const canRenderContactPointSelector = contextSrv.hasPermission(AccessControlAction.AlertingReceiversRead);
+
+const radioGroupCompactClass = css({ width: 'max-content' });
 
 type SearchQueryForm = {
   query: string;
@@ -244,7 +246,7 @@ const FilterOptions = ({ onSubmit, onClear, pluginsFilterEnabled }: FilterOption
   const { namespaceOptions, allGroupNames, isLoadingNamespaces, namespacePlaceholder, groupPlaceholder } =
     useNamespaceAndGroupOptions();
 
-  const { labelOptions, isLoadingGrafanaLabels } = useLabelOptions();
+  const { labelOptions } = useLabelOptions();
 
   // Create label options for the multi-select dropdown
   const dataSourceOptions = useAlertingDataSourceOptions();
@@ -283,11 +285,7 @@ const FilterOptions = ({ onSubmit, onClear, pluginsFilterEnabled }: FilterOption
         <Stack direction="column" alignItems="end" gap={2}>
           <div className={styles.grid}>
             <RuleNameField />
-            <LabelsField
-              labelOptions={labelOptions}
-              isLoadingGrafanaLabels={isLoadingGrafanaLabels}
-              portalContainer={portalContainer}
-            />
+            <LabelsField labelOptions={labelOptions} portalContainer={portalContainer} />
             <NamespaceField
               namespaceOptions={namespaceOptions}
               namespacePlaceholder={namespacePlaceholder}
@@ -302,6 +300,7 @@ const FilterOptions = ({ onSubmit, onClear, pluginsFilterEnabled }: FilterOption
             />
             <DataSourceNamesField dataSourceOptions={dataSourceOptions} portalContainer={portalContainer} />
             {canRenderContactPointSelector && <ContactPointField portalContainer={portalContainer} />}
+            <RuleSourceField />
             <RuleStateField />
             <RuleTypeField />
             <RuleHealthField />
@@ -335,11 +334,9 @@ function RuleNameField() {
 
 function LabelsField({
   labelOptions,
-  isLoadingGrafanaLabels,
   portalContainer,
 }: {
-  labelOptions: Array<{ label?: string; value: string; infoOption?: boolean }>;
-  isLoadingGrafanaLabels: boolean;
+  labelOptions: (inputValue: string) => Promise<Array<{ label?: string; value: string; infoOption?: boolean }>>;
   portalContainer?: HTMLElement;
 }) {
   const { control } = useFormContext<AdvancedFilters>();
@@ -356,13 +353,7 @@ function LabelsField({
             options={labelOptions}
             value={field.value}
             onChange={(selections) => field.onChange(selections.map((s) => s.value))}
-            placeholder={
-              isLoadingGrafanaLabels
-                ? t('common.loading', 'Loading...')
-                : t('alerting.rules-filter.placeholder-labels', 'Select labels')
-            }
-            loading={isLoadingGrafanaLabels}
-            disabled={isLoadingGrafanaLabels || labelOptions.filter((option) => !option.infoOption).length === 0}
+            placeholder={t('alerting.rules-filter.placeholder-labels', 'Select labels')}
             portalContainer={portalContainer}
             width="auto"
             minWidth={40}
@@ -380,7 +371,7 @@ function NamespaceField({
   isLoadingNamespaces,
   portalContainer,
 }: {
-  namespaceOptions: Array<{ label?: string; value: string; description?: string }>;
+  namespaceOptions: (inputValue: string) => Promise<Array<{ label?: string; value: string; description?: string }>>;
   namespacePlaceholder: string;
   isLoadingNamespaces: boolean;
   portalContainer?: HTMLElement;
@@ -402,7 +393,6 @@ function NamespaceField({
               onChange={(option) => field.onChange(option?.value || null)}
               value={field.value}
               loading={isLoadingNamespaces}
-              disabled={isLoadingNamespaces || namespaceOptions.length === 0}
               isClearable
               portalContainer={portalContainer}
             />
@@ -441,7 +431,6 @@ function GroupField({
               onChange={(option) => field.onChange(option?.value || null)}
               value={field.value}
               loading={isLoadingNamespaces}
-              disabled={isLoadingNamespaces || allGroupNames.length === 0}
               isClearable
               portalContainer={portalContainer}
             />
@@ -456,7 +445,7 @@ function DataSourceNamesField({
   dataSourceOptions,
   portalContainer,
 }: {
-  dataSourceOptions: Array<{ label?: string; value: string }>;
+  dataSourceOptions: (inputValue: string) => Promise<Array<{ label?: string; value: string }>>;
   portalContainer?: HTMLElement;
 }) {
   const { control } = useFormContext<AdvancedFilters>();
@@ -584,6 +573,8 @@ function RuleStateField() {
             ]}
             value={field.value}
             onChange={field.onChange}
+            fullWidth={false}
+            className={radioGroupCompactClass}
           />
         )}
       />
@@ -610,6 +601,39 @@ function RuleTypeField() {
             ]}
             value={field.value}
             onChange={field.onChange}
+            fullWidth={false}
+            className={radioGroupCompactClass}
+          />
+        )}
+      />
+    </>
+  );
+}
+
+function RuleSourceField() {
+  const { control } = useFormContext<AdvancedFilters>();
+  return (
+    <>
+      <Label>
+        <Trans i18nKey="alerting.search.property.rule-source">Rule source</Trans>
+      </Label>
+      <Controller
+        name="ruleSource"
+        control={control}
+        render={({ field }) => (
+          <RadioButtonGroup<AdvancedFilters['ruleSource']>
+            options={[
+              { label: t('common.all', 'All'), value: null },
+              { label: t('alerting.rules-filter.rule-source.grafana', 'Grafana managed'), value: RuleSource.Grafana },
+              {
+                label: t('alerting.rules-filter.rule-source.datasource', 'Data source managed'),
+                value: RuleSource.DataSource,
+              },
+            ]}
+            value={field.value}
+            onChange={field.onChange}
+            fullWidth={false}
+            className={radioGroupCompactClass}
           />
         )}
       />
@@ -637,6 +661,8 @@ function RuleHealthField() {
             ]}
             value={field.value}
             onChange={field.onChange}
+            fullWidth={false}
+            className={radioGroupCompactClass}
           />
         )}
       />
@@ -662,6 +688,8 @@ function PluginsField() {
             ]}
             value={field.value}
             onChange={field.onChange}
+            fullWidth={false}
+            className={radioGroupCompactClass}
           />
         )}
       />

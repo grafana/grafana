@@ -16,6 +16,9 @@ export interface UseSnappingSplitterOptions {
   handleSize?: ComponentSize;
   usePixels?: boolean;
   collapseBelowPixels: number;
+
+  /* Disables the splitter, hiding all of its styles */
+  disabled?: boolean;
 }
 
 interface PaneState {
@@ -31,6 +34,7 @@ export function useSnappingSplitter({
   collapsed,
   handleSize,
   usePixels,
+  disabled,
 }: UseSnappingSplitterOptions) {
   const [state, setState] = useState<PaneState>({
     collapsed: collapsed ?? false,
@@ -90,6 +94,26 @@ export function useSnappingSplitter({
     onResizing,
     onSizeChanged,
   });
+
+  // This does cause the loss of the adjustment position when toggling disabled on and off again.
+  // Fixing this properly would require changing how useSplitter works to not both pass and
+  // adjust styles directly on the element by ref. That causes a React conflict.
+  if (disabled) {
+    containerProps.className = '';
+    primaryProps.className = '';
+    primaryProps.style = {};
+    secondaryProps.className = '';
+    secondaryProps.style = {};
+    splitterProps.style.display = 'none';
+    return {
+      containerProps,
+      primaryProps,
+      secondaryProps,
+      splitterProps,
+      splitterState: { collapsed: false },
+      onToggleCollapse,
+    };
+  }
 
   // This is to allow resizing it beyond the content dimensions
   secondaryProps.style.overflow = 'hidden';

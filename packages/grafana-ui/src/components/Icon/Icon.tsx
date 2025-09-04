@@ -84,11 +84,11 @@ export const Icon = React.memo(
           title={title}
           className={composedClassName}
           style={style}
-          // render an empty div with the correct dimensions while loading
+          // render an empty element with the correct dimensions while loading
           // this prevents content layout shift whilst the icon asynchronously loads
           // which happens even if the icon is in the cache(!)
           loader={
-            <div
+            <span
               className={cx(
                 css({
                   width: svgWid,
