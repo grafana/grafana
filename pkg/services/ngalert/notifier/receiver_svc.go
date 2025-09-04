@@ -119,6 +119,10 @@ func NewReceiverService(
 	}
 }
 
+func (rs *ReceiverService) loadProvenances(ctx context.Context, orgID int64) (map[string]models.Provenance, error) {
+	return rs.provisioningStore.GetProvenances(ctx, orgID, (&models.Integration{}).ResourceType())
+}
+
 // GetReceiver returns a receiver by name.
 // The receiver's secure settings are decrypted if requested and the user has access to do so.
 func (rs *ReceiverService) GetReceiver(ctx context.Context, q models.GetReceiverQuery, user identity.Requester) (*models.Receiver, error) {
@@ -240,7 +244,7 @@ func (rs *ReceiverService) GetReceivers(ctx context.Context, q models.GetReceive
 
 // DeleteReceiver deletes a receiver by uid.
 // UID field currently does not exist, we assume the uid is a particular hashed value of the receiver name.
-func (rs *ReceiverService) DeleteReceiver(ctx context.Context, uid string, callerProvenance definitions.Provenance, version string, orgID int64, user identity.Requester) error {
+func (rs *ReceiverService) DeleteReceiver(ctx context.Context, uid string, callerProvenance models.Provenance, version string, orgID int64, user identity.Requester) error {
 	ctx, span := rs.tracer.Start(ctx, "alerting.receivers.delete", trace.WithAttributes(
 		attribute.String("receiver_uid", uid),
 		attribute.String("receiver_version", version),
@@ -558,8 +562,7 @@ func removedIntegrations(old, new *models.Receiver) []*models.Integration {
 func (rs *ReceiverService) setReceiverProvenance(ctx context.Context, orgID int64, receiver *models.Receiver) error {
 	// Add provenance for all integrations in the receiver.
 	for _, integration := range receiver.Integrations {
-		target := definitions.EmbeddedContactPoint{UID: integration.UID}
-		if err := rs.provisioningStore.SetProvenance(ctx, &target, orgID, receiver.Provenance); err != nil { // TODO: Should we set ProvenanceNone?
+		if err := rs.provisioningStore.SetProvenance(ctx, integration, orgID, receiver.Provenance); err != nil { // TODO: Should we set ProvenanceNone?
 			return err
 		}
 	}
@@ -569,8 +572,7 @@ func (rs *ReceiverService) setReceiverProvenance(ctx context.Context, orgID int6
 func (rs *ReceiverService) deleteProvenances(ctx context.Context, orgID int64, integrations []*models.Integration) error {
 	// Delete provenance for all integrations.
 	for _, integration := range integrations {
-		target := definitions.EmbeddedContactPoint{UID: integration.UID}
-		if err := rs.provisioningStore.DeleteProvenance(ctx, &target, orgID); err != nil {
+		if err := rs.provisioningStore.DeleteProvenance(ctx, integration, orgID); err != nil {
 			return err
 		}
 	}
