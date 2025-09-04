@@ -1,7 +1,9 @@
 import {
   DataFrame,
+  Field,
   FieldColorModeId,
   FieldConfigProperty,
+  FieldOverrideContext,
   FieldType,
   identityOverrideProcessor,
   PanelPlugin,
@@ -19,6 +21,8 @@ import { TickSpacingEditor } from './TickSpacingEditor';
 import { changeToBarChartPanelMigrationHandler } from './migrations';
 import { FieldConfig, Options, defaultFieldConfig, defaultOptions } from './panelcfg.gen';
 import { BarChartSuggestionsSupplier } from './suggestions';
+import { AddBarMarkersEditor } from './AddBarMarkersEditor';
+import { BarMarkersEditor } from './BarMarkersEditor';
 
 export const plugin = new PanelPlugin<Options, FieldConfig>(BarChartPanel)
   .setPanelChangeHandler(changeToBarChartPanelMigrationHandler)
@@ -45,6 +49,7 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(BarChartPanel)
     useCustomConfig: (builder) => {
       const cfg = defaultFieldConfig;
 
+     
       builder
         .addSliderInput({
           path: 'lineWidth',
@@ -74,7 +79,36 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(BarChartPanel)
             options: getGraphFieldOptions().fillGradient,
           },
         });
-
+         builder.addCustomEditor({
+        id: 'addMarker',
+        path: 'barchart.config.add-marker',
+        name: 'Markers',
+        editor: AddBarMarkersEditor,
+        override: AddBarMarkersEditor,
+        process: function (value: any, context: FieldOverrideContext, settings?: any) {
+          // Example implementation: Return the value as-is
+          return value;
+        },
+        shouldApply: function (field: Field): boolean {
+          // Example implementation: Apply to all fields
+          return true;
+        }
+      });
+      builder.addCustomEditor({
+        id: 'Markers',
+        path: 'barchart.config.markers',
+        name: 'Markers',
+        editor: BarMarkersEditor,
+        override: BarMarkersEditor,
+        process: function (value: any, context: FieldOverrideContext, settings?: any) {
+          // Example implementation: Return the value as-is
+          return value;
+        },
+        shouldApply: function (field: Field): boolean {
+          // Example implementation: Apply to all fields
+          return true;
+        }
+      });
       builder.addSelect({
         category: ['Graph styles'],
         name: t('barchart.config.name-transform', 'Transform'),
@@ -252,6 +286,7 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(BarChartPanel)
         'Use the color value for a sibling field to color each bar value.'
       ),
     });
+
 
     commonOptionsBuilder.addTooltipOptions(builder, false, false, optsWithHideZeros);
     commonOptionsBuilder.addLegendOptions(builder);
