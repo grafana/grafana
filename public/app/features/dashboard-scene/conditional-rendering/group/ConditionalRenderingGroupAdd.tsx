@@ -4,17 +4,19 @@ import { SelectableValue } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { ValuePicker } from '@grafana/ui';
 
-import { GroupConditionItemType, ItemsWithConditionalRendering } from './types';
+import { ObjectsWithConditionalRendering } from '../object';
+
+import { GroupConditionConditionType } from './types';
 
 interface Props {
-  itemType: ItemsWithConditionalRendering;
+  objectType: ObjectsWithConditionalRendering;
   hasVariables: boolean;
-  onAdd: (option: SelectableValue<GroupConditionItemType>) => void;
+  onAdd: (option: SelectableValue<GroupConditionConditionType>) => void;
 }
 
-export const ConditionalRenderingGroupAdd = ({ itemType, hasVariables, onAdd }: Props) => {
-  const options = useMemo<Array<SelectableValue<GroupConditionItemType>>>(() => {
-    const allOptions: Array<SelectableValue<GroupConditionItemType>> = [
+export const ConditionalRenderingGroupAdd = ({ objectType, hasVariables, onAdd }: Props) => {
+  const options = useMemo<Array<SelectableValue<GroupConditionConditionType>>>(() => {
+    const allOptions: Array<SelectableValue<GroupConditionConditionType>> = [
       { label: t('dashboard.conditional-rendering.conditions.group.add.data', 'Query result'), value: 'data' },
       {
         label: t('dashboard.conditional-rendering.conditions.group.add.variable', 'Template variable'),
@@ -27,12 +29,12 @@ export const ConditionalRenderingGroupAdd = ({ itemType, hasVariables, onAdd }: 
       },
     ];
 
-    if (itemType !== 'panel') {
+    if (objectType !== 'panel') {
       allOptions.shift();
     }
 
     return allOptions;
-  }, [itemType, hasVariables]);
+  }, [objectType, hasVariables]);
 
   return (
     <ValuePicker
