@@ -133,7 +133,9 @@ func (m *PluginInstaller) install(ctx context.Context, pluginID, version string,
 		return nil, err
 	}
 
-    // Check that the extracted plugin archive has the expected ID and version
+	// Check that the extracted plugin archive has the expected ID and version
+	// but avoid a hard error for backwards compatibility with older plugins
+	// and because in the case of an update, the previous version has been already uninstalled
 	if extractedArchive.ID != pluginID {
 		m.log.Error("Installed plugin ID mismatch", "expected", pluginID, "got", extractedArchive.ID)
 	}
