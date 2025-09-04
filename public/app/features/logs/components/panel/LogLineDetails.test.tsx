@@ -67,6 +67,7 @@ const setup = (
     onResize: jest.fn(),
     timeRange: getDefaultTimeRange(),
     timeZone: 'browser',
+    showControls: true,
     ...(propOverrides || {}),
   };
 
@@ -581,6 +582,7 @@ describe('LogLineDetails', () => {
         logs: [logs[0]],
         timeRange: getDefaultTimeRange(),
         timeZone: 'browser',
+        showControls: true,
         onResize: jest.fn(),
       };
 

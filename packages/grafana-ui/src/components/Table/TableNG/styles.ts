@@ -112,11 +112,6 @@ export const getGridStyles = (theme: GrafanaTheme2, enablePagination?: boolean, 
   };
 };
 
-export const getFooterStyles = (justifyContent: Property.JustifyContent) => ({
-  footerCellCountRows: css({ display: 'flex', justifyContent: 'space-between' }),
-  footerCell: css({ display: 'flex', justifyContent: justifyContent || 'space-between' }),
-});
-
 export const getHeaderCellStyles = (theme: GrafanaTheme2, justifyContent: Property.JustifyContent) =>
   css({
     display: 'flex',
