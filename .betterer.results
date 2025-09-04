@@ -2662,8 +2662,7 @@ exports[`better eslint`] = {
       [0, 0, 0, "Do not use any type assertions.", "1"]
     ],
     "public/app/features/explore/TraceView/components/TracePageHeader/TracePageHeader.tsx:5381": [
-      [0, 0, 0, "React Hook \\"useMemo\\" is called conditionally. React Hooks must be called in the exact same order in every component render.", "0"],
-      [0, 0, 0, "React Hook \\"usePluginLinks\\" is called conditionally. React Hooks must be called in the exact same order in every component render.", "1"]
+      [0, 0, 0, "React Hook \\"useMemo\\" is called conditionally. React Hooks must be called in the exact same order in every component render.", "0"]
     ],
     "public/app/features/explore/TraceView/components/TracePageHeader/index.tsx:5381": [
       [0, 0, 0, "Do not re-export imported variable (\`./TracePageHeader\`)", "0"]

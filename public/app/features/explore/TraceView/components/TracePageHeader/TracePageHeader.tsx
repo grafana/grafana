@@ -26,7 +26,7 @@ import {
   PluginExtensionPoints,
 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { reportInteraction, usePluginLinks } from '@grafana/runtime';
+import { reportInteraction, renderLimitedComponents, usePluginComponents, usePluginLinks } from '@grafana/runtime';
 import { TimeZone } from '@grafana/schema';
 import {
   Badge,
@@ -95,6 +95,28 @@ export const TracePageHeader = memo((props: TracePageHeaderProps) => {
     setHeaderHeight(document.querySelector('.' + styles.header)?.scrollHeight ?? 0);
   }, [setHeaderHeight, showSpanFilters, styles.header]);
 
+  // Build context for plugin extensions if trace is available
+  const traceContext: TraceViewPluginExtensionContext | undefined = trace
+    ? {
+        ...trace,
+        datasource: {
+          name: datasourceName,
+          uid: datasourceUid,
+          type: datasourceType,
+        },
+      }
+    : undefined;
+
+  const { links: extensionLinks } = usePluginLinks({
+    extensionPointId: PluginExtensionPoints.TraceViewHeaderActions,
+    context: traceContext,
+    limitPerPlugin: 2,
+  });
+
+  const { components: extensionComponents } = usePluginComponents<TraceViewPluginExtensionContext>({
+    extensionPointId: PluginExtensionPoints.TraceViewHeaderActions,
+  });
+
   if (!trace) {
     return null;
   }
@@ -109,22 +131,6 @@ export const TracePageHeader = memo((props: TracePageHeaderProps) => {
   const serviceCount = useMemo(() => {
     return new Set(trace.spans.map((span) => span.process?.serviceName)).size;
   }, [trace.spans]);
-
-  // Get plugin extensions for trace view header actions
-  const traceContext: TraceViewPluginExtensionContext = {
-    ...trace,
-    datasource: {
-      name: datasourceName,
-      uid: datasourceUid,
-      type: datasourceType,
-    },
-  };
-
-  const { links: extensionLinks } = usePluginLinks({
-    extensionPointId: PluginExtensionPoints.TraceViewHeaderActions,
-    context: traceContext,
-    limitPerPlugin: 2,
-  });
 
   let statusColor: BadgeColor = 'green';
   if (status && status.length > 0) {
@@ -211,6 +217,16 @@ export const TracePageHeader = memo((props: TracePageHeaderProps) => {
               ))}
             </div>
           )}
+
+          <div className={styles.actions}>
+            {traceContext
+              ? renderLimitedComponents<TraceViewPluginExtensionContext>({
+                  props: traceContext,
+                  components: extensionComponents,
+                  limit: 2,
+                })
+              : null}
+          </div>
 
           {config.feedbackLinksEnabled && (
             <Tooltip
