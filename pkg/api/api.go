@@ -277,13 +277,6 @@ func (hs *HTTPServer) registerRoutes() {
 			userRoute.Get("/teams", routing.Wrap(hs.GetSignedInUserTeamList))
 
 			userRoute.Get("/stars", routing.Wrap(hs.starApi.GetStars))
-			// Deprecated: use /stars/dashboard/uid/:uid API instead.
-			// nolint:staticcheck
-			userRoute.Post("/stars/dashboard/:id", routing.Wrap(hs.starApi.StarDashboard))
-			// Deprecated: use /stars/dashboard/uid/:uid API instead.
-			// nolint:staticcheck
-			userRoute.Delete("/stars/dashboard/:id", routing.Wrap(hs.starApi.UnstarDashboard))
-
 			userRoute.Post("/stars/dashboard/uid/:uid", routing.Wrap(hs.starApi.StarDashboardByUID))
 			userRoute.Delete("/stars/dashboard/uid/:uid", routing.Wrap(hs.starApi.UnstarDashboardByUID))
 
