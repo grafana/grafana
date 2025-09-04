@@ -119,6 +119,15 @@ func (rev *ConfigRevision) GetReceivers(uids []string, prov Provenances) ([]*mod
 	return receivers, nil
 }
 
+// GetReceiversNames returns a map of receiver names
+func (rev *ConfigRevision) GetReceiversNames() map[string]struct{} {
+	result := make(map[string]struct{}, len(rev.Config.AlertmanagerConfig.Receivers))
+	for _, r := range rev.Config.AlertmanagerConfig.Receivers {
+		result[r.GetName()] = struct{}{}
+	}
+	return result
+}
+
 func DecryptedReceivers(receivers []*definitions.PostableApiReceiver, decryptFn models.DecryptFn) ([]*definitions.PostableApiReceiver, error) {
 	decrypted := make([]*definitions.PostableApiReceiver, len(receivers))
 	for i, r := range receivers {
