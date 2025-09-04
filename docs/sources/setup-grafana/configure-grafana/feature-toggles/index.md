@@ -42,6 +42,7 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `dashgpt`                              | Enable AI powered features in dashboards                                                                                                                      | Yes                |
 | `panelMonitoring`                      | Enables panel monitoring through logs and measurements                                                                                                        | Yes                |
 | `formatString`                         | Enable format string transformer                                                                                                                              | Yes                |
+| `kubernetesDashboards`                 | Use the kubernetes API in the frontend for dashboards                                                                                                         | Yes                |
 | `addFieldFromCalculationStatFunctions` | Add cumulative and window functions to the add field from calculation transformation                                                                          | Yes                |
 | `annotationPermissionUpdate`           | Change the way annotation permissions work by scoping them to folders and dashboards.                                                                         | Yes                |
 | `dashboardSceneForViewers`             | Enables dashboard rendering using Scenes for viewer roles                                                                                                     | Yes                |
@@ -78,6 +79,8 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `unifiedNavbars`                       | Enables unified navbars                                                                                                                                       |                    |
 | `grafanaAssistantInProfilesDrilldown`  | Enables integration with Grafana Assistant in Profiles Drilldown                                                                                              | Yes                |
 | `tabularNumbers`                       | Use fixed-width numbers globally in the UI                                                                                                                    |                    |
+| `dashboardDsAdHocFiltering`            | Enables adhoc filtering support for the dashboard datasource                                                                                                  | Yes                |
+| `adhocFiltersInTooltips`               | Enable adhoc filter buttons in visualization tooltips                                                                                                         | Yes                |
 
 ## Public preview feature toggles
 
@@ -98,12 +101,14 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `canvasPanelPanZoom`              | Allow pan and zoom in canvas panel                                                                     |
 | `regressionTransformation`        | Enables regression analysis transformation                                                             |
 | `alertingSaveStateCompressed`     | Enables the compressed protobuf-based alert state storage                                              |
+| `sqlExpressions`                  | Enables SQL Expressions, which can execute SQL queries against data source results.                    |
 | `enableSCIM`                      | Enables SCIM support for user and group management                                                     |
 | `elasticsearchCrossClusterSearch` | Enables cross cluster search in the Elasticsearch datasource                                           |
 | `alertRuleRestore`                | Enables the alert rule restore feature                                                                 |
 | `azureMonitorLogsBuilderEditor`   | Enables the logs builder mode for the Azure Monitor data source                                        |
 | `localeFormatPreference`          | Specifies the locale so the correct format for numbers and dates can be shown                          |
 | `logsPanelControls`               | Enables a control component for the logs panel in Explore                                              |
+| `azureResourcePickerUpdates`      | Enables the updated Azure Monitor resource picker                                                      |
 
 ## Development feature toggles
 

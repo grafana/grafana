@@ -45,6 +45,9 @@
             "cellOptions": {
               "type": "auto"
             },
+            "footer": {
+              "reducers": []
+            },
             "inspect": false
           },
           "mappings": [],
@@ -122,6 +125,9 @@
             "align": "center",
             "cellOptions": {
               "type": "color-background"
+            },
+            "footer": {
+              "reducers": []
             },
             "inspect": false
           },
@@ -273,6 +279,9 @@
             "cellOptions": {
               "type": "auto"
             },
+            "footer": {
+              "reducers": []
+            },
             "inspect": false
           },
           "decimals": 1,
@@ -350,6 +359,9 @@
             "cellOptions": {
               "type": "auto"
             },
+            "footer": {
+              "reducers": []
+            },
             "inspect": false
           },
           "mappings": [],
@@ -417,6 +429,9 @@
             "align": "auto",
             "cellOptions": {
               "type": "auto"
+            },
+            "footer": {
+              "reducers": []
             },
             "inspect": false
           },
@@ -486,6 +501,9 @@
             "cellOptions": {
               "type": "auto"
             },
+            "footer": {
+              "reducers": []
+            },
             "inspect": false
           },
           "mappings": [],
@@ -552,6 +570,9 @@
             "align": "auto",
             "cellOptions": {
               "type": "auto"
+            },
+            "footer": {
+              "reducers": []
             },
             "inspect": false
           },
@@ -632,6 +653,9 @@
             "cellOptions": {
               "type": "auto"
             },
+            "footer": {
+              "reducers": []
+            },
             "inspect": false
           },
           "mappings": [],
@@ -700,6 +724,9 @@
             "align": "auto",
             "cellOptions": {
               "type": "color-background"
+            },
+            "footer": {
+              "reducers": []
             },
             "inspect": false
           },
@@ -804,6 +831,9 @@
             "cellOptions": {
               "type": "auto"
             },
+            "footer": {
+              "reducers": []
+            },
             "inspect": false
           },
           "mappings": [],
@@ -900,6 +930,9 @@
             "align": "auto",
             "cellOptions": {
               "type": "auto"
+            },
+            "footer": {
+              "reducers": []
             },
             "inspect": false
           },
@@ -1010,6 +1043,9 @@
             "align": "auto",
             "cellOptions": {
               "type": "auto"
+            },
+            "footer": {
+              "reducers": []
             },
             "inspect": false
           },
@@ -1126,6 +1162,9 @@
             "align": "auto",
             "cellOptions": {
               "type": "auto"
+            },
+            "footer": {
+              "reducers": []
             },
             "inspect": false
           },

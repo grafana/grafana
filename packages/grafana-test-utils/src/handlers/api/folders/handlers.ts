@@ -11,6 +11,7 @@ const collator = new Intl.Collator();
 const mockAccessControl = {
   'dashboards.permissions:write': true,
   'dashboards:create': true,
+  'folders:write': true,
 };
 const additionalProperties = {
   canAdmin: true,
@@ -78,6 +79,49 @@ const getFolderHandler = () =>
     });
   });
 
-const handlers = [listFoldersHandler(), getFolderHandler()];
+const createFolderHandler = () =>
+  http.post<never, { title: string; parentUid?: string }>('/api/folders', async ({ request }) => {
+    const body = await request.json();
+    if (!body || !body.title) {
+      return HttpResponse.json({ message: 'folder title cannot be empty' }, { status: 400 });
+    }
+    const random = Chance(body.title);
+    const uid = random.string({ length: 10 });
+    const id = random.integer({ min: 1, max: 1000 });
+
+    return HttpResponse.json({
+      id,
+      uid: uid,
+      orgId: 1,
+      title: body.title,
+      url: `/dashboards/f/${uid}/${body.title}`,
+      hasAcl: false,
+      canSave: true,
+      canEdit: true,
+      canAdmin: true,
+      canDelete: true,
+      parentUid: body.parentUid,
+      createdBy: 'admin',
+      created: '2025-08-26T12:19:27+01:00',
+      updatedBy: 'admin',
+      updated: '2025-08-26T12:19:27+01:00',
+      version: 1,
+    });
+  });
+
+const saveFolderHandler = () =>
+  http.put<{ uid: string }, { title: string; version: number }>('/api/folders/:uid', async ({ params, request }) => {
+    const { uid } = params;
+    const body = await request.json();
+    const folder = mockTree.find((v) => v.item.uid === uid);
+
+    if (!folder) {
+      return HttpResponse.json({ message: 'folder not found' }, { status: 404 });
+    }
+
+    return HttpResponse.json({ ...folder.item, title: body.title });
+  });
+
+const handlers = [listFoldersHandler(), getFolderHandler(), createFolderHandler(), saveFolderHandler()];
 
 export default handlers;

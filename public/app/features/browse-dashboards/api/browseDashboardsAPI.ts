@@ -5,7 +5,6 @@ import { t } from '@grafana/i18n';
 import { config, getBackendSrv, isFetchError, locationService } from '@grafana/runtime';
 import { Dashboard } from '@grafana/schema';
 import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2';
-import { folderAPIv1beta1 as folderAPI } from 'app/api/clients/folder/v1beta1';
 import { isProvisionedFolderCheck } from 'app/api/clients/folder/v1beta1/utils';
 import { createBaseQuery, handleRequestError } from 'app/api/createBaseQuery';
 import appEvents from 'app/core/app_events';
@@ -24,10 +23,10 @@ import { getDashboardScenePageStateManager } from '../../dashboard-scene/pages/D
 import { refetchChildren, refreshParents } from '../state/actions';
 import { DashboardTreeSelection } from '../types';
 
-import { isProvisionedDashboard, isProvisionedFolder } from './isProvisioned';
+import { isProvisionedDashboard } from './isProvisioned';
 import { PAGE_SIZE } from './services';
 
-interface DeleteFoldersArgs {
+export interface DeleteFoldersArgs {
   folderUIDs: string[];
 }
 
@@ -35,9 +34,14 @@ interface DeleteDashboardsArgs {
   dashboardUIDs: string[];
 }
 
-interface MoveItemsArgs {
+interface MoveDashboardsArgs {
   destinationUID: string;
-  selectedItems: Omit<DashboardTreeSelection, 'panel' | '$all'>;
+  dashboardUIDs: string[];
+}
+
+export interface MoveFoldersArgs {
+  destinationUID: string;
+  folderUIDs: string[];
 }
 
 export interface ImportInputs {
@@ -100,7 +104,6 @@ export const browseDashboardsAPI = createApi({
       }),
       onQueryStarted: ({ parentUid }, { queryFulfilled, dispatch }) => {
         queryFulfilled.then(async ({ data: folder }) => {
-          await contextSrv.fetchUserPermissions();
           dispatch(
             refetchChildren({
               parentUID: parentUid,
@@ -112,7 +115,7 @@ export const browseDashboardsAPI = createApi({
     }),
 
     // save an existing folder (e.g. rename)
-    saveFolder: builder.mutation<FolderDTO, FolderDTO>({
+    saveFolder: builder.mutation<FolderDTO, Pick<FolderDTO, 'uid' | 'title' | 'version' | 'parentUid'>>({
       // because the getFolder calls contain the parents, renaming a parent/grandparent/etc needs to invalidate all child folders
       // we could do something smart and recursively invalidate these child folders but it doesn't seem worth it
       // instead let's just invalidate all the getFolder calls
@@ -218,37 +221,13 @@ export const browseDashboardsAPI = createApi({
       },
     }),
 
-    // move *multiple* items (folders and dashboards). used in the move modal.
-    moveItems: builder.mutation<void, MoveItemsArgs>({
+    // move *multiple* dashboards. used in the move modal.
+    moveDashboards: builder.mutation<void, MoveDashboardsArgs>({
       invalidatesTags: ['getFolder'],
-      queryFn: async ({ selectedItems, destinationUID }, _api, _extraOptions, baseQuery) => {
-        const selectedDashboards = Object.keys(selectedItems.dashboard).filter((uid) => selectedItems.dashboard[uid]);
-        const selectedFolders = Object.keys(selectedItems.folder).filter((uid) => selectedItems.folder[uid]);
-
-        // Move all the folders sequentially
-        // TODO error handling here
-        for (const folderUID of selectedFolders) {
-          if (config.featureToggles.provisioning) {
-            const folder = await dispatch(folderAPI.endpoints.getFolder.initiate({ name: folderUID }));
-            if (isProvisionedFolder(folder.data)) {
-              appEvents.publish({
-                type: AppEvents.alertWarning.name,
-                payload: ['Cannot move provisioned folder'],
-              });
-              continue;
-            }
-          }
-
-          await baseQuery({
-            url: `/folders/${folderUID}/move`,
-            method: 'POST',
-            body: { parentUID: destinationUID },
-          });
-        }
-
+      queryFn: async ({ dashboardUIDs, destinationUID }, _api, _extraOptions, baseQuery) => {
         // Move all the dashboards sequentially
         // TODO error handling here
-        for (const dashboardUID of selectedDashboards) {
+        for (const dashboardUID of dashboardUIDs) {
           const fullDash = await getDashboardAPI().getDashboardDTO(dashboardUID);
           const dashboard = isDashboardV2Resource(fullDash) ? fullDash.spec : fullDash.dashboard;
           const k8s = isDashboardV2Resource(fullDash) ? fullDash.metadata : undefined;
@@ -272,9 +251,7 @@ export const browseDashboardsAPI = createApi({
         }
         return { data: undefined };
       },
-      onQueryStarted: ({ destinationUID, selectedItems }, { queryFulfilled, dispatch }) => {
-        const selectedDashboards = Object.keys(selectedItems.dashboard).filter((uid) => selectedItems.dashboard[uid]);
-        const selectedFolders = Object.keys(selectedItems.folder).filter((uid) => selectedItems.folder[uid]);
+      onQueryStarted: ({ destinationUID, dashboardUIDs }, { queryFulfilled, dispatch }) => {
         queryFulfilled.then(() => {
           dispatch(
             refetchChildren({
@@ -282,7 +259,47 @@ export const browseDashboardsAPI = createApi({
               pageSize: PAGE_SIZE,
             })
           );
-          dispatch(refreshParents([...selectedFolders, ...selectedDashboards]));
+          dispatch(refreshParents(dashboardUIDs));
+        });
+      },
+    }),
+
+    // move *multiple* folders. used in the move modal.
+    moveFolders: builder.mutation<void, MoveFoldersArgs>({
+      invalidatesTags: ['getFolder'],
+      queryFn: async ({ folderUIDs, destinationUID }, _api, _extraOptions, baseQuery) => {
+        // Move all the folders sequentially
+        // TODO error handling here
+        for (const folderUID of folderUIDs) {
+          if (
+            await isProvisionedFolderCheck(dispatch, folderUID, {
+              warning: t(
+                'folders.api.folder-move-error-provisioned',
+                'Cannot move provisioned folder. To move it, move it in the repository and synchronise to apply the changes.'
+              ),
+            })
+          ) {
+            continue;
+          }
+
+          await baseQuery({
+            url: `/folders/${folderUID}/move`,
+            method: 'POST',
+            body: { parentUID: destinationUID },
+          });
+        }
+
+        return { data: undefined };
+      },
+      onQueryStarted: ({ destinationUID, folderUIDs }, { queryFulfilled, dispatch }) => {
+        queryFulfilled.then(() => {
+          dispatch(
+            refetchChildren({
+              parentUID: destinationUID,
+              pageSize: PAGE_SIZE,
+            })
+          );
+          dispatch(refreshParents(folderUIDs));
         });
       },
     }),
@@ -500,7 +517,8 @@ export const {
   useGetFolderQuery,
   useLazyGetFolderQuery,
   useMoveFolderMutation,
-  useMoveItemsMutation,
+  useMoveDashboardsMutation,
+  useMoveFoldersMutation,
   useNewFolderMutation,
   useSaveDashboardMutation,
   useSaveFolderMutation,

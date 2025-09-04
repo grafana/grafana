@@ -719,9 +719,6 @@ func (c *ExtraConfiguration) GetSanitizedAlertmanagerConfigYAML() (string, error
 		return "", err
 	}
 
-	// Remove global settings as they are not used in Grafana
-	prometheusConfig.Global = nil
-
 	configYAML, err := yaml.Marshal(prometheusConfig)
 	if err != nil {
 		return "", fmt.Errorf("failed to marshal sanitized configuration: %w", err)

@@ -11,6 +11,10 @@ export const useDataSourceInfo = (dataSourceInfo: DataSourceInfo): PageInfoItem[
   const info: PageInfoItem[] = [];
   const alertingEnabled = dataSourceInfo.alertingSupported;
 
+  if (!dataSourceInfo.dataSourcePluginName) {
+    return info;
+  }
+
   info.push({
     label: t('datasources.use-data-source-info.label.type', 'Type'),
     value: dataSourceInfo.dataSourcePluginName,

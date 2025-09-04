@@ -270,6 +270,7 @@ export interface FeatureToggles {
   kubernetesLibraryPanels?: boolean;
   /**
   * Use the kubernetes API in the frontend for dashboards
+  * @default true
   */
   kubernetesDashboards?: boolean;
   /**
@@ -429,6 +430,10 @@ export interface FeatureToggles {
   * Enable the secrets management API and services under app platform
   */
   secretsManagementAppPlatform?: boolean;
+  /**
+  * Enable the secrets management app platform UI
+  */
+  secretsManagementAppPlatformUI?: boolean;
   /**
   * Writes the state periodically to the database, asynchronous to rule evaluation
   */
@@ -612,6 +617,10 @@ export interface FeatureToggles {
   */
   newFiltersUI?: boolean;
   /**
+  * Allows authenticated API calls in actions
+  */
+  vizActionsAuth?: boolean;
+  /**
   * Uses Prometheus rules as the primary source of truth for ruler-enabled data sources
   */
   alertingPrometheusRulesPrimary?: boolean;
@@ -747,6 +756,11 @@ export interface FeatureToggles {
   * @default false
   */
   alertingAIGenTemplates?: boolean;
+  /**
+  * Enable enrichment per rule in the alerting UI.
+  * @default false
+  */
+  alertingEnrichmentPerRule?: boolean;
   /**
   * Enable AI-analyze central state history.
   * @default false
@@ -901,10 +915,6 @@ export interface FeatureToggles {
   * Enables the unified storage grpc connection pool
   */
   unifiedStorageGrpcConnectionPool?: boolean;
-  /**
-  * Enables the extension sidebar
-  */
-  extensionSidebar?: boolean;
   /**
   * Enables UI functionality to permanently delete alert rules
   * @default true
@@ -1063,6 +1073,7 @@ export interface FeatureToggles {
   unifiedStorageSearchDualReaderEnabled?: boolean;
   /**
   * Enables adhoc filtering support for the dashboard datasource
+  * @default true
   */
   dashboardDsAdHocFiltering?: boolean;
   /**
@@ -1071,11 +1082,16 @@ export interface FeatureToggles {
   dashboardLevelTimeMacros?: boolean;
   /**
   * Starts Grafana in remote secondary mode pulling the latest state from the remote Alertmanager to avoid duplicate notifications.
-  * @default false
   */
   alertmanagerRemoteSecondaryWithRemoteState?: boolean;
   /**
+  * Enables sharing a list of APIs with a list of plugins
+  * @default false
+  */
+  restrictedPluginApis?: boolean;
+  /**
   * Enable adhoc filter buttons in visualization tooltips
+  * @default true
   */
   adhocFiltersInTooltips?: boolean;
   /**
@@ -1101,4 +1117,19 @@ export interface FeatureToggles {
   * @default false
   */
   teamFolders?: boolean;
+  /**
+  * Enables the alerting triage feature
+  * @default false
+  */
+  alertingTriage?: boolean;
+  /**
+  * Enables the Graphite data source full backend mode
+  * @default false
+  */
+  graphiteBackendMode?: boolean;
+  /**
+  * Enables the updated Azure Monitor resource picker
+  * @default false
+  */
+  azureResourcePickerUpdates?: boolean;
 }

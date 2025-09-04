@@ -162,7 +162,7 @@ function FormContent({ initialValues, repository, workflowOptions, folder, onDis
 
           <ResourceEditFormSharedFields
             resourceType="folder"
-            isNew={false}
+            isNew
             workflow={workflow}
             workflowOptions={workflowOptions}
             repository={repository}
@@ -187,13 +187,13 @@ function FormContent({ initialValues, repository, workflowOptions, folder, onDis
           )}
 
           <Stack gap={2}>
+            <Button variant="secondary" fill="outline" onClick={onDismiss}>
+              <Trans i18nKey="browse-dashboards.new-provisioned-folder-form.cancel">Cancel</Trans>
+            </Button>
             <Button type="submit" disabled={request.isLoading || !!formState?.errors.title}>
               {request.isLoading
                 ? t('browse-dashboards.new-provisioned-folder-form.button-creating', 'Creating...')
                 : t('browse-dashboards.new-provisioned-folder-form.button-create', 'Create')}
-            </Button>
-            <Button variant="secondary" fill="outline" onClick={onDismiss}>
-              <Trans i18nKey="browse-dashboards.new-provisioned-folder-form.cancel">Cancel</Trans>
             </Button>
           </Stack>
         </Stack>
@@ -205,7 +205,6 @@ function FormContent({ initialValues, repository, workflowOptions, folder, onDis
 export function NewProvisionedFolderForm({ parentFolder, onDismiss }: Props) {
   const { workflowOptions, repository, folder, initialValues, isReadOnlyRepo } = useProvisionedFolderFormData({
     folderUid: parentFolder?.uid,
-    action: 'create',
     title: '', // Empty title for new folders
   });
 

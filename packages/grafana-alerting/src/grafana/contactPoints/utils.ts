@@ -1,5 +1,6 @@
 import { countBy, isEmpty } from 'lodash';
 
+import { Receiver } from '../api/v0alpha1/api.gen';
 import { ContactPoint } from '../api/v0alpha1/types';
 
 /**
@@ -12,7 +13,7 @@ import { ContactPoint } from '../api/v0alpha1/types';
  * @param contactPoint - The ContactPoint object to describe
  * @returns A string description of the ContactPoint's integrations
  */
-export function getContactPointDescription(contactPoint: ContactPoint): string {
+export function getContactPointDescription(contactPoint: ContactPoint | Receiver): string {
   if (isEmpty(contactPoint.spec.integrations)) {
     return '<empty contact point>';
   }

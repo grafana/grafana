@@ -1,12 +1,12 @@
 package extras
 
 import (
+	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
+	"github.com/grafana/grafana/apps/provisioning/pkg/repository/github"
+	"github.com/grafana/grafana/apps/provisioning/pkg/repository/local"
+	"github.com/grafana/grafana/apps/secret/pkg/decrypt"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository/github"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository/local"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/webhooks"
-	"github.com/grafana/grafana/pkg/registry/apis/secret"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -19,14 +19,17 @@ func ProvideProvisioningOSSExtras(webhook *webhooks.WebhookExtraBuilder) []provi
 
 func ProvideProvisioningOSSRepositoryExtras(
 	cfg *setting.Cfg,
-	decryptSvc secret.DecryptService,
+	decryptSvc decrypt.DecryptService,
 	ghFactory *github.Factory,
 	webhooksBuilder *webhooks.WebhookExtraBuilder,
 ) []repository.Extra {
 	return []repository.Extra{
-		local.Extra(cfg),
+		local.Extra(
+			cfg.HomePath,
+			cfg.PermittedProvisioningPaths,
+		),
 		github.Extra(
-			repository.DecryptService(decryptSvc),
+			repository.ProvideDecrypter(decryptSvc),
 			ghFactory,
 			webhooksBuilder,
 		),

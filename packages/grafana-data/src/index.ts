@@ -439,6 +439,13 @@ export {
   type DataSourcePluginContextType,
   PluginContext,
 } from './context/plugins/PluginContext';
+export {
+  type RestrictedGrafanaApisContextType,
+  type RestrictedGrafanaApisAllowList,
+  RestrictedGrafanaApisContext,
+  RestrictedGrafanaApisContextProvider,
+  useRestrictedGrafanaApis,
+} from './context/plugins/RestrictedGrafanaApis';
 export { type PluginContextProviderProps, PluginContextProvider } from './context/plugins/PluginContextProvider';
 export {
   type DataSourcePluginContextProviderProps,
@@ -651,6 +658,7 @@ export {
   type DataSourceConstructor,
   type DataSourceGetTagKeysOptions,
   type DataSourceGetTagValuesOptions,
+  type DataSourceGetDrilldownsApplicabilityOptions,
   type MetadataInspectorProps,
   type LegacyMetricFindQueryOptions,
   type QueryEditorProps,
@@ -667,7 +675,7 @@ export {
   type QueryFixAction,
   type QueryHint,
   type MetricFindValue,
-  type FiltersApplicability,
+  type DrilldownsApplicability,
   type DataSourceJsonData,
   type DataSourceSettings,
   type DataSourceInstanceSettings,
@@ -841,6 +849,8 @@ export {
   defaultActionConfig,
   contentTypeOptions,
   httpMethodOptions,
+  type FetchOptions,
+  type InfinityOptions,
 } from './types/action';
 export { DataFrameType } from './types/dataFrameTypes';
 export {
