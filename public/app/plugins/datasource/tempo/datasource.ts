@@ -15,6 +15,7 @@ import {
   DataSourceGetTagValuesOptions,
   DataSourceInstanceSettings,
   dateTime,
+  FieldDTO,
   FieldType,
   LoadingState,
   NodeGraphDataFrameFieldNames,
@@ -98,6 +99,16 @@ interface ServiceMapQueryResponseWithRates {
   rates: Array<DataFrame | DataFrameDTO>;
   nodes: DataFrame;
   edges: DataFrame;
+}
+
+interface BackendNestedFrameDTO {
+  schema: {
+    fields: FieldDTO[];
+    meta?: DataFrameDTO['meta'];
+  };
+  data: {
+    values: unknown[][];
+  };
 }
 
 interface TempoQueryMetrics {
@@ -506,34 +517,62 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
             subQueries.push(this.handleStreamingQuery(options, traceqlSearchTargets, queryFromFilters));
           } else {
             const startTime = performance.now();
+            const queries = traceqlSearchTargets.map((t) => ({ ...t, query: queryFromFilters }));
+
             subQueries.push(
-              this._request('/api/search', {
-                q: queryFromFilters,
-                limit: options.targets[0].limit ?? DEFAULT_LIMIT,
-                spss: options.targets[0].spss ?? DEFAULT_SPSS,
-                start: options.range.from.unix(),
-                end: options.range.to.unix(),
-              }).pipe(
-                map((response) => {
-                  reportTempoQueryMetrics('grafana_traces_traceql_response', options, {
-                    success: true,
-                    streaming: false,
-                    latencyMs: Math.round(performance.now() - startTime), // rounded to nearest millisecond
-                    query: queryFromFilters ?? '',
-                  });
-                  return {
-                    data: formatTraceQLResponse(
-                      response.data.traces,
-                      this.instanceSettings,
-                      targets.traceqlSearch[0].tableType
-                    ),
-                  };
+              super.query({ ...options, targets: queries }).pipe(
+                map((response: DataQueryResponse) => {
+                  if (queries[0].tableType === SearchTableType.Traces && response.data && response.data.length > 0) {
+                    response.data.forEach((frame) => {
+                      reportTempoQueryMetrics('grafana_traces_traceql_response', options, {
+                        success: true,
+                        streaming: false,
+                        latencyMs: Math.round(performance.now() - startTime),
+                        query: queryFromFilters ?? '',
+                      });
+
+                      // The backend does not support nested data frames directly, so we return
+                      // what should be nested as a JSON array in a column: e.g. "[{dataframe}]".
+                      // Here, we take the frames from that column, and change the type to "nestedFrames"
+                      // This allows the frontend to render the nested frames as intended.
+                      const nested = frame.fields[5];
+                      nested.type = 'nestedFrames';
+                      nested.typeInfo.frame = 'nestedFrames';
+
+                      // The returned JSON data frame structure does not fully match what the frontend expects for
+                      // rendering nested frames. Here, we transform each nested frame array to the correct format:
+                      //
+                      // - For each row in the main data frame, there is an array of nested frames (nestedFrameArray).
+                      // - Each nested frame (nestedFrame) contains a 'schema' (with 'fields' and 'meta') and 'data' (with 'values').
+                      // - We create a new frame object (newNestedFrame) with the expected 'fields' and 'meta' properties.
+                      // - For each field, we copy its definition and assign the corresponding values from nestedFrame.data.values.
+                      // - We also set the 'length' property on the new frame, which is required by the frontend to know how many rows it contains.
+                      // - Finally, we replace the original nestedFrame in the array with the transformed newNestedFrame.
+                      const mestedFrames = nested.values as BackendNestedFrameDTO[][];
+
+                      nested.values = mestedFrames.map((nestedFrameArray) => {
+                        return nestedFrameArray.map((nestedFrame) => {
+                          const newNestedFrame = { fields: nestedFrame.schema.fields, meta: nestedFrame.schema.meta };
+
+                          newNestedFrame.fields = newNestedFrame.fields.map((field, fieldIndex: number) => {
+                            return { ...field, values: nestedFrame.data.values[fieldIndex] };
+                          });
+
+                          const rowCount = Array.isArray(nestedFrame.data.values?.[0])
+                            ? nestedFrame.data.values?.[0].length
+                            : 0;
+                          return { fields: newNestedFrame.fields, meta: nestedFrame.schema.meta, length: rowCount };
+                        });
+                      });
+                    });
+                  }
+                  return response;
                 }),
                 catchError((err) => {
                   reportTempoQueryMetrics('grafana_traces_traceql_response', options, {
                     success: false,
                     streaming: false,
-                    latencyMs: Math.round(performance.now() - startTime), // rounded to nearest millisecond
+                    latencyMs: Math.round(performance.now() - startTime),
                     query: queryFromFilters ?? '',
                     error: getErrorMessage(err.message),
                     statusCode: err.status,
