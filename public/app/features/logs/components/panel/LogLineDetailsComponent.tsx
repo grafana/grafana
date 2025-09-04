@@ -14,6 +14,7 @@ import { createLogLineLinks } from '../logParser';
 import { LogLineDetailsDisplayedFields } from './LogLineDetailsDisplayedFields';
 import { LabelWithLinks, LogLineDetailsFields, LogLineDetailsLabelFields } from './LogLineDetailsFields';
 import { LogLineDetailsHeader } from './LogLineDetailsHeader';
+import { LogLineDetailsLinks } from './LogLineDetailsLinks';
 import { LogLineDetailsLog } from './LogLineDetailsLog';
 import { LogLineDetailsTrace } from './LogLineDetailsTrace';
 import { useLogListContext } from './LogListContext';
@@ -118,6 +119,11 @@ export const LogLineDetailsComponent = memo(
       !labelGroups.length &&
       !fieldsWithoutLinks.length;
 
+    const allLinks = useMemo(
+      () => [...fieldsWithLinks.links, ...fieldsWithLinks.linksFromVariableMap],
+      [fieldsWithLinks.links, fieldsWithLinks.linksFromVariableMap]
+    );
+
     return (
       <>
         <LogLineDetailsHeader focusLogLine={focusLogLine} log={log} search={search} onSearch={handleSearch} />
@@ -141,7 +147,7 @@ export const LogLineDetailsComponent = memo(
               <LogLineDetailsDisplayedFields />
             </ControlledCollapse>
           )}
-          {fieldsWithLinks.links.length > 0 && (
+          {allLinks.length > 0 && (
             <ControlledCollapse
               className={styles.collapsable}
               label={t('logs.log-line-details.links-section', 'Links')}
@@ -149,20 +155,7 @@ export const LogLineDetailsComponent = memo(
               isOpen={linksOpen}
               onToggle={(isOpen: boolean) => handleToggle('linksOpen', isOpen)}
             >
-              <LogLineDetailsFields
-                disableActions
-                log={log}
-                logs={logs}
-                fields={fieldsWithLinks.links}
-                search={search}
-              />
-              <LogLineDetailsFields
-                disableActions
-                log={log}
-                logs={logs}
-                fields={fieldsWithLinks.linksFromVariableMap}
-                search={search}
-              />
+              <LogLineDetailsLinks log={log} logs={logs} fields={allLinks} search={search} />
             </ControlledCollapse>
           )}
           {trace && (

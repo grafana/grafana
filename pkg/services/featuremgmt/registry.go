@@ -450,9 +450,10 @@ var (
 		{
 			Name:         "kubernetesDashboards",
 			Description:  "Use the kubernetes API in the frontend for dashboards",
-			Stage:        FeatureStageExperimental,
-			Owner:        grafanaAppPlatformSquad,
+			Stage:        FeatureStageGeneralAvailability,
+			Owner:        grafanaDashboardsSquad,
 			FrontendOnly: true,
+			Expression:   "true", // enabled by default
 		},
 		{
 			Name:            "kubernetesShortURLs",
@@ -725,6 +726,12 @@ var (
 			Owner:       grafanaOperatorExperienceSquad,
 		},
 		{
+			Name:        "secretsManagementAppPlatformUI",
+			Description: "Enable the secrets management app platform UI",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaOperatorExperienceSquad,
+		},
+		{
 			Name:         "alertingSaveStatePeriodic",
 			Description:  "Writes the state periodically to the database, asynchronous to rule evaluation",
 			Stage:        FeatureStagePrivatePreview,
@@ -778,7 +785,7 @@ var (
 		{
 			Name:         "sqlExpressions",
 			Description:  "Enables SQL Expressions, which can execute SQL queries against data source results.",
-			Stage:        FeatureStagePrivatePreview,
+			Stage:        FeatureStagePublicPreview,
 			FrontendOnly: false,
 			Owner:        grafanaDatasourcesCoreServicesSquad,
 		},
@@ -1054,6 +1061,15 @@ var (
 			Expression:  "true", // enabled by default
 		},
 		{
+			Name:              "vizActionsAuth",
+			Description:       "Allows authenticated API calls in actions",
+			Stage:             FeatureStagePublicPreview,
+			Owner:             grafanaDatavizSquad,
+			FrontendOnly:      true,
+			HideFromAdminPage: true,
+			HideFromDocs:      true,
+		},
+		{
 			Name:         "alertingPrometheusRulesPrimary",
 			Description:  "Uses Prometheus rules as the primary source of truth for ruler-enabled data sources",
 			Stage:        FeatureStageExperimental,
@@ -1278,6 +1294,15 @@ var (
 		{
 			Name:              "alertingAIGenTemplates",
 			Description:       "Enable AI-generated alerting templates.",
+			Stage:             FeatureStageExperimental,
+			Owner:             grafanaAlertingSquad,
+			HideFromAdminPage: true,
+			HideFromDocs:      true,
+			Expression:        "false",
+		},
+		{
+			Name:              "alertingEnrichmentPerRule",
+			Description:       "Enable enrichment per rule in the alerting UI.",
 			Stage:             FeatureStageExperimental,
 			Owner:             grafanaAlertingSquad,
 			HideFromAdminPage: true,
@@ -1553,13 +1578,6 @@ var (
 			Owner:             grafanaSearchAndStorageSquad,
 			HideFromAdminPage: true,
 			HideFromDocs:      true,
-		},
-		{
-			Name:         "extensionSidebar",
-			Description:  "Enables the extension sidebar",
-			Stage:        FeatureStageExperimental,
-			FrontendOnly: true,
-			Owner:        grafanaObservabilityLogsSquad,
 		},
 		{
 			Name:              "alertingRulePermanentlyDelete",
@@ -1842,9 +1860,10 @@ var (
 		{
 			Name:         "dashboardDsAdHocFiltering",
 			Description:  "Enables adhoc filtering support for the dashboard datasource",
-			Stage:        FeatureStageExperimental,
+			Stage:        FeatureStageGeneralAvailability,
 			Owner:        grafanaDataProSquad,
 			FrontendOnly: true,
+			Expression:   "true",
 		},
 		{
 			Name:         "dashboardLevelTimeMacros",
@@ -1860,14 +1879,24 @@ var (
 			Owner:             grafanaAlertingSquad,
 			HideFromAdminPage: true,
 			HideFromDocs:      true,
+		},
+		{
+			Name:              "restrictedPluginApis",
+			Description:       "Enables sharing a list of APIs with a list of plugins",
+			Stage:             FeatureStageExperimental,
+			Owner:             grafanaPluginsPlatformSquad,
+			HideFromAdminPage: true,
+			HideFromDocs:      true,
+			FrontendOnly:      true,
 			Expression:        "false",
 		},
 		{
 			Name:         "adhocFiltersInTooltips",
 			Description:  "Enable adhoc filter buttons in visualization tooltips",
-			Stage:        FeatureStageExperimental,
+			Stage:        FeatureStageGeneralAvailability,
 			Owner:        grafanaDataProSquad,
 			FrontendOnly: true,
+			Expression:   "true",
 		},
 		{
 			Name:         "favoriteDatasources",
@@ -1907,6 +1936,32 @@ var (
 			Stage:        FeatureStageExperimental,
 			FrontendOnly: false,
 			Owner:        grafanaFrontendSearchNavOrganise,
+			Expression:   "false",
+		},
+		{
+			Name:              "alertingTriage",
+			Description:       "Enables the alerting triage feature",
+			Stage:             FeatureStageExperimental,
+			FrontendOnly:      true,
+			Owner:             grafanaAlertingSquad,
+			HideFromDocs:      true,
+			HideFromAdminPage: true,
+			Expression:        "false",
+		},
+		{
+			Name:         "graphiteBackendMode",
+			Description:  "Enables the Graphite data source full backend mode",
+			Stage:        FeatureStagePrivatePreview,
+			FrontendOnly: false,
+			Owner:        grafanaPartnerPluginsSquad,
+			Expression:   "false",
+		},
+		{
+			Name:         "azureResourcePickerUpdates",
+			Description:  "Enables the updated Azure Monitor resource picker",
+			Stage:        FeatureStagePublicPreview,
+			FrontendOnly: true,
+			Owner:        grafanaPartnerPluginsSquad,
 			Expression:   "false",
 		},
 	}

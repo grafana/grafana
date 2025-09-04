@@ -1,6 +1,7 @@
 package schemaversion
 
 import (
+	"context"
 	"strconv"
 )
 
@@ -199,7 +200,7 @@ func V24(panelProvider PanelPluginInfoProvider) SchemaVersionMigrationFunc {
 	return migrator.migrate
 }
 
-func (m *v24Migrator) migrate(dashboard map[string]interface{}) error {
+func (m *v24Migrator) migrate(_ context.Context, dashboard map[string]interface{}) error {
 	dashboard["schemaVersion"] = 24
 
 	panels, ok := dashboard["panels"].([]interface{})
@@ -227,7 +228,7 @@ func (m *v24Migrator) migrate(dashboard map[string]interface{}) error {
 		// Find if the panel plugin exists
 		tablePanelPlugin := m.panelProvider.GetPanelPlugin("table")
 		if tablePanelPlugin.ID == "" {
-			return NewMigrationError("table panel plugin not found when migrating dashboard to schema version 24", 24, LATEST_VERSION)
+			return NewMigrationError("table panel plugin not found when migrating dashboard to schema version 24", 24, LATEST_VERSION, "V24")
 		}
 		panelMap["pluginVersion"] = tablePanelPlugin.Version
 		err := tablePanelChangedHandler(panelMap)
@@ -510,6 +511,9 @@ func migrateDefaults(prevDefaults map[string]interface{}) map[string]interface{}
 				"type": "auto",
 			},
 			"inspect": false,
+			"footer": map[string]interface{}{
+				"reducers": []interface{}{},
+			},
 		},
 		"mappings": []interface{}{},
 	}

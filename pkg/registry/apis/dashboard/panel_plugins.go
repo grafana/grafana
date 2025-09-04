@@ -14,10 +14,10 @@ type PluginStorePanelProvider struct {
 }
 
 func (p *PluginStorePanelProvider) GetPanels() []schemaversion.PanelPluginInfo {
-	plugins := p.pluginStore.Plugins(context.Background(), plugins.TypePanel)
+	panelPlugins := p.pluginStore.Plugins(context.Background(), plugins.TypePanel)
 
-	panels := make([]schemaversion.PanelPluginInfo, len(plugins))
-	for i, plugin := range plugins {
+	panels := make([]schemaversion.PanelPluginInfo, len(panelPlugins))
+	for i, plugin := range panelPlugins {
 		version := plugin.Info.Version
 		if version == "" {
 			version = p.buildVersion
