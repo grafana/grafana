@@ -32,7 +32,6 @@ import { PromAlertingRuleState, PromRuleType } from 'app/types/unified-alerting-
 
 import { logError } from '../../Analytics';
 import { defaultPageNav } from '../../RuleViewer';
-import { RulePageEnrichmentSectionExtension } from '../../enterprise-components/enrichment/RuleViewerExtension';
 import { useRuleViewExtensionsNav } from '../../enterprise-components/rule-view-page/navigation';
 import { shouldUseAlertingListViewV2, shouldUsePrometheusRulesPrimary } from '../../featureToggles';
 import { isError, useAsync } from '../../hooks/useAsync';
@@ -73,6 +72,7 @@ import { History } from './tabs/History';
 import { InstancesList } from './tabs/Instances';
 import { QueryResults } from './tabs/Query';
 import { Routing } from './tabs/Routing';
+import { RulePageEnrichmentSectionExtension } from './tabs/extensions/RuleViewerExtension';
 
 export enum ActiveTab {
   Query = 'query',
