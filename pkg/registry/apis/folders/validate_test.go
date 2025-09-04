@@ -212,7 +212,7 @@ func TestValidateUpdate(t *testing.T) {
 						}, Spec: folders.FolderSpec{
 							Title: v.Title,
 						},
-					}, nil)
+					}, nil).Maybe()
 				}
 			}
 

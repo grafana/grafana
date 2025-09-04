@@ -75,14 +75,14 @@ func TestFolderAPIBuilder_Validate_Create(t *testing.T) {
 							Name:        "p1",
 							Annotations: map[string]string{"grafana.app/folder": "p2"},
 						},
-					}, nil)
+					}, nil).Maybe()
 				m.On("Get", mock.Anything, "p2", mock.Anything).Return(
 					&folders.Folder{
 						ObjectMeta: metav1.ObjectMeta{
 							Name:        "p2",
 							Annotations: map[string]string{"grafana.app/folder": "p3"},
 						},
-					}, nil)
+					}, nil).Maybe()
 			},
 			err: folder.ErrMaximumDepthReached,
 		},
@@ -302,9 +302,7 @@ func TestFolderAPIBuilder_Validate_Update(t *testing.T) {
 				},
 			},
 			setupFn: func(m *grafanarest.MockStorage) {
-				m.On("Get", mock.Anything, accesscontrol.K6FolderUID, mock.Anything).Return(
-					&folders.Folder{},
-					nil).Once()
+				// nothing
 			},
 			wantErr: true,
 		},

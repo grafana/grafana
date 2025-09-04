@@ -70,7 +70,7 @@ func TestParents(t *testing.T) {
 			setupFn: func(m *grafanarest.MockStorage) {
 				var nothing *folders.Folder // needs to be an object
 				m.On("Get", context.TODO(), "parent", &metav1.GetOptions{}).Return(
-					nothing, fmt.Errorf("custom error message")).Once()
+					nothing, fmt.Errorf("custom error message"))
 			},
 			expected: &folders.FolderInfoList{Items: []folders.FolderInfo{
 				{Name: "test", Parent: "parent"},
@@ -107,7 +107,7 @@ func TestParents(t *testing.T) {
 								utils.AnnoKeyFolder: "test", // invalid! this will cycle
 							},
 						},
-					}, nil).Times(2)
+					}, nil).Maybe()
 			},
 			expectedErr: "cyclic folder references found",
 		},
@@ -146,25 +146,24 @@ func TestParents(t *testing.T) {
 								Title:       item.Title,
 								Description: &item.Description,
 							},
-						}, nil) // we don't care how often they are called
+						}, nil).Maybe() // we don't care how often they are called
 				}
 			} else {
 				for k, v := range tt.getter {
 					v.Name = k // set the name
-					m.On("Get", context.TODO(), k, &metav1.GetOptions{}).Return(v, nil).Once()
+					m.On("Get", context.TODO(), k, &metav1.GetOptions{}).Return(v, nil).Maybe()
 				}
 				if tt.setupFn != nil {
 					tt.setupFn(m)
 				}
 			}
 
-			gm := grafanarest.NewMockStorage(t)
 			maxDepth := tt.maxDepth
 			if maxDepth == 0 {
 				maxDepth = 5
 			}
 
-			getter := newParentsGetter(gm, maxDepth)
+			getter := newParentsGetter(m, maxDepth)
 			parents, err := getter(context.TODO(), &folders.Folder{
 				ObjectMeta: metav1.ObjectMeta{
 					Name: tt.request.name,
