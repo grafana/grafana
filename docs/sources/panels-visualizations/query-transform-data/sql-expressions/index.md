@@ -162,7 +162,8 @@ SQL expressions integrates alerting and recording rules, allowing you to define 
 For SQL Expressions to work properly with alerting and recording rules, your query must return:
 
 - One numeric column - **_required_**. This contains the value that triggers alerts or gets recorded.
-- One or more string columns - _optional_. These become **labels** for the alert instances or metrics. Column names and their row values become labels.
+- Unique string column combinations - **_required_**. Each row must have a unique combination of string column values.
+- One or more string columns - _optional_. These become **labels** for the alert instances or metrics. Example: `service`, `region`. 
 
 Consider the following query results:
 
@@ -189,6 +190,15 @@ For recording rules, creates one metric with three series:
 - First series: error_count_total{service=auth-service, region=us-east} 25
 - Second series: error_count_total{service=payment-service, region=us-west} 0
 - Third series: error_count_total{service=user-service, region=eu-west} 15
+
+Following are some best practices for alerting and recording rules:
+
+- Keep numeric values meaningful (for example: error counts, request duration).
+- Use clear, descriptive column names - these become your labels.
+- Keep string values short and consistent.
+- Avoid too many unique label combinations, as this can result in high cardinality. 
+- Always use GROUP BY to avoid duplicate label errors.
+- Aggregate numeric values logically (for example, `SUM(error_count)`).
 
 ## Supported data source formats
 
