@@ -1,12 +1,14 @@
 package testutil
 
 import (
+	"context"
+
 	"github.com/grafana/grafana/apps/dashboard/pkg/migration/schemaversion"
 )
 
 type TestDataSourceProvider struct{}
 
-func (m *TestDataSourceProvider) GetDataSourceInfo() []schemaversion.DataSourceInfo {
+func (m *TestDataSourceProvider) GetDataSourceInfo(_ context.Context) []schemaversion.DataSourceInfo {
 	return []schemaversion.DataSourceInfo{
 		{
 			Default:    true,

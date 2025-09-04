@@ -357,15 +357,7 @@ type CustomMeta struct {
 // dataFrame to again basically walking depth first over the tree/profile.
 func treeToNestedSetDataFrame(tree *ProfileTree, unit string, stepDurationSec float64, profileTypeID string) *data.Frame {
 	frame := data.NewFrame("response")
-	frameMeta := &data.FrameMeta{PreferredVisualization: "flamegraph"}
-
-	// Add metadata when rate calculation is applied
-	if isCumulativeProfile(profileTypeID) && stepDurationSec > 0 {
-		frameMeta.Custom = map[string]interface{}{
-			"rateCalculated": true,
-		}
-	}
-	frame.Meta = frameMeta
+	frame.Meta = &data.FrameMeta{PreferredVisualization: "flamegraph"}
 
 	levelField := data.NewField("level", nil, []int64{})
 	valueField := data.NewField("value", nil, []int64{})
@@ -382,17 +374,9 @@ func treeToNestedSetDataFrame(tree *ProfileTree, unit string, stepDurationSec fl
 	if tree != nil {
 		walkTree(tree, func(tree *ProfileTree) {
 			levelField.Append(int64(tree.Level))
-
-			// Apply rate calculation for cumulative profiles
-			value := tree.Value
-			self := tree.Self
-			if isCumulativeProfile(profileTypeID) && stepDurationSec > 0 {
-				value = int64(float64(value) / stepDurationSec)
-				self = int64(float64(self) / stepDurationSec)
-			}
-
-			valueField.Append(value)
-			selfField.Append(self)
+			// Flamegraphs show cumulative values without rate calculation
+			valueField.Append(tree.Value)
+			selfField.Append(tree.Self)
 			labelField.Append(tree.Name)
 		})
 	}

@@ -1,6 +1,7 @@
 package schemaversion
 
 import (
+	"context"
 	"strconv"
 )
 
@@ -185,7 +186,7 @@ import (
 //     ]
 // }
 
-func V24(dashboard map[string]interface{}) error {
+func V24(_ context.Context, dashboard map[string]interface{}) error {
 	dashboard["schemaVersion"] = 24
 
 	panels, ok := dashboard["panels"].([]interface{})
@@ -491,6 +492,9 @@ func migrateDefaults(prevDefaults map[string]interface{}) map[string]interface{}
 				"type": "auto",
 			},
 			"inspect": false,
+			"footer": map[string]interface{}{
+				"reducers": []interface{}{},
+			},
 		},
 		"mappings": []interface{}{},
 	}
