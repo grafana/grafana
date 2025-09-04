@@ -1,5 +1,7 @@
 package schemaversion
 
+import "context"
+
 // V42 ensures that when a field is hidden from visualization, it is also hidden from tooltips.
 //
 // This migration addresses the inconsistency where fields could be hidden from visualizations
@@ -34,7 +36,7 @@ package schemaversion
 //	    }]
 //	  }]
 //	}
-func V42(dash map[string]interface{}) error {
+func V42(_ context.Context, dash map[string]interface{}) error {
 	dash["schemaVersion"] = int(42)
 
 	// Get panels from dashboard

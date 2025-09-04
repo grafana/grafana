@@ -8772,7 +8772,6 @@
       "cell-inspect": "Inspektera värde",
       "cell-inspect-tooltip": "Inspektera värde",
       "copy": "Kopiera till klippbordet",
-      "count": "Räknare",
       "csv-counts": "Rader:{{rows}}, Kolumner:{{columns}}  <5></5>",
       "csv-placeholder": "Ange CSV här…",
       "filter-placeholder": "Filtrera värden",
@@ -8783,6 +8782,11 @@
       "filter-popup-heading": "Filtrera per värden:",
       "filter-popup-input-placeholder": "Filtrera värden",
       "filter-popup-match-case": "Matcha gemener/versaler",
+      "footer": {
+        "reducer": {
+          "count": ""
+        }
+      },
       "inspect-drawer-title": "Inspektera värde",
       "nested-table": {
         "no-data": "Inga data"
@@ -12788,8 +12792,6 @@
     "description-calculation": "Välj en reduceringsfunktion/beräkning",
     "description-cell-value-inspect": "Aktivera cellvärdesinspektion i ett modalt fönster",
     "description-column-filter": "Aktiverar/inaktiverar fältfilter i tabellen",
-    "description-count-rows": "Visa ett enda antal för alla datarader",
-    "description-fields": "Välj de fält som ska beräknas",
     "description-frozen-columns": "",
     "description-min-column-width": "Minsta bredd för automatisk storleksändring av kolumn",
     "description-tooltip-from-field": "",
@@ -12816,21 +12818,17 @@
     "name-column-alignment": "Kolumnjustering",
     "name-column-filter": "Kolumnfilter",
     "name-column-width": "Kolumnbredd",
-    "name-count-rows": "Antal rader",
     "name-enable-pagination": "",
-    "name-fields": "Fält",
     "name-frozen-columns": "",
     "name-hide-in-table": "Dölj i tabell",
     "name-max-height": "",
     "name-min-column-width": "Minsta kolumnbredd",
-    "name-show-table-footer": "Visa tabellsidfot",
     "name-show-table-header": "Visa tabellsidhuvud",
     "name-tooltip-from-field": "",
     "name-tooltip-placement": "",
     "name-wrap-header-text": "Radbryt rubriktext",
     "name-wrap-text": "",
     "placeholder-column-width": "auto",
-    "placeholder-fields": "Alla numeriska fält",
     "placeholder-max-height": "",
     "tooltip-placement-options": {
       "label-auto": "",
