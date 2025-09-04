@@ -151,7 +151,7 @@ When you reference a RefID within a SQL statement (e.g., `SELECT * FROM A`), the
 The SQL conversion path:
 
 - The query result appears as a single data frame, without labels, and is mapped directly to a tabular format.
-- If the frame type is present and is either numeric, wide time series, or multi-frame time series (for example, labeled formats), Grafana automatically converts the data into a table structure.
+- If the frame type is present and is either numeric, wide time series, or multi-frame time series (for example: labeled formats), Grafana automatically converts the data into a table structure.
 
 ## Supported functions
 
@@ -201,8 +201,8 @@ Following are some best practices for alerting and recording rules:
 - Use clear, descriptive column names - these become your labels.
 - Keep string values short and consistent.
 - Avoid too many unique label combinations, as this can result in high cardinality. 
-- Always use GROUP BY to avoid duplicate label errors.
-- Aggregate numeric values logically (for example, `SUM(error_count)`).
+- Always use `GROUP BY` to avoid duplicate label errors.
+- Aggregate numeric values logically (for example: `SUM(error_count)`).
 
 ## Supported data source formats
 
