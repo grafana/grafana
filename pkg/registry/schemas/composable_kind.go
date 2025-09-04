@@ -248,16 +248,6 @@ func GetComposableKinds() ([]ComposableKind, error) {
 		CueFile:  logsCue,
 	})
 
-	logsnewCue, err := loadCueFileWithCommon(root, filepath.Join(root, "./public/app/plugins/panel/logs-new/panelcfg.cue"))
-	if err != nil {
-		return nil, err
-	}
-	kinds = append(kinds, ComposableKind{
-		Name:     "logsnew",
-		Filename: "panelcfg.cue",
-		CueFile:  logsnewCue,
-	})
-
 	newsCue, err := loadCueFileWithCommon(root, filepath.Join(root, "./public/app/plugins/panel/news/panelcfg.cue"))
 	if err != nil {
 		return nil, err

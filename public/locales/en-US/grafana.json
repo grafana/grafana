@@ -9734,30 +9734,6 @@
       "label-log-stats": "{{label}}: {{total}} of {{rowCount}} rows have that label"
     }
   },
-  "logs-new": {
-    "category-logs": "Logs",
-    "deduplication-options": {
-      "label-exact": "Exact",
-      "label-none": "None",
-      "label-numbers": "Numbers",
-      "label-signature": "Signature"
-    },
-    "description-infinite-scrolling": "Experimental. Request more results by scrolling to the bottom of the logs list.",
-    "description-show-controls": "Display controls to jump to the last or first log line, and filters by log level",
-    "description-syntax-highlighting": "Use a predefined syntax coloring grammar to highlight relevant parts of the log lines",
-    "name-deduplication": "Deduplication",
-    "name-enable-log-details": "Enable log details",
-    "name-infinite-scrolling": "Enable infinite scrolling",
-    "name-order": "Order",
-    "name-show-controls": "Show controls",
-    "name-syntax-highlighting": "Enable syntax highlighting",
-    "name-time": "Time",
-    "name-wrap-lines": "Wrap lines",
-    "order-options": {
-      "label-newest-first": "Newest first",
-      "label-oldest-first": "Oldest first"
-    }
-  },
   "manage-dashbaords": {
     "import-dashboard-form": {
       "description-existing-library-panels": "List of existing library panels. These panels are not affected by the import."

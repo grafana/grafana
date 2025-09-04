@@ -919,7 +919,7 @@
         }
       ],
       "title": "Requests",
-      "type": "logs-new"
+      "type": "logs"
     },
     {
       "datasource": {
@@ -962,7 +962,7 @@
         }
       ],
       "title": "grafana-api requests",
-      "type": "logs-new"
+      "type": "logs"
     },
     {
       "datasource": {
@@ -1317,7 +1317,7 @@
         }
       ],
       "title": "frontend-service errors",
-      "type": "logs-new"
+      "type": "logs"
     },
     {
       "datasource": {
@@ -1360,7 +1360,7 @@
         }
       ],
       "title": "grafana-api errors",
-      "type": "logs-new"
+      "type": "logs"
     },
     {
       "datasource": {
@@ -1403,7 +1403,7 @@
         }
       ],
       "title": "All frontend-service logs",
-      "type": "logs-new"
+      "type": "logs"
     },
     {
       "datasource": {
@@ -1446,7 +1446,7 @@
         }
       ],
       "title": "All grafana-api logs",
-      "type": "logs-new"
+      "type": "logs"
     }
   ],
   "preload": false,
