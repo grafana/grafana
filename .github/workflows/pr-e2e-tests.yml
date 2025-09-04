@@ -67,6 +67,7 @@ jobs:
         if: steps.cache.outputs.cache-hit != 'true'
         uses: dagger/dagger-for-github@e47aba410ef9bb9ed81a4d2a97df31061e5e842e
         with:
+          version: 0.18.8
           verb: run
           args: go run ./pkg/build/cmd artifacts -a targz:grafana:linux/amd64 -a docker:grafana:linux/amd64 --grafana-dir="${PWD}" > out.txt
       - name: Cat built artifact
