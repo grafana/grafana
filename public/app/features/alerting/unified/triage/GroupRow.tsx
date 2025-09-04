@@ -103,6 +103,8 @@ export const getStyles = (theme: GrafanaTheme2) => {
       flexBasis: 0,
       border: 'solid 1px transparent',
       borderBottom: `1px solid ${theme.colors.border.medium}`,
+      borderLeft: `1px solid ${theme.colors.border.medium}`,
+      borderRight: `1px solid ${theme.colors.border.medium}`,
     }),
     leftColumn: css({
       // background: `rgba(0, 0, 255, 0.1)`,

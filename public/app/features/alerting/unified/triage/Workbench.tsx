@@ -83,7 +83,7 @@ export function Workbench({ domain, data }: WorkbenchProps) {
 
   // this will measure the size of the left most column of the splitter, so we can use it to set the width of the group items
   const [ref, rect] = useMeasure<HTMLDivElement>();
-  const leftColumnWidth = rect.width + 2; // +2 for the border
+  const leftColumnWidth = rect.width;
 
   const itemsToRender = pageIndex * DEFAULT_PER_PAGE_PAGINATION;
   const dataSlice = take(data, itemsToRender);
@@ -94,16 +94,16 @@ export function Workbench({ domain, data }: WorkbenchProps) {
       {/* dummy splitter to handle flex width of group items */}
       <div {...splitter.containerProps}>
         <div {...splitter.primaryProps}>
-          <div ref={ref} className={cx(styles.containerWithBorderAndRadius, styles.flexFull, styles.minColumnWidth)} />
+          <div ref={ref} className={cx(styles.flexFull, styles.minColumnWidth)} />
         </div>
         <div {...splitter.splitterProps} />
         <div {...splitter.secondaryProps}>
-          <div className={cx(styles.containerWithBorderAndRadius, styles.flexFull, styles.minColumnWidth)} />
+          <div className={cx(styles.flexFull, styles.minColumnWidth)} />
         </div>
       </div>
       {/* content goes here */}
       <div data-testid="groups-container" className={cx(splitter.containerProps.className, styles.groupsContainer)}>
-        <div className={cx(styles.groupItemWrapper(leftColumnWidth), styles.stickyHeader, styles.summaryContainer)}>
+        <div className={cx(styles.groupItemWrapper(leftColumnWidth), styles.summaryContainer)}>
           <SummaryStatsReact />
           <SummaryChartReact />
         </div>
@@ -224,6 +224,7 @@ export const getStyles = (theme: GrafanaTheme2) => {
     }),
     summaryContainer: css({
       gridTemplateRows: summaryHeight,
+      marginBottom: theme.spacing(2),
     }),
     headerContainer: css({
       top: summaryHeight,
@@ -233,10 +234,6 @@ export const getStyles = (theme: GrafanaTheme2) => {
     }),
     minColumnWidth: css({
       minWidth: 300,
-    }),
-    containerWithBorderAndRadius: css({
-      borderRadius: theme.shape.radius.default,
-      border: `1px solid ${theme.colors.border.medium}`,
     }),
   };
 };
