@@ -16,14 +16,9 @@ export interface DashboardLayoutItem extends SceneObject {
   getOptions?(): OptionsPaneCategoryDescriptor[];
 
   /**
-   * When going into panel edit
-   **/
-  editingStarted?(): void;
-
-  /**
-   * When coming out of panel edit
+   * Called when leaving panel edit with changes
    */
-  editingCompleted?(withChanges: boolean): void;
+  handleEditChange(): void;
 
   /**
    * Change inner body / viz panel

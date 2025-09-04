@@ -96,13 +96,46 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
     this.waitForPlugin();
 
     return () => {
-      this._layoutItem.editingCompleted?.(this.state.isDirty || this._changesHaveBeenMade);
+      this.commitChanges();
 
       if (deactivateParents) {
         deactivateParents();
       }
     };
   }
+
+  private commitChanges() {
+    if (!this.state.isDirty && !this._changesHaveBeenMade) {
+      // Nothing to commit
+      return;
+    }
+
+    const layoutItem = this._layoutItem;
+    const changedState = layoutItem.state;
+    const originalState = this._layoutItemState!;
+
+    const editAction = new DashboardEditActionEvent({
+      description: t('dashboard.edit-actions.panel-edit', 'Panel changes'),
+      source: this._layoutItem,
+      perform: () => {
+        // Because panel edit makes changes directly to layout item & panel
+        // we only need to do this in case we want to re-perform after undo
+        if (layoutItem.state !== changedState) {
+          layoutItem.setState(changedState);
+        }
+      },
+      undo: () => {
+        layoutItem!.setState(originalState);
+      },
+    });
+
+    // sadly we cannot publish this event directly here as the main dashboard edit / undo system
+    // is not active while panel edit is active so we have to let the edit pane (which owns undo/redo)
+    // publish this event when it activates
+    const dashboard = getDashboardSceneFor(this);
+    dashboard.state.editPane.setPanelEditAction(editAction);
+  }
+
   private waitForPlugin(retry = 0) {
     const panel = this.getPanel();
     const plugin = panel.getPlugin();
@@ -165,8 +198,6 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
     // First time initialization
     if (this.state.isInitializing) {
       this.setOriginalState(this.state.panelRef);
-
-      this._layoutItem.editingStarted?.();
 
       this._setupChangeDetection();
       this._updateDataPane(plugin);

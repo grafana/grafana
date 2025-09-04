@@ -44,6 +44,12 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> {
     this.addActivationHandler(this.onActivate.bind(this));
   }
 
+  private panelEditAction?: DashboardEditActionEvent;
+
+  public setPanelEditAction(editAction: DashboardEditActionEvent) {
+    this.panelEditAction = editAction;
+  }
+
   private onActivate() {
     const dashboard = getDashboardSceneFor(this);
 
@@ -76,6 +82,20 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> {
         this.forceRender();
       })
     );
+
+    if (this.panelEditAction) {
+      // The changes done in panel edit are published here as when panel edit is active
+      // the main dashboard undo/redo is not active (controlled by DashboardEditPane), which is by design
+      // as we want all panel edit changes to be seen as one single action that can be undone/redone
+      this.panelEditAction.payload.source.publishEvent(this.panelEditAction, true);
+
+      // Because the layout item is not active yet we have to call this directly
+      if (isDashboardLayoutItem(this.panelEditAction.payload.source)) {
+        this.panelEditAction.payload.source.handleEditChange();
+      }
+
+      this.panelEditAction = undefined;
+    }
   }
 
   /**
@@ -93,15 +113,6 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> {
     this.performAction(action);
 
     this.setState({ undoStack: [...this.state.undoStack, action] });
-
-    // Notify repeaters that something changed
-    if (action.source instanceof VizPanel) {
-      const layoutElement = action.source.parent!;
-
-      if (isDashboardLayoutItem(layoutElement) && layoutElement.editingCompleted) {
-        layoutElement.editingCompleted(true);
-      }
-    }
   }
 
   /**

@@ -14,6 +14,7 @@ import {
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 
 import { ConditionalRendering } from '../../conditional-rendering/ConditionalRendering';
+import { DashboardStateChangedEvent } from '../../edit-pane/shared';
 import { getCloneKey, getLocalVariableValueSet } from '../../utils/clone';
 import { getMultiVariableValues } from '../../utils/utils';
 import { scrollCanvasElementIntoView } from '../layouts-shared/scrollCanvasElementIntoView';
@@ -53,6 +54,8 @@ export class AutoGridItem extends SceneObjectBase<AutoGridItemState> implements 
     if (this.state.variableName) {
       this.performRepeat();
     }
+
+    this._subs.add(this.subscribeToEvent(DashboardStateChangedEvent, () => this.handleEditChange()));
 
     const deactivate = this.state.conditionalRendering?.activate();
 
@@ -167,16 +170,8 @@ export class AutoGridItem extends SceneObjectBase<AutoGridItemState> implements 
     };
   }
 
-  public editingStarted() {
-    if (!this.state.variableName) {
-      return;
-    }
-  }
-
-  public editingCompleted(withChanges: boolean) {
-    if (withChanges) {
-      this._prevRepeatValues = undefined;
-    }
+  public handleEditChange() {
+    this._prevRepeatValues = undefined;
 
     this.performRepeat();
   }
