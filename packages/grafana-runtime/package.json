@@ -58,6 +58,7 @@
     "@grafana/faro-web-sdk": "^1.13.2",
     "@grafana/schema": "12.3.0-pre",
     "@grafana/ui": "12.3.0-pre",
+    "@openfeature/web-sdk": "^1.6.1",
     "@types/systemjs": "6.15.3",
     "history": "4.10.1",
     "lodash": "4.17.21",

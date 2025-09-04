@@ -3489,6 +3489,7 @@ __metadata:
     "@grafana/faro-web-sdk": "npm:^1.13.2"
     "@grafana/schema": "npm:12.3.0-pre"
     "@grafana/ui": "npm:12.3.0-pre"
+    "@openfeature/web-sdk": "npm:^1.6.1"
     "@rollup/plugin-node-resolve": "npm:16.0.1"
     "@rollup/plugin-terser": "npm:0.4.4"
     "@testing-library/dom": "npm:10.4.1"
