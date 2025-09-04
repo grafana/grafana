@@ -208,6 +208,9 @@ func (ps *ProvisioningServiceImpl) Run(ctx context.Context) error {
 			return
 		}
 
+		// Migrating prom types relies on data source provisioning to already be completed
+		// If we can make services depend on other services completing first,
+		// then we should remove this from provisioning
 		err = ps.MigratePrometheusType(ctx)
 		if err != nil {
 			ps.log.Error("Failed to migrate Prometheus type", "error", err)
