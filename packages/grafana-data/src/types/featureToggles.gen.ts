@@ -617,6 +617,10 @@ export interface FeatureToggles {
   */
   newFiltersUI?: boolean;
   /**
+  * Allows authenticated API calls in actions
+  */
+  vizActionsAuth?: boolean;
+  /**
   * Uses Prometheus rules as the primary source of truth for ruler-enabled data sources
   */
   alertingPrometheusRulesPrimary?: boolean;
@@ -1069,6 +1073,7 @@ export interface FeatureToggles {
   unifiedStorageSearchDualReaderEnabled?: boolean;
   /**
   * Enables adhoc filtering support for the dashboard datasource
+  * @default true
   */
   dashboardDsAdHocFiltering?: boolean;
   /**
@@ -1086,6 +1091,7 @@ export interface FeatureToggles {
   restrictedPluginApis?: boolean;
   /**
   * Enable adhoc filter buttons in visualization tooltips
+  * @default true
   */
   adhocFiltersInTooltips?: boolean;
   /**

@@ -274,7 +274,7 @@
     "@formatjs/intl-durationformat": "^0.7.0",
     "@glideapps/glide-data-grid": "^6.0.0",
     "@grafana/alerting": "workspace:*",
-    "@grafana/assistant": "0.0.16",
+    "@grafana/assistant": "0.0.17",
     "@grafana/aws-sdk": "0.7.1",
     "@grafana/azure-sdk": "0.0.7",
     "@grafana/data": "workspace:*",

@@ -44,11 +44,6 @@
       "count": 1
     }
   },
-  "packages/grafana-data/src/context/plugins/RestrictedGrafanaApis.tsx": {
-    "@typescript-eslint/consistent-type-assertions": {
-      "count": 1
-    }
-  },
   "packages/grafana-data/src/dataframe/ArrayDataFrame.ts": {
     "@typescript-eslint/no-explicit-any": {
       "count": 1
@@ -926,14 +921,9 @@
       "count": 2
     }
   },
-  "packages/grafana-ui/src/components/Table/TableNG/utils.test.ts": {
-    "@typescript-eslint/no-explicit-any": {
-      "count": 2
-    }
-  },
   "packages/grafana-ui/src/components/Table/TableNG/utils.ts": {
     "@typescript-eslint/consistent-type-assertions": {
-      "count": 2
+      "count": 1
     }
   },
   "packages/grafana-ui/src/components/Table/TableRT/Filter.tsx": {

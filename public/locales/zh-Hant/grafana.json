@@ -8751,7 +8751,6 @@
       "cell-inspect": "檢查值",
       "cell-inspect-tooltip": "檢查值",
       "copy": "複製到剪貼簿",
-      "count": "計數",
       "csv-counts": "列：{{rows}}，欄：{{columns}}  <5></5>",
       "csv-placeholder": "在此處輸入 CSV …",
       "filter-placeholder": "篩選值",
@@ -8762,6 +8761,11 @@
       "filter-popup-heading": "依據數值篩選：",
       "filter-popup-input-placeholder": "篩選值",
       "filter-popup-match-case": "區分大小寫",
+      "footer": {
+        "reducer": {
+          "count": ""
+        }
+      },
       "inspect-drawer-title": "檢查值",
       "nested-table": {
         "no-data": "無資料"
@@ -12747,8 +12751,6 @@
     "description-calculation": "選擇一個歸約函數/計算方式",
     "description-cell-value-inspect": "在模式視窗中啟用儲存格值檢查",
     "description-column-filter": "啟用/停用表格中的欄位篩選條件",
-    "description-count-rows": "顯示所有資料列的單一計數",
-    "description-fields": "選擇應計算的欄位",
     "description-frozen-columns": "",
     "description-min-column-width": "欄自動調整大小的最小寬度",
     "description-tooltip-from-field": "",
@@ -12775,21 +12777,17 @@
     "name-column-alignment": "欄對齊方式",
     "name-column-filter": "欄篩選條件",
     "name-column-width": "欄寬",
-    "name-count-rows": "計數列",
     "name-enable-pagination": "",
-    "name-fields": "欄位",
     "name-frozen-columns": "",
     "name-hide-in-table": "在表格中隱藏",
     "name-max-height": "",
     "name-min-column-width": "最小欄寬",
-    "name-show-table-footer": "顯示表格頁尾",
     "name-show-table-header": "顯示表格頁首",
     "name-tooltip-from-field": "",
     "name-tooltip-placement": "",
     "name-wrap-header-text": "換行標題文字",
     "name-wrap-text": "",
     "placeholder-column-width": "自動",
-    "placeholder-fields": "所有數值欄位",
     "placeholder-max-height": "",
     "tooltip-placement-options": {
       "label-auto": "",
