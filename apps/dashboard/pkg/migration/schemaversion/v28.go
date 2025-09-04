@@ -1,6 +1,7 @@
 package schemaversion
 
 import (
+	"context"
 	"fmt"
 	"strconv"
 	"strings"
@@ -66,12 +67,12 @@ func V28(panelProvider PanelPluginInfoProvider) SchemaVersionMigrationFunc {
 		statPanelVersion: statPanelVersion,
 	}
 
-	return func(dashboard map[string]interface{}) error {
-		return migrator.migrate(dashboard)
+	return func(ctx context.Context, dashboard map[string]interface{}) error {
+		return migrator.migrate(context.Background(), dashboard)
 	}
 }
 
-func (m *v28Migrator) migrate(dashboard map[string]interface{}) error {
+func (m *v28Migrator) migrate(_ context.Context, dashboard map[string]interface{}) error {
 	dashboard["schemaVersion"] = 28
 
 	// Migrate singlestat panels
