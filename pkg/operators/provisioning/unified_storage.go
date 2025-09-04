@@ -6,6 +6,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
@@ -25,16 +26,15 @@ type unifiedStorageFactory struct {
 	indexConn grpc.ClientConnInterface
 }
 
-func NewUnifiedStorageClientFactory(cfg unifiedStorageConfig, tracer tracing.Tracer) (resources.ResourceStore, error) {
+func NewUnifiedStorageClientFactory(cfg resource.RemoteResourceClientConfig, address string, indexAddress string, tracer tracing.Tracer) (resources.ResourceStore, error) {
 	registry := prometheus.NewPedanticRegistry()
-	conn, err := unified.GrpcConn(cfg.GrpcAddress, registry)
+	conn, err := unified.GrpcConn(address, registry)
 	if err != nil {
 		return nil, fmt.Errorf("create unified storage gRPC connection: %w", err)
 	}
 
-	indexAddress := cfg.GrpcIndexAddress
 	if indexAddress == "" {
-		indexAddress = cfg.GrpcAddress
+		indexAddress = address
 	}
 
 	indexConn, err := unified.GrpcConn(indexAddress, registry)
@@ -86,4 +86,49 @@ func (s *unifiedStorageFactory) GetStats(ctx context.Context, in *resourcepb.Res
 	}
 
 	return client.GetStats(ctx, in, opts...)
+}
+
+func setupUnifiedStorageClient(cfg *setting.Cfg, tracer tracing.Tracer) (resources.ResourceStore, error) {
+	// TODO: This is duplicate
+	gRPCAuth := cfg.SectionWithEnvOverrides("grpc_client_authentication")
+	token := gRPCAuth.Key("token").String()
+	if token == "" {
+		return nil, fmt.Errorf("token is required in [grpc_client_authentication] section")
+	}
+	tokenExchangeURL := gRPCAuth.Key("token_exchange_url").String()
+	if tokenExchangeURL == "" {
+		return nil, fmt.Errorf("token_exchange_url is required in [grpc_client_authentication] section")
+	}
+
+	tokenNamespace := gRPCAuth.Key("token_namespace").String()
+	allowInsecure := gRPCAuth.Key("allow_insecure").MustBool(false)
+
+	unifiedStorageSec := cfg.SectionWithEnvOverrides("unified_storage")
+	address := unifiedStorageSec.Key("grpc_address").String()
+	if address == "" {
+		return nil, fmt.Errorf("grpc_address is required in [unified_storage] section")
+	}
+
+	// Optional separate index address
+	indexAddress := unifiedStorageSec.Key("grpc_index_address").String()
+	unifiedCfg := resource.RemoteResourceClientConfig{
+		Token:            token,
+		TokenExchangeURL: tokenExchangeURL,
+		// TODO: why do we get this?
+		// Audiences:     unifiedStorageSec.Key("grpc_client_authentication_audiences").Strings(","),
+		Namespace:     tokenNamespace,
+		AllowInsecure: allowInsecure,
+	}
+
+	unified, err := NewUnifiedStorageClientFactory(
+		unifiedCfg,
+		address,
+		indexAddress,
+		tracer,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("create unified storage client: %w", err)
+	}
+
+	return unified, nil
 }

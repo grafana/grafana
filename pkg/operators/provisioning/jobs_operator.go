@@ -13,7 +13,6 @@ import (
 	"github.com/urfave/cli/v2"
 	"k8s.io/client-go/tools/cache"
 
-	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/export"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/migrate"
@@ -22,7 +21,6 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/grafana/grafana/pkg/services/apiserver/standalone"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/storage/unified/resource"
 
 	"github.com/grafana/grafana/apps/provisioning/pkg/controller"
 	informer "github.com/grafana/grafana/apps/provisioning/pkg/generated/informers/externalversions"
@@ -144,12 +142,6 @@ func RunJobController(opts standalone.BuildInfo, c *cli.Context, cfg *setting.Cf
 	return nil
 }
 
-type unifiedStorageConfig struct {
-	GrpcAddress      string
-	GrpcIndexAddress string
-	ClientConfig     resource.RemoteResourceClientConfig
-}
-
 type jobsControllerConfig struct {
 	provisioningControllerConfig
 	historyExpiration    time.Duration
@@ -224,54 +216,4 @@ func setupWorkers(controllerCfg *jobsControllerConfig) ([]jobs.Worker, error) {
 	workers = append(workers, moveWorker)
 
 	return workers, nil
-}
-
-// HACK: This logic directly connects to unified storage. We are doing this for now as there is no global
-// search endpoint. But controllers, in general, should not connect directly to unified storage and instead
-// go through the api server. Once there is a global search endpoint, we will switch to that here as well.
-func setupUnifiedStorageClient(cfg *setting.Cfg, tracer tracing.Tracer) (resources.ResourceStore, error) {
-	// Unified Storage
-	// TODO: This is duplicate
-	gRPCAuth := cfg.SectionWithEnvOverrides("grpc_client_authentication")
-	token := gRPCAuth.Key("token").String()
-	if token == "" {
-		return nil, fmt.Errorf("token is required in [grpc_client_authentication] section")
-	}
-	tokenExchangeURL := gRPCAuth.Key("token_exchange_url").String()
-	if tokenExchangeURL == "" {
-		return nil, fmt.Errorf("token_exchange_url is required in [grpc_client_authentication] section")
-	}
-
-	tokenNamespace := gRPCAuth.Key("token_namespace").String()
-	allowInsecure := gRPCAuth.Key("allow_insecure").MustBool(false)
-
-	unifiedStorageSec := cfg.SectionWithEnvOverrides("unified_storage")
-	grpcAddress := unifiedStorageSec.Key("grpc_address").String()
-	if grpcAddress == "" {
-		return nil, fmt.Errorf("grpc_address is required in [unified_storage] section")
-	}
-
-	// Optional separate index address
-	indexAddress := unifiedStorageSec.Key("grpc_index_address").String()
-
-	// TODO: enforce this
-	unifiedCfg := unifiedStorageConfig{
-		GrpcAddress:      grpcAddress,
-		GrpcIndexAddress: indexAddress,
-		ClientConfig: resource.RemoteResourceClientConfig{
-			Token:            token,
-			TokenExchangeURL: tokenExchangeURL,
-			// TODO: why do we get this?
-			// Audiences:     unifiedStorageSec.Key("grpc_client_authentication_audiences").Strings(","),
-			Namespace:     tokenNamespace,
-			AllowInsecure: allowInsecure,
-		},
-	}
-
-	unified, err := NewUnifiedStorageClientFactory(unifiedCfg, tracer)
-	if err != nil {
-		return nil, fmt.Errorf("create unified storage client: %w", err)
-	}
-
-	return unified, nil
 }
