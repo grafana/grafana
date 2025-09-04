@@ -23,7 +23,6 @@ import (
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository/github"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository/local"
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
-	secretdecrypt "github.com/grafana/grafana/pkg/registry/apis/secret/decrypt"
 )
 
 // directConfigProvider is a simple RestConfigProvider that always returns the same rest.Config
@@ -118,12 +117,8 @@ func setupFromConfig(cfg *setting.Cfg) (controllerCfg *provisioningControllerCon
 		return nil, fmt.Errorf("failed to create provisioning client: %w", err)
 	}
 
-	decrypter, err := setupDecrypter(cfg, tracer, tokenExchangeClient)
-	if err != nil {
-		return nil, fmt.Errorf("build decrypter: %w", err)
-	}
-
-	repoFactory, err := setupRepoFactory(cfg, decrypter, provisioningClient)
+	// TODO: Replace with a real decrypter that uses the Grafana secret service
+	repoFactory, err := setupRepoFactory(cfg, emptyValuesDecrypter, provisioningClient)
 	if err != nil {
 		return nil, fmt.Errorf("failed to setup repository getter: %w", err)
 	}
@@ -135,37 +130,6 @@ func setupFromConfig(cfg *setting.Cfg) (controllerCfg *provisioningControllerCon
 		tracer:             tracer,
 		restCfg:            config,
 	}, nil
-}
-
-func setupDecrypter(cfg *setting.Cfg, tracer tracing.Tracer, tokenExchangeClient *authn.TokenExchangeClient) (decrypter repository.Decrypter, err error) {
-	secretsSec := cfg.SectionWithEnvOverrides("secrets_manager")
-	if secretsSec == nil {
-		return nil, fmt.Errorf("no [secrets_manager] section found in config")
-	}
-	address := secretsSec.Key("grpc_server_address").String()
-	if address == "" {
-		return nil, fmt.Errorf("grpc_server_address is required in [secrets_manager] section")
-	}
-
-	secretsTls := secretdecrypt.TLSConfig{
-		UseTLS: secretsSec.Key("grpc_server_use_tls").MustBool(true),
-		CAFile: secretsSec.Key("grpc_server_tls_ca_file").String(),
-		// TODO: do we need this one?
-		// ServerName:         secretsSec.Key("grpc_server_tls_server_name").String(),
-		InsecureSkipVerify: secretsSec.Key("grpc_server_tls_skip_verify").MustBool(false),
-	}
-
-	decryptSvc, err := secretdecrypt.NewGRPCDecryptClientWithTLS(
-		tokenExchangeClient,
-		tracer,
-		address,
-		secretsTls,
-	)
-	if err != nil {
-		return nil, fmt.Errorf("create decrypt service: %w", err)
-	}
-
-	return repository.ProvideDecrypter(decryptSvc), nil
 }
 
 func buildTLSConfig(insecure bool, certFile, keyFile, caFile string) (rest.TLSClientConfig, error) {
