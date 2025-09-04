@@ -501,6 +501,14 @@ export const versionedComponents = {
             '12.2.0': 'data-testid tableng tooltip caret',
           },
         },
+        Footer: {
+          ReducerLabel: {
+            '12.2.0': 'data-testid tableng footer reducer-label',
+          },
+          Value: {
+            '12.2.0': 'data-testid tableng footer value',
+          },
+        },
       },
     },
   },

@@ -8751,7 +8751,6 @@
       "cell-inspect": "값 검사",
       "cell-inspect-tooltip": "값 검사",
       "copy": "클립보드로 복사",
-      "count": "개수",
       "csv-counts": "행:{{rows}}, 열:{{columns}}  <5></5>",
       "csv-placeholder": "여기에 CSV를 입력하세요...",
       "filter-placeholder": "값 필터링",
@@ -8762,6 +8761,11 @@
       "filter-popup-heading": "값으로 필터링:",
       "filter-popup-input-placeholder": "값 필터링",
       "filter-popup-match-case": "대소문자 일치",
+      "footer": {
+        "reducer": {
+          "count": ""
+        }
+      },
       "inspect-drawer-title": "값 검사",
       "nested-table": {
         "no-data": "데이터 없음"
@@ -12747,8 +12751,6 @@
     "description-calculation": "감속기 함수/계산 선택",
     "description-cell-value-inspect": "모달 창에서 셀 값 검사 활성화",
     "description-column-filter": "테이블에서 필드 필터 활성화/비활성화",
-    "description-count-rows": "모든 데이터 행에 대한 단일 개수 표시",
-    "description-fields": "계산해야 하는 필드 선택",
     "description-frozen-columns": "",
     "description-min-column-width": "열 자동 크기 조정을 위한 최소 너비",
     "description-tooltip-from-field": "",
@@ -12775,21 +12777,17 @@
     "name-column-alignment": "열 정렬",
     "name-column-filter": "열 필터",
     "name-column-width": "열 너비",
-    "name-count-rows": "행 개수 계산",
     "name-enable-pagination": "",
-    "name-fields": "필드",
     "name-frozen-columns": "",
     "name-hide-in-table": "테이블에서 숨기기",
     "name-max-height": "",
     "name-min-column-width": "열 최소 너비",
-    "name-show-table-footer": "테이블 바닥글 표시",
     "name-show-table-header": "테이블 머리말 표시",
     "name-tooltip-from-field": "",
     "name-tooltip-placement": "",
     "name-wrap-header-text": "머리말 텍스트 줄 바꿈",
     "name-wrap-text": "",
     "placeholder-column-width": "자동",
-    "placeholder-fields": "모든 숫자 필드",
     "placeholder-max-height": "",
     "tooltip-placement-options": {
       "label-auto": "",
