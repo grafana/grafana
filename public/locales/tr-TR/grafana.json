@@ -549,6 +549,7 @@
     },
     "alert-rules": {
       "firing-for": "Şunun için tetikleniyor:",
+      "multiple-sources": "",
       "next-evaluation": "Sonraki değerlendirme",
       "next-evaluation-in": "Sonraki değerlendirme için kalan süre:",
       "rule-definition": "Kural tanımı"
@@ -2638,13 +2639,15 @@
         "show": "Göster"
       },
       "manage-alerts": "Bu veri kaynaklarında hem Grafana arayüzünde hem de yapılandırıldıkları veri kaynağında bu uyarı kurallarını yönetebilmek için \"Uyarı Yönetimi\" arayüzü üzerinden yönetimi seçebilirsiniz.",
-      "no-groups": "",
-      "no-namespaces": "",
       "placeholder-all-data-sources": "Tüm veri kaynakları",
       "placeholder-contact-point": "",
       "placeholder-data-sources": "",
       "placeholder-labels": "",
       "plugin-rules": "Eklenti kuralları",
+      "rule-source": {
+        "datasource": "",
+        "grafana": ""
+      },
       "rule-type": "Kural türü",
       "rulesSearchInput-placeholder-search": "Ara",
       "search": "Ara",
@@ -2666,6 +2669,7 @@
         "namespace": "Klasör/Ad alanı",
         "rule-health": "Sağlık",
         "rule-name": "",
+        "rule-source": "",
         "rule-type": "Tür",
         "state": "Durum"
       }
@@ -3393,9 +3397,6 @@
       "text-badge-enabled": "Etkin",
       "text-badge-not-enabled": "Devre dışı"
     },
-    "scim-banner": {
-      "message": "SCIM şu anda geliştirme aşamasındadır ve üretim kullanımı için önerilmez. Lütfen dikkatli kullanın ve olası değişiklikler olabileceğini unutmayın."
-    },
     "server-discovery-modal": {
       "label-the-wellknownopenidconfiguration-endpoint-for-your-id-p": "Kimlik sağlayıcınız (IdP) için .well-known/openid-configuration uç noktası",
       "title-open-id-connect-discovery-url": "OpenID Connect Discovery URL'sini girin"
@@ -3565,7 +3566,9 @@
       },
       "error-moving-resources": "",
       "error-no-target-folder-path": "",
-      "move-warning": "Bu işlem, seçilen klasörleri ve alt öğelerini taşıyacaktır. Bu işlem toplamda şunları etkileyecektir:",
+      "move-total": "",
+      "move-warning": "",
+      "move-warning-tooltip": "",
       "target-folder": "Hedef Klasör"
     },
     "counts": {
@@ -4691,6 +4694,7 @@
       "panel-title": "Panel başlığını değiştir",
       "paste-panel": "Paneli yapıştır",
       "remove": "{{typeName}} ögesini kaldır",
+      "row-title": "",
       "switch-layout": "Düzeni değiştir"
     },
     "edit-pane": {
@@ -6542,7 +6546,8 @@
     },
     "data-source-load-error": {
       "back": "Geri",
-      "delete": "Sil"
+      "delete": "Sil",
+      "not-found": ""
     },
     "data-source-missing-rights-message": {
       "title-missing-rights": "Eksik haklar"
@@ -7565,7 +7570,9 @@
   "folders": {
     "api": {
       "folder-delete-error-provisioned": "",
-      "folder-deleted-success": ""
+      "folder-deleted-success": "",
+      "folder-move-error-provisioned": "",
+      "folder-moved-success": ""
     },
     "get-loading-nav": {
       "main": {
@@ -8765,7 +8772,6 @@
       "cell-inspect": "Değeri incele",
       "cell-inspect-tooltip": "Değeri incele",
       "copy": "Panoya kopyala",
-      "count": "Sayı",
       "csv-counts": "Satırlar:{{rows}}, Sütunlar:{{columns}}  <5></5>",
       "csv-placeholder": "Buraya CSV girin...",
       "filter-placeholder": "Değerleri filtrele",
@@ -8776,6 +8782,11 @@
       "filter-popup-heading": "Değerlere göre filtrele:",
       "filter-popup-input-placeholder": "Değerleri filtrele",
       "filter-popup-match-case": "Büyük/küçük harf duyarlılığı",
+      "footer": {
+        "reducer": {
+          "count": ""
+        }
+      },
       "inspect-drawer-title": "Değeri incele",
       "nested-table": {
         "no-data": "Veri yok"
@@ -9525,6 +9536,7 @@
       "fields-section": "Alanlar",
       "hide-log-line": "Günlük satırını gizle",
       "inline-mode": "Satır içi görüntüle",
+      "link-value-tooltip": "",
       "links-section": "Bağlantılar",
       "log-line-field": "Günlük satırı",
       "log-line-section": "Günlük satırı",
@@ -12085,6 +12097,7 @@
     "selector": {
       "apply": "Uygula",
       "cancel": "İptal",
+      "error-title": "",
       "input": {
         "placeholder": "Kapsam seçin...",
         "removeAll": "Tüm kapsamları kaldır"
@@ -12779,8 +12792,6 @@
     "description-calculation": "Bir azaltıcı işlevi/hesaplama seçin",
     "description-cell-value-inspect": "Hücre değerini açılır pencerede incelemeyi etkinleştir",
     "description-column-filter": "Tablo içindeki alan filtrelerini etkinleştir/devre dışı bırak",
-    "description-count-rows": "Tüm veri satırları için tek bir sayı görüntüle",
-    "description-fields": "Hesaplanacak alanları seçin",
     "description-frozen-columns": "",
     "description-min-column-width": "Sütunların otomatik olarak yeniden boyutlandırılması için minimum genişlik",
     "description-tooltip-from-field": "",
@@ -12807,21 +12818,17 @@
     "name-column-alignment": "Sütun hizalama",
     "name-column-filter": "Sütun filtresi",
     "name-column-width": "Sütun genişliği",
-    "name-count-rows": "Satır sayısını göster",
     "name-enable-pagination": "",
-    "name-fields": "Alanlar",
     "name-frozen-columns": "",
     "name-hide-in-table": "Tabloda gizle",
     "name-max-height": "",
     "name-min-column-width": "Minimum sütun genişliği",
-    "name-show-table-footer": "Tablo alt bilgisini göster",
     "name-show-table-header": "Tablo başlığını göster",
     "name-tooltip-from-field": "",
     "name-tooltip-placement": "",
     "name-wrap-header-text": "Başlık metnini kaydır",
     "name-wrap-text": "",
     "placeholder-column-width": "otomatik",
-    "placeholder-fields": "Tüm Sayısal Alanlar",
     "placeholder-max-height": "",
     "tooltip-placement-options": {
       "label-auto": "",

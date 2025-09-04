@@ -557,6 +557,7 @@
     },
     "alert-rules": {
       "firing-for": "Отправка для",
+      "multiple-sources": "",
       "next-evaluation": "Следующая оценка",
       "next-evaluation-in": "следующая оценка через",
       "rule-definition": "Определение правил"
@@ -2664,13 +2665,15 @@
         "show": "Показать"
       },
       "manage-alerts": "В этих источниках данных можно выбрать параметр «Управление оповещениями через пользовательский интерфейс Alerting», чтобы иметь возможность управлять этими правилами оповещения в пользовательском интерфейсе Grafana, а также в источнике данных, где они были установлены.",
-      "no-groups": "Нет доступных групп",
-      "no-namespaces": "Нет доступных папок",
       "placeholder-all-data-sources": "Все источники данных",
       "placeholder-contact-point": "Выбрать точку контакта",
       "placeholder-data-sources": "Выбрать источники данных",
       "placeholder-labels": "Выбрать метки",
       "plugin-rules": "Правила плагинов",
+      "rule-source": {
+        "datasource": "",
+        "grafana": ""
+      },
       "rule-type": "Тип правила",
       "rulesSearchInput-placeholder-search": "Поиск",
       "search": "Поиск",
@@ -2692,6 +2695,7 @@
         "namespace": "Папка / пространство имен",
         "rule-health": "Работоспособность",
         "rule-name": "Имя правила",
+        "rule-source": "",
         "rule-type": "Тип",
         "state": "Состояние"
       }
@@ -3419,9 +3423,6 @@
       "text-badge-enabled": "Включено",
       "text-badge-not-enabled": "Не включена"
     },
-    "scim-banner": {
-      "message": "Стандарт SCIM в настоящее время находится в разработке и не рекомендуется для использования в производстве. Используйте его с осторожностью и учитывайте возможные изменения."
-    },
     "server-discovery-modal": {
       "label-the-wellknownopenidconfiguration-endpoint-for-your-id-p": "Конечная точка .well-known/openid-configuration для вашего поставщика удостоверений (IdP)",
       "title-open-id-connect-discovery-url": "URL-адрес обнаружения OpenID Connect"
@@ -3591,7 +3592,9 @@
       },
       "error-moving-resources": "Ошибка при перемещении ресурсов",
       "error-no-target-folder-path": "Недопустимый или пустой путь к целевой папке. Повторите попытку.",
-      "move-warning": "Будут перемещены выбранные папки и их дочерние элементы. В общей сложности будет перемещено:",
+      "move-total": "",
+      "move-warning": "",
+      "move-warning-tooltip": "",
       "target-folder": "Целевая папка"
     },
     "counts": {
@@ -4727,6 +4730,7 @@
       "panel-title": "Изменить заголовок панели",
       "paste-panel": "Вставка панели",
       "remove": "Удалить {{typeName}}",
+      "row-title": "",
       "switch-layout": "Переключить макет"
     },
     "edit-pane": {
@@ -6584,7 +6588,8 @@
     },
     "data-source-load-error": {
       "back": "Назад",
-      "delete": "Удалить"
+      "delete": "Удалить",
+      "not-found": ""
     },
     "data-source-missing-rights-message": {
       "title-missing-rights": "Отсутствующие права"
@@ -7607,7 +7612,9 @@
   "folders": {
     "api": {
       "folder-delete-error-provisioned": "",
-      "folder-deleted-success": "Папка удалена"
+      "folder-deleted-success": "Папка удалена",
+      "folder-move-error-provisioned": "",
+      "folder-moved-success": ""
     },
     "get-loading-nav": {
       "main": {
@@ -8807,7 +8814,6 @@
       "cell-inspect": "Проверить значение",
       "cell-inspect-tooltip": "Проверить значение",
       "copy": "Копировать в буфер обмена",
-      "count": "Количество",
       "csv-counts": "Строки:{{rows}}, столбцы:{{columns}}  <5></5>",
       "csv-placeholder": "Ввести CSV...",
       "filter-placeholder": "Значения фильтра",
@@ -8818,6 +8824,11 @@
       "filter-popup-heading": "Фильтр по значениям:",
       "filter-popup-input-placeholder": "Значения фильтра",
       "filter-popup-match-case": "С учетом регистра",
+      "footer": {
+        "reducer": {
+          "count": ""
+        }
+      },
       "inspect-drawer-title": "Проверить значение",
       "nested-table": {
         "no-data": "Нет данных"
@@ -9583,6 +9594,7 @@
       "fields-section": "Поля",
       "hide-log-line": "Скрыть строку журнала",
       "inline-mode": "Показать встроенные",
+      "link-value-tooltip": "",
       "links-section": "Ссылки",
       "log-line-field": "Строка журнала",
       "log-line-section": "Строка журнала",
@@ -12163,6 +12175,7 @@
     "selector": {
       "apply": "Применить",
       "cancel": "Отмена",
+      "error-title": "",
       "input": {
         "placeholder": "Выбрать области...",
         "removeAll": "Удалить все области"
@@ -12861,8 +12874,6 @@
     "description-calculation": "Выбрать функцию преобразования / расчета",
     "description-cell-value-inspect": "Включить проверку значений ячеек в модальном окне",
     "description-column-filter": "Включает/отключает фильтры полей в таблице",
-    "description-count-rows": "Отобразить один счетчик для всех строк данных",
-    "description-fields": "Выбрать поля, которые необходимо рассчитать",
     "description-frozen-columns": "",
     "description-min-column-width": "Минимальная ширина для автоматического изменения размера столбцов",
     "description-tooltip-from-field": "",
@@ -12889,21 +12900,17 @@
     "name-column-alignment": "Выравнивание столбцов",
     "name-column-filter": "Фильтр столбцов",
     "name-column-width": "Ширина столбца",
-    "name-count-rows": "Подсчет строк",
     "name-enable-pagination": "",
-    "name-fields": "Поля",
     "name-frozen-columns": "",
     "name-hide-in-table": "Скрыть в таблице",
     "name-max-height": "",
     "name-min-column-width": "Минимальная ширина столбца",
-    "name-show-table-footer": "Показать футер таблицы",
     "name-show-table-header": "Показать заголовок таблицы",
     "name-tooltip-from-field": "",
     "name-tooltip-placement": "",
     "name-wrap-header-text": "Перенос текста заголовка",
     "name-wrap-text": "",
     "placeholder-column-width": "авто",
-    "placeholder-fields": "Все числовые поля",
     "placeholder-max-height": "",
     "tooltip-placement-options": {
       "label-auto": "",

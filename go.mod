@@ -79,14 +79,14 @@ require (
 	github.com/golang/protobuf v1.5.4 // @grafana/grafana-backend-group
 	github.com/golang/snappy v1.0.0 // @grafana/alerting-backend
 	github.com/google/go-cmp v0.7.0 // @grafana/grafana-backend-group
-	github.com/google/go-github/v70 v70.0.0 // @grafana/grafana-git-ui-sync-team
+	github.com/google/go-github/v70 v70.0.0 // indirect; @grafana/grafana-git-ui-sync-team
 	github.com/google/go-querystring v1.1.0 // indirect; @grafana/oss-big-tent
 	github.com/google/uuid v1.6.0 // @grafana/grafana-backend-group
 	github.com/google/wire v0.6.0 // @grafana/grafana-backend-group
 	github.com/googleapis/gax-go/v2 v2.14.2 // @grafana/grafana-backend-group
 	github.com/gorilla/mux v1.8.1 // @grafana/grafana-backend-group
 	github.com/gorilla/websocket v1.5.4-0.20250319132907-e064f32e3674 // @grafana/grafana-app-platform-squad
-	github.com/grafana/alerting v0.0.0-20250821181654-10915888e4f0 // @grafana/alerting-backend
+	github.com/grafana/alerting v0.0.0-20250903205312-24567882c5d1 // @grafana/alerting-backend
 	github.com/grafana/authlib v0.0.0-20250710201142-9542f2f28d43 // @grafana/identity-access-team
 	github.com/grafana/authlib/types v0.0.0-20250710201142-9542f2f28d43 // @grafana/identity-access-team
 	github.com/grafana/dataplane/examples v0.0.1 // @grafana/observability-metrics
@@ -98,6 +98,7 @@ require (
 	github.com/grafana/grafana-api-golang-client v0.27.0 // @grafana/alerting-backend
 	github.com/grafana/grafana-app-sdk v0.40.3 // @grafana/grafana-app-platform-squad
 	github.com/grafana/grafana-app-sdk/logging v0.40.3 // @grafana/grafana-app-platform-squad
+	github.com/grafana/grafana-app-sdk/plugin v0.40.3 // @grafana/grafana-app-platform-squad
 	github.com/grafana/grafana-aws-sdk v1.1.0 // @grafana/aws-datasources
 	github.com/grafana/grafana-azure-sdk-go/v2 v2.2.0 // @grafana/partner-datasources
 	github.com/grafana/grafana-cloud-migration-snapshot v1.9.0 // @grafana/grafana-operator-experience-squad
@@ -105,7 +106,7 @@ require (
 	github.com/grafana/grafana-openapi-client-go v0.0.0-20231213163343-bd475d63fb79 // @grafana/grafana-backend-group
 	github.com/grafana/grafana-plugin-sdk-go v0.278.0 // @grafana/plugins-platform-backend
 	github.com/grafana/loki/v3 v3.2.1 // @grafana/observability-logs
-	github.com/grafana/nanogit v0.0.0-20250723104447-68f58f5ecec0 // @grafana/grafana-git-ui-sync-team
+	github.com/grafana/nanogit v0.0.0-20250723104447-68f58f5ecec0 // indirect; @grafana/grafana-git-ui-sync-team
 	github.com/grafana/otel-profiling-go v0.5.1 // @grafana/grafana-backend-group
 	github.com/grafana/pyroscope-go/godeltaprof v0.1.8 // @grafana/observability-traces-and-profiling
 	github.com/grafana/pyroscope/api v1.2.1-0.20250415190842-3ff7247547ae // @grafana/observability-traces-and-profiling
@@ -168,7 +169,6 @@ require (
 	github.com/spf13/pflag v1.0.7 // @grafana-app-platform-squad
 	github.com/spyzhov/ajson v0.9.6 // @grafana/grafana-sharing-squad
 	github.com/stretchr/testify v1.10.0 // @grafana/grafana-backend-group
-	github.com/teris-io/shortid v0.0.0-20171029131806-771a37caa5cf // @grafana/grafana-backend-group
 	github.com/thomaspoignant/go-feature-flag v1.42.0 // @grafana/grafana-backend-group
 	github.com/tjhop/slog-gokit v0.1.3 // @grafana/grafana-app-platform-squad
 	github.com/ua-parser/uap-go v0.0.0-20250213224047-9c035f085b90 // @grafana/grafana-backend-group
@@ -233,6 +233,7 @@ require (
 
 require (
 	github.com/grafana/grafana/apps/advisor v0.0.0 // @grafana/plugins-platform-backend
+	github.com/grafana/grafana/apps/alerting/alertenrichment v0.0.0 // @grafana/alerting-backend
 	github.com/grafana/grafana/apps/alerting/notifications v0.0.0 // @grafana/alerting-backend
 	github.com/grafana/grafana/apps/dashboard v0.0.0 // @grafana/grafana-app-platform-squad @grafana/dashboards-squad
 	github.com/grafana/grafana/apps/folder v0.0.0 // @grafana/grafana-search-and-storage
@@ -258,6 +259,7 @@ require (
 // Replace the workspace versions
 replace (
 	github.com/grafana/grafana/apps/advisor => ./apps/advisor
+	github.com/grafana/grafana/apps/alerting/alertenrichment => ./apps/alerting/alertenrichment
 	github.com/grafana/grafana/apps/alerting/notifications => ./apps/alerting/notifications
 	github.com/grafana/grafana/apps/dashboard => ./apps/dashboard
 	github.com/grafana/grafana/apps/folder => ./apps/folder
@@ -365,7 +367,7 @@ require (
 	github.com/buger/jsonparser v1.1.1 // indirect
 	github.com/c2h5oh/datasize v0.0.0-20231215233829-aa82cc1e6500 // indirect
 	github.com/caio/go-tdigest v3.1.0+incompatible // indirect
-	github.com/cenkalti/backoff/v4 v4.3.0 // indirect
+	github.com/cenkalti/backoff/v4 v4.3.0 // @grafana/alerting-backend
 	github.com/cenkalti/backoff/v5 v5.0.2 // indirect
 	github.com/centrifugal/protocol v0.16.0 // indirect
 	github.com/cespare/xxhash v1.1.0 // indirect
@@ -636,7 +638,7 @@ replace github.com/crewjam/saml => github.com/grafana/saml v0.4.15-0.20240917091
 
 // Use our fork of the upstream alertmanagers.
 // This is required in order to get notification delivery errors from the receivers API.
-replace github.com/prometheus/alertmanager => github.com/grafana/prometheus-alertmanager v0.25.1-0.20250620093340-be61a673dee6
+replace github.com/prometheus/alertmanager => github.com/grafana/prometheus-alertmanager v0.25.1-0.20250821192752-903ba9e90238
 
 exclude github.com/mattn/go-sqlite3 v2.0.3+incompatible
 

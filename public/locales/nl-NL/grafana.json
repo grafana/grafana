@@ -549,6 +549,7 @@
     },
     "alert-rules": {
       "firing-for": "Alarm geactiveerd voor",
+      "multiple-sources": "",
       "next-evaluation": "Volgende evaluatie",
       "next-evaluation-in": "volgende evaluatie over",
       "rule-definition": "Regeldefinitie"
@@ -2638,13 +2639,15 @@
         "show": "Tonen"
       },
       "manage-alerts": "In deze gegevensbronnen kun je waarschuwingen beheren via de waarschuwingsinterface om deze waarschuwingsregels te kunnen beheren in de Grafana-gebruikersinterface en in de gegevensbron waar ze zijn geconfigureerd.",
-      "no-groups": "Geen groepen beschikbaar",
-      "no-namespaces": "Geen mappen beschikbaar",
       "placeholder-all-data-sources": "Alle gegevensbronnen",
       "placeholder-contact-point": "Contactpunt selecteren",
       "placeholder-data-sources": "Gegevensbronnen selecteren",
       "placeholder-labels": "Labels selecteren",
       "plugin-rules": "Plug-inregels",
+      "rule-source": {
+        "datasource": "",
+        "grafana": ""
+      },
       "rule-type": "Regeltype",
       "rulesSearchInput-placeholder-search": "Zoeken",
       "search": "Zoeken",
@@ -2666,6 +2669,7 @@
         "namespace": "Map/Naamruimte",
         "rule-health": "Gezondheid",
         "rule-name": "Regelnaam",
+        "rule-source": "",
         "rule-type": "Type",
         "state": "Status"
       }
@@ -3393,9 +3397,6 @@
       "text-badge-enabled": "Ingeschakeld",
       "text-badge-not-enabled": "Niet ingeschakeld"
     },
-    "scim-banner": {
-      "message": "SCIM is momenteel in ontwikkeling en wordt niet aanbevolen voor gebruik in productieomgevingen. Gebruik met voorzichtigheid; wijzigingen zijn mogelijk."
-    },
     "server-discovery-modal": {
       "label-the-wellknownopenidconfiguration-endpoint-for-your-id-p": "Het .well-known/openid-configuration endpoint voor je IdP",
       "title-open-id-connect-discovery-url": "URL van OpenID Connect Discovery"
@@ -3565,7 +3566,9 @@
       },
       "error-moving-resources": "Fout bij verplaatsen van bronnen",
       "error-no-target-folder-path": "Pad naar doelmap is ongeldig of leeg, selecteer opnieuw.",
-      "move-warning": "Hiermee worden geselecteerde mappen en hun afgeleiden verwijderd. In totaal heeft dit invloed op:",
+      "move-total": "",
+      "move-warning": "",
+      "move-warning-tooltip": "",
       "target-folder": "Doelmap"
     },
     "counts": {
@@ -4691,6 +4694,7 @@
       "panel-title": "Paneeltitel wijzigen",
       "paste-panel": "Paneel plakken",
       "remove": "{{typeName}} verwijderen",
+      "row-title": "",
       "switch-layout": "Indeling wisselen"
     },
     "edit-pane": {
@@ -6542,7 +6546,8 @@
     },
     "data-source-load-error": {
       "back": "Terug",
-      "delete": "Verwijderen"
+      "delete": "Verwijderen",
+      "not-found": ""
     },
     "data-source-missing-rights-message": {
       "title-missing-rights": "Ontbrekende rechten"
@@ -7565,7 +7570,9 @@
   "folders": {
     "api": {
       "folder-delete-error-provisioned": "",
-      "folder-deleted-success": "Map verwijderd"
+      "folder-deleted-success": "Map verwijderd",
+      "folder-move-error-provisioned": "",
+      "folder-moved-success": ""
     },
     "get-loading-nav": {
       "main": {
@@ -8765,7 +8772,6 @@
       "cell-inspect": "Waarde inspecteren",
       "cell-inspect-tooltip": "Waarde inspecteren",
       "copy": "Naar klembord kopiëren",
-      "count": "Telling",
       "csv-counts": "Rijen:{{rows}}, kolommen:{{columns}}  <5></5>",
       "csv-placeholder": "Voer hier csv in ...",
       "filter-placeholder": "Filter waarden",
@@ -8776,6 +8782,11 @@
       "filter-popup-heading": "Filteren op waarden:",
       "filter-popup-input-placeholder": "Filter waarden",
       "filter-popup-match-case": "Case matchen",
+      "footer": {
+        "reducer": {
+          "count": ""
+        }
+      },
       "inspect-drawer-title": "Waarde inspecteren",
       "nested-table": {
         "no-data": "Geen gegevens"
@@ -9525,6 +9536,7 @@
       "fields-section": "Velden",
       "hide-log-line": "Logregel verbergen",
       "inline-mode": "Inline weergave",
+      "link-value-tooltip": "",
       "links-section": "Links",
       "log-line-field": "Logregel",
       "log-line-section": "Logregel",
@@ -12085,6 +12097,7 @@
     "selector": {
       "apply": "Toepassen",
       "cancel": "Annuleren",
+      "error-title": "",
       "input": {
         "placeholder": "Scopes selecteren ...",
         "removeAll": "Alle scopes verwijderen"
@@ -12779,8 +12792,6 @@
     "description-calculation": "Kies een verkleiningsfunctie/berekening",
     "description-cell-value-inspect": "Celwaarde-inspectie inschakelen in een pop-upvenster",
     "description-column-filter": "Schakelt veldfilters in tabel in/uit",
-    "description-count-rows": "Een enkele telling weergeven voor alle gegevensrijen",
-    "description-fields": "Selecteer de velden die moeten worden berekend",
     "description-frozen-columns": "",
     "description-min-column-width": "De minimale breedte voor het automatisch aanpassen van de kolomgrootte",
     "description-tooltip-from-field": "",
@@ -12807,21 +12818,17 @@
     "name-column-alignment": "Kolomuitlijning",
     "name-column-filter": "Kolomfilter",
     "name-column-width": "Kolombreedte",
-    "name-count-rows": "Rijen tellen",
     "name-enable-pagination": "",
-    "name-fields": "Velden",
     "name-frozen-columns": "",
     "name-hide-in-table": "In tabel verbergen",
     "name-max-height": "",
     "name-min-column-width": "Minimale kolombreedte",
-    "name-show-table-footer": "Voettekst tabel tonen",
     "name-show-table-header": "Header tabel tonen",
     "name-tooltip-from-field": "",
     "name-tooltip-placement": "",
     "name-wrap-header-text": "Koptekst laten teruglopen",
     "name-wrap-text": "",
     "placeholder-column-width": "automatisch",
-    "placeholder-fields": "Alle numerieke velden",
     "placeholder-max-height": "",
     "tooltip-placement-options": {
       "label-auto": "",

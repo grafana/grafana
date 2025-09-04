@@ -172,6 +172,8 @@ export class TabItem
 
   public onChangeTitle(title: string) {
     this.setState({ title });
+    const currentTabSlug = this.getSlug();
+    this.getParentLayout().setState({ currentTabSlug });
   }
 
   public onChangeName(name: string): void {
@@ -199,13 +201,14 @@ export class TabItem
 
   public draggedPanelInside(panel: VizPanel) {
     panel.clearParent();
+
     this.getLayout().addPanel(panel);
     this.setIsDropTarget(false);
 
     const parentLayout = this.getParentLayout();
-    const tabIndex = parentLayout.state.tabs.findIndex((tab) => tab === this);
-    if (tabIndex !== parentLayout.state.currentTabIndex) {
-      parentLayout.setState({ currentTabIndex: tabIndex });
+
+    if (parentLayout.state.currentTabSlug !== this.getSlug()) {
+      parentLayout.setState({ currentTabSlug: this.getSlug() });
     }
   }
 
