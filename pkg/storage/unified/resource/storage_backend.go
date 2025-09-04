@@ -81,6 +81,10 @@ func NewKvStorageBackend(opts KvBackendOptions) (StorageBackend, error) {
 }
 
 func (k *kvStorageBackend) pruneEvents(ctx context.Context, key PruningKey) error {
+	if !key.Validate() {
+		return fmt.Errorf("invalid pruning key: %+v", key)
+	}
+
 	keepEvents := make([]DataKey, 0, prunerMaxEvents)
 
 	// iterate over all keys for the resource and delete versions beyond the latest 20

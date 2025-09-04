@@ -22,8 +22,9 @@ func setupTestStorageBackend(t *testing.T) *kvStorageBackend {
 		WithPruner: true,
 	}
 	backend, err := NewKvStorageBackend(opts)
+	kvBackend := backend.(*kvStorageBackend)
 	require.NoError(t, err)
-	return backend
+	return kvBackend
 }
 
 func TestNewKvStorageBackend(t *testing.T) {
