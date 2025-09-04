@@ -1,40 +1,33 @@
-import { css } from '@emotion/css';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { ReactElement, useCallback, useEffect, useMemo, useState } from 'react';
 
 import { rangeUtil, SelectableValue } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { SceneComponentProps, sceneGraph } from '@grafana/scenes';
+import { SceneComponentProps, sceneGraph, SceneObjectBase, SceneObjectState } from '@grafana/scenes';
 import { ConditionalRenderingTimeRangeSizeKind } from '@grafana/schema/dist/esm/schema/dashboard/v2';
-import { Field, Select, useStyles2 } from '@grafana/ui';
+import { Field, Select } from '@grafana/ui';
 
-import { dashboardEditActions } from '../edit-pane/shared';
+import { dashboardEditActions } from '../../edit-pane/shared';
+import { getLowerTranslatedObjectType } from '../object';
 
-import { ConditionalRenderingBase, ConditionalRenderingBaseState } from './ConditionalRenderingBase';
-import { ConditionalRenderingSerializerRegistryItem, TimeRangeSizeConditionValue } from './types';
-import { translatedItemType } from './utils';
+import { ConditionalRenderingConditionWrapper } from './ConditionalRenderingConditionWrapper';
+import { ConditionalRenderingConditionsSerializerRegistryItem } from './serializers';
+import { checkGroup, getObjectType } from './utils';
 
-type ConditionalRenderingTimeRangeSizeState = ConditionalRenderingBaseState<TimeRangeSizeConditionValue>;
+interface ConditionalRenderingTimeRangeSizeState extends SceneObjectState {
+  value: string;
+  result: boolean | undefined;
+}
 
-export class ConditionalRenderingTimeRangeSize extends ConditionalRenderingBase<ConditionalRenderingTimeRangeSizeState> {
+export class ConditionalRenderingTimeRangeSize extends SceneObjectBase<ConditionalRenderingTimeRangeSizeState> {
   public static Component = ConditionalRenderingTimeRangeSizeRenderer;
 
-  public static serializer: ConditionalRenderingSerializerRegistryItem = {
+  public static serializer: ConditionalRenderingConditionsSerializerRegistryItem = {
     id: 'ConditionalRenderingTimeRangeSize',
     name: 'Time Range Size',
     deserialize: this.deserialize,
   };
 
-  public get title(): string {
-    return t('dashboard.conditional-rendering.conditions.time-range-size.label', 'Time range less than');
-  }
-
-  public get info(): string {
-    return t(
-      'dashboard.conditional-rendering.conditions.time-range-size.info',
-      'Show or hide the {{type}} if the dashboard time range is shorter than the selected time frame.',
-      { type: translatedItemType(this.getItemType()) }
-    );
-  }
+  public readonly validateIntervalRegex = /^(\d+(?:\.\d+)?)[Mwdhmsy]$/;
 
   public constructor(state: ConditionalRenderingTimeRangeSizeState) {
     super(state);
@@ -43,26 +36,52 @@ export class ConditionalRenderingTimeRangeSize extends ConditionalRenderingBase<
   }
 
   private _activationHandler() {
-    this._subs.add(sceneGraph.getTimeRange(this).subscribeToState(() => this.notifyChange()));
+    this.forEachChild((child) => {
+      if (!child.isActive) {
+        this._subs.add(child.activate());
+      }
+    });
+
+    this._check();
+
+    this._subs.add(sceneGraph.getTimeRange(this).subscribeToState(() => this._check()));
   }
 
-  public evaluate(): boolean {
+  private _check() {
+    const result = this._evaluate();
+
+    if (result !== this.state.result) {
+      this.setState({ ...this.state, result });
+      checkGroup(this);
+    }
+
+    return result;
+  }
+
+  private _evaluate(): boolean | undefined {
     try {
-      if (!validateIntervalRegex.test(this.state.value)) {
-        return true;
+      if (!this.validateIntervalRegex.test(this.state.value)) {
+        return undefined;
       }
 
       const interval = rangeUtil.intervalToSeconds(this.state.value);
       const timeRange = sceneGraph.getTimeRange(this);
 
-      if (timeRange.state.value.to.unix() - timeRange.state.value.from.unix() <= interval) {
-        return true;
-      }
+      return timeRange.state.value.to.unix() - timeRange.state.value.from.unix() <= interval;
     } catch {
-      return false;
+      return undefined;
     }
+  }
 
-    return false;
+  public changeValue(value: string) {
+    if (this.state.value !== value) {
+      this.setState({ value });
+      this._check();
+    }
+  }
+
+  public render(): ReactElement {
+    return <this.Component model={this} key={this.state.key} />;
   }
 
   public serialize(): ConditionalRenderingTimeRangeSizeKind {
@@ -70,20 +89,19 @@ export class ConditionalRenderingTimeRangeSize extends ConditionalRenderingBase<
   }
 
   public static deserialize(model: ConditionalRenderingTimeRangeSizeKind): ConditionalRenderingTimeRangeSize {
-    return new ConditionalRenderingTimeRangeSize({ value: model.spec.value });
+    return new ConditionalRenderingTimeRangeSize({ value: model.spec.value, result: undefined });
   }
 
   public static createEmpty(): ConditionalRenderingTimeRangeSize {
-    return new ConditionalRenderingTimeRangeSize({ value: '7d' });
+    return new ConditionalRenderingTimeRangeSize({ value: '7d', result: undefined });
   }
 }
 
 function ConditionalRenderingTimeRangeSizeRenderer({ model }: SceneComponentProps<ConditionalRenderingTimeRangeSize>) {
   const { value } = model.useState();
-  const [isValid, setIsValid] = useState(validateIntervalRegex.test(value));
-  const styles = useStyles2(getStyles);
+  const [isValid, setIsValid] = useState(model.validateIntervalRegex.test(value));
 
-  useEffect(() => setIsValid(validateIntervalRegex.test(value)), [value]);
+  useEffect(() => setIsValid(model.validateIntervalRegex.test(value)), [model, value]);
 
   const staticOptions = useMemo<Array<SelectableValue<string>>>(
     () => [
@@ -200,35 +218,38 @@ function ConditionalRenderingTimeRangeSizeRenderer({ model }: SceneComponentProp
       dashboardEditActions.edit({
         description: t('dashboard.edit-actions.edit-time-range-rule', 'Change time range rule'),
         source: model,
-        perform: () => model.setStateAndNotify({ value: newValue }),
-        undo: () => model.setStateAndNotify({ value }),
+        perform: () => model.changeValue(newValue ?? ''),
+        undo: () => model.changeValue(value),
       });
     },
     [model, value]
   );
 
   return (
-    <Field
-      invalid={!isValid}
-      error={t('dashboard.conditional-rendering.conditions.time-range-size.invalid-message', 'Invalid interval')}
-      className={styles.container}
+    <ConditionalRenderingConditionWrapper
+      info={t(
+        'dashboard.conditional-rendering.conditions.time-range-size.info',
+        'Show or hide the {{type}} if the dashboard time range is shorter than the selected time frame.',
+        { type: getLowerTranslatedObjectType(getObjectType(model)) }
+      )}
+      isObjectSupported={true}
+      model={model}
+      title={t('dashboard.conditional-rendering.conditions.time-range-size.label', 'Time range less than')}
     >
-      <Select
-        isClearable={false}
-        allowCustomValue
-        onCreateOption={(value) => handleChange(value)}
-        value={value}
-        options={options}
-        onChange={({ value }) => handleChange(value)}
-      />
-    </Field>
+      <Field
+        invalid={!isValid}
+        error={t('dashboard.conditional-rendering.conditions.time-range-size.invalid-message', 'Invalid interval')}
+        noMargin
+      >
+        <Select
+          isClearable={false}
+          allowCustomValue
+          onCreateOption={(value) => handleChange(value)}
+          value={value}
+          options={options}
+          onChange={({ value }) => handleChange(value)}
+        />
+      </Field>
+    </ConditionalRenderingConditionWrapper>
   );
 }
-
-const getStyles = () => ({
-  container: css({
-    margin: 0,
-  }),
-});
-
-const validateIntervalRegex = /^(\d+(?:\.\d+)?)[Mwdhmsy]$/;
