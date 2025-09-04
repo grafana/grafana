@@ -7,7 +7,7 @@ import { Trans, t } from '@grafana/i18n';
 import { getAppEvents, locationService } from '@grafana/runtime';
 import { Dashboard } from '@grafana/schema';
 import { Button, Field, Input, Stack, TextArea } from '@grafana/ui';
-import { RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
+import { RepositoryView, Unstructured } from 'app/api/clients/provisioning/v0alpha1';
 import kbn from 'app/core/utils/kbn';
 import { Resource } from 'app/features/apiserver/types';
 import { SaveDashboardFormCommonOptions } from 'app/features/dashboard-scene/saving/SaveDashboardForm';
@@ -19,6 +19,7 @@ import {
   ProvisionedOperationInfo,
   useProvisionedRequestHandler,
 } from 'app/features/provisioning/hooks/useProvisionedRequestHandler';
+import { SaveDashboardResponseDTO } from 'app/types/dashboard';
 
 import { ProvisionedDashboardFormData } from '../../types/form';
 import { buildResourceBranchRedirectUrl } from '../../utils/redirect';
@@ -52,6 +53,7 @@ export function SaveProvisionedDashboardForm({
   const navigate = useNavigate();
   const appEvents = getAppEvents();
   const { isDirty, editPanel: panelEditor } = dashboard.useState();
+  console.log('isDirty', isDirty);
 
   const [createOrUpdateFile, request] = useCreateOrUpdateRepositoryFile(isNew ? undefined : defaultValues.path);
 
@@ -84,7 +86,7 @@ export function SaveProvisionedDashboardForm({
   };
 
   const onWriteSuccess = (_: ProvisionedOperationInfo, upsert: Resource<Dashboard>) => {
-    handleDismiss();
+    handleDismiss(upsert);
     if (isNew && upsert?.metadata.name) {
       handleNewDashboard(upsert);
     } else {
@@ -96,7 +98,7 @@ export function SaveProvisionedDashboardForm({
   };
 
   const onBranchSuccess = (ref: string, path: string, info: ProvisionedOperationInfo, upsert: Resource<Dashboard>) => {
-    handleDismiss();
+    handleDismiss(upsert);
     if (isNew && upsert?.metadata?.name) {
       handleNewDashboard(upsert);
     } else {
@@ -110,9 +112,22 @@ export function SaveProvisionedDashboardForm({
     }
   };
 
-  const handleDismiss = () => {
-    dashboard.setState({ isDirty: false });
+  const handleDismiss = (upsert: Resource<Dashboard>) => {
     panelEditor?.onDiscard();
+
+    // Try upsert first, then dryRun fallback
+    let resourceData: Resource<Dashboard> | Unstructured = upsert;
+    if (!resourceData && request.data?.resource?.dryRun) {
+      resourceData = request.data.resource.dryRun;
+    }
+
+    if (resourceData) {
+      const saveResponse = createSaveResponseFromResource(resourceData);
+      dashboard.saveCompleted(resourceData.spec, saveResponse, defaultValues.folder?.uid);
+    } else {
+      dashboard.setState({ isDirty: false });
+    }
+
     drawer.onClose();
   };
 
@@ -291,4 +306,25 @@ function updateURLParams(param: string, value?: string) {
   const url = new URL(window.location.href);
   url.searchParams.set(param, value);
   window.history.replaceState({}, '', url);
+}
+
+function createSaveResponseFromResource(resource: Resource<Dashboard> | Unstructured): SaveDashboardResponseDTO {
+  const uid = resource.metadata?.name || '';
+  const title = resource.spec?.title || '';
+  const slug = kbn.slugifyForUrl(title);
+
+  return {
+    uid,
+    version: resource.metadata?.generation || 0,
+    id: resource.spec?.id || 0,
+    status: 'success',
+    url: locationUtil.assureBaseUrl(
+      getDashboardUrl({
+        uid,
+        slug,
+        currentQueryParams: '',
+      })
+    ),
+    slug,
+  };
 }
