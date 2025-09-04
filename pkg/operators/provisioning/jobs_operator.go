@@ -13,6 +13,7 @@ import (
 	"github.com/urfave/cli/v2"
 	"k8s.io/client-go/tools/cache"
 
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/export"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/migrate"
@@ -101,56 +102,9 @@ func RunJobController(opts standalone.BuildInfo, c *cli.Context, cfg *setting.Cf
 		return fmt.Errorf("create API client job store: %w", err)
 	}
 
-	configProvider := NewDirectConfigProvider(controllerCfg.restCfg)
-	clients := resources.NewClientFactory(configProvider)
-	parsers := resources.NewParserFactory(clients)
-
-	// HACK: This logic directly connects to unified storage. We are doing this for now as there is no global
-	// search endpoint. But controllers, in general, should not connect directly to unified storage and instead
-	// go through the api server. Once there is a global search endpoint, we will switch to that here as well.
-	unified, err := NewUnifiedStorageClientFactory(controllerCfg.unifiedCfg, controllerCfg.tracer)
+	workers, err := setupWorkers(controllerCfg)
 	if err != nil {
-		return fmt.Errorf("create unified storage client: %w", err)
-	}
-
-	resourceLister := resources.NewResourceLister(unified)
-	repositoryResources := resources.NewRepositoryResourcesFactory(parsers, clients, resourceLister)
-
-	stageIfPossible := repository.WrapWithStageAndPushIfPossible
-	exportWorker := export.NewExportWorker(
-		clients,
-		repositoryResources,
-		export.ExportAll,
-		stageIfPossible,
-	)
-
-	statusPatcher := controller.NewRepositoryStatusPatcher(controllerCfg.provisioningClient.ProvisioningV0alpha1())
-	syncer := sync.NewSyncer(sync.Compare, sync.FullSync, sync.IncrementalSync)
-	syncWorker := sync.NewSyncWorker(
-		clients,
-		repositoryResources,
-		nil, // HACK: we have updated the worker to check for nil
-		statusPatcher.Patch,
-		syncer,
-	)
-
-	cleaner := migrate.NewNamespaceCleaner(clients)
-	unifiedStorageMigrator := migrate.NewUnifiedStorageMigrator(
-		cleaner,
-		exportWorker,
-		syncWorker,
-	)
-
-	migrationWorker := migrate.NewMigrationWorkerFromUnified(unifiedStorageMigrator)
-	deleteWorker := deletepkg.NewWorker(syncWorker, stageIfPossible, repositoryResources)
-	moveWorker := move.NewWorker(syncWorker, stageIfPossible, repositoryResources)
-
-	workers := []jobs.Worker{
-		deleteWorker,
-		exportWorker,
-		migrationWorker,
-		moveWorker,
-		syncWorker,
+		return fmt.Errorf("setup workers: %w", err)
 	}
 
 	// This is basically our own JobQueue system
@@ -198,8 +152,8 @@ type unifiedStorageConfig struct {
 
 type jobsControllerConfig struct {
 	provisioningControllerConfig
-	historyExpiration time.Duration
-	unifiedCfg        unifiedStorageConfig
+	historyExpiration    time.Duration
+	unifiedStorageClient resources.ResourceStore
 }
 
 func setupJobsControllerFromConfig(cfg *setting.Cfg) (*jobsControllerConfig, error) {
@@ -208,6 +162,74 @@ func setupJobsControllerFromConfig(cfg *setting.Cfg) (*jobsControllerConfig, err
 		return nil, err
 	}
 
+	unifiedStorageClient, err := setupUnifiedStorageClient(cfg, controllerCfg.tracer)
+	if err != nil {
+		return nil, fmt.Errorf("setup unified storage client: %w", err)
+	}
+
+	return &jobsControllerConfig{
+		provisioningControllerConfig: *controllerCfg,
+		historyExpiration:            cfg.SectionWithEnvOverrides("operator").Key("history_expiration").MustDuration(0),
+		unifiedStorageClient:         unifiedStorageClient,
+	}, nil
+}
+
+func setupWorkers(controllerCfg *jobsControllerConfig) ([]jobs.Worker, error) {
+	configProvider := NewDirectConfigProvider(controllerCfg.restCfg)
+	clients := resources.NewClientFactory(configProvider)
+	parsers := resources.NewParserFactory(clients)
+	resourceLister := resources.NewResourceLister(controllerCfg.unifiedStorageClient)
+	repositoryResources := resources.NewRepositoryResourcesFactory(parsers, clients, resourceLister)
+	statusPatcher := controller.NewRepositoryStatusPatcher(controllerCfg.provisioningClient.ProvisioningV0alpha1())
+
+	workers := make([]jobs.Worker, 0)
+
+	// Sync
+	syncer := sync.NewSyncer(sync.Compare, sync.FullSync, sync.IncrementalSync)
+	syncWorker := sync.NewSyncWorker(
+		clients,
+		repositoryResources,
+		nil, // HACK: we have updated the worker to check for nil
+		statusPatcher.Patch,
+		syncer,
+	)
+	workers = append(workers, syncWorker)
+
+	// Export
+	stageIfPossible := repository.WrapWithStageAndPushIfPossible
+	exportWorker := export.NewExportWorker(
+		clients,
+		repositoryResources,
+		export.ExportAll,
+		stageIfPossible,
+	)
+	workers = append(workers, exportWorker)
+
+	// Migrate
+	cleaner := migrate.NewNamespaceCleaner(clients)
+	unifiedStorageMigrator := migrate.NewUnifiedStorageMigrator(
+		cleaner,
+		exportWorker,
+		syncWorker,
+	)
+	migrationWorker := migrate.NewMigrationWorkerFromUnified(unifiedStorageMigrator)
+	workers = append(workers, migrationWorker)
+
+	// Delete
+	deleteWorker := deletepkg.NewWorker(syncWorker, stageIfPossible, repositoryResources)
+	workers = append(workers, deleteWorker)
+
+	// Move
+	moveWorker := move.NewWorker(syncWorker, stageIfPossible, repositoryResources)
+	workers = append(workers, moveWorker)
+
+	return workers, nil
+}
+
+// HACK: This logic directly connects to unified storage. We are doing this for now as there is no global
+// search endpoint. But controllers, in general, should not connect directly to unified storage and instead
+// go through the api server. Once there is a global search endpoint, we will switch to that here as well.
+func setupUnifiedStorageClient(cfg *setting.Cfg, tracer tracing.Tracer) (resources.ResourceStore, error) {
 	// Unified Storage
 	// TODO: This is duplicate
 	gRPCAuth := cfg.SectionWithEnvOverrides("grpc_client_authentication")
@@ -222,11 +244,20 @@ func setupJobsControllerFromConfig(cfg *setting.Cfg) (*jobsControllerConfig, err
 
 	tokenNamespace := gRPCAuth.Key("token_namespace").String()
 	allowInsecure := gRPCAuth.Key("allow_insecure").MustBool(false)
-	// TODO: enforce this
+
 	unifiedStorageSec := cfg.SectionWithEnvOverrides("unified_storage")
+	grpcAddress := unifiedStorageSec.Key("grpc_address").String()
+	if grpcAddress == "" {
+		return nil, fmt.Errorf("grpc_address is required in [unified_storage] section")
+	}
+
+	// Optional separate index address
+	indexAddress := unifiedStorageSec.Key("grpc_index_address").String()
+
+	// TODO: enforce this
 	unifiedCfg := unifiedStorageConfig{
-		GrpcAddress:      unifiedStorageSec.Key("grpc_address").String(),
-		GrpcIndexAddress: unifiedStorageSec.Key("grpc_index_address").String(),
+		GrpcAddress:      grpcAddress,
+		GrpcIndexAddress: indexAddress,
 		ClientConfig: resource.RemoteResourceClientConfig{
 			Token:            token,
 			TokenExchangeURL: tokenExchangeURL,
@@ -237,9 +268,10 @@ func setupJobsControllerFromConfig(cfg *setting.Cfg) (*jobsControllerConfig, err
 		},
 	}
 
-	return &jobsControllerConfig{
-		provisioningControllerConfig: *controllerCfg,
-		historyExpiration:            cfg.SectionWithEnvOverrides("operator").Key("history_expiration").MustDuration(0),
-		unifiedCfg:                   unifiedCfg,
-	}, nil
+	unified, err := NewUnifiedStorageClientFactory(unifiedCfg, tracer)
+	if err != nil {
+		return nil, fmt.Errorf("create unified storage client: %w", err)
+	}
+
+	return unified, nil
 }
