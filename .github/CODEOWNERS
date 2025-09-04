@@ -755,6 +755,7 @@ playwright.storybook.config.ts @grafana/grafana-frontend-platform
 
 # public folder
 /public/app/api/ @grafana/grafana-frontend-platform
+/public/app/api/clients/folder/ @grafana/grafana-search-navigate-organise
 /public/app/core/actions/ @grafana/grafana-frontend-platform
 /public/app/core/app_events.ts @grafana/grafana-frontend-platform
 /public/app/core/components/AccessControl/ @grafana/identity-access-team
