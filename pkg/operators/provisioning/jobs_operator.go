@@ -35,7 +35,7 @@ func RunJobController(opts standalone.BuildInfo, c *cli.Context, cfg *setting.Cf
 	})).With("logger", "provisioning-job-controller")
 	logger.Info("Starting provisioning job controller")
 
-	controllerCfg, err := getJobsControllerConfig(cfg)
+	controllerCfg, err := setupJobsControllerFromConfig(cfg)
 	if err != nil {
 		return fmt.Errorf("failed to setup operator: %w", err)
 	}
@@ -190,13 +190,19 @@ func RunJobController(opts standalone.BuildInfo, c *cli.Context, cfg *setting.Cf
 	return nil
 }
 
+type unifiedStorageConfig struct {
+	GrpcAddress      string
+	GrpcIndexAddress string
+	ClientConfig     resource.RemoteResourceClientConfig
+}
+
 type jobsControllerConfig struct {
 	provisioningControllerConfig
 	historyExpiration time.Duration
 	unifiedCfg        unifiedStorageConfig
 }
 
-func getJobsControllerConfig(cfg *setting.Cfg) (*jobsControllerConfig, error) {
+func setupJobsControllerFromConfig(cfg *setting.Cfg) (*jobsControllerConfig, error) {
 	controllerCfg, err := setupFromConfig(cfg)
 	if err != nil {
 		return nil, err

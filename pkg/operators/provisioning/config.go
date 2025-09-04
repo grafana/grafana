@@ -15,7 +15,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/storage/unified/resource"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	authrt "github.com/grafana/grafana/apps/provisioning/pkg/auth"
@@ -26,17 +25,6 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	secretdecrypt "github.com/grafana/grafana/pkg/registry/apis/secret/decrypt"
 )
-
-type localConfig struct {
-	homePath          string
-	permittedPrefixes []string
-}
-
-type unifiedStorageConfig struct {
-	GrpcAddress      string
-	GrpcIndexAddress string
-	ClientConfig     resource.RemoteResourceClientConfig
-}
 
 // directConfigProvider is a simple RestConfigProvider that always returns the same rest.Config
 // it implements apiserver.RestConfigProvider
@@ -58,7 +46,6 @@ type provisioningControllerConfig struct {
 	resyncInterval     time.Duration
 	tracer             tracing.Tracer
 	repoGetter         *resources.RepositoryGetter
-	decrypter          repository.Decrypter
 	restCfg            *rest.Config
 }
 
@@ -74,7 +61,6 @@ type provisioningControllerConfig struct {
 // tls_ca_file =
 // resync_interval =
 func setupFromConfig(cfg *setting.Cfg) (controllerCfg *provisioningControllerConfig, err error) {
-	// TODO: Enforce required
 	if cfg == nil {
 		return nil, fmt.Errorf("no configuration available")
 	}
@@ -129,8 +115,35 @@ func setupFromConfig(cfg *setting.Cfg) (controllerCfg *provisioningControllerCon
 		return nil, fmt.Errorf("failed to create provisioning client: %w", err)
 	}
 
-	// Decrypt Service
+	decrypter, err := setupDecrypter(cfg, tracer, tokenExchangeClient)
+	if err != nil {
+		return nil, fmt.Errorf("build decrypter: %w", err)
+	}
+
+	repoGetter, err := setupRepoGetter(cfg, decrypter, provisioningClient)
+	if err != nil {
+		return nil, fmt.Errorf("build repository getter: %w", err)
+	}
+
+	return &provisioningControllerConfig{
+		provisioningClient: provisioningClient,
+		resyncInterval:     operatorSec.Key("resync_interval").MustDuration(60 * time.Second),
+		tracer:             tracer,
+		repoGetter:         repoGetter,
+		restCfg:            config,
+	}, nil
+}
+
+func setupDecrypter(cfg *setting.Cfg, tracer tracing.Tracer, tokenExchangeClient *authn.TokenExchangeClient) (decrypter repository.Decrypter, err error) {
 	secretsSec := cfg.SectionWithEnvOverrides("secrets_manager")
+	if secretsSec == nil {
+		return nil, fmt.Errorf("no [secrets_manager] section found in config")
+	}
+	address := secretsSec.Key("grpc_server_address").String()
+	if address == "" {
+		return nil, fmt.Errorf("grpc_server_address is required in [secrets_manager] section")
+	}
+
 	secretsTls := secretdecrypt.TLSConfig{
 		UseTLS: secretsSec.Key("grpc_server_use_tls").MustBool(true),
 		CAFile: secretsSec.Key("grpc_server_tls_ca_file").String(),
@@ -142,70 +155,59 @@ func setupFromConfig(cfg *setting.Cfg) (controllerCfg *provisioningControllerCon
 	decryptSvc, err := secretdecrypt.NewGRPCDecryptClientWithTLS(
 		tokenExchangeClient,
 		tracer,
-		secretsSec.Key("grpc_server_address").String(),
+		address,
 		secretsTls,
 	)
 	if err != nil {
 		return nil, fmt.Errorf("create decrypt service: %w", err)
 	}
-	decrypter := repository.ProvideDecrypter(decryptSvc)
 
-	// Repository Types
-	// TODO: This depends on the different flavor of Grafana
-	// https://github.com/grafana/git-ui-sync-project/issues/495
-	repositoryTypes := operatorSec.Key("repository_types").Strings("|")
-	availableRepositoryTypes := make(map[provisioning.RepositoryType]struct{})
-	for _, t := range repositoryTypes {
-		if t != string(provisioning.LocalRepositoryType) && t != string(provisioning.GitHubRepositoryType) {
-			return nil, fmt.Errorf("unsupported repository type: %s", t)
-		}
-
-		availableRepositoryTypes[provisioning.RepositoryType(t)] = struct{}{}
-	}
-
-	// local
-	localCfg := localConfig{
-		homePath:          operatorSec.Key("home_path").String(),
-		permittedPrefixes: operatorSec.Key("local_permitted_prefixes").Strings("|"),
-	}
-
-	repoGetter, err := buildRepoGetter(availableRepositoryTypes, decrypter, localCfg, provisioningClient)
-	if err != nil {
-		return nil, fmt.Errorf("build repository getter: %w", err)
-	}
-
-	return &provisioningControllerConfig{
-		provisioningClient: provisioningClient,
-		resyncInterval:     operatorSec.Key("resync_interval").MustDuration(60 * time.Second),
-		tracer:             tracer,
-		repoGetter:         repoGetter,
-		decrypter:          decrypter,
-		restCfg:            config,
-	}, nil
+	return repository.ProvideDecrypter(decryptSvc), nil
 }
 
-func buildRepoGetter(
-	repoTypes map[provisioning.RepositoryType]struct{},
+func setupRepoGetter(
+	cfg *setting.Cfg,
 	decrypter repository.Decrypter,
-	localCfg localConfig,
 	provisioningClient *client.Clientset,
 ) (*resources.RepositoryGetter, error) {
+	operatorSec := cfg.SectionWithEnvOverrides("operator")
+	repoTypes := operatorSec.Key("repository_types").Strings("|")
+
 	// TODO: This depends on the different flavor of Grafana
 	// https://github.com/grafana/git-ui-sync-project/issues/495
-	extras := make([]repository.Extra, 0, len(repoTypes))
+	extras := make([]repository.Extra, 0)
+	alreadyRegistered := make(map[provisioning.RepositoryType]struct{})
+
 	for t := range repoTypes {
-		switch t {
+		if _, ok := alreadyRegistered[provisioning.RepositoryType(t)]; ok {
+			continue
+		}
+		alreadyRegistered[provisioning.RepositoryType(t)] = struct{}{}
+
+		switch provisioning.RepositoryType(t) {
 		case provisioning.GitHubRepositoryType:
 			extras = append(extras, github.Extra(
 				decrypter,
 				github.ProvideFactory(),
-				nil, // We don't need the WebhookURL for the execution of jobs, only for the repository controller
+				// TODO: we need to plug the webhook builder here for webhooks to be created in repository controller
+				// https://github.com/grafana/git-ui-sync-project/issues/455
+				nil,
 			),
 			)
 		case provisioning.LocalRepositoryType:
+			homePath := operatorSec.Key("home_path").String()
+			if homePath == "" {
+				return nil, fmt.Errorf("home_path is required in [operator] section for local repository type")
+			}
+
+			permittedPrefixes := operatorSec.Key("local_permitted_prefixes").Strings("|")
+			if len(permittedPrefixes) == 0 {
+				return nil, fmt.Errorf("local_permitted_prefixes is required in [operator] section for local repository type")
+			}
+
 			extras = append(extras, local.Extra(
-				localCfg.homePath,
-				localCfg.permittedPrefixes,
+				homePath,
+				permittedPrefixes,
 			))
 		default:
 			return nil, fmt.Errorf("unsupported repository type: %s", t)
