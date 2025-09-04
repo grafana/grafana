@@ -264,7 +264,7 @@ The Grafana LLM plugin seamlessly integrates AI-powered assistance into your SQL
 The Grafana LLM plugin is currently in public preview, meaning Grafana offers limited support, and breaking changes might occur prior to the feature being made generally available.
 {{< /admonition >}}
 
-To use this integration, first [install and configure the LLM plugin](https://grafana.com/grafana/plugins/grafana-llm-app/). After installation, open your dashboard and select **Edit** to open the panel editor. Navigate to the **Queries** tab and scroll to the bottom where you'll find two new buttons positioned to the right of the **Run query** button.
+To use this integration, first [install and configure the LLM plugin](https://grafana.com/grafana/plugins/grafana-llm-app/). After installation, open your dashboard and select **Edit** to open the panel editor. Navigate to the **Queries** tab and scroll to the bottom where you'll find two new buttons positioned to the right of the **Run query** button in your SQL Expressions query.
 
 {{< figure src="/media/docs/sql-expressions/sqlexpressions-LLM-integration-v12.2.png" caption="LLM integration" >}}
 
