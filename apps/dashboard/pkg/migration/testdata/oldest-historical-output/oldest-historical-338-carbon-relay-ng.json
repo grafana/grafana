@@ -1,0 +1,1972 @@
+{
+  "__inputs": [
+    {
+      "description": "",
+      "label": "graphite",
+      "name": "DS_GRAPHITE",
+      "pluginId": "graphite",
+      "pluginName": "Graphite",
+      "type": "datasource"
+    }
+  ],
+  "__requires": [
+    {
+      "id": "grafana",
+      "name": "Grafana",
+      "type": "grafana",
+      "version": "6.1.4"
+    },
+    {
+      "id": "graph",
+      "name": "Graph",
+      "type": "panel",
+      "version": ""
+    },
+    {
+      "id": "graphite",
+      "name": "Graphite",
+      "type": "datasource",
+      "version": "1.0.0"
+    }
+  ],
+  "annotations": {
+    "enable": true,
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "uid": "-- Grafana --"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations \u0026 Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "description": "A fast carbon relay+aggregator",
+  "editable": true,
+  "gnetId": 338,
+  "graphTooltip": 0,
+  "id": null,
+  "iteration": 1556542692698,
+  "links": [],
+  "panels": [
+    {
+      "aliasColors": {
+        "blacklist": "#E24D42",
+        "direction_is_blacklist": "#E0752D",
+        "direction_is_in": "#3F6833",
+        "direction_is_unroutable": "#890F02",
+        "in": "#3F6833",
+        "unroutable": "#890F02"
+      },
+      "bars": false,
+      "dashLength": 10,
+      "dashes": false,
+      "datasource": {
+        "uid": "${DS_GRAPHITE}"
+      },
+      "editable": true,
+      "error": false,
+      "fill": 0,
+      "grid": {},
+      "gridPos": {
+        "h": 4,
+        "w": 12,
+        "x": 0,
+        "y": 0
+      },
+      "id": 1,
+      "legend": {
+        "alignAsTable": true,
+        "avg": false,
+        "current": false,
+        "max": false,
+        "min": false,
+        "rightSide": true,
+        "show": true,
+        "total": false,
+        "values": false
+      },
+      "lines": true,
+      "linewidth": 1,
+      "links": [],
+      "nullPointMode": "null",
+      "percentage": false,
+      "pointradius": 5,
+      "points": false,
+      "renderer": "flot",
+      "seriesOverrides": [],
+      "spaceLength": 10,
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
+        {
+          "datasource": {
+            "uid": "${DS_GRAPHITE}"
+          },
+          "refId": "A",
+          "target": "aliasByNode(perSecond(service_is_carbon-relay-ng.instance_is_$instance.mtype_is_counter.unit_is_Metric.*), 4)"
+        },
+        {
+          "datasource": {
+            "uid": "${DS_GRAPHITE}"
+          },
+          "hide": false,
+          "refId": "B",
+          "target": "alias(perSecond(service_is_carbon-relay-ng.instance_is_$instance.mtype_is_counter.unit_is_Err.type_is_invalid), 'invalid')"
+        },
+        {
+          "datasource": {
+            "uid": "${DS_GRAPHITE}"
+          },
+          "hide": false,
+          "refId": "C",
+          "target": "alias(perSecond(service_is_carbon-relay-ng.instance_is_$instance.mtype_is_counter.unit_is_Err.type_is_out_of_order), 'out-of-order')"
+        }
+      ],
+      "thresholds": [],
+      "timeFrom": null,
+      "timeRegions": [],
+      "timeShift": null,
+      "title": "$instance incoming",
+      "tooltip": {
+        "msResolution": false,
+        "shared": false,
+        "sort": 0,
+        "value_type": "cumulative"
+      },
+      "type": "graph",
+      "xaxis": {
+        "buckets": null,
+        "mode": "time",
+        "name": null,
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "format": "short",
+          "max": null,
+          "min": null,
+          "show": true
+        },
+        {
+          "format": "short",
+          "max": null,
+          "min": null,
+          "show": true
+        }
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
+    },
+    {
+      "aliasColors": {},
+      "bars": false,
+      "dashLength": 10,
+      "dashes": false,
+      "datasource": {
+        "uid": "${DS_GRAPHITE}"
+      },
+      "editable": true,
+      "error": false,
+      "fill": 0,
+      "grid": {},
+      "gridPos": {
+        "h": 4,
+        "w": 12,
+        "x": 12,
+        "y": 0
+      },
+      "id": 4,
+      "legend": {
+        "alignAsTable": true,
+        "avg": false,
+        "current": false,
+        "max": false,
+        "min": false,
+        "rightSide": true,
+        "show": true,
+        "sortDesc": true,
+        "total": false,
+        "values": false
+      },
+      "lines": true,
+      "linewidth": 1,
+      "links": [],
+      "nullPointMode": "null",
+      "percentage": false,
+      "pointradius": 5,
+      "points": false,
+      "renderer": "flot",
+      "seriesOverrides": [],
+      "spaceLength": 10,
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
+        {
+          "datasource": {
+            "uid": "${DS_GRAPHITE}"
+          },
+          "hide": false,
+          "refId": "A",
+          "target": "alias(perSecond(service_is_carbon-relay-ng.instance_is_$instance.mtype_is_counter.dest_is_$dest.unit_is_Metric.direction_is_out), 'to tcp')"
+        },
+        {
+          "datasource": {
+            "uid": "${DS_GRAPHITE}"
+          },
+          "hide": false,
+          "refId": "B",
+          "target": "alias(perSecond(service_is_carbon-relay-ng.instance_is_$instance.mtype_is_counter.spool_is_$dest.unit_is_Metric.status_is_incomingRT), 'to spool')"
+        }
+      ],
+      "thresholds": [],
+      "timeFrom": null,
+      "timeRegions": [],
+      "timeShift": null,
+      "title": "dest metric directions",
+      "tooltip": {
+        "msResolution": false,
+        "shared": false,
+        "sort": 0,
+        "value_type": "cumulative"
+      },
+      "type": "graph",
+      "xaxis": {
+        "buckets": null,
+        "mode": "time",
+        "name": null,
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "format": "short",
+          "max": null,
+          "min": null,
+          "show": true
+        },
+        {
+          "format": "short",
+          "max": null,
+          "min": null,
+          "show": true
+        }
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
+    },
+    {
+      "aliasColors": {
+        "reason_is_bad_pickle": "#CCA300",
+        "reason_is_conn_down_no_spool": "#962D82",
+        "reason_is_slow_conn": "#E0752D",
+        "reason_is_slow_spool": "#BF1B00"
+      },
+      "bars": false,
+      "dashLength": 10,
+      "dashes": false,
+      "datasource": {
+        "uid": "${DS_GRAPHITE}"
+      },
+      "editable": true,
+      "error": false,
+      "fill": 0,
+      "grid": {},
+      "gridPos": {
+        "h": 4,
+        "w": 12,
+        "x": 0,
+        "y": 4
+      },
+      "id": 3,
+      "legend": {
+        "alignAsTable": true,
+        "avg": false,
+        "current": false,
+        "max": false,
+        "min": false,
+        "rightSide": true,
+        "show": true,
+        "sortDesc": true,
+        "total": false,
+        "values": false
+      },
+      "lines": true,
+      "linewidth": 1,
+      "links": [],
+      "nullPointMode": "null",
+      "percentage": false,
+      "pointradius": 5,
+      "points": false,
+      "renderer": "flot",
+      "seriesOverrides": [],
+      "spaceLength": 10,
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
+        {
+          "datasource": {
+            "uid": "${DS_GRAPHITE}"
+          },
+          "refId": "A",
+          "target": "aliasByNode(derivative(service_is_carbon-relay-ng.instance_is_$instance.mtype_is_counter.dest_is_$dest.unit_is_Metric.action_is_drop.*),6)"
+        }
+      ],
+      "thresholds": [],
+      "timeFrom": null,
+      "timeRegions": [],
+      "timeShift": null,
+      "title": "dest metric drops",
+      "tooltip": {
+        "msResolution": false,
+        "shared": false,
+        "sort": 0,
+        "value_type": "cumulative"
+      },
+      "type": "graph",
+      "xaxis": {
+        "buckets": null,
+        "mode": "time",
+        "name": null,
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "format": "short",
+          "max": null,
+          "min": null,
+          "show": true
+        },
+        {
+          "format": "short",
+          "max": null,
+          "min": null,
+          "show": true
+        }
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
+    },
+    {
+      "aliasColors": {
+        "type_is_truncated": "#890F02",
+        "type_is_write": "#C15C17"
+      },
+      "bars": false,
+      "dashLength": 10,
+      "dashes": false,
+      "datasource": {
+        "uid": "${DS_GRAPHITE}"
+      },
+      "editable": true,
+      "error": false,
+      "fill": 0,
+      "grid": {},
+      "gridPos": {
+        "h": 4,
+        "w": 12,
+        "x": 12,
+        "y": 4
+      },
+      "id": 2,
+      "legend": {
+        "alignAsTable": true,
+        "avg": false,
+        "current": false,
+        "max": false,
+        "min": false,
+        "rightSide": true,
+        "show": true,
+        "sortDesc": true,
+        "total": false,
+        "values": false
+      },
+      "lines": true,
+      "linewidth": 1,
+      "links": [],
+      "nullPointMode": "connected",
+      "percentage": false,
+      "pointradius": 5,
+      "points": false,
+      "renderer": "flot",
+      "seriesOverrides": [],
+      "spaceLength": 10,
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
+        {
+          "datasource": {
+            "uid": "${DS_GRAPHITE}"
+          },
+          "refId": "A",
+          "target": "aliasByNode(perSecond(service_is_carbon-relay-ng.instance_is_$instance.mtype_is_counter.dest_is_$dest.unit_is_Err.*), 5)"
+        }
+      ],
+      "thresholds": [],
+      "timeFrom": null,
+      "timeRegions": [],
+      "timeShift": null,
+      "title": "dest Errors",
+      "tooltip": {
+        "msResolution": false,
+        "shared": false,
+        "sort": 0,
+        "value_type": "cumulative"
+      },
+      "type": "graph",
+      "xaxis": {
+        "buckets": null,
+        "mode": "time",
+        "name": null,
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "format": "short",
+          "max": null,
+          "min": null,
+          "show": true
+        },
+        {
+          "format": "short",
+          "max": null,
+          "min": null,
+          "show": true
+        }
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
+    },
+    {
+      "aliasColors": {
+        "GC cpu fraction - promille": "#BF1B00",
+        "alloc speed": "#C15C17",
+        "major_page_faults": "#bf1b00",
+        "minor_page_faults": "#0a437c",
+        "rss": "#ba43a9"
+      },
+      "bars": false,
+      "dashLength": 10,
+      "dashes": false,
+      "datasource": {
+        "uid": "${DS_GRAPHITE}"
+      },
+      "fill": 1,
+      "gridPos": {
+        "h": 7,
+        "w": 8,
+        "x": 0,
+        "y": 8
+      },
+      "id": 17,
+      "legend": {
+        "avg": false,
+        "current": false,
+        "max": false,
+        "min": false,
+        "show": true,
+        "total": false,
+        "values": false
+      },
+      "lines": true,
+      "linewidth": 3,
+      "nullPointMode": "null",
+      "percentage": false,
+      "pointradius": 5,
+      "points": false,
+      "renderer": "flot",
+      "seriesOverrides": [
+        {
+          "alias": "bytes_per_point",
+          "linewidth": 1,
+          "yaxis": 1
+        },
+        {
+          "alias": "major_page_faults",
+          "yaxis": 2
+        },
+        {
+          "alias": "minor_page_faults",
+          "fill": 5,
+          "linewidth": 0,
+          "yaxis": 2
+        },
+        {
+          "alias": "rss",
+          "fill": 2,
+          "linewidth": 0
+        }
+      ],
+      "spaceLength": 10,
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
+        {
+          "datasource": {
+            "uid": "${DS_GRAPHITE}"
+          },
+          "hide": false,
+          "refCount": 0,
+          "refId": "A",
+          "target": "alias(sumSeries(perSecond(carbon-relay-ng.stats.$instance.memory.total_bytes_allocated.counter64)), 'alloc rate')"
+        },
+        {
+          "datasource": {
+            "uid": "${DS_GRAPHITE}"
+          },
+          "hide": false,
+          "refCount": 0,
+          "refId": "B",
+          "target": "alias(sumSeries(carbon-relay-ng.stats.$instance.memory.bytes.allocated_in_heap.gauge64), 'allocated in heap')"
+        },
+        {
+          "datasource": {
+            "uid": "${DS_GRAPHITE}"
+          },
+          "hide": true,
+          "refCount": 0,
+          "refId": "C",
+          "target": "alias(sumSeries(carbon-relay-ng.stats.$instance.memory.bytes.obtained_from_sys.gauge64), 'bytes_sys')"
+        },
+        {
+          "datasource": {
+            "uid": "${DS_GRAPHITE}"
+          },
+          "hide": true,
+          "refCount": 0,
+          "refId": "D",
+          "target": "alias(sumSeries(carbon-relay-ng.stats.$instance.process.virtual_memory_bytes.gauge64), 'vsz')"
+        },
+        {
+          "datasource": {
+            "uid": "${DS_GRAPHITE}"
+          },
+          "hide": false,
+          "refCount": 0,
+          "refId": "E",
+          "target": "alias(sumSeries(carbon-relay-ng.stats.$instance.process.resident_memory_bytes.gauge64), 'rss')"
+        },
+        {
+          "datasource": {
+            "uid": "${DS_GRAPHITE}"
+          },
+          "refCount": 0,
+          "refId": "G",
+          "target": "aliasByNode(sumSeries(perSecond(carbon-relay-ng.stats.$instance.process.minor_page_faults.counter64)), 5)"
+        },
+        {
+          "datasource": {
+            "uid": "${DS_GRAPHITE}"
+          },
+          "refCount": 0,
+          "refId": "I",
+          "target": "aliasByNode(sumSeries(perSecond(carbon-relay-ng.stats.$instance.process.major_page_faults.counter64)), 5)"
+        }
+      ],
+      "thresholds": [],
+      "timeFrom": null,
+      "timeRegions": [],
+      "timeShift": null,
+      "title": "memory",
+      "tooltip": {
+        "shared": true,
+        "sort": 0,
+        "value_type": "individual"
+      },
+      "type": "graph",
+      "xaxis": {
+        "buckets": null,
+        "mode": "time",
+        "name": null,
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "format": "bytes",
+          "label": "allocation",
+          "logBase": 1,
+          "max": null,
+          "min": 0,
+          "show": true
+        },
+        {
+          "format": "none",
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        }
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
+    },
+    {
+      "aliasColors": {
+        "CPU usage": "#6d1f62",
+        "GC cpu fraction - promille": "#BF1B00",
+        "alloc speed": "#C15C17",
+        "major_page_faults": "#bf1b00",
+        "minor_page_faults": "#0a437c",
+        "rss": "#ba43a9"
+      },
+      "bars": false,
+      "dashLength": 10,
+      "dashes": false,
+      "datasource": {
+        "uid": "${DS_GRAPHITE}"
+      },
+      "fill": 1,
+      "gridPos": {
+        "h": 7,
+        "w": 8,
+        "x": 8,
+        "y": 8
+      },
+      "id": 19,
+      "legend": {
+        "avg": false,
+        "current": false,
+        "max": false,
+        "min": false,
+        "show": true,
+        "total": false,
+        "values": false
+      },
+      "lines": true,
+      "linewidth": 3,
+      "nullPointMode": "null",
+      "percentage": false,
+      "pointradius": 5,
+      "points": false,
+      "renderer": "flot",
+      "seriesOverrides": [
+        {
+          "alias": "GC cpu fraction - promille",
+          "yaxis": 2
+        },
+        {
+          "alias": "CPU usage",
+          "fill": 10,
+          "linewidth": 0
+        }
+      ],
+      "spaceLength": 10,
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
+        {
+          "datasource": {
+            "uid": "${DS_GRAPHITE}"
+          },
+          "hide": false,
+          "refCount": 0,
+          "refId": "H",
+          "target": "alias(averageSeries(carbon-relay-ng.stats.$instance.memory.gc.cpu_fraction.gauge32), 'GC cpu fraction - promille')"
+        },
+        {
+          "datasource": {
+            "uid": "${DS_GRAPHITE}"
+          },
+          "refCount": 0,
+          "refId": "F",
+          "target": "alias(sumSeries(perSecond(carbon-relay-ng.stats.$instance.process.cpu_seconds_total.counter64)), 'CPU usage')"
+        }
+      ],
+      "thresholds": [],
+      "timeFrom": null,
+      "timeRegions": [],
+      "timeShift": null,
+      "title": "CPU",
+      "tooltip": {
+        "shared": true,
+        "sort": 0,
+        "value_type": "individual"
+      },
+      "type": "graph",
+      "xaxis": {
+        "buckets": null,
+        "mode": "time",
+        "name": null,
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "format": "percentunit",
+          "label": "",
+          "logBase": 1,
+          "max": null,
+          "min": 0,
+          "show": true
+        },
+        {
+          "format": "none",
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        }
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
+    },
+    {
+      "aliasColors": {},
+      "bars": false,
+      "dashLength": 10,
+      "dashes": false,
+      "datasource": {
+        "uid": "${DS_GRAPHITE}"
+      },
+      "fill": 1,
+      "gridPos": {
+        "h": 7,
+        "w": 8,
+        "x": 16,
+        "y": 8
+      },
+      "id": 21,
+      "legend": {
+        "avg": false,
+        "current": false,
+        "max": false,
+        "min": false,
+        "show": true,
+        "total": false,
+        "values": false
+      },
+      "lines": false,
+      "linewidth": 2,
+      "nullPointMode": "null",
+      "percentage": false,
+      "pointradius": 1,
+      "points": true,
+      "renderer": "flot",
+      "seriesOverrides": [
+        {
+          "alias": "duration",
+          "lines": false,
+          "pointradius": 1,
+          "points": true,
+          "yaxis": 2
+        }
+      ],
+      "spaceLength": 10,
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
+        {
+          "datasource": {
+            "uid": "${DS_GRAPHITE}"
+          },
+          "refId": "A",
+          "target": "alias(averageSeries(perSecond(carbon-relay-ng.stats.$instance.memory.total_gc_cycles.counter64)), 'collections')"
+        },
+        {
+          "datasource": {
+            "uid": "${DS_GRAPHITE}"
+          },
+          "refId": "B",
+          "target": "alias(averageSeries(carbon-relay-ng.stats.$instance.memory.gc.last_duration.gauge64), 'duration')"
+        }
+      ],
+      "thresholds": [],
+      "timeFrom": null,
+      "timeRegions": [],
+      "timeShift": null,
+      "title": "Golang GC",
+      "tooltip": {
+        "shared": true,
+        "sort": 0,
+        "value_type": "individual"
+      },
+      "type": "graph",
+      "xaxis": {
+        "buckets": null,
+        "mode": "time",
+        "name": null,
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "format": "hertz",
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        },
+        {
+          "format": "ns",
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        }
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
+    },
+    {
+      "aliasColors": {},
+      "bars": false,
+      "dashLength": 10,
+      "dashes": false,
+      "datasource": {
+        "uid": "${DS_GRAPHITE}"
+      },
+      "editable": true,
+      "error": false,
+      "fill": 0,
+      "grid": {},
+      "gridPos": {
+        "h": 7,
+        "w": 8,
+        "x": 0,
+        "y": 15
+      },
+      "id": 8,
+      "legend": {
+        "alignAsTable": true,
+        "avg": false,
+        "current": false,
+        "max": false,
+        "min": false,
+        "rightSide": true,
+        "show": true,
+        "sortDesc": true,
+        "total": false,
+        "values": false
+      },
+      "lines": true,
+      "linewidth": 1,
+      "links": [],
+      "nullPointMode": "null",
+      "percentage": false,
+      "pointradius": 5,
+      "points": false,
+      "renderer": "flot",
+      "seriesOverrides": [],
+      "spaceLength": 10,
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
+        {
+          "datasource": {
+            "uid": "${DS_GRAPHITE}"
+          },
+          "refId": "A",
+          "target": "alias(service_is_carbon-relay-ng.instance_is_$instance.mtype_is_gauge.dest_is_$dest.unit_is_B.what_is_FlushSize.type_is_ticker.stat_is_max, 'ticker max')"
+        },
+        {
+          "datasource": {
+            "uid": "${DS_GRAPHITE}"
+          },
+          "refId": "B",
+          "target": "alias(service_is_carbon-relay-ng.instance_is_$instance.mtype_is_gauge.dest_is_$dest.unit_is_B.what_is_FlushSize.type_is_ticker.stat_is_max_99, 'ticker 99')"
+        },
+        {
+          "datasource": {
+            "uid": "${DS_GRAPHITE}"
+          },
+          "refId": "C",
+          "target": "alias(service_is_carbon-relay-ng.instance_is_$instance.mtype_is_gauge.dest_is_$dest.unit_is_B.what_is_FlushSize.type_is_ticker.stat_is_mean,'ticker mean')"
+        },
+        {
+          "datasource": {
+            "uid": "${DS_GRAPHITE}"
+          },
+          "refId": "D",
+          "target": "alias(service_is_carbon-relay-ng.instance_is_$instance.mtype_is_gauge.dest_is_$dest.unit_is_B.what_is_FlushSize.type_is_manual.stat_is_max, 'manual max')"
+        },
+        {
+          "datasource": {
+            "uid": "${DS_GRAPHITE}"
+          },
+          "refId": "E",
+          "target": "alias(service_is_carbon-relay-ng.instance_is_$instance.mtype_is_gauge.dest_is_$dest.unit_is_B.what_is_FlushSize.type_is_manual.stat_is_max_99, 'manual 99')"
+        },
+        {
+          "datasource": {
+            "uid": "${DS_GRAPHITE}"
+          },
+          "refId": "F",
+          "target": "alias(service_is_carbon-relay-ng.instance_is_$instance.mtype_is_gauge.dest_is_$dest.unit_is_B.what_is_FlushSize.type_is_manual.stat_is_mean, 'manual mean')"
+        },
+        {
+          "datasource": {
+            "uid": "${DS_GRAPHITE}"
+          },
+          "refId": "G",
+          "target": "alias(service_is_carbon-relay-ng.instance_is_$instance.mtype_is_gauge.dest_is_$dest.unit_is_B.what_is_FlushSize.type_is_overflow.stat_is_max,'overflow max')"
+        },
+        {
+          "datasource": {
+            "uid": "${DS_GRAPHITE}"
+          },
+          "refId": "H",
+          "target": "alias(service_is_carbon-relay-ng.instance_is_$instance.mtype_is_gauge.dest_is_$dest.unit_is_B.what_is_FlushSize.type_is_overflow.stat_is_max99, 'overflow 99')"
+        },
+        {
+          "datasource": {
+            "uid": "${DS_GRAPHITE}"
+          },
+          "refId": "I",
+          "target": "alias(service_is_carbon-relay-ng.instance_is_$instance.mtype_is_gauge.dest_is_$dest.unit_is_B.what_is_FlushSize.type_is_overflow.mean,\"overflow mean\")"
+        }
+      ],
+      "thresholds": [],
+      "timeFrom": null,
+      "timeRegions": [],
+      "timeShift": null,
+      "title": "conn Flush size",
+      "tooltip": {
+        "msResolution": false,
+        "shared": false,
+        "sort": 0,
+        "value_type": "cumulative"
+      },
+      "type": "graph",
+      "xaxis": {
+        "buckets": null,
+        "mode": "time",
+        "name": null,
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "format": "bytes",
+          "max": null,
+          "min": null,
+          "show": true
+        },
+        {
+          "format": "short",
+          "max": null,
+          "min": null,
+          "show": true
+        }
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
+    },
+    {
+      "aliasColors": {
+        "metrics-buffered": "#E0752D"
+      },
+      "bars": false,
+      "dashLength": 10,
+      "dashes": false,
+      "datasource": {
+        "uid": "${DS_GRAPHITE}"
+      },
+      "editable": true,
+      "error": false,
+      "fill": 3,
+      "grid": {},
+      "gridPos": {
+        "h": 7,
+        "w": 8,
+        "x": 8,
+        "y": 15
+      },
+      "id": 6,
+      "legend": {
+        "alignAsTable": true,
+        "avg": false,
+        "current": false,
+        "max": false,
+        "min": false,
+        "rightSide": true,
+        "show": true,
+        "total": false,
+        "values": false
+      },
+      "lines": false,
+      "linewidth": 1,
+      "links": [],
+      "nullPointMode": "connected",
+      "percentage": false,
+      "pointradius": 2,
+      "points": true,
+      "renderer": "flot",
+      "seriesOverrides": [
+        {
+          "alias": "/bufferSize/",
+          "color": "#890F02",
+          "fill": 0,
+          "lines": true,
+          "linewidth": 3,
+          "points": false
+        },
+        {
+          "alias": "memory-usage",
+          "lines": true,
+          "linewidth": 0,
+          "points": false,
+          "yaxis": 2
+        },
+        {
+          "alias": "allocated memory",
+          "lines": true,
+          "linewidth": 0,
+          "points": false,
+          "yaxis": 2
+        }
+      ],
+      "spaceLength": 10,
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
+        {
+          "datasource": {
+            "uid": "${DS_GRAPHITE}"
+          },
+          "refId": "A",
+          "target": "alias(service_is_carbon-relay-ng.instance_is_$instance.mtype_is_gauge.dest_is_$dest.unit_is_Metric.what_is_numBuffered, 'numBuffered')"
+        },
+        {
+          "datasource": {
+            "uid": "${DS_GRAPHITE}"
+          },
+          "refId": "B",
+          "target": "alias(service_is_carbon-relay-ng.instance_is_$instance.mtype_is_gauge.dest_is_$dest.unit_is_Metric.what_is_bufferSize, 'bufferSize')"
+        },
+        {
+          "datasource": {
+            "uid": "${DS_GRAPHITE}"
+          },
+          "refId": "C",
+          "target": "alias(service_is_carbon-relay-ng.instance_is_$instance.mtype_is_gauge.what_is_virtual_memory.unit_is_Byte, 'memory-usage')"
+        },
+        {
+          "datasource": {
+            "uid": "${DS_GRAPHITE}"
+          },
+          "refId": "D",
+          "target": "alias(service_is_carbon-relay-ng.instance_is_$instance.mtype_is_gauge.what_is_memory_allocated.unit_is_Byte, 'allocated memory')"
+        }
+      ],
+      "thresholds": [],
+      "timeFrom": null,
+      "timeRegions": [],
+      "timeShift": null,
+      "title": "conn metrics in buffer",
+      "tooltip": {
+        "msResolution": false,
+        "shared": false,
+        "sort": 0,
+        "value_type": "cumulative"
+      },
+      "type": "graph",
+      "xaxis": {
+        "buckets": null,
+        "mode": "time",
+        "name": null,
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "format": "short",
+          "max": null,
+          "min": null,
+          "show": true
+        },
+        {
+          "format": "bytes",
+          "max": null,
+          "min": null,
+          "show": true
+        }
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
+    },
+    {
+      "aliasColors": {
+        "\"overflow max\"": "#EF843C",
+        "\"overflow mean\"": "#58140C",
+        "\"ticker max\"": "#6ED0E0",
+        "\"ticker mean\"": "#0A50A1"
+      },
+      "bars": false,
+      "dashLength": 10,
+      "dashes": false,
+      "datasource": {
+        "uid": "${DS_GRAPHITE}"
+      },
+      "editable": true,
+      "error": false,
+      "fill": 0,
+      "grid": {},
+      "gridPos": {
+        "h": 7,
+        "w": 8,
+        "x": 16,
+        "y": 15
+      },
+      "id": 5,
+      "legend": {
+        "alignAsTable": true,
+        "avg": false,
+        "current": false,
+        "max": false,
+        "min": false,
+        "rightSide": true,
+        "show": true,
+        "total": false,
+        "values": false
+      },
+      "lines": true,
+      "linewidth": 1,
+      "links": [],
+      "nullPointMode": "null",
+      "percentage": false,
+      "pointradius": 1,
+      "points": false,
+      "renderer": "flot",
+      "seriesOverrides": [],
+      "spaceLength": 10,
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
+        {
+          "datasource": {
+            "uid": "${DS_GRAPHITE}"
+          },
+          "hide": false,
+          "refId": "A",
+          "target": "alias(service_is_carbon-relay-ng.instance_is_$instance.mtype_is_gauge.unit_is_ns.dest_is_$dest.what_is_durationFlush.type_is_ticker.stat_is_max, '\"ticker max\"')"
+        },
+        {
+          "datasource": {
+            "uid": "${DS_GRAPHITE}"
+          },
+          "hide": false,
+          "refId": "B",
+          "target": "alias(service_is_carbon-relay-ng.instance_is_$instance.mtype_is_gauge.unit_is_ns.dest_is_$dest.what_is_durationFlush.type_is_ticker.stat_is_mean, '\"ticker mean\"')"
+        },
+        {
+          "datasource": {
+            "uid": "${DS_GRAPHITE}"
+          },
+          "hide": false,
+          "refId": "C",
+          "target": "alias(service_is_carbon-relay-ng.instance_is_$instance.mtype_is_gauge.unit_is_ns.dest_is_$dest.what_is_durationFlush.type_is_overflow.stat_is_max, '\"overflow max\"')"
+        },
+        {
+          "datasource": {
+            "uid": "${DS_GRAPHITE}"
+          },
+          "hide": false,
+          "refId": "D",
+          "target": "alias(service_is_carbon-relay-ng.instance_is_$instance.mtype_is_gauge.unit_is_ns.dest_is_$dest.what_is_durationFlush.type_is_overflow.stat_is_mean, '\"overflow mean\"')"
+        }
+      ],
+      "thresholds": [],
+      "timeFrom": null,
+      "timeRegions": [],
+      "timeShift": null,
+      "title": "conn flush durations",
+      "tooltip": {
+        "msResolution": false,
+        "shared": false,
+        "sort": 0,
+        "value_type": "cumulative"
+      },
+      "type": "graph",
+      "xaxis": {
+        "buckets": null,
+        "mode": "time",
+        "name": null,
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "format": "ns",
+          "max": null,
+          "min": null,
+          "show": true
+        },
+        {
+          "format": "short",
+          "max": null,
+          "min": null,
+          "show": true
+        }
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
+    },
+    {
+      "aliasColors": {
+        "status_is_incomingBulk": "#3F2B5B",
+        "status_is_incomingRT": "#0A50A1"
+      },
+      "bars": false,
+      "dashLength": 10,
+      "dashes": false,
+      "datasource": {
+        "uid": "${DS_GRAPHITE}"
+      },
+      "editable": true,
+      "error": false,
+      "fill": 0,
+      "grid": {},
+      "gridPos": {
+        "h": 4,
+        "w": 8,
+        "x": 0,
+        "y": 22
+      },
+      "id": 10,
+      "legend": {
+        "avg": false,
+        "current": false,
+        "max": false,
+        "min": false,
+        "show": true,
+        "total": false,
+        "values": false
+      },
+      "lines": true,
+      "linewidth": 1,
+      "links": [],
+      "nullPointMode": "connected",
+      "percentage": false,
+      "pointradius": 5,
+      "points": false,
+      "renderer": "flot",
+      "seriesOverrides": [],
+      "spaceLength": 10,
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
+        {
+          "datasource": {
+            "uid": "${DS_GRAPHITE}"
+          },
+          "refId": "A",
+          "target": "aliasByNode(service_is_carbon-relay-ng.instance_is_$instance.mtype_is_counter.spool_is_$dest.unit_is_Metric.*, 5)"
+        },
+        {
+          "datasource": {
+            "uid": "${DS_GRAPHITE}"
+          },
+          "refId": "B",
+          "target": ""
+        }
+      ],
+      "thresholds": [],
+      "timeFrom": null,
+      "timeRegions": [],
+      "timeShift": null,
+      "title": "spool inputs",
+      "tooltip": {
+        "msResolution": false,
+        "shared": false,
+        "sort": 0,
+        "value_type": "cumulative"
+      },
+      "type": "graph",
+      "xaxis": {
+        "buckets": null,
+        "mode": "time",
+        "name": null,
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "format": "short",
+          "max": null,
+          "min": null,
+          "show": true
+        },
+        {
+          "format": "short",
+          "max": null,
+          "min": null,
+          "show": true
+        }
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
+    },
+    {
+      "aliasColors": {},
+      "bars": false,
+      "dashLength": 10,
+      "dashes": false,
+      "datasource": {
+        "uid": "${DS_GRAPHITE}"
+      },
+      "editable": true,
+      "error": false,
+      "fill": 10,
+      "grid": {},
+      "gridPos": {
+        "h": 4,
+        "w": 8,
+        "x": 8,
+        "y": 22
+      },
+      "id": 9,
+      "legend": {
+        "alignAsTable": false,
+        "avg": false,
+        "current": false,
+        "max": false,
+        "min": false,
+        "rightSide": false,
+        "show": true,
+        "total": false,
+        "values": false
+      },
+      "lines": true,
+      "linewidth": 1,
+      "links": [],
+      "nullPointMode": "connected",
+      "percentage": false,
+      "pointradius": 5,
+      "points": false,
+      "renderer": "flot",
+      "seriesOverrides": [],
+      "spaceLength": 10,
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
+        {
+          "datasource": {
+            "uid": "${DS_GRAPHITE}"
+          },
+          "hide": false,
+          "refId": "A",
+          "target": "alias(service_is_carbon-relay-ng.instance_is_$instance.mtype_is_gauge.spool_is_$dest.unit_is_Metric.status_is_buffered, 'buffered')"
+        }
+      ],
+      "thresholds": [],
+      "timeFrom": null,
+      "timeRegions": [],
+      "timeShift": null,
+      "title": "spool metrics in buffer",
+      "tooltip": {
+        "msResolution": false,
+        "shared": false,
+        "sort": 0,
+        "value_type": "cumulative"
+      },
+      "type": "graph",
+      "xaxis": {
+        "buckets": null,
+        "mode": "time",
+        "name": null,
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "format": "none",
+          "label": "",
+          "max": null,
+          "min": null,
+          "show": true
+        },
+        {
+          "format": "short",
+          "max": null,
+          "min": null,
+          "show": true
+        }
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
+    },
+    {
+      "aliasColors": {},
+      "bars": false,
+      "dashLength": 10,
+      "dashes": false,
+      "datasource": {
+        "uid": "${DS_GRAPHITE}"
+      },
+      "editable": true,
+      "error": false,
+      "fill": 0,
+      "grid": {},
+      "gridPos": {
+        "h": 4,
+        "w": 8,
+        "x": 16,
+        "y": 22
+      },
+      "id": 11,
+      "legend": {
+        "alignAsTable": true,
+        "avg": false,
+        "current": false,
+        "max": false,
+        "min": false,
+        "rightSide": true,
+        "show": true,
+        "total": false,
+        "values": false
+      },
+      "lines": true,
+      "linewidth": 1,
+      "links": [],
+      "nullPointMode": "connected",
+      "percentage": false,
+      "pointradius": 5,
+      "points": false,
+      "renderer": "flot",
+      "seriesOverrides": [],
+      "spaceLength": 10,
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
+        {
+          "datasource": {
+            "uid": "${DS_GRAPHITE}"
+          },
+          "refId": "A",
+          "target": "aliasByNode(service_is_carbon-relay-ng.instance_is_$instance.mtype_is_gauge.unit_is_ns.spool_is_$dest.operation_is*.stat_is_max_50, 5, 6)"
+        },
+        {
+          "datasource": {
+            "uid": "${DS_GRAPHITE}"
+          },
+          "refId": "B",
+          "target": "aliasByNode(service_is_carbon-relay-ng.instance_is_$instance.mtype_is_gauge.unit_is_ns.spool_is_$dest.operation_is*.stat_is_max_95, 5, 6)"
+        },
+        {
+          "datasource": {
+            "uid": "${DS_GRAPHITE}"
+          },
+          "refId": "C",
+          "target": "aliasByNode(service_is_carbon-relay-ng.instance_is_$instance.mtype_is_gauge.unit_is_ns.spool_is_$dest.operation_is*.stat_is_max, 5, 6)"
+        },
+        {
+          "datasource": {
+            "uid": "${DS_GRAPHITE}"
+          },
+          "refId": "D",
+          "target": "aliasByNode(service_is_carbon-relay-ng.instance_is_$instance.mtype_is_gauge.unit_is_ns.spool_is_$dest.operation_is*.stat_is_mean, 5, 6)"
+        }
+      ],
+      "thresholds": [],
+      "timeFrom": null,
+      "timeRegions": [],
+      "timeShift": null,
+      "title": "spool durations",
+      "tooltip": {
+        "msResolution": false,
+        "shared": false,
+        "sort": 0,
+        "value_type": "cumulative"
+      },
+      "type": "graph",
+      "xaxis": {
+        "buckets": null,
+        "mode": "time",
+        "name": null,
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "format": "ns",
+          "max": null,
+          "min": null,
+          "show": true
+        },
+        {
+          "format": "short",
+          "max": null,
+          "min": null,
+          "show": true
+        }
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
+    },
+    {
+      "aliasColors": {
+        "too old": "#bf1b00"
+      },
+      "bars": false,
+      "dashLength": 10,
+      "dashes": false,
+      "datasource": {
+        "uid": "${DS_GRAPHITE}"
+      },
+      "fill": 0,
+      "gridPos": {
+        "h": 5,
+        "w": 8,
+        "x": 0,
+        "y": 26
+      },
+      "id": 13,
+      "legend": {
+        "avg": false,
+        "current": false,
+        "max": false,
+        "min": false,
+        "show": true,
+        "total": false,
+        "values": false
+      },
+      "lines": true,
+      "linewidth": 2,
+      "links": [],
+      "nullPointMode": "null",
+      "percentage": false,
+      "pointradius": 5,
+      "points": false,
+      "renderer": "flot",
+      "seriesOverrides": [
+        {
+          "alias": "max",
+          "fill": 0,
+          "fillBelowTo": "min",
+          "linewidth": 0,
+          "yaxis": 2
+        },
+        {
+          "alias": "min",
+          "fill": 0,
+          "lines": false,
+          "yaxis": 2
+        },
+        {
+          "alias": "too old",
+          "zindex": 2
+        }
+      ],
+      "spaceLength": 10,
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
+        {
+          "datasource": {
+            "uid": "${DS_GRAPHITE}"
+          },
+          "refCount": 1,
+          "refId": "A",
+          "target": "alias(sumSeries(perSecond(service_is_carbon-relay-ng.instance_is_$instance.mtype_is_counter.module_is_aggregator.unit_is_Metric.what_is_TooOld)), 'too old')"
+        },
+        {
+          "datasource": {
+            "uid": "${DS_GRAPHITE}"
+          },
+          "hide": true,
+          "refCount": 0,
+          "refId": "B",
+          "target": "time(\"now\",step=1)",
+          "textEditor": true
+        },
+        {
+          "datasource": {
+            "uid": "${DS_GRAPHITE}"
+          },
+          "hide": false,
+          "refCount": 1,
+          "refId": "C",
+          "target": "alias(diffSeries(keepLastValue(service_is_carbon-relay-ng.instance_is_$instance.mtype_is_gauge.module_is_aggregator.unit_is_s.what_is_timestamp_received.type_is_min,2), #B),'min')",
+          "targetFull": "alias(diffSeries(keepLastValue(service_is_carbon-relay-ng.instance_is_$instance.mtype_is_gauge.module_is_aggregator.unit_is_s.what_is_timestamp_received.type_is_min,2), time(\"now\",step=1)),'min')",
+          "textEditor": true
+        },
+        {
+          "datasource": {
+            "uid": "${DS_GRAPHITE}"
+          },
+          "hide": false,
+          "refCount": 0,
+          "refId": "D",
+          "target": "alias(diffSeries(keepLastValue(service_is_carbon-relay-ng.instance_is_$instance.mtype_is_gauge.module_is_aggregator.unit_is_s.what_is_timestamp_received.type_is_max,2),#B),'max')",
+          "targetFull": "alias(diffSeries(keepLastValue(service_is_carbon-relay-ng.instance_is_$instance.mtype_is_gauge.module_is_aggregator.unit_is_s.what_is_timestamp_received.type_is_max,2),time(\"now\",step=1)),'max')",
+          "textEditor": true
+        }
+      ],
+      "thresholds": [],
+      "timeFrom": null,
+      "timeRegions": [],
+      "timeShift": null,
+      "title": "Aggregator input",
+      "tooltip": {
+        "shared": true,
+        "sort": 0,
+        "value_type": "individual"
+      },
+      "type": "graph",
+      "xaxis": {
+        "buckets": null,
+        "mode": "time",
+        "name": null,
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "format": "short",
+          "label": "",
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        },
+        {
+          "format": "s",
+          "label": "offset to wall clock",
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        }
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
+    },
+    {
+      "aliasColors": {
+        "aggregators waiting to flush": "semi-dark-red"
+      },
+      "bars": false,
+      "dashLength": 10,
+      "dashes": false,
+      "datasource": {
+        "uid": "${DS_GRAPHITE}"
+      },
+      "fill": 1,
+      "gridPos": {
+        "h": 5,
+        "w": 16,
+        "x": 8,
+        "y": 26
+      },
+      "id": 15,
+      "legend": {
+        "alignAsTable": true,
+        "avg": true,
+        "current": false,
+        "max": false,
+        "min": false,
+        "rightSide": true,
+        "show": true,
+        "sort": "avg",
+        "sortDesc": true,
+        "total": false,
+        "values": true
+      },
+      "lines": true,
+      "linewidth": 1,
+      "links": [],
+      "nullPointMode": "null",
+      "percentage": false,
+      "pointradius": 2,
+      "points": false,
+      "renderer": "flot",
+      "seriesOverrides": [
+        {
+          "alias": "aggregators waiting to flush",
+          "dashes": true,
+          "lines": false,
+          "yaxis": 2
+        },
+        {
+          "alias": "/going into/",
+          "fill": 8,
+          "linewidth": 0,
+          "stack": "A"
+        }
+      ],
+      "spaceLength": 10,
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
+        {
+          "datasource": {
+            "uid": "${DS_GRAPHITE}"
+          },
+          "refCount": 0,
+          "refId": "B",
+          "target": "aliasSub(perSecond(service_is_carbon-relay-ng.instance_is_$instance.mtype_is_counter.unit_is_Metric.direction_is_in.aggregator_is_*), '.*instance_is_([^\\.]+).*aggregator_is_([^\\.]+)', 'metrics going into aggregator \\1.\\2')",
+          "textEditor": false
+        }
+      ],
+      "thresholds": [],
+      "timeFrom": null,
+      "timeRegions": [],
+      "timeShift": null,
+      "title": "aggregators inbound",
+      "tooltip": {
+        "shared": true,
+        "sort": 0,
+        "value_type": "individual"
+      },
+      "type": "graph",
+      "xaxis": {
+        "buckets": null,
+        "mode": "time",
+        "name": null,
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "format": "none",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        },
+        {
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        }
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
+    },
+    {
+      "aliasColors": {
+        "aggregators waiting to flush": "semi-dark-red"
+      },
+      "bars": false,
+      "dashLength": 10,
+      "dashes": false,
+      "datasource": {
+        "uid": "${DS_GRAPHITE}"
+      },
+      "fill": 1,
+      "gridPos": {
+        "h": 9,
+        "w": 24,
+        "x": 0,
+        "y": 31
+      },
+      "id": 22,
+      "legend": {
+        "alignAsTable": true,
+        "avg": true,
+        "current": false,
+        "max": false,
+        "min": false,
+        "rightSide": true,
+        "show": true,
+        "sort": "avg",
+        "sortDesc": true,
+        "total": false,
+        "values": true
+      },
+      "lines": false,
+      "linewidth": 1,
+      "links": [],
+      "nullPointMode": "null",
+      "percentage": false,
+      "pointradius": 2,
+      "points": true,
+      "renderer": "flot",
+      "seriesOverrides": [
+        {
+          "alias": "aggregators waiting to flush",
+          "dashes": true,
+          "lines": false,
+          "points": false,
+          "yaxis": 2
+        }
+      ],
+      "spaceLength": 10,
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
+        {
+          "datasource": {
+            "uid": "${DS_GRAPHITE}"
+          },
+          "refCount": 0,
+          "refId": "A",
+          "target": "alias(service_is_carbon-relay-ng.instance_is_$instance.*.unit_is_aggregator.what_is_flush_waiting, 'aggregators waiting to flush')"
+        },
+        {
+          "datasource": {
+            "uid": "${DS_GRAPHITE}"
+          },
+          "refCount": 0,
+          "refId": "B",
+          "target": "aliasSub(perSecond(service_is_carbon-relay-ng.instance_is_$instance.mtype_is_counter.unit_is_Metric.direction_is_out.aggregator_is_*), '.*instance_is_([^\\.]+).*aggregator_is_([^\\.]+)', 'metrics going out of aggregator \\1.\\2')",
+          "textEditor": false
+        }
+      ],
+      "thresholds": [],
+      "timeFrom": null,
+      "timeRegions": [],
+      "timeShift": null,
+      "title": "aggregators outbound and flushing",
+      "tooltip": {
+        "shared": true,
+        "sort": 0,
+        "value_type": "individual"
+      },
+      "type": "graph",
+      "xaxis": {
+        "buckets": null,
+        "mode": "time",
+        "name": null,
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "format": "none",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        },
+        {
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        }
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
+    }
+  ],
+  "refresh": "",
+  "schemaVersion": 41,
+  "style": "dark",
+  "tags": [
+    "telemetry"
+  ],
+  "templating": {
+    "list": [
+      {
+        "allFormat": "glob",
+        "allValue": null,
+        "current": {},
+        "datasource": {
+          "uid": "${DS_GRAPHITE}"
+        },
+        "definition": "",
+        "hide": 0,
+        "includeAll": true,
+        "label": null,
+        "multi": false,
+        "name": "instance",
+        "options": [],
+        "query": "service_is_carbon-relay-ng.instance_is_*",
+        "refresh": 1,
+        "refresh_on_load": true,
+        "regex": "/instance_is_(.*)/",
+        "skipUrlSync": false,
+        "sort": 0,
+        "type": "query"
+      },
+      {
+        "allFormat": "glob",
+        "allValue": null,
+        "current": {},
+        "datasource": {
+          "uid": "${DS_GRAPHITE}"
+        },
+        "definition": "",
+        "hide": 0,
+        "includeAll": true,
+        "label": null,
+        "multi": false,
+        "name": "dest",
+        "options": [],
+        "query": "service_is_carbon-relay-ng.instance_is_$instance.mtype_is_counter.dest_is_*",
+        "refresh": 1,
+        "refresh_on_load": true,
+        "regex": "/dest_is_(.*)/",
+        "skipUrlSync": false,
+        "sort": 0,
+        "type": "query"
+      }
+    ]
+  },
+  "time": {
+    "from": "now-1h",
+    "to": "now"
+  },
+  "timepicker": {
+    "collapse": false,
+    "enable": true,
+    "notice": false,
+    "now": true,
+    "refresh_intervals": [
+      "5s",
+      "10s",
+      "30s",
+      "1m",
+      "5m",
+      "15m",
+      "30m",
+      "1h",
+      "2h",
+      "1d"
+    ],
+    "status": "Stable",
+    "type": "timepicker"
+  },
+  "timezone": "browser",
+  "title": "Carbon-relay-ng",
+  "uid": "8MmAXj4mz",
+  "version": 1
+}

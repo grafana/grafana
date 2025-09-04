@@ -1,0 +1,1694 @@
+{
+  "__inputs": [
+    {
+      "description": "",
+      "label": "Monitoring datasource",
+      "name": "DS_MONITORING_DATASOURCE",
+      "pluginId": "influxdb",
+      "pluginName": "InfluxDB",
+      "type": "datasource"
+    },
+    {
+      "description": "",
+      "label": "Reporting datasource",
+      "name": "DS_REPORTING_DATASOURCE",
+      "pluginId": "influxdb",
+      "pluginName": "InfluxDB",
+      "type": "datasource"
+    }
+  ],
+  "__requires": [
+    {
+      "id": "graph",
+      "name": "Graph",
+      "type": "panel",
+      "version": ""
+    },
+    {
+      "id": "grafana-piechart-panel",
+      "name": "Pie Chart",
+      "type": "panel",
+      "version": "1.1.4"
+    },
+    {
+      "id": "table",
+      "name": "Table",
+      "type": "panel",
+      "version": ""
+    },
+    {
+      "id": "grafana",
+      "name": "Grafana",
+      "type": "grafana",
+      "version": "4.0.1"
+    },
+    {
+      "id": "influxdb",
+      "name": "InfluxDB",
+      "type": "datasource",
+      "version": "1.0.0"
+    }
+  ],
+  "annotations": {
+    "list": []
+  },
+  "description": "Citrix Xenapp sessions monitoring, application usage and farm status",
+  "editable": true,
+  "gnetId": 1118,
+  "graphTooltip": 1,
+  "hideControls": false,
+  "id": null,
+  "links": [],
+  "panels": [
+    {
+      "aliasColors": {
+        "Active ICA Sessions": "#7EB26D",
+        "Disconnected": "#DEDAF7",
+        "Disconnected ICA Sessions": "#DEDAF7"
+      },
+      "bars": false,
+      "datasource": {
+        "uid": "${DS_MONITORING_DATASOURCE}"
+      },
+      "editable": true,
+      "error": false,
+      "fill": 3,
+      "grid": {},
+      "gridPos": {
+        "h": 7,
+        "w": 24,
+        "x": 0,
+        "y": 1
+      },
+      "height": "200",
+      "hideTimeOverride": false,
+      "id": 1,
+      "interval": "\u003e15m",
+      "legend": {
+        "alignAsTable": true,
+        "avg": false,
+        "current": true,
+        "max": true,
+        "min": true,
+        "rightSide": true,
+        "show": true,
+        "sort": "min",
+        "sortDesc": false,
+        "total": false,
+        "values": true
+      },
+      "lines": true,
+      "linewidth": 2,
+      "links": [],
+      "nullPointMode": "connected",
+      "percentage": false,
+      "pointradius": 5,
+      "points": false,
+      "renderer": "flot",
+      "seriesOverrides": [
+        {
+          "alias": "Citrix Licenses",
+          "fill": 0,
+          "stack": false
+        },
+        {
+          "alias": "Active ICA Sessions",
+          "yaxis": 1
+        },
+        {
+          "alias": "Active Users",
+          "fill": 0,
+          "stack": false
+        },
+        {
+          "alias": "Nordex Active Users",
+          "fill": 0,
+          "stack": "C"
+        }
+      ],
+      "stack": true,
+      "steppedLine": false,
+      "targets": [
+        {
+          "alias": "Active",
+          "datasource": {
+            "uid": "${DS_MONITORING_DATASOURCE}"
+          },
+          "dsType": "influxdb",
+          "groupBy": [
+            {
+              "params": [
+                "$interval"
+              ],
+              "type": "time"
+            },
+            {
+              "params": [
+                "null"
+              ],
+              "type": "fill"
+            }
+          ],
+          "measurement": "citrixstatus",
+          "policy": "default",
+          "query": "SELECT sum(\"activesessions\") FROM \"citrixstatus\" WHERE $timeFilter GROUP BY time(15m) fill(null)",
+          "refId": "A",
+          "resultFormat": "time_series",
+          "select": [
+            [
+              {
+                "params": [
+                  "activesessions"
+                ],
+                "type": "field"
+              },
+              {
+                "params": [],
+                "type": "sum"
+              }
+            ]
+          ],
+          "tags": []
+        },
+        {
+          "alias": "Disconnected",
+          "datasource": {
+            "uid": "${DS_MONITORING_DATASOURCE}"
+          },
+          "dsType": "influxdb",
+          "groupBy": [
+            {
+              "params": [
+                "$interval"
+              ],
+              "type": "time"
+            },
+            {
+              "params": [
+                "null"
+              ],
+              "type": "fill"
+            }
+          ],
+          "measurement": "citrixstatus",
+          "policy": "default",
+          "query": "SELECT sum(\"inactivesessions\") FROM \"citrixstatus\" WHERE $timeFilter GROUP BY time(15m) fill(null)",
+          "refId": "B",
+          "resultFormat": "time_series",
+          "select": [
+            [
+              {
+                "params": [
+                  "inactivesessions"
+                ],
+                "type": "field"
+              },
+              {
+                "params": [],
+                "type": "sum"
+              }
+            ]
+          ],
+          "tags": []
+        },
+        {
+          "alias": "Active Users",
+          "datasource": {
+            "uid": "${DS_MONITORING_DATASOURCE}"
+          },
+          "dsType": "influxdb",
+          "groupBy": [
+            {
+              "params": [
+                "15m"
+              ],
+              "type": "time"
+            },
+            {
+              "params": [
+                "null"
+              ],
+              "type": "fill"
+            }
+          ],
+          "hide": false,
+          "measurement": "citrixstatus",
+          "policy": "default",
+          "query": "SELECT sum(\"citrixlicenses\") FROM \"citrixstatus\" WHERE $timeFilter GROUP BY time($interval) fill(null)",
+          "rawQuery": true,
+          "refId": "C",
+          "resultFormat": "time_series",
+          "select": [
+            [
+              {
+                "params": [
+                  "citrixlicenses"
+                ],
+                "type": "field"
+              },
+              {
+                "params": [],
+                "type": "sum"
+              }
+            ]
+          ],
+          "tags": []
+        },
+        {
+          "alias": "Nordex Active Users",
+          "datasource": {
+            "uid": "${DS_MONITORING_DATASOURCE}"
+          },
+          "dsType": "influxdb",
+          "groupBy": [
+            {
+              "params": [
+                "15m"
+              ],
+              "type": "time"
+            },
+            {
+              "params": [
+                "null"
+              ],
+              "type": "fill"
+            }
+          ],
+          "hide": true,
+          "measurement": "citrixstatus",
+          "policy": "default",
+          "query": "SELECT sum(\"citrixlicenses\") FROM \"citrixstatus\" WHERE $timeFilter GROUP BY time(15m) fill(null)",
+          "refId": "D",
+          "resultFormat": "time_series",
+          "select": [
+            [
+              {
+                "params": [
+                  "nordexlicenses"
+                ],
+                "type": "field"
+              },
+              {
+                "params": [],
+                "type": "sum"
+              }
+            ]
+          ],
+          "tags": []
+        }
+      ],
+      "thresholds": [],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "ICA Sessions",
+      "tooltip": {
+        "msResolution": false,
+        "shared": false,
+        "sort": 0,
+        "value_type": "individual"
+      },
+      "type": "graph",
+      "xaxis": {
+        "mode": "time",
+        "name": null,
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "format": "short",
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        },
+        {
+          "format": "short",
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        }
+      ]
+    },
+    {
+      "collapsed": false,
+      "datasource": {
+        "apiVersion": "v1",
+        "type": "prometheus",
+        "uid": "default-ds-uid"
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "id": 12,
+      "panels": [],
+      "repeat": "",
+      "targets": [
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "prometheus",
+            "uid": "default-ds-uid"
+          },
+          "refId": "A"
+        }
+      ],
+      "title": "New row",
+      "type": "row"
+    },
+    {
+      "aliasColors": {
+        "on production": "#629E51",
+        "under full maintenance": "#E24D42",
+        "under half maintenance": "#EF843C"
+      },
+      "cacheTimeout": null,
+      "combine": {
+        "label": "Others",
+        "threshold": 0
+      },
+      "datasource": {
+        "uid": "${DS_MONITORING_DATASOURCE}"
+      },
+      "editable": true,
+      "error": false,
+      "fontSize": "80%",
+      "format": "short",
+      "gridPos": {
+        "h": 7,
+        "w": 6,
+        "x": 0,
+        "y": 9
+      },
+      "height": "180",
+      "hideTimeOverride": true,
+      "id": 11,
+      "interval": null,
+      "legend": {
+        "percentage": true,
+        "show": true,
+        "values": false
+      },
+      "legendType": "Under graph",
+      "links": [],
+      "maxDataPoints": 3,
+      "nullPointMode": "connected",
+      "pieType": "donut",
+      "strokeWidth": "1",
+      "targets": [
+        {
+          "alias": "under full maintenance",
+          "datasource": {
+            "uid": "${DS_MONITORING_DATASOURCE}"
+          },
+          "dsType": "influxdb",
+          "groupBy": [
+            {
+              "params": [
+                "$interval"
+              ],
+              "type": "time"
+            },
+            {
+              "params": [
+                "null"
+              ],
+              "type": "fill"
+            }
+          ],
+          "measurement": "citrixstatus",
+          "policy": "default",
+          "query": "SELECT count(\"maintenance\") FROM \"citrixstatus\" WHERE maintenance=2 and $timeFilter GROUP BY time($interval) fill(null)",
+          "rawQuery": true,
+          "refId": "A",
+          "resultFormat": "time_series",
+          "select": [
+            [
+              {
+                "params": [
+                  "maintenance"
+                ],
+                "type": "field"
+              },
+              {
+                "params": [],
+                "type": "count"
+              }
+            ]
+          ],
+          "tags": []
+        },
+        {
+          "alias": "under half maintenance",
+          "datasource": {
+            "uid": "${DS_MONITORING_DATASOURCE}"
+          },
+          "dsType": "influxdb",
+          "groupBy": [
+            {
+              "params": [
+                "$interval"
+              ],
+              "type": "time"
+            },
+            {
+              "params": [
+                "null"
+              ],
+              "type": "fill"
+            }
+          ],
+          "policy": "default",
+          "query": "SELECT count(\"maintenance\") FROM \"citrixstatus\" WHERE maintenance=1 and $timeFilter GROUP BY time($interval) fill(null)",
+          "rawQuery": true,
+          "refId": "B",
+          "resultFormat": "time_series",
+          "select": [
+            [
+              {
+                "params": [
+                  "value"
+                ],
+                "type": "field"
+              },
+              {
+                "params": [],
+                "type": "mean"
+              }
+            ]
+          ],
+          "tags": []
+        },
+        {
+          "alias": "on production",
+          "datasource": {
+            "uid": "${DS_MONITORING_DATASOURCE}"
+          },
+          "dsType": "influxdb",
+          "groupBy": [
+            {
+              "params": [
+                "$interval"
+              ],
+              "type": "time"
+            },
+            {
+              "params": [
+                "null"
+              ],
+              "type": "fill"
+            }
+          ],
+          "policy": "default",
+          "query": "SELECT count(\"maintenance\") FROM \"citrixstatus\" WHERE maintenance=0 and $timeFilter GROUP BY time($interval) fill(null)",
+          "rawQuery": true,
+          "refId": "C",
+          "resultFormat": "time_series",
+          "select": [
+            [
+              {
+                "params": [
+                  "value"
+                ],
+                "type": "field"
+              },
+              {
+                "params": [],
+                "type": "mean"
+              }
+            ]
+          ],
+          "tags": []
+        }
+      ],
+      "timeFrom": "15m",
+      "title": "",
+      "type": "grafana-piechart-panel",
+      "valueName": "total"
+    },
+    {
+      "datasource": {
+        "uid": "${DS_MONITORING_DATASOURCE}"
+      },
+      "editable": true,
+      "error": false,
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "inspect": false
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Time"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "time: HH:mm"
+              },
+              {
+                "id": "custom.align",
+                "value": ""
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "load"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "short"
+              },
+              {
+                "id": "decimals",
+                "value": 0
+              },
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-background"
+                }
+              },
+              {
+                "id": "custom.align",
+                "value": ""
+              },
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "rgba(88, 93, 88, 0.77)",
+                      "value": null
+                    },
+                    {
+                      "color": "rgba(60, 180, 38, 0.98)",
+                      "value": 100
+                    },
+                    {
+                      "color": "rgba(234, 102, 48, 0.9)",
+                      "value": 4500
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "maintenance"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "short"
+              },
+              {
+                "id": "decimals",
+                "value": 0
+              },
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-background"
+                }
+              },
+              {
+                "id": "custom.align",
+                "value": ""
+              },
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "rgb(47, 187, 47)",
+                      "value": null
+                    },
+                    {
+                      "color": "rgba(237, 129, 40, 0.89)",
+                      "value": 0.5
+                    },
+                    {
+                      "color": "rgba(215, 35, 35, 0.81)",
+                      "value": 1.5
+                    },
+                    {
+                      "color": "red",
+                      "value": 2.5
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "sophoserr"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "short"
+              },
+              {
+                "id": "decimals",
+                "value": 0
+              },
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-background"
+                }
+              },
+              {
+                "id": "custom.align",
+                "value": ""
+              },
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "rgba(50, 172, 45, 0.97)",
+                      "value": null
+                    },
+                    {
+                      "color": "rgba(221, 44, 48, 0.8)",
+                      "value": 0.5
+                    },
+                    {
+                      "color": "rgba(219, 60, 60, 0.8)",
+                      "value": 1.5
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "pendingreboot"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "short"
+              },
+              {
+                "id": "decimals",
+                "value": 0
+              },
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-background"
+                }
+              },
+              {
+                "id": "custom.align",
+                "value": ""
+              },
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "rgba(50, 172, 45, 0.97)",
+                      "value": null
+                    },
+                    {
+                      "color": "rgba(221, 38, 38, 0.8)",
+                      "value": 0.5
+                    },
+                    {
+                      "color": "rgba(245, 54, 54, 0.9)",
+                      "value": 1.5
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "free"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "gbytes"
+              },
+              {
+                "id": "decimals",
+                "value": 2
+              },
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-background"
+                }
+              },
+              {
+                "id": "custom.align",
+                "value": ""
+              },
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "rgba(217, 34, 34, 0.8)",
+                      "value": null
+                    },
+                    {
+                      "color": "rgba(237, 129, 40, 0.89)",
+                      "value": 5
+                    },
+                    {
+                      "color": "rgba(50, 172, 45, 0.97)",
+                      "value": 10
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "fontSize": "80%",
+      "gridPos": {
+        "h": 7,
+        "w": 18,
+        "x": 6,
+        "y": 9
+      },
+      "height": "",
+      "hideTimeOverride": true,
+      "id": 4,
+      "interval": "\u003e15m",
+      "links": [],
+      "options": {
+        "cellHeight": "sm",
+        "footer": {
+          "countRows": false,
+          "fields": "",
+          "reducer": [
+            "sum"
+          ],
+          "show": false
+        },
+        "showHeader": true
+      },
+      "pageSize": 0,
+      "pluginVersion": "1.0.0",
+      "scroll": true,
+      "showHeader": true,
+      "sort": {
+        "col": 7,
+        "desc": true
+      },
+      "targets": [
+        {
+          "alias": "$tag_servername",
+          "datasource": {
+            "uid": "${DS_MONITORING_DATASOURCE}"
+          },
+          "dsType": "influxdb",
+          "groupBy": [
+            {
+              "params": [
+                "$interval"
+              ],
+              "type": "time"
+            },
+            {
+              "params": [
+                "null"
+              ],
+              "type": "fill"
+            }
+          ],
+          "policy": "default",
+          "query": "SELECT activesessions as active,inactivesessions as inactive,load,free,maintenance,pendingreboot,sophoserr FROM \"citrixstatus\" WHERE  $timeFilter GROUP BY \"servername\",\"missingwk\"",
+          "rawQuery": true,
+          "refId": "A",
+          "resultFormat": "table",
+          "select": [
+            [
+              {
+                "params": [
+                  "value"
+                ],
+                "type": "field"
+              },
+              {
+                "params": [],
+                "type": "mean"
+              }
+            ]
+          ],
+          "tags": []
+        }
+      ],
+      "timeFrom": "15m",
+      "title": "Citrix Farm status",
+      "transformations": [
+        {
+          "id": "merge",
+          "options": {
+            "reducers": []
+          }
+        }
+      ],
+      "transparent": false,
+      "type": "table"
+    },
+    {
+      "collapsed": false,
+      "datasource": {
+        "apiVersion": "v1",
+        "type": "prometheus",
+        "uid": "default-ds-uid"
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 24,
+        "x": 0,
+        "y": 8
+      },
+      "id": 13,
+      "panels": [],
+      "repeat": "",
+      "targets": [
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "prometheus",
+            "uid": "default-ds-uid"
+          },
+          "refId": "A"
+        }
+      ],
+      "title": "CITRIX FARM HEALTH STATUS",
+      "type": "row"
+    },
+    {
+      "aliasColors": {
+        "Active ICA Sessions": "#7EB26D",
+        "Disconnected": "#DEDAF7",
+        "Disconnected ICA Sessions": "#DEDAF7"
+      },
+      "bars": false,
+      "datasource": {
+        "uid": "${DS_REPORTING_DATASOURCE}"
+      },
+      "editable": true,
+      "error": false,
+      "fill": 3,
+      "grid": {},
+      "gridPos": {
+        "h": 7,
+        "w": 8,
+        "x": 0,
+        "y": 17
+      },
+      "height": "",
+      "hideTimeOverride": false,
+      "id": 5,
+      "interval": "\u003e1h",
+      "legend": {
+        "alignAsTable": true,
+        "avg": true,
+        "current": false,
+        "max": true,
+        "min": true,
+        "rightSide": false,
+        "show": true,
+        "sort": "min",
+        "sortDesc": false,
+        "total": false,
+        "values": true
+      },
+      "lines": true,
+      "linewidth": 1,
+      "links": [],
+      "nullPointMode": "connected",
+      "percentage": false,
+      "pointradius": 5,
+      "points": false,
+      "renderer": "flot",
+      "seriesOverrides": [
+        {
+          "alias": "Active Users",
+          "fill": 0,
+          "stack": false
+        },
+        {
+          "alias": "Active ICA Sessions",
+          "yaxis": 1
+        },
+        {
+          "alias": "Nordex Active Users",
+          "fill": 0,
+          "stack": "C"
+        }
+      ],
+      "stack": true,
+      "steppedLine": false,
+      "targets": [
+        {
+          "alias": "Active",
+          "datasource": {
+            "uid": "${DS_REPORTING_DATASOURCE}"
+          },
+          "dsType": "influxdb",
+          "groupBy": [
+            {
+              "params": [
+                "1h"
+              ],
+              "type": "time"
+            },
+            {
+              "params": [
+                "null"
+              ],
+              "type": "fill"
+            }
+          ],
+          "measurement": "citrixstatus",
+          "policy": "default",
+          "query": "SELECT sum(\"activesessions\") FROM \"citrixstatus\" WHERE $timeFilter GROUP BY time(1h) fill(null)",
+          "refId": "A",
+          "resultFormat": "time_series",
+          "select": [
+            [
+              {
+                "params": [
+                  "activesessions"
+                ],
+                "type": "field"
+              },
+              {
+                "params": [],
+                "type": "sum"
+              }
+            ]
+          ],
+          "tags": []
+        },
+        {
+          "alias": "Disconnected",
+          "datasource": {
+            "uid": "${DS_REPORTING_DATASOURCE}"
+          },
+          "dsType": "influxdb",
+          "groupBy": [
+            {
+              "params": [
+                "1h"
+              ],
+              "type": "time"
+            },
+            {
+              "params": [
+                "null"
+              ],
+              "type": "fill"
+            }
+          ],
+          "measurement": "citrixstatus",
+          "policy": "default",
+          "query": "SELECT sum(\"inactivesessions\") FROM \"citrixstatus\" WHERE $timeFilter GROUP BY time(1h) fill(null)",
+          "refId": "B",
+          "resultFormat": "time_series",
+          "select": [
+            [
+              {
+                "params": [
+                  "inactivesessions"
+                ],
+                "type": "field"
+              },
+              {
+                "params": [],
+                "type": "sum"
+              }
+            ]
+          ],
+          "tags": []
+        },
+        {
+          "alias": "Active Users",
+          "datasource": {
+            "uid": "${DS_REPORTING_DATASOURCE}"
+          },
+          "dsType": "influxdb",
+          "groupBy": [
+            {
+              "params": [
+                "1h"
+              ],
+              "type": "time"
+            },
+            {
+              "params": [
+                "null"
+              ],
+              "type": "fill"
+            }
+          ],
+          "hide": false,
+          "measurement": "citrixstatus",
+          "policy": "default",
+          "query": "SELECT sum(\"citrixlicenses\") FROM \"citrixstatus\" WHERE $timeFilter GROUP BY time(1h) fill(null)",
+          "rawQuery": true,
+          "refId": "C",
+          "resultFormat": "time_series",
+          "select": [
+            [
+              {
+                "params": [
+                  "citrixlicenses"
+                ],
+                "type": "field"
+              },
+              {
+                "params": [],
+                "type": "sum"
+              }
+            ]
+          ],
+          "tags": []
+        },
+        {
+          "alias": "Nordex Active Users",
+          "datasource": {
+            "uid": "${DS_REPORTING_DATASOURCE}"
+          },
+          "dsType": "influxdb",
+          "groupBy": [
+            {
+              "params": [
+                "1h"
+              ],
+              "type": "time"
+            },
+            {
+              "params": [
+                "null"
+              ],
+              "type": "fill"
+            }
+          ],
+          "measurement": "citrixstatus",
+          "policy": "default",
+          "refId": "D",
+          "resultFormat": "time_series",
+          "select": [
+            [
+              {
+                "params": [
+                  "nordexlicenses"
+                ],
+                "type": "field"
+              },
+              {
+                "params": [],
+                "type": "sum"
+              }
+            ]
+          ],
+          "tags": []
+        }
+      ],
+      "thresholds": [],
+      "timeFrom": "2w",
+      "timeShift": null,
+      "title": "ICA Sessions History",
+      "tooltip": {
+        "msResolution": false,
+        "shared": false,
+        "sort": 0,
+        "value_type": "individual"
+      },
+      "type": "graph",
+      "xaxis": {
+        "mode": "time",
+        "name": null,
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "format": "short",
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        },
+        {
+          "format": "short",
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        }
+      ]
+    },
+    {
+      "aliasColors": {
+        "11": "#890F02",
+        "12": "#BF1B00",
+        "13": "#447EBC",
+        "14": "#508642",
+        "n/a": "#DEDAF7",
+        "others": "#DEDAF7",
+        "unknown": "#DEDAF7"
+      },
+      "cacheTimeout": null,
+      "combine": {
+        "label": "Others",
+        "threshold": ""
+      },
+      "datasource": {
+        "uid": "${DS_MONITORING_DATASOURCE}"
+      },
+      "editable": true,
+      "error": false,
+      "fontSize": "80%",
+      "format": "short",
+      "gridPos": {
+        "h": 7,
+        "w": 4,
+        "x": 8,
+        "y": 17
+      },
+      "height": "",
+      "hideTimeOverride": true,
+      "id": 10,
+      "interval": "\u003e1h",
+      "legend": {
+        "avg": false,
+        "current": false,
+        "max": false,
+        "min": false,
+        "show": false,
+        "total": false,
+        "values": false
+      },
+      "legendType": "rightSide",
+      "links": [],
+      "maxDataPoints": 3,
+      "nullPointMode": "connected",
+      "nullText": null,
+      "pieType": "donut",
+      "strokeWidth": "0",
+      "targets": [
+        {
+          "alias": "$tag_app",
+          "datasource": {
+            "uid": "${DS_MONITORING_DATASOURCE}"
+          },
+          "dsType": "influxdb",
+          "groupBy": [
+            {
+              "params": [
+                "$interval"
+              ],
+              "type": "time"
+            },
+            {
+              "params": [
+                "app"
+              ],
+              "type": "tag"
+            },
+            {
+              "params": [
+                "null"
+              ],
+              "type": "fill"
+            }
+          ],
+          "measurement": "citrixappsnordex",
+          "policy": "default",
+          "query": "SELECT mean(\"count\") FROM \"citrixappsnordex\" WHERE $timeFilter GROUP BY time($interval), \"app\" fill(null)",
+          "rawQuery": true,
+          "refId": "A",
+          "resultFormat": "time_series",
+          "select": [
+            [
+              {
+                "params": [
+                  "count"
+                ],
+                "type": "field"
+              },
+              {
+                "params": [],
+                "type": "mean"
+              }
+            ]
+          ],
+          "tags": []
+        }
+      ],
+      "timeFrom": "1h",
+      "title": "NX Application Usage",
+      "type": "grafana-piechart-panel",
+      "valueName": "current"
+    },
+    {
+      "aliasColors": {
+        "11": "#890F02",
+        "12": "#BF1B00",
+        "13": "#447EBC",
+        "14": "#508642",
+        "n/a": "#DEDAF7",
+        "others": "#DEDAF7",
+        "unknown": "#DEDAF7"
+      },
+      "cacheTimeout": null,
+      "combine": {
+        "label": "Others",
+        "threshold": "0.02"
+      },
+      "datasource": {
+        "uid": "${DS_MONITORING_DATASOURCE}"
+      },
+      "editable": true,
+      "error": false,
+      "fontSize": "80%",
+      "format": "short",
+      "gridPos": {
+        "h": 7,
+        "w": 4,
+        "x": 12,
+        "y": 17
+      },
+      "height": "",
+      "hideTimeOverride": true,
+      "id": 8,
+      "interval": "\u003e1h",
+      "legend": {
+        "avg": false,
+        "current": false,
+        "max": false,
+        "min": false,
+        "show": false,
+        "total": false,
+        "values": false
+      },
+      "legendType": "rightSide",
+      "links": [],
+      "maxDataPoints": 3,
+      "nullPointMode": "connected",
+      "nullText": null,
+      "pieType": "donut",
+      "strokeWidth": "0",
+      "targets": [
+        {
+          "alias": "$tag_app",
+          "datasource": {
+            "uid": "${DS_MONITORING_DATASOURCE}"
+          },
+          "dsType": "influxdb",
+          "groupBy": [
+            {
+              "params": [
+                "$interval"
+              ],
+              "type": "time"
+            },
+            {
+              "params": [
+                "app"
+              ],
+              "type": "tag"
+            },
+            {
+              "params": [
+                "null"
+              ],
+              "type": "fill"
+            }
+          ],
+          "measurement": "citrixapps",
+          "policy": "default",
+          "refId": "A",
+          "resultFormat": "time_series",
+          "select": [
+            [
+              {
+                "params": [
+                  "count"
+                ],
+                "type": "field"
+              },
+              {
+                "params": [],
+                "type": "mean"
+              }
+            ]
+          ],
+          "tags": []
+        }
+      ],
+      "timeFrom": "1h",
+      "title": "Application Usage",
+      "type": "grafana-piechart-panel",
+      "valueName": "current"
+    },
+    {
+      "aliasColors": {
+        "11": "#890F02",
+        "12": "#BF1B00",
+        "13": "#447EBC",
+        "14": "#508642",
+        "LAN": "#890F02",
+        "n/a": "#DEDAF7",
+        "others": "#DEDAF7",
+        "unknown": "#DEDAF7"
+      },
+      "cacheTimeout": null,
+      "combine": {
+        "label": "Others",
+        "threshold": 0
+      },
+      "datasource": {
+        "uid": "${DS_MONITORING_DATASOURCE}"
+      },
+      "editable": true,
+      "error": false,
+      "fontSize": "80%",
+      "format": "short",
+      "gridPos": {
+        "h": 7,
+        "w": 4,
+        "x": 16,
+        "y": 17
+      },
+      "hideTimeOverride": true,
+      "id": 9,
+      "interval": "\u003e1h",
+      "legend": {
+        "avg": false,
+        "current": false,
+        "max": false,
+        "min": false,
+        "show": true,
+        "total": false,
+        "values": false
+      },
+      "legendType": "rightSide",
+      "links": [],
+      "maxDataPoints": 3,
+      "nullPointMode": "connected",
+      "nullText": null,
+      "pieType": "donut",
+      "strokeWidth": "0",
+      "targets": [
+        {
+          "alias": "$col",
+          "datasource": {
+            "uid": "${DS_MONITORING_DATASOURCE}"
+          },
+          "dsType": "influxdb",
+          "groupBy": [
+            {
+              "params": [
+                "$interval"
+              ],
+              "type": "time"
+            },
+            {
+              "params": [
+                "null"
+              ],
+              "type": "fill"
+            }
+          ],
+          "measurement": "citrixsubnets",
+          "policy": "default",
+          "refId": "A",
+          "resultFormat": "time_series",
+          "select": [
+            [
+              {
+                "params": [
+                  "lan"
+                ],
+                "type": "field"
+              },
+              {
+                "params": [],
+                "type": "mean"
+              },
+              {
+                "params": [
+                  "LAN"
+                ],
+                "type": "alias"
+              }
+            ],
+            [
+              {
+                "params": [
+                  "vpn"
+                ],
+                "type": "field"
+              },
+              {
+                "params": [],
+                "type": "mean"
+              },
+              {
+                "params": [
+                  "VPN"
+                ],
+                "type": "alias"
+              }
+            ],
+            [
+              {
+                "params": [
+                  "wan"
+                ],
+                "type": "field"
+              },
+              {
+                "params": [],
+                "type": "mean"
+              },
+              {
+                "params": [
+                  "WAN"
+                ],
+                "type": "alias"
+              }
+            ]
+          ],
+          "tags": []
+        }
+      ],
+      "timeFrom": null,
+      "title": "User Locations",
+      "type": "grafana-piechart-panel",
+      "valueName": "avg"
+    },
+    {
+      "aliasColors": {
+        "11": "#890F02",
+        "12": "#BF1B00",
+        "13": "#447EBC",
+        "14": "#508642",
+        "n/a": "#DEDAF7",
+        "unknown": "#DEDAF7"
+      },
+      "cacheTimeout": null,
+      "combine": {
+        "label": "Others",
+        "threshold": 0
+      },
+      "datasource": {
+        "uid": "${DS_REPORTING_DATASOURCE}"
+      },
+      "editable": true,
+      "error": false,
+      "fontSize": "80%",
+      "format": "none",
+      "gridPos": {
+        "h": 7,
+        "w": 4,
+        "x": 20,
+        "y": 17
+      },
+      "height": "",
+      "id": 7,
+      "interval": "\u003e1d",
+      "legend": {
+        "avg": false,
+        "current": false,
+        "max": false,
+        "min": false,
+        "show": true,
+        "total": false,
+        "values": false
+      },
+      "legendType": "Under graph",
+      "links": [],
+      "maxDataPoints": 3,
+      "nullPointMode": "connected",
+      "nullText": null,
+      "pieType": "donut",
+      "strokeWidth": "0",
+      "targets": [
+        {
+          "alias": "$tag_version",
+          "datasource": {
+            "uid": "${DS_REPORTING_DATASOURCE}"
+          },
+          "dsType": "influxdb",
+          "groupBy": [
+            {
+              "params": [
+                "$interval"
+              ],
+              "type": "time"
+            },
+            {
+              "params": [
+                "version"
+              ],
+              "type": "tag"
+            },
+            {
+              "params": [
+                "null"
+              ],
+              "type": "fill"
+            }
+          ],
+          "measurement": "citrixversions",
+          "policy": "default",
+          "refId": "A",
+          "resultFormat": "time_series",
+          "select": [
+            [
+              {
+                "params": [
+                  "count"
+                ],
+                "type": "field"
+              },
+              {
+                "params": [],
+                "type": "mean"
+              }
+            ]
+          ],
+          "tags": []
+        }
+      ],
+      "timeFrom": null,
+      "title": "ICA Client Versions",
+      "type": "grafana-piechart-panel",
+      "valueName": "avg"
+    },
+    {
+      "collapsed": false,
+      "datasource": {
+        "apiVersion": "v1",
+        "type": "prometheus",
+        "uid": "default-ds-uid"
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 24,
+        "x": 0,
+        "y": 16
+      },
+      "id": 14,
+      "panels": [],
+      "repeat": "",
+      "targets": [
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "prometheus",
+            "uid": "default-ds-uid"
+          },
+          "refId": "A"
+        }
+      ],
+      "title": "STATS",
+      "type": "row"
+    }
+  ],
+  "refresh": "15m",
+  "schemaVersion": 41,
+  "style": "dark",
+  "tags": [
+    "monitor",
+    "sessions",
+    "citrix"
+  ],
+  "templating": {
+    "list": []
+  },
+  "time": {
+    "from": "now-24h",
+    "to": "now"
+  },
+  "timepicker": {
+    "now": true,
+    "refresh_intervals": [
+      "15m",
+      "30m",
+      "1h",
+      "2h",
+      "1d"
+    ]
+  },
+  "timezone": "browser",
+  "title": "Citrix Xenapp Monitoring",
+  "version": 173
+}

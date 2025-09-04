@@ -1,0 +1,6 @@
+{
+  "type": "panel",
+  "name": "Panel Boilerplate",
+  "id": "panel-boilerplate-es5",
+  "staticRoot": "."
+}

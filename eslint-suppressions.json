@@ -2683,11 +2683,6 @@
       "count": 24
     }
   },
-  "public/app/features/dashboard/state/DashboardMigratorToBackend.test.ts": {
-    "@typescript-eslint/no-explicit-any": {
-      "count": 1
-    }
-  },
   "public/app/features/dashboard/state/DashboardModel.repeat.test.ts": {
     "@typescript-eslint/no-explicit-any": {
       "count": 4

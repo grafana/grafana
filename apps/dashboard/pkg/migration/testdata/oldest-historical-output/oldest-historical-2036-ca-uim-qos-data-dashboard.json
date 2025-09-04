@@ -1,0 +1,263 @@
+{
+  "__inputs": [
+    {
+      "description": "",
+      "label": "ca-uim-cloud-opentsdb",
+      "name": "DS_CA-UIM-CLOUD-OPENTSDB",
+      "pluginId": "opentsdb",
+      "pluginName": "OpenTSDB",
+      "type": "datasource"
+    }
+  ],
+  "__requires": [
+    {
+      "id": "grafana",
+      "name": "Grafana",
+      "type": "grafana",
+      "version": "4.2.0"
+    },
+    {
+      "id": "graph",
+      "name": "Graph",
+      "type": "panel",
+      "version": ""
+    },
+    {
+      "id": "opentsdb",
+      "name": "OpenTSDB",
+      "type": "datasource",
+      "version": "1.0.0"
+    }
+  ],
+  "annotations": {
+    "list": []
+  },
+  "description": "CA UIM QOS Data displayed in Grafana. This is an experimental feature of CA UIM product",
+  "editable": false,
+  "gnetId": 2036,
+  "graphTooltip": 2,
+  "hideControls": true,
+  "id": null,
+  "links": [],
+  "panels": [
+    {
+      "aliasColors": {},
+      "bars": false,
+      "datasource": {
+        "uid": "${DS_CA-UIM-CLOUD-OPENTSDB}"
+      },
+      "fill": 1,
+      "gridPos": {
+        "h": 7,
+        "w": 24,
+        "x": 0,
+        "y": 1
+      },
+      "id": 1,
+      "legend": {
+        "avg": false,
+        "current": false,
+        "max": false,
+        "min": false,
+        "show": true,
+        "total": false,
+        "values": false
+      },
+      "lines": true,
+      "linewidth": 1,
+      "links": [],
+      "nullPointMode": "null",
+      "percentage": false,
+      "pointradius": 5,
+      "points": false,
+      "renderer": "flot",
+      "seriesOverrides": [],
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
+        {
+          "aggregator": "none",
+          "currentTagKey": "",
+          "currentTagValue": "",
+          "datasource": {
+            "uid": "${DS_CA-UIM-CLOUD-OPENTSDB}"
+          },
+          "disableDownsampling": true,
+          "downsampleAggregator": "none",
+          "downsampleFillPolicy": "none",
+          "metric": "$metricname",
+          "refId": "A",
+          "tags": {
+            "hostname": "$hostname",
+            "probe": "$probe",
+            "qosname": "$qosname"
+          }
+        }
+      ],
+      "thresholds": [],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "$metricname --- $hostname --- $probe",
+      "tooltip": {
+        "shared": true,
+        "sort": 0,
+        "value_type": "individual"
+      },
+      "type": "graph",
+      "xaxis": {
+        "mode": "time",
+        "name": null,
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        },
+        {
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        }
+      ]
+    },
+    {
+      "collapsed": false,
+      "datasource": {
+        "apiVersion": "v1",
+        "type": "prometheus",
+        "uid": "default-ds-uid"
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "id": 2,
+      "panels": [],
+      "repeat": "",
+      "targets": [
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "prometheus",
+            "uid": "default-ds-uid"
+          },
+          "refId": "A"
+        }
+      ],
+      "title": "CA UIM QOS Data - Choose metric name",
+      "type": "row"
+    }
+  ],
+  "refresh": "",
+  "schemaVersion": 41,
+  "style": "dark",
+  "tags": [],
+  "templating": {
+    "list": [
+      {
+        "allValue": null,
+        "current": {},
+        "datasource": {
+          "uid": "${DS_CA-UIM-CLOUD-OPENTSDB}"
+        },
+        "hide": 0,
+        "includeAll": false,
+        "label": "Metric Name",
+        "multi": false,
+        "name": "metricname",
+        "options": [],
+        "query": "metrics(System)",
+        "refresh": 1,
+        "regex": "",
+        "sort": 1,
+        "type": "query"
+      },
+      {
+        "allValue": null,
+        "current": {},
+        "datasource": {
+          "uid": "${DS_CA-UIM-CLOUD-OPENTSDB}"
+        },
+        "hide": 0,
+        "includeAll": true,
+        "label": "Hostname",
+        "multi": true,
+        "name": "hostname",
+        "options": [],
+        "query": "tag_values($metricname, hostname)",
+        "refresh": 1,
+        "regex": "",
+        "sort": 0,
+        "type": "query"
+      },
+      {
+        "allValue": null,
+        "current": {},
+        "datasource": {
+          "uid": "${DS_CA-UIM-CLOUD-OPENTSDB}"
+        },
+        "hide": 2,
+        "includeAll": true,
+        "label": "probename",
+        "multi": true,
+        "name": "probe",
+        "options": [],
+        "query": "tag_values($metricname, probe)",
+        "refresh": 1,
+        "regex": "",
+        "sort": 0,
+        "type": "query"
+      },
+      {
+        "allValue": null,
+        "current": {},
+        "datasource": {
+          "uid": "${DS_CA-UIM-CLOUD-OPENTSDB}"
+        },
+        "hide": 2,
+        "includeAll": true,
+        "label": "qosname",
+        "multi": true,
+        "name": "qosname",
+        "options": [],
+        "query": "tag_values($metricname, qosname)\t",
+        "refresh": 1,
+        "regex": "",
+        "sort": 0,
+        "type": "query"
+      }
+    ]
+  },
+  "time": {
+    "from": "now-3h",
+    "to": "now"
+  },
+  "timepicker": {
+    "refresh_intervals": [
+      "5s",
+      "10s",
+      "30s",
+      "1m",
+      "5m",
+      "15m",
+      "30m",
+      "1h",
+      "2h",
+      "1d"
+    ]
+  },
+  "timezone": "browser",
+  "title": "CA UIM QOS Data Dashboard",
+  "version": 47
+}

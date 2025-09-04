@@ -1,0 +1,2926 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "uid": "-- Grafana --"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations \u0026 Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "gnetId": null,
+  "graphTooltip": 0,
+  "id": 90,
+  "links": [],
+  "panels": [
+    {
+      "datasource": {
+        "apiVersion": "v1",
+        "type": "prometheus",
+        "uid": "default-ds-uid"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "fixed"
+          },
+          "custom": {
+            "axis": {
+              "grid": true,
+              "label": "",
+              "side": 3,
+              "width": 60
+            },
+            "bars": {
+              "show": false
+            },
+            "fill": {
+              "alpha": 0.1
+            },
+            "line": {
+              "color": {
+                "mode": "fixed"
+              },
+              "show": true,
+              "width": 1
+            },
+            "nullValues": "null",
+            "points": {
+              "radius": 4,
+              "show": false
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 11,
+        "w": 12,
+        "x": 0,
+        "y": 0
+      },
+      "id": 40,
+      "options": {
+        "graph": {
+          "realTimeUpdates": false
+        },
+        "legend": {
+          "asTable": false,
+          "isVisible": true,
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltipOptions": {
+          "mode": "single"
+        }
+      },
+      "pluginVersion": "7.3.0-pre",
+      "targets": [
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "prometheus",
+            "uid": "default-ds-uid"
+          },
+          "refId": "A",
+          "scenarioId": "random_walk"
+        },
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "prometheus",
+            "uid": "default-ds-uid"
+          },
+          "refId": "B",
+          "scenarioId": "random_walk"
+        },
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "prometheus",
+            "uid": "default-ds-uid"
+          },
+          "refId": "C",
+          "scenarioId": "random_walk"
+        },
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "prometheus",
+            "uid": "default-ds-uid"
+          },
+          "refId": "D",
+          "scenarioId": "random_walk"
+        },
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "prometheus",
+            "uid": "default-ds-uid"
+          },
+          "refId": "E",
+          "scenarioId": "random_walk"
+        }
+      ],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "React NG graph",
+      "type": "graph3"
+    },
+    {
+      "aliasColors": {
+        "B-series": "purple"
+      },
+      "bars": false,
+      "dashLength": 10,
+      "dashes": false,
+      "datasource": {
+        "uid": "gdev-testdata"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": null,
+            "axis": {
+              "grid": true,
+              "label": "",
+              "side": 3,
+              "width": 80
+            },
+            "bars": {
+              "show": false
+            },
+            "fill": {
+              "alpha": 0
+            },
+            "line": {
+              "show": false,
+              "width": 1
+            },
+            "nullValues": "null",
+            "points": {
+              "radius": 2,
+              "show": true
+            }
+          },
+          "decimals": 2,
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "celsius"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "B-series"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "fahrenheit"
+              },
+              {
+                "id": "custom.axis.side",
+                "value": 1
+              },
+              {
+                "id": "custom.line.show",
+                "value": true
+              },
+              {
+                "id": "custom.axis.label",
+                "value": "Temperature (F)"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "C-series"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "kelvin"
+              },
+              {
+                "id": "custom.axis.label",
+                "value": "Temperature (K)"
+              },
+              {
+                "id": "custom.axis.side",
+                "value": 1
+              },
+              {
+                "id": "custom.axis.grid",
+                "value": false
+              }
+            ]
+          }
+        ]
+      },
+      "fill": 1,
+      "fillGradient": 0,
+      "gridPos": {
+        "h": 11,
+        "w": 12,
+        "x": 12,
+        "y": 0
+      },
+      "hiddenSeries": false,
+      "id": 22,
+      "legend": {
+        "alignAsTable": true,
+        "avg": false,
+        "current": false,
+        "max": false,
+        "min": false,
+        "show": true,
+        "total": false,
+        "values": false
+      },
+      "lines": true,
+      "linewidth": 1,
+      "nullPointMode": "null",
+      "options": {
+        "alertThreshold": true
+      },
+      "percentage": false,
+      "pluginVersion": "7.3.0-pre",
+      "pointradius": 2,
+      "points": false,
+      "renderer": "flot",
+      "seriesOverrides": [
+        {
+          "alias": "C-series",
+          "yaxis": 2
+        },
+        {
+          "alias": "B-series",
+          "yaxis": 2
+        }
+      ],
+      "spaceLength": 10,
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
+        {
+          "datasource": {
+            "uid": "gdev-testdata"
+          },
+          "labels": "",
+          "refId": "A",
+          "scenarioId": "random_walk"
+        },
+        {
+          "datasource": {
+            "uid": "gdev-testdata"
+          },
+          "refId": "B",
+          "scenarioId": "random_walk"
+        },
+        {
+          "datasource": {
+            "uid": "gdev-testdata"
+          },
+          "refId": "C",
+          "scenarioId": "random_walk"
+        },
+        {
+          "datasource": {
+            "uid": "gdev-testdata"
+          },
+          "refId": "D",
+          "scenarioId": "random_walk"
+        },
+        {
+          "datasource": {
+            "uid": "gdev-testdata"
+          },
+          "refId": "E",
+          "scenarioId": "random_walk"
+        },
+        {
+          "datasource": {
+            "uid": "gdev-testdata"
+          },
+          "refId": "F",
+          "scenarioId": "random_walk"
+        },
+        {
+          "datasource": {
+            "uid": "gdev-testdata"
+          },
+          "refId": "G",
+          "scenarioId": "random_walk"
+        },
+        {
+          "datasource": {
+            "uid": "gdev-testdata"
+          },
+          "refId": "H",
+          "scenarioId": "random_walk"
+        },
+        {
+          "datasource": {
+            "uid": "gdev-testdata"
+          },
+          "refId": "I",
+          "scenarioId": "random_walk"
+        }
+      ],
+      "thresholds": [],
+      "timeFrom": null,
+      "timeRegions": [],
+      "timeShift": null,
+      "title": "Angular graph",
+      "tooltip": {
+        "shared": true,
+        "sort": 0,
+        "value_type": "individual"
+      },
+      "transformations": [],
+      "type": "graph",
+      "xaxis": {
+        "buckets": null,
+        "mode": "time",
+        "name": null,
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "format": "celsius",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        },
+        {
+          "format": "kelvin",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        }
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
+    },
+    {
+      "collapsed": true,
+      "datasource": {
+        "apiVersion": "v1",
+        "type": "prometheus",
+        "uid": "default-ds-uid"
+      },
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 11
+      },
+      "id": 34,
+      "panels": [
+        {
+          "datasource": {
+            "uid": "gdev-testdata"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "fixed"
+              },
+              "custom": {
+                "align": null,
+                "axis": {
+                  "grid": true,
+                  "label": "",
+                  "side": 3,
+                  "width": 40
+                },
+                "bars": {
+                  "show": false
+                },
+                "fill": {
+                  "alpha": 0.2
+                },
+                "line": {
+                  "show": true,
+                  "width": 1
+                },
+                "nullValues": "null",
+                "points": {
+                  "radius": 5,
+                  "show": false
+                }
+              },
+              "decimals": 2,
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "red",
+                    "value": 80
+                  }
+                ]
+              },
+              "unit": "celsius"
+            },
+            "overrides": [
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "B-series"
+                },
+                "properties": [
+                  {
+                    "id": "unit",
+                    "value": "fahrenheit"
+                  },
+                  {
+                    "id": "custom.axis.side",
+                    "value": 1
+                  },
+                  {
+                    "id": "custom.line.show",
+                    "value": true
+                  },
+                  {
+                    "id": "custom.axis.width",
+                    "value": 40
+                  }
+                ]
+              }
+            ]
+          },
+          "gridPos": {
+            "h": 11,
+            "w": 8,
+            "x": 0,
+            "y": 12
+          },
+          "id": 31,
+          "options": {
+            "graph": {
+              "realTimeUpdates": false
+            },
+            "legend": {
+              "asTable": true,
+              "isVisible": true,
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltipOptions": {
+              "mode": "single"
+            }
+          },
+          "pluginVersion": "7.2.0-pre",
+          "targets": [
+            {
+              "datasource": {
+                "uid": "gdev-testdata"
+              },
+              "hide": false,
+              "refId": "A",
+              "scenarioId": "random_walk"
+            },
+            {
+              "datasource": {
+                "uid": "gdev-testdata"
+              },
+              "hide": false,
+              "refId": "B",
+              "scenarioId": "random_walk"
+            },
+            {
+              "datasource": {
+                "uid": "gdev-testdata"
+              },
+              "refId": "C",
+              "scenarioId": "random_walk"
+            },
+            {
+              "datasource": {
+                "uid": "gdev-testdata"
+              },
+              "labels": "",
+              "refId": "D",
+              "scenarioId": "random_walk"
+            },
+            {
+              "datasource": {
+                "uid": "gdev-testdata"
+              },
+              "refId": "E",
+              "scenarioId": "random_walk"
+            },
+            {
+              "datasource": {
+                "uid": "gdev-testdata"
+              },
+              "hide": false,
+              "refId": "F",
+              "scenarioId": "random_walk"
+            },
+            {
+              "datasource": {
+                "uid": "gdev-testdata"
+              },
+              "hide": false,
+              "refId": "G",
+              "scenarioId": "random_walk"
+            },
+            {
+              "datasource": {
+                "uid": "gdev-testdata"
+              },
+              "hide": false,
+              "refId": "H",
+              "scenarioId": "random_walk"
+            },
+            {
+              "datasource": {
+                "uid": "gdev-testdata"
+              },
+              "hide": false,
+              "refId": "I",
+              "scenarioId": "random_walk"
+            },
+            {
+              "datasource": {
+                "uid": "gdev-testdata"
+              },
+              "refId": "J",
+              "scenarioId": "random_walk"
+            },
+            {
+              "datasource": {
+                "uid": "gdev-testdata"
+              },
+              "refId": "K",
+              "scenarioId": "random_walk"
+            },
+            {
+              "datasource": {
+                "uid": "gdev-testdata"
+              },
+              "hide": false,
+              "refId": "L",
+              "scenarioId": "random_walk"
+            },
+            {
+              "datasource": {
+                "uid": "gdev-testdata"
+              },
+              "hide": false,
+              "refId": "M",
+              "scenarioId": "random_walk"
+            },
+            {
+              "datasource": {
+                "uid": "gdev-testdata"
+              },
+              "hide": false,
+              "refId": "N",
+              "scenarioId": "random_walk"
+            },
+            {
+              "datasource": {
+                "uid": "gdev-testdata"
+              },
+              "hide": false,
+              "refId": "O",
+              "scenarioId": "random_walk"
+            },
+            {
+              "datasource": {
+                "uid": "gdev-testdata"
+              },
+              "hide": false,
+              "refId": "P",
+              "scenarioId": "random_walk"
+            },
+            {
+              "datasource": {
+                "uid": "gdev-testdata"
+              },
+              "hide": false,
+              "refId": "Q",
+              "scenarioId": "random_walk"
+            },
+            {
+              "datasource": {
+                "uid": "gdev-testdata"
+              },
+              "hide": false,
+              "refId": "R",
+              "scenarioId": "random_walk"
+            },
+            {
+              "datasource": {
+                "uid": "gdev-testdata"
+              },
+              "hide": false,
+              "refId": "S",
+              "scenarioId": "random_walk"
+            },
+            {
+              "datasource": {
+                "uid": "gdev-testdata"
+              },
+              "hide": false,
+              "refId": "T",
+              "scenarioId": "random_walk"
+            },
+            {
+              "datasource": {
+                "uid": "gdev-testdata"
+              },
+              "hide": false,
+              "refId": "U",
+              "scenarioId": "random_walk"
+            }
+          ],
+          "timeFrom": null,
+          "timeShift": null,
+          "title": "Table",
+          "transformations": [],
+          "type": "graph3"
+        },
+        {
+          "datasource": {
+            "uid": "gdev-testdata"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "fixed"
+              },
+              "custom": {
+                "align": null,
+                "axis": {
+                  "grid": true,
+                  "label": "",
+                  "side": 3,
+                  "width": 40
+                },
+                "bars": {
+                  "show": false
+                },
+                "fill": {
+                  "alpha": 0.2
+                },
+                "line": {
+                  "show": true,
+                  "width": 1
+                },
+                "nullValues": "null",
+                "points": {
+                  "radius": 5,
+                  "show": false
+                }
+              },
+              "decimals": 2,
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "red",
+                    "value": 80
+                  }
+                ]
+              },
+              "unit": "celsius"
+            },
+            "overrides": [
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "B-series"
+                },
+                "properties": [
+                  {
+                    "id": "unit",
+                    "value": "fahrenheit"
+                  },
+                  {
+                    "id": "custom.axis.side",
+                    "value": 1
+                  },
+                  {
+                    "id": "custom.line.show",
+                    "value": true
+                  },
+                  {
+                    "id": "custom.axis.width",
+                    "value": 40
+                  }
+                ]
+              }
+            ]
+          },
+          "gridPos": {
+            "h": 11,
+            "w": 8,
+            "x": 8,
+            "y": 12
+          },
+          "id": 32,
+          "options": {
+            "graph": {
+              "realTimeUpdates": false
+            },
+            "legend": {
+              "asTable": false,
+              "isVisible": true,
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltipOptions": {
+              "mode": "single"
+            }
+          },
+          "pluginVersion": "7.2.0-pre",
+          "targets": [
+            {
+              "datasource": {
+                "uid": "gdev-testdata"
+              },
+              "hide": false,
+              "refId": "A",
+              "scenarioId": "random_walk"
+            },
+            {
+              "datasource": {
+                "uid": "gdev-testdata"
+              },
+              "hide": false,
+              "refId": "B",
+              "scenarioId": "random_walk"
+            },
+            {
+              "datasource": {
+                "uid": "gdev-testdata"
+              },
+              "refId": "C",
+              "scenarioId": "random_walk"
+            }
+          ],
+          "timeFrom": null,
+          "timeShift": null,
+          "title": "List",
+          "transformations": [],
+          "type": "graph3"
+        },
+        {
+          "datasource": {
+            "uid": "gdev-testdata"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "fixed"
+              },
+              "custom": {
+                "align": null,
+                "axis": {
+                  "grid": true,
+                  "label": "",
+                  "side": 3,
+                  "width": 40
+                },
+                "bars": {
+                  "show": false
+                },
+                "fill": {
+                  "alpha": 0.2
+                },
+                "line": {
+                  "show": true,
+                  "width": 1
+                },
+                "nullValues": "null",
+                "points": {
+                  "radius": 5,
+                  "show": false
+                }
+              },
+              "decimals": 2,
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "red",
+                    "value": 80
+                  }
+                ]
+              },
+              "unit": "celsius"
+            },
+            "overrides": [
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "B-series"
+                },
+                "properties": [
+                  {
+                    "id": "unit",
+                    "value": "fahrenheit"
+                  },
+                  {
+                    "id": "custom.axis.side",
+                    "value": 1
+                  },
+                  {
+                    "id": "custom.line.show",
+                    "value": true
+                  },
+                  {
+                    "id": "custom.axis.width",
+                    "value": 40
+                  }
+                ]
+              }
+            ]
+          },
+          "gridPos": {
+            "h": 11,
+            "w": 8,
+            "x": 16,
+            "y": 12
+          },
+          "id": 35,
+          "options": {
+            "graph": {
+              "realTimeUpdates": false
+            },
+            "legend": {
+              "asTable": false,
+              "isVisible": false,
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltipOptions": {
+              "mode": "single"
+            }
+          },
+          "pluginVersion": "7.2.0-pre",
+          "targets": [
+            {
+              "datasource": {
+                "uid": "gdev-testdata"
+              },
+              "hide": false,
+              "refId": "A",
+              "scenarioId": "random_walk"
+            },
+            {
+              "datasource": {
+                "uid": "gdev-testdata"
+              },
+              "hide": false,
+              "refId": "B",
+              "scenarioId": "random_walk"
+            },
+            {
+              "datasource": {
+                "uid": "gdev-testdata"
+              },
+              "refId": "C",
+              "scenarioId": "random_walk"
+            }
+          ],
+          "timeFrom": null,
+          "timeShift": null,
+          "title": "No legend",
+          "transformations": [],
+          "type": "graph3"
+        }
+      ],
+      "targets": [
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "prometheus",
+            "uid": "default-ds-uid"
+          },
+          "refId": "A"
+        }
+      ],
+      "title": "Legend rendering",
+      "type": "row"
+    },
+    {
+      "collapsed": true,
+      "datasource": {
+        "apiVersion": "v1",
+        "type": "prometheus",
+        "uid": "default-ds-uid"
+      },
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 12
+      },
+      "id": 24,
+      "panels": [
+        {
+          "datasource": {
+            "uid": "gdev-testdata"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "fixed"
+              },
+              "custom": {
+                "align": null,
+                "axis": {
+                  "grid": true,
+                  "label": "",
+                  "side": 3,
+                  "width": 40
+                },
+                "bars": {
+                  "show": false
+                },
+                "fill": {
+                  "alpha": 0.2
+                },
+                "line": {
+                  "show": false,
+                  "width": 1
+                },
+                "nullValues": "null",
+                "points": {
+                  "radius": 5,
+                  "show": false
+                }
+              },
+              "decimals": 2,
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "red",
+                    "value": 80
+                  }
+                ]
+              },
+              "unit": "celsius"
+            },
+            "overrides": [
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "B-series"
+                },
+                "properties": [
+                  {
+                    "id": "unit",
+                    "value": "fahrenheit"
+                  },
+                  {
+                    "id": "custom.axis.side",
+                    "value": 1
+                  },
+                  {
+                    "id": "custom.line.show",
+                    "value": true
+                  },
+                  {
+                    "id": "custom.axis.width",
+                    "value": 40
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "C-series"
+                },
+                "properties": [
+                  {
+                    "id": "unit",
+                    "value": "kelvin"
+                  },
+                  {
+                    "id": "custom.axis.side",
+                    "value": 1
+                  },
+                  {
+                    "id": "custom.axis.grid",
+                    "value": false
+                  },
+                  {
+                    "id": "color",
+                    "value": {
+                      "fixedColor": "purple",
+                      "mode": "fixed"
+                    }
+                  },
+                  {
+                    "id": "custom.axis.width",
+                    "value": 40
+                  }
+                ]
+              }
+            ]
+          },
+          "gridPos": {
+            "h": 11,
+            "w": 6,
+            "x": 0,
+            "y": 24
+          },
+          "id": 25,
+          "options": {
+            "graph": {
+              "realTimeUpdates": false
+            },
+            "legend": {
+              "asTable": false,
+              "isVisible": true,
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltipOptions": {
+              "mode": "single"
+            }
+          },
+          "pluginVersion": "7.2.0-pre",
+          "targets": [
+            {
+              "datasource": {
+                "uid": "gdev-testdata"
+              },
+              "hide": false,
+              "refId": "A",
+              "scenarioId": "random_walk"
+            },
+            {
+              "datasource": {
+                "uid": "gdev-testdata"
+              },
+              "hide": false,
+              "refId": "B",
+              "scenarioId": "random_walk"
+            },
+            {
+              "datasource": {
+                "uid": "gdev-testdata"
+              },
+              "refId": "C",
+              "scenarioId": "random_walk"
+            }
+          ],
+          "timeFrom": null,
+          "timeShift": null,
+          "title": "Bottom",
+          "transformations": [],
+          "type": "graph3"
+        },
+        {
+          "datasource": {
+            "uid": "gdev-testdata"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "fixed"
+              },
+              "custom": {
+                "align": null,
+                "axis": {
+                  "grid": true,
+                  "label": "",
+                  "side": 3,
+                  "width": 40
+                },
+                "bars": {
+                  "show": false
+                },
+                "fill": {
+                  "alpha": 0.2
+                },
+                "line": {
+                  "show": false,
+                  "width": 1
+                },
+                "nullValues": "null",
+                "points": {
+                  "radius": 5,
+                  "show": false
+                }
+              },
+              "decimals": 2,
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "red",
+                    "value": 80
+                  }
+                ]
+              },
+              "unit": "celsius"
+            },
+            "overrides": [
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "B-series"
+                },
+                "properties": [
+                  {
+                    "id": "unit",
+                    "value": "fahrenheit"
+                  },
+                  {
+                    "id": "custom.axis.side",
+                    "value": 1
+                  },
+                  {
+                    "id": "custom.line.show",
+                    "value": true
+                  },
+                  {
+                    "id": "custom.axis.width",
+                    "value": 40
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "C-series"
+                },
+                "properties": [
+                  {
+                    "id": "unit",
+                    "value": "kelvin"
+                  },
+                  {
+                    "id": "custom.axis.side",
+                    "value": 1
+                  },
+                  {
+                    "id": "custom.axis.grid",
+                    "value": false
+                  },
+                  {
+                    "id": "color",
+                    "value": {
+                      "fixedColor": "purple",
+                      "mode": "fixed"
+                    }
+                  },
+                  {
+                    "id": "custom.axis.width",
+                    "value": 40
+                  }
+                ]
+              }
+            ]
+          },
+          "gridPos": {
+            "h": 11,
+            "w": 6,
+            "x": 6,
+            "y": 24
+          },
+          "id": 26,
+          "options": {
+            "graph": {
+              "realTimeUpdates": false
+            },
+            "legend": {
+              "asTable": false,
+              "isVisible": true,
+              "placement": "top",
+              "showLegend": true
+            },
+            "tooltipOptions": {
+              "mode": "single"
+            }
+          },
+          "pluginVersion": "7.2.0-pre",
+          "targets": [
+            {
+              "datasource": {
+                "uid": "gdev-testdata"
+              },
+              "hide": false,
+              "refId": "A",
+              "scenarioId": "random_walk"
+            },
+            {
+              "datasource": {
+                "uid": "gdev-testdata"
+              },
+              "hide": false,
+              "refId": "B",
+              "scenarioId": "random_walk"
+            },
+            {
+              "datasource": {
+                "uid": "gdev-testdata"
+              },
+              "refId": "C",
+              "scenarioId": "random_walk"
+            }
+          ],
+          "timeFrom": null,
+          "timeShift": null,
+          "title": "Top",
+          "transformations": [],
+          "type": "graph3"
+        },
+        {
+          "datasource": {
+            "uid": "gdev-testdata"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "fixed"
+              },
+              "custom": {
+                "align": null,
+                "axis": {
+                  "grid": true,
+                  "label": "",
+                  "side": 3,
+                  "width": 40
+                },
+                "bars": {
+                  "show": false
+                },
+                "fill": {
+                  "alpha": 0.2
+                },
+                "line": {
+                  "show": false,
+                  "width": 1
+                },
+                "nullValues": "null",
+                "points": {
+                  "radius": 5,
+                  "show": false
+                }
+              },
+              "decimals": 2,
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "red",
+                    "value": 80
+                  }
+                ]
+              },
+              "unit": "celsius"
+            },
+            "overrides": [
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "B-series"
+                },
+                "properties": [
+                  {
+                    "id": "unit",
+                    "value": "fahrenheit"
+                  },
+                  {
+                    "id": "custom.axis.side",
+                    "value": 1
+                  },
+                  {
+                    "id": "custom.line.show",
+                    "value": true
+                  },
+                  {
+                    "id": "custom.axis.width",
+                    "value": 40
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "C-series"
+                },
+                "properties": [
+                  {
+                    "id": "unit",
+                    "value": "kelvin"
+                  },
+                  {
+                    "id": "custom.axis.side",
+                    "value": 1
+                  },
+                  {
+                    "id": "custom.axis.grid",
+                    "value": false
+                  },
+                  {
+                    "id": "color",
+                    "value": {
+                      "fixedColor": "purple",
+                      "mode": "fixed"
+                    }
+                  },
+                  {
+                    "id": "custom.axis.width",
+                    "value": 40
+                  }
+                ]
+              }
+            ]
+          },
+          "gridPos": {
+            "h": 11,
+            "w": 6,
+            "x": 12,
+            "y": 24
+          },
+          "id": 28,
+          "options": {
+            "graph": {
+              "realTimeUpdates": false
+            },
+            "legend": {
+              "asTable": false,
+              "isVisible": true,
+              "placement": "left",
+              "showLegend": true
+            },
+            "tooltipOptions": {
+              "mode": "single"
+            }
+          },
+          "pluginVersion": "7.2.0-pre",
+          "targets": [
+            {
+              "datasource": {
+                "uid": "gdev-testdata"
+              },
+              "hide": false,
+              "refId": "A",
+              "scenarioId": "random_walk"
+            },
+            {
+              "datasource": {
+                "uid": "gdev-testdata"
+              },
+              "hide": false,
+              "refId": "B",
+              "scenarioId": "random_walk"
+            },
+            {
+              "datasource": {
+                "uid": "gdev-testdata"
+              },
+              "refId": "C",
+              "scenarioId": "random_walk"
+            }
+          ],
+          "timeFrom": null,
+          "timeShift": null,
+          "title": "Left",
+          "transformations": [],
+          "type": "graph3"
+        },
+        {
+          "datasource": {
+            "uid": "gdev-testdata"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "fixed"
+              },
+              "custom": {
+                "align": null,
+                "axis": {
+                  "grid": true,
+                  "label": "",
+                  "side": 3,
+                  "width": 40
+                },
+                "bars": {
+                  "show": false
+                },
+                "fill": {
+                  "alpha": 0.2
+                },
+                "line": {
+                  "show": false,
+                  "width": 1
+                },
+                "nullValues": "null",
+                "points": {
+                  "radius": 5,
+                  "show": false
+                }
+              },
+              "decimals": 2,
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "red",
+                    "value": 80
+                  }
+                ]
+              },
+              "unit": "celsius"
+            },
+            "overrides": [
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "B-series"
+                },
+                "properties": [
+                  {
+                    "id": "unit",
+                    "value": "fahrenheit"
+                  },
+                  {
+                    "id": "custom.axis.side",
+                    "value": 1
+                  },
+                  {
+                    "id": "custom.line.show",
+                    "value": true
+                  },
+                  {
+                    "id": "custom.axis.width",
+                    "value": 40
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "C-series"
+                },
+                "properties": [
+                  {
+                    "id": "unit",
+                    "value": "kelvin"
+                  },
+                  {
+                    "id": "custom.axis.side",
+                    "value": 1
+                  },
+                  {
+                    "id": "custom.axis.grid",
+                    "value": false
+                  },
+                  {
+                    "id": "color",
+                    "value": {
+                      "fixedColor": "purple",
+                      "mode": "fixed"
+                    }
+                  },
+                  {
+                    "id": "custom.axis.width",
+                    "value": 40
+                  }
+                ]
+              }
+            ]
+          },
+          "gridPos": {
+            "h": 11,
+            "w": 6,
+            "x": 18,
+            "y": 24
+          },
+          "id": 27,
+          "options": {
+            "graph": {
+              "realTimeUpdates": false
+            },
+            "legend": {
+              "asTable": false,
+              "isVisible": true,
+              "placement": "right",
+              "showLegend": true
+            },
+            "tooltipOptions": {
+              "mode": "single"
+            }
+          },
+          "pluginVersion": "7.2.0-pre",
+          "targets": [
+            {
+              "datasource": {
+                "uid": "gdev-testdata"
+              },
+              "hide": false,
+              "refId": "A",
+              "scenarioId": "random_walk"
+            },
+            {
+              "datasource": {
+                "uid": "gdev-testdata"
+              },
+              "hide": false,
+              "refId": "B",
+              "scenarioId": "random_walk"
+            },
+            {
+              "datasource": {
+                "uid": "gdev-testdata"
+              },
+              "refId": "C",
+              "scenarioId": "random_walk"
+            }
+          ],
+          "timeFrom": null,
+          "timeShift": null,
+          "title": "Right",
+          "transformations": [],
+          "type": "graph3"
+        }
+      ],
+      "targets": [
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "prometheus",
+            "uid": "default-ds-uid"
+          },
+          "refId": "A"
+        }
+      ],
+      "title": "Legend placement",
+      "type": "row"
+    },
+    {
+      "collapsed": true,
+      "datasource": {
+        "apiVersion": "v1",
+        "type": "prometheus",
+        "uid": "default-ds-uid"
+      },
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 13
+      },
+      "id": 17,
+      "panels": [
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "prometheus",
+            "uid": "default-ds-uid"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "fixed"
+              },
+              "custom": {
+                "align": null,
+                "axis": {
+                  "grid": true,
+                  "label": "",
+                  "side": 3,
+                  "width": 60
+                },
+                "bars": {
+                  "show": false
+                },
+                "fill": {
+                  "alpha": 0
+                },
+                "line": {
+                  "color": {
+                    "mode": "fixed"
+                  },
+                  "show": true,
+                  "width": 1
+                },
+                "nullValues": "null",
+                "points": {
+                  "radius": 5,
+                  "show": false
+                }
+              },
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "red",
+                    "value": 80
+                  }
+                ]
+              }
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 8,
+            "x": 0,
+            "y": 14
+          },
+          "id": 19,
+          "options": {
+            "graph": {
+              "realTimeUpdates": false
+            },
+            "legend": {
+              "asTable": false,
+              "isVisible": true,
+              "placement": "under",
+              "showLegend": true
+            },
+            "tooltipOptions": {
+              "mode": "single"
+            }
+          },
+          "pluginVersion": "7.2.0-pre",
+          "targets": [
+            {
+              "datasource": {
+                "apiVersion": "v1",
+                "type": "prometheus",
+                "uid": "default-ds-uid"
+              },
+              "refId": "A",
+              "scenarioId": "random_walk"
+            },
+            {
+              "datasource": {
+                "apiVersion": "v1",
+                "type": "prometheus",
+                "uid": "default-ds-uid"
+              },
+              "refId": "B",
+              "scenarioId": "random_walk"
+            }
+          ],
+          "timeFrom": null,
+          "timeShift": null,
+          "title": "Single mode",
+          "type": "graph3"
+        },
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "prometheus",
+            "uid": "default-ds-uid"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "fixed"
+              },
+              "custom": {
+                "align": null,
+                "axis": {
+                  "grid": true,
+                  "label": "",
+                  "side": 3,
+                  "width": 60
+                },
+                "bars": {
+                  "show": false
+                },
+                "fill": {
+                  "alpha": 0
+                },
+                "line": {
+                  "color": {
+                    "mode": "fixed"
+                  },
+                  "show": true,
+                  "width": 1
+                },
+                "nullValues": "null",
+                "points": {
+                  "radius": 5,
+                  "show": false
+                }
+              },
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "red",
+                    "value": 80
+                  }
+                ]
+              }
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 8,
+            "x": 8,
+            "y": 14
+          },
+          "id": 20,
+          "options": {
+            "graph": {
+              "realTimeUpdates": false
+            },
+            "legend": {
+              "asTable": false,
+              "isVisible": true,
+              "placement": "under",
+              "showLegend": true
+            },
+            "tooltipOptions": {
+              "mode": "multi"
+            }
+          },
+          "pluginVersion": "7.2.0-pre",
+          "targets": [
+            {
+              "datasource": {
+                "apiVersion": "v1",
+                "type": "prometheus",
+                "uid": "default-ds-uid"
+              },
+              "refId": "A",
+              "scenarioId": "random_walk"
+            },
+            {
+              "datasource": {
+                "apiVersion": "v1",
+                "type": "prometheus",
+                "uid": "default-ds-uid"
+              },
+              "refId": "B",
+              "scenarioId": "random_walk"
+            }
+          ],
+          "timeFrom": null,
+          "timeShift": null,
+          "title": "Multi mode",
+          "type": "graph3"
+        },
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "prometheus",
+            "uid": "default-ds-uid"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "fixed"
+              },
+              "custom": {
+                "axis": {
+                  "grid": true,
+                  "label": "",
+                  "side": 3,
+                  "width": 60
+                },
+                "bars": {
+                  "show": false
+                },
+                "fill": {
+                  "alpha": 0
+                },
+                "line": {
+                  "color": {
+                    "mode": "fixed"
+                  },
+                  "show": true,
+                  "width": 1
+                },
+                "nullValues": "null",
+                "points": {
+                  "radius": 5,
+                  "show": false
+                }
+              },
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "red",
+                    "value": 80
+                  }
+                ]
+              }
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 8,
+            "x": 16,
+            "y": 14
+          },
+          "id": 21,
+          "options": {
+            "graph": {
+              "realTimeUpdates": false
+            },
+            "legend": {
+              "asTable": false,
+              "isVisible": true,
+              "placement": "under",
+              "showLegend": true
+            },
+            "tooltipOptions": {
+              "mode": "none"
+            }
+          },
+          "pluginVersion": "7.2.0-pre",
+          "targets": [
+            {
+              "datasource": {
+                "apiVersion": "v1",
+                "type": "prometheus",
+                "uid": "default-ds-uid"
+              },
+              "refId": "A",
+              "scenarioId": "random_walk"
+            },
+            {
+              "datasource": {
+                "apiVersion": "v1",
+                "type": "prometheus",
+                "uid": "default-ds-uid"
+              },
+              "refId": "B",
+              "scenarioId": "random_walk"
+            }
+          ],
+          "timeFrom": null,
+          "timeShift": null,
+          "title": "No tooltip",
+          "type": "graph3"
+        },
+        {
+          "datasource": {
+            "uid": "gdev-testdata"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "fixed"
+              },
+              "custom": {
+                "axis": {
+                  "grid": true,
+                  "label": "Temperature",
+                  "side": 3,
+                  "width": 60
+                },
+                "bars": {
+                  "show": false
+                },
+                "fill": {
+                  "alpha": 0
+                },
+                "line": {
+                  "color": {
+                    "mode": "fixed"
+                  },
+                  "show": true,
+                  "width": 1
+                },
+                "nullValues": "null",
+                "points": {
+                  "radius": 8,
+                  "show": true
+                }
+              },
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "red",
+                    "value": 80
+                  }
+                ]
+              },
+              "unit": "celsius"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 9,
+            "w": 12,
+            "x": 0,
+            "y": 22
+          },
+          "id": 9,
+          "options": {
+            "graph": {
+              "realTimeUpdates": false
+            },
+            "legend": {
+              "asTable": false,
+              "isVisible": true,
+              "placement": "under",
+              "showLegend": true
+            },
+            "tooltipOptions": {
+              "mode": "multi"
+            }
+          },
+          "pluginVersion": "7.2.0-pre",
+          "targets": [
+            {
+              "datasource": {
+                "uid": "gdev-testdata"
+              },
+              "refId": "C",
+              "scenarioId": "csv_metric_values",
+              "stringInput": "1,20,90,30,5,0"
+            },
+            {
+              "datasource": {
+                "uid": "gdev-testdata"
+              },
+              "refId": "A",
+              "scenarioId": "csv_metric_values",
+              "stringInput": "10,25,40"
+            }
+          ],
+          "timeFrom": null,
+          "timeShift": null,
+          "title": "Diff number of datapoints milt multi series tooltip",
+          "transformations": [],
+          "type": "graph3"
+        }
+      ],
+      "targets": [
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "prometheus",
+            "uid": "default-ds-uid"
+          },
+          "refId": "A"
+        }
+      ],
+      "title": "Tooltip",
+      "type": "row"
+    },
+    {
+      "collapsed": true,
+      "datasource": {
+        "apiVersion": "v1",
+        "type": "prometheus",
+        "uid": "default-ds-uid"
+      },
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 14
+      },
+      "id": 11,
+      "panels": [
+        {
+          "datasource": {
+            "uid": "gdev-testdata"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "fixed"
+              },
+              "custom": {
+                "axis": {
+                  "grid": true,
+                  "label": "Temperature",
+                  "side": 3,
+                  "width": 60
+                },
+                "bars": {
+                  "show": false
+                },
+                "fill": {
+                  "alpha": 0
+                },
+                "line": {
+                  "color": {
+                    "mode": "fixed"
+                  },
+                  "show": true,
+                  "width": 1
+                },
+                "nullValues": "null",
+                "points": {
+                  "radius": 8,
+                  "show": true
+                }
+              },
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "red",
+                    "value": 80
+                  }
+                ]
+              },
+              "unit": "celsius"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 11,
+            "w": 8,
+            "x": 0,
+            "y": 15
+          },
+          "id": 8,
+          "options": {
+            "graph": {
+              "realTimeUpdates": false
+            },
+            "legend": {
+              "asTable": false,
+              "isVisible": true,
+              "placement": "under",
+              "showLegend": true
+            },
+            "tooltipOptions": {
+              "mode": "single"
+            }
+          },
+          "pluginVersion": "7.2.0-pre",
+          "targets": [
+            {
+              "datasource": {
+                "uid": "gdev-testdata"
+              },
+              "refId": "C",
+              "scenarioId": "csv_metric_values",
+              "stringInput": "1,20,90,30,5,0"
+            },
+            {
+              "datasource": {
+                "uid": "gdev-testdata"
+              },
+              "refId": "A",
+              "scenarioId": "csv_metric_values",
+              "stringInput": "10,25,null,null,50,10"
+            }
+          ],
+          "timeFrom": null,
+          "timeShift": null,
+          "title": "As null",
+          "transformations": [],
+          "type": "graph3"
+        },
+        {
+          "datasource": {
+            "uid": "gdev-testdata"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "fixed"
+              },
+              "custom": {
+                "axis": {
+                  "grid": true,
+                  "label": "",
+                  "side": 3,
+                  "width": 60
+                },
+                "bars": {
+                  "show": false
+                },
+                "custom": {
+                  "axis": {
+                    "grid": true,
+                    "label": "Temperature",
+                    "side": 3
+                  },
+                  "bars": {
+                    "show": false
+                  },
+                  "line": {
+                    "show": true
+                  },
+                  "points": {
+                    "radius": 8,
+                    "show": true
+                  }
+                },
+                "fill": {
+                  "alpha": 0
+                },
+                "line": {
+                  "color": {
+                    "mode": "fixed"
+                  },
+                  "show": true,
+                  "width": 1
+                },
+                "nullValues": "asZero",
+                "points": {
+                  "radius": 5,
+                  "show": false
+                }
+              },
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "red",
+                    "value": 80
+                  }
+                ]
+              },
+              "unit": "celsius"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 11,
+            "w": 8,
+            "x": 8,
+            "y": 15
+          },
+          "id": 13,
+          "options": {
+            "graph": {
+              "realTimeUpdates": false
+            },
+            "legend": {
+              "asTable": false,
+              "isVisible": true,
+              "placement": "under",
+              "showLegend": true
+            },
+            "tooltipOptions": {
+              "mode": "single"
+            }
+          },
+          "pluginVersion": "7.2.0-pre",
+          "targets": [
+            {
+              "datasource": {
+                "uid": "gdev-testdata"
+              },
+              "refId": "C",
+              "scenarioId": "csv_metric_values",
+              "stringInput": "1,20,90,30,5,0"
+            },
+            {
+              "datasource": {
+                "uid": "gdev-testdata"
+              },
+              "refId": "A",
+              "scenarioId": "csv_metric_values",
+              "stringInput": "10,25,null,null,50,10"
+            }
+          ],
+          "timeFrom": null,
+          "timeShift": null,
+          "title": "As zero",
+          "transformations": [],
+          "type": "graph3"
+        },
+        {
+          "datasource": {
+            "uid": "gdev-testdata"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "fixed"
+              },
+              "custom": {
+                "axis": {
+                  "grid": true,
+                  "label": "Temperature",
+                  "side": 3,
+                  "width": 60
+                },
+                "bars": {
+                  "show": false
+                },
+                "fill": {
+                  "alpha": 0
+                },
+                "line": {
+                  "color": {
+                    "mode": "fixed"
+                  },
+                  "show": true,
+                  "width": 1
+                },
+                "nullValues": "connected",
+                "points": {
+                  "radius": 8,
+                  "show": true
+                }
+              },
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "red",
+                    "value": 80
+                  }
+                ]
+              },
+              "unit": "celsius"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 11,
+            "w": 8,
+            "x": 16,
+            "y": 15
+          },
+          "id": 12,
+          "options": {
+            "graph": {
+              "realTimeUpdates": false
+            },
+            "legend": {
+              "asTable": false,
+              "isVisible": true,
+              "placement": "under",
+              "showLegend": true
+            },
+            "tooltipOptions": {
+              "mode": "single"
+            }
+          },
+          "pluginVersion": "7.2.0-pre",
+          "targets": [
+            {
+              "datasource": {
+                "uid": "gdev-testdata"
+              },
+              "refId": "C",
+              "scenarioId": "csv_metric_values",
+              "stringInput": "1,20,90,30,5,0"
+            },
+            {
+              "datasource": {
+                "uid": "gdev-testdata"
+              },
+              "refId": "A",
+              "scenarioId": "csv_metric_values",
+              "stringInput": "10,25,null,null,50,10"
+            }
+          ],
+          "timeFrom": null,
+          "timeShift": null,
+          "title": "Connected",
+          "transformations": [],
+          "type": "graph3"
+        }
+      ],
+      "targets": [
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "prometheus",
+            "uid": "default-ds-uid"
+          },
+          "refId": "A"
+        }
+      ],
+      "title": "Null values rendering",
+      "type": "row"
+    },
+    {
+      "collapsed": true,
+      "datasource": {
+        "apiVersion": "v1",
+        "type": "prometheus",
+        "uid": "default-ds-uid"
+      },
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 15
+      },
+      "id": 15,
+      "panels": [
+        {
+          "datasource": {
+            "uid": "gdev-testdata"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "fixed"
+              },
+              "custom": {
+                "axis": {
+                  "grid": true,
+                  "label": "Temperature",
+                  "side": 3,
+                  "width": 60
+                },
+                "bars": {
+                  "show": false
+                },
+                "fill": {
+                  "alpha": 0
+                },
+                "line": {
+                  "color": {
+                    "mode": "fixed"
+                  },
+                  "show": true,
+                  "width": 1
+                },
+                "nullValues": "null",
+                "points": {
+                  "radius": 8,
+                  "show": true
+                }
+              },
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "red",
+                    "value": 80
+                  }
+                ]
+              },
+              "unit": "celsius"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 10,
+            "w": 24,
+            "x": 0,
+            "y": 16
+          },
+          "id": 43,
+          "options": {
+            "graph": {
+              "realTimeUpdates": false
+            },
+            "legend": {
+              "asTable": false,
+              "isVisible": true,
+              "placement": "under",
+              "showLegend": true
+            },
+            "tooltipOptions": {
+              "mode": "single"
+            }
+          },
+          "pluginVersion": "7.2.0-pre",
+          "targets": [
+            {
+              "datasource": {
+                "uid": "gdev-testdata"
+              },
+              "refId": "C",
+              "scenarioId": "csv_metric_values",
+              "stringInput": "1,20,90,30,5,0"
+            },
+            {
+              "datasource": {
+                "uid": "gdev-testdata"
+              },
+              "refId": "A",
+              "scenarioId": "csv_metric_values",
+              "stringInput": "10,25,40"
+            }
+          ],
+          "timeFrom": null,
+          "timeShift": null,
+          "title": "Diff number of datapoints",
+          "transformations": [],
+          "type": "graph3"
+        }
+      ],
+      "targets": [
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "prometheus",
+            "uid": "default-ds-uid"
+          },
+          "refId": "A"
+        }
+      ],
+      "title": "Misaligned data",
+      "type": "row"
+    },
+    {
+      "collapsed": true,
+      "datasource": {
+        "apiVersion": "v1",
+        "type": "prometheus",
+        "uid": "default-ds-uid"
+      },
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 16
+      },
+      "id": 38,
+      "panels": [
+        {
+          "datasource": {
+            "uid": "gdev-testdata"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "fixed"
+              },
+              "custom": {
+                "align": null,
+                "axis": {
+                  "grid": true,
+                  "label": "",
+                  "side": 3,
+                  "width": 80
+                },
+                "bars": {
+                  "show": false
+                },
+                "fill": {
+                  "alpha": 0.2
+                },
+                "line": {
+                  "color": {
+                    "mode": "fixed"
+                  },
+                  "show": false,
+                  "width": 1
+                },
+                "nullValues": "null",
+                "points": {
+                  "radius": 4,
+                  "show": false
+                }
+              },
+              "decimals": 2,
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "red",
+                    "value": 80
+                  }
+                ]
+              },
+              "unit": "celsius"
+            },
+            "overrides": [
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "B-series"
+                },
+                "properties": [
+                  {
+                    "id": "unit",
+                    "value": "fahrenheit"
+                  },
+                  {
+                    "id": "custom.axis.side",
+                    "value": 1
+                  },
+                  {
+                    "id": "custom.line.show",
+                    "value": true
+                  },
+                  {
+                    "id": "custom.axis.label",
+                    "value": "Temperature (F)"
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "C-series"
+                },
+                "properties": [
+                  {
+                    "id": "unit",
+                    "value": "kelvin"
+                  },
+                  {
+                    "id": "custom.axis.label",
+                    "value": "Temperature (K)"
+                  },
+                  {
+                    "id": "custom.axis.side",
+                    "value": 1
+                  },
+                  {
+                    "id": "custom.axis.grid",
+                    "value": false
+                  },
+                  {
+                    "id": "color",
+                    "value": {
+                      "fixedColor": "purple",
+                      "mode": "fixed"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          "gridPos": {
+            "h": 11,
+            "w": 12,
+            "x": 0,
+            "y": 17
+          },
+          "id": 5,
+          "options": {
+            "graph": {
+              "realTimeUpdates": false
+            },
+            "legend": {
+              "asTable": false,
+              "isVisible": true,
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltipOptions": {
+              "mode": "single"
+            }
+          },
+          "pluginVersion": "7.2.0-pre",
+          "targets": [
+            {
+              "datasource": {
+                "uid": "gdev-testdata"
+              },
+              "refId": "C",
+              "scenarioId": "streaming_client",
+              "stream": {
+                "bands": 1,
+                "noise": 2.2,
+                "speed": 250,
+                "spread": 3.5,
+                "type": "signal"
+              },
+              "stringInput": ""
+            }
+          ],
+          "timeFrom": null,
+          "timeShift": null,
+          "title": "Graph ng",
+          "transformations": [],
+          "type": "graph3"
+        }
+      ],
+      "targets": [
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "prometheus",
+            "uid": "default-ds-uid"
+          },
+          "refId": "A"
+        }
+      ],
+      "title": "Streaming",
+      "type": "row"
+    },
+    {
+      "collapsed": true,
+      "datasource": {
+        "apiVersion": "v1",
+        "type": "prometheus",
+        "uid": "default-ds-uid"
+      },
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 17
+      },
+      "id": 45,
+      "panels": [
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "prometheus",
+            "uid": "default-ds-uid"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "fixed"
+              },
+              "custom": {
+                "axis": {
+                  "grid": true,
+                  "label": "",
+                  "side": 3,
+                  "width": 60
+                },
+                "bars": {
+                  "show": false
+                },
+                "fill": {
+                  "alpha": 0.1
+                },
+                "line": {
+                  "color": {
+                    "mode": "fixed"
+                  },
+                  "show": true,
+                  "width": 1
+                },
+                "nullValues": "null",
+                "points": {
+                  "radius": 4,
+                  "show": false
+                }
+              },
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "red",
+                    "value": 80
+                  }
+                ]
+              }
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 11,
+            "w": 12,
+            "x": 0,
+            "y": 18
+          },
+          "id": 46,
+          "options": {
+            "graph": {
+              "realTimeUpdates": false
+            },
+            "legend": {
+              "asTable": false,
+              "isVisible": true,
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltipOptions": {
+              "mode": "single"
+            }
+          },
+          "pluginVersion": "7.3.0-pre",
+          "targets": [
+            {
+              "datasource": {
+                "apiVersion": "v1",
+                "type": "prometheus",
+                "uid": "default-ds-uid"
+              },
+              "refId": "A",
+              "scenarioId": "random_walk"
+            },
+            {
+              "datasource": {
+                "apiVersion": "v1",
+                "type": "prometheus",
+                "uid": "default-ds-uid"
+              },
+              "refId": "B",
+              "scenarioId": "random_walk"
+            },
+            {
+              "datasource": {
+                "apiVersion": "v1",
+                "type": "prometheus",
+                "uid": "default-ds-uid"
+              },
+              "refId": "C",
+              "scenarioId": "random_walk"
+            },
+            {
+              "datasource": {
+                "apiVersion": "v1",
+                "type": "prometheus",
+                "uid": "default-ds-uid"
+              },
+              "refId": "D",
+              "scenarioId": "random_walk"
+            },
+            {
+              "datasource": {
+                "apiVersion": "v1",
+                "type": "prometheus",
+                "uid": "default-ds-uid"
+              },
+              "refId": "E",
+              "scenarioId": "random_walk"
+            },
+            {
+              "datasource": {
+                "apiVersion": "v1",
+                "type": "prometheus",
+                "uid": "default-ds-uid"
+              },
+              "refId": "F",
+              "scenarioId": "annotations",
+              "stringInput": ""
+            }
+          ],
+          "timeFrom": null,
+          "timeShift": null,
+          "title": "React NG graph",
+          "type": "graph3"
+        }
+      ],
+      "targets": [
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "prometheus",
+            "uid": "default-ds-uid"
+          },
+          "refId": "A"
+        }
+      ],
+      "title": "Annotations",
+      "type": "row"
+    }
+  ],
+  "refresh": "",
+  "schemaVersion": 41,
+  "style": "dark",
+  "tags": [],
+  "templating": {
+    "list": []
+  },
+  "time": {
+    "from": "now-2d",
+    "to": "now"
+  },
+  "timepicker": {
+    "refresh_intervals": [
+      "5s",
+      "10s",
+      "30s",
+      "1m",
+      "5m",
+      "15m",
+      "30m",
+      "1h",
+      "2h",
+      "1d"
+    ]
+  },
+  "timezone": "Africa/Accra",
+  "title": "Graph NG - tests",
+  "uid": "TkZXxlNG3",
+  "version": 65
+}

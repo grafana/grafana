@@ -1,0 +1,868 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "uid": "-- Grafana --"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations \u0026 Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "gnetId": null,
+  "graphTooltip": 0,
+  "links": [
+    {
+      "icon": "external link",
+      "tags": [
+        "gdev",
+        "graph-ng"
+      ],
+      "type": "dashboards"
+    }
+  ],
+  "panels": [
+    {
+      "datasource": {
+        "apiVersion": "v1",
+        "type": "prometheus",
+        "uid": "default-ds-uid"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axis": {
+              "grid": true,
+              "label": "",
+              "side": 3,
+              "width": 60
+            },
+            "bars": {
+              "show": false
+            },
+            "fill": {
+              "alpha": 0
+            },
+            "line": {
+              "show": true,
+              "width": 1
+            },
+            "nullValues": "null",
+            "points": {
+              "radius": 4,
+              "show": false
+            }
+          },
+          "links": [],
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 8,
+        "x": 0,
+        "y": 0
+      },
+      "id": 7,
+      "options": {
+        "legend": {
+          "asTable": false,
+          "isVisible": true,
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "single"
+        }
+      },
+      "pluginVersion": "7.4.0-pre",
+      "targets": [
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "prometheus",
+            "uid": "default-ds-uid"
+          },
+          "refId": "A",
+          "scenarioId": "csv_metric_values",
+          "stringInput": "0,500,1000,3000,2500,4000,4500,5000,7000,7500,8000,8500,9000,9500,10000"
+        }
+      ],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "Data from 0 - 10K (unit short)",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "apiVersion": "v1",
+        "type": "prometheus",
+        "uid": "default-ds-uid"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axis": {
+              "grid": true,
+              "label": "",
+              "side": 3,
+              "width": 60
+            },
+            "bars": {
+              "show": false
+            },
+            "fill": {
+              "alpha": 0
+            },
+            "line": {
+              "show": true,
+              "width": 1
+            },
+            "nullValues": "null",
+            "points": {
+              "radius": 4,
+              "show": false
+            }
+          },
+          "links": [],
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "bytes"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 8,
+        "x": 8,
+        "y": 0
+      },
+      "id": 5,
+      "options": {
+        "legend": {
+          "asTable": false,
+          "isVisible": true,
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "single"
+        }
+      },
+      "pluginVersion": "7.4.0-pre",
+      "targets": [
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "prometheus",
+            "uid": "default-ds-uid"
+          },
+          "refId": "A",
+          "scenarioId": "csv_metric_values",
+          "stringInput": "0,500,1000,3000,2500,4000,4500,5000,7000,7500,8000,8500,9000,9500,10000"
+        }
+      ],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "Data from 0 - 10K (unit bytes metric)",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "apiVersion": "v1",
+        "type": "prometheus",
+        "uid": "default-ds-uid"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axis": {
+              "grid": true,
+              "label": "",
+              "side": 3,
+              "width": 60
+            },
+            "bars": {
+              "show": false
+            },
+            "fill": {
+              "alpha": 0
+            },
+            "line": {
+              "show": true,
+              "width": 1
+            },
+            "nullValues": "null",
+            "points": {
+              "radius": 4,
+              "show": false
+            }
+          },
+          "links": [],
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "bytes"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 8,
+        "x": 16,
+        "y": 0
+      },
+      "id": 4,
+      "options": {
+        "legend": {
+          "asTable": false,
+          "isVisible": true,
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "single"
+        }
+      },
+      "pluginVersion": "7.4.0-pre",
+      "targets": [
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "prometheus",
+            "uid": "default-ds-uid"
+          },
+          "refId": "A",
+          "scenarioId": "csv_metric_values",
+          "stringInput": "0,500,1000,3000,2500,4000,4500,5000,7000,7500,8000,8500,9000,9500,10000"
+        }
+      ],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "Data from 0 - 10K (unit bytes IEC)",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "apiVersion": "v1",
+        "type": "prometheus",
+        "uid": "default-ds-uid"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axis": {
+              "grid": true,
+              "label": "",
+              "side": 3,
+              "width": 60
+            },
+            "bars": {
+              "show": false
+            },
+            "fill": {
+              "alpha": 0
+            },
+            "line": {
+              "show": true,
+              "width": 1
+            },
+            "nullValues": "null",
+            "points": {
+              "radius": 4,
+              "show": false
+            }
+          },
+          "links": [],
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 8,
+        "x": 0,
+        "y": 7
+      },
+      "id": 2,
+      "options": {
+        "legend": {
+          "asTable": false,
+          "isVisible": true,
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "single"
+        }
+      },
+      "pluginVersion": "7.4.0-pre",
+      "targets": [
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "prometheus",
+            "uid": "default-ds-uid"
+          },
+          "refId": "A",
+          "scenarioId": "csv_metric_values",
+          "stringInput": "0,500,1000,3000,2500,4000,4500,5000,7000,7500,8000,8500,9000,9500,10000"
+        }
+      ],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "Data from 0 - 10K (unit short)",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "apiVersion": "v1",
+        "type": "prometheus",
+        "uid": "default-ds-uid"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axis": {
+              "grid": true,
+              "label": "",
+              "side": 3,
+              "width": 60
+            },
+            "bars": {
+              "show": false
+            },
+            "fill": {
+              "alpha": 0
+            },
+            "line": {
+              "show": true,
+              "width": 1
+            },
+            "nullValues": "null",
+            "points": {
+              "radius": 4,
+              "show": false
+            }
+          },
+          "links": [],
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 8,
+        "x": 8,
+        "y": 7
+      },
+      "id": 3,
+      "options": {
+        "legend": {
+          "asTable": false,
+          "isVisible": true,
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "single"
+        }
+      },
+      "pluginVersion": "7.4.0-pre",
+      "targets": [
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "prometheus",
+            "uid": "default-ds-uid"
+          },
+          "refId": "A",
+          "scenarioId": "csv_metric_values",
+          "stringInput": "0.001,0.0002,0.0003"
+        }
+      ],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "Data from 0.0002 - 0.001 (unit short)",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "apiVersion": "v1",
+        "type": "prometheus",
+        "uid": "default-ds-uid"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axis": {
+              "grid": true,
+              "label": "",
+              "side": 3,
+              "width": 60
+            },
+            "bars": {
+              "show": false
+            },
+            "fill": {
+              "alpha": 0
+            },
+            "line": {
+              "show": true,
+              "width": 1
+            },
+            "nullValues": "null",
+            "points": {
+              "radius": 4,
+              "show": false
+            }
+          },
+          "links": [],
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "ms"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 8,
+        "x": 16,
+        "y": 7
+      },
+      "id": 6,
+      "options": {
+        "legend": {
+          "asTable": false,
+          "isVisible": true,
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "single"
+        }
+      },
+      "pluginVersion": "7.4.0-pre",
+      "targets": [
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "prometheus",
+            "uid": "default-ds-uid"
+          },
+          "refId": "A",
+          "scenarioId": "csv_metric_values",
+          "stringInput": "12000,15000,20000"
+        }
+      ],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "Data from 12000 - 30000 (unit ms)",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "apiVersion": "v1",
+        "type": "prometheus",
+        "uid": "default-ds-uid"
+      },
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axis": {
+              "grid": true,
+              "label": "",
+              "side": 3,
+              "width": 60
+            },
+            "bars": {
+              "show": false
+            },
+            "fill": {
+              "alpha": 0
+            },
+            "line": {
+              "show": true,
+              "width": 1
+            },
+            "nullValues": "null",
+            "points": {
+              "radius": 4,
+              "show": false
+            }
+          },
+          "links": [],
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 8,
+        "x": 0,
+        "y": 16
+      },
+      "id": 9,
+      "options": {
+        "legend": {
+          "asTable": false,
+          "isVisible": true,
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "single"
+        }
+      },
+      "pluginVersion": "7.4.0-pre",
+      "targets": [
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "prometheus",
+            "uid": "default-ds-uid"
+          },
+          "refId": "A",
+          "scenarioId": "csv_metric_values",
+          "stringInput": "0,10000000000"
+        }
+      ],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "Data from 0 - 1B (unit short)",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "apiVersion": "v1",
+        "type": "prometheus",
+        "uid": "default-ds-uid"
+      },
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axis": {
+              "grid": true,
+              "label": "",
+              "side": 3,
+              "width": 60
+            },
+            "bars": {
+              "show": false
+            },
+            "fill": {
+              "alpha": 0
+            },
+            "line": {
+              "show": true,
+              "width": 1
+            },
+            "nullValues": "null",
+            "points": {
+              "radius": 4,
+              "show": false
+            }
+          },
+          "links": [],
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "decbytes"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 8,
+        "x": 8,
+        "y": 16
+      },
+      "id": 10,
+      "options": {
+        "legend": {
+          "asTable": false,
+          "isVisible": true,
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "single"
+        }
+      },
+      "pluginVersion": "7.4.0-pre",
+      "targets": [
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "prometheus",
+            "uid": "default-ds-uid"
+          },
+          "refId": "A",
+          "scenarioId": "csv_metric_values",
+          "stringInput": "0,10000000000"
+        }
+      ],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "Data from 0 - 1B (unit bytes)",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "apiVersion": "v1",
+        "type": "prometheus",
+        "uid": "default-ds-uid"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axis": {
+              "grid": true,
+              "label": "",
+              "side": 3,
+              "width": 60
+            },
+            "bars": {
+              "show": false
+            },
+            "fill": {
+              "alpha": 0
+            },
+            "line": {
+              "show": true,
+              "width": 1
+            },
+            "nullValues": "null",
+            "points": {
+              "radius": 4,
+              "show": false
+            }
+          },
+          "links": [],
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "ms"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 8,
+        "x": 16,
+        "y": 16
+      },
+      "id": 8,
+      "options": {
+        "legend": {
+          "asTable": false,
+          "isVisible": true,
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "single"
+        }
+      },
+      "pluginVersion": "7.4.0-pre",
+      "targets": [
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "prometheus",
+            "uid": "default-ds-uid"
+          },
+          "refId": "A",
+          "scenarioId": "csv_metric_values",
+          "stringInput": "12000,15000,20000"
+        }
+      ],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "Data from 12000 - 30000 (unit ms)",
+      "type": "timeseries"
+    }
+  ],
+  "refresh": "",
+  "schemaVersion": 41,
+  "style": "dark",
+  "tags": [
+    "gdev",
+    "panel-tests",
+    "graph-ng"
+  ],
+  "templating": {
+    "list": []
+  },
+  "time": {
+    "from": "now-6h",
+    "to": "now"
+  },
+  "timepicker": {
+    "refresh_intervals": [
+      "5s",
+      "10s",
+      "30s",
+      "1m",
+      "5m",
+      "15m",
+      "30m",
+      "1h",
+      "2h",
+      "1d"
+    ]
+  },
+  "timezone": "",
+  "title": "Panel Tests - Graph NG - Y axis ticks",
+  "uid": "29Yjn62Gk",
+  "version": 2
+}

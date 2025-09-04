@@ -1,0 +1,61 @@
+{
+  "title": "Home",
+  "tags": [],
+  "style": "dark",
+  "timezone": "browser",
+  "editable": true,
+  "hideControls": true,
+  "rows": [
+    {
+      "title": "New row",
+      "height": "100px",
+      "collapse": false,
+      "editable": true,
+      "panels": [
+        {
+          "id": 1,
+          "span": 12,
+          "editable": true,
+          "type": "text",
+          "mode": "html",
+          "content": "<div class=\"text-center\" style=\"padding: 10px 0 20px 0\">\n<img src=\"img/logo_transparent_200x.png\" width=\"170px\"> \n</div>",
+          "style": {},
+          "title": ""
+        }
+      ]
+    },
+    {
+      "height": "610px",
+      "panels": [
+        {
+          "id": 2,
+          "span": 6,
+          "type": "dashlist",
+          "mode": "starred",
+          "title": "Starred dashboards"
+        },
+        {
+          "id": 3,
+          "span": 6,
+          "type": "dashlist",
+          "mode": "search",
+          "title": "Dashboards"
+        }
+      ]
+    }
+  ],
+  "nav": [
+    {
+      "type": "timepicker",
+      "enable": false
+    }
+  ],
+  "time": {
+    "from": "now-6h",
+    "to": "now"
+  },
+  "templating": {
+    "list": []
+  },
+  "version": 5
+}

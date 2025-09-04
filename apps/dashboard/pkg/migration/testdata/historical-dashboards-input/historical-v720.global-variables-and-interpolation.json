@@ -1,0 +1,110 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": "-- Grafana --",
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "gnetId": null,
+  "graphTooltip": 0,
+  "iteration": 1596705352582,
+  "links": [],
+  "panels": [
+    {
+      "datasource": null,
+      "fieldConfig": {
+        "defaults": {
+          "custom": {}
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 16,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "id": 11,
+      "options": {
+        "content": "## Global variables\n\n* `__dashboard` = `${__dashboard}`\n* `__dashboard.name` = `${__dashboard.name}`\n* `__dashboard.uid` = `${__dashboard.uid}`\n* `__org.name` = `${__org.name}`\n* `__org.id` = `${__org.id}`\n* `__user.id` = `${__user.id}`\n* `__user.login` = `${__user.login}`\n         \n## Formats\n\n* `Server:raw` = `${Server:raw}`\n* `Server:regex` = `${Server:regex}`\n* `Server:lucene` = `${Server:lucene}`\n* `Server:glob` = `${Server:glob}`\n* `Server:pipe` = `${Server:pipe}`\n* `Server:distributed` = `${Server:distributed}`\n* `Server:csv` = `${Server:csv}`\n* `Server:html` = `${Server:html}`\n* `Server:json` = `${Server:json}`\n* `Server:percentencode` = `${Server:percentencode}`\n* `Server:singlequote` = `${Server:singlequote}`\n* `Server:doublequote` = `${Server:doublequote}`\n* `Server:sqlstring` = `${Server:sqlstring}`\n* `Server:date` = `${Server:date}`\n* `Server:text` = `${Server:text}`\n\n",
+        "mode": "markdown"
+      },
+      "pluginVersion": "7.1.0",
+      "targets": [
+        {
+          "refId": "A",
+          "scenarioId": "random_walk"
+        }
+      ],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "Variable interpolation",
+      "type": "text"
+    }
+  ],
+  "schemaVersion": 26,
+  "style": "dark",
+  "tags": ["gdev", "templating"],
+  "templating": {
+    "list": [
+      {
+        "allValue": null,
+        "current": {
+          "selected": true,
+          "text": "All",
+          "value": ["$__all"]
+        },
+        "hide": 0,
+        "includeAll": true,
+        "label": null,
+        "multi": true,
+        "name": "Server",
+        "options": [
+          {
+            "selected": true,
+            "text": "All",
+            "value": "$__all"
+          },
+          {
+            "selected": false,
+            "text": "A'A\"A",
+            "value": "A'A\"A"
+          },
+          {
+            "selected": false,
+            "text": "BB\\B",
+            "value": "BB\\B"
+          },
+          {
+            "selected": false,
+            "text": "CCC",
+            "value": "CCC"
+          }
+        ],
+        "query": "A'A\"A,BB\\B,CCC",
+        "queryValue": "",
+        "skipUrlSync": false,
+        "type": "custom"
+      }
+    ]
+  },
+  "time": {
+    "from": "now-6h",
+    "to": "now"
+  },
+  "timepicker": {
+    "refresh_intervals": ["5s", "10s", "30s", "1m", "5m", "15m", "30m", "1h", "2h", "1d"]
+  },
+  "timezone": "",
+  "title": "Templating - Global variables and interpolation",
+  "uid": "HYaGDGIMk",
+  "version": 5
+}

@@ -1,0 +1,323 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "type": "grafana",
+          "uid": "-- Grafana --"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations \u0026 Alerts",
+        "target": {
+          "limit": 100,
+          "matchAny": false,
+          "tags": [
+            "gdev",
+            "transform",
+            "transformations",
+            "extract",
+            "json"
+          ],
+          "type": "dashboard"
+        },
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "id": 8,
+  "links": [],
+  "liveNow": false,
+  "panels": [
+    {
+      "datasource": {
+        "type": "testdata",
+        "uid": "gdev-testdata"
+      },
+      "description": "Some data sources (for example MQTT) might be consuming incomparable metrics packaged in the same JSON payload. We can use this extract fields transformation's JSON option to select the specific fields we want, and alias the values to help classify unlabeled or unstructured data.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "inspect": false
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 12,
+        "x": 0,
+        "y": 0
+      },
+      "id": 2,
+      "options": {
+        "footer": {
+          "countRows": false,
+          "fields": "",
+          "reducer": [
+            "sum"
+          ],
+          "show": false
+        },
+        "showHeader": true
+      },
+      "pluginVersion": "9.4.0-pre",
+      "targets": [
+        {
+          "datasource": {
+            "type": "testdata",
+            "uid": "gdev-testdata"
+          },
+          "rawFrameContent": "[{\"schema\":{\"refId\":\"A\",\"meta\":{\"channel\":\"ds/bHGPS1h4z/1s/test\",\"transformations\":[\"extractFields\",\"extractFields\",\"extractFields\"]},\"fields\":[{\"name\":\"Time\",\"type\":\"time\",\"config\":{\"custom\":{\"align\":\"auto\",\"displayMode\":\"auto\",\"inspect\":false},\"color\":{\"mode\":\"thresholds\"},\"thresholds\":{\"mode\":\"absolute\",\"steps\":[{\"color\":\"green\",\"value\":null},{\"color\":\"red\",\"value\":80}]}}},{\"name\":\"Value\",\"type\":\"other\",\"config\":{\"custom\":{\"align\":\"auto\",\"displayMode\":\"auto\",\"inspect\":false},\"color\":{\"mode\":\"thresholds\"},\"mappings\":[],\"thresholds\":{\"mode\":\"absolute\",\"steps\":[{\"color\":\"green\",\"value\":null},{\"color\":\"red\",\"value\":80}]}}}]},\"data\":{\"values\":[[1673543683471,1673543689063,1673543695050],[[\"2023-01-12T17:14:44.419Z\",62,141,79,29,79,-29,29,{\"testdata\":{\"source1\":{\"value1\":9,\"value2\":18},\"source2\":[[0,1,2,3,4,5,6,7,8,9],[7,11,13,17,19,23,27,29]]}}],[\"2023-01-12T17:14:50.050Z\",62,143,81,29,81,-29,29,{\"testdata\":{\"source1\":{\"value1\":10,\"value2\":20},\"source2\":[[1,2,3,4,5,6,7,8,9,10],[11,13,17,19,23,27,29,31]]}}],[\"2023-01-12T17:14:55.050Z\",61,146,80,22,85,-28,28,{\"testdata\":{\"source1\":{\"value1\":11,\"value2\":22},\"source2\":[[3,4,5,6,7,8,9,10,11,12],[13,17,19,23,27,29,31,37,41]]}}]]]}}]",
+          "refId": "A",
+          "scenarioId": "raw_frame"
+        }
+      ],
+      "title": "Extracting individual values",
+      "transformations": [
+        {
+          "id": "extractFields",
+          "options": {
+            "format": "json",
+            "jsonPaths": [
+              {
+                "alias": "Temperature",
+                "path": "[8].testdata.source1.value1"
+              },
+              {
+                "alias": "Primes",
+                "path": "[8].testdata.source2[1][3]"
+              }
+            ],
+            "keepTime": true,
+            "replace": true,
+            "source": "Value"
+          }
+        }
+      ],
+      "type": "table"
+    },
+    {
+      "datasource": {
+        "type": "testdata",
+        "uid": "gdev-testdata"
+      },
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "celsius"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 12,
+        "x": 12,
+        "y": 0
+      },
+      "id": 3,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "9.4.0-pre",
+      "targets": [
+        {
+          "datasource": {
+            "type": "testdata",
+            "uid": "gdev-testdata"
+          },
+          "rawFrameContent": "[{\"schema\":{\"refId\":\"A\",\"meta\":{\"channel\":\"ds/bHGPS1h4z/1s/test\",\"transformations\":[\"extractFields\",\"extractFields\",\"extractFields\"]},\"fields\":[{\"name\":\"Time\",\"type\":\"time\",\"config\":{\"custom\":{\"align\":\"auto\",\"displayMode\":\"auto\",\"inspect\":false},\"color\":{\"mode\":\"thresholds\"},\"thresholds\":{\"mode\":\"absolute\",\"steps\":[{\"color\":\"green\",\"value\":null},{\"color\":\"red\",\"value\":80}]}}},{\"name\":\"Value\",\"type\":\"other\",\"config\":{\"custom\":{\"align\":\"auto\",\"displayMode\":\"auto\",\"inspect\":false},\"color\":{\"mode\":\"thresholds\"},\"mappings\":[],\"thresholds\":{\"mode\":\"absolute\",\"steps\":[{\"color\":\"green\",\"value\":null},{\"color\":\"red\",\"value\":80}]}}}]},\"data\":{\"values\":[[1673543683471,1673543689063,1673543695050],[[\"2023-01-12T17:14:44.419Z\",62,141,79,29,79,-29,29,{\"testdata\":{\"source1\":{\"value1\":9,\"value2\":18},\"source2\":[[0,1,2,3,4,5,6,7,8,9],[7,11,13,17,19,23,27,29]]}}],[\"2023-01-12T17:14:50.050Z\",62,143,81,29,81,-29,29,{\"testdata\":{\"source1\":{\"value1\":10,\"value2\":20},\"source2\":[[1,2,3,4,5,6,7,8,9,10],[11,13,17,19,23,27,29,31]]}}],[\"2023-01-12T17:14:55.050Z\",61,146,80,22,85,-28,28,{\"testdata\":{\"source1\":{\"value1\":11,\"value2\":22},\"source2\":[[3,4,5,6,7,8,9,10,11,12],[13,17,19,23,27,29,31,37,41]]}}]]]}}]",
+          "refId": "A",
+          "scenarioId": "raw_frame"
+        }
+      ],
+      "title": "Visualizing extracted JSON",
+      "transformations": [
+        {
+          "id": "extractFields",
+          "options": {
+            "format": "json",
+            "jsonPaths": [
+              {
+                "alias": "Temperature",
+                "path": "[8].testdata.source1.value1"
+              }
+            ],
+            "keepTime": true,
+            "replace": true,
+            "source": "Value"
+          }
+        }
+      ],
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "testdata",
+        "uid": "gdev-testdata"
+      },
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "inspect": false
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 12,
+        "x": 0,
+        "y": 9
+      },
+      "id": 4,
+      "options": {
+        "footer": {
+          "countRows": false,
+          "fields": "",
+          "reducer": [
+            "sum"
+          ],
+          "show": false
+        },
+        "showHeader": true
+      },
+      "pluginVersion": "9.4.0-pre",
+      "targets": [
+        {
+          "datasource": {
+            "type": "testdata",
+            "uid": "gdev-testdata"
+          },
+          "rawFrameContent": "[{\"schema\":{\"refId\":\"A\",\"meta\":{\"channel\":\"ds/bHGPS1h4z/1s/test\",\"transformations\":[\"extractFields\",\"extractFields\",\"extractFields\"]},\"fields\":[{\"name\":\"Time\",\"type\":\"time\",\"config\":{\"custom\":{\"align\":\"auto\",\"displayMode\":\"auto\",\"inspect\":false},\"color\":{\"mode\":\"thresholds\"},\"thresholds\":{\"mode\":\"absolute\",\"steps\":[{\"color\":\"green\",\"value\":null},{\"color\":\"red\",\"value\":80}]}}},{\"name\":\"Value\",\"type\":\"other\",\"config\":{\"custom\":{\"align\":\"auto\",\"displayMode\":\"auto\",\"inspect\":false},\"color\":{\"mode\":\"thresholds\"},\"mappings\":[],\"thresholds\":{\"mode\":\"absolute\",\"steps\":[{\"color\":\"green\",\"value\":null},{\"color\":\"red\",\"value\":80}]}}}]},\"data\":{\"values\":[[1673543683471,1673543689063,1673543695050],[[\"2023-01-12T17:14:44.419Z\",62,141,79,29,79,-29,29,{\"testdata\":{\"source1\":{\"value1\":9,\"value2\":18},\"source2\":[[0,1,2,3,4,5,6,7,8,9],[7,11,13,17,19,23,27,29]]}}],[\"2023-01-12T17:14:50.050Z\",62,143,81,29,81,-29,29,{\"testdata\":{\"source1\":{\"value1\":10,\"value2\":20},\"source2\":[[1,2,3,4,5,6,7,8,9,10],[11,13,17,19,23,27,29,31]]}}],[\"2023-01-12T17:14:55.050Z\",61,146,80,22,85,-28,28,{\"testdata\":{\"source1\":{\"value1\":11,\"value2\":22},\"source2\":[[3,4,5,6,7,8,9,10,11,12],[13,17,19,23,27,29,31,37,41]]}}]]]}}]",
+          "refId": "A",
+          "scenarioId": "raw_frame"
+        }
+      ],
+      "title": "Raw data",
+      "transformations": [],
+      "type": "table"
+    }
+  ],
+  "refresh": "",
+  "revision": 1,
+  "schemaVersion": 41,
+  "tags": [
+    "gdev",
+    "transform"
+  ],
+  "templating": {
+    "list": []
+  },
+  "time": {
+    "from": "2023-01-12T17:14:42.652Z",
+    "to": "2023-01-12T17:14:55.358Z"
+  },
+  "timepicker": {},
+  "timezone": "",
+  "title": "Transforms - Test extractFields JSON",
+  "uid": "pD4vPYhVz",
+  "version": 3,
+  "weekStart": ""
+}

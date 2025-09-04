@@ -1,0 +1,21 @@
+{
+  "revision": 25,
+  "tags": ["tag1", "tag2"],
+  "boolean_false": false,
+  "boolean_true": true,
+  "number_array": [1,2,3,10.33],
+  "rows": [
+    {
+      "panels": [
+        {
+          "datasource": "graphite",
+          "type": "graph"
+        }
+      ]
+    }
+  ],
+  "schemaVersion": 11,
+  "title": "Nginx Connections",
+  "uid": "1MHHlVjzz",
+  "version": 0
+}

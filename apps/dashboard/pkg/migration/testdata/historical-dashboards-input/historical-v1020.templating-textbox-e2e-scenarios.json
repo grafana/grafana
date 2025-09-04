@@ -1,0 +1,114 @@
+{
+  "__inputs": [
+    {
+      "name": "DS_GDEV-TESTDATA",
+      "label": "gdev-testdata",
+      "description": "",
+      "type": "datasource",
+      "pluginId": "testdata"
+    }
+  ],
+  "__requires": [
+    {
+      "type": "grafana",
+      "id": "grafana",
+      "name": "Grafana",
+      "version": "7.4.0-pre"
+    },
+    {
+      "type": "datasource",
+      "id": "testdata",
+      "name": "TestData",
+      "version": "1.0.0"
+    },
+    {
+      "type": "panel",
+      "id": "text",
+      "name": "Text",
+      "version": ""
+    }
+  ],
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": "-- Grafana --",
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "gnetId": null,
+  "graphTooltip": 0,
+  "id": null,
+  "iteration": 1606804991052,
+  "links": [],
+  "panels": [
+    {
+      "datasource": "${DS_GDEV-TESTDATA}",
+      "fieldConfig": {
+        "defaults": {
+          "custom": {}
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 12,
+        "x": 0,
+        "y": 0
+      },
+      "id": 2,
+      "options": {
+        "content": "# variable: ${text}\n         ",
+        "mode": "markdown"
+      },
+      "pluginVersion": "7.4.0-pre",
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "Panel Title",
+      "type": "text"
+    }
+  ],
+  "schemaVersion": 27,
+  "tags": [],
+  "templating": {
+    "list": [
+      {
+        "current": {
+          "selected": false,
+          "text": "default value",
+          "value": "default value"
+        },
+        "description": null,
+        "error": null,
+        "hide": 0,
+        "label": null,
+        "name": "text",
+        "options": [
+          {
+            "selected": true,
+            "text": "default value",
+            "value": "default value"
+          }
+        ],
+        "query": "default value",
+        "skipUrlSync": false,
+        "type": "textbox"
+      }
+    ]
+  },
+  "time": {
+    "from": "now-6h",
+    "to": "now"
+  },
+  "timepicker": {},
+  "timezone": "",
+  "title": "Templating - Textbox e2e scenarios",
+  "uid": "AejrN1AMz",
+  "version": 1
+}
