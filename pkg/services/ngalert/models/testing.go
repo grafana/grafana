@@ -1180,6 +1180,7 @@ func ReceiverGen(mutators ...Mutator[Receiver]) func() Receiver {
 			Name:         name,
 			Integrations: []*Integration{&integration},
 			Provenance:   ProvenanceNone,
+			Origin:       ResourceOriginGrafana,
 		}
 		for _, mutator := range mutators {
 			mutator(&c)
@@ -1243,6 +1244,12 @@ func (n ReceiverMutators) Encrypted(fn EncryptFn) Mutator[Receiver] {
 func (n ReceiverMutators) Decrypted(fn DecryptFn) Mutator[Receiver] {
 	return func(r *Receiver) {
 		_ = r.Decrypt(fn)
+	}
+}
+
+func (n ReceiverMutators) WithOrigin(origin ResourceOrigin) Mutator[Receiver] {
+	return func(r *Receiver) {
+		r.Origin = origin
 	}
 }
 

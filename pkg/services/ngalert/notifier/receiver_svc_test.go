@@ -1450,6 +1450,8 @@ func TestReceiverService_InUseMetadata(t *testing.T) {
 				util.Pointer(models.ReceiverGen(models.ReceiverMuts.WithName("receiver2"))()),
 				util.Pointer(models.ReceiverGen(models.ReceiverMuts.WithName("receiver3"))()),
 				util.Pointer(models.ReceiverGen(models.ReceiverMuts.WithName("receiver4"))()),
+				util.Pointer(models.ReceiverGen(models.ReceiverMuts.WithName("receiver5"),
+					models.ReceiverMuts.WithOrigin(models.ResourceOriginStaging))()),
 			},
 			storeSettings: map[models.AlertRuleKey][]models.NotificationSettings{
 				{OrgID: 1, UID: "rule1uid"}: {
@@ -1479,18 +1481,27 @@ func TestReceiverService_InUseMetadata(t *testing.T) {
 				legacy_storage.NameToUid("receiver1"): {
 					InUseByRules:  []models.AlertRuleKey{{OrgID: 1, UID: "rule1uid"}},
 					InUseByRoutes: 2,
+					CanUse:        true,
 				},
 				legacy_storage.NameToUid("receiver2"): {
 					InUseByRules:  []models.AlertRuleKey{{OrgID: 1, UID: "rule1uid"}, {OrgID: 1, UID: "rule2uid"}},
 					InUseByRoutes: 1,
+					CanUse:        true,
 				},
 				legacy_storage.NameToUid("receiver3"): {
 					InUseByRules:  []models.AlertRuleKey{{OrgID: 1, UID: "rule2uid"}},
 					InUseByRoutes: 2,
+					CanUse:        true,
 				},
 				legacy_storage.NameToUid("receiver4"): {
 					InUseByRules:  []models.AlertRuleKey{},
 					InUseByRoutes: 1,
+					CanUse:        true,
+				},
+				legacy_storage.NameToUid("receiver5"): {
+					InUseByRules:  []models.AlertRuleKey{},
+					InUseByRoutes: 0,
+					CanUse:        false,
 				},
 			},
 		},
