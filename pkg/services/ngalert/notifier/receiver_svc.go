@@ -538,6 +538,7 @@ func (rs *ReceiverService) InUseMetadata(ctx context.Context, orgID int64, recei
 		results[rcv.GetUID()] = models.ReceiverMetadata{
 			InUseByRoutes: receiverUses[rcv.Name],
 			InUseByRules:  byReceiver[rcv.Name],
+			CanUse:        rcv.Origin == models.ResourceOriginGrafana, // Only receivers from the Grafana configuration can be used.
 		}
 	}
 
