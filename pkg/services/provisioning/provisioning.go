@@ -172,7 +172,6 @@ type ProvisioningServiceImpl struct {
 	resourcePermissions          accesscontrol.ReceiverPermissionsService
 	tracer                       tracing.Tracer
 	dual                         dualwrite.Service
-	promTypeMigrationProvider    promtypemigration.PromTypeMigrationProvider
 	onceInitProvisioners         sync.Once
 	migratePrometheusType        func(context.Context) error
 }
@@ -268,7 +267,6 @@ func (ps *ProvisioningServiceImpl) ProvisionDatasources(ctx context.Context) err
 		ps.log.Error("Failed to provision data sources", "error", err)
 		return err
 	}
-	ps.promTypeMigrationProvider.Run(ctx)
 	return nil
 }
 
@@ -350,6 +348,10 @@ func (ps *ProvisioningServiceImpl) ProvisionAlerting(ctx context.Context) error 
 		TemplateService:            *templateService,
 	}
 	return ps.provisionAlerting(ctx, cfg)
+}
+
+func (ps *ProvisioningServiceImpl) MigratePrometheusType(ctx context.Context) error {
+	return ps.migratePrometheusType(ctx)
 }
 
 func (ps *ProvisioningServiceImpl) GetDashboardProvisionerResolvedPath(name string) string {
