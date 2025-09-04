@@ -31,14 +31,14 @@ func TestIdentityQueries(t *testing.T) {
 		return &v
 	}
 
-	deleteUser := func(q *DeleteUserQuery) sqltemplate.SQLTemplate {
+	deleteUser := func(q *DeleteUserCommand) sqltemplate.SQLTemplate {
 		v := newDeleteUser(nodb, q)
 		v.SQLTemplate = mocks.NewTestingSQLTemplate()
 		return &v
 	}
 
 	deleteOrgUser := func(userID int64) sqltemplate.SQLTemplate {
-		v := deleteOrgUserQuery{
+		v := DeleteOrgUserQuery{
 			SQLTemplate:  mocks.NewTestingSQLTemplate(),
 			OrgUserTable: nodb.Table("org_user"),
 			UserID:       userID,
@@ -337,14 +337,14 @@ func TestIdentityQueries(t *testing.T) {
 			sqlDeleteUserTemplate: {
 				{
 					Name: "delete_user_basic",
-					Data: deleteUser(&DeleteUserQuery{
+					Data: deleteUser(&DeleteUserCommand{
 						OrgID: 1,
 						UID:   "user-1",
 					}),
 				},
 				{
 					Name: "delete_user_different_org",
-					Data: deleteUser(&DeleteUserQuery{
+					Data: deleteUser(&DeleteUserCommand{
 						OrgID: 2,
 						UID:   "user-abc",
 					}),

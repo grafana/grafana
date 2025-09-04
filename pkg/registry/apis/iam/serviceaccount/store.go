@@ -52,7 +52,40 @@ func (s *LegacyStore) DeleteCollection(ctx context.Context, deleteValidation res
 
 // Delete implements rest.GracefulDeleter.
 func (s *LegacyStore) Delete(ctx context.Context, name string, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions) (runtime.Object, bool, error) {
-	return nil, false, apierrors.NewMethodNotSupported(resource.GroupResource(), "delete")
+	if !s.enableAuthnMutation {
+		return nil, false, apierrors.NewMethodNotSupported(resource.GroupResource(), "delete")
+	}
+
+	ns, err := request.NamespaceInfoFrom(ctx, true)
+	if err != nil {
+		return nil, false, err
+	}
+
+	toBeDeleted, err := s.Get(ctx, name, nil)
+	if err != nil {
+		return nil, false, err
+	}
+
+	if deleteValidation != nil {
+		if err := deleteValidation(ctx, toBeDeleted); err != nil {
+			return nil, false, err
+		}
+	}
+
+	err = s.store.DeleteServiceAccount(ctx, ns, legacy.DeleteServiceAccountQuery{
+		UID: name,
+	})
+
+	if err != nil {
+		return nil, false, err
+	}
+
+	return &iamv0alpha1.ServiceAccount{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      name,
+			Namespace: ns.Value,
+		},
+	}, true, nil
 }
 
 // Update implements rest.Updater.
@@ -179,7 +212,7 @@ func (s *LegacyStore) toSAItem(sa legacy.ServiceAccount, ns string) iamv0alpha1.
 	return item
 }
 
-func (s *LegacyStore) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
+func (s *LegacyStore) Get(ctx context.Context, name string, _ *metav1.GetOptions) (runtime.Object, error) {
 	ns, err := request.NamespaceInfoFrom(ctx, true)
 	if err != nil {
 		return nil, err

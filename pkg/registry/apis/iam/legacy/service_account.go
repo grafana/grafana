@@ -404,3 +404,97 @@ func (s *legacySQLStore) CreateServiceAccount(ctx context.Context, ns claims.Nam
 
 	return &CreateServiceAccountResult{ServiceAccount: createdSA}, nil
 }
+
+type DeleteServiceAccountQuery struct {
+	OrgID int64
+	UID   string
+}
+
+func (s *legacySQLStore) DeleteServiceAccount(ctx context.Context, ns claims.NamespaceInfo, query DeleteServiceAccountQuery) error {
+	query.OrgID = ns.OrgID
+	if query.OrgID == 0 {
+		return fmt.Errorf("expected non zero org id")
+	}
+
+	sql, err := s.sql(ctx)
+	if err != nil {
+		return err
+	}
+
+	deleteUserQuery := &DeleteUserCommand{
+		OrgID: query.OrgID,
+		UID:   query.UID,
+	}
+	req := newDeleteUser(sql, deleteUserQuery)
+
+	err = sql.DB.GetSqlxSession().WithTransaction(ctx, func(st *session.SessionTx) error {
+		userLookupReq := newGetServiceAccountInternalID(sql, &GetServiceAccountInternalIDQuery{
+			OrgID: ns.OrgID,
+			UID:   query.UID,
+		})
+
+		userQuery, err := sqltemplate.Execute(sqlQueryServiceAccountInternalIDTemplate, userLookupReq)
+		if err != nil {
+			return fmt.Errorf("execute user lookup template: %w", err)
+		}
+
+		rows, err := st.Query(ctx, userQuery, userLookupReq.GetArgs()...)
+		if err != nil {
+			return fmt.Errorf("failed to check if user exists: %w", err)
+		}
+		defer func() {
+			if rows != nil {
+				_ = rows.Close()
+			}
+		}()
+
+		var userID int64
+		if !rows.Next() {
+			if err := rows.Err(); err != nil {
+				return fmt.Errorf("failed to read user lookup rows: %w", err)
+			}
+			return fmt.Errorf("user not found")
+		}
+
+		if err := rows.Scan(&userID); err != nil {
+			return fmt.Errorf("failed to scan user ID: %w", err)
+		}
+
+		// Close rows to avoid the bad connection error
+		if rows != nil {
+			_ = rows.Close()
+		}
+
+		orgUserReq := DeleteOrgUserQuery{
+			SQLTemplate:  sqltemplate.New(sql.DialectForDriver()),
+			OrgUserTable: sql.Table("org_user"),
+			UserID:       userID,
+		}
+
+		orgUserDeleteQuery, err := sqltemplate.Execute(sqlDeleteOrgUserTemplate, orgUserReq)
+		if err != nil {
+			return fmt.Errorf("execute org_user delete template: %w", err)
+		}
+
+		if _, err := st.Exec(ctx, orgUserDeleteQuery, orgUserReq.GetArgs()...); err != nil {
+			return fmt.Errorf("failed to delete org_user relationship: %w", err)
+		}
+
+		deleteQuery, err := sqltemplate.Execute(sqlDeleteUserTemplate, req)
+		if err != nil {
+			return fmt.Errorf("execute service account template %q: %w", sqlDeleteUserTemplate.Name(), err)
+		}
+
+		if _, err := st.Exec(ctx, deleteQuery, req.GetArgs()...); err != nil {
+			return fmt.Errorf("failed to delete service account: %w", err)
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
