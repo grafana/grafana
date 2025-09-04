@@ -85,7 +85,7 @@ export function SaveProvisionedDashboardForm({
   };
 
   const onWriteSuccess = (_: ProvisionedOperationInfo, upsert: Resource<Dashboard>) => {
-    handleDismiss(upsert);
+    handleDismiss();
     if (isNew && upsert?.metadata.name) {
       handleNewDashboard(upsert);
     } else {
@@ -97,7 +97,7 @@ export function SaveProvisionedDashboardForm({
   };
 
   const onBranchSuccess = (ref: string, path: string, info: ProvisionedOperationInfo, upsert: Resource<Dashboard>) => {
-    handleDismiss(upsert);
+    handleDismiss();
     if (isNew && upsert?.metadata?.name) {
       handleNewDashboard(upsert);
     } else {
@@ -111,16 +111,12 @@ export function SaveProvisionedDashboardForm({
     }
   };
 
-  const handleDismiss = (upsert: Resource<Dashboard>) => {
+  const handleDismiss = () => {
     panelEditor?.onDiscard();
 
-    // Get the current dashboard model and create a proper save response
     const model = dashboard.getSaveModel();
     const resourceData = request?.data?.resource.dryRun;
     const saveResponse = createSaveResponseFromResource(resourceData);
-
-    // Use the standard save completion flow to properly reset change tracking
-    // This ensures isDirty is set to false and the serializer's initialSaveModel is updated
     dashboard.saveCompleted(model, saveResponse, defaultValues.folder?.uid);
 
     drawer.onClose();
@@ -314,8 +310,9 @@ function createSaveResponseFromResource(resource?: Unstructured): SaveDashboardR
 
   return {
     uid,
+    // Use the current dashboard state version to maintain consistency
     version: resource?.metadata?.generation,
-    id: resource?.spec?.id || 0, // id is deprecated field, we just fall back to 0
+    id: resource?.spec?.id || 0,
     status: 'success',
     url: locationUtil.assureBaseUrl(
       getDashboardUrl({
