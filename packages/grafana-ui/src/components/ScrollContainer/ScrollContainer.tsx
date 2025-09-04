@@ -40,7 +40,10 @@ export const ScrollContainer = forwardRef<HTMLDivElement, PropsWithChildren<Prop
 
     return (
       <Box {...boxProps} display="flex" direction="column" flex={1} position="relative">
-        <div onScroll={onScroll} className={styles.scroller} ref={ref}>
+        {/* scrollable containers need tabindex set so keyboard users can focus them to scroll */}
+        {/* see https://github.com/jsx-eslint/eslint-plugin-jsx-a11y/blob/a7d1a12a6198d546c4a06477b385b4fde03b762e/docs/rules/no-noninteractive-tabindex.md#:~:text=If%20you%20know,scroll%20containers%22. */}
+        {/* eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex */}
+        <div tabIndex={0} onScroll={onScroll} className={styles.scroller} ref={ref}>
           {showScrollIndicators ? <ScrollIndicators>{children}</ScrollIndicators> : children}
         </div>
       </Box>
