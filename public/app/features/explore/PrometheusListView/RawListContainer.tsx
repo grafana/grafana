@@ -126,6 +126,7 @@ const RawListContainer = (props: RawListContainerProps) => {
           className={styles.switchWrapper}
           label={t('explore.raw-list-container.label-expand-results', 'Expand results')}
           htmlFor={'isExpandedView'}
+          noMargin
         >
           <div className={styles.switch}>
             <Switch
