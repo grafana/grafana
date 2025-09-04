@@ -16,7 +16,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning/validation"
@@ -459,7 +458,7 @@ func (rs *ReceiverService) UpdateReceiver(ctx context.Context, r *models.Receive
 	err = rs.xact.InTransaction(ctx, func(ctx context.Context) error {
 		// If the name of the receiver changed, we must update references to it in both routes and notification settings.
 		if existing.Name != r.Name {
-			err := rs.RenameReceiverInDependentResources(ctx, orgID, revision.Config.AlertmanagerConfig.Route, existing.Name, r.Name, r.Provenance)
+			err := rs.RenameReceiverInDependentResources(ctx, orgID, revision, existing.Name, r.Name, r.Provenance)
 			if err != nil {
 				return err
 			}
@@ -685,7 +684,7 @@ func makeErrReceiverDependentResourcesProvenance(usedByRoutes bool, rules []mode
 	})
 }
 
-func (rs *ReceiverService) RenameReceiverInDependentResources(ctx context.Context, orgID int64, route *definitions.Route, oldName, newName string, receiverProvenance models.Provenance) error {
+func (rs *ReceiverService) RenameReceiverInDependentResources(ctx context.Context, orgID int64, revision *legacy_storage.ConfigRevision, oldName, newName string, receiverProvenance models.Provenance) error {
 	ctx, span := rs.tracer.Start(ctx, "alerting.receivers.rename-dependent-resources", trace.WithAttributes(
 		attribute.String("oldName", oldName),
 		attribute.String("newName", newName),
@@ -695,10 +694,10 @@ func (rs *ReceiverService) RenameReceiverInDependentResources(ctx context.Contex
 
 	validate := validation.ValidateProvenanceOfDependentResources(receiverProvenance)
 	// if there are no references to the old time interval, exit
-	updatedRoutes := legacy_storage.RenameReceiverInRoute(oldName, newName, route)
+	updatedRoutes := revision.RenameReceiverInRoutes(oldName, newName)
 	canUpdate := true
 	if updatedRoutes > 0 {
-		routeProvenance, err := rs.provisioningStore.GetProvenance(ctx, route, orgID)
+		routeProvenance, err := rs.provisioningStore.GetProvenance(ctx, revision.Config.AlertmanagerConfig.Route, orgID)
 		if err != nil {
 			return err
 		}
