@@ -219,7 +219,7 @@ export const TracePageHeader = memo((props: TracePageHeaderProps) => {
           )}
 
           <div className={styles.actions}>
-            {traceContext 
+            {traceContext
               ? renderLimitedComponents<TraceViewPluginExtensionContext>({
                   props: traceContext,
                   components: extensionComponents,
