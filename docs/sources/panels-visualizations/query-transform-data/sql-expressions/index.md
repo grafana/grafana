@@ -103,6 +103,10 @@ To create a SQL expression, complete the following steps:
 
 After you have added a SQL expression, you can select from other data source queries by referencing the RefIDs of the queries in your SQL expression as if they were tables in a SQL database.
 
+{{< admonition type="note" >}}
+The **RefID** is a unique identifier assigned to each query within a Grafana panel that serves as a reference name for that query's data.
+{{< /admonition >}}
+
 ![Using the RefID](/media/docs/sql-expressions/using-the-RefID.png)
 
 ## Workflow to build SQL expressions
@@ -163,7 +167,7 @@ For SQL Expressions to work properly with alerting and recording rules, your que
 
 - One numeric column - **_required_**. This contains the value that triggers alerts or gets recorded.
 - Unique string column combinations - **_required_**. Each row must have a unique combination of string column values.
-- One or more string columns - _optional_. These become **labels** for the alert instances or metrics. Example: `service`, `region`. 
+- One or more string columns - _optional_. These become **labels** for the alert instances or metrics. Examples: `service`, `region`. 
 
 Consider the following query results:
 
