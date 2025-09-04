@@ -48,6 +48,7 @@ type ProtoClientOpts struct {
 	ExecutablePath       string
 	ExecutableArgs       []string
 	Env                  []string
+	SkipHostEnvVars      bool
 	ContainerModeEnabled bool
 	Logger               log.Logger
 	Tracer               trace.Tracer
@@ -62,6 +63,7 @@ func NewProtoClient(opts ProtoClientOpts) (ProtoClient, error) {
 			executableArgs:   opts.ExecutableArgs,
 			versionedPlugins: pluginSet,
 			containerMode:    opts.ContainerModeEnabled,
+			skipHostEnvVars:  opts.SkipHostEnvVars,
 		},
 		opts.Logger,
 		opts.Tracer,
