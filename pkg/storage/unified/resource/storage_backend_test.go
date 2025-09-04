@@ -43,7 +43,7 @@ func TestNewKvStorageBackend(t *testing.T) {
 	assert.NotNil(t, backend)
 	assert.NotNil(t, backend.kv)
 	assert.NotNil(t, backend.dataStore)
-	assert.NotNil(t, backend.metaStore)
+
 	assert.NotNil(t, backend.eventStore)
 	assert.NotNil(t, backend.notifier)
 	assert.NotNil(t, backend.snowflake)
@@ -125,25 +125,6 @@ func TestKvStorageBackend_WriteEvent_Success(t *testing.T) {
 			require.NoError(t, err)
 			require.NoError(t, dataReader.Close())
 			assert.Equal(t, objectToJSONBytes(t, testObj), dataValue)
-
-			// Verify metadata was written to metaStore
-			metaKey := MetaDataKey{
-				Namespace:       "default",
-				Group:           "apps",
-				Resource:        "resources",
-				Name:            "test-resource",
-				ResourceVersion: rv,
-				Action:          expectedAction,
-				Folder:          "",
-			}
-
-			m, err := backend.metaStore.Get(ctx, metaKey)
-			require.NoError(t, err)
-			require.NotNil(t, m)
-			require.Equal(t, "test-resource", m.Key.Name)
-			require.Equal(t, "default", m.Key.Namespace)
-			require.Equal(t, "apps", m.Key.Group)
-			require.Equal(t, "resources", m.Key.Resource)
 
 			// Verify event was written to eventStore
 			eventKey := EventKey{
