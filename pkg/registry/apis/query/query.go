@@ -252,6 +252,28 @@ func handleQuery(ctx context.Context, raw query.QueryDataRequest, b QueryAPIBuil
 			connectLogger.Error("error unmarshalling", err)
 		}
 
+		/*
+			most queries are stored like this:
+			{
+				datasource: {
+					uid: "123",
+					type: "cool-ds",
+				}
+			}
+			but sometimes queries are stored like:
+			{
+				datasourceUid: "123",
+				datasource: {
+					type: "cool-ds",
+				}
+			}
+			this sets the second case to match the first
+		*/
+		if sjQuery.Get("datasourceUid").MustString() != "" && sjQuery.Get("datasource").Get("uid").MustString() == "" {
+			connectLogger.Debug("datasourceUid was top level, moving to datasource.uid")
+			sjQuery.Get("datasource").Set("uid", sjQuery.Get("datasourceUid").MustString())
+		}
+
 		jsonQueries = append(jsonQueries, sjQuery)
 	}
 
