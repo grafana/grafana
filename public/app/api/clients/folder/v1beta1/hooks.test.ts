@@ -260,12 +260,22 @@ describe.each([
   });
 
   describe('useCreateFolder', () => {
-    it('creates a folder', async () => {
+    it('creates a folder at the root level', async () => {
       const { user } = setupCreateFolder();
 
-      await user.click(screen.getByText('Create Folder'));
+      await user.click(screen.getByText(/Create Folder at root/));
 
       expect(await screen.findByText('Folder created')).toBeInTheDocument();
+      expect(dispatchMockFn).toHaveBeenCalled();
+    });
+
+    it('creates a folder in a nested folder', async () => {
+      const { user } = setupCreateFolder();
+
+      await user.click(screen.getByText(/Create Folder in nested folder/));
+
+      expect(await screen.findByText('Folder created')).toBeInTheDocument();
+      expect(dispatchMockFn).toHaveBeenCalled();
     });
   });
 
