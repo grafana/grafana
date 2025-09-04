@@ -385,7 +385,8 @@ export function toDashboardResults(rsp: SearchAPIResponse, sort: string): DataFr
 }
 
 async function loadLocationInfo(): Promise<Record<string, LocationInfo>> {
-  const uri = `${searchURI}?type=folders`;
+  // TODO: use proper pagination for search.
+  const uri = `${searchURI}?type=folders&limit=100000`;
   const rsp = getBackendSrv()
     .get<SearchAPIResponse>(uri)
     .then((rsp) => {
