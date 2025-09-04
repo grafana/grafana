@@ -557,6 +557,7 @@
     },
     "alert-rules": {
       "firing-for": "Aktivní pro",
+      "multiple-sources": "",
       "next-evaluation": "Další hodnocení",
       "next-evaluation-in": "další hodnocení v",
       "rule-definition": "Definice pravidla"
@@ -2664,13 +2665,15 @@
         "show": "Zobrazit"
       },
       "manage-alerts": "V těchto zdrojích dat můžete prostřednictvím uživatelského rozhraní upozorňování vybrat možnost Správa upozorňování. Odtud můžete spravovat tato pravidla výstrah v uživatelském rozhraní Grafana i ve zdroji dat, kde byla nakonfigurována.",
-      "no-groups": "Nejsou k dispozici žádné skupiny",
-      "no-namespaces": "Nejsou k dispozici žádné složky",
       "placeholder-all-data-sources": "Všechny zdroje dat",
       "placeholder-contact-point": "Vyberte kontaktní bod",
       "placeholder-data-sources": "Vyberte zdroje dat",
       "placeholder-labels": "Vyberte štítky",
       "plugin-rules": "Pravidla pluginu",
+      "rule-source": {
+        "datasource": "",
+        "grafana": ""
+      },
       "rule-type": "Typ pravidla",
       "rulesSearchInput-placeholder-search": "Hledat",
       "search": "Hledat",
@@ -2692,6 +2695,7 @@
         "namespace": "Složka / jmenný prostor",
         "rule-health": "Kondice",
         "rule-name": "Název pravidla",
+        "rule-source": "",
         "rule-type": "Typ",
         "state": "Stav"
       }
@@ -3419,9 +3423,6 @@
       "text-badge-enabled": "Povoleno",
       "text-badge-not-enabled": "Není povoleno"
     },
-    "scim-banner": {
-      "message": "SCIM je momentálně ve vývoji a není doporučeno ho používat v produkčním prostředí. Používejte ho opatrně a počítejte s možnými změnami."
-    },
     "server-discovery-modal": {
       "label-the-wellknownopenidconfiguration-endpoint-for-your-id-p": "Koncový bod .well-known / openid-configuration pro vašeho poskytovatele identity",
       "title-open-id-connect-discovery-url": "Adresa URL OpenID Connect Discovery"
@@ -3591,7 +3592,9 @@
       },
       "error-moving-resources": "Chyba při přesouvání zdrojů",
       "error-no-target-folder-path": "Cesta k cílové složce je neplatná nebo prázdná, vyberte ji znovu.",
-      "move-warning": "Tímto se přesunou vybrané složky a všechny jejich podsložky. Celkem to ovlivní:",
+      "move-total": "",
+      "move-warning": "",
+      "move-warning-tooltip": "",
       "target-folder": "Cílová složka"
     },
     "counts": {
@@ -4727,6 +4730,7 @@
       "panel-title": "Změnit název panelu",
       "paste-panel": "Vložit panel",
       "remove": "Odebrat {{typeName}}",
+      "row-title": "",
       "switch-layout": "Přepnout rozvržení"
     },
     "edit-pane": {
@@ -6584,7 +6588,8 @@
     },
     "data-source-load-error": {
       "back": "Zpět",
-      "delete": "Odstranit"
+      "delete": "Odstranit",
+      "not-found": ""
     },
     "data-source-missing-rights-message": {
       "title-missing-rights": "Chybějící práva"
@@ -7607,7 +7612,9 @@
   "folders": {
     "api": {
       "folder-delete-error-provisioned": "",
-      "folder-deleted-success": "Složka byla odstraněna"
+      "folder-deleted-success": "Složka byla odstraněna",
+      "folder-move-error-provisioned": "",
+      "folder-moved-success": ""
     },
     "get-loading-nav": {
       "main": {
@@ -8807,7 +8814,6 @@
       "cell-inspect": "Zkontrolovat hodnotu",
       "cell-inspect-tooltip": "Zkontrolovat hodnotu",
       "copy": "Kopírovat do schránky",
-      "count": "Počet",
       "csv-counts": "Řádky:{{rows}}, sloupce:{{columns}}  <5></5>",
       "csv-placeholder": "Zadej CSV tady…",
       "filter-placeholder": "Filtrovat hodnoty",
@@ -8818,6 +8824,11 @@
       "filter-popup-heading": "Filtrovat podle hodnot:",
       "filter-popup-input-placeholder": "Filtrovat hodnoty",
       "filter-popup-match-case": "Rozlišovat malá a velká písmena",
+      "footer": {
+        "reducer": {
+          "count": ""
+        }
+      },
       "inspect-drawer-title": "Zkontrolovat hodnotu",
       "nested-table": {
         "no-data": "Žádná data"
@@ -9583,6 +9594,7 @@
       "fields-section": "Pole",
       "hide-log-line": "Skrýt řádek protokolu",
       "inline-mode": "Zobrazit v řádku",
+      "link-value-tooltip": "",
       "links-section": "Odkazy",
       "log-line-field": "Řádek protokolu",
       "log-line-section": "Řádek protokolu",
@@ -12862,8 +12874,6 @@
     "description-calculation": "Vyberte funkci reduktoru / výpočet",
     "description-cell-value-inspect": "Povolit kontrolu hodnoty buňky v modálním okně",
     "description-column-filter": "Povolit/zakázat filtry polí v tabulce",
-    "description-count-rows": "Zobrazit jeden počet pro všechny datové řádky",
-    "description-fields": "Vyberte pole, která by měla být vypočtena",
     "description-frozen-columns": "",
     "description-min-column-width": "Minimální šířka pro automatickou změnu velikosti sloupce",
     "description-tooltip-from-field": "",
@@ -12890,21 +12900,17 @@
     "name-column-alignment": "Zarovnání sloupce",
     "name-column-filter": "Filtr sloupce",
     "name-column-width": "Šířka sloupce",
-    "name-count-rows": "Spočítat řádky",
     "name-enable-pagination": "",
-    "name-fields": "Pole",
     "name-frozen-columns": "",
     "name-hide-in-table": "Skrýt v tabulce",
     "name-max-height": "",
     "name-min-column-width": "Minimální šířka sloupce",
-    "name-show-table-footer": "Zobrazit zápatí tabulky",
     "name-show-table-header": "Zobrazit záhlaví tabulky",
     "name-tooltip-from-field": "",
     "name-tooltip-placement": "",
     "name-wrap-header-text": "Zalomit text záhlaví",
     "name-wrap-text": "",
     "placeholder-column-width": "auto.",
-    "placeholder-fields": "Všechna číselná pole",
     "placeholder-max-height": "",
     "tooltip-placement-options": {
       "label-auto": "",

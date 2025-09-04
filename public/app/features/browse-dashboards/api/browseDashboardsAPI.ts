@@ -44,6 +44,11 @@ export interface MoveFoldersArgs {
   folderUIDs: string[];
 }
 
+export interface MoveFolderArgs {
+  folderUID: string;
+  destinationUID: string;
+}
+
 export interface ImportInputs {
   name: string;
   type: string;
@@ -115,7 +120,7 @@ export const browseDashboardsAPI = createApi({
     }),
 
     // save an existing folder (e.g. rename)
-    saveFolder: builder.mutation<FolderDTO, FolderDTO>({
+    saveFolder: builder.mutation<FolderDTO, Pick<FolderDTO, 'uid' | 'title' | 'version' | 'parentUid'>>({
       // because the getFolder calls contain the parents, renaming a parent/grandparent/etc needs to invalidate all child folders
       // we could do something smart and recursively invalidate these child folders but it doesn't seem worth it
       // instead let's just invalidate all the getFolder calls
@@ -141,22 +146,16 @@ export const browseDashboardsAPI = createApi({
     }),
 
     // move an *individual* folder. used in the folder actions menu.
-    moveFolder: builder.mutation<void, { folder: FolderDTO; destinationUID: string }>({
+    moveFolder: builder.mutation<void, MoveFolderArgs>({
       invalidatesTags: ['getFolder'],
-      query: ({ folder, destinationUID }) => ({
-        url: `/folders/${folder.uid}/move`,
+      query: ({ folderUID, destinationUID }) => ({
+        url: `/folders/${folderUID}/move`,
         method: 'POST',
         body: { parentUID: destinationUID },
       }),
-      onQueryStarted: ({ folder, destinationUID }, { queryFulfilled, dispatch }) => {
-        const { parentUid } = folder;
+      onQueryStarted: ({ folderUID, destinationUID }, { queryFulfilled, dispatch }) => {
         queryFulfilled.then(() => {
-          dispatch(
-            refetchChildren({
-              parentUID: parentUid,
-              pageSize: PAGE_SIZE,
-            })
-          );
+          dispatch(refreshParents([folderUID]));
           dispatch(
             refetchChildren({
               parentUID: destinationUID,

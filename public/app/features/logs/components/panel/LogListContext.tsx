@@ -199,7 +199,10 @@ export const LogListContextProvider = ({
   children,
   containerElement,
   enableLogDetails,
-  detailsMode: detailsModeProp,
+  logOptionsStorageKey,
+  detailsMode: detailsModeProp = logOptionsStorageKey
+    ? store.get(`${logOptionsStorageKey}.detailsMode`)
+    : getDefaultDetailsMode(containerElement),
   dedupStrategy,
   displayedFields,
   filterLevels,
@@ -209,7 +212,6 @@ export const LogListContextProvider = ({
   logs,
   logLineMenuCustomItems,
   logsMeta,
-  logOptionsStorageKey,
   logSupportsContext,
   noInteractions,
   onClickFilterLabel,
@@ -258,7 +260,9 @@ export const LogListContextProvider = ({
   const [detailsWidth, setDetailsWidthState] = useState(
     getDetailsWidth(containerElement, logOptionsStorageKey, undefined, detailsModeProp, showControls)
   );
-  const [detailsMode, setDetailsMode] = useState<LogLineDetailsMode>(detailsModeProp ?? 'sidebar');
+  const [detailsMode, setDetailsMode] = useState<LogLineDetailsMode>(
+    detailsModeProp ?? getDefaultDetailsMode(containerElement)
+  );
   const [isAssistantAvailable, openAssistant] = useAssistant();
   const [prettifyJSON, setPrettifyJSONState] = useState(prettifyJSONProp);
   const [wrapLogMessage, setWrapLogMessageState] = useState(wrapLogMessageProp);
@@ -718,16 +722,20 @@ async function handleOpenAssistant(openAssistant: (props: OpenAssistantProps) =>
   const datasource = await getDataSourceSrv().get(log.datasourceUid);
   const context = [];
   if (datasource) {
-    context.push(createAssistantContextItem('datasource', { datasourceUid: datasource.uid }));
+    context.push(
+      createAssistantContextItem('datasource', {
+        datasourceUid: datasource.uid,
+      })
+    );
   }
   openAssistant({
+    origin: 'grafana/explain-log-line',
     prompt: `${t('logs.log-line-menu.log-line-explainer', 'Explain log line in a concise way')}:
-    
-    \`\`\`
-    ${log.entry.replaceAll('`', '\\`')}
-    \`\`\`
-    `,
-    origin: 'explain-log-line',
+
+      \`\`\`
+${log.entry.replaceAll('`', '\\`')}
+      \`\`\`
+      `,
     context: [
       ...context,
       createAssistantContextItem('structured', {
@@ -740,4 +748,9 @@ async function handleOpenAssistant(openAssistant: (props: OpenAssistantProps) =>
       }),
     ],
   });
+}
+
+export function getDefaultDetailsMode(container: HTMLDivElement | undefined): LogLineDetailsMode {
+  const width = container?.clientWidth ?? window.innerWidth;
+  return width > 1440 ? 'sidebar' : 'inline';
 }

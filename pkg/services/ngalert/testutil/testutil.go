@@ -19,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/dashboards/database"
 	dashboardservice "github.com/grafana/grafana/pkg/services/dashboards/service"
+	dashclient "github.com/grafana/grafana/pkg/services/dashboards/service/client"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/folder/folderimpl"
@@ -55,13 +56,32 @@ func SetupDashboardService(tb testing.TB, sqlStore db.DB, fs *folderimpl.Dashboa
 	require.NoError(tb, err)
 
 	dashboardService, err := dashboardservice.ProvideDashboardServiceImpl(
-		cfg, dashboardStore, fs,
-		features, folderPermissions, ac,
-		&actest.FakeService{}, foldertest.NewFakeService(),
-		nil, client.MockTestRestConfig{}, nil, quotaService, nil, nil, nil,
-		dualwrite.ProvideTestService(), sort.ProvideService(),
+		cfg,
+		dashboardStore,
+		fs,
+		features,
+		folderPermissions,
+		ac,
+		&actest.FakeService{},
+		foldertest.NewFakeService(),
+		nil,
+		quotaService,
+		nil,
+		nil,
+		dualwrite.ProvideTestService(),
 		serverlock.ProvideService(sqlStore, tracing.InitializeTracerForTest()),
 		kvstore.NewFakeKVStore(),
+		dashclient.NewK8sClientWithFallback(
+			cfg,
+			client.MockTestRestConfig{},
+			dashboardStore,
+			nil,
+			nil,
+			sort.ProvideService(),
+			dualwrite.ProvideTestService(),
+			nil,
+			features,
+		),
 	)
 	require.NoError(tb, err)
 	dashboardService.RegisterDashboardPermissions(dashboardPermissions)

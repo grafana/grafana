@@ -42,6 +42,7 @@ export interface TimeSeriesTooltipProps {
   dataLinks: LinkModel[];
   hideZeros?: boolean;
   adHocFilters?: AdHocFilterModel[];
+  canExecuteActions?: boolean;
 }
 
 function getTooltipTimeText(timestamp: number, field: Field, xField: Field) {
@@ -66,6 +67,7 @@ export const TimeSeriesTooltip = ({
   dataLinks,
   hideZeros,
   adHocFilters,
+  canExecuteActions,
 }: TimeSeriesTooltipProps) => {
   const xField = series.fields[0];
   let timestamp = xField.values[dataIdxs[0]!];
@@ -95,7 +97,7 @@ export const TimeSeriesTooltip = ({
 
     if (isPinned || hasOneClickLink) {
       const dataIdx = dataIdxs[seriesIdx]!;
-      const actions = getFieldActions(series, field, replaceVariables, dataIdx);
+      const actions = canExecuteActions ? getFieldActions(series, field, replaceVariables, dataIdx) : [];
 
       footer = (
         <VizTooltipFooter dataLinks={dataLinks} actions={actions} annotate={annotate} adHocFilters={adHocFilters} />
