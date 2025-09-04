@@ -242,20 +242,52 @@ const matchEnumColorToSeriesColor = (frames: DataFrame[], theme: GrafanaTheme2) 
 
 export const setClassicPaletteIdxs = (frames: DataFrame[], theme: GrafanaTheme2, skipFieldIdx?: number) => {
   let seriesIndex = 0;
-  frames.forEach((frame) => {
-    frame.fields.forEach((field, fieldIdx) => {
-      if (
-        fieldIdx !== skipFieldIdx &&
-        (field.type === FieldType.number || field.type === FieldType.boolean || field.type === FieldType.enum)
-      ) {
-        field.state = {
-          ...field.state,
-          seriesIndex: seriesIndex++, // TODO: skip this for fields with custom renderers (e.g. Candlestick)?
-        };
-        field.display = getDisplayProcessor({ field, theme });
+
+  const updateFieldDisplay = (field: Field, idx: number) => {
+    field.state = { ...field.state, seriesIndex: idx };
+    field.display = getDisplayProcessor({ field, theme });
+  };
+
+  const shouldProcessField = (field: Field, fieldIdx: number) => {
+    return (
+      fieldIdx !== skipFieldIdx &&
+      (field.type === FieldType.number || field.type === FieldType.boolean || field.type === FieldType.enum)
+    );
+  };
+
+  for (const frame of frames) {
+    const isCompareFrame = frame.meta?.timeCompare?.isTimeShiftQuery;
+
+    if (isCompareFrame) {
+      // Handle compare frames
+      const baseRefId = frame.refId?.replace('-compare', ''); // TODO update scenes to include original refId in meta
+      const mainFrame = baseRefId ? frames.find((f) => f.refId === baseRefId) : undefined;
+
+      if (mainFrame && mainFrame.fields.length === frame.fields.length) {
+        // Match series indices with main frame
+        frame.fields.forEach((field, fieldIdx) => {
+          if (shouldProcessField(field, fieldIdx)) {
+            const mainField = mainFrame.fields[fieldIdx];
+            updateFieldDisplay(field, mainField.state?.seriesIndex ?? seriesIndex++);
+          }
+        });
+      } else {
+        // Fallback to incremental assignment
+        frame.fields.forEach((field, fieldIdx) => {
+          if (shouldProcessField(field, fieldIdx)) {
+            updateFieldDisplay(field, seriesIndex++);
+          }
+        });
       }
-    });
-  });
+    } else {
+      // Handle main frames - assign incremental series indices
+      frame.fields.forEach((field, fieldIdx) => {
+        if (shouldProcessField(field, fieldIdx)) {
+          updateFieldDisplay(field, seriesIndex++);
+        }
+      });
+    }
+  }
 };
 
 export function getTimezones(timezones: string[] | undefined, defaultTimezone: string): string[] {

@@ -50,7 +50,7 @@ export const TimeSeriesPanel = ({
       frames.forEach((frame: DataFrame) => {
         const tc = frame.meta?.timeCompare;
         if (tc?.isTimeShiftQuery && tc.diffMs != null) {
-          alignTimeRangeCompareData(frame, tc.diffMs, config.theme2.colors.text.disabled);
+          alignTimeRangeCompareData(frame, tc.diffMs, config.theme2);
         }
       });
     }
