@@ -362,6 +362,7 @@ export const browseDashboardsAPI = createApi({
 
           pageStateManager.clearDashboardCache();
           pageStateManager.removeSceneCache(dashboardUID);
+          deletedDashboardsCache.clear();
 
           // handling success alerts for these feature toggles
           // for legacy response, the success alert will be triggered by showSuccessAlert function in public/app/core/services/backend_srv.ts
