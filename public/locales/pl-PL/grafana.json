@@ -8814,7 +8814,6 @@
       "cell-inspect": "Sprawdź wartość",
       "cell-inspect-tooltip": "Sprawdź wartość",
       "copy": "Kopiuj do schowka",
-      "count": "Liczba",
       "csv-counts": "Wiersze:{{rows}}, Kolumny:{{columns}}  <5></5>",
       "csv-placeholder": "Wprowadź plik CSV tutaj…",
       "filter-placeholder": "Wartości filtra",
@@ -8825,6 +8824,11 @@
       "filter-popup-heading": "Filtruj według wartości:",
       "filter-popup-input-placeholder": "Wartości filtra",
       "filter-popup-match-case": "Dopasuj wielkość liter",
+      "footer": {
+        "reducer": {
+          "count": ""
+        }
+      },
       "inspect-drawer-title": "Sprawdź wartość",
       "nested-table": {
         "no-data": "Brak danych"
@@ -12870,8 +12874,6 @@
     "description-calculation": "Wybierz funkcję reduktora / obliczenia",
     "description-cell-value-inspect": "Włącz kontrolę wartości komórki w oknie modalnym",
     "description-column-filter": "Włącza/wyłącza filtry pól w tabeli",
-    "description-count-rows": "Wyświetl pojedynczą liczbę dla wszystkich wierszy danych",
-    "description-fields": "Wybierz pola, które powinny być obliczone",
     "description-frozen-columns": "",
     "description-min-column-width": "Minimalna szerokość dla automatycznej zmiany rozmiaru kolumny",
     "description-tooltip-from-field": "",
@@ -12898,21 +12900,17 @@
     "name-column-alignment": "Wyrównanie kolumn",
     "name-column-filter": "Filtr kolumn",
     "name-column-width": "Szerokość kolumny",
-    "name-count-rows": "Policz wiersze",
     "name-enable-pagination": "",
-    "name-fields": "Pola",
     "name-frozen-columns": "",
     "name-hide-in-table": "Ukryj w tabeli",
     "name-max-height": "",
     "name-min-column-width": "Minimalna szerokość kolumny",
-    "name-show-table-footer": "Pokaż stopkę tabeli",
     "name-show-table-header": "Pokaż nagłówek tabeli",
     "name-tooltip-from-field": "",
     "name-tooltip-placement": "",
     "name-wrap-header-text": "Zawijaj tekst nagłówka",
     "name-wrap-text": "",
     "placeholder-column-width": "automatycznie",
-    "placeholder-fields": "Wszystkie pola numeryczne",
     "placeholder-max-height": "",
     "tooltip-placement-options": {
       "label-auto": "",

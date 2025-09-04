@@ -227,7 +227,6 @@ func verifyCorePluginCatalogue(t *testing.T, ctx context.Context, ps *pluginstor
 		"histogram":      {},
 		"live":           {},
 		"logs":           {},
-		"logs-new":       {},
 		"candlestick":    {},
 		"news":           {},
 		"nodeGraph":      {},

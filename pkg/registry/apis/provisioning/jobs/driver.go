@@ -276,7 +276,7 @@ func (d *jobDriver) processJob(ctx context.Context, job *provisioning.Job, recor
 			continue
 		}
 
-		repo, err := d.repoGetter.GetRepository(ctx, job.Spec.Repository)
+		repo, err := d.repoGetter.GetRepository(ctx, job.Namespace, job.Spec.Repository)
 		if err != nil {
 			return apifmt.Errorf("failed to get repository '%s': %w", job.Spec.Repository, err)
 		}

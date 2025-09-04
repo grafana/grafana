@@ -52,6 +52,9 @@ This binary currently wires informers and emits job-create notifications. In the
 2. Ensure the following services are running locally: provisioning API server, secrets service API server, repository controller, unified storage, and auth.
 3. Create a operator.ini file:
 ```
+[database]
+ensure_default_org_and_user = false
+skip_migrations = true
 [operator]
 provisioning_server_url = https://localhost:6446
 tls_insecure = true
