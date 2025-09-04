@@ -469,6 +469,9 @@
     "cypress": {
       "built": true
     },
+    "msw": {
+      "built": true
+    },
     "nx": {
       "built": false
     },
