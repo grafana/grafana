@@ -49,7 +49,7 @@ func GetMigrations(dsInfoProvider DataSourceInfoProvider) map[int]SchemaVersionM
 		25: V25,
 		26: V26,
 		27: V27,
-		28: V28(),
+		28: V28,
 		29: V29,
 		30: V30,
 		31: V31,

@@ -87,6 +87,7 @@ func TestV28(t *testing.T) {
 							},
 							"overrides": []interface{}{},
 						},
+
 						"pluginVersion": "12.2.0-pre",
 						"targets": []interface{}{
 							map[string]interface{}{"refId": "A"},
@@ -745,5 +746,5 @@ func TestV28(t *testing.T) {
 		},
 	}
 
-	runMigrationTests(t, tests, schemaversion.V28())
+	runMigrationTests(t, tests, schemaversion.V28)
 }
