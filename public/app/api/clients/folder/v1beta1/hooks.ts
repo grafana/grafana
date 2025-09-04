@@ -379,7 +379,8 @@ function useRefreshFolders() {
     if (options.parentsOf) {
       dispatch(refreshParents(options.parentsOf));
     }
-    if (options.childrenOf) {
+    // Refetch children even if we passed in `childrenOf: undefined`, as this corresponds to the root folder
+    if (options.childrenOf || 'childrenOf' in options) {
       dispatch(
         refetchChildren({
           parentUID: options.childrenOf,

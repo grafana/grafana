@@ -250,7 +250,7 @@ describe.each([
   // app platform
   true,
   // legacy
-  // false,
+  false,
 ])('folderAppPlatformAPI toggle set to: %s', (toggle) => {
   beforeEach(() => {
     config.featureToggles.foldersAppPlatformAPI = toggle;
