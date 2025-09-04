@@ -8,6 +8,7 @@ import {
   ThresholdsConfig,
   CoreApp,
   DataFrame,
+  DataLinkPostProcessor,
 } from '@grafana/data';
 
 import { AdHocFilterItem } from '../Table/types';
@@ -91,6 +92,13 @@ export interface PanelContext {
    * in a the Promise resolving to a false value.
    */
   onUpdateData?: (frames: DataFrame[]) => Promise<boolean>;
+
+  /**
+   * Optional supplier for internal data links. If not provided a link pointing to Explore will be generated.
+   * @internal
+   * @deprecated Please use DataLinksContext instead. This property will be removed in next major.
+   */
+  dataLinkPostProcessor?: DataLinkPostProcessor;
 }
 
 export const PanelContextRoot = createContext<PanelContext>({
