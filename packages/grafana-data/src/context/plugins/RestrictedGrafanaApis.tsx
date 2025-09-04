@@ -35,6 +35,7 @@ export function RestrictedGrafanaApisContextProvider(props: PropsWithChildren<Pr
   const allowedApis = useMemo(() => {
     const allowedApis: RestrictedGrafanaApisContextType = {};
 
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
     for (const api of Object.keys(apis) as Array<keyof RestrictedGrafanaApisContextType>) {
       if (
         apiAllowList &&
