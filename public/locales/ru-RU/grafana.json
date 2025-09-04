@@ -8814,7 +8814,6 @@
       "cell-inspect": "Проверить значение",
       "cell-inspect-tooltip": "Проверить значение",
       "copy": "Копировать в буфер обмена",
-      "count": "Количество",
       "csv-counts": "Строки:{{rows}}, столбцы:{{columns}}  <5></5>",
       "csv-placeholder": "Ввести CSV...",
       "filter-placeholder": "Значения фильтра",
@@ -8825,6 +8824,11 @@
       "filter-popup-heading": "Фильтр по значениям:",
       "filter-popup-input-placeholder": "Значения фильтра",
       "filter-popup-match-case": "С учетом регистра",
+      "footer": {
+        "reducer": {
+          "count": ""
+        }
+      },
       "inspect-drawer-title": "Проверить значение",
       "nested-table": {
         "no-data": "Нет данных"
@@ -12870,8 +12874,6 @@
     "description-calculation": "Выбрать функцию преобразования / расчета",
     "description-cell-value-inspect": "Включить проверку значений ячеек в модальном окне",
     "description-column-filter": "Включает/отключает фильтры полей в таблице",
-    "description-count-rows": "Отобразить один счетчик для всех строк данных",
-    "description-fields": "Выбрать поля, которые необходимо рассчитать",
     "description-frozen-columns": "",
     "description-min-column-width": "Минимальная ширина для автоматического изменения размера столбцов",
     "description-tooltip-from-field": "",
@@ -12898,21 +12900,17 @@
     "name-column-alignment": "Выравнивание столбцов",
     "name-column-filter": "Фильтр столбцов",
     "name-column-width": "Ширина столбца",
-    "name-count-rows": "Подсчет строк",
     "name-enable-pagination": "",
-    "name-fields": "Поля",
     "name-frozen-columns": "",
     "name-hide-in-table": "Скрыть в таблице",
     "name-max-height": "",
     "name-min-column-width": "Минимальная ширина столбца",
-    "name-show-table-footer": "Показать футер таблицы",
     "name-show-table-header": "Показать заголовок таблицы",
     "name-tooltip-from-field": "",
     "name-tooltip-placement": "",
     "name-wrap-header-text": "Перенос текста заголовка",
     "name-wrap-text": "",
     "placeholder-column-width": "авто",
-    "placeholder-fields": "Все числовые поля",
     "placeholder-max-height": "",
     "tooltip-placement-options": {
       "label-auto": "",

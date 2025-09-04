@@ -8772,7 +8772,6 @@
       "cell-inspect": "Inspecionar valor",
       "cell-inspect-tooltip": "Inspecionar valor",
       "copy": "Copiar para a área de transferência",
-      "count": "Número",
       "csv-counts": "Linhas:{{rows}}, Colunas:{{columns}}  <5></5>",
       "csv-placeholder": "Introduza o CSV aqui...",
       "filter-placeholder": "Filtrar valores",
@@ -8783,6 +8782,11 @@
       "filter-popup-heading": "Filtrar por valores:",
       "filter-popup-input-placeholder": "Filtrar valores",
       "filter-popup-match-case": "Diferenciar maiúsculas de minúsculas",
+      "footer": {
+        "reducer": {
+          "count": ""
+        }
+      },
       "inspect-drawer-title": "Inspecionar valor",
       "nested-table": {
         "no-data": "Sem dados"
@@ -12788,8 +12792,6 @@
     "description-calculation": "Escolha uma função de redução ou cálculo",
     "description-cell-value-inspect": "Ativar a inspeção do valor da célula numa janela modal",
     "description-column-filter": "Ativa/desativa filtros de campo na tabela",
-    "description-count-rows": "Mostrar uma única contagem para todas as linhas de dados",
-    "description-fields": "Selecionar os campos que devem ser calculados",
     "description-frozen-columns": "",
     "description-min-column-width": "A largura mínima para o redimensionamento automático da coluna",
     "description-tooltip-from-field": "",
@@ -12816,21 +12818,17 @@
     "name-column-alignment": "Alinhamento da coluna",
     "name-column-filter": "Filtro de coluna",
     "name-column-width": "Largura da coluna",
-    "name-count-rows": "Contar linhas",
     "name-enable-pagination": "",
-    "name-fields": "Campos",
     "name-frozen-columns": "",
     "name-hide-in-table": "Ocultar na tabela",
     "name-max-height": "",
     "name-min-column-width": "Largura mínima da coluna",
-    "name-show-table-footer": "Mostrar o rodapé da tabela",
     "name-show-table-header": "Mostrar o cabeçalho da tabela",
     "name-tooltip-from-field": "",
     "name-tooltip-placement": "",
     "name-wrap-header-text": "Encapsular o texto do cabeçalho",
     "name-wrap-text": "",
     "placeholder-column-width": "auto",
-    "placeholder-fields": "Todos os campos numéricos",
     "placeholder-max-height": "",
     "tooltip-placement-options": {
       "label-auto": "",

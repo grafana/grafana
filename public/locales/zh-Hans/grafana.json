@@ -8751,7 +8751,6 @@
       "cell-inspect": "检查值",
       "cell-inspect-tooltip": "检查值",
       "copy": "复制到剪贴板",
-      "count": "计数",
       "csv-counts": "行：{{rows}}，列：{{columns}}  <5></5>",
       "csv-placeholder": "在此处输入 CSV...",
       "filter-placeholder": "筛选值",
@@ -8762,6 +8761,11 @@
       "filter-popup-heading": "按值筛选：",
       "filter-popup-input-placeholder": "筛选值",
       "filter-popup-match-case": "区分大小写",
+      "footer": {
+        "reducer": {
+          "count": ""
+        }
+      },
       "inspect-drawer-title": "检查值",
       "nested-table": {
         "no-data": "无数据"
@@ -12747,8 +12751,6 @@
     "description-calculation": "选择一个归约器函数/计算",
     "description-cell-value-inspect": "在模态窗口中启用单元格值检查",
     "description-column-filter": "启用/禁用表格中的字段筛选条件",
-    "description-count-rows": "显示所有数据行的单个计数",
-    "description-fields": "选择应计算的字段",
     "description-frozen-columns": "",
     "description-min-column-width": "列自动调整大小的最小宽度",
     "description-tooltip-from-field": "",
@@ -12775,21 +12777,17 @@
     "name-column-alignment": "列对齐",
     "name-column-filter": "列筛选",
     "name-column-width": "列宽度",
-    "name-count-rows": "计算行",
     "name-enable-pagination": "",
-    "name-fields": "字段",
     "name-frozen-columns": "",
     "name-hide-in-table": "在表格中隐藏",
     "name-max-height": "",
     "name-min-column-width": "最小列宽",
-    "name-show-table-footer": "显示表格页脚",
     "name-show-table-header": "显示表格表头",
     "name-tooltip-from-field": "",
     "name-tooltip-placement": "",
     "name-wrap-header-text": "表头文字换行",
     "name-wrap-text": "",
     "placeholder-column-width": "自动",
-    "placeholder-fields": "所有数字字段",
     "placeholder-max-height": "",
     "tooltip-placement-options": {
       "label-auto": "",

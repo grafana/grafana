@@ -8772,7 +8772,6 @@
       "cell-inspect": "Ispeziona valore",
       "cell-inspect-tooltip": "Ispeziona valore",
       "copy": "Copia negli appunti",
-      "count": "Conta",
       "csv-counts": "Righe: {{rows}}, Colonne: {{columns}} <5></5>",
       "csv-placeholder": "Inserisci qui il CSV...",
       "filter-placeholder": "Valori filtro",
@@ -8783,6 +8782,11 @@
       "filter-popup-heading": "Filtra per valori:",
       "filter-popup-input-placeholder": "Valori filtro",
       "filter-popup-match-case": "Corrispondenza",
+      "footer": {
+        "reducer": {
+          "count": ""
+        }
+      },
       "inspect-drawer-title": "Ispeziona valore",
       "nested-table": {
         "no-data": "Nessun dato"
@@ -12788,8 +12792,6 @@
     "description-calculation": "Scegli una funzione/un calcolo di riduzione",
     "description-cell-value-inspect": "Abilita l'ispezione del valore della cella in una finestra modale",
     "description-column-filter": "Abilita/disabilita i filtri di campo nella tabella",
-    "description-count-rows": "Visualizza un singolo conteggio per tutte le righe di dati",
-    "description-fields": "Seleziona i campi da calcolare",
     "description-frozen-columns": "",
     "description-min-column-width": "La larghezza minima per il ridimensionamento automatico della colonna",
     "description-tooltip-from-field": "",
@@ -12816,21 +12818,17 @@
     "name-column-alignment": "Allineamento colonna",
     "name-column-filter": "Filtro colonna",
     "name-column-width": "Larghezza colonna",
-    "name-count-rows": "Conteggio righe",
     "name-enable-pagination": "",
-    "name-fields": "Campi",
     "name-frozen-columns": "",
     "name-hide-in-table": "Nascondi nella tabella",
     "name-max-height": "",
     "name-min-column-width": "Larghezza minima colonna",
-    "name-show-table-footer": "Mostra piè di pagina tabella",
     "name-show-table-header": "Mostra intestazione tabella",
     "name-tooltip-from-field": "",
     "name-tooltip-placement": "",
     "name-wrap-header-text": "Testo intestazione a capo",
     "name-wrap-text": "",
     "placeholder-column-width": "automatica",
-    "placeholder-fields": "Tutti i campi numerici",
     "placeholder-max-height": "",
     "tooltip-placement-options": {
       "label-auto": "",

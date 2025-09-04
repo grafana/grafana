@@ -8814,7 +8814,6 @@
       "cell-inspect": "Zkontrolovat hodnotu",
       "cell-inspect-tooltip": "Zkontrolovat hodnotu",
       "copy": "Kopírovat do schránky",
-      "count": "Počet",
       "csv-counts": "Řádky:{{rows}}, sloupce:{{columns}}  <5></5>",
       "csv-placeholder": "Zadej CSV tady…",
       "filter-placeholder": "Filtrovat hodnoty",
@@ -8825,6 +8824,11 @@
       "filter-popup-heading": "Filtrovat podle hodnot:",
       "filter-popup-input-placeholder": "Filtrovat hodnoty",
       "filter-popup-match-case": "Rozlišovat malá a velká písmena",
+      "footer": {
+        "reducer": {
+          "count": ""
+        }
+      },
       "inspect-drawer-title": "Zkontrolovat hodnotu",
       "nested-table": {
         "no-data": "Žádná data"
@@ -12870,8 +12874,6 @@
     "description-calculation": "Vyberte funkci reduktoru / výpočet",
     "description-cell-value-inspect": "Povolit kontrolu hodnoty buňky v modálním okně",
     "description-column-filter": "Povolit/zakázat filtry polí v tabulce",
-    "description-count-rows": "Zobrazit jeden počet pro všechny datové řádky",
-    "description-fields": "Vyberte pole, která by měla být vypočtena",
     "description-frozen-columns": "",
     "description-min-column-width": "Minimální šířka pro automatickou změnu velikosti sloupce",
     "description-tooltip-from-field": "",
@@ -12898,21 +12900,17 @@
     "name-column-alignment": "Zarovnání sloupce",
     "name-column-filter": "Filtr sloupce",
     "name-column-width": "Šířka sloupce",
-    "name-count-rows": "Spočítat řádky",
     "name-enable-pagination": "",
-    "name-fields": "Pole",
     "name-frozen-columns": "",
     "name-hide-in-table": "Skrýt v tabulce",
     "name-max-height": "",
     "name-min-column-width": "Minimální šířka sloupce",
-    "name-show-table-footer": "Zobrazit zápatí tabulky",
     "name-show-table-header": "Zobrazit záhlaví tabulky",
     "name-tooltip-from-field": "",
     "name-tooltip-placement": "",
     "name-wrap-header-text": "Zalomit text záhlaví",
     "name-wrap-text": "",
     "placeholder-column-width": "auto.",
-    "placeholder-fields": "Všechna číselná pole",
     "placeholder-max-height": "",
     "tooltip-placement-options": {
       "label-auto": "",
