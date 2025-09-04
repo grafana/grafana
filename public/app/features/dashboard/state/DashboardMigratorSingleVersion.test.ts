@@ -103,8 +103,8 @@ describe('Backend / Frontend single version migration result comparison', () => 
           await handleAngularPanelMigration(frontendModel);
         }
 
-        const frontendMigrationResult = cleanDashboardModel(frontendModel);
-        const backendMigrationResult = cleanDashboardModel(backendModel);
+        const frontendMigrationResult = frontendModel.getSaveModelClone();
+        const backendMigrationResult = backendModel.getSaveModelClone();
 
         expect(backendMigrationResult).toEqual(frontendMigrationResult);
       });

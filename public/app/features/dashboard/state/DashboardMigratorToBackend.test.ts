@@ -10,7 +10,6 @@ import {
   getJsonInputFiles,
   constructLatestVersionOutputFilename,
   handleAngularPanelMigration,
-  cleanDashboardModel,
 } from './__tests__/migrationTestUtils';
 
 /*
@@ -61,9 +60,7 @@ describe('Backend / Frontend result comparison', () => {
         expect(backendOutput.schemaVersion).toEqual(DASHBOARD_SCHEMA_VERSION);
 
         // Create dashboard models
-        const frontendModel = new DashboardModel(jsonInput, undefined, {
-          targetSchemaVersion: DASHBOARD_SCHEMA_VERSION,
-        });
+        const frontendModel = new DashboardModel(jsonInput);
         const backendModel = new DashboardModel(backendOutput);
 
         // Handle angular panel migration if needed
@@ -71,8 +68,8 @@ describe('Backend / Frontend result comparison', () => {
           await handleAngularPanelMigration(frontendModel);
         }
 
-        const frontendMigrationResult = cleanDashboardModel(frontendModel);
-        const backendMigrationResult = cleanDashboardModel(backendModel);
+        const frontendMigrationResult = frontendModel.getSaveModelClone();
+        const backendMigrationResult = backendModel.getSaveModelClone();
 
         expect(backendMigrationResult).toEqual(frontendMigrationResult);
       });
