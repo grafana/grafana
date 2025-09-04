@@ -2,11 +2,15 @@ package grpcplugin
 
 import (
 	"os/exec"
+	"runtime"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend/grpcplugin"
+	"github.com/hashicorp/go-hclog"
 	goplugin "github.com/hashicorp/go-plugin"
+	"github.com/hashicorp/go-plugin/runner"
+	"github.com/hashicorp/go-secure-stdlib/plugincontainer"
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
-	trace "go.opentelemetry.io/otel/trace"
+	"go.opentelemetry.io/otel/trace"
 	"go.opentelemetry.io/otel/trace/embedded"
 	"google.golang.org/grpc"
 
@@ -45,7 +49,7 @@ type clientTracerProvider struct {
 	embedded.TracerProvider
 }
 
-func (ctp *clientTracerProvider) Tracer(instrumentationName string, opts ...trace.TracerOption) trace.Tracer {
+func (ctp *clientTracerProvider) Tracer(_ string, _ ...trace.TracerOption) trace.Tracer {
 	return ctp.tracer
 }
 
@@ -53,8 +57,15 @@ func newClientTracerProvider(tracer trace.Tracer) trace.TracerProvider {
 	return &clientTracerProvider{tracer: tracer}
 }
 
-func newClientConfig(executablePath string, args []string, env []string, skipHostEnvVars bool, logger log.Logger, tracer trace.Tracer,
+func newClientConfig(executablePath string, args []string, env []string, skipHostEnvVars bool, containerModeEnabled bool, logger log.Logger, tracer trace.Tracer,
 	versionedPlugins map[int]goplugin.PluginSet) *goplugin.ClientConfig {
+	logger.Info("Creating client config", "executablePath", executablePath, "os", runtime.GOOS, "containerModeEnabled", containerModeEnabled)
+	if runtime.GOOS == "linux" && containerModeEnabled {
+		return containerClientConfig(executablePath, logger, versionedPlugins, skipHostEnvVars, tracer)
+	}
+
+	logger.Info("Using process mode", "os", runtime.GOOS, "executablePath", executablePath)
+
 	// We can ignore gosec G201 here, since the dynamic part of executablePath comes from the plugin definition
 	// nolint:gosec
 	cmd := exec.Command(executablePath, args...)
@@ -79,6 +90,29 @@ func newClientConfig(executablePath string, args []string, env []string, skipHos
 	}
 }
 
+func containerClientConfig(executablePath string, logger log.Logger, versionedPlugins map[int]goplugin.PluginSet, skipHostEnvVars bool, tracer trace.Tracer) *goplugin.ClientConfig {
+	logger.Info("Linux host detected - using container mode", "executable", executablePath)
+	return &goplugin.ClientConfig{
+		RunnerFunc: func(l hclog.Logger, cmd *exec.Cmd, tmpDir string) (runner.Runner, error) {
+			logger.Info("Creating container runner", "executablePath", executablePath, "tmpDir", tmpDir)
+			config := &plugincontainer.Config{
+				Image: "alpine:latest",
+				Env:   cmd.Env,
+			}
+
+			return config.NewContainerRunner(l, cmd, tmpDir)
+		},
+		HandshakeConfig:  handshake,
+		VersionedPlugins: versionedPlugins,
+		SkipHostEnv:      skipHostEnvVars,
+		Logger:           logWrapper{Logger: logger},
+		AllowedProtocols: []goplugin.Protocol{goplugin.ProtocolGRPC},
+		GRPCDialOptions: []grpc.DialOption{
+			grpc.WithStatsHandler(otelgrpc.NewClientHandler(otelgrpc.WithTracerProvider(newClientTracerProvider(tracer)))),
+		},
+	}
+}
+
 // StartRendererFunc callback function called when a renderer plugin is started.
 type StartRendererFunc func(pluginID string, renderer pluginextensionv2.RendererPlugin, logger log.Logger) error
 
@@ -89,22 +123,28 @@ type PluginDescriptor struct {
 	executableArgs   []string
 	skipHostEnvVars  bool
 	managed          bool
+	containerMode    bool
 	versionedPlugins map[int]goplugin.PluginSet
 	startRendererFn  StartRendererFunc
 }
 
 // NewBackendPlugin creates a new backend plugin factory used for registering a backend plugin.
 func NewBackendPlugin(pluginID, executablePath string, skipHostEnvVars bool, executableArgs ...string) backendplugin.PluginFactoryFunc {
-	return newBackendPlugin(pluginID, executablePath, true, skipHostEnvVars, executableArgs...)
+	return newBackendPlugin(pluginID, executablePath, true, skipHostEnvVars, false, executableArgs...)
+}
+
+// NewBackendPluginWithContainerMode creates a new backend plugin factory used for registering a backend plugin that runs in a container.
+func NewBackendPluginWithContainerMode(pluginID, executablePath string, skipHostEnvVars bool, executableArgs ...string) backendplugin.PluginFactoryFunc {
+	return newBackendPlugin(pluginID, executablePath, true, skipHostEnvVars, true, executableArgs...)
 }
 
 // NewUnmanagedBackendPlugin creates a new backend plugin factory used for registering an unmanaged backend plugin.
 func NewUnmanagedBackendPlugin(pluginID, executablePath string, skipHostEnvVars bool, executableArgs ...string) backendplugin.PluginFactoryFunc {
-	return newBackendPlugin(pluginID, executablePath, false, skipHostEnvVars, executableArgs...)
+	return newBackendPlugin(pluginID, executablePath, false, skipHostEnvVars, false, executableArgs...)
 }
 
 // NewBackendPlugin creates a new backend plugin factory used for registering a backend plugin.
-func newBackendPlugin(pluginID, executablePath string, managed bool, skipHostEnvVars bool, executableArgs ...string) backendplugin.PluginFactoryFunc {
+func newBackendPlugin(pluginID, executablePath string, managed bool, skipHostEnvVars bool, containerMode bool, executableArgs ...string) backendplugin.PluginFactoryFunc {
 	return newPlugin(PluginDescriptor{
 		pluginID:         pluginID,
 		executablePath:   executablePath,
@@ -112,6 +152,7 @@ func newBackendPlugin(pluginID, executablePath string, managed bool, skipHostEnv
 		skipHostEnvVars:  skipHostEnvVars,
 		managed:          managed,
 		versionedPlugins: pluginSet,
+		containerMode:    containerMode,
 	})
 }
 
