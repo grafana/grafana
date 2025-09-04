@@ -87,7 +87,7 @@ func ProvideService(
 		folderService:                folderService,
 		resourcePermissions:          resourcePermissions,
 		tracer:                       tracer,
-		promTypeMigrationProvider:    promTypeMigrationProvider,
+		migratePrometheusType:        promTypeMigrationProvider.Run,
 	}
 
 	if err := s.setDashboardProvisioner(); err != nil {
@@ -123,6 +123,7 @@ func newProvisioningServiceImpl(
 	newDashboardProvisioner dashboards.DashboardProvisionerFactory,
 	provisionDatasources func(context.Context, string, datasources.BaseDataSourceService, datasources.CorrelationsStore, org.Service) error,
 	provisionPlugins func(context.Context, string, pluginstore.Store, pluginsettings.Service, org.Service) error,
+	migratePrometheusType func(context.Context) error,
 	searchService searchV2.SearchService,
 ) (*ProvisioningServiceImpl, error) {
 	s := &ProvisioningServiceImpl{
@@ -132,6 +133,7 @@ func newProvisioningServiceImpl(
 		provisionPlugins:        provisionPlugins,
 		Cfg:                     setting.NewCfg(),
 		searchService:           searchService,
+		migratePrometheusType:   migratePrometheusType,
 	}
 
 	if err := s.setDashboardProvisioner(); err != nil {
@@ -170,8 +172,8 @@ type ProvisioningServiceImpl struct {
 	resourcePermissions          accesscontrol.ReceiverPermissionsService
 	tracer                       tracing.Tracer
 	dual                         dualwrite.Service
-	promTypeMigrationProvider    promtypemigration.PromTypeMigrationProvider
 	onceInitProvisioners         sync.Once
+	migratePrometheusType        func(context.Context) error
 }
 
 func (ps *ProvisioningServiceImpl) RunInitProvisioners(ctx context.Context) error {
@@ -203,6 +205,12 @@ func (ps *ProvisioningServiceImpl) Run(ctx context.Context) error {
 		err = ps.ProvisionAlerting(ctx)
 		if err != nil {
 			ps.log.Error("Failed to provision alerting", "error", err)
+			return
+		}
+
+		err = ps.MigratePrometheusType(ctx)
+		if err != nil {
+			ps.log.Error("Failed to migrate Prometheus type", "error", err)
 			return
 		}
 	})
@@ -256,7 +264,6 @@ func (ps *ProvisioningServiceImpl) ProvisionDatasources(ctx context.Context) err
 		ps.log.Error("Failed to provision data sources", "error", err)
 		return err
 	}
-	ps.promTypeMigrationProvider.Run(ctx)
 	return nil
 }
 
@@ -338,6 +345,10 @@ func (ps *ProvisioningServiceImpl) ProvisionAlerting(ctx context.Context) error 
 		TemplateService:            *templateService,
 	}
 	return ps.provisionAlerting(ctx, cfg)
+}
+
+func (ps *ProvisioningServiceImpl) MigratePrometheusType(ctx context.Context) error {
+	return ps.migratePrometheusType(ctx)
 }
 
 func (ps *ProvisioningServiceImpl) GetDashboardProvisionerResolvedPath(name string) string {
