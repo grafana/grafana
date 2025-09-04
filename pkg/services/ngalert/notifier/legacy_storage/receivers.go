@@ -89,7 +89,7 @@ func (rev *ConfigRevision) GetReceiver(uid string, prov Provenances) (*models.Re
 		if NameToUid(r.GetName()) != uid {
 			continue
 		}
-		recv, err := PostableApiReceiverToReceiver(r, GetReceiverProvenance(prov, r), models.ResourceOriginGrafana)
+		recv, err := PostableApiReceiverToReceiver(r, GetReceiverProvenance(prov, r, models.ResourceOriginGrafana), models.ResourceOriginGrafana)
 		if err != nil {
 			return nil, fmt.Errorf("failed to convert receiver %q: %w", r.Name, err)
 		}
@@ -109,7 +109,7 @@ func (rev *ConfigRevision) GetReceivers(uids []string, prov Provenances) ([]*mod
 		if len(uids) > 0 && !slices.Contains(uids, uid) {
 			continue
 		}
-		recv, err := PostableApiReceiverToReceiver(r, GetReceiverProvenance(prov, r), models.ResourceOriginGrafana)
+		recv, err := PostableApiReceiverToReceiver(r, GetReceiverProvenance(prov, r, models.ResourceOriginGrafana), models.ResourceOriginGrafana)
 		if err != nil {
 			return nil, fmt.Errorf("failed to convert receiver %q: %w", r.Name, err)
 		}
