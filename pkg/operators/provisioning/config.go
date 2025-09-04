@@ -36,6 +36,7 @@ type provisioningControllerConfig struct {
 // token_exchange_url =
 // [secrets_manager]
 // grpc_server_address =
+// grpc_server_tls_server_name =
 // grpc_server_use_tls =
 // grpc_server_tls_ca_file =
 // grpc_server_tls_skip_verify =
@@ -219,10 +220,9 @@ func setupDecrypter(cfg *setting.Cfg, tracer tracing.Tracer, tokenExchangeClient
 	}
 
 	secretsTls := secretdecrypt.TLSConfig{
-		UseTLS: secretsSec.Key("grpc_server_use_tls").MustBool(true),
-		CAFile: secretsSec.Key("grpc_server_tls_ca_file").String(),
-		// TODO: do we need this one?
-		// ServerName:         secretsSec.Key("grpc_server_tls_server_name").String(),
+		UseTLS:             secretsSec.Key("grpc_server_use_tls").MustBool(true),
+		CAFile:             secretsSec.Key("grpc_server_tls_ca_file").String(),
+		ServerName:         secretsSec.Key("grpc_server_tls_server_name").String(),
 		InsecureSkipVerify: secretsSec.Key("grpc_server_tls_skip_verify").MustBool(false),
 	}
 
