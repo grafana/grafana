@@ -1,6 +1,13 @@
 import { useMemo, useState } from 'react';
 
-import { PanelProps, DataFrameType, DashboardCursorSync, DataFrame, alignTimeRangeCompareData } from '@grafana/data';
+import {
+  PanelProps,
+  DataFrameType,
+  DashboardCursorSync,
+  DataFrame,
+  alignTimeRangeCompareData,
+  shouldAlignTimeCompare,
+} from '@grafana/data';
 import { PanelDataErrorView } from '@grafana/runtime';
 import { TooltipDisplayMode, VizOrientation } from '@grafana/schema';
 import { EventBusPlugin, KeyboardPlugin, TooltipPlugin2, usePanelContext } from '@grafana/ui';
@@ -53,7 +60,12 @@ export const TimeSeriesPanel = ({
       frames.forEach((frame: DataFrame) => {
         const tc = frame.meta?.timeCompare;
         if (tc?.isTimeShiftQuery && tc.diffMs != null) {
-          alignTimeRangeCompareData(frame, tc.diffMs, config.theme2.colors.text.disabled);
+          // Check if the compared frame needs time alignment
+          // Apply alignment when time ranges match (no shift applied yet)
+          const needsAlignment = shouldAlignTimeCompare(frame, frames);
+          if (needsAlignment) {
+            alignTimeRangeCompareData(frame, tc.diffMs, config.theme2.colors.text.disabled);
+          }
         }
       });
     }

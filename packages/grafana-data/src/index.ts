@@ -51,6 +51,7 @@ export {
   getRowUniqueId,
   addRow,
   alignTimeRangeCompareData,
+  shouldAlignTimeCompare,
 } from './dataframe/utils';
 export {
   StreamingDataFrame,
