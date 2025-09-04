@@ -12,11 +12,13 @@ import (
 	"go.opentelemetry.io/otel/trace"
 
 	"github.com/grafana/dskit/services"
+	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/middleware/loggermw"
 	"github.com/grafana/grafana/pkg/middleware/requestmeta"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	fswebassets "github.com/grafana/grafana/pkg/services/frontend/webassets"
 	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
@@ -26,21 +28,28 @@ var tracer = otel.Tracer("github.com/grafana/grafana/pkg/services/frontend")
 
 type frontendService struct {
 	*services.BasicService
-	cfg          *setting.Cfg
-	httpServ     *http.Server
-	features     featuremgmt.FeatureToggles
-	log          log.Logger
-	errChan      chan error
-	promGatherer prometheus.Gatherer
-	promRegister prometheus.Registerer
-	tracer       trace.Tracer
-	license      licensing.Licensing
+	cfg            *setting.Cfg
+	httpServ       *http.Server
+	features       featuremgmt.FeatureToggles
+	log            log.Logger
+	errChan        chan error
+	promGatherer   prometheus.Gatherer
+	promRegister   prometheus.Registerer
+	tracer         trace.Tracer
+	license        licensing.Licensing
+	assetsManifest dtos.EntryPointAssets
 
 	index *IndexProvider
 }
 
 func ProvideFrontendService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, promGatherer prometheus.Gatherer, promRegister prometheus.Registerer, license licensing.Licensing) (*frontendService, error) {
-	index, err := NewIndexProvider(cfg, license)
+	logger := log.New("frontend-server")
+	assetsManifest, err := fswebassets.GetWebAssets(cfg, license)
+	if err != nil {
+		return nil, err
+	}
+
+	index, err := NewIndexProvider(cfg, assetsManifest)
 	if err != nil {
 		return nil, err
 	}
@@ -48,7 +57,7 @@ func ProvideFrontendService(cfg *setting.Cfg, features featuremgmt.FeatureToggle
 	s := &frontendService{
 		cfg:          cfg,
 		features:     features,
-		log:          log.New("frontend-server"),
+		log:          logger,
 		promGatherer: promGatherer,
 		promRegister: promRegister,
 		tracer:       tracer,

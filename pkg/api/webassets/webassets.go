@@ -60,7 +60,7 @@ func GetWebAssets(ctx context.Context, cfg *setting.Cfg, license licensing.Licen
 	}
 
 	if result == nil {
-		result, err = readWebAssetsFromFile(filepath.Join(cfg.StaticRootPath, "build", "assets-manifest.json"))
+		result, err = ReadWebAssetsFromFile(filepath.Join(cfg.StaticRootPath, "build", "assets-manifest.json"))
 		if err == nil {
 			cdn, _ = cfg.GetContentDeliveryURL(license.ContentDeliveryPrefix())
 			if cdn != "" {
@@ -73,7 +73,7 @@ func GetWebAssets(ctx context.Context, cfg *setting.Cfg, license licensing.Licen
 	return entryPointAssetsCache, err
 }
 
-func readWebAssetsFromFile(manifestpath string) (*dtos.EntryPointAssets, error) {
+func ReadWebAssetsFromFile(manifestpath string) (*dtos.EntryPointAssets, error) {
 	//nolint:gosec
 	f, err := os.Open(manifestpath)
 	if err != nil {
