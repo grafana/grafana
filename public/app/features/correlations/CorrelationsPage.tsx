@@ -237,7 +237,6 @@ function ExpendedRow({ correlation: { source, ...correlation }, readOnly, onUpda
   useEffect(
     () => reportInteraction('grafana_correlations_details_expanded'),
     // we only want to fire this on first render
-    // eslint-disable-next-line react-hooks/exhaustive-deps
     []
   );
 

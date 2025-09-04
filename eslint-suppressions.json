@@ -273,11 +273,6 @@
       "count": 1
     }
   },
-  "packages/grafana-data/src/types/scopes.ts": {
-    "@typescript-eslint/consistent-type-assertions": {
-      "count": 1
-    }
-  },
   "packages/grafana-data/src/types/select.ts": {
     "@typescript-eslint/no-explicit-any": {
       "count": 2
@@ -453,6 +448,9 @@
   "packages/grafana-prometheus/src/querybuilder/components/LabelParamEditor.tsx": {
     "@typescript-eslint/consistent-type-assertions": {
       "count": 1
+    },
+    "jsx-a11y/no-autofocus": {
+      "count": 1
     }
   },
   "packages/grafana-prometheus/src/querybuilder/components/PromQueryCodeEditor.tsx": {
@@ -460,8 +458,23 @@
       "count": 1
     }
   },
+  "packages/grafana-prometheus/src/querybuilder/components/metrics-modal/MetricsModal.tsx": {
+    "jsx-a11y/no-autofocus": {
+      "count": 1
+    }
+  },
   "packages/grafana-prometheus/src/querybuilder/shared/OperationEditor.tsx": {
     "@typescript-eslint/no-explicit-any": {
+      "count": 1
+    }
+  },
+  "packages/grafana-prometheus/src/querybuilder/shared/OperationHeader.tsx": {
+    "jsx-a11y/no-autofocus": {
+      "count": 1
+    }
+  },
+  "packages/grafana-prometheus/src/querybuilder/shared/OperationList.tsx": {
+    "jsx-a11y/no-autofocus": {
       "count": 1
     }
   },
@@ -487,6 +500,11 @@
   },
   "packages/grafana-runtime/src/analytics/types.ts": {
     "@typescript-eslint/no-explicit-any": {
+      "count": 1
+    }
+  },
+  "packages/grafana-runtime/src/components/DataSourcePicker.tsx": {
+    "jsx-a11y/no-autofocus": {
       "count": 1
     }
   },
@@ -584,14 +602,34 @@
       "count": 1
     }
   },
+  "packages/grafana-ui/src/components/Carousel/Carousel.tsx": {
+    "jsx-a11y/no-autofocus": {
+      "count": 1
+    }
+  },
+  "packages/grafana-ui/src/components/Cascader/Cascader.tsx": {
+    "jsx-a11y/no-autofocus": {
+      "count": 2
+    }
+  },
   "packages/grafana-ui/src/components/ColorPicker/ColorPicker.tsx": {
     "@typescript-eslint/no-explicit-any": {
       "count": 2
     }
   },
+  "packages/grafana-ui/src/components/ColorPicker/ColorPickerPopover.tsx": {
+    "jsx-a11y/no-autofocus": {
+      "count": 1
+    }
+  },
   "packages/grafana-ui/src/components/Combobox/Combobox.story.tsx": {
     "react-hooks/rules-of-hooks": {
       "count": 5
+    }
+  },
+  "packages/grafana-ui/src/components/Combobox/Combobox.tsx": {
+    "jsx-a11y/no-autofocus": {
+      "count": 1
     }
   },
   "packages/grafana-ui/src/components/Combobox/MultiCombobox.story.tsx": {
@@ -650,6 +688,51 @@
       "count": 2
     }
   },
+  "packages/grafana-ui/src/components/DateTimePickers/DateTimePicker/DateTimePicker.tsx": {
+    "jsx-a11y/no-autofocus": {
+      "count": 2
+    }
+  },
+  "packages/grafana-ui/src/components/DateTimePickers/RelativeTimeRangePicker/RelativeTimeRangePicker.tsx": {
+    "jsx-a11y/no-autofocus": {
+      "count": 1
+    }
+  },
+  "packages/grafana-ui/src/components/DateTimePickers/TimeRangeInput.tsx": {
+    "jsx-a11y/no-autofocus": {
+      "count": 1
+    }
+  },
+  "packages/grafana-ui/src/components/DateTimePickers/TimeRangePicker.tsx": {
+    "jsx-a11y/no-autofocus": {
+      "count": 1
+    }
+  },
+  "packages/grafana-ui/src/components/DateTimePickers/TimeRangePicker/TimePickerCalendar.tsx": {
+    "jsx-a11y/no-autofocus": {
+      "count": 2
+    }
+  },
+  "packages/grafana-ui/src/components/DateTimePickers/TimeZonePicker.tsx": {
+    "jsx-a11y/no-autofocus": {
+      "count": 1
+    }
+  },
+  "packages/grafana-ui/src/components/DateTimePickers/WeekStartPicker.tsx": {
+    "jsx-a11y/no-autofocus": {
+      "count": 1
+    }
+  },
+  "packages/grafana-ui/src/components/Drawer/Drawer.tsx": {
+    "jsx-a11y/no-autofocus": {
+      "count": 1
+    }
+  },
+  "packages/grafana-ui/src/components/Dropdown/ButtonSelect.tsx": {
+    "jsx-a11y/no-autofocus": {
+      "count": 1
+    }
+  },
   "packages/grafana-ui/src/components/ElementSelectionContext/ElementSelectionContext.tsx": {
     "react-hooks/rules-of-hooks": {
       "count": 3
@@ -704,6 +787,9 @@
   "packages/grafana-ui/src/components/Forms/Legacy/Select/Select.tsx": {
     "@typescript-eslint/no-explicit-any": {
       "count": 1
+    },
+    "jsx-a11y/no-autofocus": {
+      "count": 2
     },
     "no-restricted-syntax": {
       "count": 6
@@ -767,6 +853,11 @@
       "count": 1
     }
   },
+  "packages/grafana-ui/src/components/Modal/Modal.tsx": {
+    "jsx-a11y/no-autofocus": {
+      "count": 1
+    }
+  },
   "packages/grafana-ui/src/components/Modal/ModalsContext.tsx": {
     "@typescript-eslint/no-explicit-any": {
       "count": 4
@@ -824,6 +915,9 @@
   },
   "packages/grafana-ui/src/components/Segment/SegmentSelect.tsx": {
     "@typescript-eslint/consistent-type-assertions": {
+      "count": 1
+    },
+    "jsx-a11y/no-autofocus": {
       "count": 1
     }
   },
@@ -963,8 +1057,16 @@
       "count": 1
     }
   },
+  "packages/grafana-ui/src/components/ToolbarButton/ToolbarButtonRow.tsx": {
+    "jsx-a11y/no-autofocus": {
+      "count": 1
+    }
+  },
   "packages/grafana-ui/src/components/ValuePicker/ValuePicker.tsx": {
     "@grafana/no-aria-label-selectors": {
+      "count": 1
+    },
+    "jsx-a11y/no-autofocus": {
       "count": 1
     }
   },
@@ -1127,6 +1229,11 @@
       "count": 1
     }
   },
+  "public/app/core/components/AppChrome/AppChromeMenu.tsx": {
+    "jsx-a11y/no-autofocus": {
+      "count": 1
+    }
+  },
   "public/app/core/components/AppChrome/History/HistoryWrapper.tsx": {
     "no-restricted-syntax": {
       "count": 2
@@ -1143,6 +1250,9 @@
     }
   },
   "public/app/core/components/ForgottenPassword/ChangePassword.tsx": {
+    "jsx-a11y/no-autofocus": {
+      "count": 1
+    },
     "no-restricted-syntax": {
       "count": 2
     }
@@ -1160,17 +1270,31 @@
       "count": 2
     }
   },
+  "public/app/core/components/Layers/LayerName.tsx": {
+    "jsx-a11y/no-autofocus": {
+      "count": 1
+    }
+  },
   "public/app/core/components/Login/LoginForm.tsx": {
+    "jsx-a11y/no-autofocus": {
+      "count": 1
+    },
     "no-restricted-syntax": {
       "count": 2
     }
   },
   "public/app/core/components/Login/PasswordlessConfirmationForm.tsx": {
+    "jsx-a11y/no-autofocus": {
+      "count": 3
+    },
     "no-restricted-syntax": {
       "count": 4
     }
   },
   "public/app/core/components/Login/PasswordlessLoginForm.tsx": {
+    "jsx-a11y/no-autofocus": {
+      "count": 1
+    },
     "no-restricted-syntax": {
       "count": 1
     }
@@ -1180,7 +1304,15 @@
       "count": 1
     }
   },
+  "public/app/core/components/NestedFolderPicker/NestedFolderPicker.tsx": {
+    "jsx-a11y/no-autofocus": {
+      "count": 2
+    }
+  },
   "public/app/core/components/OptionsUI/NumberInput.tsx": {
+    "jsx-a11y/no-autofocus": {
+      "count": 1
+    },
     "no-restricted-syntax": {
       "count": 1
     }
@@ -1190,7 +1322,15 @@
       "count": 1
     }
   },
+  "public/app/core/components/OptionsUI/strings.tsx": {
+    "jsx-a11y/no-autofocus": {
+      "count": 1
+    }
+  },
   "public/app/core/components/Page/EditableTitle.tsx": {
+    "jsx-a11y/no-autofocus": {
+      "count": 1
+    },
     "no-restricted-syntax": {
       "count": 1
     }
@@ -1219,6 +1359,9 @@
     }
   },
   "public/app/core/components/Signup/SignupPage.tsx": {
+    "jsx-a11y/no-autofocus": {
+      "count": 1
+    },
     "no-restricted-syntax": {
       "count": 6
     }
@@ -1356,7 +1499,15 @@
       "count": 2
     }
   },
+  "public/app/extensions/recorded-queries/RecordedQueryCreateModal.tsx": {
+    "jsx-a11y/no-autofocus": {
+      "count": 1
+    }
+  },
   "public/app/features/actions/ActionEditor.tsx": {
+    "jsx-a11y/no-autofocus": {
+      "count": 1
+    },
     "no-restricted-syntax": {
       "count": 7
     }
@@ -1384,6 +1535,11 @@
       "count": 3
     }
   },
+  "public/app/features/admin/OrgRolePicker.tsx": {
+    "jsx-a11y/no-autofocus": {
+      "count": 1
+    }
+  },
   "public/app/features/admin/ServerStatsCard.tsx": {
     "no-restricted-syntax": {
       "count": 1
@@ -1399,9 +1555,27 @@
       "count": 3
     }
   },
+  "public/app/features/admin/UserListAdminPage.tsx": {
+    "jsx-a11y/no-autofocus": {
+      "count": 1
+    }
+  },
+  "public/app/features/admin/UserListAnonymousPage.tsx": {
+    "jsx-a11y/no-autofocus": {
+      "count": 1
+    }
+  },
   "public/app/features/admin/UserOrgs.tsx": {
+    "jsx-a11y/no-autofocus": {
+      "count": 2
+    },
     "no-restricted-syntax": {
       "count": 2
+    }
+  },
+  "public/app/features/admin/UserPermissions.tsx": {
+    "jsx-a11y/no-autofocus": {
+      "count": 1
     }
   },
   "public/app/features/admin/ldap/LdapDrawer.tsx": {
@@ -1508,7 +1682,15 @@
     }
   },
   "public/app/features/alerting/unified/components/create-folder/CreateNewFolder.tsx": {
+    "jsx-a11y/no-autofocus": {
+      "count": 1
+    },
     "no-restricted-syntax": {
+      "count": 1
+    }
+  },
+  "public/app/features/alerting/unified/components/expressions/Expression.tsx": {
+    "jsx-a11y/no-autofocus": {
       "count": 1
     }
   },
@@ -1538,6 +1720,9 @@
     }
   },
   "public/app/features/alerting/unified/components/notification-policies/EditNotificationPolicyForm.tsx": {
+    "jsx-a11y/no-autofocus": {
+      "count": 1
+    },
     "no-restricted-syntax": {
       "count": 13
     }
@@ -1545,6 +1730,16 @@
   "public/app/features/alerting/unified/components/notification-policies/Filters.tsx": {
     "no-restricted-syntax": {
       "count": 2
+    }
+  },
+  "public/app/features/alerting/unified/components/receivers/AlertInstanceModalSelector.tsx": {
+    "jsx-a11y/no-autofocus": {
+      "count": 1
+    }
+  },
+  "public/app/features/alerting/unified/components/receivers/TemplateForm.tsx": {
+    "jsx-a11y/no-autofocus": {
+      "count": 1
     }
   },
   "public/app/features/alerting/unified/components/receivers/TemplatePreview.tsx": {
@@ -1631,6 +1826,9 @@
     }
   },
   "public/app/features/alerting/unified/components/rule-editor/DashboardPicker.tsx": {
+    "jsx-a11y/no-autofocus": {
+      "count": 1
+    },
     "no-restricted-syntax": {
       "count": 1
     }
@@ -1646,6 +1844,9 @@
     }
   },
   "public/app/features/alerting/unified/components/rule-editor/GrafanaEvaluationBehavior.tsx": {
+    "jsx-a11y/no-autofocus": {
+      "count": 1
+    },
     "no-restricted-syntax": {
       "count": 10
     }
@@ -1670,6 +1871,11 @@
   },
   "public/app/features/alerting/unified/components/rule-editor/RuleInspector.tsx": {
     "@typescript-eslint/consistent-type-assertions": {
+      "count": 1
+    }
+  },
+  "public/app/features/alerting/unified/components/rule-editor/SelectWIthAdd.tsx": {
+    "jsx-a11y/no-autofocus": {
       "count": 1
     }
   },
@@ -1731,6 +1937,11 @@
   "public/app/features/alerting/unified/components/rules/Filter/RulesFilter.v1.tsx": {
     "no-restricted-syntax": {
       "count": 4
+    }
+  },
+  "public/app/features/alerting/unified/components/rules/MultipleDataSourcePicker.tsx": {
+    "jsx-a11y/no-autofocus": {
+      "count": 1
     }
   },
   "public/app/features/alerting/unified/components/rules/RuleListGroupView.tsx": {
@@ -1931,6 +2142,16 @@
       "count": 1
     }
   },
+  "public/app/features/canvas/elements/text.tsx": {
+    "jsx-a11y/no-autofocus": {
+      "count": 1
+    }
+  },
+  "public/app/features/commandPalette/CommandPalette.tsx": {
+    "jsx-a11y/no-autofocus": {
+      "count": 1
+    }
+  },
   "public/app/features/commandPalette/actions/recentScopesActions.ts": {
     "react-hooks/rules-of-hooks": {
       "count": 1
@@ -2118,17 +2339,31 @@
       "count": 1
     }
   },
+  "public/app/features/dashboard-scene/panel-edit/PanelOptionsPane.tsx": {
+    "jsx-a11y/no-autofocus": {
+      "count": 1
+    }
+  },
   "public/app/features/dashboard-scene/panel-edit/PanelVizTypePicker.tsx": {
+    "jsx-a11y/no-autofocus": {
+      "count": 1
+    },
     "no-restricted-syntax": {
       "count": 1
     }
   },
   "public/app/features/dashboard-scene/saving/SaveDashboardAsForm.tsx": {
+    "jsx-a11y/no-autofocus": {
+      "count": 1
+    },
     "no-restricted-syntax": {
       "count": 4
     }
   },
   "public/app/features/dashboard-scene/saving/SaveDashboardForm.tsx": {
+    "jsx-a11y/no-autofocus": {
+      "count": 1
+    },
     "no-restricted-syntax": {
       "count": 1
     }
@@ -2249,11 +2484,17 @@
     }
   },
   "public/app/features/dashboard-scene/settings/annotations/AnnotationSettingsEdit.tsx": {
+    "jsx-a11y/no-autofocus": {
+      "count": 1
+    },
     "no-restricted-syntax": {
       "count": 7
     }
   },
   "public/app/features/dashboard-scene/settings/links/DashboardLinkForm.tsx": {
+    "jsx-a11y/no-autofocus": {
+      "count": 1
+    },
     "no-restricted-syntax": {
       "count": 10
     }
@@ -2413,6 +2654,9 @@
     }
   },
   "public/app/features/dashboard/components/AnnotationSettings/AnnotationSettingsEdit.tsx": {
+    "jsx-a11y/no-autofocus": {
+      "count": 1
+    },
     "no-restricted-syntax": {
       "count": 7
     }
@@ -2518,6 +2762,9 @@
     "@grafana/no-aria-label-selectors": {
       "count": 1
     },
+    "jsx-a11y/no-autofocus": {
+      "count": 1
+    },
     "no-restricted-syntax": {
       "count": 1
     }
@@ -2546,6 +2793,9 @@
     }
   },
   "public/app/features/dashboard/components/SaveDashboard/forms/SaveDashboardAsForm.tsx": {
+    "jsx-a11y/no-autofocus": {
+      "count": 2
+    },
     "no-restricted-syntax": {
       "count": 4
     }
@@ -2553,6 +2803,9 @@
   "public/app/features/dashboard/components/SaveDashboard/forms/SaveDashboardForm.tsx": {
     "@grafana/no-aria-label-selectors": {
       "count": 3
+    },
+    "jsx-a11y/no-autofocus": {
+      "count": 1
     }
   },
   "public/app/features/dashboard/components/SaveDashboard/useDashboardSave.tsx": {
@@ -2622,7 +2875,15 @@
     }
   },
   "public/app/features/dashboard/components/TransformationsEditor/TransformationPicker.tsx": {
+    "jsx-a11y/no-autofocus": {
+      "count": 1
+    },
     "no-restricted-syntax": {
+      "count": 1
+    }
+  },
+  "public/app/features/dashboard/components/TransformationsEditor/TransformationPickerNg.tsx": {
+    "jsx-a11y/no-autofocus": {
       "count": 1
     }
   },
@@ -2803,6 +3064,11 @@
       "count": 1
     }
   },
+  "public/app/features/datasources/components/picker/DataSourceModal.tsx": {
+    "jsx-a11y/no-autofocus": {
+      "count": 1
+    }
+  },
   "public/app/features/datasources/state/actions.test.ts": {
     "@typescript-eslint/no-explicit-any": {
       "count": 2
@@ -2852,6 +3118,11 @@
   },
   "public/app/features/dimensions/editors/ResourceDimensionEditor.tsx": {
     "@typescript-eslint/consistent-type-assertions": {
+      "count": 1
+    }
+  },
+  "public/app/features/dimensions/editors/ResourcePickerPopover.tsx": {
+    "jsx-a11y/no-autofocus": {
       "count": 1
     }
   },
@@ -3087,6 +3358,11 @@
   },
   "public/app/features/live/centrifuge/channel.ts": {
     "@typescript-eslint/no-explicit-any": {
+      "count": 1
+    }
+  },
+  "public/app/features/logs/components/panel/LogListSearch.tsx": {
+    "jsx-a11y/no-autofocus": {
       "count": 1
     }
   },
@@ -3331,6 +3607,16 @@
       "count": 2
     }
   },
+  "public/app/features/provisioning/File/FilesView.tsx": {
+    "jsx-a11y/no-autofocus": {
+      "count": 1
+    }
+  },
+  "public/app/features/provisioning/Repository/RepositoryResources.tsx": {
+    "jsx-a11y/no-autofocus": {
+      "count": 1
+    }
+  },
   "public/app/features/provisioning/Shared/BranchValidationError.tsx": {
     "react/no-unescaped-entities": {
       "count": 26
@@ -3339,6 +3625,11 @@
   "public/app/features/provisioning/Shared/TokenPermissionsInfo.tsx": {
     "react/no-unescaped-entities": {
       "count": 2
+    }
+  },
+  "public/app/features/provisioning/Wizard/BootstrapStep.tsx": {
+    "jsx-a11y/no-autofocus": {
+      "count": 1
     }
   },
   "public/app/features/provisioning/Wizard/SynchronizeStep.tsx": {
@@ -3362,6 +3653,9 @@
   },
   "public/app/features/query/components/QueryEditorRowHeader.tsx": {
     "@grafana/no-aria-label-selectors": {
+      "count": 1
+    },
+    "jsx-a11y/no-autofocus": {
       "count": 1
     }
   },
@@ -3408,6 +3702,11 @@
       "count": 3
     }
   },
+  "public/app/features/scopes/selector/ScopesTreeSearch.tsx": {
+    "jsx-a11y/no-autofocus": {
+      "count": 1
+    }
+  },
   "public/app/features/search/page/components/columns.tsx": {
     "@typescript-eslint/consistent-type-assertions": {
       "count": 1
@@ -3440,6 +3739,9 @@
     }
   },
   "public/app/features/serviceaccounts/ServiceAccountCreatePage.tsx": {
+    "jsx-a11y/no-autofocus": {
+      "count": 2
+    },
     "no-restricted-syntax": {
       "count": 4
     }
@@ -3609,6 +3911,9 @@
   "public/app/features/transformers/suggestionsInput/SuggestionsInput.tsx": {
     "@typescript-eslint/consistent-type-assertions": {
       "count": 4
+    },
+    "jsx-a11y/no-autofocus": {
+      "count": 2
     }
   },
   "public/app/features/variables/adapters.ts": {
@@ -4153,6 +4458,11 @@
       "count": 1
     }
   },
+  "public/app/plugins/datasource/grafana-testdata-datasource/components/CSVWaveEditor.tsx": {
+    "jsx-a11y/no-autofocus": {
+      "count": 1
+    }
+  },
   "public/app/plugins/datasource/grafana-testdata-datasource/components/RandomWalkEditor.tsx": {
     "@typescript-eslint/consistent-type-assertions": {
       "count": 2
@@ -4199,6 +4509,9 @@
     }
   },
   "public/app/plugins/datasource/grafana/components/TimeRegionEditor.tsx": {
+    "jsx-a11y/no-autofocus": {
+      "count": 1
+    },
     "no-restricted-syntax": {
       "count": 6
     }
@@ -4323,6 +4636,11 @@
       "count": 2
     }
   },
+  "public/app/plugins/datasource/influxdb/components/editor/query/influxql/visual/Seg.tsx": {
+    "jsx-a11y/no-autofocus": {
+      "count": 3
+    }
+  },
   "public/app/plugins/datasource/influxdb/components/editor/query/influxql/visual/TagsSection.tsx": {
     "no-restricted-syntax": {
       "count": 1
@@ -4399,6 +4717,11 @@
   "public/app/plugins/datasource/loki/datasource.ts": {
     "@typescript-eslint/no-explicit-any": {
       "count": 2
+    }
+  },
+  "public/app/plugins/datasource/loki/querybuilder/components/LabelParamEditor.tsx": {
+    "jsx-a11y/no-autofocus": {
+      "count": 1
     }
   },
   "public/app/plugins/datasource/loki/querybuilder/components/LokiQueryBuilder.tsx": {
@@ -4863,6 +5186,11 @@
   },
   "public/app/plugins/panel/text/textPanelMigrationHandler.ts": {
     "@typescript-eslint/no-explicit-any": {
+      "count": 1
+    }
+  },
+  "public/app/plugins/panel/timeseries/NullsThresholdInput.tsx": {
+    "jsx-a11y/no-autofocus": {
       "count": 1
     }
   },

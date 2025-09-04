@@ -14,7 +14,6 @@ export type Each = (idx: number, offPct: number, dimPct: number) => void;
 export function distribute(numItems: number, sizeFactor: number, justify: number, onlyIdx: number | null, each: Each) {
   let space = 1 - sizeFactor;
 
-  /* eslint-disable no-multi-spaces */
   // prettier-ignore
   let gap = (
     justify === SPACE_BETWEEN ? space / (numItems - 1) :
@@ -32,7 +31,6 @@ export function distribute(numItems: number, sizeFactor: number, justify: number
     justify === SPACE_AROUND  ? gap / 2 :
     justify === SPACE_EVENLY  ? gap     : 0
   );
-  /* eslint-enable */
 
   let iwid = sizeFactor / numItems;
   let _iwid = roundDecimals(iwid, 6);

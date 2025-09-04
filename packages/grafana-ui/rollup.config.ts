@@ -9,7 +9,6 @@ const icons = rq('../../public/app/core/icons/cached.json');
 const pkg = rq('./package.json');
 
 const iconSrcPaths = icons.map((iconSubPath) => {
-  // eslint-disable-next-line @grafana/no-restricted-img-srcs
   return `../../public/img/icons/${iconSubPath}.svg`;
 });
 

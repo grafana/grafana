@@ -24,7 +24,7 @@ test.describe(
       // Get panel types from window object
       const panelTypes = await page.evaluate(() => {
         // @grafana/plugin-e2e doesn't export the full bootdata config
-        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+
         const win = window as typeof window & { grafanaBootData: BootData };
         return win.grafanaBootData?.settings?.panels ?? {};
       });

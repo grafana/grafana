@@ -34,9 +34,9 @@ export const scopeFilterOperatorMap: Record<string, ScopeFilterOperator> = {
   '!=|': 'not-one-of',
 };
 
+// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
 export const reverseScopeFilterOperatorMap: Record<ScopeFilterOperator, string> = Object.fromEntries(
   Object.entries(scopeFilterOperatorMap).map(([symbol, operator]) => [operator, symbol])
-  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
 ) as Record<ScopeFilterOperator, string>;
 
 export interface ScopeSpecFilter {

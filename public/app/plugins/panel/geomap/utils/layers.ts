@@ -83,7 +83,7 @@ export async function updateLayer(panel: GeomapPanel, uid: string, newOptions: M
     // initialize with new data
     applyLayerFilter(info.handler, newOptions, panel.props.data);
   } catch (err) {
-    console.warn('ERROR', err); // eslint-disable-line no-console
+    console.warn('ERROR', err);
     return false;
   }
 
@@ -124,7 +124,7 @@ export async function initLayer(
   }
 
   const handler = await item.create(map, options, panel.props.eventBus, config.theme2);
-  const layer = handler.init(); // eslint-disable-line
+  const layer = handler.init();
   if (options.opacity != null) {
     layer.setOpacity(options.opacity);
   }

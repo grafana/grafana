@@ -20,7 +20,7 @@
 let dashboard;
 
 // All url parameters are available via the ARGS object
-// eslint-disable-next-line no-redeclare
+
 // let ARGS;
 
 // Initialize a skeleton with nothing but a rows array and service object

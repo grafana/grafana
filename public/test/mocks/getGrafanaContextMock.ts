@@ -10,11 +10,8 @@ export function getGrafanaContextMock(overrides: Partial<GrafanaContextType> = {
   return {
     chrome: new AppChromeService(),
     backend: backendSrv,
-    // eslint-disable-next-line
     location: {} as LocationService,
-    // eslint-disable-next-line
     config: { featureToggles: {} } as GrafanaBootConfig,
-    // eslint-disable-next-line
     keybindings: {
       clearAndInitGlobalBindings: jest.fn(),
       setupDashboardBindings: jest.fn(),

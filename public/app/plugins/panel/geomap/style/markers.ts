@@ -297,7 +297,7 @@ async function prepareSVG(url: string, size?: number, backgroundOpacity?: number
       return `data:image/svg+xml,${svgURI}`;
     })
     .catch((error) => {
-      console.error(error); // eslint-disable-line no-console
+      console.error(error);
       return '';
     });
 }

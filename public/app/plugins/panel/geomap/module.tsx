@@ -83,7 +83,7 @@ export const plugin = new PanelPlugin<Options>(GeomapPanel)
           id: 'layers',
           path: '',
           name: '',
-          // eslint-disable-next-line react/display-name
+
           editor: () => (
             <div>
               <Trans i18nKey="geomap.plugin.basemap-layer-configured-server-admin">

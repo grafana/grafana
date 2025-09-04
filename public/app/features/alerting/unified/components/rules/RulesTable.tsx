@@ -204,14 +204,14 @@ function useColumns(
       {
         id: 'name',
         label: t('alerting.use-columns.columns.label.name', 'Name'),
-        // eslint-disable-next-line react/display-name
+
         renderCell: ({ data: rule }) => rule.name,
         size: showNextEvaluationColumn ? 4 : 5,
       },
       {
         id: 'metadata',
         label: '',
-        // eslint-disable-next-line react/display-name
+
         renderCell: ({ data: rule }) => {
           const { promRule, rulerRule } = rule;
 
@@ -239,7 +239,7 @@ function useColumns(
       {
         id: 'health',
         label: t('alerting.use-columns.columns.label.health', 'Health'),
-        // eslint-disable-next-line react/display-name
+
         renderCell: ({ data: { promRule, group } }) => (promRule ? <RuleHealth rule={promRule} /> : null),
         size: '75px',
       },
@@ -248,7 +248,7 @@ function useColumns(
       columns.push({
         id: 'summary',
         label: t('alerting.use-columns.label.summary', 'Summary'),
-        // eslint-disable-next-line react/display-name
+
         renderCell: ({ data: rule }) => {
           return <Tokenize input={rule.annotations[Annotation.summary] ?? ''} />;
         },
@@ -284,7 +284,7 @@ function useColumns(
       columns.push({
         id: 'group',
         label: t('alerting.use-columns.label.group', 'Group'),
-        // eslint-disable-next-line react/display-name
+
         renderCell: ({ data: rule }) => {
           const { namespace, group } = rule;
           // ungrouped rules are rules that are in the "default" group name
@@ -303,7 +303,7 @@ function useColumns(
     columns.push({
       id: 'actions',
       label: t('alerting.use-columns.label.actions', 'Actions'),
-      // eslint-disable-next-line react/display-name
+
       renderCell: ({ data: rule }) => <RuleActionsCell rule={rule} isLoadingRuler={isRulerLoading} />,
       size: '215px',
     });
