@@ -102,7 +102,14 @@ export function getRawDashboardChanges(
   saveRefresh?: boolean
 ) {
   const initialSaveModel = initial;
-  const changedSaveModel = changed;
+  let changedSaveModel = changed;
+
+  // If initial dashboard didn't have version, remove it from changed model for comparison
+  if (initialSaveModel.version === undefined && changedSaveModel.version === 0) {
+    changedSaveModel = { ...changedSaveModel };
+    delete changedSaveModel.version;
+  }
+
   const hasTimeChanged = getHasTimeChanged(changedSaveModel.time, initialSaveModel.time);
   const hasVariableValueChanges = applyVariableChanges(changedSaveModel, initialSaveModel, saveVariables);
   const hasRefreshChanged = changedSaveModel.refresh !== initialSaveModel.refresh;
