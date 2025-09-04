@@ -4517,16 +4517,11 @@
             "any": "Match any",
             "label": "Match rules"
           },
-          "label": "Group",
           "visibility": {
             "hide": "Hide",
             "label": "{{type}} visibility",
             "show": "Show"
           }
-        },
-        "shared": {
-          "delete-condition": "Delete Condition",
-          "unsupported-item-type": "This condition is not supported by the element, hence it will be ignored."
         },
         "time-range-size": {
           "info": "Show or hide the {{type}} if the dashboard time range is shorter than the selected time frame.",
@@ -4556,17 +4551,21 @@
             "not-matches": "Not matches"
           },
           "value": "Value"
+        },
+        "wrapper": {
+          "delete-condition": "Delete Condition",
+          "unsupported-object-type": "This condition is not supported by the element, hence it will be ignored."
         }
       },
       "editor": {
+        "info": "Set rules to control {{type}} visibility by matching any or all rules.",
         "not-supported-for-custom-grid": "Conditional rendering is not supported for the custom grid layout. Switch to auto grid to use conditional rendering.",
-        "unsupported-item-type": "Conditional rendering not supported for this item type"
+        "unsupported-object-type": "Conditional rendering not supported for this item type"
       },
       "overlay": {
         "tooltip": "Element is hidden due to conditional rendering."
       },
       "root": {
-        "info": "Set rules to control {{type}} visibility by matching any or all rules.",
         "title": "Show / hide rules"
       }
     },
@@ -4706,7 +4705,8 @@
       "paste-panel": "Paste panel",
       "remove": "Remove {{typeName}}",
       "row-title": "Change row title",
-      "switch-layout": "Switch layout"
+      "switch-layout": "Switch layout",
+      "tab-title": "Change tab title"
     },
     "edit-pane": {
       "elements": {
@@ -8359,6 +8359,10 @@
         "action-title": "Title",
         "action-title-placeholder": "Action title",
         "action-variables": "Variables",
+        "connection": "Connection",
+        "connection-direct-description": "Make request directly from browser",
+        "connection-direct-label": "Direct from browser",
+        "connection-placeholder": "Select connection",
         "one-click-description": "Only one link or action can have one click enabled at a time"
       }
     },
@@ -8783,7 +8787,6 @@
       "cell-inspect": "Inspect value",
       "cell-inspect-tooltip": "Inspect value",
       "copy": "Copy to Clipboard",
-      "count": "Count",
       "csv-counts": "Rows:{{rows}}, Columns:{{columns}}  <5></5>",
       "csv-placeholder": "Enter CSV here...",
       "filter-placeholder": "Filter values",
@@ -8794,6 +8797,11 @@
       "filter-popup-heading": "Filter by values:",
       "filter-popup-input-placeholder": "Filter values",
       "filter-popup-match-case": "Match case",
+      "footer": {
+        "reducer": {
+          "count": "Count"
+        }
+      },
       "inspect-drawer-title": "Inspect value",
       "nested-table": {
         "no-data": "No data"
@@ -9734,30 +9742,6 @@
     "un-themed-log-label-stats": {
       "field-log-stats": "{{label}}: {{total}} of {{rowCount}} rows have that field",
       "label-log-stats": "{{label}}: {{total}} of {{rowCount}} rows have that label"
-    }
-  },
-  "logs-new": {
-    "category-logs": "Logs",
-    "deduplication-options": {
-      "label-exact": "Exact",
-      "label-none": "None",
-      "label-numbers": "Numbers",
-      "label-signature": "Signature"
-    },
-    "description-infinite-scrolling": "Experimental. Request more results by scrolling to the bottom of the logs list.",
-    "description-show-controls": "Display controls to jump to the last or first log line, and filters by log level",
-    "description-syntax-highlighting": "Use a predefined syntax coloring grammar to highlight relevant parts of the log lines",
-    "name-deduplication": "Deduplication",
-    "name-enable-log-details": "Enable log details",
-    "name-infinite-scrolling": "Enable infinite scrolling",
-    "name-order": "Order",
-    "name-show-controls": "Show controls",
-    "name-syntax-highlighting": "Enable syntax highlighting",
-    "name-time": "Time",
-    "name-wrap-lines": "Wrap lines",
-    "order-options": {
-      "label-newest-first": "Newest first",
-      "label-oldest-first": "Oldest first"
     }
   },
   "manage-dashbaords": {
@@ -12799,8 +12783,6 @@
     "description-calculation": "Choose a reducer function / calculation",
     "description-cell-value-inspect": "Enable cell value inspection in a modal window",
     "description-column-filter": "Enables/disables field filters in table",
-    "description-count-rows": "Display a single count for all data rows",
-    "description-fields": "Select the fields that should be calculated",
     "description-frozen-columns": "Columns are frozen from the left side of the table",
     "description-min-column-width": "The minimum width for column auto resizing",
     "description-tooltip-from-field": "Render a cell from a field (hidden or visible) in a tooltip",
@@ -12827,21 +12809,17 @@
     "name-column-alignment": "Column alignment",
     "name-column-filter": "Column filter",
     "name-column-width": "Column width",
-    "name-count-rows": "Count rows",
     "name-enable-pagination": "Enable pagination",
-    "name-fields": "Fields",
     "name-frozen-columns": "Frozen columns",
     "name-hide-in-table": "Hide in table",
     "name-max-height": "Max row height",
     "name-min-column-width": "Minimum column width",
-    "name-show-table-footer": "Show table footer",
     "name-show-table-header": "Show table header",
     "name-tooltip-from-field": "Tooltip from field",
     "name-tooltip-placement": "Tooltip placement",
     "name-wrap-header-text": "Wrap header text",
     "name-wrap-text": "Wrap text",
     "placeholder-column-width": "auto",
-    "placeholder-fields": "All Numeric Fields",
     "placeholder-max-height": "none",
     "tooltip-placement-options": {
       "label-auto": "Auto",
