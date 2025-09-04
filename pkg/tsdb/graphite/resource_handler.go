@@ -10,7 +10,6 @@ import (
 	"strings"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/tracing"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
@@ -46,7 +45,7 @@ func (s *Service) handleResourceReq(handlerFn resourceHandler) func(rw http.Resp
 		}()
 		requestBody, err := io.ReadAll(req.Body)
 		if err != nil {
-			s.logger.Error("Failed to read events request body", "error", err)
+			s.logger.Error("Failed to read request body", "error", err)
 			writeErrorResponse(rw, http.StatusInternalServerError, fmt.Sprintf("unexpected error %v", err))
 			return
 		}
@@ -65,7 +64,7 @@ func (s *Service) handleResourceReq(handlerFn resourceHandler) func(rw http.Resp
 		rw.WriteHeader(statusCode)
 		_, err = rw.Write(response)
 		if err != nil {
-			writeErrorResponse(rw, http.StatusInternalServerError, fmt.Sprintf("failed to write events response: %v", err))
+			writeErrorResponse(rw, http.StatusInternalServerError, fmt.Sprintf("failed to write response: %v", err))
 			return
 		}
 	}
@@ -121,7 +120,7 @@ func (s *Service) handleEvents(ctx context.Context, dsInfo *datasourceInfo, requ
 		}
 	}()
 
-	events, err := parseResponse[[]GraphiteEventsResponse](res, s.logger)
+	events, err := parseResponse[[]GraphiteEventsResponse](res)
 	if err != nil {
 		return nil, http.StatusInternalServerError, fmt.Errorf("failed to parse events response: %v", err)
 	}
@@ -186,8 +185,14 @@ func (s *Service) handleMetricsFind(ctx context.Context, dsInfo *datasourceInfo,
 		span.SetStatus(codes.Error, err.Error())
 		return nil, http.StatusInternalServerError, fmt.Errorf("failed to complete metrics find request: %v", err)
 	}
+	defer func() {
+		err := res.Body.Close()
+		if err != nil {
+			s.logger.Warn("Failed to close response body", "error", err)
+		}
+	}()
 
-	metrics, err := parseResponse[[]GraphiteMetricsFindResponse](res, s.logger)
+	metrics, err := parseResponse[[]GraphiteMetricsFindResponse](res)
 	if err != nil {
 		return nil, http.StatusInternalServerError, fmt.Errorf("failed to parse metrics find response: %v", err)
 	}
@@ -203,14 +208,7 @@ func (s *Service) handleMetricsFind(ctx context.Context, dsInfo *datasourceInfo,
 	return metricsFindResponse, res.StatusCode, nil
 }
 
-func parseResponse[V any](res *http.Response, logger log.Logger) (*V, error) {
-	defer func() {
-		err := res.Body.Close()
-		if err != nil {
-			logger.Warn("Failed to close response body", "error", err)
-		}
-	}()
-
+func parseResponse[V any](res *http.Response) (*V, error) {
 	encoding := res.Header.Get("Content-Encoding")
 	body, err := decode(encoding, res.Body)
 	if err != nil {
