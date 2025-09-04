@@ -3,6 +3,8 @@ import { HttpResponse, http } from 'msw';
 
 import { wellFormedTree } from '../../../fixtures/folders';
 
+import { SORT_OPTIONS } from './constants';
+
 const [mockTree] = wellFormedTree();
 
 type FilterArray = Array<(v: (typeof mockTree)[number]) => boolean>;
@@ -70,4 +72,6 @@ const getLegacySearchHandler = () =>
     return HttpResponse.json(response);
   });
 
-export default [getLegacySearchHandler()];
+const getSearchSortingHandler = () => http.get('/api/search/sorting', () => HttpResponse.json(SORT_OPTIONS));
+
+export default [getLegacySearchHandler(), getSearchSortingHandler()];

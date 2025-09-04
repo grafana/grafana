@@ -1,5 +1,7 @@
 package schemaversion
 
+import "context"
+
 // V22 migrates table panel styles to set align property to 'auto'.
 // This migration ensures that all table panel styles have their align property
 // set to 'auto' for consistent alignment behavior.
@@ -27,7 +29,7 @@ package schemaversion
 //	    ]
 //	  }
 //	]
-func V22(dashboard map[string]interface{}) error {
+func V22(_ context.Context, dashboard map[string]interface{}) error {
 	dashboard["schemaVersion"] = 22
 
 	panels, ok := dashboard["panels"].([]interface{})

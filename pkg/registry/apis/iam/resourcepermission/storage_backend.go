@@ -6,11 +6,11 @@ import (
 	"errors"
 	"fmt"
 	"iter"
-	"net/http"
 	"sync"
 	"time"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
@@ -30,6 +30,9 @@ type ResourcePermSqlBackend struct {
 	identityStore IdentityStore
 	logger        log.Logger
 
+	mappers        map[schema.GroupResource]Mapper // group/resource -> rbac mapper
+	reverseMappers map[string]schema.GroupResource // rbac kind -> group/resource
+
 	subscribers []chan *resource.WrittenEvent
 	mutex       sync.Mutex
 }
@@ -39,6 +42,15 @@ func ProvideStorageBackend(dbProvider legacysql.LegacyDatabaseProvider) *Resourc
 		dbProvider:    dbProvider,
 		identityStore: idStore.NewLegacySQLStores(dbProvider),
 		logger:        log.New("resourceperm_storage_backend"),
+
+		mappers: map[schema.GroupResource]Mapper{
+			{Group: "folder.grafana.app", Resource: "folders"}:       NewMapper("folders", defaultLevels),
+			{Group: "dashboard.grafana.app", Resource: "dashboards"}: NewMapper("dashboards", defaultLevels),
+		},
+		reverseMappers: map[string]schema.GroupResource{
+			"folders":    {Group: "folder.grafana.app", Resource: "folders"},
+			"dashboards": {Group: "dashboard.grafana.app", Resource: "dashboards"},
+		},
 
 		subscribers: make([]chan *resource.WrittenEvent, 0),
 		mutex:       sync.Mutex{},
@@ -63,11 +75,55 @@ func (s *ResourcePermSqlBackend) ListModifiedSince(ctx context.Context, key reso
 	}
 }
 
-func (s *ResourcePermSqlBackend) ReadResource(_ context.Context, req *resourcepb.ReadRequest) *resource.BackendReadResponse {
-	return &resource.BackendReadResponse{
-		Key:   req.GetKey(),
-		Error: &resourcepb.ErrorResult{Code: http.StatusForbidden, Message: errNotImplemented.Error()},
+func (s *ResourcePermSqlBackend) ReadResource(ctx context.Context, req *resourcepb.ReadRequest) *resource.BackendReadResponse {
+	rsp := &resource.BackendReadResponse{Key: req.GetKey()}
+
+	ns, err := types.ParseNamespace(req.Key.Namespace)
+	if err != nil {
+		rsp.Error = resource.AsErrorResult(err)
+		return rsp
 	}
+	if ns.OrgID <= 0 {
+		rsp.Error = resource.AsErrorResult(apierrors.NewBadRequest(errInvalidNamespace.Error()))
+		return rsp
+	}
+
+	if req.ResourceVersion > 0 {
+		rsp.Error = resource.AsErrorResult(apierrors.NewBadRequest("resourceVersion is not supported"))
+		return rsp
+	}
+
+	dbHelper, err := s.dbProvider(ctx)
+	if err != nil {
+		// Hide the error from the user, but log it
+		logger := s.logger.FromContext(ctx)
+		logger.Error("Failed to get database helper", "error", err)
+		rsp.Error = resource.AsErrorResult(errDatabaseHelper)
+		return rsp
+	}
+
+	resourcePermission, err := s.getResourcePermission(ctx, dbHelper, ns, req.Key.Name)
+	if err != nil {
+		if errors.Is(err, errNotFound) {
+			rsp.Error = resource.AsErrorResult(
+				apierrors.NewNotFound(v0alpha1.ResourcePermissionInfo.GroupResource(), req.Key.Name),
+			)
+		} else if errors.Is(err, errUnknownGroupResource) || errors.Is(err, errInvalidName) {
+			rsp.Error = resource.AsErrorResult(apierrors.NewBadRequest(err.Error()))
+		} else {
+			rsp.Error = resource.AsErrorResult(err)
+		}
+		return rsp
+	}
+
+	rsp.ResourceVersion = resourcePermission.GetUpdateTimestamp().UnixMilli()
+	rsp.Value, err = json.Marshal(resourcePermission)
+	if err != nil {
+		rsp.Error = resource.AsErrorResult(err)
+		return rsp
+	}
+
+	return rsp
 }
 
 func (s *ResourcePermSqlBackend) WatchWriteEvents(ctx context.Context) (<-chan *resource.WrittenEvent, error) {

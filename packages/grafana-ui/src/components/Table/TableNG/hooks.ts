@@ -1,19 +1,12 @@
 import { useState, useMemo, useCallback, useRef, useLayoutEffect, RefObject, CSSProperties, useEffect } from 'react';
 import { Column, DataGridHandle, DataGridProps, SortColumn } from 'react-data-grid';
 
-import {
-  compareArrayValues,
-  Field,
-  fieldReducers,
-  FieldType,
-  formattedValueToString,
-  reduceField,
-} from '@grafana/data';
+import { compareArrayValues, Field, formattedValueToString } from '@grafana/data';
 
 import { TableColumnResizeActionCallback } from '../types';
 
 import { TABLE } from './constants';
-import { FilterType, TableFooterCalc, TableRow, TableSortByFieldState, TableSummaryRow, TypographyCtx } from './types';
+import { FilterType, TableRow, TableSortByFieldState, TableSummaryRow, TypographyCtx } from './types';
 import {
   getDisplayName,
   processNestedTableRows,
@@ -259,73 +252,6 @@ export function usePaginatedRows(
   };
 }
 
-export interface FooterCalcsOptions {
-  enabled?: boolean;
-  isCountRowsSet?: boolean;
-  footerOptions?: TableFooterCalc;
-}
-
-export function useFooterCalcs(
-  rows: TableRow[],
-  // it's very important that this is the _visible_ fields.
-  fields: Field[],
-  { enabled, footerOptions, isCountRowsSet }: FooterCalcsOptions
-): string[] {
-  return useMemo(() => {
-    const footerReducers = footerOptions?.reducer;
-
-    if (!enabled || !footerOptions || !Array.isArray(footerReducers) || !footerReducers.length) {
-      return [];
-    }
-
-    const fieldNameSet = footerOptions.fields?.length ? new Set(footerOptions.fields) : null;
-
-    return fields.map((field, index) => {
-      if (field.state?.calcs) {
-        delete field.state?.calcs;
-      }
-
-      if (isCountRowsSet) {
-        return index === 0 ? `${rows.length}` : '';
-      }
-
-      let emptyValue = '';
-      if (index === 0) {
-        const footerCalcReducer = footerReducers[0];
-        emptyValue = footerCalcReducer ? fieldReducers.get(footerCalcReducer).name : '';
-      }
-
-      if (field.type !== FieldType.number) {
-        return emptyValue;
-      }
-
-      // if field.display is undefined, don't throw
-      const displayFn = field.display;
-      if (!displayFn) {
-        return emptyValue;
-      }
-
-      // If fields array is specified, only show footer for fields included in that array.
-      // the array can include either the display name or the field name. we don't use a field matcher
-      // because that requires us to drill the data frame down here.
-      if (fieldNameSet && !fieldNameSet.has(getDisplayName(field)) && !fieldNameSet.has(field.name)) {
-        return emptyValue;
-      }
-
-      const calc = footerReducers[0];
-      const value = reduceField({
-        field: {
-          ...field,
-          values: rows.map((row) => row[getDisplayName(field)]),
-        },
-        reducers: footerReducers,
-      })[calc];
-
-      return formattedValueToString(displayFn(value));
-    });
-  }, [fields, enabled, footerOptions, isCountRowsSet, rows]);
-}
-
 const ICON_WIDTH = 16;
 const ICON_GAP = 4;
 
@@ -403,6 +329,7 @@ interface UseRowHeightOptions {
   defaultHeight: NonNullable<CSSProperties['height']>;
   expandedRows: Set<number>;
   typographyCtx: TypographyCtx;
+  maxHeight?: number;
 }
 
 export function useRowHeight({
@@ -412,8 +339,12 @@ export function useRowHeight({
   defaultHeight,
   expandedRows,
   typographyCtx,
+  maxHeight,
 }: UseRowHeightOptions): NonNullable<CSSProperties['height']> | ((row: TableRow) => number) {
-  const measurers = useMemo(() => buildCellHeightMeasurers(fields, typographyCtx), [fields, typographyCtx]);
+  const measurers = useMemo(
+    () => buildCellHeightMeasurers(fields, typographyCtx, maxHeight),
+    [fields, typographyCtx, maxHeight]
+  );
   const hasWrappedCols = useMemo(() => measurers?.length ?? 0 > 0, [measurers]);
 
   const colWidths = useMemo(() => {

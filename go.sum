@@ -634,8 +634,8 @@ cuelabs.dev/go/oci/ociregistry v0.0.0-20240906074133-82eb438dd565 h1:R5wwEcbEZSB
 cuelabs.dev/go/oci/ociregistry v0.0.0-20240906074133-82eb438dd565/go.mod h1:5A4xfTzHTXfeVJBU6RAUf+QrlfTCW+017q/QiW+sMLg=
 cuelang.org/go v0.11.1 h1:pV+49MX1mmvDm8Qh3Za3M786cty8VKPWzQ1Ho4gZRP0=
 cuelang.org/go v0.11.1/go.mod h1:PBY6XvPUswPPJ2inpvUozP9mebDVTXaeehQikhZPBz0=
-dario.cat/mergo v1.0.1 h1:Ra4+bf83h2ztPIQYNP99R6m+Y7KfnARDfID+a+vLl4s=
-dario.cat/mergo v1.0.1/go.mod h1:uNxQE+84aUszobStD9th8a29P2fMDhsBdgRYvZOxGmk=
+dario.cat/mergo v1.0.2 h1:85+piFYR1tMbRrLcDwR18y4UKJ3aH1Tbzi24VRW1TK8=
+dario.cat/mergo v1.0.2/go.mod h1:E/hbnu0NxMFBjpMIE34DRGLWqDy0g5FuKDhCb31ngxA=
 dmitri.shuralyov.com/gpu/mtl v0.0.0-20190408044501-666a987793e9/go.mod h1:H6x//7gZCb22OMCxBHrMx7a5I7Hp++hsVxbQ4BYO7hU=
 filippo.io/age v1.2.1 h1:X0TZjehAZylOIj4DubWYU1vWQxv9bJpo+Uu2/LGhi1o=
 filippo.io/age v1.2.1/go.mod h1:JL9ew2lTN+Pyft4RiNGguFfOpewKwSHm5ayKD/A4004=
@@ -1581,8 +1581,8 @@ github.com/gorilla/sessions v1.2.1 h1:DHd3rPN5lE3Ts3D8rKkQ8x/0kqfeNmBAaiSi+o7Fsg
 github.com/gorilla/sessions v1.2.1/go.mod h1:dk2InVEVJ0sfLlnXv9EAgkf6ecYs/i80K/zI+bUmuGM=
 github.com/gorilla/websocket v1.5.4-0.20250319132907-e064f32e3674 h1:JeSE6pjso5THxAzdVpqr6/geYxZytqFMBCOtn/ujyeo=
 github.com/gorilla/websocket v1.5.4-0.20250319132907-e064f32e3674/go.mod h1:r4w70xmWCQKmi1ONH4KIaBptdivuRPyosB9RmPlGEwA=
-github.com/grafana/alerting v0.0.0-20250821181654-10915888e4f0 h1:CC+ShIgoLTBsAulRfJH9xF++Us6Y3va3VFbeDeJym2M=
-github.com/grafana/alerting v0.0.0-20250821181654-10915888e4f0/go.mod h1:VKxaR93Gff0ZlO2sPcdPVob1a/UzArFEW5zx3Bpyhls=
+github.com/grafana/alerting v0.0.0-20250903205312-24567882c5d1 h1:1Xjk9zr9P4jeRsdHlWkQPiByd16YEEeTVqkwn8i6iMQ=
+github.com/grafana/alerting v0.0.0-20250903205312-24567882c5d1/go.mod h1:EfKE30jNw2b4whbJjtgea3JXUfUSVadmVSL/IAGgJeQ=
 github.com/grafana/authlib v0.0.0-20250710201142-9542f2f28d43 h1:vVPT0i5Y1vI6qzecYStV2yk7cHKrC3Pc7AgvwT5KydQ=
 github.com/grafana/authlib v0.0.0-20250710201142-9542f2f28d43/go.mod h1:1fWkOiL+m32NBgRHZtlZGz2ji868tPZACYbqP3nBRJI=
 github.com/grafana/authlib/types v0.0.0-20250710201142-9542f2f28d43 h1:NlkGMnVi/oUn6Cr90QbJYpQJ4FnjyAIG9Ex5GtTZIzw=
@@ -1605,6 +1605,8 @@ github.com/grafana/grafana-app-sdk v0.40.3 h1:JFo7uAfbAJUfZ9neD7/4sODKm1xgu9zhck
 github.com/grafana/grafana-app-sdk v0.40.3/go.mod h1:j0KzHo3Sa6kd+lnwSScBNoV9Vobkg/YY9HtEjxpyPrk=
 github.com/grafana/grafana-app-sdk/logging v0.40.3 h1:2VXsXXEQiqAavRP8wusRDB6rDqf5lufP7A6NfjELqPE=
 github.com/grafana/grafana-app-sdk/logging v0.40.3/go.mod h1:otUD9XpJD7A5sCLb8mcs9hIXGdeV6lnhzVwe747g4RU=
+github.com/grafana/grafana-app-sdk/plugin v0.40.3 h1:uH0oFZnYOUL+OXcyhd5NVYwoM+Wa0WUXvZ2Om1M91r0=
+github.com/grafana/grafana-app-sdk/plugin v0.40.3/go.mod h1:+ylwE0P8WgPu5zURK5aDnVJpwRpuK3573rwrVV28qzQ=
 github.com/grafana/grafana-aws-sdk v1.1.0 h1:G0fvwbQmHw14c5RXPd7Gnw9ZQcgzl139LtMDoe0KhmE=
 github.com/grafana/grafana-aws-sdk v1.1.0/go.mod h1:7e+47EdHynteYWGoT5Ere9KeOXQObsk8F0vkOLQ1tz8=
 github.com/grafana/grafana-azure-sdk-go/v2 v2.2.0 h1:0TYrkzAc3u0HX+9GK86cGrLTUAcmQfl3/LEB3tL+SOA=
@@ -1631,8 +1633,8 @@ github.com/grafana/nanogit v0.0.0-20250723104447-68f58f5ecec0 h1:cS0SlJGIlZbmDLc
 github.com/grafana/nanogit v0.0.0-20250723104447-68f58f5ecec0/go.mod h1:ToqLjIdvV3AZQa3K6e5m9hy/nsGaUByc2dWQlctB9iA=
 github.com/grafana/otel-profiling-go v0.5.1 h1:stVPKAFZSa7eGiqbYuG25VcqYksR6iWvF3YH66t4qL8=
 github.com/grafana/otel-profiling-go v0.5.1/go.mod h1:ftN/t5A/4gQI19/8MoWurBEtC6gFw8Dns1sJZ9W4Tls=
-github.com/grafana/prometheus-alertmanager v0.25.1-0.20250620093340-be61a673dee6 h1:oJnbhG6ZNy10AjsgNeAtAKeGHogIGOMfAsBH6fYYa5M=
-github.com/grafana/prometheus-alertmanager v0.25.1-0.20250620093340-be61a673dee6/go.mod h1:O/QP1BCm0HHIzbKvgMzqb5sSyH88rzkFk84F4TfJjBU=
+github.com/grafana/prometheus-alertmanager v0.25.1-0.20250821192752-903ba9e90238 h1:0UYzSzpVFKCc4OhVB8dZai3lO0ANg7IIdSZhMiBhdOg=
+github.com/grafana/prometheus-alertmanager v0.25.1-0.20250821192752-903ba9e90238/go.mod h1:O/QP1BCm0HHIzbKvgMzqb5sSyH88rzkFk84F4TfJjBU=
 github.com/grafana/pyroscope-go/godeltaprof v0.1.8 h1:iwOtYXeeVSAeYefJNaxDytgjKtUuKQbJqgAIjlnicKg=
 github.com/grafana/pyroscope-go/godeltaprof v0.1.8/go.mod h1:2+l7K7twW49Ct4wFluZD3tZ6e0SjanjcUUBPVD/UuGU=
 github.com/grafana/pyroscope/api v1.2.1-0.20250415190842-3ff7247547ae h1:35W3Wjp9KWnSoV/DuymmyIj5aHE0CYlDQ5m2KeXUPAc=
@@ -2419,8 +2421,6 @@ github.com/stretchr/testify v1.10.0/go.mod h1:r2ic/lqez/lEtzL7wO/rwa5dbSLXVDPFyf
 github.com/subosito/gotenv v1.4.1/go.mod h1:ayKnFf/c6rvx/2iiLrJUk1e6plDbT3edrFNGqEflhK0=
 github.com/subosito/gotenv v1.6.0 h1:9NlTDc1FTs4qu0DDq7AEtTPNw6SVm7uBMsUCUjABIf8=
 github.com/subosito/gotenv v1.6.0/go.mod h1:Dk4QP5c2W3ibzajGcXpNraDfq2IrhjMIvMSWPKKo0FU=
-github.com/teris-io/shortid v0.0.0-20171029131806-771a37caa5cf h1:Z2X3Os7oRzpdJ75iPqWZc0HeJWFYNCvKsfpQwFpRNTA=
-github.com/teris-io/shortid v0.0.0-20171029131806-771a37caa5cf/go.mod h1:M8agBzgqHIhgj7wEn9/0hJUZcrvt9VY+Ln+S1I5Mha0=
 github.com/tetratelabs/wazero v1.8.2 h1:yIgLR/b2bN31bjxwXHD8a3d+BogigR952csSDdLYEv4=
 github.com/tetratelabs/wazero v1.8.2/go.mod h1:yAI0XTsMBhREkM/YDAK/zNou3GoiAce1P6+rp/wQhjs=
 github.com/thanos-io/objstore v0.0.0-20240818203309-0363dadfdfb1 h1:z0v9BB/p7s4J6R//+0a5M3wCld8KzNjrGRLIwXfrAZk=

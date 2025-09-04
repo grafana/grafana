@@ -56,6 +56,23 @@ func TestTemplates(t *testing.T) {
 		return &v
 	}
 
+	getListResourcePermissionsQuery := func(q *ListResourcePermissionsQuery) sqltemplate.SQLTemplate {
+		v := listResourcePermissionsQueryTemplate{
+			SQLTemplate:        sqltemplate.New(nodb.DialectForDriver()),
+			Query:              q,
+			PermissionTable:    nodb.Table("permission"),
+			RoleTable:          nodb.Table("role"),
+			UserTable:          nodb.Table("user"),
+			TeamTable:          nodb.Table("team"),
+			BuiltinRoleTable:   nodb.Table("builtin_role"),
+			UserRoleTable:      nodb.Table("user_role"),
+			TeamRoleTable:      nodb.Table("team_role"),
+			ManagedRolePattern: "managed:%",
+		}
+		v.SQLTemplate = mocks.NewTestingSQLTemplate()
+		return &v
+	}
+
 	mocks.CheckQuerySnapshots(t, mocks.TemplateTestSetup{
 		RootDir:        "testdata",
 		SQLTemplatesFS: sqlTemplatesFS,
@@ -101,6 +118,20 @@ func TestTemplates(t *testing.T) {
 						AssignmentColumn: "role",
 						Action:           "dashboards:admin",
 						Scope:            "dashboard:uid:dash2",
+					}),
+				},
+			},
+			resourcePermissionsQueryTplt: {
+				{
+					Name: "basic_query",
+					Data: getListResourcePermissionsQuery(&ListResourcePermissionsQuery{}),
+				},
+				{
+					Name: "with_all_fields",
+					Data: getListResourcePermissionsQuery(&ListResourcePermissionsQuery{
+						Scope:      "123",
+						OrgID:      3,
+						ActionSets: []string{"folders:admin", "folders:edit", "folders:view"},
 					}),
 				},
 			},

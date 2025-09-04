@@ -228,6 +228,9 @@ export function MoveProvisionedDashboardForm({
             />
 
             <Stack gap={2}>
+              <Button variant="secondary" onClick={onDismiss} fill="outline">
+                <Trans i18nKey="dashboard-scene.move-provisioned-dashboard-form.cancel-action">Cancel</Trans>
+              </Button>
               <Button
                 variant="primary"
                 type="submit"
@@ -236,9 +239,6 @@ export function MoveProvisionedDashboardForm({
                 {isLoading
                   ? t('dashboard-scene.move-provisioned-dashboard-form.moving', 'Moving...')
                   : t('dashboard-scene.move-provisioned-dashboard-form.move-action', 'Move dashboard')}
-              </Button>
-              <Button variant="secondary" onClick={onDismiss} fill="outline">
-                <Trans i18nKey="dashboard-scene.move-provisioned-dashboard-form.cancel-action">Cancel</Trans>
               </Button>
             </Stack>
           </Stack>

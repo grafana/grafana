@@ -20,50 +20,53 @@ export interface Props {
   timeRange: TimeRange;
   timeZone: string;
   onResize(): void;
+  showControls: boolean;
 }
 
 export type LogLineDetailsMode = 'inline' | 'sidebar';
 
-export const LogLineDetails = memo(({ containerElement, focusLogLine, logs, timeRange, timeZone, onResize }: Props) => {
-  const { detailsWidth, noInteractions, setDetailsWidth } = useLogListContext();
-  const styles = useStyles2(getStyles, 'sidebar');
-  const dragStyles = useStyles2(getDragStyles);
-  const containerRef = useRef<HTMLDivElement | null>(null);
+export const LogLineDetails = memo(
+  ({ containerElement, focusLogLine, logs, timeRange, timeZone, onResize, showControls }: Props) => {
+    const { detailsWidth, noInteractions, setDetailsWidth } = useLogListContext();
+    const styles = useStyles2(getStyles, 'sidebar', showControls);
+    const dragStyles = useStyles2(getDragStyles);
+    const containerRef = useRef<HTMLDivElement | null>(null);
 
-  const handleResize = useCallback(() => {
-    if (containerRef.current) {
-      setDetailsWidth(containerRef.current.clientWidth);
-    }
-    onResize();
-  }, [onResize, setDetailsWidth]);
+    const handleResize = useCallback(() => {
+      if (containerRef.current) {
+        setDetailsWidth(containerRef.current.clientWidth);
+      }
+      onResize();
+    }, [onResize, setDetailsWidth]);
 
-  const reportResize = useCallback(() => {
-    if (containerRef.current && !noInteractions) {
-      reportInteraction('logs_log_line_details_sidebar_resized', {
-        width: Math.round(containerRef.current.clientWidth),
-      });
-    }
-  }, [noInteractions]);
+    const reportResize = useCallback(() => {
+      if (containerRef.current && !noInteractions) {
+        reportInteraction('logs_log_line_details_sidebar_resized', {
+          width: Math.round(containerRef.current.clientWidth),
+        });
+      }
+    }, [noInteractions]);
 
-  const maxWidth = containerElement.clientWidth - LOG_LIST_MIN_WIDTH;
+    const maxWidth = containerElement.clientWidth - LOG_LIST_MIN_WIDTH;
 
-  return (
-    <Resizable
-      onResize={handleResize}
-      onResizeStop={reportResize}
-      handleClasses={{ left: dragStyles.dragHandleVertical }}
-      defaultSize={{ width: detailsWidth, height: containerElement.clientHeight }}
-      size={{ width: detailsWidth, height: containerElement.clientHeight }}
-      enable={{ left: true }}
-      minWidth={40}
-      maxWidth={maxWidth}
-    >
-      <div className={styles.container} ref={containerRef}>
-        <LogLineDetailsTabs focusLogLine={focusLogLine} logs={logs} timeRange={timeRange} timeZone={timeZone} />
-      </div>
-    </Resizable>
-  );
-});
+    return (
+      <Resizable
+        onResize={handleResize}
+        onResizeStop={reportResize}
+        handleClasses={{ left: dragStyles.dragHandleVertical }}
+        defaultSize={{ width: detailsWidth, height: containerElement.clientHeight }}
+        size={{ width: detailsWidth, height: containerElement.clientHeight }}
+        enable={{ left: true }}
+        minWidth={40}
+        maxWidth={maxWidth}
+      >
+        <div className={styles.container} ref={containerRef}>
+          <LogLineDetailsTabs focusLogLine={focusLogLine} logs={logs} timeRange={timeRange} timeZone={timeZone} />
+        </div>
+      </Resizable>
+    );
+  }
+);
 LogLineDetails.displayName = 'LogLineDetails';
 
 const LogLineDetailsTabs = memo(
@@ -141,11 +144,12 @@ LogLineDetailsTabs.displayName = 'LogLineDetailsTabs';
 export interface InlineLogLineDetailsProps {
   log: LogListModel;
   logs: LogListModel[];
+  onResize(): void;
   timeRange: TimeRange;
   timeZone: string;
 }
 
-export const InlineLogLineDetails = memo(({ logs, log, timeRange, timeZone }: InlineLogLineDetailsProps) => {
+export const InlineLogLineDetails = memo(({ logs, log, onResize, timeRange, timeZone }: InlineLogLineDetailsProps) => {
   const { app, detailsWidth, noInteractions } = useLogListContext();
   const styles = useStyles2(getStyles, 'inline');
   const scrollRef = useRef<HTMLDivElement | null>(null);
@@ -158,6 +162,14 @@ export const InlineLogLineDetails = memo(({ logs, log, timeRange, timeZone }: In
       });
     }
   }, [app, noInteractions]);
+
+  useEffect(() => {
+    function handleResize() {
+      onResize();
+    }
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [onResize]);
 
   const saveScroll = useCallback(() => {
     saveDetailsScrollPosition(log, scrollRef.current?.scrollTop ?? 0);
@@ -172,7 +184,7 @@ export const InlineLogLineDetails = memo(({ logs, log, timeRange, timeZone }: In
 
   return (
     <div className={`${styles.inlineWrapper} log-line-inline-details`} style={{ maxWidth: detailsWidth }}>
-      <div className={styles.container}>
+      <div className={styles.inlineContainer}>
         <div className={styles.scrollContainer} ref={scrollRef} onScroll={saveScroll}>
           <LogLineDetailsComponent log={log} logs={logs} timeRange={timeRange} timeZone={timeZone} />
         </div>
@@ -182,21 +194,31 @@ export const InlineLogLineDetails = memo(({ logs, log, timeRange, timeZone }: In
 });
 InlineLogLineDetails.displayName = 'InlineLogLineDetails';
 
-export const LOG_LINE_DETAILS_HEIGHT = 35;
+export const LOG_LINE_DETAILS_HEIGHT = 45;
 
-const getStyles = (theme: GrafanaTheme2, mode: LogLineDetailsMode) => ({
+const getStyles = (theme: GrafanaTheme2, mode: LogLineDetailsMode, showControls?: boolean) => ({
   inlineWrapper: css({
     gridColumn: '1 / -1',
     height: `${LOG_LINE_DETAILS_HEIGHT}vh`,
     padding: theme.spacing(1, 2, 1.5, 2),
     marginRight: 1,
   }),
-  container: css({
-    overflow: 'auto',
+  inlineContainer: css({
+    backgroundColor: theme.colors.background.secondary,
+    border: `1px solid ${theme.colors.border.weak}`,
+    borderRadius: theme.shape.radius.default,
     height: '100%',
-    boxShadow: theme.shadows.z1,
-    border: `1px solid ${theme.colors.border.medium}`,
-    borderRight: mode === 'sidebar' ? 'none' : undefined,
+    overflow: 'auto',
+  }),
+  container: css({
+    backgroundColor: theme.colors.background.elevated,
+    border: `1px solid ${theme.colors.border.weak}`,
+    borderBottomRightRadius: showControls ? undefined : theme.shape.radius.default,
+    borderRight: mode === 'sidebar' && showControls ? 'none' : undefined,
+    borderTopRightRadius: showControls ? undefined : theme.shape.radius.default,
+    boxShadow: theme.shadows.z3,
+    height: '100%',
+    overflow: 'auto',
   }),
   scrollContainer: css({
     overflow: 'auto',
