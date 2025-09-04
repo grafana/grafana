@@ -17,5 +17,5 @@ WHERE r.name LIKE 'managed:%'
 AND p.action IN ('folders:admin', 'folders:edit', 'folders:view')
 AND (u.uid IS NOT NULL OR t.uid IS NOT NULL OR br.role IS NOT NULL)
 AND COALESCE(ur.org_id, tr.org_id, r.org_id) = 3
-AND p.scope LIKE '123'
+AND p.scope = '123'
 ORDER BY p.id

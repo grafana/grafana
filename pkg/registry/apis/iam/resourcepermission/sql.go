@@ -54,7 +54,7 @@ func (s *ResourcePermSqlBackend) getResourcePermissions(ctx context.Context, sql
 	return permissions, nil
 }
 
-// getResourcePermission retrieves a single ResourcePermission by its name in the format <group>.<resource>.<name> (e.g. dashboard.grafana.app-dashboards-ad5rwqs)
+// getResourcePermission retrieves a single ResourcePermission by its name in the format <group>-<resource>-<name> (e.g. dashboard.grafana.app-dashboards-ad5rwqs)
 func (s *ResourcePermSqlBackend) getResourcePermission(ctx context.Context, sql *legacysql.LegacyDatabaseHelper, ns types.NamespaceInfo, name string) (*v0alpha1.ResourcePermission, error) {
 	// e.g. dashboard.grafana.app-dashboards-ad5rwqs
 	parts := strings.SplitN(name, "-", 3)
