@@ -568,6 +568,7 @@ export type { FeatureToggles } from './types/featureToggles.gen';
 export {
   PluginExtensionTypes,
   PluginExtensionPoints,
+  PluginExtensionExposedComponents,
   type PluginExtension,
   type PluginExtensionLink,
   type PluginExtensionComponent,
@@ -588,6 +589,7 @@ export {
   type PluginExtensionAddedLinkConfig,
   type PluginExtensionAddedFunctionConfig,
   type PluginExtensionResourceAttributesContext,
+  type CentralAlertHistorySceneProps,
 } from './types/pluginExtensions';
 export {
   type ScopeDashboardBindingSpec,

@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import { useEffect, useMemo } from 'react';
 
-import { GrafanaTheme2, VariableHide } from '@grafana/data';
+import { CentralAlertHistorySceneProps, GrafanaTheme2, VariableHide } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import {
   CustomVariable,
@@ -39,7 +39,6 @@ import {
   useStyles2,
 } from '@grafana/ui';
 
-import { CentralAlertHistorySceneProps } from '../../../../../../../../packages/grafana-data/src/types/pluginExtensions';
 import { LogMessages, logInfo } from '../../../Analytics';
 
 import { alertStateHistoryDatasource, useRegisterHistoryRuntimeDataSource } from './CentralHistoryRuntimeDataSource';

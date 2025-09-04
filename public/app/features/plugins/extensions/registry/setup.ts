@@ -1,6 +1,6 @@
+import { PluginExtensionExposedComponents } from '@grafana/data';
 import CentralAlertHistorySceneExposedComponent from 'app/features/alerting/unified/components/rules/central-state-history/CentralAlertHistorySceneExposedComponent';
 
-import { PluginExtensionExposedComponents } from '../../../../../../packages/grafana-data/src/types/pluginExtensions';
 import { getCoreExtensionConfigurations } from '../getCoreExtensionConfigurations';
 
 import { AddedComponentsRegistry } from './AddedComponentsRegistry';
