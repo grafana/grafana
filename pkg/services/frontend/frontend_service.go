@@ -43,7 +43,6 @@ type frontendService struct {
 }
 
 func ProvideFrontendService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, promGatherer prometheus.Gatherer, promRegister prometheus.Registerer, license licensing.Licensing) (*frontendService, error) {
-	logger := log.New("frontend-server")
 	assetsManifest, err := fswebassets.GetWebAssets(cfg, license)
 	if err != nil {
 		return nil, err
@@ -57,7 +56,7 @@ func ProvideFrontendService(cfg *setting.Cfg, features featuremgmt.FeatureToggle
 	s := &frontendService{
 		cfg:          cfg,
 		features:     features,
-		log:          logger,
+		log:          log.New("frontend-server"),
 		promGatherer: promGatherer,
 		promRegister: promRegister,
 		tracer:       tracer,
