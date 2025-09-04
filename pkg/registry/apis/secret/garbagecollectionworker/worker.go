@@ -39,7 +39,7 @@ func ProvideWorker(
 }
 
 func (w *Worker) Run(ctx context.Context) error {
-	if !w.Cfg.SecretsManagement.GCWorkerEnabled {
+	if !w.Cfg.SecretsManagement.GCWorkerEnabled || w.Cfg.StackID != "" {
 		return nil
 	}
 
