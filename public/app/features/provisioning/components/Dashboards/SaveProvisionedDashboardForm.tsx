@@ -53,7 +53,6 @@ export function SaveProvisionedDashboardForm({
   const navigate = useNavigate();
   const appEvents = getAppEvents();
   const { isDirty, editPanel: panelEditor } = dashboard.useState();
-  console.log('isDirty', isDirty);
 
   const [createOrUpdateFile, request] = useCreateOrUpdateRepositoryFile(isNew ? undefined : defaultValues.path);
 
@@ -115,18 +114,14 @@ export function SaveProvisionedDashboardForm({
   const handleDismiss = (upsert: Resource<Dashboard>) => {
     panelEditor?.onDiscard();
 
-    // Try upsert first, then dryRun fallback
-    let resourceData: Resource<Dashboard> | Unstructured = upsert;
-    if (!resourceData && request.data?.resource?.dryRun) {
-      resourceData = request.data.resource.dryRun;
-    }
+    // Get the current dashboard model and create a proper save response
+    const model = dashboard.getSaveModel();
+    const resourceData = request?.data?.resource.dryRun;
+    const saveResponse = createSaveResponseFromResource(resourceData);
 
-    if (resourceData) {
-      const saveResponse = createSaveResponseFromResource(resourceData);
-      dashboard.saveCompleted(resourceData.spec, saveResponse, defaultValues.folder?.uid);
-    } else {
-      dashboard.setState({ isDirty: false });
-    }
+    // Use the standard save completion flow to properly reset change tracking
+    // This ensures isDirty is set to false and the serializer's initialSaveModel is updated
+    dashboard.saveCompleted(model, saveResponse, defaultValues.folder?.uid);
 
     drawer.onClose();
   };
@@ -308,15 +303,19 @@ function updateURLParams(param: string, value?: string) {
   window.history.replaceState({}, '', url);
 }
 
-function createSaveResponseFromResource(resource: Resource<Dashboard> | Unstructured): SaveDashboardResponseDTO {
-  const uid = resource.metadata?.name || '';
-  const title = resource.spec?.title || '';
+/**
+ * Creates a SaveDashboardResponseDTO from a provisioning resource response
+ * This allows us to use the standard dashboard save completion flow
+ */
+function createSaveResponseFromResource(resource?: Unstructured): SaveDashboardResponseDTO {
+  const uid = resource?.metadata?.name;
+  const title = resource?.spec?.title;
   const slug = kbn.slugifyForUrl(title);
 
   return {
     uid,
-    version: resource.metadata?.generation || 0,
-    id: resource.spec?.id || 0,
+    version: resource?.metadata?.generation,
+    id: resource?.spec?.id || 0, // id is deprecated field, we just fall back to 0
     status: 'success',
     url: locationUtil.assureBaseUrl(
       getDashboardUrl({
