@@ -42,13 +42,6 @@ export function usePluginLinks({
       };
     }
 
-    if (!registryState || !registryState[extensionPointId]) {
-      return {
-        isLoading: false,
-        links: [],
-      };
-    }
-
     const frozenContext = context ? getReadOnlyProxy(context) : {};
     const extensions: PluginExtensionLink[] = [];
     const extensionsByPlugin: Record<string, number> = {};
