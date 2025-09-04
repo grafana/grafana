@@ -6,11 +6,12 @@ import {
   GrafanaTheme2,
   PluginExtensionPoints,
   PluginExtensionLink,
+  PluginExtensionDataSourceConfigStatusContext,
 } from '@grafana/data';
 import { sanitizeUrl } from '@grafana/data/internal';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
-import { TestingStatus, config, usePluginLinks } from '@grafana/runtime';
+import { TestingStatus, config, usePluginLinks, usePluginComponents, renderLimitedComponents } from '@grafana/runtime';
 import { AlertVariant, Alert, useTheme2, Link, useStyles2 } from '@grafana/ui';
 
 import { contextSrv } from '../../../core/core';
@@ -161,19 +162,26 @@ export function DataSourceTestingStatus({ testingStatus, exploreUrl, dataSource 
   };
   const styles = useStyles2(getTestingStatusStyles);
 
+  // Extensions context
+  const extensionStatusContext: PluginExtensionDataSourceConfigStatusContext = {
+    dataSource: {
+      type: dataSource.type,
+      uid: dataSource.uid,
+      name: dataSource.name,
+      typeName: dataSource.typeName,
+    },
+    testingStatus,
+    severity,
+  };
+
   const { links: allStatusLinks } = usePluginLinks({
     extensionPointId: PluginExtensionPoints.DataSourceConfigStatus,
-    context: {
-      dataSource: {
-        type: dataSource.type,
-        uid: dataSource.uid,
-        name: dataSource.name,
-        typeName: dataSource.typeName,
-      },
-      testingStatus,
-      severity,
-    },
+    context: extensionStatusContext,
     limitPerPlugin: 1,
+  });
+
+  const { components: extensionComponents } = usePluginComponents<PluginExtensionDataSourceConfigStatusContext>({
+    extensionPointId: PluginExtensionPoints.DataSourceConfigStatus,
   });
 
   // Existing error-specific extensions (backward compatibility)
@@ -192,6 +200,7 @@ export function DataSourceTestingStatus({ testingStatus, exploreUrl, dataSource 
 
   // Filter to only allow grafana-owned plugins
   const statusLinks = allStatusLinks.filter((link) => ALLOWED_DATASOURCE_EXTENSION_PLUGINS.includes(link.pluginId));
+  const statusComponents = extensionComponents.filter((c) => ALLOWED_DATASOURCE_EXTENSION_PLUGINS.includes(c.meta.pluginId));
   const errorLinks = allErrorLinks.filter((link) => ALLOWED_DATASOURCE_EXTENSION_PLUGINS.includes(link.pluginId));
 
   // Combine links: show error-specific only for errors, status-general for all
@@ -232,6 +241,15 @@ export function DataSourceTestingStatus({ testingStatus, exploreUrl, dataSource 
                     {link.title}
                   </a>
                 );
+              })}
+            </div>
+          )}
+          {statusComponents.length > 0 && (
+            <div className={styles.linksContainer}>
+              {renderLimitedComponents<PluginExtensionDataSourceConfigStatusContext>({
+                props: extensionStatusContext,
+                components: statusComponents,
+                limit: 2,
               })}
             </div>
           )}
