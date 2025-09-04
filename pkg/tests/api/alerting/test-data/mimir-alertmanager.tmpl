@@ -1,0 +1,48 @@
+{{ define "alert.title" }}
+[{{ .Status | toUpper }}{{ if eq .Status "firing" }}:{{ .Alerts.Firing | len }}{{ end }}] {{ .GroupLabels.SortedPairs.Values | join " " }} {{ if gt (len .CommonLabels) (len .GroupLabels) }}({{ with .CommonLabels.Remove .GroupLabels.Names }}{{ .Values | join " " }}{{ end }}){{ end }}
+{{ end }}
+
+{{ define "alert.severity" }}
+{{- if eq .Labels.severity "critical" -}}
+🔴 CRITICAL
+{{- else if eq .Labels.severity "warning" -}}
+🟡 WARNING
+{{- else if eq .Labels.severity "info" -}}
+🔵 INFO
+{{- else -}}
+⚪️ UNKNOWN
+{{- end }}
+{{ end }}
+
+{{ define "alert.message" }}
+{{ range .Alerts }}
+*Alert:* {{ .Annotations.summary }}{{ if .Annotations.description }}
+*Description:* {{ .Annotations.description }}{{ end }}
+*Severity:* {{ template "alert.severity" . }}
+*Status:* {{ .Status }}
+*Started:* {{ .StartsAt }}
+*Labels:*
+{{ range .Labels.SortedPairs }}  - {{ .Name }}: {{ .Value }}
+{{ end }}
+{{ end }}
+{{ end }}
+
+{{ define "slack.message" }}
+{{ template "alert.title" . }}
+{{ template "alert.message" . }}
+{{ end }}
+
+{{ define "email.message" }}
+<!DOCTYPE html>
+<html>
+<body>
+<h2>{{ template "alert.title" . }}</h2>
+<pre>{{ template "alert.message" . }}</pre>
+</body>
+</html>
+{{ end }}
+
+{{ define "default" }}
+{{ template "alert.title" . }}
+{{ template "alert.message" . }}
+{{ end }}

@@ -202,7 +202,7 @@ export class UnifiedSearcher implements GrafanaSearcher {
       totalRows: meta.count ?? first.length,
       view,
       loadMoreItems: async (startIndex: number, stopIndex: number): Promise<void> => {
-        loadMax = Math.max(loadMax, stopIndex);
+        loadMax = Math.max(loadMax, stopIndex + 1);
         if (!pending) {
           pending = getNextPage();
         }
@@ -259,6 +259,10 @@ export class UnifiedSearcher implements GrafanaSearcher {
     let uri = searchURI;
     uri += `?query=${encodeURIComponent(query.query ?? '*')}`;
     uri += `&limit=${query.limit ?? pageSize}`;
+
+    if (query.offset) {
+      uri += `&offset=${query.offset}`;
+    }
 
     if (!isEmpty(query.location)) {
       uri += `&folder=${query.location}`;
