@@ -101,6 +101,7 @@ func convertToK8sResource(
 			rules = append(rules, rule.UID)
 		}
 		r.SetInUse(metadata.InUseByRoutes, rules)
+		r.SetCanUse(metadata.CanUse)
 	}
 	r.UID = gapiutil.CalculateClusterWideUID(r)
 	return r, nil
