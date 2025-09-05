@@ -24,7 +24,6 @@ import (
 // It is used to add additional functionality for webhooks
 type WebhookExtraBuilder struct {
 	provisioningapis.ExtraBuilder
-	provisioningapis.JobsWorkerRetriever
 	isPublic    bool
 	urlProvider func(namespace string) string
 }

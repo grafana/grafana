@@ -813,7 +813,7 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts Options, apiOpts api
 	legacyMigrator := legacy.ProvideLegacyMigrator(sqlStore, provisioningServiceImpl, libraryPanelService, dashboardPermissionsService, accessControl, featureToggles)
 	webhookExtraBuilder := webhooks.ProvideWebhooksWithImages(cfg, renderingService, resourceClient, eventualRestConfigProvider)
 	v3 := extras.ProvideProvisioningOSSExtras(webhookExtraBuilder)
-	v4 := extras.ProvideExtraWorkers(webhookExtraBuilder)
+	v4 := extras.ProvideExtraWorkers(cfg, renderingService, resourceClient, eventualRestConfigProvider)
 	decryptAuthorizer := decrypt.ProvideDecryptAuthorizer(tracer)
 	decryptStorage, err := metadata.ProvideDecryptStorage(tracer, ossKeeperService, keeperMetadataStorage, secureValueMetadataStorage, decryptAuthorizer, registerer)
 	if err != nil {
@@ -1399,7 +1399,7 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	legacyMigrator := legacy.ProvideLegacyMigrator(sqlStore, provisioningServiceImpl, libraryPanelService, dashboardPermissionsService, accessControl, featureToggles)
 	webhookExtraBuilder := webhooks.ProvideWebhooksWithImages(cfg, renderingService, resourceClient, eventualRestConfigProvider)
 	v3 := extras.ProvideProvisioningOSSExtras(webhookExtraBuilder)
-	v4 := extras.ProvideExtraWorkers(webhookExtraBuilder)
+	v4 := extras.ProvideExtraWorkers(cfg, renderingService, resourceClient, eventualRestConfigProvider)
 	decryptAuthorizer := decrypt.ProvideDecryptAuthorizer(tracer)
 	decryptStorage, err := metadata.ProvideDecryptStorage(tracer, ossKeeperService, keeperMetadataStorage, secureValueMetadataStorage, decryptAuthorizer, registerer)
 	if err != nil {
