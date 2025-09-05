@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"iter"
 	"sync"
-	"time"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -216,22 +215,5 @@ func (s *ResourcePermSqlBackend) WriteEvent(ctx context.Context, event resource.
 		return 0, fmt.Errorf("unsupported event type: %v", event.Type)
 	}
 
-	// Async notify all subscribers (not HA!!!)
-	if s.subscribers != nil {
-		go func() {
-			write := &resource.WrittenEvent{
-				Type:       event.Type,
-				Key:        event.Key,
-				PreviousRV: event.PreviousRV,
-				Value:      event.Value,
-
-				Timestamp:       time.Now().UnixMilli(),
-				ResourceVersion: rv,
-			}
-			for _, sub := range s.subscribers {
-				sub <- write
-			}
-		}()
-	}
 	return rv, nil
 }
