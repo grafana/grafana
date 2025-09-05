@@ -19,7 +19,7 @@ func TestUpgradeCommand_FailsWithImmutableError(t *testing.T) {
 		pluginID := "test-upgrade-plugin"
 		pluginDir := filepath.Join(tmpDir, pluginID)
 
-		err := os.MkdirAll(pluginDir, 0755)
+		err := os.MkdirAll(pluginDir, 0750)
 		require.NoError(t, err)
 
 		pluginJSON := `{
@@ -45,7 +45,8 @@ func TestUpgradeCommand_FailsWithImmutableError(t *testing.T) {
 			}
 
 			w.Header().Set("Content-Type", "application/json")
-			json.NewEncoder(w).Encode(plugin)
+			err = json.NewEncoder(w).Encode(plugin)
+			require.NoError(t, err)
 		}))
 		defer mockServer.Close()
 

@@ -430,7 +430,7 @@ func TestPluginInstaller_Removal(t *testing.T) {
 
 	t.Run("LocalFS plugin removal succeeds via installer.Remove", func(t *testing.T) {
 		pluginDir := filepath.Join(tmpDir, "localfs-plugin")
-		err := os.MkdirAll(pluginDir, 0755)
+		err := os.MkdirAll(pluginDir, 0750)
 		require.NoError(t, err)
 
 		pluginJSON := `{
@@ -475,7 +475,7 @@ func TestPluginInstaller_Removal(t *testing.T) {
 
 	t.Run("StaticFS plugin removal is skipped via installer.Remove", func(t *testing.T) {
 		pluginDir := filepath.Join(tmpDir, "staticfs-plugin")
-		err := os.MkdirAll(pluginDir, 0755)
+		err := os.MkdirAll(pluginDir, 0750)
 		require.NoError(t, err)
 
 		pluginJSON := `{

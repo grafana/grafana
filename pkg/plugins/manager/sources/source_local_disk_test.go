@@ -118,7 +118,7 @@ func TestLocalSource(t *testing.T) {
 		pluginID := "test-plugin"
 		pluginDir := filepath.Join(tmpDir, pluginID)
 
-		err := os.MkdirAll(pluginDir, 0755)
+		err := os.MkdirAll(pluginDir, 0750)
 		require.NoError(t, err)
 
 		pluginJSON := `{
