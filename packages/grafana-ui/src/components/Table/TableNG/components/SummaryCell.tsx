@@ -21,7 +21,6 @@ interface SummaryCellProps {
   colIdx: number;
   rowLabel?: boolean;
   hideLabel?: boolean;
-  justifyContent?: CSSProperties['justifyContent'];
 }
 
 const getReducerName = (reducerId: string): string => {
