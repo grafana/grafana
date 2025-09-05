@@ -10,6 +10,12 @@ labels:
     - oss
 title: Query management in Explore
 weight: 10
+refs:
+  saved-queries:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/#saved-queries
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/visualizations/panels-visualizations/query-transform-data/#saved-queries
 ---
 
 # Query management in Explore
@@ -49,6 +55,7 @@ The Query history depicts a history of your queries for the past two weeks, unle
 - Copy a shortened link with the query to the clipboard.
 - Delete a query.
 - Star a query.
+- Add a query from your history to your [saved queries](ref:saved-queries).
 
 By default, query history shows you newest queries first. Click the sort box in the upper right to change to **Oldest first** to older queries first. You can search your queries using keywords.
 
