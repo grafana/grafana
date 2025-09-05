@@ -576,7 +576,7 @@ func (d *dataStore) getGroupResources(ctx context.Context) ([]GroupResource, err
 	}
 
 	// Cache miss or invalid data, compute the results
-	var results []GroupResource
+	results := make([]GroupResource, 0)
 	seenGroupResources := make(map[string]bool) // "group/resource" -> seen
 
 	startKey := ""
@@ -615,12 +615,11 @@ func (d *dataStore) getGroupResources(ctx context.Context) ([]GroupResource, err
 
 		// Add to results if we haven't seen this group/resource combination before
 		if !seenGroupResources[groupResourceKey] {
-			groupResource := GroupResource{
+			seenGroupResources[groupResourceKey] = true
+			results = append(results, GroupResource{
 				Group:    dataKey.Group,
 				Resource: dataKey.Resource,
-			}
-			results = append(results, groupResource)
-			seenGroupResources[groupResourceKey] = true
+			})
 		}
 
 		// Compute the next starting point by finding the end of this group/resource prefix
