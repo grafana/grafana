@@ -13,8 +13,9 @@ import {
 } from '@grafana/scenes';
 import { EmbeddedSceneWithContext } from '@grafana/scenes-react';
 
+import { DATASOURCE_UID } from '../constants';
+
 import { WorkbenchSceneObject } from './Workbench';
-import { DATASOURCE_UID } from './constants';
 import { defaultTimeRange } from './utils';
 
 const cursorSync = new behaviors.CursorSync({ key: 'triage-cursor-sync', sync: DashboardCursorSync.Crosshair });

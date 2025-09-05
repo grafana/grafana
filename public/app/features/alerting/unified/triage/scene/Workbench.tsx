@@ -3,9 +3,9 @@ import { SceneObjectBase, SceneObjectState } from '@grafana/scenes';
 import { useQueryRunner, useTimeRange, useVariableValues } from '@grafana/scenes-react';
 
 import { Workbench } from '../Workbench';
+import { DEFAULT_FIELDS, METRIC_NAME, VARIABLES } from '../constants';
 import { AlertRuleRow, GenericGroupedRow, WorkbenchRow } from '../types';
 
-import { DEFAULT_FIELDS, METRIC_NAME, VARIABLES } from './constants';
 import { convertTimeRangeToDomain, getDataQuery, useQueryFilter } from './utils';
 
 export class WorkbenchSceneObject extends SceneObjectBase<SceneObjectState> {
@@ -34,7 +34,7 @@ export function WorkbenchRenderer() {
   return <Workbench data={rows} domain={domain} />;
 }
 
-function createAlertRuleRows(dataPoints: Array<Record<string, any>>): AlertRuleRow[] {
+function createAlertRuleRows(dataPoints: Array<Record<string, unknown>>): AlertRuleRow[] {
   const rules = new Map<
     string,
     {
@@ -74,7 +74,7 @@ function groupData(dataPoints: Array<Record<string, unknown>>, groupBy: string[]
   }
 
   const groupByKey = groupBy[depth];
-  const grouped = new Map<string, Array<Record<string, any>>>();
+  const grouped = new Map<string, Array<Record<string, unknown>>>();
 
   for (const dp of dataPoints) {
     const key = String(dp[groupByKey] ?? 'undefined');

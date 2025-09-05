@@ -3,7 +3,7 @@ import React from 'react';
 import { Stack, Text, TextLink } from '@grafana/ui';
 
 import { MetaText } from '../../components/MetaText';
-import { AlertRuleDetails } from '../scene/AlertRuleDetails';
+import { AlertRuleInstances } from '../scene/AlertRuleInstances';
 import { AlertRuleSummary } from '../scene/AlertRuleSummary';
 import { AlertRuleRow as AlertRuleRowType } from '../types';
 
@@ -35,7 +35,7 @@ export const AlertRuleRow = ({ row, leftColumnWidth, rowKey }: AlertRuleRowProps
       }
       content={<AlertRuleSummary ruleUID={row.metadata.ruleUID} />}
     >
-      <AlertRuleDetails ruleUID={row.metadata.ruleUID} />
+      <AlertRuleInstances ruleUID={row.metadata.ruleUID} />
     </GenericRow>
   );
 };

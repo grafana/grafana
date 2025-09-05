@@ -4,8 +4,8 @@ import { BarAlignment, GraphDrawStyle, VisibilityMode } from '@grafana/schema';
 import { LegendDisplayMode, StackingMode, TooltipDisplayMode } from '@grafana/ui';
 
 import { overrideToFixedColor } from '../../home/Insights';
+import { METRIC_NAME } from '../constants';
 
-import { METRIC_NAME } from './constants';
 import { getDataQuery, useQueryFilter } from './utils';
 
 /**

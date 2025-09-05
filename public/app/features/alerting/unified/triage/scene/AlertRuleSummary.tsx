@@ -11,8 +11,8 @@ import {
 } from '@grafana/schema';
 
 import { overrideToFixedColor } from '../../home/Insights';
+import { METRIC_NAME } from '../constants';
 
-import { METRIC_NAME } from './constants';
 import { getDataQuery } from './utils';
 
 /**

@@ -18,7 +18,7 @@ import {
 
 import { AlertLabels } from '../../components/AlertLabels';
 import { overrideToFixedColor } from '../../home/Insights';
-import { DEFAULT_FIELDS } from '../scene/constants';
+import { DEFAULT_FIELDS } from '../constants';
 
 import { GenericRow } from './GenericRow';
 

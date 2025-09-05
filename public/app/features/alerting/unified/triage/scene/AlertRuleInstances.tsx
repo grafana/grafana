@@ -6,10 +6,10 @@ import { Trans } from '@grafana/i18n';
 import { useQueryRunner, useTimeRange } from '@grafana/scenes-react';
 
 import { useWorkbenchContext } from '../WorkbenchContext';
+import { METRIC_NAME } from '../constants';
 import { GenericRow } from '../rows/GenericRow';
 import { InstanceRow } from '../rows/InstanceRow';
 
-import { METRIC_NAME } from './constants';
 import { getDataQuery } from './utils';
 
 function extractInstancesFromData(series: DataFrame[] | undefined) {
@@ -37,7 +37,7 @@ function extractInstancesFromData(series: DataFrame[] | undefined) {
   return Array.from(groups.values());
 }
 
-export function AlertRuleDetails({ ruleUID }: { ruleUID: string }) {
+export function AlertRuleInstances({ ruleUID }: { ruleUID: string }) {
   const { leftColumnWidth } = useWorkbenchContext();
   const [timeRange] = useTimeRange();
 

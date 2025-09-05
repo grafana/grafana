@@ -3,9 +3,8 @@ import { SceneDataQuery } from '@grafana/scenes';
 import { useVariableValue, useVariableValues } from '@grafana/scenes-react';
 import { DataSourceRef } from '@grafana/schema';
 
+import { DATASOURCE_UID, VARIABLES } from '../constants';
 import { Domain } from '../types';
-
-import { DATASOURCE_UID, VARIABLES } from './constants';
 
 export function getDataQuery(expression: string, options?: Partial<SceneDataQuery>): SceneDataQuery {
   const datasourceRef: DataSourceRef = {
