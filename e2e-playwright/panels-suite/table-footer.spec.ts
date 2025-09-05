@@ -26,12 +26,6 @@ test.describe('Panels test: Table - Footer', { tag: ['@panels', '@table'] }, () 
     const minColumnIdx = await getColumnIdx(page, 'Min');
 
     // this is the footer cell for the "Min" column.
-    await expect(
-      dashboardPage
-        .getByGrafanaSelector(selectors.components.Panels.Visualization.TableNG.Footer.ReducerLabel)
-        .nth(minColumnIdx)
-    ).toHaveText('Last *');
-
     const minReducerValue = await dashboardPage
       .getByGrafanaSelector(selectors.components.Panels.Visualization.TableNG.Footer.Value)
       .nth(minColumnIdx)
@@ -75,12 +69,6 @@ test.describe('Panels test: Table - Footer', { tag: ['@panels', '@table'] }, () 
     const minColumnIdx = await getColumnIdx(page, 'Min');
 
     // this is the footer cell for the "Min" column.
-    await expect(
-      dashboardPage
-        .getByGrafanaSelector(selectors.components.Panels.Visualization.TableNG.Footer.ReducerLabel)
-        .nth(minColumnIdx)
-    ).toHaveText('Last *');
-
     const minReducerValue = await dashboardPage
       .getByGrafanaSelector(selectors.components.Panels.Visualization.TableNG.Footer.Value)
       .nth(minColumnIdx)

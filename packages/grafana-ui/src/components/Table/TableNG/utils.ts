@@ -16,7 +16,6 @@ import {
   DisplayValueAlignmentFactors,
   DataFrame,
   DisplayProcessor,
-  ReducerID,
 } from '@grafana/data';
 import {
   BarGaugeDisplayMode,
