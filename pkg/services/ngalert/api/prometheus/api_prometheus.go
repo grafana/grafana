@@ -195,7 +195,7 @@ func getMatchersFromQuery(v url.Values) (labels.Matchers, error) {
 	return matchers, nil
 }
 
-func getStatesFromQuery(v url.Values) (map[eval.State]struct{}, error) {
+func GetStatesFromQuery(v url.Values) (map[eval.State]struct{}, error) {
 	states := make(map[eval.State]struct{})
 	for _, s := range v["state"] {
 		s = strings.ToLower(s)
@@ -219,7 +219,7 @@ func getStatesFromQuery(v url.Values) (map[eval.State]struct{}, error) {
 	return states, nil
 }
 
-func getHealthFromQuery(v url.Values) (map[string]struct{}, error) {
+func GetHealthFromQuery(v url.Values) (map[string]struct{}, error) {
 	health := make(map[string]struct{})
 	for _, s := range v["health"] {
 		s = strings.ToLower(s)
@@ -438,7 +438,7 @@ func PrepareRuleGroupStatusesV2(log log.Logger, store ListAlertRulesStoreV2, opt
 		ruleResponse.ErrorType = apiv1.ErrBadData
 		return ruleResponse
 	}
-	stateFilterSet, err := getStatesFromQuery(opts.Query)
+	stateFilterSet, err := GetStatesFromQuery(opts.Query)
 	if err != nil {
 		ruleResponse.Status = "error"
 		ruleResponse.Error = err.Error()
@@ -446,7 +446,7 @@ func PrepareRuleGroupStatusesV2(log log.Logger, store ListAlertRulesStoreV2, opt
 		return ruleResponse
 	}
 
-	healthFilterSet, err := getHealthFromQuery(opts.Query)
+	healthFilterSet, err := GetHealthFromQuery(opts.Query)
 	if err != nil {
 		ruleResponse.Status = "error"
 		ruleResponse.Error = err.Error()
@@ -583,7 +583,7 @@ func PrepareRuleGroupStatuses(log log.Logger, store ListAlertRulesStore, opts Ru
 		ruleResponse.ErrorType = apiv1.ErrBadData
 		return ruleResponse
 	}
-	stateFilterSet, err := getStatesFromQuery(opts.Query)
+	stateFilterSet, err := GetStatesFromQuery(opts.Query)
 	if err != nil {
 		ruleResponse.Status = "error"
 		ruleResponse.Error = err.Error()
@@ -591,7 +591,7 @@ func PrepareRuleGroupStatuses(log log.Logger, store ListAlertRulesStore, opts Ru
 		return ruleResponse
 	}
 
-	healthFilterSet, err := getHealthFromQuery(opts.Query)
+	healthFilterSet, err := GetHealthFromQuery(opts.Query)
 	if err != nil {
 		ruleResponse.Status = "error"
 		ruleResponse.Error = err.Error()

@@ -50,6 +50,11 @@ type ListResourcePermissionsQuery struct {
 	// TODO Pagination common.Pagination
 }
 
+type DeleteResourcePermissionsQuery struct {
+	Scope string
+	OrgID int64
+}
+
 type rbacAssignmentCreate struct {
 	Action           string // e.g. "dashboards:edit"
 	Scope            string // e.g. "folders:uid:1"

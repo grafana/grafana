@@ -8,7 +8,6 @@ import (
 	"strings"
 
 	"github.com/grafana/authlib/types"
-
 	"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/legacy"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -320,3 +319,31 @@ func (s *ResourcePermSqlBackend) createResourcePermission(
 // Update
 
 // Delete
+
+// deleteResourcePermission deletes resource permissions for a single ResourcePermission resource referenced by its name in the format <group>-<resource>-<name> (e.g. dashboard.grafana.app-dashboards-ad5rwqs)
+func (s *ResourcePermSqlBackend) deleteResourcePermission(ctx context.Context, sql *legacysql.LegacyDatabaseHelper, ns types.NamespaceInfo, name string) error {
+	mapper, grn, err := s.splitResourceName(name)
+	if err != nil {
+		return err
+	}
+	scope := mapper.Scope(grn.Name)
+
+	resourceQuery := &DeleteResourcePermissionsQuery{
+		Scope: scope,
+		OrgID: ns.OrgID,
+	}
+
+	rawQuery, args, err := buildDeleteResourcePermissionsQueryFromTemplate(sql, resourceQuery)
+	if err != nil {
+		return err
+	}
+
+	// run delete query
+	_, err = sql.DB.GetSqlxSession().Exec(ctx, rawQuery, args...)
+	if err != nil {
+		s.logger.Error("could not delete resource permissions", "scope", scope, "orgID", ns.OrgID, err.Error())
+		return fmt.Errorf("could not delete resource permission")
+	}
+
+	return nil
+}

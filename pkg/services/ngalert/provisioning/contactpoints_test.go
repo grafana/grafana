@@ -198,8 +198,8 @@ func TestIntegrationContactPointService(t *testing.T) {
 
 		newCp.Name = newName
 
-		svc.RenameReceiverInDependentResourcesFunc = func(ctx context.Context, orgID int64, route *definitions.Route, oldName, newName string, receiverProvenance models.Provenance) error {
-			legacy_storage.RenameReceiverInRoute(oldName, newName, route)
+		svc.RenameReceiverInDependentResourcesFunc = func(ctx context.Context, orgID int64, revision *legacy_storage.ConfigRevision, oldName, newName string, receiverProvenance models.Provenance) error {
+			revision.RenameReceiverInRoutes(oldName, newName)
 			return nil
 		}
 
@@ -213,7 +213,8 @@ func TestIntegrationContactPointService(t *testing.T) {
 		assert.Equal(t, "RenameReceiverInDependentResources", svc.Calls[0].Method)
 		assertInTransaction(t, svc.Calls[0].Args[0].(context.Context))
 		assert.Equal(t, int64(1), svc.Calls[0].Args[1])
-		assert.EqualValues(t, parsed.AlertmanagerConfig.Route, svc.Calls[0].Args[2])
+		revision := svc.Calls[0].Args[2].(*legacy_storage.ConfigRevision)
+		assert.EqualValues(t, parsed.AlertmanagerConfig.Route, revision.Config.AlertmanagerConfig.Route)
 		assert.Equal(t, oldName, svc.Calls[0].Args[3])
 		assert.Equal(t, newName, svc.Calls[0].Args[4])
 		assert.Equal(t, models.ProvenanceAPI, svc.Calls[0].Args[5])

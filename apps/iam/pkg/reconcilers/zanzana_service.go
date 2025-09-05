@@ -25,6 +25,11 @@ func (c *ZanzanaPermissionStore) SetFolderParent(ctx context.Context, namespace,
 		return err
 	}
 
+	if parentUID == "" {
+		// Setting the parent to empty means the folder is at root which Zanzana doesn't care about.
+		return nil
+	}
+
 	user, err := toFolderTuple(parentUID)
 	if err != nil {
 		return err
