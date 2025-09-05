@@ -13,8 +13,10 @@ import (
 	"github.com/urfave/cli/v2"
 	"k8s.io/client-go/tools/cache"
 
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/services/apiserver/standalone"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 
 	"github.com/grafana/grafana/apps/provisioning/pkg/controller"
 	informer "github.com/grafana/grafana/apps/provisioning/pkg/generated/informers/externalversions"
@@ -40,6 +42,33 @@ func RunJobController(opts standalone.BuildInfo, c *cli.Context, cfg *setting.Cf
 		<-sigChan
 		fmt.Println("Received shutdown signal, stopping controllers")
 		cancel()
+	}()
+
+	// Use unified storage client for testing purposes.
+	// TODO: remove this once the processing logic is in place
+	// A ticker to periodically counts managed objects in unified storage
+	// https://github.com/grafana/git-ui-sync-project/issues/467
+	tick := time.NewTicker(controllerCfg.resyncInterval)
+	go func() {
+		logger.Info("starting periodic managed resource lister", "interval", tick.C)
+		for {
+			select {
+			case <-ctx.Done():
+				tick.Stop()
+				return
+			case <-tick.C:
+				resp, err := controllerCfg.unified.CountManagedObjects(ctx, &resourcepb.CountManagedObjectsRequest{
+					Kind: string(utils.ManagerKindRepo),
+				})
+				if err != nil {
+					logger.Error("failed to list managed objects", "error", err)
+				} else {
+					for _, obj := range resp.Items {
+						logger.Info("manage object counts", "item", obj)
+					}
+				}
+			}
+		}
 	}()
 
 	// Jobs informer and controller (resync ~60s like in register.go)
