@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
 	"slices"
 	"strconv"
@@ -242,6 +243,14 @@ func (r *queryREST) Connect(connectCtx context.Context, name string, _ runtime.O
 func handleQuery(ctx context.Context, raw query.QueryDataRequest, b QueryAPIBuilder, httpreq *http.Request, responder responderWrapper, connectLogger log.Logger) (*backend.QueryDataResponse, error) {
 	var jsonQueries = make([]*simplejson.Json, 0, len(raw.Queries))
 	for _, query := range raw.Queries {
+		dsRef, err := getValidDataSourceRef(ctx, query.Datasource, query.DatasourceID, b.legacyDatasourceLookup)
+		if err != nil {
+			connectLogger.Error("error getting valid datasource ref", err)
+		}
+		if dsRef != nil {
+			query.Datasource = dsRef
+		}
+
 		jsonBytes, err := json.Marshal(query)
 		if err != nil {
 			connectLogger.Error("error marshalling", err)
@@ -368,4 +377,68 @@ func mergeHeaders(main http.Header, extra http.Header, l log.Logger) {
 			}
 		}
 	}
+}
+
+/*
+most queries are stored like this:
+
+	{
+		datasource: {
+			uid: "123",
+			type: "cool-ds",
+		}
+	}
+
+but sometimes queries are stored like:
+
+	{
+		datasourceUid: "123",
+		datasource: {
+			type: "cool-ds",
+		}
+	}
+
+this sets the second case to match the first and looks up missing types
+*/
+func getValidDataSourceRef(ctx context.Context, ds *v0alpha1.DataSourceRef, id int64, legacyDatasourceLookup ds_service.LegacyDataSourceLookup) (*v0alpha1.DataSourceRef, error) {
+	if ds == nil {
+		if id == 0 {
+			return nil, fmt.Errorf("missing datasource reference or id")
+		}
+		if legacyDatasourceLookup == nil {
+			return nil, fmt.Errorf("legacy datasource lookup unsupported (id:%d)", id)
+		}
+		return legacyDatasourceLookup.GetDataSourceFromDeprecatedFields(ctx, "", id)
+	}
+
+	// we need to special-case the "grafana" data source
+	if ds.UID == "grafana" {
+		return &v0alpha1.DataSourceRef{
+			// it does not really matter what `type` we set here,
+			// we will always detect this case by `uid` later.
+			// here we go with what the data source's plugin.json says.
+			Type: "grafana",
+			UID:  "grafana",
+		}, nil
+	}
+
+	if ds.Type == "" {
+		if ds.UID == "" {
+			return nil, fmt.Errorf("missing name/uid in data source reference")
+		}
+		if expr.IsDataSource(ds.UID) {
+			return ds, nil
+		}
+		if legacyDatasourceLookup == nil {
+			return nil, fmt.Errorf("legacy datasource lookup unsupported (name:%s)", ds.UID)
+		}
+		return legacyDatasourceLookup.GetDataSourceFromDeprecatedFields(ctx, ds.UID, 0)
+	}
+
+	if ds.UID == "" && expr.IsDataSource(ds.Type) {
+		ds.UID = ds.Type
+		return ds, nil
+	}
+
+	return ds, nil
 }
