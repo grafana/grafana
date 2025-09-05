@@ -192,6 +192,7 @@ For a complete list of every change, with links to pull requests and related iss
 
 ## Grafana 12
 
+- [What's new in 12.2](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/whatsnew/whats-new-in-v12-2)
 - [What's new in 12.1](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/whatsnew/whats-new-in-v12-1)
 - [What's new in 12.0](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/whatsnew/whats-new-in-v12-0)
 
