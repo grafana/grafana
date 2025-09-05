@@ -109,7 +109,7 @@ func LoadConfigFromEnv() (*Config, error) {
 		cfg.KubeConfig = kubeConfig
 	}
 
-	cfg.ZanzanaClient.Address = os.Getenv("ZANZANA_ADDR")
+	cfg.ZanzanaClient.URL = os.Getenv("ZANZANA_ADDR")
 	cfg.ZanzanaClient.Token = os.Getenv("ZANZANA_TOKEN")
 	cfg.ZanzanaClient.TokenExchangeURL = os.Getenv("TOKEN_EXCHANGE_URL")
 	cfg.ZanzanaClient.ServerCertFile = os.Getenv("ZANZANA_SERVER_CERT_FILE")

@@ -45,7 +45,7 @@ func ProvideZanzana(cfg *setting.Cfg, db db.DB, tracer tracing.Tracer, features 
 		return NewZanzanaClient(
 			fmt.Sprintf("stacks-%s", cfg.StackID),
 			ZanzanaClientConfig{
-				Address:          cfg.ZanzanaClient.Addr,
+				URL:              cfg.ZanzanaClient.Addr,
 				Token:            cfg.ZanzanaClient.Token,
 				TokenExchangeURL: cfg.ZanzanaClient.TokenExchangeURL,
 				ServerCertFile:   cfg.ZanzanaClient.ServerCertFile,
@@ -94,7 +94,7 @@ func ProvideZanzana(cfg *setting.Cfg, db db.DB, tracer tracing.Tracer, features 
 }
 
 type ZanzanaClientConfig struct {
-	Address          string
+	URL              string
 	Token            string
 	TokenExchangeURL string
 	ServerCertFile   string
@@ -128,7 +128,7 @@ func NewZanzanaClient(namespace string, cfg ZanzanaClientConfig) (zanzana.Client
 		),
 	}
 
-	conn, err := grpc.NewClient(cfg.Address, dialOptions...)
+	conn, err := grpc.NewClient(cfg.URL, dialOptions...)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create zanzana client to remote server: %w", err)
 	}
