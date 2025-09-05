@@ -7,6 +7,8 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/tsdb/tempo/kinds/dataquery"
+	"github.com/grafana/tempo/pkg/tempopb"
+	v1 "github.com/grafana/tempo/pkg/tempopb/common/v1"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -30,20 +32,20 @@ func TestCreateSearchRequest(t *testing.T) {
 
 func TestTransformTraceSearchResponse(t *testing.T) {
 	pCtx := backend.PluginContext{DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{UID: "u", Name: "n"}}
-	resp := &SearchResponse{Traces: []*TraceSearchMetadata{{
+	resp := &tempopb.SearchResponse{Traces: []*tempopb.TraceSearchMetadata{{
 		TraceID:           "test-trace-id-x",
 		RootServiceName:   "test-service-name",
 		RootTraceName:     "test-root-trace-name",
-		StartTimeUnixNano: "2000000",
+		StartTimeUnixNano: 2000000,
 		DurationMs:        5,
-		SpanSet:           &SpanSet{Spans: []*Span{{SpanID: "span1", Name: "op", StartTimeUnixNano: "1000000", DurationNanos: "1000"}}},
+		SpanSet:           &tempopb.SpanSet{Spans: []*tempopb.Span{{SpanID: "span1", Name: "op", StartTimeUnixNano: 1000000, DurationNanos: 1000}}},
 	}, {
 		TraceID:           "test-trace-id-y",
 		RootServiceName:   "test-service-name",
 		RootTraceName:     "test-root-trace-name",
-		StartTimeUnixNano: "1000000",
+		StartTimeUnixNano: 1000000,
 		DurationMs:        10,
-		SpanSet:           &SpanSet{Spans: []*Span{{SpanID: "span1", Name: "op", StartTimeUnixNano: "1000000", DurationNanos: "1000"}}},
+		SpanSet:           &tempopb.SpanSet{Spans: []*tempopb.Span{{SpanID: "span1", Name: "op", StartTimeUnixNano: 1000000, DurationNanos: 1000}}},
 	}}}
 
 	frames, err := transformTraceSearchResponse(pCtx, resp)
@@ -62,19 +64,19 @@ func TestTransformTraceSearchResponse(t *testing.T) {
 
 func TestTransformSpanSearchResponse(t *testing.T) {
 	pCtx := backend.PluginContext{DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{UID: "u", Name: "n"}}
-	resp := &SearchResponse{Traces: []*TraceSearchMetadata{{
+	resp := &tempopb.SearchResponse{Traces: []*tempopb.TraceSearchMetadata{{
 		TraceID:           "test-trace-id",
 		RootServiceName:   "test-service-name",
 		RootTraceName:     "test-root-trace-name",
-		StartTimeUnixNano: "1000",
-		SpanSets: []*SpanSet{{
-			Attributes: []Attribute{{Key: "service.name", Value: AttributeValue{StringValue: "test-service-name"}}},
-			Spans: []*Span{{
+		StartTimeUnixNano: 1000,
+		SpanSets: []*tempopb.SpanSet{{
+			Attributes: []*v1.KeyValue{{Key: "service.name", Value: &v1.AnyValue{Value: &v1.AnyValue_StringValue{StringValue: "test-service-name"}}}},
+			Spans: []*tempopb.Span{{
 				SpanID:            "test-span-id",
 				Name:              "test-span-name",
-				StartTimeUnixNano: "2000",
-				DurationNanos:     "3000",
-				Attributes:        []Attribute{{Key: "http.method", Value: AttributeValue{StringValue: "GET"}}},
+				StartTimeUnixNano: 2000,
+				DurationNanos:     3000,
+				Attributes:        []*v1.KeyValue{{Key: "http.method", Value: &v1.AnyValue{Value: &v1.AnyValue_StringValue{StringValue: "GET"}}}},
 			}},
 		}},
 	}}}
@@ -96,7 +98,7 @@ func TestTransformSpanSearchResponse(t *testing.T) {
 }
 
 func TestTransformRawSearchResponse(t *testing.T) {
-	resp := &SearchResponse{Traces: []*TraceSearchMetadata{{
+	resp := &tempopb.SearchResponse{Traces: []*tempopb.TraceSearchMetadata{{
 		TraceID: "test-trace-id-raw",
 	}}}
 
