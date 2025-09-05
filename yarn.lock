@@ -13377,6 +13377,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"commander@npm:^4.1.1":
+  version: 4.1.1
+  resolution: "commander@npm:4.1.1"
+  checksum: 10/3b2dc4125f387dab73b3294dbcb0ab2a862f9c0ad748ee2b27e3544d25325b7a8cdfbcc228d103a98a716960b14478114a5206b5415bd48cdafa38797891562c
+  languageName: node
+  linkType: hard
+
 "commander@npm:^6.2.0, commander@npm:^6.2.1":
   version: 6.2.1
   resolution: "commander@npm:6.2.1"
@@ -17924,6 +17931,18 @@ __metadata:
   languageName: node
   linkType: hard
 
+"github-codeowners@npm:^0.2.1":
+  version: 0.2.1
+  resolution: "github-codeowners@npm:0.2.1"
+  dependencies:
+    commander: "npm:^4.1.1"
+    ignore: "npm:^5.1.4"
+  bin:
+    github-codeowners: dist/cli.js
+  checksum: 10/d32e1f11418979b00fc5767531e23dab19f42bddf70df5ac13715d89bd70b7a71879ef62bbbdef331a48aeec99c6d804284190ca37041178053a860a5a0f3785
+  languageName: node
+  linkType: hard
+
 "glob-parent@npm:6.0.2, glob-parent@npm:^6.0.1, glob-parent@npm:^6.0.2":
   version: 6.0.2
   resolution: "glob-parent@npm:6.0.2"
@@ -18401,6 +18420,7 @@ __metadata:
     file-saver: "npm:2.0.5"
     fishery: "npm:^2.2.2"
     fork-ts-checker-webpack-plugin: "npm:9.1.0"
+    github-codeowners: "npm:^0.2.1"
     glob: "npm:11.0.3"
     history: "npm:4.10.1"
     html-loader: "npm:5.1.0"
@@ -19402,7 +19422,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"ignore@npm:^5.0.4, ignore@npm:^5.1.1, ignore@npm:^5.2.0, ignore@npm:^5.2.4":
+"ignore@npm:^5.0.4, ignore@npm:^5.1.1, ignore@npm:^5.1.4, ignore@npm:^5.2.0, ignore@npm:^5.2.4":
   version: 5.3.2
   resolution: "ignore@npm:5.3.2"
   checksum: 10/cceb6a457000f8f6a50e1196429750d782afce5680dd878aa4221bd79972d68b3a55b4b1458fc682be978f4d3c6a249046aa0880637367216444ab7b014cfc98
