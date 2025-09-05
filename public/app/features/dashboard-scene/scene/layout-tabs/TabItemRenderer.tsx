@@ -7,7 +7,7 @@ import { t } from '@grafana/i18n';
 import { SceneComponentProps, sceneGraph } from '@grafana/scenes';
 import { Box, Icon, Tab, TabContent, Tooltip, useElementSelection, usePointerDistance, useStyles2 } from '@grafana/ui';
 
-import { useIsConditionallyHidden } from '../../conditional-rendering/useIsConditionallyHidden';
+import { useIsConditionallyHidden } from '../../conditional-rendering/hooks/useIsConditionallyHidden';
 import { isRepeatCloneOrChildOf } from '../../utils/clone';
 import { useDashboardState } from '../../utils/utils';
 import { useSoloPanelContext } from '../SoloPanelContext';
