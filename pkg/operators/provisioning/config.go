@@ -22,7 +22,7 @@ import (
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository/github"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository/local"
-	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
+	secretdecrypt "github.com/grafana/grafana/pkg/registry/apis/secret/decrypt"
 )
 
 // directConfigProvider is a simple RestConfigProvider that always returns the same rest.Config
@@ -52,6 +52,12 @@ type provisioningControllerConfig struct {
 // [grpc_client_authentication]
 // token =
 // token_exchange_url =
+// [secrets_manager]
+// grpc_server_address =
+// grpc_server_tls_server_name =
+// grpc_server_use_tls =
+// grpc_server_tls_ca_file =
+// grpc_server_tls_skip_verify =
 // [operator]
 // provisioning_server_url =
 // tls_insecure =
@@ -117,8 +123,12 @@ func setupFromConfig(cfg *setting.Cfg) (controllerCfg *provisioningControllerCon
 		return nil, fmt.Errorf("failed to create provisioning client: %w", err)
 	}
 
-	// TODO: Replace with a real decrypter that uses the Grafana secret service
-	repoFactory, err := setupRepoFactory(cfg, emptyValuesDecrypter, provisioningClient)
+	decrypter, err := setupDecrypter(cfg, tracer, tokenExchangeClient)
+	if err != nil {
+		return nil, fmt.Errorf("failed to setup decrypter: %w", err)
+	}
+
+	repoFactory, err := setupRepoFactory(cfg, decrypter, provisioningClient)
 	if err != nil {
 		return nil, fmt.Errorf("failed to setup repository getter: %w", err)
 	}
@@ -159,26 +169,6 @@ func buildTLSConfig(insecure bool, certFile, keyFile, caFile string) (rest.TLSCl
 	}
 
 	return tlsConfig, nil
-}
-
-// emptyValuesDecrypter is a decrypter that always returns empty values.
-// This is a temporary implementation and should be replaced with a real decrypter.
-// TODO: remove this and use a real decrypter that uses the Grafana secret service
-func emptyValuesDecrypter(r *provisioning.Repository) repository.SecureValues {
-	return &emptyValues{}
-}
-
-// emptyValues is a that always returns empty values.
-// This is a temporary implementation and should be replaced with a real decrypter.
-// TODO: remove this and use a real decrypter that uses the Grafana secret service
-type emptyValues struct{}
-
-func (s *emptyValues) Token(ctx context.Context) (common.RawSecureValue, error) {
-	return common.NewSecretValue(""), nil
-}
-
-func (s *emptyValues) WebhookSecret(ctx context.Context) (common.RawSecureValue, error) {
-	return common.NewSecretValue(""), nil
 }
 
 func setupRepoFactory(
@@ -236,4 +226,35 @@ func setupRepoFactory(
 	}
 
 	return repoFactory, nil
+}
+
+func setupDecrypter(cfg *setting.Cfg, tracer tracing.Tracer, tokenExchangeClient *authn.TokenExchangeClient) (decrypter repository.Decrypter, err error) {
+	secretsSec := cfg.SectionWithEnvOverrides("secrets_manager")
+	if secretsSec == nil {
+		return nil, fmt.Errorf("no [secrets_manager] section found in config")
+	}
+
+	address := secretsSec.Key("grpc_server_address").String()
+	if address == "" {
+		return nil, fmt.Errorf("grpc_server_address is required in [secrets_manager] section")
+	}
+
+	secretsTls := secretdecrypt.TLSConfig{
+		UseTLS:             secretsSec.Key("grpc_server_use_tls").MustBool(true),
+		CAFile:             secretsSec.Key("grpc_server_tls_ca_file").String(),
+		ServerName:         secretsSec.Key("grpc_server_tls_server_name").String(),
+		InsecureSkipVerify: secretsSec.Key("grpc_server_tls_skip_verify").MustBool(false),
+	}
+
+	decryptSvc, err := secretdecrypt.NewGRPCDecryptClientWithTLS(
+		tokenExchangeClient,
+		tracer,
+		address,
+		secretsTls,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("create decrypt service: %w", err)
+	}
+
+	return repository.ProvideDecrypter(decryptSvc), nil
 }

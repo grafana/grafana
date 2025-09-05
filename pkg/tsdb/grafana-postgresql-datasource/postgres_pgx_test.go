@@ -1,6 +1,7 @@
 package postgres
 
 import (
+	"encoding/json"
 	"fmt"
 	"math/rand"
 	"strings"
@@ -242,7 +243,10 @@ func TestIntegrationPostgresPGX(t *testing.T) {
 				c14_timetz time with time zone,
 				time date,
 				c15_interval interval,
-				c16_smallint smallint
+				c16_smallint smallint,
+
+				c17_json json,
+				c18_jsonb jsonb
 			);
 		`
 		_, err := p.Exec(t.Context(), sql)
@@ -253,9 +257,8 @@ func TestIntegrationPostgresPGX(t *testing.T) {
 				1,2,3,
 				4.5,6.7,1.1,1.2,
 				'char10','varchar10','text',
-
-				now(),now(),now(),now(),now(),now(),'15m'::interval,
-				null
+				now(),now(),now(),now(),now(),now(),'15m'::interval,null,
+			    '{"key1": "value1"}'::json, '{"key2": "value2"}'::jsonb
 			);
 		`
 		_, err = p.Exec(t.Context(), sql)
@@ -280,7 +283,7 @@ func TestIntegrationPostgresPGX(t *testing.T) {
 
 			frames := queryResult.Frames
 			require.Len(t, frames, 1)
-			require.Len(t, frames[0].Fields, 18)
+			require.Len(t, frames[0].Fields, 20)
 
 			require.Equal(t, int16(1), *frames[0].Fields[0].At(0).(*int16))
 			require.Equal(t, int32(2), *frames[0].Fields[1].At(0).(*int32))
@@ -309,6 +312,13 @@ func TestIntegrationPostgresPGX(t *testing.T) {
 			require.True(t, ok)
 			require.Equal(t, "00:15:00", *frames[0].Fields[16].At(0).(*string))
 			require.Nil(t, frames[0].Fields[17].At(0))
+
+			_, ok = frames[0].Fields[18].At(0).(*json.RawMessage)
+			require.True(t, ok)
+			require.Equal(t, json.RawMessage(`{"key1": "value1"}`), *frames[0].Fields[18].At(0).(*json.RawMessage))
+			_, ok = frames[0].Fields[19].At(0).(*json.RawMessage)
+			require.True(t, ok)
+			require.Equal(t, json.RawMessage(`{"key2": "value2"}`), *frames[0].Fields[19].At(0).(*json.RawMessage))
 		})
 	})
 
