@@ -197,7 +197,11 @@ func callResource(ctx context.Context, req *backend.CallResourceRequest, sender 
 		plog.Error("Failed resource call to Tempo", "error", err, "url", parsedURL.String(), "duration", time.Since(start))
 		return err
 	}
-	defer resp.Body.Close()
+	defer func() {
+		if err := resp.Body.Close(); err != nil {
+			plog.Warn("Failed to close response body", "error", err)
+		}
+	}()
 
 	plog.Debug("Response received from Tempo", "statusCode", resp.StatusCode, "contentLength", resp.Header.Get("Content-Length"), "duration", time.Since(start))
 

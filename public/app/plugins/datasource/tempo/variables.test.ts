@@ -3,7 +3,7 @@ import { lastValueFrom } from 'rxjs';
 import { DataQueryRequest, TimeRange } from '@grafana/data';
 
 import { TempoVariableQuery } from './VariableQueryEditor';
-import { createMetadataRequest, createTempoDatasource } from './test/mocks';
+import { createTempoDatasource } from './test/mocks';
 import { TempoVariableSupport } from './variables';
 
 describe('TempoVariableSupport', () => {

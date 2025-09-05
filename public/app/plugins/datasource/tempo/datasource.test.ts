@@ -48,7 +48,7 @@ import {
 } from './datasource';
 import mockJson from './test/mockJsonResponse.json';
 import mockServiceGraph from './test/mockServiceGraph.json';
-import { createMetadataRequest, createTempoDatasource } from './test/mocks';
+import { createTempoDatasource } from './test/mocks';
 import { initTemplateSrv } from './test/test_utils';
 import { TempoJsonData, TempoQuery } from './types';
 
