@@ -246,7 +246,7 @@ func (s *ResourcePermSqlBackend) buildRbacAssignments(ctx context.Context, ns ty
 	return assignments, nil
 }
 
-func (s *ResourcePermSqlBackend) createResourcePermission(ctx context.Context, dbHelper *legacysql.LegacyDatabaseHelper, ns types.NamespaceInfo, v0ResourcePerm *v0alpha1.ResourcePermission) (int64, error) {
+func (s *ResourcePermSqlBackend) createResourcePermission(ctx context.Context, dbHelper *legacysql.LegacyDatabaseHelper, ns types.NamespaceInfo, mapper Mapper, grn *groupResourceName, v0ResourcePerm *v0alpha1.ResourcePermission) (int64, error) {
 	if v0ResourcePerm == nil {
 		return 0, fmt.Errorf("resource permission cannot be nil")
 	}
@@ -255,9 +255,15 @@ func (s *ResourcePermSqlBackend) createResourcePermission(ctx context.Context, d
 		return 0, fmt.Errorf("resource permission must have at least one permission: %w", errInvalidSpec)
 	}
 
-	mapper, grn, err := s.splitResourceName(v0ResourcePerm.Name)
-	if err != nil {
-		return 0, err
+	// Validate that the group/resource/name in the name matches the spec
+	if grn.Group != v0ResourcePerm.Spec.Resource.ApiGroup ||
+		grn.Resource != v0ResourcePerm.Spec.Resource.Resource ||
+		grn.Name != v0ResourcePerm.Spec.Resource.Name {
+		return 0, fmt.Errorf("resource permission group/resource does not match spec: %w", errInvalidSpec)
+	}
+
+	if grn.Name == "" {
+		return 0, fmt.Errorf("resource permission name cannot be empty: %w", errInvalidName)
 	}
 
 	assignments, err := s.buildRbacAssignments(ctx, ns, mapper, v0ResourcePerm, mapper.Scope(grn.Name))

@@ -226,7 +226,7 @@ func TestIntegration_ResourcePermSqlBackend_CreateResourcePermission(t *testing.
 			},
 			Spec: v0alpha1.ResourcePermissionSpec{
 				Resource: v0alpha1.ResourcePermissionspecResource{
-					ApiGroup: "folders.grafana.app",
+					ApiGroup: "folder.grafana.app",
 					Resource: "folders",
 					Name:     "fold1",
 				},
@@ -259,7 +259,11 @@ func TestIntegration_ResourcePermSqlBackend_CreateResourcePermission(t *testing.
 		backend := setupBackend(t)
 		sqlHelper, _ := backend.dbProvider(ctx)
 		backend.identityStore = NewFakeIdentityStore(t)
-		rv, err := backend.createResourcePermission(ctx, sqlHelper, types.NamespaceInfo{Value: "default", OrgID: 1}, resourcePerm)
+
+		mapper, grn, err := backend.splitResourceName(resourcePerm.Name)
+		require.NoError(t, err)
+
+		rv, err := backend.createResourcePermission(ctx, sqlHelper, types.NamespaceInfo{Value: "default", OrgID: 1}, mapper, grn, resourcePerm)
 		require.NoError(t, err)
 		require.Equal(t, timeNow().UnixMilli(), rv)
 
