@@ -11,4 +11,5 @@ export const UIMap: Record<string, [IconName, string]> = {
   grafana_com: ['grafana', 'Grafana.com'],
   azuread: ['microsoft', 'Azure AD'],
   okta: ['okta', 'Okta'],
+  scim: ['scim', 'SCIM'],
 };
