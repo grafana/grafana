@@ -198,15 +198,15 @@ func TestGetInstanceSettings(t *testing.T) {
 			},
 		},
 		{
-			name: "lookup by reference object without UID",
+			name: "lookup by reference object without UID should find by type",
 			nameOrRef: map[string]interface{}{
-				"type": "prometheus",
+				"type": "elasticsearch",
 			},
 			expected: &schemaversion.DataSourceInfo{
-				UID:        "default-ds-uid",
-				Type:       "prometheus",
-				Name:       "Default Test Datasource Name",
-				APIVersion: "v1",
+				UID:        "existing-target-uid",
+				Type:       "elasticsearch",
+				Name:       "Existing Target Name",
+				APIVersion: "v2",
 			},
 		},
 		{
@@ -416,5 +416,200 @@ func TestMigrateDatasourceNameToRef(t *testing.T) {
 			}
 			assert.Equal(t, expected, result)
 		})
+	})
+}
+
+// TestTypeBasedLookupFix specifically tests our datasource type-based lookup fix.
+// This test verifies that when a datasource reference object has a "type" but no "uid",
+// the system should lookup by type instead of defaulting to prometheus.
+func TestTypeBasedLookupFix(t *testing.T) {
+	// Setup test datasources for type-based lookup verification
+	datasources := []schemaversion.DataSourceInfo{
+		{
+			UID:        "testdata-uid",
+			Type:       "grafana-testdata-datasource",
+			Name:       "TestData",
+			Default:    true,
+			APIVersion: "v1",
+		},
+		{
+			UID:        "prometheus-uid",
+			Type:       "prometheus",
+			Name:       "Prometheus",
+			Default:    false,
+			APIVersion: "v1",
+		},
+		{
+			UID:        "loki-uid",
+			Type:       "loki",
+			Name:       "Loki",
+			Default:    false,
+			APIVersion: "v1",
+		},
+	}
+
+	tests := []struct {
+		name      string
+		nameOrRef interface{}
+		expected  *schemaversion.DataSourceInfo
+	}{
+		{
+			name: "type-only reference should find by type - grafana-testdata-datasource",
+			nameOrRef: map[string]interface{}{
+				"type": "grafana-testdata-datasource",
+			},
+			expected: &schemaversion.DataSourceInfo{
+				UID:        "testdata-uid",
+				Type:       "grafana-testdata-datasource",
+				Name:       "TestData",
+				Default:    false, // GetInstanceSettings returns a copy without preserving Default field
+				APIVersion: "v1",
+			},
+		},
+		{
+			name: "type-only reference should find by type - prometheus",
+			nameOrRef: map[string]interface{}{
+				"type": "prometheus",
+			},
+			expected: &schemaversion.DataSourceInfo{
+				UID:        "prometheus-uid",
+				Type:       "prometheus",
+				Name:       "Prometheus",
+				Default:    false,
+				APIVersion: "v1",
+			},
+		},
+		{
+			name: "type-only reference should find by type - loki",
+			nameOrRef: map[string]interface{}{
+				"type": "loki",
+			},
+			expected: &schemaversion.DataSourceInfo{
+				UID:        "loki-uid",
+				Type:       "loki",
+				Name:       "Loki",
+				Default:    false,
+				APIVersion: "v1",
+			},
+		},
+		{
+			name: "type-only reference with unknown type should preserve original type (frontend compatibility)",
+			nameOrRef: map[string]interface{}{
+				"type": "unknown-type",
+			},
+			expected: &schemaversion.DataSourceInfo{
+				UID:        "unknown-type",
+				Type:       "unknown-type",
+				Name:       "unknown-type",
+				Default:    false,
+				APIVersion: "v1",
+			},
+		},
+		{
+			name: "type-only reference with non-string type should default to testdata",
+			nameOrRef: map[string]interface{}{
+				"type": 123,
+			},
+			expected: &schemaversion.DataSourceInfo{
+				UID:        "testdata-uid",
+				Type:       "grafana-testdata-datasource",
+				Name:       "TestData",
+				Default:    false, // GetInstanceSettings returns a copy without preserving Default field
+				APIVersion: "v1",
+			},
+		},
+		{
+			name: "type-only reference with unknown type should preserve original type",
+			nameOrRef: map[string]interface{}{
+				"type": "unknown-datasource-type",
+			},
+			expected: &schemaversion.DataSourceInfo{
+				UID:        "unknown-datasource-type",
+				Type:       "unknown-datasource-type",
+				Name:       "unknown-datasource-type",
+				Default:    false,
+				APIVersion: "v1",
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := schemaversion.GetInstanceSettings(tt.nameOrRef, datasources)
+			assert.Equal(t, tt.expected, result)
+		})
+	}
+}
+
+// TestMigrateDatasourceNameToRefTypeBasedLookup tests the MigrateDatasourceNameToRef function
+// specifically for our type-based lookup fix scenario.
+func TestMigrateDatasourceNameToRefTypeBasedLookup(t *testing.T) {
+	// Setup test datasources for type-based lookup verification
+	datasources := []schemaversion.DataSourceInfo{
+		{
+			UID:        "testdata-uid",
+			Type:       "grafana-testdata-datasource",
+			Name:       "TestData",
+			Default:    true,
+			APIVersion: "v1",
+		},
+		{
+			UID:        "prometheus-uid",
+			Type:       "prometheus",
+			Name:       "Prometheus",
+			Default:    false,
+			APIVersion: "v1",
+		},
+	}
+
+	t.Run("type-based lookup in MigrateDatasourceNameToRef", func(t *testing.T) {
+		options := map[string]bool{"returnDefaultAsNull": false}
+
+		tests := []struct {
+			name      string
+			nameOrRef interface{}
+			expected  map[string]interface{}
+		}{
+			{
+				name: "type-only reference should lookup grafana-testdata-datasource",
+				nameOrRef: map[string]interface{}{
+					"type": "grafana-testdata-datasource",
+				},
+				expected: map[string]interface{}{
+					"uid":        "testdata-uid",
+					"type":       "grafana-testdata-datasource",
+					"apiVersion": "v1",
+				},
+			},
+			{
+				name: "type-only reference should lookup prometheus",
+				nameOrRef: map[string]interface{}{
+					"type": "prometheus",
+				},
+				expected: map[string]interface{}{
+					"uid":        "prometheus-uid",
+					"type":       "prometheus",
+					"apiVersion": "v1",
+				},
+			},
+			{
+				name: "type-only reference with unknown type should preserve original type",
+				nameOrRef: map[string]interface{}{
+					"type": "unknown-datasource-type",
+				},
+				expected: map[string]interface{}{
+					"uid":        "unknown-datasource-type",
+					"type":       "unknown-datasource-type",
+					"apiVersion": "v1",
+				},
+			},
+		}
+
+		for _, tt := range tests {
+			t.Run(tt.name, func(t *testing.T) {
+				result := schemaversion.MigrateDatasourceNameToRef(tt.nameOrRef, options, datasources)
+				assert.Equal(t, tt.expected, result)
+			})
+		}
 	})
 }
