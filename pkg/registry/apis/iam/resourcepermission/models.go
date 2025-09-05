@@ -9,6 +9,7 @@ import (
 	"time"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/grafana/authlib/types"
 
@@ -191,5 +192,26 @@ func (s *ResourcePermSqlBackend) parseScope(scope string) (*groupResourceName, e
 		Group:    gr.Group,
 		Resource: gr.Resource,
 		Name:     parts[2],
+	}, nil
+}
+
+// splitResourceName splits a resource name in the format <group>-<resource>-<name> (e.g. dashboard.grafana.app-dashboards-ad5rwqs) into its components
+func (s *ResourcePermSqlBackend) splitResourceName(resourceName string) (Mapper, *groupResourceName, error) {
+	// e.g. dashboard.grafana.app-dashboards-ad5rwqs
+	parts := strings.SplitN(resourceName, "-", 3)
+	if len(parts) != 3 {
+		return nil, nil, fmt.Errorf("%w: %s", errInvalidName, resourceName)
+	}
+
+	group, resourceType, uid := parts[0], parts[1], parts[2]
+	mapper, ok := s.mappers[schema.GroupResource{Group: group, Resource: resourceType}]
+	if !ok {
+		return nil, nil, fmt.Errorf("%w: %s/%s", errUnknownGroupResource, group, resourceType)
+	}
+
+	return mapper, &groupResourceName{
+		Group:    group,
+		Resource: resourceType,
+		Name:     uid,
 	}, nil
 }

@@ -14,7 +14,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/sqlstore/session"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
 // List
@@ -58,27 +57,6 @@ func (s *ResourcePermSqlBackend) getResourcePermissions(ctx context.Context, sql
 	}
 
 	return permissions, nil
-}
-
-// splitResourceName splits a resource name in the format <group>-<resource>-<name> (e.g. dashboard.grafana.app-dashboards-ad5rwqs) into its components
-func (s *ResourcePermSqlBackend) splitResourceName(resourceName string) (Mapper, *groupResourceName, error) {
-	// e.g. dashboard.grafana.app-dashboards-ad5rwqs
-	parts := strings.SplitN(resourceName, "-", 3)
-	if len(parts) != 3 {
-		return nil, nil, fmt.Errorf("%w: %s", errInvalidName, resourceName)
-	}
-
-	group, resourceType, uid := parts[0], parts[1], parts[2]
-	mapper, ok := s.mappers[schema.GroupResource{Group: group, Resource: resourceType}]
-	if !ok {
-		return nil, nil, fmt.Errorf("%w: %s/%s", errUnknownGroupResource, group, resourceType)
-	}
-
-	return mapper, &groupResourceName{
-		Group:    group,
-		Resource: resourceType,
-		Name:     uid,
-	}, nil
 }
 
 // getResourcePermission retrieves a single ResourcePermission by its name in the format <group>-<resource>-<name> (e.g. dashboard.grafana.app-dashboards-ad5rwqs)
