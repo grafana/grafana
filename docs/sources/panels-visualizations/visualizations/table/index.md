@@ -227,7 +227,6 @@ For the full list of options, refer to [Calculations](ref:calculations).
 In the table footer:
 
 - You can apply multiple calculations at once.
-- All calculations and reducer functions are labeled except **Total** when it's the only function applied.
 - The calculations and reducer functions apply to all fields in the table, by default. To control which fields have a calculation or function applied, add the table footer in an override instead.
 - If you enable a mathematical function for a non-numeric field, nothing for that function is displayed for that field.
 
@@ -237,10 +236,6 @@ In the following image, multiple calculations&mdash;**Mean**, **Max**, and **Las
 
 You can also see in the previous image that the mathematical functions, **Mean** and **Max**, haven't been applied to the text field in the table.
 Only the **Last** function has been applied to that field.
-
-In the following image, the **Total** calculation has been applied, and no label is displayed because it's the only function:
-
-{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-table-footer-2-v12.2.png" max-width="750px" alt="" >}}
 
 {{< admonition type="note">}}
 Calculations applied to cell types like **Markdown + HTML** might have unexpected results.

@@ -1,6 +1,6 @@
 import { screen, render } from '@testing-library/react';
 
-import { Field, FieldType } from '@grafana/data';
+import { Field, FieldType, ReducerID } from '@grafana/data';
 
 import { SummaryCell } from './SummaryCell';
 
@@ -13,13 +13,13 @@ describe('SummaryCell', () => {
 
   const footers = [
     {
-      reducers: ['sum'],
+      reducers: [ReducerID.sum],
     },
     {
-      reducers: ['sum'],
+      reducers: [ReducerID.sum],
     },
     {
-      reducers: ['sum'],
+      reducers: [ReducerID.sum],
     },
   ];
 
@@ -30,7 +30,7 @@ describe('SummaryCell', () => {
     config: {
       custom: {
         footer: {
-          reducers: ['sum'],
+          reducers: [ReducerID.sum],
         },
       },
     },
@@ -52,7 +52,7 @@ describe('SummaryCell', () => {
     config: {
       custom: {
         footer: {
-          reducers: ['sum'],
+          reducers: [ReducerID.sum],
         },
       },
     },
@@ -73,7 +73,7 @@ describe('SummaryCell', () => {
     values: ['a', 'b', 'c'],
     config: {
       custom: {
-        reducers: ['sum'],
+        reducers: [ReducerID.sum],
       },
     },
     display: (value: unknown) => ({
@@ -103,7 +103,7 @@ describe('SummaryCell', () => {
       ...numericField,
       config: {
         ...numericField.config,
-        custom: { ...numericField.config.custom, footer: { reducers: ['sum', 'mean'] } },
+        custom: { ...numericField.config.custom, footer: { reducers: [ReducerID.sum, ReducerID.mean] } },
       },
     };
     render(
@@ -120,7 +120,7 @@ describe('SummaryCell', () => {
       ...numericField,
       config: {
         ...numericField.config,
-        custom: { ...numericField.config.custom, footer: { reducers: ['mean'] } },
+        custom: { ...numericField.config.custom, footer: { reducers: [ReducerID.mean] } },
       },
     };
     render(<SummaryCell footers={footers} rows={rows} field={newNumericField} textAlign="left" colIdx={1} />);
@@ -136,7 +136,7 @@ describe('SummaryCell', () => {
   it('should render the summary cell if a non-numeric reducer is set for a non-numeric field', () => {
     const textFieldNonNumericReducer = {
       ...textField,
-      config: { ...textField.config, custom: { ...textField.config.custom, footer: { reducers: ['last'] } } },
+      config: { ...textField.config, custom: { ...textField.config.custom, footer: { reducers: [ReducerID.last] } } },
     };
     render(
       <SummaryCell footers={footers} rows={rows} field={textFieldNonNumericReducer} textAlign="left" colIdx={1} />
@@ -173,7 +173,7 @@ describe('SummaryCell', () => {
         ...field.config,
         custom: {
           ...field.config.custom,
-          footer: { reducers: ['sum', 'mean', 'last'] },
+          footer: { reducers: [ReducerID.sum, ReducerID.mean, ReducerID.last] },
         },
       },
     }));
@@ -187,5 +187,26 @@ describe('SummaryCell', () => {
     expect(screen.getByText('13')).toBeInTheDocument(); // sum
     expect(screen.getByText('6.5')).toBeInTheDocument(); // mean
     expect(screen.getByText('efghi')).toBeInTheDocument(); // last
+  });
+
+  it('renders row labels when the prop is set, there are reducers in the footers, and no reducers for this field', () => {
+    const numericFieldNoReducers = {
+      ...numericField,
+      state: {
+        displayName: 'NoReducer',
+      },
+      config: { ...numericField.config, custom: { ...numericField.config.custom, footer: { reducers: [] } } },
+    };
+    render(
+      <SummaryCell
+        footers={[{ reducers: [] }, ...footers]}
+        rows={rows.map((r) => ({ ...r, NoReducer: 1 }))}
+        field={numericFieldNoReducers}
+        textAlign="left"
+        colIdx={0}
+        rowLabel
+      />
+    );
+    expect(screen.getByText('Total')).toBeInTheDocument();
   });
 });
