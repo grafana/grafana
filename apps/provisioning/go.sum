@@ -60,8 +60,8 @@ github.com/grafana/grafana-app-sdk v0.40.3 h1:JFo7uAfbAJUfZ9neD7/4sODKm1xgu9zhck
 github.com/grafana/grafana-app-sdk v0.40.3/go.mod h1:j0KzHo3Sa6kd+lnwSScBNoV9Vobkg/YY9HtEjxpyPrk=
 github.com/grafana/grafana-app-sdk/logging v0.40.3 h1:2VXsXXEQiqAavRP8wusRDB6rDqf5lufP7A6NfjELqPE=
 github.com/grafana/grafana-app-sdk/logging v0.40.3/go.mod h1:otUD9XpJD7A5sCLb8mcs9hIXGdeV6lnhzVwe747g4RU=
-github.com/grafana/grafana/apps/secret v0.0.0-20250901132934-4de9ec7310c6 h1:zdLB7jkC3Y9OD6dIQN5E44Svil35ikdZDqFdBuXb08Y=
-github.com/grafana/grafana/apps/secret v0.0.0-20250901132934-4de9ec7310c6/go.mod h1:RA8mP8KVIwKXBx3Ssqa/uEBABib5LvUWYPVMxrNvnP0=
+github.com/grafana/grafana/apps/secret v0.0.0-20250902093454-b56b7add012f h1:f+Z5Xpfp1WNYjUe23ginerWsHWUsRgOWrr3WGu3SlWs=
+github.com/grafana/grafana/apps/secret v0.0.0-20250902093454-b56b7add012f/go.mod h1:RA8mP8KVIwKXBx3Ssqa/uEBABib5LvUWYPVMxrNvnP0=
 github.com/grafana/grafana/pkg/apimachinery v0.0.0-20250804150913-990f1c69ecc2 h1:X0cnaFdR+iz+sDSuoZmkryFSjOirchHe2MdKSRwBWgM=
 github.com/grafana/grafana/pkg/apimachinery v0.0.0-20250804150913-990f1c69ecc2/go.mod h1:RRvSjHH12/PnQaXraMO65jUhVu8n59mzvhfIMBETnV4=
 github.com/grafana/nanogit v0.0.0-20250723104447-68f58f5ecec0 h1:cS0SlJGIlZbmDLctNj5vIYGemrJDLy25wwoiIyZWVN8=

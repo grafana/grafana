@@ -547,6 +547,15 @@ func convertPostgresValue(rawValue []byte, fd pgconn.FieldDescription, m *pgtype
 			return nil, err
 		}
 		return d, nil
+	case pgtype.JSONOID, pgtype.JSONBOID:
+		var d *string
+		scanPlan := m.PlanScan(dataTypeOID, format, &d)
+		err := scanPlan.Scan(rawValue, &d)
+		if err != nil {
+			return nil, err
+		}
+		j := json.RawMessage(*d)
+		return &j, nil
 	default:
 		var d *string
 		scanPlan := m.PlanScan(dataTypeOID, format, &d)

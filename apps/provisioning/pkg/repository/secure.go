@@ -5,29 +5,9 @@ import (
 	"fmt"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
-	secretv1beta1 "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1"
+	"github.com/grafana/grafana/apps/secret/pkg/decrypt"
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 )
-
-// HACK: this interface and struct are used to avoid the dependency on the secret contracts
-// "github.com/grafana/grafana/pkg/registry/apis/secret/contracts" which creates a circular dependency
-// between the apps/provisioning and root modules.
-type DecryptResult struct {
-	Val *secretv1beta1.ExposedSecureValue
-	Err error
-}
-
-func (d DecryptResult) Error() error {
-	return d.Err
-}
-
-func (d DecryptResult) Value() *secretv1beta1.ExposedSecureValue {
-	return d.Val
-}
-
-type DecryptService interface {
-	Decrypt(ctx context.Context, group, namespace string, names ...string) (map[string]DecryptResult, error)
-}
 
 type Decrypter = func(r *provisioning.Repository) SecureValues
 
@@ -37,7 +17,7 @@ type SecureValues interface {
 }
 
 type secureValues struct {
-	svc       DecryptService
+	svc       decrypt.DecryptService
 	names     provisioning.SecureValues
 	namespace string
 }
@@ -72,7 +52,7 @@ func (s *secureValues) WebhookSecret(ctx context.Context) (common.RawSecureValue
 	return s.get(ctx, s.names.WebhookSecret)
 }
 
-func ProvideDecrypter(svc DecryptService) Decrypter {
+func ProvideDecrypter(svc decrypt.DecryptService) Decrypter {
 	return func(r *provisioning.Repository) SecureValues {
 		return &secureValues{svc: svc, names: r.Secure, namespace: r.Namespace}
 	}

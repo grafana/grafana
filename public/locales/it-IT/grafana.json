@@ -549,6 +549,7 @@
     },
     "alert-rules": {
       "firing-for": "Attivazione per",
+      "multiple-sources": "",
       "next-evaluation": "Prossima valutazione",
       "next-evaluation-in": "prossima valutazione tra",
       "rule-definition": "Definizione regola"
@@ -2638,13 +2639,15 @@
         "show": "Mostra"
       },
       "manage-alerts": "In queste origini dei dati, è possibile selezionare Gestisci avvisi tramite l'interfaccia utente di avviso per poter gestire queste regole di avviso nell'interfaccia utente di Grafana e nell'origine dei dati in cui sono state configurate.",
-      "no-groups": "Nessun gruppo disponibile",
-      "no-namespaces": "Nessuna cartella disponibile",
       "placeholder-all-data-sources": "Tutte le fonti dei dati",
       "placeholder-contact-point": "Seleziona punto di contatto",
       "placeholder-data-sources": "Seleziona origini dati",
       "placeholder-labels": "Seleziona etichette",
       "plugin-rules": "Regole dei componenti aggiuntivi",
+      "rule-source": {
+        "datasource": "",
+        "grafana": ""
+      },
       "rule-type": "Tipo di regola",
       "rulesSearchInput-placeholder-search": "Cerca",
       "search": "Cerca",
@@ -2666,6 +2669,7 @@
         "namespace": "Cartella/Spazio dei nomi",
         "rule-health": "Stato",
         "rule-name": "Nome regola",
+        "rule-source": "",
         "rule-type": "Tipo",
         "state": "Stato"
       }
@@ -3393,9 +3397,6 @@
       "text-badge-enabled": "Abilitato",
       "text-badge-not-enabled": "Non abilitato"
     },
-    "scim-banner": {
-      "message": "SCIM è attualmente in fase di sviluppo e non è consigliato per l'uso in produzione. Utilizzalo con cautela e prevedi potenziali modifiche."
-    },
     "server-discovery-modal": {
       "label-the-wellknownopenidconfiguration-endpoint-for-your-id-p": "L'endpoint .well-known/openid-configuration per il tuo IdP",
       "title-open-id-connect-discovery-url": "URL di OpenID Connect Discovery"
@@ -3565,7 +3566,9 @@
       },
       "error-moving-resources": "Errore durante lo spostamento delle risorse",
       "error-no-target-folder-path": "Il percorso della cartella di destinazione non è valido o è vuoto, prova a selezionarlo di nuovo.",
-      "move-warning": "Questa operazione sposterà le cartelle selezionate e i relativi discendenti. In totale, questo influenzerà:",
+      "move-total": "",
+      "move-warning": "",
+      "move-warning-tooltip": "",
       "target-folder": "Cartella di destinazione"
     },
     "counts": {
@@ -4691,6 +4694,7 @@
       "panel-title": "Modifica il titolo del pannello",
       "paste-panel": "Incolla pannello",
       "remove": "Rimuovi {{typeName}}",
+      "row-title": "",
       "switch-layout": "Cambia layout"
     },
     "edit-pane": {
@@ -6542,7 +6546,8 @@
     },
     "data-source-load-error": {
       "back": "Indietro",
-      "delete": "Elimina"
+      "delete": "Elimina",
+      "not-found": ""
     },
     "data-source-missing-rights-message": {
       "title-missing-rights": "Diritti mancanti"
@@ -7565,7 +7570,9 @@
   "folders": {
     "api": {
       "folder-delete-error-provisioned": "",
-      "folder-deleted-success": "Cartella eliminata"
+      "folder-deleted-success": "Cartella eliminata",
+      "folder-move-error-provisioned": "",
+      "folder-moved-success": ""
     },
     "get-loading-nav": {
       "main": {
@@ -8765,7 +8772,6 @@
       "cell-inspect": "Ispeziona valore",
       "cell-inspect-tooltip": "Ispeziona valore",
       "copy": "Copia negli appunti",
-      "count": "Conta",
       "csv-counts": "Righe: {{rows}}, Colonne: {{columns}} <5></5>",
       "csv-placeholder": "Inserisci qui il CSV...",
       "filter-placeholder": "Valori filtro",
@@ -8776,6 +8782,11 @@
       "filter-popup-heading": "Filtra per valori:",
       "filter-popup-input-placeholder": "Valori filtro",
       "filter-popup-match-case": "Corrispondenza",
+      "footer": {
+        "reducer": {
+          "count": ""
+        }
+      },
       "inspect-drawer-title": "Ispeziona valore",
       "nested-table": {
         "no-data": "Nessun dato"
@@ -9525,6 +9536,7 @@
       "fields-section": "Campi",
       "hide-log-line": "Nascondi riga registro",
       "inline-mode": "Visualizza in linea",
+      "link-value-tooltip": "",
       "links-section": "Collegamenti",
       "log-line-field": "Riga registro",
       "log-line-section": "Riga registro",
@@ -12780,8 +12792,6 @@
     "description-calculation": "Scegli una funzione/un calcolo di riduzione",
     "description-cell-value-inspect": "Abilita l'ispezione del valore della cella in una finestra modale",
     "description-column-filter": "Abilita/disabilita i filtri di campo nella tabella",
-    "description-count-rows": "Visualizza un singolo conteggio per tutte le righe di dati",
-    "description-fields": "Seleziona i campi da calcolare",
     "description-frozen-columns": "",
     "description-min-column-width": "La larghezza minima per il ridimensionamento automatico della colonna",
     "description-tooltip-from-field": "",
@@ -12808,21 +12818,17 @@
     "name-column-alignment": "Allineamento colonna",
     "name-column-filter": "Filtro colonna",
     "name-column-width": "Larghezza colonna",
-    "name-count-rows": "Conteggio righe",
     "name-enable-pagination": "",
-    "name-fields": "Campi",
     "name-frozen-columns": "",
     "name-hide-in-table": "Nascondi nella tabella",
     "name-max-height": "",
     "name-min-column-width": "Larghezza minima colonna",
-    "name-show-table-footer": "Mostra piè di pagina tabella",
     "name-show-table-header": "Mostra intestazione tabella",
     "name-tooltip-from-field": "",
     "name-tooltip-placement": "",
     "name-wrap-header-text": "Testo intestazione a capo",
     "name-wrap-text": "",
     "placeholder-column-width": "automatica",
-    "placeholder-fields": "Tutti i campi numerici",
     "placeholder-max-height": "",
     "tooltip-placement-options": {
       "label-auto": "",
