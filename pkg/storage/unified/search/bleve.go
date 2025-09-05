@@ -199,6 +199,18 @@ func (b *bleveBackend) updateIndexSizeMetric(indexPath string) {
 	}
 }
 
+// newBleveIndex creates a new bleve index with consistent configuration.
+// If path is empty, creates an in-memory index.
+// If path is not empty, creates a file-based index at the specified path.
+func newBleveIndex(path string, mapper mapping.IndexMapping) (bleve.Index, error) {
+	kvstore := bleve.Config.DefaultKVStore
+	if path == "" {
+		// use in-memory kvstore
+		kvstore = bleve.Config.DefaultMemKVStore
+	}
+	return bleve.NewUsing(path, mapper, bleve.Config.DefaultIndexType, kvstore, nil)
+}
+
 // BuildIndex builds an index from scratch or retrieves it from the filesystem.
 // If built successfully, the new index replaces the old index in the cache (if there was any).
 // An index in the file system is considered to be valid if the requested resourceVersion is smaller than or equal to
@@ -299,7 +311,7 @@ func (b *bleveBackend) BuildIndex(
 					return nil, fmt.Errorf("invalid path %s", indexDir)
 				}
 
-				index, err = bleve.New(indexDir, mapper)
+				index, err = newBleveIndex(indexDir, mapper)
 				if errors.Is(err, bleve.ErrorIndexPathExists) {
 					now = now.Add(time.Second) // Bump time for next try
 					index = nil                // Bleve actually returns non-nil value with ErrorIndexPathExists
@@ -314,7 +326,7 @@ func (b *bleveBackend) BuildIndex(
 			defer closeIndexOnExit(index, indexDir) // Close index, and delete new index directory.
 		}
 	} else {
-		index, err = bleve.NewMemOnly(mapper)
+		index, err = newBleveIndex("", mapper)
 		if err != nil {
 			return nil, fmt.Errorf("error creating new in-memory bleve index: %w", err)
 		}
@@ -516,17 +528,19 @@ func (b *bleveBackend) findPreviousFileBasedIndex(resourceDir string, resourceVe
 			continue
 		}
 
-		cnt, err := idx.DocCount()
-		if err != nil {
-			b.log.Debug("error getting count from index", "indexDir", indexDir, "err", err)
-			_ = idx.Close()
-			continue
-		}
+		if !searchAfterWrite {
+			cnt, err := idx.DocCount()
+			if err != nil {
+				b.log.Debug("error getting count from index", "indexDir", indexDir, "err", err)
+				_ = idx.Close()
+				continue
+			}
 
-		if uint64(size) != cnt {
-			b.log.Debug("index count mismatch. ignoring index", "indexDir", indexDir, "size", size, "cnt", cnt)
-			_ = idx.Close()
-			continue
+			if uint64(size) != cnt {
+				b.log.Debug("index count mismatch. ignoring index", "indexDir", indexDir, "size", size, "cnt", cnt)
+				_ = idx.Close()
+				continue
+			}
 		}
 
 		indexRV, err := getRV(idx)
@@ -1058,16 +1072,18 @@ func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resourcepb.R
 		// Query 1: Match the exact query string
 		queryExact := bleve.NewMatchQuery(req.Query)
 		queryExact.SetBoost(10.0)
-		queryExact.Analyzer = keyword.Name // don't analyze the query input - treat it as a single token
+		queryExact.Analyzer = keyword.Name                // don't analyze the query input - treat it as a single token
+		queryExact.Operator = query.MatchQueryOperatorAnd // This doesn't make a difference for keyword analyzer, we add it just to be explicit.
 
 		// Query 2: Phrase query with standard analyzer
 		queryPhrase := bleve.NewMatchPhraseQuery(req.Query)
-		queryExact.SetBoost(5.0)
+		queryPhrase.SetBoost(5.0)
 		queryPhrase.Analyzer = standard.Name
 
 		// Query 3: Match query with standard analyzer
 		queryAnalyzed := bleve.NewMatchQuery(req.Query)
 		queryAnalyzed.Analyzer = standard.Name
+		queryAnalyzed.Operator = query.MatchQueryOperatorAnd // Make sure all terms from the query are matched
 
 		// At least one of the queries must match
 		searchQuery := bleve.NewDisjunctionQuery(queryExact, queryAnalyzed, queryPhrase)

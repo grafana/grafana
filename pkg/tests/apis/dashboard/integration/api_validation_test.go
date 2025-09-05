@@ -159,7 +159,7 @@ func TestIntegrationDashboardAPIAuthorization(t *testing.T) {
 			})
 
 			t.Run("Dashboard permission tests", func(t *testing.T) {
-				runDashboardPermissionTests(t, org1Ctx, false)
+				runDashboardPermissionTests(t, org1Ctx, true)
 			})
 
 			t.Run("Cross-organization tests", func(t *testing.T) {
@@ -390,7 +390,7 @@ func runDashboardValidationTests(t *testing.T, ctx TestContext) {
 							},
 							"spec": map[string]interface{}{
 								"title":         "Dashboard Title",
-								"schemaVersion": 41,
+								"schemaVersion": 42,
 								"editable":      "elephant",
 								"time":          9000,
 								"uid":           strings.Repeat("a", 100),
@@ -411,7 +411,7 @@ func runDashboardValidationTests(t *testing.T, ctx TestContext) {
 							},
 							"spec": map[string]interface{}{
 								"title":         "Dashboard Title",
-								"schemaVersion": 41,
+								"schemaVersion": 42,
 								"editable":      "elephant",
 								"time":          9000,
 								"uid":           strings.Repeat("a", 100),
@@ -1015,7 +1015,7 @@ func createDashboardObject(t *testing.T, title string, folderUID string, generat
 			},
 			"spec": map[string]interface{}{
 				"title":         title,
-				"schemaVersion": 41,
+				"schemaVersion": 42,
 			},
 		},
 	}
@@ -2038,7 +2038,7 @@ func runDashboardHttpTest(t *testing.T, ctx TestContext, foreignOrgCtx TestConte
 							},
 							"spec": {
 								"title": "%s",
-								"schemaVersion": 41,
+								"schemaVersion": 42,
 								"layout": {
 									"kind": "GridLayout",
 									"items": []

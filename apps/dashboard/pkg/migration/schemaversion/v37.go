@@ -1,5 +1,7 @@
 package schemaversion
 
+import "context"
+
 // V37 normalizes legend configuration to use `showLegend` property consistently.
 //
 // This migration addresses inconsistencies in how legend visibility was handled.
@@ -71,7 +73,7 @@ package schemaversion
 //	    showLegend: true
 //	  }
 //	}
-func V37(dashboard map[string]interface{}) error {
+func V37(_ context.Context, dashboard map[string]interface{}) error {
 	dashboard["schemaVersion"] = int(37)
 
 	panels, ok := dashboard["panels"].([]interface{})

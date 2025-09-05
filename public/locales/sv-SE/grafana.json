@@ -549,6 +549,7 @@
     },
     "alert-rules": {
       "firing-for": "Aktiveras för",
+      "multiple-sources": "",
       "next-evaluation": "Nästa utvärdering",
       "next-evaluation-in": "nästa utvärdering om",
       "rule-definition": "Regeldefinition"
@@ -2638,13 +2639,15 @@
         "show": "Visa"
       },
       "manage-alerts": "I dessa datakällor kan du välja Hantera larm via larmgränssnittet för att kunna hantera dessa larmregler i Grafana-gränssnittet samt i datakällan där de konfigurerades.",
-      "no-groups": "Inga grupper tillgängliga",
-      "no-namespaces": "Inga mappar tillgängliga",
       "placeholder-all-data-sources": "Alla datakällor",
       "placeholder-contact-point": "Välj kontaktpunkt",
       "placeholder-data-sources": "Välj datakällor",
       "placeholder-labels": "Välj etiketter",
       "plugin-rules": "Tilläggsregler",
+      "rule-source": {
+        "datasource": "",
+        "grafana": ""
+      },
       "rule-type": "Typ av regel",
       "rulesSearchInput-placeholder-search": "Sök",
       "search": "Sök",
@@ -2666,6 +2669,7 @@
         "namespace": "Mapp/namnområde",
         "rule-health": "Hälsa",
         "rule-name": "Regelnamn",
+        "rule-source": "",
         "rule-type": "Typ",
         "state": "Tillstånd"
       }
@@ -3393,9 +3397,6 @@
       "text-badge-enabled": "Aktiverad",
       "text-badge-not-enabled": "Ej aktiverat"
     },
-    "scim-banner": {
-      "message": "SCIM är under utveckling och bör inte användas i en produktionsmiljö. Använd med försiktighet och räkna med potentiella ändringar."
-    },
     "server-discovery-modal": {
       "label-the-wellknownopenidconfiguration-endpoint-for-your-id-p": "Slutpunkten .well-known/openid-configuration för din identitetsleverantör",
       "title-open-id-connect-discovery-url": "Webbadress för OpenID Connect Discovery"
@@ -3565,7 +3566,9 @@
       },
       "error-moving-resources": "Fel vid flyttning av resurser",
       "error-no-target-folder-path": "Sökvägen till målmappen är ogiltig eller tom. Välj på nytt.",
-      "move-warning": "Detta kommer att flytta valda mappar och alla underordnade mappar. Totalt kommer detta att påverka:",
+      "move-total": "",
+      "move-warning": "",
+      "move-warning-tooltip": "",
       "target-folder": "Målkatalog"
     },
     "counts": {
@@ -4503,16 +4506,11 @@
             "any": "Matcha någon",
             "label": "Matchningsregler"
           },
-          "label": "Grupp",
           "visibility": {
             "hide": "Dölj",
             "label": "{{type}} synlighet",
             "show": "Visa"
           }
-        },
-        "shared": {
-          "delete-condition": "Ta bort villkor",
-          "unsupported-item-type": "Detta villkor stöds inte av elementet, därför kommer det att ignoreras."
         },
         "time-range-size": {
           "info": "Visa eller dölj {{type}} om instrumentpanelens tidsintervall är kortare än den valda tidsramen.",
@@ -4542,17 +4540,21 @@
             "not-matches": "Ingen matchning"
           },
           "value": "Värde"
+        },
+        "wrapper": {
+          "delete-condition": "",
+          "unsupported-object-type": ""
         }
       },
       "editor": {
+        "info": "",
         "not-supported-for-custom-grid": "Villkorsstyrd rendering stöds inte för den anpassade rutnätslayouten. Byt till automatiskt rutnät om du vill använda villkorsstyrd rendering.",
-        "unsupported-item-type": "Villkorsstyrd rendering stöds inte för den här objekttypen"
+        "unsupported-object-type": ""
       },
       "overlay": {
         "tooltip": "Elementet är dolt på grund av villkorsstyrd rendering."
       },
       "root": {
-        "info": "Ställ in regler för att reglera synligheten för {{type}} genom att matcha med någon eller alla regler.",
         "title": "Visa/dölj regler"
       }
     },
@@ -4691,7 +4693,9 @@
       "panel-title": "Ändra paneltitel",
       "paste-panel": "Klistra in panel",
       "remove": "Ta bort {{typeName}}",
-      "switch-layout": "Byt layout"
+      "row-title": "",
+      "switch-layout": "Byt layout",
+      "tab-title": ""
     },
     "edit-pane": {
       "elements": {
@@ -6542,7 +6546,8 @@
     },
     "data-source-load-error": {
       "back": "Tillbaka",
-      "delete": "Ta bort"
+      "delete": "Ta bort",
+      "not-found": ""
     },
     "data-source-missing-rights-message": {
       "title-missing-rights": "Saknade rättigheter"
@@ -7565,7 +7570,9 @@
   "folders": {
     "api": {
       "folder-delete-error-provisioned": "",
-      "folder-deleted-success": "Mappen raderad"
+      "folder-deleted-success": "Mappen raderad",
+      "folder-move-error-provisioned": "",
+      "folder-moved-success": ""
     },
     "get-loading-nav": {
       "main": {
@@ -8341,6 +8348,10 @@
         "action-title": "Titel",
         "action-title-placeholder": "Åtgärdstitel",
         "action-variables": "Variabler",
+        "connection": "",
+        "connection-direct-description": "",
+        "connection-direct-label": "",
+        "connection-placeholder": "",
         "one-click-description": "Endast en länk eller en åtgärd kan ha en aktiverad klickning åt gången"
       }
     },
@@ -8765,7 +8776,6 @@
       "cell-inspect": "Inspektera värde",
       "cell-inspect-tooltip": "Inspektera värde",
       "copy": "Kopiera till klippbordet",
-      "count": "Räknare",
       "csv-counts": "Rader:{{rows}}, Kolumner:{{columns}}  <5></5>",
       "csv-placeholder": "Ange CSV här…",
       "filter-placeholder": "Filtrera värden",
@@ -8776,6 +8786,11 @@
       "filter-popup-heading": "Filtrera per värden:",
       "filter-popup-input-placeholder": "Filtrera värden",
       "filter-popup-match-case": "Matcha gemener/versaler",
+      "footer": {
+        "reducer": {
+          "count": ""
+        }
+      },
       "inspect-drawer-title": "Inspektera värde",
       "nested-table": {
         "no-data": "Inga data"
@@ -9525,6 +9540,7 @@
       "fields-section": "Fält",
       "hide-log-line": "Dölj loggrad",
       "inline-mode": "Visa inline",
+      "link-value-tooltip": "",
       "links-section": "Länkar",
       "log-line-field": "Loggrad",
       "log-line-section": "Loggrad",
@@ -9715,30 +9731,6 @@
     "un-themed-log-label-stats": {
       "field-log-stats": "{{label}}: {{total}} av {{rowCount}} rader har det fältet",
       "label-log-stats": "{{label}}: {{total}} av {{rowCount}} rader har den etiketten"
-    }
-  },
-  "logs-new": {
-    "category-logs": "Loggar",
-    "deduplication-options": {
-      "label-exact": "Exakt",
-      "label-none": "Ingen",
-      "label-numbers": "Nummer",
-      "label-signature": "Underskrift"
-    },
-    "description-infinite-scrolling": "Experimentellt. Begär fler resultat genom att bläddra till längst ner i logglistan.",
-    "description-show-controls": "Visa kontroller för att hoppa till den sista eller första loggraden och filtrera efter loggnivå",
-    "description-syntax-highlighting": "Använd en fördefinierad syntaxfärgningsgrammatik för att markera relevanta delar av loggraderna",
-    "name-deduplication": "Avduplicering",
-    "name-enable-log-details": "Aktivera loggdetaljer",
-    "name-infinite-scrolling": "Aktivera oändlig rullning",
-    "name-order": "Beställning",
-    "name-show-controls": "Visa kontroller",
-    "name-syntax-highlighting": "Aktivera syntaxfärgläggning",
-    "name-time": "Tid",
-    "name-wrap-lines": "Radbryt linjer",
-    "order-options": {
-      "label-newest-first": "Nyaste först",
-      "label-oldest-first": "Äldsta först"
     }
   },
   "manage-dashbaords": {
@@ -12780,8 +12772,6 @@
     "description-calculation": "Välj en reduceringsfunktion/beräkning",
     "description-cell-value-inspect": "Aktivera cellvärdesinspektion i ett modalt fönster",
     "description-column-filter": "Aktiverar/inaktiverar fältfilter i tabellen",
-    "description-count-rows": "Visa ett enda antal för alla datarader",
-    "description-fields": "Välj de fält som ska beräknas",
     "description-frozen-columns": "",
     "description-min-column-width": "Minsta bredd för automatisk storleksändring av kolumn",
     "description-tooltip-from-field": "",
@@ -12808,21 +12798,17 @@
     "name-column-alignment": "Kolumnjustering",
     "name-column-filter": "Kolumnfilter",
     "name-column-width": "Kolumnbredd",
-    "name-count-rows": "Antal rader",
     "name-enable-pagination": "",
-    "name-fields": "Fält",
     "name-frozen-columns": "",
     "name-hide-in-table": "Dölj i tabell",
     "name-max-height": "",
     "name-min-column-width": "Minsta kolumnbredd",
-    "name-show-table-footer": "Visa tabellsidfot",
     "name-show-table-header": "Visa tabellsidhuvud",
     "name-tooltip-from-field": "",
     "name-tooltip-placement": "",
     "name-wrap-header-text": "Radbryt rubriktext",
     "name-wrap-text": "",
     "placeholder-column-width": "auto",
-    "placeholder-fields": "Alla numeriska fält",
     "placeholder-max-height": "",
     "tooltip-placement-options": {
       "label-auto": "",
