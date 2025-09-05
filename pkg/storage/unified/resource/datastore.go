@@ -39,9 +39,9 @@ type DataObj struct {
 }
 
 type DataKey struct {
+	Namespace       string
 	Group           string
 	Resource        string
-	Namespace       string
 	Name            string
 	ResourceVersion int64
 	Action          DataAction
