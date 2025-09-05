@@ -1,28 +1,27 @@
 import { random } from 'lodash';
 
-import { test, expect, DataSourceConfigPage } from '@grafana/plugin-e2e';
+import { test, expect } from '@grafana/plugin-e2e';
 
 const DATASOURCE_ID = 'sandbox-test-datasource';
 let DATASOURCE_CONNECTION_ID = '';
-const DATASOURCE_TYPED_NAME = 'SandboxDatasourceInstance';
+const TIMESTAMP = Date.now();
+const DATASOURCE_TYPED_NAME = `SandboxDatasourceInstance-${TIMESTAMP}`;
 
-// Originally skipped due to flakiness/race conditions with same old arch test e2e/various-suite/frontend-sandbox-datasource.spec.ts
-// TODO: fix and remove skip
-test.describe.skip(
+test.beforeAll(async ({ createDataSource }) => {
+  // Add the datasource
+  const response = await createDataSource({
+    type: 'sandbox-test-datasource',
+    name: DATASOURCE_TYPED_NAME,
+  });
+  DATASOURCE_CONNECTION_ID = response.uid;
+});
+
+test.describe(
   'Datasource sandbox',
   {
-    tag: ['@various', '@wip'],
+    tag: ['@various'],
   },
   () => {
-    let configPage: DataSourceConfigPage;
-    test.beforeEach(async ({ createDataSourceConfigPage }) => {
-      // Add the datasource
-      configPage = await createDataSourceConfigPage({
-        type: 'sandbox',
-        name: DATASOURCE_TYPED_NAME,
-      });
-    });
-
     test.describe('Config Editor', () => {
       test.describe('Sandbox disabled', () => {
         test.beforeEach(async ({ page }) => {
@@ -33,7 +32,6 @@ test.describe.skip(
 
         test('Should not render a sandbox wrapper around the datasource config editor', async ({ page }) => {
           await page.goto(`/connections/datasources/edit/${DATASOURCE_CONNECTION_ID}`);
-          await page.waitForTimeout(300); // wait to prevent false positives because playwright checks too fast
 
           const sandboxDiv = page.locator(`div[data-plugin-sandbox="${DATASOURCE_ID}"]`);
           await expect(sandboxDiv).toBeHidden();
@@ -47,7 +45,9 @@ test.describe.skip(
           });
         });
 
-        test('Should render a sandbox wrapper around the datasource config editor', async ({ page, selectors }) => {
+        test('Should render a sandbox wrapper around the datasource config editor', async ({ page }) => {
+          await page.goto(`/connections/datasources/edit/${DATASOURCE_CONNECTION_ID}`);
+
           const sandboxDiv = page.locator(`div[data-plugin-sandbox="${DATASOURCE_ID}"]`);
           await expect(sandboxDiv).toBeVisible();
         });
