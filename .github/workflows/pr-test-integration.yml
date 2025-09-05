@@ -135,7 +135,7 @@ jobs:
           --health-interval=10s 
           --health-timeout=5s 
           --health-retries=3
-          --volume=/tmp/mysql/custom.cnf:/etc/mysql/conf.d/custom.cnf
+          --volume=${{ runner.temp }}/mysql/custom.cnf:/etc/mysql/conf.d/custom.cnf
         ports:
           - 3306:3306
     steps:
@@ -153,12 +153,12 @@ jobs:
 
       - name: Prepare MySQL config
         run: |
-          mkdir -p /tmp/mysql
-          cp .github/mysql/custom.cnf /tmp/mysql/custom.cnf
+          mkdir -p ${{ runner.temp }}/mysql
+          cp .github/mysql/custom.cnf ${{ runner.temp }}/mysql/custom.cnf
       - name: Prepare Postgres config
         run: |
-          mkdir -p /tmp/postgres
-          cp .github/postgres/postgresql.conf /tmp/postgres/postgresql.conf
+          mkdir -p ${{ runner.temp }}/postgres
+          cp .github/postgres/postgresql.conf ${{ runner.temp }}/postgres/postgresql.conf
       - name: Run tests
         env:
           SHARD: ${{ matrix.shard }}
@@ -199,7 +199,7 @@ jobs:
           --health-interval=10s
           --health-timeout=5s
           --health-retries=5
-          --volume=/tmp/postgres/postgresql.conf:/etc/postgresql/postgresql.conf
+          --volume=${{ runner.temp }}/postgres/postgresql.conf:/etc/postgresql/postgresql.conf
         ports:
           - 5432:5432
     steps:
