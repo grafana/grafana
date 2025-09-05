@@ -12,7 +12,6 @@ import (
 	"go.opentelemetry.io/otel/trace"
 
 	"github.com/grafana/dskit/services"
-	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/middleware/loggermw"
@@ -28,16 +27,15 @@ var tracer = otel.Tracer("github.com/grafana/grafana/pkg/services/frontend")
 
 type frontendService struct {
 	*services.BasicService
-	cfg            *setting.Cfg
-	httpServ       *http.Server
-	features       featuremgmt.FeatureToggles
-	log            log.Logger
-	errChan        chan error
-	promGatherer   prometheus.Gatherer
-	promRegister   prometheus.Registerer
-	tracer         trace.Tracer
-	license        licensing.Licensing
-	assetsManifest dtos.EntryPointAssets
+	cfg          *setting.Cfg
+	httpServ     *http.Server
+	features     featuremgmt.FeatureToggles
+	log          log.Logger
+	errChan      chan error
+	promGatherer prometheus.Gatherer
+	promRegister prometheus.Registerer
+	tracer       trace.Tracer
+	license      licensing.Licensing
 
 	index *IndexProvider
 }
