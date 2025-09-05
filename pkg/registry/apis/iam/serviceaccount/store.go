@@ -3,6 +3,7 @@ package serviceaccount
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
@@ -12,13 +13,14 @@ import (
 
 	claims "github.com/grafana/authlib/types"
 	iamv0alpha1 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
-	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/infra/slugify"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/common"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/legacy"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 var (
@@ -82,11 +84,20 @@ func (s *LegacyStore) Create(ctx context.Context, obj runtime.Object, createVali
 		}
 	}
 
+	login := serviceaccounts.GenerateLogin(serviceaccounts.ServiceAccountPrefix, ns.OrgID, saObj.Spec.Title)
+	if saObj.Spec.Plugin != "" {
+		login = serviceaccounts.ExtSvcLoginPrefix(ns.OrgID) + slugify.Slugify(saObj.Spec.Title)
+	}
+
+	if saObj.GenerateName != "" {
+		saObj.Name = saObj.GenerateName + util.GenerateShortUID()
+	}
+
 	createCmd := legacy.CreateServiceAccountCommand{
 		IsDisabled: saObj.Spec.Disabled,
 		Name:       saObj.Spec.Title,
 		UID:        saObj.Name,
-		Login:      saObj.Spec.Login,
+		Login:      strings.ToLower(login),
 		Role:       string(saObj.Spec.Role),
 	}
 
@@ -165,18 +176,27 @@ func (s *LegacyStore) toSAItem(sa legacy.ServiceAccount, ns string) iamv0alpha1.
 			CreationTimestamp: metav1.NewTime(sa.Created),
 		},
 		Spec: iamv0alpha1.ServiceAccountSpec{
-			AvatarUrl: dtos.GetGravatarUrlWithDefault(s.cfg, "", sa.Name),
-			External:  serviceaccounts.IsExternalServiceAccount(sa.Login),
-			Login:     sa.Login,
-			Title:     sa.Name,
-			Disabled:  sa.Disabled,
-			Role:      iamv0alpha1.ServiceAccountOrgRole(sa.Role),
+			Plugin:   extractPluginNameFromLogin(sa.Login),
+			Title:    sa.Name,
+			Disabled: sa.Disabled,
+			Role:     iamv0alpha1.ServiceAccountOrgRole(sa.Role),
 		},
 	}
 	obj, _ := utils.MetaAccessor(&item)
 	obj.SetUpdatedTimestamp(&sa.Updated)
 	obj.SetDeprecatedInternalID(sa.ID) // nolint:staticcheck
 	return item
+}
+
+func extractPluginNameFromLogin(login string) string {
+	if serviceaccounts.IsExternalServiceAccount(login) {
+		parts := strings.SplitAfter(login, "-")
+		if len(parts) < 4 {
+			return ""
+		}
+		return parts[3]
+	}
+	return ""
 }
 
 func (s *LegacyStore) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {

@@ -289,52 +289,22 @@ func (b *IdentityAccessManagementAPIBuilder) GetAuthorizer() authorizer.Authoriz
 // TODO: Move this to the ValidateFunc of the user resource after moving the APIs to use the app-platofrm-sdk.
 // TODO: https://github.com/grafana/grafana/blob/main/apps/playlist/pkg/app/app.go#L62
 func (b *IdentityAccessManagementAPIBuilder) Validate(ctx context.Context, a admission.Attributes, o admission.ObjectInterfaces) (err error) {
+
 	switch a.GetOperation() {
 	case admission.Create:
-		switch a.GetKind() {
-		case iamv0.UserResourceInfo.GroupVersionKind():
+		switch typedObj := a.GetObject().(type) {
+		case *iamv0.User:
 			return b.validateCreateUser(ctx, a, o)
-		case iamv0.ServiceAccountResourceInfo.GroupVersionKind():
-			return b.validateCreateServiceAccount(ctx, a, o)
+		case *iamv0.ServiceAccount:
+			return serviceaccount.ValidateOnCreate(ctx, typedObj)
 		}
-	case admission.Connect:
-	case admission.Delete:
+		return nil
 	case admission.Update:
 		return nil
-	}
-	return nil
-}
-
-func (b *IdentityAccessManagementAPIBuilder) validateCreateServiceAccount(ctx context.Context, a admission.Attributes, o admission.ObjectInterfaces) error {
-	saObj, ok := a.GetObject().(*iamv0.ServiceAccount)
-	if !ok {
+	case admission.Delete:
 		return nil
-	}
-
-	if saObj.Spec.Title == "" {
-		return apierrors.NewBadRequest("service account must have a title")
-	}
-
-	requester, err := identity.GetRequester(ctx)
-	if err != nil {
-		return apierrors.NewBadRequest("no identity found")
-	}
-
-	if saObj.Spec.External && !requester.IsIdentityType(types.TypeAccessPolicy) {
-		return apierrors.NewForbidden(iamv0.ServiceAccountResourceInfo.GroupResource(),
-			saObj.Name,
-			fmt.Errorf("only service identities can create external service accounts"))
-	}
-
-	requestedRole := identity.RoleType(saObj.Spec.Role)
-	if !requestedRole.IsValid() {
-		return apierrors.NewBadRequest(fmt.Sprintf("invalid role: %s", requestedRole))
-	}
-
-	if !requester.HasRole(requestedRole) {
-		return apierrors.NewForbidden(iamv0.ServiceAccountResourceInfo.GroupResource(),
-			saObj.Name,
-			fmt.Errorf("can not assign a role higher than user's role"))
+	case admission.Connect:
+		return nil
 	}
 
 	return nil
@@ -375,7 +345,7 @@ func (b *IdentityAccessManagementAPIBuilder) Mutate(ctx context.Context, a admis
 		case *iamv0.User:
 			return user.MutateOnCreate(ctx, typedObj)
 		case *iamv0.ServiceAccount:
-			return serviceaccount.MutateOnCreate(ctx, typedObj, b.cfg)
+			return serviceaccount.MutateOnCreate(ctx, typedObj)
 		}
 		return nil
 	case admission.Update:

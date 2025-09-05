@@ -2990,27 +2990,17 @@
       "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.ServiceAccountSpec": {
         "type": "object",
         "required": [
-          "avatarUrl",
           "disabled",
-          "external",
-          "login",
+          "plugin",
           "role",
           "title"
         ],
         "properties": {
-          "avatarUrl": {
-            "type": "string",
-            "default": ""
-          },
           "disabled": {
             "type": "boolean",
             "default": false
           },
-          "external": {
-            "type": "boolean",
-            "default": false
-          },
-          "login": {
+          "plugin": {
             "type": "string",
             "default": ""
           },
@@ -5116,27 +5106,17 @@
       "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.ServiceAccountSpec": {
         "type": "object",
         "required": [
-          "avatarUrl",
           "disabled",
-          "external",
-          "login",
+          "plugin",
           "role",
           "title"
         ],
         "properties": {
-          "avatarUrl": {
-            "type": "string",
-            "default": ""
-          },
           "disabled": {
             "type": "boolean",
             "default": false
           },
-          "external": {
-            "type": "boolean",
-            "default": false
-          },
-          "login": {
+          "plugin": {
             "type": "string",
             "default": ""
           },

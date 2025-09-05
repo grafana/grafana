@@ -12,7 +12,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore/session"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
-	"github.com/grafana/grafana/pkg/util"
 )
 
 type GetServiceAccountInternalIDQuery struct {
@@ -333,7 +332,6 @@ func (r createServiceAccountQuery) Validate() error {
 func (s *legacySQLStore) CreateServiceAccount(ctx context.Context, ns claims.NamespaceInfo, cmd CreateServiceAccountCommand) (*CreateServiceAccountResult, error) {
 	cmd.OrgID = ns.OrgID
 	cmd.Email = cmd.Login
-	cmd.UID = util.GenerateShortUID()
 
 	now := time.Now().UTC().Truncate(time.Second)
 	lastSeenAt := now.AddDate(-10, 0, 0) // Set last seen 10 years ago like in user service

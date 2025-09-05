@@ -1,10 +1,8 @@
 package v0alpha1
 
 ServiceAccountSpec: {
-    avatarUrl: string
     disabled: bool |* false
-    external: bool |* false
-    login: string
+    plugin: string
     role: OrgRole
     title: string
 }
