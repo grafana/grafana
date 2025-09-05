@@ -34,7 +34,8 @@ var (
 	errInvalidScope         = errors.New("invalid scope")
 	errInvalidNamespace     = errors.New("invalid namespace")
 
-	defaultLevels = []string{"view", "edit", "admin"}
+	defaultLevels     = []string{"view", "edit", "admin"}
+	allowedBasicRoles = map[string]bool{"Viewer": true, "Editor": true, "Admin": true}
 )
 
 type IdentityStore interface {

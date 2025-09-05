@@ -230,6 +230,9 @@ func (s *ResourcePermSqlBackend) buildRbacAssignments(ctx context.Context, ns ty
 				Scope:            rbacScope,
 			})
 		case v0alpha1.ResourcePermissionSpecPermissionKindBasicRole:
+			if !allowedBasicRoles[perm.Name] {
+				return nil, fmt.Errorf("invalid basic role %q: %w", perm.Name, errInvalidSpec)
+			}
 			assignments = append(assignments, grant{
 				RoleName:         fmt.Sprintf("managed:builtins:%s:permissions", strings.ToLower(perm.Name)),
 				AssignmentTable:  "builtin_role",
