@@ -51,21 +51,22 @@ func (m *migrator) migrate(ctx context.Context, dash map[string]interface{}, tar
 	// This replicates the behavior of the frontend DashboardModel and PanelModel constructors
 	applyFrontendDefaults(dash)
 
-	// 2. Apply panel defaults to each panel (including nested panels)
-	// This matches the frontend behavior where PanelModel constructor is called on ALL panels
-	panels := getPanels(dash)
-	for _, panel := range panels {
-		applyPanelDefaults(panel)
+	// 2. Apply panel defaults to top-level panels only (not nested panels)
+	// This matches the frontend behavior where PanelModel constructor is only called on top-level panels
+	if dashboardPanels, ok := dash["panels"].([]interface{}); ok {
+		for _, panelInterface := range dashboardPanels {
+			if panel, ok := panelInterface.(map[string]interface{}); ok {
+				applyPanelDefaults(panel)
+			}
+		}
 	}
 
 	// 3. Ensure panel IDs are unique for ALL panels (including nested ones)
 	// This matches the frontend ensurePanelsHaveUniqueIds() behavior
 	ensurePanelsHaveUniqueIds(dash)
 
-	// 4. Clean up the dashboard to match frontend getSaveModel behavior
-	// This removes properties that shouldn't be persisted and filters out default values
-	cleanupDashboardForSave(dash)
-
+	// TODO: Probably we can check if we can migrate at the begining of the function
+	// 4. Ensure schema version is set and if not default to 0
 	inputVersion := schemaversion.GetSchemaVersion(dash)
 	dash["schemaVersion"] = inputVersion
 
@@ -86,6 +87,10 @@ func (m *migrator) migrate(ctx context.Context, dash map[string]interface{}, tar
 			dash["schemaVersion"] = nextVersion
 		}
 	}
+
+	// 6. Clean up the dashboard to match frontend getSaveModel behavior
+	// This removes properties that shouldn't be persisted and filters out default values
+	cleanupDashboardForSave(dash)
 
 	if schemaversion.GetSchemaVersion(dash) != targetVersion {
 		return schemaversion.NewMigrationError("schema version not migrated to target version", inputVersion, targetVersion, "")

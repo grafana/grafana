@@ -20,16 +20,6 @@
   "gnetId": null,
   "graphTooltip": 0,
   "links": [],
-  "meta": {
-    "canDelete": true,
-    "canEdit": true,
-    "canMakeEditable": false,
-    "canSave": true,
-    "canShare": true,
-    "canStar": true,
-    "hasUnsavedFolderChange": false,
-    "showSettings": true
-  },
   "panels": [
     {
       "datasource": {
@@ -109,7 +99,6 @@
         }
       ],
       "title": "Basic Angular Table with Defaults",
-      "transformations": [],
       "type": "table"
     },
     {
@@ -262,7 +251,6 @@
         }
       ],
       "title": "Complex Table with All Style Features",
-      "transformations": [],
       "type": "table"
     },
     {
@@ -708,7 +696,6 @@
         }
       ],
       "title": "Mixed Threshold Types",
-      "transformations": [],
       "type": "table"
     },
     {
@@ -814,7 +801,6 @@
         }
       ],
       "title": "All Color Modes Test",
-      "transformations": [],
       "type": "table"
     },
     {
@@ -914,7 +900,6 @@
         }
       ],
       "title": "All Alignment Options",
-      "transformations": [],
       "type": "table"
     },
     {
@@ -1027,7 +1012,6 @@
         }
       ],
       "title": "Field Matcher Types Test",
-      "transformations": [],
       "type": "table"
     },
     {
@@ -1146,7 +1130,6 @@
         }
       ],
       "title": "Link Configuration Test",
-      "transformations": [],
       "type": "table"
     },
     {
@@ -1259,7 +1242,6 @@
         }
       ],
       "title": "Date Format Variations",
-      "transformations": [],
       "type": "table"
     },
     {

@@ -520,6 +520,37 @@ func isEqual(a, b interface{}) bool {
 
 // cleanupDashboardForSave applies the same cleanup logic as the frontend
 func cleanupDashboardForSave(dashboard map[string]interface{}) {
+
+	// Remove non-persisted dashboard properties to match frontend getSaveModel behavior
+	nonPersistedProperties := map[string]bool{
+		"events":                           true,
+		"meta":                             true,
+		"panels":                           true, // handled specially below
+		"templating":                       true, // handled specially below
+		"originalTime":                     true,
+		"originalTemplating":               true,
+		"originalLibraryPanels":            true,
+		"panelInEdit":                      true,
+		"panelInView":                      true,
+		"getVariablesFromState":            true,
+		"formatDate":                       true,
+		"appEventsSubscription":            true,
+		"panelsAffectedByVariableChange":   true,
+		"lastRefresh":                      true,
+		"timeRangeUpdatedDuringEditOrView": true,
+		"originalDashboard":                true,
+	}
+
+	for k, v := range nonPersistedProperties {
+		// Do not remove "panels" and "templating" here, as they are handled specially
+		if (k == "panels" || k == "templating") && v {
+			continue
+		}
+		if v {
+			delete(dashboard, k)
+		}
+	}
+
 	// Clean up panels
 	if panels, ok := dashboard["panels"].([]interface{}); ok {
 		for _, panelInterface := range panels {

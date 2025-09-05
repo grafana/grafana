@@ -58,16 +58,6 @@
   "gnetId": null,
   "graphTooltip": 0,
   "links": [],
-  "meta": {
-    "canDelete": true,
-    "canEdit": true,
-    "canMakeEditable": false,
-    "canSave": true,
-    "canShare": true,
-    "canStar": true,
-    "hasUnsavedFolderChange": false,
-    "showSettings": true
-  },
   "panels": [
     {
       "datasource": {

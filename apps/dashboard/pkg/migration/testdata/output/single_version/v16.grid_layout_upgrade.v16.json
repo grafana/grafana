@@ -20,16 +20,6 @@
   "gnetId": null,
   "graphTooltip": 0,
   "links": [],
-  "meta": {
-    "canDelete": true,
-    "canEdit": true,
-    "canMakeEditable": false,
-    "canSave": true,
-    "canShare": true,
-    "canStar": true,
-    "hasUnsavedFolderChange": false,
-    "showSettings": true
-  },
   "panels": [
     {
       "gridPos": {
@@ -64,7 +54,6 @@
       "id": 13,
       "panels": [],
       "repeat": "",
-      "title": "",
       "type": "row"
     },
     {
@@ -199,7 +188,6 @@
       "id": 16,
       "panels": [],
       "repeat": "",
-      "title": "",
       "type": "row"
     },
     {
@@ -224,7 +212,6 @@
       "id": 17,
       "panels": [],
       "repeat": "server",
-      "title": "",
       "type": "row"
     }
   ],

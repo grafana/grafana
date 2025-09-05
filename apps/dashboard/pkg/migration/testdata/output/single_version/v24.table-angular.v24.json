@@ -20,16 +20,6 @@
   "gnetId": null,
   "graphTooltip": 0,
   "links": [],
-  "meta": {
-    "canDelete": true,
-    "canEdit": true,
-    "canMakeEditable": false,
-    "canSave": true,
-    "canShare": true,
-    "canStar": true,
-    "hasUnsavedFolderChange": false,
-    "showSettings": true
-  },
   "panels": [
     {
       "description": "Tests basic migration with default style pattern (/.*/) containing thresholds and colors. Should convert styles to fieldConfig.defaults with threshold steps.",
@@ -94,7 +84,6 @@
         }
       ],
       "title": "Basic Angular Table with Defaults",
-      "transformations": [],
       "type": "table"
     },
     {
@@ -232,7 +221,6 @@
       },
       "pluginVersion": "1.0.0",
       "title": "Complex Table with All Style Features",
-      "transformations": [],
       "type": "table"
     },
     {
@@ -588,7 +576,6 @@
       },
       "pluginVersion": "1.0.0",
       "title": "Mixed Threshold Types",
-      "transformations": [],
       "type": "table"
     },
     {
@@ -679,7 +666,6 @@
       },
       "pluginVersion": "1.0.0",
       "title": "All Color Modes Test",
-      "transformations": [],
       "type": "table"
     },
     {
@@ -764,7 +750,6 @@
       },
       "pluginVersion": "1.0.0",
       "title": "All Alignment Options",
-      "transformations": [],
       "type": "table"
     },
     {
@@ -862,7 +847,6 @@
       },
       "pluginVersion": "1.0.0",
       "title": "Field Matcher Types Test",
-      "transformations": [],
       "type": "table"
     },
     {
@@ -966,7 +950,6 @@
       },
       "pluginVersion": "1.0.0",
       "title": "Link Configuration Test",
-      "transformations": [],
       "type": "table"
     },
     {
@@ -1064,7 +1047,6 @@
       },
       "pluginVersion": "1.0.0",
       "title": "Date Format Variations",
-      "transformations": [],
       "type": "table"
     },
     {

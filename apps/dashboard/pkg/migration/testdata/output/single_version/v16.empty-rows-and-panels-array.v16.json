@@ -39,16 +39,6 @@
       "url": ""
     }
   ],
-  "meta": {
-    "canDelete": false,
-    "canEdit": false,
-    "canMakeEditable": true,
-    "canSave": false,
-    "canShare": true,
-    "canStar": true,
-    "hasUnsavedFolderChange": false,
-    "showSettings": true
-  },
   "panels": [
     {
       "datasource": {
