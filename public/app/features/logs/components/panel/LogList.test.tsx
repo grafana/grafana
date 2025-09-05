@@ -359,17 +359,16 @@ describe('LogList', () => {
       render(<LogList {...defaultProps} showTime showControls logs={logs} />);
 
       expect(screen.getByText('2025-08-06 03:35:19.504')).toBeInTheDocument();
-      expect(screen.getByLabelText('Show nanosecond timestamps')).toBeInTheDocument();
 
-      await userEvent.click(screen.getByLabelText('Show nanosecond timestamps'));
+      await userEvent.click(screen.getByLabelText('Log timestamps'));
+      await userEvent.click(screen.getByText('Show nanosecond timestamps'));
 
       expect(screen.getByText('2025-08-06 03:35:19.504133766')).toBeInTheDocument();
-      expect(screen.getByLabelText('Hide timestamps')).toBeInTheDocument();
 
-      await userEvent.click(screen.getByLabelText('Hide timestamps'));
+      await userEvent.click(screen.getByLabelText('Log timestamps'));
+      await userEvent.click(screen.getByText('Hide timestamps'));
 
       expect(screen.queryByText(/2025-08-06 03:35:19/)).not.toBeInTheDocument();
-      expect(screen.getByLabelText('Show millisecond timestamps')).toBeInTheDocument();
     });
   });
   describe('Interactions', () => {

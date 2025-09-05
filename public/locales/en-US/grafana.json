@@ -9644,6 +9644,12 @@
       "hide-search": "Close search",
       "hide-timestamps": "Hide timestamps",
       "hide-unique-labels": "Hide unique labels",
+      "line-wrapping": {
+        "enable": "Enable line wrapping",
+        "enable-prettify": "Enable line wrapping and prettify JSON",
+        "hide": "Disable line wrapping",
+        "label": "Log line wrapping"
+      },
       "newest-first": "Sorted by newest logs first - Click to show oldest first",
       "oldest-first": "Sorted by oldest logs first - Click to show newest first",
       "prettify-json": "Expand JSON logs",
@@ -9652,13 +9658,16 @@
       "resolution-ns": "ns",
       "scroll-bottom": "Scroll to bottom",
       "scroll-top": "Scroll to top",
-      "show-ms-timestamps": "Show millisecond timestamps",
-      "show-ns-timestamps": "Show nanosecond timestamps",
       "show-search": "Search in logs result",
       "show-timestamps": "Show timestamps",
       "show-unique-labels": "Show unique labels",
+      "timestamp": {
+        "hide": "Hide timestamps",
+        "label": "Log timestamps",
+        "milliseconds": "Show millisecond timestamps",
+        "nanoseconds": "Show nanosecond timestamps"
+      },
       "unwrap-lines": "Unwrap lines",
-      "wrap-json-lines": "Wrap lines and expand JSON",
       "wrap-lines": "Wrap lines"
     },
     "logs-navigation": {
