@@ -49,6 +49,7 @@ type provisioningControllerConfig struct {
 // grpc_address =
 // grpc_index_address =
 // allow_insecure =
+// audiences =
 // [operator]
 // provisioning_server_url =
 // tls_insecure =
@@ -130,7 +131,6 @@ func setupFromConfig(cfg *setting.Cfg) (controllerCfg *provisioningControllerCon
 	resourceClientCfg := resource.RemoteResourceClientConfig{
 		Token:            token,
 		TokenExchangeURL: tokenExchangeURL,
-		Audiences:        gRPCAuth.Key("audiences").Strings("|"),
 		Namespace:        gRPCAuth.Key("token_namespace").String(),
 	}
 	unified, err := setupUnifiedStorageClient(cfg, tracer, resourceClientCfg)
@@ -280,17 +280,19 @@ func setupUnifiedStorageClient(cfg *setting.Cfg, tracer tracing.Tracer, resource
 	}
 
 	// Connect to Index
+	indexConn := conn
 	indexAddress := unifiedStorageSec.Key("grpc_index_address").String()
 	if indexAddress == "" {
-		indexAddress = address
-	}
-	indexConn, err := unified.GrpcConn(indexAddress, registry)
-	if err != nil {
-		return nil, fmt.Errorf("create unified storage index gRPC connection: %w", err)
+		indexConn, err = unified.GrpcConn(indexAddress, registry)
+		if err != nil {
+			return nil, fmt.Errorf("create unified storage index gRPC connection: %w", err)
+		}
 	}
 
 	// Create client
 	resourceClientCfg.AllowInsecure = unifiedStorageSec.Key("allow_insecure").MustBool(false)
+	resourceClientCfg.Audiences = unifiedStorageSec.Key("audiences").Strings("|")
+
 	client, err := resource.NewRemoteResourceClient(tracer, conn, indexConn, resourceClientCfg)
 	if err != nil {
 		return nil, fmt.Errorf("create unified storage client: %w", err)

@@ -13,6 +13,7 @@ import (
 	"github.com/urfave/cli/v2"
 	"k8s.io/client-go/tools/cache"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/services/apiserver/standalone"
 	"github.com/grafana/grafana/pkg/setting"
@@ -49,24 +50,42 @@ func RunJobController(opts standalone.BuildInfo, c *cli.Context, cfg *setting.Cf
 	// A ticker to periodically counts managed objects in unified storage
 	// https://github.com/grafana/git-ui-sync-project/issues/467
 	tick := time.NewTicker(controllerCfg.resyncInterval)
+
 	go func() {
-		logger.Info("starting periodic managed resource lister", "interval", tick.C)
+		logger.Info("starting periodic managed resource lister", "interval", controllerCfg.resyncInterval.String())
+		fetchAndLog := func(ctx context.Context) {
+			ctx, _, err = identity.WithProvisioningIdentity(ctx, "*") // "*" grants us access to all namespaces.
+			if err != nil {
+				logger.Error("failed to set identity", "error", err)
+				return
+			}
+
+			resp, err := controllerCfg.unified.CountManagedObjects(ctx, &resourcepb.CountManagedObjectsRequest{
+				Kind: string(utils.ManagerKindRepo),
+			})
+			if err != nil {
+				logger.Error("failed to list managed objects", "error", err)
+			} else {
+				if len(resp.Items) == 0 {
+					logger.Info("no managed objects found")
+					return
+				}
+
+				for _, obj := range resp.Items {
+					logger.Info("manage object counts", "item", obj)
+				}
+			}
+		}
+
+		fetchAndLog(ctx) // Initial fetch
 		for {
 			select {
 			case <-ctx.Done():
 				tick.Stop()
 				return
 			case <-tick.C:
-				resp, err := controllerCfg.unified.CountManagedObjects(ctx, &resourcepb.CountManagedObjectsRequest{
-					Kind: string(utils.ManagerKindRepo),
-				})
-				if err != nil {
-					logger.Error("failed to list managed objects", "error", err)
-				} else {
-					for _, obj := range resp.Items {
-						logger.Info("manage object counts", "item", obj)
-					}
-				}
+				// Periodic fetch
+				fetchAndLog(ctx)
 			}
 		}
 	}()
