@@ -333,7 +333,7 @@ func (m *model) update(namespace, name string, version int64, encryptedData []by
 		}
 	}
 
-	return encryption.ErrUnexpectedNumberOfRowsAffected
+	return nil
 }
 
 func (m *model) get(namespace, name string, version int64) (*contracts.EncryptedValue, error) {
