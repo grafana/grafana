@@ -170,6 +170,14 @@ func (s *ResourcePermSqlBackend) WriteEvent(ctx context.Context, event resource.
 		return 0, apierrors.NewBadRequest(fmt.Sprintf("invalid key %q: %v", event.Key, err.Error()))
 	}
 
+	dbHelper, err := s.dbProvider(ctx)
+	if err != nil {
+		// Hide the error from the user, but log it
+		logger := s.logger.FromContext(ctx)
+		logger.Error("Failed to get database helper", "error", err)
+		return 0, errDatabaseHelper
+	}
+
 	mapper, grn, err := s.splitResourceName(event.Key.Name)
 	if err != nil {
 		return 0, apierrors.NewBadRequest(fmt.Sprintf("invalid resource name %q: %v", event.Key.Name, err.Error()))
@@ -180,6 +188,8 @@ func (s *ResourcePermSqlBackend) WriteEvent(ctx context.Context, event resource.
 	}
 
 	switch event.Type {
+	case resourcepb.WatchEvent_DELETED:
+		err = s.deleteResourcePermission(ctx, dbHelper, ns, event.Key.Name)
 	case resourcepb.WatchEvent_ADDED:
 		{
 			var v0resourceperm *v0alpha1.ResourcePermission
@@ -199,11 +209,6 @@ func (s *ResourcePermSqlBackend) WriteEvent(ctx context.Context, event resource.
 				)
 			}
 
-			dbHelper, err := s.dbProvider(ctx)
-			if err != nil {
-				return 0, err
-			}
-
 			rv, err = s.createResourcePermission(ctx, dbHelper, ns, mapper, grn, v0resourceperm)
 			if err != nil {
 				if errors.Is(err, errInvalidSpec) || errors.Is(err, errInvalidName) {
@@ -219,5 +224,5 @@ func (s *ResourcePermSqlBackend) WriteEvent(ctx context.Context, event resource.
 		return 0, fmt.Errorf("unsupported event type: %v", event.Type)
 	}
 
-	return rv, nil
+	return rv, err
 }

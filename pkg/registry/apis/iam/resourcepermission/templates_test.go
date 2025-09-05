@@ -73,6 +73,18 @@ func TestTemplates(t *testing.T) {
 		return &v
 	}
 
+	getDeleteResourcePermissionsQuery := func(q *DeleteResourcePermissionsQuery) sqltemplate.SQLTemplate {
+		v := deleteResourcePermissionsQueryTemplate{
+			SQLTemplate:        sqltemplate.New(nodb.DialectForDriver()),
+			Query:              q,
+			PermissionTable:    nodb.Table("permission"),
+			RoleTable:          nodb.Table("role"),
+			ManagedRolePattern: "managed:%",
+		}
+		v.SQLTemplate = mocks.NewTestingSQLTemplate()
+		return &v
+	}
+
 	mocks.CheckQuerySnapshots(t, mocks.TemplateTestSetup{
 		RootDir:        "testdata",
 		SQLTemplatesFS: sqlTemplatesFS,
@@ -132,6 +144,15 @@ func TestTemplates(t *testing.T) {
 						Scope:      "123",
 						OrgID:      3,
 						ActionSets: []string{"folders:admin", "folders:edit", "folders:view"},
+					}),
+				},
+			},
+			resourcePermissionDeletionQueryTplt: {
+				{
+					Name: "basic_delete_query",
+					Data: getDeleteResourcePermissionsQuery(&DeleteResourcePermissionsQuery{
+						Scope: "dash_123",
+						OrgID: 3,
 					}),
 				},
 			},
