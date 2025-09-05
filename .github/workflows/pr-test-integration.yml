@@ -135,7 +135,7 @@ jobs:
           --health-interval=10s 
           --health-timeout=5s 
           --health-retries=3
-          --volume=${{ github.workspace }}/.github/mysql/custom.cnf:/etc/mysql/conf.d/custom.cnf
+          --volume=/tmp/mysql/custom.cnf:/etc/mysql/conf.d/custom.cnf
         ports:
           - 3306:3306
     steps:
@@ -150,6 +150,15 @@ jobs:
           cache: true
       - name: Setup MySQL devenv
         run: mysql -h 127.0.0.1 -P 3306 -u root -prootpass < devenv/docker/blocks/mysql_tests/setup.sql
+
+      - name: Prepare MySQL config
+        run: |
+          mkdir -p /tmp/mysql
+          cp .github/mysql/custom.cnf /tmp/mysql/custom.cnf
+      - name: Prepare Postgres config
+        run: |
+          mkdir -p /tmp/postgres
+          cp .github/postgres/postgresql.cnf /tmp/postgres/postgresql
       - name: Run tests
         env:
           SHARD: ${{ matrix.shard }}
@@ -190,7 +199,7 @@ jobs:
           --health-interval=10s
           --health-timeout=5s
           --health-retries=5
-          --volume=${{ github.workspace }}/.github/postgres/postgresql.conf:/etc/postgresql/postgresql.conf
+          --volume=/tmp/postgres/postgresql.conf:/etc/postgresql/postgresql.conf
         ports:
           - 5432:5432
     steps:
