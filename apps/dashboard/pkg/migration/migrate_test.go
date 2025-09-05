@@ -25,9 +25,6 @@ const SINGLE_VERSION_OUTPUT_DIR = "testdata/output/single_version"
 const LATEST_VERSION_OUTPUT_DIR = "testdata/output/latest_version"
 
 func TestMigrate(t *testing.T) {
-	files, err := os.ReadDir(INPUT_DIR)
-	require.NoError(t, err)
-
 	// Use the same datasource provider as the frontend test to ensure consistency
 	Initialize(migrationtestutil.GetTestDataSourceProvider(), migrationtestutil.GetTestPanelProvider())
 
@@ -39,6 +36,21 @@ func TestMigrate(t *testing.T) {
 		var minVersionErr = schemaversion.NewMinimumVersionError(schemaversion.MIN_VERSION - 1)
 		require.ErrorAs(t, err, &minVersionErr)
 	})
+
+	runMigrationTests(t, schemaversion.LATEST_VERSION, LATEST_VERSION_OUTPUT_DIR)
+}
+
+func TestMigrateSingleVersion(t *testing.T) {
+	// Use the same datasource provider as the frontend test to ensure consistency
+	Initialize(migrationtestutil.GetTestDataSourceProvider(), migrationtestutil.GetTestPanelProvider())
+
+	runSingleVersionMigrationTests(t, SINGLE_VERSION_OUTPUT_DIR)
+}
+
+// runMigrationTests runs migration tests with a unified approach
+func runMigrationTests(t *testing.T, targetVersion int, outputDir string) {
+	files, err := os.ReadDir(INPUT_DIR)
+	require.NoError(t, err)
 
 	for _, f := range files {
 		if f.IsDir() {
@@ -59,7 +71,7 @@ func TestMigrate(t *testing.T) {
 		filenameTargetVersion, err := strconv.Atoi(versionStr[:dotIndex])
 		require.NoError(t, err, "failed to parse version from filename: %s", f.Name())
 
-		// Load a fresh copy of the dashboard for this test
+		// Load a fresh copy of the dashboard for this test (ensures no object sharing)
 		inputDash := loadDashboard(t, filepath.Join(INPUT_DIR, f.Name()))
 		inputVersion := getSchemaVersion(t, inputDash)
 
@@ -69,20 +81,17 @@ func TestMigrate(t *testing.T) {
 			"naming convention violation for %s: filename suggests target v%d, but schemaVersion is %d (should be %d)",
 			f.Name(), filenameTargetVersion, inputVersion, expectedSchemaVersion)
 
-		// Single test: migrate to latest version
-		testName := fmt.Sprintf("%s v%d to v%d", f.Name(), inputVersion, schemaversion.LATEST_VERSION)
+		testName := fmt.Sprintf("%s v%d to v%d", f.Name(), inputVersion, targetVersion)
 		t.Run(testName, func(t *testing.T) {
-			testMigration(t, inputDash, f.Name(), schemaversion.LATEST_VERSION)
+			testMigrationUnified(t, inputDash, f.Name(), inputVersion, targetVersion, outputDir)
 		})
 	}
 }
 
-func TestMigrateSingleVersion(t *testing.T) {
+// runSingleVersionMigrationTests runs single version migration tests
+func runSingleVersionMigrationTests(t *testing.T, outputDir string) {
 	files, err := os.ReadDir(INPUT_DIR)
 	require.NoError(t, err)
-
-	// Use the same datasource provider as the frontend test to ensure consistency
-	Initialize(migrationtestutil.GetTestDataSourceProvider(), migrationtestutil.GetTestPanelProvider())
 
 	for _, f := range files {
 		if f.IsDir() {
@@ -95,7 +104,6 @@ func TestMigrateSingleVersion(t *testing.T) {
 		}
 
 		// Extract version from filename (e.g., v16.grid_layout_upgrade.json -> 16)
-		// This represents the tested version that the file should be migrated TO
 		versionStr := strings.TrimPrefix(f.Name(), "v")
 		dotIndex := strings.Index(versionStr, ".")
 		if dotIndex == -1 {
@@ -110,7 +118,7 @@ func TestMigrateSingleVersion(t *testing.T) {
 			t.Skipf("skipping %s: target version %d exceeds latest version %d", f.Name(), targetVersion, schemaversion.LATEST_VERSION)
 		}
 
-		// Load a fresh copy of the dashboard for this test
+		// Load a fresh copy of the dashboard for this test (ensures no object sharing)
 		inputDash := loadDashboard(t, filepath.Join(INPUT_DIR, f.Name()))
 		inputVersion := getSchemaVersion(t, inputDash)
 
@@ -120,32 +128,31 @@ func TestMigrateSingleVersion(t *testing.T) {
 			"naming convention violation for %s: filename suggests target v%d, but schemaVersion is %d (should be %d)",
 			f.Name(), targetVersion, inputVersion, expectedSchemaVersion)
 
-		// File follows the expected pattern: current version is one less than target
 		testName := fmt.Sprintf("%s v%d to v%d", f.Name(), inputVersion, targetVersion)
 		t.Run(testName, func(t *testing.T) {
-			testSingleMigration(t, inputDash, f.Name(), inputVersion, targetVersion)
+			testMigrationUnified(t, inputDash, f.Name(), inputVersion, targetVersion, outputDir)
 		})
 	}
 }
 
-func testSingleMigration(t *testing.T, dash map[string]interface{}, inputFileName string, inputVersion, targetVersion int) {
+// testMigrationUnified is the unified test function that handles both single and full migrations
+func testMigrationUnified(t *testing.T, dash map[string]interface{}, inputFileName string, inputVersion, targetVersion int, outputDir string) {
 	t.Helper()
 
 	// 1. Verify input version matches filename
 	actualInputVersion := getSchemaVersion(t, dash)
 	require.Equal(t, inputVersion, actualInputVersion, "input version mismatch for %s", inputFileName)
 
-	// 2. Run migration to target version (next version: schemaVersion + 1)
-	require.NoError(t, Migrate(context.Background(), dash, targetVersion), "single version migration from v%d to v%d failed", inputVersion, targetVersion)
+	// 2. Run migration to target version
+	require.NoError(t, Migrate(context.Background(), dash, targetVersion), "migration from v%d to v%d failed", inputVersion, targetVersion)
 
 	// 3. Verify final schema version
 	finalVersion := getSchemaVersion(t, dash)
 	require.Equal(t, targetVersion, finalVersion, "dashboard not migrated to target version %d", targetVersion)
 
 	// 4. Generate output filename with target version suffix
-	// e.g., v16.grid_layout_upgrade.json -> v16.grid_layout_upgrade.v16.json
 	outputFileName := strings.TrimSuffix(inputFileName, ".json") + fmt.Sprintf(".v%d.json", targetVersion)
-	outPath := filepath.Join(SINGLE_VERSION_OUTPUT_DIR, outputFileName)
+	outPath := filepath.Join(outputDir, outputFileName)
 
 	// 5. Marshal the migrated dashboard
 	outBytes, err := json.MarshalIndent(dash, "", "  ")
@@ -160,40 +167,6 @@ func testSingleMigration(t *testing.T, dash map[string]interface{}, inputFileNam
 	}
 
 	// 7b. If existing file exists, compare them and fail if different
-	// We can ignore gosec G304 here since it's a test
-	// nolint:gosec
-	existingBytes, err := os.ReadFile(outPath)
-	require.NoError(t, err, "failed to read existing output file %s", outPath)
-	require.JSONEq(t, string(existingBytes), string(outBytes), "output file %s did not match expected result", outPath)
-}
-
-func testMigration(t *testing.T, dash map[string]interface{}, inputFileName string, targetVersion int) {
-	t.Helper()
-
-	// 1. Run migration to target version
-	require.NoError(t, Migrate(context.Background(), dash, targetVersion), "migration to v%d failed", targetVersion)
-
-	// 2. Verify final schema version
-	finalVersion := getSchemaVersion(t, dash)
-	require.Equal(t, targetVersion, finalVersion, "dashboard not migrated to target version %d", targetVersion)
-
-	// 3. Generate output filename with target version suffix: e.g., v16.grid_layout_upgrade.json -> v16.grid_layout_upgrade.v41.json
-	outputFileName := strings.TrimSuffix(inputFileName, ".json") + fmt.Sprintf(".v%d.json", targetVersion)
-	outPath := filepath.Join(LATEST_VERSION_OUTPUT_DIR, outputFileName)
-
-	// 4. Marshal the migrated dashboard
-	outBytes, err := json.MarshalIndent(dash, "", "  ")
-	require.NoError(t, err, "failed to marshal migrated dashboard")
-
-	// 5. Check if output file already exists
-	if _, err := os.Stat(outPath); os.IsNotExist(err) {
-		// 6a. If no existing file, create a new one
-		err = os.WriteFile(outPath, outBytes, 0644)
-		require.NoError(t, err, "failed to write new output file %s", outPath)
-		return
-	}
-
-	// 6b. If existing file exists, compare them and fail if different
 	// We can ignore gosec G304 here since it's a test
 	// nolint:gosec
 	existingBytes, err := os.ReadFile(outPath)
