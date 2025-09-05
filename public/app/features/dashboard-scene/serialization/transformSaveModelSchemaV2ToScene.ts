@@ -53,6 +53,7 @@ import {
 } from 'app/features/apiserver/types';
 import { DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
 import {
+  getDashboardComponentInteractionCallback,
   getDashboardInteractionCallback,
   getDashboardSceneProfiler,
 } from 'app/features/dashboard/services/DashboardProfiler';
@@ -172,6 +173,11 @@ export function transformSaveModelSchemaV2ToScene(dto: DashboardWithAccessInfo<D
     getDashboardSceneProfiler()
   );
 
+  const interactionProfilerBehavior = new behaviors.SceneInteractionProfiler({
+    enableProfiling: config.dashboardPerformanceMetrics.findIndex((uid) => uid === '*' || uid === metadata.name) !== -1,
+    onProfileComplete: getDashboardComponentInteractionCallback(metadata.name, dashboard.title),
+  });
+
   const dashboardScene = new DashboardScene(
     {
       description: dashboard.description,
@@ -200,6 +206,7 @@ export function transformSaveModelSchemaV2ToScene(dto: DashboardWithAccessInfo<D
           sync: transformCursorSyncV2ToV1(dashboard.cursorSync),
         }),
         queryController,
+        interactionProfilerBehavior,
         registerDashboardMacro,
         registerPanelInteractionsReporter,
         new behaviors.LiveNowTimer({ enabled: dashboard.liveNow }),
