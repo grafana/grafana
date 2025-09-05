@@ -249,7 +249,7 @@ func (s *ResourcePermSqlBackend) buildRbacAssignments(ctx context.Context, ns ty
 // existsResourcePermission checks if a resource permission for the given scope already exists in the given organization
 func (s *ResourcePermSqlBackend) existsResourcePermission(ctx context.Context, tx *session.SessionTx, dbHelper *legacysql.LegacyDatabaseHelper, orgID int64, scope string) error {
 	idQuery := fmt.Sprintf(
-		`SELECT id FROM %s AS r INNER JOIN %s AS p WHERE r.org_id = ? AND r.name LIKE ? AND p.scope = ? LIMIT 1`,
+		`SELECT r.id FROM %s AS r INNER JOIN %s AS p WHERE r.org_id = ? AND r.name LIKE ? AND p.scope = ? LIMIT 1`,
 		dbHelper.Table("role"), dbHelper.Table("permission"),
 	)
 	roleID := int64(0)
