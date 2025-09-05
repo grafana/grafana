@@ -7,6 +7,7 @@ import {
   CoreApp,
   DataFrame,
   DataFrameDTO,
+  DataFrameJSON,
   DataLink,
   DataQueryRequest,
   DataQueryResponse,
@@ -15,7 +16,6 @@ import {
   DataSourceGetTagValuesOptions,
   DataSourceInstanceSettings,
   dateTime,
-  FieldDTO,
   FieldType,
   LoadingState,
   NodeGraphDataFrameFieldNames,
@@ -99,16 +99,6 @@ interface ServiceMapQueryResponseWithRates {
   rates: Array<DataFrame | DataFrameDTO>;
   nodes: DataFrame;
   edges: DataFrame;
-}
-
-interface BackendNestedFrameDTO {
-  schema: {
-    fields: FieldDTO[];
-    meta?: DataFrameDTO['meta'];
-  };
-  data: {
-    values: unknown[][];
-  };
 }
 
 interface TempoQueryMetrics {
@@ -548,20 +538,23 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
                       // - For each field, we copy its definition and assign the corresponding values from nestedFrame.data.values.
                       // - We also set the 'length' property on the new frame, which is required by the frontend to know how many rows it contains.
                       // - Finally, we replace the original nestedFrame in the array with the transformed newNestedFrame.
-                      const mestedFrames = nested.values as BackendNestedFrameDTO[][];
+                      // const mestedFrames = nested.values as DataFrameJSON[][];
+                      const mestedFrames = nested.values as DataFrameJSON[][];
 
                       nested.values = mestedFrames.map((nestedFrameArray) => {
                         return nestedFrameArray.map((nestedFrame) => {
-                          const newNestedFrame = { fields: nestedFrame.schema.fields, meta: nestedFrame.schema.meta };
+                          const newNestedFrame = { fields: nestedFrame.schema?.fields, meta: nestedFrame.schema?.meta };
 
-                          newNestedFrame.fields = newNestedFrame.fields.map((field, fieldIndex: number) => {
-                            return { ...field, values: nestedFrame.data.values[fieldIndex] };
+                          newNestedFrame.fields = newNestedFrame.fields?.map((field, fieldIndex: number) => {
+                            return { ...field, values: nestedFrame.data?.values[fieldIndex] };
                           });
 
-                          const rowCount = Array.isArray(nestedFrame.data.values?.[0])
+                          const rowCount = Array.isArray(nestedFrame.data?.values?.[0])
                             ? nestedFrame.data.values?.[0].length
                             : 0;
-                          return { fields: newNestedFrame.fields, meta: nestedFrame.schema.meta, length: rowCount };
+
+                          console.log('ITS ALL WORKING WITH NEW TYPE');
+                          return { fields: newNestedFrame.fields, meta: nestedFrame.schema?.meta, length: rowCount };
                         });
                       });
                     });
