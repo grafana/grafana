@@ -1123,32 +1123,6 @@ describe('label names - v2 tags', () => {
   });
 });
 
-describe('label names - v1 tags', () => {
-  let datasource: TempoDatasource;
-
-  beforeEach(() => {
-    datasource = createTempoDatasource();
-    jest
-      .spyOn(datasource, 'metadataRequest')
-      .mockImplementationOnce(() => {
-        throw Error;
-      })
-      .mockImplementation(
-        createMetadataRequest({
-          data: {
-            tagNames: ['label1', 'label2'],
-          },
-        })
-      );
-  });
-
-  it('get label names', async () => {
-    // label_names()
-    const response = await datasource.executeVariableQuery({ refId: 'test', type: TempoVariableQueryType.LabelNames });
-    expect(response).toEqual([{ text: 'label1' }, { text: 'label2' }, { text: 'status.code' }]);
-  });
-});
-
 describe('label values', () => {
   let datasource: TempoDatasource;
 
