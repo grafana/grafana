@@ -121,18 +121,6 @@ describe('CompletionProvider', () => {
     expect((result! as monacoTypes.languages.CompletionList).suggestions).toEqual([]);
   });
 
-  it('suggests tags on empty input (API v1)', async () => {
-    const { provider, model } = setup('', 0, v2Tags);
-    const result = await provider.provideCompletionItems(model, emptyPosition);
-    expect((result! as monacoTypes.languages.CompletionList).suggestions).toEqual([
-      ...scopes.map((s) => expect.objectContaining({ label: s, insertText: `{ ${s}$0 }` })),
-      ...intrinsicsV1.map((s) => expect.objectContaining({ label: s, insertText: `{ ${s}$0 }` })),
-      expect.objectContaining({ label: 'bar', insertText: '{ .bar' }),
-      expect.objectContaining({ label: 'foo', insertText: '{ .foo' }),
-      expect.objectContaining({ label: 'status', insertText: '{ .status' }),
-    ]);
-  });
-
   it('suggests tags on empty input (API v2)', async () => {
     const { provider, model } = setup('', 0, v2Tags);
     const result = await provider.provideCompletionItems(model, emptyPosition);
@@ -145,27 +133,11 @@ describe('CompletionProvider', () => {
     ]);
   });
 
-  it('only suggests tags after typing the global attribute scope (API v1)', async () => {
-    const { provider, model } = setup('{.}', 2, v2Tags);
-    const result = await provider.provideCompletionItems(model, emptyPosition);
-    expect((result! as monacoTypes.languages.CompletionList).suggestions).toEqual(
-      v2Tags.map((s) => expect.objectContaining({ label: s, insertText: s }))
-    );
-  });
-
   it('only suggests tags after typing the global attribute scope (API v2)', async () => {
     const { provider, model } = setup('{.}', 2, v2Tags);
     const result = await provider.provideCompletionItems(model, emptyPosition);
     expect((result! as monacoTypes.languages.CompletionList).suggestions).toEqual(
       ['cluster', 'container', 'db'].map((s) => expect.objectContaining({ label: s, insertText: s }))
-    );
-  });
-
-  it('suggests tags after a scope (API v1)', async () => {
-    const { provider, model } = setup('{ resource. }', 11, v2Tags);
-    const result = await provider.provideCompletionItems(model, emptyPosition);
-    expect((result! as monacoTypes.languages.CompletionList).suggestions).toEqual(
-      v2Tags.map((s) => expect.objectContaining({ label: s, insertText: s }))
     );
   });
 
