@@ -11,7 +11,7 @@ import (
 )
 
 var PreferencesResourceInfo = utils.NewResourceInfo(APIGroup, APIVersion,
-	"preferences", "preferences", "Preferences",
+	"preferences", "preference", "Preferences",
 	func() runtime.Object { return &Preferences{} },
 	func() runtime.Object { return &PreferencesList{} },
 	utils.TableColumns{
@@ -33,7 +33,7 @@ var PreferencesResourceInfo = utils.NewResourceInfo(APIGroup, APIVersion,
 )
 
 var StarsResourceInfo = utils.NewResourceInfo(APIGroup, APIVersion,
-	"stars", "stars", "Stars",
+	"stars", "star", "Stars",
 	func() runtime.Object { return &Stars{} },
 	func() runtime.Object { return &StarsList{} },
 	utils.TableColumns{
