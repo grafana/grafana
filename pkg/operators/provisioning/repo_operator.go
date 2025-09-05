@@ -20,7 +20,6 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 
 	informer "github.com/grafana/grafana/apps/provisioning/pkg/generated/informers/externalversions"
-	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 )
 
 func RunRepoController(opts standalone.BuildInfo, c *cli.Context, cfg *setting.Cfg) error {
@@ -63,12 +62,8 @@ func RunRepoController(opts standalone.BuildInfo, c *cli.Context, cfg *setting.C
 	if err != nil {
 		return fmt.Errorf("create API client job store: %w", err)
 	}
-	tester := &repository.Tester{}
 	statusPatcher := appcontroller.NewRepositoryStatusPatcher(controllerCfg.provisioningClient.ProvisioningV0alpha1())
-	healthChecker := controller.NewHealthChecker(
-		tester,
-		statusPatcher,
-	)
+	healthChecker := controller.NewHealthChecker(statusPatcher)
 
 	repoInformer := informerFactory.Provisioning().V0alpha1().Repositories()
 	controller, err := controller.NewRepositoryController(
@@ -77,7 +72,6 @@ func RunRepoController(opts standalone.BuildInfo, c *cli.Context, cfg *setting.C
 		controllerCfg.repoFactory,
 		nil, // resourceLister -- TODO: needed for finalizers
 		nil, // clients -- TODO: needed for finalizers
-		tester,
 		jobs,
 		nil, // dualwrite -- standalone operator assumes it is backed by unified storage
 		healthChecker,

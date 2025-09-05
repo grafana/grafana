@@ -68,7 +68,6 @@ func NewRepositoryController(
 	repoFactory repository.Factory,
 	resourceLister resources.ResourceLister,
 	clients resources.ClientFactory,
-	tester RepositoryTester,
 	jobs jobs.Queue,
 	dualwrite dualwrite.Service,
 	healthChecker *HealthChecker,
