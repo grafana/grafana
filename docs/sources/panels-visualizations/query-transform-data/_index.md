@@ -147,6 +147,7 @@ In the **Saved queries** drawer, you can:
 - Set queries as favorites.
 - Duplicate, lock and unlock a query for editing, or delete a saved query.
 - Edit a query title, description, tags, or the availability of the query to other users in your organization. By default, saved queries are locked for editing.
+- When you access the **Saved queries** drawer from Explore, you can use the **Edit in Explore** option to edit the body of a query.
 
 Access the duplicate, lock, unlock, and delete query options through the menu in the top-right corner of the query form next to the **Edit** button.
 
