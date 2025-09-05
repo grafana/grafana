@@ -1,11 +1,15 @@
+import { css } from '@emotion/css';
 import { useEffect } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 
+import { GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { Box, Card, Field, Input, LoadingPlaceholder, Stack, Text } from '@grafana/ui';
+import { Box, Card, Field, Input, LoadingPlaceholder, Stack, Text, useStyles2 } from '@grafana/ui';
 import { RepositoryViewList } from 'app/api/clients/provisioning/v0alpha1';
 import { generateRepositoryTitle } from 'app/features/provisioning/utils/data';
 
+import { BootstrapStepCardIcons } from './BootstrapStepCardIcons';
+import { BootstrapStepResourceCounting } from './BootstrapStepResourceCounting';
 import { useStepStatus } from './StepStatusContext';
 import { useModeOptions } from './hooks/useModeOptions';
 import { useResourceStats } from './hooks/useResourceStats';
@@ -28,9 +32,11 @@ export function BootstrapStep({ settingsData, repoName }: Props) {
   } = useFormContext<WizardFormData>();
 
   const selectedTarget = watch('repository.sync.target');
+  const repositoryType = watch('repository.type');
   const options = useModeOptions(repoName, settingsData);
   const { target } = options[0];
   const { resourceCountString, fileCountString, isLoading } = useResourceStats(repoName, settingsData?.legacyStorage);
+  const styles = useStyles2(getStyles);
 
   useEffect(() => {
     // Pick a name nice name based on type+settings
@@ -60,7 +66,7 @@ export function BootstrapStep({ settingsData, repoName }: Props) {
   return (
     <Stack direction="column" gap={2}>
       <Stack direction="column" gap={2}>
-        <Box alignItems="center" padding={4}>
+        {/* <Box alignItems="center" padding={4}>
           <Stack direction="row" gap={4} alignItems="flex-start" justifyContent="center">
             <Stack direction="column" gap={1} alignItems="center">
               <Text color="secondary">
@@ -77,7 +83,7 @@ export function BootstrapStep({ settingsData, repoName }: Props) {
               <Text variant="h4">{fileCountString}</Text>
             </Stack>
           </Stack>
-        </Box>
+        </Box> */}
 
         <Controller
           name="repository.sync.target"
@@ -96,10 +102,26 @@ export function BootstrapStep({ settingsData, repoName }: Props) {
                 >
                   <Card.Heading>{action.label}</Card.Heading>
                   <Card.Description>
-                    <Stack direction="column" gap={3}>
-                      {action.description}
-                      <Text color="primary">{action.subtitle}</Text>
+                    <div className={styles.divider} />
+                    <Stack direction="row" gap={4} alignItems="center">
+                      <Stack>
+                        <Box paddingBottom={2}>
+                          <BootstrapStepCardIcons target={action.target} repoType={repositoryType} />
+                        </Box>
+                      </Stack>
+                      <Stack direction="column" gap={3}>
+                        {action.description}
+                        <Text color="primary">{action.subtitle}</Text>
+                      </Stack>
                     </Stack>
+
+                    <div className={styles.divider} />
+
+                    <BootstrapStepResourceCounting
+                      target={action.target}
+                      fileCountString={fileCountString}
+                      resourceCountString={resourceCountString}
+                    />
                   </Card.Description>
                 </Card>
               ))}
@@ -138,3 +160,13 @@ export function BootstrapStep({ settingsData, repoName }: Props) {
     </Stack>
   );
 }
+
+const getStyles = (theme: GrafanaTheme2) => ({
+  divider: css({
+    height: 1,
+    width: '100%',
+    backgroundColor: theme.colors.border.medium,
+    marginTop: theme.spacing(2),
+    marginBottom: theme.spacing(2),
+  }),
+});

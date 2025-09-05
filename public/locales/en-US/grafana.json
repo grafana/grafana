@@ -11211,6 +11211,7 @@
       "empty": "Empty",
       "error-field-required": "This field is required.",
       "ext-storage": "External storage",
+      "external-storage-label": "External storage",
       "files-count_one": "{{count}} files",
       "files-count_other": "{{count}} files",
       "folders-count_one": "{{count}} folder",
@@ -11218,7 +11219,8 @@
       "grafana": "Grafana instance",
       "label-display-name": "Display name",
       "placeholder-my-repository-connection": "My repository connection",
-      "text-loading-resource-information": "Loading resource information..."
+      "text-loading-resource-information": "Loading resource information...",
+      "unmanaged-resources-label": "Unmanaged resources"
     },
     "check-repository": {
       "check": "Check"
