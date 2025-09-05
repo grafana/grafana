@@ -325,9 +325,6 @@ To create an ad hoc filter, follow these steps:
 
 Now you can [filter data on the dashboard](ref:filter-dashboard).
 
-<!-- vale Grafana.Spelling = YES -->
-<!-- vale Grafana.WordList = YES -->
-
 ### Panel filtering with ad hoc filters
 
 In table visualizations, you can apply ad hoc filters from the visualization with one click.
@@ -348,6 +345,9 @@ If one of the panels in the dashboard using that data source doesn't include tha
 {{< figure src="screenshot-ah-table-filter-no-data-ph.png" max-width="750px" alt="TBD" >}}
 
 <!--add this content in the table docs in the filtering section -->
+
+<!-- vale Grafana.Spelling = YES -->
+<!-- vale Grafana.WordList = YES -->
 
 ## Configure variable selection options
 
