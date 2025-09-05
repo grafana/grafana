@@ -126,8 +126,9 @@ func (s *encryptedValStorage) Update(ctx context.Context, namespace, name string
 
 	if rowsAffected, err := res.RowsAffected(); err != nil {
 		return fmt.Errorf("getting rows affected: %w", err)
-	} else if rowsAffected > 1 {
-		return fmt.Errorf("expected at most 1 row affected, got %d on %s: %w", rowsAffected, namespace, ErrUnexpectedNumberOfRowsAffected)
+	} else if rowsAffected != 1 {
+		return fmt.Errorf("expected 1 row affected, got %d on namespace=%+v name=%+v version%+v: %w",
+			rowsAffected, namespace, name, version, ErrUnexpectedNumberOfRowsAffected)
 	}
 
 	return nil
