@@ -15,11 +15,8 @@ type Extra interface {
 	PostProcessOpenAPI(oas *spec3.OpenAPI) error
 }
 
-type ExtraWithWorkers interface {
-	Extra
+type JobsWorkerRetriever interface {
 	GetJobWorkers() []jobs.Worker
 }
 
 type ExtraBuilder func(b *APIBuilder) Extra
-
-type ExtraWithWorkersBuilder func(b *APIBuilder) ExtraWithWorkers

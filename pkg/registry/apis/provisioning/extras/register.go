@@ -6,6 +6,7 @@ import (
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository/local"
 	"github.com/grafana/grafana/apps/secret/pkg/decrypt"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/webhooks"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -34,4 +35,8 @@ func ProvideProvisioningOSSRepositoryExtras(
 			webhooksBuilder,
 		),
 	}
+}
+
+func ProvideExtraWorkers(webhook *webhooks.WebhookExtraBuilder) []jobs.Worker {
+	return webhook.GetJobWorkers()
 }

@@ -72,6 +72,7 @@ var provisioningExtras = wire.NewSet(
 	webhooks.ProvideWebhooksWithImages,
 	repository.ProvideFactory,
 	extras.ProvideProvisioningOSSExtras,
+	extras.ProvideExtraWorkers,
 	extras.ProvideProvisioningOSSRepositoryExtras,
 )
 

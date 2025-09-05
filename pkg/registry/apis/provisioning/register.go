@@ -108,7 +108,8 @@ type APIBuilder struct {
 	statusPatcher    *appcontroller.RepositoryStatusPatcher
 	healthChecker    *controller.HealthChecker
 	// Extras provides additional functionality to the API.
-	extras []Extra
+	extras       []Extra
+	extraWorkers []jobs.Worker
 }
 
 // NewAPIBuilder creates an API builder.
@@ -126,6 +127,7 @@ func NewAPIBuilder(
 	access authlib.AccessChecker,
 	tracer tracing.Tracer,
 	extraBuilders []ExtraBuilder,
+	extraWorkers []jobs.Worker,
 	jobHistoryConfig *JobHistoryConfig,
 ) *APIBuilder {
 	clients := resources.NewClientFactory(configProvider)
@@ -147,6 +149,7 @@ func NewAPIBuilder(
 		unified:             unified,
 		access:              access,
 		jobHistoryConfig:    jobHistoryConfig,
+		extraWorkers:        extraWorkers,
 	}
 
 	for _, builder := range extraBuilders {
@@ -204,6 +207,7 @@ func RegisterAPIService(
 	usageStats usagestats.Service,
 	tracer tracing.Tracer,
 	extraBuilders []ExtraBuilder,
+	extraWorkers []jobs.Worker,
 	repoFactory repository.Factory,
 ) (*APIBuilder, error) {
 	if !features.IsEnabledGlobally(featuremgmt.FlagProvisioning) {
@@ -221,6 +225,7 @@ func RegisterAPIService(
 		access,
 		tracer,
 		extraBuilders,
+		extraWorkers,
 		createJobHistoryConfigFromSettings(cfg),
 	)
 	apiregistration.RegisterAPI(builder)
@@ -720,12 +725,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			}
 
 			// Add any extra workers
-			for _, extra := range b.extras {
-				extraWithWorkers, ok := extra.(ExtraWithWorkers)
-				if ok {
-					workers = append(workers, extraWithWorkers.GetJobWorkers()...)
-				}
-			}
+			workers = append(workers, b.extraWorkers...)
 
 			var jobHistoryWriter jobs.HistoryWriter
 			if b.jobHistoryLoki != nil {
