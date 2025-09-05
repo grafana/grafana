@@ -38,7 +38,7 @@ services:
       GF_FEATURE_TOGGLES_ENABLE: multiTenantFrontend enableNativeHTTPHistogram
       GF_DATABASE_URL: postgres://grafana:grafana@postgres:5432/grafana
       GF_SERVER_ROUTER_LOGGING: true
-      GF_LOG_LEVEL: info
+      GF_LOG_LEVEL: debug
       GF_AUTH_LOGIN_COOKIE_NAME: grafana_fs_dev_login # set a custom cookie name to not conflict with other instances running on localhost
       OTEL_SERVICE_NAME: grafana-api
       GF_TRACING_OPENTELEMETRY_OTLP_ADDRESS: 'alloy:4317'
