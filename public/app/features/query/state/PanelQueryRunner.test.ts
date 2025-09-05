@@ -1,12 +1,12 @@
 const applyFieldOverridesMock = jest.fn(); // needs to be first in this file
 
-import { Subject, of } from 'rxjs';
+import { Subject } from 'rxjs';
 
 // Importing this way to be able to spy on grafana/data
 
 import * as grafanaData from '@grafana/data';
 import { DataSourceApi, DataTransformerID, dateTime, TypedVariableModel } from '@grafana/data';
-import { FrameType } from '@grafana/data/internal';
+import { FrameType, mockTransformationsRegistry } from '@grafana/data/internal';
 import { DataSourceSrv, setDataSourceSrv, setEchoSrv } from '@grafana/runtime';
 import { TemplateSrvMock } from 'app/features/templating/template_srv.mock';
 
@@ -182,6 +182,11 @@ function describeQueryRunnerScenario(
 }
 
 describe('PanelQueryRunner', () => {
+  beforeAll(() => {
+    const { convertFrameTypeTransformer } = grafanaData.standardTransformers;
+    mockTransformationsRegistry([convertFrameTypeTransformer]);
+  });
+
   beforeEach(() => {
     jest.clearAllMocks();
   });
@@ -323,43 +328,27 @@ describe('PanelQueryRunner', () => {
   describeQueryRunnerScenario(
     'transformations',
     (ctx) => {
-      it('should re-categorize any anno frames returned by series transformations', (done) => {
-        const spy = jest.spyOn(grafanaData, 'transformDataFrame');
-        spy.mockImplementation((transformations, frames) => {
-          if (transformations.some((t) => 'topic' in t && t.topic === grafanaData.DataTopic.Series)) {
-            return of([
-              {
-                name: 'exemplar',
-                meta: { custom: { resultType: 'exemplar' }, dataTopic: 'annotations' },
-                length: 2,
-                fields: [
-                  { config: {}, name: 'Time', type: 'time', values: [1000, 2000] },
-                  { config: {}, name: 'Value', type: 'number', values: [1, 2] },
-                ],
-              },
-            ] as grafanaData.DataFrame[]);
-          }
-
-          return of([]);
-        });
-
-        ctx.runner.getData({ withTransforms: true, withFieldConfig: true }).subscribe({
+      it('should re-categorize any anno frames returned by series transformations', async () => {
+        ctx.runner.getData({ withTransforms: true, withFieldConfig: false }).subscribe({
           next: (data: grafanaData.PanelData) => {
-            expect(data.annotations).toEqual([
-              {
-                name: 'exemplar',
-                meta: { custom: { resultType: 'exemplar' }, dataTopic: 'annotations' },
-                length: 2,
-                fields: [
-                  { config: {}, name: 'Time', type: 'time', values: [1000, 2000] },
-                  { config: {}, name: 'Value', type: 'number', values: [1, 2] },
-                ],
-              },
-            ]);
-            done();
-            return data;
+            try {
+              expect(data.series).toEqual([]);
+              expect(data.annotations).toEqual([
+                {
+                  name: 'exemplar',
+                  meta: { custom: { resultType: 'exemplar' }, dataTopic: 'annotations' },
+                  length: 2,
+                  fields: [
+                    { config: {}, name: 'Time', state: null, type: 'time', values: [1000, 2000] },
+                    { config: {}, name: 'Value', state: null, type: 'number', values: [1, 2] },
+                  ],
+                },
+              ]);
+              return data;
+            } catch (e) {
+              return Promise.reject(e instanceof Error ? e.message : e);
+            }
           },
-          error: (err) => done(err),
         });
       });
     },
