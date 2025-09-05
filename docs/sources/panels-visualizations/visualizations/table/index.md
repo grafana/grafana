@@ -232,7 +232,7 @@ In the table footer:
 
 In the following image, multiple calculations&mdash;**Mean**, **Max**, and **Last**&mdash;have been applied:
 
-{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-table-footer-1-v12.2.png" max-width="750px" alt="" >}}
+{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-tablefooter-v12.2.png" max-width="750px" alt="" >}}
 
 You can also see in the previous image that the mathematical functions, **Mean** and **Max**, haven't been applied to the text field in the table.
 Only the **Last** function has been applied to that field.
