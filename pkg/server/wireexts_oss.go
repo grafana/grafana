@@ -69,7 +69,7 @@ import (
 )
 
 var provisioningExtras = wire.NewSet(
-	webhooks.ProvideWebhooks,
+	webhooks.ProvideWebhooksWithImages,
 	repository.ProvideFactory,
 	extras.ProvideProvisioningOSSExtras,
 	extras.ProvideProvisioningOSSRepositoryExtras,

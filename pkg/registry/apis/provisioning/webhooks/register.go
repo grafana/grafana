@@ -57,7 +57,7 @@ func isPublicURL(url string) bool {
 		!strings.HasPrefix(url, "https://172.16.")
 }
 
-func ProvideWebhooks(
+func ProvideWebhooksWithImages(
 	cfg *setting.Cfg,
 	renderer rendering.Service,
 	blobstore resource.ResourceClient,
@@ -87,7 +87,7 @@ func ProvideWebhooks(
 			commenter := pullrequest.NewCommenter()
 			pullRequestWorker := pullrequest.NewPullRequestWorker(evaluator, commenter)
 
-			return NewWebhookExtra(
+			return NewWebhookExtraWithImages(
 				render,
 				webhook,
 				urlProvider,
@@ -97,21 +97,53 @@ func ProvideWebhooks(
 	}
 }
 
-// WebhookExtra implements the Extra interface for webhooks
+func ProvideWebhooks(
+	cfg *setting.Cfg,
+	configProvider apiserver.RestConfigProvider,
+) *WebhookExtraBuilder {
+	urlProvider := func(_ string) string {
+		return cfg.AppURL
+	}
+	isPublic := isPublicURL(urlProvider(""))
+
+	return &WebhookExtraBuilder{
+		isPublic:    isPublic,
+		urlProvider: urlProvider,
+		ExtraBuilder: func(b *provisioningapis.APIBuilder) provisioningapis.Extra {
+			clients := resources.NewClientFactory(configProvider)
+			parsers := resources.NewParserFactory(clients)
+
+			screenshotRenderer := pullrequest.NewNoOpRenderer()
+			webhook := NewWebhookConnector(
+				isPublic,
+				b,
+				screenshotRenderer,
+			)
+
+			evaluator := pullrequest.NewEvaluator(screenshotRenderer, parsers, urlProvider)
+			commenter := pullrequest.NewCommenter()
+			pullRequestWorker := pullrequest.NewPullRequestWorker(evaluator, commenter)
+
+			return NewWebhookExtra(webhook, []jobs.Worker{pullRequestWorker})
+		},
+	}
+}
+
+// WebhookExtraWithImages implements the Extra interface for webhooks
 // to wrap around
-type WebhookExtra struct {
+type WebhookExtraWithImages struct {
 	render  *renderConnector
 	webhook *webhookConnector
 	workers []jobs.Worker
 }
 
-func NewWebhookExtra(
+func NewWebhookExtraWithImages(
 	render *renderConnector,
 	webhook *webhookConnector,
 	urlProvider func(namespace string) string,
 	workers []jobs.Worker,
-) *WebhookExtra {
-	return &WebhookExtra{
+) *WebhookExtraWithImages {
+	return &WebhookExtraWithImages{
 		render:  render,
 		webhook: webhook,
 		workers: workers,
@@ -119,7 +151,7 @@ func NewWebhookExtra(
 }
 
 // Authorize delegates authorization to the webhook connector
-func (e *WebhookExtra) Authorize(ctx context.Context, a authorizer.Attributes) (decision authorizer.Decision, reason string, err error) {
+func (e *WebhookExtraWithImages) Authorize(ctx context.Context, a authorizer.Attributes) (decision authorizer.Decision, reason string, err error) {
 	webhookDecision, webhookReason, webhookErr := e.webhook.Authorize(ctx, a)
 	if webhookDecision != authorizer.DecisionNoOpinion {
 		return webhookDecision, webhookReason, webhookErr
@@ -129,7 +161,7 @@ func (e *WebhookExtra) Authorize(ctx context.Context, a authorizer.Attributes) (
 }
 
 // UpdateStorage updates the storage with both render and webhook connectors
-func (e *WebhookExtra) UpdateStorage(storage map[string]rest.Storage) error {
+func (e *WebhookExtraWithImages) UpdateStorage(storage map[string]rest.Storage) error {
 	if err := e.webhook.UpdateStorage(storage); err != nil {
 		return err
 	}
@@ -138,12 +170,47 @@ func (e *WebhookExtra) UpdateStorage(storage map[string]rest.Storage) error {
 }
 
 // PostProcessOpenAPI processes OpenAPI specs for both connectors
-func (e *WebhookExtra) PostProcessOpenAPI(oas *spec3.OpenAPI) error {
+func (e *WebhookExtraWithImages) PostProcessOpenAPI(oas *spec3.OpenAPI) error {
 	if err := e.webhook.PostProcessOpenAPI(oas); err != nil {
 		return err
 	}
 
 	return e.render.PostProcessOpenAPI(oas)
+}
+
+// GetJobWorkers returns job workers from the webhook connector
+func (e *WebhookExtraWithImages) GetJobWorkers() []jobs.Worker {
+	return e.workers
+}
+
+type WebhookExtra struct {
+	webhook *webhookConnector
+	workers []jobs.Worker
+}
+
+func NewWebhookExtra(
+	webhook *webhookConnector,
+	workers []jobs.Worker,
+) *WebhookExtra {
+	return &WebhookExtra{
+		webhook: webhook,
+		workers: workers,
+	}
+}
+
+// Authorize delegates authorization to the webhook connector
+func (e *WebhookExtra) Authorize(ctx context.Context, a authorizer.Attributes) (decision authorizer.Decision, reason string, err error) {
+	return e.webhook.Authorize(ctx, a)
+}
+
+// UpdateStorage updates the storage with webhook connector
+func (e *WebhookExtra) UpdateStorage(storage map[string]rest.Storage) error {
+	return e.webhook.UpdateStorage(storage)
+}
+
+// PostProcessOpenAPI processes OpenAPI specs for webhook connectors
+func (e *WebhookExtra) PostProcessOpenAPI(oas *spec3.OpenAPI) error {
+	return e.webhook.PostProcessOpenAPI(oas)
 }
 
 // GetJobWorkers returns job workers from the webhook connector
