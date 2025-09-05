@@ -211,7 +211,7 @@ func RegisterAPIService(
 	}
 
 	builder := NewAPIBuilder(
-		false, // Run controllers
+		cfg.ProvisioningDisableControllers,
 		repoFactory,
 		features,
 		client,
