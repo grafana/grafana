@@ -16,7 +16,7 @@ import (
 
 type managerAdapter struct {
 	reg     registry.BackgroundServiceRegistry
-	manager grafanamodules.Engine
+	manager grafanamodules.Manager
 	mu      sync.RWMutex // protects manager field from concurrent access
 }
 
@@ -46,9 +46,9 @@ func (r *managerAdapter) Run(ctx context.Context) error {
 	defer span.End()
 
 	logger := log.New("backgroundsvcs.adapter").FromContext(spanCtx)
-	manager := modules.NewManager(logger)
-
 	deps := dependencyMap()
+	moduleManager := modules.NewManager(logger)
+	r.manager = grafanamodules.NewWithManager(logger, []string{BackgroundServices}, moduleManager, deps)
 
 	for _, bgSvc := range r.reg.GetServices() {
 		if s, ok := bgSvc.(registry.CanBeDisabled); ok && s.IsDisabled() {
@@ -60,9 +60,9 @@ func (r *managerAdapter) Run(ctx context.Context) error {
 			// if the service is not a NamedService, try to convert it
 			namedService = asNamedService(bgSvc)
 		}
-		manager.RegisterModule(namedService.ServiceName(), func() (services.Service, error) {
+		r.manager.RegisterInvisibleModule(namedService.ServiceName(), func() (services.Service, error) {
 			return namedService, nil
-		}, modules.UserInvisibleModule)
+		})
 
 		// add the service as a background service dependency if it's not already in the dependency map
 		if _, ok := deps[namedService.ServiceName()]; !ok {
@@ -74,16 +74,12 @@ func (r *managerAdapter) Run(ctx context.Context) error {
 	// any modules in the dependency map that haven't been registered should be registered.
 	// this should only include modules like all and core.
 	for modName := range deps {
-		if manager.IsModuleRegistered(modName) {
+		if moduleManager.IsModuleRegistered(modName) {
 			continue
 		}
 		logger.Debug("registering virtual module", "module", modName)
-		manager.RegisterModule(modName, nil)
+		r.manager.RegisterModule(modName, nil)
 	}
-
-	r.mu.Lock()
-	r.manager = grafanamodules.NewWithManager(logger, []string{BackgroundServices}, manager, deps)
-	r.mu.Unlock()
 
 	logger.Debug("starting background services")
 	return r.manager.Run(spanCtx)
