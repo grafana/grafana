@@ -316,7 +316,9 @@ func setupUnifiedStorageClient(cfg *setting.Cfg, tracer tracing.Tracer, resource
 	indexConn := conn
 	indexAddress := unifiedStorageSec.Key("grpc_index_address").String()
 	if indexAddress != "" {
-		indexConn, err = unified.GrpcConn(indexAddress, registry)
+		// FIXME: This needs to actually have the metrics registered
+		registry2 := prometheus.NewPedanticRegistry()
+		indexConn, err = unified.GrpcConn(indexAddress, registry2)
 		if err != nil {
 			return nil, fmt.Errorf("create unified storage index gRPC connection: %w", err)
 		}
