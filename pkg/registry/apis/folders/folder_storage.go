@@ -111,6 +111,7 @@ func (s *folderStorage) Create(ctx context.Context,
 	}
 
 	parentUid := accessor.GetFolder()
+
 	err = s.setDefaultFolderPermissions(ctx, info.OrgID, user, p.Name, parentUid)
 	if err != nil {
 		return nil, err
