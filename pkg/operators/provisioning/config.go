@@ -1,6 +1,7 @@
 package provisioning
 
 import (
+	"context"
 	"crypto/x509"
 	"fmt"
 	"net/http"
@@ -13,6 +14,7 @@ import (
 	"k8s.io/client-go/transport"
 
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
@@ -33,6 +35,7 @@ type provisioningControllerConfig struct {
 	resyncInterval     time.Duration
 	repoFactory        repository.Factory
 	unified            resources.ResourceStore
+	clients            resources.ClientFactory
 }
 
 // expects:
@@ -51,7 +54,10 @@ type provisioningControllerConfig struct {
 // allow_insecure =
 // audiences =
 // [operator]
+// api_server_url =
 // provisioning_server_url =
+// dashboards_server_url =
+// folders_server_url =
 // tls_insecure =
 // tls_cert_file =
 // tls_key_file =
@@ -79,10 +85,8 @@ func setupFromConfig(cfg *setting.Cfg) (controllerCfg *provisioningControllerCon
 	}
 
 	operatorSec := cfg.SectionWithEnvOverrides("operator")
-	provisioningServerURL := operatorSec.Key("provisioning_server_url").String()
-	if provisioningServerURL == "" {
-		return nil, fmt.Errorf("provisioning_server_url is required in [operator] section")
-	}
+	apiServerURL := operatorSec.Key("api_server_url").String()
+
 	tlsInsecure := operatorSec.Key("tls_insecure").MustBool(false)
 	tlsCertFile := operatorSec.Key("tls_cert_file").String()
 	tlsKeyFile := operatorSec.Key("tls_key_file").String()
@@ -99,6 +103,20 @@ func setupFromConfig(cfg *setting.Cfg) (controllerCfg *provisioningControllerCon
 	tlsConfig, err := buildTLSConfig(tlsInsecure, tlsCertFile, tlsKeyFile, tlsCAFile)
 	if err != nil {
 		return nil, fmt.Errorf("failed to build TLS configuration: %w", err)
+	}
+
+	clients, err := setupResourcesClient(apiServerURL, tlsConfig, tokenExchangeClient)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create resources client factory: %w", err)
+	}
+
+	provisioningServerURL := apiServerURL
+	if custom := operatorSec.Key("provisioning_server_url").String(); custom != "" {
+		provisioningServerURL = custom
+	}
+
+	if provisioningServerURL == "" {
+		return nil, fmt.Errorf("provisioning_server_url is required in [operator] section")
 	}
 
 	config := &rest.Config{
@@ -142,6 +160,7 @@ func setupFromConfig(cfg *setting.Cfg) (controllerCfg *provisioningControllerCon
 		provisioningClient: provisioningClient,
 		repoFactory:        repoFactory,
 		unified:            unified,
+		clients:            clients,
 		resyncInterval:     operatorSec.Key("resync_interval").MustDuration(60 * time.Second),
 	}, nil
 }
@@ -299,4 +318,45 @@ func setupUnifiedStorageClient(cfg *setting.Cfg, tracer tracing.Tracer, resource
 	}
 
 	return client, nil
+}
+
+// directConfigProvider is a simple RestConfigProvider that always returns the same rest.Config
+// it implements apiserver.RestConfigProvider
+type directConfigProvider struct {
+	cfg *rest.Config
+}
+
+func NewDirectConfigProvider(cfg *rest.Config) apiserver.RestConfigProvider {
+	return &directConfigProvider{cfg: cfg}
+}
+
+func (r *directConfigProvider) GetRestConfig(ctx context.Context) (*rest.Config, error) {
+	return r.cfg, nil
+}
+
+func setupResourcesClient(
+	apiServerURL string,
+	tlsConfig rest.TLSClientConfig,
+	tokenExchangeClient *authn.TokenExchangeClient,
+) (resources.ClientFactory, error) {
+	if apiServerURL == "" {
+		return nil, fmt.Errorf("api_server_url is required in [operator] section")
+	}
+
+	// TODO: implement NewClientFactoryForMultipleAPIServers or similar if we want to support multiple api servers
+	// That should only create dynamic and descovery clients per group, similar to the existing one.
+	// TODO: read new settings dashboards_server_url and folders_server_url
+	// use them to build the factory differently
+
+	config := &rest.Config{
+		APIPath: "/apis",
+		Host:    apiServerURL,
+		WrapTransport: transport.WrapperFunc(func(rt http.RoundTripper) http.RoundTripper {
+			return authrt.NewRoundTripper(tokenExchangeClient, rt)
+		}),
+		TLSClientConfig: tlsConfig,
+	}
+	configProvider := NewDirectConfigProvider(config)
+
+	return resources.NewClientFactory(configProvider), nil
 }
