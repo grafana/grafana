@@ -139,7 +139,7 @@ func isValidKey(key *resourcepb.ResourceKey, requireName bool) error {
 		return fmt.Errorf("expecting resource (%s != %s)", key.Resource, gr.Resource)
 	}
 	if requireName && key.Name == "" {
-		return fmt.Errorf("expecting name (uid): %w", errEmptyName)
+		return fmt.Errorf("expecting name (uid): %w", errInvalidName)
 	}
 	return nil
 }
