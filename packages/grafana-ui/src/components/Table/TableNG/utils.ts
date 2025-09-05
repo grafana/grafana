@@ -31,15 +31,7 @@ import { TableCellOptions } from '../types';
 import { inferPills } from './Cells/PillCell';
 import { AutoCellRenderer, getCellRenderer } from './Cells/renderers';
 import { COLUMN, TABLE } from './constants';
-import {
-  TableRow,
-  ColumnTypes,
-  FrameToRowsConverter,
-  Comparator,
-  TypographyCtx,
-  MeasureCellHeight,
-  MeasureCellHeightEntry,
-} from './types';
+import { TableRow, ColumnTypes, Comparator, TypographyCtx, MeasureCellHeight, MeasureCellHeightEntry } from './types';
 
 /* ---------------------------- Cell calculations --------------------------- */
 export type CellNumLinesCalculator = (text: string, cellWidth: number) => number;
@@ -693,7 +685,7 @@ export const frameToRecords = (frame: DataFrame): TableRow[] => {
 
   // Creates a function that converts a DataFrame into an array of TableRows
   // Uses new Function() for performance as it's faster than creating rows using loops
-  const convert = new Function('frame', fnBody) as FrameToRowsConverter;
+  const convert = new Function('frame', fnBody);
   return convert(frame);
 };
 
