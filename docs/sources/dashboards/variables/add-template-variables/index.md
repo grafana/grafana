@@ -305,10 +305,13 @@ Ad hoc filters let you add label/value filters that are automatically added to a
 Unlike other variables, you don't use ad hoc filters in queries.
 Instead, you use ad hoc filters to write filters for existing queries.
 
-{{< admonition type="note" >}}
-Not all data sources support ad hoc filters.
-Examples of those that do include Prometheus, Loki, InfluxDB, and Elasticsearch.
-{{< /admonition >}}
+The following data sources support ad hoc filters:
+
+- Prometheus
+- Loki
+- InfluxDB
+- Elasticsearch
+- OpenSearch
 
 To create an ad hoc filter, follow these steps:
 
