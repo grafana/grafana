@@ -1,14 +1,17 @@
 package legacy_storage
 
 import (
-	"errors"
 	"fmt"
 	"slices"
+
+	"github.com/grafana/alerting/definition"
 
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/util"
 )
+
+type Provenances map[string]models.Provenance
 
 func (rev *ConfigRevision) DeleteReceiver(uid string) {
 	// Remove the receiver from the configuration.
@@ -17,14 +20,12 @@ func (rev *ConfigRevision) DeleteReceiver(uid string) {
 	})
 }
 
-func (rev *ConfigRevision) CreateReceiver(receiver *models.Receiver) (*definitions.PostableApiReceiver, error) {
-	// Check if the receiver already exists.
-	_, err := rev.GetReceiver(receiver.GetUID())
-	if err == nil {
+func (rev *ConfigRevision) CreateReceiver(receiver *models.Receiver) (*models.Receiver, error) {
+	exists := slices.ContainsFunc(rev.Config.AlertmanagerConfig.Receivers, func(r *definition.PostableApiReceiver) bool {
+		return NameToUid(r.Name) == receiver.GetUID()
+	})
+	if exists {
 		return nil, ErrReceiverExists.Errorf("")
-	}
-	if !errors.Is(err, ErrReceiverNotFound) {
-		return nil, err
 	}
 
 	if err := validateAndSetIntegrationUIDs(receiver); err != nil {
@@ -42,32 +43,33 @@ func (rev *ConfigRevision) CreateReceiver(receiver *models.Receiver) (*definitio
 		return nil, err
 	}
 
-	return postable, nil
+	return PostableApiReceiverToReceiver(postable, receiver.Provenance)
 }
 
-func (rev *ConfigRevision) UpdateReceiver(receiver *models.Receiver) (*definitions.PostableApiReceiver, error) {
-	existing, err := rev.GetReceiver(receiver.GetUID())
-	if err != nil {
-		return nil, err
+func (rev *ConfigRevision) UpdateReceiver(receiver *models.Receiver) (*models.Receiver, error) {
+	existingIdx := slices.IndexFunc(rev.Config.AlertmanagerConfig.Receivers, func(postable *definitions.PostableApiReceiver) bool {
+		return NameToUid(postable.GetName()) == receiver.GetUID()
+	})
+	if existingIdx < 0 {
+		return nil, ErrReceiverNotFound.Errorf("")
 	}
 
 	if err := validateAndSetIntegrationUIDs(receiver); err != nil {
 		return nil, err
 	}
 
-	postable, err := ReceiverToPostableApiReceiver(receiver)
+	newReceiver, err := ReceiverToPostableApiReceiver(receiver)
 	if err != nil {
 		return nil, err
 	}
 
-	// Update receiver in the configuration.
-	*existing = *postable
+	rev.Config.AlertmanagerConfig.Receivers[existingIdx] = newReceiver
 
-	if err := rev.ValidateReceiver(existing); err != nil {
+	if err := rev.ValidateReceiver(newReceiver); err != nil {
 		return nil, err
 	}
 
-	return postable, nil
+	return PostableApiReceiverToReceiver(newReceiver, receiver.Provenance)
 }
 
 // ReceiverNameUsedByRoutes checks if a receiver name is used in any routes.
@@ -82,23 +84,47 @@ func (rev *ConfigRevision) ReceiverUseByName() map[string]int {
 	return m
 }
 
-func (rev *ConfigRevision) GetReceiver(uid string) (*definitions.PostableApiReceiver, error) {
+func (rev *ConfigRevision) GetReceiver(uid string, prov Provenances) (*models.Receiver, error) {
 	for _, r := range rev.Config.AlertmanagerConfig.Receivers {
-		if NameToUid(r.GetName()) == uid {
-			return r, nil
+		if NameToUid(r.GetName()) != uid {
+			continue
 		}
+		recv, err := PostableApiReceiverToReceiver(r, GetReceiverProvenance(prov, r))
+		if err != nil {
+			return nil, fmt.Errorf("failed to convert receiver %q: %w", r.Name, err)
+		}
+		return recv, nil
 	}
 	return nil, ErrReceiverNotFound.Errorf("")
 }
 
-func (rev *ConfigRevision) GetReceivers(uids []string) []*definitions.PostableApiReceiver {
-	receivers := make([]*definitions.PostableApiReceiver, 0, len(uids))
-	for _, r := range rev.Config.AlertmanagerConfig.Receivers {
-		if len(uids) == 0 || slices.Contains(uids, NameToUid(r.GetName())) {
-			receivers = append(receivers, r)
-		}
+func (rev *ConfigRevision) GetReceivers(uids []string, prov Provenances) ([]*models.Receiver, error) {
+	capacity := len(uids)
+	if capacity == 0 {
+		capacity = len(rev.Config.AlertmanagerConfig.Receivers)
 	}
-	return receivers
+	receivers := make([]*models.Receiver, 0, capacity)
+	for _, r := range rev.Config.AlertmanagerConfig.Receivers {
+		uid := NameToUid(r.GetName())
+		if len(uids) > 0 && !slices.Contains(uids, uid) {
+			continue
+		}
+		recv, err := PostableApiReceiverToReceiver(r, GetReceiverProvenance(prov, r))
+		if err != nil {
+			return nil, fmt.Errorf("failed to convert receiver %q: %w", r.Name, err)
+		}
+		receivers = append(receivers, recv)
+	}
+	return receivers, nil
+}
+
+// GetReceiversNames returns a map of receiver names
+func (rev *ConfigRevision) GetReceiversNames() map[string]struct{} {
+	result := make(map[string]struct{}, len(rev.Config.AlertmanagerConfig.Receivers))
+	for _, r := range rev.Config.AlertmanagerConfig.Receivers {
+		result[r.GetName()] = struct{}{}
+	}
+	return result
 }
 
 func DecryptedReceivers(receivers []*definitions.PostableApiReceiver, decryptFn models.DecryptFn) ([]*definitions.PostableApiReceiver, error) {
