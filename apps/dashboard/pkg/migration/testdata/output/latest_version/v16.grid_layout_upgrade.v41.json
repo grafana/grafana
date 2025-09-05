@@ -1,4 +1,25 @@
 {
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "type": "grafana",
+          "uid": "-- Grafana --"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations \u0026 Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "gnetId": null,
+  "graphTooltip": 0,
+  "links": [],
   "panels": [
     {
       "datasource": {
@@ -115,7 +136,6 @@
           "refId": "A"
         }
       ],
-      "title": "",
       "type": "row"
     },
     {
@@ -380,7 +400,6 @@
           "refId": "A"
         }
       ],
-      "title": "",
       "type": "row"
     },
     {
@@ -435,11 +454,22 @@
           "refId": "A"
         }
       ],
-      "title": "",
       "type": "row"
     }
   ],
   "refresh": "",
   "schemaVersion": 41,
-  "title": "V16 Grid Layout Migration Test Dashboard"
+  "tags": [],
+  "templating": {
+    "list": []
+  },
+  "time": {
+    "from": "now-6h",
+    "to": "now"
+  },
+  "timepicker": {},
+  "timezone": "",
+  "title": "V16 Grid Layout Migration Test Dashboard",
+  "version": 0,
+  "weekStart": ""
 }

@@ -1,4 +1,25 @@
 {
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "type": "grafana",
+          "uid": "-- Grafana --"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations \u0026 Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "gnetId": null,
+  "graphTooltip": 0,
+  "links": [],
   "panels": [
     {
       "datasource": {
@@ -73,11 +94,11 @@
             "apiVersion": "v1",
             "type": "prometheus",
             "uid": "default-ds-uid"
-          }
+          },
+          "refId": "A"
         }
       ],
       "title": "Basic Angular Table with Defaults",
-      "transformations": [],
       "type": "table"
     },
     {
@@ -230,7 +251,6 @@
         }
       ],
       "title": "Complex Table with All Style Features",
-      "transformations": [],
       "type": "table"
     },
     {
@@ -676,7 +696,6 @@
         }
       ],
       "title": "Mixed Threshold Types",
-      "transformations": [],
       "type": "table"
     },
     {
@@ -782,7 +801,6 @@
         }
       ],
       "title": "All Color Modes Test",
-      "transformations": [],
       "type": "table"
     },
     {
@@ -882,7 +900,6 @@
         }
       ],
       "title": "All Alignment Options",
-      "transformations": [],
       "type": "table"
     },
     {
@@ -995,7 +1012,6 @@
         }
       ],
       "title": "Field Matcher Types Test",
-      "transformations": [],
       "type": "table"
     },
     {
@@ -1114,7 +1130,6 @@
         }
       ],
       "title": "Link Configuration Test",
-      "transformations": [],
       "type": "table"
     },
     {
@@ -1227,7 +1242,6 @@
         }
       ],
       "title": "Date Format Variations",
-      "transformations": [],
       "type": "table"
     },
     {
@@ -1369,5 +1383,18 @@
     }
   ],
   "refresh": "",
-  "schemaVersion": 41
+  "schemaVersion": 41,
+  "tags": [],
+  "templating": {
+    "list": []
+  },
+  "time": {
+    "from": "now-6h",
+    "to": "now"
+  },
+  "timepicker": {},
+  "timezone": "",
+  "title": "No Title",
+  "version": 0,
+  "weekStart": ""
 }

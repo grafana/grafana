@@ -1,6 +1,14 @@
 import { readFileSync } from 'fs';
 import path from 'path';
 
+import { variableAdapters } from 'app/features/variables/adapters';
+import { createConstantVariableAdapter } from 'app/features/variables/constant/adapter';
+import { createCustomVariableAdapter } from 'app/features/variables/custom/adapter';
+import { createDataSourceVariableAdapter } from 'app/features/variables/datasource/adapter';
+import { createIntervalVariableAdapter } from 'app/features/variables/interval/adapter';
+import { createQueryVariableAdapter } from 'app/features/variables/query/adapter';
+import { createTextBoxVariableAdapter } from 'app/features/variables/textbox/adapter';
+
 import { DASHBOARD_SCHEMA_VERSION } from './DashboardMigrator';
 import { DashboardModel } from './DashboardModel';
 import {
@@ -10,7 +18,6 @@ import {
   getJsonInputFiles,
   constructLatestVersionOutputFilename,
   handleAngularPanelMigration,
-  cleanDashboardModel,
 } from './__tests__/migrationTestUtils';
 
 /*
@@ -36,6 +43,12 @@ import {
  *    - Ensures both paths produce identical final dashboard states
  *    - Avoids test brittleness from comparing raw JSON with different default value representations
  */
+variableAdapters.register(createQueryVariableAdapter());
+variableAdapters.register(createDataSourceVariableAdapter());
+variableAdapters.register(createConstantVariableAdapter());
+variableAdapters.register(createIntervalVariableAdapter());
+variableAdapters.register(createCustomVariableAdapter());
+variableAdapters.register(createTextBoxVariableAdapter());
 
 describe('Backend / Frontend result comparison', () => {
   beforeEach(() => {
@@ -60,19 +73,19 @@ describe('Backend / Frontend result comparison', () => {
 
         expect(backendOutput.schemaVersion).toEqual(DASHBOARD_SCHEMA_VERSION);
 
-        // Create dashboard models
-        const frontendModel = new DashboardModel(jsonInput);
-        const backendModel = new DashboardModel(backendOutput);
+        // Migrate dashboard in Frontend.
+        const frontendModel = new DashboardModel(jsonInput, undefined, {
+          getVariablesFromState: () => jsonInput?.templating?.list ?? [],
+        });
 
         // Handle angular panel migration if needed
         if (jsonInput.schemaVersion <= 27) {
           await handleAngularPanelMigration(frontendModel);
         }
 
-        const frontendMigrationResult = cleanDashboardModel(frontendModel);
-        const backendMigrationResult = cleanDashboardModel(backendModel);
+        const frontendMigrationResult = frontendModel.getSaveModelClone();
 
-        expect(backendMigrationResult).toEqual(frontendMigrationResult);
+        expect(backendOutput).toEqual(frontendMigrationResult);
       });
     });
 });

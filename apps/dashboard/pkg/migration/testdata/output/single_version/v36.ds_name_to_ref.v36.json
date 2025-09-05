@@ -2,6 +2,18 @@
   "annotations": {
     "list": [
       {
+        "builtIn": 1,
+        "datasource": {
+          "type": "grafana",
+          "uid": "-- Grafana --"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations \u0026 Alerts",
+        "type": "dashboard"
+      },
+      {
         "datasource": {
           "apiVersion": "v1",
           "type": "prometheus",
@@ -41,6 +53,11 @@
       }
     ]
   },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "gnetId": null,
+  "graphTooltip": 0,
+  "links": [],
   "panels": [
     {
       "datasource": {
@@ -322,6 +339,7 @@
     }
   ],
   "schemaVersion": 36,
+  "tags": [],
   "templating": {
     "list": [
       {
@@ -365,5 +383,13 @@
       }
     ]
   },
-  "title": "Datasource Reference Migration Test Dashboard"
+  "time": {
+    "from": "now-6h",
+    "to": "now"
+  },
+  "timepicker": {},
+  "timezone": "",
+  "title": "Datasource Reference Migration Test Dashboard",
+  "version": 0,
+  "weekStart": ""
 }

@@ -1,4 +1,25 @@
 {
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "type": "grafana",
+          "uid": "-- Grafana --"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations \u0026 Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "gnetId": null,
+  "graphTooltip": 0,
+  "links": [],
   "panels": [
     {
       "description": "Tests basic migration with default style pattern (/.*/) containing thresholds and colors. Should convert styles to fieldConfig.defaults with threshold steps.",
@@ -8,6 +29,9 @@
             "align": "auto",
             "cellOptions": {
               "type": "auto"
+            },
+            "footer": {
+              "reducers": []
             },
             "inspect": false
           },
@@ -55,10 +79,11 @@
         {
           "refId": "A"
         },
-        {}
+        {
+          "refId": "A"
+        }
       ],
       "title": "Basic Angular Table with Defaults",
-      "transformations": [],
       "type": "table"
     },
     {
@@ -69,6 +94,9 @@
             "align": "center",
             "cellOptions": {
               "type": "color-background"
+            },
+            "footer": {
+              "reducers": []
             },
             "inspect": false
           },
@@ -192,13 +220,7 @@
         "showHeader": true
       },
       "pluginVersion": "1.0.0",
-      "targets": [
-        {
-          "refId": "A"
-        }
-      ],
       "title": "Complex Table with All Style Features",
-      "transformations": [],
       "type": "table"
     },
     {
@@ -209,6 +231,9 @@
             "align": "auto",
             "cellOptions": {
               "type": "auto"
+            },
+            "footer": {
+              "reducers": []
             },
             "inspect": false
           },
@@ -244,11 +269,6 @@
         "showHeader": true
       },
       "pluginVersion": "1.0.0",
-      "targets": [
-        {
-          "refId": "A"
-        }
-      ],
       "title": "Table with Timeseries Aggregations Transform",
       "transformations": [
         {
@@ -276,6 +296,9 @@
             "align": "auto",
             "cellOptions": {
               "type": "auto"
+            },
+            "footer": {
+              "reducers": []
             },
             "inspect": false
           },
@@ -310,11 +333,6 @@
         "showHeader": true
       },
       "pluginVersion": "1.0.0",
-      "targets": [
-        {
-          "refId": "A"
-        }
-      ],
       "title": "Table with Timeseries to Rows Transform",
       "transformations": [
         {
@@ -334,6 +352,9 @@
             "align": "auto",
             "cellOptions": {
               "type": "auto"
+            },
+            "footer": {
+              "reducers": []
             },
             "inspect": false
           },
@@ -368,11 +389,6 @@
         "showHeader": true
       },
       "pluginVersion": "1.0.0",
-      "targets": [
-        {
-          "refId": "A"
-        }
-      ],
       "title": "Table with Timeseries to Columns Transform",
       "transformations": [
         {
@@ -392,6 +408,9 @@
             "align": "",
             "cellOptions": {
               "type": "auto"
+            },
+            "footer": {
+              "reducers": []
             },
             "inspect": false
           },
@@ -425,11 +444,6 @@
         "showHeader": true
       },
       "pluginVersion": "1.0.0",
-      "targets": [
-        {
-          "refId": "A"
-        }
-      ],
       "title": "Table with Merge Transform",
       "transformations": [
         {
@@ -449,6 +463,9 @@
             "align": "auto",
             "cellOptions": {
               "type": "auto"
+            },
+            "footer": {
+              "reducers": []
             },
             "inspect": false
           },
@@ -483,11 +500,6 @@
         "showHeader": true
       },
       "pluginVersion": "1.0.0",
-      "targets": [
-        {
-          "refId": "A"
-        }
-      ],
       "title": "Table with Existing Transformations",
       "transformations": [
         {
@@ -518,6 +530,9 @@
             "align": "auto",
             "cellOptions": {
               "type": "auto"
+            },
+            "footer": {
+              "reducers": []
             },
             "inspect": false
           },
@@ -560,13 +575,7 @@
         "showHeader": true
       },
       "pluginVersion": "1.0.0",
-      "targets": [
-        {
-          "refId": "A"
-        }
-      ],
       "title": "Mixed Threshold Types",
-      "transformations": [],
       "type": "table"
     },
     {
@@ -577,6 +586,9 @@
             "align": "auto",
             "cellOptions": {
               "type": "color-background"
+            },
+            "footer": {
+              "reducers": []
             },
             "inspect": false
           },
@@ -653,13 +665,7 @@
         "showHeader": true
       },
       "pluginVersion": "1.0.0",
-      "targets": [
-        {
-          "refId": "A"
-        }
-      ],
       "title": "All Color Modes Test",
-      "transformations": [],
       "type": "table"
     },
     {
@@ -670,6 +676,9 @@
             "align": "center",
             "cellOptions": {
               "type": "auto"
+            },
+            "footer": {
+              "reducers": []
             },
             "inspect": false
           },
@@ -740,13 +749,7 @@
         "showHeader": true
       },
       "pluginVersion": "1.0.0",
-      "targets": [
-        {
-          "refId": "A"
-        }
-      ],
       "title": "All Alignment Options",
-      "transformations": [],
       "type": "table"
     },
     {
@@ -757,6 +760,9 @@
             "align": "auto",
             "cellOptions": {
               "type": "auto"
+            },
+            "footer": {
+              "reducers": []
             },
             "inspect": false
           },
@@ -840,13 +846,7 @@
         "showHeader": true
       },
       "pluginVersion": "1.0.0",
-      "targets": [
-        {
-          "refId": "A"
-        }
-      ],
       "title": "Field Matcher Types Test",
-      "transformations": [],
       "type": "table"
     },
     {
@@ -857,6 +857,9 @@
             "align": "auto",
             "cellOptions": {
               "type": "auto"
+            },
+            "footer": {
+              "reducers": []
             },
             "inspect": false
           },
@@ -946,13 +949,7 @@
         "showHeader": true
       },
       "pluginVersion": "1.0.0",
-      "targets": [
-        {
-          "refId": "A"
-        }
-      ],
       "title": "Link Configuration Test",
-      "transformations": [],
       "type": "table"
     },
     {
@@ -963,6 +960,9 @@
             "align": "auto",
             "cellOptions": {
               "type": "auto"
+            },
+            "footer": {
+              "reducers": []
             },
             "inspect": false
           },
@@ -1046,13 +1046,7 @@
         "showHeader": true
       },
       "pluginVersion": "1.0.0",
-      "targets": [
-        {
-          "refId": "A"
-        }
-      ],
       "title": "Date Format Variations",
-      "transformations": [],
       "type": "table"
     },
     {
@@ -1074,47 +1068,40 @@
         }
       ],
       "table": "table2",
-      "targets": [
-        {
-          "refId": "A"
-        }
-      ],
       "title": "React Table - Should NOT Migrate",
       "type": "table"
     },
     {
       "description": "Angular table without styles property should not be migrated.",
       "id": 15,
-      "targets": [
-        {
-          "refId": "A"
-        }
-      ],
       "title": "Angular Table without Styles - Should NOT Migrate",
       "type": "table"
     },
     {
       "description": "Non-table panels should remain completely unchanged.",
       "id": 16,
-      "targets": [
-        {
-          "refId": "A"
-        }
-      ],
       "title": "Non-Table Panel - Should NOT Migrate",
       "type": "graph"
     },
     {
       "description": "Other panel types should not be affected by table migration.",
       "id": 17,
-      "targets": [
-        {
-          "refId": "A"
-        }
-      ],
       "title": "Singlestat Panel - Should NOT Migrate",
       "type": "singlestat"
     }
   ],
-  "schemaVersion": 24
+  "schemaVersion": 24,
+  "tags": [],
+  "templating": {
+    "list": []
+  },
+  "time": {
+    "from": "now-6h",
+    "to": "now"
+  },
+  "timepicker": {},
+  "timezone": "",
+  "title": "No Title",
+  "version": 0,
+  "weekStart": ""
 }

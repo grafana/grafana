@@ -1,6 +1,14 @@
 import { readFileSync } from 'fs';
 import path from 'path';
 
+import { variableAdapters } from 'app/features/variables/adapters';
+import { createConstantVariableAdapter } from 'app/features/variables/constant/adapter';
+import { createCustomVariableAdapter } from 'app/features/variables/custom/adapter';
+import { createDataSourceVariableAdapter } from 'app/features/variables/datasource/adapter';
+import { createIntervalVariableAdapter } from 'app/features/variables/interval/adapter';
+import { createQueryVariableAdapter } from 'app/features/variables/query/adapter';
+import { createTextBoxVariableAdapter } from 'app/features/variables/textbox/adapter';
+
 import { DASHBOARD_SCHEMA_VERSION } from './DashboardMigrator';
 import { DashboardModel } from './DashboardModel';
 import {
@@ -11,7 +19,6 @@ import {
   extractTargetVersionFromFilename,
   constructBackendOutputFilename,
   handleAngularPanelMigration,
-  cleanDashboardModel,
 } from './__tests__/migrationTestUtils';
 
 /*
@@ -40,6 +47,13 @@ import {
  *    - Ensures both paths produce identical final dashboard states for single version migrations
  *    - Avoids test brittleness from comparing raw JSON with different default value representations
  */
+
+variableAdapters.register(createQueryVariableAdapter());
+variableAdapters.register(createDataSourceVariableAdapter());
+variableAdapters.register(createConstantVariableAdapter());
+variableAdapters.register(createIntervalVariableAdapter());
+variableAdapters.register(createCustomVariableAdapter());
+variableAdapters.register(createTextBoxVariableAdapter());
 
 describe('Backend / Frontend single version migration result comparison', () => {
   beforeEach(() => {
@@ -90,12 +104,10 @@ describe('Backend / Frontend single version migration result comparison', () => 
 
         expect(backendOutput.schemaVersion).toEqual(targetVersion);
 
-        // Create dashboard models
+        // Migrate dashboard in Frontend.
         const frontendModel = new DashboardModel(jsonInput, undefined, {
           targetSchemaVersion: targetVersion,
-        });
-        const backendModel = new DashboardModel(backendOutput, undefined, {
-          targetSchemaVersion: targetVersion,
+          getVariablesFromState: () => jsonInput?.templating?.list ?? [],
         });
 
         // Handle angular panel migration if needed
@@ -103,10 +115,9 @@ describe('Backend / Frontend single version migration result comparison', () => 
           await handleAngularPanelMigration(frontendModel);
         }
 
-        const frontendMigrationResult = cleanDashboardModel(frontendModel);
-        const backendMigrationResult = cleanDashboardModel(backendModel);
+        const frontendMigrationResult = frontendModel.getSaveModelClone();
 
-        expect(backendMigrationResult).toEqual(frontendMigrationResult);
+        expect(backendOutput).toEqual(frontendMigrationResult);
       });
     });
 });

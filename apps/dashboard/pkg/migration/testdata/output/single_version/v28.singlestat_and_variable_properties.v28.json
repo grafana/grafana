@@ -1,4 +1,25 @@
 {
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "type": "grafana",
+          "uid": "-- Grafana --"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations \u0026 Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "gnetId": null,
+  "graphTooltip": 0,
+  "links": [],
   "panels": [
     {
       "fieldConfig": {
@@ -28,6 +49,7 @@
         "max": 10,
         "min": 1
       },
+      "id": 1,
       "legend": true,
       "options": {
         "colorMode": "none",
@@ -51,7 +73,9 @@
         {
           "refId": "A"
         },
-        {}
+        {
+          "refId": "A"
+        }
       ],
       "type": "stat"
     },
@@ -85,6 +109,7 @@
         "max": 10,
         "min": 1
       },
+      "id": 2,
       "options": {
         "colorMode": "none",
         "graphMode": "none",
@@ -161,6 +186,7 @@
         "max": 10,
         "min": 1
       },
+      "id": 3,
       "legend": true,
       "mappingTypes": [
         {
@@ -190,11 +216,14 @@
         {
           "refId": "A"
         },
-        {}
+        {
+          "refId": "A"
+        }
       ],
       "type": "stat"
     },
     {
+      "id": 4,
       "targets": [
         {
           "expr": "rate(http_requests_total[5m])",
@@ -205,6 +234,7 @@
     }
   ],
   "schemaVersion": 28,
+  "tags": [],
   "templating": {
     "list": [
       {
@@ -258,5 +288,8 @@
       "1d"
     ]
   },
-  "title": "V28 Singlestat and Variable Properties Migration Test Dashboard"
+  "timezone": "",
+  "title": "V28 Singlestat and Variable Properties Migration Test Dashboard",
+  "version": 0,
+  "weekStart": ""
 }
