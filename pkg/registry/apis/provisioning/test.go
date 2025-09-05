@@ -31,20 +31,17 @@ type HealthCheckerProvider interface {
 type testConnector struct {
 	getter         RepoGetter
 	factory        repository.Factory
-	tester         controller.RepositoryTester
 	healthProvider HealthCheckerProvider
 }
 
 func NewTestConnector(
 	getter RepoGetter,
 	factory repository.Factory,
-	tester controller.RepositoryTester,
 	healthProvider HealthCheckerProvider,
 ) *testConnector {
 	return &testConnector{
 		factory:        factory,
 		getter:         getter,
-		tester:         tester,
 		healthProvider: healthProvider,
 	}
 }
@@ -184,7 +181,7 @@ func (s *testConnector) Connect(ctx context.Context, name string, opts runtime.O
 			}
 		} else {
 			// Testing temporary repository - just run test without status update
-			rsp, err = s.tester.TestRepository(ctx, repo)
+			rsp, err = repository.TestRepository(ctx, repo)
 			if err != nil {
 				responder.Error(err)
 				return

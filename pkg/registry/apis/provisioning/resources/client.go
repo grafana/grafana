@@ -41,7 +41,7 @@ type ClientFactory interface {
 }
 
 type clientFactory struct {
-	configProvider apiserver.RestConfigProvider
+	clientsProvider clientsProvider
 }
 
 // TODO: Rename to NamespacedClients
@@ -49,51 +49,111 @@ type clientFactory struct {
 //
 //go:generate mockery --name ResourceClients --structname MockResourceClients --inpackage --filename clients_mock.go --with-expecter
 type ResourceClients interface {
-	ForKind(gvk schema.GroupVersionKind) (dynamic.ResourceInterface, schema.GroupVersionResource, error)
-	ForResource(gvr schema.GroupVersionResource) (dynamic.ResourceInterface, schema.GroupVersionKind, error)
+	ForKind(ctx context.Context, gvk schema.GroupVersionKind) (dynamic.ResourceInterface, schema.GroupVersionResource, error)
+	ForResource(ctx context.Context, gvr schema.GroupVersionResource) (dynamic.ResourceInterface, schema.GroupVersionKind, error)
+	Folder(ctx context.Context) (dynamic.ResourceInterface, error)
+	User(ctx context.Context) (dynamic.ResourceInterface, error)
+}
 
-	Folder() (dynamic.ResourceInterface, error)
-	User() (dynamic.ResourceInterface, error)
+type clientsProvider interface {
+	GetClientsForKind(ctx context.Context, gvk schema.GroupVersionKind) (dynamic.Interface, client.DiscoveryClient, error)
+	GetClientsForResource(ctx context.Context, gvr schema.GroupVersionResource) (dynamic.Interface, client.DiscoveryClient, error)
+}
+
+// singleAPIClients provides clients for all registered APIs
+// It implements ClientsProvider by creating a dynamic client and discovery client
+// for the given rest config provider
+type singleAPIClients struct {
+	configProvider apiserver.RestConfigProvider
+	once           sync.Once
+	dynamic        dynamic.Interface
+	discovery      client.DiscoveryClient
+	initErr        error
+}
+
+func newSingleAPIClients(configProvider apiserver.RestConfigProvider) clientsProvider {
+	return &singleAPIClients{configProvider: configProvider}
+}
+
+func (p *singleAPIClients) onlyOnce(ctx context.Context) error {
+	p.once.Do(func() {
+		restConfig, e := p.configProvider.GetRestConfig(ctx)
+		if e != nil {
+			p.initErr = fmt.Errorf("get rest config: %w", e)
+			return
+		}
+
+		p.dynamic, e = dynamic.NewForConfig(restConfig)
+		if e != nil {
+			p.initErr = fmt.Errorf("create dynamic client: %w", e)
+			return
+		}
+
+		p.discovery, e = client.NewDiscoveryClient(restConfig)
+		if e != nil {
+			p.initErr = fmt.Errorf("create discovery client: %w", e)
+			return
+		}
+	})
+
+	return p.initErr
+}
+
+func (p *singleAPIClients) GetClientsForKind(ctx context.Context, _ schema.GroupVersionKind) (dynamic.Interface, client.DiscoveryClient, error) {
+	if err := p.onlyOnce(ctx); err != nil {
+		return nil, nil, fmt.Errorf("get clients: %w", err)
+	}
+
+	return p.dynamic, p.discovery, nil
+}
+
+func (p *singleAPIClients) GetClientsForResource(ctx context.Context, _ schema.GroupVersionResource) (dynamic.Interface, client.DiscoveryClient, error) {
+	if err := p.onlyOnce(ctx); err != nil {
+		return nil, nil, fmt.Errorf("get clients: %w", err)
+	}
+
+	return p.dynamic, p.discovery, nil
 }
 
 func NewClientFactory(configProvider apiserver.RestConfigProvider) ClientFactory {
-	return &clientFactory{configProvider}
+	return &clientFactory{newSingleAPIClients(configProvider)}
+}
+
+// NewClientFactoryForMultipleAPIServers creates a ClientFactory for multiple API servers
+func NewClientFactoryForMultipleAPIServers(configProviders []apiserver.RestConfigProvider) ClientFactory {
+	clientFactories := make([]ClientFactory, len(configProviders))
+
+	for i, configProvider := range configProviders {
+		clientFactory := NewClientFactory(configProvider)
+		clientFactories[i] = clientFactory
+	}
+
+	return &multiClientFactory{clientFactories: clientFactories}
+}
+
+type multiClientFactory struct {
+	clientFactories []ClientFactory
+}
+
+func (m *multiClientFactory) Clients(ctx context.Context, namespace string) (ResourceClients, error) {
+	for _, clientFactory := range m.clientFactories {
+		return clientFactory.Clients(ctx, namespace)
+	}
+	return nil, fmt.Errorf("no client factories available")
 }
 
 func (f *clientFactory) Clients(ctx context.Context, namespace string) (ResourceClients, error) {
-	restConfig, err := f.configProvider.GetRestConfig(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	if namespace == "" {
-		return nil, fmt.Errorf("missing namespace")
-	}
-
-	discovery, err := client.NewDiscoveryClient(restConfig)
-	if err != nil {
-		return nil, err
-	}
-
-	client, err := dynamic.NewForConfig(restConfig)
-	if err != nil {
-		return nil, err
-	}
-
 	return &resourceClients{
-		namespace:  namespace,
-		discovery:  discovery,
-		dynamic:    client,
-		byKind:     make(map[schema.GroupVersionKind]*clientInfo),
-		byResource: make(map[schema.GroupVersionResource]*clientInfo),
+		namespace:       namespace,
+		clientsProvider: f.clientsProvider,
+		byKind:          make(map[schema.GroupVersionKind]*clientInfo),
+		byResource:      make(map[schema.GroupVersionResource]*clientInfo),
 	}, nil
 }
 
 type resourceClients struct {
-	namespace string
-
-	dynamic   dynamic.Interface
-	discovery client.DiscoveryClient
+	namespace       string
+	clientsProvider clientsProvider
 
 	// ResourceInterface cache for this context + namespace
 	mutex      sync.Mutex
@@ -110,7 +170,7 @@ type clientInfo struct {
 // ForKind returns a client for a kind.
 // If the kind has a version, it will be used.
 // If the kind does not have a version, the preferred version will be used.
-func (c *resourceClients) ForKind(gvk schema.GroupVersionKind) (dynamic.ResourceInterface, schema.GroupVersionResource, error) {
+func (c *resourceClients) ForKind(ctx context.Context, gvk schema.GroupVersionKind) (dynamic.ResourceInterface, schema.GroupVersionResource, error) {
 	c.mutex.Lock()
 	defer c.mutex.Unlock()
 
@@ -119,12 +179,16 @@ func (c *resourceClients) ForKind(gvk schema.GroupVersionKind) (dynamic.Resource
 		return info.client, info.gvr, nil
 	}
 
-	var err error
+	dynamic, discovery, err := c.clientsProvider.GetClientsForKind(ctx, gvk)
+	if err != nil {
+		return nil, schema.GroupVersionResource{}, fmt.Errorf("get clients for resource %s: %w", gvk.String(), err)
+	}
+
 	var gvr schema.GroupVersionResource
 	var versionless schema.GroupVersionKind
 	if gvk.Version == "" {
 		versionless = gvk
-		gvr, gvk, err = c.discovery.GetPreferredVersionForKind(schema.GroupKind{
+		gvr, gvk, err = discovery.GetPreferredVersionForKind(schema.GroupKind{
 			Group: gvk.Group,
 			Kind:  gvk.Kind,
 		})
@@ -138,7 +202,7 @@ func (c *resourceClients) ForKind(gvk schema.GroupVersionKind) (dynamic.Resource
 			return info.client, info.gvr, nil
 		}
 	} else {
-		gvr, err = c.discovery.GetResourceForKind(gvk)
+		gvr, err = discovery.GetResourceForKind(gvk)
 		if err != nil {
 			return nil, schema.GroupVersionResource{}, err
 		}
@@ -146,7 +210,7 @@ func (c *resourceClients) ForKind(gvk schema.GroupVersionKind) (dynamic.Resource
 	info = &clientInfo{
 		gvk:    gvk,
 		gvr:    gvr,
-		client: c.dynamic.Resource(gvr).Namespace(c.namespace),
+		client: dynamic.Resource(gvr).Namespace(c.namespace),
 	}
 	c.byKind[gvk] = info
 	c.byResource[gvr] = info
@@ -159,7 +223,7 @@ func (c *resourceClients) ForKind(gvk schema.GroupVersionKind) (dynamic.Resource
 // ForResource returns a client for a resource.
 // If the resource has a version, it will be used.
 // If the resource does not have a version, the preferred version will be used.
-func (c *resourceClients) ForResource(gvr schema.GroupVersionResource) (dynamic.ResourceInterface, schema.GroupVersionKind, error) {
+func (c *resourceClients) ForResource(ctx context.Context, gvr schema.GroupVersionResource) (dynamic.ResourceInterface, schema.GroupVersionKind, error) {
 	c.mutex.Lock()
 	defer c.mutex.Unlock()
 
@@ -168,12 +232,16 @@ func (c *resourceClients) ForResource(gvr schema.GroupVersionResource) (dynamic.
 		return info.client, info.gvk, nil
 	}
 
-	var err error
+	dynamic, discovery, err := c.clientsProvider.GetClientsForResource(ctx, gvr)
+	if err != nil {
+		return nil, schema.GroupVersionKind{}, fmt.Errorf("get clients for kind %s: %w", gvr.String(), err)
+	}
+
 	var gvk schema.GroupVersionKind
 	var versionless schema.GroupVersionResource
 	if gvr.Version == "" {
 		versionless = gvr
-		gvr, gvk, err = c.discovery.GetPreferredVesion(schema.GroupResource{
+		gvr, gvk, err = discovery.GetPreferredVesion(schema.GroupResource{
 			Group:    gvr.Group,
 			Resource: gvr.Resource,
 		})
@@ -187,7 +255,7 @@ func (c *resourceClients) ForResource(gvr schema.GroupVersionResource) (dynamic.
 			return info.client, info.gvk, nil
 		}
 	} else {
-		gvk, err = c.discovery.GetKindForResource(gvr)
+		gvk, err = discovery.GetKindForResource(gvr)
 		if err != nil {
 			return nil, schema.GroupVersionKind{}, err
 		}
@@ -195,7 +263,7 @@ func (c *resourceClients) ForResource(gvr schema.GroupVersionResource) (dynamic.
 	info = &clientInfo{
 		gvk:    gvk,
 		gvr:    gvr,
-		client: c.dynamic.Resource(gvr).Namespace(c.namespace),
+		client: dynamic.Resource(gvr).Namespace(c.namespace),
 	}
 	c.byKind[gvk] = info
 	c.byResource[gvr] = info
@@ -205,13 +273,13 @@ func (c *resourceClients) ForResource(gvr schema.GroupVersionResource) (dynamic.
 	return info.client, info.gvk, nil
 }
 
-func (c *resourceClients) Folder() (dynamic.ResourceInterface, error) {
-	client, _, err := c.ForResource(FolderResource)
+func (c *resourceClients) Folder(ctx context.Context) (dynamic.ResourceInterface, error) {
+	client, _, err := c.ForResource(ctx, FolderResource)
 	return client, err
 }
 
-func (c *resourceClients) User() (dynamic.ResourceInterface, error) {
-	v, _, err := c.ForResource(UserResource)
+func (c *resourceClients) User(ctx context.Context) (dynamic.ResourceInterface, error) {
+	v, _, err := c.ForResource(ctx, UserResource)
 	return v, err
 }
 

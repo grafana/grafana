@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/log"
+	idStore "github.com/grafana/grafana/pkg/registry/apis/iam/legacy"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
@@ -24,8 +25,9 @@ var (
 )
 
 type ResourcePermSqlBackend struct {
-	dbProvider legacysql.LegacyDatabaseProvider
-	logger     log.Logger
+	dbProvider    legacysql.LegacyDatabaseProvider
+	identityStore IdentityStore
+	logger        log.Logger
 
 	mappers        map[schema.GroupResource]Mapper // group/resource -> rbac mapper
 	reverseMappers map[string]schema.GroupResource // rbac kind -> group/resource
@@ -36,8 +38,9 @@ type ResourcePermSqlBackend struct {
 
 func ProvideStorageBackend(dbProvider legacysql.LegacyDatabaseProvider) *ResourcePermSqlBackend {
 	return &ResourcePermSqlBackend{
-		dbProvider: dbProvider,
-		logger:     log.New("resourceperm_storage_backend"),
+		dbProvider:    dbProvider,
+		identityStore: idStore.NewLegacySQLStores(dbProvider),
+		logger:        log.New("resourceperm_storage_backend"),
 
 		mappers: map[schema.GroupResource]Mapper{
 			{Group: "folder.grafana.app", Resource: "folders"}:       NewMapper("folders", defaultLevels),
@@ -136,9 +139,22 @@ func isValidKey(key *resourcepb.ResourceKey, requireName bool) error {
 		return fmt.Errorf("expecting resource (%s != %s)", key.Resource, gr.Resource)
 	}
 	if requireName && key.Name == "" {
-		return fmt.Errorf("expecting name (uid): %w", errEmptyName)
+		return fmt.Errorf("expecting name (uid): %w", errInvalidName)
 	}
 	return nil
+}
+
+func getResourcePermissionFromEvent(event resource.WriteEvent) (*v0alpha1.ResourcePermission, error) {
+	obj, ok := event.Object.GetRuntimeObject()
+	if ok && obj != nil {
+		resourcePermission, ok := obj.(*v0alpha1.ResourcePermission)
+		if ok {
+			return resourcePermission, nil
+		}
+	}
+	resourcePermission := &v0alpha1.ResourcePermission{}
+	err := json.Unmarshal(event.Value, resourcePermission)
+	return resourcePermission, err
 }
 
 func (s *ResourcePermSqlBackend) WriteEvent(ctx context.Context, event resource.WriteEvent) (rv int64, err error) {
@@ -154,8 +170,59 @@ func (s *ResourcePermSqlBackend) WriteEvent(ctx context.Context, event resource.
 		return 0, apierrors.NewBadRequest(fmt.Sprintf("invalid key %q: %v", event.Key, err.Error()))
 	}
 
+	dbHelper, err := s.dbProvider(ctx)
+	if err != nil {
+		// Hide the error from the user, but log it
+		logger := s.logger.FromContext(ctx)
+		logger.Error("Failed to get database helper", "error", err)
+		return 0, errDatabaseHelper
+	}
+
+	mapper, grn, err := s.splitResourceName(event.Key.Name)
+	if err != nil {
+		return 0, apierrors.NewBadRequest(fmt.Sprintf("invalid resource name %q: %v", event.Key.Name, err.Error()))
+	}
+
+	if grn.Name == "" {
+		return 0, fmt.Errorf("resource name cannot be empty: %w", errInvalidName)
+	}
+
 	switch event.Type {
+	case resourcepb.WatchEvent_DELETED:
+		err = s.deleteResourcePermission(ctx, dbHelper, ns, event.Key.Name)
+	case resourcepb.WatchEvent_ADDED:
+		{
+			var v0resourceperm *v0alpha1.ResourcePermission
+			v0resourceperm, err = getResourcePermissionFromEvent(event)
+			if err != nil {
+				return 0, err
+			}
+
+			if v0resourceperm.Name != event.Key.Name {
+				return 0, apierrors.NewBadRequest(
+					fmt.Sprintf("resource permission name %q != %q: %v", event.Key.Name, v0resourceperm.Name, errNameMismatch.Error()),
+				)
+			}
+			if v0resourceperm.Namespace != ns.Value {
+				return 0, apierrors.NewBadRequest(
+					fmt.Sprintf("namespace %q != %q: %v", ns.Value, v0resourceperm.Namespace, errNamespaceMismatch.Error()),
+				)
+			}
+
+			rv, err = s.createResourcePermission(ctx, dbHelper, ns, mapper, grn, v0resourceperm)
+			if err != nil {
+				if errors.Is(err, errInvalidSpec) || errors.Is(err, errInvalidName) {
+					return 0, apierrors.NewBadRequest(err.Error())
+				}
+				if errors.Is(err, errConflict) {
+					return 0, apierrors.NewConflict(v0alpha1.ResourcePermissionInfo.GroupResource(), event.Key.Name, err)
+				}
+				return 0, err
+			}
+		}
 	default:
 		return 0, fmt.Errorf("unsupported event type: %v", event.Type)
 	}
+
+	return rv, err
 }

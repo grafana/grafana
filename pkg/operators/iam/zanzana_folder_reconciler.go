@@ -2,6 +2,7 @@ package iam
 
 import (
 	"context"
+	"crypto/x509"
 	"errors"
 	"fmt"
 	"log/slog"
@@ -10,9 +11,9 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/grafana/grafana-app-sdk/k8s"
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana-app-sdk/operator"
+	folder "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	"github.com/grafana/grafana/apps/iam/pkg/app"
 	"github.com/grafana/grafana/pkg/server"
 	"github.com/grafana/grafana/pkg/services/apiserver/standalone"
@@ -22,7 +23,6 @@ import (
 	"k8s.io/client-go/transport"
 
 	"github.com/grafana/authlib/authn"
-	"github.com/grafana/grafana-app-sdk/plugin/kubeconfig"
 	utilnet "k8s.io/apimachinery/pkg/util/net"
 )
 
@@ -78,64 +78,63 @@ type iamConfig struct {
 	AppConfig    app.AppConfig
 }
 
-const (
-	ConnTypeGRPC = "grpc"
-	ConnTypeHTTP = "http"
-)
-
 func buildIAMConfigFromSettings(cfg *setting.Cfg) (*iamConfig, error) {
-	var err error
 	if cfg == nil {
 		return nil, fmt.Errorf("no configuration available")
 	}
 
 	iamCfg := iamConfig{}
 
-	iamFolderReconcilerSec := cfg.SectionWithEnvOverrides("iam_folder_reconciler")
-
-	zanzanaAddress := iamFolderReconcilerSec.Key("zanzana_address").MustString("")
-	if zanzanaAddress == "" {
-		return nil, fmt.Errorf("address is required in [iam_folder_reconciler.zanzana] section")
-	}
-	iamCfg.AppConfig.ZanzanaClientCfg.Address = zanzanaAddress
-
-	tokenExchangeURL := iamFolderReconcilerSec.Key("token_exchange_url").MustString("")
-	if tokenExchangeURL == "" {
-		return nil, fmt.Errorf("token_exchange_url is required in [iam_folder_reconciler] section")
-	}
-	iamCfg.AppConfig.ZanzanaClientCfg.TokenExchangeURL = tokenExchangeURL
-
-	token := iamFolderReconcilerSec.Key("token").MustString("")
+	gRPCAuth := cfg.SectionWithEnvOverrides("grpc_client_authentication")
+	token := gRPCAuth.Key("token").String()
 	if token == "" {
-		return nil, fmt.Errorf("token is required in [iam_folder_reconciler] section")
+		return nil, fmt.Errorf("token is required in [grpc_client_authentication] section")
 	}
 	iamCfg.AppConfig.ZanzanaClientCfg.Token = token
 
-	folderAppURL := iamFolderReconcilerSec.Key("folder_app_url").MustString("")
-	folderAppNamespace := iamFolderReconcilerSec.Key("folder_app_namespace").MustString("default")
+	tokenExchangeURL := gRPCAuth.Key("token_exchange_url").String()
+	if tokenExchangeURL == "" {
+		return nil, fmt.Errorf("token_exchange_url is required in [grpc_client_authentication] section")
+	}
+	iamCfg.AppConfig.ZanzanaClientCfg.TokenExchangeURL = tokenExchangeURL
 
-	kubeConfig, err := buildKubeConfigFromFolderAppURL(folderAppURL, tokenExchangeURL, token, folderAppNamespace)
+	operatorSec := cfg.SectionWithEnvOverrides("operator")
+
+	zanzanaURL := operatorSec.Key("zanzana_url").MustString("")
+	if zanzanaURL == "" {
+		return nil, fmt.Errorf("zanzana_url is required in [operator] section")
+	}
+	iamCfg.AppConfig.ZanzanaClientCfg.URL = zanzanaURL
+
+	folderAppURL := operatorSec.Key("folder_app_url").MustString("")
+	if folderAppURL == "" {
+		return nil, fmt.Errorf("folder_app_url is required in [operator] section")
+	}
+
+	tlsInsecure := operatorSec.Key("tls_insecure").MustBool(false)
+	tlsCertFile := operatorSec.Key("tls_cert_file").String()
+	tlsKeyFile := operatorSec.Key("tls_key_file").String()
+	tlsCAFile := operatorSec.Key("tls_ca_file").String()
+	iamCfg.AppConfig.ZanzanaClientCfg.ServerCertFile = tlsCertFile
+
+	kubeConfig, err := buildKubeConfigFromFolderAppURL(
+		folderAppURL,
+		tokenExchangeURL, token,
+		tlsInsecure, tlsCertFile, tlsKeyFile, tlsCAFile,
+	)
 	if err != nil {
 		return nil, fmt.Errorf("failed to build kube config: %w", err)
 	}
-	iamCfg.RunnerConfig.KubeConfig = kubeConfig.RestConfig
-
-	wenhookSection := cfg.SectionWithEnvOverrides("iam_folder_reconciler.webhook_server")
-	webhookPort := wenhookSection.Key("port").MustInt(8443)
-	webhookCertPath := wenhookSection.Key("cert_path").MustString("")
-	webhookKeyPath := wenhookSection.Key("key_path").MustString("")
-	iamCfg.RunnerConfig.WebhookConfig = operator.RunnerWebhookConfig{
-		Port: webhookPort,
-		TLSConfig: k8s.TLSConfig{
-			CertPath: webhookCertPath,
-			KeyPath:  webhookKeyPath,
-		},
-	}
+	iamCfg.RunnerConfig.KubeConfig = *kubeConfig
 
 	return &iamCfg, nil
 }
 
-func buildKubeConfigFromFolderAppURL(folderAppURL, exchangeUrl, authToken, namespace string) (*kubeconfig.NamespacedConfig, error) {
+func buildKubeConfigFromFolderAppURL(
+	folderAppURL string,
+	exchangeUrl, authToken string,
+	tlsInsecure bool, tlsCertFile, tlsKeyFile, tlsCAFile string,
+) (*rest.Config, error) {
 	tokenExchangeClient, err := authn.NewTokenExchangeClient(authn.TokenExchangeConfig{
 		TokenExchangeURL: exchangeUrl,
 		Token:            authToken,
@@ -144,22 +143,51 @@ func buildKubeConfigFromFolderAppURL(folderAppURL, exchangeUrl, authToken, names
 		return nil, fmt.Errorf("failed to create token exchange client: %w", err)
 	}
 
-	return &kubeconfig.NamespacedConfig{
-		RestConfig: rest.Config{
-			APIPath: "/apis",
-			Host:    folderAppURL,
-			WrapTransport: transport.WrapperFunc(func(rt http.RoundTripper) http.RoundTripper {
-				return &authRoundTripper{
-					tokenExchangeClient: tokenExchangeClient,
-					transport:           rt,
-				}
-			}),
-			TLSClientConfig: rest.TLSClientConfig{
-				Insecure: true,
-			},
-		},
-		Namespace: namespace,
+	tlsConfig, err := buildTLSConfig(tlsInsecure, tlsCertFile, tlsKeyFile, tlsCAFile)
+	if err != nil {
+		return nil, fmt.Errorf("failed to build TLS configuration: %w", err)
+	}
+
+	return &rest.Config{
+		APIPath: "/apis",
+		Host:    folderAppURL,
+		WrapTransport: transport.WrapperFunc(func(rt http.RoundTripper) http.RoundTripper {
+			return &authRoundTripper{
+				tokenExchangeClient: tokenExchangeClient,
+				transport:           rt,
+			}
+		}),
+		TLSClientConfig: tlsConfig,
 	}, nil
+}
+
+func buildTLSConfig(insecure bool, certFile, keyFile, caFile string) (rest.TLSClientConfig, error) {
+	tlsConfig := rest.TLSClientConfig{
+		Insecure: insecure,
+	}
+
+	if certFile != "" && keyFile != "" {
+		tlsConfig.CertFile = certFile
+		tlsConfig.KeyFile = keyFile
+	}
+
+	if caFile != "" {
+		// caFile is set in operator.ini file
+		// nolint:gosec
+		caCert, err := os.ReadFile(caFile)
+		if err != nil {
+			return tlsConfig, fmt.Errorf("failed to read CA certificate file: %w", err)
+		}
+
+		caCertPool := x509.NewCertPool()
+		if !caCertPool.AppendCertsFromPEM(caCert) {
+			return tlsConfig, fmt.Errorf("failed to parse CA certificate")
+		}
+
+		tlsConfig.CAData = caCert
+	}
+
+	return tlsConfig, nil
 }
 
 type authRoundTripper struct {
@@ -169,7 +197,7 @@ type authRoundTripper struct {
 
 func (t *authRoundTripper) RoundTrip(req *http.Request) (*http.Response, error) {
 	tokenResponse, err := t.tokenExchangeClient.Exchange(req.Context(), authn.TokenExchangeRequest{
-		Audiences: []string{"folder.grafana.app"},
+		Audiences: []string{folder.GROUP},
 		Namespace: "*",
 	})
 	if err != nil {
@@ -178,7 +206,6 @@ func (t *authRoundTripper) RoundTrip(req *http.Request) (*http.Response, error) 
 
 	// clone the request as RTs are not expected to mutate the passed request
 	req = utilnet.CloneRequest(req)
-
 	req.Header.Set("X-Access-Token", "Bearer "+tokenResponse.Token)
 	return t.transport.RoundTrip(req)
 }

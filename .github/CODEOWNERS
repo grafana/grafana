@@ -1049,7 +1049,6 @@ playwright.storybook.config.ts @grafana/grafana-frontend-platform
 /scripts/**/generate-transformations* @grafana/datapro
 /scripts/webpack/ @grafana/frontend-ops
 /scripts/generate-a11y-report.sh @grafana/grafana-frontend-platform
-.betterer.ts @grafana/grafana-frontend-platform
 eslint-suppressions.json @grafanabot
 
 # Design system
@@ -1138,6 +1137,8 @@ eslint-suppressions.json @grafanabot
 # Feature toggles
 /pkg/services/featuremgmt/ @grafana/grafana-backend-services-squad
 
+# Data source migrations
+/pkg/services/promtypemigration/ @grafana/partner-datasources @grafana/aws-datasources
 
 # Kind definitions
 /kinds/dashboard @grafana/dashboards-squad
