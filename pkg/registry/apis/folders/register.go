@@ -55,9 +55,9 @@ type FolderAPIBuilder struct {
 	authorizer authorizer.Authorizer
 	parents    parentsGetter
 
-	searcher     resourcepb.ResourceIndexClient
-	cfg          *setting.Cfg
-	ignoreLegacy bool // skip legacy storage and only use unified storage
+	searcher            resourcepb.ResourceIndexClient
+	permissionsOnCreate bool
+	ignoreLegacy        bool // skip legacy storage and only use unified storage
 }
 
 func RegisterAPIService(cfg *setting.Cfg,
@@ -78,7 +78,7 @@ func RegisterAPIService(cfg *setting.Cfg,
 		folderPermissionsSvc: folderPermissionsSvc,
 		acService:            acService,
 		ac:                   accessControl,
-		cfg:                  cfg,
+		permissionsOnCreate:  cfg.RBAC.PermissionsOnCreation("folder"),
 		authorizer:           newLegacyAuthorizer(accessControl),
 		searcher:             unified,
 	}
@@ -153,8 +153,6 @@ func (b *FolderAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.API
 		service:        b.folderSvc,
 		namespacer:     b.namespacer,
 		tableConverter: resourceInfo.TableConverter(),
-		features:       b.features,
-		cfg:            b.cfg,
 	}
 
 	opts.StorageOptsRegister(resourceInfo.GroupResource(), apistore.StorageOptions{
@@ -165,8 +163,7 @@ func (b *FolderAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.API
 		tableConverter:       resourceInfo.TableConverter(),
 		folderPermissionsSvc: b.folderPermissionsSvc,
 		acService:            b.acService,
-		features:             b.features,
-		cfg:                  b.cfg,
+		permissionsOnCreate:  b.permissionsOnCreate,
 	}
 
 	if optsGetter != nil && dualWriteBuilder != nil {

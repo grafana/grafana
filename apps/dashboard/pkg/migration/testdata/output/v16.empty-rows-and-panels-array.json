@@ -938,7 +938,7 @@
     }
   ],
   "refresh": "30s",
-  "schemaVersion": 41,
+  "schemaVersion": 42,
   "style": "dark",
   "tags": [
     "sample-monitoring"
