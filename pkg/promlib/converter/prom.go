@@ -20,7 +20,9 @@ func logf(format string, a ...any) {
 	// fmt.Printf(format, a...)
 }
 
+// 🔹 Step 2: Add options struct
 type Options struct {
+	HideWarnings bool
 }
 
 func rspErr(e error) backend.DataResponse {
@@ -100,7 +102,8 @@ l1Fields:
 		warnings = append(warnings, infos...)
 	}
 
-	if len(warnings) > 0 {
+	// 🔹 Use HideWarnings flag here
+	if len(warnings) > 0 && !opt.HideWarnings {
 		if len(rsp.Frames) == 0 {
 			rsp.Frames = append(rsp.Frames, data.NewFrame("Warnings"))
 		}
@@ -115,6 +118,7 @@ l1Fields:
 
 	return rsp
 }
+
 
 func readAnnotations(iter *sdkjsoniter.Iterator, sevLevel data.NoticeSeverity) ([]data.Notice, error) {
 	warnings := []data.Notice{}
