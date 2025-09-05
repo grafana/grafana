@@ -4,12 +4,15 @@ import { StoreState, useSelector } from 'app/types/store';
 
 import { ROUTES } from './constants';
 import { AddNewConnectionPage } from './pages/AddNewConnectionPage';
+import { CacheFeatureHighlightPage } from './pages/CacheFeatureHighlightPage';
 import ConnectionsHomePage from './pages/ConnectionsHomePage';
 import { DataSourceDashboardsPage } from './pages/DataSourceDashboardsPage';
 import { DataSourceDetailsPage } from './pages/DataSourceDetailsPage';
 import { DataSourcesListPage } from './pages/DataSourcesListPage';
 import { EditDataSourcePage } from './pages/EditDataSourcePage';
+import { InsightsFeatureHighlightPage } from './pages/InsightsFeatureHighlightPage';
 import { NewDataSourcePage } from './pages/NewDataSourcePage';
+import { PermissionsFeatureHighlightPage } from './pages/PermissionsFeatureHighlightPage';
 
 function RedirectToAddNewConnection() {
   const { search } = useLocation();
@@ -41,6 +44,11 @@ export default function Connections() {
         element={<DataSourceDetailsPage />}
       />
       <Route caseSensitive path={ROUTES.DataSourcesEdit.replace(ROUTES.Base, '')} element={<EditDataSourcePage />} />
+      {/* TODO add the proper pages to be rendered here */}
+      <Route caseSensitive path={ROUTES.DataSourcesEdit.replace(ROUTES.Base, '') + '/permissions'} element={<PermissionsFeatureHighlightPage />} />
+      <Route caseSensitive path={ROUTES.DataSourcesEdit.replace(ROUTES.Base, '') + '/insights'} element={<InsightsFeatureHighlightPage />} />
+      <Route caseSensitive path={ROUTES.DataSourcesEdit.replace(ROUTES.Base, '') + '/cache'} element={<CacheFeatureHighlightPage />} />
+
       <Route
         caseSensitive
         path={ROUTES.DataSourcesDashboards.replace(ROUTES.Base, '')}

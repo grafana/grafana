@@ -9,7 +9,7 @@ import { getDataSourceLoadingNav, buildNavModel, getDataSourceNav } from 'app/fe
 import { useGetSingle } from 'app/features/plugins/admin/state/hooks';
 import { useSelector } from 'app/types/store';
 
-export function useDataSourceSettingsNav(pageIdParam?: string) {
+export function useDataSourceTabNav(pageName: string, pageIdParam?: string) {
   const { uid = '' } = useParams<{ uid: string }>();
   const location = useLocation();
   const datasource = useDataSource(uid);
@@ -18,14 +18,14 @@ export function useDataSourceSettingsNav(pageIdParam?: string) {
   const params = new URLSearchParams(location.search);
   const pageId = pageIdParam || params.get('page');
 
-  const { plugin, loadError, loading } = useDataSourceSettings();
   const dsi = getDataSourceSrv()?.getInstanceSettings(uid);
+  const { plugin, loadError, loading } = useDataSourceSettings();
   const hasAlertingEnabled = Boolean(dsi?.meta?.alerting ?? false);
   const isAlertManagerDatasource = dsi?.type === 'alertmanager';
   const alertingSupported = hasAlertingEnabled || isAlertManagerDatasource;
 
   const navIndex = useSelector((state) => state.navIndex);
-  const navIndexId = pageId ? `datasource-${pageId}-${uid}` : `datasource-settings-${uid}`;
+  const navIndexId = pageId ? `datasource-${pageId}-${uid}` : `datasource-${pageName}-${uid}`;
 
   let pageNav: NavModel = {
     node: {
@@ -50,7 +50,7 @@ export function useDataSourceSettingsNav(pageIdParam?: string) {
   }
 
   if (loading || !plugin) {
-    pageNav = getNavModel(navIndex, navIndexId, getDataSourceLoadingNav('settings'));
+    pageNav = getNavModel(navIndex, navIndexId, getDataSourceLoadingNav(pageName));
   }
 
   if (!datasource.uid) {
@@ -69,7 +69,7 @@ export function useDataSourceSettingsNav(pageIdParam?: string) {
     pageNav = getNavModel(
       navIndex,
       navIndexId,
-      getDataSourceNav(buildNavModel(datasource, plugin), pageId || 'settings')
+      getDataSourceNav(buildNavModel(datasource, plugin), pageId || pageName)
     );
   }
 

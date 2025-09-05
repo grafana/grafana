@@ -3,17 +3,17 @@ import { css } from '@emotion/css';
 import { GrafanaTheme2 } from '@grafana/data';
 import { Icon, useStyles2 } from '@grafana/ui';
 
-export function OrangeBadge({ text }: { text: string }) {
-  const styles = useStyles2(getStyles);
+export function OrangeBadge({ text, className }: { text?: string; className?: string }) {
+  const styles = useStyles2(getStyles, text);
   return (
-    <div className={styles.wrapper}>
+    <div className={`${styles.wrapper}${className ? ` ${className}` : ''}`}>
       <Icon name="cloud" size="sm" />
       {text}
     </div>
   );
 }
 
-const getStyles = (theme: GrafanaTheme2) => {
+const getStyles = (theme: GrafanaTheme2, text: string | undefined) => {
   return {
     wrapper: css({
       display: 'inline-flex',
@@ -26,6 +26,11 @@ const getStyles = (theme: GrafanaTheme2) => {
       fontSize: theme.typography.bodySmall.fontSize,
       lineHeight: theme.typography.bodySmall.lineHeight,
       alignItems: 'center',
+      ...(text === undefined && {
+        svg: {
+          marginRight: 0,
+        },
+      }),
     }),
   };
 };

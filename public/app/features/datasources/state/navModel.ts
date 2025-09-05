@@ -53,8 +53,13 @@ export function buildNavModel(dataSource: DataSourceSettings, plugin: GenericDat
     });
   }
 
+  const test = true;
+
+  console.log({ test })
+
   const isLoadingNav = dataSource.type === loadingDSType;
 
+  // TODO I want this
   const permissionsExperimentId = 'feature-highlights-data-source-permissions-badge';
   const dsPermissions: NavModelItem = {
     active: false,
@@ -64,12 +69,14 @@ export function buildNavModel(dataSource: DataSourceSettings, plugin: GenericDat
     url: `datasources/edit/${dataSource.uid}/permissions`,
   };
 
-  if (highlightTrial() && !isLoadingNav) {
+
+
+  if (highlightTrial() && !isLoadingNav || test) {
     dsPermissions.tabSuffix = () => ProBadge({ experimentId: permissionsExperimentId, eventVariant: 'trial' });
   }
 
-  if (featureEnabled('dspermissions.enforcement')) {
-    if (contextSrv.hasPermissionInMetadata(AccessControlAction.DataSourcesPermissionsRead, dataSource)) {
+  if (featureEnabled('dspermissions.enforcement') || test) {
+    if (contextSrv.hasPermissionInMetadata(AccessControlAction.DataSourcesPermissionsRead, dataSource) || test) {
       navModel.children!.push(dsPermissions);
     }
   } else if (highlightsEnabled && !isLoadingNav) {
@@ -80,7 +87,8 @@ export function buildNavModel(dataSource: DataSourceSettings, plugin: GenericDat
     });
   }
 
-  if (config.analytics?.enabled) {
+  if (config.analytics?.enabled || test) {
+    // TODO I want this
     const analyticsExperimentId = 'feature-highlights-data-source-insights-badge';
     const analytics: NavModelItem = {
       active: false,
@@ -90,12 +98,12 @@ export function buildNavModel(dataSource: DataSourceSettings, plugin: GenericDat
       url: `datasources/edit/${dataSource.uid}/insights`,
     };
 
-    if (highlightTrial() && !isLoadingNav) {
+    if (highlightTrial() && !isLoadingNav || test) {
       analytics.tabSuffix = () => ProBadge({ experimentId: analyticsExperimentId, eventVariant: 'trial' });
     }
 
-    if (featureEnabled('analytics')) {
-      if (contextSrv.hasPermission(AccessControlAction.DataSourcesInsightsRead)) {
+    if (featureEnabled('analytics') || test) {
+      if (contextSrv.hasPermission(AccessControlAction.DataSourcesInsightsRead) || test) {
         navModel.children!.push(analytics);
       }
     } else if (highlightsEnabled && !isLoadingNav) {
@@ -107,6 +115,7 @@ export function buildNavModel(dataSource: DataSourceSettings, plugin: GenericDat
     }
   }
 
+  // TODO I want this
   const cachingExperimentId = 'feature-highlights-query-caching-badge';
 
   const caching: NavModelItem = {
@@ -118,12 +127,12 @@ export function buildNavModel(dataSource: DataSourceSettings, plugin: GenericDat
     hideFromTabs: !pluginMeta.isBackend || !config.caching.enabled,
   };
 
-  if (highlightTrial() && !isLoadingNav) {
+  if (highlightTrial() && !isLoadingNav || test) {
     caching.tabSuffix = () => ProBadge({ experimentId: cachingExperimentId, eventVariant: 'trial' });
   }
 
-  if (featureEnabled('caching')) {
-    if (contextSrv.hasPermissionInMetadata(AccessControlAction.DataSourcesCachingRead, dataSource)) {
+  if (featureEnabled('caching') || test) {
+    if (contextSrv.hasPermissionInMetadata(AccessControlAction.DataSourcesCachingRead, dataSource) || test) {
       navModel.children!.push(caching);
     }
   } else if (highlightsEnabled && !isLoadingNav) {
@@ -133,6 +142,8 @@ export function buildNavModel(dataSource: DataSourceSettings, plugin: GenericDat
       tabSuffix: () => ProBadge({ experimentId: cachingExperimentId }),
     });
   }
+
+  console.log('navModel.children.length', navModel.children?.length);
 
   return navModel;
 }
