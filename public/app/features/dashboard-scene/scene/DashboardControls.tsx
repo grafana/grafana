@@ -22,7 +22,7 @@ import { getDashboardSceneFor } from '../utils/utils';
 
 import { DashboardLinksControls } from './DashboardLinksControls';
 import { DashboardScene } from './DashboardScene';
-import { DropdownVariableControls } from './DropdownVariableControls';
+import { DashboardControlsMenu } from './DashboardControlsMenu';
 import { VariableControls } from './VariableControls';
 
 export interface DashboardControlsState extends SceneObjectState {
@@ -158,7 +158,7 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
       )}
       {hasControlMenuVariables && (
         <Stack>
-          <DropdownVariableControls dashboard={dashboard} />
+          <DashboardControlsMenu dashboard={dashboard} />
         </Stack>
       )}
       {showDebugger && <SceneDebugger scene={model} key={'scene-debugger'} />}
