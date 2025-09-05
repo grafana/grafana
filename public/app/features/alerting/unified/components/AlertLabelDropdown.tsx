@@ -12,18 +12,11 @@ export interface AlertLabelDropdownProps {
   defaultValue?: SelectableValue;
   type: 'key' | 'value';
   isLoading?: boolean;
-  fetchOptions?: (inputValue: string) => Promise<ComboboxOption[]>;
 }
 
 const AlertLabelDropdown: FC<AlertLabelDropdownProps> = forwardRef<HTMLDivElement, AlertLabelDropdownProps>(
-  function LabelPicker(
-    { onChange, options, defaultValue, type, onOpenMenu = () => {}, isLoading = false, fetchOptions },
-    ref
-  ) {
+  function LabelPicker({ onChange, options, defaultValue, type, onOpenMenu = () => {}, isLoading = false }, ref) {
     const styles = useStyles2(getStyles);
-
-    // Create async options function if fetchOptions is provided, otherwise use static options
-    const asyncOptions = fetchOptions || options;
 
     const handleChange = (option: ComboboxOption<string> | null) => {
       if (option) {
@@ -49,7 +42,7 @@ const AlertLabelDropdown: FC<AlertLabelDropdownProps> = forwardRef<HTMLDivElemen
           <Combobox<string>
             placeholder={t('alerting.alert-label-dropdown.placeholder-select', 'Choose {{type}}', { type })}
             width={25}
-            options={asyncOptions}
+            options={options}
             value={currentValue}
             onChange={handleChange}
             createCustomValue={true}
