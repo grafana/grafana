@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import clsx from 'clsx';
-import { CSSProperties, ReactNode, useMemo } from 'react';
+import { ReactNode, useMemo } from 'react';
 
 import { GrafanaTheme2, Field, fieldReducers, ReducerID } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';

@@ -219,7 +219,7 @@ This option is only available when you're editing the panel.
 The table footer displays the results of calculations (and reducer functions) on fields.
 The footer is only displayed after you select an option in the **Calculation** drop-down list:
 
-{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-table-footer-selector-v12.2.png" max-width="300px" alt="" >}}
+{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-table-footer-selector-v12.2.png" max-width="300px" alt="The footer calculation selector, open" >}}
 
 There are several calculations you can choose from including minimum, maximum, first, last, and total.
 For the full list of options, refer to [Calculations](ref:calculations).
@@ -232,7 +232,7 @@ In the table footer:
 
 In the following image, multiple calculations&mdash;**Mean**, **Max**, and **Last**&mdash;have been applied:
 
-{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-tablefooter-v12.2.png" max-width="750px" alt="" >}}
+{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-tablefooter-v12.2.png" max-width="750px" alt="Table with footer displaying mean, max, and last" >}}
 
 You can also see in the previous image that the mathematical functions, **Mean** and **Max**, haven't been applied to the text field in the table.
 Only the **Last** function has been applied to that field.
