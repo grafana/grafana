@@ -2045,14 +2045,14 @@
       "count": 1
     }
   },
-  "public/app/features/dashboard-scene/conditional-rendering/ConditionalRenderingTimeRangeSize.tsx": {
-    "no-restricted-syntax": {
-      "count": 1
-    }
-  },
   "public/app/features/dashboard-scene/addToDashboard/AddToDashboardForm.tsx": {
     "no-restricted-syntax": {
       "count": 2
+    }
+  },
+  "public/app/features/dashboard-scene/conditional-rendering/ConditionalRenderingTimeRangeSize.tsx": {
+    "no-restricted-syntax": {
+      "count": 1
     }
   },
   "public/app/features/dashboard-scene/edit-pane/DashboardEditPaneRenderer.tsx": {
