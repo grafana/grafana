@@ -17,10 +17,6 @@ concurrency:
 
 permissions: {}
 
-env:
-  # static path for Linux runners
-  RUNNER_TEMP_PATH: /home/runner/work/_temp
-
 jobs:
   detect-changes:
     # Run on `grafana/grafana` main branch, or on pull requests to prevent double-running on mirrors
@@ -139,7 +135,7 @@ jobs:
           --health-interval=10s 
           --health-timeout=5s 
           --health-retries=3
-          --volume=${{ env.RUNNER_TEMP_PATH }}/mysql/custom.cnf:/etc/mysql/conf.d/custom.cnf
+          --volume=${{ github.workspace }}/mysql/custom.cnf:/etc/mysql/conf.d/custom.cnf
         ports:
           - 3306:3306
     steps:
@@ -157,12 +153,12 @@ jobs:
 
       - name: Prepare MySQL config
         run: |
-          mkdir -p ${{ env.RUNNER_TEMP_PATH }}/mysql
-          cp .github/mysql/custom.cnf ${{ env.RUNNER_TEMP_PATH }}/mysql/custom.cnf
+          mkdir -p ${{ github.workspace }}/mysql
+          cp .github/mysql/custom.cnf ${{ github.workspace }}/mysql/custom.cnf
       - name: Prepare Postgres config
         run: |
-          mkdir -p ${{ env.RUNNER_TEMP_PATH }}/postgres
-          cp .github/postgres/postgresql.conf ${{ env.RUNNER_TEMP_PATH }}/postgres/postgresql.conf
+          mkdir -p ${{ github.workspace }}/postgres
+          cp .github/postgres/postgresql.conf ${{ github.workspace }}/postgres/postgresql.conf
       - name: Run tests
         env:
           SHARD: ${{ matrix.shard }}
@@ -203,7 +199,7 @@ jobs:
           --health-interval=10s
           --health-timeout=5s
           --health-retries=5
-          --volume=${{ env.RUNNER_TEMP_PATH }}/postgres/postgresql.conf:/etc/postgresql/postgresql.conf
+          --volume=${{ github.workspace }}/postgres/postgresql.conf:/etc/postgresql/postgresql.conf
         ports:
           - 5432:5432
     steps:
