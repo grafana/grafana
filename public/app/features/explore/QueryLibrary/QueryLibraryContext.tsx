@@ -34,14 +34,15 @@ export type QueryLibraryContextType = {
   onSave?: () => void;
 
   /**
-   * Returns a predefined small button that can be used to save a query to the library.
+   * Returns both save and replace action buttons that can be used to save or replace a query to the library.
    * @param query
    */
-  renderSaveQueryButton: (
+  renderSavedQueryButtons: (
     query: DataQuery,
     app?: CoreApp,
     onUpdateSuccess?: () => void,
-    onSelectQuery?: (query: DataQuery) => void
+    onSelectQuery?: (query: DataQuery) => void,
+    datasourceFilters?: string[]
   ) => ReactNode;
 
   /**
@@ -81,7 +82,7 @@ export const QueryLibraryContext = createContext<QueryLibraryContextType>({
   setNewQuery: () => {},
   onSave: () => {},
 
-  renderSaveQueryButton: () => {
+  renderSavedQueryButtons: () => {
     return null;
   },
 

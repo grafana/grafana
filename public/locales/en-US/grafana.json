@@ -11940,7 +11940,6 @@
       "expand-row": "Expand query row",
       "hide-response": "Hide response",
       "remove-query": "Remove query",
-      "replace-query-from-library": "Replace with saved query",
       "show-response": "Show response"
     },
     "query-editor-not-exported": "Data source plugin does not export any Query Editor component"
