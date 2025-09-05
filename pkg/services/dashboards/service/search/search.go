@@ -14,11 +14,12 @@ import (
 
 var (
 	excludedFields = map[string]string{
-		resource.SEARCH_FIELD_EXPLAIN: "",
-		resource.SEARCH_FIELD_SCORE:   "",
-		resource.SEARCH_FIELD_TITLE:   "",
-		resource.SEARCH_FIELD_FOLDER:  "",
-		resource.SEARCH_FIELD_TAGS:    "",
+		resource.SEARCH_FIELD_EXPLAIN:     "",
+		resource.SEARCH_FIELD_SCORE:       "",
+		resource.SEARCH_FIELD_TITLE:       "",
+		resource.SEARCH_FIELD_FOLDER:      "",
+		resource.SEARCH_FIELD_TAGS:        "",
+		resource.SEARCH_FIELD_DESCRIPTION: "",
 	}
 
 	IncludeFields = []string{
