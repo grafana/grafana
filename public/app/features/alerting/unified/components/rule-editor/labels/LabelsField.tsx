@@ -258,7 +258,7 @@ export function LabelsWithSuggestions({ dataSourceName }: LabelsWithSuggestionsP
     labelsPluginInstalled,
     loadingLabelsPlugin,
     labelsInSubform,
-    '' // selectedKey - not needed for non-blocking approach
+    ''
   );
 
   return (
