@@ -18,9 +18,9 @@ import {
 
 import { AlertLabels } from '../../components/AlertLabels';
 import { overrideToFixedColor } from '../../home/Insights';
-import { GroupRow } from '../GroupRow';
+import { DEFAULT_FIELDS } from '../scene/constants';
 
-import { DEFAULT_FIELDS } from './constants';
+import { GenericRow } from './GenericRow';
 
 interface Instance {
   labels: Labels;
@@ -61,7 +61,6 @@ const chartConfig = VizConfigBuilders.timeseries()
   .build();
 
 export function InstanceRow({ instance, commonLabels, leftColumnWidth, timeRange }: InstanceRowProps) {
-  console.log(instance);
   const styles = useStyles2(getStyles);
 
   const dataProvider = useMemo(
@@ -79,7 +78,7 @@ export function InstanceRow({ instance, commonLabels, leftColumnWidth, timeRange
   const labels = omit(instance.labels, DEFAULT_FIELDS);
 
   return (
-    <GroupRow
+    <GenericRow
       width={leftColumnWidth}
       title={
         isEmpty(labels) ? (

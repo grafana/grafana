@@ -6,9 +6,9 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { IconButton, Stack, useStyles2 } from '@grafana/ui';
 
-import { Spacer } from '../components/Spacer';
+import { Spacer } from '../../components/Spacer';
 
-interface GroupRowProps {
+interface GenericRowProps {
   width: number;
   title: ReactNode;
   metadata?: ReactNode;
@@ -18,7 +18,7 @@ interface GroupRowProps {
   children?: ReactNode;
 }
 
-export const GroupRow = ({
+export const GenericRow = ({
   width,
   title,
   metadata,
@@ -26,7 +26,7 @@ export const GroupRow = ({
   content,
   isOpenByDefault = false,
   children,
-}: GroupRowProps) => {
+}: GenericRowProps) => {
   const styles = useStyles2(getStyles);
   const [isOpen, handleToggle] = useToggle(isOpenByDefault);
 

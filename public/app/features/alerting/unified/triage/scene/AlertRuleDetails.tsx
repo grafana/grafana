@@ -5,10 +5,10 @@ import { DataFrame, Labels, findCommonLabels } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
 import { useQueryRunner, useTimeRange } from '@grafana/scenes-react';
 
-import { GroupRow } from '../GroupRow';
 import { useWorkbenchContext } from '../WorkbenchContext';
+import { GenericRow } from '../rows/GenericRow';
+import { InstanceRow } from '../rows/InstanceRow';
 
-import { InstanceRow } from './InstanceRow';
 import { METRIC_NAME } from './constants';
 import { getDataQuery } from './utils';
 
@@ -55,14 +55,14 @@ export function AlertRuleDetails({ ruleUID }: { ruleUID: string }) {
 
   if (!instances.length && !isLoading) {
     return (
-      <GroupRow
+      <GenericRow
         width={leftColumnWidth}
         title={<Trans i18nKey="alerting.triage.alert-instances">Alert instances</Trans>}
       >
         <div>
           <Trans i18nKey="alerting.triage.no-instances-found">No alert instances found for rule: {ruleUID}</Trans>
         </div>
-      </GroupRow>
+      </GenericRow>
     );
   }
 

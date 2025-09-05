@@ -13,9 +13,9 @@ import { MetaText } from '../components/MetaText';
 import { EditorColumnHeader } from '../components/contact-points/templates/EditorColumnHeader';
 import LoadMoreHelper from '../rule-list/LoadMoreHelper';
 
-import { GroupRow } from './GroupRow';
 import { TimelineHeader } from './Timeline';
 import { WorkbenchProvider } from './WorkbenchContext';
+import { GenericRow } from './rows/GenericRow';
 import { AlertRuleDetails } from './scene/AlertRuleDetails';
 import { AlertRuleSummary } from './scene/AlertRuleSummary';
 import { SummaryChartReact } from './scene/SummaryChart';
@@ -154,7 +154,7 @@ function renderWorkbenchRow(
 ): React.ReactElement {
   if (isAlertRuleRow(row)) {
     return (
-      <GroupRow
+      <GenericRow
         key={key}
         width={leftColumnWidth}
         title={
@@ -173,12 +173,12 @@ function renderWorkbenchRow(
         content={<AlertRuleSummary ruleUID={row.metadata.ruleUID} />}
       >
         <AlertRuleDetails ruleUID={row.metadata.ruleUID} />
-      </GroupRow>
+      </GenericRow>
     );
   } else {
     const groupedRow = row;
     return (
-      <GroupRow
+      <GenericRow
         key={key}
         width={leftColumnWidth}
         title={groupedRow.metadata.value}
@@ -189,7 +189,7 @@ function renderWorkbenchRow(
         {groupedRow.rows.map((childRow, childIndex) =>
           renderWorkbenchRow(childRow, leftColumnWidth, domain, `${key}-${generateRowKey(childRow, childIndex)}`)
         )}
-      </GroupRow>
+      </GenericRow>
     );
   }
 }
