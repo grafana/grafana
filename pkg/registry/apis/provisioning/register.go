@@ -108,7 +108,7 @@ type APIBuilder struct {
 	statusPatcher    *appcontroller.RepositoryStatusPatcher
 	healthChecker    *controller.HealthChecker
 	// Extras provides additional functionality to the API.
-	extras []Extra
+	extras []ExtraWithWorkers
 }
 
 // NewAPIBuilder creates an API builder.
@@ -125,7 +125,7 @@ func NewAPIBuilder(
 	usageStats usagestats.Service,
 	access authlib.AccessChecker,
 	tracer tracing.Tracer,
-	extraBuilders []ExtraBuilder,
+	extraBuilders []ExtraWithWorkersBuilder,
 	jobHistoryConfig *JobHistoryConfig,
 ) *APIBuilder {
 	clients := resources.NewClientFactory(configProvider)
@@ -203,7 +203,7 @@ func RegisterAPIService(
 	storageStatus dualwrite.Service,
 	usageStats usagestats.Service,
 	tracer tracing.Tracer,
-	extraBuilders []ExtraBuilder,
+	extraBuilders []ExtraWithWorkersBuilder,
 	repoFactory repository.Factory,
 ) (*APIBuilder, error) {
 	if !features.IsEnabledGlobally(featuremgmt.FlagProvisioning) {
