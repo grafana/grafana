@@ -1,6 +1,7 @@
 import { getFieldSeriesColor } from '../field/fieldColor';
 import { GrafanaTheme2 } from '../themes/types';
 import { DataFrame, Field, FieldType } from '../types/dataFrame';
+import { TimeRange } from '../types/time';
 
 import { getTimeField } from './processDataFrame';
 
@@ -179,13 +180,14 @@ export function alignTimeRangeCompareData(series: DataFrame, diff: number, theme
 }
 
 /**
- * Checks if a time comparison frame needs alignment with its original frame.
- * Returns true when time ranges match, indicating no time shift has been applied yet by an older version of scenes.
+ * Checks if a time comparison frame needs alignment based on whether its first time is before the current time range.
+ * Returns true if the first time in compare is before timeRange.from, indicating it needs shifting.
  * @param compareFrame - The frame with time comparison data
  * @param allFrames - Array of all frames to find the matching original frame
- * @returns true if alignment is needed (time ranges match), false if already shifted
+ * @param timeRange - The current panel time range
+ * @returns true if alignment is needed
  */
-export function shouldAlignTimeCompare(compareFrame: DataFrame, allFrames: DataFrame[]): boolean {
+export function shouldAlignTimeCompare(compareFrame: DataFrame, allFrames: DataFrame[], timeRange: TimeRange): boolean {
   // Find the matching original frame by removing '-compare' from refId
   const compareRefId = compareFrame.refId;
   if (!compareRefId || !compareRefId.endsWith('-compare')) {
@@ -217,6 +219,6 @@ export function shouldAlignTimeCompare(compareFrame: DataFrame, allFrames: DataF
     return false;
   }
 
-  // Check if first non-null time values match exactly
-  return compareFirstTime === originalFirstTime;
+  // Check if first non-null time value is before timeRange.from
+  return compareFirstTime < timeRange.from.valueOf();
 }

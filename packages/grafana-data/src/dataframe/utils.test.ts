@@ -1,5 +1,6 @@
 import { createTheme } from '../themes/createTheme';
 import { FieldType } from '../types/dataFrame';
+import { TimeRange } from '../types/time';
 
 import { createDataFrame, toDataFrame } from './processDataFrame';
 import { anySeriesWithTimeField, addRow, alignTimeRangeCompareData, shouldAlignTimeCompare } from './utils';
@@ -185,7 +186,13 @@ describe('shouldAlignTimeCompare', () => {
   const ORIGINAL_VALUES = [10, 20, 30];
   const COMPARE_VALUES = [15, 25, 35];
 
-  it('should return true when compare and original frames have matching time ranges', () => {
+  const mockTimeRange: TimeRange = {
+    from: { valueOf: () => 4000 },
+    to: { valueOf: () => 8000 },
+    raw: { from: 'now-1h', to: 'now' },
+  } as TimeRange;
+
+  it('should return true when compare first time is before time range', () => {
     const originalFrame = toDataFrame({
       refId: 'A',
       fields: [
@@ -209,10 +216,10 @@ describe('shouldAlignTimeCompare', () => {
     });
 
     const allFrames = [originalFrame, compareFrame];
-    expect(shouldAlignTimeCompare(compareFrame, allFrames)).toBe(true);
+    expect(shouldAlignTimeCompare(compareFrame, allFrames, mockTimeRange)).toBe(true);
   });
 
-  it('should return false when compare and original frames have different time ranges', () => {
+  it('should return false when compare first time is after time range', () => {
     const originalFrame = toDataFrame({
       refId: 'A',
       fields: [
@@ -236,7 +243,7 @@ describe('shouldAlignTimeCompare', () => {
     });
 
     const allFrames = [originalFrame, compareFrame];
-    expect(shouldAlignTimeCompare(compareFrame, allFrames)).toBe(false);
+    expect(shouldAlignTimeCompare(compareFrame, allFrames, mockTimeRange)).toBe(false);
   });
 
   it('should return false when compare frame refId does not end with -compare', () => {
@@ -249,7 +256,7 @@ describe('shouldAlignTimeCompare', () => {
     });
 
     const allFrames = [compareFrame];
-    expect(shouldAlignTimeCompare(compareFrame, allFrames)).toBe(false);
+    expect(shouldAlignTimeCompare(compareFrame, allFrames, mockTimeRange)).toBe(false);
   });
 
   it('should return false when original frame is not found', () => {
@@ -262,7 +269,7 @@ describe('shouldAlignTimeCompare', () => {
     });
 
     const allFrames = [compareFrame]; // No original frame with refId 'A'
-    expect(shouldAlignTimeCompare(compareFrame, allFrames)).toBe(false);
+    expect(shouldAlignTimeCompare(compareFrame, allFrames, mockTimeRange)).toBe(false);
   });
 
   it('should return false when compare frame has no time field', () => {
@@ -280,7 +287,7 @@ describe('shouldAlignTimeCompare', () => {
     });
 
     const allFrames = [originalFrame, compareFrame];
-    expect(shouldAlignTimeCompare(compareFrame, allFrames)).toBe(false);
+    expect(shouldAlignTimeCompare(compareFrame, allFrames, mockTimeRange)).toBe(false);
   });
 
   it('should return false when original frame has no time field', () => {
@@ -298,7 +305,7 @@ describe('shouldAlignTimeCompare', () => {
     });
 
     const allFrames = [originalFrame, compareFrame];
-    expect(shouldAlignTimeCompare(compareFrame, allFrames)).toBe(false);
+    expect(shouldAlignTimeCompare(compareFrame, allFrames, mockTimeRange)).toBe(false);
   });
 
   it('should return false when time fields have empty values', () => {
@@ -321,10 +328,10 @@ describe('shouldAlignTimeCompare', () => {
     });
 
     const allFrames = [originalFrame, compareFrame];
-    expect(shouldAlignTimeCompare(compareFrame, allFrames)).toBe(false);
+    expect(shouldAlignTimeCompare(compareFrame, allFrames, mockTimeRange)).toBe(false);
   });
 
-  it('should handle null values and return true when first non-null values match', () => {
+  it('should handle null values and return true when first non-null time is before range', () => {
     const TIME_WITH_NULLS = [null, ...TIME_VALUES_A];
     const ORIGINAL_WITH_NULLS = [null, ...ORIGINAL_VALUES];
     const COMPARE_WITH_NULLS = [null, ...COMPARE_VALUES];
@@ -346,7 +353,7 @@ describe('shouldAlignTimeCompare', () => {
     });
 
     const allFrames = [originalFrame, compareFrame];
-    expect(shouldAlignTimeCompare(compareFrame, allFrames)).toBe(true);
+    expect(shouldAlignTimeCompare(compareFrame, allFrames, mockTimeRange)).toBe(true);
   });
 
   it('should return false when all time values are null', () => {
@@ -369,6 +376,6 @@ describe('shouldAlignTimeCompare', () => {
     });
 
     const allFrames = [originalFrame, compareFrame];
-    expect(shouldAlignTimeCompare(compareFrame, allFrames)).toBe(false);
+    expect(shouldAlignTimeCompare(compareFrame, allFrames, mockTimeRange)).toBe(false);
   });
 });
