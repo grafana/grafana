@@ -130,7 +130,7 @@ It also helps you avoid having several users build the same queries for the same
 
 You can see a list of these queries in the **Saved queries** drawer:
 
-{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-saved-queries-v12.2png.png" max-width="550px" alt="List of saved queries and the edit query form" >}}
+{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-saved-queries-v12.2png.png" max-width="550px" alt="List of saved queries and the edit query form" caption="The Saved queries drawer accessed from Dashboards" >}}
 
 When you first open the drawer, the list of queries in the **All** tab is filtered by the data source of the panel.
 However, you can clear that filter to display all saved queries.
@@ -153,11 +153,11 @@ Access the duplicate, lock, unlock, and delete query options through the menu in
 
 To access your saved queries, click **+ Add from saved queries** in the query editor:
 
-{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-add-from-saved-v12.2.png" max-width="750px" alt="Add a saved query" >}}
+{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-add-from-saved-2-v12.2.png" max-width="750px" alt="Add a saved query" >}}
 
 If you've already entered a query, you also have the option to replace it with a saved one:
 
-{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-replace-query-v12.2.png" max-width="750px" alt="Replace a query with a saved one" >}}
+{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-replace-w-saved-v12.2.png" max-width="750px" alt="Replace a query with a saved one" >}}
 
 #### Save a query
 
@@ -165,7 +165,7 @@ To save a query you've created:
 
 1. From the query editor, click the **Save query** icon:
 
-   {{< figure src="/media/docs/grafana/panels-visualizations/screensho-save-query-v12.2.png" max-width="750px" alt="Save a query" >}}
+   {{< figure src="/media/docs/grafana/panels-visualizations/screenshot-save-query-v12.2.png" max-width="750px" alt="Save a query" >}}
 
 1. In the **Saved queries** drawer, enter a title for the query that will make it easy to find later.
 1. (Optional) Enter a description and relevant tags.
