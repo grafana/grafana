@@ -347,25 +347,3 @@ func NewDirectConfigProvider(cfg *rest.Config) apiserver.RestConfigProvider {
 func (r *directConfigProvider) GetRestConfig(ctx context.Context) (*rest.Config, error) {
 	return r.cfg, nil
 }
-
-func setupResourcesClient(
-	apiServerURL string,
-	tlsConfig rest.TLSClientConfig,
-	tokenExchangeClient *authn.TokenExchangeClient,
-) (resources.ClientFactory, error) {
-	if apiServerURL == "" {
-		return nil, fmt.Errorf("api_server_url is required in [operator] section")
-	}
-
-	config := &rest.Config{
-		APIPath: "/apis",
-		Host:    apiServerURL,
-		WrapTransport: transport.WrapperFunc(func(rt http.RoundTripper) http.RoundTripper {
-			return authrt.NewRoundTripper(tokenExchangeClient, rt)
-		}),
-		TLSClientConfig: tlsConfig,
-	}
-	configProvider := NewDirectConfigProvider(config)
-
-	return resources.NewClientFactory(configProvider), nil
-}
