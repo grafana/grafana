@@ -42,23 +42,24 @@ export const SummaryCell = ({
 }: SummaryCellProps) => {
   const styles = useStyles2(getStyles, textAlign, hideLabel);
   const theme = useTheme2();
-  const defaultFooterCellStyles = getDefaultCellStyles(theme, {
-    textAlign: 'left', // alignment is set in footerItem
-    shouldOverflow: true,
-    textWrap: false,
-  });
-  const displayName = getDisplayName(field);
-  const reducerResultsEntries = useReducerEntries(field, rows, displayName, colIdx);
-  const cellClass = clsx(styles.footerCell, defaultFooterCellStyles);
-  const firstFooterReducers = useMemo(() => {
-    for (const footer of footers) {
-      if (footer?.reducers?.length ?? 0 > 0) {
-        return footer!.reducers!;
+
+  const reducerResultsEntries = useReducerEntries(field, rows, getDisplayName(field), colIdx);
+  const entries = useMemo<Array<[string, string | null]>>(() => {
+    // if there are reducer results, always render those.
+    if (reducerResultsEntries.length > 0) {
+      return reducerResultsEntries;
+    }
+    // if not, we may need to render the labels for a "uniform" footer where the reducers don't start in the first column.
+    if (rowLabel) {
+      for (const footer of footers) {
+        if (footer?.reducers?.length ?? 0 > 0) {
+          return footer!.reducers!.map((r) => [r, null]);
+        }
       }
     }
-    return;
-  }, [footers]);
-  const renderRowLabel = rowLabel && reducerResultsEntries.length === 0 && Boolean(firstFooterReducers);
+    // otherwise, this is empty.
+    return [];
+  }, [reducerResultsEntries, rowLabel, footers]);
 
   const SummaryCellItem = ({ children, idx }: { children: ReactNode; idx: number }) => (
     <div className={clsx(styles.footerItem, { [styles.footerItemOdd]: idx % 2 === 1 })}>{children}</div>
@@ -73,36 +74,34 @@ export const SummaryCell = ({
   );
   const SummaryCellValue = ({ children }: { children: ReactNode }) => (
     <div
-      data-testid={selectors.components.Panels.Visualization.TableNG.Footer.Value}
+      data-testid={selectors.components.Panels.Visualization.TableNG.Footer[children == null ? 'EmptyValue' : 'Value']}
       className={styles.footerItemValue}
     >
-      {children}
+      {children ?? <>&nbsp;</>}
     </div>
   );
 
-  // Render each reducer in the footer
+  const defaultFooterCellStyles = getDefaultCellStyles(theme, {
+    textAlign: 'left', // alignment is set in footerItem
+    shouldOverflow: true,
+    textWrap: false,
+  });
+
   return (
     <div
-      className={cellClass}
-      data-testid={reducerResultsEntries.length === 0 && !renderRowLabel ? 'summary-cell-empty' : undefined}
+      className={clsx(styles.footerCell, defaultFooterCellStyles)}
+      data-testid={entries.length === 0 ? 'summary-cell-empty' : undefined}
     >
-      {reducerResultsEntries.map(([reducerId, reducerResult], idx) => {
+      {entries.map(([reducerId, reducerResult], idx) => {
         return (
           <SummaryCellItem key={reducerId} idx={idx}>
             {((!hideLabel && reducerResult != null) || rowLabel) && (
               <SummaryCellLabel>{getReducerName(reducerId)}</SummaryCellLabel>
             )}
-            <SummaryCellValue>{reducerResult ?? <>&nbsp;</>}</SummaryCellValue>
+            <SummaryCellValue>{reducerResult}</SummaryCellValue>
           </SummaryCellItem>
         );
       })}
-
-      {renderRowLabel &&
-        firstFooterReducers!.map((reducerId, idx) => (
-          <SummaryCellItem key={reducerId} idx={idx}>
-            <SummaryCellLabel>{getReducerName(reducerId)}</SummaryCellLabel>
-          </SummaryCellItem>
-        ))}
     </div>
   );
 };
