@@ -26,8 +26,9 @@ var _ Manager = (*service)(nil)
 
 // service manages the registration and lifecycle of modules.
 type service struct {
-	log     log.Logger
-	targets []string
+	log           log.Logger
+	targets       []string
+	dependencyMap map[string][]string
 
 	moduleManager  *modules.Manager
 	serviceManager *services.Manager
@@ -40,10 +41,27 @@ func New(
 	logger := log.New("modules")
 
 	return &service{
-		log:     logger,
-		targets: targets,
+		log:           logger,
+		targets:       targets,
+		dependencyMap: dependencyMap,
 
 		moduleManager: modules.NewManager(logger),
+		serviceMap:    map[string]services.Service{},
+	}
+}
+
+func NewWithManager(
+	logger log.Logger,
+	targets []string,
+	manager *modules.Manager,
+	dependencyMap map[string][]string,
+) *service {
+	return &service{
+		log:           logger,
+		targets:       targets,
+		dependencyMap: dependencyMap,
+
+		moduleManager: manager,
 		serviceMap:    map[string]services.Service{},
 	}
 }
@@ -52,7 +70,7 @@ func New(
 func (m *service) Run(ctx context.Context) error {
 	var err error
 
-	for mod, targets := range dependencyMap {
+	for mod, targets := range m.dependencyMap {
 		if !m.moduleManager.IsModuleRegistered(mod) {
 			continue
 		}

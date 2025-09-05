@@ -1132,4 +1132,8 @@ export interface FeatureToggles {
   * @default false
   */
   azureResourcePickerUpdates?: boolean;
+  /**
+  * Enables dskit background service wrapper
+  */
+  dskitBackgroundServices?: boolean;
 }
