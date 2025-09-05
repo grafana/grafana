@@ -1193,7 +1193,7 @@ func TestKvStorageBackend_PruneEvents(t *testing.T) {
 		ctx := context.Background()
 
 		// Create a resource
-		testObj, err := createTestObjectWithName("test-resource", "apps", "test-data")
+		testObj, err := createTestObjectWithName("test-resource", appsNamespace, "test-data")
 		require.NoError(t, err)
 		metaAccessor, err := utils.MetaAccessor(testObj)
 		require.NoError(t, err)
@@ -1266,7 +1266,7 @@ func TestKvStorageBackend_PruneEvents(t *testing.T) {
 		ctx := context.Background()
 
 		// Create a resource
-		testObj, err := createTestObjectWithName("test-resource", "apps", "test-data")
+		testObj, err := createTestObjectWithName("test-resource", appsNamespace, "test-data")
 		require.NoError(t, err)
 		metaAccessor, err := utils.MetaAccessor(testObj)
 		require.NoError(t, err)
