@@ -130,7 +130,12 @@ jobs:
           MYSQL_DATABASE: grafana_tests
           MYSQL_USER: grafana
           MYSQL_PASSWORD: password
-        options: --health-cmd="mysqladmin ping --silent" --health-interval=10s --health-timeout=5s --health-retries=3
+        options: >-
+          --health-cmd="mysqladmin ping --silent" 
+          --health-interval=10s 
+          --health-timeout=5s 
+          --health-retries=3
+          --volume=${{ github.workspace }}/.github/mysql/custom.cnf:/etc/mysql/conf.d/custom.cnf
         ports:
           - 3306:3306
     steps:
@@ -180,6 +185,12 @@ jobs:
           POSTGRES_USER: grafanatest
           POSTGRES_PASSWORD: grafanatest
           POSTGRES_DB: grafanatest
+        options: >-
+          --health-cmd="pg_isready -U grafanatest"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+          --volume=${{ github.workspace }}/.github/postgres/postgresql.conf:/etc/postgresql/postgresql.conf
         ports:
           - 5432:5432
     steps:
