@@ -886,6 +886,8 @@ export interface DashboardLink {
 	includeVars: boolean;
 	// If true, includes current time range in the link as query params
 	keepTime: boolean;
+	// Placement can be used to display the link somewhere else on the dashbaord other than abovethe visualisations.
+	placement?: DashboardLinkPlacement;
 }
 
 export const defaultDashboardLink = (): DashboardLink => ({
@@ -904,6 +906,13 @@ export const defaultDashboardLink = (): DashboardLink => ({
 export type DashboardLinkType = "link" | "dashboards";
 
 export const defaultDashboardLinkType = (): DashboardLinkType => ("link");
+
+// Dashboard Link placement. Defines where the link should be displayed.
+// - "default" renders the link above the visualisations
+// - "inControlsMenu" renders the link in bottom part of the dashboard controls dropdown menu
+export type DashboardLinkPlacement = "default" | "inControlsMenu";
+
+export const defaultDashboardLinkPlacement = (): DashboardLinkPlacement => ("default");
 
 // Time configuration
 // It defines the default time config for the time picker, the refresh picker for the specific dashboard.
