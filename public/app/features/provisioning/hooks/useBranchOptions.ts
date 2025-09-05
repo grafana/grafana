@@ -14,11 +14,18 @@ export interface UseBranchOptionsProps {
   repositoryType: RepoType;
   repositoryUrl: string;
   repositoryToken: string;
+  repositoryTokenUser?: string;
 }
 
-export function useBranchOptions({ repositoryType, repositoryUrl = '', repositoryToken = '' }: UseBranchOptionsProps) {
+export function useBranchOptions({
+  repositoryType,
+  repositoryUrl = '',
+  repositoryToken = '',
+  repositoryTokenUser = '',
+}: UseBranchOptionsProps) {
   const trimmedUrl = repositoryUrl.trim();
   const trimmedToken = repositoryToken.trim();
+  const trimmedTokenUser = repositoryTokenUser.trim();
 
   const hasRequiredData = useMemo(() => {
     if (!isSupportedGitProvider(repositoryType)) {
@@ -27,10 +34,11 @@ export function useBranchOptions({ repositoryType, repositoryUrl = '', repositor
 
     const hasUrl = trimmedUrl.length > 0;
     const hasToken = trimmedToken.length > 0;
+    const hasTokenUser = repositoryType === 'bitbucket' ? trimmedTokenUser.length > 0 : true;
     const repoInfo = hasUrl ? parseRepositoryUrl(trimmedUrl, repositoryType) : null;
 
-    return hasUrl && hasToken && repoInfo !== null;
-  }, [trimmedUrl, trimmedToken, repositoryType]);
+    return hasUrl && hasToken && hasTokenUser && repoInfo !== null;
+  }, [trimmedUrl, trimmedToken, trimmedTokenUser, repositoryType]);
 
   const fetchOptions = useMemo(
     () => async (): Promise<Array<{ label: string; value: string }>> => {
@@ -44,14 +52,16 @@ export function useBranchOptions({ repositoryType, repositoryUrl = '', repositor
         throw new Error('Invalid repository URL format');
       }
 
-      const branchData = await fetchAllBranches(repositoryType, repoInfo.owner, repoInfo.repo, trimmedToken);
+      // For Bitbucket, combine username and app password for Basic auth
+      const authToken = repositoryType === 'bitbucket' ? `${trimmedTokenUser}:${trimmedToken}` : trimmedToken;
+      const branchData = await fetchAllBranches(repositoryType, repoInfo.owner, repoInfo.repo, authToken);
 
       return branchData.map((branch) => ({
         label: branch.name,
         value: branch.name,
       }));
     },
-    [hasRequiredData, trimmedUrl, trimmedToken, repositoryType]
+    [hasRequiredData, trimmedUrl, trimmedToken, trimmedTokenUser, repositoryType]
   );
 
   const asyncState = useAsync(fetchOptions, [fetchOptions]);
