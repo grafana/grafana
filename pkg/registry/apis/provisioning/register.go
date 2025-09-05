@@ -758,7 +758,6 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				repoInformer,
 				b.repoFactory,
 				b.resourceLister,
-				b.parsers,
 				b.clients,
 				b.jobs,
 				b.storageStatus,
