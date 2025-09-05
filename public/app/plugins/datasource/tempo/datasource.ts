@@ -306,7 +306,9 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
       // Get the Prometheus datasource instance
       const promDs = await getDataSourceSrv().get(this.serviceMap.datasourceUid);
 
-      // Check if the datasource has the checkMetricExists method
+      // Runtime check for checkMetricExists method to avoid TypeScript type assertions
+      // (Grafana linting rules forbid "as" type assertions, so we use duck typing instead)
+      // Note: getDataSourceSrv().get() returns a generic DataSourceApi type, not the specific Prometheus type
       if (!('checkMetricExists' in promDs) || typeof promDs.checkMetricExists !== 'function') {
         console.warn('Prometheus datasource does not support checkMetricExists method');
         return false;
