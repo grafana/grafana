@@ -245,6 +245,16 @@ You should see a confirmation dialog box that says:
 
 You can also remove a connection by clicking **Delete**.
 
+- **Hide Prometheus warnings** - Optional. Toggle this setting if you want to hide warnings returned by Prometheus in query results.
+
+When **enabled**, warnings will not be displayed in panels or Explore, and only the query data is shown.
+
+After you have configured your Prometheus data source options, click Save & test at the bottom to test out your data source connection.
+
+You should see a confirmation dialog box that says:
+
+**Successfully queried the Prometheus API.**
+
 ## Provision the Prometheus data source
 
 You can define and configure the data source in YAML files as part of the Grafana provisioning system. For more information about provisioning, and for available configuration options, refer to [Provision Grafana](ref:provision-grafana).
