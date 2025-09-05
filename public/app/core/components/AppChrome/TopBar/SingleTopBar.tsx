@@ -107,9 +107,10 @@ export const SingleTopBar = memo(function SingleTopBar({
           {enrichedHelpNode &&
             (enrichedHelpNode.hideFromTabs && availableComponents.has('grafana-grafanadocsplugin-app') ? (
               (() => {
-                const componentId = getComponentIdFromComponentMeta('grafana-grafanadocsplugin-app', {
-                  title: 'Grafana Pathfinder',
-                } as any);
+                const componentId = getComponentIdFromComponentMeta(
+                  'grafana-grafanadocsplugin-app',
+                  'Grafana Pathfinder'
+                );
                 const isOpen = dockedComponentId === componentId;
                 return (
                   <ToolbarButton

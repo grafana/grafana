@@ -42,7 +42,7 @@ export function ExtensionToolbarItem({ compact }: Props) {
 
     if (components.length === 1) {
       const component = components[0];
-      const componentId = getComponentIdFromComponentMeta(pluginId, component);
+      const componentId = getComponentIdFromComponentMeta(pluginId, component.title);
       const isActive = dockedComponentId === componentId;
 
       // we now allow more components in the extension sidebar
@@ -66,7 +66,7 @@ export function ExtensionToolbarItem({ compact }: Props) {
     const MenuItems = (
       <Menu>
         {components.map((c) => {
-          const id = getComponentIdFromComponentMeta(pluginId, c);
+          const id = getComponentIdFromComponentMeta(pluginId, c.title);
           return (
             <Menu.Item
               key={id}
