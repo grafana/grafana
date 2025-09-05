@@ -20,9 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
-	"github.com/grafana/grafana/pkg/setting"
 )
 
 var (
@@ -37,12 +35,13 @@ var (
 )
 
 type folderStorage struct {
-	tableConverter       rest.TableConvertor
-	cfg                  *setting.Cfg
-	features             featuremgmt.FeatureToggles
+	// Wrapped storage
+	store          grafanarest.Storage
+	tableConverter rest.TableConvertor
+
+	permissionsOnCreate  bool // cfg.RBAC.PermissionsOnCreation("folder")
 	folderPermissionsSvc accesscontrol.FolderPermissionsService
 	acService            accesscontrol.Service
-	store                grafanarest.Storage
 }
 
 func (s *folderStorage) New() runtime.Object {
@@ -86,6 +85,11 @@ func (s *folderStorage) Create(ctx context.Context,
 		return nil, &statusErr
 	}
 
+	// When cfg.RBAC.PermissionsOnCreation("folder") is not enabled
+	if !s.permissionsOnCreate {
+		return obj, err
+	}
+
 	info, err := request.NamespaceInfoFrom(ctx, true)
 	if err != nil {
 		return nil, err
@@ -107,7 +111,6 @@ func (s *folderStorage) Create(ctx context.Context,
 	}
 
 	parentUid := accessor.GetFolder()
-
 	err = s.setDefaultFolderPermissions(ctx, info.OrgID, user, p.Name, parentUid)
 	if err != nil {
 		return nil, err
@@ -154,10 +157,6 @@ func (s *folderStorage) DeleteCollection(ctx context.Context, deleteValidation r
 }
 
 func (s *folderStorage) setDefaultFolderPermissions(ctx context.Context, orgID int64, user identity.Requester, uid string, parentUID string) error {
-	if !s.cfg.RBAC.PermissionsOnCreation("folder") {
-		return nil
-	}
-
 	var permissions []accesscontrol.SetResourcePermissionCommand
 
 	if user.IsIdentityType(claims.TypeUser, claims.TypeServiceAccount) {

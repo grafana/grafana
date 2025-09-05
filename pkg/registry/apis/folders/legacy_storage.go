@@ -3,7 +3,6 @@ package folders
 import (
 	"context"
 	"fmt"
-	"strings"
 
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -17,10 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/dashboards"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
-	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/util"
 )
 
 var (
@@ -38,8 +34,6 @@ type legacyStorage struct {
 	service        folder.Service
 	namespacer     request.NamespaceMapper
 	tableConverter rest.TableConvertor
-	cfg            *setting.Cfg
-	features       featuremgmt.FeatureToggles
 }
 
 func (s *legacyStorage) New() runtime.Object {
@@ -175,12 +169,6 @@ func (s *legacyStorage) Create(ctx context.Context,
 	p, ok := obj.(*folders.Folder)
 	if !ok {
 		return nil, fmt.Errorf("expected folder?")
-	}
-
-	// Simplify creating unique folder names with
-	if p.GenerateName != "" && strings.Contains(p.Spec.Title, "${RAND}") {
-		rand, _ := util.GetRandomString(10)
-		p.Spec.Title = strings.ReplaceAll(p.Spec.Title, "${RAND}", rand)
 	}
 
 	accessor, err := utils.MetaAccessor(p)
