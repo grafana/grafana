@@ -4488,16 +4488,11 @@
             "any": "任意匹配",
             "label": "匹配规则"
           },
-          "label": "组",
           "visibility": {
             "hide": "隐藏",
             "label": "{{type}}可见性",
             "show": "显示"
           }
-        },
-        "shared": {
-          "delete-condition": "删除条件",
-          "unsupported-item-type": "此条件不受元素支持，因此将被忽略。"
         },
         "time-range-size": {
           "info": "如果数据面板时间范围短于所选时间范围，则显示或隐藏{{type}}。",
@@ -4527,17 +4522,21 @@
             "not-matches": "不匹配"
           },
           "value": "值"
+        },
+        "wrapper": {
+          "delete-condition": "",
+          "unsupported-object-type": ""
         }
       },
       "editor": {
+        "info": "",
         "not-supported-for-custom-grid": "自定义网格布局不支持条件渲染。请切换到自动网格以使用条件渲染。",
-        "unsupported-item-type": "此项目类型不支持条件渲染"
+        "unsupported-object-type": ""
       },
       "overlay": {
         "tooltip": "由于条件渲染，元素已被隐藏。"
       },
       "root": {
-        "info": "设置规则以通过匹配任何或所有规则来控制{{type}}可见性。",
         "title": "显示/隐藏规则"
       }
     },
@@ -4677,7 +4676,8 @@
       "paste-panel": "粘贴面板",
       "remove": "移除{{typeName}}",
       "row-title": "",
-      "switch-layout": "切换布局"
+      "switch-layout": "切换布局",
+      "tab-title": ""
     },
     "edit-pane": {
       "elements": {
@@ -8327,6 +8327,10 @@
         "action-title": "标题",
         "action-title-placeholder": "操作标题",
         "action-variables": "变量",
+        "connection": "",
+        "connection-direct-description": "",
+        "connection-direct-label": "",
+        "connection-placeholder": "",
         "one-click-description": "一次只能为一个链接或操作启用一次点击"
       }
     },
@@ -8751,7 +8755,6 @@
       "cell-inspect": "检查值",
       "cell-inspect-tooltip": "检查值",
       "copy": "复制到剪贴板",
-      "count": "计数",
       "csv-counts": "行：{{rows}}，列：{{columns}}  <5></5>",
       "csv-placeholder": "在此处输入 CSV...",
       "filter-placeholder": "筛选值",
@@ -8762,6 +8765,11 @@
       "filter-popup-heading": "按值筛选：",
       "filter-popup-input-placeholder": "筛选值",
       "filter-popup-match-case": "区分大小写",
+      "footer": {
+        "reducer": {
+          "count": ""
+        }
+      },
       "inspect-drawer-title": "检查值",
       "nested-table": {
         "no-data": "无数据"
@@ -9694,30 +9702,6 @@
     "un-themed-log-label-stats": {
       "field-log-stats": "{{label}}：{{total}} 行（共 {{rowCount}} 行）含有该字段",
       "label-log-stats": "{{label}}：{{total}} 行（共 {{rowCount}} 行）含有该标签"
-    }
-  },
-  "logs-new": {
-    "category-logs": "日志",
-    "deduplication-options": {
-      "label-exact": "确切",
-      "label-none": "无",
-      "label-numbers": "数字",
-      "label-signature": "签名"
-    },
-    "description-infinite-scrolling": "实验性。通过滚动到日志列表底部来请求更多结果。",
-    "description-show-controls": "显示控件以跳转到最后一行或第一行日志，并按日志级别筛选",
-    "description-syntax-highlighting": "使用预定义的语法着色规则来突出显示日志行的相关部分",
-    "name-deduplication": "去重",
-    "name-enable-log-details": "启用日志详情",
-    "name-infinite-scrolling": "启用无限滚动",
-    "name-order": "顺序",
-    "name-show-controls": "显示控件",
-    "name-syntax-highlighting": "启用语法高亮",
-    "name-time": "时间",
-    "name-wrap-lines": "多行显示",
-    "order-options": {
-      "label-newest-first": "最新靠前",
-      "label-oldest-first": "最旧靠前"
     }
   },
   "manage-dashbaords": {
@@ -12747,8 +12731,6 @@
     "description-calculation": "选择一个归约器函数/计算",
     "description-cell-value-inspect": "在模态窗口中启用单元格值检查",
     "description-column-filter": "启用/禁用表格中的字段筛选条件",
-    "description-count-rows": "显示所有数据行的单个计数",
-    "description-fields": "选择应计算的字段",
     "description-frozen-columns": "",
     "description-min-column-width": "列自动调整大小的最小宽度",
     "description-tooltip-from-field": "",
@@ -12775,21 +12757,17 @@
     "name-column-alignment": "列对齐",
     "name-column-filter": "列筛选",
     "name-column-width": "列宽度",
-    "name-count-rows": "计算行",
     "name-enable-pagination": "",
-    "name-fields": "字段",
     "name-frozen-columns": "",
     "name-hide-in-table": "在表格中隐藏",
     "name-max-height": "",
     "name-min-column-width": "最小列宽",
-    "name-show-table-footer": "显示表格页脚",
     "name-show-table-header": "显示表格表头",
     "name-tooltip-from-field": "",
     "name-tooltip-placement": "",
     "name-wrap-header-text": "表头文字换行",
     "name-wrap-text": "",
     "placeholder-column-width": "自动",
-    "placeholder-fields": "所有数字字段",
     "placeholder-max-height": "",
     "tooltip-placement-options": {
       "label-auto": "",

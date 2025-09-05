@@ -24,7 +24,7 @@ func TestIntegrationProvisioning_Client(t *testing.T) {
 	require.NoError(t, err)
 
 	t.Run("dashboard client support", func(t *testing.T) {
-		_, _, err := clients.ForResource(schema.GroupVersionResource{
+		_, _, err := clients.ForResource(ctx, schema.GroupVersionResource{
 			Group:    dashboardV1.GROUP,
 			Version:  dashboardV1.VERSION,
 			Resource: "dashboards",
@@ -32,7 +32,7 @@ func TestIntegrationProvisioning_Client(t *testing.T) {
 		require.NoError(t, err)
 
 		// With empty version, we should get the preferred version (v1beta1)
-		_, gvk, err := clients.ForResource(schema.GroupVersionResource{
+		_, gvk, err := clients.ForResource(ctx, schema.GroupVersionResource{
 			Group:    dashboardV1.GROUP,
 			Resource: "dashboards",
 		})
@@ -40,7 +40,7 @@ func TestIntegrationProvisioning_Client(t *testing.T) {
 		require.Equal(t, dashboardV1.VERSION, gvk.Version)
 		require.Equal(t, "Dashboard", gvk.Kind)
 
-		_, _, err = clients.ForKind(schema.GroupVersionKind{
+		_, _, err = clients.ForKind(ctx, schema.GroupVersionKind{
 			Group:   dashboardV1.GROUP,
 			Version: dashboardV1.VERSION,
 			Kind:    "Dashboard",

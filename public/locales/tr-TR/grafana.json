@@ -4506,16 +4506,11 @@
             "any": "Herhangi birini eşleştir",
             "label": "Kurallarla eşleştir"
           },
-          "label": "Grup",
           "visibility": {
             "hide": "Gizle",
             "label": "{{type}} görünürlüğü",
             "show": "Göster"
           }
-        },
-        "shared": {
-          "delete-condition": "Koşulu sil",
-          "unsupported-item-type": "Bu koşul öge tarafından desteklenmiyor, bu nedenle yok sayılacak."
         },
         "time-range-size": {
           "info": "Pano zaman aralığı seçilen zaman diliminden daha kısa ise {{type}} göster veya gizle",
@@ -4545,17 +4540,21 @@
             "not-matches": ""
           },
           "value": "Değer"
+        },
+        "wrapper": {
+          "delete-condition": "",
+          "unsupported-object-type": ""
         }
       },
       "editor": {
+        "info": "",
         "not-supported-for-custom-grid": "",
-        "unsupported-item-type": ""
+        "unsupported-object-type": ""
       },
       "overlay": {
         "tooltip": "Koşullu oluşturma nedeniyle öge gizlendi."
       },
       "root": {
-        "info": "{{type}} görünürlüğünü bir kuralla veya tüm kurallarla eşleştirerek kontrol etmek için kurallar ayarla.",
         "title": "Kuralları göster/gizle"
       }
     },
@@ -4695,7 +4694,8 @@
       "paste-panel": "Paneli yapıştır",
       "remove": "{{typeName}} ögesini kaldır",
       "row-title": "",
-      "switch-layout": "Düzeni değiştir"
+      "switch-layout": "Düzeni değiştir",
+      "tab-title": ""
     },
     "edit-pane": {
       "elements": {
@@ -8348,6 +8348,10 @@
         "action-title": "Başlık",
         "action-title-placeholder": "İşlem başlığı",
         "action-variables": "Değişkenler",
+        "connection": "",
+        "connection-direct-description": "",
+        "connection-direct-label": "",
+        "connection-placeholder": "",
         "one-click-description": "Aynı anda yalnızca bir bağlantı veya işlem için tek tıklama etkinleştirilebilir"
       }
     },
@@ -8772,7 +8776,6 @@
       "cell-inspect": "Değeri incele",
       "cell-inspect-tooltip": "Değeri incele",
       "copy": "Panoya kopyala",
-      "count": "Sayı",
       "csv-counts": "Satırlar:{{rows}}, Sütunlar:{{columns}}  <5></5>",
       "csv-placeholder": "Buraya CSV girin...",
       "filter-placeholder": "Değerleri filtrele",
@@ -8783,6 +8786,11 @@
       "filter-popup-heading": "Değerlere göre filtrele:",
       "filter-popup-input-placeholder": "Değerleri filtrele",
       "filter-popup-match-case": "Büyük/küçük harf duyarlılığı",
+      "footer": {
+        "reducer": {
+          "count": ""
+        }
+      },
       "inspect-drawer-title": "Değeri incele",
       "nested-table": {
         "no-data": "Veri yok"
@@ -9723,30 +9731,6 @@
     "un-themed-log-label-stats": {
       "field-log-stats": "{{label}}: {{total}} satırın {{rowCount}} tanesinde bu alan mevcut",
       "label-log-stats": "{{label}}: {{total}} satırın {{rowCount}} tanesinde bu etiket mevcut"
-    }
-  },
-  "logs-new": {
-    "category-logs": "Günlükler",
-    "deduplication-options": {
-      "label-exact": "Özdeş",
-      "label-none": "Yok",
-      "label-numbers": "Sayılar",
-      "label-signature": "İmza"
-    },
-    "description-infinite-scrolling": "Deneysel. Günlük listesinin en altına kaydırarak daha fazla sonuç isteyin.",
-    "description-show-controls": "Son veya ilk günlük satırına atlamak için ekran kontrolleri ve günlük düzeyine göre filtreler",
-    "description-syntax-highlighting": "Günlük satırlarının ilgili bölümlerini vurgulamak için önceden tanımlanmış bir sözdizimi renklendirme kuralı kullan",
-    "name-deduplication": "Yinelenenleri kaldırma",
-    "name-enable-log-details": "Günlük ayrıntılarını etkinleştir",
-    "name-infinite-scrolling": "Sonsuz kaydırmayı etkinleştir",
-    "name-order": "Sıralama",
-    "name-show-controls": "Kontrolleri göster",
-    "name-syntax-highlighting": "Sözdizimi renklendirmesini etkinleştir",
-    "name-time": "Zaman",
-    "name-wrap-lines": "Satırları kaydır",
-    "order-options": {
-      "label-newest-first": "Yeniden eskiye",
-      "label-oldest-first": "Eskiden yeniye"
     }
   },
   "manage-dashbaords": {
@@ -12788,8 +12772,6 @@
     "description-calculation": "Bir azaltıcı işlevi/hesaplama seçin",
     "description-cell-value-inspect": "Hücre değerini açılır pencerede incelemeyi etkinleştir",
     "description-column-filter": "Tablo içindeki alan filtrelerini etkinleştir/devre dışı bırak",
-    "description-count-rows": "Tüm veri satırları için tek bir sayı görüntüle",
-    "description-fields": "Hesaplanacak alanları seçin",
     "description-frozen-columns": "",
     "description-min-column-width": "Sütunların otomatik olarak yeniden boyutlandırılması için minimum genişlik",
     "description-tooltip-from-field": "",
@@ -12816,21 +12798,17 @@
     "name-column-alignment": "Sütun hizalama",
     "name-column-filter": "Sütun filtresi",
     "name-column-width": "Sütun genişliği",
-    "name-count-rows": "Satır sayısını göster",
     "name-enable-pagination": "",
-    "name-fields": "Alanlar",
     "name-frozen-columns": "",
     "name-hide-in-table": "Tabloda gizle",
     "name-max-height": "",
     "name-min-column-width": "Minimum sütun genişliği",
-    "name-show-table-footer": "Tablo alt bilgisini göster",
     "name-show-table-header": "Tablo başlığını göster",
     "name-tooltip-from-field": "",
     "name-tooltip-placement": "",
     "name-wrap-header-text": "Başlık metnini kaydır",
     "name-wrap-text": "",
     "placeholder-column-width": "otomatik",
-    "placeholder-fields": "Tüm Sayısal Alanlar",
     "placeholder-max-height": "",
     "tooltip-placement-options": {
       "label-auto": "",
