@@ -1,26 +1,24 @@
 import { css, cx } from '@emotion/css';
 import { take } from 'lodash';
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useMeasure } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { ScrollContainer, Stack, Text, TextLink, useSplitter, useStyles2 } from '@grafana/ui';
+import { ScrollContainer, useSplitter, useStyles2 } from '@grafana/ui';
 import { DEFAULT_PER_PAGE_PAGINATION } from 'app/core/constants';
 
-import { Label } from '../components/Label';
-import { MetaText } from '../components/MetaText';
 import { EditorColumnHeader } from '../components/contact-points/templates/EditorColumnHeader';
 import LoadMoreHelper from '../rule-list/LoadMoreHelper';
 
 import { TimelineHeader } from './Timeline';
 import { WorkbenchProvider } from './WorkbenchContext';
-import { GenericRow } from './rows/GenericRow';
-import { AlertRuleDetails } from './scene/AlertRuleDetails';
-import { AlertRuleSummary } from './scene/AlertRuleSummary';
+import { AlertRuleRow } from './rows/AlertRuleRow';
+import { GroupRow } from './rows/GroupRow';
+import { generateRowKey, isAlertRuleRow } from './rows/utils';
 import { SummaryChartReact } from './scene/SummaryChart';
 import { SummaryStatsReact } from './scene/SummaryStats';
-import { AlertRuleRow, Domain, Filter, WorkbenchRow } from './types';
+import { Domain, Filter, WorkbenchRow } from './types';
 
 type WorkbenchProps = {
   domain: Domain;
@@ -116,9 +114,23 @@ export function Workbench({ domain, data }: WorkbenchProps) {
         <div className={styles.virtualizedContainer}>
           <WorkbenchProvider leftColumnWidth={leftColumnWidth} domain={domain}>
             <ScrollContainer height="100%" width="100%" scrollbarWidth="none" showScrollIndicators>
-              {dataSlice.map((row, index) =>
-                renderWorkbenchRow(row, leftColumnWidth, domain, generateRowKey(row, index))
-              )}
+              {dataSlice.map((row, index) => {
+                const rowKey = generateRowKey(row, index);
+
+                if (isAlertRuleRow(row)) {
+                  return <AlertRuleRow key={rowKey} row={row} leftColumnWidth={leftColumnWidth} rowKey={rowKey} />;
+                } else {
+                  return (
+                    <GroupRow
+                      key={rowKey}
+                      row={row}
+                      leftColumnWidth={leftColumnWidth}
+                      domain={domain}
+                      rowKey={rowKey}
+                    />
+                  );
+                }
+              })}
               {hasMore && <LoadMoreHelper handleLoad={() => setPageIndex((prevIndex) => prevIndex + 1)} />}
             </ScrollContainer>
           </WorkbenchProvider>
@@ -126,72 +138,6 @@ export function Workbench({ domain, data }: WorkbenchProps) {
       </div>
     </div>
   );
-}
-
-// Helper function to determine if a row is an AlertRuleRow
-function isAlertRuleRow(row: WorkbenchRow): row is AlertRuleRow {
-  return 'ruleUID' in row.metadata;
-}
-
-// Generate unique keys for WorkbenchRow items
-function generateRowKey(row: WorkbenchRow, fallbackIndex: number): string {
-  if (isAlertRuleRow(row)) {
-    // Use ruleUID as primary key for AlertRuleRow
-    return `alert-${row.metadata.ruleUID}`;
-  } else {
-    // For GenericGroupedRow, create key from label and value
-    const groupedRow = row;
-    return `group-${groupedRow.metadata.label}-${groupedRow.metadata.value}`;
-  }
-}
-
-// Helper function to render a WorkbenchRow
-function renderWorkbenchRow(
-  row: WorkbenchRow,
-  leftColumnWidth: number,
-  domain: Domain,
-  key: React.Key
-): React.ReactElement {
-  if (isAlertRuleRow(row)) {
-    return (
-      <GenericRow
-        key={key}
-        width={leftColumnWidth}
-        title={
-          <TextLink inline={false} href="#">
-            {row.metadata.title}
-          </TextLink>
-        }
-        metadata={
-          <Stack direction="row" gap={0.5} alignItems="center">
-            <MetaText icon="folder" />
-            <Text variant="bodySmall" color="secondary">
-              {row.metadata.folder}
-            </Text>
-          </Stack>
-        }
-        content={<AlertRuleSummary ruleUID={row.metadata.ruleUID} />}
-      >
-        <AlertRuleDetails ruleUID={row.metadata.ruleUID} />
-      </GenericRow>
-    );
-  } else {
-    const groupedRow = row;
-    return (
-      <GenericRow
-        key={key}
-        width={leftColumnWidth}
-        title={groupedRow.metadata.value}
-        actions={<Label size="sm" value={groupedRow.metadata.label} />}
-        content={null}
-        isOpenByDefault={true}
-      >
-        {groupedRow.rows.map((childRow, childIndex) =>
-          renderWorkbenchRow(childRow, leftColumnWidth, domain, `${key}-${generateRowKey(childRow, childIndex)}`)
-        )}
-      </GenericRow>
-    );
-  }
 }
 
 export const getStyles = (theme: GrafanaTheme2) => {
