@@ -100,7 +100,7 @@ func TestValidateCreate(t *testing.T) {
 		name: "team folder",
 		folder: &folders.Folder{
 			ObjectMeta: metav1.ObjectMeta{
-				Name: "team:abc",
+				Name: "team-abc",
 				OwnerReferences: []metav1.OwnerReference{
 					{Name: "abc", Kind: "Team", APIVersion: "iam.grafana.app/vAnything"},
 				},
@@ -110,7 +110,7 @@ func TestValidateCreate(t *testing.T) {
 		name: "user folder",
 		folder: &folders.Folder{
 			ObjectMeta: metav1.ObjectMeta{
-				Name: "user:xyz",
+				Name: "user-xyz",
 				OwnerReferences: []metav1.OwnerReference{
 					{Name: "xyz", Kind: "User", APIVersion: "iam.grafana.app/vAnything"},
 				},
@@ -120,7 +120,7 @@ func TestValidateCreate(t *testing.T) {
 		name: "team without owner reference",
 		folder: &folders.Folder{
 			ObjectMeta: metav1.ObjectMeta{
-				Name: "user:xyz",
+				Name: "user-xyz",
 			},
 		},
 		expectedErr: "folder is missing owner reference (xyz)",
@@ -128,7 +128,7 @@ func TestValidateCreate(t *testing.T) {
 		name: "team with owner mismatch",
 		folder: &folders.Folder{
 			ObjectMeta: metav1.ObjectMeta{
-				Name: "user:xyz",
+				Name: "user-xyz",
 				OwnerReferences: []metav1.OwnerReference{
 					{Name: "ABC", Kind: "User", APIVersion: "iam.grafana.app/vAnything"},
 				},
@@ -139,7 +139,7 @@ func TestValidateCreate(t *testing.T) {
 		name: "team with wrong owner kind",
 		folder: &folders.Folder{
 			ObjectMeta: metav1.ObjectMeta{
-				Name: "user:xyz",
+				Name: "user-xyz",
 				OwnerReferences: []metav1.OwnerReference{
 					{Name: "xyz", Kind: "NotUser", APIVersion: "iam.grafana.app/vAnything"},
 				},
@@ -150,7 +150,7 @@ func TestValidateCreate(t *testing.T) {
 		name: "team with wrong owner apiVersion",
 		folder: &folders.Folder{
 			ObjectMeta: metav1.ObjectMeta{
-				Name: "user:xyz",
+				Name: "user-xyz",
 				OwnerReferences: []metav1.OwnerReference{
 					{Name: "xyz", Kind: "User", APIVersion: "not-iam.grafana.app"},
 				},
@@ -161,7 +161,7 @@ func TestValidateCreate(t *testing.T) {
 		name: "team with multiple owners",
 		folder: &folders.Folder{
 			ObjectMeta: metav1.ObjectMeta{
-				Name: "user:xyz",
+				Name: "user-xyz",
 				OwnerReferences: []metav1.OwnerReference{
 					{Name: "ABC", Kind: "User", APIVersion: "iam.grafana.app/vAnything"},
 					{Name: "EFG", Kind: "User", APIVersion: "iam.grafana.app/vAnything"},
@@ -173,7 +173,7 @@ func TestValidateCreate(t *testing.T) {
 		name: "team with title set",
 		folder: &folders.Folder{
 			ObjectMeta: metav1.ObjectMeta{
-				Name: "user:xyz",
+				Name: "user-xyz",
 				OwnerReferences: []metav1.OwnerReference{
 					{Name: "xyz", Kind: "User", APIVersion: "iam.grafana.app/vAnything"},
 				},
@@ -187,7 +187,7 @@ func TestValidateCreate(t *testing.T) {
 		name: "team folder must be root",
 		folder: &folders.Folder{
 			ObjectMeta: metav1.ObjectMeta{
-				Name:        "user:xyz",
+				Name:        "user-xyz",
 				Annotations: map[string]string{"grafana.app/folder": "p1"},
 			},
 		},
@@ -196,7 +196,7 @@ func TestValidateCreate(t *testing.T) {
 		name: "team folder must be root",
 		folder: &folders.Folder{
 			ObjectMeta: metav1.ObjectMeta{
-				Name:        "user:xyz",
+				Name:        "user-xyz",
 				Annotations: map[string]string{"grafana.app/folder": "p1"},
 			},
 		},
@@ -205,7 +205,7 @@ func TestValidateCreate(t *testing.T) {
 		name: "team folder with grant permissions",
 		folder: &folders.Folder{
 			ObjectMeta: metav1.ObjectMeta{
-				Name:        "team:abc",
+				Name:        "team-abc",
 				Annotations: map[string]string{"grafana.app/grant-permissions": "default"},
 			},
 		},
@@ -314,7 +314,7 @@ func TestValidateUpdate(t *testing.T) {
 		name: "change team folder title",
 		folder: &folders.Folder{
 			ObjectMeta: metav1.ObjectMeta{
-				Name: "team:xyz",
+				Name: "team-xyz",
 				OwnerReferences: []metav1.OwnerReference{
 					{Name: "xyz", Kind: "Team", APIVersion: "iam.grafana.app/vAnything"},
 				},
@@ -325,7 +325,7 @@ func TestValidateUpdate(t *testing.T) {
 		},
 		old: &folders.Folder{
 			ObjectMeta: metav1.ObjectMeta{
-				Name: "team:xyz",
+				Name: "team-xyz",
 				OwnerReferences: []metav1.OwnerReference{
 					{Name: "xyz", Kind: "Team", APIVersion: "iam.grafana.app/vAnything"},
 				},
@@ -336,7 +336,7 @@ func TestValidateUpdate(t *testing.T) {
 		name: "remove owner from team folder",
 		folder: &folders.Folder{
 			ObjectMeta: metav1.ObjectMeta{
-				Name: "team:xyz",
+				Name: "team-xyz",
 			},
 		},
 		old:         &folders.Folder{},
