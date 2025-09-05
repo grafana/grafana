@@ -145,11 +145,11 @@ func setupFromConfig(cfg *setting.Cfg) (controllerCfg *provisioningControllerCon
 	}
 
 	dashboardsServerURL := operatorSec.Key("dashboards_server_url").String()
-	if provisioningServerURL == "" {
+	if dashboardsServerURL == "" {
 		return nil, fmt.Errorf("dashboards_server_url is required in [operator] section")
 	}
 	foldersServerURL := operatorSec.Key("folders_server_url").String()
-	if provisioningServerURL == "" {
+	if foldersServerURL == "" {
 		return nil, fmt.Errorf("folders_server_url is required in [operator] section")
 	}
 
