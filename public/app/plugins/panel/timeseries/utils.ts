@@ -255,24 +255,53 @@ export const setClassicPaletteIdxs = (frames: DataFrame[], theme: GrafanaTheme2,
     );
   };
 
+  // Pre-pass to group main frames by refId
+  const mainFramesByRefId = new Map<string, DataFrame[]>();
+  for (const frame of frames) {
+    if (!frame.meta?.timeCompare?.isTimeShiftQuery && frame.refId) {
+      if (!mainFramesByRefId.has(frame.refId)) {
+        mainFramesByRefId.set(frame.refId, []);
+      }
+      mainFramesByRefId.get(frame.refId)!.push(frame);
+    }
+  }
+
+  // Counter for comparison indices per baseRefId
+  const compareIndicesByRefId = new Map<string, number>();
+
   for (const frame of frames) {
     const isCompareFrame = frame.meta?.timeCompare?.isTimeShiftQuery;
 
     if (isCompareFrame) {
-      // Handle compare frames
-      const baseRefId = frame.refId?.replace('-compare', ''); // TODO update scenes to include original refId in meta
-      const mainFrame = baseRefId ? frames.find((f) => f.refId === baseRefId) : undefined;
+      const baseRefId = frame.refId?.replace('-compare', '');
 
-      if (mainFrame && mainFrame.fields.length === frame.fields.length) {
-        // Match series indices with main frame
-        frame.fields.forEach((field, fieldIdx) => {
-          if (shouldProcessField(field, fieldIdx)) {
-            const mainField = mainFrame.fields[fieldIdx];
-            updateFieldDisplay(field, mainField.state?.seriesIndex ?? seriesIndex++);
-          }
-        });
+      if (baseRefId) {
+        // Get and increment the comparison index
+        let compareIndex = compareIndicesByRefId.get(baseRefId) ?? 0;
+        compareIndicesByRefId.set(baseRefId, compareIndex + 1);
+
+        // Get the matching main frame using the index
+        const mainFrames = mainFramesByRefId.get(baseRefId);
+        const mainFrame = mainFrames?.[compareIndex];
+
+        if (mainFrame && mainFrame.fields.length === frame.fields.length) {
+          // Match series indices with main frame
+          frame.fields.forEach((field, fieldIdx) => {
+            if (shouldProcessField(field, fieldIdx)) {
+              const mainField = mainFrame.fields[fieldIdx];
+              updateFieldDisplay(field, mainField.state?.seriesIndex ?? seriesIndex++);
+            }
+          });
+        } else {
+          // Fallback
+          frame.fields.forEach((field, fieldIdx) => {
+            if (shouldProcessField(field, fieldIdx)) {
+              updateFieldDisplay(field, seriesIndex++);
+            }
+          });
+        }
       } else {
-        // Fallback to incremental assignment
+        // Fallback when no baseRefId
         frame.fields.forEach((field, fieldIdx) => {
           if (shouldProcessField(field, fieldIdx)) {
             updateFieldDisplay(field, seriesIndex++);
@@ -280,7 +309,7 @@ export const setClassicPaletteIdxs = (frames: DataFrame[], theme: GrafanaTheme2,
         });
       }
     } else {
-      // Handle main frames - assign incremental series indices
+      // Main frames
       frame.fields.forEach((field, fieldIdx) => {
         if (shouldProcessField(field, fieldIdx)) {
           updateFieldDisplay(field, seriesIndex++);
