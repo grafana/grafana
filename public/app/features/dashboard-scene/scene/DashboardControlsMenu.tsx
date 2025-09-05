@@ -7,18 +7,21 @@ import { Dropdown, Menu, ToolbarButton, useStyles2 } from '@grafana/ui';
 
 import { DashboardScene } from './DashboardScene';
 import { VariableValueSelectWrapper } from './VariableControls';
+import { DashboardLinkRenderer } from './DashboardLinkRenderer';
 
 export const DASHBOARD_CONTROLS_MENU_ARIA_LABEL = 'Dashboard controls menu';
 export const DASHBOARD_CONTROLS_MENU_TITLE = 'Dashboard controls';
 
 export function DashboardControlsMenu({ dashboard }: { dashboard: DashboardScene }) {
   const styles = useStyles2(getStyles);
+  const { links, uid } = dashboard.useState();
+  const filteredLinks = links.filter((link) => link.placement === 'inControlsMenu');
   const variables = sceneGraph
     .getVariables(dashboard)!
     .useState()
     .variables.filter((v) => v.state.showInControlsMenu === true);
 
-  if (variables.length === 0) {
+  if ((variables.length === 0 && filteredLinks.length === 0) || !uid) {
     return null;
   }
 
@@ -30,9 +33,19 @@ export function DashboardControlsMenu({ dashboard }: { dashboard: DashboardScene
             e.stopPropagation();
           }}
         >
+          {/* Variables */}
           {variables.map((variable) => (
             <div className={styles.menuItem} key={variable.state.key}>
               <VariableValueSelectWrapper variable={variable} />
+            </div>
+          ))}
+
+          {variables.length > 0 && <Menu.Divider />}
+
+          {/* Links */}
+          {filteredLinks.map((link, index) => (
+            <div className={styles.menuItem} key={`${link.title}-$${index}`}>
+              <DashboardLinkRenderer link={link} dashboardUID={uid} />
             </div>
           ))}
         </Menu>
