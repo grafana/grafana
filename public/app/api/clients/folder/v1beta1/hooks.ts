@@ -10,8 +10,13 @@ import {
   useGetFolderQuery as useGetFolderQueryLegacy,
   useDeleteFoldersMutation as useDeleteFoldersMutationLegacy,
   useNewFolderMutation as useLegacyNewFolderMutation,
+  useMoveFoldersMutation as useMoveFoldersMutationLegacy,
+  useSaveFolderMutation as useLegacySaveFolderMutation,
+  useMoveFolderMutation as useMoveFolderMutationLegacy,
+  MoveFoldersArgs,
+  DeleteFoldersArgs,
+  MoveFolderArgs,
 } from 'app/features/browse-dashboards/api/browseDashboardsAPI';
-import { dispatch } from 'app/store/store';
 import { FolderDTO, NewFolder } from 'app/types/folders';
 
 import kbn from '../../../../core/utils/kbn';
@@ -38,19 +43,12 @@ import {
   useGetFolderParentsQuery,
   useDeleteFolderMutation,
   useCreateFolderMutation,
+  useUpdateFolderMutation,
   Folder,
   CreateFolderApiArg,
+  useReplaceFolderMutation,
+  ReplaceFolderApiArg,
 } from './index';
-
-/** Trigger necessary actions to ensure legacy folder stores are updated */
-function dispatchRefetchChildren(parentUID?: string) {
-  dispatch(
-    refetchChildren({
-      parentUID: parentUID || GENERAL_FOLDER_UID,
-      pageSize: PAGE_SIZE,
-    })
-  );
-}
 
 function getFolderUrl(uid: string, title: string): string {
   // mimics https://github.com/grafana/grafana/blob/79fe8a9902335c7a28af30e467b904a4ccfac503/pkg/services/dashboards/models.go#L188
@@ -172,16 +170,16 @@ export function useGetFolderQueryFacade(uid?: string) {
 export function useDeleteFolderMutationFacade() {
   const [deleteFolder] = useDeleteFolderMutation();
   const [deleteFolderLegacy] = useDeleteFolderMutationLegacy();
+  const refresh = useRefreshFolders();
   const notify = useAppNotification();
 
   return async (folder: FolderDTO) => {
     if (config.featureToggles.foldersAppPlatformAPI) {
       const result = await deleteFolder({ name: folder.uid });
       if (!result.error) {
-        // We need to update a legacy version of the folder storage for now until all is in the new API.
-        // we could do it in the enhanceEndpoint method but we would also need to change the args as we need parentUID
+        // we could do this in the enhanceEndpoint method, but we would also need to change the args as we need parentUID
         // here and so it seemed easier to do it here.
-        dispatchRefetchChildren(folder.parentUid);
+        refresh({ childrenOf: folder.parentUid });
         // Before this was done in backend srv automatically because the old API sent a message wiht 200 request. see
         // public/app/core/services/backend_srv.ts#L341-L361. New API does not do that so we do it here.
         notify.success(t('folders.api.folder-deleted-success', 'Folder deleted'));
@@ -197,37 +195,86 @@ export function useDeleteMultipleFoldersMutationFacade() {
   const [deleteFolders] = useDeleteFoldersMutationLegacy();
   const [deleteFolder] = useDeleteFolderMutation();
   const dispatch = useDispatch();
+  const refresh = useRefreshFolders();
 
   if (!config.featureToggles.foldersAppPlatformAPI) {
     return deleteFolders;
   }
 
-  return async function deleteFolders({ folderUIDs }: { folderUIDs: string[] }) {
+  return async function deleteFolders({ folderUIDs }: DeleteFoldersArgs) {
+    const successMessage = t('folders.api.folder-deleted-success', 'Folder deleted');
+
     // Delete all the folders sequentially
     // TODO error handling here
     for (const folderUID of folderUIDs) {
       // This also shows warning alert
-      if (await isProvisionedFolderCheck(dispatch, folderUID)) {
-        continue;
-      }
-      const result = await deleteFolder({ name: folderUID });
-      if (!result.error) {
-        // Before this was done in backend srv automatically because the old API sent a message wiht 200 request. see
-        // public/app/core/services/backend_srv.ts#L341-L361. New API does not do that so we do it here.
-        getAppEvents().publish({
-          type: AppEvents.alertSuccess.name,
-          payload: [t('folders.api.folder-deleted-success', 'Folder deleted')],
-        });
-        dispatch(refreshParents(folderUIDs));
+      const isProvisioned = await isProvisionedFolderCheck(dispatch, folderUID);
+
+      if (!isProvisioned) {
+        const result = await deleteFolder({ name: folderUID });
+        if (!result.error) {
+          // Before this was done in backend srv automatically because the old API sent a message wiht 200 request. see
+          // public/app/core/services/backend_srv.ts#L341-L361. New API does not do that so we do it here.
+          getAppEvents().publish({
+            type: AppEvents.alertSuccess.name,
+            payload: [successMessage],
+          });
+        }
       }
     }
+
+    refresh({ parentsOf: folderUIDs });
     return { data: undefined };
   };
+}
+
+export function useMoveMultipleFoldersMutationFacade() {
+  const moveFoldersLegacyResult = useMoveFoldersMutationLegacy();
+  const [updateFolder, updateFolderData] = useUpdateFolderMutation();
+  const dispatch = useDispatch();
+  const refetch = useRefreshFolders();
+
+  if (!config.featureToggles.foldersAppPlatformAPI) {
+    return moveFoldersLegacyResult;
+  }
+
+  async function moveFolders({ folderUIDs, destinationUID }: MoveFoldersArgs) {
+    const provisionedWarning = t(
+      'folders.api.folder-move-error-provisioned',
+      'Cannot move provisioned folder. To move it, move it in the repository and synchronise to apply the changes.'
+    );
+    const successMessage = t('folders.api.folder-moved-success', 'Folder moved');
+
+    // Move all the folders sequentially one by one
+    for (const folderUID of folderUIDs) {
+      // isProvisionedFolderCheck also shows a warning alert
+      const isFolderProvisioned = await isProvisionedFolderCheck(dispatch, folderUID, { warning: provisionedWarning });
+
+      // If provisioned, we just skip this folder
+      if (!isFolderProvisioned) {
+        const result = await updateFolder({
+          name: folderUID,
+          patch: { metadata: { annotations: { [AnnoKeyFolder]: destinationUID } } },
+        });
+        if (!result.error) {
+          getAppEvents().publish({
+            type: AppEvents.alertSuccess.name,
+            payload: [successMessage],
+          });
+        }
+      }
+    }
+    refetch({ childrenOf: destinationUID, parentsOf: folderUIDs });
+    return { data: undefined };
+  }
+
+  return [moveFolders, updateFolderData] as const;
 }
 
 export function useCreateFolder() {
   const [createFolder, result] = useCreateFolderMutation();
   const legacyHook = useLegacyNewFolderMutation();
+  const refresh = useRefreshFolders();
 
   if (!config.featureToggles.foldersAppPlatformAPI) {
     return legacyHook;
@@ -250,7 +297,7 @@ export function useCreateFolder() {
     };
 
     const result = await createFolder(payload);
-    dispatchRefetchChildren(folder.parentUid);
+    refresh({ childrenOf: folder.parentUid });
 
     return {
       ...result,
@@ -259,6 +306,89 @@ export function useCreateFolder() {
   };
 
   return [createFolderAppPlatform, result] as const;
+}
+
+export function useUpdateFolder() {
+  const [updateFolder, result] = useReplaceFolderMutation();
+  const legacyHook = useLegacySaveFolderMutation();
+  const refresh = useRefreshFolders();
+
+  if (!config.featureToggles.foldersAppPlatformAPI) {
+    return legacyHook;
+  }
+
+  const updateFolderAppPlatform = async (folder: Pick<FolderDTO, 'uid' | 'title' | 'version' | 'parentUid'>) => {
+    const payload: ReplaceFolderApiArg = {
+      name: folder.uid,
+      folder: {
+        spec: { title: folder.title },
+        metadata: {
+          name: folder.uid,
+        },
+        status: {},
+      },
+    };
+
+    const result = await updateFolder(payload);
+    refresh({ childrenOf: folder.parentUid });
+
+    return {
+      ...result,
+      data: result.data ? appPlatformFolderToLegacyFolder(result.data) : undefined,
+    };
+  };
+
+  return [updateFolderAppPlatform, result] as const;
+}
+
+export function useMoveFolderMutationFacade() {
+  const [updateFolder, updateFolderData] = useUpdateFolderMutation();
+  const moveFolderResult = useMoveFolderMutationLegacy();
+  const refresh = useRefreshFolders();
+  const notify = useAppNotification();
+
+  if (!config.featureToggles.foldersAppPlatformAPI) {
+    return moveFolderResult;
+  }
+
+  async function moveFolder({ folderUID, destinationUID }: MoveFolderArgs) {
+    const result = await updateFolder({
+      name: folderUID,
+      patch: { metadata: { annotations: { [AnnoKeyFolder]: destinationUID } } },
+    });
+    if (!result.error) {
+      refresh({ parentsOf: [folderUID], childrenOf: destinationUID });
+      // Before this was done in backend srv automatically because the old API sent a message with 200 request. see
+      // public/app/core/services/backend_srv.ts#L341-L361. New API does not do that so we do it here.
+      notify.success(t('folders.api.folder-moved-success', 'Folder moved'));
+    }
+    return result;
+  }
+
+  return [moveFolder, updateFolderData] as const;
+}
+
+/**
+ * Refresh the state of the folders to update the UI after folders are updated. This refreshes legacy storage
+ * of the folder structure outside the RTK query. Once all is migrated to new API this should not be needed.
+ */
+function useRefreshFolders() {
+  const dispatch = useDispatch();
+
+  return (options: { parentsOf?: string[]; childrenOf?: string }) => {
+    if (options.parentsOf) {
+      dispatch(refreshParents(options.parentsOf));
+    }
+    // Refetch children even if we passed in `childrenOf: undefined`, as this corresponds to the root folder
+    if (options.childrenOf || 'childrenOf' in options) {
+      dispatch(
+        refetchChildren({
+          parentUID: options.childrenOf,
+          pageSize: PAGE_SIZE,
+        })
+      );
+    }
+  };
 }
 
 function combinedState(

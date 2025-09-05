@@ -30,6 +30,7 @@ type StorageMetrics struct {
 	SecureValueMetadataListDuration   *prometheus.HistogramVec
 	SecureValueSetExternalIDDuration  *prometheus.HistogramVec
 	SecureValueSetStatusDuration      *prometheus.HistogramVec
+	SecureValueDeleteDuration         *prometheus.HistogramVec
 
 	DecryptDuration *prometheus.HistogramVec
 }
@@ -116,6 +117,13 @@ func newStorageMetrics() *StorageMetrics {
 			Help:      "Duration of secure value set status operations",
 			Buckets:   prometheus.DefBuckets,
 		}, []string{successLabel}),
+		SecureValueDeleteDuration: prometheus.NewHistogramVec(prometheus.HistogramOpts{
+			Namespace: namespace,
+			Subsystem: subsystem,
+			Name:      "secure_value_delete_duration_seconds",
+			Help:      "Duration of secure value delete operations",
+			Buckets:   prometheus.DefBuckets,
+		}, []string{successLabel}),
 
 		// Decrypt metrics
 		DecryptDuration: prometheus.NewHistogramVec(prometheus.HistogramOpts{
@@ -151,6 +159,7 @@ func NewStorageMetrics(reg prometheus.Registerer) *StorageMetrics {
 				m.SecureValueMetadataListDuration,
 				m.SecureValueSetExternalIDDuration,
 				m.SecureValueSetStatusDuration,
+				m.SecureValueDeleteDuration,
 				m.DecryptDuration,
 			)
 		}

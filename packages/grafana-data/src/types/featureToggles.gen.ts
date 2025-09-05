@@ -270,6 +270,7 @@ export interface FeatureToggles {
   kubernetesLibraryPanels?: boolean;
   /**
   * Use the kubernetes API in the frontend for dashboards
+  * @default true
   */
   kubernetesDashboards?: boolean;
   /**
@@ -429,6 +430,10 @@ export interface FeatureToggles {
   * Enable the secrets management API and services under app platform
   */
   secretsManagementAppPlatform?: boolean;
+  /**
+  * Enable the secrets management app platform UI
+  */
+  secretsManagementAppPlatformUI?: boolean;
   /**
   * Writes the state periodically to the database, asynchronous to rule evaluation
   */
@@ -611,6 +616,10 @@ export interface FeatureToggles {
   * @default true
   */
   newFiltersUI?: boolean;
+  /**
+  * Allows authenticated API calls in actions
+  */
+  vizActionsAuth?: boolean;
   /**
   * Uses Prometheus rules as the primary source of truth for ruler-enabled data sources
   */
@@ -1064,6 +1073,7 @@ export interface FeatureToggles {
   unifiedStorageSearchDualReaderEnabled?: boolean;
   /**
   * Enables adhoc filtering support for the dashboard datasource
+  * @default true
   */
   dashboardDsAdHocFiltering?: boolean;
   /**
@@ -1081,6 +1091,7 @@ export interface FeatureToggles {
   restrictedPluginApis?: boolean;
   /**
   * Enable adhoc filter buttons in visualization tooltips
+  * @default true
   */
   adhocFiltersInTooltips?: boolean;
   /**

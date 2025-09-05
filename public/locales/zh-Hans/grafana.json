@@ -545,6 +545,7 @@
     },
     "alert-rules": {
       "firing-for": "触发原因",
+      "multiple-sources": "",
       "next-evaluation": "下一次评估",
       "next-evaluation-in": "下一次评估将于此时间后进行：",
       "rule-definition": "规则定义"
@@ -2625,13 +2626,15 @@
         "show": "显示"
       },
       "manage-alerts": "在这些数据源中，您可以选择通过警报用户界面管理警报，以便能够在 Grafana 用户界面以及在其配置所在的数据源中管理这些警报规则。",
-      "no-groups": "没有可用的小组",
-      "no-namespaces": "没有可用的文件夹",
       "placeholder-all-data-sources": "所有数据源",
       "placeholder-contact-point": "选择联络点",
       "placeholder-data-sources": "选择数据源",
       "placeholder-labels": "选择标签",
       "plugin-rules": "插件规则",
+      "rule-source": {
+        "datasource": "",
+        "grafana": ""
+      },
       "rule-type": "规则类型",
       "rulesSearchInput-placeholder-search": "搜索",
       "search": "搜索",
@@ -2653,6 +2656,7 @@
         "namespace": "文件夹/命名空间",
         "rule-health": "健康",
         "rule-name": "规则名称",
+        "rule-source": "",
         "rule-type": "类型",
         "state": "状态"
       }
@@ -3380,9 +3384,6 @@
       "text-badge-enabled": "已启用",
       "text-badge-not-enabled": "未启用"
     },
-    "scim-banner": {
-      "message": "SCIM 目前正在开发中，不建议用于生产。请谨慎使用并注意可能出现的变化。"
-    },
     "server-discovery-modal": {
       "label-the-wellknownopenidconfiguration-endpoint-for-your-id-p": "IdP 的 .well-known/openid-configuration 端点",
       "title-open-id-connect-discovery-url": "OpenID Connect 发现 URL"
@@ -3552,7 +3553,9 @@
       },
       "error-moving-resources": "移动资源时出错",
       "error-no-target-folder-path": "目标文件夹路径无效或为空，请再次选择。",
-      "move-warning": "此操作将移动所选文件夹及其子文件夹。总体而言，这将影响：",
+      "move-total": "",
+      "move-warning": "",
+      "move-warning-tooltip": "",
       "target-folder": "目标文件夹"
     },
     "counts": {
@@ -4485,16 +4488,11 @@
             "any": "任意匹配",
             "label": "匹配规则"
           },
-          "label": "组",
           "visibility": {
             "hide": "隐藏",
             "label": "{{type}}可见性",
             "show": "显示"
           }
-        },
-        "shared": {
-          "delete-condition": "删除条件",
-          "unsupported-item-type": "此条件不受元素支持，因此将被忽略。"
         },
         "time-range-size": {
           "info": "如果数据面板时间范围短于所选时间范围，则显示或隐藏{{type}}。",
@@ -4524,17 +4522,21 @@
             "not-matches": "不匹配"
           },
           "value": "值"
+        },
+        "wrapper": {
+          "delete-condition": "",
+          "unsupported-object-type": ""
         }
       },
       "editor": {
+        "info": "",
         "not-supported-for-custom-grid": "自定义网格布局不支持条件渲染。请切换到自动网格以使用条件渲染。",
-        "unsupported-item-type": "此项目类型不支持条件渲染"
+        "unsupported-object-type": ""
       },
       "overlay": {
         "tooltip": "由于条件渲染，元素已被隐藏。"
       },
       "root": {
-        "info": "设置规则以通过匹配任何或所有规则来控制{{type}}可见性。",
         "title": "显示/隐藏规则"
       }
     },
@@ -4673,7 +4675,9 @@
       "panel-title": "更改面板标题",
       "paste-panel": "粘贴面板",
       "remove": "移除{{typeName}}",
-      "switch-layout": "切换布局"
+      "row-title": "",
+      "switch-layout": "切换布局",
+      "tab-title": ""
     },
     "edit-pane": {
       "elements": {
@@ -6521,7 +6525,8 @@
     },
     "data-source-load-error": {
       "back": "上一步",
-      "delete": "删除"
+      "delete": "删除",
+      "not-found": ""
     },
     "data-source-missing-rights-message": {
       "title-missing-rights": "缺少权限"
@@ -7544,7 +7549,9 @@
   "folders": {
     "api": {
       "folder-delete-error-provisioned": "",
-      "folder-deleted-success": "文件夹已删除"
+      "folder-deleted-success": "文件夹已删除",
+      "folder-move-error-provisioned": "",
+      "folder-moved-success": ""
     },
     "get-loading-nav": {
       "main": {
@@ -8320,6 +8327,10 @@
         "action-title": "标题",
         "action-title-placeholder": "操作标题",
         "action-variables": "变量",
+        "connection": "",
+        "connection-direct-description": "",
+        "connection-direct-label": "",
+        "connection-placeholder": "",
         "one-click-description": "一次只能为一个链接或操作启用一次点击"
       }
     },
@@ -8744,7 +8755,6 @@
       "cell-inspect": "检查值",
       "cell-inspect-tooltip": "检查值",
       "copy": "复制到剪贴板",
-      "count": "计数",
       "csv-counts": "行：{{rows}}，列：{{columns}}  <5></5>",
       "csv-placeholder": "在此处输入 CSV...",
       "filter-placeholder": "筛选值",
@@ -8755,6 +8765,11 @@
       "filter-popup-heading": "按值筛选：",
       "filter-popup-input-placeholder": "筛选值",
       "filter-popup-match-case": "区分大小写",
+      "footer": {
+        "reducer": {
+          "count": ""
+        }
+      },
       "inspect-drawer-title": "检查值",
       "nested-table": {
         "no-data": "无数据"
@@ -9496,6 +9511,7 @@
       "fields-section": "字段",
       "hide-log-line": "隐藏日志行",
       "inline-mode": "内联显示",
+      "link-value-tooltip": "",
       "links-section": "关联",
       "log-line-field": "日志行",
       "log-line-section": "日志行",
@@ -9686,30 +9702,6 @@
     "un-themed-log-label-stats": {
       "field-log-stats": "{{label}}：{{total}} 行（共 {{rowCount}} 行）含有该字段",
       "label-log-stats": "{{label}}：{{total}} 行（共 {{rowCount}} 行）含有该标签"
-    }
-  },
-  "logs-new": {
-    "category-logs": "日志",
-    "deduplication-options": {
-      "label-exact": "确切",
-      "label-none": "无",
-      "label-numbers": "数字",
-      "label-signature": "签名"
-    },
-    "description-infinite-scrolling": "实验性。通过滚动到日志列表底部来请求更多结果。",
-    "description-show-controls": "显示控件以跳转到最后一行或第一行日志，并按日志级别筛选",
-    "description-syntax-highlighting": "使用预定义的语法着色规则来突出显示日志行的相关部分",
-    "name-deduplication": "去重",
-    "name-enable-log-details": "启用日志详情",
-    "name-infinite-scrolling": "启用无限滚动",
-    "name-order": "顺序",
-    "name-show-controls": "显示控件",
-    "name-syntax-highlighting": "启用语法高亮",
-    "name-time": "时间",
-    "name-wrap-lines": "多行显示",
-    "order-options": {
-      "label-newest-first": "最新靠前",
-      "label-oldest-first": "最旧靠前"
     }
   },
   "manage-dashbaords": {
@@ -12739,8 +12731,6 @@
     "description-calculation": "选择一个归约器函数/计算",
     "description-cell-value-inspect": "在模态窗口中启用单元格值检查",
     "description-column-filter": "启用/禁用表格中的字段筛选条件",
-    "description-count-rows": "显示所有数据行的单个计数",
-    "description-fields": "选择应计算的字段",
     "description-frozen-columns": "",
     "description-min-column-width": "列自动调整大小的最小宽度",
     "description-tooltip-from-field": "",
@@ -12767,21 +12757,17 @@
     "name-column-alignment": "列对齐",
     "name-column-filter": "列筛选",
     "name-column-width": "列宽度",
-    "name-count-rows": "计算行",
     "name-enable-pagination": "",
-    "name-fields": "字段",
     "name-frozen-columns": "",
     "name-hide-in-table": "在表格中隐藏",
     "name-max-height": "",
     "name-min-column-width": "最小列宽",
-    "name-show-table-footer": "显示表格页脚",
     "name-show-table-header": "显示表格表头",
     "name-tooltip-from-field": "",
     "name-tooltip-placement": "",
     "name-wrap-header-text": "表头文字换行",
     "name-wrap-text": "",
     "placeholder-column-width": "自动",
-    "placeholder-fields": "所有数字字段",
     "placeholder-max-height": "",
     "tooltip-placement-options": {
       "label-auto": "",

@@ -2,6 +2,7 @@ import { http, HttpResponse } from 'msw';
 import { useParams } from 'react-router-dom-v5-compat';
 import { render, screen } from 'test/test-utils';
 
+import { config, setBackendSrv } from '@grafana/runtime';
 import server, { setupMockServer } from '@grafana/test-utils/server';
 import { getFolderFixtures } from '@grafana/test-utils/unstable';
 import { contextSrv } from 'app/core/core';
@@ -11,15 +12,9 @@ import BrowseFolderLibraryPanelsPage from './BrowseFolderLibraryPanelsPage';
 import { getLibraryElementsResponse } from './fixtures/libraryElements.fixture';
 import * as permissions from './permissions';
 
+setBackendSrv(backendSrv);
 setupMockServer();
-jest.mock('@grafana/runtime', () => ({
-  ...jest.requireActual('@grafana/runtime'),
-  getBackendSrv: () => backendSrv,
-  config: {
-    ...jest.requireActual('@grafana/runtime').config,
-    unifiedAlertingEnabled: true,
-  },
-}));
+
 jest.mock('react-router-dom-v5-compat', () => ({
   ...jest.requireActual('react-router-dom-v5-compat'),
   useParams: jest.fn(),
@@ -46,19 +41,15 @@ describe('browse-dashboards BrowseFolderLibraryPanelsPage', () => {
   };
 
   beforeEach(() => {
+    config.unifiedAlertingEnabled = true;
     server.use(
       http.get('/api/library-elements', () => {
         return HttpResponse.json({
           result: mockLibraryElementsResponse,
         });
-      }),
-      http.get('/api/search/sorting', () => {
-        return HttpResponse.json({});
       })
     );
-  });
 
-  beforeEach(() => {
     jest.spyOn(permissions, 'getFolderPermissions').mockImplementation(() => mockPermissions);
     jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
   });

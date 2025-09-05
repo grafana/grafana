@@ -545,6 +545,7 @@
     },
     "alert-rules": {
       "firing-for": "Menyalakan untuk",
+      "multiple-sources": "",
       "next-evaluation": "Evaluasi berikutnya",
       "next-evaluation-in": "evaluasi berikutnya dalam",
       "rule-definition": "Definisi aturan"
@@ -2625,13 +2626,15 @@
         "show": "Tampilkan"
       },
       "manage-alerts": "Dalam sumber data ini, Anda dapat memilih Kelola peringatan melalui UI Alerting untuk dapat mengelola aturan peringatan ini di UI Grafana serta di sumber data tempat mereka dikonfigurasi.",
-      "no-groups": "Tidak ada grup yang tersedia",
-      "no-namespaces": "Tidak ada folder yang tersedia",
       "placeholder-all-data-sources": "Semua sumber data",
       "placeholder-contact-point": "Pilih titik kontak",
       "placeholder-data-sources": "Pilih sumber data",
       "placeholder-labels": "Pilih label",
       "plugin-rules": "Aturan plugin",
+      "rule-source": {
+        "datasource": "",
+        "grafana": ""
+      },
       "rule-type": "Jenis aturan",
       "rulesSearchInput-placeholder-search": "Cari",
       "search": "Cari",
@@ -2653,6 +2656,7 @@
         "namespace": "Folder / Ruang nama",
         "rule-health": "Kesehatan",
         "rule-name": "Nama aturan",
+        "rule-source": "",
         "rule-type": "Jenis",
         "state": "Status"
       }
@@ -3380,9 +3384,6 @@
       "text-badge-enabled": "Aktif",
       "text-badge-not-enabled": "Tidak diaktifkan"
     },
-    "scim-banner": {
-      "message": "SCIM saat ini sedang dalam pengembangan dan tidak disarankan untuk penggunaan produksi. Gunakan dengan hati-hati dan antisipasi kemungkinan perubahan."
-    },
     "server-discovery-modal": {
       "label-the-wellknownopenidconfiguration-endpoint-for-your-id-p": "Endpoint .well known/openid-configuration untuk IdP Anda",
       "title-open-id-connect-discovery-url": "URL OpenID Connect Discovery"
@@ -3552,7 +3553,9 @@
       },
       "error-moving-resources": "Kesalahan saat memindahkan sumber daya",
       "error-no-target-folder-path": "Jalur folder target tidak valid atau kosong, harap pilih lagi.",
-      "move-warning": "Ini akan memindahkan folder yang dipilih dan turunannya. Secara keseluruhan, ini akan memengaruhi:",
+      "move-total": "",
+      "move-warning": "",
+      "move-warning-tooltip": "",
       "target-folder": "Folder Target"
     },
     "counts": {
@@ -4485,16 +4488,11 @@
             "any": "Cocokkan apa pun",
             "label": "Cocokkan aturan"
           },
-          "label": "Grup",
           "visibility": {
             "hide": "Sembunyikan",
             "label": "visibilitas {{type}}",
             "show": "Tampilkan"
           }
-        },
-        "shared": {
-          "delete-condition": "Hapus Ketentuan",
-          "unsupported-item-type": "Syarat ini tidak didukung oleh elemen, jadi akan diabaikan."
         },
         "time-range-size": {
           "info": "Tampilkan atau sembunyikan {{type}} jika rentang waktu dasbor lebih pendek dari rentang waktu yang dipilih.",
@@ -4524,17 +4522,21 @@
             "not-matches": "Tidak cocok"
           },
           "value": "Nilai"
+        },
+        "wrapper": {
+          "delete-condition": "",
+          "unsupported-object-type": ""
         }
       },
       "editor": {
+        "info": "",
         "not-supported-for-custom-grid": "Rendering bersyarat tidak didukung untuk tata letak kisi khusus. Beralih ke kisi otomatis untuk menggunakan perenderan bersyarat.",
-        "unsupported-item-type": "Rendering bersyarat tidak didukung untuk jenis item ini"
+        "unsupported-object-type": ""
       },
       "overlay": {
         "tooltip": "Elemen disembunyikan karena rendering bersyarat."
       },
       "root": {
-        "info": "Tetapkan aturan untuk mengontrol visibilitas {{type}} dengan mencocokkan salah satu atau semua aturan.",
         "title": "Tampilkan/sembunyikan aturan"
       }
     },
@@ -4673,7 +4675,9 @@
       "panel-title": "Ubah judul panel",
       "paste-panel": "Tempel panel",
       "remove": "Hapus {{typeName}}",
-      "switch-layout": "Ganti tata letak"
+      "row-title": "",
+      "switch-layout": "Ganti tata letak",
+      "tab-title": ""
     },
     "edit-pane": {
       "elements": {
@@ -6521,7 +6525,8 @@
     },
     "data-source-load-error": {
       "back": "Kembali",
-      "delete": "Hapus"
+      "delete": "Hapus",
+      "not-found": ""
     },
     "data-source-missing-rights-message": {
       "title-missing-rights": "Hak tidak ada"
@@ -7544,7 +7549,9 @@
   "folders": {
     "api": {
       "folder-delete-error-provisioned": "",
-      "folder-deleted-success": "Folder dihapus"
+      "folder-deleted-success": "Folder dihapus",
+      "folder-move-error-provisioned": "",
+      "folder-moved-success": ""
     },
     "get-loading-nav": {
       "main": {
@@ -8320,6 +8327,10 @@
         "action-title": "Judul",
         "action-title-placeholder": "Judul tindakan",
         "action-variables": "Variabel",
+        "connection": "",
+        "connection-direct-description": "",
+        "connection-direct-label": "",
+        "connection-placeholder": "",
         "one-click-description": "Hanya satu tautan atau tindakan yang dapat diaktifkan satu klik pada satu waktu"
       }
     },
@@ -8744,7 +8755,6 @@
       "cell-inspect": "Periksa nilai",
       "cell-inspect-tooltip": "Periksa nilai",
       "copy": "Salin ke Papan Klip",
-      "count": "Jumlah",
       "csv-counts": "Baris:{{rows}}, Kolom:{{columns}}  <5></5>",
       "csv-placeholder": "Masukkan CSV di sini...",
       "filter-placeholder": "Filter nilai",
@@ -8755,6 +8765,11 @@
       "filter-popup-heading": "Filter menurut nilai:",
       "filter-popup-input-placeholder": "Filter nilai",
       "filter-popup-match-case": "Cocok huruf besar kecil",
+      "footer": {
+        "reducer": {
+          "count": ""
+        }
+      },
       "inspect-drawer-title": "Periksa nilai",
       "nested-table": {
         "no-data": "Tidak ada data"
@@ -9496,6 +9511,7 @@
       "fields-section": "Bidang",
       "hide-log-line": "Sembunyikan baris log",
       "inline-mode": "Tampilkan sebaris",
+      "link-value-tooltip": "",
       "links-section": "Tautan",
       "log-line-field": "Baris log",
       "log-line-section": "Baris log",
@@ -9686,30 +9702,6 @@
     "un-themed-log-label-stats": {
       "field-log-stats": "{{label}}: {{total}} dari {{rowCount}} baris memiliki bidang tersebut",
       "label-log-stats": "{{label}}: {{total}} dari {{rowCount}} baris memiliki label tersebut"
-    }
-  },
-  "logs-new": {
-    "category-logs": "Log",
-    "deduplication-options": {
-      "label-exact": "Tepat",
-      "label-none": "Tidak ada",
-      "label-numbers": "Angka",
-      "label-signature": "Tanda Tangan"
-    },
-    "description-infinite-scrolling": "Eksperimental. Minta lebih banyak hasil dengan menggulir ke bagian bawah daftar log.",
-    "description-show-controls": "Tampilkan kontrol untuk melompat ke baris log terakhir atau pertama, dan filter berdasarkan level log",
-    "description-syntax-highlighting": "Gunakan tata bahasa pewarnaan sintaks yang telah ditentukan untuk menyoroti bagian yang relevan dari baris log",
-    "name-deduplication": "Deduplikasi",
-    "name-enable-log-details": "Aktifkan detail log",
-    "name-infinite-scrolling": "Aktifkan gulir tak terbatas",
-    "name-order": "Urutan",
-    "name-show-controls": "Tampilkan kontrol",
-    "name-syntax-highlighting": "Aktifkan penyorotan sintaks",
-    "name-time": "Waktu",
-    "name-wrap-lines": "Bungkus baris",
-    "order-options": {
-      "label-newest-first": "Terbaru lebih dulu",
-      "label-oldest-first": "Terlama lebih dulu"
     }
   },
   "manage-dashbaords": {
@@ -12739,8 +12731,6 @@
     "description-calculation": "Pilih fungsi/perhitungan reducer",
     "description-cell-value-inspect": "Aktifkan pemeriksaan nilai sel di jendela modal",
     "description-column-filter": "Mengaktifkan/menonaktifkan filter bidang di tabel",
-    "description-count-rows": "Tampilkan satu hitungan untuk semua baris data",
-    "description-fields": "Pilih bidang yang harus dihitung",
     "description-frozen-columns": "",
     "description-min-column-width": "Lebar minimum untuk perubahan ukuran kolom otomatis",
     "description-tooltip-from-field": "",
@@ -12767,21 +12757,17 @@
     "name-column-alignment": "Perataan kolom",
     "name-column-filter": "Filter kolom",
     "name-column-width": "Lebar kolom",
-    "name-count-rows": "Hitung baris",
     "name-enable-pagination": "",
-    "name-fields": "Bidang",
     "name-frozen-columns": "",
     "name-hide-in-table": "Sembunyikan di tabel",
     "name-max-height": "",
     "name-min-column-width": "Lebar kolom minimum",
-    "name-show-table-footer": "Tampilkan footer tabel",
     "name-show-table-header": "Tampilkan header tabel",
     "name-tooltip-from-field": "",
     "name-tooltip-placement": "",
     "name-wrap-header-text": "Bungkus teks header",
     "name-wrap-text": "",
     "placeholder-column-width": "otomatis",
-    "placeholder-fields": "Semua Bidang Numerik",
     "placeholder-max-height": "",
     "tooltip-placement-options": {
       "label-auto": "",
