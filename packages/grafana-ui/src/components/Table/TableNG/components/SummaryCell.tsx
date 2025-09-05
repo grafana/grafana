@@ -8,6 +8,7 @@ import { t } from '@grafana/i18n';
 import { TableFooterOptions } from '@grafana/schema';
 
 import { useStyles2, useTheme2 } from '../../../../themes/ThemeContext';
+import { TABLE } from '../constants';
 import { useReducerEntries } from '../hooks';
 import { getDefaultCellStyles } from '../styles';
 import { TableRow } from '../types';
@@ -59,8 +60,8 @@ export const SummaryCell = ({
   }, [footers]);
   const renderRowLabel = rowLabel && reducerResultsEntries.length === 0 && Boolean(firstFooterReducers);
 
-  const SummaryCellItem = ({ children }: { children: ReactNode }) => (
-    <div className={styles.footerItem}>{children}</div>
+  const SummaryCellItem = ({ children, idx }: { children: ReactNode; idx: number }) => (
+    <div className={clsx(styles.footerItem, { [styles.footerItemOdd]: idx % 2 === 1 })}>{children}</div>
   );
   const SummaryCellLabel = ({ children }: { children: ReactNode }) => (
     <div
@@ -85,27 +86,18 @@ export const SummaryCell = ({
       className={cellClass}
       data-testid={reducerResultsEntries.length === 0 && !renderRowLabel ? 'summary-cell-empty' : undefined}
     >
-      {reducerResultsEntries.map(([reducerId, reducerResult]) => {
-        // empty reducer entry, but there may be more after - render a spacer.
-        if (reducerResult === null) {
-          return (
-            <SummaryCellItem key={reducerId}>
-              {rowLabel ? <SummaryCellLabel>{getReducerName(reducerId)}</SummaryCellLabel> : <>&nbsp;</>}
-            </SummaryCellItem>
-          );
-        }
-
+      {reducerResultsEntries.map(([reducerId, reducerResult], idx) => {
         return (
-          <SummaryCellItem key={reducerId}>
-            {!hideLabel && <SummaryCellLabel>{getReducerName(reducerId)}</SummaryCellLabel>}
-            <SummaryCellValue>{reducerResult}</SummaryCellValue>
+          <SummaryCellItem key={reducerId} idx={idx}>
+            {(!hideLabel || rowLabel) && <SummaryCellLabel>{getReducerName(reducerId)}</SummaryCellLabel>}
+            <SummaryCellValue>{reducerResult ?? <>&nbsp;</>}</SummaryCellValue>
           </SummaryCellItem>
         );
       })}
 
       {renderRowLabel &&
-        firstFooterReducers!.map((reducerId) => (
-          <SummaryCellItem key={reducerId}>
+        firstFooterReducers!.map((reducerId, idx) => (
+          <SummaryCellItem key={reducerId} idx={idx}>
             <SummaryCellLabel>{getReducerName(reducerId)}</SummaryCellLabel>
           </SummaryCellItem>
         ))}
@@ -126,6 +118,11 @@ export const getStyles = (theme: GrafanaTheme2, textAlign: TextAlign, hideLabel:
     alignItems: 'flex-start',
     width: '100%',
     gap: theme.spacing(0.5),
+    paddingBlock: TABLE.FOOTER_PADDING,
+    paddingInline: TABLE.CELL_PADDING,
+  }),
+  footerItemOdd: css({
+    backgroundColor: theme.colors.background.secondary,
   }),
   footerItemLabel: css({
     flexShrink: 0,

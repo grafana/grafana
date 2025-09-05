@@ -889,8 +889,8 @@ const getMaxReducerCount = (dataFrame: DataFrame, fieldConfig?: FieldConfigSourc
  */
 export const calculateFooterHeight = (dataFrame: DataFrame, fieldConfig?: FieldConfigSource) => {
   const maxReducerCount = getMaxReducerCount(dataFrame, fieldConfig);
-  // Base height (+ padding) + height per reducer
-  return maxReducerCount * TABLE.LINE_HEIGHT + TABLE.CELL_PADDING * 2;
+  // Base height (+ padding) + height per reducer, plus borders
+  return maxReducerCount * (TABLE.LINE_HEIGHT + TABLE.FOOTER_PADDING * 2) + 2;
 };
 
 /**

@@ -71,10 +71,12 @@ export const getGridStyles = (theme: GrafanaTheme2, enablePagination?: boolean, 
         },
       },
 
+      '.rdg-summary-row': {
+        background: 'var(--rdg-row-background-color)',
+      },
       '.rdg-summary-row >': {
         '.rdg-cell': {
-          // 0.75 padding causes "jumping" on hover.
-          paddingBlock: theme.spacing(0.625),
+          padding: 0,
         },
         [getActiveCellSelector()]: {
           whiteSpace: 'pre-line',
