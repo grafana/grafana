@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { capitalize } from 'lodash';
-import { MouseEvent, useCallback, useMemo } from 'react';
+import { forwardRef, MouseEvent, useCallback, useMemo } from 'react';
 
 import { CoreApp, EventBus, LogLevel, LogsDedupDescription, LogsDedupStrategy, LogsSortOrder } from '@grafana/data';
 import { GrafanaTheme2 } from '@grafana/data/';
@@ -11,7 +11,6 @@ import { Dropdown, Icon, IconButton, Menu, Tooltip, useStyles2 } from '@grafana/
 import { LogsVisualisationType } from '../../../explore/Logs/Logs';
 import { DownloadFormat } from '../../utils';
 
-import { LogLineTimestampResolution } from './LogLine';
 import { useLogListContext } from './LogListContext';
 import { useLogListSearchContext } from './LogListSearchContext';
 import { ScrollToLogsEvent } from './virtualization';
@@ -460,46 +459,71 @@ export const LogListControls = ({ eventBus, visualisationType = 'logs' }: Props)
   );
 };
 
-const TimestampResolutionButton = () => {
+const TimestampResolutionButton = forwardRef<HTMLButtonElement, {}>((_, ref) => {
   const styles = useStyles2(getStyles);
   const { setTimestampResolution, setShowTime, showTime, timestampResolution } = useLogListContext();
 
-  const onShowTimestampsClick = useCallback(() => {
-    if (!config.featureToggles.newLogsPanel) {
-      reportInteraction('logs_log_list_controls_show_time_clicked', {
-        show_time: !showTime,
-      });
-      setShowTime(!showTime);
-      return;
-    }
-    if (!showTime || timestampResolution === 'ns') {
-      setShowTime(!showTime);
-    } else if (timestampResolution === 'ms') {
-      setTimestampResolution('ns');
-    }
-  }, [setShowTime, setTimestampResolution, showTime, timestampResolution]);
+  const hide = useCallback(() => {
+    setShowTime(false);
+  }, [setShowTime]);
+
+  const showMs = useCallback(() => {
+    setShowTime(true);
+    setTimestampResolution('ms');
+  }, [setShowTime, setTimestampResolution]);
+
+  const showNs = useCallback(() => {
+    setShowTime(true);
+    setTimestampResolution('ns');
+  }, [setShowTime, setTimestampResolution]);
+
+  const timestampMenu = useMemo(
+    () => (
+      <Menu>
+        <Menu.Item
+          label={t('logs.logs-controls.timestamp.hide', 'Hide timestamps')}
+          className={!showTime ? styles.menuItemActive : undefined}
+          onClick={hide}
+        />
+        <Menu.Item
+          label={t('logs.logs-controls.timestamp.milliseconds', 'Show millisecond timestamps')}
+          className={showTime && timestampResolution === 'ms' ? styles.menuItemActive : undefined}
+          onClick={showMs}
+        />
+        <Menu.Item
+          label={t('logs.logs-controls.download-logs.csv', 'Show nanosecond timestamps')}
+          className={showTime && timestampResolution === 'ns' ? styles.menuItemActive : undefined}
+          onClick={showNs}
+        />
+      </Menu>
+    ),
+    [hide, showMs, showNs, showTime, styles.menuItemActive, timestampResolution]
+  );
 
   return (
-    <Tooltip content={getTimestampTooltip(showTime, timestampResolution)}>
-      <button
-        aria-label={getTimestampTooltip(showTime, timestampResolution)}
-        aria-pressed={showTime}
-        className={`${styles.customControlButton} ${showTime ? styles.controlButtonActive : styles.controlButton}`}
-        type="button"
-        onClick={onShowTimestampsClick}
-      >
-        <Icon name="clock-nine" size="lg" className={styles.customControlIcon} />
-        {showTime && (
-          <span className={styles.customControlTag}>
-            {timestampResolution === 'ms'
-              ? t('logs.logs-controls.resolution-ms', 'ms')
-              : t('logs.logs-controls.resolution-ns', 'ns')}
-          </span>
-        )}
-      </button>
-    </Tooltip>
+    <Dropdown overlay={timestampMenu} placement="auto-end">
+      <div>
+        <Tooltip content={t('logs.logs-controls.timestamp', 'Log timestamps')}>
+          <button
+            aria-pressed={showTime}
+            className={`${styles.customControlButton} ${showTime ? styles.controlButtonActive : styles.controlButton}`}
+            type="button"
+          >
+            <Icon name="clock-nine" size="lg" className={styles.customControlIcon} />
+            {showTime && (
+              <span className={styles.customControlTag}>
+                {timestampResolution === 'ms'
+                  ? t('logs.logs-controls.resolution-ms', 'ms')
+                  : t('logs.logs-controls.resolution-ns', 'ns')}
+              </span>
+            )}
+          </button>
+        </Tooltip>
+      </div>
+    </Dropdown>
   );
-};
+});
+TimestampResolutionButton.displayName = 'TimestampResolutionButton';
 
 const WrapLogMessageButton = () => {
   const styles = useStyles2(getStyles);
@@ -633,16 +657,6 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
   };
 };
-
-function getTimestampTooltip(showTime: boolean, timestampResolution: LogLineTimestampResolution) {
-  if (!showTime) {
-    return t('logs.logs-controls.show-ms-timestamps', 'Show millisecond timestamps');
-  }
-  if (timestampResolution === 'ms') {
-    return t('logs.logs-controls.show-ns-timestamps', 'Show nanosecond timestamps');
-  }
-  return t('logs.logs-controls.hide-timestamps', 'Hide timestamps');
-}
 
 function getWrapLogMessageTooltip(wrapLogMessage: boolean, prettifyJSON: boolean | undefined) {
   if (!wrapLogMessage) {
