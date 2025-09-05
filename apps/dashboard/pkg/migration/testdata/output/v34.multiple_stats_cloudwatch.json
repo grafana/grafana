@@ -634,6 +634,6 @@
     }
   ],
   "refresh": "",
-  "schemaVersion": 41,
+  "schemaVersion": 42,
   "title": "CloudWatch Multiple Statistics Test Dashboard"
 }

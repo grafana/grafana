@@ -215,7 +215,7 @@
     }
   ],
   "refresh": "5s",
-  "schemaVersion": 41,
+  "schemaVersion": 42,
   "style": "dark",
   "tags": [
     "migration-test"

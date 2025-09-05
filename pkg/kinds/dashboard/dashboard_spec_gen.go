@@ -86,7 +86,7 @@ func NewSpec() *Spec {
 		Editable:             (func(input bool) *bool { return &input })(true),
 		GraphTooltip:         (func(input DashboardCursorSync) *DashboardCursorSync { return &input })(DashboardCursorSyncOff),
 		FiscalYearStartMonth: (func(input uint8) *uint8 { return &input })(0),
-		SchemaVersion:        41,
+		SchemaVersion:        42,
 	}
 }
 

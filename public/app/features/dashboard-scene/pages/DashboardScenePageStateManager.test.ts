@@ -1681,7 +1681,7 @@ const v1ProvisionedDashboardResource = {
           },
         ],
         preload: false,
-        schemaVersion: 41,
+        schemaVersion: 42,
         tags: [],
         templating: {
           list: [],
