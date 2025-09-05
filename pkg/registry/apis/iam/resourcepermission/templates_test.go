@@ -33,6 +33,18 @@ func TestListResourcePermissionsQuery(t *testing.T) {
 		return &v
 	}
 
+	getDeleteResourcePermissionsQuery := func(q *DeleteResourcePermissionsQuery) sqltemplate.SQLTemplate {
+		v := deleteResourcePermissionsQueryTemplate{
+			SQLTemplate:        sqltemplate.New(nodb.DialectForDriver()),
+			Query:              q,
+			PermissionTable:    nodb.Table("permission"),
+			RoleTable:          nodb.Table("role"),
+			ManagedRolePattern: "managed:%",
+		}
+		v.SQLTemplate = mocks.NewTestingSQLTemplate()
+		return &v
+	}
+
 	mocks.CheckQuerySnapshots(t, mocks.TemplateTestSetup{
 		RootDir:        "testdata",
 		SQLTemplatesFS: sqlTemplatesFS,
@@ -51,33 +63,6 @@ func TestListResourcePermissionsQuery(t *testing.T) {
 					}),
 				},
 			},
-		},
-	})
-}
-
-func TestDeleteResourcePermissionsQuery(t *testing.T) {
-	nodb := &legacysql.LegacyDatabaseHelper{
-		Table: func(n string) string {
-			return "grafana." + n
-		},
-	}
-
-	getDeleteResourcePermissionsQuery := func(q *DeleteResourcePermissionsQuery) sqltemplate.SQLTemplate {
-		v := deleteResourcePermissionsQueryTemplate{
-			SQLTemplate:        sqltemplate.New(nodb.DialectForDriver()),
-			Query:              q,
-			PermissionTable:    nodb.Table("permission"),
-			RoleTable:          nodb.Table("role"),
-			ManagedRolePattern: "managed:%",
-		}
-		v.SQLTemplate = mocks.NewTestingSQLTemplate()
-		return &v
-	}
-
-	mocks.CheckQuerySnapshots(t, mocks.TemplateTestSetup{
-		RootDir:        "testdata",
-		SQLTemplatesFS: sqlTemplatesFS,
-		Templates: map[*template.Template][]mocks.TemplateTestCase{
 			resourcePermissionDeletionQueryTplt: {
 				{
 					Name: "basic_delete_query",
