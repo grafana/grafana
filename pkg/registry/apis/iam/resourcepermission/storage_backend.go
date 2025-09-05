@@ -175,7 +175,7 @@ func (s *ResourcePermSqlBackend) WriteEvent(ctx context.Context, event resource.
 		// Hide the error from the user, but log it
 		logger := s.logger.FromContext(ctx)
 		logger.Error("Failed to get database helper", "error", err)
-		return 0, err
+		return 0, errDatabaseHelper
 	}
 
 	mapper, grn, err := s.splitResourceName(event.Key.Name)
