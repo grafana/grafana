@@ -47,13 +47,9 @@ func (rev *ConfigRevision) CreateReceiver(receiver *models.Receiver) (*models.Re
 }
 
 func (rev *ConfigRevision) UpdateReceiver(receiver *models.Receiver) (*models.Receiver, error) {
-	var existingIdx = -1
-	for idx, postable := range rev.Config.AlertmanagerConfig.Receivers {
-		if NameToUid(postable.GetName()) == receiver.GetUID() {
-			existingIdx = idx
-			break
-		}
-	}
+	existingIdx := slices.IndexFunc(rev.Config.AlertmanagerConfig.Receivers, func(postable *definitions.PostableApiReceiver) bool {
+		return NameToUid(postable.GetName()) == receiver.GetUID()
+	})
 	if existingIdx < 0 {
 		return nil, ErrReceiverNotFound.Errorf("")
 	}
@@ -89,12 +85,14 @@ func (rev *ConfigRevision) ReceiverUseByName() map[string]int {
 }
 
 func (rev *ConfigRevision) GetReceiver(uid string, prov Provenances) (*models.Receiver, error) {
-	result, err := rev.GetReceivers([]string{uid}, prov)
-	if err != nil {
-		return nil, err
-	}
-	if len(result) > 0 {
-		return result[0], nil
+	for _, r := range rev.Config.AlertmanagerConfig.Receivers {
+		if NameToUid(r.GetName()) == uid {
+			recv, err := PostableApiReceiverToReceiver(r, GetReceiverProvenance(prov, r))
+			if err != nil {
+				return nil, fmt.Errorf("failed to convert receiver %q: %w", r.Name, err)
+			}
+			return recv, nil
+		}
 	}
 	return nil, ErrReceiverNotFound.Errorf("")
 }
