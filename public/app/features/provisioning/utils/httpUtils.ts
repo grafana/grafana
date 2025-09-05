@@ -50,7 +50,7 @@ export function getProviderHeaders(repositoryType: string, token: string): Recor
     case 'gitlab':
       return { 'Private-Token': token };
     case 'bitbucket':
-      return { Authorization: `Bearer ${token}` };
+      return { Authorization: `Basic ${btoa(token)}` };
     default:
       throw new Error(
         t('provisioning.http-utils.unsupported-repository-type', 'Unsupported repository type: {{repositoryType}}', {
@@ -135,7 +135,7 @@ export async function fetchAllBitbucketBranches(
   repo: string,
   headers: Record<string, string>
 ): Promise<Array<{ name: string }>> {
-  const url = `https://api.bitbucket.org/2.0/repositories/${owner}/${repo}/refs/branches?pagelen=1000`;
+  const url = `https://api.bitbucket.org/2.0/repositories/${owner}/${repo}/refs/branches?pagelen=100`;
   const data = await makeApiRequest({ url, headers });
 
   if (data && Array.isArray(data.values)) {
