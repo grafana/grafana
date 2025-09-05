@@ -9,7 +9,7 @@ import {
   VariableDependencyConfig,
   VizPanel,
 } from '@grafana/scenes';
-import { RowsLayoutRowKind } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
+import { RowsLayoutRowKind } from '@grafana/schema/dist/esm/schema/dashboard/v2';
 import appEvents from 'app/core/app_events';
 import { LS_ROW_COPY_KEY } from 'app/core/constants';
 import store from 'app/core/store';
@@ -17,7 +17,7 @@ import kbn from 'app/core/utils/kbn';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { ShowConfirmModalEvent } from 'app/types/events';
 
-import { ConditionalRendering } from '../../conditional-rendering/ConditionalRendering';
+import { ConditionalRenderingGroup } from '../../conditional-rendering/group/ConditionalRenderingGroup';
 import { serializeRow } from '../../serialization/layoutSerializers/RowsLayoutSerializer';
 import { getElements } from '../../serialization/layoutSerializers/utils';
 import { getDashboardSceneFor } from '../../utils/utils';
@@ -42,9 +42,11 @@ export interface RowItemState extends SceneObjectState {
   hideHeader?: boolean;
   fillScreen?: boolean;
   isDropTarget?: boolean;
-  conditionalRendering?: ConditionalRendering;
+  conditionalRendering?: ConditionalRenderingGroup;
   repeatByVariable?: string;
   repeatedRows?: RowItem[];
+  /** Marks object as a repeated object and a key pointer to source object */
+  repeatSourceKey?: string;
 }
 
 export class RowItem
@@ -66,7 +68,7 @@ export class RowItem
       ...state,
       title: state?.title ?? t('dashboard.rows-layout.row.new', 'New row'),
       layout: state?.layout ?? AutoGridLayoutManager.createEmpty(),
-      conditionalRendering: state?.conditionalRendering ?? ConditionalRendering.createEmpty(),
+      conditionalRendering: state?.conditionalRendering ?? ConditionalRenderingGroup.createEmpty(),
     });
 
     this.addActivationHandler(() => this._activationHandler());

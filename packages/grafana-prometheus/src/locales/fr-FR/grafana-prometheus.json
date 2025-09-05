@@ -158,8 +158,8 @@
         "aria-label-prometheus-type": "Type Prometheus",
         "aria-label-select-http-method": "Sélectionner la méthode HTTP",
         "editor-options": {
-          "label-builder": "",
-          "label-code": ""
+          "label-builder": "Builder",
+          "label-code": "Code"
         },
         "label-cache-level": "Niveau du cache",
         "label-custom-query-parameters": "Paramètres de requête personnalisés",
@@ -168,7 +168,6 @@
         "label-disable-recording-rules-beta": "Désactiver les règles d’enregistrement (bêta)",
         "label-http-method": "Méthode HTTP",
         "label-incremental-querying-beta": "Requête incrémentale (bêta)",
-        "label-metric-names-suggestion-limit": "Limite de suggestion de noms de métriques",
         "label-prom-type-version": "Version {{promType}}",
         "label-prometheus-type": "Type Prometheus",
         "label-query-overlap-window": "Fenêtre de chevauchement de requête",
@@ -189,7 +188,6 @@
         "tooltip-disable-recording-rules-beta": "Cette fonctionnalité désactivera les règles d’enregistrement. Activez cette option pour améliorer les performances du tableau de bord",
         "tooltip-http-method": "Vous pouvez utiliser la méthode POST ou GET HTTP pour interroger votre source de données Prometheus. POST est la méthode recommandée car elle permet des requêtes plus volumineuses. Changez ceci en GET si vous avez une version Prometheus antérieure à la version 2.1 ou si les demandes POST sont restreintes dans votre réseau.",
         "tooltip-incremental-querying-beta": "Cette fonctionnalité modifiera le comportement par défaut des requêtes relatives pour toujours demander des données récentes à l’instance Prometheus. Au lieu de cela, les résultats des requêtes seront mis en cache et seuls les nouveaux enregistrements seront demandés. Activez cette option pour réduire la charge de la base de données et du réseau.",
-        "tooltip-metric-names-suggestion-limit": "Le nombre maximal de noms de métriques pouvant apparaître comme suggestions de saisie semi-automatique dans le mode Code de l’éditeur de requêtes.",
         "tooltip-prom-type-version": "Utilisez cette option pour définir la version de votre instance {{promType}} si elle n’est pas configurée automatiquement.",
         "tooltip-prometheus-type": "Définissez-la sur le type de votre base de données Prometheus, par exemple Prometheus, Cortex, Mimir ou Thanos. La modification de ce champ enregistrera vos paramètres actuels. Certains types de Prometheus prennent en charge ou non diverses API. Par exemple, certains types prennent en charge la correspondance d’expressions régulières pour les requêtes d’étiquettes afin d’améliorer les performances. Certains types ont une API pour les métadonnées. Si vous définissez cette option de manière incorrecte, vous risquez d’observer un comportement inhabituel lors de la requête de métriques et d’étiquettes. Veuillez consulter votre documentation Prometheus pour vous assurer que vous saisissez le bon type.",
         "tooltip-query-overlap-window": "Définissez une durée comme {{example1}} ou {{example2}} ou {{example3}}. Par défaut : {{default}}. Cette durée sera ajoutée à la durée de chaque demande incrémentielle.",
@@ -200,154 +198,147 @@
       }
     },
     "metrics-browser": {
-      "disabled-label": "",
-      "enabled-label": ""
+      "disabled-label": "(Désactivé)",
+      "enabled-label": "Navigateur de métriques"
     },
     "prom-query-legend-editor": {
       "get-legend-mode-options": {
-        "description-auto": "",
-        "description-custom": "",
-        "description-verbose": "",
-        "label-auto": "",
-        "label-custom": "",
-        "label-verbose": ""
+        "description-auto": "Inclut uniquement les étiquettes uniques",
+        "description-custom": "Fournir un modèle de nommage",
+        "description-verbose": "Tous les noms et valeurs d’étiquettes",
+        "label-auto": "Auto",
+        "label-custom": "Personnalisée",
+        "label-verbose": "Verbeux"
       }
     },
     "promql": {
       "getAggregationOptions": {
-        "documentation-avg": "",
-        "documentation-bottomk": "",
-        "documentation-count": "",
-        "documentation-count-values": "",
-        "documentation-group": "",
-        "documentation-max": "",
-        "documentation-min": "",
-        "documentation-quantile": "",
-        "documentation-stddev": "",
-        "documentation-stdvar": "",
-        "documentation-sum": "",
-        "documentation-topk": ""
+        "documentation-avg": "Calculer la moyenne par dimension",
+        "documentation-bottomk": "Les plus petits éléments k selon la valeur de l’échantillon",
+        "documentation-count": "Compter le nombre d’éléments dans le vecteur",
+        "documentation-count-values": "Compter le nombre d’éléments avec la même valeur",
+        "documentation-group": "Toutes les valeurs du vecteur résultant sont égales à 1",
+        "documentation-max": "Sélectionner la valeur maximale par dimension",
+        "documentation-min": "Sélectionner la valeur minimale par dimension",
+        "documentation-quantile": "Calculer le quantile φ (0 ≤ φ ≤ 1) par dimension",
+        "documentation-stddev": "Calculer l’écart-type de la population par dimension",
+        "documentation-stdvar": "Calculer la variance-type de la population par dimension",
+        "documentation-sum": "Calculer la somme par dimension",
+        "documentation-topk": "Les plus grands éléments k selon la valeur de l’échantillon"
       },
       "getFunctions": {
-        "documentation-abs": "",
-        "documentation-absent": "",
-        "documentation-absent-over-time": "",
-        "documentation-avg-over-time": "",
-        "documentation-ceil": "",
-        "documentation-changes": "",
-        "documentation-clamp": "",
-        "documentation-clamp-max": "",
-        "documentation-clamp-min": "",
-        "documentation-count-over-time": "",
-        "documentation-count-scalar": "",
-        "documentation-day-of-month": "",
-        "documentation-day-of-week": "",
-        "documentation-day-of-year": "",
-        "documentation-days-in-month": "",
-        "documentation-deg": "",
-        "documentation-delta": "",
-        "documentation-deriv": "",
-        "documentation-double-exponential-smoothing": "",
-        "documentation-drop-common-labels": "",
-        "documentation-exp": "",
-        "documentation-floor": "",
-        "documentation-histogram-avg": "",
-        "documentation-histogram-count": "",
-        "documentation-histogram-fraction": "",
-        "documentation-histogram-quantile": "",
-        "documentation-histogram-stddev": "",
-        "documentation-histogram-stdvar": "",
-        "documentation-histogram-sum": "",
-        "documentation-holt-winters": "",
-        "documentation-hour": "",
-        "documentation-idelta": "",
-        "documentation-increase": "",
-        "documentation-info": "",
-        "documentation-irate": "",
-        "documentation-label-join": "",
-        "documentation-label-replace": "",
-        "documentation-last-over-time": "",
-        "documentation-ln": "",
-        "documentation-log10": "",
-        "documentation-log2": "",
-        "documentation-max-over-time": "",
-        "documentation-min-over-time": "",
-        "documentation-minute": "",
-        "documentation-month": "",
-        "documentation-pi": "",
-        "documentation-predict-linear": "",
-        "documentation-present-over-time": "",
-        "documentation-quantile-over-time": "",
-        "documentation-rad": "",
-        "documentation-rate": "",
-        "documentation-resets": "",
-        "documentation-round": "",
-        "documentation-scalar": "",
-        "documentation-sgn": "",
-        "documentation-sort": "",
-        "documentation-sort-desc": "",
-        "documentation-sqrt": "",
-        "documentation-stddev-over-time": "",
-        "documentation-stdvar-over-time": "",
-        "documentation-sum-over-time": "",
-        "documentation-time": "",
-        "documentation-timestamp": "",
-        "documentation-vector": "",
-        "documentation-year": ""
+        "documentation-abs": "Renvoie le vecteur d’entrée avec toutes les valeurs converties en valeurs absolues.",
+        "documentation-absent": "Renvoie un vecteur vide si le vecteur passé en paramètre contient des éléments et un vecteur à un élément contenant la valeur 1 s’il est vide. Utile pour déclencher des alertes lorsqu’aucune série chronologique n’existe pour une combinaison donnée de nom de métrique et d’étiquette.",
+        "documentation-absent-over-time": "Renvoie un vecteur vide si le vecteur de plage passé en paramètre contient des éléments et un vecteur à un élément contenant la valeur 1 s’il est vide.",
+        "documentation-avg-over-time": "La valeur moyenne de tous les points dans l’intervalle spécifié.",
+        "documentation-ceil": "Arrondit à l’entier supérieur les valeurs d’échantillon de tous les éléments dans « v ».",
+        "documentation-changes": "Pour chaque série chronologique d’entrée, « changes(v range-vector) » renvoie le nombre de fois où sa valeur a changé dans la période spécifiée, sous forme de vecteur instantané.",
+        "documentation-clamp": "Saturation des valeurs d’échantillon des éléments de « v » : applique une borne inférieure « min. » et une borne supérieure « max. ».",
+        "documentation-clamp-max": "Saturation des valeurs d’échantillon des éléments de « v » : applique une borne supérieure « max. ».",
+        "documentation-clamp-min": "Saturation des valeurs d’échantillon des éléments de « v » : applique une borne inférieure « min. ».",
+        "documentation-count-over-time": "Le nombre total de valeurs dans l’intervalle spécifié.",
+        "documentation-count-scalar": "Renvoie le nombre d’éléments dans un vecteur de séries chronologiques sous forme scalaire. Contrairement à l’opérateur d’agrégation « count() », qui renvoie toujours un vecteur (même vide) et permet un regroupement via « by ».",
+        "documentation-day-of-month": "Renvoie le jour du mois pour chaque horodatage fourni (en UTC). Les valeurs renvoyées vont de 1 à 31.",
+        "documentation-day-of-week": "Renvoie le jour de la semaine pour chaque horodatage fourni (en UTC). Les valeurs renvoyées vont de 0 (dimanche) à 6 (samedi).",
+        "documentation-day-of-year": "Renvoie le jour de l’année pour chaque horodatage fourni (en UTC). Les valeurs renvoyées vont de 1 à 365 pour les années non bissextiles et de 1 à 366 pour les années bissextiles.",
+        "documentation-days-in-month": "Renvoie le nombre de jours dans le mois pour chaque horodatage fourni (en UTC). Les valeurs renvoyées vont de 28 à 31.",
+        "documentation-deg": "Convertit des radians en degrés pour tous les éléments dans v",
+        "documentation-delta": "Calcule la différence entre la première et la dernière valeur de chaque élément d’une série chronologique dans un vecteur de plage « v » et renvoie un vecteur instantané avec les écarts et les étiquettes correspondantes. L’écart est extrapolé sur toute la plage de temps, ce qui peut produire des résultats non entiers même avec des valeurs d’échantillon entières.",
+        "documentation-deriv": "Calcule la dérivée par seconde d’une série chronologique dans un vecteur de plage « v », à l’aide d’une régression linéaire simple.",
+        "documentation-double-exponential-smoothing": "Produit une valeur lissée pour une série chronologique à partir de la plage « v ». Plus le facteur de lissage « sf » est bas, plus l’importance est donnée aux anciennes données. Plus le facteur de tendance « tf » est élevé, plus les tendances sont prises en compte. Les valeurs de « sf » et de « tf » doivent être comprises entre 0 et 1.",
+        "documentation-drop-common-labels": "Supprime toutes les étiquettes dont les noms et les valeurs sont identiques dans toutes les séries du vecteur d’entrée.",
+        "documentation-exp": "Calcule la fonction exponentielle de tous les éléments de « v ».\nCas particuliers :\n* « Exp(+Inf) = +Inf » \n* « Exp(NaN) = NaN »",
+        "documentation-floor": "Arrondit à l’entier inférieur les valeurs d’échantillon de tous les éléments dans « v ».",
+        "documentation-histogram-avg": "Renvoie la moyenne arithmétique des valeurs observées dans un histogramme natif. Les échantillons non natifs sont ignorés et exclus du vecteur retourné.",
+        "documentation-histogram-count": "Renvoie le nombre d’observations enregistrées dans un histogramme natif.",
+        "documentation-histogram-fraction": "Renvoie la fraction estimée des observations comprises entre les valeurs inférieure et supérieure fournies.",
+        "documentation-histogram-quantile": "Calcule le quantile φ (0 ≤ φ ≤ 1) à partir des buckets « b » d’un histogramme. Les échantillons dans « b » correspondent aux comptes d’observations dans chaque bucket. Chaque échantillon doit comporter une étiquette « le » dont la valeur indique la borne supérieure (incluse) du bucket. (Les échantillons ne comportant pas cette étiquette sont ignorés sans avertissement.) Le type de métrique histogramme fournit automatiquement des séries chronologiques avec le suffixe « _bucket » et les étiquettes appropriées.",
+        "documentation-histogram-stddev": "Renvoie l’écart-type estimé des observations dans un histogramme natif, calculé à partir de la moyenne géométrique des buckets dans lesquels se trouvent les observations.",
+        "documentation-histogram-stdvar": "Renvoie la variance-type estimée des observations dans un histogramme natif.",
+        "documentation-histogram-sum": "Renvoie la somme des observations enregistrées dans un histogramme natif.",
+        "documentation-holt-winters": "Renommée en double_exponential_smoothing dans Prometheus v3.x. Pour les versions de Prometheus égales ou supérieures à la v3.0, merci d’utiliser double_exponential_smoothing. \n\nGénère une valeur lissée pour une série chronologique en fonction de l’intervalle défini dans « v ». Plus le facteur de lissage « sf » est faible, plus l’importance est donnée aux données anciennes. Plus le facteur de tendance « tf » est élevé, plus les tendances des données sont prises en compte. Les valeurs de « sf » et de « tf » doivent être comprises entre 0 et 1.",
+        "documentation-hour": "Renvoie l’heure de la journée pour chaque horodatage fourni (en UTC). Les valeurs renvoyées vont de 0 à 23.",
+        "documentation-idelta": "Calcule la différence entre les deux derniers échantillons dans le vecteur de plage « v » et renvoie un vecteur instantané contenant les deltas et les étiquettes correspondantes.",
+        "documentation-increase": "Calcule l’augmentation d’une série chronologique sur une période donnée. Les ruptures de monotonie (comme les remises à zéro du compteur liées à un redémarrage de la cible) sont automatiquement corrigées. L’augmentation est extrapolée sur l’ensemble de l’intervalle de temps spécifié dans le sélecteur de plage, ce qui permet d’obtenir un résultat non entier, même si le compteur n’augmente que par valeurs entières.",
+        "documentation-info": "Renvoie les dernières métadonnées disponibles sur un groupe de métriques, comme leurs étiquettes et valeurs actuelles, sans effectuer de calcul",
+        "documentation-irate": "Calcule le taux instantané d’augmentation par seconde d’une série chronologique sur l’intervalle donné. Ce calcul repose sur les deux derniers points de données. Les ruptures de monotonie (comme les remises à zéro du compteur dues à un redémarrage de la cible) sont automatiquement corrigées.",
+        "documentation-label-join": "Pour chaque série chronologique dans « v », concatène toutes les valeurs des étiquettes « src_labels » en utilisant un « séparateur », puis renvoie la série avec une nouvelle étiquette « dst_label » contenant cette valeur concaténée. Cette fonction peut prendre un nombre quelconque de « src_labels ».",
+        "documentation-label-replace": "Pour chaque série chronologique dans « v », la fonction « label_replace(v instant-vector, dst_label string, replacement string, src_label string, regex string) » applique l’expression régulière « regex » à l’étiquette « src_label ». Si elle correspond, la série est renvoyée avec l’étiquette « dst_label » remplacée selon la chaîne « replacement ». « $1 » est remplacé par le premier groupe capturé, « $2 » par le second, etc. Si l’expression régulière ne correspond pas, la série est renvoyée inchangée.",
+        "documentation-last-over-time": "La valeur de point la plus récente dans l’intervalle spécifié.",
+        "documentation-ln": "Calcule le logarithme népérien pour tous les éléments de « v ».\nCas particuliers :\n * « ln(+Inf) = +Inf »\n * « ln(0) = -Inf »\n * « ln(x < 0) = NaN »\n * « ln(NaN) = NaN »",
+        "documentation-log10": "Calcule le logarithme décimal pour tous les éléments de « v ». Les cas particuliers sont identiques à ceux de « ln ».",
+        "documentation-log2": "Calcule le logarithme binaire pour tous les éléments de « v ». Les cas particuliers sont identiques à ceux de « ln ».",
+        "documentation-max-over-time": "La valeur maximale de tous les points sur l’intervalle spécifié.",
+        "documentation-min-over-time": "La valeur minimale de tous les points sur l’intervalle spécifié.",
+        "documentation-minute": "Renvoie la minute de l’heure pour chaque horodatage fourni (en UTC). Les valeurs renvoyées vont de 0 à 59.",
+        "documentation-month": "Renvoie le mois de l’année pour chaque horodatage fourni (en UTC). Les valeurs renvoyées vont de 1 à 12 (1 correspondant à janvier, etc.).",
+        "documentation-pi": "Renvoie la valeur de pi",
+        "documentation-predict-linear": "Prédit la valeur de la série chronologique à « t » secondes dans le futur, en se basant sur le vecteur d’intervalle « v », à l’aide d’une régression linéaire simple.",
+        "documentation-present-over-time": "La valeur 1 pour toute série dans l’intervalle spécifié.",
+        "documentation-quantile-over-time": "Le quantile φ (0 ≤ φ ≤ 1) des valeurs dans l’intervalle spécifié.",
+        "documentation-rad": "Convertit les degrés en radians pour tous les éléments de v",
+        "documentation-rate": "Calcule le taux moyen d’augmentation par seconde de la série chronologique dans le vecteur d’intervalle. Les ruptures de monotonie (telles que les remises à zéro du compteur dues à un redémarrage de la cible) sont automatiquement corrigées. Le calcul est également extrapolé aux extrémités de l’intervalle de temps, afin de compenser d’éventuelles collectes manquées ou un mauvais alignement des cycles de collecte avec la période analysée.",
+        "documentation-resets": "Pour chaque série chronologique d’entrée, « resets(v range-vector) » renvoie le nombre de remises à zéro du compteur sur la période donnée, sous forme de vecteur instantané. Toute diminution de la valeur entre deux échantillons consécutifs est interprétée comme une remise à zéro du compteur.",
+        "documentation-round": "Arrondit les valeurs d’échantillon de tous les éléments de « v » à l’entier le plus proche. En cas d’égalité, l’arrondi est effectué vers le haut. L’argument optionnel « to_nearest » permet de spécifier le multiple auquel les valeurs doivent être arrondies. Ce multiple peut être fractionnaire.",
+        "documentation-scalar": "À partir d’un vecteur contenant un seul élément, « scalar(v instant-vector) » renvoie la valeur de cet échantillon sous forme de scalaire. Si le vecteur d’entrée ne contient pas exactement un élément, « scalar » renvoie « NaN ».",
+        "documentation-sgn": "Renvoie un vecteur avec toutes les valeurs converties en leur signe : 1 si la valeur est positive, -1 si elle est négative et 0 si elle est nulle.",
+        "documentation-sort": "Renvoie les éléments du vecteur triés par valeur d’échantillon, par ordre croissant.",
+        "documentation-sort-desc": "Renvoie les éléments du vecteur triés par valeur d’échantillon, par ordre décroissant.",
+        "documentation-sqrt": "Calcule la racine carrée de tous les éléments de « v ».",
+        "documentation-stddev-over-time": "L’écart-type de la population des valeurs dans l’intervalle spécifié.",
+        "documentation-stdvar-over-time": "La variance-type de la population des valeurs dans l’intervalle spécifié.",
+        "documentation-sum-over-time": "La somme de toutes les valeurs dans l’intervalle spécifié.",
+        "documentation-time": "Renvoie le nombre de secondes écoulées depuis le 1er janvier 1970 (UTC). À noter : cette valeur ne correspond pas à l’heure actuelle, mais à l’instant auquel l’expression est évaluée.",
+        "documentation-timestamp": "Renvoie l’horodatage de chaque échantillon du vecteur fourni, sous forme de nombre de secondes depuis le 1er janvier 1970 (UTC).",
+        "documentation-vector": "Renvoie le scalaire « s » sous forme de vecteur sans étiquette.",
+        "documentation-year": "Renvoie l’année correspondant à chaque horodatage fourni (en UTC)."
       },
       "getTrigonometricFunctions": {
-        "documentation-acos": "",
-        "documentation-acosh": "",
-        "documentation-asin": "",
-        "documentation-asinh": "",
-        "documentation-atan": "",
-        "documentation-atanh": "",
-        "documentation-cos": "",
-        "documentation-cosh": "",
-        "documentation-sin": "",
-        "documentation-sinh": "",
-        "documentation-tan": "",
-        "documentation-tanh": ""
+        "documentation-acos": "calcule l’arc cosinus de tous les éléments dans {{argument}}",
+        "documentation-acosh": "calcule le cosinus hyperbolique inverse de tous les éléments dans {{argument}}",
+        "documentation-asin": "calcule l’arc sinus de tous les éléments dans {{argument}}",
+        "documentation-asinh": "calcule le sinus hyperbolique inverse de tous les éléments dans {{argument}}",
+        "documentation-atan": "calcule l’arc tangente de tous les éléments dans {{argument}}",
+        "documentation-atanh": "calcule la tangente hyperbolique inverse de tous les éléments dans {{argument}}",
+        "documentation-cos": "calcule le cosinus de tous les éléments dans {{argument}}",
+        "documentation-cosh": "calcule le cosinus hyperbolique de tous les éléments dans {{argument}}",
+        "documentation-sin": "calcule le sinus de tous les éléments dans {{argument}}",
+        "documentation-sinh": "calcule le sinus hyperbolique de tous les éléments dans {{argument}}",
+        "documentation-tan": "calcule la tangente de tous les éléments dans {{argument}}",
+        "documentation-tanh": "calcule la tangente hyperbolique de tous les éléments dans {{argument}}"
       }
     },
     "querybuilder": {
-      "additional-settings": {
-        "content-filter-metric-names-regex-search-using": "Filtrez les noms de métriques par recherche d’expression régulière, en utilisant un appel supplémentaire sur l’API Prometheus.",
-        "disable-text-wrap": "Désactiver le retour à la ligne automatique"
-      },
       "feedback-link": {
         "give-feedback": "Publiez votre commentaire",
         "title-give-feedback": "L’explorateur de métriques est une nouvelle fonctionnalité ; faites-nous part de vos retours pour l’améliorer"
       },
       "get-collapsed-info": {
-        "exemplars": "",
-        "format": "",
-        "legend": "",
-        "step": "",
-        "type": ""
+        "exemplars": "Exemples : {{value}}",
+        "format": "Format : {{value}}",
+        "legend": "Légende : {{value}}",
+        "step": "Étape : {{value}}",
+        "type": "Type : {{value}}"
       },
       "get-placeholders": {
-        "browse": "",
-        "include-null-metadata": "",
-        "metadata-search-switch": "",
-        "set-use-backend": "",
-        "type": ""
+        "browse": "Rechercher des métriques par nom",
+        "type": "Filtrer par type"
       },
       "get-prom-types": {
-        "description-counter": "",
-        "description-gauge": "",
-        "description-histogram": "",
-        "description-native-histogram": "",
-        "description-no-type": "",
-        "description-summary": "",
-        "description-unknown": "",
-        "label-counter": "",
-        "label-gauge": "",
-        "label-histogram": "",
-        "label-native-histogram": "",
-        "label-no-type": "",
-        "label-summary": "",
-        "label-unknown": ""
+        "description-counter": "Une métrique cumulative qui représente un compteur croissant dont la valeur ne peut qu’augmenter ou être réinitialisée à zéro lors d’un redémarrage.",
+        "description-gauge": "Une métrique représentant une valeur numérique unique pouvant fluctuer librement.",
+        "description-histogram": "Un histogramme échantillonne des observations (par exemple, durées de requêtes ou tailles de réponse) et les répartit dans des classes configurables.",
+        "description-native-histogram": "Les histogrammes natifs diffèrent des histogrammes classiques de Prometheus à plusieurs égards : leurs bornes de classe sont calculées à partir d’une formule dépendant de leur résolution et ne sont pas définies par l’utilisateur.",
+        "description-no-type": "Ces métriques n’ont pas de type défini dans les métadonnées.",
+        "description-summary": "Un résumé échantillonne des observations (par exemple, durées de requêtes ou tailles de réponse) et permet de calculer des quantiles configurables sur une fenêtre temporelle glissante.",
+        "description-unknown": "Ces métriques sont marquées comme inconnues dans les métadonnées.",
+        "label-counter": "Compteur",
+        "label-gauge": "Jauge",
+        "label-histogram": "Histogramme",
+        "label-native-histogram": "Histogramme natif",
+        "label-no-type": "Aucun type",
+        "label-summary": "Résumé",
+        "label-unknown": "Inconnu"
       },
       "handle-function": {
         "text": {
@@ -365,8 +356,8 @@
         "tooltip-label-filters": "Facultatif : utilisé pour filtrer la sélection de métrique pour ce type de requête."
       },
       "label-param-editor": {
-        "loadingMessage-loading-labels": "",
-        "noOptionsMessage-no-labels-found": ""
+        "loadingMessage-loading-labels": "Chargement des étiquettes",
+        "noOptionsMessage-no-labels-found": "Aucune étiquette trouvée"
       },
       "metric-combobox": {
         "async-select": {
@@ -378,16 +369,10 @@
         "tooltip-metric": "Facultatif : renvoie une liste de valeurs d’étiquette pour le nom d’étiquette dans la métrique spécifiée."
       },
       "metrics-modal": {
-        "additional-settings": "Paramètres additionnels",
-        "aria-label-additional-settings": "Paramètres supplémentaires",
         "aria-label-browse-metrics": "Parcourir les métriques",
         "currently-selected": "Sélection actuelle : {{selected}}",
         "metrics-pre-filtered": "Ces métriques ont été pré-filtrées par les étiquettes choisies dans les filtres d’étiquettes.",
-        "placeholder-results-per-page": "résultats par page",
-        "results-per-page": "Résultats par page",
-        "title-metrics-explorer": "Explorateur de métriques",
-        "results-amount_one": "Affichage de {{num}} résultats sur {{count}}",
-        "results-amount_other": "Affichage de {{num}} résultats sur {{count}}"
+        "title-metrics-explorer": "Explorateur de métriques"
       },
       "nested-query": {
         "label": {
@@ -422,18 +407,18 @@
       },
       "operation-utils": {
         "getAggregationExplainer": {
-          "label-by": "",
-          "label-default": "",
-          "label-without": ""
+          "label-by": "Calcule {{aggregationName}} sur les dimensions tout en conservant {{labelWord}} {{labels}}.",
+          "label-default": "Calcule {{aggregationName}} sur les dimensions.",
+          "label-without": "Calcule {{aggregationName}} sur les dimensions {{labels}}. Toutes les autres étiquettes sont conservées."
         }
       },
       "prom-query-builder-options": {
         "aria-label-lower-limit-parameter": "Définir la limite inférieure pour le paramètre d’étape",
         "aria-label-select-resolution": "Sélectionner une résolution",
         "format-options": {
-          "label-heatmap": "",
-          "label-table": "",
-          "label-time-series": ""
+          "label-heatmap": "Carte thermique",
+          "label-table": "Tableau",
+          "label-time-series": "Série chronologique"
         },
         "label-exemplars": "Exemples",
         "label-format": "Format",
@@ -444,13 +429,9 @@
         "title-options": "Options",
         "tooltip-min-step": "Une limite inférieure supplémentaire pour le paramètre d’étape de la requête Prometheus et pour les variables <2>{{interval}}</2> et <4>{{rateInterval}}</4>."
       },
-      "prom-query-code-editor-autocomplete-info": {
-        "autocomplete-suggestions-limited": "Suggestions de saisie semi-automatique limitées",
-        "tooltip-autocomplete-suggestions-limited": "Le nombre de noms de métriques dépasse la limite de saisie semi-automatique. Seules les {{autocompleteLimit}} métriques les plus pertinentes sont affichées. Vous pouvez ajuster le seuil dans les paramètres de la source de données."
-      },
       "prom-query-editor-selector": {
-        "body-syntax-error": "",
-        "confirmText-continue": "",
+        "body-syntax-error": "Une erreur de syntaxe ou une structure de requête invalide empêche l’affichage en mode Builder. Certaines parties de la requête peuvent être perdues.",
+        "confirmText-continue": "Continuer",
         "kick-start-your-query": "Lancer votre requête",
         "label-explain": "Expliquer",
         "run-queries": "Exécuter les requêtes",
@@ -466,8 +447,8 @@
       },
       "query-editor-mode-toggle": {
         "editor-modes": {
-          "label-builder": "",
-          "label-code": ""
+          "label-builder": "Builder",
+          "label-code": "Code"
         }
       },
       "query-pattern": {
@@ -496,11 +477,10 @@
       "results-table": {
         "content-descriptive-type": "Lors de la création d’un(e) {{descriptiveType}}, Prometheus expose plusieurs séries avec le compteur de type. ",
         "description": "Description",
-        "message-expand-label-filters": "",
-        "message-expand-search": "",
-        "message-no-metrics-found": "",
+        "message-expand-label-filters": "Aucune métrique trouvée. Essayez d’élargir vos filtres d’étiquettes.",
+        "message-expand-search": "Aucune métrique trouvée. Essayez d’élargir votre recherche et vos filtres.",
+        "message-no-metrics-found": "Aucune métrique trouvée dans la source de données.",
         "name": "Nom",
-        "select": "Sélectionner",
         "type": "Type"
       },
       "update-function-args": {

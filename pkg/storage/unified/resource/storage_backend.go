@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"iter"
 	"math/rand/v2"
 	"net/http"
 	"sort"
@@ -215,6 +216,7 @@ func (k *kvStorageBackend) ListIterator(ctx context.Context, req *resourcepb.Lis
 
 	// Fetch the latest objects
 	keys := make([]MetaDataKey, 0, min(defaultListBufferSize, req.Limit+1))
+	idx := 0
 	for metaKey, err := range k.metaStore.ListResourceKeysAtRevision(ctx, MetaListRequestKey{
 		Namespace: req.Options.Key.Namespace,
 		Group:     req.Options.Key.Group,
@@ -224,15 +226,17 @@ func (k *kvStorageBackend) ListIterator(ctx context.Context, req *resourcepb.Lis
 		if err != nil {
 			return 0, err
 		}
+		// Skip the first offset items. This is not efficient, but it's a simple way to implement it for now.
+		if idx < int(offset) {
+			idx++
+			continue
+		}
 		keys = append(keys, metaKey)
+		// Only fetch the first limit items + 1 to get the next token.
+		if len(keys) >= int(req.Limit+1) {
+			break
+		}
 	}
-
-	sortMetaKeysByResourceVersion(keys, true) // sort ascending for sql parity
-
-	if offset > 0 && int64(len(keys)) > offset {
-		keys = keys[offset:]
-	}
-
 	iter := kvListIterator{
 		keys:         keys,
 		currentIndex: -1,
@@ -430,19 +434,6 @@ func sortByResourceVersion(filteredKeys []DataKey, sortAscending bool) {
 	}
 }
 
-// sortMetaKeysByResourceVersion sorts the metadata keys based on the sortAscending flag
-func sortMetaKeysByResourceVersion(keys []MetaDataKey, sortAscending bool) {
-	if sortAscending {
-		sort.Slice(keys, func(i, j int) bool {
-			return keys[i].ResourceVersion < keys[j].ResourceVersion
-		})
-	} else {
-		sort.Slice(keys, func(i, j int) bool {
-			return keys[i].ResourceVersion > keys[j].ResourceVersion
-		})
-	}
-}
-
 // applyPagination filters keys based on pagination parameters
 func applyPagination(keys []DataKey, lastSeenRV int64, sortAscending bool) []DataKey {
 	if lastSeenRV == 0 {
@@ -458,6 +449,191 @@ func applyPagination(keys []DataKey, lastSeenRV int64, sortAscending bool) []Dat
 		}
 	}
 	return pagedKeys
+}
+
+func (k *kvStorageBackend) ListModifiedSince(ctx context.Context, key NamespacedResource, sinceRv int64) (int64, iter.Seq2[*ModifiedResource, error]) {
+	if !key.Valid() {
+		return 0, func(yield func(*ModifiedResource, error) bool) {
+			yield(nil, fmt.Errorf("group, resource, and namespace are required"))
+		}
+	}
+
+	if sinceRv <= 0 {
+		return 0, func(yield func(*ModifiedResource, error) bool) {
+			yield(nil, fmt.Errorf("sinceRv must be greater than 0"))
+		}
+	}
+
+	// Generate a new resource version for the list
+	listRV := k.snowflake.Generate().Int64()
+
+	// Check if sinceRv is older than 1 hour
+	sinceRvTimestamp := snowflake.ID(sinceRv).Time()
+	sinceTime := time.Unix(0, sinceRvTimestamp*int64(time.Millisecond))
+	sinceRvAge := time.Since(sinceTime)
+
+	if sinceRvAge > time.Hour {
+		k.log.Debug("ListModifiedSince using data store", "sinceRv", sinceRv, "sinceRvAge", sinceRvAge)
+		return listRV, k.listModifiedSinceDataStore(ctx, key, sinceRv)
+	}
+
+	k.log.Debug("ListModifiedSince using event store", "sinceRv", sinceRv, "sinceRvAge", sinceRvAge)
+	return listRV, k.listModifiedSinceEventStore(ctx, key, sinceRv)
+}
+
+func convertEventType(action DataAction) resourcepb.WatchEvent_Type {
+	switch action {
+	case DataActionCreated:
+		return resourcepb.WatchEvent_ADDED
+	case DataActionUpdated:
+		return resourcepb.WatchEvent_MODIFIED
+	case DataActionDeleted:
+		return resourcepb.WatchEvent_DELETED
+	default:
+		panic(fmt.Sprintf("unknown DataAction: %v", action))
+	}
+}
+
+func (k *kvStorageBackend) getValueFromDataStore(ctx context.Context, dataKey DataKey) ([]byte, error) {
+	raw, err := k.dataStore.Get(ctx, dataKey)
+	if err != nil {
+		return []byte{}, err
+	}
+
+	value, err := io.ReadAll(raw)
+	if err != nil {
+		return []byte{}, err
+	}
+
+	return value, nil
+}
+
+func (k *kvStorageBackend) listModifiedSinceDataStore(ctx context.Context, key NamespacedResource, sinceRv int64) iter.Seq2[*ModifiedResource, error] {
+	return func(yield func(*ModifiedResource, error) bool) {
+		var lastSeenResource *ModifiedResource
+		var lastSeenDataKey DataKey
+		for dataKey, err := range k.dataStore.Keys(ctx, ListRequestKey{Namespace: key.Namespace, Group: key.Group, Resource: key.Resource}) {
+			if err != nil {
+				yield(&ModifiedResource{}, err)
+				return
+			}
+
+			if dataKey.ResourceVersion < sinceRv {
+				continue
+			}
+
+			if lastSeenResource == nil {
+				lastSeenResource = &ModifiedResource{
+					Key: resourcepb.ResourceKey{
+						Namespace: dataKey.Namespace,
+						Group:     dataKey.Group,
+						Resource:  dataKey.Resource,
+						Name:      dataKey.Name,
+					},
+					ResourceVersion: dataKey.ResourceVersion,
+					Action:          convertEventType(dataKey.Action),
+				}
+				lastSeenDataKey = dataKey
+			}
+
+			if lastSeenResource.Key.Name != dataKey.Name {
+				value, err := k.getValueFromDataStore(ctx, lastSeenDataKey)
+				if err != nil {
+					yield(&ModifiedResource{}, err)
+					return
+				}
+
+				lastSeenResource.Value = value
+
+				if !yield(lastSeenResource, nil) {
+					return
+				}
+			}
+
+			lastSeenResource = &ModifiedResource{
+				Key: resourcepb.ResourceKey{
+					Namespace: dataKey.Namespace,
+					Group:     dataKey.Group,
+					Resource:  dataKey.Resource,
+					Name:      dataKey.Name,
+				},
+				ResourceVersion: dataKey.ResourceVersion,
+				Action:          convertEventType(dataKey.Action),
+			}
+			lastSeenDataKey = dataKey
+		}
+
+		if lastSeenResource != nil {
+			value, err := k.getValueFromDataStore(ctx, lastSeenDataKey)
+			if err != nil {
+				yield(&ModifiedResource{}, err)
+				return
+			}
+
+			lastSeenResource.Value = value
+
+			yield(lastSeenResource, nil)
+		}
+	}
+}
+
+func (k *kvStorageBackend) listModifiedSinceEventStore(ctx context.Context, key NamespacedResource, sinceRv int64) iter.Seq2[*ModifiedResource, error] {
+	return func(yield func(*ModifiedResource, error) bool) {
+		// store all events ordered by RV for the given tenant here
+		eventKeys := make([]EventKey, 0)
+		for evtKeyStr, err := range k.eventStore.ListKeysSince(ctx, sinceRv-defaultLookbackPeriod.Nanoseconds()) {
+			if err != nil {
+				yield(&ModifiedResource{}, err)
+				return
+			}
+
+			evtKey, err := ParseEventKey(evtKeyStr)
+			if err != nil {
+				yield(&ModifiedResource{}, err)
+				return
+			}
+
+			if evtKey.ResourceVersion < sinceRv {
+				continue
+			}
+
+			if evtKey.Group != key.Group || evtKey.Resource != key.Resource || evtKey.Namespace != key.Namespace {
+				continue
+			}
+
+			eventKeys = append(eventKeys, evtKey)
+		}
+
+		// we only care about the latest revision of every resource in the list
+		seen := make(map[string]struct{})
+		for i := len(eventKeys) - 1; i >= 0; i -= 1 {
+			evtKey := eventKeys[i]
+			if _, ok := seen[evtKey.Name]; ok {
+				continue
+			}
+			seen[evtKey.Name] = struct{}{}
+
+			value, err := k.getValueFromDataStore(ctx, DataKey(evtKey))
+			if err != nil {
+				yield(&ModifiedResource{}, err)
+				return
+			}
+
+			if !yield(&ModifiedResource{
+				Key: resourcepb.ResourceKey{
+					Group:     evtKey.Group,
+					Resource:  evtKey.Resource,
+					Namespace: evtKey.Namespace,
+					Name:      evtKey.Name,
+				},
+				Action:          convertEventType(evtKey.Action),
+				ResourceVersion: evtKey.ResourceVersion,
+				Value:           value,
+			}, nil) {
+				return
+			}
+		}
+	}
 }
 
 // ListHistory is like ListIterator, but it returns the history of a resource.

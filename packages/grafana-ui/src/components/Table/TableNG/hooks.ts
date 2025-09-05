@@ -1,20 +1,21 @@
-import { useState, useMemo, useEffect, useCallback, useRef, useLayoutEffect, RefObject } from 'react';
+import { useState, useMemo, useCallback, useRef, useLayoutEffect, RefObject, CSSProperties, useEffect } from 'react';
 import { Column, DataGridHandle, DataGridProps, SortColumn } from 'react-data-grid';
 
-import { Field, fieldReducers, FieldType, formattedValueToString, reduceField } from '@grafana/data';
+import { compareArrayValues, Field, formattedValueToString } from '@grafana/data';
 
 import { TableColumnResizeActionCallback } from '../types';
 
 import { TABLE } from './constants';
-import { FilterType, TableFooterCalc, TableRow, TableSortByFieldState, TableSummaryRow, TypographyCtx } from './types';
+import { FilterType, TableRow, TableSortByFieldState, TableSummaryRow, TypographyCtx } from './types';
 import {
   getDisplayName,
   processNestedTableRows,
   applySort,
   getColumnTypes,
   getRowHeight,
-  buildHeaderLineCounters,
-  buildRowLineCounters,
+  computeColWidths,
+  buildHeaderHeightMeasurers,
+  buildCellHeightMeasurers,
 } from './utils';
 
 // Helper function to get displayed value
@@ -134,7 +135,7 @@ export function useSortedRows(
 export interface PaginatedRowsOptions {
   height: number;
   width: number;
-  rowHeight: number | ((row: TableRow) => number);
+  rowHeight: NonNullable<CSSProperties['height']> | ((row: TableRow) => number);
   headerHeight: number;
   footerHeight: number;
   paginationHeight?: number;
@@ -173,20 +174,27 @@ export function usePaginatedRows(
       return rowHeight;
     }
 
+    // when using auto-sized rows, we're just going to have to pick a number. the alternative
+    // is to measure each row, which we could do but would be expensive.
+    if (typeof rowHeight === 'string') {
+      return TABLE.MAX_CELL_HEIGHT;
+    }
+
     // we'll just measure 100 rows to estimate
     return rows.slice(0, 100).reduce((avg, row, _, { length }) => avg + rowHeight(row) / length, 0);
   }, [rows, rowHeight, enabled]);
 
+  const smallPagination = useMemo(() => enabled && width < TABLE.PAGINATION_LIMIT, [enabled, width]);
+
   // using dimensions of the panel, calculate pagination parameters
-  const { numPages, rowsPerPage, pageRangeStart, pageRangeEnd, smallPagination } = useMemo((): {
+  const { numPages, rowsPerPage, pageRangeStart, pageRangeEnd } = useMemo((): {
     numPages: number;
     rowsPerPage: number;
     pageRangeStart: number;
     pageRangeEnd: number;
-    smallPagination: boolean;
   } => {
     if (!enabled) {
-      return { numPages: 0, rowsPerPage: 0, pageRangeStart: 1, pageRangeEnd: numRows, smallPagination: false };
+      return { numPages: 0, rowsPerPage: 0, pageRangeStart: 1, pageRangeEnd: numRows };
     }
 
     // calculate number of rowsPerPage based on height stack
@@ -201,19 +209,18 @@ export function usePaginatedRows(
     if (pageRangeEnd > numRows) {
       pageRangeEnd = numRows;
     }
-    const smallPagination = width < TABLE.PAGINATION_LIMIT;
+
     const numPages = Math.ceil(numRows / rowsPerPage);
     return {
       numPages,
       rowsPerPage,
       pageRangeStart,
       pageRangeEnd,
-      smallPagination,
     };
-  }, [width, height, headerHeight, footerHeight, avgRowHeight, enabled, numRows, page]);
+  }, [height, headerHeight, footerHeight, avgRowHeight, enabled, numRows, page]);
 
   // safeguard against page overflow on panel resize or other factors
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (!enabled) {
       return;
     }
@@ -245,73 +252,6 @@ export function usePaginatedRows(
   };
 }
 
-export interface FooterCalcsOptions {
-  enabled?: boolean;
-  isCountRowsSet?: boolean;
-  footerOptions?: TableFooterCalc;
-}
-
-export function useFooterCalcs(
-  rows: TableRow[],
-  // it's very important that this is the _visible_ fields.
-  fields: Field[],
-  { enabled, footerOptions, isCountRowsSet }: FooterCalcsOptions
-): string[] {
-  return useMemo(() => {
-    const footerReducers = footerOptions?.reducer;
-
-    if (!enabled || !footerOptions || !Array.isArray(footerReducers) || !footerReducers.length) {
-      return [];
-    }
-
-    const fieldNameSet = footerOptions.fields?.length ? new Set(footerOptions.fields) : null;
-
-    return fields.map((field, index) => {
-      if (field.state?.calcs) {
-        delete field.state?.calcs;
-      }
-
-      if (isCountRowsSet) {
-        return index === 0 ? `${rows.length}` : '';
-      }
-
-      let emptyValue = '';
-      if (index === 0) {
-        const footerCalcReducer = footerReducers[0];
-        emptyValue = footerCalcReducer ? fieldReducers.get(footerCalcReducer).name : '';
-      }
-
-      if (field.type !== FieldType.number) {
-        return emptyValue;
-      }
-
-      // if field.display is undefined, don't throw
-      const displayFn = field.display;
-      if (!displayFn) {
-        return emptyValue;
-      }
-
-      // If fields array is specified, only show footer for fields included in that array.
-      // the array can include either the display name or the field name. we don't use a field matcher
-      // because that requires us to drill the data frame down here.
-      if (fieldNameSet && !fieldNameSet.has(getDisplayName(field)) && !fieldNameSet.has(field.name)) {
-        return emptyValue;
-      }
-
-      const calc = footerReducers[0];
-      const value = reduceField({
-        field: {
-          ...field,
-          values: rows.map((row) => row[getDisplayName(field)]),
-        },
-        reducers: footerReducers,
-      })[calc];
-
-      return formattedValueToString(displayFn(value));
-    });
-  }, [fields, enabled, footerOptions, isCountRowsSet, rows]);
-}
-
 const ICON_WIDTH = 16;
 const ICON_GAP = 4;
 
@@ -334,18 +274,24 @@ export function useHeaderHeight({
 }: UseHeaderHeightOptions): number {
   const perIconSpace = ICON_WIDTH + ICON_GAP;
 
-  const lineCounters = useMemo(() => buildHeaderLineCounters(fields, typographyCtx), [fields, typographyCtx]);
+  const measurers = useMemo(() => buildHeaderHeightMeasurers(fields, typographyCtx), [fields, typographyCtx]);
 
   const columnAvailableWidths = useMemo(
     () =>
       columnWidths.map((c, idx) => {
+        if (idx >= fields.length) {
+          return 0; // no width available for this column yet
+        }
+
         let width = c - 2 * TABLE.CELL_PADDING - TABLE.BORDER_RIGHT;
+        const field = fields[idx];
+
         // filtering icon
-        if (fields[idx]?.config?.custom?.filterable) {
+        if (field.config?.custom?.filterable) {
           width -= perIconSpace;
         }
         // sorting icon
-        if (sortColumns.some((col) => col.columnKey === getDisplayName(fields[idx]))) {
+        if (sortColumns.some((col) => col.columnKey === getDisplayName(field))) {
           width -= perIconSpace;
         }
         // type icon
@@ -367,11 +313,11 @@ export function useHeaderHeight({
       -1,
       columnAvailableWidths,
       TABLE.HEADER_HEIGHT,
-      lineCounters,
+      measurers,
       TABLE.LINE_HEIGHT,
       TABLE.CELL_PADDING
     );
-  }, [fields, enabled, columnAvailableWidths, lineCounters]);
+  }, [fields, enabled, columnAvailableWidths, measurers]);
 
   return headerHeight;
 }
@@ -380,9 +326,10 @@ interface UseRowHeightOptions {
   columnWidths: number[];
   fields: Field[];
   hasNestedFrames: boolean;
-  defaultHeight: number;
+  defaultHeight: NonNullable<CSSProperties['height']>;
   expandedRows: Set<number>;
   typographyCtx: TypographyCtx;
+  maxHeight?: number;
 }
 
 export function useRowHeight({
@@ -392,9 +339,13 @@ export function useRowHeight({
   defaultHeight,
   expandedRows,
   typographyCtx,
-}: UseRowHeightOptions): number | ((row: TableRow) => number) {
-  const lineCounters = useMemo(() => buildRowLineCounters(fields, typographyCtx), [fields, typographyCtx]);
-  const hasWrappedCols = useMemo(() => lineCounters?.length ?? 0 > 0, [lineCounters]);
+  maxHeight,
+}: UseRowHeightOptions): NonNullable<CSSProperties['height']> | ((row: TableRow) => number) {
+  const measurers = useMemo(
+    () => buildCellHeightMeasurers(fields, typographyCtx, maxHeight),
+    [fields, typographyCtx, maxHeight]
+  );
+  const hasWrappedCols = useMemo(() => measurers?.length ?? 0 > 0, [measurers]);
 
   const colWidths = useMemo(() => {
     const columnWidthAffordance = 2 * TABLE.CELL_PADDING + TABLE.BORDER_RIGHT;
@@ -403,7 +354,7 @@ export function useRowHeight({
 
   const rowHeight = useMemo(() => {
     // row height is only complicated when there are nested frames or wrapped columns.
-    if (!hasNestedFrames && !hasWrappedCols) {
+    if ((!hasNestedFrames && !hasWrappedCols) || typeof defaultHeight === 'string') {
       return defaultHeight;
     }
 
@@ -430,19 +381,11 @@ export function useRowHeight({
       // regular rows
       let result = cache[row.__index];
       if (!result) {
-        result = cache[row.__index] = getRowHeight(
-          fields,
-          row.__index,
-          colWidths,
-          defaultHeight,
-          lineCounters,
-          TABLE.LINE_HEIGHT,
-          TABLE.CELL_PADDING * 2
-        );
+        result = cache[row.__index] = getRowHeight(fields, row.__index, colWidths, defaultHeight, measurers);
       }
       return result;
     };
-  }, [hasNestedFrames, hasWrappedCols, defaultHeight, fields, colWidths, lineCounters, expandedRows]);
+  }, [hasNestedFrames, hasWrappedCols, defaultHeight, fields, colWidths, measurers, expandedRows]);
 
   return rowHeight;
 }
@@ -519,16 +462,70 @@ export function useColumnResize(
   return dataGridResizeHandler;
 }
 
-export function useScrollbarWidth(ref: RefObject<DataGridHandle>, height: number, renderedRows: TableRow[]) {
+export function useScrollbarWidth(ref: RefObject<DataGridHandle>, height: number) {
   const [scrollbarWidth, setScrollbarWidth] = useState(0);
 
   useLayoutEffect(() => {
     const el = ref.current?.element;
 
-    if (el) {
-      setScrollbarWidth(el.offsetWidth - el.clientWidth);
+    if (!el) {
+      return;
     }
-  }, [ref, height, renderedRows]);
+
+    const updateScrollbarDimensions = () => {
+      setScrollbarWidth(el.offsetWidth - el.clientWidth);
+    };
+
+    updateScrollbarDimensions();
+
+    const resizeObserver = new ResizeObserver(updateScrollbarDimensions);
+    resizeObserver.observe(el);
+    return () => {
+      resizeObserver.disconnect();
+    };
+  }, [ref, height]);
 
   return scrollbarWidth;
+}
+
+const numIsEqual = (a: number, b: number) => a === b;
+
+export function useColWidths(
+  visibleFields: Field[],
+  availableWidth: number,
+  frozenColumns?: number
+): [number[], number] {
+  const [widths, setWidths] = useState<number[]>(computeColWidths(visibleFields, availableWidth));
+
+  // only replace the widths array if something actually changed
+  useEffect(() => {
+    const newWidths = computeColWidths(visibleFields, availableWidth);
+    if (!compareArrayValues(widths, newWidths, numIsEqual)) {
+      setWidths(newWidths);
+    }
+  }, [availableWidth, widths, visibleFields]);
+
+  // this is to avoid buggy situations where all visible columns are frozen
+  const numFrozenColsFullyInView = useMemo(() => {
+    if (!frozenColumns || frozenColumns <= 0) {
+      return -1;
+    }
+
+    const fullyVisibleCols = widths.reduce(
+      ([count, remainingWidth], nextWidth) => {
+        if (remainingWidth - nextWidth >= 0) {
+          return [count + 1, remainingWidth - nextWidth];
+        }
+        return [count, 0];
+      },
+      [0, availableWidth]
+    )[0];
+
+    // de-noise memoized changes to the columns array, and only change this
+    // number when the number of frozen columns changes or once there are fewer
+    // visible columns than the number of frozen columns.
+    return Math.min(fullyVisibleCols, frozenColumns);
+  }, [widths, availableWidth, frozenColumns]);
+
+  return [widths, numFrozenColsFullyInView];
 }

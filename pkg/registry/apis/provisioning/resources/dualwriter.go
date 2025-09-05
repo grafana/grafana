@@ -10,12 +10,12 @@ import (
 
 	authlib "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana-app-sdk/logging"
+	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
+	"github.com/grafana/grafana/apps/provisioning/pkg/safepath"
 	"github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/safepath"
 )
 
 // DualReadWriter is a wrapper around a repository that can read and write resources
@@ -62,7 +62,7 @@ func (r *DualReadWriter) Read(ctx context.Context, path string, ref string) (*Pa
 
 	// Fail as we use the dry run for this response and it's not about updating the resource
 	if err := parsed.DryRun(ctx); err != nil {
-		return nil, apierrors.NewBadRequest(fmt.Sprintf("Dry run failed: %v", err))
+		return nil, fmt.Errorf("error running dryRun: %w", err)
 	}
 
 	// Authorize based on the existing resource
@@ -105,25 +105,22 @@ func (r *DualReadWriter) Delete(ctx context.Context, opts DualWriteOptions) (*Pa
 	}
 
 	parsed.Action = provisioning.ResourceActionDelete
+
+	// Use the parser's DryRun method like create/update operations
+	if !opts.SkipDryRun {
+		if err := parsed.DryRun(ctx); err != nil {
+			return nil, fmt.Errorf("error running dryRun for delete: %w", err)
+		}
+	}
+
 	err = r.repo.Delete(ctx, opts.Path, opts.Ref, opts.Message)
 	if err != nil {
 		return nil, fmt.Errorf("delete file from repository: %w", err)
 	}
 
-	// Delete the file in the grafana database
+	// Delete the file in the grafana database using the parser's Run method
 	if opts.Ref == "" {
-		ctx, _, err := identity.WithProvisioningIdentity(ctx, parsed.Obj.GetNamespace())
-		if err != nil {
-			return parsed, err
-		}
-
-		// FIXME: empty folders with no repository files will remain in the system
-		// until the next reconciliation.
-		err = parsed.Client.Delete(ctx, parsed.Obj.GetName(), metav1.DeleteOptions{})
-		if apierrors.IsNotFound(err) {
-			err = nil // ignorable
-		}
-
+		err = parsed.Run(ctx)
 		if err != nil {
 			return nil, fmt.Errorf("delete resource from storage: %w", err)
 		}
@@ -224,13 +221,12 @@ func (r *DualReadWriter) createOrUpdate(ctx context.Context, create bool, opts D
 			logger := logging.FromContext(ctx).With("path", opts.Path, "name", parsed.Obj.GetName(), "ref", opts.Ref)
 			logger.Warn("failed to dry run resource on create", "error", err)
 
-			// TODO: return this as a 400 rather than 500
-			return nil, fmt.Errorf("error running dryRun %w", err)
+			return nil, fmt.Errorf("error running dryRun: %w", err)
 		}
 	}
 
 	if len(parsed.Errors) > 0 {
-		// TODO: return this as a 400 rather than 500
+		// Now returns BadRequest (400) for validation errors
 		return nil, fmt.Errorf("errors while parsing file [%v]", parsed.Errors)
 	}
 
@@ -449,6 +445,7 @@ func (r *DualReadWriter) moveFile(ctx context.Context, opts DualWriteOptions) (*
 	// Perform the move operation in the repository
 	// If we have new content, we need to update the file content as part of the move
 	if len(opts.Data) > 0 {
+		// FIXME: I think we should MOVE + UPDATE instead of Delete / Create
 		// For moves with content updates, we need to delete the old file and create the new one
 		if err = r.repo.Delete(ctx, opts.OriginalPath, opts.Ref, opts.Message); err != nil {
 			return nil, fmt.Errorf("delete original file in repository: %w", err)
@@ -576,7 +573,7 @@ func (r *DualReadWriter) deleteFolder(ctx context.Context, opts DualWriteOptions
 	return folderDeleteResponse(ctx, opts.Path, opts.Ref, r.repo)
 }
 
-func getFolderURLs(ctx context.Context, path, ref string, repo repository.Repository) (*provisioning.ResourceURLs, error) {
+func getFolderURLs(ctx context.Context, path, ref string, repo repository.Repository) (*provisioning.RepositoryURLs, error) {
 	if urlRepo, ok := repo.(repository.RepositoryWithURLs); ok && ref != "" {
 		urls, err := urlRepo.ResourceURLs(ctx, &repository.FileInfo{Path: path, Ref: ref})
 		if err != nil {

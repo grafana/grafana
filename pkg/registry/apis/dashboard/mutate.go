@@ -8,11 +8,12 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	"k8s.io/apiserver/pkg/admission"
+	"k8s.io/utils/ptr"
 
 	dashboardV0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	dashboardV1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
 	dashboardV2alpha1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1"
-	dashboardV2alpha2 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha2"
+	dashboardV2beta1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1"
 	"github.com/grafana/grafana/apps/dashboard/pkg/migration"
 	"github.com/grafana/grafana/apps/dashboard/pkg/migration/schemaversion"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -43,6 +44,7 @@ func (b *DashboardsAPIBuilder) Mutate(ctx context.Context, a admission.Attribute
 			internalID = int64(id)
 		}
 		resourceInfo = dashboardV0.DashboardResourceInfo
+
 	case *dashboardV1.Dashboard:
 		delete(v.Spec.Object, "uid")
 		delete(v.Spec.Object, "version")
@@ -51,11 +53,11 @@ func (b *DashboardsAPIBuilder) Mutate(ctx context.Context, a admission.Attribute
 			internalID = int64(id)
 		}
 		resourceInfo = dashboardV1.DashboardResourceInfo
-		migrationErr = migration.Migrate(v.Spec.Object, schemaversion.LATEST_VERSION)
+		migrationErr = migration.Migrate(ctx, v.Spec.Object, schemaversion.LATEST_VERSION)
 		if migrationErr != nil {
 			v.Status.Conversion = &dashboardV1.DashboardConversionStatus{
 				Failed: true,
-				Error:  migrationErr.Error(),
+				Error:  ptr.To(migrationErr.Error()),
 			}
 		}
 
@@ -68,20 +70,18 @@ func (b *DashboardsAPIBuilder) Mutate(ctx context.Context, a admission.Attribute
 				Spec: dashboardV2alpha1.DashboardGridLayoutSpec{},
 			}
 		}
-
 		resourceInfo = dashboardV2alpha1.DashboardResourceInfo
 
-	case *dashboardV2alpha2.Dashboard:
+	case *dashboardV2beta1.Dashboard:
 		// Temporary fix: The generator fails to properly initialize this property, so we'll do it here
 		// until the generator is fixed.
 		if v.Spec.Layout.GridLayoutKind == nil && v.Spec.Layout.RowsLayoutKind == nil && v.Spec.Layout.AutoGridLayoutKind == nil && v.Spec.Layout.TabsLayoutKind == nil {
-			v.Spec.Layout.GridLayoutKind = &dashboardV2alpha2.DashboardGridLayoutKind{
+			v.Spec.Layout.GridLayoutKind = &dashboardV2beta1.DashboardGridLayoutKind{
 				Kind: "GridLayout",
-				Spec: dashboardV2alpha2.DashboardGridLayoutSpec{},
+				Spec: dashboardV2beta1.DashboardGridLayoutSpec{},
 			}
 		}
-
-		resourceInfo = dashboardV2alpha2.DashboardResourceInfo
+		resourceInfo = dashboardV2beta1.DashboardResourceInfo
 
 		// Noop for V2
 	default:

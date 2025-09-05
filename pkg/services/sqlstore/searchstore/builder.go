@@ -37,14 +37,9 @@ func (b *Builder) ToSQL(limit, page int64) (string, []any) {
 		INNER JOIN dashboard ON ids.id = dashboard.id`)
 	b.sql.WriteString("\n")
 
-	if b.Features.IsEnabledGlobally(featuremgmt.FlagNestedFolders) {
-		// covered by UQE_folder_org_id_uid
-		b.sql.WriteString(
-			`LEFT OUTER JOIN folder ON folder.uid = dashboard.folder_uid AND folder.org_id = dashboard.org_id`)
-	} else {
-		b.sql.WriteString(`
-		LEFT OUTER JOIN dashboard AS folder ON folder.id = dashboard.folder_id`)
-	}
+	// covered by UQE_folder_org_id_uid
+	b.sql.WriteString(
+		`LEFT OUTER JOIN folder ON folder.uid = dashboard.folder_uid AND folder.org_id = dashboard.org_id`)
 	b.sql.WriteString(`
 	LEFT OUTER JOIN dashboard_tag ON dashboard.id = dashboard_tag.dashboard_id`)
 	b.sql.WriteString("\n")
@@ -69,17 +64,9 @@ func (b *Builder) buildSelect() {
 			dashboard.folder_id,
 			dashboard.deleted,
 			folder.uid AS folder_uid,
+			folder.title AS folder_slug,
+			folder.title AS folder_title 
 		`)
-	if b.Features.IsEnabledGlobally(featuremgmt.FlagNestedFolders) {
-		b.sql.WriteString(`
-			folder.title AS folder_slug,`)
-	} else {
-		b.sql.WriteString(`
-			folder.slug AS folder_slug,`)
-	}
-	b.sql.WriteString(`
-			folder.title AS folder_title `)
-
 	for _, f := range b.Filters {
 		if f, ok := f.(model.FilterSelect); ok {
 			b.sql.WriteString(fmt.Sprintf(", %s", f.Select()))
@@ -149,7 +136,12 @@ func (b *Builder) applyFilters() (ordering string) {
 		}
 	}
 
-	b.sql.WriteString("SELECT dashboard.id FROM dashboard")
+	forceIndex := ""
+	if b.Dialect.DriverName() == migrator.MySQL {
+		forceIndex = " FORCE INDEX (IDX_dashboard_title) "
+	}
+
+	b.sql.WriteString(fmt.Sprintf("SELECT dashboard.id FROM dashboard %s", forceIndex))
 	b.sql.WriteString(strings.Join(joins, ""))
 
 	if len(wheres) > 0 {

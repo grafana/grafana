@@ -20,8 +20,8 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/services/dsquerierclient"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/mtdsclient"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -73,7 +73,7 @@ type Service struct {
 
 	tracer                    tracing.Tracer
 	metrics                   *metrics.ExprMetrics
-	mtDatasourceClientBuilder mtdsclient.MTDatasourceClientBuilder
+	qsDatasourceClientBuilder dsquerierclient.QSDatasourceClientBuilder
 }
 
 type pluginContextProvider interface {
@@ -82,7 +82,7 @@ type pluginContextProvider interface {
 }
 
 func ProvideService(cfg *setting.Cfg, pluginClient plugins.Client, pCtxProvider *plugincontext.Provider,
-	features featuremgmt.FeatureToggles, registerer prometheus.Registerer, tracer tracing.Tracer, builder mtdsclient.MTDatasourceClientBuilder) *Service {
+	features featuremgmt.FeatureToggles, registerer prometheus.Registerer, tracer tracing.Tracer, builder dsquerierclient.QSDatasourceClientBuilder) *Service {
 	return &Service{
 		cfg:           cfg,
 		dataService:   pluginClient,
@@ -95,7 +95,7 @@ func ProvideService(cfg *setting.Cfg, pluginClient plugins.Client, pCtxProvider 
 			Features: features,
 			Tracer:   tracer,
 		},
-		mtDatasourceClientBuilder: builder,
+		qsDatasourceClientBuilder: builder,
 	}
 }
 
@@ -107,12 +107,12 @@ func (s *Service) isDisabled() bool {
 }
 
 // BuildPipeline builds a pipeline from a request.
-func (s *Service) BuildPipeline(req *Request) (DataPipeline, error) {
+func (s *Service) BuildPipeline(ctx context.Context, req *Request) (DataPipeline, error) {
 	// TODO: REMOVE
 	if req != nil {
-		_, _ = s.GetSQLSchemas(context.Background(), *req) // temp hack until endpoint for local dev
+		_, _ = s.GetSQLSchemas(ctx, *req) // temp hack until endpoint for local dev
 	}
-	return s.buildPipeline(req)
+	return s.buildPipeline(ctx, req)
 }
 
 // BasicColumn is a simplified version of mysql.Column used for SQL expression schemas.
@@ -138,7 +138,7 @@ func (s *Service) GetSQLSchemas(ctx context.Context, req Request) (map[string][]
 		}
 	}
 	req.Queries = filtered
-	pipeline, err := s.buildPipeline(&req)
+	pipeline, err := s.buildPipeline(ctx, &req)
 	if err != nil {
 		return nil, err
 	}

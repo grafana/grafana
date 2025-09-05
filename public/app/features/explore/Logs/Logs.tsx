@@ -52,6 +52,7 @@ import { ControlledLogRows } from 'app/features/logs/components/ControlledLogRow
 import { InfiniteScroll } from 'app/features/logs/components/InfiniteScroll';
 import { LogRows } from 'app/features/logs/components/LogRows';
 import { LogRowContextModal } from 'app/features/logs/components/log-context/LogRowContextModal';
+import { LogLineContext } from 'app/features/logs/components/panel/LogLineContext';
 import { LogList, LogListControlOptions } from 'app/features/logs/components/panel/LogList';
 import { isDedupStrategy, isLogsSortOrder } from 'app/features/logs/components/panel/LogListContext';
 import { LogLevelColor, dedupLogRows } from 'app/features/logs/logsModel';
@@ -580,10 +581,12 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
   let onCloseContext = useCallback(() => {
     setContextOpen(false);
     setContextRow(undefined);
-    reportInteraction('grafana_explore_logs_log_context_closed', {
-      datasourceType: contextRow?.datasourceType,
-      logRowUid: contextRow?.uid,
-    });
+    if (!config.featureToggles.newLogContext) {
+      reportInteraction('grafana_explore_logs_log_context_closed', {
+        datasourceType: contextRow?.datasourceType,
+        logRowUid: contextRow?.uid,
+      });
+    }
     onCloseCallbackRef?.current();
   }, [contextRow?.datasourceType, contextRow?.uid, onCloseCallbackRef]);
 
@@ -591,10 +594,12 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
     // we are setting the `contextOpen` open state and passing it down to the `LogRow` in order to highlight the row when a LogContext is open
     setContextOpen(true);
     setContextRow(row);
-    reportInteraction('grafana_explore_logs_log_context_opened', {
-      datasourceType: row.datasourceType,
-      logRowUid: row.uid,
-    });
+    if (!config.featureToggles.newLogContext) {
+      reportInteraction('grafana_explore_logs_log_context_opened', {
+        datasourceType: row.datasourceType,
+        logRowUid: row.uid,
+      });
+    }
     onCloseCallbackRef.current = onClose;
   }, []);
 
@@ -698,7 +703,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
 
   const visibilityChangedRef = useRef(true);
   const onLogOptionsChange = useCallback(
-    (option: keyof LogListControlOptions, value: string | string[] | boolean) => {
+    (option: LogListControlOptions, value: string | string[] | boolean) => {
       if (option === 'sortOrder' && isLogsSortOrder(value)) {
         sortOrderChanged(value);
       } else if (option === 'dedupStrategy' && isDedupStrategy(value)) {
@@ -767,7 +772,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
 
   return (
     <>
-      {getRowContext && contextRow && (
+      {(!config.featureToggles.newLogsPanel || !config.featureToggles.newLogContext) && getRowContext && contextRow && (
         <LogRowContextModal
           open={contextOpen}
           row={contextRow}
@@ -777,6 +782,21 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
           getLogRowContextUi={getLogRowContextUi}
           logsSortOrder={logsSortOrder}
           timeZone={timeZone}
+        />
+      )}
+      {config.featureToggles.newLogsPanel && config.featureToggles.newLogContext && getRowContext && contextRow && (
+        <LogLineContext
+          open={contextOpen}
+          log={contextRow}
+          onClose={onCloseContext}
+          getRowContext={(row, options) => getRowContext(row, contextRow, options)}
+          getRowContextQuery={getRowContextQuery}
+          getLogRowContextUi={getLogRowContextUi}
+          logOptionsStorageKey={SETTING_KEY_ROOT}
+          timeZone={timeZone}
+          displayedFields={displayedFields}
+          onClickShowField={showField}
+          onClickHideField={hideField}
         />
       )}
       <PanelChrome
@@ -1109,9 +1129,9 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
                 />
               </>
             )}
-          {config.featureToggles.newLogsPanel && visualisationType === 'logs' && hasData && (
+          {config.featureToggles.newLogsPanel && visualisationType === 'logs' && (
             <div data-testid="logRows" ref={logsContainerRef} className={styles.logRowsWrapper}>
-              {logsContainerRef.current && (
+              {logsContainerRef.current && hasData && (
                 <LogList
                   app={CoreApp.Explore}
                   containerElement={logsContainerRef.current}

@@ -80,6 +80,7 @@ export enum ConnectionPath {
 
 export interface CanvasConnection {
   color?: ui.ColorDimensionConfig;
+  direction?: ui.DirectionDimensionConfig;
   path: ConnectionPath;
   size?: ui.ScaleDimensionConfig;
   source: ConnectionCoordinates;
@@ -112,11 +113,12 @@ export const defaultCanvasElementOptions: Partial<CanvasElementOptions> = {
   connections: [],
 };
 
+export interface CanvasTooltip {
+  disableForOneClick?: boolean;
+  mode: ui.TooltipDisplayMode;
+}
+
 export interface Options {
-  /**
-   * Enable infinite pan
-   */
-  infinitePan: boolean;
   /**
    * Enable inline editing
    */
@@ -147,11 +149,19 @@ export interface Options {
    * Show all available element types
    */
   showAdvancedTypes: boolean;
+  /**
+   * Controls tooltip options
+   */
+  tooltip: CanvasTooltip;
+  /**
+   * Zoom to content
+   */
+  zoomToContent: boolean;
 }
 
 export const defaultOptions: Partial<Options> = {
-  infinitePan: true,
   inlineEditing: true,
   panZoom: true,
   showAdvancedTypes: true,
+  zoomToContent: true,
 };

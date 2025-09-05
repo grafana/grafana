@@ -10,6 +10,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/configprovider"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/kvstore"
@@ -30,6 +31,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	dashboardStore "github.com/grafana/grafana/pkg/services/dashboards/database"
 	dashService "github.com/grafana/grafana/pkg/services/dashboards/service"
+	dashclient "github.com/grafana/grafana/pkg/services/dashboards/service/client"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	dsservice "github.com/grafana/grafana/pkg/services/datasources/service"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -105,7 +107,9 @@ func TestIntegrationQuotaCommandsAndQueries(t *testing.T) {
 	}
 
 	b := bus.ProvideBus(tracing.InitializeTracerForTest())
-	quotaService := ProvideService(sqlStore, cfg)
+	cfgProvider, err := configprovider.ProvideService(cfg)
+	require.NoError(t, err)
+	quotaService := ProvideService(context.Background(), sqlStore, cfgProvider)
 	orgService, err := orgimpl.ProvideService(sqlStore, cfg, quotaService)
 	require.NoError(t, err)
 	userService, err := userimpl.ProvideService(
@@ -247,7 +251,9 @@ func TestIntegrationQuotaCommandsAndQueries(t *testing.T) {
 			}()
 			cfg.UnifiedAlerting = setting.UnifiedAlertingSettings{Enabled: util.Pointer(false)}
 
-			quotaSrv := ProvideService(sqlStore, cfg)
+			cfgProvider, err := configprovider.ProvideService(cfg)
+			require.NoError(t, err)
+			quotaSrv := ProvideService(context.Background(), sqlStore, cfgProvider)
 			q, err := getQuotaBySrvTargetScope(t, quotaSrv, ngalertmodels.QuotaTargetSrv, ngalertmodels.QuotaTarget, quota.OrgScope, &quota.ScopeParameters{OrgID: o.ID})
 
 			require.NoError(t, err)
@@ -504,10 +510,36 @@ func setupEnv(t *testing.T, sqlStore db.DB, cfg *setting.Cfg, b bus.Bus, quotaSe
 	folderSvc := folderimpl.ProvideService(
 		fStore, acmock.New(), bus.ProvideBus(tracing.InitializeTracerForTest()), dashStore, folderStore,
 		nil, sqlStore, featuremgmt.WithFeatures(), supportbundlestest.NewFakeBundleService(), nil, cfg, nil, tracing.InitializeTracerForTest(), nil, dualwrite.ProvideTestService(), sort.ProvideService(), apiserver.WithoutRestConfig)
-	dashService, err := dashService.ProvideDashboardServiceImpl(cfg, dashStore, folderStore, featuremgmt.WithFeatures(), acmock.NewMockedPermissionsService(),
-		ac, actest.FakeService{}, folderSvc, nil, client.MockTestRestConfig{}, nil, quotaService, nil, nil, nil, dualwrite.ProvideTestService(), sort.ProvideService(),
+	orgService, err := orgimpl.ProvideService(sqlStore, cfg, quotaService)
+	require.NoError(t, err)
+	dashService, err := dashService.ProvideDashboardServiceImpl(
+		cfg,
+		dashStore,
+		folderStore,
+		featuremgmt.WithFeatures(),
+		acmock.NewMockedPermissionsService(),
+		ac,
+		actest.FakeService{},
+		folderSvc,
+		nil,
+		quotaService,
+		orgService,
+		nil,
+		dualwrite.ProvideTestService(),
 		serverlock.ProvideService(sqlStore, tracing.InitializeTracerForTest()),
-		kvstore.NewFakeKVStore())
+		kvstore.NewFakeKVStore(),
+		dashclient.NewK8sClientWithFallback(
+			cfg,
+			client.MockTestRestConfig{},
+			dashStore,
+			nil,
+			nil,
+			sort.ProvideService(),
+			dualwrite.ProvideTestService(),
+			nil,
+			featuremgmt.WithFeatures(),
+		),
+	)
 	require.NoError(t, err)
 	dashService.RegisterDashboardPermissions(acmock.NewMockedPermissionsService())
 	secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())

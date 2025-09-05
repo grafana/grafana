@@ -17,7 +17,7 @@ import {
   SceneGridLayoutDragStartEvent,
   SceneObject,
 } from '@grafana/scenes';
-import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
+import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2';
 import { useStyles2 } from '@grafana/ui';
 import { GRID_COLUMN_COUNT } from 'app/core/constants';
 import DashboardEmpty from 'app/features/dashboard/dashgrid/DashboardEmpty';
@@ -29,7 +29,7 @@ import {
   ObjectsReorderedOnCanvasEvent,
 } from '../../edit-pane/shared';
 import { serializeDefaultGridLayout } from '../../serialization/layoutSerializers/DefaultGridLayoutSerializer';
-import { isClonedKey, joinCloneKeys, useHasClonedParents } from '../../utils/clone';
+import { isRepeatCloneOrChildOf } from '../../utils/clone';
 import { dashboardSceneGraph } from '../../utils/dashboardSceneGraph';
 import {
   forceRenderChildren,
@@ -42,10 +42,12 @@ import {
   getLayoutOrchestratorFor,
   getDashboardSceneFor,
 } from '../../utils/utils';
+import { useSoloPanelContext } from '../SoloPanelContext';
 import { AutoGridItem } from '../layout-auto-grid/AutoGridItem';
 import { CanvasGridAddActions } from '../layouts-shared/CanvasGridAddActions';
 import { clearClipboard, getDashboardGridItemFromClipboard } from '../layouts-shared/paste';
 import { dashboardCanvasAddButtonHoverStyles } from '../layouts-shared/styles';
+import { getIsLazy } from '../layouts-shared/utils';
 import { DashboardLayoutManager } from '../types/DashboardLayoutManager';
 import { LayoutRegistryItem } from '../types/LayoutRegistryItem';
 
@@ -432,11 +434,7 @@ export class DefaultGridLayoutManager
     for (const child of this.state.grid.state.children) {
       // Flatten repeated grid items
       if (child instanceof DashboardGridItem) {
-        if (child.state.repeatedPanels) {
-          children.push(...child.state.repeatedPanels);
-        } else {
-          children.push(child.state.body);
-        }
+        children.push(child.state.body, ...(child.state.repeatedPanels || []));
       }
     }
 
@@ -444,75 +442,7 @@ export class DefaultGridLayoutManager
   }
 
   public cloneLayout(ancestorKey: string, isSource: boolean): DashboardLayoutManager {
-    return this.clone({
-      grid: this.state.grid.clone({
-        isResizable: isSource && this.state.grid.state.isResizable,
-        isDraggable: isSource && this.state.grid.state.isDraggable,
-        children: this.state.grid.state.children.reduce<{ panelId: number; children: SceneGridItemLike[] }>(
-          (childrenAcc, child) => {
-            if (child instanceof DashboardGridItem) {
-              const gridItemKey = joinCloneKeys(ancestorKey, getGridItemKeyForPanelId(childrenAcc.panelId));
-
-              const gridItem = child.clone({
-                key: gridItemKey,
-                body: child.state.body.clone({
-                  key: joinCloneKeys(gridItemKey, getVizPanelKeyForPanelId(childrenAcc.panelId++)),
-                }),
-                isDraggable: isSource && child.state.isDraggable,
-                isResizable: isSource && child.state.isResizable,
-              });
-
-              childrenAcc.children.push(gridItem);
-
-              return childrenAcc;
-            }
-
-            if (child instanceof SceneGridRow) {
-              const rowKey = joinCloneKeys(ancestorKey, getVizPanelKeyForPanelId(childrenAcc.panelId++));
-
-              const row = child.clone({
-                key: rowKey,
-                children: child.state.children.reduce<SceneGridItemLike[]>((rowAcc, rowChild) => {
-                  if (isClonedKey(rowChild.state.key!)) {
-                    return rowAcc;
-                  }
-
-                  if (!(rowChild instanceof DashboardGridItem)) {
-                    rowAcc.push(rowChild.clone());
-                    return rowAcc;
-                  }
-
-                  const gridItemKey = joinCloneKeys(rowKey, getGridItemKeyForPanelId(childrenAcc.panelId));
-
-                  const gridItem = rowChild.clone({
-                    key: gridItemKey,
-                    isDraggable: isSource && rowChild.state.isDraggable,
-                    isResizable: isSource && rowChild.state.isResizable,
-                    body: rowChild.state.body.clone({
-                      key: joinCloneKeys(gridItemKey, getVizPanelKeyForPanelId(childrenAcc.panelId++)),
-                    }),
-                  });
-
-                  rowAcc.push(gridItem);
-                  return rowAcc;
-                }, []),
-                isDraggable: isSource && child.state.isDraggable,
-                isResizable: isSource && child.state.isResizable,
-              });
-
-              childrenAcc.children.push(row);
-
-              return childrenAcc;
-            }
-
-            childrenAcc.children.push(child.clone());
-
-            return childrenAcc;
-          },
-          { panelId: 0, children: [] }
-        ).children,
-      }),
-    });
+    return this.clone({});
   }
 
   public removeRow(row: SceneGridRow, removePanels = false) {
@@ -558,10 +488,11 @@ export class DefaultGridLayoutManager
 
   public static createFromLayout(currentLayout: DashboardLayoutManager): DefaultGridLayoutManager {
     const panels = currentLayout.getVizPanels();
-    return DefaultGridLayoutManager.fromVizPanels(panels);
+    const isLazy = getIsLazy(getDashboardSceneFor(currentLayout).state.preload)!;
+    return DefaultGridLayoutManager.fromVizPanels(panels, isLazy);
   }
 
-  public static fromVizPanels(panels: VizPanel[] = []): DefaultGridLayoutManager {
+  public static fromVizPanels(panels: VizPanel[] = [], isLazy?: boolean | undefined): DefaultGridLayoutManager {
     const children: DashboardGridItem[] = [];
     const panelHeight = 10;
     const panelWidth = GRID_COLUMN_COUNT / 3;
@@ -599,6 +530,7 @@ export class DefaultGridLayoutManager
         children: children,
         isDraggable: true,
         isResizable: true,
+        isLazy,
       }),
     });
   }
@@ -606,7 +538,8 @@ export class DefaultGridLayoutManager
   public static fromGridItems(
     gridItems: SceneGridItemLike[],
     isDraggable?: boolean,
-    isResizable?: boolean
+    isResizable?: boolean,
+    isLazy?: boolean | undefined
   ): DefaultGridLayoutManager {
     const children = gridItems.reduce<SceneGridItemLike[]>((acc, gridItem) => {
       gridItem.clearParent();
@@ -620,6 +553,7 @@ export class DefaultGridLayoutManager
         children,
         isDraggable,
         isResizable,
+        isLazy,
       }),
     });
   }
@@ -629,9 +563,14 @@ function DefaultGridLayoutManagerRenderer({ model }: SceneComponentProps<Default
   const { children } = useSceneObjectState(model.state.grid, { shouldActivateOrKeepAlive: true });
   const dashboard = useDashboard(model);
   const { isEditing } = dashboard.useState();
-  const hasClonedParents = useHasClonedParents(model);
+  const hasClonedParents = isRepeatCloneOrChildOf(model);
   const styles = useStyles2(getStyles);
   const showCanvasActions = isEditing && config.featureToggles.dashboardNewLayouts && !hasClonedParents;
+  const soloPanelContext = useSoloPanelContext();
+
+  if (soloPanelContext) {
+    return children.map((child) => <child.Component model={child} key={child.state.key!} />);
+  }
 
   // If we are top level layout and we have no children, show empty state
   if (model.parent === dashboard && children.length === 0) {
@@ -650,6 +589,20 @@ function DefaultGridLayoutManagerRenderer({ model }: SceneComponentProps<Default
       )}
     </div>
   );
+}
+
+const OriginalSceneGridRowRenderer = SceneGridRow.Component;
+// @ts-expect-error
+SceneGridRow.Component = SceneGridRowRenderer;
+
+function SceneGridRowRenderer({ model }: SceneComponentProps<SceneGridRow>) {
+  const soloPanelContext = useSoloPanelContext();
+
+  if (soloPanelContext) {
+    return model.state.children.map((child) => <child.Component model={child} key={child.state.key!} />);
+  }
+
+  return <OriginalSceneGridRowRenderer model={model} />;
 }
 
 function getStyles(theme: GrafanaTheme2) {

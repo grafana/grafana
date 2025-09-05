@@ -168,7 +168,6 @@
         "label-disable-recording-rules-beta": "Disable recording rules (beta)",
         "label-http-method": "HTTP method",
         "label-incremental-querying-beta": "Incremental querying (beta)",
-        "label-metric-names-suggestion-limit": "Metric names suggestion limit",
         "label-prom-type-version": "{{promType}} version",
         "label-prometheus-type": "Prometheus type",
         "label-query-overlap-window": "Query overlap window",
@@ -189,7 +188,6 @@
         "tooltip-disable-recording-rules-beta": "This feature will disable recording rules. Turn this on to improve dashboard performance",
         "tooltip-http-method": "You can use either POST or GET HTTP method to query your Prometheus data source. POST is the recommended method as it allows bigger queries. Change this to GET if you have a Prometheus version older than 2.1 or if POST requests are restricted in your network.",
         "tooltip-incremental-querying-beta": "This feature will change the default behavior of relative queries to always request fresh data from the prometheus instance, instead query results will be cached, and only new records are requested. Turn this on to decrease database and network load.",
-        "tooltip-metric-names-suggestion-limit": "The maximum number of metric names that may appear as autocomplete suggestions in the query editor's Code mode.",
         "tooltip-prom-type-version": "Use this to set the version of your {{promType}} instance if it is not automatically configured.",
         "tooltip-prometheus-type": "Set this to the type of your prometheus database, e.g. Prometheus, Cortex, Mimir or Thanos. Changing this field will save your current settings. Certain types of Prometheus supports or does not support various APIs. For example, some types support regex matching for label queries to improve performance. Some types have an API for metadata. If you set this incorrectly you may experience odd behavior when querying metrics and labels. Please check your Prometheus documentation to ensure you enter the correct type.",
         "tooltip-query-overlap-window": "Set a duration like {{example1}} or {{example2}} or {{example3}}. Default of {{default}}. This duration will be added to the duration of each incremental request.",
@@ -311,10 +309,6 @@
       }
     },
     "querybuilder": {
-      "additional-settings": {
-        "content-filter-metric-names-regex-search-using": "Filter metric names by regex search, using an additional call on the Prometheus API.",
-        "disable-text-wrap": "Disable text wrap"
-      },
       "feedback-link": {
         "give-feedback": "Give feedback",
         "title-give-feedback": "The metrics explorer is new, please let us know how we can improve it"
@@ -328,9 +322,6 @@
       },
       "get-placeholders": {
         "browse": "Search metrics by name",
-        "include-null-metadata": "Include results with no metadata",
-        "metadata-search-switch": "Include description in search",
-        "set-use-backend": "Enable regex search",
         "type": "Filter by type"
       },
       "get-prom-types": {
@@ -378,15 +369,9 @@
         "tooltip-metric": "Optional: returns a list of label values for the label name in the specified metric."
       },
       "metrics-modal": {
-        "additional-settings": "Additional Settings",
-        "aria-label-additional-settings": "Additional settings",
         "aria-label-browse-metrics": "Browse metrics",
         "currently-selected": "Currently selected: {{selected}}",
         "metrics-pre-filtered": "These metrics have been pre-filtered by labels chosen in the label filters.",
-        "placeholder-results-per-page": "results per page",
-        "results-amount_one": "Showing {{num}} of {{count}} results",
-        "results-amount_other": "Showing {{num}} of {{count}} results",
-        "results-per-page": "Results per page",
         "title-metrics-explorer": "Metrics explorer"
       },
       "nested-query": {
@@ -444,10 +429,6 @@
         "title-options": "Options",
         "tooltip-min-step": "An additional lower limit for the step parameter of the Prometheus query and for the <2>{{interval}}</2> and <4>{{rateInterval}}</4> variables."
       },
-      "prom-query-code-editor-autocomplete-info": {
-        "autocomplete-suggestions-limited": "Autocomplete suggestions limited",
-        "tooltip-autocomplete-suggestions-limited": "The number of metric names exceeds the autocomplete limit. Only the {{autocompleteLimit}}-most relevant metrics are displayed. You can adjust the threshold in the data source settings."
-      },
       "prom-query-editor-selector": {
         "body-syntax-error": "There is a syntax error, or the query structure cannot be visualized when switching to the builder mode. Parts of the query may be lost.",
         "confirmText-continue": "Continue",
@@ -500,7 +481,6 @@
         "message-expand-search": "There are no metrics found. Try to expand your search and filters.",
         "message-no-metrics-found": "There are no metrics found in the data source.",
         "name": "Name",
-        "select": "Select",
         "type": "Type"
       },
       "update-function-args": {

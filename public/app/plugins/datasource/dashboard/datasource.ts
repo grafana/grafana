@@ -17,12 +17,14 @@ import {
   MetricFindValue,
   getValueMatcher,
   ValueMatcherID,
+  DataSourceGetDrilldownsApplicabilityOptions,
+  DrilldownsApplicability,
 } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { SceneDataProvider, SceneDataTransformer, SceneObject } from '@grafana/scenes';
 import {
   activateSceneObjectAndParentTree,
-  findOriginalVizPanelByKey,
+  findVizPanelByKey,
   getVizPanelKeyForPanelId,
 } from 'app/features/dashboard-scene/utils/utils';
 
@@ -61,7 +63,7 @@ export class DashboardDatasource extends DataSourceApi<DashboardQuery> {
       return of({ data: [] });
     }
 
-    let sourcePanel = this.findSourcePanel(scene, panelId);
+    let sourcePanel = findVizPanelByKey(scene, getVizPanelKeyForPanelId(panelId));
 
     if (!sourcePanel) {
       return of({ data: [], error: { message: 'Could not find source panel' } });
@@ -126,10 +128,11 @@ export class DashboardDatasource extends DataSourceApi<DashboardQuery> {
             ...field,
             config: {
               ...field.config,
-              // Enable AdHoc filtering for string and numeric fields only when feature toggle is enabled
-              filterable: config.featureToggles.dashboardDsAdHocFiltering
-                ? field.type === FieldType.string || field.type === FieldType.number
-                : field.config.filterable,
+              // Enable AdHoc filtering for string and numeric fields only when feature toggle and per-panel setting are enabled
+              filterable:
+                config.featureToggles.dashboardDsAdHocFiltering && query.adHocFiltersEnabled
+                  ? field.type === FieldType.string || field.type === FieldType.number
+                  : field.config.filterable,
             },
             state: {
               ...field.state,
@@ -138,7 +141,7 @@ export class DashboardDatasource extends DataSourceApi<DashboardQuery> {
         };
       });
 
-      if (!config.featureToggles.dashboardDsAdHocFiltering || filters.length === 0) {
+      if (!config.featureToggles.dashboardDsAdHocFiltering || !query.adHocFiltersEnabled || filters.length === 0) {
         return [...series, ...annotations];
       }
 
@@ -157,30 +160,18 @@ export class DashboardDatasource extends DataSourceApi<DashboardQuery> {
       return frame;
     }
 
-    // Pre-compute field indices and value matchers for better performance
-    const filterFieldIndices = filters
-      .map((filter) => {
-        const fieldIndex = frame.fields.findIndex((f) => f.name === filter.key);
-        return { filter, fieldIndex, matcher: this.createValueMatcher(filter, fieldIndex, frame) };
-      })
-      .filter(({ filter, fieldIndex, matcher }) => {
-        // If field is not present:
-        // - Keep filters with '=' operator (will always be false - reject rows)
-        // - Remove filters with '!=' operator (will always be true - no effect)
-        if (fieldIndex === -1) {
-          return filter.operator === '=';
-        }
-        // Only keep filters with valid matchers
-        return matcher !== null;
-      });
+    // Filter out non-applicable filters for this specific DataFrame
+    const applicableFilters = this.getApplicableFiltersForFrame(frame, filters);
 
-    // If no filters remain after optimization, return original frame
-    if (filterFieldIndices.length === 0) {
+    // If no filters remain after filtering, return original frame
+    if (applicableFilters.length === 0) {
       return frame;
     }
 
-    // Short-circuit: if any filter has '=' operator with missing field, reject all rows
-    const hasImpossibleFilter = filterFieldIndices.some(({ fieldIndex }) => fieldIndex === -1);
+    // Check for impossible filters (missing field with '=' operator)
+    const hasImpossibleFilter = applicableFilters.some(
+      ({ fieldIndex, filter }) => fieldIndex === -1 && filter.operator === '='
+    );
     if (hasImpossibleFilter) {
       return this.reconstructDataFrame(frame);
     }
@@ -189,7 +180,7 @@ export class DashboardDatasource extends DataSourceApi<DashboardQuery> {
 
     // Check each row to see if it matches all filters (AND logic)
     for (let rowIndex = 0; rowIndex < frame.length; rowIndex++) {
-      const rowMatches = filterFieldIndices.every(({ matcher, fieldIndex }) => {
+      const rowMatches = applicableFilters.every(({ matcher, fieldIndex }) => {
         const field = frame.fields[fieldIndex];
 
         // Use Grafana's value matcher system
@@ -210,7 +201,31 @@ export class DashboardDatasource extends DataSourceApi<DashboardQuery> {
   }
 
   /**
-   * Create a value matcher from an AdHoc filter
+   * Get applicable filters for a specific DataFrame, considering field existence and type compatibility.
+   */
+  private getApplicableFiltersForFrame(
+    frame: DataFrame,
+    filters: AdHocVariableFilter[]
+  ): Array<{ filter: AdHocVariableFilter; fieldIndex: number; matcher: ReturnType<typeof getValueMatcher> | null }> {
+    return filters
+      .map((filter) => {
+        const fieldIndex = frame.fields.findIndex((f) => f.name === filter.key);
+        return { filter, fieldIndex, matcher: this.createValueMatcher(filter, fieldIndex, frame) };
+      })
+      .filter(({ filter, fieldIndex, matcher }) => {
+        // If field is not present:
+        // - Keep filters with '=' operator (will always be false - reject rows)
+        // - Remove filters with '!=' operator (will always be true - no effect)
+        if (fieldIndex === -1) {
+          return filter.operator === '=';
+        }
+        // Only keep filters with valid matchers
+        return matcher !== null;
+      });
+  }
+
+  /**
+   * Create a value matcher from an AdHoc filter.
    */
   private createValueMatcher(filter: AdHocVariableFilter, fieldIndex: number, frame: DataFrame) {
     // Return null for missing fields - they are handled separately
@@ -281,11 +296,6 @@ export class DashboardDatasource extends DataSourceApi<DashboardQuery> {
     };
   }
 
-  private findSourcePanel(scene: SceneObject, panelId: number) {
-    // We're trying to find the original panel, not a cloned one, since `panelId` alone cannot resolve clones
-    return findOriginalVizPanelByKey(scene, getVizPanelKeyForPanelId(panelId));
-  }
-
   private emitFirstLoadedDataIfMixedDS(
     requestId: string
   ): (source: Observable<DataQueryResponse>) => Observable<DataQueryResponse> {
@@ -327,6 +337,45 @@ export class DashboardDatasource extends DataSourceApi<DashboardQuery> {
 
   testDatasource(): Promise<TestDataSourceResponse> {
     return Promise.resolve({ message: '', status: '' });
+  }
+
+  /**
+   * Check which AdHoc filters are applicable based on operator and field type support
+   */
+  async getDrilldownsApplicability(
+    options?: DataSourceGetDrilldownsApplicabilityOptions<DashboardQuery>
+  ): Promise<DrilldownsApplicability[]> {
+    if (!config.featureToggles.dashboardDsAdHocFiltering) {
+      return [];
+    }
+
+    // Check if any query has adhoc filters enabled
+    const hasAdHocFiltersEnabled = options?.queries?.some((query) => query.adHocFiltersEnabled);
+
+    if (!hasAdHocFiltersEnabled) {
+      return [];
+    }
+
+    const filters = options?.filters || [];
+
+    return filters.map((filter): DrilldownsApplicability => {
+      // Check operator support
+      if (filter.operator !== '=' && filter.operator !== '!=') {
+        return {
+          key: filter.key,
+          applicable: false,
+          reason: `Operator '${filter.operator}' is not supported. Only '=' and '!=' operators are supported.`,
+        };
+      }
+
+      // For dashboard datasource, we can't determine field existence/type
+      // without the actual DataFrame context, so we assume applicable here
+      // and let the actual filtering logic handle field-specific checks
+      return {
+        key: filter.key,
+        applicable: true,
+      };
+    });
   }
 
   getTagKeys(): Promise<MetricFindValue[]> {

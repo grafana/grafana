@@ -4,7 +4,7 @@ import { CustomVariableModel, DataFrame, DataSourceInstanceSettings } from '@gra
 import { BackendDataSourceResponse, toDataQueryResponse } from '@grafana/runtime';
 
 import { CloudWatchLogsQueryRunner } from '../query-runner/CloudWatchLogsQueryRunner';
-import { CloudWatchJsonData, CloudWatchLogsQueryStatus, CloudWatchLogsRequest } from '../types';
+import { CloudWatchJsonData, CloudWatchLogsQueryStatus } from '../types';
 
 import { CloudWatchSettings, setupMockedTemplateService } from './CloudWatchDataSource';
 
@@ -51,20 +51,4 @@ export function genMockFrames(numResponses: number): DataFrame[] {
   }
 
   return mockFrames;
-}
-
-export function genMockCloudWatchLogsRequest(overrides: Partial<CloudWatchLogsRequest> = {}) {
-  const request: CloudWatchLogsRequest = {
-    queryString: 'fields @timestamp, @message | sort @timestamp desc',
-    logGroupNames: ['log-group-name-1', 'log-group-name-2'],
-    logGroups: [
-      { arn: 'log-group-arn-1', name: 'log-group-name-1' },
-      { arn: 'log-group-arn-2', name: 'log-group-name-2' },
-    ],
-    refId: 'A',
-    region: 'us-east-1',
-    ...overrides,
-  };
-
-  return request;
 }

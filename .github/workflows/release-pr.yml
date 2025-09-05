@@ -136,7 +136,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version-file: .nvmrc
-      - uses: actions/setup-go@v5
+      - uses: actions/setup-go@v5.5.0
         with:
           go-version-file: go.mod
       - name: Configure git user
@@ -198,6 +198,7 @@ jobs:
         if: ${{ inputs.bump == true || inputs.bump == 'true' }}
         uses: dagger/dagger-for-github@e47aba410ef9bb9ed81a4d2a97df31061e5e842e
         with:
+          version: 0.18.8
           verb: run
           args: go run -C .grafana-main ./pkg/build/actions/bump-version -version="patch"
 

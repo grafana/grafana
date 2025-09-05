@@ -19,12 +19,11 @@ import {
   PanelQueryKind,
   QueryVariableKind,
   TabsLayoutTabKind,
-} from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
+  DataQueryKind,
+} from '@grafana/schema/dist/esm/schema/dashboard/v2';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 
-import { ConditionalRendering } from '../../conditional-rendering/ConditionalRendering';
-import { ConditionalRenderingGroup } from '../../conditional-rendering/ConditionalRenderingGroup';
-import { conditionalRenderingSerializerRegistry } from '../../conditional-rendering/serializers';
+import { ConditionalRenderingGroup } from '../../conditional-rendering/group/ConditionalRenderingGroup';
 import { CustomTimeRangeCompare } from '../../scene/CustomTimeRangeCompare';
 import { DashboardDatasourceBehaviour } from '../../scene/DashboardDatasourceBehaviour';
 import { DashboardScene } from '../../scene/DashboardScene';
@@ -61,10 +60,10 @@ export function buildVizPanel(panel: PanelKind, id?: number): VizPanel {
     key: getVizPanelKeyForPanelId(id ?? panel.spec.id),
     title: panel.spec.title?.substring(0, 5000),
     description: panel.spec.description,
-    pluginId: panel.spec.vizConfig.kind,
+    pluginId: panel.spec.vizConfig.group,
     options: panel.spec.vizConfig.spec.options,
     fieldConfig: transformMappingsToV1(panel.spec.vizConfig.spec.fieldConfig),
-    pluginVersion: panel.spec.vizConfig.spec.pluginVersion,
+    pluginVersion: panel.spec.vizConfig.version,
     displayMode: panel.spec.transparent ? 'transparent' : 'default',
     hoverHeader: !panel.spec.title && !timeOverrideShown,
     hoverHeaderOffset: 0,
@@ -189,12 +188,15 @@ function getPanelDataSource(panel: PanelKind): DataSourceRef | undefined {
 
   panel.spec.data.spec.queries.forEach((query) => {
     if (!datasource) {
-      if (!query.spec.datasource?.uid) {
-        datasource = getRuntimePanelDataSource(query);
+      if (!query.spec.query.datasource?.name) {
+        datasource = getRuntimePanelDataSource(query.spec.query);
       } else {
-        datasource = query.spec.datasource;
+        datasource = {
+          uid: query.spec.query.datasource?.name,
+          type: query.spec.query.group,
+        };
       }
-    } else if (datasource.uid !== query.spec.datasource?.uid || datasource.type !== query.spec.datasource?.type) {
+    } else if (datasource.uid !== query.spec.query.datasource?.name || datasource.type !== query.spec.query.group) {
       isMixedDatasource = true;
     }
   });
@@ -203,11 +205,19 @@ function getPanelDataSource(panel: PanelKind): DataSourceRef | undefined {
 }
 
 export function getRuntimeVariableDataSource(variable: QueryVariableKind): DataSourceRef | undefined {
-  return getDataSourceForQuery(variable.spec.datasource, variable.spec.query.kind);
+  const ds: DataSourceRef = {
+    uid: variable.spec.query.datasource?.name,
+    type: variable.spec.query.group,
+  };
+  return getDataSourceForQuery(ds, variable.spec.query.group);
 }
 
-export function getRuntimePanelDataSource(query: PanelQueryKind): DataSourceRef | undefined {
-  return getDataSourceForQuery(query.spec.datasource, query.spec.query.kind);
+export function getRuntimePanelDataSource(query: DataQueryKind): DataSourceRef {
+  const ds: DataSourceRef = {
+    uid: query.datasource?.name,
+    type: query.group,
+  };
+  return getDataSourceForQuery(ds, query.group);
 }
 
 /**
@@ -215,18 +225,15 @@ export function getRuntimePanelDataSource(query: PanelQueryKind): DataSourceRef 
  * @param queryKind - The kind of query being performed
  * @returns The resolved DataSourceRef
  */
-function getDataSourceForQuery(
-  querySpecDS: DataSourceRef | undefined | null,
-  queryKind: string
-): DataSourceRef | undefined {
+export function getDataSourceForQuery(querySpecDS: DataSourceRef | undefined | null, queryKind: string): DataSourceRef {
   // If datasource is specified and has a uid, use it
   if (querySpecDS?.uid) {
     return querySpecDS;
   }
 
   // Otherwise try to infer datasource based on query kind (kind = ds type)
-  const defaultDatasource = config.bootData.settings.defaultDatasource;
-  const dsList = config.bootData.settings.datasources;
+  const defaultDatasource = config.defaultDatasource;
+  const dsList = config.datasources;
 
   // First check if the default datasource matches the query type
   if (dsList && dsList[defaultDatasource] && dsList[defaultDatasource].meta.id === queryKind) {
@@ -257,14 +264,22 @@ function getDataSourceForQuery(
     };
   }
 
-  // If we don't find a default datasource, return undefined
-  return undefined;
+  if (dsList && !dsList[defaultDatasource]) {
+    throw new Error(`Default datasource ${defaultDatasource} not found in datasource list`);
+  }
+
+  // In the datasource list from bootData "id" is the type and the uid could be uid or the name
+  // in cases like grafana, dashboard or mixed datasource
+  return {
+    uid: dsList[defaultDatasource].uid || dsList[defaultDatasource].name,
+    type: dsList[defaultDatasource].meta.id,
+  };
 }
 
 function panelQueryKindToSceneQuery(query: PanelQueryKind): SceneDataQuery {
   return {
     refId: query.spec.refId,
-    datasource: getRuntimePanelDataSource(query),
+    datasource: getRuntimePanelDataSource(query.spec.query),
     hide: query.spec.hidden,
     ...query.spec.query.spec,
   };
@@ -276,20 +291,12 @@ export function getLayout(sceneState: DashboardLayoutManager): DashboardV2Spec['
 
 export function getConditionalRendering(
   item: TabsLayoutTabKind | RowsLayoutRowKind | AutoGridLayoutItemKind
-): ConditionalRendering {
+): ConditionalRenderingGroup {
   if (!item.spec.conditionalRendering) {
-    return ConditionalRendering.createEmpty();
+    return ConditionalRenderingGroup.createEmpty();
   }
 
-  const rootGroup = conditionalRenderingSerializerRegistry
-    .get(item.spec.conditionalRendering.kind)
-    .deserialize(item.spec.conditionalRendering);
-
-  if (rootGroup && !(rootGroup instanceof ConditionalRenderingGroup)) {
-    throw new Error(`Conditional rendering must always start with a root group`);
-  }
-
-  return new ConditionalRendering({ rootGroup: rootGroup });
+  return ConditionalRenderingGroup.deserialize(item.spec.conditionalRendering);
 }
 
 export function getElements(layout: DashboardLayoutManager, scene: DashboardScene): DashboardV2Spec['elements'] {

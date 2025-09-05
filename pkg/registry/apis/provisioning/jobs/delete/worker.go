@@ -8,9 +8,9 @@ import (
 
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
-	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
+	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 )
 
@@ -70,11 +70,21 @@ func (w *Worker) Process(ctx context.Context, repo repository.Repository, job pr
 		CommitOnlyOnceMessage: msg,
 		PushOnWrites:          false,
 		Timeout:               10 * time.Minute,
+		Ref:                   opts.Ref,
 	}
 
 	err := w.wrapFn(ctx, repo, stageOptions, fn)
 	if err != nil {
 		return fmt.Errorf("delete files from repository: %w", err)
+	}
+
+	// Set RefURLs if the repository supports it and we have a target ref
+	if opts.Ref != "" {
+		if repoWithURLs, ok := repo.(repository.RepositoryWithURLs); ok {
+			if refURLs, urlErr := repoWithURLs.RefURLs(ctx, opts.Ref); urlErr == nil && refURLs != nil {
+				progress.SetRefURLs(ctx, refURLs)
+			}
+		}
 	}
 
 	if opts.Ref == "" {
@@ -106,7 +116,9 @@ func (w *Worker) deleteFiles(ctx context.Context, rw repository.ReaderWriter, pr
 		}
 
 		progress.SetMessage(ctx, "Deleting "+path)
-		result.Error = rw.Delete(ctx, path, opts.Ref, "Delete "+path)
+		if err := rw.Delete(ctx, path, opts.Ref, "Delete "+path); err != nil {
+			result.Error = fmt.Errorf("deleting file %s: %w", path, err)
+		}
 		progress.Record(ctx, result)
 		if err := progress.TooManyErrors(); err != nil {
 			return err
@@ -167,12 +179,12 @@ func deduplicatePaths(paths []string) []string {
 		return paths
 	}
 
-	seen := make(map[string]bool, len(paths))
+	seen := make(map[string]struct{}, len(paths))
 	result := make([]string, 0, len(paths))
 
 	for _, path := range paths {
-		if !seen[path] {
-			seen[path] = true
+		if _, exists := seen[path]; !exists {
+			seen[path] = struct{}{}
 			result = append(result, path)
 		}
 	}
