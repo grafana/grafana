@@ -4506,16 +4506,11 @@
             "any": "Matcha någon",
             "label": "Matchningsregler"
           },
-          "label": "Grupp",
           "visibility": {
             "hide": "Dölj",
             "label": "{{type}} synlighet",
             "show": "Visa"
           }
-        },
-        "shared": {
-          "delete-condition": "Ta bort villkor",
-          "unsupported-item-type": "Detta villkor stöds inte av elementet, därför kommer det att ignoreras."
         },
         "time-range-size": {
           "info": "Visa eller dölj {{type}} om instrumentpanelens tidsintervall är kortare än den valda tidsramen.",
@@ -4545,17 +4540,21 @@
             "not-matches": "Ingen matchning"
           },
           "value": "Värde"
+        },
+        "wrapper": {
+          "delete-condition": "",
+          "unsupported-object-type": ""
         }
       },
       "editor": {
+        "info": "",
         "not-supported-for-custom-grid": "Villkorsstyrd rendering stöds inte för den anpassade rutnätslayouten. Byt till automatiskt rutnät om du vill använda villkorsstyrd rendering.",
-        "unsupported-item-type": "Villkorsstyrd rendering stöds inte för den här objekttypen"
+        "unsupported-object-type": ""
       },
       "overlay": {
         "tooltip": "Elementet är dolt på grund av villkorsstyrd rendering."
       },
       "root": {
-        "info": "Ställ in regler för att reglera synligheten för {{type}} genom att matcha med någon eller alla regler.",
         "title": "Visa/dölj regler"
       }
     },
@@ -4695,7 +4694,8 @@
       "paste-panel": "Klistra in panel",
       "remove": "Ta bort {{typeName}}",
       "row-title": "",
-      "switch-layout": "Byt layout"
+      "switch-layout": "Byt layout",
+      "tab-title": ""
     },
     "edit-pane": {
       "elements": {
@@ -8348,6 +8348,10 @@
         "action-title": "Titel",
         "action-title-placeholder": "Åtgärdstitel",
         "action-variables": "Variabler",
+        "connection": "",
+        "connection-direct-description": "",
+        "connection-direct-label": "",
+        "connection-placeholder": "",
         "one-click-description": "Endast en länk eller en åtgärd kan ha en aktiverad klickning åt gången"
       }
     },
@@ -9727,30 +9731,6 @@
     "un-themed-log-label-stats": {
       "field-log-stats": "{{label}}: {{total}} av {{rowCount}} rader har det fältet",
       "label-log-stats": "{{label}}: {{total}} av {{rowCount}} rader har den etiketten"
-    }
-  },
-  "logs-new": {
-    "category-logs": "Loggar",
-    "deduplication-options": {
-      "label-exact": "Exakt",
-      "label-none": "Ingen",
-      "label-numbers": "Nummer",
-      "label-signature": "Underskrift"
-    },
-    "description-infinite-scrolling": "Experimentellt. Begär fler resultat genom att bläddra till längst ner i logglistan.",
-    "description-show-controls": "Visa kontroller för att hoppa till den sista eller första loggraden och filtrera efter loggnivå",
-    "description-syntax-highlighting": "Använd en fördefinierad syntaxfärgningsgrammatik för att markera relevanta delar av loggraderna",
-    "name-deduplication": "Avduplicering",
-    "name-enable-log-details": "Aktivera loggdetaljer",
-    "name-infinite-scrolling": "Aktivera oändlig rullning",
-    "name-order": "Beställning",
-    "name-show-controls": "Visa kontroller",
-    "name-syntax-highlighting": "Aktivera syntaxfärgläggning",
-    "name-time": "Tid",
-    "name-wrap-lines": "Radbryt linjer",
-    "order-options": {
-      "label-newest-first": "Nyaste först",
-      "label-oldest-first": "Äldsta först"
     }
   },
   "manage-dashbaords": {

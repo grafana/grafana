@@ -13,6 +13,8 @@ import (
 	"github.com/urfave/cli/v2"
 	"k8s.io/client-go/tools/cache"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/export"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/migrate"
@@ -21,6 +23,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/grafana/grafana/pkg/services/apiserver/standalone"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 
 	"github.com/grafana/grafana/apps/provisioning/pkg/controller"
 	informer "github.com/grafana/grafana/apps/provisioning/pkg/generated/informers/externalversions"
@@ -49,6 +52,11 @@ func RunJobController(opts standalone.BuildInfo, c *cli.Context, cfg *setting.Cf
 		fmt.Println("Received shutdown signal, stopping controllers")
 		cancel()
 	}()
+
+	// Use unified storage client for testing purposes.
+	// TODO: remove this once the processing logic is in place
+	// https://github.com/grafana/git-ui-sync-project/issues/467
+	go temporaryPeriodicCountManagedObjects(ctx, logger, controllerCfg)
 
 	// Jobs informer and controller (resync ~60s like in register.go)
 	jobInformerFactory := informer.NewSharedInformerFactoryWithOptions(
@@ -149,8 +157,7 @@ func RunJobController(opts standalone.BuildInfo, c *cli.Context, cfg *setting.Cf
 
 type jobsControllerConfig struct {
 	provisioningControllerConfig
-	historyExpiration    time.Duration
-	unifiedStorageClient resources.ResourceStore
+	historyExpiration time.Duration
 }
 
 func setupJobsControllerFromConfig(cfg *setting.Cfg) (*jobsControllerConfig, error) {
@@ -159,15 +166,9 @@ func setupJobsControllerFromConfig(cfg *setting.Cfg) (*jobsControllerConfig, err
 		return nil, err
 	}
 
-	unifiedStorageClient, err := setupUnifiedStorageClient(cfg, controllerCfg.tracer)
-	if err != nil {
-		return nil, fmt.Errorf("setup unified storage client: %w", err)
-	}
-
 	return &jobsControllerConfig{
 		provisioningControllerConfig: *controllerCfg,
 		historyExpiration:            cfg.SectionWithEnvOverrides("operator").Key("history_expiration").MustDuration(0),
-		unifiedStorageClient:         unifiedStorageClient,
 	}, nil
 }
 
@@ -223,4 +224,47 @@ func setupWorkers(controllerCfg *jobsControllerConfig) ([]jobs.Worker, error) {
 	workers = append(workers, moveWorker)
 
 	return workers, nil
+}
+
+// Use unified storage client for testing purposes.
+// TODO: remove this once the processing logic is in place
+// https://github.com/grafana/git-ui-sync-project/issues/467
+func temporaryPeriodicCountManagedObjects(ctx context.Context, logger logging.Logger, controllerCfg *jobsControllerConfig) {
+	tick := time.NewTicker(controllerCfg.resyncInterval)
+	logger.Info("starting periodic managed resource lister", "interval", controllerCfg.resyncInterval.String())
+	fetchAndLog := func(ctx context.Context) {
+		ctx, _, err := identity.WithProvisioningIdentity(ctx, "*") // "*" grants us access to all namespaces.
+		if err != nil {
+			logger.Error("failed to set identity", "error", err)
+			return
+		}
+
+		resp, err := controllerCfg.unified.CountManagedObjects(ctx, &resourcepb.CountManagedObjectsRequest{
+			Kind: string(utils.ManagerKindRepo),
+		})
+		if err != nil {
+			logger.Error("failed to list managed objects", "error", err)
+		} else {
+			if len(resp.Items) == 0 {
+				logger.Info("no managed objects found")
+				return
+			}
+
+			for _, obj := range resp.Items {
+				logger.Info("manage object counts", "item", obj)
+			}
+		}
+	}
+
+	fetchAndLog(ctx) // Initial fetch
+	for {
+		select {
+		case <-ctx.Done():
+			tick.Stop()
+			return
+		case <-tick.C:
+			// Periodic fetch
+			fetchAndLog(ctx)
+		}
+	}
 }
