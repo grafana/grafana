@@ -62,7 +62,7 @@ export const TimeSeriesPanel = ({
         if (tc?.isTimeShiftQuery && tc.diffMs != null) {
           // Check if the compared frame needs time alignment
           // Apply alignment when time ranges match (no shift applied yet)
-          const needsAlignment = shouldAlignTimeCompare(frame, frames);
+          const needsAlignment = shouldAlignTimeCompare(frame, frames, timeRange);
           if (needsAlignment) {
             alignTimeRangeCompareData(frame, tc.diffMs, config.theme2.colors.text.disabled);
           }
