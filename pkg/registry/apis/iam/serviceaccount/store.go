@@ -174,7 +174,7 @@ func (s *LegacyStore) toSAItem(sa legacy.ServiceAccount, ns string) iamv0alpha1.
 			CreationTimestamp: metav1.NewTime(sa.Created),
 		},
 		Spec: iamv0alpha1.ServiceAccountSpec{
-			Plugin:   extractPluginNameFromLogin(sa.Login),
+			Plugin:   extractPluginNameFromTitle(sa.Name),
 			Title:    sa.Name,
 			Disabled: sa.Disabled,
 			Role:     iamv0alpha1.ServiceAccountOrgRole(sa.Role),
@@ -186,13 +186,9 @@ func (s *LegacyStore) toSAItem(sa legacy.ServiceAccount, ns string) iamv0alpha1.
 	return item
 }
 
-func extractPluginNameFromLogin(login string) string {
-	if serviceaccounts.IsExternalServiceAccount(login) {
-		parts := strings.SplitAfter(login, "-")
-		if len(parts) < 4 {
-			return ""
-		}
-		return parts[3]
+func extractPluginNameFromTitle(title string) string {
+	if strings.HasPrefix(title, serviceaccounts.ExtSvcPrefix) {
+		return strings.TrimLeft(title, serviceaccounts.ExtSvcPrefix)
 	}
 	return ""
 }

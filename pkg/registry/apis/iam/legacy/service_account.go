@@ -108,7 +108,6 @@ type ServiceAccount struct {
 	UID      string
 	Name     string
 	Disabled bool
-	Login    string
 	Role     string
 	Created  time.Time
 	Updated  time.Time
@@ -187,7 +186,7 @@ func (s *legacySQLStore) ListServiceAccounts(ctx context.Context, ns claims.Name
 	var lastID int64
 	for rows.Next() {
 		var s ServiceAccount
-		err := rows.Scan(&s.ID, &s.UID, &s.Name, &s.Login, &s.Disabled, &s.Role, &s.Created, &s.Updated)
+		err := rows.Scan(&s.ID, &s.UID, &s.Name, &s.Disabled, &s.Role, &s.Created, &s.Updated)
 		if err != nil {
 			return res, err
 		}
@@ -386,7 +385,6 @@ func (s *legacySQLStore) CreateServiceAccount(ctx context.Context, ns claims.Nam
 			ID:       serviceAccountID,
 			UID:      cmd.UID,
 			Name:     cmd.Name,
-			Login:    cmd.Login,
 			Role:     cmd.Role,
 			Disabled: cmd.IsDisabled,
 			Created:  cmd.Created.Time,
