@@ -24,6 +24,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver/standalone"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/grafana/grafana/apps/provisioning/pkg/controller"
 	informer "github.com/grafana/grafana/apps/provisioning/pkg/generated/informers/externalversions"
@@ -53,10 +54,10 @@ func RunJobController(opts standalone.BuildInfo, c *cli.Context, cfg *setting.Cf
 		cancel()
 	}()
 
-	// Use unified storage client for testing purposes.
+	// Use unified storage client and API clients for testing purposes.
 	// TODO: remove this once the processing logic is in place
 	// https://github.com/grafana/git-ui-sync-project/issues/467
-	go temporaryPeriodicCountManagedObjects(ctx, logger, controllerCfg)
+	go temporaryPeriodicTestClients(ctx, logger, controllerCfg)
 
 	// Jobs informer and controller (resync ~60s like in register.go)
 	jobInformerFactory := informer.NewSharedInformerFactoryWithOptions(
@@ -173,7 +174,6 @@ func setupJobsControllerFromConfig(cfg *setting.Cfg) (*jobsControllerConfig, err
 }
 
 func setupWorkers(controllerCfg *jobsControllerConfig) ([]jobs.Worker, error) {
-	// TODO: Fix once this PR is merged: https://github.com/grafana/grafana/pull/110699
 	clients := controllerCfg.clients
 	parsers := resources.NewParserFactory(clients)
 	resourceLister := resources.NewResourceLister(controllerCfg.unified)
@@ -227,9 +227,9 @@ func setupWorkers(controllerCfg *jobsControllerConfig) ([]jobs.Worker, error) {
 // Use unified storage client for testing purposes.
 // TODO: remove this once the processing logic is in place
 // https://github.com/grafana/git-ui-sync-project/issues/467
-func temporaryPeriodicCountManagedObjects(ctx context.Context, logger logging.Logger, controllerCfg *jobsControllerConfig) {
+func temporaryPeriodicTestClients(ctx context.Context, logger logging.Logger, controllerCfg *jobsControllerConfig) {
 	tick := time.NewTicker(controllerCfg.resyncInterval)
-	logger.Info("starting periodic managed resource lister", "interval", controllerCfg.resyncInterval.String())
+	logger.Info("starting periodic using clients", "interval", controllerCfg.resyncInterval.String())
 	fetchAndLog := func(ctx context.Context) {
 		ctx, _, err := identity.WithProvisioningIdentity(ctx, "*") // "*" grants us access to all namespaces.
 		if err != nil {
@@ -245,11 +245,39 @@ func temporaryPeriodicCountManagedObjects(ctx context.Context, logger logging.Lo
 		} else {
 			if len(resp.Items) == 0 {
 				logger.Info("no managed objects found")
-				return
+			} else {
+				for _, obj := range resp.Items {
+					logger.Info("manage object counts", "item", obj)
+				}
+			}
+		}
+
+		// List all supported resources
+		client, err := controllerCfg.clients.Clients(ctx, "")
+		if err != nil {
+			logger.Error("failed to get resource clients", "error", err)
+			return
+		}
+
+		for kind, gvr := range resources.SupportedProvisioningResources {
+			logger := logger.With("kind", kind, "gvr", gvr.String())
+			logger.Info("fetching resources")
+
+			resourceClient, gvk, err := client.ForResource(ctx, gvr)
+			if err != nil {
+				logger.Error("failed to get resource client", "error", err)
+				continue
 			}
 
-			for _, obj := range resp.Items {
-				logger.Info("manage object counts", "item", obj)
+			logger = logger.With("gvk", gvk.String())
+			list, err := resourceClient.List(ctx, metav1.ListOptions{})
+			if err != nil {
+				logger.Error("failed to list resources", "error", err)
+				continue
+			}
+
+			for _, item := range list.Items {
+				logger.Info("resource", "name", item.GetName(), "namespace", item.GetNamespace())
 			}
 		}
 	}
