@@ -2,6 +2,7 @@ import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { locationService } from '@grafana/runtime';
 import {
   SceneComponentProps,
   SceneObjectBase,
@@ -30,6 +31,18 @@ export interface PanelDataPaneState extends SceneObjectState {
 
 export class PanelDataPane extends SceneObjectBase<PanelDataPaneState> {
   static Component = PanelDataPaneRendered;
+  public constructor(state: PanelDataPaneState) {
+    super(state);
+
+    this.addActivationHandler(() => {
+      const urlParams = new URLSearchParams(locationService.getLocation().search);
+      const tab = urlParams.get('tab');
+      if (tab && tab !== this.state.tab) {
+        this.updateFromUrl({ tab });
+      }
+    });
+  }
+
   protected _urlSync = new SceneObjectUrlSyncConfig(this, { keys: ['tab'] });
 
   public static createFor(panel: VizPanel) {
@@ -63,7 +76,21 @@ export class PanelDataPane extends SceneObjectBase<PanelDataPaneState> {
       return;
     }
     if (typeof values.tab === 'string') {
-      this.setState({ tab: values.tab as TabId });
+      const tabId = this.getValidTabId(values.tab);
+      if (tabId) {
+        this.setState({ tab: tabId });
+      }
+    }
+  }
+
+  private getValidTabId(value: string): TabId | null {
+    switch (value) {
+      case TabId.Queries:
+      case TabId.Transformations:
+      case TabId.Alert:
+        return value;
+      default:
+        return null;
     }
   }
 }
