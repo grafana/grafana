@@ -198,7 +198,11 @@ func TestEncryptedValueStoreImpl(t *testing.T) {
 	})
 }
 
-func TestStateMachine(t *testing.T) {
+func TestIntegration_StateMachine(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+
 	t.Parallel()
 
 	tt := t
