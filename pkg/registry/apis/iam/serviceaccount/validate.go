@@ -20,7 +20,7 @@ func ValidateOnCreate(ctx context.Context, obj *iamv0alpha1.ServiceAccount) erro
 
 	requester, err := identity.GetRequester(ctx)
 	if err != nil {
-		return apierrors.NewBadRequest("no identity found")
+		return apierrors.NewUnauthorized("no identity found")
 	}
 
 	requestedRole := identity.RoleType(obj.Spec.Role)

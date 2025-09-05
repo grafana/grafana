@@ -315,7 +315,7 @@ func (b *IdentityAccessManagementAPIBuilder) validateCreateUser(ctx context.Cont
 
 	requester, err := identity.GetRequester(ctx)
 	if err != nil {
-		return apierrors.NewBadRequest("no identity found")
+		return apierrors.NewUnauthorized("no identity found")
 	}
 
 	// Temporary validation that the user is not trying to create a Grafana Admin without being a Grafana Admin.

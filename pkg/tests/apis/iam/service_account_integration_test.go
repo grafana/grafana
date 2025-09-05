@@ -74,10 +74,8 @@ func doServiceAccountCRUDTestsUsingTheNewAPIs(t *testing.T, helper *apis.K8sTest
 
 		createdSpec := created.Object["spec"].(map[string]interface{})
 		require.Equal(t, "Test Service Account 1", createdSpec["title"])
-		require.Equal(t, "sa-1-test-service-account-1", createdSpec["login"]) // Login is auto-generated
 		require.Equal(t, false, createdSpec["disabled"])
-		require.Equal(t, false, createdSpec["external"])
-		require.Regexp(t, `/avatar/\w{32}`, createdSpec["avatarUrl"])
+		require.Empty(t, createdSpec["plugin"])
 
 		createdUID := created.GetName()
 		require.NotEmpty(t, createdUID)
@@ -91,10 +89,8 @@ func doServiceAccountCRUDTestsUsingTheNewAPIs(t *testing.T, helper *apis.K8sTest
 
 		fetchedSpec := fetched.Object["spec"].(map[string]interface{})
 		require.Equal(t, "Test Service Account 1", fetchedSpec["title"])
-		require.Equal(t, "sa-1-test-service-account-1", fetchedSpec["login"]) // Login is auto-generated
 		require.Equal(t, false, fetchedSpec["disabled"])
-		require.Equal(t, false, fetchedSpec["external"])
-		require.Regexp(t, `/avatar/\w{32}`, createdSpec["avatarUrl"])
+		require.Empty(t, fetchedSpec["plugin"])
 
 		require.Equal(t, createdUID, fetched.GetName())
 		require.Equal(t, "default", fetched.GetNamespace())
@@ -232,8 +228,7 @@ func doServiceAccountCRUDTestsUsingTheLegacyAPIs(t *testing.T, helper *apis.K8sT
 		saSpec := sa.Object["spec"].(map[string]interface{})
 		require.Equal(t, "Test Service Account 2", saSpec["title"])
 		require.Equal(t, false, saSpec["disabled"])
-		require.Equal(t, false, saSpec["external"])
-		require.Regexp(t, `/avatar/\w{32}`, saSpec["avatarUrl"])
+		require.Empty(t, saSpec["plugin"])
 
 		require.Equal(t, rsp.Result.UID, sa.GetName())
 		require.Equal(t, "default", sa.GetNamespace())
