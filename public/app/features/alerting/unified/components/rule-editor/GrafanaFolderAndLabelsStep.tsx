@@ -1,9 +1,11 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 
 import { Trans, t } from '@grafana/i18n';
 import { Stack, Text } from '@grafana/ui';
 
+import { alertRuleApi } from '../../api/alertRuleApi';
+import { GRAFANA_RULER_CONFIG } from '../../api/featureDiscoveryApi';
 import { KBObjectArray, RuleFormValues } from '../../types/rule-form';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
 
@@ -13,11 +15,19 @@ import { RuleEditorSection } from './RuleEditorSection';
 import { LabelsEditorModal } from './labels/LabelsEditorModal';
 import { LabelsFieldInForm } from './labels/LabelsFieldInForm';
 
+const { usePrefetch } = alertRuleApi;
+
 /** Precondition: rule is Grafana managed.
  */
 export function GrafanaFolderAndLabelsStep() {
   const { setValue, getValues } = useFormContext<RuleFormValues>();
   const [showLabelsEditor, setShowLabelsEditor] = useState(false);
+
+  const prefechRulerRules = usePrefetch('rulerRules');
+
+  useEffect(() => {
+    prefechRulerRules({ rulerConfig: GRAFANA_RULER_CONFIG });
+  }, [prefechRulerRules]);
 
   function onCloseLabelsEditor(labelsToUpdate?: KBObjectArray) {
     if (labelsToUpdate) {
