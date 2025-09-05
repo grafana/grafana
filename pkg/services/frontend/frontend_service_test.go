@@ -4,7 +4,6 @@ import (
 	"context"
 	"net/http"
 	"net/http/httptest"
-	"net/url"
 	"strings"
 	"testing"
 
@@ -29,11 +28,11 @@ func createTestService(t *testing.T, cfg *setting.Cfg) *frontendService {
 	var promRegister prometheus.Registerer = prometheus.NewRegistry()
 	promGatherer := promRegister.(*prometheus.Registry)
 
-	if cfg.CDNRootURL == nil {
-		url, err := url.Parse("http://assets.example.com")
-		require.NoError(t, err)
-		cfg.CDNRootURL = url
-	}
+	// if cfg.CDNRootURL == nil {
+	// 	url, err := url.Parse("http://assets.example.com")
+	// 	require.NoError(t, err)
+	// 	cfg.CDNRootURL = url
+	// }
 
 	if cfg.BuildVersion == "" {
 		cfg.BuildVersion = "10.3.0"
