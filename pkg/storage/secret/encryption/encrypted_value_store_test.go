@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/testutils"
 	"github.com/grafana/grafana/pkg/storage/secret/encryption"
+	"github.com/grafana/grafana/pkg/tests"
 	"github.com/stretchr/testify/require"
 	"pgregory.net/rapid"
 )
@@ -199,9 +200,7 @@ func TestEncryptedValueStoreImpl(t *testing.T) {
 }
 
 func TestIntegration_StateMachine(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	tests.SkipIntegrationTestInShortMode(t)
 
 	t.Parallel()
 
