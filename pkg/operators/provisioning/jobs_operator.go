@@ -47,48 +47,8 @@ func RunJobController(opts standalone.BuildInfo, c *cli.Context, cfg *setting.Cf
 
 	// Use unified storage client for testing purposes.
 	// TODO: remove this once the processing logic is in place
-	// A ticker to periodically counts managed objects in unified storage
 	// https://github.com/grafana/git-ui-sync-project/issues/467
-	tick := time.NewTicker(controllerCfg.resyncInterval)
-
-	go func() {
-		logger.Info("starting periodic managed resource lister", "interval", controllerCfg.resyncInterval.String())
-		fetchAndLog := func(ctx context.Context) {
-			ctx, _, err = identity.WithProvisioningIdentity(ctx, "*") // "*" grants us access to all namespaces.
-			if err != nil {
-				logger.Error("failed to set identity", "error", err)
-				return
-			}
-
-			resp, err := controllerCfg.unified.CountManagedObjects(ctx, &resourcepb.CountManagedObjectsRequest{
-				Kind: string(utils.ManagerKindRepo),
-			})
-			if err != nil {
-				logger.Error("failed to list managed objects", "error", err)
-			} else {
-				if len(resp.Items) == 0 {
-					logger.Info("no managed objects found")
-					return
-				}
-
-				for _, obj := range resp.Items {
-					logger.Info("manage object counts", "item", obj)
-				}
-			}
-		}
-
-		fetchAndLog(ctx) // Initial fetch
-		for {
-			select {
-			case <-ctx.Done():
-				tick.Stop()
-				return
-			case <-tick.C:
-				// Periodic fetch
-				fetchAndLog(ctx)
-			}
-		}
-	}()
+	go temporaryPeriodicCountManagedObjects(ctx, logger, controllerCfg)
 
 	// Jobs informer and controller (resync ~60s like in register.go)
 	jobInformerFactory := informer.NewSharedInformerFactoryWithOptions(
@@ -163,4 +123,47 @@ func getJobsControllerConfig(cfg *setting.Cfg) (*jobsControllerConfig, error) {
 		provisioningControllerConfig: *controllerCfg,
 		historyExpiration:            cfg.SectionWithEnvOverrides("operator").Key("history_expiration").MustDuration(0),
 	}, nil
+}
+
+// Use unified storage client for testing purposes.
+// TODO: remove this once the processing logic is in place
+// https://github.com/grafana/git-ui-sync-project/issues/467
+func temporaryPeriodicCountManagedObjects(ctx context.Context, logger logging.Logger, controllerCfg *jobsControllerConfig) {
+	tick := time.NewTicker(controllerCfg.resyncInterval)
+	logger.Info("starting periodic managed resource lister", "interval", controllerCfg.resyncInterval.String())
+	fetchAndLog := func(ctx context.Context) {
+		ctx, _, err := identity.WithProvisioningIdentity(ctx, "*") // "*" grants us access to all namespaces.
+		if err != nil {
+			logger.Error("failed to set identity", "error", err)
+			return
+		}
+
+		resp, err := controllerCfg.unified.CountManagedObjects(ctx, &resourcepb.CountManagedObjectsRequest{
+			Kind: string(utils.ManagerKindRepo),
+		})
+		if err != nil {
+			logger.Error("failed to list managed objects", "error", err)
+		} else {
+			if len(resp.Items) == 0 {
+				logger.Info("no managed objects found")
+				return
+			}
+
+			for _, obj := range resp.Items {
+				logger.Info("manage object counts", "item", obj)
+			}
+		}
+	}
+
+	fetchAndLog(ctx) // Initial fetch
+	for {
+		select {
+		case <-ctx.Done():
+			tick.Stop()
+			return
+		case <-tick.C:
+			// Periodic fetch
+			fetchAndLog(ctx)
+		}
+	}
 }
