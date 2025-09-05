@@ -17,7 +17,6 @@ import (
 	"k8s.io/kube-openapi/pkg/common"
 	"k8s.io/kube-openapi/pkg/spec3"
 
-	authtypes "github.com/grafana/authlib/types"
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
@@ -55,9 +54,8 @@ type FolderAPIBuilder struct {
 	authorizer authorizer.Authorizer
 	parents    parentsGetter
 
-	searcher     resourcepb.ResourceIndexClient
-	cfg          *setting.Cfg
-	ignoreLegacy bool // skip legacy storage and only use unified storage
+	searcher resourcepb.ResourceIndexClient
+	cfg      *setting.Cfg
 }
 
 func RegisterAPIService(cfg *setting.Cfg,
@@ -84,15 +82,6 @@ func RegisterAPIService(cfg *setting.Cfg,
 	}
 	apiregistration.RegisterAPI(builder)
 	return builder
-}
-
-func NewAPIService(ac authtypes.AccessClient) *FolderAPIBuilder {
-	return &FolderAPIBuilder{
-		gv:           resourceInfo.GroupVersion(),
-		namespacer:   request.GetNamespaceMapper(nil),
-		authorizer:   newMultiTenantAuthorizer(ac),
-		ignoreLegacy: true,
-	}
 }
 
 func (b *FolderAPIBuilder) GetGroupVersion() schema.GroupVersion {
@@ -138,25 +127,6 @@ func (b *FolderAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.API
 	dualWriteBuilder := opts.DualWriteBuilder
 	storage := map[string]rest.Storage{}
 
-	if b.ignoreLegacy {
-		store, err := grafanaregistry.NewRegistryStore(opts.Scheme, resourceInfo, opts.OptsGetter)
-		if err != nil {
-			return err
-		}
-		storage[resourceInfo.StoragePath()] = store
-		apiGroupInfo.VersionedResourcesStorageMap[folders.VERSION] = storage
-		b.storage = storage[resourceInfo.StoragePath()].(grafanarest.Storage)
-		return nil
-	}
-
-	legacyStore := &legacyStorage{
-		service:        b.folderSvc,
-		namespacer:     b.namespacer,
-		tableConverter: resourceInfo.TableConverter(),
-		features:       b.features,
-		cfg:            b.cfg,
-	}
-
 	opts.StorageOptsRegister(resourceInfo.GroupResource(), apistore.StorageOptions{
 		EnableFolderSupport:         true,
 		RequireDeprecatedInternalID: true})
@@ -175,6 +145,13 @@ func (b *FolderAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.API
 			return err
 		}
 
+		legacyStore := &legacyStorage{
+			service:        b.folderSvc,
+			namespacer:     b.namespacer,
+			tableConverter: resourceInfo.TableConverter(),
+			features:       b.features,
+			cfg:            b.cfg,
+		}
 		dw, err := dualWriteBuilder(resourceInfo.GroupResource(), legacyStore, store)
 		if err != nil {
 			return err
