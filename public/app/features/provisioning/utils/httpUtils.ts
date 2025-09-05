@@ -97,7 +97,7 @@ async function fetchWithPagination(
 
     // Handle GitHub/GitLab format (direct array) and Bitbucket format ({ values: [...] })
     const branches = Array.isArray(data) ? data : data?.values;
-    
+
     if (Array.isArray(branches) && branches.length > 0) {
       allBranches.push(...branches);
       hasMorePages = branches.length === 100;
