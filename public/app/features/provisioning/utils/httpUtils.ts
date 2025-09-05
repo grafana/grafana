@@ -82,7 +82,7 @@ export async function makeApiRequest(request: ApiRequest) {
   return response.json();
 }
 
-// GitHub and GitLab limit results to 100 items per page, so we need to paginate
+// GitHub, GitLab, and Bitbucket limit results to 100 items per page, so we need to paginate
 async function fetchWithPagination(
   buildUrl: (page: number) => string,
   headers: Record<string, string>
@@ -95,9 +95,12 @@ async function fetchWithPagination(
     const url = buildUrl(page);
     const data = await makeApiRequest({ url, headers });
 
-    if (Array.isArray(data) && data.length > 0) {
-      allBranches.push(...data);
-      hasMorePages = data.length === 100;
+    // Handle GitHub/GitLab format (direct array) and Bitbucket format ({ values: [...] })
+    const branches = Array.isArray(data) ? data : data?.values;
+    
+    if (Array.isArray(branches) && branches.length > 0) {
+      allBranches.push(...branches);
+      hasMorePages = branches.length === 100;
       page++;
     } else {
       hasMorePages = false;
@@ -135,14 +138,10 @@ export async function fetchAllBitbucketBranches(
   repo: string,
   headers: Record<string, string>
 ): Promise<Array<{ name: string }>> {
-  const url = `https://api.bitbucket.org/2.0/repositories/${owner}/${repo}/refs/branches?pagelen=100`;
-  const data = await makeApiRequest({ url, headers });
-
-  if (data && Array.isArray(data.values)) {
-    return data.values;
-  }
-
-  return [];
+  return fetchWithPagination(
+    (page) => `https://api.bitbucket.org/2.0/repositories/${owner}/${repo}/refs/branches?pagelen=100&page=${page}`,
+    headers
+  );
 }
 
 export async function fetchAllBranches(
