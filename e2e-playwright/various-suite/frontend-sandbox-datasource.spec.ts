@@ -3,18 +3,6 @@ import { random } from 'lodash';
 import { test, expect } from '@grafana/plugin-e2e';
 
 const DATASOURCE_ID = 'sandbox-test-datasource';
-let DATASOURCE_CONNECTION_ID = '';
-const TIMESTAMP = Date.now();
-const DATASOURCE_TYPED_NAME = `SandboxDatasourceInstance-${TIMESTAMP}`;
-
-test.beforeAll(async ({ createDataSource }) => {
-  // Add the datasource
-  const response = await createDataSource({
-    type: 'sandbox-test-datasource',
-    name: DATASOURCE_TYPED_NAME,
-  });
-  DATASOURCE_CONNECTION_ID = response.uid;
-});
 
 test.describe(
   'Datasource sandbox',
@@ -30,7 +18,18 @@ test.describe(
           });
         });
 
-        test('Should not render a sandbox wrapper around the datasource config editor', async ({ page }) => {
+        test('Should not render a sandbox wrapper around the datasource config editor', async ({
+          page,
+          createDataSource,
+        }) => {
+          const TIMESTAMP = Date.now();
+          const DATASOURCE_TYPED_NAME = `SandboxDatasourceInstance-${TIMESTAMP}`;
+          // Add the datasource
+          const response = await createDataSource({
+            type: DATASOURCE_ID,
+            name: DATASOURCE_TYPED_NAME,
+          });
+          const DATASOURCE_CONNECTION_ID = response.uid;
           await page.goto(`/connections/datasources/edit/${DATASOURCE_CONNECTION_ID}`);
 
           const sandboxDiv = page.locator(`div[data-plugin-sandbox="${DATASOURCE_ID}"]`);
@@ -45,14 +44,33 @@ test.describe(
           });
         });
 
-        test('Should render a sandbox wrapper around the datasource config editor', async ({ page }) => {
+        test('Should render a sandbox wrapper around the datasource config editor', async ({
+          page,
+          createDataSource,
+        }) => {
+          const TIMESTAMP = Date.now();
+          const DATASOURCE_TYPED_NAME = `SandboxDatasourceInstance-${TIMESTAMP}`;
+          // Add the datasource
+          const response = await createDataSource({
+            type: DATASOURCE_ID,
+            name: DATASOURCE_TYPED_NAME,
+          });
+          const DATASOURCE_CONNECTION_ID = response.uid;
           await page.goto(`/connections/datasources/edit/${DATASOURCE_CONNECTION_ID}`);
 
           const sandboxDiv = page.locator(`div[data-plugin-sandbox="${DATASOURCE_ID}"]`);
           await expect(sandboxDiv).toBeVisible();
         });
 
-        test('Should store values in jsonData and secureJsonData correctly', async ({ page }) => {
+        test('Should store values in jsonData and secureJsonData correctly', async ({ page, createDataSource }) => {
+          const TIMESTAMP = Date.now();
+          const DATASOURCE_TYPED_NAME = `SandboxDatasourceInstance-${TIMESTAMP}`;
+          // Add the datasource
+          const response = await createDataSource({
+            type: DATASOURCE_ID,
+            name: DATASOURCE_TYPED_NAME,
+          });
+          const DATASOURCE_CONNECTION_ID = response.uid;
           await page.goto(`/connections/datasources/edit/${DATASOURCE_CONNECTION_ID}`);
 
           const valueToStore = 'test' + random(100);
@@ -62,10 +80,10 @@ test.describe(
           await queryInput.fill(valueToStore);
           await expect(queryInput).toHaveValue(valueToStore);
 
-          const saveButton = page.getByTestId('data-testid Data source settings page Save and test button');
+          const saveButton = page.getByTestId('data-testid Data source settings page Save and Test button');
           await saveButton.click();
 
-          const alert = page.locator('[data-testid="data-testid Alert"]');
+          const alert = page.getByTestId('data-testid Data source settings page Alert');
           await expect(alert).toBeVisible();
           await expect(alert).toContainText('Sandbox Success');
 
@@ -85,7 +103,20 @@ test.describe(
           });
         });
 
-        test('Should not wrap the query editor in a sandbox wrapper', async ({ page, dashboardPage, selectors }) => {
+        test('Should not wrap the query editor in a sandbox wrapper', async ({
+          page,
+          createDataSource,
+          dashboardPage,
+          selectors,
+        }) => {
+          const TIMESTAMP = Date.now();
+          const DATASOURCE_TYPED_NAME = `SandboxDatasourceInstance-${TIMESTAMP}`;
+          // Add the datasource
+          const response = await createDataSource({
+            type: DATASOURCE_ID,
+            name: DATASOURCE_TYPED_NAME,
+          });
+          const DATASOURCE_CONNECTION_ID = response.uid;
           await page.goto('/explore');
 
           const dataSourcePicker = dashboardPage.getByGrafanaSelector(selectors.components.DataSourcePicker.container);
@@ -103,12 +134,19 @@ test.describe(
           );
           await expect(breadcrumb).toBeVisible();
 
-          await page.waitForTimeout(300); // wait to prevent false positives because playwright checks too fast
           const sandboxDiv = page.locator(`div[data-plugin-sandbox="${DATASOURCE_ID}"]`);
           await expect(sandboxDiv).toBeHidden();
         });
 
-        test('Should accept values when typed', async ({ page, dashboardPage, selectors }) => {
+        test('Should accept values when typed', async ({ page, createDataSource, dashboardPage, selectors }) => {
+          const TIMESTAMP = Date.now();
+          const DATASOURCE_TYPED_NAME = `SandboxDatasourceInstance-${TIMESTAMP}`;
+          // Add the datasource
+          const response = await createDataSource({
+            type: DATASOURCE_ID,
+            name: DATASOURCE_TYPED_NAME,
+          });
+          const DATASOURCE_CONNECTION_ID = response.uid;
           await page.goto('/explore');
 
           const dataSourcePicker = dashboardPage.getByGrafanaSelector(selectors.components.DataSourcePicker.container);
@@ -142,7 +180,20 @@ test.describe(
           });
         });
 
-        test('Should wrap the query editor in a sandbox wrapper', async ({ page, dashboardPage, selectors }) => {
+        test('Should wrap the query editor in a sandbox wrapper', async ({
+          page,
+          createDataSource,
+          dashboardPage,
+          selectors,
+        }) => {
+          const TIMESTAMP = Date.now();
+          const DATASOURCE_TYPED_NAME = `SandboxDatasourceInstance-${TIMESTAMP}`;
+          // Add the datasource
+          const response = await createDataSource({
+            type: DATASOURCE_ID,
+            name: DATASOURCE_TYPED_NAME,
+          });
+          const DATASOURCE_CONNECTION_ID = response.uid;
           await page.goto('/explore');
 
           const dataSourcePicker = dashboardPage.getByGrafanaSelector(selectors.components.DataSourcePicker.container);
@@ -164,7 +215,15 @@ test.describe(
           await expect(sandboxDiv).toBeVisible();
         });
 
-        test('Should accept values when typed', async ({ page, dashboardPage, selectors }) => {
+        test('Should accept values when typed', async ({ page, createDataSource, dashboardPage, selectors }) => {
+          const TIMESTAMP = Date.now();
+          const DATASOURCE_TYPED_NAME = `SandboxDatasourceInstance-${TIMESTAMP}`;
+          // Add the datasource
+          const response = await createDataSource({
+            type: DATASOURCE_ID,
+            name: DATASOURCE_TYPED_NAME,
+          });
+          const DATASOURCE_CONNECTION_ID = response.uid;
           await page.goto('/explore');
 
           const dataSourcePicker = dashboardPage.getByGrafanaSelector(selectors.components.DataSourcePicker.container);
