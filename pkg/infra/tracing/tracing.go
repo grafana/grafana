@@ -97,7 +97,7 @@ func ProvideService(tracingCfg *TracingConfig) (*TracingService, error) {
 		cfg: tracingCfg,
 		log: log.New("tracing"),
 	}
-	ots.NamedService = services.NewBasicService(ots.start, ots.run, ots.stop).WithName(ServiceName)
+	ots.NamedService = services.NewBasicService(ots.start, ots.running, ots.stop).WithName(ServiceName)
 
 	if err := ots.initOpentelemetryTracer(); err != nil {
 		return nil, err
@@ -327,7 +327,7 @@ func (ots *TracingService) Run(ctx context.Context) error {
 	return ots.AwaitTerminated(ctx)
 }
 
-func (ots *TracingService) run(ctx context.Context) error {
+func (ots *TracingService) running(ctx context.Context) error {
 	<-ctx.Done()
 	return nil
 }

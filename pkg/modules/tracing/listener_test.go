@@ -18,6 +18,7 @@ import (
 
 // setupTestTracer creates a test tracer with in-memory span recording
 func setupTestTracer(t *testing.T) (*tracetest.InMemoryExporter, *trace.TracerProvider, func()) {
+	t.Helper()
 	exporter := tracetest.NewInMemoryExporter()
 	tp := trace.NewTracerProvider(
 		trace.WithSyncer(exporter),
@@ -37,6 +38,7 @@ func setupTestTracer(t *testing.T) (*tracetest.InMemoryExporter, *trace.TracerPr
 
 // createTracingContext creates a context with a root span to enable tracing
 func createTracingContext(t *testing.T, tp *trace.TracerProvider) (context.Context, func()) {
+	t.Helper()
 	ctx := context.Background()
 	tracer := tp.Tracer("test-tracer")
 	ctx, rootSpan := tracer.Start(ctx, "test-root")
@@ -46,19 +48,6 @@ func createTracingContext(t *testing.T, tp *trace.TracerProvider) (context.Conte
 	}
 
 	return ctx, cleanup
-}
-
-func TestNewListener(t *testing.T) {
-	t.Parallel()
-
-	ctx := context.Background()
-	serviceName := "test-service"
-
-	listener := tracingmodule.NewListener(ctx, serviceName)
-
-	require.NotNil(t, listener)
-	// We can't directly access private fields, but we can test the behavior
-	// by calling methods and checking the results
 }
 
 func TestListener_Starting(t *testing.T) {
@@ -83,14 +72,10 @@ func TestListener_Starting(t *testing.T) {
 	time.Sleep(10 * time.Millisecond)
 
 	spans := exporter.GetSpans()
-	require.Len(t, spans, 2)
+	require.Len(t, spans, 1)
 
-	// First span should be the New Service span
-	newSpan := spans[0]
-	require.Equal(t, "New Service", newSpan.Name)
-
-	// Second span should be the Starting Service span
-	startingSpan := spans[1]
+	// First span should be the Starting Service span
+	startingSpan := spans[0]
 	require.Equal(t, "Starting Service", startingSpan.Name)
 	require.True(t, startingSpan.SpanContext.IsValid())
 
@@ -129,20 +114,15 @@ func TestListener_Running(t *testing.T) {
 	time.Sleep(10 * time.Millisecond)
 
 	spans := exporter.GetSpans()
-	require.Len(t, spans, 3)
+	require.Len(t, spans, 2)
 
-	// First span should be the completed New span
-	newSpan := spans[0]
-	require.Equal(t, "New Service", newSpan.Name)
-	require.True(t, newSpan.EndTime.After(newSpan.StartTime))
-
-	// Second span should be the completed Starting span
-	startingSpan := spans[1]
+	// First span should be the completed Starting span
+	startingSpan := spans[0]
 	require.Equal(t, "Starting Service", startingSpan.Name)
 	require.True(t, startingSpan.EndTime.After(startingSpan.StartTime))
 
-	// Third span should be the Running span (still active)
-	runningSpan := spans[2]
+	// Second span should be the Running span (still active)
+	runningSpan := spans[1]
 	require.Equal(t, "Running Service", runningSpan.Name)
 }
 
@@ -170,10 +150,10 @@ func TestListener_Stopping(t *testing.T) {
 	time.Sleep(10 * time.Millisecond)
 
 	spans := exporter.GetSpans()
-	require.Len(t, spans, 5) // New, Starting, Running, Stopping, Parent
+	require.Len(t, spans, 4) // Starting, Running, Stopping, Parent
 
-	// Check that Stopping span was started (should be the 4th span, index 3)
-	stoppingSpan := spans[3]
+	// Check that Stopping span was started (should be the 3rd span, index 2)
+	stoppingSpan := spans[2]
 	require.Equal(t, "Stopping Service", stoppingSpan.Name)
 }
 
@@ -199,7 +179,7 @@ func TestListener_Terminated(t *testing.T) {
 	time.Sleep(10 * time.Millisecond)
 
 	spans := exporter.GetSpans()
-	require.Len(t, spans, 5) // New, Starting, Running, Stopping, Parent - all should be ended
+	require.Len(t, spans, 4) // Starting, Running, Stopping, Parent - all should be ended
 
 	// All spans should be completed
 	for _, span := range spans {
@@ -227,10 +207,10 @@ func TestListener_Failed(t *testing.T) {
 	time.Sleep(10 * time.Millisecond)
 
 	spans := exporter.GetSpans()
-	require.Len(t, spans, 3) // New, Starting, Parent spans
+	require.Len(t, spans, 2) // Starting, Parent spans
 
 	// The Starting span should have the error recorded
-	startingSpan := spans[1]
+	startingSpan := spans[0]
 	require.Equal(t, "Starting Service", startingSpan.Name)
 	require.True(t, startingSpan.EndTime.After(startingSpan.StartTime))
 
@@ -305,7 +285,7 @@ func TestListener_EdgeCases(t *testing.T) {
 
 		time.Sleep(10 * time.Millisecond)
 		spans := exporter.GetSpans()
-		require.Len(t, spans, 2, "Should have New span and parent span")
+		require.Len(t, spans, 1, "Should have parent span only")
 	})
 
 	t.Run("fail without starting", func(t *testing.T) {
@@ -324,7 +304,7 @@ func TestListener_EdgeCases(t *testing.T) {
 
 		time.Sleep(10 * time.Millisecond)
 		spans := exporter.GetSpans()
-		require.Len(t, spans, 2, "Should have New span with error and parent span")
+		require.Len(t, spans, 1, "Should have parent span only")
 	})
 
 	t.Run("multiple terminations", func(t *testing.T) {
@@ -344,7 +324,7 @@ func TestListener_EdgeCases(t *testing.T) {
 
 		time.Sleep(10 * time.Millisecond)
 		spans := exporter.GetSpans()
-		require.Len(t, spans, 3, "Should have New, Starting, and parent spans")
+		require.Len(t, spans, 2, "Should have Starting and parent spans")
 	})
 }
 
@@ -374,18 +354,17 @@ func TestListener_ServiceLifecycleIntegration(t *testing.T) {
 	time.Sleep(10 * time.Millisecond)
 
 	spans := exporter.GetSpans()
-	require.Len(t, spans, 5) // New, Starting, Running, Stopping, Parent
+	require.Len(t, spans, 4) // Starting, Running, Stopping, Parent
 
 	// Verify span names and order (excluding parent span which is last)
 	expectedNames := []string{
-		"New Service",
 		"Starting Service",
 		"Running Service",
 		"Stopping Service",
 	}
 
-	// Check the first 4 spans (service state spans)
-	for i := 0; i < 4; i++ {
+	// Check the first 3 spans (service state spans)
+	for i := 0; i < 3; i++ {
 		span := spans[i]
 		require.Equal(t, expectedNames[i], span.Name)
 		require.True(t, span.EndTime.After(span.StartTime), "Span %s should be ended", span.Name)
@@ -402,16 +381,14 @@ func TestListener_ServiceLifecycleIntegration(t *testing.T) {
 	}
 
 	// Check the parent span (last span)
-	parentSpan := spans[4]
+	parentSpan := spans[3]
 	require.Equal(t, serviceName, parentSpan.Name)
 	require.True(t, parentSpan.EndTime.After(parentSpan.StartTime), "Parent span should be ended")
 
 	// Verify timing relationships between state spans
 	require.True(t, spans[0].EndTime.Before(spans[1].StartTime) || spans[0].EndTime.Equal(spans[1].StartTime),
-		"New span should end before or when Starting span starts")
-	require.True(t, spans[1].EndTime.Before(spans[2].StartTime) || spans[1].EndTime.Equal(spans[2].StartTime),
 		"Starting span should end before or when Running span starts")
-	require.True(t, spans[2].EndTime.Before(spans[3].StartTime) || spans[2].EndTime.Equal(spans[3].StartTime),
+	require.True(t, spans[1].EndTime.Before(spans[2].StartTime) || spans[1].EndTime.Equal(spans[2].StartTime),
 		"Running span should end before or when Stopping span starts")
 }
 
@@ -436,10 +413,10 @@ func TestListener_ErrorRecording(t *testing.T) {
 	time.Sleep(10 * time.Millisecond)
 
 	spans := exporter.GetSpans()
-	require.Len(t, spans, 4) // New, Starting, Running, Parent spans
+	require.Len(t, spans, 3) // Starting, Running, Parent spans
 
 	// The Running span should have the error recorded
-	runningSpan := spans[2]
+	runningSpan := spans[1]
 	require.Equal(t, "Running Service", runningSpan.Name)
 
 	// Check for exception event
@@ -483,5 +460,5 @@ func TestListener_EndAllSpansWithNonRecordingSpan(t *testing.T) {
 	time.Sleep(10 * time.Millisecond)
 
 	spans := exporter.GetSpans()
-	require.Len(t, spans, 3, "Should have New, Starting, and parent spans")
+	require.Len(t, spans, 2, "Should have Starting and parent spans")
 }

@@ -3,7 +3,6 @@ package tracing
 import (
 	"context"
 	"fmt"
-	"sync"
 
 	"github.com/grafana/dskit/services"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -22,7 +21,6 @@ type Listener struct {
 	serviceName string
 
 	// Active spans for tracking state durations
-	mu         sync.RWMutex
 	parentSpan trace.Span
 	spans      map[services.State]trace.Span
 }
@@ -36,13 +34,11 @@ func NewListener(ctx context.Context, serviceName string) *Listener {
 		serviceName: serviceName,
 		spans:       make(map[services.State]trace.Span),
 	}
-	l.startSpan(services.New)
 	return l
 }
 
 // Starting is called when the service transitions from NEW to STARTING.
 func (l *Listener) Starting() {
-	l.endSpan(services.New, nil)
 	l.startSpan(services.Starting)
 }
 
@@ -61,13 +57,13 @@ func (l *Listener) Stopping(from services.State) {
 // Terminated is called when the service transitions to the TERMINATED state.
 func (l *Listener) Terminated(from services.State) {
 	l.endSpan(from, nil)
-	l.endAllSpans() // Clean up any remaining spans
+	l.parentSpan.End()
 }
 
 // Failed is called when the service transitions to the FAILED state.
 func (l *Listener) Failed(from services.State, failure error) {
 	l.endSpan(from, failure)
-	l.endAllSpans() // Clean up any remaining spans
+	l.parentSpan.End()
 }
 
 // startSpan creates and stores a span for the given state
@@ -75,17 +71,12 @@ func (l *Listener) startSpan(state services.State) {
 	spanName := fmt.Sprintf("%s Service", state.String())
 	_, span := tracing.Start(l.ctx, spanName, semconv.GrafanaServiceName(l.serviceName))
 
-	l.mu.Lock()
 	l.spans[state] = span
-	l.mu.Unlock()
 }
 
 // endSpan safely ends and removes a span for the given state
 // If err is provided, it will be recorded on the span before ending
 func (l *Listener) endSpan(state services.State, err error) {
-	l.mu.Lock()
-	defer l.mu.Unlock()
-
 	span, exists := l.spans[state]
 	if !exists || !span.IsRecording() {
 		return
@@ -95,18 +86,4 @@ func (l *Listener) endSpan(state services.State, err error) {
 	}
 	span.End()
 	delete(l.spans, state)
-}
-
-// endAllSpans ensures all active spans are properly closed
-func (l *Listener) endAllSpans() {
-	l.mu.Lock()
-	defer l.mu.Unlock()
-
-	for state, span := range l.spans {
-		if span.IsRecording() {
-			span.End()
-		}
-		delete(l.spans, state)
-	}
-	l.parentSpan.End()
 }
