@@ -16,6 +16,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/controller"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/grafana/grafana/pkg/services/apiserver/standalone"
 	"github.com/grafana/grafana/pkg/setting"
 
@@ -49,15 +50,7 @@ func RunRepoController(opts standalone.BuildInfo, c *cli.Context, cfg *setting.C
 		controllerCfg.resyncInterval,
 	)
 
-	/*
-		// TODO: wire all of this up in order to allow the finalizers to work
-		clients := resources.NewClientFactory(apiserver.WithoutRestConfig)
-		store, err := resource.NewResourceClient(nil, nil, nil, nil, nil)
-		if err != nil {
-			return fmt.Errorf("create resource client: %w", err)
-		}
-		resourceLister := resources.NewResourceListerForMigrations(nil, nil, nil)
-	*/
+	resourceLister := resources.NewResourceListerForMigrations(controllerCfg.unified, nil, nil)
 	jobs, err := jobs.NewJobStore(controllerCfg.provisioningClient.ProvisioningV0alpha1(), 30*time.Second)
 	if err != nil {
 		return fmt.Errorf("create API client job store: %w", err)
@@ -70,8 +63,8 @@ func RunRepoController(opts standalone.BuildInfo, c *cli.Context, cfg *setting.C
 		controllerCfg.provisioningClient.ProvisioningV0alpha1(),
 		repoInformer,
 		controllerCfg.repoFactory,
-		nil, // resourceLister -- TODO: needed for finalizers
-		nil, // clients -- TODO: needed for finalizers
+		resourceLister,
+		controllerCfg.clients,
 		jobs,
 		nil, // dualwrite -- standalone operator assumes it is backed by unified storage
 		healthChecker,
