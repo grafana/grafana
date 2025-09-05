@@ -45,3 +45,7 @@ type GraphiteMetricsFindResponse struct {
 	Expandable    int    `json:"expandable"`
 	Leaf          int    `json:"leaf"`
 }
+
+type GraphiteMetricsExpandResponse struct {
+	Results []string `json:"results"`
+}
