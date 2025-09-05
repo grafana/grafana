@@ -23,8 +23,8 @@
       "content": "## Data center = $datacenter\n\n### server = $server\n\n#### pod = $pod",
       "datasource": {
         "apiVersion": "v1",
-        "type": "prometheus",
-        "uid": "default-ds-uid"
+        "type": "grafana-testdata-datasource",
+        "uid": "testdata-type-uid"
       },
       "gridPos": {
         "h": 6,
@@ -39,8 +39,8 @@
         {
           "datasource": {
             "apiVersion": "v1",
-            "type": "prometheus",
-            "uid": "default-ds-uid"
+            "type": "grafana-testdata-datasource",
+            "uid": "testdata-type-uid"
           },
           "refId": "A",
           "scenarioId": "random_walk"
@@ -55,8 +55,8 @@
       "cacheTimeout": null,
       "datasource": {
         "apiVersion": "v1",
-        "type": "prometheus",
-        "uid": "default-ds-uid"
+        "type": "grafana-testdata-datasource",
+        "uid": "testdata-type-uid"
       },
       "fieldConfig": {
         "defaults": {
@@ -127,7 +127,7 @@
         "textMode": "auto",
         "wideLayout": true
       },
-      "pluginVersion": "1.0.0",
+      "pluginVersion": "12.1.0",
       "postfix": "",
       "postfixFontSize": "50%",
       "prefix": "",
@@ -143,8 +143,8 @@
         {
           "datasource": {
             "apiVersion": "v1",
-            "type": "prometheus",
-            "uid": "default-ds-uid"
+            "type": "grafana-testdata-datasource",
+            "uid": "testdata-type-uid"
           },
           "refId": "A",
           "scenarioId": "random_walk"
@@ -163,8 +163,8 @@
       "dashes": false,
       "datasource": {
         "apiVersion": "v1",
-        "type": "prometheus",
-        "uid": "default-ds-uid"
+        "type": "grafana-testdata-datasource",
+        "uid": "testdata-type-uid"
       },
       "fill": 1,
       "fillGradient": 0,
@@ -203,8 +203,8 @@
           "alias": "$datacenter.$server.$pod",
           "datasource": {
             "apiVersion": "v1",
-            "type": "prometheus",
-            "uid": "default-ds-uid"
+            "type": "grafana-testdata-datasource",
+            "uid": "testdata-type-uid"
           },
           "refId": "A",
           "scenarioId": "random_walk"
@@ -272,8 +272,8 @@
         },
         "datasource": {
           "apiVersion": "v1",
-          "type": "prometheus",
-          "uid": "default-ds-uid"
+          "type": "grafana-testdata-datasource",
+          "uid": "testdata-type-uid"
         },
         "definition": "*",
         "hide": 0,
@@ -301,8 +301,8 @@
         },
         "datasource": {
           "apiVersion": "v1",
-          "type": "prometheus",
-          "uid": "default-ds-uid"
+          "type": "grafana-testdata-datasource",
+          "uid": "testdata-type-uid"
         },
         "definition": "$datacenter.*",
         "hide": 0,
@@ -330,8 +330,8 @@
         },
         "datasource": {
           "apiVersion": "v1",
-          "type": "prometheus",
-          "uid": "default-ds-uid"
+          "type": "grafana-testdata-datasource",
+          "uid": "testdata-type-uid"
         },
         "definition": "$datacenter.$server.*",
         "hide": 0,

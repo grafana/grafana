@@ -27,8 +27,8 @@
       "dashes": false,
       "datasource": {
         "apiVersion": "v1",
-        "type": "prometheus",
-        "uid": "default-ds-uid"
+        "type": "grafana-testdata-datasource",
+        "uid": "testdata-type-uid"
       },
       "editable": true,
       "error": false,
@@ -76,8 +76,8 @@
         {
           "datasource": {
             "apiVersion": "v1",
-            "type": "prometheus",
-            "uid": "default-ds-uid"
+            "type": "grafana-testdata-datasource",
+            "uid": "testdata-type-uid"
           },
           "refId": "A",
           "scenario": "random_walk",
@@ -134,8 +134,8 @@
       "dashes": false,
       "datasource": {
         "apiVersion": "v1",
-        "type": "prometheus",
-        "uid": "default-ds-uid"
+        "type": "grafana-testdata-datasource",
+        "uid": "testdata-type-uid"
       },
       "editable": true,
       "error": false,
@@ -183,8 +183,8 @@
         {
           "datasource": {
             "apiVersion": "v1",
-            "type": "prometheus",
-            "uid": "default-ds-uid"
+            "type": "grafana-testdata-datasource",
+            "uid": "testdata-type-uid"
           },
           "refId": "A",
           "scenario": "random_walk",
@@ -241,8 +241,8 @@
       "dashes": false,
       "datasource": {
         "apiVersion": "v1",
-        "type": "prometheus",
-        "uid": "default-ds-uid"
+        "type": "grafana-testdata-datasource",
+        "uid": "testdata-type-uid"
       },
       "editable": true,
       "error": false,
@@ -295,8 +295,8 @@
         {
           "datasource": {
             "apiVersion": "v1",
-            "type": "prometheus",
-            "uid": "default-ds-uid"
+            "type": "grafana-testdata-datasource",
+            "uid": "testdata-type-uid"
           },
           "refId": "A",
           "scenarioId": "csv_metric_values",
@@ -306,8 +306,8 @@
         {
           "datasource": {
             "apiVersion": "v1",
-            "type": "prometheus",
-            "uid": "default-ds-uid"
+            "type": "grafana-testdata-datasource",
+            "uid": "testdata-type-uid"
           },
           "refId": "B",
           "scenarioId": "csv_metric_values",
@@ -364,8 +364,8 @@
       "dashes": false,
       "datasource": {
         "apiVersion": "v1",
-        "type": "prometheus",
-        "uid": "default-ds-uid"
+        "type": "grafana-testdata-datasource",
+        "uid": "testdata-type-uid"
       },
       "editable": true,
       "error": false,
@@ -418,8 +418,8 @@
         {
           "datasource": {
             "apiVersion": "v1",
-            "type": "prometheus",
-            "uid": "default-ds-uid"
+            "type": "grafana-testdata-datasource",
+            "uid": "testdata-type-uid"
           },
           "hide": false,
           "refId": "B",
@@ -431,8 +431,8 @@
           "alias": "",
           "datasource": {
             "apiVersion": "v1",
-            "type": "prometheus",
-            "uid": "default-ds-uid"
+            "type": "grafana-testdata-datasource",
+            "uid": "testdata-type-uid"
           },
           "hide": false,
           "refId": "A",
@@ -444,8 +444,8 @@
           "alias": "",
           "datasource": {
             "apiVersion": "v1",
-            "type": "prometheus",
-            "uid": "default-ds-uid"
+            "type": "grafana-testdata-datasource",
+            "uid": "testdata-type-uid"
           },
           "hide": false,
           "refId": "C",
@@ -503,8 +503,8 @@
       "dashes": false,
       "datasource": {
         "apiVersion": "v1",
-        "type": "prometheus",
-        "uid": "default-ds-uid"
+        "type": "grafana-testdata-datasource",
+        "uid": "testdata-type-uid"
       },
       "editable": true,
       "error": false,
@@ -558,8 +558,8 @@
           "alias": "",
           "datasource": {
             "apiVersion": "v1",
-            "type": "prometheus",
-            "uid": "default-ds-uid"
+            "type": "grafana-testdata-datasource",
+            "uid": "testdata-type-uid"
           },
           "hide": false,
           "refId": "B",
@@ -571,8 +571,8 @@
           "alias": "",
           "datasource": {
             "apiVersion": "v1",
-            "type": "prometheus",
-            "uid": "default-ds-uid"
+            "type": "grafana-testdata-datasource",
+            "uid": "testdata-type-uid"
           },
           "hide": false,
           "refId": "C",
@@ -630,8 +630,8 @@
       "dashes": false,
       "datasource": {
         "apiVersion": "v1",
-        "type": "prometheus",
-        "uid": "default-ds-uid"
+        "type": "grafana-testdata-datasource",
+        "uid": "testdata-type-uid"
       },
       "decimals": 3,
       "fieldConfig": {
@@ -679,8 +679,8 @@
         {
           "datasource": {
             "apiVersion": "v1",
-            "type": "prometheus",
-            "uid": "default-ds-uid"
+            "type": "grafana-testdata-datasource",
+            "uid": "testdata-type-uid"
           },
           "refId": "A",
           "scenarioId": "csv_metric_values",
@@ -690,8 +690,8 @@
         {
           "datasource": {
             "apiVersion": "v1",
-            "type": "prometheus",
-            "uid": "default-ds-uid"
+            "type": "grafana-testdata-datasource",
+            "uid": "testdata-type-uid"
           },
           "refId": "B",
           "scenarioId": "csv_metric_values",
@@ -701,8 +701,8 @@
         {
           "datasource": {
             "apiVersion": "v1",
-            "type": "prometheus",
-            "uid": "default-ds-uid"
+            "type": "grafana-testdata-datasource",
+            "uid": "testdata-type-uid"
           },
           "refId": "C",
           "scenarioId": "csv_metric_values",
@@ -712,8 +712,8 @@
         {
           "datasource": {
             "apiVersion": "v1",
-            "type": "prometheus",
-            "uid": "default-ds-uid"
+            "type": "grafana-testdata-datasource",
+            "uid": "testdata-type-uid"
           },
           "refId": "D",
           "scenarioId": "csv_metric_values",

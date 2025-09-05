@@ -28,8 +28,8 @@
       "dashes": false,
       "datasource": {
         "apiVersion": "v1",
-        "type": "prometheus",
-        "uid": "default-ds-uid"
+        "type": "grafana-testdata-datasource",
+        "uid": "testdata-type-uid"
       },
       "fill": 1,
       "fillGradient": 5,
@@ -67,8 +67,8 @@
         {
           "datasource": {
             "apiVersion": "v1",
-            "type": "prometheus",
-            "uid": "default-ds-uid"
+            "type": "grafana-testdata-datasource",
+            "uid": "testdata-type-uid"
           },
           "refId": "A",
           "scenarioId": "random_walk"
@@ -124,8 +124,8 @@
       "dashes": false,
       "datasource": {
         "apiVersion": "v1",
-        "type": "prometheus",
-        "uid": "default-ds-uid"
+        "type": "grafana-testdata-datasource",
+        "uid": "testdata-type-uid"
       },
       "fill": 4,
       "fillGradient": 4,
@@ -163,8 +163,8 @@
         {
           "datasource": {
             "apiVersion": "v1",
-            "type": "prometheus",
-            "uid": "default-ds-uid"
+            "type": "grafana-testdata-datasource",
+            "uid": "testdata-type-uid"
           },
           "refId": "A",
           "scenarioId": "random_walk"
@@ -220,8 +220,8 @@
       "dashes": false,
       "datasource": {
         "apiVersion": "v1",
-        "type": "prometheus",
-        "uid": "default-ds-uid"
+        "type": "grafana-testdata-datasource",
+        "uid": "testdata-type-uid"
       },
       "fill": 1,
       "fillGradient": 5,
@@ -259,8 +259,8 @@
         {
           "datasource": {
             "apiVersion": "v1",
-            "type": "prometheus",
-            "uid": "default-ds-uid"
+            "type": "grafana-testdata-datasource",
+            "uid": "testdata-type-uid"
           },
           "refId": "A",
           "scenarioId": "random_walk"
@@ -316,8 +316,8 @@
       "dashes": false,
       "datasource": {
         "apiVersion": "v1",
-        "type": "prometheus",
-        "uid": "default-ds-uid"
+        "type": "grafana-testdata-datasource",
+        "uid": "testdata-type-uid"
       },
       "fill": 2,
       "fillGradient": 10,
@@ -355,8 +355,8 @@
         {
           "datasource": {
             "apiVersion": "v1",
-            "type": "prometheus",
-            "uid": "default-ds-uid"
+            "type": "grafana-testdata-datasource",
+            "uid": "testdata-type-uid"
           },
           "refId": "A",
           "scenarioId": "random_walk"

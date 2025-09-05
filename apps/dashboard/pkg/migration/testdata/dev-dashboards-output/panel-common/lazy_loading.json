@@ -22,8 +22,8 @@
     {
       "datasource": {
         "apiVersion": "v1",
-        "type": "prometheus",
-        "uid": "default-ds-uid"
+        "type": "grafana-testdata-datasource",
+        "uid": "testdata-type-uid"
       },
       "gridPos": {
         "h": 7,
@@ -73,8 +73,8 @@
         {
           "datasource": {
             "apiVersion": "v1",
-            "type": "prometheus",
-            "uid": "default-ds-uid"
+            "type": "grafana-testdata-datasource",
+            "uid": "testdata-type-uid"
           },
           "refId": "A",
           "scenarioId": "random_walk"
@@ -82,8 +82,8 @@
         {
           "datasource": {
             "apiVersion": "v1",
-            "type": "prometheus",
-            "uid": "default-ds-uid"
+            "type": "grafana-testdata-datasource",
+            "uid": "testdata-type-uid"
           },
           "refId": "B",
           "scenarioId": "random_walk"
@@ -91,8 +91,8 @@
         {
           "datasource": {
             "apiVersion": "v1",
-            "type": "prometheus",
-            "uid": "default-ds-uid"
+            "type": "grafana-testdata-datasource",
+            "uid": "testdata-type-uid"
           },
           "refId": "C",
           "scenarioId": "random_walk"
@@ -100,8 +100,8 @@
         {
           "datasource": {
             "apiVersion": "v1",
-            "type": "prometheus",
-            "uid": "default-ds-uid"
+            "type": "grafana-testdata-datasource",
+            "uid": "testdata-type-uid"
           },
           "refId": "D",
           "scenarioId": "random_walk"
@@ -109,8 +109,8 @@
         {
           "datasource": {
             "apiVersion": "v1",
-            "type": "prometheus",
-            "uid": "default-ds-uid"
+            "type": "grafana-testdata-datasource",
+            "uid": "testdata-type-uid"
           },
           "refId": "E",
           "scenarioId": "csv_metric_values",
@@ -119,8 +119,8 @@
         {
           "datasource": {
             "apiVersion": "v1",
-            "type": "prometheus",
-            "uid": "default-ds-uid"
+            "type": "grafana-testdata-datasource",
+            "uid": "testdata-type-uid"
           },
           "refId": "F",
           "scenarioId": "random_walk"
@@ -128,8 +128,8 @@
         {
           "datasource": {
             "apiVersion": "v1",
-            "type": "prometheus",
-            "uid": "default-ds-uid"
+            "type": "grafana-testdata-datasource",
+            "uid": "testdata-type-uid"
           },
           "refId": "G",
           "scenarioId": "random_walk"
@@ -137,8 +137,8 @@
         {
           "datasource": {
             "apiVersion": "v1",
-            "type": "prometheus",
-            "uid": "default-ds-uid"
+            "type": "grafana-testdata-datasource",
+            "uid": "testdata-type-uid"
           },
           "refId": "H",
           "scenarioId": "csv_metric_values",
@@ -147,8 +147,8 @@
         {
           "datasource": {
             "apiVersion": "v1",
-            "type": "prometheus",
-            "uid": "default-ds-uid"
+            "type": "grafana-testdata-datasource",
+            "uid": "testdata-type-uid"
           },
           "refId": "I",
           "scenarioId": "random_walk"
@@ -156,8 +156,8 @@
         {
           "datasource": {
             "apiVersion": "v1",
-            "type": "prometheus",
-            "uid": "default-ds-uid"
+            "type": "grafana-testdata-datasource",
+            "uid": "testdata-type-uid"
           },
           "refId": "J",
           "scenarioId": "random_walk"
@@ -165,8 +165,8 @@
         {
           "datasource": {
             "apiVersion": "v1",
-            "type": "prometheus",
-            "uid": "default-ds-uid"
+            "type": "grafana-testdata-datasource",
+            "uid": "testdata-type-uid"
           },
           "refId": "K",
           "scenarioId": "random_walk"
@@ -174,8 +174,8 @@
         {
           "datasource": {
             "apiVersion": "v1",
-            "type": "prometheus",
-            "uid": "default-ds-uid"
+            "type": "grafana-testdata-datasource",
+            "uid": "testdata-type-uid"
           },
           "refId": "L",
           "scenarioId": "random_walk"
@@ -183,8 +183,8 @@
         {
           "datasource": {
             "apiVersion": "v1",
-            "type": "prometheus",
-            "uid": "default-ds-uid"
+            "type": "grafana-testdata-datasource",
+            "uid": "testdata-type-uid"
           },
           "refId": "M",
           "scenarioId": "random_walk"
@@ -192,8 +192,8 @@
         {
           "datasource": {
             "apiVersion": "v1",
-            "type": "prometheus",
-            "uid": "default-ds-uid"
+            "type": "grafana-testdata-datasource",
+            "uid": "testdata-type-uid"
           },
           "refId": "N",
           "scenarioId": "random_walk"
@@ -201,8 +201,8 @@
         {
           "datasource": {
             "apiVersion": "v1",
-            "type": "prometheus",
-            "uid": "default-ds-uid"
+            "type": "grafana-testdata-datasource",
+            "uid": "testdata-type-uid"
           },
           "refId": "O",
           "scenarioId": "random_walk"
@@ -210,8 +210,8 @@
         {
           "datasource": {
             "apiVersion": "v1",
-            "type": "prometheus",
-            "uid": "default-ds-uid"
+            "type": "grafana-testdata-datasource",
+            "uid": "testdata-type-uid"
           },
           "refId": "P",
           "scenarioId": "random_walk"
@@ -219,8 +219,8 @@
         {
           "datasource": {
             "apiVersion": "v1",
-            "type": "prometheus",
-            "uid": "default-ds-uid"
+            "type": "grafana-testdata-datasource",
+            "uid": "testdata-type-uid"
           },
           "refId": "Q",
           "scenarioId": "random_walk"
@@ -235,8 +235,8 @@
       "cacheTimeout": null,
       "datasource": {
         "apiVersion": "v1",
-        "type": "prometheus",
-        "uid": "default-ds-uid"
+        "type": "grafana-testdata-datasource",
+        "uid": "testdata-type-uid"
       },
       "fieldConfig": {
         "defaults": {
@@ -302,7 +302,7 @@
         "textMode": "auto",
         "wideLayout": true
       },
-      "pluginVersion": "1.0.0",
+      "pluginVersion": "12.1.0",
       "postfix": "",
       "postfixFontSize": "50%",
       "prefix": "p99",
@@ -318,8 +318,8 @@
         {
           "datasource": {
             "apiVersion": "v1",
-            "type": "prometheus",
-            "uid": "default-ds-uid"
+            "type": "grafana-testdata-datasource",
+            "uid": "testdata-type-uid"
           },
           "refId": "Q",
           "scenarioId": "random_walk"
@@ -335,8 +335,8 @@
       "cacheTimeout": null,
       "datasource": {
         "apiVersion": "v1",
-        "type": "prometheus",
-        "uid": "default-ds-uid"
+        "type": "grafana-testdata-datasource",
+        "uid": "testdata-type-uid"
       },
       "fieldConfig": {
         "defaults": {
@@ -402,7 +402,7 @@
         "textMode": "auto",
         "wideLayout": true
       },
-      "pluginVersion": "1.0.0",
+      "pluginVersion": "12.1.0",
       "postfix": "",
       "postfixFontSize": "50%",
       "prefix": "p95",
@@ -418,8 +418,8 @@
         {
           "datasource": {
             "apiVersion": "v1",
-            "type": "prometheus",
-            "uid": "default-ds-uid"
+            "type": "grafana-testdata-datasource",
+            "uid": "testdata-type-uid"
           },
           "refId": "Q",
           "scenarioId": "random_walk"
@@ -435,8 +435,8 @@
       "cacheTimeout": null,
       "datasource": {
         "apiVersion": "v1",
-        "type": "prometheus",
-        "uid": "default-ds-uid"
+        "type": "grafana-testdata-datasource",
+        "uid": "testdata-type-uid"
       },
       "fieldConfig": {
         "defaults": {
@@ -502,7 +502,7 @@
         "textMode": "auto",
         "wideLayout": true
       },
-      "pluginVersion": "1.0.0",
+      "pluginVersion": "12.1.0",
       "postfix": "",
       "postfixFontSize": "50%",
       "prefix": "p90",
@@ -518,8 +518,8 @@
         {
           "datasource": {
             "apiVersion": "v1",
-            "type": "prometheus",
-            "uid": "default-ds-uid"
+            "type": "grafana-testdata-datasource",
+            "uid": "testdata-type-uid"
           },
           "refId": "Q",
           "scenarioId": "random_walk"
@@ -535,8 +535,8 @@
       "cacheTimeout": null,
       "datasource": {
         "apiVersion": "v1",
-        "type": "prometheus",
-        "uid": "default-ds-uid"
+        "type": "grafana-testdata-datasource",
+        "uid": "testdata-type-uid"
       },
       "fieldConfig": {
         "defaults": {
@@ -602,7 +602,7 @@
         "textMode": "auto",
         "wideLayout": true
       },
-      "pluginVersion": "1.0.0",
+      "pluginVersion": "12.1.0",
       "postfix": "",
       "postfixFontSize": "50%",
       "prefix": "p90",
@@ -618,8 +618,8 @@
         {
           "datasource": {
             "apiVersion": "v1",
-            "type": "prometheus",
-            "uid": "default-ds-uid"
+            "type": "grafana-testdata-datasource",
+            "uid": "testdata-type-uid"
           },
           "refId": "Q",
           "scenarioId": "random_walk"
@@ -643,8 +643,8 @@
       "dashes": false,
       "datasource": {
         "apiVersion": "v1",
-        "type": "prometheus",
-        "uid": "default-ds-uid"
+        "type": "grafana-testdata-datasource",
+        "uid": "testdata-type-uid"
       },
       "fill": 3,
       "fillGradient": 0,
@@ -686,8 +686,8 @@
         {
           "datasource": {
             "apiVersion": "v1",
-            "type": "prometheus",
-            "uid": "default-ds-uid"
+            "type": "grafana-testdata-datasource",
+            "uid": "testdata-type-uid"
           },
           "refId": "Q",
           "scenarioId": "random_walk"
@@ -695,8 +695,8 @@
         {
           "datasource": {
             "apiVersion": "v1",
-            "type": "prometheus",
-            "uid": "default-ds-uid"
+            "type": "grafana-testdata-datasource",
+            "uid": "testdata-type-uid"
           },
           "refId": "A",
           "scenarioId": "random_walk"
@@ -704,8 +704,8 @@
         {
           "datasource": {
             "apiVersion": "v1",
-            "type": "prometheus",
-            "uid": "default-ds-uid"
+            "type": "grafana-testdata-datasource",
+            "uid": "testdata-type-uid"
           },
           "refId": "B",
           "scenarioId": "random_walk"
@@ -713,8 +713,8 @@
         {
           "datasource": {
             "apiVersion": "v1",
-            "type": "prometheus",
-            "uid": "default-ds-uid"
+            "type": "grafana-testdata-datasource",
+            "uid": "testdata-type-uid"
           },
           "refId": "C",
           "scenarioId": "random_walk"
@@ -764,8 +764,8 @@
     {
       "datasource": {
         "apiVersion": "v1",
-        "type": "prometheus",
-        "uid": "default-ds-uid"
+        "type": "grafana-testdata-datasource",
+        "uid": "testdata-type-uid"
       },
       "gridPos": {
         "h": 4,
@@ -810,8 +810,8 @@
         {
           "datasource": {
             "apiVersion": "v1",
-            "type": "prometheus",
-            "uid": "default-ds-uid"
+            "type": "grafana-testdata-datasource",
+            "uid": "testdata-type-uid"
           },
           "refId": "Q",
           "scenarioId": "random_walk"
@@ -831,8 +831,8 @@
       "dashes": false,
       "datasource": {
         "apiVersion": "v1",
-        "type": "prometheus",
-        "uid": "default-ds-uid"
+        "type": "grafana-testdata-datasource",
+        "uid": "testdata-type-uid"
       },
       "fill": 1,
       "fillGradient": 5,
@@ -871,8 +871,8 @@
         {
           "datasource": {
             "apiVersion": "v1",
-            "type": "prometheus",
-            "uid": "default-ds-uid"
+            "type": "grafana-testdata-datasource",
+            "uid": "testdata-type-uid"
           },
           "refId": "A",
           "scenarioId": "slow_query",
@@ -929,8 +929,8 @@
       "dashes": false,
       "datasource": {
         "apiVersion": "v1",
-        "type": "prometheus",
-        "uid": "default-ds-uid"
+        "type": "grafana-testdata-datasource",
+        "uid": "testdata-type-uid"
       },
       "fill": 1,
       "fillGradient": 5,
@@ -969,8 +969,8 @@
         {
           "datasource": {
             "apiVersion": "v1",
-            "type": "prometheus",
-            "uid": "default-ds-uid"
+            "type": "grafana-testdata-datasource",
+            "uid": "testdata-type-uid"
           },
           "refId": "A",
           "scenarioId": "slow_query",
@@ -1027,8 +1027,8 @@
       "dashes": false,
       "datasource": {
         "apiVersion": "v1",
-        "type": "prometheus",
-        "uid": "default-ds-uid"
+        "type": "grafana-testdata-datasource",
+        "uid": "testdata-type-uid"
       },
       "fill": 1,
       "fillGradient": 5,
@@ -1067,8 +1067,8 @@
         {
           "datasource": {
             "apiVersion": "v1",
-            "type": "prometheus",
-            "uid": "default-ds-uid"
+            "type": "grafana-testdata-datasource",
+            "uid": "testdata-type-uid"
           },
           "refId": "A",
           "scenarioId": "slow_query",
@@ -1125,8 +1125,8 @@
       "dashes": false,
       "datasource": {
         "apiVersion": "v1",
-        "type": "prometheus",
-        "uid": "default-ds-uid"
+        "type": "grafana-testdata-datasource",
+        "uid": "testdata-type-uid"
       },
       "fill": 1,
       "fillGradient": 5,
@@ -1165,8 +1165,8 @@
         {
           "datasource": {
             "apiVersion": "v1",
-            "type": "prometheus",
-            "uid": "default-ds-uid"
+            "type": "grafana-testdata-datasource",
+            "uid": "testdata-type-uid"
           },
           "refId": "A",
           "scenarioId": "slow_query",
@@ -1226,8 +1226,8 @@
       "dashes": false,
       "datasource": {
         "apiVersion": "v1",
-        "type": "prometheus",
-        "uid": "default-ds-uid"
+        "type": "grafana-testdata-datasource",
+        "uid": "testdata-type-uid"
       },
       "fill": 3,
       "fillGradient": 0,
@@ -1269,8 +1269,8 @@
         {
           "datasource": {
             "apiVersion": "v1",
-            "type": "prometheus",
-            "uid": "default-ds-uid"
+            "type": "grafana-testdata-datasource",
+            "uid": "testdata-type-uid"
           },
           "refId": "Q",
           "scenarioId": "slow_query",
@@ -1279,8 +1279,8 @@
         {
           "datasource": {
             "apiVersion": "v1",
-            "type": "prometheus",
-            "uid": "default-ds-uid"
+            "type": "grafana-testdata-datasource",
+            "uid": "testdata-type-uid"
           },
           "refId": "A",
           "scenarioId": "random_walk"
@@ -1288,8 +1288,8 @@
         {
           "datasource": {
             "apiVersion": "v1",
-            "type": "prometheus",
-            "uid": "default-ds-uid"
+            "type": "grafana-testdata-datasource",
+            "uid": "testdata-type-uid"
           },
           "refId": "B",
           "scenarioId": "random_walk"
@@ -1297,8 +1297,8 @@
         {
           "datasource": {
             "apiVersion": "v1",
-            "type": "prometheus",
-            "uid": "default-ds-uid"
+            "type": "grafana-testdata-datasource",
+            "uid": "testdata-type-uid"
           },
           "refId": "C",
           "scenarioId": "random_walk"
@@ -1354,8 +1354,8 @@
       "dashes": false,
       "datasource": {
         "apiVersion": "v1",
-        "type": "prometheus",
-        "uid": "default-ds-uid"
+        "type": "grafana-testdata-datasource",
+        "uid": "testdata-type-uid"
       },
       "fill": 1,
       "fillGradient": 10,
@@ -1394,8 +1394,8 @@
         {
           "datasource": {
             "apiVersion": "v1",
-            "type": "prometheus",
-            "uid": "default-ds-uid"
+            "type": "grafana-testdata-datasource",
+            "uid": "testdata-type-uid"
           },
           "refId": "A",
           "scenarioId": "slow_query",
@@ -1450,8 +1450,8 @@
       "dashes": false,
       "datasource": {
         "apiVersion": "v1",
-        "type": "prometheus",
-        "uid": "default-ds-uid"
+        "type": "grafana-testdata-datasource",
+        "uid": "testdata-type-uid"
       },
       "fill": 1,
       "fillGradient": 8,
@@ -1490,8 +1490,8 @@
         {
           "datasource": {
             "apiVersion": "v1",
-            "type": "prometheus",
-            "uid": "default-ds-uid"
+            "type": "grafana-testdata-datasource",
+            "uid": "testdata-type-uid"
           },
           "refId": "A",
           "scenarioId": "slow_query",
@@ -1548,8 +1548,8 @@
       "dashes": false,
       "datasource": {
         "apiVersion": "v1",
-        "type": "prometheus",
-        "uid": "default-ds-uid"
+        "type": "grafana-testdata-datasource",
+        "uid": "testdata-type-uid"
       },
       "fill": 1,
       "fillGradient": 5,
@@ -1588,8 +1588,8 @@
         {
           "datasource": {
             "apiVersion": "v1",
-            "type": "prometheus",
-            "uid": "default-ds-uid"
+            "type": "grafana-testdata-datasource",
+            "uid": "testdata-type-uid"
           },
           "refId": "A",
           "scenarioId": "slow_query",
@@ -1646,8 +1646,8 @@
       "dashes": false,
       "datasource": {
         "apiVersion": "v1",
-        "type": "prometheus",
-        "uid": "default-ds-uid"
+        "type": "grafana-testdata-datasource",
+        "uid": "testdata-type-uid"
       },
       "fill": 1,
       "fillGradient": 5,
@@ -1686,8 +1686,8 @@
         {
           "datasource": {
             "apiVersion": "v1",
-            "type": "prometheus",
-            "uid": "default-ds-uid"
+            "type": "grafana-testdata-datasource",
+            "uid": "testdata-type-uid"
           },
           "refId": "A",
           "scenarioId": "slow_query",
@@ -1744,8 +1744,8 @@
       "dashes": false,
       "datasource": {
         "apiVersion": "v1",
-        "type": "prometheus",
-        "uid": "default-ds-uid"
+        "type": "grafana-testdata-datasource",
+        "uid": "testdata-type-uid"
       },
       "fill": 1,
       "fillGradient": 5,
@@ -1784,8 +1784,8 @@
         {
           "datasource": {
             "apiVersion": "v1",
-            "type": "prometheus",
-            "uid": "default-ds-uid"
+            "type": "grafana-testdata-datasource",
+            "uid": "testdata-type-uid"
           },
           "refId": "A",
           "scenarioId": "slow_query",
@@ -1842,8 +1842,8 @@
       "dashes": false,
       "datasource": {
         "apiVersion": "v1",
-        "type": "prometheus",
-        "uid": "default-ds-uid"
+        "type": "grafana-testdata-datasource",
+        "uid": "testdata-type-uid"
       },
       "fill": 1,
       "fillGradient": 5,
@@ -1882,8 +1882,8 @@
         {
           "datasource": {
             "apiVersion": "v1",
-            "type": "prometheus",
-            "uid": "default-ds-uid"
+            "type": "grafana-testdata-datasource",
+            "uid": "testdata-type-uid"
           },
           "refId": "A",
           "scenarioId": "slow_query",
@@ -1943,8 +1943,8 @@
       "dashes": false,
       "datasource": {
         "apiVersion": "v1",
-        "type": "prometheus",
-        "uid": "default-ds-uid"
+        "type": "grafana-testdata-datasource",
+        "uid": "testdata-type-uid"
       },
       "fill": 3,
       "fillGradient": 0,
@@ -1986,8 +1986,8 @@
         {
           "datasource": {
             "apiVersion": "v1",
-            "type": "prometheus",
-            "uid": "default-ds-uid"
+            "type": "grafana-testdata-datasource",
+            "uid": "testdata-type-uid"
           },
           "refId": "Q",
           "scenarioId": "slow_query",
@@ -1996,8 +1996,8 @@
         {
           "datasource": {
             "apiVersion": "v1",
-            "type": "prometheus",
-            "uid": "default-ds-uid"
+            "type": "grafana-testdata-datasource",
+            "uid": "testdata-type-uid"
           },
           "refId": "A",
           "scenarioId": "random_walk"
@@ -2005,8 +2005,8 @@
         {
           "datasource": {
             "apiVersion": "v1",
-            "type": "prometheus",
-            "uid": "default-ds-uid"
+            "type": "grafana-testdata-datasource",
+            "uid": "testdata-type-uid"
           },
           "refId": "B",
           "scenarioId": "random_walk"
@@ -2014,8 +2014,8 @@
         {
           "datasource": {
             "apiVersion": "v1",
-            "type": "prometheus",
-            "uid": "default-ds-uid"
+            "type": "grafana-testdata-datasource",
+            "uid": "testdata-type-uid"
           },
           "refId": "C",
           "scenarioId": "random_walk"
@@ -2071,8 +2071,8 @@
       "dashes": false,
       "datasource": {
         "apiVersion": "v1",
-        "type": "prometheus",
-        "uid": "default-ds-uid"
+        "type": "grafana-testdata-datasource",
+        "uid": "testdata-type-uid"
       },
       "fill": 1,
       "fillGradient": 5,
@@ -2111,8 +2111,8 @@
         {
           "datasource": {
             "apiVersion": "v1",
-            "type": "prometheus",
-            "uid": "default-ds-uid"
+            "type": "grafana-testdata-datasource",
+            "uid": "testdata-type-uid"
           },
           "refId": "A",
           "scenarioId": "slow_query",
@@ -2169,8 +2169,8 @@
       "dashes": false,
       "datasource": {
         "apiVersion": "v1",
-        "type": "prometheus",
-        "uid": "default-ds-uid"
+        "type": "grafana-testdata-datasource",
+        "uid": "testdata-type-uid"
       },
       "fill": 1,
       "fillGradient": 5,
@@ -2209,8 +2209,8 @@
         {
           "datasource": {
             "apiVersion": "v1",
-            "type": "prometheus",
-            "uid": "default-ds-uid"
+            "type": "grafana-testdata-datasource",
+            "uid": "testdata-type-uid"
           },
           "refId": "A",
           "scenarioId": "slow_query",
@@ -2267,8 +2267,8 @@
       "dashes": false,
       "datasource": {
         "apiVersion": "v1",
-        "type": "prometheus",
-        "uid": "default-ds-uid"
+        "type": "grafana-testdata-datasource",
+        "uid": "testdata-type-uid"
       },
       "fill": 1,
       "fillGradient": 5,
@@ -2307,8 +2307,8 @@
         {
           "datasource": {
             "apiVersion": "v1",
-            "type": "prometheus",
-            "uid": "default-ds-uid"
+            "type": "grafana-testdata-datasource",
+            "uid": "testdata-type-uid"
           },
           "refId": "A",
           "scenarioId": "slow_query",
@@ -2365,8 +2365,8 @@
       "dashes": false,
       "datasource": {
         "apiVersion": "v1",
-        "type": "prometheus",
-        "uid": "default-ds-uid"
+        "type": "grafana-testdata-datasource",
+        "uid": "testdata-type-uid"
       },
       "fill": 1,
       "fillGradient": 5,
@@ -2405,8 +2405,8 @@
         {
           "datasource": {
             "apiVersion": "v1",
-            "type": "prometheus",
-            "uid": "default-ds-uid"
+            "type": "grafana-testdata-datasource",
+            "uid": "testdata-type-uid"
           },
           "refId": "A",
           "scenarioId": "slow_query",
@@ -2457,8 +2457,8 @@
     {
       "datasource": {
         "apiVersion": "v1",
-        "type": "prometheus",
-        "uid": "default-ds-uid"
+        "type": "grafana-testdata-datasource",
+        "uid": "testdata-type-uid"
       },
       "gridPos": {
         "h": 7,
@@ -2508,8 +2508,8 @@
         {
           "datasource": {
             "apiVersion": "v1",
-            "type": "prometheus",
-            "uid": "default-ds-uid"
+            "type": "grafana-testdata-datasource",
+            "uid": "testdata-type-uid"
           },
           "refId": "A",
           "scenarioId": "slow_query",
@@ -2518,8 +2518,8 @@
         {
           "datasource": {
             "apiVersion": "v1",
-            "type": "prometheus",
-            "uid": "default-ds-uid"
+            "type": "grafana-testdata-datasource",
+            "uid": "testdata-type-uid"
           },
           "refId": "B",
           "scenarioId": "random_walk"
@@ -2527,8 +2527,8 @@
         {
           "datasource": {
             "apiVersion": "v1",
-            "type": "prometheus",
-            "uid": "default-ds-uid"
+            "type": "grafana-testdata-datasource",
+            "uid": "testdata-type-uid"
           },
           "refId": "C",
           "scenarioId": "random_walk"
@@ -2536,8 +2536,8 @@
         {
           "datasource": {
             "apiVersion": "v1",
-            "type": "prometheus",
-            "uid": "default-ds-uid"
+            "type": "grafana-testdata-datasource",
+            "uid": "testdata-type-uid"
           },
           "refId": "D",
           "scenarioId": "random_walk"
@@ -2545,8 +2545,8 @@
         {
           "datasource": {
             "apiVersion": "v1",
-            "type": "prometheus",
-            "uid": "default-ds-uid"
+            "type": "grafana-testdata-datasource",
+            "uid": "testdata-type-uid"
           },
           "refId": "E",
           "scenarioId": "csv_metric_values",
@@ -2555,8 +2555,8 @@
         {
           "datasource": {
             "apiVersion": "v1",
-            "type": "prometheus",
-            "uid": "default-ds-uid"
+            "type": "grafana-testdata-datasource",
+            "uid": "testdata-type-uid"
           },
           "refId": "F",
           "scenarioId": "random_walk"
@@ -2564,8 +2564,8 @@
         {
           "datasource": {
             "apiVersion": "v1",
-            "type": "prometheus",
-            "uid": "default-ds-uid"
+            "type": "grafana-testdata-datasource",
+            "uid": "testdata-type-uid"
           },
           "refId": "G",
           "scenarioId": "random_walk"
@@ -2573,8 +2573,8 @@
         {
           "datasource": {
             "apiVersion": "v1",
-            "type": "prometheus",
-            "uid": "default-ds-uid"
+            "type": "grafana-testdata-datasource",
+            "uid": "testdata-type-uid"
           },
           "refId": "H",
           "scenarioId": "csv_metric_values",
@@ -2583,8 +2583,8 @@
         {
           "datasource": {
             "apiVersion": "v1",
-            "type": "prometheus",
-            "uid": "default-ds-uid"
+            "type": "grafana-testdata-datasource",
+            "uid": "testdata-type-uid"
           },
           "refId": "I",
           "scenarioId": "random_walk"
@@ -2592,8 +2592,8 @@
         {
           "datasource": {
             "apiVersion": "v1",
-            "type": "prometheus",
-            "uid": "default-ds-uid"
+            "type": "grafana-testdata-datasource",
+            "uid": "testdata-type-uid"
           },
           "refId": "J",
           "scenarioId": "random_walk"
@@ -2601,8 +2601,8 @@
         {
           "datasource": {
             "apiVersion": "v1",
-            "type": "prometheus",
-            "uid": "default-ds-uid"
+            "type": "grafana-testdata-datasource",
+            "uid": "testdata-type-uid"
           },
           "refId": "K",
           "scenarioId": "random_walk"
@@ -2610,8 +2610,8 @@
         {
           "datasource": {
             "apiVersion": "v1",
-            "type": "prometheus",
-            "uid": "default-ds-uid"
+            "type": "grafana-testdata-datasource",
+            "uid": "testdata-type-uid"
           },
           "refId": "L",
           "scenarioId": "random_walk"
@@ -2619,8 +2619,8 @@
         {
           "datasource": {
             "apiVersion": "v1",
-            "type": "prometheus",
-            "uid": "default-ds-uid"
+            "type": "grafana-testdata-datasource",
+            "uid": "testdata-type-uid"
           },
           "refId": "M",
           "scenarioId": "random_walk"
@@ -2628,8 +2628,8 @@
         {
           "datasource": {
             "apiVersion": "v1",
-            "type": "prometheus",
-            "uid": "default-ds-uid"
+            "type": "grafana-testdata-datasource",
+            "uid": "testdata-type-uid"
           },
           "refId": "N",
           "scenarioId": "random_walk"
@@ -2637,8 +2637,8 @@
         {
           "datasource": {
             "apiVersion": "v1",
-            "type": "prometheus",
-            "uid": "default-ds-uid"
+            "type": "grafana-testdata-datasource",
+            "uid": "testdata-type-uid"
           },
           "refId": "O",
           "scenarioId": "random_walk"
@@ -2646,8 +2646,8 @@
         {
           "datasource": {
             "apiVersion": "v1",
-            "type": "prometheus",
-            "uid": "default-ds-uid"
+            "type": "grafana-testdata-datasource",
+            "uid": "testdata-type-uid"
           },
           "refId": "P",
           "scenarioId": "random_walk"
@@ -2655,8 +2655,8 @@
         {
           "datasource": {
             "apiVersion": "v1",
-            "type": "prometheus",
-            "uid": "default-ds-uid"
+            "type": "grafana-testdata-datasource",
+            "uid": "testdata-type-uid"
           },
           "refId": "Q",
           "scenarioId": "random_walk"

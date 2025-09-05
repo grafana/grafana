@@ -22,8 +22,8 @@
     {
       "datasource": {
         "apiVersion": "v1",
-        "type": "prometheus",
-        "uid": "default-ds-uid"
+        "type": "grafana-testdata-datasource",
+        "uid": "testdata-type-uid"
       },
       "fieldConfig": {
         "defaults": {
@@ -190,7 +190,7 @@
         "showHeader": true
       },
       "pageSize": 10,
-      "pluginVersion": "1.0.0",
+      "pluginVersion": "12.1.0",
       "scroll": true,
       "showHeader": true,
       "sort": {
@@ -202,8 +202,8 @@
           "alias": "server1",
           "datasource": {
             "apiVersion": "v1",
-            "type": "prometheus",
-            "uid": "default-ds-uid"
+            "type": "grafana-testdata-datasource",
+            "uid": "testdata-type-uid"
           },
           "expr": "",
           "format": "table",
@@ -216,8 +216,8 @@
           "alias": "server2",
           "datasource": {
             "apiVersion": "v1",
-            "type": "prometheus",
-            "uid": "default-ds-uid"
+            "type": "grafana-testdata-datasource",
+            "uid": "testdata-type-uid"
           },
           "refId": "B",
           "scenarioId": "csv_metric_values",
@@ -238,8 +238,8 @@
     {
       "datasource": {
         "apiVersion": "v1",
-        "type": "prometheus",
-        "uid": "default-ds-uid"
+        "type": "grafana-testdata-datasource",
+        "uid": "testdata-type-uid"
       },
       "fieldConfig": {
         "defaults": {
@@ -406,7 +406,7 @@
         "showHeader": true
       },
       "pageSize": 10,
-      "pluginVersion": "1.0.0",
+      "pluginVersion": "12.1.0",
       "scroll": true,
       "showHeader": true,
       "sort": {
@@ -418,8 +418,8 @@
           "alias": "server1",
           "datasource": {
             "apiVersion": "v1",
-            "type": "prometheus",
-            "uid": "default-ds-uid"
+            "type": "grafana-testdata-datasource",
+            "uid": "testdata-type-uid"
           },
           "expr": "",
           "format": "table",
@@ -432,8 +432,8 @@
           "alias": "server2",
           "datasource": {
             "apiVersion": "v1",
-            "type": "prometheus",
-            "uid": "default-ds-uid"
+            "type": "grafana-testdata-datasource",
+            "uid": "testdata-type-uid"
           },
           "refId": "B",
           "scenarioId": "csv_metric_values",
@@ -459,8 +459,8 @@
     {
       "datasource": {
         "apiVersion": "v1",
-        "type": "prometheus",
-        "uid": "default-ds-uid"
+        "type": "grafana-testdata-datasource",
+        "uid": "testdata-type-uid"
       },
       "fieldConfig": {
         "defaults": {
@@ -581,7 +581,7 @@
         "showHeader": true
       },
       "pageSize": null,
-      "pluginVersion": "1.0.0",
+      "pluginVersion": "12.1.0",
       "scroll": true,
       "showHeader": true,
       "sort": {
@@ -593,8 +593,8 @@
           "alias": "ColorValue",
           "datasource": {
             "apiVersion": "v1",
-            "type": "prometheus",
-            "uid": "default-ds-uid"
+            "type": "grafana-testdata-datasource",
+            "uid": "testdata-type-uid"
           },
           "expr": "",
           "format": "table",
@@ -618,8 +618,8 @@
     {
       "datasource": {
         "apiVersion": "v1",
-        "type": "prometheus",
-        "uid": "default-ds-uid"
+        "type": "grafana-testdata-datasource",
+        "uid": "testdata-type-uid"
       },
       "fieldConfig": {
         "defaults": {
@@ -786,7 +786,7 @@
         "showHeader": true
       },
       "pageSize": null,
-      "pluginVersion": "1.0.0",
+      "pluginVersion": "12.1.0",
       "scroll": true,
       "showHeader": true,
       "sort": {
@@ -798,8 +798,8 @@
           "alias": "ColorValue",
           "datasource": {
             "apiVersion": "v1",
-            "type": "prometheus",
-            "uid": "default-ds-uid"
+            "type": "grafana-testdata-datasource",
+            "uid": "testdata-type-uid"
           },
           "expr": "",
           "format": "table",
@@ -812,8 +812,8 @@
           "alias": "ColorCell",
           "datasource": {
             "apiVersion": "v1",
-            "type": "prometheus",
-            "uid": "default-ds-uid"
+            "type": "grafana-testdata-datasource",
+            "uid": "testdata-type-uid"
           },
           "refId": "B",
           "scenarioId": "csv_metric_values",
@@ -834,8 +834,8 @@
     {
       "datasource": {
         "apiVersion": "v1",
-        "type": "prometheus",
-        "uid": "default-ds-uid"
+        "type": "grafana-testdata-datasource",
+        "uid": "testdata-type-uid"
       },
       "fieldConfig": {
         "defaults": {
@@ -1022,7 +1022,7 @@
         "showHeader": true
       },
       "pageSize": 20,
-      "pluginVersion": "1.0.0",
+      "pluginVersion": "12.1.0",
       "scroll": true,
       "showHeader": true,
       "sort": {
@@ -1034,8 +1034,8 @@
           "alias": "ColorValue",
           "datasource": {
             "apiVersion": "v1",
-            "type": "prometheus",
-            "uid": "default-ds-uid"
+            "type": "grafana-testdata-datasource",
+            "uid": "testdata-type-uid"
           },
           "expr": "",
           "format": "table",
@@ -1048,8 +1048,8 @@
           "alias": "ColorCell",
           "datasource": {
             "apiVersion": "v1",
-            "type": "prometheus",
-            "uid": "default-ds-uid"
+            "type": "grafana-testdata-datasource",
+            "uid": "testdata-type-uid"
           },
           "refId": "B",
           "scenarioId": "csv_metric_values",

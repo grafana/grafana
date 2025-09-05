@@ -24,8 +24,8 @@
       "content": "## Data link variables overview\n\nThis dashboard presents variables that one can use when creating *data links*. All links redirect to this dashboard and this panel represents the values that were interpolated in the link that was clicked.\n\n\n#### Series variables\n1. **Name:** \u003cspan style=\"color: orange;\"\u003e$seriesName\u003c/span\u003e\n2. **label.datacenter:** \u003cspan style=\"color: orange;\"\u003e$labelDatacenter\u003c/span\u003e\n3. **label.datacenter.region:** \u003cspan style=\"color: orange;\"\u003e$labelDatacenterRegion\u003c/span\u003e\n\n#### Field variables\n1. **Name:** \u003cspan style=\"color: orange;\"\u003e$fieldName\u003c/span\u003e\n\n#### Value variables\n1. **Time:** \u003cspan style=\"color: orange;\"\u003e$valueTime\u003c/span\u003e\n2. **Numeric:** \u003cspan style=\"color: orange;\"\u003e$valueNumeric\u003c/span\u003e\n3. **Text:** \u003cspan style=\"color: orange;\"\u003e$valueText\u003c/span\u003e\n4. **Calc:** \u003cspan style=\"color: orange;\"\u003e$valueCalc\u003c/span\u003e\n\n",
       "datasource": {
         "apiVersion": "v1",
-        "type": "prometheus",
-        "uid": "default-ds-uid"
+        "type": "grafana-testdata-datasource",
+        "uid": "testdata-type-uid"
       },
       "gridPos": {
         "h": 16,
@@ -40,8 +40,8 @@
         {
           "datasource": {
             "apiVersion": "v1",
-            "type": "prometheus",
-            "uid": "default-ds-uid"
+            "type": "grafana-testdata-datasource",
+            "uid": "testdata-type-uid"
           },
           "refId": "A"
         }
@@ -59,8 +59,8 @@
       "dashes": false,
       "datasource": {
         "apiVersion": "v1",
-        "type": "prometheus",
-        "uid": "default-ds-uid"
+        "type": "grafana-testdata-datasource",
+        "uid": "testdata-type-uid"
       },
       "fill": 1,
       "fillGradient": 0,
@@ -105,8 +105,8 @@
           "alias": "Foo datacenter",
           "datasource": {
             "apiVersion": "v1",
-            "type": "prometheus",
-            "uid": "default-ds-uid"
+            "type": "grafana-testdata-datasource",
+            "uid": "testdata-type-uid"
           },
           "labels": "datacenter=foo,datacenter.region=us-east-1",
           "refId": "A",
@@ -116,8 +116,8 @@
           "alias": "Bar datacenter",
           "datasource": {
             "apiVersion": "v1",
-            "type": "prometheus",
-            "uid": "default-ds-uid"
+            "type": "grafana-testdata-datasource",
+            "uid": "testdata-type-uid"
           },
           "labels": "datacenter=bar,datacenter.region=us-east-2",
           "refId": "B",
@@ -172,8 +172,8 @@
       "dashes": false,
       "datasource": {
         "apiVersion": "v1",
-        "type": "prometheus",
-        "uid": "default-ds-uid"
+        "type": "grafana-testdata-datasource",
+        "uid": "testdata-type-uid"
       },
       "fill": 1,
       "fillGradient": 0,
@@ -218,8 +218,8 @@
           "alias": "Foo datacenter",
           "datasource": {
             "apiVersion": "v1",
-            "type": "prometheus",
-            "uid": "default-ds-uid"
+            "type": "grafana-testdata-datasource",
+            "uid": "testdata-type-uid"
           },
           "labels": "datacenter=foo,datacenter.region=us-east-1",
           "refId": "A",
