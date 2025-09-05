@@ -1,6 +1,7 @@
 package provisioning
 
 import (
+	"context"
 	"crypto/x509"
 	"fmt"
 	"net/http"
@@ -13,6 +14,7 @@ import (
 	"k8s.io/client-go/transport"
 
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
@@ -33,6 +35,7 @@ type provisioningControllerConfig struct {
 	resyncInterval     time.Duration
 	repoFactory        repository.Factory
 	unified            resources.ResourceStore
+	clients            resources.ClientFactory
 }
 
 // expects:
@@ -52,6 +55,8 @@ type provisioningControllerConfig struct {
 // audiences =
 // [operator]
 // provisioning_server_url =
+// dashboards_server_url =
+// folders_server_url =
 // tls_insecure =
 // tls_cert_file =
 // tls_key_file =
@@ -83,6 +88,7 @@ func setupFromConfig(cfg *setting.Cfg) (controllerCfg *provisioningControllerCon
 	if provisioningServerURL == "" {
 		return nil, fmt.Errorf("provisioning_server_url is required in [operator] section")
 	}
+
 	tlsInsecure := operatorSec.Key("tls_insecure").MustBool(false)
 	tlsCertFile := operatorSec.Key("tls_cert_file").String()
 	tlsKeyFile := operatorSec.Key("tls_key_file").String()
@@ -138,10 +144,37 @@ func setupFromConfig(cfg *setting.Cfg) (controllerCfg *provisioningControllerCon
 		return nil, fmt.Errorf("failed to setup unified storage: %w", err)
 	}
 
+	dashboardsServerURL := operatorSec.Key("dashboards_server_url").String()
+	if provisioningServerURL == "" {
+		return nil, fmt.Errorf("dashboards_server_url is required in [operator] section")
+	}
+	foldersServerURL := operatorSec.Key("folders_server_url").String()
+	if provisioningServerURL == "" {
+		return nil, fmt.Errorf("folders_server_url is required in [operator] section")
+	}
+
+	apiServerURLs := []string{dashboardsServerURL, foldersServerURL}
+	configProviders := make([]apiserver.RestConfigProvider, len(apiServerURLs))
+
+	for i, url := range apiServerURLs {
+		config := &rest.Config{
+			APIPath: "/apis",
+			Host:    url,
+			WrapTransport: transport.WrapperFunc(func(rt http.RoundTripper) http.RoundTripper {
+				return authrt.NewRoundTripper(tokenExchangeClient, rt)
+			}),
+			TLSClientConfig: tlsConfig,
+		}
+		configProviders[i] = NewDirectConfigProvider(config)
+	}
+
+	clients := resources.NewClientFactoryForMultipleAPIServers(configProviders)
+
 	return &provisioningControllerConfig{
 		provisioningClient: provisioningClient,
 		repoFactory:        repoFactory,
 		unified:            unified,
+		clients:            clients,
 		resyncInterval:     operatorSec.Key("resync_interval").MustDuration(60 * time.Second),
 	}, nil
 }
@@ -299,4 +332,18 @@ func setupUnifiedStorageClient(cfg *setting.Cfg, tracer tracing.Tracer, resource
 	}
 
 	return client, nil
+}
+
+// directConfigProvider is a simple RestConfigProvider that always returns the same rest.Config
+// it implements apiserver.RestConfigProvider
+type directConfigProvider struct {
+	cfg *rest.Config
+}
+
+func NewDirectConfigProvider(cfg *rest.Config) apiserver.RestConfigProvider {
+	return &directConfigProvider{cfg: cfg}
+}
+
+func (r *directConfigProvider) GetRestConfig(ctx context.Context) (*rest.Config, error) {
+	return r.cfg, nil
 }

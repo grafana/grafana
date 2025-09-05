@@ -286,7 +286,6 @@ func (b *IdentityAccessManagementAPIBuilder) GetAuthorizer() authorizer.Authoriz
 // TODO: Move this to the ValidateFunc of the user resource after moving the APIs to use the app-platofrm-sdk.
 // TODO: https://github.com/grafana/grafana/blob/main/apps/playlist/pkg/app/app.go#L62
 func (b *IdentityAccessManagementAPIBuilder) Validate(ctx context.Context, a admission.Attributes, o admission.ObjectInterfaces) (err error) {
-
 	switch a.GetOperation() {
 	case admission.Create:
 		switch typedObj := a.GetObject().(type) {

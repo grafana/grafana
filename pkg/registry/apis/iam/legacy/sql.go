@@ -70,11 +70,11 @@ func NewDBTime(t time.Time) DBTime {
 }
 
 func (t DBTime) Value() (driver.Value, error) {
-	if t.Time.IsZero() {
+	if t.IsZero() {
 		return nil, nil
 	}
 
-	return t.Time.Format(time.DateTime), nil
+	return t.Format(time.DateTime), nil
 }
 
 func (t *DBTime) Scan(value interface{}) error {
