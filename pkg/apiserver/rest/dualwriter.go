@@ -10,35 +10,11 @@ import (
 
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/apiserver/pkg/registry/rest"
 	"k8s.io/klog/v2"
-)
-
-var (
-	_ rest.Storage              = (DualWriter)(nil)
-	_ rest.Scoper               = (DualWriter)(nil)
-	_ rest.TableConvertor       = (DualWriter)(nil)
-	_ rest.CreaterUpdater       = (DualWriter)(nil)
-	_ rest.CollectionDeleter    = (DualWriter)(nil)
-	_ rest.GracefulDeleter      = (DualWriter)(nil)
-	_ rest.SingularNameProvider = (DualWriter)(nil)
 )
 
 // Function that will create a dual writer
 type DualWriteBuilder func(gr schema.GroupResource, legacy Storage, unified Storage) (Storage, error)
-
-// Storage is a storage implementation that satisfies the same interfaces as genericregistry.Store.
-type Storage interface {
-	rest.Storage
-	rest.Scoper
-	rest.TableConvertor
-	rest.SingularNameProvider
-	rest.Getter
-	rest.Lister
-	rest.CreaterUpdater
-	rest.GracefulDeleter
-	rest.CollectionDeleter
-}
 
 // DualWriter is a storage implementation that writes first to LegacyStorage and then to Storage.
 // If writing to LegacyStorage fails, the write to Storage is skipped and the error is returned.

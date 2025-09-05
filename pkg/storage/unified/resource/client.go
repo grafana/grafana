@@ -29,6 +29,7 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
+//go:generate mockery --name ResourceClient --structname MockResourceClient --inpackage --filename client_mock.go --with-expecter
 type ResourceClient interface {
 	resourcepb.ResourceStoreClient
 	resourcepb.ResourceIndexClient
