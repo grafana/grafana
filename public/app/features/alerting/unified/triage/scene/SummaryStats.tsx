@@ -1,28 +1,12 @@
-import { VizOrientation } from '@grafana/data';
-import { SceneObjectBase, SceneObjectState, VizConfigBuilders } from '@grafana/scenes';
-import { VizPanel, useQueryRunner } from '@grafana/scenes-react';
-import { LegendDisplayMode } from '@grafana/ui';
+import { DataFrameView } from '@grafana/data';
+import { SceneObjectBase, SceneObjectState } from '@grafana/scenes';
+import { useQueryRunner } from '@grafana/scenes-react';
+import { Stack, Text } from '@grafana/ui';
 
-import { overrideToFixedColor } from '../../home/Insights';
+import { Spacer } from '../../components/Spacer';
 import { METRIC_NAME } from '../constants';
 
 import { getDataQuery, useQueryFilter } from './utils';
-
-const summaryStatVizConfig = VizConfigBuilders.bargauge()
-  .setOption('orientation', VizOrientation.Horizontal)
-  .setOption('legend', {
-    showLegend: false,
-    displayMode: LegendDisplayMode.Hidden,
-  })
-  .setMin(0)
-  .setOverrides((builder) =>
-    builder
-      .matchFieldsWithName('firing')
-      .overrideColor(overrideToFixedColor('firing'))
-      .matchFieldsWithName('pending')
-      .overrideColor(overrideToFixedColor('pending'))
-  )
-  .build();
 
 export function SummaryStatsReact() {
   const filter = useQueryFilter();
@@ -30,14 +14,35 @@ export function SummaryStatsReact() {
   const dataProvider = useQueryRunner({
     queries: [
       getDataQuery(`count by (alertstate) (${METRIC_NAME}{${filter}})`, {
-        legendFormat: '{{alertstate}}', // we need this so wgite can map states to the correct color in the vizConfig
         instant: true,
         exemplar: false,
+        format: 'table',
       }),
     ],
   });
 
-  return <VizPanel title="" viz={summaryStatVizConfig} dataProvider={dataProvider} hoverHeader={true} />;
+  const isLoading = !dataProvider.isDataReadyToDisplay;
+  const data = dataProvider.useState().data;
+
+  if (isLoading || !data?.series) {
+    return null;
+  }
+
+  const dfv = new DataFrameView(data.series[0]);
+
+  const firingIndex = dfv.fields.alertstate.values.findIndex((state) => state === 'firing');
+  const firingCount = dfv.fields.Value.values[firingIndex] ?? 0;
+
+  const pendingIndex = dfv.fields.alertstate.values.findIndex((state) => state === 'pending');
+  const pendingCount = dfv.fields.Value.values[pendingIndex] ?? 0;
+
+  return (
+    <Stack direction="column" alignItems="flex-end" gap={0}>
+      <Spacer />
+      <Text color="error">{firingCount} firing instances</Text>
+      <Text color="warning">{pendingCount} pending instances</Text>
+    </Stack>
+  );
 }
 
 // simple wrapper so we can render the Chart using a Scene parent
