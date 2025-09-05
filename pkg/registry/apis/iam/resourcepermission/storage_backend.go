@@ -166,13 +166,13 @@ func (s *ResourcePermSqlBackend) WriteEvent(ctx context.Context, event resource.
 		return 0, apierrors.NewBadRequest("write requires a valid namespace")
 	}
 
+	if err := isValidKey(event.Key, true); err != nil {
+		return 0, apierrors.NewBadRequest(fmt.Sprintf("invalid key %q: %v", event.Key, err.Error()))
+	}
+
 	mapper, grn, err := s.splitResourceName(event.Key.Name)
 	if err != nil {
 		return 0, apierrors.NewBadRequest(fmt.Sprintf("invalid resource name %q: %v", event.Key.Name, err.Error()))
-	}
-
-	if err := isValidKey(event.Key, true); err != nil {
-		return 0, apierrors.NewBadRequest(fmt.Sprintf("invalid key %q: %v", event.Key, err.Error()))
 	}
 
 	switch event.Type {
@@ -202,7 +202,7 @@ func (s *ResourcePermSqlBackend) WriteEvent(ctx context.Context, event resource.
 
 			rv, err = s.createResourcePermission(ctx, dbHelper, ns, mapper, grn, v0resourceperm)
 			if err != nil {
-				if errors.Is(err, errInvalidSpec) {
+				if errors.Is(err, errInvalidSpec) || errors.Is(err, errInvalidName) {
 					return 0, apierrors.NewBadRequest(err.Error())
 				}
 				if errors.Is(err, errConflict) {
