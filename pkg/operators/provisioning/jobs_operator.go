@@ -172,6 +172,8 @@ func setupJobsControllerFromConfig(cfg *setting.Cfg) (*jobsControllerConfig, err
 }
 
 func setupWorkers(controllerCfg *jobsControllerConfig) ([]jobs.Worker, error) {
+	// TODO: We need to connect to multiple API servers for each resource type
+	// Folders, Dashboards and Provisioning
 	configProvider := NewDirectConfigProvider(controllerCfg.restCfg)
 	clients := resources.NewClientFactory(configProvider)
 	parsers := resources.NewParserFactory(clients)
