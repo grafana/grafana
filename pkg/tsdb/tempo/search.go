@@ -1,6 +1,7 @@
 package tempo
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -8,62 +9,17 @@ import (
 	"net/http"
 	"net/url"
 	"sort"
-	"strconv"
 	"time"
 
+	"github.com/golang/protobuf/jsonpb"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/tsdb/tempo/kinds/dataquery"
 	"github.com/grafana/tempo/pkg/tempopb"
+	v1 "github.com/grafana/tempo/pkg/tempopb/common/v1"
 )
 
-// SearchResponse represents the response from Tempo's search API.
-// Note: We cannot use tempopb.SearchResponse directly because the Tempo API
-// returns some numeric fields as strings in JSON (e.g., startTimeUnixNano as "1234567890")
-// while the tempopb types expect uint64.
-type SearchResponse struct {
-	Traces []*TraceSearchMetadata `json:"traces,omitempty"`
-}
-
-type TraceSearchMetadata struct {
-	TraceID           string                           `json:"traceID,omitempty"`
-	RootServiceName   string                           `json:"rootServiceName,omitempty"`
-	RootTraceName     string                           `json:"rootTraceName,omitempty"`
-	StartTimeUnixNano string                           `json:"startTimeUnixNano,omitempty"`
-	DurationMs        uint32                           `json:"durationMs,omitempty"`
-	SpanSet           *SpanSet                         `json:"spanSet,omitempty"`
-	SpanSets          []*SpanSet                       `json:"spanSets,omitempty"`
-	ServiceStats      map[string]*tempopb.ServiceStats `json:"serviceStats,omitempty"`
-}
-
-type SpanSet struct {
-	Spans      []*Span     `json:"spans,omitempty"`
-	Matched    uint32      `json:"matched,omitempty"`
-	Attributes []Attribute `json:"attributes,omitempty"`
-}
-
-type Span struct {
-	SpanID            string      `json:"spanID,omitempty"`
-	Name              string      `json:"name,omitempty"`
-	StartTimeUnixNano string      `json:"startTimeUnixNano,omitempty"`
-	DurationNanos     string      `json:"durationNanos,omitempty"`
-	Attributes        []Attribute `json:"attributes,omitempty"`
-}
-
-type Attribute struct {
-	Key   string         `json:"key,omitempty"`
-	Value AttributeValue `json:"value,omitempty"`
-}
-
-type AttributeValue struct {
-	StringValue string  `json:"stringValue,omitempty"`
-	IntValue    string  `json:"intValue,omitempty"`
-	DoubleValue float64 `json:"doubleValue,omitempty"`
-	BoolValue   bool    `json:"boolValue,omitempty"`
-	BytesValue  string  `json:"bytesValue,omitempty"`
-}
-
-type Field struct {
+type DataFrameField struct {
 	Name   string
 	Type   interface{}
 	Config data.FieldConfig
@@ -121,8 +77,9 @@ func (s *Service) Search(ctx context.Context, pCtx backend.PluginContext, query 
 		return nil, err
 	}
 
-	var response SearchResponse
-	err = json.Unmarshal(body, &response)
+	var response tempopb.SearchResponse
+	err = jsonpb.Unmarshal(bytes.NewReader(body), &response)
+
 	if err != nil {
 		ctxLogger.Error("Failed to unmarshal response to SearchResponse", "error", err, "function", logEntrypoint())
 		return nil, err
@@ -207,7 +164,7 @@ func createSearchRequest(ctx context.Context, dsInfo *DatasourceInfo, model *dat
 	return req, nil
 }
 
-func transformTraceSearchResponse(pCtx backend.PluginContext, response *SearchResponse) ([]*data.Frame, error) {
+func transformTraceSearchResponse(pCtx backend.PluginContext, response *tempopb.SearchResponse) ([]*data.Frame, error) {
 	tracesFrame := data.NewFrame("Traces")
 	tracesFrame.Fields = append(tracesFrame.Fields, data.NewField("traceID", nil, []string{}).SetConfig(&data.FieldConfig{
 		DisplayNameFromDS: "Trace ID",
@@ -255,25 +212,14 @@ func transformTraceSearchResponse(pCtx backend.PluginContext, response *SearchRe
 		return []*data.Frame{tracesFrame}, nil
 	}
 
-	traces := make([]*TraceSearchMetadata, len(response.Traces))
+	traces := make([]*tempopb.TraceSearchMetadata, len(response.Traces))
 	copy(traces, response.Traces)
 
-	for i := 0; i < len(traces)-1; i++ {
-		for j := i + 1; j < len(traces); j++ {
-			if traces[i].StartTimeUnixNano < traces[j].StartTimeUnixNano {
-				traces[i], traces[j] = traces[j], traces[i]
-			}
-		}
-	}
+	sort.Slice(traces, func(i, j int) bool {
+		return traces[i].StartTimeUnixNano > traces[j].StartTimeUnixNano
+	})
 
 	for _, trace := range traces {
-		startTimeUnixNano, err := strconv.ParseInt(trace.StartTimeUnixNano, 10, 64)
-		if err != nil {
-			tracesFrame.Fields[1].Append(time.Time{})
-		} else {
-			tracesFrame.Fields[1].Append(time.Unix(0, startTimeUnixNano))
-		}
-
 		var traceDurationMs *float64
 		if trace.DurationMs >= 1 {
 			val := float64(trace.DurationMs)
@@ -311,6 +257,7 @@ func transformTraceSearchResponse(pCtx backend.PluginContext, response *SearchRe
 		tracesFrame.Fields[5].Append(nestedFramesJSON)
 
 		tracesFrame.Fields[0].Append(trace.TraceID)
+		tracesFrame.Fields[1].Append(time.Unix(0, int64(trace.StartTimeUnixNano)))
 		tracesFrame.Fields[2].Append(trace.RootServiceName)
 		tracesFrame.Fields[3].Append(trace.RootTraceName)
 		tracesFrame.Fields[4].Append(traceDurationMs)
@@ -319,12 +266,12 @@ func transformTraceSearchResponse(pCtx backend.PluginContext, response *SearchRe
 	return []*data.Frame{tracesFrame}, nil
 }
 
-func transformTraceSearchResponseSubFrame(trace *TraceSearchMetadata, spanSet *SpanSet, pCtx backend.PluginContext) *data.Frame {
-	spanDynamicAttributes := make(map[string]*Field)
+func transformTraceSearchResponseSubFrame(trace *tempopb.TraceSearchMetadata, spanSet *tempopb.SpanSet, pCtx backend.PluginContext) *data.Frame {
+	spanDynamicAttributes := make(map[string]*DataFrameField)
 	hasNameAttribute := false
 
 	for _, attribute := range spanSet.Attributes {
-		spanDynamicAttributes[attribute.Key] = &Field{
+		spanDynamicAttributes[attribute.Key] = &DataFrameField{
 			Name:   attribute.Key,
 			Type:   []string{},
 			Config: data.FieldConfig{DisplayNameFromDS: attribute.Key},
@@ -336,7 +283,7 @@ func transformTraceSearchResponseSubFrame(trace *TraceSearchMetadata, spanSet *S
 			hasNameAttribute = true
 		}
 		for _, attribute := range span.Attributes {
-			spanDynamicAttributes[attribute.Key] = &Field{
+			spanDynamicAttributes[attribute.Key] = &DataFrameField{
 				Name:   attribute.Key,
 				Type:   []string{},
 				Config: data.FieldConfig{DisplayNameFromDS: attribute.Key},
@@ -418,15 +365,15 @@ func transformTraceSearchResponseSubFrame(trace *TraceSearchMetadata, spanSet *S
 	return frame
 }
 
-func transformSpanSearchResponse(pCtx backend.PluginContext, response *SearchResponse) ([]*data.Frame, error) {
-	spanDynamicAttributes := make(map[string]*Field)
+func transformSpanSearchResponse(pCtx backend.PluginContext, response *tempopb.SearchResponse) ([]*data.Frame, error) {
+	spanDynamicAttributes := make(map[string]*DataFrameField)
 	hasNameAttribute := false
 
 	if response != nil {
 		for _, trace := range response.Traces {
 			for _, spanSet := range trace.SpanSets {
 				for _, attribute := range spanSet.Attributes {
-					spanDynamicAttributes[attribute.Key] = &Field{
+					spanDynamicAttributes[attribute.Key] = &DataFrameField{
 						Name:   attribute.Key,
 						Type:   []string{},
 						Config: data.FieldConfig{DisplayNameFromDS: attribute.Key},
@@ -437,7 +384,7 @@ func transformSpanSearchResponse(pCtx backend.PluginContext, response *SearchRes
 						hasNameAttribute = true
 					}
 					for _, attribute := range span.Attributes {
-						spanDynamicAttributes[attribute.Key] = &Field{
+						spanDynamicAttributes[attribute.Key] = &DataFrameField{
 							Name:   attribute.Key,
 							Type:   []string{},
 							Config: data.FieldConfig{DisplayNameFromDS: attribute.Key},
@@ -457,7 +404,7 @@ func transformSpanSearchResponse(pCtx backend.PluginContext, response *SearchRes
 	spansFrame := data.NewFrame("Spans")
 	panelsState := data.ExplorePanelsState(map[string]interface{}{"trace": map[string]interface{}{"spanId": "${__value.raw}"}})
 	spansFrame.Fields = append(spansFrame.Fields, data.NewField("traceIdHidden", nil, []string{}).SetConfig(&data.FieldConfig{
-		Custom: map[string]interface{}{"hidden": false},
+		Custom: map[string]interface{}{"hidden": true},
 	}))
 	spansFrame.Fields = append(spansFrame.Fields, data.NewField("traceService", nil, []string{}).SetConfig(&data.FieldConfig{
 		DisplayNameFromDS: "Trace Service",
@@ -516,16 +463,12 @@ func transformSpanSearchResponse(pCtx backend.PluginContext, response *SearchRes
 		return []*data.Frame{spansFrame}, nil
 	}
 
-	traces := make([]*TraceSearchMetadata, len(response.Traces))
+	traces := make([]*tempopb.TraceSearchMetadata, len(response.Traces))
 	copy(traces, response.Traces)
 
-	for i := 0; i < len(traces)-1; i++ {
-		for j := i + 1; j < len(traces); j++ {
-			if traces[i].StartTimeUnixNano < traces[j].StartTimeUnixNano {
-				traces[i], traces[j] = traces[j], traces[i]
-			}
-		}
-	}
+	sort.Slice(traces, func(i, j int) bool {
+		return traces[i].StartTimeUnixNano > traces[j].StartTimeUnixNano
+	})
 
 	for _, trace := range traces {
 		for _, spanSet := range trace.SpanSets {
@@ -554,7 +497,7 @@ func transformSpanSearchResponse(pCtx backend.PluginContext, response *SearchRes
 	return []*data.Frame{spansFrame}, nil
 }
 
-func transformRawSearchResponse(response *SearchResponse) ([]*data.Frame, error) {
+func transformRawSearchResponse(response *tempopb.SearchResponse) ([]*data.Frame, error) {
 	rawFrame := data.NewFrame("Raw response")
 	rawFrame.Fields = append(rawFrame.Fields, data.NewField("response", nil, []string{}))
 
@@ -567,25 +510,9 @@ func transformRawSearchResponse(response *SearchResponse) ([]*data.Frame, error)
 	return []*data.Frame{rawFrame}, nil
 }
 
-func transformSpanToTraceData(span *Span, spanSet *SpanSet, trace *TraceSearchMetadata) *TraceTableData {
-	spanStartTimeUnixNano, err := strconv.ParseInt(span.StartTimeUnixNano, 10, 64)
-	var spanStartTime time.Time
-	if err != nil {
-		spanStartTime = time.Time{}
-	} else {
-		spanStartTime = time.Unix(0, spanStartTimeUnixNano)
-	}
-
-	spanDuration, err := strconv.ParseInt(span.DurationNanos, 10, 64)
-	var duration float64
-	if err != nil {
-		duration = 0
-	} else {
-		duration = float64(spanDuration)
-	}
-
+func transformSpanToTraceData(span *tempopb.Span, spanSet *tempopb.SpanSet, trace *tempopb.TraceSearchMetadata) *TraceTableData {
 	attributes := make(map[string]interface{})
-	allAttributes := make([]Attribute, 0, len(spanSet.Attributes)+len(span.Attributes))
+	allAttributes := make([]*v1.KeyValue, 0, len(spanSet.Attributes)+len(span.Attributes))
 
 	if spanSet.Attributes != nil {
 		allAttributes = append(allAttributes, spanSet.Attributes...)
@@ -596,25 +523,25 @@ func transformSpanToTraceData(span *Span, spanSet *SpanSet, trace *TraceSearchMe
 	}
 
 	for _, attribute := range allAttributes {
-		if attribute.Value.StringValue != "" {
-			attributes[attribute.Key] = attribute.Value.StringValue
-		} else if attribute.Value.IntValue != "" {
-			attributes[attribute.Key] = attribute.Value.IntValue
-		} else if attribute.Value.DoubleValue != 0 {
-			attributes[attribute.Key] = attribute.Value.DoubleValue
-		} else if attribute.Value.BoolValue {
-			attributes[attribute.Key] = attribute.Value.BoolValue
-		} else if attribute.Value.BytesValue != "" {
-			attributes[attribute.Key] = attribute.Value.BytesValue
+		if attribute.Value.GetStringValue() != "" {
+			attributes[attribute.Key] = attribute.Value.GetStringValue()
+		} else if attribute.Value.GetIntValue() != 0 {
+			attributes[attribute.Key] = attribute.Value.GetIntValue()
+		} else if attribute.Value.GetDoubleValue() != 0 {
+			attributes[attribute.Key] = attribute.Value.GetDoubleValue()
+		} else if attribute.Value.GetBoolValue() {
+			attributes[attribute.Key] = attribute.Value.GetBoolValue()
+		} else if string(attribute.Value.GetBytesValue()) != "" {
+			attributes[attribute.Key] = attribute.Value.GetBytesValue()
 		}
 	}
 
 	return &TraceTableData{
 		traceIdHidden: trace.TraceID,
 		spanID:        span.SpanID,
-		time:          spanStartTime,
+		time:          time.Unix(0, int64(span.StartTimeUnixNano)),
 		name:          span.Name,
-		duration:      duration,
+		duration:      float64(span.DurationNanos),
 		attributes:    attributes,
 	}
 }
