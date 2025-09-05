@@ -95,7 +95,7 @@ export const SummaryCell = ({
       {entries.map(([reducerId, reducerResult], idx) => {
         return (
           <SummaryCellItem key={reducerId} idx={idx}>
-            {((!hideLabel && reducerResult != null) || rowLabel) && (
+            {(reducerResult != null || rowLabel) && !hideLabel && (
               <SummaryCellLabel>{getReducerName(reducerId)}</SummaryCellLabel>
             )}
             <SummaryCellValue>{reducerResult}</SummaryCellValue>
