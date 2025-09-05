@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 41,
+  "schemaVersion": 42,
   "timepicker": {
     "refresh_intervals": [
       "5s",

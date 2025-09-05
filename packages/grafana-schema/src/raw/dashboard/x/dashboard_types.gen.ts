@@ -1209,7 +1209,7 @@ export const defaultDashboard: Partial<Dashboard> = {
   graphTooltip: DashboardCursorSync.Off,
   links: [],
   panels: [],
-  schemaVersion: 41,
+  schemaVersion: 42,
   tags: [],
   timezone: 'browser',
 };
