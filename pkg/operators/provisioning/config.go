@@ -153,7 +153,7 @@ func setupFromConfig(cfg *setting.Cfg) (controllerCfg *provisioningControllerCon
 		return nil, fmt.Errorf("folders_server_url is required in [operator] section")
 	}
 
-	apiServerURLs := []string{dashboardsServerURL, foldersServerURL}
+	apiServerURLs := []string{dashboardsServerURL, foldersServerURL, provisioningServerURL}
 	configProviders := make([]apiserver.RestConfigProvider, len(apiServerURLs))
 
 	for i, url := range apiServerURLs {
