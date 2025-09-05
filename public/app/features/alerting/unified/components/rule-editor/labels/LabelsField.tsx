@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import { FC, useCallback, useMemo } from 'react';
+import { FC, useCallback, useMemo, useState } from 'react';
 import { Controller, FormProvider, useFieldArray, useForm, useFormContext } from 'react-hook-form';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
@@ -248,6 +248,7 @@ export function LabelsWithSuggestions({ dataSourceName }: LabelsWithSuggestionsP
     append({ key: '', value: '' });
   }, [append]);
 
+  const [selectedKey, setSelectedKey] = useState('');
   // check if the labels plugin is installed
   const { installed: labelsPluginInstalled = false, loading: loadingLabelsPlugin } = usePluginBridge(
     SupportedPlugin.Labels
@@ -258,8 +259,12 @@ export function LabelsWithSuggestions({ dataSourceName }: LabelsWithSuggestionsP
     labelsPluginInstalled,
     loadingLabelsPlugin,
     labelsInSubform,
-    ''
+    selectedKey
   );
+
+  const values = useMemo(() => {
+    return getValuesForLabel(selectedKey);
+  }, [selectedKey, getValuesForLabel]);
 
   return (
     <Stack direction="column" gap={2} alignItems="flex-start">
@@ -290,6 +295,7 @@ export function LabelsWithSuggestions({ dataSourceName }: LabelsWithSuggestionsP
                       onChange={(newValue: SelectableValue) => {
                         if (newValue) {
                           onChange(newValue.value || newValue.label || '');
+                          setSelectedKey(newValue.value);
                         }
                       }}
                       type="key"
@@ -314,12 +320,15 @@ export function LabelsWithSuggestions({ dataSourceName }: LabelsWithSuggestionsP
                     <AlertLabelDropdown
                       {...rest}
                       defaultValue={field.value ? { label: field.value, value: field.value } : undefined}
-                      options={getValuesForLabel(labelsInSubform[index].key)}
+                      options={values}
                       isLoading={loading}
                       onChange={(newValue: SelectableValue) => {
                         if (newValue) {
                           onChange(newValue.value || newValue.label || '');
                         }
+                      }}
+                      onOpenMenu={() => {
+                        setSelectedKey(labelsInSubform[index].key);
                       }}
                       type="value"
                     />
