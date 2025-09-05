@@ -38,7 +38,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ssosettings"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/storage/unified/apistore"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
@@ -54,7 +53,6 @@ func RegisterAPIService(
 	reg prometheus.Registerer,
 	coreRolesStorage CoreRoleStorageBackend,
 	rolesStorage RoleStorageBackend,
-	cfg *setting.Cfg,
 ) (*IdentityAccessManagementAPIBuilder, error) {
 	dbProvider := legacysql.NewDatabaseProvider(sql)
 	store := legacy.NewLegacySQLStores(dbProvider)
@@ -76,7 +74,6 @@ func RegisterAPIService(
 		enableResourcePermissionApis: features.IsEnabledGlobally(featuremgmt.FlagKubernetesAuthzResourcePermissionApis),
 		enableAuthnMutation:          features.IsEnabledGlobally(featuremgmt.FlagKubernetesAuthnMutation),
 		enableDualWriter:             true,
-		cfg:                          cfg,
 	}
 	apiregistration.RegisterAPI(builder)
 
@@ -164,7 +161,7 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *ge
 
 	// Service Accounts store registration
 	serviceAccountResource := iamv0.ServiceAccountResourceInfo
-	saLegacyStore := serviceaccount.NewLegacyStore(b.store, b.legacyAccessClient, b.enableAuthnMutation, b.cfg)
+	saLegacyStore := serviceaccount.NewLegacyStore(b.store, b.legacyAccessClient, b.enableAuthnMutation)
 	storage[serviceAccountResource.StoragePath()] = saLegacyStore
 
 	if b.enableDualWriter {

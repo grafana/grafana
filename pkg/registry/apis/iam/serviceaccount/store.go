@@ -19,7 +19,6 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/iam/legacy"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -36,15 +35,14 @@ var (
 
 var resource = iamv0alpha1.ServiceAccountResourceInfo
 
-func NewLegacyStore(store legacy.LegacyIdentityStore, ac claims.AccessClient, enableAuthnMutation bool, cfg *setting.Cfg) *LegacyStore {
-	return &LegacyStore{store, ac, enableAuthnMutation, cfg}
+func NewLegacyStore(store legacy.LegacyIdentityStore, ac claims.AccessClient, enableAuthnMutation bool) *LegacyStore {
+	return &LegacyStore{store, ac, enableAuthnMutation}
 }
 
 type LegacyStore struct {
 	store               legacy.LegacyIdentityStore
 	ac                  claims.AccessClient
 	enableAuthnMutation bool
-	cfg                 *setting.Cfg
 }
 
 // DeleteCollection implements rest.CollectionDeleter.
