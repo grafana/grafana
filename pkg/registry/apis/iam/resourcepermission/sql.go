@@ -94,8 +94,8 @@ func (s *ResourcePermSqlBackend) getResourcePermission(ctx context.Context, sql 
 
 // Create
 
-// createManagedRoleAndAssign creates a new managed role and assigns it to the given user/team/service account/basic role
-func (s *ResourcePermSqlBackend) createManagedRoleAndAssign(ctx context.Context, tx *session.SessionTx, dbHelper *legacysql.LegacyDatabaseHelper, orgID int64, assignment rbacAssignmentCreate) (int64, error) {
+// createAndAssignManagedRole creates a new managed role and assigns it to the given user/team/service account/basic role
+func (s *ResourcePermSqlBackend) createAndAssignManagedRole(ctx context.Context, tx *session.SessionTx, dbHelper *legacysql.LegacyDatabaseHelper, orgID int64, assignment rbacAssignmentCreate) (int64, error) {
 	// Create the managed role
 	roleUID := accesscontrol.PrefixedRoleUID(fmt.Sprintf("%s:org:%v", assignment.RoleName, orgID))
 	insertRoleQuery, args, err := buildInsertRoleQuery(dbHelper, orgID, roleUID, assignment.RoleName)
@@ -140,7 +140,7 @@ func (s *ResourcePermSqlBackend) storeRbacAssignment(ctx context.Context, dbHelp
 
 	// Role doesn't exist, create it
 	if roleID == 0 {
-		roleID, err = s.createManagedRoleAndAssign(ctx, tx, dbHelper, orgID, assignment)
+		roleID, err = s.createAndAssignManagedRole(ctx, tx, dbHelper, orgID, assignment)
 		if err != nil {
 			return err
 		}
