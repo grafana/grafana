@@ -1132,4 +1132,9 @@ export interface FeatureToggles {
   * @default false
   */
   azureResourcePickerUpdates?: boolean;
+  /**
+  * Enables running plugins in containers
+  * @default false
+  */
+  pluginContainers?: boolean;
 }
