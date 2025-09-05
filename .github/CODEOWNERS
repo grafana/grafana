@@ -1137,6 +1137,8 @@ eslint-suppressions.json @grafanabot
 # Feature toggles
 /pkg/services/featuremgmt/ @grafana/grafana-backend-services-squad
 
+# Data source migrations
+/pkg/services/promtypemigration/ @grafana/partner-datasources @grafana/aws-datasources
 
 # Kind definitions
 /kinds/dashboard @grafana/dashboards-squad

@@ -1018,4 +1018,8 @@ const (
 	// FlagAzureResourcePickerUpdates
 	// Enables the updated Azure Monitor resource picker
 	FlagAzureResourcePickerUpdates = "azureResourcePickerUpdates"
+
+	// FlagPrometheusTypeMigration
+	// Checks for deprecated Prometheus authentication methods (SigV4 and Azure), installs the relevant data source, and migrates the Prometheus data sources
+	FlagPrometheusTypeMigration = "prometheusTypeMigration"
 )

@@ -170,6 +170,9 @@ func setup(t *testing.T) *serviceTestStruct {
 		func(context.Context, string, pluginstore.Store, pluginsettings.Service, org.Service) error {
 			return nil
 		},
+		func(context.Context) error {
+			return nil
+		},
 		searchStub,
 	)
 	service.provisionAlerting = func(context.Context, prov_alerting.ProvisionerConfig) error {
