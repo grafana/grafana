@@ -4,7 +4,7 @@ import { test, expect } from '@grafana/plugin-e2e';
 
 import { getColumnIdx } from './table-utils';
 
-const DASHBOARD_UID = '1ea31838-e4e8-4aa0-9333-1d4c3fa95641';
+const DASHBOARD_UID = '8100236d-603c-421e-a21b-2a0b0ea4eaa3';
 
 const waitForTableLoad = async (loc: Page | Locator) => {
   await expect(loc.locator('.rdg')).toBeVisible();

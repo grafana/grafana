@@ -265,6 +265,8 @@ export function TableNG(props: TableNGProps) {
     return [footers, isUniformFooter];
   }, [visibleFields]);
 
+  console.log('isUniformFooter', isUniformFooter);
+
   // normalize the row height into a function which returns a number, so we avoid a bunch of conditionals during rendering.
   const rowHeightFn = useMemo((): ((row: TableRow) => number) => {
     if (typeof rowHeight === 'function') {

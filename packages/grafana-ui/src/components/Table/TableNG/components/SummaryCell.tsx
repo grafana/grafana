@@ -88,7 +88,11 @@ export const SummaryCell = ({
       {reducerResultsEntries.map(([reducerId, reducerResult]) => {
         // empty reducer entry, but there may be more after - render a spacer.
         if (reducerResult === null) {
-          return <SummaryCellItem key={reducerId}>&nbsp;</SummaryCellItem>;
+          return (
+            <SummaryCellItem key={reducerId}>
+              {rowLabel ? <SummaryCellLabel>{getReducerName(reducerId)}</SummaryCellLabel> : <>&nbsp;</>}
+            </SummaryCellItem>
+          );
         }
 
         return (
@@ -99,15 +103,12 @@ export const SummaryCell = ({
         );
       })}
 
-      {renderRowLabel && (
-        <div className={cellClass}>
-          {firstFooterReducers!.map((reducerId) => (
-            <SummaryCellItem key={reducerId}>
-              <SummaryCellLabel>{getReducerName(reducerId)}</SummaryCellLabel>
-            </SummaryCellItem>
-          ))}
-        </div>
-      )}
+      {renderRowLabel &&
+        firstFooterReducers!.map((reducerId) => (
+          <SummaryCellItem key={reducerId}>
+            <SummaryCellLabel>{getReducerName(reducerId)}</SummaryCellLabel>
+          </SummaryCellItem>
+        ))}
     </div>
   );
 };
