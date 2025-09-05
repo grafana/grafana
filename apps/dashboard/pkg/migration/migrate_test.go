@@ -2,6 +2,7 @@ package migration_test
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"log/slog"
@@ -26,10 +27,10 @@ func TestMigrate(t *testing.T) {
 	require.NoError(t, err)
 
 	// Use the same datasource provider as the frontend test to ensure consistency
-	migration.Initialize(migrationtestutil.GetTestDataSourceProvider(), migrationtestutil.GetTestPanelProvider())
+	migration.Initialize(migrationtestutil.GetTestDataSourceProvider())
 
 	t.Run("minimum version check", func(t *testing.T) {
-		err := migration.Migrate(map[string]interface{}{
+		err := migration.Migrate(context.Background(), map[string]interface{}{
 			"schemaVersion": schemaversion.MIN_VERSION - 1,
 		}, schemaversion.MIN_VERSION)
 
@@ -52,7 +53,7 @@ func TestMigrate(t *testing.T) {
 
 		t.Run("input check "+f.Name(), func(t *testing.T) {
 			// use input version as the target version to ensure there are no changes
-			require.NoError(t, migration.Migrate(inputDash, inputVersion), "input check migration failed")
+			require.NoError(t, migration.Migrate(context.Background(), inputDash, inputVersion), "input check migration failed")
 			outBytes, err := json.MarshalIndent(inputDash, "", "  ")
 			require.NoError(t, err, "failed to marshal migrated dashboard")
 			// We can ignore gosec G304 here since it's a test
@@ -71,7 +72,7 @@ func TestMigrate(t *testing.T) {
 
 func testMigration(t *testing.T, dash map[string]interface{}, inputFileName string, targetVersion int) {
 	t.Helper()
-	require.NoError(t, migration.Migrate(dash, targetVersion), "%d migration failed", targetVersion)
+	require.NoError(t, migration.Migrate(context.Background(), dash, targetVersion), "%d migration failed", targetVersion)
 
 	outPath := filepath.Join(OUTPUT_DIR, inputFileName)
 	outBytes, err := json.MarshalIndent(dash, "", "  ")
@@ -121,7 +122,7 @@ func loadDashboard(t *testing.T, path string) map[string]interface{} {
 // TestSchemaMigrationMetrics tests that schema migration metrics are recorded correctly
 func TestSchemaMigrationMetrics(t *testing.T) {
 	// Initialize migration with test providers
-	migration.Initialize(migrationtestutil.GetTestDataSourceProvider(), migrationtestutil.GetTestPanelProvider())
+	migration.Initialize(migrationtestutil.GetTestDataSourceProvider())
 
 	// Create a test registry for metrics
 	registry := prometheus.NewRegistry()
@@ -191,7 +192,7 @@ func TestSchemaMigrationMetrics(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Execute migration
-			err := migration.Migrate(tt.dashboard, tt.targetVersion)
+			err := migration.Migrate(context.Background(), tt.dashboard, tt.targetVersion)
 
 			// Check error expectation
 			if tt.expectSuccess {
@@ -205,7 +206,7 @@ func TestSchemaMigrationMetrics(t *testing.T) {
 
 // TestSchemaMigrationLogging tests that schema migration logging works correctly
 func TestSchemaMigrationLogging(t *testing.T) {
-	migration.Initialize(migrationtestutil.GetTestDataSourceProvider(), migrationtestutil.GetTestPanelProvider())
+	migration.Initialize(migrationtestutil.GetTestDataSourceProvider())
 
 	tests := []struct {
 		name           string
@@ -261,7 +262,7 @@ func TestSchemaMigrationLogging(t *testing.T) {
 			// and check that the migration behaves correctly (logs are called internally)
 
 			// Execute migration
-			err := migration.Migrate(tt.dashboard, tt.targetVersion)
+			err := migration.Migrate(context.Background(), tt.dashboard, tt.targetVersion)
 
 			// Check error expectation
 			if tt.expectSuccess {
@@ -285,7 +286,7 @@ func TestSchemaMigrationLogging(t *testing.T) {
 
 // TestLogMessageStructure tests that log messages contain expected structured fields
 func TestLogMessageStructure(t *testing.T) {
-	migration.Initialize(migrationtestutil.GetTestDataSourceProvider(), migrationtestutil.GetTestPanelProvider())
+	migration.Initialize(migrationtestutil.GetTestDataSourceProvider())
 
 	t.Run("log messages include all required fields", func(t *testing.T) {
 		// Test that migration functions execute successfully, ensuring log code paths are hit
@@ -295,7 +296,7 @@ func TestLogMessageStructure(t *testing.T) {
 		}
 
 		// Successful migration - should trigger debug log
-		err := migration.Migrate(dashboard, schemaversion.LATEST_VERSION)
+		err := migration.Migrate(context.Background(), dashboard, schemaversion.LATEST_VERSION)
 		require.NoError(t, err, "migration should succeed")
 
 		// Failed migration - should trigger error log
@@ -303,7 +304,7 @@ func TestLogMessageStructure(t *testing.T) {
 			"schemaVersion": schemaversion.MIN_VERSION - 1,
 			"title":         "old dashboard",
 		}
-		err = migration.Migrate(oldDashboard, schemaversion.LATEST_VERSION)
+		err = migration.Migrate(context.Background(), oldDashboard, schemaversion.LATEST_VERSION)
 		require.Error(t, err, "migration should fail")
 
 		// Both cases above execute the logging code in reportMigrationMetrics

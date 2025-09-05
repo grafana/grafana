@@ -4506,16 +4506,11 @@
             "any": "Correspondre à au moins un élément",
             "label": "Règles de concordance"
           },
-          "label": "Groupe",
           "visibility": {
             "hide": "Masquer",
             "label": "Visibilité : {{type}}",
             "show": "Afficher"
           }
-        },
-        "shared": {
-          "delete-condition": "Supprimer la condition",
-          "unsupported-item-type": "Cette condition n’est pas prise en charge par l’élément, elle sera donc ignorée."
         },
         "time-range-size": {
           "info": "Afficher ou masquer le {{type}} si la plage temporelle du tableau de bord est plus courte que la plage temporelle sélectionnée.",
@@ -4545,17 +4540,21 @@
             "not-matches": "Non correspondances"
           },
           "value": "Valeur"
+        },
+        "wrapper": {
+          "delete-condition": "",
+          "unsupported-object-type": ""
         }
       },
       "editor": {
+        "info": "",
         "not-supported-for-custom-grid": "Le rendu conditionnel n’est pas pris en charge pour la grille personnalisée. Basculez vers la grille automatique pour l’utiliser.",
-        "unsupported-item-type": "Le rendu conditionnel n’est pas pris en charge pour ce type d’élément"
+        "unsupported-object-type": ""
       },
       "overlay": {
         "tooltip": "L’élément est masqué en raison du rendu conditionnel."
       },
       "root": {
-        "info": "Définissez des règles pour contrôler la visibilité de {{type}} en faisant correspondre une ou toutes les règles.",
         "title": "Afficher / masquer les règles"
       }
     },
@@ -4695,7 +4694,8 @@
       "paste-panel": "Coller le panneau",
       "remove": "Supprimer {{typeName}}",
       "row-title": "",
-      "switch-layout": "Changer la disposition"
+      "switch-layout": "Changer la disposition",
+      "tab-title": ""
     },
     "edit-pane": {
       "elements": {
@@ -8348,6 +8348,10 @@
         "action-title": "Titre",
         "action-title-placeholder": "Titre de l'action",
         "action-variables": "Variables",
+        "connection": "",
+        "connection-direct-description": "",
+        "connection-direct-label": "",
+        "connection-placeholder": "",
         "one-click-description": "Un seul lien ou une seule action peut avoir un clic activé à la fois"
       }
     },
@@ -8772,7 +8776,6 @@
       "cell-inspect": "Inspecter la valeur",
       "cell-inspect-tooltip": "Inspecter la valeur",
       "copy": "Copier dans le presse-papier",
-      "count": "Compte",
       "csv-counts": "Lignes :{{rows}}, Colonnes :{{columns}}  <5></5>",
       "csv-placeholder": "Saisir le CSV ici…",
       "filter-placeholder": "Filtrer les valeurs",
@@ -8783,6 +8786,11 @@
       "filter-popup-heading": "Filtrer par valeurs :",
       "filter-popup-input-placeholder": "Filtrer les valeurs",
       "filter-popup-match-case": "Respecter la casse",
+      "footer": {
+        "reducer": {
+          "count": ""
+        }
+      },
       "inspect-drawer-title": "Inspecter la valeur",
       "nested-table": {
         "no-data": "Aucune donnée disponible"
@@ -9723,30 +9731,6 @@
     "un-themed-log-label-stats": {
       "field-log-stats": "{{label}} : {{total}} lignes sur {{rowCount}} ont ce champ",
       "label-log-stats": "{{label}} : {{total}} lignes sur {{rowCount}} ont cette étiquette"
-    }
-  },
-  "logs-new": {
-    "category-logs": "Logs",
-    "deduplication-options": {
-      "label-exact": "Exact",
-      "label-none": "Aucun",
-      "label-numbers": "Nombres",
-      "label-signature": "Signature"
-    },
-    "description-infinite-scrolling": "Expérimental. Obtenez plus de résultats en faisant défiler jusqu’en bas de la liste des logs.",
-    "description-show-controls": "Afficher les contrôles pour accéder à la première ou à la dernière ligne du log et filtrer par niveau de log",
-    "description-syntax-highlighting": "Utiliser une grammaire de coloration syntaxique prédéfinie pour mettre en évidence les parties pertinentes des lignes de log",
-    "name-deduplication": "Déduplication",
-    "name-enable-log-details": "Activer les détails du log",
-    "name-infinite-scrolling": "Activer le défilement infini",
-    "name-order": "Ordre",
-    "name-show-controls": "Afficher les contrôles",
-    "name-syntax-highlighting": "Activer la coloration syntaxique",
-    "name-time": "Heure",
-    "name-wrap-lines": "Retour à la ligne automatique",
-    "order-options": {
-      "label-newest-first": "Le plus récent en premier",
-      "label-oldest-first": "Le plus ancien en premier"
     }
   },
   "manage-dashbaords": {
@@ -12788,8 +12772,6 @@
     "description-calculation": "Choisissez une fonction de réduction ou de calcul",
     "description-cell-value-inspect": "Activer l’inspection de la valeur de cellule dans une fenêtre modale",
     "description-column-filter": "Active ou désactive les filtres de champ dans le tableau",
-    "description-count-rows": "Afficher un seul total pour l’ensemble des lignes de données",
-    "description-fields": "Sélectionner les champs à utiliser pour le calcul",
     "description-frozen-columns": "",
     "description-min-column-width": "La largeur minimale pour le redimensionnement automatique des colonnes",
     "description-tooltip-from-field": "",
@@ -12816,21 +12798,17 @@
     "name-column-alignment": "Alignement de la colonne",
     "name-column-filter": "Filtre de colonne",
     "name-column-width": "Largeur de colonne",
-    "name-count-rows": "Compter les lignes",
     "name-enable-pagination": "",
-    "name-fields": "Champs",
     "name-frozen-columns": "",
     "name-hide-in-table": "Masquer dans le tableau",
     "name-max-height": "",
     "name-min-column-width": "Largeur minimale de colonne",
-    "name-show-table-footer": "Afficher le pied de tableau",
     "name-show-table-header": "Afficher l’en-tête du tableau",
     "name-tooltip-from-field": "",
     "name-tooltip-placement": "",
     "name-wrap-header-text": "Retour à la ligne dans l’en-tête",
     "name-wrap-text": "",
     "placeholder-column-width": "auto",
-    "placeholder-fields": "Tous les champs numériques",
     "placeholder-max-height": "",
     "tooltip-placement-options": {
       "label-auto": "",

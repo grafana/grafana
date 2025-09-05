@@ -4542,16 +4542,11 @@
             "any": "Сопоставить любые",
             "label": "Сопоставить правила"
           },
-          "label": "Группа",
           "visibility": {
             "hide": "Скрыть",
             "label": "Видимость {{type}}",
             "show": "Показать"
           }
-        },
-        "shared": {
-          "delete-condition": "Удалить условие",
-          "unsupported-item-type": "Условие не поддерживается элементом, поэтому будет проигнорировано."
         },
         "time-range-size": {
           "info": "Показывать или скрывать {{type}}, если временной диапазон дашборда меньше выбранного интервала времени.",
@@ -4581,17 +4576,21 @@
             "not-matches": "Совпадений нет"
           },
           "value": "Значение"
+        },
+        "wrapper": {
+          "delete-condition": "",
+          "unsupported-object-type": ""
         }
       },
       "editor": {
+        "info": "",
         "not-supported-for-custom-grid": "При выборе пользовательского размещения сетки не поддерживается условный рендеринг. Чтобы воспользоваться функцией, переключитесь на автоматическую сетку.",
-        "unsupported-item-type": "Условный рендеринг не поддерживается для элемента этого типа"
+        "unsupported-object-type": ""
       },
       "overlay": {
         "tooltip": "Элемент скрыт из-за условной визуализации."
       },
       "root": {
-        "info": "Установить правила для управления видимостью {{type}} путем сопоставления части или всех правил.",
         "title": "Отображение/скрытие правил"
       }
     },
@@ -4731,7 +4730,8 @@
       "paste-panel": "Вставка панели",
       "remove": "Удалить {{typeName}}",
       "row-title": "",
-      "switch-layout": "Переключить макет"
+      "switch-layout": "Переключить макет",
+      "tab-title": ""
     },
     "edit-pane": {
       "elements": {
@@ -8390,6 +8390,10 @@
         "action-title": "Название",
         "action-title-placeholder": "Название действия",
         "action-variables": "Переменные",
+        "connection": "",
+        "connection-direct-description": "",
+        "connection-direct-label": "",
+        "connection-placeholder": "",
         "one-click-description": "Только одна ссылка или действие могут быть активированы одним нажатием за раз"
       }
     },
@@ -8814,7 +8818,6 @@
       "cell-inspect": "Проверить значение",
       "cell-inspect-tooltip": "Проверить значение",
       "copy": "Копировать в буфер обмена",
-      "count": "Количество",
       "csv-counts": "Строки:{{rows}}, столбцы:{{columns}}  <5></5>",
       "csv-placeholder": "Ввести CSV...",
       "filter-placeholder": "Значения фильтра",
@@ -8825,6 +8828,11 @@
       "filter-popup-heading": "Фильтр по значениям:",
       "filter-popup-input-placeholder": "Значения фильтра",
       "filter-popup-match-case": "С учетом регистра",
+      "footer": {
+        "reducer": {
+          "count": ""
+        }
+      },
       "inspect-drawer-title": "Проверить значение",
       "nested-table": {
         "no-data": "Нет данных"
@@ -9781,30 +9789,6 @@
     "un-themed-log-label-stats": {
       "field-log-stats": "{{label}}: {{total}} из {{rowCount}} строк содержат это поле",
       "label-log-stats": "{{label}}: {{total}} из {{rowCount}} строк содержат эту метку"
-    }
-  },
-  "logs-new": {
-    "category-logs": "Журналы",
-    "deduplication-options": {
-      "label-exact": "Точная",
-      "label-none": "Нет",
-      "label-numbers": "Номера",
-      "label-signature": "Подпись"
-    },
-    "description-infinite-scrolling": "Экспериментальная функция. Запросите больше результатов, прокрутив список журналов до конца.",
-    "description-show-controls": "Отображать элементы управления для перехода к последней или первой строке журнала и фильтры по уровню журнала",
-    "description-syntax-highlighting": "Использовать предустановленную грамматику подсветки синтаксиса для выделения важных частей строк журнала",
-    "name-deduplication": "Дедупликация",
-    "name-enable-log-details": "Включить сведения о журнале",
-    "name-infinite-scrolling": "Включить бесконечную прокрутку",
-    "name-order": "Порядок",
-    "name-show-controls": "Показывать элементы управления",
-    "name-syntax-highlighting": "Включить подсветку синтаксиса",
-    "name-time": "Время",
-    "name-wrap-lines": "Переносить строки",
-    "order-options": {
-      "label-newest-first": "Сначала новые",
-      "label-oldest-first": "Сначала старые"
     }
   },
   "manage-dashbaords": {
@@ -12870,8 +12854,6 @@
     "description-calculation": "Выбрать функцию преобразования / расчета",
     "description-cell-value-inspect": "Включить проверку значений ячеек в модальном окне",
     "description-column-filter": "Включает/отключает фильтры полей в таблице",
-    "description-count-rows": "Отобразить один счетчик для всех строк данных",
-    "description-fields": "Выбрать поля, которые необходимо рассчитать",
     "description-frozen-columns": "",
     "description-min-column-width": "Минимальная ширина для автоматического изменения размера столбцов",
     "description-tooltip-from-field": "",
@@ -12898,21 +12880,17 @@
     "name-column-alignment": "Выравнивание столбцов",
     "name-column-filter": "Фильтр столбцов",
     "name-column-width": "Ширина столбца",
-    "name-count-rows": "Подсчет строк",
     "name-enable-pagination": "",
-    "name-fields": "Поля",
     "name-frozen-columns": "",
     "name-hide-in-table": "Скрыть в таблице",
     "name-max-height": "",
     "name-min-column-width": "Минимальная ширина столбца",
-    "name-show-table-footer": "Показать футер таблицы",
     "name-show-table-header": "Показать заголовок таблицы",
     "name-tooltip-from-field": "",
     "name-tooltip-placement": "",
     "name-wrap-header-text": "Перенос текста заголовка",
     "name-wrap-text": "",
     "placeholder-column-width": "авто",
-    "placeholder-fields": "Все числовые поля",
     "placeholder-max-height": "",
     "tooltip-placement-options": {
       "label-auto": "",
