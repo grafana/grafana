@@ -1,4 +1,7 @@
+import { VizPanel } from '@grafana/scenes';
+
 import { dashboardEditActions } from '../../edit-pane/shared';
+import { DefaultGridLayoutManager } from '../layout-default/DefaultGridLayoutManager';
 import { RowItem } from '../layout-rows/RowItem';
 import { RowsLayoutManager } from '../layout-rows/RowsLayoutManager';
 
@@ -233,6 +236,30 @@ describe('TabsLayoutManager', () => {
 
       expect(manager.state.tabs).toEqual([tab1, tab2, tab3]);
       expect(manager.state.currentTabSlug).toBe(tab2.getSlug());
+    });
+  });
+
+  describe('getVizPanels', () => {
+    it('Should not included repeated tabs', () => {
+      const manager = new TabsLayoutManager({
+        tabs: [
+          new TabItem({
+            title: 'Tab 1',
+            layout: DefaultGridLayoutManager.fromVizPanels([new VizPanel({ key: 'panel-1' })]),
+            repeatedTabs: [
+              new TabItem({
+                title: 'Tab 1 - Copy 1',
+                layout: DefaultGridLayoutManager.fromVizPanels([new VizPanel({ key: 'panel-1' })]),
+              }),
+              new TabItem({
+                title: 'Tab 1 - Copy 2',
+                layout: DefaultGridLayoutManager.fromVizPanels([new VizPanel({ key: 'panel-1' })]),
+              }),
+            ],
+          }),
+        ],
+      });
+      expect(manager.getVizPanels().length).toBe(1);
     });
   });
 });

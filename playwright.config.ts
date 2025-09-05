@@ -183,5 +183,25 @@ export default defineConfig<PluginOptions>({
       name: 'dashboard-new-layouts',
       testDir: path.join(testDirRoot, '/dashboard-new-layouts'),
     }),
+    // Setup project for dashboard CUJS tests
+    withAuth({
+      name: 'dashboard-cujs-setup',
+      testDir: path.join(testDirRoot, '/dashboard-cujs'),
+      testMatch: ['global-setup.spec.ts'],
+    }),
+    // Main dashboard CUJS tests
+    withAuth({
+      name: 'dashboard-cujs',
+      testDir: path.join(testDirRoot, '/dashboard-cujs'),
+      testIgnore: ['global-setup.spec.ts', 'global-teardown.spec.ts'],
+      dependencies: ['dashboard-cujs-setup'],
+    }),
+    // Teardown project for dashboard CUJS tests
+    withAuth({
+      name: 'dashboard-cujs-teardown',
+      testDir: path.join(testDirRoot, '/dashboard-cujs'),
+      testMatch: ['global-teardown.spec.ts'],
+      dependencies: ['dashboard-cujs'],
+    }),
   ],
 });
