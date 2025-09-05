@@ -4687,6 +4687,7 @@
       "move": "Move {{typeName}}",
       "panel-background": "Change panel background",
       "panel-description": "Change panel description",
+      "panel-edit": "Panel changes",
       "panel-max-repeats-per-row": "Max repeats per row",
       "panel-repeat-direction": "Repeat direction",
       "panel-repeat-variable": "Panel repeat by",
