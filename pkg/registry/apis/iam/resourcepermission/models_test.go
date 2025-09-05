@@ -20,14 +20,14 @@ func setupBackendNoDB(t *testing.T) *ResourcePermSqlBackend {
 
 func TestToV0ResourcePermissions(t *testing.T) {
 	t.Run("empty permissions", func(t *testing.T) {
-		result, err := toV0ResourcePermissions(map[groupResourceName][]flatResourcePermission{})
+		result, err := toV0ResourcePermissions(map[groupResourceName][]rbacAssignment{})
 		require.NoError(t, err)
 		require.Nil(t, result)
 	})
 
 	now := time.Now()
 	t.Run("multiple permission are sorted by kind, name, verb", func(t *testing.T) {
-		permissions := map[groupResourceName][]flatResourcePermission{
+		permissions := map[groupResourceName][]rbacAssignment{
 			{
 				Group:    "dashboard.grafana.app",
 				Resource: "dashboards",
