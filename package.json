@@ -264,7 +264,7 @@
     "@emotion/css": "11.13.5",
     "@emotion/react": "11.14.0",
     "@fingerprintjs/fingerprintjs": "^3.4.2",
-    "@floating-ui/react": "0.27.15",
+    "@floating-ui/react": "0.27.16",
     "@formatjs/intl-durationformat": "^0.7.0",
     "@glideapps/glide-data-grid": "^6.0.0",
     "@grafana/alerting": "workspace:*",
