@@ -153,7 +153,7 @@ func setupFromConfig(cfg *setting.Cfg) (controllerCfg *provisioningControllerCon
 		return nil, fmt.Errorf("folders_server_url is required in [operator] section")
 	}
 
-	apiServerURLs := []string{dashboardsServerURL, foldersServerURL}
+	apiServerURLs := []string{dashboardsServerURL, foldersServerURL, provisioningServerURL}
 	configProviders := make([]apiserver.RestConfigProvider, len(apiServerURLs))
 
 	for i, url := range apiServerURLs {
@@ -306,6 +306,7 @@ func setupUnifiedStorageClient(cfg *setting.Cfg, tracer tracing.Tracer, resource
 	if address == "" {
 		return nil, fmt.Errorf("grpc_address is required in [unified_storage] section")
 	}
+	// FIXME: These metrics are not going to show up in /metrics
 	registry := prometheus.NewPedanticRegistry()
 	conn, err := unified.GrpcConn(address, registry)
 	if err != nil {
@@ -316,7 +317,10 @@ func setupUnifiedStorageClient(cfg *setting.Cfg, tracer tracing.Tracer, resource
 	indexConn := conn
 	indexAddress := unifiedStorageSec.Key("grpc_index_address").String()
 	if indexAddress != "" {
-		indexConn, err = unified.GrpcConn(indexAddress, registry)
+		// FIXME: These metrics are not going to show up in /metrics. We will also need to wrap these metrics
+		// to start with something else so it doesn't collide with the storage api metrics.
+		registry2 := prometheus.NewPedanticRegistry()
+		indexConn, err = unified.GrpcConn(indexAddress, registry2)
 		if err != nil {
 			return nil, fmt.Errorf("create unified storage index gRPC connection: %w", err)
 		}
