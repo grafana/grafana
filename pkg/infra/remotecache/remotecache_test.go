@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/secrets/fakes"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/tests"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 )
 
@@ -34,9 +35,8 @@ func createTestClient(t *testing.T, opts *setting.RemoteCacheSettings, sqlstore 
 }
 
 func TestIntegrationCachedBasedOnConfig(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test in short mode")
-	}
+	tests.SkipIntegrationTestInShortMode(t)
+
 	db, cfg := sqlstore.InitTestDB(t)
 	err := cfg.Load(setting.CommandLineArgs{
 		HomePath: "../../../",

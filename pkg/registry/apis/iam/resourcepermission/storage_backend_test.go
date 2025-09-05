@@ -15,12 +15,11 @@ import (
 	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
+	"github.com/grafana/grafana/pkg/tests"
 )
 
 func TestIntegration_ResourcePermSqlBackend_ReadResource(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test in short mode")
-	}
+	tests.SkipIntegrationTestInShortMode(t)
 
 	backend := setupBackend(t)
 	sql, err := backend.dbProvider(context.Background())

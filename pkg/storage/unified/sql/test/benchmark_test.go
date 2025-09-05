@@ -39,9 +39,8 @@ func newTestBackend(b testing.TB) resource.StorageBackend {
 }
 
 func TestIntegrationBenchmarkSQLStorageBackend(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test in short mode")
-	}
+	tests.SkipIntegrationTestInShortMode(t)
+
 	tests.SkipIntegrationTestInShortMode(t)
 	opts := test.DefaultBenchmarkOptions()
 	if db.IsTestDbSQLite() {
@@ -52,10 +51,8 @@ func TestIntegrationBenchmarkSQLStorageBackend(t *testing.T) {
 
 func TestIntegrationBenchmarkResourceServer(t *testing.T) {
 	t.Skip("skipping slow test, causing CI to fail due to timeout")
+	tests.SkipIntegrationTestInShortMode(t)
 
-	if testing.Short() {
-		t.Skip("skipping integration test in short mode")
-	}
 	tests.SkipIntegrationTestInShortMode(t)
 
 	ctx := context.Background()

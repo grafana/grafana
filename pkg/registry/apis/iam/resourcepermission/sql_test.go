@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/iam/legacy"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
+	"github.com/grafana/grafana/pkg/tests"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 )
 
@@ -119,9 +120,7 @@ func setupTestRoles(t *testing.T, store db.DB) {
 }
 
 func TestIntegration_ResourcePermSqlBackend_getResourcePermission(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test in short mode")
-	}
+	tests.SkipIntegrationTestInShortMode(t)
 
 	backend := setupBackend(t)
 	sql, err := backend.dbProvider(context.Background())
@@ -208,9 +207,7 @@ func TestIntegration_ResourcePermSqlBackend_getResourcePermission(t *testing.T) 
 }
 
 func TestIntegration_ResourcePermSqlBackend_CreateResourcePermission(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	tests.SkipIntegrationTestInShortMode(t)
 
 	store := db.InitTestDB(t)
 

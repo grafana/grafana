@@ -18,6 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore/permissions"
 	"github.com/grafana/grafana/pkg/services/sqlstore/searchstore"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/tests"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -32,9 +33,8 @@ func TestMain(m *testing.M) {
 }
 
 func TestIntegrationBuilder_EqualResults_Basic(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test in short mode")
-	}
+	tests.SkipIntegrationTestInShortMode(t)
+
 	user := &user.SignedInUser{
 		UserID:  1,
 		OrgID:   1,
@@ -79,9 +79,8 @@ func TestIntegrationBuilder_EqualResults_Basic(t *testing.T) {
 }
 
 func TestIntegrationBuilder_Pagination(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test in short mode")
-	}
+	tests.SkipIntegrationTestInShortMode(t)
+
 	user := &user.SignedInUser{
 		UserID:  1,
 		OrgID:   1,
@@ -129,9 +128,8 @@ func TestIntegrationBuilder_Pagination(t *testing.T) {
 }
 
 func TestIntegrationBuilder_RBAC(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test in short mode")
-	}
+	tests.SkipIntegrationTestInShortMode(t)
+
 	testsCases := []struct {
 		desc            string
 		userPermissions []accesscontrol.Permission

@@ -24,6 +24,7 @@ import (
 	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/storage/unified/federated"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
+	"github.com/grafana/grafana/pkg/tests"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 )
 
@@ -33,9 +34,8 @@ func TestMain(m *testing.M) {
 
 // tests stats are correctly reported from legacy tables
 func TestIntegrationDirectSQLStats(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test in short mode")
-	}
+	tests.SkipIntegrationTestInShortMode(t)
+
 	db, cfg := db.InitTestDBWithCfg(t)
 	ctx := context.Background()
 

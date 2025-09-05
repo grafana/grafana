@@ -12,6 +12,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/tests"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 )
 
@@ -178,10 +179,8 @@ func TestIntegrationFsStorage(t *testing.T) {
 	if true {
 		t.Skip("flakey tests - skipping")
 	}
+	tests.SkipIntegrationTestInShortMode(t)
 
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
 	//skipTest := true
 	emptyContents := make([]byte, 0)
 	pngImage, _ := base64.StdEncoding.DecodeString(pngImageBase64)

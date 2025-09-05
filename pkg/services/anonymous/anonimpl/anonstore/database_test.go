@@ -9,6 +9,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/tests"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 )
 
@@ -17,9 +18,8 @@ func TestMain(m *testing.M) {
 }
 
 func TestIntegrationAnonStore_DeleteDevicesOlderThan(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test in short mode")
-	}
+	tests.SkipIntegrationTestInShortMode(t)
+
 	store := db.InitTestDB(t)
 	anonDBStore := ProvideAnonDBStore(store, 0)
 	const keepFor = time.Hour * 24 * 61
@@ -57,9 +57,8 @@ func TestIntegrationAnonStore_DeleteDevicesOlderThan(t *testing.T) {
 }
 
 func TestIntegrationBeyondDeviceLimit(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test in short mode")
-	}
+	tests.SkipIntegrationTestInShortMode(t)
+
 	store := db.InitTestDB(t)
 	anonDBStore := ProvideAnonDBStore(store, 1)
 
@@ -81,9 +80,8 @@ func TestIntegrationBeyondDeviceLimit(t *testing.T) {
 }
 
 func TestIntegrationAnonStore_DeleteDevice(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test in short mode")
-	}
+	tests.SkipIntegrationTestInShortMode(t)
+
 	store := db.InitTestDB(t)
 	anonDBStore := ProvideAnonDBStore(store, 0)
 	const keepFor = time.Hour * 24 * 61

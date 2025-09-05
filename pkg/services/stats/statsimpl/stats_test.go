@@ -26,6 +26,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/userimpl"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/tests"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 )
 
@@ -34,9 +35,8 @@ func TestMain(m *testing.M) {
 }
 
 func TestIntegrationStatsDataAccess(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	tests.SkipIntegrationTestInShortMode(t)
+
 	db, cfg := db.InitTestDBWithCfg(t)
 	orgSvc := populateDB(t, db, cfg)
 	dashSvc := &dashboards.FakeDashboardService{}

@@ -23,13 +23,13 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/userimpl"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/tests"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 )
 
 func TestIntegrationLibraryElementPermissions(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	tests.SkipIntegrationTestInShortMode(t)
+
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{})
 
 	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
@@ -136,9 +136,8 @@ func TestIntegrationLibraryElementPermissions(t *testing.T) {
 }
 
 func TestIntegrationLibraryElementGranularPermissions(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	tests.SkipIntegrationTestInShortMode(t)
+
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{})
 	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
 	cfgProvider, err := configprovider.ProvideService(env.Cfg)

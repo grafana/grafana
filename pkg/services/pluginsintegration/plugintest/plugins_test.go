@@ -27,6 +27,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/searchV2"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/tests"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor"
@@ -57,9 +58,7 @@ func TestMain(m *testing.M) {
 // This test should run before TestIntegrationPluginManager because this test relies on having a pre-existing Admin user
 // and because the SQLStore instance is shared between tests, this test does all the necessary setup
 func TestIntegrationPluginDashboards(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	tests.SkipIntegrationTestInShortMode(t)
 
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		AnonymousUserRole: org.RoleAdmin,
@@ -123,9 +122,8 @@ func TestIntegrationPluginDashboards(t *testing.T) {
 }
 
 func TestIntegrationPluginManager(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	tests.SkipIntegrationTestInShortMode(t)
+
 	staticRootPath, err := filepath.Abs("../../../../public/")
 	require.NoError(t, err)
 

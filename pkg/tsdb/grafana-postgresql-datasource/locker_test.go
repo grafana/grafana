@@ -5,13 +5,13 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana/pkg/tests"
 	"github.com/stretchr/testify/require"
 )
 
 func TestIntegrationLocker(t *testing.T) {
-	if testing.Short() {
-		t.Skip("Tests with Sleep")
-	}
+	tests.SkipIntegrationTestInShortMode(t)
+
 	const notUpdated = "not_updated"
 	const atThread1 = "at_thread_1"
 	const atThread2 = "at_thread_2"

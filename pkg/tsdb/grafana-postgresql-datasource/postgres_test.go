@@ -17,14 +17,14 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/grafana-postgresql-datasource/sqleng"
 
+	"github.com/grafana/grafana/pkg/tests"
 	_ "github.com/lib/pq"
 )
 
 // Test generateConnectionString.
 func TestIntegrationGenerateConnectionString(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	tests.SkipIntegrationTestInShortMode(t)
+
 	cfg := setting.NewCfg()
 	cfg.DataPath = t.TempDir()
 
@@ -182,9 +182,8 @@ func TestIntegrationGenerateConnectionString(t *testing.T) {
 // use to verify that the generated data are visualized as expected, see
 // devenv/README.md for setup instructions.
 func TestIntegrationPostgres(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	tests.SkipIntegrationTestInShortMode(t)
+
 	// change to true to run the PostgreSQL tests
 	const runPostgresTests = false
 

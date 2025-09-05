@@ -18,6 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/secrets/fakes"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/tests"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 )
 
@@ -26,9 +27,8 @@ func TestMain(m *testing.M) {
 }
 
 func TestIntegrationDashboardSnapshotDBAccess(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	tests.SkipIntegrationTestInShortMode(t)
+
 	sqlstore := db.InitTestDB(t)
 	cfg := setting.NewCfg()
 	dashStore := ProvideStore(sqlstore, cfg)
@@ -160,9 +160,8 @@ func TestIntegrationDashboardSnapshotDBAccess(t *testing.T) {
 }
 
 func TestIntegrationDeleteExpiredSnapshots(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	tests.SkipIntegrationTestInShortMode(t)
+
 	sqlstore := db.InitTestDB(t)
 	dashStore := NewStore(sqlstore)
 

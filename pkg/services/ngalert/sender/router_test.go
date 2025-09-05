@@ -29,13 +29,13 @@ import (
 	fake_secrets "github.com/grafana/grafana/pkg/services/secrets/fakes"
 	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/tests"
 	"github.com/grafana/grafana/pkg/util"
 )
 
 func TestIntegrationSendingToExternalAlertmanager(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	tests.SkipIntegrationTestInShortMode(t)
+
 	ruleKey := models.GenerateRuleKey(1)
 
 	fakeAM := NewFakeExternalAlertmanager(t)
@@ -102,9 +102,8 @@ func TestIntegrationSendingToExternalAlertmanager(t *testing.T) {
 }
 
 func TestIntegrationSendingToExternalAlertmanager_WithMultipleOrgs(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	tests.SkipIntegrationTestInShortMode(t)
+
 	ruleKey1 := models.GenerateRuleKey(1)
 	ruleKey2 := models.GenerateRuleKey(2)
 

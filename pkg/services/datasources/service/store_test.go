@@ -13,12 +13,12 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/tests"
 )
 
 func TestIntegrationDataAccess(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	tests.SkipIntegrationTestInShortMode(t)
+
 	defaultAddDatasourceCommand := datasources.AddDataSourceCommand{
 		OrgID:  10,
 		Name:   "nisse",

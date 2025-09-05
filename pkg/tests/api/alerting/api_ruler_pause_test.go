@@ -10,16 +10,16 @@ import (
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/tests"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 	"github.com/grafana/grafana/pkg/util"
 )
 
 func TestIntegrationAlertRulePauseNamespace(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test in short mode")
+	tests.SkipIntegrationTestInShortMode(t)
 
-		// Setup Grafana and its Database
-	}
+	// Setup Grafana and its Database
+
 	testinfra.SQLiteIntegrationTest(t)
 
 	dir, p := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
