@@ -89,6 +89,7 @@ swagger-enterprise-gen: ## Generate API Swagger specification
 	-x "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions" \
 	-x "github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-openapiv2/options" \
 	-x "github.com/prometheus/alertmanager" \
+	-x "github.com/docker/docker" \
 	-i pkg/api/swagger_tags.json \
 	-t enterprise \
 	--exclude-tag=alpha \
