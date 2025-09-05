@@ -247,7 +247,9 @@ func handleQuery(ctx context.Context, raw query.QueryDataRequest, b QueryAPIBuil
 		if err != nil {
 			connectLogger.Error("error getting valid datasource ref", err)
 		}
-		query.Datasource = dsRef
+		if dsRef != nil {
+			query.Datasource = dsRef
+		}
 
 		jsonBytes, err := json.Marshal(query)
 		if err != nil {
