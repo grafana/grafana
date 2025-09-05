@@ -18,9 +18,9 @@ export function BootstrapStepCardIcons({ target, repoType }: { target: Target; r
   if (target === 'folder') {
     return (
       <Stack>
-        <RepoIcon type="github" />
-        <Icon name="arrow-right" size="xxl" />
         <Icon name="folder" size="xxl" />
+        <Icon name="arrow-left" size="xxl" />
+        <RepoIcon type={repoType} />
       </Stack>
     );
   }

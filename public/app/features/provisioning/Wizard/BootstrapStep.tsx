@@ -3,7 +3,7 @@ import { useEffect } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Trans, t } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { Box, Card, Field, Input, LoadingPlaceholder, Stack, Text, useStyles2 } from '@grafana/ui';
 import { RepositoryViewList } from 'app/api/clients/provisioning/v0alpha1';
 import { generateRepositoryTitle } from 'app/features/provisioning/utils/data';
@@ -66,25 +66,6 @@ export function BootstrapStep({ settingsData, repoName }: Props) {
   return (
     <Stack direction="column" gap={2}>
       <Stack direction="column" gap={2}>
-        {/* <Box alignItems="center" padding={4}>
-          <Stack direction="row" gap={4} alignItems="flex-start" justifyContent="center">
-            <Stack direction="column" gap={1} alignItems="center">
-              <Text color="secondary">
-                <Trans i18nKey="provisioning.bootstrap-step.grafana">Grafana instance</Trans>
-              </Text>
-              <Stack direction="row" gap={2}>
-                <Text variant="h4">{resourceCountString}</Text>
-              </Stack>
-            </Stack>
-            <Stack direction="column" gap={1} alignItems="center">
-              <Text color="secondary">
-                <Trans i18nKey="provisioning.bootstrap-step.ext-storage">External storage</Trans>
-              </Text>
-              <Text variant="h4">{fileCountString}</Text>
-            </Stack>
-          </Stack>
-        </Box> */}
-
         <Controller
           name="repository.sync.target"
           control={control}
@@ -100,19 +81,18 @@ export function BootstrapStep({ settingsData, repoName }: Props) {
                   noMargin
                   {...field}
                 >
-                  <Card.Heading>{action.label}</Card.Heading>
+                  <Card.Heading>
+                    <Text variant="h5">{action.label}</Text>
+                  </Card.Heading>
                   <Card.Description>
                     <div className={styles.divider} />
-                    <Stack direction="row" gap={4} alignItems="center">
-                      <Stack>
-                        <Box paddingBottom={2}>
-                          <BootstrapStepCardIcons target={action.target} repoType={repositoryType} />
-                        </Box>
-                      </Stack>
-                      <Stack direction="column" gap={3}>
-                        {action.description}
-                        <Text color="primary">{action.subtitle}</Text>
-                      </Stack>
+
+                    <Box paddingBottom={2}>
+                      <BootstrapStepCardIcons target={action.target} repoType={repositoryType} />
+                    </Box>
+                    <Stack direction="column" gap={3}>
+                      {action.description}
+                      <Text color="primary">{action.subtitle}</Text>
                     </Stack>
 
                     <div className={styles.divider} />

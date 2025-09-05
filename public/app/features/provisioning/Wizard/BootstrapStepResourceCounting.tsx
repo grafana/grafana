@@ -14,7 +14,7 @@ export function BootstrapStepResourceCounting({
 }) {
   if (target === 'instance') {
     return (
-      <Stack direction="row" gap={4}>
+      <Stack direction="row" gap={3}>
         <div>
           {t('provisioning.bootstrap-step.external-storage-label', 'External storage')}{' '}
           <Text color="primary">{fileCountString}</Text>
