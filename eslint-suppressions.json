@@ -2900,16 +2900,6 @@
       "count": 1
     }
   },
-  "public/app/features/explore/PrometheusListView/RawListContainer.tsx": {
-    "no-restricted-syntax": {
-      "count": 1
-    }
-  },
-  "public/app/features/explore/PrometheusListView/RawListItem.tsx": {
-    "react/no-unescaped-entities": {
-      "count": 2
-    }
-  },
   "public/app/features/explore/RichHistory/RichHistorySettingsTab.tsx": {
     "no-restricted-syntax": {
       "count": 1

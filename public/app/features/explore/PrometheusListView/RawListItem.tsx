@@ -97,7 +97,7 @@ function getQueryValues(allLabels: Pick<instantQueryRawVirtualizedListData, 'Val
 const RawListItem = ({ listItemData, listKey, totalNumberOfValues, valueLabels, isExpandedView }: RawListProps) => {
   const { __name__, ...allLabels } = listItemData;
   // We must know whether it is a utf8 metric name or not
-  const isLegacyMetric = isValidLegacyName(__name__);
+  const isLegacyMetric = isValidLegacyName(__name__ ?? '');
   const [_, copyToClipboard] = useCopyToClipboard();
   const displayLength = valueLabels?.length ?? totalNumberOfValues;
   const styles = useStyles2(getStyles, displayLength, isExpandedView);
@@ -142,11 +142,11 @@ const RawListItem = ({ listItemData, listKey, totalNumberOfValues, valueLabels, 
         </span>
         <span role={'cell'} className={styles.rowLabelWrapWrap}>
           <div className={styles.rowLabelWrap}>
-            {isLegacyMetric && <span>{__name__}</span>}
+            {!!__name__ && isLegacyMetric && <span>{__name__}</span>}
             <span>{`{`}</span>
-            {!isLegacyMetric && __name__ !== '' && (
+            {!isLegacyMetric && !!__name__ && __name__ !== '' && (
               <span>
-                "{__name__}"{', '}
+                &#34;{__name__}&#34;{', '}
               </span>
             )}
             <span>
