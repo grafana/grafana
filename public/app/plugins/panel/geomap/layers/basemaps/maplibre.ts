@@ -59,9 +59,24 @@ export const maplibreLayer: MapLayerRegistryItem<MaplibreConfig> = {
         }
       };
 
-      fetch(cfg.url)
-        .then((res) => (res.ok ? res.json() : Promise.reject(new Error('Failed to load style'))))
-        .then((style) => {
+      // Handle async operations in the background
+      const loadStyle = async () => {
+        try {
+          if (!cfg.url) {
+            console.warn('No URL provided for MapLibre style, layer will be empty');
+            return;
+          }
+
+          const res = await fetch(cfg.url);
+          if (!res.ok) {
+            console.warn(`Failed to load MapLibre style from ${cfg.url}: ${res.status} ${res.statusText}`);
+            // Try fallback approach
+            await tryFallbackApply();
+            return;
+          }
+
+          const style = await res.json();
+
           // Adjust background opacity - let LayerGroup opacity handle everything else
           if (Array.isArray(style?.layers)) {
             for (const l of style.layers) {
@@ -71,15 +86,31 @@ export const maplibreLayer: MapLayerRegistryItem<MaplibreConfig> = {
               }
             }
           }
-          return apply(layer, style, { styleUrl: cfg.url, accessToken: cfg.accessToken }).then(() => {
-            applyNoRepeat();
-          });
-        })
-        .catch(() =>
-          apply(layer, cfg.url, { accessToken: cfg.accessToken }).then(() => {
-            applyNoRepeat();
-          })
-        );
+
+          await apply(layer, style, { styleUrl: cfg.url, accessToken: cfg.accessToken });
+          applyNoRepeat();
+        } catch (error) {
+          console.warn('Failed to parse or apply MapLibre style JSON:', error);
+          // Try fallback approach
+          await tryFallbackApply();
+        }
+      };
+
+      const tryFallbackApply = async () => {
+        try {
+          if (!cfg.url) {
+            console.warn('No URL available for MapLibre fallback, layer will be empty');
+            return;
+          }
+          await apply(layer, cfg.url, { accessToken: cfg.accessToken });
+          applyNoRepeat();
+        } catch (fallbackError) {
+          console.warn('Failed to load MapLibre style from both JSON and direct URL approaches:', fallbackError);
+        }
+      };
+
+      // Start loading the style asynchronously
+      loadStyle();
 
       return layer;
     },
