@@ -10,6 +10,20 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func TestGetWebAssets_WithoutCDNConfigured(t *testing.T) {
+	cfg := &setting.Cfg{
+		StaticRootPath: "../../../api/webassets/testdata",
+	}
+	license := licensingtest.NewFakeLicensing()
+	license.On("ContentDeliveryPrefix").Return("grafana")
+
+	assets, err := fswebassets.GetWebAssets(cfg, license)
+	assert.NoError(t, err)
+	assert.NotNil(t, assets)
+
+	assert.Equal(t, "public/build/runtime.js", assets.JSFiles[0].FilePath)
+}
+
 func TestGetWebAssets_PrefixFromLicense(t *testing.T) {
 	cdnConfigUrl, _ := url.Parse("http://example.com")
 	cfg := &setting.Cfg{
