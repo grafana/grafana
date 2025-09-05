@@ -4506,16 +4506,11 @@
             "any": "Bármely egyezése",
             "label": "Szabályok egyeztetése"
           },
-          "label": "Csoport",
           "visibility": {
             "hide": "Elrejtés",
             "label": "{{type}} láthatósága",
             "show": "Megjelenítés"
           }
-        },
-        "shared": {
-          "delete-condition": "Feltétel törlése",
-          "unsupported-item-type": "Ezt a feltételt az elem nem támogatja, ezért figyelmen kívül lesz hagyva."
         },
         "time-range-size": {
           "info": "A(z) {{type}} megjelenítése vagy elrejtése, ha az irányítópult időtartománya rövidebb a kiválasztott időkeretnél.",
@@ -4545,17 +4540,21 @@
             "not-matches": "Nem egyezik"
           },
           "value": "Érték"
+        },
+        "wrapper": {
+          "delete-condition": "",
+          "unsupported-object-type": ""
         }
       },
       "editor": {
+        "info": "",
         "not-supported-for-custom-grid": "A feltételes ábrázolás nem támogatott az egyéni rácselrendezésnél. A feltételes ábrázolás használatához váltson automatikus rácsra.",
-        "unsupported-item-type": "A feltételes ábrázolás nem támogatott ennél az elemtípusnál"
+        "unsupported-object-type": ""
       },
       "overlay": {
         "tooltip": "Az elem rejtve van a feltételes renderelés miatt."
       },
       "root": {
-        "info": "Állítson be szabályokat a(z) {{type}} láthatóságának szabályozásához bármely vagy az összes szabály megfeleltetésével.",
         "title": "Szabályok megjelenítése/elrejtése"
       }
     },
@@ -4695,7 +4694,8 @@
       "paste-panel": "Panel beillesztése",
       "remove": "{{typeName}} eltávolítása",
       "row-title": "",
-      "switch-layout": "Kiosztás váltása"
+      "switch-layout": "Kiosztás váltása",
+      "tab-title": ""
     },
     "edit-pane": {
       "elements": {
@@ -8348,6 +8348,10 @@
         "action-title": "Cím",
         "action-title-placeholder": "Művelet címe",
         "action-variables": "Változók",
+        "connection": "",
+        "connection-direct-description": "",
+        "connection-direct-label": "",
+        "connection-placeholder": "",
         "one-click-description": "Egyszerre csak egy hivatkozáshoz vagy művelethez lehet egy kattintás engedélyezve"
       }
     },
@@ -9727,30 +9731,6 @@
     "un-themed-log-label-stats": {
       "field-log-stats": "{{label}}: {{total}}/{{rowCount}} sor rendelkezik ezzel a mezővel",
       "label-log-stats": "{{label}}: {{total}}/{{rowCount}} sor rendelkezik ezzel a címkével"
-    }
-  },
-  "logs-new": {
-    "category-logs": "Naplók",
-    "deduplication-options": {
-      "label-exact": "Pontos",
-      "label-none": "Nincs",
-      "label-numbers": "Számok",
-      "label-signature": "Aláírás"
-    },
-    "description-infinite-scrolling": "Kísérleti. További eredmények kéréséhez görgessen a naplók listájának aljára.",
-    "description-show-controls": "Vezérlők megjelenítése az utolsó vagy az első naplósorra ugráshoz és szűrés naplószint szerint",
-    "description-syntax-highlighting": "Használjon előre definiált szintaxisszínező grammatikát a naplósorok releváns részeinek kiemeléséhez",
-    "name-deduplication": "Duplikátumok törlése",
-    "name-enable-log-details": "Napló részleteinek engedélyezése",
-    "name-infinite-scrolling": "Végtelen görgetés engedélyezése",
-    "name-order": "Sorrend",
-    "name-show-controls": "Vezérlőelemek megjelenítése",
-    "name-syntax-highlighting": "Szintaxiskiemelés engedélyezése",
-    "name-time": "Idő",
-    "name-wrap-lines": "Sortörés",
-    "order-options": {
-      "label-newest-first": "Újabbat előre",
-      "label-oldest-first": "Régebbit előre"
     }
   },
   "manage-dashbaords": {

@@ -4506,16 +4506,11 @@
             "any": "Abbina qualsiasi",
             "label": "Regole di corrispondenza"
           },
-          "label": "Gruppo",
           "visibility": {
             "hide": "Nascondi",
             "label": "{{type}} visibilità",
             "show": "Mostra"
           }
-        },
-        "shared": {
-          "delete-condition": "Elimina condizione",
-          "unsupported-item-type": "Questa condizione non è supportata dall'elemento, quindi verrà ignorata."
         },
         "time-range-size": {
           "info": "Mostra o nascondi {{type}} se l'intervallo di tempo della dashboard è inferiore al fotogramma orario selezionato.",
@@ -4545,17 +4540,21 @@
             "not-matches": "Nessuna corrispondenza"
           },
           "value": "Valore"
+        },
+        "wrapper": {
+          "delete-condition": "",
+          "unsupported-object-type": ""
         }
       },
       "editor": {
+        "info": "",
         "not-supported-for-custom-grid": "Il rendering condizionale non è supportato per il layout della griglia personalizzata. Passa alla griglia automatica per utilizzare il rendering condizionale.",
-        "unsupported-item-type": "Rendering condizionale non supportato per questo tipo di elemento"
+        "unsupported-object-type": ""
       },
       "overlay": {
         "tooltip": "L'elemento è nascosto a causa del rendering condizionale."
       },
       "root": {
-        "info": "Imposta le regole per controllare la visibilità del {{type}} abbinando una o tutte le regole.",
         "title": "Mostra/nascondi regole"
       }
     },
@@ -4695,7 +4694,8 @@
       "paste-panel": "Incolla pannello",
       "remove": "Rimuovi {{typeName}}",
       "row-title": "",
-      "switch-layout": "Cambia layout"
+      "switch-layout": "Cambia layout",
+      "tab-title": ""
     },
     "edit-pane": {
       "elements": {
@@ -8348,6 +8348,10 @@
         "action-title": "Titolo",
         "action-title-placeholder": "Titolo azione",
         "action-variables": "Variabili",
+        "connection": "",
+        "connection-direct-description": "",
+        "connection-direct-label": "",
+        "connection-placeholder": "",
         "one-click-description": "Solo un link o un'azione possono avere un clic abilitato alla volta"
       }
     },
@@ -9727,30 +9731,6 @@
     "un-themed-log-label-stats": {
       "field-log-stats": "{{label}}: {{total}} di {{rowCount}} righe hanno quel campo",
       "label-log-stats": "{{label}}: {{total}} di {{rowCount}} righe hanno quell'etichetta"
-    }
-  },
-  "logs-new": {
-    "category-logs": "Registri",
-    "deduplication-options": {
-      "label-exact": "Esatto",
-      "label-none": "Nessuno",
-      "label-numbers": "Numeri",
-      "label-signature": "Firma"
-    },
-    "description-infinite-scrolling": "Sperimentale. Richiedi più risultati scorrendo fino alla fine dell'elenco dei registri.",
-    "description-show-controls": "Visualizza i controlli per passare all'ultima o alla prima riga del registro e filtra per livello di registro",
-    "description-syntax-highlighting": "Utilizza una grammatica di colorazione della sintassi predefinita per evidenziare le parti rilevanti delle righe del registro",
-    "name-deduplication": "Deduplicazione",
-    "name-enable-log-details": "Abilita i dettagli del registro",
-    "name-infinite-scrolling": "Abilita lo scorrimento infinito",
-    "name-order": "Ordina",
-    "name-show-controls": "Mostra controlli",
-    "name-syntax-highlighting": "Attiva l'evidenziazione della sintassi",
-    "name-time": "Tempo",
-    "name-wrap-lines": "A capo",
-    "order-options": {
-      "label-newest-first": "Prima il più recente",
-      "label-oldest-first": "Prima il meno recente"
     }
   },
   "manage-dashbaords": {

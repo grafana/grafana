@@ -4488,16 +4488,11 @@
             "any": "匹配任何",
             "label": "符合規則"
           },
-          "label": "群組",
           "visibility": {
             "hide": "隱藏",
             "label": "{{type}}可見性",
             "show": "顯示"
           }
-        },
-        "shared": {
-          "delete-condition": "刪除條件",
-          "unsupported-item-type": "元素不支援此條件，因此將被忽略。"
         },
         "time-range-size": {
           "info": "如果儀表板時間範圍小於所選時間範圍，則顯示或隱藏{{type}}。",
@@ -4527,17 +4522,21 @@
             "not-matches": "無匹配項目"
           },
           "value": "數值"
+        },
+        "wrapper": {
+          "delete-condition": "",
+          "unsupported-object-type": ""
         }
       },
       "editor": {
+        "info": "",
         "not-supported-for-custom-grid": "自訂網格版面配置不支援條件轉譯。切換至自動網格以使用條件轉譯。",
-        "unsupported-item-type": "此項目類型不支援條件轉譯"
+        "unsupported-object-type": ""
       },
       "overlay": {
         "tooltip": "由於條件轉譯，元素已被隱藏。"
       },
       "root": {
-        "info": "設定規則以透過匹配任何或所有規則來控制{{type}}可見性。",
         "title": "顯示/隱藏規則"
       }
     },
@@ -4677,7 +4676,8 @@
       "paste-panel": "貼上面板",
       "remove": "移除 {{typeName}}",
       "row-title": "",
-      "switch-layout": "切換版面配置"
+      "switch-layout": "切換版面配置",
+      "tab-title": ""
     },
     "edit-pane": {
       "elements": {
@@ -8327,6 +8327,10 @@
         "action-title": "標題",
         "action-title-placeholder": "動作標題",
         "action-variables": "變數",
+        "connection": "",
+        "connection-direct-description": "",
+        "connection-direct-label": "",
+        "connection-placeholder": "",
         "one-click-description": "一次只能啟用一個連結或動作的點擊"
       }
     },
@@ -9698,30 +9702,6 @@
     "un-themed-log-label-stats": {
       "field-log-stats": "{{label}}：{{total}} 列中的 {{rowCount}} 列有該欄位",
       "label-log-stats": "{{label}}：{{total}} 列中的 {{rowCount}} 列有該標籤"
-    }
-  },
-  "logs-new": {
-    "category-logs": "紀錄",
-    "deduplication-options": {
-      "label-exact": "完全符合",
-      "label-none": "無",
-      "label-numbers": "數字",
-      "label-signature": "簽名"
-    },
-    "description-infinite-scrolling": "實驗性。捲動至紀錄清單底部，以請求更多結果。",
-    "description-show-controls": "顯示控制項以跳至最後或第一個紀錄行，並按紀錄層級篩選",
-    "description-syntax-highlighting": "運用預先定義的語法著色規則，來突顯紀錄行中的相關部分",
-    "name-deduplication": "重複",
-    "name-enable-log-details": "啟用紀錄詳細資訊",
-    "name-infinite-scrolling": "啟用無限捲動",
-    "name-order": "順序",
-    "name-show-controls": "顯示控制項",
-    "name-syntax-highlighting": "啟用語法突顯",
-    "name-time": "時間",
-    "name-wrap-lines": "換行",
-    "order-options": {
-      "label-newest-first": "最新排前",
-      "label-oldest-first": "最舊排前"
     }
   },
   "manage-dashbaords": {

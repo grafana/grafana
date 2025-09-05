@@ -4542,16 +4542,11 @@
             "any": "Odpovídá libovolnému",
             "label": "Pravidla shody"
           },
-          "label": "Skupina",
           "visibility": {
             "hide": "Skrýt",
             "label": "{{type}} – viditelnost",
             "show": "Zobrazit"
           }
-        },
-        "shared": {
-          "delete-condition": "Odstranit podmínku",
-          "unsupported-item-type": "Tato podmínka není prvkem podporována, proto bude ignorována."
         },
         "time-range-size": {
           "info": "Zobrazit nebo skrýt {{type}}, pokud je časový rozsah nástěnky kratší než vybraný časový rámec.",
@@ -4581,17 +4576,21 @@
             "not-matches": "Neshody"
           },
           "value": "Hodnota"
+        },
+        "wrapper": {
+          "delete-condition": "",
+          "unsupported-object-type": ""
         }
       },
       "editor": {
+        "info": "",
         "not-supported-for-custom-grid": "Podmíněné vykreslení není pro vlastní rozvržení mřížky podporováno. Chcete-li použít podmíněné vykreslení, přepněte na automatickou mřížku.",
-        "unsupported-item-type": "Podmíněné vykreslení není pro tento typ položky podporováno"
+        "unsupported-object-type": ""
       },
       "overlay": {
         "tooltip": "Prvek je skrytý kvůli podmíněnému vykreslení."
       },
       "root": {
-        "info": "Nastavit pravidla pro viditelnost {{type}} porovnáním některých nebo všech pravidel.",
         "title": "Zobrazit/skrýt pravidla"
       }
     },
@@ -4731,7 +4730,8 @@
       "paste-panel": "Vložit panel",
       "remove": "Odebrat {{typeName}}",
       "row-title": "",
-      "switch-layout": "Přepnout rozvržení"
+      "switch-layout": "Přepnout rozvržení",
+      "tab-title": ""
     },
     "edit-pane": {
       "elements": {
@@ -8390,6 +8390,10 @@
         "action-title": "Název",
         "action-title-placeholder": "Název akce",
         "action-variables": "Proměnné",
+        "connection": "",
+        "connection-direct-description": "",
+        "connection-direct-label": "",
+        "connection-placeholder": "",
         "one-click-description": "Současně může být povoleno pouze jedno kliknutí nebo akce na jeden odkaz"
       }
     },
@@ -9785,30 +9789,6 @@
     "un-themed-log-label-stats": {
       "field-log-stats": "{{label}}: {{total}} z {{rowCount}} řádků má toto pole",
       "label-log-stats": "{{label}}: {{total}} z {{rowCount}} řádků má tento štítek"
-    }
-  },
-  "logs-new": {
-    "category-logs": "Protokoly",
-    "deduplication-options": {
-      "label-exact": "Přesné",
-      "label-none": "Žádné",
-      "label-numbers": "Čísla",
-      "label-signature": "Podpis"
-    },
-    "description-infinite-scrolling": "Experimentální. Požádejte o další výsledky posunutím do dolní části seznamu protokolů.",
-    "description-show-controls": "Zobrazit ovládací prvky pro přechod na poslední nebo první řádek protokolu a filtry podle úrovně protokolu",
-    "description-syntax-highlighting": "Použijte předdefinovanou gramatiku barev syntaxe pro zvýraznění příslušných částí řádků protokolu",
-    "name-deduplication": "Deduplikace",
-    "name-enable-log-details": "Povolit podrobnosti protokolu",
-    "name-infinite-scrolling": "Povolit nekonečné posouvání",
-    "name-order": "Objednávka",
-    "name-show-controls": "Zobrazit ovládací prvky",
-    "name-syntax-highlighting": "Povolit zvýraznění syntaxe",
-    "name-time": "Čas",
-    "name-wrap-lines": "Zalomit řádky",
-    "order-options": {
-      "label-newest-first": "Seřadit od nejnovějších",
-      "label-oldest-first": "Seřadit od nejstarších"
     }
   },
   "manage-dashbaords": {
