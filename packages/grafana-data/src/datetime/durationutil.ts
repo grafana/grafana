@@ -1,13 +1,13 @@
 import { add, Duration, intervalToDuration, Interval, isAfter } from 'date-fns';
 
 const durationMap: { [key in Required<keyof Duration>]: string[] } = {
-  years: ['y', 'Y', 'years'],
-  months: ['M', 'months'],
-  weeks: ['w', 'W', 'weeks'],
-  days: ['d', 'D', 'days'],
-  hours: ['h', 'H', 'hours'],
-  minutes: ['m', 'minutes'],
-  seconds: ['s', 'S', 'seconds'],
+  years: ['г', 'Г', 'год'],
+  months: ['М', 'Месяцев'],
+  weeks: ['н', 'Н', 'Недель'],
+  days: ['д', 'Д', 'Дней'],
+  hours: ['ч', 'Ч', 'Часов'],
+  minutes: ['м', 'Минут'],
+  seconds: ['с', 'С', 'Секунд'],
 };
 
 /**

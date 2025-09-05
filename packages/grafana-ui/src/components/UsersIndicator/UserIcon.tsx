@@ -26,7 +26,7 @@ export interface UserIconProps {
  */
 const formatViewed = (dateString: DateTimeInput): string => {
   const date = dateTime(dateString);
-  const diffHours = date.diff(dateTime(), 'hours', false);
+  const diffHours = date.diff(dateTime(), 'часов', false);
   return `Active last ${(Math.floor(-diffHours / 24) + 1) * 24}h`;
 };
 

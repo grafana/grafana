@@ -94,7 +94,7 @@ export function SaveDashboardForm({ dashboard, drawer, changeInfo }: Props) {
         <Stack alignItems="center">
           {cancelButton}
           {saveButton(false)}
-          {!hasChanges && <div>Никаких изменений для сохранения</div>}
+          {!hasChanges && <div>Нет изменений для сохранения</div>}
         </Stack>
       </>
     );

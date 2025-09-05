@@ -11,11 +11,11 @@ type IntervalMap = Record<
 >;
 
 export const intervalMap: IntervalMap = {
-  Hourly: { startOf: 'hour', amount: 'hours' },
-  Daily: { startOf: 'day', amount: 'days' },
-  Weekly: { startOf: 'isoWeek', amount: 'weeks' },
-  Monthly: { startOf: 'month', amount: 'months' },
-  Yearly: { startOf: 'year', amount: 'years' },
+  Hourly: { startOf: 'час', amount: 'часов' },
+  Daily: { startOf: 'день', amount: 'дней' },
+  Weekly: { startOf: 'isoWeek', amount: 'недель' },
+  Monthly: { startOf: 'месяц', amount: 'месяцев' },
+  Yearly: { startOf: 'год', amount: 'лет' },
 };
 
 export class IndexPattern {

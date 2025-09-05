@@ -1260,11 +1260,11 @@ function createContextTimeRange(rowTimeEpochMs: number, direction: string, inter
     if (direction === LogRowContextQueryDirection.Forward) {
       return {
         from: dateTime(rowTimeEpochMs).utc(),
-        to: dateTime(rowTimeEpochMs).add(offset, 'hours').utc(),
+        to: dateTime(rowTimeEpochMs).add(offset, 'часов').utc(),
       };
     } else {
       return {
-        from: dateTime(rowTimeEpochMs).subtract(offset, 'hours').utc(),
+        from: dateTime(rowTimeEpochMs).subtract(offset, 'часов').utc(),
         to: dateTime(rowTimeEpochMs).utc(),
       };
     }

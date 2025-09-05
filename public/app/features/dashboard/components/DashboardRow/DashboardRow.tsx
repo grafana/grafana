@@ -68,6 +68,17 @@ export class UnthemedDashboardRow extends Component<DashboardRowProps> {
     return undefined;
   };
 
+  getPanelCountTitle(count: number) {
+    if (count  === 0 || count % 10 >= 5 || count >= 11 && count <= 19) {
+      return 'панелей'
+    }
+    else if (count % 10 === 1 ) {
+      return 'панель'
+    }else {
+      return 'панели'
+    }
+  }
+
   onUpdate = (title: string, repeat?: string | null) => {
     this.props.panel.setProperty('title', title);
     this.props.panel.setProperty('repeat', repeat ?? undefined);
@@ -95,8 +106,9 @@ export class UnthemedDashboardRow extends Component<DashboardRowProps> {
 
   render() {
     const title = getTemplateSrv().replace(this.props.panel.title, this.props.panel.scopedVars, 'text');
+    // const title = 'asdad';
     const count = this.props.panel.panels ? this.props.panel.panels.length : 0;
-    const panels = count === 1 ? 'panel' : 'panels';
+    const panels = this.getPanelCountTitle(count);
     const canEdit = this.props.dashboard.meta.canEdit === true;
     const collapsed = this.props.panel.collapsed;
     const styles = getStyles(this.props.theme);
@@ -122,7 +134,7 @@ export class UnthemedDashboardRow extends Component<DashboardRowProps> {
               [styles.countCollapsed]: collapsed,
             })}
           >
-            ({count} {panels})
+            ({panels})
           </span>
         </button>
         {canEdit && (

@@ -6,14 +6,14 @@ export function toPercent(size: number | null, decimals: DecimalCount): Formatte
   if (size === null) {
     return { text: '' };
   }
-  return { text: toFixed(size, decimals), suffix: '%' };
+  return { text: `${toFixed(100 * size, decimals)} %` };
 }
 
 export function toPercentUnit(size: number | null, decimals: DecimalCount): FormattedValue {
   if (size === null) {
     return { text: '' };
   }
-  return { text: toFixed(100 * size, decimals), suffix: '%' };
+  return { text: `${toFixed(100 * size, decimals)} %` };
 }
 
 export function toHex0x(value: number | null, decimals: DecimalCount): FormattedValue {

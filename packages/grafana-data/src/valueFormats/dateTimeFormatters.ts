@@ -199,7 +199,7 @@ export function toDuration(size: number, decimals: DecimalCount, timeScale: Inte
   }
 
   if (size === 0) {
-    return { text: '0', suffix: ' ' + timeScale + 's' };
+    return { text: '0', suffix: ' ' + timeScale + 'с' };
   }
 
   if (size < 0) {
@@ -231,7 +231,7 @@ export function toDuration(size: number, decimals: DecimalCount, timeScale: Inte
     if (value >= 1 || decrementDecimals) {
       decrementDecimals = true;
       const floor = Math.floor(value);
-      const unit = UNITS[i] + (floor !== 1 ? 's' : '');
+      const unit = UNITS[i] + (floor !== 1 ? 'с' : '');
       strings.push(floor + ' ' + unit);
       size = size % interval;
       decimalsCount--;
@@ -275,7 +275,7 @@ export function toClock(size: number, decimals?: DecimalCount): FormattedValue {
 
   let format = 'mm\\m:ss\\s:SSS\\m\\s';
 
-  const hours = `${Math.floor(duration(size, 'milliseconds').asHours())}h`;
+  const hours = `${Math.floor(duration(size, 'миллисекунд').asHours())}h`;
 
   if (decimals === 0) {
     format = '';
@@ -328,7 +328,7 @@ export function toDurationInDaysHoursMinutesSeconds(size: number): FormattedValu
   let dayString = '';
   const numDays = Math.floor(size / (24 * 3600));
   if (numDays > 0) {
-    dayString = numDays + ' d ';
+    dayString = numDays + ' д ';
   }
   const hmsString = toDurationInHoursMinutesSeconds(size - numDays * 24 * 3600);
   return { text: dayString + hmsString.text };
@@ -349,7 +349,7 @@ export function toClockSeconds(size: number, decimals: DecimalCount): FormattedV
 export function toDateTimeValueFormatter(pattern: string, todayPattern?: string): ValueFormatter {
   return (value: number, decimals: DecimalCount, scaledDecimals: DecimalCount, timeZone?: TimeZone): FormattedValue => {
     if (todayPattern) {
-      if (dateTime().isSame(value, 'day')) {
+      if (dateTime().isSame(value, 'дней')) {
         return {
           text: dateTimeFormat(value, { format: todayPattern, timeZone }),
         };

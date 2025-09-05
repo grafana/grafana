@@ -81,17 +81,17 @@ export function calculateTimesWithin(cfg: TimeRegionConfig, tRange: TimeRange): 
   const regions: AbsoluteTimeRange[] = [];
 
   const fromStart = dateTime(tRange.from).utc();
-  fromStart.set('hour', 0);
-  fromStart.set('minute', 0);
-  fromStart.set('second', 0);
-  fromStart.set('millisecond', 0);
-  fromStart.add(hRange.from.h, 'hours');
-  fromStart.add(hRange.from.m, 'minutes');
-  fromStart.add(hRange.from.s, 'seconds');
+  fromStart.set('час', 0);
+  fromStart.set('минута', 0);
+  fromStart.set('секунда', 0);
+  fromStart.set('миллисекунда', 0);
+  fromStart.add(hRange.from.h, 'часов');
+  fromStart.add(hRange.from.m, 'минут');
+  fromStart.add(hRange.from.s, 'секунд');
 
   while (fromStart.unix() <= tRange.to.unix()) {
     while (hRange.from.dayOfWeek && hRange.from.dayOfWeek !== fromStart.isoWeekday()) {
-      fromStart.add(24, 'hours');
+      fromStart.add(24, 'часов');
     }
 
     if (fromStart.unix() > tRange.to.unix()) {
@@ -102,25 +102,25 @@ export function calculateTimesWithin(cfg: TimeRegionConfig, tRange: TimeRange): 
 
     if (fromEnd.hour) {
       if (hRange.from.h <= hRange.to.h) {
-        fromEnd.add(hRange.to.h - hRange.from.h, 'hours');
+        fromEnd.add(hRange.to.h - hRange.from.h, 'часов');
       } else if (hRange.from.h > hRange.to.h) {
         while (fromEnd.hour() !== hRange.to.h) {
-          fromEnd.add(1, 'hours');
+          fromEnd.add(1, 'часов');
         }
       } else {
-        fromEnd.add(24 - hRange.from.h, 'hours');
+        fromEnd.add(24 - hRange.from.h, 'часов');
 
         while (fromEnd.hour() !== hRange.to.h) {
-          fromEnd.add(1, 'hours');
+          fromEnd.add(1, 'часов');
         }
       }
     }
 
-    fromEnd.set('minute', hRange.to.m ?? 0);
-    fromEnd.set('second', hRange.to.s ?? 0);
+    fromEnd.set('минута', hRange.to.m ?? 0);
+    fromEnd.set('секунд', hRange.to.s ?? 0);
 
     while (hRange.to.dayOfWeek && hRange.to.dayOfWeek !== fromEnd.isoWeekday()) {
-      fromEnd.add(24, 'hours');
+      fromEnd.add(24, 'часов');
     }
 
     const outsideRange =
@@ -131,7 +131,7 @@ export function calculateTimesWithin(cfg: TimeRegionConfig, tRange: TimeRange): 
       regions.push({ from: fromStart.valueOf(), to: fromEnd.valueOf() });
     }
 
-    fromStart.add(24, 'hours');
+    fromStart.add(24, 'часов');
   }
 
   return regions;

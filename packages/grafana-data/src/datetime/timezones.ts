@@ -14,7 +14,7 @@ export enum InternalTimeZones {
 export const timeZoneFormatUserFriendly = (timeZone: TimeZone | undefined) => {
   switch (getTimeZone({ timeZone })) {
     case 'browser':
-      return 'Local browser time';
+      return 'Локальное время браузера';
     case 'utc':
       return 'UTC';
     default:

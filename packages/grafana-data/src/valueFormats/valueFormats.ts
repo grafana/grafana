@@ -128,7 +128,8 @@ export function toFixedUnit(unit: string, asPrefix?: boolean): ValueFormatter {
     if (size === null) {
       return { text: '' };
     }
-    const text = toFixed(size, decimals);
+    let text = toFixed(size, decimals);
+    text = Number(text).toLocaleString(undefined, { maximumFractionDigits: decimals ?? undefined })
     if (unit) {
       if (asPrefix) {
         return { text, prefix: unit };

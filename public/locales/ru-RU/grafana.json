@@ -434,7 +434,7 @@
       "dataframe-aria-label": "Select dataframe",
       "dataframe-label": "Показать кадр данных",
       "download-csv": "Скачать CSV",
-      "download-xlsx": "Скачать для Excel (BETA)",
+      "download-xlsx": "Скачать для Excel",
       "download-excel-description": "Добавляет заголовок в CSV для использования с Excel",
       "download-excel-label": "Скачать для Excel",
       "download-logs": "Скачать журналы",
@@ -501,11 +501,11 @@
     },
     "form-actions": {
       "cancel": "Отмена",
-      "load": "Нагрузка"
+      "load": "Загрузка"
     },
     "gcom-field": {
       "label": "Найти и импортировать дашборды для общих приложений по <1></1>",
-      "load-button": "Нагрузка",
+      "load-button": "Загрузка",
       "placeholder": "URL или ID дашборда Grafana.com",
       "validation-required": "Требуется URL или ID дашборда Grafana"
     },

@@ -24,14 +24,14 @@ import { addInvitee } from '../invites/state/actions';
 
 const tooltipMessage = (
   <>
-    You can now select the &quot;No basic role&quot; option and add permissions to your custom needs. You can find more
-    information in&nbsp;
+    Теперь вы можете выбрать опцию &quot;Без базовой роли&quot;
+      и добавить разрешения в соответствии с вашими индивидуальными потребностями. Дополнительную информацию вы можете найти в&nbsp;
     <TextLink
       href="https://grafana.com/docs/grafana/latest/administration/roles-and-permissions/#organization-roles"
       variant="bodySmall"
       external
     >
-      our documentation
+      в нашей документации
     </TextLink>
     .
   </>
@@ -73,12 +73,12 @@ export const UserInviteForm = () => {
             <FieldSet>
               <Field
                 invalid={!!errors.loginOrEmail}
-                error={!!errors.loginOrEmail ? 'Email or username is required' : undefined}
-                label="Email or username"
+                error={!!errors.loginOrEmail ? 'Требуется указать адрес электронной почты или имя пользователя' : undefined}
+                label="Адрес электронной почты или имя пользователя"
               >
                 <Input {...register('loginOrEmail', { required: true })} placeholder="email@example.com" />
               </Field>
-              <Field invalid={!!errors.name} label="Name">
+              <Field invalid={!!errors.name} label="Имя">
                 <Input {...register('name')} placeholder="(optional)" />
               </Field>
               <Field
@@ -86,7 +86,7 @@ export const UserInviteForm = () => {
                 label={
                   <Label>
                     <Stack gap={0.5}>
-                      <span>Role</span>
+                      <span>Роль</span>
                       {tooltipMessage && (
                         <Tooltip placement="right-end" interactive={true} content={tooltipMessage}>
                           <Icon name="info-circle" size="xs" />
@@ -102,14 +102,14 @@ export const UserInviteForm = () => {
                   name="role"
                 />
               </Field>
-              <Field label="Send invite email">
+              <Field label="Отправить приглашение по электронной почте">
                 <Switch id="send-email-switch" {...register('sendEmail')} />
               </Field>
             </FieldSet>
             <Stack>
-              <Button type="submit">Submit</Button>
+              <Button type="submit">Создать</Button>
               <LinkButton href={locationUtil.assureBaseUrl(getConfig().appSubUrl + '/admin/users')} variant="secondary">
-                Back
+                Назад
               </LinkButton>
             </Stack>
           </>

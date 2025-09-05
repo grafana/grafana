@@ -305,7 +305,7 @@ export const fieldReducers = new Registry<FieldReducerInfo>(() => [
   },
   {
     id: ReducerID.sum,
-    name: 'Total',
+    name: 'Всего',
     description: 'The sum of all values',
     emptyInputResult: 0,
     standard: true,

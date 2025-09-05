@@ -84,7 +84,7 @@ export function SaveButton({ overwrite, isLoading, isValid, onSave }: SaveButton
       variant={overwrite ? 'destructive' : 'primary'}
       data-testid={selectors.components.Drawer.DashboardSaveDrawer.saveButton}
     >
-      {isLoading ? 'Saving...' : overwrite ? 'Save and overwrite' : 'Save'}
+      {isLoading ? 'Сохранение...' : overwrite ? 'Сохранить и перезаписать' : 'Сохранть'}
     </Button>
   );
 }

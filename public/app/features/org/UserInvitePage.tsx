@@ -6,13 +6,13 @@ import UserInviteForm from './UserInviteForm';
 export function UserInvitePage() {
   const subTitle = (
     <>
-      Send invitation or add existing Grafana user to the organization.
+      Отправьте приглашение или добавьте существующего пользователя Grafana в организацию.
       <span className="highlight-word"> {contextSrv.user.orgName}</span>
     </>
   );
 
   return (
-    <Page navId="global-users" pageNav={{ text: 'Invite user' }} subTitle={subTitle}>
+    <Page navId="global-users" pageNav={{ text: 'Пригласить пользователя' }} subTitle={subTitle}>
       <Page.Contents>
         <UserInviteForm />
       </Page.Contents>
