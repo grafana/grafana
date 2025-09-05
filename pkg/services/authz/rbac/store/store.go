@@ -14,6 +14,7 @@ import (
 type Store interface {
 	GetUserIdentifiers(ctx context.Context, query UserIdentifierQuery) (*UserIdentifiers, error)
 	GetBasicRoles(ctx context.Context, ns claims.NamespaceInfo, query BasicRoleQuery) (*BasicRole, error)
+	GetLatestUpdate(ctx context.Context, ns claims.NamespaceInfo, query LatestUpdateQuery) (*LatestUpdate, error)
 }
 
 type StoreImpl struct {
@@ -101,4 +102,42 @@ func (s *StoreImpl) GetBasicRoles(ctx context.Context, ns claims.NamespaceInfo, 
 	}
 
 	return &role, nil
+}
+
+func (s *StoreImpl) GetLatestUpdate(ctx context.Context, ns claims.NamespaceInfo, query LatestUpdateQuery) (*LatestUpdate, error) {
+	ctx, span := s.tracer.Start(ctx, "authz_direct_db.database.GetLatestUpdate")
+	defer span.End()
+
+	sql, err := s.sql(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	query.OrgID = ns.OrgID
+	req := newGetLatestUpdate(sql, &query)
+	q, err := sqltemplate.Execute(sqlLatestUpdate, req)
+	if err != nil {
+		return nil, err
+	}
+
+	rows, err := sql.DB.GetSqlxSession().Query(ctx, q, req.GetArgs()...)
+	defer func() {
+		if rows != nil {
+			_ = rows.Close()
+		}
+	}()
+	if err != nil {
+		return nil, err
+	}
+
+	if !rows.Next() {
+		return nil, fmt.Errorf("no latest update found")
+	}
+
+	var update LatestUpdate
+	if err := rows.Scan(&update.Updated); err != nil {
+		return nil, err
+	}
+
+	return &update, nil
 }

@@ -1,5 +1,7 @@
 package store
 
+import "time"
+
 type UserIdentifiers struct {
 	ID  int64
 	UID string
@@ -10,6 +12,10 @@ type BasicRole struct {
 	IsAdmin bool
 }
 
+type LatestUpdate struct {
+	Updated time.Time
+}
+
 type BasicRoleQuery struct {
 	UserID int64
 	OrgID  int64
@@ -18,4 +24,8 @@ type BasicRoleQuery struct {
 type UserIdentifierQuery struct {
 	UserID  int64
 	UserUID string
+}
+
+type LatestUpdateQuery struct {
+	OrgID int64
 }

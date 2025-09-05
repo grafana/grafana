@@ -376,6 +376,15 @@ func (s *Service) getCachedIdentityPermissions(ctx context.Context, ns types.Nam
 	ctx, span := s.tracer.Start(ctx, "authz_direct_db.service.getCachedIdentityPermissions")
 	defer span.End()
 
+	latestUpdate, err := s.store.GetLatestUpdate(ctx, ns, store.LatestUpdateQuery{OrgID: ns.OrgID})
+	if err != nil {
+		return nil, err
+	}
+	// Reset cache if permissions have been updated in the db
+	if latestUpdate.Updated.After(time.Now().Add(-s.settings.CacheTTL)) {
+		return nil, cache.ErrNotFound
+	}
+
 	switch idType {
 	case types.TypeAnonymous:
 		anonPermKey := anonymousPermCacheKey(ns.Value, action)
