@@ -1,6 +1,6 @@
 import { screen, render } from '@testing-library/react';
 
-import { Field, FieldType } from '@grafana/data';
+import { Field, FieldType, ReducerID } from '@grafana/data';
 
 import { SummaryCell } from './SummaryCell';
 
@@ -11,6 +11,18 @@ describe('SummaryCell', () => {
     { Field1: 3, Text: 'efghi', __depth: 0, __index: 2 },
   ];
 
+  const footers = [
+    {
+      reducers: [ReducerID.sum],
+    },
+    {
+      reducers: [ReducerID.sum],
+    },
+    {
+      reducers: [ReducerID.sum],
+    },
+  ];
+
   const numericField: Field = {
     name: 'Field1',
     type: FieldType.number,
@@ -18,7 +30,7 @@ describe('SummaryCell', () => {
     config: {
       custom: {
         footer: {
-          reducers: ['sum'],
+          reducers: [ReducerID.sum],
         },
       },
     },
@@ -40,7 +52,7 @@ describe('SummaryCell', () => {
     config: {
       custom: {
         footer: {
-          reducers: ['sum'],
+          reducers: [ReducerID.sum],
         },
       },
     },
@@ -61,7 +73,7 @@ describe('SummaryCell', () => {
     values: ['a', 'b', 'c'],
     config: {
       custom: {
-        reducers: ['sum'],
+        reducers: [ReducerID.sum],
       },
     },
     display: (value: unknown) => ({
@@ -76,12 +88,12 @@ describe('SummaryCell', () => {
   };
 
   it('should calculate sum for numeric fields', () => {
-    render(<SummaryCell rows={rows} field={numericField} />);
+    render(<SummaryCell footers={footers} rows={rows} field={numericField} textAlign="left" colIdx={1} />);
     expect(screen.getByText('6')).toBeInTheDocument(); // 1 + 2 + 3
   });
 
-  it('should hide the label for the sum reducer if its the only reducer', () => {
-    render(<SummaryCell rows={rows} field={numericField} />);
+  it('should hide the label for the sum reducer if hideLabel is true', () => {
+    render(<SummaryCell footers={footers} rows={rows} field={numericField} textAlign="left" colIdx={1} hideLabel />);
     expect(screen.queryByText('Total')).not.toBeInTheDocument();
     expect(screen.getByText('6')).toBeInTheDocument(); // 1 + 2 + 3
   });
@@ -91,10 +103,12 @@ describe('SummaryCell', () => {
       ...numericField,
       config: {
         ...numericField.config,
-        custom: { ...numericField.config.custom, footer: { reducers: ['sum', 'mean'] } },
+        custom: { ...numericField.config.custom, footer: { reducers: [ReducerID.sum, ReducerID.mean] } },
       },
     };
-    render(<SummaryCell rows={rows} field={numericFieldWithMultipleReducers} />);
+    render(
+      <SummaryCell footers={footers} rows={rows} field={numericFieldWithMultipleReducers} textAlign="left" colIdx={1} />
+    );
     expect(screen.getByText('Total')).toBeInTheDocument();
     expect(screen.getByText('6')).toBeInTheDocument(); // 1 + 2 + 3
     expect(screen.getByText('Mean')).toBeInTheDocument();
@@ -106,25 +120,27 @@ describe('SummaryCell', () => {
       ...numericField,
       config: {
         ...numericField.config,
-        custom: { ...numericField.config.custom, footer: { reducers: ['mean'] } },
+        custom: { ...numericField.config.custom, footer: { reducers: [ReducerID.mean] } },
       },
     };
-    render(<SummaryCell rows={rows} field={newNumericField} />);
+    render(<SummaryCell footers={footers} rows={rows} field={newNumericField} textAlign="left" colIdx={1} />);
     expect(screen.getByText('Mean')).toBeInTheDocument();
     expect(screen.getByText('2')).toBeInTheDocument(); // (1 + 2 + 3) / 3
   });
 
   it('should render an empty summary cell for non-numeric fields with numeric reducers', () => {
-    render(<SummaryCell rows={rows} field={textField} />);
+    render(<SummaryCell footers={footers} rows={rows} field={textField} textAlign="left" colIdx={1} />);
     expect(screen.getByTestId('summary-cell-empty')).toBeInTheDocument();
   });
 
   it('should render the summary cell if a non-numeric reducer is set for a non-numeric field', () => {
     const textFieldNonNumericReducer = {
       ...textField,
-      config: { ...textField.config, custom: { ...textField.config.custom, footer: { reducers: ['last'] } } },
+      config: { ...textField.config, custom: { ...textField.config.custom, footer: { reducers: [ReducerID.last] } } },
     };
-    render(<SummaryCell rows={rows} field={textFieldNonNumericReducer} />);
+    render(
+      <SummaryCell footers={footers} rows={rows} field={textFieldNonNumericReducer} textAlign="left" colIdx={1} />
+    );
     expect(screen.getByText('Last')).toBeInTheDocument();
     expect(screen.getByText('efghi')).toBeInTheDocument();
   });
@@ -134,15 +150,15 @@ describe('SummaryCell', () => {
       ...numericField,
       config: { ...numericField.config, custom: { ...numericField.config.custom, footer: { reducers: [] } } },
     };
-    render(<SummaryCell rows={rows} field={numericFieldNoReducers} />);
+    render(<SummaryCell footers={footers} rows={rows} field={numericFieldNoReducers} textAlign="left" colIdx={1} />);
     expect(screen.getByTestId('summary-cell-empty')).toBeInTheDocument();
   });
 
   it('should correctly calculate sum for numeric fields based on selected fields', () => {
     render(
       <>
-        <SummaryCell rows={rows} field={numericField} />
-        <SummaryCell rows={rows} field={numericField2} />
+        <SummaryCell footers={footers} rows={rows} field={numericField} textAlign="left" colIdx={1} />
+        <SummaryCell footers={footers} rows={rows} field={numericField2} textAlign="left" colIdx={1} />
       </>
     );
 
@@ -157,14 +173,14 @@ describe('SummaryCell', () => {
         ...field.config,
         custom: {
           ...field.config.custom,
-          footer: { reducers: ['sum', 'mean', 'last'] },
+          footer: { reducers: [ReducerID.sum, ReducerID.mean, ReducerID.last] },
         },
       },
     }));
     render(
       <>
         {fields.map((field, index) => (
-          <SummaryCell key={index} rows={rows} field={field} />
+          <SummaryCell footers={footers} key={index} rows={rows} field={field} textAlign="left" colIdx={1} />
         ))}
       </>
     );
@@ -173,5 +189,24 @@ describe('SummaryCell', () => {
     expect(screen.getByText('efghi')).toBeInTheDocument(); // last
   });
 
-  // TODO: add test for noFormattingReducers
+  it('renders row labels when the prop is set, there are reducers in the footers, and no reducers for this field', () => {
+    const numericFieldNoReducers = {
+      ...numericField,
+      state: {
+        displayName: 'NoReducer',
+      },
+      config: { ...numericField.config, custom: { ...numericField.config.custom, footer: { reducers: [] } } },
+    };
+    render(
+      <SummaryCell
+        footers={[{ reducers: [] }, ...footers]}
+        rows={rows.map((r) => ({ ...r, NoReducer: 1 }))}
+        field={numericFieldNoReducers}
+        textAlign="left"
+        colIdx={0}
+        rowLabel
+      />
+    );
+    expect(screen.getByText('Total')).toBeInTheDocument();
+  });
 });
