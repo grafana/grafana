@@ -21,8 +21,31 @@ import (
 
 const threshold = 9999
 
+func indexDocumentsWithTitles(t *testing.T, index resource.ResourceIndex, key resource.NamespacedResource, docsWithTitles map[string]string) {
+	var result []*resource.BulkIndexItem
+
+	for name, title := range docsWithTitles {
+		result = append(result, &resource.BulkIndexItem{
+			Action: resource.ActionIndex,
+			Doc: &resource.IndexableDocument{
+				RV:   1,
+				Name: name,
+				Key: &resourcepb.ResourceKey{
+					Name:      name,
+					Namespace: key.Namespace,
+					Group:     key.Group,
+					Resource:  key.Resource,
+				},
+				Title: title,
+			},
+		})
+	}
+	req := &resource.BulkIndexRequest{Items: result}
+	require.NoError(t, index.BulkIndex(req))
+}
+
 func TestCanSearchByTitle(t *testing.T) {
-	key := &resourcepb.ResourceKey{
+	key := resource.NamespacedResource{
 		Namespace: "default",
 		Group:     "dashboard.grafana.app",
 		Resource:  "dashboards",
@@ -30,39 +53,10 @@ func TestCanSearchByTitle(t *testing.T) {
 
 	t.Run("when query is empty, sort documents by title instead of search score", func(t *testing.T) {
 		index := newTestDashboardsIndex(t, threshold, 2, 2, noop)
-		err := index.BulkIndex(&resource.BulkIndexRequest{
-			Items: []*resource.BulkIndexItem{
-				{
-					Action: resource.ActionIndex,
-					Doc: &resource.IndexableDocument{
-						RV:   1,
-						Name: "name1",
-						Key: &resourcepb.ResourceKey{
-							Name:      "name1",
-							Namespace: key.Namespace,
-							Group:     key.Group,
-							Resource:  key.Resource,
-						},
-						Title: "bbb",
-					},
-				},
-				{
-					Action: resource.ActionIndex,
-					Doc: &resource.IndexableDocument{
-						RV:   1,
-						Name: "name2",
-						Key: &resourcepb.ResourceKey{
-							Name:      "name2",
-							Namespace: key.Namespace,
-							Group:     key.Group,
-							Resource:  key.Resource,
-						},
-						Title: "aaa",
-					},
-				},
-			},
+		indexDocumentsWithTitles(t, index, key, map[string]string{
+			"name1": "bbb",
+			"name2": "aaa",
 		})
-		require.NoError(t, err)
 
 		// search for phrase
 		query := newTestQuery("")
@@ -74,39 +68,10 @@ func TestCanSearchByTitle(t *testing.T) {
 
 	t.Run("will boost phrase match query over match query results", func(t *testing.T) {
 		index := newTestDashboardsIndex(t, threshold, 2, 2, noop)
-		err := index.BulkIndex(&resource.BulkIndexRequest{
-			Items: []*resource.BulkIndexItem{
-				{
-					Action: resource.ActionIndex,
-					Doc: &resource.IndexableDocument{
-						RV:   1,
-						Name: "name1",
-						Key: &resourcepb.ResourceKey{
-							Name:      "name1",
-							Namespace: key.Namespace,
-							Group:     key.Group,
-							Resource:  key.Resource,
-						},
-						Title: "I want to say a hello",
-					},
-				},
-				{
-					Action: resource.ActionIndex,
-					Doc: &resource.IndexableDocument{
-						RV:   1,
-						Name: "name2",
-						Key: &resourcepb.ResourceKey{
-							Name:      "name2",
-							Namespace: key.Namespace,
-							Group:     key.Group,
-							Resource:  key.Resource,
-						},
-						Title: "we want hello",
-					},
-				},
-			},
+		indexDocumentsWithTitles(t, index, key, map[string]string{
+			"name1": "I want to say a hello",
+			"name2": "we want hello",
 		})
-		require.NoError(t, err)
 
 		// search for phrase
 		query := newTestQuery("want hello")
@@ -118,39 +83,10 @@ func TestCanSearchByTitle(t *testing.T) {
 
 	t.Run("will prioritize matches", func(t *testing.T) {
 		index := newTestDashboardsIndex(t, threshold, 2, 2, noop)
-		err := index.BulkIndex(&resource.BulkIndexRequest{
-			Items: []*resource.BulkIndexItem{
-				{
-					Action: resource.ActionIndex,
-					Doc: &resource.IndexableDocument{
-						RV:   1,
-						Name: "name1",
-						Key: &resourcepb.ResourceKey{
-							Name:      "name1",
-							Namespace: key.Namespace,
-							Group:     key.Group,
-							Resource:  key.Resource,
-						},
-						Title: "Asserts Dashboards",
-					},
-				},
-				{
-					Action: resource.ActionIndex,
-					Doc: &resource.IndexableDocument{
-						RV:   1,
-						Name: "name2",
-						Key: &resourcepb.ResourceKey{
-							Name:      "name2",
-							Namespace: key.Namespace,
-							Group:     key.Group,
-							Resource:  key.Resource,
-						},
-						Title: "New dashboard 10",
-					},
-				},
-			},
+		indexDocumentsWithTitles(t, index, key, map[string]string{
+			"name1": "Asserts Dashboards",
+			"name2": "New dashboard 10",
 		})
-		require.NoError(t, err)
 
 		query := newTestQuery("New dash")
 		res, err := index.Search(context.Background(), nil, query, nil)
@@ -161,39 +97,10 @@ func TestCanSearchByTitle(t *testing.T) {
 
 	t.Run("will boost exact match query over match phrase query results", func(t *testing.T) {
 		index := newTestDashboardsIndex(t, threshold, 2, 2, noop)
-		err := index.BulkIndex(&resource.BulkIndexRequest{
-			Items: []*resource.BulkIndexItem{
-				{
-					Action: resource.ActionIndex,
-					Doc: &resource.IndexableDocument{
-						RV:   1,
-						Name: "name1",
-						Key: &resourcepb.ResourceKey{
-							Name:      "name1",
-							Namespace: key.Namespace,
-							Group:     key.Group,
-							Resource:  key.Resource,
-						},
-						Title: "we want hello pls",
-					},
-				},
-				{
-					Action: resource.ActionIndex,
-					Doc: &resource.IndexableDocument{
-						RV:   1,
-						Name: "name2",
-						Key: &resourcepb.ResourceKey{
-							Name:      "name2",
-							Namespace: key.Namespace,
-							Group:     key.Group,
-							Resource:  key.Resource,
-						},
-						Title: "we want hello",
-					},
-				},
-			},
+		indexDocumentsWithTitles(t, index, key, map[string]string{
+			"name1": "we want hello pls",
+			"name2": "we want hello",
 		})
-		require.NoError(t, err)
 
 		// search for exact match
 		query := newTestQuery("we want hello")
@@ -205,25 +112,9 @@ func TestCanSearchByTitle(t *testing.T) {
 
 	t.Run("title with numbers will match document", func(t *testing.T) {
 		index := newTestDashboardsIndex(t, threshold, 2, 2, noop)
-		err := index.BulkIndex(&resource.BulkIndexRequest{
-			Items: []*resource.BulkIndexItem{
-				{
-					Action: resource.ActionIndex,
-					Doc: &resource.IndexableDocument{
-						RV:   1,
-						Name: "name1",
-						Key: &resourcepb.ResourceKey{
-							Name:      "aaa",
-							Namespace: key.Namespace,
-							Group:     key.Group,
-							Resource:  key.Resource,
-						},
-						Title: "A123456",
-					},
-				},
-			},
+		indexDocumentsWithTitles(t, index, key, map[string]string{
+			"name1": "A123456",
 		})
-		require.NoError(t, err)
 
 		// search for prefix of title with mix of chars and numbers
 		query := newQueryByTitle("A12")
@@ -246,39 +137,10 @@ func TestCanSearchByTitle(t *testing.T) {
 
 	t.Run("title will match escaped characters", func(t *testing.T) {
 		index := newTestDashboardsIndex(t, threshold, 2, 2, noop)
-		err := index.BulkIndex(&resource.BulkIndexRequest{
-			Items: []*resource.BulkIndexItem{
-				{
-					Action: resource.ActionIndex,
-					Doc: &resource.IndexableDocument{
-						RV:   1,
-						Name: "name1",
-						Key: &resourcepb.ResourceKey{
-							Name:      "aaa",
-							Namespace: key.Namespace,
-							Group:     key.Group,
-							Resource:  key.Resource,
-						},
-						Title: "what\"s up",
-					},
-				},
-				{
-					Action: resource.ActionIndex,
-					Doc: &resource.IndexableDocument{
-						RV:   2,
-						Name: "name2",
-						Key: &resourcepb.ResourceKey{
-							Name:      "name2",
-							Namespace: key.Namespace,
-							Group:     key.Group,
-							Resource:  key.Resource,
-						},
-						Title: "what\"s that",
-					},
-				},
-			},
+		indexDocumentsWithTitles(t, index, key, map[string]string{
+			"name1": "what\"s up",
+			"name2": "what\"s that",
 		})
-		require.NoError(t, err)
 
 		query := newQueryByTitle("what\"s up")
 		res, err := index.Search(context.Background(), nil, query, nil)
@@ -293,25 +155,9 @@ func TestCanSearchByTitle(t *testing.T) {
 
 	t.Run("title search will match document", func(t *testing.T) {
 		index := newTestDashboardsIndex(t, threshold, 2, 2, noop)
-		err := index.BulkIndex(&resource.BulkIndexRequest{
-			Items: []*resource.BulkIndexItem{
-				{
-					Action: resource.ActionIndex,
-					Doc: &resource.IndexableDocument{
-						RV:   1,
-						Name: "name1",
-						Key: &resourcepb.ResourceKey{
-							Name:      "aaa",
-							Namespace: key.Namespace,
-							Group:     key.Group,
-							Resource:  key.Resource,
-						},
-						Title: "I want to say a wonderfully Hello to the WORLD! Hello-world",
-					},
-				},
-			},
+		indexDocumentsWithTitles(t, index, key, map[string]string{
+			"name1": "I want to say a wonderfully Hello to the WORLD! Hello-world",
 		})
-		require.NoError(t, err)
 
 		// search by entire phrase
 		query := newTestQuery("I want to say a wonderfully Hello to the WORLD! Hello-world")
@@ -358,53 +204,11 @@ func TestCanSearchByTitle(t *testing.T) {
 
 	t.Run("title search will NOT match documents", func(t *testing.T) {
 		index := newTestDashboardsIndex(t, threshold, 2, 2, noop)
-		err := index.BulkIndex(&resource.BulkIndexRequest{
-			Items: []*resource.BulkIndexItem{
-				{
-					Action: resource.ActionIndex,
-					Doc: &resource.IndexableDocument{
-						RV:   1,
-						Name: "name1",
-						Key: &resourcepb.ResourceKey{
-							Name:      "name1",
-							Namespace: key.Namespace,
-							Group:     key.Group,
-							Resource:  key.Resource,
-						},
-						Title: "I want to say a wonderful Hello to the WORLD! Hello-world",
-					},
-				},
-				{
-					Action: resource.ActionIndex,
-					Doc: &resource.IndexableDocument{
-						RV:   1,
-						Name: "name2",
-						Key: &resourcepb.ResourceKey{
-							Name:      "name2",
-							Namespace: key.Namespace,
-							Group:     key.Group,
-							Resource:  key.Resource,
-						},
-						Title: "A0456",
-					},
-				},
-				{
-					Action: resource.ActionIndex,
-					Doc: &resource.IndexableDocument{
-						RV:   1,
-						Name: "name3",
-						Key: &resourcepb.ResourceKey{
-							Name:      "name3",
-							Namespace: key.Namespace,
-							Group:     key.Group,
-							Resource:  key.Resource,
-						},
-						Title: "mash-A02382-10",
-					},
-				},
-			},
+		indexDocumentsWithTitles(t, index, key, map[string]string{
+			"name1": "I want to say a wonderfully Hello to the WORLD! Hello-world",
+			"name2": "A0456",
+			"name3": "mash-A02382-10",
 		})
-		require.NoError(t, err)
 
 		// word that doesn't exist
 		query := newQueryByTitle("cats")
@@ -427,28 +231,12 @@ func TestCanSearchByTitle(t *testing.T) {
 
 	t.Run("title search with character will match one document", func(t *testing.T) {
 		index := newTestDashboardsIndex(t, threshold, 2, 2, noop)
-		err := index.BulkIndex(&resource.BulkIndexRequest{
-			Items: []*resource.BulkIndexItem{
-				{
-					Action: resource.ActionIndex,
-					Doc: &resource.IndexableDocument{
-						RV:   1,
-						Name: "name1",
-						Key: &resourcepb.ResourceKey{
-							Name:      "aaa",
-							Namespace: key.Namespace,
-							Group:     key.Group,
-							Resource:  key.Resource,
-						},
-						Title: "foo",
-					},
-				},
-			},
+		indexDocumentsWithTitles(t, index, key, map[string]string{
+			"name1": "foo",
 		})
-		require.NoError(t, err)
 
 		for i, v := range search.TermCharacters {
-			err = index.BulkIndex(&resource.BulkIndexRequest{
+			err := index.BulkIndex(&resource.BulkIndexRequest{
 				Items: []*resource.BulkIndexItem{
 					{
 						Action: resource.ActionIndex,
