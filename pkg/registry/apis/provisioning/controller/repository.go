@@ -71,7 +71,6 @@ func NewRepositoryController(
 	resourceLister resources.ResourceLister,
 	parsers resources.ParserFactory,
 	clients resources.ClientFactory,
-	tester RepositoryTester,
 	jobs jobs.Queue,
 	dualwrite dualwrite.Service,
 	healthChecker *HealthChecker,
