@@ -159,7 +159,7 @@ func TestIntegrationDashboardAPIAuthorization(t *testing.T) {
 			})
 
 			t.Run("Dashboard permission tests", func(t *testing.T) {
-				runDashboardPermissionTests(t, org1Ctx, false)
+				runDashboardPermissionTests(t, org1Ctx, true)
 			})
 
 			t.Run("Cross-organization tests", func(t *testing.T) {

@@ -1,5 +1,7 @@
 package schemaversion
 
+import "context"
+
 // V34 migrates CloudWatch queries that use multiple statistics into separate queries.
 //
 // This migration addresses CloudWatch queries where a single query uses multiple statistics
@@ -53,7 +55,7 @@ package schemaversion
 //	  { name: "CloudWatch Alerts - Maximum", dimensions: {"InstanceId": "i-123"}, namespace: "AWS/EC2", region: "us-east-1", prefixMatching: false, statistic: "Maximum" },
 //	  { name: "CloudWatch Alerts - Minimum", dimensions: {"InstanceId": "i-123"}, namespace: "AWS/EC2", region: "us-east-1", prefixMatching: false, statistic: "Minimum" }
 //	]
-func V34(dashboard map[string]interface{}) error {
+func V34(_ context.Context, dashboard map[string]interface{}) error {
 	dashboard["schemaVersion"] = int(34)
 
 	// Migrate panel queries if panels exist

@@ -5,7 +5,7 @@ package export
 import (
 	context "context"
 
-	repository "github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
+	repository "github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	mock "github.com/stretchr/testify/mock"
 )
 

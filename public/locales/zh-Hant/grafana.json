@@ -545,6 +545,7 @@
     },
     "alert-rules": {
       "firing-for": "已觸發達",
+      "multiple-sources": "",
       "next-evaluation": "下一個評估",
       "next-evaluation-in": "下一個評估於",
       "rule-definition": "規則定義"
@@ -2625,13 +2626,15 @@
         "show": "顯示"
       },
       "manage-alerts": "在這些資料來源中，您可以選擇透過警報 UI 管理警報，以便在 Grafana UI 以及在其設定的資料來源中管理這些警報規則。",
-      "no-groups": "沒有可用的群組",
-      "no-namespaces": "沒有可用的資料夾",
       "placeholder-all-data-sources": "所有資料來源",
       "placeholder-contact-point": "選擇聯絡點",
       "placeholder-data-sources": "選擇資料來源",
       "placeholder-labels": "選擇標籤",
       "plugin-rules": "外掛程式規則",
+      "rule-source": {
+        "datasource": "",
+        "grafana": ""
+      },
       "rule-type": "規則類型",
       "rulesSearchInput-placeholder-search": "搜尋",
       "search": "搜尋",
@@ -2653,6 +2656,7 @@
         "namespace": "資料夾／命名空間",
         "rule-health": "使用情況",
         "rule-name": "規則名稱",
+        "rule-source": "",
         "rule-type": "類型",
         "state": "狀態"
       }
@@ -3380,9 +3384,6 @@
       "text-badge-enabled": "已啟用",
       "text-badge-not-enabled": "未啟用"
     },
-    "scim-banner": {
-      "message": "SCIM 目前正在開發中，不建議用於生產。請謹慎使用，並做好可能發生變更的準備。"
-    },
     "server-discovery-modal": {
       "label-the-wellknownopenidconfiguration-endpoint-for-your-id-p": "您的 IdP 的 .well-known/openid-configuration 端點",
       "title-open-id-connect-discovery-url": "OpenID Connect 探索網址"
@@ -3552,7 +3553,9 @@
       },
       "error-moving-resources": "移動資源時發生錯誤",
       "error-no-target-folder-path": "目標資料夾路徑無效或空白，請再選擇一次。",
-      "move-warning": "這將移動所選資料夾及其子資料夾。總體而言，這將影響：",
+      "move-total": "",
+      "move-warning": "",
+      "move-warning-tooltip": "",
       "target-folder": "目標資料夾"
     },
     "counts": {
@@ -4485,16 +4488,11 @@
             "any": "匹配任何",
             "label": "符合規則"
           },
-          "label": "群組",
           "visibility": {
             "hide": "隱藏",
             "label": "{{type}}可見性",
             "show": "顯示"
           }
-        },
-        "shared": {
-          "delete-condition": "刪除條件",
-          "unsupported-item-type": "元素不支援此條件，因此將被忽略。"
         },
         "time-range-size": {
           "info": "如果儀表板時間範圍小於所選時間範圍，則顯示或隱藏{{type}}。",
@@ -4524,17 +4522,21 @@
             "not-matches": "無匹配項目"
           },
           "value": "數值"
+        },
+        "wrapper": {
+          "delete-condition": "",
+          "unsupported-object-type": ""
         }
       },
       "editor": {
+        "info": "",
         "not-supported-for-custom-grid": "自訂網格版面配置不支援條件轉譯。切換至自動網格以使用條件轉譯。",
-        "unsupported-item-type": "此項目類型不支援條件轉譯"
+        "unsupported-object-type": ""
       },
       "overlay": {
         "tooltip": "由於條件轉譯，元素已被隱藏。"
       },
       "root": {
-        "info": "設定規則以透過匹配任何或所有規則來控制{{type}}可見性。",
         "title": "顯示/隱藏規則"
       }
     },
@@ -4673,7 +4675,9 @@
       "panel-title": "變更面板標題",
       "paste-panel": "貼上面板",
       "remove": "移除 {{typeName}}",
-      "switch-layout": "切換版面配置"
+      "row-title": "",
+      "switch-layout": "切換版面配置",
+      "tab-title": ""
     },
     "edit-pane": {
       "elements": {
@@ -6521,7 +6525,8 @@
     },
     "data-source-load-error": {
       "back": "返回",
-      "delete": "刪除"
+      "delete": "刪除",
+      "not-found": ""
     },
     "data-source-missing-rights-message": {
       "title-missing-rights": "缺少權限"
@@ -7544,7 +7549,9 @@
   "folders": {
     "api": {
       "folder-delete-error-provisioned": "",
-      "folder-deleted-success": "資料夾已刪除"
+      "folder-deleted-success": "資料夾已刪除",
+      "folder-move-error-provisioned": "",
+      "folder-moved-success": ""
     },
     "get-loading-nav": {
       "main": {
@@ -8320,6 +8327,10 @@
         "action-title": "標題",
         "action-title-placeholder": "動作標題",
         "action-variables": "變數",
+        "connection": "",
+        "connection-direct-description": "",
+        "connection-direct-label": "",
+        "connection-placeholder": "",
         "one-click-description": "一次只能啟用一個連結或動作的點擊"
       }
     },
@@ -8744,7 +8755,6 @@
       "cell-inspect": "檢查值",
       "cell-inspect-tooltip": "檢查值",
       "copy": "複製到剪貼簿",
-      "count": "計數",
       "csv-counts": "列：{{rows}}，欄：{{columns}}  <5></5>",
       "csv-placeholder": "在此處輸入 CSV …",
       "filter-placeholder": "篩選值",
@@ -8755,6 +8765,11 @@
       "filter-popup-heading": "依據數值篩選：",
       "filter-popup-input-placeholder": "篩選值",
       "filter-popup-match-case": "區分大小寫",
+      "footer": {
+        "reducer": {
+          "count": ""
+        }
+      },
       "inspect-drawer-title": "檢查值",
       "nested-table": {
         "no-data": "無資料"
@@ -9496,6 +9511,7 @@
       "fields-section": "欄位",
       "hide-log-line": "隱藏紀錄行",
       "inline-mode": "顯示內嵌",
+      "link-value-tooltip": "",
       "links-section": "連結",
       "log-line-field": "紀錄行",
       "log-line-section": "紀錄行",
@@ -9686,30 +9702,6 @@
     "un-themed-log-label-stats": {
       "field-log-stats": "{{label}}：{{total}} 列中的 {{rowCount}} 列有該欄位",
       "label-log-stats": "{{label}}：{{total}} 列中的 {{rowCount}} 列有該標籤"
-    }
-  },
-  "logs-new": {
-    "category-logs": "紀錄",
-    "deduplication-options": {
-      "label-exact": "完全符合",
-      "label-none": "無",
-      "label-numbers": "數字",
-      "label-signature": "簽名"
-    },
-    "description-infinite-scrolling": "實驗性。捲動至紀錄清單底部，以請求更多結果。",
-    "description-show-controls": "顯示控制項以跳至最後或第一個紀錄行，並按紀錄層級篩選",
-    "description-syntax-highlighting": "運用預先定義的語法著色規則，來突顯紀錄行中的相關部分",
-    "name-deduplication": "重複",
-    "name-enable-log-details": "啟用紀錄詳細資訊",
-    "name-infinite-scrolling": "啟用無限捲動",
-    "name-order": "順序",
-    "name-show-controls": "顯示控制項",
-    "name-syntax-highlighting": "啟用語法突顯",
-    "name-time": "時間",
-    "name-wrap-lines": "換行",
-    "order-options": {
-      "label-newest-first": "最新排前",
-      "label-oldest-first": "最舊排前"
     }
   },
   "manage-dashbaords": {
@@ -12739,8 +12731,6 @@
     "description-calculation": "選擇一個歸約函數/計算方式",
     "description-cell-value-inspect": "在模式視窗中啟用儲存格值檢查",
     "description-column-filter": "啟用/停用表格中的欄位篩選條件",
-    "description-count-rows": "顯示所有資料列的單一計數",
-    "description-fields": "選擇應計算的欄位",
     "description-frozen-columns": "",
     "description-min-column-width": "欄自動調整大小的最小寬度",
     "description-tooltip-from-field": "",
@@ -12767,21 +12757,17 @@
     "name-column-alignment": "欄對齊方式",
     "name-column-filter": "欄篩選條件",
     "name-column-width": "欄寬",
-    "name-count-rows": "計數列",
     "name-enable-pagination": "",
-    "name-fields": "欄位",
     "name-frozen-columns": "",
     "name-hide-in-table": "在表格中隱藏",
     "name-max-height": "",
     "name-min-column-width": "最小欄寬",
-    "name-show-table-footer": "顯示表格頁尾",
     "name-show-table-header": "顯示表格頁首",
     "name-tooltip-from-field": "",
     "name-tooltip-placement": "",
     "name-wrap-header-text": "換行標題文字",
     "name-wrap-text": "",
     "placeholder-column-width": "自動",
-    "placeholder-fields": "所有數值欄位",
     "placeholder-max-height": "",
     "tooltip-placement-options": {
       "label-auto": "",

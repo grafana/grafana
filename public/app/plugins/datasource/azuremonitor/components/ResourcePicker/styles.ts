@@ -2,6 +2,8 @@ import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
 
+import { ResourcePickerQueryType } from '../../resourcePicker/resourcePickerData';
+
 const getStyles = (theme: GrafanaTheme2) => ({
   table: css({
     width: '100%',
@@ -14,11 +16,11 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
 
   tableScroller: css({
-    maxHeight: '16vh',
+    maxHeight: '35vh',
   }),
 
   selectedTableScroller: css({
-    maxHeight: '13vh',
+    maxHeight: '35vh',
   }),
 
   header: css({
@@ -107,7 +109,14 @@ const getStyles = (theme: GrafanaTheme2) => ({
 
   modal: css({
     width: theme.breakpoints.values.lg,
+    maxHeight: '80vh',
   }),
+
+  filterInput: (queryType: ResourcePickerQueryType) =>
+    css({
+      width: queryType === 'metrics' ? '30%' : '50%',
+      marginTop: '10px',
+    }),
 });
 
 export default getStyles;

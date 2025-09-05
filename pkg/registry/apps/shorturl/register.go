@@ -10,7 +10,6 @@ import (
 	"github.com/grafana/grafana-app-sdk/app"
 	appsdkapiserver "github.com/grafana/grafana-app-sdk/k8s/apiserver"
 	"github.com/grafana/grafana-app-sdk/simple"
-
 	"github.com/grafana/grafana/apps/shorturl/pkg/apis"
 	shorturl "github.com/grafana/grafana/apps/shorturl/pkg/apis/shorturl/v1alpha1"
 	shorturlapp "github.com/grafana/grafana/apps/shorturl/pkg/app"

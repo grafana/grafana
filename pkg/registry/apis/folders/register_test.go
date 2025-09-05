@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/folder/foldertest"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
@@ -27,27 +28,10 @@ func TestFolderAPIBuilder_Validate_Create(t *testing.T) {
 		name        string
 	}
 
-	initialMaxDepth := folderValidationRules.maxDepth
-	folderValidationRules.maxDepth = 2
-	defer func() { folderValidationRules.maxDepth = initialMaxDepth }()
-	deepFolder := &folders.Folder{
-		Spec: folders.FolderSpec{
-			Title: "foo",
-		},
-	}
-	deepFolder.Name = "valid-parent"
-	deepFolder.Annotations = map[string]string{"grafana.app/folder": "valid-grandparent"}
-	parentFolder := &folders.Folder{
-		Spec: folders.FolderSpec{
-			Title: "foo-grandparent",
-		},
-	}
-	deepFolder.Name = "valid-grandparent"
-
 	tests := []struct {
 		name    string
 		input   input
-		setupFn func(*mock.Mock)
+		setupFn func(*grafanarest.MockStorage)
 		err     error
 	}{
 		{
@@ -58,7 +42,7 @@ func TestFolderAPIBuilder_Validate_Create(t *testing.T) {
 						Title: "foo",
 					},
 				},
-				name: folderValidationRules.invalidNames[0],
+				name: "general",
 			},
 			err: dashboards.ErrFolderInvalidUID,
 		},
@@ -81,16 +65,24 @@ func TestFolderAPIBuilder_Validate_Create(t *testing.T) {
 						Title: "foo",
 					},
 				},
-				annotations: map[string]string{"grafana.app/folder": "valid-parent"},
+				annotations: map[string]string{"grafana.app/folder": "p1"}, // already max depth
 				name:        "valid-name",
 			},
-			setupFn: func(m *mock.Mock) {
-				m.On("Get", mock.Anything, "valid-parent", mock.Anything).Return(
-					deepFolder,
-					nil)
-				m.On("Get", mock.Anything, "valid-grandparent", mock.Anything).Return(
-					parentFolder,
-					nil)
+			setupFn: func(m *grafanarest.MockStorage) {
+				m.On("Get", mock.Anything, "p1", mock.Anything).Return(
+					&folders.Folder{
+						ObjectMeta: metav1.ObjectMeta{
+							Name:        "p1",
+							Annotations: map[string]string{"grafana.app/folder": "p2"},
+						},
+					}, nil).Maybe()
+				m.On("Get", mock.Anything, "p2", mock.Anything).Return(
+					&folders.Folder{
+						ObjectMeta: metav1.ObjectMeta{
+							Name:        "p2",
+							Annotations: map[string]string{"grafana.app/folder": "p3"},
+						},
+					}, nil).Maybe()
 			},
 			err: folder.ErrMaximumDepthReached,
 		},
@@ -121,25 +113,24 @@ func TestFolderAPIBuilder_Validate_Create(t *testing.T) {
 		},
 	}
 
-	s := (grafanarest.Storage)(nil)
-	m := &mock.Mock{}
-	us := storageMock{m, s}
-
-	b := &FolderAPIBuilder{
-		gv:         resourceInfo.GroupVersion(),
-		features:   nil,
-		namespacer: func(_ int64) string { return "123" },
-		folderSvc:  foldertest.NewFakeService(),
-		storage:    us,
-	}
-
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			us := grafanarest.NewMockStorage(t)
+
+			b := &FolderAPIBuilder{
+				gv:         resourceInfo.GroupVersion(),
+				features:   nil,
+				namespacer: func(_ int64) string { return "123" },
+				folderSvc:  foldertest.NewFakeService(),
+				storage:    us,
+				parents:    newParentsGetter(us, 2), // Max Depth of 2
+			}
+
 			tt.input.obj.Name = tt.input.name
 			tt.input.obj.Annotations = tt.input.annotations
 
 			if tt.setupFn != nil {
-				tt.setupFn(m)
+				tt.setupFn(us)
 			}
 
 			err := b.Validate(context.Background(), admission.NewAttributesRecord(
@@ -183,11 +174,6 @@ func TestFolderAPIBuilder_Validate_Delete(t *testing.T) {
 		},
 	}
 
-	s := (grafanarest.Storage)(nil)
-	m := &mock.Mock{}
-	us := storageMock{m, s}
-	sm := searcherMock{Mock: m}
-
 	obj := &folders.Folder{
 		Spec: folders.FolderSpec{
 			Title: "foo",
@@ -200,14 +186,12 @@ func TestFolderAPIBuilder_Validate_Delete(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			var setupFn = func(m *mock.Mock, stats *resourcepb.ResourceStatsResponse_Stats) {
-				m.On("GetStats", mock.Anything, &resourcepb.ResourceStatsRequest{Namespace: obj.Namespace, Folder: obj.Name}).Return(
-					&resourcepb.ResourceStatsResponse{Stats: []*resourcepb.ResourceStatsResponse_Stats{stats}},
-					nil,
-				).Once()
-			}
-
-			setupFn(m, tt.statsResponse)
+			us := grafanarest.NewMockStorage(t)
+			sm := resource.NewMockResourceClient(t)
+			sm.On("GetStats", mock.Anything, &resourcepb.ResourceStatsRequest{Namespace: obj.Namespace, Folder: obj.Name}).Return(
+				&resourcepb.ResourceStatsResponse{Stats: []*resourcepb.ResourceStatsResponse_Stats{tt.statsResponse}},
+				nil,
+			).Once()
 
 			b := &FolderAPIBuilder{
 				gv:         resourceInfo.GroupVersion(),
@@ -243,19 +227,11 @@ func TestFolderAPIBuilder_Validate_Delete(t *testing.T) {
 }
 
 func TestFolderAPIBuilder_Validate_Update(t *testing.T) {
-	var circularObj = &folders.Folder{
-		ObjectMeta: metav1.ObjectMeta{
-			Namespace:   "stacks-123",
-			Name:        "new-parent",
-			Annotations: map[string]string{"grafana.app/folder": "new-parent"},
-		},
-	}
-
 	tests := []struct {
 		name       string
 		updatedObj *folders.Folder
 		expected   *folders.Folder
-		setupFn    func(*mock.Mock)
+		setupFn    func(*grafanarest.MockStorage)
 		wantErr    bool
 	}{
 		{
@@ -307,7 +283,7 @@ func TestFolderAPIBuilder_Validate_Update(t *testing.T) {
 					Annotations: map[string]string{"grafana.app/folder": "new-parent"},
 				},
 			},
-			setupFn: func(m *mock.Mock) {
+			setupFn: func(m *grafanarest.MockStorage) {
 				m.On("Get", mock.Anything, "new-parent", mock.Anything).Return(
 					&folders.Folder{},
 					nil).Once()
@@ -325,15 +301,13 @@ func TestFolderAPIBuilder_Validate_Update(t *testing.T) {
 					Annotations: map[string]string{"grafana.app/folder": accesscontrol.K6FolderUID},
 				},
 			},
-			setupFn: func(m *mock.Mock) {
-				m.On("Get", mock.Anything, accesscontrol.K6FolderUID, mock.Anything).Return(
-					&folders.Folder{},
-					nil).Once()
+			setupFn: func(m *grafanarest.MockStorage) {
+				// nothing
 			},
 			wantErr: true,
 		},
 		{
-			name: "should not allow moving to a folder that is too deep",
+			name: "should not allow moving to a folder that will become too deep",
 			updatedObj: &folders.Folder{
 				Spec: folders.FolderSpec{
 					Title: "foo",
@@ -344,19 +318,32 @@ func TestFolderAPIBuilder_Validate_Update(t *testing.T) {
 					Annotations: map[string]string{"grafana.app/folder": "new-parent"},
 				},
 			},
-			setupFn: func(m *mock.Mock) {
+			setupFn: func(m *grafanarest.MockStorage) {
 				m.On("Get", mock.Anything, "new-parent", mock.Anything).Return(
-					circularObj,
-					nil)
+					&folders.Folder{
+						ObjectMeta: metav1.ObjectMeta{
+							Name:        "p1",
+							Annotations: map[string]string{"grafana.app/folder": "p2"},
+						},
+					}, nil)
+				m.On("Get", mock.Anything, "p2", mock.Anything).Return(
+					&folders.Folder{
+						ObjectMeta: metav1.ObjectMeta{
+							Name:        "p2",
+							Annotations: map[string]string{"grafana.app/folder": "p3"},
+						},
+					}, nil)
+				m.On("Get", mock.Anything, "p3", mock.Anything).Return(
+					&folders.Folder{
+						ObjectMeta: metav1.ObjectMeta{
+							Name:        "p3",
+							Annotations: map[string]string{"grafana.app/folder": "p4"},
+						},
+					}, nil)
 			},
 			wantErr: true,
 		},
 	}
-
-	s := (grafanarest.Storage)(nil)
-	m := &mock.Mock{}
-	us := storageMock{m, s}
-	sm := searcherMock{Mock: m}
 
 	obj := &folders.Folder{
 		Spec: folders.FolderSpec{
@@ -370,10 +357,13 @@ func TestFolderAPIBuilder_Validate_Update(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		if tt.setupFn != nil {
-			tt.setupFn(m)
-		}
 		t.Run(tt.name, func(t *testing.T) {
+			us := grafanarest.NewMockStorage(t)
+			sm := resource.NewMockResourceClient(t)
+			if tt.setupFn != nil {
+				tt.setupFn(us)
+			}
+
 			b := &FolderAPIBuilder{
 				gv:         resourceInfo.GroupVersion(),
 				features:   nil,
@@ -381,6 +371,7 @@ func TestFolderAPIBuilder_Validate_Update(t *testing.T) {
 				folderSvc:  foldertest.NewFakeService(),
 				storage:    us,
 				searcher:   sm,
+				parents:    newParentsGetter(us, 2), // Max Depth of 2
 			}
 
 			err := b.Validate(context.Background(), admission.NewAttributesRecord(
@@ -465,20 +456,19 @@ func TestFolderAPIBuilder_Mutate_Create(t *testing.T) {
 			wantErr: true,
 		},
 	}
-	s := (grafanarest.Storage)(nil)
-	m := &mock.Mock{}
-	us := storageMock{m, s}
-	sm := searcherMock{Mock: m}
-	b := &FolderAPIBuilder{
-		gv:         resourceInfo.GroupVersion(),
-		features:   nil,
-		namespacer: func(_ int64) string { return "123" },
-		folderSvc:  foldertest.NewFakeService(),
-		storage:    us,
-		searcher:   sm,
-	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			us := grafanarest.NewMockStorage(t)
+			sm := resource.NewMockResourceClient(t)
+			b := &FolderAPIBuilder{
+				gv:         resourceInfo.GroupVersion(),
+				features:   nil,
+				namespacer: func(_ int64) string { return "123" },
+				folderSvc:  foldertest.NewFakeService(),
+				storage:    us,
+				searcher:   sm,
+				parents:    newParentsGetter(us, 2), // Max Depth of 2
+			}
 			admAttr := admission.NewAttributesRecord(
 				tt.input,
 				nil,
@@ -576,10 +566,8 @@ func TestFolderAPIBuilder_Mutate_Update(t *testing.T) {
 			wantErr: true,
 		},
 	}
-	s := (grafanarest.Storage)(nil)
-	m := &mock.Mock{}
-	us := storageMock{m, s}
-	sm := searcherMock{Mock: m}
+	us := grafanarest.NewMockStorage(t)
+	sm := resource.NewMockResourceClient(t)
 	b := &FolderAPIBuilder{
 		gv:         resourceInfo.GroupVersion(),
 		features:   nil,
@@ -587,6 +575,7 @@ func TestFolderAPIBuilder_Mutate_Update(t *testing.T) {
 		folderSvc:  foldertest.NewFakeService(),
 		storage:    us,
 		searcher:   sm,
+		parents:    newParentsGetter(us, 2), // Max Depth of 2
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
