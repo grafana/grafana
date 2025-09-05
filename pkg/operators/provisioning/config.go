@@ -315,7 +315,7 @@ func setupUnifiedStorageClient(cfg *setting.Cfg, tracer tracing.Tracer, resource
 	// Connect to Index
 	indexConn := conn
 	indexAddress := unifiedStorageSec.Key("grpc_index_address").String()
-	if indexAddress == "" {
+	if indexAddress != "" {
 		indexConn, err = unified.GrpcConn(indexAddress, registry)
 		if err != nil {
 			return nil, fmt.Errorf("create unified storage index gRPC connection: %w", err)
