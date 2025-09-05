@@ -120,10 +120,6 @@ func NewClientFactory(configProvider apiserver.RestConfigProvider) ClientFactory
 }
 
 func (f *clientFactory) Clients(ctx context.Context, namespace string) (ResourceClients, error) {
-	if namespace == "" {
-		return nil, fmt.Errorf("missing namespace")
-	}
-
 	return &resourceClients{
 		namespace:       namespace,
 		clientsProvider: f.clientsProvider,
