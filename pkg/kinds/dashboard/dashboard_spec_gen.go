@@ -272,6 +272,8 @@ type DashboardLink struct {
 	Tags []string `json:"tags"`
 	// If true, all dashboards links will be displayed in a dropdown. If false, all dashboards links will be displayed side by side. Only valid if the type is dashboards
 	AsDropdown bool `json:"asDropdown"`
+	// Placement can be used to display the link somewhere else on the dashbaord other than abovethe visualisations.
+	Placement *DashboardLinkPlacement `json:"placement,omitempty"`
 	// If true, the link will be opened in a new tab
 	TargetBlank bool `json:"targetBlank"`
 	// If true, includes current template variables values in the link as query params
@@ -297,6 +299,16 @@ type DashboardLinkType string
 const (
 	DashboardLinkTypeLink       DashboardLinkType = "link"
 	DashboardLinkTypeDashboards DashboardLinkType = "dashboards"
+)
+
+// Dashboard Link placement. Defines where the link should be displayed.
+// - "default" renders the link above the visualisations
+// - "inControlsMenu" renders the link in bottom part of the dashboard controls dropdown menu
+type DashboardLinkPlacement string
+
+const (
+	DashboardLinkPlacementDefault        DashboardLinkPlacement = "default"
+	DashboardLinkPlacementInControlsMenu DashboardLinkPlacement = "inControlsMenu"
 )
 
 // Transformations allow to manipulate data returned by a query before the system applies a visualization.
