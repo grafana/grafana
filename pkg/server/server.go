@@ -163,6 +163,8 @@ func (s *Server) dskitRun() error {
 	ctx, span := s.tracerProvider.Start(s.context, "server.dskitRun")
 	defer span.End()
 
+	// override the shutdownFn (context cancel func) for now until the feature flag is removed.
+	// this is a temporary solution to ensure that the services are shutdown properly.
 	cancelFn := s.shutdownFn
 	s.shutdownFn = func() {
 		defer close(s.shutdownFinished)
@@ -170,7 +172,6 @@ func (s *Server) dskitRun() error {
 		if err := managerAdapter.Shutdown(s.context, modules.ErrStopProcess.Error()); err != nil {
 			s.log.Error("Failed to shutdown background services", "error", err)
 		}
-		s.log.Debug("Background services shutdown complete")
 		cancelFn()
 	}
 

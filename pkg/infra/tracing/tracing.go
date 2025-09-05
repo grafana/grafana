@@ -97,7 +97,7 @@ func ProvideService(tracingCfg *TracingConfig) (*TracingService, error) {
 		cfg: tracingCfg,
 		log: log.New("tracing"),
 	}
-	ots.NamedService = services.NewBasicService(ots.start, ots.run, ots.stop).WithName(ServiceName)
+	ots.NamedService = services.NewBasicService(ots.starting, ots.running, ots.stopping).WithName(ServiceName)
 
 	if err := ots.initOpentelemetryTracer(); err != nil {
 		return nil, err
@@ -310,7 +310,8 @@ func (ots *TracingService) initOpentelemetryTracer() error {
 
 	return nil
 }
-func (ots *TracingService) start(ctx context.Context) error {
+
+func (ots *TracingService) starting(ctx context.Context) error {
 	otel.SetErrorHandler(otel.ErrorHandlerFunc(func(err error) {
 		err = level.Error(ots.log).Log("msg", "OpenTelemetry handler returned an error", "err", err)
 		if err != nil {
@@ -319,26 +320,26 @@ func (ots *TracingService) start(ctx context.Context) error {
 	}))
 	return nil
 }
-
-func (ots *TracingService) Run(ctx context.Context) error {
-	if err := ots.StartAsync(ctx); err != nil {
-		return err
-	}
-	return ots.AwaitTerminated(ctx)
-}
-
-func (ots *TracingService) run(ctx context.Context) error {
+func (ots *TracingService) running(ctx context.Context) error {
 	<-ctx.Done()
 	return nil
 }
 
-func (ots *TracingService) stop(_ error) error {
+func (ots *TracingService) stopping(_ error) error {
+	ots.log.Info("Closing tracing")
 	if ots.tracerProvider == nil {
 		return nil
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 	defer cancel()
 	return ots.tracerProvider.Shutdown(ctx)
+}
+
+func (ots *TracingService) Run(ctx context.Context) error {
+	if err := ots.StartAsync(ctx); err != nil {
+		return err
+	}
+	return ots.AwaitTerminated(ctx)
 }
 
 func (ots *TracingService) Inject(ctx context.Context, header http.Header, _ trace.Span) {

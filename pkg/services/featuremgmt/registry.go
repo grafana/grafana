@@ -2001,6 +2001,14 @@ var (
 			Owner:             grafanaPluginsPlatformSquad,
 			Expression:        "false",
 		},
+		{
+			Name:            "pluginContainers",
+			Description:     "Enables running plugins in containers",
+			Stage:           FeatureStagePrivatePreview,
+			Owner:           grafanaPluginsPlatformSquad,
+			Expression:      "false",
+			RequiresRestart: true,
+		},
 	}
 )
 

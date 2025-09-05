@@ -1034,4 +1034,8 @@ const (
 	// FlagDskitBackgroundServices
 	// Enables dskit background service wrapper
 	FlagDskitBackgroundServices = "dskitBackgroundServices"
+
+	// FlagPluginContainers
+	// Enables running plugins in containers
+	FlagPluginContainers = "pluginContainers"
 )
