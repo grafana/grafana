@@ -7,7 +7,7 @@ import { Trans, t } from '@grafana/i18n';
 import { getAppEvents, locationService } from '@grafana/runtime';
 import { Dashboard } from '@grafana/schema';
 import { Button, Field, Input, Stack, TextArea } from '@grafana/ui';
-import { RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
+import { RepositoryView, Unstructured } from 'app/api/clients/provisioning/v0alpha1';
 import kbn from 'app/core/utils/kbn';
 import { Resource } from 'app/features/apiserver/types';
 import { SaveDashboardFormCommonOptions } from 'app/features/dashboard-scene/saving/SaveDashboardForm';
@@ -19,6 +19,7 @@ import {
   ProvisionedOperationInfo,
   useProvisionedRequestHandler,
 } from 'app/features/provisioning/hooks/useProvisionedRequestHandler';
+import { SaveDashboardResponseDTO } from 'app/types/dashboard';
 
 import { ProvisionedDashboardFormData } from '../../types/form';
 import { buildResourceBranchRedirectUrl } from '../../utils/redirect';
@@ -111,8 +112,13 @@ export function SaveProvisionedDashboardForm({
   };
 
   const handleDismiss = () => {
-    dashboard.setState({ isDirty: false });
     panelEditor?.onDiscard();
+
+    const model = dashboard.getSaveModel();
+    const resourceData = request?.data?.resource.dryRun;
+    const saveResponse = createSaveResponseFromResource(resourceData);
+    dashboard.saveCompleted(model, saveResponse, defaultValues.folder?.uid);
+
     drawer.onClose();
   };
 
@@ -243,13 +249,13 @@ export function SaveProvisionedDashboardForm({
           />
 
           <Stack gap={2}>
+            <Button variant="secondary" onClick={drawer.onClose} fill="outline">
+              <Trans i18nKey="dashboard-scene.save-provisioned-dashboard-form.cancel">Cancel</Trans>
+            </Button>
             <Button variant="primary" type="submit" disabled={request.isLoading || !isDirty || readOnly}>
               {request.isLoading
                 ? t('dashboard-scene.save-provisioned-dashboard-form.saving', 'Saving...')
                 : t('dashboard-scene.save-provisioned-dashboard-form.save', 'Save')}
-            </Button>
-            <Button variant="secondary" onClick={drawer.onClose} fill="outline">
-              <Trans i18nKey="dashboard-scene.save-provisioned-dashboard-form.cancel">Cancel</Trans>
             </Button>
           </Stack>
         </Stack>
@@ -291,4 +297,30 @@ function updateURLParams(param: string, value?: string) {
   const url = new URL(window.location.href);
   url.searchParams.set(param, value);
   window.history.replaceState({}, '', url);
+}
+
+/**
+ * Creates a SaveDashboardResponseDTO from a provisioning resource response
+ * This allows us to use the standard dashboard save completion flow
+ */
+function createSaveResponseFromResource(resource?: Unstructured): SaveDashboardResponseDTO {
+  const uid = resource?.metadata?.name;
+  const title = resource?.spec?.title;
+  const slug = kbn.slugifyForUrl(title);
+
+  return {
+    uid,
+    // Use the current dashboard state version to maintain consistency
+    version: resource?.metadata?.generation,
+    id: resource?.spec?.id || 0,
+    status: 'success',
+    url: locationUtil.assureBaseUrl(
+      getDashboardUrl({
+        uid,
+        slug,
+        currentQueryParams: '',
+      })
+    ),
+    slug,
+  };
 }

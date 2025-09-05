@@ -1,6 +1,7 @@
 package schemaversion
 
 import (
+	"context"
 	"strconv"
 )
 
@@ -89,7 +90,7 @@ import (
 //	    "tooltip": { "mode": "multi" }
 //	  }
 //	}
-func V30(dashboard map[string]interface{}) error {
+func V30(_ context.Context, dashboard map[string]interface{}) error {
 	dashboard["schemaVersion"] = 30
 
 	panels, ok := dashboard["panels"].([]interface{})

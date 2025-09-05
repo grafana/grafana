@@ -31,7 +31,7 @@ import (
 
 func TestConversionMatrixExist(t *testing.T) {
 	// Initialize the migrator with a test data source provider
-	migration.Initialize(migrationtestutil.GetTestDataSourceProvider(), migrationtestutil.GetTestPanelProvider())
+	migration.Initialize(migrationtestutil.GetTestDataSourceProvider())
 
 	versions := []metav1.Object{
 		&dashv0.Dashboard{Spec: common.Unstructured{Object: map[string]any{"title": "dashboardV0"}}},
@@ -82,7 +82,7 @@ func TestDeepCopyValid(t *testing.T) {
 
 func TestDashboardConversionToAllVersions(t *testing.T) {
 	// Initialize the migrator with a test data source provider
-	migration.Initialize(migrationtestutil.GetTestDataSourceProvider(), migrationtestutil.GetTestPanelProvider())
+	migration.Initialize(migrationtestutil.GetTestDataSourceProvider())
 
 	// Set up conversion scheme
 	scheme := runtime.NewScheme()
@@ -234,7 +234,7 @@ func testConversion(t *testing.T, convertedDash metav1.Object, filename, outputD
 // TestConversionMetrics tests that conversion-level metrics are recorded correctly
 func TestConversionMetrics(t *testing.T) {
 	// Initialize migration with test providers
-	migration.Initialize(migrationtestutil.GetTestDataSourceProvider(), migrationtestutil.GetTestPanelProvider())
+	migration.Initialize(migrationtestutil.GetTestDataSourceProvider())
 
 	// Create a test registry for metrics
 	registry := prometheus.NewRegistry()
@@ -278,15 +278,15 @@ func TestConversionMetrics(t *testing.T) {
 				ObjectMeta: metav1.ObjectMeta{UID: "test-uid-2"},
 				Spec: common.Unstructured{Object: map[string]any{
 					"title":         "test dashboard",
-					"schemaVersion": 41,
+					"schemaVersion": 42,
 				}},
 			},
 			target:               &dashv0.Dashboard{},
 			expectSuccess:        true,
 			expectedSourceAPI:    dashv1.APIVERSION,
 			expectedTargetAPI:    dashv0.APIVERSION,
-			expectedSourceSchema: "41",
-			expectedTargetSchema: "41", // V1→V0 keeps same schema version
+			expectedSourceSchema: "42",
+			expectedTargetSchema: "42", // V1→V0 keeps same schema version
 		},
 		{
 			name: "successful v2alpha1 to v2beta1 conversion",
@@ -365,7 +365,7 @@ func TestConversionMetrics(t *testing.T) {
 
 // TestConversionMetricsWrapper tests the withConversionMetrics wrapper function
 func TestConversionMetricsWrapper(t *testing.T) {
-	migration.Initialize(migrationtestutil.GetTestDataSourceProvider(), migrationtestutil.GetTestPanelProvider())
+	migration.Initialize(migrationtestutil.GetTestDataSourceProvider())
 
 	// Create a test registry for metrics
 	registry := prometheus.NewRegistry()
@@ -521,7 +521,7 @@ func TestSchemaVersionExtraction(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Test the schema version extraction logic by creating a wrapper and checking the metrics labels
-			migration.Initialize(migrationtestutil.GetTestDataSourceProvider(), migrationtestutil.GetTestPanelProvider())
+			migration.Initialize(migrationtestutil.GetTestDataSourceProvider())
 
 			// Create a test registry for metrics
 			registry := prometheus.NewRegistry()
@@ -564,7 +564,7 @@ func TestSchemaVersionExtraction(t *testing.T) {
 
 // TestConversionLogging tests that conversion-level logging works correctly
 func TestConversionLogging(t *testing.T) {
-	migration.Initialize(migrationtestutil.GetTestDataSourceProvider(), migrationtestutil.GetTestPanelProvider())
+	migration.Initialize(migrationtestutil.GetTestDataSourceProvider())
 
 	// Create a test registry for metrics
 	registry := prometheus.NewRegistry()
@@ -600,7 +600,7 @@ func TestConversionLogging(t *testing.T) {
 				"targetVersionAPI":    dashv1.APIVERSION,
 				"dashboardUID":        "test-uid-log-1",
 				"sourceSchemaVersion": "20",
-				"targetSchemaVersion": fmt.Sprintf("%d", 41), // LATEST_VERSION
+				"targetSchemaVersion": fmt.Sprintf("%d", 42), // LATEST_VERSION
 			},
 		},
 		{
@@ -620,7 +620,7 @@ func TestConversionLogging(t *testing.T) {
 				"targetVersionAPI":    dashv1.APIVERSION,
 				"dashboardUID":        "test-uid-log-2",
 				"sourceSchemaVersion": "5",
-				"targetSchemaVersion": fmt.Sprintf("%d", 41), // LATEST_VERSION
+				"targetSchemaVersion": fmt.Sprintf("%d", 42), // LATEST_VERSION
 			},
 		},
 	}
@@ -654,7 +654,7 @@ func TestConversionLogging(t *testing.T) {
 
 // TestConversionLogLevels tests that appropriate log levels are used
 func TestConversionLogLevels(t *testing.T) {
-	migration.Initialize(migrationtestutil.GetTestDataSourceProvider(), migrationtestutil.GetTestPanelProvider())
+	migration.Initialize(migrationtestutil.GetTestDataSourceProvider())
 
 	t.Run("log levels and structured fields verification", func(t *testing.T) {
 		// Create test wrapper to verify logging behavior
@@ -723,7 +723,7 @@ func TestConversionLogLevels(t *testing.T) {
 
 // TestConversionLoggingFields tests that all expected fields are included in log messages
 func TestConversionLoggingFields(t *testing.T) {
-	migration.Initialize(migrationtestutil.GetTestDataSourceProvider(), migrationtestutil.GetTestPanelProvider())
+	migration.Initialize(migrationtestutil.GetTestDataSourceProvider())
 
 	t.Run("verify all log fields are present", func(t *testing.T) {
 		// Test that the conversion wrapper includes all expected structured fields
