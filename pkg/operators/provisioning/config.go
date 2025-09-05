@@ -54,7 +54,6 @@ type provisioningControllerConfig struct {
 // allow_insecure =
 // audiences =
 // [operator]
-// api_server_url =
 // provisioning_server_url =
 // dashboards_server_url =
 // folders_server_url =
@@ -85,7 +84,10 @@ func setupFromConfig(cfg *setting.Cfg) (controllerCfg *provisioningControllerCon
 	}
 
 	operatorSec := cfg.SectionWithEnvOverrides("operator")
-	apiServerURL := operatorSec.Key("api_server_url").String()
+	provisioningServerURL := operatorSec.Key("provisioning_server_url").String()
+	if provisioningServerURL == "" {
+		return nil, fmt.Errorf("provisioning_server_url is required in [operator] section")
+	}
 
 	tlsInsecure := operatorSec.Key("tls_insecure").MustBool(false)
 	tlsCertFile := operatorSec.Key("tls_cert_file").String()
@@ -103,20 +105,6 @@ func setupFromConfig(cfg *setting.Cfg) (controllerCfg *provisioningControllerCon
 	tlsConfig, err := buildTLSConfig(tlsInsecure, tlsCertFile, tlsKeyFile, tlsCAFile)
 	if err != nil {
 		return nil, fmt.Errorf("failed to build TLS configuration: %w", err)
-	}
-
-	clients, err := setupResourcesClient(apiServerURL, tlsConfig, tokenExchangeClient)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create resources client factory: %w", err)
-	}
-
-	provisioningServerURL := apiServerURL
-	if custom := operatorSec.Key("provisioning_server_url").String(); custom != "" {
-		provisioningServerURL = custom
-	}
-
-	if provisioningServerURL == "" {
-		return nil, fmt.Errorf("provisioning_server_url is required in [operator] section")
 	}
 
 	config := &rest.Config{
@@ -155,6 +143,32 @@ func setupFromConfig(cfg *setting.Cfg) (controllerCfg *provisioningControllerCon
 	if err != nil {
 		return nil, fmt.Errorf("failed to setup unified storage: %w", err)
 	}
+
+	dashboardsServerURL := operatorSec.Key("dashboards_server_url").String()
+	if provisioningServerURL == "" {
+		return nil, fmt.Errorf("dashboards_server_url is required in [operator] section")
+	}
+	foldersServerURL := operatorSec.Key("folders_server_url").String()
+	if provisioningServerURL == "" {
+		return nil, fmt.Errorf("folders_server_url is required in [operator] section")
+	}
+
+	apiServerURLs := []string{dashboardsServerURL, foldersServerURL}
+	configProviders := make([]apiserver.RestConfigProvider, len(apiServerURLs))
+
+	for i, url := range apiServerURLs {
+		config := &rest.Config{
+			APIPath: "/apis",
+			Host:    url,
+			WrapTransport: transport.WrapperFunc(func(rt http.RoundTripper) http.RoundTripper {
+				return authrt.NewRoundTripper(tokenExchangeClient, rt)
+			}),
+			TLSClientConfig: tlsConfig,
+		}
+		configProviders[i] = NewDirectConfigProvider(config)
+	}
+
+	clients := resources.NewClientFactoryForMultipleAPIServers(configProviders)
 
 	return &provisioningControllerConfig{
 		provisioningClient: provisioningClient,
@@ -342,11 +356,6 @@ func setupResourcesClient(
 	if apiServerURL == "" {
 		return nil, fmt.Errorf("api_server_url is required in [operator] section")
 	}
-
-	// TODO: implement NewClientFactoryForMultipleAPIServers or similar if we want to support multiple api servers
-	// That should only create dynamic and descovery clients per group, similar to the existing one.
-	// TODO: read new settings dashboards_server_url and folders_server_url
-	// use them to build the factory differently
 
 	config := &rest.Config{
 		APIPath: "/apis",
