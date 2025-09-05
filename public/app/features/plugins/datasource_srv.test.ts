@@ -299,19 +299,6 @@ describe('datasource_srv', () => {
         const settings = dataSourceSrv.getInstanceSettings(runtimeDataSource.name);
         expect(settings).toBe(undefined);
       });
-
-      it('should handle type-only datasource references consistently', async () => {
-        const typeOnlyRef = { type: 'jaeger-db' };
-
-        const datasource = await dataSourceSrv.get(typeOnlyRef);
-        const settings = dataSourceSrv.getInstanceSettings(typeOnlyRef);
-
-        expect(datasource.uid).toBe('uid-code-Jaeger');
-        expect(datasource.type).toBe('jaeger-db');
-        expect(settings?.uid).toBe(datasource.uid);
-        expect(settings?.type).toBe(datasource.type);
-        expect(settings?.name).toBe('Jaeger');
-      });
     });
 
     describe('when loading datasource', () => {

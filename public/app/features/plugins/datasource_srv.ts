@@ -107,14 +107,6 @@ export class DatasourceSrv implements DataSourceService {
     }
 
     if (nameOrUid === 'default' || nameOrUid == null) {
-      // Handle type-only datasource references (e.g., {type: 'prometheus'})
-      if (isDatasourceRef(ref) && ref.type) {
-        const ds = this.findDatasourceByType(ref.type);
-        if (ds) {
-          return ds;
-        }
-      }
-      // Fall back to default datasource if no type match found
       return this.settingsMapByUid[this.defaultName] ?? this.settingsMapByName[this.defaultName];
     }
 
@@ -151,12 +143,13 @@ export class DatasourceSrv implements DataSourceService {
   get(ref?: string | DataSourceRef | null, scopedVars?: ScopedVars): Promise<DataSourceApi> {
     let nameOrUid = getNameOrUid(ref);
     if (!nameOrUid) {
-      // Handle type-only datasource references
-      if (isDatasourceRef(ref) && ref.type) {
-        const ds = this.findDatasourceByType(ref.type);
-        if (!ds) {
+      // type exists, but not the other properties
+      if (isDatasourceRef(ref)) {
+        const settings = this.getList({ type: ref.type });
+        if (!settings?.length) {
           return Promise.reject('no datasource of type');
         }
+        const ds = settings.find((v) => v.isDefault) ?? settings[0];
         return this.get(ds.uid);
       }
       return this.get(this.defaultName);
@@ -189,18 +182,6 @@ export class DatasourceSrv implements DataSourceService {
     }
 
     return this.loadDatasource(nameOrUid);
-  }
-
-  /**
-   * Finds the best datasource instance settings for a given type.
-   * Prefers the default datasource of that type, otherwise returns the first one found.
-   */
-  private findDatasourceByType(type: string): DataSourceInstanceSettings | undefined {
-    const settings = this.getList({ type });
-    if (!settings?.length) {
-      return undefined;
-    }
-    return settings.find((v) => v.isDefault) ?? settings[0];
   }
 
   async loadDatasource(key: string): Promise<DataSourceApi> {
