@@ -8,13 +8,13 @@ import (
 	"strings"
 	"time"
 
-	"github.com/grafana/authlib/types"
-	idStore "github.com/grafana/grafana/pkg/registry/apis/iam/legacy"
-	"github.com/grafana/grafana/pkg/services/accesscontrol"
-
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
+	"github.com/grafana/authlib/types"
+
 	v0alpha1 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
+	idStore "github.com/grafana/grafana/pkg/registry/apis/iam/legacy"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 )
 
 var (
@@ -33,13 +33,6 @@ var (
 	errInvalidNamespace     = errors.New("invalid namespace")
 
 	defaultLevels = []string{"view", "edit", "admin"}
-
-	// TODO make this more flexible
-	validLevels = map[string]bool{
-		"admin": true,
-		"edit":  true,
-		"view":  true,
-	}
 )
 
 type IdentityStore interface {

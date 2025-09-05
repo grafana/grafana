@@ -118,7 +118,96 @@ func setupTestRoles(t *testing.T, store db.DB) {
 	require.NoError(t, err)
 }
 
-func TestIntegrationCreateResourcePermission(t *testing.T) {
+func TestIntegration_ResourcePermSqlBackend_getResourcePermission(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
+
+	backend := setupBackend(t)
+	sql, err := backend.dbProvider(context.Background())
+	require.NoError(t, err)
+	setupTestRoles(t, sql.DB)
+
+	created := time.Date(2025, 9, 2, 0, 0, 0, 0, time.UTC)
+
+	tests := []struct {
+		name     string
+		resource string
+		orgID    int64
+		want     v0alpha1.ResourcePermission
+		err      error
+	}{
+		{
+			name:     "should return only org-1 permissions for fold1",
+			resource: "folder.grafana.app-folders-fold1",
+			orgID:    1,
+			want: v0alpha1.ResourcePermission{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:              "folder.grafana.app-folders-fold1",
+					CreationTimestamp: metav1.Time{Time: created},
+					ResourceVersion:   fmt.Sprint(created.UnixMilli()),
+				},
+				TypeMeta: v0alpha1.ResourcePermissionInfo.TypeMeta(),
+				Spec: v0alpha1.ResourcePermissionSpec{
+					Resource: v0alpha1.ResourcePermissionspecResource{
+						ApiGroup: "folder.grafana.app",
+						Resource: "folders",
+						Name:     "fold1",
+					},
+					Permissions: []v0alpha1.ResourcePermissionspecPermission{
+						{
+							Kind: v0alpha1.ResourcePermissionSpecPermissionKindUser,
+							Name: "user-1",
+							Verb: "view",
+						},
+					},
+				},
+			},
+			err: nil,
+		},
+		{
+			name:     "should return empty for org-2",
+			orgID:    2,
+			resource: "dashboard.grafana.app-dashboards-dash1",
+			err:      errNotFound,
+		},
+		{
+			name:     "should return an error for unknown resource type",
+			orgID:    1,
+			resource: "unknown.grafana.app-unknown-u1",
+			err:      errUnknownGroupResource,
+		},
+		{
+			name:     "should return an error for invalid resource name",
+			orgID:    1,
+			resource: "invalid.grafana.app-invalid",
+			err:      errInvalidName,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ns := types.NamespaceInfo{
+				OrgID: tt.orgID,
+			}
+			got, err := backend.getResourcePermission(context.Background(), sql, ns, tt.resource)
+			if tt.err != nil {
+				require.Error(t, err)
+				require.ErrorIs(t, err, tt.err)
+				return
+			}
+			require.NoError(t, err)
+
+			require.Equal(t, tt.want.Name, got.Name)
+			require.Equal(t, tt.want.CreationTimestamp, got.CreationTimestamp)
+			require.Equal(t, tt.want.ResourceVersion, got.ResourceVersion)
+			require.NotZero(t, got.GetUpdateTimestamp())
+			require.Equal(t, tt.want.TypeMeta, got.TypeMeta)
+			require.Equal(t, tt.want.Spec, got.Spec)
+		})
+	}
+}
+
+func TestIntegration_ResourcePermSqlBackend_CreateResourcePermission(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
@@ -132,7 +221,7 @@ func TestIntegrationCreateResourcePermission(t *testing.T) {
 	t.Run("should create resource permission", func(t *testing.T) {
 		resourcePerm := &v0alpha1.ResourcePermission{
 			ObjectMeta: metav1.ObjectMeta{
-				Name:      "folders.grafana.app-folders-fold1",
+				Name:      "folder.grafana.app-folders-fold1",
 				Namespace: "default",
 			},
 			Spec: v0alpha1.ResourcePermissionSpec{
@@ -145,22 +234,22 @@ func TestIntegrationCreateResourcePermission(t *testing.T) {
 					{
 						Kind: v0alpha1.ResourcePermissionSpecPermissionKindBasicRole,
 						Name: "Viewer",
-						Verb: "Admin",
+						Verb: "admin",
 					},
 					{
 						Kind: v0alpha1.ResourcePermissionSpecPermissionKindUser,
 						Name: "captain",
-						Verb: "Edit",
+						Verb: "edit",
 					},
 					{
 						Kind: v0alpha1.ResourcePermissionSpecPermissionKindServiceAccount,
 						Name: "robot",
-						Verb: "View",
+						Verb: "view",
 					},
 					{
 						Kind: v0alpha1.ResourcePermissionSpecPermissionKindTeam,
 						Name: "devs",
-						Verb: "Admin",
+						Verb: "admin",
 					},
 				},
 			},
@@ -278,93 +367,4 @@ func (f *fakeIdentityStore) GetUserInternalID(ctx context.Context, ns types.Name
 		return nil, errors.New("not found")
 	}
 	return &legacy.GetUserInternalIDResult{ID: id}, nil
-}
-
-func TestResourcePermSqlBackend_getResourcePermission(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test in short mode")
-	}
-
-	backend := setupBackend(t)
-	sql, err := backend.dbProvider(context.Background())
-	require.NoError(t, err)
-	setupTestRoles(t, sql.DB)
-
-	created := time.Date(2025, 9, 2, 0, 0, 0, 0, time.UTC)
-
-	tests := []struct {
-		name     string
-		resource string
-		orgID    int64
-		want     v0alpha1.ResourcePermission
-		err      error
-	}{
-		{
-			name:     "should return only org-1 permissions for fold1",
-			resource: "folder.grafana.app-folders-fold1",
-			orgID:    1,
-			want: v0alpha1.ResourcePermission{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:              "folder.grafana.app-folders-fold1",
-					CreationTimestamp: metav1.Time{Time: created},
-					ResourceVersion:   fmt.Sprint(created.UnixMilli()),
-				},
-				TypeMeta: v0alpha1.ResourcePermissionInfo.TypeMeta(),
-				Spec: v0alpha1.ResourcePermissionSpec{
-					Resource: v0alpha1.ResourcePermissionspecResource{
-						ApiGroup: "folder.grafana.app",
-						Resource: "folders",
-						Name:     "fold1",
-					},
-					Permissions: []v0alpha1.ResourcePermissionspecPermission{
-						{
-							Kind: v0alpha1.ResourcePermissionSpecPermissionKindUser,
-							Name: "user-1",
-							Verb: "view",
-						},
-					},
-				},
-			},
-			err: nil,
-		},
-		{
-			name:     "should return empty for org-2",
-			orgID:    2,
-			resource: "dashboard.grafana.app-dashboards-dash1",
-			err:      errNotFound,
-		},
-		{
-			name:     "should return an error for unknown resource type",
-			orgID:    1,
-			resource: "unknown.grafana.app-unknown-u1",
-			err:      errUnknownGroupResource,
-		},
-		{
-			name:     "should return an error for invalid resource name",
-			orgID:    1,
-			resource: "invalid.grafana.app-invalid",
-			err:      errInvalidName,
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			ns := types.NamespaceInfo{
-				OrgID: tt.orgID,
-			}
-			got, err := backend.getResourcePermission(context.Background(), sql, ns, tt.resource)
-			if tt.err != nil {
-				require.Error(t, err)
-				require.ErrorIs(t, err, tt.err)
-				return
-			}
-			require.NoError(t, err)
-
-			require.Equal(t, tt.want.Name, got.Name)
-			require.Equal(t, tt.want.CreationTimestamp, got.CreationTimestamp)
-			require.Equal(t, tt.want.ResourceVersion, got.ResourceVersion)
-			require.NotZero(t, got.GetUpdateTimestamp())
-			require.Equal(t, tt.want.TypeMeta, got.TypeMeta)
-			require.Equal(t, tt.want.Spec, got.Spec)
-		})
-	}
 }

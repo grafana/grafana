@@ -60,22 +60,36 @@ func (s *ResourcePermSqlBackend) getResourcePermissions(ctx context.Context, sql
 	return permissions, nil
 }
 
-// getResourcePermission retrieves a single ResourcePermission by its name in the format <group>-<resource>-<name> (e.g. dashboard.grafana.app-dashboards-ad5rwqs)
-func (s *ResourcePermSqlBackend) getResourcePermission(ctx context.Context, sql *legacysql.LegacyDatabaseHelper, ns types.NamespaceInfo, name string) (*v0alpha1.ResourcePermission, error) {
+// splitResourceName splits a resource name in the format <group>-<resource>-<name> (e.g. dashboard.grafana.app-dashboards-ad5rwqs) into its components
+func (s *ResourcePermSqlBackend) splitResourceName(resourceName string) (Mapper, *groupResourceName, error) {
 	// e.g. dashboard.grafana.app-dashboards-ad5rwqs
-	parts := strings.SplitN(name, "-", 3)
+	parts := strings.SplitN(resourceName, "-", 3)
 	if len(parts) != 3 {
-		return nil, fmt.Errorf("%w: %s", errInvalidName, name)
+		return nil, nil, fmt.Errorf("%w: %s", errInvalidName, resourceName)
 	}
 
 	group, resourceType, uid := parts[0], parts[1], parts[2]
 	mapper, ok := s.mappers[schema.GroupResource{Group: group, Resource: resourceType}]
 	if !ok {
-		return nil, fmt.Errorf("%w: %s/%s", errUnknownGroupResource, group, resourceType)
+		return nil, nil, fmt.Errorf("%w: %s/%s", errUnknownGroupResource, group, resourceType)
+	}
+
+	return mapper, &groupResourceName{
+		Group:    group,
+		Resource: resourceType,
+		Name:     uid,
+	}, nil
+}
+
+// getResourcePermission retrieves a single ResourcePermission by its name in the format <group>-<resource>-<name> (e.g. dashboard.grafana.app-dashboards-ad5rwqs)
+func (s *ResourcePermSqlBackend) getResourcePermission(ctx context.Context, sql *legacysql.LegacyDatabaseHelper, ns types.NamespaceInfo, name string) (*v0alpha1.ResourcePermission, error) {
+	mapper, grn, err := s.splitResourceName(name)
+	if err != nil {
+		return nil, err
 	}
 
 	resourceQuery := &ListResourcePermissionsQuery{
-		Scope:      mapper.Scope(uid),
+		Scope:      mapper.Scope(grn.Name),
 		OrgID:      ns.OrgID,
 		ActionSets: mapper.ActionSets(),
 	}
@@ -101,20 +115,6 @@ func (s *ResourcePermSqlBackend) getResourcePermission(ctx context.Context, sql 
 }
 
 // Create
-
-// TODO: use mapper?
-func actionSet(resource string, level string) (string, error) {
-	level = strings.ToLower(level)
-	if !validLevels[level] {
-		return "", fmt.Errorf("invalid permission level (%s): %w", level, errInvalidSpec)
-	}
-	return fmt.Sprintf("%s:%s", resource, level), nil
-}
-
-// TODO: use mapper?
-func scope(resource string, name string) string {
-	return fmt.Sprintf("%s:uid:%s", resource, name)
-}
 
 // createManagedRoleAndAssign creates a new managed role and assigns it to the given user/team/service account/basic role
 func (s *ResourcePermSqlBackend) createManagedRoleAndAssign(ctx context.Context, tx *session.SessionTx, dbHelper *legacysql.LegacyDatabaseHelper, orgID int64, assignment grant) (int64, error) {
@@ -184,11 +184,11 @@ func (s *ResourcePermSqlBackend) storeRbacAssignment(ctx context.Context, dbHelp
 
 // buildRbacAssignments builds the list of grants (role assignments and permissions) for a given ResourcePermission spec
 // It resolves user/team/service account UIDs to internal IDs for the role name and assignee ID
-func (s *ResourcePermSqlBackend) buildRbacAssignments(ctx context.Context, ns types.NamespaceInfo, v0ResourcePerm *v0alpha1.ResourcePermission, rbacScope string) ([]grant, error) {
+func (s *ResourcePermSqlBackend) buildRbacAssignments(ctx context.Context, ns types.NamespaceInfo, mapper Mapper, v0ResourcePerm *v0alpha1.ResourcePermission, rbacScope string) ([]grant, error) {
 	assignments := make([]grant, 0, len(v0ResourcePerm.Spec.Permissions))
 
 	for _, perm := range v0ResourcePerm.Spec.Permissions {
-		rbacActionSet, err := actionSet(v0ResourcePerm.Spec.Resource.Resource, perm.Verb)
+		rbacActionSet, err := mapper.ActionSet(perm.Verb)
 		if err != nil {
 			return nil, err
 		}
@@ -277,9 +277,12 @@ func (s *ResourcePermSqlBackend) createResourcePermission(ctx context.Context, d
 		return 0, fmt.Errorf("resource permission must have at least one permission: %w", errInvalidSpec)
 	}
 
-	rbacScope := scope(v0ResourcePerm.Spec.Resource.Resource, v0ResourcePerm.Spec.Resource.Name)
+	mapper, grn, err := s.splitResourceName(v0ResourcePerm.Name)
+	if err != nil {
+		return 0, err
+	}
 
-	assignments, err := s.buildRbacAssignments(ctx, ns, v0ResourcePerm, rbacScope)
+	assignments, err := s.buildRbacAssignments(ctx, ns, mapper, v0ResourcePerm, mapper.Scope(grn.Name))
 	if err != nil {
 		return 0, err
 	}

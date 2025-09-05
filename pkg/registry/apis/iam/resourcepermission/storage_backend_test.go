@@ -38,7 +38,7 @@ func TestWriteEvent_Add(t *testing.T) {
 
 		rv, err := backend.WriteEvent(context.Background(), resource.WriteEvent{
 			Type: resourcepb.WatchEvent_ADDED,
-			Key:  &resourcepb.ResourceKey{Name: "folders.grafana.app-folders-fold1", Namespace: "invalid"},
+			Key:  &resourcepb.ResourceKey{Name: "folder.grafana.app-folders-fold1", Namespace: "invalid"},
 		})
 
 		require.Zero(t, rv)
@@ -52,12 +52,12 @@ func TestWriteEvent_Add(t *testing.T) {
 
 		resourcePerm, err := utils.MetaAccessor(&v0alpha1.ResourcePermission{
 			ObjectMeta: metav1.ObjectMeta{
-				Name:      "folders.grafana.app-folders-fold1",
+				Name:      "folder.grafana.app-folders-fold1",
 				Namespace: "default",
 			},
 			Spec: v0alpha1.ResourcePermissionSpec{
 				Resource: v0alpha1.ResourcePermissionspecResource{
-					ApiGroup: "folders.grafana.app",
+					ApiGroup: "folder.grafana.app",
 					Resource: "folders",
 					Name:     "fold1",
 				},
@@ -75,7 +75,7 @@ func TestWriteEvent_Add(t *testing.T) {
 		gr := v0alpha1.ResourcePermissionInfo.GroupResource()
 		rv, err := backend.WriteEvent(context.Background(), resource.WriteEvent{
 			Type:   resourcepb.WatchEvent_ADDED,
-			Key:    &resourcepb.ResourceKey{Group: gr.Group, Resource: gr.Resource, Name: "folders.grafana.app-folders-fold1", Namespace: "default"},
+			Key:    &resourcepb.ResourceKey{Group: gr.Group, Resource: gr.Resource, Name: "folder.grafana.app-folders-fold1", Namespace: "default"},
 			Object: resourcePerm,
 		})
 
