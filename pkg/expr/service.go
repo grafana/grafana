@@ -124,6 +124,8 @@ type BasicColumn struct {
 	DataFrameFieldType data.FieldType
 }
 
+type SQLSchemaResponse = map[string][]BasicColumn
+
 // GetSQLSchemas returns what the schemas are for SQL expressions for all DS queries
 // in the request. It executes the queries to get the schemas.
 // TODO: DTO for mysql.Schema?
