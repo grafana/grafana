@@ -4,7 +4,11 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana/apps/dashboard/pkg/migration/schemaversion"
-	"github.com/grafana/grafana/apps/dashboard/pkg/migration/testutil"
+)
+
+const (
+	// The pluginVersion to set after simulating auto-migrate for angular panels
+	pluginVersionForAutoMigrate = "12.1.0"
 )
 
 func TestV24(t *testing.T) {
@@ -79,7 +83,7 @@ func TestV24(t *testing.T) {
 						"targets": []interface{}{
 							map[string]interface{}{"refId": "A"},
 						},
-						"pluginVersion": "1.0.0",
+						"pluginVersion": pluginVersionForAutoMigrate,
 					},
 				},
 			},
@@ -241,7 +245,7 @@ func TestV24(t *testing.T) {
 						"targets": []interface{}{
 							map[string]interface{}{"refId": "A"},
 						},
-						"pluginVersion": "1.0.0",
+						"pluginVersion": pluginVersionForAutoMigrate,
 					},
 				},
 			},
@@ -331,7 +335,7 @@ func TestV24(t *testing.T) {
 						"targets": []interface{}{
 							map[string]interface{}{"refId": "A"},
 						},
-						"pluginVersion": "1.0.0",
+						"pluginVersion": pluginVersionForAutoMigrate,
 					},
 				},
 			},
@@ -410,7 +414,7 @@ func TestV24(t *testing.T) {
 						"targets": []interface{}{
 							map[string]interface{}{"refId": "A"},
 						},
-						"pluginVersion": "1.0.0",
+						"pluginVersion": pluginVersionForAutoMigrate,
 					},
 				},
 			},
@@ -489,7 +493,7 @@ func TestV24(t *testing.T) {
 						"targets": []interface{}{
 							map[string]interface{}{"refId": "A"},
 						},
-						"pluginVersion": "1.0.0",
+						"pluginVersion": pluginVersionForAutoMigrate,
 					},
 				},
 			},
@@ -567,7 +571,7 @@ func TestV24(t *testing.T) {
 						"targets": []interface{}{
 							map[string]interface{}{"refId": "A"},
 						},
-						"pluginVersion": "1.0.0",
+						"pluginVersion": pluginVersionForAutoMigrate,
 					},
 				},
 			},
@@ -664,7 +668,7 @@ func TestV24(t *testing.T) {
 						"targets": []interface{}{
 							map[string]interface{}{"refId": "A"},
 						},
-						"pluginVersion": "1.0.0",
+						"pluginVersion": pluginVersionForAutoMigrate,
 					},
 				},
 			},
@@ -836,12 +840,12 @@ func TestV24(t *testing.T) {
 						"targets": []interface{}{
 							map[string]interface{}{"refId": "A"},
 						},
-						"pluginVersion": "1.0.0",
+						"pluginVersion": pluginVersionForAutoMigrate,
 					},
 				},
 			},
 		},
 	}
 
-	runMigrationTests(t, tests, schemaversion.V24(testutil.GetTestPanelProvider()))
+	runMigrationTests(t, tests, schemaversion.V24)
 }

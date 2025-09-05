@@ -4506,16 +4506,11 @@
             "any": "Combinar qualquer uma",
             "label": "Regras de correspondência"
           },
-          "label": "Grupo",
           "visibility": {
             "hide": "Ocultar",
             "label": "Visibilidade de {{type}}",
             "show": "Exibir"
           }
-        },
-        "shared": {
-          "delete-condition": "Excluir condição",
-          "unsupported-item-type": "Esta condição não é compatível com o elemento e será ignorada."
         },
         "time-range-size": {
           "info": "Exibir ou ocultar {{type}} se o intervalo de tempo do painel for menor do que o intervalo de tempo selecionado.",
@@ -4545,17 +4540,21 @@
             "not-matches": "Não corresponde"
           },
           "value": "Valor"
+        },
+        "wrapper": {
+          "delete-condition": "",
+          "unsupported-object-type": ""
         }
       },
       "editor": {
+        "info": "",
         "not-supported-for-custom-grid": "A renderização condicional não é compatível com o layout de grade personalizado. Mude para a grade automática para poder usá-la.",
-        "unsupported-item-type": "A renderização condicional não é compatível com este tipo de item"
+        "unsupported-object-type": ""
       },
       "overlay": {
         "tooltip": "O elemento está oculto devido à renderização condicional."
       },
       "root": {
-        "info": "Defina regras para controlar a visibilidade de {{type}} combinando todas as regras ou algumas delas.",
         "title": "Exibir/Ocultar regras"
       }
     },
@@ -4695,7 +4694,8 @@
       "paste-panel": "Colar painel",
       "remove": "Remover {{typeName}}",
       "row-title": "",
-      "switch-layout": "Alternar layout"
+      "switch-layout": "Alternar layout",
+      "tab-title": ""
     },
     "edit-pane": {
       "elements": {
@@ -8348,6 +8348,10 @@
         "action-title": "Título",
         "action-title-placeholder": "Título da ação",
         "action-variables": "Variáveis",
+        "connection": "",
+        "connection-direct-description": "",
+        "connection-direct-label": "",
+        "connection-placeholder": "",
         "one-click-description": "Apenas um link ou ação pode ter um clique habilitado de cada vez"
       }
     },
@@ -8772,7 +8776,6 @@
       "cell-inspect": "Inspecionar valor",
       "cell-inspect-tooltip": "Inspecionar valor",
       "copy": "Copiar para a área de transferência",
-      "count": "Contagem",
       "csv-counts": "Linhas:{{rows}}, Colunas:{{columns}}  <5></5>",
       "csv-placeholder": "Insira o CSV aqui...",
       "filter-placeholder": "Filtrar valores",
@@ -8783,6 +8786,11 @@
       "filter-popup-heading": "Filtrar por valores:",
       "filter-popup-input-placeholder": "Filtrar valores",
       "filter-popup-match-case": "Diferenciar maiúsculas/minúsculas",
+      "footer": {
+        "reducer": {
+          "count": ""
+        }
+      },
       "inspect-drawer-title": "Inspecionar valor",
       "nested-table": {
         "no-data": "Sem dados"
@@ -9723,30 +9731,6 @@
     "un-themed-log-label-stats": {
       "field-log-stats": "{{label}}: {{total}} de {{rowCount}} linhas apresentam esse campo",
       "label-log-stats": "{{label}}: {{total}} de {{rowCount}} linhas apresentam esse rótulo"
-    }
-  },
-  "logs-new": {
-    "category-logs": "Logs",
-    "deduplication-options": {
-      "label-exact": "Exato",
-      "label-none": "Nenhum",
-      "label-numbers": "Números",
-      "label-signature": "Assinatura"
-    },
-    "description-infinite-scrolling": "Experimental. Solicite mais resultados ao descer até a parte inferior da lista de logs.",
-    "description-show-controls": "Exibir controles para pular para a última ou primeira linha do log e filtros por nível de log",
-    "description-syntax-highlighting": "Use um conjunto predefinido de regras de cores de sintaxe para destacar partes relevantes das linhas de log",
-    "name-deduplication": "Desduplicação",
-    "name-enable-log-details": "Ativar detalhes do log",
-    "name-infinite-scrolling": "Ativar rolagem infinita",
-    "name-order": "Ordem",
-    "name-show-controls": "Mostrar controles",
-    "name-syntax-highlighting": "Ativar destaque de sintaxe",
-    "name-time": "Tempo",
-    "name-wrap-lines": "Quebras de linha",
-    "order-options": {
-      "label-newest-first": "Mais recentes primeiro",
-      "label-oldest-first": "Mais antigos primeiro"
     }
   },
   "manage-dashbaords": {
@@ -12788,8 +12772,6 @@
     "description-calculation": "Escolha uma função de redução/cálculo",
     "description-cell-value-inspect": "Ativar inspeção de valor de célula em uma janela modal",
     "description-column-filter": "Ativa/desativa filtros de campo na tabela",
-    "description-count-rows": "Exibir uma única contagem para todas as linhas de dados",
-    "description-fields": "Selecione os campos que devem ser calculados",
     "description-frozen-columns": "",
     "description-min-column-width": "A largura mínima para o redimensionamento automático da coluna",
     "description-tooltip-from-field": "",
@@ -12816,21 +12798,17 @@
     "name-column-alignment": "Alinhamento da coluna",
     "name-column-filter": "Filtro de coluna",
     "name-column-width": "Largura da coluna",
-    "name-count-rows": "Contar linhas",
     "name-enable-pagination": "",
-    "name-fields": "Campos",
     "name-frozen-columns": "",
     "name-hide-in-table": "Ocultar na tabela",
     "name-max-height": "",
     "name-min-column-width": "Largura mínima da coluna",
-    "name-show-table-footer": "Mostrar rodapé da tabela",
     "name-show-table-header": "Mostrar cabeçalho da tabela",
     "name-tooltip-from-field": "",
     "name-tooltip-placement": "",
     "name-wrap-header-text": "Ajustar texto do cabeçalho",
     "name-wrap-text": "",
     "placeholder-column-width": "automático",
-    "placeholder-fields": "Todos os campos numéricos",
     "placeholder-max-height": "",
     "tooltip-placement-options": {
       "label-auto": "",

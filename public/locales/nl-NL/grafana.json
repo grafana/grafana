@@ -4506,16 +4506,11 @@
             "any": "Overeenkomend met",
             "label": "Regels matchen"
           },
-          "label": "Groep",
           "visibility": {
             "hide": "Verbergen",
             "label": "{{type}} zichtbaarheid",
             "show": "Tonen"
           }
-        },
-        "shared": {
-          "delete-condition": "Voorwaarde verwijderen",
-          "unsupported-item-type": "Deze voorwaarde wordt niet ondersteund door het element, daarom wordt deze genegeerd."
         },
         "time-range-size": {
           "info": "De/het {{type}} weergeven of verbergen als het tijdsbereik van het dashboard korter is dan het geselecteerde tijdsbestek.",
@@ -4545,17 +4540,21 @@
             "not-matches": "Komt niet overeen"
           },
           "value": "Waarde"
+        },
+        "wrapper": {
+          "delete-condition": "",
+          "unsupported-object-type": ""
         }
       },
       "editor": {
+        "info": "",
         "not-supported-for-custom-grid": "Voorwaardelijke weergave wordt niet ondersteund in de aangepaste rasterindeling. Schakel over naar auto grid om dit te gebruiken.",
-        "unsupported-item-type": "Voorwaardelijke weergave wordt niet ondersteund voor dit itemtype"
+        "unsupported-object-type": ""
       },
       "overlay": {
         "tooltip": "Element is verborgen vanwege voorwaardelijke weergave."
       },
       "root": {
-        "info": "Stel regels in om de zichtbaarheid van {{type}} te beheren door een of alle regels te matchen.",
         "title": "Regels tonen / verbergen"
       }
     },
@@ -4695,7 +4694,8 @@
       "paste-panel": "Paneel plakken",
       "remove": "{{typeName}} verwijderen",
       "row-title": "",
-      "switch-layout": "Indeling wisselen"
+      "switch-layout": "Indeling wisselen",
+      "tab-title": ""
     },
     "edit-pane": {
       "elements": {
@@ -8348,6 +8348,10 @@
         "action-title": "Titel",
         "action-title-placeholder": "Actietitel",
         "action-variables": "Variabelen",
+        "connection": "",
+        "connection-direct-description": "",
+        "connection-direct-label": "",
+        "connection-placeholder": "",
         "one-click-description": "Slechts één link of actie kan tegelijk de één-klik-functionaliteit hebben ingeschakeld"
       }
     },
@@ -8772,7 +8776,6 @@
       "cell-inspect": "Waarde inspecteren",
       "cell-inspect-tooltip": "Waarde inspecteren",
       "copy": "Naar klembord kopiëren",
-      "count": "Telling",
       "csv-counts": "Rijen:{{rows}}, kolommen:{{columns}}  <5></5>",
       "csv-placeholder": "Voer hier csv in ...",
       "filter-placeholder": "Filter waarden",
@@ -8783,6 +8786,11 @@
       "filter-popup-heading": "Filteren op waarden:",
       "filter-popup-input-placeholder": "Filter waarden",
       "filter-popup-match-case": "Case matchen",
+      "footer": {
+        "reducer": {
+          "count": ""
+        }
+      },
       "inspect-drawer-title": "Waarde inspecteren",
       "nested-table": {
         "no-data": "Geen gegevens"
@@ -9723,30 +9731,6 @@
     "un-themed-log-label-stats": {
       "field-log-stats": "{{label}}: {{total}} van de {{rowCount}} rijen hebben dat veld",
       "label-log-stats": "{{label}}: {{total}} van de {{rowCount}} rijen hebben dat label"
-    }
-  },
-  "logs-new": {
-    "category-logs": "Logs",
-    "deduplication-options": {
-      "label-exact": "Exact",
-      "label-none": "Geen",
-      "label-numbers": "Nummers",
-      "label-signature": "Handtekening"
-    },
-    "description-infinite-scrolling": "Experimenteel. Vraag meer resultaten op door naar de onderkant van de loglijst te scrollen.",
-    "description-show-controls": "Weergavebesturingselementen om naar de laatste of eerste logregel te gaan en filters op logniveau",
-    "description-syntax-highlighting": "Gebruik een vooraf gedefinieerde syntaxis om relevante delen van de logregels te markeren",
-    "name-deduplication": "Dedupliceren",
-    "name-enable-log-details": "Logboekdetails inschakelen",
-    "name-infinite-scrolling": "Oneindig scrollen mogelijk maken",
-    "name-order": "Orde",
-    "name-show-controls": "Bedieningselementen tonen",
-    "name-syntax-highlighting": "Syntaxismarkering inschakelen",
-    "name-time": "Tijd",
-    "name-wrap-lines": "Lijnen omsluiten",
-    "order-options": {
-      "label-newest-first": "Nieuwste eerst",
-      "label-oldest-first": "Oudste eerst"
     }
   },
   "manage-dashbaords": {
@@ -12788,8 +12772,6 @@
     "description-calculation": "Kies een verkleiningsfunctie/berekening",
     "description-cell-value-inspect": "Celwaarde-inspectie inschakelen in een pop-upvenster",
     "description-column-filter": "Schakelt veldfilters in tabel in/uit",
-    "description-count-rows": "Een enkele telling weergeven voor alle gegevensrijen",
-    "description-fields": "Selecteer de velden die moeten worden berekend",
     "description-frozen-columns": "",
     "description-min-column-width": "De minimale breedte voor het automatisch aanpassen van de kolomgrootte",
     "description-tooltip-from-field": "",
@@ -12816,21 +12798,17 @@
     "name-column-alignment": "Kolomuitlijning",
     "name-column-filter": "Kolomfilter",
     "name-column-width": "Kolombreedte",
-    "name-count-rows": "Rijen tellen",
     "name-enable-pagination": "",
-    "name-fields": "Velden",
     "name-frozen-columns": "",
     "name-hide-in-table": "In tabel verbergen",
     "name-max-height": "",
     "name-min-column-width": "Minimale kolombreedte",
-    "name-show-table-footer": "Voettekst tabel tonen",
     "name-show-table-header": "Header tabel tonen",
     "name-tooltip-from-field": "",
     "name-tooltip-placement": "",
     "name-wrap-header-text": "Koptekst laten teruglopen",
     "name-wrap-text": "",
     "placeholder-column-width": "automatisch",
-    "placeholder-fields": "Alle numerieke velden",
     "placeholder-max-height": "",
     "tooltip-placement-options": {
       "label-auto": "",
