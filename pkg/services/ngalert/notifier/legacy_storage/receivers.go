@@ -86,13 +86,14 @@ func (rev *ConfigRevision) ReceiverUseByName() map[string]int {
 
 func (rev *ConfigRevision) GetReceiver(uid string, prov Provenances) (*models.Receiver, error) {
 	for _, r := range rev.Config.AlertmanagerConfig.Receivers {
-		if NameToUid(r.GetName()) == uid {
-			recv, err := PostableApiReceiverToReceiver(r, GetReceiverProvenance(prov, r))
-			if err != nil {
-				return nil, fmt.Errorf("failed to convert receiver %q: %w", r.Name, err)
-			}
-			return recv, nil
+		if NameToUid(r.GetName()) != uid {
+			continue
 		}
+		recv, err := PostableApiReceiverToReceiver(r, GetReceiverProvenance(prov, r))
+		if err != nil {
+			return nil, fmt.Errorf("failed to convert receiver %q: %w", r.Name, err)
+		}
+		return recv, nil
 	}
 	return nil, ErrReceiverNotFound.Errorf("")
 }
