@@ -754,3 +754,8 @@ export function getDefaultDetailsMode(container: HTMLDivElement | undefined): Lo
   const width = container?.clientWidth ?? window.innerWidth;
   return width > 1440 ? 'sidebar' : 'inline';
 }
+
+export function getDefaultControlsExpandedMode(container: HTMLDivElement | null): boolean {
+  const width = container?.clientWidth ?? window.innerWidth;
+  return width > 1080;
+}
