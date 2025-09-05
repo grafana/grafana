@@ -26,16 +26,11 @@ export function getRuleViewExtensionTabs(args: RuleViewTabBuilderArgs): NavModel
 export function addEnrichmentSection() {
   registerRuleViewTab(({ activeTab, setActiveTab }) => {
     const tabId = 'enrichment';
-    const styles = useStyles2(getStyles);
     return {
       text: t('alerting.use-page-nav.page-nav.text.enrichment', 'Alert enrichment'),
       active: activeTab === tabId,
       onClick: () => setActiveTab(tabId),
-      tabSuffix: () => (
-        <span className={styles.tabSuffix}>
-          <FeatureBadge featureState={FeatureState.new} />
-        </span>
-      ),
+      tabSuffix: () => <EnrichmentTabSuffix />,
     };
   });
 }
@@ -51,4 +46,13 @@ function getStyles() {
       marginLeft: 8,
     }),
   };
+}
+
+function EnrichmentTabSuffix() {
+  const styles = useStyles2(getStyles);
+  return (
+    <span className={styles.tabSuffix}>
+      <FeatureBadge featureState={FeatureState.new} />
+    </span>
+  );
 }
