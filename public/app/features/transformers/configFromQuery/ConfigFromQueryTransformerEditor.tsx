@@ -10,7 +10,8 @@ import {
   TransformerCategory,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { fieldMatchersUI, InlineField, InlineFieldRow, Select, useStyles2 } from '@grafana/ui';
+import { Checkbox, fieldMatchersUI, InlineField, InlineFieldRow, Select, useStyles2 } from '@grafana/ui';
+import { FieldNamePicker } from '@grafana/ui/internal';
 
 import { getTransformationContent } from '../docs/getTransformationContent';
 import { FieldToConfigMappingEditor } from '../fieldToConfigMapping/FieldToConfigMappingEditor';
@@ -20,6 +21,13 @@ import lightImage from '../images/light/configFromData.svg';
 import { getConfigFromDataTransformer, ConfigFromQueryTransformOptions } from './configFromQuery';
 
 export interface Props extends TransformerUIProps<ConfigFromQueryTransformOptions> {}
+
+const fieldNamePickerSettings = {
+  editor: FieldNamePicker,
+  id: '',
+  name: '',
+  settings: { width: 24, isClearable: false },
+};
 
 export function ConfigFromQueryTransformerEditor({ input, onChange, options }: Props) {
   const styles = useStyles2(getStyles);
@@ -38,6 +46,13 @@ export function ConfigFromQueryTransformerEditor({ input, onChange, options }: P
     onChange({
       ...options,
       configRefId: value.value || 'config',
+    });
+  };
+
+  const onMappingChange = (value: SelectableValue<boolean>) => {
+    onChange({
+      ...options,
+      isMapping: value.value || false,
     });
   };
 
@@ -85,14 +100,21 @@ export function ConfigFromQueryTransformerEditor({ input, onChange, options }: P
             onChange={onMatcherConfigChange}
           />
         </InlineField>
+        <InlineField>
+          <Checkbox
+            label={t('transformers.config-from-query-transformer-editor.label-mapping', 'Map results')}
+            onChange={onMappingChange}
+            value={options.isMapping}
+          />
+        </InlineField>
       </InlineFieldRow>
       <InlineFieldRow>
-        {configFrame && (
+        {configFrame && !options.isMapping && (
           <FieldToConfigMappingEditor
             frame={configFrame}
             mappings={options.mappings}
             onChange={(mappings) => onChange({ ...options, mappings })}
-            withReducers
+            withReducers={!options.isMapping}
           />
         )}
       </InlineFieldRow>

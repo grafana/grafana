@@ -28,6 +28,7 @@ export interface FieldToConfigMapping {
   reducerId?: ReducerID;
   handlerKey: string | null;
   handlerArguments?: HandlerArguments;
+  sourceFieldName?: string; // for mapping
 }
 
 /**

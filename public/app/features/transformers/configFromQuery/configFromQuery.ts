@@ -22,6 +22,7 @@ export interface ConfigFromQueryTransformOptions {
   configRefId?: string;
   mappings: FieldToConfigMapping[];
   applyTo?: MatcherConfig;
+  isMapping?: boolean;
 }
 
 export function extractConfigFromQuery(options: ConfigFromQueryTransformOptions, data: DataFrame[]) {
