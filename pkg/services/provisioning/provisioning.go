@@ -211,7 +211,7 @@ func (ps *ProvisioningServiceImpl) Run(ctx context.Context) error {
 		// Migrating prom types relies on data source provisioning to already be completed
 		// If we can make services depend on other services completing first,
 		// then we should remove this from provisioning
-		err = ps.MigratePrometheusType(ctx)
+		err = ps.migratePrometheusType(ctx)
 		if err != nil {
 			ps.log.Error("Failed to migrate Prometheus type", "error", err)
 			return
@@ -348,10 +348,6 @@ func (ps *ProvisioningServiceImpl) ProvisionAlerting(ctx context.Context) error 
 		TemplateService:            *templateService,
 	}
 	return ps.provisionAlerting(ctx, cfg)
-}
-
-func (ps *ProvisioningServiceImpl) MigratePrometheusType(ctx context.Context) error {
-	return ps.migratePrometheusType(ctx)
 }
 
 func (ps *ProvisioningServiceImpl) GetDashboardProvisionerResolvedPath(name string) string {
