@@ -173,12 +173,10 @@ func setupJobsControllerFromConfig(cfg *setting.Cfg) (*jobsControllerConfig, err
 }
 
 func setupWorkers(controllerCfg *jobsControllerConfig) ([]jobs.Worker, error) {
-	// TODO: We need to connect to multiple API servers for each resource type
-	// Folders, Dashboards and Provisioning
-	configProvider := NewDirectConfigProvider(controllerCfg.restCfg)
-	clients := resources.NewClientFactory(configProvider)
+	// TODO: Fix once this PR is merged: https://github.com/grafana/grafana/pull/110699
+	clients := controllerCfg.clients
 	parsers := resources.NewParserFactory(clients)
-	resourceLister := resources.NewResourceLister(controllerCfg.unifiedStorageClient)
+	resourceLister := resources.NewResourceLister(controllerCfg.unified)
 	repositoryResources := resources.NewRepositoryResourcesFactory(parsers, clients, resourceLister)
 	statusPatcher := controller.NewRepositoryStatusPatcher(controllerCfg.provisioningClient.ProvisioningV0alpha1())
 
