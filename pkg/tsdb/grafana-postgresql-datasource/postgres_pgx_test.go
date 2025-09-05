@@ -1488,6 +1488,35 @@ func TestIntegrationPostgresPGX(t *testing.T) {
 				require.Error(t, queryResult.Error)
 				require.Contains(t, queryResult.Error.Error(), "column name mismatch")
 			})
+
+			t.Run("Should return error for incompatible number of columns", func(t *testing.T) {
+				// This query returns multiple result sets with different number of columns
+				// This should fix the error "runtime error: index out of range [1] with length 1"
+				query := &backend.QueryDataRequest{
+					Queries: []backend.DataQuery{
+						{
+							RefID: "A",
+							JSON: []byte(`{
+								"rawSql": "SELECT id, name FROM test_multi_results WHERE id = 1; SELECT id FROM test_multi_results WHERE id = 1;",
+								"format": "table"
+							}`),
+							TimeRange: backend.TimeRange{
+								From: fromStart,
+								To:   fromStart.Add(1 * time.Hour),
+							},
+						},
+					},
+				}
+
+				// This should not panic anymore, but should return an error instead
+				resp, err := exe.QueryDataPGX(t.Context(), query)
+				require.NoError(t, err)
+				queryResult := resp.Responses["A"]
+
+				// We expect an error about incompatible result structure, not a panic
+				require.Error(t, queryResult.Error)
+				require.Contains(t, queryResult.Error.Error(), "incompatible result structure: expected 2 columns, got 1 columns")
+			})
 		})
 
 		t.Run("Should handle queries with mixed statement types", func(t *testing.T) {
