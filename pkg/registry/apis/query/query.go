@@ -243,7 +243,6 @@ func (r *queryREST) Connect(connectCtx context.Context, name string, _ runtime.O
 func handleQuery(ctx context.Context, raw query.QueryDataRequest, b QueryAPIBuilder, httpreq *http.Request, responder responderWrapper, connectLogger log.Logger) (*backend.QueryDataResponse, error) {
 	var jsonQueries = make([]*simplejson.Json, 0, len(raw.Queries))
 	for _, query := range raw.Queries {
-
 		dsRef, err := getValidDataSourceRef(ctx, query.Datasource, query.DatasourceID, b.legacyDatasourceLookup)
 		if err != nil {
 			connectLogger.Error("error getting valid datasource ref", err)
