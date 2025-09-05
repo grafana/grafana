@@ -10,21 +10,23 @@ import (
 	"strings"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/tracing"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 )
 
-type resourceHandler func(context.Context, *datasourceInfo, []byte) ([]byte, int, error)
+type resourceHandler[T any] func(context.Context, *datasourceInfo, T) ([]byte, int, error)
 
 func (s *Service) newResourceMux() *http.ServeMux {
 	mux := http.NewServeMux()
-	mux.HandleFunc("/events", s.handleResourceReq(s.handleEvents))
-	mux.HandleFunc("/metrics/find", s.handleResourceReq(s.handleMetricsFind))
+	mux.HandleFunc("/events", handleResourceReq[GraphiteEventsRequest](s.handleEvents, s))
+	mux.HandleFunc("/metrics/find", handleResourceReq[GraphiteMetricsFindRequest](s.handleMetricsFind, s))
+	mux.HandleFunc("/metrics/expand", handleResourceReq[GraphiteMetricsFindRequest](s.handleMetricsExpand, s))
 	return mux
 }
 
-func (s *Service) handleResourceReq(handlerFn resourceHandler) func(rw http.ResponseWriter, req *http.Request) {
+func handleResourceReq[T any](handlerFn resourceHandler[T], s *Service) func(rw http.ResponseWriter, req *http.Request) {
 	return func(rw http.ResponseWriter, req *http.Request) {
 		s.logger.Debug("Received resource call", "url", req.URL.String(), "method", req.Method)
 
@@ -55,7 +57,13 @@ func (s *Service) handleResourceReq(handlerFn resourceHandler) func(rw http.Resp
 			return
 		}
 
-		response, statusCode, err := handlerFn(ctx, dsInfo, requestBody)
+		parsedBody, err := parseRequestBody[T](requestBody, s.logger)
+		if err != nil {
+			writeErrorResponse(rw, http.StatusInternalServerError, fmt.Sprintf("failed to parse request body: %v", err))
+			return
+		}
+
+		response, statusCode, err := handlerFn(ctx, dsInfo, *parsedBody)
 		if err != nil {
 			writeErrorResponse(rw, statusCode, fmt.Sprintf("failed to handle resource request: %v", err))
 			return
@@ -70,14 +78,7 @@ func (s *Service) handleResourceReq(handlerFn resourceHandler) func(rw http.Resp
 	}
 }
 
-func (s *Service) handleEvents(ctx context.Context, dsInfo *datasourceInfo, requestBody []byte) ([]byte, int, error) {
-	eventsRequestJson := GraphiteEventsRequest{}
-	err := json.Unmarshal(requestBody, &eventsRequestJson)
-	if err != nil {
-		s.logger.Error("Failed to unmarshal events request body to JSON", "error", err)
-		return nil, http.StatusInternalServerError, fmt.Errorf("unexpected error %v", err)
-	}
-
+func (s *Service) handleEvents(ctx context.Context, dsInfo *datasourceInfo, eventsRequestJson GraphiteEventsRequest) ([]byte, int, error) {
 	eventsUrl, err := url.Parse(fmt.Sprintf("%s/events/get_data", dsInfo.URL))
 	if err != nil {
 		return nil, http.StatusInternalServerError, fmt.Errorf("unexpected error %v", err)
@@ -92,37 +93,9 @@ func (s *Service) handleEvents(ctx context.Context, dsInfo *datasourceInfo, requ
 
 	eventsUrl.RawQuery = queryValues.Encode()
 
-	graphiteReq, err := http.NewRequestWithContext(ctx, http.MethodGet, eventsUrl.String(), nil)
+	events, statusCode, err := doGraphiteRequest[[]GraphiteEventsResponse](ctx, "events", dsInfo, eventsUrl, http.MethodGet, nil, map[string]string{}, s.logger)
 	if err != nil {
-		s.logger.Info("Failed to create events request", "error", err)
-		return nil, http.StatusInternalServerError, fmt.Errorf("failed to create events request: %v", err)
-	}
-
-	_, span := tracing.DefaultTracer().Start(ctx, "graphite events")
-	defer span.End()
-	span.SetAttributes(
-		attribute.Int64("datasource_id", dsInfo.Id),
-	)
-	res, err := dsInfo.HTTPClient.Do(graphiteReq)
-	if res != nil {
-		span.SetAttributes(attribute.Int("graphite.response.code", res.StatusCode))
-	}
-	if err != nil {
-		span.RecordError(err)
-		span.SetStatus(codes.Error, err.Error())
-		return nil, http.StatusInternalServerError, fmt.Errorf("failed to complete events request: %v", err)
-	}
-
-	defer func() {
-		err := res.Body.Close()
-		if err != nil {
-			s.logger.Warn("Failed to close response body", "error", err)
-		}
-	}()
-
-	events, err := parseResponse[[]GraphiteEventsResponse](res)
-	if err != nil {
-		return nil, http.StatusInternalServerError, fmt.Errorf("failed to parse events response: %v", err)
+		return nil, statusCode, fmt.Errorf("events request failed: %v", err)
 	}
 
 	// We construct this struct to avoid frontend changes.
@@ -133,17 +106,10 @@ func (s *Service) handleEvents(ctx context.Context, dsInfo *datasourceInfo, requ
 		return nil, http.StatusInternalServerError, fmt.Errorf("failed to marshal events response: %s", err)
 	}
 
-	return graphiteEventsResponse, res.StatusCode, nil
+	return graphiteEventsResponse, statusCode, nil
 }
 
-func (s *Service) handleMetricsFind(ctx context.Context, dsInfo *datasourceInfo, requestBody []byte) ([]byte, int, error) {
-	metricsFindRequestJson := GraphiteMetricsFindRequest{}
-	err := json.Unmarshal(requestBody, &metricsFindRequestJson)
-	if err != nil {
-		s.logger.Error("Failed to unmarshal metrics find request body to JSON", "error", err)
-		return nil, http.StatusInternalServerError, fmt.Errorf("unexpected error %v", err)
-	}
-
+func (s *Service) handleMetricsFind(ctx context.Context, dsInfo *datasourceInfo, metricsFindRequestJson GraphiteMetricsFindRequest) ([]byte, int, error) {
 	if metricsFindRequestJson.Query == "" {
 		return nil, http.StatusBadRequest, fmt.Errorf("query is required")
 	}
@@ -164,14 +130,71 @@ func (s *Service) handleMetricsFind(ctx context.Context, dsInfo *datasourceInfo,
 	data := url.Values{}
 	data.Set("query", metricsFindRequestJson.Query)
 
-	graphiteReq, err := http.NewRequestWithContext(ctx, http.MethodPost, metricsFindUrl.String(), strings.NewReader(data.Encode()))
+	metrics, statusCode, err := doGraphiteRequest[[]GraphiteMetricsFindResponse](ctx, "metrics find", dsInfo, metricsFindUrl, http.MethodPost, strings.NewReader(data.Encode()), map[string]string{"Content-Type": "application/x-www-form-urlencoded"}, s.logger)
 	if err != nil {
-		s.logger.Info("Failed to create metrics find request", "error", err)
-		return nil, http.StatusInternalServerError, fmt.Errorf("failed to create metrics find request: %v", err)
+		return nil, statusCode, fmt.Errorf("metrics find request failed: %v", err)
 	}
-	graphiteReq.Header.Add("Content-Type", "application/x-www-form-urlencoded")
 
-	_, span := tracing.DefaultTracer().Start(ctx, "graphite metrics find")
+	metricsFindResponse, err := json.Marshal(*metrics)
+	if err != nil {
+		return nil, http.StatusInternalServerError, fmt.Errorf("failed to marshal metrics find response: %s", err)
+	}
+
+	return metricsFindResponse, statusCode, nil
+}
+
+func (s *Service) handleMetricsExpand(ctx context.Context, dsInfo *datasourceInfo, metricsExpandRequestJson GraphiteMetricsFindRequest) ([]byte, int, error) {
+	if metricsExpandRequestJson.Query == "" {
+		return nil, http.StatusBadRequest, fmt.Errorf("query is required")
+	}
+
+	metricsExpandUrl, err := url.Parse(fmt.Sprintf("%s/metrics/expand", dsInfo.URL))
+	if err != nil {
+		return nil, http.StatusInternalServerError, fmt.Errorf("unexpected error %v", err)
+	}
+
+	queryValues := metricsExpandUrl.Query()
+	queryValues.Set("query", metricsExpandRequestJson.Query)
+	if metricsExpandRequestJson.From != "" {
+		queryValues.Set("from", metricsExpandRequestJson.From)
+	}
+	if metricsExpandRequestJson.Until != "" {
+		queryValues.Set("until", metricsExpandRequestJson.Until)
+	}
+	metricsExpandUrl.RawQuery = queryValues.Encode()
+
+	metrics, statusCode, err := doGraphiteRequest[GraphiteMetricsExpandResponse](ctx, "metrics expand", dsInfo, metricsExpandUrl, http.MethodGet, nil, map[string]string{}, s.logger)
+	if err != nil {
+		return nil, statusCode, fmt.Errorf("metrics expand request failed: %v", err)
+	}
+
+	metricsResponse := make([]GraphiteMetricsFindResponse, 0, len(metrics.Results))
+	for _, metric := range metrics.Results {
+		metricsResponse = append(metricsResponse, GraphiteMetricsFindResponse{
+			Text: metric,
+		})
+	}
+
+	metricsExpandResponse, err := json.Marshal(metricsResponse)
+	if err != nil {
+		return nil, http.StatusInternalServerError, fmt.Errorf("failed to marshal metrics expand response: %s", err)
+	}
+
+	return metricsExpandResponse, statusCode, nil
+}
+
+func doGraphiteRequest[T any](ctx context.Context, endpoint string, dsInfo *datasourceInfo, url *url.URL, method string, body io.Reader, headers map[string]string, logger log.Logger) (*T, int, error) {
+	graphiteReq, err := http.NewRequestWithContext(ctx, method, url.String(), body)
+	if err != nil {
+		logger.Info(fmt.Sprintf("Failed to create %s request", endpoint), "error", err)
+		return nil, http.StatusInternalServerError, fmt.Errorf("failed to create %s request: %v", endpoint, err)
+	}
+
+	for k, v := range headers {
+		graphiteReq.Header.Add(k, v)
+	}
+
+	_, span := tracing.DefaultTracer().Start(ctx, fmt.Sprintf("graphite %s", endpoint))
 	defer span.End()
 	span.SetAttributes(
 		attribute.Int64("datasource_id", dsInfo.Id),
@@ -183,26 +206,32 @@ func (s *Service) handleMetricsFind(ctx context.Context, dsInfo *datasourceInfo,
 	if err != nil {
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())
-		return nil, http.StatusInternalServerError, fmt.Errorf("failed to complete metrics find request: %v", err)
+		return nil, http.StatusInternalServerError, fmt.Errorf("failed to complete %s request: %v", endpoint, err)
 	}
+
 	defer func() {
 		err := res.Body.Close()
 		if err != nil {
-			s.logger.Warn("Failed to close response body", "error", err)
+			logger.Warn("Failed to close response body", "error", err)
 		}
 	}()
 
-	metrics, err := parseResponse[[]GraphiteMetricsFindResponse](res)
+	parsedResponse, err := parseResponse[T](res)
 	if err != nil {
-		return nil, http.StatusInternalServerError, fmt.Errorf("failed to parse metrics find response: %v", err)
+		return nil, http.StatusInternalServerError, fmt.Errorf("failed to parse %s response: %v", endpoint, err)
 	}
 
-	metricsFindResponse, err := json.Marshal(*metrics)
-	if err != nil {
-		return nil, http.StatusInternalServerError, fmt.Errorf("failed to marshal metrics find response: %s", err)
-	}
+	return parsedResponse, res.StatusCode, nil
+}
 
-	return metricsFindResponse, res.StatusCode, nil
+func parseRequestBody[V any](requestBody []byte, logger log.Logger) (*V, error) {
+	requestJson := new(V)
+	err := json.Unmarshal(requestBody, &requestJson)
+	if err != nil {
+		logger.Error("Failed to unmarshal request body to JSON", "error", err)
+		return nil, fmt.Errorf("unexpected error %v", err)
+	}
+	return requestJson, nil
 }
 
 func parseResponse[V any](res *http.Response) (*V, error) {
