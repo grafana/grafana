@@ -8,8 +8,6 @@ import (
 	"strings"
 
 	"github.com/grafana/authlib/types"
-	"k8s.io/apimachinery/pkg/runtime/schema"
-
 	"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/legacy"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -324,20 +322,14 @@ func (s *ResourcePermSqlBackend) createResourcePermission(
 
 // deleteResourcePermission deletes resource permissions for a single ResourcePermission resource referenced by its name in the format <group>-<resource>-<name> (e.g. dashboard.grafana.app-dashboards-ad5rwqs)
 func (s *ResourcePermSqlBackend) deleteResourcePermission(ctx context.Context, sql *legacysql.LegacyDatabaseHelper, ns types.NamespaceInfo, name string) error {
-	// e.g. dashboard.grafana.app-dashboards-ad5rwqs
-	parts := strings.SplitN(name, "-", 3)
-	if len(parts) != 3 {
-		return fmt.Errorf("%w: %s", errInvalidName, name)
+	mapper, grn, err := s.splitResourceName(name)
+	if err != nil {
+		return err
 	}
-
-	group, resourceType, uid := parts[0], parts[1], parts[2]
-	mapper, ok := s.mappers[schema.GroupResource{Group: group, Resource: resourceType}]
-	if !ok {
-		return fmt.Errorf("%w: %s/%s", errUnknownGroupResource, group, resourceType)
-	}
+	scope := mapper.Scope(grn.Name)
 
 	resourceQuery := &DeleteResourcePermissionsQuery{
-		Scope: mapper.Scope(uid),
+		Scope: scope,
 		OrgID: ns.OrgID,
 	}
 
@@ -349,7 +341,8 @@ func (s *ResourcePermSqlBackend) deleteResourcePermission(ctx context.Context, s
 	// run delete query
 	_, err = sql.DB.GetSqlxSession().Exec(ctx, rawQuery, args...)
 	if err != nil {
-		return fmt.Errorf("deleting resource permissions: %w", err)
+		s.logger.Error("could not delete resource permissions", "scope", scope, "orgID", ns.OrgID, err.Error())
+		return fmt.Errorf("could not delete resource permission")
 	}
 
 	return nil
