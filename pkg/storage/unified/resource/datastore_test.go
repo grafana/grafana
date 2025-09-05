@@ -656,7 +656,7 @@ func TestDataStore_List(t *testing.T) {
 
 		// List the data
 		var results []DataKey
-		for key, err := range ds.Keys(ctx, resourceKey) {
+		for key, err := range ds.Keys(ctx, resourceKey, SortOrderAsc) {
 			require.NoError(t, err)
 			results = append(results, key)
 		}
@@ -690,7 +690,7 @@ func TestDataStore_List(t *testing.T) {
 		}
 
 		var results []DataKey
-		for key, err := range ds.Keys(ctx, emptyResourceKey) {
+		for key, err := range ds.Keys(ctx, emptyResourceKey, SortOrderAsc) {
 			require.NoError(t, err)
 			results = append(results, key)
 		}
@@ -724,7 +724,7 @@ func TestDataStore_List(t *testing.T) {
 
 		// List should include deleted keys
 		var results []DataKey
-		for key, err := range ds.Keys(ctx, deletedResourceKey) {
+		for key, err := range ds.Keys(ctx, deletedResourceKey, SortOrderAsc) {
 			require.NoError(t, err)
 			results = append(results, key)
 		}
@@ -778,7 +778,7 @@ func TestDataStore_Integration(t *testing.T) {
 
 		// List all versions
 		var results []DataKey
-		for key, err := range ds.Keys(ctx, resourceKey) {
+		for key, err := range ds.Keys(ctx, resourceKey, SortOrderAsc) {
 			require.NoError(t, err)
 			results = append(results, key)
 		}
@@ -804,7 +804,7 @@ func TestDataStore_Integration(t *testing.T) {
 
 		// List should now have 2 items
 		results = nil
-		for key, err := range ds.Keys(ctx, resourceKey) {
+		for key, err := range ds.Keys(ctx, resourceKey, SortOrderAsc) {
 			require.NoError(t, err)
 			results = append(results, key)
 		}
@@ -882,7 +882,7 @@ func TestDataStore_Keys(t *testing.T) {
 
 		// Get keys
 		var keys []DataKey
-		for key, err := range ds.Keys(ctx, resourceKey) {
+		for key, err := range ds.Keys(ctx, resourceKey, SortOrderAsc) {
 			require.NoError(t, err)
 			keys = append(keys, key)
 		}
@@ -911,7 +911,7 @@ func TestDataStore_Keys(t *testing.T) {
 		}
 
 		var keys []DataKey
-		for key, err := range ds.Keys(ctx, emptyResourceKey) {
+		for key, err := range ds.Keys(ctx, emptyResourceKey, SortOrderAsc) {
 			require.NoError(t, err)
 			keys = append(keys, key)
 		}
@@ -942,7 +942,7 @@ func TestDataStore_Keys(t *testing.T) {
 		require.NoError(t, err)
 
 		var keys []DataKey
-		for key, err := range ds.Keys(ctx, partialKey) {
+		for key, err := range ds.Keys(ctx, partialKey, SortOrderAsc) {
 			require.NoError(t, err)
 			keys = append(keys, key)
 		}
@@ -975,7 +975,7 @@ func TestDataStore_Keys(t *testing.T) {
 		require.NoError(t, err)
 
 		var keys []DataKey
-		for key, err := range ds.Keys(ctx, namespaceOnlyKey) {
+		for key, err := range ds.Keys(ctx, namespaceOnlyKey, SortOrderAsc) {
 			require.NoError(t, err)
 			keys = append(keys, key)
 		}
@@ -998,7 +998,7 @@ func TestDataStore_Keys(t *testing.T) {
 
 		var keys []DataKey
 		var hasError bool
-		for key, err := range ds.Keys(ctx, emptyNamespaceKey) {
+		for key, err := range ds.Keys(ctx, emptyNamespaceKey, SortOrderAsc) {
 			if err != nil {
 				hasError = true
 				require.Error(t, err)

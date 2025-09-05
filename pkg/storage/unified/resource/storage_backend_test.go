@@ -1193,7 +1193,12 @@ func TestKvStorageBackend_PruneEvents(t *testing.T) {
 		ctx := context.Background()
 
 		// Create a resource
-		testObj, err := createTestObjectWithName("test-resource", "apps", "test-data")
+		ns := NamespacedResource{
+			Namespace: "default",
+			Group:     "apps",
+			Resource:  "resources",
+		}
+		testObj, err := createTestObjectWithName("test-resource", ns, "test-data")
 		require.NoError(t, err)
 		metaAccessor, err := utils.MetaAccessor(testObj)
 		require.NoError(t, err)
@@ -1253,7 +1258,7 @@ func TestKvStorageBackend_PruneEvents(t *testing.T) {
 			Group:     "apps",
 			Resource:  "resources",
 			Name:      "test-resource",
-		}) {
+		}, SortOrderDesc) {
 			require.NoError(t, err)
 			require.NotEqual(t, rv1, datakey.ResourceVersion)
 			counter++
@@ -1266,7 +1271,12 @@ func TestKvStorageBackend_PruneEvents(t *testing.T) {
 		ctx := context.Background()
 
 		// Create a resource
-		testObj, err := createTestObjectWithName("test-resource", "apps", "test-data")
+		ns := NamespacedResource{
+			Namespace: "default",
+			Group:     "apps",
+			Resource:  "resources",
+		}
+		testObj, err := createTestObjectWithName("test-resource", ns, "test-data")
 		require.NoError(t, err)
 		metaAccessor, err := utils.MetaAccessor(testObj)
 		require.NoError(t, err)
@@ -1314,11 +1324,78 @@ func TestKvStorageBackend_PruneEvents(t *testing.T) {
 			Group:     "apps",
 			Resource:  "resources",
 			Name:      "test-resource",
-		}) {
+		}, SortOrderDesc) {
 			require.NoError(t, err)
 			counter++
 		}
 		require.Equal(t, prunerMaxEvents, counter)
+	})
+
+	t.Run("will not prune deleted events", func(t *testing.T) {
+		backend := setupTestStorageBackend(t)
+		ctx := context.Background()
+
+		// Create a resource
+		ns := NamespacedResource{
+			Namespace: "default",
+			Group:     "apps",
+			Resource:  "resources",
+		}
+		testObj, err := createTestObjectWithName("test-resource", ns, "test-data")
+		require.NoError(t, err)
+		metaAccessor, err := utils.MetaAccessor(testObj)
+		require.NoError(t, err)
+		writeEvent := WriteEvent{
+			Type: resourcepb.WatchEvent_DELETED,
+			Key: &resourcepb.ResourceKey{
+				Namespace: "default",
+				Group:     "apps",
+				Resource:  "resources",
+				Name:      "test-resource",
+			},
+			Value:      objectToJSONBytes(t, testObj),
+			Object:     metaAccessor,
+			ObjectOld:  metaAccessor,
+			PreviousRV: 0,
+		}
+		rv1, err := backend.WriteEvent(ctx, writeEvent)
+		require.NoError(t, err)
+
+		// Add prunerMaxEvents+1 deleted events
+		// Multiple deleted events for a resource shouldn't happen - this is just to ensure the pruner won't remove deleted events
+		previousRV := rv1
+		for i := 0; i < prunerMaxEvents; i++ {
+			testObj.Object["spec"].(map[string]any)["value"] = fmt.Sprintf("delete-%d", i)
+			writeEvent.Type = resourcepb.WatchEvent_DELETED
+			writeEvent.Value = objectToJSONBytes(t, testObj)
+			writeEvent.PreviousRV = previousRV
+			newRv, err := backend.WriteEvent(ctx, writeEvent)
+			require.NoError(t, err)
+			previousRV = newRv
+		}
+
+		pruningKey := PruningKey{
+			Namespace: "default",
+			Group:     "apps",
+			Resource:  "resources",
+			Name:      "test-resource",
+		}
+
+		err = backend.pruneEvents(ctx, pruningKey)
+		require.NoError(t, err)
+
+		// assert all deleted events exist
+		counter := 0
+		for _, err := range backend.dataStore.Keys(ctx, ListRequestKey{
+			Namespace: "default",
+			Group:     "apps",
+			Resource:  "resources",
+			Name:      "test-resource",
+		}, SortOrderDesc) {
+			require.NoError(t, err)
+			counter++
+		}
+		require.Equal(t, prunerMaxEvents+1, counter)
 	})
 }
 
