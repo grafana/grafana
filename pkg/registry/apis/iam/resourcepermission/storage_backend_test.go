@@ -17,73 +17,6 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
-func TestWriteEvent_Add(t *testing.T) {
-	store := db.InitTestDB(t)
-
-	timeNow = func() time.Time {
-		return time.Date(2025, 8, 28, 17, 13, 0, 0, time.UTC)
-	}
-
-	sqlHelper := &legacysql.LegacyDatabaseHelper{
-		DB:    store,
-		Table: func(name string) string { return name },
-	}
-
-	dbProvider := func(ctx context.Context) (*legacysql.LegacyDatabaseHelper, error) {
-		return sqlHelper, nil
-	}
-
-	t.Run("should error with invalid namespace", func(t *testing.T) {
-		backend := ProvideStorageBackend(dbProvider)
-
-		rv, err := backend.WriteEvent(context.Background(), resource.WriteEvent{
-			Type: resourcepb.WatchEvent_ADDED,
-			Key:  &resourcepb.ResourceKey{Name: "folder.grafana.app-folders-fold1", Namespace: "invalid"},
-		})
-
-		require.Zero(t, rv)
-		require.NotNil(t, err)
-		require.Contains(t, err.Error(), "requires a valid namespace")
-	})
-
-	t.Run("should work with valid resource permission", func(t *testing.T) {
-		backend := ProvideStorageBackend(dbProvider)
-		backend.identityStore = NewFakeIdentityStore(t)
-
-		resourcePerm, err := utils.MetaAccessor(&v0alpha1.ResourcePermission{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "folder.grafana.app-folders-fold1",
-				Namespace: "default",
-			},
-			Spec: v0alpha1.ResourcePermissionSpec{
-				Resource: v0alpha1.ResourcePermissionspecResource{
-					ApiGroup: "folder.grafana.app",
-					Resource: "folders",
-					Name:     "fold1",
-				},
-				Permissions: []v0alpha1.ResourcePermissionspecPermission{
-					{
-						Kind: v0alpha1.ResourcePermissionSpecPermissionKindBasicRole,
-						Name: "Viewer",
-						Verb: "Admin",
-					},
-				},
-			},
-		})
-		require.NoError(t, err)
-
-		gr := v0alpha1.ResourcePermissionInfo.GroupResource()
-		rv, err := backend.WriteEvent(context.Background(), resource.WriteEvent{
-			Type:   resourcepb.WatchEvent_ADDED,
-			Key:    &resourcepb.ResourceKey{Group: gr.Group, Resource: gr.Resource, Name: "folder.grafana.app-folders-fold1", Namespace: "default"},
-			Object: resourcePerm,
-		})
-
-		require.NoError(t, err)
-		require.Equal(t, timeNow().UnixMilli(), rv)
-	})
-}
-
 func TestIntegration_ResourcePermSqlBackend_ReadResource(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test in short mode")
@@ -178,5 +111,221 @@ func TestIntegration_ResourcePermSqlBackend_ReadResource(t *testing.T) {
 		require.Equal(t, "user-1", permission.Spec.Permissions[3].Name)
 		require.Equal(t, v0alpha1.ResourcePermissionSpecPermissionKindUser, permission.Spec.Permissions[3].Kind)
 		require.Equal(t, "edit", permission.Spec.Permissions[3].Verb)
+	})
+}
+
+func TestWriteEvent_Add(t *testing.T) {
+	store := db.InitTestDB(t)
+
+	timeNow = func() time.Time {
+		return time.Date(2025, 8, 28, 17, 13, 0, 0, time.UTC)
+	}
+
+	sqlHelper := &legacysql.LegacyDatabaseHelper{
+		DB:    store,
+		Table: func(name string) string { return name },
+	}
+
+	dbProvider := func(ctx context.Context) (*legacysql.LegacyDatabaseHelper, error) {
+		return sqlHelper, nil
+	}
+
+	t.Run("should error with invalid namespace", func(t *testing.T) {
+		backend := ProvideStorageBackend(dbProvider)
+
+		rv, err := backend.WriteEvent(context.Background(), resource.WriteEvent{
+			Type: resourcepb.WatchEvent_ADDED,
+			Key:  &resourcepb.ResourceKey{Name: "folder.grafana.app-folders-fold1", Namespace: "invalid"},
+		})
+
+		require.Zero(t, rv)
+		require.NotNil(t, err)
+		require.Contains(t, err.Error(), "requires a valid namespace")
+	})
+
+	t.Run("should error if there is no permission", func(t *testing.T) {
+		backend := ProvideStorageBackend(dbProvider)
+
+		resourcePerm, err := utils.MetaAccessor(&v0alpha1.ResourcePermission{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "folder.grafana.app-folders-fold1",
+				Namespace: "default",
+			},
+			Spec: v0alpha1.ResourcePermissionSpec{
+				Resource: v0alpha1.ResourcePermissionspecResource{
+					ApiGroup: "folder.grafana.app",
+					Resource: "folders",
+					Name:     "fold1",
+				},
+			},
+		})
+		require.NoError(t, err)
+
+		gr := v0alpha1.ResourcePermissionInfo.GroupResource()
+		rv, err := backend.WriteEvent(context.Background(), resource.WriteEvent{
+			Type:   resourcepb.WatchEvent_ADDED,
+			Key:    &resourcepb.ResourceKey{Group: gr.Group, Resource: gr.Resource, Name: "folder.grafana.app-folders-fold1", Namespace: "default"},
+			Object: resourcePerm,
+		})
+		require.Zero(t, rv)
+		require.NotNil(t, err)
+		require.Contains(t, err.Error(), errInvalidSpec.Error())
+	})
+
+	t.Run("should error if name and spec do not match", func(t *testing.T) {
+		backend := ProvideStorageBackend(dbProvider)
+
+		resourcePerm, err := utils.MetaAccessor(&v0alpha1.ResourcePermission{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "folder.grafana.app-folders-fold1",
+				Namespace: "default",
+			},
+			Spec: v0alpha1.ResourcePermissionSpec{
+				Resource: v0alpha1.ResourcePermissionspecResource{
+					ApiGroup: "folder.grafana.app",
+					Resource: "folders",
+					Name:     "fold2",
+				},
+				Permissions: []v0alpha1.ResourcePermissionspecPermission{
+					{
+						Kind: v0alpha1.ResourcePermissionSpecPermissionKindBasicRole,
+						Name: "Viewer",
+						Verb: "Admin",
+					},
+				},
+			},
+		})
+		require.NoError(t, err)
+
+		gr := v0alpha1.ResourcePermissionInfo.GroupResource()
+		rv, err := backend.WriteEvent(context.Background(), resource.WriteEvent{
+			Type:   resourcepb.WatchEvent_ADDED,
+			Key:    &resourcepb.ResourceKey{Group: gr.Group, Resource: gr.Resource, Name: "folder.grafana.app-folders-fold1", Namespace: "default"},
+			Object: resourcePerm,
+		})
+		require.Zero(t, rv)
+		require.NotNil(t, err)
+		require.Contains(t, err.Error(), errInvalidSpec.Error())
+	})
+
+	t.Run("should error if resource name is empty", func(t *testing.T) {
+		backend := ProvideStorageBackend(dbProvider)
+
+		resourcePerm, err := utils.MetaAccessor(&v0alpha1.ResourcePermission{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "folder.grafana.app-folders-",
+				Namespace: "default",
+			},
+			Spec: v0alpha1.ResourcePermissionSpec{
+				Resource: v0alpha1.ResourcePermissionspecResource{
+					ApiGroup: "folder.grafana.app",
+					Resource: "folders",
+					Name:     "",
+				},
+				Permissions: []v0alpha1.ResourcePermissionspecPermission{
+					{
+						Kind: v0alpha1.ResourcePermissionSpecPermissionKindBasicRole,
+						Name: "Viewer",
+						Verb: "Admin",
+					},
+				},
+			},
+		})
+		require.NoError(t, err)
+
+		gr := v0alpha1.ResourcePermissionInfo.GroupResource()
+		rv, err := backend.WriteEvent(context.Background(), resource.WriteEvent{
+			Type:   resourcepb.WatchEvent_ADDED,
+			Key:    &resourcepb.ResourceKey{Group: gr.Group, Resource: gr.Resource, Name: "folder.grafana.app-folders-", Namespace: "default"},
+			Object: resourcePerm,
+		})
+		require.Zero(t, rv)
+		require.NotNil(t, err)
+		require.Contains(t, err.Error(), errInvalidName.Error())
+	})
+
+	t.Run("should error if the resource is unknown", func(t *testing.T) {
+		backend := ProvideStorageBackend(dbProvider)
+
+		resourcePerm, err := utils.MetaAccessor(&v0alpha1.ResourcePermission{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "unknown.grafana.app-unknown-ukn1",
+				Namespace: "default",
+			},
+			Spec: v0alpha1.ResourcePermissionSpec{
+				Resource: v0alpha1.ResourcePermissionspecResource{
+					ApiGroup: "unknown.grafana.app",
+					Resource: "unknown",
+					Name:     "ukn1",
+				},
+				Permissions: []v0alpha1.ResourcePermissionspecPermission{
+					{
+						Kind: v0alpha1.ResourcePermissionSpecPermissionKindBasicRole,
+						Name: "Viewer",
+						Verb: "Admin",
+					},
+				},
+			},
+		})
+		require.NoError(t, err)
+
+		gr := v0alpha1.ResourcePermissionInfo.GroupResource()
+		rv, err := backend.WriteEvent(context.Background(), resource.WriteEvent{
+			Type:   resourcepb.WatchEvent_ADDED,
+			Key:    &resourcepb.ResourceKey{Group: gr.Group, Resource: gr.Resource, Name: "unknown.grafana.app-unknown-ukn1", Namespace: "default"},
+			Object: resourcePerm,
+		})
+		require.Zero(t, rv)
+		require.NotNil(t, err)
+		require.Contains(t, err.Error(), errUnknownGroupResource.Error())
+	})
+
+	t.Run("should work with valid resource permission", func(t *testing.T) {
+		backend := ProvideStorageBackend(dbProvider)
+		backend.identityStore = NewFakeIdentityStore(t)
+
+		resourcePerm, err := utils.MetaAccessor(&v0alpha1.ResourcePermission{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "folder.grafana.app-folders-fold1",
+				Namespace: "default",
+			},
+			Spec: v0alpha1.ResourcePermissionSpec{
+				Resource: v0alpha1.ResourcePermissionspecResource{
+					ApiGroup: "folder.grafana.app",
+					Resource: "folders",
+					Name:     "fold1",
+				},
+				Permissions: []v0alpha1.ResourcePermissionspecPermission{
+					{
+						Kind: v0alpha1.ResourcePermissionSpecPermissionKindBasicRole,
+						Name: "Viewer",
+						Verb: "Admin",
+					},
+				},
+			},
+		})
+		require.NoError(t, err)
+
+		gr := v0alpha1.ResourcePermissionInfo.GroupResource()
+		rv, err := backend.WriteEvent(context.Background(), resource.WriteEvent{
+			Type:   resourcepb.WatchEvent_ADDED,
+			Key:    &resourcepb.ResourceKey{Group: gr.Group, Resource: gr.Resource, Name: "folder.grafana.app-folders-fold1", Namespace: "default"},
+			Object: resourcePerm,
+		})
+
+		require.NoError(t, err)
+		require.Equal(t, timeNow().UnixMilli(), rv)
+
+		t.Run("Should error on duplicate add", func(t *testing.T) {
+			rv, err := backend.WriteEvent(context.Background(), resource.WriteEvent{
+				Type:   resourcepb.WatchEvent_ADDED,
+				Key:    &resourcepb.ResourceKey{Group: gr.Group, Resource: gr.Resource, Name: "folder.grafana.app-folders-fold1", Namespace: "default"},
+				Object: resourcePerm,
+			})
+
+			require.NotNil(t, err)
+			require.Contains(t, err.Error(), errConflict.Error())
+			require.Zero(t, rv)
+		})
 	})
 }

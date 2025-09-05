@@ -286,11 +286,7 @@ func (s *ResourcePermSqlBackend) createResourcePermission(
 	if grn.Group != v0ResourcePerm.Spec.Resource.ApiGroup ||
 		grn.Resource != v0ResourcePerm.Spec.Resource.Resource ||
 		grn.Name != v0ResourcePerm.Spec.Resource.Name {
-		return 0, fmt.Errorf("resource permission group/resource does not match spec: %w", errInvalidSpec)
-	}
-
-	if grn.Name == "" {
-		return 0, fmt.Errorf("resource permission name cannot be empty: %w", errInvalidName)
+		return 0, fmt.Errorf("resource permission name does not match spec: %w", errInvalidSpec)
 	}
 
 	assignments, err := s.buildRbacAssignments(ctx, ns, mapper, v0ResourcePerm, mapper.Scope(grn.Name))

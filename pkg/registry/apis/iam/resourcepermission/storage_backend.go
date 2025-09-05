@@ -175,6 +175,10 @@ func (s *ResourcePermSqlBackend) WriteEvent(ctx context.Context, event resource.
 		return 0, apierrors.NewBadRequest(fmt.Sprintf("invalid resource name %q: %v", event.Key.Name, err.Error()))
 	}
 
+	if grn.Name == "" {
+		return 0, fmt.Errorf("resource name cannot be empty: %w", errInvalidName)
+	}
+
 	switch event.Type {
 	case resourcepb.WatchEvent_ADDED:
 		{
