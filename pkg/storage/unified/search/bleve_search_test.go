@@ -22,9 +22,9 @@ import (
 const threshold = 9999
 
 func indexDocumentsWithTitles(t *testing.T, index resource.ResourceIndex, key resource.NamespacedResource, docsWithTitles map[string]string) {
-	result := make([]*resource.BulkIndexItem, 0, len(docsWithTitles))
+	items := make([]*resource.BulkIndexItem, 0, len(docsWithTitles))
 	for name, title := range docsWithTitles {
-		result = append(result, &resource.BulkIndexItem{
+		items = append(items, &resource.BulkIndexItem{
 			Action: resource.ActionIndex,
 			Doc: &resource.IndexableDocument{
 				RV:   1,
@@ -39,7 +39,7 @@ func indexDocumentsWithTitles(t *testing.T, index resource.ResourceIndex, key re
 			},
 		})
 	}
-	req := &resource.BulkIndexRequest{Items: result}
+	req := &resource.BulkIndexRequest{Items: items}
 	require.NoError(t, index.BulkIndex(req))
 }
 
