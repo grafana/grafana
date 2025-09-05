@@ -5,6 +5,7 @@ import {
   ElementSelectionOnSelectOptions,
 } from '@grafana/ui';
 
+import { TabItem } from '../scene/layout-tabs/TabItem';
 import { isRepeatCloneOrChildOf } from '../utils/clone';
 import { getDashboardSceneFor } from '../utils/utils';
 
@@ -91,6 +92,7 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> {
   private performPanelEditAction(action: DashboardEditActionEvent) {
     // Some layout items are not yet active when leaving panel edit, let's wait for them to activate
     if (!action.payload.source.isActive) {
+      trySwitchingToSourceTab(action.payload.source);
       setTimeout(() => this.performPanelEditAction(action));
       return;
     }
@@ -267,5 +269,21 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> {
   private newObjectAddedToCanvas(obj: SceneObject) {
     this.selectObject(obj, obj.state.key!);
     this.state.selection?.markAsNewElement();
+  }
+}
+
+function trySwitchingToSourceTab(source: SceneObject) {
+  if (source.parent === undefined) {
+    return;
+  }
+
+  if (source.parent instanceof TabItem) {
+    const tab = source.parent;
+    const tabsLayout = source.parent.getParentLayout();
+    if (tabsLayout.state.currentTabSlug !== tab.getSlug()) {
+      tabsLayout.switchToTab(tab);
+    }
+  } else {
+    trySwitchingToSourceTab(source.parent);
   }
 }
