@@ -28,6 +28,7 @@ var (
 	errNamespaceMismatch    = errors.New("namespace mismatch")
 	errUnknownGroupResource = errors.New("unknown group/resource")
 	errNotFound             = errors.New("not found")
+	errConflict             = errors.New("conflict")
 	errInvalidSpec          = errors.New("invalid spec")
 	errInvalidName          = errors.New("invalid name")
 	errInvalidScope         = errors.New("invalid scope")

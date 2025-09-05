@@ -206,6 +206,9 @@ func (s *ResourcePermSqlBackend) WriteEvent(ctx context.Context, event resource.
 				if errors.Is(err, errInvalidSpec) {
 					return 0, apierrors.NewBadRequest(err.Error())
 				}
+				if errors.Is(err, errConflict) {
+					return 0, apierrors.NewConflict(v0alpha1.ResourcePermissionInfo.GroupResource(), event.Key.Name, err)
+				}
 				return 0, err
 			}
 		}

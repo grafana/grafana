@@ -246,7 +246,26 @@ func (s *ResourcePermSqlBackend) buildRbacAssignments(ctx context.Context, ns ty
 	return assignments, nil
 }
 
-func (s *ResourcePermSqlBackend) createResourcePermission(ctx context.Context, dbHelper *legacysql.LegacyDatabaseHelper, ns types.NamespaceInfo, mapper Mapper, grn *groupResourceName, v0ResourcePerm *v0alpha1.ResourcePermission) (int64, error) {
+// existsResourcePermission checks if a resource permission for the given scope already exists in the given organization
+func (s *ResourcePermSqlBackend) existsResourcePermission(ctx context.Context, tx *session.SessionTx, dbHelper *legacysql.LegacyDatabaseHelper, orgID int64, scope string) error {
+	idQuery := fmt.Sprintf(
+		`SELECT id FROM %s AS r INNER JOIN %s AS p WHERE r.org_id = ? AND r.name LIKE ? AND p.scope = ? LIMIT 1`,
+		dbHelper.Table("role"), dbHelper.Table("permission"),
+	)
+	roleID := int64(0)
+	err := tx.Get(ctx, &roleID, idQuery, orgID, "managed:%", scope)
+	if err != nil {
+		return fmt.Errorf("checking for existing resource permission: %w", err)
+	}
+	if roleID != 0 {
+		return errConflict
+	}
+	return nil
+}
+
+func (s *ResourcePermSqlBackend) createResourcePermission(
+	ctx context.Context, dbHelper *legacysql.LegacyDatabaseHelper, ns types.NamespaceInfo, mapper Mapper, grn *groupResourceName, v0ResourcePerm *v0alpha1.ResourcePermission,
+) (int64, error) {
 	if v0ResourcePerm == nil {
 		return 0, fmt.Errorf("resource permission cannot be nil")
 	}
@@ -272,6 +291,11 @@ func (s *ResourcePermSqlBackend) createResourcePermission(ctx context.Context, d
 	}
 
 	err = dbHelper.DB.GetSqlxSession().WithTransaction(ctx, func(tx *session.SessionTx) error {
+		// Check if a resource permission for the same resource already exists
+		if err = s.existsResourcePermission(ctx, tx, dbHelper, ns.OrgID, mapper.Scope(grn.Name)); err != nil {
+			return err
+		}
+
 		for _, assignment := range assignments {
 			err := s.storeRbacAssignment(ctx, dbHelper, tx, ns.OrgID, assignment)
 			if err != nil {
