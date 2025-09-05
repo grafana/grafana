@@ -25,13 +25,6 @@ echo -e "@emotion/css imports: $EMOTION_IMPORTS"
 echo -e "Total TS files: $TS_FILES"
 echo -e "Total SCSS files: $SCSS_FILES"
 
-BETTERER_STATS=""
-while read -r name value
-do
-  BETTERER_STATS+=$'\n  '
-  BETTERER_STATS+="\"grafana.ci-code.betterer.${name}\": \"${value}\","
-done <<< "$(yarn betterer:stats)"
-
 ESLINT_STATS=""
 yarn lint:ts --format ./scripts/cli/eslint-stats-reporter.mjs -o eslint-stats.txt
 while read -r name value
@@ -59,7 +52,6 @@ done <<< "$(yarn themes:usage | awk '$4 == "@grafana/theme-token-usage" {print $
 
 echo "Metrics: {
   $THEME_TOKEN_USAGE
-  $BETTERER_STATS
   $ESLINT_STATS
   $I18N_STATS
   \"grafana.ci-code.strictErrors\": \"${ERROR_COUNT}\",
