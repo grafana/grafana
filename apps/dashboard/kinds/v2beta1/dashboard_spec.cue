@@ -109,7 +109,14 @@ DashboardLink: {
 	includeVars: bool | *false
 	// If true, includes current time range in the link as query params
 	keepTime: bool | *false
+	// Placement can be used to display the link somewhere else on the dashbaord other than abovethe visualisations.
+	placement?: DashboardLinkPlacement
 }
+
+// Dashboard Link placement. Defines where the link should be displayed. 
+// - "default" renders the link above the visualisations
+// - "inControlsMenu" renders the link in bottom part of the dashboard controls dropdown menu
+DashboardLinkPlacement: "default" | "inControlsMenu"
 
 // A topic is attached to DataFrame metadata in query results.
 // This specifies where the data should be used.
