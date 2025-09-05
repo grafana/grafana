@@ -1,8 +1,8 @@
-import React from 'react';
+import { css } from '@emotion/css';
 
 import { FeatureState, NavModelItem } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { FeatureBadge } from '@grafana/ui';
+import { FeatureBadge, useStyles2 } from '@grafana/ui';
 
 type SetActiveTab = (tab: string) => void;
 
@@ -26,16 +26,16 @@ export function getRuleViewExtensionTabs(args: RuleViewTabBuilderArgs): NavModel
 export function addEnrichmentSection() {
   registerRuleViewTab(({ activeTab, setActiveTab }) => {
     const tabId = 'enrichment';
+    const styles = useStyles2(getStyles);
     return {
       text: t('alerting.use-page-nav.page-nav.text.enrichment', 'Alert enrichment'),
       active: activeTab === tabId,
       onClick: () => setActiveTab(tabId),
-      tabSuffix: () =>
-        React.createElement(
-          'span',
-          { style: { marginLeft: 8 } },
-          React.createElement(FeatureBadge, { featureState: FeatureState.new })
-        ),
+      tabSuffix: () => (
+        <span className={styles.tabSuffix}>
+          <FeatureBadge featureState={FeatureState.new} />
+        </span>
+      ),
     };
   });
 }
@@ -43,4 +43,12 @@ export function addEnrichmentSection() {
 // ONLY FOR TESTS: resets the registered tabs between tests
 export function __clearRuleViewTabsForTests() {
   ruleViewTabBuilders.splice(0, ruleViewTabBuilders.length);
+}
+
+function getStyles() {
+  return {
+    tabSuffix: css({
+      marginLeft: 8,
+    }),
+  };
 }
