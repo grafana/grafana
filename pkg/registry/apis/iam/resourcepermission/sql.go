@@ -20,7 +20,7 @@ import (
 
 // Get
 // getResourcePermissions queries resource permissions based on the provided ListResourcePermissionsQuery and groups them by resource (e.g. {folder.grafana.app, folders, fold1})
-func (s *ResourcePermSqlBackend) getResourcePermissions(ctx context.Context, sql *legacysql.LegacyDatabaseHelper, query *ListResourcePermissionsQuery) (map[groupResourceName][]flatResourcePermission, error) {
+func (s *ResourcePermSqlBackend) getResourcePermissions(ctx context.Context, sql *legacysql.LegacyDatabaseHelper, query *ListResourcePermissionsQuery) (map[groupResourceName][]rbacAssignment, error) {
 	rawQuery, args, err := buildListResourcePermissionsQueryFromTemplate(sql, query)
 	if err != nil {
 		return nil, err
@@ -37,9 +37,9 @@ func (s *ResourcePermSqlBackend) getResourcePermissions(ctx context.Context, sql
 		_ = rows.Close()
 	}()
 
-	permissions := make(map[groupResourceName][]flatResourcePermission)
+	permissions := make(map[groupResourceName][]rbacAssignment)
 	for rows.Next() {
-		var perm flatResourcePermission
+		var perm rbacAssignment
 		if err := rows.Scan(
 			&perm.ID, &perm.Action, &perm.Scope, &perm.Created, &perm.Updated, &perm.RoleName,
 			&perm.SubjectUID, &perm.SubjectType, &perm.IsServiceAccount,
@@ -95,7 +95,7 @@ func (s *ResourcePermSqlBackend) getResourcePermission(ctx context.Context, sql 
 // Create
 
 // createManagedRoleAndAssign creates a new managed role and assigns it to the given user/team/service account/basic role
-func (s *ResourcePermSqlBackend) createManagedRoleAndAssign(ctx context.Context, tx *session.SessionTx, dbHelper *legacysql.LegacyDatabaseHelper, orgID int64, assignment grant) (int64, error) {
+func (s *ResourcePermSqlBackend) createManagedRoleAndAssign(ctx context.Context, tx *session.SessionTx, dbHelper *legacysql.LegacyDatabaseHelper, orgID int64, assignment rbacAssignmentCreate) (int64, error) {
 	// Create the managed role
 	roleUID := accesscontrol.PrefixedRoleUID(fmt.Sprintf("%s:org:%v", assignment.RoleName, orgID))
 	insertRoleQuery, args, err := buildInsertRoleQuery(dbHelper, orgID, roleUID, assignment.RoleName)
@@ -129,7 +129,7 @@ func (s *ResourcePermSqlBackend) createManagedRoleAndAssign(ctx context.Context,
 
 // storeRbacAssignment ensures that a role exists for the given assignment, creates and assigns it if it doesn't
 // and then ensures that the role has the correct permission for the given scope
-func (s *ResourcePermSqlBackend) storeRbacAssignment(ctx context.Context, dbHelper *legacysql.LegacyDatabaseHelper, tx *session.SessionTx, orgID int64, assignment grant) error {
+func (s *ResourcePermSqlBackend) storeRbacAssignment(ctx context.Context, dbHelper *legacysql.LegacyDatabaseHelper, tx *session.SessionTx, orgID int64, assignment rbacAssignmentCreate) error {
 	// Check if role already exists
 	var roleID int64
 	query := fmt.Sprintf("SELECT id FROM %s WHERE org_id = ? AND name = ?", dbHelper.Table("role"))
@@ -160,10 +160,10 @@ func (s *ResourcePermSqlBackend) storeRbacAssignment(ctx context.Context, dbHelp
 	return nil
 }
 
-// buildRbacAssignments builds the list of grants (role assignments and permissions) for a given ResourcePermission spec
-// It resolves user/team/service account UIDs to internal IDs for the role name and assignee ID
-func (s *ResourcePermSqlBackend) buildRbacAssignments(ctx context.Context, ns types.NamespaceInfo, mapper Mapper, v0ResourcePerm *v0alpha1.ResourcePermission, rbacScope string) ([]grant, error) {
-	assignments := make([]grant, 0, len(v0ResourcePerm.Spec.Permissions))
+// buildRbacAssignments builds the list of assignments (role assignments and permissions) for a given ResourcePermission spec
+// It resolves user/team/service account UIDs to internal IDs for the role name and assignee subjectID
+func (s *ResourcePermSqlBackend) buildRbacAssignments(ctx context.Context, ns types.NamespaceInfo, mapper Mapper, v0ResourcePerm *v0alpha1.ResourcePermission, rbacScope string) ([]rbacAssignmentCreate, error) {
+	assignments := make([]rbacAssignmentCreate, 0, len(v0ResourcePerm.Spec.Permissions))
 
 	for _, perm := range v0ResourcePerm.Spec.Permissions {
 		rbacActionSet, err := mapper.ActionSet(perm.Verb)
@@ -183,11 +183,11 @@ func (s *ResourcePermSqlBackend) buildRbacAssignments(ctx context.Context, ns ty
 			if userID == nil {
 				return nil, fmt.Errorf("user %q not found: %w", perm.Name, errInvalidSpec)
 			}
-			assignments = append(assignments, grant{
+			assignments = append(assignments, rbacAssignmentCreate{
 				RoleName:         fmt.Sprintf("managed:users:%d:permissions", userID.ID),
 				AssignmentTable:  "user_role",
 				AssignmentColumn: "user_id",
-				AssigneeID:       fmt.Sprintf("%d", userID.ID),
+				SubjectID:        fmt.Sprintf("%d", userID.ID),
 				Action:           rbacActionSet,
 				Scope:            rbacScope,
 			})
@@ -202,11 +202,11 @@ func (s *ResourcePermSqlBackend) buildRbacAssignments(ctx context.Context, ns ty
 			if teamID == nil {
 				return nil, fmt.Errorf("team %q not found: %w", perm.Name, errInvalidSpec)
 			}
-			assignments = append(assignments, grant{
+			assignments = append(assignments, rbacAssignmentCreate{
 				RoleName:         fmt.Sprintf("managed:teams:%d:permissions", teamID.ID),
 				AssignmentTable:  "team_role",
 				AssignmentColumn: "team_id",
-				AssigneeID:       fmt.Sprintf("%d", teamID.ID),
+				SubjectID:        fmt.Sprintf("%d", teamID.ID),
 				Action:           rbacActionSet,
 				Scope:            rbacScope,
 			})
@@ -221,11 +221,11 @@ func (s *ResourcePermSqlBackend) buildRbacAssignments(ctx context.Context, ns ty
 			if saID == nil {
 				return nil, fmt.Errorf("service account %q not found: %w", perm.Name, errInvalidSpec)
 			}
-			assignments = append(assignments, grant{
+			assignments = append(assignments, rbacAssignmentCreate{
 				RoleName:         fmt.Sprintf("managed:users:%d:permissions", saID.ID),
 				AssignmentTable:  "user_role",
 				AssignmentColumn: "user_id",
-				AssigneeID:       fmt.Sprintf("%d", saID.ID),
+				SubjectID:        fmt.Sprintf("%d", saID.ID),
 				Action:           rbacActionSet,
 				Scope:            rbacScope,
 			})
@@ -233,11 +233,11 @@ func (s *ResourcePermSqlBackend) buildRbacAssignments(ctx context.Context, ns ty
 			if !allowedBasicRoles[perm.Name] {
 				return nil, fmt.Errorf("invalid basic role %q: %w", perm.Name, errInvalidSpec)
 			}
-			assignments = append(assignments, grant{
+			assignments = append(assignments, rbacAssignmentCreate{
 				RoleName:         fmt.Sprintf("managed:builtins:%s:permissions", strings.ToLower(perm.Name)),
 				AssignmentTable:  "builtin_role",
 				AssignmentColumn: "role",
-				AssigneeID:       perm.Name,
+				SubjectID:        perm.Name,
 				Action:           rbacActionSet,
 				Scope:            rbacScope,
 			})

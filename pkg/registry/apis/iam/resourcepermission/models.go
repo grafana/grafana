@@ -44,16 +44,23 @@ type IdentityStore interface {
 	GetUserInternalID(ctx context.Context, ns types.NamespaceInfo, query idStore.GetUserInternalIDQuery) (*idStore.GetUserInternalIDResult, error)
 }
 
-type grant struct {
-	Action           string
-	Scope            string
-	RoleName         string
-	AssigneeID       any
-	AssignmentTable  string
-	AssignmentColumn string
+type ListResourcePermissionsQuery struct {
+	Scope      string
+	OrgID      int64
+	ActionSets []string
+	// TODO Pagination common.Pagination
 }
 
-func (g *grant) permission() accesscontrol.Permission {
+type rbacAssignmentCreate struct {
+	Action           string // e.g. "dashboards:edit"
+	Scope            string // e.g. "folders:uid:1"
+	RoleName         string // e.g. "managed:users:1:permissions
+	SubjectID        any    // int64 for user/team, string for builtin_role
+	AssignmentTable  string // "user_role", "team_role", or "builtin_role"
+	AssignmentColumn string // "user_id", "team_id", or "role"
+}
+
+func (g *rbacAssignmentCreate) permission() accesscontrol.Permission {
 	p := accesscontrol.Permission{
 		Action: g.Action,
 		Scope:  g.Scope,
@@ -62,14 +69,7 @@ func (g *grant) permission() accesscontrol.Permission {
 	return p
 }
 
-type ListResourcePermissionsQuery struct {
-	Scope      string
-	OrgID      int64
-	ActionSets []string
-	// TODO Pagination common.Pagination
-}
-
-type flatResourcePermission struct {
+type rbacAssignment struct {
 	ID               int64     `xorm:"id"`
 	Action           string    `xorm:"action"`
 	Scope            string    `xorm:"scope"`
@@ -81,8 +81,8 @@ type flatResourcePermission struct {
 	IsServiceAccount bool      `xorm:"is_service_account"`
 }
 
-// toV0ResourcePermissions converts flatResourcePermission grouped by resource (e.g. {folder.grafana.app, folders, fold1}) to a list of v0alpha1.ResourcePermission
-func toV0ResourcePermissions(permsByResource map[groupResourceName][]flatResourcePermission) ([]v0alpha1.ResourcePermission, error) {
+// toV0ResourcePermissions converts rbacAssignment grouped by resource (e.g. {folder.grafana.app, folders, fold1}) to a list of v0alpha1.ResourcePermission
+func toV0ResourcePermissions(permsByResource map[groupResourceName][]rbacAssignment) ([]v0alpha1.ResourcePermission, error) {
 	if len(permsByResource) == 0 {
 		return nil, nil
 	}

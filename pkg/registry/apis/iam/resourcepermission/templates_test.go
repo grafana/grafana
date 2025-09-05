@@ -42,14 +42,14 @@ func TestTemplates(t *testing.T) {
 		return &v
 	}
 
-	getInsertAssignment := func(orgID int64, roleID int64, assignment grant) sqltemplate.SQLTemplate {
+	getInsertAssignment := func(orgID int64, roleID int64, assignment rbacAssignmentCreate) sqltemplate.SQLTemplate {
 		v := insertAssignmentTemplate{
 			SQLTemplate:      sqltemplate.New(nodb.DialectForDriver()),
 			AssignmentTable:  nodb.Table(assignment.AssignmentTable),
 			AssignmentColumn: assignment.AssignmentColumn,
 			RoleID:           roleID,
 			OrgID:            orgID,
-			AssigneeID:       assignment.AssigneeID,
+			SubjectID:        assignment.SubjectID,
 			Now:              "2025-08-27 21:35:00",
 		}
 		v.SQLTemplate = mocks.NewTestingSQLTemplate()
@@ -102,8 +102,8 @@ func TestTemplates(t *testing.T) {
 			assignmentInsertTplt: {
 				{
 					Name: "insert user assignment",
-					Data: getInsertAssignment(8, 23, grant{
-						AssigneeID:       5,
+					Data: getInsertAssignment(8, 23, rbacAssignmentCreate{
+						SubjectID:        5,
 						AssignmentTable:  "user_role",
 						AssignmentColumn: "user_id",
 						Action:           "dashboards:edit",
@@ -112,8 +112,8 @@ func TestTemplates(t *testing.T) {
 				},
 				{
 					Name: "insert basic role assignment",
-					Data: getInsertAssignment(74, 96, grant{
-						AssigneeID:       "Viewer",
+					Data: getInsertAssignment(74, 96, rbacAssignmentCreate{
+						SubjectID:        "Viewer",
 						AssignmentTable:  "builtin_role",
 						AssignmentColumn: "role",
 						Action:           "dashboards:admin",

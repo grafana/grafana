@@ -117,7 +117,7 @@ type insertAssignmentTemplate struct {
 	AssignmentColumn string
 	RoleID           int64
 	OrgID            int64
-	AssigneeID       any // int64 or string
+	SubjectID        any // int64 or string
 	Now              string
 }
 
@@ -131,14 +131,14 @@ func (t insertAssignmentTemplate) Validate() error {
 	return nil
 }
 
-func buildInsertAssignmentQuery(dbHelper *legacysql.LegacyDatabaseHelper, orgID int64, roleID int64, assignment grant) (string, []any, error) {
+func buildInsertAssignmentQuery(dbHelper *legacysql.LegacyDatabaseHelper, orgID int64, roleID int64, assignment rbacAssignmentCreate) (string, []any, error) {
 	req := insertAssignmentTemplate{
 		SQLTemplate:      sqltemplate.New(dbHelper.DialectForDriver()),
 		AssignmentTable:  dbHelper.Table(assignment.AssignmentTable),
 		AssignmentColumn: assignment.AssignmentColumn,
 		RoleID:           roleID,
 		OrgID:            orgID,
-		AssigneeID:       assignment.AssigneeID,
+		SubjectID:        assignment.SubjectID,
 		Now:              timeNow().Format(time.DateTime),
 	}
 	rawQuery, err := sqltemplate.Execute(assignmentInsertTplt, req)
