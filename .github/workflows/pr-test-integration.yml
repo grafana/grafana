@@ -154,11 +154,11 @@ jobs:
       - name: Prepare MySQL config
         run: |
           mkdir -p /tmp/mysql
-          cp .github/mysql/custom.cnf /tmp/mysql/custom.cnf
+          cp .github/mysql/custom.cnf /tmp/mysql
       - name: Prepare Postgres config
         run: |
           mkdir -p /tmp/postgres
-          cp .github/postgres/postgresql.cnf /tmp/postgres/postgresql.cnf
+          cp .github/postgres/postgresql.cnf /tmp/postgres
       - name: Run tests
         env:
           SHARD: ${{ matrix.shard }}
