@@ -257,7 +257,7 @@ func (s *ResourcePermSqlBackend) existsResourcePermission(ctx context.Context, t
 	)
 	roleID := int64(0)
 	err := tx.Get(ctx, &roleID, idQuery, orgID, "managed:%", scope)
-	if err != nil {
+	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		return fmt.Errorf("checking for existing resource permission: %w", err)
 	}
 	if roleID != 0 {
