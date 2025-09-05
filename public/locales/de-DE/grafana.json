@@ -549,6 +549,7 @@
     },
     "alert-rules": {
       "firing-for": "Auslösen für",
+      "multiple-sources": "",
       "next-evaluation": "Nächste Evaluierung",
       "next-evaluation-in": "nächste Evaluierung in",
       "rule-definition": "Regeldefinition"
@@ -2638,13 +2639,15 @@
         "show": "Anzeigen"
       },
       "manage-alerts": "In diesen Datenquellen können Sie über die Alerting-Benutzeroberfläche „Warnungen verwalten“ auswählen, um diese Warnregeln sowohl in der Grafana-Benutzeroberfläche als auch in der Datenquelle, in der sie konfiguriert wurden, verwalten zu können.",
-      "no-groups": "Keine Gruppen verfügbar",
-      "no-namespaces": "Keine Ordner verfügbar",
       "placeholder-all-data-sources": "Alle Datenquellen",
       "placeholder-contact-point": "Kontaktpunkt auswählen",
       "placeholder-data-sources": "Datenquellen auswählen",
       "placeholder-labels": "Labels auswählen",
       "plugin-rules": "Plugin-Regeln",
+      "rule-source": {
+        "datasource": "",
+        "grafana": ""
+      },
       "rule-type": "Regelart",
       "rulesSearchInput-placeholder-search": "Suche",
       "search": "Suche",
@@ -2666,6 +2669,7 @@
         "namespace": "Ordner / Namensraum",
         "rule-health": "Zustand",
         "rule-name": "Regelname",
+        "rule-source": "",
         "rule-type": "Typ",
         "state": "Status"
       }
@@ -3393,9 +3397,6 @@
       "text-badge-enabled": "Aktiviert",
       "text-badge-not-enabled": "Nicht aktiviert"
     },
-    "scim-banner": {
-      "message": "SCIM befindet sich zurzeit in der Entwicklung und wird nicht für den Produktionseinsatz empfohlen. Bitte nutzen Sie es mit Vorsicht und rechnen Sie mit möglichen Änderungen."
-    },
     "server-discovery-modal": {
       "label-the-wellknownopenidconfiguration-endpoint-for-your-id-p": "Der Endpunkt .well-known/openid-configuration für Ihren IdP",
       "title-open-id-connect-discovery-url": "OpenID-Connect-Discovery-URL"
@@ -3565,7 +3566,9 @@
       },
       "error-moving-resources": "Fehler beim Verschieben von Ressourcen",
       "error-no-target-folder-path": "Der Zielordnerpfad ist ungültig oder leer, bitte wählen Sie ihn erneut aus.",
-      "move-warning": "Dadurch werden ausgewählte Ordner und deren Unterordner verschoben. Insgesamt betrifft dies:",
+      "move-total": "",
+      "move-warning": "",
+      "move-warning-tooltip": "",
       "target-folder": "Zielordner"
     },
     "counts": {
@@ -4503,16 +4506,11 @@
             "any": "Einzeln anpassen",
             "label": "Übereinstimmungsregeln"
           },
-          "label": "Gruppe",
           "visibility": {
             "hide": "Ausblenden",
             "label": "{{type}} Sichtbarkeit",
             "show": "Anzeigen"
           }
-        },
-        "shared": {
-          "delete-condition": "Bedingung löschen",
-          "unsupported-item-type": "Diese Bedingung wird vom Element nicht unterstützt und daher ignoriert."
         },
         "time-range-size": {
           "info": "Zeigen oder verbergen Sie {{type}}, wenn der Dashboard-Zeitbereich kürzer als der ausgewählte Zeitrahmen ist.",
@@ -4542,17 +4540,21 @@
             "not-matches": "Keine Übereinstimmungen"
           },
           "value": "Wert"
+        },
+        "wrapper": {
+          "delete-condition": "",
+          "unsupported-object-type": ""
         }
       },
       "editor": {
+        "info": "",
         "not-supported-for-custom-grid": "Bedingtes Rendering wird für das benutzerdefinierte Rasterlayout nicht unterstützt. Wechseln Sie zum automatischen Raster, um bedingtes Rendering zu nutzen.",
-        "unsupported-item-type": "Bedingtes Rendering wird für diesen Elementtyp nicht unterstützt."
+        "unsupported-object-type": ""
       },
       "overlay": {
         "tooltip": "Das Element wird aufgrund von bedingtem Rendering ausgeblendet."
       },
       "root": {
-        "info": "Legen Sie Regeln zur Steuerung der Sichtbarkeit von {{type}} fest, indem Sie einzelne oder alle Regeln anpassen.",
         "title": "Regeln ein-/ausblenden"
       }
     },
@@ -4691,7 +4693,9 @@
       "panel-title": "Panel-Titel ändern",
       "paste-panel": "Panel einfügen",
       "remove": "{{typeName}} entfernen",
-      "switch-layout": "Layout wechseln"
+      "row-title": "",
+      "switch-layout": "Layout wechseln",
+      "tab-title": ""
     },
     "edit-pane": {
       "elements": {
@@ -6542,7 +6546,8 @@
     },
     "data-source-load-error": {
       "back": "Zurück",
-      "delete": "Löschen"
+      "delete": "Löschen",
+      "not-found": ""
     },
     "data-source-missing-rights-message": {
       "title-missing-rights": "Fehlende Rechte"
@@ -7565,7 +7570,9 @@
   "folders": {
     "api": {
       "folder-delete-error-provisioned": "",
-      "folder-deleted-success": "Ordner gelöscht"
+      "folder-deleted-success": "Ordner gelöscht",
+      "folder-move-error-provisioned": "",
+      "folder-moved-success": ""
     },
     "get-loading-nav": {
       "main": {
@@ -8341,6 +8348,10 @@
         "action-title": "Titel",
         "action-title-placeholder": "Titel der Aktion",
         "action-variables": "Variable",
+        "connection": "",
+        "connection-direct-description": "",
+        "connection-direct-label": "",
+        "connection-placeholder": "",
         "one-click-description": "Der Ein-Klick-Modus kann nur für einen Link oder eine Aktion gleichzeitig aktiviert werden"
       }
     },
@@ -8765,7 +8776,6 @@
       "cell-inspect": "Wert prüfen",
       "cell-inspect-tooltip": "Wert prüfen",
       "copy": "In Zwischenablage kopieren",
-      "count": "Zählen",
       "csv-counts": "Zeilen: {{rows}}, Spalten: {{columns}} <5></5>",
       "csv-placeholder": "CSV hier eingeben …",
       "filter-placeholder": "Filterwerte",
@@ -8776,6 +8786,11 @@
       "filter-popup-heading": "Nach Werten filtern:",
       "filter-popup-input-placeholder": "Filterwerte",
       "filter-popup-match-case": "Groß-/Kleinschreibung beachten",
+      "footer": {
+        "reducer": {
+          "count": ""
+        }
+      },
       "inspect-drawer-title": "Wert prüfen",
       "nested-table": {
         "no-data": "Keine Daten"
@@ -9525,6 +9540,7 @@
       "fields-section": "Felder",
       "hide-log-line": "Log-Linie ausblenden",
       "inline-mode": "Inline anzeigen",
+      "link-value-tooltip": "",
       "links-section": "Links",
       "log-line-field": "Log-Zeile",
       "log-line-section": "Log-Linie",
@@ -9715,30 +9731,6 @@
     "un-themed-log-label-stats": {
       "field-log-stats": "{{label}}: {{total}} von {{rowCount}} Zeilen haben dieses Feld",
       "label-log-stats": "{{label}}: {{total}} von {{rowCount}} Zeilen haben dieses Label"
-    }
-  },
-  "logs-new": {
-    "category-logs": "Logs",
-    "deduplication-options": {
-      "label-exact": "Exakt",
-      "label-none": "Keine",
-      "label-numbers": "Zahlen",
-      "label-signature": "Signatur"
-    },
-    "description-infinite-scrolling": "Experimentell. Fordern Sie weitere Ergebnisse an, indem Sie zum Ende der Logs-Liste scrollen.",
-    "description-show-controls": "Anzeige von Steuerelementen für den Sprung zur letzten oder ersten Log-Linie und Filtern nach Log-Ebene",
-    "description-syntax-highlighting": "Verwenden Sie eine vordefinierte Syntax-Farbgrammatik, um relevante Teile der Log-Linien hervorzuheben",
-    "name-deduplication": "Deduplizierung",
-    "name-enable-log-details": "Log-Details aktivieren",
-    "name-infinite-scrolling": "Unbegrenztes Scrollen aktivieren",
-    "name-order": "Reihenfolge",
-    "name-show-controls": "Steuerelemente anzeigen",
-    "name-syntax-highlighting": "Syntaxhervorhebung aktivieren",
-    "name-time": "Zeit",
-    "name-wrap-lines": "Zeilen umbrechen",
-    "order-options": {
-      "label-newest-first": "Neueste zuerst",
-      "label-oldest-first": "Älteste zuerst"
     }
   },
   "manage-dashbaords": {
@@ -12085,6 +12077,7 @@
     "selector": {
       "apply": "Anwenden",
       "cancel": "Abbrechen",
+      "error-title": "",
       "input": {
         "placeholder": "Bereiche auswählen …",
         "removeAll": "Alle Bereiche entfernen"
@@ -12779,8 +12772,6 @@
     "description-calculation": "Wählen Sie eine Reduktionsfunktion/Berechnung",
     "description-cell-value-inspect": "Zellwertprüfung in einem modalen Fenster aktivieren",
     "description-column-filter": "Aktiviert/deaktiviert Feldfilter in der Tabelle",
-    "description-count-rows": "Eine einzelne Anzahl für alle Datenzeilen anzeigen",
-    "description-fields": "Wählen Sie die Felder aus, die berechnet werden sollen",
     "description-frozen-columns": "",
     "description-min-column-width": "Die Mindestbreite für die automatische Größenänderung der Spalte",
     "description-tooltip-from-field": "",
@@ -12807,21 +12798,17 @@
     "name-column-alignment": "Spaltenausrichtung",
     "name-column-filter": "Spaltenfilter",
     "name-column-width": "Spaltenbreite",
-    "name-count-rows": "Zeilen zählen",
     "name-enable-pagination": "",
-    "name-fields": "Felder",
     "name-frozen-columns": "",
     "name-hide-in-table": "In Tabelle ausblenden",
     "name-max-height": "",
     "name-min-column-width": "Minimale Spaltenbreite",
-    "name-show-table-footer": "Tabellenfußzeile anzeigen",
     "name-show-table-header": "Tabellenüberschirft anzeigen",
     "name-tooltip-from-field": "",
     "name-tooltip-placement": "",
     "name-wrap-header-text": "Kopfzeilentext umbrechen",
     "name-wrap-text": "",
     "placeholder-column-width": "auto",
-    "placeholder-fields": "Alle numerischen Felder",
     "placeholder-max-height": "",
     "tooltip-placement-options": {
       "label-auto": "",
