@@ -174,6 +174,10 @@ Columns with filters applied have a blue filter displayed next to the title.
 
 To remove the filter, click the blue filter icon and then click **Clear filter**.
 
+### Panel filtering with ad hoc filters
+
+{{< docs/shared lookup="visualizations/panel-filtering.md" source="grafana" version="<GRAFANA_VERSION>" >}}
+
 ## Sort columns
 
 Click a column title to change the sort order from default to descending to ascending.
