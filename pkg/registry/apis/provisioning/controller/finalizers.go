@@ -107,7 +107,7 @@ func (f *finalizer) processExistingItems(
 	errors := 0
 
 	for _, item := range items.Items {
-		res, _, err := clients.ForResource(schema.GroupVersionResource{
+		res, _, err := clients.ForResource(ctx, schema.GroupVersionResource{
 			Group:    item.Group,
 			Resource: item.Resource,
 		})

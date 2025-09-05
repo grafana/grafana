@@ -408,7 +408,7 @@ func TestFullSync_ApplyChanges(t *testing.T) { //nolint:gocyclo
 					return true, nil, nil
 				})
 
-				clients.On("ForResource", schema.GroupVersionResource{
+				clients.On("ForResource", mock.Anything, schema.GroupVersionResource{
 					Group:    "dashboards",
 					Resource: "Dashboard",
 				}).Return(fakeDynamicClient.Resource(resources.DashboardResource), schema.GroupVersionKind{
@@ -467,7 +467,7 @@ func TestFullSync_ApplyChanges(t *testing.T) { //nolint:gocyclo
 					return true, nil, fmt.Errorf("delete failed")
 				})
 
-				clients.On("ForResource", schema.GroupVersionResource{
+				clients.On("ForResource", mock.Anything, schema.GroupVersionResource{
 					Group:    "dashboards",
 					Resource: "Dashboard",
 				}).Return(fakeDynamicClient.Resource(resources.DashboardResource), schema.GroupVersionKind{
@@ -544,7 +544,7 @@ func TestFullSync_ApplyChanges(t *testing.T) { //nolint:gocyclo
 			setupMocks: func(repo *repository.MockRepository, repoResources *resources.MockRepositoryResources, clients *resources.MockResourceClients, progress *jobs.MockJobProgressRecorder, compareFn *MockCompareFn) {
 				progress.On("TooManyErrors").Return(nil)
 
-				clients.On("ForResource", schema.GroupVersionResource{
+				clients.On("ForResource", mock.Anything, schema.GroupVersionResource{
 					Group:    "dashboards",
 					Resource: "Dashboard",
 				}).Return(nil, schema.GroupVersionKind{}, errors.New("didn't work"))
@@ -599,7 +599,7 @@ func TestFullSync_ApplyChanges(t *testing.T) { //nolint:gocyclo
 					return true, nil, nil
 				})
 
-				clients.On("ForResource", schema.GroupVersionResource{
+				clients.On("ForResource", mock.Anything, schema.GroupVersionResource{
 					Group:    "folders",
 					Resource: "Folder",
 				}).Return(fakeDynamicClient.Resource(resources.FolderResource), schema.GroupVersionKind{
@@ -658,7 +658,7 @@ func TestFullSync_ApplyChanges(t *testing.T) { //nolint:gocyclo
 					return true, nil, fmt.Errorf("delete failed")
 				})
 
-				clients.On("ForResource", schema.GroupVersionResource{
+				clients.On("ForResource", mock.Anything, schema.GroupVersionResource{
 					Group:    "folders",
 					Resource: "Folder",
 				}).Return(fakeDynamicClient.Resource(resources.FolderResource), schema.GroupVersionKind{

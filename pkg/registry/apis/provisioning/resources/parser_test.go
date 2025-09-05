@@ -5,6 +5,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
 	dashboardV0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
@@ -16,9 +17,9 @@ import (
 
 func TestParser(t *testing.T) {
 	clients := NewMockResourceClients(t)
-	clients.On("ForKind", dashboardV0.DashboardResourceInfo.GroupVersionKind()).
+	clients.On("ForKind", mock.Anything, dashboardV0.DashboardResourceInfo.GroupVersionKind()).
 		Return(nil, dashboardV0.DashboardResourceInfo.GroupVersionResource(), nil).Maybe()
-	clients.On("ForKind", dashboardV1.DashboardResourceInfo.GroupVersionKind()).
+	clients.On("ForKind", mock.Anything, dashboardV1.DashboardResourceInfo.GroupVersionKind()).
 		Return(nil, dashboardV1.DashboardResourceInfo.GroupVersionResource(), nil).Maybe()
 
 	parser := &parser{
