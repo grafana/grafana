@@ -489,7 +489,7 @@ func filterHistoryKeysByVersion(historyKeys []DataKey, req *resourcepb.ListReque
 		if req.ResourceVersion <= 0 {
 			return nil, fmt.Errorf("expecting an explicit resource version query when using Exact matching")
 		}
-		var exactKeys []DataKey
+		exactKeys := make([]DataKey, 0, len(historyKeys))
 		for _, key := range historyKeys {
 			if key.ResourceVersion == req.ResourceVersion {
 				exactKeys = append(exactKeys, key)
@@ -498,7 +498,7 @@ func filterHistoryKeysByVersion(historyKeys []DataKey, req *resourcepb.ListReque
 		return exactKeys, nil
 	case resourcepb.ResourceVersionMatchV2_NotOlderThan:
 		if req.ResourceVersion > 0 {
-			var filteredKeys []DataKey
+			filteredKeys := make([]DataKey, 0, len(historyKeys))
 			for _, key := range historyKeys {
 				if key.ResourceVersion >= req.ResourceVersion {
 					filteredKeys = append(filteredKeys, key)
@@ -508,7 +508,7 @@ func filterHistoryKeysByVersion(historyKeys []DataKey, req *resourcepb.ListReque
 		}
 	default:
 		if req.ResourceVersion > 0 {
-			var filteredKeys []DataKey
+			filteredKeys := make([]DataKey, 0, len(historyKeys))
 			for _, key := range historyKeys {
 				if key.ResourceVersion <= req.ResourceVersion {
 					filteredKeys = append(filteredKeys, key)
@@ -534,7 +534,7 @@ func applyLiveHistoryFilter(filteredKeys []DataKey, req *resourcepb.ListRequest)
 		}
 	}
 	if latestDeleteRV > 0 {
-		var liveKeys []DataKey
+		liveKeys := make([]DataKey, 0, len(filteredKeys))
 		for _, key := range filteredKeys {
 			if key.ResourceVersion > latestDeleteRV {
 				liveKeys = append(liveKeys, key)
@@ -564,7 +564,7 @@ func applyPagination(keys []DataKey, lastSeenRV int64, sortAscending bool) []Dat
 		return keys
 	}
 
-	var pagedKeys []DataKey
+	pagedKeys := make([]DataKey, 0, len(keys))
 	for _, key := range keys {
 		if sortAscending && key.ResourceVersion > lastSeenRV {
 			pagedKeys = append(pagedKeys, key)
@@ -849,7 +849,7 @@ func (k *kvStorageBackend) ListHistory(ctx context.Context, req *resourcepb.List
 // processTrashEntries handles the special case of listing deleted items (trash)
 func (k *kvStorageBackend) processTrashEntries(ctx context.Context, req *resourcepb.ListRequest, fn func(ListIterator) error, historyKeys []DataKey, lastSeenRV int64, sortAscending bool, listRV int64) (int64, error) {
 	// Filter to only deleted entries
-	var deletedKeys []DataKey
+	deletedKeys := make([]DataKey, 0, len(historyKeys))
 	for _, key := range historyKeys {
 		if key.Action == DataActionDeleted {
 			deletedKeys = append(deletedKeys, key)
@@ -865,7 +865,7 @@ func (k *kvStorageBackend) processTrashEntries(ctx context.Context, req *resourc
 		Name:      req.Options.Key.Name,
 	})
 
-	var trashKeys []DataKey
+	trashKeys := make([]DataKey, 0, 1)
 	if errors.Is(err, ErrNotFound) {
 		// Resource doesn't exist currently, so we can return the latest delete
 		// Find the latest delete event

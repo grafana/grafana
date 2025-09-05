@@ -534,7 +534,7 @@ func (d *dataStore) processGroupResourceStats(ctx context.Context, groupResource
 	processLastResource()
 
 	// Convert namespace counts to ResourceStats
-	var stats []ResourceStats
+	stats := make([]ResourceStats, 0, len(namespaceCounts))
 	for ns, names := range namespaceCounts {
 		// Count how many names actually exist (not deleted)
 		count := int64(0)
@@ -615,10 +615,11 @@ func (d *dataStore) getGroupResources(ctx context.Context) ([]GroupResource, err
 
 		// Add to results if we haven't seen this group/resource combination before
 		if !seenGroupResources[groupResourceKey] {
-			results = append(results, GroupResource{
+			groupResource := GroupResource{
 				Group:    dataKey.Group,
 				Resource: dataKey.Resource,
-			})
+			}
+			results = append(results, groupResource)
 			seenGroupResources[groupResourceKey] = true
 		}
 
