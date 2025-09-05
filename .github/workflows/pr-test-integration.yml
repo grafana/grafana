@@ -158,7 +158,7 @@ jobs:
       - name: Prepare Postgres config
         run: |
           mkdir -p /tmp/postgres
-          cp .github/postgres/postgresql.cnf /tmp/postgres/postgresql
+          cp .github/postgres/postgresql.cnf /tmp/postgres/postgresql.cnf
       - name: Run tests
         env:
           SHARD: ${{ matrix.shard }}
