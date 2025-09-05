@@ -120,25 +120,6 @@ jobs:
         github-app-name: 'grafana-ci-bot'
     - run: yarn install --immutable --check-cache
     - run: yarn run typecheck
-  lint-frontend-betterer:
-    needs: detect-changes
-    permissions:
-      contents: read
-      id-token: write
-    if: needs.detect-changes.outputs.changed == 'true'
-    name: Betterer
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v4
-      with:
-        persist-credentials: false
-    - uses: actions/setup-node@v4
-      with:
-        node-version-file: '.nvmrc'
-        cache: 'yarn'
-        cache-dependency-path: 'yarn.lock'
-    - run: yarn install --immutable --check-cache
-    - run: yarn run betterer:ci
   lint-frontend-api-clients:
     permissions:
       contents: read

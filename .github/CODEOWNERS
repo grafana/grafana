@@ -414,6 +414,8 @@
 /e2e-playwright/dashboard-cujs/ @grafana/dashboards-squad
 /e2e-playwright/dashboards-search-suite/ @grafana/dashboards-squad
 /e2e-playwright/dashboards/cujs/ @grafana/dashboards-squad
+/e2e-playwright/dashboards/DashboardForConditionalRendering.json @grafana/dashboards-squad
+/e2e-playwright/dashboards/DashboardWithAllConditionalRendering.json @grafana/dashboards-squad
 /e2e-playwright/dashboards/AdHocFilterTest.json @grafana/datapro
 /e2e-playwright/dashboards/DashboardLiveTest.json @grafana/dashboards-squad
 /e2e-playwright/dashboards/DataLinkWithoutSlugTest.json @grafana/dashboards-squad
@@ -1047,7 +1049,6 @@ playwright.storybook.config.ts @grafana/grafana-frontend-platform
 /scripts/**/generate-transformations* @grafana/datapro
 /scripts/webpack/ @grafana/frontend-ops
 /scripts/generate-a11y-report.sh @grafana/grafana-frontend-platform
-.betterer.ts @grafana/grafana-frontend-platform
 eslint-suppressions.json @grafanabot
 
 # Design system
