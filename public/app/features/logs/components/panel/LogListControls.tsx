@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { capitalize } from 'lodash';
-import { forwardRef, MouseEvent, useCallback, useMemo } from 'react';
+import { MouseEvent, useCallback, useMemo } from 'react';
 
 import { CoreApp, EventBus, LogLevel, LogsDedupDescription, LogsDedupStrategy, LogsSortOrder } from '@grafana/data';
 import { GrafanaTheme2 } from '@grafana/data/';
@@ -481,7 +481,7 @@ export const LogListControls = ({ eventBus, visualisationType = 'logs' }: Props)
   );
 };
 
-const TimestampResolutionButton = forwardRef<HTMLButtonElement, {}>((_, ref) => {
+const TimestampResolutionButton = () => {
   const styles = useStyles2(getStyles);
   const { setTimestampResolution, setShowTime, showTime, timestampResolution } = useLogListContext();
 
@@ -556,8 +556,7 @@ const TimestampResolutionButton = forwardRef<HTMLButtonElement, {}>((_, ref) => 
       </div>
     </Dropdown>
   );
-});
-TimestampResolutionButton.displayName = 'TimestampResolutionButton';
+};
 
 const WrapLogMessageButton = () => {
   const styles = useStyles2(getStyles);
