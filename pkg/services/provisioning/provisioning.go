@@ -350,10 +350,6 @@ func (ps *ProvisioningServiceImpl) ProvisionAlerting(ctx context.Context) error 
 	return ps.provisionAlerting(ctx, cfg)
 }
 
-func (ps *ProvisioningServiceImpl) MigratePrometheusType(ctx context.Context) error {
-	return ps.migratePrometheusType(ctx)
-}
-
 func (ps *ProvisioningServiceImpl) GetDashboardProvisionerResolvedPath(name string) string {
 	return ps.dashboardProvisioner.GetProvisionerResolvedPath(name)
 }
