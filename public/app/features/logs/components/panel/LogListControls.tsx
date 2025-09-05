@@ -491,7 +491,7 @@ const TimestampResolutionButton = forwardRef<HTMLButtonElement, {}>((_, ref) => 
           onClick={showMs}
         />
         <Menu.Item
-          label={t('logs.logs-controls.download-logs.csv', 'Show nanosecond timestamps')}
+          label={t('logs.logs-controls.timestamp.nanoseconds', 'Show nanosecond timestamps')}
           className={showTime && timestampResolution === 'ns' ? styles.menuItemActive : undefined}
           onClick={showNs}
         />
@@ -503,9 +503,10 @@ const TimestampResolutionButton = forwardRef<HTMLButtonElement, {}>((_, ref) => 
   return (
     <Dropdown overlay={timestampMenu} placement="auto-end">
       <div>
-        <Tooltip content={t('logs.logs-controls.timestamp', 'Log timestamps')}>
+        <Tooltip content={t('logs.logs-controls.timestamp.label', 'Log timestamps')}>
           <button
             aria-pressed={showTime}
+            aria-label={t('logs.logs-controls.timestamp.label', 'Log timestamps')}
             className={`${styles.customControlButton} ${showTime ? styles.controlButtonActive : styles.controlButton}`}
             type="button"
           >
@@ -539,34 +540,63 @@ const WrapLogMessageButton = () => {
    * Line wrapping also controls JSON formatting, because with line wrapping disabled,
    * JSON formatting has no effect, so one is related with the other.
    */
-  const onWrapLogMessageClick = useCallback(() => {
-    if (!wrapLogMessage) {
-      setWrapLogMessage(true);
-      setPrettifyJSON(false);
-    } else if (!prettifyJSON) {
-      setPrettifyJSON(true);
-    } else {
-      setWrapLogMessage(false);
-      setPrettifyJSON(false);
-    }
+  const disable = useCallback(() => {
+    setWrapLogMessage(false);
+    setPrettifyJSON(false);
     reportInteraction('logs_log_list_controls_wrap_clicked', {
       state: !wrapLogMessage,
     });
-  }, [prettifyJSON, setPrettifyJSON, setWrapLogMessage, wrapLogMessage]);
+  }, [setPrettifyJSON, setWrapLogMessage, wrapLogMessage]);
+
+  const wrap = useCallback(() => {
+    setWrapLogMessage(true);
+    setPrettifyJSON(false);
+  }, [setPrettifyJSON, setWrapLogMessage]);
+
+  const wrapAndPrettify = useCallback(() => {
+    setWrapLogMessage(true);
+    setPrettifyJSON(true);
+  }, [setPrettifyJSON, setWrapLogMessage]);
+
+  const wrappingMenu = useMemo(
+    () => (
+      <Menu>
+        <Menu.Item
+          label={t('logs.logs-controls.line-wrapping.hide', 'Disable line wrapping')}
+          className={!wrapLogMessage ? styles.menuItemActive : undefined}
+          onClick={disable}
+        />
+        <Menu.Item
+          label={t('logs.logs-controls.line-wrapping.enable', 'Enable line wrapping')}
+          className={wrapLogMessage && !prettifyJSON ? styles.menuItemActive : undefined}
+          onClick={wrap}
+        />
+        <Menu.Item
+          label={t('logs.logs-controls.line-wrapping.enable-prettify', 'Enable line wrapping and prettify JSON')}
+          className={wrapLogMessage && prettifyJSON ? styles.menuItemActive : undefined}
+          onClick={wrapAndPrettify}
+        />
+      </Menu>
+    ),
+    [disable, prettifyJSON, styles.menuItemActive, wrap, wrapAndPrettify, wrapLogMessage]
+  );
 
   return (
-    <Tooltip content={getWrapLogMessageTooltip(wrapLogMessage, prettifyJSON)}>
-      <button
-        aria-label={getWrapLogMessageTooltip(wrapLogMessage, prettifyJSON)}
-        aria-pressed={wrapLogMessage}
-        className={`${styles.customControlButton} ${wrapLogMessage ? styles.controlButtonActive : styles.controlButton}`}
-        type="button"
-        onClick={onWrapLogMessageClick}
-      >
-        <Icon name="wrap-text" size="lg" className={styles.customControlIcon} />
-        {prettifyJSON && <span className={styles.customControlTag}>+</span>}
-      </button>
-    </Tooltip>
+    <Dropdown overlay={wrappingMenu} placement="auto-end">
+      <div>
+        <Tooltip content={t('logs.logs-controls.line-wrapping.label', 'Log line wrapping')}>
+          <button
+            aria-label={t('logs.logs-controls.line-wrapping.label', 'Log line wrapping')}
+            aria-pressed={wrapLogMessage}
+            className={`${styles.customControlButton} ${wrapLogMessage ? styles.controlButtonActive : styles.controlButton}`}
+            type="button"
+          >
+            <Icon name="wrap-text" size="lg" className={styles.customControlIcon} />
+            {prettifyJSON && <span className={styles.customControlTag}>+</span>}
+          </button>
+        </Tooltip>
+      </div>
+    </Dropdown>
   );
 };
 
@@ -657,12 +687,3 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
   };
 };
-
-function getWrapLogMessageTooltip(wrapLogMessage: boolean, prettifyJSON: boolean | undefined) {
-  if (!wrapLogMessage) {
-    return t('logs.logs-controls.wrap-lines', 'Wrap lines');
-  }
-  return prettifyJSON
-    ? t('logs.logs-controls.unwrap-lines', 'Unwrap lines')
-    : t('logs.logs-controls.wrap-json-lines', 'Wrap lines and expand JSON');
-}
