@@ -41,6 +41,7 @@ export interface SearchQuery {
   starred?: boolean;
   permission?: PermissionLevelString;
   deleted?: boolean;
+  offset?: number;
 }
 
 export interface DashboardQueryResult {

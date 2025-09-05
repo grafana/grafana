@@ -134,10 +134,16 @@ export function TableNG(props: TableNGProps) {
   const theme = useTheme2();
   const styles = useStyles2(getGridStyles, enablePagination, transparent);
   const panelContext = usePanelContext();
+  const userCanExecuteActions = useMemo(() => panelContext.canExecuteActions?.() ?? false, [panelContext]);
 
   const getCellActions = useCallback(
-    (field: Field, rowIdx: number) => getActions(data, field, rowIdx),
-    [getActions, data]
+    (field: Field, rowIdx: number) => {
+      if (!userCanExecuteActions) {
+        return [];
+      }
+      return getActions(data, field, rowIdx);
+    },
+    [getActions, data, userCanExecuteActions]
   );
 
   const hasHeader = !noHeader;

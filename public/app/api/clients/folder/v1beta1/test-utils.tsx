@@ -14,7 +14,10 @@ const TestCreationComponent = () => {
   return (
     <>
       <AppNotificationList />
-      <button onClick={() => createFolder({ title: 'test', parentUid: folderA.item.uid })}>Create Folder</button>
+      <button onClick={() => createFolder({ title: 'test' })}>Create Folder at root</button>
+      <button onClick={() => createFolder({ title: 'test', parentUid: folderA.item.uid })}>
+        Create Folder in nested folder
+      </button>
       <div>{result.isSuccess ? 'Folder created' : 'Error creating folder'}</div>
     </>
   );

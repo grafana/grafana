@@ -4488,16 +4488,11 @@
             "any": "부분 일치",
             "label": "일치 규칙"
           },
-          "label": "그룹",
           "visibility": {
             "hide": "숨기기",
             "label": "{{type}} 표시 여부",
             "show": "표시"
           }
-        },
-        "shared": {
-          "delete-condition": "조건 삭제",
-          "unsupported-item-type": "이 조건은 해당 요소에서 지원되지 않으므로 무시됩니다."
         },
         "time-range-size": {
           "info": "대시보드 시간 범위가 선택한 시간 범위보다 짧은 경우 {{type}}을(를) 표시하거나 숨깁니다.",
@@ -4527,17 +4522,21 @@
             "not-matches": "일치하지 않음"
           },
           "value": "값"
+        },
+        "wrapper": {
+          "delete-condition": "",
+          "unsupported-object-type": ""
         }
       },
       "editor": {
+        "info": "",
         "not-supported-for-custom-grid": "맞춤형 그리드 레이아웃에서는 조건부 렌더링이 지원되지 않습니다. 조건부 렌더링을 사용하려면 자동 그리드로 전환하세요.",
-        "unsupported-item-type": "이 항목 유형에서는 조건부 렌더링이 지원되지 않습니다."
+        "unsupported-object-type": ""
       },
       "overlay": {
         "tooltip": "조건부 렌더링으로 인해 요소가 숨겨져 있습니다."
       },
       "root": {
-        "info": "일부 또는 모든 규칙을 충족할 때 {{type}}의 표시 여부를 제어하는 규칙을 설정합니다.",
         "title": "규칙 표시 / 숨기기"
       }
     },
@@ -4677,7 +4676,8 @@
       "paste-panel": "패널 붙여넣기",
       "remove": "{{typeName}} 제거",
       "row-title": "",
-      "switch-layout": "레이아웃 전환"
+      "switch-layout": "레이아웃 전환",
+      "tab-title": ""
     },
     "edit-pane": {
       "elements": {
@@ -8327,6 +8327,10 @@
         "action-title": "제목",
         "action-title-placeholder": "작업 제목",
         "action-variables": "변수",
+        "connection": "",
+        "connection-direct-description": "",
+        "connection-direct-label": "",
+        "connection-placeholder": "",
         "one-click-description": "한 번에 하나의 링크나 작업만 원 클릭을 활성화할 수 있습니다."
       }
     },
@@ -8751,7 +8755,6 @@
       "cell-inspect": "값 검사",
       "cell-inspect-tooltip": "값 검사",
       "copy": "클립보드로 복사",
-      "count": "개수",
       "csv-counts": "행:{{rows}}, 열:{{columns}}  <5></5>",
       "csv-placeholder": "여기에 CSV를 입력하세요...",
       "filter-placeholder": "값 필터링",
@@ -8762,6 +8765,11 @@
       "filter-popup-heading": "값으로 필터링:",
       "filter-popup-input-placeholder": "값 필터링",
       "filter-popup-match-case": "대소문자 일치",
+      "footer": {
+        "reducer": {
+          "count": ""
+        }
+      },
       "inspect-drawer-title": "값 검사",
       "nested-table": {
         "no-data": "데이터 없음"
@@ -9694,30 +9702,6 @@
     "un-themed-log-label-stats": {
       "field-log-stats": "{{label}}: {{total}}개의 행 중 {{rowCount}}개에 해당 필드가 있습니다",
       "label-log-stats": "{{label}}: {{total}}개의 행 중 {{rowCount}}에 해당 라벨이 있습니다"
-    }
-  },
-  "logs-new": {
-    "category-logs": "로그",
-    "deduplication-options": {
-      "label-exact": "정확한",
-      "label-none": "없음",
-      "label-numbers": "숫자",
-      "label-signature": "서명"
-    },
-    "description-infinite-scrolling": "실험적. 로그 목록 하단으로 스크롤하여 더 많은 결과를 요청합니다.",
-    "description-show-controls": "마지막 또는 첫 번째 로그 라인으로 이동하는 컨트롤과 로그 단계별 필터를 표시합니다",
-    "description-syntax-highlighting": "사전 정의된 구문 색상 문법을 사용하여 로그 라인의 관련 부분을 강조 표시합니다",
-    "name-deduplication": "중복 제거",
-    "name-enable-log-details": "로그 세부 정보 활성화",
-    "name-infinite-scrolling": "무한 스크롤 활성화",
-    "name-order": "순서",
-    "name-show-controls": "컨트롤 표시",
-    "name-syntax-highlighting": "구문 강조 표시 활성화",
-    "name-time": "시간",
-    "name-wrap-lines": "줄 바꿈",
-    "order-options": {
-      "label-newest-first": "최신순",
-      "label-oldest-first": "오래된 순"
     }
   },
   "manage-dashbaords": {
@@ -12747,8 +12731,6 @@
     "description-calculation": "감속기 함수/계산 선택",
     "description-cell-value-inspect": "모달 창에서 셀 값 검사 활성화",
     "description-column-filter": "테이블에서 필드 필터 활성화/비활성화",
-    "description-count-rows": "모든 데이터 행에 대한 단일 개수 표시",
-    "description-fields": "계산해야 하는 필드 선택",
     "description-frozen-columns": "",
     "description-min-column-width": "열 자동 크기 조정을 위한 최소 너비",
     "description-tooltip-from-field": "",
@@ -12775,21 +12757,17 @@
     "name-column-alignment": "열 정렬",
     "name-column-filter": "열 필터",
     "name-column-width": "열 너비",
-    "name-count-rows": "행 개수 계산",
     "name-enable-pagination": "",
-    "name-fields": "필드",
     "name-frozen-columns": "",
     "name-hide-in-table": "테이블에서 숨기기",
     "name-max-height": "",
     "name-min-column-width": "열 최소 너비",
-    "name-show-table-footer": "테이블 바닥글 표시",
     "name-show-table-header": "테이블 머리말 표시",
     "name-tooltip-from-field": "",
     "name-tooltip-placement": "",
     "name-wrap-header-text": "머리말 텍스트 줄 바꿈",
     "name-wrap-text": "",
     "placeholder-column-width": "자동",
-    "placeholder-fields": "모든 숫자 필드",
     "placeholder-max-height": "",
     "tooltip-placement-options": {
       "label-auto": "",
