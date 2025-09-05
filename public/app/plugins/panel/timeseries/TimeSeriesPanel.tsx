@@ -54,12 +54,17 @@ export const TimeSeriesPanel = ({
   // Vertical orientation is not available for users through config.
   // It is simplified version of horizontal time series panel and it does not support all plugins.
   const isVerticallyOriented = options.orientation === VizOrientation.Vertical;
-  const frames = useMemo(() => {
+  const { frames, compareDiffMs } = useMemo(() => {
     let frames = prepareGraphableFields(data.series, config.theme2, timeRange);
+    let compareDiffMs: number | undefined = undefined;
+
     if (frames) {
       frames.forEach((frame: DataFrame) => {
         const tc = frame.meta?.timeCompare;
         if (tc?.isTimeShiftQuery && tc.diffMs != null) {
+          // Store the diffMs to pass to tooltip
+          compareDiffMs = tc.diffMs;
+
           // Check if the compared frame needs time alignment
           // Apply alignment when time ranges match (no shift applied yet)
           const needsAlignment = shouldAlignTimeCompare(frame, frames, timeRange);
@@ -69,7 +74,7 @@ export const TimeSeriesPanel = ({
         }
       });
     }
-    return frames;
+    return { frames, compareDiffMs };
   }, [data.series, timeRange]);
   const timezones = useMemo(() => getTimezones(options.timezone, timeZone), [options.timezone, timeZone]);
   const suggestions = useMemo(() => {
@@ -164,6 +169,7 @@ export const TimeSeriesPanel = ({
                       replaceVariables={replaceVariables}
                       dataLinks={dataLinks}
                       canExecuteActions={userCanExecuteActions}
+                      compareDiffMs={compareDiffMs}
                     />
                   );
                 }}
