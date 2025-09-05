@@ -16,7 +16,6 @@ FROM (
   )
   UNION ALL
   (SELECT id, updated FROM {{ .Ident .PermissionTable }} p
-    WHERE p.org_id = {{ .Arg .Query.OrgID }}
     ORDER BY id DESC LIMIT 1
   )
 ) AS u;
