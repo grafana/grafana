@@ -289,7 +289,11 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
     );
     this.tempoVersion = response.data.version;
   };
-  // TODO: Implement this function in Prometheus datasource https://github.com/grafana/grafana/issues/109706
+
+  /**
+   * New implementation using the Prometheus datasource's checkMetricExists method.
+   * This delegates the metric checking logic to the appropriate datasource.
+   */
   async getNativeHistograms(timeRange?: TimeRange): Promise<boolean> {
     if (!this.serviceMap?.datasourceUid) {
       return false;
@@ -301,37 +305,17 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
     try {
       // Get the Prometheus datasource instance
       const promDs = await getDataSourceSrv().get(this.serviceMap.datasourceUid);
-      // Use provided time range or default to last hour
-      const from = timeRange?.from || dateTime().subtract(1, 'hour');
-      const to = timeRange?.to || dateTime();
 
-      // Convert to Unix timestamps (seconds since epoch)
-      const start = Math.floor(from.valueOf() / 1000);
-      const end = Math.floor(to.valueOf() / 1000);
-
-      // Use the series endpoint to check if native histogram metrics exist
-      // this has a 90% chance of returning correctly due to sparse data
-      if (!('metadataRequest' in promDs) || typeof promDs.metadataRequest !== 'function') {
+      // Check if the datasource has the checkMetricExists method
+      if (!('checkMetricExists' in promDs) || typeof promDs.checkMetricExists !== 'function') {
+        console.warn('Prometheus datasource does not support checkMetricExists method');
         return false;
       }
 
-      const seriesResult = await promDs.metadataRequest('/api/v1/series', {
-        'match[]': metricName,
-        limit: 1,
-        start: start,
-        end: end,
-      });
-
-      // Check if any native histogram series exist
-      const seriesData = seriesResult?.data?.data;
-      if (seriesData && Array.isArray(seriesData)) {
-        // If the series array has any entries, native histograms exist
-        return seriesData.length > 0;
-      }
-
-      return false;
+      // Use the new generic method from Prometheus datasource
+      return await promDs.checkMetricExists(metricName, timeRange);
     } catch (error) {
-      console.warn('Failed to check for native histograms:', error);
+      console.warn('Failed to check for native histograms using new method:', error);
       return false;
     }
   }
