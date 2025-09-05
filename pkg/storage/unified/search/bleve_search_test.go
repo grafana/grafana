@@ -22,8 +22,7 @@ import (
 const threshold = 9999
 
 func indexDocumentsWithTitles(t *testing.T, index resource.ResourceIndex, key resource.NamespacedResource, docsWithTitles map[string]string) {
-	var result []*resource.BulkIndexItem
-
+	result := make([]*resource.BulkIndexItem, 0, len(docsWithTitles))
 	for name, title := range docsWithTitles {
 		result = append(result, &resource.BulkIndexItem{
 			Action: resource.ActionIndex,
