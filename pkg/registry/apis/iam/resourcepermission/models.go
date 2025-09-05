@@ -1,6 +1,7 @@
 package resourcepermission
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"sort"
@@ -8,22 +9,39 @@ import (
 	"time"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+
+	"github.com/grafana/authlib/types"
 
 	v0alpha1 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
+	idStore "github.com/grafana/grafana/pkg/registry/apis/iam/legacy"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 )
 
 var (
+	timeNow = func() time.Time { return time.Now() }
+
 	errDatabaseHelper       = errors.New("failed to get database")
 	errNotImplemented       = errors.New("not supported by this storage backend")
-	errEmptyName            = errors.New("name cannot be empty")
+	errNameMismatch         = errors.New("name mismatch")
+	errNamespaceMismatch    = errors.New("namespace mismatch")
 	errUnknownGroupResource = errors.New("unknown group/resource")
 	errNotFound             = errors.New("not found")
+	errConflict             = errors.New("conflict")
+	errInvalidSpec          = errors.New("invalid spec")
 	errInvalidName          = errors.New("invalid name")
 	errInvalidScope         = errors.New("invalid scope")
 	errInvalidNamespace     = errors.New("invalid namespace")
 
-	defaultLevels = []string{"view", "edit", "admin"}
+	defaultLevels     = []string{"view", "edit", "admin"}
+	allowedBasicRoles = map[string]bool{"Viewer": true, "Editor": true, "Admin": true}
 )
+
+type IdentityStore interface {
+	GetServiceAccountInternalID(ctx context.Context, ns types.NamespaceInfo, query idStore.GetServiceAccountInternalIDQuery) (*idStore.GetServiceAccountInternalIDResult, error)
+	GetTeamInternalID(ctx context.Context, ns types.NamespaceInfo, query idStore.GetTeamInternalIDQuery) (*idStore.GetTeamInternalIDResult, error)
+	GetUserInternalID(ctx context.Context, ns types.NamespaceInfo, query idStore.GetUserInternalIDQuery) (*idStore.GetUserInternalIDResult, error)
+}
 
 type ListResourcePermissionsQuery struct {
 	Scope      string
@@ -37,7 +55,25 @@ type DeleteResourcePermissionsQuery struct {
 	OrgID int64
 }
 
-type flatResourcePermission struct {
+type rbacAssignmentCreate struct {
+	Action           string // e.g. "dashboards:edit"
+	Scope            string // e.g. "folders:uid:1"
+	RoleName         string // e.g. "managed:users:1:permissions
+	SubjectID        any    // int64 for user/team, string for builtin_role
+	AssignmentTable  string // "user_role", "team_role", or "builtin_role"
+	AssignmentColumn string // "user_id", "team_id", or "role"
+}
+
+func (g *rbacAssignmentCreate) permission() accesscontrol.Permission {
+	p := accesscontrol.Permission{
+		Action: g.Action,
+		Scope:  g.Scope,
+	}
+	p.Kind, p.Attribute, p.Identifier = accesscontrol.SplitScope(p.Scope)
+	return p
+}
+
+type rbacAssignment struct {
 	ID               int64     `xorm:"id"`
 	Action           string    `xorm:"action"`
 	Scope            string    `xorm:"scope"`
@@ -49,8 +85,8 @@ type flatResourcePermission struct {
 	IsServiceAccount bool      `xorm:"is_service_account"`
 }
 
-// toV0ResourcePermissions converts flatResourcePermission grouped by resource (e.g. {folder.grafana.app, folders, fold1}) to a list of v0alpha1.ResourcePermission
-func toV0ResourcePermissions(permsByResource map[groupResourceName][]flatResourcePermission) ([]v0alpha1.ResourcePermission, error) {
+// toV0ResourcePermissions converts rbacAssignment grouped by resource (e.g. {folder.grafana.app, folders, fold1}) to a list of v0alpha1.ResourcePermission
+func toV0ResourcePermissions(permsByResource map[groupResourceName][]rbacAssignment) ([]v0alpha1.ResourcePermission, error) {
 	if len(permsByResource) == 0 {
 		return nil, nil
 	}
@@ -162,5 +198,26 @@ func (s *ResourcePermSqlBackend) parseScope(scope string) (*groupResourceName, e
 		Group:    gr.Group,
 		Resource: gr.Resource,
 		Name:     parts[2],
+	}, nil
+}
+
+// splitResourceName splits a resource name in the format <group>-<resource>-<name> (e.g. dashboard.grafana.app-dashboards-ad5rwqs) into its components
+func (s *ResourcePermSqlBackend) splitResourceName(resourceName string) (Mapper, *groupResourceName, error) {
+	// e.g. dashboard.grafana.app-dashboards-ad5rwqs
+	parts := strings.SplitN(resourceName, "-", 3)
+	if len(parts) != 3 {
+		return nil, nil, fmt.Errorf("%w: %s", errInvalidName, resourceName)
+	}
+
+	group, resourceType, uid := parts[0], parts[1], parts[2]
+	mapper, ok := s.mappers[schema.GroupResource{Group: group, Resource: resourceType}]
+	if !ok {
+		return nil, nil, fmt.Errorf("%w: %s/%s", errUnknownGroupResource, group, resourceType)
+	}
+
+	return mapper, &groupResourceName{
+		Group:    group,
+		Resource: resourceType,
+		Name:     uid,
 	}, nil
 }
