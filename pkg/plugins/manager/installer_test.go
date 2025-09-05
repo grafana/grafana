@@ -510,13 +510,12 @@ func TestPluginInstaller_Removal(t *testing.T) {
 			},
 		}
 
-
 		_, err = os.Stat(pluginDir)
-		require.NoError(t, err, )
+		require.NoError(t, err)
 
 		inst := New(&config.PluginManagementCfg{}, registry, loader, &fakes.FakePluginRepo{}, &fakes.FakePluginStorage{}, storage.SimpleDirNameGeneratorFunc, &fakes.FakeAuthService{})
 		err = inst.Remove(context.Background(), "staticfs-plugin", "1.0.0")
-		require.NoError(t, err, )
+		require.NoError(t, err)
 
 		_, err = os.Stat(pluginDir)
 		require.NoError(t, err)
