@@ -1,0 +1,86 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "type": "prometheus",
+          "uid": "gdev-prometheus"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "id": null,
+  "links": [],
+  "panels": [
+    {
+      "gridPos": {
+        "h": 9,
+        "w": 12,
+        "x": 0,
+        "y": 0
+      },
+      "id": 2,
+      "options": {
+        "mode": "markdown",
+        "content": "GroupByVar: $groupBy\n\nAdHocVar: $adHoc\n\nTimerange: ${__url_time_range}"
+      },
+      "pluginVersion": "8.4.0-pre",
+      "title": "Panel Title",
+      "type": "text"
+    }
+  ],
+  "schemaVersion": 41,
+  "tags": [],
+  "templating": {
+    "list": [
+      {
+        "baseFilters": [],
+        "datasource": {
+          "type": "prometheus",
+          "uid": "gdev-prometheus"
+        },
+        "filters": [
+          {
+            "condition": "",
+            "key": "environment",
+            "keyLabel": "environment",
+            "operator": "=",
+            "value": "dev",
+            "valueLabels": ["dev"],
+            "values": ["dev"]
+          }
+        ],
+        "name": "adHoc",
+        "type": "adhoc"
+      },
+      {
+        "current": {},
+        "datasource": {
+          "type": "prometheus",
+          "uid": "gdev-prometheus"
+        },
+        "name": "groupBy",
+        "type": "groupby"
+      }
+    ]
+  },
+  "time": {
+    "from": "now-6h",
+    "to": "now"
+  },
+  "timepicker": {},
+  "timezone": "browser",
+  "title": "CUJ Dashboard 2",
+  "uid": "cuj-dashboard-2",
+  "version": 3,
+  "weekStart": ""
+}

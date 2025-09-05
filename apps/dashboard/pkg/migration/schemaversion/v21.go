@@ -1,6 +1,7 @@
 package schemaversion
 
 import (
+	"context"
 	"strings"
 
 	"github.com/grafana/grafana/apps/dashboard/pkg/migration/utils"
@@ -55,7 +56,7 @@ import (
 //	    }
 //	  }
 //	]
-func V21(dashboard map[string]interface{}) error {
+func V21(_ context.Context, dashboard map[string]interface{}) error {
 	dashboard["schemaVersion"] = 21
 
 	panels, ok := dashboard["panels"].([]interface{})

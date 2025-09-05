@@ -502,6 +502,15 @@ func convertResultsToFrame(results []*pgconn.Result, rowLimit int64) (*data.Fram
 						return nil, err
 					}
 					row[colIdx] = d
+				case pgtype.JSONOID, pgtype.JSONBOID:
+					var d *string
+					scanPlan := m.PlanScan(dataTypeOID, format, &d)
+					err := scanPlan.Scan(rawValue, &d)
+					if err != nil {
+						return nil, err
+					}
+					j := json.RawMessage(*d)
+					row[colIdx] = &j
 				default:
 					var d *string
 					scanPlan := m.PlanScan(dataTypeOID, format, &d)
