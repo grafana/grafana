@@ -124,9 +124,7 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
           layoutItem.setState(changedState);
         }
       },
-      undo: () => {
-        layoutItem!.setState(originalState);
-      },
+      undo: () => layoutItem!.setState(originalState),
     });
 
     // sadly we cannot publish this event directly here as the main dashboard edit / undo system

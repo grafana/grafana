@@ -1,11 +1,10 @@
-import { SceneObjectState, SceneObjectBase, SceneObject, sceneGraph, VizPanel } from '@grafana/scenes';
+import { SceneObjectState, SceneObjectBase, SceneObject, sceneGraph } from '@grafana/scenes';
 import {
   ElementSelectionContextItem,
   ElementSelectionContextState,
   ElementSelectionOnSelectOptions,
 } from '@grafana/ui';
 
-import { isDashboardLayoutItem } from '../scene/types/DashboardLayoutItem';
 import { isRepeatCloneOrChildOf } from '../utils/clone';
 import { getDashboardSceneFor } from '../utils/utils';
 
