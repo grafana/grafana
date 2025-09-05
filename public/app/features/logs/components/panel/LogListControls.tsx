@@ -544,18 +544,27 @@ const WrapLogMessageButton = () => {
     setWrapLogMessage(false);
     setPrettifyJSON(false);
     reportInteraction('logs_log_list_controls_wrap_clicked', {
-      state: !wrapLogMessage,
+      state: false,
+      prettify: false,
     });
-  }, [setPrettifyJSON, setWrapLogMessage, wrapLogMessage]);
+  }, [setPrettifyJSON, setWrapLogMessage]);
 
   const wrap = useCallback(() => {
     setWrapLogMessage(true);
     setPrettifyJSON(false);
+    reportInteraction('logs_log_list_controls_wrap_clicked', {
+      state: true,
+      prettify: false,
+    });
   }, [setPrettifyJSON, setWrapLogMessage]);
 
   const wrapAndPrettify = useCallback(() => {
     setWrapLogMessage(true);
     setPrettifyJSON(true);
+    reportInteraction('logs_log_list_controls_wrap_clicked', {
+      state: true,
+      prettify: true,
+    });
   }, [setPrettifyJSON, setWrapLogMessage]);
 
   const wrappingMenu = useMemo(
