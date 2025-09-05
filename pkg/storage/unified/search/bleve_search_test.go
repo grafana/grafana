@@ -87,7 +87,17 @@ func TestCanSearchByTitle(t *testing.T) {
 			"name2": "New dashboard 10",
 		})
 
-		checkSearchQuery(t, index, newTestQuery("New dash"), []string{"name2", "name1"})
+		checkSearchQuery(t, index, newTestQuery("dashboard"), []string{"name2", "name1"})
+	})
+
+	t.Run("all terms must match", func(t *testing.T) {
+		index := newTestDashboardsIndex(t, threshold, 2, 2, noop)
+		indexDocumentsWithTitles(t, index, key, map[string]string{
+			"name1": "Dashboard",
+			"name2": "New dashboard 10",
+		})
+
+		checkSearchQuery(t, index, newTestQuery("dashboard new"), []string{"name2"})
 	})
 
 	t.Run("will boost exact match query over match phrase query results", func(t *testing.T) {
