@@ -553,7 +553,6 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
                             ? nestedFrame.data.values?.[0].length
                             : 0;
 
-                          console.log('ITS ALL WORKING WITH NEW TYPE');
                           return { fields: newNestedFrame.fields, meta: nestedFrame.schema?.meta, length: rowCount };
                         });
                       });
