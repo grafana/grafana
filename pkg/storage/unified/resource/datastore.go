@@ -570,8 +570,8 @@ func (d *dataStore) processGroupResourceStats(ctx context.Context, groupResource
 func (d *dataStore) getGroupResources(ctx context.Context) ([]GroupResource, error) {
 	// Check cache first
 	if cached, found := d.cache.Get(groupResourcesCacheKey); found {
-		if results, ok := cached.([]GroupResource); ok {
-			return results, nil
+		if cachedResults, ok := cached.([]GroupResource); ok {
+			return cachedResults, nil
 		}
 	}
 
