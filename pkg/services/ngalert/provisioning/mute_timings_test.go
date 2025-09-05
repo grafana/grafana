@@ -963,6 +963,9 @@ func TestDeleteMuteTimings(t *testing.T) {
 						{
 							Name: usedActiveTiming,
 						},
+						{
+							Name: "timing-to-delete2",
+						},
 					},
 				},
 				Receivers: nil,
@@ -1127,7 +1130,7 @@ func TestDeleteMuteTimings(t *testing.T) {
 				return nil
 			})
 
-		timingToDelete := initialConfig().AlertmanagerConfig.TimeIntervals[0]
+		timingToDelete := initialConfig().AlertmanagerConfig.TimeIntervals[1]
 		correctVersion := calculateMuteTimeIntervalFingerprint(config.MuteTimeInterval(timingToDelete))
 
 		err := sut.DeleteMuteTiming(context.Background(), timingToDelete.Name, orgID, "", correctVersion)
