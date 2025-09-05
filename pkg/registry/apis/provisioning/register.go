@@ -211,7 +211,7 @@ func RegisterAPIService(
 	}
 
 	builder := NewAPIBuilder(
-		false, // Run controllers
+		cfg.ProvisioningDisableControllers,
 		repoFactory,
 		features,
 		client,
@@ -430,7 +430,7 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 	storage[provisioning.RepositoryResourceInfo.StoragePath("status")] = repositoryStatusStorage
 
 	// TODO: Add some logic so that the connectors can registered themselves and we don't have logic all over the place
-	storage[provisioning.RepositoryResourceInfo.StoragePath("test")] = NewTestConnector(b, b.repoFactory, &repository.Tester{}, b)
+	storage[provisioning.RepositoryResourceInfo.StoragePath("test")] = NewTestConnector(b, b.repoFactory, b)
 	storage[provisioning.RepositoryResourceInfo.StoragePath("files")] = NewFilesConnector(b, b.parsers, b.clients, b.access)
 	storage[provisioning.RepositoryResourceInfo.StoragePath("refs")] = NewRefsConnector(b)
 	storage[provisioning.RepositoryResourceInfo.StoragePath("resources")] = &listConnector{
@@ -637,7 +637,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			}
 
 			b.statusPatcher = appcontroller.NewRepositoryStatusPatcher(b.GetClient())
-			b.healthChecker = controller.NewHealthChecker(&repository.Tester{}, b.statusPatcher)
+			b.healthChecker = controller.NewHealthChecker(b.statusPatcher)
 
 			// if running solely CRUD, skip the rest of the setup
 			if b.onlyApiServer {
@@ -759,7 +759,6 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				b.repoFactory,
 				b.resourceLister,
 				b.clients,
-				&repository.Tester{},
 				b.jobs,
 				b.storageStatus,
 				b.GetHealthChecker(),
