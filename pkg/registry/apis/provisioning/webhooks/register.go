@@ -97,10 +97,7 @@ func ProvideWebhooksWithImages(
 	}
 }
 
-func ProvideWebhooks(
-	cfg *setting.Cfg,
-	configProvider apiserver.RestConfigProvider,
-) *WebhookExtraBuilder {
+func ProvideWebhooks(cfg *setting.Cfg) *WebhookExtraBuilder {
 	urlProvider := func(_ string) string {
 		return cfg.AppURL
 	}
@@ -110,21 +107,10 @@ func ProvideWebhooks(
 		isPublic:    isPublic,
 		urlProvider: urlProvider,
 		ExtraBuilder: func(b *provisioningapis.APIBuilder) provisioningapis.Extra {
-			clients := resources.NewClientFactory(configProvider)
-			parsers := resources.NewParserFactory(clients)
-
 			screenshotRenderer := pullrequest.NewNoOpRenderer()
-			webhook := NewWebhookConnector(
-				isPublic,
-				b,
-				screenshotRenderer,
-			)
+			webhook := NewWebhookConnector(isPublic, b, screenshotRenderer)
 
-			evaluator := pullrequest.NewEvaluator(screenshotRenderer, parsers, urlProvider)
-			commenter := pullrequest.NewCommenter()
-			pullRequestWorker := pullrequest.NewPullRequestWorker(evaluator, commenter)
-
-			return NewWebhookExtra(webhook, []jobs.Worker{pullRequestWorker})
+			return NewWebhookExtra(webhook)
 		},
 	}
 }
@@ -185,17 +171,10 @@ func (e *WebhookExtraWithImages) GetJobWorkers() []jobs.Worker {
 
 type WebhookExtra struct {
 	webhook *webhookConnector
-	workers []jobs.Worker
 }
 
-func NewWebhookExtra(
-	webhook *webhookConnector,
-	workers []jobs.Worker,
-) *WebhookExtra {
-	return &WebhookExtra{
-		webhook: webhook,
-		workers: workers,
-	}
+func NewWebhookExtra(webhook *webhookConnector) *WebhookExtra {
+	return &WebhookExtra{webhook: webhook}
 }
 
 // Authorize delegates authorization to the webhook connector
@@ -211,9 +190,4 @@ func (e *WebhookExtra) UpdateStorage(storage map[string]rest.Storage) error {
 // PostProcessOpenAPI processes OpenAPI specs for webhook connectors
 func (e *WebhookExtra) PostProcessOpenAPI(oas *spec3.OpenAPI) error {
 	return e.webhook.PostProcessOpenAPI(oas)
-}
-
-// GetJobWorkers returns job workers from the webhook connector
-func (e *WebhookExtra) GetJobWorkers() []jobs.Worker {
-	return e.workers
 }
