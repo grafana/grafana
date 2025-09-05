@@ -28,7 +28,7 @@ func TestMigrate(t *testing.T) {
 	files, err := os.ReadDir(INPUT_DIR)
 	require.NoError(t, err)
 
-	// Use the same datasource provider as the frontend test to ensure consistency
+	// Initialize migration with standard test datasource provider
 	migration.Initialize(migrationtestutil.GetTestDataSourceProvider())
 
 	t.Run("minimum version check", func(t *testing.T) {
@@ -123,7 +123,7 @@ func loadDashboard(t *testing.T, path string) map[string]interface{} {
 
 // TestSchemaMigrationMetrics tests that schema migration metrics are recorded correctly
 func TestSchemaMigrationMetrics(t *testing.T) {
-	// Initialize migration with test providers
+	// Initialize migration with standard test datasource provider
 	migration.Initialize(migrationtestutil.GetTestDataSourceProvider())
 
 	// Create a test registry for metrics
@@ -353,8 +353,10 @@ func getRelativeOutputPath(inputPath, inputDir string) string {
 }
 
 func TestMigrateDevDashboards(t *testing.T) {
-	// Use the same datasource provider as the frontend test to ensure consistency
-	migration.Initialize(migrationtestutil.GetTestDataSourceProvider(), migrationtestutil.GetTestPanelProvider())
+	// Reset the migration singleton and use the dev dashboard datasource provider
+	// to match the frontend devDashboardDataSources configuration
+	migration.ResetForTesting()
+	migration.Initialize(migrationtestutil.GetDevDashboardDataSourceProvider())
 
 	// Find all JSON files in the dev-dashboards directory
 	jsonFiles, err := findJSONFiles(DEV_DASHBOARDS_INPUT_DIR)
