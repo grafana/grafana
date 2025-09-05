@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/grafana/authlib/types"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/legacy"
