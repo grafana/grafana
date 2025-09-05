@@ -91,7 +91,9 @@ export const LogListControls = ({ eventBus, visualisationType = 'logs' }: Props)
 
   const onFilterLevelClick = useCallback(
     (level?: LogLevel) => {
-      reportInteraction('logs_log_list_controls_level_clicked');
+      reportInteraction('logs_log_list_controls_level_clicked', {
+        level,
+      });
       if (level === undefined) {
         setFilterLevels([]);
       } else if (!filterLevels.includes(level)) {
@@ -166,7 +168,12 @@ export const LogListControls = ({ eventBus, visualisationType = 'logs' }: Props)
             className={dedupStrategy === option ? styles.menuItemActive : undefined}
             description={LogsDedupDescription[option]}
             label={capitalize(option)}
-            onClick={() => setDedupStrategy(option)}
+            onClick={() => {
+              setDedupStrategy(option);
+              reportInteraction('logs_log_list_controls_deduplication_clicked', {
+                option,
+              });
+            }}
           />
         ))}
       </Menu>
@@ -201,15 +208,30 @@ export const LogListControls = ({ eventBus, visualisationType = 'logs' }: Props)
       <Menu>
         <Menu.Item
           label={t('logs.logs-controls.download-logs.txt', 'txt')}
-          onClick={() => downloadLogs(DownloadFormat.Text)}
+          onClick={() => {
+            downloadLogs(DownloadFormat.Text);
+            reportInteraction('logs_log_list_controls_downloaded_logs', {
+              format: DownloadFormat.Text,
+            });
+          }}
         />
         <Menu.Item
           label={t('logs.logs-controls.download-logs.json', 'json')}
-          onClick={() => downloadLogs(DownloadFormat.Json)}
+          onClick={() => {
+            downloadLogs(DownloadFormat.Json);
+            reportInteraction('logs_log_list_controls_downloaded_logs', {
+              format: DownloadFormat.Json,
+            });
+          }}
         />
         <Menu.Item
           label={t('logs.logs-controls.download-logs.csv', 'csv')}
-          onClick={() => downloadLogs(DownloadFormat.CSV)}
+          onClick={() => {
+            downloadLogs(DownloadFormat.CSV);
+            reportInteraction('logs_log_list_controls_downloaded_logs', {
+              format: DownloadFormat.CSV,
+            });
+          }}
         />
       </Menu>
     ),
@@ -465,16 +487,27 @@ const TimestampResolutionButton = forwardRef<HTMLButtonElement, {}>((_, ref) => 
 
   const hide = useCallback(() => {
     setShowTime(false);
+    reportInteraction('logs_log_list_controls_show_time_clicked', {
+      show_time: false,
+    });
   }, [setShowTime]);
 
   const showMs = useCallback(() => {
     setShowTime(true);
     setTimestampResolution('ms');
+    reportInteraction('logs_log_list_controls_show_time_clicked', {
+      show_time: false,
+      resolution: 'ms',
+    });
   }, [setShowTime, setTimestampResolution]);
 
   const showNs = useCallback(() => {
     setShowTime(true);
     setTimestampResolution('ns');
+    reportInteraction('logs_log_list_controls_show_time_clicked', {
+      show_time: false,
+      resolution: 'ns',
+    });
   }, [setShowTime, setTimestampResolution]);
 
   const timestampMenu = useMemo(
