@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { useMemo } from 'react';
+import { useMemo, useRef } from 'react';
 
 import { EventBusSrv, GrafanaTheme2 } from '@grafana/data';
 import { useTheme2 } from '@grafana/ui';
@@ -28,6 +28,7 @@ export const ControlledLogsTable = ({
 }: LogRowsComponentProps) => {
   const { sortOrder } = useLogListContext();
   const eventBus = useMemo(() => new EventBusSrv(), []);
+  const ref = useRef(null);
 
   const theme = useTheme2();
   const styles = getStyles(theme);
@@ -38,8 +39,8 @@ export const ControlledLogsTable = ({
   }
 
   return (
-    <div className={styles.logRowsContainer}>
-      <LogListControls eventBus={eventBus} visualisationType={visualisationType} />
+    <div ref={ref} className={styles.logRowsContainer}>
+      <LogListControls eventBus={eventBus} visualisationType={visualisationType} containerElement={ref.current} />
       <div className={styles.logRows} data-testid="logRowsTable">
         {/* Width should be full width minus logs navigation and padding */}
         <LogsTableWrap
