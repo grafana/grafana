@@ -18,12 +18,13 @@ import (
 
 	authlib "github.com/grafana/authlib/types"
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
-	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/apps/iam/pkg/reconcilers"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
+	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/setting"
@@ -39,7 +40,6 @@ var resourceInfo = folders.FolderResourceInfo
 
 // This is used just so wire has something unique to return
 type FolderAPIBuilder struct {
-	gv                   schema.GroupVersion
 	features             featuremgmt.FeatureToggles
 	namespacer           request.NamespaceMapper
 	folderSvc            folder.Service
@@ -47,37 +47,39 @@ type FolderAPIBuilder struct {
 	acService            accesscontrol.Service
 	ac                   accesscontrol.AccessControl
 	storage              grafanarest.Storage
+	permissionStore      reconcilers.PermissionStore
 
 	authorizer authorizer.Authorizer
 	parents    parentsGetter
 
-	searcher     resourcepb.ResourceIndexClient
-	cfg          *setting.Cfg
-	ignoreLegacy bool // skip legacy storage and only use unified storage
+	searcher            resourcepb.ResourceIndexClient
+	permissionsOnCreate bool
+	ignoreLegacy        bool // skip legacy storage and only use unified storage
 }
 
 func RegisterAPIService(cfg *setting.Cfg,
 	features featuremgmt.FeatureToggles,
 	apiregistration builder.APIRegistrar,
-	accessClient authlib.AccessClient,
 	folderSvc folder.Service,
 	folderPermissionsSvc accesscontrol.FolderPermissionsService,
 	accessControl accesscontrol.AccessControl,
 	acService accesscontrol.Service,
+	accessClient authlib.AccessClient,
 	registerer prometheus.Registerer,
 	unified resource.ResourceClient,
+	zanzanaClient zanzana.Client,
 ) *FolderAPIBuilder {
 	builder := &FolderAPIBuilder{
-		gv:                   resourceInfo.GroupVersion(),
 		features:             features,
 		namespacer:           request.GetNamespaceMapper(cfg),
 		folderSvc:            folderSvc,
 		folderPermissionsSvc: folderPermissionsSvc,
 		acService:            acService,
 		ac:                   accessControl,
-		cfg:                  cfg,
+		permissionsOnCreate:  cfg.RBAC.PermissionsOnCreation("folder"),
 		authorizer:           newAuthorizer(accessClient),
 		searcher:             unified,
+		permissionStore:      reconcilers.NewZanzanaPermissionStore(zanzanaClient),
 	}
 	apiregistration.RegisterAPI(builder)
 	return builder
@@ -85,15 +87,13 @@ func RegisterAPIService(cfg *setting.Cfg,
 
 func NewAPIService(ac authlib.AccessClient) *FolderAPIBuilder {
 	return &FolderAPIBuilder{
-		gv:           resourceInfo.GroupVersion(),
-		namespacer:   request.GetNamespaceMapper(nil),
 		authorizer:   newAuthorizer(ac),
 		ignoreLegacy: true,
 	}
 }
 
 func (b *FolderAPIBuilder) GetGroupVersion() schema.GroupVersion {
-	return b.gv
+	return resourceInfo.GroupVersion()
 }
 
 func addKnownTypes(scheme *runtime.Scheme, gv schema.GroupVersion) {
@@ -107,13 +107,14 @@ func addKnownTypes(scheme *runtime.Scheme, gv schema.GroupVersion) {
 }
 
 func (b *FolderAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
-	addKnownTypes(scheme, b.gv)
+	gv := b.GetGroupVersion()
+	addKnownTypes(scheme, gv)
 
 	// Link this version to the internal representation.
 	// This is used for server-side-apply (PATCH), and avoids the error:
 	//   "no kind is registered for the type"
 	addKnownTypes(scheme, schema.GroupVersion{
-		Group:   b.gv.Group,
+		Group:   gv.Group,
 		Version: runtime.APIVersionInternal,
 	})
 
@@ -121,8 +122,8 @@ func (b *FolderAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
 	// if err := playlist.RegisterConversions(scheme); err != nil {
 	//   return err
 	// }
-	metav1.AddToGroupVersion(scheme, b.gv)
-	return scheme.SetVersionPriority(b.gv)
+	metav1.AddToGroupVersion(scheme, gv)
+	return scheme.SetVersionPriority(gv)
 }
 
 func (b *FolderAPIBuilder) AllowedV0Alpha1Resources() []string {
@@ -150,8 +151,6 @@ func (b *FolderAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.API
 		service:        b.folderSvc,
 		namespacer:     b.namespacer,
 		tableConverter: resourceInfo.TableConverter(),
-		features:       b.features,
-		cfg:            b.cfg,
 	}
 
 	opts.StorageOptsRegister(resourceInfo.GroupResource(), apistore.StorageOptions{
@@ -162,14 +161,18 @@ func (b *FolderAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.API
 		tableConverter:       resourceInfo.TableConverter(),
 		folderPermissionsSvc: b.folderPermissionsSvc,
 		acService:            b.acService,
-		features:             b.features,
-		cfg:                  b.cfg,
+		permissionsOnCreate:  b.permissionsOnCreate,
 	}
 
 	if optsGetter != nil && dualWriteBuilder != nil {
 		store, err := grafanaregistry.NewRegistryStore(scheme, resourceInfo, optsGetter)
 		if err != nil {
 			return err
+		}
+
+		if b.features.IsEnabledGlobally(featuremgmt.FlagZanzana) {
+			store.BeginCreate = b.beginCreate
+			store.BeginUpdate = b.beginUpdate
 		}
 
 		dw, err := dualWriteBuilder(resourceInfo.GroupResource(), legacyStore, store)
@@ -206,11 +209,6 @@ func (b *FolderAPIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefinitions 
 func (b *FolderAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAPI, error) {
 	oas.Info.Description = "Grafana folders"
 	return oas, nil
-}
-
-type authorizerParams struct {
-	user      identity.Requester
-	evaluator accesscontrol.Evaluator
 }
 
 func (b *FolderAPIBuilder) GetAuthorizer() authorizer.Authorizer {
