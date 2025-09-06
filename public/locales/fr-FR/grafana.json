@@ -1703,9 +1703,6 @@
       "notes": "Remarques",
       "returns": "Retours"
     },
-    "label-picker": {
-      "no-options-message": "Aucune étiquette trouvée"
-    },
     "labels-editor-modal": {
       "title-edit-labels": "Modifier les étiquettes"
     },
@@ -1723,9 +1720,6 @@
     "labels-sub-form": {
       "description": "Sélectionnez une clé/valeur d’étiquette parmi les options ci-dessous, ou saisissez-en une nouvelle et appuyez sur Entrée.",
       "save": "Enregistrer"
-    },
-    "labels-with-suggestions": {
-      "text-loading-existing-labels": "Chargement des étiquettes existantes"
     },
     "labels-without-suggestions": {
       "message": {
@@ -9650,6 +9644,12 @@
       "hide-search": "Fermer la recherche",
       "hide-timestamps": "Masquer les horodatages",
       "hide-unique-labels": "Masquer les étiquettes uniques",
+      "line-wrapping": {
+        "enable": "",
+        "enable-prettify": "",
+        "hide": "",
+        "label": ""
+      },
       "newest-first": "Trié par les journaux les plus récents en premier - Cliquez pour afficher les plus anciens en premier",
       "oldest-first": "Trié par les journaux les plus anciens en premier - Cliquez pour afficher les plus récents en premier",
       "prettify-json": "Développer les journaux JSON",
@@ -9658,13 +9658,16 @@
       "resolution-ns": "ns",
       "scroll-bottom": "Faire défiler vers le bas",
       "scroll-top": "Retour en haut de page",
-      "show-ms-timestamps": "Afficher les horodatages en millisecondes",
-      "show-ns-timestamps": "Afficher les horodatages en nanosecondes",
       "show-search": "Rechercher dans les résultats de logs",
       "show-timestamps": "Afficher les horodatages",
       "show-unique-labels": "Afficher les étiquettes uniques",
+      "timestamp": {
+        "hide": "",
+        "label": "",
+        "milliseconds": "",
+        "nanoseconds": ""
+      },
       "unwrap-lines": "Dérouler les lignes",
-      "wrap-json-lines": "",
       "wrap-lines": "Enrouler les lignes"
     },
     "logs-navigation": {
@@ -11940,7 +11943,6 @@
       "expand-row": "Développer la ligne de requête",
       "hide-response": "Masquer la réponse",
       "remove-query": "Supprimer la requête",
-      "replace-query-from-library": "Remplacer par une requête sauvegardée",
       "show-response": "Afficher la réponse"
     },
     "query-editor-not-exported": "Le plugin source de données n'exporte aucun composant de l'éditeur de requête"

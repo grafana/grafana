@@ -119,11 +119,30 @@ func NewClientFactory(configProvider apiserver.RestConfigProvider) ClientFactory
 	return &clientFactory{newSingleAPIClients(configProvider)}
 }
 
-func (f *clientFactory) Clients(ctx context.Context, namespace string) (ResourceClients, error) {
-	if namespace == "" {
-		return nil, fmt.Errorf("missing namespace")
+// NewClientFactoryForMultipleAPIServers creates a ClientFactory for multiple API servers
+func NewClientFactoryForMultipleAPIServers(configProviders []apiserver.RestConfigProvider) ClientFactory {
+	clientFactories := make([]ClientFactory, len(configProviders))
+
+	for i, configProvider := range configProviders {
+		clientFactory := NewClientFactory(configProvider)
+		clientFactories[i] = clientFactory
 	}
 
+	return &multiClientFactory{clientFactories: clientFactories}
+}
+
+type multiClientFactory struct {
+	clientFactories []ClientFactory
+}
+
+func (m *multiClientFactory) Clients(ctx context.Context, namespace string) (ResourceClients, error) {
+	for _, clientFactory := range m.clientFactories {
+		return clientFactory.Clients(ctx, namespace)
+	}
+	return nil, fmt.Errorf("no client factories available")
+}
+
+func (f *clientFactory) Clients(ctx context.Context, namespace string) (ResourceClients, error) {
 	return &resourceClients{
 		namespace:       namespace,
 		clientsProvider: f.clientsProvider,
