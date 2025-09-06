@@ -128,11 +128,11 @@ This app registration will be used as a Service Account to retrieve more informa
 
 The following table shows what the permissions look like from the Entra ID portal:
 
-| Permissions name | Type        | Admin consent required | Status  |
-| ---------------- | ----------- | ---------------------- | ------- |
-| `Group.Read.All` | Application | Yes                    | Granted |
-| `User.Read`      | Delegated   | No                     | Granted |
-| `User.Read.All`  | Application | Yes                    | Granted |
+| Permissions name       | Type        | Admin consent required | Status  |
+| ---------------------- | ----------- | ---------------------- | ------- |
+| `GroupMember.Read.All` | Application | Yes                    | Granted |
+| `User.Read`            | Delegated   | No                     | Granted |
+| `User.Read.All`        | Application | Yes                    | Granted |
 
 {{< figure src="/media/docs/grafana/saml/graph-api-app-permissions.png" caption="Screen shot of the permissions listed in Entra ID for the App registration" >}}
 
