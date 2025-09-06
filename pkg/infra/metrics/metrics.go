@@ -5,10 +5,10 @@ import (
 
 	"github.com/prometheus/client_golang/prometheus"
 
+	"github.com/grafana/grafana/pkg/extensions"
 	"github.com/grafana/grafana/pkg/infra/metrics/metricutil"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	pubdash "github.com/grafana/grafana/pkg/services/publicdashboards/models"
-	"github.com/grafana/grafana/pkg/setting"
 )
 
 // ExporterName is used as namespace for exposing prometheus metrics
@@ -663,7 +663,7 @@ func init() {
 // SetBuildInformation sets the build information for this binary
 func SetBuildInformation(reg prometheus.Registerer, version, revision, branch string, buildTimestamp int64) {
 	edition := "oss"
-	if setting.IsEnterprise {
+	if extensions.IsEnterprise {
 		edition = "enterprise"
 	}
 
