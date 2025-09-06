@@ -3,7 +3,6 @@ package generic
 import (
 	"context"
 
-	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -254,14 +253,16 @@ func (g *genericCompleteStrategy) WarningsOnUpdate(ctx context.Context, obj, old
 
 // GetAttrs returns labels and fields of an object.
 func GetAttrs(obj runtime.Object) (labels.Set, fields.Set, error) {
-	accessor, err := meta.Accessor(obj)
+	meta, err := utils.MetaAccessor(obj)
 	if err != nil {
 		return nil, nil, err
 	}
 	fieldsSet := fields.Set{
-		"metadata.name": accessor.GetName(),
+		"metadata.name":        meta.GetName(),
+		utils.AnnoKeyFolder:    meta.GetFolder(), // allows search by folder
+		utils.AnnoKeyCreatedBy: meta.GetCreatedBy(),
 	}
-	return labels.Set(accessor.GetLabels()), fieldsSet, nil
+	return labels.Set(meta.GetLabels()), fieldsSet, nil
 }
 
 // Matcher returns a generic.SelectionPredicate that matches on label and field selectors.
