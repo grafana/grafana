@@ -34,11 +34,10 @@ export default class TempoLanguageProvider extends LanguageProvider {
   tagsV2?: Scope[];
   private previousRange?: TimeRange;
 
-  constructor(datasource: TempoDatasource, initialValues?: any) {
+  constructor(datasource: TempoDatasource) {
     super();
 
     this.datasource = datasource;
-    Object.assign(this, initialValues);
   }
 
   request = async (url: string, params = {}) => {

@@ -108,7 +108,7 @@ export class UnthemedQueryEditor extends PureComponent<Props, State> {
   loadFolderInfo() {
     const query: DataQueryRequest<GrafanaQuery> = {
       targets: [{ queryType: GrafanaQueryType.List, refId: 'A' }],
-    } as any;
+    } as DataQueryRequest<GrafanaQuery>;
 
     getDataSourceSrv()
       .get('-- Grafana --')

@@ -187,7 +187,7 @@ export default class InfluxSeries {
     //
     // we have to keep this order both in table.columns and table.rows
 
-    each(this.series, (series: any, seriesIndex: number) => {
+    each(this.series, (series, seriesIndex: number) => {
       if (seriesIndex === 0) {
         const firstCol = series.columns[0];
         // Check the first column's name, if it is `time`, we
