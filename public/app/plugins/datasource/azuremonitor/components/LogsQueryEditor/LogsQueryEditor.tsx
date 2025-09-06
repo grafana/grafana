@@ -61,7 +61,6 @@ const LogsQueryEditor = ({
   const templateSrv = getTemplateSrv();
   const from = templateSrv?.replace('$__from');
   const to = templateSrv?.replace('$__to');
-  const templateVariableOptions = templateSrv.getVariables();
   const isBasicLogsQuery = (basicLogsEnabled && query.azureLogAnalytics?.basicLogsQuery) ?? false;
   const [isLoadingSchema, setIsLoadingSchema] = useState<boolean>(false);
 
@@ -282,7 +281,7 @@ const LogsQueryEditor = ({
             schema={schema}
             basicLogsEnabled={basicLogsEnabled}
             onQueryChange={onQueryChange}
-            templateVariableOptions={templateVariableOptions}
+            variableOptionGroup={variableOptionGroup}
             datasource={datasource}
             timeRange={timeRange}
             isLoadingSchema={isLoadingSchema}
