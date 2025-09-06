@@ -14,14 +14,14 @@ interface Props {
   dataFrames: DataFrame[];
   transformationOptions: Array<SelectableValue<DataTransformerID>>;
   selectedDataFrame: number | DataTransformerID;
-  downloadForExcel: boolean;
   onDataFrameChange: (item: SelectableValue<DataTransformerID | number>) => void;
-  toggleDownloadForExcel: () => void;
   data?: DataFrame[];
   hasTransformations?: boolean;
   formattedDataDescription?: string;
   onOptionsChange?: (options: GetDataOptions) => void;
   actions?: React.ReactNode;
+  excelCompatibilityMode: boolean;
+  toggleExcelCompatibilityMode: () => void;
 }
 
 export const InspectDataOptions = ({
@@ -35,8 +35,8 @@ export const InspectDataOptions = ({
   transformationOptions,
   selectedDataFrame,
   onDataFrameChange,
-  downloadForExcel,
-  toggleDownloadForExcel,
+  excelCompatibilityMode,
+  toggleExcelCompatibilityMode,
 }: Props) => {
   const styles = useStyles2(getPanelInspectorStyles2);
 
@@ -80,10 +80,6 @@ export const InspectDataOptions = ({
       if (options.withFieldConfig) {
         parts.push(t('dashboard.inspect-data.formatted', 'Formatted data'));
       }
-    }
-
-    if (downloadForExcel) {
-      parts.push(t('dashboard.inspect-data.excel-header', 'Excel header'));
     }
 
     return parts.join(', ');
@@ -147,13 +143,17 @@ export const InspectDataOptions = ({
                 </Field>
               )}
               <Field
-                label={t('dashboard.inspect-data.download-excel-label', 'Download for Excel')}
+                label={t('dashboard.inspect-data.excel-compatibility-mode-label', 'Excel compatibility mode')}
                 description={t(
-                  'dashboard.inspect-data.download-excel-description',
-                  'Adds header to CSV for use with Excel'
+                  'dashboard.inspect-data.excel-compatibility-mode-description',
+                  'Creates a CSV file that is compatible with some Excel versions'
                 )}
               >
-                <Switch id="excel-toggle" value={downloadForExcel} onChange={toggleDownloadForExcel} />
+                <Switch
+                  id="excel-compatibility-mode-toggle"
+                  value={excelCompatibilityMode}
+                  onChange={toggleExcelCompatibilityMode}
+                />
               </Field>
             </Stack>
           </Stack>
