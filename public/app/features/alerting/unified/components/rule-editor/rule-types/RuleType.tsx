@@ -30,7 +30,7 @@ const RuleType = (props: Props) => {
   });
 
   return (
-    <Card className={cardStyles} isSelected={selected} onClick={() => onClick(value)} disabled={disabled}>
+    <Card noMargin className={cardStyles} isSelected={selected} onClick={() => onClick(value)} disabled={disabled}>
       <Card.Figure>
         <img src={image} alt="" />
       </Card.Figure>

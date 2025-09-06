@@ -43,7 +43,7 @@ export function AlertmanagerCard({
   const showActions = !provisioned && Boolean(onEnable) && Boolean(onDisable);
 
   return (
-    <Card data-testid={`alertmanager-card-${name}`}>
+    <Card noMargin data-testid={`alertmanager-card-${name}`}>
       <Card.Heading>
         <Stack alignItems="center" gap={1}>
           {href ? (

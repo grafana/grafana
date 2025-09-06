@@ -63,7 +63,7 @@ const PublicDashboardCard = ({ pd }: { pd: PublicDashboardListResponse }) => {
     : t('public-dashboard-list.toggle.pause-sharing-toggle-text', 'Pause sharing');
 
   return (
-    <Card className={styles.card} href={`/d/${pd.dashboardUid}`}>
+    <Card noMargin className={styles.card} href={`/d/${pd.dashboardUid}`}>
       <Card.Heading className={styles.heading}>
         <span>{pd.title}</span>
       </Card.Heading>
