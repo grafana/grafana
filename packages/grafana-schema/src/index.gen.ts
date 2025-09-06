@@ -14,6 +14,7 @@ export type {
   VariableOption,
   DashboardLink,
   DashboardLinkType,
+  DashboardLinkPlacement,
   VariableType,
   FieldColorSeriesByMode,
   FieldColor,
