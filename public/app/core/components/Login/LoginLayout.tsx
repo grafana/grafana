@@ -153,8 +153,11 @@ export const getLoginStyles = (theme: GrafanaTheme2) => {
       borderRadius: theme.shape.radius.default,
       padding: theme.spacing(2, 0),
       opacity: 0,
-      [theme.transitions.handleMotion('no-preference', 'reduce')]: {
+      [theme.transitions.handleMotion('no-preference')]: {
         transition: 'opacity 0.5s ease-in-out',
+      },
+      [theme.transitions.handleMotion('reduce')]: {
+        opacity: 1,
       },
 
       [theme.breakpoints.up('sm')]: {
