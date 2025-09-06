@@ -1,6 +1,6 @@
-import { DataQuery, DataQueryRequest, DataSourceJsonData, TimeRange } from '@grafana/data';
-
-import { TemplateSrv } from '../../../features/templating/template_srv';
+import { DataQueryRequest, DataSourceJsonData, TimeRange } from '@grafana/data';
+import { TemplateSrv } from '@grafana/runtime';
+import { DataQuery } from '@grafana/schema';
 
 import { GraphiteDatasource } from './datasource';
 
