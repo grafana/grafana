@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"math/rand"
 	"strings"
+	"sync"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -1408,5 +1410,362 @@ func TestIntegrationPostgresPGX(t *testing.T) {
 			require.NotNil(t, frames[0].Fields)
 			require.Empty(t, frames[0].Fields)
 		})
+	})
+
+	t.Run("Concurrent Query Handling", func(t *testing.T) {
+		// Setup test data for concurrent tests
+		sql := `
+			DROP TABLE IF EXISTS concurrent_test;
+			CREATE TABLE concurrent_test(
+				id integer PRIMARY KEY,
+				name text,
+				value numeric,
+				created_at timestamp DEFAULT NOW()
+			);
+			INSERT INTO concurrent_test (id, name, value) VALUES
+				(1, 'test1', 10.5),
+				(2, 'test2', 20.7),
+				(3, 'test3', 30.2),
+				(4, 'test4', 40.1),
+				(5, 'test5', 50.9);
+		`
+		_, err := p.Exec(t.Context(), sql)
+		require.NoError(t, err)
+
+		t.Run("Should handle concurrent simple queries", func(t *testing.T) {
+			const numGoroutines = 10
+			const queriesPerGoroutine = 5
+
+			var wg sync.WaitGroup
+			results := make(chan error, numGoroutines*queriesPerGoroutine)
+
+			for i := 0; i < numGoroutines; i++ {
+				wg.Add(1)
+				go func(goroutineID int) {
+					defer wg.Done()
+
+					for j := 0; j < queriesPerGoroutine; j++ {
+						query := &backend.QueryDataRequest{
+							Queries: []backend.DataQuery{
+								{
+									RefID: fmt.Sprintf("A_%d_%d", goroutineID, j),
+									JSON: []byte(fmt.Sprintf(`{
+										"rawSql": "SELECT id, name, value FROM concurrent_test WHERE id = %d",
+										"format": "table"
+									}`, (j%5)+1)),
+									TimeRange: backend.TimeRange{
+										From: fromStart,
+										To:   fromStart.Add(1 * time.Hour),
+									},
+								},
+							},
+						}
+
+						resp, err := exe.QueryDataPGX(t.Context(), query)
+						if err != nil {
+							results <- fmt.Errorf("goroutine %d, query %d: %w", goroutineID, j, err)
+							return
+						}
+
+						queryResult := resp.Responses[fmt.Sprintf("A_%d_%d", goroutineID, j)]
+						if queryResult.Error != nil {
+							results <- fmt.Errorf("goroutine %d, query %d: %w", goroutineID, j, queryResult.Error)
+							return
+						}
+
+						if len(queryResult.Frames) != 1 || queryResult.Frames[0].Rows() != 1 {
+							results <- fmt.Errorf("goroutine %d, query %d: unexpected result structure", goroutineID, j)
+							return
+						}
+
+						results <- nil
+					}
+				}(i)
+			}
+
+			wg.Wait()
+			close(results)
+
+			// Check all results
+			for err := range results {
+				require.NoError(t, err)
+			}
+		})
+
+		t.Run("Should handle concurrent different query patterns", func(t *testing.T) {
+			const numGoroutines = 5
+			const queriesPerGoroutine = 3
+
+			var wg sync.WaitGroup
+			results := make(chan error, numGoroutines*queriesPerGoroutine)
+
+			queryPatterns := []string{
+				"SELECT id, name FROM concurrent_test WHERE id = 1",
+				"SELECT id, name FROM concurrent_test WHERE id = 2",
+				"SELECT id, name FROM concurrent_test WHERE id = 3",
+				"SELECT id, name FROM concurrent_test WHERE id = 4",
+				"SELECT id, name FROM concurrent_test WHERE id = 5",
+			}
+
+			for i := 0; i < numGoroutines; i++ {
+				wg.Add(1)
+				go func(goroutineID int) {
+					defer wg.Done()
+
+					for j := 0; j < queriesPerGoroutine; j++ {
+						querySQL := queryPatterns[j%len(queryPatterns)]
+
+						query := &backend.QueryDataRequest{
+							Queries: []backend.DataQuery{
+								{
+									RefID: fmt.Sprintf("A_%d_%d", goroutineID, j),
+									JSON: []byte(fmt.Sprintf(`{
+										"rawSql": "%s",
+										"format": "table"
+									}`, querySQL)),
+									TimeRange: backend.TimeRange{
+										From: fromStart,
+										To:   fromStart.Add(1 * time.Hour),
+									},
+								},
+							},
+						}
+
+						resp, err := exe.QueryDataPGX(t.Context(), query)
+						if err != nil {
+							results <- fmt.Errorf("goroutine %d, query %d: %w", goroutineID, j, err)
+							return
+						}
+
+						queryResult := resp.Responses[fmt.Sprintf("A_%d_%d", goroutineID, j)]
+						if queryResult.Error != nil {
+							results <- fmt.Errorf("goroutine %d, query %d: %w", goroutineID, j, queryResult.Error)
+							return
+						}
+
+						// Should have exactly 1 row
+						if len(queryResult.Frames) != 1 || queryResult.Frames[0].Rows() != 1 {
+							results <- fmt.Errorf("goroutine %d, query %d: expected 1 row, got %d", goroutineID, j, queryResult.Frames[0].Rows())
+							return
+						}
+
+						results <- nil
+					}
+				}(i)
+			}
+
+			wg.Wait()
+			close(results)
+
+			// Check all results
+			for err := range results {
+				require.NoError(t, err)
+			}
+		})
+
+		t.Run("Should handle concurrent mixed query types", func(t *testing.T) {
+			const numGoroutines = 8
+
+			var wg sync.WaitGroup
+			results := make(chan error, numGoroutines)
+
+			queryTypes := []string{
+				`{"rawSql": "SELECT COUNT(*) FROM concurrent_test", "format": "table"}`,
+				`{"rawSql": "SELECT id, name FROM concurrent_test ORDER BY id LIMIT 3", "format": "table"}`,
+				`{"rawSql": "SELECT AVG(value) FROM concurrent_test", "format": "table"}`,
+				`{"rawSql": "SELECT MAX(value), MIN(value) FROM concurrent_test", "format": "table"}`,
+			}
+
+			for i := 0; i < numGoroutines; i++ {
+				wg.Add(1)
+				go func(goroutineID int) {
+					defer wg.Done()
+
+					queryJSON := queryTypes[goroutineID%len(queryTypes)]
+
+					query := &backend.QueryDataRequest{
+						Queries: []backend.DataQuery{
+							{
+								RefID: fmt.Sprintf("A_%d", goroutineID),
+								JSON:  []byte(queryJSON),
+								TimeRange: backend.TimeRange{
+									From: fromStart,
+									To:   fromStart.Add(1 * time.Hour),
+								},
+							},
+						},
+					}
+
+					resp, err := exe.QueryDataPGX(t.Context(), query)
+					if err != nil {
+						results <- fmt.Errorf("goroutine %d: %w", goroutineID, err)
+						return
+					}
+
+					queryResult := resp.Responses[fmt.Sprintf("A_%d", goroutineID)]
+					if queryResult.Error != nil {
+						results <- fmt.Errorf("goroutine %d: %w", goroutineID, queryResult.Error)
+						return
+					}
+
+					if len(queryResult.Frames) == 0 {
+						results <- fmt.Errorf("goroutine %d: no frames returned", goroutineID)
+						return
+					}
+
+					results <- nil
+				}(i)
+			}
+
+			wg.Wait()
+			close(results)
+
+			// Check all results
+			for err := range results {
+				require.NoError(t, err)
+			}
+		})
+
+		t.Run("Should handle concurrent queries with errors gracefully", func(t *testing.T) {
+			const numGoroutines = 6
+
+			var wg sync.WaitGroup
+			results := make(chan error, numGoroutines)
+
+			for i := 0; i < numGoroutines; i++ {
+				wg.Add(1)
+				go func(goroutineID int) {
+					defer wg.Done()
+
+					var querySQL string
+					var shouldError bool
+
+					if goroutineID%2 == 0 {
+						// Valid query
+						querySQL = "SELECT id, name FROM concurrent_test WHERE id = 1"
+						shouldError = false
+					} else {
+						// Invalid query that should cause an error
+						querySQL = "SELECT nonexistent_column FROM nonexistent_table"
+						shouldError = true
+					}
+
+					query := &backend.QueryDataRequest{
+						Queries: []backend.DataQuery{
+							{
+								RefID: fmt.Sprintf("A_%d", goroutineID),
+								JSON: []byte(fmt.Sprintf(`{
+									"rawSql": "%s",
+									"format": "table"
+								}`, querySQL)),
+								TimeRange: backend.TimeRange{
+									From: fromStart,
+									To:   fromStart.Add(1 * time.Hour),
+								},
+							},
+						},
+					}
+
+					resp, err := exe.QueryDataPGX(t.Context(), query)
+					if err != nil {
+						results <- fmt.Errorf("goroutine %d: unexpected error: %w", goroutineID, err)
+						return
+					}
+
+					queryResult := resp.Responses[fmt.Sprintf("A_%d", goroutineID)]
+
+					if shouldError {
+						if queryResult.Error == nil {
+							results <- fmt.Errorf("goroutine %d: expected error but got none", goroutineID)
+							return
+						}
+					} else {
+						if queryResult.Error != nil {
+							results <- fmt.Errorf("goroutine %d: unexpected query error: %w", goroutineID, queryResult.Error)
+							return
+						}
+						if len(queryResult.Frames) != 1 || queryResult.Frames[0].Rows() != 1 {
+							results <- fmt.Errorf("goroutine %d: unexpected result structure", goroutineID)
+							return
+						}
+					}
+
+					results <- nil
+				}(i)
+			}
+
+			wg.Wait()
+			close(results)
+
+			// Check all results
+			for err := range results {
+				require.NoError(t, err)
+			}
+		})
+
+		t.Run("Should handle high concurrency load", func(t *testing.T) {
+			const numGoroutines = 50
+			const queriesPerGoroutine = 10
+
+			var wg sync.WaitGroup
+			var successCount int64
+			var errorCount int64
+
+			for i := 0; i < numGoroutines; i++ {
+				wg.Add(1)
+				go func(goroutineID int) {
+					defer wg.Done()
+
+					for j := 0; j < queriesPerGoroutine; j++ {
+						query := &backend.QueryDataRequest{
+							Queries: []backend.DataQuery{
+								{
+									RefID: fmt.Sprintf("A_%d_%d", goroutineID, j),
+									JSON: []byte(fmt.Sprintf(`{
+										"rawSql": "SELECT id, name, value FROM concurrent_test WHERE id = %d",
+										"format": "table"
+									}`, (j%5)+1)),
+									TimeRange: backend.TimeRange{
+										From: fromStart,
+										To:   fromStart.Add(1 * time.Hour),
+									},
+								},
+							},
+						}
+
+						resp, err := exe.QueryDataPGX(t.Context(), query)
+						if err != nil {
+							atomic.AddInt64(&errorCount, 1)
+							continue
+						}
+
+						queryResult := resp.Responses[fmt.Sprintf("A_%d_%d", goroutineID, j)]
+						if queryResult.Error != nil {
+							atomic.AddInt64(&errorCount, 1)
+							continue
+						}
+
+						if len(queryResult.Frames) == 1 && queryResult.Frames[0].Rows() == 1 {
+							atomic.AddInt64(&successCount, 1)
+						} else {
+							atomic.AddInt64(&errorCount, 1)
+						}
+					}
+				}(i)
+			}
+
+			wg.Wait()
+
+			totalQueries := int64(numGoroutines * queriesPerGoroutine)
+			t.Logf("High concurrency test results: %d/%d successful queries", successCount, totalQueries)
+
+			// We expect at least 95% success rate under high load
+			successRate := float64(successCount) / float64(totalQueries)
+			require.GreaterOrEqual(t, successRate, 0.95, "Success rate should be at least 95%% under high concurrency")
+		})
+
+		// Cleanup
+		_, err = p.Exec(t.Context(), "DROP TABLE IF EXISTS concurrent_test")
+		require.NoError(t, err)
 	})
 }
