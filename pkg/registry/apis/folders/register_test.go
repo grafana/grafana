@@ -118,8 +118,6 @@ func TestFolderAPIBuilder_Validate_Create(t *testing.T) {
 			us := grafanarest.NewMockStorage(t)
 
 			b := &FolderAPIBuilder{
-				gv:         resourceInfo.GroupVersion(),
-				features:   nil,
 				namespacer: func(_ int64) string { return "123" },
 				folderSvc:  foldertest.NewFakeService(),
 				storage:    us,
@@ -194,8 +192,6 @@ func TestFolderAPIBuilder_Validate_Delete(t *testing.T) {
 			).Once()
 
 			b := &FolderAPIBuilder{
-				gv:         resourceInfo.GroupVersion(),
-				features:   nil,
 				namespacer: func(_ int64) string { return "123" },
 				folderSvc:  foldertest.NewFakeService(),
 				storage:    us,
@@ -365,8 +361,6 @@ func TestFolderAPIBuilder_Validate_Update(t *testing.T) {
 			}
 
 			b := &FolderAPIBuilder{
-				gv:         resourceInfo.GroupVersion(),
-				features:   nil,
 				namespacer: func(_ int64) string { return "123" },
 				folderSvc:  foldertest.NewFakeService(),
 				storage:    us,
@@ -461,8 +455,6 @@ func TestFolderAPIBuilder_Mutate_Create(t *testing.T) {
 			us := grafanarest.NewMockStorage(t)
 			sm := resource.NewMockResourceClient(t)
 			b := &FolderAPIBuilder{
-				gv:         resourceInfo.GroupVersion(),
-				features:   nil,
 				namespacer: func(_ int64) string { return "123" },
 				folderSvc:  foldertest.NewFakeService(),
 				storage:    us,
@@ -569,8 +561,6 @@ func TestFolderAPIBuilder_Mutate_Update(t *testing.T) {
 	us := grafanarest.NewMockStorage(t)
 	sm := resource.NewMockResourceClient(t)
 	b := &FolderAPIBuilder{
-		gv:         resourceInfo.GroupVersion(),
-		features:   nil,
 		namespacer: func(_ int64) string { return "123" },
 		folderSvc:  foldertest.NewFakeService(),
 		storage:    us,
