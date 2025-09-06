@@ -25,7 +25,7 @@ jobs:
       id-token: write
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           persist-credentials: false
       - name: Pin Go version to mod file
@@ -96,7 +96,7 @@ jobs:
 
       steps:
         - name: Checkout repository
-          uses: actions/checkout@v4
+          uses: actions/checkout@v5
           with:
             persist-credentials: false
         - name: Restore Cached Node Modules
