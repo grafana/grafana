@@ -278,6 +278,21 @@ When linking to another dashboard that uses template variables, select variable 
 
 If you want to add all of the current dashboard's variables to the URL, then use `${__all_variables}`.
 
+### Variable names vs. labels
+
+When creating data links between dashboards, always use the **variable name**, not its label.  
+Labels are only display text for users and are not recognized in URLs.
+
+For example:
+
+| Correct link                                   | Incorrect link                                           |
+| ---------------------------------------------- | -------------------------------------------------------- |
+| `/d/xxxx/dashboard-b?orgId=1&var-server=web02` | `/d/xxxx/dashboard-b?orgId=1&var-ChooseYourServer=web02` |
+
+{{< admonition type="note" >}}
+Data links depend on variable names. If two dashboards use different variable names (for example, `server` in one and `host` in another), you must either align them or explicitly map values (for example, `&var-host=${server}`).
+{{< /admonition >}}
+
 ## Add data links or actions {#add-a-data-link}
 
 The following tasks describe how to configure data links and actions.
