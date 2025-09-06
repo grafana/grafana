@@ -242,20 +242,81 @@ const matchEnumColorToSeriesColor = (frames: DataFrame[], theme: GrafanaTheme2) 
 
 export const setClassicPaletteIdxs = (frames: DataFrame[], theme: GrafanaTheme2, skipFieldIdx?: number) => {
   let seriesIndex = 0;
-  frames.forEach((frame) => {
-    frame.fields.forEach((field, fieldIdx) => {
-      if (
-        fieldIdx !== skipFieldIdx &&
-        (field.type === FieldType.number || field.type === FieldType.boolean || field.type === FieldType.enum)
-      ) {
-        field.state = {
-          ...field.state,
-          seriesIndex: seriesIndex++, // TODO: skip this for fields with custom renderers (e.g. Candlestick)?
-        };
-        field.display = getDisplayProcessor({ field, theme });
+
+  const updateFieldDisplay = (field: Field, idx: number) => {
+    field.state = { ...field.state, seriesIndex: idx };
+    field.display = getDisplayProcessor({ field, theme });
+  };
+
+  const shouldProcessField = (field: Field, fieldIdx: number) => {
+    return (
+      fieldIdx !== skipFieldIdx &&
+      (field.type === FieldType.number || field.type === FieldType.boolean || field.type === FieldType.enum)
+    );
+  };
+
+  // Pre-pass to group main frames by refId
+  const mainFramesByRefId = new Map<string, DataFrame[]>();
+  for (const frame of frames) {
+    if (!frame.meta?.timeCompare?.isTimeShiftQuery && frame.refId) {
+      if (!mainFramesByRefId.has(frame.refId)) {
+        mainFramesByRefId.set(frame.refId, []);
       }
-    });
-  });
+      mainFramesByRefId.get(frame.refId)!.push(frame);
+    }
+  }
+
+  // Counter for comparison indices per baseRefId
+  const compareIndicesByRefId = new Map<string, number>();
+
+  for (const frame of frames) {
+    const isCompareFrame = frame.meta?.timeCompare?.isTimeShiftQuery;
+
+    if (isCompareFrame) {
+      const baseRefId = frame.refId?.replace('-compare', '');
+
+      if (baseRefId) {
+        // Get and increment the comparison index
+        let compareIndex = compareIndicesByRefId.get(baseRefId) ?? 0;
+        compareIndicesByRefId.set(baseRefId, compareIndex + 1);
+
+        // Get the matching main frame using the index
+        const mainFrames = mainFramesByRefId.get(baseRefId);
+        const mainFrame = mainFrames?.[compareIndex];
+
+        if (mainFrame && mainFrame.fields.length === frame.fields.length) {
+          // Match series indices with main frame
+          frame.fields.forEach((field, fieldIdx) => {
+            if (shouldProcessField(field, fieldIdx)) {
+              const mainField = mainFrame.fields[fieldIdx];
+              updateFieldDisplay(field, mainField.state?.seriesIndex ?? seriesIndex++);
+            }
+          });
+        } else {
+          // Fallback
+          frame.fields.forEach((field, fieldIdx) => {
+            if (shouldProcessField(field, fieldIdx)) {
+              updateFieldDisplay(field, seriesIndex++);
+            }
+          });
+        }
+      } else {
+        // Fallback when no baseRefId
+        frame.fields.forEach((field, fieldIdx) => {
+          if (shouldProcessField(field, fieldIdx)) {
+            updateFieldDisplay(field, seriesIndex++);
+          }
+        });
+      }
+    } else {
+      // Main frames
+      frame.fields.forEach((field, fieldIdx) => {
+        if (shouldProcessField(field, fieldIdx)) {
+          updateFieldDisplay(field, seriesIndex++);
+        }
+      });
+    }
+  }
 };
 
 export function getTimezones(timezones: string[] | undefined, defaultTimezone: string): string[] {

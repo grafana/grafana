@@ -69,7 +69,7 @@ export const TimeSeriesPanel = ({
           // Apply alignment when time ranges match (no shift applied yet)
           const needsAlignment = shouldAlignTimeCompare(frame, frames, timeRange);
           if (needsAlignment) {
-            alignTimeRangeCompareData(frame, tc.diffMs, config.theme2.colors.text.disabled);
+            alignTimeRangeCompareData(frame, tc.diffMs, config.theme2);
           }
         }
       });

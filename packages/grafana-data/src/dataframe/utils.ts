@@ -1,3 +1,5 @@
+import { getFieldSeriesColor } from '../field/fieldColor';
+import { GrafanaTheme2 } from '../themes/types';
 import { DataFrame, Field, FieldType } from '../types/dataFrame';
 import { TimeRange } from '../types/time';
 
@@ -129,9 +131,9 @@ export function addRow(dataFrame: DataFrame, row: Record<string, unknown> | unkn
  * Aligns time range comparison data by adjusting timestamps and applying compare-specific styling
  * @param series - The DataFrame containing the comparison data
  * @param diff - The time difference in milliseconds to align the timestamps
- * @param compareColor - Optional color to use for the comparison series (defaults to 'gray')
+ * @param theme - The Grafana theme for color calculations
  */
-export function alignTimeRangeCompareData(series: DataFrame, diff: number, compareColor = 'gray') {
+export function alignTimeRangeCompareData(series: DataFrame, diff: number, theme: GrafanaTheme2) {
   series.fields.forEach((field: Field) => {
     // Align compare series time stamps with reference series
     if (field.type === FieldType.time) {
@@ -142,10 +144,6 @@ export function alignTimeRangeCompareData(series: DataFrame, diff: number, compa
 
     field.config = {
       ...(field.config ?? {}),
-      color: {
-        mode: 'fixed',
-        fixedColor: compareColor,
-      },
       custom: {
         ...(field.config?.custom ?? {}),
         timeCompare: {
@@ -154,6 +152,30 @@ export function alignTimeRangeCompareData(series: DataFrame, diff: number, compa
         },
       },
     };
+
+    // Apply visual styling for comparison series
+    if (field.type === FieldType.number || field.type === FieldType.boolean || field.type === FieldType.enum) {
+      const seriesColor = getFieldSeriesColor(field, theme).color;
+      const lineStyle = field.config.custom?.lineStyle;
+      const isSolid = !lineStyle?.fill || lineStyle.fill === 'solid';
+
+      if (isSolid) {
+        field.config.custom = {
+          ...(field.config.custom ?? {}),
+          lineStyle: {
+            fill: 'dash',
+            dash: [5, 5],
+          },
+        };
+      } else {
+        // For already dashed/dotted lines, reduce opacity
+        const tinycolor = require('tinycolor2');
+        field.config.color = {
+          mode: 'fixed',
+          fixedColor: tinycolor(seriesColor).setAlpha(0.5).toString(),
+        };
+      }
+    }
   });
 }
 
