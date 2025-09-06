@@ -1,3 +1,4 @@
+import { OpenFeature } from '@openfeature/web-sdk';
 import { lastValueFrom, merge, Observable, of } from 'rxjs';
 import { catchError, switchMap } from 'rxjs/operators';
 
@@ -22,6 +23,7 @@ import {
 
 import { reportInteraction } from '../analytics/utils';
 import { config } from '../config';
+import { toggles } from '../internal/openFeature/toggles';
 import {
   BackendSrvRequest,
   FetchResponse,
@@ -222,7 +224,8 @@ class DataSourceWithBackend<
     }
 
     // Use the new query service
-    if (config.featureToggles.queryServiceFromUI) {
+    const client = OpenFeature.getClient();
+    if (client.getBooleanValue(toggles.queryServiceFromUI, false)) {
       if (!(config.featureToggles.queryService || config.featureToggles.grafanaAPIServerWithExperimentalAPIs)) {
         console.warn('feature toggle queryServiceFromUI also requires the queryService to be running');
       } else {
