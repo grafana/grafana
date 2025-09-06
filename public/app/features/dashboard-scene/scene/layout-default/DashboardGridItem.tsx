@@ -2,6 +2,7 @@ import { isEqual } from 'lodash';
 import React from 'react';
 import { Unsubscribable } from 'rxjs';
 
+import { config } from '@grafana/runtime';
 import {
   VizPanel,
   SceneObjectBase,
@@ -18,7 +19,7 @@ import { GRID_COLUMN_COUNT } from 'app/core/constants';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 
 import { getCloneKey, getLocalVariableValueSet } from '../../utils/clone';
-import { getMultiVariableValues } from '../../utils/utils';
+import { getDashboardSceneFor, getMultiVariableValues } from '../../utils/utils';
 import { scrollCanvasElementIntoView, scrollIntoView } from '../layouts-shared/scrollCanvasElementIntoView';
 import { DashboardLayoutItem } from '../types/DashboardLayoutItem';
 
@@ -122,11 +123,19 @@ export class DashboardGridItem
 
   public editingCompleted(withChanges: boolean) {
     if (withChanges) {
+      const scene = getDashboardSceneFor(this);
       this._prevRepeatValues = undefined;
-      if (this.parent instanceof SceneGridRow) {
-        const repeater = this.parent.state.$behaviors?.find((b) => b instanceof RowRepeaterBehavior);
-        if (repeater) {
-          repeater.resetPrevRepeatValues();
+
+      if (config.featureToggles.dashboardNewLayouts && !scene.state.editPanel) {
+        // re-render repeats when editing through edit pane
+        this.performRepeat();
+      } else {
+        if (this.parent instanceof SceneGridRow) {
+          const repeater = this.parent.state.$behaviors?.find((b) => b instanceof RowRepeaterBehavior);
+          if (repeater) {
+            // re-render repeated old rows
+            repeater.resetPrevRepeatValues();
+          }
         }
       }
     }
