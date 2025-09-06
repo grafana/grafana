@@ -3,6 +3,7 @@ import { Navigate, useLocation, useParams } from 'react-router-dom-v5-compat';
 
 import { isTruthy } from '@grafana/data';
 import { NavLandingPage } from 'app/core/components/NavLandingPage/NavLandingPage';
+import { ObservabilityLandingPage } from 'app/core/components/NavLandingPage/ObservabilityLandingPage';
 import { PageNotFound } from 'app/core/components/PageNotFound/PageNotFound';
 import config from 'app/core/config';
 import { contextSrv } from 'app/core/services/context_srv';
@@ -193,7 +194,7 @@ export function getAppRoutes(): RouteDescriptor[] {
     },
     {
       path: '/observability',
-      component: () => <NavLandingPage navId="observability" />,
+      component: () => <ObservabilityLandingPage />,
     },
     {
       path: '/infrastructure',
