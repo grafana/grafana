@@ -150,10 +150,8 @@ func (m *multiClientFactory) Clients(ctx context.Context, namespace string) (Res
 	}
 
 	return &multiResourceClients{
-		namespace:       namespace,
-		clientsProvider: clients,
-		byKind:          make(map[schema.GroupVersionKind]*clientInfo),
-		byResource:      make(map[schema.GroupVersionResource]*clientInfo),
+		namespace:                 namespace,
+		resourceClientsByAPIGroup: clients,
 	}, nil
 }
 
