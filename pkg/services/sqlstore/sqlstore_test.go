@@ -1,7 +1,6 @@
 package sqlstore
 
 import (
-	"context"
 	"os"
 	"testing"
 	"time"
@@ -65,7 +64,7 @@ func TestIntegrationIsUniqueConstraintViolation(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.desc, func(t *testing.T) {
-			err := store.WithDbSession(context.Background(), func(sess *DBSession) error {
+			err := store.WithDbSession(t.Context(), func(sess *DBSession) error {
 				return tc.f(t, sess)
 			})
 			require.Error(t, err)
