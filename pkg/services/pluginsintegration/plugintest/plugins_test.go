@@ -161,7 +161,7 @@ func TestIntegrationPluginManager(t *testing.T) {
 	lk := loki.ProvideService(hcp, tracer)
 	otsdb := opentsdb.ProvideService(hcp)
 	pr := prometheus.ProvideService(hcp)
-	tmpo := tempo.ProvideService(hcp)
+	tmpo := tempo.ProvideService(hcp, tracer)
 	td := testdatasource.ProvideService()
 	pg := postgres.ProvideService(cfg, features)
 	my := mysql.ProvideService()
