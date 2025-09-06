@@ -367,6 +367,7 @@ func TestAlertQuery_PreSave(t *testing.T) {
 			if tc.errContains == "" {
 				require.NoError(t, err)
 			} else {
+				require.ErrorIs(t, err, ErrAlertRuleFailedValidation)
 				require.ErrorContains(t, err, tc.errContains)
 			}
 		})
