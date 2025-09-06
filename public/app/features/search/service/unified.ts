@@ -148,8 +148,9 @@ export class UnifiedSearcher implements GrafanaSearcher {
       const field = first.fields.find((f) => f.name === meta.sortBy);
       if (field) {
         const name = getSortFieldDisplayName(field.name);
-        meta.sortBy = name;
-        field.name = name; // make it look nicer
+        // We don't want to directly change the field name, just the display name
+        // When the columns names get generated it uses getFieldDisplayName(), which will check if there is a field.config.displayName
+        field.config.displayName = name;
       }
     }
 
