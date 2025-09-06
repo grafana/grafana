@@ -1703,9 +1703,6 @@
       "notes": "Anmerkungen",
       "returns": "Rückgaben"
     },
-    "label-picker": {
-      "no-options-message": "Keine Labels gefunden"
-    },
     "labels-editor-modal": {
       "title-edit-labels": "Labels bearbeiten"
     },
@@ -1723,9 +1720,6 @@
     "labels-sub-form": {
       "description": "Wählen Sie aus den folgenden Optionen einen Label-Key/Wert aus oder geben Sie einen neuen ein und drücken Sie dann die Eingabetaste.",
       "save": "Speichern"
-    },
-    "labels-with-suggestions": {
-      "text-loading-existing-labels": "Vorhandene Labels werden geladen"
     },
     "labels-without-suggestions": {
       "message": {
@@ -9650,6 +9644,12 @@
       "hide-search": "Suche schließen",
       "hide-timestamps": "Zeitstempel ausblenden",
       "hide-unique-labels": "Eindeutige Labels ausblenden",
+      "line-wrapping": {
+        "enable": "",
+        "enable-prettify": "",
+        "hide": "",
+        "label": ""
+      },
       "newest-first": "Sortiert nach neuesten Logs zuerst – klicken Sie, um die ältesten zuerst anzuzeigen",
       "oldest-first": "Sortiert nach ältesten Logs zuerst – klicken Sie, um die neuesten zuerst anzuzeigen",
       "prettify-json": "JSON-Logs ausklappen",
@@ -9658,13 +9658,16 @@
       "resolution-ns": "ns",
       "scroll-bottom": "Nach unten scrollen",
       "scroll-top": "Nach oben scrollen",
-      "show-ms-timestamps": "Millisekunden-Zeitstempel anzeigen",
-      "show-ns-timestamps": "Nanosekunden-Zeitstempel anzeigen",
       "show-search": "Ergebnis der Suche in Logs",
       "show-timestamps": "Zeitstempel anzeigen",
       "show-unique-labels": "Eindeutige Labels anzeigen",
+      "timestamp": {
+        "hide": "",
+        "label": "",
+        "milliseconds": "",
+        "nanoseconds": ""
+      },
       "unwrap-lines": "Zeilenumbruch aufheben",
-      "wrap-json-lines": "",
       "wrap-lines": "Zeilen umbrechen"
     },
     "logs-navigation": {
@@ -11940,7 +11943,6 @@
       "expand-row": "Suchzeile erweitern",
       "hide-response": "Antwort ausblenden",
       "remove-query": "Abfrage entfernen",
-      "replace-query-from-library": "Durch gespeicherte Abfrage ersetzen",
       "show-response": "Antwort anzeigen "
     },
     "query-editor-not-exported": "Datenquellen-Plugin exportiert keine Komponente des Abfrageeditors"

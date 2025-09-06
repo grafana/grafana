@@ -1715,9 +1715,6 @@
       "notes": "Примечания",
       "returns": "Возвраты"
     },
-    "label-picker": {
-      "no-options-message": "Метки не найдены"
-    },
     "labels-editor-modal": {
       "title-edit-labels": "Редактирование меток"
     },
@@ -1735,9 +1732,6 @@
     "labels-sub-form": {
       "description": "Выберите ключ/значение метки из вариантов ниже или введите новые и нажмите Enter.",
       "save": "Сохранить"
-    },
-    "labels-with-suggestions": {
-      "text-loading-existing-labels": "Загрузка существующих меток"
     },
     "labels-without-suggestions": {
       "message": {
@@ -9708,6 +9702,12 @@
       "hide-search": "Закрыть поиск",
       "hide-timestamps": "Скрыть метки времени",
       "hide-unique-labels": "Скрыть уникальные метки",
+      "line-wrapping": {
+        "enable": "",
+        "enable-prettify": "",
+        "hide": "",
+        "label": ""
+      },
       "newest-first": "Сначала отображаются самые новые журналы. Нажмите, чтобы показать сначала самые старые",
       "oldest-first": "Сначала отображаются самые старые журналы. Нажмите, чтобы показать сначала самые новые",
       "prettify-json": "Развернуть журналы JSON",
@@ -9716,13 +9716,16 @@
       "resolution-ns": "нс",
       "scroll-bottom": "Прокрутить вниз",
       "scroll-top": "Прокрутить вверх",
-      "show-ms-timestamps": "Показать метки времени в миллисекундах",
-      "show-ns-timestamps": "Показать метки времени в наносекундах",
       "show-search": "Результат поиска по журналам",
       "show-timestamps": "Показать метки времени",
       "show-unique-labels": "Показать уникальные метки",
+      "timestamp": {
+        "hide": "",
+        "label": "",
+        "milliseconds": "",
+        "nanoseconds": ""
+      },
       "unwrap-lines": "Не переносить строки",
-      "wrap-json-lines": "",
       "wrap-lines": "Переносить строки"
     },
     "logs-navigation": {
@@ -12012,7 +12015,6 @@
       "expand-row": "Развернуть строку запроса",
       "hide-response": "Скрыть ответ",
       "remove-query": "Удалить запрос",
-      "replace-query-from-library": "Заменить на сохраненный запрос",
       "show-response": "Показать ответ"
     },
     "query-editor-not-exported": "Плагин источника данных не экспортирует компоненты редактора запросов"

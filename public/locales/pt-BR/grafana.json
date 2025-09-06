@@ -1703,9 +1703,6 @@
       "notes": "Observações",
       "returns": "Devoluções"
     },
-    "label-picker": {
-      "no-options-message": "Nenhum rótulo foi encontrado"
-    },
     "labels-editor-modal": {
       "title-edit-labels": "Editar rótulos"
     },
@@ -1723,9 +1720,6 @@
     "labels-sub-form": {
       "description": "Selecione uma chave/valor de rótulo nas opções abaixo ou digite um novo e pressione Enter.",
       "save": "Salvar"
-    },
-    "labels-with-suggestions": {
-      "text-loading-existing-labels": "Carregando rótulos existentes"
     },
     "labels-without-suggestions": {
       "message": {
@@ -9650,6 +9644,12 @@
       "hide-search": "Fechar busca",
       "hide-timestamps": "Ocultar data e hora",
       "hide-unique-labels": "Ocultar rótulos exclusivos",
+      "line-wrapping": {
+        "enable": "",
+        "enable-prettify": "",
+        "hide": "",
+        "label": ""
+      },
       "newest-first": "Organizado por logs mais recentes primeiro: clique para exibir os mais antigos primeiro",
       "oldest-first": "Organizado por logs mais antigos primeiro: clique para exibir os mais recentes primeiro",
       "prettify-json": "Expandir logs JSON",
@@ -9658,13 +9658,16 @@
       "resolution-ns": "ns",
       "scroll-bottom": "Rolar para baixo",
       "scroll-top": "Rolar para cima",
-      "show-ms-timestamps": "Exibir data e hora em milissegundos",
-      "show-ns-timestamps": "Exibir data e hora em nanossegundos",
       "show-search": "Resultado da busca nos logs",
       "show-timestamps": "Exibir data e hora",
       "show-unique-labels": "Exibir rótulos únicos",
+      "timestamp": {
+        "hide": "",
+        "label": "",
+        "milliseconds": "",
+        "nanoseconds": ""
+      },
       "unwrap-lines": "Desfazer quebra de linha",
-      "wrap-json-lines": "",
       "wrap-lines": "Aplicar quebra de linha"
     },
     "logs-navigation": {
@@ -11940,7 +11943,6 @@
       "expand-row": "Expandir linha de consulta",
       "hide-response": "Ocultar resposta",
       "remove-query": "Remover consulta",
-      "replace-query-from-library": "Substituir por consulta salva",
       "show-response": "Mostrar resposta"
     },
     "query-editor-not-exported": "O plug-in de origem de dados não exporta nenhum componente de editor de consulta"

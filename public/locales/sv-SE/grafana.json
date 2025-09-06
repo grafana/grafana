@@ -1703,9 +1703,6 @@
       "notes": "Anteckningar",
       "returns": "Återsändningar"
     },
-    "label-picker": {
-      "no-options-message": "Inga etiketter hittades"
-    },
     "labels-editor-modal": {
       "title-edit-labels": "Redigera etiketter"
     },
@@ -1723,9 +1720,6 @@
     "labels-sub-form": {
       "description": "Välj etikettnyckel/värde från alternativen nedan, eller skriv in nytt och tryck på Enter.",
       "save": "Spara"
-    },
-    "labels-with-suggestions": {
-      "text-loading-existing-labels": "Läser in befintliga etiketter"
     },
     "labels-without-suggestions": {
       "message": {
@@ -9650,6 +9644,12 @@
       "hide-search": "Stäng sökning",
       "hide-timestamps": "Dölj tidsstämplar",
       "hide-unique-labels": "Dölj unika etiketter",
+      "line-wrapping": {
+        "enable": "",
+        "enable-prettify": "",
+        "hide": "",
+        "label": ""
+      },
       "newest-first": "Sorterat efter nyaste loggar först – klicka om du vill visa äldsta först",
       "oldest-first": "Sorterat efter äldsta loggar först – klicka om du vill visa nyaste först",
       "prettify-json": "Expandera JSON-loggar",
@@ -9658,13 +9658,16 @@
       "resolution-ns": "ns",
       "scroll-bottom": "Skrolla längst ner",
       "scroll-top": "Skrolla till toppen",
-      "show-ms-timestamps": "Visa tidsstämplar i millisekunder",
-      "show-ns-timestamps": "Visa tidsstämplar i nanosekunder",
       "show-search": "Resultat av sökning i loggar",
       "show-timestamps": "Visa tidsstämplar",
       "show-unique-labels": "Visa unika etiketter",
+      "timestamp": {
+        "hide": "",
+        "label": "",
+        "milliseconds": "",
+        "nanoseconds": ""
+      },
       "unwrap-lines": "Ta bort radbrytningar",
-      "wrap-json-lines": "",
       "wrap-lines": "Radbryt linjer"
     },
     "logs-navigation": {
@@ -11940,7 +11943,6 @@
       "expand-row": "Expandera frågeraden",
       "hide-response": "Dölj svar",
       "remove-query": "Ta bort fråga",
-      "replace-query-from-library": "Ersätt med sparad fråga",
       "show-response": "Visa svar"
     },
     "query-editor-not-exported": "Tilläggsprogram för datakälla exporterar inte någon frågeredigerarkomponent"
