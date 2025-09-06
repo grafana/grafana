@@ -508,6 +508,9 @@ export const versionedComponents = {
           Value: {
             '12.2.0': 'data-testid tableng footer value',
           },
+          EmptyValue: {
+            '12.2.0': 'data-testid tableng footer empty-value',
+          },
         },
       },
     },
