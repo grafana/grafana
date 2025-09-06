@@ -43,7 +43,31 @@ func GetInstanceSettings(nameOrRef interface{}, datasources []DataSourceInfo) *D
 	// Check if it's a reference object
 	if ref, ok := nameOrRef.(map[string]interface{}); ok {
 		if _, hasUID := ref["uid"]; !hasUID {
-			// Reference object without UID should return default
+			// Check if we can lookup by type before defaulting to match frontend behavior
+			if dsType, hasType := ref["type"]; hasType {
+				if typeStr, ok := dsType.(string); ok {
+					// Search for datasource with matching type
+					for _, ds := range datasources {
+						if ds.Type == typeStr {
+							return &DataSourceInfo{
+								UID:        ds.UID,
+								Type:       ds.Type,
+								Name:       ds.Name,
+								APIVersion: ds.APIVersion,
+							}
+						}
+					}
+					// Type not found - preserve original type like frontend does
+					// Frontend: if (!ds) { return { uid: nameOrRef ? nameOrRef : undefined }; }
+					return &DataSourceInfo{
+						UID:        typeStr, // Use type as UID like frontend
+						Type:       typeStr, // Preserve original type
+						Name:       typeStr,
+						APIVersion: "v1",
+					}
+				}
+			}
+			// Reference object without UID or type should return default
 			return GetDefaultDSInstanceSettings(datasources)
 		}
 		// It's a reference object with UID, search for matching UID
