@@ -31,7 +31,7 @@ var (
 )
 
 type legacyStorage struct {
-	service        folder.Service
+	service        folder.LegacyService
 	namespacer     request.NamespaceMapper
 	tableConverter rest.TableConvertor
 }

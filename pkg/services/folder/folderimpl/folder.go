@@ -17,7 +17,6 @@ import (
 	"golang.org/x/exp/slices"
 
 	"github.com/grafana/dskit/concurrency"
-
 	dashboardv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
 	folderv1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -49,6 +48,11 @@ import (
 )
 
 const FULLPATH_SEPARATOR = "/"
+
+var (
+	_ folder.LegacyService    = (*Service)(nil)
+	_ folder.APIServerService = (*Service)(nil)
+)
 
 type Service struct {
 	store                  folder.Store
