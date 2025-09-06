@@ -8,6 +8,7 @@ import {
   createFieldConfigRegistry,
   DashboardCursorSync,
   DataFrame,
+  DataLinksContext,
   EventBus,
   FieldColorModeId,
   FieldConfigSource,
@@ -121,9 +122,8 @@ export function ExploreGraph({
       replaceVariables: (value) => value, // We don't need proper replace here as it is only used in getLinks and we use getFieldLinks
       theme,
       fieldConfigRegistry,
-      dataLinkPostProcessor,
     });
-  }, [fieldConfigRegistry, data, timeZone, theme, styledFieldConfig, dataLinkPostProcessor]);
+  }, [fieldConfigRegistry, data, timeZone, theme, styledFieldConfig]);
 
   const annotationsWithConfig = useMemo(() => {
     return applyFieldOverrides({
@@ -171,7 +171,6 @@ export function ExploreGraph({
     onToggleSeriesVisibility(label: string, mode: SeriesVisibilityChangeMode) {
       setFieldConfig(seriesVisibilityConfigFactory(label, mode, fieldConfig, data));
     },
-    dataLinkPostProcessor,
   };
 
   function toggleLegend(name: string | undefined, mode: SeriesVisibilityChangeMode) {
@@ -204,23 +203,25 @@ export function ExploreGraph({
   );
 
   return (
-    <PanelContextProvider value={panelContext}>
-      <PanelRenderer
-        data={{
-          series: dataWithConfig,
-          timeRange,
-          state: loadingState,
-          annotations: annotationsWithConfig,
-          structureRev,
-        }}
-        pluginId="timeseries"
-        title=""
-        width={width}
-        height={height}
-        onChangeTimeRange={onChangeTime}
-        timeZone={timeZone}
-        options={panelOptions}
-      />
-    </PanelContextProvider>
+    <DataLinksContext.Provider value={{ dataLinkPostProcessor }}>
+      <PanelContextProvider value={panelContext}>
+        <PanelRenderer
+          data={{
+            series: dataWithConfig,
+            timeRange,
+            state: loadingState,
+            annotations: annotationsWithConfig,
+            structureRev,
+          }}
+          pluginId="timeseries"
+          title=""
+          width={width}
+          height={height}
+          onChangeTimeRange={onChangeTime}
+          timeZone={timeZone}
+          options={panelOptions}
+        />
+      </PanelContextProvider>
+    </DataLinksContext.Provider>
   );
 }
