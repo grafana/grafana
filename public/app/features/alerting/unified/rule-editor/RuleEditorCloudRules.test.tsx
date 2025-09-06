@@ -15,7 +15,6 @@ import { captureRequests, serializeRequests } from '../mocks/server/events';
 import { setupPluginsExtensionsHook } from '../testSetup/plugins';
 
 jest.mock('../components/rule-editor/ExpressionEditor', () => ({
-  // eslint-disable-next-line react/display-name
   ExpressionEditor: ({ value, onChange }: ExpressionEditorProps) => (
     <input value={value} data-testid="expr" onChange={(e) => onChange(e.target.value)} />
   ),

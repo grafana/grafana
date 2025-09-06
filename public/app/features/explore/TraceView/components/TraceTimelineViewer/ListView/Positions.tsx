@@ -85,7 +85,6 @@ export default class Positions {
       this.ys[0] = 0;
     }
     while (i <= _max) {
-      // eslint-disable-next-line no-multi-assign
       const h = (this.heights[i] = heightGetter(i));
       this.ys[i + 1] = this.ys[i] + h;
       i++;
@@ -149,7 +148,6 @@ export default class Positions {
     }
     let i;
     while (imin < imax) {
-      // eslint-disable-next-line no-bitwise
       i = (imin + 0.5 * (imax - imin)) | 0;
       if (yValue > this.ys[i]) {
         if (yValue <= this.ys[i + 1]) {
@@ -188,10 +186,9 @@ export default class Positions {
   getEstimatedHeight(): number {
     const known = this.ys[this.lastI] + this.heights[this.lastI];
     if (this.lastI >= this.dataLen - 1) {
-      // eslint-disable-next-line no-bitwise
       return known | 0;
     }
-    // eslint-disable-next-line no-bitwise
+
     return ((known / (this.lastI + 1)) * this.heights.length) | 0;
   }
 }

@@ -58,7 +58,7 @@ describe('query migration', () => {
     });
 
     it('returns false for a datasource without backend migration', () => {
-      const ds = new MyDataSourceWithoutMigration({} as DataSourceInstanceSettings<DataSourceJsonData>); // eslint-disable-line @typescript-eslint/no-explicit-any
+      const ds = new MyDataSourceWithoutMigration({} as DataSourceInstanceSettings<DataSourceJsonData>);
       expect(isMigrationHandler(ds)).toBe(false);
     });
   });
@@ -109,7 +109,7 @@ describe('query migration', () => {
       ds.hasBackendMigration = false;
       const request = {
         targets: [{ refId: 'A', datasource: { type: 'dummy' } }],
-      } as unknown as DataQueryRequest<MyQuery>; // eslint-disable-line @typescript-eslint/no-explicit-any
+      } as unknown as DataQueryRequest<MyQuery>;
 
       const result = await migrateRequest(ds, request);
 
@@ -122,7 +122,7 @@ describe('query migration', () => {
       ds.shouldMigrate = jest.fn().mockReturnValue(false);
       const request = {
         targets: [{ refId: 'A', datasource: { type: 'dummy' } }],
-      } as unknown as DataQueryRequest<MyQuery>; // eslint-disable-line @typescript-eslint/no-explicit-any
+      } as unknown as DataQueryRequest<MyQuery>;
 
       const result = await migrateRequest(ds, request);
 
@@ -138,7 +138,7 @@ describe('query migration', () => {
           { refId: 'A', datasource: { type: 'dummy' }, foo: 'bar' },
           { refId: 'A', datasource: { type: 'dummy' }, bar: 'foo' },
         ],
-      } as unknown as DataQueryRequest<MyQuery>; // eslint-disable-line @typescript-eslint/no-explicit-any
+      } as unknown as DataQueryRequest<MyQuery>;
       const migratedRequest = {
         targets: [
           { refId: 'A', datasource: { type: 'dummy' }, foobar: 'foobar' },

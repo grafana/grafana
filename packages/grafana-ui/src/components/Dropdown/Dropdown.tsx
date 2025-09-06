@@ -96,7 +96,7 @@ export const Dropdown = React.memo(({ children, overlay, placement, offset, onVi
               this is handling bubbled events from the inner overlay
               see https://github.com/jsx-eslint/eslint-plugin-jsx-a11y/blob/main/docs/rules/no-static-element-interactions.md#case-the-event-handler-is-only-being-used-to-capture-bubbled-events
             */}
-            {/* eslint-disable-next-line jsx-a11y/no-static-element-interactions, jsx-a11y/click-events-have-key-events */}
+            {/* eslint-disable-next-line jsx-a11y/no-static-element-interactions */}
             <div ref={refs.setFloating} style={floatingStyles} onClick={onOverlayClicked} onKeyDown={handleKeys}>
               <CSSTransition
                 nodeRef={transitionRef}

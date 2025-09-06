@@ -387,7 +387,6 @@ export default class ListView extends React.Component<TListViewProps> {
         // use `.getAttribute(...)` instead of `.dataset` for jest / JSDOM
         const itemKey = node.getAttribute('data-item-key');
         if (!itemKey) {
-          // eslint-disable-next-line no-console
           console.warn('itemKey not found');
           continue;
         }
@@ -401,7 +400,7 @@ export default class ListView extends React.Component<TListViewProps> {
           this._knownHeights.set(itemKey, observed);
           if (!isDirty) {
             isDirty = true;
-            // eslint-disable-next-line no-multi-assign
+
             lowDirtyKey = highDirtyKey = itemKey;
           } else {
             highDirtyKey = itemKey;
@@ -426,7 +425,7 @@ export default class ListView extends React.Component<TListViewProps> {
     const key = this.props.getKeyFromIndex(i);
     const known = this._knownHeights.get(key);
     // known !== known iff known is NaN
-    // eslint-disable-next-line no-self-compare
+
     if (known != null && known === known) {
       return known;
     }

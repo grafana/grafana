@@ -94,7 +94,7 @@ test.describe(
         };
       } else {
         const yamlContent = readFileSync(provisioningPath, 'utf8');
-        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+
         const yaml = load(yamlContent) as AzureMonitorProvision;
         datasourceConfig = yaml.datasources[0];
       }

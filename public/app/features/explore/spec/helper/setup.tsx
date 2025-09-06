@@ -6,7 +6,6 @@ import { fromPairs } from 'lodash';
 import { stringify } from 'querystring';
 import { ComponentType, ReactNode } from 'react';
 import { Provider } from 'react-redux';
-// eslint-disable-next-line no-restricted-imports
 import { Route, Router } from 'react-router-dom';
 import { of } from 'rxjs';
 import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';

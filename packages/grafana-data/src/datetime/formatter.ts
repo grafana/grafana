@@ -1,4 +1,3 @@
-/* eslint-disable id-blacklist, no-restricted-imports */
 import moment, { Moment } from 'moment-timezone';
 
 import { formatDate } from '@grafana/i18n';

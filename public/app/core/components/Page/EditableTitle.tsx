@@ -85,7 +85,6 @@ export const EditableTitle = ({ value, onEdit }: Props) => {
             }
           }}
           // perfectly reasonable to autofocus here since we've made a conscious choice by clicking the edit button
-          // eslint-disable-next-line jsx-a11y/no-autofocus
           autoFocus
           onBlur={onCommitChange}
           onChange={(event) => setLocalValue(event.currentTarget.value)}

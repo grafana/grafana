@@ -21,7 +21,6 @@ export const TransformationFilter = ({ index, annotations, config, onChange, dat
 
   const opts = useMemo(() => {
     return {
-      // eslint-disable-next-line
       context: { data },
       showTopic: true || annotations?.length || config.topic?.length,
       showFilter: config.topic !== DataTopic.Annotations,

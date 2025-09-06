@@ -33,7 +33,7 @@ export const XYChartPanel2 = (props: Props2) => {
   // regenerate series schema when mappings or data changes
   let series = useMemo(
     () => prepSeries(mapping, mappedSeries, props.data.series, props.fieldConfig),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+
     [mapping, mappedSeries, props.data.series, props.fieldConfig]
   );
 

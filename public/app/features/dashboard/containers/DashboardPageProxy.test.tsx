@@ -91,7 +91,6 @@ jest.mock('react-virtualized-auto-sizer', () => {
 setDashboardLoaderSrv({
   loadDashboard: jest.fn().mockResolvedValue(dashMock),
   // disabling type checks since this is a test util
-  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
 } as unknown as DashboardLoaderSrv);
 
 jest.mock('react-router-dom-v5-compat', () => ({

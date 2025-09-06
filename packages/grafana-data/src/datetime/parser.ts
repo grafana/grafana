@@ -1,4 +1,3 @@
-/* eslint-disable id-blacklist, no-restricted-imports */
 import { lowerCase } from 'lodash';
 import moment from 'moment-timezone';
 

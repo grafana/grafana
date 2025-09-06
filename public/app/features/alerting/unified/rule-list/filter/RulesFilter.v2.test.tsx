@@ -17,7 +17,7 @@ import RulesFilter from './RulesFilter';
 
 // Grant permission before importing the component since permission check happens at module level
 grantUserPermissions([AccessControlAction.AlertingReceiversRead]);
-// eslint-disable-next-line @typescript-eslint/no-var-requires
+
 const RulesFilterV2 = require('./RulesFilter.v2').default;
 
 let mockFilterState: RulesFilterType = {

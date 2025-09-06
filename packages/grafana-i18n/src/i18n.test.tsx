@@ -1,4 +1,3 @@
-/* eslint-disable no-restricted-imports */
 import i18n from 'i18next';
 import { initReactI18next, setDefaults, setI18n } from 'react-i18next';
 

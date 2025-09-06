@@ -120,7 +120,7 @@ export const PromVariableQueryEditor = ({ onChange, query, datasource, range }: 
       });
     } else {
       // fetch the labels filtered by the metric
-      // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
+
       const labelToConsider = [{ label: '__name__', op: '=', value: metric }];
       const expr = promQueryModeller.renderLabels(labelToConsider);
 

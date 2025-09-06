@@ -120,11 +120,6 @@ module.exports = [
   },
   {
     name: 'grafana/defaults',
-    linterOptions: {
-      // This reports unused disable directives that we can clean up but
-      // it also conflicts with the betterer eslint rules so disabled
-      reportUnusedDisableDirectives: false,
-    },
     files: ['**/*.{ts,tsx,js}'],
     plugins: {
       '@emotion': emotionPlugin,

@@ -25,7 +25,6 @@ export interface SingleStatBaseOptions extends OptionsWithTextFormatting {
 
 const optionsToKeep = ['reduceOptions', 'orientation'];
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function sharedSingleStatPanelChangedHandler(
   panel: PanelModel<Partial<SingleStatBaseOptions>> | any,
   prevPluginId: string,

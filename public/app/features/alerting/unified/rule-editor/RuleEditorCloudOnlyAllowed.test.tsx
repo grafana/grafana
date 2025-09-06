@@ -15,7 +15,6 @@ import { setupDataSources } from '../testSetup/datasources';
 import { DataSourceType, GRAFANA_DATASOURCE_NAME, GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
 
 jest.mock('../components/rule-editor/ExpressionEditor', () => ({
-  // eslint-disable-next-line react/display-name
   ExpressionEditor: ({ value, onChange }: ExpressionEditorProps) => (
     <input value={value} data-testid="expr" onChange={(e) => onChange(e.target.value)} />
   ),
@@ -30,7 +29,6 @@ jest.mock('../api/ruler', () => ({
 }));
 
 jest.mock('app/features/query/components/QueryEditorRow', () => ({
-  // eslint-disable-next-line react/display-name
   QueryEditorRow: () => <p>hi</p>,
 }));
 

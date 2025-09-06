@@ -121,7 +121,6 @@ export function getPromOperationDisplayName(funcName: string) {
 }
 
 export function getRangeVectorParamDef(withRateInterval = false): QueryBuilderOperationParamDef {
-  /* eslint-disable @grafana/i18n/no-untranslated-strings */
   const options: Array<SelectableValue<string>> = [
     {
       label: '$__interval',
@@ -142,7 +141,6 @@ export function getRangeVectorParamDef(withRateInterval = false): QueryBuilderOp
       // tooltip: 'Always above 4x scrape interval',
     });
   }
-  /* eslint-enable @grafana/i18n/no-untranslated-strings */
 
   const param: QueryBuilderOperationParamDef = {
     name: 'Range',

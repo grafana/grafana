@@ -4,10 +4,10 @@ if (typeof window !== 'undefined' && 'Element' in window && !Element.prototype.c
     const matches = (this.document || this.ownerDocument).querySelectorAll(s);
     let el = this;
     let i;
-    // eslint-disable-next-line
+
     do {
       i = matches.length;
-      // eslint-disable-next-line
+
       while (--i >= 0 && matches.item(i) !== el) {}
       el = el.parentElement;
     } while (i < 0 && el);

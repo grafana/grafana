@@ -16,7 +16,6 @@ import { nullToValueField } from './nulls/nullToValue';
 /**
  * @internal
  */
-/* eslint-disable */
 // prettier-ignore
 export const histogramBucketSizes = [
   1e-9,  2e-9,  2.5e-9,  4e-9,  5e-9,
@@ -39,7 +38,6 @@ export const histogramBucketSizes = [
   1e+8,  2e+8,  2.5e+8,  4e+8,  5e+8,
   1e+9,  2e+9,  2.5e+9,  4e+9,  5e+9,
 ];
-/* eslint-enable */
 
 const DEFAULT_BUCKET_COUNT = 30;
 
