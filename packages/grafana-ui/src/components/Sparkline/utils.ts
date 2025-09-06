@@ -62,13 +62,6 @@ export function getYRange(field: Field, alignedFrame: DataFrame): Range.MinMax {
   min = Math.max(min!, field.config.min ?? -Infinity);
   max = Math.min(max!, field.config.max ?? Infinity);
 
-  // if noValue is set, ensure that it is included in the range as well
-  const noValue = +alignedFrame.fields[1].config?.noValue!;
-  if (!Number.isNaN(noValue)) {
-    min = Math.min(min, noValue);
-    max = Math.max(max, noValue);
-  }
-
   // if min and max are equal after all of that, create a range
   // that allows the sparkline to be visible in the center of the viz
   if (min === max) {
