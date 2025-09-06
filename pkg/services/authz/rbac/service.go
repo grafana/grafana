@@ -18,6 +18,7 @@ import (
 	authzv1 "github.com/grafana/authlib/authz/proto/v1"
 	"github.com/grafana/authlib/cache"
 	"github.com/grafana/authlib/types"
+
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -375,6 +376,15 @@ func (s *Service) getCachedIdentityPermissions(ctx context.Context, ns types.Nam
 	ctx, span := s.tracer.Start(ctx, "authz_direct_db.service.getCachedIdentityPermissions")
 	defer span.End()
 
+	latestUpdate, err := s.store.GetLatestUpdate(ctx, ns, store.LatestUpdateQuery{OrgID: ns.OrgID})
+	if err != nil {
+		return nil, err
+	}
+	// Reset cache if permissions have been updated in the db
+	if latestUpdate.Updated.After(time.Now().Add(-s.settings.CacheTTL)) {
+		return nil, cache.ErrNotFound
+	}
+
 	switch idType {
 	case types.TypeAnonymous:
 		anonPermKey := anonymousPermCacheKey(ns.Value, action)
@@ -628,16 +638,10 @@ func (s *Service) checkInheritedPermissions(ctx context.Context, scopeMap map[st
 	defer span.End()
 	ctxLogger := s.logger.FromContext(ctx)
 
-	tree, ok := s.getCachedFolderTree(ctx, req.Namespace)
-
-	// Check cached tree is up to date
-	if !ok || !s.isFolderInTree(tree, req.ParentFolder) {
-		var err error
-		tree, err = s.buildFolderTree(ctx, req.Namespace)
-		if err != nil {
-			ctxLogger.Error("could not build folder and dashboard tree", "error", err)
-			return false, err
-		}
+	tree, err := s.buildFolderTree(ctx, req.Namespace)
+	if err != nil {
+		ctxLogger.Error("could not build folder and dashboard tree", "error", err)
+		return false, err
 	}
 
 	if scopeMap["folders:uid:"+req.ParentFolder] {
@@ -653,24 +657,6 @@ func (s *Service) checkInheritedPermissions(ctx context.Context, scopeMap map[st
 	return false, nil
 }
 
-// getCachedFolderTree returns the cached folder tree for the given namespace.
-func (s *Service) getCachedFolderTree(ctx context.Context, ns types.NamespaceInfo) (folderTree, bool) {
-	ctx, span := s.tracer.Start(ctx, "authz_direct_db.service.getCachedFolderTree")
-	defer span.End()
-	key := folderCacheKey(ns.Value)
-	return s.folderCache.Get(ctx, key)
-}
-
-// isFolderInTree checks if the given parent folder exists in the folder tree.
-func (s *Service) isFolderInTree(tree folderTree, folder string) bool {
-	// Special case for general folder, which is technically not in the tree
-	if folder == accesscontrol.GeneralFolderUID {
-		return true
-	}
-	_, exists := tree.Index[folder]
-	return exists
-}
-
 // buildFolderTree builds the folder tree for the given namespace and caches it.
 func (s *Service) buildFolderTree(ctx context.Context, ns types.NamespaceInfo) (folderTree, error) {
 	ctx, span := s.tracer.Start(ctx, "authz_direct_db.service.buildFolderTree")
@@ -682,11 +668,7 @@ func (s *Service) buildFolderTree(ctx context.Context, ns types.NamespaceInfo) (
 			return nil, fmt.Errorf("could not get folders: %w", err)
 		}
 		span.SetAttributes(attribute.Int("num_folders", len(folders)))
-
-		tree := newFolderTree(folders)
-
-		s.folderCache.Set(ctx, folderCacheKey(ns.Value), tree)
-		return tree, nil
+		return newFolderTree(folders), nil
 	})
 
 	if err != nil {
@@ -714,13 +696,10 @@ func (s *Service) listPermission(ctx context.Context, scopeMap map[string]bool, 
 	var tree folderTree
 	if t.HasFolderSupport() {
 		var err error
-		tree, ok = s.getCachedFolderTree(ctx, req.Namespace)
-		if !ok {
-			tree, err = s.buildFolderTree(ctx, req.Namespace)
-			if err != nil {
-				ctxLogger.Error("could not build folder and dashboard tree", "error", err)
-				return nil, err
-			}
+		tree, err = s.buildFolderTree(ctx, req.Namespace)
+		if err != nil {
+			ctxLogger.Error("could not build folder and dashboard tree", "error", err)
+			return nil, err
 		}
 	}
 
