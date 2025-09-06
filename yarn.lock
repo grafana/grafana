@@ -16193,14 +16193,14 @@ __metadata:
   linkType: hard
 
 "eslint-plugin-testing-library@npm:^7.0.0":
-  version: 7.1.1
-  resolution: "eslint-plugin-testing-library@npm:7.1.1"
+  version: 7.6.8
+  resolution: "eslint-plugin-testing-library@npm:7.6.8"
   dependencies:
     "@typescript-eslint/scope-manager": "npm:^8.15.0"
     "@typescript-eslint/utils": "npm:^8.15.0"
   peerDependencies:
     eslint: ^8.57.0 || ^9.0.0
-  checksum: 10/48a7a7f93afd16f9cf9cccaf7a1e7ba2e2ea9072d598558ce758d396c7a4d6a71e49b4ec654feef67350141f4f2737d7460c07dbfaed4eb60a09d1c7ceb11558
+  checksum: 10/e61df24a353a298075254c89fd0278b3e6c3c8a9dbde08baeb46b4ab9e90e6080dcb5b3c2f89bf738649b58858760721fb31641672e1a837b169c16c0106ea36
   languageName: node
   linkType: hard
 
