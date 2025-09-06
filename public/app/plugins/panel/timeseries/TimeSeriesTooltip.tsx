@@ -43,31 +43,7 @@ export interface TimeSeriesTooltipProps {
   hideZeros?: boolean;
   adHocFilters?: AdHocFilterModel[];
   canExecuteActions?: boolean;
-  compareDiffMs?: number;
-}
-
-function getTooltipTimeText(timestamp: number, field: Field, xField: Field, compareDiffMs?: number) {
-  // Apply timeCompare offset to comparison fields
-  if (compareDiffMs != null && isComparisonField(field)) {
-    timestamp += compareDiffMs;
-  }
-  return formattedValueToString(xField.display!(timestamp));
-}
-
-function isComparisonField(field: Field): boolean {
-  // Check if this field is from a comparison series by looking at the original frame metadata
-  const frameMetaTimeCompare = field.state?.scopedVars?.__dataContext?.value?.frame?.meta?.timeCompare;
-
-  if (frameMetaTimeCompare?.isTimeShiftQuery) {
-    return true;
-  }
-
-  // Check field-level timeCompare for newer scenes versions
-  if (field.config?.custom?.timeCompare?.isTimeShiftQuery) {
-    return true;
-  }
-
-  return false;
+  compareDiffMs?: number[];
 }
 
 export const TimeSeriesTooltip = ({
@@ -88,12 +64,14 @@ export const TimeSeriesTooltip = ({
   compareDiffMs,
 }: TimeSeriesTooltipProps) => {
   const xField = series.fields[0];
-  let timestamp = xField.values[dataIdxs[0]!];
-  const hoveredField = series.fields[seriesIdx ?? 1];
-  const xVal =
-    xField.type === FieldType.time
-      ? getTooltipTimeText(timestamp, hoveredField, xField, compareDiffMs)
-      : formattedValueToString(xField.display!(timestamp));
+
+  let xVal = xField.values[dataIdxs[0]!];
+
+  if (compareDiffMs != null && xField.type === FieldType.time) {
+    xVal += compareDiffMs[seriesIdx ?? 1];
+  }
+
+  const xDisp = formattedValueToString(xField.display!(xVal));
 
   const contentItems = getContentItems(
     series.fields,
@@ -125,7 +103,7 @@ export const TimeSeriesTooltip = ({
 
   const headerItem: VizTooltipItem = {
     label: xField.type === FieldType.time ? '' : (xField.state?.displayName ?? xField.name),
-    value: xVal,
+    value: xDisp,
   };
 
   return (
