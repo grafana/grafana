@@ -459,6 +459,8 @@ func PrepareRuleGroupStatusesV2(log log.Logger, store ListAlertRulesStoreV2, opt
 		labelOptions = append(labelOptions, ngmodels.WithoutInternalLabels())
 	}
 
+	skipQuery := getBoolWithDefault(opts.Query, "skipQuery", false)
+
 	if len(opts.AllowedNamespaces) == 0 {
 		log.Debug("User does not have access to any namespaces")
 		return ruleResponse
@@ -516,7 +518,7 @@ func PrepareRuleGroupStatusesV2(log log.Logger, store ListAlertRulesStoreV2, opt
 	groupedRules := getGroupedRules(log, ruleList, ruleNamesSet, opts.AllowedNamespaces)
 	rulesTotals := make(map[string]int64, len(groupedRules))
 	for _, rg := range groupedRules {
-		ruleGroup, totals := toRuleGroup(log, rg.GroupKey, rg.Folder, rg.Rules, provenanceRecords, limitAlertsPerRule, stateFilterSet, matchers, labelOptions, ruleStatusMutator, alertStateMutator)
+		ruleGroup, totals := toRuleGroup(log, rg.GroupKey, rg.Folder, rg.Rules, provenanceRecords, limitAlertsPerRule, stateFilterSet, matchers, labelOptions, ruleStatusMutator, alertStateMutator, skipQuery)
 		ruleGroup.Totals = totals
 		for k, v := range totals {
 			rulesTotals[k] += v
@@ -655,6 +657,8 @@ func PrepareRuleGroupStatuses(log log.Logger, store ListAlertRulesStore, opts Ru
 		}
 	}
 
+	skipQuery := getBoolWithDefault(opts.Query, "skipQuery", false)
+
 	groupedRules := getGroupedRules(log, ruleList, ruleNamesSet, opts.AllowedNamespaces)
 	rulesTotals := make(map[string]int64, len(groupedRules))
 	var newToken string
@@ -672,7 +676,7 @@ func PrepareRuleGroupStatuses(log log.Logger, store ListAlertRulesStore, opts Ru
 			break
 		}
 
-		ruleGroup, totals := toRuleGroup(log, rg.GroupKey, rg.Folder, rg.Rules, provenanceRecords, limitAlertsPerRule, stateFilterSet, matchers, labelOptions, ruleStatusMutator, alertStateMutator)
+		ruleGroup, totals := toRuleGroup(log, rg.GroupKey, rg.Folder, rg.Rules, provenanceRecords, limitAlertsPerRule, stateFilterSet, matchers, labelOptions, ruleStatusMutator, alertStateMutator, skipQuery)
 		ruleGroup.Totals = totals
 		for k, v := range totals {
 			rulesTotals[k] += v
@@ -823,7 +827,7 @@ func matchersMatch(matchers []*labels.Matcher, labels map[string]string) bool {
 	return true
 }
 
-func toRuleGroup(log log.Logger, groupKey ngmodels.AlertRuleGroupKey, folderFullPath string, rules []*ngmodels.AlertRule, provenanceRecords map[string]ngmodels.Provenance, limitAlerts int64, stateFilterSet map[eval.State]struct{}, matchers labels.Matchers, labelOptions []ngmodels.LabelOption, ruleStatusMutator RuleStatusMutator, ruleAlertStateMutator RuleAlertStateMutator) (*apimodels.RuleGroup, map[string]int64) {
+func toRuleGroup(log log.Logger, groupKey ngmodels.AlertRuleGroupKey, folderFullPath string, rules []*ngmodels.AlertRule, provenanceRecords map[string]ngmodels.Provenance, limitAlerts int64, stateFilterSet map[eval.State]struct{}, matchers labels.Matchers, labelOptions []ngmodels.LabelOption, ruleStatusMutator RuleStatusMutator, ruleAlertStateMutator RuleAlertStateMutator, skipQuery bool) (*apimodels.RuleGroup, map[string]int64) {
 	newGroup := &apimodels.RuleGroup{
 		Name: groupKey.RuleGroup,
 		// file is what Prometheus uses for provisioning, we replace it with namespace which is the folder in Grafana.
@@ -839,10 +843,14 @@ func toRuleGroup(log log.Logger, groupKey ngmodels.AlertRuleGroupKey, folderFull
 		if prov, exists := provenanceRecords[rule.ResourceID()]; exists {
 			provenance = prov
 		}
+		var query string
+		if !skipQuery {
+			query = ruleToQuery(log, rule)
+		}
 		alertingRule := apimodels.AlertingRule{
 			State:                 "inactive",
 			Name:                  rule.Title,
-			Query:                 ruleToQuery(log, rule),
+			Query:                 query,
 			QueriedDatasourceUIDs: extractDatasourceUIDs(rule),
 			Duration:              rule.For.Seconds(),
 			KeepFiringFor:         rule.KeepFiringFor.Seconds(),
