@@ -14,6 +14,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/grpc/keepalive"
 	"k8s.io/client-go/rest"
 
 	authnlib "github.com/grafana/authlib/authn"
@@ -165,6 +166,18 @@ func newRemoteRBACClient(clientCfg *authzClientSettings, tracer trace.Tracer) (a
 		grpc.WithPerRPCCredentials(
 			NewGRPCTokenAuth(AuthzServiceAudience, clientCfg.tokenNamespace, tokenClient),
 		),
+		// Add client-side load balancing
+		grpc.WithDefaultServiceConfig(`{
+              "loadBalancingPolicy": "round_robin",
+              "healthCheckConfig": {
+                  "serviceName": ""
+              }
+          }`),
+		grpc.WithKeepaliveParams(keepalive.ClientParameters{
+			Time:                10 * time.Second,
+			Timeout:             3 * time.Second,
+			PermitWithoutStream: true,
+		}),
 	)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create authz client to remote server: %w", err)
@@ -243,7 +256,6 @@ func (t tokenExhangeRoundTripper) RoundTrip(r *http.Request) (*http.Response, er
 		Namespace: "*",
 		Audiences: []string{"folder.grafana.app"},
 	})
-
 	if err != nil {
 		return nil, fmt.Errorf("create access token: %w", err)
 	}
