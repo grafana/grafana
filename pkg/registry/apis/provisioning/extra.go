@@ -13,6 +13,9 @@ type Extra interface {
 	Authorize(ctx context.Context, a authorizer.Attributes) (decision authorizer.Decision, reason string, err error)
 	UpdateStorage(storage map[string]rest.Storage) error
 	PostProcessOpenAPI(oas *spec3.OpenAPI) error
+}
+
+type JobsWorkerRetriever interface {
 	GetJobWorkers() []jobs.Worker
 }
 
