@@ -44,6 +44,23 @@ export const notifyIfMockApiEnabled = () => {
   }
 };
 
+export const notifyWeAreHiring = () => {
+  const logoMessageStyle = 'color: #ff671d;';
+  const hiringMessageStyle = 'font-size: medium; font-weight: bold; color: #ff671d;';
+  const linkMessageStyle = 'color: #ff671d; text-decoration: underline;';
+  console.log(
+    `%c⠀⠀⠀⠀⠀⣠⣶⣶⣄⠀⢀
+⠀⢰⣶⣶⣾⣿⠿⠿⠿⠿⢿⣇
+⠀⠈⢻⡟⠋⠁⠀⣀⣀⣀⣀⠙⢧
+⠀⣰⣾⠇⠀⢰⠀⠉⠉⠉⠿⡇⠈
+⠾⣿⣿⣇⡀⠈⠀⠀⠀⠀⢀⣇⣀
+⠀⠈⠉⢻⣿⣆⣀⣀⣀⣠⣿⠟⠛
+⠀⠀⠀⠸⠿⠿⠿⠿⢿⣿⠇`,
+    logoMessageStyle
+  );
+  console.log(`%cWe are hiring! Come find us at https://grafana.com/about/careers/`, hiringMessageStyle);
+};
+
 export const togglePseudoLocale = async () => {
   const prefsService = new PreferencesService('user');
   const prefs = await prefsService.load();
