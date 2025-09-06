@@ -19,6 +19,7 @@ import { createViewLink } from '../../utils/misc';
 import * as ruleId from '../../utils/rule-id';
 import { getRuleUID, prometheusRuleType, rulerRuleType } from '../../utils/rules';
 import { createRelativeUrl } from '../../utils/url';
+import { EnrichmentDrawerExtension } from '../rule-list/extensions/EnrichmentDrawerExtension';
 
 import { RedirectToCloneRule } from './CloneRule';
 
@@ -45,6 +46,7 @@ export const RuleActionsButtons = ({ compact, showViewButton, rule, rulesSource 
   const [deleteModal, showDeleteModal] = useDeleteModal(redirectToListView);
 
   const [showSilenceDrawer, setShowSilenceDrawer] = useState<boolean>(false);
+  const [showEnrichmentDrawer, setShowEnrichmentDrawer] = useState<boolean>(false);
 
   const [redirectToClone, setRedirectToClone] = useState<
     { identifier: RuleIdentifier; isProvisioned: boolean } | undefined
@@ -126,6 +128,7 @@ export const RuleActionsButtons = ({ compact, showViewButton, rule, rulesSource 
           }
         }}
         handleSilence={() => setShowSilenceDrawer(true)}
+        handleManageEnrichments={() => setShowEnrichmentDrawer(true)}
         handleDuplicateRule={() => setRedirectToClone({ identifier, isProvisioned })}
         onPauseChange={() => {
           // Uses INSTANCES_DISPLAY_LIMIT + 1 here as exporting LIMIT_ALERTS from RuleList has the side effect
@@ -141,6 +144,9 @@ export const RuleActionsButtons = ({ compact, showViewButton, rule, rulesSource 
       {deleteModal}
       {silenceableRule && showSilenceDrawer && (
         <SilenceGrafanaRuleDrawer ruleUid={ruleUid} onClose={() => setShowSilenceDrawer(false)} />
+      )}
+      {ruleUid && showEnrichmentDrawer && (
+        <EnrichmentDrawerExtension ruleUid={ruleUid} onClose={() => setShowEnrichmentDrawer(false)} />
       )}
       {redirectToClone?.identifier && (
         <RedirectToCloneRule
