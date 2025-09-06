@@ -28,9 +28,7 @@ func TestMain(m *testing.M) {
 }
 
 func TestIntegrationAnnotations(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	tests.SkipIntegrationTestInShortMode(t)
 
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		DisableAnonymous:     true,

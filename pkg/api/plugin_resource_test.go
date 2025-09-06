@@ -36,15 +36,15 @@ import (
 	fakeSecrets "github.com/grafana/grafana/pkg/services/secrets/fakes"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/tests"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch"
 	testdatasource "github.com/grafana/grafana/pkg/tsdb/grafana-testdata-datasource"
 	"github.com/grafana/grafana/pkg/web/webtest"
 )
 
 func TestIntegrationCallResource(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test in short mode")
-	}
+	tests.SkipIntegrationTestInShortMode(t)
+
 	staticRootPath, err := filepath.Abs("../../public/")
 	require.NoError(t, err)
 

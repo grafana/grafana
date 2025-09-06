@@ -10,6 +10,7 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
+	"github.com/grafana/grafana/pkg/tests"
 	"github.com/grafana/grafana/pkg/tests/apis"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
@@ -26,9 +27,7 @@ func TestMain(m *testing.M) {
 }
 
 func TestIntegrationPluginInstalls(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	tests.SkipIntegrationTestInShortMode(t)
 
 	t.Run("create plugin install", func(t *testing.T) {
 		helper := setupHelper(t)

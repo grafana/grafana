@@ -18,6 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/sql/db/dbimpl"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/dbutil"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
+	"github.com/grafana/grafana/pkg/tests"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 )
 
@@ -25,9 +26,8 @@ func TestMain(m *testing.M) {
 	testsuite.Run(m)
 }
 func TestIntegrationListIter(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test in short mode")
-	}
+	tests.SkipIntegrationTestInShortMode(t)
+
 	ctx := context.Background()
 
 	grafanaDB := db.InitTestDB(t)

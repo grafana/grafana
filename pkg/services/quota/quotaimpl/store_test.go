@@ -8,6 +8,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/quota"
+	"github.com/grafana/grafana/pkg/tests"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 )
 
@@ -16,9 +17,7 @@ func TestMain(m *testing.M) {
 }
 
 func TestIntegrationQuotaDataAccess(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	tests.SkipIntegrationTestInShortMode(t)
 
 	ss := db.InitTestDB(t)
 	quotaStore := sqlStore{

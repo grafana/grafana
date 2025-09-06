@@ -35,9 +35,7 @@ func TestMain(m *testing.M) {
 }
 
 func TestIntegrationDashboardServiceValidation(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	tests.SkipIntegrationTestInShortMode(t)
 
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		DisableAnonymous: true,
@@ -984,9 +982,7 @@ func postDashboard(t *testing.T, grafanaListedAddr, user, password string, paylo
 }
 
 func TestIntegrationDashboardServicePermissions(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	tests.SkipIntegrationTestInShortMode(t)
 
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		DisableAnonymous: true,

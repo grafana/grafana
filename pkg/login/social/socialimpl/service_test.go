@@ -21,6 +21,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ssosettings/ssosettingsimpl"
 	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/tests"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 )
 
@@ -29,9 +30,8 @@ func TestMain(m *testing.M) {
 }
 
 func TestIntegrationSocialService_ProvideService(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test in short mode")
-	}
+	tests.SkipIntegrationTestInShortMode(t)
+
 	testCases := []struct {
 		name                                string
 		setup                               func(t *testing.T)
@@ -128,9 +128,8 @@ func TestIntegrationSocialService_ProvideService(t *testing.T) {
 }
 
 func TestIntegrationSocialService_ProvideService_GrafanaComGrafanaNet(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test in short mode")
-	}
+	tests.SkipIntegrationTestInShortMode(t)
+
 	testCases := []struct {
 		name                        string
 		rawIniContent               string

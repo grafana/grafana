@@ -7,6 +7,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/services/live/model"
+	"github.com/grafana/grafana/pkg/tests"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 )
 
@@ -15,9 +16,8 @@ func TestMain(m *testing.M) {
 }
 
 func TestIntegrationLiveMessage(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	tests.SkipIntegrationTestInShortMode(t)
+
 	storage := SetupTestStorage(t)
 
 	getQuery := &model.GetLiveMessageQuery{

@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/tests"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 )
@@ -27,10 +28,8 @@ func TestMain(m *testing.M) {
 
 func TestIntegrationInflux(t *testing.T) {
 	t.Skip("skipping due to flaky test")
+	tests.SkipIntegrationTestInShortMode(t)
 
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		DisableAnonymous: true,
 	})

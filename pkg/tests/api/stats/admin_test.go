@@ -18,6 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/userimpl"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/tests"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 )
@@ -27,9 +28,8 @@ func TestMain(m *testing.M) {
 }
 
 func TestIntegrationAdminStats(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test in short mode")
-	}
+	tests.SkipIntegrationTestInShortMode(t)
+
 	t.Run("with unified alerting enabled", func(t *testing.T) {
 		url := grafanaSetup(t, testinfra.GrafanaOpts{
 			DisableLegacyAlerting: true,

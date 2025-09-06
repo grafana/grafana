@@ -32,6 +32,7 @@ import (
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/tests"
 	"github.com/grafana/grafana/pkg/tests/api/alerting"
 	"github.com/grafana/grafana/pkg/tests/apis"
 	"github.com/grafana/grafana/pkg/tests/apis/alerting/notifications/common"
@@ -52,9 +53,7 @@ func getTestHelper(t *testing.T) *apis.K8sTestHelper {
 }
 
 func TestIntegrationResourceIdentifier(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	tests.SkipIntegrationTestInShortMode(t)
 
 	ctx := context.Background()
 	helper := getTestHelper(t)
@@ -114,9 +113,7 @@ func TestIntegrationResourceIdentifier(t *testing.T) {
 }
 
 func TestIntegrationTimeIntervalAccessControl(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	tests.SkipIntegrationTestInShortMode(t)
 
 	ctx := context.Background()
 	helper := getTestHelper(t)
@@ -340,9 +337,7 @@ func TestIntegrationTimeIntervalAccessControl(t *testing.T) {
 }
 
 func TestIntegrationTimeIntervalProvisioning(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	tests.SkipIntegrationTestInShortMode(t)
 
 	ctx := context.Background()
 	helper := getTestHelper(t)
@@ -395,9 +390,7 @@ func TestIntegrationTimeIntervalProvisioning(t *testing.T) {
 }
 
 func TestIntegrationTimeIntervalOptimisticConcurrency(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	tests.SkipIntegrationTestInShortMode(t)
 
 	ctx := context.Background()
 	helper := getTestHelper(t)
@@ -479,9 +472,7 @@ func TestIntegrationTimeIntervalOptimisticConcurrency(t *testing.T) {
 }
 
 func TestIntegrationTimeIntervalPatch(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	tests.SkipIntegrationTestInShortMode(t)
 
 	ctx := context.Background()
 	helper := getTestHelper(t)
@@ -544,9 +535,7 @@ func TestIntegrationTimeIntervalPatch(t *testing.T) {
 }
 
 func TestIntegrationTimeIntervalListSelector(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	tests.SkipIntegrationTestInShortMode(t)
 
 	ctx := context.Background()
 	helper := getTestHelper(t)
@@ -630,9 +619,7 @@ func TestIntegrationTimeIntervalListSelector(t *testing.T) {
 }
 
 func TestIntegrationTimeIntervalReferentialIntegrity(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	tests.SkipIntegrationTestInShortMode(t)
 
 	ctx := context.Background()
 	helper := getTestHelper(t)
@@ -781,9 +768,7 @@ func TestIntegrationTimeIntervalReferentialIntegrity(t *testing.T) {
 }
 
 func TestIntegrationTimeIntervalValidation(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	tests.SkipIntegrationTestInShortMode(t)
 
 	ctx := context.Background()
 	helper := getTestHelper(t)

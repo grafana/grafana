@@ -9,13 +9,13 @@ import (
 
 	dashboardV1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
+	"github.com/grafana/grafana/pkg/tests"
 )
 
 // FIXME: do this tests make sense in their current form?
 func TestIntegrationProvisioning_Client(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	tests.SkipIntegrationTestInShortMode(t)
+
 	helper := runGrafana(t)
 
 	ctx := context.Background()

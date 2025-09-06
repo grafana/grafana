@@ -26,6 +26,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/tests"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -34,9 +35,7 @@ var folderDsc string = "folder desc"
 var usr = &user.SignedInUser{UserID: 1, OrgID: orgID, Permissions: map[int64]map[string][]string{orgID: {dashboards.ActionFoldersCreate: {dashboards.ScopeFoldersProvider.GetResourceScopeUID(folder.GeneralFolderUID)}}}}
 
 func TestIntegrationCreate(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	tests.SkipIntegrationTestInShortMode(t)
 
 	db, cfg := sqlstore.InitTestDB(t)
 	folderStore := ProvideStore(db)
@@ -166,9 +165,7 @@ func TestIntegrationCreate(t *testing.T) {
 }
 
 func TestIntegrationDelete(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	tests.SkipIntegrationTestInShortMode(t)
 
 	db, cfg := sqlstore.InitTestDB(t)
 	folderStore := ProvideStore(db)
@@ -213,9 +210,7 @@ func TestIntegrationDelete(t *testing.T) {
 }
 
 func TestIntegrationUpdate(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	tests.SkipIntegrationTestInShortMode(t)
 
 	db, cfg := sqlstore.InitTestDB(t)
 	folderStore := ProvideStore(db)
@@ -388,9 +383,7 @@ func TestIntegrationUpdate(t *testing.T) {
 }
 
 func TestIntegrationGet(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	tests.SkipIntegrationTestInShortMode(t)
 
 	db, cfg := sqlstore.InitTestDB(t)
 	folderStore := ProvideStore(db)
@@ -523,9 +516,7 @@ func TestIntegrationGet(t *testing.T) {
 }
 
 func TestIntegrationGetParents(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	tests.SkipIntegrationTestInShortMode(t)
 
 	db, cfg := sqlstore.InitTestDB(t)
 	folderStore := ProvideStore(db)
@@ -591,9 +582,7 @@ func TestIntegrationGetParents(t *testing.T) {
 }
 
 func TestIntegrationGetChildren(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	tests.SkipIntegrationTestInShortMode(t)
 
 	db, cfg := sqlstore.InitTestDB(t)
 	folderStore := ProvideStore(db)
@@ -826,9 +815,7 @@ func TestIntegrationGetChildren(t *testing.T) {
 }
 
 func TestIntegrationGetHeight(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	tests.SkipIntegrationTestInShortMode(t)
 
 	db, cfg := sqlstore.InitTestDB(t)
 	folderStore := ProvideStore(db)
@@ -858,9 +845,7 @@ func TestIntegrationGetHeight(t *testing.T) {
 }
 
 func TestIntegrationGetFolders(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	tests.SkipIntegrationTestInShortMode(t)
 
 	foldersNum := 10
 	db, cfg := sqlstore.InitTestDB(t)

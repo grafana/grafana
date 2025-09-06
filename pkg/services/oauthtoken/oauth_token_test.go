@@ -26,6 +26,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/login/authinfotest"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/tests"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 )
 
@@ -64,9 +65,7 @@ func (f *FakeAuthInfoStore) DeleteAuthInfo(ctx context.Context, cmd *login.Delet
 }
 
 func TestIntegration_TryTokenRefresh(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	tests.SkipIntegrationTestInShortMode(t)
 
 	unexpiredToken := &oauth2.Token{
 		AccessToken:  "testaccess",
@@ -346,9 +345,7 @@ func TestIntegration_TryTokenRefresh(t *testing.T) {
 }
 
 func TestIntegration_TryTokenRefresh_WithExternalSessions(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	tests.SkipIntegrationTestInShortMode(t)
 
 	unexpiredToken := &oauth2.Token{
 		AccessToken:  "testaccess",

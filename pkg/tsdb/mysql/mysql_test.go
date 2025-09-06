@@ -16,6 +16,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/tests"
 	"github.com/grafana/grafana/pkg/tsdb/mysql/sqleng"
 )
 
@@ -28,9 +29,8 @@ import (
 // use to verify that the generated data are visualized as expected, see
 // devenv/README.md for setup instructions.
 func TestIntegrationMySQL(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	tests.SkipIntegrationTestInShortMode(t)
+
 	// change to true to run the MySQL tests
 	runMySQLTests := false
 	// runMySQLTests := true

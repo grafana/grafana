@@ -5,12 +5,11 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/tests"
 )
 
 func TestIntegrationMemcachedCacheStorage(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	tests.SkipIntegrationTestInShortMode(t)
 
 	u, ok := os.LookupEnv("MEMCACHED_HOSTS")
 	if !ok || u == "" {

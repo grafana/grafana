@@ -11,14 +11,15 @@ import (
 
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+	"github.com/grafana/grafana/pkg/tests"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 )
 
 func TestIntegrationConvertPrometheusAlertmanagerEndpoints(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test in short mode")
-		// Setup Grafana with alerting import feature flag enabled
-	}
+	tests.SkipIntegrationTestInShortMode(t)
+
+	// Setup Grafana with alerting import feature flag enabled
+
 	testinfra.SQLiteIntegrationTest(t)
 
 	dir, gpath := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
@@ -330,9 +331,8 @@ receivers:
 }
 
 func TestIntegrationConvertPrometheusAlertmanagerEndpoints_FeatureFlagDisabled(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test in short mode")
-	}
+	tests.SkipIntegrationTestInShortMode(t)
+
 	testinfra.SQLiteIntegrationTest(t)
 
 	dir, gpath := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{

@@ -9,13 +9,13 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
+	"github.com/grafana/grafana/pkg/tests"
 	"github.com/grafana/grafana/pkg/util/sqlite"
 )
 
 func TestIntegration_RetryingDisabled(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test in short mode")
-	}
+	tests.SkipIntegrationTestInShortMode(t)
+
 	store, _ := InitTestDB(t)
 	retryErrors := getRetryErrors(t, store)
 
@@ -64,9 +64,8 @@ func TestIntegration_RetryingDisabled(t *testing.T) {
 }
 
 func TestIntegration_RetryingOnFailures(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test in short mode")
-	}
+	tests.SkipIntegrationTestInShortMode(t)
+
 	store, _ := InitTestDB(t)
 	retryErrors := getRetryErrors(t, store)
 	store.dbCfg.QueryRetries = 5

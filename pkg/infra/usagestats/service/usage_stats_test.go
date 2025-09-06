@@ -26,6 +26,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/tests"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 )
 
@@ -156,9 +157,8 @@ func TestMetrics(t *testing.T) {
 }
 
 func TestIntegrationGetUsageReport_IncludesMetrics(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test in short mode")
-	}
+	tests.SkipIntegrationTestInShortMode(t)
+
 	sqlStore := dbtest.NewFakeDB()
 	uss := createService(t, sqlStore, true)
 	metricName := "stats.test_metric.count"

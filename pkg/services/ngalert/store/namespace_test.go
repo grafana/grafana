@@ -18,12 +18,11 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/tests"
 )
 
 func TestIntegration_GetUserVisibleNamespaces(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	tests.SkipIntegrationTestInShortMode(t)
 
 	sqlStore := db.InitTestDB(t)
 	cfg := setting.NewCfg()
