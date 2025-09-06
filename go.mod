@@ -158,7 +158,7 @@ require (
 	github.com/prometheus/client_model v0.6.2 // @grafana/grafana-backend-group
 	github.com/prometheus/common v0.65.0 // @grafana/alerting-backend
 	github.com/prometheus/prometheus v0.303.1 // @grafana/alerting-backend
-	github.com/prometheus/sigv4 v0.1.2 // @grafana/alerting-backend
+	github.com/prometheus/sigv4 v0.2.1 // @grafana/alerting-backend
 	github.com/redis/go-redis/v9 v9.8.0 // @grafana/alerting-backend
 	github.com/robfig/cron/v3 v3.0.1 // @grafana/grafana-backend-group
 	github.com/rs/cors v1.11.1 // @grafana/identity-access-team
