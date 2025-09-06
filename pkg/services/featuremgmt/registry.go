@@ -633,9 +633,10 @@ var (
 		{
 			Name:         "timeComparison",
 			Description:  "Enables time comparison option in supported panels",
-			Stage:        FeatureStageExperimental,
+			Stage:        FeatureStageGeneralAvailability,
 			FrontendOnly: true,
 			Owner:        grafanaDatavizSquad,
+			Expression:   "true", // enabled by default
 		},
 		{
 			Name:         "logsInfiniteScrolling",
