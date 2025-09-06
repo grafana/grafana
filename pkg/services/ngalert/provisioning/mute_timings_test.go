@@ -765,8 +765,8 @@ func TestUpdateMuteTimings(t *testing.T) {
 
 		revision := store.Calls[1].Args[1].(*legacy_storage.ConfigRevision)
 		assert.EqualValues(t, append(initialConfig().AlertmanagerConfig.TimeIntervals, config.TimeInterval(interval)), revision.Config.AlertmanagerConfig.TimeIntervals)
-		assert.Falsef(t, isMuteTimeInUseInRoutes(expected.Name, revision.Config.AlertmanagerConfig.Route), "There are still references to the old time interval")
-		assert.Truef(t, isMuteTimeInUseInRoutes(interval.Name, revision.Config.AlertmanagerConfig.Route), "There are no references to the new time interval")
+		assert.Falsef(t, isTimeIntervalInUseInRoutes(expected.Name, revision.Config.AlertmanagerConfig.Route), "There are still references to the old time interval")
+		assert.Truef(t, isTimeIntervalInUseInRoutes(interval.Name, revision.Config.AlertmanagerConfig.Route), "There are no references to the new time interval")
 	})
 
 	t.Run("returns ErrTimeIntervalDependentResourcesProvenance if route has different provenance status", func(t *testing.T) {
@@ -942,22 +942,27 @@ func TestDeleteMuteTimings(t *testing.T) {
 
 	timingToDelete := config.MuteTimeInterval{Name: "unused-timing"}
 	correctVersion := calculateMuteTimeIntervalFingerprint(timingToDelete)
-	usedTiming := "used-timing"
+	usedMuteTiming := "used-timing"
+	usedActiveTiming := "used-active-timing"
 	initialConfig := func() *definitions.PostableUserConfig {
 		return &definitions.PostableUserConfig{
 			TemplateFiles: nil,
 			AlertmanagerConfig: definitions.PostableApiAlertingConfig{
 				Config: definitions.Config{
 					Route: &definitions.Route{
-						MuteTimeIntervals: []string{usedTiming},
+						MuteTimeIntervals:   []string{usedMuteTiming},
+						ActiveTimeIntervals: []string{usedActiveTiming},
 					},
 					MuteTimeIntervals: []config.MuteTimeInterval{
 						{
-							Name: usedTiming,
+							Name: usedMuteTiming,
 						},
 						timingToDelete,
 					},
 					TimeIntervals: []config.TimeInterval{
+						{
+							Name: usedActiveTiming,
+						},
 						{
 							Name: "timing-to-delete2",
 						},
@@ -990,7 +995,22 @@ func TestDeleteMuteTimings(t *testing.T) {
 		}
 		prov.EXPECT().GetProvenance(mock.Anything, mock.Anything, mock.Anything).Return(models.ProvenanceAPI, nil)
 
-		err := sut.DeleteMuteTiming(context.Background(), usedTiming, orgID, definitions.Provenance(models.ProvenanceAPI), correctVersion)
+		err := sut.DeleteMuteTiming(context.Background(), usedMuteTiming, orgID, definitions.Provenance(models.ProvenanceAPI), correctVersion)
+
+		require.Len(t, store.Calls, 1)
+		require.Equal(t, "Get", store.Calls[0].Method)
+		require.Equal(t, orgID, store.Calls[0].Args[1])
+		require.ErrorIs(t, err, ErrTimeIntervalInUse)
+	})
+
+	t.Run("returns ErrTimeIntervalInUse if active timing is used by a route", func(t *testing.T) {
+		sut, store, prov := createMuteTimingSvcSut()
+		store.GetFn = func(ctx context.Context, orgID int64) (*legacy_storage.ConfigRevision, error) {
+			return &legacy_storage.ConfigRevision{Config: initialConfig()}, nil
+		}
+		prov.EXPECT().GetProvenance(mock.Anything, mock.Anything, mock.Anything).Return(models.ProvenanceAPI, nil)
+
+		err := sut.DeleteMuteTiming(context.Background(), usedActiveTiming, orgID, definitions.Provenance(models.ProvenanceAPI), correctVersion)
 
 		require.Len(t, store.Calls, 1)
 		require.Equal(t, "Get", store.Calls[0].Method)
@@ -1110,7 +1130,7 @@ func TestDeleteMuteTimings(t *testing.T) {
 				return nil
 			})
 
-		timingToDelete := initialConfig().AlertmanagerConfig.TimeIntervals[0]
+		timingToDelete := initialConfig().AlertmanagerConfig.TimeIntervals[1]
 		correctVersion := calculateMuteTimeIntervalFingerprint(config.MuteTimeInterval(timingToDelete))
 
 		err := sut.DeleteMuteTiming(context.Background(), timingToDelete.Name, orgID, "", correctVersion)

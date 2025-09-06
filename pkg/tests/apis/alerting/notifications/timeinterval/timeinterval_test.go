@@ -688,7 +688,7 @@ func TestIntegrationTimeIntervalReferentialIntegrity(t *testing.T) {
 
 	intervals, err := adminClient.List(ctx, v1.ListOptions{})
 	require.NoError(t, err)
-	require.Len(t, intervals.Items, 2)
+	require.Len(t, intervals.Items, 3)
 	intervalIdx := slices.IndexFunc(intervals.Items, func(interval v0alpha1.TimeInterval) bool {
 		return interval.Spec.Name == "test-interval"
 	})
@@ -775,6 +775,16 @@ func TestIntegrationTimeIntervalReferentialIntegrity(t *testing.T) {
 			legacyCli.UpdateRoute(t, route, true)
 
 			err = adminClient.Delete(ctx, interval.Name, v1.DeleteOptions{})
+			require.Truef(t, errors.IsConflict(err), "Expected Conflict, got: %s", err)
+		})
+
+		t.Run("should fail to delete if time interval is used in route as an active time interval", func(t *testing.T) {
+			idx := slices.IndexFunc(intervals.Items, func(interval v0alpha1.TimeInterval) bool {
+				return interval.Spec.Name == "test-interval-for-active-time-interval"
+			})
+			intervalToDelete := intervals.Items[idx]
+
+			err = adminClient.Delete(ctx, intervalToDelete.Name, v1.DeleteOptions{})
 			require.Truef(t, errors.IsConflict(err), "Expected Conflict, got: %s", err)
 		})
 	})
