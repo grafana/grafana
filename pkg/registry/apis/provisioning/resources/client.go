@@ -299,13 +299,9 @@ func (c *resourceClients) User(ctx context.Context) (dynamic.ResourceInterface, 
 }
 
 type multiResourceClients struct {
-	namespace       string
-	clientsProvider map[string]ResourceClients
-
-	// ResourceInterface cache for this context + namespace
-	mutex      sync.Mutex
-	byKind     map[schema.GroupVersionKind]*clientInfo
-	byResource map[schema.GroupVersionResource]*clientInfo
+	namespace                 string
+	mutex                     sync.Mutex
+	resourceClientsByAPIGroup map[string]ResourceClients
 }
 
 // ForKind returns a client for a kind.
@@ -315,17 +311,12 @@ func (c *multiResourceClients) ForKind(ctx context.Context, gvk schema.GroupVers
 	c.mutex.Lock()
 	defer c.mutex.Unlock()
 
-	info, ok := c.byKind[gvk]
-	if ok && info.client != nil {
-		return info.client, info.gvr, nil
-	}
-
-	resourceClient, ok := c.clientsProvider[gvk.Group]
+	resourceClients, ok := c.resourceClientsByAPIGroup[gvk.Group]
 	if !ok {
 		return nil, schema.GroupVersionResource{}, fmt.Errorf("no clients provider for group %s", gvk.Group)
 	}
 
-	return resourceClient.ForKind(ctx, gvk)
+	return resourceClients.ForKind(ctx, gvk)
 }
 
 // ForResource returns a client for a resource.
@@ -335,17 +326,12 @@ func (c *multiResourceClients) ForResource(ctx context.Context, gvr schema.Group
 	c.mutex.Lock()
 	defer c.mutex.Unlock()
 
-	info, ok := c.byResource[gvr]
-	if ok && info.client != nil {
-		return info.client, info.gvk, nil
-	}
-
-	resourceClient, ok := c.clientsProvider[gvr.Group]
+	resourceClients, ok := c.resourceClientsByAPIGroup[gvr.Group]
 	if !ok {
 		return nil, schema.GroupVersionKind{}, fmt.Errorf("no clients provider for group %s", gvr.Group)
 	}
 
-	return resourceClient.ForResource(ctx, gvr)
+	return resourceClients.ForResource(ctx, gvr)
 }
 
 func (c *multiResourceClients) Folder(ctx context.Context) (dynamic.ResourceInterface, error) {
