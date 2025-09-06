@@ -1,3 +1,12 @@
+<!-- 12.2.0 START -->
+
+# 12.2.0 (Unreleased)
+
+### Bug fixes
+
+- **Internationalization:** Fixed crash when `LANG=c` is set in environment variables. Grafana now gracefully handles invalid locales and falls back to default language instead of crashing with "RangeError: Incorrect locale information provided". ([#110522](https://github.com/grafana/grafana/pull/110522))
+
+<!-- 12.2.0 END -->
 <!-- 12.1.1 START -->
 
 # 12.1.1 (2025-08-13)

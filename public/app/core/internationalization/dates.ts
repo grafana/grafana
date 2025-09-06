@@ -9,7 +9,15 @@ const deepMemoize: typeof memoize = (fn) => memoize(fn, { isEqual: deepEqual });
 const isLocaleEnabled = config.featureToggles.localeFormatPreference;
 
 const createDateTimeFormatter = deepMemoize((locale: string, options: Intl.DateTimeFormatOptions) => {
-  return new Intl.DateTimeFormat(locale, options);
+  // Validate locale to prevent crashes with invalid locales like 'c'
+  let safeLocale = locale;
+  try {
+    new Intl.DateTimeFormat(locale);
+  } catch {
+    // Fallback to default language if locale is invalid
+    safeLocale = 'en-US';
+  }
+  return new Intl.DateTimeFormat(safeLocale, options);
 });
 
 const createDurationFormatter = deepMemoize((locale: string, options: Intl.DurationFormatOptions) => {
