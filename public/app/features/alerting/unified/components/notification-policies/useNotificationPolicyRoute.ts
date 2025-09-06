@@ -1,6 +1,7 @@
 import { pick } from 'lodash';
 import memoize from 'micro-memoize';
 
+import { INHERITABLE_KEYS, type InheritableProperties } from '@grafana/alerting/internal';
 import { BaseAlertmanagerArgs, Skippable } from 'app/features/alerting/unified/types/hooks';
 import { MatcherOperator, ROUTES_META_SYMBOL, Route } from 'app/plugins/datasource/alertmanager/types';
 
@@ -23,7 +24,6 @@ import { FormAmRoute } from '../../types/amroutes';
 import { addUniqueIdentifierToRoute } from '../../utils/amroutes';
 import { PROVENANCE_NONE, ROOT_ROUTE_NAME } from '../../utils/k8s/constants';
 import { isK8sEntityProvisioned, shouldUseK8sApi } from '../../utils/k8s/utils';
-import { INHERITABLE_KEYS, InheritableProperties } from '../../utils/notification-policies';
 import {
   InsertPosition,
   addRouteToReferenceRoute,
