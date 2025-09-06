@@ -22,6 +22,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 
 	dashboardv2alpha1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1"
 	dashboardv2beta1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1"
@@ -280,6 +281,272 @@ func TestListDashboardVersions(t *testing.T) {
 		query := dashver.ListDashboardVersionsQuery{DashboardID: 42}
 		_, err := dashboardVersionService.List(context.Background(), &query)
 		require.ErrorIs(t, dashboards.ErrDashboardNotFound, err)
+	})
+}
+
+func TestRestoreVersion(t *testing.T) {
+	t.Run("should use k8s restoration when feature toggles are enabled", func(t *testing.T) {
+		dashboardService := dashboards.NewFakeDashboardService(t)
+		features := featuremgmt.WithFeatures(featuremgmt.FlagKubernetesDashboards, featuremgmt.FlagDashboardNewLayouts)
+		mockDualWrite := dualwrite.NewMockService(t)
+		dashboardVersionService := Service{
+			dashSvc:  dashboardService,
+			features: features,
+			dual:     mockDualWrite,
+		}
+		mockCli := new(client.MockK8sHandler)
+		dashboardVersionService.k8sclient = mockCli
+
+		// Mock dual write service to return that we're reading from unified storage
+		mockDualWrite.On("ReadFromUnified", mock.Anything, mock.Anything).Return(true, nil)
+
+		// Mock dashboard service calls
+		dashboardService.On("GetDashboard", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardQuery")).Return(&dashboards.Dashboard{
+			ID:      1,
+			UID:     "test-uid",
+			Version: 5,
+			Data:    simplejson.NewFromAny(map[string]any{"title": "Current Dashboard"}),
+		}, nil)
+
+		// Mock version data
+		versionObj := &unstructured.Unstructured{
+			Object: map[string]any{
+				"metadata": map[string]any{
+					"name":       "test-uid",
+					"generation": int64(3),
+				},
+				"spec": map[string]any{
+					"title": "Version 3 Dashboard",
+					"data":  map[string]any{"panels": []any{}},
+				},
+			},
+		}
+
+		// Mock k8s client calls
+		mockCli.On("List", mock.Anything, int64(1), mock.Anything).Return(&unstructured.UnstructuredList{
+			Items: []unstructured.Unstructured{*versionObj},
+		}, nil)
+		mockCli.On("GetUsersFromMeta", mock.Anything, mock.AnythingOfType("[]string")).Return(map[string]*user.User{}, nil)
+		mockCli.On("Update", mock.Anything, mock.AnythingOfType("*unstructured.Unstructured"), int64(1), mock.Anything).Return(versionObj, nil)
+
+		// Mock conversion methods
+		dashboardService.On("UnstructuredToLegacyDashboard", mock.Anything, mock.AnythingOfType("*unstructured.Unstructured"), int64(1)).Return(&dashboards.Dashboard{
+			ID:      1,
+			UID:     "test-uid",
+			Version: 6,
+			Data:    simplejson.NewFromAny(map[string]any{"title": "Restored Dashboard"}),
+		}, nil)
+
+		cmd := &dashver.RestoreVersionCommand{
+			DashboardUID: "test-uid",
+			OrgID:        1,
+			Version:      3,
+			UserID:       1,
+		}
+
+		result, err := dashboardVersionService.RestoreVersion(context.Background(), cmd)
+		require.NoError(t, err)
+		require.NotNil(t, result)
+		require.Equal(t, "test-uid", result.UID)
+		require.Equal(t, 6, result.Version)
+
+		dashboardService.AssertExpectations(t)
+		mockCli.AssertExpectations(t)
+	})
+
+	t.Run("should use legacy restoration when k8s feature toggles are disabled", func(t *testing.T) {
+		dashboardService := dashboards.NewFakeDashboardService(t)
+		features := featuremgmt.WithFeatures() // No k8s features enabled
+		mockDualWrite := dualwrite.NewMockService(t)
+		dashboardVersionService := Service{
+			dashSvc:  dashboardService,
+			features: features,
+			dual:     mockDualWrite,
+		}
+
+		// Mock dual write service to return that we're reading from legacy storage
+		mockDualWrite.On("ReadFromUnified", mock.Anything, mock.Anything).Return(false, nil)
+
+		// Mock dashboard service calls
+		dashboardService.On("GetDashboard", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardQuery")).Return(&dashboards.Dashboard{
+			ID:      1,
+			UID:     "test-uid",
+			Version: 5,
+			Data:    simplejson.NewFromAny(map[string]any{"title": "Current Dashboard"}),
+		}, nil)
+
+		// Mock version data
+		versionObj := &unstructured.Unstructured{
+			Object: map[string]any{
+				"metadata": map[string]any{
+					"name":       "test-uid",
+					"generation": int64(3),
+				},
+				"spec": map[string]any{
+					"title": "Version 3 Dashboard",
+					"data":  map[string]any{"panels": []any{}},
+				},
+			},
+		}
+
+		// Mock k8s client calls
+		mockCli := new(client.MockK8sHandler)
+		dashboardVersionService.k8sclient = mockCli
+		mockCli.On("List", mock.Anything, int64(1), mock.Anything).Return(&unstructured.UnstructuredList{
+			Items: []unstructured.Unstructured{*versionObj},
+		}, nil)
+		mockCli.On("GetUsersFromMeta", mock.Anything, mock.AnythingOfType("[]string")).Return(map[string]*user.User{}, nil)
+
+		// Mock legacy restoration - this would call the existing postDashboard logic
+		dashboardService.On("SaveDashboard", mock.Anything, mock.AnythingOfType("*dashboards.SaveDashboardDTO"), mock.AnythingOfType("bool")).Return(&dashboards.Dashboard{
+			ID:      1,
+			UID:     "test-uid",
+			Version: 6,
+			Data:    simplejson.NewFromAny(map[string]any{"title": "Legacy Restored Dashboard"}),
+		}, nil)
+
+		cmd := &dashver.RestoreVersionCommand{
+			DashboardUID: "test-uid",
+			OrgID:        1,
+			Version:      3,
+			UserID:       1,
+		}
+
+		result, err := dashboardVersionService.RestoreVersion(context.Background(), cmd)
+		require.NoError(t, err)
+		require.NotNil(t, result)
+		require.Equal(t, "test-uid", result.UID)
+
+		dashboardService.AssertExpectations(t)
+	})
+
+	t.Run("should return error when dashboard not found", func(t *testing.T) {
+		dashboardService := dashboards.NewFakeDashboardService(t)
+		features := featuremgmt.WithFeatures(featuremgmt.FlagKubernetesDashboards, featuremgmt.FlagDashboardNewLayouts)
+		mockDualWrite := dualwrite.NewMockService(t)
+		dashboardVersionService := Service{
+			dashSvc:  dashboardService,
+			features: features,
+			dual:     mockDualWrite,
+		}
+
+		// Mock dual write service to return that we're reading from unified storage
+		mockDualWrite.On("ReadFromUnified", mock.Anything, mock.Anything).Return(true, nil)
+
+		dashboardService.On("GetDashboard", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardQuery")).Return(nil, dashboards.ErrDashboardNotFound)
+
+		cmd := &dashver.RestoreVersionCommand{
+			DashboardUID: "nonexistent-uid",
+			OrgID:        1,
+			Version:      3,
+			UserID:       1,
+		}
+
+		result, err := dashboardVersionService.RestoreVersion(context.Background(), cmd)
+		require.Error(t, err)
+		require.Nil(t, result)
+		require.ErrorIs(t, err, dashboards.ErrDashboardNotFound)
+
+		dashboardService.AssertExpectations(t)
+	})
+
+	t.Run("should return error when version not found", func(t *testing.T) {
+		dashboardService := dashboards.NewFakeDashboardService(t)
+		features := featuremgmt.WithFeatures(featuremgmt.FlagKubernetesDashboards, featuremgmt.FlagDashboardNewLayouts)
+		mockDualWrite := dualwrite.NewMockService(t)
+		dashboardVersionService := Service{
+			dashSvc:  dashboardService,
+			features: features,
+			dual:     mockDualWrite,
+		}
+		mockCli := new(client.MockK8sHandler)
+		dashboardVersionService.k8sclient = mockCli
+
+		// Mock dual write service to return that we're reading from unified storage
+		mockDualWrite.On("ReadFromUnified", mock.Anything, mock.Anything).Return(true, nil)
+
+		dashboardService.On("GetDashboard", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardQuery")).Return(&dashboards.Dashboard{
+			ID:      1,
+			UID:     "test-uid",
+			Version: 5,
+			Data:    simplejson.NewFromAny(map[string]any{"title": "Current Dashboard"}),
+		}, nil)
+
+		// Mock empty version list
+		mockCli.On("List", mock.Anything, int64(1), mock.Anything).Return(&unstructured.UnstructuredList{
+			Items: []unstructured.Unstructured{},
+		}, nil)
+
+		cmd := &dashver.RestoreVersionCommand{
+			DashboardUID: "test-uid",
+			OrgID:        1,
+			Version:      999, // Non-existent version
+			UserID:       1,
+		}
+
+		result, err := dashboardVersionService.RestoreVersion(context.Background(), cmd)
+		require.Error(t, err)
+		require.Nil(t, result)
+		require.ErrorIs(t, err, dashboards.ErrDashboardNotFound)
+
+		dashboardService.AssertExpectations(t)
+		mockCli.AssertExpectations(t)
+	})
+
+	t.Run("should skip restoration when dashboard data is identical", func(t *testing.T) {
+		dashboardService := dashboards.NewFakeDashboardService(t)
+		features := featuremgmt.WithFeatures(featuremgmt.FlagKubernetesDashboards, featuremgmt.FlagDashboardNewLayouts)
+		mockDualWrite := dualwrite.NewMockService(t)
+		dashboardVersionService := Service{
+			dashSvc:  dashboardService,
+			features: features,
+			dual:     mockDualWrite,
+		}
+		mockCli := new(client.MockK8sHandler)
+		dashboardVersionService.k8sclient = mockCli
+
+		// Mock dual write service to return that we're reading from unified storage
+		mockDualWrite.On("ReadFromUnified", mock.Anything, mock.Anything).Return(true, nil)
+
+		// Mock identical dashboard data
+		identicalData := map[string]any{"title": "Same Dashboard", "panels": []any{}}
+		dashboardService.On("GetDashboard", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardQuery")).Return(&dashboards.Dashboard{
+			ID:      1,
+			UID:     "test-uid",
+			Version: 5,
+			Data:    simplejson.NewFromAny(identicalData),
+		}, nil)
+
+		// Mock version with identical data
+		versionObj := &unstructured.Unstructured{
+			Object: map[string]any{
+				"metadata": map[string]any{
+					"name":       "test-uid",
+					"generation": int64(3),
+				},
+				"spec": identicalData, // The spec should contain the dashboard data directly
+			},
+		}
+
+		mockCli.On("List", mock.Anything, int64(1), mock.Anything).Return(&unstructured.UnstructuredList{
+			Items: []unstructured.Unstructured{*versionObj},
+		}, nil)
+		mockCli.On("GetUsersFromMeta", mock.Anything, mock.AnythingOfType("[]string")).Return(map[string]*user.User{}, nil)
+
+		cmd := &dashver.RestoreVersionCommand{
+			DashboardUID: "test-uid",
+			OrgID:        1,
+			Version:      3,
+			UserID:       1,
+		}
+
+		result, err := dashboardVersionService.RestoreVersion(context.Background(), cmd)
+		require.Error(t, err)
+		require.Nil(t, result)
+		// Should return appropriate error for identical data
+
+		dashboardService.AssertExpectations(t)
+		mockCli.AssertExpectations(t)
 	})
 }
 

@@ -33,7 +33,7 @@ func setupTest(t *testing.T) *testSetup {
 
 	handler := &K8sClientWithFallback{
 		K8sHandler: mockClientV1Alpha1,
-		newClientFunc: func(ctx context.Context, version string) client.K8sHandler {
+		newClientFunc: func(_ context.Context, version string) client.K8sHandler {
 			mockFactoryCalls[version]++
 			if version == "v2alpha1" {
 				return mockClientV2Alpha1
@@ -379,6 +379,181 @@ func TestK8sHandlerWithFallback_List(t *testing.T) {
 		result, err := setup.handler.List(context.Background(), 7, metav1.ListOptions{})
 		require.NoError(t, err)
 		require.Len(t, result.Items, 0)
+
+		setup.mockClientV1Alpha1.AssertExpectations(t)
+		setup.mockClientV2Alpha1.AssertExpectations(t)
+	})
+}
+
+func TestK8sHandlerWithFallback_Update(t *testing.T) {
+	t.Run("Update without fallback", func(t *testing.T) {
+		setup := setupTest(t)
+
+		ctx := context.Background()
+		obj := &unstructured.Unstructured{
+			Object: map[string]interface{}{
+				"apiVersion": dashboardv1.VERSION,
+				"metadata": map[string]interface{}{
+					"name": "test-dashboard",
+				},
+				"spec": map[string]interface{}{
+					"title": "Updated Dashboard",
+				},
+			},
+		}
+		orgID := int64(1)
+		options := metav1.UpdateOptions{}
+
+		expectedResult := &unstructured.Unstructured{
+			Object: map[string]interface{}{
+				"apiVersion": dashboardv1.VERSION,
+				"metadata": map[string]interface{}{
+					"name":            "test-dashboard",
+					"resourceVersion": "123",
+				},
+				"spec": map[string]interface{}{
+					"title": "Updated Dashboard",
+				},
+			},
+		}
+
+		setup.mockClientV1Alpha1.On("Update", mock.Anything, obj, orgID, options).Return(expectedResult, nil).Once()
+
+		result, err := setup.handler.Update(ctx, obj, orgID, options)
+		require.NoError(t, err)
+		require.Equal(t, expectedResult, result)
+		require.Equal(t, 0, len(setup.mockFactoryCalls), "Factory should not be called for same version")
+
+		setup.mockClientV1Alpha1.AssertExpectations(t)
+		setup.mockClientV2Alpha1.AssertExpectations(t)
+	})
+
+	t.Run("Update with different API version", func(t *testing.T) {
+		setup := setupTest(t)
+
+		ctx := context.Background()
+		obj := &unstructured.Unstructured{
+			Object: map[string]interface{}{
+				"apiVersion": "v2alpha1",
+				"metadata": map[string]interface{}{
+					"name": "test-dashboard-v2",
+				},
+				"spec": map[string]interface{}{
+					"title": "Updated Dashboard V2",
+				},
+			},
+		}
+		orgID := int64(2)
+		options := metav1.UpdateOptions{}
+
+		expectedResult := &unstructured.Unstructured{
+			Object: map[string]interface{}{
+				"apiVersion": "v2alpha1",
+				"metadata": map[string]interface{}{
+					"name":            "test-dashboard-v2",
+					"resourceVersion": "456",
+				},
+				"spec": map[string]interface{}{
+					"title": "Updated Dashboard V2",
+				},
+			},
+		}
+
+		setup.mockClientV2Alpha1.On("Update", mock.Anything, obj, orgID, options).Return(expectedResult, nil).Once()
+
+		result, err := setup.handler.Update(ctx, obj, orgID, options)
+		require.NoError(t, err)
+		require.Equal(t, expectedResult, result)
+		require.Equal(t, 1, setup.mockFactoryCalls["v2alpha1"], "Factory should be called once with v2alpha1")
+
+		setup.mockClientV1Alpha1.AssertExpectations(t)
+		setup.mockClientV2Alpha1.AssertExpectations(t)
+	})
+
+	t.Run("Update with error", func(t *testing.T) {
+		setup := setupTest(t)
+
+		ctx := context.Background()
+		obj := &unstructured.Unstructured{
+			Object: map[string]interface{}{
+				"apiVersion": dashboardv1.VERSION,
+				"metadata": map[string]interface{}{
+					"name": "test-dashboard-error",
+				},
+				"spec": map[string]interface{}{
+					"title": "Error Dashboard",
+				},
+			},
+		}
+		orgID := int64(3)
+		options := metav1.UpdateOptions{}
+		expectedErr := errors.New("update failed")
+
+		setup.mockClientV1Alpha1.On("Update", mock.Anything, obj, orgID, options).Return(nil, expectedErr).Once()
+
+		result, err := setup.handler.Update(ctx, obj, orgID, options)
+		require.Error(t, err)
+		require.Nil(t, result)
+		require.Equal(t, expectedErr, err)
+		require.Equal(t, 0, len(setup.mockFactoryCalls), "Factory should not be called for error case")
+
+		setup.mockClientV1Alpha1.AssertExpectations(t)
+		setup.mockClientV2Alpha1.AssertExpectations(t)
+	})
+
+	t.Run("Update with different version and error", func(t *testing.T) {
+		setup := setupTest(t)
+
+		ctx := context.Background()
+		obj := &unstructured.Unstructured{
+			Object: map[string]interface{}{
+				"apiVersion": "v2alpha1",
+				"metadata": map[string]interface{}{
+					"name": "test-dashboard-v2-error",
+				},
+				"spec": map[string]interface{}{
+					"title": "Error Dashboard V2",
+				},
+			},
+		}
+		orgID := int64(4)
+		options := metav1.UpdateOptions{}
+		expectedErr := errors.New("v2alpha1 update failed")
+
+		setup.mockClientV2Alpha1.On("Update", mock.Anything, obj, orgID, options).Return(nil, expectedErr).Once()
+
+		result, err := setup.handler.Update(ctx, obj, orgID, options)
+		require.Error(t, err)
+		require.Nil(t, result)
+		require.Equal(t, expectedErr, err)
+		require.Equal(t, 1, setup.mockFactoryCalls["v2alpha1"], "Factory should be called once with v2alpha1")
+
+		setup.mockClientV1Alpha1.AssertExpectations(t)
+		setup.mockClientV2Alpha1.AssertExpectations(t)
+	})
+
+	t.Run("Update with unknown API version", func(t *testing.T) {
+		setup := setupTest(t)
+
+		ctx := context.Background()
+		obj := &unstructured.Unstructured{
+			Object: map[string]interface{}{
+				"apiVersion": "unknown/v1",
+				"metadata": map[string]interface{}{
+					"name": "test-dashboard-unknown",
+				},
+				"spec": map[string]interface{}{
+					"title": "Unknown Dashboard",
+				},
+			},
+		}
+		orgID := int64(5)
+		options := metav1.UpdateOptions{}
+
+		// This should trigger a panic or error since the factory doesn't handle unknown versions
+		require.Panics(t, func() {
+			setup.handler.Update(ctx, obj, orgID, options)
+		})
 
 		setup.mockClientV1Alpha1.AssertExpectations(t)
 		setup.mockClientV2Alpha1.AssertExpectations(t)
