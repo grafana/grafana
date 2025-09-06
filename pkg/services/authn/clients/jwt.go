@@ -77,6 +77,7 @@ func (s *JWT) Authenticate(ctx context.Context, r *authn.Request) (*authn.Identi
 	id := &authn.Identity{
 		AuthenticatedBy: login.JWTModule,
 		AuthID:          sub,
+		OrgID:           r.OrgID,
 		OrgRoles:        map[int64]org.RoleType{},
 		ClientParams: authn.ClientParams{
 			SyncUser:        true,
@@ -116,6 +117,7 @@ func (s *JWT) Authenticate(ctx context.Context, r *authn.Request) (*authn.Identi
 
 	id.Groups, err = s.extractGroups(claims)
 	if err != nil {
+		s.log.Warn("Failed to extract groups", "err", err)
 		return nil, err
 	}
 
