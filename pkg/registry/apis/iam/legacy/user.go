@@ -303,9 +303,9 @@ type CreateUserCommand struct {
 	IsProvisioned bool
 	Salt          string
 	Rands         string
-	Created       time.Time
-	Updated       time.Time
-	LastSeenAt    time.Time
+	Created       DBTime
+	Updated       DBTime
+	LastSeenAt    DBTime
 	Role          string
 }
 
@@ -317,8 +317,8 @@ type CreateOrgUserCommand struct {
 	OrgID   int64
 	UserID  int64
 	Role    string
-	Created time.Time
-	Updated time.Time
+	Created DBTime
+	Updated DBTime
 }
 
 type DeleteUserCommand struct {
@@ -395,9 +395,9 @@ func (s *legacySQLStore) CreateUser(ctx context.Context, ns claims.NamespaceInfo
 
 	cmd.Salt = salt
 	cmd.Rands = rands
-	cmd.Created = now
-	cmd.Updated = now
-	cmd.LastSeenAt = lastSeenAt
+	cmd.Created = NewDBTime(now)
+	cmd.Updated = NewDBTime(now)
+	cmd.LastSeenAt = NewDBTime(lastSeenAt)
 	cmd.Role = "Viewer" // TODO: https://github.com/grafana/identity-access-team/issues/1552
 
 	sql, err := s.sql(ctx)
@@ -451,9 +451,9 @@ func (s *legacySQLStore) CreateUser(ctx context.Context, ns claims.NamespaceInfo
 			IsProvisioned:    cmd.IsProvisioned,
 			Salt:             cmd.Salt,
 			Rands:            cmd.Rands,
-			Created:          cmd.Created,
-			Updated:          cmd.Updated,
-			LastSeenAt:       cmd.LastSeenAt,
+			Created:          cmd.Created.Time,
+			Updated:          cmd.Updated.Time,
+			LastSeenAt:       cmd.LastSeenAt.Time,
 			IsServiceAccount: false,
 		}
 
