@@ -182,7 +182,7 @@ const (
 )
 
 // Keys returns all keys for a given key by iterating through the KV store
-func (d *dataStore) Keys(ctx context.Context, key ListRequestKey) iter.Seq2[DataKey, error] {
+func (d *dataStore) Keys(ctx context.Context, key ListRequestKey, sort SortOrder) iter.Seq2[DataKey, error] {
 	if err := key.Validate(); err != nil {
 		return func(yield func(DataKey, error) bool) {
 			yield(DataKey{}, err)
@@ -194,6 +194,7 @@ func (d *dataStore) Keys(ctx context.Context, key ListRequestKey) iter.Seq2[Data
 		for k, err := range d.kv.Keys(ctx, dataSection, ListOptions{
 			StartKey: prefix,
 			EndKey:   PrefixRangeEnd(prefix),
+			Sort:     sort,
 		}) {
 			if err != nil {
 				yield(DataKey{}, err)
