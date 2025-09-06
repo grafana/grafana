@@ -31,14 +31,14 @@ func TestIdentityQueries(t *testing.T) {
 		return &v
 	}
 
-	deleteUser := func(q *DeleteUserQuery) sqltemplate.SQLTemplate {
+	deleteUser := func(q *DeleteUserCommand) sqltemplate.SQLTemplate {
 		v := newDeleteUser(nodb, q)
 		v.SQLTemplate = mocks.NewTestingSQLTemplate()
 		return &v
 	}
 
 	deleteOrgUser := func(userID int64) sqltemplate.SQLTemplate {
-		v := deleteOrgUserQuery{
+		v := DeleteOrgUserQuery{
 			SQLTemplate:  mocks.NewTestingSQLTemplate(),
 			OrgUserTable: nodb.Table("org_user"),
 			UserID:       userID,
@@ -84,6 +84,12 @@ func TestIdentityQueries(t *testing.T) {
 
 	listServiceAccounts := func(q *ListServiceAccountsQuery) sqltemplate.SQLTemplate {
 		v := newListServiceAccounts(nodb, q)
+		v.SQLTemplate = mocks.NewTestingSQLTemplate()
+		return &v
+	}
+
+	createServiceAccounts := func(cmd *CreateServiceAccountCommand) sqltemplate.SQLTemplate {
+		v := newCreateServiceAccount(nodb, cmd)
 		v.SQLTemplate = mocks.NewTestingSQLTemplate()
 		return &v
 	}
@@ -331,14 +337,14 @@ func TestIdentityQueries(t *testing.T) {
 			sqlDeleteUserTemplate: {
 				{
 					Name: "delete_user_basic",
-					Data: deleteUser(&DeleteUserQuery{
+					Data: deleteUser(&DeleteUserCommand{
 						OrgID: 1,
 						UID:   "user-1",
 					}),
 				},
 				{
 					Name: "delete_user_different_org",
-					Data: deleteUser(&DeleteUserQuery{
+					Data: deleteUser(&DeleteUserCommand{
 						OrgID: 2,
 						UID:   "user-abc",
 					}),
@@ -361,8 +367,8 @@ func TestIdentityQueries(t *testing.T) {
 						OrgID:   1,
 						UserID:  123,
 						Role:    "Viewer",
-						Created: time.Date(2023, 1, 1, 12, 0, 0, 0, time.UTC),
-						Updated: time.Date(2023, 1, 1, 12, 0, 0, 0, time.UTC),
+						Created: NewDBTime(time.Date(2023, 1, 1, 12, 0, 0, 0, time.UTC)),
+						Updated: NewDBTime(time.Date(2023, 1, 1, 12, 0, 0, 0, time.UTC)),
 					}),
 				},
 				{
@@ -371,8 +377,8 @@ func TestIdentityQueries(t *testing.T) {
 						OrgID:   2,
 						UserID:  456,
 						Role:    "Admin",
-						Created: time.Date(2023, 2, 1, 10, 30, 0, 0, time.UTC),
-						Updated: time.Date(2023, 2, 1, 10, 30, 0, 0, time.UTC),
+						Created: NewDBTime(time.Date(2023, 2, 1, 10, 30, 0, 0, time.UTC)),
+						Updated: NewDBTime(time.Date(2023, 2, 1, 10, 30, 0, 0, time.UTC)),
 					}),
 				},
 			},
@@ -391,9 +397,9 @@ func TestIdentityQueries(t *testing.T) {
 						IsProvisioned: false,
 						Salt:          "randomsalt",
 						Rands:         "randomrands",
-						Created:       time.Date(2023, 1, 1, 12, 0, 0, 0, time.UTC),
-						Updated:       time.Date(2023, 1, 1, 12, 0, 0, 0, time.UTC),
-						LastSeenAt:    time.Date(2013, 1, 1, 12, 0, 0, 0, time.UTC),
+						Created:       NewDBTime(time.Date(2023, 1, 1, 12, 0, 0, 0, time.UTC)),
+						Updated:       NewDBTime(time.Date(2023, 1, 1, 12, 0, 0, 0, time.UTC)),
+						LastSeenAt:    NewDBTime(time.Date(2013, 1, 1, 12, 0, 0, 0, time.UTC)),
 						Role:          "Viewer",
 					}),
 				},
@@ -411,10 +417,40 @@ func TestIdentityQueries(t *testing.T) {
 						IsProvisioned: true,
 						Salt:          "adminsalt",
 						Rands:         "adminrands",
-						Created:       time.Date(2023, 2, 1, 10, 30, 0, 0, time.UTC),
-						Updated:       time.Date(2023, 2, 1, 10, 30, 0, 0, time.UTC),
-						LastSeenAt:    time.Date(2013, 2, 1, 10, 30, 0, 0, time.UTC),
+						Created:       NewDBTime(time.Date(2023, 2, 1, 10, 30, 0, 0, time.UTC)),
+						Updated:       NewDBTime(time.Date(2023, 2, 1, 10, 30, 0, 0, time.UTC)),
+						LastSeenAt:    NewDBTime(time.Date(2013, 2, 1, 10, 30, 0, 0, time.UTC)),
 						Role:          "Admin",
+					}),
+				},
+			},
+			sqlCreateServiceAccountTemplate: {
+				{
+					Name: "create_service_account_basic",
+					Data: createServiceAccounts(&CreateServiceAccountCommand{
+						UID:        "abcdef",
+						Name:       "Service Account 1",
+						Email:      "sa-1-service-account-1",
+						Login:      "sa-1-service-account-1",
+						IsDisabled: false,
+						OrgID:      1,
+						Created:    NewDBTime(time.Date(2023, 1, 1, 12, 0, 0, 0, time.UTC)),
+						Updated:    NewDBTime(time.Date(2023, 1, 1, 12, 0, 0, 0, time.UTC)),
+						LastSeenAt: time.Date(2013, 1, 1, 12, 0, 0, 0, time.UTC),
+					}),
+				},
+				{
+					Name: "create_service_account_disabled",
+					Data: createServiceAccounts(&CreateServiceAccountCommand{
+						UID:        "abcdef",
+						Name:       "Disabled Service Account",
+						Email:      "sa-2-disabled-service-account",
+						Login:      "sa-2-disabled-service-account",
+						IsDisabled: true,
+						OrgID:      2,
+						Created:    NewDBTime(time.Date(2023, 2, 1, 10, 30, 0, 0, time.UTC)),
+						Updated:    NewDBTime(time.Date(2023, 2, 1, 10, 30, 0, 0, time.UTC)),
+						LastSeenAt: time.Date(2013, 2, 1, 10, 30, 0, 0, time.UTC),
 					}),
 				},
 			},

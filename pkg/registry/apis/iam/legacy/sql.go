@@ -2,9 +2,11 @@ package legacy
 
 import (
 	"context"
+	"database/sql/driver"
 	"embed"
 	"fmt"
 	"text/template"
+	"time"
 
 	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
@@ -18,10 +20,13 @@ type LegacyIdentityStore interface {
 	ListUsers(ctx context.Context, ns claims.NamespaceInfo, query ListUserQuery) (*ListUserResult, error)
 	ListUserTeams(ctx context.Context, ns claims.NamespaceInfo, query ListUserTeamsQuery) (*ListUserTeamsResult, error)
 	CreateUser(ctx context.Context, ns claims.NamespaceInfo, cmd CreateUserCommand) (*CreateUserResult, error)
-	DeleteUser(ctx context.Context, ns claims.NamespaceInfo, cmd DeleteUserCommand) (*DeleteUserResult, error)
+	DeleteUser(ctx context.Context, ns claims.NamespaceInfo, cmd DeleteUserCommand) error
 
 	GetServiceAccountInternalID(ctx context.Context, ns claims.NamespaceInfo, query GetServiceAccountInternalIDQuery) (*GetServiceAccountInternalIDResult, error)
 	ListServiceAccounts(ctx context.Context, ns claims.NamespaceInfo, query ListServiceAccountsQuery) (*ListServiceAccountResult, error)
+	CreateServiceAccount(ctx context.Context, ns claims.NamespaceInfo, cmd CreateServiceAccountCommand) (*CreateServiceAccountResult, error)
+	DeleteServiceAccount(ctx context.Context, ns claims.NamespaceInfo, query DeleteServiceAccountQuery) error
+
 	ListServiceAccountTokens(ctx context.Context, ns claims.NamespaceInfo, query ListServiceAccountTokenQuery) (*ListServiceAccountTokenResult, error)
 
 	GetTeamInternalID(ctx context.Context, ns claims.NamespaceInfo, query GetTeamInternalIDQuery) (*GetTeamInternalIDResult, error)
@@ -30,9 +35,7 @@ type LegacyIdentityStore interface {
 	ListTeamMembers(ctx context.Context, ns claims.NamespaceInfo, query ListTeamMembersQuery) (*ListTeamMembersResult, error)
 }
 
-var (
-	_ LegacyIdentityStore = (*legacySQLStore)(nil)
-)
+var _ LegacyIdentityStore = (*legacySQLStore)(nil)
 
 func NewLegacySQLStores(sql legacysql.LegacyDatabaseProvider) LegacyIdentityStore {
 	return &legacySQLStore{
@@ -57,4 +60,34 @@ func mustTemplate(filename string) *template.Template {
 		return t
 	}
 	panic(fmt.Sprintf("template file not found: %s", filename))
+}
+
+type DBTime struct {
+	time.Time
+}
+
+func NewDBTime(t time.Time) DBTime {
+	return DBTime{Time: t}
+}
+
+func (t DBTime) Value() (driver.Value, error) {
+	return t.Format(time.DateTime), nil
+}
+
+func (t *DBTime) Scan(value interface{}) error {
+	if value == nil {
+		t.Time = time.Time{}
+		return nil
+	}
+	switch v := value.(type) {
+	case string:
+		parsedTime, err := time.Parse(time.DateTime, v)
+		if err != nil {
+			return err
+		}
+		t.Time = parsedTime
+		return nil
+	default:
+		return fmt.Errorf("unsupported type for DBTime scan: %T", value)
+	}
 }
