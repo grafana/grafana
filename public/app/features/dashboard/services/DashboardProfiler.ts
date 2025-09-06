@@ -1,5 +1,6 @@
 import { logMeasurement, reportInteraction } from '@grafana/runtime';
 import { SceneInteractionProfileEvent, SceneRenderProfiler } from '@grafana/scenes';
+import { InteractionProfileResult } from '@grafana/scenes/src/behaviors';
 
 let dashboardSceneProfiler: SceneRenderProfiler | undefined;
 
@@ -8,6 +9,27 @@ export function getDashboardSceneProfiler() {
     dashboardSceneProfiler = new SceneRenderProfiler();
   }
   return dashboardSceneProfiler;
+}
+
+export function getDashboardComponentInteractionCallback(uid: string, title: string) {
+  return (e: InteractionProfileResult) => {
+    const payload = {
+      duration: e.interactionDuration,
+      networkDuration: e.networkDuration,
+      processingTime: e.interactionDuration - e.networkDuration,
+      startTs: e.startTs,
+      endTs: e.endTs,
+      timeSinceBoot: performance.measure('time_since_boot', 'frontend_boot_js_done_time_seconds').duration,
+    };
+
+    reportInteraction('dashboard_render', {
+      interactionType: e.interaction,
+      uid,
+      ...payload,
+    });
+
+    logMeasurement(`dashboard_render`, payload, { interactionType: e.interaction, dashboard: uid, title: title });
+  };
 }
 
 export function getDashboardInteractionCallback(uid: string, title: string) {

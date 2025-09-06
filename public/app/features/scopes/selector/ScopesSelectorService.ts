@@ -1,4 +1,5 @@
 import { Scope, ScopeNode, store as storeImpl } from '@grafana/data';
+import { config } from '@grafana/runtime';
 
 import { ScopesApiClient } from '../ScopesApiClient';
 import { ScopesServiceBase } from '../ScopesServiceBase';
@@ -14,6 +15,8 @@ import {
   treeNodeAtPath,
 } from './scopesTreeUtils';
 import { NodesMap, RecentScope, RecentScopeSchema, ScopeSchema, ScopesMap, SelectedScope, TreeNode } from './types';
+import { behaviors } from '@grafana/scenes';
+import { getDashboardComponentInteractionCallback } from 'app/features/dashboard/services/DashboardProfiler';
 
 export const RECENT_SCOPES_KEY = 'grafana.scopes.recent';
 
@@ -46,6 +49,12 @@ export interface ScopesSelectorServiceState {
 }
 
 export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServiceState> {
+  private interactionProfiler = new behaviors.SceneInteractionProfiler({
+    enableProfiling:
+      config.dashboardPerformanceMetrics.findIndex((uid) => uid === '*' || uid === 'metadata.name') !== -1,
+    onProfileComplete: getDashboardComponentInteractionCallback('metadata.name', 'dashboard.title'),
+  });
+
   constructor(
     private apiClient: ScopesApiClient,
     private dashboardsService: ScopesDashboardsService,
@@ -94,25 +103,33 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
   };
 
   private expandOrFilterNode = async (scopeNodeId: string, query?: string) => {
+    this.interactionProfiler.startProfile('updateScopeNode');
+
     const path = getPathOfNode(scopeNodeId, this.state.nodes);
 
     const nodeToExpand = treeNodeAtPath(this.state.tree!, path);
 
-    if (nodeToExpand) {
-      if (nodeToExpand.scopeNodeId === '' || isNodeExpandable(this.state.nodes[nodeToExpand.scopeNodeId])) {
-        if (!nodeToExpand.expanded || nodeToExpand.query !== query) {
-          const newTree = modifyTreeNodeAtPath(this.state.tree!, path, (treeNode) => {
-            treeNode.expanded = true;
-            treeNode.query = query || '';
-          });
-          this.updateState({ tree: newTree });
-          await this.loadNodeChildren(path, nodeToExpand, query);
+    try {
+      if (nodeToExpand) {
+        if (nodeToExpand.scopeNodeId === '' || isNodeExpandable(this.state.nodes[nodeToExpand.scopeNodeId])) {
+          if (!nodeToExpand.expanded || nodeToExpand.query !== query) {
+            const newTree = modifyTreeNodeAtPath(this.state.tree!, path, (treeNode) => {
+              treeNode.expanded = true;
+              treeNode.query = query || '';
+            });
+            this.updateState({ tree: newTree });
+            await this.loadNodeChildren(path, nodeToExpand, query);
+          }
+        } else {
+          throw new Error(`Trying to expand node at id ${scopeNodeId} that is not expandable`);
         }
       } else {
-        throw new Error(`Trying to expand node at id ${scopeNodeId} that is not expandable`);
+        throw new Error(`Trying to expand node at id ${scopeNodeId} not found`);
       }
-    } else {
-      throw new Error(`Trying to expand node at id ${scopeNodeId} not found`);
+    } catch (error) {
+      throw error;
+    } finally {
+      this.interactionProfiler.stopProfile();
     }
   };
 
