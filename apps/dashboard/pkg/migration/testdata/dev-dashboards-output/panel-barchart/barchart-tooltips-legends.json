@@ -1,0 +1,896 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "type": "grafana",
+          "uid": "-- Grafana --"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations \u0026 Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "links": [],
+  "liveNow": false,
+  "panels": [
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "id": 4,
+      "panels": [],
+      "title": "Field Override - Data Links",
+      "type": "row"
+    },
+    {
+      "datasource": {},
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "fillOpacity": 80,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineWidth": 1,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "column1"
+            },
+            "properties": [
+              {
+                "id": "links",
+                "value": [
+                  {
+                    "title": "${__data.fields.id}/${__field.name}/${__value.raw}",
+                    "url": "google.com"
+                  },
+                  {
+                    "targetBlank": true,
+                    "title": "youtube",
+                    "url": "youtube.com"
+                  }
+                ]
+              },
+              {
+                "id": "custom.fillOpacity",
+                "value": 14
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "column2"
+            },
+            "properties": [
+              {
+                "id": "links",
+                "value": [
+                  {
+                    "title": "${__data.fields.id}/${__field.name}/${__value.raw}",
+                    "url": ""
+                  }
+                ]
+              },
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "purple",
+                  "mode": "shades"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 9,
+        "x": 0,
+        "y": 1
+      },
+      "id": 1,
+      "options": {
+        "barRadius": 0,
+        "barWidth": 0.97,
+        "fullHighlight": false,
+        "groupWidth": 0.7,
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "orientation": "auto",
+        "showValue": "auto",
+        "stacking": "none",
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        },
+        "xTickLabelRotation": 0,
+        "xTickLabelSpacing": 0
+      },
+      "pluginVersion": "9.5.0-cloud.4.a016665c",
+      "targets": [
+        {
+          "csvContent": "id,column1,column2\r\nA,1,2",
+          "datasource": {
+            "type": "grafana-testdata-datasource"
+          },
+          "refId": "A",
+          "scenarioId": "csv_content"
+        },
+        {
+          "csvContent": "id,column1,column2\r\nB,2,1",
+          "datasource": {
+            "type": "grafana-testdata-datasource"
+          },
+          "hide": false,
+          "refId": "B",
+          "scenarioId": "csv_content"
+        }
+      ],
+      "title": "Tooltip mode: Single",
+      "transformations": [
+        {
+          "id": "merge",
+          "options": {}
+        }
+      ],
+      "type": "barchart"
+    },
+    {
+      "datasource": {},
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "fillOpacity": 80,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineWidth": 1,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "column1"
+            },
+            "properties": [
+              {
+                "id": "links",
+                "value": [
+                  {
+                    "title": "google",
+                    "url": "google.com"
+                  },
+                  {
+                    "targetBlank": true,
+                    "title": "youtube",
+                    "url": "youtube.com"
+                  }
+                ]
+              },
+              {
+                "id": "custom.fillOpacity",
+                "value": 14
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "column2"
+            },
+            "properties": [
+              {
+                "id": "links",
+                "value": [
+                  {
+                    "title": "datalink column 2",
+                    "url": "grafana.com"
+                  }
+                ]
+              },
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "purple",
+                  "mode": "shades"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 9,
+        "x": 9,
+        "y": 1
+      },
+      "id": 6,
+      "options": {
+        "barRadius": 0,
+        "barWidth": 0.97,
+        "fullHighlight": false,
+        "groupWidth": 0.7,
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "orientation": "auto",
+        "showValue": "auto",
+        "stacking": "none",
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        },
+        "xTickLabelRotation": 0,
+        "xTickLabelSpacing": 0
+      },
+      "pluginVersion": "9.5.0-cloud.4.a016665c",
+      "targets": [
+        {
+          "csvContent": "id,column1,column2\r\nA,1,2",
+          "datasource": {
+            "type": "grafana-testdata-datasource"
+          },
+          "refId": "A",
+          "scenarioId": "csv_content"
+        },
+        {
+          "csvContent": "id,column1,column2\r\nB,2,1",
+          "datasource": {
+            "type": "grafana-testdata-datasource"
+          },
+          "hide": false,
+          "refId": "B",
+          "scenarioId": "csv_content"
+        }
+      ],
+      "title": "Tooltip mode: All",
+      "transformations": [
+        {
+          "id": "merge",
+          "options": {}
+        }
+      ],
+      "type": "barchart"
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 7
+      },
+      "id": 3,
+      "panels": [],
+      "title": "Field Override - Hide Tooltip",
+      "type": "row"
+    },
+    {
+      "datasource": {
+        "type": "grafana-testdata-datasource"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "fillOpacity": 80,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineWidth": 1,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "field 3"
+            },
+            "properties": [
+              {
+                "id": "custom.hideFrom",
+                "value": {
+                  "legend": false,
+                  "tooltip": true,
+                  "viz": false
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 9,
+        "x": 0,
+        "y": 8
+      },
+      "id": 5,
+      "options": {
+        "barRadius": 0,
+        "barWidth": 0.97,
+        "fullHighlight": false,
+        "groupWidth": 0.7,
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "orientation": "auto",
+        "showValue": "auto",
+        "stacking": "none",
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        },
+        "xTickLabelRotation": 0,
+        "xTickLabelSpacing": 0
+      },
+      "targets": [
+        {
+          "csvContent": "id, field 1, field 2, field 3\na, 20, 30, 40\nb, 40, 50, 60",
+          "datasource": {
+            "type": "grafana-testdata-datasource"
+          },
+          "refId": "A",
+          "scenarioId": "csv_content"
+        }
+      ],
+      "title": "Hide 'field 3'",
+      "type": "barchart"
+    },
+    {
+      "datasource": {
+        "type": "grafana-testdata-datasource"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "fillOpacity": 80,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineWidth": 1,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "id"
+            },
+            "properties": [
+              {
+                "id": "custom.hideFrom",
+                "value": {
+                  "legend": false,
+                  "tooltip": true,
+                  "viz": false
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 9,
+        "x": 9,
+        "y": 8
+      },
+      "id": 7,
+      "options": {
+        "barRadius": 0,
+        "barWidth": 0.97,
+        "fullHighlight": false,
+        "groupWidth": 0.7,
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "orientation": "auto",
+        "showValue": "auto",
+        "stacking": "none",
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        },
+        "xTickLabelRotation": 0,
+        "xTickLabelSpacing": 0
+      },
+      "targets": [
+        {
+          "csvContent": "id, field 1, field 2, field 3\na, 20, 30, 40\nb, 40, 50, 60",
+          "datasource": {
+            "type": "grafana-testdata-datasource"
+          },
+          "refId": "A",
+          "scenarioId": "csv_content"
+        }
+      ],
+      "title": "Hide 'id'",
+      "type": "barchart"
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 14
+      },
+      "id": 8,
+      "panels": [],
+      "title": "Legends - Stacking 100%",
+      "type": "row"
+    },
+    {
+      "datasource": {
+        "type": "grafana-testdata-datasource"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "fixed"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "fillOpacity": 80,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineWidth": 1,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "accFS2"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 7,
+        "x": 0,
+        "y": 15
+      },
+      "id": 9,
+      "options": {
+        "barRadius": 0,
+        "barWidth": 0.97,
+        "fullHighlight": false,
+        "groupWidth": 0.7,
+        "legend": {
+          "calcs": [
+            "min",
+            "max",
+            "mean",
+            "variance"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "orientation": "auto",
+        "showValue": "auto",
+        "stacking": "percent",
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        },
+        "xTickLabelRotation": 0,
+        "xTickLabelSpacing": 0
+      },
+      "targets": [
+        {
+          "csvContent": "time, value\n100000, 10\n200000, 20\n300000, 30\n400000, 40",
+          "datasource": {
+            "type": "grafana-testdata-datasource"
+          },
+          "refId": "A",
+          "scenarioId": "csv_content"
+        },
+        {
+          "csvContent": "time, value\n100000, 500\n200000, 220\n300000, 10\n400000, 550",
+          "datasource": {
+            "type": "grafana-testdata-datasource"
+          },
+          "hide": false,
+          "refId": "B",
+          "scenarioId": "csv_content"
+        }
+      ],
+      "title": "Stacking 100% Correct Legend Units (no %)",
+      "type": "barchart"
+    },
+    {
+      "datasource": {
+        "type": "grafana-testdata-datasource"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "fillOpacity": 80,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineWidth": 1,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Total B"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "red",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 7,
+        "x": 7,
+        "y": 15
+      },
+      "id": 10,
+      "options": {
+        "barRadius": 0,
+        "barWidth": 0.97,
+        "fullHighlight": false,
+        "groupWidth": 0.7,
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "orientation": "auto",
+        "showValue": "auto",
+        "stacking": "percent",
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        },
+        "xTickLabelRotation": 0,
+        "xTickLabelSpacing": 0
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-testdata-datasource"
+          },
+          "rawFrameContent": "[\n  {\n    \"fields\": [\n      {\n        \"name\": \"TimeGenerated\",\n        \"type\": \"time\",\n        \"values\": [\n          1687200000000\n        ]\n      },\n      {\n        \"name\": \"Total\",\n        \"type\": \"number\",\n        \"values\": [\n          200\n        ],\n        \"labels\": {\n          \"name\": \"A\"\n        }\n      },\n      {\n        \"name\": \"Total\",\n        \"type\": \"number\",\n        \"values\": [\n          180\n        ],\n        \"labels\": {\n          \"name\": \"B\"\n        }\n      }\n    ],\n    \"refId\": \"A\",\n    \"meta\": {\n      \"custom\": {\n        \"azureColumnTypes\": [\n          \"string\",\n          \"datetime\",\n          \"long\"\n        ]\n      },\n      \"type\": \"timeseries-wide\",\n      \"typeVersion\": [\n        0,\n        0\n      ]\n    }\n  }\n]",
+          "refId": "A",
+          "scenarioId": "raw_frame"
+        }
+      ],
+      "title": "Stacking 100% Legend Label Color Override",
+      "type": "barchart"
+    },
+    {
+      "datasource": {
+        "type": "grafana-testdata-datasource"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "hidden",
+            "fillOpacity": 80,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineWidth": 1,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 10,
+        "x": 14,
+        "y": 15
+      },
+      "id": 11,
+      "options": {
+        "barRadius": 0.5,
+        "barWidth": 0.97,
+        "fullHighlight": false,
+        "groupWidth": 0.7,
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "orientation": "horizontal",
+        "showValue": "auto",
+        "stacking": "percent",
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        },
+        "xTickLabelRotation": 0,
+        "xTickLabelSpacing": 0
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-testdata-datasource"
+          },
+          "rawFrameContent": "[\n    {\n        \"fields\": [\n            {\n                \"name\": \"Time\",\n                \"type\": \"time\",\n                \"config\": {},\n                \"values\": [\n                    1700488200000,\n                    1700488500000,\n                    1700488800000,\n                    1700489100000,\n                    1700489400000\n                ]\n            },\n            {\n                \"name\": \"Value\",\n                \"type\": \"number\",\n                \"config\": {\n                    \"displayNameFromDS\": \"f141\"\n                },\n                \"values\": [\n                    11834,\n                    26195,\n                    27496,\n                    21417\n                ],\n                \"labels\": {\n                    \"nodename\": \"z141\"\n                }\n            }\n        ],\n        \"refId\": \"A\",\n        \"meta\": {\n            \"type\": \"timeseries-multi\",\n            \"typeVersion\": [\n                0,\n                0\n            ]\n        }\n    },\n    {\n        \"fields\": [\n            {\n                \"name\": \"Time\",\n                \"type\": \"time\",\n                \"config\": {},\n                \"values\": [\n                    1700488200000,\n                    1700488500000,\n                    1700488800000,\n                    1700489100000,\n                    1700489400000\n                ]\n            },\n            {\n                \"name\": \"Value\",\n                \"type\": \"number\",\n                \"config\": {\n                    \"displayNameFromDS\": \"f131\"\n                },\n                \"values\": [\n                    11042,\n                    26646,\n                    27120,\n                    21508,\n                    19905\n                ],\n                \"labels\": {\n                    \"nodename\": \"t131\"\n                }\n            }\n        ],\n        \"refId\": \"A\",\n        \"meta\": {\n            \"type\": \"timeseries-multi\",\n            \"typeVersion\": [\n                0,\n                0\n            ]\n        }\n    },\n    {\n        \"fields\": [\n            {\n                \"name\": \"Time\",\n                \"type\": \"time\",\n                \"config\": {},\n                \"values\": [\n                    1700488200000,\n                    1700488500000,\n                    1700488800000,\n                    1700489100000,\n                    1700489400000\n                ]\n            },\n            {\n                \"name\": \"Value\",\n                \"type\": \"number\",\n                \"config\": {\n                    \"displayNameFromDS\": \"f121\"\n                },\n                \"values\": [\n                    12095,\n                    26718,\n                    26907,\n                    21483,\n                    20272\n                ],\n                \"labels\": {\n                    \"nodename\": \"k121\"\n                }\n            }\n        ],\n        \"refId\": \"A\",\n        \"meta\": {\n            \"type\": \"timeseries-multi\",\n            \"typeVersion\": [\n                0,\n                0\n            ]\n        }\n    },\n    {\n        \"fields\": [\n            {\n                \"name\": \"Time\",\n                \"type\": \"time\",\n                \"config\": {},\n                \"values\": [\n                    1700488200000,\n                    1700488500000,\n                    1700488800000,\n                    1700489100000,\n                    1700489400000\n                ]\n            },\n            {\n                \"name\": \"Value\",\n                \"type\": \"number\",\n                \"config\": {\n                    \"displayNameFromDS\": \"f111\"\n                },\n                \"values\": [\n                    641,\n                    1015,\n                    791,\n                    752,\n                    758\n                ],\n                \"labels\": {\n                    \"nodename\": \"n111\"\n                }\n            }\n        ],\n        \"refId\": \"A\",\n        \"meta\": {\n            \"type\": \"timeseries-multi\",\n            \"typeVersion\": [\n                0,\n                0\n            ]\n        }\n    },\n    {\n        \"fields\": [\n            {\n                \"name\": \"Time\",\n                \"type\": \"time\",\n                \"config\": {},\n                \"values\": [\n                    1700488200000,\n                    1700488500000,\n                    1700488800000,\n                    1700489100000,\n                    1700489400000\n                ]\n            },\n            {\n                \"name\": \"Value\",\n                \"type\": \"number\",\n                \"config\": {\n                    \"displayNameFromDS\": \"f102\"\n                },\n                \"values\": [\n                    101,\n                    167,\n                    205,\n                    181,\n                    172\n                ],\n                \"labels\": {\n                    \"nodename\": \"a102\"\n                }\n            }\n        ],\n        \"refId\": \"A\",\n        \"meta\": {\n            \"type\": \"timeseries-multi\",\n            \"typeVersion\": [\n                0,\n                0\n            ]\n        }\n    },\n    {\n        \"fields\": [\n            {\n                \"name\": \"Time\",\n                \"type\": \"time\",\n                \"config\": {},\n                \"values\": [\n                    1700488200000,\n                    1700488500000,\n                    1700488800000,\n                    1700489100000,\n                    1700489400000\n                ]\n            },\n            {\n                \"name\": \"Value\",\n                \"type\": \"number\",\n                \"config\": {\n                    \"displayNameFromDS\": \"f100\"\n                },\n                \"values\": [\n                    89,\n                    137,\n                    161,\n                    150,\n                    161\n                ],\n                \"labels\": {\n                    \"nodename\": \"v100\"\n                }\n            }\n        ],\n        \"refId\": \"A\",\n        \"meta\": {\n            \"type\": \"timeseries-multi\",\n            \"typeVersion\": [\n                0,\n                0\n            ]\n        }\n    },\n    {\n        \"fields\": [\n            {\n                \"name\": \"Time\",\n                \"type\": \"time\",\n                \"config\": {},\n                \"values\": [\n                    1700488200000,\n                    1700488500000,\n                    1700488800000,\n                    1700489100000,\n                    1700489400000\n                ]\n            },\n            {\n                \"name\": \"Value\",\n                \"type\": \"number\",\n                \"config\": {\n                    \"displayNameFromDS\": \"d141\"\n                },\n                \"values\": [\n                    11616,\n                    26053,\n                    25586,\n                    21023,\n                    19787\n                ],\n                \"labels\": {\n                    \"nodename\": \"e141\"\n                }\n            }\n        ],\n        \"refId\": \"A\",\n        \"meta\": {\n            \"type\": \"timeseries-multi\",\n            \"typeVersion\": [\n                0,\n                0\n            ]\n        }\n    },\n    {\n        \"fields\": [\n            {\n                \"name\": \"Time\",\n                \"type\": \"time\",\n                \"config\": {},\n                \"values\": [\n                    1700488200000,\n                    1700488500000,\n                    1700488800000,\n                    1700489100000,\n                    1700489400000\n                ]\n            },\n            {\n                \"name\": \"Value\",\n                \"type\": \"number\",\n                \"config\": {\n                    \"displayNameFromDS\": \"d131\"\n                },\n                \"values\": [\n                    11682,\n                    26851,\n                    26985,\n                    22475,\n                    20852\n                ],\n                \"labels\": {\n                    \"nodename\": \"r131\"\n                }\n            }\n        ],\n        \"refId\": \"A\",\n        \"meta\": {\n            \"type\": \"timeseries-multi\",\n            \"typeVersion\": [\n                0,\n                0\n            ]\n        }\n    },\n    {\n        \"fields\": [\n            {\n                \"name\": \"Time\",\n                \"type\": \"time\",\n                \"config\": {},\n                \"values\": [\n                    1700488200000,\n                    1700488500000,\n                    1700488800000,\n                    1700489100000,\n                    1700489400000\n                ]\n            },\n            {\n                \"name\": \"Value\",\n                \"type\": \"number\",\n                \"config\": {\n                    \"displayNameFromDS\": \"d121\"\n                },\n                \"values\": [\n                    12108,\n                    26379,\n                    25734,\n                    20145,\n                    19310\n                ],\n                \"labels\": {\n                    \"nodename\": \"g121\"\n                }\n            }\n        ],\n        \"refId\": \"A\",\n        \"meta\": {\n            \"type\": \"timeseries-multi\",\n            \"typeVersion\": [\n                0,\n                0\n            ]\n        }\n    },\n    {\n        \"fields\": [\n            {\n                \"name\": \"Time\",\n                \"type\": \"time\",\n                \"config\": {},\n                \"values\": [\n                    1700488200000,\n                    1700488500000,\n                    1700488800000,\n                    1700489100000,\n                    1700489400000\n                ]\n            },\n            {\n                \"name\": \"Value\",\n                \"type\": \"number\",\n                \"config\": {\n                    \"displayNameFromDS\": \"d111\"\n                },\n                \"values\": [\n                    11254,\n                    24739,\n                    25406,\n                    21239,\n                    19426\n                ],\n                \"labels\": {\n                    \"nodename\": \"q111\"\n                }\n            }\n        ],\n        \"refId\": \"A\",\n        \"meta\": {\n            \"type\": \"timeseries-multi\",\n            \"typeVersion\": [\n                0,\n                0\n            ]\n        }\n    },\n    {\n        \"fields\": [\n            {\n                \"name\": \"Time\",\n                \"type\": \"time\",\n                \"config\": {},\n                \"values\": [\n                    1700488200000,\n                    1700488500000,\n                    1700488800000,\n                    1700489100000,\n                    1700489400000\n                ]\n            },\n            {\n                \"name\": \"Value\",\n                \"type\": \"number\",\n                \"config\": {\n                    \"displayNameFromDS\": \"d102\"\n                },\n                \"values\": [\n                    168,\n                    264,\n                    288,\n                    283,\n                    267\n                ],\n                \"labels\": {\n                    \"nodename\": \"d102\"\n                }\n            }\n        ],\n        \"refId\": \"A\",\n        \"meta\": {\n            \"type\": \"timeseries-multi\",\n            \"typeVersion\": [\n                0,\n                0\n            ]\n        }\n    }\n]",
+          "refId": "A",
+          "scenarioId": "raw_frame"
+        }
+      ],
+      "title": "Stacking 100% unique legend field label when duplicate field names are present",
+      "type": "barchart"
+    }
+  ],
+  "refresh": "",
+  "schemaVersion": 41,
+  "tags": [
+    "gdev",
+    "panel-tests",
+    "barchart",
+    "graph-ng"
+  ],
+  "templating": {
+    "list": []
+  },
+  "time": {
+    "from": "now-6h",
+    "to": "now"
+  },
+  "timepicker": {},
+  "timezone": "",
+  "title": "Panel Tests - Bar Chart Tooltips \u0026 Legends",
+  "uid": "ea33320b-bd97-4fe1-a27c-24bc61a48b41",
+  "version": 5,
+  "weekStart": ""
+}

@@ -1,0 +1,266 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "type": "grafana",
+          "uid": "-- Grafana --"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations \u0026 Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "id": 988,
+  "links": [],
+  "panels": [
+    {
+      "datasource": {
+        "type": "grafana-testdata-datasource"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "fillOpacity": 70,
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineWidth": 0,
+            "spanNulls": false
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 13,
+        "w": 15,
+        "x": 0,
+        "y": 0
+      },
+      "id": 1,
+      "options": {
+        "alignValue": "left",
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "mergeValues": true,
+        "rowHeight": 0.9,
+        "showValue": "auto",
+        "tooltip": {
+          "maxHeight": 600,
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-testdata-datasource"
+          },
+          "rawFrameContent": "[\n  {\n    \"schema\": {\n      \"refId\": \"A\",\n      \"meta\": {\n        \"typeVersion\": [\n          0,\n          0\n        ]\n      },\n      \"name\": \"A\",\n      \"fields\": [\n        {\n          \"name\": \"channel\",\n          \"config\": {\n            \"selector\": \"channel\"\n          },\n          \"type\": \"string\"\n        },\n        {\n          \"name\": \"name\",\n          \"config\": {\n            \"selector\": \"name\"\n          },\n          \"type\": \"string\"\n        },\n        {\n          \"name\": \"starttime\",\n          \"config\": {\n            \"selector\": \"starttime\"\n          },\n          \"type\": \"string\"\n        },\n        {\n          \"name\": \"endtime\",\n          \"config\": {\n            \"selector\": \"endtime\"\n          },\n          \"type\": \"string\"\n        },\n        {\n          \"name\": \"duration_minutes\",\n          \"config\": {\n            \"selector\": \"duration_minutes\"\n          },\n          \"type\": \"number\"\n        },\n        {\n          \"name\": \"state\",\n          \"config\": {\n            \"selector\": \"state\"\n          },\n          \"type\": \"string\"\n        }\n      ]\n    },\n    \"data\": {\n      \"values\": [\n        [\n          \"Channel 1\",\n          \"Channel 2\",\n          \"Channel 1\",\n          \"Channel 2\"\n        ],\n        [\n          \"Event 1\",\n          \"Event 2\",\n          \"Event 3\",\n          \"Event 4\"\n        ],\n        [\n          \"2024-02-28T08:00:00Z\",\n          \"2024-02-28T09:00:00Z\",\n          \"2024-02-28T11:00:00Z\",\n          \"2024-02-28T12:30:00Z\"\n        ],\n        [\n          \"2024-02-28T10:00:00Z\",\n          \"2024-02-28T10:30:00Z\",\n          \"2024-02-28T14:00:00Z\",\n          \"2024-02-28T13:30:00Z\"\n        ],\n        [\n          120,\n          90,\n          180,\n          60\n        ],\n        [\n          \"OK\",\n          \"ERROR\",\n          \"NO_DATA\",\n          \"WARNING\"\n        ]\n      ]\n    }\n  }\n]",
+          "refId": "A",
+          "scenarioId": "raw_frame"
+        }
+      ],
+      "title": "Raw frames w/enums",
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "channel": false,
+              "duration_minutes": true,
+              "name": true
+            },
+            "includeByName": {},
+            "indexByName": {},
+            "renameByName": {}
+          }
+        },
+        {
+          "id": "convertFieldType",
+          "options": {
+            "conversions": [
+              {
+                "destinationType": "time",
+                "enumConfig": {
+                  "text": [
+                    "2024-02-28T08:00:00Z",
+                    "2024-02-28T09:00:00Z",
+                    "2024-02-28T11:00:00Z",
+                    "2024-02-28T12:30:00Z"
+                  ]
+                },
+                "targetField": "starttime"
+              },
+              {
+                "destinationType": "time",
+                "targetField": "endtime"
+              },
+              {
+                "destinationType": "enum",
+                "enumConfig": {
+                  "text": [
+                    "OK",
+                    "ERROR",
+                    "NO_DATA",
+                    "WARNING"
+                  ]
+                },
+                "targetField": "state"
+              }
+            ],
+            "fields": {}
+          }
+        },
+        {
+          "id": "partitionByValues",
+          "options": {
+            "fields": [
+              "channel"
+            ],
+            "keepFields": false,
+            "naming": {
+              "asLabels": false
+            }
+          }
+        }
+      ],
+      "type": "state-timeline"
+    },
+    {
+      "datasource": {
+        "type": "grafana-testdata-datasource"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "fillOpacity": 70,
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineWidth": 0,
+            "spanNulls": false
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 12,
+        "w": 15,
+        "x": 0,
+        "y": 13
+      },
+      "id": 2,
+      "options": {
+        "alignValue": "left",
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "mergeValues": true,
+        "rowHeight": 0.9,
+        "showValue": "auto",
+        "tooltip": {
+          "maxHeight": 600,
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "alias": "Channel 1",
+          "csvContent": "starttime,endtime,state\n1709107200000,1709114400000,OK\n1709118000000,1709128800000,NO_DATA",
+          "datasource": {
+            "type": "grafana-testdata-datasource"
+          },
+          "refId": "A",
+          "scenarioId": "csv_content"
+        },
+        {
+          "alias": "Channel 2",
+          "csvContent": "starttime,endtime,state\n1709110800000,1709116200000,ERROR\n1709123400000,1709127000000,WARNING",
+          "datasource": {
+            "type": "grafana-testdata-datasource"
+          },
+          "refId": "B",
+          "scenarioId": "csv_content"
+        }
+      ],
+      "title": "CSV content",
+      "type": "state-timeline"
+    }
+  ],
+  "refresh": "",
+  "schemaVersion": 41,
+  "tags": [
+    "gdev",
+    "panel-tests",
+    "graph-ng",
+    "demo"
+  ],
+  "templating": {
+    "list": []
+  },
+  "time": {
+    "from": "2024-02-28T07:47:21.428Z",
+    "to": "2024-02-28T14:12:43.391Z"
+  },
+  "timeRangeUpdatedDuringEditOrView": false,
+  "timepicker": {},
+  "timezone": "browser",
+  "title": "Panel Tests - StateTimeline - multiple frames with endTime",
+  "uid": "cdf3gkge5reo0f",
+  "version": 4,
+  "weekStart": ""
+}
