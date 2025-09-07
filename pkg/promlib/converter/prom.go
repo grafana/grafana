@@ -20,7 +20,7 @@ func logf(format string, a ...any) {
 	// fmt.Printf(format, a...)
 }
 
-// 🔹 Step 2: Add options struct
+// Add options struct
 type Options struct {
 	HideWarnings bool
 }
