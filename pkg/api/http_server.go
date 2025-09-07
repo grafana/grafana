@@ -122,6 +122,7 @@ type HTTPServer struct {
 	httpSrv          *http.Server
 	middlewares      []web.Handler
 	namedMiddlewares []routing.RegisterNamedMiddleware
+	bus              bus.Bus
 
 	pluginContextProvider        *plugincontext.Provider
 	RouteRegister                routing.RouteRegister
@@ -234,7 +235,7 @@ type ServerOptions struct {
 	Listener net.Listener
 }
 
-func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routing.RouteRegister, _ bus.Bus,
+func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routing.RouteRegister, bus bus.Bus,
 	renderService rendering.Service, licensing licensing.Licensing, hooksService *hooks.HooksService,
 	cacheService *localcache.CacheService, sqlStore db.DB,
 	dataSourceRequestValidator validations.DataSourceRequestValidator, pluginStaticRouteResolver plugins.StaticRouteResolver,
@@ -278,6 +279,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	hs := &HTTPServer{
 		Cfg:                          cfg,
 		RouteRegister:                routeRegister,
+		bus:                          bus,
 		RenderService:                renderService,
 		License:                      licensing,
 		HooksService:                 hooksService,
