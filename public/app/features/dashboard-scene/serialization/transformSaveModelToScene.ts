@@ -37,6 +37,7 @@ import { DashboardAnnotationsDataLayer } from '../scene/DashboardAnnotationsData
 import { DashboardControls } from '../scene/DashboardControls';
 import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
 import { registerDashboardMacro } from '../scene/DashboardMacro';
+import { DashboardPanelProfilingBehavior } from '../scene/DashboardPanelProfilingBehavior';
 import { DashboardReloadBehavior } from '../scene/DashboardReloadBehavior';
 import { DashboardScene } from '../scene/DashboardScene';
 import { LibraryPanelBehavior } from '../scene/LibraryPanelBehavior';
@@ -319,6 +320,11 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel,
       uid,
     }),
   ];
+
+  // Add panel profiling behavior when dashboard profiling is enabled
+  if (config.dashboardPerformanceMetrics.findIndex((uid) => uid === '*' || uid === oldModel.uid) !== -1) {
+    behaviorList.push(new DashboardPanelProfilingBehavior());
+  }
 
   let body: DashboardLayoutManager;
 

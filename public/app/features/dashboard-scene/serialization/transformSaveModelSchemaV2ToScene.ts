@@ -63,6 +63,7 @@ import { DashboardAnnotationsDataLayer } from '../scene/DashboardAnnotationsData
 import { DashboardControls } from '../scene/DashboardControls';
 import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
 import { registerDashboardMacro } from '../scene/DashboardMacro';
+import { DashboardPanelProfilingBehavior } from '../scene/DashboardPanelProfilingBehavior';
 import { DashboardReloadBehavior } from '../scene/DashboardReloadBehavior';
 import { DashboardScene } from '../scene/DashboardScene';
 import { DashboardLayoutManager } from '../scene/types/DashboardLayoutManager';
@@ -208,6 +209,10 @@ export function transformSaveModelSchemaV2ToScene(dto: DashboardWithAccessInfo<D
           reloadOnParamsChange: config.featureToggles.reloadDashboardsOnParamsChange && false,
           uid: dashboardId?.toString(),
         }),
+        // Add panel profiling behavior when dashboard profiling is enabled
+        ...(config.dashboardPerformanceMetrics.findIndex((uid) => uid === '*' || uid === dashboardId?.toString()) !== -1
+          ? [new DashboardPanelProfilingBehavior()]
+          : []),
       ],
       $data: new DashboardDataLayerSet({
         annotationLayers,
