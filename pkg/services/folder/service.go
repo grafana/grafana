@@ -13,9 +13,6 @@ type LegacyService interface {
 	DeleteLegacy(ctx context.Context, cmd *DeleteFolderCommand) error
 	MoveLegacy(ctx context.Context, cmd *MoveFolderCommand) (*Folder, error)
 	GetFoldersLegacy(ctx context.Context, q GetFoldersQuery) ([]*Folder, error)
-	GetChildrenLegacy(ctx context.Context, q *GetChildrenQuery) ([]*FolderReference, error)
-	GetParentsLegacy(ctx context.Context, q GetParentsQuery) ([]*Folder, error)
-	GetDescendantCountsLegacy(ctx context.Context, q *GetDescendantCountsQuery) (DescendantCounts, error)
 }
 
 type APIServerService interface {

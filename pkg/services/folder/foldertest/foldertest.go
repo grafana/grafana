@@ -59,14 +59,14 @@ func (s *FakeService) GetChildren(ctx context.Context, q *folder.GetChildrenQuer
 	}
 	return result, nil
 }
-func (s *FakeService) GetChildrenLegacy(ctx context.Context, q *folder.GetChildrenQuery) ([]*folder.FolderReference, error) {
+func (s *FakeService) getChildrenLegacy(ctx context.Context, q *folder.GetChildrenQuery) ([]*folder.FolderReference, error) {
 	return s.ExpectedFoldersRef, s.ExpectedError
 }
 
 func (s *FakeService) GetParents(ctx context.Context, q folder.GetParentsQuery) ([]*folder.Folder, error) {
 	return s.ExpectedFolders, s.ExpectedError
 }
-func (s *FakeService) GetParentsLegacy(ctx context.Context, q folder.GetParentsQuery) ([]*folder.Folder, error) {
+func (s *FakeService) getParentsLegacy(ctx context.Context, q folder.GetParentsQuery) ([]*folder.Folder, error) {
 	return s.ExpectedFolders, s.ExpectedError
 }
 
@@ -115,9 +115,6 @@ func (s *FakeService) RegisterService(service folder.RegistryService) error {
 }
 
 func (s *FakeService) GetDescendantCounts(ctx context.Context, q *folder.GetDescendantCountsQuery) (folder.DescendantCounts, error) {
-	return s.ExpectedDescendantCounts, s.ExpectedError
-}
-func (s *FakeService) GetDescendantCountsLegacy(ctx context.Context, q *folder.GetDescendantCountsQuery) (folder.DescendantCounts, error) {
 	return s.ExpectedDescendantCounts, s.ExpectedError
 }
 
