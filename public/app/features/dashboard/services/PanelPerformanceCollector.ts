@@ -1,15 +1,6 @@
 import { PanelPerformanceData } from '@grafana/runtime';
+import { type PanelPerformanceCollectorLike, PanelLifecyclePhase } from '@grafana/scenes';
 import { isChromePerformance } from 'app/core/crash/crash.utils';
-
-/**
- * Phase names for panel lifecycle tracking
- */
-export enum PanelLifecyclePhase {
-  PluginLoad = 'pluginLoad',
-  DataQuery = 'dataQuery',
-  DataProcessing = 'dataProcessing',
-  Render = 'render',
-}
 
 interface PanelTrackingData {
   panelId: string;
@@ -44,8 +35,9 @@ interface PanelTrackingData {
 /**
  * Collects performance metrics for individual panels during dashboard interactions.
  * Tracks timing for different lifecycle phases and aggregates metrics.
+ * Implements the interface defined in @grafana/scenes for compatibility.
  */
-export class PanelPerformanceCollector {
+export class PanelPerformanceCollector implements PanelPerformanceCollectorLike {
   private panels: Map<string, PanelTrackingData> = new Map();
 
   /**
