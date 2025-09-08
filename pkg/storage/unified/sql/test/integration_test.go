@@ -26,7 +26,6 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/sql"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/db/dbimpl"
 	unitest "github.com/grafana/grafana/pkg/storage/unified/testing"
-	"github.com/grafana/grafana/pkg/tests"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
@@ -102,10 +101,7 @@ func TestIntegrationSQLStorageBackend(t *testing.T) {
 }
 
 func TestIntegrationSearchAndStorage(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test in short mode")
-	}
-	tests.SkipIntegrationTestInShortMode(t)
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	ctx := context.Background()
 
