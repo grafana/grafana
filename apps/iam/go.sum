@@ -742,8 +742,6 @@ github.com/grafana/grafana-aws-sdk v1.1.0 h1:G0fvwbQmHw14c5RXPd7Gnw9ZQcgzl139LtM
 github.com/grafana/grafana-aws-sdk v1.1.0/go.mod h1:7e+47EdHynteYWGoT5Ere9KeOXQObsk8F0vkOLQ1tz8=
 github.com/grafana/grafana-azure-sdk-go/v2 v2.2.0 h1:0TYrkzAc3u0HX+9GK86cGrLTUAcmQfl3/LEB3tL+SOA=
 github.com/grafana/grafana-azure-sdk-go/v2 v2.2.0/go.mod h1:H9sVh9A4yg5egMGZeh0mifxT1Q/uqwKe1LBjBJU6pN8=
-github.com/grafana/grafana-openapi-client-go v0.0.0-20231213163343-bd475d63fb79 h1:r+mU5bGMzcXCRVAuOrTn54S80qbfVkvTdUJZfSfTNbs=
-github.com/grafana/grafana-openapi-client-go v0.0.0-20231213163343-bd475d63fb79/go.mod h1:wc6Hbh3K2TgCUSfBC/BOzabItujtHMESZeFk5ZhdxhQ=
 github.com/grafana/grafana-plugin-sdk-go v0.279.0 h1:/KCrsZkj9pEGwIGovqAz1A8rjI2A2YT+ZpvgfZN0LAA=
 github.com/grafana/grafana-plugin-sdk-go v0.279.0/go.mod h1:/7oGN6Z7DGTGaLHhgIYrRr6Wvmdsb3BLw5hL4Kbjy88=
 github.com/grafana/grafana/pkg/promlib v0.0.8 h1:VUWsqttdf0wMI4j9OX9oNrykguQpZcruudDAFpJJVw0=
