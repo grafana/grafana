@@ -1,18 +1,17 @@
 import { css } from '@emotion/css';
-import { ReactNode } from "react";
-import { useParams } from "react-router-dom-v5-compat";
+import { ReactNode } from 'react';
+import { useParams } from 'react-router-dom-v5-compat';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Icon, LinkButton, useStyles2 } from "@grafana/ui";
+import { Icon, LinkButton, useStyles2 } from '@grafana/ui';
 import { CloudEnterpriseBadge } from 'app/core/components/Branding/CloudEnterpriseBadge';
-import { Page } from "app/core/components/Page/Page";
-import { DataSourceTitle } from "app/features/datasources/components/DataSourceTitle";
-import { EditDataSourceActions } from "app/features/datasources/components/EditDataSourceActions";
-import { useDataSourceInfo } from "app/features/datasources/components/useDataSourceInfo";
+import { Page } from 'app/core/components/Page/Page';
+import { DataSourceTitle } from 'app/features/datasources/components/DataSourceTitle';
+import { EditDataSourceActions } from 'app/features/datasources/components/EditDataSourceActions';
+import { useDataSourceInfo } from 'app/features/datasources/components/useDataSourceInfo';
 import { useInitDataSourceSettings } from 'app/features/datasources/state/hooks';
 
-import { useDataSourceTabNav } from "../hooks/useDataSourceTabNav";
-
+import { useDataSourceTabNav } from '../hooks/useDataSourceTabNav';
 
 type FeatureHighlightsTabPageProps = {
   pageName: string;
@@ -23,9 +22,18 @@ type FeatureHighlightsTabPageProps = {
   linkButtonLabel: string;
   footNote?: ReactNode;
   screenshotPath: string;
-}
+};
 
-export function FeatureHighlightsTabPage({ pageName, title, header, items, linkButtonLabel, footNote, screenshotPath, footer }: FeatureHighlightsTabPageProps) {
+export function FeatureHighlightsTabPage({
+  pageName,
+  title,
+  header,
+  items,
+  linkButtonLabel,
+  footNote,
+  screenshotPath,
+  footer,
+}: FeatureHighlightsTabPageProps) {
   const { uid = '' } = useParams<{ uid: string }>();
   useInitDataSourceSettings(uid);
 
@@ -36,9 +44,6 @@ export function FeatureHighlightsTabPage({ pageName, title, header, items, linkB
     dataSourcePluginName: pageNav.dataSourcePluginName,
     alertingSupported: dataSourceHeader.alertingSupported,
   });
-
-
-
 
   console.log({ pageNav });
   console.log({ info });

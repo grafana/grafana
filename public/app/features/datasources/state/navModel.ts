@@ -67,14 +67,15 @@ export function buildNavModel(dataSource: DataSourceSettings, plugin: GenericDat
     url: `datasources/edit/${dataSource.uid}/permissions`,
   };
 
-
-
-  if (highlightTrial() && !isLoadingNav || shouldEnableFeatureHighlights) {
+  if ((highlightTrial() && !isLoadingNav) || shouldEnableFeatureHighlights) {
     dsPermissions.tabSuffix = () => ProBadge({ experimentId: permissionsExperimentId, eventVariant: 'trial' });
   }
 
   if (featureEnabled('dspermissions.enforcement') || shouldEnableFeatureHighlights) {
-    if (contextSrv.hasPermissionInMetadata(AccessControlAction.DataSourcesPermissionsRead, dataSource) || shouldEnableFeatureHighlights) {
+    if (
+      contextSrv.hasPermissionInMetadata(AccessControlAction.DataSourcesPermissionsRead, dataSource) ||
+      shouldEnableFeatureHighlights
+    ) {
       navModel.children!.push(dsPermissions);
     }
   } else if (highlightsEnabled && !isLoadingNav) {
@@ -95,7 +96,7 @@ export function buildNavModel(dataSource: DataSourceSettings, plugin: GenericDat
       url: `datasources/edit/${dataSource.uid}/insights`,
     };
 
-    if (highlightTrial() && !isLoadingNav || shouldEnableFeatureHighlights) {
+    if ((highlightTrial() && !isLoadingNav) || shouldEnableFeatureHighlights) {
       analytics.tabSuffix = () => ProBadge({ experimentId: analyticsExperimentId, eventVariant: 'trial' });
     }
 
@@ -123,12 +124,15 @@ export function buildNavModel(dataSource: DataSourceSettings, plugin: GenericDat
     hideFromTabs: !pluginMeta.isBackend || !config.caching.enabled,
   };
 
-  if (highlightTrial() && !isLoadingNav || shouldEnableFeatureHighlights) {
+  if ((highlightTrial() && !isLoadingNav) || shouldEnableFeatureHighlights) {
     caching.tabSuffix = () => ProBadge({ experimentId: cachingExperimentId, eventVariant: 'trial' });
   }
 
   if (featureEnabled('caching') || shouldEnableFeatureHighlights) {
-    if (contextSrv.hasPermissionInMetadata(AccessControlAction.DataSourcesCachingRead, dataSource) || shouldEnableFeatureHighlights) {
+    if (
+      contextSrv.hasPermissionInMetadata(AccessControlAction.DataSourcesCachingRead, dataSource) ||
+      shouldEnableFeatureHighlights
+    ) {
       navModel.children!.push(caching);
     }
   } else if (highlightsEnabled && !isLoadingNav) {
@@ -206,7 +210,7 @@ export function getDataSourceLoadingNav(pageName: string): NavModel {
         module: '',
         baseUrl: '',
       },
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } as any
   );
 

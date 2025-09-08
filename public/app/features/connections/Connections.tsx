@@ -50,9 +50,21 @@ export default function Connections() {
 
       {shouldEnableFeatureHighlights && (
         <>
-          <Route caseSensitive path={ROUTES.DataSourcesEdit.replace(ROUTES.Base, '') + '/permissions'} element={<PermissionsFeatureHighlightPage />} />
-          <Route caseSensitive path={ROUTES.DataSourcesEdit.replace(ROUTES.Base, '') + '/insights'} element={<InsightsFeatureHighlightPage />} />
-          <Route caseSensitive path={ROUTES.DataSourcesEdit.replace(ROUTES.Base, '') + '/cache'} element={<CacheFeatureHighlightPage />} />
+          <Route
+            caseSensitive
+            path={ROUTES.DataSourcesEdit.replace(ROUTES.Base, '') + '/permissions'}
+            element={<PermissionsFeatureHighlightPage />}
+          />
+          <Route
+            caseSensitive
+            path={ROUTES.DataSourcesEdit.replace(ROUTES.Base, '') + '/insights'}
+            element={<InsightsFeatureHighlightPage />}
+          />
+          <Route
+            caseSensitive
+            path={ROUTES.DataSourcesEdit.replace(ROUTES.Base, '') + '/cache'}
+            element={<CacheFeatureHighlightPage />}
+          />
         </>
       )}
 
