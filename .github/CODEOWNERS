@@ -416,6 +416,7 @@
 /e2e-playwright/dashboards/cujs/ @grafana/dashboards-squad
 /e2e-playwright/dashboards/DashboardForConditionalRendering.json @grafana/dashboards-squad
 /e2e-playwright/dashboards/DashboardWithAllConditionalRendering.json @grafana/dashboards-squad
+/e2e-playwright/dashboards/README.md @grafana/dashboards-squad
 /e2e-playwright/dashboards/AdHocFilterTest.json @grafana/datapro
 /e2e-playwright/dashboards/DashboardLiveTest.json @grafana/dashboards-squad
 /e2e-playwright/dashboards/DataLinkWithoutSlugTest.json @grafana/dashboards-squad
