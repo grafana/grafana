@@ -466,9 +466,6 @@
     "msw": {
       "built": true
     },
-    "nx": {
-      "built": false
-    },
     "prettier@3.6.2": {
       "unplugged": true
     }
