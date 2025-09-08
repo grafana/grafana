@@ -119,7 +119,7 @@ function calculateFontSizeWithMetrics(
 /**
  * @internal
  */
-export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
+export function getConfig(opts: BarsOptions, theme: GrafanaTheme2, clusters: number[]) {
   const {
     xOri,
     xDir: dir,
@@ -563,11 +563,11 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
       s._paths = null;
     });
 
-    const nClusters = 2; // TODO for testing, remove
-    const groupsPerCluster = [2,2];
+    // const nClusters = 2; // TODO for testing, remove
+    // const groupsPerCluster = [2,2];
 
-    if (groupByField != "" && groupByField != undefined) {
-      barsPctLayout = [null, ...distrClusteredStacked(u.data[0].length, u.data.length -1, nClusters, groupsPerCluster)];
+    if (groupByField && clusters.length !== 0) {
+      barsPctLayout = [null, ...distrClusteredStacked(u.data[0].length, u.data.length -1, clusters.length, clusters)];
     }else if (isStacked) {
       barsPctLayout = [null, ...distrOne(u.data[0].length, u.data.length - 1)];
     } else {

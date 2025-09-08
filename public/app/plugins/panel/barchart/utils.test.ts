@@ -102,6 +102,7 @@ describe('BarChart utils', () => {
 
       options: {
         orientation: VizOrientation.Auto,
+        clusterWidth: 0.7,
         groupWidth: 20,
         barWidth: 2,
         showValue: VisibilityMode.Always,
@@ -260,3 +261,5 @@ describe('BarChart utils', () => {
     });
   });
 });
+
+

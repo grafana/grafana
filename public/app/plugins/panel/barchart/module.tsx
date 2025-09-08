@@ -218,7 +218,7 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(BarChartPanel)
         },
         defaultValue: defaultOptions.clusterWidth,
         showIf: (c) => {
-          return c.groupByField != "" && c.groupByField != undefined; // only show if no group field is selected
+          return c.groupByField !== "" && c.groupByField !== undefined; // only show if no group field is selected
         },
       })
       .addSliderInput({
