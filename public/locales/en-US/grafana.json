@@ -4163,6 +4163,17 @@
       "body": "Try the new Advisor to uncover potential issues with your data sources and plugins.",
       "go-to-advisor": "Go to Advisor"
     },
+    "cache-feature-highlight-page": {
+      "foot-note": "After creating an account, you can have Grafana <2>migrate this instance to Grafana Cloud</2> with minimal effort.",
+      "footer": "Create a Grafana Cloud Free account to start using data source permissions. This feature is also available with a Grafana Enterprise license.",
+      "footer-link": "Learn about Enterprise",
+      "header": "Query caching can improve load times and reduce API costs by temporarily storing the results of data source queries. When you or other users submit the same query, the results will come back from the cache instead of from the data source.",
+      "item-1": "Faster dashboard load times, especially for popular dashboards.",
+      "item-2": "Reduced API costs.",
+      "item-3": "Reduced likelihood that APIs will rate-limit or throttle requests.",
+      "link-button-label": "Create account",
+      "title": "Get started with Query Caching for data sources"
+    },
     "cloud": {
       "connections-home-page": {
         "add-new-connection": {
@@ -4211,6 +4222,16 @@
         "unknown-datasource": "Unknown datasource"
       }
     },
+    "insights-feature-highlight-page": {
+      "footer": "Grafana Enterprise offers you not only usage insights but many more advanced features like Enterprise plugins, dashboard search and reporting.",
+      "header": "Usage Insights provide detailed information about data source usage, like the number of views, queries, and errors users have experienced. You can use this to improve users’ experience and troubleshoot issues.",
+      "item-1": "Demonstrate and improve the value of your observability service by keeping track of user engagement",
+      "item-2": "Keep Grafana performant and by identifying and fixing slow, error-prone data sources",
+      "item-3": "Clean up your instance by finding and removing unused data sources",
+      "item-4": "Review individual data source usage insights at a glance in the UI, sort search results by usage and errors, or dig into detailed usage logs",
+      "link-button-label": "Learn about Grafana Enterprise",
+      "title": "Get started with data source usage insights in Grafana Enterprise"
+    },
     "new-data-source-page": {
       "subTitle": {
         "choose-a-data-source-type": "Choose a data source type"
@@ -4240,6 +4261,17 @@
         },
         "subtitle": "Manage your data source connections in one place. Use this page to add a new data source or manage your existing connections."
       }
+    },
+    "permissions-feature-highlight-page": {
+      "foot-note": "After creating an account, you can have Grafana <2>migrate this instance to Grafana Cloud</2> with minimal effort.",
+      "footer": "Create a Grafana Cloud Free account to start using data source permissions. This feature is also available with a Grafana Enterprise license.",
+      "footer-link": "Learn about Enterprise",
+      "header": "With data source permissions, you can protect sensitive data by limiting access to this data source to specific users, teams, and roles.",
+      "item-1": "Protect sensitive data, like security logs, production databases, and personally-identifiable information",
+      "item-2": "Clean up users’ experience by hiding data sources they don’t need to use",
+      "item-3": "Share Grafana access more freely, knowing that users will not unwittingly see sensitive data",
+      "link-button-label": "Create account",
+      "title": "Get started with data source permissions in Grafana Cloud"
     },
     "search": {
       "aria-label-search-all": "Search all",
