@@ -28,6 +28,7 @@ type WebhookExtraBuilder struct {
 	urlProvider func(namespace string) string
 }
 
+// FIXME: separate the URL provider from connector to simplify operators
 func (b *WebhookExtraBuilder) WebhookURL(ctx context.Context, r *provisioning.Repository) string {
 	if !b.isPublic {
 		return ""
@@ -162,11 +163,6 @@ func (e *WebhookExtraWithImages) PostProcessOpenAPI(oas *spec3.OpenAPI) error {
 	}
 
 	return e.render.PostProcessOpenAPI(oas)
-}
-
-// GetJobWorkers returns job workers from the webhook connector
-func (e *WebhookExtraWithImages) GetJobWorkers() []jobs.Worker {
-	return e.workers
 }
 
 type WebhookExtra struct {
