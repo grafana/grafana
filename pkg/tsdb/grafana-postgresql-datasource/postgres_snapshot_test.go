@@ -31,10 +31,9 @@ var updateGoldenFiles = false
 // Use the docker/blocks/postgres_tests/docker-compose.yaml to spin up a
 // preconfigured Postgres server suitable for running these tests.
 func TestIntegrationPostgresSnapshots(t *testing.T) {
-	testutil.
-		// the logic in this function is copied from postgres_tests.go
-		SkipIntegrationTestInShortMode(t)
+	testutil.SkipIntegrationTestInShortMode(t)
 
+	// the logic in this function is copied from postgres_tests.go
 	shouldRunTest := func() bool {
 		if testing.Short() {
 			return false

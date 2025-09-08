@@ -12,9 +12,8 @@ import (
 )
 
 func TestIntegrationUnifiedStorageCommand(t *testing.T) {
-	testutil.
-		// setup datasources with password, basic_auth and none
-		SkipIntegrationTestInShortMode(t)
+	testutil.SkipIntegrationTestInShortMode(t)
+	// setup datasources with password, basic_auth and none
 
 	store := db.InitTestDB(t)
 	err := store.WithDbSession(context.Background(), func(sess *db.Session) error {

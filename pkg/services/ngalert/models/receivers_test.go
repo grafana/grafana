@@ -103,10 +103,9 @@ func TestIntegration_Redact(t *testing.T) {
 }
 
 func TestIntegration_Validate(t *testing.T) {
-	testutil.
-		// Test that all known integration types are valid.
-		SkipIntegrationTestInShortMode(t)
+	testutil.SkipIntegrationTestInShortMode(t)
 
+	// Test that all known integration types are valid.
 	for integrationType := range alertingNotify.AllKnownConfigsForTesting {
 		t.Run(integrationType, func(t *testing.T) {
 			validIntegration := IntegrationGen(IntegrationMuts.WithValidConfig(integrationType))()
@@ -121,10 +120,9 @@ func TestIntegration_Validate(t *testing.T) {
 }
 
 func TestIntegration_WithExistingSecureFields(t *testing.T) {
-	testutil.
-		// Test that WithExistingSecureFields will copy over the secure fields from the existing integration.
-		SkipIntegrationTestInShortMode(t)
+	testutil.SkipIntegrationTestInShortMode(t)
 
+	// Test that WithExistingSecureFields will copy over the secure fields from the existing integration.
 	testCases := []struct {
 		name         string
 		integration  Integration
@@ -288,10 +286,9 @@ func TestSecretsIntegrationConfig(t *testing.T) {
 }
 
 func TestIntegration_SecureFields(t *testing.T) {
-	testutil.
-		// Test that all known integration types have a config and correctly mark their secrets as secure.
-		SkipIntegrationTestInShortMode(t)
+	testutil.SkipIntegrationTestInShortMode(t)
 
+	// Test that all known integration types have a config and correctly mark their secrets as secure.
 	for integrationType := range alertingNotify.AllKnownConfigsForTesting {
 		t.Run(integrationType, func(t *testing.T) {
 			t.Run("contains SecureSettings", func(t *testing.T) {
