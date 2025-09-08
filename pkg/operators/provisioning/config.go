@@ -56,7 +56,7 @@ type provisioningControllerConfig struct {
 // audiences =
 // [operator]
 // provisioning_server_url =
-// provisioning_public_server_url =
+// provisioning_server_public_url =
 // dashboards_server_url =
 // folders_server_url =
 // tls_insecure =
@@ -236,7 +236,7 @@ func setupRepoFactory(
 		switch provisioning.RepositoryType(t) {
 		case provisioning.GitHubRepositoryType:
 			var webhook *webhooks.WebhookExtraBuilder
-			provisioningAppURL := operatorSec.Key("provisioning_public_server_url").String()
+			provisioningAppURL := operatorSec.Key("provisioning_server_public_url").String()
 			if provisioningAppURL != "" {
 				webhook = webhooks.ProvideWebhooks(provisioningAppURL)
 			}
