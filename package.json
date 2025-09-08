@@ -460,8 +460,11 @@
   },
   "packageManager": "yarn@4.9.2",
   "dependenciesMeta": {
-    "nx": {
-      "built": false
+    "cypress": {
+      "built": true
+    },
+    "msw": {
+      "built": true
     },
     "prettier@3.6.2": {
       "unplugged": true
