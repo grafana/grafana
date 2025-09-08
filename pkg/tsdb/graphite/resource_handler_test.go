@@ -626,6 +626,86 @@ func TestHandleTagValuesAutocomplete(t *testing.T) {
 		})
 	}
 }
+
+func TestHandleVersion(t *testing.T) {
+	tests := []struct {
+		name          string
+		responseBody  string
+		statusCode    int
+		expectError   bool
+		errorContains string
+		expectedData  string
+	}{
+		{
+			name:         "successful version request",
+			responseBody: `"1.1.10"`,
+			statusCode:   200,
+			expectedData: "1.1.10",
+		},
+		{
+			name:         "version with build info",
+			responseBody: `"1.1.10-pre1"`,
+			statusCode:   200,
+			expectedData: "1.1.10-pre1",
+		},
+		{
+			name:          "version request server error - invalid JSON causes parse error",
+			responseBody:  `{"error": "internal error"}`,
+			statusCode:    500,
+			expectError:   true,
+			errorContains: "version request failed",
+		},
+		{
+			name:          "version request not found - invalid JSON causes parse error",
+			responseBody:  `{"error": "not found"}`,
+			statusCode:    404,
+			expectError:   true,
+			errorContains: "version request failed",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mockTransport := &mockRoundTripper{
+				respBody: []byte(tt.responseBody),
+				status:   tt.statusCode,
+			}
+
+			dsInfo := &datasourceInfo{
+				HTTPClient: &http.Client{Transport: mockTransport},
+				URL:        "http://graphite.example.com",
+			}
+
+			service := &Service{
+				logger: log.NewNullLogger(),
+			}
+
+			result, statusCode, err := service.handleVersion(context.Background(), dsInfo)
+
+			if tt.expectError {
+				assert.Error(t, err)
+				if tt.errorContains != "" {
+					assert.Contains(t, err.Error(), tt.errorContains)
+				}
+			} else {
+				assert.NoError(t, err)
+				assert.Equal(t, tt.statusCode, statusCode)
+
+				var version string
+				err = json.Unmarshal(result, &version)
+				assert.NoError(t, err)
+				assert.Equal(t, tt.expectedData, version)
+			}
+
+			if !tt.expectError {
+				expectedURL := "http://graphite.example.com/version"
+				assert.Equal(t, expectedURL, mockTransport.lastRequest.URL.String())
+				assert.Equal(t, http.MethodGet, mockTransport.lastRequest.Method)
+			}
+		})
+	}
+}
+
 func TestHandleFunctions(t *testing.T) {
 	tests := []struct {
 		name          string

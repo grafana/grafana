@@ -27,6 +27,7 @@ func (s *Service) newResourceMux() *http.ServeMux {
 	mux.HandleFunc("/metrics/expand", handlePostResourceReq(s.handleMetricsExpand, s))
 	mux.HandleFunc("/tags/autoComplete/tags", handlePostResourceReq(s.handleTagsAutocomplete, s))
 	mux.HandleFunc("/tags/autoComplete/values", handlePostResourceReq(s.handleTagValuesAutocomplete, s))
+	mux.HandleFunc("/version", handleGetResourceReq(s.handleVersion, s))
 	mux.HandleFunc("/functions", handleGetResourceReq(s.handleFunctions, s))
 	return mux
 }
@@ -289,6 +290,26 @@ func (s *Service) handleTagValuesAutocomplete(ctx context.Context, dsInfo *datas
 
 	return tagValuesResponse, statusCode, nil
 }
+
+func (s *Service) handleVersion(ctx context.Context, dsInfo *datasourceInfo) ([]byte, int, error) {
+	versionUrl, err := url.Parse(fmt.Sprintf("%s/version", dsInfo.URL))
+	if err != nil {
+		return nil, http.StatusInternalServerError, fmt.Errorf("unexpected error %v", err)
+	}
+
+	version, _, statusCode, err := doGraphiteRequest[string](ctx, "version", dsInfo, versionUrl, http.MethodGet, nil, map[string]string{}, s.logger, false)
+	if err != nil {
+		return nil, statusCode, fmt.Errorf("version request failed: %v", err)
+	}
+
+	versionResponse, err := json.Marshal(version)
+	if err != nil {
+		return nil, http.StatusInternalServerError, fmt.Errorf("failed to marshal version response: %s", err)
+	}
+
+	return versionResponse, statusCode, nil
+}
+
 func (s *Service) handleFunctions(ctx context.Context, dsInfo *datasourceInfo) ([]byte, int, error) {
 	functionsUrl, err := url.Parse(fmt.Sprintf("%s/functions", dsInfo.URL))
 	if err != nil {
