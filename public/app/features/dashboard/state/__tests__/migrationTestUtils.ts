@@ -119,6 +119,8 @@ export function constructLatestVersionOutputFilename(inputFile: string, latestVe
   return inputFile.replace('.json', `.v${latestVersion}.json`);
 }
 
+export const pluginVersionForAutoMigrate = '12.1.0';
+
 export async function handleAngularPanelMigration(frontendModel: DashboardModel): Promise<void> {
   /* 
     Migration from schema V27 involves migrating angular singlestat panels to stat panels
@@ -153,11 +155,11 @@ export async function handleAngularPanelMigration(frontendModel: DashboardModel)
           logos: { small: 'small/logo', large: 'large/logo' },
           screenshots: [],
           updated: '2024-01-01',
-          version: '1.0.0',
+          version: pluginVersionForAutoMigrate,
         };
       }
       if (!statPanelPlugin.meta.info.version) {
-        statPanelPlugin.meta.info.version = '1.0.0';
+        statPanelPlugin.meta.info.version = pluginVersionForAutoMigrate;
       }
 
       await panel.pluginLoaded(statPanelPlugin);
@@ -175,11 +177,11 @@ export async function handleAngularPanelMigration(frontendModel: DashboardModel)
           logos: { small: 'small/logo', large: 'large/logo' },
           screenshots: [],
           updated: '2024-01-01',
-          version: '1.0.0',
+          version: pluginVersionForAutoMigrate,
         };
       }
       if (!tablePanelPlugin.meta.info.version) {
-        tablePanelPlugin.meta.info.version = '1.0.0';
+        tablePanelPlugin.meta.info.version = pluginVersionForAutoMigrate;
       }
 
       await panel.pluginLoaded(tablePanelPlugin);

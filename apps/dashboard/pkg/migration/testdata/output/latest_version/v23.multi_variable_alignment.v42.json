@@ -1,0 +1,210 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "type": "grafana",
+          "uid": "-- Grafana --"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations \u0026 Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "links": [],
+  "panels": [
+    {
+      "datasource": {
+        "apiVersion": "v1",
+        "type": "prometheus",
+        "uid": "default-ds-uid"
+      },
+      "id": 1,
+      "options": {
+        "justifyMode": "auto",
+        "percentChangeColorMode": "standard",
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "targets": [
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "prometheus",
+            "uid": "default-ds-uid"
+          },
+          "expr": "up",
+          "refId": "A"
+        }
+      ],
+      "title": "Test Panel",
+      "type": "stat"
+    }
+  ],
+  "refresh": "",
+  "schemaVersion": 42,
+  "tags": [],
+  "templating": {
+    "list": [
+      {
+        "current": {
+          "selected": true,
+          "text": [
+            "A"
+          ],
+          "value": [
+            "A"
+          ]
+        },
+        "datasource": "prometheus",
+        "multi": true,
+        "name": "multi_single_value",
+        "options": [],
+        "refresh": 1,
+        "type": "query"
+      },
+      {
+        "current": {
+          "selected": true,
+          "text": [
+            "B",
+            "C"
+          ],
+          "value": [
+            "B",
+            "C"
+          ]
+        },
+        "datasource": "prometheus",
+        "multi": true,
+        "name": "multi_array_value",
+        "options": [],
+        "refresh": 1,
+        "type": "query"
+      },
+      {
+        "current": {
+          "selected": true,
+          "text": "D",
+          "value": "D"
+        },
+        "datasource": "prometheus",
+        "multi": false,
+        "name": "non_multi_array_value",
+        "options": [],
+        "refresh": 1,
+        "type": "query"
+      },
+      {
+        "current": {
+          "selected": true,
+          "text": "E",
+          "value": "E"
+        },
+        "datasource": "prometheus",
+        "multi": false,
+        "name": "non_multi_single_value",
+        "options": [],
+        "refresh": 1,
+        "type": "query"
+      },
+      {
+        "current": {
+          "selected": true,
+          "text": "F",
+          "value": "F"
+        },
+        "datasource": "prometheus",
+        "name": "no_multi_property",
+        "options": [],
+        "refresh": 1,
+        "type": "query"
+      },
+      {
+        "current": {},
+        "datasource": "prometheus",
+        "multi": true,
+        "name": "empty_current",
+        "options": [],
+        "refresh": 1,
+        "type": "query"
+      },
+      {
+        "datasource": "prometheus",
+        "multi": true,
+        "name": "nil_current",
+        "options": [],
+        "refresh": 1,
+        "type": "query"
+      },
+      {
+        "current": {
+          "selected": true,
+          "text": [
+            "G"
+          ],
+          "value": [
+            "G"
+          ]
+        },
+        "multi": true,
+        "name": "custom_variable",
+        "type": "custom"
+      },
+      {
+        "current": {
+          "selected": true,
+          "text": "H",
+          "value": "H"
+        },
+        "multi": false,
+        "name": "textbox_variable",
+        "type": "textbox"
+      },
+      {
+        "current": {
+          "selected": true,
+          "text": [
+            "Prometheus",
+            "InfluxDB"
+          ],
+          "value": [
+            "prometheus",
+            "influxdb"
+          ]
+        },
+        "multi": true,
+        "name": "datasource_variable",
+        "options": [],
+        "type": "datasource"
+      },
+      {
+        "current": {
+          "selected": true,
+          "text": "1m",
+          "value": "1m"
+        },
+        "multi": false,
+        "name": "interval_variable",
+        "type": "interval"
+      }
+    ]
+  },
+  "time": {
+    "from": "now-6h",
+    "to": "now"
+  },
+  "timepicker": {},
+  "timezone": "",
+  "title": "V23 Multi Variables Migration Test Dashboard",
+  "version": 0,
+  "weekStart": ""
+}

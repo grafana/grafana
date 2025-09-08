@@ -15,6 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/tests/apis"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
+	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 func TestMain(m *testing.M) {
@@ -22,9 +23,7 @@ func TestMain(m *testing.M) {
 }
 
 func TestIntegrationPreferences(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
 		AppModeProduction: false, // required for experimental APIs
@@ -96,8 +95,8 @@ func TestIntegrationPreferences(t *testing.T) {
 		}
 		require.Equal(t, []string{
 			"namespace",
-			fmt.Sprintf("team:%s", helper.Org1.Staff.UID),
-			clientAdmin.Args.User.Identity.GetUID(),
+			fmt.Sprintf("team-%s", helper.Org1.Staff.UID),
+			fmt.Sprintf("user-%s", clientAdmin.Args.User.Identity.GetIdentifier()),
 		}, names)
 
 		// The viewer should only have namespace (eg org level) permissions

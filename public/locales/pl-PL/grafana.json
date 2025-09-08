@@ -1715,9 +1715,6 @@
       "notes": "Uwagi",
       "returns": "Zwroty"
     },
-    "label-picker": {
-      "no-options-message": "Nie znaleziono etykiet"
-    },
     "labels-editor-modal": {
       "title-edit-labels": "Edytuj etykiety"
     },
@@ -1735,9 +1732,6 @@
     "labels-sub-form": {
       "description": "Wybierz parę klucz-wartość etykiety z poniższych opcji lub wpisz nową i naciśnij Enter.",
       "save": "Zapisz"
-    },
-    "labels-with-suggestions": {
-      "text-loading-existing-labels": "Wczytywanie istniejących etykiet"
     },
     "labels-without-suggestions": {
       "message": {
@@ -4542,16 +4536,11 @@
             "any": "Zgodność: jakakolwiek",
             "label": "Dopasuj reguły"
           },
-          "label": "Grupa",
           "visibility": {
             "hide": "Ukryj",
             "label": "{{type}} – widoczność",
             "show": "Pokaż"
           }
-        },
-        "shared": {
-          "delete-condition": "Usuń warunek",
-          "unsupported-item-type": "Ten warunek nie jest obsługiwany przez element, slatego zostanie zignorowany."
         },
         "time-range-size": {
           "info": "Pokaż lub ukryj: {{type}}, jeśli zakres czasu pulpitu jest krótszy niż wybrane ramy czasowe.",
@@ -4581,17 +4570,21 @@
             "not-matches": "Brak dopasowań"
           },
           "value": "Wartość"
+        },
+        "wrapper": {
+          "delete-condition": "",
+          "unsupported-object-type": ""
         }
       },
       "editor": {
+        "info": "",
         "not-supported-for-custom-grid": "Renderowanie warunkowe nie jest obsługiwane w przypadku niestandardowego układu siatki. Przełącz na automatyczną siatkę, aby użyć renderowania warunkowego.",
-        "unsupported-item-type": "Renderowanie warunkowe nie jest obsługiwane w przypadku tego typu elementu"
+        "unsupported-object-type": ""
       },
       "overlay": {
         "tooltip": "Element jest ukryty z powodu renderowania warunkowego."
       },
       "root": {
-        "info": "Ustaw reguły, aby kontrolować widoczność elementów {{type}}, dopasowując dowolne lub wszystkie reguły.",
         "title": "Pokaż/ukryj reguły"
       }
     },
@@ -4731,7 +4724,8 @@
       "paste-panel": "Wklej panel",
       "remove": "Usuń: {{typeName}}",
       "row-title": "",
-      "switch-layout": "Przełącz układ"
+      "switch-layout": "Przełącz układ",
+      "tab-title": ""
     },
     "edit-pane": {
       "elements": {
@@ -8390,6 +8384,10 @@
         "action-title": "Tytuł",
         "action-title-placeholder": "Tytuł działania",
         "action-variables": "Zmienne",
+        "connection": "",
+        "connection-direct-description": "",
+        "connection-direct-label": "",
+        "connection-placeholder": "",
         "one-click-description": "Tylko jeden link lub działanie może mieć włączoną opcję jednego kliknięcia"
       }
     },
@@ -9704,6 +9702,12 @@
       "hide-search": "Zamknij wyszukiwanie",
       "hide-timestamps": "Ukryj znaczniki czasu",
       "hide-unique-labels": "Ukryj unikalne etykiety",
+      "line-wrapping": {
+        "enable": "",
+        "enable-prettify": "",
+        "hide": "",
+        "label": ""
+      },
       "newest-first": "Sortowanie od najnowszych wpisów dziennika – kliknij, aby wyświetlić najpierw najstarsze",
       "oldest-first": "Sortowanie od najstarszych wpisów dziennika – kliknij, aby wyświetlić najpierw najnowsze",
       "prettify-json": "Rozwiń logi JSON",
@@ -9712,13 +9716,16 @@
       "resolution-ns": "ns",
       "scroll-bottom": "Przewiń w dół",
       "scroll-top": "Przewiń w górę",
-      "show-ms-timestamps": "Pokaż znaczniki czasu w milisekundach",
-      "show-ns-timestamps": "Pokaż znaczniki czasu w nanosekundach",
       "show-search": "Wynik wyszukiwania w logach",
       "show-timestamps": "Pokaż znaczniki czasu",
       "show-unique-labels": "Pokaż unikalne etykiety",
+      "timestamp": {
+        "hide": "",
+        "label": "",
+        "milliseconds": "",
+        "nanoseconds": ""
+      },
       "unwrap-lines": "Nie zawijaj wierszy",
-      "wrap-json-lines": "",
       "wrap-lines": "Zawijaj wiersze"
     },
     "logs-navigation": {
@@ -9785,30 +9792,6 @@
     "un-themed-log-label-stats": {
       "field-log-stats": "{{label}}: to pole występuje w {{total}} z {{rowCount}} wierszy",
       "label-log-stats": "{{label}}: ta etykieta występuje w {{total}} z {{rowCount}} wierszy"
-    }
-  },
-  "logs-new": {
-    "category-logs": "Logi",
-    "deduplication-options": {
-      "label-exact": "Dokładnie",
-      "label-none": "Brak",
-      "label-numbers": "Liczby",
-      "label-signature": "Podpis"
-    },
-    "description-infinite-scrolling": "Eksperymentalne. Poproś o więcej wyników, przewijając do dołu listy logów.",
-    "description-show-controls": "Wyświetlaj elementy sterujące, aby przejść do ostatniego lub pierwszego wiersza logu, i filtruj według poziomu logów",
-    "description-syntax-highlighting": "Użyj wstępnie zdefiniowanej gramatyki kolorowania składni, aby wyróżnić odpowiednie części wierszy logów",
-    "name-deduplication": "Deduplikacja",
-    "name-enable-log-details": "Włącz szczegóły logu",
-    "name-infinite-scrolling": "Włącz nieskończone przewijanie",
-    "name-order": "Kolejność",
-    "name-show-controls": "Pokaż kontrolki",
-    "name-syntax-highlighting": "Włącz podświetlanie składni",
-    "name-time": "Czas",
-    "name-wrap-lines": "Zawijaj wiersze",
-    "order-options": {
-      "label-newest-first": "Od najnowszych",
-      "label-oldest-first": "Od najstarszych"
     }
   },
   "manage-dashbaords": {
@@ -12032,7 +12015,6 @@
       "expand-row": "Rozwiń wiersz zapytania",
       "hide-response": "Ukryj odpowiedź",
       "remove-query": "Usuń zapytanie",
-      "replace-query-from-library": "Zastąp zapisanym zapytaniem",
       "show-response": "Pokaż odpowiedź"
     },
     "query-editor-not-exported": "Wtyczka źródła danych nie eksportuje żadnego komponentu Edytora zapytań"

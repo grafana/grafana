@@ -73,6 +73,16 @@ type PanelSchemeUpgradeHandler = (panel: PanelModel) => PanelModel;
 
 /**
  * The current version of the dashboard schema.
+ *
+ * NOTE: Schema version 42 is the FINAL version for the v1 dashboard API.
+ * DO NOT increment this number or add new schema migrations.
+ *
+ * This is necessary due to the migration of the legacy dashboards API to the app platform.
+ *
+ * For panel-specific migrations, implement them as panel migrations in the
+ * individual panel plugin migration handlers instead of adding new schema versions.
+ *
+ * Legacy migration instructions (for reference only):
  * To add a dashboard migration increment this number
  * and then add your migration at the bottom of 'updateSchema'
  * hint: search "Add migration here"
@@ -81,7 +91,7 @@ type PanelSchemeUpgradeHandler = (panel: PanelModel) => PanelModel;
  * kinds/dashboard/dashboard_kind.cue
  * Example PR: #87712
  */
-export const DASHBOARD_SCHEMA_VERSION = 41;
+export const DASHBOARD_SCHEMA_VERSION = 42;
 export class DashboardMigrator {
   dashboard: DashboardModel;
 
@@ -932,9 +942,13 @@ export class DashboardMigrator {
     }
 
     /**
-     * -==- Add migration here -==-
-     * Your migration should go below the previous
-     * block and above this (hopefully) helpful message.
+     * ⚠️  WARNING: DO NOT ADD NEW MIGRATIONS HERE ⚠️
+     *
+     * Schema version 42 is the FINAL version for the v1 dashboard API.
+     * This is due to the migration of the legacy dashboards API to the app platform.
+     *
+     * For panel-specific migrations, implement them as panel migrations in the
+     * individual panel plugin migration handlers instead of adding new schema versions.
      */
 
     // Apply panel upgrades if any exist

@@ -72,7 +72,7 @@
         },
         "showHeader": true
       },
-      "pluginVersion": "1.0.0",
+      "pluginVersion": "12.1.0",
       "targets": [
         {
           "refId": "A"
@@ -216,7 +216,7 @@
         },
         "showHeader": true
       },
-      "pluginVersion": "1.0.0",
+      "pluginVersion": "12.1.0",
       "title": "Complex Table with All Style Features",
       "type": "table"
     },
@@ -265,7 +265,7 @@
         },
         "showHeader": true
       },
-      "pluginVersion": "1.0.0",
+      "pluginVersion": "12.1.0",
       "title": "Table with Timeseries Aggregations Transform",
       "transformations": [
         {
@@ -329,7 +329,7 @@
         },
         "showHeader": true
       },
-      "pluginVersion": "1.0.0",
+      "pluginVersion": "12.1.0",
       "title": "Table with Timeseries to Rows Transform",
       "transformations": [
         {
@@ -385,7 +385,7 @@
         },
         "showHeader": true
       },
-      "pluginVersion": "1.0.0",
+      "pluginVersion": "12.1.0",
       "title": "Table with Timeseries to Columns Transform",
       "transformations": [
         {
@@ -440,7 +440,7 @@
         },
         "showHeader": true
       },
-      "pluginVersion": "1.0.0",
+      "pluginVersion": "12.1.0",
       "title": "Table with Merge Transform",
       "transformations": [
         {
@@ -496,7 +496,7 @@
         },
         "showHeader": true
       },
-      "pluginVersion": "1.0.0",
+      "pluginVersion": "12.1.0",
       "title": "Table with Existing Transformations",
       "transformations": [
         {
@@ -570,7 +570,7 @@
         },
         "showHeader": true
       },
-      "pluginVersion": "1.0.0",
+      "pluginVersion": "12.1.0",
       "title": "Mixed Threshold Types",
       "type": "table"
     },
@@ -660,7 +660,7 @@
         },
         "showHeader": true
       },
-      "pluginVersion": "1.0.0",
+      "pluginVersion": "12.1.0",
       "title": "All Color Modes Test",
       "type": "table"
     },
@@ -744,7 +744,7 @@
         },
         "showHeader": true
       },
-      "pluginVersion": "1.0.0",
+      "pluginVersion": "12.1.0",
       "title": "All Alignment Options",
       "type": "table"
     },
@@ -841,7 +841,7 @@
         },
         "showHeader": true
       },
-      "pluginVersion": "1.0.0",
+      "pluginVersion": "12.1.0",
       "title": "Field Matcher Types Test",
       "type": "table"
     },
@@ -944,7 +944,7 @@
         },
         "showHeader": true
       },
-      "pluginVersion": "1.0.0",
+      "pluginVersion": "12.1.0",
       "title": "Link Configuration Test",
       "type": "table"
     },
@@ -1041,7 +1041,7 @@
         },
         "showHeader": true
       },
-      "pluginVersion": "1.0.0",
+      "pluginVersion": "12.1.0",
       "title": "Date Format Variations",
       "type": "table"
     },
