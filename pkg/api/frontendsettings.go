@@ -26,7 +26,6 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/grafanads"
 	"github.com/grafana/grafana/pkg/util"
-	"github.com/open-feature/go-sdk/openfeature"
 )
 
 // GetBootdataAPI returns the same data we currently have rendered into index.html
@@ -35,19 +34,6 @@ import (
 func (hs *HTTPServer) GetBootdata(c *contextmodel.ReqContext) {
 	c, span := hs.injectSpan(c, "api.GetBootdata")
 	defer span.End()
-
-	ctx := c.Req.Context()
-	mtfeEnabled := openfeature.GetApiInstance().GetClient().Boolean(
-		ctx,
-		featuremgmt.FlagMultiTenantFrontend,
-		false, // default if evaluation fails
-		openfeature.TransactionContext(ctx),
-	)
-
-	if !mtfeEnabled {
-		c.JsonApiErr(http.StatusNotFound, "Not found", nil)
-		return
-	}
 
 	data, err := hs.setIndexViewData(c)
 	if err != nil {

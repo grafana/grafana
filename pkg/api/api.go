@@ -84,8 +84,7 @@ func (hs *HTTPServer) registerRoutes() {
 	r.Get("/login", hs.LoginView)
 	r.Get("/invite/:code", hs.Index)
 
-	// MT-frontend config endpoint.
-	// OpenFeature flag evaluation is inside the handler
+	// Temporary MT-frontend config endpoint
 	r.Get("/bootdata", reqNoAuth, hs.GetBootdata)
 
 	// authed views
