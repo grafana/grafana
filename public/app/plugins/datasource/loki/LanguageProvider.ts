@@ -36,13 +36,11 @@ export default class LokiLanguageProvider extends LanguageProvider {
   private labelsPromisesCache = new LRUCache<string, Promise<string[]>>({ max: 10 });
   private detectedLabelValuesPromisesCache = new LRUCache<string, Promise<string[]>>({ max: 10 });
 
-  constructor(datasource: LokiDatasource, initialValues?: any) {
+  constructor(datasource: LokiDatasource) {
     super();
 
     this.datasource = datasource;
     this.labelKeys = [];
-
-    Object.assign(this, initialValues);
   }
 
   request = async (

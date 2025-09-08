@@ -12,7 +12,6 @@ interface Props {
   onOperatorChange: (item: SelectableValue<string>) => void;
   onValueChange: (item: SelectableValue<string>) => void;
   placeHolder?: string;
-  getTagKeysOptions?: any;
   disabled?: boolean;
 }
 
