@@ -30,7 +30,7 @@ func TestMigrate(t *testing.T) {
 	require.NoError(t, err)
 
 	// Use the same datasource provider as the frontend test to ensure consistency
-	migration.Initialize(migrationtestutil.GetTestDataSourceProvider(), migrationtestutil.GetTestPanelProvider())
+	migration.Initialize(migrationtestutil.GetTestDataSourceProvider())
 
 	t.Run("minimum version check", func(t *testing.T) {
 		err := migration.Migrate(context.Background(), map[string]interface{}{
@@ -93,7 +93,7 @@ func TestMigrateSingleVersion(t *testing.T) {
 	require.NoError(t, err)
 
 	// Use the same datasource provider as the frontend test to ensure consistency
-	migration.Initialize(migrationtestutil.GetTestDataSourceProvider(), migrationtestutil.GetTestPanelProvider())
+	migration.Initialize(migrationtestutil.GetTestDataSourceProvider())
 
 	for _, f := range files {
 		if f.IsDir() {
@@ -227,7 +227,7 @@ func loadDashboard(t *testing.T, path string) map[string]interface{} {
 // TestSchemaMigrationMetrics tests that schema migration metrics are recorded correctly
 func TestSchemaMigrationMetrics(t *testing.T) {
 	// Initialize migration with test providers
-	migration.Initialize(migrationtestutil.GetTestDataSourceProvider(), migrationtestutil.GetTestPanelProvider())
+	migration.Initialize(migrationtestutil.GetTestDataSourceProvider())
 
 	// Create a test registry for metrics
 	registry := prometheus.NewRegistry()
@@ -311,7 +311,7 @@ func TestSchemaMigrationMetrics(t *testing.T) {
 
 // TestSchemaMigrationLogging tests that schema migration logging works correctly
 func TestSchemaMigrationLogging(t *testing.T) {
-	migration.Initialize(migrationtestutil.GetTestDataSourceProvider(), migrationtestutil.GetTestPanelProvider())
+	migration.Initialize(migrationtestutil.GetTestDataSourceProvider())
 
 	tests := []struct {
 		name           string
@@ -391,7 +391,7 @@ func TestSchemaMigrationLogging(t *testing.T) {
 
 // TestLogMessageStructure tests that log messages contain expected structured fields
 func TestLogMessageStructure(t *testing.T) {
-	migration.Initialize(migrationtestutil.GetTestDataSourceProvider(), migrationtestutil.GetTestPanelProvider())
+	migration.Initialize(migrationtestutil.GetTestDataSourceProvider())
 
 	t.Run("log messages include all required fields", func(t *testing.T) {
 		// Test that migration functions execute successfully, ensuring log code paths are hit

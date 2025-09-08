@@ -47,7 +47,7 @@
         "textMode": "auto",
         "wideLayout": true
       },
-      "pluginVersion": "1.0.0",
+      "pluginVersion": "12.1.0",
       "targets": [
         {
           "refId": "A"
@@ -99,7 +99,7 @@
         "textMode": "auto",
         "wideLayout": true
       },
-      "pluginVersion": "1.0.0",
+      "pluginVersion": "12.1.0",
       "targets": [
         {
           "refId": "A"
@@ -156,7 +156,7 @@
         "textMode": "auto",
         "wideLayout": true
       },
-      "pluginVersion": "1.0.0",
+      "pluginVersion": "12.1.0",
       "type": "stat"
     },
     {
@@ -240,7 +240,7 @@
         "textMode": "auto",
         "wideLayout": true
       },
-      "pluginVersion": "1.0.0",
+      "pluginVersion": "12.1.0",
       "targets": [
         {
           "refId": "A"
@@ -314,7 +314,7 @@
         "textMode": "auto",
         "wideLayout": true
       },
-      "pluginVersion": "1.0.0",
+      "pluginVersion": "12.1.0",
       "postfix": "b",
       "postfixFontSize": "50%",
       "prefix": "a",

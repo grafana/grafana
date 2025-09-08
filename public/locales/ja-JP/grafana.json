@@ -1697,9 +1697,6 @@
       "notes": "メモ",
       "returns": "返す"
     },
-    "label-picker": {
-      "no-options-message": "ラベルが見つかりません"
-    },
     "labels-editor-modal": {
       "title-edit-labels": "ラベルを編集"
     },
@@ -1717,9 +1714,6 @@
     "labels-sub-form": {
       "description": "以下のオプションからラベルのキー/値を選択するか、新しいキー/値を入力してEnterキーを押してください。",
       "save": "保存"
-    },
-    "labels-with-suggestions": {
-      "text-loading-existing-labels": "既存のラベルを読み込み中"
     },
     "labels-without-suggestions": {
       "message": {
@@ -4488,16 +4482,11 @@
             "any": "いずれかに一致",
             "label": "マッチルール"
           },
-          "label": "グループ",
           "visibility": {
             "hide": "非表示",
             "label": "{{type}}の表示状態",
             "show": "表示"
           }
-        },
-        "shared": {
-          "delete-condition": "条件を削除",
-          "unsupported-item-type": "この条件はこの要素でサポートされていないため、無視されます。"
         },
         "time-range-size": {
           "info": "ダッシュボードの時間範囲が選択した時間枠より短い場合に、{{type}}を表示または非表示にします。",
@@ -4527,17 +4516,21 @@
             "not-matches": "一致しない"
           },
           "value": "値"
+        },
+        "wrapper": {
+          "delete-condition": "",
+          "unsupported-object-type": ""
         }
       },
       "editor": {
+        "info": "",
         "not-supported-for-custom-grid": "カスタムグリッドレイアウトでは、条件付きレンダリングはサポートされていません。条件付きレンダリングを使用するには、自動グリッドに切り替えてください。",
-        "unsupported-item-type": "このアイテムタイプでは条件付きレンダリングはサポートされていません"
+        "unsupported-object-type": ""
       },
       "overlay": {
         "tooltip": "条件付きレンダリング設定のため、要素は非表示になっています。"
       },
       "root": {
-        "info": "任意またはすべてのルールに一致させることで、{{type}}の表示/非表示を制御するルールを設定します。",
         "title": "表示/非表示ルール"
       }
     },
@@ -4677,7 +4670,8 @@
       "paste-panel": "パネルを貼り付け",
       "remove": "{{typeName}}を削除",
       "row-title": "",
-      "switch-layout": "レイアウトを切り替え"
+      "switch-layout": "レイアウトを切り替え",
+      "tab-title": ""
     },
     "edit-pane": {
       "elements": {
@@ -8327,6 +8321,10 @@
         "action-title": "タイトル",
         "action-title-placeholder": "操作のタイトル",
         "action-variables": "変数",
+        "connection": "",
+        "connection-direct-description": "",
+        "connection-direct-label": "",
+        "connection-placeholder": "",
         "one-click-description": "一度に1つのクリックを有効にできるリンクまたは操作は1つだけです"
       }
     },
@@ -9617,6 +9615,12 @@
       "hide-search": "検索を閉じる",
       "hide-timestamps": "タイムスタンプを非表示",
       "hide-unique-labels": "一意のラベルを非表示",
+      "line-wrapping": {
+        "enable": "",
+        "enable-prettify": "",
+        "hide": "",
+        "label": ""
+      },
       "newest-first": "最新のログ順に並び替え - クリックして最も古いログを最初に表示",
       "oldest-first": "古いログ順に並び替え - クリックして最新のログを最初に表示",
       "prettify-json": "JSONログを展開",
@@ -9625,13 +9629,16 @@
       "resolution-ns": "ns",
       "scroll-bottom": "一番下までスクロール",
       "scroll-top": "一番上までスクロール",
-      "show-ms-timestamps": "ミリ秒のタイムスタンプを表示",
-      "show-ns-timestamps": "ナノ秒のタイムスタンプを表示",
       "show-search": "ログ結果内を検索",
       "show-timestamps": "タイムスタンプを表示",
       "show-unique-labels": "一意のラベルを表示",
+      "timestamp": {
+        "hide": "",
+        "label": "",
+        "milliseconds": "",
+        "nanoseconds": ""
+      },
       "unwrap-lines": "行の折り返しを解除",
-      "wrap-json-lines": "",
       "wrap-lines": "行を折り返す"
     },
     "logs-navigation": {
@@ -9698,30 +9705,6 @@
     "un-themed-log-label-stats": {
       "field-log-stats": "{{label}}：このフィールドは{{rowCount}}行中{{total}}行にあります",
       "label-log-stats": "{{label}}：このラベルは{{rowCount}}行中{{total}}行にあります"
-    }
-  },
-  "logs-new": {
-    "category-logs": "ログ",
-    "deduplication-options": {
-      "label-exact": "正確",
-      "label-none": "なし",
-      "label-numbers": "数値",
-      "label-signature": "署名"
-    },
-    "description-infinite-scrolling": "実験的機能。ログリストの一番下までスクロールして、さらに結果をリクエストします。",
-    "description-show-controls": "最後または最初のログ行にジャンプするコントロールを表示し、ログレベルでフィルタリングします",
-    "description-syntax-highlighting": "事前定義された構文の色付けルールを使い、ログ行の該当部分をハイライト表示します",
-    "name-deduplication": "重複排除",
-    "name-enable-log-details": "ログの詳細を有効化",
-    "name-infinite-scrolling": "無限スクロールを有効化",
-    "name-order": "順番",
-    "name-show-controls": "コントロールを表示",
-    "name-syntax-highlighting": "構文ハイライトを有効化",
-    "name-time": "時間",
-    "name-wrap-lines": "行を折り返す",
-    "order-options": {
-      "label-newest-first": "新しいものから表示",
-      "label-oldest-first": "古いものから表示"
     }
   },
   "manage-dashbaords": {
@@ -11924,7 +11907,6 @@
       "expand-row": "クエリ行を展開",
       "hide-response": "回答を非表示にする",
       "remove-query": "クエリを削除",
-      "replace-query-from-library": "保存されたクエリに置き換える",
       "show-response": "応答の表示"
     },
     "query-editor-not-exported": "データソースプラグインは、クエリエディタコンポーネントをエクスポートしません"

@@ -105,7 +105,7 @@ type APIBuilder struct {
 	repoFactory      repository.Factory
 	client           client.ProvisioningV0alpha1Interface
 	access           authlib.AccessChecker
-	statusPatcher    *controller.RepositoryStatusPatcher
+	statusPatcher    *appcontroller.RepositoryStatusPatcher
 	healthChecker    *controller.HealthChecker
 	// Extras provides additional functionality to the API.
 	extras []Extra
@@ -130,7 +130,7 @@ func NewAPIBuilder(
 ) *APIBuilder {
 	clients := resources.NewClientFactory(configProvider)
 	parsers := resources.NewParserFactory(clients)
-	resourceLister := resources.NewResourceLister(unified, unified, legacyMigrator, storageStatus)
+	resourceLister := resources.NewResourceListerForMigrations(unified, legacyMigrator, storageStatus)
 
 	b := &APIBuilder{
 		onlyApiServer:       onlyApiServer,
@@ -211,7 +211,7 @@ func RegisterAPIService(
 	}
 
 	builder := NewAPIBuilder(
-		false, // Run controllers
+		cfg.ProvisioningDisableControllers,
 		repoFactory,
 		features,
 		client,
@@ -363,7 +363,7 @@ func (b *APIBuilder) GetJobQueue() jobs.Queue {
 	return b.jobs
 }
 
-func (b *APIBuilder) GetStatusPatcher() *controller.RepositoryStatusPatcher {
+func (b *APIBuilder) GetStatusPatcher() *appcontroller.RepositoryStatusPatcher {
 	return b.statusPatcher
 }
 
@@ -430,7 +430,7 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 	storage[provisioning.RepositoryResourceInfo.StoragePath("status")] = repositoryStatusStorage
 
 	// TODO: Add some logic so that the connectors can registered themselves and we don't have logic all over the place
-	storage[provisioning.RepositoryResourceInfo.StoragePath("test")] = NewTestConnector(b, b.repoFactory, &repository.Tester{}, b)
+	storage[provisioning.RepositoryResourceInfo.StoragePath("test")] = NewTestConnector(b, b.repoFactory, b)
 	storage[provisioning.RepositoryResourceInfo.StoragePath("files")] = NewFilesConnector(b, b.parsers, b.clients, b.access)
 	storage[provisioning.RepositoryResourceInfo.StoragePath("refs")] = NewRefsConnector(b)
 	storage[provisioning.RepositoryResourceInfo.StoragePath("resources")] = &listConnector{
@@ -636,8 +636,8 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				return fmt.Errorf("create API client job store: %w", err)
 			}
 
-			b.statusPatcher = controller.NewRepositoryStatusPatcher(b.GetClient())
-			b.healthChecker = controller.NewHealthChecker(&repository.Tester{}, b.statusPatcher)
+			b.statusPatcher = appcontroller.NewRepositoryStatusPatcher(b.GetClient())
+			b.healthChecker = controller.NewHealthChecker(b.statusPatcher)
 
 			// if running solely CRUD, skip the rest of the setup
 			if b.onlyApiServer {
@@ -731,6 +731,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				jobHistoryWriter = jobs.NewAPIClientHistoryWriter(b.GetClient())
 			}
 
+			repoGetter := resources.NewRepositoryGetter(b.repoFactory, b.client)
 			// This is basically our own JobQueue system
 			driver, err := jobs.NewConcurrentJobDriver(
 				3,              // 3 drivers for now
@@ -738,7 +739,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				time.Minute,    // Cleanup jobs
 				30*time.Second, // Periodically look for new jobs
 				30*time.Second, // Lease renewal interval
-				b.jobs, b, jobHistoryWriter,
+				b.jobs, repoGetter, jobHistoryWriter,
 				jobController.InsertNotifications(),
 				workers...,
 			)
@@ -757,9 +758,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				repoInformer,
 				b.repoFactory,
 				b.resourceLister,
-				b.parsers,
 				b.clients,
-				&repository.Tester{},
 				b.jobs,
 				b.storageStatus,
 				b.GetHealthChecker(),

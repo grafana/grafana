@@ -1,0 +1,77 @@
+{
+  "panels": [
+    {
+      "datasource": {
+        "apiVersion": "v1",
+        "type": "prometheus",
+        "uid": "default-ds-uid"
+      },
+      "id": 2,
+      "targets": [
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "prometheus",
+            "uid": "default-ds-uid"
+          },
+          "refId": "A"
+        }
+      ],
+      "title": "Normal Panel",
+      "type": "graph"
+    },
+    {
+      "datasource": {
+        "apiVersion": "v1",
+        "type": "prometheus",
+        "uid": "default-ds-uid"
+      },
+      "id": 4,
+      "panels": [
+        {
+          "datasource": null,
+          "id": 6,
+          "title": "Normal nested panel",
+          "type": "graph"
+        }
+      ],
+      "targets": [
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "prometheus",
+            "uid": "default-ds-uid"
+          },
+          "refId": "A"
+        }
+      ],
+      "title": "Row with repeated panels",
+      "type": "row"
+    }
+  ],
+  "refresh": "",
+  "schemaVersion": 42,
+  "templating": {
+    "list": [
+      {
+        "current": {
+          "selected": true,
+          "text": "default_value",
+          "value": "default_value"
+        },
+        "hide": 0,
+        "name": "constant_var",
+        "options": [
+          {
+            "selected": true,
+            "text": "default_value",
+            "value": "default_value"
+          }
+        ],
+        "query": "default_value",
+        "type": "textbox"
+      }
+    ]
+  },
+  "title": "V27 Repeated Panels and Constant Variable Migration Test Dashboard"
+}
