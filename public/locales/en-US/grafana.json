@@ -11644,6 +11644,7 @@
       "tooltip-unhealthy-repository": "Unable to pull an unhealthy repository"
     },
     "synchronize-step": {
+      "repository-unhealthy": "Repository is unhealthy",
       "synchronization-description": "Include commits for each historical value",
       "synchronization-options": "Synchronization options"
     },
