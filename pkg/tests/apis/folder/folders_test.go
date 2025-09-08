@@ -26,10 +26,10 @@ import (
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/tests"
 	"github.com/grafana/grafana/pkg/tests/apis"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
+	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 func TestMain(m *testing.M) {
@@ -1172,7 +1172,7 @@ func TestIntegrationFoldersGetAPIEndpointK8S(t *testing.T) {
 
 // Reproduces a bug where folder deletion does not check for attached library panels.
 func TestIntegrationFolderDeletionBlockedByLibraryElements(t *testing.T) {
-	tests.SkipIntegrationTestInShortMode(t)
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	if !db.IsTestDbSQLite() {
 		t.Skip("test only on sqlite for now")
@@ -1251,7 +1251,7 @@ func TestIntegrationFolderDeletionBlockedByLibraryElements(t *testing.T) {
 }
 
 func TestIntegrationRootFolderDeletionBlockedByLibraryElementsInSubfolder(t *testing.T) {
-	tests.SkipIntegrationTestInShortMode(t)
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	if !db.IsTestDbSQLite() {
 		t.Skip("test only on sqlite for now")

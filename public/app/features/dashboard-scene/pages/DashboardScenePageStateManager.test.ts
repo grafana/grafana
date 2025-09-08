@@ -1276,9 +1276,10 @@ describe('UnifiedDashboardScenePageStateManager', () => {
       await loader.loadDashboard({ uid: 'blah-blah', route: DashboardRoutes.Provisioning });
 
       expect(loader.state.dashboard).toBeDefined();
-      expect(loader.state.dashboard!.serializer.initialSaveModel).toEqual(
-        v1ProvisionedDashboardResource.resource.dryRun.spec
-      );
+      expect(loader.state.dashboard!.serializer.initialSaveModel).toEqual({
+        ...v1ProvisionedDashboardResource.resource.dryRun.spec,
+        version: v1ProvisionedDashboardResource.resource.dryRun.metadata.generation || 0,
+      });
     });
 
     it('should load a provisioned v2 dashboard', async () => {

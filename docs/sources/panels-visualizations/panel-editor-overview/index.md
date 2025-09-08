@@ -29,29 +29,39 @@ refs:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/transform-data/
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/transform-data/
+      destination: /docs/grafana-cloud/visualizations/panels-visualizations/query-transform-data/transform-data/
   the-overview-of-grafana-alerting:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/
   table:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/table/
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/table/
+      destination: /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/table/
   add-a-query:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/#add-a-query
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/#add-a-query
+      destination: /docs/grafana-cloud/visualizations/panels-visualizations/query-transform-data/#add-a-query
+  saved-queries:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/#saved-queries
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/visualizations/panels-visualizations/query-transform-data/#saved-queries
+  save-query:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/#save-a-query
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/visualizations/panels-visualizations/query-transform-data/#save-a-query
 ---
 
 # Panel editor
 
 In the panel editor, you can update all the elements of a visualization including the data source, queries, time range, and visualization display options.
 
-![Panel editor](/media/docs/grafana/panels-visualizations/screenshot-grafana-11.2-panel-editor.png)
+![Panel editor](/media/docs/grafana/panels-visualizations/screenshot-panel-editor-v11.6.png)
 
 This following sections describe the areas of the Grafana panel editor.
 
@@ -75,7 +85,14 @@ The visualization preview section contains the following options:
 
 The data section contains tabs where you enter queries, transform your data, and create alert rules (if applicable).
 
-- **Queries** - Select your data source and enter queries here. For more information, refer to [Add a query](ref:add-a-query). When you create a new dashboard, you'll be prompted to select a data source before you get to the panel editor. You set or update the data source in existing dashboards using the drop-down in the **Queries** tab.
+- **Queries**
+  - Select your data source. You can also set or update the data source in existing dashboards using the drop-down menu in the **Queries** tab.
+  - [Add queries](ref:add-a-query). Write or construct a query in the query language of your data source or click **+ Add from saved queries** to add a previously saved query. If you've already written a query, you can click the **Replace with saved query** icon to use a previously saved query instead. To [save the query](ref:save-query) for reuse, click the **Save query** icon.
+
+  {{< admonition type="note" >}}
+  [Saved queries](ref:saved-queries) is in [public preview](https://grafana.com/docs/release-life-cycle/) in Grafana Enterprise and Cloud only.
+  {{< /admonition >}}
+
 - **Transformations** - Apply data transformations. For more information, refer to [Transform data](ref:transform-data).
 - **Alert** - Write alert rules. For more information, refer to [the overview of Grafana Alerting](ref:the-overview-of-grafana-alerting).
 
