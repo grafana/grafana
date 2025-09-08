@@ -4,12 +4,12 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
-func TestPluginsIntegrationDiscovery(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+func TestIntegrationPluginsIntegrationDiscovery(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode()
 
 	t.Run("discovery", func(t *testing.T) {
 		helper := setupHelper(t)

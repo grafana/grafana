@@ -5,12 +5,12 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
-func TestAlertmanager_ExtraDedupStage(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+func TestIntegrationAlertmanager_ExtraDedupStage(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	t.Run("assert no flapping alerts when stopOnExtraDedup is enabled", func(t *testing.T) {
 		s, err := NewAlertmanagerScenario()

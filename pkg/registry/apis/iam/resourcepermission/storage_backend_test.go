@@ -330,10 +330,6 @@ func TestWriteEvent_Add(t *testing.T) {
 }
 
 func TestWriteEvent_Delete(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test in short mode")
-	}
-
 	backend := setupBackend(t)
 	sql, err := backend.dbProvider(context.Background())
 	require.NoError(t, err)
