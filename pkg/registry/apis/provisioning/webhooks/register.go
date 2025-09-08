@@ -98,10 +98,11 @@ func ProvideWebhooksWithImages(
 	}
 }
 
-func ProvideWebhooks(cfg *setting.Cfg) *WebhookExtraBuilder {
+func ProvideWebhooks(provisioningURL string) *WebhookExtraBuilder {
 	urlProvider := func(_ string) string {
-		return cfg.AppURL
+		return provisioningURL
 	}
+
 	isPublic := isPublicURL(urlProvider(""))
 
 	return &WebhookExtraBuilder{
