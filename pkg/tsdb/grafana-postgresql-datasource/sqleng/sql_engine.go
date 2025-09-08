@@ -108,7 +108,6 @@ func (e *DataSourceHandler) TransformQueryError(logger log.Logger, err error) er
 	// for security purposes.
 	var opErr *net.OpError
 	if errors.As(err, &opErr) {
-		logger.Error("Query error", "err", err)
 		return fmt.Errorf("failed to connect to server - %s", e.userError)
 	}
 
