@@ -113,7 +113,7 @@ func ProvideService(
 
 	supportBundles.RegisterSupportItemCollector(srv.supportBundleCollector())
 
-	ac.RegisterScopeAttributeResolver(dashboards.NewFolderIDScopeResolver(folderStore, srv))
+	ac.RegisterScopeAttributeResolver(dashboards.NewFolderIDScopeResolver(srv.getUIDFromLegacyID, srv))
 	ac.RegisterScopeAttributeResolver(dashboards.NewFolderUIDScopeResolver(srv))
 
 	k8sHandler := client.NewK8sHandler(
@@ -196,6 +196,14 @@ func (s *Service) DBMigration(db db.DB) {
 	}
 
 	s.log.Debug("syncing dashboard and folder tables finished")
+}
+
+func (s *Service) getUIDFromLegacyID(ctx context.Context, orgID int64, id int64) (string, error) {
+	f, err := s.dashboardFolderStore.GetFolderByID(ctx, orgID, id)
+	if err != nil {
+		return "", err
+	}
+	return f.UID, nil
 }
 
 func (s *Service) CountFoldersInOrg(ctx context.Context, orgID int64) (int64, error) {

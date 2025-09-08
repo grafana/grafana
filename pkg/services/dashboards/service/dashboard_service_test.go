@@ -2093,7 +2093,6 @@ func TestSetDefaultPermissionsAfterCreate(t *testing.T) {
 
 				// Setup mocks and service
 				dashboardStore := &dashboards.FakeDashboardStore{}
-				folderStore := foldertest.FakeFolderStore{}
 				features := featuremgmt.WithFeatures()
 				if tc.featureKubernetesDashboards {
 					features = featuremgmt.WithFeatures(featuremgmt.FlagKubernetesDashboards)
@@ -2106,7 +2105,6 @@ func TestSetDefaultPermissionsAfterCreate(t *testing.T) {
 					cfg:                       setting.NewCfg(),
 					log:                       log.New("test-logger"),
 					dashboardStore:            dashboardStore,
-					folderStore:               &folderStore,
 					features:                  features,
 					dashboardPermissions:      permService,
 					folderPermissions:         permService,
