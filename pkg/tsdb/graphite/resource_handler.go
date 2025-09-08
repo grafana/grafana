@@ -25,6 +25,7 @@ func (s *Service) newResourceMux() *http.ServeMux {
 	mux.HandleFunc("/events", handlePostResourceReq(s.handleEvents, s))
 	mux.HandleFunc("/metrics/find", handlePostResourceReq(s.handleMetricsFind, s))
 	mux.HandleFunc("/metrics/expand", handlePostResourceReq(s.handleMetricsExpand, s))
+	mux.HandleFunc("/tags/autoComplete/tags", handlePostResourceReq(s.handleTagsAutocomplete, s))
 	mux.HandleFunc("/functions", handleGetResourceReq(s.handleFunctions, s))
 	return mux
 }
@@ -218,6 +219,39 @@ func (s *Service) handleMetricsExpand(ctx context.Context, dsInfo *datasourceInf
 	return metricsExpandResponse, statusCode, nil
 }
 
+func (s *Service) handleTagsAutocomplete(ctx context.Context, dsInfo *datasourceInfo, tagsAutocompleteRequestJson GraphiteTagsRequest) ([]byte, int, error) {
+	tagsAutocompleteUrl, err := url.Parse(fmt.Sprintf("%s/tags/autoComplete/tags", dsInfo.URL))
+	if err != nil {
+		return nil, http.StatusInternalServerError, fmt.Errorf("unexpected error %v", err)
+	}
+
+	queryValues := tagsAutocompleteUrl.Query()
+	if tagsAutocompleteRequestJson.From != "" {
+		queryValues.Set("from", tagsAutocompleteRequestJson.From)
+	}
+	if tagsAutocompleteRequestJson.Until != "" {
+		queryValues.Set("until", tagsAutocompleteRequestJson.Until)
+	}
+	if tagsAutocompleteRequestJson.Limit != 0 {
+		queryValues.Set("limit", fmt.Sprintf("%d", tagsAutocompleteRequestJson.Limit))
+	}
+	if tagsAutocompleteRequestJson.TagPrefix != "" {
+		queryValues.Set("tagPrefix", tagsAutocompleteRequestJson.TagPrefix)
+	}
+	tagsAutocompleteUrl.RawQuery = queryValues.Encode()
+
+	tags, _, statusCode, err := doGraphiteRequest[[]string](ctx, "tags autocomplete", dsInfo, tagsAutocompleteUrl, http.MethodGet, nil, map[string]string{}, s.logger, false)
+	if err != nil {
+		return nil, statusCode, fmt.Errorf("tags autocomplete request failed: %v", err)
+	}
+
+	tagsResponse, err := json.Marshal(tags)
+	if err != nil {
+		return nil, http.StatusInternalServerError, fmt.Errorf("failed to marshal tags autocomplete response: %s", err)
+	}
+
+	return tagsResponse, statusCode, nil
+}
 func (s *Service) handleFunctions(ctx context.Context, dsInfo *datasourceInfo) ([]byte, int, error) {
 	functionsUrl, err := url.Parse(fmt.Sprintf("%s/functions", dsInfo.URL))
 	if err != nil {

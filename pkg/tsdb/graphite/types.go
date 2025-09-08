@@ -49,3 +49,10 @@ type GraphiteMetricsFindResponse struct {
 type GraphiteMetricsExpandResponse struct {
 	Results []string `json:"results"`
 }
+
+type GraphiteTagsRequest struct {
+	From      string `json:"from"`
+	Until     string `json:"until"`
+	Limit     int    `json:"limit,omitempty"`
+	TagPrefix string `json:"tagPrefix,omitempty"`
+}
