@@ -82,7 +82,7 @@ func applyChanges(ctx context.Context, changes []ResourceFileChange, clients res
 			}
 
 			// TODO: should we use the clients or the resource manager instead?
-			client, _, err := clients.ForResource(versionlessGVR)
+			client, _, err := clients.ForResource(ctx, versionlessGVR)
 			if err != nil {
 				result.Error = fmt.Errorf("get client for deleted object: %w", err)
 				progress.Record(ctx, result)
