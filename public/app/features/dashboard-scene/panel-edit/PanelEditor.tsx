@@ -5,6 +5,7 @@ import { NavIndex, PanelPlugin } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config, locationService } from '@grafana/runtime';
 import {
+  NewSceneObjectAddedEvent,
   PanelBuilders,
   SceneDataTransformer,
   SceneObjectBase,
@@ -245,15 +246,16 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
 
       // clean up data provider when switching from data to non data panel
       if (panel.state.$data) {
-        panel.setState({
-          $data: undefined,
-        });
+        panel.setState({ $data: undefined });
       }
     }
 
     if (!skipDataQuery) {
       if (!this.state.dataPane) {
-        this.setState({ dataPane: PanelDataPane.createFor(this.getPanel()) });
+        const dataPane = PanelDataPane.createFor(this.getPanel());
+        this.setState({ dataPane });
+        // This is to notify UrlSyncManager that a new object has been added to scene that requires url sync
+        this.publishEvent(new NewSceneObjectAddedEvent(dataPane), true);
       }
 
       // add data provider when switching from non data to data panel
