@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { SceneVariableSet, TextBoxVariable, QueryVariable, CustomVariable, SceneVariable } from '@grafana/scenes';
@@ -65,7 +65,9 @@ describe('DashboardControlsMenu', () => {
       }),
     ];
 
-    render(<DashboardControlsMenu dashboard={getDashboard(variables)} />);
+    act(() => {
+      render(<DashboardControlsMenu dashboard={getDashboard(variables)} />);
+    });
 
     // Should have rendered a dropdown
     expect(screen.getByRole('button')).toBeInTheDocument();
