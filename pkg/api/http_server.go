@@ -184,7 +184,7 @@ type HTTPServer struct {
 	NotificationService          notifications.Service
 	DashboardService             dashboards.DashboardService
 	dashboardProvisioningService dashboards.DashboardProvisioningService
-	folderService                folder.APIServerService
+	folderService                folder.Service
 	dsGuardian                   guardian.DatasourceGuardianProvider
 	dashboardsnapshotsService    dashboardsnapshots.Service
 	PluginSettings               pluginSettings.Service

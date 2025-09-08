@@ -15,7 +15,10 @@ type LegacyService interface {
 	GetFoldersLegacy(ctx context.Context, q GetFoldersQuery) ([]*Folder, error)
 }
 
-type APIServerService interface {
+// The folder.Service is backed by calls forwarding to an apiserver
+type Service interface {
+	RegisterService(service RegistryService) error
+
 	Create(ctx context.Context, cmd *CreateFolderCommand) (*Folder, error)
 
 	// GetFolder takes a GetFolderCommand and returns a folder matching the
@@ -56,11 +59,4 @@ type APIServerService interface {
 	GetDescendantCounts(ctx context.Context, q *GetDescendantCountsQuery) (DescendantCounts, error)
 
 	CountFoldersInOrg(ctx context.Context, orgID int64) (int64, error)
-}
-
-type Service interface {
-	LegacyService
-	APIServerService
-
-	RegisterService(service RegistryService) error
 }

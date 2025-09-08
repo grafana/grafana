@@ -49,7 +49,7 @@ var (
 type UIDLookup = func(ctx context.Context, orgID int64, id int64) (string, error)
 
 // NewFolderIDScopeResolver provides an ScopeAttributeResolver that is able to convert a scope prefixed with "folders:id:" into an uid based scope.
-func NewFolderIDScopeResolver(lookup UIDLookup, folderSvc folder.APIServerService) (string, ac.ScopeAttributeResolver) {
+func NewFolderIDScopeResolver(lookup UIDLookup, folderSvc folder.Service) (string, ac.ScopeAttributeResolver) {
 	prefix := ScopeFoldersProvider.GetResourceScope("")
 	return prefix, ac.ScopeAttributeResolverFunc(func(ctx context.Context, orgID int64, scope string) ([]string, error) {
 		ctx, span := tracer.Start(ctx, "dashboards.NewFolderIDScopeResolver")
@@ -193,7 +193,7 @@ func resolveDashboardScope(ctx context.Context, orgID int64, dashboard *Dashboar
 	return result, nil
 }
 
-func GetInheritedScopes(ctx context.Context, orgID int64, folderUID string, folderSvc folder.APIServerService) ([]string, error) {
+func GetInheritedScopes(ctx context.Context, orgID int64, folderUID string, folderSvc folder.Service) ([]string, error) {
 	ctx, span := tracer.Start(ctx, "dashboards.GetInheritedScopes")
 	span.End()
 

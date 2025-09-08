@@ -50,8 +50,8 @@ import (
 const FULLPATH_SEPARATOR = "/"
 
 var (
-	_ folder.LegacyService    = (*Service)(nil)
-	_ folder.APIServerService = (*Service)(nil)
+	_ folder.LegacyService = (*Service)(nil)
+	_ folder.Service       = (*Service)(nil)
 )
 
 type Service struct {
