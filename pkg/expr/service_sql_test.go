@@ -10,6 +10,7 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/grafana/grafana/pkg/expr/sql"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/stretchr/testify/require"
@@ -91,6 +92,9 @@ func TestSQLService(t *testing.T) {
 
 		require.Error(t, rsp.Responses["B"].Error, "should return invalid sql error")
 		require.ErrorContains(t, rsp.Responses["B"].Error, "not in the allowed list of")
+		var sqlErr *sql.ErrorWithCategory
+		require.ErrorAs(t, rsp.Responses["B"].Error, &sqlErr)
+		require.Equal(t, sql.ErrCategoryBlockedNodeOrFunc, sqlErr.Category())
 	})
 
 	t.Run("parse error should be returned", func(t *testing.T) {
@@ -108,6 +112,9 @@ func TestSQLService(t *testing.T) {
 
 		require.Error(t, rsp.Responses["B"].Error, "should return sql error on parsing")
 		require.ErrorContains(t, rsp.Responses["B"].Error, "limit expression expected to be numeric")
+		var sqlErr *sql.ErrorWithCategory
+		require.ErrorAs(t, rsp.Responses["B"].Error, &sqlErr)
+		require.Equal(t, sql.GeneralGMSError, sqlErr.Category())
 	})
 }
 
@@ -184,9 +191,14 @@ func TestSQLServiceErrors(t *testing.T) {
 
 		require.Error(t, rsp.Responses["tsMultiNoType"].Error, "should return conversion error on DS response")
 		require.ErrorContains(t, rsp.Responses["tsMultiNoType"].Error, "missing the data type")
+		var sqlErr *sql.ErrorWithCategory
+		require.ErrorAs(t, rsp.Responses["tsMultiNoType"].Error, &sqlErr)
+		require.Equal(t, sql.ErrCategoryInputConversion, sqlErr.Category())
 
 		require.Error(t, rsp.Responses["sqlExpression"].Error, "should return dependency error")
 		require.ErrorContains(t, rsp.Responses["sqlExpression"].Error, "dependency")
+		require.ErrorAs(t, rsp.Responses["sqlExpression"].Error, &sqlErr)
+		require.Equal(t, sql.ErrCategoryDependency, sqlErr.Category())
 	})
 
 	t.Run("pipeline (expressions and DS queries) will fail if the table is not found, before execution of the sql expression", func(t *testing.T) {
@@ -209,5 +221,8 @@ func TestSQLServiceErrors(t *testing.T) {
 
 		_, err := s.BuildPipeline(t.Context(), req)
 		require.ErrorContains(t, err, "exceeded the configured limit of 5 characters")
+		var sqlErr *sql.ErrorWithCategory
+		require.ErrorAs(t, err, &sqlErr)
+		require.Equal(t, sql.ErrCategoryQueryTooLong, sqlErr.Category())
 	})
 }
