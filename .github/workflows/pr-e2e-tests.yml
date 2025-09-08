@@ -208,8 +208,6 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - suite: various-suite
-            path: e2e/various-suite
           - suite: various-suite (old arch)
             path: e2e/old-arch/various-suite
             flags: --flags="--env dashboardScene=false"
