@@ -200,8 +200,7 @@ func (s *ModuleServer) Run() error {
 	})
 
 	m.RegisterModule(modules.FrontendServer, func() (services.Service, error) {
-		// TODO: Add proper DirectRestConfigProvider dependency for Kubernetes short URL support
-		// For now, passing nil - the frontend service will fall back to serving index.html for /goto/* routes
+		// Frontend service now needs the API server and core services to handle K8s short URLs
 		return frontend.ProvideFrontendService(s.cfg, s.features, s.promGatherer, s.registerer, s.license, s.clientConfigProvider)
 	})
 

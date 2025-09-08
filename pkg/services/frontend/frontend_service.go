@@ -2,6 +2,7 @@ package frontend
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"net"
 	"net/http"
@@ -12,11 +13,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/trace"
-	"k8s.io/apimachinery/pkg/api/errors"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/client-go/dynamic"
-	clientrest "k8s.io/client-go/rest"
 
 	"github.com/grafana/dskit/services"
 	"github.com/grafana/grafana/apps/shorturl/pkg/apis/shorturl/v1alpha1"
@@ -27,7 +24,6 @@ import (
 
 	grafanaapiserver "github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
-	"github.com/grafana/grafana/pkg/services/contexthandler"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/setting"
@@ -211,68 +207,17 @@ func (s *frontendService) handleGotoRequest(writer http.ResponseWriter, request 
 	s.handleKubernetesShortURLRedirect(writer, request, path)
 }
 
-// handleKubernetesShortURLRedirect handles the Kubernetes short URL redirect logic
+// handleKubernetesShortURLRedirect handles the short URL redirect by calling the K8s API
 func (s *frontendService) handleKubernetesShortURLRedirect(writer http.ResponseWriter, request *http.Request, shortURLUID string) {
-	s.log.Info("Starting Kubernetes short URL redirect", "uid", shortURLUID)
+	s.log.Info("Starting short URL redirect via K8s API", "uid", shortURLUID)
 
-	client, err := s.getKubernetesClient(request)
+	// Get the short URL data from the K8s API
+	targetPath, err := s.getShortURLFromAPI(request, shortURLUID)
 	if err != nil {
-		s.log.Error("Failed to get Kubernetes client, redirecting to app URL", "uid", shortURLUID, "error", err)
-		http.Redirect(writer, request, s.cfg.AppURL, http.StatusFound)
+		s.log.Error("Failed to get short URL from K8s API", "uid", shortURLUID, "error", err)
+		// Fallback to serving index page
+		s.index.HandleRequest(writer, request)
 		return
-	}
-
-	s.log.Info("Successfully created Kubernetes client, fetching short URL", "uid", shortURLUID)
-
-	// Get the short URL object from Kubernetes
-	obj, err := client.Get(request.Context(), shortURLUID, v1.GetOptions{})
-	if err != nil {
-		s.log.Error("Failed to get short URL from Kubernetes", "uid", shortURLUID, "error", err)
-		s.writeKubernetesError(writer, request, err)
-		return
-	}
-
-	s.log.Info("Successfully retrieved short URL object from Kubernetes", "uid", shortURLUID)
-
-	// Extract path from spec before updating (in case update fails)
-	spec, ok := obj.Object["spec"].(map[string]any)
-	if !ok {
-		s.log.Error("Invalid spec format in short URL object", "uid", shortURLUID)
-		http.Redirect(writer, request, s.cfg.AppURL, http.StatusFound)
-		return
-	}
-
-	targetPath, ok := spec["path"].(string)
-	if !ok {
-		s.log.Error("Invalid path format in short URL spec", "uid", shortURLUID)
-		http.Redirect(writer, request, s.cfg.AppURL, http.StatusFound)
-		return
-	}
-
-	s.log.Info("Extracted target path from short URL", "uid", shortURLUID, "target_path", targetPath)
-
-	// Update lastSeenAt timestamp (best effort - don't fail redirect if this fails)
-	if status, ok := obj.Object["status"].(map[string]interface{}); ok {
-		newTimestamp := time.Now().Unix()
-		status["lastSeenAt"] = newTimestamp
-
-		// Try status subresource first (works in Mode 5), fallback to main resource (works in Mode 0)
-		_, err = client.Update(request.Context(), obj, v1.UpdateOptions{}, "status")
-		if err != nil {
-			s.log.Debug("Status subresource update failed, trying main resource", "uid", shortURLUID, "error", err)
-			// Fallback to main resource update (for Mode 0)
-			_, err = client.Update(request.Context(), obj, v1.UpdateOptions{})
-			if err != nil {
-				s.log.Warn("Both status and main resource updates failed, continuing with redirect", "uid", shortURLUID, "error", err)
-				// Continue with redirect even if update fails
-			} else {
-				s.log.Debug("Successfully updated lastSeenAt via main resource", "uid", shortURLUID)
-			}
-		} else {
-			s.log.Debug("Successfully updated lastSeenAt via status subresource", "uid", shortURLUID)
-		}
-	} else {
-		s.log.Warn("No status object found in short URL, skipping lastSeenAt update", "uid", shortURLUID)
 	}
 
 	// Perform the redirect
@@ -281,96 +226,73 @@ func (s *frontendService) handleKubernetesShortURLRedirect(writer http.ResponseW
 	http.Redirect(writer, request, redirectURL, http.StatusFound)
 }
 
-// getKubernetesClient creates a Kubernetes dynamic client with proper authentication context
-func (s *frontendService) getKubernetesClient(request *http.Request) (dynamic.ResourceInterface, error) {
-	s.log.Info("Creating Kubernetes client")
+// getShortURLFromAPI gets the short URL data from the Kubernetes API via the Grafana API server
+func (s *frontendService) getShortURLFromAPI(request *http.Request, shortURLUID string) (string, error) {
+	s.log.Info("Fetching short URL from Kubernetes API via Grafana API server", "uid", shortURLUID)
 
-	// Get the ReqContext from the request (set by our context middleware)
-	reqCtx := contexthandler.FromContext(request.Context())
-	if reqCtx == nil {
-		s.log.Error("No ReqContext found in request")
-		return nil, fmt.Errorf("no request context found")
-	}
+	// For org ID = 1, the namespace will be "org-1" (based on the namespace mapper)
+	namespace := s.namespacer(1) // Using org ID 1 for now - in production, extract from auth
 
-	if reqCtx.SignedInUser == nil {
-		s.log.Error("No SignedInUser found in request context")
-		return nil, fmt.Errorf("no signed in user found")
-	}
+	// Create request to the Kubernetes API endpoint via Grafana API server
+	apiURL := fmt.Sprintf("http://grafana-api:3000/apis/shorturl.grafana.app/v1alpha1/namespaces/%s/shorturls/%s", namespace, shortURLUID)
 
-	s.log.Info("Getting REST config from client config provider",
-		"user_id", reqCtx.SignedInUser.UserID,
-		"org_id", reqCtx.SignedInUser.OrgID,
-		"login", reqCtx.SignedInUser.Login)
+	s.log.Debug("Making Kubernetes API request", "url", apiURL, "namespace", namespace)
 
-	// The eventualRestConfigProvider waits for the API server to be ready
-	// Add retry logic with exponential backoff to wait for API server startup
-	var restConfig *clientrest.Config
-	maxRetries := 5
-	baseDelay := 500 * time.Millisecond
-
-	for attempt := 0; attempt < maxRetries; attempt++ {
-		if attempt > 0 {
-			delay := time.Duration(1<<attempt) * baseDelay // Exponential backoff: 500ms, 1s, 2s, 4s, 8s
-			s.log.Info("Retrying REST config after delay", "attempt", attempt+1, "delay", delay)
-			time.Sleep(delay)
-		}
-
-		s.log.Debug("Attempting to get REST config", "attempt", attempt+1)
-
-		// Create a timeout context to prevent GetDirectRestConfig from blocking indefinitely
-		// The eventualRestConfigProvider blocks until API server is ready, so we need a timeout
-		timeoutCtx, cancel := context.WithTimeout(request.Context(), 3*time.Second)
-		reqCtxWithTimeout := *reqCtx // Copy the context
-		reqCtxWithTimeout.Req = reqCtx.Req.WithContext(timeoutCtx)
-
-		restConfig = s.clientConfigProvider.GetDirectRestConfig(&reqCtxWithTimeout)
-		cancel() // Always cancel the timeout context
-
-		if restConfig != nil {
-			s.log.Info("Successfully got REST config from client config provider", "attempt", attempt+1)
-			break
-		}
-
-		s.log.Warn("Client config provider returned nil REST config, API server may not be ready yet",
-			"attempt", attempt+1, "max_attempts", maxRetries)
-	}
-
-	if restConfig == nil {
-		s.log.Error("Failed to get REST config after all retries - API server not ready", "max_attempts", maxRetries)
-		return nil, fmt.Errorf("API server not ready after %d attempts", maxRetries)
-	}
-
-	// Create dynamic client
-	dyn, err := dynamic.NewForConfig(restConfig)
+	apiReq, err := http.NewRequestWithContext(request.Context(), "GET", apiURL, nil)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create dynamic client: %w", err)
+		return "", fmt.Errorf("failed to create K8s API request: %w", err)
 	}
 
-	// Use the user's org ID for namespace mapping
-	namespace := s.namespacer(reqCtx.SignedInUser.OrgID)
-
-	s.log.Info("Created Kubernetes client", "namespace", namespace, "gvr", s.gvr)
-	return dyn.Resource(s.gvr).Namespace(namespace), nil
-}
-
-// writeKubernetesError handles Kubernetes API errors
-func (s *frontendService) writeKubernetesError(writer http.ResponseWriter, request *http.Request, err error) {
-	//nolint:errorlint
-	statusError, ok := err.(*errors.StatusError)
-	if ok {
-		statusCode := statusError.Status().Code
-		s.log.Warn("Kubernetes API status error during short URL redirect",
-			"status_code", statusCode,
-			"message", statusError.Status().Message,
-			"error", err)
-
-		if statusCode == 404 {
-			s.log.Info("Short URL not found in Kubernetes, redirecting to app URL")
+	// Copy authentication headers from the original request
+	for name, values := range request.Header {
+		// Copy authentication-related headers
+		if name == "Cookie" || name == "Authorization" || strings.HasPrefix(name, "X-Grafana") {
+			for _, value := range values {
+				apiReq.Header.Add(name, value)
+			}
 		}
-	} else {
-		s.log.Error("Non-status Kubernetes API error during short URL redirect", "error", err)
 	}
 
-	s.log.Info("Redirecting to app URL due to Kubernetes error", "redirect_url", s.cfg.AppURL)
-	http.Redirect(writer, request, s.cfg.AppURL, http.StatusFound)
+	// Make the request
+	client := &http.Client{Timeout: 10 * time.Second}
+	resp, err := client.Do(apiReq)
+	if err != nil {
+		return "", fmt.Errorf("failed to fetch short URL from K8s API: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode == 404 {
+		return "", fmt.Errorf("short URL not found in Kubernetes")
+	}
+
+	if resp.StatusCode != 200 {
+		return "", fmt.Errorf("K8s API request failed with status %d", resp.StatusCode)
+	}
+
+	// Parse the Kubernetes API response - it follows the standard K8s resource structure
+	var k8sResponse struct {
+		APIVersion string `json:"apiVersion"`
+		Kind       string `json:"kind"`
+		Metadata   struct {
+			Name      string `json:"name"`
+			Namespace string `json:"namespace"`
+		} `json:"metadata"`
+		Spec struct {
+			Path string `json:"path"`
+		} `json:"spec"`
+		Status struct {
+			LastSeenAt int64 `json:"lastSeenAt,omitempty"`
+		} `json:"status,omitempty"`
+	}
+
+	if err := json.NewDecoder(resp.Body).Decode(&k8sResponse); err != nil {
+		return "", fmt.Errorf("failed to decode K8s API response: %w", err)
+	}
+
+	s.log.Info("Successfully fetched short URL from K8s API",
+		"uid", shortURLUID,
+		"path", k8sResponse.Spec.Path,
+		"namespace", k8sResponse.Metadata.Namespace)
+
+	return k8sResponse.Spec.Path, nil
 }
