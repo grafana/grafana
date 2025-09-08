@@ -16,20 +16,85 @@ import (
 )
 
 // List
-func (s *ResourcePermSqlBackend) newRoleIterator(ctx context.Context, dbHelper *legacysql.LegacyDatabaseHelper, ns types.NamespaceInfo, query *ListResourcePermissionsQuery) (*listIterator, error) {
+func (s *ResourcePermSqlBackend) newRoleIterator(ctx context.Context, dbHelper *legacysql.LegacyDatabaseHelper, ns types.NamespaceInfo, pageQuery *PageQuery, query *ListResourcePermissionsQuery) (*listIterator, error) {
+	var (
+		id    int64
+		scope string
+
+		assignments = make([]rbacAssignment, 0, 8)
+		scopes      = make([]string, 0, 8)
+		// actionSetComputed     = make(map[schema.GroupResource]bool, 8)
+		// actionSets            = make([]string, 8)
+		resourcePermissionIDs = make(map[string]int64, 8)
+	)
+
+	// Run in a transaction to ensure a consistent view of the data
+	err := dbHelper.DB.GetSqlxSession().WithTransaction(ctx, func(tx *session.SessionTx) error {
+		// Get page
+		rawPageQuery, pageArgs, err := buildPageQueryFromTemplate(pageQuery)
+		if err != nil {
+			return err
+		}
+		rows, err := tx.Query(ctx, rawPageQuery, pageArgs...)
+		if err != nil {
+			if rows != nil {
+				_ = rows.Close()
+			}
+			return fmt.Errorf("querying resource permissions: %w", err)
+		}
+		defer func() {
+			_ = rows.Close()
+		}()
+
+		for rows.Next() {
+			if err := rows.Scan(&id, &scope); err != nil {
+				return fmt.Errorf("scanning resource permission: %w", err)
+			}
+			resourcePermissionIDs[scope] = id
+			scopes = append(scopes, scope)
+			// grn, err := s.parseScope(scope)
+			if err != nil {
+				s.logger.Error("could not parse scope", "scope", scope, "error", err.Error())
+				continue
+			}
+
+		}
+
+		if len(scopes) == 0 {
+			// No results
+			return nil
+		}
+
+		newQuery := &ListResourcePermissionsQuery{
+			Scopes:     scopes,
+			OrgID:      ns.OrgID,
+			ActionSets: query.ActionSets, // TODO
+		}
+		assignments, err = s.getRbacAssignmentsWithTx(ctx, dbHelper, tx, newQuery)
+		return err
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	if len(assignments) == 0 {
+		// No results
+		return &listIterator{}, nil
+	}
+
 	// TODO: implement
 	return nil, nil
 }
 
 // Get
-// getRbacAssignments queries resource permissions based on the provided ListResourcePermissionsQuery and groups them by resource (e.g. {folder.grafana.app, folders, fold1})
-func (s *ResourcePermSqlBackend) getRbacAssignments(ctx context.Context, sql *legacysql.LegacyDatabaseHelper, query *ListResourcePermissionsQuery) ([]rbacAssignment, error) {
+// getRbacAssignmentsWithTx queries resource permissions based on the provided ListResourcePermissionsQuery and groups them by resource (e.g. {folder.grafana.app, folders, fold1})
+func (s *ResourcePermSqlBackend) getRbacAssignmentsWithTx(ctx context.Context, sql *legacysql.LegacyDatabaseHelper, tx *session.SessionTx, query *ListResourcePermissionsQuery) ([]rbacAssignment, error) {
 	rawQuery, args, err := buildListResourcePermissionsQueryFromTemplate(sql, query)
 	if err != nil {
 		return nil, err
 	}
 
-	rows, err := sql.DB.GetSqlxSession().Query(ctx, rawQuery, args...)
+	rows, err := tx.Query(ctx, rawQuery, args...)
 	if err != nil {
 		if rows != nil {
 			_ = rows.Close()
@@ -68,10 +133,11 @@ func (s *ResourcePermSqlBackend) getResourcePermission(ctx context.Context, sql 
 		ActionSets: mapper.ActionSets(),
 	}
 
-	assignments, err := s.getRbacAssignments(ctx, sql, resourceQuery)
-	if err != nil {
-		return nil, err
-	}
+	var assignments []rbacAssignment
+	err = sql.DB.GetSqlxSession().WithTransaction(ctx, func(tx *session.SessionTx) error {
+		assignments, err = s.getRbacAssignmentsWithTx(ctx, sql, tx, resourceQuery)
+		return err
+	})
 
 	if len(assignments) == 0 {
 		return nil, fmt.Errorf("resource permission %q: %w", resourceQuery.Scopes, errNotFound)

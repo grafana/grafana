@@ -57,7 +57,7 @@ func TestTemplates(t *testing.T) {
 		return &v
 	}
 
-	getPageQuery := func(q *ListResourcePermissionsQuery) sqltemplate.SQLTemplate {
+	getPageQuery := func(q *PageQuery) sqltemplate.SQLTemplate {
 		v := pageQueryTemplate{
 			SQLTemplate:        sqltemplate.New(nodb.DialectForDriver()),
 			Query:              q,
@@ -149,8 +149,9 @@ func TestTemplates(t *testing.T) {
 			pageQueryTplt: {
 				{
 					Name: "basic_page_query",
-					Data: getPageQuery(&ListResourcePermissionsQuery{
-						OrgID: 3,
+					Data: getPageQuery(&PageQuery{
+						ScopePatterns: []string{"folders:uid:%", "dashboards:uid:%"},
+						OrgID:         3,
 						Pagination: common.Pagination{
 							Limit:    100,
 							Continue: 5,

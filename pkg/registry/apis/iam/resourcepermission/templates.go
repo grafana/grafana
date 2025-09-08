@@ -37,7 +37,7 @@ func mustTemplate(filename string) *template.Template {
 
 type pageQueryTemplate struct {
 	sqltemplate.SQLTemplate
-	Query              *ListResourcePermissionsQuery
+	Query              *PageQuery
 	PermissionTable    string
 	RoleTable          string
 	ManagedRolePattern string
@@ -47,7 +47,7 @@ func (r pageQueryTemplate) Validate() error {
 	return nil
 }
 
-func buildPageQueryFromTemplate(query *ListResourcePermissionsQuery) (string, []interface{}, error) {
+func buildPageQueryFromTemplate(query *PageQuery) (string, []interface{}, error) {
 	req := pageQueryTemplate{
 		Query:              query,
 		PermissionTable:    "permission",

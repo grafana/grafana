@@ -44,11 +44,16 @@ type IdentityStore interface {
 	GetUserInternalID(ctx context.Context, ns types.NamespaceInfo, query idStore.GetUserInternalIDQuery) (*idStore.GetUserInternalIDResult, error)
 }
 
+type PageQuery struct {
+	ScopePatterns []string
+	OrgID         int64
+	Pagination    common.Pagination
+}
+
 type ListResourcePermissionsQuery struct {
 	Scopes     []string
 	OrgID      int64
 	ActionSets []string
-	Pagination common.Pagination
 }
 
 type DeleteResourcePermissionsQuery struct {

@@ -4,6 +4,7 @@ INNER JOIN {{ .Ident .RoleTable }} r ON p.role_id = r.id
 WHERE r.name LIKE {{ .Arg .ManagedRolePattern }} 
     AND r.org_id = {{ .Arg .Query.OrgID }}
     AND p.id > {{ .Arg .Query.Pagination.Continue }}
+    AND ( {{ range $index, $scopePattern := .Query.ScopePatterns }}{{ if $index }} OR {{ end }} p.scope LIKE {{ $.Arg $scopePattern }}{{ end }} )
 GROUP BY p.scope
 ORDER BY p.scope
 LIMIT {{ .Arg .Query.Pagination.Limit }}
