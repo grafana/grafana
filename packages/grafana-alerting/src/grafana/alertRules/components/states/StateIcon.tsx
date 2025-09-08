@@ -1,4 +1,5 @@
 import { css, keyframes } from '@emotion/css';
+import { upperFirst } from 'lodash';
 import { ComponentProps, memo } from 'react';
 import type { RequireAtLeastOne } from 'type-fest';
 
@@ -17,10 +18,7 @@ interface StateIconProps {
   operation?: RuleOperation;
 }
 
-export enum RuleOperation {
-  Creating = 'Creating',
-  Deleting = 'Deleting',
-}
+export type RuleOperation = 'creating' | 'deleting';
 
 const icons: Record<State, IconName> = {
   normal: 'check-circle',
@@ -47,8 +45,8 @@ const stateNames: Record<State, string> = {
 };
 
 const operationIcons: Record<RuleOperation, IconName> = {
-  [RuleOperation.Creating]: 'plus-circle',
-  [RuleOperation.Deleting]: 'minus-circle',
+  creating: 'plus-circle',
+  deleting: 'minus-circle',
 };
 
 // ⚠️ not trivial to update this, you have to re-do the math for the loading spinner
@@ -57,6 +55,8 @@ const ICON_SIZE = 15;
 /**
  * Make sure that the order of importance here matches the one we use in the StateBadge component for the detail view
  * This component is often rendered tens or hundreds of times in a single page, so it's performance is important
+ *
+ * @TODO support translations
  */
 export const StateIcon = memo(function StateIcon({
   state,
@@ -99,7 +99,7 @@ export const StateIcon = memo(function StateIcon({
   if (operation) {
     iconName = operationIcons[operation];
     iconColor = 'secondary';
-    stateName = operation;
+    stateName = upperFirst(operation);
   }
 
   return (
