@@ -24,8 +24,6 @@ type PluginManagementCfg struct {
 	GrafanaAppURL string
 
 	Features Features
-
-	HideAngularDeprecation []string
 }
 
 // Features contains the feature toggles used for the plugin management system.
@@ -42,20 +40,19 @@ type Features struct {
 // NewPluginManagementCfg returns a new PluginManagementCfg.
 func NewPluginManagementCfg(devMode bool, pluginsPath string, pluginSettings setting.PluginSettings, pluginsAllowUnsigned []string,
 	pluginsCDNURLTemplate string, appURL string, features Features,
-	grafanaComAPIURL string, disablePlugins []string, hideAngularDeprecation []string, forwardHostEnvVars []string, grafanaComAPIToken string,
+	grafanaComAPIURL string, disablePlugins []string, forwardHostEnvVars []string, grafanaComAPIToken string,
 ) *PluginManagementCfg {
 	return &PluginManagementCfg{
-		PluginsPath:            pluginsPath,
-		DevMode:                devMode,
-		PluginSettings:         pluginSettings,
-		PluginsAllowUnsigned:   pluginsAllowUnsigned,
-		DisablePlugins:         disablePlugins,
-		PluginsCDNURLTemplate:  pluginsCDNURLTemplate,
-		GrafanaComAPIURL:       grafanaComAPIURL,
-		GrafanaAppURL:          appURL,
-		Features:               features,
-		HideAngularDeprecation: hideAngularDeprecation,
-		ForwardHostEnvVars:     forwardHostEnvVars,
-		GrafanaComAPIToken:     grafanaComAPIToken,
+		PluginsPath:           pluginsPath,
+		DevMode:               devMode,
+		PluginSettings:        pluginSettings,
+		PluginsAllowUnsigned:  pluginsAllowUnsigned,
+		DisablePlugins:        disablePlugins,
+		PluginsCDNURLTemplate: pluginsCDNURLTemplate,
+		GrafanaComAPIURL:      grafanaComAPIURL,
+		GrafanaAppURL:         appURL,
+		Features:              features,
+		ForwardHostEnvVars:    forwardHostEnvVars,
+		GrafanaComAPIToken:    grafanaComAPIToken,
 	}
 }
