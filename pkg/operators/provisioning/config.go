@@ -111,7 +111,7 @@ func setupFromConfig(cfg *setting.Cfg) (controllerCfg *provisioningControllerCon
 		APIPath: "/apis",
 		Host:    provisioningServerURL,
 		WrapTransport: transport.WrapperFunc(func(rt http.RoundTripper) http.RoundTripper {
-			return authrt.NewRoundTripper(tokenExchangeClient, rt)
+			return authrt.NewRoundTripper(tokenExchangeClient, rt, provisioning.GROUP)
 		}),
 		TLSClientConfig: tlsConfig,
 	}
@@ -145,27 +145,31 @@ func setupFromConfig(cfg *setting.Cfg) (controllerCfg *provisioningControllerCon
 	}
 
 	dashboardsServerURL := operatorSec.Key("dashboards_server_url").String()
-	if provisioningServerURL == "" {
+	if dashboardsServerURL == "" {
 		return nil, fmt.Errorf("dashboards_server_url is required in [operator] section")
 	}
 	foldersServerURL := operatorSec.Key("folders_server_url").String()
-	if provisioningServerURL == "" {
+	if foldersServerURL == "" {
 		return nil, fmt.Errorf("folders_server_url is required in [operator] section")
 	}
 
-	apiServerURLs := []string{dashboardsServerURL, foldersServerURL}
-	configProviders := make([]apiserver.RestConfigProvider, len(apiServerURLs))
+	apiServerURLs := map[string]string{
+		resources.DashboardResource.Group: dashboardsServerURL,
+		resources.FolderResource.Group:    foldersServerURL,
+		provisioning.GROUP:                provisioningServerURL,
+	}
+	configProviders := make(map[string]apiserver.RestConfigProvider)
 
-	for i, url := range apiServerURLs {
+	for group, url := range apiServerURLs {
 		config := &rest.Config{
 			APIPath: "/apis",
 			Host:    url,
 			WrapTransport: transport.WrapperFunc(func(rt http.RoundTripper) http.RoundTripper {
-				return authrt.NewRoundTripper(tokenExchangeClient, rt)
+				return authrt.NewRoundTripper(tokenExchangeClient, rt, group)
 			}),
 			TLSClientConfig: tlsConfig,
 		}
-		configProviders[i] = NewDirectConfigProvider(config)
+		configProviders[group] = NewDirectConfigProvider(config)
 	}
 
 	clients := resources.NewClientFactoryForMultipleAPIServers(configProviders)
@@ -306,6 +310,7 @@ func setupUnifiedStorageClient(cfg *setting.Cfg, tracer tracing.Tracer, resource
 	if address == "" {
 		return nil, fmt.Errorf("grpc_address is required in [unified_storage] section")
 	}
+	// FIXME: These metrics are not going to show up in /metrics
 	registry := prometheus.NewPedanticRegistry()
 	conn, err := unified.GrpcConn(address, registry)
 	if err != nil {
@@ -316,7 +321,10 @@ func setupUnifiedStorageClient(cfg *setting.Cfg, tracer tracing.Tracer, resource
 	indexConn := conn
 	indexAddress := unifiedStorageSec.Key("grpc_index_address").String()
 	if indexAddress != "" {
-		indexConn, err = unified.GrpcConn(indexAddress, registry)
+		// FIXME: These metrics are not going to show up in /metrics. We will also need to wrap these metrics
+		// to start with something else so it doesn't collide with the storage api metrics.
+		registry2 := prometheus.NewPedanticRegistry()
+		indexConn, err = unified.GrpcConn(indexAddress, registry2)
 		if err != nil {
 			return nil, fmt.Errorf("create unified storage index gRPC connection: %w", err)
 		}

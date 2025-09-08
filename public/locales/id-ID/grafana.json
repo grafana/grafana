@@ -1697,9 +1697,6 @@
       "notes": "Catatan",
       "returns": "Hasil"
     },
-    "label-picker": {
-      "no-options-message": "Tidak ada label yang ditemukan"
-    },
     "labels-editor-modal": {
       "title-edit-labels": "Edit label"
     },
@@ -1717,9 +1714,6 @@
     "labels-sub-form": {
       "description": "Pilih kunci/nilai label dari opsi di bawah ini, atau ketik yang baru dan tekan Enter.",
       "save": "Simpan"
-    },
-    "labels-with-suggestions": {
-      "text-loading-existing-labels": "Memuat label yang ada"
     },
     "labels-without-suggestions": {
       "message": {
@@ -9621,6 +9615,12 @@
       "hide-search": "Tutup pencarian",
       "hide-timestamps": "Sembunyikan stempel waktu",
       "hide-unique-labels": "Sembunyikan label unik",
+      "line-wrapping": {
+        "enable": "",
+        "enable-prettify": "",
+        "hide": "",
+        "label": ""
+      },
       "newest-first": "Diurutkan berdasarkan log terbaru lebih dulu - Klik untuk menampilkan yang paling lama lebih dulu",
       "oldest-first": "Diurutkan berdasarkan log paling lama lebih dulu - Klik untuk menampilkan yang terbaru lebih dulu",
       "prettify-json": "Perluas log JSON",
@@ -9629,13 +9629,16 @@
       "resolution-ns": "nd",
       "scroll-bottom": "Gulir ke bawah",
       "scroll-top": "Gulir ke atas",
-      "show-ms-timestamps": "Tampilkan stempel waktu milidetik",
-      "show-ns-timestamps": "Tampilkan stempel waktu nanodetik",
       "show-search": "Cari di hasil log",
       "show-timestamps": "Tampilkan stempel waktu",
       "show-unique-labels": "Tampilkan label unik",
+      "timestamp": {
+        "hide": "",
+        "label": "",
+        "milliseconds": "",
+        "nanoseconds": ""
+      },
       "unwrap-lines": "Batal terapkan wrap pada baris",
-      "wrap-json-lines": "",
       "wrap-lines": "Terapkan wrap pada baris"
     },
     "logs-navigation": {
@@ -11904,7 +11907,6 @@
       "expand-row": "Perluas baris kueri",
       "hide-response": "Sembunyikan respons",
       "remove-query": "Hapus kueri",
-      "replace-query-from-library": "Ganti dengan kueri tersimpan",
       "show-response": "Tampilkan respons"
     },
     "query-editor-not-exported": "Plugin sumber data tidak mengekspor komponen Editor Kueri apa pun"

@@ -1697,9 +1697,6 @@
       "notes": "備註",
       "returns": "退回"
     },
-    "label-picker": {
-      "no-options-message": "找不到標籤"
-    },
     "labels-editor-modal": {
       "title-edit-labels": "編輯標籤"
     },
@@ -1717,9 +1714,6 @@
     "labels-sub-form": {
       "description": "從以下選項中選擇一個標籤鍵/值，或輸入新的鍵/值，然後按 Enter。",
       "save": "儲存"
-    },
-    "labels-with-suggestions": {
-      "text-loading-existing-labels": "正在載入現有標籤"
     },
     "labels-without-suggestions": {
       "message": {
@@ -9621,6 +9615,12 @@
       "hide-search": "關閉搜尋",
       "hide-timestamps": "隱藏時間戳記",
       "hide-unique-labels": "隱藏唯一標籤",
+      "line-wrapping": {
+        "enable": "",
+        "enable-prettify": "",
+        "hide": "",
+        "label": ""
+      },
       "newest-first": "按最新紀錄排序 - 按一下以顯示最舊紀錄",
       "oldest-first": "按最舊紀錄排序 - 按一下以顯示最新紀錄",
       "prettify-json": "展開 JSON 紀錄",
@@ -9629,13 +9629,16 @@
       "resolution-ns": "ns",
       "scroll-bottom": "滾動到底部",
       "scroll-top": "捲動回頂部",
-      "show-ms-timestamps": "顯示毫秒時間戳記",
-      "show-ns-timestamps": "顯示奈秒時間戳記",
       "show-search": "在紀錄結果中搜尋",
       "show-timestamps": "顯示時間戳記",
       "show-unique-labels": "顯示唯一標籤",
+      "timestamp": {
+        "hide": "",
+        "label": "",
+        "milliseconds": "",
+        "nanoseconds": ""
+      },
       "unwrap-lines": "取消換行",
-      "wrap-json-lines": "",
       "wrap-lines": "換行"
     },
     "logs-navigation": {
@@ -11904,7 +11907,6 @@
       "expand-row": "展開查詢列",
       "hide-response": "隱藏回應",
       "remove-query": "移除查詢",
-      "replace-query-from-library": "替換為已儲存的查詢",
       "show-response": "顯示回應"
     },
     "query-editor-not-exported": "資料來源外掛程式不匯出任何查詢編輯器元件"
