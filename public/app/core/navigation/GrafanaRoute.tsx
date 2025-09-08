@@ -2,6 +2,7 @@ import { Suspense, useEffect, useLayoutEffect } from 'react';
 import { Navigate, useLocation } from 'react-router-dom-v5-compat';
 
 import { config, locationSearchToObject, navigationLogger, reportPageview } from '@grafana/runtime';
+import { isFrontendService } from '@grafana/runtime/internal';
 import { ErrorBoundary } from '@grafana/ui';
 
 import { useGrafana } from '../context/GrafanaContext';
@@ -64,7 +65,7 @@ export function GrafanaRouteWrapper({ route }: Pick<Props, 'route'>) {
   const location = useLocation();
 
   // Perform login check in the frontend now
-  if (config.featureToggles.multiTenantFrontend) {
+  if (isFrontendService()) {
     const routeRequiresSignin = !route.allowAnonymous && !config.anonymousEnabled;
     if (routeRequiresSignin && !contextSrv.isSignedIn) {
       contextSrv.setRedirectToUrl();
