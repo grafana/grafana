@@ -23,6 +23,7 @@ var (
 	roleInsertTplt                      = mustTemplate("role_insert.sql")
 	assignmentInsertTplt                = mustTemplate("assignment_insert.sql")
 	permissionInsertTplt                = mustTemplate("permission_insert.sql")
+	pageQueryTplt                       = mustTemplate("page_query.sql")
 )
 
 func mustTemplate(filename string) *template.Template {
@@ -33,6 +34,34 @@ func mustTemplate(filename string) *template.Template {
 }
 
 // List
+
+type pageQueryTemplate struct {
+	sqltemplate.SQLTemplate
+	Query              *ListResourcePermissionsQuery
+	PermissionTable    string
+	RoleTable          string
+	ManagedRolePattern string
+}
+
+func (r pageQueryTemplate) Validate() error {
+	return nil
+}
+
+func buildPageQueryFromTemplate(query *ListResourcePermissionsQuery) (string, []interface{}, error) {
+	req := pageQueryTemplate{
+		Query:              query,
+		PermissionTable:    "permission",
+		RoleTable:          "role",
+		ManagedRolePattern: "managed:%",
+	}
+
+	rawQuery, err := sqltemplate.Execute(pageQueryTplt, req)
+	if err != nil {
+		return "", nil, fmt.Errorf("execute template %q: %w", pageQueryTplt.Name(), err)
+	}
+
+	return rawQuery, req.GetArgs(), nil
+}
 
 type listResourcePermissionsQueryTemplate struct {
 	sqltemplate.SQLTemplate
@@ -45,14 +74,6 @@ type listResourcePermissionsQueryTemplate struct {
 	UserRoleTable      string
 	TeamRoleTable      string
 	ManagedRolePattern string
-}
-
-// BooleanStr provides the BooleanStr functionality that the template is trying to access
-func (r listResourcePermissionsQueryTemplate) BooleanStr(value bool) string {
-	if value {
-		return "1"
-	}
-	return "0"
 }
 
 func (r listResourcePermissionsQueryTemplate) Validate() error {

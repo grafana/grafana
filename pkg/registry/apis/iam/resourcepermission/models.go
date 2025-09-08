@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/authlib/types"
 
 	v0alpha1 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
+	"github.com/grafana/grafana/pkg/registry/apis/iam/common"
 	idStore "github.com/grafana/grafana/pkg/registry/apis/iam/legacy"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 )
@@ -44,10 +45,10 @@ type IdentityStore interface {
 }
 
 type ListResourcePermissionsQuery struct {
-	Scope      string
+	Scopes     []string
 	OrgID      int64
 	ActionSets []string
-	// TODO Pagination common.Pagination
+	Pagination common.Pagination
 }
 
 type DeleteResourcePermissionsQuery struct {

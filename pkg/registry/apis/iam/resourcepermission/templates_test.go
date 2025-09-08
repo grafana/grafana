@@ -141,7 +141,7 @@ func TestTemplates(t *testing.T) {
 				{
 					Name: "with_all_fields",
 					Data: getListResourcePermissionsQuery(&ListResourcePermissionsQuery{
-						Scope:      "123",
+						Scopes:     []string{"123"},
 						OrgID:      3,
 						ActionSets: []string{"folders:admin", "folders:edit", "folders:view"},
 					}),

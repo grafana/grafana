@@ -16,6 +16,8 @@ import (
 )
 
 // List
+func (s *ResourcePermSqlBackend) newRoleIterator(ctx context.Context, dbHelper *legacysql.LegacyDatabaseHelper, ns types.NamespaceInfo, query *ListResourcePermissionsQuery) (*listIterator, error) {
+}
 
 // Get
 // getResourcePermissions queries resource permissions based on the provided ListResourcePermissionsQuery and groups them by resource (e.g. {folder.grafana.app, folders, fold1})
@@ -66,7 +68,7 @@ func (s *ResourcePermSqlBackend) getResourcePermission(ctx context.Context, sql 
 	}
 
 	resourceQuery := &ListResourcePermissionsQuery{
-		Scope:      mapper.Scope(grn.Name),
+		Scopes:     []string{mapper.Scope(grn.Name)},
 		OrgID:      ns.OrgID,
 		ActionSets: mapper.ActionSets(),
 	}
@@ -77,7 +79,7 @@ func (s *ResourcePermSqlBackend) getResourcePermission(ctx context.Context, sql 
 	}
 
 	if len(permsByResource) == 0 {
-		return nil, fmt.Errorf("resource permission %q: %w", resourceQuery.Scope, errNotFound)
+		return nil, fmt.Errorf("resource permission %q: %w", resourceQuery.Scopes, errNotFound)
 	}
 
 	resourcePermission, err := toV0ResourcePermissions(permsByResource)
@@ -85,7 +87,7 @@ func (s *ResourcePermSqlBackend) getResourcePermission(ctx context.Context, sql 
 		return nil, err
 	}
 	if resourcePermission == nil {
-		return nil, fmt.Errorf("resource permission %q: %w", resourceQuery.Scope, errNotFound)
+		return nil, fmt.Errorf("resource permission %q: %w", resourceQuery.Scopes, errNotFound)
 	}
 
 	return &resourcePermission[0], nil
