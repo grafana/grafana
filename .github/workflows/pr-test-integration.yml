@@ -135,7 +135,7 @@ jobs:
           --health-interval=10s 
           --health-timeout=5s 
           --health-retries=3
-          --volume=/opt/actions-runner/config/mysql/custom.cnf:/etc/mysql/conf.d/custom.cnf
+          --mount type=bind,source=${{ github.workspace }}/.github/mysql/custom.cnf,target=/etc/mysql/conf.d/custom.cnf
         ports:
           - 3306:3306
     steps:
@@ -199,7 +199,7 @@ jobs:
           --health-interval=10s
           --health-timeout=5s
           --health-retries=5
-          --volume=/opt/actions-runner/config/postgres/postgresql.conf:/etc/postgresql/postgresql.conf
+          --mount type=bind,source=${{ github.workspace }}/.github/postgresql/postgresql.conf,target=/etc/postgresql/postgresql.conf
         ports:
           - 5432:5432
     steps:
