@@ -278,19 +278,19 @@ When linking to another dashboard that uses template variables, select variable 
 
 If you want to add all of the current dashboard's variables to the URL, then use `${__all_variables}`.
 
-### Variable names vs. labels
+#### Variable names and labels
 
-When creating data links between dashboards, always use the **variable name**, not its label.  
-Labels are only display text for users and are not recognized in URLs.
+If you're using a data link to link to another dashboard, always use the _variable name_, not the label.  
+Labels are only used as display text and aren't recognized in URLs.
 
-For example:
+For example, if you have a variable with the name `var-server` and the label `ChooseYourServer`, you must use `var-server` in the URL, as shown in the following table:
 
 | Correct link                                   | Incorrect link                                           |
 | ---------------------------------------------- | -------------------------------------------------------- |
 | `/d/xxxx/dashboard-b?orgId=1&var-server=web02` | `/d/xxxx/dashboard-b?orgId=1&var-ChooseYourServer=web02` |
 
-{{< admonition type="note" >}}
-Data links depend on variable names. If two dashboards use different variable names (for example, `server` in one and `host` in another), you must either align them or explicitly map values (for example, `&var-host=${server}`).
+{{< admonition type="note">}}
+If two dashboards use different variable names (for example, `server` in one and `host` in another), you must either align them or explicitly map values (for example, `&var-host=${server}`).
 {{< /admonition >}}
 
 ## Add data links or actions {#add-a-data-link}
@@ -311,8 +311,10 @@ To add a data link, follow these steps:
    This is a human-readable label for the link displayed in the UI. This is a required field.
 
 1. Enter the **URL** to which you want to link.
+1. (Optional) To add a data link variable, do the following:
 
-   To add a data link variable, click in the **URL** field and enter `$` or press Ctrl+Space or Cmd+Space to see a list of available variables. This is a required field.
+   - Click in the **URL** field and enter `$` or press Ctrl+Space or Cmd+Space to see a list of available variables.
+   - Ensure that you use the variable _name_ and not the variable _label_ in the URL. The label is only used as display text.
 
 1. If you want the link to open in a new tab, toggle the **Open in a new tab** switch.
 1. If you want the data link to open with a single click on the visualization, toggle the **One click** switch.
