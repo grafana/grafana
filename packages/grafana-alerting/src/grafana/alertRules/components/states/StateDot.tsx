@@ -4,7 +4,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { Stack, useStyles2 } from '@grafana/ui';
 
 interface DotStylesProps {
-  color: 'success' | 'error' | 'warning' | 'info' | 'secondary';
+  color: 'success' | 'error' | 'warning' | 'unknown';
   includeState?: boolean;
 }
 

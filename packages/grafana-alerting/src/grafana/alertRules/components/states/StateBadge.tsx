@@ -3,9 +3,7 @@ import { ReactNode } from 'react';
 import { Stack, Text } from '@grafana/ui';
 
 import { StateDot } from './StateDot';
-
-type Health = 'nodata' | 'error';
-type State = 'normal' | 'firing' | 'pending' | 'unknown' | 'recovering';
+import { Health, State } from './types';
 
 interface RecordingBadgeProps {
   health?: Health;
@@ -21,8 +19,8 @@ export const RecordingBadge = ({ health }: RecordingBadgeProps) => {
 };
 
 // we're making a distinction here between the "state" of the rule and its "health".
-export interface StateBadgeProps {
-  state: State;
+interface StateBadgeProps {
+  state?: State;
   health?: Health;
 }
 
@@ -48,7 +46,8 @@ export const StateBadge = ({ state, health }: StateBadgeProps) => {
       stateLabel = 'Recovering';
       break;
     case 'unknown':
-      color = 'secondary';
+    default:
+      color = 'unknown';
       stateLabel = 'Unknown';
       break;
   }
@@ -68,18 +67,23 @@ export const StateBadge = ({ state, health }: StateBadgeProps) => {
 };
 
 // the generic badge component
-type BadgeColor = 'success' | 'error' | 'warning' | 'info' | 'secondary';
+type BadgeColor = 'success' | 'error' | 'warning' | 'unknown';
 
 interface BadgeProps {
   color: BadgeColor;
   text: NonNullable<ReactNode>;
 }
 
+// the inner badge component doesn't care about the semantics of "state" or "health" but just renders
+// a badge in a specific text color and a dot in matching color.
+// We currently don't expose this component outside of this file.
 function Badge({ color, text }: BadgeProps) {
+  const textColor = color === 'unknown' ? 'secondary' : color;
+
   return (
     <Stack direction="row" gap={0.5} wrap={'nowrap'} flex={'0 0 auto'}>
       <StateDot color={color} />
-      <Text variant="bodySmall" color={color}>
+      <Text variant="bodySmall" color={textColor}>
         {text}
       </Text>
     </Stack>
