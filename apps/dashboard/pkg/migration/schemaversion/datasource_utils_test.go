@@ -386,15 +386,13 @@ func TestMigrateDatasourceNameToRef(t *testing.T) {
 	t.Run("edge cases", func(t *testing.T) {
 		options := map[string]bool{"returnDefaultAsNull": false}
 
-		t.Run("reference without uid should lookup default", func(t *testing.T) {
+		t.Run("reference without uid should be preserved as-is", func(t *testing.T) {
 			nameOrRef := map[string]interface{}{
 				"type": "prometheus",
 			}
 			result := schemaversion.MigrateDatasourceNameToRef(nameOrRef, options, datasources)
 			expected := map[string]interface{}{
-				"uid":        "default-ds-uid",
-				"type":       "prometheus",
-				"apiVersion": "v1",
+				"type": "prometheus",
 			}
 			assert.Equal(t, expected, result)
 		})
@@ -417,4 +415,5 @@ func TestMigrateDatasourceNameToRef(t *testing.T) {
 			assert.Equal(t, expected, result)
 		})
 	})
+
 }
