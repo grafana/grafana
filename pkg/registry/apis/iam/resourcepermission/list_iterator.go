@@ -10,7 +10,7 @@ import (
 )
 
 type continueToken struct {
-	id int64 // the internal id (sort by!)
+	offset int64 // the internal id (sort by!)
 }
 
 func readContinueToken(next string) (continueToken, error) {
@@ -24,7 +24,7 @@ func readContinueToken(next string) (continueToken, error) {
 	if sub[0] != "start" {
 		return token, fmt.Errorf("expected internal ID in second slug")
 	}
-	token.id, err = strconv.ParseInt(sub[1], 10, 64)
+	token.offset, err = strconv.ParseInt(sub[1], 10, 64)
 	if err != nil {
 		return token, fmt.Errorf("error parsing updated")
 	}
@@ -33,16 +33,16 @@ func readContinueToken(next string) (continueToken, error) {
 }
 
 func (r *continueToken) String() string {
-	return fmt.Sprintf("start:%d", r.id)
+	return fmt.Sprintf("start:%d", r.offset)
 }
 
 // listIterator implements resource.ListIterator for iterating over resource permissions.
 type listIterator struct {
 	// List of resourcePermissions to iterate over
 	resourcePermissions []v0alpha1.ResourcePermission
-	// Resource permission IDs
-	resourcePermissionIDs []int64 // TODO change to map by resource permission groupResourceName
-	// Current index in the roles slice (1-based)
+	// Initial offset
+	initOffset int64
+	// Current index in the resource permission slice (1-based)
 	idx int
 	// Error encountered during iteration
 	err error
@@ -91,8 +91,7 @@ func (r *listIterator) Next() bool {
 	}
 
 	r.idx++
-	// Set the continue token to the current role ID
-	r.token.id = r.resourcePermissionIDs[r.idx-1]
+	r.token.offset = r.initOffset + int64(r.idx)
 
 	return true
 }

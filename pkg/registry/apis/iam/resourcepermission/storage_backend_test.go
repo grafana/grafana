@@ -17,6 +17,18 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
+// func TestIntegration_ResourcePermSqlBackend_ListResourcePermission(t *testing.T) {
+// 	if testing.Short() {
+// 		t.Skip("skipping integration test in short mode")
+// 	}
+// 	backend := setupBackend(t)
+// 	sql, err := backend.dbProvider(context.Background())
+// 	require.NoError(t, err)
+// 	setupTestRoles(t, sql.DB)
+
+// 	// TODO
+// }
+
 func TestIntegration_ResourcePermSqlBackend_ReadResource(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test in short mode")

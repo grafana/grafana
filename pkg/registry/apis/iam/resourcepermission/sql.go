@@ -9,6 +9,7 @@ import (
 
 	"github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
+	"github.com/grafana/grafana/pkg/registry/apis/iam/common"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/legacy"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/sqlstore/session"
@@ -16,22 +17,39 @@ import (
 )
 
 // List
-func (s *ResourcePermSqlBackend) newRoleIterator(ctx context.Context, dbHelper *legacysql.LegacyDatabaseHelper, ns types.NamespaceInfo, pageQuery *PageQuery, query *ListResourcePermissionsQuery) (*listIterator, error) {
+func (s *ResourcePermSqlBackend) newRoleIterator(ctx context.Context, dbHelper *legacysql.LegacyDatabaseHelper, ns types.NamespaceInfo, pagination *common.Pagination) (*listIterator, error) {
+	if ns.OrgID <= 0 {
+		return nil, fmt.Errorf("invalid namespace: %w", errInvalidNamespace)
+	}
+	if pagination == nil {
+		pagination = &common.Pagination{Limit: 100}
+	}
+
 	var (
-		id    int64
 		scope string
+
+		actionSets    = make([]string, 0, 3*len(s.mappers))
+		scopePatterns = make([]string, 0, len(s.mappers))
 
 		assignments = make([]rbacAssignment, 0, 8)
 		scopes      = make([]string, 0, 8)
-		// actionSetComputed     = make(map[schema.GroupResource]bool, 8)
-		// actionSets            = make([]string, 8)
-		resourcePermissionIDs = make(map[string]int64, 8)
 	)
+
+	for _, mapper := range s.mappers {
+		actionSets = append(actionSets, mapper.ActionSets()...)
+	}
+	for _, mapper := range s.mappers {
+		scopePatterns = append(scopePatterns, mapper.ScopePattern())
+	}
 
 	// Run in a transaction to ensure a consistent view of the data
 	err := dbHelper.DB.GetSqlxSession().WithTransaction(ctx, func(tx *session.SessionTx) error {
 		// Get page
-		rawPageQuery, pageArgs, err := buildPageQueryFromTemplate(pageQuery)
+		rawPageQuery, pageArgs, err := buildPageQueryFromTemplate(dbHelper, &PageQuery{
+			ScopePatterns: scopePatterns,
+			OrgID:         ns.OrgID,
+			Pagination:    *pagination,
+		})
 		if err != nil {
 			return err
 		}
@@ -47,17 +65,10 @@ func (s *ResourcePermSqlBackend) newRoleIterator(ctx context.Context, dbHelper *
 		}()
 
 		for rows.Next() {
-			if err := rows.Scan(&id, &scope); err != nil {
+			if err := rows.Scan(&scope); err != nil {
 				return fmt.Errorf("scanning resource permission: %w", err)
 			}
-			resourcePermissionIDs[scope] = id
 			scopes = append(scopes, scope)
-			// grn, err := s.parseScope(scope)
-			if err != nil {
-				s.logger.Error("could not parse scope", "scope", scope, "error", err.Error())
-				continue
-			}
-
 		}
 
 		if len(scopes) == 0 {
@@ -65,12 +76,12 @@ func (s *ResourcePermSqlBackend) newRoleIterator(ctx context.Context, dbHelper *
 			return nil
 		}
 
-		newQuery := &ListResourcePermissionsQuery{
+		// Get assignments for the page
+		assignments, err = s.getRbacAssignmentsWithTx(ctx, dbHelper, tx, &ListResourcePermissionsQuery{
 			Scopes:     scopes,
 			OrgID:      ns.OrgID,
-			ActionSets: query.ActionSets, // TODO
-		}
-		assignments, err = s.getRbacAssignmentsWithTx(ctx, dbHelper, tx, newQuery)
+			ActionSets: actionSets,
+		})
 		return err
 	})
 	if err != nil {
@@ -82,8 +93,16 @@ func (s *ResourcePermSqlBackend) newRoleIterator(ctx context.Context, dbHelper *
 		return &listIterator{}, nil
 	}
 
+	v0ResourcePermissions, err := s.toV0ResourcePermissions(assignments)
+	if err != nil {
+		return nil, err
+	}
+
 	// TODO: implement
-	return nil, nil
+	return &listIterator{
+		resourcePermissions: v0ResourcePermissions,
+		initOffset:          pagination.Continue,
+	}, nil
 }
 
 // Get

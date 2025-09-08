@@ -47,8 +47,9 @@ func (r pageQueryTemplate) Validate() error {
 	return nil
 }
 
-func buildPageQueryFromTemplate(query *PageQuery) (string, []interface{}, error) {
+func buildPageQueryFromTemplate(dbHelper *legacysql.LegacyDatabaseHelper, query *PageQuery) (string, []interface{}, error) {
 	req := pageQueryTemplate{
+		SQLTemplate:        sqltemplate.New(dbHelper.DialectForDriver()),
 		Query:              query,
 		PermissionTable:    "permission",
 		RoleTable:          "role",
@@ -80,17 +81,17 @@ func (r listResourcePermissionsQueryTemplate) Validate() error {
 	return nil
 }
 
-func buildListResourcePermissionsQueryFromTemplate(sql *legacysql.LegacyDatabaseHelper, query *ListResourcePermissionsQuery) (string, []interface{}, error) {
+func buildListResourcePermissionsQueryFromTemplate(dbHelper *legacysql.LegacyDatabaseHelper, query *ListResourcePermissionsQuery) (string, []interface{}, error) {
 	req := listResourcePermissionsQueryTemplate{
-		SQLTemplate:        sqltemplate.New(sql.DialectForDriver()),
+		SQLTemplate:        sqltemplate.New(dbHelper.DialectForDriver()),
 		Query:              query,
-		PermissionTable:    sql.Table("permission"),
-		RoleTable:          sql.Table("role"),
-		UserTable:          sql.Table("user"),
-		TeamTable:          sql.Table("team"),
-		BuiltinRoleTable:   sql.Table("builtin_role"),
-		UserRoleTable:      sql.Table("user_role"),
-		TeamRoleTable:      sql.Table("team_role"),
+		PermissionTable:    dbHelper.Table("permission"),
+		RoleTable:          dbHelper.Table("role"),
+		UserTable:          dbHelper.Table("user"),
+		TeamTable:          dbHelper.Table("team"),
+		BuiltinRoleTable:   dbHelper.Table("builtin_role"),
+		UserRoleTable:      dbHelper.Table("user_role"),
+		TeamRoleTable:      dbHelper.Table("team_role"),
 		ManagedRolePattern: "managed:%",
 	}
 
