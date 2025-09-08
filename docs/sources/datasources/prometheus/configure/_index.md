@@ -271,7 +271,7 @@ datasources:
       prometheusVersion: 3.3.0
       cacheLevel: 'High'
       disableRecordingRules: false
-      timeInterval: 10s   # Prometheus scrape interval
+      timeInterval: 10s # Prometheus scrape interval
       incrementalQueryOverlapWindow: 10m
       exemplarTraceIdDestinations:
         # Field with internal link pointing to data source in Grafana.
