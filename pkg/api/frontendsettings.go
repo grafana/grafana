@@ -38,10 +38,10 @@ func (hs *HTTPServer) GetBootdata(c *contextmodel.ReqContext) {
 
 	ctx := c.Req.Context()
 	mtfeEnabled := openfeature.GetApiInstance().GetClient().Boolean(
-		ctx,                                 // Request context
-		featuremgmt.FlagMultiTenantFrontend, // Feature flag name
-		false,                               // Default value if evaluation fails
-		openfeature.TransactionContext(ctx), // Extract evaluation context from the request
+		ctx,
+		featuremgmt.FlagMultiTenantFrontend,
+		false, // default if evaluation fails
+		openfeature.TransactionContext(ctx),
 	)
 
 	if !mtfeEnabled {
