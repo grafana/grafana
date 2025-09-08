@@ -56,3 +56,12 @@ type GraphiteTagsRequest struct {
 	Limit     int    `json:"limit,omitempty"`
 	TagPrefix string `json:"tagPrefix,omitempty"`
 }
+
+type GraphiteTagValuesRequest struct {
+	Expr        string `json:"expr"`
+	Tag         string `json:"tag"`
+	From        string `json:"from"`
+	Until       string `json:"until"`
+	Limit       int    `json:"limit,omitempty"`
+	ValuePrefix string `json:"valuePrefix,omitempty"`
+}

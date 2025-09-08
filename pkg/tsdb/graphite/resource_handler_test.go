@@ -511,6 +511,121 @@ func TestHandleTagsAutocomplete(t *testing.T) {
 		})
 	}
 }
+
+func TestHandleTagValuesAutocomplete(t *testing.T) {
+	tests := []struct {
+		name          string
+		request       GraphiteTagValuesRequest
+		responseBody  string
+		statusCode    int
+		expectError   bool
+		errorContains string
+		expectedData  []string
+	}{
+		{
+			name: "successful tag values autocomplete request",
+			request: GraphiteTagValuesRequest{
+				Expr:        "app=*",
+				Tag:         "environment",
+				From:        "1h",
+				Until:       "now",
+				Limit:       5,
+				ValuePrefix: "prod",
+			},
+			responseBody: `["production", "prod-eu", "prod-us"]`,
+			statusCode:   200,
+			expectedData: []string{"production", "prod-eu", "prod-us"},
+		},
+		{
+			name: "tag values autocomplete with required fields only",
+			request: GraphiteTagValuesRequest{
+				Expr: "app=web",
+				Tag:  "datacenter",
+			},
+			responseBody: `["dc1", "dc2", "dc3"]`,
+			statusCode:   200,
+			expectedData: []string{"dc1", "dc2", "dc3"},
+		},
+		{
+			name: "tag values autocomplete with empty response",
+			request: GraphiteTagValuesRequest{
+				Expr:        "app=nonexistent",
+				Tag:         "environment",
+				ValuePrefix: "staging",
+			},
+			responseBody: `[]`,
+			statusCode:   200,
+			expectedData: []string{},
+		},
+		{
+			name: "tag values autocomplete server error - invalid JSON causes marshal error",
+			request: GraphiteTagValuesRequest{
+				Expr: "invalid-expr",
+				Tag:  "env",
+			},
+			responseBody:  `invalid json response`,
+			statusCode:    400,
+			expectError:   true,
+			errorContains: "tag values autocomplete request failed",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mockTransport := &mockRoundTripper{
+				respBody: []byte(tt.responseBody),
+				status:   tt.statusCode,
+			}
+
+			dsInfo := &datasourceInfo{
+				HTTPClient: &http.Client{Transport: mockTransport},
+				URL:        "http://graphite.example.com",
+			}
+
+			service := &Service{
+				logger: log.NewNullLogger(),
+			}
+
+			result, statusCode, err := service.handleTagValuesAutocomplete(context.Background(), dsInfo, tt.request)
+
+			if tt.expectError {
+				assert.Error(t, err)
+				if tt.errorContains != "" {
+					assert.Contains(t, err.Error(), tt.errorContains)
+				}
+			} else {
+				assert.NoError(t, err)
+				assert.Equal(t, tt.statusCode, statusCode)
+
+				var tagValues []string
+				err = json.Unmarshal(result, &tagValues)
+				assert.NoError(t, err)
+				assert.Equal(t, tt.expectedData, tagValues)
+			}
+
+			if !tt.expectError {
+				expectedURL := "http://graphite.example.com/tags/autoComplete/values"
+				assert.Contains(t, mockTransport.lastRequest.URL.String(), expectedURL)
+
+				assert.Contains(t, mockTransport.lastRequest.URL.RawQuery, fmt.Sprintf("expr=%s", url.QueryEscape(tt.request.Expr)))
+				assert.Contains(t, mockTransport.lastRequest.URL.RawQuery, fmt.Sprintf("tag=%s", tt.request.Tag))
+
+				if tt.request.From != "" {
+					assert.Contains(t, mockTransport.lastRequest.URL.RawQuery, fmt.Sprintf("from=%s", tt.request.From))
+				}
+				if tt.request.Until != "" {
+					assert.Contains(t, mockTransport.lastRequest.URL.RawQuery, fmt.Sprintf("until=%s", tt.request.Until))
+				}
+				if tt.request.Limit != 0 {
+					assert.Contains(t, mockTransport.lastRequest.URL.RawQuery, fmt.Sprintf("limit=%d", tt.request.Limit))
+				}
+				if tt.request.ValuePrefix != "" {
+					assert.Contains(t, mockTransport.lastRequest.URL.RawQuery, fmt.Sprintf("valuePrefix=%s", tt.request.ValuePrefix))
+				}
+			}
+		})
+	}
+}
 func TestHandleFunctions(t *testing.T) {
 	tests := []struct {
 		name          string

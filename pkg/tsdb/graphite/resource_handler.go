@@ -26,6 +26,7 @@ func (s *Service) newResourceMux() *http.ServeMux {
 	mux.HandleFunc("/metrics/find", handlePostResourceReq(s.handleMetricsFind, s))
 	mux.HandleFunc("/metrics/expand", handlePostResourceReq(s.handleMetricsExpand, s))
 	mux.HandleFunc("/tags/autoComplete/tags", handlePostResourceReq(s.handleTagsAutocomplete, s))
+	mux.HandleFunc("/tags/autoComplete/values", handlePostResourceReq(s.handleTagValuesAutocomplete, s))
 	mux.HandleFunc("/functions", handleGetResourceReq(s.handleFunctions, s))
 	return mux
 }
@@ -251,6 +252,42 @@ func (s *Service) handleTagsAutocomplete(ctx context.Context, dsInfo *datasource
 	}
 
 	return tagsResponse, statusCode, nil
+}
+
+func (s *Service) handleTagValuesAutocomplete(ctx context.Context, dsInfo *datasourceInfo, tagValuesAutocompleteRequestJson GraphiteTagValuesRequest) ([]byte, int, error) {
+	tagValuesAutocompleteUrl, err := url.Parse(fmt.Sprintf("%s/tags/autoComplete/values", dsInfo.URL))
+	if err != nil {
+		return nil, http.StatusInternalServerError, fmt.Errorf("unexpected error %v", err)
+	}
+
+	queryValues := tagValuesAutocompleteUrl.Query()
+	queryValues.Set("expr", tagValuesAutocompleteRequestJson.Expr)
+	queryValues.Set("tag", tagValuesAutocompleteRequestJson.Tag)
+	if tagValuesAutocompleteRequestJson.From != "" {
+		queryValues.Set("from", tagValuesAutocompleteRequestJson.From)
+	}
+	if tagValuesAutocompleteRequestJson.Until != "" {
+		queryValues.Set("until", tagValuesAutocompleteRequestJson.Until)
+	}
+	if tagValuesAutocompleteRequestJson.Limit != 0 {
+		queryValues.Set("limit", fmt.Sprintf("%d", tagValuesAutocompleteRequestJson.Limit))
+	}
+	if tagValuesAutocompleteRequestJson.ValuePrefix != "" {
+		queryValues.Set("valuePrefix", tagValuesAutocompleteRequestJson.ValuePrefix)
+	}
+	tagValuesAutocompleteUrl.RawQuery = queryValues.Encode()
+
+	tagValues, _, statusCode, err := doGraphiteRequest[[]string](ctx, "tag values autocomplete", dsInfo, tagValuesAutocompleteUrl, http.MethodGet, nil, map[string]string{}, s.logger, false)
+	if err != nil {
+		return nil, statusCode, fmt.Errorf("tag values autocomplete request failed: %v", err)
+	}
+
+	tagValuesResponse, err := json.Marshal(tagValues)
+	if err != nil {
+		return nil, http.StatusInternalServerError, fmt.Errorf("failed to marshal tag values autocomplete response: %s", err)
+	}
+
+	return tagValuesResponse, statusCode, nil
 }
 func (s *Service) handleFunctions(ctx context.Context, dsInfo *datasourceInfo) ([]byte, int, error) {
 	functionsUrl, err := url.Parse(fmt.Sprintf("%s/functions", dsInfo.URL))
