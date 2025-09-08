@@ -20,6 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning/validation"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 type NotificationPolicyService struct {
@@ -88,7 +89,7 @@ func (nps *NotificationPolicyService) UpdatePolicyTree(ctx context.Context, orgI
 		return definitions.Route{}, "", err
 	}
 
-	receivers := revision.GetReceiversNames()
+	receivers := revision.GetReceiversNames(util.Pointer(models.ResourceOriginGrafana))
 	receivers[""] = struct{}{} // Allow empty receiver (inheriting from parent)
 
 	err = tree.ValidateReceivers(receivers)
