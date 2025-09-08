@@ -6,12 +6,14 @@ import (
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository/local"
 	"github.com/grafana/grafana/apps/secret/pkg/decrypt"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/webhooks"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/webhooks/pullrequest"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
 // HACK: This is a hack so that wire can uniquely identify dependencies
-func ProvideProvisioningOSSExtras(webhook *webhooks.WebhookExtraBuilder) []provisioning.ExtraBuilder {
+func ProvideProvisioningExtraAPIs(webhook *webhooks.WebhookExtraBuilder) []provisioning.ExtraBuilder {
 	return []provisioning.ExtraBuilder{
 		webhook.ExtraBuilder,
 	}
@@ -34,4 +36,8 @@ func ProvideProvisioningOSSRepositoryExtras(
 			webhooksBuilder,
 		),
 	}
+}
+
+func ProvideExtraWorkers(pullRequestWorker *pullrequest.PullRequestWorker) []jobs.Worker {
+	return []jobs.Worker{pullRequestWorker}
 }

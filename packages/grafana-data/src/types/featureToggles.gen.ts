@@ -1132,4 +1132,9 @@ export interface FeatureToggles {
   * @default false
   */
   azureResourcePickerUpdates?: boolean;
+  /**
+  * Checks for deprecated Prometheus authentication methods (SigV4 and Azure), installs the relevant data source, and migrates the Prometheus data sources
+  * @default false
+  */
+  prometheusTypeMigration?: boolean;
 }
