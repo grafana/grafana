@@ -240,7 +240,7 @@ func (n *eventStore) CleanupOldEvents(ctx context.Context, retentionPeriod time.
 	deletedCount := 0
 
 	// Keys are stored in the format of "resource_version~namespace~group~resource~name"
-	// So if we sort ascending, we can stop once we get to an event that is older than the cutoff time
+	// So if we sort ascending, we can stop once we get to an event that is newer than the cutoff time
 	for key, err := range n.kv.Keys(ctx, eventsSection, ListOptions{Sort: SortOrderAsc}) {
 		if err != nil {
 			return deletedCount, fmt.Errorf("failed to list event keys: %w", err)
