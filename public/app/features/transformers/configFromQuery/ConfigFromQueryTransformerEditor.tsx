@@ -1,4 +1,5 @@
 import { css } from '@emotion/css';
+import { isArray } from 'lodash';
 
 import {
   FieldMatcherID,
@@ -11,10 +12,11 @@ import {
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Checkbox, fieldMatchersUI, InlineField, InlineFieldRow, Select, useStyles2 } from '@grafana/ui';
-import { FieldNamePicker } from '@grafana/ui/internal';
+//import { FieldNamePicker } from '@grafana/ui/internal';
 
 import { getTransformationContent } from '../docs/getTransformationContent';
 import { FieldToConfigMappingEditor } from '../fieldToConfigMapping/FieldToConfigMappingEditor';
+import { FieldConfigHandlerKey, FieldToConfigMapHandlerProcessor } from '../fieldToConfigMapping/fieldToConfigMapping';
 import darkImage from '../images/dark/configFromData.svg';
 import lightImage from '../images/light/configFromData.svg';
 
@@ -22,12 +24,12 @@ import { getConfigFromDataTransformer, ConfigFromQueryTransformOptions } from '.
 
 export interface Props extends TransformerUIProps<ConfigFromQueryTransformOptions> {}
 
-const fieldNamePickerSettings = {
+/*const fieldNamePickerSettings = {
   editor: FieldNamePicker,
   id: '',
   name: '',
   settings: { width: 24, isClearable: false },
-};
+}; */
 
 export function ConfigFromQueryTransformerEditor({ input, onChange, options }: Props) {
   const styles = useStyles2(getStyles);
@@ -49,13 +51,6 @@ export function ConfigFromQueryTransformerEditor({ input, onChange, options }: P
     });
   };
 
-  const onMappingChange = (value: SelectableValue<boolean>) => {
-    onChange({
-      ...options,
-      isMapping: value.value || false,
-    });
-  };
-
   const onMatcherChange = (value: SelectableValue<string>) => {
     onChange({ ...options, applyTo: { id: value.value! } });
   };
@@ -68,6 +63,11 @@ export function ConfigFromQueryTransformerEditor({ input, onChange, options }: P
     .list()
     .filter((o) => !o.excludeFromPicker)
     .map<SelectableValue<string>>((i) => ({ label: i.name, value: i.id, description: i.description }));
+
+  const mapFn: FieldToConfigMapHandlerProcessor = (value, config, context) => {
+    console.log(value, config, context);
+    return config.mappings;
+  };
 
   return (
     <>
@@ -103,18 +103,36 @@ export function ConfigFromQueryTransformerEditor({ input, onChange, options }: P
         <InlineField>
           <Checkbox
             label={t('transformers.config-from-query-transformer-editor.label-mapping', 'Map results')}
-            onChange={onMappingChange}
+            onChange={(evt) => onChange({ ...options, isMapping: evt.currentTarget.checked })}
             value={options.isMapping}
           />
         </InlineField>
       </InlineFieldRow>
       <InlineFieldRow>
-        {configFrame && !options.isMapping && (
+        {configFrame && (
           <FieldToConfigMappingEditor
             frame={configFrame}
             mappings={options.mappings}
             onChange={(mappings) => onChange({ ...options, mappings })}
             withReducers={!options.isMapping}
+            configOverride={
+              options.isMapping
+                ? [
+                    {
+                      key: 'mappings.text',
+                      name: 'Value mappings / Display text',
+                      targetProperty: 'mappings',
+                      processor: mapFn,
+                    },
+                    {
+                      key: 'mappings.value',
+                      name: 'Value mappings / Value',
+                      targetProperty: 'mappings',
+                      processor: mapFn,
+                    },
+                  ]
+                : undefined
+            }
           />
         )}
       </InlineFieldRow>

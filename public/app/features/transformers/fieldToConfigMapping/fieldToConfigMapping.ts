@@ -88,7 +88,7 @@ interface FieldToConfigContext {
   mappingTexts?: string[];
 }
 
-type FieldToConfigMapHandlerProcessor = (
+export type FieldToConfigMapHandlerProcessor = (
   value: any,
   config: FieldConfig,
   context: FieldToConfigContext,

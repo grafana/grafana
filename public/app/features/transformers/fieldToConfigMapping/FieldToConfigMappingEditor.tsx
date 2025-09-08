@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/consistent-type-assertions */
 import { css } from '@emotion/css';
 import { capitalize } from 'lodash';
 
@@ -25,14 +26,22 @@ export interface Props {
   onChange: (mappings: FieldToConfigMapping[]) => void;
   withReducers?: boolean;
   withNameAndValue?: boolean;
+  configOverride?: FieldToConfigMapHandler[];
 }
 
-export function FieldToConfigMappingEditor({ frame, mappings, onChange, withReducers, withNameAndValue }: Props) {
+export function FieldToConfigMappingEditor({
+  frame,
+  mappings,
+  onChange,
+  withReducers,
+  withNameAndValue,
+  configOverride,
+}: Props) {
   const styles = useStyles2(getStyles);
   const rows = getViewModelRows(frame, mappings, withNameAndValue);
-  const configProps = configMapHandlers.map((def) => configHandlerToSelectOption(def, false)) as Array<
-    SelectableValue<string>
-  >;
+  const configProps = (configOverride ?? configMapHandlers).map((def) =>
+    configHandlerToSelectOption(def, false)
+  ) as Array<SelectableValue<string>>;
   const hasAdditionalSettings = mappings.reduce(
     (prev, mapping) => prev || createsArgumentsEditor(mapping.handlerKey),
     false
