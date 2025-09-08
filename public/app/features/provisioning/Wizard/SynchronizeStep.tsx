@@ -60,6 +60,14 @@ export function SynchronizeStep({ isLegacyStorage }: SynchronizeStepProps) {
           to the repository and provisioned back into the instance.
         </Trans>
       </Text>
+      {repositoryHealthMessages && (
+        <ProvisioningAlert
+          error={{
+            title: t('provisioning.synchronize-step.repository-unhealthy', 'Repository is unhealthy'),
+            message: repositoryHealthMessages,
+          }}
+        />
+      )}
       <Alert
         title={t(
           'provisioning.wizard.alert-title',
@@ -120,15 +128,6 @@ export function SynchronizeStep({ isLegacyStorage }: SynchronizeStepProps) {
           <Trans i18nKey="provisioning.wizard.button-start">Begin synchronization</Trans>
         </Button>
       </Field>
-
-      {repositoryHealthMessages && (
-        <ProvisioningAlert
-          error={{
-            title: t('provisioning.synchronize-step.repository-unhealthy', 'Repository is unhealthy'),
-            message: repositoryHealthMessages,
-          }}
-        />
-      )}
     </Stack>
   );
 }
