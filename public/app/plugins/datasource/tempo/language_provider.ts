@@ -1,5 +1,5 @@
 import { AdHocVariableFilter, LanguageProvider, SelectableValue, TimeRange } from '@grafana/data';
-import { BackendSrvRequest, getTemplateSrv } from '@grafana/runtime';
+import { getTemplateSrv } from '@grafana/runtime';
 import { VariableFormatID } from '@grafana/schema';
 
 import {
