@@ -47,7 +47,6 @@ import (
 	dashsvc "github.com/grafana/grafana/pkg/services/dashboards/service"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/librarypanels"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/services/provisioning"
@@ -89,7 +88,6 @@ type DashboardsAPIBuilder struct {
 	scheme                       *runtime.Scheme
 	search                       *SearchHandler
 	dashStore                    dashboards.Store
-	folderStore                  folder.FolderStore
 	QuotaService                 quota.Service
 	ProvisioningService          provisioning.ProvisioningService
 	cfg                          *setting.Cfg
@@ -125,7 +123,6 @@ func RegisterAPIService(
 	dual dualwrite.Service,
 	sorter sort.Service,
 	quotaService quota.Service,
-	folderStore folder.FolderStore,
 	libraryPanelSvc librarypanels.Service,
 	restConfigProvider apiserver.RestConfigProvider,
 	userService user.Service,
@@ -149,7 +146,6 @@ func RegisterAPIService(
 		dashboardProvisioningService: provisioningDashboardService,
 		search:                       NewSearchHandler(tracing, dual, legacyDashboardSearcher, unified, features),
 		dashStore:                    dashStore,
-		folderStore:                  folderStore,
 		QuotaService:                 quotaService,
 		ProvisioningService:          provisioning,
 		cfg:                          cfg,
