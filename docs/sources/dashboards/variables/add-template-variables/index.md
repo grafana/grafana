@@ -332,8 +332,6 @@ Now you can [filter data on the dashboard](ref:filter-dashboard).
 
 {{< docs/shared lookup="visualizations/panel-filtering.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
-<!--add this content in the table docs in the filtering section -->
-
 <!-- vale Grafana.Spelling = YES -->
 <!-- vale Grafana.WordList = YES -->
 
