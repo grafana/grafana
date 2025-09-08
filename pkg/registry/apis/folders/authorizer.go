@@ -8,8 +8,6 @@ import (
 	authlib "github.com/grafana/authlib/types"
 )
 
-// newMultiTenantAuthorizer creates an authorizer suitable to multi-tenant setup.
-// For now it only allow authorization of access tokens.
 func newAuthorizer(ac authlib.AccessClient) authorizer.Authorizer {
 	return authorizer.AuthorizerFunc(func(ctx context.Context, a authorizer.Attributes) (authorizer.Decision, string, error) {
 		info, ok := authlib.AuthInfoFrom(ctx)

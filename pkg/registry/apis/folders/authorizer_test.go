@@ -16,7 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
 
-func TestMultiTenantAuthorizer(t *testing.T) {
+func TestFolderAuthorizer(t *testing.T) {
 	type input struct {
 		verb   string
 		info   types.AuthInfo
@@ -29,12 +29,12 @@ func TestMultiTenantAuthorizer(t *testing.T) {
 	}
 
 	tests := []struct {
-		name    string
-		input   input
-		expeted expected
+		name     string
+		input    input
+		expected expected
 	}{
 		{
-			name: "non access policy idenity should not be able to authorize",
+			name: "non access policy identity should not be able to authorize",
 			input: input{
 				verb: utils.VerbGet,
 				info: &identity.StaticRequester{
@@ -43,7 +43,7 @@ func TestMultiTenantAuthorizer(t *testing.T) {
 					UserUID: "1",
 				},
 			},
-			expeted: expected{
+			expected: expected{
 				authorized: authorizer.DecisionDeny,
 			},
 		},
@@ -64,7 +64,7 @@ func TestMultiTenantAuthorizer(t *testing.T) {
 				}),
 				client: authz.NewClient(nil),
 			},
-			expeted: expected{
+			expected: expected{
 				authorized: authorizer.DecisionAllow,
 			},
 		},
@@ -85,7 +85,7 @@ func TestMultiTenantAuthorizer(t *testing.T) {
 				}),
 				client: authz.NewClient(nil),
 			},
-			expeted: expected{
+			expected: expected{
 				authorized: authorizer.DecisionDeny,
 			},
 		},
@@ -99,14 +99,14 @@ func TestMultiTenantAuthorizer(t *testing.T) {
 				authorizer.AttributesRecord{User: tt.input.info, Verb: tt.input.verb, APIGroup: folders.GROUP, Resource: "folders", ResourceRequest: true, Name: "123", Namespace: "stacks-1"},
 			)
 
-			if tt.expeted.err {
+			if tt.expected.err {
 				require.Error(t, err)
 				require.Equal(t, authorizer.DecisionDeny, authorized)
 				return
 			}
 
 			require.NoError(t, err)
-			require.Equal(t, tt.expeted.authorized, authorized)
+			require.Equal(t, tt.expected.authorized, authorized)
 		})
 	}
 }
