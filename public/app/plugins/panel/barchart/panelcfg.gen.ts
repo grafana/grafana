@@ -77,6 +77,7 @@ export const defaultOptions: Partial<Options> = {
   clusterWidth: 0.7,
   fullHighlight: false,
   groupWidth: 0.7,
+  groupByField: "",
   orientation: common.VizOrientation.Auto,
   showValue: common.VisibilityMode.Auto,
   stacking: common.StackingMode.None,

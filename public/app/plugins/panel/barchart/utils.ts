@@ -79,7 +79,7 @@ export function prepSeries(
   if (timeFieldIdx >= 0 && frames.length > 1) {
     frame = outerJoinDataFrames({ frames, keepDisplayNames: true }) ?? frame;
   }
-
+  
   const xField =
     // TODO: use matcher
     frame.fields.find((field) => field.state?.displayName === xFieldName || field.name === xFieldName) ??

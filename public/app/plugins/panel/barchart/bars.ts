@@ -14,11 +14,12 @@ import { timeUnitSize, StackingGroup, preparePlotData2, getStackingGroups } from
 
 const intervals = systemDateFormats.interval;
 
-import { distribute, SPACE_BETWEEN } from './distribute';
+import { distribute, SPACE_BETWEEN, SPACE_EVENLY } from './distribute';
 import { findRects, intersects, pointWithin, Quadtree, Rect } from './quadtree';
 
 const groupDistr = SPACE_BETWEEN;
 const barDistr = SPACE_BETWEEN;
+const clusterDistr = SPACE_BETWEEN;
 // min.max font size for value label
 const VALUE_MIN_FONT_SIZE = 8;
 const VALUE_MAX_FONT_SIZE = 30;
@@ -131,6 +132,7 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
     xSpacing = 0,
     hoverMulti = false,
     timeZone = 'browser',
+    groupByField,
   } = opts;
   const isXHorizontal = xOri === ScaleOrientation.Horizontal;
   const hasAutoValueSize = !Boolean(opts.text?.valueSize);
@@ -232,6 +234,7 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
     return [min, max];
   };
 
+  // non-stacked distribution
   let distrTwo = (groupCount: number, barCount: number) => {
     let out = Array.from({ length: barCount }, () => ({
       offs: Array(groupCount).fill(0),
@@ -248,7 +251,8 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
     return out;
   };
 
-  let distrOne = (groupCount: number, barCount: number) => {
+  // stacked distribution
+  let distrOne = (groupCount: number, barCount: number) => { 
     let out = Array.from({ length: barCount }, () => ({
       offs: Array(groupCount).fill(0),
       size: Array(groupCount).fill(0),
@@ -273,17 +277,17 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
     let groupOffset = 0; // running index into groups
 
     // distribute clusters across the entire x-axis
-    distribute(clusterCount, groupWidth, groupDistr, null, (clusterIdx, clusterOffPct, clusterDimPct) => {
+    distribute(clusterCount, clusterWidth, clusterDistr, null, (clusterIdx, clusterOffPct, clusterDimPct) => {
       const groupsInCurrentCluster = groupsPerCluster[clusterIdx]; // number of groups in this cluster
       const start = groupOffset;
       const end = groupOffset + groupsInCurrentCluster;
       groupOffset = end;
 
       // distribute groups within cluster
-      distribute(groupsInCurrentCluster, barWidth, barDistr, null, (localGroupIdx, gOff, gDim) => {
+      distribute(groupsInCurrentCluster, groupWidth, groupDistr, null, (localGroupIdx, groupOffPct, groupDimPct) => {
         const globalGroupIdx = start + localGroupIdx;
-        const offset = clusterOffPct + clusterDimPct * gOff;
-        const size = clusterDimPct * gDim;
+        const offset = clusterOffPct + clusterDimPct * groupOffPct;
+        const size = clusterDimPct * groupDimPct;
 
         // In stacked mode: all stacked bars share same offset and size.
         for (let bar = 0; bar < barCount; bar++) {
@@ -562,13 +566,13 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
     const nClusters = 2; // TODO for testing, remove
     const groupsPerCluster = [2,2];
 
-    barsPctLayout = [null, ...distrClusteredStacked(u.data[0].length, u.data.length -1, nClusters, groupsPerCluster)];
-
-    // if (isStacked) {
-    //   barsPctLayout = [null, ...distrOne(u.data[0].length, u.data.length - 1)];
-    // } else {
-    //   barsPctLayout = [null, ...distrTwo(u.data[0].length, u.data.length - 1)];
-    // }
+    if (groupByField != "" && groupByField != undefined) {
+      barsPctLayout = [null, ...distrClusteredStacked(u.data[0].length, u.data.length -1, nClusters, groupsPerCluster)];
+    }else if (isStacked) {
+      barsPctLayout = [null, ...distrOne(u.data[0].length, u.data.length - 1)];
+    } else {
+      barsPctLayout = [null, ...distrTwo(u.data[0].length, u.data.length - 1)];
+    }
 
     if (useMappedColors) {
       barsColors = [null];
