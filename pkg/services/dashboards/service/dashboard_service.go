@@ -83,7 +83,6 @@ type DashboardServiceImpl struct {
 	cfg                    *setting.Cfg
 	log                    log.Logger
 	dashboardStore         dashboards.Store
-	folderStore            folder.FolderStore
 	folderService          folder.Service
 	orgService             org.Service
 	features               featuremgmt.FeatureToggles
@@ -373,7 +372,6 @@ var _ registry.BackgroundService = (*DashboardServiceImpl)(nil)
 func ProvideDashboardServiceImpl(
 	cfg *setting.Cfg,
 	dashboardStore dashboards.Store,
-	folderStore folder.FolderStore,
 	features featuremgmt.FeatureToggles,
 	folderPermissionsService accesscontrol.FolderPermissionsService,
 	ac accesscontrol.AccessControl,
@@ -396,7 +394,6 @@ func ProvideDashboardServiceImpl(
 		folderPermissions:         folderPermissionsService,
 		ac:                        ac,
 		acService:                 acService,
-		folderStore:               folderStore,
 		folderService:             folderSvc,
 		orgService:                orgService,
 		k8sclient:                 k8sClient,

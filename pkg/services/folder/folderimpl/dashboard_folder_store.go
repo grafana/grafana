@@ -17,7 +17,7 @@ type DashboardFolderStoreImpl struct {
 	store db.DB
 }
 
-func ProvideDashboardFolderStore(sqlStore db.DB) *DashboardFolderStoreImpl {
+func newDashboardFolderStore(sqlStore db.DB) *DashboardFolderStoreImpl {
 	return &DashboardFolderStoreImpl{store: sqlStore}
 }
 
