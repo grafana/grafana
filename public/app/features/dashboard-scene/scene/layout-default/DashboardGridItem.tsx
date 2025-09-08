@@ -17,6 +17,7 @@ import {
 import { GRID_COLUMN_COUNT } from 'app/core/constants';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 
+import { DashboardStateChangedEvent } from '../../edit-pane/shared';
 import { getCloneKey, getLocalVariableValueSet } from '../../utils/clone';
 import { getMultiVariableValues } from '../../utils/utils';
 import { scrollCanvasElementIntoView, scrollIntoView } from '../layouts-shared/scrollCanvasElementIntoView';
@@ -60,6 +61,8 @@ export class DashboardGridItem
 
   private _activationHandler() {
     this.handleVariableName();
+
+    this._subs.add(this.subscribeToEvent(DashboardStateChangedEvent, () => this.handleEditChange()));
 
     return () => {
       this._handleGridSizeUnsubscribe();
@@ -114,26 +117,21 @@ export class DashboardGridItem
     this.setState({ body });
   }
 
-  public editingStarted() {
-    if (!this.state.variableName) {
-      return;
-    }
-  }
+  public handleEditChange() {
+    this._prevRepeatValues = undefined;
 
-  public editingCompleted(withChanges: boolean) {
-    if (withChanges) {
-      this._prevRepeatValues = undefined;
-      if (this.parent instanceof SceneGridRow) {
-        const repeater = this.parent.state.$behaviors?.find((b) => b instanceof RowRepeaterBehavior);
-        if (repeater) {
-          repeater.resetPrevRepeatValues();
-        }
+    if (this.parent instanceof SceneGridRow) {
+      const repeater = this.parent.state.$behaviors?.find((b) => b instanceof RowRepeaterBehavior);
+      if (repeater) {
+        repeater.resetPrevRepeatValues();
       }
     }
 
     if (this.state.variableName && this.state.repeatDirection === 'h' && this.state.width !== GRID_COLUMN_COUNT) {
       this.setState({ width: GRID_COLUMN_COUNT });
     }
+
+    this.performRepeat();
   }
 
   public performRepeat() {
