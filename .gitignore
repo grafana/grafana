@@ -94,6 +94,8 @@ example-apiserver/
 /devenv/docker/blocks/auth/openldap/certs/
 
 conf/custom.ini
+conf/operator.ini
+conf/storage.ini
 
 /conf/provisioning/**/*.yaml
 !/conf/provisioning/**/sample.yaml
@@ -189,6 +191,8 @@ compilation-stats.json
 /e2e/build_results.zip
 /e2e/extensions
 !/e2e/extensions/.keep
+/e2e-playwright/extensions
+!/e2e-playwright/extensions/.keep
 /e2e/extensions-suite
 /test-results/
 /playwright-report/
@@ -218,7 +222,6 @@ public/api-spec.json
 
 deployment_tools_config.json
 
-.betterer.cache
 .nx
 
 # Temporary file for backporting PRs
@@ -241,3 +244,8 @@ public/app/plugins/**/dist/
 public/mockServiceWorker.js
 
 /e2e-playwright/test-plugins/*/dist
+/apps/provisioning/cmd/job-controller/bin/
+
+
+# Ignore unified storage kv store files
+/grafana-kv-data

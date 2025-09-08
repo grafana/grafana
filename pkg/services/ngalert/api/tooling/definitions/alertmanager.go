@@ -277,7 +277,7 @@ func (m MergeResult) LogContext() []any {
 		return nil
 	}
 	logCtx := make([]any, 0, 4)
-	if len(m.RenamedTimeIntervals) > 0 {
+	if len(m.RenamedReceivers) > 0 {
 		rcvBuilder := strings.Builder{}
 		for from, to := range m.RenamedReceivers {
 			rcvBuilder.WriteString(fmt.Sprintf("'%s'->'%s',", from, to))
@@ -285,11 +285,11 @@ func (m MergeResult) LogContext() []any {
 		logCtx = append(logCtx, "renamedReceivers", fmt.Sprintf("[%s]", rcvBuilder.String()[0:rcvBuilder.Len()-1]))
 	}
 	if len(m.RenamedTimeIntervals) > 0 {
-		rcvBuilder := strings.Builder{}
+		intervalBuilder := strings.Builder{}
 		for from, to := range m.RenamedTimeIntervals {
-			rcvBuilder.WriteString(fmt.Sprintf("'%s'->'%s',", from, to))
+			intervalBuilder.WriteString(fmt.Sprintf("'%s'->'%s',", from, to))
 		}
-		logCtx = append(logCtx, "renamedTimeIntervals", fmt.Sprintf("[%s]", rcvBuilder.String()[0:rcvBuilder.Len()-1]))
+		logCtx = append(logCtx, "renamedTimeIntervals", fmt.Sprintf("[%s]", intervalBuilder.String()[0:intervalBuilder.Len()-1]))
 	}
 	return logCtx
 }
@@ -718,9 +718,6 @@ func (c *ExtraConfiguration) GetSanitizedAlertmanagerConfigYAML() (string, error
 	if err != nil {
 		return "", err
 	}
-
-	// Remove global settings as they are not used in Grafana
-	prometheusConfig.Global = nil
 
 	configYAML, err := yaml.Marshal(prometheusConfig)
 	if err != nil {

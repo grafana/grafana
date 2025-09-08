@@ -3,16 +3,20 @@ package expr
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"slices"
 	"time"
 
 	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
+	"go.opentelemetry.io/otel/trace"
 	"golang.org/x/exp/maps"
 	"gonum.org/v1/gonum/graph/simple"
 	"gonum.org/v1/gonum/graph/topo"
 
 	"github.com/grafana/grafana/pkg/expr/mathexp"
+	"github.com/grafana/grafana/pkg/expr/sql"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
 
@@ -48,6 +52,8 @@ type Node interface {
 	RefID() string
 	String() string
 	NeedsVars() []string
+	SetInputTo(refID string)
+	IsInputTo() map[string]struct{}
 }
 
 type ExecutableNode interface {
@@ -87,8 +93,26 @@ func (dp *DataPipeline) execute(c context.Context, now time.Time, s *Service) (m
 		for _, neededVar := range node.NeedsVars() {
 			if res, ok := vars[neededVar]; ok {
 				if res.Error != nil {
+					var depErr error
+					// IF SQL expression dependency error
+					if node.NodeType() == TypeCMDNode && node.(*CMDNode).CMDType == TypeSQL {
+						e := sql.MakeSQLDependencyError(node.RefID(), neededVar)
+
+						// although the SQL expression won't be executed,
+						// we track a dependency error on the metric.
+						eType := e.Category()
+						var errWithType *sql.ErrorWithCategory
+						if errors.As(res.Error, &errWithType) {
+							// If it is already SQL error with type (e.g. limit exceeded, input conversion, capture the type as that)
+							eType = errWithType.Category()
+						}
+						s.metrics.SqlCommandCount.WithLabelValues("error", eType)
+						depErr = e
+					} else { // general SSE dependency error
+						depErr = MakeDependencyError(node.RefID(), neededVar)
+					}
 					errResult := mathexp.Results{
-						Error: MakeDependencyError(node.RefID(), neededVar),
+						Error: depErr,
 					}
 					vars[node.RefID()] = errResult
 					hasDepError = true
@@ -180,6 +204,26 @@ func (s *Service) buildPipeline(ctx context.Context, req *Request) (DataPipeline
 		req.Headers = map[string]string{}
 	}
 
+	instrumentSQLError := func(err error, span trace.Span) {
+		var sqlErr *sql.ErrorWithCategory
+		if errors.As(err, &sqlErr) {
+			// The SQL expression (and the entire pipeline) will not be executed, so we
+			// track the attempt to execute here.
+			s.metrics.SqlCommandCount.WithLabelValues("error", sqlErr.Category()).Inc()
+		}
+		if err != nil {
+			span.RecordError(err)
+			span.SetStatus(codes.Error, err.Error())
+		}
+	}
+
+	_, span := s.tracer.Start(ctx, "SSE.BuildPipeline")
+	var err error
+	defer func() {
+		instrumentSQLError(err, span)
+		span.End()
+	}()
+
 	graph, err := s.buildDependencyGraph(ctx, req)
 	if err != nil {
 		return nil, err
@@ -202,7 +246,7 @@ func (s *Service) buildDependencyGraph(ctx context.Context, req *Request) (*simp
 
 	registry := buildNodeRegistry(graph)
 
-	if err := buildGraphEdges(graph, registry); err != nil {
+	if err := s.buildGraphEdges(graph, registry); err != nil {
 		return nil, err
 	}
 
@@ -311,7 +355,7 @@ func (s *Service) buildGraph(ctx context.Context, req *Request) (*simple.Directe
 }
 
 // buildGraphEdges generates graph edges based on each node's dependencies.
-func buildGraphEdges(dp *simple.DirectedGraph, registry map[string]Node) error {
+func (s *Service) buildGraphEdges(dp *simple.DirectedGraph, registry map[string]Node) error {
 	nodeIt := dp.Nodes()
 
 	for nodeIt.Next() {
@@ -328,6 +372,14 @@ func buildGraphEdges(dp *simple.DirectedGraph, registry map[string]Node) error {
 		for _, neededVar := range cmdNode.Command.NeedsVars() {
 			neededNode, ok := registry[neededVar]
 			if !ok {
+				if cmdNode.CMDType == TypeSQL {
+					// With the current flow, the SQL expression won't be executed with
+					// this missing dependency. But we collection the metric as there was an
+					// attempt to execute a SQL expression.
+					e := sql.MakeTableNotFoundError(cmdNode.refID, neededVar)
+					s.metrics.SqlCommandCount.WithLabelValues("error", e.Category()).Inc()
+					return e
+				}
 				return fmt.Errorf("unable to find dependent node '%v'", neededVar)
 			}
 
@@ -365,6 +417,7 @@ func buildGraphEdges(dp *simple.DirectedGraph, registry map[string]Node) error {
 			}
 
 			edge := dp.NewEdge(neededNode, cmdNode)
+			neededNode.SetInputTo(cmdNode.RefID())
 
 			dp.SetEdge(edge)
 		}

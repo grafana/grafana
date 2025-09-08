@@ -16,6 +16,8 @@ permissions: {}
 jobs:
   detect-changes:
     name: Detect whether code changed
+    # Run on `grafana/grafana` main branch, or on pull requests to prevent double-running on mirrors
+    if: (github.event_name == 'pull_request' || (github.event_name == 'push' && github.repository == 'grafana/grafana'))
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -66,7 +68,7 @@ jobs:
         run: |
           set -euo pipefail
           readarray -t PACKAGES <<< "$(./scripts/ci/backend-tests/shard.sh -N"$SHARD")"
-          go test -short -timeout=30m "${PACKAGES[@]}"
+          CGO_ENABLED=0 go test -short -timeout=30m "${PACKAGES[@]}"
 
   grafana-enterprise:
     # Run this workflow for non-PR events (like pushes to `main` or `release-*`) OR for internal PRs (PRs not from forks)
@@ -116,7 +118,7 @@ jobs:
           readarray -t PACKAGES <<< "$(./scripts/ci/backend-tests/shard.sh -N"$SHARD")"
           # This tee requires pipefail to be set, otherwise `go test`'s exit code is thrown away.
           # That means having no `-o pipefail` => failing tests => exit code 0, which is wrong.
-          go test -short -timeout=30m "${PACKAGES[@]}"
+          CGO_ENABLED=0 go test -short -timeout=30m "${PACKAGES[@]}"
 
   # This is the job that is actually required by rulesets.
   # We need to require EITHER the OSS or the Enterprise job to pass.

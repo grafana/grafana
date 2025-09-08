@@ -1223,6 +1223,7 @@ type DashboardQueryVariableSpec struct {
 	Refresh            DashboardVariableRefresh                      `json:"refresh"`
 	SkipUrlSync        bool                                          `json:"skipUrlSync"`
 	Description        *string                                       `json:"description,omitempty"`
+	ShowInControlsMenu *bool                                         `json:"showInControlsMenu,omitempty"`
 	Query              DashboardDataQueryKind                        `json:"query"`
 	Regex              string                                        `json:"regex"`
 	Sort               DashboardVariableSort                         `json:"sort"`
@@ -1281,14 +1282,15 @@ func NewDashboardVariableOption() *DashboardVariableOption {
 }
 
 // Determine if the variable shows on dashboard
-// Accepted values are `dontHide` (show label and value), `hideLabel` (show value only), `hideVariable` (show nothing).
+// Accepted values are `dontHide` (show label and value), `hideLabel` (show value only), `hideVariable` (show nothing), `inControlsMenu` (show in a drop-down menu).
 // +k8s:openapi-gen=true
 type DashboardVariableHide string
 
 const (
-	DashboardVariableHideDontHide     DashboardVariableHide = "dontHide"
-	DashboardVariableHideHideLabel    DashboardVariableHide = "hideLabel"
-	DashboardVariableHideHideVariable DashboardVariableHide = "hideVariable"
+	DashboardVariableHideDontHide       DashboardVariableHide = "dontHide"
+	DashboardVariableHideHideLabel      DashboardVariableHide = "hideLabel"
+	DashboardVariableHideHideVariable   DashboardVariableHide = "hideVariable"
+	DashboardVariableHideInControlsMenu DashboardVariableHide = "inControlsMenu"
 )
 
 // Options to config when to refresh a variable
@@ -1349,13 +1351,14 @@ func NewDashboardTextVariableKind() *DashboardTextVariableKind {
 // Text variable specification
 // +k8s:openapi-gen=true
 type DashboardTextVariableSpec struct {
-	Name        string                  `json:"name"`
-	Current     DashboardVariableOption `json:"current"`
-	Query       string                  `json:"query"`
-	Label       *string                 `json:"label,omitempty"`
-	Hide        DashboardVariableHide   `json:"hide"`
-	SkipUrlSync bool                    `json:"skipUrlSync"`
-	Description *string                 `json:"description,omitempty"`
+	Name               string                  `json:"name"`
+	Current            DashboardVariableOption `json:"current"`
+	Query              string                  `json:"query"`
+	Label              *string                 `json:"label,omitempty"`
+	Hide               DashboardVariableHide   `json:"hide"`
+	SkipUrlSync        bool                    `json:"skipUrlSync"`
+	Description        *string                 `json:"description,omitempty"`
+	ShowInControlsMenu *bool                   `json:"showInControlsMenu,omitempty"`
 }
 
 // NewDashboardTextVariableSpec creates a new DashboardTextVariableSpec object.
@@ -1394,13 +1397,14 @@ func NewDashboardConstantVariableKind() *DashboardConstantVariableKind {
 // Constant variable specification
 // +k8s:openapi-gen=true
 type DashboardConstantVariableSpec struct {
-	Name        string                  `json:"name"`
-	Query       string                  `json:"query"`
-	Current     DashboardVariableOption `json:"current"`
-	Label       *string                 `json:"label,omitempty"`
-	Hide        DashboardVariableHide   `json:"hide"`
-	SkipUrlSync bool                    `json:"skipUrlSync"`
-	Description *string                 `json:"description,omitempty"`
+	Name               string                  `json:"name"`
+	Query              string                  `json:"query"`
+	Current            DashboardVariableOption `json:"current"`
+	Label              *string                 `json:"label,omitempty"`
+	Hide               DashboardVariableHide   `json:"hide"`
+	SkipUrlSync        bool                    `json:"skipUrlSync"`
+	Description        *string                 `json:"description,omitempty"`
+	ShowInControlsMenu *bool                   `json:"showInControlsMenu,omitempty"`
 }
 
 // NewDashboardConstantVariableSpec creates a new DashboardConstantVariableSpec object.
@@ -1439,20 +1443,21 @@ func NewDashboardDatasourceVariableKind() *DashboardDatasourceVariableKind {
 // Datasource variable specification
 // +k8s:openapi-gen=true
 type DashboardDatasourceVariableSpec struct {
-	Name             string                    `json:"name"`
-	PluginId         string                    `json:"pluginId"`
-	Refresh          DashboardVariableRefresh  `json:"refresh"`
-	Regex            string                    `json:"regex"`
-	Current          DashboardVariableOption   `json:"current"`
-	Options          []DashboardVariableOption `json:"options"`
-	Multi            bool                      `json:"multi"`
-	IncludeAll       bool                      `json:"includeAll"`
-	AllValue         *string                   `json:"allValue,omitempty"`
-	Label            *string                   `json:"label,omitempty"`
-	Hide             DashboardVariableHide     `json:"hide"`
-	SkipUrlSync      bool                      `json:"skipUrlSync"`
-	Description      *string                   `json:"description,omitempty"`
-	AllowCustomValue bool                      `json:"allowCustomValue"`
+	Name               string                    `json:"name"`
+	PluginId           string                    `json:"pluginId"`
+	Refresh            DashboardVariableRefresh  `json:"refresh"`
+	Regex              string                    `json:"regex"`
+	Current            DashboardVariableOption   `json:"current"`
+	Options            []DashboardVariableOption `json:"options"`
+	Multi              bool                      `json:"multi"`
+	IncludeAll         bool                      `json:"includeAll"`
+	AllValue           *string                   `json:"allValue,omitempty"`
+	Label              *string                   `json:"label,omitempty"`
+	Hide               DashboardVariableHide     `json:"hide"`
+	SkipUrlSync        bool                      `json:"skipUrlSync"`
+	Description        *string                   `json:"description,omitempty"`
+	AllowCustomValue   bool                      `json:"allowCustomValue"`
+	ShowInControlsMenu *bool                     `json:"showInControlsMenu,omitempty"`
 }
 
 // NewDashboardDatasourceVariableSpec creates a new DashboardDatasourceVariableSpec object.
@@ -1497,18 +1502,19 @@ func NewDashboardIntervalVariableKind() *DashboardIntervalVariableKind {
 // Interval variable specification
 // +k8s:openapi-gen=true
 type DashboardIntervalVariableSpec struct {
-	Name        string                    `json:"name"`
-	Query       string                    `json:"query"`
-	Current     DashboardVariableOption   `json:"current"`
-	Options     []DashboardVariableOption `json:"options"`
-	Auto        bool                      `json:"auto"`
-	AutoMin     string                    `json:"auto_min"`
-	AutoCount   int64                     `json:"auto_count"`
-	Refresh     DashboardVariableRefresh  `json:"refresh"`
-	Label       *string                   `json:"label,omitempty"`
-	Hide        DashboardVariableHide     `json:"hide"`
-	SkipUrlSync bool                      `json:"skipUrlSync"`
-	Description *string                   `json:"description,omitempty"`
+	Name               string                    `json:"name"`
+	Query              string                    `json:"query"`
+	Current            DashboardVariableOption   `json:"current"`
+	Options            []DashboardVariableOption `json:"options"`
+	Auto               bool                      `json:"auto"`
+	AutoMin            string                    `json:"auto_min"`
+	AutoCount          int64                     `json:"auto_count"`
+	Refresh            DashboardVariableRefresh  `json:"refresh"`
+	Label              *string                   `json:"label,omitempty"`
+	Hide               DashboardVariableHide     `json:"hide"`
+	SkipUrlSync        bool                      `json:"skipUrlSync"`
+	Description        *string                   `json:"description,omitempty"`
+	ShowInControlsMenu *bool                     `json:"showInControlsMenu,omitempty"`
 }
 
 // NewDashboardIntervalVariableSpec creates a new DashboardIntervalVariableSpec object.
@@ -1552,18 +1558,19 @@ func NewDashboardCustomVariableKind() *DashboardCustomVariableKind {
 // Custom variable specification
 // +k8s:openapi-gen=true
 type DashboardCustomVariableSpec struct {
-	Name             string                    `json:"name"`
-	Query            string                    `json:"query"`
-	Current          DashboardVariableOption   `json:"current"`
-	Options          []DashboardVariableOption `json:"options"`
-	Multi            bool                      `json:"multi"`
-	IncludeAll       bool                      `json:"includeAll"`
-	AllValue         *string                   `json:"allValue,omitempty"`
-	Label            *string                   `json:"label,omitempty"`
-	Hide             DashboardVariableHide     `json:"hide"`
-	SkipUrlSync      bool                      `json:"skipUrlSync"`
-	Description      *string                   `json:"description,omitempty"`
-	AllowCustomValue bool                      `json:"allowCustomValue"`
+	Name               string                    `json:"name"`
+	Query              string                    `json:"query"`
+	Current            DashboardVariableOption   `json:"current"`
+	Options            []DashboardVariableOption `json:"options"`
+	Multi              bool                      `json:"multi"`
+	IncludeAll         bool                      `json:"includeAll"`
+	AllValue           *string                   `json:"allValue,omitempty"`
+	Label              *string                   `json:"label,omitempty"`
+	Hide               DashboardVariableHide     `json:"hide"`
+	SkipUrlSync        bool                      `json:"skipUrlSync"`
+	Description        *string                   `json:"description,omitempty"`
+	AllowCustomValue   bool                      `json:"allowCustomValue"`
+	ShowInControlsMenu *bool                     `json:"showInControlsMenu,omitempty"`
 }
 
 // NewDashboardCustomVariableSpec creates a new DashboardCustomVariableSpec object.
@@ -1601,15 +1608,16 @@ func NewDashboardGroupByVariableKind() *DashboardGroupByVariableKind {
 // GroupBy variable specification
 // +k8s:openapi-gen=true
 type DashboardGroupByVariableSpec struct {
-	Name         string                    `json:"name"`
-	DefaultValue *DashboardVariableOption  `json:"defaultValue,omitempty"`
-	Current      DashboardVariableOption   `json:"current"`
-	Options      []DashboardVariableOption `json:"options"`
-	Multi        bool                      `json:"multi"`
-	Label        *string                   `json:"label,omitempty"`
-	Hide         DashboardVariableHide     `json:"hide"`
-	SkipUrlSync  bool                      `json:"skipUrlSync"`
-	Description  *string                   `json:"description,omitempty"`
+	Name               string                    `json:"name"`
+	DefaultValue       *DashboardVariableOption  `json:"defaultValue,omitempty"`
+	Current            DashboardVariableOption   `json:"current"`
+	Options            []DashboardVariableOption `json:"options"`
+	Multi              bool                      `json:"multi"`
+	Label              *string                   `json:"label,omitempty"`
+	Hide               DashboardVariableHide     `json:"hide"`
+	SkipUrlSync        bool                      `json:"skipUrlSync"`
+	Description        *string                   `json:"description,omitempty"`
+	ShowInControlsMenu *bool                     `json:"showInControlsMenu,omitempty"`
 }
 
 // NewDashboardGroupByVariableSpec creates a new DashboardGroupByVariableSpec object.
@@ -1651,15 +1659,16 @@ func NewDashboardAdhocVariableKind() *DashboardAdhocVariableKind {
 // Adhoc variable specification
 // +k8s:openapi-gen=true
 type DashboardAdhocVariableSpec struct {
-	Name             string                           `json:"name"`
-	BaseFilters      []DashboardAdHocFilterWithLabels `json:"baseFilters"`
-	Filters          []DashboardAdHocFilterWithLabels `json:"filters"`
-	DefaultKeys      []DashboardMetricFindValue       `json:"defaultKeys"`
-	Label            *string                          `json:"label,omitempty"`
-	Hide             DashboardVariableHide            `json:"hide"`
-	SkipUrlSync      bool                             `json:"skipUrlSync"`
-	Description      *string                          `json:"description,omitempty"`
-	AllowCustomValue bool                             `json:"allowCustomValue"`
+	Name               string                           `json:"name"`
+	BaseFilters        []DashboardAdHocFilterWithLabels `json:"baseFilters"`
+	Filters            []DashboardAdHocFilterWithLabels `json:"filters"`
+	DefaultKeys        []DashboardMetricFindValue       `json:"defaultKeys"`
+	Label              *string                          `json:"label,omitempty"`
+	Hide               DashboardVariableHide            `json:"hide"`
+	SkipUrlSync        bool                             `json:"skipUrlSync"`
+	Description        *string                          `json:"description,omitempty"`
+	AllowCustomValue   bool                             `json:"allowCustomValue"`
+	ShowInControlsMenu *bool                            `json:"showInControlsMenu,omitempty"`
 }
 
 // NewDashboardAdhocVariableSpec creates a new DashboardAdhocVariableSpec object.

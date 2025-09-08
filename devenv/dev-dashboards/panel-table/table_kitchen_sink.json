@@ -18,7 +18,7 @@
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 0,
-  "id": 21409,
+  "id": 1827,
   "links": [],
   "panels": [
     {
@@ -33,12 +33,11 @@
           "custom": {
             "align": "auto",
             "cellOptions": {
-              "type": "auto",
-              "wrapText": false
+              "type": "auto"
             },
             "filterable": true,
             "inspect": false,
-            "wrapHeaderText": false
+            "wrapText": false
           },
           "fieldMinMax": true,
           "links": [],
@@ -82,6 +81,10 @@
               {
                 "id": "custom.inspect",
                 "value": true
+              },
+              {
+                "id": "custom.footer.reducers",
+                "value": ["sum"]
               }
             ]
           },
@@ -155,6 +158,10 @@
               {
                 "id": "unit",
                 "value": "dateTimeFromNow"
+              },
+              {
+                "id": "custom.footer.reducers",
+                "value": ["countAll"]
               }
             ]
           },
@@ -243,6 +250,10 @@
                   "fixedColor": "blue",
                   "mode": "continuous-YlRd"
                 }
+              },
+              {
+                "id": "unit",
+                "value": "areaM2"
               }
             ]
           },
@@ -278,7 +289,7 @@
                 "value": "State"
               },
               {
-                "id": "custom.hidden",
+                "id": "custom.hideFrom.viz",
                 "value": true
               }
             ]
@@ -292,9 +303,12 @@
               {
                 "id": "custom.cellOptions",
                 "value": {
-                  "type": "auto",
-                  "wrapText": true
+                  "type": "auto"
                 }
+              },
+              {
+                "id": "custom.wrapText",
+                "value": true
               },
               {
                 "id": "custom.width",
@@ -307,6 +321,10 @@
               {
                 "id": "custom.tooltip.placement",
                 "value": "left"
+              },
+              {
+                "id": "custom.footer.reducers",
+                "value": ["last"]
               }
             ]
           },
@@ -319,9 +337,12 @@
               {
                 "id": "custom.cellOptions",
                 "value": {
-                  "type": "pill",
-                  "wrapText": true
+                  "type": "pill"
                 }
+              },
+              {
+                "id": "custom.wrapText",
+                "value": true
               },
               {
                 "id": "custom.width",
@@ -338,9 +359,12 @@
               {
                 "id": "custom.cellOptions",
                 "value": {
-                  "type": "data-links",
-                  "wrapText": true
+                  "type": "data-links"
                 }
+              },
+              {
+                "id": "custom.wrapText",
+                "value": true
               },
               {
                 "id": "links",
@@ -422,6 +446,21 @@
                 ]
               }
             ]
+          },
+          {
+            "matcher": {
+              "id": "byNames",
+              "options": {
+                "mode": "include",
+                "names": ["Min", "Max"]
+              }
+            },
+            "properties": [
+              {
+                "id": "custom.footer.reducers",
+                "value": ["min", "max"]
+              }
+            ]
           }
         ]
       },
@@ -434,17 +473,10 @@
       "id": 1,
       "options": {
         "cellHeight": "sm",
+        "frameIndex": 0,
         "frozenColumns": {
           "left": 1
         },
-        "footer": {
-          "countRows": false,
-          "enablePagination": false,
-          "fields": ["Min", "Max"],
-          "reducer": ["max"],
-          "show": true
-        },
-        "frameIndex": 0,
         "showHeader": true,
         "sortBy": [
           {
@@ -453,7 +485,7 @@
           }
         ]
       },
-      "pluginVersion": "12.2.0-pre",
+      "pluginVersion": "12.2.0",
       "targets": [
         {
           "datasource": {
@@ -557,8 +589,10 @@
               "type": "color-background"
             },
             "filterable": true,
-            "inspect": true,
-            "wrapHeaderText": false
+            "footer": {
+              "reducer": []
+            },
+            "inspect": true
           },
           "fieldMinMax": true,
           "links": [],
@@ -589,13 +623,7 @@
       "maxDataPoints": 100,
       "options": {
         "cellHeight": "sm",
-        "footer": {
-          "countRows": false,
-          "enablePagination": false,
-          "fields": "",
-          "reducer": ["max"],
-          "show": false
-        },
+        "enablePagination": false,
         "showHeader": true,
         "sortBy": [
           {
@@ -604,7 +632,7 @@
           }
         ]
       },
-      "pluginVersion": "12.2.0-pre",
+      "pluginVersion": "12.2.0",
       "targets": [
         {
           "datasource": {
@@ -664,8 +692,7 @@
               "type": "auto"
             },
             "inspect": false,
-            "minWidth": 50,
-            "wrapHeaderText": false
+            "minWidth": 50
           },
           "mappings": [],
           "thresholds": {
@@ -797,6 +824,10 @@
                 "value": {
                   "type": "data-links"
                 }
+              },
+              {
+                "id": "custom.width",
+                "value": 140
               }
             ]
           }
@@ -804,23 +835,17 @@
       },
       "gridPos": {
         "h": 7,
-        "w": 24,
+        "w": 12,
         "x": 0,
         "y": 12
       },
       "id": 2,
       "options": {
         "cellHeight": "sm",
-        "footer": {
-          "countRows": false,
-          "fields": "",
-          "reducer": ["sum"],
-          "show": false
-        },
         "showHeader": true,
         "sortBy": []
       },
-      "pluginVersion": "12.2.0-pre",
+      "pluginVersion": "12.2.0",
       "targets": [
         {
           "csvContent": "auto,link,links,bg,bg-link,bg-links,color,color-link,color-links,bg-row,bg-row-link,bg-row-links,color-row,color-row-link,color-row-links,links-cellType\na,a,a,a,a,a,a,a,a,1,1,1,1,1,1,1\nb,b,b,b,b,b,b,b,b,2,2,2,2,2,2,2\nc,c,c,c,c,c,c,c,c,3,3,3,3,3,3,3\nd,d,d,d,d,d,d,d,d,4,4,4,4,4,4,4",
@@ -841,7 +866,8 @@
       "fieldConfig": {
         "defaults": {
           "color": {
-            "mode": "thresholds"
+            "fixedColor": "transparent",
+            "mode": "fixed"
           },
           "custom": {
             "align": "auto",
@@ -849,7 +875,159 @@
               "type": "auto"
             },
             "inspect": false,
+            "width": 100,
             "wrapHeaderText": false
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "highlight"
+            },
+            "properties": [
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "applyToRow": true,
+                  "mode": "basic",
+                  "type": "color-background"
+                }
+              },
+              {
+                "id": "mappings",
+                "value": [
+                  {
+                    "options": {
+                      "1": {
+                        "color": "#fff899",
+                        "index": 0
+                      }
+                    },
+                    "type": "value"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": "/^color-*/"
+            },
+            "properties": [
+              {
+                "id": "mappings",
+                "value": [
+                  {
+                    "options": {
+                      "1": {
+                        "color": "green",
+                        "index": 0
+                      }
+                    },
+                    "type": "value"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "color-bg"
+            },
+            "properties": [
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-background"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "color-text"
+            },
+            "properties": [
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-text"
+                }
+              },
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "text",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "use-case"
+            },
+            "properties": [
+              {
+                "id": "custom.width"
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 12,
+        "x": 12,
+        "y": 12
+      },
+      "id": 10,
+      "options": {
+        "cellHeight": "sm",
+        "showHeader": true,
+        "sortBy": []
+      },
+      "pluginVersion": "12.2.0",
+      "targets": [
+        {
+          "csvContent": "use-case,normal,color-text,color-bg,highlight\n\"color bg and apply to row\",1,0,1,1\n\"color text and apply to row\",1,1,0,1\n\"color text + color bg + apply to row\",1,1,1,1\n\"only apply to row\",1,0,0,1\n\"only color bg\",1,0,1,0\n\"only color text\",1,1,0,0\n\"color text + color bg\",1,1,1,0\n\"no colorization\",1,0,0,0",
+          "refId": "A",
+          "scenarioId": "csv_content"
+        }
+      ],
+      "title": "Apply to Row - mixed color cell types",
+      "type": "table"
+    },
+    {
+      "datasource": {
+        "type": "grafana-testdata-datasource"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "inspect": false
           },
           "fieldMinMax": true,
           "mappings": [],
@@ -901,7 +1079,7 @@
             },
             "properties": [
               {
-                "id": "custom.hidden",
+                "id": "custom.hideFrom.viz",
                 "value": true
               }
             ]
@@ -964,15 +1142,9 @@
       "maxDataPoints": 10,
       "options": {
         "cellHeight": "sm",
-        "footer": {
-          "countRows": false,
-          "fields": "",
-          "reducer": ["sum"],
-          "show": false
-        },
         "showHeader": true
       },
-      "pluginVersion": "12.2.0-pre",
+      "pluginVersion": "12.2.0",
       "targets": [
         {
           "rawFrameContent": "[\n  {\n    \"schema\": {\n      \"refId\": \"A\",\n      \"name\": \"A\",\n      \"fields\": [\n        {\n          \"name\": \"Time\",\n          \"type\": \"time\",\n          \"typeInfo\": {\n            \"frame\": \"time.Time\",\n            \"nullable\": true\n          },\n          \"config\": {}\n        },\n        {\n          \"name\": \"Value\",\n          \"type\": \"number\",\n          \"typeInfo\": {\n            \"frame\": \"float64\",\n            \"nullable\": true\n          },\n          \"config\": {}\n        },\n        {\n          \"name\": \"Min\",\n          \"type\": \"number\",\n          \"typeInfo\": {\n            \"frame\": \"float64\",\n            \"nullable\": true\n          },\n          \"config\": {}\n        },\n        {\n          \"name\": \"Max\",\n          \"type\": \"number\",\n          \"typeInfo\": {\n            \"frame\": \"float64\",\n            \"nullable\": true\n          },\n          \"config\": {}\n        },\n        {\n          \"name\": \"Info\",\n          \"type\": \"string\",\n          \"typeInfo\": {\n            \"frame\": \"string\",\n            \"nullable\": true\n          },\n          \"config\": {}\n        },\n        {\n          \"name\": \"State\",\n          \"type\": \"enum\",\n          \"typeInfo\": {\n            \"frame\": \"enum\"\n          },\n          \"config\": {\n            \"type\": {\n              \"enum\": {\n                \"text\": [\n                  \"Unknown\",\n                  \"Up\",\n                  \"Down\"\n                ]\n              }\n            }\n          }\n        }\n      ]\n    },\n    \"data\": {\n      \"values\": [\n        [\n          1754578636810,\n          1754580436810,\n          1754582236810,\n          1754584036810,\n          1754585836810,\n          1754587636810,\n          1754589436810,\n          1754591236810,\n          1754593036810,\n          1754594836810\n        ],\n        [\n          68.67815082171406,\n          68.21038738705283,\n          67.85748579518524,\n          67.48088827530566,\n          67.36362085363314,\n          67.75399477824531,\n          67.9006935145112,\n          68.2893033558627,\n          68.20547872017494,\n          67.96251158324088\n        ],\n        [\n          67.52655915076163,\n          68.03367017865995,\n          65.44308825471086,\n          66.94142900198796,\n          66.33531057489242,\n          66.97007154625013,\n          67.88134129373145,\n          65.92102089546943,\n          65.7896781452792,\n          67.77680599320166\n        ],\n        [\n          68.78026730954913,\n          68.46495903270079,\n          68.29118217530531,\n          67.90561937677037,\n          68.05316512901861,\n          70.26033810424696,\n          68.05691975265877,\n          68.76874724839202,\n          70.02772232081647,\n          70.38628221361253\n        ],\n        [\n          \"up\",\n          \"down fast\",\n          \"down\",\n          \"down\",\n          \"down\",\n          \"up\",\n          \"up\",\n          \"up\",\n          \"down\",\n          \"down\"\n        ],\n        [\n          1,\n          2,\n          2,\n          2,\n          2,\n          1,\n          1,\n          1,\n          2,\n          2\n        ]\n      ]\n    }\n  }\n]",
@@ -997,8 +1169,7 @@
             "cellOptions": {
               "type": "auto"
             },
-            "inspect": false,
-            "wrapHeaderText": false
+            "inspect": false
           },
           "fieldMinMax": true,
           "mappings": [],
@@ -1049,7 +1220,7 @@
             },
             "properties": [
               {
-                "id": "custom.hidden",
+                "id": "custom.hideFrom.viz",
                 "value": true
               }
             ]
@@ -1112,15 +1283,9 @@
       "maxDataPoints": 10,
       "options": {
         "cellHeight": "sm",
-        "footer": {
-          "countRows": false,
-          "fields": "",
-          "reducer": ["sum"],
-          "show": false
-        },
         "showHeader": true
       },
-      "pluginVersion": "12.2.0-pre",
+      "pluginVersion": "12.2.0",
       "targets": [
         {
           "rawFrameContent": "[\n  {\n    \"schema\": {\n      \"refId\": \"A\",\n      \"name\": \"A\",\n      \"fields\": [\n        {\n          \"name\": \"Time\",\n          \"type\": \"time\",\n          \"typeInfo\": {\n            \"frame\": \"time.Time\",\n            \"nullable\": true\n          },\n          \"config\": {}\n        },\n        {\n          \"name\": \"Value\",\n          \"type\": \"number\",\n          \"typeInfo\": {\n            \"frame\": \"float64\",\n            \"nullable\": true\n          },\n          \"config\": {}\n        },\n        {\n          \"name\": \"Min\",\n          \"type\": \"number\",\n          \"typeInfo\": {\n            \"frame\": \"float64\",\n            \"nullable\": true\n          },\n          \"config\": {}\n        },\n        {\n          \"name\": \"Max\",\n          \"type\": \"number\",\n          \"typeInfo\": {\n            \"frame\": \"float64\",\n            \"nullable\": true\n          },\n          \"config\": {}\n        },\n        {\n          \"name\": \"Info\",\n          \"type\": \"string\",\n          \"typeInfo\": {\n            \"frame\": \"string\",\n            \"nullable\": true\n          },\n          \"config\": {}\n        },\n        {\n          \"name\": \"State\",\n          \"type\": \"enum\",\n          \"typeInfo\": {\n            \"frame\": \"enum\"\n          },\n          \"config\": {\n            \"type\": {\n              \"enum\": {\n                \"text\": [\n                  \"Unknown\",\n                  \"Up\",\n                  \"Down\"\n                ]\n              }\n            }\n          }\n        }\n      ]\n    },\n    \"data\": {\n      \"values\": [\n        [\n          1754579008785,\n          1754580808785,\n          1754582608785,\n          1754584408785,\n          1754586208785,\n          1754588008785,\n          1754589808785,\n          1754591608785,\n          1754593408785,\n          1754595208785\n        ],\n        [\n          89.82213040422468,\n          89.53763263564208,\n          90.03103064454615,\n          90.51535567776907,\n          90.88960652895187,\n          91.30921636258488,\n          91.12427953645643,\n          91.1507153149385,\n          90.81021008780039,\n          91.11327042147582\n        ],\n        [\n          87.33191559754641,\n          88.46410173314496,\n          88.06920794235972,\n          88.98473401700574,\n          90.60349141857057,\n          90.5858441719162,\n          90.42154517148411,\n          90.32413455176213,\n          90.72055904641739,\n          88.74774424339796\n        ],\n        [\n          90.58845140604446,\n          90.08173133413374,\n          90.58230197880795,\n          92.55531809442493,\n          93.09165646181742,\n          93.38354884838586,\n          92.68544239576967,\n          92.15770413350477,\n          92.77335012158814,\n          92.52115072193222\n        ],\n        [\n          \"down\",\n          \"down\",\n          \"up fast\",\n          \"up fast\",\n          \"up\",\n          \"up fast\",\n          \"down\",\n          \"up\",\n          \"down\",\n          \"up\"\n        ],\n        [\n          2,\n          2,\n          1,\n          1,\n          1,\n          1,\n          2,\n          1,\n          2,\n          1\n        ]\n      ]\n    }\n  }\n]",
@@ -1145,8 +1310,7 @@
             "cellOptions": {
               "type": "auto"
             },
-            "inspect": false,
-            "wrapHeaderText": false
+            "inspect": false
           },
           "fieldMinMax": true,
           "mappings": [],
@@ -1197,7 +1361,7 @@
             },
             "properties": [
               {
-                "id": "custom.hidden",
+                "id": "custom.hideFrom.viz",
                 "value": true
               }
             ]
@@ -1260,15 +1424,9 @@
       "maxDataPoints": 10,
       "options": {
         "cellHeight": "sm",
-        "footer": {
-          "countRows": false,
-          "fields": "",
-          "reducer": ["sum"],
-          "show": false
-        },
         "showHeader": true
       },
-      "pluginVersion": "12.2.0-pre",
+      "pluginVersion": "12.2.0",
       "targets": [
         {
           "rawFrameContent": "[\n  {\n    \"schema\": {\n      \"refId\": \"A\",\n      \"name\": \"A\",\n      \"fields\": [\n        {\n          \"name\": \"Time\",\n          \"type\": \"time\",\n          \"typeInfo\": {\n            \"frame\": \"time.Time\",\n            \"nullable\": true\n          },\n          \"config\": {}\n        },\n        {\n          \"name\": \"Value\",\n          \"type\": \"number\",\n          \"typeInfo\": {\n            \"frame\": \"float64\",\n            \"nullable\": true\n          },\n          \"config\": {}\n        },\n        {\n          \"name\": \"Min\",\n          \"type\": \"number\",\n          \"typeInfo\": {\n            \"frame\": \"float64\",\n            \"nullable\": true\n          },\n          \"config\": {}\n        },\n        {\n          \"name\": \"Max\",\n          \"type\": \"number\",\n          \"typeInfo\": {\n            \"frame\": \"float64\",\n            \"nullable\": true\n          },\n          \"config\": {}\n        },\n        {\n          \"name\": \"Info\",\n          \"type\": \"string\",\n          \"typeInfo\": {\n            \"frame\": \"string\",\n            \"nullable\": true\n          },\n          \"config\": {}\n        },\n        {\n          \"name\": \"State\",\n          \"type\": \"enum\",\n          \"typeInfo\": {\n            \"frame\": \"enum\"\n          },\n          \"config\": {\n            \"type\": {\n              \"enum\": {\n                \"text\": [\n                  \"Unknown\",\n                  \"Up\",\n                  \"Down\"\n                ]\n              }\n            }\n          }\n        }\n      ]\n    },\n    \"data\": {\n      \"values\": [\n        [\n          1754579078813,\n          1754580878813,\n          1754582678813,\n          1754584478813,\n          1754586278813,\n          1754588078813,\n          1754589878813,\n          1754591678813,\n          1754593478813,\n          1754595278813\n        ],\n        [\n          77.30289281564126,\n          87.14357945690202,\n          76.67466266903213,\n          76.27969352662608,\n          95.80292639037513,\n          75.68396049965999,\n          75.76117912054544,\n          76.05073308839697,\n          75.93744737071192,\n          75.82930696129104\n        ],\n        [\n          76.58900057075734,\n          76.01493865596112,\n          75.25501274661029,\n          75.52871130918913,\n          73.53324017648568,\n          74.74670600818675,\n          73.4627470190636,\n          75.38455781635166,\n          74.04318166296315,\n          74.79620005730261\n        ],\n        [\n          77.58417866514938,\n          77.9390885538468,\n          78.37258492198521,\n          76.82242506518101,\n          75.81423643776408,\n          75.86349731305505,\n          76.79031910137064,\n          77.71934637974913,\n          76.11981207380533,\n          77.29746416618009\n        ],\n        [\n          \"down fast\",\n          \"down\",\n          \"down fast\",\n          \"down\",\n          \"down fast\",\n          \"down\",\n          \"up\",\n          \"up\",\n          \"down\",\n          \"down\"\n        ],\n        [\n          2,\n          2,\n          2,\n          2,\n          2,\n          2,\n          1,\n          1,\n          2,\n          2\n        ]\n      ]\n    }\n  }\n]",
@@ -1293,8 +1451,7 @@
             "cellOptions": {
               "type": "auto"
             },
-            "inspect": false,
-            "wrapHeaderText": false
+            "inspect": false
           },
           "fieldMinMax": true,
           "mappings": [],
@@ -1332,7 +1489,7 @@
             },
             "properties": [
               {
-                "id": "custom.hidden",
+                "id": "custom.hideFrom.viz",
                 "value": true
               }
             ]
@@ -1402,12 +1559,6 @@
       "maxDataPoints": 10,
       "options": {
         "cellHeight": "sm",
-        "footer": {
-          "countRows": false,
-          "fields": "",
-          "reducer": ["sum"],
-          "show": false
-        },
         "showHeader": true,
         "sortBy": [
           {
@@ -1416,7 +1567,7 @@
           }
         ]
       },
-      "pluginVersion": "12.2.0-pre",
+      "pluginVersion": "12.2.0",
       "targets": [
         {
           "rawFrameContent": "[\n  {\n    \"schema\": {\n      \"refId\": \"A\",\n      \"name\": \"A\",\n      \"fields\": [\n        {\n          \"name\": \"Time\",\n          \"type\": \"time\",\n          \"typeInfo\": {\n            \"frame\": \"time.Time\",\n            \"nullable\": true\n          },\n          \"config\": {}\n        },\n        {\n          \"name\": \"Value\",\n          \"type\": \"number\",\n          \"typeInfo\": {\n            \"frame\": \"float64\",\n            \"nullable\": true\n          },\n          \"config\": {}\n        },\n        {\n          \"name\": \"Min\",\n          \"type\": \"number\",\n          \"typeInfo\": {\n            \"frame\": \"float64\",\n            \"nullable\": true\n          },\n          \"config\": {}\n        },\n        {\n          \"name\": \"Max\",\n          \"type\": \"number\",\n          \"typeInfo\": {\n            \"frame\": \"float64\",\n            \"nullable\": true\n          },\n          \"config\": {}\n        },\n        {\n          \"name\": \"Info\",\n          \"type\": \"string\",\n          \"typeInfo\": {\n            \"frame\": \"string\",\n            \"nullable\": true\n          },\n          \"config\": {}\n        },\n        {\n          \"name\": \"State\",\n          \"type\": \"enum\",\n          \"typeInfo\": {\n            \"frame\": \"enum\"\n          },\n          \"config\": {\n            \"type\": {\n              \"enum\": {\n                \"text\": [\n                  \"Unknown\",\n                  \"Up\",\n                  \"Down\"\n                ]\n              }\n            }\n          }\n        }\n      ]\n    },\n    \"data\": {\n      \"values\": [\n        [\n          1754579078813,\n          1754580878813,\n          1754582678813,\n          1754584478813,\n          1754586278813,\n          1754588078813,\n          1754589878813,\n          1754591678813,\n          1754593478813,\n          1754595278813\n        ],\n        [\n          77.30289281564126,\n          87.14357945690202,\n          76.67466266903213,\n          76.27969352662608,\n          95.80292639037513,\n          75.68396049965999,\n          75.76117912054544,\n          76.05073308839697,\n          75.93744737071192,\n          75.82930696129104\n        ],\n        [\n          76.58900057075734,\n          76.01493865596112,\n          75.25501274661029,\n          75.52871130918913,\n          73.53324017648568,\n          74.74670600818675,\n          73.4627470190636,\n          75.38455781635166,\n          74.04318166296315,\n          74.79620005730261\n        ],\n        [\n          77.58417866514938,\n          77.9390885538468,\n          78.37258492198521,\n          76.82242506518101,\n          75.81423643776408,\n          75.86349731305505,\n          76.79031910137064,\n          77.71934637974913,\n          76.11981207380533,\n          77.29746416618009\n        ],\n        [\n          \"down fast\",\n          \"down\",\n          \"down fast\",\n          \"down\",\n          \"down fast\",\n          \"down\",\n          \"up\",\n          \"up\",\n          \"down\",\n          \"down\"\n        ],\n        [\n          2,\n          2,\n          2,\n          2,\n          2,\n          2,\n          1,\n          1,\n          2,\n          2\n        ]\n      ]\n    }\n  }\n]",
@@ -1441,8 +1592,7 @@
             "cellOptions": {
               "type": "auto"
             },
-            "inspect": false,
-            "wrapHeaderText": false
+            "inspect": false
           },
           "fieldMinMax": true,
           "mappings": [],
@@ -1486,7 +1636,7 @@
             },
             "properties": [
               {
-                "id": "custom.hidden",
+                "id": "custom.hideFrom.viz",
                 "value": true
               }
             ]
@@ -1590,16 +1740,10 @@
       "maxDataPoints": 10,
       "options": {
         "cellHeight": "sm",
-        "footer": {
-          "countRows": false,
-          "fields": "",
-          "reducer": ["sum"],
-          "show": false
-        },
         "showHeader": true,
         "sortBy": []
       },
-      "pluginVersion": "12.2.0-pre",
+      "pluginVersion": "12.2.0",
       "targets": [
         {
           "rawFrameContent": "[\n  {\n    \"schema\": {\n      \"refId\": \"A\",\n      \"name\": \"A\",\n      \"fields\": [\n        {\n          \"name\": \"Time\",\n          \"type\": \"time\",\n          \"typeInfo\": {\n            \"frame\": \"time.Time\",\n            \"nullable\": true\n          },\n          \"config\": {}\n        },\n        {\n          \"name\": \"Value\",\n          \"type\": \"number\",\n          \"typeInfo\": {\n            \"frame\": \"float64\",\n            \"nullable\": true\n          },\n          \"config\": {}\n        },\n        {\n          \"name\": \"Min\",\n          \"type\": \"number\",\n          \"typeInfo\": {\n            \"frame\": \"float64\",\n            \"nullable\": true\n          },\n          \"config\": {}\n        },\n        {\n          \"name\": \"Max\",\n          \"type\": \"number\",\n          \"typeInfo\": {\n            \"frame\": \"float64\",\n            \"nullable\": true\n          },\n          \"config\": {}\n        },\n        {\n          \"name\": \"Info\",\n          \"type\": \"string\",\n          \"typeInfo\": {\n            \"frame\": \"string\",\n            \"nullable\": true\n          },\n          \"config\": {}\n        },\n        {\n          \"name\": \"State\",\n          \"type\": \"enum\",\n          \"typeInfo\": {\n            \"frame\": \"enum\"\n          },\n          \"config\": {\n            \"type\": {\n              \"enum\": {\n                \"text\": [\n                  \"Unknown\",\n                  \"Up\",\n                  \"Down\"\n                ]\n              }\n            }\n          }\n        }\n      ]\n    },\n    \"data\": {\n      \"values\": [\n        [\n          1754579078813,\n          1754580878813,\n          1754582678813,\n          1754584478813,\n          1754586278813,\n          1754588078813,\n          1754589878813,\n          1754591678813,\n          1754593478813,\n          1754595278813\n        ],\n        [\n          77.30289281564126,\n          87.14357945690202,\n          76.67466266903213,\n          76.27969352662608,\n          95.80292639037513,\n          75.68396049965999,\n          75.76117912054544,\n          76.05073308839697,\n          75.93744737071192,\n          75.82930696129104\n        ],\n        [\n          76.58900057075734,\n          76.01493865596112,\n          75.25501274661029,\n          75.52871130918913,\n          73.53324017648568,\n          74.74670600818675,\n          73.4627470190636,\n          75.38455781635166,\n          74.04318166296315,\n          74.79620005730261\n        ],\n        [\n          77.58417866514938,\n          77.9390885538468,\n          78.37258492198521,\n          76.82242506518101,\n          75.81423643776408,\n          75.86349731305505,\n          76.79031910137064,\n          77.71934637974913,\n          76.11981207380533,\n          77.29746416618009\n        ],\n        [\n          \"down fast\",\n          \"down\",\n          \"down fast\",\n          \"down\",\n          \"down fast\",\n          \"down\",\n          \"up\",\n          \"up\",\n          \"down\",\n          \"down\"\n        ],\n        [\n          2,\n          2,\n          2,\n          2,\n          2,\n          2,\n          1,\n          1,\n          2,\n          2\n        ]\n      ]\n    }\n  }\n]",
@@ -1624,8 +1768,7 @@
             "cellOptions": {
               "type": "auto"
             },
-            "inspect": false,
-            "wrapHeaderText": false
+            "inspect": false
           },
           "mappings": [],
           "thresholds": {
@@ -1653,15 +1796,9 @@
       "id": 3,
       "options": {
         "cellHeight": "sm",
-        "footer": {
-          "countRows": false,
-          "fields": "",
-          "reducer": ["sum"],
-          "show": false
-        },
         "showHeader": true
       },
-      "pluginVersion": "12.2.0-pre",
+      "pluginVersion": "12.2.0",
       "targets": [
         {
           "csvContent": "a,b,c",
@@ -1697,5 +1834,5 @@
   "timezone": "",
   "title": "Panel Tests - Table - Kitchen Sink",
   "uid": "dcb9f5e9-8066-4397-889e-864b99555dbb",
-  "version": 9
+  "version": 34
 }

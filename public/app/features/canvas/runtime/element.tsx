@@ -11,6 +11,7 @@ import {
   OneClickMode,
   ActionModel,
   ActionVariableInput,
+  ActionType,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { TooltipDisplayMode } from '@grafana/schema';
@@ -34,7 +35,7 @@ import {
   removeStyles,
 } from 'app/plugins/panel/canvas/utils';
 
-import { getActions, getActionsDefaultField } from '../../actions/utils';
+import { getActions, getActionsDefaultField, isInfinityActionWithAuth } from '../../actions/utils';
 import { CanvasElementItem, CanvasElementOptions } from '../element';
 import { canvasElementRegistry } from '../registry';
 
@@ -640,8 +641,16 @@ export class ElementState implements LayerElement {
 
     if (this.options.links?.some((link) => link.oneClick === true)) {
       this.oneClickMode = OneClickMode.Link;
-    } else if (this.options.actions?.some((action) => action.oneClick === true)) {
-      this.oneClickMode = OneClickMode.Action;
+    } else if (
+      this.options.actions
+        ?.filter((action) => action.type === ActionType.Fetch || isInfinityActionWithAuth(action))
+        .some((action) => action.oneClick)
+    ) {
+      const scene = this.getScene();
+      const canExecuteActions = scene?.panel?.panelContext?.canExecuteActions;
+      const userCanExecuteActions = canExecuteActions?.() ?? false;
+
+      this.oneClickMode = userCanExecuteActions ? OneClickMode.Action : OneClickMode.Off;
     } else {
       this.oneClickMode = OneClickMode.Off;
     }
@@ -866,7 +875,8 @@ export class ElementState implements LayerElement {
   handleMouseEnter = (event: React.MouseEvent, isSelected: boolean | undefined) => {
     const scene = this.getScene();
 
-    const shouldHandleTooltip = !scene?.isEditingEnabled && !scene?.tooltipPayload?.isOpen;
+    const shouldHandleTooltip =
+      !scene?.isEditingEnabled && (!scene?.tooltipPayload?.isOpen || scene?.tooltipPayload?.element === this);
     if (shouldHandleTooltip) {
       this.handleTooltip(event);
     } else if (!isSelected) {
@@ -900,9 +910,17 @@ export class ElementState implements LayerElement {
   };
 
   getPrimaryAction = () => {
-    const config: ValueLinkConfig = { valueRowIndex: getRowIndex(this.data.field, this.getScene()!) };
+    const scene = this.getScene();
+    const canExecuteActions = scene?.panel?.panelContext?.canExecuteActions;
+    const userCanExecuteActions = canExecuteActions?.() ?? false;
+
+    if (!userCanExecuteActions) {
+      return undefined;
+    }
+
+    const config: ValueLinkConfig = { valueRowIndex: getRowIndex(this.data.field, scene!) };
     const actionsDefaultFieldConfig = { links: this.options.links ?? [], actions: this.options.actions ?? [] };
-    const frames = this.getScene()?.data?.series;
+    const frames = scene?.data?.series;
 
     if (frames) {
       const defaultField = getActionsDefaultField(actionsDefaultFieldConfig.links, actionsDefaultFieldConfig.actions);
@@ -921,7 +939,7 @@ export class ElementState implements LayerElement {
         frames[0],
         defaultField,
         scopedVars,
-        this.getScene()?.panel.props.replaceVariables!,
+        scene?.panel.props.replaceVariables!,
         actionsDefaultFieldConfig.actions,
         config
       );
@@ -933,7 +951,14 @@ export class ElementState implements LayerElement {
 
   handleTooltip = (event: React.MouseEvent) => {
     const scene = this.getScene();
-    if (scene?.tooltipCallback && scene.tooltipMode !== TooltipDisplayMode.None) {
+    if (!scene || !scene.tooltipCallback) {
+      return;
+    }
+
+    const shouldDisableForOneClick = scene.tooltipDisableForOneClick && this.oneClickMode !== OneClickMode.Off;
+    const shouldShowTooltip = scene.tooltipMode !== TooltipDisplayMode.None && !shouldDisableForOneClick;
+
+    if (shouldShowTooltip) {
       const rect = this.div?.getBoundingClientRect();
       scene.tooltipCallback({
         anchorPoint: { x: rect?.right ?? event.pageX, y: rect?.top ?? event.pageY },

@@ -642,7 +642,7 @@ func (alertRule *AlertRule) PreSave(timeNow func() time.Time, userUID *UserUID) 
 	for i, q := range alertRule.Data {
 		err := q.PreSave()
 		if err != nil {
-			return fmt.Errorf("invalid alert query %s: %w", q.RefID, err)
+			return errors.Join(ErrAlertRuleFailedValidation, fmt.Errorf("invalid alert query %s: %w", q.RefID, err))
 		}
 		alertRule.Data[i] = q
 	}
@@ -835,8 +835,9 @@ func (alertRule *AlertRule) Copy() *AlertRule {
 
 	if alertRule.Record != nil {
 		result.Record = &Record{
-			From:   alertRule.Record.From,
-			Metric: alertRule.Record.Metric,
+			From:                alertRule.Record.From,
+			Metric:              alertRule.Record.Metric,
+			TargetDatasourceUID: alertRule.Record.TargetDatasourceUID,
 		}
 	}
 
@@ -937,6 +938,15 @@ type ListAlertRulesQuery struct {
 	TimeIntervalName string
 
 	HasPrometheusRuleDefinition *bool
+}
+
+type ListAlertRulesExtendedQuery struct {
+	ListAlertRulesQuery
+
+	RuleType RuleTypeFilter
+
+	Limit         int64
+	ContinueToken string
 }
 
 // CountAlertRulesQuery is the query for counting alert rules

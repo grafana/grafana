@@ -1,5 +1,4 @@
-import { screen } from '@testing-library/react';
-import { render } from 'test/test-utils';
+import { render, screen } from 'test/test-utils';
 
 import { config } from '@grafana/runtime';
 import { contextSrv } from 'app/core/core';

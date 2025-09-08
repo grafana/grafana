@@ -1,6 +1,7 @@
 package schemaversion
 
 import (
+	"context"
 	"math"
 )
 
@@ -16,7 +17,7 @@ const (
 
 // V16 migrates dashboard layout from the old row-based system to the modern grid-based layout.
 // This migration follows the exact logic from DashboardMigrator.ts to ensure consistency between frontend and backend.
-func V16(dashboard map[string]interface{}) error {
+func V16(_ context.Context, dashboard map[string]interface{}) error {
 	dashboard["schemaVersion"] = 16
 
 	upgradeToGridLayout(dashboard)
@@ -37,7 +38,6 @@ func upgradeToGridLayout(dashboard map[string]interface{}) {
 
 	// Handle empty rows
 	if len(rows) == 0 {
-		dashboard["panels"] = []interface{}{}
 		delete(dashboard, "rows")
 		return
 	}
@@ -66,7 +66,7 @@ func upgradeToGridLayout(dashboard map[string]interface{}) {
 		}
 
 		// Skip repeated rows (line 1031-1033 in TS)
-		if _, hasRepeatIteration := row["repeatIteration"]; hasRepeatIteration {
+		if repeatIteration, hasRepeatIteration := row["repeatIteration"]; hasRepeatIteration && repeatIteration != nil {
 			continue
 		}
 
@@ -283,7 +283,11 @@ func getMaxPanelID(rows []interface{}) int {
 func shouldShowRows(rows []interface{}) bool {
 	for _, rowInterface := range rows {
 		if row, ok := rowInterface.(map[string]interface{}); ok {
-			if GetBoolValue(row, "collapse") || GetBoolValue(row, "showTitle") || GetStringValue(row, "repeat") != "" {
+			collapse := GetBoolValue(row, "collapse")
+			showTitle := GetBoolValue(row, "showTitle")
+			repeat := GetStringValue(row, "repeat")
+
+			if collapse || showTitle || repeat != "" {
 				return true
 			}
 		}

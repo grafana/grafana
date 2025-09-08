@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
 	"slices"
 	"strconv"
@@ -167,7 +168,7 @@ func (r *queryREST) Connect(connectCtx context.Context, name string, _ runtime.O
 		raw := &query.QueryDataRequest{}
 		err := web.Bind(httpreq, raw)
 		if err != nil {
-			b.log.Error("Hit unexpected error when reading query", "err", err)
+			connectLogger.Error("Hit unexpected error when reading query", "err", err)
 			err = errorsK8s.NewBadRequest("error reading query")
 			// TODO: can we wrap the error so details are not lost?!
 			// errutil.BadRequest(
@@ -181,8 +182,8 @@ func (r *queryREST) Connect(connectCtx context.Context, name string, _ runtime.O
 		qdr, err := handleQuery(ctx, *raw, *b, httpreq, *responder, connectLogger)
 
 		if err != nil {
-			b.log.Error("execute error", "http code", query.GetResponseCode(qdr), "err", err)
-			logEmptyRefids(raw.Queries, b.log)
+			connectLogger.Error("execute error", "http code", query.GetResponseCode(qdr), "err", err)
+			logEmptyRefids(raw.Queries, connectLogger)
 			if qdr != nil { // if we have a response, we assume the err is set in the response
 				responder.Object(query.GetResponseCode(qdr), &query.QueryDataResponse{
 					QueryDataResponse: *qdr,
@@ -190,19 +191,40 @@ func (r *queryREST) Connect(connectCtx context.Context, name string, _ runtime.O
 				return
 			} else {
 				var errorDataResponse backend.DataResponse
-				if errors.Is(err, service.ErrInvalidDatasourceID) || errors.Is(err, service.ErrNoQueriesFound) || errors.Is(err, service.ErrMissingDataSourceInfo) || errors.Is(err, service.ErrQueryParamMismatch) || errors.Is(err, service.ErrDuplicateRefId) {
+
+				badRequestErrors := []error{
+					service.ErrInvalidDatasourceID,
+					service.ErrNoQueriesFound,
+					service.ErrMissingDataSourceInfo,
+					service.ErrQueryParamMismatch,
+					service.ErrDuplicateRefId,
+					datasources.ErrDataSourceNotFound,
+				}
+				isTypedBadRequestError := false
+				for _, badRequestError := range badRequestErrors {
+					if errors.Is(err, badRequestError) {
+						isTypedBadRequestError = true
+					}
+				}
+				if isTypedBadRequestError {
 					errorDataResponse = backend.ErrDataResponseWithSource(backend.StatusBadRequest, backend.ErrorSourceDownstream, err.Error())
 				} else if strings.Contains(err.Error(), "expression request error") {
-					b.log.Error("Error calling TransformData in an expression", "err", err)
+					connectLogger.Error("Error calling TransformData in an expression", "err", err)
 					errorDataResponse = backend.ErrDataResponseWithSource(backend.StatusBadRequest, backend.ErrorSourceDownstream, err.Error())
 				} else {
-					b.log.Error("unknown error, treated as a 500", "err", err)
+					connectLogger.Error("unknown error, treated as a 500", "err", err)
 					responder.Error(err)
 					return
 				}
+				// TODO ensure errors also return the refId wherever possible
+				errorRefId := raw.Queries[0].RefID
+				if errorRefId == "" {
+					errorRefId = "A"
+				}
+
 				qdr = &backend.QueryDataResponse{
 					Responses: map[string]backend.DataResponse{
-						"A": errorDataResponse,
+						errorRefId: errorDataResponse,
 					},
 				}
 				responder.Object(query.GetResponseCode(qdr), &query.QueryDataResponse{
@@ -221,14 +243,22 @@ func (r *queryREST) Connect(connectCtx context.Context, name string, _ runtime.O
 func handleQuery(ctx context.Context, raw query.QueryDataRequest, b QueryAPIBuilder, httpreq *http.Request, responder responderWrapper, connectLogger log.Logger) (*backend.QueryDataResponse, error) {
 	var jsonQueries = make([]*simplejson.Json, 0, len(raw.Queries))
 	for _, query := range raw.Queries {
+		dsRef, err := getValidDataSourceRef(ctx, query.Datasource, query.DatasourceID, b.legacyDatasourceLookup)
+		if err != nil {
+			connectLogger.Error("error getting valid datasource ref", err)
+		}
+		if dsRef != nil {
+			query.Datasource = dsRef
+		}
+
 		jsonBytes, err := json.Marshal(query)
 		if err != nil {
-			b.log.Error("error marshalling", err)
+			connectLogger.Error("error marshalling", err)
 		}
 
 		sjQuery, _ := simplejson.NewJson(jsonBytes)
 		if err != nil {
-			b.log.Error("error unmarshalling", err)
+			connectLogger.Error("error unmarshalling", err)
 		}
 
 		jsonQueries = append(jsonQueries, sjQuery)
@@ -265,10 +295,11 @@ func handleQuery(ctx context.Context, raw query.QueryDataRequest, b QueryAPIBuil
 
 	exprService := expr.ProvideService(
 		&setting.Cfg{
-			ExpressionsEnabled:           instanceConfig.ExpressionsEnabled,
-			SQLExpressionCellLimit:       instanceConfig.SQLExpressionCellLimit,
-			SQLExpressionOutputCellLimit: instanceConfig.SQLExpressionOutputCellLimit,
-			SQLExpressionTimeout:         instanceConfig.SQLExpressionTimeout,
+			ExpressionsEnabled:            instanceConfig.ExpressionsEnabled,
+			SQLExpressionCellLimit:        instanceConfig.SQLExpressionCellLimit,
+			SQLExpressionOutputCellLimit:  instanceConfig.SQLExpressionOutputCellLimit,
+			SQLExpressionTimeout:          instanceConfig.SQLExpressionTimeout,
+			SQLExpressionQueryLengthLimit: instanceConfig.SQLExpressionQueryLengthLimit,
 		},
 		nil,
 		nil,
@@ -346,4 +377,68 @@ func mergeHeaders(main http.Header, extra http.Header, l log.Logger) {
 			}
 		}
 	}
+}
+
+/*
+most queries are stored like this:
+
+	{
+		datasource: {
+			uid: "123",
+			type: "cool-ds",
+		}
+	}
+
+but sometimes queries are stored like:
+
+	{
+		datasourceUid: "123",
+		datasource: {
+			type: "cool-ds",
+		}
+	}
+
+this sets the second case to match the first and looks up missing types
+*/
+func getValidDataSourceRef(ctx context.Context, ds *v0alpha1.DataSourceRef, id int64, legacyDatasourceLookup ds_service.LegacyDataSourceLookup) (*v0alpha1.DataSourceRef, error) {
+	if ds == nil {
+		if id == 0 {
+			return nil, fmt.Errorf("missing datasource reference or id")
+		}
+		if legacyDatasourceLookup == nil {
+			return nil, fmt.Errorf("legacy datasource lookup unsupported (id:%d)", id)
+		}
+		return legacyDatasourceLookup.GetDataSourceFromDeprecatedFields(ctx, "", id)
+	}
+
+	// we need to special-case the "grafana" data source
+	if ds.UID == "grafana" {
+		return &v0alpha1.DataSourceRef{
+			// it does not really matter what `type` we set here,
+			// we will always detect this case by `uid` later.
+			// here we go with what the data source's plugin.json says.
+			Type: "grafana",
+			UID:  "grafana",
+		}, nil
+	}
+
+	if ds.Type == "" {
+		if ds.UID == "" {
+			return nil, fmt.Errorf("missing name/uid in data source reference")
+		}
+		if expr.IsDataSource(ds.UID) {
+			return ds, nil
+		}
+		if legacyDatasourceLookup == nil {
+			return nil, fmt.Errorf("legacy datasource lookup unsupported (name:%s)", ds.UID)
+		}
+		return legacyDatasourceLookup.GetDataSourceFromDeprecatedFields(ctx, ds.UID, 0)
+	}
+
+	if ds.UID == "" && expr.IsDataSource(ds.Type) {
+		ds.UID = ds.Type
+		return ds, nil
+	}
+
+	return ds, nil
 }

@@ -12,19 +12,21 @@ import {
   MultiValueVariable,
   CustomVariable,
   VariableValueSingle,
+  SceneGridRow,
 } from '@grafana/scenes';
 import { GRID_COLUMN_COUNT } from 'app/core/constants';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 
+import { DashboardStateChangedEvent } from '../../edit-pane/shared';
 import { getCloneKey, getLocalVariableValueSet } from '../../utils/clone';
 import { getMultiVariableValues } from '../../utils/utils';
 import { scrollCanvasElementIntoView, scrollIntoView } from '../layouts-shared/scrollCanvasElementIntoView';
 import { DashboardLayoutItem } from '../types/DashboardLayoutItem';
-import { DashboardRepeatsProcessedEvent } from '../types/DashboardRepeatsProcessedEvent';
 
 import { getDashboardGridItemOptions } from './DashboardGridItemEditor';
 import { DashboardGridItemRenderer } from './DashboardGridItemRenderer';
 import { DashboardGridItemVariableDependencyHandler } from './DashboardGridItemVariableDependencyHandler';
+import { RowRepeaterBehavior } from './RowRepeaterBehavior';
 
 export interface DashboardGridItemState extends SceneGridItemStateLike {
   body: VizPanel;
@@ -60,6 +62,8 @@ export class DashboardGridItem
   private _activationHandler() {
     this.handleVariableName();
 
+    this._subs.add(this.subscribeToEvent(DashboardStateChangedEvent, () => this.handleEditChange()));
+
     return () => {
       this._handleGridSizeUnsubscribe();
     };
@@ -86,9 +90,9 @@ export class DashboardGridItem
     const stateChange: Partial<DashboardGridItemState> = {};
 
     if (this.getRepeatDirection() === 'v') {
-      stateChange.itemHeight = Math.ceil(newState.height! / this.getPanelCount());
+      stateChange.itemHeight = Math.ceil(newState.height! / this.getChildCount());
     } else {
-      const rowCount = Math.ceil(this.getPanelCount() / this.getMaxPerRow());
+      const rowCount = Math.ceil(this.getChildCount() / this.getMaxPerRow());
       stateChange.itemHeight = Math.ceil(newState.height! / rowCount);
     }
 
@@ -97,7 +101,7 @@ export class DashboardGridItem
     }
   }
 
-  public getPanelCount() {
+  public getChildCount() {
     return (this.state.repeatedPanels?.length ?? 0) + 1;
   }
 
@@ -113,20 +117,21 @@ export class DashboardGridItem
     this.setState({ body });
   }
 
-  public editingStarted() {
-    if (!this.state.variableName) {
-      return;
-    }
-  }
+  public handleEditChange() {
+    this._prevRepeatValues = undefined;
 
-  public editingCompleted(withChanges: boolean) {
-    if (withChanges) {
-      this._prevRepeatValues = undefined;
+    if (this.parent instanceof SceneGridRow) {
+      const repeater = this.parent.state.$behaviors?.find((b) => b instanceof RowRepeaterBehavior);
+      if (repeater) {
+        repeater.resetPrevRepeatValues();
+      }
     }
 
     if (this.state.variableName && this.state.repeatDirection === 'h' && this.state.width !== GRID_COLUMN_COUNT) {
       this.setState({ width: GRID_COLUMN_COUNT });
     }
+
+    this.performRepeat();
   }
 
   public performRepeat() {
@@ -209,8 +214,6 @@ export class DashboardGridItem
     }
 
     this._prevRepeatValues = values;
-
-    this.publishEvent(new DashboardRepeatsProcessedEvent({ source: this }), true);
   }
 
   public handleVariableName() {

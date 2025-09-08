@@ -143,13 +143,13 @@ const createNestedDataFrame = (): DataFrame => {
         name: '__depth',
         type: FieldType.number,
         values: [0, 0],
-        config: { custom: { hidden: true } },
+        config: { custom: { hideFrom: { viz: true } } },
       },
       {
         name: '__index',
         type: FieldType.number,
         values: [0, 1],
-        config: { custom: { hidden: true } },
+        config: { custom: { hideFrom: { viz: true } } },
       },
       {
         name: '__nestedFrames',
@@ -462,18 +462,22 @@ describe('TableNG', () => {
     });
 
     it('renders footer with aggregations when footerOptions are provided', () => {
+      const baseFrame = createBasicDataFrame();
+      // Create a filter function that only shows rows with A1
+      const frameWithReducers = {
+        ...baseFrame,
+        fields: baseFrame.fields.map((field) => ({
+          ...field,
+          config: {
+            ...field.config,
+            custom: {
+              footer: { reducers: ['sum'] },
+            },
+          },
+        })),
+      };
       const { container } = render(
-        <TableNG
-          enableVirtualization={false}
-          data={createBasicDataFrame()}
-          width={800}
-          height={600}
-          footerOptions={{
-            show: true,
-            reducer: ['sum'],
-            countRows: false,
-          }}
-        />
+        <TableNG enableVirtualization={false} data={frameWithReducers} width={800} height={600} />
       );
 
       // Check for footer row
@@ -482,36 +486,6 @@ describe('TableNG', () => {
 
       // Sum of Column B values (1+2+3=6)
       expect(screen.getByText('6')).toBeInTheDocument();
-    });
-
-    it('renders row count in footer when countRows is true', () => {
-      const { container } = render(
-        <TableNG
-          enableVirtualization={false}
-          data={createBasicDataFrame()}
-          width={800}
-          height={600}
-          footerOptions={{
-            show: true,
-            reducer: ['count'],
-            countRows: true, // Enable row counting
-          }}
-        />
-      );
-
-      // Check for footer row
-      const footerRow = container.querySelector('.rdg-summary-row');
-      expect(footerRow).toBeInTheDocument();
-
-      // Get the text content of the footer cells
-      const footerCells = footerRow?.querySelectorAll('[role="gridcell"]');
-      const footerTexts = Array.from(footerCells || []).map((cell) => cell.textContent);
-
-      // The first cell should contain the row count (3 rows)
-      expect(footerTexts[0]).toBe('Count3');
-
-      // There should be no other footer cells
-      expect(footerTexts[1]).toBe('');
     });
   });
 
@@ -1147,28 +1121,36 @@ describe('TableNG', () => {
     it('updates footer calculations when rows are filtered', () => {
       // Create a filtered frame with only the first row
       const baseFrame = createBasicDataFrame();
+
+      const baseFrameWithReducers = {
+        ...baseFrame,
+        fields: baseFrame.fields.map((field) => ({
+          ...field,
+          state: {
+            calcs: {
+              sum: {
+                value: 6,
+                formattedValue: '6',
+                reducerName: 'sum',
+              },
+            },
+          },
+          config: { ...field.config, custom: { footer: { reducers: ['sum'] } } },
+        })),
+      };
+
       const filteredFrame = {
         ...baseFrame,
-        length: 1,
         fields: baseFrame.fields.map((field) => ({
           ...field,
           values: field.name === 'Column A' ? ['A1'] : field.name === 'Column B' ? [1] : field.values.slice(0, 1),
+          config: { ...field.config, custom: { footer: { reducers: ['sum'] } } },
         })),
       };
 
       // Render with unfiltered data and footer options
       const { container, rerender } = render(
-        <TableNG
-          enableVirtualization={false}
-          data={baseFrame}
-          width={800}
-          height={600}
-          footerOptions={{
-            show: true,
-            reducer: ['sum'],
-            countRows: false,
-          }}
-        />
+        <TableNG enableVirtualization={false} data={baseFrameWithReducers} width={800} height={600} />
       );
 
       // Check initial footer sum (1+2+3=6)
@@ -1183,20 +1165,7 @@ describe('TableNG', () => {
       expect(initialFooterTexts[1]).toBe('6');
 
       // Rerender with filtered data
-      rerender(
-        <TableNG
-          enableVirtualization={false}
-          data={filteredFrame}
-          width={800}
-          height={600}
-          footerOptions={{
-            show: true,
-            reducer: ['sum'],
-            countRows: false,
-          }}
-        />
-      );
-
+      rerender(<TableNG enableVirtualization={false} data={filteredFrame} width={800} height={600} />);
       // Check filtered footer sum (should be 1)
       const filteredFooter = container.querySelector('.rdg-summary-row');
       expect(filteredFooter).toBeInTheDocument();
@@ -1258,10 +1227,7 @@ describe('TableNG', () => {
       const frame = createBasicDataFrame();
       frame.fields.forEach((field) => {
         if (field.config?.custom) {
-          field.config.custom.cellOptions = {
-            ...field.config.custom.cellOptions,
-            wrapText: true,
-          };
+          field.config.custom.wrapText = true;
         }
       });
 
@@ -1274,9 +1240,7 @@ describe('TableNG', () => {
           fieldConfig={{
             defaults: {
               custom: {
-                cellOptions: {
-                  wrapText: true,
-                },
+                wrapText: true,
               },
             },
             overrides: [],

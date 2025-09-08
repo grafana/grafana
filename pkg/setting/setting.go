@@ -132,15 +132,16 @@ type Cfg struct {
 	HomePath                   string
 	ProvisioningPath           string
 	PermittedProvisioningPaths []string
-	// Job History Configuration
-	ProvisioningLokiURL      string
-	ProvisioningLokiUser     string
-	ProvisioningLokiPassword string
-	ProvisioningLokiTenantID string
-	DataPath                 string
-	LogsPath                 string
-	PluginsPath              string
-	EnterpriseLicensePath    string
+	// Provisioning config
+	ProvisioningDisableControllers bool
+	ProvisioningLokiURL            string
+	ProvisioningLokiUser           string
+	ProvisioningLokiPassword       string
+	ProvisioningLokiTenantID       string
+	DataPath                       string
+	LogsPath                       string
+	PluginsPath                    string
+	EnterpriseLicensePath          string
 
 	// SMTP email settings
 	Smtp SmtpSettings
@@ -204,7 +205,6 @@ type Cfg struct {
 	PluginForcePublicKeyDownload     bool
 	PluginSkipPublicKeyDownload      bool
 	DisablePlugins                   []string
-	HideAngularDeprecation           []string
 	ForwardHostEnvVars               []string
 	PreinstallPluginsAsync           []InstallPlugin
 	PreinstallPluginsSync            []InstallPlugin
@@ -213,6 +213,10 @@ type Cfg struct {
 	PluginLogBackendRequests bool
 
 	PluginUpdateStrategy string
+
+	// Plugin API restrictions - maps API name to list of plugin IDs/patterns
+	PluginRestrictedAPIsAllowList map[string][]string
+	PluginRestrictedAPIsBlockList map[string][]string
 
 	// Panels
 	DisableSanitizeHtml bool
@@ -440,6 +444,9 @@ type Cfg struct {
 
 	// SQLExpressionOutputCellLimit is the maximum number of cells (rows × columns) that can be outputted by a SQL expression.
 	SQLExpressionOutputCellLimit int64
+
+	// SQLExpressionQueryLengthLimit is the maximum length of a SQL query that can be used in a SQL expression.
+	SQLExpressionQueryLengthLimit int64
 
 	// SQLExpressionTimeoutSeconds is the duration a SQL expression will run before timing out
 	SQLExpressionTimeout time.Duration
@@ -830,6 +837,7 @@ func (cfg *Cfg) readExpressionsSettings() {
 	cfg.SQLExpressionCellLimit = expressions.Key("sql_expression_cell_limit").MustInt64(100000)
 	cfg.SQLExpressionOutputCellLimit = expressions.Key("sql_expression_output_cell_limit").MustInt64(100000)
 	cfg.SQLExpressionTimeout = expressions.Key("sql_expression_timeout").MustDuration(time.Second * 10)
+	cfg.SQLExpressionQueryLengthLimit = expressions.Key("sql_expression_query_length_limit").MustInt64(10000)
 }
 
 type AnnotationCleanupSettings struct {
@@ -1053,6 +1061,10 @@ func NewCfg() *Cfg {
 		Raw:    ini.Empty(),
 		Azure:  &azsettings.AzureSettings{},
 
+		// Initialize plugin API restriction maps
+		PluginRestrictedAPIsAllowList: make(map[string][]string),
+		PluginRestrictedAPIsBlockList: make(map[string][]string),
+
 		// Avoid nil pointer
 		IsFeatureToggleEnabled: func(_ string) bool {
 			return false
@@ -1085,6 +1097,12 @@ func NewCfgFromBytes(bytes []byte) (*Cfg, error) {
 	}
 
 	return NewCfgFromINIFile(parsedFile)
+}
+
+// prevents a log line from being printed when the static root path is not found, useful for apiservers that have no frontend
+func NewCfgFromBytesWithoutJSValidation(bytes []byte) (*Cfg, error) {
+	skipStaticRootValidation = true
+	return NewCfgFromBytes(bytes)
 }
 
 // NewCfgFromINIFile specialized function to create a new Cfg from an ini.File.
@@ -2084,6 +2102,8 @@ func (cfg *Cfg) readProvisioningSettings(iniFile *ini.File) error {
 			cfg.PermittedProvisioningPaths[i] = makeAbsolute(s, cfg.HomePath)
 		}
 	}
+
+	cfg.ProvisioningDisableControllers = iniFile.Section("provisioning").Key("disable_controllers").MustBool(false)
 
 	// Read job history configuration
 	cfg.ProvisioningLokiURL = valueAsString(iniFile.Section("provisioning"), "loki_url", "")

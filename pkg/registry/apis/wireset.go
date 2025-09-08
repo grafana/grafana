@@ -3,6 +3,7 @@ package apiregistry
 import (
 	"github.com/google/wire"
 
+	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	dashboardinternal "github.com/grafana/grafana/pkg/registry/apis/dashboard"
 	"github.com/grafana/grafana/pkg/registry/apis/dashboardsnapshot"
 	"github.com/grafana/grafana/pkg/registry/apis/datasource"
@@ -11,8 +12,11 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/iam"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/noopstorage"
 	"github.com/grafana/grafana/pkg/registry/apis/ofrep"
+	"github.com/grafana/grafana/pkg/registry/apis/preferences"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/secrets"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/extras"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/webhooks"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/webhooks/pullrequest"
 	"github.com/grafana/grafana/pkg/registry/apis/query"
 	"github.com/grafana/grafana/pkg/registry/apis/secret"
 	"github.com/grafana/grafana/pkg/registry/apis/service"
@@ -27,6 +31,14 @@ var WireSetExts = wire.NewSet(
 	wire.Bind(new(iam.RoleStorageBackend), new(*noopstorage.StorageBackendImpl)),
 )
 
+var provisioningExtras = wire.NewSet(
+	repository.ProvideFactory,
+	pullrequest.ProvidePullRequestWorker,
+	webhooks.ProvideWebhooksWithImages,
+	extras.ProvideProvisioningExtraAPIs,
+	extras.ProvideExtraWorkers,
+)
+
 var WireSet = wire.NewSet(
 	ProvideRegistryServiceSink, // dummy background service that forces registration
 
@@ -37,6 +49,8 @@ var WireSet = wire.NewSet(
 
 	// Secrets
 	secret.RegisterDependencies,
+	// Provisioning
+	provisioningExtras,
 
 	// Each must be added here *and* in the ServiceSink above
 	dashboardinternal.RegisterAPIService,
@@ -45,10 +59,10 @@ var WireSet = wire.NewSet(
 	datasource.RegisterAPIService,
 	folders.RegisterAPIService,
 	iam.RegisterAPIService,
-	secrets.ProvideRepositorySecrets,
 	provisioning.RegisterAPIService,
 	service.RegisterAPIService,
 	query.RegisterAPIService,
+	preferences.RegisterAPIService,
 	userstorage.RegisterAPIService,
 	ofrep.RegisterAPIService,
 )

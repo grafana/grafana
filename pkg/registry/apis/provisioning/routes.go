@@ -156,16 +156,11 @@ func (b *APIBuilder) handleSettings(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	availableTypes := []provisioning.RepositoryType{}
-	for t := range b.availableRepositoryTypes {
-		availableTypes = append(availableTypes, t)
-	}
-
 	settings := provisioning.RepositoryViewList{
 		Items: make([]provisioning.RepositoryView, len(all)),
 		// FIXME: this shouldn't be here in provisioning but at the dual writer or something about the storage
 		LegacyStorage:            dualwrite.IsReadingLegacyDashboardsAndFolders(ctx, b.storageStatus),
-		AvailableRepositoryTypes: availableTypes,
+		AvailableRepositoryTypes: b.repoFactory.Types(),
 	}
 
 	for i, val := range all {

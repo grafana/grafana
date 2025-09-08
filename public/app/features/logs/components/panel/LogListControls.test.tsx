@@ -211,6 +211,77 @@ describe('LogListControls', () => {
     expect(onLogOptionsChange).toHaveBeenCalledWith('wrapLogMessage', true);
   });
 
+  test('Controls line wrapping and prettify JSON', async () => {
+    const originalFlagState = config.featureToggles.newLogsPanel;
+    config.featureToggles.newLogsPanel = true;
+
+    const onLogOptionsChange = jest.fn();
+    render(
+      <LogListContextProvider
+        {...contextProps}
+        wrapLogMessage={false}
+        onLogOptionsChange={onLogOptionsChange}
+        prettifyJSON={false}
+      >
+        <LogListControls eventBus={new EventBusSrv()} />
+      </LogListContextProvider>
+    );
+
+    await userEvent.click(screen.getByLabelText('Log line wrapping'));
+    await userEvent.click(screen.getByText('Enable line wrapping'));
+
+    expect(onLogOptionsChange).toHaveBeenCalledTimes(2);
+    expect(onLogOptionsChange).toHaveBeenCalledWith('wrapLogMessage', true);
+    expect(onLogOptionsChange).toHaveBeenCalledWith('prettifyJSON', false);
+
+    await userEvent.click(screen.getByLabelText('Log line wrapping'));
+    await userEvent.click(screen.getByText('Enable line wrapping and prettify JSON'));
+
+    expect(onLogOptionsChange).toHaveBeenCalledTimes(4);
+    expect(onLogOptionsChange).toHaveBeenCalledWith('prettifyJSON', true);
+
+    await userEvent.click(screen.getByLabelText('Log line wrapping'));
+    await userEvent.click(screen.getByText('Disable line wrapping'));
+
+    expect(onLogOptionsChange).toHaveBeenCalledWith('wrapLogMessage', false);
+    expect(onLogOptionsChange).toHaveBeenCalledWith('prettifyJSON', false);
+
+    expect(onLogOptionsChange).toHaveBeenCalledTimes(6);
+
+    config.featureToggles.newLogsPanel = originalFlagState;
+  });
+
+  test('Controls line wrapping and prettify JSON', async () => {
+    const originalFlagState = config.featureToggles.newLogsPanel;
+    config.featureToggles.newLogsPanel = true;
+
+    const onLogOptionsChange = jest.fn();
+    render(
+      <LogListContextProvider {...contextProps} showTime={false} onLogOptionsChange={onLogOptionsChange}>
+        <LogListControls eventBus={new EventBusSrv()} />
+      </LogListContextProvider>
+    );
+
+    await userEvent.click(screen.getByLabelText('Log timestamps'));
+    await userEvent.click(screen.getByText('Show millisecond timestamps'));
+
+    expect(onLogOptionsChange).toHaveBeenCalledTimes(1);
+    expect(onLogOptionsChange).toHaveBeenCalledWith('showTime', true);
+
+    await userEvent.click(screen.getByLabelText('Log timestamps'));
+    await userEvent.click(screen.getByText('Show nanosecond timestamps'));
+
+    expect(onLogOptionsChange).toHaveBeenCalledTimes(2);
+
+    await userEvent.click(screen.getByLabelText('Log timestamps'));
+    await userEvent.click(screen.getByText('Hide timestamps'));
+
+    expect(onLogOptionsChange).toHaveBeenCalledTimes(3);
+    expect(onLogOptionsChange).toHaveBeenCalledWith('showTime', false);
+
+    config.featureToggles.newLogsPanel = originalFlagState;
+  });
+
   test('Controls syntax highlighting', async () => {
     const onLogOptionsChange = jest.fn();
     render(
