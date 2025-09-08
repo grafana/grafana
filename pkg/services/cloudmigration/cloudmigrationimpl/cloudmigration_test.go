@@ -343,7 +343,7 @@ func Test_GetSnapshotStatusFromGMS(t *testing.T) {
 		require.Eventually(t, func() bool { return gmsClientFake.GetSnapshotStatusCallCount() == 1 }, time.Second, 10*time.Millisecond)
 
 		require.EventuallyWithTf(t, func(t *assert.CollectT) {
-			snapshot, err = s.GetSnapshot(context.Background(), cloudmigration.GetSnapshotsQuery{
+			snapshot, err := s.GetSnapshot(context.Background(), cloudmigration.GetSnapshotsQuery{
 				SnapshotUID: snapshotUID,
 				SessionUID:  sessionUID,
 				SnapshotResultQueryParams: cloudmigration.SnapshotResultQueryParams{
