@@ -94,21 +94,18 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   content: css({
     flex: '0 0 40%',
-    minWidth: 0, // Allows flex item to shrink below content size
+    minWidth: 0,
   }),
   imageContainer: css({
     flex: '0 0 60%',
+    display: 'flex',
     [theme.breakpoints.down('lg')]: {
       flex: '1 1 auto',
-      alignSelf: 'center',
     },
-    padding: `${theme.spacing(5)} ${theme.spacing(22)} 0 ${theme.spacing(5)}`,
+    padding: `${theme.spacing(5)} 10% 0 ${theme.spacing(5)}`,
   }),
   image: css({
     width: '100%',
-    height: '374.406px',
-    objectFit: 'cover',
-    objectPosition: 'top',
     borderRadius: theme.shape.radius.default,
     boxShadow: theme.shadows.z3,
   }),

@@ -3,7 +3,7 @@ import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Icon, TextLink, useStyles2 } from "@grafana/ui";
-import permissionsScreenshot from 'img/permission-screenshot.png';
+import permissionsScreenshot from 'img/permissions-screenshot.png';
 
 import { FeatureHighlightsTabPage } from "../components/FeatureHighlightsTabPage";
 
