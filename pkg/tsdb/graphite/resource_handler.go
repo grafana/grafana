@@ -17,6 +17,7 @@ import (
 )
 
 type postResourceHandler[T any] func(context.Context, *datasourceInfo, T) ([]byte, int, error)
+type getResourceHandler func(context.Context, *datasourceInfo) ([]byte, int, error)
 
 func (s *Service) newResourceMux() *http.ServeMux {
 	mux := http.NewServeMux()
@@ -65,6 +66,38 @@ func handlePostResourceReq[T any](handlerFn postResourceHandler[T], s *Service) 
 		}
 
 		response, statusCode, err := handlerFn(ctx, dsInfo, *parsedBody)
+		if err != nil {
+			writeErrorResponse(rw, statusCode, fmt.Sprintf("failed to handle resource request: %v", err))
+			return
+		}
+
+		rw.WriteHeader(statusCode)
+		_, err = rw.Write(response)
+		if err != nil {
+			writeErrorResponse(rw, http.StatusInternalServerError, fmt.Sprintf("failed to write response: %v", err))
+			return
+		}
+	}
+}
+
+func handleGetResourceReq(handlerFn getResourceHandler, s *Service) func(rw http.ResponseWriter, req *http.Request) {
+	return func(rw http.ResponseWriter, req *http.Request) {
+		s.logger.Debug("Received resource call", "url", req.URL.String(), "method", req.Method)
+
+		pluginCtx := backend.PluginConfigFromContext(req.Context())
+		ctx := req.Context()
+		dsInfo, err := s.getDSInfo(ctx, pluginCtx)
+		if err != nil {
+			writeErrorResponse(rw, http.StatusInternalServerError, fmt.Sprintf("unexpected error %v", err))
+			return
+		}
+
+		if handlerFn == nil {
+			writeErrorResponse(rw, http.StatusInternalServerError, "responseFn should not be nil")
+			return
+		}
+
+		response, statusCode, err := handlerFn(ctx, dsInfo)
 		if err != nil {
 			writeErrorResponse(rw, statusCode, fmt.Sprintf("failed to handle resource request: %v", err))
 			return
