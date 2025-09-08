@@ -53,9 +53,8 @@ func TestIntegrationDuplicatesValidator(t *testing.T) {
 	tagService := tagimpl.ProvideService(sql)
 	dashStore, err := database.ProvideDashboardStore(sql, cfgT, features, tagService)
 	require.NoError(t, err)
-	folderStore := folderimpl.ProvideDashboardFolderStore(sql)
 	folderSvc := folderimpl.ProvideService(fStore, actest.FakeAccessControl{}, bus.ProvideBus(tracing.InitializeTracerForTest()),
-		dashStore, folderStore, nil, sql, featuremgmt.WithFeatures(),
+		dashStore, nil, sql, featuremgmt.WithFeatures(),
 		supportbundlestest.NewFakeBundleService(), nil, cfgT, nil, tracing.InitializeTracerForTest(), nil, dualwrite.ProvideTestService(), grafanasort.ProvideService(), apiserver.WithoutRestConfig)
 
 	t.Run("Duplicates validator should collect info about duplicate UIDs and titles within folders", func(t *testing.T) {

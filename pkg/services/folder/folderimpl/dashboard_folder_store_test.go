@@ -44,7 +44,7 @@ func TestIntegrationDashboardFolderStore(t *testing.T) {
 		setup()
 		var orgId int64 = 1
 		sqlStore := db.InitTestDB(t)
-		folderStore := ProvideDashboardFolderStore(sqlStore)
+		folderStore := newDashboardFolderStore(sqlStore)
 		folder := insertTestFolder(t, dashboardStore, "TEST", orgId, "", "prod")
 		dash := insertTestDashboard(t, dashboardStore, "Very Unique Name", orgId, folder.ID, folder.UID, "prod")
 
@@ -69,7 +69,7 @@ func TestIntegrationDashboardFolderStore(t *testing.T) {
 		setup()
 		var orgId int64 = 1
 		sqlStore := db.InitTestDB(t)
-		folderStore := ProvideDashboardFolderStore(sqlStore)
+		folderStore := newDashboardFolderStore(sqlStore)
 		folder := insertTestFolder(t, dashboardStore, "TEST", orgId, "", "prod")
 		dash := insertTestDashboard(t, dashboardStore, "Very Unique Name", orgId, folder.ID, folder.UID, "prod")
 
@@ -124,7 +124,7 @@ func TestIntegrationGetDashFolderStore(t *testing.T) {
 	folderStore := ProvideStore(db)
 	dashboardStore, err := database.ProvideDashboardStore(db, cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(db))
 	require.NoError(t, err)
-	dashFolderStore := ProvideDashboardFolderStore(db)
+	dashFolderStore := newDashboardFolderStore(db)
 
 	orgID := CreateOrg(t, db, cfg)
 

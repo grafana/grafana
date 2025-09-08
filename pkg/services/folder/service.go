@@ -64,17 +64,3 @@ type Service interface {
 
 	RegisterService(service RegistryService) error
 }
-
-// FolderStore is a folder store.
-//
-//go:generate mockery --name FolderStore --structname FakeFolderStore --outpkg foldertest --output foldertest --filename folder_store_mock.go
-type FolderStore interface {
-	// Get joins on the dashboard and folder table to return all information needed for a folder
-	Get(ctx context.Context, q GetFolderQuery) (*Folder, error)
-	// GetFolderByUID retrieves a folder by its UID
-	GetFolderByUID(ctx context.Context, orgID int64, uid string) (*Folder, error)
-	// GetFolderByID retrieves a folder by its ID
-	GetFolderByID(ctx context.Context, orgID int64, id int64) (*Folder, error)
-	// GetFolders returns all folders for the given orgID and UIDs.
-	GetFolders(ctx context.Context, orgID int64, uids []string) (map[string]*Folder, error)
-}

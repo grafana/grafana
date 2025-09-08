@@ -25,7 +25,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
-	"github.com/grafana/grafana/pkg/services/folder/folderimpl"
 	"github.com/grafana/grafana/pkg/services/ngalert/testutil"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -1630,10 +1629,9 @@ func createRule(tb testing.TB, store *DBstore, generator *models.AlertRuleGenera
 func setupFolderService(t testing.TB, sqlStore db.DB, cfg *setting.Cfg, features featuremgmt.FeatureToggles) folder.Service {
 	tracer := tracing.InitializeTracerForTest()
 	inProcBus := bus.ProvideBus(tracer)
-	folderStore := folderimpl.ProvideDashboardFolderStore(sqlStore)
-	_, dashboardStore := testutil.SetupDashboardService(t, sqlStore, folderStore, cfg)
+	_, dashboardStore := testutil.SetupDashboardService(t, sqlStore, cfg)
 
-	return testutil.SetupFolderService(t, cfg, sqlStore, dashboardStore, folderStore, inProcBus, features, &actest.FakeAccessControl{ExpectedEvaluate: true})
+	return testutil.SetupFolderService(t, cfg, sqlStore, dashboardStore, inProcBus, features, &actest.FakeAccessControl{ExpectedEvaluate: true})
 }
 
 func TestIntegration_AlertRuleVersionsCleanup(t *testing.T) {
