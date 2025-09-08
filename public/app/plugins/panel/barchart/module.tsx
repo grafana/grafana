@@ -202,11 +202,20 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(BarChartPanel)
         },
         defaultValue: defaultOptions.stacking,
       })
-      .addFieldNamePicker({
+      .addFieldNamePicker({ // added 
         path: 'groupByField',
         name: 'Group by',
         description: 'Select field to group bars by',
         defaultValue: '',
+      })
+      .addSliderInput({
+        path: 'clusterWidth',
+        name: 'Cluster width',
+        settings: {
+          min: 0,
+          max: 1,
+          step: 0.01,
+        },
       })
       .addSliderInput({
         path: 'groupWidth',

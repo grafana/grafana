@@ -54,6 +54,8 @@ composableKinds: PanelCfg: {
 					barWidth: float64 & >=0 & <=3 | *0.97
 					// Controls the width of groups. 1 = max with, 0 = min width.
 					groupWidth: float64 & >=0 & <=1 | *0.7
+					// Controls the width of the clusters. 1= max width, 0 = min width.
+					clusterWidth: float64 & >=0 & <=1 | *0.7
 					// What field is being grouped by.
 					groupByField?: string
 					// Enables mode which highlights the entire bar area and shows tooltip when cursor

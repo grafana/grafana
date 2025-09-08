@@ -20,6 +20,10 @@ export interface Options extends common.OptionsWithLegend, common.OptionsWithToo
    */
   barWidth: number;
   /**
+   * Controls the width of the clusters. 1= max width, 0 = min width.
+   */
+  clusterWidth: number;
+  /**
    * Use the color value for a sibling field to color each bar value.
    */
   colorByField?: string;
@@ -70,6 +74,7 @@ export interface Options extends common.OptionsWithLegend, common.OptionsWithToo
 export const defaultOptions: Partial<Options> = {
   barRadius: 0,
   barWidth: 0.97,
+  clusterWidth: 0.7,
   fullHighlight: false,
   groupWidth: 0.7,
   orientation: common.VizOrientation.Auto,

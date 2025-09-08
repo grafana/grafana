@@ -19,7 +19,7 @@ import { TimeSeriesTooltip } from '../timeseries/TimeSeriesTooltip';
 
 import { BarChartLegend, hasVisibleLegendSeries } from './BarChartLegend';
 import { Options } from './panelcfg.gen';
-import { prepConfig, preprocessFrames, prepSeries } from './utils';
+import { prepConfig, prepSeries } from './utils';
 
 const charWidth = measureText('M', UPLOT_AXIS_FONT_SIZE).width;
 const toRads = Math.PI / 180;
@@ -69,10 +69,9 @@ export const BarChartPanel = (props: PanelProps<Options>) => {
         // auto max length clamps to half viz height, subracts 3 chars for ... ellipsis
         Math.floor(height / 2 / Math.sin(Math.abs(xTickLabelRotation * toRads)) / charWidth - 3);
 
-  const processedFrames = preprocessFrames(data.series, groupByField, xField);
   const info = useMemo(
-    () => prepSeries(processedFrames, fieldConfig, stacking, theme, xField, colorByField),
-    [processedFrames, fieldConfig, stacking, theme, xField, colorByField]
+    () => prepSeries(data.series, fieldConfig, stacking, theme, xField, colorByField),
+    [data.series, fieldConfig, stacking, theme, xField, colorByField]
   );
   
   // // TODO: config data links
@@ -98,7 +97,7 @@ export const BarChartPanel = (props: PanelProps<Options>) => {
     () => {
       return xGroupsCount === 0
         ? { builder: null, prepData: null }
-        : prepConfig({ series: vizSeries, totalSeries, color: info.color, orientation, options, timeZone, theme });
+        : prepConfig({ series: vizSeries, totalSeries, color: info.color, orientation, options, timeZone, theme, groupByField });
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [
