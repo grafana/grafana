@@ -103,7 +103,11 @@ export const ConfirmContent = ({
           <div className={styles.confirmationInput}>
             <Stack alignItems="flex-start">
               <Field disabled={disabled}>
-                <Input placeholder={placeholder} onChange={onConfirmationTextChange} />
+                <Input
+                  placeholder={placeholder}
+                  onChange={onConfirmationTextChange}
+                  data-testid={selectors.pages.ConfirmModal.input}
+                />
               </Field>
             </Stack>
           </div>
