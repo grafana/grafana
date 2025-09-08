@@ -11956,14 +11956,6 @@
       "no-deleted-dashboards-text": "When you delete a dashboard, it will appear here for 30 days before being permanently deleted. Your organization administrator can restore recently-deleted dashboards.",
       "no-search-result": "No results found for your query"
     },
-    "permanently-delete-modal": {
-      "confirm-text": "Delete",
-      "delete-button": "Delete",
-      "delete-loading": "Deleting...",
-      "text_one": "This action will delete {{numberOfDashboards}} dashboards.",
-      "text_other": "This action will delete {{numberOfDashboards}} dashboards.",
-      "title": "Permanently Delete Dashboards"
-    },
     "restore-modal": {
       "folder-picker-text_one": "Please choose a folder where your dashboards will be restored.",
       "folder-picker-text_other": "Please choose a folder where your dashboards will be restored.",
