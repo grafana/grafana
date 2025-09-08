@@ -147,10 +147,10 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
         {editPanel && <PanelEditControls panelEditor={editPanel} />}
       </Stack>
       {!hideTimeControls && (
-        <div className={styles.timeControlStack}>
+        <Stack justifyContent="flex-end">
           <timePicker.Component model={timePicker} />
           <refreshPicker.Component model={refreshPicker} />
-        </div>
+        </Stack>
       )}
       <Stack>
         <DropdownVariableControls dashboard={dashboard} />
@@ -181,7 +181,7 @@ function getStyles(theme: GrafanaTheme2) {
       gap: theme.spacing(1),
       padding: theme.spacing(2),
       flexDirection: 'row',
-      flexWrap: 'wrap-reverse',
+      flexWrap: 'nowrap',
       position: 'relative',
       width: '100%',
       marginLeft: 'auto',
@@ -197,13 +197,6 @@ function getStyles(theme: GrafanaTheme2) {
     embedded: css({
       background: 'unset',
       position: 'unset',
-    }),
-    timeControlStack: css({
-      display: 'flex',
-      flexWrap: 'wrap',
-      justifyContent: 'flex-end',
-      gap: theme.spacing(1),
-      marginLeft: 'auto',
     }),
   };
 }
