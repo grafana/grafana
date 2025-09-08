@@ -33,6 +33,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards" // TODO: Check if we can remove this import
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/util"
+	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 func TestMain(m *testing.M) {
@@ -58,9 +59,7 @@ type TestContext struct {
 
 // TestIntegrationDashboardAPIValidation tests the dashboard K8s API with validation checks
 func TestIntegrationDashboardAPIValidation(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	dualWriterModes := []rest.DualWriterMode{rest.Mode0, rest.Mode1, rest.Mode2, rest.Mode3, rest.Mode4, rest.Mode5}
 	for _, dualWriterMode := range dualWriterModes {
@@ -126,9 +125,7 @@ func TestIntegrationDashboardAPIValidation(t *testing.T) {
 
 // TestIntegrationDashboardAPIAuthorization tests the dashboard K8s API with authorization checks
 func TestIntegrationDashboardAPIAuthorization(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	dualWriterModes := []rest.DualWriterMode{rest.Mode0, rest.Mode1, rest.Mode2, rest.Mode3, rest.Mode4, rest.Mode5}
 	for _, dualWriterMode := range dualWriterModes {
@@ -175,9 +172,7 @@ func TestIntegrationDashboardAPIAuthorization(t *testing.T) {
 
 // TestIntegrationDashboardAPI tests the dashboard K8s API
 func TestIntegrationDashboardAPI(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	dualWriterModes := []rest.DualWriterMode{rest.Mode0, rest.Mode1, rest.Mode2, rest.Mode3, rest.Mode4, rest.Mode5}
 	for _, dualWriterMode := range dualWriterModes {

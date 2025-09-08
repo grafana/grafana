@@ -24,6 +24,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
+	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 func TestMain(m *testing.M) {
@@ -50,9 +51,8 @@ func setupTestEnv(t testing.TB) *Service {
 }
 
 func TestIntegrationUsageMetrics(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test in short mode")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	tests := []struct {
 		name          string
 		expectedValue int
@@ -84,9 +84,8 @@ func TestIntegrationUsageMetrics(t *testing.T) {
 }
 
 func TestIntegrationService_DeclareFixedRoles(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test in short mode")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	tests := []struct {
 		name          string
 		registrations []accesscontrol.RoleRegistration
@@ -172,9 +171,8 @@ func TestIntegrationService_DeclareFixedRoles(t *testing.T) {
 }
 
 func TestIntegrationService_DeclarePluginRoles(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test in short mode")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	tests := []struct {
 		name          string
 		pluginID      string
@@ -288,9 +286,8 @@ func TestIntegrationService_DeclarePluginRoles(t *testing.T) {
 }
 
 func TestIntegrationService_RegisterFixedRoles(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test in short mode")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	tests := []struct {
 		name          string
 		token         licensing.Licensing
@@ -393,9 +390,8 @@ func TestIntegrationService_RegisterFixedRoles(t *testing.T) {
 }
 
 func TestIntegrationService_SearchUsersPermissions(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test in short mode")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	searchOption := accesscontrol.SearchOptions{ActionPrefix: "teams"}
 	ctx := context.Background()
 	listAllPerms := map[string][]string{accesscontrol.ActionUsersPermissionsRead: {"users:*"}}
@@ -617,9 +613,8 @@ func TestIntegrationService_SearchUsersPermissions(t *testing.T) {
 }
 
 func TestIntegrationService_SearchUserPermissions(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test in short mode")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	ctx := context.Background()
 	tests := []struct {
 		name           string
@@ -851,9 +846,8 @@ func TestIntegrationService_SearchUserPermissions(t *testing.T) {
 }
 
 func TestIntegrationService_SaveExternalServiceRole(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test in short mode")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	type run struct {
 		cmd     accesscontrol.SaveExternalServiceRoleCommand
 		wantErr bool
@@ -941,9 +935,8 @@ func TestIntegrationService_SaveExternalServiceRole(t *testing.T) {
 }
 
 func TestIntegrationService_DeleteExternalServiceRole(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test in short mode")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	tests := []struct {
 		name              string
 		initCmd           *accesscontrol.SaveExternalServiceRoleCommand
@@ -998,9 +991,8 @@ func TestIntegrationService_DeleteExternalServiceRole(t *testing.T) {
 }
 
 func TestIntegrationService_GetRoleByName(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test in short mode")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	t.Parallel()
 
 	ctx := context.Background()
