@@ -88,7 +88,10 @@ func (s *LegacyStore) Create(ctx context.Context, obj runtime.Object, createVali
 	}
 
 	if saObj.GenerateName != "" {
+	if saObj.GenerateName != "" {
 		saObj.Name = saObj.GenerateName + util.GenerateShortUID()
+		saObj.GenerateName = ""
+	}
 	}
 
 	createCmd := legacy.CreateServiceAccountCommand{
