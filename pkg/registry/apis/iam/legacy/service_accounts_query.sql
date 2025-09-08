@@ -3,6 +3,7 @@ SELECT
   u.uid,
   u.name,
   u.is_disabled,
+  o.role,
   u.created,
   u.updated
   FROM {{ .Ident .UserTable }} as u JOIN {{ .Ident .OrgUserTable }} as o ON u.id = o.user_id

@@ -53,6 +53,5 @@ import (
 	_ "github.com/grafana/e2e"
 	_ "github.com/grafana/gofpdf"
 	_ "github.com/grafana/gomemcache/memcache"
-	_ "github.com/grafana/grafana/apps/alerting/alertenrichment/pkg/apis/alertenrichment/v1beta1"
 	_ "github.com/grafana/tempo/pkg/traceql"
 )
