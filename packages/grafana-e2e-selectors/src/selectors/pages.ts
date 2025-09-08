@@ -113,7 +113,7 @@ export const versionedPages = {
     },
   },
   SecretsManagement: {
-    form: {
+    SecretForm: {
       '12.2.0': 'data-testid Secret Form',
     },
   },
