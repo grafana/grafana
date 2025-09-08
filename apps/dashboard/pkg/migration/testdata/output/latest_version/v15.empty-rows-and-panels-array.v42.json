@@ -986,7 +986,8 @@
         "refresh": 2,
         "regex": "",
         "sort": 2,
-        "type": "query"
+        "type": "query",
+        "useTags": false
       },
       {
         "allValue": ".*",
@@ -1004,7 +1005,8 @@
         "refresh": 2,
         "regex": "",
         "sort": 0,
-        "type": "query"
+        "type": "query",
+        "useTags": false
       },
       {
         "allValue": ".+",
@@ -1022,7 +1024,8 @@
         "refresh": 2,
         "regex": "",
         "sort": 2,
-        "type": "query"
+        "type": "query",
+        "useTags": false
       },
       {
         "allValue": ".+",
@@ -1040,7 +1043,8 @@
         "refresh": 2,
         "regex": "",
         "sort": 2,
-        "type": "query"
+        "type": "query",
+        "useTags": false
       }
     ]
   },

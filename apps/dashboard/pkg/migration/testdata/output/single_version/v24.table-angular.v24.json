@@ -78,7 +78,7 @@
           "refId": "A"
         },
         {
-          "refId": "A"
+          "refId": "B"
         }
       ],
       "title": "Basic Angular Table with Defaults",

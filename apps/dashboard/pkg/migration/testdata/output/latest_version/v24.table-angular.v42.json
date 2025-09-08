@@ -93,7 +93,7 @@
             "type": "prometheus",
             "uid": "default-ds-uid"
           },
-          "refId": "A"
+          "refId": "B"
         }
       ],
       "title": "Basic Angular Table with Defaults",
@@ -1321,21 +1321,49 @@
       "type": "timeseries"
     },
     {
-      "autoMigrateFrom": "singlestat",
       "datasource": {
         "apiVersion": "v1",
         "type": "prometheus",
         "uid": "default-ds-uid"
       },
       "description": "Other panel types should not be affected by table migration.",
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
       "id": 17,
       "options": {
+        "colorMode": "none",
+        "graphMode": "none",
         "justifyMode": "auto",
+        "orientation": "horizontal",
         "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "mean"
+          ],
+          "fields": "",
+          "values": false
+        },
         "showPercentChange": false,
         "textMode": "auto",
         "wideLayout": true
       },
+      "pluginVersion": "12.1.0",
       "targets": [
         {
           "datasource": {

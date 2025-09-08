@@ -45,7 +45,8 @@
             "value": "opt2"
           }
         ],
-        "type": "custom"
+        "type": "custom",
+        "useTags": false
       },
       {
         "name": "clean_variable",

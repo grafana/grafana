@@ -34,31 +34,6 @@
       "type": "timeseries"
     },
     {
-      "autoMigrateFrom": "singlestat",
-      "gridPos": {
-        "h": 4,
-        "w": 6,
-        "x": 0,
-        "y": 8
-      },
-      "id": 2,
-      "maxPerRow": 6,
-      "title": "Panel with minSpan 4",
-      "type": "stat"
-    },
-    {
-      "gridPos": {
-        "h": 6,
-        "w": 24,
-        "x": 0,
-        "y": 12
-      },
-      "id": 3,
-      "maxPerRow": 12,
-      "title": "Panel with minSpan 2",
-      "type": "table"
-    },
-    {
       "autoMigrateFrom": "graph",
       "gridPos": {
         "h": 8,
@@ -72,16 +47,17 @@
       "type": "timeseries"
     },
     {
+      "autoMigrateFrom": "singlestat",
       "gridPos": {
         "h": 4,
-        "w": 24,
+        "w": 6,
         "x": 0,
-        "y": 18
+        "y": 8
       },
-      "id": 5,
-      "maxPerRow": 1,
-      "title": "Panel with minSpan 24",
-      "type": "gauge"
+      "id": 2,
+      "maxPerRow": 6,
+      "title": "Panel with minSpan 4",
+      "type": "stat"
     },
     {
       "gridPos": {
@@ -117,6 +93,30 @@
       "id": 8,
       "title": "Panel with invalid minSpan",
       "type": "text"
+    },
+    {
+      "gridPos": {
+        "h": 6,
+        "w": 24,
+        "x": 0,
+        "y": 12
+      },
+      "id": 3,
+      "maxPerRow": 12,
+      "title": "Panel with minSpan 2",
+      "type": "table"
+    },
+    {
+      "gridPos": {
+        "h": 4,
+        "w": 24,
+        "x": 0,
+        "y": 18
+      },
+      "id": 5,
+      "maxPerRow": 1,
+      "title": "Panel with minSpan 24",
+      "type": "gauge"
     },
     {
       "autoMigrateFrom": "graph",

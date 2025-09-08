@@ -378,13 +378,34 @@ func ensureQueryIds(panel map[string]interface{}) {
 	}
 
 	if hasMissingRefId {
-		// Assign refIds starting from 'A'
-		refId := 'A'
+		// Find existing refIds
+		existingRefIds := make(map[string]bool)
+		for _, target := range targets {
+			if targetMap, ok := target.(map[string]interface{}); ok {
+				if refId, ok := targetMap["refId"].(string); ok {
+					existingRefIds[refId] = true
+				}
+			}
+		}
+
+		// Assign refIds to targets that don't have them
+		letters := "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+		letterIndex := 0
+
 		for _, target := range targets {
 			if targetMap, ok := target.(map[string]interface{}); ok {
 				if targetMap["refId"] == nil {
-					targetMap["refId"] = string(refId)
-					refId++
+					// Find next available refId
+					for letterIndex < len(letters) {
+						refId := string(letters[letterIndex])
+						if !existingRefIds[refId] {
+							targetMap["refId"] = refId
+							existingRefIds[refId] = true
+							break
+						}
+						letterIndex++
+					}
+					letterIndex++
 				}
 			}
 		}
@@ -656,6 +677,15 @@ func cleanupDashboardForSave(dashboard map[string]interface{}) {
 						case "datasource":
 							// Datasource variables: always set options to empty array
 							variable["options"] = []interface{}{}
+						case "custom":
+							// Custom variables: no special handling (just return rest)
+							// This is the default behavior - no additional processing needed
+						case "textbox":
+							// Textbox variables: handle query vs originalQuery logic
+							// For now, just return rest (no special handling needed for basic cases)
+						case "adhoc":
+							// Adhoc variables: no special handling
+							// This is the default behavior - no additional processing needed
 						}
 					}
 				}
@@ -679,6 +709,55 @@ func cleanupDashboardForSave(dashboard map[string]interface{}) {
 				}
 			}
 		}
+
+		// Sort panels by grid position (matches frontend sortPanelsByGridPos behavior)
+		sort.Slice(panels, func(i, j int) bool {
+			panelA, okA := panels[i].(map[string]interface{})
+			panelB, okB := panels[j].(map[string]interface{})
+			if !okA || !okB {
+				return false
+			}
+
+			// Get gridPos or use default values if missing
+			gridPosA, okA := panelA["gridPos"].(map[string]interface{})
+			gridPosB, okB := panelB["gridPos"].(map[string]interface{})
+
+			// Default gridPos values (matches frontend PanelModel defaults)
+			defaultY := float64(0)
+			defaultX := float64(0)
+
+			yA := defaultY
+			if okA {
+				if y, ok := gridPosA["y"].(float64); ok {
+					yA = y
+				}
+			}
+
+			yB := defaultY
+			if okB {
+				if y, ok := gridPosB["y"].(float64); ok {
+					yB = y
+				}
+			}
+
+			if yA == yB {
+				xA := defaultX
+				if okA {
+					if x, ok := gridPosA["x"].(float64); ok {
+						xA = x
+					}
+				}
+
+				xB := defaultX
+				if okB {
+					if x, ok := gridPosB["x"].(float64); ok {
+						xB = x
+					}
+				}
+				return xA < xB
+			}
+			return yA < yB
+		})
 	} else {
 		// Ensure panels property exists even if empty (matches frontend behavior)
 		dashboard["panels"] = []interface{}{}
