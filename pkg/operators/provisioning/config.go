@@ -237,7 +237,7 @@ func setupRepoFactory(
 		case provisioning.GitHubRepositoryType:
 			var webhook *webhooks.WebhookExtraBuilder
 			provisioningAppURL := operatorSec.Key("provisioning_public_server_url").String()
-			if provisioningAppURL == "" {
+			if provisioningAppURL != "" {
 				webhook = webhooks.ProvideWebhooks(provisioningAppURL)
 			}
 
