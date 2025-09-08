@@ -18,6 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
+	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 // run tests with cleanup
@@ -26,9 +27,8 @@ func TestMain(m *testing.M) {
 }
 
 func TestIntegrationDashboardFolderStore(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test in short mode")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	var sqlStore db.DB
 	var cfg *setting.Cfg
 	var dashboardStore dashboards.Store
@@ -116,9 +116,7 @@ func insertTestDashboard(t *testing.T, dashboardStore dashboards.Store, title st
 }
 
 func TestIntegrationGetDashFolderStore(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	db, cfg := sqlstore.InitTestDB(t)
 	folderStore := ProvideStore(db)

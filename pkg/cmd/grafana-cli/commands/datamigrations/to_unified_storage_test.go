@@ -8,13 +8,13 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 func TestIntegrationUnifiedStorageCommand(t *testing.T) {
-	// setup datasources with password, basic_auth and none
-	if testing.Short() {
-		t.Skip("skipping integration test in short mode")
-	}
+	testutil.
+		// setup datasources with password, basic_auth and none
+		SkipIntegrationTestInShortMode(t)
 
 	store := db.InitTestDB(t)
 	err := store.WithDbSession(context.Background(), func(sess *db.Session) error {

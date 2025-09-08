@@ -23,6 +23,7 @@ import (
 	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
+	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 func TestMain(m *testing.M) {
@@ -64,9 +65,8 @@ func setupAMTest(t *testing.T) *alertmanager {
 }
 
 func TestIntegrationAlertmanager_newAlertmanager(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test in short mode")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	am := setupAMTest(t)
 	require.False(t, am.Ready())
 }

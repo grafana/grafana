@@ -40,6 +40,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/util"
+	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 func TestMain(m *testing.M) {
@@ -47,9 +48,8 @@ func TestMain(m *testing.M) {
 }
 
 func TestIntegrationWarmStateCache(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test in short mode")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	evaluationTime, err := time.Parse("2006-01-02", "2021-03-25")
 	require.NoError(t, err)
 	ctx := context.Background()
@@ -275,9 +275,8 @@ func TestIntegrationWarmStateCache(t *testing.T) {
 }
 
 func TestIntegrationDashboardAnnotations(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test in short mode")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	evaluationTime, err := time.Parse("2006-01-02", "2022-01-01")
 	require.NoError(t, err)
 
@@ -1457,10 +1456,10 @@ func printAllAnnotations(annos map[int64]annotations.Item) string {
 }
 
 func TestIntegrationStaleResultsHandler(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test in short mode")
-		// Truncate to the second since we don't store sub-second precision.
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	// Truncate to the second since we don't store sub-second precision.
+
 	evaluationTime := time.Now().Truncate(time.Second).UTC()
 	interval := time.Minute
 
@@ -1748,9 +1747,8 @@ func TestStaleResults(t *testing.T) {
 }
 
 func TestIntegrationDeleteStateByRuleUID(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test in short mode")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	interval := time.Minute
 	ctx := context.Background()
 	ng, dbstore := tests.SetupTestEnv(t, 1)
@@ -1897,9 +1895,8 @@ func TestIntegrationDeleteStateByRuleUID(t *testing.T) {
 }
 
 func TestIntegrationResetStateByRuleUID(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test in short mode")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	interval := time.Minute
 	ctx := context.Background()
 	ng, dbstore := tests.SetupTestEnv(t, 1)

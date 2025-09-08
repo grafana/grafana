@@ -17,6 +17,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/tsdb/mysql/sqleng"
+	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 // To run this test, set runMySqlTests=true
@@ -28,9 +29,8 @@ import (
 // use to verify that the generated data are visualized as expected, see
 // devenv/README.md for setup instructions.
 func TestIntegrationMySQL(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	// change to true to run the MySQL tests
 	runMySQLTests := false
 	// runMySQLTests := true
