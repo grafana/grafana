@@ -22,12 +22,11 @@ import (
 	"github.com/grafana/grafana/pkg/extensions"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/tests/apis"
+	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 func TestIntegrationProvisioning_CreatingAndGetting(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	helper := runGrafana(t)
 	createOptions := metav1.CreateOptions{FieldValidation: "Strict"}
@@ -176,9 +175,8 @@ func TestIntegrationProvisioning_CreatingAndGetting(t *testing.T) {
 }
 
 func TestIntegrationProvisioning_FailInvalidSchema(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	t.Skip("Reenable this test once we enforce schema validation for provisioning")
 
 	helper := runGrafana(t)
@@ -230,9 +228,7 @@ func TestIntegrationProvisioning_FailInvalidSchema(t *testing.T) {
 }
 
 func TestIntegrationProvisioning_CreatingGitHubRepository(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	helper := runGrafana(t)
 	ctx := context.Background()
@@ -345,9 +341,7 @@ func TestIntegrationProvisioning_CreatingGitHubRepository(t *testing.T) {
 }
 
 func TestIntegrationProvisioning_RepositoryLimits(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	helper := runGrafana(t)
 	ctx := context.Background()
@@ -453,9 +447,7 @@ func TestIntegrationProvisioning_RepositoryLimits(t *testing.T) {
 }
 
 func TestIntegrationProvisioning_RunLocalRepository(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	helper := runGrafana(t)
 	ctx := context.Background()
@@ -616,9 +608,7 @@ spec:
 }
 
 func TestIntegrationProvisioning_ImportAllPanelsFromLocalRepository(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	helper := runGrafana(t)
 	ctx := context.Background()
@@ -685,9 +675,7 @@ func TestIntegrationProvisioning_ImportAllPanelsFromLocalRepository(t *testing.T
 }
 
 func TestIntegrationProvisioning_DeleteRepositoryAndReleaseResources(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	helper := runGrafana(t)
 	ctx := context.Background()

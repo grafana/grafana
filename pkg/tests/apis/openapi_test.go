@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
+	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 func TestMain(m *testing.M) {
@@ -19,9 +20,7 @@ func TestMain(m *testing.M) {
 }
 
 func TestIntegrationOpenAPIs(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	h := NewK8sTestHelper(t, testinfra.GrafanaOpts{
 		AppModeProduction: true,

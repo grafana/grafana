@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/tests/apis"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
+	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 func TestMain(m *testing.M) {
@@ -16,9 +17,8 @@ func TestMain(m *testing.M) {
 }
 
 func TestIntegrationDashboardSnapshots(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
 		AppModeProduction: false, // required for experimental apis
 		DisableAnonymous:  true,

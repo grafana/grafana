@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
+	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 type FakeServiceAccountStore struct {
@@ -118,9 +119,8 @@ func TestMain(m *testing.M) {
 }
 
 func TestIntegrationProvideServiceAccount_DeleteServiceAccount(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test in short mode")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	storeMock := newServiceAccountStoreFake()
 	acSvc := actest.FakeService{}
 	pSvc := &actest.FakePermissionsService{}

@@ -9,12 +9,12 @@ import (
 	"github.com/grafana/grafana/pkg/kinds/librarypanel"
 	"github.com/grafana/grafana/pkg/services/libraryelements/model"
 	"github.com/grafana/grafana/pkg/util"
+	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 func TestIntegration_CreateLibraryElement(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test in short mode")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	scenarioWithPanel(t, "When an admin tries to create a library panel that already exists, it should fail",
 		func(t *testing.T, sc scenarioContext) {
 			// nolint:staticcheck

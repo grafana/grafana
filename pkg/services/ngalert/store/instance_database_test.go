@@ -17,14 +17,13 @@ import (
 	pb "github.com/grafana/grafana/pkg/services/ngalert/store/proto/v1"
 	"github.com/grafana/grafana/pkg/services/ngalert/tests"
 	"github.com/grafana/grafana/pkg/util"
+	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 const baseIntervalSeconds = 10
 
 func TestIntegration_CompressedAlertRuleStateOperations(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	ctx := context.Background()
 	ng, dbstore := tests.SetupTestEnv(
@@ -124,9 +123,8 @@ func createAlertInstance(orgID int64, ruleUID, labelsHash, reason string, state 
 }
 
 func TestIntegrationAlertInstanceOperations(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	ctx := context.Background()
 	ng, dbstore := tests.SetupTestEnv(t, baseIntervalSeconds)
 
@@ -301,9 +299,8 @@ func TestIntegrationAlertInstanceOperations(t *testing.T) {
 }
 
 func TestIntegrationFullSync(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test in short mode")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	batchSize := 1
 
 	ctx := context.Background()
@@ -511,9 +508,7 @@ func TestIntegrationFullSync(t *testing.T) {
 }
 
 func TestIntegration_ProtoInstanceDBStore_VerifyCompressedData(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	ctx := context.Background()
 	ng, dbstore := tests.SetupTestEnv(

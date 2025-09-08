@@ -16,14 +16,13 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/ngalert/tests"
+	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 const testAlertingIntervalSeconds = 10
 
 func TestIntegrationProvisioningStore(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	testCases := []struct {
 		name           string

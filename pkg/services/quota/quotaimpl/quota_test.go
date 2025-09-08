@@ -62,6 +62,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/util"
+	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 func TestQuotaService(t *testing.T) {
@@ -77,9 +78,8 @@ func TestQuotaService(t *testing.T) {
 }
 
 func TestIntegrationQuotaCommandsAndQueries(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	sqlStore, cfg := db.InitTestDBWithCfg(t)
 	cfg.Quota = setting.QuotaSettings{
 		Enabled: true,

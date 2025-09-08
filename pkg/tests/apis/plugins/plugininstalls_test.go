@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/tests/apis"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
+	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 var gvrPluginInstalls = schema.GroupVersionResource{
@@ -26,9 +27,7 @@ func TestMain(m *testing.M) {
 }
 
 func TestIntegrationPluginInstalls(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	t.Run("create plugin install", func(t *testing.T) {
 		helper := setupHelper(t)

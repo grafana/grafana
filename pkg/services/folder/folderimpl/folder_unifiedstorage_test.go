@@ -43,6 +43,7 @@ import (
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
+	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 type rcp struct {
@@ -74,9 +75,7 @@ func compareFoldersNormalizeTime(t *testing.T, expected, actual *folder.Folder) 
 }
 
 func TestIntegrationFolderServiceViaUnifiedStorage(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	m := map[string]folderv1.Folder{}
 
@@ -846,9 +845,8 @@ func TestGetFoldersFromApiServer(t *testing.T) {
 }
 
 func TestIntegrationDeleteFoldersFromApiServer(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test in short mode")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	fakeK8sClient := new(client.MockK8sHandler)
 	fakeK8sClient.On("GetNamespace", mock.Anything, mock.Anything).Return("default")
 	dashboardK8sclient := new(client.MockK8sHandler)

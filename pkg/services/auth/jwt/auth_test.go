@@ -22,6 +22,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
+	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 type scenarioContext struct {
@@ -46,9 +47,8 @@ func TestMain(m *testing.M) {
 }
 
 func TestIntegrationVerifyUsingPKIXPublicKeyFile(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test in short mode")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	key := rsaKeys[0]
 	unknownKey := rsaKeys[1]
 
@@ -84,9 +84,8 @@ func TestIntegrationVerifyUsingPKIXPublicKeyFile(t *testing.T) {
 }
 
 func TestIntegrationVerifyUsingJWKSetFile(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test in short mode")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	configure := func(t *testing.T, cfg *setting.Cfg) {
 		t.Helper()
 
@@ -126,9 +125,8 @@ func TestIntegrationVerifyUsingJWKSetFile(t *testing.T) {
 }
 
 func TestIntegrationVerifyUsingJWKSetURL(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test in short mode")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	t.Run("should refuse to start with non-https URL", func(t *testing.T) {
 		var err error
 
@@ -172,9 +170,7 @@ func TestIntegrationVerifyUsingJWKSetURL(t *testing.T) {
 
 // test that caCert and bearer token files have been read and configured and an error is thrown when the file does not exist or is empty
 func TestIntegrationCustomRootCAJWKHTTPSClient(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test in short mode")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	urlConfigure := func(t *testing.T, cfg *setting.Cfg) {
 		cfg.JWTAuth.JWKSetURL = "https://example.com/.well-known/jwks.json"
@@ -241,9 +237,7 @@ func TestIntegrationCustomRootCAJWKHTTPSClient(t *testing.T) {
 }
 
 func TestIntegrationAuthorizationHeaderJWKHTTPSClient(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test in short mode")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	urlConfigure := func(t *testing.T, cfg *setting.Cfg) {
 		cfg.JWTAuth.JWKSetURL = "https://example.com/.well-known/jwks.json"
@@ -366,9 +360,8 @@ func TestIntegrationAuthorizationHeaderJWKHTTPSClient(t *testing.T) {
 }
 
 func TestIntegrationCachingJWKHTTPResponse(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test in short mode")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	jwkCachingScenario(t, "caches the jwk response", func(t *testing.T, sc cachingScenarioContext) {
 		for i := 0; i < 5; i++ {
 			token := sign(t, &jwKeys[0], jwt.Claims{Subject: subject}, nil)
@@ -409,9 +402,8 @@ func TestIntegrationCachingJWKHTTPResponse(t *testing.T) {
 }
 
 func TestIntegrationSignatureWithNoneAlgorithm(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test in short mode")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	scenario(t, "rejects a token signed with \"none\" algorithm", func(t *testing.T, sc scenarioContext) {
 		token := signNone(t, jwt.Claims{Subject: "foo"})
 		_, err := sc.authJWTSvc.Verify(sc.ctx, token)
@@ -420,9 +412,8 @@ func TestIntegrationSignatureWithNoneAlgorithm(t *testing.T) {
 }
 
 func TestIntegrationClaimValidation(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test in short mode")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	key := rsaKeys[0]
 
 	scenario(t, "validates iss field for equality", func(t *testing.T, sc scenarioContext) {
@@ -583,9 +574,8 @@ func jwkCachingScenario(t *testing.T, desc string, fn cachingScenarioFunc, cbs .
 }
 
 func TestIntegrationBase64Paddings(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test in short mode")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	key := rsaKeys[0]
 
 	scenario(t, "verifies a token with base64 padding (non compliant rfc7515#section-2 but accepted)", func(t *testing.T, sc scenarioContext) {

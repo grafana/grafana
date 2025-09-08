@@ -12,12 +12,12 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 func TestIntegrationServiceAccountMigration(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test in short mode")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	// Run initial migration to have a working DB
 	x := setupTestDB(t)
 
@@ -287,9 +287,8 @@ func TestIntegrationServiceAccountMigration(t *testing.T) {
 }
 
 func TestIntegrationServiceAccountDedupOrgMigration(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test in short mode")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	// Run initial migration to have a working DB
 	x := setupTestDB(t)
 

@@ -21,6 +21,7 @@ import (
 	"github.com/grafana/grafana/pkg/tests/apis"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
+	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 func TestMain(m *testing.M) {
@@ -36,9 +37,7 @@ var gvr = schema.GroupVersionResource{
 var RESOURCEGROUP = gvr.GroupResource().String()
 
 func TestIntegrationShortURL(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	t.Run("default setup with k8s flag turned off (legacy APIs)", func(t *testing.T) {
 		helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{

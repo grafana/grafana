@@ -28,6 +28,7 @@ import (
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/util"
+	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 func TestMain(m *testing.M) {
@@ -35,9 +36,7 @@ func TestMain(m *testing.M) {
 }
 
 func TestIntegrationDashboardServiceValidation(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		DisableAnonymous: true,
@@ -984,9 +983,7 @@ func postDashboard(t *testing.T, grafanaListedAddr, user, password string, paylo
 }
 
 func TestIntegrationDashboardServicePermissions(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		DisableAnonymous: true,

@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
+	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 func TestMain(m *testing.M) {
@@ -31,9 +32,8 @@ func createTestableServerLock(t *testing.T) *ServerLockService {
 }
 
 func TestIntegrationServerLock(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test in short mode")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	sl := createTestableServerLock(t)
 	operationUID := "test-operation"
 
@@ -70,9 +70,8 @@ func TestIntegrationServerLock(t *testing.T) {
 }
 
 func TestIntegrationLockAndRelease(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test in short mode")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	operationUID := "test-operation-release"
 
 	t.Run("create lock and then release it", func(t *testing.T) {

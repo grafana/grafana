@@ -24,6 +24,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
 	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
+	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 const (
@@ -32,9 +33,8 @@ const (
 )
 
 func TestIntegrationDuplicatesValidator(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test in short mode")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	fakeService := &dashboards.FakeDashboardProvisioning{}
 	defer fakeService.AssertExpectations(t)
 

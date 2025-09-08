@@ -15,6 +15,7 @@ import (
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
+	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 func TestMain(m *testing.M) {
@@ -46,9 +47,8 @@ func batchInsertPermissions(cnt int, sqlStore db.DB) error {
 // TestIntegrationMigrateScopeSplit tests the scope split migration
 // also tests the scope split truncation logic
 func TestIntegrationMigrateScopeSplitTruncation(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test in short mode")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	sqlStore := db.InitTestDB(t)
 	logger := log.New("accesscontrol.migrator.test")
 

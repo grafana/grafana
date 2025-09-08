@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/loginattempt"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 func TestService_Validate(t *testing.T) {
@@ -134,9 +135,8 @@ func TestService_Validate(t *testing.T) {
 }
 
 func TestIntegrationUserLoginAttempts(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test in short mode")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	ctx := context.Background()
 	cfg := setting.NewCfg()
 	cfg.DisableBruteForceLoginProtection = false
@@ -282,9 +282,8 @@ func TestService_ValidateIPAddress(t *testing.T) {
 }
 
 func TestIntegrationIPLoginAttempts(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test in short mode")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	ctx := context.Background()
 	cfg := setting.NewCfg()
 	cfg.DisableBruteForceLoginProtection = false
@@ -312,9 +311,7 @@ func TestIntegrationIPLoginAttempts(t *testing.T) {
 // TestIPv6AddressSupport verifies that various IPv6 address formats can be stored properly with the new column length, testing various IPv6 address formats that could be encountered.
 // This test validates that the ip_address column length is sufficient for IPv6 addresses
 func TestIntegrationIPv6AddressSupport(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	ctx := context.Background()
 	cfg := setting.NewCfg()

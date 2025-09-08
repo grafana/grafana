@@ -51,6 +51,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/util"
+	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 //go:embed test-data/*.*
@@ -260,11 +261,10 @@ func TestGetRemoteState(t *testing.T) {
 }
 
 func TestIntegrationApplyConfig(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test in short mode")
+	testutil.SkipIntegrationTestInShortMode(t)
 
-		// errorHandler returns an error response for the readiness check and state sync.
-	}
+	// errorHandler returns an error response for the readiness check and state sync.
+
 	const tenantID = "test"
 
 	errorHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -938,9 +938,7 @@ receivers:
 }
 
 func TestIntegrationRemoteAlertmanagerConfiguration(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	amURL, ok := os.LookupEnv("AM_URL")
 	if !ok {
@@ -1119,9 +1117,7 @@ func TestIntegrationRemoteAlertmanagerConfiguration(t *testing.T) {
 }
 
 func TestIntegrationRemoteAlertmanagerGetStatus(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	amURL, ok := os.LookupEnv("AM_URL")
 	if !ok {
@@ -1153,9 +1149,7 @@ func TestIntegrationRemoteAlertmanagerGetStatus(t *testing.T) {
 }
 
 func TestIntegrationRemoteAlertmanagerSilences(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	amURL, ok := os.LookupEnv("AM_URL")
 	if !ok {
@@ -1239,9 +1233,7 @@ func TestIntegrationRemoteAlertmanagerSilences(t *testing.T) {
 }
 
 func TestIntegrationRemoteAlertmanagerAlerts(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	amURL, ok := os.LookupEnv("AM_URL")
 	if !ok {
@@ -1316,9 +1308,7 @@ func TestIntegrationRemoteAlertmanagerAlerts(t *testing.T) {
 }
 
 func TestIntegrationRemoteAlertmanagerReceivers(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	amURL, ok := os.LookupEnv("AM_URL")
 	if !ok {
@@ -1355,9 +1345,7 @@ func TestIntegrationRemoteAlertmanagerReceivers(t *testing.T) {
 }
 
 func TestIntegrationRemoteAlertmanagerTestTemplates(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	amURL, ok := os.LookupEnv("AM_URL")
 	if !ok {

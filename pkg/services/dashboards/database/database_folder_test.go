@@ -17,14 +17,14 @@ import (
 	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 var testFeatureToggles = featuremgmt.WithFeatures(featuremgmt.FlagPanelTitleSearch)
 
 func TestIntegrationDashboardFolderDataAccess(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	t.Run("Testing DB", func(t *testing.T) {
 		var sqlStore db.DB
 		var cfg *setting.Cfg

@@ -12,12 +12,11 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 func TestIntegrationHealth(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	helper := runGrafana(t)
 	ctx := context.Background()
