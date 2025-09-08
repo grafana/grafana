@@ -3,12 +3,12 @@ import userEvent from '@testing-library/user-event';
 
 import { SceneVariableSet, TextBoxVariable, QueryVariable, CustomVariable, SceneVariable } from '@grafana/scenes';
 
-import { DashboardScene } from './DashboardScene';
 import {
   DASHBOARD_CONTROLS_MENU_ARIA_LABEL,
   DASHBOARD_CONTROLS_MENU_TITLE,
   DashboardControlsMenu,
 } from './DashboardControlsMenu';
+import { DashboardScene } from './DashboardScene';
 
 describe('DashboardControlsMenu', () => {
   it('should return null and not render anything when there are no variables', () => {

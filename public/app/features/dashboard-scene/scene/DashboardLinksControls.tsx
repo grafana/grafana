@@ -1,8 +1,8 @@
 import { sceneGraph } from '@grafana/scenes';
 import { DashboardLink } from '@grafana/schema';
 
-import { DashboardScene } from './DashboardScene';
 import { DashboardLinkRenderer } from './DashboardLinkRenderer';
+import { DashboardScene } from './DashboardScene';
 
 export interface Props {
   links: DashboardLink[];

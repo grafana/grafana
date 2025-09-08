@@ -5,9 +5,9 @@ import { t } from '@grafana/i18n';
 import { sceneGraph } from '@grafana/scenes';
 import { Dropdown, Menu, ToolbarButton, useStyles2 } from '@grafana/ui';
 
+import { DashboardLinkRenderer } from './DashboardLinkRenderer';
 import { DashboardScene } from './DashboardScene';
 import { VariableValueSelectWrapper } from './VariableControls';
-import { DashboardLinkRenderer } from './DashboardLinkRenderer';
 
 export const DASHBOARD_CONTROLS_MENU_ARIA_LABEL = 'Dashboard controls menu';
 export const DASHBOARD_CONTROLS_MENU_TITLE = 'Dashboard controls';
