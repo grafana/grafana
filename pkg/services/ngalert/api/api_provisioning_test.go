@@ -673,6 +673,28 @@ func TestIntegrationProvisioningApi(t *testing.T) {
 				require.NotEmpty(t, response.Body())
 				require.Contains(t, string(response.Body()), "invalid alert rule")
 			})
+
+			t.Run("PUT returns 400 when the alert rule has invalid queries", func(t *testing.T) {
+				sut := createProvisioningSrvSut(t)
+				rc := createTestRequestCtx()
+				group := definitions.AlertRuleGroup{
+					Title:    "test rule group",
+					Interval: 60,
+					Rules: []definitions.ProvisionedAlertRule{
+						createTestAlertRule("rule", 1),
+					},
+				}
+				// Set an invalid query model that will fail PreSave validation
+				// Invalid JSON should trigger unmarshal error in PreSave
+				group.Rules[0].Data[0].Model = json.RawMessage(`{invalid json`)
+
+				response := sut.RoutePutAlertRuleGroup(&rc, group, "folder-uid", group.Title)
+
+				require.Equal(t, 400, response.Status())
+				require.NotEmpty(t, response.Body())
+				require.Contains(t, string(response.Body()), "invalid alert rule")
+				require.Contains(t, string(response.Body()), "invalid alert query")
+			})
 		})
 
 		t.Run("have reached the rule quota, PUT returns 403", func(t *testing.T) {
