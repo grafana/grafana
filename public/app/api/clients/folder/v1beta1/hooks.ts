@@ -32,6 +32,7 @@ import {
 import { PAGE_SIZE } from '../../../../features/browse-dashboards/api/services';
 import { refetchChildren, refreshParents } from '../../../../features/browse-dashboards/state/actions';
 import { GENERAL_FOLDER_UID } from '../../../../features/search/constants';
+import { deletedDashboardsCache } from '../../../../features/search/service/deletedDashboardsCache';
 import { useDispatch } from '../../../../types/store';
 import { useLazyGetDisplayMappingQuery } from '../../iam/v0alpha1';
 
@@ -298,6 +299,7 @@ export function useCreateFolder() {
 
     const result = await createFolder(payload);
     refresh({ childrenOf: folder.parentUid });
+    deletedDashboardsCache.clear();
 
     return {
       ...result,
