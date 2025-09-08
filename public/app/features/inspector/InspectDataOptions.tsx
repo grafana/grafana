@@ -143,10 +143,10 @@ export const InspectDataOptions = ({
                 </Field>
               )}
               <Field
-                label={t('dashboard.inspect-data.excel-compatibility-mode-label', 'Excel compatibility mode')}
+                label={t('dashboard.inspect-data.excel-compatibility-mode-label', 'Download for Excel')}
                 description={t(
                   'dashboard.inspect-data.excel-compatibility-mode-description',
-                  'Creates a CSV file that is compatible with some Excel versions'
+                  "Generates a CSV file that's compatible with most Excel versions"
                 )}
               >
                 <Switch
