@@ -230,6 +230,12 @@ abstract class DashboardScenePageStateManagerBase<T>
     anno[AnnoKeyManagerIdentity] = repo;
     anno[AnnoKeySourcePath] = provisioningPreview.ref ? path + '#' + provisioningPreview.ref : path;
 
+    // Include version information to align with the current dashboard schema
+    const specWithVersion = {
+      ...dryRun.spec,
+      version: dryRun.metadata.generation || 0,
+    };
+
     return {
       meta: {
         canStar: false,
@@ -247,7 +253,7 @@ abstract class DashboardScenePageStateManagerBase<T>
         // lookup info
         provisioning: provisioningPreview,
       },
-      dashboard: dryRun.spec,
+      dashboard: specWithVersion,
     };
   }
 

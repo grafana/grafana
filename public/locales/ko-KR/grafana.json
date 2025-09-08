@@ -1697,9 +1697,6 @@
       "notes": "메모",
       "returns": "반환"
     },
-    "label-picker": {
-      "no-options-message": "라벨을 찾을 수 없습니다"
-    },
     "labels-editor-modal": {
       "title-edit-labels": "라벨 편집"
     },
@@ -1717,9 +1714,6 @@
     "labels-sub-form": {
       "description": "아래 옵션에서 라벨 키/값을 선택하거나 새 라벨 키/값을 입력하고 엔터 키를 누릅니다.",
       "save": "저장"
-    },
-    "labels-with-suggestions": {
-      "text-loading-existing-labels": "기존 라벨 로딩 중"
     },
     "labels-without-suggestions": {
       "message": {
@@ -9621,6 +9615,12 @@
       "hide-search": "검색 닫기",
       "hide-timestamps": "타임스탬프 숨기기",
       "hide-unique-labels": "고유 라벨 숨기기",
+      "line-wrapping": {
+        "enable": "",
+        "enable-prettify": "",
+        "hide": "",
+        "label": ""
+      },
       "newest-first": "최신 로그순으로 정렬 - 클릭하여 오래된 로그순으로 표시",
       "oldest-first": "오래된 로그순으로 정렬 - 클릭하여 최신 로그순으로 표시",
       "prettify-json": "JSON 로그 펼치기",
@@ -9629,13 +9629,16 @@
       "resolution-ns": "ns",
       "scroll-bottom": "맨 아래로 스크롤",
       "scroll-top": "맨 위로 스크롤",
-      "show-ms-timestamps": "타임스탬프(밀리초 단위) 표시",
-      "show-ns-timestamps": "타임스탬프(나노초 단위) 표시",
       "show-search": "로그 결과에서 검색",
       "show-timestamps": "타임스탬프 표시",
       "show-unique-labels": "고유 라벨 표시",
+      "timestamp": {
+        "hide": "",
+        "label": "",
+        "milliseconds": "",
+        "nanoseconds": ""
+      },
       "unwrap-lines": "줄 바꿈 제거",
-      "wrap-json-lines": "",
       "wrap-lines": "줄 바꿈"
     },
     "logs-navigation": {
@@ -11904,7 +11907,6 @@
       "expand-row": "쿼리 행 펼치기",
       "hide-response": "응답 숨기기",
       "remove-query": "쿼리 제거",
-      "replace-query-from-library": "저장된 쿼리로 교체",
       "show-response": "응답 표시"
     },
     "query-editor-not-exported": "데이터 소스 플러그인은 쿼리 편집기 구성 요소를 내보내지 않습니다."
