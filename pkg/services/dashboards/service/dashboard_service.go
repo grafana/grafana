@@ -1977,6 +1977,10 @@ func (dr *DashboardServiceImpl) searchDashboardsThroughK8sRaw(ctx context.Contex
 			return dashboardv0.SearchResults{}, err
 		}
 		request.SortBy = append(request.SortBy, &resourcepb.ResourceSearchRequest_Sort{Field: sortName, Desc: isDesc})
+		// include the sort field in the response so we can populate SortMeta
+		if !slices.Contains(request.Fields, sortName) {
+			request.Fields = append(request.Fields, sortName)
+		}
 	}
 
 	res, err := dr.k8sclient.Search(ctx, query.OrgId, request)
