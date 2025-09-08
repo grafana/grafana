@@ -403,4 +403,46 @@ func TestOpenTsdbExecutor(t *testing.T) {
 		require.Equal(t, float64(45), metricRateOptions["counterMax"])
 		require.Equal(t, float64(60), metricRateOptions["resetValue"])
 	})
+
+	t.Run("createRequest uses per-query time range", func(t *testing.T) {
+		qA := backend.DataQuery{
+			RefID: "A",
+			JSON:  []byte(`{"metric": "m", "aggregator": "avg"}`),
+			TimeRange: backend.TimeRange{
+				From: time.Unix(1000, 0),
+				To:   time.Unix(2000, 0),
+			},
+		}
+		tsdbA := OpenTsdbQuery{
+			Start:   qA.TimeRange.From.Unix(),
+			End:     qA.TimeRange.To.Unix(),
+			Queries: []map[string]any{service.buildMetric(qA)},
+		}
+		reqA, err := service.createRequest(context.Background(), logger, &datasourceInfo{URL: "http://x"}, tsdbA)
+		require.NoError(t, err)
+		bodyA, _ := io.ReadAll(reqA.Body)
+
+		qB := backend.DataQuery{
+			RefID: "B",
+			JSON:  []byte(`{"metric": "m", "aggregator": "avg"}`),
+			TimeRange: backend.TimeRange{
+				From: time.Unix(3000, 0),
+				To:   time.Unix(4000, 0),
+			},
+		}
+		tsdbB := OpenTsdbQuery{
+			Start:   qB.TimeRange.From.Unix(),
+			End:     qB.TimeRange.To.Unix(),
+			Queries: []map[string]any{service.buildMetric(qB)},
+		}
+		reqB, err := service.createRequest(context.Background(), logger, &datasourceInfo{URL: "http://x"}, tsdbB)
+		require.NoError(t, err)
+		bodyB, _ := io.ReadAll(reqB.Body)
+
+		require.Contains(t, string(bodyA), `"start":1000`)
+		require.Contains(t, string(bodyA), `"end":2000`)
+		require.Contains(t, string(bodyB), `"start":3000`)
+		require.Contains(t, string(bodyB), `"end":4000`)
+	})
+
 }
