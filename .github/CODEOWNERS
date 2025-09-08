@@ -624,6 +624,7 @@
 /packages/grafana-runtime/rollup.config.ts @grafana/grafana-frontend-platform
 /packages/grafana-runtime/src/index.ts @grafana/grafana-frontend-platform @grafana/plugins-platform-frontend
 /packages/grafana-runtime/src/internal/index.ts @grafana/grafana-frontend-platform @grafana/plugins-platform-frontend
+/packages/grafana-runtime/src/internal/isFrontendService.ts @grafana/grafana-frontend-platform
 /packages/grafana-runtime/src/unstable.ts @grafana/grafana-frontend-platform @grafana/plugins-platform-frontend
 /packages/grafana-runtime/tsconfig.build.json @grafana/grafana-frontend-platform
 /packages/grafana-runtime/tsconfig.json @grafana/grafana-frontend-platform
