@@ -15,12 +15,12 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/server"
+	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 func TestIntegration_AdminApiReencrypt_Enterprise(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test in short mode")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	getSecretsFunctions := map[string]func(*testing.T, *server.TestEnv) map[int]secret{}
 	getSecretsFunctions["settings"] = func(t *testing.T, env *server.TestEnv) map[int]secret {
 		return getSettingSecrets(t, env.SQLStore)

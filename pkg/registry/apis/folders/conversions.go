@@ -22,7 +22,6 @@ func LegacyCreateCommandToUnstructured(cmd *folder.CreateFolderCommand) (*unstru
 			"spec": map[string]any{
 				"title":       cmd.Title,
 				"description": cmd.Description,
-				"version":     1,
 			},
 		},
 	}

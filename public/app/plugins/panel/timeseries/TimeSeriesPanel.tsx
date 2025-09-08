@@ -7,6 +7,7 @@ import {
   DataFrame,
   alignTimeRangeCompareData,
   shouldAlignTimeCompare,
+  FieldType,
 } from '@grafana/data';
 import { PanelDataErrorView } from '@grafana/runtime';
 import { TooltipDisplayMode, VizOrientation } from '@grafana/schema';
@@ -56,26 +57,35 @@ export const TimeSeriesPanel = ({
   const isVerticallyOriented = options.orientation === VizOrientation.Vertical;
   const { frames, compareDiffMs } = useMemo(() => {
     let frames = prepareGraphableFields(data.series, config.theme2, timeRange);
-    let compareDiffMs: number | undefined = undefined;
+    if (frames != null) {
+      let compareDiffMs: number[] = [0];
 
-    if (frames) {
       frames.forEach((frame: DataFrame) => {
-        const tc = frame.meta?.timeCompare;
-        if (tc?.isTimeShiftQuery && tc.diffMs != null) {
-          // Store the diffMs to pass to tooltip
-          compareDiffMs = tc.diffMs;
+        const diffMs = frame.meta?.timeCompare?.diffMs ?? 0;
 
+        frame.fields.forEach((field) => {
+          if (field.type !== FieldType.time) {
+            compareDiffMs.push(diffMs);
+          }
+        });
+
+        if (diffMs !== 0) {
           // Check if the compared frame needs time alignment
           // Apply alignment when time ranges match (no shift applied yet)
           const needsAlignment = shouldAlignTimeCompare(frame, frames, timeRange);
+
           if (needsAlignment) {
-            alignTimeRangeCompareData(frame, tc.diffMs, config.theme2);
+            alignTimeRangeCompareData(frame, diffMs, config.theme2);
           }
         }
       });
+
+      return { frames, compareDiffMs };
     }
-    return { frames, compareDiffMs };
+
+    return { frames };
   }, [data.series, timeRange]);
+
   const timezones = useMemo(() => getTimezones(options.timezone, timeZone), [options.timezone, timeZone]);
   const suggestions = useMemo(() => {
     if (frames?.length && frames.every((df) => df.meta?.type === DataFrameType.TimeSeriesLong)) {

@@ -1703,9 +1703,6 @@
       "notes": "Observações",
       "returns": "Devoluções"
     },
-    "label-picker": {
-      "no-options-message": "Nenhum rótulo foi encontrado"
-    },
     "labels-editor-modal": {
       "title-edit-labels": "Editar rótulos"
     },
@@ -1723,9 +1720,6 @@
     "labels-sub-form": {
       "description": "Selecione uma chave/valor de rótulo nas opções abaixo ou digite um novo e pressione Enter.",
       "save": "Salvar"
-    },
-    "labels-with-suggestions": {
-      "text-loading-existing-labels": "Carregando rótulos existentes"
     },
     "labels-without-suggestions": {
       "message": {
@@ -4506,16 +4500,11 @@
             "any": "Combinar qualquer uma",
             "label": "Regras de correspondência"
           },
-          "label": "Grupo",
           "visibility": {
             "hide": "Ocultar",
             "label": "Visibilidade de {{type}}",
             "show": "Exibir"
           }
-        },
-        "shared": {
-          "delete-condition": "Excluir condição",
-          "unsupported-item-type": "Esta condição não é compatível com o elemento e será ignorada."
         },
         "time-range-size": {
           "info": "Exibir ou ocultar {{type}} se o intervalo de tempo do painel for menor do que o intervalo de tempo selecionado.",
@@ -4545,17 +4534,21 @@
             "not-matches": "Não corresponde"
           },
           "value": "Valor"
+        },
+        "wrapper": {
+          "delete-condition": "",
+          "unsupported-object-type": ""
         }
       },
       "editor": {
+        "info": "",
         "not-supported-for-custom-grid": "A renderização condicional não é compatível com o layout de grade personalizado. Mude para a grade automática para poder usá-la.",
-        "unsupported-item-type": "A renderização condicional não é compatível com este tipo de item"
+        "unsupported-object-type": ""
       },
       "overlay": {
         "tooltip": "O elemento está oculto devido à renderização condicional."
       },
       "root": {
-        "info": "Defina regras para controlar a visibilidade de {{type}} combinando todas as regras ou algumas delas.",
         "title": "Exibir/Ocultar regras"
       }
     },
@@ -4695,7 +4688,8 @@
       "paste-panel": "Colar painel",
       "remove": "Remover {{typeName}}",
       "row-title": "",
-      "switch-layout": "Alternar layout"
+      "switch-layout": "Alternar layout",
+      "tab-title": ""
     },
     "edit-pane": {
       "elements": {
@@ -8348,6 +8342,10 @@
         "action-title": "Título",
         "action-title-placeholder": "Título da ação",
         "action-variables": "Variáveis",
+        "connection": "",
+        "connection-direct-description": "",
+        "connection-direct-label": "",
+        "connection-placeholder": "",
         "one-click-description": "Apenas um link ou ação pode ter um clique habilitado de cada vez"
       }
     },
@@ -9646,6 +9644,12 @@
       "hide-search": "Fechar busca",
       "hide-timestamps": "Ocultar data e hora",
       "hide-unique-labels": "Ocultar rótulos exclusivos",
+      "line-wrapping": {
+        "enable": "",
+        "enable-prettify": "",
+        "hide": "",
+        "label": ""
+      },
       "newest-first": "Organizado por logs mais recentes primeiro: clique para exibir os mais antigos primeiro",
       "oldest-first": "Organizado por logs mais antigos primeiro: clique para exibir os mais recentes primeiro",
       "prettify-json": "Expandir logs JSON",
@@ -9654,13 +9658,16 @@
       "resolution-ns": "ns",
       "scroll-bottom": "Rolar para baixo",
       "scroll-top": "Rolar para cima",
-      "show-ms-timestamps": "Exibir data e hora em milissegundos",
-      "show-ns-timestamps": "Exibir data e hora em nanossegundos",
       "show-search": "Resultado da busca nos logs",
       "show-timestamps": "Exibir data e hora",
       "show-unique-labels": "Exibir rótulos únicos",
+      "timestamp": {
+        "hide": "",
+        "label": "",
+        "milliseconds": "",
+        "nanoseconds": ""
+      },
       "unwrap-lines": "Desfazer quebra de linha",
-      "wrap-json-lines": "",
       "wrap-lines": "Aplicar quebra de linha"
     },
     "logs-navigation": {
@@ -9727,30 +9734,6 @@
     "un-themed-log-label-stats": {
       "field-log-stats": "{{label}}: {{total}} de {{rowCount}} linhas apresentam esse campo",
       "label-log-stats": "{{label}}: {{total}} de {{rowCount}} linhas apresentam esse rótulo"
-    }
-  },
-  "logs-new": {
-    "category-logs": "Logs",
-    "deduplication-options": {
-      "label-exact": "Exato",
-      "label-none": "Nenhum",
-      "label-numbers": "Números",
-      "label-signature": "Assinatura"
-    },
-    "description-infinite-scrolling": "Experimental. Solicite mais resultados ao descer até a parte inferior da lista de logs.",
-    "description-show-controls": "Exibir controles para pular para a última ou primeira linha do log e filtros por nível de log",
-    "description-syntax-highlighting": "Use um conjunto predefinido de regras de cores de sintaxe para destacar partes relevantes das linhas de log",
-    "name-deduplication": "Desduplicação",
-    "name-enable-log-details": "Ativar detalhes do log",
-    "name-infinite-scrolling": "Ativar rolagem infinita",
-    "name-order": "Ordem",
-    "name-show-controls": "Mostrar controles",
-    "name-syntax-highlighting": "Ativar destaque de sintaxe",
-    "name-time": "Tempo",
-    "name-wrap-lines": "Quebras de linha",
-    "order-options": {
-      "label-newest-first": "Mais recentes primeiro",
-      "label-oldest-first": "Mais antigos primeiro"
     }
   },
   "manage-dashbaords": {
@@ -11960,7 +11943,6 @@
       "expand-row": "Expandir linha de consulta",
       "hide-response": "Ocultar resposta",
       "remove-query": "Remover consulta",
-      "replace-query-from-library": "Substituir por consulta salva",
       "show-response": "Mostrar resposta"
     },
     "query-editor-not-exported": "O plug-in de origem de dados não exporta nenhum componente de editor de consulta"
