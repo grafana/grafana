@@ -1,4 +1,5 @@
 import { DataFrameView } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
 import { SceneObjectBase, SceneObjectState } from '@grafana/scenes';
 import { useQueryRunner } from '@grafana/scenes-react';
 import { Stack, Text } from '@grafana/ui';
@@ -39,8 +40,12 @@ export function SummaryStatsReact() {
   return (
     <Stack direction="column" alignItems="flex-end" gap={0}>
       <Spacer />
-      <Text color="error">{firingCount} firing instances</Text>
-      <Text color="warning">{pendingCount} pending instances</Text>
+      <Text color="error">
+        <Trans i18nKey="alerting.triage.firing-instances-count">{{ firingCount }} firing instances</Trans>
+      </Text>
+      <Text color="warning">
+        <Trans i18nKey="alerting.triage.pending-instances-count">{{ pendingCount }} pending instances</Trans>
+      </Text>
     </Stack>
   );
 }

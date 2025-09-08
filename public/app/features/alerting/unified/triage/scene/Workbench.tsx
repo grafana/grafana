@@ -1,3 +1,5 @@
+import { ArrayValues } from 'type-fest';
+
 import { DataFrame, PanelData } from '@grafana/data';
 import { SceneObjectBase, SceneObjectState } from '@grafana/scenes';
 import { useQueryRunner, useTimeRange, useVariableValues } from '@grafana/scenes-react';
@@ -18,7 +20,7 @@ export function WorkbenchRenderer() {
 
   const [groupByKeys = []] = useVariableValues<string>(VARIABLES.groupBy);
 
-  const countBy = DEFAULT_FIELDS.concat(groupByKeys).join(',');
+  const countBy = [...DEFAULT_FIELDS, ...groupByKeys].join(',');
   const queryFilter = useQueryFilter();
 
   const runner = useQueryRunner({
@@ -34,7 +36,9 @@ export function WorkbenchRenderer() {
   return <Workbench data={rows} domain={domain} />;
 }
 
-function createAlertRuleRows(dataPoints: Array<Record<string, unknown>>): AlertRuleRow[] {
+type DataPoint = Record<ArrayValues<typeof DEFAULT_FIELDS>, string> & Record<string, string | undefined>;
+
+function createAlertRuleRows(dataPoints: DataPoint[]): AlertRuleRow[] {
   const rules = new Map<
     string,
     {
@@ -68,13 +72,13 @@ function createAlertRuleRows(dataPoints: Array<Record<string, unknown>>): AlertR
   return result;
 }
 
-function groupData(dataPoints: Array<Record<string, unknown>>, groupBy: string[], depth: number): WorkbenchRow[] {
+function groupData(dataPoints: DataPoint[], groupBy: string[], depth: number): WorkbenchRow[] {
   if (depth >= groupBy.length) {
     return createAlertRuleRows(dataPoints);
   }
 
   const groupByKey = groupBy[depth];
-  const grouped = new Map<string, Array<Record<string, unknown>>>();
+  const grouped = new Map<string, DataPoint[]>();
 
   for (const dp of dataPoints) {
     const key = String(dp[groupByKey] ?? 'undefined');
@@ -109,12 +113,13 @@ export function convertToWorkbenchRows(data: PanelData, groupBy: string[] = []):
     return [];
   }
 
-  const allDataPoints = Array.from({ length: frame.length }, (_, i) =>
-    frame.fields.reduce<Record<string, unknown>>((acc, field) => {
-      acc[field.name] = field.values[i];
-      return acc;
-    }, {})
-  );
+  const allDataPoints = Array.from({ length: frame.length }, (_, i) => {
+    const dataPoint: DataPoint = Object.create(null);
+    frame.fields.forEach((field) => {
+      dataPoint[field.name] = field.values[i];
+    });
+    return dataPoint;
+  });
 
   return groupData(allDataPoints, groupBy, 0);
 }
