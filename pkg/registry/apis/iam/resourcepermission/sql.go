@@ -98,7 +98,6 @@ func (s *ResourcePermSqlBackend) newRoleIterator(ctx context.Context, dbHelper *
 		return nil, err
 	}
 
-	// TODO: implement
 	return &listIterator{
 		resourcePermissions: v0ResourcePermissions,
 		initOffset:          pagination.Continue,
