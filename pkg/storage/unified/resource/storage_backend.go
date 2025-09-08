@@ -101,10 +101,6 @@ func (k *kvStorageBackend) startEventCleanup(ctx context.Context) {
 		ticker := time.NewTicker(time.Hour)
 		defer ticker.Stop()
 
-		// Run initial cleanup after a short delay
-		time.Sleep(5 * time.Minute)
-		k.cleanupOldEvents(ctx)
-
 		for {
 			select {
 			case <-ctx.Done():
