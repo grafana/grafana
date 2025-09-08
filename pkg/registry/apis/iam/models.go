@@ -6,7 +6,6 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/iam/user"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/ssosettings"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/prometheus/client_golang/prometheus"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
@@ -32,8 +31,6 @@ type IdentityAccessManagementAPIBuilder struct {
 	coreRolesStorage           CoreRoleStorageBackend
 	rolesStorage               RoleStorageBackend
 	resourcePermissionsStorage resource.StorageBackend
-
-	cfg *setting.Cfg
 
 	// Access Control
 	authorizer authorizer.Authorizer

@@ -38,11 +38,7 @@ func TestIdentityQueries(t *testing.T) {
 	}
 
 	deleteOrgUser := func(userID int64) sqltemplate.SQLTemplate {
-		v := DeleteOrgUserQuery{
-			SQLTemplate:  mocks.NewTestingSQLTemplate(),
-			OrgUserTable: nodb.Table("org_user"),
-			UserID:       userID,
-		}
+		v := newDeleteOrgUser(nodb, userID)
 		return &v
 	}
 

@@ -401,32 +401,22 @@ func (s *legacySQLStore) CreateServiceAccount(ctx context.Context, ns claims.Nam
 	return &CreateServiceAccountResult{ServiceAccount: createdSA}, nil
 }
 
-type DeleteServiceAccountQuery struct {
-	OrgID int64
-	UID   string
-}
-
-func (s *legacySQLStore) DeleteServiceAccount(ctx context.Context, ns claims.NamespaceInfo, query DeleteServiceAccountQuery) error {
-	query.OrgID = ns.OrgID
-	if query.OrgID == 0 {
-		return fmt.Errorf("expected non zero org id")
-	}
-
+func (s *legacySQLStore) DeleteServiceAccount(ctx context.Context, ns claims.NamespaceInfo, cmd DeleteUserCommand) error {
 	sql, err := s.sql(ctx)
 	if err != nil {
 		return err
 	}
 
-	deleteUserQuery := &DeleteUserCommand{
-		OrgID: query.OrgID,
-		UID:   query.UID,
+	cmd.OrgID = ns.OrgID
+	req := newDeleteUser(sql, &cmd)
+	if err := req.Validate(); err != nil {
+		return err
 	}
-	req := newDeleteUser(sql, deleteUserQuery)
 
 	err = sql.DB.GetSqlxSession().WithTransaction(ctx, func(st *session.SessionTx) error {
 		userLookupReq := newGetServiceAccountInternalID(sql, &GetServiceAccountInternalIDQuery{
 			OrgID: ns.OrgID,
-			UID:   query.UID,
+			UID:   cmd.UID,
 		})
 
 		userQuery, err := sqltemplate.Execute(sqlQueryServiceAccountInternalIDTemplate, userLookupReq)
@@ -461,10 +451,9 @@ func (s *legacySQLStore) DeleteServiceAccount(ctx context.Context, ns claims.Nam
 			_ = rows.Close()
 		}
 
-		orgUserReq := DeleteOrgUserQuery{
-			SQLTemplate:  sqltemplate.New(sql.DialectForDriver()),
-			OrgUserTable: sql.Table("org_user"),
-			UserID:       userID,
+		orgUserReq := newDeleteOrgUser(sql, userID)
+		if err := orgUserReq.Validate(); err != nil {
+			return err
 		}
 
 		orgUserDeleteQuery, err := sqltemplate.Execute(sqlDeleteOrgUserTemplate, orgUserReq)
