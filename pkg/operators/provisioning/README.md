@@ -1,10 +1,8 @@
-# Jobs Controller
+# Provisioning Controllers
 
-> [!WARNING]
-> This controller has current limitations:
->
-> - Does not start the ConcurrentJobDriver yet. Notifications are logged but not consumed by workers here.
-> - Job processing (claim/renew/update/complete) isn't implemented yet as it requires refactoring of some components.
+Git sync has two different controllers: the jobs controller and the repo controller.
+
+## Jobs Controller
 
 ### Behavior
 
@@ -47,7 +45,11 @@ This binary currently wires informers and emits job-create notifications. In the
    - `make build`
 2. Ensure the following services are running locally: provisioning API server, secrets service API server, repository controller, unified storage, and auth.
 3. Create a operator.ini file:
+
 ```
+[database]
+ensure_default_org_and_user = false
+skip_migrations = true
 [operator]
 provisioning_server_url = https://localhost:6446
 tls_insecure = true
@@ -58,12 +60,15 @@ token_exchange_url = http://localhost:6481/sign/access-token
 # Uncomment to enable history cleanup via Loki. First ensure the Provisioning API is configured with Loki for job history (see `createJobHistoryConfigFromSettings` in `pkg/registry/apis/provisioning/register.go`).
 # history_expiration = 24h  
 ```
+
 3. Start the controller:
-  - `GF_DEFAULT_TARGET=operator GF_OPERATOR_NAME=provisioning-jobs ./bin/darwin-arm64/grafana server target --config=conf/operator.ini`
+
+- `GF_DEFAULT_TARGET=operator GF_OPERATOR_NAME=provisioning-jobs ./bin/darwin-arm64/grafana server target --config=conf/operator.ini`
 
 #### TLS Configuration Examples
 
 - **Production with proper TLS verification**:
+
 ```
 [operator]
 provisioning_server_url = https://localhost:6446
@@ -76,6 +81,7 @@ token_exchange_url = http://localhost:6481/sign/access-token
 ```
 
 - **Mutual TLS authentication**:
+
 ```
 [operator]
 provisioning_server_url = https://localhost:6446
@@ -90,6 +96,7 @@ token_exchange_url = http://localhost:6481/sign/access-token
 ```
 
 - **Development with self-signed certificates (insecure)**:
+
 ```
 [operator]
 provisioning_server_url = https://localhost:6446
@@ -143,3 +150,9 @@ curl -X POST https://localhost:6446/apis/provisioning.grafana.app/v0alpha1/names
 
 3. In a full setup with the concurrent driver, workers claim and process jobs, updating status and writing history.
 4. Entries move to `HistoricJobs`; if cleanup is enabled, older entries are pruned based on `--history-expiration`.
+
+## [WIP] Repository Controller
+
+This controller is responsible for watching repositories. It will eventually do health checks, queue sync jobs, and create/delete github hooks.
+
+To run locally, run `GF_DEFAULT_TARGET=operator GF_OPERATOR_NAME=provisioning-repo ./bin/darwin-arm64/grafana server target --config=conf/operator.ini`

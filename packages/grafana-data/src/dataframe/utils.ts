@@ -1,4 +1,5 @@
 import { DataFrame, Field, FieldType } from '../types/dataFrame';
+import { TimeRange } from '../types/time';
 
 import { getTimeField } from './processDataFrame';
 
@@ -122,4 +123,80 @@ export function addRow(dataFrame: DataFrame, row: Record<string, unknown> | unkn
     // length getter. In that case it will throw and so we just skip and assume they defined a `getter` for length that
     // does not need any external updating.
   }
+}
+
+/**
+ * Aligns time range comparison data by adjusting timestamps and applying compare-specific styling
+ * @param series - The DataFrame containing the comparison data
+ * @param diff - The time difference in milliseconds to align the timestamps
+ * @param compareColor - Optional color to use for the comparison series (defaults to 'gray')
+ */
+export function alignTimeRangeCompareData(series: DataFrame, diff: number, compareColor = 'gray') {
+  series.fields.forEach((field: Field) => {
+    // Align compare series time stamps with reference series
+    if (field.type === FieldType.time) {
+      field.values = field.values.map((v: number) => {
+        return diff < 0 ? v - diff : v + diff;
+      });
+    }
+
+    field.config = {
+      ...(field.config ?? {}),
+      color: {
+        mode: 'fixed',
+        fixedColor: compareColor,
+      },
+      custom: {
+        ...(field.config?.custom ?? {}),
+        timeCompare: {
+          diffMs: diff,
+          isTimeShiftQuery: true,
+        },
+      },
+    };
+  });
+}
+
+/**
+ * Checks if a time comparison frame needs alignment based on whether its first time is before the current time range.
+ * Returns true if the first time in compare is before timeRange.from, indicating it needs shifting.
+ * @param compareFrame - The frame with time comparison data
+ * @param allFrames - Array of all frames to find the matching original frame
+ * @param timeRange - The current panel time range
+ * @returns true if alignment is needed
+ */
+export function shouldAlignTimeCompare(compareFrame: DataFrame, allFrames: DataFrame[], timeRange: TimeRange): boolean {
+  // Find the matching original frame by removing '-compare' from refId
+  const compareRefId = compareFrame.refId;
+  if (!compareRefId || !compareRefId.endsWith('-compare')) {
+    return false;
+  }
+
+  const originalRefId = compareRefId.replace('-compare', '');
+  const originalFrame = allFrames.find(
+    (frame) => frame.refId === originalRefId && !frame.meta?.timeCompare?.isTimeShiftQuery
+  );
+
+  if (!originalFrame) {
+    return false;
+  }
+
+  // Find time fields
+  const compareTimeField = compareFrame.fields.find((field) => field.type === FieldType.time);
+  const originalTimeField = originalFrame.fields.find((field) => field.type === FieldType.time);
+
+  if (!compareTimeField?.values.length || !originalTimeField?.values.length) {
+    return false;
+  }
+
+  // Find first non-null time value from each frame
+  const compareFirstTime = compareTimeField.values.find((value) => value != null);
+  const originalFirstTime = originalTimeField.values.find((value) => value != null);
+
+  if (compareFirstTime == null || originalFirstTime == null) {
+    return false;
+  }
+
+  // Check if first non-null time value is before timeRange.from
+  return compareFirstTime < timeRange.from.valueOf();
 }

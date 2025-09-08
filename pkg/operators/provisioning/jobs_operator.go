@@ -2,35 +2,31 @@ package provisioning
 
 import (
 	"context"
-	"crypto/x509"
 	"fmt"
 	"log/slog"
-	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
 
-	"github.com/grafana/authlib/authn"
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/urfave/cli/v2"
-	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/cache"
-	"k8s.io/client-go/transport"
 
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/export"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/migrate"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/move"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/sync"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/grafana/grafana/pkg/services/apiserver/standalone"
 	"github.com/grafana/grafana/pkg/setting"
 
-	authrt "github.com/grafana/grafana/apps/provisioning/pkg/auth"
 	"github.com/grafana/grafana/apps/provisioning/pkg/controller"
-	client "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned"
 	informer "github.com/grafana/grafana/apps/provisioning/pkg/generated/informers/externalversions"
+	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
+	deletepkg "github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/delete"
 )
-
-type controllerConfig struct {
-	provisioningClient *client.Clientset
-	historyExpiration  time.Duration
-}
 
 func RunJobController(opts standalone.BuildInfo, c *cli.Context, cfg *setting.Cfg) error {
 	logger := logging.NewSLogLogger(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
@@ -38,7 +34,7 @@ func RunJobController(opts standalone.BuildInfo, c *cli.Context, cfg *setting.Cf
 	})).With("logger", "provisioning-job-controller")
 	logger.Info("Starting provisioning job controller")
 
-	controllerCfg, err := setupFromConfig(cfg)
+	controllerCfg, err := setupJobsControllerFromConfig(cfg)
 	if err != nil {
 		return fmt.Errorf("failed to setup operator: %w", err)
 	}
@@ -57,7 +53,7 @@ func RunJobController(opts standalone.BuildInfo, c *cli.Context, cfg *setting.Cf
 	// Jobs informer and controller (resync ~60s like in register.go)
 	jobInformerFactory := informer.NewSharedInformerFactoryWithOptions(
 		controllerCfg.provisioningClient,
-		60*time.Second,
+		controllerCfg.resyncInterval,
 	)
 	jobInformer := jobInformerFactory.Provisioning().V0alpha1().Jobs()
 	jobController, err := controller.NewJobController(jobInformer)
@@ -66,17 +62,6 @@ func RunJobController(opts standalone.BuildInfo, c *cli.Context, cfg *setting.Cf
 	}
 
 	logger.Info("jobs controller started")
-	notifications := jobController.InsertNotifications()
-	go func() {
-		for {
-			select {
-			case <-ctx.Done():
-				return
-			case <-notifications:
-				logger.Info("job create notification received")
-			}
-		}
-	}()
 
 	var startHistoryInformers func()
 	if controllerCfg.historyExpiration > 0 {
@@ -99,6 +84,55 @@ func RunJobController(opts standalone.BuildInfo, c *cli.Context, cfg *setting.Cf
 	} else {
 		startHistoryInformers = func() {}
 	}
+	// HistoryWriter can be either Loki or the API server
+	// TODO: Loki configuration and setup in the same way we do for the API server
+	// https://github.com/grafana/git-ui-sync-project/issues/508
+	// var jobHistoryWriter jobs.HistoryWriter
+	// if b.jobHistoryLoki != nil {
+	// 	jobHistoryWriter = b.jobHistoryLoki
+	// } else {
+	// 	jobHistoryWriter = jobs.NewAPIClientHistoryWriter(provisioningClient.ProvisioningV0alpha1())
+	// }
+
+	jobHistoryWriter := jobs.NewAPIClientHistoryWriter(controllerCfg.provisioningClient.ProvisioningV0alpha1())
+	jobStore, err := jobs.NewJobStore(controllerCfg.provisioningClient.ProvisioningV0alpha1(), 30*time.Second)
+	if err != nil {
+		return fmt.Errorf("create API client job store: %w", err)
+	}
+
+	workers, err := setupWorkers(controllerCfg)
+	if err != nil {
+		return fmt.Errorf("setup workers: %w", err)
+	}
+
+	repoGetter := resources.NewRepositoryGetter(
+		controllerCfg.repoFactory,
+		controllerCfg.provisioningClient.ProvisioningV0alpha1(),
+	)
+
+	// This is basically our own JobQueue system
+	driver, err := jobs.NewConcurrentJobDriver(
+		3,              // 3 drivers for now
+		20*time.Minute, // Max time for each job
+		time.Minute,    // Cleanup jobs
+		30*time.Second, // Periodically look for new jobs
+		30*time.Second, // Lease renewal interval
+		jobStore,
+		repoGetter,
+		jobHistoryWriter,
+		jobController.InsertNotifications(),
+		workers...,
+	)
+	if err != nil {
+		return fmt.Errorf("create concurrent job driver: %w", err)
+	}
+
+	go func() {
+		logger.Info("jobs controller started")
+		if err := driver.Run(ctx); err != nil {
+			logger.Error("job driver failed", "error", err)
+		}
+	}()
 
 	// Start informers
 	go jobInformerFactory.Start(ctx.Done())
@@ -113,89 +147,70 @@ func RunJobController(opts standalone.BuildInfo, c *cli.Context, cfg *setting.Cf
 	return nil
 }
 
-func setupFromConfig(cfg *setting.Cfg) (controllerCfg *controllerConfig, err error) {
-	if cfg == nil {
-		return nil, fmt.Errorf("no configuration available")
-	}
+type jobsControllerConfig struct {
+	provisioningControllerConfig
+	historyExpiration time.Duration
+}
 
-	gRPCAuth := cfg.SectionWithEnvOverrides("grpc_client_authentication")
-	token := gRPCAuth.Key("token").String()
-	if token == "" {
-		return nil, fmt.Errorf("token is required in [grpc_client_authentication] section")
-	}
-	tokenExchangeURL := gRPCAuth.Key("token_exchange_url").String()
-	if tokenExchangeURL == "" {
-		return nil, fmt.Errorf("token_exchange_url is required in [grpc_client_authentication] section")
-	}
-
-	operatorSec := cfg.SectionWithEnvOverrides("operator")
-	provisioningServerURL := operatorSec.Key("provisioning_server_url").String()
-	if provisioningServerURL == "" {
-		return nil, fmt.Errorf("provisioning_server_url is required in [operator] section")
-	}
-	tlsInsecure := operatorSec.Key("tls_insecure").MustBool(false)
-	tlsCertFile := operatorSec.Key("tls_cert_file").String()
-	tlsKeyFile := operatorSec.Key("tls_key_file").String()
-	tlsCAFile := operatorSec.Key("tls_ca_file").String()
-
-	tokenExchangeClient, err := authn.NewTokenExchangeClient(authn.TokenExchangeConfig{
-		TokenExchangeURL: tokenExchangeURL,
-		Token:            token,
-	})
+func setupJobsControllerFromConfig(cfg *setting.Cfg) (*jobsControllerConfig, error) {
+	controllerCfg, err := setupFromConfig(cfg)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create token exchange client: %w", err)
+		return nil, err
 	}
 
-	tlsConfig, err := buildTLSConfig(tlsInsecure, tlsCertFile, tlsKeyFile, tlsCAFile)
-	if err != nil {
-		return nil, fmt.Errorf("failed to build TLS configuration: %w", err)
-	}
-
-	config := &rest.Config{
-		APIPath: "/apis",
-		Host:    provisioningServerURL,
-		WrapTransport: transport.WrapperFunc(func(rt http.RoundTripper) http.RoundTripper {
-			return authrt.NewRoundTripper(tokenExchangeClient, rt)
-		}),
-		TLSClientConfig: tlsConfig,
-	}
-
-	provisioningClient, err := client.NewForConfig(config)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create provisioning client: %w", err)
-	}
-
-	return &controllerConfig{
-		provisioningClient: provisioningClient,
-		historyExpiration:  operatorSec.Key("history_expiration").MustDuration(0),
+	return &jobsControllerConfig{
+		provisioningControllerConfig: *controllerCfg,
+		historyExpiration:            cfg.SectionWithEnvOverrides("operator").Key("history_expiration").MustDuration(0),
 	}, nil
 }
 
-func buildTLSConfig(insecure bool, certFile, keyFile, caFile string) (rest.TLSClientConfig, error) {
-	tlsConfig := rest.TLSClientConfig{
-		Insecure: insecure,
-	}
+func setupWorkers(controllerCfg *jobsControllerConfig) ([]jobs.Worker, error) {
+	clients := controllerCfg.clients
+	parsers := resources.NewParserFactory(clients)
+	resourceLister := resources.NewResourceLister(controllerCfg.unified)
+	repositoryResources := resources.NewRepositoryResourcesFactory(parsers, clients, resourceLister)
+	statusPatcher := controller.NewRepositoryStatusPatcher(controllerCfg.provisioningClient.ProvisioningV0alpha1())
 
-	if certFile != "" && keyFile != "" {
-		tlsConfig.CertFile = certFile
-		tlsConfig.KeyFile = keyFile
-	}
+	workers := make([]jobs.Worker, 0)
 
-	if caFile != "" {
-		// caFile is set in operator.ini file
-		// nolint:gosec
-		caCert, err := os.ReadFile(caFile)
-		if err != nil {
-			return tlsConfig, fmt.Errorf("failed to read CA certificate file: %w", err)
-		}
+	// Sync
+	syncer := sync.NewSyncer(sync.Compare, sync.FullSync, sync.IncrementalSync)
+	syncWorker := sync.NewSyncWorker(
+		clients,
+		repositoryResources,
+		nil, // HACK: we have updated the worker to check for nil
+		statusPatcher.Patch,
+		syncer,
+	)
+	workers = append(workers, syncWorker)
 
-		caCertPool := x509.NewCertPool()
-		if !caCertPool.AppendCertsFromPEM(caCert) {
-			return tlsConfig, fmt.Errorf("failed to parse CA certificate")
-		}
+	// Export
+	stageIfPossible := repository.WrapWithStageAndPushIfPossible
+	exportWorker := export.NewExportWorker(
+		clients,
+		repositoryResources,
+		export.ExportAll,
+		stageIfPossible,
+	)
+	workers = append(workers, exportWorker)
 
-		tlsConfig.CAData = caCert
-	}
+	// Migrate
+	cleaner := migrate.NewNamespaceCleaner(clients)
+	unifiedStorageMigrator := migrate.NewUnifiedStorageMigrator(
+		cleaner,
+		exportWorker,
+		syncWorker,
+	)
+	migrationWorker := migrate.NewMigrationWorkerFromUnified(unifiedStorageMigrator)
+	workers = append(workers, migrationWorker)
 
-	return tlsConfig, nil
+	// Delete
+	deleteWorker := deletepkg.NewWorker(syncWorker, stageIfPossible, repositoryResources)
+	workers = append(workers, deleteWorker)
+
+	// Move
+	moveWorker := move.NewWorker(syncWorker, stageIfPossible, repositoryResources)
+	workers = append(workers, moveWorker)
+
+	return workers, nil
 }

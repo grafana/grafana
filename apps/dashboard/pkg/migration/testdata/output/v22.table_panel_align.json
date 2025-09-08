@@ -13,6 +13,9 @@
             "cellOptions": {
               "type": "auto"
             },
+            "footer": {
+              "reducers": []
+            },
             "inspect": false
           },
           "mappings": [],
@@ -69,7 +72,7 @@
         },
         "showHeader": true
       },
-      "pluginVersion": "1.0.0",
+      "pluginVersion": "12.1.0",
       "targets": [
         {
           "datasource": {
@@ -85,6 +88,6 @@
     }
   ],
   "refresh": "",
-  "schemaVersion": 41,
+  "schemaVersion": 42,
   "title": "V22 Table Panel Styles Test"
 }

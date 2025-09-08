@@ -1,5 +1,7 @@
 package schemaversion
 
+import "context"
+
 // V18 migrates gauge panel options from the legacy `options-gauge` format to the new `options` format.
 // This migration restructures gauge panel configuration to use the modern options structure with valueOptions.
 //
@@ -42,7 +44,7 @@ package schemaversion
 //	    }
 //	  }
 //	]
-func V18(dashboard map[string]interface{}) error {
+func V18(_ context.Context, dashboard map[string]interface{}) error {
 	dashboard["schemaVersion"] = 18
 
 	panels, ok := dashboard["panels"].([]interface{})

@@ -323,7 +323,12 @@ func (ng *AlertNG) init() error {
 	ng.RecordingWriter = recordingWriter
 
 	schedCfg := schedule.SchedulerCfg{
-		MaxAttempts:          ng.Cfg.UnifiedAlerting.MaxAttempts,
+		RetryConfig: schedule.RetryConfig{
+			MaxAttempts:         ng.Cfg.UnifiedAlerting.MaxAttempts,
+			InitialRetryDelay:   ng.Cfg.UnifiedAlerting.InitialRetryDelay,
+			MaxRetryDelay:       ng.Cfg.UnifiedAlerting.MaxRetryDelay,
+			RandomizationFactor: ng.Cfg.UnifiedAlerting.RandomizationFactor,
+		},
 		C:                    clk,
 		BaseInterval:         ng.Cfg.UnifiedAlerting.BaseInterval,
 		MinRuleInterval:      ng.Cfg.UnifiedAlerting.MinInterval,

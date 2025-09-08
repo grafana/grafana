@@ -1,5 +1,7 @@
 package schemaversion
 
+import "context"
+
 // V15 migration is a no-op migration
 // It only updates the schema version to 15
 // It's created to keep the migration history consistent with frontend migrator
@@ -19,7 +21,7 @@ package schemaversion
 //   "panels": [...]
 // }
 
-func V15(dashboard map[string]interface{}) error {
+func V15(_ context.Context, dashboard map[string]interface{}) error {
 	dashboard["schemaVersion"] = 15
 	return nil
 }
