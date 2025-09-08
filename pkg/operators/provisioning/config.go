@@ -111,7 +111,7 @@ func setupFromConfig(cfg *setting.Cfg) (controllerCfg *provisioningControllerCon
 		APIPath: "/apis",
 		Host:    provisioningServerURL,
 		WrapTransport: transport.WrapperFunc(func(rt http.RoundTripper) http.RoundTripper {
-			return authrt.NewRoundTripper(tokenExchangeClient, rt)
+			return authrt.NewRoundTripper(tokenExchangeClient, rt, provisioning.GROUP)
 		}),
 		TLSClientConfig: tlsConfig,
 	}
@@ -145,27 +145,31 @@ func setupFromConfig(cfg *setting.Cfg) (controllerCfg *provisioningControllerCon
 	}
 
 	dashboardsServerURL := operatorSec.Key("dashboards_server_url").String()
-	if provisioningServerURL == "" {
+	if dashboardsServerURL == "" {
 		return nil, fmt.Errorf("dashboards_server_url is required in [operator] section")
 	}
 	foldersServerURL := operatorSec.Key("folders_server_url").String()
-	if provisioningServerURL == "" {
+	if foldersServerURL == "" {
 		return nil, fmt.Errorf("folders_server_url is required in [operator] section")
 	}
 
-	apiServerURLs := []string{dashboardsServerURL, foldersServerURL, provisioningServerURL}
-	configProviders := make([]apiserver.RestConfigProvider, len(apiServerURLs))
+	apiServerURLs := map[string]string{
+		resources.DashboardResource.Group: dashboardsServerURL,
+		resources.FolderResource.Group:    foldersServerURL,
+		provisioning.GROUP:                provisioningServerURL,
+	}
+	configProviders := make(map[string]apiserver.RestConfigProvider)
 
-	for i, url := range apiServerURLs {
+	for group, url := range apiServerURLs {
 		config := &rest.Config{
 			APIPath: "/apis",
 			Host:    url,
 			WrapTransport: transport.WrapperFunc(func(rt http.RoundTripper) http.RoundTripper {
-				return authrt.NewRoundTripper(tokenExchangeClient, rt)
+				return authrt.NewRoundTripper(tokenExchangeClient, rt, group)
 			}),
 			TLSClientConfig: tlsConfig,
 		}
-		configProviders[i] = NewDirectConfigProvider(config)
+		configProviders[group] = NewDirectConfigProvider(config)
 	}
 
 	clients := resources.NewClientFactoryForMultipleAPIServers(configProviders)

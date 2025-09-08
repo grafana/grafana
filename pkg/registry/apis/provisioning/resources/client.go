@@ -120,26 +120,39 @@ func NewClientFactory(configProvider apiserver.RestConfigProvider) ClientFactory
 }
 
 // NewClientFactoryForMultipleAPIServers creates a ClientFactory for multiple API servers
-func NewClientFactoryForMultipleAPIServers(configProviders []apiserver.RestConfigProvider) ClientFactory {
-	clientFactories := make([]ClientFactory, len(configProviders))
+func NewClientFactoryForMultipleAPIServers(configProviders map[string]apiserver.RestConfigProvider) ClientFactory {
+	clientFactories := make(map[string]ClientFactory)
 
-	for i, configProvider := range configProviders {
+	for api, configProvider := range configProviders {
 		clientFactory := NewClientFactory(configProvider)
-		clientFactories[i] = clientFactory
+		clientFactories[api] = clientFactory
 	}
 
 	return &multiClientFactory{clientFactories: clientFactories}
 }
 
 type multiClientFactory struct {
-	clientFactories []ClientFactory
+	clientFactories map[string]ClientFactory
 }
 
 func (m *multiClientFactory) Clients(ctx context.Context, namespace string) (ResourceClients, error) {
-	for _, clientFactory := range m.clientFactories {
-		return clientFactory.Clients(ctx, namespace)
+	clients := make(map[string]ResourceClients)
+	for group, clientFactory := range m.clientFactories {
+		c, err := clientFactory.Clients(ctx, namespace)
+		if err != nil {
+			return nil, err
+		}
+
+		clients[group] = c
 	}
-	return nil, fmt.Errorf("no client factories available")
+	if len(clients) == 0 {
+		return nil, fmt.Errorf("no client factories available")
+	}
+
+	return &multiResourceClients{
+		namespace:                 namespace,
+		resourceClientsByAPIGroup: clients,
+	}, nil
 }
 
 func (f *clientFactory) Clients(ctx context.Context, namespace string) (ResourceClients, error) {
@@ -279,6 +292,52 @@ func (c *resourceClients) Folder(ctx context.Context) (dynamic.ResourceInterface
 }
 
 func (c *resourceClients) User(ctx context.Context) (dynamic.ResourceInterface, error) {
+	v, _, err := c.ForResource(ctx, UserResource)
+	return v, err
+}
+
+type multiResourceClients struct {
+	namespace                 string
+	mutex                     sync.Mutex
+	resourceClientsByAPIGroup map[string]ResourceClients
+}
+
+// ForKind returns a client for a kind.
+// If the kind has a version, it will be used.
+// If the kind does not have a version, the preferred version will be used.
+func (c *multiResourceClients) ForKind(ctx context.Context, gvk schema.GroupVersionKind) (dynamic.ResourceInterface, schema.GroupVersionResource, error) {
+	c.mutex.Lock()
+	defer c.mutex.Unlock()
+
+	resourceClients, ok := c.resourceClientsByAPIGroup[gvk.Group]
+	if !ok {
+		return nil, schema.GroupVersionResource{}, fmt.Errorf("no clients provider for group %s", gvk.Group)
+	}
+
+	return resourceClients.ForKind(ctx, gvk)
+}
+
+// ForResource returns a client for a resource.
+// If the resource has a version, it will be used.
+// If the resource does not have a version, the preferred version will be used.
+func (c *multiResourceClients) ForResource(ctx context.Context, gvr schema.GroupVersionResource) (dynamic.ResourceInterface, schema.GroupVersionKind, error) {
+	c.mutex.Lock()
+	defer c.mutex.Unlock()
+
+	resourceClients, ok := c.resourceClientsByAPIGroup[gvr.Group]
+	if !ok {
+		return nil, schema.GroupVersionKind{}, fmt.Errorf("no clients provider for group %s", gvr.Group)
+	}
+
+	return resourceClients.ForResource(ctx, gvr)
+}
+
+func (c *multiResourceClients) Folder(ctx context.Context) (dynamic.ResourceInterface, error) {
+	client, _, err := c.ForResource(ctx, FolderResource)
+	return client, err
+}
+
+func (c *multiResourceClients) User(ctx context.Context) (dynamic.ResourceInterface, error) {
 	v, _, err := c.ForResource(ctx, UserResource)
 	return v, err
 }
