@@ -353,11 +353,11 @@ func Test_GetSnapshotStatusFromGMS(t *testing.T) {
 					SortOrder:   cloudmigration.SortOrderAsc,
 				},
 			})
-			require.NoError(t, err)
-			require.NotNil(t, snapshot)
-			require.Len(t, snapshot.Resources, 1)
-			require.Equal(t, "A", snapshot.Resources[0].RefID)
-			require.Equal(t, "fake", snapshot.Resources[0].Error)
+			assert.NoError(t, err)
+			assert.NotNil(t, snapshot)
+			assert.Len(t, snapshot.Resources, 1)
+			assert.Equal(t, "A", snapshot.Resources[0].RefID)
+			assert.Equal(t, "fake", snapshot.Resources[0].Error)
 		}, 5*time.Second, 100*time.Millisecond, "DB wasn't applied to local snapshot in time")
 	})
 }
