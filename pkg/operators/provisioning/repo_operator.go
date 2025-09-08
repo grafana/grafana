@@ -50,7 +50,7 @@ func RunRepoController(opts standalone.BuildInfo, c *cli.Context, cfg *setting.C
 		controllerCfg.resyncInterval,
 	)
 
-	resourceLister := resources.NewResourceListerForMigrations(controllerCfg.unified, nil, nil)
+	resourceLister := resources.NewResourceLister(controllerCfg.unified)
 	jobs, err := jobs.NewJobStore(controllerCfg.provisioningClient.ProvisioningV0alpha1(), 30*time.Second)
 	if err != nil {
 		return fmt.Errorf("create API client job store: %w", err)

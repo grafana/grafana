@@ -324,14 +324,14 @@ export const browseDashboardsAPI = createApi({
               forceDeleteRules: false,
             },
           });
-          // Clear the deleted dashboards cache since deleting a folder also deletes its dashboards
-          deletedDashboardsCache.clear();
         }
         return { data: undefined };
       },
       onQueryStarted: ({ folderUIDs }, { queryFulfilled, dispatch }) => {
         queryFulfilled.then(() => {
           dispatch(refreshParents(folderUIDs));
+          // Clear the deleted dashboards cache since deleting a folder also deletes its dashboards
+          deletedDashboardsCache.clear();
         });
       },
     }),

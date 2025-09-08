@@ -229,6 +229,7 @@ export type CentralAlertHistorySceneV1Props = {
   defaultLabelsFilter?: string;
   defaultTimeRange?: { from: string; to: string };
   hideFilters?: boolean;
+  hideAlertRuleColumn?: boolean;
 };
 
 export type PluginExtensionQueryEditorRowAdaptiveTelemetryV1Context = {
