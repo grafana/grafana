@@ -11,11 +11,11 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/testutil"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/util/testutil"
+	tutil "github.com/grafana/grafana/pkg/util/testutil"
 )
 
 func TestIntegrationFetchOrgIds(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
+	tutil.SkipIntegrationTestInShortMode(t)
 
 	ctx := context.Background()
 

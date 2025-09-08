@@ -40,7 +40,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/util"
-	"github.com/grafana/grafana/pkg/util/testutil"
+	tutil "github.com/grafana/grafana/pkg/util/testutil"
 )
 
 func TestMain(m *testing.M) {
@@ -48,7 +48,7 @@ func TestMain(m *testing.M) {
 }
 
 func TestIntegrationWarmStateCache(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
+	tutil.SkipIntegrationTestInShortMode(t)
 
 	evaluationTime, err := time.Parse("2006-01-02", "2021-03-25")
 	require.NoError(t, err)
@@ -275,7 +275,7 @@ func TestIntegrationWarmStateCache(t *testing.T) {
 }
 
 func TestIntegrationDashboardAnnotations(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
+	tutil.SkipIntegrationTestInShortMode(t)
 
 	evaluationTime, err := time.Parse("2006-01-02", "2022-01-01")
 	require.NoError(t, err)
@@ -1456,7 +1456,7 @@ func printAllAnnotations(annos map[int64]annotations.Item) string {
 }
 
 func TestIntegrationStaleResultsHandler(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
+	tutil.SkipIntegrationTestInShortMode(t)
 
 	// Truncate to the second since we don't store sub-second precision.
 
@@ -1747,7 +1747,7 @@ func TestStaleResults(t *testing.T) {
 }
 
 func TestIntegrationDeleteStateByRuleUID(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
+	tutil.SkipIntegrationTestInShortMode(t)
 
 	interval := time.Minute
 	ctx := context.Background()
@@ -1895,7 +1895,7 @@ func TestIntegrationDeleteStateByRuleUID(t *testing.T) {
 }
 
 func TestIntegrationResetStateByRuleUID(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
+	tutil.SkipIntegrationTestInShortMode(t)
 
 	interval := time.Minute
 	ctx := context.Background()

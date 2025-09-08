@@ -24,7 +24,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
-	"github.com/grafana/grafana/pkg/util/testutil"
+	tutil "github.com/grafana/grafana/pkg/util/testutil"
 )
 
 func TestMain(m *testing.M) {
@@ -32,7 +32,7 @@ func TestMain(m *testing.M) {
 }
 
 func TestIntegrationAnnotations(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
+	tutil.SkipIntegrationTestInShortMode(t)
 
 	sql := db.InitTestDB(t)
 
