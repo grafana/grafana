@@ -8,7 +8,7 @@ import (
 	authlib "github.com/grafana/authlib/types"
 )
 
-func newAuthorizer(ac authlib.AccessClient) authorizer.Authorizer {
+func newAuthorizer(ac authlib.AccessChecker) authorizer.Authorizer {
 	return authorizer.AuthorizerFunc(func(ctx context.Context, a authorizer.Attributes) (authorizer.Decision, string, error) {
 		info, ok := authlib.AuthInfoFrom(ctx)
 		if !ok {

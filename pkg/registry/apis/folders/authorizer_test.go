@@ -2,6 +2,7 @@ package folders
 
 import (
 	"context"
+	"fmt"
 	"testing"
 
 	"github.com/go-jose/go-jose/v3/jwt"
@@ -10,17 +11,16 @@ import (
 
 	"github.com/grafana/authlib/authn"
 	"github.com/grafana/authlib/authz"
-	"github.com/grafana/authlib/types"
+	authlib "github.com/grafana/authlib/types"
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
-	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
 
 func TestFolderAuthorizer(t *testing.T) {
 	type input struct {
 		verb   string
-		info   types.AuthInfo
-		client types.AccessClient
+		info   authlib.AuthInfo
+		client authlib.AccessChecker
 	}
 
 	type expected struct {
@@ -34,14 +34,10 @@ func TestFolderAuthorizer(t *testing.T) {
 		expected expected
 	}{
 		{
-			name: "non access policy identity should not be able to authorize",
+			name: "missing auth info",
 			input: input{
-				verb: utils.VerbGet,
-				info: &identity.StaticRequester{
-					Type:    types.TypeUser,
-					UserID:  1,
-					UserUID: "1",
-				},
+				verb:   utils.VerbGet,
+				client: authz.NewClient(nil),
 			},
 			expected: expected{
 				authorized: authorizer.DecisionDeny,
@@ -89,13 +85,29 @@ func TestFolderAuthorizer(t *testing.T) {
 				authorized: authorizer.DecisionDeny,
 			},
 		},
+		{
+			name: "with client error",
+			input: input{
+				verb: utils.VerbGet,
+				info: authn.NewIDTokenAuthInfo(authn.Claims[authn.AccessTokenClaims]{}, &authn.Claims[authn.IDTokenClaims]{}),
+				client: &dummyClient{
+					check: func(ctx context.Context, info authlib.AuthInfo, req authlib.CheckRequest) (authlib.CheckResponse, error) {
+						return authlib.CheckResponse{}, fmt.Errorf("nope")
+					},
+				},
+			},
+			expected: expected{
+				authorized: authorizer.DecisionDeny,
+				err:        true,
+			},
+		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			authz := newAuthorizer(tt.input.client)
 			authorized, _, err := authz.Authorize(
-				types.WithAuthInfo(context.Background(), tt.input.info),
+				authlib.WithAuthInfo(context.Background(), tt.input.info),
 				authorizer.AttributesRecord{User: tt.input.info, Verb: tt.input.verb, APIGroup: folders.GROUP, Resource: "folders", ResourceRequest: true, Name: "123", Namespace: "stacks-1"},
 			)
 
@@ -109,4 +121,12 @@ func TestFolderAuthorizer(t *testing.T) {
 			require.Equal(t, tt.expected.authorized, authorized)
 		})
 	}
+}
+
+type dummyClient struct {
+	check func(ctx context.Context, info authlib.AuthInfo, req authlib.CheckRequest) (authlib.CheckResponse, error)
+}
+
+func (c *dummyClient) Check(ctx context.Context, info authlib.AuthInfo, req authlib.CheckRequest) (authlib.CheckResponse, error) {
+	return c.check(ctx, info, req)
 }
