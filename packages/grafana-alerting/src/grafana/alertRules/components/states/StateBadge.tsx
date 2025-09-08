@@ -5,26 +5,21 @@ import { Stack, Text } from '@grafana/ui';
 import { StateDot } from './StateDot';
 import { Health, State } from './types';
 
-interface RecordingBadgeProps {
-  health?: Health;
-}
-
-export const RecordingBadge = ({ health }: RecordingBadgeProps) => {
-  const hasError = health === 'error';
-
-  const color = hasError ? 'error' : 'success';
-  const text = hasError ? 'Recording error' : 'Recording';
-
-  return <Badge color={color} text={text} />;
-};
-
 // we're making a distinction here between the "state" of the rule and its "health".
-interface StateBadgeProps {
-  state?: State;
-  health?: Health;
-}
+// When the type is "recording" we only support the health property.
+type StateBadgeProps =
+  | {
+      state?: State;
+      health?: Health;
+      type?: 'alerting';
+    }
+  | {
+      health?: Health;
+      state: undefined;
+      type: 'recording';
+    };
 
-export const StateBadge = ({ state, health }: StateBadgeProps) => {
+export const StateBadge = ({ state, health, type = 'alerting' }: StateBadgeProps) => {
   let stateLabel: string;
   let color: BadgeColor;
 
@@ -61,6 +56,15 @@ export const StateBadge = ({ state, health }: StateBadgeProps) => {
   if (health === 'nodata') {
     color = 'warning';
     stateLabel = 'No data';
+  }
+
+  // recording rule badge
+  // @TODO do recording rules support "nodata" state?
+  if (type === 'recording') {
+    const text = health === 'error' ? 'Recording error' : 'Recording';
+    const color = health === 'error' ? 'error' : 'success';
+
+    return <Badge color={color} text={text} />;
   }
 
   return <Badge color={color} text={stateLabel} />;
