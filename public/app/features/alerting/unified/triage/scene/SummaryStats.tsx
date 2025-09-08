@@ -24,7 +24,7 @@ export function SummaryStatsReact() {
   const isLoading = !dataProvider.isDataReadyToDisplay;
   const data = dataProvider.useState().data;
 
-  if (isLoading || !data?.series) {
+  if (isLoading || !data?.series?.length) {
     return null;
   }
 

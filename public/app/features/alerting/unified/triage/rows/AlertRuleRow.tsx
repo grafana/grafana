@@ -3,6 +3,8 @@ import React from 'react';
 import { Stack, Text, TextLink } from '@grafana/ui';
 
 import { MetaText } from '../../components/MetaText';
+import { WithReturnButton } from '../../components/WithReturnButton';
+import { rulesNav } from '../../utils/navigation';
 import { AlertRuleInstances } from '../scene/AlertRuleInstances';
 import { AlertRuleSummary } from '../scene/AlertRuleSummary';
 import { AlertRuleRow as AlertRuleRowType } from '../types';
@@ -21,9 +23,19 @@ export const AlertRuleRow = ({ row, leftColumnWidth, rowKey }: AlertRuleRowProps
       key={rowKey}
       width={leftColumnWidth}
       title={
-        <TextLink inline={false} href="#">
-          {row.metadata.title}
-        </TextLink>
+        <WithReturnButton
+          component={
+            <TextLink
+              inline={false}
+              href={rulesNav.detailsPageLink('grafana', {
+                ruleSourceName: 'grafana',
+                uid: row.metadata.ruleUID,
+              })}
+            >
+              {row.metadata.title}
+            </TextLink>
+          }
+        />
       }
       metadata={
         <Stack direction="row" gap={0.5} alignItems="center">
