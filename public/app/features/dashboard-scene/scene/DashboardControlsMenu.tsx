@@ -40,7 +40,7 @@ export function DashboardControlsMenu({ dashboard }: { dashboard: DashboardScene
             </div>
           ))}
 
-          {variables.length > 0 && <Menu.Divider />}
+          {variables.length > 0 && filteredLinks.length > 0 && <Menu.Divider />}
 
           {/* Links */}
           {filteredLinks.map((link, index) => (
