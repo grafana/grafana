@@ -20,6 +20,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/resource/httpadapter"
 	"github.com/grafana/grafana/pkg/tsdb/tempo/kinds/dataquery"
 	"github.com/grafana/tempo/pkg/tempopb"
 )
@@ -30,9 +31,10 @@ var (
 )
 
 type Service struct {
-	im     instancemgmt.InstanceManager
-	logger log.Logger
-	tracer trace.Tracer
+	im              instancemgmt.InstanceManager
+	logger          log.Logger
+	tracer          trace.Tracer
+	resourceHandler backend.CallResourceHandler
 }
 
 type DatasourceInfo struct {
@@ -42,11 +44,19 @@ type DatasourceInfo struct {
 }
 
 func ProvideService(httpClientProvider *httpclient.Provider, tracer trace.Tracer) *Service {
-	return &Service{
+	s := &Service{
 		im:     datasource.NewInstanceManager(newInstanceSettings(httpClientProvider)),
 		logger: backend.NewLoggerWith("logger", "tsdb.tempo"),
 		tracer: tracer,
 	}
+
+	// Set up resource routes using httpadapter
+	mux := http.NewServeMux()
+	mux.HandleFunc("/tags", s.handleTags)
+	mux.HandleFunc("/tag-values", s.handleTagValues)
+	s.resourceHandler = httpadapter.New(mux)
+
+	return s
 }
 
 func newInstanceSettings(httpClientProvider *httpclient.Provider) datasource.InstanceFactoryFunc {
@@ -141,90 +151,115 @@ func (s *Service) getDSInfo(ctx context.Context, pluginCtx backend.PluginContext
 }
 
 func (s *Service) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
-	dsInfo, err := s.getDSInfo(ctx, req.PluginContext)
-	logger := s.logger.FromContext(ctx)
-	if err != nil {
-		logger.Error("Failed to get data source info", "error", err)
-		return err
-	}
-	return callResource(ctx, req, sender, dsInfo, logger, s.tracer)
+	return s.resourceHandler.CallResource(ctx, req, sender)
 }
 
-func callResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender, dsInfo *DatasourceInfo, plog log.Logger, tracer trace.Tracer) error {
-	tempoURL := "/" + req.URL
+// handleTags handles requests to /tags resource
+func (s *Service) handleTags(rw http.ResponseWriter, req *http.Request) {
+	s.proxyToTempo(rw, req, "api/v2/search/tags")
+}
 
-	ctx, span := tracer.Start(ctx, "datasource.tempo.CallResource", trace.WithAttributes(
-		attribute.String("url", tempoURL),
+// handleTagValues handles requests to /tag-values resource
+func (s *Service) handleTagValues(rw http.ResponseWriter, req *http.Request) {
+	// Extract the encoded tag from query parameters
+	encodedTag := req.URL.Query().Get("tag")
+	if encodedTag == "" {
+		http.Error(rw, "Missing required 'tag' parameter", http.StatusBadRequest)
+		return
+	}
+
+	tempoPath := fmt.Sprintf("api/v2/search/tag/%s/values", encodedTag)
+	s.proxyToTempo(rw, req, tempoPath)
+}
+
+// proxyToTempo is the shared function that builds the URL and proxies requests to Tempo
+func (s *Service) proxyToTempo(rw http.ResponseWriter, req *http.Request, tempoPath string) {
+	ctx := req.Context()
+	pCtx := backend.PluginConfigFromContext(ctx)
+
+	// Get datasource info
+	dsInfo, err := s.getDSInfo(ctx, pCtx)
+	if err != nil {
+		s.logger.Error("Failed to get data source info", "error", err)
+		http.Error(rw, "Failed to get datasource configuration", http.StatusInternalServerError)
+		return
+	}
+
+	ctx, span := s.tracer.Start(ctx, "datasource.tempo.proxyToTempo", trace.WithAttributes(
+		attribute.String("tempoPath", tempoPath),
 	))
 	defer span.End()
 
-	// Build the full URL
+	// Build the full URL to Tempo
 	parsedURL, err := url.Parse(dsInfo.URL)
 	if err != nil {
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())
-		plog.Error("Failed to parse datasource URL", "error", err, "url", dsInfo.URL)
-		return err
+		s.logger.Error("Failed to parse datasource URL", "error", err, "url", dsInfo.URL)
+		http.Error(rw, "Invalid datasource URL", http.StatusInternalServerError)
+		return
 	}
 
-	resourceURL, err := url.Parse(req.URL)
-	if err != nil {
-		span.RecordError(err)
-		span.SetStatus(codes.Error, err.Error())
-		plog.Error("Failed to parse resource URL", "error", err, "url", req.URL)
-		return err
-	}
+	// Join the tempo path with the base URL
+	parsedURL.Path = path.Join(parsedURL.Path, tempoPath)
+	// Preserve query parameters from the original request
+	parsedURL.RawQuery = req.URL.RawQuery
 
-	// Join the paths and preserve query parameters
-	parsedURL.RawQuery = resourceURL.RawQuery
-	parsedURL.Path = path.Join(parsedURL.Path, resourceURL.Path)
-
-	plog.Debug("Making resource request to Tempo", "url", parsedURL.String())
+	s.logger.Debug("Making resource request to Tempo", "url", parsedURL.String())
 	start := time.Now()
 
-	httpReq, err := http.NewRequestWithContext(ctx, "GET", parsedURL.String(), nil)
+	// Create the request to Tempo
+	httpReq, err := http.NewRequestWithContext(ctx, req.Method, parsedURL.String(), req.Body)
 	if err != nil {
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())
-		plog.Error("Failed to create HTTP request", "error", err)
-		return err
+		s.logger.Error("Failed to create HTTP request", "error", err)
+		http.Error(rw, "Failed to create request", http.StatusInternalServerError)
+		return
 	}
 
+	// Copy headers from the original request
+	for name, values := range req.Header {
+		for _, value := range values {
+			httpReq.Header.Add(name, value)
+		}
+	}
+
+	// Make the request to Tempo
 	resp, err := dsInfo.HTTPClient.Do(httpReq)
 	if err != nil {
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())
-		plog.Error("Failed resource call to Tempo", "error", err, "url", parsedURL.String(), "duration", time.Since(start))
-		return err
+		s.logger.Error("Failed resource call to Tempo", "error", err, "url", parsedURL.String(), "duration", time.Since(start))
+		http.Error(rw, "Failed to connect to Tempo", http.StatusBadGateway)
+		return
 	}
 	defer func() {
 		if err := resp.Body.Close(); err != nil {
-			plog.Warn("Failed to close response body", "error", err)
+			s.logger.Warn("Failed to close response body", "error", err)
 		}
 	}()
 
-	plog.Debug("Response received from Tempo", "statusCode", resp.StatusCode, "contentLength", resp.Header.Get("Content-Length"), "duration", time.Since(start))
+	s.logger.Debug("Response received from Tempo", "statusCode", resp.StatusCode, "contentLength", resp.Header.Get("Content-Length"), "duration", time.Since(start))
 
-	body, err := io.ReadAll(resp.Body)
+	// Copy response headers
+	for name, values := range resp.Header {
+		for _, value := range values {
+			rw.Header().Add(name, value)
+		}
+	}
+
+	// Set the status code
+	rw.WriteHeader(resp.StatusCode)
+
+	// Copy the response body
+	_, err = io.Copy(rw, resp.Body)
 	if err != nil {
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())
-		plog.Error("Failed to read response body", "error", err)
-		return err
+		s.logger.Error("Failed to copy response body", "error", err)
+		return
 	}
-
-	respHeaders := map[string][]string{
-		"content-type": {"application/json"},
-	}
-	if encoding := resp.Header.Get("Content-Encoding"); encoding != "" {
-		respHeaders["content-encoding"] = []string{encoding}
-	}
-
-	return sender.Send(&backend.CallResourceResponse{
-		Status:  resp.StatusCode,
-		Headers: respHeaders,
-		Body:    body,
-	})
 }
 
 // Return the file, line, and (full-path) function name of the caller

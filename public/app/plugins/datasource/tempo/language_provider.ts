@@ -1,5 +1,5 @@
 import { AdHocVariableFilter, LanguageProvider, SelectableValue, TimeRange } from '@grafana/data';
-import { getTemplateSrv } from '@grafana/runtime';
+import { BackendSrvRequest, getTemplateSrv } from '@grafana/runtime';
 import { VariableFormatID } from '@grafana/schema';
 
 import {
@@ -92,7 +92,7 @@ export default class TempoLanguageProvider extends LanguageProvider {
       params.start = start;
       params.end = end;
     }
-    const v2Resp = await this.request(`api/v2/search/tags`, params);
+    const v2Resp = await this.request(`tags`, params);
 
     if (v2Resp && v2Resp.scopes) {
       this.setV2Tags(v2Resp.scopes);
@@ -142,7 +142,7 @@ export default class TempoLanguageProvider extends LanguageProvider {
 
   async getOptionsV2({ tag, query, timeRangeForTags, range }: GetOptionsV2): Promise<Array<SelectableValue<string>>> {
     const encodedTag = this.encodeTag(tag);
-    const params: { q?: string; limit: number; start?: number; end?: number } = {
+    const params: { q?: string; limit: number; start?: number; end?: number; tag?: string } = {
       limit: this.getTagsLimit(),
     };
 
@@ -156,7 +156,9 @@ export default class TempoLanguageProvider extends LanguageProvider {
       params.end = end;
     }
 
-    const response = await this.request(`api/v2/search/tag/${encodedTag}/values`, params);
+    // Add the encoded tag as a query parameter for the new resource endpoint
+    params.tag = encodedTag;
+    const response = await this.request(`tag-values`, params);
 
     let options: Array<SelectableValue<string>> = [];
     if (response && response.tagValues) {
