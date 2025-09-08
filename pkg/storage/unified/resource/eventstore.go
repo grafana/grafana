@@ -7,6 +7,9 @@ import (
 	"iter"
 	"strconv"
 	"strings"
+	"time"
+
+	"github.com/bwmarrin/snowflake"
 )
 
 const (
@@ -223,4 +226,50 @@ func (n *eventStore) ListSince(ctx context.Context, sinceRV int64) iter.Seq2[Eve
 			}
 		}
 	}
+}
+
+// CleanupOldEvents deletes events older than the specified retention period.
+func (n *eventStore) CleanupOldEvents(ctx context.Context, retentionPeriod time.Duration) (int, error) {
+	if retentionPeriod <= 0 {
+		return 0, fmt.Errorf("retention period must be positive")
+	}
+
+	// Calculate the cutoff time - events older than this will be deleted
+	cutoffTime := time.Now().Add(-retentionPeriod)
+
+	deletedCount := 0
+
+	// Keys are stored in the format of "resource_version~namespace~group~resource~name"
+	// So if we sort ascending, we can stop once we get to an event that is older than the cutoff time
+	for key, err := range n.kv.Keys(ctx, eventsSection, ListOptions{Sort: SortOrderAsc}) {
+		if err != nil {
+			return deletedCount, fmt.Errorf("failed to list event keys: %w", err)
+		}
+
+		// Parse the event key to get the resource version (which is a snowflake ID)
+		eventKey, err := ParseEventKey(key)
+		if err != nil {
+			continue
+		}
+
+		// Extract timestamp from the snowflake ID (resource version)
+		eventTimestamp := snowflake.ID(eventKey.ResourceVersion).Time()
+		eventTime := time.Unix(0, eventTimestamp*int64(time.Millisecond))
+
+		// TODO should use batch deletes here when available
+		// If the event is older than the cutoff time, delete it
+		if eventTime.Before(cutoffTime) {
+			if err := n.kv.Delete(ctx, eventsSection, key); err != nil {
+				return deletedCount, fmt.Errorf("failed to delete event key %s: %w", key, err)
+			}
+			deletedCount++
+		}
+
+		// Since keys are sorted ascending, we can stop processing once we reach an event newer than the cutoff
+		if eventTime.After(cutoffTime) {
+			break
+		}
+	}
+
+	return deletedCount, nil
 }
