@@ -15,14 +15,13 @@ import (
 
 	"github.com/grafana/grafana/pkg/tsdb/grafana-postgresql-datasource/sqleng"
 
+	"github.com/grafana/grafana/pkg/util/testutil"
 	_ "github.com/lib/pq"
 )
 
 // Test generateConnectionString.
 func TestIntegrationGenerateConnectionStringPGX(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	testCases := []struct {
 		desc        string
@@ -177,9 +176,8 @@ func TestIntegrationGenerateConnectionStringPGX(t *testing.T) {
 // use to verify that the generated data are visualized as expected, see
 // devenv/README.md for setup instructions.
 func TestIntegrationPostgresPGX(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	// change to true to run the PostgreSQL tests
 	const runPostgresTests = false
 
@@ -1407,6 +1405,154 @@ func TestIntegrationPostgresPGX(t *testing.T) {
 			require.Equal(t, 0, frames[0].Rows())
 			require.NotNil(t, frames[0].Fields)
 			require.Empty(t, frames[0].Fields)
+		})
+
+		t.Run("Should handle multiple result sets without panicking", func(t *testing.T) {
+			// Create a test table for the panic scenario test
+			sql := `
+				DROP TABLE IF EXISTS test_multi_results;
+				CREATE TABLE test_multi_results(
+					id integer,
+					name text,
+					value numeric
+				);
+				INSERT INTO test_multi_results VALUES
+					(1, 'test1', 10.5),
+					(2, 'test2', 20.7),
+					(3, 'test3', 30.2);
+			`
+			_, err := p.Exec(t.Context(), sql)
+			require.NoError(t, err)
+
+			t.Run("Should handle compatible multiple result sets", func(t *testing.T) {
+				// This query returns multiple result sets with the same structure
+				query := &backend.QueryDataRequest{
+					Queries: []backend.DataQuery{
+						{
+							RefID: "A",
+							JSON: []byte(`{
+								"rawSql": "SELECT id, name FROM test_multi_results WHERE id <= 2; SELECT id, name FROM test_multi_results WHERE id >= 2;",
+								"format": "table"
+							}`),
+							TimeRange: backend.TimeRange{
+								From: fromStart,
+								To:   fromStart.Add(1 * time.Hour),
+							},
+						},
+					},
+				}
+
+				// This should not panic and should work correctly
+				resp, err := exe.QueryDataPGX(t.Context(), query)
+				require.NoError(t, err)
+				queryResult := resp.Responses["A"]
+				require.NoError(t, queryResult.Error)
+
+				frames := queryResult.Frames
+				require.Len(t, frames, 1)
+
+				// The frame should be properly constructed from both SELECT results
+				frame := frames[0]
+				require.Equal(t, 2, len(frame.Fields)) // id, name from both queries
+				require.Equal(t, "id", frame.Fields[0].Name)
+				require.Equal(t, "name", frame.Fields[1].Name)
+				require.Equal(t, 4, frame.Rows()) // 2 rows from first result + 2 rows from second result
+			})
+
+			t.Run("Should return error for incompatible multiple result sets", func(t *testing.T) {
+				// This query returns multiple result sets with different structures - the kind that used to cause panic
+				query := &backend.QueryDataRequest{
+					Queries: []backend.DataQuery{
+						{
+							RefID: "A",
+							JSON: []byte(`{
+								"rawSql": "SELECT id, name FROM test_multi_results WHERE id <= 2; SELECT id, value FROM test_multi_results WHERE id >= 2;",
+								"format": "table"
+							}`),
+							TimeRange: backend.TimeRange{
+								From: fromStart,
+								To:   fromStart.Add(1 * time.Hour),
+							},
+						},
+					},
+				}
+
+				// This should not panic anymore, but should return an error instead
+				resp, err := exe.QueryDataPGX(t.Context(), query)
+				require.NoError(t, err)
+				queryResult := resp.Responses["A"]
+
+				// We expect an error about column mismatch, not a panic
+				require.Error(t, queryResult.Error)
+				require.Contains(t, queryResult.Error.Error(), "column name mismatch")
+			})
+
+			t.Run("Should return error for incompatible number of columns", func(t *testing.T) {
+				// This query returns multiple result sets with different number of columns
+				// This should fix the error "runtime error: index out of range [1] with length 1"
+				query := &backend.QueryDataRequest{
+					Queries: []backend.DataQuery{
+						{
+							RefID: "A",
+							JSON: []byte(`{
+								"rawSql": "SELECT id, name FROM test_multi_results WHERE id = 1; SELECT id FROM test_multi_results WHERE id = 1;",
+								"format": "table"
+							}`),
+							TimeRange: backend.TimeRange{
+								From: fromStart,
+								To:   fromStart.Add(1 * time.Hour),
+							},
+						},
+					},
+				}
+
+				// This should not panic anymore, but should return an error instead
+				resp, err := exe.QueryDataPGX(t.Context(), query)
+				require.NoError(t, err)
+				queryResult := resp.Responses["A"]
+
+				// We expect an error about incompatible result structure, not a panic
+				require.Error(t, queryResult.Error)
+				require.Contains(t, queryResult.Error.Error(), "incompatible result structure: expected 2 columns, got 1 columns")
+			})
+		})
+
+		t.Run("Should handle queries with mixed statement types", func(t *testing.T) {
+			// This tests a scenario with UPDATE + SELECT that could cause the original panic
+			query := &backend.QueryDataRequest{
+				Queries: []backend.DataQuery{
+					{
+						RefID: "A",
+						JSON: []byte(`{
+							"rawSql": "UPDATE test_multi_results SET name = 'updated' WHERE id = 1; SELECT id, name FROM test_multi_results WHERE id = 1;",
+							"format": "table"
+						}`),
+						TimeRange: backend.TimeRange{
+							From: fromStart,
+							To:   fromStart.Add(1 * time.Hour),
+						},
+					},
+				},
+			}
+
+			// This should not panic
+			resp, err := exe.QueryDataPGX(t.Context(), query)
+			require.NoError(t, err)
+			queryResult := resp.Responses["A"]
+			require.NoError(t, queryResult.Error)
+
+			frames := queryResult.Frames
+			require.Len(t, frames, 1)
+
+			// Should only contain data from the SELECT part
+			frame := frames[0]
+			require.Equal(t, 2, len(frame.Fields)) // id, name
+			require.Equal(t, 1, frame.Rows())      // 1 row
+
+			// Verify the update worked
+			nameField := frame.Fields[1]
+			nameValue := nameField.At(0).(*string)
+			require.Equal(t, "updated", *nameValue)
 		})
 	})
 }

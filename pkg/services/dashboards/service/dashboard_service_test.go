@@ -48,6 +48,7 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/search"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
+	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 func TestMain(m *testing.M) {
@@ -2212,9 +2213,8 @@ func TestCleanUpDashboard(t *testing.T) {
 }
 
 func TestIntegrationK8sDashboardCleanupJob(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test in short mode")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	tests := []struct {
 		name            string
 		readFromUnified bool
