@@ -27,7 +27,7 @@ import (
 const (
 	defaultListBufferSize       = 100
 	prunerMaxEvents             = 20
-	defaultEventRetentionPeriod = 24 * time.Hour // Default event retention period
+	defaultEventRetentionPeriod = 24 * time.Hour
 )
 
 // kvStorageBackend Unified storage backend based on KV storage.
@@ -122,7 +122,7 @@ func (k *kvStorageBackend) cleanupOldEvents(ctx context.Context) {
 	}
 
 	if deletedCount > 0 {
-		k.log.Debug("Cleaned up old events", "deleted_count", deletedCount, "retention_period", k.eventRetentionPeriod)
+		k.log.Info("Cleaned up old events", "deleted_count", deletedCount, "retention_period", k.eventRetentionPeriod)
 	}
 }
 
