@@ -4,6 +4,7 @@ import (
 	"testing"
 	"text/template"
 
+	"github.com/grafana/grafana/pkg/registry/apis/iam/common"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
@@ -51,6 +52,18 @@ func TestTemplates(t *testing.T) {
 			OrgID:            orgID,
 			SubjectID:        assignment.SubjectID,
 			Now:              "2025-08-27 21:35:00",
+		}
+		v.SQLTemplate = mocks.NewTestingSQLTemplate()
+		return &v
+	}
+
+	getPageQuery := func(q *ListResourcePermissionsQuery) sqltemplate.SQLTemplate {
+		v := pageQueryTemplate{
+			SQLTemplate:        sqltemplate.New(nodb.DialectForDriver()),
+			Query:              q,
+			PermissionTable:    nodb.Table("permission"),
+			RoleTable:          nodb.Table("role"),
+			ManagedRolePattern: "managed:%",
 		}
 		v.SQLTemplate = mocks.NewTestingSQLTemplate()
 		return &v
@@ -130,6 +143,18 @@ func TestTemplates(t *testing.T) {
 						AssignmentColumn: "role",
 						Action:           "dashboards:admin",
 						Scope:            "dashboard:uid:dash2",
+					}),
+				},
+			},
+			pageQueryTplt: {
+				{
+					Name: "basic_page_query",
+					Data: getPageQuery(&ListResourcePermissionsQuery{
+						OrgID: 3,
+						Pagination: common.Pagination{
+							Limit:    100,
+							Continue: 5,
+						},
 					}),
 				},
 			},
