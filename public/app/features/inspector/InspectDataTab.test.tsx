@@ -65,7 +65,7 @@ describe('InspectDataTab', () => {
       const dataOptions = screen.getByText(/Data options/i);
       await userEvent.click(dataOptions);
       expect(screen.getByText(/Show data frame/i)).toBeInTheDocument();
-      expect(screen.getByText(/Excel compatibility mode/i)).toBeInTheDocument();
+      expect(screen.getByText(/Download for Excel/i)).toBeInTheDocument();
     });
     it('should show available dataFrame options', async () => {
       render(<InspectDataTab {...createProps()} />);
