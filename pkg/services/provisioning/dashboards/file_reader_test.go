@@ -30,6 +30,7 @@ import (
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/util"
+	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 const (
@@ -109,9 +110,8 @@ func TestCreatingNewDashboardFileReader(t *testing.T) {
 }
 
 func TestIntegrationDashboardFileReader(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test in short mode")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	logger := log.New("test-logger")
 	cfg := &config{}
 
