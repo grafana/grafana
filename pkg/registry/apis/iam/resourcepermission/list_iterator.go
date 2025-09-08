@@ -1,7 +1,5 @@
 package resourcepermission
 
-package role
-
 import (
 	"encoding/json"
 	"fmt"
@@ -40,8 +38,10 @@ func (r *continueToken) String() string {
 
 // listIterator implements resource.ListIterator for iterating over resource permissions.
 type listIterator struct {
-	// List of roles to iterate over
-	assignments map[groupResourceName][]rbacAssignment 
+	// List of resourcePermissions to iterate over
+	resourcePermissions []v0alpha1.ResourcePermission
+	// Resource permission IDs
+	resourcePermissionIDs []int64 // TODO change to map by resource permission groupResourceName
 	// Current index in the roles slice (1-based)
 	idx int
 	// Error encountered during iteration
@@ -50,9 +50,9 @@ type listIterator struct {
 	token continueToken
 }
 
-func (r *listIterator) cur() *v0alpha1.Role {
+func (r *listIterator) cur() *v0alpha1.ResourcePermission {
 	// idx is 1-based
-	return &r.roles[r.idx-1]
+	return &r.resourcePermissions[r.idx-1]
 }
 
 func (r *listIterator) Close() error {
@@ -81,25 +81,25 @@ func (r *listIterator) Name() string {
 
 // Namespace implements resource.ListIterator.
 func (r *listIterator) Namespace() string {
-	return r.roles[r.idx-1].GetNamespace()
+	return r.resourcePermissions[r.idx-1].GetNamespace()
 }
 
 // Next implements resource.ListIterator.
 func (r *listIterator) Next() bool {
-	if r.err != nil || r.idx >= len(r.roles) {
+	if r.err != nil || r.idx >= len(r.resourcePermissions) {
 		return false
 	}
 
 	r.idx++
 	// Set the continue token to the current role ID
-	r.token.id = r.roleIDs[r.idx-1]
+	r.token.id = r.resourcePermissionIDs[r.idx-1]
 
 	return true
 }
 
 // ResourceVersion implements resource.ListIterator.
 func (r *listIterator) ResourceVersion() int64 {
-	return r.cur().Spec.Version
+	return r.cur().GetUpdateTimestamp().UnixMilli()
 }
 
 // Value implements resource.ListIterator.

@@ -19,68 +19,64 @@ func setupBackendNoDB(t *testing.T) *ResourcePermSqlBackend {
 }
 
 func TestToV0ResourcePermissions(t *testing.T) {
+	backend := setupBackendNoDB(t)
+
 	t.Run("empty permissions", func(t *testing.T) {
-		result, err := toV0ResourcePermissions(map[groupResourceName][]rbacAssignment{})
+		result, err := backend.toV0ResourcePermissions([]rbacAssignment{})
 		require.NoError(t, err)
 		require.Nil(t, result)
 	})
 
 	now := time.Now()
 	t.Run("multiple permission are sorted by kind, name, verb", func(t *testing.T) {
-		permissions := map[groupResourceName][]rbacAssignment{
+		permissions := []rbacAssignment{
 			{
-				Group:    "dashboard.grafana.app",
-				Resource: "dashboards",
-				Name:     "test123",
-			}: {
-				{
-					ID:               1,
-					Action:           "dashboards:admin",
-					Scope:            "dashboards:uid:test123",
-					Created:          now,
-					Updated:          now,
-					RoleName:         "managed:role1",
-					SubjectUID:       "testuser",
-					SubjectType:      "user",
-					IsServiceAccount: false,
-				},
-				{
-					ID:               2,
-					Action:           "dashboards:edit",
-					Scope:            "dashboards:uid:test123",
-					Created:          now,
-					Updated:          now,
-					RoleName:         "managed:role1",
-					SubjectUID:       "sa1",
-					SubjectType:      "user",
-					IsServiceAccount: true,
-				},
-				{
-					ID:               3,
-					Action:           "dashboards:view",
-					Scope:            "dashboards:uid:test123",
-					Created:          now,
-					Updated:          now,
-					RoleName:         "managed:role1",
-					SubjectUID:       "testteam",
-					SubjectType:      "team",
-					IsServiceAccount: false,
-				},
-				{
-					ID:               4,
-					Action:           "dashboards:view",
-					Scope:            "dashboards:uid:test123",
-					Created:          now,
-					Updated:          now,
-					RoleName:         "managed:role1",
-					SubjectUID:       "Viewer",
-					SubjectType:      "builtin_role",
-					IsServiceAccount: false,
-				},
+				ID:               1,
+				Action:           "dashboards:admin",
+				Scope:            "dashboards:uid:test123",
+				Created:          now,
+				Updated:          now,
+				RoleName:         "managed:role1",
+				SubjectUID:       "testuser",
+				SubjectType:      "user",
+				IsServiceAccount: false,
+			},
+			{
+				ID:               2,
+				Action:           "dashboards:edit",
+				Scope:            "dashboards:uid:test123",
+				Created:          now,
+				Updated:          now,
+				RoleName:         "managed:role1",
+				SubjectUID:       "sa1",
+				SubjectType:      "user",
+				IsServiceAccount: true,
+			},
+			{
+				ID:               3,
+				Action:           "dashboards:view",
+				Scope:            "dashboards:uid:test123",
+				Created:          now,
+				Updated:          now,
+				RoleName:         "managed:role1",
+				SubjectUID:       "testteam",
+				SubjectType:      "team",
+				IsServiceAccount: false,
+			},
+			{
+				ID:               4,
+				Action:           "dashboards:view",
+				Scope:            "dashboards:uid:test123",
+				Created:          now,
+				Updated:          now,
+				RoleName:         "managed:role1",
+				SubjectUID:       "Viewer",
+				SubjectType:      "builtin_role",
+				IsServiceAccount: false,
 			},
 		}
 
-		result, err := toV0ResourcePermissions(permissions)
+		result, err := backend.toV0ResourcePermissions(permissions)
 		require.NoError(t, err)
 		require.NotNil(t, result)
 		require.Len(t, result, 1)

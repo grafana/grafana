@@ -17,11 +17,13 @@ import (
 
 // List
 func (s *ResourcePermSqlBackend) newRoleIterator(ctx context.Context, dbHelper *legacysql.LegacyDatabaseHelper, ns types.NamespaceInfo, query *ListResourcePermissionsQuery) (*listIterator, error) {
+	// TODO: implement
+	return nil, nil
 }
 
 // Get
-// getResourcePermissions queries resource permissions based on the provided ListResourcePermissionsQuery and groups them by resource (e.g. {folder.grafana.app, folders, fold1})
-func (s *ResourcePermSqlBackend) getResourcePermissions(ctx context.Context, sql *legacysql.LegacyDatabaseHelper, query *ListResourcePermissionsQuery) (map[groupResourceName][]rbacAssignment, error) {
+// getRbacAssignments queries resource permissions based on the provided ListResourcePermissionsQuery and groups them by resource (e.g. {folder.grafana.app, folders, fold1})
+func (s *ResourcePermSqlBackend) getRbacAssignments(ctx context.Context, sql *legacysql.LegacyDatabaseHelper, query *ListResourcePermissionsQuery) ([]rbacAssignment, error) {
 	rawQuery, args, err := buildListResourcePermissionsQueryFromTemplate(sql, query)
 	if err != nil {
 		return nil, err
@@ -38,7 +40,7 @@ func (s *ResourcePermSqlBackend) getResourcePermissions(ctx context.Context, sql
 		_ = rows.Close()
 	}()
 
-	permissions := make(map[groupResourceName][]rbacAssignment)
+	permissions := make([]rbacAssignment, 0, 8)
 	for rows.Next() {
 		var perm rbacAssignment
 		if err := rows.Scan(
@@ -47,14 +49,7 @@ func (s *ResourcePermSqlBackend) getResourcePermissions(ctx context.Context, sql
 		); err != nil {
 			return nil, fmt.Errorf("scanning resource permission: %w", err)
 		}
-
-		key, err := s.parseScope(perm.Scope)
-		if err != nil {
-			s.logger.Warn("skipping", "scope", perm.Scope, "err", err)
-			continue
-		}
-
-		permissions[*key] = append(permissions[*key], perm)
+		permissions = append(permissions, perm)
 	}
 
 	return permissions, nil
@@ -73,16 +68,16 @@ func (s *ResourcePermSqlBackend) getResourcePermission(ctx context.Context, sql 
 		ActionSets: mapper.ActionSets(),
 	}
 
-	permsByResource, err := s.getResourcePermissions(ctx, sql, resourceQuery)
+	assignments, err := s.getRbacAssignments(ctx, sql, resourceQuery)
 	if err != nil {
 		return nil, err
 	}
 
-	if len(permsByResource) == 0 {
+	if len(assignments) == 0 {
 		return nil, fmt.Errorf("resource permission %q: %w", resourceQuery.Scopes, errNotFound)
 	}
 
-	resourcePermission, err := toV0ResourcePermissions(permsByResource)
+	resourcePermission, err := s.toV0ResourcePermissions(assignments)
 	if err != nil {
 		return nil, err
 	}
