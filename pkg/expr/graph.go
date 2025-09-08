@@ -377,7 +377,6 @@ func (s *Service) buildGraphEdges(dp *simple.DirectedGraph, registry map[string]
 					// this missing dependency. But we collection the metric as there was an
 					// attempt to execute a SQL expression.
 					e := sql.MakeTableNotFoundError(cmdNode.refID, neededVar)
-					s.metrics.SqlCommandCount.WithLabelValues("error", e.Category()).Inc()
 					return e
 				}
 				return fmt.Errorf("unable to find dependent node '%v'", neededVar)
