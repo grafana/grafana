@@ -12,6 +12,7 @@
     "build:stats": "NODE_ENV=production webpack --progress --config scripts/webpack/webpack.stats.js",
     "codeowners-manifest": "yarn codeowners-manifest:clean && yarn codeowners-manifest:raw && node ./scripts/generate-codeowners-manifest.js",
     "codeowners-manifest:clean": "rm -rf codeowners-manifest && mkdir -p codeowners-manifest",
+    "codeowners-manifest:metadata": "node ./scripts/generate-codeowners-metadata.js",
     "codeowners-manifest:raw": "echo \"🍣 Getting raw CODEOWNERS data for manifest ...\" && github-codeowners audit --output jsonl >> codeowners-manifest/audit-raw.jsonl",
     "dev": "NODE_ENV=dev nx exec -- webpack --config scripts/webpack/webpack.dev.js",
     "e2e": "./e2e/start-and-run-suite",
