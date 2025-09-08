@@ -9,7 +9,6 @@ import (
 	"k8s.io/apiserver/pkg/registry/rest"
 
 	authlib "github.com/grafana/authlib/types"
-	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	foldersV1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -25,7 +24,7 @@ var _ = rest.Connecter(&subAccessREST{})
 var _ = rest.StorageMetadata(&subAccessREST{})
 
 func (r *subAccessREST) New() runtime.Object {
-	return &folders.FolderAccessInfo{}
+	return &foldersV1.FolderAccessInfo{}
 }
 
 func (r *subAccessREST) Destroy() {
@@ -40,7 +39,7 @@ func (r *subAccessREST) ProducesMIMETypes(verb string) []string {
 }
 
 func (r *subAccessREST) ProducesObject(verb string) interface{} {
-	return &folders.FolderAccessInfo{}
+	return &foldersV1.FolderAccessInfo{}
 }
 
 func (r *subAccessREST) NewConnectOptions() (runtime.Object, bool, string) {
@@ -48,6 +47,17 @@ func (r *subAccessREST) NewConnectOptions() (runtime.Object, bool, string) {
 }
 
 func (r *subAccessREST) Connect(ctx context.Context, name string, opts runtime.Object, responder rest.Responder) (http.Handler, error) {
+	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+		access, err := r.getAccessInfo(ctx, name)
+		if err != nil {
+			responder.Error(err)
+		} else {
+			responder.Object(200, access)
+		}
+	}), nil
+}
+
+func (r *subAccessREST) getAccessInfo(ctx context.Context, name string) (*foldersV1.FolderAccessInfo, error) {
 	ns, err := request.NamespaceInfoFrom(ctx, true)
 	if err != nil {
 		return nil, err
@@ -66,34 +76,38 @@ func (r *subAccessREST) Connect(ctx context.Context, name string, opts runtime.O
 	if err != nil {
 		return nil, err
 	}
-
-	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-		var rsp authlib.CheckResponse
-		check := func(verb string) bool {
-			if err != nil {
-				return false
-			}
-			rsp, err = r.accessClient.Check(ctx, user, authlib.CheckRequest{
-				Verb:      verb,
-				Group:     foldersV1.GROUP,
-				Resource:  foldersV1.RESOURCE,
-				Namespace: ns.Value,
-				Name:      name,
-				Folder:    obj.GetFolder(),
-			})
-			return rsp.Allowed
-		}
-
-		access := &folders.FolderAccessInfo{
-			CanSave:   check(utils.VerbCreate),
-			CanEdit:   check(utils.VerbUpdate),
-			CanAdmin:  check(utils.VerbSetPermissions),
-			CanDelete: check(utils.VerbDelete),
-		}
+	var tmp authlib.CheckResponse
+	check := func(verb string) bool {
 		if err != nil {
-			responder.Error(err)
-		} else {
-			responder.Object(200, access)
+			return false
 		}
-	}), nil
+		tmp, err = r.accessClient.Check(ctx, user, authlib.CheckRequest{
+			Verb:      verb,
+			Group:     foldersV1.GROUP,
+			Resource:  foldersV1.RESOURCE,
+			Namespace: ns.Value,
+			Name:      name,
+			Folder:    obj.GetFolder(),
+		})
+		return tmp.Allowed
+	}
+
+	rsp := &foldersV1.FolderAccessInfo{}
+	rsp.CanAdmin = check(utils.VerbSetPermissions)
+	if err != nil {
+		return nil, err
+	}
+	rsp.CanDelete = rsp.CanAdmin || check(utils.VerbDelete)
+	if err != nil {
+		return nil, err
+	}
+	rsp.CanEdit = rsp.CanAdmin || check(utils.VerbUpdate)
+	if err != nil {
+		return nil, err
+	}
+	rsp.CanSave = rsp.CanAdmin || check(utils.VerbCreate) // or the same as update?
+	if err != nil {
+		return nil, err
+	}
+	return rsp, nil
 }
