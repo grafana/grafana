@@ -20,7 +20,6 @@
   "description": "Sample monitoring dashboard for testing purposes.",
   "editable": false,
   "fiscalYearStartMonth": 0,
-  "gnetId": null,
   "graphTooltip": 0,
   "hideControls": false,
   "id": 36098,
@@ -86,8 +85,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
-                "value": null
+                "color": "green"
               },
               {
                 "color": "red",
@@ -178,8 +176,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
-                "value": null
+                "color": "green"
               },
               {
                 "color": "red",
@@ -271,8 +268,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
-                "value": null
+                "color": "green"
               },
               {
                 "color": "red",
@@ -364,8 +360,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
-                "value": null
+                "color": "green"
               },
               {
                 "color": "red",
@@ -461,8 +456,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
-                "value": null
+                "color": "green"
               }
             ]
           },
@@ -553,8 +547,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
-                "value": null
+                "color": "green"
               }
             ]
           },
@@ -623,8 +616,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
-                "value": null
+                "color": "green"
               }
             ]
           },
@@ -735,8 +727,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
-                "value": null
+                "color": "green"
               }
             ]
           },
@@ -824,8 +815,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
-                "value": null
+                "color": "green"
               }
             ]
           },
@@ -913,8 +903,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
-                "value": null
+                "color": "green"
               },
               {
                 "color": "red",
@@ -994,7 +983,7 @@
         "name": "env",
         "options": [],
         "query": "label_values(system_info_lambda{}, env)",
-        "refresh": 1,
+        "refresh": 2,
         "regex": "",
         "sort": 2,
         "type": "query"
@@ -1012,7 +1001,7 @@
         "name": "region",
         "options": [],
         "query": "label_values(system_info_lambda{env=~\"$env\"}, region)",
-        "refresh": 1,
+        "refresh": 2,
         "regex": "",
         "sort": 0,
         "type": "query"
@@ -1030,7 +1019,7 @@
         "name": "node",
         "options": [],
         "query": "label_values(system_info_lambda{env=~\"$env\", region=~\"$region\"}, node)",
-        "refresh": 1,
+        "refresh": 2,
         "regex": "",
         "sort": 2,
         "type": "query"
@@ -1048,7 +1037,7 @@
         "name": "service",
         "options": [],
         "query": "label_values(example_events_kappa{env=~\"$env\", region=~\"$region\", node=~\"$node\"}, service)",
-        "refresh": 1,
+        "refresh": 2,
         "regex": "",
         "sort": 2,
         "type": "query"

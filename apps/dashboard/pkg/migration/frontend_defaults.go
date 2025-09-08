@@ -47,9 +47,9 @@ func applyFrontendDefaults(dashboard map[string]interface{}) {
 	if dashboard["links"] == nil {
 		dashboard["links"] = []interface{}{}
 	}
-	if dashboard["gnetId"] == nil {
-		dashboard["gnetId"] = nil
-	}
+	// Note: gnetId is handled by the frontend constructor as: this.gnetId = data.gnetId || null;
+	// But the frontend's JSON.stringify/parse in getSaveModelClone() removes null values
+	// So we should NOT set gnetId to null here - let it be handled by the cleanup phase
 
 	// Note: The frontend does NOT set defaults for these properties:
 	// - liveNow: copied as-is from input data
@@ -104,15 +104,25 @@ func applyPanelDefaults(panel map[string]interface{}) {
 	if panel["transformations"] == nil {
 		panel["transformations"] = []interface{}{}
 	}
-	if panel["fieldConfig"] == nil {
+	if _, exists := panel["fieldConfig"]; !exists {
 		panel["fieldConfig"] = map[string]interface{}{
 			"defaults":  map[string]interface{}{},
 			"overrides": []interface{}{},
+		}
+	} else {
+		// Add overrides array if it doesn't exist (matches frontend behavior)
+		if fieldConfig, ok := panel["fieldConfig"].(map[string]interface{}); ok {
+			if _, hasOverrides := fieldConfig["overrides"]; !hasOverrides {
+				fieldConfig["overrides"] = []interface{}{}
+			}
 		}
 	}
 	if panel["title"] == nil {
 		panel["title"] = ""
 	}
+
+	// Auto-migration logic (matches frontend PanelModel constructor)
+	applyPanelAutoMigration(panel)
 
 	// Structure normalizations
 	ensureQueryIds(panel)
@@ -411,6 +421,11 @@ func getPanels(dashboard map[string]interface{}) []map[string]interface{} {
 // cleanupPanelForSave mimics the PanelModel.getSaveModel() behavior
 // This removes properties that shouldn't be persisted and filters out default values
 func cleanupPanelForSave(panel map[string]interface{}) {
+	// Track which properties were present in the input to preserve them even if they become empty
+	originalProperties := make(map[string]bool)
+	for key := range panel {
+		originalProperties[key] = true
+	}
 	// Properties that should never be persisted (notPersistedProperties)
 	notPersistedProps := map[string]bool{
 		"events":                  true,
@@ -461,6 +476,62 @@ func cleanupPanelForSave(panel map[string]interface{}) {
 		if panelValue, exists := panel[prop]; exists {
 			if isEqual(panelValue, defaultValue) {
 				delete(panel, prop)
+			}
+		}
+	}
+
+	// Remove null values recursively to match frontend's JSON.stringify/parse behavior
+	removeNullValuesRecursively(panel)
+
+	// Filter out properties that match defaults (matches frontend's isEqual logic)
+	filterDefaultValues(panel, originalProperties)
+}
+
+// filterDefaultValues removes properties that match the default values (matches frontend's isEqual logic)
+func filterDefaultValues(panel map[string]interface{}, originalProperties map[string]bool) {
+	// PanelModel defaults from frontend
+	defaults := map[string]interface{}{
+		"gridPos": map[string]interface{}{
+			"x": 0, "y": 0, "h": 3, "w": 6,
+		},
+		"targets": []interface{}{
+			map[string]interface{}{"refId": "A"},
+		},
+		"cachedPluginOptions": map[string]interface{}{},
+		"transparent":         false,
+		"options":             map[string]interface{}{},
+		"links":               []interface{}{},
+		"transformations":     []interface{}{},
+		"fieldConfig": map[string]interface{}{
+			"defaults":  map[string]interface{}{},
+			"overrides": []interface{}{},
+		},
+		"title": "",
+	}
+
+	// Remove properties that match defaults, but preserve properties that were originally present
+	for prop, defaultValue := range defaults {
+		if panelValue, exists := panel[prop]; exists {
+			if isEqual(panelValue, defaultValue) {
+				// Only remove if it wasn't originally present in the input
+				if !originalProperties[prop] {
+					delete(panel, prop)
+				}
+			}
+		}
+	}
+
+	// Remove empty targets arrays (frontend removes them in cleanup)
+	if targets, exists := panel["targets"].([]interface{}); exists && len(targets) == 0 {
+		delete(panel, "targets")
+	}
+
+	// Remove fieldConfig objects that only have empty overrides arrays (frontend removes them in cleanup)
+	if fieldConfig, exists := panel["fieldConfig"].(map[string]interface{}); exists {
+		if overrides, hasOverrides := fieldConfig["overrides"].([]interface{}); hasOverrides && len(overrides) == 0 {
+			// Check if fieldConfig only has empty overrides
+			if len(fieldConfig) == 1 {
+				delete(panel, "fieldConfig")
 			}
 		}
 	}
@@ -551,7 +622,48 @@ func cleanupDashboardForSave(dashboard map[string]interface{}) {
 		}
 	}
 
-	// Clean up panels
+	// Remove null values to match frontend's JSON.stringify/parse behavior
+	// This handles gnetId: null and other null properties
+	if dashboard["gnetId"] == nil {
+		delete(dashboard, "gnetId")
+	}
+
+	// Clean up templating to match frontend's getTemplatingSaveModel behavior
+	if templating, ok := dashboard["templating"].(map[string]interface{}); ok {
+		removeNullValuesRecursively(templating)
+
+		// Apply variable adapter logic (matches frontend variable adapters)
+		if list, ok := templating["list"].([]interface{}); ok {
+			for _, variableInterface := range list {
+				if variable, ok := variableInterface.(map[string]interface{}); ok {
+					// Remove null datasource
+					if variable["datasource"] == nil {
+						delete(variable, "datasource")
+					}
+
+					// Apply variable type-specific logic
+					if variableType, ok := variable["type"].(string); ok {
+						switch variableType {
+						case "query":
+							// Query variables: keep options: [] if refresh !== never
+							// Since refresh is not specified in the input, it defaults to not "never"
+							if _, hasOptions := variable["options"]; !hasOptions {
+								variable["options"] = []interface{}{}
+							}
+						case "constant":
+							// Constant variables: remove options completely
+							delete(variable, "options")
+						case "datasource":
+							// Datasource variables: always set options to empty array
+							variable["options"] = []interface{}{}
+						}
+					}
+				}
+			}
+		}
+	}
+
+	// Clean up panels - ensure panels property always exists (like frontend)
 	if panels, ok := dashboard["panels"].([]interface{}); ok {
 		for _, panelInterface := range panels {
 			if panel, ok := panelInterface.(map[string]interface{}); ok {
@@ -565,6 +677,92 @@ func cleanupDashboardForSave(dashboard map[string]interface{}) {
 						}
 					}
 				}
+			}
+		}
+	} else {
+		// Ensure panels property exists even if empty (matches frontend behavior)
+		dashboard["panels"] = []interface{}{}
+	}
+}
+
+// applyPanelAutoMigration applies the same auto-migration logic as the frontend PanelModel constructor
+// This matches the behavior of getPanelPluginToMigrateTo() and the auto-migration logic
+func applyPanelAutoMigration(panel map[string]interface{}) {
+	panelType, ok := panel["type"].(string)
+	if !ok {
+		return
+	}
+
+	var newType string
+
+	// Graph needs special logic as it can be migrated to multiple panels
+	if panelType == "graph" {
+		// Check xaxis mode for special cases
+		if xaxis, ok := panel["xaxis"].(map[string]interface{}); ok {
+			if mode, ok := xaxis["mode"].(string); ok {
+				if mode == "series" {
+					// Check legend values for bargauge
+					if legend, ok := panel["legend"].(map[string]interface{}); ok {
+						if values, ok := legend["values"].(bool); ok && values {
+							newType = "bargauge"
+						} else {
+							newType = "barchart"
+						}
+					} else {
+						newType = "barchart"
+					}
+				} else if mode == "histogram" {
+					newType = "histogram"
+				}
+			}
+		}
+
+		// Default graph migration to timeseries
+		if newType == "" {
+			newType = "timeseries"
+		}
+	} else {
+		// Check autoMigrateAngular mapping
+		autoMigrateAngular := map[string]string{
+			"table-old":                "table",
+			"singlestat":               "stat",
+			"grafana-singlestat-panel": "stat",
+			"grafana-piechart-panel":   "piechart",
+			"grafana-worldmap-panel":   "geomap",
+			"natel-discrete-panel":     "state-timeline",
+		}
+
+		if mappedType, exists := autoMigrateAngular[panelType]; exists {
+			newType = mappedType
+		}
+	}
+
+	// Apply auto-migration if a new type was determined
+	if newType != "" {
+		panel["autoMigrateFrom"] = panelType
+		panel["type"] = newType
+	}
+}
+
+// removeNullValuesRecursively removes null values from nested objects and arrays
+// This matches the frontend's JSON.stringify/parse behavior
+func removeNullValuesRecursively(data interface{}) {
+	switch v := data.(type) {
+	case map[string]interface{}:
+		// Remove null values from map
+		for key, value := range v {
+			if value == nil {
+				delete(v, key)
+			} else {
+				// Recursively process nested values
+				removeNullValuesRecursively(value)
+			}
+		}
+	case []interface{}:
+		// Process array elements
+		for _, item := range v {
+			if item != nil {
+				removeNullValuesRecursively(item)
 			}
 		}
 	}

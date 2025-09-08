@@ -17,7 +17,6 @@
   },
   "editable": true,
   "fiscalYearStartMonth": 0,
-  "gnetId": null,
   "graphTooltip": 0,
   "links": [],
   "panels": [
@@ -70,14 +69,14 @@
         "datasource": "prometheus",
         "name": "timerange_refresh_with_options",
         "options": [],
-        "refresh": 1,
+        "refresh": 2,
         "type": "query"
       },
       {
         "datasource": "prometheus",
         "name": "timerange_refresh_without_options",
         "options": [],
-        "refresh": 1,
+        "refresh": 2,
         "type": "query"
       },
       {
@@ -130,12 +129,7 @@
       },
       {
         "name": "datasource_variable",
-        "options": [
-          {
-            "text": "ds",
-            "value": "ds"
-          }
-        ],
+        "options": [],
         "type": "datasource"
       },
       {

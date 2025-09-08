@@ -24,7 +24,6 @@
   },
   "editable": true,
   "fiscalYearStartMonth": 0,
-  "gnetId": null,
   "graphTooltip": 0,
   "links": [],
   "panels": [
@@ -65,6 +64,7 @@
       "type": "timeseries"
     },
     {
+      "autoMigrateFrom": "graph",
       "datasource": {
         "apiVersion": "v1",
         "type": "prometheus",
@@ -82,11 +82,9 @@
         }
       ],
       "title": "Graph panel remains unchanged",
-      "type": "graph",
+      "type": "timeseries",
       "yAxes": [
         {
-          "max": null,
-          "min": null,
           "show": true
         }
       ]
@@ -101,7 +99,6 @@
       "id": 3,
       "panels": [
         {
-          "datasource": null,
           "fieldConfig": {
             "defaults": {
               "unit": "bytes"
@@ -132,9 +129,7 @@
   "templating": {
     "list": [
       {
-        "datasource": {
-          "uid": "prometheus"
-        },
+        "datasource": "prometheus",
         "name": "environment",
         "options": [],
         "type": "query"

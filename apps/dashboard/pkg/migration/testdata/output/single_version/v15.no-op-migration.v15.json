@@ -22,26 +22,25 @@
   },
   "editable": true,
   "fiscalYearStartMonth": 0,
-  "gnetId": null,
   "graphTooltip": 0,
   "links": [],
   "panels": [
     {
+      "autoMigrateFrom": "graph",
       "id": 1,
       "title": "CPU Usage",
-      "type": "graph",
+      "type": "timeseries",
       "yAxes": [
         {
-          "max": null,
-          "min": null,
           "show": true
         }
       ]
     },
     {
+      "autoMigrateFrom": "singlestat",
       "id": 2,
       "title": "Memory Usage",
-      "type": "singlestat",
+      "type": "stat",
       "valueMaps": [
         {
           "op": "=",

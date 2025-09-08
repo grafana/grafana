@@ -17,7 +17,6 @@
   },
   "editable": true,
   "fiscalYearStartMonth": 0,
-  "gnetId": null,
   "graphTooltip": 0,
   "links": [],
   "panels": [
@@ -91,6 +90,7 @@
       "type": "gauge"
     },
     {
+      "autoMigrateFrom": "graph",
       "id": 5,
       "options": {
         "legend": {
@@ -98,7 +98,7 @@
         }
       },
       "title": "Non-Gauge Panel",
-      "type": "graph"
+      "type": "timeseries"
     }
   ],
   "schemaVersion": 18,

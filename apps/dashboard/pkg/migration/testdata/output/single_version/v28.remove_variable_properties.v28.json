@@ -17,7 +17,6 @@
   },
   "editable": true,
   "fiscalYearStartMonth": 0,
-  "gnetId": null,
   "graphTooltip": 0,
   "links": [],
   "panels": [],
@@ -28,6 +27,7 @@
       {
         "datasource": "prometheus",
         "name": "query_variable_with_tags",
+        "options": [],
         "query": "label_values(up, instance)",
         "refresh": 1,
         "type": "query"

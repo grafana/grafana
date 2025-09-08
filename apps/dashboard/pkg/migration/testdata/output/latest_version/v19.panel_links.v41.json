@@ -17,11 +17,11 @@
   },
   "editable": true,
   "fiscalYearStartMonth": 0,
-  "gnetId": null,
   "graphTooltip": 0,
   "links": [],
   "panels": [
     {
+      "autoMigrateFrom": "graph",
       "datasource": {
         "apiVersion": "v1",
         "type": "prometheus",
@@ -46,7 +46,7 @@
         }
       ],
       "title": "Panel with legacy dashboard link",
-      "type": "graph"
+      "type": "timeseries"
     },
     {
       "datasource": {
@@ -164,49 +164,20 @@
       "type": "gauge"
     },
     {
+      "autoMigrateFrom": "singlestat",
       "datasource": {
         "apiVersion": "v1",
         "type": "prometheus",
         "uid": "default-ds-uid"
       },
-      "fieldConfig": {
-        "defaults": {
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              },
-              {
-                "color": "red",
-                "value": 80
-              }
-            ]
-          }
-        },
-        "overrides": []
-      },
       "id": 6,
       "options": {
-        "colorMode": "none",
-        "graphMode": "none",
         "justifyMode": "auto",
-        "orientation": "horizontal",
         "percentChangeColorMode": "standard",
-        "reduceOptions": {
-          "calcs": [
-            "mean"
-          ],
-          "fields": "",
-          "values": false
-        },
         "showPercentChange": false,
         "textMode": "auto",
         "wideLayout": true
       },
-      "pluginVersion": "1.0.0",
       "targets": [
         {
           "datasource": {

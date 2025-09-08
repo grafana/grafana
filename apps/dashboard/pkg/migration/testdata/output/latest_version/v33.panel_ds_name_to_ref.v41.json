@@ -17,7 +17,6 @@
   },
   "editable": true,
   "fiscalYearStartMonth": 0,
-  "gnetId": null,
   "graphTooltip": 0,
   "links": [],
   "panels": [
@@ -106,6 +105,7 @@
       "type": "table"
     },
     {
+      "autoMigrateFrom": "graph",
       "datasource": {
         "apiVersion": "v1",
         "type": "loki",
@@ -150,7 +150,7 @@
         }
       ],
       "title": "Target Datasources: mixed null/string/non-existing scenarios",
-      "type": "graph"
+      "type": "timeseries"
     },
     {
       "datasource": {

@@ -17,14 +17,14 @@
   },
   "editable": true,
   "fiscalYearStartMonth": 0,
-  "gnetId": null,
   "graphTooltip": 0,
   "links": [],
   "panels": [
     {
+      "autoMigrateFrom": "graph",
       "id": 2,
       "title": "Normal Panel",
-      "type": "graph"
+      "type": "timeseries"
     },
     {
       "id": 4,

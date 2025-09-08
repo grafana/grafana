@@ -17,7 +17,6 @@
   },
   "editable": true,
   "fiscalYearStartMonth": 0,
-  "gnetId": null,
   "graphTooltip": 0,
   "links": [],
   "panels": [
@@ -38,6 +37,7 @@
       "type": "timeseries"
     },
     {
+      "autoMigrateFrom": "graph",
       "id": 3,
       "options": {
         "legend": {
@@ -46,7 +46,7 @@
         }
       },
       "title": "Panel with Hidden DisplayMode",
-      "type": "graph"
+      "type": "timeseries"
     },
     {
       "id": 4,
@@ -100,9 +100,7 @@
     },
     {
       "id": 9,
-      "options": {
-        "legend": null
-      },
+      "options": {},
       "title": "Panel with Null Legend",
       "type": "piechart"
     },

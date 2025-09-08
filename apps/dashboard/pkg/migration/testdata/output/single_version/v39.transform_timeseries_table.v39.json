@@ -17,7 +17,6 @@
   },
   "editable": true,
   "fiscalYearStartMonth": 0,
-  "gnetId": null,
   "graphTooltip": 0,
   "links": [],
   "panels": [
@@ -61,6 +60,7 @@
       "type": "table"
     },
     {
+      "autoMigrateFrom": "graph",
       "id": 3,
       "title": "Panel with TimeSeriesTable Transformation - Mixed with Other Transforms",
       "transformations": [
@@ -90,7 +90,7 @@
           }
         }
       ],
-      "type": "graph"
+      "type": "timeseries"
     },
     {
       "id": 4,
@@ -143,9 +143,10 @@
       "type": "table"
     },
     {
+      "autoMigrateFrom": "graph",
       "id": 8,
       "title": "Panel with No Transformations (Should Remain Unchanged)",
-      "type": "graph"
+      "type": "timeseries"
     },
     {
       "collapsed": false,

@@ -22,7 +22,6 @@
   },
   "editable": true,
   "fiscalYearStartMonth": 0,
-  "gnetId": null,
   "graphTooltip": 0,
   "links": [],
   "panels": [
@@ -32,13 +31,12 @@
       "type": "timeseries"
     },
     {
+      "autoMigrateFrom": "graph",
       "id": 2,
       "title": "Graph",
-      "type": "graph",
+      "type": "timeseries",
       "yAxes": [
         {
-          "max": null,
-          "min": null,
           "show": true
         }
       ]

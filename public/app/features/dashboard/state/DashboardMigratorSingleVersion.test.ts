@@ -19,6 +19,7 @@ import {
   extractTargetVersionFromFilename,
   constructBackendOutputFilename,
   handleAngularPanelMigration,
+  TEST_MIN_VERSION,
 } from './__tests__/migrationTestUtils';
 
 /*
@@ -67,7 +68,7 @@ describe('Backend / Frontend single version migration result comparison', () => 
 
   jsonInputs
     // TODO: remove this filter when we fixed all inconsistencies
-    .filter((inputFile) => parseInt(inputFile.split('.')[0].replace('v', ''), 10) > 29)
+    .filter((inputFile) => parseInt(inputFile.split('.')[0].replace('v', ''), 10) > TEST_MIN_VERSION)
     .forEach((inputFile) => {
       // Extract target version from filename (e.g., v16.grid_layout_upgrade.json -> target v16)
       const targetVersion = extractTargetVersionFromFilename(inputFile);

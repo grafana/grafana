@@ -17,34 +17,16 @@
   },
   "editable": true,
   "fiscalYearStartMonth": 0,
-  "gnetId": null,
   "graphTooltip": 0,
   "links": [],
   "panels": [
     {
-      "fieldConfig": {
-        "defaults": {
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "#FF0000",
-                "value": null
-              },
-              {
-                "color": "green",
-                "value": 10
-              },
-              {
-                "color": "orange",
-                "value": 20
-              }
-            ]
-          }
-        },
-        "overrides": []
-      },
+      "autoMigrateFrom": "singlestat",
+      "colors": [
+        "#FF0000",
+        "green",
+        "orange"
+      ],
       "grid": {
         "max": 10,
         "min": 1
@@ -52,23 +34,12 @@
       "id": 1,
       "legend": true,
       "options": {
-        "colorMode": "none",
-        "graphMode": "none",
         "justifyMode": "auto",
-        "orientation": "horizontal",
         "percentChangeColorMode": "standard",
-        "reduceOptions": {
-          "calcs": [
-            "mean"
-          ],
-          "fields": "",
-          "values": false
-        },
         "showPercentChange": false,
         "textMode": "auto",
         "wideLayout": true
       },
-      "pluginVersion": "1.0.0",
       "targets": [
         {
           "refId": "A"
@@ -77,28 +48,16 @@
           "refId": "A"
         }
       ],
+      "thresholds": "10,20,30",
       "type": "stat"
     },
     {
-      "fieldConfig": {
-        "defaults": {
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              },
-              {
-                "color": "red",
-                "value": 80
-              }
-            ]
-          }
-        },
-        "overrides": []
-      },
+      "autoMigrateFrom": "singlestat",
+      "colors": [
+        "#FF0000",
+        "green",
+        "orange"
+      ],
       "grid": {
         "max": 10,
         "min": 1
@@ -106,23 +65,12 @@
       "id": 2,
       "legend": true,
       "options": {
-        "colorMode": "none",
-        "graphMode": "none",
         "justifyMode": "auto",
-        "orientation": "horizontal",
         "percentChangeColorMode": "standard",
-        "reduceOptions": {
-          "calcs": [
-            "mean"
-          ],
-          "fields": "",
-          "values": false
-        },
         "showPercentChange": false,
         "textMode": "auto",
         "wideLayout": true
       },
-      "pluginVersion": "1.0.0",
       "targets": [
         {
           "refId": "A"
@@ -131,33 +79,20 @@
           "refId": "A"
         }
       ],
+      "thresholds": "",
       "type": "stat"
     },
     {
-      "fieldConfig": {
-        "defaults": {
-          "mappings": [],
-          "max": null,
-          "min": null,
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "#FF0000",
-                "value": null
-              },
-              {
-                "color": "green",
-                "value": 10
-              },
-              {
-                "color": "orange",
-                "value": 20
-              }
-            ]
-          }
-        },
-        "overrides": []
+      "autoMigrateFrom": "singlestat",
+      "colors": [
+        "#FF0000",
+        "green",
+        "orange"
+      ],
+      "gauge": {
+        "show": true,
+        "thresholdLabels": false,
+        "thresholdMarkers": true
       },
       "grid": {
         "max": 10,
@@ -165,77 +100,22 @@
       },
       "id": 3,
       "options": {
-        "colorMode": "none",
-        "graphMode": "none",
         "justifyMode": "auto",
-        "orientation": "horizontal",
         "percentChangeColorMode": "standard",
-        "reduceOptions": {
-          "calcs": [
-            "mean"
-          ],
-          "fields": "",
-          "values": false
-        },
         "showPercentChange": false,
         "textMode": "auto",
         "wideLayout": true
       },
-      "pluginVersion": "1.0.0",
+      "thresholds": "10,20,30",
       "type": "stat"
     },
     {
-      "fieldConfig": {
-        "defaults": {
-          "mappings": [
-            {
-              "options": {
-                "20": {
-                  "color": "orange",
-                  "text": "test"
-                }
-              },
-              "type": "value"
-            },
-            {
-              "options": {
-                "30": {
-                  "color": "orange",
-                  "text": "test1"
-                }
-              },
-              "type": "value"
-            },
-            {
-              "options": {
-                "40": {
-                  "color": "orange",
-                  "text": "50"
-                }
-              },
-              "type": "value"
-            }
-          ],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "#FF0000",
-                "value": null
-              },
-              {
-                "color": "green",
-                "value": 10
-              },
-              {
-                "color": "orange",
-                "value": 20
-              }
-            ]
-          }
-        },
-        "overrides": []
-      },
+      "autoMigrateFrom": "singlestat",
+      "colors": [
+        "#FF0000",
+        "green",
+        "orange"
+      ],
       "grid": {
         "max": 10,
         "min": 1
@@ -249,23 +129,12 @@
         }
       ],
       "options": {
-        "colorMode": "none",
-        "graphMode": "none",
         "justifyMode": "auto",
-        "orientation": "horizontal",
         "percentChangeColorMode": "standard",
-        "reduceOptions": {
-          "calcs": [
-            "mean"
-          ],
-          "fields": "",
-          "values": false
-        },
         "showPercentChange": false,
         "textMode": "auto",
         "wideLayout": true
       },
-      "pluginVersion": "1.0.0",
       "targets": [
         {
           "refId": "A"
@@ -274,36 +143,45 @@
           "refId": "A"
         }
       ],
-      "type": "stat"
+      "thresholds": "10,20,30",
+      "type": "stat",
+      "valueMaps": [
+        {
+          "op": "=",
+          "text": "test",
+          "value": "20"
+        },
+        {
+          "op": "=",
+          "text": "test1",
+          "value": "30"
+        },
+        {
+          "op": "=",
+          "text": "50",
+          "value": "40"
+        }
+      ]
     },
     {
+      "autoMigrateFrom": "grafana-singlestat-panel",
+      "colorBackground": false,
+      "colorValue": true,
+      "colors": [
+        "#299c46",
+        "rgba(237, 129, 40, 0.89)",
+        "#d44a3a"
+      ],
       "datasource": {
         "type": "prometheus"
       },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "fixedColor": "rgb(31, 120, 193)",
-            "mode": "fixed"
-          },
-          "mappings": [],
-          "nullValueMode": "connected",
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              },
-              {
-                "color": "red",
-                "value": 80
-              }
-            ]
-          },
-          "unit": "areaF2"
-        },
-        "overrides": []
+      "format": "areaF2",
+      "gauge": {
+        "maxValue": 100,
+        "minValue": 0,
+        "show": false,
+        "thresholdLabels": false,
+        "thresholdMarkers": true
       },
       "gridPos": {
         "h": 8,
@@ -324,24 +202,14 @@
         }
       ],
       "maxDataPoints": 100,
+      "nullPointMode": "connected",
       "options": {
-        "colorMode": "value",
-        "graphMode": "area",
         "justifyMode": "auto",
-        "orientation": "auto",
         "percentChangeColorMode": "standard",
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": "",
-          "values": false
-        },
         "showPercentChange": false,
         "textMode": "auto",
         "wideLayout": true
       },
-      "pluginVersion": "1.0.0",
       "postfix": "b",
       "postfixFontSize": "50%",
       "prefix": "a",
@@ -353,6 +221,13 @@
           "to": "null"
         }
       ],
+      "sparkline": {
+        "fillColor": "rgba(31, 118, 189, 0.18)",
+        "full": false,
+        "lineColor": "rgb(31, 120, 193)",
+        "show": true
+      },
+      "tableColumn": "",
       "targets": [
         {
           "datasource": {
@@ -362,9 +237,18 @@
           "refId": "A"
         }
       ],
+      "thresholds": "",
       "title": "grafana-singlestat-panel",
       "type": "stat",
-      "valueFontSize": "80%"
+      "valueFontSize": "80%",
+      "valueMaps": [
+        {
+          "op": "=",
+          "text": "N/A",
+          "value": "null"
+        }
+      ],
+      "valueName": "avg"
     },
     {
       "datasource": {
@@ -387,8 +271,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
-                "value": null
+                "color": "green"
               },
               {
                 "color": "red",

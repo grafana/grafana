@@ -17,7 +17,6 @@
   },
   "editable": true,
   "fiscalYearStartMonth": 0,
-  "gnetId": null,
   "graphTooltip": 0,
   "links": [],
   "panels": [
@@ -40,8 +39,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "red",
-                "value": null
+                "color": "red"
               },
               {
                 "color": "yellow",
@@ -106,8 +104,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
-                "value": null
+                "color": "green"
               },
               {
                 "color": "yellow",
@@ -541,8 +538,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
-                "value": null
+                "color": "green"
               },
               {
                 "color": "yellow",
@@ -1078,16 +1074,18 @@
       "type": "table"
     },
     {
+      "autoMigrateFrom": "graph",
       "description": "Non-table panels should remain completely unchanged.",
       "id": 16,
       "title": "Non-Table Panel - Should NOT Migrate",
-      "type": "graph"
+      "type": "timeseries"
     },
     {
+      "autoMigrateFrom": "singlestat",
       "description": "Other panel types should not be affected by table migration.",
       "id": 17,
       "title": "Singlestat Panel - Should NOT Migrate",
-      "type": "singlestat"
+      "type": "stat"
     }
   ],
   "schemaVersion": 24,

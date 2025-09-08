@@ -55,7 +55,6 @@
   },
   "editable": true,
   "fiscalYearStartMonth": 0,
-  "gnetId": null,
   "graphTooltip": 0,
   "links": [],
   "panels": [
@@ -350,6 +349,7 @@
           "uid": "default-ds-uid"
         },
         "name": "query_var_null",
+        "options": [],
         "type": "query"
       },
       {
@@ -359,6 +359,7 @@
           "uid": "existing-target-uid"
         },
         "name": "query_var_named",
+        "options": [],
         "type": "query"
       },
       {
@@ -368,6 +369,7 @@
           "uid": "existing-target-uid"
         },
         "name": "query_var_uid",
+        "options": [],
         "type": "query"
       },
       {
@@ -375,10 +377,10 @@
           "uid": "unknown-datasource"
         },
         "name": "query_var_unknown",
+        "options": [],
         "type": "query"
       },
       {
-        "datasource": null,
         "name": "non_query_var",
         "type": "constant"
       }

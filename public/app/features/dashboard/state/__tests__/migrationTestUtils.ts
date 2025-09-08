@@ -211,3 +211,5 @@ export function cleanDashboardModel(dashboard: DashboardModel) {
 export function shouldSkipAngularMigration(schemaVersion: number): boolean {
   return schemaVersion <= 27;
 }
+
+export const TEST_MIN_VERSION = 28;

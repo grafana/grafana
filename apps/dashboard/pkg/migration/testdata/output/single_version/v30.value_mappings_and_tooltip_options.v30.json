@@ -17,7 +17,6 @@
   },
   "editable": true,
   "fiscalYearStartMonth": 0,
-  "gnetId": null,
   "graphTooltip": 0,
   "links": [],
   "panels": [
@@ -60,8 +59,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
-                "value": null
+                "color": "green"
               },
               {
                 "color": "red",
@@ -125,6 +123,7 @@
       "type": "xychart2"
     },
     {
+      "autoMigrateFrom": "graph",
       "id": 4,
       "options": {
         "tooltip": {
@@ -132,7 +131,7 @@
         }
       },
       "title": "Graph panel gets migrated to timeseries and tooltip",
-      "type": "graph"
+      "type": "timeseries"
     },
     {
       "fieldConfig": {
@@ -167,7 +166,8 @@
               "type": "range"
             }
           ]
-        }
+        },
+        "overrides": []
       },
       "id": 5,
       "title": "Panel with complex value mappings",
@@ -212,7 +212,8 @@
       "fieldConfig": {
         "defaults": {
           "unit": "bytes"
-        }
+        },
+        "overrides": []
       },
       "id": 8,
       "options": {

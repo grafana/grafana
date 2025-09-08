@@ -17,11 +17,11 @@
   },
   "editable": true,
   "fiscalYearStartMonth": 0,
-  "gnetId": null,
   "graphTooltip": 0,
   "links": [],
   "panels": [
     {
+      "autoMigrateFrom": "graph",
       "datasource": {
         "apiVersion": "v1",
         "type": "prometheus",
@@ -46,32 +46,14 @@
         }
       ],
       "title": "Panel with minSpan 8",
-      "type": "graph"
+      "type": "timeseries"
     },
     {
+      "autoMigrateFrom": "singlestat",
       "datasource": {
         "apiVersion": "v1",
         "type": "prometheus",
         "uid": "default-ds-uid"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              },
-              {
-                "color": "red",
-                "value": 80
-              }
-            ]
-          }
-        },
-        "overrides": []
       },
       "gridPos": {
         "h": 4,
@@ -82,23 +64,12 @@
       "id": 2,
       "maxPerRow": 6,
       "options": {
-        "colorMode": "none",
-        "graphMode": "none",
         "justifyMode": "auto",
-        "orientation": "horizontal",
         "percentChangeColorMode": "standard",
-        "reduceOptions": {
-          "calcs": [
-            "mean"
-          ],
-          "fields": "",
-          "values": false
-        },
         "showPercentChange": false,
         "textMode": "auto",
         "wideLayout": true
       },
-      "pluginVersion": "1.0.0",
       "targets": [
         {
           "datasource": {
@@ -140,6 +111,7 @@
       "type": "table"
     },
     {
+      "autoMigrateFrom": "graph",
       "datasource": {
         "apiVersion": "v1",
         "type": "prometheus",
@@ -164,7 +136,7 @@
         }
       ],
       "title": "Panel with minSpan 12",
-      "type": "graph"
+      "type": "timeseries"
     },
     {
       "datasource": {
@@ -228,6 +200,7 @@
       "type": "stat"
     },
     {
+      "autoMigrateFrom": "graph",
       "datasource": {
         "apiVersion": "v1",
         "type": "prometheus",
@@ -251,7 +224,7 @@
         }
       ],
       "title": "Panel without minSpan",
-      "type": "graph"
+      "type": "timeseries"
     },
     {
       "datasource": {
@@ -280,6 +253,7 @@
       "type": "text"
     },
     {
+      "autoMigrateFrom": "graph",
       "datasource": {
         "apiVersion": "v1",
         "type": "prometheus",
@@ -303,9 +277,10 @@
         }
       ],
       "title": "Panel with zero minSpan",
-      "type": "graph"
+      "type": "timeseries"
     },
     {
+      "autoMigrateFrom": "graph",
       "datasource": {
         "apiVersion": "v1",
         "type": "prometheus",
@@ -329,7 +304,7 @@
         }
       ],
       "title": "Panel with negative minSpan",
-      "type": "graph"
+      "type": "timeseries"
     }
   ],
   "refresh": "",

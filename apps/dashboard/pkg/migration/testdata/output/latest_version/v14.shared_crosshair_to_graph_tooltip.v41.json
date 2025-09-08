@@ -17,11 +17,11 @@
   },
   "editable": true,
   "fiscalYearStartMonth": 0,
-  "gnetId": null,
   "graphTooltip": 1,
   "links": [],
   "panels": [
     {
+      "autoMigrateFrom": "graph",
       "datasource": {
         "apiVersion": "v1",
         "type": "prometheus",
@@ -40,16 +40,15 @@
         }
       ],
       "title": "CPU Usage Over Time",
-      "type": "graph",
+      "type": "timeseries",
       "yAxes": [
         {
-          "max": null,
-          "min": null,
           "show": true
         }
       ]
     },
     {
+      "autoMigrateFrom": "graph",
       "datasource": {
         "apiVersion": "v1",
         "type": "prometheus",
@@ -68,7 +67,7 @@
         }
       ],
       "title": "Memory Usage",
-      "type": "graph",
+      "type": "timeseries",
       "yAxes": [
         {
           "max": 100,
@@ -84,9 +83,7 @@
   "templating": {
     "list": [
       {
-        "datasource": {
-          "uid": "prometheus"
-        },
+        "datasource": "prometheus",
         "name": "server",
         "options": [],
         "query": "label_values(server)",

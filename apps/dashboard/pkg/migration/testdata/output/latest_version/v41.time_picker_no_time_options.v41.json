@@ -17,9 +17,9 @@
   },
   "editable": true,
   "fiscalYearStartMonth": 0,
-  "gnetId": null,
   "graphTooltip": 0,
   "links": [],
+  "panels": [],
   "schemaVersion": 41,
   "tags": [],
   "templating": {

@@ -17,11 +17,11 @@
   },
   "editable": true,
   "fiscalYearStartMonth": 0,
-  "gnetId": null,
   "graphTooltip": 0,
   "links": [],
   "panels": [
     {
+      "autoMigrateFrom": "graph",
       "datasource": {
         "apiVersion": "v1",
         "type": "prometheus",
@@ -39,7 +39,7 @@
         }
       ],
       "title": "Normal Panel",
-      "type": "graph"
+      "type": "timeseries"
     },
     {
       "datasource": {
@@ -50,7 +50,6 @@
       "id": 4,
       "panels": [
         {
-          "datasource": null,
           "id": 6,
           "title": "Normal nested panel",
           "type": "graph"

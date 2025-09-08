@@ -17,7 +17,6 @@
   },
   "editable": true,
   "fiscalYearStartMonth": 0,
-  "gnetId": null,
   "graphTooltip": 0,
   "links": [],
   "panels": [
@@ -60,8 +59,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
-                "value": null
+                "color": "green"
               },
               {
                 "color": "red",
@@ -154,7 +152,6 @@
       "id": 14,
       "panels": [
         {
-          "datasource": null,
           "gridPos": {
             "h": 8,
             "w": 24,
@@ -166,7 +163,6 @@
           "type": "table"
         },
         {
-          "datasource": null,
           "gridPos": {
             "h": 6,
             "w": 12,
@@ -179,7 +175,6 @@
           "type": "graph"
         },
         {
-          "datasource": null,
           "gridPos": {
             "h": 6,
             "w": 12,

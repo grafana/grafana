@@ -17,7 +17,6 @@
   },
   "editable": true,
   "fiscalYearStartMonth": 0,
-  "gnetId": null,
   "graphTooltip": 0,
   "links": [],
   "panels": [
@@ -50,6 +49,7 @@
         "datasource": "prometheus",
         "multi": true,
         "name": "multi_single_value",
+        "options": [],
         "type": "query"
       },
       {
@@ -67,6 +67,7 @@
         "datasource": "prometheus",
         "multi": true,
         "name": "multi_array_value",
+        "options": [],
         "type": "query"
       },
       {
@@ -78,6 +79,7 @@
         "datasource": "prometheus",
         "multi": false,
         "name": "non_multi_array_value",
+        "options": [],
         "type": "query"
       },
       {
@@ -89,6 +91,7 @@
         "datasource": "prometheus",
         "multi": false,
         "name": "non_multi_single_value",
+        "options": [],
         "type": "query"
       },
       {
@@ -99,6 +102,7 @@
         },
         "datasource": "prometheus",
         "name": "no_multi_property",
+        "options": [],
         "type": "query"
       },
       {
@@ -106,13 +110,14 @@
         "datasource": "prometheus",
         "multi": true,
         "name": "empty_current",
+        "options": [],
         "type": "query"
       },
       {
-        "current": null,
         "datasource": "prometheus",
         "multi": true,
         "name": "nil_current",
+        "options": [],
         "type": "query"
       },
       {
@@ -153,6 +158,7 @@
         },
         "multi": true,
         "name": "datasource_variable",
+        "options": [],
         "type": "datasource"
       },
       {

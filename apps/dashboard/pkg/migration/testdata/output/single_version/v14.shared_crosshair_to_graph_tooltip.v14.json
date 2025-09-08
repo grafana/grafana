@@ -17,11 +17,11 @@
   },
   "editable": true,
   "fiscalYearStartMonth": 0,
-  "gnetId": null,
   "graphTooltip": 1,
   "links": [],
   "panels": [
     {
+      "autoMigrateFrom": "graph",
       "id": 1,
       "targets": [
         {
@@ -30,16 +30,15 @@
         }
       ],
       "title": "CPU Usage Over Time",
-      "type": "graph",
+      "type": "timeseries",
       "yAxes": [
         {
-          "max": null,
-          "min": null,
           "show": true
         }
       ]
     },
     {
+      "autoMigrateFrom": "graph",
       "id": 2,
       "targets": [
         {
@@ -48,7 +47,7 @@
         }
       ],
       "title": "Memory Usage",
-      "type": "graph",
+      "type": "timeseries",
       "yAxes": [
         {
           "max": 100,

@@ -136,12 +136,12 @@ func migrateTemplateVariables(dashboard map[string]interface{}, datasources []Da
 		}
 
 		ds, exists := varMap["datasource"]
-		// Handle null datasource variables by setting to default
+		// Handle null datasource variables by setting to default (matches frontend behavior)
 		if !exists || ds == nil {
 			varMap["datasource"] = GetDataSourceRef(defaultDS)
-		} else {
-			varMap["datasource"] = MigrateDatasourceNameToRef(ds, map[string]bool{"returnDefaultAsNull": false}, datasources)
 		}
+		// Note: Frontend v36 migration only converts null datasources to default objects
+		// It does NOT convert string datasources to objects, so we should not do that either
 	}
 }
 

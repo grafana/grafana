@@ -17,11 +17,11 @@
   },
   "editable": true,
   "fiscalYearStartMonth": 0,
-  "gnetId": null,
   "graphTooltip": 0,
   "links": [],
   "panels": [
     {
+      "autoMigrateFrom": "graph",
       "id": 1,
       "links": [
         {
@@ -31,7 +31,7 @@
         }
       ],
       "title": "Panel with legacy dashboard link",
-      "type": "graph"
+      "type": "timeseries"
     },
     {
       "id": 2,
@@ -82,9 +82,10 @@
       "type": "gauge"
     },
     {
+      "autoMigrateFrom": "singlestat",
       "id": 6,
       "title": "Panel with no links",
-      "type": "singlestat"
+      "type": "stat"
     }
   ],
   "schemaVersion": 19,

@@ -17,7 +17,6 @@
   },
   "editable": true,
   "fiscalYearStartMonth": 0,
-  "gnetId": null,
   "graphTooltip": 0,
   "links": [],
   "panels": [
@@ -197,7 +196,6 @@
       "id": 5,
       "panels": [
         {
-          "datasource": null,
           "id": 6,
           "title": "Nested panel with labelsToFields",
           "transformations": [
@@ -213,7 +211,6 @@
           "type": "timeseries"
         },
         {
-          "datasource": null,
           "id": 7,
           "title": "Nested panel without labelsToFields",
           "transformations": [

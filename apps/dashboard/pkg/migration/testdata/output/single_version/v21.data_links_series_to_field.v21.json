@@ -17,7 +17,6 @@
   },
   "editable": true,
   "fiscalYearStartMonth": 0,
-  "gnetId": null,
   "graphTooltip": 0,
   "links": [],
   "panels": [
@@ -60,6 +59,7 @@
       "type": "stat"
     },
     {
+      "autoMigrateFrom": "graph",
       "id": 3,
       "options": {
         "dataLinks": [
@@ -80,7 +80,7 @@
         }
       },
       "title": "Panel with both link types",
-      "type": "graph"
+      "type": "timeseries"
     },
     {
       "id": 4,

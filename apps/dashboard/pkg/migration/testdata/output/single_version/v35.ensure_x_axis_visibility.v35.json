@@ -17,7 +17,6 @@
   },
   "editable": true,
   "fiscalYearStartMonth": 0,
-  "gnetId": null,
   "graphTooltip": 0,
   "links": [],
   "panels": [
@@ -117,9 +116,6 @@
       "type": "timeseries"
     },
     {
-      "fieldConfig": {
-        "overrides": []
-      },
       "id": 10,
       "title": "Timeseries with Missing Defaults",
       "type": "timeseries"

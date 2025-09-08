@@ -17,11 +17,11 @@
   },
   "editable": true,
   "fiscalYearStartMonth": 0,
-  "gnetId": null,
   "graphTooltip": 0,
   "links": [],
   "panels": [
     {
+      "autoMigrateFrom": "graph",
       "gridPos": {
         "h": 8,
         "w": 12,
@@ -31,9 +31,10 @@
       "id": 1,
       "maxPerRow": 3,
       "title": "Panel with minSpan 8",
-      "type": "graph"
+      "type": "timeseries"
     },
     {
+      "autoMigrateFrom": "singlestat",
       "gridPos": {
         "h": 4,
         "w": 6,
@@ -43,7 +44,7 @@
       "id": 2,
       "maxPerRow": 6,
       "title": "Panel with minSpan 4",
-      "type": "singlestat"
+      "type": "stat"
     },
     {
       "gridPos": {
@@ -58,6 +59,7 @@
       "type": "table"
     },
     {
+      "autoMigrateFrom": "graph",
       "gridPos": {
         "h": 8,
         "w": 12,
@@ -67,7 +69,7 @@
       "id": 4,
       "maxPerRow": 2,
       "title": "Panel with minSpan 12",
-      "type": "graph"
+      "type": "timeseries"
     },
     {
       "gridPos": {
@@ -94,6 +96,7 @@
       "type": "stat"
     },
     {
+      "autoMigrateFrom": "graph",
       "gridPos": {
         "h": 6,
         "w": 8,
@@ -102,7 +105,7 @@
       },
       "id": 7,
       "title": "Panel without minSpan",
-      "type": "graph"
+      "type": "timeseries"
     },
     {
       "gridPos": {
@@ -116,6 +119,7 @@
       "type": "text"
     },
     {
+      "autoMigrateFrom": "graph",
       "gridPos": {
         "h": 4,
         "w": 6,
@@ -124,9 +128,10 @@
       },
       "id": 9,
       "title": "Panel with zero minSpan",
-      "type": "graph"
+      "type": "timeseries"
     },
     {
+      "autoMigrateFrom": "graph",
       "gridPos": {
         "h": 4,
         "w": 6,
@@ -135,7 +140,7 @@
       },
       "id": 10,
       "title": "Panel with negative minSpan",
-      "type": "graph"
+      "type": "timeseries"
     }
   ],
   "schemaVersion": 17,

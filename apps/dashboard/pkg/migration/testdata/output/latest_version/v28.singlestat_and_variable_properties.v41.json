@@ -17,38 +17,20 @@
   },
   "editable": true,
   "fiscalYearStartMonth": 0,
-  "gnetId": null,
   "graphTooltip": 0,
   "links": [],
   "panels": [
     {
+      "autoMigrateFrom": "singlestat",
+      "colors": [
+        "#FF0000",
+        "green",
+        "orange"
+      ],
       "datasource": {
         "apiVersion": "v1",
         "type": "prometheus",
         "uid": "default-ds-uid"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "#FF0000",
-                "value": null
-              },
-              {
-                "color": "green",
-                "value": 10
-              },
-              {
-                "color": "orange",
-                "value": 20
-              }
-            ]
-          }
-        },
-        "overrides": []
       },
       "grid": {
         "max": 10,
@@ -57,23 +39,12 @@
       "id": 1,
       "legend": true,
       "options": {
-        "colorMode": "none",
-        "graphMode": "none",
         "justifyMode": "auto",
-        "orientation": "horizontal",
         "percentChangeColorMode": "standard",
-        "reduceOptions": {
-          "calcs": [
-            "mean"
-          ],
-          "fields": "",
-          "values": false
-        },
         "showPercentChange": false,
         "textMode": "auto",
         "wideLayout": true
       },
-      "pluginVersion": "1.0.0",
       "targets": [
         {
           "datasource": {
@@ -92,38 +63,25 @@
           "refId": "A"
         }
       ],
+      "thresholds": "10,20,30",
       "type": "stat"
     },
     {
+      "autoMigrateFrom": "singlestat",
+      "colors": [
+        "#FF0000",
+        "green",
+        "orange"
+      ],
       "datasource": {
         "apiVersion": "v1",
         "type": "prometheus",
         "uid": "default-ds-uid"
       },
-      "fieldConfig": {
-        "defaults": {
-          "mappings": [],
-          "max": null,
-          "min": null,
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "#FF0000",
-                "value": null
-              },
-              {
-                "color": "green",
-                "value": 10
-              },
-              {
-                "color": "orange",
-                "value": 20
-              }
-            ]
-          }
-        },
-        "overrides": []
+      "gauge": {
+        "show": true,
+        "thresholdLabels": false,
+        "thresholdMarkers": true
       },
       "grid": {
         "max": 10,
@@ -131,23 +89,12 @@
       },
       "id": 2,
       "options": {
-        "colorMode": "none",
-        "graphMode": "none",
         "justifyMode": "auto",
-        "orientation": "horizontal",
         "percentChangeColorMode": "standard",
-        "reduceOptions": {
-          "calcs": [
-            "mean"
-          ],
-          "fields": "",
-          "values": false
-        },
         "showPercentChange": false,
         "textMode": "auto",
         "wideLayout": true
       },
-      "pluginVersion": "1.0.0",
       "targets": [
         {
           "datasource": {
@@ -158,64 +105,20 @@
           "refId": "A"
         }
       ],
+      "thresholds": "10,20,30",
       "type": "stat"
     },
     {
+      "autoMigrateFrom": "singlestat",
+      "colors": [
+        "#FF0000",
+        "green",
+        "orange"
+      ],
       "datasource": {
         "apiVersion": "v1",
         "type": "prometheus",
         "uid": "default-ds-uid"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "mappings": [
-            {
-              "options": {
-                "20": {
-                  "color": "orange",
-                  "text": "test"
-                }
-              },
-              "type": "value"
-            },
-            {
-              "options": {
-                "30": {
-                  "color": "orange",
-                  "text": "test1"
-                }
-              },
-              "type": "value"
-            },
-            {
-              "options": {
-                "40": {
-                  "color": "orange",
-                  "text": "50"
-                }
-              },
-              "type": "value"
-            }
-          ],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "#FF0000",
-                "value": null
-              },
-              {
-                "color": "green",
-                "value": 10
-              },
-              {
-                "color": "orange",
-                "value": 20
-              }
-            ]
-          }
-        },
-        "overrides": []
       },
       "grid": {
         "max": 10,
@@ -230,23 +133,12 @@
         }
       ],
       "options": {
-        "colorMode": "none",
-        "graphMode": "none",
         "justifyMode": "auto",
-        "orientation": "horizontal",
         "percentChangeColorMode": "standard",
-        "reduceOptions": {
-          "calcs": [
-            "mean"
-          ],
-          "fields": "",
-          "values": false
-        },
         "showPercentChange": false,
         "textMode": "auto",
         "wideLayout": true
       },
-      "pluginVersion": "1.0.0",
       "targets": [
         {
           "datasource": {
@@ -265,7 +157,25 @@
           "refId": "A"
         }
       ],
-      "type": "stat"
+      "thresholds": "10,20,30",
+      "type": "stat",
+      "valueMaps": [
+        {
+          "op": "=",
+          "text": "test",
+          "value": "20"
+        },
+        {
+          "op": "=",
+          "text": "test1",
+          "value": "30"
+        },
+        {
+          "op": "=",
+          "text": "50",
+          "value": "40"
+        }
+      ]
     },
     {
       "datasource": {
@@ -294,10 +204,9 @@
   "templating": {
     "list": [
       {
-        "datasource": {
-          "uid": "prometheus"
-        },
+        "datasource": "prometheus",
         "name": "query_variable_with_tags",
+        "options": [],
         "query": "label_values(up, instance)",
         "refresh": 1,
         "type": "query"

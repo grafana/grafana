@@ -17,7 +17,6 @@
   },
   "editable": true,
   "fiscalYearStartMonth": 0,
-  "gnetId": null,
   "graphTooltip": 0,
   "links": [],
   "panels": [
@@ -45,90 +44,70 @@
   "templating": {
     "list": [
       {
-        "datasource": {
-          "uid": "prometheus"
-        },
+        "datasource": "prometheus",
         "name": "never_refresh_with_options",
         "options": [],
         "refresh": 1,
         "type": "query"
       },
       {
-        "datasource": {
-          "uid": "prometheus"
-        },
+        "datasource": "prometheus",
         "name": "never_refresh_without_options",
         "options": [],
         "refresh": 1,
         "type": "query"
       },
       {
-        "datasource": {
-          "uid": "prometheus"
-        },
+        "datasource": "prometheus",
         "name": "dashboard_refresh_with_options",
         "options": [],
         "refresh": 1,
         "type": "query"
       },
       {
-        "datasource": {
-          "uid": "prometheus"
-        },
+        "datasource": "prometheus",
         "name": "dashboard_refresh_without_options",
         "options": [],
         "refresh": 1,
         "type": "query"
       },
       {
-        "datasource": {
-          "uid": "prometheus"
-        },
+        "datasource": "prometheus",
         "name": "timerange_refresh_with_options",
         "options": [],
-        "refresh": 1,
+        "refresh": 2,
         "type": "query"
       },
       {
-        "datasource": {
-          "uid": "prometheus"
-        },
+        "datasource": "prometheus",
         "name": "timerange_refresh_without_options",
         "options": [],
-        "refresh": 1,
+        "refresh": 2,
         "type": "query"
       },
       {
-        "datasource": {
-          "uid": "prometheus"
-        },
+        "datasource": "prometheus",
         "name": "no_refresh_with_options",
         "options": [],
         "refresh": 1,
         "type": "query"
       },
       {
-        "datasource": {
-          "uid": "prometheus"
-        },
+        "datasource": "prometheus",
         "name": "no_refresh_without_options",
         "options": [],
         "refresh": 1,
         "type": "query"
       },
       {
-        "datasource": {
-          "uid": "prometheus"
-        },
+        "datasource": "prometheus",
         "name": "unknown_refresh_with_options",
         "options": [],
         "refresh": 1,
         "type": "query"
       },
       {
-        "datasource": {
-          "uid": "prometheus"
-        },
+        "datasource": "prometheus",
         "name": "unknown_refresh_without_options",
         "options": [],
         "refresh": 1,
@@ -156,12 +135,7 @@
       },
       {
         "name": "datasource_variable",
-        "options": [
-          {
-            "text": "ds",
-            "value": "ds"
-          }
-        ],
+        "options": [],
         "type": "datasource"
       },
       {
