@@ -218,6 +218,25 @@ func (s *Service) handleMetricsExpand(ctx context.Context, dsInfo *datasourceInf
 	return metricsExpandResponse, statusCode, nil
 }
 
+func (s *Service) handleFunctions(ctx context.Context, dsInfo *datasourceInfo) ([]byte, int, error) {
+	functionsUrl, err := url.Parse(fmt.Sprintf("%s/functions", dsInfo.URL))
+	if err != nil {
+		return nil, http.StatusInternalServerError, fmt.Errorf("unexpected error %v", err)
+	}
+
+	_, rawBody, statusCode, err := doGraphiteRequest[map[string]any](ctx, "functions", dsInfo, functionsUrl, http.MethodGet, nil, map[string]string{}, s.logger, true)
+	if err != nil {
+		return nil, statusCode, fmt.Errorf("version request failed: %v", err)
+	}
+
+	if rawBody == nil {
+		return []byte{}, statusCode, nil
+	}
+
+	rawBodyReplaced := bytes.Replace(*rawBody, []byte("\"default\": Infinity"), []byte("\"default\": 1e9999"), -1)
+	return rawBodyReplaced, statusCode, nil
+}
+
 func doGraphiteRequest[T any](ctx context.Context, endpoint string, dsInfo *datasourceInfo, url *url.URL, method string, body io.Reader, headers map[string]string, logger log.Logger, rawResponse bool) (*T, *[]byte, int, error) {
 	graphiteReq, err := http.NewRequestWithContext(ctx, method, url.String(), body)
 	if err != nil {

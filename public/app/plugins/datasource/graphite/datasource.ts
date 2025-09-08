@@ -947,7 +947,7 @@ export class GraphiteDatasource
     return this.getFuncDefs();
   }
 
-  getFuncDefs() {
+  async getFuncDefs() {
     if (this.funcDefsPromise !== null) {
       return this.funcDefsPromise;
     }
@@ -965,6 +965,12 @@ export class GraphiteDatasource
       // backend_srv defaults to json
       responseType: 'text' as const,
     };
+
+    if (config.featureToggles.graphiteBackendMode) {
+      const functions = await this.getResource<string>('functions');
+      this.funcDefs = gfunc.parseFuncDefs(functions);
+      return this.funcDefs;
+    }
 
     return lastValueFrom(
       this.doGraphiteRequest(httpOptions).pipe(

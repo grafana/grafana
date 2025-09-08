@@ -408,6 +408,86 @@ func TestHandleMetricsExpand(t *testing.T) {
 	}
 }
 
+func TestHandleFunctions(t *testing.T) {
+	tests := []struct {
+		name          string
+		responseBody  string
+		statusCode    int
+		expectError   bool
+		errorContains string
+		expectedData  string
+	}{
+		{
+			name:         "successful functions request",
+			responseBody: `{"sum": {"description": "Sum function"}, "avg": {"description": "Average function"}}`,
+			statusCode:   200,
+			expectedData: `{"sum": {"description": "Sum function"}, "avg": {"description": "Average function"}}`,
+		},
+		{
+			name:         "functions with infinity replacement",
+			responseBody: `{"func": {"default": Infinity, "description": "Test function"}}`,
+			statusCode:   200,
+			expectedData: `{"func": {"default": 1e9999, "description": "Test function"}}`,
+		},
+		{
+			name:         "empty functions response",
+			responseBody: `{}`,
+			statusCode:   200,
+			expectedData: `{}`,
+		},
+		{
+			name:          "functions request server error - now returns error due to status check",
+			responseBody:  `{"error": "internal error"}`,
+			statusCode:    500,
+			expectError:   true,
+			errorContains: "version request failed",
+		},
+		{
+			name:          "functions request not found - now returns error due to status check",
+			responseBody:  `{"error": "not found"}`,
+			statusCode:    404,
+			expectError:   true,
+			errorContains: "version request failed",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mockTransport := &mockRoundTripper{
+				respBody: []byte(tt.responseBody),
+				status:   tt.statusCode,
+			}
+
+			dsInfo := &datasourceInfo{
+				HTTPClient: &http.Client{Transport: mockTransport},
+				URL:        "http://graphite.example.com",
+			}
+
+			service := &Service{
+				logger: log.NewNullLogger(),
+			}
+
+			result, statusCode, err := service.handleFunctions(context.Background(), dsInfo)
+
+			if tt.expectError {
+				assert.Error(t, err)
+				if tt.errorContains != "" {
+					assert.Contains(t, err.Error(), tt.errorContains)
+				}
+			} else {
+				assert.NoError(t, err)
+				assert.Equal(t, tt.statusCode, statusCode)
+				assert.Equal(t, tt.expectedData, string(result))
+			}
+
+			// Verify the URL was constructed correctly
+			expectedURL := "http://graphite.example.com/functions"
+			assert.Equal(t, expectedURL, mockTransport.lastRequest.URL.String())
+			assert.Equal(t, http.MethodGet, mockTransport.lastRequest.Method)
+		})
+	}
+}
+
 func TestHandleResourceReq_Success(t *testing.T) {
 	mockEvents := []GraphiteEventsResponse{{When: 1234567890, What: "event1"}}
 	mockResp, _ := json.Marshal(mockEvents)
