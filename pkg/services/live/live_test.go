@@ -23,6 +23,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/live/livecontext"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
+	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 func TestMain(m *testing.M) {
@@ -30,9 +31,8 @@ func TestMain(m *testing.M) {
 }
 
 func TestIntegration_provideLiveService_RedisUnavailable(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test in short mode")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	cfg := setting.NewCfg()
 
 	cfg.LiveHAEngine = "testredisunavailable"
