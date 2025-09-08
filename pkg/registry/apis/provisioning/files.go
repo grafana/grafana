@@ -99,7 +99,7 @@ func (c *filesConnector) Connect(ctx context.Context, name string, opts runtime.
 			return
 		}
 
-		folderClient, err := clients.Folder()
+		folderClient, err := clients.Folder(ctx)
 		if err != nil {
 			responder.Error(fmt.Errorf("failed to get folder client: %w", err))
 			return

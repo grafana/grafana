@@ -22,7 +22,6 @@ import (
 
 	"github.com/grafana/authlib/types"
 	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
-	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	legacyiamv0 "github.com/grafana/grafana/pkg/apis/iam/v0alpha1"
@@ -37,9 +36,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/iam/user"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
-	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/services/ssosettings"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
@@ -167,7 +164,7 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *ge
 
 	// Service Accounts store registration
 	serviceAccountResource := iamv0.ServiceAccountResourceInfo
-	saLegacyStore := serviceaccount.NewLegacyStore(b.store, b.legacyAccessClient, b.enableAuthnMutation, b.cfg)
+	saLegacyStore := serviceaccount.NewLegacyStore(b.store, b.legacyAccessClient, b.enableAuthnMutation)
 	storage[serviceAccountResource.StoragePath()] = saLegacyStore
 
 	if b.enableDualWriter {
@@ -294,50 +291,19 @@ func (b *IdentityAccessManagementAPIBuilder) GetAuthorizer() authorizer.Authoriz
 func (b *IdentityAccessManagementAPIBuilder) Validate(ctx context.Context, a admission.Attributes, o admission.ObjectInterfaces) (err error) {
 	switch a.GetOperation() {
 	case admission.Create:
-		switch a.GetKind() {
-		case iamv0.UserResourceInfo.GroupVersionKind():
+		switch typedObj := a.GetObject().(type) {
+		case *iamv0.User:
 			return b.validateCreateUser(ctx, a, o)
-		case iamv0.ServiceAccountResourceInfo.GroupVersionKind():
-			return b.validateCreateServiceAccount(ctx, a, o)
+		case *iamv0.ServiceAccount:
+			return serviceaccount.ValidateOnCreate(ctx, typedObj)
 		}
-	case admission.Connect:
-	case admission.Delete:
+		return nil
 	case admission.Update:
 		return nil
-	}
-	return nil
-}
-
-func (b *IdentityAccessManagementAPIBuilder) validateCreateServiceAccount(ctx context.Context, a admission.Attributes, o admission.ObjectInterfaces) error {
-	saObj, ok := a.GetObject().(*iamv0.ServiceAccount)
-	if !ok {
+	case admission.Delete:
 		return nil
-	}
-
-	if saObj.Spec.Title == "" {
-		return apierrors.NewBadRequest("service account must have a title")
-	}
-
-	requester, err := identity.GetRequester(ctx)
-	if err != nil {
-		return apierrors.NewBadRequest("no identity found")
-	}
-
-	if saObj.Spec.External && !requester.IsIdentityType(types.TypeAccessPolicy) {
-		return apierrors.NewForbidden(iamv0.ServiceAccountResourceInfo.GroupResource(),
-			saObj.Name,
-			fmt.Errorf("only service identities can create external service accounts"))
-	}
-
-	requestedRole := identity.RoleType(saObj.Spec.Role)
-	if !requestedRole.IsValid() {
-		return apierrors.NewBadRequest(fmt.Sprintf("invalid role: %s", requestedRole))
-	}
-
-	if !requester.HasRole(requestedRole) {
-		return apierrors.NewForbidden(iamv0.ServiceAccountResourceInfo.GroupResource(),
-			saObj.Name,
-			fmt.Errorf("can not assign a role higher than user's role"))
+	case admission.Connect:
+		return nil
 	}
 
 	return nil
@@ -351,7 +317,7 @@ func (b *IdentityAccessManagementAPIBuilder) validateCreateUser(ctx context.Cont
 
 	requester, err := identity.GetRequester(ctx)
 	if err != nil {
-		return apierrors.NewBadRequest("no identity found")
+		return apierrors.NewUnauthorized("no identity found")
 	}
 
 	// Temporary validation that the user is not trying to create a Grafana Admin without being a Grafana Admin.
@@ -374,11 +340,11 @@ func (b *IdentityAccessManagementAPIBuilder) validateCreateUser(ctx context.Cont
 func (b *IdentityAccessManagementAPIBuilder) Mutate(ctx context.Context, a admission.Attributes, o admission.ObjectInterfaces) (err error) {
 	switch a.GetOperation() {
 	case admission.Create:
-		switch a.GetKind() {
-		case iamv0.UserResourceInfo.GroupVersionKind():
-			return b.mutateUser(ctx, a, o)
-		case iamv0.ServiceAccountResourceInfo.GroupVersionKind():
-			return b.mutateServiceAccount(ctx, a, o)
+		switch typedObj := a.GetObject().(type) {
+		case *iamv0.User:
+			return user.MutateOnCreate(ctx, typedObj)
+		case *iamv0.ServiceAccount:
+			return serviceaccount.MutateOnCreate(ctx, typedObj)
 		}
 	case admission.Update:
 		return nil
@@ -387,52 +353,6 @@ func (b *IdentityAccessManagementAPIBuilder) Mutate(ctx context.Context, a admis
 	case admission.Connect:
 		return nil
 	}
-
-	return nil
-}
-
-func (b *IdentityAccessManagementAPIBuilder) mutateUser(_ context.Context, a admission.Attributes, o admission.ObjectInterfaces) error {
-	userObj, ok := a.GetObject().(*iamv0.User)
-	if !ok {
-		return nil
-	}
-
-	userObj.Spec.Email = strings.ToLower(userObj.Spec.Email)
-	userObj.Spec.Login = strings.ToLower(userObj.Spec.Login)
-
-	if userObj.Spec.Login == "" {
-		userObj.Spec.Login = userObj.Spec.Email
-	}
-	if userObj.Spec.Email == "" {
-		userObj.Spec.Email = userObj.Spec.Login
-	}
-
-	return nil
-}
-
-func (b *IdentityAccessManagementAPIBuilder) mutateServiceAccount(ctx context.Context, a admission.Attributes, o admission.ObjectInterfaces) error {
-	saObj, ok := a.GetObject().(*iamv0.ServiceAccount)
-	if !ok {
-		return nil
-	}
-
-	ns, err := request.NamespaceInfoFrom(ctx, true)
-	if err != nil {
-		return err
-	}
-
-	// External service accounts have None org role by default
-	if saObj.Spec.External {
-		saObj.Spec.Role = iamv0.ServiceAccountOrgRoleNone
-	}
-
-	prefix := serviceaccounts.ServiceAccountPrefix
-	if saObj.Spec.External {
-		prefix = serviceaccounts.ExtSvcLoginPrefix(ns.OrgID)
-	}
-	saObj.Spec.Login = strings.ToLower(serviceaccounts.GenerateLogin(prefix, ns.OrgID, saObj.Spec.Title))
-
-	saObj.Spec.AvatarUrl = dtos.GetGravatarUrlWithDefault(b.cfg, "", saObj.Spec.Title)
 
 	return nil
 }

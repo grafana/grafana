@@ -71,6 +71,10 @@ func NewDBTime(t time.Time) DBTime {
 }
 
 func (t DBTime) Value() (driver.Value, error) {
+	if t.IsZero() {
+		return nil, nil
+	}
+
 	return t.Format(time.DateTime), nil
 }
 
@@ -79,15 +83,25 @@ func (t *DBTime) Scan(value interface{}) error {
 		t.Time = time.Time{}
 		return nil
 	}
+
+	var parsedTime time.Time
+	var err error
+
 	switch v := value.(type) {
+	case []byte:
+		parsedTime, err = time.Parse(time.DateTime, string(v))
 	case string:
-		parsedTime, err := time.Parse(time.DateTime, v)
-		if err != nil {
-			return err
-		}
-		t.Time = parsedTime
-		return nil
+		parsedTime, err = time.Parse(time.DateTime, v)
+	case time.Time:
+		parsedTime = v
 	default:
-		return fmt.Errorf("unsupported type for DBTime scan: %T", value)
+		return fmt.Errorf("could not scan type %T into DBTime", value)
 	}
+
+	if err != nil {
+		return fmt.Errorf("could not parse time: %w", err)
+	}
+
+	t.Time = parsedTime
+	return nil
 }

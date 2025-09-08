@@ -6,7 +6,6 @@ import (
 	"net/http"
 
 	"github.com/grafana/authlib/authn"
-	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	utilnet "k8s.io/apimachinery/pkg/util/net"
 )
 
@@ -19,20 +18,22 @@ type tokenExchanger interface {
 type RoundTripper struct {
 	client    tokenExchanger
 	transport http.RoundTripper
+	audience  string
 }
 
 // NewRoundTripper constructs a RoundTripper that exchanges the provided token per request
 // and forwards the request to the provided base transport.
-func NewRoundTripper(tokenExchangeClient tokenExchanger, base http.RoundTripper) *RoundTripper {
+func NewRoundTripper(tokenExchangeClient tokenExchanger, base http.RoundTripper, audience string) *RoundTripper {
 	return &RoundTripper{
 		client:    tokenExchangeClient,
 		transport: base,
+		audience:  audience,
 	}
 }
 
 func (t *RoundTripper) RoundTrip(req *http.Request) (*http.Response, error) {
 	tokenResponse, err := t.client.Exchange(req.Context(), authn.TokenExchangeRequest{
-		Audiences: []string{provisioning.GROUP},
+		Audiences: []string{t.audience},
 		Namespace: "*",
 	})
 	if err != nil {

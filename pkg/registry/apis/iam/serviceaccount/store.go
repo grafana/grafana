@@ -3,6 +3,7 @@ package serviceaccount
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
@@ -12,13 +13,13 @@ import (
 
 	claims "github.com/grafana/authlib/types"
 	iamv0alpha1 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
-	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/infra/slugify"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/common"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/legacy"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
-	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 var (
@@ -34,15 +35,14 @@ var (
 
 var resource = iamv0alpha1.ServiceAccountResourceInfo
 
-func NewLegacyStore(store legacy.LegacyIdentityStore, ac claims.AccessClient, enableAuthnMutation bool, cfg *setting.Cfg) *LegacyStore {
-	return &LegacyStore{store, ac, enableAuthnMutation, cfg}
+func NewLegacyStore(store legacy.LegacyIdentityStore, ac claims.AccessClient, enableAuthnMutation bool) *LegacyStore {
+	return &LegacyStore{store, ac, enableAuthnMutation}
 }
 
 type LegacyStore struct {
 	store               legacy.LegacyIdentityStore
 	ac                  claims.AccessClient
 	enableAuthnMutation bool
-	cfg                 *setting.Cfg
 }
 
 // DeleteCollection implements rest.CollectionDeleter.
@@ -109,17 +109,27 @@ func (s *LegacyStore) Create(ctx context.Context, obj runtime.Object, createVali
 		return nil, fmt.Errorf("expected ServiceAccount object, got %T", obj)
 	}
 
+	if saObj.GenerateName != "" {
+		saObj.Name = saObj.GenerateName + util.GenerateShortUID()
+		saObj.GenerateName = ""
+	}
+
 	if createValidation != nil {
 		if err := createValidation(ctx, obj); err != nil {
 			return nil, err
 		}
 	}
 
+	login := serviceaccounts.GenerateLogin(serviceaccounts.ServiceAccountPrefix, ns.OrgID, saObj.Spec.Title)
+	if saObj.Spec.Plugin != "" {
+		login = serviceaccounts.ExtSvcLoginPrefix(ns.OrgID) + slugify.Slugify(saObj.Spec.Title)
+	}
+
 	createCmd := legacy.CreateServiceAccountCommand{
 		IsDisabled: saObj.Spec.Disabled,
 		Name:       saObj.Spec.Title,
 		UID:        saObj.Name,
-		Login:      saObj.Spec.Login,
+		Login:      strings.ToLower(login),
 		Role:       string(saObj.Spec.Role),
 	}
 
@@ -198,12 +208,10 @@ func (s *LegacyStore) toSAItem(sa legacy.ServiceAccount, ns string) iamv0alpha1.
 			CreationTimestamp: metav1.NewTime(sa.Created),
 		},
 		Spec: iamv0alpha1.ServiceAccountSpec{
-			AvatarUrl: dtos.GetGravatarUrlWithDefault(s.cfg, "", sa.Name),
-			External:  serviceaccounts.IsExternalServiceAccount(sa.Login),
-			Login:     sa.Login,
-			Title:     sa.Name,
-			Disabled:  sa.Disabled,
-			Role:      iamv0alpha1.ServiceAccountOrgRole(sa.Role),
+			Plugin:   extractPluginNameFromTitle(sa.Name),
+			Title:    sa.Name,
+			Disabled: sa.Disabled,
+			Role:     iamv0alpha1.ServiceAccountOrgRole(sa.Role),
 		},
 	}
 	obj, _ := utils.MetaAccessor(&item)
@@ -212,7 +220,14 @@ func (s *LegacyStore) toSAItem(sa legacy.ServiceAccount, ns string) iamv0alpha1.
 	return item
 }
 
-func (s *LegacyStore) Get(ctx context.Context, name string, _ *metav1.GetOptions) (runtime.Object, error) {
+func extractPluginNameFromTitle(title string) string {
+	if strings.HasPrefix(title, serviceaccounts.ExtSvcPrefix) {
+		return strings.TrimLeft(title, serviceaccounts.ExtSvcPrefix)
+	}
+	return ""
+}
+
+func (s *LegacyStore) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
 	ns, err := request.NamespaceInfoFrom(ctx, true)
 	if err != nil {
 		return nil, err
