@@ -1,11 +1,13 @@
+import { skipToken } from '@reduxjs/toolkit/query';
 import { useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 
 import { Trans, t } from '@grafana/i18n';
-import { Button, Text, Stack, Alert, TextLink, Field, Checkbox } from '@grafana/ui';
-import { Job } from 'app/api/clients/provisioning/v0alpha1';
+import { Button, Text, Stack, TextLink, Field, Checkbox, Alert } from '@grafana/ui';
+import { Job, useGetRepositoryStatusQuery } from 'app/api/clients/provisioning/v0alpha1';
 
 import { JobStatus } from '../Job/JobStatus';
+import { ProvisioningAlert } from '../Shared/ProvisioningAlert';
 
 import { useStepStatus } from './StepStatusContext';
 import { useCreateSyncJob } from './hooks/useCreateSyncJob';
@@ -29,6 +31,14 @@ export function SynchronizeStep({ isLegacyStorage }: SynchronizeStepProps) {
     setStepStatusInfo,
   });
   const [job, setJob] = useState<Job>();
+  const repositoryStatusQuery = useGetRepositoryStatusQuery(repoName ? { name: repoName } : skipToken);
+
+  const {
+    healthy: isRepositoryHealthy,
+    message: repositoryHealthMessages,
+    checked,
+  } = repositoryStatusQuery?.data?.status?.health || {};
+  const isButtonDisabled = checked !== undefined && isRepositoryHealthy === false;
 
   const startSynchronization = async () => {
     const [history] = getValues(['migrate.history']);
@@ -43,7 +53,7 @@ export function SynchronizeStep({ isLegacyStorage }: SynchronizeStepProps) {
   }
 
   return (
-    <Stack direction="column" gap={3} alignItems="flex-start">
+    <Stack direction="column" gap={3}>
       <Text color="secondary">
         <Trans i18nKey="provisioning.wizard.sync-description">
           Sync resources with external storage. After this one-time step, all future updates will be automatically saved
@@ -60,8 +70,8 @@ export function SynchronizeStep({ isLegacyStorage }: SynchronizeStepProps) {
         <ul style={{ marginLeft: '16px' }}>
           <li>
             <Trans i18nKey="provisioning.wizard.alert-point-1">
-              Resources won't be able to be created, edited, or deleted during this process. In the last step, they will
-              disappear.
+              Resources won&#39;t be able to be created, edited, or deleted during this process. In the last step, they
+              will disappear.
             </Trans>
           </li>
           <li>
@@ -105,9 +115,20 @@ export function SynchronizeStep({ isLegacyStorage }: SynchronizeStepProps) {
         </>
       )}
 
-      <Button variant="primary" onClick={startSynchronization}>
-        <Trans i18nKey="provisioning.wizard.button-start">Begin synchronization</Trans>
-      </Button>
+      <Field noMargin>
+        <Button variant="primary" onClick={startSynchronization} disabled={isButtonDisabled}>
+          <Trans i18nKey="provisioning.wizard.button-start">Begin synchronization</Trans>
+        </Button>
+      </Field>
+
+      {repositoryHealthMessages && (
+        <ProvisioningAlert
+          error={{
+            title: t('provisioning.synchronize-step.repository-unhealthy', 'Repository is unhealthy'),
+            message: repositoryHealthMessages,
+          }}
+        />
+      )}
     </Stack>
   );
 }
