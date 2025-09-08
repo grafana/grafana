@@ -16,17 +16,18 @@ import (
 	"go.opentelemetry.io/otel/codes"
 )
 
-type resourceHandler[T any] func(context.Context, *datasourceInfo, T) ([]byte, int, error)
+type postResourceHandler[T any] func(context.Context, *datasourceInfo, T) ([]byte, int, error)
 
 func (s *Service) newResourceMux() *http.ServeMux {
 	mux := http.NewServeMux()
-	mux.HandleFunc("/events", handleResourceReq[GraphiteEventsRequest](s.handleEvents, s))
-	mux.HandleFunc("/metrics/find", handleResourceReq[GraphiteMetricsFindRequest](s.handleMetricsFind, s))
-	mux.HandleFunc("/metrics/expand", handleResourceReq[GraphiteMetricsFindRequest](s.handleMetricsExpand, s))
+	mux.HandleFunc("/events", handlePostResourceReq(s.handleEvents, s))
+	mux.HandleFunc("/metrics/find", handlePostResourceReq(s.handleMetricsFind, s))
+	mux.HandleFunc("/metrics/expand", handlePostResourceReq(s.handleMetricsExpand, s))
+	mux.HandleFunc("/functions", handleGetResourceReq(s.handleFunctions, s))
 	return mux
 }
 
-func handleResourceReq[T any](handlerFn resourceHandler[T], s *Service) func(rw http.ResponseWriter, req *http.Request) {
+func handlePostResourceReq[T any](handlerFn postResourceHandler[T], s *Service) func(rw http.ResponseWriter, req *http.Request) {
 	return func(rw http.ResponseWriter, req *http.Request) {
 		s.logger.Debug("Received resource call", "url", req.URL.String(), "method", req.Method)
 
@@ -40,7 +41,7 @@ func handleResourceReq[T any](handlerFn resourceHandler[T], s *Service) func(rw 
 
 		defer func() {
 			if err := req.Body.Close(); err != nil {
-				s.logger.Warn("Failed to close response body", "err", err)
+				s.logger.Warn("Failed to close request body", "err", err)
 				writeErrorResponse(rw, http.StatusInternalServerError, fmt.Sprintf("unexpected error %v", err))
 				return
 			}
