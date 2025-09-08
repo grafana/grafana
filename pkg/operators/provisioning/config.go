@@ -26,6 +26,7 @@ import (
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository/github"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository/local"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/webhooks"
 	secretdecrypt "github.com/grafana/grafana/pkg/registry/apis/secret/decrypt"
 )
 
@@ -55,6 +56,7 @@ type provisioningControllerConfig struct {
 // audiences =
 // [operator]
 // provisioning_server_url =
+// provisioning_public_server_url =
 // dashboards_server_url =
 // folders_server_url =
 // tls_insecure =
@@ -233,12 +235,16 @@ func setupRepoFactory(
 
 		switch provisioning.RepositoryType(t) {
 		case provisioning.GitHubRepositoryType:
+			var webhook *webhooks.WebhookExtraBuilder
+			provisioningAppURL := operatorSec.Key("provisioning_public_server_url").String()
+			if provisioningAppURL == "" {
+				webhook = webhooks.ProvideWebhooks(provisioningAppURL)
+			}
+
 			extras = append(extras, github.Extra(
 				decrypter,
 				github.ProvideFactory(),
-				// TODO: we need to plug the webhook builder here for webhooks to be created in repository controller
-				// https://github.com/grafana/git-ui-sync-project/issues/455
-				nil,
+				webhook,
 			),
 			)
 		case provisioning.LocalRepositoryType:
