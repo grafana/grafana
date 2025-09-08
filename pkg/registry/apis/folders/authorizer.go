@@ -17,11 +17,6 @@ func newAuthorizer(ac authlib.AccessClient) authorizer.Authorizer {
 			return authorizer.DecisionDeny, "missing auth info", nil
 		}
 
-		// For now we only allow access policy to authorize with multi-tenant setup
-		if !authlib.IsIdentityType(info.GetIdentityType(), authlib.TypeAccessPolicy) {
-			return authorizer.DecisionDeny, "permission denied", nil
-		}
-
 		res, err := ac.Check(ctx, info, authlib.CheckRequest{
 			Verb:        a.GetVerb(),
 			Group:       a.GetAPIGroup(),
