@@ -11254,7 +11254,9 @@
     },
     "connect-repository-button": {
       "configure": "Configure",
-      "repository-limit-info-alert": "Repository limit reached ({{count}})"
+      "instance-fully-managed-tooltip": "Configuration is disabled because this instance is fully managed",
+      "repository-limit-reached-tooltip_one": "Repository limit reached {{count}}",
+      "repository-limit-reached-tooltip_other": "Repository limit reached {{count}}"
     },
     "delete-repository-button": {
       "button-delete": "Delete",
