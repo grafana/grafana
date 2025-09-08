@@ -33,12 +33,12 @@ import (
 	"github.com/grafana/grafana/pkg/services/secrets/manager"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/util"
+	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 func TestIntegrationContactPointService(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test in short mode")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	sqlStore := db.InitTestDB(t)
 	secretsService := manager.SetupTestService(t, database.ProvideSecretsStore(sqlStore))
 
@@ -365,9 +365,8 @@ func TestIntegrationContactPointService(t *testing.T) {
 }
 
 func TestIntegrationContactPointServiceDecryptRedact(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test in short mode")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	secretsService := manager.SetupTestService(t, database.ProvideSecretsStore(db.InitTestDB(t)))
 
 	redactedUser := &user.SignedInUser{OrgID: 1, Permissions: map[int64]map[string][]string{

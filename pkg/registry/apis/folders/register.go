@@ -42,7 +42,7 @@ var resourceInfo = folders.FolderResourceInfo
 type FolderAPIBuilder struct {
 	features             featuremgmt.FeatureToggles
 	namespacer           request.NamespaceMapper
-	folderSvc            folder.Service
+	folderSvc            folder.LegacyService
 	folderPermissionsSvc accesscontrol.FolderPermissionsService
 	acService            accesscontrol.Service
 	ac                   accesscontrol.AccessControl
@@ -60,7 +60,7 @@ type FolderAPIBuilder struct {
 func RegisterAPIService(cfg *setting.Cfg,
 	features featuremgmt.FeatureToggles,
 	apiregistration builder.APIRegistrar,
-	folderSvc folder.Service,
+	folderSvc folder.LegacyService,
 	folderPermissionsSvc accesscontrol.FolderPermissionsService,
 	accessControl accesscontrol.AccessControl,
 	acService accesscontrol.Service,
@@ -184,13 +184,13 @@ func (b *FolderAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.API
 	}
 	storage[resourceInfo.StoragePath()] = folderStore
 
-	b.parents = newParentsGetter(folderStore, folderValidationRules.maxDepth) // used for validation
+	b.parents = newParentsGetter(folderStore, folder.MaxNestedFolderDepth) // used for validation
 	storage[resourceInfo.StoragePath("parents")] = &subParentsREST{
 		getter:  folderStore,
 		parents: b.parents,
 	}
 	storage[resourceInfo.StoragePath("counts")] = &subCountREST{searcher: b.searcher}
-	storage[resourceInfo.StoragePath("access")] = &subAccessREST{b.folderSvc, b.ac}
+	storage[resourceInfo.StoragePath("access")] = &subAccessREST{folderStore, b.ac}
 
 	// Adds a path to return children of a given folder
 	storage[resourceInfo.StoragePath("children")] = &subChildrenREST{
@@ -213,12 +213,6 @@ func (b *FolderAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAP
 
 func (b *FolderAPIBuilder) GetAuthorizer() authorizer.Authorizer {
 	return b.authorizer
-}
-
-var folderValidationRules = struct {
-	maxDepth int
-}{
-	maxDepth: 5, // why different than folder.MaxNestedFolderDepth?? (4)
 }
 
 func (b *FolderAPIBuilder) Mutate(ctx context.Context, a admission.Attributes, _ admission.ObjectInterfaces) error {
@@ -248,7 +242,7 @@ func (b *FolderAPIBuilder) Validate(ctx context.Context, a admission.Attributes,
 
 	switch a.GetOperation() {
 	case admission.Create:
-		return validateOnCreate(ctx, f, b.parents, folderValidationRules.maxDepth)
+		return validateOnCreate(ctx, f, b.parents, folder.MaxNestedFolderDepth)
 	case admission.Delete:
 		return validateOnDelete(ctx, f, b.searcher)
 	case admission.Update:
@@ -256,7 +250,7 @@ func (b *FolderAPIBuilder) Validate(ctx context.Context, a admission.Attributes,
 		if !ok {
 			return fmt.Errorf("obj is not folders.Folder")
 		}
-		return validateOnUpdate(ctx, f, old, b.storage, b.parents, folderValidationRules.maxDepth)
+		return validateOnUpdate(ctx, f, old, b.storage, b.parents, folder.MaxNestedFolderDepth)
 	default:
 		return nil
 	}
