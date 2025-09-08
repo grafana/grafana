@@ -43,10 +43,10 @@ test.describe('Canvas Panel - Scene Tests', () => {
     await expect(viewerBounds).toBeDefined();
 
     // Test pan functionality
-    const startX = viewerBounds.x + 50;
-    const startY = viewerBounds.y + 50;
-    const endX = viewerBounds.x + 250;
-    const endY = viewerBounds.y + 250;
+    const startX = viewerBounds!.x + 50;
+    const startY = viewerBounds!.y + 50;
+    const endX = viewerBounds!.x + 250;
+    const endY = viewerBounds!.y + 250;
     await page.getByTestId('canvas-scene-pan-zoom');
     await page.mouse.move(startX, startY);
     await page.mouse.down({ button: 'middle' });
@@ -79,9 +79,9 @@ async function isOutsideViewport(element: Locator, viewPort: Locator): Promise<b
   const elementBounds = await element.boundingBox();
   const viewportBounds = await viewPort.boundingBox();
   return (
-    elementBounds.x + elementBounds.width < viewportBounds.x ||
-    elementBounds.x > viewportBounds.x + viewportBounds.width ||
-    elementBounds.y + elementBounds.height < viewportBounds.y ||
-    elementBounds.y > viewportBounds.y + viewportBounds.height
+    elementBounds!.x + elementBounds!.width < viewportBounds!.x ||
+    elementBounds!.x > viewportBounds!.x + viewportBounds!.width ||
+    elementBounds!.y + elementBounds!.height < viewportBounds!.y ||
+    elementBounds!.y > viewportBounds!.y + viewportBounds!.height
   );
 }
