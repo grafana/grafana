@@ -76,6 +76,11 @@ func (s *LegacyStore) Create(ctx context.Context, obj runtime.Object, createVali
 		return nil, fmt.Errorf("expected ServiceAccount object, got %T", obj)
 	}
 
+	if saObj.GenerateName != "" {
+		saObj.Name = saObj.GenerateName + util.GenerateShortUID()
+		saObj.GenerateName = ""
+	}
+
 	if createValidation != nil {
 		if err := createValidation(ctx, obj); err != nil {
 			return nil, err
@@ -85,13 +90,6 @@ func (s *LegacyStore) Create(ctx context.Context, obj runtime.Object, createVali
 	login := serviceaccounts.GenerateLogin(serviceaccounts.ServiceAccountPrefix, ns.OrgID, saObj.Spec.Title)
 	if saObj.Spec.Plugin != "" {
 		login = serviceaccounts.ExtSvcLoginPrefix(ns.OrgID) + slugify.Slugify(saObj.Spec.Title)
-	}
-
-	if saObj.GenerateName != "" {
-	if saObj.GenerateName != "" {
-		saObj.Name = saObj.GenerateName + util.GenerateShortUID()
-		saObj.GenerateName = ""
-	}
 	}
 
 	createCmd := legacy.CreateServiceAccountCommand{

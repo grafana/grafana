@@ -195,6 +195,44 @@ func doServiceAccountCRUDTestsUsingTheNewAPIs(t *testing.T, helper *apis.K8sTest
 		require.Equal(t, int32(403), statusErr.ErrStatus.Code)
 		require.Contains(t, statusErr.ErrStatus.Message, "only service identities can create external service accounts")
 	})
+
+	t.Run("should create service account with generateName and get it using the new APIs as a GrafanaAdmin", func(t *testing.T) {
+		ctx := context.Background()
+
+		saClient := helper.GetResourceClient(apis.ResourceClientArgs{
+			User:      helper.Org1.Admin,
+			Namespace: helper.Namespacer(helper.Org1.Admin.Identity.GetOrgID()),
+			GVR:       gvrServiceAccounts,
+		})
+
+		created, err := saClient.Resource.Create(ctx, helper.LoadYAMLOrJSONFile("testdata/serviceaccount-test-generate-name-v0.yaml"), metav1.CreateOptions{})
+		require.NoError(t, err)
+		require.NotNil(t, created)
+
+		createdSpec := created.Object["spec"].(map[string]interface{})
+		require.Equal(t, "Test Service Account with GenerateName", createdSpec["title"])
+		require.Equal(t, false, createdSpec["disabled"])
+		require.Empty(t, createdSpec["plugin"])
+
+		createdUID := created.GetName()
+		require.NotEmpty(t, createdUID)
+		require.Contains(t, createdUID, "sa-")
+
+		_, err = saClient.Resource.List(ctx, metav1.ListOptions{})
+		require.NoError(t, err)
+
+		fetched, err := saClient.Resource.Get(ctx, createdUID, metav1.GetOptions{})
+		require.NoError(t, err)
+		require.NotNil(t, fetched)
+
+		fetchedSpec := fetched.Object["spec"].(map[string]interface{})
+		require.Equal(t, "Test Service Account with GenerateName", fetchedSpec["title"])
+		require.Equal(t, false, fetchedSpec["disabled"])
+		require.Empty(t, fetchedSpec["plugin"])
+
+		require.Equal(t, createdUID, fetched.GetName())
+		require.Equal(t, "default", fetched.GetNamespace())
+	})
 }
 
 func doServiceAccountCRUDTestsUsingTheLegacyAPIs(t *testing.T, helper *apis.K8sTestHelper) {
