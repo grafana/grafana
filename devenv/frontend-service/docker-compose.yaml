@@ -35,7 +35,7 @@ services:
       GF_DEFAULT_APP_MODE: development
       GF_PANELS_ENABLE_ALPHA: true
       GF_SERVER_CDN_URL: http://localhost:3010
-      GF_FEATURE_TOGGLES_ENABLE: multiTenantFrontend enableNativeHTTPHistogram
+      GF_FEATURE_TOGGLES_ENABLE: multiTenantFrontend enableNativeHTTPHistogram kubernetesShortURLs
       GF_DATABASE_URL: postgres://grafana:grafana@postgres:5432/grafana
       GF_SERVER_ROUTER_LOGGING: true
       GF_LOG_LEVEL: debug
@@ -58,6 +58,8 @@ services:
       - ./configs/frontend-service.local.ini:/grafana/conf/custom.ini
     ports:
       - '3012:3000'
+    depends_on:
+      - grafana-api
     labels:
       - 'alloy.logs=true'
     environment:
@@ -65,10 +67,10 @@ services:
       GF_DEFAULT_APP_MODE: development
       GF_DEFAULT_TARGET: frontend-server
       GF_SECURITY_CONTENT_SECURITY_POLICY: false
-      GF_FEATURE_TOGGLES_ENABLE: enableNativeHTTPHistogram
+      GF_FEATURE_TOGGLES_ENABLE: enableNativeHTTPHistogram kubernetesShortURLs
       GF_SERVER_CDN_URL: http://localhost:3010
       GF_SERVER_ROUTER_LOGGING: true
-      GF_LOG_LEVEL: info
+      GF_LOG_LEVEL: debug
       OTEL_SERVICE_NAME: frontend-service
       GF_TRACING_OPENTELEMETRY_OTLP_ADDRESS: 'alloy:4317'
       GF_TRACING_OPENTELEMETRY_OTLP_PROPAGATION: jaeger,w3c

@@ -33,11 +33,11 @@ func (hs *HTTPServer) registerShortURLAPI(apiRoute routing.RouteRegister) {
 		handler := newShortURLK8sHandler(hs)
 		apiRoute.Post("/api/short-urls", reqSignedIn, handler.createKubernetesShortURLsHandler)
 		apiRoute.Get("/api/short-urls/:uid", reqSignedIn, handler.getKubernetesShortURLsHandler)
-		apiRoute.Get("/goto/:uid", reqSignedIn, handler.getKubernetesRedirectFromShortURL, hs.Index)
+		//apiRoute.Get("/goto/:uid", reqSignedIn, handler.getKubernetesRedirectFromShortURL, hs.Index)
 	} else {
 		apiRoute.Post("/api/short-urls", reqSignedIn, hs.createShortURL)
 		apiRoute.Get("/api/short-urls/:uid", reqSignedIn, hs.getShortURL)
-		apiRoute.Get("/goto/:uid", reqSignedIn, hs.redirectFromShortURL, hs.Index)
+		//apiRoute.Get("/goto/:uid", reqSignedIn, hs.redirectFromShortURL, hs.Index)
 	}
 }
 

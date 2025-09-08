@@ -27,11 +27,9 @@ import (
 
 	grafanaapiserver "github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
-	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
+	"github.com/grafana/grafana/pkg/services/contexthandler"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/licensing"
-	"github.com/grafana/grafana/pkg/services/org"
-	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
@@ -208,7 +206,7 @@ func (s *frontendService) handleGotoRequest(writer http.ResponseWriter, request 
 		return
 	}
 
-	// Handle Kubernetes short URL redirect
+	// Handle Kubernetes short URL redirect directly
 	s.log.Info("Attempting Kubernetes short URL redirect", "uid", path)
 	s.handleKubernetesShortURLRedirect(writer, request, path)
 }
@@ -283,82 +281,73 @@ func (s *frontendService) handleKubernetesShortURLRedirect(writer http.ResponseW
 	http.Redirect(writer, request, redirectURL, http.StatusFound)
 }
 
-// getKubernetesClient creates a Kubernetes dynamic client
+// getKubernetesClient creates a Kubernetes dynamic client with proper authentication context
 func (s *frontendService) getKubernetesClient(request *http.Request) (dynamic.ResourceInterface, error) {
 	s.log.Info("Creating Kubernetes client")
 
-	// TODO: This is a simplified approach without proper authentication context
-	// In production, you would need to:
-	// 1. Extract user authentication from the request (cookies, headers, etc.)
-	// 2. Create a proper ReqContext with SignedInUser
-	// 3. Handle organization context properly
-
-	// Create a ReqContext with timeout for the client config provider
-	webCtx := &web.Context{
-		Req:  request,
-		Resp: nil, // We don't need response for client creation
+	// Get the ReqContext from the request (set by our context middleware)
+	reqCtx := contexthandler.FromContext(request.Context())
+	if reqCtx == nil {
+		s.log.Error("No ReqContext found in request")
+		return nil, fmt.Errorf("no request context found")
 	}
 
-	// Create ReqContext with proper context that has timeout
-	ctx, cancel := context.WithTimeout(request.Context(), 10*time.Second)
-	defer cancel()
-
-	webCtx.Req = request.WithContext(ctx)
-
-	reqCtx := &contextmodel.ReqContext{
-		Context: webCtx,
-		// Using default org ID - in production you'd extract this from authentication
-		SignedInUser: &user.SignedInUser{
-			OrgID:   1,
-			OrgRole: org.RoleAdmin,
-			Login:   "grafana_frontend_service",
-		},
+	if reqCtx.SignedInUser == nil {
+		s.log.Error("No SignedInUser found in request context")
+		return nil, fmt.Errorf("no signed in user found")
 	}
 
-	s.log.Info("Getting REST config from client config provider with timeout and retry")
+	s.log.Info("Getting REST config from client config provider",
+		"user_id", reqCtx.SignedInUser.UserID,
+		"org_id", reqCtx.SignedInUser.OrgID,
+		"login", reqCtx.SignedInUser.Login)
 
+	// The eventualRestConfigProvider waits for the API server to be ready
+	// Add retry logic with exponential backoff to wait for API server startup
 	var restConfig *clientrest.Config
-	maxRetries := 3
-	baseDelay := 1 * time.Second
+	maxRetries := 5
+	baseDelay := 500 * time.Millisecond
 
 	for attempt := 0; attempt < maxRetries; attempt++ {
 		if attempt > 0 {
-			delay := time.Duration(attempt) * baseDelay
+			delay := time.Duration(1<<attempt) * baseDelay // Exponential backoff: 500ms, 1s, 2s, 4s, 8s
 			s.log.Info("Retrying REST config after delay", "attempt", attempt+1, "delay", delay)
 			time.Sleep(delay)
 		}
 
 		s.log.Debug("Attempting to get REST config", "attempt", attempt+1)
-		restConfig = s.clientConfigProvider.GetDirectRestConfig(reqCtx)
+
+		// Create a timeout context to prevent GetDirectRestConfig from blocking indefinitely
+		// The eventualRestConfigProvider blocks until API server is ready, so we need a timeout
+		timeoutCtx, cancel := context.WithTimeout(request.Context(), 3*time.Second)
+		reqCtxWithTimeout := *reqCtx // Copy the context
+		reqCtxWithTimeout.Req = reqCtx.Req.WithContext(timeoutCtx)
+
+		restConfig = s.clientConfigProvider.GetDirectRestConfig(&reqCtxWithTimeout)
+		cancel() // Always cancel the timeout context
 
 		if restConfig != nil {
 			s.log.Info("Successfully got REST config from client config provider", "attempt", attempt+1)
 			break
 		}
 
-		s.log.Warn("Client config provider returned nil REST config", "attempt", attempt+1)
-
-		// Check if context is cancelled
-		if ctx.Err() != nil {
-			s.log.Error("Context cancelled while waiting for REST config", "error", ctx.Err())
-			return nil, fmt.Errorf("context cancelled while waiting for REST config: %w", ctx.Err())
-		}
+		s.log.Warn("Client config provider returned nil REST config, API server may not be ready yet",
+			"attempt", attempt+1, "max_attempts", maxRetries)
 	}
 
 	if restConfig == nil {
-		s.log.Error("Failed to get REST config after all retries", "max_retries", maxRetries)
-		return nil, fmt.Errorf("client config provider returned nil REST config after %d retries", maxRetries)
+		s.log.Error("Failed to get REST config after all retries - API server not ready", "max_attempts", maxRetries)
+		return nil, fmt.Errorf("API server not ready after %d attempts", maxRetries)
 	}
 
-	s.log.Info("Creating dynamic Kubernetes client")
+	// Create dynamic client
 	dyn, err := dynamic.NewForConfig(restConfig)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create dynamic client: %w", err)
 	}
 
-	// Use default org ID for namespace mapping
-	orgID := int64(1)
-	namespace := s.namespacer(orgID)
+	// Use the user's org ID for namespace mapping
+	namespace := s.namespacer(reqCtx.SignedInUser.OrgID)
 
 	s.log.Info("Created Kubernetes client", "namespace", namespace, "gvr", s.gvr)
 	return dyn.Resource(s.gvr).Namespace(namespace), nil

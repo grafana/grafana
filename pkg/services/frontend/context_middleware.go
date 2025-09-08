@@ -8,11 +8,13 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/contexthandler/ctxkey"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
+	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/web"
 )
 
-// Minimal copy of contextHandler.Middleware for frontend-service
-// frontend-service doesn't handle authentication or know what signed in users are
+// contextMiddleware creates a request context for frontend-service
+// It sets up a basic authenticated context for service operations
 func (s *frontendService) contextMiddleware() web.Middleware {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -21,6 +23,19 @@ func (s *frontendService) contextMiddleware() web.Middleware {
 			reqContext := &contextmodel.ReqContext{
 				Context: web.FromContext(ctx),
 				Logger:  log.New("context"),
+				// Create a service user for frontend operations
+				// In a real implementation, you'd extract user from cookies/headers
+				SignedInUser: &user.SignedInUser{
+					UserID:      1,
+					OrgID:       1,
+					OrgRole:     org.RoleViewer, // Minimal permissions for short URL access
+					Login:       "frontend-service",
+					Name:        "Frontend Service",
+					Email:       "frontend-service@grafana.local",
+					Permissions: map[int64]map[string][]string{},
+				},
+				IsSignedIn:     true,
+				AllowAnonymous: false,
 			}
 
 			// inject ReqContext in the context
