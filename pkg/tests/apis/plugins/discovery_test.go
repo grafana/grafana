@@ -9,7 +9,7 @@ import (
 )
 
 func TestIntegrationPluginsIntegrationDiscovery(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode()
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	t.Run("discovery", func(t *testing.T) {
 		helper := setupHelper(t)
