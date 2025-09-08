@@ -493,21 +493,22 @@ export const prepConfig = ({ series, totalSeries, color, orientation, options, t
   };
 };
 
-// returns an array of number, where each number n represents the size of the nth cluster
+// returns an array of ints, where each number n represents the size of the nth cluster
 function getClustersFromField(series: DataFrame[], groupByField: string | undefined): number[] {
-  if (!groupByField) return [];
+  if (!groupByField || series.length === 0) { return [] };
   const fieldIdx = series[0].fields.findIndex((field) => field.name === groupByField);
-  if (fieldIdx === -1) return [];
+  if (fieldIdx === -1) { return [] };
   const fieldValues = series[0].fields[fieldIdx].values;
   const clusters = [];
   let clustersIdx = -1;
   let currentValue: any = undefined;
   for (let i = 0; i < fieldValues.length; i++) {
-    if (fieldValues[i] != currentValue) {
+    if (fieldValues[i] !== currentValue) {
       currentValue = fieldValues[i];
       clusters.push(0);
       clustersIdx++;
     }
+    if (clustersIdx === -1) { return [] };
     clusters[clustersIdx]++;
   }
   return clusters;

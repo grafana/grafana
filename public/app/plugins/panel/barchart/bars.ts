@@ -10,11 +10,11 @@ import {
   VizLegendOptions,
 } from '@grafana/schema';
 import { measureText } from '@grafana/ui';
-import { timeUnitSize, StackingGroup, preparePlotData2, getStackingGroups } from '@grafana/ui/internal';
+import { timeUnitSize, StackingGroup, preparePlotData2 } from '@grafana/ui/internal';
 
 const intervals = systemDateFormats.interval;
 
-import { distribute, SPACE_BETWEEN, SPACE_EVENLY } from './distribute';
+import { distribute, SPACE_BETWEEN } from './distribute';
 import { findRects, intersects, pointWithin, Quadtree, Rect } from './quadtree';
 
 const groupDistr = SPACE_BETWEEN;
@@ -273,22 +273,18 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2, clusters: num
       offs: Array(groupCount).fill(0),
       size: Array(groupCount).fill(0),
     }));
-
     let groupOffset = 0; // running index into groups
-
     // distribute clusters across the entire x-axis
     distribute(clusterCount, clusterWidth, clusterDistr, null, (clusterIdx, clusterOffPct, clusterDimPct) => {
       const groupsInCurrentCluster = groupsPerCluster[clusterIdx]; // number of groups in this cluster
       const start = groupOffset;
       const end = groupOffset + groupsInCurrentCluster;
       groupOffset = end;
-
       // distribute groups within cluster
       distribute(groupsInCurrentCluster, groupWidth, groupDistr, null, (localGroupIdx, groupOffPct, groupDimPct) => {
         const globalGroupIdx = start + localGroupIdx;
         const offset = clusterOffPct + clusterDimPct * groupOffPct;
         const size = clusterDimPct * groupDimPct;
-
         // In stacked mode: all stacked bars share same offset and size.
         for (let bar = 0; bar < barCount; bar++) {
           out[bar].offs[globalGroupIdx] = offset; // fraction of total x-axis as left starting point
@@ -296,9 +292,31 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2, clusters: num
         }
       });
     });
-
     return out;
   };
+
+
+  let distrClusteredNonStacked = (groupCount: number, barCount: number, clusterCount: number, groupsPerCluster: number[]) => {
+    let out = Array.from({ length: barCount }, () => ({
+      offs: Array(groupCount).fill(0),
+      size: Array(groupCount).fill(0),
+    }));
+        let groupOffset = 0;
+        distribute(clusterCount, clusterWidth, clusterDistr, null, (clusterIdx, clusterOffPct, clusterDimPct) => {
+          const groupsInCurrentCluster = groupsPerCluster[clusterIdx];
+          const start = groupOffset;
+          const end = groupOffset + groupsInCurrentCluster;
+          groupOffset = end;
+          distribute(groupsInCurrentCluster, groupWidth, groupDistr, null, (localGroupIdx, groupOffPct, groupDimPct) => {
+            const globalGroupIdx = start + localGroupIdx;    
+            distribute(barCount, barWidth, barDistr, null, (barIdx, barOffPct, barDimPct) => {
+              out[barIdx].offs[globalGroupIdx] = clusterOffPct + clusterDimPct * (groupOffPct + groupDimPct * barOffPct); 
+              out[barIdx].size[globalGroupIdx] = clusterDimPct * groupDimPct * barDimPct;
+            });
+          });
+        });
+    return out;
+  }
 
 
   const LABEL_OFFSET_FACTOR = isXHorizontal ? LABEL_OFFSET_FACTOR_VT : LABEL_OFFSET_FACTOR_HZ;
@@ -567,7 +585,11 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2, clusters: num
     // const groupsPerCluster = [2,2];
 
     if (groupByField && clusters.length !== 0) {
-      barsPctLayout = [null, ...distrClusteredStacked(u.data[0].length, u.data.length -1, clusters.length, clusters)];
+      if (isStacked) {
+        barsPctLayout = [null, ...distrClusteredStacked(u.data[0].length, u.data.length -1, clusters.length, clusters)];
+      } else {
+        barsPctLayout = [null, ...distrClusteredNonStacked(u.data[0].length, u.data.length - 1, clusters.length, clusters)]
+      }
     }else if (isStacked) {
       barsPctLayout = [null, ...distrOne(u.data[0].length, u.data.length - 1)];
     } else {
