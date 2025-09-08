@@ -1,0 +1,19 @@
+apiVersion: iam.grafana.app/v0alpha1
+kind: ResourcePermission
+metadata:
+  name: dashboard.grafana.app-dashboards-ad5rwqs
+spec:
+  resource: 
+    apiGroup: dashboard.grafana.app
+    resource: dashboards
+    name: ad5rwqs
+  permissions:
+  - kind: User
+    name: few8wwtp1si68e
+    verbs:
+    - edit
+  - kind: BasicRole
+    name: Editor
+    verbs:
+    - view
+  

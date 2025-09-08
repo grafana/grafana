@@ -4,8 +4,9 @@ import (
 	"context"
 	"testing"
 
-	"github.com/grafana/grafana/apps/dashboard/pkg/migration/schemaversion"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/apps/dashboard/pkg/migration/schemaversion"
 )
 
 func TestGetSchemaVersion(t *testing.T) {

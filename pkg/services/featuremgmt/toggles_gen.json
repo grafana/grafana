@@ -21,7 +21,7 @@
       "metadata": {
         "name": "adhocFiltersInTooltips",
         "resourceVersion": "1756814786992",
-        "creationTimestamp": "2025-07-28T14:25:55Z",
+        "creationTimestamp": "2025-07-29T17:53:43Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2025-09-02 12:06:26.992384 +0000 UTC"
         }
@@ -912,7 +912,7 @@
       "metadata": {
         "name": "dashboardDsAdHocFiltering",
         "resourceVersion": "1756814786992",
-        "creationTimestamp": "2025-07-25T13:06:00Z",
+        "creationTimestamp": "2025-07-23T08:12:25Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2025-09-02 12:06:26.992384 +0000 UTC"
         }
@@ -2716,6 +2716,23 @@
     },
     {
       "metadata": {
+        "name": "prometheusTypeMigration",
+        "resourceVersion": "1757089774247",
+        "creationTimestamp": "2025-08-25T21:53:16Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-09-05 16:29:34.247055837 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Checks for deprecated Prometheus authentication methods (SigV4 and Azure), installs the relevant data source, and migrates the Prometheus data sources",
+        "stage": "experimental",
+        "codeowner": "@grafana/partner-datasources",
+        "requiresRestart": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "provisioning",
         "resourceVersion": "1753448760331",
         "creationTimestamp": "2024-11-22T09:03:50Z"
@@ -2966,12 +2983,15 @@
     {
       "metadata": {
         "name": "savedQueries",
-        "resourceVersion": "1755721444487",
-        "creationTimestamp": "2025-08-25T21:22:09Z"
+        "resourceVersion": "1756920131554",
+        "creationTimestamp": "2025-08-25T21:22:09Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-09-03 17:22:11.554759 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables Saved Queries feature",
-        "stage": "privatePreview",
+        "stage": "preview",
         "codeowner": "@grafana/sharing-squad"
       }
     },

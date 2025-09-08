@@ -1703,9 +1703,6 @@
       "notes": "Notes",
       "returns": "Returns"
     },
-    "label-picker": {
-      "no-options-message": "No labels found"
-    },
     "labels-editor-modal": {
       "title-edit-labels": "Edit labels"
     },
@@ -1723,9 +1720,6 @@
     "labels-sub-form": {
       "description": "Select a label key/value from the options below, or type a new one and press Enter.",
       "save": "Save"
-    },
-    "labels-with-suggestions": {
-      "text-loading-existing-labels": "Loading existing labels"
     },
     "labels-without-suggestions": {
       "message": {
@@ -4506,16 +4500,11 @@
             "any": "Match any",
             "label": "Match rules"
           },
-          "label": "Group",
           "visibility": {
             "hide": "Hide",
             "label": "{{type}} visibility",
             "show": "Show"
           }
-        },
-        "shared": {
-          "delete-condition": "Delete Condition",
-          "unsupported-item-type": "This condition is not supported by the element, hence it will be ignored."
         },
         "time-range-size": {
           "info": "Show or hide the {{type}} if the dashboard time range is shorter than the selected time frame.",
@@ -4545,17 +4534,21 @@
             "not-matches": "Not matches"
           },
           "value": "Value"
+        },
+        "wrapper": {
+          "delete-condition": "Delete Condition",
+          "unsupported-object-type": "This condition is not supported by the element, hence it will be ignored."
         }
       },
       "editor": {
+        "info": "Set rules to control {{type}} visibility by matching any or all rules.",
         "not-supported-for-custom-grid": "Conditional rendering is not supported for the custom grid layout. Switch to auto grid to use conditional rendering.",
-        "unsupported-item-type": "Conditional rendering not supported for this item type"
+        "unsupported-object-type": "Conditional rendering not supported for this item type"
       },
       "overlay": {
         "tooltip": "Element is hidden due to conditional rendering."
       },
       "root": {
-        "info": "Set rules to control {{type}} visibility by matching any or all rules.",
         "title": "Show / hide rules"
       }
     },
@@ -9651,6 +9644,12 @@
       "hide-search": "Close search",
       "hide-timestamps": "Hide timestamps",
       "hide-unique-labels": "Hide unique labels",
+      "line-wrapping": {
+        "enable": "Enable line wrapping",
+        "enable-prettify": "Enable line wrapping and prettify JSON",
+        "hide": "Disable line wrapping",
+        "label": "Log line wrapping"
+      },
       "newest-first": "Sorted by newest logs first - Click to show oldest first",
       "oldest-first": "Sorted by oldest logs first - Click to show newest first",
       "prettify-json": "Expand JSON logs",
@@ -9659,13 +9658,16 @@
       "resolution-ns": "ns",
       "scroll-bottom": "Scroll to bottom",
       "scroll-top": "Scroll to top",
-      "show-ms-timestamps": "Show millisecond timestamps",
-      "show-ns-timestamps": "Show nanosecond timestamps",
       "show-search": "Search in logs result",
       "show-timestamps": "Show timestamps",
       "show-unique-labels": "Show unique labels",
+      "timestamp": {
+        "hide": "Hide timestamps",
+        "label": "Log timestamps",
+        "milliseconds": "Show millisecond timestamps",
+        "nanoseconds": "Show nanosecond timestamps"
+      },
       "unwrap-lines": "Unwrap lines",
-      "wrap-json-lines": "Wrap lines and expand JSON",
       "wrap-lines": "Wrap lines"
     },
     "logs-navigation": {
@@ -11941,7 +11943,6 @@
       "expand-row": "Expand query row",
       "hide-response": "Hide response",
       "remove-query": "Remove query",
-      "replace-query-from-library": "Replace with saved query",
       "show-response": "Show response"
     },
     "query-editor-not-exported": "Data source plugin does not export any Query Editor component"
@@ -11954,14 +11955,6 @@
       "no-deleted-dashboards": "You haven't deleted any dashboards recently.",
       "no-deleted-dashboards-text": "When you delete a dashboard, it will appear here for 30 days before being permanently deleted. Your organization administrator can restore recently-deleted dashboards.",
       "no-search-result": "No results found for your query"
-    },
-    "permanently-delete-modal": {
-      "confirm-text": "Delete",
-      "delete-button": "Delete",
-      "delete-loading": "Deleting...",
-      "text_one": "This action will delete {{numberOfDashboards}} dashboards.",
-      "text_other": "This action will delete {{numberOfDashboards}} dashboards.",
-      "title": "Permanently Delete Dashboards"
     },
     "restore-modal": {
       "folder-picker-text_one": "Please choose a folder where your dashboards will be restored.",
