@@ -4,20 +4,21 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
-	"github.com/grafana/grafana/pkg/services/folder"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
 
+	authlib "github.com/grafana/authlib/types"
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
+	foldersV1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 )
 
 type subAccessREST struct {
-	service folder.Service
-	ac      accesscontrol.AccessControl
+	getter       rest.Getter
+	accessClient authlib.AccessClient
 }
 
 var _ = rest.Connecter(&subAccessREST{})
@@ -57,27 +58,42 @@ func (r *subAccessREST) Connect(ctx context.Context, name string, opts runtime.O
 	}
 
 	// Can view is managed here (and in the Authorizer)
-	f, err := r.service.Get(ctx, &folder.GetFolderQuery{
-		UID:          &name,
-		OrgID:        ns.OrgID,
-		SignedInUser: user,
-	})
+	f, err := r.getter.Get(ctx, name, &v1.GetOptions{})
+	if err != nil {
+		return nil, err
+	}
+	obj, err := utils.MetaAccessor(f)
 	if err != nil {
 		return nil, err
 	}
 
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-		access := &folders.FolderAccessInfo{}
-		canEditEvaluator := accesscontrol.EvalPermission(dashboards.ActionFoldersWrite, dashboards.ScopeFoldersProvider.GetResourceScopeUID(f.UID))
-		access.CanEdit, _ = r.ac.Evaluate(ctx, user, canEditEvaluator)
-		access.CanSave = access.CanEdit
-		canAdminEvaluator := accesscontrol.EvalAll(
-			accesscontrol.EvalPermission(dashboards.ActionFoldersPermissionsRead, dashboards.ScopeFoldersProvider.GetResourceScopeUID(f.UID)),
-			accesscontrol.EvalPermission(dashboards.ActionFoldersPermissionsWrite, dashboards.ScopeFoldersProvider.GetResourceScopeUID(f.UID)),
-		)
-		access.CanAdmin, _ = r.ac.Evaluate(ctx, user, canAdminEvaluator)
-		canDeleteEvaluator := accesscontrol.EvalPermission(dashboards.ActionFoldersDelete, dashboards.ScopeFoldersProvider.GetResourceScopeUID(f.UID))
-		access.CanDelete, _ = r.ac.Evaluate(ctx, user, canDeleteEvaluator)
-		responder.Object(http.StatusOK, access)
+		var rsp authlib.CheckResponse
+		check := func(verb string) bool {
+			if err != nil {
+				return false
+			}
+			rsp, err = r.accessClient.Check(ctx, user, authlib.CheckRequest{
+				Verb:      verb,
+				Group:     foldersV1.GROUP,
+				Resource:  foldersV1.RESOURCE,
+				Namespace: ns.Value,
+				Name:      name,
+				Folder:    obj.GetFolder(),
+			})
+			return rsp.Allowed
+		}
+
+		access := &folders.FolderAccessInfo{
+			CanSave:   check(utils.VerbCreate),
+			CanEdit:   check(utils.VerbUpdate),
+			CanAdmin:  check(utils.VerbSetPermissions),
+			CanDelete: check(utils.VerbDelete),
+		}
+		if err != nil {
+			responder.Error(err)
+		} else {
+			responder.Object(200, access)
+		}
 	}), nil
 }
