@@ -4,12 +4,6 @@ Git sync has two different controllers: the jobs controller and the repo control
 
 ## Jobs Controller
 
-> [!WARNING]
-> This controller has current limitations:
->
-> - Does not start the ConcurrentJobDriver yet. Notifications are logged but not consumed by workers here.
-> - Job processing (claim/renew/update/complete) isn't implemented yet as it requires refactoring of some components.
-
 ### Behavior
 
 - Watches provisioning `Jobs` and emits notifications on job creation.
@@ -51,6 +45,7 @@ This binary currently wires informers and emits job-create notifications. In the
    - `make build`
 2. Ensure the following services are running locally: provisioning API server, secrets service API server, repository controller, unified storage, and auth.
 3. Create a operator.ini file:
+
 ```
 [database]
 ensure_default_org_and_user = false
@@ -65,12 +60,15 @@ token_exchange_url = http://localhost:6481/sign/access-token
 # Uncomment to enable history cleanup via Loki. First ensure the Provisioning API is configured with Loki for job history (see `createJobHistoryConfigFromSettings` in `pkg/registry/apis/provisioning/register.go`).
 # history_expiration = 24h  
 ```
+
 3. Start the controller:
-  - `GF_DEFAULT_TARGET=operator GF_OPERATOR_NAME=provisioning-jobs ./bin/darwin-arm64/grafana server target --config=conf/operator.ini`
+
+- `GF_DEFAULT_TARGET=operator GF_OPERATOR_NAME=provisioning-jobs ./bin/darwin-arm64/grafana server target --config=conf/operator.ini`
 
 #### TLS Configuration Examples
 
 - **Production with proper TLS verification**:
+
 ```
 [operator]
 provisioning_server_url = https://localhost:6446
@@ -83,6 +81,7 @@ token_exchange_url = http://localhost:6481/sign/access-token
 ```
 
 - **Mutual TLS authentication**:
+
 ```
 [operator]
 provisioning_server_url = https://localhost:6446
@@ -97,6 +96,7 @@ token_exchange_url = http://localhost:6481/sign/access-token
 ```
 
 - **Development with self-signed certificates (insecure)**:
+
 ```
 [operator]
 provisioning_server_url = https://localhost:6446
