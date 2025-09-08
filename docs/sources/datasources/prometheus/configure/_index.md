@@ -255,34 +255,34 @@ After you have provisioned a data source you cannot edit it.
 
 **Example of a Prometheus data source configuration:**
 
-    ```yaml
-    apiVersion: 1
+```yaml
+apiVersion: 1
 
-    datasources:
-      - name: Prometheus
-        type: prometheus
-        access: proxy
-        url: http://localhost:9090
-        jsonData:
-          httpMethod: POST
-          manageAlerts: true
-          allowAsRecordingRulesTarget: true
-          prometheusType: Prometheus
-          prometheusVersion: 3.3.0
-          cacheLevel: 'High'
-          disableRecordingRules: false
-          timeInterval: 10s   # Prometheus scrape interval
-          incrementalQueryOverlapWindow: 10m
-          exemplarTraceIdDestinations:
-            # Field with internal link pointing to data source in Grafana.
-            # datasourceUid value can be anything, but it should be unique across all defined data source uids.
-            - datasourceUid: my_jaeger_uid
-              name: traceID
+datasources:
+  - name: Prometheus
+    type: prometheus
+    access: proxy
+    url: http://localhost:9090
+    jsonData:
+      httpMethod: POST
+      manageAlerts: true
+      allowAsRecordingRulesTarget: true
+      prometheusType: Prometheus
+      prometheusVersion: 3.3.0
+      cacheLevel: 'High'
+      disableRecordingRules: false
+      timeInterval: 10s # Prometheus scrape interval
+      incrementalQueryOverlapWindow: 10m
+      exemplarTraceIdDestinations:
+        # Field with internal link pointing to data source in Grafana.
+        # datasourceUid value can be anything, but it should be unique across all defined data source uids.
+        - datasourceUid: my_jaeger_uid
+          name: traceID
 
-            # Field with external link.
-            - name: traceID
-              url: 'http://localhost:3000/explore?orgId=1&left=%5B%22now-1h%22,%22now%22,%22Jaeger%22,%7B%22query%22:%22$${__value.raw}%22%7D%5D'
-    ```
+        # Field with external link.
+        - name: traceID
+          url: 'http://localhost:3000/explore?orgId=1&left=%5B%22now-1h%22,%22now%22,%22Jaeger%22,%7B%22query%22:%22$${__value.raw}%22%7D%5D'
+```
 
 ## Azure authentication settings
 
