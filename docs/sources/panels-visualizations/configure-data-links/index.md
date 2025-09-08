@@ -312,7 +312,6 @@ To add a data link, follow these steps:
 
 1. Enter the **URL** to which you want to link.
 1. (Optional) To add a data link variable, do the following:
-
    - Click in the **URL** field and enter `$` or press Ctrl+Space or Cmd+Space to see a list of available variables.
    - Ensure that you use the variable _name_ and not the variable _label_ in the URL. The label is only used as display text.
 
