@@ -123,7 +123,7 @@ func (s *LegacyStore) Create(ctx context.Context, obj runtime.Object, createVali
 
 	login := serviceaccounts.GenerateLogin(serviceaccounts.ServiceAccountPrefix, ns.OrgID, saObj.Spec.Title)
 	if saObj.Spec.Plugin != "" {
-		login = serviceaccounts.ExtSvcLoginPrefix(ns.OrgID) + slugify.Slugify(saObj.Spec.Title)
+		login = serviceaccounts.ExtSvcLoginPrefix(ns.OrgID) + slugify.Slugify(saObj.Spec.Plugin)
 	}
 
 	createCmd := legacy.CreateServiceAccountCommand{
