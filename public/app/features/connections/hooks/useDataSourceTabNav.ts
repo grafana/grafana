@@ -18,8 +18,8 @@ export function useDataSourceTabNav(pageName: string, pageIdParam?: string) {
   const params = new URLSearchParams(location.search);
   const pageId = pageIdParam || params.get('page');
 
-  const dsi = getDataSourceSrv()?.getInstanceSettings(uid);
   const { plugin, loadError, loading } = useDataSourceSettings();
+  const dsi = getDataSourceSrv()?.getInstanceSettings(uid);
   const hasAlertingEnabled = Boolean(dsi?.meta?.alerting ?? false);
   const isAlertManagerDatasource = dsi?.type === 'alertmanager';
   const alertingSupported = hasAlertingEnabled || isAlertManagerDatasource;
