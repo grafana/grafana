@@ -8,10 +8,13 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 func TestIntegrationUnifiedStorageCommand(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
 	// setup datasources with password, basic_auth and none
+
 	store := db.InitTestDB(t)
 	err := store.WithDbSession(context.Background(), func(sess *db.Session) error {
 		unistoreMigrationTest(t, sess, store)

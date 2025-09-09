@@ -37,6 +37,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/dashboards/database"
 	dashboardservice "github.com/grafana/grafana/pkg/services/dashboards/service"
+	dashclient "github.com/grafana/grafana/pkg/services/dashboards/service/client"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder/folderimpl"
 	"github.com/grafana/grafana/pkg/services/licensing/licensingtest"
@@ -107,80 +108,50 @@ func BenchmarkFolderListAndSearch(b *testing.B) {
 		features    featuremgmt.FeatureToggles
 	}{
 		{
-			desc:        "impl=default nested_folders=on get root folders",
+			desc:        "impl=default get root folders",
 			url:         "/api/folders",
 			expectedLen: LEVEL0_FOLDER_NUM + 1, // for shared with me folder
-			features:    featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders),
+			features:    featuremgmt.WithFeatures(),
 		},
 		{
-			desc:        "impl=default nested_folders=on get subfolders",
+			desc:        "impl=default get subfolders",
 			url:         "/api/folders?parentUid=folder0",
 			expectedLen: LEVEL1_FOLDER_NUM,
-			features:    featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders),
-		},
-		{
-			desc:        "impl=default nested_folders=on list all inherited dashboards",
-			url:         "/api/search?type=dash-db&limit=5000",
-			expectedLen: withLimit(all),
-			features:    featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders),
-		},
-		{
-			desc:        "impl=permissionsFilterRemoveSubquery nested_folders=on list all inherited dashboards",
-			url:         "/api/search?type=dash-db&limit=5000",
-			expectedLen: withLimit(all),
-			features:    featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders, featuremgmt.FlagPermissionsFilterRemoveSubquery),
-		},
-		{
-			desc:        "impl=default nested_folders=on search for pattern",
-			url:         "/api/search?type=dash-db&query=dashboard_0_0&limit=5000",
-			expectedLen: withLimit(1 + LEVEL1_DASHBOARD_NUM + LEVEL2_FOLDER_NUM*LEVEL2_DASHBOARD_NUM),
-			features:    featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders),
-		},
-		{
-			desc:        "impl=permissionsFilterRemoveSubquery nested_folders=on search for pattern",
-			url:         "/api/search?type=dash-db&query=dashboard_0_0&limit=5000",
-			expectedLen: withLimit(1 + LEVEL1_DASHBOARD_NUM + LEVEL2_FOLDER_NUM*LEVEL2_DASHBOARD_NUM),
-			features:    featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders, featuremgmt.FlagPermissionsFilterRemoveSubquery),
-		},
-		{
-			desc:        "impl=default nested_folders=on search for specific dashboard",
-			url:         "/api/search?type=dash-db&query=dashboard_0_0_0_0",
-			expectedLen: 1,
-			features:    featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders),
-		},
-		{
-			desc:        "impl=permissionsFilterRemoveSubquery nested_folders=on search for specific dashboard",
-			url:         "/api/search?type=dash-db&query=dashboard_0_0_0_0",
-			expectedLen: 1,
-			features:    featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders, featuremgmt.FlagPermissionsFilterRemoveSubquery),
-		},
-		{
-			desc:        "impl=default nested_folders=off get root folders",
-			url:         "/api/folders?limit=5000",
-			expectedLen: withLimit(LEVEL0_FOLDER_NUM),
 			features:    featuremgmt.WithFeatures(),
 		},
 		{
-			desc:        "impl=default nested_folders=off list all dashboards",
+			desc:        "impl=defaultlist all inherited dashboards",
 			url:         "/api/search?type=dash-db&limit=5000",
-			expectedLen: withLimit(LEVEL0_FOLDER_NUM * LEVEL0_DASHBOARD_NUM),
+			expectedLen: withLimit(all),
 			features:    featuremgmt.WithFeatures(),
 		},
 		{
-			desc:        "impl=permissionsFilterRemoveSubquery nested_folders=off list all dashboards",
+			desc:        "impl=permissionsFilterRemoveSubquery list all inherited dashboards",
 			url:         "/api/search?type=dash-db&limit=5000",
-			expectedLen: withLimit(LEVEL0_FOLDER_NUM * LEVEL0_DASHBOARD_NUM),
+			expectedLen: withLimit(all),
 			features:    featuremgmt.WithFeatures(featuremgmt.FlagPermissionsFilterRemoveSubquery),
 		},
 		{
-			desc:        "impl=default nested_folders=off search specific dashboard",
-			url:         "/api/search?type=dash-db&query=dashboard_0_0",
+			desc:        "impl=default search for pattern",
+			url:         "/api/search?type=dash-db&query=dashboard_0_0&limit=5000",
+			expectedLen: withLimit(1 + LEVEL1_DASHBOARD_NUM + LEVEL2_FOLDER_NUM*LEVEL2_DASHBOARD_NUM),
+			features:    featuremgmt.WithFeatures(),
+		},
+		{
+			desc:        "impl=permissionsFilterRemoveSubquery search for pattern",
+			url:         "/api/search?type=dash-db&query=dashboard_0_0&limit=5000",
+			expectedLen: withLimit(1 + LEVEL1_DASHBOARD_NUM + LEVEL2_FOLDER_NUM*LEVEL2_DASHBOARD_NUM),
+			features:    featuremgmt.WithFeatures(featuremgmt.FlagPermissionsFilterRemoveSubquery),
+		},
+		{
+			desc:        "impl=default search for specific dashboard",
+			url:         "/api/search?type=dash-db&query=dashboard_0_0_0_0",
 			expectedLen: 1,
 			features:    featuremgmt.WithFeatures(),
 		},
 		{
-			desc:        "impl=permissionsFilterRemoveSubquery nested_folders=off search specific dashboard",
-			url:         "/api/search?type=dash-db&query=dashboard_0_0",
+			desc:        "impl=permissionsFilterRemoveSubquery search for specific dashboard",
+			url:         "/api/search?type=dash-db&query=dashboard_0_0_0_0",
 			expectedLen: 1,
 			features:    featuremgmt.WithFeatures(featuremgmt.FlagPermissionsFilterRemoveSubquery),
 		},
@@ -459,14 +430,12 @@ func setupServer(b testing.TB, sc benchScenario, features featuremgmt.FeatureTog
 	dashStore, err := database.ProvideDashboardStore(sc.db, sc.cfg, features, tagimpl.ProvideService(sc.db))
 	require.NoError(b, err)
 
-	folderStore := folderimpl.ProvideDashboardFolderStore(sc.db)
-
 	ac := acimpl.ProvideAccessControl(featuremgmt.WithFeatures())
 	cfg := setting.NewCfg()
 	actionSets := resourcepermissions.NewActionSetService()
 	fStore := folderimpl.ProvideStore(sc.db)
 	folderServiceWithFlagOn := folderimpl.ProvideService(
-		fStore, ac, bus.ProvideBus(tracing.InitializeTracerForTest()), dashStore, folderStore,
+		fStore, ac, bus.ProvideBus(tracing.InitializeTracerForTest()), dashStore,
 		nil, sc.db, features, supportbundlestest.NewFakeBundleService(), nil, cfg, nil, tracing.InitializeTracerForTest(), nil, dualwrite.ProvideTestService(), sort.ProvideService(), apiserver.WithoutRestConfig)
 	acSvc := acimpl.ProvideOSSService(
 		sc.cfg, acdb.ProvideService(sc.db), actionSets, localcache.ProvideService(),
@@ -476,11 +445,31 @@ func setupServer(b testing.TB, sc benchScenario, features featuremgmt.FeatureTog
 		cfg, features, routing.NewRouteRegister(), sc.db, ac, license, folderServiceWithFlagOn, acSvc, sc.teamSvc, sc.userSvc, actionSets)
 	require.NoError(b, err)
 	dashboardSvc, err := dashboardservice.ProvideDashboardServiceImpl(
-		sc.cfg, dashStore, folderStore,
-		features, folderPermissions, ac, actest.FakeService{},
-		folderServiceWithFlagOn, nil, client.MockTestRestConfig{}, nil, quotaSrv, nil, nil, nil, dualwrite.ProvideTestService(), sort.ProvideService(),
+		sc.cfg,
+		dashStore,
+		features,
+		folderPermissions,
+		ac,
+		actest.FakeService{},
+		folderServiceWithFlagOn,
+		nil,
+		quotaSrv,
+		nil,
+		nil,
+		dualwrite.ProvideTestService(),
 		serverlock.ProvideService(sc.db, tracing.InitializeTracerForTest()),
 		kvstore.NewFakeKVStore(),
+		dashclient.NewK8sClientWithFallback(
+			sc.cfg,
+			client.MockTestRestConfig{},
+			dashStore,
+			sc.userSvc,
+			nil,
+			sort.ProvideService(),
+			dualwrite.ProvideTestService(),
+			nil,
+			features,
+		),
 	)
 	require.NoError(b, err)
 

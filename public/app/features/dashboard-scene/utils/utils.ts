@@ -17,6 +17,7 @@ import { Dashboard, Panel, RowPanel } from '@grafana/schema';
 import { createLogger } from '@grafana/ui';
 import { initialIntervalVariableModelState } from 'app/features/variables/interval/reducer';
 
+import { CustomTimeRangeCompare } from '../scene/CustomTimeRangeCompare';
 import { DashboardDatasourceBehaviour } from '../scene/DashboardDatasourceBehaviour';
 import { DashboardLayoutOrchestrator } from '../scene/DashboardLayoutOrchestrator';
 import { DashboardScene, DashboardSceneState } from '../scene/DashboardScene';
@@ -27,8 +28,6 @@ import { UNCONFIGURED_PANEL_PLUGIN_ID } from '../scene/UnconfiguredPanel';
 import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
 import { setDashboardPanelContext } from '../scene/setDashboardPanelContext';
 import { DashboardLayoutManager, isDashboardLayoutManager } from '../scene/types/DashboardLayoutManager';
-
-import { containsCloneKey, getLastKeyFromClone, getOriginalKey, isInCloneChain } from './clone';
 
 export const NEW_PANEL_HEIGHT = 8;
 export const NEW_PANEL_WIDTH = 12;
@@ -43,7 +42,7 @@ export function getVizPanelKeyForPanelId(panelId: number) {
 }
 
 export function getPanelIdForVizPanel(panel: SceneObject): number {
-  return parseInt(getOriginalKey(panel.state.key!).replace('panel-', ''), 10);
+  return parseInt(panel.state.key!.replace('panel-', ''), 10);
 }
 
 /**
@@ -97,100 +96,14 @@ function findVizPanelInternal(scene: SceneObject, key: string | undefined): VizP
 
   return null;
 }
-
-export function findOriginalVizPanelByKey(scene: SceneObject, key: string | undefined): VizPanel | null {
-  if (!key) {
-    return null;
-  }
-
-  let panel: VizPanel | null = findOriginalVizPanelInternal(scene, key);
-
-  if (panel) {
-    return panel;
-  }
-
-  // Also try to find by panel id
-  const id = parseInt(key, 10);
-  if (isNaN(id)) {
-    return null;
-  }
-
-  const panelId = getVizPanelKeyForPanelId(id);
-  panel = findVizPanelInternal(scene, panelId);
-
-  if (panel) {
-    return panel;
-  }
-
-  panel = findOriginalVizPanelInternal(scene, panelId);
-
-  return panel;
-}
-
-function findOriginalVizPanelInternal(scene: SceneObject, key: string | undefined): VizPanel | null {
-  if (!key) {
-    return null;
-  }
-
-  const panel = sceneGraph.findObject(scene, (obj) => {
-    const objKey = obj.state.key!;
-
-    // Compare the original keys
-    if (objKey === key || (!isInCloneChain(objKey) && getOriginalKey(objKey) === getOriginalKey(key))) {
-      return true;
-    }
-
-    if (!(obj instanceof VizPanel)) {
-      return false;
-    }
-
-    return false;
-  });
-
-  if (panel) {
-    if (panel instanceof VizPanel) {
-      return panel;
-    } else {
-      throw new Error(`Found panel with key ${key} but it was not a VizPanel`);
-    }
-  }
-
-  return null;
-}
-
 export function findEditPanel(scene: SceneObject, key: string | undefined): VizPanel | null {
   if (!key) {
     return null;
   }
 
-  // First we try to find the non-cloned panel
-  // This means it is either in not in a repeat chain or every item in the chain is not a clone
-  let panel: SceneObject | null = findOriginalVizPanelByKey(scene, key);
+  let panel: SceneObject | null = findVizPanelByKey(scene, key);
   if (!panel || !panel.state.key) {
     return null;
-  }
-
-  // Get the actual panel key, without any of the ancestors
-  const panelKey = getLastKeyFromClone(panel.state.key);
-
-  // If the panel contains clone in the key, this means it's a repeated panel, and we need to find the original panel
-  if (containsCloneKey(panelKey)) {
-    // Get the original key of the panel that we are looking for
-    const originalPanelKey = getOriginalKey(panelKey);
-    // Start the search from the parent to avoid unnecessary checks
-    // The parent usually is the grid item where the referenced panel is also located
-    panel = sceneGraph.findObject(panel.parent ?? scene, (sceneObject) => {
-      if (!sceneObject.state.key || isInCloneChain(sceneObject.state.key)) {
-        return false;
-      }
-
-      const currentLastKey = getLastKeyFromClone(sceneObject.state.key);
-      if (containsCloneKey(currentLastKey)) {
-        return false;
-      }
-
-      return getOriginalKey(currentLastKey) === originalPanelKey;
-    });
   }
 
   if (!(panel instanceof VizPanel)) {
@@ -343,6 +256,9 @@ export function getDefaultVizPanel(): VizPanel {
     menu: new VizPanelMenu({
       $behaviors: [panelMenuBehavior],
     }),
+    headerActions: config.featureToggles.timeComparison
+      ? [new CustomTimeRangeCompare({ key: 'time-compare', compareWith: undefined, compareOptions: [] })]
+      : undefined,
     $data: new SceneDataTransformer({
       $data: new SceneQueryRunner({
         queries: [{ refId: 'A' }],
@@ -369,8 +285,8 @@ export function getLibraryPanelBehavior(vizPanel: VizPanel): LibraryPanelBehavio
 }
 
 export function calculateGridItemDimensions(repeater: DashboardGridItem) {
-  const rowCount = Math.ceil(repeater.state.repeatedPanels!.length / repeater.getMaxPerRow());
-  const columnCount = Math.ceil(repeater.state.repeatedPanels!.length / rowCount);
+  const rowCount = Math.ceil(repeater.getChildCount() / repeater.getMaxPerRow());
+  const columnCount = Math.ceil(repeater.getChildCount() / rowCount);
   const w = 24 / columnCount;
   const h = repeater.state.itemHeight ?? 10;
   return { h, w, columnCount };

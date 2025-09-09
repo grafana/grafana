@@ -1,21 +1,22 @@
 import { useEffect, useRef } from 'react';
 
 import { Trans, t } from '@grafana/i18n';
-import { Alert, Spinner, Stack, Text } from '@grafana/ui';
+import { Spinner, Stack, Text } from '@grafana/ui';
 import { useGetRepositoryJobsWithPathQuery } from 'app/api/clients/provisioning/v0alpha1';
 
-import { useStepStatus } from '../Wizard/StepStatusContext';
+import { StepStatusInfo } from '../Wizard/types';
 
 import { JobContent } from './JobContent';
 
 export interface FinishedJobProps {
   jobUid: string;
   repositoryName: string;
+  jobType: 'sync' | 'delete' | 'move';
+  onStatusChange?: (statusInfo: StepStatusInfo) => void;
 }
 
-export function FinishedJobStatus({ jobUid, repositoryName }: FinishedJobProps) {
+export function FinishedJobStatus({ jobUid, repositoryName, jobType, onStatusChange }: FinishedJobProps) {
   const hasRetried = useRef(false);
-  const { setStepStatusInfo } = useStepStatus();
   const finishedQuery = useGetRepositoryJobsWithPathQuery({
     name: repositoryName,
     uid: jobUid,
@@ -35,16 +36,46 @@ export function FinishedJobStatus({ jobUid, repositoryName }: FinishedJobProps) 
       }, 1000);
     }
 
+    if (retryFailed) {
+      onStatusChange?.({
+        status: 'error',
+        error: {
+          title: t('provisioning.job-status.no-job-found', 'No job found'),
+          message: t(
+            'provisioning.job-status.no-job-found-message',
+            'The job may have been deleted or could not be retrieved. Cancel the current process and start again.'
+          ),
+        },
+      });
+      return;
+    }
+
     if (finishedQuery.isSuccess && job?.status) {
-      if (job.status.state === 'error') {
-        setStepStatusInfo({
+      const { state, message, errors } = job.status;
+
+      if (state === 'error') {
+        onStatusChange?.({
           status: 'error',
+          error: {
+            title: t('provisioning.job-status.status.title-error-running-job', 'Error running job'),
+            message: errors?.length ? errors : message,
+          },
         });
-      } else if (job.status.state === 'success') {
-        setStepStatusInfo({ status: 'success' });
-      } else if (job.status.state === 'warning') {
-        // We treat warnings as success for now, but this could be changed later
-        setStepStatusInfo({ status: 'success' });
+      } else if (state === 'success') {
+        onStatusChange?.({
+          status: 'success',
+          success: {
+            title: t('provisioning.job-status.status.title-success-running-job', 'Job completed successfully'),
+          },
+        });
+      } else if (state === 'warning') {
+        onStatusChange?.({
+          status: 'warning',
+          warning: {
+            title: t('provisioning.job-status.status.title-warning-running-job', 'Job completed with warnings'),
+            message: errors?.length ? errors : message,
+          },
+        });
       }
     }
 
@@ -53,18 +84,7 @@ export function FinishedJobStatus({ jobUid, repositoryName }: FinishedJobProps) 
         clearTimeout(timeoutId);
       }
     };
-  }, [finishedQuery, job, setStepStatusInfo]);
-
-  if (retryFailed) {
-    setStepStatusInfo({ status: 'error' });
-    return (
-      <Alert severity="error" title={t('provisioning.job-status.no-job-found', 'No job found')}>
-        <Trans i18nKey="provisioning.job-status.no-job-found-message">
-          The job may have been deleted or could not be retrieved. Cancel the current process and start again.
-        </Trans>
-      </Alert>
-    );
-  }
+  }, [finishedQuery, job, onStatusChange, retryFailed]);
 
   if (!job || finishedQuery.isLoading || finishedQuery.isFetching) {
     return (
@@ -77,5 +97,5 @@ export function FinishedJobStatus({ jobUid, repositoryName }: FinishedJobProps) 
     );
   }
 
-  return <JobContent job={job} isFinishedJob={true} />;
+  return <JobContent job={job} isFinishedJob={true} onStatusChange={onStatusChange} jobType={jobType} />;
 }

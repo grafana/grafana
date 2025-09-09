@@ -8,16 +8,14 @@ import {
   SceneObjectState,
   VizPanel,
 } from '@grafana/scenes';
-import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
+import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2';
 
 import { dashboardEditActions, ObjectsReorderedOnCanvasEvent } from '../../edit-pane/shared';
 import { serializeRowsLayout } from '../../serialization/layoutSerializers/RowsLayoutSerializer';
-import { isClonedKey, joinCloneKeys } from '../../utils/clone';
 import { getDashboardSceneFor } from '../../utils/utils';
 import { DashboardGridItem } from '../layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from '../layout-default/DefaultGridLayoutManager';
 import { RowRepeaterBehavior } from '../layout-default/RowRepeaterBehavior';
-import { TabItemRepeaterBehavior } from '../layout-tabs/TabItemRepeaterBehavior';
 import { TabsLayoutManager } from '../layout-tabs/TabsLayoutManager';
 import { getRowFromClipboard } from '../layouts-shared/paste';
 import { generateUniqueTitle, ungroupLayout } from '../layouts-shared/utils';
@@ -68,16 +66,7 @@ export class RowsLayoutManager extends SceneObjectBase<RowsLayoutManagerState> i
   }
 
   public cloneLayout(ancestorKey: string, isSource: boolean): DashboardLayoutManager {
-    return this.clone({
-      rows: this.state.rows.map((row) => {
-        const key = joinCloneKeys(ancestorKey, row.state.key!);
-
-        return row.clone({
-          key,
-          layout: row.state.layout.cloneLayout(key, isSource),
-        });
-      }),
-    });
+    return this.clone({});
   }
 
   public duplicate(): DashboardLayoutManager {
@@ -189,21 +178,19 @@ export class RowsLayoutManager extends SceneObjectBase<RowsLayoutManagerState> i
 
     if (layout instanceof TabsLayoutManager) {
       for (const tab of layout.state.tabs) {
-        if (isClonedKey(tab.state.key!)) {
+        if (tab.state.repeatSourceKey) {
           continue;
         }
 
         const conditionalRendering = tab.state.conditionalRendering;
         conditionalRendering?.clearParent();
 
-        const behavior = tab.state.$behaviors?.find((b) => b instanceof TabItemRepeaterBehavior);
-
         rows.push(
           new RowItem({
             layout: tab.state.layout.clone(),
             title: tab.state.title,
             conditionalRendering,
-            repeatByVariable: behavior?.state.variableName,
+            repeatByVariable: tab.state.repeatByVariable,
           })
         );
       }
@@ -224,21 +211,24 @@ export class RowsLayoutManager extends SceneObjectBase<RowsLayoutManagerState> i
         }
 
         if (child instanceof SceneGridRow) {
-          if (!isClonedKey(child.state.key!)) {
-            const behaviour = child.state.$behaviors?.find((b) => b instanceof RowRepeaterBehavior);
-
-            config.push({
-              title: child.state.title,
-              isCollapsed: !!child.state.isCollapsed,
-              isDraggable: child.state.isDraggable,
-              isResizable: child.state.isResizable,
-              children: child.state.children,
-              repeat: behaviour?.state.variableName,
-            });
-
-            // Since we encountered a row item, any subsequent panels should be added to a new row
-            children = undefined;
+          // Skip repeated row clones
+          if (child.state.repeatSourceKey) {
+            return;
           }
+
+          const behaviour = child.state.$behaviors?.find((b) => b instanceof RowRepeaterBehavior);
+
+          config.push({
+            title: child.state.title,
+            isCollapsed: !!child.state.isCollapsed,
+            isDraggable: child.state.isDraggable,
+            isResizable: child.state.isResizable,
+            children: child.state.children,
+            repeat: behaviour?.state.variableName,
+          });
+
+          // Since we encountered a row item, any subsequent panels should be added to a new row
+          children = undefined;
         } else {
           if (!children) {
             children = [];
@@ -258,7 +248,8 @@ export class RowsLayoutManager extends SceneObjectBase<RowsLayoutManagerState> i
             layout: DefaultGridLayoutManager.fromGridItems(
               rowConfig.children,
               rowConfig.isDraggable ?? layout.state.grid.state.isDraggable,
-              rowConfig.isResizable ?? layout.state.grid.state.isResizable
+              rowConfig.isResizable ?? layout.state.grid.state.isResizable,
+              layout.state.grid.state.isLazy
             ),
           })
       );

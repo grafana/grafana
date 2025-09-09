@@ -47,6 +47,7 @@ export enum VariableHide {
   dontHide,
   hideLabel,
   hideVariable,
+  inControlsMenu,
 }
 
 export interface AdHocVariableFilter {
@@ -186,6 +187,7 @@ export interface BaseVariableModel {
   error: any | null;
   description: string | null;
   usedInRepeat?: boolean;
+  showInControlsMenu?: boolean;
 }
 
 export interface SnapshotVariableModel extends VariableWithOptions {

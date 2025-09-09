@@ -15,6 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
+	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 func TestMain(m *testing.M) {
@@ -34,6 +35,8 @@ func createTestClient(t *testing.T, opts *setting.RemoteCacheSettings, sqlstore 
 }
 
 func TestIntegrationCachedBasedOnConfig(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	db, cfg := sqlstore.InitTestDB(t)
 	err := cfg.Load(setting.CommandLineArgs{
 		HomePath: "../../../",

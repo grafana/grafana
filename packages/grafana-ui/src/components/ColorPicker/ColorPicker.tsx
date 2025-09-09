@@ -37,7 +37,7 @@ export const colorPickerFactory = <T extends ColorPickerProps>(
     pickerTriggerRef = createRef<any>();
 
     render() {
-      const { theme, children, onChange, color } = this.props;
+      const { theme, children, onChange, color, id } = this.props;
       const styles = getStyles(theme);
       const popoverElement = React.createElement(popover, {
         ...{ ...this.props, children: null },
@@ -67,6 +67,7 @@ export const colorPickerFactory = <T extends ColorPickerProps>(
                   })
                 ) : (
                   <ColorSwatch
+                    id={id}
                     ref={this.pickerTriggerRef}
                     onClick={showPopper}
                     onMouseLeave={hidePopper}
@@ -94,6 +95,8 @@ const getStyles = stylesFactory((theme: GrafanaTheme2) => {
       color: theme.colors.text.primary,
       maxWidth: '400px',
       fontSize: theme.typography.size.sm,
+      maxHeight: '100vh',
+      overflow: 'auto',
     }),
   };
 });

@@ -3,6 +3,7 @@ package sync
 import (
 	"context"
 	"errors"
+	"fmt"
 	"strconv"
 	"testing"
 
@@ -975,6 +976,93 @@ func TestUserSync_FetchSyncedUserHook(t *testing.T) {
 	}
 }
 
+func TestUserSync_CatalogLoginHook(t *testing.T) {
+	type testCase struct {
+		name           string
+		identity       *authn.Identity
+		expectFlagSet  bool
+		catalogVersion string
+	}
+
+	tests := []testCase{
+		{
+			name: "should skip hook when SyncUser flag is not enabled",
+			identity: &authn.Identity{
+				ClientParams: authn.ClientParams{
+					SyncUser: false,
+				},
+			},
+			expectFlagSet: false,
+		},
+		{
+			name: "should skip hook when request is nil",
+			identity: &authn.Identity{
+				ClientParams: authn.ClientParams{
+					SyncUser: true,
+				},
+			},
+		},
+		{
+			name: "should skip hook when catalog version is not set",
+			identity: &authn.Identity{
+				ClientParams: authn.ClientParams{
+					SyncUser: true,
+				},
+			},
+			expectFlagSet: false,
+		},
+		{
+			name: "should not set loginflag when catalog version is set incorrectly",
+			identity: &authn.Identity{
+				ClientParams: authn.ClientParams{
+					SyncUser: true,
+				},
+			},
+			catalogVersion: "v0aplha1",
+			expectFlagSet:  false,
+		},
+		{
+			name: "should not set loginflag when catalog version is empty",
+			identity: &authn.Identity{
+				ClientParams: authn.ClientParams{
+					SyncUser: true,
+				},
+			},
+			expectFlagSet: false,
+		},
+		{
+			name: "should set successful loginflag when catalog version is set correctly",
+			identity: &authn.Identity{
+				ClientParams: authn.ClientParams{
+					SyncUser: true,
+				},
+			},
+			catalogVersion: "1.0.0",
+			expectFlagSet:  true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			s := UserSync{
+				tracer: tracing.InitializeTracerForTest(),
+				log:    log.New("test"),
+			}
+
+			req := authn.Request{}
+			if tt.catalogVersion != "" {
+				req.SetMeta("catalog_version", tt.catalogVersion)
+			}
+
+			s.CatalogLoginHook(context.Background(), tt.identity, &req, nil)
+			usageStats := s.GetUsageStats(context.Background())
+			countIndex := fmt.Sprintf("stats.features.saml.catalog_version_%s.count", tt.catalogVersion)
+			countResult := usageStats[countIndex] != nil && usageStats[countIndex].(int) == 1
+			assert.Equal(t, tt.expectFlagSet, countResult)
+		})
+	}
+}
+
 func TestUserSync_EnableDisabledUserHook(t *testing.T) {
 	type testCase struct {
 		desc       string
@@ -1092,11 +1180,24 @@ func TestUserSync_ValidateUserProvisioningHook(t *testing.T) {
 			},
 		},
 		{
-			desc: "it should skip validation if allowedNonProvisionedUsers is enabled",
+			desc: "it should skip validation if rejectNonProvisionedUsers is disabled",
 			userSyncServiceSetup: func() *UserSync {
 				userSyncService := initUserSyncService()
-				userSyncService.allowNonProvisionedUsers = true
+				userSyncService.rejectNonProvisionedUsers = false
 				userSyncService.isUserProvisioningEnabled = true
+				userSyncService.userService = &usertest.FakeUserService{
+					ExpectedUser: &user.User{
+						ID:            1,
+						IsProvisioned: false,
+					},
+				}
+				userSyncService.authInfoService = &authinfotest.FakeService{
+					ExpectedUserAuth: &login.UserAuth{
+						UserId:     1,
+						AuthModule: login.GenericOAuthModule,
+						AuthId:     "1",
+					},
+				}
 				return userSyncService
 			},
 			identity: &authn.Identity{
@@ -1111,7 +1212,7 @@ func TestUserSync_ValidateUserProvisioningHook(t *testing.T) {
 			desc: "it should skip validation if the user is authenticated via GrafanaComAuthModule",
 			userSyncServiceSetup: func() *UserSync {
 				userSyncService := initUserSyncService()
-				userSyncService.allowNonProvisionedUsers = false
+				userSyncService.rejectNonProvisionedUsers = true
 				userSyncService.isUserProvisioningEnabled = true
 				return userSyncService
 			},
@@ -1127,7 +1228,7 @@ func TestUserSync_ValidateUserProvisioningHook(t *testing.T) {
 			desc: "it should fail to validate the identity with the provisioned user, unexpected error",
 			userSyncServiceSetup: func() *UserSync {
 				userSyncService := initUserSyncService()
-				userSyncService.allowNonProvisionedUsers = false
+				userSyncService.rejectNonProvisionedUsers = true
 				userSyncService.isUserProvisioningEnabled = true
 				userSyncService.userService = &usertest.FakeUserService{
 					ExpectedError: errors.New("random error"),
@@ -1148,7 +1249,7 @@ func TestUserSync_ValidateUserProvisioningHook(t *testing.T) {
 			desc: "it should fail to validate the identity with the provisioned user, no user found",
 			userSyncServiceSetup: func() *UserSync {
 				userSyncService := initUserSyncService()
-				userSyncService.allowNonProvisionedUsers = false
+				userSyncService.rejectNonProvisionedUsers = true
 				userSyncService.isUserProvisioningEnabled = true
 				userSyncService.userService = &usertest.FakeUserService{}
 				return userSyncService
@@ -1167,7 +1268,7 @@ func TestUserSync_ValidateUserProvisioningHook(t *testing.T) {
 			desc: "it should fail to validate the provisioned user.ExternalUID with the identity.ExternalUID - empty ExternalUID",
 			userSyncServiceSetup: func() *UserSync {
 				userSyncService := initUserSyncService()
-				userSyncService.allowNonProvisionedUsers = false
+				userSyncService.rejectNonProvisionedUsers = true
 				userSyncService.isUserProvisioningEnabled = true
 				userSyncService.userService = &usertest.FakeUserService{
 					ExpectedUser: &user.User{
@@ -1198,7 +1299,7 @@ func TestUserSync_ValidateUserProvisioningHook(t *testing.T) {
 			desc: "it should fail to validate the provisioned user.ExternalUID with the identity.ExternalUID - different ExternalUID",
 			userSyncServiceSetup: func() *UserSync {
 				userSyncService := initUserSyncService()
-				userSyncService.allowNonProvisionedUsers = false
+				userSyncService.rejectNonProvisionedUsers = true
 				userSyncService.isUserProvisioningEnabled = true
 				userSyncService.userService = &usertest.FakeUserService{
 					ExpectedUser: &user.User{
@@ -1230,7 +1331,7 @@ func TestUserSync_ValidateUserProvisioningHook(t *testing.T) {
 			desc: "it should successfully validate the provisioned user.ExternalUID with the identity.ExternalUID",
 			userSyncServiceSetup: func() *UserSync {
 				userSyncService := initUserSyncService()
-				userSyncService.allowNonProvisionedUsers = false
+				userSyncService.rejectNonProvisionedUsers = true
 				userSyncService.isUserProvisioningEnabled = true
 				userSyncService.userService = &usertest.FakeUserService{
 					ExpectedUser: &user.User{
@@ -1259,10 +1360,10 @@ func TestUserSync_ValidateUserProvisioningHook(t *testing.T) {
 			expectedErr: nil,
 		},
 		{
-			desc: "it should failed to validate a non provisioned user when retrieved from the database",
+			desc: "it should fail to validate a non provisioned user when configured to reject non provisioned users",
 			userSyncServiceSetup: func() *UserSync {
 				userSyncService := initUserSyncService()
-				userSyncService.allowNonProvisionedUsers = false
+				userSyncService.rejectNonProvisionedUsers = true
 				userSyncService.isUserProvisioningEnabled = true
 				userSyncService.userService = &usertest.FakeUserService{
 					ExpectedUser: &user.User{
@@ -1289,6 +1390,38 @@ func TestUserSync_ValidateUserProvisioningHook(t *testing.T) {
 				},
 			},
 			expectedErr: errUserNotProvisioned.Errorf("user is not provisioned"),
+		},
+		{
+			desc: "it should skip to validate a non provisioned user when configured to allow non provisioned users",
+			userSyncServiceSetup: func() *UserSync {
+				userSyncService := initUserSyncService()
+				userSyncService.rejectNonProvisionedUsers = false
+				userSyncService.isUserProvisioningEnabled = true
+				userSyncService.userService = &usertest.FakeUserService{
+					ExpectedUser: &user.User{
+						ID:            1,
+						IsProvisioned: false,
+					},
+				}
+				userSyncService.authInfoService = &authinfotest.FakeService{
+					ExpectedUserAuth: &login.UserAuth{
+						UserId:      1,
+						AuthModule:  login.SAMLAuthModule,
+						AuthId:      "1",
+						ExternalUID: "random-external-uid",
+					},
+				}
+				return userSyncService
+			},
+			identity: &authn.Identity{
+				AuthenticatedBy: login.SAMLAuthModule,
+				AuthID:          "1",
+				ExternalUID:     "different-external-uid",
+				ClientParams: authn.ClientParams{
+					SyncUser: true,
+				},
+			},
+			expectedErr: nil,
 		},
 		{
 			desc: "ValidateProvisioning: DB ExternalUID is empty, Incoming ExternalUID is empty - expect mismatch (stricter logic)",
@@ -1351,7 +1484,7 @@ func TestUserSync_ValidateUserProvisioningHook(t *testing.T) {
 			desc: "it should skip ExternalUID validation for a SAML-provisioned user accessed by a non-SAML method with an empty incoming ExternalUID",
 			userSyncServiceSetup: func() *UserSync {
 				userSyncService := initUserSyncService()
-				userSyncService.allowNonProvisionedUsers = false
+				userSyncService.rejectNonProvisionedUsers = false
 				userSyncService.isUserProvisioningEnabled = true
 				userSyncService.userService = &usertest.FakeUserService{
 					ExpectedUser: &user.User{
@@ -1380,7 +1513,7 @@ func TestUserSync_ValidateUserProvisioningHook(t *testing.T) {
 			desc: "it should fail validation when a provisioned user is accessed by SAML with an empty incoming ExternalUID",
 			userSyncServiceSetup: func() *UserSync {
 				userSyncService := initUserSyncService()
-				userSyncService.allowNonProvisionedUsers = false
+				userSyncService.rejectNonProvisionedUsers = true
 				userSyncService.isUserProvisioningEnabled = true
 				userSyncService.userService = &usertest.FakeUserService{
 					ExpectedUser: &user.User{
@@ -1425,10 +1558,10 @@ func TestUserSync_SCIMUtilIntegration(t *testing.T) {
 
 	// Mock SCIM utility for testing
 	type mockSCIMUtil struct {
-		userSyncEnabled            bool
-		nonProvisionedUsersAllowed bool
-		shouldUseDynamicConfig     bool
-		shouldReturnError          bool
+		userSyncEnabled             bool
+		nonProvisionedUsersRejected bool
+		shouldUseDynamicConfig      bool
+		shouldReturnError           bool
 	}
 
 	createMockSCIMUtil := func(mockCfg *mockSCIMUtil) *scimutil.SCIMUtil {
@@ -1453,9 +1586,9 @@ func TestUserSync_SCIMUtilIntegration(t *testing.T) {
 						"namespace": "default",
 					},
 					"spec": map[string]interface{}{
-						"enableUserSync":           mockCfg.userSyncEnabled,
-						"enableGroupSync":          false, // Not used for this test
-						"allowNonProvisionedUsers": mockCfg.nonProvisionedUsersAllowed,
+						"enableUserSync":            mockCfg.userSyncEnabled,
+						"enableGroupSync":           false, // Not used for this test
+						"rejectNonProvisionedUsers": mockCfg.nonProvisionedUsersRejected,
 					},
 				},
 			}
@@ -1467,13 +1600,13 @@ func TestUserSync_SCIMUtilIntegration(t *testing.T) {
 	}
 
 	tests := []struct {
-		name                          string
-		identity                      *authn.Identity
-		staticConfig                  *StaticSCIMConfig
-		mockSCIMUtil                  *mockSCIMUtil
-		expectedUserSyncEnabled       bool
-		expectedNonProvisionedAllowed bool
-		expectedError                 error
+		name                           string
+		identity                       *authn.Identity
+		staticConfig                   *StaticSCIMConfig
+		mockSCIMUtil                   *mockSCIMUtil
+		expectedUserSyncEnabled        bool
+		expectedNonProvisionedRejected bool
+		expectedError                  error
 	}{
 		{
 			name: "SCIM util nil - uses static config",
@@ -1483,11 +1616,11 @@ func TestUserSync_SCIMUtilIntegration(t *testing.T) {
 			},
 			staticConfig: &StaticSCIMConfig{
 				IsUserProvisioningEnabled: true,
-				AllowNonProvisionedUsers:  false,
+				RejectNonProvisionedUsers: false,
 			},
-			mockSCIMUtil:                  nil, // No SCIM util
-			expectedUserSyncEnabled:       true,
-			expectedNonProvisionedAllowed: false,
+			mockSCIMUtil:                   nil, // No SCIM util
+			expectedUserSyncEnabled:        true,
+			expectedNonProvisionedRejected: false,
 		},
 		{
 			name: "SCIM util with dynamic config - user sync enabled",
@@ -1497,15 +1630,15 @@ func TestUserSync_SCIMUtilIntegration(t *testing.T) {
 			},
 			staticConfig: &StaticSCIMConfig{
 				IsUserProvisioningEnabled: false, // Static disabled
-				AllowNonProvisionedUsers:  false,
+				RejectNonProvisionedUsers: true,
 			},
 			mockSCIMUtil: &mockSCIMUtil{
-				userSyncEnabled:            true, // Dynamic enabled
-				nonProvisionedUsersAllowed: true,
-				shouldUseDynamicConfig:     true,
+				userSyncEnabled:             true, // Dynamic enabled
+				nonProvisionedUsersRejected: true,
+				shouldUseDynamicConfig:      true,
 			},
-			expectedUserSyncEnabled:       true,
-			expectedNonProvisionedAllowed: true,
+			expectedUserSyncEnabled:        true,
+			expectedNonProvisionedRejected: true,
 		},
 		{
 			name: "SCIM util with dynamic config - user sync disabled",
@@ -1515,15 +1648,15 @@ func TestUserSync_SCIMUtilIntegration(t *testing.T) {
 			},
 			staticConfig: &StaticSCIMConfig{
 				IsUserProvisioningEnabled: true, // Static enabled
-				AllowNonProvisionedUsers:  true,
+				RejectNonProvisionedUsers: true,
 			},
 			mockSCIMUtil: &mockSCIMUtil{
-				userSyncEnabled:            false, // Dynamic disabled
-				nonProvisionedUsersAllowed: false,
-				shouldUseDynamicConfig:     true,
+				userSyncEnabled:             false, // Dynamic disabled
+				nonProvisionedUsersRejected: false,
+				shouldUseDynamicConfig:      true,
 			},
-			expectedUserSyncEnabled:       false,
-			expectedNonProvisionedAllowed: false,
+			expectedUserSyncEnabled:        false,
+			expectedNonProvisionedRejected: false,
 		},
 		{
 			name: "SCIM util with error - falls back to static config",
@@ -1533,13 +1666,13 @@ func TestUserSync_SCIMUtilIntegration(t *testing.T) {
 			},
 			staticConfig: &StaticSCIMConfig{
 				IsUserProvisioningEnabled: true,
-				AllowNonProvisionedUsers:  false,
+				RejectNonProvisionedUsers: false,
 			},
 			mockSCIMUtil: &mockSCIMUtil{
 				shouldReturnError: true,
 			},
-			expectedUserSyncEnabled:       true,
-			expectedNonProvisionedAllowed: false,
+			expectedUserSyncEnabled:        true,
+			expectedNonProvisionedRejected: false,
 		},
 	}
 
@@ -1559,14 +1692,14 @@ func TestUserSync_SCIMUtilIntegration(t *testing.T) {
 			}
 			assert.Equal(t, tt.expectedUserSyncEnabled, userSyncEnabled, "User sync enabled mismatch")
 
-			// Test non-provisioned users allowed check
-			var nonProvisionedAllowed bool
+			// Test non-provisioned users rejected check
+			var nonProvisionedReject bool
 			if userSync.scimUtil != nil {
-				nonProvisionedAllowed = userSync.scimUtil.AreNonProvisionedUsersAllowed(ctx, orgID, tt.staticConfig.AllowNonProvisionedUsers)
+				nonProvisionedReject = userSync.scimUtil.AreNonProvisionedUsersRejected(ctx, orgID, tt.staticConfig.RejectNonProvisionedUsers)
 			} else {
-				nonProvisionedAllowed = tt.staticConfig.AllowNonProvisionedUsers
+				nonProvisionedReject = tt.staticConfig.RejectNonProvisionedUsers
 			}
-			assert.Equal(t, tt.expectedNonProvisionedAllowed, nonProvisionedAllowed, "Non-provisioned users allowed mismatch")
+			assert.Equal(t, tt.expectedNonProvisionedRejected, nonProvisionedReject, "Non-provisioned users rejected mismatch")
 		})
 	}
 }
@@ -1765,7 +1898,7 @@ func TestUserSync_GetUsageStats(t *testing.T) {
 
 func TestUserSync_SCIMLoginUsageStatSet(t *testing.T) {
 	userSync := initUserSyncService()
-	userSync.allowNonProvisionedUsers = false
+	userSync.rejectNonProvisionedUsers = false
 	userSync.isUserProvisioningEnabled = true
 	userSync.userService = &usertest.FakeUserService{
 		ExpectedUser: &user.User{

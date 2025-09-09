@@ -8,12 +8,17 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/kinds/librarypanel"
+	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/libraryelements/model"
 	"github.com/grafana/grafana/pkg/services/org"
+	searchmodel "github.com/grafana/grafana/pkg/services/search/model"
 	"github.com/grafana/grafana/pkg/services/search/sort"
+	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 func TestIntegration_GetAllLibraryElements(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	testScenario(t, "When an admin tries to get all library panels and none exists, it should return none",
 		func(t *testing.T, sc scenarioContext) {
 			resp := sc.service.getAllHandler(sc.reqContext)
@@ -403,7 +408,14 @@ func TestIntegration_GetAllLibraryElements(t *testing.T) {
 
 	scenarioWithPanel(t, "When an admin tries to get all library panels and two exist and folderFilterUIDs is set to existing folders, it should succeed and the result should be correct",
 		func(t *testing.T, sc scenarioContext) {
-			newFolder := createFolder(t, sc, "NewFolder", sc.folderSvc)
+			newFolder := &folder.Folder{
+				ID:    2,
+				OrgID: 1,
+				UID:   "uid_for_NewFolder",
+				Title: "NewFolder",
+			}
+			sc.folderSvc.ExpectedFolder = newFolder
+			sc.folderSvc.ExpectedFolders = []*folder.Folder{newFolder}
 			// nolint:staticcheck
 			command := getCreatePanelCommand(newFolder.ID, newFolder.UID, "Text - Library Panel2")
 			sc.reqContext.Req.Body = mockRequestBody(command)
@@ -445,7 +457,7 @@ func TestIntegration_GetAllLibraryElements(t *testing.T) {
 							},
 							Version: 1,
 							Meta: model.LibraryElementDTOMeta{
-								FolderName:          "NewFolder",
+								FolderName:          newFolder.Title,
 								FolderUID:           newFolder.UID,
 								ConnectedDashboards: 0,
 								Created:             result.Result.Elements[0].Meta.Created,
@@ -1168,6 +1180,14 @@ func TestIntegration_GetAllLibraryElements(t *testing.T) {
 	// Folder name search integration tests
 	scenarioWithPanel(t, "When searching by folder name, it should return panels in that folder",
 		func(t *testing.T, sc scenarioContext) {
+			sc.folderSvc.ExpectedHitList = searchmodel.HitList{
+				{
+					UID:   sc.folder.UID,
+					Title: sc.folder.Title,
+					Type:  searchmodel.DashHitFolder,
+				},
+			}
+
 			// Create a panel in the existing folder
 			// nolint:staticcheck
 			command := getCreatePanelCommand(sc.folder.ID, sc.folder.UID, "Panel in ScenarioFolder")
@@ -1272,6 +1292,14 @@ func TestIntegration_GetAllLibraryElements(t *testing.T) {
 
 	scenarioWithPanel(t, "When searching by partial folder name, it should return panels in matching folders",
 		func(t *testing.T, sc scenarioContext) {
+			sc.folderSvc.ExpectedHitList = searchmodel.HitList{
+				{
+					UID:   sc.folder.UID,
+					Title: sc.folder.Title,
+					Type:  searchmodel.DashHitFolder,
+				},
+			}
+
 			// Create a panel in the existing folder
 			// nolint:staticcheck
 			command := getCreatePanelCommand(sc.folder.ID, sc.folder.UID, "Test Panel")

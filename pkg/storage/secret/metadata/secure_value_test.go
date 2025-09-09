@@ -4,21 +4,26 @@ import (
 	"fmt"
 	"slices"
 	"testing"
+	"time"
 
-	secretv1beta1 "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1"
-	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
-	"github.com/grafana/grafana/pkg/registry/apis/secret/testutils"
-	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
 	"github.com/mitchellh/copystructure"
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/utils/ptr"
 	"pgregory.net/rapid"
+
+	secretv1beta1 "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1"
+	"github.com/grafana/grafana/apps/secret/pkg/decrypt"
+	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
+	"github.com/grafana/grafana/pkg/registry/apis/secret/testutils"
+	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
 )
 
 type modelSecureValue struct {
 	*secretv1beta1.SecureValue
-	active bool
+	active       bool
+	created      time.Time
+	leaseCreated time.Time
 }
 
 // A simplified model of the grafana secrets manager
@@ -67,8 +72,8 @@ func (m *model) readActiveVersion(namespace, name string) *modelSecureValue {
 	return nil
 }
 
-func (m *model) create(sv *secretv1beta1.SecureValue, actorUID string) (*secretv1beta1.SecureValue, error) {
-	modelSv := &modelSecureValue{sv, false}
+func (m *model) create(now time.Time, sv *secretv1beta1.SecureValue) (*secretv1beta1.SecureValue, error) {
+	modelSv := &modelSecureValue{SecureValue: sv, active: false, created: now}
 	modelSv.Status.Version = m.getNewVersionNumber(modelSv.Namespace, modelSv.Name)
 	modelSv.Status.ExternalID = fmt.Sprintf("%d", modelSv.Status.Version)
 	m.secureValues = append(m.secureValues, modelSv)
@@ -76,7 +81,7 @@ func (m *model) create(sv *secretv1beta1.SecureValue, actorUID string) (*secretv
 	return modelSv.SecureValue, nil
 }
 
-func (m *model) update(newSecureValue *secretv1beta1.SecureValue, actorUID string) (*secretv1beta1.SecureValue, bool, error) {
+func (m *model) update(now time.Time, newSecureValue *secretv1beta1.SecureValue) (*secretv1beta1.SecureValue, bool, error) {
 	// If the payload doesn't contain a value, get the value from current version
 	if newSecureValue.Spec.Value == nil {
 		sv := m.readActiveVersion(newSecureValue.Namespace, newSecureValue.Name)
@@ -85,7 +90,7 @@ func (m *model) update(newSecureValue *secretv1beta1.SecureValue, actorUID strin
 		}
 		newSecureValue.Spec.Value = sv.Spec.Value
 	}
-	createdSv, err := m.create(newSecureValue, actorUID)
+	createdSv, err := m.create(now, newSecureValue)
 	return createdSv, true, err
 }
 
@@ -110,24 +115,24 @@ func (m *model) list(namespace string) (*secretv1beta1.SecureValueList, error) {
 	return &secretv1beta1.SecureValueList{Items: out}, nil
 }
 
-func (m *model) decrypt(decrypter, namespace, name string) (map[string]contracts.DecryptResult, error) {
+func (m *model) decrypt(decrypter, namespace, name string) (map[string]decrypt.DecryptResult, error) {
 	for _, v := range m.secureValues {
 		if v.Namespace == namespace &&
 			v.Name == name &&
 			v.active {
 			if slices.ContainsFunc(v.Spec.Decrypters, func(d string) bool { return d == decrypter }) {
-				return map[string]contracts.DecryptResult{
-					name: contracts.NewDecryptResultValue(deepCopy(v).Spec.Value),
+				return map[string]decrypt.DecryptResult{
+					name: decrypt.NewDecryptResultValue(deepCopy(v).Spec.Value),
 				}, nil
 			}
 
-			return map[string]contracts.DecryptResult{
-				name: contracts.NewDecryptResultErr(contracts.ErrDecryptNotAuthorized),
+			return map[string]decrypt.DecryptResult{
+				name: decrypt.NewDecryptResultErr(contracts.ErrDecryptNotAuthorized),
 			}, nil
 		}
 	}
-	return map[string]contracts.DecryptResult{
-		name: contracts.NewDecryptResultErr(contracts.ErrDecryptNotFound),
+	return map[string]decrypt.DecryptResult{
+		name: decrypt.NewDecryptResultErr(contracts.ErrDecryptNotFound),
 	}, nil
 }
 
@@ -137,6 +142,22 @@ func (m *model) read(namespace, name string) (*secretv1beta1.SecureValue, error)
 		return nil, contracts.ErrSecureValueNotFound
 	}
 	return modelSv.SecureValue, nil
+}
+
+func (m *model) leaseInactiveSecureValues(now time.Time, minAge, leaseTTL time.Duration, maxBatchSize uint16) ([]*modelSecureValue, error) {
+	out := make([]*modelSecureValue, 0)
+
+	for _, sv := range m.secureValues {
+		if len(out) >= int(maxBatchSize) {
+			break
+		}
+		if !sv.active && now.Sub(sv.created) > minAge && now.Sub(sv.leaseCreated) > leaseTTL {
+			sv.leaseCreated = now
+			out = append(out, sv)
+		}
+	}
+
+	return out, nil
 }
 
 var (
@@ -202,16 +223,17 @@ func TestModel(t *testing.T) {
 		t.Parallel()
 
 		m := newModel()
+		now := time.Now()
 
 		// Create a secure value
-		sv1, err := m.create(deepCopy(sv), "actor-uid")
+		sv1, err := m.create(now, deepCopy(sv))
 		require.NoError(t, err)
 		require.Equal(t, sv.Namespace, sv1.Namespace)
 		require.Equal(t, sv.Name, sv1.Name)
 		require.EqualValues(t, 1, sv1.Status.Version)
 
 		// Create a new version of a secure value
-		sv2, err := m.create(deepCopy(sv), "actor-uid")
+		sv2, err := m.create(now, deepCopy(sv))
 		require.NoError(t, err)
 		require.Equal(t, sv.Namespace, sv2.Namespace)
 		require.Equal(t, sv.Name, sv2.Name)
@@ -223,11 +245,13 @@ func TestModel(t *testing.T) {
 
 		m := newModel()
 
-		sv1, err := m.create(deepCopy(sv), "actor-uid")
+		now := time.Now()
+
+		sv1, err := m.create(now, deepCopy(sv))
 		require.NoError(t, err)
 
 		// Create a new version of a secure value by updating it
-		sv2, _, err := m.update(deepCopy(sv1), "actor-uid")
+		sv2, _, err := m.update(now, deepCopy(sv1))
 		require.NoError(t, err)
 		require.Equal(t, sv.Namespace, sv2.Namespace)
 		require.Equal(t, sv.Name, sv2.Name)
@@ -237,14 +261,14 @@ func TestModel(t *testing.T) {
 		sv3 := deepCopy(sv2)
 		sv3.Name = "i_dont_exist"
 		sv3.Spec.Value = nil
-		_, _, err = m.update(sv3, "actor-uid")
+		_, _, err = m.update(now, sv3)
 		require.ErrorIs(t, err, contracts.ErrSecureValueNotFound)
 
 		// Updating a value that doesn't exist creates a new version
 		sv4 := deepCopy(sv3)
 		sv4.Name = "i_dont_exist"
 		sv4.Spec.Value = ptr.To(secretv1beta1.NewExposedSecureValue("sv4"))
-		sv4, _, err = m.update(sv4, "actor-uid")
+		sv4, _, err = m.update(now, sv4)
 		require.NoError(t, err)
 		require.EqualValues(t, 1, sv4.Status.Version)
 	})
@@ -253,8 +277,9 @@ func TestModel(t *testing.T) {
 		t.Parallel()
 
 		m := newModel()
+		now := time.Now()
 
-		sv1, err := m.create(deepCopy(sv), "actor-uid")
+		sv1, err := m.create(now, deepCopy(sv))
 		require.NoError(t, err)
 
 		// Deleting a secure value
@@ -273,6 +298,7 @@ func TestModel(t *testing.T) {
 		t.Parallel()
 
 		m := newModel()
+		now := time.Now()
 
 		// No secure values exist yet
 		list, err := m.list(sv.Namespace)
@@ -280,7 +306,7 @@ func TestModel(t *testing.T) {
 		require.Equal(t, 0, len(list.Items))
 
 		// Create a secure value
-		sv1, err := m.create(deepCopy(sv), "actor-uid")
+		sv1, err := m.create(now, deepCopy(sv))
 		require.NoError(t, err)
 
 		// 1 secure value exists and it should be returned
@@ -296,6 +322,7 @@ func TestModel(t *testing.T) {
 		t.Parallel()
 
 		m := newModel()
+		now := time.Now()
 
 		// Decrypting a secure value that does not exist
 		result, err := m.decrypt("decrypter", "namespace", "name")
@@ -306,7 +333,7 @@ func TestModel(t *testing.T) {
 
 		// Create a secure value
 		secret := "v1"
-		sv1, err := m.create(deepCopy(sv), "actor-uid")
+		sv1, err := m.create(now, deepCopy(sv))
 		require.NoError(t, err)
 
 		// Decrypt the just created secure value
@@ -331,7 +358,7 @@ func TestStateMachine(t *testing.T) {
 			"create": func(t *rapid.T) {
 				sv := anySecureValueGen.Draw(t, "sv")
 
-				modelCreatedSv, modelErr := model.create(deepCopy(sv), "actor-uid")
+				modelCreatedSv, modelErr := model.create(sut.Clock.Now(), deepCopy(sv))
 
 				createdSv, err := sut.CreateSv(t.Context(), testutils.CreateSvWithSv(deepCopy(sv)))
 				if err != nil || modelErr != nil {
@@ -344,7 +371,7 @@ func TestStateMachine(t *testing.T) {
 			},
 			"update": func(t *rapid.T) {
 				sv := updateSecureValueGen.Draw(t, "sv")
-				modelCreatedSv, _, modelErr := model.update(deepCopy(sv), "actor-uid")
+				modelCreatedSv, _, modelErr := model.update(sut.Clock.Now(), deepCopy(sv))
 				createdSv, err := sut.UpdateSv(t.Context(), deepCopy(sv))
 				if err != nil || modelErr != nil {
 					require.ErrorIs(t, err, modelErr)
@@ -403,9 +430,8 @@ func TestStateMachine(t *testing.T) {
 			},
 			"decrypt": func(t *rapid.T) {
 				input := decryptGen.Draw(t, "decryptInput")
-				authCtx := testutils.CreateServiceAuthContext(t.Context(), input.decrypter, []string{fmt.Sprintf("secret.grafana.app/securevalues/%+v:decrypt", input.name)})
 				modelResult, modelErr := model.decrypt(input.decrypter, input.namespace, input.name)
-				result, err := sut.DecryptService.Decrypt(authCtx, input.namespace, input.name)
+				result, err := sut.DecryptService.Decrypt(t.Context(), input.decrypter, input.namespace, input.name)
 				if err != nil || modelErr != nil {
 					require.ErrorIs(t, err, modelErr)
 					return
@@ -440,8 +466,7 @@ func TestSecureValueServiceExampleBased(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, sv.Status.Version, deletedSv.Status.Version)
 
-		authCtx := testutils.CreateServiceAuthContext(t.Context(), sv.Spec.Decrypters[0], []string{fmt.Sprintf("secret.grafana.app/securevalues/%+v:decrypt", sv.Name)})
-		result, err := sut.DecryptService.Decrypt(authCtx, sv.Namespace, sv.Name)
+		result, err := sut.DecryptService.Decrypt(t.Context(), sv.Spec.Decrypters[0], sv.Namespace, sv.Name)
 		require.NoError(t, err)
 		require.Equal(t, 1, len(result))
 		require.ErrorIs(t, result[sv.Name].Error(), contracts.ErrDecryptNotFound)

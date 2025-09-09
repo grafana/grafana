@@ -10,7 +10,7 @@
 
 import * as ui from '@grafana/schema';
 
-export const pluginVersion = "12.1.0-pre";
+export const pluginVersion = "12.2.0-pre";
 
 export interface Options {
   /**
@@ -18,13 +18,23 @@ export interface Options {
    */
   cellHeight?: ui.TableCellHeight;
   /**
-   * Controls footer options
+   * Enable pagination on the table
    */
-  footer?: ui.TableFooterOptions;
+  enablePagination?: boolean;
   /**
    * Represents the index of the selected frame
    */
   frameIndex: number;
+  /**
+   * Defines the number of columns to freeze on the left side of the table
+   */
+  frozenColumns?: {
+    left?: number;
+  };
+  /**
+   * limits the maximum height of a row, if text wrapping or dynamic height is enabled
+   */
+  maxRowHeight?: number;
   /**
    * Controls whether the panel should show the header
    */
@@ -41,20 +51,6 @@ export interface Options {
 
 export const defaultOptions: Partial<Options> = {
   cellHeight: ui.TableCellHeight.Sm,
-  footer: {
-    /**
-     * Controls whether the footer should be shown
-     */
-    show: false,
-    /**
-     * Controls whether the footer should show the total number of rows on Count calculation
-     */
-    countRows: false,
-    /**
-     * Represents the selected calculations
-     */
-    reducer: [],
-  },
   frameIndex: 0,
   showHeader: true,
   showTypeIcons: false,

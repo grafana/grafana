@@ -4,56 +4,47 @@ import (
 	"github.com/grafana/grafana/apps/iam/kinds/v0alpha1"
 )
 
-role: {
+roleKind: {
 	kind:       "Role"
 	pluralName: "Roles"
-	current:    "v0alpha1"
-
-	versions: {
-		"v0alpha1": {
-			codegen: {
-				ts: { enabled: false }
-				go: { enabled: true }
-			}
-			schema: {
-				spec:   v0alpha1.RoleSpec
-			}
-		}
+	codegen: {
+		ts: { enabled: false }
+		go: { enabled: true }
 	}
 }
 
-corerole: {
+coreroleKind: {
 	kind:       "CoreRole"
 	pluralName: "CoreRoles"
-	current:    "v0alpha1"
-
-	versions: {
-		"v0alpha1": {
-			codegen: {
-				ts: { enabled: false }
-				go: { enabled: true }
-			}
-			schema: {
-				spec:   v0alpha1.RoleSpec
-			}
-		}
+	codegen: {
+		ts: { enabled: false }
+		go: { enabled: true }
 	}
 }
 
-globalrole: {
+globalroleKind: {
 	kind:       "GlobalRole"
 	pluralName: "GlobalRoles"
-	current:    "v0alpha1"
+	codegen: {
+		ts: { enabled: false }
+		go: { enabled: true }
+	}
+}
 
-	versions: {
-		"v0alpha1": {
-			codegen: {
-				ts: { enabled: false }
-				go: { enabled: true }
-			}
-			schema: {
-				spec:   v0alpha1.RoleSpec
-			}
-		}
+rolev0alpha1: roleKind & {
+	schema: {
+		spec:   v0alpha1.RoleSpec
+	}
+}
+
+corerolev0alpha1: coreroleKind & {
+	schema: {
+		spec:   v0alpha1.RoleSpec
+	}
+}
+
+globalrolev0alpha1: globalroleKind & {
+	schema: {
+		spec:   v0alpha1.RoleSpec
 	}
 }

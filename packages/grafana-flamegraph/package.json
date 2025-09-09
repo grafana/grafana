@@ -2,7 +2,7 @@
   "author": "Grafana Labs",
   "license": "Apache-2.0",
   "name": "@grafana/flamegraph",
-  "version": "12.1.0-pre",
+  "version": "12.2.0-pre",
   "description": "Grafana flamegraph visualization component",
   "keywords": [
     "grafana",
@@ -44,8 +44,8 @@
   ],
   "dependencies": {
     "@emotion/css": "11.13.5",
-    "@grafana/data": "12.1.0-pre",
-    "@grafana/ui": "12.1.0-pre",
+    "@grafana/data": "12.2.0-pre",
+    "@grafana/ui": "12.2.0-pre",
     "@leeoniya/ufuzzy": "1.0.18",
     "d3": "^7.8.5",
     "lodash": "4.17.21",
@@ -59,16 +59,15 @@
     "@babel/core": "7.28.0",
     "@babel/preset-env": "7.28.0",
     "@babel/preset-react": "7.27.1",
-    "@grafana/tsconfig": "^2.0.0",
     "@rollup/plugin-node-resolve": "16.0.1",
-    "@testing-library/dom": "10.4.0",
+    "@testing-library/dom": "10.4.1",
     "@testing-library/jest-dom": "^6.1.2",
     "@testing-library/react": "16.3.0",
     "@testing-library/user-event": "14.6.1",
     "@types/d3": "^7",
     "@types/jest": "^29.5.4",
     "@types/lodash": "4.17.20",
-    "@types/node": "22.16.5",
+    "@types/node": "22.17.0",
     "@types/react": "19.0.10",
     "@types/react-virtualized-auto-sizer": "1.0.8",
     "@types/tinycolor2": "1.4.6",
@@ -79,11 +78,12 @@
     "rollup": "^4.22.4",
     "rollup-plugin-esbuild": "6.2.1",
     "rollup-plugin-node-externals": "^8.0.0",
-    "ts-jest": "29.2.5",
+    "ts-jest": "29.4.0",
     "ts-node": "10.9.2",
-    "typescript": "5.8.3"
+    "typescript": "5.9.2"
   },
   "peerDependencies": {
+    "@grafana/assistant": "^0.0.17",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"
   }

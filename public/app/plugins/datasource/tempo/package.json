@@ -2,7 +2,7 @@
   "name": "@grafana-plugins/tempo",
   "description": "Grafana plugin for the Tempo data source.",
   "private": true,
-  "version": "12.1.0-pre",
+  "version": "12.2.0-pre",
   "dependencies": {
     "@emotion/css": "11.13.5",
     "@grafana/data": "workspace:*",
@@ -10,7 +10,7 @@
     "@grafana/lezer-traceql": "0.0.23",
     "@grafana/monaco-logql": "^0.0.8",
     "@grafana/o11y-ds-frontend": "workspace:*",
-    "@grafana/plugin-ui": "0.10.7",
+    "@grafana/plugin-ui": "^0.10.10",
     "@grafana/runtime": "workspace:*",
     "@grafana/schema": "workspace:*",
     "@grafana/ui": "workspace:*",
@@ -38,14 +38,14 @@
     "uuid": "11.1.0"
   },
   "devDependencies": {
-    "@grafana/plugin-configs": "12.1.0-pre",
-    "@testing-library/dom": "10.4.0",
-    "@testing-library/jest-dom": "6.6.3",
+    "@grafana/plugin-configs": "12.2.0-pre",
+    "@testing-library/dom": "10.4.1",
+    "@testing-library/jest-dom": "6.6.4",
     "@testing-library/react": "16.3.0",
     "@testing-library/user-event": "14.6.1",
     "@types/jest": "29.5.14",
     "@types/lodash": "4.17.20",
-    "@types/node": "22.16.5",
+    "@types/node": "22.17.0",
     "@types/prismjs": "1.26.5",
     "@types/react": "19.0.10",
     "@types/react-dom": "19.0.4",
@@ -55,8 +55,8 @@
     "jest": "29.7.0",
     "react-select-event": "5.5.1",
     "ts-node": "10.9.2",
-    "typescript": "5.8.3",
-    "webpack": "5.97.1"
+    "typescript": "5.9.2",
+    "webpack": "5.101.0"
   },
   "peerDependencies": {
     "@grafana/runtime": "*"

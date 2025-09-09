@@ -1,10 +1,17 @@
 import { act, render, renderHook, screen } from '@testing-library/react';
 import React from 'react';
 
-import { PluginContextProvider, PluginExtensionPoints, PluginMeta, PluginType } from '@grafana/data';
+import {
+  PluginContextProvider,
+  PluginExtensionPoints,
+  PluginLoadingStrategy,
+  PluginMeta,
+  PluginType,
+} from '@grafana/data';
 import { config } from '@grafana/runtime';
 
 import { ExtensionRegistriesProvider } from './ExtensionRegistriesContext';
+import * as errors from './errors';
 import { log } from './logs/log';
 import { resetLogMock } from './logs/testUtils';
 import { AddedComponentsRegistry } from './registry/AddedComponentsRegistry';
@@ -22,7 +29,7 @@ jest.mock('./utils', () => ({
   ...jest.requireActual('./utils'),
 
   // Manually set the dev mode to false
-  // (to make sure that by default we are testing a production scneario)
+  // (to make sure that by default we are testing a production scenario)
   isGrafanaDevMode: jest.fn().mockReturnValue(false),
 }));
 
@@ -102,6 +109,32 @@ describe('usePluginComponents()', () => {
         extensions: {
           exposedComponents: [],
         },
+      },
+    };
+
+    config.apps[pluginId] = {
+      id: pluginId,
+      path: '',
+      version: '',
+      preload: false,
+      angular: {
+        detected: false,
+        hideDeprecation: false,
+      },
+      loadingStrategy: PluginLoadingStrategy.fetch,
+      dependencies: {
+        grafanaVersion: '8.0.0',
+        plugins: [],
+        extensions: {
+          exposedComponents: [],
+        },
+      },
+      extensions: {
+        addedLinks: [],
+        addedComponents: [],
+        addedFunctions: [],
+        exposedComponents: [],
+        extensionPoints: [],
       },
     };
 
@@ -454,7 +487,50 @@ describe('usePluginComponents()', () => {
 
     // Trying to render an extension point that is not defined in the plugin meta
     // (No restrictions due to isGrafanaDevMode() = false)
-    let { result } = renderHook(() => usePluginComponents({ extensionPointId }), { wrapper });
+    const { result } = renderHook(() => usePluginComponents({ extensionPointId }), { wrapper });
+    expect(result.current.components.length).toBe(1);
+    expect(log.error).not.toHaveBeenCalled();
+  });
+
+  // It can happen that core Grafana plugins (e.g. traces) reuse core components which implement extension points.
+  it('should not validate the extension point meta-info for core plugins', () => {
+    jest.mocked(isGrafanaDevMode).mockReturnValue(true);
+
+    const componentConfig = {
+      targets: extensionPointId,
+      title: '1',
+      description: '1',
+      component: () => <div>Component</div>,
+    };
+
+    // The `AddedComponentsRegistry` is validating if the link is registered in the plugin metadata (config.apps).
+    config.apps[pluginId].extensions.addedComponents = [componentConfig];
+
+    wrapper = ({ children }: { children: React.ReactNode }) => (
+      <PluginContextProvider
+        meta={{
+          ...pluginMeta,
+          // The module tells if it is a core plugin
+          module: 'core:plugin/traces',
+          extensions: {
+            ...pluginMeta.extensions!,
+            // Empty list of extension points in the plugin meta (from plugin.json)
+            extensionPoints: [],
+          },
+        }}
+      >
+        <ExtensionRegistriesProvider registries={registries}>{children}</ExtensionRegistriesProvider>
+      </PluginContextProvider>
+    );
+
+    registries.addedComponentsRegistry.register({
+      pluginId,
+      configs: [componentConfig],
+    });
+
+    // Trying to render an extension point that is not defined in the plugin meta
+    // (No restrictions due to being a core plugin)
+    const { result } = renderHook(() => usePluginComponents({ extensionPointId }), { wrapper });
     expect(result.current.components.length).toBe(1);
     expect(log.error).not.toHaveBeenCalled();
   });
@@ -477,7 +553,7 @@ describe('usePluginComponents()', () => {
 
     // Trying to render an extension point that is not defined in the plugin meta
     // (No restrictions due to isGrafanaDevMode() = false)
-    let { result } = renderHook(() => usePluginComponents({ extensionPointId: 'invalid-extension-point-id' }), {
+    const { result } = renderHook(() => usePluginComponents({ extensionPointId: 'invalid-extension-point-id' }), {
       wrapper,
     });
     expect(result.current.components.length).toBe(0);
@@ -506,7 +582,7 @@ describe('usePluginComponents()', () => {
       ],
     });
 
-    let { result } = renderHook(
+    const { result } = renderHook(
       () => usePluginComponents({ extensionPointId: PluginExtensionPoints.DashboardPanelMenu }),
       {
         wrapper,
@@ -540,7 +616,7 @@ describe('usePluginComponents()', () => {
       ],
     });
 
-    let { result } = renderHook(() => usePluginComponents({ extensionPointId }), {
+    const { result } = renderHook(() => usePluginComponents({ extensionPointId }), {
       wrapper,
     });
     expect(result.current.components.length).toBe(0);
@@ -580,9 +656,10 @@ describe('usePluginComponents()', () => {
     });
 
     // Trying to render an extension point that is not defined in the plugin meta
-    let { result } = renderHook(() => usePluginComponents({ extensionPointId }), { wrapper });
+    const { result } = renderHook(() => usePluginComponents({ extensionPointId }), { wrapper });
     expect(result.current.components.length).toBe(0);
     expect(log.error).toHaveBeenCalled();
+    expect(log.error).toHaveBeenCalledWith(errors.EXTENSION_POINT_META_INFO_MISSING);
   });
 
   it('should not log an error if the extension point meta-info is correct if in dev-mode and used by a plugin', () => {
@@ -624,7 +701,7 @@ describe('usePluginComponents()', () => {
     });
 
     // Trying to render an extension point that is not defined in the plugin meta
-    let { result } = renderHook(() => usePluginComponents({ extensionPointId }), { wrapper });
+    const { result } = renderHook(() => usePluginComponents({ extensionPointId }), { wrapper });
     expect(result.current.components.length).toBe(0);
     expect(log.error).toHaveBeenCalled();
   });

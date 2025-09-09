@@ -24,7 +24,8 @@ import (
 	dashboardV0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	dashboardV1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
 	dashboardV2alpha1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1"
-	dashboardV2alpha2 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha2"
+	dashboardV2beta1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1"
+	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 func TestMain(m *testing.M) {
@@ -119,9 +120,7 @@ func TestIntegrationDashboardsAppV0Alpha1(t *testing.T) {
 		Version:  dashboardV0.VERSION,
 		Resource: "dashboards",
 	}
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	modes := []rest.DualWriterMode{rest.Mode0, rest.Mode1, rest.Mode2, rest.Mode3, rest.Mode4, rest.Mode5}
 	for _, mode := range modes {
@@ -145,9 +144,7 @@ func TestIntegrationDashboardsAppV1(t *testing.T) {
 		Version:  dashboardV1.VERSION,
 		Resource: "dashboards",
 	}
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	modes := []rest.DualWriterMode{rest.Mode0, rest.Mode1, rest.Mode2, rest.Mode3, rest.Mode4, rest.Mode5}
 	for _, mode := range modes {
@@ -171,9 +168,7 @@ func TestIntegrationDashboardsAppV2alpha1(t *testing.T) {
 		Version:  dashboardV2alpha1.VERSION,
 		Resource: "dashboards",
 	}
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	modes := []rest.DualWriterMode{rest.Mode0, rest.Mode1, rest.Mode2, rest.Mode3, rest.Mode4, rest.Mode5}
 	for _, mode := range modes {
@@ -191,15 +186,13 @@ func TestIntegrationDashboardsAppV2alpha1(t *testing.T) {
 	}
 }
 
-func TestIntegrationDashboardsAppV2alpha2(t *testing.T) {
+func TestIntegrationDashboardsAppV2beta1(t *testing.T) {
 	gvr := schema.GroupVersionResource{
-		Group:    dashboardV2alpha2.GROUP,
-		Version:  dashboardV2alpha2.VERSION,
+		Group:    dashboardV2beta1.GROUP,
+		Version:  dashboardV2beta1.VERSION,
 		Resource: "dashboards",
 	}
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	modes := []rest.DualWriterMode{rest.Mode0, rest.Mode1, rest.Mode2, rest.Mode3, rest.Mode4, rest.Mode5}
 	for _, mode := range modes {
@@ -218,13 +211,10 @@ func TestIntegrationDashboardsAppV2alpha2(t *testing.T) {
 }
 
 func TestIntegrationLegacySupport(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	ctx := context.Background()
-	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-		EnableFeatureToggles: []string{
-			// NOTE: when using this feature toggle, the read is always v0!
-			// featuremgmt.FlagKubernetesClientDashboardsFolders
-		},
-	})
+	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{})
 
 	clientV0 := helper.GetResourceClient(apis.ResourceClientArgs{
 		User: helper.Org1.Admin,

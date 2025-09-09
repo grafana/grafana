@@ -136,7 +136,7 @@
     "name": "datasource/Tempo",
     "action": "addToProject",
     "addToProject": {
-      "url": "https://github.com/orgs/grafana/projects/221"
+      "url": "https://github.com/orgs/grafana/projects/457"
     }
   },
   {
@@ -152,7 +152,7 @@
     "name": "datasource/Parca",
     "action": "addToProject",
     "addToProject": {
-      "url": "https://github.com/orgs/grafana/projects/221"
+      "url": "https://github.com/orgs/grafana/projects/457"
     }
   },
   {
@@ -168,7 +168,7 @@
     "name": "datasource/Jaeger",
     "action": "addToProject",
     "addToProject": {
-      "url": "https://github.com/orgs/grafana/projects/221"
+      "url": "https://github.com/orgs/grafana/projects/457"
     }
   },
   {
@@ -176,7 +176,7 @@
     "name": "datasource/Zipkin",
     "action": "addToProject",
     "addToProject": {
-      "url": "https://github.com/orgs/grafana/projects/221"
+      "url": "https://github.com/orgs/grafana/projects/457"
     }
   },
   {
@@ -584,7 +584,7 @@
     "name": "area/public-dashboards",
     "action": "addToProject",
     "addToProject": {
-      "url": "https://github.com/orgs/grafana/projects/482"
+      "url": "https://github.com/orgs/grafana/projects/467"
     }
   },
   {
@@ -696,7 +696,7 @@
     "name": "area/navigation",
     "action": "addToProject",
     "addToProject": {
-      "url": "https://github.com/orgs/grafana/projects/78"
+      "url": "https://github.com/orgs/grafana/projects/911"
     }
   },
   {
@@ -704,7 +704,7 @@
     "name": "area/search",
     "action": "addToProject",
     "addToProject": {
-      "url": "https://github.com/orgs/grafana/projects/78"
+      "url": "https://github.com/orgs/grafana/projects/911"
     }
   },
   {
@@ -752,7 +752,7 @@
     "name": "area/image-rendering",
     "action": "addToProject",
     "addToProject": {
-      "url": "https://github.com/orgs/grafana/projects/482"
+      "url": "https://github.com/orgs/grafana/projects/467"
     }
   },
   {
@@ -949,6 +949,14 @@
   },
   {
     "type": "label",
+    "name": "area/gitsync",
+    "action": "addToProject",
+    "addToProject": {
+      "url": "https://github.com/orgs/grafana/projects/792"
+    }
+  },
+  {
+    "type": "label",
     "name": "area/backend/db/sqlite",
     "action": "addToProject",
     "addToProject": {
@@ -1000,7 +1008,7 @@
     "name": "area/frontend/login",
     "action": "addToProject",
     "addToProject": {
-      "url": "https://github.com/orgs/grafana/projects/78"
+      "url": "https://github.com/orgs/grafana/projects/911"
     }
   },
   {
@@ -1032,7 +1040,7 @@
     "name": "area/panel/dashboard-list",
     "action": "addToProject",
     "addToProject": {
-      "url": "https://github.com/orgs/grafana/projects/202"
+      "url": "https://github.com/orgs/grafana/projects/911"
     }
   },
   {

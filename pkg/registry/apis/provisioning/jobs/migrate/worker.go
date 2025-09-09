@@ -4,9 +4,9 @@ import (
 	"context"
 	"errors"
 
-	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
+	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 )
 
@@ -21,6 +21,13 @@ type MigrationWorker struct {
 	unifiedMigrator Migrator
 }
 
+func NewMigrationWorkerFromUnified(unifiedMigrator Migrator) *MigrationWorker {
+	return &MigrationWorker{
+		unifiedMigrator: unifiedMigrator,
+	}
+}
+
+// HACK: we should decouple the implementation of these two
 func NewMigrationWorker(
 	legacyMigrator Migrator,
 	unifiedMigrator Migrator,
@@ -55,7 +62,16 @@ func (w *MigrationWorker) Process(ctx context.Context, repo repository.Repositor
 		}
 	}
 
-	if dualwrite.IsReadingLegacyDashboardsAndFolders(ctx, w.storageStatus) {
+	// Block migrate for legacy resources if repository type is folder
+	if repo.Config().Spec.Sync.Target == provisioning.SyncTargetTypeFolder {
+		// HACK: we should not have to check for storage existence here
+		if w.storageStatus != nil && dualwrite.IsReadingLegacyDashboardsAndFolders(ctx, w.storageStatus) {
+			return errors.New("migration of legacy resources is not supported for folder-type repositories")
+		}
+	}
+
+	// HACK: we should not have to check for storage existence here
+	if w.storageStatus != nil && dualwrite.IsReadingLegacyDashboardsAndFolders(ctx, w.storageStatus) {
 		return w.legacyMigrator.Migrate(ctx, rw, *options, progress)
 	}
 

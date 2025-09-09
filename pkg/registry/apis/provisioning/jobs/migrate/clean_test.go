@@ -12,8 +12,8 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
 
+	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 )
 
@@ -21,8 +21,8 @@ type mockClients struct {
 	mock.Mock
 }
 
-func (m *mockClients) ForResource(gvr schema.GroupVersionResource) (dynamic.ResourceInterface, schema.GroupVersionKind, error) {
-	args := m.Called(gvr)
+func (m *mockClients) ForResource(ctx context.Context, gvr schema.GroupVersionResource) (dynamic.ResourceInterface, schema.GroupVersionKind, error) {
+	args := m.Called(ctx, gvr)
 	var ri dynamic.ResourceInterface
 	if args.Get(0) != nil {
 		ri = args.Get(0).(dynamic.ResourceInterface)
@@ -30,8 +30,8 @@ func (m *mockClients) ForResource(gvr schema.GroupVersionResource) (dynamic.Reso
 	return ri, args.Get(1).(schema.GroupVersionKind), args.Error(2)
 }
 
-func (m *mockClients) ForKind(gvk schema.GroupVersionKind) (dynamic.ResourceInterface, schema.GroupVersionResource, error) {
-	args := m.Called(gvk)
+func (m *mockClients) ForKind(ctx context.Context, gvk schema.GroupVersionKind) (dynamic.ResourceInterface, schema.GroupVersionResource, error) {
+	args := m.Called(ctx, gvk)
 	var ri dynamic.ResourceInterface
 	if args.Get(0) != nil {
 		ri = args.Get(0).(dynamic.ResourceInterface)
@@ -39,8 +39,8 @@ func (m *mockClients) ForKind(gvk schema.GroupVersionKind) (dynamic.ResourceInte
 	return ri, args.Get(1).(schema.GroupVersionResource), args.Error(2)
 }
 
-func (m *mockClients) Folder() (dynamic.ResourceInterface, error) {
-	args := m.Called()
+func (m *mockClients) Folder(ctx context.Context) (dynamic.ResourceInterface, error) {
+	args := m.Called(ctx)
 	var ri dynamic.ResourceInterface
 	if args.Get(0) != nil {
 		ri = args.Get(0).(dynamic.ResourceInterface)
@@ -48,8 +48,8 @@ func (m *mockClients) Folder() (dynamic.ResourceInterface, error) {
 	return ri, args.Error(1)
 }
 
-func (m *mockClients) User() (dynamic.ResourceInterface, error) {
-	args := m.Called()
+func (m *mockClients) User(ctx context.Context) (dynamic.ResourceInterface, error) {
+	args := m.Called(ctx)
 	var ri dynamic.ResourceInterface
 	if args.Get(0) != nil {
 		ri = args.Get(0).(dynamic.ResourceInterface)
@@ -75,7 +75,7 @@ func TestNamespaceCleaner_Clean(t *testing.T) {
 
 	t.Run("should fail when getting resource client fails", func(t *testing.T) {
 		clients := &mockClients{}
-		clients.On("ForResource", resources.SupportedProvisioningResources[0]).
+		clients.On("ForResource", mock.Anything, resources.SupportedProvisioningResources[0]).
 			Return(nil, schema.GroupVersionKind{}, errors.New("failed to get resource client"))
 
 		mockClientFactory := resources.NewMockClientFactory(t)
@@ -113,7 +113,7 @@ func TestNamespaceCleaner_Clean(t *testing.T) {
 		}
 
 		clients := &mockClients{}
-		clients.On("ForResource", mock.Anything).
+		clients.On("ForResource", mock.Anything, mock.Anything).
 			Return(mockDynamicClient, schema.GroupVersionKind{}, nil)
 
 		mockClientFactory := resources.NewMockClientFactory(t)
@@ -127,7 +127,7 @@ func TestNamespaceCleaner_Clean(t *testing.T) {
 			return result.Action == repository.FileActionDeleted &&
 				result.Name == "test-folder" &&
 				result.Error != nil &&
-				result.Error.Error() == "delete failed"
+				result.Error.Error() == "deleting resource folder.grafana.app/Folder test-folder: delete failed"
 		})).Return()
 
 		err := cleaner.Clean(context.Background(), "test-namespace", progress)
@@ -139,8 +139,8 @@ func TestNamespaceCleaner_Clean(t *testing.T) {
 		progress.AssertExpectations(t)
 	})
 
-	t.Run("should successfully clean namespace", func(t *testing.T) {
-		// Create a mock dynamic client that returns a list with multiple items
+	t.Run("should only delete unprovisioned resources", func(t *testing.T) {
+		// Create a mock dynamic client that returns a list with mixed provisioned and unprovisioned items
 		mockDynamicClient := &mockDynamicInterface{
 			items: []unstructured.Unstructured{
 				{
@@ -148,7 +148,8 @@ func TestNamespaceCleaner_Clean(t *testing.T) {
 						"apiVersion": "folder.grafana.app/v1alpha1",
 						"kind":       "Folder",
 						"metadata": map[string]interface{}{
-							"name": "folder-1",
+							"name": "unprovisioned-folder",
+							// No manager annotations - this is unprovisioned
 						},
 					},
 				},
@@ -157,7 +158,21 @@ func TestNamespaceCleaner_Clean(t *testing.T) {
 						"apiVersion": "dashboard.grafana.app/v1alpha1",
 						"kind":       "Dashboard",
 						"metadata": map[string]interface{}{
-							"name": "dashboard-1",
+							"name": "provisioned-dashboard",
+							"annotations": map[string]interface{}{
+								"grafana.app/managerKind": "repo",
+								"grafana.app/managerId":   "test-repo",
+							},
+						},
+					},
+				},
+				{
+					Object: map[string]interface{}{
+						"apiVersion": "dashboard.grafana.app/v1alpha1",
+						"kind":       "Dashboard",
+						"metadata": map[string]interface{}{
+							"name": "unprovisioned-dashboard",
+							// No manager annotations - this is unprovisioned
 						},
 					},
 				},
@@ -165,7 +180,7 @@ func TestNamespaceCleaner_Clean(t *testing.T) {
 		}
 
 		clients := &mockClients{}
-		clients.On("ForResource", mock.Anything).
+		clients.On("ForResource", mock.Anything, mock.Anything).
 			Return(mockDynamicClient, schema.GroupVersionKind{}, nil)
 
 		mockClientFactory := resources.NewMockClientFactory(t)
@@ -177,15 +192,88 @@ func TestNamespaceCleaner_Clean(t *testing.T) {
 		progress.On("SetMessage", mock.Anything, "remove unprovisioned folders").Return()
 		progress.On("SetMessage", mock.Anything, "remove unprovisioned dashboards").Return()
 
-		// Expect two successful deletions
+		// Expect only unprovisioned resources to be deleted (2 deletions)
 		progress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
 			return result.Action == repository.FileActionDeleted &&
-				result.Name == "dashboard-1" &&
+				result.Name == "unprovisioned-folder" &&
 				result.Error == nil
 		})).Return()
 		progress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
 			return result.Action == repository.FileActionDeleted &&
-				result.Name == "folder-1" &&
+				result.Name == "unprovisioned-dashboard" &&
+				result.Error == nil
+		})).Return()
+
+		// Expect provisioned resource to be ignored (1 ignore)
+		progress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
+			return result.Action == repository.FileActionIgnored &&
+				result.Name == "provisioned-dashboard" &&
+				result.Error == nil
+		})).Return()
+
+		err := cleaner.Clean(context.Background(), "test-namespace", progress)
+		require.NoError(t, err)
+
+		mockClientFactory.AssertExpectations(t)
+		clients.AssertExpectations(t)
+		progress.AssertExpectations(t)
+	})
+
+	t.Run("should skip all provisioned resources", func(t *testing.T) {
+		// Create a mock dynamic client with only provisioned resources
+		mockDynamicClient := &mockDynamicInterface{
+			items: []unstructured.Unstructured{
+				{
+					Object: map[string]interface{}{
+						"apiVersion": "dashboard.grafana.app/v1alpha1",
+						"kind":       "Dashboard",
+						"metadata": map[string]interface{}{
+							"name": "repo-managed-dashboard",
+							"annotations": map[string]interface{}{
+								"grafana.app/managerKind": "repo",
+								"grafana.app/managerId":   "my-repo",
+							},
+						},
+					},
+				},
+				{
+					Object: map[string]interface{}{
+						"apiVersion": "folder.grafana.app/v1alpha1",
+						"kind":       "Folder",
+						"metadata": map[string]interface{}{
+							"name": "file-provisioned-folder",
+							"annotations": map[string]interface{}{
+								"grafana.app/managerKind": "classic-file-provisioning",
+								"grafana.app/managerId":   "file-provisioner",
+							},
+						},
+					},
+				},
+			},
+		}
+
+		clients := &mockClients{}
+		clients.On("ForResource", mock.Anything, mock.Anything).
+			Return(mockDynamicClient, schema.GroupVersionKind{}, nil)
+
+		mockClientFactory := resources.NewMockClientFactory(t)
+		mockClientFactory.On("Clients", mock.Anything, "test-namespace").
+			Return(clients, nil)
+
+		cleaner := NewNamespaceCleaner(mockClientFactory)
+		progress := jobs.NewMockJobProgressRecorder(t)
+		progress.On("SetMessage", mock.Anything, "remove unprovisioned folders").Return()
+		progress.On("SetMessage", mock.Anything, "remove unprovisioned dashboards").Return()
+
+		// Expect both resources to be ignored (no deletions)
+		progress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
+			return result.Action == repository.FileActionIgnored &&
+				result.Name == "repo-managed-dashboard" &&
+				result.Error == nil
+		})).Return()
+		progress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
+			return result.Action == repository.FileActionIgnored &&
+				result.Name == "file-provisioned-folder" &&
 				result.Error == nil
 		})).Return()
 

@@ -5,9 +5,9 @@ import (
 	"fmt"
 
 	"github.com/grafana/grafana-app-sdk/logging"
-	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
+	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 )
@@ -58,7 +58,8 @@ func (r *SyncWorker) Process(ctx context.Context, repo repository.Repository, jo
 	cfg := repo.Config()
 	logger := logging.FromContext(ctx).With("job", job.GetName(), "namespace", job.GetNamespace())
 	// Check if we are onboarding from legacy storage
-	if dualwrite.IsReadingLegacyDashboardsAndFolders(ctx, r.storageStatus) {
+	// HACK -- this should be handled outside of this worker
+	if r.storageStatus != nil && dualwrite.IsReadingLegacyDashboardsAndFolders(ctx, r.storageStatus) {
 		return fmt.Errorf("sync not supported until storage has migrated")
 	}
 

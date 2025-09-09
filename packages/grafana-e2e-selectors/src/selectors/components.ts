@@ -493,6 +493,22 @@ export const versionedComponents = {
             '12.1.0': 'data-testid tableng filter select-all',
           },
         },
+        Tooltip: {
+          Wrapper: {
+            '12.2.0': 'data-testid tableng tooltip wrapper',
+          },
+          Caret: {
+            '12.2.0': 'data-testid tableng tooltip caret',
+          },
+        },
+        Footer: {
+          ReducerLabel: {
+            '12.2.0': 'data-testid tableng footer reducer-label',
+          },
+          Value: {
+            '12.2.0': 'data-testid tableng footer value',
+          },
+        },
       },
     },
   },
@@ -1238,6 +1254,9 @@ export const versionedComponents = {
   DashboardRow: {
     title: {
       [MIN_GRAFANA_VERSION]: (title: string) => `data-testid dashboard-row-title-${title}`,
+    },
+    wrapper: {
+      '12.1.0': (title: string) => `data-testid dashboard-row-wrapper-for-${title}`,
     },
   },
   UserProfile: {

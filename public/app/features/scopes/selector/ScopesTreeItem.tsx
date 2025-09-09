@@ -15,6 +15,7 @@ export interface ScopesTreeItemProps {
   scopeNodes: NodesMap;
   selected: boolean;
   selectedScopes: SelectedScope[];
+  highlighted: boolean;
 
   onNodeUpdate: (scopeNodeId: string, expanded: boolean, query: string) => void;
   selectScope: (scopeNodeId: string) => void;
@@ -31,6 +32,7 @@ export function ScopesTreeItem({
   selectedScopes,
   selectScope,
   deselectScope,
+  highlighted,
 }: ScopesTreeItemProps) {
   const styles = useStyles2(getStyles);
 
@@ -52,18 +54,27 @@ export function ScopesTreeItem({
   return (
     <div
       key={treeNode.scopeNodeId}
+      id={getTreeItemElementId(treeNode.scopeNodeId)}
       role="treeitem"
-      aria-selected={treeNode.expanded}
+      // aria-selected refers to the highlighted item in the tree, not the selected checkbox/radio button
+      aria-selected={highlighted}
+      aria-expanded={isExpandable ? treeNode.expanded : undefined}
       className={anyChildExpanded ? styles.expandedContainer : undefined}
     >
-      <div className={cx(styles.title, isSelectable && !treeNode.expanded && styles.titlePadding)}>
+      <div
+        className={cx(
+          styles.title,
+          isSelectable && !treeNode.expanded && styles.titlePadding,
+          highlighted && styles.highlighted
+        )}
+      >
         {isSelectable && !treeNode.expanded ? (
           disableMultiSelect ? (
             <RadioButtonDot
               id={treeNode.scopeNodeId}
               name={treeNode.scopeNodeId}
               checked={selected}
-              label=""
+              label={isExpandable ? '' : scopeNode.spec.title}
               data-testid={`scopes-tree-${treeNode.scopeNodeId}-radio`}
               onClick={() => {
                 selected ? deselectScope(treeNode.scopeNodeId) : selectScope(treeNode.scopeNodeId);
@@ -71,8 +82,10 @@ export function ScopesTreeItem({
             />
           ) : (
             <Checkbox
+              id={treeNode.scopeNodeId}
               checked={selected}
               data-testid={`scopes-tree-${treeNode.scopeNodeId}-checkbox`}
+              label={isExpandable ? '' : scopeNode.spec.title}
               onChange={() => {
                 selected ? deselectScope(treeNode.scopeNodeId) : selectScope(treeNode.scopeNodeId);
               }}
@@ -80,7 +93,7 @@ export function ScopesTreeItem({
           )
         ) : null}
 
-        {isExpandable ? (
+        {isExpandable && (
           <button
             className={styles.expand}
             data-testid={`scopes-tree-${treeNode.scopeNodeId}-expand`}
@@ -93,8 +106,6 @@ export function ScopesTreeItem({
 
             {scopeNode.spec.title}
           </button>
-        ) : (
-          <span data-testid={`scopes-tree-${treeNode.scopeNodeId}-title`}>{scopeNode.spec.title}</span>
         )}
       </div>
 
@@ -115,8 +126,16 @@ export function ScopesTreeItem({
   );
 }
 
+export const getTreeItemElementId = (scopeNodeId?: string) => {
+  return scopeNodeId ? `scopes-tree-item-${scopeNodeId}` : undefined;
+};
+
 const getStyles = (theme: GrafanaTheme2) => {
   return {
+    highlighted: css({
+      background: theme.colors.action.focus,
+      borderRadius: theme.shape.radius.default,
+    }),
     expandedContainer: css({
       display: 'flex',
       flexDirection: 'column',
@@ -130,8 +149,10 @@ const getStyles = (theme: GrafanaTheme2) => {
       lineHeight: theme.typography.pxToRem(22),
       padding: theme.spacing(0.5, 0),
 
-      '& > label': css({
-        gap: 0,
+      '& > label :last-child': css({
+        fontSize: theme.typography.pxToRem(14),
+        lineHeight: theme.typography.pxToRem(22),
+        fontWeight: theme.typography.fontWeightRegular,
       }),
     }),
     titlePadding: css({

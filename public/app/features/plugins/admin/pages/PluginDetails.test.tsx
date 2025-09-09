@@ -36,16 +36,11 @@ jest.mock('@grafana/runtime', () => {
   return runtime;
 });
 
-jest.mock('../hooks/usePluginConfig.tsx', () => ({
-  usePluginConfig: jest.fn(() => ({
-    value: {
-      meta: {},
-    },
-  })),
-}));
+jest.mock('../hooks/usePluginConfig.tsx', () => ({ usePluginConfig: jest.fn(() => ({ value: { meta: {} } })) }));
 
 jest.mock('app/core/core', () => ({
   contextSrv: {
+    ...jest.requireActual('app/core/core').contextSrv,
     hasPermission: (action: string) => true,
     hasPermissionInMetadata: (action: string, object: WithAccessControlMetadata) => true,
   },
@@ -53,19 +48,11 @@ jest.mock('app/core/core', () => ({
 
 const renderPluginDetails = (
   pluginOverride: Partial<CatalogPlugin>,
-  {
-    pageId,
-    pluginsStateOverride,
-  }: {
-    pageId?: PluginTabIds;
-    pluginsStateOverride?: ReducerState;
-  } = {}
+  { pageId, pluginsStateOverride }: { pageId?: PluginTabIds; pluginsStateOverride?: ReducerState } = {}
 ) => {
   const plugin = getCatalogPluginMock(pluginOverride);
   const { id } = plugin;
-  const store = configureStore({
-    plugins: pluginsStateOverride || getPluginsStateMock([plugin]),
-  });
+  const store = configureStore({ plugins: pluginsStateOverride || getPluginsStateMock([plugin]) });
 
   return render(
     <Routes>
@@ -86,10 +73,7 @@ describe('Plugin details page', () => {
     dateNow = jest.spyOn(Date, 'now').mockImplementation(() => 1609470000000); // 2021-01-01 04:00:00
 
     // Enabling / disabling the plugin is currently reloading the page to propagate the changes
-    Object.defineProperty(window, 'location', {
-      configurable: true,
-      value: { reload: jest.fn() },
-    });
+    Object.defineProperty(window, 'location', { configurable: true, value: { reload: jest.fn() } });
   });
 
   afterEach(() => {
@@ -106,21 +90,14 @@ describe('Plugin details page', () => {
 
   describe('viewed as user with grafana admin permissions', () => {
     beforeAll(() => {
-      mockUserPermissions({
-        isAdmin: true,
-        isDataSourceEditor: true,
-        isOrgAdmin: true,
-      });
+      mockUserPermissions({ isAdmin: true, isDataSourceEditor: true, isOrgAdmin: true });
     });
 
     // We are doing this very basic test to see if the API fetching and data-munging is working correctly from a high-level.
     it('(SMOKE TEST) - should fetch and merge the remote and local plugin API responses correctly ', async () => {
       const id = 'smoke-test-plugin';
 
-      mockPluginApis({
-        remote: { slug: id },
-        local: { id },
-      });
+      mockPluginApis({ remote: { slug: id }, local: { id } });
 
       const { queryByText } = renderPluginDetails({ id });
 
@@ -139,12 +116,7 @@ describe('Plugin details page', () => {
       // @ts-ignore
       usePluginConfig.mockReturnValue({
         value: {
-          meta: {
-            type: PluginType.app,
-            enabled: false,
-            pinned: false,
-            jsonData: {},
-          },
+          meta: { type: PluginType.app, enabled: false, pinned: false, jsonData: {} },
           configPages: [
             {
               title: 'Config',
@@ -158,11 +130,7 @@ describe('Plugin details page', () => {
         },
       });
 
-      const { queryByText } = renderPluginDetails({
-        name,
-        isInstalled: true,
-        type: PluginType.app,
-      });
+      const { queryByText } = renderPluginDetails({ name, isInstalled: true, type: PluginType.app });
 
       expect(await queryByText(/custom config page/i)).toBeInTheDocument();
     });
@@ -236,34 +204,13 @@ describe('Plugin details page', () => {
 
     it('should display version history if the plugin is published', async () => {
       const versions = [
-        {
-          version: '1.2.0',
-          createdAt: '2018-04-06T20:23:41.000Z',
-          isCompatible: false,
-          grafanaDependency: '>=8.3.0',
-        },
-        {
-          version: '1.1.0',
-          createdAt: '2017-04-06T20:23:41.000Z',
-          isCompatible: true,
-          grafanaDependency: '>=8.0.0',
-        },
-        {
-          version: '1.0.0',
-          createdAt: '2016-04-06T20:23:41.000Z',
-          isCompatible: true,
-          grafanaDependency: '>=7.0.0',
-        },
+        { version: '1.2.0', createdAt: '2018-04-06T20:23:41.000Z', isCompatible: false, grafanaDependency: '>=8.3.0' },
+        { version: '1.1.0', createdAt: '2017-04-06T20:23:41.000Z', isCompatible: true, grafanaDependency: '>=8.0.0' },
+        { version: '1.0.0', createdAt: '2016-04-06T20:23:41.000Z', isCompatible: true, grafanaDependency: '>=7.0.0' },
       ];
 
       const { findByRole, queryByText, getByRole } = renderPluginDetails(
-        {
-          id,
-          details: {
-            links: [],
-            versions,
-          },
-        },
+        { id, details: { links: [], versions } },
         { pageId: PluginTabIds.VERSIONS }
       );
 
@@ -404,11 +351,7 @@ describe('Plugin details page', () => {
     it('should display grafana dependencies for a plugin if they are available', async () => {
       const { queryByText } = renderPluginDetails({
         id,
-        details: {
-          pluginDependencies: [],
-          grafanaDependency: '>=8.0.0',
-          links: [],
-        },
+        details: { pluginDependencies: [], grafanaDependency: '>=8.0.0', links: [] },
       });
 
       // Wait for the dependencies part to be loaded
@@ -419,10 +362,7 @@ describe('Plugin details page', () => {
       // @ts-ignore
       api.uninstallPlugin = jest.fn();
 
-      setBackendSrv({
-        ...originalBackendSrv,
-        get: jest.fn().mockResolvedValue({ panels: [] }),
-      });
+      setBackendSrv({ ...originalBackendSrv, get: jest.fn().mockResolvedValue({ panels: [] }) });
 
       const { queryByText, getByRole, findByRole, user } = renderPluginDetails({
         id,
@@ -432,14 +372,7 @@ describe('Plugin details page', () => {
           pluginDependencies: [],
           grafanaDependency: '>=8.0.0',
           links: [],
-          versions: [
-            {
-              version: '1.0.0',
-              createdAt: '',
-              isCompatible: true,
-              grafanaDependency: '>=8.0.0',
-            },
-          ],
+          versions: [{ version: '1.0.0', createdAt: '', isCompatible: true, grafanaDependency: '>=8.0.0' }],
         },
       });
 
@@ -470,12 +403,7 @@ describe('Plugin details page', () => {
       // Mock the store like if the remote plugins request was rejected
       const pluginsStateOverride = {
         ...state,
-        requests: {
-          ...state.requests,
-          [fetchRemotePlugins.typePrefix]: {
-            status: RequestStatus.Rejected,
-          },
-        },
+        requests: { ...state.requests, [fetchRemotePlugins.typePrefix]: { status: RequestStatus.Rejected } },
       };
 
       // Does not show an Install button
@@ -521,11 +449,7 @@ describe('Plugin details page', () => {
 
     it('should display a "Create" button as a post installation step for installed data source plugins', async () => {
       const name = 'Akumuli';
-      const { queryByText } = renderPluginDetails({
-        name,
-        isInstalled: true,
-        type: PluginType.datasource,
-      });
+      const { queryByText } = renderPluginDetails({ name, isInstalled: true, type: PluginType.datasource });
 
       await waitFor(() => queryByText('Uninstall'));
       expect(queryByText('Add new data source')).toBeInTheDocument();
@@ -546,11 +470,7 @@ describe('Plugin details page', () => {
 
     it('should not display post installation step for panel plugins', async () => {
       const name = 'Akumuli';
-      const { queryByText } = renderPluginDetails({
-        name,
-        isInstalled: true,
-        type: PluginType.panel,
-      });
+      const { queryByText } = renderPluginDetails({ name, isInstalled: true, type: PluginType.panel });
 
       await waitFor(() => queryByText('Uninstall'));
       expect(queryByText('Add new data source')).toBeNull();
@@ -560,21 +480,9 @@ describe('Plugin details page', () => {
       const name = 'Akumuli';
 
       // @ts-ignore
-      usePluginConfig.mockReturnValue({
-        value: {
-          meta: {
-            enabled: false,
-            pinned: false,
-            jsonData: {},
-          },
-        },
-      });
+      usePluginConfig.mockReturnValue({ value: { meta: { enabled: false, pinned: false, jsonData: {} } } });
 
-      const { queryByText, queryByRole } = renderPluginDetails({
-        name,
-        isInstalled: true,
-        type: PluginType.app,
-      });
+      const { queryByText, queryByRole } = renderPluginDetails({ name, isInstalled: true, type: PluginType.app });
 
       await waitFor(() => queryByText('Uninstall'));
 
@@ -586,21 +494,9 @@ describe('Plugin details page', () => {
       const name = 'Akumuli';
 
       // @ts-ignore
-      usePluginConfig.mockReturnValue({
-        value: {
-          meta: {
-            enabled: true,
-            pinned: false,
-            jsonData: {},
-          },
-        },
-      });
+      usePluginConfig.mockReturnValue({ value: { meta: { enabled: true, pinned: false, jsonData: {} } } });
 
-      const { queryByText, queryByRole } = renderPluginDetails({
-        name,
-        isInstalled: true,
-        type: PluginType.app,
-      });
+      const { queryByText, queryByRole } = renderPluginDetails({ name, isInstalled: true, type: PluginType.app });
 
       await waitFor(() => queryByText('Uninstall'));
 
@@ -616,15 +512,7 @@ describe('Plugin details page', () => {
       api.updatePluginSettings = jest.fn();
 
       // @ts-ignore
-      usePluginConfig.mockReturnValue({
-        value: {
-          meta: {
-            enabled: false,
-            pinned: false,
-            jsonData: {},
-          },
-        },
-      });
+      usePluginConfig.mockReturnValue({ value: { meta: { enabled: false, pinned: false, jsonData: {} } } });
 
       const { queryByText, getByRole, user } = renderPluginDetails({
         id,
@@ -641,11 +529,7 @@ describe('Plugin details page', () => {
 
       // Check if the API request was initiated
       expect(api.updatePluginSettings).toHaveBeenCalledTimes(1);
-      expect(api.updatePluginSettings).toHaveBeenCalledWith(id, {
-        enabled: true,
-        pinned: true,
-        jsonData: {},
-      });
+      expect(api.updatePluginSettings).toHaveBeenCalledWith(id, { enabled: true, pinned: true, jsonData: {} });
     });
 
     it('should be possible to disable an app plugin', async () => {
@@ -656,15 +540,7 @@ describe('Plugin details page', () => {
       api.updatePluginSettings = jest.fn();
 
       // @ts-ignore
-      usePluginConfig.mockReturnValue({
-        value: {
-          meta: {
-            enabled: true,
-            pinned: true,
-            jsonData: {},
-          },
-        },
-      });
+      usePluginConfig.mockReturnValue({ value: { meta: { enabled: true, pinned: true, jsonData: {} } } });
 
       const { queryByText, getByRole, user } = renderPluginDetails({
         id,
@@ -681,11 +557,7 @@ describe('Plugin details page', () => {
 
       // Check if the API request was initiated
       expect(api.updatePluginSettings).toHaveBeenCalledTimes(1);
-      expect(api.updatePluginSettings).toHaveBeenCalledWith(id, {
-        enabled: false,
-        pinned: false,
-        jsonData: {},
-      });
+      expect(api.updatePluginSettings).toHaveBeenCalledWith(id, { enabled: false, pinned: false, jsonData: {} });
     });
 
     it('should not display versions tab for plugins not published to gcom', async () => {
@@ -742,37 +614,25 @@ describe('Plugin details page', () => {
     });
 
     it('shows a "angular warning" if the plugin uses Angular', async () => {
-      const { queryByText } = renderPluginDetails({
-        angularDetected: true,
-      });
+      const { queryByText } = renderPluginDetails({ angularDetected: true });
 
       await waitFor(() => expect(queryByText(/angular plugin/i)).toBeInTheDocument);
     });
 
     it('does not show an "angular warning" if the plugin is not using Angular', async () => {
-      const { queryByText } = renderPluginDetails({
-        angularDetected: false,
-      });
+      const { queryByText } = renderPluginDetails({ angularDetected: false });
 
       await waitFor(() => expect(queryByText(/angular plugin/i)).not.toBeInTheDocument);
     });
 
     it('should display a deprecation warning if the plugin is deprecated', async () => {
-      const { findByRole } = renderPluginDetails({
-        id,
-        isInstalled: true,
-        isDeprecated: true,
-      });
+      const { findByRole } = renderPluginDetails({ id, isInstalled: true, isDeprecated: true });
 
       expect(await findByRole('link', { name: 'deprecated' })).toBeInTheDocument();
     });
 
     it('should not display a deprecation warning in the plugin is not deprecated', async () => {
-      const { queryByRole } = renderPluginDetails({
-        id,
-        isInstalled: true,
-        isDeprecated: false,
-      });
+      const { queryByRole } = renderPluginDetails({ id, isInstalled: true, isDeprecated: false });
 
       await waitFor(() => expect(queryByRole('link', { name: 'deprecated' })).not.toBeInTheDocument());
     });
@@ -783,10 +643,7 @@ describe('Plugin details page', () => {
         id,
         isInstalled: true,
         isDeprecated: true,
-        details: {
-          statusContext,
-          links: [],
-        },
+        details: { statusContext, links: [] },
       });
 
       expect(await findByRole('link', { name: 'deprecated' })).toBeInTheDocument();
@@ -800,10 +657,7 @@ describe('Plugin details page', () => {
         id,
         isInstalled: true,
         isDeprecated: true,
-        details: {
-          statusContext,
-          links: [],
-        },
+        details: { statusContext, links: [] },
       });
 
       expect(await findByRole('link', { name: 'deprecated' })).toBeInTheDocument();
@@ -816,11 +670,7 @@ describe('Plugin details page', () => {
 
   describe('viewed as user without grafana admin permissions', () => {
     beforeAll(() => {
-      mockUserPermissions({
-        isAdmin: false,
-        isDataSourceEditor: false,
-        isOrgAdmin: false,
-      });
+      mockUserPermissions({ isAdmin: false, isDataSourceEditor: false, isOrgAdmin: false });
     });
 
     it("should not display an install button for a plugin that isn't installed", async () => {
@@ -858,20 +708,12 @@ describe('Plugin details page', () => {
 
   describe('viewed as user without data source edit permissions', () => {
     beforeAll(() => {
-      mockUserPermissions({
-        isAdmin: true,
-        isDataSourceEditor: false,
-        isOrgAdmin: true,
-      });
+      mockUserPermissions({ isAdmin: true, isDataSourceEditor: false, isOrgAdmin: true });
     });
 
     it('should not display the data source post installation step', async () => {
       const name = 'Akumuli';
-      const { queryByText } = renderPluginDetails({
-        name,
-        isInstalled: true,
-        type: PluginType.app,
-      });
+      const { queryByText } = renderPluginDetails({ name, isInstalled: true, type: PluginType.app });
 
       await waitFor(() => queryByText('Uninstall'));
       expect(queryByText('Add new data source')).toBeNull();
@@ -880,16 +722,7 @@ describe('Plugin details page', () => {
 
   describe('Display plugin details right panel', () => {
     beforeAll(() => {
-      mockUserPermissions({
-        isAdmin: true,
-        isDataSourceEditor: false,
-        isOrgAdmin: true,
-      });
-      config.featureToggles.pluginsDetailsRightPanel = true;
-    });
-
-    afterAll(() => {
-      config.featureToggles.pluginsDetailsRightPanel = false;
+      mockUserPermissions({ isAdmin: true, isDataSourceEditor: false, isOrgAdmin: true });
     });
 
     it('should display Latest release date and report a concern information', async () => {
@@ -906,21 +739,6 @@ describe('Plugin details page', () => {
       const updatedAt = undefined;
       const { queryByText } = renderPluginDetails({ id, updatedAt });
       expect(queryByText('Last updated:')).toBeNull();
-    });
-
-    it('should display last commit date information', async () => {
-      const id = 'right-panel-test-plugin';
-      const lastCommitDate = '2023-10-26T16:54:55.000Z';
-      const { queryByText } = renderPluginDetails({ id, details: { lastCommitDate, links: [] } });
-      expect(queryByText('Last commit date:')).toBeVisible();
-      expect(queryByText('Oct 26, 2023')).toBeVisible();
-    });
-
-    it('should not display last commit date if there is no lastCommit data', async () => {
-      const id = 'right-panel-test-plugin';
-      const lastCommitDate = undefined;
-      const { queryByText } = renderPluginDetails({ id, details: { lastCommitDate, links: [] } });
-      expect(queryByText('Last commit date:')).toBeNull();
     });
 
     it('should not display Report Abuse if the plugin is Core', async () => {

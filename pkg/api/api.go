@@ -47,7 +47,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/frontend"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginaccesscontrol"
 	publicdashboardsapi "github.com/grafana/grafana/pkg/services/publicdashboards/api"
@@ -85,16 +84,8 @@ func (hs *HTTPServer) registerRoutes() {
 	r.Get("/login", hs.LoginView)
 	r.Get("/invite/:code", hs.Index)
 
-	if hs.Features.IsEnabledGlobally(featuremgmt.FlagMultiTenantFrontend) {
-		index, err := frontend.NewIndexProvider(hs.Cfg, hs.License)
-		if err != nil {
-			panic(err) // ???
-		}
-		r.Get("/femt", index.HandleRequest)
-
-		// Temporarily expose the full bootdata via API
-		r.Get("/bootdata", reqNoAuth, hs.GetBootdata)
-	}
+	// Temporary MT-frontend config endpoint
+	r.Get("/bootdata", reqNoAuth, hs.GetBootdata)
 
 	// authed views
 	r.Get("/", reqSignedIn, hs.Index)
@@ -176,7 +167,6 @@ func (hs *HTTPServer) registerRoutes() {
 	r.Get("/import/dashboard", reqSignedIn, hs.Index)
 	r.Get("/dashboards/", reqSignedIn, hs.Index)
 	r.Get("/dashboards/*", reqSignedIn, hs.Index)
-	r.Get("/goto/:uid", reqSignedIn, hs.redirectFromShortURL, hs.Index)
 
 	if hs.Cfg.PublicDashboardsEnabled {
 		// list public dashboards
@@ -264,6 +254,9 @@ func (hs *HTTPServer) registerRoutes() {
 	providerParam := ac.Parameter(":provider")
 	r.Get("/admin/authentication/:provider", authorize(ac.EvalPermission(ac.ActionSettingsRead, ac.ScopeSettingsOAuth(providerParam))), hs.Index)
 
+	// ShortURL API
+	hs.registerShortURLAPI(r)
+
 	// authed api
 	r.Group("/api", func(apiRoute routing.RouteRegister) {
 		// user (signed in)
@@ -275,13 +268,6 @@ func (hs *HTTPServer) registerRoutes() {
 			userRoute.Get("/teams", routing.Wrap(hs.GetSignedInUserTeamList))
 
 			userRoute.Get("/stars", routing.Wrap(hs.starApi.GetStars))
-			// Deprecated: use /stars/dashboard/uid/:uid API instead.
-			// nolint:staticcheck
-			userRoute.Post("/stars/dashboard/:id", routing.Wrap(hs.starApi.StarDashboard))
-			// Deprecated: use /stars/dashboard/uid/:uid API instead.
-			// nolint:staticcheck
-			userRoute.Delete("/stars/dashboard/:id", routing.Wrap(hs.starApi.UnstarDashboard))
-
 			userRoute.Post("/stars/dashboard/uid/:uid", routing.Wrap(hs.starApi.StarDashboardByUID))
 			userRoute.Delete("/stars/dashboard/uid/:uid", routing.Wrap(hs.starApi.UnstarDashboardByUID))
 
@@ -549,9 +535,6 @@ func (hs *HTTPServer) registerRoutes() {
 			// Some channels may have info
 			liveRoute.Get("/info/*", routing.Wrap(hs.Live.HandleInfoHTTP))
 		}, requestmeta.SetSLOGroup(requestmeta.SLOGroupNone))
-
-		// short urls
-		apiRoute.Post("/short-urls", routing.Wrap(hs.createShortURL))
 	}, reqSignedIn)
 
 	// admin api

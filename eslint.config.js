@@ -15,16 +15,72 @@ const grafanaConfig = require('@grafana/eslint-config/flat');
 const grafanaPlugin = require('@grafana/eslint-plugin');
 const grafanaI18nPlugin = require('@grafana/i18n/eslint-plugin');
 
-const bettererConfig = require('./.betterer.eslint.config');
-const getEnvConfig = require('./scripts/webpack/env-util');
-
-const envConfig = getEnvConfig();
-const enableBettererRules = envConfig.frontend_dev_betterer_eslint_rules;
 const pluginsToTranslate = [
   'public/app/plugins/panel',
   'public/app/plugins/datasource/azuremonitor',
   'public/app/plugins/datasource/mssql',
 ];
+
+const commonTestIgnores = [
+  '**/*.{test,spec}.{ts,tsx}',
+  '**/__mocks__/**',
+  '**/mocks/**/*.{ts,tsx}',
+  '**/public/test/**',
+  '**/mocks.{ts,tsx}',
+  '**/spec/**/*.{ts,tsx}',
+];
+
+const enterpriseIgnores = ['public/app/extensions/**/*', 'e2e/extensions/**/*'];
+
+// [FIXME] add comment about this applying everywhere
+const baseImportConfig = {
+  patterns: [
+    {
+      group: ['react-i18next', 'i18next'],
+      importNames: ['t'],
+      message: 'Please import from @grafana/i18n instead',
+    },
+    {
+      group: ['react-i18next'],
+      importNames: ['Trans'],
+      message: 'Please import from @grafana/i18n instead',
+    },
+    {
+      group: ['@grafana/ui*', '*/Layout/*'],
+      importNames: ['Layout', 'HorizontalGroup', 'VerticalGroup'],
+      message: 'Use Stack component instead.',
+    },
+    {
+      regex: '\\.test$',
+      message:
+        'Do not import test files. If you require reuse of constants/mocks across files, create a separate file with no tests',
+    },
+    {
+      group: ['@grafana/ui/src/*', '@grafana/runtime/src/*', '@grafana/data/src/*'],
+      message: 'Import from the public export instead.',
+    },
+  ],
+  paths: [
+    {
+      name: 'react-redux',
+      importNames: ['useDispatch', 'useSelector'],
+      message: 'Please import from app/types/store instead.',
+    },
+  ],
+};
+
+/**
+ *
+ * @param {{ patterns?: Array<object>, paths?: Array<object> }} config
+ * @returns
+ */
+function withBaseRestrictedImportsConfig(config = {}) {
+  const finalConfig = {
+    patterns: [...baseImportConfig.patterns, ...(config?.patterns ?? [])],
+    paths: [...baseImportConfig.paths, ...(config?.paths ?? [])],
+  };
+  return finalConfig;
+}
 
 /**
  * @type {Array<import('eslint').Linter.Config>}
@@ -53,18 +109,14 @@ module.exports = [
       'public/locales/**/*.js',
       'public/vendor/',
       'scripts/grafana-server/tmp',
-      '!.betterer.eslint.config.js',
       'packages/grafana-ui/src/graveyard', // deprecated UI components slated for removal
       'public/build-swagger', // swagger build output
     ],
   },
-  // Conditionally run the betterer rules if enabled in dev's config
-  ...(enableBettererRules ? bettererConfig : []),
-  grafanaConfig,
+  ...grafanaConfig,
   {
-    name: 'react/jsx-runtime',
-    // @ts-ignore - not sure why but flat config is typed as a maybe?
-    ...reactPlugin.configs.flat['jsx-runtime'],
+    name: 'react/jsx-runtime-rules',
+    rules: reactPlugin.configs.flat['jsx-runtime'].rules,
   },
   {
     name: 'grafana/defaults',
@@ -121,35 +173,7 @@ module.exports = [
           pathGroupsExcludedImportTypes: ['builtin'],
         },
       ],
-      'no-restricted-imports': [
-        'error',
-        {
-          patterns: [
-            {
-              group: ['react-i18next', 'i18next'],
-              importNames: ['t'],
-              message: 'Please import from @grafana/i18n instead',
-            },
-            {
-              group: ['react-i18next'],
-              importNames: ['Trans'],
-              message: 'Please import from @grafana/i18n instead',
-            },
-            {
-              regex: '\\.test$',
-              message:
-                'Do not import test files. If you require reuse of constants/mocks across files, create a separate file with no tests',
-            },
-          ],
-          paths: [
-            {
-              name: 'react-redux',
-              importNames: ['useDispatch', 'useSelector'],
-              message: 'Please import from app/types instead.',
-            },
-          ],
-        },
-      ],
+      'no-restricted-imports': ['error', baseImportConfig],
       'no-restricted-globals': ['error'].concat(restrictedGlobals),
 
       // Use typescript's no-redeclare for compatibility with overrides
@@ -157,6 +181,33 @@ module.exports = [
       '@typescript-eslint/no-redeclare': ['error'],
       'unicorn/no-empty-file': 'error',
       'no-constant-condition': 'error',
+      'no-restricted-syntax': [
+        'error',
+        {
+          // value regex is to filter out whitespace-only text nodes (e.g. new lines and spaces in the JSX)
+          selector: "JSXElement[openingElement.name.name='a'] > JSXText[value!=/^\\s*$/]",
+          message: 'No bare anchor nodes containing only text. Use `TextLink` instead.',
+        },
+      ],
+    },
+  },
+
+  {
+    name: 'grafana/no-extensions-imports',
+    files: ['public/**/*.{ts,tsx,js}'],
+    ignores: ['public/app/extensions/**/*'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        withBaseRestrictedImportsConfig({
+          patterns: [
+            {
+              group: ['app/extensions', 'app/extensions/*'],
+              message: 'Importing from app/extensions is not allowed',
+            },
+          ],
+        }),
+      ],
     },
   },
   {
@@ -212,76 +263,58 @@ module.exports = [
       ],
     },
   },
+
   {
-    name: 'grafana/data-overrides',
-    files: ['packages/grafana-data/**/*.{ts,tsx}'],
-    ignores: ['packages/grafana-data/src/**/*.{spec,test}.{ts,tsx}'],
+    // No NPM package should import from @grafana/*/internal because it does not exist
+    // outside of this repo - they're not published to NPM.
+    name: 'grafana/packages-overrides',
+    files: ['packages/**/*.{ts,tsx}'],
+    ignores: [],
     rules: {
       'no-restricted-imports': [
         'error',
-        {
-          patterns: ['@grafana/runtime', '@grafana/ui', '@grafana/data'],
-        },
-      ],
-    },
-  },
-  {
-    name: 'grafana/ui-overrides',
-    files: ['packages/grafana-ui/**/*.{ts,tsx}'],
-    rules: {
-      'no-restricted-imports': [
-        'error',
-        {
-          patterns: ['@grafana/runtime', '@grafana/data/*', '@grafana/ui', '@grafana/e2e-selectors/*'],
-          paths: [
+        withBaseRestrictedImportsConfig({
+          patterns: [
             {
-              name: 'react-i18next',
-              importNames: ['Trans', 't'],
-              message: 'Please import from grafana-ui/src/utils/i18n instead',
+              group: ['@grafana/*/internal'],
+              message: "'internal' exports are not available in NPM packages because they are not published to NPM",
             },
           ],
-        },
+        }),
       ],
     },
   },
+
   {
-    name: 'grafana/schema-overrides',
-    files: ['packages/grafana-schema/**/*.{ts,tsx}'],
-    ignores: ['packages/grafana-schema/**/*.test.{ts,tsx}'],
+    // @grafana/runtime shouldn't be imported from our 'library' NPM packages
+    name: 'grafana/packages-that-cant-import-runtime',
+    files: [
+      'packages/grafana-ui/**/*.{ts,tsx}',
+      'packages/grafana-data/**/*.{ts,tsx}',
+      'packages/grafana-schema/**/*.{ts,tsx}',
+      'packages/grafana-e2e-selectors/**/*.{ts,tsx}',
+    ],
+    ignores: [],
     rules: {
       'no-restricted-imports': [
         'error',
-        {
-          patterns: ['@grafana/*'],
-        },
+        withBaseRestrictedImportsConfig({
+          patterns: [
+            {
+              // Duplicated because these rules override the previous grafana/packages-overrides
+              group: ['@grafana/*/internal'],
+              message: "'internal' exports are not available in NPM packages because they are not published to NPM",
+            },
+            {
+              group: ['@grafana/runtime'],
+              message: "'@grafana/runtime' should not be imported from library packages",
+            },
+          ],
+        }),
       ],
     },
   },
-  {
-    name: 'grafana/runtime-overrides',
-    files: ['packages/grafana-runtime/**/*.{ts,tsx}'],
-    rules: {
-      'no-restricted-imports': [
-        'error',
-        {
-          patterns: ['@grafana/runtime', '@grafana/data/*', '@grafana/ui/*', '@grafana/e2e/*'],
-        },
-      ],
-    },
-  },
-  {
-    name: 'grafana/flamegraph-overrides',
-    files: ['packages/grafana-flamegraph/**/*.{ts,tsx}'],
-    ignores: ['packages/grafana-flamegraph/**/*.{test,story}.{ts,tsx}'],
-    rules: {
-      'no-restricted-imports': [
-        'error',
-        {
-          patterns: ['@grafana/runtime', '@grafana/e2e', '@grafana/e2e-selectors/*'],
-        },
-      ],
-    },
-  },
+
   {
     name: 'grafana/alerting-overrides',
     plugins: {
@@ -359,6 +392,14 @@ module.exports = [
     },
   },
   {
+    name: 'grafana/test-disables',
+    files: ['**/*.{spec,test}.{ts,tsx}'],
+    rules: {
+      'react/display-name': 'off',
+      'react/no-children-prop': 'off',
+    },
+  },
+  {
     name: 'grafana/explore-traceview-overrides',
     files: ['public/app/features/explore/TraceView/components/demo/**/*.{ts,tsx,js,jsx}'],
     rules: {
@@ -408,6 +449,102 @@ module.exports = [
           ],
         },
       ],
+    },
+  },
+
+  {
+    // custom rule for Table to avoid performance regressions
+    files: ['packages/grafana-ui/src/components/Table/TableNG/Cells/**/*.{ts,tsx}'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        withBaseRestrictedImportsConfig({
+          patterns: [
+            {
+              group: ['**/themes/ThemeContext'],
+              importNames: ['useStyles2', 'useTheme2'],
+              message:
+                'Do not use "useStyles2" or "useTheme2" in a cell directly. Instead, provide styles to cells via `getDefaultCellStyles` or `getCellSpecificStyles`.',
+            },
+          ],
+        }),
+      ],
+    },
+  },
+
+  // Old betterer rules config:
+  {
+    files: ['**/*.{js,jsx,ts,tsx}'],
+    ignores:
+      // FIXME: Remove once all enterprise issues are fixed -
+      // we don't have a suppressions file/approach for enterprise code yet
+      enterpriseIgnores,
+    rules: {
+      '@typescript-eslint/no-explicit-any': 'error',
+      '@grafana/no-aria-label-selectors': 'error',
+    },
+  },
+  {
+    files: ['**/*.{js,jsx,ts,tsx}'],
+    ignores: [
+      ...commonTestIgnores,
+      // FIXME: Remove once all enterprise issues are fixed -
+      // we don't have a suppressions file/approach for enterprise code yet
+      ...enterpriseIgnores,
+    ],
+    rules: {
+      '@typescript-eslint/consistent-type-assertions': ['error', { assertionStyle: 'never' }],
+      'no-restricted-syntax': [
+        'error',
+        {
+          selector: 'Identifier[name=localStorage]',
+          message: 'Direct usage of localStorage is not allowed. import store from @grafana/data instead',
+        },
+        {
+          selector: 'MemberExpression[object.name=localStorage]',
+          message: 'Direct usage of localStorage is not allowed. import store from @grafana/data instead',
+        },
+        {
+          selector:
+            'Program:has(ImportDeclaration[source.value="@grafana/ui"] ImportSpecifier[imported.name="Card"]) JSXOpeningElement[name.name="Card"]:not(:has(JSXAttribute[name.name="noMargin"]))',
+          message:
+            'Add noMargin prop to Card components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.',
+        },
+        {
+          selector:
+            'Program:has(ImportDeclaration[source.value="@grafana/ui"] ImportSpecifier[imported.name="Field"]) JSXOpeningElement[name.name="Field"]:not(:has(JSXAttribute[name.name="noMargin"]))',
+          message:
+            'Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.',
+        },
+        {
+          selector: 'CallExpression[callee.type="MemberExpression"][callee.property.name="localeCompare"]',
+          message:
+            'Using localeCompare() can cause performance issues when sorting large datasets. Consider using Intl.Collator for better performance when sorting arrays, or add an eslint-disable comment if sorting a small, known dataset.',
+        },
+        {
+          // eslint-disable-next-line no-restricted-syntax
+          selector: 'Literal[value=/gf-form/], TemplateElement[value.cooked=/gf-form/]',
+          // eslint-disable-next-line no-restricted-syntax
+          message: 'gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.',
+        },
+        {
+          selector:
+            "Property[key.name='a11y'][value.type='ObjectExpression'] Property[key.name='test'][value.value='off']",
+          message: 'Skipping a11y tests is not allowed. Please fix the component or story instead.',
+        },
+      ],
+    },
+  },
+  {
+    files: ['public/app/**/*.{ts,tsx}'],
+    ignores: [
+      ...commonTestIgnores,
+      // FIXME: Remove once all enterprise issues are fixed -
+      // we don't have a suppressions file/approach for enterprise code yet
+      ...enterpriseIgnores,
+    ],
+    rules: {
+      'no-barrel-files/no-barrel-files': 'error',
     },
   },
 ];

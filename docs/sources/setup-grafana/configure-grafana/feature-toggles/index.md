@@ -29,13 +29,11 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `featureHighlights`                    | Highlight Grafana Enterprise features                                                                                                                         |                    |
 | `correlations`                         | Correlations page                                                                                                                                             | Yes                |
 | `cloudWatchCrossAccountQuerying`       | Enables cross-account querying in CloudWatch datasources                                                                                                      | Yes                |
-| `nestedFolders`                        | Enable folder nesting                                                                                                                                         | Yes                |
 | `logsContextDatasourceUi`              | Allow datasource to provide custom UI for context view                                                                                                        | Yes                |
 | `lokiQuerySplitting`                   | Split large interval queries into subqueries with smaller time intervals                                                                                      | Yes                |
 | `influxdbBackendMigration`             | Query InfluxDB InfluxQL without the proxy                                                                                                                     | Yes                |
 | `dataplaneFrontendFallback`            | Support dataplane contract field name change for transformations and field name matchers where the name is different                                          | Yes                |
 | `unifiedRequestLog`                    | Writes error logs to the request logger                                                                                                                       | Yes                |
-| `pluginsDetailsRightPanel`             | Enables right panel for the plugins details page                                                                                                              | Yes                |
 | `recordedQueriesMulti`                 | Enables writing multiple items from a single query within Recorded Queries                                                                                    | Yes                |
 | `logsExploreTableVisualisation`        | A table visualisation for logs in Explore                                                                                                                     | Yes                |
 | `awsDatasourcesTempCredentials`        | Support temporary security credentials in AWS plugins for Grafana Cloud customers                                                                             | Yes                |
@@ -44,7 +42,7 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `dashgpt`                              | Enable AI powered features in dashboards                                                                                                                      | Yes                |
 | `panelMonitoring`                      | Enables panel monitoring through logs and measurements                                                                                                        | Yes                |
 | `formatString`                         | Enable format string transformer                                                                                                                              | Yes                |
-| `kubernetesClientDashboardsFolders`    | Route the folder and dashboard service requests to k8s                                                                                                        | Yes                |
+| `kubernetesDashboards`                 | Use the kubernetes API in the frontend for dashboards                                                                                                         | Yes                |
 | `addFieldFromCalculationStatFunctions` | Add cumulative and window functions to the add field from calculation transformation                                                                          | Yes                |
 | `annotationPermissionUpdate`           | Change the way annotation permissions work by scoping them to folders and dashboards.                                                                         | Yes                |
 | `dashboardSceneForViewers`             | Enables dashboard rendering using Scenes for viewer roles                                                                                                     | Yes                |
@@ -76,11 +74,13 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `alertingNotificationsStepMode`        | Enables simplified step mode in the notifications section                                                                                                     | Yes                |
 | `lokiLabelNamesQueryApi`               | Defaults to using the Loki `/labels` API instead of `/series`                                                                                                 | Yes                |
 | `improvedExternalSessionHandlingSAML`  | Enables improved support for SAML external sessions. Ensure the NameID format is correctly configured in Grafana for SAML Single Logout to function properly. | Yes                |
-| `teamHttpHeadersMimir`                 | Enables LBAC for datasources for Mimir to apply LBAC filtering of metrics to the client requests for users in teams                                           | Yes                |
 | `alertingMigrationUI`                  | Enables the alerting migration UI, to migrate data source-managed rules to Grafana-managed rules                                                              | Yes                |
 | `alertingImportYAMLUI`                 | Enables a UI feature for importing rules from a Prometheus file to Grafana-managed rules                                                                      | Yes                |
 | `unifiedNavbars`                       | Enables unified navbars                                                                                                                                       |                    |
+| `grafanaAssistantInProfilesDrilldown`  | Enables integration with Grafana Assistant in Profiles Drilldown                                                                                              | Yes                |
 | `tabularNumbers`                       | Use fixed-width numbers globally in the UI                                                                                                                    |                    |
+| `dashboardDsAdHocFiltering`            | Enables adhoc filtering support for the dashboard datasource                                                                                                  | Yes                |
+| `adhocFiltersInTooltips`               | Enable adhoc filter buttons in visualization tooltips                                                                                                         | Yes                |
 
 ## Public preview feature toggles
 
@@ -94,7 +94,6 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `refactorVariablesTimeRange`      | Refactor time range variables flow to reduce number of API calls made when query variables are chained |
 | `faroDatasourceSelector`          | Enable the data source selector within the Frontend Apps section of the Frontend Observability         |
 | `enableDatagridEditing`           | Enables the edit functionality in the datagrid panel                                                   |
-| `sqlDatasourceDatabaseSelection`  | Enables previous SQL data source dataset dropdown behavior                                             |
 | `reportingRetries`                | Enables rendering retries for the reporting feature                                                    |
 | `externalServiceAccounts`         | Automatic service account and token setup for plugins                                                  |
 | `cloudWatchBatchQueries`          | Runs CloudWatch metrics queries as separate batches                                                    |
@@ -102,13 +101,15 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `canvasPanelPanZoom`              | Allow pan and zoom in canvas panel                                                                     |
 | `regressionTransformation`        | Enables regression analysis transformation                                                             |
 | `alertingSaveStateCompressed`     | Enables the compressed protobuf-based alert state storage                                              |
-| `tableNextGen`                    | Allows access to the new react-data-grid based table component.                                        |
+| `sqlExpressions`                  | Enables SQL Expressions, which can execute SQL queries against data source results.                    |
+| `savedQueries`                    | Enables Saved Queries feature                                                                          |
 | `enableSCIM`                      | Enables SCIM support for user and group management                                                     |
 | `elasticsearchCrossClusterSearch` | Enables cross cluster search in the Elasticsearch datasource                                           |
 | `alertRuleRestore`                | Enables the alert rule restore feature                                                                 |
 | `azureMonitorLogsBuilderEditor`   | Enables the logs builder mode for the Azure Monitor data source                                        |
 | `localeFormatPreference`          | Specifies the locale so the correct format for numbers and dates can be shown                          |
 | `logsPanelControls`               | Enables a control component for the logs panel in Explore                                              |
+| `azureResourcePickerUpdates`      | Enables the updated Azure Monitor resource picker                                                      |
 
 ## Development feature toggles
 

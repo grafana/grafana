@@ -38,10 +38,13 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch"
 	testdatasource "github.com/grafana/grafana/pkg/tsdb/grafana-testdata-datasource"
+	"github.com/grafana/grafana/pkg/util/testutil"
 	"github.com/grafana/grafana/pkg/web/webtest"
 )
 
 func TestIntegrationCallResource(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	staticRootPath, err := filepath.Abs("../../public/")
 	require.NoError(t, err)
 

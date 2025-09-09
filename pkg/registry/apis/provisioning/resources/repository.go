@@ -4,11 +4,16 @@ import (
 	"context"
 	"fmt"
 
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
-	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
+	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	provisioningv0alpha1 "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned/typed/provisioning/v0alpha1"
+	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
+	"github.com/grafana/grafana/apps/provisioning/pkg/safepath"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
 
 //go:generate mockery --name RepositoryResourcesFactory --structname MockRepositoryResourcesFactory --inpackage --filename repository_resources_factory_mock.go --with-expecter
@@ -28,6 +33,7 @@ type RepositoryResources interface {
 	// Resource from file
 	WriteResourceFromFile(ctx context.Context, path, ref string) (string, schema.GroupVersionKind, error)
 	RemoveResourceFromFile(ctx context.Context, path, ref string) (string, schema.GroupVersionKind, error)
+	FindResourcePath(ctx context.Context, name string, gvk schema.GroupVersionKind) (string, error)
 	RenameResourceFile(ctx context.Context, path, previousRef, newPath, newRef string) (string, schema.GroupVersionKind, error)
 	// Stats
 	Stats(ctx context.Context) (*provisioning.ResourceStats, error)
@@ -55,6 +61,42 @@ func (r *repositoryResources) List(ctx context.Context) (*provisioning.ResourceL
 	return r.lister.List(ctx, r.namespace, r.repoName)
 }
 
+// FindResourcePath finds the repository file path for a resource by its name and GroupVersionKind
+func (r *repositoryResources) FindResourcePath(ctx context.Context, name string, gvk schema.GroupVersionKind) (string, error) {
+	// Use ForKind to get the dynamic client for this resource type
+	client, gvr, err := r.clients.ForKind(ctx, gvk)
+	if err != nil {
+		return "", fmt.Errorf("get client for kind %s: %w", gvk.Kind, err)
+	}
+
+	// Get the specific resource by name using the dynamic client (already namespaced)
+	obj, err := client.Get(ctx, name, metav1.GetOptions{})
+	if err != nil {
+		if apierrors.IsNotFound(err) {
+			return "", fmt.Errorf("resource not found: %s/%s/%s", gvr.Group, gvr.Resource, name)
+		}
+		return "", fmt.Errorf("failed to get resource %s/%s/%s: %w", gvr.Group, gvr.Resource, name, err)
+	}
+
+	// Extract the source path from annotations
+	annotations := obj.GetAnnotations()
+	if annotations == nil {
+		return "", fmt.Errorf("resource %s/%s/%s has no annotations", gvr.Group, gvr.Resource, name)
+	}
+
+	sourcePath, exists := annotations[utils.AnnoKeySourcePath]
+	if !exists || sourcePath == "" {
+		return "", fmt.Errorf("resource %s/%s/%s has no source path annotation", gvr.Group, gvr.Resource, name)
+	}
+
+	// For folder resources, ensure the path has a trailing slash for proper deletion
+	if gvk.Kind == "Folder" && !safepath.IsDir(sourcePath) {
+		sourcePath = sourcePath + "/"
+	}
+
+	return sourcePath, nil
+}
+
 func NewRepositoryResourcesFactory(parsers ParserFactory, clients ClientFactory, lister ResourceLister) RepositoryResourcesFactory {
 	return &repositoryResourcesFactory{parsers, clients, lister}
 }
@@ -65,7 +107,7 @@ func (r *repositoryResourcesFactory) Client(ctx context.Context, repo repository
 		return nil, fmt.Errorf("create clients: %w", err)
 	}
 
-	folderClient, err := clients.Folder()
+	folderClient, err := clients.Folder(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("create folder client: %w", err)
 	}
@@ -84,4 +126,28 @@ func (r *repositoryResourcesFactory) Client(ctx context.Context, repo repository
 		namespace:        repo.Config().Namespace,
 		repoName:         repo.Config().Name,
 	}, nil
+}
+
+type RepositoryGetter struct {
+	factory repository.Factory
+	client  provisioningv0alpha1.ProvisioningV0alpha1Interface
+}
+
+func NewRepositoryGetter(
+	factory repository.Factory,
+	client provisioningv0alpha1.ProvisioningV0alpha1Interface,
+) *RepositoryGetter {
+	return &RepositoryGetter{
+		factory: factory,
+		client:  client,
+	}
+}
+
+func (r *RepositoryGetter) GetRepository(ctx context.Context, namespace, repoName string) (repository.Repository, error) {
+	repo, err := r.client.Repositories(namespace).Get(ctx, repoName, metav1.GetOptions{})
+	if err != nil {
+		return nil, fmt.Errorf("get repository %q: %w", repoName, err)
+	}
+
+	return r.factory.Build(ctx, repo)
 }

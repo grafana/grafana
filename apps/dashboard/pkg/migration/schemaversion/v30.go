@@ -1,6 +1,7 @@
 package schemaversion
 
 import (
+	"context"
 	"strconv"
 )
 
@@ -89,7 +90,7 @@ import (
 //	    "tooltip": { "mode": "multi" }
 //	  }
 //	}
-func V30(dashboard map[string]interface{}) error {
+func V30(_ context.Context, dashboard map[string]interface{}) error {
 	dashboard["schemaVersion"] = 30
 
 	panels, ok := dashboard["panels"].([]interface{})
@@ -186,108 +187,21 @@ func upgradeValueMappings(oldMappings []interface{}, thresholds map[string]inter
 		return oldMappings
 	}
 
-	valueMaps := map[string]interface{}{
-		"type":    "value",
-		"options": map[string]interface{}{},
+	// Check if all mappings are already in the new format
+	if areAllMappingsNewFormat(oldMappings) {
+		return oldMappings
 	}
 
+	valueMaps := createValueMaps()
 	var newMappings []interface{}
 	hasValueMappings := false
 
 	for _, mapping := range oldMappings {
 		if mappingMap, ok := mapping.(map[string]interface{}); ok {
-			// Check if this is already the new format
-			if mappingType, ok := mappingMap["type"].(string); ok && mappingType != "" {
-				if mappingType == "value" {
-					// Consolidate existing value mappings
-					if options, ok := mappingMap["options"].(map[string]interface{}); ok {
-						valueMapsOptions := valueMaps["options"].(map[string]interface{})
-						for k, v := range options {
-							valueMapsOptions[k] = v
-						}
-						hasValueMappings = true
-					}
-				} else {
-					newMappings = append(newMappings, mappingMap)
-				}
-				continue
-			}
-
-			// Handle legacy format
-			var color interface{}
-			if thresholds != nil {
-				// Try to get color from threshold based on the mapping value
-				if value, ok := mappingMap["value"]; ok {
-					if valueStr, ok := value.(string); ok {
-						if numeric, err := strconv.ParseFloat(valueStr, 64); err == nil {
-							color = getActiveThresholdColor(numeric, thresholds)
-						}
-					}
-				}
-				// For range mappings, use the 'from' value to determine color
-				if fromVal, ok := mappingMap["from"]; ok {
-					if fromStr, ok := fromVal.(string); ok {
-						if numeric, err := strconv.ParseFloat(fromStr, 64); err == nil {
-							color = getActiveThresholdColor(numeric, thresholds)
-						}
-					}
-				}
-			}
-
-			// Convert legacy type numbers to new format
-			if mappingType, ok := mappingMap["type"].(float64); ok {
-				switch int(mappingType) {
-				case 1: // ValueToText
-					if value, ok := mappingMap["value"]; ok {
-						if valueStr, ok := value.(string); ok && valueStr == "null" {
-							// Handle null values as special value mapping
-							// For null values, use the base threshold color (lowest step)
-							if thresholds != nil {
-								color = getBaseThresholdColor(thresholds)
-							}
-							newMappings = append(newMappings, map[string]interface{}{
-								"type": "special",
-								"options": map[string]interface{}{
-									"match": "null",
-									"result": map[string]interface{}{
-										"text":  mappingMap["text"],
-										"color": color,
-									},
-								},
-							})
-						} else {
-							// Regular value mapping
-							valueMapsOptions := valueMaps["options"].(map[string]interface{})
-							result := map[string]interface{}{
-								"text": mappingMap["text"],
-							}
-							if color != nil {
-								result["color"] = color
-							}
-							valueMapsOptions[stringifyValue(value)] = result
-							hasValueMappings = true
-						}
-					}
-				case 2: // RangeToText
-					result := map[string]interface{}{
-						"text": mappingMap["text"],
-					}
-					if color != nil {
-						result["color"] = color
-					}
-
-					from, _ := strconv.ParseFloat(stringifyValue(mappingMap["from"]), 64)
-					to, _ := strconv.ParseFloat(stringifyValue(mappingMap["to"]), 64)
-
-					newMappings = append(newMappings, map[string]interface{}{
-						"type": "range",
-						"options": map[string]interface{}{
-							"from":   from,
-							"to":     to,
-							"result": result,
-						},
-					})
-				}
+			if isNewFormatMapping(mappingMap) {
+				hasValueMappings = processNewFormatMapping(mappingMap, valueMaps, &newMappings, hasValueMappings)
+			} else {
+				hasValueMappings = processLegacyMapping(mappingMap, thresholds, valueMaps, &newMappings, hasValueMappings)
 			}
 		}
 	}
@@ -298,6 +212,168 @@ func upgradeValueMappings(oldMappings []interface{}, thresholds map[string]inter
 	}
 
 	return newMappings
+}
+
+// areAllMappingsNewFormat checks if all mappings are already in the new format
+func areAllMappingsNewFormat(oldMappings []interface{}) bool {
+	for _, mapping := range oldMappings {
+		if mappingMap, ok := mapping.(map[string]interface{}); ok {
+			if mappingType, ok := mappingMap["type"].(string); ok && mappingType != "" {
+				// This is already in new format, keep it as-is
+				continue
+			} else {
+				// Found a legacy format mapping, need to process
+				return false
+			}
+		}
+	}
+	return true
+}
+
+// createValueMaps creates the base value maps structure
+func createValueMaps() map[string]interface{} {
+	return map[string]interface{}{
+		"type":    "value",
+		"options": map[string]interface{}{},
+	}
+}
+
+// isNewFormatMapping checks if a mapping is already in the new format
+func isNewFormatMapping(mappingMap map[string]interface{}) bool {
+	if mappingType, ok := mappingMap["type"].(string); ok && mappingType != "" {
+		return true
+	}
+	return false
+}
+
+// processNewFormatMapping handles mappings that are already in the new format
+func processNewFormatMapping(mappingMap map[string]interface{}, valueMaps map[string]interface{}, newMappings *[]interface{}, hasValueMappings bool) bool {
+	mappingType := mappingMap["type"].(string)
+	if mappingType == "value" {
+		// Consolidate existing value mappings
+		if options, ok := mappingMap["options"].(map[string]interface{}); ok {
+			valueMapsOptions := valueMaps["options"].(map[string]interface{})
+			for k, v := range options {
+				valueMapsOptions[k] = v
+			}
+			hasValueMappings = true
+		}
+	} else {
+		*newMappings = append(*newMappings, mappingMap)
+	}
+	return hasValueMappings
+}
+
+// processLegacyMapping handles legacy format mappings
+func processLegacyMapping(mappingMap map[string]interface{}, thresholds map[string]interface{}, valueMaps map[string]interface{}, newMappings *[]interface{}, hasValueMappings bool) bool {
+	color := getColorFromThresholds(mappingMap, thresholds)
+
+	// Convert legacy type numbers to new format
+	if mappingType, ok := mappingMap["type"].(float64); ok {
+		switch int(mappingType) {
+		case 1: // ValueToText
+			hasValueMappings = processValueToTextMapping(mappingMap, color, thresholds, valueMaps, newMappings, hasValueMappings)
+		case 2: // RangeToText
+			processRangeToTextMapping(mappingMap, color, newMappings)
+		}
+	}
+
+	return hasValueMappings
+}
+
+// getColorFromThresholds extracts color from thresholds based on mapping values
+func getColorFromThresholds(mappingMap map[string]interface{}, thresholds map[string]interface{}) interface{} {
+	if thresholds == nil {
+		return nil
+	}
+
+	// Try to get color from threshold based on the mapping value
+	if value, ok := mappingMap["value"]; ok {
+		if valueStr, ok := value.(string); ok {
+			if numeric, err := strconv.ParseFloat(valueStr, 64); err == nil {
+				return getActiveThresholdColor(numeric, thresholds)
+			}
+		}
+	}
+
+	// For range mappings, use the 'from' value to determine color
+	if fromVal, ok := mappingMap["from"]; ok {
+		if fromStr, ok := fromVal.(string); ok {
+			if numeric, err := strconv.ParseFloat(fromStr, 64); err == nil {
+				return getActiveThresholdColor(numeric, thresholds)
+			}
+		}
+	}
+
+	return nil
+}
+
+// processValueToTextMapping handles ValueToText legacy mappings
+func processValueToTextMapping(mappingMap map[string]interface{}, color interface{}, thresholds map[string]interface{}, valueMaps map[string]interface{}, newMappings *[]interface{}, hasValueMappings bool) bool {
+	if value, ok := mappingMap["value"]; ok {
+		if valueStr, ok := value.(string); ok && valueStr == "null" {
+			// Handle null values as special value mapping
+			processNullValueMapping(mappingMap, color, thresholds, newMappings)
+		} else {
+			// Regular value mapping
+			processRegularValueMapping(mappingMap, value, color, valueMaps)
+			hasValueMappings = true
+		}
+	}
+	return hasValueMappings
+}
+
+// processNullValueMapping creates a special value mapping for null values
+func processNullValueMapping(mappingMap map[string]interface{}, color interface{}, thresholds map[string]interface{}, newMappings *[]interface{}) {
+	// For null values, use the base threshold color (lowest step)
+	if thresholds != nil && color == nil {
+		color = getBaseThresholdColor(thresholds)
+	}
+
+	*newMappings = append(*newMappings, map[string]interface{}{
+		"type": "special",
+		"options": map[string]interface{}{
+			"match": "null",
+			"result": map[string]interface{}{
+				"text":  mappingMap["text"],
+				"color": color,
+			},
+		},
+	})
+}
+
+// processRegularValueMapping creates a regular value mapping
+func processRegularValueMapping(mappingMap map[string]interface{}, value interface{}, color interface{}, valueMaps map[string]interface{}) {
+	valueMapsOptions := valueMaps["options"].(map[string]interface{})
+	result := map[string]interface{}{
+		"text": mappingMap["text"],
+	}
+	if color != nil {
+		result["color"] = color
+	}
+	valueMapsOptions[stringifyValue(value)] = result
+}
+
+// processRangeToTextMapping handles RangeToText legacy mappings
+func processRangeToTextMapping(mappingMap map[string]interface{}, color interface{}, newMappings *[]interface{}) {
+	result := map[string]interface{}{
+		"text": mappingMap["text"],
+	}
+	if color != nil {
+		result["color"] = color
+	}
+
+	from, _ := strconv.ParseFloat(stringifyValue(mappingMap["from"]), 64)
+	to, _ := strconv.ParseFloat(stringifyValue(mappingMap["to"]), 64)
+
+	*newMappings = append(*newMappings, map[string]interface{}{
+		"type": "range",
+		"options": map[string]interface{}{
+			"from":   from,
+			"to":     to,
+			"result": result,
+		},
+	})
 }
 
 // getActiveThresholdColor returns the color for a value based on thresholds

@@ -2,7 +2,6 @@ package query
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
@@ -14,7 +13,6 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
 	"golang.org/x/sync/errgroup"
 
-	data "github.com/grafana/grafana-plugin-sdk-go/experimental/apis/data/v0alpha1"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -24,7 +22,8 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
 	"github.com/grafana/grafana/pkg/services/datasources"
-	"github.com/grafana/grafana/pkg/services/mtdsclient"
+	"github.com/grafana/grafana/pkg/services/dsquerierclient"
+	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
 	"github.com/grafana/grafana/pkg/services/validations"
 	"github.com/grafana/grafana/pkg/setting"
@@ -50,7 +49,7 @@ func ProvideService(
 	dataSourceRequestValidator validations.DataSourceRequestValidator,
 	pluginClient plugins.Client,
 	pCtxProvider *plugincontext.Provider,
-	mtDatasourceClientBuilder mtdsclient.MTDatasourceClientBuilder,
+	qsDatasourceClientBuilder dsquerierclient.QSDatasourceClientBuilder,
 ) *ServiceImpl {
 	g := &ServiceImpl{
 		cfg:                        cfg,
@@ -61,7 +60,7 @@ func ProvideService(
 		pCtxProvider:               pCtxProvider,
 		log:                        log.New("query_data"),
 		concurrentQueryLimit:       cfg.SectionWithEnvOverrides("query").Key("concurrent_query_limit").MustInt(runtime.NumCPU()),
-		mtDatasourceClientBuilder:  mtDatasourceClientBuilder,
+		qsDatasourceClientBuilder:  qsDatasourceClientBuilder,
 	}
 	g.log.Info("Query Service initialization")
 	return g
@@ -71,6 +70,9 @@ func ProvideService(
 type Service interface {
 	Run(ctx context.Context) error
 	QueryData(ctx context.Context, user identity.Requester, skipDSCache bool, reqDTO dtos.MetricRequest) (*backend.QueryDataResponse, error)
+
+	// this is more "forward compatible", for example supports per-query time ranges
+	QueryDataNew(ctx context.Context, user identity.Requester, skipDSCache bool, reqDTO dtos.MetricRequest) (*backend.QueryDataResponse, error)
 }
 
 // Gives us compile time error if the service does not adhere to the contract of the interface
@@ -85,7 +87,7 @@ type ServiceImpl struct {
 	pCtxProvider               *plugincontext.Provider
 	log                        log.Logger
 	concurrentQueryLimit       int
-	mtDatasourceClientBuilder  mtdsclient.MTDatasourceClientBuilder
+	qsDatasourceClientBuilder  dsquerierclient.QSDatasourceClientBuilder
 	headers                    map[string]string
 }
 
@@ -96,15 +98,21 @@ func (s *ServiceImpl) Run(ctx context.Context) error {
 }
 
 // QueryData processes queries and returns query responses. It handles queries to single or mixed datasources, as well as expressions.
-func (s *ServiceImpl) QueryData(ctx context.Context, user identity.Requester, skipDSCache bool, reqDTO dtos.MetricRequest) (*backend.QueryDataResponse, error) {
+func (s *ServiceImpl) queryData(ctx context.Context, user identity.Requester, skipDSCache bool, reqDTO dtos.MetricRequest, supportLocaltimeRange bool) (*backend.QueryDataResponse, error) {
+	fromAlert := false
+	for header, val := range s.headers {
+		if header == models.FromAlertHeaderName && val == "true" {
+			fromAlert = true
+		}
+	}
 	// Parse the request into parsed queries grouped by datasource uid
-	parsedReq, err := s.parseMetricRequest(ctx, user, skipDSCache, reqDTO)
+	parsedReq, err := s.parseMetricRequest(ctx, user, skipDSCache, reqDTO, supportLocaltimeRange)
 	if err != nil {
 		return nil, err
 	}
 
 	// If there are expressions, handle them and return
-	if parsedReq.hasExpression {
+	if parsedReq.hasExpression || fromAlert {
 		return s.handleExpressions(ctx, user, parsedReq)
 	}
 	// If there is only one datasource, query it and return
@@ -113,6 +121,14 @@ func (s *ServiceImpl) QueryData(ctx context.Context, user identity.Requester, sk
 	}
 	// If there are multiple datasources, handle their queries concurrently and return the aggregate result
 	return s.executeConcurrentQueries(ctx, user, skipDSCache, reqDTO, parsedReq.parsedQueries)
+}
+
+func (s *ServiceImpl) QueryData(ctx context.Context, user identity.Requester, skipDSCache bool, reqDTO dtos.MetricRequest) (*backend.QueryDataResponse, error) {
+	return s.queryData(ctx, user, skipDSCache, reqDTO, false)
+}
+
+func (s *ServiceImpl) QueryDataNew(ctx context.Context, user identity.Requester, skipDSCache bool, reqDTO dtos.MetricRequest) (*backend.QueryDataResponse, error) {
+	return s.queryData(ctx, user, skipDSCache, reqDTO, true)
 }
 
 // splitResponse contains the results of a concurrent data source query - the response and any headers
@@ -208,16 +224,23 @@ func buildErrorResponses(err error, queries []*simplejson.Json) splitResponse {
 	return splitResponse{er, http.Header{}}
 }
 
-func QueryData(ctx context.Context, log log.Logger, dscache datasources.CacheService, exprService *expr.Service, reqDTO dtos.MetricRequest, mtDatasourceClientBuilder mtdsclient.MTDatasourceClientBuilder, headers map[string]string) (*backend.QueryDataResponse, error) {
+func QueryData(ctx context.Context, log log.Logger, dscache datasources.CacheService, exprService *expr.Service, reqDTO dtos.MetricRequest, qsDatasourceClientBuilder dsquerierclient.QSDatasourceClientBuilder, headers map[string]string) (*backend.QueryDataResponse, error) {
 	s := &ServiceImpl{
 		log:                        log,
 		dataSourceCache:            dscache,
 		expressionService:          exprService,
 		dataSourceRequestValidator: validations.ProvideValidator(),
-		mtDatasourceClientBuilder:  mtDatasourceClientBuilder,
+		qsDatasourceClientBuilder:  qsDatasourceClientBuilder,
 		headers:                    headers,
+		concurrentQueryLimit:       16, // TODO: make it configurable
 	}
-	return s.QueryData(ctx, nil, false, reqDTO)
+
+	user, err := identity.GetRequester(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return s.QueryDataNew(ctx, user, false, reqDTO)
 }
 
 // handleExpressions handles queries when there is an expression.
@@ -285,7 +308,11 @@ func (s *ServiceImpl) handleQuerySingleDatasource(ctx context.Context, user iden
 		req.Queries = append(req.Queries, q.query)
 	}
 
-	mtDsClient, ok := s.mtDatasourceClientBuilder.BuildClient(ds.Type, ds.UID)
+	qsDsClient, ok, err := s.qsDatasourceClientBuilder.BuildClient(ds.Type, ds.UID)
+	if err != nil {
+		return nil, err
+	}
+
 	if !ok { // single tenant flow
 		pCtx, err := s.pCtxProvider.GetWithDataSource(ctx, ds.Type, user, ds)
 		if err != nil {
@@ -293,34 +320,39 @@ func (s *ServiceImpl) handleQuerySingleDatasource(ctx context.Context, user iden
 		}
 		req.PluginContext = pCtx
 		return s.pluginClient.QueryData(ctx, req)
-	} else { // multi tenant flow
+	} else { // query-service flow (single or multi tenant)
 		// transform request from backend.QueryDataRequest to k8s request
-		k8sReq := &data.QueryDataRequest{
-			TimeRange: data.TimeRange{
-				From: req.Queries[0].TimeRange.From.Format(time.RFC3339),
-				To:   req.Queries[0].TimeRange.To.Format(time.RFC3339),
-			},
+		k8sReq, err := expr.ConvertBackendRequestToDataRequest(req)
+		if err != nil {
+			return nil, err
 		}
-		for _, q := range req.Queries {
-			var dataQuery data.DataQuery
-			err := json.Unmarshal(q.JSON, &dataQuery)
-			if err != nil {
-				return nil, err
-			}
-
-			k8sReq.Queries = append(k8sReq.Queries, dataQuery)
-		}
-		return mtDsClient.QueryData(ctx, *k8sReq)
+		return qsDsClient.QueryData(ctx, *k8sReq)
 	}
 }
 
+func getTimeRange(query *simplejson.Json, globalFrom string, globalTo string) (string, string, error) {
+	tr, ok := query.CheckGet("timeRange")
+	if !ok { // timeRange json node does not exist, use global from/to
+		return globalFrom, globalTo, nil
+	}
+	from, err := tr.Get("from").String()
+	if err != nil {
+		return "", "", errors.New("time range: field 'from' is missing or invalid")
+	}
+	to, err := tr.Get("to").String()
+	if err != nil {
+		return "", "", errors.New("time range: field 'to' is missing or invalid")
+	}
+
+	return from, to, nil
+}
+
 // parseRequest parses a request into parsed queries grouped by datasource uid
-func (s *ServiceImpl) parseMetricRequest(ctx context.Context, user identity.Requester, skipDSCache bool, reqDTO dtos.MetricRequest) (*parsedRequest, error) {
+func (s *ServiceImpl) parseMetricRequest(ctx context.Context, user identity.Requester, skipDSCache bool, reqDTO dtos.MetricRequest, supportLocalTimeRange bool) (*parsedRequest, error) {
 	if len(reqDTO.Queries) == 0 {
 		return nil, ErrNoQueriesFound
 	}
 
-	timeRange := gtime.NewTimeRange(reqDTO.From, reqDTO.To)
 	req := &parsedRequest{
 		hasExpression: false,
 		parsedQueries: make(map[string][]parsedQuery),
@@ -347,6 +379,17 @@ func (s *ServiceImpl) parseMetricRequest(ctx context.Context, user identity.Requ
 
 		if _, ok := req.parsedQueries[ds.UID]; !ok {
 			req.parsedQueries[ds.UID] = []parsedQuery{}
+		}
+
+		var timeRange gtime.TimeRange
+		if supportLocalTimeRange {
+			from, to, err := getTimeRange(query, reqDTO.From, reqDTO.To)
+			if err != nil {
+				return nil, err
+			}
+			timeRange = gtime.NewTimeRange(from, to)
+		} else {
+			timeRange = gtime.NewTimeRange(reqDTO.From, reqDTO.To)
 		}
 
 		modelJSON, err := query.MarshalJSON()

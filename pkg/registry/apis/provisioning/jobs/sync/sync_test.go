@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"testing"
 
-	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
+	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	mock "github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -31,6 +31,11 @@ func (m *mockReaderWriter) LatestRef(ctx context.Context) (string, error) {
 
 func (m *mockReaderWriter) CompareFiles(ctx context.Context, base, ref string) ([]repository.VersionedFileChange, error) {
 	return m.MockVersioned.CompareFiles(ctx, base, ref)
+}
+
+func (m *mockReaderWriter) Move(ctx context.Context, oldPath, newPath, ref, message string) error {
+	args := m.MockRepository.Called(ctx, oldPath, newPath, ref, message)
+	return args.Error(0)
 }
 
 func TestSyncer_Sync(t *testing.T) {

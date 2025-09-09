@@ -277,7 +277,7 @@ func (m MergeResult) LogContext() []any {
 		return nil
 	}
 	logCtx := make([]any, 0, 4)
-	if len(m.RenamedTimeIntervals) > 0 {
+	if len(m.RenamedReceivers) > 0 {
 		rcvBuilder := strings.Builder{}
 		for from, to := range m.RenamedReceivers {
 			rcvBuilder.WriteString(fmt.Sprintf("'%s'->'%s',", from, to))
@@ -285,11 +285,11 @@ func (m MergeResult) LogContext() []any {
 		logCtx = append(logCtx, "renamedReceivers", fmt.Sprintf("[%s]", rcvBuilder.String()[0:rcvBuilder.Len()-1]))
 	}
 	if len(m.RenamedTimeIntervals) > 0 {
-		rcvBuilder := strings.Builder{}
+		intervalBuilder := strings.Builder{}
 		for from, to := range m.RenamedTimeIntervals {
-			rcvBuilder.WriteString(fmt.Sprintf("'%s'->'%s',", from, to))
+			intervalBuilder.WriteString(fmt.Sprintf("'%s'->'%s',", from, to))
 		}
-		logCtx = append(logCtx, "renamedTimeIntervals", fmt.Sprintf("[%s]", rcvBuilder.String()[0:rcvBuilder.Len()-1]))
+		logCtx = append(logCtx, "renamedTimeIntervals", fmt.Sprintf("[%s]", intervalBuilder.String()[0:intervalBuilder.Len()-1]))
 	}
 	return logCtx
 }
@@ -719,9 +719,6 @@ func (c *ExtraConfiguration) GetSanitizedAlertmanagerConfigYAML() (string, error
 		return "", err
 	}
 
-	// Remove global settings as they are not used in Grafana
-	prometheusConfig.Global = nil
-
 	configYAML, err := yaml.Marshal(prometheusConfig)
 	if err != nil {
 		return "", fmt.Errorf("failed to marshal sanitized configuration: %w", err)
@@ -745,11 +742,13 @@ func (c ExtraConfiguration) Validate() error {
 		}
 	}
 
-	// Alertmanager configuration is validated during YAML unmarshalling.
-	am := config.Config{}
-	err := yaml.Unmarshal([]byte(c.AlertmanagerConfig), &am)
+	cfg, err := c.GetAlertmanagerConfig()
 	if err != nil {
 		return errInvalidExtraConfiguration(fmt.Errorf("failed to parse alertmanager config: %w", err))
+	}
+	err = cfg.Validate()
+	if err != nil {
+		return errInvalidExtraConfiguration(fmt.Errorf("invalid alertmanager config: %w", err))
 	}
 
 	return nil
@@ -758,10 +757,12 @@ func (c ExtraConfiguration) Validate() error {
 func fromPrometheusConfig(prometheusConfig config.Config) PostableApiAlertingConfig {
 	config := PostableApiAlertingConfig{
 		Config: Config{
-			Global:       prometheusConfig.Global,
-			Route:        AsGrafanaRoute(prometheusConfig.Route),
-			InhibitRules: prometheusConfig.InhibitRules,
-			Templates:    prometheusConfig.Templates,
+			Global:            prometheusConfig.Global,
+			Route:             AsGrafanaRoute(prometheusConfig.Route),
+			InhibitRules:      prometheusConfig.InhibitRules,
+			TimeIntervals:     prometheusConfig.TimeIntervals,
+			MuteTimeIntervals: prometheusConfig.MuteTimeIntervals,
+			Templates:         prometheusConfig.Templates,
 		},
 	}
 

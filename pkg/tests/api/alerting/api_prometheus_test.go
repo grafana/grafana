@@ -25,12 +25,15 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 	"github.com/grafana/grafana/pkg/util"
+	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 // Declare respModel at the function level
 var respModel apimodels.UpdateRuleGroupResponse
 
 func TestIntegrationPrometheusRules(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	testinfra.SQLiteIntegrationTest(t)
 
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
@@ -359,6 +362,8 @@ func TestIntegrationPrometheusRules(t *testing.T) {
 }
 
 func TestIntegrationPrometheusRulesFilterByDashboard(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	testinfra.SQLiteIntegrationTest(t)
 
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
@@ -690,6 +695,8 @@ func TestIntegrationPrometheusRulesFilterByDashboard(t *testing.T) {
 }
 
 func TestIntegrationPrometheusRulesPermissions(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	testinfra.SQLiteIntegrationTest(t)
 
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{

@@ -3,22 +3,24 @@ package resource
 import (
 	"context"
 	"hash/fnv"
+	"math/rand"
 	"time"
 
 	"github.com/grafana/dskit/ring"
 	ringclient "github.com/grafana/dskit/ring/client"
 	"github.com/grafana/dskit/services"
 	userutils "github.com/grafana/dskit/user"
-	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/grpcserver"
-	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel/trace"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/health/grpc_health_v1"
 	"google.golang.org/grpc/metadata"
+
+	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/grpcserver"
+	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
 func ProvideSearchDistributorServer(cfg *setting.Cfg, features featuremgmt.FeatureToggles, registerer prometheus.Registerer, tracer trace.Tracer, ring *ring.Ring, ringClientPool *ringclient.Pool) (grpcserver.Provider, error) {
@@ -32,6 +34,7 @@ func ProvideSearchDistributorServer(cfg *setting.Cfg, features featuremgmt.Featu
 		log:        log.New("index-server-distributor"),
 		ring:       ring,
 		clientPool: ringClientPool,
+		tracing:    tracer,
 	}
 
 	healthService, err := ProvideHealthService(distributorServer)
@@ -79,6 +82,7 @@ type distributorServer struct {
 	clientPool *ringclient.Pool
 	ring       *ring.Ring
 	log        log.Logger
+	tracing    trace.Tracer
 }
 
 var (
@@ -91,6 +95,8 @@ var (
 )
 
 func (ds *distributorServer) Search(ctx context.Context, r *resourcepb.ResourceSearchRequest) (*resourcepb.ResourceSearchResponse, error) {
+	ctx, span := ds.tracing.Start(ctx, "distributor.Search")
+	defer span.End()
 	ctx, client, err := ds.getClientToDistributeRequest(ctx, r.Options.Key.Namespace, "Search")
 	if err != nil {
 		return nil, err
@@ -100,6 +106,8 @@ func (ds *distributorServer) Search(ctx context.Context, r *resourcepb.ResourceS
 }
 
 func (ds *distributorServer) GetStats(ctx context.Context, r *resourcepb.ResourceStatsRequest) (*resourcepb.ResourceStatsResponse, error) {
+	ctx, span := ds.tracing.Start(ctx, "distributor.GetStats")
+	defer span.End()
 	ctx, client, err := ds.getClientToDistributeRequest(ctx, r.Namespace, "GetStats")
 	if err != nil {
 		return nil, err
@@ -109,6 +117,8 @@ func (ds *distributorServer) GetStats(ctx context.Context, r *resourcepb.Resourc
 }
 
 func (ds *distributorServer) CountManagedObjects(ctx context.Context, r *resourcepb.CountManagedObjectsRequest) (*resourcepb.CountManagedObjectsResponse, error) {
+	ctx, span := ds.tracing.Start(ctx, "distributor.CountManagedObjects")
+	defer span.End()
 	ctx, client, err := ds.getClientToDistributeRequest(ctx, r.Namespace, "CountManagedObjects")
 	if err != nil {
 		return nil, err
@@ -118,6 +128,8 @@ func (ds *distributorServer) CountManagedObjects(ctx context.Context, r *resourc
 }
 
 func (ds *distributorServer) ListManagedObjects(ctx context.Context, r *resourcepb.ListManagedObjectsRequest) (*resourcepb.ListManagedObjectsResponse, error) {
+	ctx, span := ds.tracing.Start(ctx, "distributor.ListManagedObjects")
+	defer span.End()
 	ctx, client, err := ds.getClientToDistributeRequest(ctx, r.Namespace, "ListManagedObjects")
 	if err != nil {
 		return nil, err
@@ -130,16 +142,21 @@ func (ds *distributorServer) getClientToDistributeRequest(ctx context.Context, n
 	ringHasher := fnv.New32a()
 	_, err := ringHasher.Write([]byte(namespace))
 	if err != nil {
+		ds.log.Debug("error hashing namespace", "err", err, "namespace", namespace)
 		return ctx, nil, err
 	}
 
 	rs, err := ds.ring.GetWithOptions(ringHasher.Sum32(), searchRingRead, ring.WithReplicationFactor(ds.ring.ReplicationFactor()))
 	if err != nil {
+		ds.log.Debug("error getting replication set from ring", "err", err, "namespace", namespace)
 		return ctx, nil, err
 	}
 
-	client, err := ds.clientPool.GetClientForInstance(rs.Instances[0])
+	// Randomly select an instance for primitive load balancing
+	inst := rs.Instances[rand.Intn(len(rs.Instances))]
+	client, err := ds.clientPool.GetClientForInstance(inst)
 	if err != nil {
+		ds.log.Debug("error getting instance client from pool", "err", err, "namespace", namespace, "searchApiInstanceId", inst.Id)
 		return ctx, nil, err
 	}
 
@@ -148,9 +165,10 @@ func (ds *distributorServer) getClientToDistributeRequest(ctx context.Context, n
 		md = make(metadata.MD)
 	}
 
-	ds.log.Info("distributing request to ", "methodName", methodName, "instanceId", rs.Instances[0].Id)
-
-	_ = grpc.SetHeader(ctx, metadata.Pairs("proxied-instance-id", rs.Instances[0].Id))
+	err = grpc.SetHeader(ctx, metadata.Pairs("proxied-instance-id", inst.Id))
+	if err != nil {
+		ds.log.Debug("error setting grpc header", "err", err)
+	}
 
 	return userutils.InjectOrgID(metadata.NewOutgoingContext(ctx, md), namespace), client.(*RingClient).Client, nil
 }

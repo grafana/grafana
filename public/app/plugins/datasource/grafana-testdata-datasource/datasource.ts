@@ -290,6 +290,8 @@ export class TestDataDataSource extends DataSourceWithBackend<TestDataDataQuery>
         { name: 'tags' },
         { name: 'kind' },
         { name: 'statusCode' },
+        { name: 'warnings' },
+        { name: 'stackTraces' },
       ],
     });
     const numberOfSpans = options.targets[0].spanCount || 10;
@@ -327,6 +329,52 @@ export class TestDataDataSource extends DataSourceWithBackend<TestDataDataQuery>
             : [],
         kind: i === 0 ? 'client' : kinds[Math.floor(Math.random() * kinds.length)],
         statusCode: statusCodes[Math.floor(Math.random() * statusCodes.length)],
+        references:
+          i === 0
+            ? []
+            : [
+                {
+                  refType: 'EXTERNAL',
+                  spanID: spanIdPrefix + 10001,
+                  traceID: spanIdPrefix + '10000',
+                  tags: [
+                    { key: 'external.service', value: `Service${i}` },
+                    { key: 'resource.pod', value: `Pod${i}` },
+                  ],
+                },
+              ],
+        warnings:
+          i % 2 === 0
+            ? [
+                '[2025-07-30T14:12:09Z] [payment-service] Delayed response from external payment gateway (Stripe). Request ID: 8f3a7c2b-ff13-4e3c-b610-18a92c8b199d. Latency: 3421ms. Threshold: 2500ms.',
+                '[2025-07-30T14:14:42Z] [notification-service] Email delivery failed for user_id=93244 (Email: user@example.com). SMTP server responded with status 421: "Service not available, closing transmission channel".',
+                '[2025-07-30T14:18:55Z] [user-profile-service] Deprecated API version used in request: /v1/profile/update. Recommend migrating to /v2/profile/update. Client ID: svc-auth-34.',
+              ]
+            : [],
+        stackTraces:
+          i % 4 === 0
+            ? [
+                'Traceback (most recent call last):\n' +
+                  '  File "/app/services/payment.py", line 112, in process_transaction\n' +
+                  '    response = gateway.charge(card_info, amount)\n' +
+                  '  File "/app/lib/gateway/stripe_client.py", line 76, in charge\n' +
+                  '    return self._send_request(payload)\n' +
+                  '  File "/app/lib/gateway/stripe_client.py", line 45, in _send_request\n' +
+                  '    raise GatewayTimeoutError("Stripe request timed out after 3000ms")\n' +
+                  'gateway.exceptions.GatewayTimeoutError: Stripe request timed out after 3000ms\n',
+
+                'Traceback (most recent call last):\n' +
+                  '  File "/usr/src/app/main.py", line 27, in <module>\n' +
+                  '    run_app()\n' +
+                  '  File "/usr/src/app/core/server.py", line 88, in run_app\n' +
+                  '    initialize_services()\n' +
+                  '  File "/usr/src/app/core/init.py", line 52, in initialize_services\n' +
+                  '    db.connect()\n' +
+                  '  File "/usr/src/app/db/connection.py", line 31, in connect\n' +
+                  '    raise DatabaseConnectionError("Failed to connect to database: timeout after 5s")\n' +
+                  'db.exceptions.DatabaseConnectionError: Failed to connect to database: timeout after 5s\n',
+              ]
+            : [],
       });
     }
 
@@ -338,7 +386,7 @@ export class TestDataDataSource extends DataSourceWithBackend<TestDataDataQuery>
     options: DataQueryRequest<TestDataDataQuery>
   ): Observable<DataQueryResponse> {
     try {
-      const data = JSON.parse(target.rawFrameContent ?? '[]').map((v: any) => {
+      const data = JSON.parse(target.rawFrameContent ?? '[]').map((v: unknown) => {
         const f = toDataFrame(v);
         f.refId = target.refId;
         return f;

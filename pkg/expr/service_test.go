@@ -19,8 +19,8 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	datafakes "github.com/grafana/grafana/pkg/services/datasources/fakes"
+	"github.com/grafana/grafana/pkg/services/dsquerierclient"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/mtdsclient"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginconfig"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
@@ -61,7 +61,7 @@ func TestService(t *testing.T) {
 
 	s, req := newMockQueryService(resp, queries)
 
-	pl, err := s.BuildPipeline(req)
+	pl, err := s.BuildPipeline(t.Context(), req)
 	require.NoError(t, err)
 
 	res, err := s.ExecutePipeline(context.Background(), time.Now(), pl)
@@ -135,7 +135,7 @@ func TestDSQueryError(t *testing.T) {
 
 	s, req := newMockQueryService(resp, queries)
 
-	pl, err := s.BuildPipeline(req)
+	pl, err := s.BuildPipeline(t.Context(), req)
 	require.NoError(t, err)
 
 	res, err := s.ExecutePipeline(context.Background(), time.Now(), pl)
@@ -146,6 +146,25 @@ func TestDSQueryError(t *testing.T) {
 	require.ErrorAs(t, res.Responses["B"].Error, &utilErr)
 	require.ErrorIs(t, utilErr, DependencyError)
 	require.Equal(t, fp(42), res.Responses["C"].Frames[0].Fields[0].At(0))
+}
+
+func TestParseError(t *testing.T) {
+	resp := map[string]backend.DataResponse{}
+
+	queries := []Query{
+		{
+			RefID:      "A",
+			DataSource: dataSourceModel(),
+			JSON:       json.RawMessage(`{ "datasource": { "uid": "__expr__", "type": "__expr__"}, "type": "math", "expression": "asdf" }`),
+		},
+	}
+
+	s, req := newMockQueryService(resp, queries)
+
+	_, err := s.BuildPipeline(t.Context(), req)
+	require.ErrorContains(t, err, "parse")
+	require.ErrorContains(t, err, "math")
+	require.ErrorContains(t, err, "asdf")
 }
 
 func TestSQLExpressionCellLimitFromConfig(t *testing.T) {
@@ -195,12 +214,13 @@ func TestSQLExpressionCellLimitFromConfig(t *testing.T) {
 				converter: &ResultConverter{
 					Features: features,
 				},
+				tracer: &testTracer{},
 			}
 
 			req := &Request{Queries: queries, User: &user.SignedInUser{}}
 
 			// Build the pipeline
-			pipeline, err := s.BuildPipeline(req)
+			pipeline, err := s.BuildPipeline(t.Context(), req)
 			require.NoError(t, err)
 
 			node := pipeline[0]
@@ -256,6 +276,6 @@ func newMockQueryService(responses map[string]backend.DataResponse, queries []Qu
 			Features: features,
 			Tracer:   tracing.InitializeTracerForTest(),
 		},
-		mtDatasourceClientBuilder: mtdsclient.NewNullMTDatasourceClientBuilder(),
+		qsDatasourceClientBuilder: dsquerierclient.NewNullQSDatasourceClientBuilder(),
 	}, &Request{Queries: queries, User: &user.SignedInUser{}}
 }

@@ -62,7 +62,7 @@ jobs:
         with:
           credentials_json: '${{ env.PLUGINS_GOOGLE_CREDENTIALS }}'
       - name: 'Set up Cloud SDK'
-        uses: 'google-github-actions/setup-gcloud@77e7a554d41e2ee56fc945c52dfd3f33d12def9a'
+        uses: 'google-github-actions/setup-gcloud@aa5489c8933f4cc7a4f7d45035b3b1440c9c10db'
       - name: Setup nodejs environment
         uses: actions/setup-node@v4
         with:
@@ -101,7 +101,7 @@ jobs:
             echo "has_backend=false" >> "$GITHUB_OUTPUT"
           fi
       - name: Setup golang environment
-        uses: actions/setup-go@19bb51245e9c80abacb2e91cc42b33fa478b8639
+        uses: actions/setup-go@d35c59abb061a4a6fb18e82ac0862c26744d6ab5
         if: steps.check_backend.outputs.has_backend == 'true'
         with:
           go-version-file: go.mod

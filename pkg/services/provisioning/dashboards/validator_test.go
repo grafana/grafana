@@ -24,6 +24,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
 	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
+	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 const (
@@ -32,6 +33,8 @@ const (
 )
 
 func TestIntegrationDuplicatesValidator(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	fakeService := &dashboards.FakeDashboardProvisioning{}
 	defer fakeService.AssertExpectations(t)
 
@@ -45,14 +48,13 @@ func TestIntegrationDuplicatesValidator(t *testing.T) {
 	logger := log.New("test.logger")
 
 	sql, cfgT := db.InitTestDBWithCfg(t)
-	features := featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders)
+	features := featuremgmt.WithFeatures()
 	fStore := folderimpl.ProvideStore(sql)
 	tagService := tagimpl.ProvideService(sql)
 	dashStore, err := database.ProvideDashboardStore(sql, cfgT, features, tagService)
 	require.NoError(t, err)
-	folderStore := folderimpl.ProvideDashboardFolderStore(sql)
 	folderSvc := folderimpl.ProvideService(fStore, actest.FakeAccessControl{}, bus.ProvideBus(tracing.InitializeTracerForTest()),
-		dashStore, folderStore, nil, sql, featuremgmt.WithFeatures(),
+		dashStore, nil, sql, featuremgmt.WithFeatures(),
 		supportbundlestest.NewFakeBundleService(), nil, cfgT, nil, tracing.InitializeTracerForTest(), nil, dualwrite.ProvideTestService(), grafanasort.ProvideService(), apiserver.WithoutRestConfig)
 
 	t.Run("Duplicates validator should collect info about duplicate UIDs and titles within folders", func(t *testing.T) {

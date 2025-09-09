@@ -6,7 +6,7 @@ import { CoreApp, EventBus, LogLevel, LogsDedupDescription, LogsDedupStrategy, L
 import { GrafanaTheme2 } from '@grafana/data/';
 import { t } from '@grafana/i18n';
 import { config, reportInteraction } from '@grafana/runtime';
-import { Dropdown, IconButton, Menu, useStyles2 } from '@grafana/ui';
+import { Dropdown, Icon, IconButton, Menu, Tooltip, useStyles2 } from '@grafana/ui';
 
 import { LogsVisualisationType } from '../../../explore/Logs/Logs';
 import { DownloadFormat } from '../../utils';
@@ -91,7 +91,9 @@ export const LogListControls = ({ eventBus, visualisationType = 'logs' }: Props)
 
   const onFilterLevelClick = useCallback(
     (level?: LogLevel) => {
-      reportInteraction('logs_log_list_controls_level_clicked');
+      reportInteraction('logs_log_list_controls_level_clicked', {
+        level,
+      });
       if (level === undefined) {
         setFilterLevels([]);
       } else if (!filterLevels.includes(level)) {
@@ -166,7 +168,12 @@ export const LogListControls = ({ eventBus, visualisationType = 'logs' }: Props)
             className={dedupStrategy === option ? styles.menuItemActive : undefined}
             description={LogsDedupDescription[option]}
             label={capitalize(option)}
-            onClick={() => setDedupStrategy(option)}
+            onClick={() => {
+              setDedupStrategy(option);
+              reportInteraction('logs_log_list_controls_deduplication_clicked', {
+                option,
+              });
+            }}
           />
         ))}
       </Menu>
@@ -201,15 +208,30 @@ export const LogListControls = ({ eventBus, visualisationType = 'logs' }: Props)
       <Menu>
         <Menu.Item
           label={t('logs.logs-controls.download-logs.txt', 'txt')}
-          onClick={() => downloadLogs(DownloadFormat.Text)}
+          onClick={() => {
+            downloadLogs(DownloadFormat.Text);
+            reportInteraction('logs_log_list_controls_downloaded_logs', {
+              format: DownloadFormat.Text,
+            });
+          }}
         />
         <Menu.Item
           label={t('logs.logs-controls.download-logs.json', 'json')}
-          onClick={() => downloadLogs(DownloadFormat.Json)}
+          onClick={() => {
+            downloadLogs(DownloadFormat.Json);
+            reportInteraction('logs_log_list_controls_downloaded_logs', {
+              format: DownloadFormat.Json,
+            });
+          }}
         />
         <Menu.Item
           label={t('logs.logs-controls.download-logs.csv', 'csv')}
-          onClick={() => downloadLogs(DownloadFormat.CSV)}
+          onClick={() => {
+            downloadLogs(DownloadFormat.CSV);
+            reportInteraction('logs_log_list_controls_downloaded_logs', {
+              format: DownloadFormat.CSV,
+            });
+          }}
         />
       </Menu>
     ),
@@ -280,18 +302,22 @@ export const LogListControls = ({ eventBus, visualisationType = 'logs' }: Props)
                 />
               </Dropdown>
               <div className={styles.divider} />
-              <IconButton
-                name="clock-nine"
-                aria-pressed={showTime}
-                className={showTime ? styles.controlButtonActive : styles.controlButton}
-                onClick={onShowTimestampsClick}
-                tooltip={
-                  showTime
-                    ? t('logs.logs-controls.hide-timestamps', 'Hide timestamps')
-                    : t('logs.logs-controls.show-timestamps', 'Show timestamps')
-                }
-                size="lg"
-              />
+              {config.featureToggles.newLogsPanel ? (
+                <TimestampResolutionButton />
+              ) : (
+                <IconButton
+                  name="clock-nine"
+                  aria-pressed={showTime}
+                  className={showTime ? styles.controlButtonActive : styles.controlButton}
+                  onClick={onShowTimestampsClick}
+                  tooltip={
+                    showTime
+                      ? t('logs.logs-controls.hide-timestamps', 'Hide timestamps')
+                      : t('logs.logs-controls.show-timestamps', 'Show timestamps')
+                  }
+                  size="lg"
+                />
+              )}
               {/* When this is used in a Plugin context, app is unknown */}
               {showUniqueLabels !== undefined && app !== CoreApp.Unknown && (
                 <IconButton
@@ -307,19 +333,23 @@ export const LogListControls = ({ eventBus, visualisationType = 'logs' }: Props)
                   size="lg"
                 />
               )}
-              <IconButton
-                name="wrap-text"
-                className={wrapLogMessage ? styles.controlButtonActive : styles.controlButton}
-                aria-pressed={wrapLogMessage}
-                onClick={onWrapLogMessageClick}
-                tooltip={
-                  wrapLogMessage
-                    ? t('logs.logs-controls.unwrap-lines', 'Unwrap lines')
-                    : t('logs.logs-controls.wrap-lines', 'Wrap lines')
-                }
-                size="lg"
-              />
-              {prettifyJSON !== undefined && (
+              {config.featureToggles.newLogsPanel ? (
+                <WrapLogMessageButton />
+              ) : (
+                <IconButton
+                  name="wrap-text"
+                  className={wrapLogMessage ? styles.controlButtonActive : styles.controlButton}
+                  aria-pressed={wrapLogMessage}
+                  onClick={onWrapLogMessageClick}
+                  tooltip={
+                    wrapLogMessage
+                      ? t('logs.logs-controls.unwrap-lines', 'Unwrap lines')
+                      : t('logs.logs-controls.wrap-lines', 'Wrap lines')
+                  }
+                  size="lg"
+                />
+              )}
+              {prettifyJSON !== undefined && !config.featureToggles.newLogsPanel && (
                 <IconButton
                   name="brackets-curly"
                   aria-pressed={prettifyJSON}
@@ -451,6 +481,166 @@ export const LogListControls = ({ eventBus, visualisationType = 'logs' }: Props)
   );
 };
 
+const TimestampResolutionButton = () => {
+  const styles = useStyles2(getStyles);
+  const { setTimestampResolution, setShowTime, showTime, timestampResolution } = useLogListContext();
+
+  const hide = useCallback(() => {
+    setShowTime(false);
+    reportInteraction('logs_log_list_controls_show_time_clicked', {
+      show_time: false,
+    });
+  }, [setShowTime]);
+
+  const showMs = useCallback(() => {
+    setShowTime(true);
+    setTimestampResolution('ms');
+    reportInteraction('logs_log_list_controls_show_time_clicked', {
+      show_time: false,
+      resolution: 'ms',
+    });
+  }, [setShowTime, setTimestampResolution]);
+
+  const showNs = useCallback(() => {
+    setShowTime(true);
+    setTimestampResolution('ns');
+    reportInteraction('logs_log_list_controls_show_time_clicked', {
+      show_time: false,
+      resolution: 'ns',
+    });
+  }, [setShowTime, setTimestampResolution]);
+
+  const timestampMenu = useMemo(
+    () => (
+      <Menu>
+        <Menu.Item
+          label={t('logs.logs-controls.timestamp.hide', 'Hide timestamps')}
+          className={!showTime ? styles.menuItemActive : undefined}
+          onClick={hide}
+        />
+        <Menu.Item
+          label={t('logs.logs-controls.timestamp.milliseconds', 'Show millisecond timestamps')}
+          className={showTime && timestampResolution === 'ms' ? styles.menuItemActive : undefined}
+          onClick={showMs}
+        />
+        <Menu.Item
+          label={t('logs.logs-controls.timestamp.nanoseconds', 'Show nanosecond timestamps')}
+          className={showTime && timestampResolution === 'ns' ? styles.menuItemActive : undefined}
+          onClick={showNs}
+        />
+      </Menu>
+    ),
+    [hide, showMs, showNs, showTime, styles.menuItemActive, timestampResolution]
+  );
+
+  return (
+    <Dropdown overlay={timestampMenu} placement="auto-end">
+      <div>
+        <Tooltip content={t('logs.logs-controls.timestamp.label', 'Log timestamps')}>
+          <button
+            aria-pressed={showTime}
+            aria-label={t('logs.logs-controls.timestamp.label', 'Log timestamps')}
+            className={`${styles.customControlButton} ${showTime ? styles.controlButtonActive : styles.controlButton}`}
+            type="button"
+          >
+            <Icon name="clock-nine" size="lg" className={styles.customControlIcon} />
+            {showTime && (
+              <span className={styles.customControlTag}>
+                {timestampResolution === 'ms'
+                  ? t('logs.logs-controls.resolution-ms', 'ms')
+                  : t('logs.logs-controls.resolution-ns', 'ns')}
+              </span>
+            )}
+          </button>
+        </Tooltip>
+      </div>
+    </Dropdown>
+  );
+};
+
+const WrapLogMessageButton = () => {
+  const styles = useStyles2(getStyles);
+  const { prettifyJSON, setPrettifyJSON, setWrapLogMessage, wrapLogMessage } = useLogListContext();
+
+  /**
+   * This component currently controls two internal states: line wrapping and JSON formatting.
+   * The state transition is as follows:
+   * - Line wrapping and JSON formatting disabled.
+   * - Line wrapping enabled.
+   * - Line wrapping and JSON formatting enabled.
+   *
+   * Line wrapping also controls JSON formatting, because with line wrapping disabled,
+   * JSON formatting has no effect, so one is related with the other.
+   */
+  const disable = useCallback(() => {
+    setWrapLogMessage(false);
+    setPrettifyJSON(false);
+    reportInteraction('logs_log_list_controls_wrap_clicked', {
+      state: false,
+      prettify: false,
+    });
+  }, [setPrettifyJSON, setWrapLogMessage]);
+
+  const wrap = useCallback(() => {
+    setWrapLogMessage(true);
+    setPrettifyJSON(false);
+    reportInteraction('logs_log_list_controls_wrap_clicked', {
+      state: true,
+      prettify: false,
+    });
+  }, [setPrettifyJSON, setWrapLogMessage]);
+
+  const wrapAndPrettify = useCallback(() => {
+    setWrapLogMessage(true);
+    setPrettifyJSON(true);
+    reportInteraction('logs_log_list_controls_wrap_clicked', {
+      state: true,
+      prettify: true,
+    });
+  }, [setPrettifyJSON, setWrapLogMessage]);
+
+  const wrappingMenu = useMemo(
+    () => (
+      <Menu>
+        <Menu.Item
+          label={t('logs.logs-controls.line-wrapping.hide', 'Disable line wrapping')}
+          className={!wrapLogMessage ? styles.menuItemActive : undefined}
+          onClick={disable}
+        />
+        <Menu.Item
+          label={t('logs.logs-controls.line-wrapping.enable', 'Enable line wrapping')}
+          className={wrapLogMessage && !prettifyJSON ? styles.menuItemActive : undefined}
+          onClick={wrap}
+        />
+        <Menu.Item
+          label={t('logs.logs-controls.line-wrapping.enable-prettify', 'Enable line wrapping and prettify JSON')}
+          className={wrapLogMessage && prettifyJSON ? styles.menuItemActive : undefined}
+          onClick={wrapAndPrettify}
+        />
+      </Menu>
+    ),
+    [disable, prettifyJSON, styles.menuItemActive, wrap, wrapAndPrettify, wrapLogMessage]
+  );
+
+  return (
+    <Dropdown overlay={wrappingMenu} placement="auto-end">
+      <div>
+        <Tooltip content={t('logs.logs-controls.line-wrapping.label', 'Log line wrapping')}>
+          <button
+            aria-label={t('logs.logs-controls.line-wrapping.label', 'Log line wrapping')}
+            aria-pressed={wrapLogMessage}
+            className={`${styles.customControlButton} ${wrapLogMessage ? styles.controlButtonActive : styles.controlButton}`}
+            type="button"
+          >
+            <Icon name="wrap-text" size="lg" className={styles.customControlIcon} />
+            {prettifyJSON && <span className={styles.customControlTag}>+</span>}
+          </button>
+        </Tooltip>
+      </div>
+    </Dropdown>
+  );
+};
+
 const getStyles = (theme: GrafanaTheme2) => {
   return {
     navContainer: css({
@@ -509,6 +699,33 @@ const getStyles = (theme: GrafanaTheme2) => {
         width: '2px',
         backgroundColor: theme.colors.warning.main,
       },
+    }),
+    customControlButton: css({
+      position: 'relative',
+      zIndex: 0,
+      margin: 0,
+      boxShadow: 'none',
+      border: 'none',
+      display: 'flex',
+      background: 'transparent',
+      justifyContent: 'center',
+      alignItems: 'center',
+      padding: 0,
+      overflow: 'visible',
+      width: '100%',
+    }),
+    customControlIcon: css({
+      verticalAlign: 'baseline',
+    }),
+    customControlTag: css({
+      color: theme.colors.primary.text,
+      fontSize: 10,
+      position: 'absolute',
+      bottom: -4,
+      right: 1,
+      lineHeight: '10px',
+      backgroundColor: theme.colors.background.primary,
+      paddingLeft: 2,
     }),
   };
 };

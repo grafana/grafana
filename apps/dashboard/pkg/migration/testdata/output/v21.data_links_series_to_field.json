@@ -1,0 +1,166 @@
+{
+  "panels": [
+    {
+      "datasource": {
+        "apiVersion": "v1",
+        "type": "prometheus",
+        "uid": "default-ds-uid"
+      },
+      "id": 1,
+      "options": {
+        "dataLinks": [
+          {
+            "title": "Data Link 1",
+            "url": "http://mylink.com?series=${__field.labels}\u0026${__field.labels.a}"
+          },
+          {
+            "title": "Data Link 2",
+            "url": "http://anotherlink.com?param=${__field.labels}"
+          }
+        ]
+      },
+      "targets": [
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "prometheus",
+            "uid": "default-ds-uid"
+          },
+          "refId": "A"
+        }
+      ],
+      "title": "Panel with data links",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "apiVersion": "v1",
+        "type": "prometheus",
+        "uid": "default-ds-uid"
+      },
+      "id": 2,
+      "options": {
+        "fieldOptions": {
+          "defaults": {
+            "links": [
+              {
+                "title": "Field Link 1",
+                "url": "http://mylink.com?series=${__field.labels}\u0026${__field.labels.x}"
+              },
+              {
+                "title": "Field Link 2",
+                "url": "http://fieldlink.com?field=${__field.labels}"
+              }
+            ]
+          }
+        },
+        "justifyMode": "auto",
+        "percentChangeColorMode": "standard",
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "targets": [
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "prometheus",
+            "uid": "default-ds-uid"
+          },
+          "refId": "A"
+        }
+      ],
+      "title": "Panel with field options links",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "apiVersion": "v1",
+        "type": "prometheus",
+        "uid": "default-ds-uid"
+      },
+      "id": 3,
+      "options": {
+        "dataLinks": [
+          {
+            "title": "Graph Data Link",
+            "url": "http://mylink.com?series=${__field.labels}"
+          }
+        ],
+        "fieldOptions": {
+          "defaults": {
+            "links": [
+              {
+                "title": "Graph Field Link",
+                "url": "http://mylink.com?field=${__field.labels}"
+              }
+            ]
+          }
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "prometheus",
+            "uid": "default-ds-uid"
+          },
+          "refId": "A"
+        }
+      ],
+      "title": "Panel with both link types",
+      "type": "graph"
+    },
+    {
+      "datasource": {
+        "apiVersion": "v1",
+        "type": "prometheus",
+        "uid": "default-ds-uid"
+      },
+      "id": 4,
+      "options": {
+        "dataLinks": [
+          {
+            "title": "No Series Labels Link",
+            "url": "http://mylink.com?other=${__field.labels}"
+          }
+        ]
+      },
+      "targets": [
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "prometheus",
+            "uid": "default-ds-uid"
+          },
+          "refId": "A"
+        }
+      ],
+      "title": "Panel without series labels",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "apiVersion": "v1",
+        "type": "prometheus",
+        "uid": "default-ds-uid"
+      },
+      "id": 5,
+      "targets": [
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "prometheus",
+            "uid": "default-ds-uid"
+          },
+          "refId": "A"
+        }
+      ],
+      "title": "Panel without options",
+      "type": "timeseries"
+    }
+  ],
+  "refresh": "",
+  "schemaVersion": 42,
+  "title": "V21 Data Links Series to Field Migration Test Dashboard"
+}

@@ -6,8 +6,6 @@ import { PluginExtensionLink, PluginExtensionTypes, usePluginContext } from '@gr
 import { UsePluginLinksOptions, UsePluginLinksResult } from '@grafana/runtime';
 
 import { useAddedLinksRegistry } from './ExtensionRegistriesContext';
-import * as errors from './errors';
-import { log } from './logs/log';
 import { useLoadAppPlugins } from './useLoadAppPlugins';
 import {
   generateExtensionId,
@@ -16,9 +14,8 @@ import {
   getLinkExtensionOverrides,
   getLinkExtensionPathWithTracking,
   getReadOnlyProxy,
-  isGrafanaDevMode,
 } from './utils';
-import { isExtensionPointIdValid, isExtensionPointMetaInfoMissing } from './validators';
+import { validateExtensionPoint } from './validateExtensionPoint';
 
 // Returns an array of component extensions for the given extension point
 export function usePluginLinks({
@@ -32,38 +29,15 @@ export function usePluginLinks({
   const { isLoading: isLoadingAppPlugins } = useLoadAppPlugins(getExtensionPointPluginDependencies(extensionPointId));
 
   return useMemo(() => {
-    const isInsidePlugin = Boolean(pluginContext);
-    const pluginId = pluginContext?.meta.id ?? '';
-    const pointLog = log.child({
-      pluginId,
+    const { result, pointLog } = validateExtensionPoint({
       extensionPointId,
+      pluginContext,
+      isLoadingAppPlugins,
     });
 
-    if (isGrafanaDevMode() && !isExtensionPointIdValid({ extensionPointId, pluginId, isInsidePlugin, log: pointLog })) {
+    if (result) {
       return {
-        isLoading: false,
-        links: [],
-      };
-    }
-
-    if (isGrafanaDevMode() && pluginContext && isExtensionPointMetaInfoMissing(extensionPointId, pluginContext)) {
-      pointLog.error(errors.EXTENSION_POINT_META_INFO_MISSING);
-      return {
-        isLoading: false,
-        links: [],
-      };
-    }
-
-    if (isLoadingAppPlugins) {
-      return {
-        isLoading: true,
-        links: [],
-      };
-    }
-
-    if (!registryState || !registryState[extensionPointId]) {
-      return {
-        isLoading: false,
+        isLoading: result.isLoading,
         links: [],
       };
     }
@@ -72,7 +46,7 @@ export function usePluginLinks({
     const extensions: PluginExtensionLink[] = [];
     const extensionsByPlugin: Record<string, number> = {};
 
-    for (const addedLink of registryState[extensionPointId] ?? []) {
+    for (const addedLink of registryState?.[extensionPointId] ?? []) {
       const { pluginId } = addedLink;
       const linkLog = pointLog.child({
         path: addedLink.path ?? '',

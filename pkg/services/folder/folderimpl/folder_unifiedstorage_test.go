@@ -43,6 +43,7 @@ import (
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
+	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 type rcp struct {
@@ -74,9 +75,7 @@ func compareFoldersNormalizeTime(t *testing.T, expected, actual *folder.Folder) 
 }
 
 func TestIntegrationFolderServiceViaUnifiedStorage(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	m := map[string]folderv1.Folder{}
 
@@ -193,9 +192,7 @@ func TestIntegrationFolderServiceViaUnifiedStorage(t *testing.T) {
 		ExpectedUser: &user.User{},
 	}
 
-	featuresArr := []any{
-		featuremgmt.FlagKubernetesClientDashboardsFolders}
-	features := featuremgmt.WithFeatures(featuresArr...)
+	features := featuremgmt.WithFeatures()
 
 	tracer := noop.NewTracerProvider().Tracer("TestIntegrationFolderServiceViaUnifiedStorage")
 	dashboardStore := dashboards.NewFakeDashboardStore(t)
@@ -521,7 +518,7 @@ func TestSearchFoldersFromApiServer(t *testing.T) {
 	tracer := noop.NewTracerProvider().Tracer("TestSearchFoldersFromApiServer")
 	service := Service{
 		k8sclient:     fakeK8sClient,
-		features:      featuremgmt.WithFeatures(featuremgmt.FlagKubernetesClientDashboardsFolders),
+		features:      featuremgmt.WithFeatures(),
 		unifiedStore:  folderStore,
 		tracer:        tracer,
 		accessControl: actest.FakeAccessControl{ExpectedEvaluate: true},
@@ -764,7 +761,7 @@ func TestGetFoldersFromApiServer(t *testing.T) {
 	tracer := noop.NewTracerProvider().Tracer("TestGetFoldersFromApiServer")
 	service := Service{
 		k8sclient:     fakeK8sClient,
-		features:      featuremgmt.WithFeatures(featuremgmt.FlagKubernetesClientDashboardsFolders),
+		features:      featuremgmt.WithFeatures(),
 		unifiedStore:  folderStore,
 		accessControl: actest.FakeAccessControl{ExpectedEvaluate: true},
 		tracer:        tracer,
@@ -848,6 +845,8 @@ func TestGetFoldersFromApiServer(t *testing.T) {
 }
 
 func TestIntegrationDeleteFoldersFromApiServer(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	fakeK8sClient := new(client.MockK8sHandler)
 	fakeK8sClient.On("GetNamespace", mock.Anything, mock.Anything).Return("default")
 	dashboardK8sclient := new(client.MockK8sHandler)
@@ -863,7 +862,7 @@ func TestIntegrationDeleteFoldersFromApiServer(t *testing.T) {
 		publicDashboardService: publicDashboardFakeService,
 		accessControl:          actest.FakeAccessControl{ExpectedEvaluate: true},
 		registry:               make(map[string]folder.RegistryService),
-		features:               featuremgmt.WithFeatures(featuremgmt.FlagKubernetesClientDashboardsFolders),
+		features:               featuremgmt.WithFeatures(),
 		tracer:                 tracer,
 	}
 	user := &user.SignedInUser{OrgID: 1}

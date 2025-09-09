@@ -5,14 +5,12 @@ build
 compiled
 data
 deployment_tools_config.json
-devenv
 dist
 e2e/tmp
 node_modules
 pkg
 public/lib/monaco
 public/sass/*.generated.scss
-scripts/cli/bettererIssueTemplate.md
 scripts/grafana-server/tmp
 vendor
 
@@ -40,3 +38,9 @@ public/mockServiceWorker.js
 
 /.nx/cache
 /.nx/workspace-data
+
+# Playwright results
+test-results
+playwright-report
+
+eslint-suppressions.json

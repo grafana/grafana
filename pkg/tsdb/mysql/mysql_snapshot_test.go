@@ -33,11 +33,11 @@ var updateGoldenFiles = false
 // preconfigured MySQL server suitable for running these tests.
 func TestIntegrationMySQLSnapshots(t *testing.T) {
 	// the logic in this function is copied from mysql_tests.go
-	shouldRunTest := func() bool {
-		if testing.Short() {
-			return false
-		}
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 
+	shouldRunTest := func() bool {
 		testDbName, present := os.LookupEnv("GRAFANA_TEST_DB")
 
 		if present && testDbName == "mysql" {

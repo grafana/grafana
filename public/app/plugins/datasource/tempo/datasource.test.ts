@@ -1227,7 +1227,17 @@ describe('should provide functionality for ad-hoc filters', () => {
   });
 
   it('for getTagKeys', async () => {
-    const response = await datasource.getTagKeys();
+    const response = await datasource.getTagKeys({
+      filters: [],
+      timeRange: {
+        from: dateTime('2021-04-20T15:55:00Z'),
+        to: dateTime('2021-04-20T15:55:00Z'),
+        raw: {
+          from: 'now-15m',
+          to: 'now',
+        },
+      },
+    });
     expect(response).toEqual([{ text: 'span.label1' }, { text: 'span.label2' }]);
   });
 
@@ -1257,7 +1267,7 @@ describe('histogram type functionality', () => {
     const target = 'server="${__data.fields.target}"';
     const serverSumBy = 'server';
 
-    const links = makeHistogramLink(datasourceUid, source, target, serverSumBy);
+    const links = makeHistogramLink(datasourceUid, source, target, serverSumBy, false);
     expect(links).toHaveLength(1);
     expect(links[0].title).toBe('Request classic histogram');
     expect(links[0].internal.query.expr).toBe(
@@ -1271,28 +1281,10 @@ describe('histogram type functionality', () => {
     const target = 'server="${__data.fields.target}"';
     const serverSumBy = 'server';
 
-    const links = makeHistogramLink(datasourceUid, source, target, serverSumBy, 'native');
+    const links = makeHistogramLink(datasourceUid, source, target, serverSumBy, true);
     expect(links).toHaveLength(1);
     expect(links[0].title).toBe('Request native histogram');
     expect(links[0].internal.query.expr).toBe(
-      'histogram_quantile(0.9, sum(rate(traces_service_graph_request_server_seconds{client="${__data.fields.source}",server="${__data.fields.target}"}[$__rate_interval])) by (le, client, server))'
-    );
-  });
-
-  it('should create correct histogram links for both histogram types', () => {
-    const datasourceUid = 'prom';
-    const source = 'client="${__data.fields.source}",';
-    const target = 'server="${__data.fields.target}"';
-    const serverSumBy = 'server';
-
-    const links = makeHistogramLink(datasourceUid, source, target, serverSumBy, 'both');
-    expect(links).toHaveLength(2);
-    expect(links[0].title).toBe('Request classic histogram');
-    expect(links[1].title).toBe('Request native histogram');
-    expect(links[0].internal.query.expr).toBe(
-      'histogram_quantile(0.9, sum(rate(traces_service_graph_request_server_seconds_bucket{client="${__data.fields.source}",server="${__data.fields.target}"}[$__rate_interval])) by (le, client, server))'
-    );
-    expect(links[1].internal.query.expr).toBe(
       'histogram_quantile(0.9, sum(rate(traces_service_graph_request_server_seconds{client="${__data.fields.source}",server="${__data.fields.target}"}[$__rate_interval])) by (le, client, server))'
     );
   });
@@ -1311,7 +1303,7 @@ describe('histogram type functionality', () => {
       tempoField,
       sourceField,
       undefined,
-      'native'
+      true
     );
     const histogramLink = fieldConfig.links.find((link) => link.title === 'Request native histogram');
     expect(histogramLink).toBeDefined();
@@ -1329,7 +1321,7 @@ describe('histogram type functionality', () => {
         targets: [{ serviceMapQuery: '{service="test"}' }],
         range: getDefaultTimeRange(),
       } as DataQueryRequest<TempoQuery>,
-      'native'
+      true
     );
 
     const bucketMetric = request.targets.find((t: PromQuery) => t.expr.includes('_bucket'));

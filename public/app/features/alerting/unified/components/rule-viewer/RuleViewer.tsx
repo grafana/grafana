@@ -32,6 +32,7 @@ import { PromAlertingRuleState, PromRuleType } from 'app/types/unified-alerting-
 
 import { logError } from '../../Analytics';
 import { defaultPageNav } from '../../RuleViewer';
+import { useRuleViewExtensionsNav } from '../../enterprise-components/rule-view-page/navigation';
 import { shouldUseAlertingListViewV2, shouldUsePrometheusRulesPrimary } from '../../featureToggles';
 import { isError, useAsync } from '../../hooks/useAsync';
 import { useRuleLocation } from '../../hooks/useCombinedRule';
@@ -48,6 +49,7 @@ import {
   RulePluginOrigin,
   getRulePluginOrigin,
   isFederatedRuleGroup,
+  isGrafanaRuleIdentifier,
   isPausedRule,
   prometheusRuleType,
   rulerRuleType,
@@ -70,6 +72,7 @@ import { History } from './tabs/History';
 import { InstancesList } from './tabs/Instances';
 import { QueryResults } from './tabs/Query';
 import { Routing } from './tabs/Routing';
+import { RulePageEnrichmentSectionExtension } from './tabs/extensions/RuleViewerExtension';
 
 export enum ActiveTab {
   Query = 'query',
@@ -78,16 +81,21 @@ export enum ActiveTab {
   Routing = 'routing',
   Details = 'details',
   VersionHistory = 'version-history',
+  Enrichment = 'enrichment',
 }
 
 const prometheusRulesPrimary = shouldUsePrometheusRulesPrimary();
 const alertingListViewV2 = shouldUseAlertingListViewV2();
 
-const shouldUseConsistencyCheck = prometheusRulesPrimary || alertingListViewV2;
-
 const RuleViewer = () => {
   const { rule, identifier } = useAlertRule();
   const { pageNav, activeTab } = usePageNav(rule);
+  const styles = useStyles2(getStyles);
+
+  // GMA /api/v1/rules endpoint is strongly consistent, so we don't need to check for consistency
+  const shouldUseConsistencyCheck = isGrafanaRuleIdentifier(identifier)
+    ? false
+    : prometheusRulesPrimary || alertingListViewV2;
 
   // this will be used to track if we are in the process of cloning a rule
   // we want to be able to show a modal if the rule has been provisioned explain the limitations
@@ -124,7 +132,7 @@ const RuleViewer = () => {
         />
       )}
       actions={<RuleActionsButtons rule={rule} rulesSource={rule.namespace.rulesSource} />}
-      info={createMetadata(rule)}
+      info={createMetadata(rule, styles)}
       subTitle={
         <Stack direction="column">
           {summary}
@@ -167,6 +175,7 @@ const RuleViewer = () => {
           {activeTab === ActiveTab.VersionHistory && rulerRuleType.grafana.rule(rule.rulerRule) && (
             <AlertVersionHistory rule={rule.rulerRule} />
           )}
+          {activeTab === ActiveTab.Enrichment && <RulePageEnrichmentSectionExtension />}
         </TabContent>
       </Stack>
       {duplicateRuleIdentifier && (
@@ -181,7 +190,7 @@ const RuleViewer = () => {
   );
 };
 
-const createMetadata = (rule: CombinedRule): PageInfoItem[] => {
+const createMetadata = (rule: CombinedRule, styles: ReturnType<typeof getStyles>): PageInfoItem[] => {
   const { labels, annotations, group, rulerRule } = rule;
   const metadata: PageInfoItem[] = [];
 
@@ -194,7 +203,6 @@ const createMetadata = (rule: CombinedRule): PageInfoItem[] => {
   const hasLabels = labelsSize(labels) > 0;
 
   const interval = group.interval;
-  const styles = useStyles2(getStyles);
 
   // if the alert rule uses simplified routing, we'll show a link to the contact point
   if (rulerRuleType.grafana.alertingRule(rulerRule)) {
@@ -301,7 +309,14 @@ export const Title = ({ name, paused = false, state, health, ruleType, ruleOrigi
 
   return (
     <Stack direction="row" gap={1} minWidth={0} alignItems="center">
-      {returnToHref && <LinkButton variant="secondary" icon="angle-left" href={returnTo} />}
+      {returnToHref && (
+        <LinkButton
+          aria-label={t('alerting.rule-viewer.aria-label-return-to', 'Return to previous view')}
+          variant="secondary"
+          icon="angle-left"
+          href={returnTo}
+        />
+      )}
       {ruleOrigin && <PluginOriginBadge pluginId={ruleOrigin.pluginId} size="lg" />}
       <Text variant="h1" truncate>
         {name}
@@ -427,6 +442,12 @@ function usePageNav(rule: CombinedRule) {
 
   const groupDetailsUrl = groups.detailsPageLink(dataSourceUID, namespaceString, groupName);
 
+  const setActiveTabFromString = (tab: string) => {
+    if (isValidTab(tab)) {
+      setActiveTab(tab);
+    }
+  };
+
   const pageNav: NavModelItem = {
     ...defaultPageNav,
     text: rule.name,
@@ -472,6 +493,8 @@ function usePageNav(rule: CombinedRule) {
         },
         hideFromTabs: !isGrafanaAlertRule && !isGrafanaRecordingRule,
       },
+      // Enterprise extensions can append additional tabs here
+      ...useRuleViewExtensionsNav(activeTab, setActiveTabFromString),
     ],
     parentItem: {
       text: groupName,

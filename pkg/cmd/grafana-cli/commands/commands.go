@@ -1,12 +1,14 @@
 package commands
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
 	"github.com/urfave/cli/v2"
 
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/commands/datamigrations"
+	"github.com/grafana/grafana/pkg/cmd/grafana-cli/commands/secretsconsolidation"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/commands/secretsmigrations"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/utils"
@@ -18,7 +20,7 @@ import (
 func runRunnerCommand(command func(commandLine utils.CommandLine, runner server.Runner) error) func(context *cli.Context) error {
 	return func(context *cli.Context) error {
 		cmd := &utils.ContextCommandLine{Context: context}
-		runner, err := initializeRunner(cmd)
+		runner, err := initializeRunner(context.Context, cmd)
 		if err != nil {
 			return fmt.Errorf("%v: %w", "failed to initialize runner", err)
 		}
@@ -33,7 +35,7 @@ func runRunnerCommand(command func(commandLine utils.CommandLine, runner server.
 func runDbCommand(command func(commandLine utils.CommandLine, cfg *setting.Cfg, sqlStore db.DB) error) func(context *cli.Context) error {
 	return func(context *cli.Context) error {
 		cmd := &utils.ContextCommandLine{Context: context}
-		runner, err := initializeRunner(cmd)
+		runner, err := initializeRunner(context.Context, cmd)
 		if err != nil {
 			return fmt.Errorf("%v: %w", "failed to initialize runner", err)
 		}
@@ -49,7 +51,7 @@ func runDbCommand(command func(commandLine utils.CommandLine, cfg *setting.Cfg, 
 	}
 }
 
-func initializeRunner(cmd *utils.ContextCommandLine) (server.Runner, error) {
+func initializeRunner(ctx context.Context, cmd *utils.ContextCommandLine) (server.Runner, error) {
 	configOptions := strings.Split(cmd.String("configOverrides"), " ")
 	cfg, err := setting.NewCfgFromArgs(setting.CommandLineArgs{
 		Config:   cmd.ConfigFile(),
@@ -61,7 +63,7 @@ func initializeRunner(cmd *utils.ContextCommandLine) (server.Runner, error) {
 		return server.Runner{}, err
 	}
 
-	runner, err := server.InitializeForCLI(cfg)
+	runner, err := server.InitializeForCLI(ctx, cfg)
 	if err != nil {
 		return server.Runner{}, fmt.Errorf("%v: %w", "failed to initialize runner", err)
 	}
@@ -181,6 +183,17 @@ var adminCommands = []*cli.Command{
 				Name:   "re-encrypt-data-keys",
 				Usage:  "Rotates persisted data encryption keys. Returns ok unless there is an error. Safe to execute multiple times.",
 				Action: runRunnerCommand(secretsmigrations.ReEncryptDEKS),
+			},
+		},
+	},
+	{
+		Name:  "secrets-consolidation",
+		Usage: "Runs an operation that re-encrypts all encrypted values in your database with new data keys",
+		Subcommands: []*cli.Command{
+			{
+				Name:   "consolidate",
+				Usage:  "Re-encrypts all encrypted values with new data keys and deletes the old deactivated data keys. Returns ok unless there is an error. Safe to execute multiple times.",
+				Action: runRunnerCommand(secretsconsolidation.ConsolidateSecrets),
 			},
 		},
 	},

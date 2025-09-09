@@ -4,26 +4,45 @@ import (
 	"github.com/grafana/grafana/apps/iam/kinds/v0alpha1"
 )
 
-user: {
+userKind: {
 	kind:       "User"
 	pluralName: "Users"
-	current:    "v0alpha1"
-    
-	versions: {
-		"v0alpha1": {
-			codegen: {
-				ts: { enabled: false }
-				go: { enabled: true }
-			}
-			validation: {
-				operations: [
-					"CREATE",
-					"UPDATE",
-				]
-			}
-			schema: {
-				spec: v0alpha1.UserSpec
-			}
-		}
+	codegen: {
+		ts: {enabled: false}
+		go: {enabled: true}
 	}
+}
+
+userv0alpha1: userKind & {
+	// TODO: Uncomment this when User will be added to ManagedKinds 
+	// validation: {
+	// 	operations: [
+	// 		"CREATE",
+	// 		"UPDATE",
+	// 	]
+	// }
+	// mutation: {
+	// 	operations: [
+	// 		"CREATE",
+	// 		"UPDATE",
+	// 	]
+	// }
+	schema: {
+		spec: v0alpha1.UserSpec
+	}
+	// TODO: Uncomment when the custom routes implementation is done
+	// routes: {
+	// 	"/teams": {
+	// 		"GET": {
+	// 			response: {
+	// 				#UserTeam: {
+	// 					title: string
+	// 					teamRef: v0alpha1.TeamRef
+	// 					permission: v0alpha1.TeamPermission
+	// 				}
+	// 				items: [...#UserTeam]
+	// 			}
+	// 		}
+	// 	}
+	// }
 }

@@ -7,9 +7,9 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-app-sdk/logging"
-	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
+	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 )
 
 type LegacyMigrator struct {
@@ -35,8 +35,18 @@ func NewLegacyMigrator(
 
 func (m *LegacyMigrator) Migrate(ctx context.Context, rw repository.ReaderWriter, options provisioning.MigrateJobOptions, progress jobs.JobProgressRecorder) error {
 	namespace := rw.Config().Namespace
+	var stageMode repository.StageMode
+	if options.History {
+		// When History is true, we want to commit and push each file (previous PushOnWrites: true)
+		stageMode = repository.StageModeCommitAndPushOnEach
+	} else {
+		// When History is false, we want to commit only once (previous CommitOnlyOnce: true)
+		stageMode = repository.StageModeCommitOnlyOnce
+	}
+
 	stageOptions := repository.StageOptions{
-		PushOnWrites: options.History,
+		Mode:                  stageMode,
+		CommitOnlyOnceMessage: options.Message,
 		// TODO: make this configurable
 		Timeout: 10 * time.Minute,
 	}

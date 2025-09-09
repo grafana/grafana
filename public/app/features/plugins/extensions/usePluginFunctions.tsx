@@ -5,11 +5,9 @@ import { usePluginContext, PluginExtensionFunction, PluginExtensionTypes } from 
 import { UsePluginFunctionsOptions, UsePluginFunctionsResult } from '@grafana/runtime';
 
 import { useAddedFunctionsRegistry } from './ExtensionRegistriesContext';
-import * as errors from './errors';
-import { log } from './logs/log';
 import { useLoadAppPlugins } from './useLoadAppPlugins';
-import { generateExtensionId, getExtensionPointPluginDependencies, isGrafanaDevMode } from './utils';
-import { isExtensionPointIdValid, isExtensionPointMetaInfoMissing } from './validators';
+import { generateExtensionId, getExtensionPointPluginDependencies } from './utils';
+import { validateExtensionPoint } from './validateExtensionPoint';
 
 // Returns an array of component extensions for the given extension point
 export function usePluginFunctions<Signature>({
@@ -23,36 +21,17 @@ export function usePluginFunctions<Signature>({
   const { isLoading: isLoadingAppPlugins } = useLoadAppPlugins(deps);
 
   return useMemo(() => {
-    const isInsidePlugin = Boolean(pluginContext);
+    const { result } = validateExtensionPoint({ extensionPointId, pluginContext, isLoadingAppPlugins });
+
+    if (result) {
+      return {
+        isLoading: result.isLoading,
+        functions: [],
+      };
+    }
+
     const results: Array<PluginExtensionFunction<Signature>> = [];
     const extensionsByPlugin: Record<string, number> = {};
-    const pluginId = pluginContext?.meta.id ?? '';
-    const pointLog = log.child({
-      pluginId,
-      extensionPointId,
-    });
-
-    if (isGrafanaDevMode() && !isExtensionPointIdValid({ extensionPointId, pluginId, isInsidePlugin, log: pointLog })) {
-      return {
-        isLoading: false,
-        functions: [],
-      };
-    }
-
-    if (isGrafanaDevMode() && pluginContext && isExtensionPointMetaInfoMissing(extensionPointId, pluginContext)) {
-      pointLog.error(errors.EXTENSION_POINT_META_INFO_MISSING);
-      return {
-        isLoading: false,
-        functions: [],
-      };
-    }
-
-    if (isLoadingAppPlugins) {
-      return {
-        isLoading: true,
-        functions: [],
-      };
-    }
 
     for (const registryItem of registryState?.[extensionPointId] ?? []) {
       const { pluginId } = registryItem;
