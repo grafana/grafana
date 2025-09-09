@@ -1,25 +1,35 @@
 import { ReactNode } from 'react';
 
-import { Stack, Text } from '@grafana/ui';
+import { Trans } from '@grafana/i18n';
+import { Icon, Stack, Text } from '@grafana/ui';
 
 import { StateDot } from './StateDot';
 import { Health, State } from './types';
 
 // we're making a distinction here between the "state" of the rule and its "health".
 // When the type is "recording" we only support the health property.
-type StateTextProps =
-  | {
-      state?: State;
-      health?: Health;
-      type?: 'alerting';
-    }
-  | {
-      health?: Health;
-      state?: never;
-      type: 'recording';
-    };
+type CommonStateTextProps = {
+  health?: Health;
+  isPaused?: boolean;
+};
 
-export const StateText = ({ state, health, type = 'alerting' }: StateTextProps) => {
+interface AlertingStateTextProps extends CommonStateTextProps {
+  type?: 'alerting';
+  state?: State;
+}
+
+interface RecordingStateTextProps extends CommonStateTextProps {
+  type: 'recording';
+  state?: never;
+}
+
+type StateTextProps = AlertingStateTextProps | RecordingStateTextProps;
+
+export const StateText = ({ state, health, type = 'alerting', isPaused = false }: StateTextProps) => {
+  if (isPaused) {
+    return <PausedText />;
+  }
+
   let stateLabel: string;
   let color: TextColor;
 
@@ -85,11 +95,22 @@ function InnerText({ color, text }: InnerTextProps) {
   const textColor = color === 'unknown' ? 'secondary' : color;
 
   return (
-    <Stack direction="row" gap={0.5} wrap={'nowrap'} flex={'0 0 auto'}>
+    <Stack direction="row" gap={0.5} wrap="nowrap" flex="0 0 auto" alignItems="center">
       <StateDot color={color} />
       <Text variant="bodySmall" color={textColor}>
         {text}
       </Text>
     </Stack>
+  );
+}
+
+function PausedText() {
+  return (
+    <Text variant="bodySmall" color="warning">
+      <Stack direction="row" gap={0.5} wrap="nowrap" flex="0 0 auto" alignItems="center">
+        <Icon name="pause" size="xs" />
+        <Trans i18nKey="alerting.paused-badge.paused">Paused</Trans>
+      </Stack>
+    </Text>
   );
 }
