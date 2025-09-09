@@ -5,11 +5,10 @@ import { Stack, useStyles2 } from '@grafana/ui';
 
 interface DotStylesProps {
   color: 'success' | 'error' | 'warning' | 'unknown';
-  includeState?: boolean;
 }
 
-const StateDot = ({ color, includeState }: DotStylesProps) => {
-  const styles = useStyles2(getDotStyles, { color, includeState });
+const StateDot = ({ color }: DotStylesProps) => {
+  const styles = useStyles2(getDotStyles, { color });
 
   return (
     <Stack direction="row" gap={0.5}>
@@ -18,13 +17,13 @@ const StateDot = ({ color, includeState }: DotStylesProps) => {
   );
 };
 
-const getDotStyles = (theme: GrafanaTheme2, props: DotStylesProps) => {
+const getDotStyles = (theme: GrafanaTheme2, { color }: DotStylesProps) => {
   const size = theme.spacing(1.25);
   const outlineSize = `calc(${size} / 2.5)`;
 
-  const errorStyle = props.color === 'error';
-  const successStyle = props.color === 'success';
-  const warningStyle = props.color === 'warning';
+  const errorStyle = color === 'error';
+  const successStyle = color === 'success';
+  const warningStyle = color === 'warning';
 
   return {
     dot: css(
