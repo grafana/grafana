@@ -174,6 +174,9 @@ Columns with filters applied have a blue filter displayed next to the title.
 
 To remove the filter, click the blue filter icon and then click **Clear filter**.
 
+<!-- vale Grafana.WordList = NO -->
+<!-- vale Grafana.Spelling = NO -->
+
 ### Panel filtering with ad hoc filters
 
 In table visualizations, you can apply ad hoc filters from the visualization with one click.
@@ -192,6 +195,9 @@ To quickly ad hoc filter variables, follow these steps:
 If one of the panels in the dashboard using that data source doesn't include that variable value, the panel won't return any data. In this example, the variable pair `_name_ = ALERTS` has been added to the ad hoc filter so one of the tables doesn't return any results:
 
 {{< figure src="/media/docs/grafana/panels-visualizations/screenshot-ad-hoc-filter-no-data-v12.2.png" max-width="750px" alt="Two tables, one filtered and one returning no results" >}}
+
+<!-- vale Grafana.Spelling = YES -->
+<!-- vale Grafana.WordList = YES -->
 
 ## Sort columns
 
