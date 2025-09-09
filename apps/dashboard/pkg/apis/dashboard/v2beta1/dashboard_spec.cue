@@ -113,7 +113,7 @@ DashboardLink: {
 	includeVars: bool | *false
 	// If true, includes current time range in the link as query params
 	keepTime: bool | *false
-	// Placement can be used to display the link somewhere else on the dashbaord other than abovethe visualisations.
+	// Placement can be used to display the link somewhere else on the dashboard other than above the visualisations.
 	placement?: DashboardLinkPlacement
 }
 
