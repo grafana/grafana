@@ -64,7 +64,6 @@ import { RedirectToCloneRule } from '../rules/CloneRule';
 
 import { ContactPointLink } from './ContactPointLink';
 import { FederatedRuleWarning } from './FederatedRuleWarning';
-import PausedBadge from './PausedBadge';
 import { useAlertRule } from './RuleContext';
 import { AlertVersionHistory } from './tabs/AlertVersionHistory';
 import { Details } from './tabs/Details';
@@ -321,15 +320,9 @@ export const Title = ({ name, paused = false, state, health, ruleType, ruleOrigi
       <Text variant="h1" truncate>
         {name}
       </Text>
-      {paused ? (
-        <PausedBadge />
-      ) : (
-        <>
-          {/* recording rules won't have a state */}
-          {state && <StateText type="alerting" state={textState} health={textHealth} />}
-          {isRecordingRule && <StateText type="recording" health={textHealth} />}
-        </>
-      )}
+      {/* recording rules won't have a state */}
+      {state && <StateText type="alerting" state={textState} health={textHealth} isPaused={paused} />}
+      {isRecordingRule && <StateText type="recording" health={textHealth} isPaused={paused} />}
     </Stack>
   );
 };
