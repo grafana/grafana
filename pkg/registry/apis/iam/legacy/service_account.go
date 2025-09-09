@@ -407,7 +407,6 @@ func (s *legacySQLStore) DeleteServiceAccount(ctx context.Context, ns claims.Nam
 		return err
 	}
 
-	cmd.OrgID = ns.OrgID
 	req := newDeleteUser(sql, &cmd)
 	if err := req.Validate(); err != nil {
 		return err

@@ -73,8 +73,7 @@ func (s *LegacyStore) Delete(ctx context.Context, name string, deleteValidation 
 	}
 
 	err = s.store.DeleteServiceAccount(ctx, ns, legacy.DeleteUserCommand{
-		UID:   name,
-		OrgID: ns.OrgID,
+		UID: name,
 	})
 
 	if err != nil {

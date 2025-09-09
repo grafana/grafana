@@ -334,15 +334,13 @@ func TestIdentityQueries(t *testing.T) {
 				{
 					Name: "delete_user_basic",
 					Data: deleteUser(&DeleteUserCommand{
-						OrgID: 1,
-						UID:   "user-1",
+						UID: "user-1",
 					}),
 				},
 				{
 					Name: "delete_user_different_org",
 					Data: deleteUser(&DeleteUserCommand{
-						OrgID: 2,
-						UID:   "user-abc",
+						UID: "user-abc",
 					}),
 				},
 			},

@@ -322,8 +322,7 @@ type CreateOrgUserCommand struct {
 }
 
 type DeleteUserCommand struct {
-	OrgID int64
-	UID   string
+	UID string
 }
 
 var sqlCreateUserTemplate = mustTemplate("create_user.sql")
@@ -461,27 +460,23 @@ func (s *legacySQLStore) CreateUser(ctx context.Context, ns claims.NamespaceInfo
 
 func newDeleteUser(sql *legacysql.LegacyDatabaseHelper, cmd *DeleteUserCommand) deleteUserQuery {
 	return deleteUserQuery{
-		SQLTemplate:  sqltemplate.New(sql.DialectForDriver()),
-		UserTable:    sql.Table("user"),
-		OrgUserTable: sql.Table("org_user"),
-		Command:      cmd,
+		SQLTemplate: sqltemplate.New(sql.DialectForDriver()),
+		UserTable:   sql.Table("user"),
+		Command:     cmd,
 	}
 }
 
 type deleteUserQuery struct {
 	sqltemplate.SQLTemplate
-	UserTable    string
-	OrgUserTable string
-	Command      *DeleteUserCommand
+	UserTable string
+	Command   *DeleteUserCommand
 }
 
 func (r deleteUserQuery) Validate() error {
 	if r.Command.UID == "" {
 		return fmt.Errorf("user UID is required")
 	}
-	if r.Command.OrgID == 0 {
-		return fmt.Errorf("org ID is required")
-	}
+
 	return nil
 }
 
@@ -513,7 +508,6 @@ func (s *legacySQLStore) DeleteUser(ctx context.Context, ns claims.NamespaceInfo
 		return err
 	}
 
-	cmd.OrgID = ns.OrgID
 	req := newDeleteUser(sql, &cmd)
 	if err := req.Validate(); err != nil {
 		return err
