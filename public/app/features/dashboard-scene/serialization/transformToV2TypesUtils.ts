@@ -1,3 +1,4 @@
+import { Action as ActionV1 } from '@grafana/data';
 import {
   VariableHide as VariableHideV1,
   VariableRefresh as VariableRefreshV1,
@@ -17,6 +18,7 @@ import {
   VariableRefresh,
   VariableSort,
   FieldColorModeId as FieldColorModeIdV2,
+  Action as ActionV2,
 } from '@grafana/schema/dist/esm/schema/dashboard/v2';
 
 // used for QueryVariableKind's query prop - in schema V2 we've deprecated string type and support only DataQuery
@@ -124,4 +126,44 @@ export function colorIdEnumToColorIdV2(colorId: FieldColorModeIdV1 | string): Fi
     default:
       return undefined;
   }
+}
+
+export function transformActionsV2(actions: ActionV1[]): ActionV2[] | undefined {
+  if (!actions || actions.length === 0) {
+    return undefined;
+  }
+
+  const transformedActions: ActionV2[] = [];
+
+  actions.forEach((action) => {
+    let fetch: ActionV2['fetch'];
+    let infinity: ActionV2['infinity'];
+
+    if (action.fetch) {
+      fetch = {
+        ...action.fetch,
+        headers: action.fetch.headers?.map((header: [string, string]) => ({ [header[0]]: header[1] })),
+        queryParams: action.fetch.queryParams?.map((queryParam: [string, string]) => ({
+          [queryParam[0]]: queryParam[1],
+        })),
+      };
+    }
+    if (action.infinity) {
+      infinity = {
+        ...action.infinity,
+        headers: action.infinity.headers?.map((header: [string, string]) => ({ [header[0]]: header[1] })),
+        queryParams: action.infinity.queryParams?.map((queryParam: [string, string]) => ({
+          [queryParam[0]]: queryParam[1],
+        })),
+      };
+    }
+
+    transformedActions.push({
+      ...action,
+      fetch,
+      infinity,
+    });
+  });
+
+  return transformedActions;
 }

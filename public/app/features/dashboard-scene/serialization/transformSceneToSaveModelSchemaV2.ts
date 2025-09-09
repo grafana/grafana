@@ -44,7 +44,6 @@ import {
   FieldColor,
   defaultFieldConfig,
   defaultDataQueryKind,
-  Action,
 } from '../../../../../packages/grafana-schema/src/schema/dashboard/v2';
 import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
 import { DashboardScene, DashboardSceneState } from '../scene/DashboardScene';
@@ -55,7 +54,7 @@ import { getLibraryPanelBehavior, getPanelIdForVizPanel, getQueryRunnerFor, isLi
 import { DSReferencesMapping } from './DashboardSceneSerializer';
 import { transformV1ToV2AnnotationQuery } from './annotations';
 import { sceneVariablesSetToSchemaV2Variables } from './sceneVariablesSetToVariables';
-import { colorIdEnumToColorIdV2, transformCursorSynctoEnum } from './transformToV2TypesUtils';
+import { colorIdEnumToColorIdV2, transformCursorSynctoEnum, transformActionsV2 } from './transformToV2TypesUtils';
 
 // FIXME: This is temporary to avoid creating partial types for all the new schema, it has some performance implications, but it's fine for now
 type DeepPartial<T> = T extends object
@@ -218,36 +217,8 @@ function handleFieldConfigDefaultsConversion(vizPanel: VizPanel) {
     return defaultFieldConfig();
   }
 
-  const actions: Action[] = [];
-
-  // handle actions conversion
-  if (vizPanel.state.fieldConfig.defaults.actions) {
-    vizPanel.state.fieldConfig.defaults.actions.forEach((action) => {
-      let fetch: Action['fetch'];
-      let infinity: Action['infinity'];
-
-      if (action.fetch) {
-        fetch = {
-          ...action.fetch,
-          headers: action.fetch.headers?.map((header) => ({ [header[0]]: header[1] })),
-          queryParams: action.fetch.queryParams?.map((queryParam) => ({ [queryParam[0]]: queryParam[1] })),
-        };
-      }
-      if (action.infinity) {
-        infinity = {
-          ...action.infinity,
-          headers: action.infinity.headers?.map((header) => ({ [header[0]]: header[1] })),
-          queryParams: action.infinity.queryParams?.map((queryParam) => ({ [queryParam[0]]: queryParam[1] })),
-        };
-      }
-
-      actions.push({
-        ...action,
-        fetch,
-        infinity,
-      });
-    });
-  }
+  // handle panel actions conversion
+  const actions = transformActionsV2(vizPanel.state.fieldConfig.defaults.actions ?? []);
 
   // Handle type conversion for color mode
   const rawColor = vizPanel.state.fieldConfig.defaults.color;
