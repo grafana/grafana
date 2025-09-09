@@ -246,12 +246,13 @@ export enum VariableRefresh {
 
 /**
  * Determine if the variable shows on dashboard
- * Accepted values are 0 (show label and value), 1 (show value only), 2 (show nothing).
+ * Accepted values are 0 (show label and value), 1 (show value only), 2 (show nothing), 3 (show under the controls dropdown menu).
  */
 export enum VariableHide {
   dontHide = 0,
   hideLabel = 1,
   hideVariable = 2,
+  inControlsMenu = 3,
 }
 
 /**
@@ -1209,7 +1210,7 @@ export const defaultDashboard: Partial<Dashboard> = {
   graphTooltip: DashboardCursorSync.Off,
   links: [],
   panels: [],
-  schemaVersion: 41,
+  schemaVersion: 42,
   tags: [],
   timezone: 'browser',
 };

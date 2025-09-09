@@ -709,14 +709,19 @@ func (c *K8sTestHelper) AddOrUpdateTeamMember(user User, teamID int64, permissio
 	require.NoError(c.t, err)
 }
 
-func (c *K8sTestHelper) NewDiscoveryClient() *discovery.DiscoveryClient {
+func (c *K8sTestHelper) NewAdminRestConfig() *rest.Config {
 	c.t.Helper()
 
 	baseUrl := fmt.Sprintf("http://%s", c.env.Server.HTTPServer.Listener.Addr())
 	cfg := newOptimizedRestConfig(baseUrl)
 	cfg.Username = c.Org1.Admin.Identity.GetLogin()
 	cfg.Password = c.Org1.Admin.password
-	client, err := discovery.NewDiscoveryClientForConfig(cfg)
+	return cfg
+}
+
+func (c *K8sTestHelper) NewDiscoveryClient() *discovery.DiscoveryClient {
+	c.t.Helper()
+	client, err := discovery.NewDiscoveryClientForConfig(c.NewAdminRestConfig())
 	require.NoError(c.t, err)
 	return client
 }
@@ -787,7 +792,7 @@ func VerifyOpenAPISnapshots(t *testing.T, dir string, gv schema.GroupVersion, h 
 		return // skip invalid groups
 	}
 	path := fmt.Sprintf("/openapi/v3/apis/%s/%s", gv.Group, gv.Version)
-	t.Run(path, func(t *testing.T) {
+	t.Run(path[1:], func(t *testing.T) {
 		rsp := DoRequest(h, RequestParams{
 			Method: http.MethodGet,
 			Path:   path,
@@ -795,7 +800,9 @@ func VerifyOpenAPISnapshots(t *testing.T, dir string, gv schema.GroupVersion, h 
 		}, &AnyResource{})
 
 		require.NotNil(t, rsp.Response)
-		require.Equal(t, 200, rsp.Response.StatusCode, path)
+		if rsp.Response.StatusCode != 200 {
+			require.Failf(t, "Not OK", "Code[%d] %s", rsp.Response.StatusCode, string(rsp.Body))
+		}
 
 		var prettyJSON bytes.Buffer
 		err := json.Indent(&prettyJSON, rsp.Body, "", "  ")

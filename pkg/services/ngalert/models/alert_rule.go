@@ -642,7 +642,7 @@ func (alertRule *AlertRule) PreSave(timeNow func() time.Time, userUID *UserUID) 
 	for i, q := range alertRule.Data {
 		err := q.PreSave()
 		if err != nil {
-			return fmt.Errorf("invalid alert query %s: %w", q.RefID, err)
+			return errors.Join(ErrAlertRuleFailedValidation, fmt.Errorf("invalid alert query %s: %w", q.RefID, err))
 		}
 		alertRule.Data[i] = q
 	}

@@ -109,7 +109,7 @@ export const LogList = ({
   displayedFields,
   containerElement,
   logOptionsStorageKey,
-  detailsMode = logOptionsStorageKey ? (store.get(`${logOptionsStorageKey}.detailsMode`) ?? 'sidebar') : 'sidebar',
+  detailsMode,
   dedupStrategy,
   enableLogDetails,
   eventBus,
@@ -399,7 +399,7 @@ const LogListComponent = ({
 
   const focusLogLine = useCallback(
     (log: LogListModel) => {
-      const index = filteredLogs.indexOf(log);
+      const index = filteredLogs.findIndex((filteredLog) => filteredLog.uid === log.uid);
       if (index >= 0) {
         debouncedScrollToItem(index, 'start');
       }
@@ -423,6 +423,7 @@ const LogListComponent = ({
           timeRange={timeRange}
           timeZone={timeZone}
           onResize={handleLogDetailsResize}
+          showControls={showControls}
         />
       )}
       <div className={styles.logListWrapper} ref={wrapperRef}>

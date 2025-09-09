@@ -557,6 +557,7 @@
     },
     "alert-rules": {
       "firing-for": "Uruchamianie dla",
+      "multiple-sources": "",
       "next-evaluation": "Następna ocena",
       "next-evaluation-in": "następna ocena za",
       "rule-definition": "Definicja reguły"
@@ -1714,9 +1715,6 @@
       "notes": "Uwagi",
       "returns": "Zwroty"
     },
-    "label-picker": {
-      "no-options-message": "Nie znaleziono etykiet"
-    },
     "labels-editor-modal": {
       "title-edit-labels": "Edytuj etykiety"
     },
@@ -1734,9 +1732,6 @@
     "labels-sub-form": {
       "description": "Wybierz parę klucz-wartość etykiety z poniższych opcji lub wpisz nową i naciśnij Enter.",
       "save": "Zapisz"
-    },
-    "labels-with-suggestions": {
-      "text-loading-existing-labels": "Wczytywanie istniejących etykiet"
     },
     "labels-without-suggestions": {
       "message": {
@@ -2664,13 +2659,15 @@
         "show": "Pokaż"
       },
       "manage-alerts": "W tych źródłach danych możesz wybrać „Zarządzaj alertami za pośrednictwem interfejsu alertów”, aby móc zarządzać tymi regułami alertów w interfejsie Grafany, a także w źródle danych, w którym zostały skonfigurowane.",
-      "no-groups": "Brak dostępnych grup",
-      "no-namespaces": "Brak dostępnych folderów",
       "placeholder-all-data-sources": "Wszystkie źródła danych",
       "placeholder-contact-point": "Wybierz punkt kontaktowy",
       "placeholder-data-sources": "Wybierz źródła danych",
       "placeholder-labels": "Wybierz etykiety",
       "plugin-rules": "Reguły dotyczące wtyczek",
+      "rule-source": {
+        "datasource": "",
+        "grafana": ""
+      },
       "rule-type": "Typ reguły",
       "rulesSearchInput-placeholder-search": "Szukaj",
       "search": "Szukaj",
@@ -2692,6 +2689,7 @@
         "namespace": "Folder / przestrzeń nazw",
         "rule-health": "Zdrowie",
         "rule-name": "Nazwa reguły",
+        "rule-source": "",
         "rule-type": "Typ",
         "state": "Stan"
       }
@@ -3419,9 +3417,6 @@
       "text-badge-enabled": "Włączone",
       "text-badge-not-enabled": "Niewłączone"
     },
-    "scim-banner": {
-      "message": "Standard SCIM jest obecnie w trakcie rozwoju i nie jest zalecany do użytku produkcyjnego. Należy stosować go ostrożnie i spodziewać się potencjalnych zmian."
-    },
     "server-discovery-modal": {
       "label-the-wellknownopenidconfiguration-endpoint-for-your-id-p": "Punkt końcowy konfiguracji .well-known/openid-configuration dla Twojego dostawcy tożsamości",
       "title-open-id-connect-discovery-url": "Adres URL wykrywania OpenID Connect"
@@ -3591,7 +3586,9 @@
       },
       "error-moving-resources": "Błąd przenoszenia zasobów",
       "error-no-target-folder-path": "Ścieżka do folderu docelowego jest nieprawidłowa lub pusta. Wybierz ponownie.",
-      "move-warning": "Spowoduje to przeniesienie wybranych folderów i ich elementów podrzędnych. Wpłynie to na następujące elementy:",
+      "move-total": "",
+      "move-warning": "",
+      "move-warning-tooltip": "",
       "target-folder": "Folder docelowy"
     },
     "counts": {
@@ -4539,16 +4536,11 @@
             "any": "Zgodność: jakakolwiek",
             "label": "Dopasuj reguły"
           },
-          "label": "Grupa",
           "visibility": {
             "hide": "Ukryj",
             "label": "{{type}} – widoczność",
             "show": "Pokaż"
           }
-        },
-        "shared": {
-          "delete-condition": "Usuń warunek",
-          "unsupported-item-type": "Ten warunek nie jest obsługiwany przez element, slatego zostanie zignorowany."
         },
         "time-range-size": {
           "info": "Pokaż lub ukryj: {{type}}, jeśli zakres czasu pulpitu jest krótszy niż wybrane ramy czasowe.",
@@ -4578,17 +4570,21 @@
             "not-matches": "Brak dopasowań"
           },
           "value": "Wartość"
+        },
+        "wrapper": {
+          "delete-condition": "",
+          "unsupported-object-type": ""
         }
       },
       "editor": {
+        "info": "",
         "not-supported-for-custom-grid": "Renderowanie warunkowe nie jest obsługiwane w przypadku niestandardowego układu siatki. Przełącz na automatyczną siatkę, aby użyć renderowania warunkowego.",
-        "unsupported-item-type": "Renderowanie warunkowe nie jest obsługiwane w przypadku tego typu elementu"
+        "unsupported-object-type": ""
       },
       "overlay": {
         "tooltip": "Element jest ukryty z powodu renderowania warunkowego."
       },
       "root": {
-        "info": "Ustaw reguły, aby kontrolować widoczność elementów {{type}}, dopasowując dowolne lub wszystkie reguły.",
         "title": "Pokaż/ukryj reguły"
       }
     },
@@ -4597,6 +4593,12 @@
       "cancel": "Anuluj",
       "overwrite": "Zastąp",
       "title-plugin-dashboard": "Pulpit wtyczek"
+    },
+    "controls": {
+      "menu": {
+        "aria-label": "",
+        "title": ""
+      }
     },
     "dash-nav": {
       "on-open-snapshot-original": {
@@ -4715,13 +4717,16 @@
       "move": "Przenieś {{typeName}}",
       "panel-background": "Zmień tło panelu",
       "panel-description": "Zmień opis panelu",
+      "panel-edit": "",
       "panel-max-repeats-per-row": "Maks. liczba powtórzeń na wiersz",
       "panel-repeat-direction": "Powtórz kierunek",
       "panel-repeat-variable": "Powtórz panel wg",
       "panel-title": "Zmień tytuł panelu",
       "paste-panel": "Wklej panel",
       "remove": "Usuń: {{typeName}}",
-      "switch-layout": "Przełącz układ"
+      "row-title": "",
+      "switch-layout": "Przełącz układ",
+      "tab-title": ""
     },
     "edit-pane": {
       "elements": {
@@ -4967,12 +4972,11 @@
       "dataframe-aria-label": "Wybierz ramkę danych",
       "dataframe-label": "Pokaż ramkę danych",
       "download-csv": "Pobierz plik CSV",
-      "download-excel-description": "Dodaje nagłówek do pliku CSV do użytku z programem Excel",
-      "download-excel-label": "Pobierz do programu Excel",
       "download-logs": "Pobierz logi",
       "download-service": "Pobierz wykres usługi",
       "download-traces": "Pobierz śledzenie",
-      "excel-header": "Nagłówek na potrzeby programu Excel",
+      "excel-compatibility-mode-description": "",
+      "excel-compatibility-mode-label": "",
       "formatted": "Sformatowane dane",
       "formatted-data-description": "Dane tabeli są formatowane za pomocą opcji zdefiniowanych na kartach Pole i Nadpisanie.",
       "formatted-data-label": "Sformatowane dane",
@@ -5878,11 +5882,6 @@
         "transparent-background": "Przezroczyste tło"
       }
     },
-    "get-workflow-options": {
-      "label": {
-        "push-to-a-new-branch": "Wyślij do nowej gałęzi"
-      }
-    },
     "group-by-variable-form": {
       "alert-not-supported": "To źródło danych nie obsługuje grupowania według zmiennych",
       "description-enables-users-custom-values": "Umożliwia użytkownikom dodawanie niestandardowych wartości do listy",
@@ -6583,7 +6582,8 @@
     },
     "data-source-load-error": {
       "back": "Wstecz",
-      "delete": "Usuń"
+      "delete": "Usuń",
+      "not-found": ""
     },
     "data-source-missing-rights-message": {
       "title-missing-rights": "Brak uprawnień"
@@ -6983,11 +6983,6 @@
       "dragging-a-divider": "Przeciąganie podziału",
       "dragging-a-sub-region": "Przeciąganie podregionu",
       "value": "Wartość: {{ dividerPos }}"
-    },
-    "drilldownInfo": {
-      "action": "Przejdź do narzędzia Grafana Drilldown",
-      "description": "Szukasz aplikacji Grafana Explore? Teraz nazywają się Grafana Drilldown i można je znaleźć w <1>Menu > Drilldown</1>",
-      "title": "Funkcje „Eksploruj metryki”, „Logi”, „Śledzenie” i „Profile” zostały przeniesione."
     },
     "drop-down-menu": {
       "aria-label-links": "Linki",
@@ -7611,7 +7606,9 @@
   "folders": {
     "api": {
       "folder-delete-error-provisioned": "",
-      "folder-deleted-success": "Folder usunięty"
+      "folder-deleted-success": "Folder usunięty",
+      "folder-move-error-provisioned": "",
+      "folder-moved-success": ""
     },
     "get-loading-nav": {
       "main": {
@@ -8387,6 +8384,10 @@
         "action-title": "Tytuł",
         "action-title-placeholder": "Tytuł działania",
         "action-variables": "Zmienne",
+        "connection": "",
+        "connection-direct-description": "",
+        "connection-direct-label": "",
+        "connection-placeholder": "",
         "one-click-description": "Tylko jeden link lub działanie może mieć włączoną opcję jednego kliknięcia"
       }
     },
@@ -8811,7 +8812,6 @@
       "cell-inspect": "Sprawdź wartość",
       "cell-inspect-tooltip": "Sprawdź wartość",
       "copy": "Kopiuj do schowka",
-      "count": "Liczba",
       "csv-counts": "Wiersze:{{rows}}, Kolumny:{{columns}}  <5></5>",
       "csv-placeholder": "Wprowadź plik CSV tutaj…",
       "filter-placeholder": "Wartości filtra",
@@ -8822,6 +8822,11 @@
       "filter-popup-heading": "Filtruj według wartości:",
       "filter-popup-input-placeholder": "Wartości filtra",
       "filter-popup-match-case": "Dopasuj wielkość liter",
+      "footer": {
+        "reducer": {
+          "count": ""
+        }
+      },
       "inspect-drawer-title": "Sprawdź wartość",
       "nested-table": {
         "no-data": "Brak danych"
@@ -9587,6 +9592,7 @@
       "fields-section": "Pola",
       "hide-log-line": "Ukryj wiersz logu",
       "inline-mode": "Wyświetl bezpośrednio",
+      "link-value-tooltip": "",
       "links-section": "Linki",
       "log-line-field": "Wiersz logu",
       "log-line-section": "Wiersz logu",
@@ -9696,6 +9702,12 @@
       "hide-search": "Zamknij wyszukiwanie",
       "hide-timestamps": "Ukryj znaczniki czasu",
       "hide-unique-labels": "Ukryj unikalne etykiety",
+      "line-wrapping": {
+        "enable": "",
+        "enable-prettify": "",
+        "hide": "",
+        "label": ""
+      },
       "newest-first": "Sortowanie od najnowszych wpisów dziennika – kliknij, aby wyświetlić najpierw najstarsze",
       "oldest-first": "Sortowanie od najstarszych wpisów dziennika – kliknij, aby wyświetlić najpierw najnowsze",
       "prettify-json": "Rozwiń logi JSON",
@@ -9704,13 +9716,16 @@
       "resolution-ns": "ns",
       "scroll-bottom": "Przewiń w dół",
       "scroll-top": "Przewiń w górę",
-      "show-ms-timestamps": "Pokaż znaczniki czasu w milisekundach",
-      "show-ns-timestamps": "Pokaż znaczniki czasu w nanosekundach",
       "show-search": "Wynik wyszukiwania w logach",
       "show-timestamps": "Pokaż znaczniki czasu",
       "show-unique-labels": "Pokaż unikalne etykiety",
+      "timestamp": {
+        "hide": "",
+        "label": "",
+        "milliseconds": "",
+        "nanoseconds": ""
+      },
       "unwrap-lines": "Nie zawijaj wierszy",
-      "wrap-json-lines": "",
       "wrap-lines": "Zawijaj wiersze"
     },
     "logs-navigation": {
@@ -9777,30 +9792,6 @@
     "un-themed-log-label-stats": {
       "field-log-stats": "{{label}}: to pole występuje w {{total}} z {{rowCount}} wierszy",
       "label-log-stats": "{{label}}: ta etykieta występuje w {{total}} z {{rowCount}} wierszy"
-    }
-  },
-  "logs-new": {
-    "category-logs": "Logi",
-    "deduplication-options": {
-      "label-exact": "Dokładnie",
-      "label-none": "Brak",
-      "label-numbers": "Liczby",
-      "label-signature": "Podpis"
-    },
-    "description-infinite-scrolling": "Eksperymentalne. Poproś o więcej wyników, przewijając do dołu listy logów.",
-    "description-show-controls": "Wyświetlaj elementy sterujące, aby przejść do ostatniego lub pierwszego wiersza logu, i filtruj według poziomu logów",
-    "description-syntax-highlighting": "Użyj wstępnie zdefiniowanej gramatyki kolorowania składni, aby wyróżnić odpowiednie części wierszy logów",
-    "name-deduplication": "Deduplikacja",
-    "name-enable-log-details": "Włącz szczegóły logu",
-    "name-infinite-scrolling": "Włącz nieskończone przewijanie",
-    "name-order": "Kolejność",
-    "name-show-controls": "Pokaż kontrolki",
-    "name-syntax-highlighting": "Włącz podświetlanie składni",
-    "name-time": "Czas",
-    "name-wrap-lines": "Zawijaj wiersze",
-    "order-options": {
-      "label-newest-first": "Od najnowszych",
-      "label-oldest-first": "Od najstarszych"
     }
   },
   "manage-dashbaords": {
@@ -11222,11 +11213,16 @@
     "save-or-delete-resource-shared-fields": {
       "comment-placeholder-describe-changes-optional": "Dodaj notatkę, aby opisać zmiany (opcjonalnie)",
       "description-branch-name-in-git-hub": "Nazwa gałęzi w GitHub",
+      "description-file-path": "",
+      "description-folder-path": "",
       "description-inside-repository": "",
       "label-branch": "Gałąź",
       "label-comment": "Uwagi",
       "label-path": "Ścieżka",
-      "label-workflow": "Przepływ pracy"
+      "label-workflow": "Przepływ pracy",
+      "placeholder-branch": "",
+      "placeholder-new-branch": "",
+      "suffix-configured-branch": ""
     }
   },
   "provisioned-resource-preview-banner": {
@@ -11766,6 +11762,10 @@
       "button-previous": "Wstecz",
       "button-submitting": "Zgłaszanie…",
       "error-instance-repository-exists": "Repozytorium instancji już istnieje"
+    },
+    "workflow-options-label": {
+      "push-to-a-new-branch": "",
+      "push-to-existing-branch": ""
     }
   },
   "public-dashboard": {
@@ -12015,7 +12015,6 @@
       "expand-row": "Rozwiń wiersz zapytania",
       "hide-response": "Ukryj odpowiedź",
       "remove-query": "Usuń zapytanie",
-      "replace-query-from-library": "Zastąp zapisanym zapytaniem",
       "show-response": "Pokaż odpowiedź"
     },
     "query-editor-not-exported": "Wtyczka źródła danych nie eksportuje żadnego komponentu Edytora zapytań"
@@ -12028,16 +12027,6 @@
       "no-deleted-dashboards": "Ostatnio nie usunięto żadnych pulpitów.",
       "no-deleted-dashboards-text": "Usunięty pulpit będzie widoczny tutaj przez 30 dni, zanim zostanie trwale usunięty. Administrator organizacji może przywrócić ostatnio usunięte pulpity.",
       "no-search-result": "Nie znaleziono wyników dla tego zapytania"
-    },
-    "permanently-delete-modal": {
-      "confirm-text": "Usuń",
-      "delete-button": "Usuń",
-      "delete-loading": "Usuwanie…",
-      "title": "Trwale usuń pulpity",
-      "text_one": "To działanie spowoduje usunięcie {{numberOfDashboards}} pulpitu.",
-      "text_few": "To działanie spowoduje usunięcie {{numberOfDashboards}} pulpitów.",
-      "text_many": "To działanie spowoduje usunięcie {{numberOfDashboards}} pulpitów.",
-      "text_other": "To działanie spowoduje usunięcie {{numberOfDashboards}} pulpitu."
     },
     "restore-modal": {
       "restore-button": "Przywróć",
@@ -12158,6 +12147,7 @@
     "selector": {
       "apply": "Zastosuj",
       "cancel": "Anuluj",
+      "error-title": "",
       "input": {
         "placeholder": "Wybierz zakresy…",
         "removeAll": "Usuń wszystkie zakresy"
@@ -12856,8 +12846,6 @@
     "description-calculation": "Wybierz funkcję reduktora / obliczenia",
     "description-cell-value-inspect": "Włącz kontrolę wartości komórki w oknie modalnym",
     "description-column-filter": "Włącza/wyłącza filtry pól w tabeli",
-    "description-count-rows": "Wyświetl pojedynczą liczbę dla wszystkich wierszy danych",
-    "description-fields": "Wybierz pola, które powinny być obliczone",
     "description-frozen-columns": "",
     "description-min-column-width": "Minimalna szerokość dla automatycznej zmiany rozmiaru kolumny",
     "description-tooltip-from-field": "",
@@ -12884,20 +12872,18 @@
     "name-column-alignment": "Wyrównanie kolumn",
     "name-column-filter": "Filtr kolumn",
     "name-column-width": "Szerokość kolumny",
-    "name-count-rows": "Policz wiersze",
     "name-enable-pagination": "",
-    "name-fields": "Pola",
     "name-frozen-columns": "",
     "name-hide-in-table": "Ukryj w tabeli",
+    "name-max-height": "",
     "name-min-column-width": "Minimalna szerokość kolumny",
-    "name-show-table-footer": "Pokaż stopkę tabeli",
     "name-show-table-header": "Pokaż nagłówek tabeli",
     "name-tooltip-from-field": "",
     "name-tooltip-placement": "",
     "name-wrap-header-text": "Zawijaj tekst nagłówka",
     "name-wrap-text": "",
     "placeholder-column-width": "automatycznie",
-    "placeholder-fields": "Wszystkie pola numeryczne",
+    "placeholder-max-height": "",
     "tooltip-placement-options": {
       "label-auto": "",
       "label-bottom": "",

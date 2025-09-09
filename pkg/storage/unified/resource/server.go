@@ -954,7 +954,7 @@ func (s *server) List(ctx context.Context, req *resourcepb.ListRequest) (*resour
 	}
 
 	if req.Limit < 1 {
-		req.Limit = 50 // default max 50 items in a page
+		req.Limit = 500 // default max 500 items in a page
 	}
 	maxPageBytes := s.maxPageSizeBytes
 	pageBytes := 0
@@ -1301,10 +1301,18 @@ func (s *server) GetStats(ctx context.Context, req *resourcepb.ResourceStatsRequ
 }
 
 func (s *server) ListManagedObjects(ctx context.Context, req *resourcepb.ListManagedObjectsRequest) (*resourcepb.ListManagedObjectsResponse, error) {
+	if s.search == nil {
+		return nil, fmt.Errorf("search index not configured")
+	}
+
 	return s.search.ListManagedObjects(ctx, req)
 }
 
 func (s *server) CountManagedObjects(ctx context.Context, req *resourcepb.CountManagedObjectsRequest) (*resourcepb.CountManagedObjectsResponse, error) {
+	if s.search == nil {
+		return nil, fmt.Errorf("search index not configured")
+	}
+
 	return s.search.CountManagedObjects(ctx, req)
 }
 

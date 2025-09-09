@@ -67,6 +67,7 @@ const setup = (
     onResize: jest.fn(),
     timeRange: getDefaultTimeRange(),
     timeZone: 'browser',
+    showControls: true,
     ...(propOverrides || {}),
   };
 
@@ -228,7 +229,7 @@ describe('LogLineDetails', () => {
       expect(screen.queryByText('Structured metadata')).not.toBeInTheDocument();
     });
   });
-  test('should render fields from the dataframe with links', () => {
+  test('should render fields from the dataframe with links', async () => {
     const entry = 'traceId=1234 msg="some message"';
     const dataFrame = toDataFrame({
       fields: [
@@ -273,6 +274,10 @@ describe('LogLineDetails', () => {
     expect(screen.getByText('Links')).toBeInTheDocument();
     expect(screen.getByText('traceId')).toBeInTheDocument();
     expect(screen.getByText('link title')).toBeInTheDocument();
+    expect(screen.queryByText('1234')).not.toBeInTheDocument();
+
+    await userEvent.click(screen.getByLabelText('Link value'));
+
     expect(screen.getByText('1234')).toBeInTheDocument();
   });
 
@@ -346,7 +351,6 @@ describe('LogLineDetails', () => {
     expect(screen.getByText('label1')).toBeInTheDocument();
     expect(screen.getByText('value1')).toBeInTheDocument();
     expect(screen.getByText('shouldShowLinkName')).toBeInTheDocument();
-    expect(screen.getByText('shouldShowLinkValue')).toBeInTheDocument();
   });
 
   test('should load plugin links for logs view resource attributes extension point', () => {
@@ -578,6 +582,7 @@ describe('LogLineDetails', () => {
         logs: [logs[0]],
         timeRange: getDefaultTimeRange(),
         timeZone: 'browser',
+        showControls: true,
         onResize: jest.fn(),
       };
 
