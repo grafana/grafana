@@ -10,8 +10,8 @@ export type OnSelectQueryType = (query: DataQuery) => void;
 
 export type QueryLibraryEventsPropertyMap = Record<string, string | boolean | undefined>;
 
-// map from API response to facilitate structs
-export type SavedQueryDTO = {
+// flattened data from API response to facilitate structs
+export type SavedQueryBase = {
   uid: string;
   title: string;
   description: string;
@@ -32,4 +32,4 @@ export type SavedQuery = {
   queryText?: string;
   datasourceRef?: DataSourceRef | null;
   datasourceType?: string;
-} & Omit<Partial<SavedQueryDTO>, 'targets'>;
+} & Omit<Partial<SavedQueryBase>, 'targets'>;
