@@ -2,7 +2,6 @@ package frontend
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"net"
 	"net/http"
@@ -13,7 +12,11 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/trace"
+	"k8s.io/apimachinery/pkg/api/errors"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/client-go/dynamic"
+	"k8s.io/client-go/rest"
 
 	"github.com/grafana/dskit/services"
 	"github.com/grafana/grafana/apps/shorturl/pkg/apis/shorturl/v1alpha1"
@@ -24,6 +27,8 @@ import (
 
 	grafanaapiserver "github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
+	"github.com/grafana/grafana/pkg/services/contexthandler"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/setting"
@@ -63,6 +68,13 @@ func ProvideFrontendService(cfg *setting.Cfg, features featuremgmt.FeatureToggle
 		Resource: v1alpha1.ShortURLKind().Plural(),
 	}
 
+	// Create a custom DirectRestConfigProvider for the frontend service
+	// that connects to the remote grafana-api server instead of local
+	frontendClientConfigProvider := &frontendDirectRestConfigProvider{
+		cfg: cfg,
+		log: log.New("frontend-k8s-client"),
+	}
+
 	s := &frontendService{
 		cfg:                  cfg,
 		features:             features,
@@ -72,7 +84,7 @@ func ProvideFrontendService(cfg *setting.Cfg, features featuremgmt.FeatureToggle
 		tracer:               tracer,
 		license:              license,
 		index:                index,
-		clientConfigProvider: clientConfigProvider,
+		clientConfigProvider: frontendClientConfigProvider,
 		namespacer:           request.GetNamespaceMapper(cfg),
 		gvr:                  gvr,
 	}
@@ -160,22 +172,22 @@ func (s *frontendService) registerRoutes(m *web.Mux) {
 // handleGotoRequest handles /goto/* requests by checking if it's a short URL redirect
 // or falling back to serving the index page
 func (s *frontendService) handleGotoRequest(writer http.ResponseWriter, request *http.Request) {
-	s.log.Info("Handling goto request", "path", request.URL.Path, "method", request.Method)
+	s.log.Info("Handling goto request", "uid", request.URL.Path, "method", request.Method)
 
-	// Extract UID from path like /goto/abc123
-	path := strings.TrimPrefix(request.URL.Path, "/goto/")
-	if path == "" || path == request.URL.Path {
+	// Extract UID from uid like /goto/abc123
+	uid := strings.TrimPrefix(request.URL.Path, "/goto/")
+	if uid == "" || uid == request.URL.Path {
 		// No UID found, serve index page
-		s.log.Debug("No UID found in goto path, serving index page", "original_path", request.URL.Path)
+		s.log.Debug("No UID found in goto uid, serving index page", "original_path", request.URL.Path)
 		s.index.HandleRequest(writer, request)
 		return
 	}
 
-	s.log.Info("Extracted UID from goto path", "uid", path, "original_path", request.URL.Path)
+	s.log.Info("Extracted UID from goto uid", "uid", uid, "original_path", request.URL.Path)
 
 	// Check if this looks like a valid short URL UID
-	if !util.IsValidShortUID(path) {
-		s.log.Warn("Invalid short URL UID format, redirecting to app URL", "uid", path)
+	if !util.IsValidShortUID(uid) {
+		s.log.Warn("Invalid short URL UID format, redirecting to app URL", "uid", uid)
 		http.Redirect(writer, request, s.cfg.AppURL, http.StatusFound)
 		return
 	}
@@ -185,7 +197,7 @@ func (s *frontendService) handleGotoRequest(writer http.ResponseWriter, request 
 	hasClient := s.clientConfigProvider != nil
 
 	s.log.Info("Checking Kubernetes short URL availability",
-		"uid", path,
+		"uid", uid,
 		"feature_enabled", featureEnabled,
 		"has_client", hasClient,
 		"app_url", s.cfg.AppURL)
@@ -194,7 +206,7 @@ func (s *frontendService) handleGotoRequest(writer http.ResponseWriter, request 
 	if !featureEnabled || !hasClient {
 		// Feature not enabled or no client config provider, redirect to app URL to avoid infinite loop
 		s.log.Warn("Kubernetes short URLs not available, redirecting to app URL",
-			"uid", path,
+			"uid", uid,
 			"feature_enabled", featureEnabled,
 			"has_client", hasClient,
 			"redirect_url", s.cfg.AppURL)
@@ -203,96 +215,203 @@ func (s *frontendService) handleGotoRequest(writer http.ResponseWriter, request 
 	}
 
 	// Handle Kubernetes short URL redirect directly
-	s.log.Info("Attempting Kubernetes short URL redirect", "uid", path)
-	s.handleKubernetesShortURLRedirect(writer, request, path)
+	s.log.Info("Attempting Kubernetes short URL redirect", "uid", uid)
+	s.handleKubernetesShortURLRedirect(writer, request, uid)
 }
 
-// handleKubernetesShortURLRedirect handles the short URL redirect by calling the K8s API
+// handleKubernetesShortURLRedirect handles the short URL redirect using K8s client (like short_url.go)
 func (s *frontendService) handleKubernetesShortURLRedirect(writer http.ResponseWriter, request *http.Request, shortURLUID string) {
-	s.log.Info("Starting short URL redirect via K8s API", "uid", shortURLUID)
+	s.log.Info("Starting Kubernetes short URL redirect", "uid", shortURLUID)
 
-	// Get the short URL data from the K8s API
-	targetPath, err := s.getShortURLFromAPI(request, shortURLUID)
-	if err != nil {
-		s.log.Error("Failed to get short URL from K8s API", "uid", shortURLUID, "error", err)
-		// Fallback to serving index page
+	// Get the ReqContext from the request (set by our context middleware)
+	reqCtx := contexthandler.FromContext(request.Context())
+	if reqCtx == nil {
+		s.log.Error("No ReqContext found in request")
 		s.index.HandleRequest(writer, request)
 		return
 	}
 
-	// Perform the redirect
-	redirectURL := setting.ToAbsUrl(targetPath)
-	s.log.Info("Performing redirect", "uid", shortURLUID, "target_path", targetPath, "redirect_url", redirectURL)
+	client, ok := s.getK8sClient(reqCtx)
+	if !ok {
+		s.log.Error("Failed to get Kubernetes client")
+		s.index.HandleRequest(writer, request)
+		return
+	}
+
+	// Get Object from Kubernetes
+	shortURLObj, err := client.Get(request.Context(), shortURLUID, v1.GetOptions{})
+	if err != nil {
+		s.log.Error("Failed to get short URL from Kubernetes", "uid", shortURLUID, "error", err)
+		s.writeKubernetesError(writer, request, err)
+		return
+	}
+
+	// Update lastSeenAt timestamp (same logic as short_url.go)
+	status := shortURLObj.Object["status"].(map[string]interface{})
+	newTimestamp := time.Now().Unix()
+	status["lastSeenAt"] = newTimestamp
+
+	// Try status subresource first (works in Mode 5), fallback to main resource (works in Mode 0)
+	out, err := client.Update(request.Context(), shortURLObj, v1.UpdateOptions{}, "status")
+	if err != nil {
+		s.log.Debug("Status subresource update failed, trying main resource", "error", err)
+		// Fallback to main resource update (for Mode 0)
+		out, err = client.Update(request.Context(), shortURLObj, v1.UpdateOptions{})
+		if err != nil {
+			s.log.Warn("Both status and main resource updates failed, continuing with redirect", "error", err)
+			// Continue with redirect even if update fails - use original object
+			out = shortURLObj
+		}
+	}
+
+	// Extract path from spec (same as short_url.go)
+	spec := out.Object["spec"].(map[string]any)
+	path := spec["path"].(string)
+
+	// Perform redirect
+	redirectURL := setting.ToAbsUrl(path)
+	s.log.Info("Performing redirect", "uid", shortURLUID, "target_path", path, "redirect_url", redirectURL)
 	http.Redirect(writer, request, redirectURL, http.StatusFound)
 }
 
-// getShortURLFromAPI gets the short URL data from the Kubernetes API via the Grafana API server
-func (s *frontendService) getShortURLFromAPI(request *http.Request, shortURLUID string) (string, error) {
-	s.log.Info("Fetching short URL from Kubernetes API via Grafana API server", "uid", shortURLUID)
-
-	// For org ID = 1, the namespace will be "org-1" (based on the namespace mapper)
-	namespace := s.namespacer(1) // Using org ID 1 for now - in production, extract from auth
-
-	// Create request to the Kubernetes API endpoint via Grafana API server
-	apiURL := fmt.Sprintf("http://grafana-api:3000/apis/shorturl.grafana.app/v1alpha1/namespaces/%s/shorturls/%s", namespace, shortURLUID)
-
-	s.log.Debug("Making Kubernetes API request", "url", apiURL, "namespace", namespace)
-
-	apiReq, err := http.NewRequestWithContext(request.Context(), "GET", apiURL, nil)
-	if err != nil {
-		return "", fmt.Errorf("failed to create K8s API request: %w", err)
+// getK8sClient creates a Kubernetes dynamic client
+func (s *frontendService) getK8sClient(c *contextmodel.ReqContext) (dynamic.ResourceInterface, bool) {
+	// Add defensive checks
+	if s.clientConfigProvider == nil {
+		s.log.Error("clientConfigProvider is nil - frontend service not properly configured for K8s")
+		return nil, false
 	}
 
-	// Copy authentication headers from the original request
-	for name, values := range request.Header {
-		// Copy authentication-related headers
-		if name == "Cookie" || name == "Authorization" || strings.HasPrefix(name, "X-Grafana") {
-			for _, value := range values {
-				apiReq.Header.Add(name, value)
+	// Get REST config with proper error handling
+	restConfig := s.clientConfigProvider.GetDirectRestConfig(c)
+	if restConfig == nil {
+		s.log.Error("GetDirectRestConfig returned nil - API server may not be available for frontend service",
+			"user_id", c.SignedInUser.UserID,
+			"org_id", c.OrgID,
+			"login", c.SignedInUser.Login)
+		return nil, false
+	}
+
+	s.log.Debug("Got REST config from clientConfigProvider",
+		"host", restConfig.Host,
+		"user_id", c.SignedInUser.UserID,
+		"org_id", c.OrgID)
+
+	dyn, err := dynamic.NewForConfig(restConfig)
+	if err != nil {
+		s.log.Error("Failed to create dynamic client", "error", err)
+		return nil, false
+	}
+	return dyn.Resource(s.gvr).Namespace(s.namespacer(c.OrgID)), true
+}
+
+// writeKubernetesError handles Kubernetes API errors (same as short_url.go)
+func (s *frontendService) writeKubernetesError(writer http.ResponseWriter, request *http.Request, err error) {
+	//nolint:errorlint
+	statusError, ok := err.(*errors.StatusError)
+	if ok {
+		statusCode := statusError.Status().Code
+		s.log.Warn("Kubernetes API status error during short URL redirect",
+			"status_code", statusCode,
+			"message", statusError.Status().Message,
+			"error", err)
+
+		if statusCode == 404 {
+			s.log.Info("Short URL not found in Kubernetes, serving index page")
+		}
+	} else {
+		s.log.Error("Non-status Kubernetes API error during short URL redirect", "error", err)
+	}
+
+	// Fallback to serving index page instead of redirecting to app URL
+	s.index.HandleRequest(writer, request)
+}
+
+// frontendDirectRestConfigProvider is a custom DirectRestConfigProvider for the frontend service
+// that connects to the remote Grafana API server instead of expecting a local one
+type frontendDirectRestConfigProvider struct {
+	cfg *setting.Cfg
+	log log.Logger
+}
+
+func (f *frontendDirectRestConfigProvider) GetDirectRestConfig(c *contextmodel.ReqContext) *rest.Config {
+	f.log.Debug("Creating REST config for remote Grafana API server",
+		"user_id", c.SignedInUser.UserID,
+		"org_id", c.OrgID,
+		"login", c.SignedInUser.Login)
+
+	// Create a REST config that connects to the remote grafana-api server
+	return &rest.Config{
+		Host: "http://grafana-api:3000",
+		Transport: &frontendRoundTripper{
+			originalRequest: c.Req,
+			log:             f.log,
+		},
+	}
+}
+
+func (f *frontendDirectRestConfigProvider) DirectlyServeHTTP(w http.ResponseWriter, r *http.Request) {
+	// Not implemented for frontend service
+	f.log.Error("DirectlyServeHTTP not implemented for frontend service")
+	http.Error(w, "Not implemented", http.StatusNotImplemented)
+}
+
+// frontendRoundTripper implements http.RoundTripper to proxy K8s API requests
+// to the remote Grafana API server with proper authentication forwarding
+type frontendRoundTripper struct {
+	originalRequest *http.Request
+	log             log.Logger
+}
+
+func (f *frontendRoundTripper) RoundTrip(req *http.Request) (*http.Response, error) {
+	f.log.Debug("Forwarding K8s API request to remote Grafana API server",
+		"method", req.Method,
+		"url", req.URL.String(),
+		"path", req.URL.Path)
+
+	// Create new request to the remote Grafana API server
+	remoteURL := "http://grafana-api:3000" + req.URL.Path
+	if req.URL.RawQuery != "" {
+		remoteURL += "?" + req.URL.RawQuery
+	}
+
+	proxyReq, err := http.NewRequestWithContext(req.Context(), req.Method, remoteURL, req.Body)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create proxy request: %w", err)
+	}
+
+	// Copy all headers from the original request
+	for name, values := range req.Header {
+		for _, value := range values {
+			proxyReq.Header.Add(name, value)
+		}
+	}
+
+	// Copy authentication headers from the original frontend request
+	if f.originalRequest != nil {
+		for name, values := range f.originalRequest.Header {
+			if name == "Cookie" || name == "Authorization" || strings.HasPrefix(name, "X-Grafana") {
+				for _, value := range values {
+					proxyReq.Header.Set(name, value) // Use Set to override K8s client headers
+				}
 			}
 		}
 	}
 
+	f.log.Debug("Making proxied request to Grafana API server",
+		"url", remoteURL,
+		"headers_count", len(proxyReq.Header))
+
 	// Make the request
-	client := &http.Client{Timeout: 10 * time.Second}
-	resp, err := client.Do(apiReq)
+	client := &http.Client{Timeout: 30 * time.Second}
+	resp, err := client.Do(proxyReq)
 	if err != nil {
-		return "", fmt.Errorf("failed to fetch short URL from K8s API: %w", err)
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode == 404 {
-		return "", fmt.Errorf("short URL not found in Kubernetes")
+		return nil, fmt.Errorf("failed to proxy K8s API request: %w", err)
 	}
 
-	if resp.StatusCode != 200 {
-		return "", fmt.Errorf("K8s API request failed with status %d", resp.StatusCode)
-	}
+	f.log.Debug("Received response from Grafana API server",
+		"status", resp.Status,
+		"status_code", resp.StatusCode)
 
-	// Parse the Kubernetes API response - it follows the standard K8s resource structure
-	var k8sResponse struct {
-		APIVersion string `json:"apiVersion"`
-		Kind       string `json:"kind"`
-		Metadata   struct {
-			Name      string `json:"name"`
-			Namespace string `json:"namespace"`
-		} `json:"metadata"`
-		Spec struct {
-			Path string `json:"path"`
-		} `json:"spec"`
-		Status struct {
-			LastSeenAt int64 `json:"lastSeenAt,omitempty"`
-		} `json:"status,omitempty"`
-	}
-
-	if err := json.NewDecoder(resp.Body).Decode(&k8sResponse); err != nil {
-		return "", fmt.Errorf("failed to decode K8s API response: %w", err)
-	}
-
-	s.log.Info("Successfully fetched short URL from K8s API",
-		"uid", shortURLUID,
-		"path", k8sResponse.Spec.Path,
-		"namespace", k8sResponse.Metadata.Namespace)
-
-	return k8sResponse.Spec.Path, nil
+	return resp, nil
 }
