@@ -132,7 +132,7 @@ type CreateFolderCommand struct {
 	ParentUID   string `json:"parentUid"`
 
 	// When loaded from provisioning
-	Provisioning string `json:"provisioning,omitempty"`
+	ClassicProvisioning string `json:"-"`
 
 	SignedInUser identity.Requester `json:"-"`
 }
