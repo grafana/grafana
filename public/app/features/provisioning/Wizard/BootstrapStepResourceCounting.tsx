@@ -1,4 +1,4 @@
-import { t, Trans } from '@grafana/i18n';
+import { Trans } from '@grafana/i18n';
 import { Stack, Text } from '@grafana/ui';
 
 import { Target } from './types';
