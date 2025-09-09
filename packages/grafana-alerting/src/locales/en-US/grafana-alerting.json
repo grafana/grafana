@@ -1,0 +1,7 @@
+{
+  "alerting": {
+    "paused-badge": {
+      "paused": "Paused"
+    }
+  }
+}

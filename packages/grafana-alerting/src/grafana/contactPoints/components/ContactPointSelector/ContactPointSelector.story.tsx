@@ -11,7 +11,7 @@ import { simpleContactPointsListScenario, withErrorScenario } from './ContactPoi
 
 const meta: Meta<typeof ContactPointSelector> = {
   component: ContactPointSelector,
-  title: 'ContactPointSelector',
+  title: 'Contact Points/ContactPointSelector',
   decorators: defaultDecorators,
   parameters: {
     docs: {
