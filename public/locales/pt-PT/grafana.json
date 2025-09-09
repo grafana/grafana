@@ -4681,6 +4681,7 @@
       "move": "Mover {{typeName}}",
       "panel-background": "Alterar fundo do painel",
       "panel-description": "Alterar descrição do painel",
+      "panel-edit": "",
       "panel-max-repeats-per-row": "Máx. de repetições por linha",
       "panel-repeat-direction": "Repetir direção",
       "panel-repeat-variable": "Repetição do painel por",
@@ -4935,12 +4936,11 @@
       "dataframe-aria-label": "Selecionar estrutura de dados",
       "dataframe-label": "Mostrar estrutura de dados",
       "download-csv": "Transferir CSV",
-      "download-excel-description": "Adiciona um cabeçalho ao CSV para utilizar com o Excel",
-      "download-excel-label": "Transferir para Excel",
       "download-logs": "Transferir registos",
       "download-service": "Transferir gráfico de serviço",
       "download-traces": "Transferir Traces",
-      "excel-header": "Cabeçalho do Excel",
+      "excel-compatibility-mode-description": "",
+      "excel-compatibility-mode-label": "",
       "formatted": "Dados formatados",
       "formatted-data-description": "Os dados da tabela são formatados com opções definidas nos separadores Campo e Substituir.",
       "formatted-data-label": "Dados formatados",
@@ -11955,14 +11955,6 @@
       "no-deleted-dashboards": "Não eliminou quaisquer painéis de controlo recentemente.",
       "no-deleted-dashboards-text": "Quando elimina um painel de controlo, este aparecerá aqui durante 30 dias antes de ser eliminado permanentemente. O administrador da sua organização pode restaurar painéis de controlo eliminados recentemente.",
       "no-search-result": "Não foram encontrados resultados para a sua consulta"
-    },
-    "permanently-delete-modal": {
-      "confirm-text": "Eliminar",
-      "delete-button": "Eliminar",
-      "delete-loading": "A eliminar...",
-      "title": "Eliminar permanentemente painéis de controlo",
-      "text_one": "Esta ação irá eliminar {{numberOfDashboards}} painéis de controlo.",
-      "text_other": "Esta ação irá eliminar {{numberOfDashboards}} painéis de controlo."
     },
     "restore-modal": {
       "restore-button": "Restaurar",
