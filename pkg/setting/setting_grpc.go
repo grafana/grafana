@@ -20,6 +20,12 @@ type GRPCServerSettings struct {
 	MaxRecvMsgSize int
 	MaxSendMsgSize int
 
+	MaxConnectionAge      int // in seconds
+	MaxConnectionAgeGrace int // in seconds
+	KeepaliveTime         int // in seconds
+	KeepaliveTimeout      int // in seconds
+	KeepaliveMinTime      int // in seconds
+	MaxConnectionIdle     int // in seconds
 	// Internal fields
 	useTLS   bool
 	certFile string
@@ -134,4 +140,12 @@ func (c *GRPCServerSettings) AddFlags(fs *pflag.FlagSet) {
 	fs.BoolVar(&c.useTLS, "grpc-server-use-tls", false, "Enable TLS for the gRPC server")
 	fs.StringVar(&c.certFile, "grpc-server-cert-file", "", "Path to the certificate file for the gRPC server")
 	fs.StringVar(&c.keyFile, "grpc-server-key-file", "", "Path to the certificate key file for the gRPC server")
+
+	// Load balancing options
+	fs.IntVar(&c.MaxConnectionAge, "grpc-server-max-connection-age", 0, "Maximum amount of time a connection may exist before it will be closed (e.g. 30s)")
+	fs.IntVar(&c.MaxConnectionAgeGrace, "grpc-server-max-connection-age-grace", 0, "Additional time to allow for pending RPCs to complete before forcibly closing connections (e.g. 5s)")
+	fs.IntVar(&c.MaxConnectionIdle, "grpc-server-max-connection-idle", 0, "Maximum amount of idle time before a connection is closed (e.g. 15s)")
+	fs.IntVar(&c.KeepaliveTime, "grpc-server-keepalive-time", 0, "Frequency of server-to-client pings to check if a connection is still active (e.g. 10s)")
+	fs.IntVar(&c.KeepaliveTimeout, "grpc-server-keepalive-timeout", 0, "Amount of time the server waits for a response to keepalive pings before closing the connection (e.g. 3s)")
+	fs.IntVar(&c.KeepaliveMinTime, "grpc-server-keepalive-min-time", 0, "Minimum amount of time a client should wait before sending a keepalive ping (e.g. 5s)")
 }
