@@ -632,11 +632,6 @@ require (
 	sigs.k8s.io/yaml v1.6.0 // indirect
 )
 
-require (
-	github.com/grafana/grafana/apps/alerting/alertenrichment v0.0.0-00010101000000-000000000000
-	sigs.k8s.io/structured-merge-diff/v4 v4.7.0
-)
-
 require github.com/woodsbury/decimal128 v1.3.0 // indirect
 
 // Use fork of crewjam/saml with fixes for some issues until changes get merged into upstream
