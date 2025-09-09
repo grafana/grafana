@@ -4681,6 +4681,7 @@
       "move": "Sposta {{typeName}}",
       "panel-background": "Modifica lo sfondo del pannello",
       "panel-description": "Modifica la descrizione del pannello",
+      "panel-edit": "",
       "panel-max-repeats-per-row": "Ripetizioni massime per riga",
       "panel-repeat-direction": "Ripeti la direzione",
       "panel-repeat-variable": "Ripetizione del pannello per",
@@ -4935,12 +4936,11 @@
       "dataframe-aria-label": "Seleziona dataframe",
       "dataframe-label": "Mostra dataframe",
       "download-csv": "Scarica CSV",
-      "download-excel-description": "Aggiunge l'intestazione al CSV per l'utilizzo con Excel",
-      "download-excel-label": "Scarica per Excel",
       "download-logs": "Scarica i registri",
       "download-service": "Scarica il grafico del servizio",
       "download-traces": "Scarica le tracce",
-      "excel-header": "Intestazione Excel",
+      "excel-compatibility-mode-description": "",
+      "excel-compatibility-mode-label": "",
       "formatted": "Dati formattati",
       "formatted-data-description": "I dati della tabella sono formattati con le opzioni definite nelle schede Campo e Sovrascrivi.",
       "formatted-data-label": "Dati formattati",
@@ -11955,14 +11955,6 @@
       "no-deleted-dashboards": "Non hai eliminato nessun dashboard di recente.",
       "no-deleted-dashboards-text": "Quando elimini un dashboard, questo verrà visualizzato qui per 30 giorni prima di essere eliminato definitivamente. L'amministratore dell'organizzazione può ripristinare i dashboard eliminati di recente.",
       "no-search-result": "Nessun risultato trovato per la ricerca"
-    },
-    "permanently-delete-modal": {
-      "confirm-text": "Elimina",
-      "delete-button": "Elimina",
-      "delete-loading": "Eliminazione in corso...",
-      "title": "Elimina definitivamente i dashboard",
-      "text_one": "Questa azione eliminerà {{numberOfDashboards}} dashboard.",
-      "text_other": "Questa azione eliminerà {{numberOfDashboards}} dashboard."
     },
     "restore-modal": {
       "restore-button": "Ripristina",
