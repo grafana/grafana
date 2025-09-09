@@ -29,6 +29,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/userimpl"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
+	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 const userInDbName = "user_in_db"
@@ -40,9 +41,8 @@ func TestMain(m *testing.M) {
 }
 
 func TestIntegrationConnectLibraryPanelsForDashboard(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test in short mode")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	scenarioWithLibraryPanel(t, "When an admin tries to store a dashboard with a library panel, it should connect the two",
 		func(t *testing.T, sc scenarioContext) {
 			dashJSON := map[string]any{
@@ -336,9 +336,8 @@ func TestIntegrationConnectLibraryPanelsForDashboard(t *testing.T) {
 }
 
 func TestIntegrationImportLibraryPanelsForDashboard(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test in short mode")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	testScenario(t, "When an admin tries to import a dashboard with a library panel that does not exist, it should import the library panel",
 		func(t *testing.T, sc scenarioContext) {
 			var missingUID = "jL6MrxCMz"

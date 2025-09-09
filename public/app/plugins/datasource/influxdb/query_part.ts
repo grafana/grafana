@@ -2,9 +2,10 @@ import { clone, map } from 'lodash';
 
 import { functionRenderer, QueryPart, QueryPartDef, suffixRenderer } from 'app/features/alerting/state/query_part';
 
-const index: any[] = [];
+const index: QueryPartDef[] = [];
 const categories = {
   Aggregations: [],
+  GroupByTimeFunctions: [],
   Selectors: [],
   Transformations: [],
   Predictors: [],
@@ -26,8 +27,6 @@ function register(options: any) {
   index[options.type] = new QueryPartDef(options);
   options.category.push(index[options.type]);
 }
-
-const groupByTimeFunctions: any[] = [];
 
 function aliasRenderer(part: { params: string[] }, innerExpr: string) {
   return innerExpr + ' AS ' + '"' + part.params[0] + '"';
@@ -308,7 +307,7 @@ register({
 
 register({
   type: 'time',
-  category: groupByTimeFunctions,
+  category: categories.GroupByTimeFunctions,
   params: [
     {
       name: 'interval',
@@ -322,7 +321,7 @@ register({
 
 register({
   type: 'fill',
-  category: groupByTimeFunctions,
+  category: categories.GroupByTimeFunctions,
   params: [
     {
       name: 'fill',
@@ -440,7 +439,7 @@ register({
 
 register({
   type: 'tag',
-  category: groupByTimeFunctions,
+  category: categories.GroupByTimeFunctions,
   params: [{ name: 'tag', type: 'string', dynamicLookup: true }],
   defaultParams: ['tag'],
   renderer: fieldRenderer,

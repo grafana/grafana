@@ -48,6 +48,7 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/search"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
+	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 func TestMain(m *testing.M) {
@@ -1873,58 +1874,114 @@ func TestCountInFolders(t *testing.T) {
 }
 
 func TestSearchDashboardsThroughK8sRaw(t *testing.T) {
-	ctx := context.Background()
-	k8sCliMock := new(client.MockK8sHandler)
-	service := &DashboardServiceImpl{k8sclient: k8sCliMock}
-	query := &dashboards.FindPersistedDashboardsQuery{
-		OrgId: 1,
-		Sort:  sort.SortAlphaAsc,
-	}
-	k8sCliMock.On("GetNamespace", mock.Anything, mock.Anything).Return("default")
-	k8sCliMock.On("Search", mock.Anything, mock.Anything, mock.MatchedBy(func(req *resourcepb.ResourceSearchRequest) bool {
-		return len(req.SortBy) == 1 &&
-			// should be converted to "title" due to ParseSortName
-			req.SortBy[0].Field == "title" &&
-			!req.SortBy[0].Desc
-	})).Return(&resourcepb.ResourceSearchResponse{
-		Results: &resourcepb.ResourceTable{
-			Columns: []*resourcepb.ResourceTableColumnDefinition{
-				{
-					Name: "title",
-					Type: resourcepb.ResourceTableColumnDefinition_STRING,
+	t.Run("can search dashboards", func(t *testing.T) {
+		ctx := context.Background()
+		k8sCliMock := new(client.MockK8sHandler)
+		service := &DashboardServiceImpl{k8sclient: k8sCliMock}
+		query := &dashboards.FindPersistedDashboardsQuery{
+			OrgId: 1,
+			Sort:  sort.SortAlphaAsc,
+		}
+		k8sCliMock.On("GetNamespace", mock.Anything, mock.Anything).Return("default")
+		k8sCliMock.On("Search", mock.Anything, mock.Anything, mock.MatchedBy(func(req *resourcepb.ResourceSearchRequest) bool {
+			// should include sort field only once
+			titleFieldCount := 0
+			for _, field := range req.Fields {
+				if field == "title" {
+					titleFieldCount++
+				}
+			}
+
+			return len(req.SortBy) == 1 &&
+				// should be converted to "title" due to ParseSortName
+				req.SortBy[0].Field == "title" &&
+				!req.SortBy[0].Desc &&
+				titleFieldCount == 1
+		})).Return(&resourcepb.ResourceSearchResponse{
+			Results: &resourcepb.ResourceTable{
+				Columns: []*resourcepb.ResourceTableColumnDefinition{
+					{
+						Name: "title",
+						Type: resourcepb.ResourceTableColumnDefinition_STRING,
+					},
+					{
+						Name: "folder",
+						Type: resourcepb.ResourceTableColumnDefinition_STRING,
+					},
 				},
-				{
-					Name: "folder",
-					Type: resourcepb.ResourceTableColumnDefinition_STRING,
+				Rows: []*resourcepb.ResourceTableRow{
+					{
+						Key: &resourcepb.ResourceKey{
+							Name:     "uid",
+							Resource: "dashboard",
+						},
+						Cells: [][]byte{
+							[]byte("Dashboard 1"),
+							[]byte("folder1"),
+						},
+					},
 				},
 			},
-			Rows: []*resourcepb.ResourceTableRow{
-				{
-					Key: &resourcepb.ResourceKey{
-						Name:     "uid",
-						Resource: "dashboard",
+			TotalHits: 1,
+		}, nil)
+		res, err := service.searchDashboardsThroughK8s(ctx, query)
+		require.NoError(t, err)
+		assert.Equal(t, []*dashboards.Dashboard{
+			{
+				UID:       "uid",
+				OrgID:     1,
+				FolderUID: "folder1",
+				Title:     "Dashboard 1",
+				Slug:      "dashboard-1", // should be slugified
+			},
+		}, res)
+		assert.Equal(t, "dash-db", query.Type) // query type should be added
+	})
+
+	t.Run("search will include sort field in hit fields", func(t *testing.T) {
+		ctx := context.Background()
+		k8sCliMock := new(client.MockK8sHandler)
+		service := &DashboardServiceImpl{k8sclient: k8sCliMock}
+		query := &dashboards.FindPersistedDashboardsQuery{
+			OrgId: 1,
+			Sort:  model.SortOption{Name: "viewed-recently-desc"},
+		}
+		k8sCliMock.On("GetNamespace", mock.Anything, mock.Anything).Return("default")
+		k8sCliMock.On("Search", mock.Anything, mock.Anything, mock.MatchedBy(func(req *resourcepb.ResourceSearchRequest) bool {
+			return len(req.SortBy) == 1 &&
+				req.SortBy[0].Field == "views_last_30_days" &&
+				req.SortBy[0].Desc &&
+				slices.Contains(req.Fields, "views_last_30_days")
+		})).Return(&resourcepb.ResourceSearchResponse{
+			Results: &resourcepb.ResourceTable{
+				Columns: []*resourcepb.ResourceTableColumnDefinition{
+					{
+						Name: "title",
+						Type: resourcepb.ResourceTableColumnDefinition_STRING,
 					},
-					Cells: [][]byte{
-						[]byte("Dashboard 1"),
-						[]byte("folder1"),
+					{
+						Name: "folder",
+						Type: resourcepb.ResourceTableColumnDefinition_STRING,
+					},
+				},
+				Rows: []*resourcepb.ResourceTableRow{
+					{
+						Key: &resourcepb.ResourceKey{
+							Name:     "uid",
+							Resource: "dashboard",
+						},
+						Cells: [][]byte{
+							[]byte("Dashboard 1"),
+							[]byte("folder1"),
+						},
 					},
 				},
 			},
-		},
-		TotalHits: 1,
-	}, nil)
-	res, err := service.searchDashboardsThroughK8s(ctx, query)
-	require.NoError(t, err)
-	assert.Equal(t, []*dashboards.Dashboard{
-		{
-			UID:       "uid",
-			OrgID:     1,
-			FolderUID: "folder1",
-			Title:     "Dashboard 1",
-			Slug:      "dashboard-1", // should be slugified
-		},
-	}, res)
-	assert.Equal(t, "dash-db", query.Type) // query type should be added
+			TotalHits: 1,
+		}, nil)
+		_, err := service.searchDashboardsThroughK8s(ctx, query)
+		require.NoError(t, err)
+	})
 }
 
 func TestSearchProvisionedDashboardsThroughK8sRaw(t *testing.T) {
@@ -2093,7 +2150,6 @@ func TestSetDefaultPermissionsAfterCreate(t *testing.T) {
 
 				// Setup mocks and service
 				dashboardStore := &dashboards.FakeDashboardStore{}
-				folderStore := foldertest.FakeFolderStore{}
 				features := featuremgmt.WithFeatures()
 				if tc.featureKubernetesDashboards {
 					features = featuremgmt.WithFeatures(featuremgmt.FlagKubernetesDashboards)
@@ -2106,7 +2162,6 @@ func TestSetDefaultPermissionsAfterCreate(t *testing.T) {
 					cfg:                       setting.NewCfg(),
 					log:                       log.New("test-logger"),
 					dashboardStore:            dashboardStore,
-					folderStore:               &folderStore,
 					features:                  features,
 					dashboardPermissions:      permService,
 					folderPermissions:         permService,
@@ -2212,9 +2267,8 @@ func TestCleanUpDashboard(t *testing.T) {
 }
 
 func TestIntegrationK8sDashboardCleanupJob(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test in short mode")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	tests := []struct {
 		name            string
 		readFromUnified bool

@@ -18,6 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/team/teamtest"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 func TestUserService(t *testing.T) {
@@ -270,9 +271,7 @@ func TestMetrics(t *testing.T) {
 }
 
 func TestIntegrationCreateUser(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	cfg := setting.NewCfg()
 	ss := db.InitTestDB(t)
