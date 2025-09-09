@@ -334,6 +334,8 @@ Now you can [filter data on the dashboard](ref:filter-dashboard).
 In cases where a data source doesn't support the use of ad hoc filters, you can use the Dashboard data source to reference that data, and then filter it in a new panel.
 This allows you to bypass the limitations of the data source in the source panel.
 
+{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-adhoc-filter-dashboard-ds-v12.2.png" max-width="750px" alt="The query section of a panel with the Dashboard data source configured" >}}
+
 To use ad hoc filters on data from an unsupported data source, follow these steps:
 
 1. Navigate to the dashboard with the panel with the data you want to filter.
