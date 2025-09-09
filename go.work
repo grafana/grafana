@@ -8,6 +8,7 @@ use (
 	./apps/advisor
 	./apps/alerting/alertenrichment
 	./apps/alerting/notifications
+	./apps/correlations
 	./apps/dashboard
 	./apps/folder
 	./apps/iam
