@@ -34,11 +34,6 @@
       "count": 1
     }
   },
-  "packages/grafana-alerting/src/grafana/notificationPolicies/utils.ts": {
-    "@typescript-eslint/consistent-type-assertions": {
-      "count": 1
-    }
-  },
   "packages/grafana-data/src/dataframe/ArrayDataFrame.ts": {
     "@typescript-eslint/no-explicit-any": {
       "count": 1

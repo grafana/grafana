@@ -258,6 +258,7 @@ export function convertObjectMatcherToAlertingPackageMatcher(matcher: ObjectMatc
 
   return {
     label,
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
     type: operator as LabelMatcher['type'],
     value,
   };

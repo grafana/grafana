@@ -1,5 +1,5 @@
 import { render, waitFor, within } from 'test/test-utils';
-import { byRole, byTestId, byText } from 'testing-library-selector';
+import { byRole, byText } from 'testing-library-selector';
 
 import { setAlertmanagerConfig } from 'app/features/alerting/unified/mocks/server/entities/alertmanagers';
 import { AccessControlAction } from 'app/types/accessControl';
@@ -33,10 +33,6 @@ const getAlertManagerDataSourcesByPermissionAndConfigMock =
 
 const ui = {
   contactPointGroup: byRole('list'),
-  routeButton: byRole('button', { name: /Expand policy route/ }),
-  routeMatchingInstances: byTestId('route-matching-instance'),
-  loadingIndicator: byText(/Loading routing preview/i),
-  previewButton: byRole('button', { name: /preview routing/i }),
   grafanaAlertManagerLabel: byText(/alertmanager:grafana/i),
   otherAlertManagerLabel: byText(/alertmanager:other_am/i),
   expandButton: byRole('button', { name: 'Expand policy route' }),

@@ -1,30 +1,20 @@
 import { css } from '@emotion/css';
 
+import { LabelMatchDetails } from '@grafana/alerting/unstable';
 import { GrafanaTheme2 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
 import { Text, useStyles2 } from '@grafana/ui';
-import { MatcherOperator } from 'app/plugins/datasource/alertmanager/types';
 
+import { labelMatcherToObjectMatcher } from '../../../utils/routeAdapter';
 import { Label } from '../../Label';
 import { MatcherBadge } from '../../notification-policies/Matchers';
-
-type LabelMatchDetails = {
-  labelIndex: number;
-  match: boolean;
-  matcher: {
-    label: string;
-    type: string;
-    value: string;
-  } | null;
-};
 
 interface MatchDetailsProps {
   matchDetails: LabelMatchDetails[];
   labels: Array<[string, string]>;
-  routeMatched: boolean;
 }
 
-export function MatchDetails({ matchDetails, labels, routeMatched }: MatchDetailsProps) {
+export function MatchDetails({ matchDetails, labels }: MatchDetailsProps) {
   const styles = useStyles2(getStyles);
   const matchingLabels = matchDetails.filter((detail) => detail.match);
 
@@ -43,11 +33,7 @@ export function MatchDetails({ matchDetails, labels, routeMatched }: MatchDetail
             <Text variant="bodySmall" color="secondary">
               <Trans i18nKey="alerting.match-details.matched">matched</Trans>
             </Text>
-            {detail.matcher && (
-              <MatcherBadge
-                matcher={[detail.matcher.label, detail.matcher.type as MatcherOperator, detail.matcher.value]}
-              />
-            )}
+            {detail.matcher && <MatcherBadge matcher={labelMatcherToObjectMatcher(detail.matcher)} />}
           </div>
         ))
       )}

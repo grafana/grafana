@@ -69,11 +69,7 @@ export function NotificationPolicyDrawer({
                     {index > 0 && (
                       <>
                         <ConnectionLine />
-                        <MatchDetails
-                          matchDetails={routeInfo.matchDetails}
-                          labels={labels}
-                          routeMatched={routeInfo.matched}
-                        />
+                        <MatchDetails matchDetails={routeInfo.matchDetails} labels={labels} />
                         <ConnectionLine />
                       </>
                     )}
