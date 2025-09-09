@@ -2,7 +2,6 @@ package folders
 
 import (
 	"context"
-	"fmt"
 	"testing"
 
 	"github.com/go-jose/go-jose/v3/jwt"
@@ -11,16 +10,183 @@ import (
 
 	"github.com/grafana/authlib/authn"
 	"github.com/grafana/authlib/authz"
-	authlib "github.com/grafana/authlib/types"
+	"github.com/grafana/authlib/types"
+
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
+	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/user"
 )
 
-func TestFolderAuthorizer(t *testing.T) {
+func TestLegacyAuthorizer(t *testing.T) {
+	type input struct {
+		user identity.Requester
+		verb string
+	}
+	type expect struct {
+		authorized authorizer.Decision
+		err        error
+	}
+	var orgID int64 = 1
+
+	tests := []struct {
+		name   string
+		input  input
+		expect expect
+	}{
+		{
+			name: "user with create permissions should be able to create a folder",
+			input: input{
+				user: &user.SignedInUser{
+					UserID: 1,
+					OrgID:  orgID,
+					Name:   "123",
+					Permissions: map[int64]map[string][]string{
+						orgID: {dashboards.ActionFoldersCreate: {}, dashboards.ActionFoldersWrite: {dashboards.ScopeFoldersAll}},
+					},
+				},
+				verb: string(utils.VerbCreate),
+			},
+			expect: expect{
+				authorized: authorizer.DecisionAllow,
+			},
+		},
+		{
+			name: "not possible to create a folder without a user",
+			input: input{
+				user: nil,
+				verb: string(utils.VerbCreate),
+			},
+			expect: expect{authorized: authorizer.DecisionDeny},
+		},
+		{
+			name: "user without permissions should not be able to create a folder",
+			input: input{
+				user: &user.SignedInUser{},
+				verb: string(utils.VerbCreate),
+			},
+			expect: expect{authorized: authorizer.DecisionDeny},
+		},
+		{
+			name: "user in another orgId should not be able to create a folder ",
+			input: input{
+				user: &user.SignedInUser{
+					UserID: 1,
+					OrgID:  2,
+					Name:   "123",
+					Permissions: map[int64]map[string][]string{
+						orgID: {dashboards.ActionFoldersCreate: {}, dashboards.ActionFoldersWrite: {dashboards.ScopeFoldersAll}},
+					},
+				},
+				verb: string(utils.VerbCreate),
+			},
+			expect: expect{authorized: authorizer.DecisionDeny},
+		},
+		{
+			name: "user with read permissions should be able to list folders",
+			input: input{
+				user: &user.SignedInUser{
+					UserID: 1,
+					OrgID:  orgID,
+					Name:   "123",
+					Permissions: map[int64]map[string][]string{
+						orgID: {},
+					},
+				},
+				verb: string(utils.VerbList),
+			},
+			expect: expect{authorized: authorizer.DecisionDeny},
+		},
+		{
+			name: "user with delete permissions should be able to delete a folder",
+			input: input{
+				user: &user.SignedInUser{
+					UserID: 1,
+					OrgID:  orgID,
+					Name:   "123",
+					Permissions: map[int64]map[string][]string{
+						orgID: {dashboards.ActionFoldersDelete: {dashboards.ScopeFoldersAll}, dashboards.ActionFoldersWrite: {dashboards.ScopeFoldersAll}},
+					},
+				},
+				verb: string(utils.VerbDelete),
+			},
+			expect: expect{authorized: authorizer.DecisionAllow},
+		},
+		{
+			name: "user without delete permissions should NOT be able to delete a folder",
+			input: input{
+				user: &user.SignedInUser{
+					UserID: 1,
+					OrgID:  orgID,
+					Name:   "123",
+					Permissions: map[int64]map[string][]string{
+						orgID: {},
+					},
+				},
+				verb: string(utils.VerbDelete),
+			},
+			expect: expect{authorized: authorizer.DecisionDeny},
+		},
+		{
+			name: "user with write permissions should be able to update a folder",
+			input: input{
+				user: &user.SignedInUser{
+					UserID: 1,
+					OrgID:  orgID,
+					Name:   "123",
+					Permissions: map[int64]map[string][]string{
+						orgID: {dashboards.ActionFoldersWrite: {dashboards.ScopeFoldersAll}},
+					},
+				},
+				verb: string(utils.VerbUpdate),
+			},
+			expect: expect{authorized: authorizer.DecisionAllow},
+		},
+		{
+			name: "user without write permissions should NOT be able to update a folder",
+			input: input{
+				user: &user.SignedInUser{
+					UserID: 1,
+					OrgID:  orgID,
+					Name:   "123",
+					Permissions: map[int64]map[string][]string{
+						orgID: {},
+					},
+				},
+				verb: string(utils.VerbUpdate),
+			},
+			expect: expect{authorized: authorizer.DecisionDeny},
+		},
+	}
+
+	authz := newLegacyAuthorizer(acimpl.ProvideAccessControl(featuremgmt.WithFeatures()))
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			authorized, _, err := authz.Authorize(
+				identity.WithRequester(context.Background(), tt.input.user),
+				authorizer.AttributesRecord{User: tt.input.user, Verb: tt.input.verb, Resource: "folders", ResourceRequest: true, Name: "123"},
+			)
+			if tt.expect.err != nil {
+				require.Error(t, err)
+				require.Equal(t, authorizer.DecisionDeny, authorized)
+				return
+			}
+
+			require.NoError(t, err)
+			require.Equal(t, tt.expect.authorized, authorized)
+		})
+	}
+}
+
+func TestMultiTenantAuthorizer(t *testing.T) {
 	type input struct {
 		verb   string
-		info   authlib.AuthInfo
-		client authlib.AccessChecker
+		info   types.AuthInfo
+		client types.AccessClient
 	}
 
 	type expected struct {
@@ -29,17 +195,21 @@ func TestFolderAuthorizer(t *testing.T) {
 	}
 
 	tests := []struct {
-		name     string
-		input    input
-		expected expected
+		name    string
+		input   input
+		expeted expected
 	}{
 		{
-			name: "missing auth info",
+			name: "non access policy idenity should not be able to authorize",
 			input: input{
-				verb:   utils.VerbGet,
-				client: authz.NewClient(nil),
+				verb: utils.VerbGet,
+				info: &identity.StaticRequester{
+					Type:    types.TypeUser,
+					UserID:  1,
+					UserUID: "1",
+				},
 			},
-			expected: expected{
+			expeted: expected{
 				authorized: authorizer.DecisionDeny,
 			},
 		},
@@ -60,7 +230,7 @@ func TestFolderAuthorizer(t *testing.T) {
 				}),
 				client: authz.NewClient(nil),
 			},
-			expected: expected{
+			expeted: expected{
 				authorized: authorizer.DecisionAllow,
 			},
 		},
@@ -81,52 +251,28 @@ func TestFolderAuthorizer(t *testing.T) {
 				}),
 				client: authz.NewClient(nil),
 			},
-			expected: expected{
+			expeted: expected{
 				authorized: authorizer.DecisionDeny,
-			},
-		},
-		{
-			name: "with client error",
-			input: input{
-				verb: utils.VerbGet,
-				info: authn.NewIDTokenAuthInfo(authn.Claims[authn.AccessTokenClaims]{}, &authn.Claims[authn.IDTokenClaims]{}),
-				client: &dummyClient{
-					check: func(ctx context.Context, info authlib.AuthInfo, req authlib.CheckRequest) (authlib.CheckResponse, error) {
-						return authlib.CheckResponse{}, fmt.Errorf("nope")
-					},
-				},
-			},
-			expected: expected{
-				authorized: authorizer.DecisionDeny,
-				err:        true,
 			},
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			authz := newAuthorizer(tt.input.client)
+			authz := newMultiTenantAuthorizer(tt.input.client)
 			authorized, _, err := authz.Authorize(
-				authlib.WithAuthInfo(context.Background(), tt.input.info),
+				types.WithAuthInfo(context.Background(), tt.input.info),
 				authorizer.AttributesRecord{User: tt.input.info, Verb: tt.input.verb, APIGroup: folders.GROUP, Resource: "folders", ResourceRequest: true, Name: "123", Namespace: "stacks-1"},
 			)
 
-			if tt.expected.err {
+			if tt.expeted.err {
 				require.Error(t, err)
 				require.Equal(t, authorizer.DecisionDeny, authorized)
 				return
 			}
 
 			require.NoError(t, err)
-			require.Equal(t, tt.expected.authorized, authorized)
+			require.Equal(t, tt.expeted.authorized, authorized)
 		})
 	}
-}
-
-type dummyClient struct {
-	check func(ctx context.Context, info authlib.AuthInfo, req authlib.CheckRequest) (authlib.CheckResponse, error)
-}
-
-func (c *dummyClient) Check(ctx context.Context, info authlib.AuthInfo, req authlib.CheckRequest) (authlib.CheckResponse, error) {
-	return c.check(ctx, info, req)
 }
