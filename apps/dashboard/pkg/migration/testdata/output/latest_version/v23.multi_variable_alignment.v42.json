@@ -29,7 +29,6 @@
       "id": 1,
       "options": {
         "justifyMode": "auto",
-        "percentChangeColorMode": "standard",
         "showPercentChange": false,
         "textMode": "auto",
         "wideLayout": true

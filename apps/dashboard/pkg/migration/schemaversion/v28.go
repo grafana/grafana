@@ -88,6 +88,12 @@ func processPanels(panels []interface{}) error {
 			continue
 		}
 
+		// Check for auto-migrated panels before migration (preserve autoMigrateFrom)
+		isAutoMigrated := false
+		if p["autoMigrateFrom"] == "singlestat" || p["autoMigrateFrom"] == "grafana-singlestat-panel" {
+			isAutoMigrated = true
+		}
+
 		// Migrate singlestat panels (including those already auto-migrated to stat)
 		if p["type"] == "singlestat" || p["type"] == "grafana-singlestat-panel" ||
 			p["autoMigrateFrom"] == "singlestat" || p["autoMigrateFrom"] == "grafana-singlestat-panel" {
@@ -97,7 +103,8 @@ func processPanels(panels []interface{}) error {
 		}
 
 		// Normalize existing stat panels to ensure they have current default options
-		if p["type"] == "stat" {
+		// Skip auto-migrated panels as they already have the correct options
+		if p["type"] == "stat" && !isAutoMigrated {
 			normalizeStatPanel(p)
 		}
 	}
@@ -122,8 +129,12 @@ func migrateSinglestatPanel(panel map[string]interface{}) error {
 	// 	panel.changePlugin(gaugePanelPlugin)
 
 	// Store original type for migration context (only for stat/gauge migration)
-	// Note: We don't set autoMigrateFrom here because the frontend removes it in clearPropertiesBeforePluginChange
+	// Set autoMigrateFrom to track the original type for proper migration logic
 	originalType := panel["type"].(string)
+	// Only set autoMigrateFrom if it doesn't already exist (preserve frontend defaults)
+	if _, exists := panel["autoMigrateFrom"]; !exists {
+		panel["autoMigrateFrom"] = originalType
+	}
 	panel["type"] = targetType
 	panel["pluginVersion"] = pluginVersionForAutoMigrate
 
@@ -142,9 +153,10 @@ func normalizeStatPanel(panel map[string]interface{}) {
 	options := panel["options"].(map[string]interface{})
 
 	// Apply missing default options that might not be present in older stat panels
-	if _, exists := options["percentChangeColorMode"]; !exists {
-		options["percentChangeColorMode"] = "standard"
-	}
+	// Note: Don't add percentChangeColorMode for existing stat panels - frontend filters it out as default
+	// if _, exists := options["percentChangeColorMode"]; !exists {
+	//	options["percentChangeColorMode"] = "standard"
+	// }
 
 	// Ensure other critical defaults are present
 	if _, exists := options["justifyMode"]; !exists {
@@ -185,7 +197,13 @@ func migrateSinglestatOptions(panel map[string]interface{}, originalType string)
 	defaults := fieldConfig["defaults"].(map[string]interface{})
 
 	// Migrate from angular singlestat configuration using appropriate strategy
-	if originalType == "grafana-singlestat-panel" {
+	// Use autoMigrateFrom if available, otherwise use originalType
+	migrationType := originalType
+	if autoMigrateFrom, exists := panel["autoMigrateFrom"].(string); exists {
+		migrationType = autoMigrateFrom
+	}
+
+	if migrationType == "grafana-singlestat-panel" {
 		migrateGrafanaSinglestatPanel(panel, defaults)
 	} else {
 		migratetSinglestat(panel, defaults)
@@ -213,7 +231,7 @@ func getDefaultStatOptions() map[string]interface{} {
 		"colorMode":              "value",
 		"graphMode":              "area",
 		"justifyMode":            "auto",
-		"percentChangeColorMode": "standard",
+		"percentChangeColorMode": "standard", // Match frontend behavior
 		"showPercentChange":      false,
 		"textMode":               "auto",
 		"wideLayout":             true,
@@ -299,22 +317,14 @@ func migrateGrafanaSinglestatPanel(panel map[string]interface{}, defaults map[st
 		},
 		"orientation":            "auto", // Auto-migration uses auto
 		"justifyMode":            "auto",
-		"percentChangeColorMode": "standard",
+		"percentChangeColorMode": "standard", // Match frontend behavior
 		"showPercentChange":      false,
 		"textMode":               "auto",
 		"wideLayout":             true,
 	}
 
-	// Auto-migration: only override if valid, otherwise keep default "lastNotNull"
-	var valueName string
-	if vn, ok := angularOpts["valueName"].(string); ok {
-		valueName = vn
-	}
-
-	if reducer := getReducerForValueName(valueName); reducer != "" {
-		options["reduceOptions"].(map[string]interface{})["calcs"] = []string{reducer}
-	}
-	// No fallback - keeps the auto-migration default "lastNotNull"
+	// Auto-migration: don't apply valueName mapping - keep default "lastNotNull"
+	// The frontend changePlugin() behavior uses stat panel defaults, not valueName mapping
 
 	// Migrate thresholds FIRST (consolidated: both panel types create DEFAULT_THRESHOLDS for empty strings)
 	migrateThresholds(angularOpts, defaults)
@@ -516,6 +526,7 @@ func getReducerForValueName(valueName string) string {
 		"min":     "min",
 		"max":     "max",
 		"mean":    "mean",
+		"avg":     "mean", // avg maps to mean
 		"median":  "median",
 		"sum":     "sum",
 		"count":   "count",
@@ -806,6 +817,7 @@ func cleanupAngularProperties(panel map[string]interface{}) {
 		"cachedPluginOptions": true, "transparent": true, "pluginVersion": true,
 		"fieldConfig": true, "options": true, // These are set by migration
 		"maxDataPoints": true, "interval": true, // Panel-level properties preserved by frontend
+		"autoMigrateFrom": true, // Preserve autoMigrateFrom for proper migration logic
 	}
 
 	// Remove ALL properties except those in mustKeepProps (matching frontend behavior)
