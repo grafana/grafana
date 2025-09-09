@@ -4663,6 +4663,7 @@
       "move": "Pindahkan {{typeName}}",
       "panel-background": "Ubah latar belakang panel",
       "panel-description": "Ubah deskripsi panel",
+      "panel-edit": "",
       "panel-max-repeats-per-row": "Pengulangan maksimum per baris",
       "panel-repeat-direction": "Ulangi arah",
       "panel-repeat-variable": "Panel diulang berdasarkan",
@@ -4917,12 +4918,11 @@
       "dataframe-aria-label": "Pilih dataframe",
       "dataframe-label": "Tampilkan bingkai data",
       "download-csv": "Unduh CSV",
-      "download-excel-description": "Menambahkan header ke CSV untuk digunakan dengan Excel",
-      "download-excel-label": "Unduh untuk Excel",
       "download-logs": "Unduh log",
       "download-service": "Unduh grafik layanan",
       "download-traces": "Unduh jejak",
-      "excel-header": "Header Excel",
+      "excel-compatibility-mode-description": "",
+      "excel-compatibility-mode-label": "",
       "formatted": "Data yang diformat",
       "formatted-data-description": "Data tabel diformat dengan opsi yang ditentukan di tab Bidang dan Timpa.",
       "formatted-data-label": "Data yang diformat",
@@ -11919,13 +11919,6 @@
       "no-deleted-dashboards": "Anda belum menghapus dasbor baru-baru ini.",
       "no-deleted-dashboards-text": "Saat Anda menghapus dasbor, dasbor akan muncul di sini selama 30 hari sebelum dihapus secara permanen. Administrator organisasi Anda dapat memulihkan dasbor yang baru saja dihapus.",
       "no-search-result": "Hasil untuk kueri Anda tidak ditemukan"
-    },
-    "permanently-delete-modal": {
-      "confirm-text": "Hapus",
-      "delete-button": "Hapus",
-      "delete-loading": "Menghapus...",
-      "title": "Hapus Dasbor Secara Permanen",
-      "text_other": "Tindakan ini akan menghapus {{numberOfDashboards}} dasbor."
     },
     "restore-modal": {
       "restore-button": "Pulihkan",
