@@ -17,6 +17,21 @@ usage() {
     } >&2
 }
 
+relativify() {
+    # Show the package with relative path from cwd (./ or ../ prefix)
+    local pkg="$1"
+    local cwd
+    cwd="$(pwd)"
+    local relative
+    relative="$(realpath -s --relative-to="$cwd" "$pkg")"
+    # if there is no ./ or ../ prefix, add ./
+    # bashism: [[ ]] behaves differently with = than [ ] (test) does
+    if [[ "$relative" != ./* && "$relative" != ../* && "$relative" != . ]]; then
+        relative="./$relative"
+    fi
+    printf "%s" "$relative"
+}
+
 beginningWith=""
 dirs=()
 s=0
@@ -48,6 +63,7 @@ if [[ ${#dirs[@]} -eq 0 ]]; then
 fi
 if [ -z "$beginningWith" ]; then
     for pkg in "${dirs[@]}"; do
+        pkg="$(relativify "$pkg")"
         if [ $s -eq 1 ]; then
             printf "%s " "$pkg"
         else
@@ -71,6 +87,7 @@ for i in "${!PACKAGES[@]}"; do
 done
 
 for pkg in "${PACKAGES[@]}"; do
+    pkg="$(relativify "$pkg")"
     if [ $s -eq 1 ]; then
         printf "%s " "$pkg"
     else
