@@ -338,7 +338,9 @@ func (rs *ReceiverService) CreateReceiver(ctx context.Context, r *models.Receive
 	if err := rs.authz.AuthorizeCreate(ctx, user); err != nil {
 		return nil, err
 	}
-
+	if r.Origin != models.ResourceOriginGrafana {
+		return nil, makeErrReceiverOrigin(r, "create")
+	}
 	revision, err := rs.cfgStore.Get(ctx, orgID)
 	if err != nil {
 		return nil, err

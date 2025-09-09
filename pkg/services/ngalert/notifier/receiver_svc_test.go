@@ -405,6 +405,12 @@ func TestReceiverService_Create(t *testing.T) {
 			expectedProvenances: map[string]models.Provenance{generated(0): models.ProvenanceNone, generated(1): models.ProvenanceNone}, // Mark UIDs as generated so that test will insert generated UID.
 		},
 		{
+			name:        "create receiver with non-Grafana origin fails",
+			user:        writer,
+			receiver:    models.CopyReceiverWith(baseReceiver, models.ReceiverMuts.WithOrigin(models.ResourceOriginStaging)),
+			expectedErr: ErrReceiverOrigin,
+		},
+		{
 			name: "create integration with invalid UID fails",
 			user: writer,
 			receiver: models.CopyReceiverWith(baseReceiver, models.ReceiverMuts.WithIntegrations(
@@ -727,6 +733,13 @@ func TestReceiverService_Update(t *testing.T) {
 			receiver:    models.CopyReceiverWith(baseReceiver, models.ReceiverMuts.WithInvalidIntegration("slack")),
 			existing:    util.Pointer(baseReceiver.Clone()),
 			expectedErr: legacy_storage.ErrReceiverInvalid,
+		},
+		{
+			name:        "update of non-Grafana origin fails",
+			user:        writer,
+			receiver:    models.CopyReceiverWith(baseReceiver),
+			existing:    util.Pointer(models.CopyReceiverWith(baseReceiver.Clone(), models.ReceiverMuts.WithOrigin(models.ResourceOriginStaging))),
+			expectedErr: ErrReceiverOrigin,
 		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
