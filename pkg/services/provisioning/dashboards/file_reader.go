@@ -391,7 +391,7 @@ func (fr *FileReader) getOrCreateFolder(ctx context.Context, cfg *config, servic
 			SignedInUser: user,
 		}
 
-		f, err := service.SaveFolderForProvisionedDashboards(ctx, createCmd)
+		f, err := service.SaveFolderForProvisionedDashboards(ctx, createCmd, fr.Cfg.Name)
 		if err != nil {
 			return 0, "", err
 		}
