@@ -27,7 +27,6 @@ export * from './grafana/notificationPolicies/types';
 
 // Rules
 export { StateText } from './grafana/rules/components/state/StateText';
-export { StateDot } from './grafana/rules/components/state/StateDot';
 export { StateIcon } from './grafana/rules/components/state/StateIcon';
 
 // Matchers
