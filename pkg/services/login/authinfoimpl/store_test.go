@@ -14,6 +14,7 @@ import (
 	secretstest "github.com/grafana/grafana/pkg/services/secrets/fakes"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
+	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 func TestMain(m *testing.M) {
@@ -21,9 +22,7 @@ func TestMain(m *testing.M) {
 }
 
 func TestIntegrationAuthInfoStore(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	sql := db.InitTestDB(t)
 	store := ProvideStore(sql, secretstest.NewFakeSecretsService())
