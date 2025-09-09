@@ -60,7 +60,7 @@ export function SynchronizeStep({ isLegacyStorage }: SynchronizeStepProps) {
           to the repository and provisioned back into the instance.
         </Trans>
       </Text>
-      {repositoryHealthMessages && (
+      {repositoryHealthMessages && !isRepositoryHealthy && (
         <ProvisioningAlert
           error={{
             title: t('provisioning.synchronize-step.repository-unhealthy', 'Repository is unhealthy'),
