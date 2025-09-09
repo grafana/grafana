@@ -22,7 +22,7 @@ func TestToV0ResourcePermissions(t *testing.T) {
 	backend := setupBackendNoDB(t)
 
 	t.Run("empty permissions", func(t *testing.T) {
-		result, err := backend.toV0ResourcePermissions([]rbacAssignment{})
+		result, err := backend.toV0ResourcePermissions([]rbacAssignment{}, "default")
 		require.NoError(t, err)
 		require.Nil(t, result)
 	})
@@ -76,7 +76,7 @@ func TestToV0ResourcePermissions(t *testing.T) {
 			},
 		}
 
-		result, err := backend.toV0ResourcePermissions(permissions)
+		result, err := backend.toV0ResourcePermissions(permissions, "default")
 		require.NoError(t, err)
 		require.NotNil(t, result)
 		require.Len(t, result, 1)
