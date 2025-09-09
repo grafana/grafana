@@ -10,7 +10,7 @@ import (
 )
 
 type continueToken struct {
-	offset int64 // the internal id (sort by!)
+	offset int64
 }
 
 func readContinueToken(next string) (continueToken, error) {
