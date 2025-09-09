@@ -24,12 +24,12 @@ import (
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
+	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 func TestIntegrationAdminConfiguration_SendingToExternalAlertmanagers(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test in short mode")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	testinfra.SQLiteIntegrationTest(t)
 
 	const disableOrgID int64 = 2
