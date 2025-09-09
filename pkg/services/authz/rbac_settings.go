@@ -31,7 +31,8 @@ type authzClientSettings struct {
 	tokenExchangeURL string
 	tokenNamespace   string
 
-	cacheTTL time.Duration
+	cacheTTL                 time.Duration
+	grpcLoadBalancingEnabled bool
 }
 
 func readAuthzClientSettings(cfg *setting.Cfg) (*authzClientSettings, error) {

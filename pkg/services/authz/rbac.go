@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/fullstorydev/grpchan/inprocgrpc"
@@ -159,13 +160,25 @@ func newRemoteRBACClient(clientCfg *authzClientSettings, tracer trace.Tracer) (a
 		}
 	}
 
-	conn, err := grpc.NewClient(
-		clientCfg.remoteAddress,
+	// Build gRPC dial options
+	opts := []grpc.DialOption{
 		grpc.WithTransportCredentials(transportCreds),
 		grpc.WithPerRPCCredentials(
 			NewGRPCTokenAuth(AuthzServiceAudience, clientCfg.tokenNamespace, tokenClient),
 		),
-	)
+	}
+
+	// if we serve the client as a load balancer
+	if strings.Contains(clientCfg.remoteAddress, "dns") {
+		// Use round_robin to balances requests more evenly over the available Grafana replicas.
+		opts = append(opts, grpc.WithDefaultServiceConfig(`{"loadBalancingPolicy": "round_robin"}`))
+
+		// Disable looking up service config from TXT DNS records.
+		// This reduces the number of requests made to the DNS servers.
+		opts = append(opts, grpc.WithDisableServiceConfig())
+	}
+
+	conn, err := grpc.NewClient(clientCfg.remoteAddress, opts...)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create authz client to remote server: %w", err)
 	}
