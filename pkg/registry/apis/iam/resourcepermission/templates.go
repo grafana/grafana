@@ -23,6 +23,7 @@ var (
 	roleInsertTplt                      = mustTemplate("role_insert.sql")
 	assignmentInsertTplt                = mustTemplate("assignment_insert.sql")
 	permissionInsertTplt                = mustTemplate("permission_insert.sql")
+	permissionRemoveTplt                = mustTemplate("permission_remove.sql")
 )
 
 func mustTemplate(filename string) *template.Template {
@@ -177,6 +178,25 @@ func buildInsertPermissionQuery(dbHelper *legacysql.LegacyDatabaseHelper, roleID
 }
 
 // Update
+
+type removePermissionTemplate struct {
+	sqltemplate.SQLTemplate
+	PermissionTable string
+	PermissionID    int64
+}
+
+func buildRemovePermissionQuery(dbHelper *legacysql.LegacyDatabaseHelper, permissionID int64) (string, []any, error) {
+	req := removePermissionTemplate{
+		SQLTemplate:     sqltemplate.New(dbHelper.DialectForDriver()),
+		PermissionTable: dbHelper.Table("permission"),
+		PermissionID:    permissionID,
+	}
+	rawQuery, err := sqltemplate.Execute(permissionRemoveTplt, req)
+	if err != nil {
+		return "", nil, fmt.Errorf("rendering sql template: %w", err)
+	}
+	return rawQuery, req.GetArgs(), nil
+}
 
 // Delete
 

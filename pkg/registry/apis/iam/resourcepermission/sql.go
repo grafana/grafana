@@ -273,19 +273,8 @@ func (s *ResourcePermSqlBackend) existsResourcePermission(ctx context.Context, t
 func (s *ResourcePermSqlBackend) createResourcePermission(
 	ctx context.Context, dbHelper *legacysql.LegacyDatabaseHelper, ns types.NamespaceInfo, mapper Mapper, grn *groupResourceName, v0ResourcePerm *v0alpha1.ResourcePermission,
 ) (int64, error) {
-	if v0ResourcePerm == nil {
-		return 0, fmt.Errorf("resource permission cannot be nil")
-	}
-
-	if len(v0ResourcePerm.Spec.Permissions) == 0 {
-		return 0, fmt.Errorf("resource permission must have at least one permission: %w", errInvalidSpec)
-	}
-
-	// Validate that the group/resource/name in the name matches the spec
-	if grn.Group != v0ResourcePerm.Spec.Resource.ApiGroup ||
-		grn.Resource != v0ResourcePerm.Spec.Resource.Resource ||
-		grn.Name != v0ResourcePerm.Spec.Resource.Name {
-		return 0, fmt.Errorf("resource permission name does not match spec: %w", errInvalidSpec)
+	if err := validateCreateAndUpdateInput(v0ResourcePerm, grn); err != nil {
+		return 0, err
 	}
 
 	assignments, err := s.buildRbacAssignments(ctx, ns, mapper, v0ResourcePerm, mapper.Scope(grn.Name))
@@ -317,6 +306,118 @@ func (s *ResourcePermSqlBackend) createResourcePermission(
 }
 
 // Update
+
+func (s *ResourcePermSqlBackend) updateResourcePermission(ctx context.Context, dbHelper *legacysql.LegacyDatabaseHelper, ns types.NamespaceInfo, mapper Mapper, grn *groupResourceName, v0ResourcePerm *v0alpha1.ResourcePermission) (int64, error) {
+	if err := validateCreateAndUpdateInput(v0ResourcePerm, grn); err != nil {
+		return 0, err
+	}
+
+	resourceQuery := &ListResourcePermissionsQuery{
+		Scope:      mapper.Scope(grn.Name),
+		OrgID:      ns.OrgID,
+		ActionSets: mapper.ActionSets(),
+	}
+
+	permsByResource, err := s.getResourcePermissions(ctx, dbHelper, resourceQuery)
+	if err != nil {
+		if errors.Is(err, errNotFound) {
+			return 0, fmt.Errorf("resource permissions not found: %w", errNotFound)
+		}
+		s.logger.Error("could not get resource permissions", "orgID", ns.OrgID, "scope", grn.Name, "error", err.Error())
+		return 0, fmt.Errorf("could not get the existing resource permissions for resource %s", grn.Name)
+	}
+	currentPerms := permsByResource[*grn]
+	if len(currentPerms) == 0 {
+		return 0, fmt.Errorf("resource permissions doesn't exist for resource %s", grn.Name)
+	}
+
+	assignments, err := s.buildRbacAssignments(ctx, ns, mapper, v0ResourcePerm, mapper.Scope(grn.Name))
+	if err != nil {
+		return 0, err
+	}
+
+	// Diff the existing permissions with the desired ones
+	permsToAdd := make([]rbacAssignmentCreate, 0)
+	permissionsToRemove := make([]rbacAssignment, 0)
+
+	// Compile a list of permissions to add
+	for _, desired := range assignments {
+		found := false
+		for _, existing := range currentPerms {
+			// TODO check what fields need to be compared here
+			if desired.Action == existing.Action && desired.SubjectID == existing.SubjectUID && desired.AssignmentColumn == existing.SubjectType {
+				found = true
+				break
+			}
+		}
+		if !found {
+			permsToAdd = append(permsToAdd, desired)
+		}
+	}
+
+	// Compile a list of permissions to remove
+	for _, existing := range currentPerms {
+		found := false
+		for _, desired := range assignments {
+			if desired.Action == existing.Action && desired.SubjectID == existing.SubjectUID && desired.AssignmentColumn == existing.SubjectType {
+				found = true
+				break
+			}
+		}
+		if !found {
+			permissionsToRemove = append(permissionsToRemove, existing)
+		}
+	}
+
+	err = dbHelper.DB.GetSqlxSession().WithTransaction(ctx, func(tx *session.SessionTx) error {
+		if len(permsToAdd) > 0 {
+			for _, assignment := range permsToAdd {
+				if err := s.storeRbacAssignment(ctx, dbHelper, tx, ns.OrgID, assignment); err != nil {
+					return err
+				}
+			}
+		}
+
+		if len(permissionsToRemove) > 0 {
+			for _, perm := range permissionsToRemove {
+				removePermQuery, args, err := buildRemovePermissionQuery(dbHelper, perm.ID)
+				if err != nil {
+					return err
+				}
+				_, err = tx.Exec(ctx, removePermQuery, args...)
+				if err != nil {
+					s.logger.Error("could not remove role permission", "scope", perm.Scope, "role", perm.RoleName, "error", err.Error())
+					return fmt.Errorf("could not remove role permission")
+				}
+
+			}
+		}
+
+		return nil
+	})
+
+	// Return a timestamp as resource version
+	return timeNow().UnixMilli(), nil
+}
+
+func validateCreateAndUpdateInput(v0ResourcePerm *v0alpha1.ResourcePermission, grn *groupResourceName) error {
+	if v0ResourcePerm == nil {
+		return fmt.Errorf("resource permission cannot be nil")
+	}
+
+	if len(v0ResourcePerm.Spec.Permissions) == 0 {
+		return fmt.Errorf("resource permission must have at least one permission: %w", errInvalidSpec)
+	}
+
+	// Validate that the group/resource/name in the name matches the spec
+	if grn.Group != v0ResourcePerm.Spec.Resource.ApiGroup ||
+		grn.Resource != v0ResourcePerm.Spec.Resource.Resource ||
+		grn.Name != v0ResourcePerm.Spec.Resource.Name {
+		return fmt.Errorf("resource permission name does not match spec: %w", errInvalidSpec)
+	}
+
+	return nil
+}
 
 // Delete
 

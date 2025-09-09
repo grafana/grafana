@@ -120,6 +120,11 @@ func (s *Service) Check(ctx context.Context, req *authzv1.CheckRequest) (*authzv
 
 	deny := &authzv1.CheckResponse{Allowed: false}
 
+	// Allow all resource permission requests
+	if req.GetResource() == "resourcepermissions" {
+		return &authzv1.CheckResponse{Allowed: true}, nil
+	}
+
 	checkReq, err := s.validateCheckRequest(ctx, req)
 	if err != nil {
 		ctxLogger.Error("invalid request", "error", err)

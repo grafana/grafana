@@ -190,7 +190,7 @@ func (s *ResourcePermSqlBackend) WriteEvent(ctx context.Context, event resource.
 	switch event.Type {
 	case resourcepb.WatchEvent_DELETED:
 		err = s.deleteResourcePermission(ctx, dbHelper, ns, event.Key.Name)
-	case resourcepb.WatchEvent_ADDED:
+	case resourcepb.WatchEvent_ADDED, resourcepb.WatchEvent_MODIFIED:
 		{
 			var v0resourceperm *v0alpha1.ResourcePermission
 			v0resourceperm, err = getResourcePermissionFromEvent(event)
@@ -209,13 +209,26 @@ func (s *ResourcePermSqlBackend) WriteEvent(ctx context.Context, event resource.
 				)
 			}
 
-			rv, err = s.createResourcePermission(ctx, dbHelper, ns, mapper, grn, v0resourceperm)
+			dbHelper, err := s.dbProvider(ctx)
+			if err != nil {
+				return 0, err
+			}
+
+			if event.Type == resourcepb.WatchEvent_ADDED {
+				rv, err = s.createResourcePermission(ctx, dbHelper, ns, mapper, grn, v0resourceperm)
+				if err != nil && errors.Is(err, errConflict) {
+					return 0, apierrors.NewConflict(v0alpha1.ResourcePermissionInfo.GroupResource(), event.Key.Name, err)
+				}
+			} else {
+				rv, err = s.updateResourcePermission(ctx, dbHelper, ns, mapper, grn, v0resourceperm)
+				if errors.Is(err, errNotFound) {
+					return 0, apierrors.NewNotFound(v0alpha1.ResourcePermissionInfo.GroupResource(), event.Key.Name)
+				}
+			}
+
 			if err != nil {
 				if errors.Is(err, errInvalidSpec) || errors.Is(err, errInvalidName) {
 					return 0, apierrors.NewBadRequest(err.Error())
-				}
-				if errors.Is(err, errConflict) {
-					return 0, apierrors.NewConflict(v0alpha1.ResourcePermissionInfo.GroupResource(), event.Key.Name, err)
 				}
 				return 0, err
 			}
