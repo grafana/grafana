@@ -20,6 +20,7 @@ type FeatureHighlightsTabPageProps = {
   footer: ReactNode;
   items: string[];
   linkButtonLabel: string;
+  buttonLink: string;
   footNote?: ReactNode;
   screenshotPath: string;
 };
@@ -30,6 +31,7 @@ export function FeatureHighlightsTabPage({
   header,
   items,
   linkButtonLabel,
+  buttonLink,
   footNote,
   screenshotPath,
   footer,
@@ -73,7 +75,7 @@ export function FeatureHighlightsTabPage({
               ))}
             </div>
             {footer && <div className={styles.footer}>{footer}</div>}
-            <LinkButton className={styles.linkButton} href={`/datasources/${pageName}`}>
+            <LinkButton className={styles.linkButton} href={buttonLink}>
               <Icon name="external-link-alt" className={styles.buttonIcon} />
               <span>{linkButtonLabel}</span>
             </LinkButton>
