@@ -195,7 +195,7 @@ Each data link configuration consists of:
 
 Use private data source connect (PDC) to connect to and query data within a secure network without opening that network to inbound traffic from Grafana Cloud. See [Private data source connect](https://grafana.com/docs/grafana-cloud/connect-externally-hosted/private-data-source-connect/) for more information on how PDC works and [Configure Grafana private data source connect (PDC)](https://grafana.com/docs/grafana-cloud/connect-externally-hosted/private-data-source-connect/configure-pdc/#configure-grafana-private-data-source-connect-pdc) for steps on setting up a PDC connection.
 
-If PDC is used with SIGv4 (AWS Signature Version 4 Authentication) the PDC agent must allow internet egress to`sts.<region>.amazonaws.com:443`.
+If you use PDC with SIGv4 (AWS Signature Version 4 Authentication), the PDC agent must allow internet egress to`sts.<region>.amazonaws.com:443`.
 
 - **Private data source connect** - Click in the box to set the default PDC connection from the dropdown menu or create a new connection.
 

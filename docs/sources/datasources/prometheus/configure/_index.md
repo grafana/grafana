@@ -233,9 +233,9 @@ You can add multiple exemplars.
 
 - **Private data source connect** - _Only for Grafana Cloud users._ Private data source connect, or PDC, allows you to establish a private, secured connection between a Grafana Cloud instance, or stack, and data sources secured within a private network. Click the drop-down to locate the URL for PDC. For more information regarding Grafana PDC refer to [Private data source connect (PDC)](ref:private-data-source-connect) and [Configure Grafana private data source connect (PDC)](https://grafana.com/docs/grafana-cloud/connect-externally-hosted/private-data-source-connect/configure-pdc/#configure-grafana-private-data-source-connect-pdc) for steps on setting up a PDC connection.
 
-  If PDC is used with SIGv4 (AWS Signature Version 4 Authentication) the PDC agent must allow internet egress to`sts.<region>.amazonaws.com:443`.
+  If you use PDC with SIGv4 (AWS Signature Version 4 Authentication), the PDC agent must allow internet egress to`sts.<region>.amazonaws.com:443`.
 
-  Click **Manage private data source connect** to be taken to your PDC connection page, where you’ll find your PDC configuration details.
+  Click **Manage private data source connect** to open your PDC connection page and view your configuration details.
 
 After you have configured your Prometheus data source options, click **Save & test** at the bottom to test out your data source connection.
 
