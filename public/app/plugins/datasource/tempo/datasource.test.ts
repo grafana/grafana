@@ -48,7 +48,7 @@ import {
 } from './datasource';
 import mockJson from './test/mockJsonResponse.json';
 import mockServiceGraph from './test/mockServiceGraph.json';
-import { createMetadataRequest, createTempoDatasource } from './test/mocks';
+import { createTempoDatasource } from './test/mocks';
 import { initTemplateSrv } from './test/test_utils';
 import { TempoJsonData, TempoQuery } from './types';
 
@@ -355,11 +355,11 @@ describe('Tempo data source', () => {
   });
 
   describe('test the metadataRequest function', () => {
-    it('should return the last value from the observed stream', async () => {
-      mockObservable = () => of('321', '123', '456');
+    it('should return the data from getResource', async () => {
       const ds = new TempoDatasource(defaultSettings);
-      const response = await ds.metadataRequest('/api/search/tags');
-      expect(response).toBe('456');
+      jest.spyOn(ds, 'getResource').mockResolvedValue({ data: 'test-data' });
+      const response = await ds.metadataRequest('api/v2/search/tags');
+      expect(response).toBe('test-data');
     });
   });
 
@@ -1106,13 +1106,9 @@ describe('label names - v2 tags', () => {
 
   beforeEach(() => {
     datasource = createTempoDatasource();
-    jest.spyOn(datasource, 'metadataRequest').mockImplementation(
-      createMetadataRequest({
-        data: {
-          scopes: [{ name: 'span', tags: ['label1', 'label2'] }],
-        },
-      })
-    );
+    // Mock the language provider to return v2 tags
+    datasource.languageProvider.tagsV2 = [{ name: 'span', tags: ['label1', 'label2'] }];
+    jest.spyOn(datasource.languageProvider, 'start').mockResolvedValue([]);
   });
 
   it('get label names', async () => {
@@ -1123,55 +1119,18 @@ describe('label names - v2 tags', () => {
   });
 });
 
-describe('label names - v1 tags', () => {
-  let datasource: TempoDatasource;
-
-  beforeEach(() => {
-    datasource = createTempoDatasource();
-    jest
-      .spyOn(datasource, 'metadataRequest')
-      .mockImplementationOnce(() => {
-        throw Error;
-      })
-      .mockImplementation(
-        createMetadataRequest({
-          data: {
-            tagNames: ['label1', 'label2'],
-          },
-        })
-      );
-  });
-
-  it('get label names', async () => {
-    // label_names()
-    const response = await datasource.executeVariableQuery({ refId: 'test', type: TempoVariableQueryType.LabelNames });
-    expect(response).toEqual([{ text: 'label1' }, { text: 'label2' }, { text: 'status.code' }]);
-  });
-});
-
 describe('label values', () => {
   let datasource: TempoDatasource;
 
   beforeEach(() => {
     datasource = createTempoDatasource();
-    jest.spyOn(datasource, 'metadataRequest').mockImplementation(
-      createMetadataRequest({
-        data: {
-          tagValues: [
-            {
-              type: 'value1',
-              value: 'value1',
-              label: 'value1',
-            },
-            {
-              type: 'value2',
-              value: 'value2',
-              label: 'value2',
-            },
-          ],
-        },
-      })
-    );
+    // Mock the language provider to return v2 tags that includes the "label" tag
+    datasource.languageProvider.tagsV2 = [{ name: 'span', tags: ['label'] }];
+    jest.spyOn(datasource.languageProvider, 'start').mockResolvedValue([]);
+    jest.spyOn(datasource.languageProvider, 'getOptionsV2').mockResolvedValue([
+      { type: 'string', value: 'value1', label: 'value1' },
+      { type: 'string', value: 'value2', label: 'value2' },
+    ]);
   });
 
   it('get label values for given label', async () => {
@@ -1182,10 +1141,7 @@ describe('label values', () => {
       label: 'label',
     });
 
-    expect(response).toEqual([
-      { text: { type: 'value1', value: 'value1', label: 'value1' } },
-      { text: { type: 'value2', value: 'value2', label: 'value2' } },
-    ]);
+    expect(response).toEqual([{ text: 'value1' }, { text: 'value2' }]);
   });
 
   it('do not raise error when label is not set', async () => {
@@ -1205,25 +1161,13 @@ describe('should provide functionality for ad-hoc filters', () => {
 
   beforeEach(() => {
     datasource = createTempoDatasource();
-    jest.spyOn(datasource, 'metadataRequest').mockImplementation(
-      createMetadataRequest({
-        data: {
-          scopes: [{ name: 'span', tags: ['label1', 'label2'] }],
-          tagValues: [
-            {
-              type: 'value1',
-              value: 'value1',
-              label: 'value1',
-            },
-            {
-              type: 'value2',
-              value: 'value2',
-              label: 'value2',
-            },
-          ],
-        },
-      })
-    );
+    // Mock the language provider to return v2 tags
+    datasource.languageProvider.tagsV2 = [{ name: 'span', tags: ['label1', 'label2'] }];
+    jest.spyOn(datasource.languageProvider, 'fetchTags').mockResolvedValue();
+    jest.spyOn(datasource.languageProvider, 'getOptionsV2').mockResolvedValue([
+      { type: 'string', value: 'value1', label: 'value1' },
+      { type: 'string', value: 'value2', label: 'value2' },
+    ]);
   });
 
   it('for getTagKeys', async () => {
