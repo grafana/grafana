@@ -75,6 +75,11 @@ func enforceManagerProperties(auth authtypes.AuthInfo, obj utils.GrafanaMetaAcce
 		return nil // not managed
 
 	case utils.ManagerKindRepo:
+		fmt.Println("authlib.GetIdentifier", auth.GetIdentifier())
+		fmt.Println("authlib.GetName", auth.GetName())
+		fmt.Println("authlib.GetIdentityType", auth.GetIdentityType())
+		fmt.Println("auth.GetUID()", auth.GetUID())
+		fmt.Println("extras", auth.GetExtra())
 		if auth.GetUID() == "access-policy:provisioning" {
 			return nil // OK!
 		}
