@@ -20,7 +20,7 @@ export function DashboardLinksControls({ links, dashboard }: Props) {
   return (
     <>
       {links
-        .filter((link) => link.placement === undefined || link.placement === 'default')
+        .filter((link) => link.placement === undefined)
         .map((link: DashboardLink, index: number) => (
           <DashboardLinkRenderer link={link} dashboardUID={uid} key={`${link.title}-$${index}`} />
         ))}

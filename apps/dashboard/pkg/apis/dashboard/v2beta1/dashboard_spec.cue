@@ -118,9 +118,8 @@ DashboardLink: {
 }
 
 // Dashboard Link placement. Defines where the link should be displayed. 
-// - "default" renders the link above the visualisations
 // - "inControlsMenu" renders the link in bottom part of the dashboard controls dropdown menu
-DashboardLinkPlacement: "default" | "inControlsMenu"
+DashboardLinkPlacement: "inControlsMenu"
 
 // A topic is attached to DataFrame metadata in query results.
 // This specifies where the data should be used.

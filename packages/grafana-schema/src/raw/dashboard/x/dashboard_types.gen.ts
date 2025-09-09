@@ -359,10 +359,9 @@ export type DashboardLinkType = ('link' | 'dashboards');
 
 /**
  * Dashboard Link placement. Defines where the link should be displayed.
- * - "default" renders the link above the visualisations
  * - "inControlsMenu" renders the link in bottom part of the dashboard controls dropdown menu
  */
-export type DashboardLinkPlacement = ('default' | 'inControlsMenu');
+export type DashboardLinkPlacement = 'inControlsMenu';
 
 /**
  * Dashboard variable type

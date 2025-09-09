@@ -299,9 +299,8 @@ lineage: schemas: [{
 		#DashboardLinkType: "link" | "dashboards" @cuetsy(kind="type")
 
 		// Dashboard Link placement. Defines where the link should be displayed. 
-		// - "default" renders the link above the visualisations
 		// - "inControlsMenu" renders the link in bottom part of the dashboard controls dropdown menu 
-		#DashboardLinkPlacement: "default" | "inControlsMenu" @cuetsy(kind="type")
+		#DashboardLinkPlacement: "inControlsMenu" @cuetsy(kind="type")
 
 		// Dashboard variable type
 		// `query`: Query-generated list of values such as metric names, server names, sensor IDs, data centers, and so on.

@@ -1107,7 +1107,7 @@ type DashboardDashboardLink struct {
 	// If true, includes current time range in the link as query params
 	KeepTime bool `json:"keepTime"`
 	// Placement can be used to display the link somewhere else on the dashboard other than above the visualisations.
-	Placement *DashboardDashboardLinkPlacement `json:"placement,omitempty"`
+	Placement string `json:"placement,omitempty"`
 }
 
 // NewDashboardDashboardLink creates a new DashboardDashboardLink object.
@@ -1118,6 +1118,7 @@ func NewDashboardDashboardLink() *DashboardDashboardLink {
 		TargetBlank: false,
 		IncludeVars: false,
 		KeepTime:    false,
+		Placement:   DashboardDashboardLinkPlacement,
 	}
 }
 
@@ -1131,15 +1132,9 @@ const (
 )
 
 // Dashboard Link placement. Defines where the link should be displayed.
-// - "default" renders the link above the visualisations
 // - "inControlsMenu" renders the link in bottom part of the dashboard controls dropdown menu
 // +k8s:openapi-gen=true
-type DashboardDashboardLinkPlacement string
-
-const (
-	DashboardDashboardLinkPlacementDefault        DashboardDashboardLinkPlacement = "default"
-	DashboardDashboardLinkPlacementInControlsMenu DashboardDashboardLinkPlacement = "inControlsMenu"
-)
+const DashboardDashboardLinkPlacement = "inControlsMenu"
 
 // Time configuration
 // It defines the default time config for the time picker, the refresh picker for the specific dashboard.

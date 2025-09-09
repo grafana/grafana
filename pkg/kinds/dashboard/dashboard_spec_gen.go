@@ -273,7 +273,7 @@ type DashboardLink struct {
 	// If true, all dashboards links will be displayed in a dropdown. If false, all dashboards links will be displayed side by side. Only valid if the type is dashboards
 	AsDropdown bool `json:"asDropdown"`
 	// Placement can be used to display the link somewhere else on the dashboard other than above the visualisations.
-	Placement *DashboardLinkPlacement `json:"placement,omitempty"`
+	Placement string `json:"placement,omitempty"`
 	// If true, the link will be opened in a new tab
 	TargetBlank bool `json:"targetBlank"`
 	// If true, includes current template variables values in the link as query params
@@ -287,6 +287,7 @@ func NewDashboardLink() *DashboardLink {
 	return &DashboardLink{
 		Tags:        []string{},
 		AsDropdown:  false,
+		Placement:   DashboardLinkPlacement,
 		TargetBlank: false,
 		IncludeVars: false,
 		KeepTime:    false,
@@ -302,14 +303,8 @@ const (
 )
 
 // Dashboard Link placement. Defines where the link should be displayed.
-// - "default" renders the link above the visualisations
 // - "inControlsMenu" renders the link in bottom part of the dashboard controls dropdown menu
-type DashboardLinkPlacement string
-
-const (
-	DashboardLinkPlacementDefault        DashboardLinkPlacement = "default"
-	DashboardLinkPlacementInControlsMenu DashboardLinkPlacement = "inControlsMenu"
-)
+const DashboardLinkPlacement = "inControlsMenu"
 
 // Transformations allow to manipulate data returned by a query before the system applies a visualization.
 // Using transformations you can: rename fields, join time series data, perform mathematical operations across queries,

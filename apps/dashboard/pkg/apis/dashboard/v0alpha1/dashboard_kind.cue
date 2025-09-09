@@ -284,7 +284,7 @@ lineage: schemas: [{
 			tags: [...string]
 			// If true, all dashboards links will be displayed in a dropdown. If false, all dashboards links will be displayed side by side. Only valid if the type is dashboards
 			asDropdown: bool | *false
-			// Placement can be used to display the link somewhere else on the dashbaord other than abovethe visualisations.
+			// Placement can be used to display the link somewhere else on the dashboard other than above the visualisations.
 			placement?: #DashboardLinkPlacement
 			// If true, the link will be opened in a new tab
 			targetBlank: bool | *false
@@ -299,9 +299,8 @@ lineage: schemas: [{
 		#DashboardLinkType: "link" | "dashboards" @cuetsy(kind="type")
 
 		// Dashboard Link placement. Defines where the link should be displayed. 
-		// - "default" renders the link above the visualisations
 		// - "inControlsMenu" renders the link in bottom part of the dashboard controls dropdown menu 
-		#DashboardLinkPlacement: "default" | "inControlsMenu" @cuetsy(kind="type")
+		#DashboardLinkPlacement: "inControlsMenu" @cuetsy(kind="type")
 
 		// Dashboard variable type
 		// `query`: Query-generated list of values such as metric names, server names, sensor IDs, data centers, and so on.
