@@ -206,6 +206,12 @@ export enum PluginExtensionPoints {
   LogsViewResourceAttributes = 'grafana/logsview/resource-attributes',
   AppChrome = 'grafana/app/chrome/v1',
   ExtensionSidebar = 'grafana/extension-sidebar/v0-alpha',
+}
+
+// Don't use directly in a plugin!
+// Extension point IDs that contain dynamic segments and are not valid as static values — they require runtime substitution of certain parts.
+// (They cannot be used as is. E.g. "grafana/nav-landing-page/.*/v1" becomes "grafana/nav-landing-page/observability/v1" during runtime.)
+export enum PluginExtensionPointPatterns {
   NavLandingPage = 'grafana/nav-landing-page/.*/v1',
 }
 

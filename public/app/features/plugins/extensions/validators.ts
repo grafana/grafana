@@ -7,6 +7,7 @@ import {
   type PluginExtensionExposedComponentConfig,
   type PluginExtensionAddedFunctionConfig,
   PluginExtensionPoints,
+  PluginExtensionPointPatterns,
 } from '@grafana/data';
 import { PluginAddedLinksConfigureFunc } from '@grafana/data/internal';
 import { config, isPluginExtensionLink } from '@grafana/runtime';
@@ -93,8 +94,9 @@ export function isExtensionPointIdValid({
 
   if (
     !isInsidePlugin &&
-    !Object.values<string>(PluginExtensionPoints).some(
-      (extension) => extension === extensionPointId || new RegExp(extension).test(extensionPointId)
+    !Object.values<string>(PluginExtensionPoints).includes(extensionPointId) &&
+    !Object.values<string>(PluginExtensionPointPatterns).some((extensionPointPattern) =>
+      extensionPointId.match(extensionPointPattern)
     )
   ) {
     log.error(errors.INVALID_EXTENSION_POINT_ID_GRAFANA_EXPOSED);
