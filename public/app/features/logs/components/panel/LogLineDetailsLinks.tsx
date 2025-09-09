@@ -42,7 +42,7 @@ const getFieldsStyles = (theme: GrafanaTheme2) => ({
   linksTable: css({
     display: 'grid',
     gap: theme.spacing(1),
-    gridTemplateColumns: `minmax(auto, 40%) 1fr`,
+    gridTemplateColumns: `fit-content(30%) 1fr`,
     marginBottom: theme.spacing(1),
   }),
 });
