@@ -44,8 +44,7 @@ func (o *ExtraOptions) ApplyTo(c *genericapiserver.RecommendedConfig) error {
 	handler := slogadapter.New(log.New("grafana-apiserver"))
 	logger := slog.New(handler)
 	if err := utilfeature.DefaultMutableFeatureGate.SetFromMap(map[string]bool{
-		string(genericfeatures.APIServerTracing): false,
-		string(genericfeatures.WatchList):        true,
+		string(genericfeatures.WatchList): true,
 	}); err != nil {
 		return err
 	}
