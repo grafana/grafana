@@ -461,7 +461,6 @@ var (
 			Stage:           FeatureStageExperimental,
 			Owner:           grafanaAppPlatformSquad,
 			RequiresRestart: true, // changes the API routing
-			Expression:      "true",
 		},
 		{
 			Name:         "useKubernetesShortURLsAPI",
@@ -469,7 +468,6 @@ var (
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaSharingSquad,
 			FrontendOnly: true,
-			Expression:   "true",
 		},
 		{
 			Name:        "dashboardDisableSchemaValidationV1",
