@@ -18,6 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
+	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 func TestMain(m *testing.M) {
@@ -43,7 +44,7 @@ func setupTestRoles(t *testing.T, store db.DB) {
 	sess := store.GetSqlxSession()
 
 	_, err := sess.Exec(context.Background(),
-		`INSERT INTO role (id, version, org_id, uid, name, display_name, description, group_name, hidden, created, updated) 
+		`INSERT INTO role (id, version, org_id, uid, name, display_name, description, group_name, hidden, created, updated)
 		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?), (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?), (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?),
 		(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?), (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
 		// Managed roles
@@ -119,9 +120,7 @@ func setupTestRoles(t *testing.T, store db.DB) {
 }
 
 func TestIntegration_ResourcePermSqlBackend_getResourcePermission(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test in short mode")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	backend := setupBackend(t)
 	sql, err := backend.dbProvider(context.Background())
@@ -207,10 +206,68 @@ func TestIntegration_ResourcePermSqlBackend_getResourcePermission(t *testing.T) 
 	}
 }
 
-func TestIntegration_ResourcePermSqlBackend_CreateResourcePermission(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
+func TestIntegrationResourcePermSqlBackend_deleteResourcePermission(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	backend := setupBackend(t)
+	sql, err := backend.dbProvider(context.Background())
+	require.NoError(t, err)
+	setupTestRoles(t, sql.DB)
+
+	tests := []struct {
+		name     string
+		resource string
+		orgID    int64
+		want     v0alpha1.ResourcePermission
+		err      error
+	}{
+		{
+			name:     "should return an error for unknown resource type",
+			orgID:    1,
+			resource: "unknown.grafana.app-unknown-u1",
+			err:      errUnknownGroupResource,
+		},
+		{
+			name:     "should return an error for invalid resource name",
+			orgID:    1,
+			resource: "invalid.grafana.app-invalid",
+			err:      errInvalidName,
+		},
+		{
+			name:     "should delete permissions in org1 for fold1",
+			resource: "folder.grafana.app-folders-fold1",
+			orgID:    1,
+			err:      nil,
+		},
+		{
+			name:     "should delete permissions in org2 for fold1",
+			resource: "folder.grafana.app-folders-fold1",
+			orgID:    2,
+			err:      nil,
+		},
 	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ns := types.NamespaceInfo{
+				OrgID: tt.orgID,
+			}
+			err := backend.deleteResourcePermission(context.Background(), sql, ns, tt.resource)
+			if tt.err != nil {
+				require.Error(t, err)
+				require.ErrorIs(t, err, tt.err)
+				return
+			}
+			require.NoError(t, err)
+
+			// check that the resource has been deleted
+			_, err = backend.getResourcePermission(context.Background(), sql, ns, tt.resource)
+			require.Error(t, err)
+		})
+	}
+}
+
+func TestIntegration_ResourcePermSqlBackend_CreateResourcePermission(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	store := db.InitTestDB(t)
 

@@ -1703,9 +1703,6 @@
       "notes": "Remarques",
       "returns": "Retours"
     },
-    "label-picker": {
-      "no-options-message": "Aucune étiquette trouvée"
-    },
     "labels-editor-modal": {
       "title-edit-labels": "Modifier les étiquettes"
     },
@@ -1723,9 +1720,6 @@
     "labels-sub-form": {
       "description": "Sélectionnez une clé/valeur d’étiquette parmi les options ci-dessous, ou saisissez-en une nouvelle et appuyez sur Entrée.",
       "save": "Enregistrer"
-    },
-    "labels-with-suggestions": {
-      "text-loading-existing-labels": "Chargement des étiquettes existantes"
     },
     "labels-without-suggestions": {
       "message": {
@@ -4687,6 +4681,7 @@
       "move": "Déplacer {{typeName}}",
       "panel-background": "Modifier l’arrière-plan du panneau",
       "panel-description": "Modifier la description du panneau",
+      "panel-edit": "",
       "panel-max-repeats-per-row": "Nombre maximal de répétitions par ligne",
       "panel-repeat-direction": "Répéter la direction",
       "panel-repeat-variable": "Répéter le panneau selon",
@@ -4941,12 +4936,11 @@
       "dataframe-aria-label": "Sélectionner la dataframe",
       "dataframe-label": "Afficher la dataframe",
       "download-csv": "Télécharger en format CSV",
-      "download-excel-description": "Ajoute l'en-tête au fichier CSV pour une utilisation dans Excel",
-      "download-excel-label": "Télécharger pour Excel",
       "download-logs": "Télécharger les journaux",
       "download-service": "Télécharger le graphique de service",
       "download-traces": "Télécharger les traces",
-      "excel-header": "En-tête Excel",
+      "excel-compatibility-mode-description": "",
+      "excel-compatibility-mode-label": "",
       "formatted": "Données formatées",
       "formatted-data-description": "Les données du tableau sont formatées avec les options définies dans les onglets Champ et Remplacer.",
       "formatted-data-label": "Données formatées",
@@ -9650,6 +9644,12 @@
       "hide-search": "Fermer la recherche",
       "hide-timestamps": "Masquer les horodatages",
       "hide-unique-labels": "Masquer les étiquettes uniques",
+      "line-wrapping": {
+        "enable": "",
+        "enable-prettify": "",
+        "hide": "",
+        "label": ""
+      },
       "newest-first": "Trié par les journaux les plus récents en premier - Cliquez pour afficher les plus anciens en premier",
       "oldest-first": "Trié par les journaux les plus anciens en premier - Cliquez pour afficher les plus récents en premier",
       "prettify-json": "Développer les journaux JSON",
@@ -9658,13 +9658,16 @@
       "resolution-ns": "ns",
       "scroll-bottom": "Faire défiler vers le bas",
       "scroll-top": "Retour en haut de page",
-      "show-ms-timestamps": "Afficher les horodatages en millisecondes",
-      "show-ns-timestamps": "Afficher les horodatages en nanosecondes",
       "show-search": "Rechercher dans les résultats de logs",
       "show-timestamps": "Afficher les horodatages",
       "show-unique-labels": "Afficher les étiquettes uniques",
+      "timestamp": {
+        "hide": "",
+        "label": "",
+        "milliseconds": "",
+        "nanoseconds": ""
+      },
       "unwrap-lines": "Dérouler les lignes",
-      "wrap-json-lines": "",
       "wrap-lines": "Enrouler les lignes"
     },
     "logs-navigation": {
@@ -11940,7 +11943,6 @@
       "expand-row": "Développer la ligne de requête",
       "hide-response": "Masquer la réponse",
       "remove-query": "Supprimer la requête",
-      "replace-query-from-library": "Remplacer par une requête sauvegardée",
       "show-response": "Afficher la réponse"
     },
     "query-editor-not-exported": "Le plugin source de données n'exporte aucun composant de l'éditeur de requête"
@@ -11953,14 +11955,6 @@
       "no-deleted-dashboards": "Vous n'avez pas supprimé de tableau de bord récemment.",
       "no-deleted-dashboards-text": "Lorsque vous supprimez un tableau de bord, il apparaîtra ici pendant 30 jours avant d'être définitivement supprimé. L'administrateur de votre organisation peut restaurer les tableaux de bord récemment supprimés.",
       "no-search-result": "Aucun résultat n'a été trouvé pour votre requête"
-    },
-    "permanently-delete-modal": {
-      "confirm-text": "Supprimer",
-      "delete-button": "Supprimer",
-      "delete-loading": "Suppression…",
-      "title": "Supprimer définitivement les tableaux de bord",
-      "text_one": "Cette action supprimera {{numberOfDashboards}} tableaux de bord.",
-      "text_other": "Cette action supprimera {{numberOfDashboards}} tableaux de bord."
     },
     "restore-modal": {
       "restore-button": "Restaurer",

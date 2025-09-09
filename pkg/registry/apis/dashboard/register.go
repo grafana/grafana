@@ -19,7 +19,7 @@ import (
 	"k8s.io/kube-openapi/pkg/spec3"
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
-	claims "github.com/grafana/authlib/types"
+	authlib "github.com/grafana/authlib/types"
 	internal "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard"
 	dashv0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	dashv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
@@ -47,7 +47,6 @@ import (
 	dashsvc "github.com/grafana/grafana/pkg/services/dashboards/service"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/librarypanels"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/services/provisioning"
@@ -80,7 +79,7 @@ type DashboardsAPIBuilder struct {
 
 	authorizer                   authorizer.Authorizer
 	accessControl                accesscontrol.AccessControl
-	accessClient                 claims.AccessClient
+	accessClient                 authlib.AccessClient
 	legacy                       *DashboardStorage
 	unified                      resource.ResourceClient
 	dashboardProvisioningService dashboards.DashboardProvisioningService
@@ -89,7 +88,6 @@ type DashboardsAPIBuilder struct {
 	scheme                       *runtime.Scheme
 	search                       *SearchHandler
 	dashStore                    dashboards.Store
-	folderStore                  folder.FolderStore
 	QuotaService                 quota.Service
 	ProvisioningService          provisioning.ProvisioningService
 	cfg                          *setting.Cfg
@@ -115,7 +113,7 @@ func RegisterAPIService(
 	dashboardPermissions dashboards.PermissionsRegistrationService,
 	dashboardPermissionsSvc accesscontrol.DashboardPermissionsService,
 	accessControl accesscontrol.AccessControl,
-	accessClient claims.AccessClient,
+	accessClient authlib.AccessClient,
 	provisioning provisioning.ProvisioningService,
 	dashStore dashboards.Store,
 	reg prometheus.Registerer,
@@ -125,7 +123,6 @@ func RegisterAPIService(
 	dual dualwrite.Service,
 	sorter sort.Service,
 	quotaService quota.Service,
-	folderStore folder.FolderStore,
 	libraryPanelSvc librarypanels.Service,
 	restConfigProvider apiserver.RestConfigProvider,
 	userService user.Service,
@@ -149,7 +146,6 @@ func RegisterAPIService(
 		dashboardProvisioningService: provisioningDashboardService,
 		search:                       NewSearchHandler(tracing, dual, legacyDashboardSearcher, unified, features),
 		dashStore:                    dashStore,
-		folderStore:                  folderStore,
 		QuotaService:                 quotaService,
 		ProvisioningService:          provisioning,
 		cfg:                          cfg,
@@ -171,7 +167,7 @@ func RegisterAPIService(
 	return builder
 }
 
-func NewAPIService(ac claims.AccessClient, features featuremgmt.FeatureToggles, folderClientProvider client.K8sHandlerProvider, datasourceProvider schemaversion.DataSourceInfoProvider, pluginStore *pluginstore.Service) *DashboardsAPIBuilder {
+func NewAPIService(ac authlib.AccessClient, features featuremgmt.FeatureToggles, folderClientProvider client.K8sHandlerProvider, datasourceProvider schemaversion.DataSourceInfoProvider, pluginStore *pluginstore.Service) *DashboardsAPIBuilder {
 	// TODO: Plugin store will soon be removed,
 	// as the cases for plugin fetching is not needed. Keeping it now to not break implementation
 	if pluginStore == nil {
@@ -278,7 +274,7 @@ func (b *DashboardsAPIBuilder) validateDelete(ctx context.Context, a admission.A
 		return nil
 	}
 
-	nsInfo, err := claims.ParseNamespace(a.GetNamespace())
+	nsInfo, err := authlib.ParseNamespace(a.GetNamespace())
 	if err != nil {
 		return fmt.Errorf("%v: %w", "failed to parse namespace", err)
 	}
@@ -384,7 +380,7 @@ func (b *DashboardsAPIBuilder) validateUpdate(ctx context.Context, a admission.A
 	}
 
 	// Parse namespace for old dashboard
-	nsInfo, err := claims.ParseNamespace(oldAccessor.GetNamespace())
+	nsInfo, err := authlib.ParseNamespace(oldAccessor.GetNamespace())
 	if err != nil {
 		return fmt.Errorf("failed to parse namespace: %w", err)
 	}
