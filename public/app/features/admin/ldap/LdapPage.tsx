@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { connect, ConnectedProps } from 'react-redux';
 
 import { NavModelItem } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
@@ -11,8 +10,7 @@ import { contextSrv } from 'app/core/core';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { AccessControlAction } from 'app/types/accessControl';
 import { AppNotificationSeverity } from 'app/types/appNotifications';
-import { LdapConnectionInfo, LdapUser, SyncInfo, LdapError } from 'app/types/ldap';
-import { StoreState } from 'app/types/store';
+import { useDispatch, useSelector } from 'app/types/store';
 
 import {
   loadLdapState,
@@ -26,13 +24,7 @@ import { LdapConnectionStatus } from './LdapConnectionStatus';
 import { LdapSyncInfo } from './LdapSyncInfo';
 import { LdapUserInfo } from './LdapUserInfo';
 
-interface OwnProps extends GrafanaRouteComponentProps<{}, { username?: string }> {
-  ldapConnectionInfo: LdapConnectionInfo;
-  ldapUser?: LdapUser;
-  ldapSyncInfo?: SyncInfo;
-  ldapError?: LdapError;
-  userError?: LdapError;
-}
+interface Props extends GrafanaRouteComponentProps<{}, { username?: string }> { }
 
 interface FormModel {
   username: string;
@@ -45,36 +37,31 @@ const pageNav: NavModelItem = {
   id: 'LDAP',
 };
 
-export const LdapPage = ({
-  clearUserMappingInfo,
-  queryParams,
-  loadLdapState,
-  loadLdapSyncStatus,
-  loadUserMapping,
-  clearUserError,
-  ldapUser,
-  userError,
-  ldapError,
-  ldapSyncInfo,
-  ldapConnectionInfo,
-}: Props) => {
+export const LdapPage = ({ queryParams }: Props) => {
+  const dispatch = useDispatch();
+
+  const ldapConnectionInfo = useSelector((state) => state.ldap.connectionInfo);
+  const ldapUser = useSelector((state) => state.ldap.user);
+  const ldapSyncInfo = useSelector((state) => state.ldap.syncInfo);
+  const userError = useSelector((state) => state.ldap.userError);
+  const ldapError = useSelector((state) => state.ldap.ldapError);
   const [isLoading, setIsLoading] = useState(true);
   const { register, handleSubmit } = useForm<FormModel>();
 
   const fetchUserMapping = useCallback(
     async (username: string) => {
-      return loadUserMapping(username);
+      return dispatch(loadUserMapping(username));
     },
-    [loadUserMapping]
+    [dispatch]
   );
 
   useEffect(() => {
     const fetchLDAPStatus = async () => {
-      return Promise.all([loadLdapState(), loadLdapSyncStatus()]);
+      return Promise.all([dispatch(loadLdapState()), dispatch(loadLdapSyncStatus())]);
     };
 
     async function init() {
-      await clearUserMappingInfo();
+      await dispatch(clearUserMappingInfo());
       await fetchLDAPStatus();
 
       if (queryParams.username) {
@@ -85,7 +72,7 @@ export const LdapPage = ({
     }
 
     init();
-  }, [clearUserMappingInfo, fetchUserMapping, loadLdapState, loadLdapSyncStatus, queryParams]);
+  }, [dispatch, fetchUserMapping, queryParams]);
 
   const search = ({ username }: FormModel) => {
     if (username) {
@@ -94,7 +81,7 @@ export const LdapPage = ({
   };
 
   const onClearUserError = () => {
-    clearUserError();
+    dispatch(clearUserError());
   };
 
   const canReadLDAPUser = contextSrv.hasPermission(AccessControlAction.LDAPUsersRead);
@@ -147,23 +134,4 @@ export const LdapPage = ({
   );
 };
 
-const mapStateToProps = (state: StoreState) => ({
-  ldapConnectionInfo: state.ldap.connectionInfo,
-  ldapUser: state.ldap.user,
-  ldapSyncInfo: state.ldap.syncInfo,
-  userError: state.ldap.userError,
-  ldapError: state.ldap.ldapError,
-});
-
-const mapDispatchToProps = {
-  loadLdapState,
-  loadLdapSyncStatus,
-  loadUserMapping,
-  clearUserError,
-  clearUserMappingInfo,
-};
-
-const connector = connect(mapStateToProps, mapDispatchToProps);
-type Props = OwnProps & ConnectedProps<typeof connector>;
-
-export default connector(LdapPage);
+export default LdapPage;
