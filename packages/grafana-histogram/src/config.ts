@@ -1,8 +1,8 @@
 import { StackingMode } from '@grafana/schema';
 
-import { FieldConfig } from './panelcfg.gen';
+import { HistogramFieldConfig } from './types';
 
-export const defaultHistogramConfig: FieldConfig = {
+export const defaultHistogramConfig: HistogramFieldConfig = {
   stacking: {
     mode: StackingMode.None,
     group: 'A',

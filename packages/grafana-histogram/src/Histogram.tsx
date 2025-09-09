@@ -25,7 +25,7 @@ import {
   preparePlotData2,
 } from '@grafana/ui';
 
-import { defaultFieldConfig, FieldConfig, Options } from './panelcfg.gen';
+import { HistogramOptions, HistogramFieldConfig, defaultHistogramFieldConfig } from './types';
 
 function incrRoundDn(num: number, incr: number) {
   return Math.floor(num / incr) * incr;
@@ -36,36 +36,36 @@ function incrRoundUp(num: number, incr: number) {
 }
 
 export interface HistogramProps extends Themeable2 {
-  options: Options; // used for diff
-  alignedFrame: DataFrame; // This could take HistogramFields
+  options: HistogramOptions;
+  alignedFrame: DataFrame;
   bucketCount?: number;
   bucketSize: number;
   width: number;
   height: number;
-  structureRev?: number; // a number that will change when the frames[] structure changes
+  structureRev?: number;
   legend: VizLegendOptions;
   rawSeries?: DataFrame[];
   children?: (builder: UPlotConfigBuilder, frame: DataFrame, xMinOnlyFrame: DataFrame) => React.ReactNode;
 }
 
 export function getBucketSize(frame: DataFrame) {
-  // assumes BucketMin is fields[0] and BucktMax is fields[1]
+  // NOTE: Assumes BucketMin is fields[0] and BucktMax is fields[1]
   return frame.fields[0].type === FieldType.string
     ? 1
     : roundDecimals(frame.fields[1].values[0] - frame.fields[0].values[0], 9);
 }
 
 export function getBucketSize1(frame: DataFrame) {
-  // assumes BucketMin is fields[0] and BucktMax is fields[1]
+  // NOTE: Assumes BucketMin is fields[0] and BucktMax is fields[1]
   return frame.fields[0].type === FieldType.string
     ? 1
     : roundDecimals(frame.fields[1].values[1] - frame.fields[0].values[1], 9);
 }
 
 const prepConfig = (frame: DataFrame, theme: GrafanaTheme2) => {
-  // todo: scan all values in BucketMin and BucketMax fields to assert if uniform bucketSize
+  // TODO: scan all values in BucketMin and BucketMax fields to assert if uniform bucketSize
 
-  // since this is x axis range, this should ideally come from xMin or xMax fields, not a count field
+  // NOTE: Since this is x axis range, this should ideally come from xMin or xMax fields, not a count field
   // though both methods are probably hacks, and we should just accept explicit opts into this prepConfig
   let { min: xScaleMin, max: xScaleMax } = frame.fields[2].config;
 
@@ -73,7 +73,7 @@ const prepConfig = (frame: DataFrame, theme: GrafanaTheme2) => {
 
   let isOrdinalX = frame.fields[0].type === FieldType.string;
 
-  // assumes BucketMin is fields[0] and BucktMax is fields[1]
+  // NOTE: Assumes BucketMin is fields[0] and BucktMax is fields[1]
   let bucketSize = getBucketSize(frame);
   let bucketSize1 = getBucketSize1(frame);
 
@@ -81,7 +81,7 @@ const prepConfig = (frame: DataFrame, theme: GrafanaTheme2) => {
 
   let useLogScale = bucketSize1 !== bucketSize; // (imperfect floats)
 
-  // splits shifter, to ensure splits always start at first bucket
+  // Splits shifter to ensure splits always start at first bucket
   let xSplits: uPlot.Axis.Splits = (u, axisIdx, scaleMin, scaleMax, foundIncr, foundSpace) => {
     /** @ts-ignore */
     let minSpace = u.axes[axisIdx]._space;
@@ -101,7 +101,7 @@ const prepConfig = (frame: DataFrame, theme: GrafanaTheme2) => {
   };
 
   builder.addScale({
-    scaleKey: 'x', // bukkits
+    scaleKey: 'x', // Buckets
     isTime: false,
     distribution: isOrdinalX
       ? ScaleDistribution.Ordinal
@@ -116,7 +116,7 @@ const prepConfig = (frame: DataFrame, theme: GrafanaTheme2) => {
           return uPlot.rangeLog(wantedMin, wantedMax * bucketFactor, 2, true);
         }
       : (u, wantedMin, wantedMax) => {
-          // these settings will prevent zooming, probably okay?
+          // TODO: These settings will prevent zooming, probably okay?
           if (xScaleMin != null) {
             wantedMin = xScaleMin;
           }
@@ -126,8 +126,10 @@ const prepConfig = (frame: DataFrame, theme: GrafanaTheme2) => {
 
           let fullRangeMax = u.data[0][u.data[0].length - 1];
 
-          // isOrdinalX is when we have classic histograms, which are LE, ordinal X, and already have 0 dummy bucket prepended
-          // else we have calculated histograms which are GE and cardinal+linear X, and have no next dummy bucket appended
+          // NOTE: isOrdinalX is when we have classic histograms, which are LE,
+          //       ordinal X, and already have 0 dummy bucket prepended
+          //       else we have calculated histograms which are GE and cardinal+linear X,
+          //       and have no next dummy bucket appended.
           wantedMin = incrRoundUp(wantedMin, bucketSize);
           wantedMax =
             !isOrdinalX && wantedMax === fullRangeMax ? wantedMax + bucketSize : incrRoundDn(wantedMax, bucketSize);
@@ -137,7 +139,7 @@ const prepConfig = (frame: DataFrame, theme: GrafanaTheme2) => {
   });
 
   builder.addScale({
-    scaleKey: 'y', // counts
+    scaleKey: 'y', // Counts
     isTime: false,
     distribution: ScaleDistribution.Linear,
     orientation: ScaleOrientation.Vertical,
@@ -227,7 +229,7 @@ const prepConfig = (frame: DataFrame, theme: GrafanaTheme2) => {
     field.state = field.state ?? {};
     field.state.seriesIndex = seriesIndex++;
 
-    const customConfig: FieldConfig = { ...defaultFieldConfig, ...field.config.custom };
+    const customConfig: HistogramFieldConfig = { ...defaultHistogramFieldConfig, ...field.config.custom };
 
     const scaleKey = 'y';
     const colorMode = getFieldColorModeForField(field);

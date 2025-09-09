@@ -4,4 +4,10 @@ export { HistogramTooltip, type HistogramTooltipProps } from './HistogramTooltip
 export { changeToHistogramPanelMigrationHandler } from './migrations';
 export { defaultHistogramConfig } from './config';
 export { originalDataHasHistogram } from './utils';
-export { type Options, type FieldConfig, defaultOptions, defaultFieldConfig } from './panelcfg.gen';
+export {
+  type HistogramOptions,
+  type HistogramFieldConfig,
+  type HistogramPanelProps,
+  defaultHistogramOptions,
+  defaultHistogramFieldConfig,
+} from './types';

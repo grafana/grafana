@@ -4,7 +4,6 @@ import {
   histogramFieldsToFrame,
   joinHistograms,
   DataFrameType,
-  PanelProps,
   buildHistogram,
   cacheFieldDisplayNames,
   getHistogramFields,
@@ -14,11 +13,11 @@ import { TooltipDisplayMode, TooltipPlugin2, useTheme2, TooltipHoverMode } from 
 
 import { Histogram, getBucketSize } from './Histogram';
 import { HistogramTooltip } from './HistogramTooltip';
-import { Options } from './panelcfg.gen';
+import { HistogramPanelProps } from './types';
 
-type Props = PanelProps<Options>;
+type Props = HistogramPanelProps;
 
-export const HistogramPanel = ({ data, options, width, height }: Props) => {
+export const HistogramPanel = ({ data, options, fieldConfig, width, height }: Props) => {
   const theme = useTheme2();
 
   const histogram = useMemo(() => {
