@@ -63,7 +63,7 @@ func newClientConfig(descriptor PluginDescriptor, env []string, logger log.Logge
 	versionedPlugins := descriptor.versionedPlugins
 
 	if runtime.GOOS == "linux" && descriptor.containerMode.enabled {
-		return containerClientConfig(executablePath, logger, versionedPlugins, skipHostEnvVars, tracer)
+		return containerClientConfig(executablePath, descriptor.containerMode.image, logger, versionedPlugins, skipHostEnvVars, tracer)
 	}
 
 	logger.Info("Using process mode", "os", runtime.GOOS, "executablePath", executablePath)
@@ -92,13 +92,13 @@ func newClientConfig(descriptor PluginDescriptor, env []string, logger log.Logge
 	}
 }
 
-func containerClientConfig(executablePath string, logger log.Logger, versionedPlugins map[int]goplugin.PluginSet, skipHostEnvVars bool, tracer trace.Tracer) *goplugin.ClientConfig {
+func containerClientConfig(executablePath, containerImage string, logger log.Logger, versionedPlugins map[int]goplugin.PluginSet, skipHostEnvVars bool, tracer trace.Tracer) *goplugin.ClientConfig {
 	logger.Debug("Linux host detected - using container mode", "executable", executablePath)
 	return &goplugin.ClientConfig{
 		RunnerFunc: func(l hclog.Logger, cmd *exec.Cmd, tmpDir string) (runner.Runner, error) {
 			logger.Info("Creating container runner", "executablePath", executablePath, "tmpDir", tmpDir)
 			config := &plugincontainer.Config{
-				Image: "alpine:3.22.1",
+				Image: containerImage,
 				Env:   cmd.Env,
 			}
 
