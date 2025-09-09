@@ -3195,6 +3195,45 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@grafana/histogram@workspace:packages/grafana-histogram":
+  version: 0.0.0-use.local
+  resolution: "@grafana/histogram@workspace:packages/grafana-histogram"
+  dependencies:
+    "@babel/core": "npm:7.28.0"
+    "@babel/preset-env": "npm:7.28.0"
+    "@babel/preset-react": "npm:7.27.1"
+    "@emotion/css": "npm:11.13.5"
+    "@grafana/data": "npm:12.2.0-pre"
+    "@grafana/i18n": "npm:12.2.0-pre"
+    "@grafana/schema": "npm:12.2.0-pre"
+    "@grafana/ui": "npm:12.2.0-pre"
+    "@rollup/plugin-node-resolve": "npm:16.0.1"
+    "@testing-library/dom": "npm:10.4.1"
+    "@testing-library/jest-dom": "npm:^6.1.2"
+    "@testing-library/react": "npm:16.3.0"
+    "@testing-library/user-event": "npm:14.6.1"
+    "@types/jest": "npm:^29.5.4"
+    "@types/lodash": "npm:4.17.20"
+    "@types/node": "npm:22.17.0"
+    "@types/react": "npm:18.3.18"
+    babel-jest: "npm:29.7.0"
+    esbuild: "npm:0.25.8"
+    jest: "npm:^29.6.4"
+    lodash: "npm:4.17.21"
+    react: "npm:18.3.1"
+    rollup: "npm:^4.22.4"
+    rollup-plugin-esbuild: "npm:6.2.1"
+    rollup-plugin-node-externals: "npm:^8.0.0"
+    ts-jest: "npm:29.4.0"
+    ts-node: "npm:10.9.2"
+    tslib: "npm:2.8.1"
+    typescript: "npm:5.9.2"
+  peerDependencies:
+    react: ^18.0.0
+    react-dom: ^18.0.0
+  languageName: unknown
+  linkType: soft
+
 "@grafana/i18n@npm:12.2.0-pre, @grafana/i18n@workspace:*, @grafana/i18n@workspace:packages/grafana-i18n":
   version: 0.0.0-use.local
   resolution: "@grafana/i18n@workspace:packages/grafana-i18n"
