@@ -19,6 +19,11 @@ describe('StateText', () => {
       expect(screen.getByText('Pending')).toBeInTheDocument();
     });
 
+    it('should render the state for "paused"', () => {
+      render(<StateText isPaused />);
+      expect(screen.getByText('Paused')).toBeInTheDocument();
+    });
+
     it('should render "Error" when health is "error", even when state is "normal"', () => {
       render(<StateText state="normal" health="error" />);
       expect(screen.getByText('Error')).toBeInTheDocument();
