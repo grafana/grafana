@@ -2,6 +2,7 @@ package extras
 
 import (
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
+	"github.com/grafana/grafana/apps/provisioning/pkg/repository/git"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository/github"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository/local"
 	"github.com/grafana/grafana/apps/secret/pkg/decrypt"
@@ -25,13 +26,15 @@ func ProvideProvisioningOSSRepositoryExtras(
 	ghFactory *github.Factory,
 	webhooksBuilder *webhooks.WebhookExtraBuilder,
 ) []repository.Extra {
+	decrypter := repository.ProvideDecrypter(decryptSvc)
 	return []repository.Extra{
 		local.Extra(
 			cfg.HomePath,
 			cfg.PermittedProvisioningPaths,
 		),
+		git.Extra(decrypter),
 		github.Extra(
-			repository.ProvideDecrypter(decryptSvc),
+			decrypter,
 			ghFactory,
 			webhooksBuilder,
 		),

@@ -3,11 +3,10 @@ package repository
 import (
 	"context"
 	"fmt"
-	"maps"
-	"slices"
 	"sort"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/pkg/setting"
 	"k8s.io/apimachinery/pkg/runtime"
 )
 
@@ -28,12 +27,23 @@ type Factory interface {
 }
 
 type factory struct {
-	extras map[provisioning.RepositoryType]Extra
+	extras  map[provisioning.RepositoryType]Extra
+	enabled map[provisioning.RepositoryType]struct{}
 }
 
-func ProvideFactory(extras []Extra) (Factory, error) {
+func ProvideFactoryFromConfig(cfg *setting.Cfg, extras []Extra) (Factory, error) {
+	enabledTypes := make(map[provisioning.RepositoryType]struct{}, len(cfg.ProvisioningRepositoryTypes))
+	for _, e := range cfg.ProvisioningRepositoryTypes {
+		enabledTypes[provisioning.RepositoryType(e)] = struct{}{}
+	}
+
+	return ProvideFactory(enabledTypes, extras)
+}
+
+func ProvideFactory(enabled map[provisioning.RepositoryType]struct{}, extras []Extra) (Factory, error) {
 	f := &factory{
-		extras: make(map[provisioning.RepositoryType]Extra, len(extras)),
+		enabled: enabled,
+		extras:  make(map[provisioning.RepositoryType]Extra, len(extras)),
 	}
 
 	for _, e := range extras {
@@ -47,16 +57,27 @@ func ProvideFactory(extras []Extra) (Factory, error) {
 }
 
 func (f *factory) Types() []provisioning.RepositoryType {
-	types := slices.Collect(maps.Keys(f.extras))
+	var types []provisioning.RepositoryType
+	for t := range f.enabled {
+		if _, exists := f.extras[t]; exists {
+			types = append(types, t)
+		}
+	}
+
 	sort.Slice(types, func(i, j int) bool {
 		return string(types[i]) < string(types[j])
 	})
+
 	return types
 }
 
 func (f *factory) Build(ctx context.Context, r *provisioning.Repository) (Repository, error) {
 	for _, e := range f.extras {
 		if e.Type() == r.Spec.Type {
+			if _, enabled := f.enabled[e.Type()]; !enabled {
+				return nil, fmt.Errorf("repository type %q is not enabled", e.Type())
+			}
+
 			return e.Build(ctx, r)
 		}
 	}
