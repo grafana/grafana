@@ -608,6 +608,7 @@ func TestIntegrationAccessControl(t *testing.T) {
 				// Set expected metadata.
 				expectedWithMetadata := expected.Copy().(*v0alpha1.Receiver)
 				expectedWithMetadata.SetInUse(0, nil)
+				expectedWithMetadata.SetCanUse(true)
 				if tc.canUpdate {
 					expectedWithMetadata.SetAccessControl("canWrite")
 				}
