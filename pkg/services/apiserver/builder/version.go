@@ -16,7 +16,7 @@ type grafanaVersion struct {
 	wrap compatibility.EffectiveVersion
 }
 
-func getEffectiveVersion(
+func GetEffectiveVersion(
 	buildTimestamp int64,
 	buildVersion string,
 	buildCommit string,

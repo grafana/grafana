@@ -312,6 +312,12 @@ func (s *service) start(ctx context.Context) error {
 	if err := o.ApplyTo(serverConfig); err != nil {
 		return err
 	}
+	serverConfig.EffectiveVersion = builder.GetEffectiveVersion(
+		s.cfg.BuildStamp,
+		s.cfg.BuildVersion,
+		s.cfg.BuildCommit,
+		s.cfg.BuildBranch,
+	)
 
 	if err := o.APIEnablementOptions.ApplyTo(&serverConfig.Config, appinstaller.NewAPIResourceConfig(s.appInstallers), s.scheme); err != nil {
 		return err
@@ -351,10 +357,7 @@ func (s *service) start(ctx context.Context) error {
 		s.scheme,
 		serverConfig,
 		builders,
-		s.cfg.BuildStamp,
 		s.cfg.BuildVersion,
-		s.cfg.BuildCommit,
-		s.cfg.BuildBranch,
 		s.buildHandlerChainFuncFromBuilders,
 		groupVersions,
 		defGetters,

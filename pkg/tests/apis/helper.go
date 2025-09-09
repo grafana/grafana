@@ -709,14 +709,19 @@ func (c *K8sTestHelper) AddOrUpdateTeamMember(user User, teamID int64, permissio
 	require.NoError(c.t, err)
 }
 
-func (c *K8sTestHelper) NewDiscoveryClient() *discovery.DiscoveryClient {
+func (c *K8sTestHelper) NewAdminRestConfig() *rest.Config {
 	c.t.Helper()
 
 	baseUrl := fmt.Sprintf("http://%s", c.env.Server.HTTPServer.Listener.Addr())
 	cfg := newOptimizedRestConfig(baseUrl)
 	cfg.Username = c.Org1.Admin.Identity.GetLogin()
 	cfg.Password = c.Org1.Admin.password
-	client, err := discovery.NewDiscoveryClientForConfig(cfg)
+	return cfg
+}
+
+func (c *K8sTestHelper) NewDiscoveryClient() *discovery.DiscoveryClient {
+	c.t.Helper()
+	client, err := discovery.NewDiscoveryClientForConfig(c.NewAdminRestConfig())
 	require.NoError(c.t, err)
 	return client
 }
