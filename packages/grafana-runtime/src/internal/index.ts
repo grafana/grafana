@@ -27,5 +27,3 @@ export {
 } from '../services/pluginExtensions/getObservablePluginLinks';
 
 export { UserStorage } from '../utils/userStorage';
-
-export { isFrontendService } from './isFrontendService';

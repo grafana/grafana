@@ -1,4 +1,4 @@
-import { config } from '../config';
+import { config } from '@grafana/runtime';
 
 /**
  * Returns true if the current instance is using the frontend-service.

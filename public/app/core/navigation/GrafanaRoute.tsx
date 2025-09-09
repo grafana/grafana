@@ -2,8 +2,8 @@ import { Suspense, useEffect, useLayoutEffect } from 'react';
 import { Navigate, useLocation } from 'react-router-dom-v5-compat';
 
 import { config, locationSearchToObject, navigationLogger, reportPageview } from '@grafana/runtime';
-import { isFrontendService } from '@grafana/runtime/internal';
 import { ErrorBoundary } from '@grafana/ui';
+import { isFrontendService } from 'app/core/utils/isFrontendService';
 
 import { useGrafana } from '../context/GrafanaContext';
 import { contextSrv } from '../services/context_srv';
