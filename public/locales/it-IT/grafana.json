@@ -1703,9 +1703,6 @@
       "notes": "Note",
       "returns": "Resi"
     },
-    "label-picker": {
-      "no-options-message": "Nessuna etichetta trovata"
-    },
     "labels-editor-modal": {
       "title-edit-labels": "Modifica etichette"
     },
@@ -1723,9 +1720,6 @@
     "labels-sub-form": {
       "description": "Seleziona una chiave/valore dell'etichetta dalle opzioni seguenti o digitane una nuova e premi Invio.",
       "save": "Salva"
-    },
-    "labels-with-suggestions": {
-      "text-loading-existing-labels": "Caricamento delle etichette esistenti"
     },
     "labels-without-suggestions": {
       "message": {
@@ -4687,6 +4681,7 @@
       "move": "Sposta {{typeName}}",
       "panel-background": "Modifica lo sfondo del pannello",
       "panel-description": "Modifica la descrizione del pannello",
+      "panel-edit": "",
       "panel-max-repeats-per-row": "Ripetizioni massime per riga",
       "panel-repeat-direction": "Ripeti la direzione",
       "panel-repeat-variable": "Ripetizione del pannello per",
@@ -4941,12 +4936,11 @@
       "dataframe-aria-label": "Seleziona dataframe",
       "dataframe-label": "Mostra dataframe",
       "download-csv": "Scarica CSV",
-      "download-excel-description": "Aggiunge l'intestazione al CSV per l'utilizzo con Excel",
-      "download-excel-label": "Scarica per Excel",
       "download-logs": "Scarica i registri",
       "download-service": "Scarica il grafico del servizio",
       "download-traces": "Scarica le tracce",
-      "excel-header": "Intestazione Excel",
+      "excel-compatibility-mode-description": "",
+      "excel-compatibility-mode-label": "",
       "formatted": "Dati formattati",
       "formatted-data-description": "I dati della tabella sono formattati con le opzioni definite nelle schede Campo e Sovrascrivi.",
       "formatted-data-label": "Dati formattati",
@@ -9650,6 +9644,12 @@
       "hide-search": "Chiudi ricerca",
       "hide-timestamps": "Nascondi marca temporale",
       "hide-unique-labels": "Nascondi etichette univoche",
+      "line-wrapping": {
+        "enable": "",
+        "enable-prettify": "",
+        "hide": "",
+        "label": ""
+      },
       "newest-first": "Ordine: prima i registri più recenti – Fai clic per mostrare prima i meno recenti",
       "oldest-first": "Ordine: prima i registri meno recenti - Fai clic per mostrare prima i più recenti",
       "prettify-json": "Ingrandisci i registri JSON",
@@ -9658,13 +9658,16 @@
       "resolution-ns": "ns",
       "scroll-bottom": "Scorri verso il basso",
       "scroll-top": "Scorri verso l'alto",
-      "show-ms-timestamps": "Mostra marche temporali in millisecondi",
-      "show-ns-timestamps": "Mostra marche temporali in nanosecondi",
       "show-search": "Cerca nel risultato dei registri",
       "show-timestamps": "Mostra marca temporale",
       "show-unique-labels": "Mostra etichette univoche",
+      "timestamp": {
+        "hide": "",
+        "label": "",
+        "milliseconds": "",
+        "nanoseconds": ""
+      },
       "unwrap-lines": "Rimuovi a capo",
-      "wrap-json-lines": "",
       "wrap-lines": "A capo"
     },
     "logs-navigation": {
@@ -11940,7 +11943,6 @@
       "expand-row": "Espandi riga della query",
       "hide-response": "Nascondi risposta",
       "remove-query": "Rimuovi query",
-      "replace-query-from-library": "Sostituisci con query salvata",
       "show-response": "Mostra la risposta"
     },
     "query-editor-not-exported": "Il plug-in dell'origine dati non esporta alcun componente dell'editor di query"
@@ -11953,14 +11955,6 @@
       "no-deleted-dashboards": "Non hai eliminato nessun dashboard di recente.",
       "no-deleted-dashboards-text": "Quando elimini un dashboard, questo verrà visualizzato qui per 30 giorni prima di essere eliminato definitivamente. L'amministratore dell'organizzazione può ripristinare i dashboard eliminati di recente.",
       "no-search-result": "Nessun risultato trovato per la ricerca"
-    },
-    "permanently-delete-modal": {
-      "confirm-text": "Elimina",
-      "delete-button": "Elimina",
-      "delete-loading": "Eliminazione in corso...",
-      "title": "Elimina definitivamente i dashboard",
-      "text_one": "Questa azione eliminerà {{numberOfDashboards}} dashboard.",
-      "text_other": "Questa azione eliminerà {{numberOfDashboards}} dashboard."
     },
     "restore-modal": {
       "restore-button": "Ripristina",

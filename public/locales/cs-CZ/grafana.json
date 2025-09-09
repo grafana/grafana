@@ -1715,9 +1715,6 @@
       "notes": "Poznámky",
       "returns": "Vrácení zboží"
     },
-    "label-picker": {
-      "no-options-message": "Nebyly nalezeny žádné štítky"
-    },
     "labels-editor-modal": {
       "title-edit-labels": "Upravit štítky"
     },
@@ -1735,9 +1732,6 @@
     "labels-sub-form": {
       "description": "Vyberte klíč/hodnotu štítku z možností níže nebo zadejte nový klíč/hodnotu štítku a stiskněte klávesu Enter.",
       "save": "Uložit"
-    },
-    "labels-with-suggestions": {
-      "text-loading-existing-labels": "Načítání stávajících štítků"
     },
     "labels-without-suggestions": {
       "message": {
@@ -4723,6 +4717,7 @@
       "move": "Přesunout {{typeName}}",
       "panel-background": "Změnit pozadí panelu",
       "panel-description": "Změnit popis panelu",
+      "panel-edit": "",
       "panel-max-repeats-per-row": "Max. počet opakování na řádek",
       "panel-repeat-direction": "Opakovat směr",
       "panel-repeat-variable": "Opakování panelu podle",
@@ -4977,12 +4972,11 @@
       "dataframe-aria-label": "Vyberte rámec data",
       "dataframe-label": "Zobrazit rámec data",
       "download-csv": "Stáhnout CSV",
-      "download-excel-description": "Přidá záhlaví do CSV pro použití s aplikací Excel",
-      "download-excel-label": "Stáhnout pro Excel",
       "download-logs": "Stáhnout protokoly",
       "download-service": "Stáhnout graf služby",
       "download-traces": "Stáhnout stopy",
-      "excel-header": "Záhlaví Excel",
+      "excel-compatibility-mode-description": "",
+      "excel-compatibility-mode-label": "",
       "formatted": "Formátovaná data",
       "formatted-data-description": "Data tabulky jsou formátována možnostmi definovanými na kartách Pole a Přepsat.",
       "formatted-data-label": "Formátovaná data",
@@ -9708,6 +9702,12 @@
       "hide-search": "Zavřít vyhledávání",
       "hide-timestamps": "Skrýt časová razítka",
       "hide-unique-labels": "Skrýt jedinečné štítky",
+      "line-wrapping": {
+        "enable": "",
+        "enable-prettify": "",
+        "hide": "",
+        "label": ""
+      },
       "newest-first": "Seřazeno od nejnovějších protokolů – kliknutím zobrazíte nejstarší protokoly jako první",
       "oldest-first": "Seřazeno od nejstarších protokolů – kliknutím zobrazíte nejnovější protokoly jako první",
       "prettify-json": "Rozbalit protokoly JSON",
@@ -9716,13 +9716,16 @@
       "resolution-ns": "ns",
       "scroll-bottom": "Posunout dolů",
       "scroll-top": "Posunout nahoru",
-      "show-ms-timestamps": "Zobrazit časová razítka v milisekundách",
-      "show-ns-timestamps": "Zobrazit časová razítka v nanosekundách",
       "show-search": "Výsledek vyhledávání v protokolech",
       "show-timestamps": "Zobrazit časová razítka",
       "show-unique-labels": "Zobrazit jedinečné štítky",
+      "timestamp": {
+        "hide": "",
+        "label": "",
+        "milliseconds": "",
+        "nanoseconds": ""
+      },
       "unwrap-lines": "Rozbalit řádky",
-      "wrap-json-lines": "",
       "wrap-lines": "Zalomit řádky"
     },
     "logs-navigation": {
@@ -12012,7 +12015,6 @@
       "expand-row": "Rozbalit řádek dotazu",
       "hide-response": "Skrýt odpověď",
       "remove-query": "Odebrat dotaz",
-      "replace-query-from-library": "Nahradit uloženým dotazem",
       "show-response": "Zobrazit odpověď"
     },
     "query-editor-not-exported": "Doplněk zdroje dat neexportuje žádnou komponentu editoru dotazů"
@@ -12025,16 +12027,6 @@
       "no-deleted-dashboards": "V poslední době jste neodstranili žádné nástěnky.",
       "no-deleted-dashboards-text": "Když odstraníte nástěnku, zobrazí se tady po dobu 30 dnů, než bude trvale odstraněna. Správce organizace může obnovit nedávno odstraněné nástěnky.",
       "no-search-result": "Nebyly nalezeny žádné výsledky pro váš dotaz"
-    },
-    "permanently-delete-modal": {
-      "confirm-text": "Odstranit",
-      "delete-button": "Odstranit",
-      "delete-loading": "Probíhá odstranění…",
-      "title": "Trvale smazat nástěnky",
-      "text_one": "Tato akce odstraní následující počet nástěnek: {{numberOfDashboards}}.",
-      "text_few": "Tato akce odstraní následující počet nástěnek: {{numberOfDashboards}}.",
-      "text_many": "Tato akce odstraní následující počet nástěnek: {{numberOfDashboards}}.",
-      "text_other": "Tato akce odstraní následující počet nástěnek: {{numberOfDashboards}}."
     },
     "restore-modal": {
       "restore-button": "Obnovit",

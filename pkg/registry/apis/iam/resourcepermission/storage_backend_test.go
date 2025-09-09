@@ -15,12 +15,11 @@ import (
 	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
+	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 func TestIntegration_ResourcePermSqlBackend_ReadResource(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test in short mode")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	backend := setupBackend(t)
 	sql, err := backend.dbProvider(context.Background())
@@ -331,10 +330,6 @@ func TestWriteEvent_Add(t *testing.T) {
 }
 
 func TestWriteEvent_Delete(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test in short mode")
-	}
-
 	backend := setupBackend(t)
 	sql, err := backend.dbProvider(context.Background())
 	require.NoError(t, err)

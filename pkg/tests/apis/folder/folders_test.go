@@ -26,10 +26,10 @@ import (
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/tests"
 	"github.com/grafana/grafana/pkg/tests/apis"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
+	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 func TestMain(m *testing.M) {
@@ -43,9 +43,8 @@ var gvr = schema.GroupVersionResource{
 }
 
 func TestIntegrationFoldersApp(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	if !db.IsTestDbSQLite() {
 		t.Skip("test only on sqlite for now")
 	}
@@ -564,9 +563,8 @@ func checkListRequest(t *testing.T, limit int64, client *apis.K8sResourceClient)
 }
 
 func TestIntegrationFolderCreatePermissions(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	if !db.IsTestDbSQLite() {
 		t.Skip("test only on sqlite for now")
 	}
@@ -691,9 +689,8 @@ func TestIntegrationFolderCreatePermissions(t *testing.T) {
 }
 
 func TestIntegrationFolderGetPermissions(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	if !db.IsTestDbSQLite() {
 		t.Skip("test only on sqlite for now")
 	}
@@ -844,9 +841,8 @@ func TestIntegrationFolderGetPermissions(t *testing.T) {
 
 // TestFoldersCreateAPIEndpointK8S is the counterpart of pkg/api/folder_test.go TestFoldersCreateAPIEndpoint
 func TestIntegrationFoldersCreateAPIEndpointK8S(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	if !db.IsTestDbSQLite() {
 		t.Skip("test only on sqlite for now")
 	}
@@ -1008,9 +1004,8 @@ func testDescription(description string, expectedErr error) string {
 
 // There are no counterpart of TestFoldersGetAPIEndpointK8S in pkg/api/folder_test.go
 func TestIntegrationFoldersGetAPIEndpointK8S(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	if !db.IsTestDbSQLite() {
 		t.Skip("test only on sqlite for now")
 	}
@@ -1172,7 +1167,7 @@ func TestIntegrationFoldersGetAPIEndpointK8S(t *testing.T) {
 
 // Reproduces a bug where folder deletion does not check for attached library panels.
 func TestIntegrationFolderDeletionBlockedByLibraryElements(t *testing.T) {
-	tests.SkipIntegrationTestInShortMode(t)
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	if !db.IsTestDbSQLite() {
 		t.Skip("test only on sqlite for now")
@@ -1251,7 +1246,7 @@ func TestIntegrationFolderDeletionBlockedByLibraryElements(t *testing.T) {
 }
 
 func TestIntegrationRootFolderDeletionBlockedByLibraryElementsInSubfolder(t *testing.T) {
-	tests.SkipIntegrationTestInShortMode(t)
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	if !db.IsTestDbSQLite() {
 		t.Skip("test only on sqlite for now")

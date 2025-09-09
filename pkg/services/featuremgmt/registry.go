@@ -1665,13 +1665,6 @@ var (
 			Owner:        grafanaPluginsPlatformSquad,
 		},
 		{
-			Name:         "multiTenantFrontend",
-			Description:  "Register MT frontend",
-			Stage:        FeatureStageExperimental,
-			FrontendOnly: false,
-			Owner:        grafanaFrontendPlatformSquad,
-		},
-		{
 			Name:         "alertingListViewV2PreviewToggle",
 			Description:  "Enables the alerting list view v2 preview toggle",
 			FrontendOnly: true,
@@ -1963,6 +1956,14 @@ var (
 			FrontendOnly: true,
 			Owner:        grafanaPartnerPluginsSquad,
 			Expression:   "false",
+		},
+		{
+			Name:            "prometheusTypeMigration",
+			Description:     "Checks for deprecated Prometheus authentication methods (SigV4 and Azure), installs the relevant data source, and migrates the Prometheus data sources",
+			Stage:           FeatureStageExperimental,
+			RequiresRestart: true,
+			Owner:           grafanaPartnerPluginsSquad,
+			Expression:      "false",
 		},
 	}
 )
