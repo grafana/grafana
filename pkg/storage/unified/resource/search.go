@@ -301,6 +301,12 @@ func (s *searchSupport) Search(ctx context.Context, req *resourcepb.ResourceSear
 	ctx, span := s.tracer.Start(ctx, tracingPrexfixSearch+"Search")
 	defer span.End()
 
+	if req.Options.Key.Namespace == "" || req.Options.Key.Group == "" || req.Options.Key.Resource == "" {
+		return &resourcepb.ResourceSearchResponse{
+			Error: NewBadRequestError("missing namespace, group or resource"),
+		}, nil
+	}
+
 	nsr := NamespacedResource{
 		Group:     req.Options.Key.Group,
 		Namespace: req.Options.Key.Namespace,
