@@ -332,6 +332,17 @@ Now you can [filter data on the dashboard](ref:filter-dashboard).
 
 {{< docs/shared lookup="visualizations/panel-filtering.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
+### Filter between dashboards
+
+You can also filter panels on another dashboard using data links, by including a variable in the link:
+
+```
+https://play.grafana.org/d/HYaGDGIMk/templating-global-variables-and-interpolation?orgId=1&from=now-6h&to=now&timezone=utc&var-Server=CCC&var-MyCustomDashboardVariable=Hello%20World%21
+```
+
+In the preceding example, the variables and values are `var-Server=CCC` and `var-MyCustomDashboardVariable=Hello%20World%21`.
+When someone clicks the link, they're taken to a version of the dashboard with those variables already applied.
+
 <!-- vale Grafana.Spelling = YES -->
 <!-- vale Grafana.WordList = YES -->
 
