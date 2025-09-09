@@ -7,6 +7,7 @@ import {
   MutableDataFrame,
   VizOrientation,
   FieldConfigSource,
+  createDataFrame,
 } from '@grafana/data';
 import {
   LegendDisplayMode,
@@ -19,7 +20,7 @@ import {
 } from '@grafana/schema';
 
 import { FieldConfig as PanelFieldConfig } from './panelcfg.gen';
-import { prepSeries, prepConfig, PrepConfigOpts } from './utils';
+import { prepSeries, prepConfig, PrepConfigOpts, getClustersFromField } from './utils';
 
 const fieldConfig: FieldConfigSource = {
   defaults: {},
@@ -258,6 +259,47 @@ describe('BarChart utils', () => {
       expect(info.series[0].fields[0].config.unit).toBeUndefined();
       expect(info.series[0].fields[1].config.unit).toBeUndefined();
       expect(info.series[0].fields[2].config.unit).toBeUndefined();
+    });
+  });
+  describe('getClustersFromField', () => {
+    it('should return an empty array when no fields', () => {
+      const df = createDataFrame({
+        fields: [],
+      });
+      const info = prepSeries([df], fieldConfig, StackingMode.Percent, createTheme());
+      const groupByField = "testField"
+      expect(getClustersFromField(info.series, groupByField)).toEqual([]);
+    });
+    it('should return an empty array when no, empty or invalid groupByField', () => {
+      const df = createDataFrame({
+        fields: [
+          { name: 'station', values: [1,1,2,2]},
+          { name: 'type', type: FieldType.string, values: ['actual', 'estimate', 'actual', 'estimate']},
+          { name: 'welding', values: [50.0, 55.0, 30.0, 25.0]},
+          { name: 'lineup', values: [70.0, 90.0, , ,]},
+          { name: 'other', values: [20.0, 15.0, 10.0, 15.0]},
+        ],
+      });
+      df.fields.forEach((f) => (f.config.custom = f.config.custom ?? {}));
+
+      const info = prepSeries([df], fieldConfig, StackingMode.Percent, createTheme());
+      expect(getClustersFromField(info.series, undefined)).toEqual([]);
+      expect(getClustersFromField(info.series, "")).toEqual([]);
+      expect(getClustersFromField(info.series, "non-existent")).toEqual([]);
+    });
+    it('should return correct clusters', () => {
+      const df = createDataFrame({
+        fields: [
+          { name: 'station', values: [1,1,2,2]},
+          { name: 'type', type: FieldType.string, values: ['actual', 'estimate', 'actual', 'estimate']},
+          { name: 'welding', values: [50.0, 55.0, 30.0, 25.0]},
+          { name: 'lineup', values: [70.0, 90.0, , ,]},
+          { name: 'other', values: [20.0, 15.0, 10.0, 15.0]},
+        ],
+      });
+      df.fields.forEach((f) => (f.config.custom = f.config.custom ?? {}));
+      const info = prepSeries([df], fieldConfig, StackingMode.Percent, createTheme());
+      expect(getClustersFromField(info.series, "station")).toEqual([2,2]);
     });
   });
 });

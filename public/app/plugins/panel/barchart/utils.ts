@@ -477,7 +477,6 @@ export const prepConfig = ({ series, totalSeries, color, orientation, options, t
   }
 
   let stackingGroups = getStackingGroups(frame);
-  console.log("frame: %s", frame);
 
   builder.setStackingGroups(stackingGroups);
 
@@ -494,7 +493,7 @@ export const prepConfig = ({ series, totalSeries, color, orientation, options, t
 };
 
 // returns an array of ints, where each number n represents the size of the nth cluster
-function getClustersFromField(series: DataFrame[], groupByField: string | undefined): number[] {
+export function getClustersFromField(series: DataFrame[], groupByField: string | undefined): number[] {
   if (!groupByField || series.length === 0) { return [] };
   const fieldIdx = series[0].fields.findIndex((field) => field.name === groupByField);
   if (fieldIdx === -1) { return [] };
