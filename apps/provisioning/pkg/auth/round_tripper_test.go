@@ -34,7 +34,7 @@ func TestRoundTripper_SetsAccessTokenHeader(t *testing.T) {
 		rr := httptest.NewRecorder()
 		rr.WriteHeader(http.StatusOK)
 		return rr.Result(), nil
-	}))
+	}), "example-audience")
 
 	req, _ := http.NewRequestWithContext(context.Background(), http.MethodGet, "http://example", nil)
 	resp, err := tr.RoundTrip(req)
@@ -50,7 +50,7 @@ func TestRoundTripper_PropagatesExchangeError(t *testing.T) {
 	tr := NewRoundTripper(&fakeExchanger{err: io.EOF}, roundTripperFunc(func(_ *http.Request) (*http.Response, error) {
 		t.Fatal("transport should not be called on exchange error")
 		return nil, nil
-	}))
+	}), "example-audience")
 
 	req, _ := http.NewRequestWithContext(context.Background(), http.MethodGet, "http://example", nil)
 	resp, err := tr.RoundTrip(req)

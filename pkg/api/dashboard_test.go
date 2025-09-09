@@ -54,6 +54,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/usertest"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util/testutil"
 	"github.com/grafana/grafana/pkg/web"
 	"github.com/grafana/grafana/pkg/web/webtest"
 )
@@ -406,9 +407,8 @@ func TestHTTPServer_GetDashboardVersions_AccessControl(t *testing.T) {
 }
 
 func TestIntegrationDashboardAPIEndpoint(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test in short mode")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	t.Run("Given two dashboards with the same title in different folders", func(t *testing.T) {
 		dashOne := dashboards.NewDashboard("dash")
 		dashOne.ID = 2

@@ -16,7 +16,7 @@ import store from 'app/core/store';
 import kbn from 'app/core/utils/kbn';
 import { ShowConfirmModalEvent } from 'app/types/events';
 
-import { ConditionalRendering } from '../../conditional-rendering/ConditionalRendering';
+import { ConditionalRenderingGroup } from '../../conditional-rendering/group/ConditionalRenderingGroup';
 import { serializeTab } from '../../serialization/layoutSerializers/TabsLayoutSerializer';
 import { getElements } from '../../serialization/layoutSerializers/utils';
 import { getDashboardSceneFor, getDefaultVizPanel } from '../../utils/utils';
@@ -38,7 +38,7 @@ export interface TabItemState extends SceneObjectState {
   layout: DashboardLayoutManager;
   title?: string;
   isDropTarget?: boolean;
-  conditionalRendering?: ConditionalRendering;
+  conditionalRendering?: ConditionalRenderingGroup;
   repeatByVariable?: string;
   repeatedTabs?: TabItem[];
   /** Marks object as a repeated object and a key pointer to source object */
@@ -65,7 +65,7 @@ export class TabItem
       ...state,
       title: state?.title ?? t('dashboard.tabs-layout.tab.new', 'New tab'),
       layout: state?.layout ?? AutoGridLayoutManager.createEmpty(),
-      conditionalRendering: state?.conditionalRendering ?? ConditionalRendering.createEmpty(),
+      conditionalRendering: state?.conditionalRendering ?? ConditionalRenderingGroup.createEmpty(),
     });
 
     this.addActivationHandler(() => this._activationHandler());
