@@ -1006,6 +1006,16 @@ export interface FeatureToggles {
   */
   alertEnrichment?: boolean;
   /**
+  * Allow multiple steps per enrichment.
+  * @default false
+  */
+  alertEnrichmentMultiStep?: boolean;
+  /**
+  * Enable conditional alert enrichment steps.
+  * @default false
+  */
+  alertEnrichmentConditional?: boolean;
+  /**
   * Enables the API to import Alertmanager configuration
   * @default false
   */

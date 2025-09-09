@@ -64,6 +64,36 @@
     },
     {
       "metadata": {
+        "name": "alertEnrichmentConditional",
+        "resourceVersion": "1757418974334",
+        "creationTimestamp": "2025-09-09T11:56:14Z"
+      },
+      "spec": {
+        "description": "Enable conditional alert enrichment steps.",
+        "stage": "experimental",
+        "codeowner": "@grafana/alerting-squad",
+        "hideFromAdminPage": true,
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "alertEnrichmentMultiStep",
+        "resourceVersion": "1757418224384",
+        "creationTimestamp": "2025-09-09T11:43:44Z"
+      },
+      "spec": {
+        "description": "Allow multiple steps per enrichment.",
+        "stage": "experimental",
+        "codeowner": "@grafana/alerting-squad",
+        "hideFromAdminPage": true,
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "alertRuleRestore",
         "resourceVersion": "1753448760331",
         "creationTimestamp": "2025-03-05T14:15:26Z"
