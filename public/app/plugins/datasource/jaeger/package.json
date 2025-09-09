@@ -8,7 +8,7 @@
     "@grafana/data": "workspace:*",
     "@grafana/e2e-selectors": "workspace:*",
     "@grafana/o11y-ds-frontend": "workspace:*",
-    "@grafana/plugin-ui": "0.10.4",
+    "@grafana/plugin-ui": "0.10.10",
     "@grafana/runtime": "workspace:*",
     "@grafana/ui": "workspace:*",
     "lodash": "4.17.21",

@@ -2492,7 +2492,7 @@ __metadata:
     "@grafana/data": "npm:12.0.0-pre"
     "@grafana/e2e-selectors": "npm:12.0.0-pre"
     "@grafana/plugin-configs": "npm:12.0.0-pre"
-    "@grafana/plugin-ui": "npm:0.10.4"
+    "@grafana/plugin-ui": "npm:0.10.10"
     "@grafana/runtime": "npm:12.0.0-pre"
     "@grafana/schema": "npm:12.0.0-pre"
     "@grafana/ui": "npm:12.0.0-pre"
@@ -2536,7 +2536,7 @@ __metadata:
     "@grafana/data": "npm:12.0.0-pre"
     "@grafana/e2e-selectors": "npm:12.0.0-pre"
     "@grafana/plugin-configs": "npm:12.0.0-pre"
-    "@grafana/plugin-ui": "npm:0.10.4"
+    "@grafana/plugin-ui": "npm:0.10.10"
     "@grafana/runtime": "npm:12.0.0-pre"
     "@grafana/sql": "npm:12.0.0-pre"
     "@grafana/ui": "npm:12.0.0-pre"
@@ -2647,7 +2647,7 @@ __metadata:
     "@grafana/e2e-selectors": "workspace:*"
     "@grafana/o11y-ds-frontend": "workspace:*"
     "@grafana/plugin-configs": "workspace:*"
-    "@grafana/plugin-ui": "npm:0.10.4"
+    "@grafana/plugin-ui": "npm:0.10.10"
     "@grafana/runtime": "workspace:*"
     "@grafana/ui": "workspace:*"
     "@testing-library/dom": "npm:10.4.0"
@@ -2688,7 +2688,7 @@ __metadata:
     "@grafana/data": "npm:12.0.0-pre"
     "@grafana/e2e-selectors": "npm:12.0.0-pre"
     "@grafana/plugin-configs": "npm:12.0.0-pre"
-    "@grafana/plugin-ui": "npm:0.10.4"
+    "@grafana/plugin-ui": "npm:0.10.10"
     "@grafana/runtime": "npm:12.0.0-pre"
     "@grafana/sql": "npm:12.0.0-pre"
     "@grafana/ui": "npm:12.0.0-pre"
@@ -2719,7 +2719,7 @@ __metadata:
     "@grafana/data": "npm:12.0.0-pre"
     "@grafana/e2e-selectors": "npm:12.0.0-pre"
     "@grafana/plugin-configs": "npm:12.0.0-pre"
-    "@grafana/plugin-ui": "npm:0.10.4"
+    "@grafana/plugin-ui": "npm:0.10.10"
     "@grafana/runtime": "npm:12.0.0-pre"
     "@grafana/sql": "npm:12.0.0-pre"
     "@grafana/ui": "npm:12.0.0-pre"
@@ -2783,7 +2783,7 @@ __metadata:
     "@grafana/e2e-selectors": "npm:12.0.0-pre"
     "@grafana/google-sdk": "npm:0.1.2"
     "@grafana/plugin-configs": "npm:12.0.0-pre"
-    "@grafana/plugin-ui": "npm:0.10.4"
+    "@grafana/plugin-ui": "npm:0.10.10"
     "@grafana/runtime": "npm:12.0.0-pre"
     "@grafana/schema": "npm:12.0.0-pre"
     "@grafana/ui": "npm:12.0.0-pre"
@@ -2832,7 +2832,7 @@ __metadata:
     "@grafana/monaco-logql": "npm:^0.0.8"
     "@grafana/o11y-ds-frontend": "workspace:*"
     "@grafana/plugin-configs": "npm:12.0.0-pre"
-    "@grafana/plugin-ui": "npm:0.10.4"
+    "@grafana/plugin-ui": "npm:0.10.10"
     "@grafana/runtime": "workspace:*"
     "@grafana/schema": "workspace:*"
     "@grafana/ui": "workspace:*"
@@ -2889,7 +2889,7 @@ __metadata:
     "@grafana/e2e-selectors": "workspace:*"
     "@grafana/o11y-ds-frontend": "workspace:*"
     "@grafana/plugin-configs": "workspace:*"
-    "@grafana/plugin-ui": "npm:0.10.4"
+    "@grafana/plugin-ui": "npm:0.10.10"
     "@grafana/runtime": "workspace:*"
     "@grafana/ui": "workspace:*"
     "@testing-library/dom": "npm:10.4.0"
@@ -3211,7 +3211,7 @@ __metadata:
     "@emotion/css": "npm:11.13.5"
     "@grafana/data": "npm:12.0.0-pre"
     "@grafana/e2e-selectors": "npm:12.0.0-pre"
-    "@grafana/plugin-ui": "npm:0.10.4"
+    "@grafana/plugin-ui": "npm:0.10.10"
     "@grafana/runtime": "npm:12.0.0-pre"
     "@grafana/schema": "npm:12.0.0-pre"
     "@grafana/tsconfig": "npm:^2.0.0"
@@ -3275,16 +3275,16 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@grafana/plugin-ui@npm:0.10.4":
-  version: 0.10.4
-  resolution: "@grafana/plugin-ui@npm:0.10.4"
+"@grafana/plugin-ui@npm:0.10.10":
+  version: 0.10.10
+  resolution: "@grafana/plugin-ui@npm:0.10.10"
   dependencies:
     "@emotion/css": "npm:^11.11.2"
     "@hello-pangea/dnd": "npm:^17.0.0"
     "@react-awesome-query-builder/ui": "npm:^6.6.4"
     "@types/prismjs": "npm:^1.26.4"
     lodash: "npm:^4.17.21"
-    prismjs: "npm:^1.29.0"
+    prismjs: "npm:^1.30.0"
     react-calendar: "npm:^4.8.0"
     react-popper-tooltip: "npm:^4.4.2"
     react-use: "npm:^17.3.1"
@@ -3292,14 +3292,14 @@ __metadata:
     sql-formatter-plus: "npm:^1.3.6"
     uuid: "npm:^11.0.0"
   peerDependencies:
-    "@grafana/data": ^10.4.0 || ^11.0.0
-    "@grafana/e2e-selectors": ^10.4.0 || ^11.0.0
-    "@grafana/runtime": ^10.4.0 || ^11.0.0
-    "@grafana/ui": ^10.4.0 || ^11.0.0
+    "@grafana/data": ">=10.4.0"
+    "@grafana/e2e-selectors": ">=10.4.0"
+    "@grafana/runtime": ">=10.4.0"
+    "@grafana/ui": ">=10.4.0"
     react: ^18.2.0
     react-dom: ^18.2.0
     rxjs: ^7.8.1
-  checksum: 10/bce3860e03ee96c569106257862649eebdb494b0db1f7a24b66f4461b8d8b2306dde27ab7964b8e6c6f478f26a9b361b4d318a343e523a474dc0cecb31668ac7
+  checksum: 10/69a663e07ba28c42e5ea1f884d6e83a60b5324a30b3a96b3b0c86c56c44c26332431d51f564700162ab06a031d27126d5f86e3fdc9931d48289649bae61cbe1c
   languageName: node
   linkType: hard
 
@@ -3341,7 +3341,7 @@ __metadata:
     "@floating-ui/react": "npm:0.27.5"
     "@grafana/data": "npm:12.0.0-pre"
     "@grafana/e2e-selectors": "npm:12.0.0-pre"
-    "@grafana/plugin-ui": "npm:0.10.4"
+    "@grafana/plugin-ui": "npm:0.10.10"
     "@grafana/runtime": "npm:12.0.0-pre"
     "@grafana/schema": "npm:12.0.0-pre"
     "@grafana/tsconfig": "npm:^2.0.0"
@@ -3549,7 +3549,7 @@ __metadata:
     "@emotion/css": "npm:11.13.5"
     "@grafana/data": "npm:12.0.0-pre"
     "@grafana/e2e-selectors": "npm:12.0.0-pre"
-    "@grafana/plugin-ui": "npm:0.10.4"
+    "@grafana/plugin-ui": "npm:0.10.10"
     "@grafana/runtime": "npm:12.0.0-pre"
     "@grafana/tsconfig": "npm:^2.0.0"
     "@grafana/ui": "npm:12.0.0-pre"
@@ -17701,7 +17701,7 @@ __metadata:
     "@grafana/monaco-logql": "npm:^0.0.8"
     "@grafana/o11y-ds-frontend": "workspace:*"
     "@grafana/plugin-e2e": "npm:1.17.1"
-    "@grafana/plugin-ui": "npm:0.10.4"
+    "@grafana/plugin-ui": "npm:0.10.10"
     "@grafana/prometheus": "workspace:*"
     "@grafana/runtime": "workspace:*"
     "@grafana/saga-icons": "workspace:*"
@@ -24778,7 +24778,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"prismjs@npm:1.30.0, prismjs@npm:^1.27.0, prismjs@npm:^1.29.0":
+"prismjs@npm:1.30.0, prismjs@npm:^1.27.0, prismjs@npm:^1.29.0, prismjs@npm:^1.30.0":
   version: 1.30.0
   resolution: "prismjs@npm:1.30.0"
   checksum: 10/6b48a2439a82e5c6882f48ebc1564c3890e16463ba17ac10c3ad4f62d98dea5b5c915b172b63b83023a70ad4f5d7be3e8a60304420db34a161fae69dd4e3e2da
