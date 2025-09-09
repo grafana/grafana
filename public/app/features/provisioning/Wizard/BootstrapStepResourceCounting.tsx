@@ -29,10 +29,10 @@ export function BootstrapStepResourceCounting({
 
   if (target === 'folder') {
     return (
-      <div>
+      <Stack gap={1}>
         <Trans i18nKey="provisioning.bootstrap-step.external-storage-label">External storage</Trans>{' '}
         <Text color="primary">{fileCountString}</Text>
-      </div>
+      </Stack>
     );
   }
 
