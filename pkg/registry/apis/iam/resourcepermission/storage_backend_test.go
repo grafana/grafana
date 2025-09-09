@@ -331,9 +331,7 @@ func TestWriteEvent_Add(t *testing.T) {
 }
 
 func TestIntegration_ResourcePermSqlBackend_ListIterator(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test in short mode")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	// No result => list resource version should be current time
 	now := time.Date(2025, 9, 9, 0, 0, 0, 0, time.UTC)
@@ -558,10 +556,8 @@ func TestIntegration_ResourcePermSqlBackend_ListIterator(t *testing.T) {
 	})
 }
 
-func TestWriteEvent_Delete(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test in short mode")
-	}
+func TestIntegration_WriteEvent_Delete(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	backend := setupBackend(t)
 	sql, err := backend.dbProvider(context.Background())

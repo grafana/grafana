@@ -192,9 +192,8 @@ func setupTestRoles(t *testing.T, store db.DB) {
 }
 
 func TestIntegration_ResourcePermSqlBackend_newRoleIterator(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test in short mode")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	backend := setupBackend(t)
 	sql, err := backend.dbProvider(context.Background())
 	require.NoError(t, err)
@@ -316,10 +315,8 @@ func TestIntegration_ResourcePermSqlBackend_getResourcePermission(t *testing.T) 
 	}
 }
 
-func TestResourcePermSqlBackend_deleteResourcePermission(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test in short mode")
-	}
+func TestIntegration_ResourcePermSqlBackend_deleteResourcePermission(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	backend := setupBackend(t)
 	sql, err := backend.dbProvider(context.Background())
