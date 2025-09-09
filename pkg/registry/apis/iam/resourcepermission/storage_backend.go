@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/registry/apis/iam/common"
 	idStore "github.com/grafana/grafana/pkg/registry/apis/iam/legacy"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
@@ -64,8 +65,52 @@ func (s *ResourcePermSqlBackend) ListHistory(context.Context, *resourcepb.ListRe
 	return 0, errNotImplemented
 }
 
-func (s *ResourcePermSqlBackend) ListIterator(context.Context, *resourcepb.ListRequest, func(resource.ListIterator) error) (int64, error) {
-	return 0, errNotImplemented
+func (s *ResourcePermSqlBackend) ListIterator(ctx context.Context, req *resourcepb.ListRequest, callback func(resource.ListIterator) error) (int64, error) {
+	ns, err := types.ParseNamespace(req.Options.Key.Namespace)
+	if err != nil {
+		return 0, err
+	}
+	if ns.OrgID <= 0 {
+		return 0, apierrors.NewBadRequest(errInvalidNamespace.Error())
+	}
+
+	limit := req.Limit
+	if limit <= 0 {
+		limit = 50
+	}
+
+	var continueOffset int64 = 0
+	if req.NextPageToken != "" {
+		token, err := readContinueToken(req.NextPageToken)
+		if err != nil {
+			return 0, apierrors.NewBadRequest(fmt.Sprintf("invalid continue token: %v", err))
+		}
+		continueOffset = token.offset
+	}
+
+	pagination := &common.Pagination{
+		Limit:    limit,
+		Continue: continueOffset,
+	}
+
+	dbHelper, err := s.dbProvider(ctx)
+	if err != nil {
+		logger := s.logger.FromContext(ctx)
+		logger.Error("Failed to get database helper", "error", err)
+		return 0, errDatabaseHelper
+	}
+
+	iterator, err := s.newRoleIterator(ctx, dbHelper, ns, pagination)
+	if err != nil {
+		return 0, err
+	}
+
+	err = callback(iterator)
+	if err != nil {
+		return 0, err
+	}
+
+	return int64(len(iterator.resourcePermissions)), nil
 }
 
 func (s *ResourcePermSqlBackend) ListModifiedSince(ctx context.Context, key resource.NamespacedResource, sinceRv int64) (int64, iter.Seq2[*resource.ModifiedResource, error]) {

@@ -93,7 +93,7 @@ func (s *ResourcePermSqlBackend) newRoleIterator(ctx context.Context, dbHelper *
 		return &listIterator{}, nil
 	}
 
-	v0ResourcePermissions, err := s.toV0ResourcePermissions(assignments)
+	v0ResourcePermissions, err := s.toV0ResourcePermissions(assignments, ns.Value)
 	if err != nil {
 		return nil, err
 	}
@@ -161,7 +161,7 @@ func (s *ResourcePermSqlBackend) getResourcePermission(ctx context.Context, sql 
 		return nil, fmt.Errorf("resource permission %q: %w", resourceQuery.Scopes, errNotFound)
 	}
 
-	resourcePermission, err := s.toV0ResourcePermissions(assignments)
+	resourcePermission, err := s.toV0ResourcePermissions(assignments, ns.Value)
 	if err != nil {
 		return nil, err
 	}

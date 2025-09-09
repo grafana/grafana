@@ -93,7 +93,7 @@ type rbacAssignment struct {
 
 // newV0ResourcePermission creates a new v0alpha1.ResourcePermission from the given groupResourceName and permission specs.
 // Specs are sorted for consistency, created and updated are used for the metadata timestamps and resourceVersion is set to the updated timestamp in milliseconds.
-func newV0ResourcePermission(grn *groupResourceName, specs []v0alpha1.ResourcePermissionspecPermission, created, updated time.Time) v0alpha1.ResourcePermission {
+func newV0ResourcePermission(grn *groupResourceName, specs []v0alpha1.ResourcePermissionspecPermission, created, updated time.Time, namespace string) v0alpha1.ResourcePermission {
 	// Sort specs for consistency
 	sort.Slice(specs, func(i, j int) bool {
 		if specs[i].Kind != specs[j].Kind {
@@ -109,6 +109,7 @@ func newV0ResourcePermission(grn *groupResourceName, specs []v0alpha1.ResourcePe
 		TypeMeta: v0alpha1.ResourcePermissionInfo.TypeMeta(),
 		ObjectMeta: metav1.ObjectMeta{
 			Name:              grn.string(),
+			Namespace:         namespace,
 			ResourceVersion:   fmt.Sprint(updated.UnixMilli()),
 			CreationTimestamp: metav1.NewTime(created.UTC()),
 		},
@@ -123,7 +124,7 @@ func newV0ResourcePermission(grn *groupResourceName, specs []v0alpha1.ResourcePe
 
 // toV0ResourcePermissions translates a list of rbacAssignments into a list of v0alpha1.ResourcePermissions.
 // it is assumed that assignments are sorted by scope
-func (s *ResourcePermSqlBackend) toV0ResourcePermissions(assignments []rbacAssignment) ([]v0alpha1.ResourcePermission, error) {
+func (s *ResourcePermSqlBackend) toV0ResourcePermissions(assignments []rbacAssignment, namespace string) ([]v0alpha1.ResourcePermission, error) {
 	if len(assignments) == 0 {
 		return nil, nil
 	}
@@ -152,7 +153,7 @@ func (s *ResourcePermSqlBackend) toV0ResourcePermissions(assignments []rbacAssig
 		if *parsedGrn != *grn {
 			resourcePermissions = append(
 				resourcePermissions,
-				newV0ResourcePermission(grn, specs, created, updated),
+				newV0ResourcePermission(grn, specs, created, updated, namespace),
 			)
 
 			// Reset for the new resource
@@ -205,7 +206,7 @@ func (s *ResourcePermSqlBackend) toV0ResourcePermissions(assignments []rbacAssig
 	// Flush the final resource
 	resourcePermissions = append(
 		resourcePermissions,
-		newV0ResourcePermission(grn, specs, created, updated),
+		newV0ResourcePermission(grn, specs, created, updated, namespace),
 	)
 
 	return resourcePermissions, nil
