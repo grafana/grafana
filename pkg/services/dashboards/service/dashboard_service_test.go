@@ -1078,7 +1078,7 @@ func TestSetDefaultPermissionsWhenSavingFolderForProvisionedDashboards(t *testin
 	}
 
 	service.features = featuremgmt.WithFeatures()
-	folder, err := service.SaveFolderForProvisionedDashboards(context.Background(), cmd)
+	folder, err := service.SaveFolderForProvisionedDashboards(context.Background(), cmd, "")
 	require.NoError(t, err)
 	require.NotNil(t, folder)
 
