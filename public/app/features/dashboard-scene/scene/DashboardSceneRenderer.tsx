@@ -32,7 +32,15 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
   const scopesContext = useContext(ScopesContext);
   const navIndex = useSelector((state) => state.navIndex);
   const pageNav = model.getPageNav(location, navIndex);
-  const navModel = getNavModel(navIndex, `dashboards/${type === 'snapshot' ? 'snapshots' : 'browse'}`);
+  const navModel =
+    type === 'snapshot'
+      ? getNavModel(
+          navIndex,
+          'dashboards/snapshots',
+          // fallback navModel to prevent showing `Page not found` in snapshots
+          getNavModel(navIndex, 'home')
+        )
+      : getNavModel(navIndex, 'dashboards/browse');
   const isSettingsOpen = editview !== undefined;
   const soloPanelContext = useDefineSoloPanelContext(viewPanel);
 
