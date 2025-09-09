@@ -4746,6 +4746,12 @@
       },
       "variable": {
         "custom-options": {
+          "close": "Close",
+          "editor-type": {
+            "builder": "Builder",
+            "static": "Static"
+          },
+          "modal-title": "Custom Variable",
           "values": "Values separated by comma",
           "values-placeholder": "1, 10, mykey : myvalue, myvalue, escaped,value"
         },
@@ -14131,9 +14137,10 @@
     "query-variable-static-options": {
       "add-option-button-label": "Add option",
       "description": "Add custom options in addition to query results",
-      "label-placeholder": "display label",
+      "drag-and-drop": "Drag and drop to reorder",
+      "label-placeholder": "Label, defaults to value",
       "remove-option-button-label": "Remove option",
-      "value-placeholder": "value, default empty string"
+      "value-placeholder": "Value"
     },
     "query-variable-static-options-sort-select": {
       "description-values-variable": "How to sort static options with query results"
