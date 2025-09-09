@@ -185,7 +185,6 @@ export function getDataSourceLoadingNav(pageName: string): NavModel {
       user: '',
       secureJsonFields: {},
     },
-    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
     {
       meta: {
         id: '1',
@@ -210,7 +209,6 @@ export function getDataSourceLoadingNav(pageName: string): NavModel {
         module: '',
         baseUrl: '',
       },
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } as any
   );
 
