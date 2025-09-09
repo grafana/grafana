@@ -19,10 +19,6 @@ import (
 
 // List
 func (s *ResourcePermSqlBackend) newRoleIterator(ctx context.Context, dbHelper *legacysql.LegacyDatabaseHelper, ns types.NamespaceInfo, pagination *common.Pagination) (*listIterator, error) {
-	if pagination == nil {
-		pagination = &common.Pagination{Limit: 100}
-	}
-
 	var (
 		scope string
 
