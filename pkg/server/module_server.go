@@ -13,7 +13,6 @@ import (
 	"github.com/grafana/dskit/kv"
 	"github.com/grafana/dskit/ring"
 	ringclient "github.com/grafana/dskit/ring/client"
-	grafanaapiserver "github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/urfave/cli/v2"
 
@@ -45,9 +44,8 @@ func NewModule(opts Options,
 	promGatherer prometheus.Gatherer,
 	tracer tracing.Tracer, // Ensures tracing is initialized
 	license licensing.Licensing,
-	clientConfigProvider grafanaapiserver.DirectRestConfigProvider,
 ) (*ModuleServer, error) {
-	s, err := newModuleServer(opts, apiOpts, features, cfg, storageMetrics, indexMetrics, reg, promGatherer, license, clientConfigProvider)
+	s, err := newModuleServer(opts, apiOpts, features, cfg, storageMetrics, indexMetrics, reg, promGatherer, license)
 	if err != nil {
 		return nil, err
 	}
@@ -68,29 +66,27 @@ func newModuleServer(opts Options,
 	reg prometheus.Registerer,
 	promGatherer prometheus.Gatherer,
 	license licensing.Licensing,
-	clientConfigProvider grafanaapiserver.DirectRestConfigProvider,
 ) (*ModuleServer, error) {
 	rootCtx, shutdownFn := context.WithCancel(context.Background())
 
 	s := &ModuleServer{
-		opts:                 opts,
-		apiOpts:              apiOpts,
-		context:              rootCtx,
-		shutdownFn:           shutdownFn,
-		shutdownFinished:     make(chan struct{}),
-		log:                  log.New("base-server"),
-		features:             features,
-		cfg:                  cfg,
-		pidFile:              opts.PidFile,
-		version:              opts.Version,
-		commit:               opts.Commit,
-		buildBranch:          opts.BuildBranch,
-		storageMetrics:       storageMetrics,
-		indexMetrics:         indexMetrics,
-		promGatherer:         promGatherer,
-		registerer:           reg,
-		license:              license,
-		clientConfigProvider: clientConfigProvider,
+		opts:             opts,
+		apiOpts:          apiOpts,
+		context:          rootCtx,
+		shutdownFn:       shutdownFn,
+		shutdownFinished: make(chan struct{}),
+		log:              log.New("base-server"),
+		features:         features,
+		cfg:              cfg,
+		pidFile:          opts.PidFile,
+		version:          opts.Version,
+		commit:           opts.Commit,
+		buildBranch:      opts.BuildBranch,
+		storageMetrics:   storageMetrics,
+		indexMetrics:     indexMetrics,
+		promGatherer:     promGatherer,
+		registerer:       reg,
+		license:          license,
 	}
 
 	return s, nil
@@ -103,19 +99,18 @@ type ModuleServer struct {
 	opts    Options
 	apiOpts api.ServerOptions
 
-	features             featuremgmt.FeatureToggles
-	context              context.Context
-	shutdownFn           context.CancelFunc
-	log                  log.Logger
-	cfg                  *setting.Cfg
-	shutdownOnce         sync.Once
-	shutdownFinished     chan struct{}
-	isInitialized        bool
-	mtx                  sync.Mutex
-	storageMetrics       *resource.StorageMetrics
-	indexMetrics         *resource.BleveIndexMetrics
-	license              licensing.Licensing
-	clientConfigProvider grafanaapiserver.DirectRestConfigProvider
+	features         featuremgmt.FeatureToggles
+	context          context.Context
+	shutdownFn       context.CancelFunc
+	log              log.Logger
+	cfg              *setting.Cfg
+	shutdownOnce     sync.Once
+	shutdownFinished chan struct{}
+	isInitialized    bool
+	mtx              sync.Mutex
+	storageMetrics   *resource.StorageMetrics
+	indexMetrics     *resource.BleveIndexMetrics
+	license          licensing.Licensing
 
 	pidFile     string
 	version     string
@@ -200,8 +195,7 @@ func (s *ModuleServer) Run() error {
 	})
 
 	m.RegisterModule(modules.FrontendServer, func() (services.Service, error) {
-		// Frontend service now needs the API server and core services to handle K8s short URLs
-		return frontend.ProvideFrontendService(s.cfg, s.features, s.promGatherer, s.registerer, s.license, s.clientConfigProvider)
+		return frontend.ProvideFrontendService(s.cfg, s.features, s.promGatherer, s.registerer, s.license)
 	})
 
 	m.RegisterModule(modules.OperatorServer, s.initOperatorServer)

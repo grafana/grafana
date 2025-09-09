@@ -2,7 +2,6 @@ package frontend
 
 import (
 	"context"
-	"fmt"
 	"net"
 	"net/http"
 	"strings"
@@ -56,7 +55,7 @@ type frontendService struct {
 	gvr        schema.GroupVersionResource
 }
 
-func ProvideFrontendService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, promGatherer prometheus.Gatherer, promRegister prometheus.Registerer, license licensing.Licensing, clientConfigProvider grafanaapiserver.DirectRestConfigProvider) (*frontendService, error) {
+func ProvideFrontendService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, promGatherer prometheus.Gatherer, promRegister prometheus.Registerer, license licensing.Licensing) (*frontendService, error) {
 	index, err := NewIndexProvider(cfg, license)
 	if err != nil {
 		return nil, err
@@ -274,7 +273,7 @@ func (s *frontendService) handleKubernetesShortURLRedirect(writer http.ResponseW
 	http.Redirect(writer, request, redirectURL, http.StatusFound)
 }
 
-// getK8sClient creates a Kubernetes dynamic client
+// getK8sClient creates a Kubernetes dynamic client using the same pattern as short_url.go
 func (s *frontendService) getK8sClient(c *contextmodel.ReqContext) (dynamic.ResourceInterface, bool) {
 	// Add defensive checks
 	if s.clientConfigProvider == nil {
@@ -327,23 +326,25 @@ func (s *frontendService) writeKubernetesError(writer http.ResponseWriter, reque
 	s.index.HandleRequest(writer, request)
 }
 
-// frontendDirectRestConfigProvider is a custom DirectRestConfigProvider for the frontend service
-// that connects to the remote Grafana API server instead of expecting a local one
+// frontendDirectRestConfigProvider is a simplified DirectRestConfigProvider
+// that reads API server URL from config and connects to remote Grafana API server
 type frontendDirectRestConfigProvider struct {
 	cfg *setting.Cfg
 	log log.Logger
 }
 
 func (f *frontendDirectRestConfigProvider) GetDirectRestConfig(c *contextmodel.ReqContext) *rest.Config {
-	f.log.Debug("Creating REST config for remote Grafana API server",
-		"user_id", c.SignedInUser.UserID,
-		"org_id", c.OrgID,
-		"login", c.SignedInUser.Login)
+	// Read API server URL from config with fallback
+	apiServerURL := f.cfg.Raw.Section("kubernetes").Key("api_server_url").MustString("http://grafana-api:3000")
 
-	// Create a REST config that connects to the remote grafana-api server
+	f.log.Debug("Creating REST config for remote API server",
+		"api_server_url", apiServerURL,
+		"user_id", c.SignedInUser.UserID,
+		"org_id", c.OrgID)
+
 	return &rest.Config{
-		Host: "http://grafana-api:3000",
-		Transport: &frontendRoundTripper{
+		Host: apiServerURL,
+		Transport: &authForwardingRoundTripper{
 			originalRequest: c.Req,
 			log:             f.log,
 		},
@@ -351,67 +352,56 @@ func (f *frontendDirectRestConfigProvider) GetDirectRestConfig(c *contextmodel.R
 }
 
 func (f *frontendDirectRestConfigProvider) DirectlyServeHTTP(w http.ResponseWriter, r *http.Request) {
-	// Not implemented for frontend service
-	f.log.Error("DirectlyServeHTTP not implemented for frontend service")
+	// Not needed for frontend service
 	http.Error(w, "Not implemented", http.StatusNotImplemented)
 }
 
-// frontendRoundTripper implements http.RoundTripper to proxy K8s API requests
-// to the remote Grafana API server with proper authentication forwarding
-type frontendRoundTripper struct {
+// authForwardingRoundTripper forwards authentication from the original request
+type authForwardingRoundTripper struct {
 	originalRequest *http.Request
 	log             log.Logger
 }
 
-func (f *frontendRoundTripper) RoundTrip(req *http.Request) (*http.Response, error) {
-	f.log.Debug("Forwarding K8s API request to remote Grafana API server",
-		"method", req.Method,
-		"url", req.URL.String(),
-		"path", req.URL.Path)
-
-	// Create new request to the remote Grafana API server
-	remoteURL := "http://grafana-api:3000" + req.URL.Path
-	if req.URL.RawQuery != "" {
-		remoteURL += "?" + req.URL.RawQuery
-	}
-
-	proxyReq, err := http.NewRequestWithContext(req.Context(), req.Method, remoteURL, req.Body)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create proxy request: %w", err)
-	}
-
-	// Copy all headers from the original request
-	for name, values := range req.Header {
-		for _, value := range values {
-			proxyReq.Header.Add(name, value)
+func (a *authForwardingRoundTripper) RoundTrip(req *http.Request) (*http.Response, error) {
+	// Build the target URL
+	targetURL := req.URL.String()
+	if !strings.HasPrefix(targetURL, "http") {
+		// Relative URL - the Host from rest.Config will be prefixed
+		targetURL = req.URL.Path
+		if req.URL.RawQuery != "" {
+			targetURL += "?" + req.URL.RawQuery
 		}
 	}
 
-	// Copy authentication headers from the original frontend request
-	if f.originalRequest != nil {
-		for name, values := range f.originalRequest.Header {
-			if name == "Cookie" || name == "Authorization" || strings.HasPrefix(name, "X-Grafana") {
-				for _, value := range values {
-					proxyReq.Header.Set(name, value) // Use Set to override K8s client headers
-				}
+	a.log.Debug("Forwarding K8s API request",
+		"method", req.Method,
+		"path", targetURL)
+
+	// Forward authentication headers from the original frontend request
+	if a.originalRequest != nil {
+		a.copyAuthHeaders(req)
+	}
+
+	// Use default HTTP client with reasonable timeout
+	client := &http.Client{Timeout: 30 * time.Second}
+	return client.Do(req)
+}
+
+// copyAuthHeaders copies authentication-related headers from original request
+func (a *authForwardingRoundTripper) copyAuthHeaders(req *http.Request) {
+	authHeaders := []string{"Cookie", "Authorization"}
+	for _, header := range authHeaders {
+		if value := a.originalRequest.Header.Get(header); value != "" {
+			req.Header.Set(header, value)
+		}
+	}
+
+	// Copy Grafana-specific headers
+	for name, values := range a.originalRequest.Header {
+		if strings.HasPrefix(name, "X-Grafana") {
+			for _, value := range values {
+				req.Header.Add(name, value)
 			}
 		}
 	}
-
-	f.log.Debug("Making proxied request to Grafana API server",
-		"url", remoteURL,
-		"headers_count", len(proxyReq.Header))
-
-	// Make the request
-	client := &http.Client{Timeout: 30 * time.Second}
-	resp, err := client.Do(proxyReq)
-	if err != nil {
-		return nil, fmt.Errorf("failed to proxy K8s API request: %w", err)
-	}
-
-	f.log.Debug("Received response from Grafana API server",
-		"status", resp.Status,
-		"status_code", resp.StatusCode)
-
-	return resp, nil
 }
