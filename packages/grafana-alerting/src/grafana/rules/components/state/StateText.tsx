@@ -15,7 +15,7 @@ type StateTextProps =
     }
   | {
       health?: Health;
-      state: undefined;
+      state?: never;
       type: 'recording';
     };
 

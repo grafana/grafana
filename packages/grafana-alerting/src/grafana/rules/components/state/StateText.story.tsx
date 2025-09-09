@@ -39,8 +39,8 @@ export const AlertRule: StoryObj<typeof StateText> = {
 export const RecordingRule: StoryObj<typeof StateText> = {
   render: (args: ComponentProps<typeof StateText>) => (
     <Stack direction="column" alignItems="flex-start">
-      <StateText type="recording" health={'error'} state={undefined} />
-      <StateText type="recording" health={undefined} state={undefined} />
+      <StateText type="recording" health="error" />
+      <StateText type="recording" />
     </Stack>
   ),
 };

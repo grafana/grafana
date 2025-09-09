@@ -1,22 +1,32 @@
 import { css, keyframes } from '@emotion/css';
 import { upperFirst } from 'lodash';
 import { ComponentProps, memo } from 'react';
-import type { RequireAtLeastOne } from 'type-fest';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Icon, type IconName, Text, Tooltip, useStyles2, useTheme2 } from '@grafana/ui';
 
-import type { Health, State } from './types';
+import type { Health, State, Type } from './types';
 
 type TextProps = ComponentProps<typeof Text>;
 
-interface StateIconProps {
-  recording?: boolean;
-  state?: State;
+interface CommonStateIconsProps {
+  type?: Type;
   health?: Health;
   isPaused?: boolean;
   operation?: RuleOperation;
 }
+
+interface AlertingStateIconProps extends CommonStateIconsProps {
+  type?: 'alerting';
+  state?: State;
+}
+
+interface RecordingStateIconProps extends CommonStateIconsProps {
+  type: 'recording';
+  state?: never;
+}
+
+type StateIconProps = AlertingStateIconProps | RecordingStateIconProps;
 
 export type RuleOperation = 'creating' | 'deleting';
 
@@ -61,10 +71,10 @@ const ICON_SIZE = 15;
 export const StateIcon = memo(function StateIcon({
   state,
   health,
-  recording = false,
+  type = 'alerting',
   isPaused = false,
   operation,
-}: RequireAtLeastOne<StateIconProps>) {
+}: StateIconProps) {
   const styles = useStyles2(getStyles);
   const theme = useTheme2();
 
@@ -72,7 +82,7 @@ export const StateIcon = memo(function StateIcon({
   let iconColor: TextProps['color'] = state ? color[state] : 'secondary';
   let stateName: string = state ? stateNames[state] : 'unknown';
 
-  if (recording) {
+  if (type === 'recording') {
     iconName = 'record-audio';
     iconColor = 'success';
     stateName = 'Recording';
@@ -107,7 +117,7 @@ export const StateIcon = memo(function StateIcon({
       <div>
         <Text color={iconColor}>
           <div className={styles.iconsContainer}>
-            <Icon name={iconName} width={ICON_SIZE} height={ICON_SIZE} />
+            <Icon name={iconName} width={ICON_SIZE} height={ICON_SIZE} aria-label={stateName} />
             {/* this loading spinner works by using an optical illusion;
               the actual icon is static and the "spinning" part is just a semi-transparent darker circle overlayed on top.
               This makes it look like there is a small bright colored spinner rotating.
