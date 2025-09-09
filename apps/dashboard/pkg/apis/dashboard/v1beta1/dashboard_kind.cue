@@ -284,7 +284,7 @@ lineage: schemas: [{
 			tags: [...string]
 			// If true, all dashboards links will be displayed in a dropdown. If false, all dashboards links will be displayed side by side. Only valid if the type is dashboards
 			asDropdown: bool | *false
-			// Placement can be used to display the link somewhere else on the dashbaord other than abovethe visualisations.
+			// Placement can be used to display the link somewhere else on the dashboard other than above the visualisations.
 			placement?: #DashboardLinkPlacement
 			// If true, the link will be opened in a new tab
 			targetBlank: bool | *false
