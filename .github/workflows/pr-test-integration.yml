@@ -61,14 +61,13 @@ jobs:
         id: list-packages
         run: |
           set -euo pipefail
-          echo "packages=$(./scripts/ci/backend-tests/pkgs-with-tests-named.sh -b TestIntegration -s | xargs | tr -d '\n' | jq --slurp --raw-input '. | split(" ")')" >> "$GITHUB_OUTPUT"
+          echo "packages=$(./scripts/ci/backend-tests/pkgs-with-tests-named.sh -b TestIntegration -s | xargs | tr -d '\n' | jq --slurp --raw-input '{package: . | split(" ")')}" >> "$GITHUB_OUTPUT"
 
   sqlite:
     needs: [detect-changes, packages]
     if: needs.detect-changes.outputs.changed == 'true'
     strategy:
-      matrix:
-        package: ${{ fromJson(needs.packages.outputs.packages) }}
+      matrix: ${{ fromJson(needs.packages.outputs.packages) }}
       fail-fast: false
 
     name: Sqlite (${{ matrix.package }})
