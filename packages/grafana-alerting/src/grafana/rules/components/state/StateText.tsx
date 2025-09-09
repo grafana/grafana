@@ -7,7 +7,7 @@ import { Health, State } from './types';
 
 // we're making a distinction here between the "state" of the rule and its "health".
 // When the type is "recording" we only support the health property.
-type StateBadgeProps =
+type StateTextProps =
   | {
       state?: State;
       health?: Health;
@@ -19,9 +19,9 @@ type StateBadgeProps =
       type: 'recording';
     };
 
-export const StateBadge = ({ state, health, type = 'alerting' }: StateBadgeProps) => {
+export const StateText = ({ state, health, type = 'alerting' }: StateTextProps) => {
   let stateLabel: string;
-  let color: BadgeColor;
+  let color: TextColor;
 
   switch (state) {
     case 'normal':
@@ -64,24 +64,24 @@ export const StateBadge = ({ state, health, type = 'alerting' }: StateBadgeProps
     const text = health === 'error' ? 'Recording error' : 'Recording';
     const color = health === 'error' ? 'error' : 'success';
 
-    return <Badge color={color} text={text} />;
+    return <InnerText color={color} text={text} />;
   }
 
-  return <Badge color={color} text={stateLabel} />;
+  return <InnerText color={color} text={stateLabel} />;
 };
 
 // the generic badge component
-type BadgeColor = 'success' | 'error' | 'warning' | 'unknown';
+type TextColor = 'success' | 'error' | 'warning' | 'unknown';
 
-interface BadgeProps {
-  color: BadgeColor;
+interface InnerTextProps {
+  color: TextColor;
   text: NonNullable<ReactNode>;
 }
 
 // the inner badge component doesn't care about the semantics of "state" or "health" but just renders
 // a badge in a specific text color and a dot in matching color.
 // We currently don't expose this component outside of this file.
-function Badge({ color, text }: BadgeProps) {
+function InnerText({ color, text }: InnerTextProps) {
   const textColor = color === 'unknown' ? 'secondary' : color;
 
   return (

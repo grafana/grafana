@@ -26,7 +26,7 @@ export { USER_DEFINED_TREE_NAME } from './grafana/notificationPolicies/consts';
 export * from './grafana/notificationPolicies/types';
 
 // Rules
-export { StateBadge } from './grafana/rules/components/state/StateBadge';
+export { StateText } from './grafana/rules/components/state/StateText';
 export { StateDot } from './grafana/rules/components/state/StateDot';
 export { StateIcon } from './grafana/rules/components/state/StateIcon';
 
