@@ -25,6 +25,11 @@ export {
 export { USER_DEFINED_TREE_NAME } from './grafana/notificationPolicies/consts';
 export * from './grafana/notificationPolicies/types';
 
+// Rules
+export { StateBadge } from './grafana/rules/components/state/StateBadge';
+export { StateDot } from './grafana/rules/components/state/StateDot';
+export { StateIcon } from './grafana/rules/components/state/StateIcon';
+
 // Matchers
 export { type LabelMatcher, type Label } from './grafana/matchers/types';
 export { matchLabelsSet, matchLabels, isLabelMatch, type LabelMatchDetails } from './grafana/matchers/utils';
