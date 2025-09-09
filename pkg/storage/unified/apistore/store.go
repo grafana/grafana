@@ -676,3 +676,13 @@ func (s *Storage) validateMinimumResourceVersion(minimumResourceVersion string, 
 	}
 	return nil
 }
+
+func (s *Storage) CompactRevision() int64 {
+	return 0
+}
+
+func (s *Storage) SetKeysFunc(storage.KeysFunc) {}
+
+func (s *Storage) Stats(ctx context.Context) (storage.Stats, error) {
+	return storage.Stats{}, nil
+}
