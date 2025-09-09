@@ -42,7 +42,7 @@ const getFieldsStyles = (theme: GrafanaTheme2) => ({
   linksTable: css({
     display: 'grid',
     gap: theme.spacing(1),
-    gridTemplateColumns: `minmax(auto, 40%) 1fr`,
+    gridTemplateColumns: `fit-content(30%) 1fr`,
     marginBottom: theme.spacing(1),
   }),
 });
@@ -53,7 +53,7 @@ interface LogLineDetailsFieldProps {
 }
 
 export const LogLineDetailsField = ({ field, log }: LogLineDetailsFieldProps) => {
-  const { closeDetails, onPinLine, pinLineButtonTooltipTitle, syntaxHighlighting } = useLogListContext();
+  const { closeDetails, onPinLine, pinLineButtonTooltipTitle, prettifyJSON } = useLogListContext();
 
   const styles = useStyles2(getFieldStyles);
 
@@ -65,14 +65,14 @@ export const LogLineDetailsField = ({ field, log }: LogLineDetailsFieldProps) =>
       <div className={styles.value}>
         <div className={styles.valueContainer}>
           {singleValue ? (
-            <SingleValue value={field.values[0]} syntaxHighlighting={syntaxHighlighting} />
+            <SingleValue value={field.values[0]} prettifyJSON={prettifyJSON} />
           ) : (
             <MultipleValue showCopy={true} values={field.values} />
           )}
         </div>
       </div>
     ),
-    [field.values, singleValue, styles.value, styles.valueContainer, syntaxHighlighting]
+    [field.values, singleValue, styles.value, styles.valueContainer, prettifyJSON]
   );
 
   return (
