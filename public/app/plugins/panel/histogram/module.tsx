@@ -6,15 +6,17 @@ import {
   PanelPlugin,
   histogramFieldInfo,
 } from '@grafana/data';
+import {
+  defaultHistogramConfig,
+  changeToHistogramPanelMigrationHandler,
+  originalDataHasHistogram,
+} from '@grafana/histogram';
 import { t } from '@grafana/i18n';
 import { commonOptionsBuilder, getGraphFieldOptions } from '@grafana/ui';
 import { StackingEditor } from '@grafana/ui/internal';
 
 import { HistogramPanel } from './HistogramPanel';
-import { defaultHistogramConfig } from './config';
-import { changeToHistogramPanelMigrationHandler } from './migrations';
 import { FieldConfig, Options, defaultFieldConfig, defaultOptions } from './panelcfg.gen';
-import { originalDataHasHistogram } from './utils';
 
 export const plugin = new PanelPlugin<Options, FieldConfig>(HistogramPanel)
   .setPanelChangeHandler(changeToHistogramPanelMigrationHandler)
