@@ -2,8 +2,7 @@
   "kind": "Dashboard",
   "apiVersion": "dashboard.grafana.app/v0alpha1",
   "metadata": {
-    "name": "test-v2alpha1-viz-config",
-    "creationTimestamp": null
+    "name": "test-v2alpha1-viz-config"
   },
   "spec": null,
   "status": {

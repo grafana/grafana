@@ -183,7 +183,7 @@ func (s *Storage) SetKeysFunc(storage.KeysFunc) {
 
 // Stats implements storage.Interface.
 func (s *Storage) Stats(ctx context.Context) (storage.Stats, error) {
-	return storage.Stats{}, nil //
+	return storage.Stats{}, nil
 }
 
 // GetCurrentResourceVersion implements storage.Interface.
@@ -646,12 +646,6 @@ func (s *Storage) GuaranteedUpdate(
 	}
 
 	return nil
-}
-
-// Count returns number of different entries under the key (generally being path prefix).
-// TODO: Implement count.
-func (s *Storage) Count(key string) (int64, error) {
-	return 0, nil
 }
 
 // RequestWatchProgress requests the a watch stream progress status be sent in the
