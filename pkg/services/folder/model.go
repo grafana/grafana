@@ -131,6 +131,9 @@ type CreateFolderCommand struct {
 	Description string `json:"description"`
 	ParentUID   string `json:"parentUid"`
 
+	// When loaded from provisioning
+	Provisioning string `json:"provisioning,omitempty"`
+
 	SignedInUser identity.Requester `json:"-"`
 }
 

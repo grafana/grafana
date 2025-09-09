@@ -971,12 +971,13 @@ func (dr *DashboardServiceImpl) SaveProvisionedDashboard(ctx context.Context, dt
 	return dash, nil
 }
 
-func (dr *DashboardServiceImpl) SaveFolderForProvisionedDashboards(ctx context.Context, dto *folder.CreateFolderCommand) (*folder.Folder, error) {
+func (dr *DashboardServiceImpl) SaveFolderForProvisionedDashboards(ctx context.Context, dto *folder.CreateFolderCommand, readerName string) (*folder.Folder, error) {
 	ctx, span := tracer.Start(ctx, "dashboards.service.SaveFolderForProvisionedDashboards")
 	defer span.End()
 
 	ctx, ident := identity.WithServiceIdentity(ctx, dto.OrgID)
 	dto.SignedInUser = ident
+	dto.Provisioning = readerName
 
 	f, err := dr.folderService.Create(ctx, dto)
 	if err != nil {
