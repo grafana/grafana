@@ -830,7 +830,7 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts Options, apiOpts api
 	}
 	factory := github.ProvideFactory()
 	v5 := extras.ProvideProvisioningOSSRepositoryExtras(cfg, decryptService, factory, webhookExtraBuilder)
-	repositoryFactory, err := repository.ProvideFactory(v5)
+	repositoryFactory, err := repository.ProvideFactoryFromConfig(cfg, v5)
 	if err != nil {
 		return nil, err
 	}
@@ -1419,7 +1419,7 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	}
 	factory := github.ProvideFactory()
 	v5 := extras.ProvideProvisioningOSSRepositoryExtras(cfg, decryptService, factory, webhookExtraBuilder)
-	repositoryFactory, err := repository.ProvideFactory(v5)
+	repositoryFactory, err := repository.ProvideFactoryFromConfig(cfg, v5)
 	if err != nil {
 		return nil, err
 	}

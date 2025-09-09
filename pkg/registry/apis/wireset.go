@@ -32,7 +32,7 @@ var WireSetExts = wire.NewSet(
 )
 
 var provisioningExtras = wire.NewSet(
-	repository.ProvideFactoryFromCfg,
+	repository.ProvideFactoryFromConfig,
 	pullrequest.ProvidePullRequestWorker,
 	webhooks.ProvideWebhooksWithImages,
 	extras.ProvideProvisioningExtraAPIs,
