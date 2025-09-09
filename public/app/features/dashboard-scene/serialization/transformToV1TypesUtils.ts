@@ -101,7 +101,7 @@ function transformSpecialValueMatchToV1(match: SpecialValueMatch): SpecialValueM
   }
 }
 
-export function transformMappingsToV1(fieldConfig: FieldConfigSource): FieldConfigSourceV1 {
+export function transformMappingsAndActionsToV1(fieldConfig: FieldConfigSource): FieldConfigSourceV1 {
   const getThresholdsMode = (mode: ThresholdsMode): ThresholdsModeV1 => {
     switch (mode) {
       case 'absolute':
@@ -157,7 +157,7 @@ export function transformMappingsToV1(fieldConfig: FieldConfigSource): FieldConf
     };
   }
 
-  // TODO:
+  // Unfortunately with schema v2 when generating Go types through cue, it's not possible to have a tuple
   if (fieldConfig.defaults.actions) {
     transformedDefaults.actions = fieldConfig.defaults.actions.map((action) => {
       if (action.fetch) {
@@ -165,8 +165,8 @@ export function transformMappingsToV1(fieldConfig: FieldConfigSource): FieldConf
           ...action,
           fetch: {
             ...action.fetch,
-            headers: action.fetch.headers?.map((header) => [header[0], header[1]]),
-            queryParams: action.fetch.queryParams?.map((queryParam) => [queryParam[0], queryParam[1]]),
+            headers: action.fetch.headers?.map((header) => Object.entries(header)[0]).filter(Boolean),
+            queryParams: action.fetch.queryParams?.map((queryParam) => Object.entries(queryParam)[0]).filter(Boolean),
           },
         };
       }
@@ -176,8 +176,10 @@ export function transformMappingsToV1(fieldConfig: FieldConfigSource): FieldConf
           ...action,
           infinity: {
             ...action.infinity,
-            headers: action.infinity.headers?.map((header) => [header[0], header[1]]),
-            queryParams: action.infinity.queryParams?.map((queryParam) => [queryParam[0], queryParam[1]]),
+            headers: action.infinity.headers?.map((header) => Object.entries(header)[0]).filter(Boolean),
+            queryParams: action.infinity.queryParams
+              ?.map((queryParam) => Object.entries(queryParam)[0])
+              .filter(Boolean),
           },
         };
       }
