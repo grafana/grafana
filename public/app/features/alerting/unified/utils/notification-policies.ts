@@ -1,4 +1,4 @@
-import { findMatchingRoutes, getInheritedProperties } from '@grafana/alerting/unstable';
+import { findMatchingRoutes } from '@grafana/alerting/unstable';
 import { AlertmanagerGroup, Route } from 'app/plugins/datasource/alertmanager/types';
 
 import { normalizeMatchers, unquoteWithUnescape } from './matchers';
@@ -85,4 +85,4 @@ function renameReceiverInRoute(route: Route, oldName: string, newName: string) {
   return updated;
 }
 
-export { findMatchingAlertGroups, findMatchingRoutes, getInheritedProperties, renameReceiverInRoute, routeAdapter };
+export { findMatchingAlertGroups, renameReceiverInRoute };

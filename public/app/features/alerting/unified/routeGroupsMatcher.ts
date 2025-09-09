@@ -3,12 +3,8 @@ import { InstanceMatchResult, RouteMatch, matchAlertInstancesToPolicyTree } from
 import { AlertmanagerGroup, RouteWithID } from '../../../plugins/datasource/alertmanager/types';
 import { Labels } from '../../../types/unified-alerting-dto';
 
-import {
-  findMatchingAlertGroups,
-  normalizeRoute,
-  routeAdapter,
-  unquoteRouteMatchers,
-} from './utils/notification-policies';
+import { findMatchingAlertGroups, normalizeRoute, unquoteRouteMatchers } from './utils/notification-policies';
+import { routeAdapter } from './utils/routeAdapter';
 
 export interface MatchOptions {
   unquoteMatchers?: boolean;

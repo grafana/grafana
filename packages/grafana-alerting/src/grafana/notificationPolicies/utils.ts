@@ -206,6 +206,7 @@ export function convertRoutingTreeToRoute(routingTree: RoutingTree): Route {
           (matcher): LabelMatcher => ({
             ...matcher,
             // sadly we use type narrowing for this on Route but the codegen has it as a string
+            // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
             type: matcher.type as LabelMatcher['type'],
           })
         ),

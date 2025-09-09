@@ -24,6 +24,7 @@ import { FormAmRoute } from '../../types/amroutes';
 import { addUniqueIdentifierToRoute } from '../../utils/amroutes';
 import { PROVENANCE_NONE, ROOT_ROUTE_NAME } from '../../utils/k8s/constants';
 import { isK8sEntityProvisioned, shouldUseK8sApi } from '../../utils/k8s/utils';
+import { routeAdapter } from '../../utils/routeAdapter';
 import {
   InsertPosition,
   addRouteToReferenceRoute,
@@ -279,7 +280,7 @@ export function routeToK8sSubRoute(route: Route): ComGithubGrafanaGrafanaPkgApis
 export function createKubernetesRoutingTreeSpec(
   rootRoute: Route
 ): ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1RoutingTree {
-  const inheritableDefaultProperties: InheritableProperties = pick(rootRoute, INHERITABLE_KEYS);
+  const inheritableDefaultProperties: InheritableProperties = pick(routeAdapter.toPackage(rootRoute), INHERITABLE_KEYS);
 
   const defaults: ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1RouteDefaults = {
     ...inheritableDefaultProperties,

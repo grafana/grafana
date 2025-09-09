@@ -57,9 +57,11 @@ function fromPackageRoute<T extends AlertingRoute | AlertingRouteWithID>(route: 
       ...convertedRoute,
       id: route.id,
     };
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
     return routeWithId as MapFromPackageRoute<T>;
   }
 
+  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
   return convertedRoute as MapFromPackageRoute<T>;
 }
 
@@ -108,9 +110,11 @@ function toPackageRoute<T extends Route | RouteWithID>(route: T): MapToPackageRo
       ...convertedRoute,
       id: route.id,
     };
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
     return routeWithId as MapToPackageRoute<T>;
   }
 
+  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
   return convertedRoute as MapToPackageRoute<T>;
 }
 
@@ -135,5 +139,6 @@ export const routeAdapter = {
  * Converts a LabelMatcher from the alerting package format to an ObjectMatcher for alertmanager format
  */
 export function labelMatcherToObjectMatcher(matcher: LabelMatcher): ObjectMatcher {
+  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
   return [matcher.label, matcher.type as MatcherOperator, matcher.value];
 }
