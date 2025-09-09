@@ -307,7 +307,7 @@ Instead, you use ad hoc filters to write filters for existing queries.
 
 The following data sources support ad hoc filters:
 
-- Dashboard - Use this special data source to use ad hoc filters on data from unsupported data sources. For more information, refer to [heading](#heading)
+- Dashboard - Use this special data source to [apply ad hoc filters to data from unsupported data sources](#filter-any-data-using-the-dashboard-data-source).
 - Prometheus
 - Loki
 - InfluxDB
@@ -344,33 +344,32 @@ https://play.grafana.org/d/HYaGDGIMk/templating-global-variables-and-interpolati
 In the preceding example, the variables and values are `var-Server=CCC` and `var-MyCustomDashboardVariable=Hello%20World%21`.
 When someone clicks the link, they're taken to a version of the dashboard with those variables already applied.
 
-### Filter any data with the Dashboard data source
+### Filter any data using the Dashboard data source
 
-<!-- update this heading to be more descriptive of the value add -->
-
-You can use the Dashboard data source in cases where a data source doesn't support the use ad hoc filters.
-By referencing a panel with the data you want to filter using the Dashboard data source, you can bypass the limitation of the data source.
+In cases where a data source doesn't support the use of ad hoc filters, you can use the Dashboard data source to reference that data, and then filter it in a new panel.
+This allows you to bypass the limitations of the data source in the source panel.
 
 To use ad hoc filters on data from an unsupported data source, follow these steps:
 
-1. Navigate to the dashboard with the panel that's using the data source you want to filter.
-1. Click **Edit** in top-right corner.
-1. At the top of the dashboard, click **Add** and select **Visualization** in the drop-down.
+1. Navigate to the dashboard with the panel with the data you want to filter.
+1. Click **Edit** in top-right corner of the dashboard.
+1. At the top of the dashboard, click **Add** and select **Visualization** in the drop-down list.
 1. In the **Queries** tab of the edit panel view, enter `Dashboard` in the **Data source** field and select **-- Dashboard --**.
 1. In the query configuration section, make the following selections:
 
    - **Source panel** - Choose the panel with the source data.
-   - **Data** - Select **All Data** to use the data of the panel and not just the annotations. This is the default selection.
+   - **Data** - Select **All Data** to use the data of the panel, and not just the annotations. This is the default selection.
    - **AdHoc Filters** - Toggle on the switch to make the data from the referenced panel filterable.
 
    {{< admonition type="note">}}
-   Grafana uses the data from all Dashboard data sources with this switch toggled on. We recommend only turning on this feature for one Dashboard data source at a time.
+   If you're referencing multiple panels in a dashboard with the Dashboard data source, you can only use one of those source panels at a time for ad hoc filtering.
    {{< /admonition >}}
 
-1. Configure any other options for the panel.
+1. Configure any other needed options for the panel.
 1. Click **Save dashboard**.
 
-Now that panel does the things
+Now you can filter the data from the source panel by way of the Dashboard data source.
+Add as many panels as you need.
 
 <!-- vale Grafana.Spelling = YES -->
 <!-- vale Grafana.WordList = YES -->
