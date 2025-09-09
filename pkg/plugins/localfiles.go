@@ -236,6 +236,15 @@ func (f StaticFS) Files() ([]string, error) {
 	return files, nil
 }
 
+func (f StaticFS) Remove() error {
+	if remover, ok := f.FS.(FSRemover); ok {
+		if err := remover.Remove(); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 // LocalFile implements a fs.File for accessing the local filesystem.
 type LocalFile struct {
 	f    *os.File
