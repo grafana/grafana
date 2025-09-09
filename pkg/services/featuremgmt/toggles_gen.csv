@@ -216,7 +216,6 @@ grafanaAssistantInProfilesDrilldown,GA,@grafana/observability-traces-and-profili
 postgresDSUsePGX,experimental,@grafana/oss-big-tent,false,false,false
 tempoAlerting,experimental,@grafana/observability-traces-and-profiling,false,false,true
 pluginsAutoUpdate,experimental,@grafana/plugins-platform-backend,false,false,false
-multiTenantFrontend,experimental,@grafana/grafana-frontend-platform,false,false,false
 alertingListViewV2PreviewToggle,privatePreview,@grafana/alerting-squad,false,false,true
 alertRuleUseFiredAtForStartsAt,experimental,@grafana/alerting-squad,false,false,false
 alertingBulkActionsInUI,GA,@grafana/alerting-squad,false,false,true
@@ -226,6 +225,8 @@ kubernetesAuthnMutation,experimental,@grafana/identity-access-team,false,false,f
 restoreDashboards,experimental,@grafana/grafana-frontend-platform,false,false,false
 skipTokenRotationIfRecent,GA,@grafana/identity-access-team,false,false,false
 alertEnrichment,experimental,@grafana/alerting-squad,false,false,false
+alertEnrichmentMultiStep,experimental,@grafana/alerting-squad,false,false,false
+alertEnrichmentConditional,experimental,@grafana/alerting-squad,false,false,false
 alertingImportAlertmanagerAPI,experimental,@grafana/alerting-squad,false,false,false
 alertingImportAlertmanagerUI,experimental,@grafana/alerting-squad,false,false,false
 sharingDashboardImage,experimental,@grafana/sharing-squad,false,false,true
