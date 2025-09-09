@@ -879,10 +879,6 @@ const (
 	// Enables auto-updating of users installed plugins
 	FlagPluginsAutoUpdate = "pluginsAutoUpdate"
 
-	// FlagMultiTenantFrontend
-	// Register MT frontend
-	FlagMultiTenantFrontend = "multiTenantFrontend"
-
 	// FlagAlertingListViewV2PreviewToggle
 	// Enables the alerting list view v2 preview toggle
 	FlagAlertingListViewV2PreviewToggle = "alertingListViewV2PreviewToggle"
@@ -918,6 +914,14 @@ const (
 	// FlagAlertEnrichment
 	// Enable configuration of alert enrichments in Grafana Cloud.
 	FlagAlertEnrichment = "alertEnrichment"
+
+	// FlagAlertEnrichmentMultiStep
+	// Allow multiple steps per enrichment.
+	FlagAlertEnrichmentMultiStep = "alertEnrichmentMultiStep"
+
+	// FlagAlertEnrichmentConditional
+	// Enable conditional alert enrichment steps.
+	FlagAlertEnrichmentConditional = "alertEnrichmentConditional"
 
 	// FlagAlertingImportAlertmanagerAPI
 	// Enables the API to import Alertmanager configuration
@@ -1022,4 +1026,8 @@ const (
 	// FlagAzureResourcePickerUpdates
 	// Enables the updated Azure Monitor resource picker
 	FlagAzureResourcePickerUpdates = "azureResourcePickerUpdates"
+
+	// FlagPrometheusTypeMigration
+	// Checks for deprecated Prometheus authentication methods (SigV4 and Azure), installs the relevant data source, and migrates the Prometheus data sources
+	FlagPrometheusTypeMigration = "prometheusTypeMigration"
 )

@@ -64,6 +64,36 @@
     },
     {
       "metadata": {
+        "name": "alertEnrichmentConditional",
+        "resourceVersion": "1757418974334",
+        "creationTimestamp": "2025-09-09T11:56:14Z"
+      },
+      "spec": {
+        "description": "Enable conditional alert enrichment steps.",
+        "stage": "experimental",
+        "codeowner": "@grafana/alerting-squad",
+        "hideFromAdminPage": true,
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "alertEnrichmentMultiStep",
+        "resourceVersion": "1757418224384",
+        "creationTimestamp": "2025-09-09T11:43:44Z"
+      },
+      "spec": {
+        "description": "Allow multiple steps per enrichment.",
+        "stage": "experimental",
+        "codeowner": "@grafana/alerting-squad",
+        "hideFromAdminPage": true,
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "alertRuleRestore",
         "resourceVersion": "1753448760331",
         "creationTimestamp": "2025-03-05T14:15:26Z"
@@ -2232,7 +2262,8 @@
       "metadata": {
         "name": "multiTenantFrontend",
         "resourceVersion": "1753448760331",
-        "creationTimestamp": "2025-04-25T09:24:25Z"
+        "creationTimestamp": "2025-04-25T09:24:25Z",
+        "deletionTimestamp": "2025-09-08T17:06:39Z"
       },
       "spec": {
         "description": "Register MT frontend",
@@ -2715,6 +2746,23 @@
         "stage": "experimental",
         "codeowner": "@grafana/oss-big-tent",
         "frontend": true
+      }
+    },
+    {
+      "metadata": {
+        "name": "prometheusTypeMigration",
+        "resourceVersion": "1757089774247",
+        "creationTimestamp": "2025-08-25T21:53:16Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-09-05 16:29:34.247055837 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Checks for deprecated Prometheus authentication methods (SigV4 and Azure), installs the relevant data source, and migrates the Prometheus data sources",
+        "stage": "experimental",
+        "codeowner": "@grafana/partner-datasources",
+        "requiresRestart": true,
+        "expression": "false"
       }
     },
     {

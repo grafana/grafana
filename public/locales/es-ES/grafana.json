@@ -1703,9 +1703,6 @@
       "notes": "Notas",
       "returns": "Devoluciones"
     },
-    "label-picker": {
-      "no-options-message": "No se ha encontrado ninguna etiqueta"
-    },
     "labels-editor-modal": {
       "title-edit-labels": "Editar etiquetas"
     },
@@ -1723,9 +1720,6 @@
     "labels-sub-form": {
       "description": "Selecciona una clave/un valor de etiqueta de las opciones siguientes o escribe una nueva y pulsa Intro.",
       "save": "Guardar"
-    },
-    "labels-with-suggestions": {
-      "text-loading-existing-labels": "Cargando etiquetas existentes"
     },
     "labels-without-suggestions": {
       "message": {
@@ -4506,16 +4500,11 @@
             "any": "Coincidencia parcial",
             "label": "Reglas de coincidencia"
           },
-          "label": "Grupo",
           "visibility": {
             "hide": "Ocultar",
             "label": "Visibilidad {{type}}",
             "show": "Mostrar"
           }
-        },
-        "shared": {
-          "delete-condition": "Eliminar condición",
-          "unsupported-item-type": "Esta condición no es compatible con el elemento y, por lo tanto, se ignorará."
         },
         "time-range-size": {
           "info": "Muestra u oculta el {{type}} si el intervalo de tiempo del dashboard es más corto que el intervalo de tiempo seleccionado.",
@@ -4545,17 +4534,21 @@
             "not-matches": "No coincide"
           },
           "value": "Valor"
+        },
+        "wrapper": {
+          "delete-condition": "",
+          "unsupported-object-type": ""
         }
       },
       "editor": {
+        "info": "",
         "not-supported-for-custom-grid": "La representación condicional no es compatible con el diseño de cuadrícula personalizado. Emplea la cuadrícula automática para poder usarla.",
-        "unsupported-item-type": "La representación condicional no es compatible con este tipo de elemento"
+        "unsupported-object-type": ""
       },
       "overlay": {
         "tooltip": "El elemento está oculto debido al renderizado condicional."
       },
       "root": {
-        "info": "Define reglas para controlar la visibilidad de {{type}} haciendo coincidir cualquiera o todas las reglas.",
         "title": "Mostrar/ocultar reglas"
       }
     },
@@ -4688,6 +4681,7 @@
       "move": "Mover {{typeName}}",
       "panel-background": "Cambiar fondo del panel",
       "panel-description": "Cambiar descripción del panel",
+      "panel-edit": "",
       "panel-max-repeats-per-row": "Máx. de repeticiones por fila",
       "panel-repeat-direction": "Repetir dirección",
       "panel-repeat-variable": "Repetición del panel por",
@@ -4695,7 +4689,8 @@
       "paste-panel": "Pegar panel",
       "remove": "Eliminar {{typeName}}",
       "row-title": "",
-      "switch-layout": "Cambiar diseño"
+      "switch-layout": "Cambiar diseño",
+      "tab-title": ""
     },
     "edit-pane": {
       "elements": {
@@ -4941,12 +4936,11 @@
       "dataframe-aria-label": "Seleccionar marco de datos",
       "dataframe-label": "Mostrar marco de datos",
       "download-csv": "Descargar CSV",
-      "download-excel-description": "Añadir encabezado a CSV para su uso con Excel",
-      "download-excel-label": "Descargar para Excel",
       "download-logs": "Descargar registros",
       "download-service": "Descargar gráfico de servicio",
       "download-traces": "Descargar seguimientos",
-      "excel-header": "Encabezado de Excel",
+      "excel-compatibility-mode-description": "",
+      "excel-compatibility-mode-label": "",
       "formatted": "Datos formateados",
       "formatted-data-description": "Los datos de la tabla están formateados con opciones definidas en las pestañas Campo y Anulación.",
       "formatted-data-label": "Datos formateados",
@@ -8348,6 +8342,10 @@
         "action-title": "Título",
         "action-title-placeholder": "Título de la acción",
         "action-variables": "Variables",
+        "connection": "",
+        "connection-direct-description": "",
+        "connection-direct-label": "",
+        "connection-placeholder": "",
         "one-click-description": "Solo un enlace o acción puede tener un clic habilitado a la vez"
       }
     },
@@ -9646,6 +9644,12 @@
       "hide-search": "Cerrar la búsqueda",
       "hide-timestamps": "Ocultar marcas de tiempo",
       "hide-unique-labels": "Ocultar etiquetas únicas",
+      "line-wrapping": {
+        "enable": "",
+        "enable-prettify": "",
+        "hide": "",
+        "label": ""
+      },
       "newest-first": "Ordenado por los logs más nuevos primero: haga clic para mostrar los más antiguos primero",
       "oldest-first": "Ordenado por los logs más antiguos primero: haga clic para mostrar los más nuevos primero",
       "prettify-json": "Expandir logs JSON",
@@ -9654,13 +9658,16 @@
       "resolution-ns": "ns",
       "scroll-bottom": "Desplazarse al final",
       "scroll-top": "Desplazarse al inicio",
-      "show-ms-timestamps": "Mostrar marcas de tiempo en milisegundos",
-      "show-ns-timestamps": "Mostrar marcas de tiempo en nanosegundos",
       "show-search": "Resultado de la búsqueda en logs",
       "show-timestamps": "Mostrar marcas temporales",
       "show-unique-labels": "Mostrar etiquetas únicas",
+      "timestamp": {
+        "hide": "",
+        "label": "",
+        "milliseconds": "",
+        "nanoseconds": ""
+      },
       "unwrap-lines": "Desajustar líneas",
-      "wrap-json-lines": "",
       "wrap-lines": "Ajustar líneas"
     },
     "logs-navigation": {
@@ -9727,30 +9734,6 @@
     "un-themed-log-label-stats": {
       "field-log-stats": "{{label}}: {{total}} de {{rowCount}} filas tienen ese campo",
       "label-log-stats": "{{label}}: {{total}} de {{rowCount}} filas tienen esa etiqueta"
-    }
-  },
-  "logs-new": {
-    "category-logs": "Logs",
-    "deduplication-options": {
-      "label-exact": "Exacto",
-      "label-none": "Ninguno",
-      "label-numbers": "Números",
-      "label-signature": "Firma"
-    },
-    "description-infinite-scrolling": "Experimental. Obtenga más resultados desplazándose hasta la parte inferior de la lista de logs.",
-    "description-show-controls": "Mostrar controles para saltar a la última o primera línea de log y filtra por nivel de log",
-    "description-syntax-highlighting": "Utilice una gramática de color de sintaxis predefinida para resaltar las partes relevantes de las líneas de log",
-    "name-deduplication": "Desduplicación",
-    "name-enable-log-details": "Habilitar detalles de log",
-    "name-infinite-scrolling": "Habilitar el desplazamiento infinito",
-    "name-order": "Orden",
-    "name-show-controls": "Mostrar controles",
-    "name-syntax-highlighting": "Habilitar resaltado de sintaxis",
-    "name-time": "Hora",
-    "name-wrap-lines": "Líneas de envoltura",
-    "order-options": {
-      "label-newest-first": "Nuevos primero",
-      "label-oldest-first": "Más antiguos primero"
     }
   },
   "manage-dashbaords": {
@@ -11960,7 +11943,6 @@
       "expand-row": "Expandir la fila de la consulta",
       "hide-response": "Ocultar respuesta",
       "remove-query": "Eliminar consulta",
-      "replace-query-from-library": "Reemplazar con consulta guardada",
       "show-response": "Mostrar respuesta"
     },
     "query-editor-not-exported": "El complemento de la fuente de datos no exporta ningún componente del editor de consultas"
@@ -11973,14 +11955,6 @@
       "no-deleted-dashboards": "No has eliminado ningún panel de control recientemente.",
       "no-deleted-dashboards-text": "Cuando elimines un panel de control, aparecerá aquí durante 30 días antes de eliminarse de forma permanente. El administrador de tu organización puede restaurar los paneles de control eliminados recientemente.",
       "no-search-result": "No se han encontrado resultados para tu consulta"
-    },
-    "permanently-delete-modal": {
-      "confirm-text": "Eliminar",
-      "delete-button": "Eliminar",
-      "delete-loading": "Eliminando...",
-      "title": "Eliminar paneles de control permanentemente",
-      "text_one": "Esta acción eliminará {{numberOfDashboards}} paneles de control.",
-      "text_other": "Esta acción eliminará {{numberOfDashboards}} paneles de control."
     },
     "restore-modal": {
       "restore-button": "Restaurar",

@@ -519,6 +519,36 @@ describe('LogLineDetails', () => {
       expect(onClickHideField).toHaveBeenCalledWith('key1');
     });
 
+    test('Renders JSON field values', async () => {
+      setup(
+        undefined,
+        { labels: { label1: 'value of label1', label2: '{"key1":"value1", "key2": "value2"}' } },
+        { prettifyJSON: false }
+      );
+
+      expect(screen.getByText('label1')).toBeInTheDocument();
+      expect(screen.getByText('value of label1')).toBeInTheDocument();
+      expect(screen.getByText('label2')).toBeInTheDocument();
+      expect(screen.getByText('{"key1":"value1", "key2": "value2"}')).toBeInTheDocument();
+    });
+
+    test('Renders prettify JSON field values', async () => {
+      setup(
+        undefined,
+        { labels: { label1: 'value of label1', label2: '{"key1":"value1", "key2": "value2"}' } },
+        { prettifyJSON: true }
+      );
+
+      expect(screen.getByText('label1')).toBeInTheDocument();
+      expect(screen.getByText('value of label1')).toBeInTheDocument();
+      expect(screen.getByText('label2')).toBeInTheDocument();
+      expect(screen.queryByText('{"key1":"value1", "key2": "value2"}')).not.toBeInTheDocument();
+      expect(screen.getByText(/key1/)).toBeInTheDocument();
+      expect(screen.getByText(/value1/)).toBeInTheDocument();
+      expect(screen.getByText(/key2/)).toBeInTheDocument();
+      expect(screen.getByText(/value2/)).toBeInTheDocument();
+    });
+
     test('Exposes buttons to reorder displayed fields', async () => {
       const setDisplayedFields = jest.fn();
       const onClickHideField = jest.fn();

@@ -1697,9 +1697,6 @@
       "notes": "메모",
       "returns": "반환"
     },
-    "label-picker": {
-      "no-options-message": "라벨을 찾을 수 없습니다"
-    },
     "labels-editor-modal": {
       "title-edit-labels": "라벨 편집"
     },
@@ -1717,9 +1714,6 @@
     "labels-sub-form": {
       "description": "아래 옵션에서 라벨 키/값을 선택하거나 새 라벨 키/값을 입력하고 엔터 키를 누릅니다.",
       "save": "저장"
-    },
-    "labels-with-suggestions": {
-      "text-loading-existing-labels": "기존 라벨 로딩 중"
     },
     "labels-without-suggestions": {
       "message": {
@@ -4488,16 +4482,11 @@
             "any": "부분 일치",
             "label": "일치 규칙"
           },
-          "label": "그룹",
           "visibility": {
             "hide": "숨기기",
             "label": "{{type}} 표시 여부",
             "show": "표시"
           }
-        },
-        "shared": {
-          "delete-condition": "조건 삭제",
-          "unsupported-item-type": "이 조건은 해당 요소에서 지원되지 않으므로 무시됩니다."
         },
         "time-range-size": {
           "info": "대시보드 시간 범위가 선택한 시간 범위보다 짧은 경우 {{type}}을(를) 표시하거나 숨깁니다.",
@@ -4527,17 +4516,21 @@
             "not-matches": "일치하지 않음"
           },
           "value": "값"
+        },
+        "wrapper": {
+          "delete-condition": "",
+          "unsupported-object-type": ""
         }
       },
       "editor": {
+        "info": "",
         "not-supported-for-custom-grid": "맞춤형 그리드 레이아웃에서는 조건부 렌더링이 지원되지 않습니다. 조건부 렌더링을 사용하려면 자동 그리드로 전환하세요.",
-        "unsupported-item-type": "이 항목 유형에서는 조건부 렌더링이 지원되지 않습니다."
+        "unsupported-object-type": ""
       },
       "overlay": {
         "tooltip": "조건부 렌더링으로 인해 요소가 숨겨져 있습니다."
       },
       "root": {
-        "info": "일부 또는 모든 규칙을 충족할 때 {{type}}의 표시 여부를 제어하는 규칙을 설정합니다.",
         "title": "규칙 표시 / 숨기기"
       }
     },
@@ -4670,6 +4663,7 @@
       "move": "{{typeName}} 이동",
       "panel-background": "패널 배경 변경",
       "panel-description": "패널 설명 변경",
+      "panel-edit": "",
       "panel-max-repeats-per-row": "행당 최대 반복 횟수",
       "panel-repeat-direction": "반복 방향",
       "panel-repeat-variable": "패널 반복 기준",
@@ -4677,7 +4671,8 @@
       "paste-panel": "패널 붙여넣기",
       "remove": "{{typeName}} 제거",
       "row-title": "",
-      "switch-layout": "레이아웃 전환"
+      "switch-layout": "레이아웃 전환",
+      "tab-title": ""
     },
     "edit-pane": {
       "elements": {
@@ -4923,12 +4918,11 @@
       "dataframe-aria-label": "데이터 프레임 선택",
       "dataframe-label": "데이터 프레임 표시",
       "download-csv": "CSV 다운로드",
-      "download-excel-description": "CSV에 헤더 추가하여 Excel과 함께 사용",
-      "download-excel-label": "Excel용으로 다운로드",
       "download-logs": "로그 다운로드",
       "download-service": "서비스 그래프 다운로드",
       "download-traces": "추적 다운로드",
-      "excel-header": "Excel 헤더",
+      "excel-compatibility-mode-description": "",
+      "excel-compatibility-mode-label": "",
       "formatted": "형식화된 데이터",
       "formatted-data-description": "표 데이터 형식은 '필드' 및 '재정의' 탭에 정의된 옵션으로 지정됩니다.",
       "formatted-data-label": "형식화된 데이터",
@@ -8327,6 +8321,10 @@
         "action-title": "제목",
         "action-title-placeholder": "작업 제목",
         "action-variables": "변수",
+        "connection": "",
+        "connection-direct-description": "",
+        "connection-direct-label": "",
+        "connection-placeholder": "",
         "one-click-description": "한 번에 하나의 링크나 작업만 원 클릭을 활성화할 수 있습니다."
       }
     },
@@ -9617,6 +9615,12 @@
       "hide-search": "검색 닫기",
       "hide-timestamps": "타임스탬프 숨기기",
       "hide-unique-labels": "고유 라벨 숨기기",
+      "line-wrapping": {
+        "enable": "",
+        "enable-prettify": "",
+        "hide": "",
+        "label": ""
+      },
       "newest-first": "최신 로그순으로 정렬 - 클릭하여 오래된 로그순으로 표시",
       "oldest-first": "오래된 로그순으로 정렬 - 클릭하여 최신 로그순으로 표시",
       "prettify-json": "JSON 로그 펼치기",
@@ -9625,13 +9629,16 @@
       "resolution-ns": "ns",
       "scroll-bottom": "맨 아래로 스크롤",
       "scroll-top": "맨 위로 스크롤",
-      "show-ms-timestamps": "타임스탬프(밀리초 단위) 표시",
-      "show-ns-timestamps": "타임스탬프(나노초 단위) 표시",
       "show-search": "로그 결과에서 검색",
       "show-timestamps": "타임스탬프 표시",
       "show-unique-labels": "고유 라벨 표시",
+      "timestamp": {
+        "hide": "",
+        "label": "",
+        "milliseconds": "",
+        "nanoseconds": ""
+      },
       "unwrap-lines": "줄 바꿈 제거",
-      "wrap-json-lines": "",
       "wrap-lines": "줄 바꿈"
     },
     "logs-navigation": {
@@ -9698,30 +9705,6 @@
     "un-themed-log-label-stats": {
       "field-log-stats": "{{label}}: {{total}}개의 행 중 {{rowCount}}개에 해당 필드가 있습니다",
       "label-log-stats": "{{label}}: {{total}}개의 행 중 {{rowCount}}에 해당 라벨이 있습니다"
-    }
-  },
-  "logs-new": {
-    "category-logs": "로그",
-    "deduplication-options": {
-      "label-exact": "정확한",
-      "label-none": "없음",
-      "label-numbers": "숫자",
-      "label-signature": "서명"
-    },
-    "description-infinite-scrolling": "실험적. 로그 목록 하단으로 스크롤하여 더 많은 결과를 요청합니다.",
-    "description-show-controls": "마지막 또는 첫 번째 로그 라인으로 이동하는 컨트롤과 로그 단계별 필터를 표시합니다",
-    "description-syntax-highlighting": "사전 정의된 구문 색상 문법을 사용하여 로그 라인의 관련 부분을 강조 표시합니다",
-    "name-deduplication": "중복 제거",
-    "name-enable-log-details": "로그 세부 정보 활성화",
-    "name-infinite-scrolling": "무한 스크롤 활성화",
-    "name-order": "순서",
-    "name-show-controls": "컨트롤 표시",
-    "name-syntax-highlighting": "구문 강조 표시 활성화",
-    "name-time": "시간",
-    "name-wrap-lines": "줄 바꿈",
-    "order-options": {
-      "label-newest-first": "최신순",
-      "label-oldest-first": "오래된 순"
     }
   },
   "manage-dashbaords": {
@@ -11924,7 +11907,6 @@
       "expand-row": "쿼리 행 펼치기",
       "hide-response": "응답 숨기기",
       "remove-query": "쿼리 제거",
-      "replace-query-from-library": "저장된 쿼리로 교체",
       "show-response": "응답 표시"
     },
     "query-editor-not-exported": "데이터 소스 플러그인은 쿼리 편집기 구성 요소를 내보내지 않습니다."
@@ -11937,13 +11919,6 @@
       "no-deleted-dashboards": "최근에 삭제한 대시보드가 없습니다.",
       "no-deleted-dashboards-text": "대시보드를 삭제하면 영구적으로 삭제되기 전에 30일간 여기에 표시됩니다. 조직 관리자는 최근에 삭제된 대시보드를 복구할 수 있습니다.",
       "no-search-result": "쿼리에 대해 찾은 결과 없음"
-    },
-    "permanently-delete-modal": {
-      "confirm-text": "삭제",
-      "delete-button": "삭제",
-      "delete-loading": "삭제 중…",
-      "title": "대시보드 영구 삭제",
-      "text_other": "이 작업을 수행하면 {{numberOfDashboards}}개의 대시보드가 삭제됩니다."
     },
     "restore-modal": {
       "restore-button": "복구",
