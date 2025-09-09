@@ -59,7 +59,7 @@ func TestIntegrationServiceAccounts(t *testing.T) {
 }
 
 func doServiceAccountCRUDTestsUsingTheNewAPIs(t *testing.T, helper *apis.K8sTestHelper) {
-	t.Run("should create service account and get it using the new APIs as a GrafanaAdmin", func(t *testing.T) {
+	t.Run("should create service account and get it using the new APIs as admin", func(t *testing.T) {
 		ctx := context.Background()
 
 		saClient := helper.GetResourceClient(apis.ResourceClientArgs{
@@ -94,6 +94,15 @@ func doServiceAccountCRUDTestsUsingTheNewAPIs(t *testing.T, helper *apis.K8sTest
 
 		require.Equal(t, createdUID, fetched.GetName())
 		require.Equal(t, "default", fetched.GetNamespace())
+
+		err = saClient.Resource.Delete(ctx, createdUID, metav1.DeleteOptions{})
+		require.NoError(t, err)
+
+		_, err = saClient.Resource.Get(ctx, createdUID, metav1.GetOptions{})
+		require.Error(t, err)
+		var statusErr *errors.StatusError
+		require.ErrorAs(t, err, &statusErr)
+		require.Equal(t, int32(404), statusErr.ErrStatus.Code)
 	})
 
 	t.Run("should not be able to create service account when using a user with insufficient permissions", func(t *testing.T) {
@@ -239,8 +248,9 @@ func doServiceAccountCRUDTestsUsingTheLegacyAPIs(t *testing.T, helper *apis.K8sT
 	t.Run("should create service account using legacy APIs and get it using the new APIs", func(t *testing.T) {
 		ctx := context.Background()
 		saClient := helper.GetResourceClient(apis.ResourceClientArgs{
-			User: helper.Org1.Admin,
-			GVR:  gvrServiceAccounts,
+			User:      helper.Org1.Admin,
+			Namespace: helper.Namespacer(helper.Org1.Admin.Identity.GetOrgID()),
+			GVR:       gvrServiceAccounts,
 		})
 
 		legacySAPayload := `{
@@ -270,5 +280,42 @@ func doServiceAccountCRUDTestsUsingTheLegacyAPIs(t *testing.T, helper *apis.K8sT
 
 		require.Equal(t, rsp.Result.UID, sa.GetName())
 		require.Equal(t, "default", sa.GetNamespace())
+	})
+
+	t.Run("should create service account using legacy APIs and delete it using the new APIs", func(t *testing.T) {
+		ctx := context.Background()
+		saClient := helper.GetResourceClient(apis.ResourceClientArgs{
+			User:      helper.Org1.Admin,
+			Namespace: helper.Namespacer(helper.Org1.Admin.Identity.GetOrgID()),
+			GVR:       gvrServiceAccounts,
+		})
+
+		legacySAPayload := `{
+			"name": "Test Service Account to delete",
+			"role": "Editor"
+		}`
+
+		rsp := apis.DoRequest(helper, apis.RequestParams{
+			User:   helper.Org1.Admin,
+			Method: "POST",
+			Path:   "/api/serviceaccounts",
+			Body:   []byte(legacySAPayload),
+		}, &serviceaccounts.ServiceAccountDTO{})
+
+		require.NotNil(t, rsp)
+		require.Equal(t, 201, rsp.Response.StatusCode)
+		require.NotEmpty(t, rsp.Result.UID)
+
+		_, err := saClient.Resource.Get(ctx, rsp.Result.UID, metav1.GetOptions{})
+		require.NoError(t, err)
+
+		err = saClient.Resource.Delete(ctx, rsp.Result.UID, metav1.DeleteOptions{})
+		require.NoError(t, err)
+
+		_, err = saClient.Resource.Get(ctx, rsp.Result.UID, metav1.GetOptions{})
+		require.Error(t, err)
+		var statusErr *errors.StatusError
+		require.ErrorAs(t, err, &statusErr)
+		require.Equal(t, int32(404), statusErr.ErrStatus.Code)
 	})
 }
