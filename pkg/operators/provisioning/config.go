@@ -224,6 +224,9 @@ func setupRepoFactory(
 	operatorSec := cfg.SectionWithEnvOverrides("operator")
 	provisioningSec := cfg.SectionWithEnvOverrides("provisioning")
 	repoTypes := provisioningSec.Key("repository_types").Strings("|")
+	if len(repoTypes) == 0 {
+		repoTypes = []string{"github"}
+	}
 
 	// TODO: This depends on the different flavor of Grafana
 	// https://github.com/grafana/git-ui-sync-project/issues/495
