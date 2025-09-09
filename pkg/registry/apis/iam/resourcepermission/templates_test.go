@@ -42,6 +42,16 @@ func TestTemplates(t *testing.T) {
 		return &v
 	}
 
+	getRemovePermission := func(permissionID int64) sqltemplate.SQLTemplate {
+		v := removePermissionTemplate{
+			SQLTemplate:     sqltemplate.New(nodb.DialectForDriver()),
+			PermissionTable: nodb.Table("permission"),
+			PermissionID:    permissionID,
+		}
+		v.SQLTemplate = mocks.NewTestingSQLTemplate()
+		return &v
+	}
+
 	getInsertAssignment := func(orgID int64, roleID int64, assignment rbacAssignmentCreate) sqltemplate.SQLTemplate {
 		v := insertAssignmentTemplate{
 			SQLTemplate:      sqltemplate.New(nodb.DialectForDriver()),
@@ -109,6 +119,12 @@ func TestTemplates(t *testing.T) {
 						Attribute:  "uid",
 						Identifier: "dash1",
 					}),
+				},
+			},
+			permissionRemoveTplt: {
+				{
+					Name: "remove_permission",
+					Data: getRemovePermission(55),
 				},
 			},
 			assignmentInsertTplt: {

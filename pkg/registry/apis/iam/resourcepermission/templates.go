@@ -185,6 +185,10 @@ type removePermissionTemplate struct {
 	PermissionID    int64
 }
 
+func (t removePermissionTemplate) Validate() error {
+	return nil
+}
+
 func buildRemovePermissionQuery(dbHelper *legacysql.LegacyDatabaseHelper, permissionID int64) (string, []any, error) {
 	req := removePermissionTemplate{
 		SQLTemplate:     sqltemplate.New(dbHelper.DialectForDriver()),
