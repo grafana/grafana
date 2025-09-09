@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 
-import { Trans } from '@grafana/i18n';
+import { AppEvents } from '@grafana/data';
+import { t, Trans } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { Button, Stack } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
@@ -30,8 +31,12 @@ export function RecentlyDeletedActions() {
       .map(([uid]) => uid);
   }, [selectedItemsState.dashboard]);
 
-  const selectedDashboardOrigin: string[] = [];
-  if (searchState.result) {
+  const selectedDashboardOrigin = useMemo(() => {
+    if (!searchState.result) {
+      return [];
+    }
+
+    const origins: string[] = [];
     for (const selectedDashboard of selectedDashboards) {
       const index = searchState.result.view.fields.uid.values.findIndex((e) => e === selectedDashboard);
 
@@ -40,9 +45,10 @@ export function RecentlyDeletedActions() {
       // to an empty string
       const location = searchState.result.view.fields.location.values[index];
       const fixedLocation = location === GENERAL_FOLDER_UID ? '' : location;
-      selectedDashboardOrigin.push(fixedLocation);
+      origins.push(fixedLocation);
     }
-  }
+    return origins;
+  }, [selectedDashboards, searchState.result]);
 
   const onActionComplete = () => {
     dispatch(setAllSelection({ isSelected: false, folderUID: undefined }));
@@ -57,10 +63,11 @@ export function RecentlyDeletedActions() {
       return;
     }
 
-    const promises = selectedDashboards.map((uid) => {
+    const promises = selectedDashboards.map(async (uid) => {
       const dashboard = deletedDashboards.data?.items.find((d) => d.metadata.name === uid);
       if (!dashboard) {
-        return Promise.resolve();
+        console.warn(`Dashboard ${uid} not found in deleted items`);
+        return { uid, error: 'not_found' };
       }
       // Clone the dashboard to be able to edit the immutable data from the store
       const copy = structuredClone(dashboard);
@@ -72,7 +79,27 @@ export function RecentlyDeletedActions() {
       return restoreDashboard({ dashboard: copy });
     });
 
-    await Promise.all(promises);
+    const results = await Promise.allSettled(promises);
+
+    // Count failures from both rejected promises and RTK Query errors
+    const failures = results.filter(
+      (result) => result.status === 'rejected' || (result.status === 'fulfilled' && result.value.error)
+    );
+
+    const failedCount = failures.length;
+    if (failedCount > 0) {
+      const totalCount = results.length;
+      appEvents.publish({
+        type: AppEvents.alertWarning.name,
+        payload: [
+          t(
+            'browse-dashboards.restore.partial-failure',
+            '{{failedCount}} of {{totalCount}} dashboards failed to restore',
+            { failedCount, totalCount }
+          ),
+        ],
+      });
+    }
 
     const parentUIDs = new Set<string | undefined>();
     for (const uid of selectedDashboards) {

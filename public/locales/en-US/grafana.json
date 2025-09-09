@@ -3662,6 +3662,7 @@
       "text": "No results found for your query"
     },
     "restore": {
+      "partial-failure": "{{failedCount}} of {{totalCount}} dashboards failed to restore",
       "success": "Dashboard {{name}} restored"
     },
     "text-this-repository-is-read-only": "If you have direct access to the target, copy the JSON and paste it there.",
