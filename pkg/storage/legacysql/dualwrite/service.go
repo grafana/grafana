@@ -9,6 +9,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/grafana/grafana-app-sdk/logging"
+	"github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
@@ -25,11 +26,26 @@ func ProvideService(
 	features featuremgmt.FeatureToggles,
 	reg prometheus.Registerer,
 	kv kvstore.KVStore,
-	cfg *setting.Cfg) Service {
+	cfg *setting.Cfg,
+) Service {
 	enabled := features.IsEnabledGlobally(featuremgmt.FlagManagedDualWriter) ||
 		features.IsEnabledGlobally(featuremgmt.FlagProvisioning) // required for git provisioning
-	if !enabled && cfg != nil {
-		return &staticService{cfg} // fallback to using the dual write flags from cfg
+
+	if cfg != nil {
+		// Avoid dynamic behavior when things are explicitly configured to mode5
+		allMode5 := true
+		for _, gr := range []string{
+			"dashboards.dashboard.grafana.app",
+			"folders.folder.grafana.app",
+		} {
+			if cfg.UnifiedStorage[gr].DualWriterMode != rest.Mode5 {
+				allMode5 = false
+				break
+			}
+		}
+		if allMode5 || !enabled {
+			return &staticService{cfg} // fallback to using the dual write flags from cfg
+		}
 	}
 
 	db := &keyvalueDB{
@@ -37,21 +53,14 @@ func ProvideService(
 		logger: logging.DefaultLogger.With("logger", "dualwrite.kv"),
 	}
 
-	// TODO: remove this after G12.1
-	if cfg != nil {
-		migrateFileDBTo(cfg, db)
-	}
-
 	return &service{
 		db:      db,
-		reg:     reg,
 		enabled: enabled,
 	}
 }
 
 type service struct {
 	db      *keyvalueDB
-	reg     prometheus.Registerer
 	enabled bool
 }
 
