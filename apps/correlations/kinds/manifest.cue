@@ -1,7 +1,7 @@
 package kinds
 
 manifest: {
-	appName:          "correlations"
+	appName:          "correlation"
 	groupOverride:    "correlations.grafana.app"
 	preferredVersion: "v0alpha1"
 

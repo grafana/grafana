@@ -9,12 +9,12 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/klog/v2"
 
-	correlationsv0alpha1 "github.com/grafana/grafana/apps/correlations/pkg/apis/correlations/v0alpha1"
+	correlationsv0alpha1 "github.com/grafana/grafana/apps/correlations/pkg/apis/correlation/v0alpha1"
 )
 
 func New(cfg app.Config) (app.App, error) {
 	simpleConfig := simple.AppConfig{
-		Name:       "correlations",
+		Name:       "correlation",
 		KubeConfig: cfg.KubeConfig,
 		InformerConfig: simple.AppInformerConfig{
 			ErrorHandler: func(ctx context.Context, err error) {
@@ -23,7 +23,7 @@ func New(cfg app.Config) (app.App, error) {
 		},
 		ManagedKinds: []simple.AppManagedKind{
 			{
-				Kind: correlationsv0alpha1.CorrelationsKind(),
+				Kind: correlationsv0alpha1.CorrelationKind(),
 			},
 		},
 	}
@@ -43,10 +43,10 @@ func New(cfg app.Config) (app.App, error) {
 
 func GetKinds() map[schema.GroupVersion][]resource.Kind {
 	gv := schema.GroupVersion{
-		Group:   correlationsv0alpha1.CorrelationsKind().Group(),
-		Version: correlationsv0alpha1.CorrelationsKind().Version(),
+		Group:   correlationsv0alpha1.CorrelationKind().Group(),
+		Version: correlationsv0alpha1.CorrelationKind().Version(),
 	}
 	return map[schema.GroupVersion][]resource.Kind{
-		gv: {correlationsv0alpha1.CorrelationsKind()},
+		gv: {correlationsv0alpha1.CorrelationKind()},
 	}
 }

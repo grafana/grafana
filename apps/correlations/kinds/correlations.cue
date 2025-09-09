@@ -1,7 +1,8 @@
 package kinds
 
 correlationsv0alpha1: {
-	kind:       "Correlations"  // note: must be uppercase
+	kind:       "Correlation"  // note: must be uppercase
+	pluralName: "Correlations"
 	schema: {
 		spec: {
 			source_uid:  string
