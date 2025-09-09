@@ -532,8 +532,8 @@ export interface FetchOptions {
 	method: HttpRequestMethod;
 	url: string;
 	body?: string;
-	queryParams?: Record<string, string>[];
-	headers?: Record<string, string>[];
+	queryParams?: Record<string, string>;
+	headers?: Record<string, string>;
 }
 
 export const defaultFetchOptions = (): FetchOptions => ({
@@ -549,9 +549,9 @@ export interface InfinityOptions {
 	method: HttpRequestMethod;
 	url: string;
 	body?: string;
-	queryParams?: Record<string, string>[];
+	queryParams?: Record<string, string>;
 	datasourceUid: string;
-	headers?: Record<string, string>[];
+	headers?: Record<string, string>;
 }
 
 export const defaultInfinityOptions = (): InfinityOptions => ({

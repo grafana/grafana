@@ -369,8 +369,8 @@ FetchOptions: {
 	method: HttpRequestMethod
 	url: string
 	body?: string
-	queryParams?: [...{[string]: string}]
-	headers?: [...{[string]: string}]
+	queryParams?: {[string]: string}
+	headers?: {[string]: string}
 }
 
 InfinityOptions: FetchOptions & {

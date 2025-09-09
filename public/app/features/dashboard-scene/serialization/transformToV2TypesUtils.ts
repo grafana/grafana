@@ -142,19 +142,15 @@ export function transformActionsV2(actions: ActionV1[]): ActionV2[] | undefined 
     if (action.fetch) {
       fetch = {
         ...action.fetch,
-        headers: action.fetch.headers?.map((header: [string, string]) => ({ [header[0]]: header[1] })),
-        queryParams: action.fetch.queryParams?.map((queryParam: [string, string]) => ({
-          [queryParam[0]]: queryParam[1],
-        })),
+        headers: action.fetch.headers ? Object.fromEntries(action.fetch.headers) : undefined,
+        queryParams: action.fetch.queryParams ? Object.fromEntries(action.fetch.queryParams) : undefined,
       };
     }
     if (action.infinity) {
       infinity = {
         ...action.infinity,
-        headers: action.infinity.headers?.map((header: [string, string]) => ({ [header[0]]: header[1] })),
-        queryParams: action.infinity.queryParams?.map((queryParam: [string, string]) => ({
-          [queryParam[0]]: queryParam[1],
-        })),
+        headers: action.infinity.headers ? Object.fromEntries(action.infinity.headers) : undefined,
+        queryParams: action.infinity.queryParams ? Object.fromEntries(action.infinity.queryParams) : undefined,
       };
     }
 

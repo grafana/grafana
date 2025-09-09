@@ -649,8 +649,8 @@ type DashboardFetchOptions struct {
 	Method      DashboardHttpRequestMethod `json:"method"`
 	Url         string                     `json:"url"`
 	Body        *string                    `json:"body,omitempty"`
-	QueryParams []map[string]string        `json:"queryParams,omitempty"`
-	Headers     []map[string]string        `json:"headers,omitempty"`
+	QueryParams map[string]string          `json:"queryParams,omitempty"`
+	Headers     map[string]string          `json:"headers,omitempty"`
 }
 
 // NewDashboardFetchOptions creates a new DashboardFetchOptions object.
@@ -674,9 +674,9 @@ type DashboardInfinityOptions struct {
 	Method        DashboardHttpRequestMethod `json:"method"`
 	Url           string                     `json:"url"`
 	Body          *string                    `json:"body,omitempty"`
-	QueryParams   []map[string]string        `json:"queryParams,omitempty"`
+	QueryParams   map[string]string          `json:"queryParams,omitempty"`
 	DatasourceUid string                     `json:"datasourceUid"`
-	Headers       []map[string]string        `json:"headers,omitempty"`
+	Headers       map[string]string          `json:"headers,omitempty"`
 }
 
 // NewDashboardInfinityOptions creates a new DashboardInfinityOptions object.

@@ -165,8 +165,8 @@ export function transformMappingsAndActionsToV1(fieldConfig: FieldConfigSource):
           ...action,
           fetch: {
             ...action.fetch,
-            headers: action.fetch.headers?.map((header) => Object.entries(header)[0]).filter(Boolean),
-            queryParams: action.fetch.queryParams?.map((queryParam) => Object.entries(queryParam)[0]).filter(Boolean),
+            headers: action.fetch.headers ? Object.entries(action.fetch.headers) : undefined,
+            queryParams: action.fetch.queryParams ? Object.entries(action.fetch.queryParams) : undefined,
           },
         };
       }
@@ -176,10 +176,8 @@ export function transformMappingsAndActionsToV1(fieldConfig: FieldConfigSource):
           ...action,
           infinity: {
             ...action.infinity,
-            headers: action.infinity.headers?.map((header) => Object.entries(header)[0]).filter(Boolean),
-            queryParams: action.infinity.queryParams
-              ?.map((queryParam) => Object.entries(queryParam)[0])
-              .filter(Boolean),
+            headers: action.infinity.headers ? Object.entries(action.infinity.headers) : undefined,
+            queryParams: action.infinity.queryParams ? Object.entries(action.infinity.queryParams) : undefined,
           },
         };
       }
