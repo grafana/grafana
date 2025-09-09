@@ -16,7 +16,7 @@ import (
 	authzv1 "github.com/grafana/authlib/authz/proto/v1"
 	"github.com/grafana/authlib/cache"
 	"github.com/grafana/authlib/types"
-	"github.com/grafana/grafana/pkg/apimachinery/identity"
+
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -30,7 +30,7 @@ func TestService_checkPermission(t *testing.T) {
 	type testCase struct {
 		name        string
 		permissions []accesscontrol.Permission
-		check       checkRequest
+		check       CheckRequest
 		folders     []store.Folder
 		expected    bool
 	}
@@ -47,7 +47,7 @@ func TestService_checkPermission(t *testing.T) {
 					Identifier: "some_dashboard",
 				},
 			},
-			check: checkRequest{
+			check: CheckRequest{
 				Action:   "dashboards:read",
 				Group:    "dashboard.grafana.app",
 				Resource: "dashboards",
@@ -66,7 +66,7 @@ func TestService_checkPermission(t *testing.T) {
 					Identifier: "another_dashboard",
 				},
 			},
-			check: checkRequest{
+			check: CheckRequest{
 				Action:   "dashboards:read",
 				Group:    "dashboard.grafana.app",
 				Resource: "dashboards",
@@ -85,7 +85,7 @@ func TestService_checkPermission(t *testing.T) {
 					Identifier: "*",
 				},
 			},
-			check: checkRequest{
+			check: CheckRequest{
 				Action:   "dashboards:read",
 				Group:    "dashboard.grafana.app",
 				Resource: "dashboards",
@@ -103,7 +103,7 @@ func TestService_checkPermission(t *testing.T) {
 					Attribute: "*",
 				},
 			},
-			check: checkRequest{
+			check: CheckRequest{
 				Action:   "dashboards:read",
 				Group:    "dashboard.grafana.app",
 				Resource: "dashboards",
@@ -120,7 +120,7 @@ func TestService_checkPermission(t *testing.T) {
 					Kind:   "*",
 				},
 			},
-			check: checkRequest{
+			check: CheckRequest{
 				Action:   "dashboards:read",
 				Group:    "dashboard.grafana.app",
 				Resource: "dashboards",
@@ -139,7 +139,7 @@ func TestService_checkPermission(t *testing.T) {
 					Identifier: "general",
 				},
 			},
-			check: checkRequest{
+			check: CheckRequest{
 				Action:   "dashboards:create",
 				Group:    "dashboard.grafana.app",
 				Resource: "dashboards",
@@ -154,7 +154,7 @@ func TestService_checkPermission(t *testing.T) {
 					Action: "dashboards:create",
 				},
 			},
-			check: checkRequest{
+			check: CheckRequest{
 				Action:   "dashboards:create",
 				Group:    "dashboard.grafana.app",
 				Resource: "dashboards",
@@ -165,7 +165,7 @@ func TestService_checkPermission(t *testing.T) {
 		{
 			name:        "should return false if user has no permissions on resource",
 			permissions: []accesscontrol.Permission{},
-			check: checkRequest{
+			check: CheckRequest{
 				Action:   "dashboards:read",
 				Group:    "dashboard.grafana.app",
 				Resource: "dashboards",
@@ -187,7 +187,7 @@ func TestService_checkPermission(t *testing.T) {
 				{UID: "parent"},
 				{UID: "child", ParentUID: strPtr("parent")},
 			},
-			check: checkRequest{
+			check: CheckRequest{
 				Action:       "dashboards:read",
 				Group:        "dashboard.grafana.app",
 				Resource:     "dashboards",
@@ -208,7 +208,7 @@ func TestService_checkPermission(t *testing.T) {
 				},
 			},
 			folders: []store.Folder{{UID: "parent"}},
-			check: checkRequest{
+			check: CheckRequest{
 				Action:       "dashboards:create",
 				Group:        "dashboard.grafana.app",
 				Resource:     "dashboards",
@@ -230,7 +230,7 @@ func TestService_checkPermission(t *testing.T) {
 				},
 			},
 			folders: []store.Folder{{UID: "parent"}, {UID: "other_parent"}},
-			check: checkRequest{
+			check: CheckRequest{
 				Action:       "dashboards:create",
 				Group:        "dashboard.grafana.app",
 				Resource:     "dashboards",
@@ -252,7 +252,7 @@ func TestService_checkPermission(t *testing.T) {
 				},
 			},
 			folders: []store.Folder{{UID: "parent"}},
-			check: checkRequest{
+			check: CheckRequest{
 				Action:       "dashboards:read",
 				Group:        "dashboard.grafana.app",
 				Resource:     "dashboards",
@@ -273,7 +273,7 @@ func TestService_checkPermission(t *testing.T) {
 					Identifier: "some_datasource",
 				},
 			},
-			check: checkRequest{
+			check: CheckRequest{
 				Action:   "datasources:query",
 				Group:    "query.grafana.app",
 				Resource: "query",
@@ -293,75 +293,6 @@ func TestService_checkPermission(t *testing.T) {
 			got, err := s.checkPermission(context.Background(), getScopeMap(tc.permissions), &tc.check)
 			require.NoError(t, err)
 			assert.Equal(t, tc.expected, got)
-		})
-	}
-}
-
-func TestService_mapping(t *testing.T) {
-	type testCase struct {
-		name   string
-		input  *authzv1.CheckRequest
-		output *checkRequest
-		err    string
-	}
-
-	ns := "default"
-	testUserA := &identity.StaticRequester{
-		Type:           types.TypeUser,
-		Login:          "test",
-		UserID:         123,
-		UserUID:        "u123",
-		OrgRole:        identity.RoleAdmin,
-		IsGrafanaAdmin: true, // can do anything
-		Namespace:      ns,
-		OrgID:          1,
-	}
-	ctx := types.WithAuthInfo(request.WithNamespace(context.Background(), ns), testUserA)
-
-	testCases := []testCase{
-		{
-			name: "should return true if user has permission",
-			input: &authzv1.CheckRequest{
-				Group:    "folder.grafana.app",
-				Resource: "folders",
-				Name:     "aaa",
-				Verb:     utils.VerbCreate,
-				Folder:   "folder",
-			},
-			output: &checkRequest{
-				Action:       "folders:create",
-				Group:        "folder.grafana.app",
-				Resource:     "folders",
-				Name:         "aaa",
-				Verb:         "create",
-				ParentFolder: "folder",
-				Namespace: types.NamespaceInfo{
-					Value: ns,
-					OrgID: 1,
-				},
-			},
-		},
-	}
-
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			s := setupService()
-			tc.input.Namespace = ns
-			tc.input.Subject = testUserA.GetUID() // the subject string
-
-			got, err := s.validateCheckRequest(ctx, tc.input)
-			if tc.err != "" {
-				require.Error(t, err)
-				require.ErrorContains(t, err, tc.err)
-				return
-			}
-			require.NoError(t, err)
-			require.NotNil(t, got)
-
-			tc.output.IdentityType = types.TypeUser
-			tc.output.UserUID = testUserA.GetIdentifier()
-
-			require.Equal(t, tc.output, got)
 		})
 	}
 }
@@ -386,7 +317,7 @@ func TestService_checkPermission_folderCacheMissRecovery(t *testing.T) {
 	s.folderCache.Set(ctx, folderCacheKey("default"), newFolderTree([]store.Folder{{UID: "root"}}))
 
 	// Perform check on sub folder
-	check := checkRequest{
+	check := CheckRequest{
 		Action:       "dashboards:read",
 		Group:        "dashboard.grafana.app",
 		Resource:     "dashboards",
@@ -628,7 +559,7 @@ func TestService_listPermission(t *testing.T) {
 		name            string
 		permissions     []accesscontrol.Permission
 		folders         []store.Folder
-		list            listRequest
+		list            ListRequest
 		expectedItems   []string
 		expectedFolders []string
 		expectedAll     bool
@@ -644,7 +575,7 @@ func TestService_listPermission(t *testing.T) {
 					Kind:   "*",
 				},
 			},
-			list: listRequest{
+			list: ListRequest{
 				Action:   "dashboards:read",
 				Group:    "dashboard.grafana.app",
 				Resource: "dashboards",
@@ -680,7 +611,7 @@ func TestService_listPermission(t *testing.T) {
 				{UID: "some_folder_1"},
 				{UID: "some_folder_2"},
 			},
-			list: listRequest{
+			list: ListRequest{
 				Action:   "dashboards:read",
 				Group:    "dashboard.grafana.app",
 				Resource: "dashboards",
@@ -707,7 +638,7 @@ func TestService_listPermission(t *testing.T) {
 				{UID: "some_folder_subsubchild", ParentUID: strPtr("some_folder_subchild2")},
 				{UID: "some_folder_1", ParentUID: strPtr("some_other_folder")},
 			},
-			list: listRequest{
+			list: ListRequest{
 				Action:   "dashboards:read",
 				Group:    "dashboard.grafana.app",
 				Resource: "dashboards",
@@ -736,7 +667,7 @@ func TestService_listPermission(t *testing.T) {
 				{UID: "some_folder_parent"},
 				{UID: "some_folder_child", ParentUID: strPtr("some_folder_parent")},
 			},
-			list: listRequest{
+			list: ListRequest{
 				Action:   "dashboards:read",
 				Group:    "dashboard.grafana.app",
 				Resource: "dashboards",
@@ -768,7 +699,7 @@ func TestService_listPermission(t *testing.T) {
 				{UID: "some_folder_subchild", ParentUID: strPtr("some_folder_child")},
 				{UID: "some_folder_child2", ParentUID: strPtr("some_folder_parent")},
 			},
-			list: listRequest{
+			list: ListRequest{
 				Action:   "dashboards:read",
 				Group:    "dashboard.grafana.app",
 				Resource: "dashboards",
@@ -782,7 +713,7 @@ func TestService_listPermission(t *testing.T) {
 			folders: []store.Folder{
 				{UID: "some_folder_1"},
 			},
-			list: listRequest{
+			list: ListRequest{
 				Action:   "dashboards:read",
 				Group:    "dashboard.grafana.app",
 				Resource: "dashboards",
@@ -803,7 +734,7 @@ func TestService_listPermission(t *testing.T) {
 				{UID: "some_folder_parent"},
 				{UID: "some_folder_child", ParentUID: strPtr("some_folder_parent")},
 			},
-			list: listRequest{
+			list: ListRequest{
 				Action:   "folders:read",
 				Group:    "folder.grafana.app",
 				Resource: "folders",
