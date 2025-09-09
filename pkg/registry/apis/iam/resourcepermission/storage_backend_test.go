@@ -18,18 +18,6 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
-// func TestIntegration_ResourcePermSqlBackend_ListResourcePermission(t *testing.T) {
-// 	if testing.Short() {
-// 		t.Skip("skipping integration test in short mode")
-// 	}
-// 	backend := setupBackend(t)
-// 	sql, err := backend.dbProvider(context.Background())
-// 	require.NoError(t, err)
-// 	setupTestRoles(t, sql.DB)
-
-// 	// TODO
-// }
-
 func TestIntegration_ResourcePermSqlBackend_ReadResource(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test in short mode")
@@ -348,6 +336,12 @@ func TestIntegration_ResourcePermSqlBackend_ListIterator(t *testing.T) {
 		t.Skip("skipping integration test in short mode")
 	}
 
+	// No result => list resource version should be current time
+	now := time.Date(2025, 9, 9, 0, 0, 0, 0, time.UTC)
+	timeNow = func() time.Time {
+		return now
+	}
+
 	backend := setupBackend(t)
 	sql, err := backend.dbProvider(context.Background())
 	require.NoError(t, err)
@@ -417,7 +411,7 @@ func TestIntegration_ResourcePermSqlBackend_ListIterator(t *testing.T) {
 		}
 
 		var results []v0alpha1.ResourcePermission
-		count, err := backend.ListIterator(context.Background(), req, func(it resource.ListIterator) error {
+		listRV, err := backend.ListIterator(context.Background(), req, func(it resource.ListIterator) error {
 			for it.Next() {
 				var perm v0alpha1.ResourcePermission
 				err := json.Unmarshal(it.Value(), &perm)
@@ -434,7 +428,7 @@ func TestIntegration_ResourcePermSqlBackend_ListIterator(t *testing.T) {
 		})
 
 		require.NoError(t, err)
-		require.Equal(t, int64(2), count) // dash1 and fold1
+		require.Equal(t, updated.UnixMilli(), listRV)
 		require.Len(t, results, 2)
 
 		// Results should be sorted by scope (alphabetically)
@@ -468,7 +462,7 @@ func TestIntegration_ResourcePermSqlBackend_ListIterator(t *testing.T) {
 		}
 
 		var results []v0alpha1.ResourcePermission
-		count, err := backend.ListIterator(context.Background(), req, func(it resource.ListIterator) error {
+		listRV, err := backend.ListIterator(context.Background(), req, func(it resource.ListIterator) error {
 			for it.Next() {
 				var perm v0alpha1.ResourcePermission
 				err := json.Unmarshal(it.Value(), &perm)
@@ -482,7 +476,7 @@ func TestIntegration_ResourcePermSqlBackend_ListIterator(t *testing.T) {
 		})
 
 		require.NoError(t, err)
-		require.Equal(t, int64(1), count) // Only fold1
+		require.Equal(t, updated.UnixMilli(), listRV) // Only fold1
 		require.Len(t, results, 1)
 		require.Equal(t, "folder.grafana.app-folders-fold1", results[0].Name)
 	})
@@ -500,7 +494,7 @@ func TestIntegration_ResourcePermSqlBackend_ListIterator(t *testing.T) {
 		}
 
 		callbackCalled := false
-		count, err := backend.ListIterator(context.Background(), req, func(it resource.ListIterator) error {
+		listRV, err := backend.ListIterator(context.Background(), req, func(it resource.ListIterator) error {
 			callbackCalled = true
 			// Just verify the iterator works
 			for it.Next() {
@@ -511,7 +505,7 @@ func TestIntegration_ResourcePermSqlBackend_ListIterator(t *testing.T) {
 
 		require.NoError(t, err)
 		require.True(t, callbackCalled)
-		require.Equal(t, int64(2), count)
+		require.Equal(t, updated.UnixMilli(), listRV)
 	})
 
 	t.Run("Should return empty results for org with no permissions", func(t *testing.T) {
@@ -527,7 +521,7 @@ func TestIntegration_ResourcePermSqlBackend_ListIterator(t *testing.T) {
 		}
 
 		var results []v0alpha1.ResourcePermission
-		count, err := backend.ListIterator(context.Background(), req, func(it resource.ListIterator) error {
+		listRV, err := backend.ListIterator(context.Background(), req, func(it resource.ListIterator) error {
 			for it.Next() {
 				var perm v0alpha1.ResourcePermission
 				err := json.Unmarshal(it.Value(), &perm)
@@ -538,7 +532,7 @@ func TestIntegration_ResourcePermSqlBackend_ListIterator(t *testing.T) {
 		})
 
 		require.NoError(t, err)
-		require.Zero(t, count)
+		require.Equal(t, listRV, now.UnixMilli())
 		require.Empty(t, results)
 	})
 
@@ -555,13 +549,13 @@ func TestIntegration_ResourcePermSqlBackend_ListIterator(t *testing.T) {
 		}
 
 		expectedErr := errors.New("callback error")
-		count, err := backend.ListIterator(context.Background(), req, func(it resource.ListIterator) error {
+		listRV, err := backend.ListIterator(context.Background(), req, func(it resource.ListIterator) error {
 			return expectedErr
 		})
 
 		require.Error(t, err)
 		require.Equal(t, expectedErr, err)
-		require.Zero(t, count)
+		require.Zero(t, listRV)
 	})
 }
 

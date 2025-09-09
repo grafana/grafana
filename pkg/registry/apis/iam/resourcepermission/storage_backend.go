@@ -66,7 +66,11 @@ func (s *ResourcePermSqlBackend) ListHistory(context.Context, *resourcepb.ListRe
 }
 
 func (s *ResourcePermSqlBackend) ListIterator(ctx context.Context, req *resourcepb.ListRequest, callback func(resource.ListIterator) error) (int64, error) {
-	ns, err := types.ParseNamespace(req.Options.Key.Namespace)
+	opts := req.Options
+	if opts == nil || opts.Key == nil || opts.Key.Namespace == "" {
+		return 0, apierrors.NewBadRequest("list requires a valid namespace")
+	}
+	ns, err := types.ParseNamespace(opts.Key.Namespace)
 	if err != nil {
 		return 0, err
 	}
@@ -74,23 +78,23 @@ func (s *ResourcePermSqlBackend) ListIterator(ctx context.Context, req *resource
 		return 0, apierrors.NewBadRequest(errInvalidNamespace.Error())
 	}
 
+	if req.ResourceVersion != 0 {
+		return 0, apierrors.NewBadRequest("list with explicit resourceVersion is not supported by this storage backend")
+	}
+
 	limit := req.Limit
 	if limit <= 0 {
 		limit = 50
 	}
 
-	var continueOffset int64 = 0
-	if req.NextPageToken != "" {
-		token, err := readContinueToken(req.NextPageToken)
-		if err != nil {
-			return 0, apierrors.NewBadRequest(fmt.Sprintf("invalid continue token: %v", err))
-		}
-		continueOffset = token.offset
+	token, err := readContinueToken(req.NextPageToken)
+	if err != nil {
+		return 0, apierrors.NewBadRequest(fmt.Sprintf("invalid continue token: %v", err))
 	}
 
 	pagination := &common.Pagination{
 		Limit:    limit,
-		Continue: continueOffset,
+		Continue: token.offset,
 	}
 
 	dbHelper, err := s.dbProvider(ctx)
@@ -101,6 +105,11 @@ func (s *ResourcePermSqlBackend) ListIterator(ctx context.Context, req *resource
 	}
 
 	iterator, err := s.newRoleIterator(ctx, dbHelper, ns, pagination)
+	if iterator != nil {
+		defer func() {
+			_ = iterator.Close()
+		}()
+	}
 	if err != nil {
 		return 0, err
 	}
@@ -110,7 +119,7 @@ func (s *ResourcePermSqlBackend) ListIterator(ctx context.Context, req *resource
 		return 0, err
 	}
 
-	return int64(len(iterator.resourcePermissions)), nil
+	return s.latestUpdate(ctx, dbHelper, ns), nil
 }
 
 func (s *ResourcePermSqlBackend) ListModifiedSince(ctx context.Context, key resource.NamespacedResource, sinceRv int64) (int64, iter.Seq2[*resource.ModifiedResource, error]) {

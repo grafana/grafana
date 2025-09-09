@@ -69,6 +69,19 @@ func TestTemplates(t *testing.T) {
 		return &v
 	}
 
+	getLastestUpdateQuery := func(orgID int64, scopePatterns []string) sqltemplate.SQLTemplate {
+		v := latestUpdateTemplate{
+			SQLTemplate:     sqltemplate.New(nodb.DialectForDriver()),
+			OrgID:           orgID,
+			ScopePatterns:   scopePatterns,
+			PermissionTable: nodb.Table("permission"),
+			RoleTable:       nodb.Table("role"),
+			ManagedPattern:  "managed:%",
+		}
+		v.SQLTemplate = mocks.NewTestingSQLTemplate()
+		return &v
+	}
+
 	getListResourcePermissionsQuery := func(q *ListResourcePermissionsQuery) sqltemplate.SQLTemplate {
 		v := listResourcePermissionsQueryTemplate{
 			SQLTemplate:        sqltemplate.New(nodb.DialectForDriver()),
@@ -157,6 +170,12 @@ func TestTemplates(t *testing.T) {
 							Continue: 5,
 						},
 					}),
+				},
+			},
+			latestUpdateTplt: {
+				{
+					Name: "basic_latest_update_query",
+					Data: getLastestUpdateQuery(3, []string{"folders:uid:%", "dashboards:uid:%"}),
 				},
 			},
 			resourcePermissionsQueryTplt: {

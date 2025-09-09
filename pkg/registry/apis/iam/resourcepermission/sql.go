@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
@@ -18,9 +19,6 @@ import (
 
 // List
 func (s *ResourcePermSqlBackend) newRoleIterator(ctx context.Context, dbHelper *legacysql.LegacyDatabaseHelper, ns types.NamespaceInfo, pagination *common.Pagination) (*listIterator, error) {
-	if ns.OrgID <= 0 {
-		return nil, fmt.Errorf("invalid namespace: %w", errInvalidNamespace)
-	}
 	if pagination == nil {
 		pagination = &common.Pagination{Limit: 100}
 	}
@@ -102,6 +100,29 @@ func (s *ResourcePermSqlBackend) newRoleIterator(ctx context.Context, dbHelper *
 		resourcePermissions: v0ResourcePermissions,
 		initOffset:          pagination.Continue,
 	}, nil
+}
+
+func (s *ResourcePermSqlBackend) latestUpdate(ctx context.Context, dbHelper *legacysql.LegacyDatabaseHelper, ns types.NamespaceInfo) int64 {
+	scopePatterns := make([]string, 0, len(s.mappers)*3)
+	for _, mapper := range s.mappers {
+		scopePatterns = append(scopePatterns, mapper.ScopePattern())
+	}
+	query, args, err := buildLatestUpdateQueryFromTemplate(dbHelper, ns.OrgID, scopePatterns)
+	if err != nil {
+		s.logger.FromContext(ctx).Warn("Failed to build latest update query", "error", err)
+		return timeNow().UnixMilli()
+	}
+
+	var maxUpdated time.Time
+	err = dbHelper.DB.GetSqlxSession().Get(ctx, &maxUpdated, query, args...)
+	if err != nil {
+		if !errors.Is(err, sql.ErrNoRows) {
+			s.logger.FromContext(ctx).Warn("Failed to get latest update for roles", "error", err)
+		}
+		return timeNow().UnixMilli()
+	}
+
+	return maxUpdated.UnixMilli()
 }
 
 // Get

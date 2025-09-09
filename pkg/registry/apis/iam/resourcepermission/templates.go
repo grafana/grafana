@@ -24,6 +24,7 @@ var (
 	assignmentInsertTplt                = mustTemplate("assignment_insert.sql")
 	permissionInsertTplt                = mustTemplate("permission_insert.sql")
 	pageQueryTplt                       = mustTemplate("page_query.sql")
+	latestUpdateTplt                    = mustTemplate("latest_update_query.sql")
 )
 
 func mustTemplate(filename string) *template.Template {
@@ -61,6 +62,41 @@ func buildPageQueryFromTemplate(dbHelper *legacysql.LegacyDatabaseHelper, query 
 		return "", nil, fmt.Errorf("execute template %q: %w", pageQueryTplt.Name(), err)
 	}
 
+	return rawQuery, req.GetArgs(), nil
+}
+
+type latestUpdateTemplate struct {
+	sqltemplate.SQLTemplate
+	OrgID           int64
+	ScopePatterns   []string
+	PermissionTable string
+	RoleTable       string
+	ManagedPattern  string
+}
+
+func (l latestUpdateTemplate) Validate() error {
+	if l.OrgID <= 0 {
+		return fmt.Errorf("orgID must be set")
+	}
+	if len(l.ScopePatterns) == 0 {
+		return fmt.Errorf("at least one scope pattern is required")
+	}
+	return nil
+}
+
+func buildLatestUpdateQueryFromTemplate(dbHelper *legacysql.LegacyDatabaseHelper, orgID int64, scopePatterns []string) (string, []interface{}, error) {
+	req := latestUpdateTemplate{
+		SQLTemplate:     sqltemplate.New(dbHelper.DialectForDriver()),
+		OrgID:           orgID,
+		ScopePatterns:   scopePatterns,
+		PermissionTable: dbHelper.Table("permission"),
+		RoleTable:       dbHelper.Table("role"),
+		ManagedPattern:  "managed:%",
+	}
+	rawQuery, err := sqltemplate.Execute(latestUpdateTplt, req)
+	if err != nil {
+		return "", nil, fmt.Errorf("execute template %q: %w", latestUpdateTplt.Name(), err)
+	}
 	return rawQuery, req.GetArgs(), nil
 }
 
