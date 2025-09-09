@@ -103,38 +103,42 @@ export const StateIcon = memo(function StateIcon({
   }
 
   return (
-    <Text color={iconColor} title={stateName}>
-      <div className={styles.iconsContainer}>
-        <Icon name={iconName} width={ICON_SIZE} height={ICON_SIZE} />
-        {/* this loading spinner works by using an optical illusion;
+    <Tooltip content={stateName} placement="right">
+      <div>
+        <Text color={iconColor}>
+          <div className={styles.iconsContainer}>
+            <Icon name={iconName} width={ICON_SIZE} height={ICON_SIZE} />
+            {/* this loading spinner works by using an optical illusion;
               the actual icon is static and the "spinning" part is just a semi-transparent darker circle overlayed on top.
               This makes it look like there is a small bright colored spinner rotating.
             */}
-        {operation && (
-          <svg
-            width={ICON_SIZE}
-            height={ICON_SIZE}
-            viewBox="0 0 20 20"
-            version="1.1"
-            xmlns="http://www.w3.org/2000/svg"
-            className={styles.spinning}
-          >
-            <circle
-              r={ICON_SIZE / 2}
-              cx="10"
-              cy="10"
-              // make sure to match this color to the color of the list item background where it's being used! Works for both light and dark themes.
-              stroke={theme.colors.background.primary}
-              strokeWidth="2"
-              strokeLinecap="round"
-              fill="transparent"
-              strokeOpacity={0.85}
-              strokeDasharray="20px"
-            />
-          </svg>
-        )}
+            {operation && (
+              <svg
+                width={ICON_SIZE}
+                height={ICON_SIZE}
+                viewBox="0 0 20 20"
+                version="1.1"
+                xmlns="http://www.w3.org/2000/svg"
+                className={styles.spinning}
+              >
+                <circle
+                  r={ICON_SIZE / 2}
+                  cx="10"
+                  cy="10"
+                  // make sure to match this color to the color of the list item background where it's being used! Works for both light and dark themes.
+                  stroke={theme.colors.background.primary}
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  fill="transparent"
+                  strokeOpacity={0.85}
+                  strokeDasharray="20px"
+                />
+              </svg>
+            )}
+          </div>
+        </Text>
       </div>
-    </Text>
+    </Tooltip>
   );
 });
 
