@@ -47,9 +47,6 @@ export function FeatureHighlightsTabPage({
     alertingSupported: dataSourceHeader.alertingSupported,
   });
 
-  console.log({ pageNav });
-  console.log({ info });
-
   return (
     <Page
       navId={navId}
