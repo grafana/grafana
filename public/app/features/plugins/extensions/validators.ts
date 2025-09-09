@@ -91,6 +91,16 @@ export function isExtensionPointIdValid({
     return false;
   }
 
+  if (
+    !isInsidePlugin &&
+    !Object.values<string>(PluginExtensionPoints).some(
+      (extension) => extension === extensionPointId || new RegExp(extension).test(extensionPointId)
+    )
+  ) {
+    log.error(errors.INVALID_EXTENSION_POINT_ID_GRAFANA_EXPOSED);
+    return false;
+  }
+
   return true;
 }
 

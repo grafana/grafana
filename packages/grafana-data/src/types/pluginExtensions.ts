@@ -206,6 +206,7 @@ export enum PluginExtensionPoints {
   LogsViewResourceAttributes = 'grafana/logsview/resource-attributes',
   AppChrome = 'grafana/app/chrome/v1',
   ExtensionSidebar = 'grafana/extension-sidebar/v0-alpha',
+  NavLandingPage = 'grafana/nav-landing-page/.*/v1',
 }
 
 // Extension Points available in plugins

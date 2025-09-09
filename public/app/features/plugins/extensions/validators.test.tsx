@@ -211,6 +211,7 @@ describe('Plugin Extension Validators', () => {
       ['plugins/grafana-oncall-app/alert-group/action', 'grafana-oncall-app'],
       ['plugins/grafana-oncall-app/alert-group/action/v1', 'grafana-oncall-app'],
       ['plugins/grafana-oncall-app/alert-group/action/v1.0.0', 'grafana-oncall-app'],
+      ['grafana/nav-landing-page/observability/v1', 'grafana'],
     ])('should return TRUE if the extension point id is valid ("%s", "%s")', (extensionPointId, pluginId) => {
       expect(
         isExtensionPointIdValid({
@@ -233,6 +234,11 @@ describe('Plugin Extension Validators', () => {
         // Missing plugin id prefix
         'extension-point/v1',
         'myorgs-extensions-app',
+      ],
+      [
+        // Not exposed to plugins
+        'grafana/not-exposed-extension-point/v1',
+        'grafana',
       ],
     ])('should return FALSE if the extension point id is invalid ("%s", "%s")', (extensionPointId, pluginId) => {
       expect(

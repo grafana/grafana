@@ -7,6 +7,8 @@ export const INVALID_EXTENSION_POINT_ID_PLUGIN = (pluginId: string, extensionPoi
 export const INVALID_EXTENSION_POINT_ID_GRAFANA_PREFIX = (extensionPointId: string) =>
   `Invalid usage of extension point. Reason: Core Grafana extension point id should be prefixed with "grafana/", e.g "grafana/${extensionPointId}".`;
 
+export const INVALID_EXTENSION_POINT_ID_GRAFANA_EXPOSED = `Invalid usage of extension point. Reason: Core Grafana extension point id should be exposed to plugins via the "PluginExtensionPoints" enum in the "grafana-data" package (/packages/grafana-data/src/types/pluginExtensions.ts).`;
+
 export const EXTENSION_POINT_META_INFO_MISSING =
   'Invalid usage of extension point. Reason: The extension point is not recorded in the "plugin.json" file. Extension points must be listed in the section "extensions.extensionPoints[]". Returning an empty array of extensions.';
 
