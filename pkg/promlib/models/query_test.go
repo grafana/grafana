@@ -37,36 +37,68 @@ func TestDDInterval(t *testing.T) {
 			expectedInterval: 20 * time.Second,
 		},
 		{
+			timeRange:        75 * time.Minute,
+			expectedInterval: 20 * time.Second,
+		},
+		{
 			timeRange:        2 * time.Hour,
+			expectedInterval: 30 * time.Second,
+		},
+		{
+			timeRange:        2*time.Hour + 30*time.Minute,
+			expectedInterval: 30 * time.Second,
+		},
+		{
+			timeRange:        3 * time.Hour,
 			expectedInterval: time.Minute,
 		},
 		{
-			timeRange:        4 * time.Hour,
+			timeRange:        5 * time.Hour,
 			expectedInterval: time.Minute,
 		},
 		{
 			timeRange:        8 * time.Hour,
-			expectedInterval: 5 * time.Minute,
+			expectedInterval: 2 * time.Minute,
 		},
 		{
 			timeRange:        12 * time.Hour,
-			expectedInterval: 5 * time.Minute,
+			expectedInterval: 2 * time.Minute,
+		},
+		{
+			timeRange:        12*time.Hour + 30*time.Minute,
+			expectedInterval: 2 * time.Minute,
 		},
 		{
 			timeRange:        24 * time.Hour,
 			expectedInterval: 5 * time.Minute,
 		},
 		{
-			timeRange:        36 * time.Hour,
+			timeRange:        25 * time.Hour,
+			expectedInterval: 5 * time.Minute,
+		},
+		{
+			timeRange:        48 * time.Hour,
 			expectedInterval: 10 * time.Minute,
 		},
 		{
-			timeRange:        2 * 24 * time.Hour,
+			timeRange:        50 * time.Hour,
 			expectedInterval: 10 * time.Minute,
 		},
 		{
-			timeRange:        4 * 24 * time.Hour,
-			expectedInterval: time.Hour,
+			timeRange:        72 * time.Hour,
+			expectedInterval: 20 * time.Minute,
+		},
+		{
+			timeRange:        75 * time.Hour,
+			expectedInterval: 20 * time.Minute,
+		},
+		{
+			timeRange:        144 * time.Hour,
+			expectedInterval: 30 * time.Minute,
+		},
+		{
+			timeRange:        150 * time.Hour,
+			expectedInterval: 30 * time.Minute,
 		},
 		{
 			timeRange:        7 * 24 * time.Hour,
@@ -120,11 +152,23 @@ func TestLargeInterval(t *testing.T) {
 			expectedInterval: 2 * time.Minute,
 		},
 		{
+			timeRange:        6 * time.Hour,
+			expectedInterval: 5 * time.Minute,
+		},
+		{
 			timeRange:        8 * time.Hour,
-			expectedInterval: 20 * time.Minute,
+			expectedInterval: 5 * time.Minute,
 		},
 		{
 			timeRange:        12 * time.Hour,
+			expectedInterval: 10 * time.Minute,
+		},
+		{
+			timeRange:        16 * time.Hour,
+			expectedInterval: 10 * time.Minute,
+		},
+		{
+			timeRange:        20 * time.Hour,
 			expectedInterval: 20 * time.Minute,
 		},
 		{
@@ -140,15 +184,35 @@ func TestLargeInterval(t *testing.T) {
 			expectedInterval: 30 * time.Minute,
 		},
 		{
+			timeRange:        3 * 24 * time.Hour,
+			expectedInterval: time.Hour,
+		},
+		{
 			timeRange:        4 * 24 * time.Hour,
 			expectedInterval: 2 * time.Hour,
 		},
 		{
-			timeRange:        7 * 24 * time.Hour,
+			timeRange:        5 * 24 * time.Hour,
 			expectedInterval: 2 * time.Hour,
 		},
 		{
-			timeRange:        15 * 24 * time.Hour,
+			timeRange:        10 * 24 * time.Hour,
+			expectedInterval: 4 * time.Hour,
+		},
+		{
+			timeRange:        14 * 24 * time.Hour,
+			expectedInterval: 4 * time.Hour,
+		},
+		{
+			timeRange:        20 * 24 * time.Hour,
+			expectedInterval: 8 * time.Hour,
+		},
+		{
+			timeRange:        21 * 24 * time.Hour,
+			expectedInterval: 8 * time.Hour,
+		},
+		{
+			timeRange:        25 * 24 * time.Hour,
 			expectedInterval: 12 * time.Hour,
 		},
 		{
@@ -157,11 +221,11 @@ func TestLargeInterval(t *testing.T) {
 		},
 		{
 			timeRange:        60 * 24 * time.Hour,
-			expectedInterval: 12 * time.Hour, // Returns barChartDefaultMaxInterval for ranges beyond predefined thresholds
+			expectedInterval: 12 * time.Hour, // Returns barChartMaxInterval for ranges beyond predefined thresholds
 		},
 		{
 			timeRange:        365 * 24 * time.Hour,
-			expectedInterval: 12 * time.Hour, // Returns barChartDefaultMaxInterval for ranges beyond predefined thresholds
+			expectedInterval: 12 * time.Hour, // Returns barChartMaxInterval for ranges beyond predefined thresholds
 		},
 	}
 

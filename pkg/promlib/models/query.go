@@ -437,14 +437,22 @@ type timeRangeToInterval struct {
 	intervalUpToTimeRange time.Duration
 }
 
-// Reference: https://docs.datadoghq.com/dashboards/functions/rollup/#rollup-interval-enforced-vs-custom
+// These values were determined manually by observing when the step interval changes for time ranges up to 1 week.
+// Although Datadog documents the default rollup intervals based on time range here:
+// https://docs.datadoghq.com/dashboards/functions/rollup/#rollup-interval-enforced-vs-custom
+// the actual step intervals seen in the UI do not always match the documented values.
 var defaultMaxInterval = 4 * time.Hour
 var defaultTimeRangeToIntervalSorted = []timeRangeToInterval{
-	{timeRange: time.Hour, intervalUpToTimeRange: time.Second * 20},
-	{timeRange: time.Hour * 4, intervalUpToTimeRange: time.Minute},
-	{timeRange: time.Hour * 24, intervalUpToTimeRange: time.Minute * 5},
-	{timeRange: time.Hour * 24 * 2, intervalUpToTimeRange: time.Minute * 10},
+	{timeRange: time.Minute * 75, intervalUpToTimeRange: time.Second * 20},
+	{timeRange: (time.Hour * 2) + (time.Minute * 30), intervalUpToTimeRange: time.Second * 30},
+	{timeRange: time.Hour * 5, intervalUpToTimeRange: time.Minute * 1},
+	{timeRange: (time.Hour * 12) + (time.Minute * 30), intervalUpToTimeRange: time.Minute * 2},
+	{timeRange: time.Hour * (24 + 1), intervalUpToTimeRange: time.Minute * 5},
+	{timeRange: time.Hour * (48 + 2), intervalUpToTimeRange: time.Minute * 10},
+	{timeRange: time.Hour * (72 + 3), intervalUpToTimeRange: time.Minute * 20},
+	{timeRange: time.Hour * (144 + 6), intervalUpToTimeRange: time.Minute * 30},
 	{timeRange: time.Hour * 24 * 7, intervalUpToTimeRange: time.Hour},
+	{timeRange: time.Hour * 24 * 13, intervalUpToTimeRange: time.Hour * 2},
 	{timeRange: time.Hour * 24 * 31, intervalUpToTimeRange: time.Hour * 4},
 }
 
@@ -452,9 +460,14 @@ var barChartMaxInterval = 12 * time.Hour
 var barChartTimeRangeToIntervalSorted = []timeRangeToInterval{
 	{timeRange: time.Hour, intervalUpToTimeRange: time.Minute},
 	{timeRange: time.Hour * 4, intervalUpToTimeRange: time.Minute * 2},
+	{timeRange: time.Hour * 8, intervalUpToTimeRange: time.Minute * 5},
+	{timeRange: time.Hour * 16, intervalUpToTimeRange: time.Minute * 10},
 	{timeRange: time.Hour * 24, intervalUpToTimeRange: time.Minute * 20},
 	{timeRange: time.Hour * 24 * 2, intervalUpToTimeRange: time.Minute * 30},
-	{timeRange: time.Hour * 24 * 7, intervalUpToTimeRange: time.Hour * 2},
+	{timeRange: time.Hour * 24 * 3, intervalUpToTimeRange: time.Hour * 1},
+	{timeRange: time.Hour * 24 * 5, intervalUpToTimeRange: time.Hour * 2},
+	{timeRange: time.Hour * 24 * 14, intervalUpToTimeRange: time.Hour * 4},
+	{timeRange: time.Hour * 24 * 21, intervalUpToTimeRange: time.Hour * 8},
 	{timeRange: time.Hour * 24 * 31, intervalUpToTimeRange: time.Hour * 12},
 }
 
