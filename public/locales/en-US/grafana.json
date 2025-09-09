@@ -4166,9 +4166,6 @@
       "go-to-advisor": "Go to Advisor"
     },
     "cache-feature-highlight-page": {
-      "foot-note": "After creating an account, you can have Grafana <2>migrate this instance to Grafana Cloud</2> with minimal effort.",
-      "footer": "Create a Grafana Cloud Free account to start using data source permissions. This feature is also available with a Grafana Enterprise license.",
-      "footer-link": "Learn about Enterprise",
       "header": "Query caching can improve load times and reduce API costs by temporarily storing the results of data source queries. When you or other users submit the same query, the results will come back from the cache instead of from the data source.",
       "item-1": "Faster dashboard load times, especially for popular dashboards.",
       "item-2": "Reduced API costs.",
@@ -4224,6 +4221,11 @@
         "unknown-datasource": "Unknown datasource"
       }
     },
+    "feature-highlight-page": {
+      "foot-note": "After creating an account, you can have Grafana <2>migrate this instance to Grafana Cloud</2> with minimal effort.",
+      "footer": "Create a Grafana Cloud Free account to start using data source permissions. This feature is also available with a Grafana Enterprise license.",
+      "footer-link": "Learn about Enterprise"
+    },
     "insights-feature-highlight-page": {
       "footer": "Grafana Enterprise offers you not only usage insights but many more advanced features like Enterprise plugins, dashboard search and reporting.",
       "header": "Usage Insights provide detailed information about data source usage, like the number of views, queries, and errors users have experienced. You can use this to improve users’ experience and troubleshoot issues.",
@@ -4265,9 +4267,6 @@
       }
     },
     "permissions-feature-highlight-page": {
-      "foot-note": "After creating an account, you can have Grafana <2>migrate this instance to Grafana Cloud</2> with minimal effort.",
-      "footer": "Create a Grafana Cloud Free account to start using data source permissions. This feature is also available with a Grafana Enterprise license.",
-      "footer-link": "Learn about Enterprise",
       "header": "With data source permissions, you can protect sensitive data by limiting access to this data source to specific users, teams, and roles.",
       "item-1": "Protect sensitive data, like security logs, production databases, and personally-identifiable information",
       "item-2": "Clean up users’ experience by hiding data sources they don’t need to use",
