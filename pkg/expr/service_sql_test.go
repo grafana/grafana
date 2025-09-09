@@ -209,6 +209,9 @@ func TestSQLServiceErrors(t *testing.T) {
 		s.features = featuremgmt.WithFeatures(featuremgmt.FlagSqlExpressions)
 
 		_, err := s.BuildPipeline(t.Context(), req)
+		var sqlErr *sql.ErrorWithCategory
+		require.ErrorAs(t, err, &sqlErr)
+		require.Equal(t, sql.ErrCategoryTableNotFound, sqlErr.Category())
 		require.Error(t, err, "whole pipeline fails when selecting a dependency that does not exist")
 	})
 
