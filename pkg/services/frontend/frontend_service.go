@@ -4,14 +4,16 @@ import (
 	"context"
 	"net"
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
+
+	utilnet "k8s.io/apimachinery/pkg/util/net"
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/trace"
-	"k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
@@ -173,12 +175,20 @@ func (s *frontendService) registerRoutes(m *web.Mux) {
 func (s *frontendService) handleGotoRequest(writer http.ResponseWriter, request *http.Request) {
 	s.log.Info("Handling goto request", "uid", request.URL.Path, "method", request.Method)
 
+	// Get the ReqContext from the request (set by our context middleware)
+	reqCtx := contexthandler.FromContext(request.Context())
+	if reqCtx == nil {
+		s.log.Error("No ReqContext found in request")
+		http.Redirect(writer, request, s.cfg.AppURL, http.StatusFound)
+		return
+	}
+
 	// Extract UID from uid like /goto/abc123
 	uid := strings.TrimPrefix(request.URL.Path, "/goto/")
 	if uid == "" || uid == request.URL.Path {
 		// No UID found, serve index page
 		s.log.Debug("No UID found in goto uid, serving index page", "original_path", request.URL.Path)
-		s.index.HandleRequest(writer, request)
+		http.Redirect(writer, request, s.cfg.AppURL, http.StatusFound)
 		return
 	}
 
@@ -221,19 +231,18 @@ func (s *frontendService) handleGotoRequest(writer http.ResponseWriter, request 
 // handleKubernetesShortURLRedirect handles the short URL redirect using K8s client (like short_url.go)
 func (s *frontendService) handleKubernetesShortURLRedirect(writer http.ResponseWriter, request *http.Request, shortURLUID string) {
 	s.log.Info("Starting Kubernetes short URL redirect", "uid", shortURLUID)
-
 	// Get the ReqContext from the request (set by our context middleware)
 	reqCtx := contexthandler.FromContext(request.Context())
 	if reqCtx == nil {
 		s.log.Error("No ReqContext found in request")
-		s.index.HandleRequest(writer, request)
+		http.Redirect(writer, request, s.cfg.AppURL, http.StatusFound)
 		return
 	}
 
 	client, ok := s.getK8sClient(reqCtx)
 	if !ok {
 		s.log.Error("Failed to get Kubernetes client")
-		s.index.HandleRequest(writer, request)
+		http.Redirect(writer, request, s.cfg.AppURL, http.StatusFound)
 		return
 	}
 
@@ -241,7 +250,7 @@ func (s *frontendService) handleKubernetesShortURLRedirect(writer http.ResponseW
 	shortURLObj, err := client.Get(request.Context(), shortURLUID, v1.GetOptions{})
 	if err != nil {
 		s.log.Error("Failed to get short URL from Kubernetes", "uid", shortURLUID, "error", err)
-		s.writeKubernetesError(writer, request, err)
+		http.Redirect(writer, request, s.cfg.AppURL, http.StatusFound)
 		return
 	}
 
@@ -284,46 +293,21 @@ func (s *frontendService) getK8sClient(c *contextmodel.ReqContext) (dynamic.Reso
 	// Get REST config with proper error handling
 	restConfig := s.clientConfigProvider.GetDirectRestConfig(c)
 	if restConfig == nil {
-		s.log.Error("GetDirectRestConfig returned nil - API server may not be available for frontend service",
-			"user_id", c.SignedInUser.UserID,
-			"org_id", c.OrgID,
-			"login", c.SignedInUser.Login)
+		s.log.Error("GetDirectRestConfig returned nil - API server may not be available for frontend service")
 		return nil, false
 	}
 
 	s.log.Debug("Got REST config from clientConfigProvider",
-		"host", restConfig.Host,
-		"user_id", c.SignedInUser.UserID,
-		"org_id", c.OrgID)
+		"host", restConfig.Host)
 
 	dyn, err := dynamic.NewForConfig(restConfig)
 	if err != nil {
 		s.log.Error("Failed to create dynamic client", "error", err)
 		return nil, false
 	}
-	return dyn.Resource(s.gvr).Namespace(s.namespacer(c.OrgID)), true
-}
-
-// writeKubernetesError handles Kubernetes API errors (same as short_url.go)
-func (s *frontendService) writeKubernetesError(writer http.ResponseWriter, request *http.Request, err error) {
-	//nolint:errorlint
-	statusError, ok := err.(*errors.StatusError)
-	if ok {
-		statusCode := statusError.Status().Code
-		s.log.Warn("Kubernetes API status error during short URL redirect",
-			"status_code", statusCode,
-			"message", statusError.Status().Message,
-			"error", err)
-
-		if statusCode == 404 {
-			s.log.Info("Short URL not found in Kubernetes, serving index page")
-		}
-	} else {
-		s.log.Error("Non-status Kubernetes API error during short URL redirect", "error", err)
-	}
-
-	// Fallback to serving index page instead of redirecting to app URL
-	s.index.HandleRequest(writer, request)
+	// Extract and format namespace from the original request
+	namespace := s.extractAndFormatNamespace(c.Req)
+	return dyn.Resource(s.gvr).Namespace(namespace), true
 }
 
 // frontendDirectRestConfigProvider is a simplified DirectRestConfigProvider
@@ -337,16 +321,14 @@ func (f *frontendDirectRestConfigProvider) GetDirectRestConfig(c *contextmodel.R
 	// Read API server URL from config with fallback
 	apiServerURL := f.cfg.Raw.Section("kubernetes").Key("api_server_url").MustString("http://grafana-api:3000")
 
-	f.log.Debug("Creating REST config for remote API server",
-		"api_server_url", apiServerURL,
-		"user_id", c.SignedInUser.UserID,
-		"org_id", c.OrgID)
-
 	return &rest.Config{
 		Host: apiServerURL,
-		Transport: &authForwardingRoundTripper{
-			originalRequest: c.Req,
-			log:             f.log,
+		WrapTransport: func(rt http.RoundTripper) http.RoundTripper {
+			return &userAuthRoundTripper{
+				originalRequest: c.Req,
+				transport:       rt,
+				log:             f.log,
+			}
 		},
 	}
 }
@@ -356,52 +338,66 @@ func (f *frontendDirectRestConfigProvider) DirectlyServeHTTP(w http.ResponseWrit
 	http.Error(w, "Not implemented", http.StatusNotImplemented)
 }
 
-// authForwardingRoundTripper forwards authentication from the original request
-type authForwardingRoundTripper struct {
+// userAuthRoundTripper forwards user authentication headers to the grafana-api server
+// This ensures the frontend service acts with the user's identity, not as a service
+type userAuthRoundTripper struct {
 	originalRequest *http.Request
+	transport       http.RoundTripper
 	log             log.Logger
 }
 
-func (a *authForwardingRoundTripper) RoundTrip(req *http.Request) (*http.Response, error) {
-	// Build the target URL
-	targetURL := req.URL.String()
-	if !strings.HasPrefix(targetURL, "http") {
-		// Relative URL - the Host from rest.Config will be prefixed
-		targetURL = req.URL.Path
-		if req.URL.RawQuery != "" {
-			targetURL += "?" + req.URL.RawQuery
-		}
+func (u *userAuthRoundTripper) RoundTrip(req *http.Request) (*http.Response, error) {
+	// Clone request properly (don't mutate the original)
+	req = utilnet.CloneRequest(req)
+
+	// Always forward user authentication headers
+	u.log.Debug("Forwarding user authentication headers to grafana-api")
+	if u.originalRequest != nil {
+		u.copyAuthHeaders(req)
 	}
 
-	a.log.Debug("Forwarding K8s API request",
-		"method", req.Method,
-		"path", targetURL)
-
-	// Forward authentication headers from the original frontend request
-	if a.originalRequest != nil {
-		a.copyAuthHeaders(req)
-	}
-
-	// Use default HTTP client with reasonable timeout
-	client := &http.Client{Timeout: 30 * time.Second}
-	return client.Do(req)
+	// Chain to base transport
+	return u.transport.RoundTrip(req)
 }
 
-// copyAuthHeaders copies authentication-related headers from original request
-func (a *authForwardingRoundTripper) copyAuthHeaders(req *http.Request) {
+// copyAuthHeaders copies authentication-related headers from the original user request
+func (u *userAuthRoundTripper) copyAuthHeaders(req *http.Request) {
+	// Forward standard authentication headers
 	authHeaders := []string{"Cookie", "Authorization"}
 	for _, header := range authHeaders {
-		if value := a.originalRequest.Header.Get(header); value != "" {
+		if value := u.originalRequest.Header.Get(header); value != "" {
 			req.Header.Set(header, value)
 		}
 	}
 
-	// Copy Grafana-specific headers
-	for name, values := range a.originalRequest.Header {
+	// Forward Grafana-specific headers (org context, etc.)
+	for name, values := range u.originalRequest.Header {
 		if strings.HasPrefix(name, "X-Grafana") {
 			for _, value := range values {
 				req.Header.Add(name, value)
 			}
 		}
 	}
+}
+
+// extractAndFormatNamespace extracts orgId from URL and formats it for namespace mapping
+func (s *frontendService) extractAndFormatNamespace(r *http.Request) string {
+	// Extract orgId from query parameter (e.g., /goto/abc123?orgId=org-2 or ?orgId=5 or ?orgId=default)
+	if orgIDParam := r.URL.Query().Get("orgId"); orgIDParam != "" {
+		// If it's a numeric value, use the namespacer to convert it
+		if orgID, err := strconv.ParseInt(orgIDParam, 10, 64); err == nil && orgID > 0 {
+			namespace := s.namespacer(orgID)
+			s.log.Debug("Extracted numeric orgId, converted to namespace", "org_id", orgID, "param_value", orgIDParam, "namespace", namespace)
+			return namespace
+		}
+
+		// If it's a string (like "org-2" or "default"), return it as-is
+		s.log.Debug("Extracted string orgId, using as-is for namespace", "param_value", orgIDParam, "namespace", orgIDParam)
+		return orgIDParam
+	}
+
+	// Default to org 1 namespace if no orgId parameter found
+	defaultNamespace := s.namespacer(1)
+	s.log.Debug("No orgId parameter found, using default namespace", "namespace", defaultNamespace)
+	return defaultNamespace
 }
