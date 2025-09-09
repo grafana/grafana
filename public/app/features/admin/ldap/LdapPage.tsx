@@ -24,7 +24,7 @@ import { LdapConnectionStatus } from './LdapConnectionStatus';
 import { LdapSyncInfo } from './LdapSyncInfo';
 import { LdapUserInfo } from './LdapUserInfo';
 
-interface Props extends GrafanaRouteComponentProps<{}, { username?: string }> { }
+interface Props extends GrafanaRouteComponentProps<{}, { username?: string }> {}
 
 interface FormModel {
   username: string;

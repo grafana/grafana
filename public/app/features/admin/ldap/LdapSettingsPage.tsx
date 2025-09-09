@@ -469,12 +469,9 @@ export const LdapSettingsPage = () => {
               />
             )}
           </form>
-        {isTestDrawerOpen && (
-          <LdapTestDrawer
-            onClose={() => setIsTestDrawerOpen(false)}
-            username={usernameParam || undefined}
-          />
-        )}
+          {isTestDrawerOpen && (
+            <LdapTestDrawer onClose={() => setIsTestDrawerOpen(false)} username={usernameParam || undefined} />
+          )}
         </FormProvider>
       </Page.Contents>
     </Page>
