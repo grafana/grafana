@@ -965,10 +965,6 @@ export interface FeatureToggles {
   */
   pluginsAutoUpdate?: boolean;
   /**
-  * Register MT frontend
-  */
-  multiTenantFrontend?: boolean;
-  /**
   * Enables the alerting list view v2 preview toggle
   */
   alertingListViewV2PreviewToggle?: boolean;
@@ -1009,6 +1005,16 @@ export interface FeatureToggles {
   * @default false
   */
   alertEnrichment?: boolean;
+  /**
+  * Allow multiple steps per enrichment.
+  * @default false
+  */
+  alertEnrichmentMultiStep?: boolean;
+  /**
+  * Enable conditional alert enrichment steps.
+  * @default false
+  */
+  alertEnrichmentConditional?: boolean;
   /**
   * Enables the API to import Alertmanager configuration
   * @default false

@@ -58,7 +58,7 @@ func New(ctx context.Context, configDirectory string, provisioner dashboards.Das
 	}
 
 	if dual != nil && !dual.ShouldManage(dashboard.DashboardResourceInfo.GroupResource()) {
-		dual = nil // not activily managed
+		dual = nil // not actively managed
 	}
 
 	d := &Provisioner{
