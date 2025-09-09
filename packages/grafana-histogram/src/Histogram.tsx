@@ -21,8 +21,9 @@ import {
   PlotLegend,
   measureText,
   UPLOT_AXIS_FONT_SIZE,
+  getStackingGroups,
+  preparePlotData2,
 } from '@grafana/ui';
-import { getStackingGroups, preparePlotData2 } from '@grafana/ui/internal';
 
 import { defaultFieldConfig, FieldConfig, Options } from './panelcfg.gen';
 

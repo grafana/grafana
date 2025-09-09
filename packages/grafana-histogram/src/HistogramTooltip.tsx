@@ -1,7 +1,7 @@
 import { ReactNode, useMemo } from 'react';
 
 import { DataFrame, formattedValueToString } from '@grafana/data';
-import { SortOrder, TooltipDisplayMode } from '@grafana/schema/dist/esm/common/common.gen';
+import { SortOrder, TooltipDisplayMode } from '@grafana/schema';
 import {
   VizTooltipContent,
   VizTooltipFooter,
@@ -9,10 +9,9 @@ import {
   VizTooltipWrapper,
   getContentItems,
   VizTooltipItem,
-} from '@grafana/ui/internal';
+} from '@grafana/ui';
 
-import { getDataLinks } from '../status-history/utils';
-import { isTooltipScrollable } from '../timeseries/utils';
+import { getDataLinks, isTooltipScrollable } from './utils/duplicated';
 
 export interface HistogramTooltipProps {
   // aligned series frame
