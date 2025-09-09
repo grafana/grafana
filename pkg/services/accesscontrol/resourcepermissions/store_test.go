@@ -753,10 +753,6 @@ func retrievePermissionsHelper(store *store, t *testing.T) []orgPermission {
 }
 
 func TestStore_StoreActionSet(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
-
 	type actionSetTest struct {
 		desc     string
 		resource string
