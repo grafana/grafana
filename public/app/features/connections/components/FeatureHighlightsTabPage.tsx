@@ -98,7 +98,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   content: css({
     flex: '0 0 40%',
-    minWidth: 0,
   }),
   imageContainer: css({
     flex: '0 0 60%',
