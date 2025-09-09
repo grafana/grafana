@@ -314,7 +314,7 @@ func (s *ServiceImpl) addPluginToSection(c *contextmodel.ReqContext, treeRoot *n
 				Id:         navtree.NavIDAdaptiveTelemetry,
 				SubTitle:   "Reduce noise, cut costs, and accelerate troubleshooting by intelligently ingesting only the telemetry data that matters most.",
 				Icon:       "adaptive-telemetry",
-				SortWeight: navtree.WeightDataConnections + 1,
+				SortWeight: navtree.WeightAIAndML + 1, // Place under "AI & Machine Learning"
 				Children:   []*navtree.NavLink{appLink},
 				Url:        "adaptive-telemetry",
 				// Use the icon URL from the first "Adaptive Telemetry" plugin in the list (they will all be the same)
