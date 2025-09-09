@@ -19,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
+	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 var (
@@ -252,9 +253,7 @@ func TestIntegration_ResourcePermSqlBackend_newRoleIterator(t *testing.T) {
 }
 
 func TestIntegration_ResourcePermSqlBackend_getResourcePermission(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test in short mode")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	backend := setupBackend(t)
 	sql, err := backend.dbProvider(context.Background())
@@ -380,9 +379,7 @@ func TestResourcePermSqlBackend_deleteResourcePermission(t *testing.T) {
 }
 
 func TestIntegration_ResourcePermSqlBackend_CreateResourcePermission(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	store := db.InitTestDB(t)
 

@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 type databaseConfigTest struct {
@@ -105,9 +106,8 @@ var databaseConfigTestCases = []databaseConfigTest{
 }
 
 func TestIntegrationSQLConnectionString(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	for _, testCase := range databaseConfigTestCases {
 		t.Run(testCase.name, func(t *testing.T) {
 			cfg := makeDatabaseTestConfig(t, testCase)
