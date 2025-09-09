@@ -45,7 +45,7 @@
     "@grafana/schema": "12.0.0-pre",
     "@grafana/ui": "12.0.0-pre",
     "@hello-pangea/dnd": "17.0.0",
-    "@leeoniya/ufuzzy": "1.0.18",
+    "@leeoniya/ufuzzy": "1.0.19",
     "@lezer/common": "1.2.3",
     "@lezer/highlight": "1.2.1",
     "@lezer/lr": "1.4.2",
