@@ -5,12 +5,16 @@ import (
 	"encoding/json"
 	"fmt"
 	"sort"
+	"strings"
 	"testing"
 	"time"
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/testutil"
+	"github.com/prometheus/common/expfmt"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
@@ -278,4 +282,36 @@ func newMockQueryService(responses map[string]backend.DataResponse, queries []Qu
 		},
 		qsDatasourceClientBuilder: dsquerierclient.NewNullQSDatasourceClientBuilder(),
 	}, &Request{Queries: queries, User: &user.SignedInUser{}}
+}
+
+func newMockQueryServiceWithMetricsRegistry(
+	responses map[string]backend.DataResponse,
+	queries []Query,
+	reg *prometheus.Registry,
+) (*Service, *Request) {
+	s, req := newMockQueryService(responses, queries)
+	// Replace the default metrics with a set bound to our private registry.
+	s.metrics = metrics.NewSSEMetrics(reg)
+	return s, req
+}
+
+// Return the value of a prometheus counter with the given labels to test if it has been incremented, if the labels don't exist 0 will still be returned.
+func counterVal(t *testing.T, cv *prometheus.CounterVec, labels ...string) float64 {
+	t.Helper()
+	ch, err := cv.GetMetricWithLabelValues(labels...)
+	require.NoError(t, err)
+	return testutil.ToFloat64(ch)
+}
+
+func dumpMetrics(t *testing.T, reg *prometheus.Registry) string {
+	t.Helper()
+	mfs, err := reg.Gather()
+	require.NoError(t, err)
+
+	var sb strings.Builder
+	enc := expfmt.NewEncoder(&sb, expfmt.FmtText)
+	for _, mf := range mfs {
+		require.NoError(t, enc.Encode(mf))
+	}
+	return sb.String()
 }

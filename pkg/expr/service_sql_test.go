@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/expr/sql"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/require"
 )
 
@@ -114,7 +115,7 @@ func TestSQLService(t *testing.T) {
 		require.ErrorContains(t, rsp.Responses["B"].Error, "limit expression expected to be numeric")
 		var sqlErr *sql.ErrorWithCategory
 		require.ErrorAs(t, rsp.Responses["B"].Error, &sqlErr)
-		require.Equal(t, sql.GeneralGMSError, sqlErr.Category())
+		require.Equal(t, sql.ErrCategoryGeneralGMSError, sqlErr.Category())
 	})
 }
 
@@ -177,8 +178,11 @@ func TestSQLServiceErrors(t *testing.T) {
 	}
 
 	t.Run("conversion failure (and therefore dependency error)", func(t *testing.T) {
-		s, req := newMockQueryService(resp,
+		reg := prometheus.NewPedanticRegistry()
+
+		s, req := newMockQueryServiceWithMetricsRegistry(resp,
 			newABSQLQueries(`SELECT * FROM tsMultiNoType`),
+			reg,
 		)
 
 		s.features = featuremgmt.WithFeatures(featuremgmt.FlagSqlExpressions)
@@ -199,11 +203,17 @@ func TestSQLServiceErrors(t *testing.T) {
 		require.ErrorContains(t, rsp.Responses["sqlExpression"].Error, "dependency")
 		require.ErrorAs(t, rsp.Responses["sqlExpression"].Error, &sqlErr)
 		require.Equal(t, sql.ErrCategoryDependency, sqlErr.Category())
+
+		require.Equal(t, 0.0, counterVal(t, s.metrics.SqlCommandCount, "ok", "none"))
+		require.Equal(t, 1.0, counterVal(t, s.metrics.SqlCommandCount, "error", sql.ErrCategoryInputConversion))
+		require.Equal(t, 1.0, counterVal(t, s.metrics.SqlCommandInputCount, "error", "false", "test", "missing"))
 	})
 
 	t.Run("pipeline (expressions and DS queries) will fail if the table is not found, before execution of the sql expression", func(t *testing.T) {
-		s, req := newMockQueryService(resp,
-			newABSQLQueries(`SELECT * FROM nonExisting`),
+		reg := prometheus.NewPedanticRegistry()
+
+		s, req := newMockQueryServiceWithMetricsRegistry(resp,
+			newABSQLQueries(`SELECT * FROM nonExisting`), reg,
 		)
 
 		s.features = featuremgmt.WithFeatures(featuremgmt.FlagSqlExpressions)
@@ -213,6 +223,10 @@ func TestSQLServiceErrors(t *testing.T) {
 		require.ErrorAs(t, err, &sqlErr)
 		require.Equal(t, sql.ErrCategoryTableNotFound, sqlErr.Category())
 		require.Error(t, err, "whole pipeline fails when selecting a dependency that does not exist")
+
+		// Metrics
+		require.Equal(t, 0.0, counterVal(t, s.metrics.SqlCommandCount, "ok", "none"))
+		require.Equal(t, 1.0, counterVal(t, s.metrics.SqlCommandCount, "error", sql.ErrCategoryTableNotFound))
 	})
 
 	t.Run("pipeline will fail if query is longer than the configured limit", func(t *testing.T) {
