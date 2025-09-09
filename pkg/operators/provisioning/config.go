@@ -241,9 +241,7 @@ func setupRepoFactory(
 
 		switch provisioning.RepositoryType(t) {
 		case provisioning.GitRepositoryType:
-			extras = append(extras, repository.Extra(
-				git.Extra(decrypter),
-			))
+			extras = append(extras, git.Extra(decrypter))
 		case provisioning.GitHubRepositoryType:
 			var webhook *webhooks.WebhookExtraBuilder
 			provisioningAppURL := operatorSec.Key("provisioning_server_public_url").String()
