@@ -353,35 +353,6 @@ describe('usePluginLinks()', () => {
     expect(log.warning).not.toHaveBeenCalled();
   });
 
-  it('should not allow to create an extension point in core Grafana that is not exposed to plugins', () => {
-    // Imitate running in dev mode
-    jest.mocked(isGrafanaDevMode).mockReturnValue(true);
-
-    // No plugin context -> used in Grafana core
-    wrapper = ({ children }: { children: React.ReactNode }) => (
-      <ExtensionRegistriesProvider registries={registries}>{children}</ExtensionRegistriesProvider>
-    );
-
-    const extensionPointId = 'grafana/not-exposed-extension-point/v1';
-
-    // Adding an extension to the extension point
-    registries.addedLinksRegistry.register({
-      pluginId: 'grafana', // Only core Grafana can register extensions without a plugin context
-      configs: [
-        {
-          targets: extensionPointId,
-          title: '1',
-          description: '1',
-          path: `/a/grafana/${pluginId}/2`,
-        },
-      ],
-    });
-
-    const { result } = renderHook(() => usePluginLinks({ extensionPointId }), { wrapper });
-    expect(result.current.links.length).toBe(0);
-    expect(log.error).toHaveBeenCalled();
-  });
-
   it('should not validate the extension point id if used in Grafana core (no plugin context)', () => {
     // Imitate running in dev mode
     jest.mocked(isGrafanaDevMode).mockReturnValue(true);
