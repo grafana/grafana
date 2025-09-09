@@ -35,6 +35,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/iam/team"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/user"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	gfauthorizer "github.com/grafana/grafana/pkg/services/apiserver/auth/authorizer"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ssosettings"
@@ -80,12 +81,24 @@ func RegisterAPIService(
 	return builder, nil
 }
 
-func NewAPIService(store legacy.LegacyIdentityStore) *IdentityAccessManagementAPIBuilder {
+func NewAPIService(
+	accessClient types.AccessClient,
+	store legacy.LegacyIdentityStore,
+	resourcePermissionsStorage resource.StorageBackend,
+) *IdentityAccessManagementAPIBuilder {
+	authz := gfauthorizer.NewResourceAuthorizer(accessClient)
 	return &IdentityAccessManagementAPIBuilder{
-		store:   store,
-		display: user.NewLegacyDisplayREST(store),
+		store:                        store,
+		display:                      user.NewLegacyDisplayREST(store),
+		resourcePermissionsStorage:   resourcePermissionsStorage,
+		enableResourcePermissionApis: true,
 		authorizer: authorizer.AuthorizerFunc(
 			func(ctx context.Context, a authorizer.Attributes) (authorizer.Decision, string, error) {
+				// For now only authorize resourcepermissions resource
+				if a.GetResource() == "resourcepermissions" {
+					return authz.Authorize(ctx, a)
+				}
+
 				user, err := identity.GetRequester(ctx)
 				if err != nil {
 					return authorizer.DecisionDeny, "no identity found", err
