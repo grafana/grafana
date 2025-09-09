@@ -1,15 +1,11 @@
-import { css } from '@emotion/css';
-
-import { GrafanaTheme2 } from '@grafana/data';
-import { t, Trans } from '@grafana/i18n';
-import { Icon, TextLink, useStyles2 } from '@grafana/ui';
+import { t } from '@grafana/i18n';
 import permissionsScreenshot from 'img/permissions-screenshot.png';
 
-import { FeatureHighlightsTabPage } from '../components/FeatureHighlightsTabPage';
+import { FeatureHighlightsTabPage } from '../components/FeatureHighlightsTabPage/FeatureHighlightsTabPage';
+import { Footer } from '../components/FeatureHighlightsTabPage/Footer';
+import { Footnote } from '../components/FeatureHighlightsTabPage/Footnote';
 
 export function PermissionsFeatureHighlightPage() {
-  const styles = useStyles2(getStyles);
-
   return (
     <FeatureHighlightsTabPage
       pageName="permissions"
@@ -35,41 +31,11 @@ export function PermissionsFeatureHighlightPage() {
           'Share Grafana access more freely, knowing that users will not unwittingly see sensitive data'
         ),
       ]}
-      footer={
-        <div>
-          <Trans i18nKey="connections.permissions-feature-highlight-page.footer">
-            Create a Grafana Cloud Free account to start using data source permissions. This feature is also available
-            with a Grafana Enterprise license.
-          </Trans>
-          <div>
-            <TextLink href="https://grafana.com/products/enterprise/grafana/">
-              <Icon name="external-link-alt" />
-              <Trans i18nKey="connections.permissions-feature-highlight-page.footer-link">Learn about Enterprise</Trans>
-            </TextLink>
-          </div>
-        </div>
-      }
+      footer={<Footer />}
       linkButtonLabel={t('connections.permissions-feature-highlight-page.link-button-label', 'Create account')}
       buttonLink={'https://grafana.com/auth/sign-up/create-user'}
-      footNote={
-        <div className={styles.footNote}>
-          <Trans i18nKey="connections.permissions-feature-highlight-page.foot-note">
-            After creating an account, you can have Grafana{' '}
-            <TextLink href="https://grafana.com/products/bring-your-own-cloud-byoc/">
-              migrate this instance to Grafana Cloud
-            </TextLink>{' '}
-            with minimal effort.
-          </Trans>
-        </div>
-      }
+      footNote={<Footnote />}
       screenshotPath={permissionsScreenshot}
     />
   );
 }
-
-const getStyles = (theme: GrafanaTheme2) => ({
-  footNote: css({
-    color: theme.colors.text.secondary,
-    fontSize: theme.typography.bodySmall.fontSize,
-  }),
-});

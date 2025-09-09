@@ -1,7 +1,7 @@
 import { t, Trans } from '@grafana/i18n';
 import insightsScreenshot from 'img/insights-screenshot.png';
 
-import { FeatureHighlightsTabPage } from '../components/FeatureHighlightsTabPage';
+import { FeatureHighlightsTabPage } from '../components/FeatureHighlightsTabPage/FeatureHighlightsTabPage';
 
 export function InsightsFeatureHighlightPage() {
   return (

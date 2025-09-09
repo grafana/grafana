@@ -11,7 +11,7 @@ import { EditDataSourceActions } from 'app/features/datasources/components/EditD
 import { useDataSourceInfo } from 'app/features/datasources/components/useDataSourceInfo';
 import { useInitDataSourceSettings } from 'app/features/datasources/state/hooks';
 
-import { useDataSourceTabNav } from '../hooks/useDataSourceTabNav';
+import { useDataSourceTabNav } from '../../hooks/useDataSourceTabNav';
 
 type FeatureHighlightsTabPageProps = {
   pageName: string;
