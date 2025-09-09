@@ -241,5 +241,7 @@ func TestSQLServiceErrors(t *testing.T) {
 		var sqlErr *sql.ErrorWithCategory
 		require.ErrorAs(t, err, &sqlErr)
 		require.Equal(t, sql.ErrCategoryQueryTooLong, sqlErr.Category())
+
+		require.Equal(t, 1.0, counterVal(t, s.metrics.SqlCommandCount, "error", sql.ErrCategoryQueryTooLong))
 	})
 }
