@@ -28,7 +28,8 @@ If one of the panels in the dashboard using that data source doesn't include tha
 
 {{< figure src="/media/docs/grafana/panels-visualizations/screenshot-adhoc-filter-no-data-v12.2.png" max-width="650px" alt="Table, filtered and bar chart returning no results" >}}
 
-Note that in bar chart 
+In cases where the data source you're using doesn't support ad hoc filtering, consider using the special Dashboard data source.
+For more information, refer to [heading](#heading).
 
 <!-- vale Grafana.Spelling = YES -->
 <!-- vale Grafana.WordList = YES -->

@@ -307,7 +307,7 @@ Instead, you use ad hoc filters to write filters for existing queries.
 
 The following data sources support ad hoc filters:
 
-- Dashboard - Using this special data source lets you indirectly use ad hoc filters on unsupported data sources. Probably more information...
+- Dashboard - Use this special data source to use ad hoc filters on data from unsupported data sources. For more information, refer to [heading](#heading)
 - Prometheus
 - Loki
 - InfluxDB
@@ -343,6 +343,34 @@ https://play.grafana.org/d/HYaGDGIMk/templating-global-variables-and-interpolati
 
 In the preceding example, the variables and values are `var-Server=CCC` and `var-MyCustomDashboardVariable=Hello%20World%21`.
 When someone clicks the link, they're taken to a version of the dashboard with those variables already applied.
+
+### Filter any data with the Dashboard data source
+
+<!-- update this heading to be more descriptive of the value add -->
+
+You can use the Dashboard data source in cases where a data source doesn't support the use ad hoc filters.
+By referencing a panel with the data you want to filter using the Dashboard data source, you can bypass the limitation of the data source.
+
+To use ad hoc filters on data from an unsupported data source, follow these steps:
+
+1. Navigate to the dashboard with the panel that's using the data source you want to filter.
+1. Click **Edit** in top-right corner.
+1. At the top of the dashboard, click **Add** and select **Visualization** in the drop-down.
+1. In the **Queries** tab of the edit panel view, enter `Dashboard` in the **Data source** field and select **-- Dashboard --**.
+1. In the query configuration section, make the following selections:
+
+   - **Source panel** - Choose the panel with the source data.
+   - **Data** - Select **All Data** to use the data of the panel and not just the annotations. This is the default selection.
+   - **AdHoc Filters** - Toggle on the switch to make the data from the referenced panel filterable.
+
+   {{< admonition type="note">}}
+   Grafana uses the data from all Dashboard data sources with this switch toggled on. We recommend only turning on this feature for one Dashboard data source at a time.
+   {{< /admonition >}}
+
+1. Configure any other options for the panel.
+1. Click **Save dashboard**.
+
+Now that panel does the things
 
 <!-- vale Grafana.Spelling = YES -->
 <!-- vale Grafana.WordList = YES -->
