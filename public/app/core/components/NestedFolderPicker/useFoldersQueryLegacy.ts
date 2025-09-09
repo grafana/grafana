@@ -160,6 +160,7 @@ export function useFoldersQueryLegacy({
               title: item.title,
               uid: item.uid,
               managedBy: item.managedBy,
+              parentUID: item.parentUid,
             },
           };
 
