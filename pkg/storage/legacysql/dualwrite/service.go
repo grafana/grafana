@@ -9,6 +9,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/grafana/grafana-app-sdk/logging"
+	"github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
@@ -26,6 +27,19 @@ func ProvideService(
 	reg prometheus.Registerer,
 	kv kvstore.KVStore,
 	cfg *setting.Cfg) Service {
+
+	// Avoid dynamic behavior when things are explicitly configured to mode5
+	allMode5 := true
+	for _, gr := range []string{"dashboards.dashboard.grafana.app", "folders.folder.grafana.app"} {
+		if cfg.UnifiedStorage[gr].DualWriterMode != rest.Mode5 {
+			allMode5 = false
+			break
+		}
+	}
+	if allMode5 {
+		return &staticService{cfg}
+	}
+
 	enabled := features.IsEnabledGlobally(featuremgmt.FlagManagedDualWriter) ||
 		features.IsEnabledGlobally(featuremgmt.FlagProvisioning) // required for git provisioning
 	if !enabled && cfg != nil {
