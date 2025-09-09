@@ -181,7 +181,7 @@ func (s *Service) proxyToTempo(rw http.ResponseWriter, req *http.Request, tempoP
 	dsInfo, err := s.getDSInfo(ctx, pCtx)
 	if err != nil {
 		s.logger.Error("Failed to get data source info", "error", err)
-		http.Error(rw, "Failed to get datasource configuration", http.StatusInternalServerError)
+		http.Error(rw, "Failed to get data source configuration", http.StatusInternalServerError)
 		return
 	}
 
@@ -195,8 +195,8 @@ func (s *Service) proxyToTempo(rw http.ResponseWriter, req *http.Request, tempoP
 	if err != nil {
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())
-		s.logger.Error("Failed to parse datasource URL", "error", err, "url", dsInfo.URL)
-		http.Error(rw, "Invalid datasource URL", http.StatusInternalServerError)
+		s.logger.Error("Failed to parse data source URL", "error", err, "url", dsInfo.URL)
+		http.Error(rw, "Invalid data source URL", http.StatusInternalServerError)
 		return
 	}
 
