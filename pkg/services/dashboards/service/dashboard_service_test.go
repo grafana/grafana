@@ -2118,7 +2118,7 @@ func TestSetDefaultPermissionsAfterCreate(t *testing.T) {
 				featureKubernetesDashboards: true,
 				expectedPermission: []accesscontrol.SetResourcePermissionCommand{
 					{UserID: 1, Permission: dashboardaccess.PERMISSION_ADMIN.String()},
-					{BuiltinRole: string(org.RoleEditor), Permission: dashboardaccess.PERMISSION_ADMIN.String()},
+					{BuiltinRole: string(org.RoleEditor), Permission: dashboardaccess.PERMISSION_EDIT.String()},
 					{BuiltinRole: string(org.RoleViewer), Permission: dashboardaccess.PERMISSION_VIEW.String()},
 				},
 			},
