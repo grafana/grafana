@@ -206,10 +206,8 @@ func TestIntegration_ResourcePermSqlBackend_getResourcePermission(t *testing.T) 
 	}
 }
 
-func TestResourcePermSqlBackend_deleteResourcePermission(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test in short mode")
-	}
+func TestIntegrationResourcePermSqlBackend_deleteResourcePermission(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	backend := setupBackend(t)
 	sql, err := backend.dbProvider(context.Background())
