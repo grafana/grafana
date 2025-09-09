@@ -15,12 +15,11 @@ import (
 	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
+	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 func TestIntegration_ResourcePermSqlBackend_ReadResource(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test in short mode")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	backend := setupBackend(t)
 	sql, err := backend.dbProvider(context.Background())
@@ -327,5 +326,98 @@ func TestWriteEvent_Add(t *testing.T) {
 			require.Contains(t, err.Error(), errConflict.Error())
 			require.Zero(t, rv)
 		})
+	})
+}
+
+func TestWriteEvent_Delete(t *testing.T) {
+	backend := setupBackend(t)
+	sql, err := backend.dbProvider(context.Background())
+	require.NoError(t, err)
+	setupTestRoles(t, sql.DB)
+
+	updated1 := time.Date(2025, 9, 2, 0, 0, 0, 0, time.UTC)
+	updated2 := time.Date(2025, 9, 3, 0, 0, 0, 0, time.UTC) // managed role for team 1 has a later updated permission
+
+	gr := v0alpha1.ResourcePermissionInfo.GroupResource()
+
+	t.Run("Should error if namespace is invalid", func(t *testing.T) {
+		rv, err := backend.WriteEvent(context.Background(), resource.WriteEvent{
+			Key:  &resourcepb.ResourceKey{Group: gr.Group, Resource: gr.Resource, Name: "folder.grafana.app-folders-fold1", Namespace: "invalid"},
+			Type: resourcepb.WatchEvent_DELETED,
+		})
+
+		require.Zero(t, rv)
+		require.NotNil(t, err)
+		require.Contains(t, err.Error(), "requires a valid namespace")
+	})
+
+	t.Run("Should fail to delete resource permissions if resource name is not specified", func(t *testing.T) {
+		_, err = backend.WriteEvent(context.Background(), resource.WriteEvent{
+			Key:  &resourcepb.ResourceKey{Group: gr.Group, Resource: gr.Resource, Name: "", Namespace: "default"},
+			Type: resourcepb.WatchEvent_DELETED,
+		})
+		require.NotNil(t, err)
+		require.Contains(t, err.Error(), "invalid key")
+	})
+
+	t.Run("Should fail to delete resource permissions for unknown resource", func(t *testing.T) {
+		_, err = backend.WriteEvent(context.Background(), resource.WriteEvent{
+			Key:  &resourcepb.ResourceKey{Group: gr.Group, Resource: gr.Resource, Name: "unknown.grafana.app-unknown-uid", Namespace: "default"},
+			Type: resourcepb.WatchEvent_DELETED,
+		})
+		require.NotNil(t, err)
+		require.Contains(t, err.Error(), "unknown group/resource")
+	})
+
+	t.Run("Should successfully delete fold1 permissions in org-1", func(t *testing.T) {
+		// Check that permissions exist
+		resp := backend.ReadResource(context.Background(), &resourcepb.ReadRequest{
+			Key: &resourcepb.ResourceKey{Name: "folder.grafana.app-folders-fold1", Namespace: "default"},
+		})
+
+		require.NotNil(t, resp)
+		require.Nil(t, resp.Error)
+		require.NotNil(t, resp.Value)
+
+		var permission v0alpha1.ResourcePermission
+		err := json.Unmarshal(resp.Value, &permission)
+		require.NoError(t, err)
+		require.Len(t, permission.Spec.Permissions, 1)
+
+		_, err = backend.WriteEvent(context.Background(), resource.WriteEvent{
+			Key:  &resourcepb.ResourceKey{Group: gr.Group, Resource: gr.Resource, Name: "folder.grafana.app-folders-fold1", Namespace: "default"},
+			Type: resourcepb.WatchEvent_DELETED,
+		})
+		require.Nil(t, err)
+
+		// Check that permissions are deleted
+		resp = backend.ReadResource(context.Background(), &resourcepb.ReadRequest{
+			Key: &resourcepb.ResourceKey{Name: "folder.grafana.app-folders-fold1", Namespace: "default"},
+		})
+		require.NotNil(t, resp.Error)
+
+		// Check that org-2 permissions are unaffected
+		resp = backend.ReadResource(context.Background(), &resourcepb.ReadRequest{
+			Key: &resourcepb.ResourceKey{Name: "folder.grafana.app-folders-fold1", Namespace: "org-2"},
+		})
+		require.NotNil(t, resp)
+		require.Nil(t, resp.Error)
+		require.NotNil(t, resp.Value)
+		require.Equal(t, updated1.UnixMilli(), resp.ResourceVersion)
+		err = json.Unmarshal(resp.Value, &permission)
+		require.NoError(t, err)
+		require.Len(t, permission.Spec.Permissions, 1)
+
+		// Check that dash1 permissions in org 1 are unaffected
+		resp = backend.ReadResource(context.Background(), &resourcepb.ReadRequest{
+			Key: &resourcepb.ResourceKey{Name: "dashboard.grafana.app-dashboards-dash1", Namespace: "default"},
+		})
+		require.NotNil(t, resp)
+		require.Nil(t, resp.Error)
+		require.NotNil(t, resp.Value)
+		require.Equal(t, updated2.UnixMilli(), resp.ResourceVersion)
+		err = json.Unmarshal(resp.Value, &permission)
+		require.NoError(t, err)
+		require.Len(t, permission.Spec.Permissions, 4)
 	})
 }

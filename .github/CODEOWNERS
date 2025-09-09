@@ -416,6 +416,7 @@
 /e2e-playwright/dashboards/cujs/ @grafana/dashboards-squad
 /e2e-playwright/dashboards/DashboardForConditionalRendering.json @grafana/dashboards-squad
 /e2e-playwright/dashboards/DashboardWithAllConditionalRendering.json @grafana/dashboards-squad
+/e2e-playwright/dashboards/README.md @grafana/dashboards-squad
 /e2e-playwright/dashboards/AdHocFilterTest.json @grafana/datapro
 /e2e-playwright/dashboards/DashboardLiveTest.json @grafana/dashboards-squad
 /e2e-playwright/dashboards/DataLinkWithoutSlugTest.json @grafana/dashboards-squad
@@ -460,6 +461,7 @@
 /e2e-playwright/fixtures/long-trace-response.json @grafana/observability-traces-and-profiling
 /e2e-playwright/fixtures/tempo-response.json @grafana/oss-big-tent
 /e2e-playwright/fixtures/prometheus-response.json @grafana/datapro
+/e2e-playwright/panels-suite/canvas-scene.spec.ts @grafana/dataviz-squad
 /e2e-playwright/panels-suite/dashlist.spec.ts @grafana/grafana-search-navigate-organise
 /e2e-playwright/panels-suite/datagrid-data-change.spec.ts @grafana/dataviz-squad
 /e2e-playwright/panels-suite/datagrid-editing-features.spec.ts @grafana/dataviz-squad
@@ -1137,6 +1139,8 @@ eslint-suppressions.json @grafanabot
 # Feature toggles
 /pkg/services/featuremgmt/ @grafana/grafana-backend-services-squad
 
+# Data source migrations
+/pkg/services/promtypemigration/ @grafana/partner-datasources @grafana/aws-datasources
 
 # Kind definitions
 /kinds/dashboard @grafana/dashboards-squad

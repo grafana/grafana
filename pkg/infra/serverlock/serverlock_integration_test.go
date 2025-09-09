@@ -6,13 +6,13 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana/pkg/util/testutil"
 	"github.com/stretchr/testify/require"
 )
 
 func TestIntegrationServerLock_LockAndExecute(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	sl := createTestableServerLock(t)
 
 	counter := 0
@@ -38,9 +38,8 @@ func TestIntegrationServerLock_LockAndExecute(t *testing.T) {
 }
 
 func TestIntegrationServerLock_LockExecuteAndRelease(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	sl := createTestableServerLock(t)
 
 	counter := 0
@@ -65,9 +64,8 @@ func TestIntegrationServerLock_LockExecuteAndRelease(t *testing.T) {
 }
 
 func TestIntegrationServerLock_LockExecuteAndReleaseWithRetries(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	sl := createTestableServerLock(t)
 
 	retries := 0
