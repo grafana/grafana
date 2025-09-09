@@ -134,6 +134,7 @@ type Cfg struct {
 	PermittedProvisioningPaths []string
 	// Provisioning config
 	ProvisioningDisableControllers bool
+	ProvisioningRepositoryTypes    []string
 	ProvisioningLokiURL            string
 	ProvisioningLokiUser           string
 	ProvisioningLokiPassword       string
@@ -2100,6 +2101,19 @@ func (cfg *Cfg) readProvisioningSettings(iniFile *ini.File) error {
 				return fmt.Errorf("a provisioning path is empty in '%s' (at index %d)", provisioningPaths, i)
 			}
 			cfg.PermittedProvisioningPaths[i] = makeAbsolute(s, cfg.HomePath)
+		}
+	}
+
+	repositoryTypes := strings.TrimSpace(valueAsString(iniFile.Section("provisioning"), "repository_types", "github|local"))
+	if repositoryTypes != "|" && repositoryTypes != "" {
+		cfg.ProvisioningRepositoryTypes = strings.Split(repositoryTypes, "|")
+		for i, s := range cfg.ProvisioningRepositoryTypes {
+			s = strings.TrimSpace(s)
+			if s == "" {
+				return fmt.Errorf("a provisioning repository type is empty in '%s' (at index %d)", repositoryTypes, i)
+			}
+
+			cfg.ProvisioningRepositoryTypes[i] = s
 		}
 	}
 

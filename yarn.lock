@@ -2915,6 +2915,7 @@ __metadata:
   resolution: "@grafana/alerting@workspace:packages/grafana-alerting"
   dependencies:
     "@faker-js/faker": "npm:^9.8.0"
+    "@grafana/i18n": "npm:12.2.0-pre"
     "@grafana/test-utils": "workspace:*"
     "@rtk-query/codegen-openapi": "npm:^2.0.0"
     "@testing-library/jest-dom": "npm:^6.6.3"
@@ -2924,6 +2925,7 @@ __metadata:
     "@types/react": "npm:18.3.18"
     "@types/react-dom": "npm:18.3.5"
     fishery: "npm:^2.3.1"
+    i18next: "npm:^25.5.2"
     lodash: "npm:^4.17.21"
     react: "npm:18.3.1"
     react-dom: "npm:18.3.1"
@@ -18434,8 +18436,10 @@ __metadata:
     yargs: "npm:^18.0.0"
     zod: "npm:^4.0.0"
   dependenciesMeta:
-    nx:
-      built: false
+    cypress:
+      built: true
+    msw:
+      built: true
     prettier@3.6.2:
       unplugged: true
   languageName: unknown
@@ -19221,6 +19225,20 @@ __metadata:
     typescript:
       optional: true
   checksum: 10/fb6b2035cc8f3bcc89f56e164d22cefbefd54e5a569315b20ddcfa6e1b68c48962307181b271fea7e5ee37ddfaa90721a4a7f7814b739f24bf00a3a670b8eb93
+  languageName: node
+  linkType: hard
+
+"i18next@npm:^25.5.2":
+  version: 25.5.2
+  resolution: "i18next@npm:25.5.2"
+  dependencies:
+    "@babel/runtime": "npm:^7.27.6"
+  peerDependencies:
+    typescript: ^5
+  peerDependenciesMeta:
+    typescript:
+      optional: true
+  checksum: 10/8d52e82386722a228f4465aa5cf39d82bd9861ea9cc8b31d7cc4d22d5e70b2740ee006068b09f486d5273cabd227a2ac14f37d68fab26344524200083f679bcd
   languageName: node
   linkType: hard
 
