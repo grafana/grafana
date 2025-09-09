@@ -148,7 +148,7 @@ export const LogLineDetailsField = ({
     onClickHideField,
     onPinLine,
     pinLineButtonTooltipTitle,
-    syntaxHighlighting,
+    prettifyJSON,
   } = useLogListContext();
 
   const styles = useStyles2(getFieldStyles);
@@ -317,7 +317,7 @@ export const LogLineDetailsField = ({
         <div className={styles.value}>
           <div className={styles.valueContainer}>
             {singleValue ? (
-              <SingleValue value={values[0]} syntaxHighlighting={syntaxHighlighting} />
+              <SingleValue value={values[0]} prettifyJSON={prettifyJSON} />
             ) : (
               <MultipleValue showCopy={true} values={values} />
             )}
@@ -485,15 +485,9 @@ export const MultipleValue = ({ showCopy, values = [] }: { showCopy?: boolean; v
   );
 };
 
-export const SingleValue = ({
-  value: originalValue,
-  syntaxHighlighting,
-}: {
-  value: string;
-  syntaxHighlighting?: boolean;
-}) => {
+export const SingleValue = ({ value: originalValue, prettifyJSON }: { value: string; prettifyJSON?: boolean }) => {
   const value = useMemo(() => {
-    if (!syntaxHighlighting) {
+    if (!prettifyJSON) {
       return originalValue;
     }
     try {
@@ -503,7 +497,7 @@ export const SingleValue = ({
       }
     } catch (error) {}
     return originalValue;
-  }, [originalValue, syntaxHighlighting]);
+  }, [originalValue, prettifyJSON]);
 
   return (
     <>
