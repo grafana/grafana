@@ -106,7 +106,7 @@ func (dp *DataPipeline) execute(c context.Context, now time.Time, s *Service) (m
 							// If it is already SQL error with type (e.g. limit exceeded, input conversion, capture the type as that)
 							eType = errWithType.Category()
 						}
-						s.metrics.SqlCommandCount.WithLabelValues("error", eType)
+						s.metrics.SqlCommandCount.WithLabelValues("error", eType).Inc()
 						depErr = e
 					} else { // general SSE dependency error
 						depErr = MakeDependencyError(node.RefID(), neededVar)
