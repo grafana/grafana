@@ -7,7 +7,7 @@ title: Panel filtering
 <!-- vale Grafana.WordList = NO -->
 <!-- vale Grafana.Spelling = NO -->
 
-In table visualizations, you can apply ad hoc filters from the visualization with one click.
+In table and bar chart visualizations, you can apply ad hoc filters from the visualization with one click.
 To quickly ad hoc filter variables, follow these steps:
 
 1. Hover your cursor over the cell with the value you want to filter for to display the filter icons. In this example, the cell value is `ConfigMap Updated`, which is in the `alertname` column:
