@@ -4681,6 +4681,7 @@
       "move": "Flytta {{typeName}}",
       "panel-background": "Ändra panelbakgrund",
       "panel-description": "Ändra panelbeskrivning",
+      "panel-edit": "",
       "panel-max-repeats-per-row": "Max upprepningar per rad",
       "panel-repeat-direction": "Upprepa riktning",
       "panel-repeat-variable": "Panelupprepning efter",
@@ -4935,12 +4936,11 @@
       "dataframe-aria-label": "Välj dataram",
       "dataframe-label": "Visa dataram",
       "download-csv": "Ladda ner CSV",
-      "download-excel-description": "Lägger till rubrik i CSV för användning med Excel",
-      "download-excel-label": "Ladda ner för Excel",
       "download-logs": "Ladda ner loggar",
       "download-service": "Ladda ner servicegraf",
       "download-traces": "Ladda ner spår",
-      "excel-header": "Excel-rubrik",
+      "excel-compatibility-mode-description": "",
+      "excel-compatibility-mode-label": "",
       "formatted": "Formaterade data",
       "formatted-data-description": "Tabelldata formateras med alternativ som definieras på flikarna Fält och Åsidosätt.",
       "formatted-data-label": "Formaterade data",
@@ -11955,14 +11955,6 @@
       "no-deleted-dashboards": "Du har inte raderat några instrumentpaneler nyligen.",
       "no-deleted-dashboards-text": "När du tar bort en instrumentpanel visas den här under 30 dagar innan den raderas permanent. Din organisations administratör kan återställa nyligen raderade instrumentpaneler.",
       "no-search-result": "Inga resultat hittades för din fråga"
-    },
-    "permanently-delete-modal": {
-      "confirm-text": "Ta bort",
-      "delete-button": "Ta bort",
-      "delete-loading": "Tar bort ...",
-      "title": "Radera instrumentpaneler permanent",
-      "text_one": "Denna åtgärd raderar {{numberOfDashboards}} paneler.",
-      "text_other": "Denna åtgärd raderar {{numberOfDashboards}} paneler."
     },
     "restore-modal": {
       "restore-button": "Återställ",

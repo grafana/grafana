@@ -4663,6 +4663,7 @@
       "move": "{{typeName}} 이동",
       "panel-background": "패널 배경 변경",
       "panel-description": "패널 설명 변경",
+      "panel-edit": "",
       "panel-max-repeats-per-row": "행당 최대 반복 횟수",
       "panel-repeat-direction": "반복 방향",
       "panel-repeat-variable": "패널 반복 기준",
@@ -4917,12 +4918,11 @@
       "dataframe-aria-label": "데이터 프레임 선택",
       "dataframe-label": "데이터 프레임 표시",
       "download-csv": "CSV 다운로드",
-      "download-excel-description": "CSV에 헤더 추가하여 Excel과 함께 사용",
-      "download-excel-label": "Excel용으로 다운로드",
       "download-logs": "로그 다운로드",
       "download-service": "서비스 그래프 다운로드",
       "download-traces": "추적 다운로드",
-      "excel-header": "Excel 헤더",
+      "excel-compatibility-mode-description": "",
+      "excel-compatibility-mode-label": "",
       "formatted": "형식화된 데이터",
       "formatted-data-description": "표 데이터 형식은 '필드' 및 '재정의' 탭에 정의된 옵션으로 지정됩니다.",
       "formatted-data-label": "형식화된 데이터",
@@ -11919,13 +11919,6 @@
       "no-deleted-dashboards": "최근에 삭제한 대시보드가 없습니다.",
       "no-deleted-dashboards-text": "대시보드를 삭제하면 영구적으로 삭제되기 전에 30일간 여기에 표시됩니다. 조직 관리자는 최근에 삭제된 대시보드를 복구할 수 있습니다.",
       "no-search-result": "쿼리에 대해 찾은 결과 없음"
-    },
-    "permanently-delete-modal": {
-      "confirm-text": "삭제",
-      "delete-button": "삭제",
-      "delete-loading": "삭제 중…",
-      "title": "대시보드 영구 삭제",
-      "text_other": "이 작업을 수행하면 {{numberOfDashboards}}개의 대시보드가 삭제됩니다."
     },
     "restore-modal": {
       "restore-button": "복구",

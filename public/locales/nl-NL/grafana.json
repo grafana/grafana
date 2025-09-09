@@ -4681,6 +4681,7 @@
       "move": "{{typeName}} verplaatsen ",
       "panel-background": "Paneelachtergrond wijzigen",
       "panel-description": "Paneelbeschrijving wijzigen",
+      "panel-edit": "",
       "panel-max-repeats-per-row": "Max herhalingen per rij",
       "panel-repeat-direction": "Herhaalrichting",
       "panel-repeat-variable": "Paneel herhalen op",
@@ -4935,12 +4936,11 @@
       "dataframe-aria-label": "Gegevensframe selecteren",
       "dataframe-label": "Gegevensframe weergeven",
       "download-csv": "Csv uploaden",
-      "download-excel-description": "Voegt koptekst toe aan csv voor gebruik met Excel",
-      "download-excel-label": "Downloaden voor Excel",
       "download-logs": "Logs downloaden",
       "download-service": "Servicegrafiek downloaden",
       "download-traces": "Sporen downloaden",
-      "excel-header": "Excel-koptekst",
+      "excel-compatibility-mode-description": "",
+      "excel-compatibility-mode-label": "",
       "formatted": "Opgemaakte gegevens",
       "formatted-data-description": "Tabelgegevens worden opgemaakt met opties die zijn gedefinieerd in de tabbladen Veld en Overschrijven.",
       "formatted-data-label": "Opgemaakte gegevens",
@@ -11955,14 +11955,6 @@
       "no-deleted-dashboards": "Je hebt onlangs geen dashboards verwijderd.",
       "no-deleted-dashboards-text": "Wanneer je een dashboard verwijdert, wordt dit hier 30 dagen weergegeven voordat het definitief wordt verwijderd. Je organisatiebeheerder kan recent verwijderde dashboards herstellen.",
       "no-search-result": "Geen resultaten gevonden voor je zoekopdracht"
-    },
-    "permanently-delete-modal": {
-      "confirm-text": "Verwijderen",
-      "delete-button": "Verwijderen",
-      "delete-loading": "Bezig met verwijderen ...",
-      "title": "Dashboards permanent verwijderen",
-      "text_one": "Met deze actie worden {{numberOfDashboards}} dashboards verwijderd.",
-      "text_other": "Met deze actie worden {{numberOfDashboards}} dashboards verwijderd."
     },
     "restore-modal": {
       "restore-button": "Herstellen",

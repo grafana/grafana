@@ -4681,6 +4681,7 @@
       "move": "Mover {{typeName}}",
       "panel-background": "Cambiar fondo del panel",
       "panel-description": "Cambiar descripción del panel",
+      "panel-edit": "",
       "panel-max-repeats-per-row": "Máx. de repeticiones por fila",
       "panel-repeat-direction": "Repetir dirección",
       "panel-repeat-variable": "Repetición del panel por",
@@ -4935,12 +4936,11 @@
       "dataframe-aria-label": "Seleccionar marco de datos",
       "dataframe-label": "Mostrar marco de datos",
       "download-csv": "Descargar CSV",
-      "download-excel-description": "Añadir encabezado a CSV para su uso con Excel",
-      "download-excel-label": "Descargar para Excel",
       "download-logs": "Descargar registros",
       "download-service": "Descargar gráfico de servicio",
       "download-traces": "Descargar seguimientos",
-      "excel-header": "Encabezado de Excel",
+      "excel-compatibility-mode-description": "",
+      "excel-compatibility-mode-label": "",
       "formatted": "Datos formateados",
       "formatted-data-description": "Los datos de la tabla están formateados con opciones definidas en las pestañas Campo y Anulación.",
       "formatted-data-label": "Datos formateados",
@@ -11955,14 +11955,6 @@
       "no-deleted-dashboards": "No has eliminado ningún panel de control recientemente.",
       "no-deleted-dashboards-text": "Cuando elimines un panel de control, aparecerá aquí durante 30 días antes de eliminarse de forma permanente. El administrador de tu organización puede restaurar los paneles de control eliminados recientemente.",
       "no-search-result": "No se han encontrado resultados para tu consulta"
-    },
-    "permanently-delete-modal": {
-      "confirm-text": "Eliminar",
-      "delete-button": "Eliminar",
-      "delete-loading": "Eliminando...",
-      "title": "Eliminar paneles de control permanentemente",
-      "text_one": "Esta acción eliminará {{numberOfDashboards}} paneles de control.",
-      "text_other": "Esta acción eliminará {{numberOfDashboards}} paneles de control."
     },
     "restore-modal": {
       "restore-button": "Restaurar",

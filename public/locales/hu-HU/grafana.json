@@ -4681,6 +4681,7 @@
       "move": "{{typeName}} áthelyezése",
       "panel-background": "Panel hátterének módosítása",
       "panel-description": "Panel leírásának módosítása",
+      "panel-edit": "",
       "panel-max-repeats-per-row": "Max. ismétlés soronként",
       "panel-repeat-direction": "Ismétlési irány",
       "panel-repeat-variable": "Panelismétlés alapja:",
@@ -4935,12 +4936,11 @@
       "dataframe-aria-label": "Adatkeret kijelölése",
       "dataframe-label": "Adatkeret megjelenítése",
       "download-csv": "CSV letöltése",
-      "download-excel-description": "Fejléc hozzáadása a CSV-fájlhoz az Excelben történő használathoz",
-      "download-excel-label": "Letöltés Excelhez",
       "download-logs": "Naplók letöltése",
       "download-service": "Szolgáltatási grafikon letöltése",
       "download-traces": "Nyomkövetések letöltése",
-      "excel-header": "Excel-fejléc",
+      "excel-compatibility-mode-description": "",
+      "excel-compatibility-mode-label": "",
       "formatted": "Formázott adatok",
       "formatted-data-description": "A táblázatadatok a Mező és a Felülbírálás lapon meghatározott opciókkal formázhatók.",
       "formatted-data-label": "Formázott adatok",
@@ -11955,14 +11955,6 @@
       "no-deleted-dashboards": "Mostanában nem törölt irányítópultokat.",
       "no-deleted-dashboards-text": "Ha töröl egy irányítópultot, az 30 napig itt fog megjelenni, mielőtt véglegesen törlődik. A szervezeti rendszergazda visszaállíthatja a legutóbb törölt irányítópultokat.",
       "no-search-result": "Nincs találat a lekérdezésre"
-    },
-    "permanently-delete-modal": {
-      "confirm-text": "Törlés",
-      "delete-button": "Törlés",
-      "delete-loading": "Törlés...",
-      "title": "Irányítópultok végleges törlése",
-      "text_one": "Ez a művelet {{numberOfDashboards}} irányítópultot töröl.",
-      "text_other": "Ez a művelet {{numberOfDashboards}} irányítópultot töröl."
     },
     "restore-modal": {
       "restore-button": "Visszaállítás",

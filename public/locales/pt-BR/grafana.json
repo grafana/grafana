@@ -4681,6 +4681,7 @@
       "move": "Mover {{typeName}}",
       "panel-background": "Alterar plano de fundo do painel",
       "panel-description": "Alterar descrição do painel",
+      "panel-edit": "",
       "panel-max-repeats-per-row": "Máximo de repetições por linha",
       "panel-repeat-direction": "Repetir direção",
       "panel-repeat-variable": "Repetição do painel por",
@@ -4935,12 +4936,11 @@
       "dataframe-aria-label": "Selecionar quadro de dados",
       "dataframe-label": "Mostrar quadro de dados",
       "download-csv": "Baixar CSV",
-      "download-excel-description": "Adiciona cabeçalho ao CSV para usar com o Excel",
-      "download-excel-label": "Baixar para Excel",
       "download-logs": "Baixar logs",
       "download-service": "Baixar gráfico de serviço",
       "download-traces": "Baixar rastreamentos",
-      "excel-header": "Cabeçalho do Excel",
+      "excel-compatibility-mode-description": "",
+      "excel-compatibility-mode-label": "",
       "formatted": "Dados formatados",
       "formatted-data-description": "Os dados da tabela estão formatados com opções definidas no campo e nas guias de substituição.",
       "formatted-data-label": "Dados formatados",
@@ -11955,14 +11955,6 @@
       "no-deleted-dashboards": "Você não excluiu nenhum painel de controle recentemente.",
       "no-deleted-dashboards-text": "Quando você exclui um painel de controle, ele continua aqui por 30 dias e só depois é excluído permanentemente. O administrador da sua organização pode restaurar painéis de controle que foram excluídos recentemente.",
       "no-search-result": "Nenhum resultado encontrado para sua consulta"
-    },
-    "permanently-delete-modal": {
-      "confirm-text": "Excluir",
-      "delete-button": "Excluir",
-      "delete-loading": "Excluindo...",
-      "title": "Excluir painéis de controle permanentemente",
-      "text_one": "Esta ação excluirá {{numberOfDashboards}} painel de controle.",
-      "text_other": "Esta ação excluirá {{numberOfDashboards}} painéis de controle."
     },
     "restore-modal": {
       "restore-button": "Restaurar",
