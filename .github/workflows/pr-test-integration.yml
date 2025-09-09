@@ -61,7 +61,7 @@ jobs:
         id: list-packages
         run: |
           set -euo pipefail
-          echo "::set-output name=packages::$(./scripts/ci/backend-tests/pkgs-with-tests-named.sh -b TestIntegration -s | xargs | jq --slurp --raw-input '. | split(" ")')"
+          echo "packages=$(./scripts/ci/backend-tests/pkgs-with-tests-named.sh -b TestIntegration -s | xargs | tr -d '\n' | jq --slurp --raw-input '. | split(" ")')" >> "$GITHUB_OUTPUT"
 
   sqlite:
     needs: [detect-changes, packages]
