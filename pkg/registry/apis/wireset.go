@@ -3,7 +3,6 @@ package apiregistry
 import (
 	"github.com/google/wire"
 
-	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	dashboardinternal "github.com/grafana/grafana/pkg/registry/apis/dashboard"
 	"github.com/grafana/grafana/pkg/registry/apis/dashboardsnapshot"
 	"github.com/grafana/grafana/pkg/registry/apis/datasource"
@@ -32,9 +31,9 @@ var WireSetExts = wire.NewSet(
 )
 
 var provisioningExtras = wire.NewSet(
-	repository.ProvideFactoryFromConfig,
 	pullrequest.ProvidePullRequestWorker,
 	webhooks.ProvideWebhooksWithImages,
+	extras.ProvideFactoryFromConfig,
 	extras.ProvideProvisioningExtraAPIs,
 	extras.ProvideExtraWorkers,
 )

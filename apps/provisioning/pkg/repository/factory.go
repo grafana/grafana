@@ -6,7 +6,6 @@ import (
 	"sort"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
-	"github.com/grafana/grafana/pkg/setting"
 	"k8s.io/apimachinery/pkg/runtime"
 )
 
@@ -29,15 +28,6 @@ type Factory interface {
 type factory struct {
 	extras  map[provisioning.RepositoryType]Extra
 	enabled map[provisioning.RepositoryType]struct{}
-}
-
-func ProvideFactoryFromConfig(cfg *setting.Cfg, extras []Extra) (Factory, error) {
-	enabledTypes := make(map[provisioning.RepositoryType]struct{}, len(cfg.ProvisioningRepositoryTypes))
-	for _, e := range cfg.ProvisioningRepositoryTypes {
-		enabledTypes[provisioning.RepositoryType(e)] = struct{}{}
-	}
-
-	return ProvideFactory(enabledTypes, extras)
 }
 
 func ProvideFactory(enabled map[provisioning.RepositoryType]struct{}, extras []Extra) (Factory, error) {

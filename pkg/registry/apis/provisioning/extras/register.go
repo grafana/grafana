@@ -1,6 +1,7 @@
 package extras
 
 import (
+	apisprovisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository/git"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository/github"
@@ -43,4 +44,13 @@ func ProvideProvisioningOSSRepositoryExtras(
 
 func ProvideExtraWorkers(pullRequestWorker *pullrequest.PullRequestWorker) []jobs.Worker {
 	return []jobs.Worker{pullRequestWorker}
+}
+
+func ProvideFactoryFromConfig(cfg *setting.Cfg, extras []repository.Extra) (repository.Factory, error) {
+	enabledTypes := make(map[apisprovisioning.RepositoryType]struct{}, len(cfg.ProvisioningRepositoryTypes))
+	for _, e := range cfg.ProvisioningRepositoryTypes {
+		enabledTypes[apisprovisioning.RepositoryType(e)] = struct{}{}
+	}
+
+	return repository.ProvideFactory(enabledTypes, extras)
 }

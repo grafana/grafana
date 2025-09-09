@@ -10,7 +10,6 @@ import (
 	"github.com/google/wire"
 	httpclient2 "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana/apps/advisor/pkg/app/checkregistry"
-	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository/github"
 	"github.com/grafana/grafana/pkg/api"
 	"github.com/grafana/grafana/pkg/api/avatar"
@@ -830,7 +829,7 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts Options, apiOpts api
 	}
 	factory := github.ProvideFactory()
 	v5 := extras.ProvideProvisioningOSSRepositoryExtras(cfg, decryptService, factory, webhookExtraBuilder)
-	repositoryFactory, err := repository.ProvideFactoryFromConfig(cfg, v5)
+	repositoryFactory, err := extras.ProvideFactoryFromConfig(cfg, v5)
 	if err != nil {
 		return nil, err
 	}
@@ -1419,7 +1418,7 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	}
 	factory := github.ProvideFactory()
 	v5 := extras.ProvideProvisioningOSSRepositoryExtras(cfg, decryptService, factory, webhookExtraBuilder)
-	repositoryFactory, err := repository.ProvideFactoryFromConfig(cfg, v5)
+	repositoryFactory, err := extras.ProvideFactoryFromConfig(cfg, v5)
 	if err != nil {
 		return nil, err
 	}
