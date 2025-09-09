@@ -43,6 +43,15 @@ var (
 	// validNameRegex validates that a name contains only lowercase alphanumeric characters, '-' or '.'
 	// and starts and ends with an alphanumeric character
 	validNameRegex = regexp.MustCompile(`^[a-z0-9]([a-z0-9.-]*[a-z0-9])?$`)
+
+	// k8sRegex validates Kubernetes qualified name format
+	// must consist of alphanumeric characters, '-', '_' or '.', and must start and end with an alphanumeric character
+	// all future Grafana UIDs will need to conform to this
+	k8sRegex = regexp.MustCompile(`^[A-Za-z0-9][-A-Za-z0-9_.]*[A-Za-z0-9]$`)
+
+	// legacyNameRegex validates legacy UIDs: letters, numbers, dashes, underscores
+	// this matches the shortids that legacy Grafana used to generate uids
+	legacyNameRegex = regexp.MustCompile(`^[a-zA-Z0-9\-_]+$`)
 )
 
 func (k DataKey) String() string {
@@ -89,8 +98,8 @@ func (k DataKey) Validate() error {
 	if !validNameRegex.MatchString(k.Resource) {
 		return fmt.Errorf("resource '%s' is invalid", k.Resource)
 	}
-	if !validNameRegex.MatchString(k.Name) {
-		return fmt.Errorf("name '%s' is invalid", k.Name)
+	if !k8sRegex.MatchString(k.Name) && !legacyNameRegex.MatchString(k.Name) {
+		return fmt.Errorf("name '%s' is invalid, must match k8s qualified name format or Grafana shortid format", k.Name)
 	}
 
 	switch k.Action {
@@ -150,7 +159,7 @@ func (k ListRequestKey) Validate() error {
 	if !validNameRegex.MatchString(k.Resource) {
 		return fmt.Errorf("resource '%s' is invalid", k.Resource)
 	}
-	if k.Name != "" && !validNameRegex.MatchString(k.Name) {
+	if k.Name != "" && !k8sRegex.MatchString(k.Name) && !legacyNameRegex.MatchString(k.Name) {
 		return fmt.Errorf("name '%s' is invalid", k.Name)
 	}
 

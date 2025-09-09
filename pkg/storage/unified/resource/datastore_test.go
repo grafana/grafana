@@ -135,6 +135,18 @@ func TestDataKey_Validate(t *testing.T) {
 			expectError: false,
 		},
 		{
+			name: "valid - name ends with dash",
+			key: DataKey{
+				Namespace:       "test-namespace",
+				Group:           "test-group",
+				Resource:        "test-resource",
+				Name:            "test-name-",
+				ResourceVersion: rv,
+				Action:          DataActionCreated,
+			},
+			expectError: false,
+		},
+		{
 			name: "valid key with single character names",
 			key: DataKey{
 				Namespace:       "a",
@@ -153,6 +165,18 @@ func TestDataKey_Validate(t *testing.T) {
 				Group:           "group456",
 				Resource:        "resource789",
 				Name:            "name000",
+				ResourceVersion: rv,
+				Action:          DataActionCreated,
+			},
+			expectError: false,
+		},
+		{
+			name: "valid - uppercase in name",
+			key: DataKey{
+				Namespace:       "test-namespace",
+				Group:           "test-group",
+				Resource:        "test-resource",
+				Name:            "Test-Name",
 				ResourceVersion: rv,
 				Action:          DataActionCreated,
 			},
@@ -277,19 +301,6 @@ func TestDataKey_Validate(t *testing.T) {
 			expectError: true,
 			errorMsg:    "resource 'Test-Resource' is invalid",
 		},
-		{
-			name: "invalid - uppercase in name",
-			key: DataKey{
-				Namespace:       "test-namespace",
-				Group:           "test-group",
-				Resource:        "test-resource",
-				Name:            "Test-Name",
-				ResourceVersion: rv,
-				Action:          DataActionCreated,
-			},
-			expectError: true,
-			errorMsg:    "name 'Test-Name' is invalid",
-		},
 		// Invalid cases - invalid characters
 		{
 			name: "invalid - underscore in namespace",
@@ -330,8 +341,156 @@ func TestDataKey_Validate(t *testing.T) {
 			expectError: true,
 			errorMsg:    "resource 'test@resource' is invalid",
 		},
+		// Name validation tests - K8s qualified name format
 		{
-			name: "invalid - slash in name",
+			name: "valid - K8s format with underscores",
+			key: DataKey{
+				Namespace:       "test-namespace",
+				Group:           "test-group",
+				Resource:        "test-resource",
+				Name:            "test_name_with_underscores",
+				ResourceVersion: rv,
+				Action:          DataActionCreated,
+			},
+			expectError: false,
+		},
+		{
+			name: "valid - K8s format with dots",
+			key: DataKey{
+				Namespace:       "test-namespace",
+				Group:           "test-group",
+				Resource:        "test-resource",
+				Name:            "test.name.with.dots",
+				ResourceVersion: rv,
+				Action:          DataActionCreated,
+			},
+			expectError: false,
+		},
+		{
+			name: "valid - K8s format mixed case",
+			key: DataKey{
+				Namespace:       "test-namespace",
+				Group:           "test-group",
+				Resource:        "test-resource",
+				Name:            "TestName123",
+				ResourceVersion: rv,
+				Action:          DataActionCreated,
+			},
+			expectError: false,
+		},
+		{
+			name: "valid - Legacy Grafana shortid format",
+			key: DataKey{
+				Namespace:       "test-namespace",
+				Group:           "test-group",
+				Resource:        "test-resource",
+				Name:            "a1B2c3D4e5F6g7H8",
+				ResourceVersion: rv,
+				Action:          DataActionCreated,
+			},
+			expectError: false,
+		},
+		{
+			name: "valid - Legacy format with dashes and underscores",
+			key: DataKey{
+				Namespace:       "test-namespace",
+				Group:           "test-group",
+				Resource:        "test-resource",
+				Name:            "test-name_with-mixed_chars123",
+				ResourceVersion: rv,
+				Action:          DataActionCreated,
+			},
+			expectError: false,
+		},
+		{
+			name: "valid - Single character name",
+			key: DataKey{
+				Namespace:       "test-namespace",
+				Group:           "test-group",
+				Resource:        "test-resource",
+				Name:            "a",
+				ResourceVersion: rv,
+				Action:          DataActionCreated,
+			},
+			expectError: false,
+		},
+		// Invalid name cases
+		{
+			name: "valid - name starts with dash (legacy format)",
+			key: DataKey{
+				Namespace:       "test-namespace",
+				Group:           "test-group",
+				Resource:        "test-resource",
+				Name:            "-test-name",
+				ResourceVersion: rv,
+				Action:          DataActionCreated,
+			},
+			expectError: false,
+		},
+		{
+			name: "valid - name ends with dash (legacy format)",
+			key: DataKey{
+				Namespace:       "test-namespace",
+				Group:           "test-group",
+				Resource:        "test-resource",
+				Name:            "test-name-",
+				ResourceVersion: rv,
+				Action:          DataActionCreated,
+			},
+			expectError: false,
+		},
+		{
+			name: "invalid - name starts with dot",
+			key: DataKey{
+				Namespace:       "test-namespace",
+				Group:           "test-group",
+				Resource:        "test-resource",
+				Name:            ".test-name",
+				ResourceVersion: rv,
+				Action:          DataActionCreated,
+			},
+			expectError: true,
+			errorMsg:    "name '.test-name' is invalid, must match k8s qualified name format or Grafana shortid format",
+		},
+		{
+			name: "invalid - name ends with dot",
+			key: DataKey{
+				Namespace:       "test-namespace",
+				Group:           "test-group",
+				Resource:        "test-resource",
+				Name:            "test-name.",
+				ResourceVersion: rv,
+				Action:          DataActionCreated,
+			},
+			expectError: true,
+			errorMsg:    "name 'test-name.' is invalid, must match k8s qualified name format or Grafana shortid format",
+		},
+		{
+			name: "valid - name starts with underscore (legacy format)",
+			key: DataKey{
+				Namespace:       "test-namespace",
+				Group:           "test-group",
+				Resource:        "test-resource",
+				Name:            "_test-name",
+				ResourceVersion: rv,
+				Action:          DataActionCreated,
+			},
+			expectError: false,
+		},
+		{
+			name: "valid - name ends with underscore (legacy format)",
+			key: DataKey{
+				Namespace:       "test-namespace",
+				Group:           "test-group",
+				Resource:        "test-resource",
+				Name:            "test-name_",
+				ResourceVersion: rv,
+				Action:          DataActionCreated,
+			},
+			expectError: false,
+		},
+		{
+			name: "invalid - name with slash",
 			key: DataKey{
 				Namespace:       "test-namespace",
 				Group:           "test-group",
@@ -341,7 +500,46 @@ func TestDataKey_Validate(t *testing.T) {
 				Action:          DataActionCreated,
 			},
 			expectError: true,
-			errorMsg:    "name 'test/name' is invalid",
+			errorMsg:    "name 'test/name' is invalid, must match k8s qualified name format or Grafana shortid format",
+		},
+		{
+			name: "invalid - name with spaces",
+			key: DataKey{
+				Namespace:       "test-namespace",
+				Group:           "test-group",
+				Resource:        "test-resource",
+				Name:            "test name",
+				ResourceVersion: rv,
+				Action:          DataActionCreated,
+			},
+			expectError: true,
+			errorMsg:    "name 'test name' is invalid, must match k8s qualified name format or Grafana shortid format",
+		},
+		{
+			name: "invalid - name with special characters",
+			key: DataKey{
+				Namespace:       "test-namespace",
+				Group:           "test-group",
+				Resource:        "test-resource",
+				Name:            "test@name#with$special",
+				ResourceVersion: rv,
+				Action:          DataActionCreated,
+			},
+			expectError: true,
+			errorMsg:    "name 'test@name#with$special' is invalid, must match k8s qualified name format or Grafana shortid format",
+		},
+		{
+			name: "invalid - empty name",
+			key: DataKey{
+				Namespace:       "test-namespace",
+				Group:           "test-group",
+				Resource:        "test-resource",
+				Name:            "",
+				ResourceVersion: rv,
+				Action:          DataActionCreated,
+			},
+			expectError: true,
+			errorMsg:    "name cannot be empty",
 		},
 		// Invalid cases - start/end with invalid characters
 		{
@@ -382,19 +580,6 @@ func TestDataKey_Validate(t *testing.T) {
 			},
 			expectError: true,
 			errorMsg:    "resource '.test-resource' is invalid",
-		},
-		{
-			name: "invalid - name ends with dash",
-			key: DataKey{
-				Namespace:       "test-namespace",
-				Group:           "test-group",
-				Resource:        "test-resource",
-				Name:            "test-name-",
-				ResourceVersion: rv,
-				Action:          DataActionCreated,
-			},
-			expectError: true,
-			errorMsg:    "name 'test-name-' is invalid",
 		},
 		// Invalid cases - invalid action
 		{
@@ -1138,6 +1323,36 @@ func TestListRequestKey_Validate(t *testing.T) {
 			},
 			expectError: false,
 		},
+		{
+			name: "valid - legacy grafana uid 1",
+			key: ListRequestKey{
+				Namespace: "test-namespace",
+				Group:     "test-group",
+				Resource:  "test-resource",
+				Name:      "_4OV_5Nmz",
+			},
+			expectError: false,
+		},
+		{
+			name: "valid - legacy grafana uid 2",
+			key: ListRequestKey{
+				Namespace: "test-namespace",
+				Group:     "test-group",
+				Resource:  "test-resource",
+				Name:      "-Y-tnEDWk",
+			},
+			expectError: false,
+		},
+		{
+			name: "valid - legacy grafana uid 3",
+			key: ListRequestKey{
+				Namespace: "test-namespace",
+				Group:     "test-group",
+				Resource:  "test-resource",
+				Name:      "000000005",
+			},
+			expectError: false,
+		},
 		// Invalid hierarchical cases
 		{
 			name: "invalid - group without namespace",
@@ -1220,17 +1435,6 @@ func TestListRequestKey_Validate(t *testing.T) {
 			errorMsg:    "resource 'Test-Resource' is invalid",
 		},
 		{
-			name: "invalid - uppercase in name",
-			key: ListRequestKey{
-				Namespace: "test-namespace",
-				Group:     "test-group",
-				Resource:  "test-resource",
-				Name:      "Test-Name",
-			},
-			expectError: true,
-			errorMsg:    "name 'Test-Name' is invalid",
-		},
-		{
 			name: "invalid - underscore in namespace",
 			key: ListRequestKey{
 				Namespace: "test_namespace",
@@ -1254,6 +1458,16 @@ func TestListRequestKey_Validate(t *testing.T) {
 			},
 			expectError: true,
 			errorMsg:    "group 'test-group.' is invalid",
+		},
+		{
+			name: "invalid - name contains invalid char",
+			key: ListRequestKey{
+				Namespace: "test-namespace",
+				Group:     "test-group.",
+				Resource:  "test-resource",
+				Name:      "test$name",
+			},
+			expectError: true,
 		},
 	}
 
