@@ -2725,7 +2725,7 @@ __metadata:
     immer: "npm:10.2.0"
     jest: "npm:29.7.0"
     lodash: "npm:^4.17.23"
-    monaco-editor: "npm:0.34.1"
+    monaco-editor: "npm:0.53.0"
     prismjs: "npm:1.30.0"
     react: "npm:18.3.1"
     react-dom: "npm:18.3.1"
@@ -2799,7 +2799,7 @@ __metadata:
     fast-deep-equal: "npm:^3.1.3"
     jest: "npm:29.7.0"
     lodash: "npm:^4.17.23"
-    monaco-editor: "npm:0.34.1"
+    monaco-editor: "npm:0.53.0"
     prismjs: "npm:1.30.0"
     react: "npm:18.3.1"
     react-dom: "npm:18.3.1"
@@ -3112,7 +3112,7 @@ __metadata:
     "@types/react-dom": "npm:18.3.5"
     jest: "npm:29.7.0"
     lodash: "npm:^4.17.23"
-    monaco-editor: "npm:0.34.1"
+    monaco-editor: "npm:0.53.0"
     react: "npm:18.3.1"
     react-dom: "npm:18.3.1"
     react-use: "npm:17.6.0"
@@ -3156,7 +3156,7 @@ __metadata:
     immer: "npm:10.2.0"
     jest: "npm:29.7.0"
     lodash: "npm:^4.17.23"
-    monaco-editor: "npm:0.34.1"
+    monaco-editor: "npm:0.53.0"
     prismjs: "npm:1.30.0"
     react: "npm:18.3.1"
     react-dom: "npm:18.3.1"
@@ -3212,7 +3212,7 @@ __metadata:
     jest: "npm:29.7.0"
     lodash: "npm:^4.17.23"
     lru-cache: "npm:11.2.2"
-    monaco-editor: "npm:0.34.1"
+    monaco-editor: "npm:0.53.0"
     prismjs: "npm:1.30.0"
     react: "npm:18.3.1"
     react-dom: "npm:18.3.1"
@@ -4173,7 +4173,7 @@ __metadata:
     micro-memoize: "npm:^4.1.2"
     mock-raf: "npm:1.0.1"
     moment: "npm:2.30.1"
-    monaco-editor: "npm:0.34.1"
+    monaco-editor: "npm:0.53.0"
     msw: "npm:^2.10.2"
     msw-storybook-addon: "npm:^2.0.5"
     ol: "npm:10.7.0"
@@ -11657,6 +11657,13 @@ __metadata:
   version: 4.0.5
   resolution: "@types/tough-cookie@npm:4.0.5"
   checksum: 10/01fd82efc8202670865928629697b62fe9bf0c0dcbc5b1c115831caeb073a2c0abb871ff393d7df1ae94ea41e256cb87d2a5a91fd03cdb1b0b4384e08d4ee482
+  languageName: node
+  linkType: hard
+
+"@types/trusted-types@npm:^1.0.6":
+  version: 1.0.6
+  resolution: "@types/trusted-types@npm:1.0.6"
+  checksum: 10/22b8efcb6116ab80d07542047135618ee282f2060c481e472126604d838c09e7dad33c9462d88c130aef2c3133aece516f00d6af7ff814f0612f7d19db720e6d
   languageName: node
   linkType: hard
 
@@ -20708,7 +20715,7 @@ __metadata:
     ml-regression-simple-linear: "npm:^3.0.0"
     moment: "npm:2.30.1"
     moment-timezone: "npm:0.5.47"
-    monaco-editor: "npm:0.34.1"
+    monaco-editor: "npm:0.53.0"
     moveable: "npm:0.53.0"
     msw: "npm:2.10.4"
     mutationobserver-shim: "npm:0.3.7"
@@ -25882,10 +25889,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"monaco-editor@npm:0.34.1":
-  version: 0.34.1
-  resolution: "monaco-editor@npm:0.34.1"
-  checksum: 10/50cde6f68f27cd66fbaadb7efe0e6ce46748e4bb552ddaa84451fbda18e5ff970a1fa79371c04618927c1f6348839747e3d4804fe383040bad2137527f8a38e4
+"monaco-editor@npm:0.53.0":
+  version: 0.53.0
+  resolution: "monaco-editor@npm:0.53.0"
+  dependencies:
+    "@types/trusted-types": "npm:^1.0.6"
+  checksum: 10/ecfaeae965ce7a4b7f7c6d6fd889984d035beb169cd3e33f55dbd04b2b33a454c9ab7551e0822c2c37e1e89bb2950999c704235c0fb70bb21602695e182f90b2
   languageName: node
   linkType: hard
 
