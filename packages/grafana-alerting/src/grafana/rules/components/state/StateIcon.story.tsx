@@ -6,7 +6,7 @@ import mdx from './StateIcon.mdx';
 
 const meta: Meta<typeof StateIcon> = {
   component: StateIcon,
-  title: 'rules/StateIcon',
+  title: 'Rules/StateIcon',
   decorators: [],
   parameters: {
     docs: {

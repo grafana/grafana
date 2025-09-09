@@ -8,7 +8,7 @@ import mdx from './StateText.mdx';
 
 const meta: Meta<typeof StateText> = {
   component: StateText,
-  title: 'rules/StateText',
+  title: 'Rules/StateText',
   decorators: [],
   parameters: {
     docs: {

@@ -6,7 +6,7 @@ import mdx from './StateDot.mdx';
 
 const meta: Meta<typeof StateDot> = {
   component: StateDot,
-  title: 'rules/StateDot',
+  title: 'Rules/StateDot',
   decorators: [],
   parameters: {
     docs: {
