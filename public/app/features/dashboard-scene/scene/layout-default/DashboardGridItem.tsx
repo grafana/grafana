@@ -211,6 +211,8 @@ export class DashboardGridItem
     if (prevHeight !== this.state.height) {
       const layout = sceneGraph.getLayout(this);
       if (layout instanceof SceneGridLayout) {
+        // When the height changes, we need to adjust the y positions of the following children or we will potentially create a broken layout with grid items out of sync with their parent row.
+        layout.adjustYPositions(this.state.y!, Math.max(0, (this.state.height ?? 0) - (prevHeight ?? 0)));
         layout.forceRender();
       }
     }
