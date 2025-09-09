@@ -1,5 +1,5 @@
 import { Page } from 'app/core/components/Page/Page';
-import { useDataSourceTabNav } from 'app/features/connections/hooks/useDataSourceTabNav';
+import { useDataSourceSettingsNav } from 'app/features/connections/hooks/useDataSourceSettingsNav';
 
 import { EditDataSource } from '../components/EditDataSource';
 import { EditDataSourceActions } from '../components/EditDataSourceActions';
@@ -13,7 +13,7 @@ export interface Props {
 }
 
 export function DataSourceTabPage({ uid, pageId }: Props) {
-  const { navId, pageNav, dataSourceHeader } = useDataSourceTabNav('settings');
+  const { navId, pageNav, dataSourceHeader } = useDataSourceSettingsNav('settings');
 
   const info = useDataSourceInfo({
     dataSourcePluginName: pageNav.dataSourcePluginName,
