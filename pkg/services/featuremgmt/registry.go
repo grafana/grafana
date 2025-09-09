@@ -1346,6 +1346,7 @@ var (
 			Description: "Enables cross cluster search in the Elasticsearch datasource",
 			Stage:       FeatureStageGeneralAvailability,
 			Owner:       grafanaPartnerPluginsSquad,
+			Expression:  "false",
 		},
 		{
 			Name:         "unifiedHistory",

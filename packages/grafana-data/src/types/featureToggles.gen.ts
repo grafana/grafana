@@ -781,6 +781,7 @@ export interface FeatureToggles {
   unifiedStorageSearchUI?: boolean;
   /**
   * Enables cross cluster search in the Elasticsearch datasource
+  * @default false
   */
   elasticsearchCrossClusterSearch?: boolean;
   /**

@@ -1155,16 +1155,17 @@
     {
       "metadata": {
         "name": "elasticsearchCrossClusterSearch",
-        "resourceVersion": "1757440201180",
+        "resourceVersion": "1757440917830",
         "creationTimestamp": "2024-12-12T22:20:04Z",
         "annotations": {
-          "grafana.app/updatedTimestamp": "2025-09-09 17:50:01.180169 +0000 UTC"
+          "grafana.app/updatedTimestamp": "2025-09-09 18:01:57.830761 +0000 UTC"
         }
       },
       "spec": {
         "description": "Enables cross cluster search in the Elasticsearch datasource",
         "stage": "GA",
-        "codeowner": "@grafana/partner-datasources"
+        "codeowner": "@grafana/partner-datasources",
+        "expression": "false"
       }
     },
     {
