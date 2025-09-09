@@ -1723,11 +1723,6 @@
       "count": 1
     }
   },
-  "public/app/features/alerting/unified/components/rule-viewer/RuleViewer.tsx": {
-    "react-hooks/rules-of-hooks": {
-      "count": 1
-    }
-  },
   "public/app/features/alerting/unified/components/rules/Filter/RulesFilter.v1.tsx": {
     "no-restricted-syntax": {
       "count": 4
