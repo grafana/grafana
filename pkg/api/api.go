@@ -84,10 +84,8 @@ func (hs *HTTPServer) registerRoutes() {
 	r.Get("/login", hs.LoginView)
 	r.Get("/invite/:code", hs.Index)
 
-	if hs.Features.IsEnabledGlobally(featuremgmt.FlagMultiTenantFrontend) {
-		// Temporarily expose the full bootdata via API
-		r.Get("/bootdata", reqNoAuth, hs.GetBootdata)
-	}
+	// Temporary MT-frontend config endpoint
+	r.Get("/bootdata", reqNoAuth, hs.GetBootdata)
 
 	// authed views
 	r.Get("/", reqSignedIn, hs.Index)

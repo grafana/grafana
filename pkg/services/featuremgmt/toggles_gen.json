@@ -2229,7 +2229,8 @@
       "metadata": {
         "name": "multiTenantFrontend",
         "resourceVersion": "1753448760331",
-        "creationTimestamp": "2025-04-25T09:24:25Z"
+        "creationTimestamp": "2025-04-25T09:24:25Z",
+        "deletionTimestamp": "2025-09-08T17:06:39Z"
       },
       "spec": {
         "description": "Register MT frontend",

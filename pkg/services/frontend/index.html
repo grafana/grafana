@@ -252,7 +252,7 @@
           const rawBootData = await loadBootData();
 
           window.grafanaBootData = {
-            _femt: true,
+            _femt: true, // isFrontendService() needs this
             ...rawBootData,
           }
 

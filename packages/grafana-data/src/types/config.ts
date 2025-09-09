@@ -195,6 +195,9 @@ export interface BootData {
     light: string;
     dark: string;
   };
+
+  /** @deprecated Internal Grafana usage only. This property will be removed at any time. */
+  _femt?: boolean;
 }
 
 /**
