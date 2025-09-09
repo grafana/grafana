@@ -442,6 +442,12 @@ function usePageNav(rule: CombinedRule) {
 
   const groupDetailsUrl = groups.detailsPageLink(dataSourceUID, namespaceString, groupName);
 
+  const setActiveTabFromString = (tab: string) => {
+    if (isValidTab(tab)) {
+      setActiveTab(tab);
+    }
+  };
+
   const pageNav: NavModelItem = {
     ...defaultPageNav,
     text: rule.name,
@@ -488,7 +494,7 @@ function usePageNav(rule: CombinedRule) {
         hideFromTabs: !isGrafanaAlertRule && !isGrafanaRecordingRule,
       },
       // Enterprise extensions can append additional tabs here
-      ...useRuleViewExtensionsNav(activeTab, (tab) => setActiveTab(tab as ActiveTab)),
+      ...useRuleViewExtensionsNav(activeTab, setActiveTabFromString),
     ],
     parentItem: {
       text: groupName,
