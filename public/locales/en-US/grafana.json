@@ -2056,6 +2056,9 @@
       "text-loading-rules": "Loading rules...",
       "title-dashboard-not-saved": "Dashboard not saved"
     },
+    "paused-badge": {
+      "paused": "Paused"
+    },
     "payload-editor": {
       "edit-payload": "Edit payload",
       "label-add-custom-alert-instance": "Add custom alert instance",
