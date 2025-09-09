@@ -2,11 +2,11 @@ package rbac
 
 import claims "github.com/grafana/authlib/types"
 
-type CheckRequest struct {
+type checkRequest struct {
 	Namespace    claims.NamespaceInfo
 	IdentityType claims.IdentityType
 	UserUID      string
-	Action       string
+	Action       string // Verb has been mapped into an action
 	Group        string
 	Resource     string
 	Verb         string
@@ -14,7 +14,7 @@ type CheckRequest struct {
 	ParentFolder string
 }
 
-type ListRequest struct {
+type listRequest struct {
 	Namespace    claims.NamespaceInfo
 	IdentityType claims.IdentityType
 	UserUID      string
