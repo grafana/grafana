@@ -9047,9 +9047,6 @@
   },
   "histogram": {
     "category-histogram": "Histogram",
-    "histogram-panel": {
-      "no-histogram-found-in-response": "No histogram found in response"
-    },
     "name-fill-opacity": "Fill opacity",
     "name-gradient-mode": "Gradient mode",
     "name-line-width": "Line width",

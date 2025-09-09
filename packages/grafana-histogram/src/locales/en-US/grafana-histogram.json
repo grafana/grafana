@@ -1,0 +1,7 @@
+{
+  "grafana-histogram": {
+    "panel": {
+      "no-data-message": "No histogram found in response"
+    }
+  }
+}

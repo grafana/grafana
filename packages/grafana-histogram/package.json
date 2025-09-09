@@ -26,6 +26,7 @@
   },
   "files": [
     "./dist",
+    "./src/locales",
     "./README.md",
     "./CHANGELOG.md",
     "./LICENSE_APACHE2"
@@ -35,6 +36,7 @@
     "bundle": "rollup -c rollup.config.ts --configPlugin esbuild",
     "clean": "rimraf ./dist ./compiled ./package.tgz",
     "typecheck": "tsc --emitDeclarationOnly false --noEmit",
+    "i18n-extract": "i18next --config src/locales/i18next-parser.config.cjs",
     "prepack": "cp package.json package.json.bak && node ../../scripts/prepare-npm-package.js",
     "postpack": "mv package.json.bak package.json"
   },

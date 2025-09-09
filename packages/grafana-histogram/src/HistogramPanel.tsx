@@ -64,9 +64,7 @@ export const HistogramPanel = ({ data, options, fieldConfig, width, height }: Pr
     return (
       <div className="panel-empty">
         <p>
-          <Trans i18nKey="histogram.histogram-panel.no-histogram-found-in-response">
-            No histogram found in response
-          </Trans>
+          <Trans i18nKey="grafana-histogram.panel.no-data-message">No histogram found in response</Trans>
         </p>
       </div>
     );
