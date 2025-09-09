@@ -1,3 +1,4 @@
+API rule violation: list_type_missing,github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1,DashboardAction,Variables
 API rule violation: list_type_missing,github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1,DashboardAdHocFilterWithLabels,ValueLabels
 API rule violation: list_type_missing,github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1,DashboardAdHocFilterWithLabels,Values
 API rule violation: list_type_missing,github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1,DashboardAdhocVariableSpec,BaseFilters
@@ -9,6 +10,7 @@ API rule violation: list_type_missing,github.com/grafana/grafana/apps/dashboard/
 API rule violation: list_type_missing,github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1,DashboardCustomVariableSpec,Options
 API rule violation: list_type_missing,github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1,DashboardDashboardLink,Tags
 API rule violation: list_type_missing,github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1,DashboardDatasourceVariableSpec,Options
+API rule violation: list_type_missing,github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1,DashboardFieldConfig,Actions
 API rule violation: list_type_missing,github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1,DashboardFieldConfig,Links
 API rule violation: list_type_missing,github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1,DashboardFieldConfig,Mappings
 API rule violation: list_type_missing,github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1,DashboardFieldConfigSource,Overrides
