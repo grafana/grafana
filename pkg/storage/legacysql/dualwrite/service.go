@@ -27,8 +27,8 @@ func ProvideService(
 	features featuremgmt.FeatureToggles,
 	reg prometheus.Registerer,
 	kv kvstore.KVStore,
-	cfg *setting.Cfg) Service {
-
+	cfg *setting.Cfg,
+) Service {
 	enabled := features.IsEnabledGlobally(featuremgmt.FlagManagedDualWriter) ||
 		features.IsEnabledGlobally(featuremgmt.FlagProvisioning) // required for git provisioning
 
