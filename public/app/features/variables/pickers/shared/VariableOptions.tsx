@@ -137,7 +137,9 @@ class VariableOptions extends PureComponent<Props> {
 }
 
 const getStyles = stylesFactory((theme: GrafanaTheme2) => {
-  const checkboxImageUrl = theme.isDark ? 'public/img/checkbox.png' : 'public/img/checkbox_white.png';
+  const relativeCheckboxImageUrl = theme.isDark ? 'public/img/checkbox.png' : 'public/img/checkbox_white.png';
+  // NI fork: Use absolute URL to avoid issue with incorrect base path used when in an Emotion Global style in an iframe on Firefox
+  const checkboxImageUrl = `${document.baseURI}${relativeCheckboxImageUrl}`;
 
   return {
     hideVariableOptionIcon: css({
