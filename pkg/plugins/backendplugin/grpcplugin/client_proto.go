@@ -44,14 +44,19 @@ type protoClient struct {
 }
 
 type ProtoClientOpts struct {
-	PluginJSON           plugins.JSONData
-	ExecutablePath       string
-	ExecutableArgs       []string
-	Env                  []string
-	SkipHostEnvVars      bool
-	ContainerModeEnabled bool
-	Logger               log.Logger
-	Tracer               trace.Tracer
+	PluginJSON      plugins.JSONData
+	ExecutablePath  string
+	ExecutableArgs  []string
+	Env             []string
+	ContainerMode   ContainerModeOpts
+	SkipHostEnvVars bool
+	Logger          log.Logger
+	Tracer          trace.Tracer
+}
+
+type ContainerModeOpts struct {
+	Enabled bool
+	Image   string
 }
 
 func NewProtoClient(opts ProtoClientOpts) (ProtoClient, error) {
@@ -62,8 +67,11 @@ func NewProtoClient(opts ProtoClientOpts) (ProtoClient, error) {
 			executablePath:   opts.ExecutablePath,
 			executableArgs:   opts.ExecutableArgs,
 			versionedPlugins: pluginSet,
-			containerMode:    opts.ContainerModeEnabled,
-			skipHostEnvVars:  opts.SkipHostEnvVars,
+			containerMode: containerModeOpts{
+				enabled: opts.ContainerMode.Enabled,
+				image:   opts.ContainerMode.Image,
+			},
+			skipHostEnvVars: opts.SkipHostEnvVars,
 		},
 		opts.Logger,
 		opts.Tracer,

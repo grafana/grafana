@@ -57,10 +57,12 @@ func newClientTracerProvider(tracer trace.Tracer) trace.TracerProvider {
 	return &clientTracerProvider{tracer: tracer}
 }
 
-func newClientConfig(executablePath string, args []string, env []string, skipHostEnvVars bool, containerModeEnabled bool, logger log.Logger, tracer trace.Tracer,
-	versionedPlugins map[int]goplugin.PluginSet) *goplugin.ClientConfig {
-	logger.Info("Creating client config", "executablePath", executablePath, "os", runtime.GOOS, "containerModeEnabled", containerModeEnabled)
-	if runtime.GOOS == "linux" && containerModeEnabled {
+func newClientConfig(descriptor PluginDescriptor, env []string, logger log.Logger, tracer trace.Tracer) *goplugin.ClientConfig {
+	executablePath := descriptor.executablePath
+	skipHostEnvVars := descriptor.skipHostEnvVars
+	versionedPlugins := descriptor.versionedPlugins
+
+	if runtime.GOOS == "linux" && descriptor.containerMode.enabled {
 		return containerClientConfig(executablePath, logger, versionedPlugins, skipHostEnvVars, tracer)
 	}
 
@@ -68,7 +70,7 @@ func newClientConfig(executablePath string, args []string, env []string, skipHos
 
 	// We can ignore gosec G201 here, since the dynamic part of executablePath comes from the plugin definition
 	// nolint:gosec
-	cmd := exec.Command(executablePath, args...)
+	cmd := exec.Command(executablePath, descriptor.executableArgs...)
 	cmd.Env = env
 
 	return &goplugin.ClientConfig{
@@ -91,12 +93,12 @@ func newClientConfig(executablePath string, args []string, env []string, skipHos
 }
 
 func containerClientConfig(executablePath string, logger log.Logger, versionedPlugins map[int]goplugin.PluginSet, skipHostEnvVars bool, tracer trace.Tracer) *goplugin.ClientConfig {
-	logger.Info("Linux host detected - using container mode", "executable", executablePath)
+	logger.Debug("Linux host detected - using container mode", "executable", executablePath)
 	return &goplugin.ClientConfig{
 		RunnerFunc: func(l hclog.Logger, cmd *exec.Cmd, tmpDir string) (runner.Runner, error) {
 			logger.Info("Creating container runner", "executablePath", executablePath, "tmpDir", tmpDir)
 			config := &plugincontainer.Config{
-				Image: "alpine:latest",
+				Image: "alpine:3.22.1",
 				Env:   cmd.Env,
 			}
 
@@ -123,9 +125,14 @@ type PluginDescriptor struct {
 	executableArgs   []string
 	skipHostEnvVars  bool
 	managed          bool
-	containerMode    bool
+	containerMode    containerModeOpts
 	versionedPlugins map[int]goplugin.PluginSet
 	startRendererFn  StartRendererFunc
+}
+
+type containerModeOpts struct {
+	enabled bool
+	image   string
 }
 
 // NewBackendPlugin creates a new backend plugin factory used for registering a backend plugin.
