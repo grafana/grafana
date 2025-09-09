@@ -977,7 +977,9 @@ func (dr *DashboardServiceImpl) SaveFolderForProvisionedDashboards(ctx context.C
 
 	ctx, ident := identity.WithServiceIdentity(ctx, dto.OrgID)
 	dto.SignedInUser = ident
-	dto.ClassicProvisioning = readerName
+
+	// The readerName is the identifier for the file provisioning manager
+	dto.ManagerKindClassicFP = readerName // nolint:staticcheck
 
 	f, err := dr.folderService.Create(ctx, dto)
 	if err != nil {

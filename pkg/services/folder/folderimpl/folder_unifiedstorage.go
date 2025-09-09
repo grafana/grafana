@@ -512,7 +512,7 @@ func (s *Service) createOnApiServer(ctx context.Context, cmd *folder.CreateFolde
 		ParentUID:    cmd.ParentUID,
 		SignedInUser: cmd.SignedInUser,
 		// pass along provisioning details
-		ClassicProvisioning: cmd.ClassicProvisioning,
+		ManagerKindClassicFP: cmd.ManagerKindClassicFP, // nolint:staticcheck
 	}
 
 	f, err := s.unifiedStore.Create(ctx, *cmd)

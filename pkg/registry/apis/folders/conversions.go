@@ -37,10 +37,11 @@ func LegacyCreateCommandToUnstructured(cmd *folder.CreateFolderCommand) (*unstru
 	meta.SetName(cmd.UID)
 	meta.SetFolder(cmd.ParentUID)
 
-	if cmd.ClassicProvisioning != "" {
+	// nolint:staticcheck
+	if cmd.ManagerKindClassicFP != "" {
 		meta.SetManagerProperties(utils.ManagerProperties{
-			Kind:     utils.ManagerKindClassicFP, // nolint:staticcheck
-			Identity: cmd.ClassicProvisioning,
+			Kind:     utils.ManagerKindClassicFP,
+			Identity: cmd.ManagerKindClassicFP,
 		})
 	}
 
