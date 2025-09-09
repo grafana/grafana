@@ -35,7 +35,7 @@ services:
       GF_DEFAULT_APP_MODE: development
       GF_PANELS_ENABLE_ALPHA: true
       GF_SERVER_CDN_URL: http://localhost:3010
-      GF_FEATURE_TOGGLES_ENABLE: multiTenantFrontend enableNativeHTTPHistogram kubernetesShortURLs useKubernetesShortURLsAPI
+      GF_FEATURE_TOGGLES_ENABLE: enableNativeHTTPHistogram kubernetesShortURLs useKubernetesShortURLsAPI
       GF_DATABASE_URL: postgres://grafana:grafana@postgres:5432/grafana
       GF_SERVER_ROUTER_LOGGING: true
       GF_LOG_LEVEL: info

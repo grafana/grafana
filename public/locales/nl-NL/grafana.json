@@ -1703,9 +1703,6 @@
       "notes": "Opmerkingen",
       "returns": "Retouren"
     },
-    "label-picker": {
-      "no-options-message": "Geen labels gevonden"
-    },
     "labels-editor-modal": {
       "title-edit-labels": "Labels bewerken"
     },
@@ -1723,9 +1720,6 @@
     "labels-sub-form": {
       "description": "Selecteer een labelsleutel/-waarde uit de onderstaande opties of typ een nieuwe en druk op Enter.",
       "save": "Opslaan"
-    },
-    "labels-with-suggestions": {
-      "text-loading-existing-labels": "Bestaande labels laden"
     },
     "labels-without-suggestions": {
       "message": {
@@ -4506,16 +4500,11 @@
             "any": "Overeenkomend met",
             "label": "Regels matchen"
           },
-          "label": "Groep",
           "visibility": {
             "hide": "Verbergen",
             "label": "{{type}} zichtbaarheid",
             "show": "Tonen"
           }
-        },
-        "shared": {
-          "delete-condition": "Voorwaarde verwijderen",
-          "unsupported-item-type": "Deze voorwaarde wordt niet ondersteund door het element, daarom wordt deze genegeerd."
         },
         "time-range-size": {
           "info": "De/het {{type}} weergeven of verbergen als het tijdsbereik van het dashboard korter is dan het geselecteerde tijdsbestek.",
@@ -4545,17 +4534,21 @@
             "not-matches": "Komt niet overeen"
           },
           "value": "Waarde"
+        },
+        "wrapper": {
+          "delete-condition": "",
+          "unsupported-object-type": ""
         }
       },
       "editor": {
+        "info": "",
         "not-supported-for-custom-grid": "Voorwaardelijke weergave wordt niet ondersteund in de aangepaste rasterindeling. Schakel over naar auto grid om dit te gebruiken.",
-        "unsupported-item-type": "Voorwaardelijke weergave wordt niet ondersteund voor dit itemtype"
+        "unsupported-object-type": ""
       },
       "overlay": {
         "tooltip": "Element is verborgen vanwege voorwaardelijke weergave."
       },
       "root": {
-        "info": "Stel regels in om de zichtbaarheid van {{type}} te beheren door een of alle regels te matchen.",
         "title": "Regels tonen / verbergen"
       }
     },
@@ -4688,6 +4681,7 @@
       "move": "{{typeName}} verplaatsen ",
       "panel-background": "Paneelachtergrond wijzigen",
       "panel-description": "Paneelbeschrijving wijzigen",
+      "panel-edit": "",
       "panel-max-repeats-per-row": "Max herhalingen per rij",
       "panel-repeat-direction": "Herhaalrichting",
       "panel-repeat-variable": "Paneel herhalen op",
@@ -4695,7 +4689,8 @@
       "paste-panel": "Paneel plakken",
       "remove": "{{typeName}} verwijderen",
       "row-title": "",
-      "switch-layout": "Indeling wisselen"
+      "switch-layout": "Indeling wisselen",
+      "tab-title": ""
     },
     "edit-pane": {
       "elements": {
@@ -4941,12 +4936,11 @@
       "dataframe-aria-label": "Gegevensframe selecteren",
       "dataframe-label": "Gegevensframe weergeven",
       "download-csv": "Csv uploaden",
-      "download-excel-description": "Voegt koptekst toe aan csv voor gebruik met Excel",
-      "download-excel-label": "Downloaden voor Excel",
       "download-logs": "Logs downloaden",
       "download-service": "Servicegrafiek downloaden",
       "download-traces": "Sporen downloaden",
-      "excel-header": "Excel-koptekst",
+      "excel-compatibility-mode-description": "",
+      "excel-compatibility-mode-label": "",
       "formatted": "Opgemaakte gegevens",
       "formatted-data-description": "Tabelgegevens worden opgemaakt met opties die zijn gedefinieerd in de tabbladen Veld en Overschrijven.",
       "formatted-data-label": "Opgemaakte gegevens",
@@ -8348,6 +8342,10 @@
         "action-title": "Titel",
         "action-title-placeholder": "Actietitel",
         "action-variables": "Variabelen",
+        "connection": "",
+        "connection-direct-description": "",
+        "connection-direct-label": "",
+        "connection-placeholder": "",
         "one-click-description": "Slechts één link of actie kan tegelijk de één-klik-functionaliteit hebben ingeschakeld"
       }
     },
@@ -9646,6 +9644,12 @@
       "hide-search": "Zoekopdracht sluiten",
       "hide-timestamps": "Tijdstempels verbergen",
       "hide-unique-labels": "Unieke labels verbergen",
+      "line-wrapping": {
+        "enable": "",
+        "enable-prettify": "",
+        "hide": "",
+        "label": ""
+      },
       "newest-first": "Gesorteerd op nieuwste logboeken eerst - klik om oudste eerst weer te geven",
       "oldest-first": "Gesorteerd op oudste logboeken eerst - klik om nieuwste eerst weer te geven",
       "prettify-json": "JSON-logs uitvouwen",
@@ -9654,13 +9658,16 @@
       "resolution-ns": "nsec",
       "scroll-bottom": "Naar beneden scrollen",
       "scroll-top": "Naar boven scrollen",
-      "show-ms-timestamps": "Tijdstempels met milliseconden weergeven",
-      "show-ns-timestamps": "Tijdstempels met nanoseconden weergeven",
       "show-search": "Zoeken in logresultaten",
       "show-timestamps": "Tijdstempels weergeven",
       "show-unique-labels": "Unieke labels weergeven",
+      "timestamp": {
+        "hide": "",
+        "label": "",
+        "milliseconds": "",
+        "nanoseconds": ""
+      },
       "unwrap-lines": "Lijnen omsluiten",
-      "wrap-json-lines": "",
       "wrap-lines": "Lijnen omsluiten"
     },
     "logs-navigation": {
@@ -9727,30 +9734,6 @@
     "un-themed-log-label-stats": {
       "field-log-stats": "{{label}}: {{total}} van de {{rowCount}} rijen hebben dat veld",
       "label-log-stats": "{{label}}: {{total}} van de {{rowCount}} rijen hebben dat label"
-    }
-  },
-  "logs-new": {
-    "category-logs": "Logs",
-    "deduplication-options": {
-      "label-exact": "Exact",
-      "label-none": "Geen",
-      "label-numbers": "Nummers",
-      "label-signature": "Handtekening"
-    },
-    "description-infinite-scrolling": "Experimenteel. Vraag meer resultaten op door naar de onderkant van de loglijst te scrollen.",
-    "description-show-controls": "Weergavebesturingselementen om naar de laatste of eerste logregel te gaan en filters op logniveau",
-    "description-syntax-highlighting": "Gebruik een vooraf gedefinieerde syntaxis om relevante delen van de logregels te markeren",
-    "name-deduplication": "Dedupliceren",
-    "name-enable-log-details": "Logboekdetails inschakelen",
-    "name-infinite-scrolling": "Oneindig scrollen mogelijk maken",
-    "name-order": "Orde",
-    "name-show-controls": "Bedieningselementen tonen",
-    "name-syntax-highlighting": "Syntaxismarkering inschakelen",
-    "name-time": "Tijd",
-    "name-wrap-lines": "Lijnen omsluiten",
-    "order-options": {
-      "label-newest-first": "Nieuwste eerst",
-      "label-oldest-first": "Oudste eerst"
     }
   },
   "manage-dashbaords": {
@@ -11960,7 +11943,6 @@
       "expand-row": "Queryrij uitvouwen",
       "hide-response": "Antwoord verbergen",
       "remove-query": "Query verwijderen",
-      "replace-query-from-library": "Vervangen door opgeslagen query",
       "show-response": "Antwoord weergeven"
     },
     "query-editor-not-exported": "Gegevensbronplug-in exporteert geen Query Editor-component"
@@ -11973,14 +11955,6 @@
       "no-deleted-dashboards": "Je hebt onlangs geen dashboards verwijderd.",
       "no-deleted-dashboards-text": "Wanneer je een dashboard verwijdert, wordt dit hier 30 dagen weergegeven voordat het definitief wordt verwijderd. Je organisatiebeheerder kan recent verwijderde dashboards herstellen.",
       "no-search-result": "Geen resultaten gevonden voor je zoekopdracht"
-    },
-    "permanently-delete-modal": {
-      "confirm-text": "Verwijderen",
-      "delete-button": "Verwijderen",
-      "delete-loading": "Bezig met verwijderen ...",
-      "title": "Dashboards permanent verwijderen",
-      "text_one": "Met deze actie worden {{numberOfDashboards}} dashboards verwijderd.",
-      "text_other": "Met deze actie worden {{numberOfDashboards}} dashboards verwijderd."
     },
     "restore-modal": {
       "restore-button": "Herstellen",

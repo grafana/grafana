@@ -31,6 +31,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/contexthandler"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	fswebassets "github.com/grafana/grafana/pkg/services/frontend/webassets"
 	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
@@ -58,7 +59,12 @@ type frontendService struct {
 }
 
 func ProvideFrontendService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, promGatherer prometheus.Gatherer, promRegister prometheus.Registerer, license licensing.Licensing) (*frontendService, error) {
-	index, err := NewIndexProvider(cfg, license)
+	assetsManifest, err := fswebassets.GetWebAssets(cfg, license)
+	if err != nil {
+		return nil, err
+	}
+
+	index, err := NewIndexProvider(cfg, assetsManifest)
 	if err != nil {
 		return nil, err
 	}

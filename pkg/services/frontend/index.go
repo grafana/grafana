@@ -1,7 +1,6 @@
 package frontend
 
 import (
-	"context"
 	"embed"
 	"errors"
 	"fmt"
@@ -11,9 +10,7 @@ import (
 
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/pkg/api/dtos"
-	"github.com/grafana/grafana/pkg/api/webassets"
 	"github.com/grafana/grafana/pkg/middleware"
-	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -29,15 +26,14 @@ type IndexViewData struct {
 	CSPEnabled           bool
 	IsDevelopmentEnv     bool
 
-	Config  *setting.Cfg
-	License licensing.Licensing
+	Config *setting.Cfg
 
 	AppSubUrl    string
 	BuildVersion string
 	BuildCommit  string
 	AppTitle     string
 
-	Assets *dtos.EntryPointAssets // Includes CDN info
+	Assets dtos.EntryPointAssets // Includes CDN info
 
 	// Nonce is a cryptographic identifier for use with Content Security Policy.
 	Nonce string
@@ -52,7 +48,7 @@ var (
 	htmlTemplates = template.Must(template.New("html").Delims("[[", "]]").ParseFS(templatesFS, `*.html`))
 )
 
-func NewIndexProvider(cfg *setting.Cfg, license licensing.Licensing) (*IndexProvider, error) {
+func NewIndexProvider(cfg *setting.Cfg, assetsManifest dtos.EntryPointAssets) (*IndexProvider, error) {
 	t := htmlTemplates.Lookup("index.html")
 	if t == nil {
 		return nil, fmt.Errorf("missing index template")
@@ -67,13 +63,14 @@ func NewIndexProvider(cfg *setting.Cfg, license licensing.Licensing) (*IndexProv
 			BuildVersion: cfg.BuildVersion,
 			BuildCommit:  cfg.BuildCommit,
 			Config:       cfg,
-			License:      license,
 
 			CSPEnabled:           cfg.CSPEnabled,
 			CSPContent:           cfg.CSPTemplate,
 			CSPReportOnlyContent: cfg.CSPReportOnlyTemplate,
 
 			IsDevelopmentEnv: cfg.Env == setting.Dev,
+
+			Assets: assetsManifest,
 		},
 	}, nil
 }
@@ -106,17 +103,6 @@ func (p *IndexProvider) HandleRequest(writer http.ResponseWriter, request *http.
 		policy := middleware.ReplacePolicyVariables(p.data.CSPReportOnlyContent, p.data.AppSubUrl, data.Nonce)
 		writer.Header().Set("Content-Security-Policy-Report-Only", policy)
 	}
-
-	// TODO: moved to request handler to prevent stale assets during dev,
-	// but should we do this differently?
-	assets, err := webassets.GetWebAssets(context.Background(), data.Config, data.License)
-	if err != nil {
-		p.log.Error("error getting assets", "err", err)
-		writer.WriteHeader(500)
-		return
-	}
-
-	data.Assets = assets
 
 	writer.Header().Set("Content-Type", "text/html; charset=UTF-8")
 	writer.WriteHeader(200)
