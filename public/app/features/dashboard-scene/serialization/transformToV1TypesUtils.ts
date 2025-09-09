@@ -157,6 +157,35 @@ export function transformMappingsToV1(fieldConfig: FieldConfigSource): FieldConf
     };
   }
 
+  // TODO:
+  if (fieldConfig.defaults.actions) {
+    transformedDefaults.actions = fieldConfig.defaults.actions.map((action) => {
+      if (action.fetch) {
+        return {
+          ...action,
+          fetch: {
+            ...action.fetch,
+            headers: action.fetch.headers?.map((header) => [header[0], header[1]]),
+            queryParams: action.fetch.queryParams?.map((queryParam) => [queryParam[0], queryParam[1]]),
+          },
+        };
+      }
+
+      if (action.infinity) {
+        return {
+          ...action,
+          infinity: {
+            ...action.infinity,
+            headers: action.infinity.headers?.map((header) => [header[0], header[1]]),
+            queryParams: action.infinity.queryParams?.map((queryParam) => [queryParam[0], queryParam[1]]),
+          },
+        };
+      }
+
+      return action;
+    });
+  }
+
   return {
     ...fieldConfig,
     defaults: transformedDefaults,

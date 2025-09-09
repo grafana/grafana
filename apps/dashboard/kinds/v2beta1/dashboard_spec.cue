@@ -213,6 +213,9 @@ FieldConfig: {
 	// The behavior when clicking on a result
 	links?: [...]
 
+	// Define interactive HTTP requests that can be triggered from data visualizations.
+	actions?: [...Action]
+
 	// Alternative to empty string
 	noValue?: string
 
@@ -355,6 +358,42 @@ FieldColor: {
 
 // Dashboard Link type. Accepted values are dashboards (to refer to another dashboard) and link (to refer to an external resource)
 DashboardLinkType: "link" | "dashboards"
+
+ActionType: "fetch" | "infinity"
+
+FetchOptions: {
+	method: HttpRequestMethod
+	url: string
+	body?: string
+	queryParams?: [...{[string]: string}]
+	headers?: [...{[string]: string}]
+}
+
+InfinityOptions: FetchOptions & {
+	datasourceUid: string
+}
+
+HttpRequestMethod: "GET" | "PUT" | "POST" | "DELETE" | "PATCH" 
+
+ActionVariable: {
+	key: string
+	name: string
+	type: "string"
+}
+
+Action: {
+	type: ActionType
+	title: string
+	fetch?: FetchOptions
+	infinity?: InfinityOptions
+	confirmation?: string
+	oneClick?: bool
+	variables?: [...ActionVariable]
+	style?: {
+		backgroundColor?: string
+	}
+}
+
 
 // --- Common types ---
 Kind: {

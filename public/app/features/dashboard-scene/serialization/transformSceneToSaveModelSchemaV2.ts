@@ -44,6 +44,7 @@ import {
   FieldColor,
   defaultFieldConfig,
   defaultDataQueryKind,
+  Action,
 } from '../../../../../packages/grafana-schema/src/schema/dashboard/v2';
 import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
 import { DashboardScene, DashboardSceneState } from '../scene/DashboardScene';
@@ -217,6 +218,37 @@ function handleFieldConfigDefaultsConversion(vizPanel: VizPanel) {
     return defaultFieldConfig();
   }
 
+  const actions: Action[] = [];
+
+  // handle actions conversion
+  if (vizPanel.state.fieldConfig.defaults.actions) {
+    vizPanel.state.fieldConfig.defaults.actions.forEach((action) => {
+      let fetch: Action['fetch'];
+      let infinity: Action['infinity'];
+
+      if (action.fetch) {
+        fetch = {
+          ...action.fetch,
+          headers: action.fetch.headers?.map((header) => ({ [header[0]]: header[1] })),
+          queryParams: action.fetch.queryParams?.map((queryParam) => ({ [queryParam[0]]: queryParam[1] })),
+        };
+      }
+      if (action.infinity) {
+        infinity = {
+          ...action.infinity,
+          headers: action.infinity.headers?.map((header) => ({ [header[0]]: header[1] })),
+          queryParams: action.infinity.queryParams?.map((queryParam) => ({ [queryParam[0]]: queryParam[1] })),
+        };
+      }
+
+      actions.push({
+        ...action,
+        fetch,
+        infinity,
+      });
+    });
+  }
+
   // Handle type conversion for color mode
   const rawColor = vizPanel.state.fieldConfig.defaults.color;
   let color: FieldColor | undefined;
@@ -240,6 +272,7 @@ function handleFieldConfigDefaultsConversion(vizPanel: VizPanel) {
   const defaults = Object.fromEntries(
     Object.entries({
       ...vizPanel.state.fieldConfig.defaults,
+      actions,
       decimals,
       min,
       max,
