@@ -1353,6 +1353,16 @@ func TestListRequestKey_Validate(t *testing.T) {
 			},
 			expectError: false,
 		},
+		{
+			name: "valid - uppercase in name",
+			key: ListRequestKey{
+				Namespace: "test-namespace",
+				Group:     "test-group",
+				Resource:  "test-resource",
+				Name:      "Test-Name",
+			},
+			expectError: false,
+		},
 		// Invalid hierarchical cases
 		{
 			name: "invalid - group without namespace",
