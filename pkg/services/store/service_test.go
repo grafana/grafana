@@ -21,6 +21,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 	testdatasource "github.com/grafana/grafana/pkg/tsdb/grafana-testdata-datasource"
+	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 var (
@@ -74,9 +75,8 @@ func TestMain(m *testing.M) {
 }
 
 func TestIntegrationListFiles(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test in short mode")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	roots := []storageRuntime{publicStaticFilesStorage}
 
 	store := newStandardStorageService(db.InitTestDB(t), roots, func(orgId int64) []storageRuntime {
@@ -98,9 +98,8 @@ func TestIntegrationListFiles(t *testing.T) {
 }
 
 func TestIntegrationListFilesWithoutPermissions(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test in short mode")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	roots := []storageRuntime{publicStaticFilesStorage}
 
 	store := newStandardStorageService(db.InitTestDB(t), roots, func(orgId int64) []storageRuntime {
@@ -135,9 +134,8 @@ func setupUploadStore(t *testing.T, authService storageAuthService) (StorageServ
 }
 
 func TestIntegrationShouldUploadWhenNoFileAlreadyExists(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test in short mode")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	service, mockStorage, storageName := setupUploadStore(t, nil)
 
 	fileName := "/myFile.jpg"
@@ -157,9 +155,8 @@ func TestIntegrationShouldUploadWhenNoFileAlreadyExists(t *testing.T) {
 }
 
 func TestIntegrationShouldFailUploadWithoutAccess(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test in short mode")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	service, _, storageName := setupUploadStore(t, denyAllAuthService)
 
 	err := service.Upload(context.Background(), dummyUser, &UploadRequest{
@@ -171,9 +168,8 @@ func TestIntegrationShouldFailUploadWithoutAccess(t *testing.T) {
 }
 
 func TestIntegrationShouldFailUploadWhenFileAlreadyExists(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test in short mode")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	service, mockStorage, storageName := setupUploadStore(t, nil)
 
 	mockStorage.On("Get", mock.Anything, "/myFile.jpg", &filestorage.GetFileOptions{WithContents: false}).Return(&filestorage.File{Contents: make([]byte, 0)}, true, nil)
@@ -187,9 +183,8 @@ func TestIntegrationShouldFailUploadWhenFileAlreadyExists(t *testing.T) {
 }
 
 func TestIntegrationShouldDelegateFileDeletion(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test in short mode")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	service, mockStorage, storageName := setupUploadStore(t, nil)
 
 	mockStorage.On("Delete", mock.Anything, "/myFile.jpg").Return(nil)
@@ -199,9 +194,8 @@ func TestIntegrationShouldDelegateFileDeletion(t *testing.T) {
 }
 
 func TestIntegrationShouldDelegateFolderCreation(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test in short mode")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	service, mockStorage, storageName := setupUploadStore(t, nil)
 
 	mockStorage.On("CreateFolder", mock.Anything, "/nestedFolder/mostNestedFolder").Return(nil)
@@ -211,9 +205,8 @@ func TestIntegrationShouldDelegateFolderCreation(t *testing.T) {
 }
 
 func TestIntegrationShouldDelegateFolderDeletion(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test in short mode")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	service, mockStorage, storageName := setupUploadStore(t, nil)
 	cmds := []*DeleteFolderCmd{
 		{
@@ -238,9 +231,8 @@ func TestIntegrationShouldDelegateFolderDeletion(t *testing.T) {
 }
 
 func TestIntegrationShouldUploadSvg(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test in short mode")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	service, mockStorage, storageName := setupUploadStore(t, nil)
 
 	fileName := "/myFile.svg"
@@ -260,9 +252,8 @@ func TestIntegrationShouldUploadSvg(t *testing.T) {
 }
 
 func TestIntegrationShouldNotUploadHtmlDisguisedAsSvg(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test in short mode")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	service, mockStorage, storageName := setupUploadStore(t, nil)
 
 	fileName := "/myFile.svg"
@@ -277,9 +268,8 @@ func TestIntegrationShouldNotUploadHtmlDisguisedAsSvg(t *testing.T) {
 }
 
 func TestIntegrationShouldNotUploadJpgDisguisedAsSvg(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test in short mode")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	service, mockStorage, storageName := setupUploadStore(t, nil)
 
 	fileName := "/myFile.svg"
@@ -294,9 +284,8 @@ func TestIntegrationShouldNotUploadJpgDisguisedAsSvg(t *testing.T) {
 }
 
 func TestIntegrationSetupWithNonUniqueStoragePrefixes(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test in short mode")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	prefix := "resources"
 	sqlStorage := newSQLStorage(RootStorageMeta{}, prefix, "Testing upload", "dummy descr", &StorageSQLConfig{}, db.InitTestDB(t), 1, false)
 	sqlStorage2 := newSQLStorage(RootStorageMeta{}, prefix, "Testing upload", "dummy descr", &StorageSQLConfig{}, db.InitTestDB(t), 1, false)
@@ -313,9 +302,8 @@ func TestIntegrationSetupWithNonUniqueStoragePrefixes(t *testing.T) {
 }
 
 func TestIntegrationContentRootWithNestedStorage(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test in short mode")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	globalOrgID := int64(accesscontrol.GlobalOrgID)
 	testDB := db.InitTestDB(t)
 	orgedUser := &user.SignedInUser{OrgID: 1}
@@ -562,9 +550,8 @@ func TestIntegrationContentRootWithNestedStorage(t *testing.T) {
 }
 
 func TestIntegrationShadowingExistingFolderByNestedContentRoot(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test in short mode")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	db := db.InitTestDB(t)
 	ctx := context.Background()
 	nestedStorage := newSQLStorage(RootStorageMeta{}, "nested", "Testing upload", "dummy descr", &StorageSQLConfig{}, db, accesscontrol.GlobalOrgID, true)

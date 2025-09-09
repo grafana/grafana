@@ -4,13 +4,13 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana/pkg/services/sqlstore/searchstore"
+	"github.com/grafana/grafana/pkg/util/testutil"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestIntegrationFolderUIDFilter(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test in short mode")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	testCases := []struct {
 		description    string
 		uids           []string

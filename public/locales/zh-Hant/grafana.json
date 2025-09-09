@@ -4663,6 +4663,7 @@
       "move": "移動 {{typeName}}",
       "panel-background": "變更面板背景",
       "panel-description": "變更面板描述",
+      "panel-edit": "",
       "panel-max-repeats-per-row": "每列最大重複次數",
       "panel-repeat-direction": "重複方向",
       "panel-repeat-variable": "面板重複方式",
@@ -4917,12 +4918,11 @@
       "dataframe-aria-label": "選擇資料框架",
       "dataframe-label": "顯示資料框架",
       "download-csv": "下載 CSV",
-      "download-excel-description": "將標題新增到 CSV 以便與 Excel 一起使用",
-      "download-excel-label": "下載 Excel 版本",
       "download-logs": "下載日誌",
       "download-service": "下載服務圖表",
       "download-traces": "下載追蹤",
-      "excel-header": "Excel 標題",
+      "excel-compatibility-mode-description": "",
+      "excel-compatibility-mode-label": "",
       "formatted": "格式化資料",
       "formatted-data-description": "表格資料的格式使用「欄位」和「覆寫」分頁中定義的選項。",
       "formatted-data-label": "格式化資料",
@@ -11919,13 +11919,6 @@
       "no-deleted-dashboards": "您最近沒有刪除任何儀表板。",
       "no-deleted-dashboards-text": "當您刪除儀表板後，它會在此處保留 30 天，之後才會被永久刪除。您的組織管理員可以還原最近刪除的儀表板。",
       "no-search-result": "未找到您的查詢結果"
-    },
-    "permanently-delete-modal": {
-      "confirm-text": "刪除",
-      "delete-button": "刪除",
-      "delete-loading": "正在刪除…",
-      "title": "永久刪除儀表板",
-      "text_other": "此動作將刪除 {{numberOfDashboards}} 個儀表板。"
     },
     "restore-modal": {
       "restore-button": "還原",

@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ssosettings"
 	"github.com/grafana/grafana/pkg/services/ssosettings/models"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
+	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 const (
@@ -23,9 +24,7 @@ func TestMain(m *testing.M) {
 }
 
 func TestIntegrationGetSSOSettings(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	var sqlStore db.DB
 	var ssoSettingsStore *SSOSettingsStore
@@ -86,9 +85,7 @@ func TestIntegrationGetSSOSettings(t *testing.T) {
 }
 
 func TestIntegrationUpsertSSOSettings(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	var sqlStore db.DB
 	var ssoSettingsStore *SSOSettingsStore
@@ -265,9 +262,7 @@ func TestIntegrationUpsertSSOSettings(t *testing.T) {
 }
 
 func TestIntegrationListSSOSettings(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	var sqlStore db.DB
 	var ssoSettingsStore *SSOSettingsStore
@@ -331,9 +326,7 @@ func TestIntegrationListSSOSettings(t *testing.T) {
 }
 
 func TestIntegrationDeleteSSOSettings(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	var sqlStore db.DB
 	var ssoSettingsStore *SSOSettingsStore
