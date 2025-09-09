@@ -48,6 +48,12 @@ func (o *ExtraOptions) ApplyTo(c *genericapiserver.RecommendedConfig) error {
 	}); err != nil {
 		return err
 	}
+
+	// disabling configured trace provider
+	if c.TracerProvider != nil {
+		c.TracerProvider = nil
+	}
+
 	// if verbosity is 8+, response bodies will be logged. versboity of 7 should then be the max
 	if o.Verbosity > 7 {
 		o.Verbosity = 7
