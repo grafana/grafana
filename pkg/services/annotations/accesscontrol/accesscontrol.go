@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/sqlstore/permissions"
 	"github.com/grafana/grafana/pkg/services/sqlstore/searchstore"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 var (
@@ -31,13 +32,15 @@ type AuthService struct {
 	db       db.DB
 	features featuremgmt.FeatureToggles
 	dashSvc  dashboards.DashboardService
+	cfg      *setting.Cfg
 }
 
-func NewAuthService(db db.DB, features featuremgmt.FeatureToggles, dashSvc dashboards.DashboardService) *AuthService {
+func NewAuthService(db db.DB, features featuremgmt.FeatureToggles, dashSvc dashboards.DashboardService, cfg *setting.Cfg) *AuthService {
 	return &AuthService{
 		db:       db,
 		features: features,
 		dashSvc:  dashSvc,
+		cfg:      cfg,
 	}
 }
 
@@ -131,13 +134,17 @@ func (authz *AuthService) dashboardsWithVisibleAnnotations(ctx context.Context, 
 		})
 	}
 
+	section := authz.cfg.Raw.Section("annotations")
+	key := "dashboards_with_visible_annotations_search_dashboards_page_limit"
+	limit := section.Key(key).MustInt64(1000)
+
 	dashs, err := authz.dashSvc.SearchDashboards(ctx, &dashboards.FindPersistedDashboardsQuery{
 		OrgId:        query.SignedInUser.GetOrgID(),
 		Filters:      filters,
 		SignedInUser: query.SignedInUser,
 		Page:         query.Page,
 		Type:         filterType,
-		Limit:        1000,
+		Limit:        limit,
 	})
 	if err != nil {
 		return nil, err
