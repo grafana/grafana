@@ -80,7 +80,7 @@ func TestV28(t *testing.T) {
 										"steps": []interface{}{
 											map[string]interface{}{
 												"color": "green",
-												"value": nil,
+												"value": (*float64)(nil),
 											},
 											map[string]interface{}{
 												"color": "yellow",
@@ -174,7 +174,7 @@ func TestV28(t *testing.T) {
 										"steps": []interface{}{
 											map[string]interface{}{
 												"color": "green",
-												"value": nil,
+												"value": (*float64)(nil),
 											},
 											map[string]interface{}{
 												"color": "red",
@@ -255,7 +255,7 @@ func TestV28(t *testing.T) {
 										"steps": []interface{}{
 											map[string]interface{}{
 												"color": "green",
-												"value": nil,
+												"value": (*float64)(nil),
 											},
 											map[string]interface{}{
 												"color": "red",
@@ -321,7 +321,7 @@ func TestV28(t *testing.T) {
 										"steps": []interface{}{
 											map[string]interface{}{
 												"color": "green",
-												"value": nil,
+												"value": (*float64)(nil),
 											},
 											map[string]interface{}{
 												"color": "red",
@@ -388,7 +388,7 @@ func TestV28(t *testing.T) {
 										"steps": []interface{}{
 											map[string]interface{}{
 												"color": "green",
-												"value": nil,
+												"value": (*float64)(nil),
 											},
 											map[string]interface{}{
 												"color": "red",
@@ -465,7 +465,7 @@ func TestV28(t *testing.T) {
 										"steps": []interface{}{
 											map[string]interface{}{
 												"color": "green",
-												"value": nil,
+												"value": (*float64)(nil),
 											},
 											map[string]interface{}{
 												"color": "orange",
@@ -553,7 +553,7 @@ func TestV28(t *testing.T) {
 										"steps": []interface{}{
 											map[string]interface{}{
 												"color": "green",
-												"value": nil,
+												"value": (*float64)(nil),
 											},
 											map[string]interface{}{
 												"color": "red",
@@ -618,7 +618,7 @@ func TestV28(t *testing.T) {
 										"steps": []interface{}{
 											map[string]interface{}{
 												"color": "green",
-												"value": nil,
+												"value": (*float64)(nil),
 											},
 											map[string]interface{}{
 												"color": "red",
@@ -693,7 +693,7 @@ func TestV28(t *testing.T) {
 												"steps": []interface{}{
 													map[string]interface{}{
 														"color": "green",
-														"value": nil,
+														"value": (*float64)(nil),
 													},
 													map[string]interface{}{
 														"color": "red",

@@ -60,7 +60,7 @@ func TestV24(t *testing.T) {
 								"thresholds": map[string]interface{}{
 									"mode": "absolute",
 									"steps": []interface{}{
-										map[string]interface{}{"value": nil, "color": "red"},
+										map[string]interface{}{"value": (*float64)(nil), "color": "red"},
 										map[string]interface{}{"value": float64(10), "color": "yellow"},
 										map[string]interface{}{"value": float64(20), "color": "green"},
 										map[string]interface{}{"value": float64(30), "color": "red"},
@@ -171,7 +171,7 @@ func TestV24(t *testing.T) {
 								"thresholds": map[string]interface{}{
 									"mode": "absolute",
 									"steps": []interface{}{
-										map[string]interface{}{"value": nil, "color": "green"},
+										map[string]interface{}{"value": (*float64)(nil), "color": "green"},
 										map[string]interface{}{"value": float64(100), "color": "yellow"},
 										map[string]interface{}{"value": float64(500), "color": "red"},
 									},
@@ -817,7 +817,7 @@ func TestV24(t *testing.T) {
 								"thresholds": map[string]interface{}{
 									"mode": "absolute",
 									"steps": []interface{}{
-										map[string]interface{}{"value": nil, "color": "green"},
+										map[string]interface{}{"value": (*float64)(nil), "color": "green"},
 										map[string]interface{}{"value": float64(10), "color": "yellow"},
 										map[string]interface{}{"value": float64(20), "color": "orange"},
 										map[string]interface{}{"value": float64(30.5), "color": "red"},

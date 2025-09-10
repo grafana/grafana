@@ -156,7 +156,6 @@
   ],
   "refresh": "5s",
   "schemaVersion": 20,
-  "style": "dark",
   "tags": [
     "migration-test"
   ],

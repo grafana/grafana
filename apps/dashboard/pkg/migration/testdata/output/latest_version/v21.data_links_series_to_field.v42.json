@@ -73,11 +73,7 @@
               }
             ]
           }
-        },
-        "justifyMode": "auto",
-        "showPercentChange": false,
-        "textMode": "auto",
-        "wideLayout": true
+        }
       },
       "targets": [
         {

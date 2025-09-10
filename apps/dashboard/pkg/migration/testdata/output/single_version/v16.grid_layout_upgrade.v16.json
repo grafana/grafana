@@ -21,28 +21,6 @@
   "links": [],
   "panels": [
     {
-      "gridPos": {
-        "h": 7,
-        "w": 12,
-        "x": 0,
-        "y": 1
-      },
-      "id": 1,
-      "title": "CPU Usage",
-      "type": "graph"
-    },
-    {
-      "gridPos": {
-        "h": 7,
-        "w": 12,
-        "x": 12,
-        "y": 1
-      },
-      "id": 2,
-      "title": "Memory Usage",
-      "type": "singlestat"
-    },
-    {
       "collapsed": false,
       "gridPos": {
         "h": 7,
@@ -52,8 +30,31 @@
       },
       "id": 13,
       "panels": [],
-      "repeat": "",
       "type": "row"
+    },
+    {
+      "autoMigrateFrom": "graph",
+      "gridPos": {
+        "h": 7,
+        "w": 12,
+        "x": 0,
+        "y": 1
+      },
+      "id": 1,
+      "title": "CPU Usage",
+      "type": "timeseries"
+    },
+    {
+      "autoMigrateFrom": "singlestat",
+      "gridPos": {
+        "h": 7,
+        "w": 12,
+        "x": 12,
+        "y": 1
+      },
+      "id": 2,
+      "title": "Memory Usage",
+      "type": "stat"
     },
     {
       "collapsed": true,
@@ -101,8 +102,19 @@
           "type": "graph"
         }
       ],
-      "repeat": "",
       "title": "Collapsed Row",
+      "type": "row"
+    },
+    {
+      "gridPos": {
+        "h": 6,
+        "w": 24,
+        "x": 0,
+        "y": 17
+      },
+      "id": 15,
+      "panels": [],
+      "title": "Visible Row Title",
       "type": "row"
     },
     {
@@ -140,17 +152,14 @@
       "type": "bargauge"
     },
     {
-      "collapsed": false,
       "gridPos": {
-        "h": 6,
+        "h": 4,
         "w": 24,
         "x": 0,
-        "y": 17
+        "y": 24
       },
-      "id": 15,
+      "id": 16,
       "panels": [],
-      "repeat": "",
-      "title": "Visible Row Title",
       "type": "row"
     },
     {
@@ -177,31 +186,6 @@
       "type": "logs"
     },
     {
-      "collapsed": false,
-      "gridPos": {
-        "h": 4,
-        "w": 24,
-        "x": 0,
-        "y": 24
-      },
-      "id": 16,
-      "panels": [],
-      "repeat": "",
-      "type": "row"
-    },
-    {
-      "gridPos": {
-        "h": 7,
-        "w": 24,
-        "x": 0,
-        "y": 30
-      },
-      "id": 11,
-      "title": "Server Metrics",
-      "type": "graph"
-    },
-    {
-      "collapsed": false,
       "gridPos": {
         "h": 7,
         "w": 24,
@@ -212,6 +196,18 @@
       "panels": [],
       "repeat": "server",
       "type": "row"
+    },
+    {
+      "autoMigrateFrom": "graph",
+      "gridPos": {
+        "h": 7,
+        "w": 24,
+        "x": 0,
+        "y": 30
+      },
+      "id": 11,
+      "title": "Server Metrics",
+      "type": "timeseries"
     }
   ],
   "schemaVersion": 16,

@@ -25,7 +25,7 @@ func TestV30(t *testing.T) {
 									"steps": []interface{}{
 										map[string]interface{}{
 											"color": "green",
-											"value": nil,
+											"value": (*float64)(nil),
 										},
 										map[string]interface{}{
 											"color": "red",
@@ -99,7 +99,7 @@ func TestV30(t *testing.T) {
 									"steps": []interface{}{
 										map[string]interface{}{
 											"color": "green",
-											"value": nil,
+											"value": (*float64)(nil),
 										},
 										map[string]interface{}{
 											"color": "red",

@@ -25,7 +25,6 @@
       "id": 1,
       "links": [
         {
-          "targetBlank": false,
           "title": "Dashboard Link",
           "url": "dashboard/db/my-dashboard?$__url_time_range"
         }
@@ -37,7 +36,6 @@
       "id": 2,
       "links": [
         {
-          "targetBlank": false,
           "title": "DashUri Link",
           "url": "dashboard/my-dashboard-uid?$__all_variables"
         }
@@ -49,7 +47,6 @@
       "id": 3,
       "links": [
         {
-          "targetBlank": false,
           "title": "Custom Params Link",
           "url": "http://example.com?customParam=value"
         }
@@ -73,7 +70,6 @@
       "id": 5,
       "links": [
         {
-          "targetBlank": false,
           "title": "Existing URL Link",
           "url": "http://existing-url.com"
         }

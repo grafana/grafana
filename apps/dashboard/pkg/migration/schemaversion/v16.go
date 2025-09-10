@@ -97,18 +97,23 @@ func upgradeToGridLayout(dashboard map[string]interface{}) {
 		if showRows {
 			// add special row panel (lines 1041-1058 in TS)
 			rowPanel = map[string]interface{}{
-				"id":        nextRowID,
-				"type":      "row",
-				"title":     GetStringValue(row, "title"),
-				"collapsed": isCollapsed,
-				"repeat":    GetStringValue(row, "repeat"),
-				"panels":    []interface{}{},
+				"id":     nextRowID,
+				"type":   "row",
+				"title":  GetStringValue(row, "title"),
+				"repeat": GetStringValue(row, "repeat"),
+				"panels": []interface{}{},
 				"gridPos": map[string]interface{}{
 					"x": 0,
 					"y": yPos,
 					"w": int(gridColumnCount),
 					"h": rowGridHeight,
 				},
+			}
+
+			// Set collapsed property only if the original row had a collapse property
+			// This matches the frontend behavior: rowPanel.collapsed = row.collapse
+			if _, hasCollapse := row["collapse"]; hasCollapse {
+				rowPanel["collapsed"] = isCollapsed
 			}
 			nextRowID++
 			yPos++

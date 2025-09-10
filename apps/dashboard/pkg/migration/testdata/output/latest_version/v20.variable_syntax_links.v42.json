@@ -90,11 +90,7 @@
             ],
             "title": "Series: __series.name, Field: ${__field.name}, Time: __value.time"
           }
-        },
-        "justifyMode": "auto",
-        "showPercentChange": false,
-        "textMode": "auto",
-        "wideLayout": true
+        }
       },
       "targets": [
         {
@@ -235,7 +231,6 @@
   ],
   "refresh": "5s",
   "schemaVersion": 42,
-  "style": "dark",
   "tags": [
     "migration-test"
   ],

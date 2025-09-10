@@ -121,8 +121,7 @@ func applyPanelDefaults(panel map[string]interface{}) {
 		panel["title"] = ""
 	}
 
-	// Auto-migration logic (matches frontend PanelModel constructor)
-	applyPanelAutoMigration(panel)
+	// Auto-migration logic is now applied during cleanup phase to match frontend behavior
 
 	// Structure normalizations
 	ensureQueryIds(panel)
@@ -442,6 +441,22 @@ func getPanels(dashboard map[string]interface{}) []map[string]interface{} {
 // cleanupPanelForSave mimics the PanelModel.getSaveModel() behavior
 // This removes properties that shouldn't be persisted and filters out default values
 func cleanupPanelForSave(panel map[string]interface{}) {
+	cleanupPanelForSaveWithContext(panel, false)
+}
+
+// cleanupPanelForSaveWithContext mimics the PanelModel.getSaveModel() behavior
+// This removes properties that shouldn't be persisted and filters out default values
+func cleanupPanelForSaveWithContext(panel map[string]interface{}, isNested bool) {
+	// Apply auto-migration logic (matches frontend PanelModel constructor)
+	// This happens during cleanup phase to match when frontend applies auto-migration
+	// Only apply auto-migration to top-level panels, not nested ones (matches frontend behavior)
+	if !isNested {
+		applyPanelAutoMigration(panel)
+	}
+
+	// Row panel specific cleanup (matches frontend behavior)
+	cleanupRowPanelProperties(panel)
+
 	// Track which properties were present in the input to preserve them even if they become empty
 	originalProperties := make(map[string]bool)
 	for key := range panel {
@@ -502,7 +517,16 @@ func cleanupPanelForSave(panel map[string]interface{}) {
 	}
 
 	// Remove null values recursively to match frontend's JSON.stringify/parse behavior
-	removeNullValuesRecursively(panel)
+	// Pass panel type information to help with threshold handling
+	panelType := ""
+	if t, ok := panel["type"].(string); ok {
+		panelType = t
+	}
+	// Debug: log panel type for troubleshooting
+	if panelType != "" {
+		// fmt.Printf("Panel type: %s\n", panelType)
+	}
+	removeNullValuesRecursivelyWithContext(panel, panelType)
 
 	// Filter out properties that match defaults (matches frontend's isEqual logic)
 	filterDefaultValues(panel, originalProperties)
@@ -616,6 +640,7 @@ func cleanupDashboardForSave(dashboard map[string]interface{}) {
 	removeNullValues(dashboard)
 	cleanupTemplating(dashboard)
 	cleanupPanels(dashboard)
+	cleanupDashboardDefaults(dashboard)
 }
 
 // removeNonPersistedProperties removes non-persisted dashboard properties
@@ -733,7 +758,7 @@ func cleanupPanelList(panels []interface{}) {
 			if nestedPanels, ok := panel["panels"].([]interface{}); ok {
 				for _, nestedPanelInterface := range nestedPanels {
 					if nestedPanel, ok := nestedPanelInterface.(map[string]interface{}); ok {
-						cleanupPanelForSave(nestedPanel)
+						cleanupPanelForSaveWithContext(nestedPanel, true)
 					}
 				}
 			}
@@ -762,6 +787,8 @@ func sortPanelsByGridPosition(panels []interface{}) {
 		if okA {
 			if y, ok := gridPosA["y"].(float64); ok {
 				yA = y
+			} else if y, ok := gridPosA["y"].(int); ok {
+				yA = float64(y)
 			}
 		}
 
@@ -769,6 +796,8 @@ func sortPanelsByGridPosition(panels []interface{}) {
 		if okB {
 			if y, ok := gridPosB["y"].(float64); ok {
 				yB = y
+			} else if y, ok := gridPosB["y"].(int); ok {
+				yB = float64(y)
 			}
 		}
 
@@ -777,6 +806,8 @@ func sortPanelsByGridPosition(panels []interface{}) {
 			if okA {
 				if x, ok := gridPosA["x"].(float64); ok {
 					xA = x
+				} else if x, ok := gridPosA["x"].(int); ok {
+					xA = float64(x)
 				}
 			}
 
@@ -784,12 +815,30 @@ func sortPanelsByGridPosition(panels []interface{}) {
 			if okB {
 				if x, ok := gridPosB["x"].(float64); ok {
 					xB = x
+				} else if x, ok := gridPosB["x"].(int); ok {
+					xB = float64(x)
 				}
 			}
 			return xA < xB
 		}
 		return yA < yB
 	})
+}
+
+// cleanupRowPanelProperties removes default row panel properties that frontend filters out
+func cleanupRowPanelProperties(panel map[string]interface{}) {
+	panelType, ok := panel["type"].(string)
+	if !ok || panelType != "row" {
+		return
+	}
+
+	// Note: The frontend keeps "collapsed": false in the output, so we should NOT remove it
+	// This matches the frontend behavior where collapsed: false is preserved in getSaveModel()
+
+	// Remove repeat if empty string (default value)
+	if repeat, ok := panel["repeat"].(string); ok && repeat == "" {
+		delete(panel, "repeat")
+	}
 }
 
 // applyPanelAutoMigration applies the same auto-migration logic as the frontend PanelModel constructor
@@ -855,23 +904,78 @@ func applyPanelAutoMigration(panel map[string]interface{}) {
 // removeNullValuesRecursively removes null values from nested objects and arrays
 // This matches the frontend's JSON.stringify/parse behavior
 func removeNullValuesRecursively(data interface{}) {
+	removeNullValuesRecursivelyWithContext(data, "")
+}
+
+// removeNullValuesRecursivelyWithContext removes null values from nested objects and arrays
+// This matches the frontend's JSON.stringify/parse behavior
+// Special case: preserve "value": null only in the first threshold step for table panels
+func removeNullValuesRecursivelyWithContext(data interface{}, panelType string) {
 	switch v := data.(type) {
 	case map[string]interface{}:
 		// Remove null values from map
 		for key, value := range v {
 			if value == nil {
+				// Special case: preserve "value": null only in the first threshold step for table panels
+				if key == "value" && isFirstThresholdStepForPanel(v, panelType) {
+					continue // Don't delete null values in the first threshold step for table panels
+				}
 				delete(v, key)
 			} else {
 				// Recursively process nested values
-				removeNullValuesRecursively(value)
+				removeNullValuesRecursivelyWithContext(value, panelType)
 			}
 		}
 	case []interface{}:
 		// Process array elements
 		for _, item := range v {
 			if item != nil {
-				removeNullValuesRecursively(item)
+				removeNullValuesRecursivelyWithContext(item, panelType)
 			}
 		}
+	}
+}
+
+// isFirstThresholdStep checks if a map represents the first threshold step (base step)
+// The first threshold step has "color" and "value": null (represents -Infinity)
+// Only preserve null values for v24 table panels where the frontend expects them
+func isFirstThresholdStep(obj map[string]interface{}) bool {
+	return isFirstThresholdStepForPanel(obj, "")
+}
+
+// isFirstThresholdStepForPanel checks if a map represents the first threshold step for a specific panel type
+// The first threshold step has "color" and may have "value": null (represents -Infinity)
+// Only preserve null values for table panels where the frontend expects them
+func isFirstThresholdStepForPanel(obj map[string]interface{}, panelType string) bool {
+	_, hasColor := obj["color"]
+	value, hasValue := obj["value"]
+
+	// Only preserve null values if this is a threshold step with null value
+	if hasColor && hasValue && value == nil {
+		// For table panels, the frontend expects "value": null in first threshold step
+		// For other panel types (stat, gauge), the frontend expects NO value property
+		if panelType == "table" {
+			return true // Preserve null values for table panels
+		}
+		return false // Remove null values for other panel types
+	}
+
+	return false
+}
+
+// cleanupDashboardDefaults removes dashboard-level default values that frontend filters out
+func cleanupDashboardDefaults(dashboard map[string]interface{}) {
+	// Remove style if it's the default "dark" value
+	// Frontend never sets this.style in DashboardModel constructor, so hasOwnProperty('style') returns false
+	// This causes the frontend to skip the style property entirely in getSaveModelCloneOld()
+	// We replicate this behavior by removing "style": "dark" when it matches the default
+	if style, ok := dashboard["style"].(string); ok && style == "dark" {
+		delete(dashboard, "style")
+	}
+
+	// Remove hideControls if it's the default false value
+	// Frontend filters out default hideControls: false in getSaveModelClone()
+	if hideControls, ok := dashboard["hideControls"].(bool); ok && !hideControls {
+		delete(dashboard, "hideControls")
 	}
 }

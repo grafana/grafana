@@ -1,7 +1,5 @@
 
 {
-    "__inputs": [],
-    "__requires": [],
     "annotations": {
         "list": []
     },
@@ -933,10 +931,10 @@
     ],
     "refresh": "30s",
     "rows": [],
-    "schemaVersion": 14,
+    "schemaVersion": 15,
     "style": "dark",
     "tags": [
-                        "sample-monitoring"
+        "sample-monitoring"
     ],
     "templating": {
         "list": [
