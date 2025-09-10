@@ -122,13 +122,13 @@ export const LdapTestDrawer = ({ onClose, username }: Props) => {
                     </Stack>
                   </Field>
                 </form>
-                {userError && userError.title && (
-                  <Alert title={userError.title} severity={AppNotificationSeverity.Error} onRemove={onClearUserError}>
-                    {userError.body}
-                  </Alert>
-                )}
-                {ldapUser && <LdapUserInfo ldapUser={ldapUser} />}
               </Stack>
+              {userError && userError.title && (
+                <Alert title={userError.title} severity={AppNotificationSeverity.Error} onRemove={onClearUserError}>
+                  {userError.body}
+                </Alert>
+              )}
+              {ldapUser && <LdapUserInfo ldapUser={ldapUser} />}
             </section>
           )}
         </Stack>
