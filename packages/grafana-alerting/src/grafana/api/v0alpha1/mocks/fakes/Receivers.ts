@@ -1,10 +1,10 @@
 import { faker } from '@faker-js/faker';
 import { Factory } from 'fishery';
 
+import type { ContactPoint, Integration } from '../../../../contactPoints/types';
 import { DEFAULT_NAMESPACE, generateResourceVersion, generateTitle, generateUID } from '../../../../mocks/util';
-import { ContactPointMetadataAnnotations, ListReceiverApiResponse } from '../../api.gen';
+import type { ContactPointMetadataAnnotations, ListReceiverApiResponse } from '../../api.gen';
 import { GROUP, VERSION } from '../../const';
-import { ContactPoint, Integration } from '../../types';
 
 import { AlertingEntityMetadataAnnotationsFactory } from './common';
 
