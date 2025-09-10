@@ -157,7 +157,6 @@ export function alignTimeRangeCompareData(series: DataFrame, diff: number, theme
       field.config.custom = {
         ...(field.config.custom ?? {}),
         lineStyle: {
-          fill: 'dash',
           dash: [1, 5, 4, 5],
         },
       };
