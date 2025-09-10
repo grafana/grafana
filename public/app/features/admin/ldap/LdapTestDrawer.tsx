@@ -107,7 +107,7 @@ export const LdapTestDrawer = ({ onClose, username }: Props) => {
                   <Trans i18nKey="admin.ldap.test-mapping-heading">Test user mapping</Trans>
                 </Text>
                 <form onSubmit={handleSubmit(search)}>
-                  <Field label={t('admin.ldap-page.label-username', 'Username')}>
+                  <Field noMargin label={t('admin.ldap-page.label-username', 'Username')}>
                     <Stack>
                       <Input
                         {...register('username', { required: true })}
@@ -122,13 +122,13 @@ export const LdapTestDrawer = ({ onClose, username }: Props) => {
                     </Stack>
                   </Field>
                 </form>
+                {userError && userError.title && (
+                  <Alert title={userError.title} severity={AppNotificationSeverity.Error} onRemove={onClearUserError}>
+                    {userError.body}
+                  </Alert>
+                )}
+                {ldapUser && <LdapUserInfo ldapUser={ldapUser} />}
               </Stack>
-              {userError && userError.title && (
-                <Alert title={userError.title} severity={AppNotificationSeverity.Error} onRemove={onClearUserError}>
-                  {userError.body}
-                </Alert>
-              )}
-              {ldapUser && <LdapUserInfo ldapUser={ldapUser} />}
             </section>
           )}
         </Stack>
