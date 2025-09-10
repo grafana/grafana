@@ -11649,7 +11649,7 @@
       "tooltip-unhealthy-repository": "Unable to pull an unhealthy repository"
     },
     "synchronize-step": {
-      "repository-unhealthy": "Repository is unhealthy",
+      "repository-unhealthy": "The repository cannot be synchronized. Cancel provisioning and try again once the issue has been resolved. See details below.",
       "synchronization-description": "Include commits for each historical value",
       "synchronization-options": "Synchronization options"
     },

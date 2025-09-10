@@ -63,7 +63,10 @@ export function SynchronizeStep({ isLegacyStorage }: SynchronizeStepProps) {
       {repositoryHealthMessages && !isRepositoryHealthy && (
         <ProvisioningAlert
           error={{
-            title: t('provisioning.synchronize-step.repository-unhealthy', 'Repository is unhealthy'),
+            title: t(
+              'provisioning.synchronize-step.repository-unhealthy',
+              'The repository cannot be synchronized. Cancel provisioning and try again once the issue has been resolved. See details below.'
+            ),
             message: repositoryHealthMessages,
           }}
         />
