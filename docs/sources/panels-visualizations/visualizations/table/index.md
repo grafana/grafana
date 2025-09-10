@@ -220,6 +220,7 @@ This option is only available when you're editing the panel.
 | Show table header    | Show or hide column names imported from your data source. |
 | Frozen columns       | Freeze columns starting from the left side of the table. Enter a value to set how many columns are frozen. |
 | Cell height          | Set the height of the cell. Choose from **Small**, **Medium**, or **Large**. |
+| Max row height       | Define the maximum height for a row in the table. This can be useful when **Wrap text** is enabled for one or more columns. |
 | Enable pagination    | Toggle the switch to control how many table rows are visible at once. When switched on, the page size automatically adjusts to the height of the table. This option doesn't affect queries. |
 | Minimum column width | Define the lower limit of the column width, in pixels. By default, the minimum width of the table column is 150 pixels. For small-screen devices, such as mobile phones or tablets, reduce the value to `50` to allow table-based panels to render correctly in dashboards. |
 | Column width         | Define a column width, in pixels, rather than allowing the width to be set automatically. By default, Grafana calculates the column width based on the table size and the minimum column width. |
@@ -231,14 +232,30 @@ This option is only available when you're editing the panel.
 
 ### Table footer options
 
-Toggle the **Show table footer** switch on and off to control the display of the footer.
-When the toggle is switched on, you can use the table footer to show [calculations](ref:calculations) on fields.
+The table footer displays the results of calculations (and reducer functions) on fields.
+The footer is only displayed after you select an option in the **Calculation** drop-down list:
 
-After you activate the table footer, make selections for the following options:
+{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-table-footer-selector-v12.2.png" max-width="300px" alt="The footer calculation selector, open" >}}
 
-- **Calculation** - The calculation that you want to apply.
-- **Count rows** - This option is displayed if you select the **Count** calculation. If you want to show the number of rows in the dataset instead of the number of values in the selected fields, toggle on the **Count rows** switch.
-- **Fields** - The fields to which you want to apply the calculation. Grafana applies the calculation to all numeric fields if you don't select a field.
+There are several calculations you can choose from including minimum, maximum, first, last, and total.
+For the full list of options, refer to [Calculations](ref:calculations).
+
+In the table footer:
+
+- You can apply multiple calculations at once.
+- The calculations and reducer functions apply to all fields in the table, by default. To control which fields have a calculation or function applied, add the table footer in an override instead.
+- If you enable a mathematical function for a non-numeric field, nothing for that function is displayed for that field.
+
+In the following image, multiple calculations&mdash;**Mean**, **Max**, and **Last**&mdash;have been applied:
+
+{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-tablefooter-v12.2.png" max-width="750px" alt="Table with footer displaying mean, max, and last" >}}
+
+You can also see in the previous image that the mathematical functions, **Mean** and **Max**, haven't been applied to the text field in the table.
+Only the **Last** function has been applied to that field.
+
+{{< admonition type="note">}}
+Calculations applied to cell types like **Markdown + HTML** might have unexpected results.
+{{< /admonition>}}
 
 ### Cell options
 

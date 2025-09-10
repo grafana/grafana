@@ -227,16 +227,26 @@
       "select-resource": "Kies een bron"
     },
     "resource-picker": {
+      "browse-tab": "",
       "button-apply": "Toepassen",
       "button-cancel": "Annuleren",
       "header-location": "Locatie",
+      "header-resource-group": "",
       "header-scope": "Bereik",
       "header-type": "Type",
       "heading-selection": "Selectie",
+      "locations-filter": "",
+      "locations-filter-placeholder": "",
+      "recent-tab": "",
       "result-limit": "Eerste {{numResults}} resultaten weergeven",
+      "subscriptions-filter": "",
+      "subscriptions-filter-placeholder": "",
       "text-loading": "Laden...",
+      "text-no-recent-resources": "",
       "text-no-resources": "Geen bronnen gevonden",
-      "title-error-occurred": "Er is een fout opgetreden bij het aanvragen van metagegevens van Azure Monitor"
+      "title-error-occurred": "Er is een fout opgetreden bij het aanvragen van metagegevens van Azure Monitor",
+      "types-filter": "",
+      "types-filter-placeholder": ""
     },
     "scope-selector": {
       "label": "Bereik"

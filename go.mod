@@ -79,14 +79,14 @@ require (
 	github.com/golang/protobuf v1.5.4 // @grafana/grafana-backend-group
 	github.com/golang/snappy v1.0.0 // @grafana/alerting-backend
 	github.com/google/go-cmp v0.7.0 // @grafana/grafana-backend-group
-	github.com/google/go-github/v70 v70.0.0 // @grafana/grafana-git-ui-sync-team
+	github.com/google/go-github/v70 v70.0.0 // indirect; @grafana/grafana-git-ui-sync-team
 	github.com/google/go-querystring v1.1.0 // indirect; @grafana/oss-big-tent
 	github.com/google/uuid v1.6.0 // @grafana/grafana-backend-group
 	github.com/google/wire v0.6.0 // @grafana/grafana-backend-group
 	github.com/googleapis/gax-go/v2 v2.14.2 // @grafana/grafana-backend-group
 	github.com/gorilla/mux v1.8.1 // @grafana/grafana-backend-group
 	github.com/gorilla/websocket v1.5.4-0.20250319132907-e064f32e3674 // @grafana/grafana-app-platform-squad
-	github.com/grafana/alerting v0.0.0-20250821181654-10915888e4f0 // @grafana/alerting-backend
+	github.com/grafana/alerting v0.0.0-20250903205312-24567882c5d1 // @grafana/alerting-backend
 	github.com/grafana/authlib v0.0.0-20250710201142-9542f2f28d43 // @grafana/identity-access-team
 	github.com/grafana/authlib/types v0.0.0-20250710201142-9542f2f28d43 // @grafana/identity-access-team
 	github.com/grafana/dataplane/examples v0.0.1 // @grafana/observability-metrics
@@ -105,7 +105,7 @@ require (
 	github.com/grafana/grafana-openapi-client-go v0.0.0-20231213163343-bd475d63fb79 // @grafana/grafana-backend-group
 	github.com/grafana/grafana-plugin-sdk-go v0.278.0 // @grafana/plugins-platform-backend
 	github.com/grafana/loki/v3 v3.2.1 // @grafana/observability-logs
-	github.com/grafana/nanogit v0.0.0-20250723104447-68f58f5ecec0 // @grafana/grafana-git-ui-sync-team
+	github.com/grafana/nanogit v0.0.0-20250723104447-68f58f5ecec0 // indirect; @grafana/grafana-git-ui-sync-team
 	github.com/grafana/otel-profiling-go v0.5.1 // @grafana/grafana-backend-group
 	github.com/grafana/pyroscope-go/godeltaprof v0.1.8 // @grafana/observability-traces-and-profiling
 	github.com/grafana/pyroscope/api v1.2.1-0.20250415190842-3ff7247547ae // @grafana/observability-traces-and-profiling
@@ -117,6 +117,7 @@ require (
 	github.com/hashicorp/go-hclog v1.6.3 // @grafana/plugins-platform-backend
 	github.com/hashicorp/go-multierror v1.1.1 // @grafana/alerting-squad
 	github.com/hashicorp/go-plugin v1.6.3 // @grafana/plugins-platform-backend
+	github.com/hashicorp/go-secure-stdlib/plugincontainer v0.4.2 // @grafana/plugins-platform-backend
 	github.com/hashicorp/go-version v1.7.0 // @grafana/grafana-backend-group
 	github.com/hashicorp/golang-lru/v2 v2.0.7 // @grafana/alerting-backend
 	github.com/hashicorp/hcl/v2 v2.17.0 // @grafana/alerting-backend
@@ -168,7 +169,6 @@ require (
 	github.com/spf13/pflag v1.0.7 // @grafana-app-platform-squad
 	github.com/spyzhov/ajson v0.9.6 // @grafana/grafana-sharing-squad
 	github.com/stretchr/testify v1.10.0 // @grafana/grafana-backend-group
-	github.com/teris-io/shortid v0.0.0-20171029131806-771a37caa5cf // @grafana/grafana-backend-group
 	github.com/thomaspoignant/go-feature-flag v1.42.0 // @grafana/grafana-backend-group
 	github.com/tjhop/slog-gokit v0.1.3 // @grafana/grafana-app-platform-squad
 	github.com/ua-parser/uap-go v0.0.0-20250213224047-9c035f085b90 // @grafana/grafana-backend-group
@@ -233,7 +233,9 @@ require (
 
 require (
 	github.com/grafana/grafana/apps/advisor v0.0.0 // @grafana/plugins-platform-backend
+	github.com/grafana/grafana/apps/alerting/alertenrichment v0.0.0 // @grafana/alerting-backend
 	github.com/grafana/grafana/apps/alerting/notifications v0.0.0 // @grafana/alerting-backend
+	github.com/grafana/grafana/apps/alerting/rules v0.0.0 // @grafana/alerting-backend
 	github.com/grafana/grafana/apps/dashboard v0.0.0 // @grafana/grafana-app-platform-squad @grafana/dashboards-squad
 	github.com/grafana/grafana/apps/folder v0.0.0 // @grafana/grafana-search-and-storage
 	github.com/grafana/grafana/apps/iam v0.0.0 // @grafana/identity-access-team
@@ -258,7 +260,9 @@ require (
 // Replace the workspace versions
 replace (
 	github.com/grafana/grafana/apps/advisor => ./apps/advisor
+	github.com/grafana/grafana/apps/alerting/alertenrichment => ./apps/alerting/alertenrichment
 	github.com/grafana/grafana/apps/alerting/notifications => ./apps/alerting/notifications
+	github.com/grafana/grafana/apps/alerting/rules => ./apps/alerting/rules
 	github.com/grafana/grafana/apps/dashboard => ./apps/dashboard
 	github.com/grafana/grafana/apps/folder => ./apps/folder
 	github.com/grafana/grafana/apps/iam => ./apps/iam
@@ -304,6 +308,7 @@ require (
 	github.com/GoogleCloudPlatform/opentelemetry-operations-go/internal/resourcemapping v0.51.0 // indirect
 	github.com/Masterminds/goutils v1.1.1 // indirect
 	github.com/Masterminds/squirrel v1.5.4 // indirect
+	github.com/Microsoft/go-winio v0.6.2 // indirect
 	github.com/NYTimes/gziphandler v1.1.1 // indirect
 	github.com/RoaringBitmap/roaring v1.9.3 // indirect
 	github.com/RoaringBitmap/roaring/v2 v2.4.5 // indirect
@@ -365,7 +370,7 @@ require (
 	github.com/buger/jsonparser v1.1.1 // indirect
 	github.com/c2h5oh/datasize v0.0.0-20231215233829-aa82cc1e6500 // indirect
 	github.com/caio/go-tdigest v3.1.0+incompatible // indirect
-	github.com/cenkalti/backoff/v4 v4.3.0 // indirect
+	github.com/cenkalti/backoff/v4 v4.3.0 // @grafana/alerting-backend
 	github.com/cenkalti/backoff/v5 v5.0.2 // indirect
 	github.com/centrifugal/protocol v0.16.0 // indirect
 	github.com/cespare/xxhash v1.1.0 // indirect
@@ -375,6 +380,8 @@ require (
 	github.com/cloudflare/circl v1.6.1 // indirect
 	github.com/cncf/xds/go v0.0.0-20250501225837-2ac532fd4443 // indirect
 	github.com/cockroachdb/apd/v3 v3.2.1 // indirect
+	github.com/containerd/errdefs v1.0.0 // indirect
+	github.com/containerd/errdefs/pkg v0.3.0 // indirect
 	github.com/coreos/go-semver v0.3.1 // indirect
 	github.com/coreos/go-systemd/v22 v22.5.0 // indirect
 	github.com/cpuguy83/go-md2man/v2 v2.0.7 // indirect
@@ -384,6 +391,9 @@ require (
 	github.com/dgryski/go-metro v0.0.0-20180109044635-280f6062b5bc // indirect
 	github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f // indirect
 	github.com/diegoholiveira/jsonlogic/v3 v3.7.4 // indirect
+	github.com/distribution/reference v0.6.0 // indirect
+	github.com/docker/docker v28.3.3+incompatible // indirect
+	github.com/docker/go-connections v0.5.0 // indirect
 	github.com/docker/go-units v0.5.0 // indirect
 	github.com/dolthub/flatbuffers/v23 v23.3.3-dh.2 // indirect
 	github.com/dolthub/go-icu-regex v0.0.0-20250327004329-6799764f2dad // indirect
@@ -468,6 +478,7 @@ require (
 	github.com/jhump/protoreflect v1.15.1 // indirect
 	github.com/jonboulle/clockwork v0.5.0 // indirect
 	github.com/josharian/intern v1.0.0 // indirect
+	github.com/joshlf/go-acl v0.0.0-20200411065538-eae00ae38531 // indirect
 	github.com/jpillora/backoff v1.0.0 // indirect
 	github.com/jszwedko/go-datemath v0.1.1-0.20230526204004-640a500621d6 // indirect
 	github.com/jtolds/gls v4.20.0+incompatible // indirect
@@ -502,6 +513,7 @@ require (
 	github.com/mithrandie/go-file/v2 v2.1.0 // indirect
 	github.com/mithrandie/go-text v1.6.0 // indirect
 	github.com/mithrandie/ternary v1.1.1 // indirect
+	github.com/moby/docker-image-spec v1.3.1 // indirect
 	github.com/moby/spdystream v0.5.0 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/mohae/deepcopy v0.0.0-20170929034955-c48cc78d4826 // indirect
@@ -631,12 +643,17 @@ require (
 	sigs.k8s.io/yaml v1.5.0 // indirect
 )
 
+require (
+	github.com/gopherjs/gopherjs v1.17.2 // indirect
+	github.com/smarty/assertions v1.15.0 // indirect
+)
+
 // Use fork of crewjam/saml with fixes for some issues until changes get merged into upstream
 replace github.com/crewjam/saml => github.com/grafana/saml v0.4.15-0.20240917091248-ae3bbdad8a56
 
 // Use our fork of the upstream alertmanagers.
 // This is required in order to get notification delivery errors from the receivers API.
-replace github.com/prometheus/alertmanager => github.com/grafana/prometheus-alertmanager v0.25.1-0.20250620093340-be61a673dee6
+replace github.com/prometheus/alertmanager => github.com/grafana/prometheus-alertmanager v0.25.1-0.20250821192752-903ba9e90238
 
 exclude github.com/mattn/go-sqlite3 v2.0.3+incompatible
 

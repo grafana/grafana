@@ -2,6 +2,7 @@ import { map as _map, each, indexOf, isArray, isString } from 'lodash';
 import moment from 'moment';
 import { lastValueFrom, merge, Observable, of, OperatorFunction, pipe, throwError } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
+import { coerce, gte, SemVer, valid } from 'semver';
 
 import {
   AbstractLabelMatcher,
@@ -22,16 +23,14 @@ import {
   TimeRange,
   toDataFrame,
 } from '@grafana/data';
-import { BackendSrvRequest, FetchResponse, getBackendSrv } from '@grafana/runtime';
+import { BackendSrvRequest, FetchResponse, getBackendSrv, getTemplateSrv, TemplateSrv } from '@grafana/runtime';
 import { TimeZone } from '@grafana/schema';
-import { isVersionGtOrEq, SemVersion } from 'app/core/utils/version';
-import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
-import { getRollupNotice, getRuntimeConsolidationNotice } from 'app/plugins/datasource/graphite/meta';
 
 import { AnnotationEditor } from './components/AnnotationsEditor';
 import { convertToGraphiteQueryObject } from './components/helpers';
 import gfunc, { FuncDef, FuncDefs, FuncInstance } from './gfunc';
 import GraphiteQueryModel from './graphite_query';
+import { getRollupNotice, getRuntimeConsolidationNotice } from './meta';
 import { prepareAnnotation } from './migrations';
 // Types
 import {
@@ -679,7 +678,7 @@ export class GraphiteDatasource
   private requestMetricFind(
     query: string,
     requestId: string,
-    range?: { from: any; until: any }
+    range?: { from: string | number; until: string | number }
   ): Promise<MetricFindValue[]> {
     const params: BackendSrvRequest['params'] = {};
 
@@ -722,7 +721,7 @@ export class GraphiteDatasource
   private requestMetricExpand(
     query: string,
     requestId: string,
-    range?: { from: any; until: any }
+    range?: { from: string | number; until: string | number }
   ): Promise<MetricFindValue[]> {
     const params: BackendSrvRequest['params'] = { query };
     if (range) {
@@ -889,8 +888,8 @@ export class GraphiteDatasource
       this.doGraphiteRequest(httpOptions).pipe(
         map((results: FetchResponse) => {
           if (results.data) {
-            const semver = new SemVersion(results.data);
-            return semver.isValid() ? results.data : '';
+            const semver = new SemVer(results.data);
+            return valid(semver) ? results.data : '';
           }
           return '';
         }),
@@ -901,7 +900,7 @@ export class GraphiteDatasource
     );
   }
 
-  createFuncInstance(funcDef: string | FuncDef, options?: any): FuncInstance {
+  createFuncInstance(funcDef: string | FuncDef, options?: { withDefaultParams: boolean }): FuncInstance {
     return gfunc.createFuncInstance(funcDef, options, this.funcDefs);
   }
 
@@ -1079,11 +1078,19 @@ export class GraphiteDatasource
 }
 
 function supportsTags(version: string): boolean {
-  return isVersionGtOrEq(version, '1.1');
+  const fullVersion = coerce(version);
+  if (!fullVersion) {
+    return false;
+  }
+  return gte(fullVersion, '1.1.0');
 }
 
 function supportsFunctionIndex(version: string): boolean {
-  return isVersionGtOrEq(version, '1.1');
+  const fullVersion = coerce(version);
+  if (!fullVersion) {
+    return false;
+  }
+  return gte(fullVersion, '1.1.0');
 }
 
 function mapToTags(): OperatorFunction<FetchResponse, Array<{ text: string }>> {

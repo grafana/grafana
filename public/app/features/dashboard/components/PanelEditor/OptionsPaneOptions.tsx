@@ -204,7 +204,4 @@ const getStyles = (theme: GrafanaTheme2) => ({
     borderTop: 'none',
     flexGrow: 1,
   }),
-  angularDeprecationWrapper: css({
-    padding: theme.spacing(1),
-  }),
 });

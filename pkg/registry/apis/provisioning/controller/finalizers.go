@@ -2,6 +2,7 @@ package controller
 
 import (
 	"context"
+	"encoding/json"
 	"sort"
 	"strings"
 
@@ -13,8 +14,8 @@ import (
 	"github.com/grafana/grafana-app-sdk/logging"
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 )
 
@@ -52,12 +53,14 @@ func (f *finalizer) process(ctx context.Context,
 		case ReleaseOrphanResourcesFinalizer:
 			err := f.processExistingItems(ctx, repo.Config(),
 				func(client dynamic.ResourceInterface, item *provisioning.ResourceListItem) error {
-					_, err := client.Patch(ctx, item.Name, types.JSONPatchType, []byte(`[
-						{"op": "remove", "path": "/metadata/annotations/`+utils.AnnoKeyManagerKind+`" },
-						{"op": "remove", "path": "/metadata/annotations/`+utils.AnnoKeyManagerIdentity+`" },
-						{"op": "remove", "path": "/metadata/annotations/`+utils.AnnoKeySourcePath+`" },
-						{"op": "remove", "path": "/metadata/annotations/`+utils.AnnoKeySourceChecksum+`" }
-					]`), v1.PatchOptions{})
+					patchAnnotations, err := getPatchedAnnotations(item)
+					if err != nil {
+						return err
+					}
+
+					_, err = client.Patch(
+						ctx, item.Name, types.JSONPatchType, patchAnnotations, v1.PatchOptions{},
+					)
 					return err
 				})
 			if err != nil {
@@ -104,7 +107,7 @@ func (f *finalizer) processExistingItems(
 	errors := 0
 
 	for _, item := range items.Items {
-		res, _, err := clients.ForResource(schema.GroupVersionResource{
+		res, _, err := clients.ForResource(ctx, schema.GroupVersionResource{
 			Group:    item.Group,
 			Resource: item.Resource,
 		})
@@ -122,6 +125,43 @@ func (f *finalizer) processExistingItems(
 	}
 	logger.Info("processed orphan items", "items", count, "errors", errors)
 	return nil
+}
+
+type jsonPatchOperation struct {
+	Op   string `json:"op"`
+	Path string `json:"path"`
+}
+
+func getPatchedAnnotations(item *provisioning.ResourceListItem) ([]byte, error) {
+	annotations := []jsonPatchOperation{
+		{Op: "remove", Path: "/metadata/annotations/" + escapePatchString(utils.AnnoKeyManagerKind)},
+		{Op: "remove", Path: "/metadata/annotations/" + escapePatchString(utils.AnnoKeyManagerIdentity)},
+	}
+
+	if item.Path != "" {
+		annotations = append(
+			annotations,
+			jsonPatchOperation{
+				Op: "remove", Path: "/metadata/annotations/" + escapePatchString(utils.AnnoKeySourcePath),
+			},
+		)
+	}
+	if item.Hash != "" {
+		annotations = append(
+			annotations,
+			jsonPatchOperation{
+				Op: "remove", Path: "/metadata/annotations/" + escapePatchString(utils.AnnoKeySourceChecksum),
+			},
+		)
+	}
+
+	return json.Marshal(annotations)
+}
+
+func escapePatchString(s string) string {
+	s = strings.ReplaceAll(s, "~", "~0")
+	s = strings.ReplaceAll(s, "/", "~1")
+	return s
 }
 
 func sortResourceListForDeletion(list *provisioning.ResourceList) {

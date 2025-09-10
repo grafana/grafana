@@ -6,7 +6,7 @@ import (
 	"time"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
+	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 )
 
 // StatusPatcher defines the interface for updating repository status
@@ -18,21 +18,12 @@ type StatusPatcher interface {
 
 // HealthChecker provides unified health checking for repositories
 type HealthChecker struct {
-	tester        RepositoryTester
 	statusPatcher StatusPatcher
 }
 
-// RepositoryTester defines the interface for testing repository connectivity
-//
-//go:generate mockery --name=RepositoryTester
-type RepositoryTester interface {
-	TestRepository(ctx context.Context, repo repository.Repository) (*provisioning.TestResults, error)
-}
-
 // NewHealthChecker creates a new health checker
-func NewHealthChecker(tester RepositoryTester, statusPatcher StatusPatcher) *HealthChecker {
+func NewHealthChecker(statusPatcher StatusPatcher) *HealthChecker {
 	return &HealthChecker{
-		tester:        tester,
 		statusPatcher: statusPatcher,
 	}
 }
@@ -172,7 +163,7 @@ func (hc *HealthChecker) RefreshTimestamp(ctx context.Context, repo *provisionin
 // refreshHealth performs a comprehensive health check
 // Returns test results, health status, and any error
 func (hc *HealthChecker) refreshHealth(ctx context.Context, repo repository.Repository, existingStatus provisioning.HealthStatus) (*provisioning.TestResults, provisioning.HealthStatus, error) {
-	res, err := hc.tester.TestRepository(ctx, repo)
+	res, err := repository.TestRepository(ctx, repo)
 	if err != nil {
 		return nil, existingStatus, fmt.Errorf("failed to test repository: %w", err)
 	}

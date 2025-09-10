@@ -116,7 +116,7 @@ export function ImportDashboardOverviewV2() {
           if (element.kind === 'Panel') {
             const panel = { ...element.spec };
             if (panel.data?.kind === 'QueryGroup') {
-              const newQueries = panel.data.spec.queries.map((query: any) => {
+              const newQueries = panel.data.spec.queries.map((query) => {
                 if (query.kind === 'PanelQuery') {
                   const queryType = query.spec.query?.kind;
                   // Match datasource by query kind
