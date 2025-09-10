@@ -12,14 +12,14 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 	"github.com/grafana/grafana/pkg/util"
+	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 func TestIntegrationAlertRulePauseNamespace(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test in short mode")
+	testutil.SkipIntegrationTestInShortMode(t)
 
-		// Setup Grafana and its Database
-	}
+	// Setup Grafana and its Database
+
 	testinfra.SQLiteIntegrationTest(t)
 
 	dir, p := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{

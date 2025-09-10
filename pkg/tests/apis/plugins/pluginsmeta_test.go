@@ -9,6 +9,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/grafana/grafana/pkg/tests/apis"
+	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 var gvrPluginMeta = schema.GroupVersionResource{
@@ -18,9 +19,7 @@ var gvrPluginMeta = schema.GroupVersionResource{
 }
 
 func TestIntegrationPluginMeta(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	t.Run("list plugin metas", func(t *testing.T) {
 		helper := setupHelper(t)

@@ -10,6 +10,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	provisioningv0alpha1 "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned/typed/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/apps/provisioning/pkg/safepath"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -63,7 +64,7 @@ func (r *repositoryResources) List(ctx context.Context) (*provisioning.ResourceL
 // FindResourcePath finds the repository file path for a resource by its name and GroupVersionKind
 func (r *repositoryResources) FindResourcePath(ctx context.Context, name string, gvk schema.GroupVersionKind) (string, error) {
 	// Use ForKind to get the dynamic client for this resource type
-	client, gvr, err := r.clients.ForKind(gvk)
+	client, gvr, err := r.clients.ForKind(ctx, gvk)
 	if err != nil {
 		return "", fmt.Errorf("get client for kind %s: %w", gvk.Kind, err)
 	}
@@ -106,7 +107,7 @@ func (r *repositoryResourcesFactory) Client(ctx context.Context, repo repository
 		return nil, fmt.Errorf("create clients: %w", err)
 	}
 
-	folderClient, err := clients.Folder()
+	folderClient, err := clients.Folder(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("create folder client: %w", err)
 	}
@@ -125,4 +126,28 @@ func (r *repositoryResourcesFactory) Client(ctx context.Context, repo repository
 		namespace:        repo.Config().Namespace,
 		repoName:         repo.Config().Name,
 	}, nil
+}
+
+type RepositoryGetter struct {
+	factory repository.Factory
+	client  provisioningv0alpha1.ProvisioningV0alpha1Interface
+}
+
+func NewRepositoryGetter(
+	factory repository.Factory,
+	client provisioningv0alpha1.ProvisioningV0alpha1Interface,
+) *RepositoryGetter {
+	return &RepositoryGetter{
+		factory: factory,
+		client:  client,
+	}
+}
+
+func (r *RepositoryGetter) GetRepository(ctx context.Context, namespace, repoName string) (repository.Repository, error) {
+	repo, err := r.client.Repositories(namespace).Get(ctx, repoName, metav1.GetOptions{})
+	if err != nil {
+		return nil, fmt.Errorf("get repository %q: %w", repoName, err)
+	}
+
+	return r.factory.Build(ctx, repo)
 }

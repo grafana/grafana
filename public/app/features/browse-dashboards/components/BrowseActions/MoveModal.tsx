@@ -1,8 +1,9 @@
 import { useState } from 'react';
 
 import { Trans, t } from '@grafana/i18n';
-import { Alert, Button, Field, Modal, Text, Space } from '@grafana/ui';
-import { FolderPicker } from 'app/core/components/Select/FolderPicker';
+import { Alert, Button, Field, Modal, Text, Space, Box } from '@grafana/ui';
+import { MoveActionAvailableTargetWarning } from 'app/features/provisioning/components/Shared/MoveActionAvailableTargetWarning';
+import { ProvisioningAwareFolderPicker } from 'app/features/provisioning/components/Shared/ProvisioningAwareFolderPicker';
 
 import { DashboardTreeSelection } from '../../types';
 
@@ -18,7 +19,6 @@ export interface Props {
 export const MoveModal = ({ onConfirm, onDismiss, selectedItems, ...props }: Props) => {
   const [moveTarget, setMoveTarget] = useState<string>();
   const [isMoving, setIsMoving] = useState(false);
-
   const selectedFolders = Object.keys(selectedItems.folder).filter((uid) => selectedItems.folder[uid]);
 
   const onMove = async () => {
@@ -43,16 +43,25 @@ export const MoveModal = ({ onConfirm, onDismiss, selectedItems, ...props }: Pro
         />
       )}
 
-      <Text element="p">
-        <Trans i18nKey="browse-dashboards.action.move-modal-text">This action will move the following content:</Trans>
-      </Text>
+      <MoveActionAvailableTargetWarning />
 
-      <DescendantCount selectedItems={selectedItems} />
+      <Box paddingTop={2}>
+        <Text element="p">
+          <Trans i18nKey="browse-dashboards.action.move-modal-text">This action will move the following content:</Trans>
+        </Text>
+
+        <DescendantCount selectedItems={selectedItems} />
+      </Box>
 
       <Space v={3} />
 
       <Field label={t('browse-dashboards.action.move-modal-field-label', 'Folder name')}>
-        <FolderPicker value={moveTarget} excludeUIDs={selectedFolders} onChange={setMoveTarget} />
+        <ProvisioningAwareFolderPicker
+          value={moveTarget}
+          excludeUIDs={selectedFolders}
+          onChange={setMoveTarget}
+          repositoryName={undefined} // is non-provisioned folder
+        />
       </Field>
 
       <Modal.ButtonRow>

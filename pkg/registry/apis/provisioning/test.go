@@ -15,12 +15,13 @@ import (
 	"k8s.io/apiserver/pkg/registry/rest"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	appcontroller "github.com/grafana/grafana/apps/provisioning/pkg/controller"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/controller"
 )
 
 type StatusPatcherProvider interface {
-	GetStatusPatcher() *controller.RepositoryStatusPatcher
+	GetStatusPatcher() *appcontroller.RepositoryStatusPatcher
 }
 
 type HealthCheckerProvider interface {
@@ -30,20 +31,17 @@ type HealthCheckerProvider interface {
 type testConnector struct {
 	getter         RepoGetter
 	factory        repository.Factory
-	tester         controller.RepositoryTester
 	healthProvider HealthCheckerProvider
 }
 
 func NewTestConnector(
 	getter RepoGetter,
 	factory repository.Factory,
-	tester controller.RepositoryTester,
 	healthProvider HealthCheckerProvider,
 ) *testConnector {
 	return &testConnector{
 		factory:        factory,
 		getter:         getter,
-		tester:         tester,
 		healthProvider: healthProvider,
 	}
 }
@@ -183,7 +181,7 @@ func (s *testConnector) Connect(ctx context.Context, name string, opts runtime.O
 			}
 		} else {
 			// Testing temporary repository - just run test without status update
-			rsp, err = s.tester.TestRepository(ctx, repo)
+			rsp, err = repository.TestRepository(ctx, repo)
 			if err != nil {
 				responder.Error(err)
 				return
