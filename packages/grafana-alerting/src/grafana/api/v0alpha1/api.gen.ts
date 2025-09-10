@@ -1321,16 +1321,21 @@ export type OnCallIntegration = {
     message?: string;
   };
 };
-export type ReceiverIntegration =
-  | ({
-      type: 'email';
-    } & EmailIntegration)
-  | ({
-      type: 'slack';
-    } & SlackIntegration)
-  | ({
-      type: 'OnCall';
-    } & OnCallIntegration);
+export type GenericIntegration = {
+  disableResolveMessage?: boolean;
+  secureFields?: {
+    [key: string]: boolean;
+  };
+  /** Type of the receiver integration. Can be any string for extensibility. */
+  type: string;
+  uid?: string;
+  version: string;
+  /** Generic settings for any integration type */
+  settings: {
+    [key: string]: any;
+  };
+};
+export type ReceiverIntegration = EmailIntegration | SlackIntegration | OnCallIntegration | GenericIntegration;
 export type ReceiverSpec = {
   integrations: ReceiverIntegration[];
   title: string;

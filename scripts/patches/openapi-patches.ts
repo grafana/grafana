@@ -43,7 +43,7 @@ export const SPEC_PATCHES: SpecPatches = {
       ],
     },
     {
-      description: 'Replace ReceiverIntegration with discriminated union based on type field',
+      description: 'Replace ReceiverIntegration with simple union (no discriminator to avoid TaggedUnion issues)',
       operations: [
         {
           op: 'replace',
@@ -53,15 +53,8 @@ export const SPEC_PATCHES: SpecPatches = {
               { $ref: '#/components/schemas/EmailIntegration' },
               { $ref: '#/components/schemas/SlackIntegration' },
               { $ref: '#/components/schemas/OnCallIntegration' },
+              { $ref: '#/components/schemas/GenericIntegration' },
             ],
-            discriminator: {
-              propertyName: 'type',
-              mapping: {
-                email: '#/components/schemas/EmailIntegration',
-                slack: '#/components/schemas/SlackIntegration',
-                OnCall: '#/components/schemas/OnCallIntegration',
-              },
-            },
           },
         },
       ],
@@ -160,6 +153,32 @@ export const SPEC_PATCHES: SpecPatches = {
                   message: { type: 'string' },
                 },
                 required: ['url'],
+              },
+            },
+            required: ['type', 'version', 'settings'],
+          },
+        },
+        {
+          op: 'add',
+          path: '/components/schemas/GenericIntegration',
+          value: {
+            type: 'object',
+            properties: {
+              disableResolveMessage: { type: 'boolean' },
+              secureFields: {
+                type: 'object',
+                additionalProperties: { type: 'boolean', default: false },
+              },
+              type: {
+                type: 'string',
+                description: 'Type of the receiver integration. Can be any string for extensibility.',
+              },
+              uid: { type: 'string' },
+              version: { type: 'string' },
+              settings: {
+                type: 'object',
+                additionalProperties: true,
+                description: 'Generic settings for any integration type',
               },
             },
             required: ['type', 'version', 'settings'],
