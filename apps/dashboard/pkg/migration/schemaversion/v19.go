@@ -84,9 +84,16 @@ func upgradePanelLink(link map[string]interface{}) map[string]interface{} {
 	url := buildPanelLinkURL(link)
 
 	result := map[string]interface{}{
-		"url":         url,
-		"title":       GetStringValue(link, "title"),
-		"targetBlank": GetBoolValue(link, "targetBlank"),
+		"url":   url,
+		"title": GetStringValue(link, "title"),
+	}
+
+	// Only add targetBlank if it's explicitly set to true (matches frontend behavior)
+	// Frontend filters out targetBlank: false as a default, so we shouldn't add it
+	if targetBlank, exists := link["targetBlank"]; exists {
+		if tb, ok := targetBlank.(bool); ok && tb {
+			result["targetBlank"] = true
+		}
 	}
 
 	return result
