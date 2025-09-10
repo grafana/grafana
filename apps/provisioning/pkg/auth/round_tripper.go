@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/grafana/authlib/authn"
+	"github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	utilnet "k8s.io/apimachinery/pkg/util/net"
 )
 
@@ -32,8 +33,15 @@ func NewRoundTripper(tokenExchangeClient tokenExchanger, base http.RoundTripper,
 }
 
 func (t *RoundTripper) RoundTrip(req *http.Request) (*http.Response, error) {
+	// when we want to write resources with the provisioning API, the audience needs to include provisioning
+	// so that it passes the check in enforceManagerProperties, which prevents others from updating provisioned resources
+	audiences := []string{t.audience}
+	if t.audience != v0alpha1.GROUP {
+		audiences = append(audiences, v0alpha1.GROUP)
+	}
+
 	tokenResponse, err := t.client.Exchange(req.Context(), authn.TokenExchangeRequest{
-		Audiences: []string{t.audience},
+		Audiences: audiences,
 		Namespace: "*",
 	})
 	if err != nil {

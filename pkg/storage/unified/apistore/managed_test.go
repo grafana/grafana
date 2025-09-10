@@ -4,15 +4,19 @@ import (
 	"context"
 	"testing"
 
+	"github.com/go-jose/go-jose/v3/jwt"
 	"github.com/stretchr/testify/require"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 
+	authnlib "github.com/grafana/authlib/authn"
 	authtypes "github.com/grafana/authlib/types"
 	dashboard "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
+	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	serviceauthn "github.com/grafana/grafana/pkg/services/authn"
 )
 
 func TestManagedAuthorizer(t *testing.T) {
@@ -108,6 +112,25 @@ func TestManagedAuthorizer(t *testing.T) {
 					Annotations: map[string]string{
 						utils.AnnoKeyManagerKind:     string(utils.ManagerKindRepo),
 						utils.AnnoKeyManagerIdentity: "abc",
+					},
+				},
+			},
+		},
+		{
+			name: "audience includes provisioning group",
+			auth: &serviceauthn.Identity{
+				Type: authtypes.TypeAccessPolicy,
+				UID:  "access-policy:random-uid",
+				AccessTokenClaims: &authnlib.Claims[authnlib.AccessTokenClaims]{
+					Claims: jwt.Claims{
+						Audience: []string{provisioning.GROUP},
+					},
+				},
+			},
+			obj: &dashboard.Dashboard{
+				ObjectMeta: v1.ObjectMeta{
+					Annotations: map[string]string{
+						utils.AnnoKeyManagerKind: string(utils.ManagerKindRepo),
 					},
 				},
 			},
