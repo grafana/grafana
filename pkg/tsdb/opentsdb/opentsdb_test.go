@@ -460,5 +460,4 @@ func TestOpenTsdbExecutor(t *testing.T) {
 		require.Contains(t, bodies[1], `"start":3000`)
 		require.Contains(t, bodies[1], `"end":4000`)
 	})
-
 }
