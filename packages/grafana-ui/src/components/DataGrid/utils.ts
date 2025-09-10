@@ -4,9 +4,10 @@ import { DataFrame, Field, FieldType } from '@grafana/data';
 
 import { ColumnTypes, Comparator, TableRow } from './types';
 
+/**
+ * @internal
+ */
 export const getDisplayName = (field: Field): string => field.state?.displayName ?? field.name;
-
-export const predicateByName = (name: string) => (f: Field) => f.name === name || getDisplayName(f) === name;
 
 /**
  * @internal

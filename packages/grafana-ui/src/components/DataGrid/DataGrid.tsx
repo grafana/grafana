@@ -3,7 +3,7 @@ import 'react-data-grid/lib/styles.css';
 import { css } from '@emotion/css';
 import clsx from 'clsx';
 import { ComponentProps, ReactNode, RefObject, useMemo, useState, cloneElement, useLayoutEffect } from 'react';
-import { DataGridHandle, DataGrid as RDG } from 'react-data-grid';
+import { DataGridHandle, DataGrid as RDG, SortColumn } from 'react-data-grid';
 
 import { colorManipulator, DataFrame, GrafanaTheme2 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
@@ -11,16 +11,13 @@ import { Trans } from '@grafana/i18n';
 import { useStyles2 } from '../../themes/ThemeContext';
 import { Pagination } from '../Pagination/Pagination';
 
-import { useSortedRows } from './hooks';
 import { TableRow, TableSummaryRow } from './types';
-import { frameToRecords, type applySort } from './utils';
-
-const DEFAULT_ROWS_PER_PAGE = 25;
+import { applySort, frameToRecords, getColumnTypes } from './utils';
 
 export interface DataGridPaginationProps {
   rows: TableRow[];
   children: (rows: TableRow[]) => ReactNode;
-  rowsPerPage?: number | ((rows: TableRow[]) => number);
+  rowsPerPage: number | ((rows: TableRow[]) => number);
   onPageChange?: (pageIndex: number) => void;
   initialPage?: number;
   small?: boolean;
@@ -29,9 +26,9 @@ export interface DataGridPaginationProps {
 const PaginatedDataGrid = ({
   children,
   rows,
-  rowsPerPage: _rowsPerPage = DEFAULT_ROWS_PER_PAGE,
+  rowsPerPage: _rowsPerPage,
   onPageChange,
-  initialPage = 0,
+  initialPage = 1,
   small,
 }: DataGridPaginationProps) => {
   const styles = useStyles2(getPaginationStyles);
@@ -42,21 +39,21 @@ const PaginatedDataGrid = ({
   );
   const numRows = rows.length;
   const numPages = Math.ceil(numRows / rowsPerPage);
-  const pageRangeStart = page * rowsPerPage + 1;
+  const pageRangeStart = (page - 1) * rowsPerPage + 1;
   let pageRangeEnd = pageRangeStart + rowsPerPage - 1;
   if (pageRangeEnd > numRows) {
     pageRangeEnd = numRows;
   }
   const paginatedRows = useMemo(() => {
-    const pageOffset = page * rowsPerPage;
+    const pageOffset = pageRangeStart - 1;
     return rows.slice(pageOffset, pageOffset + rowsPerPage);
-  }, [page, rows, rowsPerPage]);
+  }, [pageRangeStart, rows, rowsPerPage]);
 
   // safeguard against page overflow on panel resize or other factors
   useLayoutEffect(() => {
     if (page > numPages) {
       // resets pagination to end
-      setPage(numPages - 1);
+      setPage(numPages);
     }
   }, [numPages, page, setPage]);
 
@@ -66,12 +63,12 @@ const PaginatedDataGrid = ({
       <div className={styles.container}>
         <Pagination
           className="table-ng-pagination"
-          currentPage={page + 1}
+          currentPage={page}
           numberOfPages={numPages}
           showSmallVersion={small}
           onNavigate={(toPage) => {
             onPageChange?.(toPage);
-            setPage(toPage - 1);
+            setPage(toPage);
           }}
         />
         {!small && (
@@ -87,47 +84,81 @@ const PaginatedDataGrid = ({
 };
 
 export interface DataGridProps<TableRow, TableSummaryRow>
-  extends ComponentProps<typeof RDG<TableRow, TableSummaryRow>> {
+  extends Omit<ComponentProps<typeof RDG<TableRow, TableSummaryRow>>, 'sortColumns' | 'rows'> {
+  /**
+   * instead of providing `rows` as you would with a typical react-data-grid, you should provide `data` as a DataFrame
+   * to this component, which enables the sorting functionality to work correctly.
+   */
   data: DataFrame;
+  /**
+   * if true, the background color of the grid will be updated to match the theme's body background.
+   * (true transparent is not possible in react-data-grid.)
+   */
   transparent?: boolean;
+  /**
+   * if this object is set, pagination will be enabled for the grid.
+   */
   pagination?: {
+    /**
+     * either an integer for number of rows, or a method which, given the rows in the grid, returns a number of rows
+     * (which is useful for dynamic pagination based on the height of the container or other unique situations).
+     */
     rowsPerPage: DataGridPaginationProps['rowsPerPage'];
+    /**
+     * callback when the page is changed
+     */
     onPageChange?: DataGridPaginationProps['onPageChange'];
+    /**
+     * initial page to show (1-indexed)
+     */
     initialPage?: DataGridPaginationProps['initialPage'];
+    /**
+     * if true, a more compact pagination control will be shown.
+     */
     small?: DataGridPaginationProps['small'];
   };
+  /**
+   * if true, the header row will be hidden.
+   */
   hideHeader?: boolean;
-  sortColumns?: Array<{ columnKey: string; direction: 'ASC' | 'DESC' }>;
-  initialSortColumns?: Array<{ columnKey: string; direction: 'ASC' | 'DESC' }>;
+  /**
+   * sort columns are statefully handled in this component, unlike react-data-grid which makes you handle sorting yourself.
+   * You can optionally provide an initial sort state here.
+   */
+  initialSortColumns?: SortColumn[];
+  /**
+   * a sensible sorting algorithm is provided for you based on the column type, but if you want to provide your own sorting
+   * algorithm, you can do so here. It has the same signature as the `applySort` method exported from the utils file.
+   */
   customSort?: typeof applySort;
+  /**
+   * if you need a ref to the underlying grid, create one using `useRef<DataGridHandle>()` and pass it here.
+   */
   gridRef?: RefObject<DataGridHandle>; // NOTE: until React 19, we must use a prop with a name other than "ref" for this.
 }
 
 export function DataGrid({
-  pagination,
-  transparent,
-  hideHeader,
   className,
-  headerRowClass,
-  gridRef,
-  data,
-  rows: _rows,
-  initialSortColumns,
-  sortColumns: controlledSortColumns,
   customSort,
+  data,
+  gridRef,
+  headerRowClass,
+  hideHeader,
+  initialSortColumns,
   onSortColumnsChange,
+  pagination,
   rowHeight,
+  transparent,
   ...props
 }: DataGridProps<TableRow, TableSummaryRow>) {
   const styles = useStyles2(getStyles, Boolean(pagination), transparent, hideHeader);
-
-  const rows = useMemo(() => (_rows ? [..._rows] : frameToRecords(data)), [_rows, data]);
-
-  const {
-    rows: sortedRows,
-    sortColumns,
-    setSortColumns,
-  } = useSortedRows(rows, data.fields, { initialSortColumns, sortColumns: controlledSortColumns, customSort });
+  const rows = useMemo(() => frameToRecords(data), [data]);
+  const [sortColumns, setSortColumns] = useState<SortColumn[]>(initialSortColumns ?? []);
+  const columnTypes = useMemo(() => getColumnTypes(data.fields), [data.fields]);
+  const sortedRows = useMemo(
+    () => (customSort ?? applySort)(rows, data.fields, sortColumns, columnTypes),
+    [customSort, rows, data.fields, sortColumns, columnTypes]
+  );
 
   let content = (
     <RDG<TableRow, TableSummaryRow>
