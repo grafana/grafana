@@ -971,12 +971,15 @@ func (dr *DashboardServiceImpl) SaveProvisionedDashboard(ctx context.Context, dt
 	return dash, nil
 }
 
-func (dr *DashboardServiceImpl) SaveFolderForProvisionedDashboards(ctx context.Context, dto *folder.CreateFolderCommand) (*folder.Folder, error) {
+func (dr *DashboardServiceImpl) SaveFolderForProvisionedDashboards(ctx context.Context, dto *folder.CreateFolderCommand, readerName string) (*folder.Folder, error) {
 	ctx, span := tracer.Start(ctx, "dashboards.service.SaveFolderForProvisionedDashboards")
 	defer span.End()
 
 	ctx, ident := identity.WithServiceIdentity(ctx, dto.OrgID)
 	dto.SignedInUser = ident
+
+	// The readerName is the identifier for the file provisioning manager
+	dto.ManagerKindClassicFP = readerName // nolint:staticcheck
 
 	f, err := dr.folderService.Create(ctx, dto)
 	if err != nil {
@@ -1175,7 +1178,7 @@ func (dr *DashboardServiceImpl) SetDefaultPermissionsAfterCreate(ctx context.Con
 			return nil
 		}
 		permissions = append(permissions, []accesscontrol.SetResourcePermissionCommand{
-			{BuiltinRole: string(org.RoleEditor), Permission: dashboardaccess.PERMISSION_ADMIN.String()},
+			{BuiltinRole: string(org.RoleEditor), Permission: dashboardaccess.PERMISSION_EDIT.String()},
 			{BuiltinRole: string(org.RoleViewer), Permission: dashboardaccess.PERMISSION_VIEW.String()},
 		}...)
 	}
@@ -1977,6 +1980,10 @@ func (dr *DashboardServiceImpl) searchDashboardsThroughK8sRaw(ctx context.Contex
 			return dashboardv0.SearchResults{}, err
 		}
 		request.SortBy = append(request.SortBy, &resourcepb.ResourceSearchRequest_Sort{Field: sortName, Desc: isDesc})
+		// include the sort field in the response so we can populate SortMeta
+		if !slices.Contains(request.Fields, sortName) {
+			request.Fields = append(request.Fields, sortName)
+		}
 	}
 
 	res, err := dr.k8sclient.Search(ctx, query.OrgId, request)
