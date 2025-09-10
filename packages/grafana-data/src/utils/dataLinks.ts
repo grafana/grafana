@@ -42,7 +42,7 @@ export function mapInternalLinkToExplore(options: LinkToExploreOptions): LinkMod
     typeof link.internal?.query === 'function'
       ? link.internal.query({ replaceVariables, scopedVars })
       : internalLink.query;
-  const interpolatedQuery = interpolateObject<DataQuery>(query, scopedVars, replaceVariables) || { refId: 'unknown'};
+  const interpolatedQuery = interpolateObject<DataQuery>(query, scopedVars, replaceVariables) || { refId: 'unknown' };
   const interpolatedPanelsState = interpolateObject(link.internal?.panelsState, scopedVars, replaceVariables);
   const interpolatedCorrelationData = interpolateObject(link.meta?.correlationData, scopedVars, replaceVariables);
   const title = link.title ? link.title : internalLink.datasourceName;
@@ -58,20 +58,25 @@ export function mapInternalLinkToExplore(options: LinkToExploreOptions): LinkMod
             // data source is defined in a separate property in DataLink, we ensure it's put back together after interpolation
             datasource: {
               ...interpolatedQuery.datasource,
-              uid: internalLink.datasourceUid
-            }
+              uid: internalLink.datasourceUid,
+            },
           },
-          timeRange: range
-        }
-      }
-    }
+          timeRange: range,
+        },
+      },
+    };
   }
 
   return {
     title: replaceVariables(title, scopedVars),
     // In this case this is meant to be internal link (opens split view by default) the href will also points
     // to explore but this way you can open it in new tab.
-    href: generateInternalHref<DataQuery>(internalLink.datasourceUid, interpolatedQuery, range, interpolatedPanelsState),
+    href: generateInternalHref<DataQuery>(
+      internalLink.datasourceUid,
+      interpolatedQuery,
+      range,
+      interpolatedPanelsState
+    ),
     onClick: onClickFn
       ? (event) => {
           // Explore data links can be displayed not only in DataLinkButton but it can be used by the consumer in

@@ -57,9 +57,9 @@ describe('mapInternalLinkToExplore', () => {
                   uid: 'uid',
                 },
               },
-            }
-          }
-        }
+            },
+          },
+        },
       })
     );
   });
@@ -148,7 +148,7 @@ describe('mapInternalLinkToExplore', () => {
       nested: { something: 'val1' },
       num: 1,
       arr: ['val1', 'non var'],
-    }
+    };
 
     expect(decodeURIComponent(link.href)).toEqual(
       `/explore?left=${JSON.stringify({
@@ -157,7 +157,7 @@ describe('mapInternalLinkToExplore', () => {
           to: DATE_AS_MS,
         },
         datasource: 'uid',
-        queries: [query,],
+        queries: [query],
       })}`
     );
 

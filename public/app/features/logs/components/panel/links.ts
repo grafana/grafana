@@ -24,9 +24,9 @@ function getTempoTraceFromLink(link: LinkModel) {
       dsUID: query.datasource?.uid || '',
       query: query.query,
       queryType: query.queryType || '',
-    }
+    };
   } else {
-    return undefined
+    return undefined;
   }
 }
 
@@ -39,11 +39,11 @@ export type EmbeddedInternalLink = {
 type TempoQuery = {
   query: string;
   queryType: string;
-}
+};
 
 const isTempoQuery = (query: unknown): query is TempoQuery => {
   if (!query || typeof query !== 'object') {
-    return false
+    return false;
   }
   return 'query' in query && 'queryType' in query;
-}
+};

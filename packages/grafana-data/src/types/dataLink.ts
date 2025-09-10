@@ -110,9 +110,8 @@ type InternalLinkModelMeta = {
   interpolated: {
     query: DataQuery;
     timeRange?: TimeRange;
-  }
+  };
 };
-
 
 /**
  * Provides a way to produce links on demand
