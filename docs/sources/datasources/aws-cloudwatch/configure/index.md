@@ -140,10 +140,10 @@ You must use both an access key ID and a secret access key to authenticate.
 
 **CloudWatch Logs**:
 
-| Setting                  | Description                                                                                                                                                                                                                                                                                                                   |
-| ------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Setting                  | Description                                                                                                                                                                                                                                                                                                                          |
+| ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | **Query timeout result** | Grafana polls CloudWatch Logs every second until AWS returns a `Done` status or the timeout is reached. An error is returned if the timeout is exceeded. For alerting, the timeout defined in the Grafana configuration file takes precedence. Enter a valid duration string, such as `30m`, `30s` or `200ms`. The default is `30m`. |
-| **Default Log Groups**   | _Optional_. Specify the default log groups for CloudWatch Logs queries.                                                                                                                                                                                                                                                       |
+| **Default Log Groups**   | _Optional_. Specify the default log groups for CloudWatch Logs queries.                                                                                                                                                                                                                                                              |
 
 **X-Ray trace link:**
 
@@ -164,7 +164,6 @@ To log the `@xrayTraceId`, refer to the [AWS X-Ray documentation](https://docs.a
 After configuring your Amazon CloudWatch data source options, click **Save & test** at the bottom to test the connection. You should see a confirmation dialog box that says:
 
 {{< figure src="/media/docs/CloudWatch/CloudWatch-config-success-message.png" >}}
-
 
 {{< admonition type="note" >}}
 To troubleshoot issues while setting up the CloudWatch data source, check the `/var/log/grafana/grafana.log` file. Common issues include invalid credentials, missing regions and metrics-only credentials.
