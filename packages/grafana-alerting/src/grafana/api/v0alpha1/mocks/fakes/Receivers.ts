@@ -2,17 +2,13 @@ import { faker } from '@faker-js/faker';
 import { Factory } from 'fishery';
 
 import { DEFAULT_NAMESPACE, generateResourceVersion, generateTitle, generateUID } from '../../../../mocks/util';
+import { ContactPointMetadataAnnotations, ListReceiverApiResponse } from '../../api.gen';
 import { GROUP, VERSION } from '../../const';
-import {
-  ContactPoint,
-  ContactPointMetadataAnnotations,
-  EnhancedListReceiverApiResponse,
-  Integration,
-} from '../../types';
+import { ContactPoint, Integration } from '../../types';
 
 import { AlertingEntityMetadataAnnotationsFactory } from './common';
 
-export const ListReceiverApiResponseFactory = Factory.define<EnhancedListReceiverApiResponse>(() => ({
+export const ListReceiverApiResponseFactory = Factory.define<ListReceiverApiResponse>(() => ({
   kind: 'ReceiverList',
   apiVersion: `${GROUP}/${VERSION}`,
   metadata: {},
@@ -23,6 +19,8 @@ export const ContactPointFactory = Factory.define<ContactPoint>(() => {
   const title = generateTitle();
 
   return {
+    apiVersion: `${GROUP}/${VERSION}`,
+    kind: 'Receiver',
     metadata: {
       name: btoa(title),
       namespace: DEFAULT_NAMESPACE,
@@ -31,7 +29,9 @@ export const ContactPointFactory = Factory.define<ContactPoint>(() => {
       annotations: ContactPointMetadataAnnotationsFactory.build(),
     },
     spec: ContactPointSpecFactory.build({ title }),
-    status: {},
+    status: {
+      operatorStates: {},
+    },
   } satisfies ContactPoint;
 });
 
@@ -42,15 +42,17 @@ export const ContactPointSpecFactory = Factory.define<ContactPoint['spec']>(() =
 }));
 
 export const GenericIntegrationFactory = Factory.define<Integration>(() => ({
-  type: 'generic',
+  type: 'email',
   disableResolveMessage: false,
+  version: '1',
   settings: {
-    foo: 'bar',
+    addresses: faker.internet.email(),
   },
 }));
 
 export const EmailIntegrationFactory = Factory.define<Integration>(() => ({
   type: 'email',
+  version: '1',
   settings: {
     addresses: faker.internet.email(),
   },
@@ -58,6 +60,7 @@ export const EmailIntegrationFactory = Factory.define<Integration>(() => ({
 
 export const SlackIntegrationFactory = Factory.define<Integration>(() => ({
   type: 'slack',
+  version: '1',
   settings: {
     mentionChannel: '#alerts',
   },

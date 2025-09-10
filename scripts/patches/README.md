@@ -40,13 +40,6 @@ Uses [JSON Patch (RFC 6902)](https://tools.ietf.org/html/rfc6902) format for pre
 
 **Important**: JSON Patch paths use `/` as separators (not `.`) and must start with `/`.
 
-## Current Patches
-
-### notifications.alerting.grafana.app-v0alpha1
-
-1. **RoutingTreeMatcher.type** - Narrows the `type` field from `string` to specific matcher operators: `'=' | '!=' | '=~' | '!~'`
-2. **ReceiverIntegration.settings** - Makes the `settings` field explicitly `Record<string, unknown>` with `additionalProperties: true`
-
 ## How It Works
 
 The patches are applied during the OpenAPI spec processing pipeline:
@@ -57,3 +50,16 @@ The patches are applied during the OpenAPI spec processing pipeline:
 4. The patched spec is written to the output directory
 
 Each patch group is applied atomically - either all operations in a group succeed or none do. This ensures consistency and prevents partially applied patches.
+
+## Current Patches
+
+### notifications.alerting.grafana.app-v0alpha1
+
+1. **RoutingTreeMatcher.type** - Narrows the `type` field from `string` to specific matcher operators: `'=' | '!=' | '=~' | '!~'`
+2. **ReceiverIntegration.settings** - Uses `oneOf` to support typed settings for specific integration types while maintaining backward compatibility
+3. **ReceiverIntegration.type** - Narrows the `type` field from `string` to supported integration types: `'email' | 'slack' | 'OnCall'`
+4. **Integration Type Schemas** - Adds specific schemas for each integration type:
+   - `EmailIntegrationSettings` - Schema for email integration settings with `addresses` as required field
+   - `SlackIntegrationSettings` - Schema for Slack integration settings with detailed comment descriptions
+   - `OnCallIntegrationSettings` - Schema for OnCall integration settings with `url` as required field and `httpMethod` enum constraint
+5. **Receiver.kind** - Sets the `kind` field to always be the constant `'Receiver'` instead of optional string

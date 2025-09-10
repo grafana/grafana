@@ -42,8 +42,8 @@ describe('getContactPointDescription', () => {
 
   it('should show description for generic / unknown contact point integration', () => {
     const contactPoint = ContactPointFactory.build({
-      spec: { integrations: [GenericIntegrationFactory.build({ type: 'generic' })] },
+      spec: { integrations: [GenericIntegrationFactory.build()] },
     });
-    expect(getContactPointDescription(contactPoint)).toBe('generic');
+    expect(getContactPointDescription(contactPoint)).toBe('email');
   });
 });

@@ -3,8 +3,8 @@ import fs from 'fs';
 import { OpenAPIV3 } from 'openapi-types';
 import path from 'path';
 
-import { SPEC_PATCHES } from './patches/openapi-patches.js';
-import type { SchemaPatch } from './patches/types.js';
+import { SPEC_PATCHES } from './patches/openapi-patches';
+import type { SchemaPatch } from './patches/types';
 
 /**
  * Apply JSON patches to an OpenAPI spec document.
