@@ -17,7 +17,7 @@ jobs:
     outputs:
       changed: ${{ steps.detect-changes.outputs.frontend }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           persist-credentials: true # required to get more history in the changed-files action
           fetch-depth: 2
@@ -36,7 +36,7 @@ jobs:
     if: needs.detect-changes.outputs.changed == 'true'
     name: "Run Storybook a11y tests"
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v5
       with:
         persist-credentials: false
     - uses: actions/setup-node@v4
