@@ -1121,7 +1121,8 @@
     },
     "enrichment": {
       "error-boundary": {
-        "notification-message-section-extension": ""
+        "notification-message-section-extension": "",
+        "rule-viewer-section-extension": ""
       }
     },
     "error-modal": {
@@ -3042,6 +3043,7 @@
       "page-nav": {
         "text": {
           "details": "Dettagli",
+          "enrichment": "",
           "history": "Cronologia",
           "instances": "Istanze",
           "query-and-conditions": "Query e condizioni",
@@ -11211,11 +11213,11 @@
       "description-clear-repository-connection": "Aggiungi un nome semplice per questa connessione al repository",
       "empty": "Vuoto",
       "error-field-required": "Questo campo è obbligatorio.",
-      "ext-storage": "Memoria esterna ",
-      "grafana": "Istanza Grafana",
+      "external-storage-label": "",
       "label-display-name": "Nome visualizzato",
       "placeholder-my-repository-connection": "La mia connessione al repository",
       "text-loading-resource-information": "Caricamento delle informazioni sulle risorse in corso...",
+      "unmanaged-resources-label": "",
       "dashboards-count_one": "{{count}} dashboard",
       "dashboards-count_other": "{{count}} dashboard",
       "files-count_one": "{{count}} file",
@@ -11263,7 +11265,9 @@
     },
     "connect-repository-button": {
       "configure": "Configura",
-      "repository-limit-info-alert": "Limite del repository raggiunto ({{count}})"
+      "instance-fully-managed-tooltip": "",
+      "repository-limit-reached-tooltip_one": "",
+      "repository-limit-reached-tooltip_other": ""
     },
     "delete-repository-button": {
       "button-delete": "Elimina",

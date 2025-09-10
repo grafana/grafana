@@ -1133,7 +1133,8 @@
     },
     "enrichment": {
       "error-boundary": {
-        "notification-message-section-extension": ""
+        "notification-message-section-extension": "",
+        "rule-viewer-section-extension": ""
       }
     },
     "error-modal": {
@@ -3068,6 +3069,7 @@
       "page-nav": {
         "text": {
           "details": "Podrobnosti",
+          "enrichment": "",
           "history": "Historie",
           "instances": "Instance",
           "query-and-conditions": "Dotaz a podmínky",
@@ -11275,11 +11277,11 @@
       "description-clear-repository-connection": "Pojmenujte jasně toto připojení k úložišti",
       "empty": "Prázdný",
       "error-field-required": "Toto pole je povinné.",
-      "ext-storage": "Externí úložiště",
-      "grafana": "Instance Grafany",
+      "external-storage-label": "",
       "label-display-name": "Zobrazované jméno",
       "placeholder-my-repository-connection": "Moje připojení k úložišti",
       "text-loading-resource-information": "Načítání informací o zdroji…",
+      "unmanaged-resources-label": "",
       "dashboards-count_one": "{{count}} nástěnka",
       "dashboards-count_few": "{{count}} nástěnka",
       "dashboards-count_many": "{{count}} nástěnka",
@@ -11333,7 +11335,11 @@
     },
     "connect-repository-button": {
       "configure": "Konfigurovat",
-      "repository-limit-info-alert": "Bylo dosaženo limitu úložiště ({{count}})"
+      "instance-fully-managed-tooltip": "",
+      "repository-limit-reached-tooltip_one": "",
+      "repository-limit-reached-tooltip_few": "",
+      "repository-limit-reached-tooltip_many": "",
+      "repository-limit-reached-tooltip_other": ""
     },
     "delete-repository-button": {
       "button-delete": "Odstranit",
