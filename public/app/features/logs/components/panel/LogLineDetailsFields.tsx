@@ -12,7 +12,9 @@ import { logRowToSingleRowDataFrame } from '../../logsModel';
 import { calculateLogsLabelStats, calculateStats } from '../../utils';
 import { LogLabelStats } from '../LogLabelStats';
 import { FieldDef } from '../logParser';
+import { LOG_LINE_ATTRIBUTES_FIELD_NAME } from '../otel/formats';
 
+import { getNormalizedFieldName } from './LogLineDetailsDisplayedFields';
 import { useLogListContext } from './LogListContext';
 import { LogListModel } from './processing';
 
@@ -258,12 +260,14 @@ export const LogLineDetailsField = ({
   const singleKey = keys.length === 1;
   const singleValue = values.length === 1;
 
+  const fieldSupportsFilters = keys[0] !== LOG_LINE_ATTRIBUTES_FIELD_NAME;
+
   return (
     <>
       <div className={styles.row}>
         {!disableActions && (
           <div className={styles.actions}>
-            {onClickFilterLabel && (
+            {onClickFilterLabel && fieldSupportsFilters && (
               <AsyncIconButton
                 name="search-plus"
                 onClick={filterLabel}
@@ -272,7 +276,7 @@ export const LogLineDetailsField = ({
                 tooltipSuffix={refIdTooltip}
               />
             )}
-            {onClickFilterOutLabel && (
+            {onClickFilterOutLabel && fieldSupportsFilters && (
               <IconButton
                 name="search-minus"
                 tooltip={
@@ -313,7 +317,7 @@ export const LogLineDetailsField = ({
             />
           </div>
         )}
-        <div className={styles.label}>{singleKey ? keys[0] : <MultipleValue values={keys} />}</div>
+        <div className={styles.label}>{singleKey ? getNormalizedFieldName(keys[0]) : <MultipleValue values={keys} />}</div>
         <div className={styles.value}>
           <div className={styles.valueContainer}>
             {singleValue ? (
