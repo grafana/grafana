@@ -1,6 +1,4 @@
 {
-  "__inputs": [],
-  "__requires": [],
   "annotations": {
     "list": [
       {
@@ -21,7 +19,6 @@
   "editable": false,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 0,
-  "hideControls": false,
   "id": 36098,
   "links": [
     {
@@ -985,6 +982,8 @@
         "refresh": 2,
         "regex": "",
         "sort": 2,
+        "tagValuesQuery": "",
+        "tagsQuery": "",
         "type": "query",
         "useTags": false
       },
@@ -1004,6 +1003,8 @@
         "refresh": 2,
         "regex": "",
         "sort": 0,
+        "tagValuesQuery": "",
+        "tagsQuery": "",
         "type": "query",
         "useTags": false
       },
@@ -1023,6 +1024,8 @@
         "refresh": 2,
         "regex": "",
         "sort": 2,
+        "tagValuesQuery": "",
+        "tagsQuery": "",
         "type": "query",
         "useTags": false
       },
@@ -1042,6 +1045,8 @@
         "refresh": 2,
         "regex": "",
         "sort": 2,
+        "tagValuesQuery": "",
+        "tagsQuery": "",
         "type": "query",
         "useTags": false
       }

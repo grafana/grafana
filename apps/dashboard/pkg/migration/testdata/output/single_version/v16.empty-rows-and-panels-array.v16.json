@@ -1,6 +1,4 @@
 {
-  "__inputs": [],
-  "__requires": [],
   "annotations": {
     "list": [
       {
@@ -21,7 +19,6 @@
   "editable": false,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 0,
-  "hideControls": false,
   "id": 36098,
   "links": [
     {
@@ -944,8 +941,7 @@
     }
   ],
   "refresh": "30s",
-  "rows": [],
-  "schemaVersion": 15,
+  "schemaVersion": 16,
   "tags": [
     "sample-monitoring"
   ],

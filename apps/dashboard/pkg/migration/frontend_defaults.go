@@ -972,4 +972,10 @@ func cleanupDashboardDefaults(dashboard map[string]interface{}) {
 	if style, ok := dashboard["style"].(string); ok && style == "dark" {
 		delete(dashboard, "style")
 	}
+
+	// Remove hideControls if it's the default false value
+	// Frontend filters out default hideControls: false in getSaveModelClone()
+	if hideControls, ok := dashboard["hideControls"].(bool); ok && !hideControls {
+		delete(dashboard, "hideControls")
+	}
 }

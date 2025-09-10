@@ -839,8 +839,16 @@ func ensureTargetRefIds(panel map[string]interface{}) {
 func removeDeprecatedVariableProperties(variable map[string]interface{}) {
 	// Remove deprecated properties
 	delete(variable, "tags")
-	delete(variable, "tagsQuery")
-	delete(variable, "tagValuesQuery")
+
+	// Only remove tagsQuery if it's truthy (matches frontend behavior)
+	if tagsQuery, exists := variable["tagsQuery"]; exists && tagsQuery != "" && tagsQuery != nil {
+		delete(variable, "tagsQuery")
+	}
+
+	// Only remove tagValuesQuery if it's truthy (matches frontend behavior)
+	if tagValuesQuery, exists := variable["tagValuesQuery"]; exists && tagValuesQuery != "" && tagValuesQuery != nil {
+		delete(variable, "tagValuesQuery")
+	}
 
 	// Only remove useTags if it's truthy (matches frontend behavior)
 	if useTags, exists := variable["useTags"]; exists && useTags != false && useTags != nil {
