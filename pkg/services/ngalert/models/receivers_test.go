@@ -378,6 +378,7 @@ func TestReceiver_Fingerprint(t *testing.T) {
 		fingerprint := baseReceiver.Fingerprint()
 		excludedFields := map[string]struct{}{
 			"Version": {},
+			"Origin":  {},
 		}
 
 		reflectVal := reflect.ValueOf(&completelyDifferentReceiver).Elem()

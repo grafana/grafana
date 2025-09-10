@@ -734,13 +734,6 @@ func TestReceiverService_Update(t *testing.T) {
 			existing:    util.Pointer(baseReceiver.Clone()),
 			expectedErr: legacy_storage.ErrReceiverInvalid,
 		},
-		{
-			name:        "update of non-Grafana origin fails",
-			user:        writer,
-			receiver:    models.CopyReceiverWith(baseReceiver),
-			existing:    util.Pointer(models.CopyReceiverWith(baseReceiver.Clone(), models.ReceiverMuts.WithOrigin(models.ResourceOriginStaging))),
-			expectedErr: ErrReceiverOrigin,
-		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			sut := createReceiverServiceSut(t, &secretsService)

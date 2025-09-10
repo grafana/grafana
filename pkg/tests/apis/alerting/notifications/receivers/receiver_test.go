@@ -1295,6 +1295,7 @@ func TestIntegrationCRUD(t *testing.T) {
 		receiver.SetAccessControl("canReadSecrets")
 		receiver.SetAccessControl("canAdmin")
 		receiver.SetInUse(0, nil)
+		receiver.SetCanUse(true)
 
 		// Use export endpoint because it's the only way to get decrypted secrets fast.
 		cliCfg := helper.Org1.Admin.NewRestConfig()
