@@ -164,9 +164,9 @@ func MigrateRemoveDeprecatedPermissions(db db.DB, log log.Logger) error {
 			// Remove trailing ','
 			delQuery = delQuery[:len(delQuery)-1] + ")"
 
-			// Execute delete
-			if errDel := db.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
-				_, err := sess.Exec(delQuery, delArgs)
+			// Execute delete using the same pattern as MigrateScopeSplit
+			if errDel := db.GetSqlxSession().WithTransaction(ctx, func(tx *session.SessionTx) error {
+				_, err := tx.Exec(ctx, delQuery, delArgs...)
 				return err
 			}); errDel != nil {
 				log.Error("Error deleting deprecated permissions batch", "migration", "removeDeprecatedPermissions", "pattern", permPattern, "start", start, "end", end, "error", errDel)
