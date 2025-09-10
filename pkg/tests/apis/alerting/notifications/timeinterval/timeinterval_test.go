@@ -38,6 +38,7 @@ import (
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/util"
+	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 //go:embed test-data/*.*
@@ -52,9 +53,7 @@ func getTestHelper(t *testing.T) *apis.K8sTestHelper {
 }
 
 func TestIntegrationResourceIdentifier(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	ctx := context.Background()
 	helper := getTestHelper(t)
@@ -114,9 +113,7 @@ func TestIntegrationResourceIdentifier(t *testing.T) {
 }
 
 func TestIntegrationTimeIntervalAccessControl(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	ctx := context.Background()
 	helper := getTestHelper(t)
@@ -340,9 +337,7 @@ func TestIntegrationTimeIntervalAccessControl(t *testing.T) {
 }
 
 func TestIntegrationTimeIntervalProvisioning(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	ctx := context.Background()
 	helper := getTestHelper(t)
@@ -395,9 +390,7 @@ func TestIntegrationTimeIntervalProvisioning(t *testing.T) {
 }
 
 func TestIntegrationTimeIntervalOptimisticConcurrency(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	ctx := context.Background()
 	helper := getTestHelper(t)
@@ -479,9 +472,7 @@ func TestIntegrationTimeIntervalOptimisticConcurrency(t *testing.T) {
 }
 
 func TestIntegrationTimeIntervalPatch(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	ctx := context.Background()
 	helper := getTestHelper(t)
@@ -544,9 +535,7 @@ func TestIntegrationTimeIntervalPatch(t *testing.T) {
 }
 
 func TestIntegrationTimeIntervalListSelector(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	ctx := context.Background()
 	helper := getTestHelper(t)
@@ -630,9 +619,7 @@ func TestIntegrationTimeIntervalListSelector(t *testing.T) {
 }
 
 func TestIntegrationTimeIntervalReferentialIntegrity(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	ctx := context.Background()
 	helper := getTestHelper(t)
@@ -688,7 +675,7 @@ func TestIntegrationTimeIntervalReferentialIntegrity(t *testing.T) {
 
 	intervals, err := adminClient.List(ctx, v1.ListOptions{})
 	require.NoError(t, err)
-	require.Len(t, intervals.Items, 2)
+	require.Len(t, intervals.Items, 3)
 	intervalIdx := slices.IndexFunc(intervals.Items, func(interval v0alpha1.TimeInterval) bool {
 		return interval.Spec.Name == "test-interval"
 	})
@@ -777,13 +764,21 @@ func TestIntegrationTimeIntervalReferentialIntegrity(t *testing.T) {
 			err = adminClient.Delete(ctx, interval.Name, v1.DeleteOptions{})
 			require.Truef(t, errors.IsConflict(err), "Expected Conflict, got: %s", err)
 		})
+
+		t.Run("should fail to delete if time interval is used in route as an active time interval", func(t *testing.T) {
+			idx := slices.IndexFunc(intervals.Items, func(interval v0alpha1.TimeInterval) bool {
+				return interval.Spec.Name == "test-interval-for-active-time-interval"
+			})
+			intervalToDelete := intervals.Items[idx]
+
+			err = adminClient.Delete(ctx, intervalToDelete.Name, v1.DeleteOptions{})
+			require.Truef(t, errors.IsConflict(err), "Expected Conflict, got: %s", err)
+		})
 	})
 }
 
 func TestIntegrationTimeIntervalValidation(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	ctx := context.Background()
 	helper := getTestHelper(t)

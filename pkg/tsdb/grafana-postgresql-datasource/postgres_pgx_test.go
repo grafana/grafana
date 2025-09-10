@@ -15,14 +15,13 @@ import (
 
 	"github.com/grafana/grafana/pkg/tsdb/grafana-postgresql-datasource/sqleng"
 
+	"github.com/grafana/grafana/pkg/util/testutil"
 	_ "github.com/lib/pq"
 )
 
 // Test generateConnectionString.
 func TestIntegrationGenerateConnectionStringPGX(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	testCases := []struct {
 		desc        string
@@ -177,9 +176,8 @@ func TestIntegrationGenerateConnectionStringPGX(t *testing.T) {
 // use to verify that the generated data are visualized as expected, see
 // devenv/README.md for setup instructions.
 func TestIntegrationPostgresPGX(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	// change to true to run the PostgreSQL tests
 	const runPostgresTests = false
 

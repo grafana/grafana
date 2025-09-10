@@ -2915,6 +2915,7 @@ __metadata:
   resolution: "@grafana/alerting@workspace:packages/grafana-alerting"
   dependencies:
     "@faker-js/faker": "npm:^9.8.0"
+    "@grafana/i18n": "npm:12.2.0-pre"
     "@grafana/test-utils": "workspace:*"
     "@rtk-query/codegen-openapi": "npm:^2.0.0"
     "@testing-library/jest-dom": "npm:^6.6.3"
@@ -2924,6 +2925,7 @@ __metadata:
     "@types/react": "npm:18.3.18"
     "@types/react-dom": "npm:18.3.5"
     fishery: "npm:^2.3.1"
+    i18next: "npm:^25.5.2"
     lodash: "npm:^4.17.21"
     react: "npm:18.3.1"
     react-dom: "npm:18.3.1"
@@ -3475,11 +3477,11 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@grafana/scenes-react@npm:6.34.0":
-  version: 6.34.0
-  resolution: "@grafana/scenes-react@npm:6.34.0"
+"@grafana/scenes-react@npm:6.35.0":
+  version: 6.35.0
+  resolution: "@grafana/scenes-react@npm:6.35.0"
   dependencies:
-    "@grafana/scenes": "npm:6.34.0"
+    "@grafana/scenes": "npm:6.35.0"
     lru-cache: "npm:^10.2.2"
     react-use: "npm:^17.4.0"
   peerDependencies:
@@ -3491,13 +3493,13 @@ __metadata:
     react: ^18.0.0
     react-dom: ^18.0.0
     react-router-dom: ^6.28.0
-  checksum: 10/a95e18c3e8e303c88ac307e37ce5795325593e134ce90e069675b223f82966d4fe27c8d09f8c4dbc259db46a572f669f3571adf4d967a36639fa55128f619f2e
+  checksum: 10/7f4f3b2c23137adb0dc71b2fe93e92c41e2f71fc91d1f7a1432f04946841220dc27941f021af74642ebc3b58467c482e1349b8b7e0d490b78f3a33f8671fda85
   languageName: node
   linkType: hard
 
-"@grafana/scenes@npm:6.34.0":
-  version: 6.34.0
-  resolution: "@grafana/scenes@npm:6.34.0"
+"@grafana/scenes@npm:6.35.0":
+  version: 6.35.0
+  resolution: "@grafana/scenes@npm:6.35.0"
   dependencies:
     "@floating-ui/react": "npm:^0.26.16"
     "@leeoniya/ufuzzy": "npm:^1.0.16"
@@ -3517,7 +3519,7 @@ __metadata:
     react: ^18.0.0
     react-dom: ^18.0.0
     react-router-dom: ^6.28.0
-  checksum: 10/16e3c0309b2af0d655215ef7b73a254667bad7b2e3e40af9480a70b1610cd50fa48927bb81b477ea9f543791b7aed6e6e21189e608feadf64cc29b96d10d9de5
+  checksum: 10/4a9ff88c2a6cfafe5aaa7d50b8ee67ab38f105b3073cab4469665338e28c9991fb9b908c0325680cc32525a87ebcd34c3d376d940a4f9b9b684c8db238f02527
   languageName: node
   linkType: hard
 
@@ -18122,8 +18124,8 @@ __metadata:
     "@grafana/plugin-ui": "npm:^0.10.10"
     "@grafana/prometheus": "workspace:*"
     "@grafana/runtime": "workspace:*"
-    "@grafana/scenes": "npm:6.34.0"
-    "@grafana/scenes-react": "npm:6.34.0"
+    "@grafana/scenes": "npm:6.35.0"
+    "@grafana/scenes-react": "npm:6.35.0"
     "@grafana/schema": "workspace:*"
     "@grafana/sql": "workspace:*"
     "@grafana/test-utils": "workspace:*"
@@ -18434,8 +18436,10 @@ __metadata:
     yargs: "npm:^18.0.0"
     zod: "npm:^4.0.0"
   dependenciesMeta:
-    nx:
-      built: false
+    cypress:
+      built: true
+    msw:
+      built: true
     prettier@3.6.2:
       unplugged: true
   languageName: unknown
@@ -19221,6 +19225,20 @@ __metadata:
     typescript:
       optional: true
   checksum: 10/fb6b2035cc8f3bcc89f56e164d22cefbefd54e5a569315b20ddcfa6e1b68c48962307181b271fea7e5ee37ddfaa90721a4a7f7814b739f24bf00a3a670b8eb93
+  languageName: node
+  linkType: hard
+
+"i18next@npm:^25.5.2":
+  version: 25.5.2
+  resolution: "i18next@npm:25.5.2"
+  dependencies:
+    "@babel/runtime": "npm:^7.27.6"
+  peerDependencies:
+    typescript: ^5
+  peerDependenciesMeta:
+    typescript:
+      optional: true
+  checksum: 10/8d52e82386722a228f4465aa5cf39d82bd9861ea9cc8b31d7cc4d22d5e70b2740ee006068b09f486d5273cabd227a2ac14f37d68fab26344524200083f679bcd
   languageName: node
   linkType: hard
 

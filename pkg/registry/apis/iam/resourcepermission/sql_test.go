@@ -14,10 +14,83 @@ import (
 
 	"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/registry/apis/iam/common"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/legacy"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
+	"github.com/grafana/grafana/pkg/util/testutil"
+)
+
+var (
+	created = time.Date(2025, 9, 2, 0, 0, 0, 0, time.UTC)
+	updated = time.Date(2025, 9, 3, 0, 0, 0, 0, time.UTC) // The "dashboards:admin" permission was updated later
+
+	fold1ResourcePermission = v0alpha1.ResourcePermission{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:              "folder.grafana.app-folders-fold1",
+			CreationTimestamp: metav1.Time{Time: created},
+			ResourceVersion:   fmt.Sprint(created.UnixMilli()),
+		},
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "ResourcePermission",
+			APIVersion: "iam.grafana.app/v0alpha1",
+		},
+		Spec: v0alpha1.ResourcePermissionSpec{
+			Resource: v0alpha1.ResourcePermissionspecResource{
+				ApiGroup: "folder.grafana.app",
+				Resource: "folders",
+				Name:     "fold1",
+			},
+			Permissions: []v0alpha1.ResourcePermissionspecPermission{
+				{
+					Kind: v0alpha1.ResourcePermissionSpecPermissionKindUser,
+					Name: "user-1",
+					Verb: "view",
+				},
+			},
+		},
+	}
+	dash1ResourcePermission = v0alpha1.ResourcePermission{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:              "dashboard.grafana.app-dashboards-dash1",
+			CreationTimestamp: metav1.Time{Time: created},
+			ResourceVersion:   fmt.Sprint(updated.UnixMilli()),
+		},
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "ResourcePermission",
+			APIVersion: "iam.grafana.app/v0alpha1",
+		},
+		Spec: v0alpha1.ResourcePermissionSpec{
+			Resource: v0alpha1.ResourcePermissionspecResource{
+				ApiGroup: "dashboard.grafana.app",
+				Resource: "dashboards",
+				Name:     "dash1",
+			},
+			Permissions: []v0alpha1.ResourcePermissionspecPermission{
+				{
+					Kind: v0alpha1.ResourcePermissionSpecPermissionKindBasicRole,
+					Name: "Editor",
+					Verb: "edit",
+				},
+				{
+					Kind: v0alpha1.ResourcePermissionSpecPermissionKindServiceAccount,
+					Name: "sa-1",
+					Verb: "view",
+				},
+				{
+					Kind: v0alpha1.ResourcePermissionSpecPermissionKindTeam,
+					Name: "team-1",
+					Verb: "admin",
+				},
+				{
+					Kind: v0alpha1.ResourcePermissionSpecPermissionKindUser,
+					Name: "user-1",
+					Verb: "edit",
+				},
+			},
+		},
+	}
 )
 
 func TestMain(m *testing.M) {
@@ -118,17 +191,73 @@ func setupTestRoles(t *testing.T, store db.DB) {
 	require.NoError(t, err)
 }
 
-func TestIntegration_ResourcePermSqlBackend_getResourcePermission(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test in short mode")
-	}
+func TestIntegration_ResourcePermSqlBackend_newRoleIterator(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	backend := setupBackend(t)
 	sql, err := backend.dbProvider(context.Background())
 	require.NoError(t, err)
 	setupTestRoles(t, sql.DB)
 
-	created := time.Date(2025, 9, 2, 0, 0, 0, 0, time.UTC)
+	tests := []struct {
+		name       string
+		orgID      int64
+		pagination common.Pagination
+		want       []v0alpha1.ResourcePermission
+		err        error
+	}{
+		{
+			name:  "should return all permissions for org-1",
+			orgID: 1,
+			pagination: common.Pagination{
+				Limit: 100,
+			},
+			want: []v0alpha1.ResourcePermission{dash1ResourcePermission, fold1ResourcePermission},
+			err:  nil,
+		},
+		{
+			name:  "should return a partial list of permissions for org-1",
+			orgID: 1,
+			pagination: common.Pagination{
+				Continue: 1,
+				Limit:    1,
+			},
+			want: []v0alpha1.ResourcePermission{fold1ResourcePermission},
+			err:  nil,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ns := types.NamespaceInfo{OrgID: tt.orgID}
+			it, err := backend.newRoleIterator(context.Background(), sql, ns, &tt.pagination)
+			require.NoError(t, err)
+			var result []v0alpha1.ResourcePermission
+			for it.Next() {
+				result = append(result, *it.cur())
+			}
+			require.NoError(t, it.Error())
+			for i := range result {
+				require.Equal(t, tt.want[i].Name, result[i].Name)
+				require.Equal(t, tt.want[i].CreationTimestamp, result[i].CreationTimestamp)
+				require.Equal(t, tt.want[i].ResourceVersion, result[i].ResourceVersion)
+				require.NotZero(t, result[i].GetUpdateTimestamp())
+				require.Equal(t, tt.want[i].TypeMeta, result[i].TypeMeta)
+				for j := range result[i].Spec.Permissions {
+					require.Equal(t, tt.want[i].Spec.Permissions[j], result[i].Spec.Permissions[j])
+				}
+				require.Equal(t, tt.want[i].Spec.Resource, result[i].Spec.Resource)
+			}
+		})
+	}
+}
+
+func TestIntegration_ResourcePermSqlBackend_getResourcePermission(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	backend := setupBackend(t)
+	sql, err := backend.dbProvider(context.Background())
+	require.NoError(t, err)
+	setupTestRoles(t, sql.DB)
 
 	tests := []struct {
 		name     string
@@ -141,29 +270,8 @@ func TestIntegration_ResourcePermSqlBackend_getResourcePermission(t *testing.T) 
 			name:     "should return only org-1 permissions for fold1",
 			resource: "folder.grafana.app-folders-fold1",
 			orgID:    1,
-			want: v0alpha1.ResourcePermission{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:              "folder.grafana.app-folders-fold1",
-					CreationTimestamp: metav1.Time{Time: created},
-					ResourceVersion:   fmt.Sprint(created.UnixMilli()),
-				},
-				TypeMeta: v0alpha1.ResourcePermissionInfo.TypeMeta(),
-				Spec: v0alpha1.ResourcePermissionSpec{
-					Resource: v0alpha1.ResourcePermissionspecResource{
-						ApiGroup: "folder.grafana.app",
-						Resource: "folders",
-						Name:     "fold1",
-					},
-					Permissions: []v0alpha1.ResourcePermissionspecPermission{
-						{
-							Kind: v0alpha1.ResourcePermissionSpecPermissionKindUser,
-							Name: "user-1",
-							Verb: "view",
-						},
-					},
-				},
-			},
-			err: nil,
+			want:     fold1ResourcePermission,
+			err:      nil,
 		},
 		{
 			name:     "should return empty for org-2",
@@ -207,10 +315,8 @@ func TestIntegration_ResourcePermSqlBackend_getResourcePermission(t *testing.T) 
 	}
 }
 
-func TestResourcePermSqlBackend_deleteResourcePermission(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test in short mode")
-	}
+func TestIntegration_ResourcePermSqlBackend_deleteResourcePermission(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	backend := setupBackend(t)
 	sql, err := backend.dbProvider(context.Background())
@@ -270,9 +376,7 @@ func TestResourcePermSqlBackend_deleteResourcePermission(t *testing.T) {
 }
 
 func TestIntegration_ResourcePermSqlBackend_CreateResourcePermission(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	store := db.InitTestDB(t)
 

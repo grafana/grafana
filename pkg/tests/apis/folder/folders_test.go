@@ -43,9 +43,8 @@ var gvr = schema.GroupVersionResource{
 }
 
 func TestIntegrationFoldersApp(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	if !db.IsTestDbSQLite() {
 		t.Skip("test only on sqlite for now")
 	}
@@ -564,9 +563,8 @@ func checkListRequest(t *testing.T, limit int64, client *apis.K8sResourceClient)
 }
 
 func TestIntegrationFolderCreatePermissions(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	if !db.IsTestDbSQLite() {
 		t.Skip("test only on sqlite for now")
 	}
@@ -691,9 +689,8 @@ func TestIntegrationFolderCreatePermissions(t *testing.T) {
 }
 
 func TestIntegrationFolderGetPermissions(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	if !db.IsTestDbSQLite() {
 		t.Skip("test only on sqlite for now")
 	}
@@ -844,9 +841,8 @@ func TestIntegrationFolderGetPermissions(t *testing.T) {
 
 // TestFoldersCreateAPIEndpointK8S is the counterpart of pkg/api/folder_test.go TestFoldersCreateAPIEndpoint
 func TestIntegrationFoldersCreateAPIEndpointK8S(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	if !db.IsTestDbSQLite() {
 		t.Skip("test only on sqlite for now")
 	}
@@ -1008,9 +1004,8 @@ func testDescription(description string, expectedErr error) string {
 
 // There are no counterpart of TestFoldersGetAPIEndpointK8S in pkg/api/folder_test.go
 func TestIntegrationFoldersGetAPIEndpointK8S(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	if !db.IsTestDbSQLite() {
 		t.Skip("test only on sqlite for now")
 	}
