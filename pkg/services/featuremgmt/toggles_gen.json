@@ -21,7 +21,7 @@
       "metadata": {
         "name": "adhocFiltersInTooltips",
         "resourceVersion": "1756814786992",
-        "creationTimestamp": "2025-07-28T14:25:55Z",
+        "creationTimestamp": "2025-07-29T17:53:43Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2025-09-02 12:06:26.992384 +0000 UTC"
         }
@@ -55,6 +55,36 @@
       },
       "spec": {
         "description": "Enable configuration of alert enrichments in Grafana Cloud.",
+        "stage": "experimental",
+        "codeowner": "@grafana/alerting-squad",
+        "hideFromAdminPage": true,
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "alertEnrichmentConditional",
+        "resourceVersion": "1757418974334",
+        "creationTimestamp": "2025-09-09T11:56:14Z"
+      },
+      "spec": {
+        "description": "Enable conditional alert enrichment steps.",
+        "stage": "experimental",
+        "codeowner": "@grafana/alerting-squad",
+        "hideFromAdminPage": true,
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "alertEnrichmentMultiStep",
+        "resourceVersion": "1757418224384",
+        "creationTimestamp": "2025-09-09T11:43:44Z"
+      },
+      "spec": {
+        "description": "Allow multiple steps per enrichment.",
         "stage": "experimental",
         "codeowner": "@grafana/alerting-squad",
         "hideFromAdminPage": true,
@@ -912,7 +942,7 @@
       "metadata": {
         "name": "dashboardDsAdHocFiltering",
         "resourceVersion": "1756814786992",
-        "creationTimestamp": "2025-07-25T13:06:00Z",
+        "creationTimestamp": "2025-07-23T08:12:25Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2025-09-02 12:06:26.992384 +0000 UTC"
         }
@@ -1137,6 +1167,25 @@
         "description": "Disables dataplane specific processing in server side expressions.",
         "stage": "experimental",
         "codeowner": "@grafana/observability-metrics"
+      }
+    },
+    {
+      "metadata": {
+        "name": "dskitBackgroundServices",
+        "resourceVersion": "1757339637779",
+        "creationTimestamp": "2025-09-03T12:20:24Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-09-08 13:53:57.77994 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Enables dskit background service wrapper",
+        "stage": "experimental",
+        "codeowner": "@grafana/plugins-platform-backend",
+        "requiresRestart": true,
+        "hideFromAdminPage": true,
+        "hideFromDocs": true,
+        "expression": "false"
       }
     },
     {
@@ -2229,7 +2278,8 @@
       "metadata": {
         "name": "multiTenantFrontend",
         "resourceVersion": "1753448760331",
-        "creationTimestamp": "2025-04-25T09:24:25Z"
+        "creationTimestamp": "2025-04-25T09:24:25Z",
+        "deletionTimestamp": "2025-09-08T17:06:39Z"
       },
       "spec": {
         "description": "Register MT frontend",
@@ -2716,6 +2766,23 @@
     },
     {
       "metadata": {
+        "name": "prometheusTypeMigration",
+        "resourceVersion": "1757089774247",
+        "creationTimestamp": "2025-08-25T21:53:16Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-09-05 16:29:34.247055837 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Checks for deprecated Prometheus authentication methods (SigV4 and Azure), installs the relevant data source, and migrates the Prometheus data sources",
+        "stage": "experimental",
+        "codeowner": "@grafana/partner-datasources",
+        "requiresRestart": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "provisioning",
         "resourceVersion": "1753448760331",
         "creationTimestamp": "2024-11-22T09:03:50Z"
@@ -2966,12 +3033,15 @@
     {
       "metadata": {
         "name": "savedQueries",
-        "resourceVersion": "1755721444487",
-        "creationTimestamp": "2025-08-25T21:22:09Z"
+        "resourceVersion": "1756920131554",
+        "creationTimestamp": "2025-08-25T21:22:09Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-09-03 17:22:11.554759 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables Saved Queries feature",
-        "stage": "privatePreview",
+        "stage": "preview",
         "codeowner": "@grafana/sharing-squad"
       }
     },
@@ -3112,12 +3182,15 @@
     {
       "metadata": {
         "name": "sqlExpressions",
-        "resourceVersion": "1753448760331",
-        "creationTimestamp": "2024-02-27T21:16:00Z"
+        "resourceVersion": "1756828051955",
+        "creationTimestamp": "2024-02-27T21:16:00Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-09-02 15:47:31.955288671 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables SQL Expressions, which can execute SQL queries against data source results.",
-        "stage": "privatePreview",
+        "stage": "preview",
         "codeowner": "@grafana/grafana-datasources-core-services"
       }
     },
@@ -3531,6 +3604,24 @@
         "stage": "GA",
         "codeowner": "@grafana/identity-access-team",
         "expression": "true"
+      }
+    },
+    {
+      "metadata": {
+        "name": "vizActionsAuth",
+        "resourceVersion": "1756904995830",
+        "creationTimestamp": "2025-08-08T18:59:18Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-09-03 13:09:55.830412 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Allows authenticated API calls in actions",
+        "stage": "preview",
+        "codeowner": "@grafana/dataviz-squad",
+        "frontend": true,
+        "hideFromAdminPage": true,
+        "hideFromDocs": true
       }
     },
     {

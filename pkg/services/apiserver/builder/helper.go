@@ -102,10 +102,7 @@ func SetupConfig(
 	scheme *runtime.Scheme,
 	serverConfig *genericapiserver.RecommendedConfig,
 	builders []APIGroupBuilder,
-	buildTimestamp int64,
 	buildVersion string,
-	buildCommit string,
-	buildBranch string,
 	buildHandlerChainFuncFromBuilders BuildHandlerChainFuncFromBuilders,
 	gvs []schema.GroupVersion,
 	additionalOpenAPIDefGetters []common.GetOpenAPIDefinitions,
@@ -234,7 +231,6 @@ func SetupConfig(
 	serverConfig.SkipOpenAPIInstallation = false
 	serverConfig.BuildHandlerChainFunc = buildHandlerChainFuncFromBuilders(builders)
 
-	serverConfig.EffectiveVersion = getEffectiveVersion(buildTimestamp, buildVersion, buildCommit, buildBranch)
 	// set priority for aggregated discovery
 	for i, b := range builders {
 		gvs := GetGroupVersions(b)

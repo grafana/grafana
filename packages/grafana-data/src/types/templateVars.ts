@@ -47,6 +47,7 @@ export enum VariableHide {
   dontHide,
   hideLabel,
   hideVariable,
+  inControlsMenu,
 }
 
 export interface AdHocVariableFilter {

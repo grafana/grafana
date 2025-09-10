@@ -141,6 +141,7 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *ge
 	teamBindingResource := iamv0.TeamBindingResourceInfo
 	storage[teamBindingResource.StoragePath()] = team.NewLegacyBindingStore(b.store)
 
+	// User store registration
 	userResource := iamv0.UserResourceInfo
 	legacyStore := user.NewLegacyStore(b.store, b.legacyAccessClient, b.enableAuthnMutation)
 	storage[userResource.StoragePath()] = legacyStore
@@ -160,8 +161,26 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *ge
 	}
 
 	storage[userResource.StoragePath("teams")] = user.NewLegacyTeamMemberREST(b.store)
+
+	// Service Accounts store registration
 	serviceAccountResource := iamv0.ServiceAccountResourceInfo
-	storage[serviceAccountResource.StoragePath()] = serviceaccount.NewLegacyStore(b.store, b.legacyAccessClient)
+	saLegacyStore := serviceaccount.NewLegacyStore(b.store, b.legacyAccessClient, b.enableAuthnMutation)
+	storage[serviceAccountResource.StoragePath()] = saLegacyStore
+
+	if b.enableDualWriter {
+		store, err := grafanaregistry.NewRegistryStore(opts.Scheme, serviceAccountResource, opts.OptsGetter)
+		if err != nil {
+			return err
+		}
+
+		dw, err := opts.DualWriteBuilder(serviceAccountResource.GroupResource(), saLegacyStore, store)
+		if err != nil {
+			return err
+		}
+
+		storage[serviceAccountResource.StoragePath()] = dw
+	}
+
 	storage[serviceAccountResource.StoragePath("tokens")] = serviceaccount.NewLegacyTokenREST(b.store)
 
 	if b.sso != nil {
@@ -278,15 +297,21 @@ func (b *IdentityAccessManagementAPIBuilder) GetAuthorizer() authorizer.Authoriz
 func (b *IdentityAccessManagementAPIBuilder) Validate(ctx context.Context, a admission.Attributes, o admission.ObjectInterfaces) (err error) {
 	switch a.GetOperation() {
 	case admission.Create:
-		if a.GetKind() == iamv0.UserResourceInfo.GroupVersionKind() {
+		switch typedObj := a.GetObject().(type) {
+		case *iamv0.User:
 			return b.validateCreateUser(ctx, a, o)
+		case *iamv0.ServiceAccount:
+			return serviceaccount.ValidateOnCreate(ctx, typedObj)
 		}
 		return nil
-	case admission.Connect:
-	case admission.Delete:
 	case admission.Update:
 		return nil
+	case admission.Delete:
+		return nil
+	case admission.Connect:
+		return nil
 	}
+
 	return nil
 }
 
@@ -298,7 +323,7 @@ func (b *IdentityAccessManagementAPIBuilder) validateCreateUser(ctx context.Cont
 
 	requester, err := identity.GetRequester(ctx)
 	if err != nil {
-		return apierrors.NewBadRequest("no identity found")
+		return apierrors.NewUnauthorized("no identity found")
 	}
 
 	// Temporary validation that the user is not trying to create a Grafana Admin without being a Grafana Admin.
@@ -321,8 +346,11 @@ func (b *IdentityAccessManagementAPIBuilder) validateCreateUser(ctx context.Cont
 func (b *IdentityAccessManagementAPIBuilder) Mutate(ctx context.Context, a admission.Attributes, o admission.ObjectInterfaces) (err error) {
 	switch a.GetOperation() {
 	case admission.Create:
-		if a.GetKind() == iamv0.UserResourceInfo.GroupVersionKind() {
-			return b.mutateUser(ctx, a, o)
+		switch typedObj := a.GetObject().(type) {
+		case *iamv0.User:
+			return user.MutateOnCreate(ctx, typedObj)
+		case *iamv0.ServiceAccount:
+			return serviceaccount.MutateOnCreate(ctx, typedObj)
 		}
 		return nil
 	case admission.Update:
@@ -331,25 +359,6 @@ func (b *IdentityAccessManagementAPIBuilder) Mutate(ctx context.Context, a admis
 		return nil
 	case admission.Connect:
 		return nil
-	}
-
-	return nil
-}
-
-func (b *IdentityAccessManagementAPIBuilder) mutateUser(_ context.Context, a admission.Attributes, o admission.ObjectInterfaces) error {
-	userObj, ok := a.GetObject().(*iamv0.User)
-	if !ok {
-		return nil
-	}
-
-	userObj.Spec.Email = strings.ToLower(userObj.Spec.Email)
-	userObj.Spec.Login = strings.ToLower(userObj.Spec.Login)
-
-	if userObj.Spec.Login == "" {
-		userObj.Spec.Login = userObj.Spec.Email
-	}
-	if userObj.Spec.Email == "" {
-		userObj.Spec.Email = userObj.Spec.Login
 	}
 
 	return nil
