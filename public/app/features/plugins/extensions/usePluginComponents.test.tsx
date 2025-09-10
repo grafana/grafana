@@ -616,7 +616,7 @@ describe('usePluginComponents()', () => {
       ],
     });
 
-    let { result } = renderHook(() => usePluginComponents({ extensionPointId }), {
+    const { result } = renderHook(() => usePluginComponents({ extensionPointId }), {
       wrapper,
     });
     expect(result.current.components.length).toBe(0);

@@ -377,7 +377,7 @@ describe('usePluginLinks()', () => {
       ],
     });
 
-    let { result } = renderHook(() => usePluginLinks({ extensionPointId }), { wrapper });
+    const { result } = renderHook(() => usePluginLinks({ extensionPointId }), { wrapper });
     expect(result.current.links.length).toBe(0);
     expect(log.error).toHaveBeenCalled();
   });
