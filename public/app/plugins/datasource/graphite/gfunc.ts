@@ -1,7 +1,7 @@
-import { assign, each, filter, forEach, get, includes, isString, last, map, toString, isFinite } from 'lodash';
+import { assign, each, filter, forEach, get, includes, isFinite, isString, last, map, toString } from 'lodash';
+import { coerce, gte } from 'semver';
 
 import { InterpolateFunction } from '@grafana/data';
-import { isVersionGtOrEq } from 'app/core/utils/version';
 
 export type ParamDef = {
   name: string;
@@ -665,7 +665,7 @@ addFuncDef({
     },
   ],
   defaultParams: ['avg'],
-  version: '1.0',
+  version: '1.0.0',
 });
 
 addFuncDef({
@@ -673,7 +673,7 @@ addFuncDef({
   category: 'Filter Series',
   params: [{ name: 'n', type: 'int' }],
   defaultParams: [95],
-  version: '1.0',
+  version: '1.0.0',
 });
 
 addFuncDef({
@@ -681,7 +681,7 @@ addFuncDef({
   category: 'Transform',
   params: [{ name: 'steps', type: 'int' }],
   defaultParams: [1],
-  version: '1.0',
+  version: '1.0.0',
 });
 
 addFuncDef({
@@ -695,7 +695,7 @@ addFuncDef({
     },
   ],
   defaultParams: [10],
-  version: '1.0',
+  version: '1.0.0',
 });
 
 addFuncDef({
@@ -703,7 +703,7 @@ addFuncDef({
   category: 'Special',
   params: [{ name: 'fallback', type: 'string' }],
   defaultParams: ['constantLine(0)'],
-  version: '1.0',
+  version: '1.0.0',
 });
 
 addFuncDef({
@@ -711,7 +711,7 @@ addFuncDef({
   category: 'Filter Series',
   params: [{ name: 'grep', type: 'string' }],
   defaultParams: ['grep'],
-  version: '1.0',
+  version: '1.0.0',
 });
 
 addFuncDef({
@@ -731,7 +731,7 @@ addFuncDef({
     },
   ],
   defaultParams: ['sum', 3],
-  version: '1.0',
+  version: '1.0.0',
 });
 
 addFuncDef({
@@ -745,7 +745,7 @@ addFuncDef({
     },
   ],
   defaultParams: ['1d'],
-  version: '1.0',
+  version: '1.0.0',
 });
 
 addFuncDef({
@@ -753,19 +753,19 @@ addFuncDef({
   category: 'Transform',
   params: [{ name: 'limit', type: 'int', optional: true }],
   defaultParams: [],
-  version: '1.0',
+  version: '1.0.0',
 });
 
 addFuncDef({
   name: 'invert',
   category: 'Transform',
-  version: '1.0',
+  version: '1.0.0',
 });
 
 addFuncDef({
   name: 'isNonNull',
   category: 'Combine',
-  version: '1.0',
+  version: '1.0.0',
 });
 
 addFuncDef({
@@ -786,7 +786,7 @@ addFuncDef({
     },
   ],
   defaultParams: [],
-  version: '1.0',
+  version: '1.0.0',
 });
 
 addFuncDef({
@@ -795,7 +795,7 @@ addFuncDef({
   params: [{ name: 'node', type: 'int' }],
   defaultParams: [3],
   category: 'Combine',
-  version: '1.0',
+  version: '1.0.0',
 });
 
 addFuncDef({
@@ -809,7 +809,7 @@ addFuncDef({
     },
   ],
   defaultParams: [10],
-  version: '1.0',
+  version: '1.0.0',
 });
 
 addFuncDef({
@@ -823,7 +823,7 @@ addFuncDef({
     },
   ],
   defaultParams: [10],
-  version: '1.0',
+  version: '1.0.0',
 });
 
 addFuncDef({
@@ -837,7 +837,7 @@ addFuncDef({
     },
   ],
   defaultParams: [10],
-  version: '1.0',
+  version: '1.0.0',
 });
 
 addFuncDef({
@@ -852,13 +852,13 @@ addFuncDef({
     },
   ],
   defaultParams: [2],
-  version: '1.0',
+  version: '1.0.0',
 });
 
 addFuncDef({
   name: 'offsetToZero',
   category: 'Transform',
-  version: '1.0',
+  version: '1.0.0',
 });
 
 addFuncDef({
@@ -866,7 +866,7 @@ addFuncDef({
   category: 'Transform',
   params: [{ name: 'factor', type: 'int' }],
   defaultParams: [10],
-  version: '1.0',
+  version: '1.0.0',
 });
 
 addFuncDef({
@@ -874,7 +874,7 @@ addFuncDef({
   category: 'Transform',
   params: optionalSeriesRefArgs,
   defaultParams: [''],
-  version: '1.0',
+  version: '1.0.0',
 });
 
 addFuncDef({
@@ -895,7 +895,7 @@ addFuncDef({
   ],
   defaultParams: ['asPercent', 2, 'used_bytes'],
   category: 'Combine',
-  version: '1.0',
+  version: '1.0.0',
 });
 
 addFuncDef({
@@ -903,19 +903,19 @@ addFuncDef({
   category: 'Filter Series',
   params: [{ name: 'n', type: 'int' }],
   defaultParams: [95],
-  version: '1.0',
+  version: '1.0.0',
 });
 
 addFuncDef({
   name: 'removeEmptySeries',
   category: 'Filter Series',
-  version: '1.0',
+  version: '1.0.0',
 });
 
 addFuncDef({
   name: 'squareRoot',
   category: 'Transform',
-  version: '1.0',
+  version: '1.0.0',
 });
 
 addFuncDef({
@@ -935,7 +935,7 @@ addFuncDef({
     },
   ],
   defaultParams: ['-1h'],
-  version: '1.0',
+  version: '1.0.0',
 });
 
 addFuncDef({
@@ -950,14 +950,14 @@ addFuncDef({
     },
   ],
   defaultParams: ['#A', 4],
-  version: '1.0',
+  version: '1.0.0',
 });
 
 addFuncDef({
   name: 'seriesByTag',
   category: 'Special',
   params: [{ name: 'tagExpression', type: 'string', multiple: true }],
-  version: '1.1',
+  version: '1.1.0',
 });
 
 addFuncDef({
@@ -972,7 +972,7 @@ addFuncDef({
     { name: 'tag', type: 'string', multiple: true },
   ],
   defaultParams: ['sum', 'tag'],
-  version: '1.1',
+  version: '1.1.0',
 });
 
 addFuncDef({
@@ -980,11 +980,16 @@ addFuncDef({
   category: 'Alias',
   params: [{ name: 'tag', type: 'string', multiple: true }],
   defaultParams: ['tag'],
-  version: '1.1',
+  version: '1.1.0',
 });
 
 function isVersionRelatedFunction(obj: { version?: string }, graphiteVersion: string) {
-  return !obj.version || isVersionGtOrEq(graphiteVersion, obj.version);
+  const fullVersion = coerce(graphiteVersion);
+  if (!fullVersion) {
+    return false;
+  }
+
+  return !obj.version || gte(fullVersion, obj.version);
 }
 
 export class FuncInstance {

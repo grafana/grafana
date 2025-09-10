@@ -12,13 +12,11 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-
-	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/infra/httpclient"
-	"github.com/grafana/grafana/pkg/infra/tracing"
+	"go.opentelemetry.io/otel/trace/noop"
 )
 
 func TestFixIntervalFormat(t *testing.T) {
@@ -58,8 +56,9 @@ func TestFixIntervalFormat(t *testing.T) {
 }
 
 func TestProcessQuery(t *testing.T) {
-	service := &Service{}
-	log := logger.FromContext(context.Background())
+	service := &Service{
+		logger: backend.Logger,
+	}
 	t.Run("Parses single valid query", func(t *testing.T) {
 		queries := []backend.DataQuery{
 			{
@@ -69,7 +68,7 @@ func TestProcessQuery(t *testing.T) {
 				}`),
 			},
 		}
-		target, jsonModel, err := service.processQuery(log, queries[0])
+		target, jsonModel, err := service.processQuery(queries[0])
 		assert.NoError(t, err)
 		assert.Nil(t, jsonModel)
 		assert.Equal(t, "app.grafana.*.dashboards.views.1M.count", target)
@@ -84,10 +83,10 @@ func TestProcessQuery(t *testing.T) {
 				}`),
 			},
 		}
-		jsonEqual, _ := simplejson.NewJson([]byte(`{"target": ""}`))
-		target, jsonModel, err := service.processQuery(log, queries[0])
+		emptyQuery := GraphiteQuery{Target: ""}
+		target, jsonModel, err := service.processQuery(queries[0])
 		assert.NoError(t, err)
-		assert.Equal(t, jsonEqual, jsonModel)
+		assert.Equal(t, &emptyQuery, jsonModel)
 		assert.Equal(t, "", target)
 	})
 
@@ -107,7 +106,7 @@ func TestProcessQuery(t *testing.T) {
 			},
 		}
 
-		service := ProvideService(httpclient.NewProvider(), tracing.NewNoopTracerService())
+		service := ProvideService(httpclient.NewProvider(), noop.NewTracerProvider().Tracer("graphite-tests"))
 
 		rsp, err := service.QueryData(context.Background(), &backend.QueryDataRequest{
 			PluginContext: backend.PluginContext{
@@ -124,7 +123,9 @@ func TestProcessQuery(t *testing.T) {
 	})
 
 	t.Run("QueryData with no queries returns an error", func(t *testing.T) {
-		service := &Service{}
+		service := &Service{
+			logger: backend.Logger,
+		}
 
 		rsp, err := service.QueryData(context.Background(), &backend.QueryDataRequest{})
 		assert.Nil(t, rsp)
@@ -143,7 +144,7 @@ func TestProcessQuery(t *testing.T) {
 		}))
 		t.Cleanup(server.Close)
 
-		service := ProvideService(httpclient.NewProvider(), tracing.NewNoopTracerService())
+		service := ProvideService(httpclient.NewProvider(), noop.NewTracerProvider().Tracer("graphite-tests"))
 
 		queries := []backend.DataQuery{
 			{
@@ -175,7 +176,9 @@ func TestProcessQuery(t *testing.T) {
 }
 
 func TestConvertResponses(t *testing.T) {
-	service := &Service{}
+	service := &Service{
+		logger: backend.Logger,
+	}
 
 	t.Run("Converts response without tags to data frames", func(*testing.T) {
 		body := `
@@ -195,7 +198,7 @@ func TestConvertResponses(t *testing.T) {
 		expectedFrames := data.Frames{expectedFrame}
 
 		httpResponse := &http.Response{StatusCode: 200, Body: io.NopCloser(strings.NewReader(body))}
-		dataFrames, err := service.toDataFrames(logger, httpResponse, refId)
+		dataFrames, err := service.toDataFrames(httpResponse, refId)
 
 		require.NoError(t, err)
 		if !reflect.DeepEqual(expectedFrames, dataFrames) {
@@ -229,7 +232,7 @@ func TestConvertResponses(t *testing.T) {
 		expectedFrames := data.Frames{expectedFrame}
 
 		httpResponse := &http.Response{StatusCode: 200, Body: io.NopCloser(strings.NewReader(body))}
-		dataFrames, err := service.toDataFrames(logger, httpResponse, refId)
+		dataFrames, err := service.toDataFrames(httpResponse, refId)
 
 		require.NoError(t, err)
 		if !reflect.DeepEqual(expectedFrames, dataFrames) {
