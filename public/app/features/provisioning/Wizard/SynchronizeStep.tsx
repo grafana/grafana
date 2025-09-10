@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 
 import { Trans, t } from '@grafana/i18n';
-import { Button, Text, Stack, TextLink, Field, Checkbox, Alert } from '@grafana/ui';
+import { Button, Text, Stack, TextLink, Field, Checkbox, Alert, Spinner } from '@grafana/ui';
 import { Job, useGetRepositoryStatusQuery } from 'app/api/clients/provisioning/v0alpha1';
 
 import { JobStatus } from '../Job/JobStatus';
@@ -50,6 +50,9 @@ export function SynchronizeStep({ isLegacyStorage, onCancel, isCancelling }: Syn
     }
   };
 
+  if (repositoryStatusQuery.isFetching) {
+    return <Spinner />;
+  }
   if (job) {
     return <JobStatus watch={job} onStatusChange={setStepStatusInfo} jobType="sync" />;
   }
