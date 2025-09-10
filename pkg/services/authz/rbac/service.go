@@ -230,6 +230,7 @@ func (s *Service) List(ctx context.Context, req *authzv1.ListRequest) (*authzv1.
 	}
 
 	resp, err := s.listPermission(ctx, permissions, listReq)
+	resp.Zookie = &authzv1.Zookie{Timestamp: time.Now().Unix()}
 	s.metrics.requestCount.WithLabelValues(strconv.FormatBool(err != nil), "true", req.GetVerb(), req.GetGroup(), req.GetResource()).Inc()
 	return resp, err
 }
