@@ -25,7 +25,7 @@ import { DashboardModel } from './DashboardModel';
  *
  * 3. Why DashboardMigrator doesn't run on backendOutput:
  *    - DashboardMigrator.updateSchema() has an early return: `if (oldVersion === this.dashboard.schemaVersion) return;`
- *    - Since backendOutput.schemaVersion is already 41 (latest), no migration occurs
+ *    - Since backendOutput.schemaVersion is already 42 (latest), no migration occurs
  *    - This ensures we compare the final migrated state from both paths
  *
  * 4. Benefits of this approach:
@@ -74,6 +74,8 @@ const dataSources = {
     isDefault: false,
   }),
 };
+
+const pluginVersionForAutoMigrate = '12.1.0';
 
 describe('Backend / Frontend result comparison', () => {
   beforeEach(() => {
@@ -157,11 +159,11 @@ describe('Backend / Frontend result comparison', () => {
                 logos: { small: 'small/logo', large: 'large/logo' },
                 screenshots: [],
                 updated: '2024-01-01',
-                version: '1.0.0',
+                version: pluginVersionForAutoMigrate,
               };
             }
             if (!statPanelPlugin.meta.info.version) {
-              statPanelPlugin.meta.info.version = '1.0.0';
+              statPanelPlugin.meta.info.version = pluginVersionForAutoMigrate;
             }
 
             await panel.pluginLoaded(statPanelPlugin);
@@ -179,11 +181,11 @@ describe('Backend / Frontend result comparison', () => {
                 logos: { small: 'small/logo', large: 'large/logo' },
                 screenshots: [],
                 updated: '2024-01-01',
-                version: '1.0.0',
+                version: pluginVersionForAutoMigrate,
               };
             }
             if (!tablePanelPlugin.meta.info.version) {
-              tablePanelPlugin.meta.info.version = '1.0.0';
+              tablePanelPlugin.meta.info.version = pluginVersionForAutoMigrate;
             }
 
             await panel.pluginLoaded(tablePanelPlugin as any);

@@ -70,6 +70,20 @@ export const getGridStyles = (theme: GrafanaTheme2, enablePagination?: boolean, 
           },
         },
       },
+
+      '.rdg-summary-row >': {
+        '.rdg-cell': {
+          // 0.75 padding causes "jumping" on hover.
+          paddingBlock: theme.spacing(0.625),
+        },
+        [getActiveCellSelector()]: {
+          whiteSpace: 'pre-line',
+          height: '100%',
+          minHeight: 'fit-content',
+          overflowY: 'visible',
+          boxShadow: theme.shadows.z2,
+        },
+      },
     }),
     gridNested: css({
       height: '100%',
@@ -111,11 +125,6 @@ export const getGridStyles = (theme: GrafanaTheme2, enablePagination?: boolean, 
     menuItem: css({ maxWidth: '200px' }),
   };
 };
-
-export const getFooterStyles = (justifyContent: Property.JustifyContent) => ({
-  footerCellCountRows: css({ display: 'flex', justifyContent: 'space-between' }),
-  footerCell: css({ display: 'flex', justifyContent: justifyContent || 'space-between' }),
-});
 
 export const getHeaderCellStyles = (theme: GrafanaTheme2, justifyContent: Property.JustifyContent) =>
   css({

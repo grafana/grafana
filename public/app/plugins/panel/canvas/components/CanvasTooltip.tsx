@@ -1,7 +1,7 @@
 import { css, cx } from '@emotion/css';
 import { useDialog } from '@react-aria/dialog';
 import { useOverlay } from '@react-aria/overlays';
-import { createRef } from 'react';
+import { createRef, useMemo } from 'react';
 
 import {
   Field,
@@ -14,7 +14,7 @@ import {
   ValueLinkConfig,
   ActionModel,
 } from '@grafana/data';
-import { Portal, useStyles2, useTheme2, VizTooltipContainer } from '@grafana/ui';
+import { Portal, useStyles2, useTheme2, VizTooltipContainer, usePanelContext } from '@grafana/ui';
 import {
   VizTooltipContent,
   VizTooltipFooter,
@@ -35,6 +35,8 @@ interface Props {
 export const CanvasTooltip = ({ scene }: Props) => {
   const theme = useTheme2();
   const styles = useStyles2(getStyles);
+  const { canExecuteActions } = usePanelContext();
+  const userCanExecuteActions = useMemo(() => canExecuteActions?.() ?? false, [canExecuteActions]);
 
   const onClose = () => {
     if (scene?.tooltipCallback && scene.tooltipPayload) {
@@ -104,7 +106,7 @@ export const CanvasTooltip = ({ scene }: Props) => {
   const elementHasActions = (element.options.actions?.length ?? 0) > 0;
   const frames = scene.data?.series;
 
-  if (elementHasActions && frames) {
+  if (elementHasActions && frames && userCanExecuteActions) {
     const defaultField = getActionsDefaultField(element.options.links ?? [], element.options.actions ?? []);
     const scopedVars: ScopedVars = {
       __dataContext: {

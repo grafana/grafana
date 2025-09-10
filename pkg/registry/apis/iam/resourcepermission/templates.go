@@ -1,11 +1,268 @@
 package resourcepermission
 
+import (
+	"embed"
+	"fmt"
+	"text/template"
+	"time"
+
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/storage/legacysql"
+	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
+)
+
+// Templates setup.
+var (
+	//go:embed queries/*.sql
+	sqlTemplatesFS embed.FS
+
+	sqlTemplates = template.Must(template.New("sql").ParseFS(sqlTemplatesFS, `queries/*.sql`))
+
+	resourcePermissionsQueryTplt        = mustTemplate("resource_permission_query.sql")
+	resourcePermissionDeletionQueryTplt = mustTemplate("resource_permission_deletion_query.sql")
+	roleInsertTplt                      = mustTemplate("role_insert.sql")
+	assignmentInsertTplt                = mustTemplate("assignment_insert.sql")
+	permissionInsertTplt                = mustTemplate("permission_insert.sql")
+	pageQueryTplt                       = mustTemplate("page_query.sql")
+	latestUpdateTplt                    = mustTemplate("latest_update_query.sql")
+)
+
+func mustTemplate(filename string) *template.Template {
+	if t := sqlTemplates.Lookup(filename); t != nil {
+		return t
+	}
+	panic(fmt.Sprintf("template file not found: %s", filename))
+}
+
 // List
 
-// Get
+type pageQueryTemplate struct {
+	sqltemplate.SQLTemplate
+	Query              *PageQuery
+	PermissionTable    string
+	RoleTable          string
+	ManagedRolePattern string
+}
+
+func (r pageQueryTemplate) Validate() error {
+	return nil
+}
+
+func buildPageQueryFromTemplate(dbHelper *legacysql.LegacyDatabaseHelper, query *PageQuery) (string, []interface{}, error) {
+	req := pageQueryTemplate{
+		SQLTemplate:        sqltemplate.New(dbHelper.DialectForDriver()),
+		Query:              query,
+		PermissionTable:    "permission",
+		RoleTable:          "role",
+		ManagedRolePattern: "managed:%",
+	}
+
+	rawQuery, err := sqltemplate.Execute(pageQueryTplt, req)
+	if err != nil {
+		return "", nil, fmt.Errorf("execute template %q: %w", pageQueryTplt.Name(), err)
+	}
+
+	return rawQuery, req.GetArgs(), nil
+}
+
+type latestUpdateTemplate struct {
+	sqltemplate.SQLTemplate
+	OrgID           int64
+	ScopePatterns   []string
+	PermissionTable string
+	RoleTable       string
+	ManagedPattern  string
+}
+
+func (l latestUpdateTemplate) Validate() error {
+	if l.OrgID <= 0 {
+		return fmt.Errorf("orgID must be set")
+	}
+	if len(l.ScopePatterns) == 0 {
+		return fmt.Errorf("at least one scope pattern is required")
+	}
+	return nil
+}
+
+func buildLatestUpdateQueryFromTemplate(dbHelper *legacysql.LegacyDatabaseHelper, orgID int64, scopePatterns []string) (string, []interface{}, error) {
+	req := latestUpdateTemplate{
+		SQLTemplate:     sqltemplate.New(dbHelper.DialectForDriver()),
+		OrgID:           orgID,
+		ScopePatterns:   scopePatterns,
+		PermissionTable: dbHelper.Table("permission"),
+		RoleTable:       dbHelper.Table("role"),
+		ManagedPattern:  "managed:%",
+	}
+	rawQuery, err := sqltemplate.Execute(latestUpdateTplt, req)
+	if err != nil {
+		return "", nil, fmt.Errorf("execute template %q: %w", latestUpdateTplt.Name(), err)
+	}
+	return rawQuery, req.GetArgs(), nil
+}
+
+type listResourcePermissionsQueryTemplate struct {
+	sqltemplate.SQLTemplate
+	Query              *ListResourcePermissionsQuery
+	PermissionTable    string
+	RoleTable          string
+	UserTable          string
+	TeamTable          string
+	BuiltinRoleTable   string
+	UserRoleTable      string
+	TeamRoleTable      string
+	ManagedRolePattern string
+}
+
+func (r listResourcePermissionsQueryTemplate) Validate() error {
+	return nil
+}
+
+func buildListResourcePermissionsQueryFromTemplate(dbHelper *legacysql.LegacyDatabaseHelper, query *ListResourcePermissionsQuery) (string, []interface{}, error) {
+	req := listResourcePermissionsQueryTemplate{
+		SQLTemplate:        sqltemplate.New(dbHelper.DialectForDriver()),
+		Query:              query,
+		PermissionTable:    dbHelper.Table("permission"),
+		RoleTable:          dbHelper.Table("role"),
+		UserTable:          dbHelper.Table("user"),
+		TeamTable:          dbHelper.Table("team"),
+		BuiltinRoleTable:   dbHelper.Table("builtin_role"),
+		UserRoleTable:      dbHelper.Table("user_role"),
+		TeamRoleTable:      dbHelper.Table("team_role"),
+		ManagedRolePattern: "managed:%",
+	}
+
+	rawQuery, err := sqltemplate.Execute(resourcePermissionsQueryTplt, req)
+	if err != nil {
+		return "", nil, fmt.Errorf("execute template %q: %w", resourcePermissionsQueryTplt.Name(), err)
+	}
+
+	return rawQuery, req.GetArgs(), nil
+}
 
 // Create
+
+type insertRoleTemplate struct {
+	sqltemplate.SQLTemplate
+	RoleTable string
+	OrgID     int64
+	UID       string
+	Name      string
+	Now       string
+}
+
+func (t insertRoleTemplate) Validate() error {
+	return nil
+}
+
+func buildInsertRoleQuery(dbHelper *legacysql.LegacyDatabaseHelper, orgID int64, uid string, name string) (string, []any, error) {
+	req := insertRoleTemplate{
+		SQLTemplate: sqltemplate.New(dbHelper.DialectForDriver()),
+		RoleTable:   dbHelper.Table("role"),
+		OrgID:       orgID,
+		UID:         uid,
+		Name:        name,
+		Now:         timeNow().Format(time.DateTime),
+	}
+	rawQuery, err := sqltemplate.Execute(roleInsertTplt, req)
+	if err != nil {
+		return "", nil, fmt.Errorf("rendering sql template: %w", err)
+	}
+	return rawQuery, req.GetArgs(), nil
+}
+
+type insertAssignmentTemplate struct {
+	sqltemplate.SQLTemplate
+	AssignmentTable  string
+	AssignmentColumn string
+	RoleID           int64
+	OrgID            int64
+	SubjectID        any // int64 or string
+	Now              string
+}
+
+func (t insertAssignmentTemplate) Validate() error {
+	if t.AssignmentTable == "" {
+		return fmt.Errorf("assignment table is required")
+	}
+	if t.AssignmentColumn == "" {
+		return fmt.Errorf("assignment column is required")
+	}
+	return nil
+}
+
+func buildInsertAssignmentQuery(dbHelper *legacysql.LegacyDatabaseHelper, orgID int64, roleID int64, assignment rbacAssignmentCreate) (string, []any, error) {
+	req := insertAssignmentTemplate{
+		SQLTemplate:      sqltemplate.New(dbHelper.DialectForDriver()),
+		AssignmentTable:  dbHelper.Table(assignment.AssignmentTable),
+		AssignmentColumn: assignment.AssignmentColumn,
+		RoleID:           roleID,
+		OrgID:            orgID,
+		SubjectID:        assignment.SubjectID,
+		Now:              timeNow().Format(time.DateTime),
+	}
+	rawQuery, err := sqltemplate.Execute(assignmentInsertTplt, req)
+	if err != nil {
+		return "", nil, fmt.Errorf("rendering sql template: %w", err)
+	}
+	return rawQuery, req.GetArgs(), nil
+}
+
+type insertPermissionTemplate struct {
+	sqltemplate.SQLTemplate
+	PermissionTable string
+	RoleID          int64
+	Permission      accesscontrol.Permission
+	Now             string
+}
+
+func (t insertPermissionTemplate) Validate() error {
+	return nil
+}
+
+func buildInsertPermissionQuery(dbHelper *legacysql.LegacyDatabaseHelper, roleID int64, permission accesscontrol.Permission) (string, []any, error) {
+	req := insertPermissionTemplate{
+		SQLTemplate:     sqltemplate.New(dbHelper.DialectForDriver()),
+		PermissionTable: dbHelper.Table("permission"),
+		RoleID:          roleID,
+		Permission:      permission,
+		Now:             timeNow().Format(time.DateTime),
+	}
+	rawQuery, err := sqltemplate.Execute(permissionInsertTplt, req)
+	if err != nil {
+		return "", nil, fmt.Errorf("rendering sql template: %w", err)
+	}
+	return rawQuery, req.GetArgs(), nil
+}
 
 // Update
 
 // Delete
+
+type deleteResourcePermissionsQueryTemplate struct {
+	sqltemplate.SQLTemplate
+	Query              *DeleteResourcePermissionsQuery
+	PermissionTable    string
+	RoleTable          string
+	ManagedRolePattern string
+}
+
+func (r deleteResourcePermissionsQueryTemplate) Validate() error {
+	return nil
+}
+
+func buildDeleteResourcePermissionsQueryFromTemplate(sql *legacysql.LegacyDatabaseHelper, query *DeleteResourcePermissionsQuery) (string, []interface{}, error) {
+	req := deleteResourcePermissionsQueryTemplate{
+		SQLTemplate:        sqltemplate.New(sql.DialectForDriver()),
+		Query:              query,
+		PermissionTable:    sql.Table("permission"),
+		RoleTable:          sql.Table("role"),
+		ManagedRolePattern: "managed:%",
+	}
+
+	rawQuery, err := sqltemplate.Execute(resourcePermissionDeletionQueryTplt, req)
+	if err != nil {
+		return "", nil, fmt.Errorf("execute template %q: %w", resourcePermissionDeletionQueryTplt.Name(), err)
+	}
+
+	return rawQuery, req.GetArgs(), nil
+}

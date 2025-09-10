@@ -195,6 +195,196 @@ func TestK8sHandlerWithFallback_Get(t *testing.T) {
 	})
 }
 
+func TestK8sHandlerWithFallback_List(t *testing.T) {
+	// Helper function to create a dashboard item
+	createDashboard := func(name, resourceVersion string, status map[string]interface{}) unstructured.Unstructured {
+		return unstructured.Unstructured{
+			Object: map[string]interface{}{
+				"metadata": map[string]interface{}{
+					"name":            name,
+					"resourceVersion": resourceVersion,
+				},
+				"status": status,
+			},
+		}
+	}
+
+	// Helper function to create a fallback dashboard item
+	createFallbackDashboard := func(name, resourceVersion, apiVersion string) unstructured.Unstructured {
+		return unstructured.Unstructured{
+			Object: map[string]interface{}{
+				"apiVersion": apiVersion,
+				"kind":       "Dashboard",
+				"metadata": map[string]interface{}{
+					"name":            name,
+					"resourceVersion": resourceVersion,
+				},
+			},
+		}
+	}
+
+	// Helper function to create conversion status
+	conversionStatus := func(failed bool, storedVersion, errorMsg string) map[string]interface{} {
+		return map[string]interface{}{
+			"conversion": map[string]interface{}{
+				"failed":        failed,
+				"storedVersion": storedVersion,
+				"error":         errorMsg,
+			},
+		}
+	}
+
+	t.Run("List without fallback needed", func(t *testing.T) {
+		setup := setupTest(t)
+		expectedResult := &unstructured.UnstructuredList{
+			Items: []unstructured.Unstructured{
+				createDashboard("dashboard-1", "123", map[string]interface{}{"someOtherStatus": "ok"}),
+				createDashboard("dashboard-2", "456", map[string]interface{}{"anotherStatus": "ok"}),
+			},
+		}
+
+		setup.mockClientV1Alpha1.On("List", mock.Anything, int64(1), metav1.ListOptions{}).Return(expectedResult, nil).Once()
+
+		result, err := setup.handler.List(context.Background(), 1, metav1.ListOptions{})
+		require.NoError(t, err)
+		require.Equal(t, expectedResult, result)
+
+		setup.mockClientV1Alpha1.AssertExpectations(t)
+		setup.mockClientV2Alpha1.AssertExpectations(t)
+	})
+
+	t.Run("List with some items needing fallback", func(t *testing.T) {
+		setup := setupTest(t)
+		initialResult := &unstructured.UnstructuredList{
+			Items: []unstructured.Unstructured{
+				createDashboard("dashboard-ok", "123", map[string]interface{}{"someOtherStatus": "ok"}),
+				createDashboard("dashboard-fallback", "456", conversionStatus(true, "v2alpha1", "conversion failed")),
+			},
+		}
+
+		fallbackResult := createFallbackDashboard("dashboard-fallback", "456", "dashboard/v2alpha1")
+
+		setup.mockClientV1Alpha1.On("List", mock.Anything, int64(2), metav1.ListOptions{}).Return(initialResult, nil).Once()
+		setup.mockClientV2Alpha1.On("Get", mock.Anything, "dashboard-fallback", int64(2), metav1.GetOptions{ResourceVersion: "456"}, mock.Anything).Return(&fallbackResult, nil).Once()
+
+		result, err := setup.handler.List(context.Background(), 2, metav1.ListOptions{})
+		require.NoError(t, err)
+		require.Len(t, result.Items, 2)
+
+		expectedItems := []unstructured.Unstructured{
+			createDashboard("dashboard-ok", "123", map[string]interface{}{"someOtherStatus": "ok"}),
+			fallbackResult,
+		}
+		require.ElementsMatch(t, expectedItems, result.Items)
+
+		setup.mockClientV1Alpha1.AssertExpectations(t)
+		setup.mockClientV2Alpha1.AssertExpectations(t)
+	})
+
+	t.Run("List with all items needing fallback", func(t *testing.T) {
+		setup := setupTest(t)
+		initialResult := &unstructured.UnstructuredList{
+			Items: []unstructured.Unstructured{
+				createDashboard("dashboard-1-fallback", "111", conversionStatus(true, "v2alpha1", "conversion failed 1")),
+				createDashboard("dashboard-2-fallback", "222", conversionStatus(true, "v2alpha1", "conversion failed 2")),
+			},
+		}
+
+		fallbackResult1 := createFallbackDashboard("dashboard-1-fallback", "111", "dashboard/v2alpha1")
+		fallbackResult2 := createFallbackDashboard("dashboard-2-fallback", "222", "dashboard/v2alpha1")
+
+		setup.mockClientV1Alpha1.On("List", mock.Anything, int64(3), metav1.ListOptions{}).Return(initialResult, nil).Once()
+		setup.mockClientV2Alpha1.On("Get", mock.Anything, "dashboard-1-fallback", int64(3), metav1.GetOptions{ResourceVersion: "111"}, mock.Anything).Return(&fallbackResult1, nil).Once()
+		setup.mockClientV2Alpha1.On("Get", mock.Anything, "dashboard-2-fallback", int64(3), metav1.GetOptions{ResourceVersion: "222"}, mock.Anything).Return(&fallbackResult2, nil).Once()
+
+		result, err := setup.handler.List(context.Background(), 3, metav1.ListOptions{})
+		require.NoError(t, err)
+		require.Len(t, result.Items, 2)
+
+		expectedItems := []unstructured.Unstructured{fallbackResult1, fallbackResult2}
+		require.ElementsMatch(t, expectedItems, result.Items)
+
+		setup.mockClientV1Alpha1.AssertExpectations(t)
+		setup.mockClientV2Alpha1.AssertExpectations(t)
+	})
+
+	t.Run("List with different versions needing fallback", func(t *testing.T) {
+		setup := setupTest(t)
+		initialResult := &unstructured.UnstructuredList{
+			Items: []unstructured.Unstructured{
+				createDashboard("dashboard-v2alpha1", "333", conversionStatus(true, "v2alpha1", "conversion failed v2alpha1")),
+				createDashboard("dashboard-v1beta1", "444", conversionStatus(true, "v1beta1", "conversion failed v1beta1")),
+			},
+		}
+
+		fallbackResultV2Alpha1 := createFallbackDashboard("dashboard-v2alpha1", "333", "dashboard/v2alpha1")
+		fallbackResultV1Beta1 := createFallbackDashboard("dashboard-v1beta1", "444", "dashboard/v1beta1")
+
+		setup.mockClientV1Alpha1.On("List", mock.Anything, int64(4), metav1.ListOptions{}).Return(initialResult, nil).Once()
+		setup.mockClientV2Alpha1.On("Get", mock.Anything, "dashboard-v2alpha1", int64(4), metav1.GetOptions{ResourceVersion: "333"}, mock.Anything).Return(&fallbackResultV2Alpha1, nil).Once()
+		setup.mockClientV1Alpha1.On("Get", mock.Anything, "dashboard-v1beta1", int64(4), metav1.GetOptions{ResourceVersion: "444"}, mock.Anything).Return(&fallbackResultV1Beta1, nil).Once()
+
+		result, err := setup.handler.List(context.Background(), 4, metav1.ListOptions{})
+		require.NoError(t, err)
+		require.Len(t, result.Items, 2)
+
+		expectedItems := []unstructured.Unstructured{fallbackResultV2Alpha1, fallbackResultV1Beta1}
+		require.ElementsMatch(t, expectedItems, result.Items)
+
+		setup.mockClientV1Alpha1.AssertExpectations(t)
+		setup.mockClientV2Alpha1.AssertExpectations(t)
+	})
+
+	t.Run("List with initial fetch error", func(t *testing.T) {
+		setup := setupTest(t)
+		expectedErr := errors.New("initial list failed")
+
+		setup.mockClientV1Alpha1.On("List", mock.Anything, int64(5), metav1.ListOptions{}).Return(nil, expectedErr).Once()
+
+		_, err := setup.handler.List(context.Background(), 5, metav1.ListOptions{})
+		require.Error(t, err)
+		require.Equal(t, expectedErr, err)
+
+		setup.mockClientV1Alpha1.AssertExpectations(t)
+		setup.mockClientV2Alpha1.AssertExpectations(t)
+	})
+
+	t.Run("List with fallback fetch error", func(t *testing.T) {
+		setup := setupTest(t)
+		initialResult := &unstructured.UnstructuredList{
+			Items: []unstructured.Unstructured{
+				createDashboard("dashboard-fallback-error", "555", conversionStatus(true, "v2alpha1", "conversion failed")),
+			},
+		}
+
+		fallbackErr := errors.New("fallback get failed")
+
+		setup.mockClientV1Alpha1.On("List", mock.Anything, int64(6), metav1.ListOptions{}).Return(initialResult, nil).Once()
+		setup.mockClientV2Alpha1.On("Get", mock.Anything, "dashboard-fallback-error", int64(6), metav1.GetOptions{ResourceVersion: "555"}, mock.Anything).Return(nil, fallbackErr).Once()
+
+		_, err := setup.handler.List(context.Background(), 6, metav1.ListOptions{})
+		require.Error(t, err)
+		require.Equal(t, fallbackErr, err)
+
+		setup.mockClientV1Alpha1.AssertExpectations(t)
+		setup.mockClientV2Alpha1.AssertExpectations(t)
+	})
+
+	t.Run("List with empty result", func(t *testing.T) {
+		setup := setupTest(t)
+		emptyResult := &unstructured.UnstructuredList{Items: []unstructured.Unstructured{}}
+
+		setup.mockClientV1Alpha1.On("List", mock.Anything, int64(7), metav1.ListOptions{}).Return(emptyResult, nil).Once()
+
+		result, err := setup.handler.List(context.Background(), 7, metav1.ListOptions{})
+		require.NoError(t, err)
+		require.Len(t, result.Items, 0)
+
+		setup.mockClientV1Alpha1.AssertExpectations(t)
+		setup.mockClientV2Alpha1.AssertExpectations(t)
+	})
+}
+
 func TestGetConversionStatus(t *testing.T) {
 	tests := []struct {
 		name                  string

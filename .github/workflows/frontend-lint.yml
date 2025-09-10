@@ -18,7 +18,7 @@ jobs:
       changed: ${{ steps.detect-changes.outputs.frontend }}
       prettier: ${{ steps.detect-changes.outputs.frontend == 'true' || steps.detect-changes.outputs.docs == 'true' }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           persist-credentials: true # required to get more history in the changed-files action
           fetch-depth: 2
@@ -39,7 +39,7 @@ jobs:
     name: Lint
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v5
       with:
         persist-credentials: false
     - uses: actions/setup-node@v4
@@ -60,7 +60,7 @@ jobs:
     name: Lint
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v5
       with:
         persist-credentials: false
     - uses: actions/setup-node@v4
@@ -86,7 +86,7 @@ jobs:
     name: Typecheck
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v5
       with:
         persist-credentials: false
     - uses: actions/setup-node@v4
@@ -106,7 +106,7 @@ jobs:
     name: Typecheck
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v5
       with:
         persist-credentials: false
     - uses: actions/setup-node@v4
@@ -120,25 +120,6 @@ jobs:
         github-app-name: 'grafana-ci-bot'
     - run: yarn install --immutable --check-cache
     - run: yarn run typecheck
-  lint-frontend-betterer:
-    needs: detect-changes
-    permissions:
-      contents: read
-      id-token: write
-    if: needs.detect-changes.outputs.changed == 'true'
-    name: Betterer
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v4
-      with:
-        persist-credentials: false
-    - uses: actions/setup-node@v4
-      with:
-        node-version-file: '.nvmrc'
-        cache: 'yarn'
-        cache-dependency-path: 'yarn.lock'
-    - run: yarn install --immutable --check-cache
-    - run: yarn run betterer:ci
   lint-frontend-api-clients:
     permissions:
       contents: read
@@ -149,7 +130,7 @@ jobs:
     name: Verify API clients
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v5
       with:
         persist-credentials: false
     - uses: actions/setup-node@v4
@@ -180,7 +161,7 @@ jobs:
     name: Verify API clients (enterprise)
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v5
       with:
         persist-credentials: false
     - uses: actions/setup-node@v4

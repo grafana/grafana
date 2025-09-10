@@ -325,8 +325,8 @@ type WebhookIntegration struct {
 	ExtraHeaders             *map[string]string `json:"headers,omitempty" yaml:"headers,omitempty" hcl:"headers"`
 	Title                    *string            `json:"title,omitempty" yaml:"title,omitempty" hcl:"title"`
 	Message                  *string            `json:"message,omitempty" yaml:"message,omitempty" hcl:"message"`
-	TLSConfig                *TLSConfig         `json:"tlsConfig,omitempty" yaml:"tlsConfig,omitempty" hcl:"tlsConfig,block"`
-	HMACConfig               *HMACConfig        `json:"hmacConfig,omitempty" yaml:"hmacConfig,omitempty" hcl:"hmacConfig,block"`
+	TLSConfig                *TLSConfig         `json:"tlsConfig,omitempty" yaml:"tlsConfig,omitempty" hcl:"tls_config,block"`
+	HMACConfig               *HMACConfig        `json:"hmacConfig,omitempty" yaml:"hmacConfig,omitempty" hcl:"hmac_config,block"`
 	HTTPConfig               *HTTPClientConfig  `json:"http_config,omitempty" yaml:"http_config,omitempty" hcl:"http_config,block"`
 
 	Payload *CustomPayload `json:"payload,omitempty" yaml:"payload,omitempty" hcl:"payload,block"`
