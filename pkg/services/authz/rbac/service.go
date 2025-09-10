@@ -233,7 +233,7 @@ func (s *Service) List(ctx context.Context, req *authzv1.ListRequest) (*authzv1.
 	return resp, err
 }
 
-func (s *Service) validateCheckRequest(ctx context.Context, req *authzv1.CheckRequest) (*checkRequest, error) {
+func (s *Service) validateCheckRequest(ctx context.Context, req *authzv1.CheckRequest) (*CheckRequest, error) {
 	ctx, span := s.tracer.Start(ctx, "authz_direct_db.service.validateCheckRequest")
 	defer span.End()
 
@@ -252,7 +252,7 @@ func (s *Service) validateCheckRequest(ctx context.Context, req *authzv1.CheckRe
 		return nil, err
 	}
 
-	checkReq := &checkRequest{
+	checkReq := &CheckRequest{
 		Namespace:    ns,
 		UserUID:      userUID,
 		IdentityType: idType,
@@ -266,7 +266,7 @@ func (s *Service) validateCheckRequest(ctx context.Context, req *authzv1.CheckRe
 	return checkReq, nil
 }
 
-func (s *Service) validateListRequest(ctx context.Context, req *authzv1.ListRequest) (*listRequest, error) {
+func (s *Service) validateListRequest(ctx context.Context, req *authzv1.ListRequest) (*ListRequest, error) {
 	ctx, span := s.tracer.Start(ctx, "authz_direct_db.service.validateListRequest")
 	defer span.End()
 
@@ -285,7 +285,7 @@ func (s *Service) validateListRequest(ctx context.Context, req *authzv1.ListRequ
 		return nil, err
 	}
 
-	listReq := &listRequest{
+	listReq := &ListRequest{
 		Namespace:    ns,
 		UserUID:      userUID,
 		IdentityType: idType,
@@ -336,19 +336,18 @@ func (s *Service) validateSubject(ctx context.Context, subject string) (string, 
 	return userUID, identityType, nil
 }
 
-// Find the action for a selected verb
 func (s *Service) validateAction(ctx context.Context, group, resource, verb string) (string, error) {
 	ctxLogger := s.logger.FromContext(ctx)
 
 	t, ok := s.mapper.Get(group, resource)
 	if !ok {
-		ctxLogger.Error("unsupported resource", "group", group, "resource", resource)
+		ctxLogger.Error("unsupport resource", "group", group, "resource", resource)
 		return "", status.Error(codes.NotFound, "unsupported resource")
 	}
 
 	action, ok := t.Action(verb)
 	if !ok {
-		ctxLogger.Error("unsupported verb", "group", group, "resource", resource, "verb", verb)
+		ctxLogger.Error("unsupport verb", "group", group, "resource", resource, "verb", verb)
 		return "", status.Error(codes.NotFound, "unsupported verb")
 	}
 
@@ -576,7 +575,7 @@ func (s *Service) getUserBasicRole(ctx context.Context, ns types.NamespaceInfo, 
 	return *basicRole, nil
 }
 
-func (s *Service) checkPermission(ctx context.Context, scopeMap map[string]bool, req *checkRequest) (bool, error) {
+func (s *Service) checkPermission(ctx context.Context, scopeMap map[string]bool, req *CheckRequest) (bool, error) {
 	ctx, span := s.tracer.Start(ctx, "authz_direct_db.service.checkPermission", trace.WithAttributes(
 		attribute.Int("scope_count", len(scopeMap))))
 	defer span.End()
@@ -625,7 +624,7 @@ func getScopeMap(permissions []accesscontrol.Permission) map[string]bool {
 	return permMap
 }
 
-func (s *Service) checkInheritedPermissions(ctx context.Context, scopeMap map[string]bool, req *checkRequest) (bool, error) {
+func (s *Service) checkInheritedPermissions(ctx context.Context, scopeMap map[string]bool, req *CheckRequest) (bool, error) {
 	if req.ParentFolder == "" {
 		return false, nil
 	}
@@ -702,7 +701,7 @@ func (s *Service) buildFolderTree(ctx context.Context, ns types.NamespaceInfo) (
 	return res.(folderTree), nil
 }
 
-func (s *Service) listPermission(ctx context.Context, scopeMap map[string]bool, req *listRequest) (*authzv1.ListResponse, error) {
+func (s *Service) listPermission(ctx context.Context, scopeMap map[string]bool, req *ListRequest) (*authzv1.ListResponse, error) {
 	if scopeMap["*"] {
 		return &authzv1.ListResponse{All: true}, nil
 	}
@@ -713,7 +712,7 @@ func (s *Service) listPermission(ctx context.Context, scopeMap map[string]bool, 
 
 	t, ok := s.mapper.Get(req.Group, req.Resource)
 	if !ok {
-		ctxLogger.Error("unsupported resource", "group", req.Group, "resource", req.Resource)
+		ctxLogger.Error("unsupport resource", "group", req.Group, "resource", req.Resource)
 		return nil, status.Error(codes.NotFound, "unsupported resource")
 	}
 
