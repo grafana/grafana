@@ -4,13 +4,16 @@ import (
 	"context"
 	"io"
 	"net/http"
+	"net/http/httptest"
 	"strings"
 	"testing"
 	"time"
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -402,5 +405,59 @@ func TestOpenTsdbExecutor(t *testing.T) {
 		require.True(t, metricRateOptions["counter"].(bool))
 		require.Equal(t, float64(45), metricRateOptions["counterMax"])
 		require.Equal(t, float64(60), metricRateOptions["resetValue"])
+	})
+
+	t.Run("createRequest uses per-query time range", func(t *testing.T) {
+		qA := backend.DataQuery{
+			RefID:     "A",
+			JSON:      []byte(`{"metric":"mA","aggregator":"avg"}`),
+			TimeRange: backend.TimeRange{From: time.Unix(1000, 0), To: time.Unix(2000, 0)},
+		}
+		qB := backend.DataQuery{
+			RefID:     "B",
+			JSON:      []byte(`{"metric":"mB","aggregator":"avg"}`),
+			TimeRange: backend.TimeRange{From: time.Unix(3000, 0), To: time.Unix(4000, 0)},
+		}
+
+		var bodies []string
+		hits := 0 // count how many times the test server was hit
+		srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			b, _ := io.ReadAll(r.Body)
+			_ = r.Body.Close()
+			bodies = append(bodies, string(b))
+			hits++
+
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusOK)
+			_, _ = w.Write([]byte(`[]`))
+		}))
+		t.Cleanup(srv.Close)
+
+		service := &Service{
+			im: datasource.NewInstanceManager(newInstanceSettings(httpclient.NewProvider())),
+		}
+
+		settings := &backend.DataSourceInstanceSettings{
+			UID:      "opentsdb-test",
+			URL:      srv.URL,
+			JSONData: []byte(`{"tsdbVersion":4,"httpMethod":"post"}`),
+		}
+
+		req := backend.QueryDataRequest{
+			PluginContext: backend.PluginContext{
+				DataSourceInstanceSettings: settings,
+			},
+			Queries: []backend.DataQuery{qA, qB},
+		}
+		_, err := service.QueryData(context.Background(), &req)
+		require.NoError(t, err)
+
+		require.Equal(t, 2, hits)
+		require.Len(t, bodies, 2)
+
+		require.Contains(t, bodies[0], `"start":1000`)
+		require.Contains(t, bodies[0], `"end":2000`)
+		require.Contains(t, bodies[1], `"start":3000`)
+		require.Contains(t, bodies[1], `"end":4000`)
 	})
 }
