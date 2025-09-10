@@ -52,6 +52,7 @@ export const TransformationOperationRow = ({
   const [showDebug, toggleShowDebug] = useToggle(false);
   const [showHelp, toggleShowHelp] = useToggle(false);
   const disabled = !!configs[index].transformation.disabled;
+  const collapsed = configs[index].transformation.collapsed;
   const topic = configs[index].transformation.topic;
   const showFilterEditor = configs[index].transformation.filter != null || topic != null;
   const showFilterToggle = showFilterEditor || data.series.length > 0 || (data.annotations?.length ?? 0) > 0;
@@ -66,6 +67,17 @@ export const TransformationOperationRow = ({
       onChange(index, {
         ...current,
         disabled: current.disabled ? undefined : true,
+      });
+    },
+    [onChange, configs]
+  );
+
+  const onCollapseToggle = useCallback(
+    (index: number) => {
+      const current = configs[index].transformation;
+      onChange(index, {
+        ...current,
+        collapsed: !current.collapsed,
       });
     },
     [onChange, configs]
@@ -233,6 +245,8 @@ export const TransformationOperationRow = ({
         draggable
         actions={renderActions}
         disabled={disabled}
+        collapsed={collapsed}
+        onCollapseToggle={() => onCollapseToggle(index)}
         expanderMessages={{
           close: 'Collapse transformation row',
           open: 'Expand transformation row',

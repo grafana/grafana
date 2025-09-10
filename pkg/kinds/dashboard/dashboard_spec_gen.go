@@ -307,6 +307,8 @@ type DataTransformerConfig struct {
 	Id string `json:"id"`
 	// Disabled transformations are skipped
 	Disabled *bool `json:"disabled,omitempty"`
+	// Whether the transformation is collapsed or not
+	Collapsed *bool `json:"collapsed,omitempty"`
 	// Optional frame matcher. When missing it will be applied to all results
 	Filter *MatcherConfig `json:"filter,omitempty"`
 	// Where to pull DataFrames from as input to transformation

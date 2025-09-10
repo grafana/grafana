@@ -454,6 +454,8 @@ lineage: schemas: [{
 			id: string
 			// Disabled transformations are skipped
 			disabled?: bool
+			// Whether the transformation is collapsed or not
+			collapsed?: bool
 			// Optional frame matcher. When missing it will be applied to all results
 			filter?: #MatcherConfig
 			// Where to pull DataFrames from as input to transformation
