@@ -329,11 +329,6 @@ func TestHandleMetricsFind(t *testing.T) {
 		})
 	}
 }
-				}
-			}
-		})
-	}
-}
 
 func TestHandleResourceReq_Success(t *testing.T) {
 	mockEvents := []GraphiteEventsResponse{{When: 1234567890, What: "event1"}}
