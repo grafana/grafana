@@ -176,11 +176,11 @@ The following example shows three series: Min, Max, and Value. The Min and Max s
 
 #### Time comparison
 
-Toggle on the **Time comparison** switch to enable the **Comparison** selector in the panel so you can compare data between two time ranges.
+Toggle on the **Time comparison** switch to show the **Comparison** selector in the panel so you can compare data between two time ranges.
 
-When you apply a time comparison to a visualization, the comparison data is displayed in grey:
+When you apply a time comparison to a visualization, the comparison data is displayed with color matching dashed lines:
 
-{{< figure src="screenshot-time-comparison-v12.2.png" max-width="750px" alt="A time series graph with the comparison selector open and Month before selected" >}}
+{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-time-series-time-comparison-v12.2.png" max-width="750px" alt="A time series graph with the comparison selector open and Previous period selected" >}}
 
 <!-- to be replaced -->
 
