@@ -1133,7 +1133,8 @@
     },
     "enrichment": {
       "error-boundary": {
-        "notification-message-section-extension": ""
+        "notification-message-section-extension": "",
+        "rule-viewer-section-extension": ""
       }
     },
     "error-modal": {
@@ -3068,6 +3069,7 @@
       "page-nav": {
         "text": {
           "details": "Подробности",
+          "enrichment": "",
           "history": "История",
           "instances": "Экземпляры",
           "query-and-conditions": "Запрос и условия",
@@ -11275,11 +11277,11 @@
       "description-clear-repository-connection": "Добавьте понятное имя для этого подключения к репозиторию.",
       "empty": "Пусто",
       "error-field-required": "Поле является обязательным.",
-      "ext-storage": "Внешнее хранилище",
-      "grafana": "Экземпляр Grafana",
+      "external-storage-label": "",
       "label-display-name": "Отображаемое имя",
       "placeholder-my-repository-connection": "Мое подключение к репозиторию",
       "text-loading-resource-information": "Загрузка информации о ресурсе...",
+      "unmanaged-resources-label": "",
       "dashboards-count_one": "{{count}} дашборд",
       "dashboards-count_few": "{{count}} дашборда",
       "dashboards-count_many": "{{count}} дашбордов",
@@ -11333,7 +11335,11 @@
     },
     "connect-repository-button": {
       "configure": "Настроить",
-      "repository-limit-info-alert": "Достигнут лимит репозитория ({{count}})"
+      "instance-fully-managed-tooltip": "",
+      "repository-limit-reached-tooltip_one": "",
+      "repository-limit-reached-tooltip_few": "",
+      "repository-limit-reached-tooltip_many": "",
+      "repository-limit-reached-tooltip_other": ""
     },
     "delete-repository-button": {
       "button-delete": "Удалить",

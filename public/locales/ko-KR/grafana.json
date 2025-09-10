@@ -1115,7 +1115,8 @@
     },
     "enrichment": {
       "error-boundary": {
-        "notification-message-section-extension": ""
+        "notification-message-section-extension": "",
+        "rule-viewer-section-extension": ""
       }
     },
     "error-modal": {
@@ -3029,6 +3030,7 @@
       "page-nav": {
         "text": {
           "details": "세부 정보",
+          "enrichment": "",
           "history": "이력",
           "instances": "인스턴스",
           "query-and-conditions": "쿼리 및 조건",
@@ -11179,11 +11181,11 @@
       "description-clear-repository-connection": "이 리포지토리 연결에 대해 알기 쉬운 이름 추가",
       "empty": "비어 있음",
       "error-field-required": "이 필드는 필수 입력 항목입니다.",
-      "ext-storage": "외부 스토리지",
-      "grafana": "Grafana 인스턴스",
+      "external-storage-label": "",
       "label-display-name": "표시 이름",
       "placeholder-my-repository-connection": "내 리포지토리 연결",
       "text-loading-resource-information": "리소스 정보 로딩 중...",
+      "unmanaged-resources-label": "",
       "dashboards-count_other": "대시보드 {{count}}개",
       "files-count_other": "파일 {{count}}개",
       "folders-count_other": "폴더 {{count}}개"
@@ -11228,7 +11230,8 @@
     },
     "connect-repository-button": {
       "configure": "구성",
-      "repository-limit-info-alert": "리포지토리 한도 도달({{count}}개)"
+      "instance-fully-managed-tooltip": "",
+      "repository-limit-reached-tooltip_other": ""
     },
     "delete-repository-button": {
       "button-delete": "삭제",

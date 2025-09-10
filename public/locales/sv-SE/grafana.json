@@ -1121,7 +1121,8 @@
     },
     "enrichment": {
       "error-boundary": {
-        "notification-message-section-extension": ""
+        "notification-message-section-extension": "",
+        "rule-viewer-section-extension": ""
       }
     },
     "error-modal": {
@@ -3042,6 +3043,7 @@
       "page-nav": {
         "text": {
           "details": "Detaljer",
+          "enrichment": "",
           "history": "Historik",
           "instances": "Instanser",
           "query-and-conditions": "Fråga och villkor",
@@ -11211,11 +11213,11 @@
       "description-clear-repository-connection": "Lägg till ett tydligt namn för den här lagringsplatsanslutningen",
       "empty": "Tom",
       "error-field-required": "Detta fält är obligatoriskt.",
-      "ext-storage": "Extern lagring",
-      "grafana": "Grafana-instans",
+      "external-storage-label": "",
       "label-display-name": "Visningsnamn",
       "placeholder-my-repository-connection": "Min lagringsplatsanslutning",
       "text-loading-resource-information": "Läser in resursinformation …",
+      "unmanaged-resources-label": "",
       "dashboards-count_one": "{{count}} kontrollpanel",
       "dashboards-count_other": "{{count}} kontrollpanel",
       "files-count_one": "{{count}} filer",
@@ -11263,7 +11265,9 @@
     },
     "connect-repository-button": {
       "configure": "Konfigurera",
-      "repository-limit-info-alert": "Gränsen för lagringsplatsen har uppnåtts ({{count}})"
+      "instance-fully-managed-tooltip": "",
+      "repository-limit-reached-tooltip_one": "",
+      "repository-limit-reached-tooltip_other": ""
     },
     "delete-repository-button": {
       "button-delete": "Ta bort",
