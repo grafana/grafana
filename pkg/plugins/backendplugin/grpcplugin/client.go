@@ -66,7 +66,7 @@ func newClientConfig(descriptor PluginDescriptor, env []string, logger log.Logge
 		return containerClientConfig(executablePath, descriptor.containerMode.image, logger, versionedPlugins, skipHostEnvVars, tracer)
 	}
 
-	logger.Info("Using process mode", "os", runtime.GOOS, "executablePath", executablePath)
+	logger.Debug("Using process mode", "os", runtime.GOOS, "executablePath", executablePath)
 
 	// We can ignore gosec G201 here, since the dynamic part of executablePath comes from the plugin definition
 	// nolint:gosec
@@ -93,7 +93,7 @@ func newClientConfig(descriptor PluginDescriptor, env []string, logger log.Logge
 }
 
 func containerClientConfig(executablePath, containerImage string, logger log.Logger, versionedPlugins map[int]goplugin.PluginSet, skipHostEnvVars bool, tracer trace.Tracer) *goplugin.ClientConfig {
-	logger.Debug("Linux host detected - using container mode", "executable", executablePath)
+	logger.Info("Using container mode", "executable", executablePath, "image", containerImage)
 	return &goplugin.ClientConfig{
 		RunnerFunc: func(l hclog.Logger, cmd *exec.Cmd, tmpDir string) (runner.Runner, error) {
 			logger.Info("Creating container runner", "executablePath", executablePath, "tmpDir", tmpDir)
