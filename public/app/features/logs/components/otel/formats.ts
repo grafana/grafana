@@ -6,7 +6,8 @@ import { LogListModel } from '../panel/processing';
 /**
  * The presence of this field along log fields determines OTel origin.
  */
-const OTEL_PROBE_FIELD = 'severity_number';
+export const OTEL_PROBE_FIELD = 'severity_number';
+const OTEL_LANGUAGE_UNKNOWN = 'unknown';
 export function identifyOTelLanguages(logs: LogListModel[] | LogRowModel[]): string[] {
   const languagesSet = new Set<string>();
   logs.forEach((log) => {
@@ -22,8 +23,8 @@ export function identifyOTelLanguage(log: LogListModel | LogRowModel): string | 
   if ('otelLanguage' in log && log.otelLanguage) {
     return log.otelLanguage;
   }
-  return log.labels[OTEL_PROBE_FIELD] !== undefined && log.labels.telemetry_sdk_language
-    ? log.labels.telemetry_sdk_language
+  return log.labels[OTEL_PROBE_FIELD] !== undefined
+    ? (log.labels.telemetry_sdk_language ?? OTEL_LANGUAGE_UNKNOWN)
     : undefined;
 }
 
