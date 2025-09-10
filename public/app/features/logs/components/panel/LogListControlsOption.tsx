@@ -93,8 +93,8 @@ export const LogListControlsSelectOption = React.forwardRef<SVGElement, SelectPr
                     type="button"
                   >
                     <Icon
-                      ref={ref}
                       {...iconButtonProps}
+                      ref={ref}
                       name={iconButtonName}
                       size="lg"
                       className={styles.customControlIcon}
@@ -113,6 +113,7 @@ export const LogListControlsSelectOption = React.forwardRef<SVGElement, SelectPr
 
 LogListControlsSelectOption.displayName = 'LogListControlsSelectOption';
 const getStyles = (theme: GrafanaTheme2, expanded: boolean) => {
+  const hoverSize = '26';
   return {
     customControlTag: css({
       color: theme.colors.primary.text,
@@ -145,6 +146,26 @@ const getStyles = (theme: GrafanaTheme2, expanded: boolean) => {
       margin: 0,
       color: theme.colors.text.secondary,
       height: theme.spacing(2),
+      '&:hover': {
+        '&:before': {
+          backgroundColor: theme.colors.action.hover,
+          opacity: 1,
+        },
+      },
+      '&:before': {
+        zIndex: -1,
+        position: 'absolute',
+        opacity: 0,
+        width: `${hoverSize}px`,
+        height: `${hoverSize}px`,
+        borderRadius: theme.shape.radius.default,
+        content: '""',
+        [theme.transitions.handleMotion('no-preference', 'reduce')]: {
+          transitionDuration: '0.2s',
+          transitionTimingFunction: 'cubic-bezier(0.4, 0, 0.2, 1)',
+          transitionProperty: 'opacity',
+        },
+      },
       '&:after': {
         display: 'block',
         content: '" "',

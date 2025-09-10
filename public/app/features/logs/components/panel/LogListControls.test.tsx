@@ -139,6 +139,29 @@ describe('LogListControls', () => {
     );
   });
 
+  test('Expands options', async () => {
+    render(
+      <LogListContextProvider {...contextProps} sortOrder={LogsSortOrder.Ascending}>
+        <LogListControls eventBus={new EventBusSrv()} />
+      </LogListContextProvider>
+    );
+    // Initial state should be collapsed
+    expect(screen.getByLabelText('Collapsed')).toBeVisible();
+    // Expanded label should not be visible
+    expect(screen.queryByText('Expanded')).not.toBeInTheDocument();
+    // Expand options
+    await userEvent.click(screen.getByLabelText('Collapsed'));
+    // Verify that the label (state) is not collapsed
+    expect(screen.queryByLabelText('Collapsed')).not.toBeInTheDocument();
+    expect(screen.getByLabelText('Expanded')).toBeVisible();
+    // Verify that the option label text is visible
+    expect(screen.getByText('Expanded')).toBeVisible();
+    expect(screen.getByText('Scroll to bottom')).toBeVisible();
+    expect(screen.getByText('Oldest logs first')).toBeVisible();
+    expect(screen.getByText('Deduplication')).toBeVisible();
+    expect(screen.getByText('Scroll to top')).toBeVisible();
+  });
+
   test('Controls sort order', async () => {
     const onLogOptionsChange = jest.fn();
     render(
@@ -227,20 +250,20 @@ describe('LogListControls', () => {
       </LogListContextProvider>
     );
 
-    await userEvent.click(screen.getByLabelText('Log line wrapping'));
+    await userEvent.click(screen.getByLabelText('Wrap disabled'));
     await userEvent.click(screen.getByText('Enable line wrapping'));
 
     expect(onLogOptionsChange).toHaveBeenCalledTimes(2);
     expect(onLogOptionsChange).toHaveBeenCalledWith('wrapLogMessage', true);
     expect(onLogOptionsChange).toHaveBeenCalledWith('prettifyJSON', false);
 
-    await userEvent.click(screen.getByLabelText('Log line wrapping'));
+    await userEvent.click(screen.getByLabelText('Wrap lines'));
     await userEvent.click(screen.getByText('Enable line wrapping and prettify JSON'));
 
     expect(onLogOptionsChange).toHaveBeenCalledTimes(4);
     expect(onLogOptionsChange).toHaveBeenCalledWith('prettifyJSON', true);
 
-    await userEvent.click(screen.getByLabelText('Log line wrapping'));
+    await userEvent.click(screen.getByLabelText('Wrap json'));
     await userEvent.click(screen.getByText('Disable line wrapping'));
 
     expect(onLogOptionsChange).toHaveBeenCalledWith('wrapLogMessage', false);
@@ -333,11 +356,11 @@ describe('LogListControls', () => {
         <LogListControls eventBus={new EventBusSrv()} />
       </LogListContextProvider>
     );
-    await userEvent.click(screen.getByLabelText('Use small font size'));
-    await screen.findByLabelText('Use default font size');
+    await userEvent.click(screen.getByLabelText('Large font'));
+    await screen.findByLabelText('Set large font');
 
-    await userEvent.click(screen.getByLabelText('Use default font size'));
-    await screen.findByLabelText('Use small font size');
+    await userEvent.click(screen.getByLabelText('Small font'));
+    await screen.findByLabelText('Set small font');
 
     config.featureToggles.newLogsPanel = originalValue;
   });

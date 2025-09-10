@@ -1,6 +1,6 @@
 import { css, cx } from '@emotion/css';
 import { capitalize } from 'lodash';
-import { forwardRef, MouseEvent, useCallback, useMemo } from 'react';
+import { MouseEvent, useCallback, useMemo } from 'react';
 
 import {
   CoreApp,
@@ -269,7 +269,11 @@ export const LogListControls = ({ eventBus, visualisationType = 'logs' }: Props)
           className={cx(styles.controlButton, styles.controlsExpandedButton)}
           variant="secondary"
           onClick={onExpandControlsClick}
-          label={t('logs.logs-controls.label.collapse', 'Expanded')}
+          label={
+            controlsExpanded
+              ? t('logs.logs-controls.label.collapse', 'Expanded')
+              : t('logs.logs-controls.label.expand', 'Collapsed')
+          }
           tooltip={
             controlsExpanded ? t('logs.logs-controls.collapse', 'Collapse') : t('logs.logs-controls.expand', 'Expand')
           }
@@ -484,6 +488,7 @@ export const LogListControls = ({ eventBus, visualisationType = 'logs' }: Props)
                   expanded={controlsExpanded}
                   name="download-alt"
                   className={styles.controlButton}
+                  label={t('logs.logs-controls.download', 'Download logs')}
                   tooltip={t('logs.logs-controls.tooltip.download', 'Download')}
                   size="lg"
                 />
@@ -558,97 +563,87 @@ export const LogListControls = ({ eventBus, visualisationType = 'logs' }: Props)
   );
 };
 
-// @todo extract component to new file
-interface TimestampResolutionButtonProps {
+interface LogSelectOptionProps {
   expanded: boolean;
 }
 
-const TimestampResolutionButton = forwardRef<HTMLButtonElement, TimestampResolutionButtonProps>(
-  ({ expanded }: TimestampResolutionButtonProps) => {
-    const styles = useStyles2(getWrapButtonStyles, expanded);
-    const { setTimestampResolution, setShowTime, showTime, timestampResolution } = useLogListContext();
+const TimestampResolutionButton = ({ expanded }: LogSelectOptionProps) => {
+  const styles = useStyles2(getWrapButtonStyles, expanded);
+  const { setTimestampResolution, setShowTime, showTime, timestampResolution } = useLogListContext();
 
-    const hide = useCallback(() => {
-      setShowTime(false);
-      reportInteraction('logs_log_list_controls_show_time_clicked', {
-        show_time: false,
-      });
-    }, [setShowTime]);
+  const hide = useCallback(() => {
+    setShowTime(false);
+    reportInteraction('logs_log_list_controls_show_time_clicked', {
+      show_time: false,
+    });
+  }, [setShowTime]);
 
-    const showMs = useCallback(() => {
-      setShowTime(true);
-      setTimestampResolution('ms');
-      reportInteraction('logs_log_list_controls_show_time_clicked', {
-        show_time: false,
-        resolution: 'ms',
-      });
-    }, [setShowTime, setTimestampResolution]);
+  const showMs = useCallback(() => {
+    setShowTime(true);
+    setTimestampResolution('ms');
+    reportInteraction('logs_log_list_controls_show_time_clicked', {
+      show_time: false,
+      resolution: 'ms',
+    });
+  }, [setShowTime, setTimestampResolution]);
 
-    const showNs = useCallback(() => {
-      setShowTime(true);
-      setTimestampResolution('ns');
-      reportInteraction('logs_log_list_controls_show_time_clicked', {
-        show_time: false,
-        resolution: 'ns',
-      });
-    }, [setShowTime, setTimestampResolution]);
+  const showNs = useCallback(() => {
+    setShowTime(true);
+    setTimestampResolution('ns');
+    reportInteraction('logs_log_list_controls_show_time_clicked', {
+      show_time: false,
+      resolution: 'ns',
+    });
+  }, [setShowTime, setTimestampResolution]);
 
-    const timestampMenu = useMemo(
-      () => (
-        <Menu>
-          <Menu.Item
-            label={t('logs.logs-controls.timestamp.hide', 'Hide timestamps')}
-            className={!showTime ? styles.menuItemActive : undefined}
-            onClick={hide}
-          />
-          <Menu.Item
-            label={t('logs.logs-controls.timestamp.milliseconds', 'Show millisecond timestamps')}
-            className={showTime && timestampResolution === 'ms' ? styles.menuItemActive : undefined}
-            onClick={showMs}
-          />
-          <Menu.Item
-            label={t('logs.logs-controls.timestamp.nanoseconds', 'Show nanosecond timestamps')}
-            className={showTime && timestampResolution === 'ns' ? styles.menuItemActive : undefined}
-            onClick={showNs}
-          />
-        </Menu>
-      ),
-      [hide, showMs, showNs, showTime, styles.menuItemActive, timestampResolution]
-    );
+  const timestampMenu = useMemo(
+    () => (
+      <Menu>
+        <Menu.Item
+          label={t('logs.logs-controls.timestamp.hide', 'Hide timestamps')}
+          className={!showTime ? styles.menuItemActive : undefined}
+          onClick={hide}
+        />
+        <Menu.Item
+          label={t('logs.logs-controls.timestamp.milliseconds', 'Show millisecond timestamps')}
+          className={showTime && timestampResolution === 'ms' ? styles.menuItemActive : undefined}
+          onClick={showMs}
+        />
+        <Menu.Item
+          label={t('logs.logs-controls.timestamp.nanoseconds', 'Show nanosecond timestamps')}
+          className={showTime && timestampResolution === 'ns' ? styles.menuItemActive : undefined}
+          onClick={showNs}
+        />
+      </Menu>
+    ),
+    [hide, showMs, showNs, showTime, styles.menuItemActive, timestampResolution]
+  );
 
-    const labelText = !showTime
-      ? t('logs.logs-controls.timestamp.label.hide', 'Hide timestamps')
-      : timestampResolution === 'ms'
-        ? t('logs.logs-controls.timestamp.label.ms', 'Display ms')
-        : t('logs.logs-controls.timestamp.label.ns', 'Display ns');
+  const labelText = !showTime
+    ? t('logs.logs-controls.timestamp.label.hide', 'Hide timestamps')
+    : timestampResolution === 'ms'
+      ? t('logs.logs-controls.timestamp.label.ms', 'Display ms')
+      : t('logs.logs-controls.timestamp.label.ns', 'Display ns');
 
-    const customTagText =
-      timestampResolution === 'ms'
-        ? t('logs.logs-controls.resolution-ms', 'ms')
-        : t('logs.logs-controls.resolution-ns', 'ns');
+  const customTagText =
+    timestampResolution === 'ms'
+      ? t('logs.logs-controls.resolution-ms', 'ms')
+      : t('logs.logs-controls.resolution-ns', 'ns');
 
-    return (
-      <LogListControlsSelectOption
-        expanded={expanded}
-        name={'clock-nine'}
-        isActive={showTime}
-        dropdown={timestampMenu}
-        tooltip={t('logs.logs-controls.timestamp.tooltip', 'Set timestamp format')}
-        label={labelText}
-        buttonAriaLabel={t('logs.logs-controls.timestamp.label', 'Log timestamps')}
-        customTagText={customTagText}
-      />
-    );
-  }
-);
-TimestampResolutionButton.displayName = 'TimestampResolutionButton';
-
-// @todo extract component to new file
-interface WrapLogMessageButtonProps {
-  expanded: boolean;
-}
-
-const WrapLogMessageButton = ({ expanded }: WrapLogMessageButtonProps) => {
+  return (
+    <LogListControlsSelectOption
+      expanded={expanded}
+      name={'clock-nine'}
+      isActive={showTime}
+      dropdown={timestampMenu}
+      tooltip={t('logs.logs-controls.timestamp.tooltip', 'Set timestamp format')}
+      label={labelText}
+      buttonAriaLabel={t('logs.logs-controls.timestamp.label', 'Log timestamps')}
+      customTagText={customTagText}
+    />
+  );
+};
+const WrapLogMessageButton = ({ expanded }: LogSelectOptionProps) => {
   const styles = useStyles2(getWrapButtonStyles, expanded);
   const { prettifyJSON, setPrettifyJSON, setWrapLogMessage, wrapLogMessage } = useLogListContext();
 
@@ -766,7 +761,6 @@ const getStyles = (theme: GrafanaTheme2, controlsExpanded: boolean) => {
       paddingTop: theme.spacing(0.75),
       paddingLeft: theme.spacing(1),
       borderLeft: `solid 1px ${theme.colors.border.medium}`,
-      overflow: 'hidden',
       minWidth: theme.spacing(4),
       backgroundColor: theme.colors.background.primary,
     }),
