@@ -47,25 +47,17 @@ export function mapInternalLinkToExplore(options: LinkToExploreOptions): LinkMod
   const interpolatedCorrelationData = interpolateObject(link.meta?.correlationData, scopedVars, replaceVariables);
   const title = link.title ? link.title : internalLink.datasourceName;
 
-  let meta;
-
-  if (interpolatedQuery) {
-    meta = {
-      internalLink: {
-        interpolated: {
-          query: {
-            ...interpolatedQuery,
-            // data source is defined in a separate property in DataLink, we ensure it's put back together after interpolation
-            datasource: {
-              ...interpolatedQuery.datasource,
-              uid: internalLink.datasourceUid,
-            },
-          },
-          ...(range && { timeRange: range }),
-        },
+  const interpolation = interpolatedQuery ? {
+    query: {
+      ...interpolatedQuery,
+      // data source is defined in a separate property in DataLink, we ensure it's put back together after interpolation
+      datasource: {
+        ...interpolatedQuery.datasource,
+        uid: internalLink.datasourceUid,
       },
-    };
-  }
+    },
+    ...(range && { timeRange: range }),
+  } : undefined
 
   return {
     title: replaceVariables(title, scopedVars),
@@ -97,7 +89,7 @@ export function mapInternalLinkToExplore(options: LinkToExploreOptions): LinkMod
       : undefined,
     target: link?.targetBlank ? '_blank' : '_self',
     origin: field,
-    meta,
+    ...(interpolation && { interpolation }),
   };
 }
 

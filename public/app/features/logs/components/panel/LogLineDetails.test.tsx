@@ -689,14 +689,11 @@ describe('LogLineDetails', () => {
             return field.config.links.map((link) => {
               return {
                 href: '/explore',
-                meta: {
-                  internalLink: {
-                    interpolated: {
-                      query: {
-                        query: 'abcd1234',
-                        queryType: 'traceql',
-                      },
-                    },
+                interpolation: {
+                  query: {
+                    refId: 'A',
+                    query: 'abcd1234',
+                    queryType: 'traceql',
                   },
                 },
                 title: 'tempo',
@@ -761,14 +758,11 @@ describe('LogLineDetails', () => {
             return field.config.links.map((link) => {
               return {
                 href: '/explore',
-                meta: {
-                  internalLink: {
-                    interpolated: {
-                      query: {
-                        query: 'abcd1234',
-                        queryType: 'traceql',
-                      },
-                    },
+                interpolation: {
+                  query: {
+                    refId: 'A',
+                    query: 'abcd1234',
+                    queryType: 'traceql',
                   },
                 },
                 title: 'tempo',

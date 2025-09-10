@@ -103,15 +103,11 @@ export interface LinkModel<T = any> {
   onClick?: (e: any, origin?: any) => void;
   oneClick?: boolean;
 
-  meta?: { internalLink?: InternalLinkModelMeta };
-}
-
-type InternalLinkModelMeta = {
-  interpolated: {
-    query: DataQuery;
+  interpolation?: {
+    query?: DataQuery;
     timeRange?: TimeRange;
-  };
-};
+  }
+}
 
 /**
  * Provides a way to produce links on demand
