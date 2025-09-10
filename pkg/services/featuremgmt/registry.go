@@ -1350,9 +1350,10 @@ var (
 		},
 		{
 			Name:        "elasticsearchCrossClusterSearch",
-			Description: "Enables cross cluster search in the Elasticsearch datasource",
-			Stage:       FeatureStagePublicPreview,
-			Owner:       awsDatasourcesSquad,
+			Description: "Enables cross cluster search in the Elasticsearch data source",
+			Stage:       FeatureStageGeneralAvailability,
+			Owner:       grafanaPartnerPluginsSquad,
+			Expression:  "false",
 		},
 		{
 			Name:         "unifiedHistory",
