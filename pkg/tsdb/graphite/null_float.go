@@ -1,3 +1,5 @@
+// Copied from Grafana core https://github.com/grafana/grafana/blob/main/pkg/components/null/float.go
+// Graphite DataPoints utilise the Float type here https://github.com/grafana/grafana/blob/main/pkg/tsdb/graphite/types.go#L10
 package graphite
 
 import (
