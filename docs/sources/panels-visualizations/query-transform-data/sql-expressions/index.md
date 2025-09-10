@@ -19,7 +19,7 @@ refs:
 
 # SQL expressions
 
-{{< docs/private-preview product="SQL expressions" >}}
+{{< docs/public-preview product="SQL expressions" >}}
 
 SQL Expressions are server-side expressions that manipulate and transform the results of data source queries using MySQL-like syntax. They allow you to easily query and transform your data after it has been queried, using SQL, which provides a familiar and powerful syntax that can handle everything from simple filters to highly complex, multi-step transformations.
 
@@ -60,11 +60,17 @@ A key capability of SQL expressions is the ability to JOIN data from multiple ta
 
 To work with SQL expressions, you must use data from a backend data source. In Grafana, a backend data source refers to a data source plugin or integration that communicates with a database, service, or API through the Grafana server, rather than directly from the browser (frontend).
 
+## Known limitations
+
+- Currently, only one SQL expression is supported per panel or alert.
+- Grafana supports certain data sources. Refer to [compatible data sources](#compatible-data-sources) for a current list.
+- Autocomplete is available, but column/field autocomplete is only available after enabling the `sqlExpressionsColumnAutoComplete` feature toggle, which is provided on an experimental basis.
+
 ## Compatible data sources
 
 The following are compatible data sources:
 
-**Full support:** All query types for each data source are supported.
+**Full support:** Grafana supports all query types for each of these data sources.
 
 - Elasticsearch
 - MySQL
@@ -73,7 +79,7 @@ The following are compatible data sources:
 - Google Sheets
 - Amazon Athena
 
-**Partial support:** The following data sources offer limited or conditional support. Some allow different types of queries, depending on the service being accessed. For example, Azure Monitor can query multiple services, each with its own query format. In some cases, you can also change the query type within a panel.
+**Partial support:** The following data sources have limited or conditional support. Some support multiple query types depending on the service. For example, Azure Monitor can query multiple services, each with its own query format. In some cases, you can also switch the query type within a panel.
 
 - InfluxDB
 - Infinity
@@ -96,6 +102,10 @@ To create a SQL expression, complete the following steps:
 1. Select **SQL** from the drop-down.
 
 After you have added a SQL expression, you can select from other data source queries by referencing the RefIDs of the queries in your SQL expression as if they were tables in a SQL database.
+
+{{< admonition type="note" >}}
+The **RefID** is a unique identifier assigned to each query within a Grafana panel that serves as a reference name for that query's data.
+{{< /admonition >}}
 
 ![Using the RefID](/media/docs/sql-expressions/using-the-RefID.png)
 
@@ -134,22 +144,65 @@ The SQL expression workflow in Grafana is designed with the following behaviors:
 
 - **Non-tabular or incorrectly shaped data will not render in certain panels.** Visualizations such as graphs or gauges require properly structured data. Mismatched formats will result in rendering issues or missing data.
 
-For data to be used in SQL expressions, it must be in a **tabular format**, specifically the **FullLong format**. This means all relevant data is contained within a single table, with values such as metric labels stored as columns and individual cells. Because not all data sources return results in this format by default, Grafana will automatically convert compatible query results to FullLong format when they are referenced in a SQL expression.
-
 ## SQL conversion rules
 
-When a RefID is referenced within a SQL statement (e.g., `SELECT * FROM A`), the system invokes a distinct SQL conversion process.
+When you reference a RefID within a SQL statement (e.g., `SELECT * FROM A`), the system invokes a distinct SQL conversion process.
 
 The SQL conversion path:
 
-- The query result is treated as a single data frame, without labels, and is mapped directly to a tabular format.
-- If the frame type is present and is either numeric, wide time series, or multi-frame time series (for example, labeled formats), Grafana automatically converts the data into a table structure.
+- The query result appears as a single data frame, without labels, and is mapped directly to a tabular format.
+- If the frame type is present and is either numeric, wide time series, or multi-frame time series (for example: labeled formats), Grafana automatically converts the data into a table structure.
 
-## Known limitations
+## Supported functions
 
-- Currently, only one SQL expression is supported per panel or alert.
-- Grafana supports certain data sources. Refer to [compatible data sources](#compatible-data-sources) for a current list.
-- Autocomplete is available, but column/field autocomplete is only available after enabling the `sqlExpressionsColumnAutoComplete` feature toggle, which is provided on an experimental basis.
+Grafana maintains a complete list of supported SQL keywords, operators, and functions in the SQL expressions query validator implementation.
+
+For the most up-to-date reference of all supported SQL functionality, refer to the `allowedNode` and `allowedFunction` definitions in the Grafana [codebase](https://github.com/grafana/grafana/blob/main/pkg/expr/sql/parser_allow.go).
+
+## Alerting and recording rules
+
+SQL expressions integrates alerting and recording rules, allowing you to define complex conditions and metrics using standard SQL queries. The system processes your query results and automatically creates alert instances or recorded metrics based on the returned data structure.
+
+For SQL Expressions to work properly with alerting and recording rules, your query must return:
+
+- One numeric column - **_required_**. This contains the value that triggers alerts or gets recorded.
+- Unique string column combinations - **_required_**. Each row must have a unique combination of string column values.
+- One or more string columns - _optional_. These become **labels** for the alert instances or metrics. Examples: `service`, `region`.
+
+Consider the following query results:
+
+```sql
+error_count,service,region
+25,auth-service,us-east
+0,payment-service,us-west
+15,user-service,eu-west
+```
+
+This query returns:
+
+- the numeric column `error_count` (values: 25, 0, 15)
+- the string columns `service` and `region`
+
+For alert rules, this creates three alert instances:
+
+- First instance with labels {service=auth-service, region=us-east} and value 25 (triggers alert - high error count)
+- Second instance with labels {service=payment-service, region=us-west} and value 0 (no alert - zero errors)
+- Third instance with labels {service=user-service, region=eu-west} and value 15 (triggers alert - elevated error count)
+
+For recording rules, creates one metric with three series:
+
+- First series: error_count_total{service=auth-service, region=us-east} 25
+- Second series: error_count_total{service=payment-service, region=us-west} 0
+- Third series: error_count_total{service=user-service, region=eu-west} 15
+
+Following are some best practices for alerting and recording rules:
+
+- Keep numeric values meaningful (for example: error counts, request duration).
+- Use clear, descriptive column names - these become your labels.
+- Keep string values short and consistent.
+- Avoid too many unique label combinations, as this can result in high cardinality.
+- Always use `GROUP BY` to avoid duplicate label errors.
+- Aggregate numeric values logically (for example: `SUM(error_count)`).
 
 ## Supported data source formats
 
@@ -202,3 +255,19 @@ During conversion:
 2. Add the SQL expression `SELECT * from A`. After you add a SQL expression that selects from RefID A, Grafana converts it to a table response:
 
    ![Add the SQL expression](/media/docs/sql-expressions/add-the-sql-expression.png)
+
+## LLM integration
+
+The Grafana LLM plugin seamlessly integrates AI-powered assistance into your SQL expressions workflow.
+
+{{< admonition type="note" >}}
+The Grafana LLM plugin is currently in public preview, meaning Grafana offers limited support, and breaking changes might occur prior to the feature being made generally available.
+{{< /admonition >}}
+
+To use this integration, first [install and configure the LLM plugin](https://grafana.com/grafana/plugins/grafana-llm-app/). After installation, open your dashboard and select **Edit** to open the panel editor. Navigate to the **Queries** tab and scroll to the bottom where you'll find two new buttons positioned to the right of the **Run query** button in your SQL Expressions query.
+
+{{< figure src="/media/docs/sql-expressions/sqlexpressions-LLM-integration-v12.2.png" caption="LLM integration" >}}
+
+Click **Explain query** to open a drawer that displays a detailed explanation of your query, including its interpreted business meaning and performance statistics. Once the explanation is generated, the button changes to **View explanation**.
+
+Click **Improve query** to open a suggestions drawer that contains performance and reliability enhancements, column naming best practices, and guidance on panel optimization. Click **Apply** to implement a suggestion. After you’ve interacted with the interface, you'll see a **Suggestions** button for quick access. Newer suggestions appear at the top, with older ones listed below, creating a history of improvements. If your SQL query has a parsing error, such as a syntax issue, the LLM will attempt to provide a corrected version. The LLM automatically identifies errors and helps you rewrite the query correctly.
