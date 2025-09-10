@@ -5,9 +5,6 @@
 dist_tag="canary"
 registry="http://localhost:4873"
 
-# shellcheck source=./scripts/helpers/exit-if-fail.sh
-source "$(dirname "$0")/helpers/exit-if-fail.sh"
-
 if [ -z "$NPM_TOKEN" ]; then
   echo "The NPM_TOKEN environment variable does not exist."
   exit 1
