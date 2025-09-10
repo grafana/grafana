@@ -1,10 +1,6 @@
-import { SortColumn } from 'react-data-grid';
-
 import {
-  createDataFrame,
   createTheme,
   DataFrame,
-  DataFrameWithValue,
   DataLink,
   DisplayValue,
   Field,
@@ -29,7 +25,6 @@ import {
   getAlignment,
   getJustifyContent,
   migrateTableDisplayModeToCellOptions,
-  getColumnTypes,
   computeColWidths,
   getRowHeight,
   buildCellHeightMeasurers,
