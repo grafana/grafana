@@ -1,4 +1,24 @@
 {
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "type": "grafana",
+          "uid": "-- Grafana --"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations \u0026 Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "links": [],
   "panels": [
     {
       "description": "Tests basic migration with default style pattern (/.*/) containing thresholds and colors. Should convert styles to fieldConfig.defaults with threshold steps.",
@@ -19,8 +39,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "red",
-                "value": null
+                "color": "red"
               },
               {
                 "color": "yellow",
@@ -58,10 +77,11 @@
         {
           "refId": "A"
         },
-        {}
+        {
+          "refId": "B"
+        }
       ],
       "title": "Basic Angular Table with Defaults",
-      "transformations": [],
       "type": "table"
     },
     {
@@ -84,8 +104,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
-                "value": null
+                "color": "green"
               },
               {
                 "color": "yellow",
@@ -198,13 +217,7 @@
         "showHeader": true
       },
       "pluginVersion": "12.1.0",
-      "targets": [
-        {
-          "refId": "A"
-        }
-      ],
       "title": "Complex Table with All Style Features",
-      "transformations": [],
       "type": "table"
     },
     {
@@ -253,11 +266,6 @@
         "showHeader": true
       },
       "pluginVersion": "12.1.0",
-      "targets": [
-        {
-          "refId": "A"
-        }
-      ],
       "title": "Table with Timeseries Aggregations Transform",
       "transformations": [
         {
@@ -322,11 +330,6 @@
         "showHeader": true
       },
       "pluginVersion": "12.1.0",
-      "targets": [
-        {
-          "refId": "A"
-        }
-      ],
       "title": "Table with Timeseries to Rows Transform",
       "transformations": [
         {
@@ -383,11 +386,6 @@
         "showHeader": true
       },
       "pluginVersion": "12.1.0",
-      "targets": [
-        {
-          "refId": "A"
-        }
-      ],
       "title": "Table with Timeseries to Columns Transform",
       "transformations": [
         {
@@ -443,11 +441,6 @@
         "showHeader": true
       },
       "pluginVersion": "12.1.0",
-      "targets": [
-        {
-          "refId": "A"
-        }
-      ],
       "title": "Table with Merge Transform",
       "transformations": [
         {
@@ -504,11 +497,6 @@
         "showHeader": true
       },
       "pluginVersion": "12.1.0",
-      "targets": [
-        {
-          "refId": "A"
-        }
-      ],
       "title": "Table with Existing Transformations",
       "transformations": [
         {
@@ -550,8 +538,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
-                "value": null
+                "color": "green"
               },
               {
                 "color": "yellow",
@@ -584,13 +571,7 @@
         "showHeader": true
       },
       "pluginVersion": "12.1.0",
-      "targets": [
-        {
-          "refId": "A"
-        }
-      ],
       "title": "Mixed Threshold Types",
-      "transformations": [],
       "type": "table"
     },
     {
@@ -680,13 +661,7 @@
         "showHeader": true
       },
       "pluginVersion": "12.1.0",
-      "targets": [
-        {
-          "refId": "A"
-        }
-      ],
       "title": "All Color Modes Test",
-      "transformations": [],
       "type": "table"
     },
     {
@@ -770,13 +745,7 @@
         "showHeader": true
       },
       "pluginVersion": "12.1.0",
-      "targets": [
-        {
-          "refId": "A"
-        }
-      ],
       "title": "All Alignment Options",
-      "transformations": [],
       "type": "table"
     },
     {
@@ -873,13 +842,7 @@
         "showHeader": true
       },
       "pluginVersion": "12.1.0",
-      "targets": [
-        {
-          "refId": "A"
-        }
-      ],
       "title": "Field Matcher Types Test",
-      "transformations": [],
       "type": "table"
     },
     {
@@ -982,13 +945,7 @@
         "showHeader": true
       },
       "pluginVersion": "12.1.0",
-      "targets": [
-        {
-          "refId": "A"
-        }
-      ],
       "title": "Link Configuration Test",
-      "transformations": [],
       "type": "table"
     },
     {
@@ -1085,13 +1042,7 @@
         "showHeader": true
       },
       "pluginVersion": "12.1.0",
-      "targets": [
-        {
-          "refId": "A"
-        }
-      ],
       "title": "Date Format Variations",
-      "transformations": [],
       "type": "table"
     },
     {
@@ -1113,47 +1064,42 @@
         }
       ],
       "table": "table2",
-      "targets": [
-        {
-          "refId": "A"
-        }
-      ],
       "title": "React Table - Should NOT Migrate",
       "type": "table"
     },
     {
       "description": "Angular table without styles property should not be migrated.",
       "id": 15,
-      "targets": [
-        {
-          "refId": "A"
-        }
-      ],
       "title": "Angular Table without Styles - Should NOT Migrate",
       "type": "table"
     },
     {
+      "autoMigrateFrom": "graph",
       "description": "Non-table panels should remain completely unchanged.",
       "id": 16,
-      "targets": [
-        {
-          "refId": "A"
-        }
-      ],
       "title": "Non-Table Panel - Should NOT Migrate",
-      "type": "graph"
+      "type": "timeseries"
     },
     {
+      "autoMigrateFrom": "singlestat",
       "description": "Other panel types should not be affected by table migration.",
       "id": 17,
-      "targets": [
-        {
-          "refId": "A"
-        }
-      ],
       "title": "Singlestat Panel - Should NOT Migrate",
-      "type": "singlestat"
+      "type": "stat"
     }
   ],
-  "schemaVersion": 24
+  "schemaVersion": 24,
+  "tags": [],
+  "templating": {
+    "list": []
+  },
+  "time": {
+    "from": "now-6h",
+    "to": "now"
+  },
+  "timepicker": {},
+  "timezone": "",
+  "title": "No Title",
+  "version": 0,
+  "weekStart": ""
 }

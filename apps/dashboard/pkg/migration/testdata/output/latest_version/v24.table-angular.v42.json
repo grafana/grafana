@@ -1,4 +1,24 @@
 {
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "type": "grafana",
+          "uid": "-- Grafana --"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations \u0026 Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "links": [],
   "panels": [
     {
       "datasource": {
@@ -24,8 +44,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "red",
-                "value": null
+                "color": "red"
               },
               {
                 "color": "yellow",
@@ -73,11 +92,11 @@
             "apiVersion": "v1",
             "type": "prometheus",
             "uid": "default-ds-uid"
-          }
+          },
+          "refId": "B"
         }
       ],
       "title": "Basic Angular Table with Defaults",
-      "transformations": [],
       "type": "table"
     },
     {
@@ -105,8 +124,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
-                "value": null
+                "color": "green"
               },
               {
                 "color": "yellow",
@@ -230,7 +248,6 @@
         }
       ],
       "title": "Complex Table with All Style Features",
-      "transformations": [],
       "type": "table"
     },
     {
@@ -631,8 +648,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
-                "value": null
+                "color": "green"
               },
               {
                 "color": "yellow",
@@ -676,7 +692,6 @@
         }
       ],
       "title": "Mixed Threshold Types",
-      "transformations": [],
       "type": "table"
     },
     {
@@ -782,7 +797,6 @@
         }
       ],
       "title": "All Color Modes Test",
-      "transformations": [],
       "type": "table"
     },
     {
@@ -882,7 +896,6 @@
         }
       ],
       "title": "All Alignment Options",
-      "transformations": [],
       "type": "table"
     },
     {
@@ -995,7 +1008,6 @@
         }
       ],
       "title": "Field Matcher Types Test",
-      "transformations": [],
       "type": "table"
     },
     {
@@ -1114,7 +1126,6 @@
         }
       ],
       "title": "Link Configuration Test",
-      "transformations": [],
       "type": "table"
     },
     {
@@ -1227,7 +1238,6 @@
         }
       ],
       "title": "Date Format Variations",
-      "transformations": [],
       "type": "table"
     },
     {
@@ -1289,6 +1299,7 @@
       "type": "table"
     },
     {
+      "autoMigrateFrom": "graph",
       "datasource": {
         "apiVersion": "v1",
         "type": "prometheus",
@@ -1307,7 +1318,7 @@
         }
       ],
       "title": "Non-Table Panel - Should NOT Migrate",
-      "type": "graph"
+      "type": "timeseries"
     },
     {
       "datasource": {
@@ -1323,8 +1334,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
-                "value": null
+                "color": "green"
               },
               {
                 "color": "red",
@@ -1369,5 +1379,18 @@
     }
   ],
   "refresh": "",
-  "schemaVersion": 42
+  "schemaVersion": 42,
+  "tags": [],
+  "templating": {
+    "list": []
+  },
+  "time": {
+    "from": "now-6h",
+    "to": "now"
+  },
+  "timepicker": {},
+  "timezone": "",
+  "title": "No Title",
+  "version": 0,
+  "weekStart": ""
 }

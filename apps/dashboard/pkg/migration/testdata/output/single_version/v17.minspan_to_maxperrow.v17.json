@@ -1,6 +1,27 @@
 {
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "type": "grafana",
+          "uid": "-- Grafana --"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations \u0026 Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "links": [],
   "panels": [
     {
+      "autoMigrateFrom": "graph",
       "gridPos": {
         "h": 8,
         "w": 12,
@@ -10,9 +31,23 @@
       "id": 1,
       "maxPerRow": 3,
       "title": "Panel with minSpan 8",
-      "type": "graph"
+      "type": "timeseries"
     },
     {
+      "autoMigrateFrom": "graph",
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 0
+      },
+      "id": 4,
+      "maxPerRow": 2,
+      "title": "Panel with minSpan 12",
+      "type": "timeseries"
+    },
+    {
+      "autoMigrateFrom": "singlestat",
       "gridPos": {
         "h": 4,
         "w": 6,
@@ -22,7 +57,42 @@
       "id": 2,
       "maxPerRow": 6,
       "title": "Panel with minSpan 4",
-      "type": "singlestat"
+      "type": "stat"
+    },
+    {
+      "gridPos": {
+        "h": 3,
+        "w": 4,
+        "x": 6,
+        "y": 8
+      },
+      "id": 6,
+      "maxPerRow": 24,
+      "title": "Panel with minSpan 1",
+      "type": "stat"
+    },
+    {
+      "autoMigrateFrom": "graph",
+      "gridPos": {
+        "h": 6,
+        "w": 8,
+        "x": 12,
+        "y": 8
+      },
+      "id": 7,
+      "title": "Panel without minSpan",
+      "type": "timeseries"
+    },
+    {
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 18,
+        "y": 8
+      },
+      "id": 8,
+      "title": "Panel with invalid minSpan",
+      "type": "text"
     },
     {
       "gridPos": {
@@ -38,18 +108,6 @@
     },
     {
       "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 12,
-        "y": 0
-      },
-      "id": 4,
-      "maxPerRow": 2,
-      "title": "Panel with minSpan 12",
-      "type": "graph"
-    },
-    {
-      "gridPos": {
         "h": 4,
         "w": 24,
         "x": 0,
@@ -61,40 +119,7 @@
       "type": "gauge"
     },
     {
-      "gridPos": {
-        "h": 3,
-        "w": 4,
-        "x": 6,
-        "y": 8
-      },
-      "id": 6,
-      "maxPerRow": 24,
-      "title": "Panel with minSpan 1",
-      "type": "stat"
-    },
-    {
-      "gridPos": {
-        "h": 6,
-        "w": 8,
-        "x": 12,
-        "y": 8
-      },
-      "id": 7,
-      "title": "Panel without minSpan",
-      "type": "graph"
-    },
-    {
-      "gridPos": {
-        "h": 4,
-        "w": 6,
-        "x": 18,
-        "y": 8
-      },
-      "id": 8,
-      "title": "Panel with invalid minSpan",
-      "type": "text"
-    },
-    {
+      "autoMigrateFrom": "graph",
       "gridPos": {
         "h": 4,
         "w": 6,
@@ -103,9 +128,10 @@
       },
       "id": 9,
       "title": "Panel with zero minSpan",
-      "type": "graph"
+      "type": "timeseries"
     },
     {
+      "autoMigrateFrom": "graph",
       "gridPos": {
         "h": 4,
         "w": 6,
@@ -114,9 +140,21 @@
       },
       "id": 10,
       "title": "Panel with negative minSpan",
-      "type": "graph"
+      "type": "timeseries"
     }
   ],
   "schemaVersion": 17,
-  "title": "V17 MinSpan to MaxPerRow Migration Test Dashboard"
+  "tags": [],
+  "templating": {
+    "list": []
+  },
+  "time": {
+    "from": "now-6h",
+    "to": "now"
+  },
+  "timepicker": {},
+  "timezone": "",
+  "title": "V17 MinSpan to MaxPerRow Migration Test Dashboard",
+  "version": 0,
+  "weekStart": ""
 }

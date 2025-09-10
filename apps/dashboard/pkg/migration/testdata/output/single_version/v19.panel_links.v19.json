@@ -1,6 +1,27 @@
 {
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "type": "grafana",
+          "uid": "-- Grafana --"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations \u0026 Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "links": [],
   "panels": [
     {
+      "autoMigrateFrom": "graph",
       "id": 1,
       "links": [
         {
@@ -10,7 +31,7 @@
         }
       ],
       "title": "Panel with legacy dashboard link",
-      "type": "graph"
+      "type": "timeseries"
     },
     {
       "id": 2,
@@ -61,11 +82,24 @@
       "type": "gauge"
     },
     {
+      "autoMigrateFrom": "singlestat",
       "id": 6,
       "title": "Panel with no links",
-      "type": "singlestat"
+      "type": "stat"
     }
   ],
   "schemaVersion": 19,
-  "title": "V19 Panel Links Migration Test Dashboard"
+  "tags": [],
+  "templating": {
+    "list": []
+  },
+  "time": {
+    "from": "now-6h",
+    "to": "now"
+  },
+  "timepicker": {},
+  "timezone": "",
+  "title": "V19 Panel Links Migration Test Dashboard",
+  "version": 0,
+  "weekStart": ""
 }

@@ -2,11 +2,24 @@
   "__inputs": [],
   "__requires": [],
   "annotations": {
-    "list": []
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "type": "grafana",
+          "uid": "-- Grafana --"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations \u0026 Alerts",
+        "type": "dashboard"
+      }
+    ]
   },
   "description": "Sample monitoring dashboard for testing purposes.",
   "editable": false,
-  "gnetId": null,
+  "fiscalYearStartMonth": 0,
   "graphTooltip": 0,
   "hideControls": false,
   "id": 36098,
@@ -72,8 +85,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
-                "value": null
+                "color": "green"
               },
               {
                 "color": "red",
@@ -112,7 +124,8 @@
           "expr": "random_metric_alpha{env=~\"$env\", region=~\"$region\", node=~\"$node\"}",
           "format": "time_series",
           "intervalFactor": 2,
-          "legendFormat": "{{node}} - {{service}}"
+          "legendFormat": "{{node}} - {{service}}",
+          "refId": "A"
         }
       ],
       "title": "Alpha metric",
@@ -163,8 +176,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
-                "value": null
+                "color": "green"
               },
               {
                 "color": "red",
@@ -204,7 +216,8 @@
           "format": "time_series",
           "interval": "1m",
           "intervalFactor": 2,
-          "legendFormat": "{{node}}"
+          "legendFormat": "{{node}}",
+          "refId": "A"
         }
       ],
       "title": "Beta counter",
@@ -255,8 +268,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
-                "value": null
+                "color": "green"
               },
               {
                 "color": "red",
@@ -296,7 +308,8 @@
           "format": "time_series",
           "interval": "1m",
           "intervalFactor": 2,
-          "legendFormat": "{{node}}"
+          "legendFormat": "{{node}}",
+          "refId": "A"
         }
       ],
       "title": "Gamma errors",
@@ -347,8 +360,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
-                "value": null
+                "color": "green"
               },
               {
                 "color": "red",
@@ -388,7 +400,8 @@
           "format": "time_series",
           "interval": "1m",
           "intervalFactor": 2,
-          "legendFormat": "{{node}}"
+          "legendFormat": "{{node}}",
+          "refId": "A"
         }
       ],
       "title": "Delta events",
@@ -443,8 +456,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
-                "value": null
+                "color": "green"
               }
             ]
           },
@@ -479,7 +491,8 @@
           "expr": "example_usage_epsilon{env=~\"$env\", region=~\"$region\", node=~\"$node\"}",
           "format": "time_series",
           "intervalFactor": 2,
-          "legendFormat": "{{node}} - {{status}}"
+          "legendFormat": "{{node}} - {{status}}",
+          "refId": "A"
         }
       ],
       "title": "Epsilon usage",
@@ -534,8 +547,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
-                "value": null
+                "color": "green"
               }
             ]
           },
@@ -570,7 +582,8 @@
           "expr": "random_total_zeta{env=~\"$env\", region=~\"$region\", node=~\"$node\"}",
           "format": "time_series",
           "intervalFactor": 2,
-          "legendFormat": "{{node}} - total"
+          "legendFormat": "{{node}} - total",
+          "refId": "A"
         },
         {
           "datasource": {
@@ -579,7 +592,8 @@
           "expr": "sample_target_eta{env=~\"$env\", region=~\"$region\", node=~\"$node\"}",
           "format": "time_series",
           "intervalFactor": 2,
-          "legendFormat": "{{node}} - target"
+          "legendFormat": "{{node}} - target",
+          "refId": "B"
         }
       ],
       "title": "Zeta and Eta",
@@ -602,8 +616,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
-                "value": null
+                "color": "green"
               }
             ]
           },
@@ -639,7 +652,8 @@
           "expr": "100 * random_total_zeta{env=~\"$env\", region=~\"$region\", node=~\"$node\"} / clamp_min(test_available_theta{env=~\"$env\", region=~\"$region\", node=~\"$node\"},1)",
           "format": "time_series",
           "intervalFactor": 2,
-          "legendFormat": "{{node}}"
+          "legendFormat": "{{node}}",
+          "refId": "A"
         }
       ],
       "title": "Theta utilization",
@@ -713,8 +727,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
-                "value": null
+                "color": "green"
               }
             ]
           },
@@ -750,7 +763,8 @@
           "format": "time_series",
           "interval": "1m",
           "intervalFactor": 2,
-          "legendFormat": "{{node}} - {{service}}"
+          "legendFormat": "{{node}} - {{service}}",
+          "refId": "A"
         }
       ],
       "title": "Iota primary latency",
@@ -801,8 +815,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
-                "value": null
+                "color": "green"
               }
             ]
           },
@@ -838,7 +851,8 @@
           "format": "time_series",
           "interval": "1m",
           "intervalFactor": 2,
-          "legendFormat": "{{node}} - {{service}}"
+          "legendFormat": "{{node}} - {{service}}",
+          "refId": "A"
         }
       ],
       "title": "Iota secondary latency",
@@ -889,8 +903,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
-                "value": null
+                "color": "green"
               },
               {
                 "color": "red",
@@ -930,7 +943,8 @@
           "format": "time_series",
           "interval": "1m",
           "intervalFactor": 2,
-          "legendFormat": "{{node}} - {{service}}"
+          "legendFormat": "{{node}} - {{service}}",
+          "refId": "A"
         }
       ],
       "title": "Kappa expansions",
@@ -969,10 +983,11 @@
         "name": "env",
         "options": [],
         "query": "label_values(system_info_lambda{}, env)",
-        "refresh": 1,
+        "refresh": 2,
         "regex": "",
         "sort": 2,
-        "type": "query"
+        "type": "query",
+        "useTags": false
       },
       {
         "allValue": ".*",
@@ -987,10 +1002,11 @@
         "name": "region",
         "options": [],
         "query": "label_values(system_info_lambda{env=~\"$env\"}, region)",
-        "refresh": 1,
+        "refresh": 2,
         "regex": "",
         "sort": 0,
-        "type": "query"
+        "type": "query",
+        "useTags": false
       },
       {
         "allValue": ".+",
@@ -1005,10 +1021,11 @@
         "name": "node",
         "options": [],
         "query": "label_values(system_info_lambda{env=~\"$env\", region=~\"$region\"}, node)",
-        "refresh": 1,
+        "refresh": 2,
         "regex": "",
         "sort": 2,
-        "type": "query"
+        "type": "query",
+        "useTags": false
       },
       {
         "allValue": ".+",
@@ -1023,10 +1040,11 @@
         "name": "service",
         "options": [],
         "query": "label_values(example_events_kappa{env=~\"$env\", region=~\"$region\", node=~\"$node\"}, service)",
-        "refresh": 1,
+        "refresh": 2,
         "regex": "",
         "sort": 2,
-        "type": "query"
+        "type": "query",
+        "useTags": false
       }
     ]
   },
@@ -1051,5 +1069,6 @@
   "timezone": "default",
   "title": "Sample dashboard",
   "uid": "sample-dashboard",
-  "version": 1
+  "version": 1,
+  "weekStart": ""
 }

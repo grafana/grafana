@@ -1,6 +1,27 @@
 {
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "type": "grafana",
+          "uid": "-- Grafana --"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations \u0026 Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "links": [],
   "panels": [
     {
+      "autoMigrateFrom": "graph",
       "datasource": {
         "apiVersion": "v1",
         "type": "prometheus",
@@ -25,7 +46,35 @@
         }
       ],
       "title": "Panel with minSpan 8",
-      "type": "graph"
+      "type": "timeseries"
+    },
+    {
+      "autoMigrateFrom": "graph",
+      "datasource": {
+        "apiVersion": "v1",
+        "type": "prometheus",
+        "uid": "default-ds-uid"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 0
+      },
+      "id": 4,
+      "maxPerRow": 2,
+      "targets": [
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "prometheus",
+            "uid": "default-ds-uid"
+          },
+          "refId": "A"
+        }
+      ],
+      "title": "Panel with minSpan 12",
+      "type": "timeseries"
     },
     {
       "datasource": {
@@ -40,8 +89,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
-                "value": null
+                "color": "green"
               },
               {
                 "color": "red",
@@ -59,7 +107,6 @@
         "y": 8
       },
       "id": 2,
-      "maxPerRow": 6,
       "options": {
         "colorMode": "none",
         "graphMode": "none",
@@ -98,87 +145,6 @@
         "uid": "default-ds-uid"
       },
       "gridPos": {
-        "h": 6,
-        "w": 24,
-        "x": 0,
-        "y": 12
-      },
-      "id": 3,
-      "maxPerRow": 12,
-      "targets": [
-        {
-          "datasource": {
-            "apiVersion": "v1",
-            "type": "prometheus",
-            "uid": "default-ds-uid"
-          },
-          "refId": "A"
-        }
-      ],
-      "title": "Panel with minSpan 2",
-      "type": "table"
-    },
-    {
-      "datasource": {
-        "apiVersion": "v1",
-        "type": "prometheus",
-        "uid": "default-ds-uid"
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 12,
-        "y": 0
-      },
-      "id": 4,
-      "maxPerRow": 2,
-      "targets": [
-        {
-          "datasource": {
-            "apiVersion": "v1",
-            "type": "prometheus",
-            "uid": "default-ds-uid"
-          },
-          "refId": "A"
-        }
-      ],
-      "title": "Panel with minSpan 12",
-      "type": "graph"
-    },
-    {
-      "datasource": {
-        "apiVersion": "v1",
-        "type": "prometheus",
-        "uid": "default-ds-uid"
-      },
-      "gridPos": {
-        "h": 4,
-        "w": 24,
-        "x": 0,
-        "y": 18
-      },
-      "id": 5,
-      "maxPerRow": 1,
-      "targets": [
-        {
-          "datasource": {
-            "apiVersion": "v1",
-            "type": "prometheus",
-            "uid": "default-ds-uid"
-          },
-          "refId": "A"
-        }
-      ],
-      "title": "Panel with minSpan 24",
-      "type": "gauge"
-    },
-    {
-      "datasource": {
-        "apiVersion": "v1",
-        "type": "prometheus",
-        "uid": "default-ds-uid"
-      },
-      "gridPos": {
         "h": 3,
         "w": 4,
         "x": 6,
@@ -188,7 +154,6 @@
       "maxPerRow": 24,
       "options": {
         "justifyMode": "auto",
-        "percentChangeColorMode": "standard",
         "showPercentChange": false,
         "textMode": "auto",
         "wideLayout": true
@@ -207,6 +172,7 @@
       "type": "stat"
     },
     {
+      "autoMigrateFrom": "graph",
       "datasource": {
         "apiVersion": "v1",
         "type": "prometheus",
@@ -230,7 +196,7 @@
         }
       ],
       "title": "Panel without minSpan",
-      "type": "graph"
+      "type": "timeseries"
     },
     {
       "datasource": {
@@ -265,6 +231,61 @@
         "uid": "default-ds-uid"
       },
       "gridPos": {
+        "h": 6,
+        "w": 24,
+        "x": 0,
+        "y": 12
+      },
+      "id": 3,
+      "maxPerRow": 12,
+      "targets": [
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "prometheus",
+            "uid": "default-ds-uid"
+          },
+          "refId": "A"
+        }
+      ],
+      "title": "Panel with minSpan 2",
+      "type": "table"
+    },
+    {
+      "datasource": {
+        "apiVersion": "v1",
+        "type": "prometheus",
+        "uid": "default-ds-uid"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 24,
+        "x": 0,
+        "y": 18
+      },
+      "id": 5,
+      "maxPerRow": 1,
+      "targets": [
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "prometheus",
+            "uid": "default-ds-uid"
+          },
+          "refId": "A"
+        }
+      ],
+      "title": "Panel with minSpan 24",
+      "type": "gauge"
+    },
+    {
+      "autoMigrateFrom": "graph",
+      "datasource": {
+        "apiVersion": "v1",
+        "type": "prometheus",
+        "uid": "default-ds-uid"
+      },
+      "gridPos": {
         "h": 4,
         "w": 6,
         "x": 0,
@@ -282,9 +303,10 @@
         }
       ],
       "title": "Panel with zero minSpan",
-      "type": "graph"
+      "type": "timeseries"
     },
     {
+      "autoMigrateFrom": "graph",
       "datasource": {
         "apiVersion": "v1",
         "type": "prometheus",
@@ -308,10 +330,22 @@
         }
       ],
       "title": "Panel with negative minSpan",
-      "type": "graph"
+      "type": "timeseries"
     }
   ],
   "refresh": "",
   "schemaVersion": 42,
-  "title": "V17 MinSpan to MaxPerRow Migration Test Dashboard"
+  "tags": [],
+  "templating": {
+    "list": []
+  },
+  "time": {
+    "from": "now-6h",
+    "to": "now"
+  },
+  "timepicker": {},
+  "timezone": "",
+  "title": "V17 MinSpan to MaxPerRow Migration Test Dashboard",
+  "version": 0,
+  "weekStart": ""
 }

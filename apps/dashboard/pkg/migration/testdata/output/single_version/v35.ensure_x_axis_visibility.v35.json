@@ -1,4 +1,24 @@
 {
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "type": "grafana",
+          "uid": "-- Grafana --"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations \u0026 Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "links": [],
   "panels": [
     {
       "fieldConfig": {
@@ -22,6 +42,7 @@
           }
         ]
       },
+      "id": 6,
       "title": "Timeseries with Hidden Axis",
       "type": "timeseries"
     },
@@ -59,6 +80,7 @@
           }
         ]
       },
+      "id": 7,
       "title": "Timeseries with Hidden Axis and Existing Overrides",
       "type": "timeseries"
     },
@@ -71,6 +93,7 @@
         },
         "overrides": []
       },
+      "id": 8,
       "title": "Timeseries with Auto Axis (No Change Expected)",
       "type": "timeseries"
     },
@@ -83,6 +106,7 @@
         },
         "overrides": []
       },
+      "id": 9,
       "title": "Stat Panel with Hidden Axis (No Change Expected)",
       "type": "stat"
     },
@@ -92,9 +116,7 @@
       "type": "timeseries"
     },
     {
-      "fieldConfig": {
-        "overrides": []
-      },
+      "id": 10,
       "title": "Timeseries with Missing Defaults",
       "type": "timeseries"
     },
@@ -105,6 +127,7 @@
         },
         "overrides": []
       },
+      "id": 11,
       "title": "Timeseries with Missing Custom Config",
       "type": "timeseries"
     },
@@ -130,10 +153,23 @@
           }
         ]
       },
+      "id": 12,
       "title": "Timeseries with Missing Overrides Array",
       "type": "timeseries"
     }
   ],
   "schemaVersion": 35,
-  "title": "X-Axis Visibility Test Dashboard"
+  "tags": [],
+  "templating": {
+    "list": []
+  },
+  "time": {
+    "from": "now-6h",
+    "to": "now"
+  },
+  "timepicker": {},
+  "timezone": "",
+  "title": "X-Axis Visibility Test Dashboard",
+  "version": 0,
+  "weekStart": ""
 }

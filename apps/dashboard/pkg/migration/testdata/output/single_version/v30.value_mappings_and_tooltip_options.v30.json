@@ -1,4 +1,24 @@
 {
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "type": "grafana",
+          "uid": "-- Grafana --"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations \u0026 Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "links": [],
   "panels": [
     {
       "fieldConfig": {
@@ -39,8 +59,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
-                "value": null
+                "color": "green"
               },
               {
                 "color": "red",
@@ -104,6 +123,7 @@
       "type": "xychart2"
     },
     {
+      "autoMigrateFrom": "graph",
       "id": 4,
       "options": {
         "tooltip": {
@@ -111,7 +131,7 @@
         }
       },
       "title": "Graph panel gets migrated to timeseries and tooltip",
-      "type": "graph"
+      "type": "timeseries"
     },
     {
       "fieldConfig": {
@@ -146,7 +166,8 @@
               "type": "range"
             }
           ]
-        }
+        },
+        "overrides": []
       },
       "id": 5,
       "title": "Panel with complex value mappings",
@@ -191,7 +212,8 @@
       "fieldConfig": {
         "defaults": {
           "unit": "bytes"
-        }
+        },
+        "overrides": []
       },
       "id": 8,
       "options": {
@@ -228,5 +250,17 @@
     }
   ],
   "schemaVersion": 30,
-  "title": "V30 Value Mappings and Tooltip Options Migration Test Dashboard"
+  "tags": [],
+  "templating": {
+    "list": []
+  },
+  "time": {
+    "from": "now-6h",
+    "to": "now"
+  },
+  "timepicker": {},
+  "timezone": "",
+  "title": "V30 Value Mappings and Tooltip Options Migration Test Dashboard",
+  "version": 0,
+  "weekStart": ""
 }

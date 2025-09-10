@@ -2,6 +2,18 @@
   "annotations": {
     "list": [
       {
+        "builtIn": 1,
+        "datasource": {
+          "type": "grafana",
+          "uid": "-- Grafana --"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations \u0026 Alerts",
+        "type": "dashboard"
+      },
+      {
         "datasource": {
           "apiVersion": "v1",
           "type": "prometheus",
@@ -41,6 +53,10 @@
       }
     ]
   },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "links": [],
   "panels": [
     {
       "datasource": {
@@ -323,6 +339,7 @@
   ],
   "refresh": "",
   "schemaVersion": 42,
+  "tags": [],
   "templating": {
     "list": [
       {
@@ -332,6 +349,7 @@
           "uid": "default-ds-uid"
         },
         "name": "query_var_null",
+        "options": [],
         "type": "query"
       },
       {
@@ -341,6 +359,7 @@
           "uid": "existing-target-uid"
         },
         "name": "query_var_named",
+        "options": [],
         "type": "query"
       },
       {
@@ -350,6 +369,7 @@
           "uid": "existing-target-uid"
         },
         "name": "query_var_uid",
+        "options": [],
         "type": "query"
       },
       {
@@ -357,14 +377,22 @@
           "uid": "unknown-datasource"
         },
         "name": "query_var_unknown",
+        "options": [],
         "type": "query"
       },
       {
-        "datasource": null,
         "name": "non_query_var",
         "type": "constant"
       }
     ]
   },
-  "title": "Datasource Reference Migration Test Dashboard"
+  "time": {
+    "from": "now-6h",
+    "to": "now"
+  },
+  "timepicker": {},
+  "timezone": "",
+  "title": "Datasource Reference Migration Test Dashboard",
+  "version": 0,
+  "weekStart": ""
 }

@@ -1,4 +1,24 @@
 {
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "type": "grafana",
+          "uid": "-- Grafana --"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations \u0026 Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "links": [],
   "panels": [
     {
       "id": 1,
@@ -70,6 +90,7 @@
       "type": "gauge"
     },
     {
+      "autoMigrateFrom": "graph",
       "id": 5,
       "options": {
         "legend": {
@@ -77,9 +98,21 @@
         }
       },
       "title": "Non-Gauge Panel",
-      "type": "graph"
+      "type": "timeseries"
     }
   ],
   "schemaVersion": 18,
-  "title": "V18 Gauge Options Migration Test Dashboard"
+  "tags": [],
+  "templating": {
+    "list": []
+  },
+  "time": {
+    "from": "now-6h",
+    "to": "now"
+  },
+  "timepicker": {},
+  "timezone": "",
+  "title": "V18 Gauge Options Migration Test Dashboard",
+  "version": 0,
+  "weekStart": ""
 }

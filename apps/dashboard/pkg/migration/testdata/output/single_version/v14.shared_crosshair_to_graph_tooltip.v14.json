@@ -1,10 +1,27 @@
 {
   "annotations": {
-    "list": []
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "type": "grafana",
+          "uid": "-- Grafana --"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations \u0026 Alerts",
+        "type": "dashboard"
+      }
+    ]
   },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
   "graphTooltip": 1,
+  "links": [],
   "panels": [
     {
+      "autoMigrateFrom": "graph",
       "id": 1,
       "targets": [
         {
@@ -13,16 +30,15 @@
         }
       ],
       "title": "CPU Usage Over Time",
-      "type": "graph",
+      "type": "timeseries",
       "yAxes": [
         {
-          "max": null,
-          "min": null,
           "show": true
         }
       ]
     },
     {
+      "autoMigrateFrom": "graph",
       "id": 2,
       "targets": [
         {
@@ -31,7 +47,7 @@
         }
       ],
       "title": "Memory Usage",
-      "type": "graph",
+      "type": "timeseries",
       "yAxes": [
         {
           "max": 100,
@@ -42,6 +58,7 @@
     }
   ],
   "schemaVersion": 14,
+  "tags": [],
   "templating": {
     "list": [
       {
@@ -72,5 +89,8 @@
       "1d"
     ]
   },
-  "title": "V14 Shared Crosshair Migration Test Dashboard"
+  "timezone": "",
+  "title": "V14 Shared Crosshair Migration Test Dashboard",
+  "version": 0,
+  "weekStart": ""
 }

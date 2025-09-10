@@ -2,6 +2,18 @@
   "annotations": {
     "list": [
       {
+        "builtIn": 1,
+        "datasource": {
+          "type": "grafana",
+          "uid": "-- Grafana --"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations \u0026 Alerts",
+        "type": "dashboard"
+      },
+      {
         "datasource": {
           "uid": "grafana"
         },
@@ -10,6 +22,10 @@
       }
     ]
   },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "links": [],
   "panels": [
     {
       "datasource": {
@@ -48,6 +64,7 @@
       "type": "timeseries"
     },
     {
+      "autoMigrateFrom": "graph",
       "datasource": {
         "apiVersion": "v1",
         "type": "prometheus",
@@ -65,11 +82,9 @@
         }
       ],
       "title": "Graph panel remains unchanged",
-      "type": "graph",
+      "type": "timeseries",
       "yAxes": [
         {
-          "max": null,
-          "min": null,
           "show": true
         }
       ]
@@ -84,7 +99,6 @@
       "id": 3,
       "panels": [
         {
-          "datasource": null,
           "fieldConfig": {
             "defaults": {
               "unit": "bytes"
@@ -111,12 +125,11 @@
   ],
   "refresh": "",
   "schemaVersion": 42,
+  "tags": [],
   "templating": {
     "list": [
       {
-        "datasource": {
-          "uid": "prometheus"
-        },
+        "datasource": "prometheus",
         "name": "environment",
         "options": [],
         "type": "query"
@@ -141,5 +154,8 @@
       "1d"
     ]
   },
-  "title": "V32 No-Op Migration Test Dashboard"
+  "timezone": "",
+  "title": "V32 No-Op Migration Test Dashboard",
+  "version": 0,
+  "weekStart": ""
 }

@@ -1,14 +1,34 @@
 {
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "type": "grafana",
+          "uid": "-- Grafana --"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations \u0026 Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "links": [],
   "panels": [],
   "refresh": "",
   "schemaVersion": 42,
+  "tags": [],
   "templating": {
     "list": [
       {
-        "datasource": {
-          "uid": "prometheus"
-        },
+        "datasource": "prometheus",
         "name": "query_variable_with_tags",
+        "options": [],
         "query": "label_values(up, instance)",
         "refresh": 1,
         "type": "query"
@@ -25,7 +45,8 @@
             "value": "opt2"
           }
         ],
-        "type": "custom"
+        "type": "custom",
+        "useTags": false
       },
       {
         "name": "clean_variable",
@@ -57,5 +78,8 @@
       "1d"
     ]
   },
-  "title": "V28 Singlestat and Variable Properties Migration Test Dashboard"
+  "timezone": "",
+  "title": "V28 Singlestat and Variable Properties Migration Test Dashboard",
+  "version": 0,
+  "weekStart": ""
 }

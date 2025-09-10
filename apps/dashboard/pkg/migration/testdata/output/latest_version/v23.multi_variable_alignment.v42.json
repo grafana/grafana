@@ -1,4 +1,24 @@
 {
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "type": "grafana",
+          "uid": "-- Grafana --"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations \u0026 Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "links": [],
   "panels": [
     {
       "datasource": {
@@ -9,7 +29,6 @@
       "id": 1,
       "options": {
         "justifyMode": "auto",
-        "percentChangeColorMode": "standard",
         "showPercentChange": false,
         "textMode": "auto",
         "wideLayout": true
@@ -31,6 +50,7 @@
   ],
   "refresh": "",
   "schemaVersion": 42,
+  "tags": [],
   "templating": {
     "list": [
       {
@@ -43,11 +63,10 @@
             "A"
           ]
         },
-        "datasource": {
-          "uid": "prometheus"
-        },
+        "datasource": "prometheus",
         "multi": true,
         "name": "multi_single_value",
+        "options": [],
         "refresh": 1,
         "type": "query"
       },
@@ -63,11 +82,10 @@
             "C"
           ]
         },
-        "datasource": {
-          "uid": "prometheus"
-        },
+        "datasource": "prometheus",
         "multi": true,
         "name": "multi_array_value",
+        "options": [],
         "refresh": 1,
         "type": "query"
       },
@@ -77,11 +95,10 @@
           "text": "D",
           "value": "D"
         },
-        "datasource": {
-          "uid": "prometheus"
-        },
+        "datasource": "prometheus",
         "multi": false,
         "name": "non_multi_array_value",
+        "options": [],
         "refresh": 1,
         "type": "query"
       },
@@ -91,11 +108,10 @@
           "text": "E",
           "value": "E"
         },
-        "datasource": {
-          "uid": "prometheus"
-        },
+        "datasource": "prometheus",
         "multi": false,
         "name": "non_multi_single_value",
+        "options": [],
         "refresh": 1,
         "type": "query"
       },
@@ -105,30 +121,26 @@
           "text": "F",
           "value": "F"
         },
-        "datasource": {
-          "uid": "prometheus"
-        },
+        "datasource": "prometheus",
         "name": "no_multi_property",
+        "options": [],
         "refresh": 1,
         "type": "query"
       },
       {
         "current": {},
-        "datasource": {
-          "uid": "prometheus"
-        },
+        "datasource": "prometheus",
         "multi": true,
         "name": "empty_current",
+        "options": [],
         "refresh": 1,
         "type": "query"
       },
       {
-        "current": null,
-        "datasource": {
-          "uid": "prometheus"
-        },
+        "datasource": "prometheus",
         "multi": true,
         "name": "nil_current",
+        "options": [],
         "refresh": 1,
         "type": "query"
       },
@@ -170,6 +182,7 @@
         },
         "multi": true,
         "name": "datasource_variable",
+        "options": [],
         "type": "datasource"
       },
       {
@@ -184,5 +197,13 @@
       }
     ]
   },
-  "title": "V23 Multi Variables Migration Test Dashboard"
+  "time": {
+    "from": "now-6h",
+    "to": "now"
+  },
+  "timepicker": {},
+  "timezone": "",
+  "title": "V23 Multi Variables Migration Test Dashboard",
+  "version": 0,
+  "weekStart": ""
 }

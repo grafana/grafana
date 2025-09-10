@@ -1,4 +1,24 @@
 {
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "type": "grafana",
+          "uid": "-- Grafana --"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations \u0026 Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "links": [],
   "panels": [
     {
       "datasource": {
@@ -72,7 +92,6 @@
           }
         },
         "justifyMode": "auto",
-        "percentChangeColorMode": "standard",
         "showPercentChange": false,
         "textMode": "auto",
         "wideLayout": true
@@ -220,6 +239,9 @@
   "tags": [
     "migration-test"
   ],
+  "templating": {
+    "list": []
+  },
   "time": {
     "from": "now-6h",
     "to": "now"
@@ -228,5 +250,6 @@
   "timezone": "",
   "title": "V20 Variable Syntax Migration Test Dashboard",
   "uid": "v20-migration-test",
-  "version": 0
+  "version": 0,
+  "weekStart": ""
 }

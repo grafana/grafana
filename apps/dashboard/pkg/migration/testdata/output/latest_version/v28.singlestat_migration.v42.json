@@ -1,4 +1,24 @@
 {
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "type": "grafana",
+          "uid": "-- Grafana --"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations \u0026 Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "links": [],
   "panels": [
     {
       "datasource": {
@@ -29,12 +49,7 @@
         },
         "overrides": []
       },
-      "grid": {
-        "max": 10,
-        "min": 1
-      },
       "id": 1,
-      "legend": true,
       "options": {
         "colorMode": "none",
         "graphMode": "none",
@@ -67,7 +82,8 @@
             "apiVersion": "v1",
             "type": "prometheus",
             "uid": "default-ds-uid"
-          }
+          },
+          "refId": "B"
         }
       ],
       "type": "stat"
@@ -97,12 +113,7 @@
         },
         "overrides": []
       },
-      "grid": {
-        "max": 10,
-        "min": 1
-      },
       "id": 2,
-      "legend": true,
       "options": {
         "colorMode": "none",
         "graphMode": "none",
@@ -135,7 +146,8 @@
             "apiVersion": "v1",
             "type": "prometheus",
             "uid": "default-ds-uid"
-          }
+          },
+          "refId": "B"
         }
       ],
       "type": "stat"
@@ -149,8 +161,6 @@
       "fieldConfig": {
         "defaults": {
           "mappings": [],
-          "max": null,
-          "min": null,
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -170,10 +180,6 @@
           }
         },
         "overrides": []
-      },
-      "grid": {
-        "max": 10,
-        "min": 1
       },
       "id": 3,
       "options": {
@@ -218,7 +224,6 @@
             {
               "options": {
                 "20": {
-                  "color": "orange",
                   "text": "test"
                 }
               },
@@ -227,7 +232,6 @@
             {
               "options": {
                 "30": {
-                  "color": "orange",
                   "text": "test1"
                 }
               },
@@ -263,18 +267,7 @@
         },
         "overrides": []
       },
-      "grid": {
-        "max": 10,
-        "min": 1
-      },
       "id": 4,
-      "legend": true,
-      "mappingTypes": [
-        {
-          "name": "value to text",
-          "value": 1
-        }
-      ],
       "options": {
         "colorMode": "none",
         "graphMode": "none",
@@ -307,7 +300,8 @@
             "apiVersion": "v1",
             "type": "prometheus",
             "uid": "default-ds-uid"
-          }
+          },
+          "refId": "B"
         }
       ],
       "type": "stat"
@@ -318,14 +312,27 @@
         "type": "prometheus",
         "uid": "default-ds-uid"
       },
+      "id": 8,
+      "targets": [
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "prometheus",
+            "uid": "default-ds-uid"
+          },
+          "expr": "rate(http_requests_total[5m])",
+          "refId": "A"
+        }
+      ],
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus"
+      },
       "fieldConfig": {
         "defaults": {
-          "color": {
-            "fixedColor": "rgb(31, 120, 193)",
-            "mode": "fixed"
-          },
           "mappings": [],
-          "nullValueMode": "connected",
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -338,8 +345,7 @@
                 "value": 80
               }
             ]
-          },
-          "unit": "areaF2"
+          }
         },
         "overrides": []
       },
@@ -350,17 +356,6 @@
         "y": 43
       },
       "id": 5,
-      "mappingType": 1,
-      "mappingTypes": [
-        {
-          "name": "value to text",
-          "value": 1
-        },
-        {
-          "name": "range to text",
-          "value": 2
-        }
-      ],
       "maxDataPoints": 100,
       "options": {
         "colorMode": "value",
@@ -380,17 +375,6 @@
         "wideLayout": true
       },
       "pluginVersion": "12.1.0",
-      "postfix": "b",
-      "postfixFontSize": "50%",
-      "prefix": "a",
-      "prefixFontSize": "50%",
-      "rangeMaps": [
-        {
-          "from": "null",
-          "text": "N/A",
-          "to": "null"
-        }
-      ],
       "targets": [
         {
           "datasource": {
@@ -401,14 +385,11 @@
         }
       ],
       "title": "grafana-singlestat-panel",
-      "type": "stat",
-      "valueFontSize": "80%"
+      "type": "stat"
     },
     {
       "datasource": {
-        "apiVersion": "v1",
-        "type": "prometheus",
-        "uid": "default-ds-uid"
+        "type": "prometheus"
       },
       "fieldConfig": {
         "defaults": {
@@ -427,8 +408,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
-                "value": null
+                "color": "green"
               },
               {
                 "color": "red",
@@ -453,7 +433,6 @@
         "graphMode": "area",
         "justifyMode": "auto",
         "orientation": "horizontal",
-        "percentChangeColorMode": "standard",
         "reduceOptions": {
           "calcs": [
             "mean"
@@ -480,9 +459,7 @@
     },
     {
       "datasource": {
-        "apiVersion": "v1",
-        "type": "prometheus",
-        "uid": "default-ds-uid"
+        "type": "prometheus"
       },
       "gridPos": {
         "h": 8,
@@ -512,30 +489,11 @@
       ],
       "title": "Status + Notes",
       "type": "text"
-    },
-    {
-      "datasource": {
-        "apiVersion": "v1",
-        "type": "prometheus",
-        "uid": "default-ds-uid"
-      },
-      "id": 8,
-      "targets": [
-        {
-          "datasource": {
-            "apiVersion": "v1",
-            "type": "prometheus",
-            "uid": "default-ds-uid"
-          },
-          "expr": "rate(http_requests_total[5m])",
-          "refId": "A"
-        }
-      ],
-      "type": "timeseries"
     }
   ],
   "refresh": "",
   "schemaVersion": 42,
+  "tags": [],
   "templating": {
     "list": []
   },
@@ -557,5 +515,8 @@
       "1d"
     ]
   },
-  "title": "V28 Singlestat and Variable Properties Migration Test Dashboard"
+  "timezone": "",
+  "title": "V28 Singlestat and Variable Properties Migration Test Dashboard",
+  "version": 0,
+  "weekStart": ""
 }

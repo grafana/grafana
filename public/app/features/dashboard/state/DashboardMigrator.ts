@@ -951,26 +951,25 @@ export class DashboardMigrator {
      * individual panel plugin migration handlers instead of adding new schema versions.
      */
 
-    // Update schema version after all migrations (both dashboard-level and panel-level)
-    // Only update if we're migrating to a higher version
-    if (finalTargetVersion > oldVersion) {
-      this.dashboard.schemaVersion = finalTargetVersion;
-    }
-
-    if (panelUpgrades.length === 0) {
-      return;
-    }
-
-    for (j = 0; j < this.dashboard.panels.length; j++) {
-      for (k = 0; k < panelUpgrades.length; k++) {
-        this.dashboard.panels[j] = panelUpgrades[k].call(this, this.dashboard.panels[j]);
-        const rowPanels = this.dashboard.panels[j].panels;
-        if (rowPanels) {
-          for (n = 0; n < rowPanels.length; n++) {
-            rowPanels[n] = panelUpgrades[k].call(this, rowPanels[n]);
+    // Apply panel upgrades if any exist
+    if (panelUpgrades.length > 0) {
+      for (j = 0; j < this.dashboard.panels.length; j++) {
+        for (k = 0; k < panelUpgrades.length; k++) {
+          this.dashboard.panels[j] = panelUpgrades[k].call(this, this.dashboard.panels[j]);
+          const rowPanels = this.dashboard.panels[j].panels;
+          if (rowPanels) {
+            for (n = 0; n < rowPanels.length; n++) {
+              rowPanels[n] = panelUpgrades[k].call(this, rowPanels[n]);
+            }
           }
         }
       }
+    }
+
+    // Always update schema version after migrations, regardless of panel upgrades
+    // Only update schema version if migrations were actually needed
+    if (oldVersion < finalTargetVersion) {
+      this.dashboard.schemaVersion = finalTargetVersion;
     }
   }
 

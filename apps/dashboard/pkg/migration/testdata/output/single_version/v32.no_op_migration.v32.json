@@ -2,12 +2,28 @@
   "annotations": {
     "list": [
       {
+        "builtIn": 1,
+        "datasource": {
+          "type": "grafana",
+          "uid": "-- Grafana --"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations \u0026 Alerts",
+        "type": "dashboard"
+      },
+      {
         "datasource": "grafana",
         "enable": true,
         "name": "Deployments"
       }
     ]
   },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "links": [],
   "panels": [
     {
       "id": 1,
@@ -31,13 +47,12 @@
       "type": "timeseries"
     },
     {
+      "autoMigrateFrom": "graph",
       "id": 2,
       "title": "Graph panel remains unchanged",
-      "type": "graph",
+      "type": "timeseries",
       "yAxes": [
         {
-          "max": null,
-          "min": null,
           "show": true
         }
       ]
@@ -62,6 +77,7 @@
     }
   ],
   "schemaVersion": 32,
+  "tags": [],
   "templating": {
     "list": [
       {
@@ -90,5 +106,8 @@
       "1d"
     ]
   },
-  "title": "V32 No-Op Migration Test Dashboard"
+  "timezone": "",
+  "title": "V32 No-Op Migration Test Dashboard",
+  "version": 0,
+  "weekStart": ""
 }

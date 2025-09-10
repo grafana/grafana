@@ -1,4 +1,24 @@
 {
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "type": "grafana",
+          "uid": "-- Grafana --"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations \u0026 Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "links": [],
   "panels": [
     {
       "id": 1,
@@ -17,6 +37,7 @@
       "type": "timeseries"
     },
     {
+      "autoMigrateFrom": "graph",
       "id": 3,
       "options": {
         "legend": {
@@ -25,7 +46,7 @@
         }
       },
       "title": "Panel with Hidden DisplayMode",
-      "type": "graph"
+      "type": "timeseries"
     },
     {
       "id": 4,
@@ -79,9 +100,7 @@
     },
     {
       "id": 9,
-      "options": {
-        "legend": null
-      },
+      "options": {},
       "title": "Panel with Null Legend",
       "type": "piechart"
     },
@@ -126,5 +145,17 @@
   ],
   "refresh": "",
   "schemaVersion": 42,
-  "title": "V37 Legend Normalization Test Dashboard"
+  "tags": [],
+  "templating": {
+    "list": []
+  },
+  "time": {
+    "from": "now-6h",
+    "to": "now"
+  },
+  "timepicker": {},
+  "timezone": "",
+  "title": "V37 Legend Normalization Test Dashboard",
+  "version": 0,
+  "weekStart": ""
 }

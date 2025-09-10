@@ -1,6 +1,27 @@
 {
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "type": "grafana",
+          "uid": "-- Grafana --"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations \u0026 Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "links": [],
   "panels": [
     {
+      "autoMigrateFrom": "graph",
       "datasource": {
         "apiVersion": "v1",
         "type": "prometheus",
@@ -18,7 +39,7 @@
         }
       ],
       "title": "Normal Panel",
-      "type": "graph"
+      "type": "timeseries"
     },
     {
       "datasource": {
@@ -29,7 +50,6 @@
       "id": 4,
       "panels": [
         {
-          "datasource": null,
           "id": 6,
           "title": "Normal nested panel",
           "type": "graph"
@@ -51,6 +71,7 @@
   ],
   "refresh": "",
   "schemaVersion": 42,
+  "tags": [],
   "templating": {
     "list": [
       {
@@ -73,5 +94,13 @@
       }
     ]
   },
-  "title": "V27 Repeated Panels and Constant Variable Migration Test Dashboard"
+  "time": {
+    "from": "now-6h",
+    "to": "now"
+  },
+  "timepicker": {},
+  "timezone": "",
+  "title": "V27 Repeated Panels and Constant Variable Migration Test Dashboard",
+  "version": 0,
+  "weekStart": ""
 }

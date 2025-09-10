@@ -1,4 +1,24 @@
 {
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "type": "grafana",
+          "uid": "-- Grafana --"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations \u0026 Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "links": [],
   "panels": [
     {
       "datasource": {
@@ -39,8 +59,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
-                "value": null
+                "color": "green"
               },
               {
                 "color": "red",
@@ -115,7 +134,6 @@
           "refId": "A"
         }
       ],
-      "title": "",
       "type": "row"
     },
     {
@@ -134,7 +152,6 @@
       "id": 14,
       "panels": [
         {
-          "datasource": null,
           "gridPos": {
             "h": 8,
             "w": 24,
@@ -146,7 +163,6 @@
           "type": "table"
         },
         {
-          "datasource": null,
           "gridPos": {
             "h": 6,
             "w": 12,
@@ -159,7 +175,6 @@
           "type": "graph"
         },
         {
-          "datasource": null,
           "gridPos": {
             "h": 6,
             "w": 12,
@@ -228,7 +243,6 @@
       "id": 7,
       "options": {
         "justifyMode": "auto",
-        "percentChangeColorMode": "standard",
         "showPercentChange": false,
         "textMode": "auto",
         "wideLayout": true
@@ -380,7 +394,6 @@
           "refId": "A"
         }
       ],
-      "title": "",
       "type": "row"
     },
     {
@@ -435,11 +448,22 @@
           "refId": "A"
         }
       ],
-      "title": "",
       "type": "row"
     }
   ],
   "refresh": "",
   "schemaVersion": 42,
-  "title": "V16 Grid Layout Migration Test Dashboard"
+  "tags": [],
+  "templating": {
+    "list": []
+  },
+  "time": {
+    "from": "now-6h",
+    "to": "now"
+  },
+  "timepicker": {},
+  "timezone": "",
+  "title": "V16 Grid Layout Migration Test Dashboard",
+  "version": 0,
+  "weekStart": ""
 }

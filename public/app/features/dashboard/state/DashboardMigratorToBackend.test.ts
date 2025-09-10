@@ -1,6 +1,14 @@
 import { readFileSync } from 'fs';
 import path from 'path';
 
+import { variableAdapters } from 'app/features/variables/adapters';
+import { createConstantVariableAdapter } from 'app/features/variables/constant/adapter';
+import { createCustomVariableAdapter } from 'app/features/variables/custom/adapter';
+import { createDataSourceVariableAdapter } from 'app/features/variables/datasource/adapter';
+import { createIntervalVariableAdapter } from 'app/features/variables/interval/adapter';
+import { createQueryVariableAdapter } from 'app/features/variables/query/adapter';
+import { createTextBoxVariableAdapter } from 'app/features/variables/textbox/adapter';
+
 import { DASHBOARD_SCHEMA_VERSION } from './DashboardMigrator';
 import { DashboardModel } from './DashboardModel';
 import {
@@ -10,7 +18,7 @@ import {
   getJsonInputFiles,
   constructLatestVersionOutputFilename,
   handleAngularPanelMigration,
-  cleanDashboardModel,
+  TEST_MIN_VERSION,
 } from './__tests__/migrationTestUtils';
 
 /*
@@ -36,6 +44,12 @@ import {
  *    - Ensures both paths produce identical final dashboard states
  *    - Avoids test brittleness from comparing raw JSON with different default value representations
  */
+variableAdapters.register(createQueryVariableAdapter());
+variableAdapters.register(createDataSourceVariableAdapter());
+variableAdapters.register(createConstantVariableAdapter());
+variableAdapters.register(createIntervalVariableAdapter());
+variableAdapters.register(createCustomVariableAdapter());
+variableAdapters.register(createTextBoxVariableAdapter());
 
 describe('Backend / Frontend result comparison', () => {
   beforeEach(() => {
@@ -49,28 +63,26 @@ describe('Backend / Frontend result comparison', () => {
 
   jsonInputs
     // TODO: remove this filter when we fixed all inconsistencies
-    .filter((inputFile) => parseInt(inputFile.split('.')[0].replace('v', ''), 10) > 29)
+    .filter((inputFile) => parseInt(inputFile.split('.')[0].replace('v', ''), 10) > TEST_MIN_VERSION)
     .forEach((inputFile) => {
       it(`should migrate ${inputFile} correctly`, async () => {
         const jsonInput = JSON.parse(readFileSync(path.join(inputDir, inputFile), 'utf8'));
 
         // Construct the backend output filename: v30.something.json -> v30.something.v41.json
         const backendOutputFilename = constructLatestVersionOutputFilename(inputFile, DASHBOARD_SCHEMA_VERSION);
-        const backendOutput = JSON.parse(readFileSync(path.join(outputDir, backendOutputFilename), 'utf8'));
+        const backendMigrationResult = JSON.parse(readFileSync(path.join(outputDir, backendOutputFilename), 'utf8'));
 
-        expect(backendOutput.schemaVersion).toEqual(DASHBOARD_SCHEMA_VERSION);
+        expect(backendMigrationResult.schemaVersion).toEqual(DASHBOARD_SCHEMA_VERSION);
 
-        // Create dashboard models
-        const frontendModel = new DashboardModel(jsonInput);
-        const backendModel = new DashboardModel(backendOutput);
+        // Migrate dashboard in Frontend.
+        const frontendModel = new DashboardModel(jsonInput, undefined, {
+          getVariablesFromState: () => jsonInput?.templating?.list ?? [],
+        });
 
         // Handle angular panel migration if needed
-        if (jsonInput.schemaVersion <= 27) {
-          await handleAngularPanelMigration(frontendModel);
-        }
+        await handleAngularPanelMigration(frontendModel);
 
-        const frontendMigrationResult = cleanDashboardModel(frontendModel);
-        const backendMigrationResult = cleanDashboardModel(backendModel);
+        const frontendMigrationResult = frontendModel.getSaveModelClone();
 
         expect(backendMigrationResult).toEqual(frontendMigrationResult);
       });

@@ -1,4 +1,24 @@
 {
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "type": "grafana",
+          "uid": "-- Grafana --"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations \u0026 Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "links": [],
   "panels": [
     {
       "datasource": {
@@ -20,93 +40,74 @@
   ],
   "refresh": "",
   "schemaVersion": 42,
+  "tags": [],
   "templating": {
     "list": [
       {
-        "datasource": {
-          "uid": "prometheus"
-        },
+        "datasource": "prometheus",
         "name": "never_refresh_with_options",
         "options": [],
         "refresh": 1,
         "type": "query"
       },
       {
-        "datasource": {
-          "uid": "prometheus"
-        },
+        "datasource": "prometheus",
         "name": "never_refresh_without_options",
         "options": [],
         "refresh": 1,
         "type": "query"
       },
       {
-        "datasource": {
-          "uid": "prometheus"
-        },
+        "datasource": "prometheus",
         "name": "dashboard_refresh_with_options",
         "options": [],
         "refresh": 1,
         "type": "query"
       },
       {
-        "datasource": {
-          "uid": "prometheus"
-        },
+        "datasource": "prometheus",
         "name": "dashboard_refresh_without_options",
         "options": [],
         "refresh": 1,
         "type": "query"
       },
       {
-        "datasource": {
-          "uid": "prometheus"
-        },
+        "datasource": "prometheus",
         "name": "timerange_refresh_with_options",
         "options": [],
-        "refresh": 1,
+        "refresh": 2,
         "type": "query"
       },
       {
-        "datasource": {
-          "uid": "prometheus"
-        },
+        "datasource": "prometheus",
         "name": "timerange_refresh_without_options",
         "options": [],
-        "refresh": 1,
+        "refresh": 2,
         "type": "query"
       },
       {
-        "datasource": {
-          "uid": "prometheus"
-        },
+        "datasource": "prometheus",
         "name": "no_refresh_with_options",
         "options": [],
         "refresh": 1,
         "type": "query"
       },
       {
-        "datasource": {
-          "uid": "prometheus"
-        },
+        "datasource": "prometheus",
         "name": "no_refresh_without_options",
         "options": [],
         "refresh": 1,
         "type": "query"
       },
       {
-        "datasource": {
-          "uid": "prometheus"
-        },
+        "datasource": "prometheus",
         "name": "unknown_refresh_with_options",
         "options": [],
         "refresh": 1,
         "type": "query"
       },
       {
-        "datasource": {
-          "uid": "prometheus"
-        },
+        "datasource": "prometheus",
         "name": "unknown_refresh_without_options",
         "options": [],
         "refresh": 1,
@@ -134,12 +135,7 @@
       },
       {
         "name": "datasource_variable",
-        "options": [
-          {
-            "text": "ds",
-            "value": "ds"
-          }
-        ],
+        "options": [],
         "type": "datasource"
       },
       {
@@ -172,5 +168,8 @@
       "1d"
     ]
   },
-  "title": "V29 Query Variables Refresh and Options Migration Test Dashboard"
+  "timezone": "",
+  "title": "V29 Query Variables Refresh and Options Migration Test Dashboard",
+  "version": 0,
+  "weekStart": ""
 }

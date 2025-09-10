@@ -1,4 +1,24 @@
 {
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "type": "grafana",
+          "uid": "-- Grafana --"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations \u0026 Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "links": [],
   "panels": [
     {
       "datasource": {
@@ -27,6 +47,7 @@
           }
         ]
       },
+      "id": 6,
       "targets": [
         {
           "datasource": {
@@ -79,6 +100,7 @@
           }
         ]
       },
+      "id": 7,
       "targets": [
         {
           "datasource": {
@@ -106,6 +128,7 @@
         },
         "overrides": []
       },
+      "id": 8,
       "targets": [
         {
           "datasource": {
@@ -133,6 +156,7 @@
         },
         "overrides": []
       },
+      "id": 9,
       "targets": [
         {
           "datasource": {
@@ -172,9 +196,7 @@
         "type": "prometheus",
         "uid": "default-ds-uid"
       },
-      "fieldConfig": {
-        "overrides": []
-      },
+      "id": 10,
       "targets": [
         {
           "datasource": {
@@ -200,6 +222,7 @@
         },
         "overrides": []
       },
+      "id": 11,
       "targets": [
         {
           "datasource": {
@@ -240,6 +263,7 @@
           }
         ]
       },
+      "id": 12,
       "targets": [
         {
           "datasource": {
@@ -256,5 +280,17 @@
   ],
   "refresh": "",
   "schemaVersion": 42,
-  "title": "X-Axis Visibility Test Dashboard"
+  "tags": [],
+  "templating": {
+    "list": []
+  },
+  "time": {
+    "from": "now-6h",
+    "to": "now"
+  },
+  "timepicker": {},
+  "timezone": "",
+  "title": "X-Axis Visibility Test Dashboard",
+  "version": 0,
+  "weekStart": ""
 }

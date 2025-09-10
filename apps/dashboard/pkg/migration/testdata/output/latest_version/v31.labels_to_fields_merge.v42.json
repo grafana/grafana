@@ -1,4 +1,24 @@
 {
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "type": "grafana",
+          "uid": "-- Grafana --"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations \u0026 Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "links": [],
   "panels": [
     {
       "datasource": {
@@ -176,7 +196,6 @@
       "id": 5,
       "panels": [
         {
-          "datasource": null,
           "id": 6,
           "title": "Nested panel with labelsToFields",
           "transformations": [
@@ -192,7 +211,6 @@
           "type": "timeseries"
         },
         {
-          "datasource": null,
           "id": 7,
           "title": "Nested panel without labelsToFields",
           "transformations": [
@@ -258,5 +276,17 @@
   ],
   "refresh": "",
   "schemaVersion": 42,
-  "title": "V31 LabelsToFields Merge Migration Test Dashboard"
+  "tags": [],
+  "templating": {
+    "list": []
+  },
+  "time": {
+    "from": "now-6h",
+    "to": "now"
+  },
+  "timepicker": {},
+  "timezone": "",
+  "title": "V31 LabelsToFields Merge Migration Test Dashboard",
+  "version": 0,
+  "weekStart": ""
 }
