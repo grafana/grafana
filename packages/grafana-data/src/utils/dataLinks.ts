@@ -61,7 +61,7 @@ export function mapInternalLinkToExplore(options: LinkToExploreOptions): LinkMod
               uid: internalLink.datasourceUid,
             },
           },
-          timeRange: range,
+          ...(range && { timeRange: range }),
         },
       },
     };

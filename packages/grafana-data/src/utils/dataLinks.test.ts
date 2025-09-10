@@ -25,6 +25,7 @@ describe('mapInternalLinkToExplore', () => {
       title: '',
       internal: {
         datasourceUid: 'uid',
+        datasourceName: 'dsName',
         query: { query: '12344' },
       },
     };
@@ -53,7 +54,6 @@ describe('mapInternalLinkToExplore', () => {
               query: {
                 query: '12344',
                 datasource: {
-                  name: 'dsName',
                   uid: 'uid',
                 },
               },
