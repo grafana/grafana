@@ -103,7 +103,7 @@ func GetAvailableMimirNotifiers() []*NotifierPlugin {
 			Description:  "Configures the OAuth2 settings.",
 			PropertyName: "oauth2",
 			Element:      ElementTypeSubform,
-			SubformOptions: append([]NotifierOption{
+			SubformOptions: []NotifierOption{
 				{
 					Label:        "Client ID",
 					Description:  "The OAuth2 client ID",
@@ -141,7 +141,7 @@ func GetAvailableMimirNotifiers() []*NotifierPlugin {
 					PropertyName: "endpoint_params",
 				},
 				tlsConfigOption("TLSConfig"), // OAuth2 struct definition does not define JSON tag for this field
-			} /*proxyConfigOptions()...*/), // TODO OAuth2 proxy config is not allowed in Mimir (see validation)
+			}, /*proxyConfigOptions()...)*/ // TODO OAuth2 proxy config is not allowed in Mimir (see validation)
 		}
 	}
 

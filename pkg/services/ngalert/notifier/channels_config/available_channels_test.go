@@ -155,8 +155,8 @@ func TestV0IntegrationsSecrets(t *testing.T) {
 		t.Run(configType.Name(), func(t *testing.T) {
 			integrationType := strings.ToLower(strings.TrimSuffix(configType.Name(), "Config"))
 			expectedSecrets, err := GetSecretKeysForContactPointType(integrationType, V0)
-
 			require.NoError(t, err)
+
 			var secrets []string
 			for option := range maps.Keys(notifytest.ValidMimirHTTPConfigs) {
 				cfg, err := notifytest.GetMimirIntegrationForType(configType, option)
@@ -165,6 +165,7 @@ func TestV0IntegrationsSecrets(t *testing.T) {
 				require.NoError(t, err)
 				m := map[string]any{}
 				err = json.Unmarshal(data, &m)
+				require.NoError(t, err)
 				secrets = append(secrets, getSecrets(m, "")...)
 			}
 			secrets = unique(secrets)
