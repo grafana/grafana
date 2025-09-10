@@ -254,12 +254,12 @@ func (c *resourceClients) ForResource(ctx context.Context, gvr schema.GroupVersi
 	var versionless schema.GroupVersionResource
 	if gvr.Version == "" {
 		versionless = gvr
-		gvr, gvk, err = discovery.GetPreferredVesion(schema.GroupResource{
+		gvr, gvk, err = discovery.GetPreferredVersion(schema.GroupResource{
 			Group:    gvr.Group,
 			Resource: gvr.Resource,
 		})
 		if err != nil {
-			return nil, schema.GroupVersionKind{}, err
+			return nil, schema.GroupVersionKind{}, fmt.Errorf("getting preferred version for %s: %w", versionless.String(), err)
 		}
 
 		info, ok := c.byResource[gvr]
@@ -270,7 +270,7 @@ func (c *resourceClients) ForResource(ctx context.Context, gvr schema.GroupVersi
 	} else {
 		gvk, err = discovery.GetKindForResource(gvr)
 		if err != nil {
-			return nil, schema.GroupVersionKind{}, err
+			return nil, schema.GroupVersionKind{}, fmt.Errorf("getting kind for resource for %s: %w", gvr.String(), err)
 		}
 	}
 	info = &clientInfo{

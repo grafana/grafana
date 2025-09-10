@@ -3,6 +3,7 @@ package controller
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"sort"
 	"strings"
 
@@ -46,16 +47,16 @@ func (f *finalizer) process(ctx context.Context,
 				func(client dynamic.ResourceInterface, item *provisioning.ResourceListItem) error {
 					patchAnnotations, err := getPatchedAnnotations(item)
 					if err != nil {
-						return err
+						return fmt.Errorf("failed to get patched annotations: %w", err)
 					}
 
 					_, err = client.Patch(
 						ctx, item.Name, types.JSONPatchType, patchAnnotations, v1.PatchOptions{},
 					)
-					return err
+					return fmt.Errorf("failed to patch resource to release ownership: %w", err)
 				})
 			if err != nil {
-				return err
+				return fmt.Errorf("error running %s finalizer: %w", ReleaseOrphanResourcesFinalizer, err)
 			}
 
 		case repository.RemoveOrphanResourcesFinalizer:
@@ -64,7 +65,7 @@ func (f *finalizer) process(ctx context.Context,
 					return client.Delete(ctx, item.Name, v1.DeleteOptions{})
 				})
 			if err != nil {
-				return err
+				return fmt.Errorf("error running %s finalizer %w", RemoveOrphanResourcesFinalizer, err)
 			}
 
 		default:
@@ -103,6 +104,7 @@ func (f *finalizer) processExistingItems(
 			Resource: item.Resource,
 		})
 		if err != nil {
+			logger.Warn("error getting client for resource", "resource", item.Resource, "error", err)
 			return err
 		}
 
