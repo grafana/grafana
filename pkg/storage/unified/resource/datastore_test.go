@@ -2646,7 +2646,7 @@ func TestDataStore_GetResourceStats_Comprehensive(t *testing.T) {
 		// Other resource types in ns1 should still have 3 items
 		otherResourceCount := 0
 		for _, stat := range stats {
-			if !(stat.Group == "apps" && stat.Resource == "deployments") {
+			if stat.Group != "apps" || stat.Resource != "deployments" {
 				require.Equal(t, int64(3), stat.Count, "Other resources should still have 3 items")
 				otherResourceCount++
 			}

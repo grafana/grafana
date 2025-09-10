@@ -616,6 +616,7 @@ func (d *dataStore) getGroupResources(ctx context.Context) ([]GroupResource, err
 		// Add to results if we haven't seen this group/resource combination before
 		if !seenGroupResources[groupResourceKey] {
 			seenGroupResources[groupResourceKey] = true
+			//nolint:staticcheck // SA4010: wrongly assumes that this result of append is never used
 			results = append(results, GroupResource{
 				Group:    dataKey.Group,
 				Resource: dataKey.Resource,
