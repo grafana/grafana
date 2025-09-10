@@ -311,7 +311,7 @@ jobs:
 
       - run: tree . -a -L 4
 
-      - run: mv dist/artifacts-linux-amd64/npm-artifacts npm-artifacts
+      - run: mv dist/"${PACKAGES_VERSION}"/npm-packages npm-artifacts
 
       - run: ls -lah npm-artifacts
 
@@ -319,4 +319,3 @@ jobs:
         env:
           NPM_TOKEN: "oidc"
         run: ./scripts/publish-npm-packages.sh --dist-tag 'canary' --registry 'https://registry.npmjs.org/'
-
