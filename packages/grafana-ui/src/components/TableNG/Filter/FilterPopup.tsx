@@ -12,7 +12,7 @@ import { ButtonSelect } from '../../Dropdown/ButtonSelect';
 import { FilterInput } from '../../FilterInput/FilterInput';
 import { Label } from '../../Forms/Label';
 import { Stack } from '../../Layout/Stack/Stack';
-import { FilterType } from '../types';
+import { FilterType, TableRow } from '../types';
 import { getDisplayName } from '../utils';
 
 import { FilterList } from './FilterList';
@@ -36,9 +36,9 @@ const OPERATORS = Object.values(operatorSelectableValues);
 
 interface Props {
   name: string;
-  rows: any[];
-  filterValue: any;
-  setFilter: (value: any) => void;
+  rows: TableRow[];
+  filterValue?: Array<SelectableValue<unknown>>;
+  setFilter: React.Dispatch<React.SetStateAction<FilterType>>;
   onClose: () => void;
   field?: Field;
   searchFilter: string;

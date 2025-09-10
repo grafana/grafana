@@ -4,7 +4,13 @@ import { createDataFrame, Field, FieldType, ReducerID } from '@grafana/data';
 import { TableCellDisplayMode } from '@grafana/schema';
 
 import { TABLE } from './constants';
-import { useFilteredRows, useRowsPerPageCallback, useHeaderHeight, useRowHeight, useReducerEntries } from './hooks';
+import {
+  useFilterRowsCallback,
+  useRowsPerPageCallback,
+  useHeaderHeight,
+  useRowHeight,
+  useReducerEntries,
+} from './hooks';
 import { TableRow } from './types';
 import { createTypographyContext } from './utils';
 
@@ -44,16 +50,16 @@ describe('TableNG hooks', () => {
     return { fields, rows };
   }
 
-  describe('useFilteredRows', () => {
+  describe('useFilterRowsCallback', () => {
     it('should correctly initialize with provided fields and rows', () => {
       const { fields, rows } = setupData();
-      const { result } = renderHook(() => useFilteredRows(rows, fields, { hasNestedFrames: false }));
-      expect(result.current.rows[0].name).toBe('Alice');
+      const { result } = renderHook(() => useFilterRowsCallback());
+      expect(result.current.filterRows(rows, fields)[0].name).toBe('Alice');
     });
 
     it('should apply filters correctly', () => {
       const { fields, rows } = setupData();
-      const { result } = renderHook(() => useFilteredRows(rows, fields, { hasNestedFrames: false }));
+      const { result } = renderHook(() => useFilterRowsCallback());
 
       act(() => {
         result.current.setFilter({
@@ -61,13 +67,17 @@ describe('TableNG hooks', () => {
         });
       });
 
-      expect(result.current.rows.length).toBe(1);
-      expect(result.current.rows[0].name).toBe('Alice');
+      const nextRows = result.current.filterRows(rows, fields);
+
+      expect(nextRows.length).toBe(1);
+      expect(nextRows[0].name).toBe('Alice');
+      expect(result.current.crossFilterOrder).toEqual(['name']);
+      expect(result.current.crossFilterRows).toEqual({ name: ['Alice'] });
     });
 
     it('should clear filters correctly', () => {
       const { fields, rows } = setupData();
-      const { result } = renderHook(() => useFilteredRows(rows, fields, { hasNestedFrames: false }));
+      const { result } = renderHook(() => useFilterRowsCallback());
 
       act(() => {
         result.current.setFilter({
@@ -75,13 +85,13 @@ describe('TableNG hooks', () => {
         });
       });
 
-      expect(result.current.rows.length).toBe(1);
+      expect(result.current.filterRows(rows, fields).length).toBe(1);
 
       act(() => {
         result.current.setFilter({});
       });
 
-      expect(result.current.rows.length).toBe(3);
+      expect(result.current.filterRows(rows, fields).length).toBe(3);
     });
 
     it.todo('should handle nested frames');
@@ -94,7 +104,6 @@ describe('TableNG hooks', () => {
         useRowsPerPageCallback({
           rowHeight: 30,
           height: 300,
-          width: 800,
           enabled: false,
           headerHeight: TABLE.HEADER_HEIGHT,
           footerHeight: 0,
@@ -111,7 +120,6 @@ describe('TableNG hooks', () => {
         useRowsPerPageCallback({
           enabled: true,
           height: 60,
-          width: 800,
           rowHeight: 10,
           headerHeight: 0,
           footerHeight: 0,
@@ -127,15 +135,14 @@ describe('TableNG hooks', () => {
       const { result } = renderHook(() =>
         useRowsPerPageCallback({
           enabled: true,
-          height: 260,
-          width: 800,
+          height: 200,
           rowHeight: 10,
-          headerHeight: TABLE.HEADER_HEIGHT,
-          footerHeight: 45,
+          headerHeight: 40,
+          footerHeight: 40,
         })
       );
 
-      expect(result.current(rows)).toBe(4);
+      expect(result.current(rows)).toBe(8); // 200px - 80px of header and footer - 38px for pagination itself = 82px / 10px = 8 rows
     });
   });
 

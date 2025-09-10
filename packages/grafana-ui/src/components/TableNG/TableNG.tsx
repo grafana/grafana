@@ -43,7 +43,7 @@ import { COLUMN, TABLE } from './constants';
 import {
   useColumnResize,
   useColWidths,
-  useFilteredRows,
+  useFilterRowsCallback,
   useHeaderHeight,
   useRowsPerPageCallback,
   useRowHeight,
@@ -149,13 +149,7 @@ export function TableNG(props: TableNGProps) {
   const hasNestedFrames = useMemo(() => getIsNestedTable(data.fields), [data]);
   const getTextColorForBackground = useMemo(() => memoize(_getTextColorForBackground, { maxSize: 1000 }), []);
 
-  const {
-    rows: filteredRows,
-    filter,
-    setFilter,
-    crossFilterOrder,
-    crossFilterRows,
-  } = useFilteredRows(rows, data.fields, { hasNestedFrames });
+  const { filterRows, filter, setFilter, crossFilterOrder, crossFilterRows } = useFilterRowsCallback(hasNestedFrames);
 
   const [inspectCell, setInspectCell] = useState<InspectCellProps | null>(null);
   const [tooltipState, setTooltipState] = useState<DataLinksActionsTooltipState>();
@@ -165,11 +159,11 @@ export function TableNG(props: TableNGProps) {
       initialSortBy?.flatMap(({ displayName, desc }) =>
         data.fields.some(predicateByName(displayName))
           ? [
-            {
-              columnKey: displayName,
-              direction: desc ? ('DESC' as const) : ('ASC' as const),
-            } satisfies SortColumn,
-          ]
+              {
+                columnKey: displayName,
+                direction: desc ? ('DESC' as const) : ('ASC' as const),
+              } satisfies SortColumn,
+            ]
           : []
       ) ?? [],
     [data.fields, initialSortBy]
@@ -227,7 +221,6 @@ export function TableNG(props: TableNGProps) {
 
   const paginationRowsPerPage = useRowsPerPageCallback({
     enabled: enablePagination,
-    width: availableWidth,
     height,
     footerHeight,
     headerHeight: hasHeader ? TABLE.HEADER_ROW_HEIGHT : 0,
@@ -280,8 +273,8 @@ export function TableNG(props: TableNGProps) {
   const commonDataGridProps = useMemo(
     () =>
       ({
-        customSort: applySort,
-        data,
+        sortRows: applySort,
+        filterRows,
         enableVirtualization: enableVirtualization !== false && rowHeight !== 'auto',
         defaultColumnOptions: {
           minWidth: 50,
@@ -306,13 +299,13 @@ export function TableNG(props: TableNGProps) {
         headerRowHeight: noHeader ? 0 : TABLE.HEADER_ROW_HEIGHT,
       }) satisfies Partial<DataGridProps<TableRow, TableSummaryRow>>,
     [
-      data,
       enableVirtualization,
       hasFooter,
       resizeHandler,
       rowHeight,
       noHeader,
       onSortByChange,
+      filterRows,
       footerHeight,
       initialSortColumns,
     ]
@@ -366,8 +359,7 @@ export function TableNG(props: TableNGProps) {
           return null;
         }
 
-        const expandedRecords = frameToRecords(nestedData);
-        if (!expandedRecords.length) {
+        if (!nestedData.fields[0].values.length) {
           return (
             <div className={styles.noDataNested}>
               <Trans i18nKey="grafana-ui.table.nested-table.no-data">No data</Trans>
@@ -378,12 +370,12 @@ export function TableNG(props: TableNGProps) {
         return (
           <DataGrid
             {...commonDataGridProps}
+            data={nestedData}
             transparent={transparent}
             className={styles.gridNested}
             headerRowHeight={hasNestedHeaders ? TABLE.HEADER_HEIGHT : 0}
             hideHeader={!hasNestedHeaders}
             columns={nestedColumns}
-            rows={expandedRecords}
             renderers={renderers}
           />
         );
@@ -782,18 +774,18 @@ export function TableNG(props: TableNGProps) {
     <>
       <DataGrid
         {...commonDataGridProps}
+        data={data}
         transparent={transparent}
         gridRef={gridRef} // NOTE: this can't be called `ref` until React 19.
         columns={structureRevColumns}
         pagination={
           enablePagination
             ? {
-              rowsPerPage: paginationRowsPerPage,
-              small: width < TABLE.PAGINATION_LIMIT,
-            }
+                rowsPerPage: paginationRowsPerPage,
+                small: width < TABLE.PAGINATION_LIMIT,
+              }
             : undefined
         }
-        rows={filteredRows}
         hideHeader={noHeader}
         headerRowHeight={headerHeight}
         onCellClick={({ column, row }, { clientX, clientY, preventGridDefault, target }) => {
@@ -823,11 +815,11 @@ export function TableNG(props: TableNGProps) {
         onCellKeyDown={
           hasNestedFrames
             ? (_, event) => {
-              if (event.isDefaultPrevented()) {
-                // skip parent grid keyboard navigation if nested grid handled it
-                event.preventGridDefault();
+                if (event.isDefaultPrevented()) {
+                  // skip parent grid keyboard navigation if nested grid handled it
+                  event.preventGridDefault();
+                }
               }
-            }
             : null
         }
         renderers={{ renderRow, renderCell: renderCellRoot }}
@@ -858,40 +850,40 @@ export function TableNG(props: TableNGProps) {
  */
 const renderRowFactory =
   (fields: Field[], panelContext: PanelContext, expandedRows: Set<number>, enableSharedCrosshair: boolean) =>
-    // eslint-disable-next-line react/display-name
-    (key: React.Key, props: RenderRowProps<TableRow, TableSummaryRow>): React.ReactNode => {
-      const { row } = props;
-      const rowIdx = row.__index;
-      const isExpanded = expandedRows.has(rowIdx);
+  // eslint-disable-next-line react/display-name
+  (key: React.Key, props: RenderRowProps<TableRow, TableSummaryRow>): React.ReactNode => {
+    const { row } = props;
+    const rowIdx = row.__index;
+    const isExpanded = expandedRows.has(rowIdx);
 
-      // Don't render non expanded child rows
-      if (row.__depth === 1 && !isExpanded) {
-        return null;
+    // Don't render non expanded child rows
+    if (row.__depth === 1 && !isExpanded) {
+      return null;
+    }
+
+    // Add aria-expanded to parent rows that have nested data
+    if (row.data) {
+      return <Row key={key} {...props} aria-expanded={isExpanded} />;
+    }
+
+    const handlers: Partial<typeof props> = {};
+    if (enableSharedCrosshair) {
+      const timeField = fields.find((f) => f.type === FieldType.time);
+      if (timeField) {
+        handlers.onMouseEnter = () => {
+          panelContext.eventBus.publish(
+            new DataHoverEvent({
+              point: {
+                time: timeField?.values[rowIdx],
+              },
+            })
+          );
+        };
+        handlers.onMouseLeave = () => {
+          panelContext.eventBus.publish(new DataHoverClearEvent());
+        };
       }
+    }
 
-      // Add aria-expanded to parent rows that have nested data
-      if (row.data) {
-        return <Row key={key} {...props} aria-expanded={isExpanded} />;
-      }
-
-      const handlers: Partial<typeof props> = {};
-      if (enableSharedCrosshair) {
-        const timeField = fields.find((f) => f.type === FieldType.time);
-        if (timeField) {
-          handlers.onMouseEnter = () => {
-            panelContext.eventBus.publish(
-              new DataHoverEvent({
-                point: {
-                  time: timeField?.values[rowIdx],
-                },
-              })
-            );
-          };
-          handlers.onMouseLeave = () => {
-            panelContext.eventBus.publish(new DataHoverClearEvent());
-          };
-        }
-      }
-
-      return <Row key={key} {...props} {...handlers} />;
-    };
+    return <Row key={key} {...props} {...handlers} />;
+  };

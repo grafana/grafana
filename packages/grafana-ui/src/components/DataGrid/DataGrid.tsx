@@ -5,13 +5,13 @@ import clsx from 'clsx';
 import { ComponentProps, ReactNode, RefObject, useMemo, useState, cloneElement, useLayoutEffect } from 'react';
 import { DataGridHandle, DataGrid as RDG, SortColumn } from 'react-data-grid';
 
-import { colorManipulator, DataFrame, GrafanaTheme2 } from '@grafana/data';
+import { colorManipulator, DataFrame, Field, GrafanaTheme2 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
 
 import { useStyles2 } from '../../themes/ThemeContext';
 import { Pagination } from '../Pagination/Pagination';
 
-import { TableRow, TableSummaryRow } from './types';
+import { ColumnTypes, TableRow, TableSummaryRow } from './types';
 import { applySort, frameToRecords, getColumnTypes } from './utils';
 
 export interface DataGridPaginationProps {
@@ -127,10 +127,14 @@ export interface DataGridProps<TableRow, TableSummaryRow>
    */
   initialSortColumns?: SortColumn[];
   /**
+   * if provided, this method can be used to filter rows based on whatever UX you provide within or around your DataGrid.
+   */
+  filterRows?: (rows: TableRow[], fields: Field[]) => TableRow[];
+  /**
    * a sensible sorting algorithm is provided for you based on the column type, but if you want to provide your own sorting
    * algorithm, you can do so here. It has the same signature as the `applySort` method exported from the utils file.
    */
-  customSort?: typeof applySort;
+  sortRows?: (rows: TableRow[], fields: Field[], sortColumns: SortColumn[], columnTypes?: ColumnTypes) => TableRow[];
   /**
    * if you need a ref to the underlying grid, create one using `useRef<DataGridHandle>()` and pass it here.
    */
@@ -139,7 +143,8 @@ export interface DataGridProps<TableRow, TableSummaryRow>
 
 export function DataGrid({
   className,
-  customSort,
+  filterRows = (rows) => rows,
+  sortRows = applySort,
   data,
   gridRef,
   headerRowClass,
@@ -155,9 +160,10 @@ export function DataGrid({
   const rows = useMemo(() => frameToRecords(data), [data]);
   const [sortColumns, setSortColumns] = useState<SortColumn[]>(initialSortColumns ?? []);
   const columnTypes = useMemo(() => getColumnTypes(data.fields), [data.fields]);
+  const filteredRows = useMemo(() => filterRows(rows, data.fields), [filterRows, rows, data.fields]);
   const sortedRows = useMemo(
-    () => (customSort ?? applySort)(rows, data.fields, sortColumns, columnTypes),
-    [customSort, rows, data.fields, sortColumns, columnTypes]
+    () => sortRows(filteredRows, data.fields, sortColumns, columnTypes),
+    [sortRows, filteredRows, data.fields, sortColumns, columnTypes]
   );
 
   let content = (

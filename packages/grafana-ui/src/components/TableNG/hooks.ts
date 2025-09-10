@@ -10,17 +10,16 @@ import { FilterType, FooterFieldState, TableRow, TableSortByFieldState, TableSum
 import {
   getDisplayName,
   processNestedTableRows,
-  applySort,
-  getColumnTypes,
   getRowHeight,
   computeColWidths,
   buildHeaderHeightMeasurers,
   buildCellHeightMeasurers,
+  predicateByName,
 } from './utils';
 
 // Helper function to get displayed value
 const getDisplayedValue = (row: TableRow, key: string, fields: Field[]) => {
-  const field = fields.find((field) => getDisplayName(field) === key);
+  const field = fields.find(predicateByName(key));
   if (!field || !field.display) {
     return '';
   }
@@ -29,7 +28,7 @@ const getDisplayedValue = (row: TableRow, key: string, fields: Field[]) => {
 };
 
 export interface FilteredRowsResult {
-  rows: TableRow[];
+  filterRows: (rows: TableRow[], fields: Field[], search?: string) => TableRow[];
   filter: FilterType;
   setFilter: React.Dispatch<React.SetStateAction<FilterType>>;
   crossFilterOrder: string[];
@@ -40,50 +39,44 @@ export interface FilteredRowsOptions {
   hasNestedFrames: boolean;
 }
 
-export function useFilteredRows(
-  rows: TableRow[],
-  fields: Field[],
-  { hasNestedFrames }: FilteredRowsOptions
-): FilteredRowsResult {
+export function useFilterRowsCallback(hasNestedFrames?: boolean): FilteredRowsResult {
   // TODO: allow persisted filter selection via url
   const [filter, setFilter] = useState<FilterType>({});
   const filterValues = useMemo(() => Object.entries(filter), [filter]);
+  const crossFilterRows = useRef<Record<string, TableRow[]>>({});
 
   const crossFilterOrder: FilteredRowsResult['crossFilterOrder'] = useMemo(
     () => Array.from(new Set(filterValues.map(([key]) => key))),
     [filterValues]
   );
 
-  const [filteredRows, crossFilterRows] = useMemo(() => {
-    const crossFilterRows: FilteredRowsResult['crossFilterRows'] = {};
+  const filterRows = useCallback(
+    (rows: TableRow[], fields: Field[]) => {
+      crossFilterRows.current = {};
 
-    const filterRows = (row: TableRow): boolean => {
-      for (const [key, value] of filterValues) {
-        const displayedValue = getDisplayedValue(row, key, fields);
-        if (!value.filteredSet.has(displayedValue)) {
-          return false;
+      const shouldIncludeRow = (row: TableRow): boolean => {
+        for (const [key, value] of filterValues) {
+          const displayedValue = getDisplayedValue(row, key, fields);
+          if (!value.filteredSet.has(displayedValue)) {
+            return false;
+          }
+          // collect rows for crossFilter
+          crossFilterRows.current[key] = crossFilterRows.current[key] ?? [];
+          crossFilterRows.current[key].push(row);
         }
-        // collect rows for crossFilter
-        crossFilterRows[key] = crossFilterRows[key] ?? [];
-        crossFilterRows[key].push(row);
+        return true;
+      };
+
+      if (hasNestedFrames) {
+        return processNestedTableRows(rows, (parents) => parents.filter(shouldIncludeRow));
       }
-      return true;
-    };
 
-    const filteredRows = hasNestedFrames
-      ? processNestedTableRows(rows, (parents) => parents.filter(filterRows))
-      : rows.filter(filterRows);
+      return rows.filter(shouldIncludeRow);
+    },
+    [crossFilterRows, filterValues, hasNestedFrames]
+  );
 
-    return [filteredRows, crossFilterRows];
-  }, [filterValues, rows, fields, hasNestedFrames]);
-
-  return {
-    rows: filteredRows,
-    filter,
-    setFilter,
-    crossFilterOrder,
-    crossFilterRows,
-  };
+  return { filterRows, filter, setFilter, crossFilterOrder, crossFilterRows: crossFilterRows.current };
 }
 
 export interface SortedRowsOptions {
@@ -99,7 +92,6 @@ export interface SortedRowsResult {
 
 export interface PaginatedRowsOptions {
   height: number;
-  width: number;
   rowHeight: NonNullable<CSSProperties['height']> | ((row: TableRow) => number);
   headerHeight: number;
   footerHeight: number;
