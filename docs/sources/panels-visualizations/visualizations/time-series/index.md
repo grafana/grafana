@@ -191,7 +191,7 @@ If you have very little data, the list might include the option **Minute before*
 In all cases, the list includes the options:
 
 - **None**
-- **Previous period** - Based on the time range selection. For example, if the time range is **Last 6 hours**, the previous period would be the six hours before that.
+- **Previous period** - Based on the time range selection. For example, if the time range is **Last 1 hour**, the comparison period would be the hour before that.
 
 When you end a session, the **Comparison** selector resets to **None**.
 
