@@ -124,6 +124,10 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
   const { links, editPanel } = dashboard.useState();
   const styles = useStyles2(getStyles);
   const showDebugger = window.location.search.includes('scene-debugger');
+  const hasControlMenuVariables = sceneGraph
+    .getVariables(dashboard)
+    .useState()
+    .variables.some((v) => v.state.showInControlsMenu === true);
 
   if (!model.hasControls()) {
     // To still have spacing when no controls are rendered
@@ -147,14 +151,16 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
         {editPanel && <PanelEditControls panelEditor={editPanel} />}
       </Stack>
       {!hideTimeControls && (
-        <Stack justifyContent={'flex-end'}>
+        <Stack justifyContent="flex-end">
           <timePicker.Component model={timePicker} />
           <refreshPicker.Component model={refreshPicker} />
         </Stack>
       )}
-      <Stack>
-        <DropdownVariableControls dashboard={dashboard} />
-      </Stack>
+      {hasControlMenuVariables && (
+        <Stack>
+          <DropdownVariableControls dashboard={dashboard} />
+        </Stack>
+      )}
       {showDebugger && <SceneDebugger scene={model} key={'scene-debugger'} />}
     </div>
   );

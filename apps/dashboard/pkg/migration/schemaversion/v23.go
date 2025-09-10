@@ -1,6 +1,10 @@
 package schemaversion
 
-import "github.com/grafana/grafana/apps/dashboard/pkg/migration/utils"
+import (
+	"context"
+
+	"github.com/grafana/grafana/apps/dashboard/pkg/migration/utils"
+)
 
 // V23 migrates multi variables to ensure their current property is aligned with their multi property.
 // This migration ensures that variables with multi=true have current.value and current.text as arrays,
@@ -23,7 +27,7 @@ import "github.com/grafana/grafana/apps/dashboard/pkg/migration/utils"
 //	    { "type": "query", "multi": false, "current": { "value": "B", "text": "B" } }
 //	  ]
 //	}
-func V23(dashboard map[string]interface{}) error {
+func V23(_ context.Context, dashboard map[string]interface{}) error {
 	dashboard["schemaVersion"] = 23
 
 	templating, ok := dashboard["templating"].(map[string]interface{})
