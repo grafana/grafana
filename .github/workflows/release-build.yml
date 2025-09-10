@@ -309,7 +309,9 @@ jobs:
           name: artifacts-linux-amd64
           path: dist
 
-      - run: mv dist/"${PACKAGES_VERSION}"/npm-artifacts npm-artifacts
+      - run: tree . -a -L 4
+
+      - run: mv dist/artifacts-linux-amd64/npm-artifacts npm-artifacts
 
       - run: ls -lah npm-artifacts
 
@@ -317,14 +319,4 @@ jobs:
         env:
           NPM_TOKEN: "oidc"
         run: ./scripts/publish-npm-packages.sh --dist-tag 'canary' --registry 'https://registry.npmjs.org/'
-
-      # - name: Publish
-      #   env:
-      #     DIST_TAG: "canary"
-      #     REGISTRY: "https://registry.npmjs.org/"
-      #   run: |
-      #     for file in ./npm-artifacts/*.tgz; do
-      #         npm publish "$file" --tag "$DIST_TAG" --registry "$REGISTRY"
-      #     done
-
 
