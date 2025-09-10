@@ -141,7 +141,7 @@ func (c *GRPCServerSettings) AddFlags(fs *pflag.FlagSet) {
 	fs.StringVar(&c.certFile, "grpc-server-cert-file", "", "Path to the certificate file for the gRPC server")
 	fs.StringVar(&c.keyFile, "grpc-server-key-file", "", "Path to the certificate key file for the gRPC server")
 
-	// Load balancing options
+	// Connection management options
 	fs.IntVar(&c.MaxConnectionAge, "grpc-server-max-connection-age", 0, "Maximum amount of time a connection may exist before it will be closed (e.g. 30s)")
 	fs.IntVar(&c.MaxConnectionAgeGrace, "grpc-server-max-connection-age-grace", 0, "Additional time to allow for pending RPCs to complete before forcibly closing connections (e.g. 5s)")
 	fs.IntVar(&c.MaxConnectionIdle, "grpc-server-max-connection-idle", 0, "Maximum amount of idle time before a connection is closed (e.g. 15s)")
