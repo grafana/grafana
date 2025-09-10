@@ -8,10 +8,12 @@ import (
 
 	"github.com/benbjohnson/clock"
 	"github.com/grafana/alerting/notify/nfstatus"
-	"github.com/grafana/grafana/pkg/services/ngalert/lokiclient"
 	"github.com/prometheus/alertmanager/featurecontrol"
 	"github.com/prometheus/alertmanager/matchers/compat"
 	"golang.org/x/sync/errgroup"
+
+	"github.com/grafana/grafana/pkg/services/ngalert/lokiclient"
+	evalHistorian "github.com/grafana/grafana/pkg/services/ngalert/schedule/historian"
 
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/bus"
@@ -381,6 +383,15 @@ func (ng *AlertNG) init() error {
 		Log:                        log.New("ngalert.state.manager"),
 		ResolvedRetention:          ng.Cfg.UnifiedAlerting.ResolvedAlertRetention,
 	}
+
+	if ng.FeatureToggles.IsEnabledGlobally(featuremgmt.FlagAlertingEvaluationHistory) {
+		hist, err := ng.createEvaluationHistorian(initCtx)
+		if err != nil {
+			return err
+		}
+		schedCfg.Historian = hist
+	}
+
 	statePersister := initStatePersister(ng.Cfg.UnifiedAlerting, stateManagerCfg, ng.FeatureToggles)
 	stateManager := state.NewManager(stateManagerCfg, statePersister)
 	scheduler := schedule.NewScheduler(schedCfg, stateManager)
@@ -745,4 +756,34 @@ func createRecordingWriter(settings setting.RecordingRuleSettings, httpClientPro
 	}
 
 	return writer.NoopWriter{}, nil
+}
+
+func (ng *AlertNG) createEvaluationHistorian(ctx context.Context) (schedule.Historian, error) {
+	lcfg, err := lokiclient.NewLokiConfig(ng.Cfg.UnifiedAlerting.StateHistory.LokiSettings) // TODO change to its own settings
+	if err != nil {
+		return nil, fmt.Errorf("invalid remote loki configuration: %w", err)
+	}
+	m := ng.Metrics.GetEvalHistorianMetrics()
+	logger := log.New("ngalert.schedule.historian")
+	client := lokiclient.NewLokiClient(
+		lcfg,
+		lokiclient.NewRequester(),
+		m.BytesWritten,
+		m.WriteDuration,
+		logger.New("component", "loki-client"),
+		ng.tracer,
+		evalHistorian.LokiClientSpanName,
+	)
+	testConnCtx, cancelFunc := context.WithTimeout(ctx, 10*time.Second)
+	defer cancelFunc()
+	if err := client.Ping(testConnCtx); err != nil {
+		ng.Log.Error("Failed to communicate with configured remote Loki backend, notification history may not be persisted", "error", err)
+	}
+	return evalHistorian.NewHistorian(
+		logger,
+		client,
+		m,
+		ng.Cfg.UnifiedAlerting.StateHistory.ExternalLabels,
+		0, // TODO add to config
+	), nil
 }
