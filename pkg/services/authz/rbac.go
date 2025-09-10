@@ -178,10 +178,7 @@ func newRemoteRBACClient(clientCfg *authzClientSettings, tracer trace.Tracer, re
 		grpc.WithChainStreamInterceptor(streamInterceptors...),
 	}
 
-	conn, err := grpc.NewClient(
-		clientCfg.remoteAddress,
-		opts...,
-	)
+	conn, err := grpc.NewClient(clientCfg.remoteAddress, opts...)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create authz client to remote server: %w", err)
 	}
