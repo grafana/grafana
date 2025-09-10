@@ -299,7 +299,7 @@ groupByNode(summarize(movingAverage(apps.$app.$server.counters.requests.count, 5
 
 _Ad hoc filters_ are one of the most complex and flexible variable options available.
 Instead of creating a variable for each dimension by which you want to filter, ad hoc filters automatically create variables (key/value pairs) for all the dimensions returned by your data source query.
-This allows you to build dashboard-wide ad hoc queries.
+This allows you to apply filters dashboard-wide.
 
 Ad hoc filters let you add label/value filters that are automatically added to all metric queries that use the specified data source.
 Unlike other variables, you don't use ad hoc filters in queries.
@@ -337,7 +337,7 @@ Now you can [filter data on the dashboard](ref:filter-dashboard).
 You can also filter panels on another dashboard using data links, by including a variable in the link:
 
 ```
-https://play.grafana.org/d/HYaGDGIMk/templating-global-variables-and-interpolation?orgId=1&from=now-6h&to=now&timezone=utc&var-Server=CCC&var-MyCustomDashboardVariable=Hello%20World%21
+play.grafana.org/d/HYaGDGIMk?var-Server=CCC&var-MyCustomDashboardVariable=Hello%20World%21
 ```
 
 In the preceding example, the variables and values are `var-Server=CCC` and `var-MyCustomDashboardVariable=Hello%20World%21`.

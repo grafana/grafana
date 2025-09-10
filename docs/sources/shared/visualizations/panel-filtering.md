@@ -8,7 +8,7 @@ title: Panel filtering
 <!-- vale Grafana.Spelling = NO -->
 
 In table visualizations, you can apply ad hoc filters from the visualization with one click.
-To quickly ad hoc filter variables, follow these steps:
+To quickly filter the dashboard data, follow these steps:
 
 1. Hover your cursor over the cell with the value you want to filter for to display the filter icons. In this example, the cell value is `ConfigMap Updated`, which is in the `alertname` column:
 
@@ -16,7 +16,7 @@ To quickly ad hoc filter variables, follow these steps:
 
 1. Click the add filter icon.
 
-   The variable pair `alertname = ConfigMap Updated` is added to the ad hoc filter and all panels using the same data source that include that variable value are filtered by that value:
+   The variable pair `alertname = ConfigMap Updated` is added to the ad hoc filter and all panels using the same data source are filtered by that value:
 
    {{< figure src="/media/docs/grafana/panels-visualizations/screenshot-ad-hoc-filter-applied-v12.2.png" max-width="750px" alt="Two tables, filtered" >}}
 
