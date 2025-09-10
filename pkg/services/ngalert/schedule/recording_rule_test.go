@@ -14,9 +14,12 @@ import (
 	"github.com/benbjohnson/clock"
 	"github.com/gogo/protobuf/proto"
 	"github.com/golang/snappy"
+	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/prometheus/prometheus/prompb"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/atomic"
 
@@ -29,8 +32,10 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	dsfakes "github.com/grafana/grafana/pkg/services/datasources/fakes"
+	"github.com/grafana/grafana/pkg/services/ngalert/eval/eval_mocks"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	models "github.com/grafana/grafana/pkg/services/ngalert/models"
+	historianModels "github.com/grafana/grafana/pkg/services/ngalert/schedule/historian/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/writer"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
@@ -179,7 +184,21 @@ func blankRecordingRuleForTests(ctx context.Context) *recordingRule {
 		Enabled: true,
 	}
 
-	return newRecordingRule(context.Background(), models.AlertRuleKeyWithGroup{}, RetryConfig{}, nil, nil, st, log.NewNopLogger(), nil, nil, writer.FakeWriter{}, nil, nil, nil)
+	return newRecordingRule(
+		context.Background(),
+		models.AlertRuleKeyWithGroup{},
+		RetryConfig{},
+		nil,
+		nil,
+		st,
+		log.NewNopLogger(),
+		nil,
+		nil,
+		writer.FakeWriter{},
+		nil,
+		nil,
+		&fakeHistorian{},
+	)
 }
 
 func TestRecordingRule_Integration(t *testing.T) {
@@ -428,16 +447,19 @@ func TestRecordingRuleAfterEval(t *testing.T) {
 	})
 }
 
-func testRecordingRule_Integration(t *testing.T, writeTarget *writer.TestRemoteWriteTarget, writer RecordingWriter, writerReg *prometheus.Registry, dsUID string) {
+func testRecordingRule_Integration(t *testing.T, writeTarget *writer.TestRemoteWriteTarget, recordingWriter RecordingWriter, writerReg *prometheus.Registry, dsUID string) {
 	gen := models.RuleGen.With(models.RuleGen.WithAllRecordingRules(), models.RuleGen.WithOrgID(123))
 	ruleStore := newFakeRulesStore()
 	reg := prometheus.NewPedanticRegistry()
 	clk := clock.NewMock()
 	sch := setupScheduler(t, ruleStore, nil, reg, nil, nil, nil, withSchedulerClock(clk))
-	sch.recordingWriter = writer
+	sch.recordingWriter = recordingWriter
+	historian := &fakeHistorian{}
+	sch.historian = historian
 
 	t.Run("rule that succeeds", func(t *testing.T) {
 		writeTarget.Reset()
+		historian.Reset()
 		rule := gen.With(withQueryForHealth("ok")).GenerateRef()
 		rule.Record.TargetDatasourceUID = dsUID
 		ruleStore.PutRule(context.Background(), rule)
@@ -464,11 +486,12 @@ func testRecordingRule_Integration(t *testing.T, writeTarget *writer.TestRemoteW
 			require.Zero(t, status.EvaluationDuration)
 		})
 
-		process.Eval(&Evaluation{
+		evaluation := &Evaluation{
 			scheduledAt: now,
 			rule:        rule,
 			folderTitle: folderTitle,
-		})
+		}
+		process.Eval(evaluation)
 		_ = waitForTimeChannel(t, evalDoneChan)
 
 		t.Run("reports basic evaluation metrics", func(t *testing.T) {
@@ -574,10 +597,30 @@ func testRecordingRule_Integration(t *testing.T, writeTarget *writer.TestRemoteW
 			require.NotZero(t, writeTarget.RequestsCount)
 			require.Contains(t, writeTarget.LastRequestBody, "some_metric")
 		})
+
+		t.Run("it should record to history", func(t *testing.T) {
+			historian := sch.historian.(*fakeHistorian)
+			require.Eventually(t, func() bool {
+				return len(historian.Records) > 0
+			}, 10*time.Second, 10*time.Millisecond)
+			assert.Len(t, historian.Records, 1)
+			for i, record := range historian.Records {
+				assert.Equal(t, i+1, record.Attempt)
+				assert.Equal(t, rule.UID, record.RuleUID)
+				assert.Equal(t, rule.GetGroupKey(), record.GroupKey)
+				assert.Equal(t, evaluation.Fingerprint().String(), record.RuleFingerprint)
+				assert.Equal(t, historianModels.EvalStatusSuccess, record.Status)
+				assert.Empty(t, record.Error)
+				assert.Equal(t, evaluation.scheduledAt, record.Tick)
+				assert.NotEmpty(t, record.EvaluationTime)
+				assert.Equal(t, rule.Version, record.RuleVersion)
+			}
+		})
 	})
 
-	t.Run("rule that errors", func(t *testing.T) {
+	t.Run("rule that errors to evaluate", func(t *testing.T) {
 		writeTarget.Reset()
+		historian.Reset()
 		rule := gen.With(withQueryForHealth("error")).GenerateRef()
 		ruleStore.PutRule(context.Background(), rule)
 		folderTitle := ruleStore.getNamespaceTitle(rule.NamespaceUID)
@@ -603,11 +646,12 @@ func testRecordingRule_Integration(t *testing.T, writeTarget *writer.TestRemoteW
 			require.Zero(t, status.EvaluationDuration)
 		})
 
-		process.Eval(&Evaluation{
+		evaluation := &Evaluation{
 			scheduledAt: now,
 			rule:        rule,
 			folderTitle: folderTitle,
-		})
+		}
+		process.Eval(evaluation)
 
 		// Because we are using a mock clock, first we need to wait until the rule evaluation
 		// reaches the point where it sleeps for the duration of the retry interval.
@@ -720,10 +764,30 @@ func testRecordingRule_Integration(t *testing.T, writeTarget *writer.TestRemoteW
 		t.Run("no write was performed", func(t *testing.T) {
 			require.Zero(t, writeTarget.RequestsCount)
 		})
+
+		t.Run("it should record to history", func(t *testing.T) {
+			historian := sch.historian.(*fakeHistorian)
+			require.Eventually(t, func() bool {
+				return len(historian.Records) > 0
+			}, 10*time.Second, 10*time.Millisecond)
+			assert.Len(t, historian.Records, 1)
+			for i, record := range historian.Records {
+				assert.Equal(t, i+1, record.Attempt)
+				assert.Equal(t, rule.UID, record.RuleUID)
+				assert.Equal(t, rule.GetGroupKey(), record.GroupKey)
+				assert.Equal(t, evaluation.Fingerprint().String(), record.RuleFingerprint)
+				assert.Equal(t, historianModels.EvalStatusEvalError, record.Status)
+				assert.NotEmpty(t, record.Error)
+				assert.Equal(t, evaluation.scheduledAt, record.Tick)
+				assert.NotEmpty(t, record.EvaluationTime)
+				assert.Equal(t, rule.Version, record.RuleVersion)
+			}
+		})
 	})
 
-	t.Run("nodata rule", func(t *testing.T) {
-		rule := gen.With(withQueryForHealth("nodata")).GenerateRef()
+	t.Run("rule that errors to write", func(t *testing.T) {
+		historian.Reset()
+		rule := gen.With(withQueryForHealth("ok")).GenerateRef()
 		ruleStore.PutRule(context.Background(), rule)
 		folderTitle := ruleStore.getNamespaceTitle(rule.NamespaceUID)
 		ruleFactory := ruleFactoryFromScheduler(sch)
@@ -732,6 +796,11 @@ func testRecordingRule_Integration(t *testing.T, writeTarget *writer.TestRemoteW
 		evalDoneChan := make(chan time.Time)
 		process.(*recordingRule).evalAppliedHook = func(_ models.AlertRuleKey, t time.Time) {
 			evalDoneChan <- t
+		}
+		process.(*recordingRule).writer = &writer.FakeWriter{
+			WriteFunc: func(_ context.Context, _ string, _ string, _ time.Time, _ data.Frames, _ int64, _ map[string]string) error {
+				return fmt.Errorf("failed to write")
+			},
 		}
 		now := time.Now()
 
@@ -748,11 +817,188 @@ func testRecordingRule_Integration(t *testing.T, writeTarget *writer.TestRemoteW
 			require.Zero(t, status.EvaluationDuration)
 		})
 
-		process.Eval(&Evaluation{
+		evaluation := &Evaluation{
 			scheduledAt: now,
 			rule:        rule,
 			folderTitle: folderTitle,
+		}
+		process.Eval(evaluation)
+
+		// Because we are using a mock clock, first we need to wait until the rule evaluation
+		// reaches the point where it sleeps for the duration of the retry interval.
+		time.Sleep(200 * time.Millisecond)
+		// Then advance the mock clock to trigger the retry.
+		clk.Add(2 * time.Second)
+
+		_ = waitForTimeChannel(t, evalDoneChan)
+
+		t.Run("reports basic evaluation metrics", func(t *testing.T) {
+			expectedMetric := fmt.Sprintf(
+				`
+				# HELP grafana_alerting_rule_evaluation_duration_seconds The time to evaluate a rule.
+				# TYPE grafana_alerting_rule_evaluation_duration_seconds histogram
+				grafana_alerting_rule_evaluation_duration_seconds_bucket{org="%[1]d",le="0.01"} 3
+				grafana_alerting_rule_evaluation_duration_seconds_bucket{org="%[1]d",le="0.1"} 3
+				grafana_alerting_rule_evaluation_duration_seconds_bucket{org="%[1]d",le="0.5"} 3
+				grafana_alerting_rule_evaluation_duration_seconds_bucket{org="%[1]d",le="1"} 3
+				grafana_alerting_rule_evaluation_duration_seconds_bucket{org="%[1]d",le="5"} 3
+				grafana_alerting_rule_evaluation_duration_seconds_bucket{org="%[1]d",le="10"} 3
+				grafana_alerting_rule_evaluation_duration_seconds_bucket{org="%[1]d",le="15"} 3
+				grafana_alerting_rule_evaluation_duration_seconds_bucket{org="%[1]d",le="30"} 3
+				grafana_alerting_rule_evaluation_duration_seconds_bucket{org="%[1]d",le="60"} 3
+				grafana_alerting_rule_evaluation_duration_seconds_bucket{org="%[1]d",le="120"} 3
+				grafana_alerting_rule_evaluation_duration_seconds_bucket{org="%[1]d",le="180"} 3
+				grafana_alerting_rule_evaluation_duration_seconds_bucket{org="%[1]d",le="240"} 3
+				grafana_alerting_rule_evaluation_duration_seconds_bucket{org="%[1]d",le="300"} 3
+				grafana_alerting_rule_evaluation_duration_seconds_bucket{org="%[1]d",le="+Inf"} 3
+				grafana_alerting_rule_evaluation_duration_seconds_sum{org="%[1]d"} 0
+				grafana_alerting_rule_evaluation_duration_seconds_count{org="%[1]d"} 3
+				# HELP grafana_alerting_rule_evaluations_total The total number of rule evaluations.
+				# TYPE grafana_alerting_rule_evaluations_total counter
+				grafana_alerting_rule_evaluations_total{org="%[1]d"} 3
+				# HELP grafana_alerting_rule_evaluation_attempts_total The total number of rule evaluation attempts.
+				 # TYPE grafana_alerting_rule_evaluation_attempts_total counter
+				grafana_alerting_rule_evaluation_attempts_total{org="%[1]d"} 3
+				`,
+				rule.OrgID,
+			)
+
+			err := testutil.GatherAndCompare(reg, bytes.NewBufferString(expectedMetric),
+				"grafana_alerting_rule_evaluation_duration_seconds",
+				"grafana_alerting_rule_evaluations_total",
+				"grafana_alerting_rule_evaluation_attempts_total",
+			)
+			require.NoError(t, err)
 		})
+
+		t.Run("reports failure evaluation metrics", func(t *testing.T) {
+			expectedMetric := fmt.Sprintf(
+				`
+				# HELP grafana_alerting_rule_evaluation_failures_total The total number of rule evaluation failures.
+				# TYPE grafana_alerting_rule_evaluation_failures_total counter
+				grafana_alerting_rule_evaluation_failures_total{org="%[1]d"} 2
+				# HELP grafana_alerting_rule_evaluation_attempt_failures_total The total number of rule evaluation attempt failures.
+				# TYPE grafana_alerting_rule_evaluation_attempt_failures_total counter
+				grafana_alerting_rule_evaluation_attempt_failures_total{org="%[1]d"} 2
+				`,
+				rule.OrgID,
+			)
+
+			err := testutil.GatherAndCompare(reg, bytes.NewBufferString(expectedMetric),
+				"grafana_alerting_rule_evaluation_failures_total",
+				"grafana_alerting_rule_evaluation_attempt_failures_total",
+			)
+			require.NoError(t, err)
+		})
+
+		t.Run("reports remote write metrics", func(t *testing.T) {
+			expectedMetric := fmt.Sprintf(
+				`
+				# HELP grafana_alerting_remote_writer_write_duration_seconds Histogram of remote write durations.
+				# TYPE grafana_alerting_remote_writer_write_duration_seconds histogram
+				grafana_alerting_remote_writer_write_duration_seconds_bucket{backend="prometheus",org="%[1]d",le="0.005"} 1
+				grafana_alerting_remote_writer_write_duration_seconds_bucket{backend="prometheus",org="%[1]d",le="0.01"} 1
+				grafana_alerting_remote_writer_write_duration_seconds_bucket{backend="prometheus",org="%[1]d",le="0.025"} 1
+				grafana_alerting_remote_writer_write_duration_seconds_bucket{backend="prometheus",org="%[1]d",le="0.05"} 1
+				grafana_alerting_remote_writer_write_duration_seconds_bucket{backend="prometheus",org="%[1]d",le="0.1"} 1
+				grafana_alerting_remote_writer_write_duration_seconds_bucket{backend="prometheus",org="%[1]d",le="0.25"} 1
+				grafana_alerting_remote_writer_write_duration_seconds_bucket{backend="prometheus",org="%[1]d",le="0.5"} 1
+				grafana_alerting_remote_writer_write_duration_seconds_bucket{backend="prometheus",org="%[1]d",le="1"} 1
+				grafana_alerting_remote_writer_write_duration_seconds_bucket{backend="prometheus",org="%[1]d",le="2.5"} 1
+				grafana_alerting_remote_writer_write_duration_seconds_bucket{backend="prometheus",org="%[1]d",le="5"} 1
+				grafana_alerting_remote_writer_write_duration_seconds_bucket{backend="prometheus",org="%[1]d",le="10"} 1
+				grafana_alerting_remote_writer_write_duration_seconds_bucket{backend="prometheus",org="%[1]d",le="+Inf"} 1
+				grafana_alerting_remote_writer_write_duration_seconds_sum{backend="prometheus",org="%[1]d"} 0
+				grafana_alerting_remote_writer_write_duration_seconds_count{backend="prometheus",org="%[1]d"} 1
+				# HELP grafana_alerting_remote_writer_writes_total The total number of remote writes attempted.
+				# TYPE grafana_alerting_remote_writer_writes_total counter
+				grafana_alerting_remote_writer_writes_total{backend="prometheus", org="%[1]d", status_code="200"} 1
+				`,
+				rule.OrgID,
+			)
+
+			err := testutil.GatherAndCompare(writerReg, bytes.NewBufferString(expectedMetric),
+				"grafana_alerting_remote_writer_writes_total",
+				"grafana_alerting_remote_writer_write_duration_seconds",
+			)
+			require.NoError(t, err)
+		})
+
+		t.Run("status shows evaluation", func(t *testing.T) {
+			status := process.(*recordingRule).Status()
+
+			require.Equal(t, "error", status.Health)
+			require.NotNil(t, status.LastError)
+			require.ErrorContains(t, status.LastError, "failed to write")
+		})
+
+		t.Run("it should record to history", func(t *testing.T) {
+			historian := sch.historian.(*fakeHistorian)
+			require.Eventually(t, func() bool {
+				return len(historian.Records) > 0
+			}, 10*time.Second, 10*time.Millisecond)
+			assert.Len(t, historian.Records, 1)
+			for i, record := range historian.Records {
+				assert.Equal(t, i+1, record.Attempt)
+				assert.Equal(t, rule.UID, record.RuleUID)
+				assert.Equal(t, rule.GetGroupKey(), record.GroupKey)
+				assert.Equal(t, evaluation.Fingerprint().String(), record.RuleFingerprint)
+				assert.Equal(t, historianModels.EvalStatusProcessError, record.Status)
+				assert.Contains(t, record.Error, "failed to write")
+				assert.Equal(t, evaluation.scheduledAt, record.Tick)
+				assert.NotEmpty(t, record.EvaluationTime)
+				assert.Equal(t, rule.Version, record.RuleVersion)
+			}
+		})
+	})
+
+	t.Run("nodata rule", func(t *testing.T) {
+		historian.Reset()
+		rule := gen.With(withQueryForHealth("nodata")).GenerateRef()
+		ruleStore.PutRule(context.Background(), rule)
+
+		response := &backend.QueryDataResponse{
+			Responses: map[string]backend.DataResponse{
+				rule.Record.From: {
+					Frames: data.Frames{},
+					Status: backend.StatusOK,
+				},
+			},
+		}
+		evalMock := eval_mocks.NewConditionEvaluatorMock(t)
+		evalMock.EXPECT().EvaluateRaw(mock.Anything, mock.Anything).Return(response, nil)
+
+		folderTitle := ruleStore.getNamespaceTitle(rule.NamespaceUID)
+		ruleFactory := ruleFactoryFromScheduler(sch)
+
+		process := ruleFactory.new(context.Background(), rule)
+		evalDoneChan := make(chan time.Time)
+		recRule := process.(*recordingRule)
+		recRule.evalAppliedHook = func(_ models.AlertRuleKey, t time.Time) {
+			evalDoneChan <- t
+		}
+		recRule.evalFactory = eval_mocks.NewEvaluatorFactory(evalMock)
+		now := time.Now()
+
+		go func() {
+			_ = process.Run()
+		}()
+
+		t.Run("status shows no evaluations", func(t *testing.T) {
+			status := process.(*recordingRule).Status()
+
+			require.Equal(t, "unknown", status.Health)
+			require.Nil(t, status.LastError)
+			require.Zero(t, status.EvaluationTimestamp)
+			require.Zero(t, status.EvaluationDuration)
+		})
+
+		evaluation := &Evaluation{
+			scheduledAt: now,
+			rule:        rule,
+			folderTitle: folderTitle,
+		}
+		process.Eval(evaluation)
 
 		// Because we are using a mock clock, first we need to wait until the rule evaluation
 		// reaches the point where it sleeps for the duration of the retry interval.
@@ -764,9 +1010,26 @@ func testRecordingRule_Integration(t *testing.T, writeTarget *writer.TestRemoteW
 
 		t.Run("status shows evaluation", func(t *testing.T) {
 			status := process.(*recordingRule).Status()
+			require.Equal(t, "ok", status.Health)
+		})
 
-			// TODO: assert "error" to fix test, update to "nodata" in the future
-			require.Equal(t, "error", status.Health)
+		t.Run("it should record to history", func(t *testing.T) {
+			historian := sch.historian.(*fakeHistorian)
+			require.Eventually(t, func() bool {
+				return len(historian.Records) > 0
+			}, 10*time.Second, 10*time.Millisecond)
+			assert.Len(t, historian.Records, 1)
+			for i, record := range historian.Records {
+				assert.Equal(t, i+1, record.Attempt)
+				assert.Equal(t, rule.UID, record.RuleUID)
+				assert.Equal(t, rule.GetGroupKey(), record.GroupKey)
+				assert.Equal(t, evaluation.Fingerprint().String(), record.RuleFingerprint)
+				assert.Equal(t, historianModels.EvalStatusNoData, record.Status)
+				assert.Empty(t, record.Error)
+				assert.Equal(t, evaluation.scheduledAt, record.Tick)
+				assert.NotEmpty(t, record.EvaluationTime)
+				assert.Equal(t, rule.Version, record.RuleVersion)
+			}
 		})
 	})
 

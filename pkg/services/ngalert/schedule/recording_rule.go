@@ -18,6 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
+	historianModels "github.com/grafana/grafana/pkg/services/ngalert/schedule/historian/models"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -197,7 +198,7 @@ func (r *recordingRule) doEvaluate(ctx context.Context, ev *Evaluation) {
 		return
 	}
 
-	ctx, span := r.tracer.Start(ctx, "recording rule execution", trace.WithAttributes(
+	tracingCtx, span := r.tracer.Start(ctx, "recording rule execution", trace.WithAttributes(
 		attribute.String("rule_uid", ev.rule.UID),
 		attribute.Int64("org_id", ev.rule.OrgID),
 		attribute.Int64("rule_version", ev.rule.Version),
@@ -225,8 +226,30 @@ func (r *recordingRule) doEvaluate(ctx context.Context, ev *Evaluation) {
 		}
 
 		evalAttemptTotal.Inc()
-		err := r.tryEvaluation(ctx, ev, logger)
+		start := r.clock.Now()
+		status, err := r.tryEvaluation(tracingCtx, ev, logger)
 		latestError = err
+
+		if r.historian != nil {
+			duration := r.clock.Since(start)
+			statusErr := ""
+			if err != nil {
+				statusErr = err.Error()
+			}
+			go r.historian.Record(ctx, historianModels.Record{
+				RuleUID:         ev.rule.UID,
+				RuleVersion:     ev.rule.Version,
+				GroupKey:        ev.rule.GetGroupKey(),
+				RuleFingerprint: ev.Fingerprint().String(),
+				Tick:            ev.scheduledAt,
+				Attempt:         attempt,
+				Status:          status,
+				Error:           statusErr,
+				Duration:        duration,
+				EvaluationTime:  start,
+			})
+		}
+
 		if err == nil {
 			break
 		}
@@ -247,7 +270,7 @@ func (r *recordingRule) doEvaluate(ctx context.Context, ev *Evaluation) {
 		attempt++
 
 		select {
-		case <-ctx.Done():
+		case <-tracingCtx.Done():
 			logger.Error("Context has been cancelled while backing off", "attempt", attempt)
 			return
 		case <-r.clock.After(retryIn):
@@ -269,18 +292,18 @@ func (r *recordingRule) doEvaluate(ctx context.Context, ev *Evaluation) {
 	r.health.Store("ok")
 }
 
-func (r *recordingRule) tryEvaluation(ctx context.Context, ev *Evaluation, logger log.Logger) error {
+func (r *recordingRule) tryEvaluation(ctx context.Context, ev *Evaluation, logger log.Logger) (historianModels.EvalStatus, error) {
 	evalStart := r.clock.Now()
 	evalCtx := eval.NewContext(ctx, SchedulerUserFor(ev.rule.OrgID))
 	result, err := r.buildAndExecutePipeline(ctx, evalCtx, ev, logger)
 	evalDur := r.clock.Now().Sub(evalStart)
 	if err != nil {
-		return fmt.Errorf("server side expressions pipeline returned an error: %w", err)
+		return historianModels.EvalStatusEvalError, fmt.Errorf("server side expressions pipeline returned an error: %w", err)
 	}
 
 	// There might be errors in the pipeline results, even if the query succeeded.
 	if err := eval.FindConditionError(result, ev.rule.Record.From); err != nil {
-		return fmt.Errorf("the query failed with an error: %w", err)
+		return historianModels.EvalStatusEvalError, fmt.Errorf("the query failed with an error: %w", err)
 	}
 	// TODO: This is missing dedicated logic for NoData. If NoData we can skip the write.
 
@@ -297,7 +320,7 @@ func (r *recordingRule) tryEvaluation(ctx context.Context, ev *Evaluation, logge
 		))
 		logger.Debug("Query returned no data", "reason", err)
 		r.health.Store("nodata")
-		return nil
+		return historianModels.EvalStatusNoData, nil
 	}
 
 	filteredLabels := ngmodels.WithoutPrivateLabels(ev.rule.Labels)
@@ -308,7 +331,7 @@ func (r *recordingRule) tryEvaluation(ctx context.Context, ev *Evaluation, logge
 	if err != nil {
 		span.SetStatus(codes.Error, "failed to write metrics")
 		span.RecordError(err)
-		return fmt.Errorf("remote write failed: %w", err)
+		return historianModels.EvalStatusProcessError, fmt.Errorf("remote write failed: %w", err)
 	}
 
 	logger.Debug("Metrics written", "duration", writeDur)
@@ -316,7 +339,7 @@ func (r *recordingRule) tryEvaluation(ctx context.Context, ev *Evaluation, logge
 		attribute.Int64("frames", int64(len(frames))),
 	))
 
-	return nil
+	return historianModels.EvalStatusSuccess, nil
 }
 
 func (r *recordingRule) buildAndExecutePipeline(ctx context.Context, evalCtx eval.EvaluationContext, ev *Evaluation, logger log.Logger) (*backend.QueryDataResponse, error) {
