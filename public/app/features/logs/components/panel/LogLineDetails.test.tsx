@@ -694,10 +694,10 @@ describe('LogLineDetails', () => {
                     interpolated: {
                       query: {
                         query: 'abcd1234',
-                        queryType: 'traceql'
-                      }
-                    }
-                  }
+                        queryType: 'traceql',
+                      },
+                    },
+                  },
                 },
                 title: 'tempo',
                 target: '_blank',
@@ -766,10 +766,10 @@ describe('LogLineDetails', () => {
                     interpolated: {
                       query: {
                         query: 'abcd1234',
-                        queryType: 'traceql'
-                      }
-                    }
-                  }
+                        queryType: 'traceql',
+                      },
+                    },
+                  },
                 },
                 title: 'tempo',
                 target: '_blank',
