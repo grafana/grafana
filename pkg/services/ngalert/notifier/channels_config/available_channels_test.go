@@ -149,7 +149,8 @@ func Test_getSecretFields(t *testing.T) {
 	}
 }
 
-func TestPostableMimirReceiverToIntegrations(t *testing.T) {
+func TestV0IntegrationsSecrets(t *testing.T) {
+	// This test ensures that all known integrations' secrets are listed in the schema definition.
 	notifytest.ForEachIntegrationType(t, func(configType reflect.Type) {
 		t.Run(configType.Name(), func(t *testing.T) {
 			integrationType := strings.ToLower(strings.TrimSuffix(configType.Name(), "Config"))
