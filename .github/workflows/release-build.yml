@@ -74,7 +74,7 @@ jobs:
         run: |
           echo "version=$(cat VERSION)" >> "$GITHUB_OUTPUT"
           echo "grafana_commit=$(git rev-parse HEAD)" | tee -a "$GITHUB_OUTPUT"
-  Triggers the same workflow in `grafana-enterprise` on the same ref
+  # Triggers the same workflow in `grafana-enterprise` on the same ref
   downstream:
     runs-on: github-hosted-ubuntu-x64-small
     needs: [setup]
