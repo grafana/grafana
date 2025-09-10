@@ -3,7 +3,7 @@
  */
 
 // Contact Points
-export * from './grafana/api/v0alpha1/types';
+export * from './grafana/contactPoints/types';
 export { ContactPointSelector } from './grafana/contactPoints/components/ContactPointSelector/ContactPointSelector';
 export { getContactPointDescription } from './grafana/contactPoints/utils';
 

@@ -1321,7 +1321,7 @@ export type OnCallIntegration = {
     message?: string;
   };
 };
-export type GenericIntegration = {
+export type UnknownIntegration = {
   disableResolveMessage?: boolean;
   secureFields?: {
     [key: string]: boolean;
@@ -1335,7 +1335,7 @@ export type GenericIntegration = {
     [key: string]: any;
   };
 };
-export type ReceiverIntegration = EmailIntegration | SlackIntegration | OnCallIntegration | GenericIntegration;
+export type ReceiverIntegration = EmailIntegration | SlackIntegration | OnCallIntegration | UnknownIntegration;
 export type ReceiverSpec = {
   integrations: ReceiverIntegration[];
   title: string;

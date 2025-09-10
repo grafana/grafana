@@ -4,8 +4,8 @@ import type {
   Receiver,
   ReceiverIntegration,
   SlackIntegration,
-  GenericIntegration as UnknownIntegration,
-} from './api.gen';
+  UnknownIntegration,
+} from '../api/v0alpha1/api.gen';
 
 export type Integration = ReceiverIntegration;
 export type ContactPoint = Receiver;
@@ -34,9 +34,9 @@ export function isOnCallIntegration(integration: ReceiverIntegration): integrati
 }
 
 /**
- * Type guard to check if an integration is a GenericIntegration
+ * Type guard to check if an integration is an UnknownIntegration
  */
-export function isGenericIntegration(integration: ReceiverIntegration): integration is UnknownIntegration {
+export function isUnknownIntegration(integration: ReceiverIntegration): integration is UnknownIntegration {
   return !isKnownIntegration(integration);
 }
 

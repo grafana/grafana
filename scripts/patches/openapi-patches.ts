@@ -53,7 +53,7 @@ export const SPEC_PATCHES: SpecPatches = {
               { $ref: '#/components/schemas/EmailIntegration' },
               { $ref: '#/components/schemas/SlackIntegration' },
               { $ref: '#/components/schemas/OnCallIntegration' },
-              { $ref: '#/components/schemas/GenericIntegration' },
+              { $ref: '#/components/schemas/UnknownIntegration' },
             ],
           },
         },
@@ -160,7 +160,7 @@ export const SPEC_PATCHES: SpecPatches = {
         },
         {
           op: 'add',
-          path: '/components/schemas/GenericIntegration',
+          path: '/components/schemas/UnknownIntegration',
           value: {
             type: 'object',
             properties: {

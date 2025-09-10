@@ -1,8 +1,8 @@
 import {
   ContactPointFactory,
   EmailIntegrationFactory,
-  GenericIntegrationFactory,
   SlackIntegrationFactory,
+  UnknownIntegrationFactory,
 } from '../api/v0alpha1/mocks/fakes/Receivers';
 
 import { getContactPointDescription } from './utils';
@@ -42,8 +42,8 @@ describe('getContactPointDescription', () => {
 
   it('should show description for generic / unknown contact point integration', () => {
     const contactPoint = ContactPointFactory.build({
-      spec: { integrations: [GenericIntegrationFactory.build({ type: 'generic' })] },
+      spec: { integrations: [UnknownIntegrationFactory.build({ type: 'unknown' })] },
     });
-    expect(getContactPointDescription(contactPoint)).toBe('generic');
+    expect(getContactPointDescription(contactPoint)).toBe('unknown');
   });
 });

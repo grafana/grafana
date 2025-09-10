@@ -41,8 +41,8 @@ export const ContactPointSpecFactory = Factory.define<ContactPoint['spec']>(() =
   integrations: faker.helpers.uniqueArray(IntegrationUnion, 2).map((integration) => integration.build()),
 }));
 
-export const GenericIntegrationFactory = Factory.define<Integration>(() => ({
-  type: 'email',
+export const UnknownIntegrationFactory = Factory.define<Integration>(() => ({
+  type: 'unknown',
   disableResolveMessage: false,
   version: '1',
   settings: {
