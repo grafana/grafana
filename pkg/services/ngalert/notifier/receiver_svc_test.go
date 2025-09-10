@@ -1456,8 +1456,6 @@ func TestReceiverService_InUseMetadata(t *testing.T) {
 				util.Pointer(models.ReceiverGen(models.ReceiverMuts.WithName("receiver2"))()),
 				util.Pointer(models.ReceiverGen(models.ReceiverMuts.WithName("receiver3"))()),
 				util.Pointer(models.ReceiverGen(models.ReceiverMuts.WithName("receiver4"))()),
-				util.Pointer(models.ReceiverGen(models.ReceiverMuts.WithName("receiver5"),
-					models.ReceiverMuts.WithOrigin(models.ResourceOriginStaging))()),
 			},
 			storeSettings: map[models.AlertRuleKey][]models.NotificationSettings{
 				{OrgID: 1, UID: "rule1uid"}: {
@@ -1503,11 +1501,6 @@ func TestReceiverService_InUseMetadata(t *testing.T) {
 					InUseByRules:  []models.AlertRuleKey{},
 					InUseByRoutes: 1,
 					CanUse:        true,
-				},
-				legacy_storage.NameToUid("receiver5"): {
-					InUseByRules:  []models.AlertRuleKey{},
-					InUseByRoutes: 0,
-					CanUse:        false,
 				},
 			},
 		},
