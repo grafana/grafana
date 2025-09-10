@@ -174,11 +174,20 @@ The following example shows three series: Min, Max, and Value. The Min and Max s
 
 {{< docs/shared lookup="visualizations/panel-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
-#### Time comparison
+### Tooltip options
 
-Toggle on the **Time comparison** switch to show the **Comparison** selector in the panel so you can compare data between two time ranges.
+{{< docs/shared lookup="visualizations/tooltip-options-2.md" source="grafana" version="<GRAFANA_VERSION>" leveloffset="+1">}}
 
-When you apply a time comparison to a visualization, the comparison data is displayed with color matching dashed lines:
+### Legend options
+
+{{< docs/shared lookup="visualizations/legend-options-1.md" source="grafana" version="<GRAFANA_VERSION>" leveloffset="+1" >}}
+
+### Time comparison
+
+Toggle on the **Show comparison selector** switch to show **Comparison** drop-down list in the panel.
+This allows you to compare data between two time ranges.
+
+When you apply a time comparison to a visualization, the comparison data is displayed with color-matching dashed lines:
 
 {{< figure src="/media/docs/grafana/panels-visualizations/screenshot-time-series-time-comparison-v12.2.png" max-width="750px" alt="A time series graph with the comparison selector open and Previous period selected" >}}
 
@@ -194,14 +203,6 @@ In all cases, the list includes the options:
 - **Previous period** - Based on the time range selection. For example, if the time range is **Last 1 hour**, the comparison period would be the hour before that.
 
 When you end a session, the **Comparison** selector resets to **None**.
-
-### Tooltip options
-
-{{< docs/shared lookup="visualizations/tooltip-options-2.md" source="grafana" version="<GRAFANA_VERSION>" leveloffset="+1">}}
-
-### Legend options
-
-{{< docs/shared lookup="visualizations/legend-options-1.md" source="grafana" version="<GRAFANA_VERSION>" leveloffset="+1" >}}
 
 ### Axis options
 
