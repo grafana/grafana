@@ -732,69 +732,10 @@ const WrapLogMessageButton = ({ expanded }: WrapLogMessageButtonProps) => {
       customTagText={'+'}
     />
   );
-
-  // return (
-  //   <div className={styles.container}>
-  //     <label className={styles.label}>
-  //       {expanded && <span className={styles.labelText}>{wrapStateText}</span>}
-  //       <Dropdown overlay={wrappingMenu} placement="auto-end">
-  //         <div className={styles.iconContainer}>
-  //           <Tooltip content={t('logs.logs-controls.line-wrapping.tooltip', 'Set line wrap')}>
-  //             <button
-  //               aria-label={t('logs.logs-controls.line-wrapping.tooltip', 'Set line wrap')}
-  //               aria-pressed={wrapLogMessage}
-  //               className={`${styles.customControlButton} ${wrapLogMessage ? styles.controlButtonActive : styles.controlButton}`}
-  //               type="button"
-  //             >
-  //               <Icon name="wrap-text" size="lg" className={styles.customControlIcon} />
-  //               {prettifyJSON && <span className={styles.customControlTag}>+</span>}
-  //             </button>
-  //           </Tooltip>
-  //         </div>
-  //       </Dropdown>
-  //     </label>
-  //   </div>
-  // );
 };
 
 const getWrapButtonStyles = (theme: GrafanaTheme2, expanded: boolean) => {
-  const hoverSize = '26';
-
   return {
-    iconContainer: css({
-      width: theme.spacing(4),
-      alignItems: 'center',
-      display: 'flex',
-    }),
-    container: css({
-      fontSize: theme.typography.pxToRem(12),
-      height: theme.spacing(2),
-    }),
-    label: css({
-      display: 'flex',
-      justifyContent: 'space-between',
-    }),
-    labelText: css({
-      display: expanded ? 'block' : 'none',
-    }),
-    customControlTag: css({
-      color: theme.colors.primary.text,
-      fontSize: 10,
-      position: 'absolute',
-      bottom: -4,
-      right: 1,
-      lineHeight: '10px',
-      backgroundColor: theme.colors.background.primary,
-      paddingLeft: 2,
-    }),
-    customControlIcon: css({
-      verticalAlign: 'baseline',
-    }),
-    controlButton: css({
-      margin: 0,
-      color: theme.colors.text.secondary,
-      height: theme.spacing(2),
-    }),
     menuItemActive: css({
       '&:before': {
         content: '""',
@@ -804,58 +745,6 @@ const getWrapButtonStyles = (theme: GrafanaTheme2, expanded: boolean) => {
         height: `calc(100% - ${theme.spacing(1)})`,
         width: '2px',
         backgroundColor: theme.colors.warning.main,
-      },
-    }),
-    customControlButton: css({
-      position: 'relative',
-      zIndex: 0,
-      margin: 0,
-      boxShadow: 'none',
-      border: 'none',
-      display: 'flex',
-      background: 'transparent',
-      justifyContent: 'flex-start',
-      alignItems: 'center',
-      padding: 0,
-      overflow: 'visible',
-      width: theme.spacing(2.5),
-
-      '&:before': {
-        left: theme.spacing(-0.5),
-        zIndex: -1,
-        position: 'absolute',
-        opacity: 0,
-        width: `${hoverSize}px`,
-        height: `${hoverSize}px`,
-        borderRadius: theme.shape.radius.default,
-        content: '""',
-        [theme.transitions.handleMotion('no-preference', 'reduce')]: {
-          transitionDuration: '0.2s',
-          transitionTimingFunction: 'cubic-bezier(0.4, 0, 0.2, 1)',
-          transitionProperty: 'opacity',
-        },
-      },
-      '&:hover, &:focus': {
-        '&:before': {
-          backgroundColor: theme.colors.action.hover,
-          opacity: 1,
-        },
-      },
-    }),
-    controlButtonActive: css({
-      margin: 0,
-      color: theme.colors.text.secondary,
-      height: theme.spacing(2),
-      '&:after': {
-        display: 'block',
-        content: '" "',
-        position: 'absolute',
-        height: 2,
-        borderRadius: theme.shape.radius.default,
-        bottom: theme.spacing(-1),
-        backgroundImage: theme.colors.gradients.brandHorizontal,
-        width: theme.spacing(2.25),
-        opacity: 1,
       },
     }),
   };
