@@ -105,13 +105,11 @@ type SearchBackend interface {
 		ctx context.Context,
 		key NamespacedResource,
 		size int64,
-		resourceVersion int64,
 		nonStandardFields SearchableDocumentFields,
 		indexBuildReason string,
 		builder BuildFn,
 		updater UpdateFn,
 		rebuild bool,
-		searchAfterWrite bool,
 	) (ResourceIndex, error)
 
 	// TotalDocs returns the total number of documents across all indexes.
@@ -122,17 +120,15 @@ const tracingPrexfixSearch = "unified_search."
 
 // This supports indexing+search regardless of implementation
 type searchSupport struct {
-	tracer           trace.Tracer
-	log              *slog.Logger
-	storage          StorageBackend
-	search           SearchBackend
-	indexMetrics     *BleveIndexMetrics
-	access           types.AccessClient
-	builders         *builderCache
-	initWorkers      int
-	initMinSize      int
-	initMaxSize      int
-	searchAfterWrite bool
+	tracer       trace.Tracer
+	log          *slog.Logger
+	storage      StorageBackend
+	search       SearchBackend
+	indexMetrics *BleveIndexMetrics
+	access       types.AccessClient
+	builders     *builderCache
+	initWorkers  int
+	initMinSize  int
 
 	ring           *ring.Ring
 	ringLifecycler *ring.BasicLifecycler
@@ -156,7 +152,7 @@ var (
 	_ resourcepb.ManagedObjectIndexServer = (*searchSupport)(nil)
 )
 
-func newSearchSupport(opts SearchOptions, storage StorageBackend, access types.AccessClient, blob BlobSupport, tracer trace.Tracer, indexMetrics *BleveIndexMetrics, ring *ring.Ring, ringLifecycler *ring.BasicLifecycler, searchAfterWrite bool) (support *searchSupport, err error) {
+func newSearchSupport(opts SearchOptions, storage StorageBackend, access types.AccessClient, blob BlobSupport, tracer trace.Tracer, indexMetrics *BleveIndexMetrics, ring *ring.Ring, ringLifecycler *ring.BasicLifecycler) (support *searchSupport, err error) {
 	// No backend search support
 	if opts.Backend == nil {
 		return nil, nil
@@ -177,8 +173,6 @@ func newSearchSupport(opts SearchOptions, storage StorageBackend, access types.A
 		log:                   slog.Default().With("logger", "resource-search"),
 		initWorkers:           opts.WorkerThreads,
 		initMinSize:           opts.InitMinCount,
-		initMaxSize:           opts.InitMaxCount,
-		searchAfterWrite:      searchAfterWrite,
 		indexMetrics:          indexMetrics,
 		clientIndexEventsChan: opts.IndexEventsChan,
 		indexEventsChan:       make(chan *IndexEvent),
@@ -471,20 +465,12 @@ func (s *searchSupport) buildIndexes(ctx context.Context, rebuild bool) (int, er
 			}
 			totalBatchesIndexed++
 
-			// If the count is too large, we need to set the index to empty.
-			// Only do this if the max size is set to a non-zero (default) value.
-			if s.initMaxSize > 0 && (info.Count > int64(s.initMaxSize)) {
-				s.log.Info("setting empty index for resource with count greater than max size", "namespace", info.Namespace, "group", info.Group, "resource", info.Resource, "count", info.Count, "maxSize", s.initMaxSize)
-				_, err := s.buildEmptyIndex(ctx, info.NamespacedResource, info.ResourceVersion)
-				return err
-			}
-
 			s.log.Debug("building index", "namespace", info.Namespace, "group", info.Group, "resource", info.Resource, "rebuild", rebuild)
 			reason := "init"
 			if rebuild {
 				reason = "rebuild"
 			}
-			_, _, err := s.build(ctx, info.NamespacedResource, info.Count, info.ResourceVersion, reason, rebuild)
+			_, err := s.build(ctx, info.NamespacedResource, info.Count, reason, rebuild)
 			return err
 		})
 	}
@@ -498,6 +484,8 @@ func (s *searchSupport) buildIndexes(ctx context.Context, rebuild bool) (int, er
 }
 
 func (s *searchSupport) init(ctx context.Context) error {
+	origCtx := ctx
+
 	ctx, span := s.tracer.Start(ctx, tracingPrexfixSearch+"Init")
 	defer span.End()
 	start := time.Now().Unix()
@@ -509,34 +497,10 @@ func (s *searchSupport) init(ctx context.Context) error {
 
 	span.AddEvent("namespaces indexed", trace.WithAttributes(attribute.Int("namespaced_indexed", totalBatchesIndexed)))
 
-	watchctx := context.Background() // new context?
-	// don't start watcher when SearchAfterWrite changes are enabled
-	if !s.searchAfterWrite {
-		// Now start listening for new events
-		events, err := s.storage.WatchWriteEvents(watchctx)
-		if err != nil {
-			return err
-		}
-		go func() {
-			for {
-				v := <-events
-
-				// Skip events during batch updates
-				if v.PreviousRV < 0 {
-					continue
-				}
-
-				s.dispatchEvent(watchctx, v)
-			}
-		}()
-
-		go s.monitorIndexEvents(ctx)
-	}
-
 	// since usage insights is not in unified storage, we need to periodically rebuild the index
 	// to make sure these data points are up to date.
 	if s.rebuildInterval > 0 {
-		go s.startPeriodicRebuild(watchctx)
+		go s.startPeriodicRebuild(origCtx)
 	}
 
 	end := time.Now().Unix()
@@ -700,16 +664,14 @@ func (s *searchSupport) getOrCreateIndex(ctx context.Context, key NamespacedReso
 			}
 
 			size := int64(0)
-			rv := int64(0)
 			for _, stat := range stats {
 				if stat.Namespace == key.Namespace && stat.Group == key.Group && stat.Resource == key.Resource {
 					size = stat.Count
-					rv = stat.ResourceVersion
 					break
 				}
 			}
 
-			idx, _, err = s.build(ctx, key, size, rv, reason, false)
+			idx, err = s.build(ctx, key, size, reason, false)
 			if err != nil {
 				return nil, fmt.Errorf("error building search index, %w", err)
 			}
@@ -730,25 +692,23 @@ func (s *searchSupport) getOrCreateIndex(ctx context.Context, key NamespacedReso
 		}
 	}
 
-	if s.searchAfterWrite {
-		span.AddEvent("Updating index")
-		start := time.Now()
-		rv, err := idx.UpdateIndex(ctx, reason)
-		if err != nil {
-			return nil, tracing.Error(span, fmt.Errorf("failed to update index to guarantee strong consistency: %w", err))
-		}
-		elapsed := time.Since(start)
-		if s.indexMetrics != nil {
-			s.indexMetrics.SearchUpdateWaitTime.WithLabelValues(reason).Observe(elapsed.Seconds())
-		}
-		s.log.Debug("Index updated before search", "namespace", key.Namespace, "group", key.Group, "resource", key.Resource, "reason", reason, "duration", elapsed, "rv", rv)
-		span.AddEvent("Index updated")
+	span.AddEvent("Updating index")
+	start := time.Now()
+	rv, err := idx.UpdateIndex(ctx, reason)
+	if err != nil {
+		return nil, tracing.Error(span, fmt.Errorf("failed to update index to guarantee strong consistency: %w", err))
 	}
+	elapsed := time.Since(start)
+	if s.indexMetrics != nil {
+		s.indexMetrics.SearchUpdateWaitTime.WithLabelValues(reason).Observe(elapsed.Seconds())
+	}
+	s.log.Debug("Index updated before search", "namespace", key.Namespace, "group", key.Group, "resource", key.Resource, "reason", reason, "duration", elapsed, "rv", rv)
+	span.AddEvent("Index updated")
 
 	return idx, nil
 }
 
-func (s *searchSupport) build(ctx context.Context, nsr NamespacedResource, size int64, documentStatsRV int64, indexBuildReason string, rebuild bool) (ResourceIndex, int64, error) {
+func (s *searchSupport) build(ctx context.Context, nsr NamespacedResource, size int64, indexBuildReason string, rebuild bool) (ResourceIndex, error) {
 	ctx, span := s.tracer.Start(ctx, tracingPrexfixSearch+"Build")
 	defer span.End()
 
@@ -757,20 +717,19 @@ func (s *searchSupport) build(ctx context.Context, nsr NamespacedResource, size 
 		attribute.String("group", nsr.Group),
 		attribute.String("resource", nsr.Resource),
 		attribute.Int64("size", size),
-		attribute.Int64("rv", documentStatsRV),
 	)
 
 	logger := s.log.With("namespace", nsr.Namespace, "group", nsr.Group, "resource", nsr.Resource)
 
 	builder, err := s.builders.get(ctx, nsr)
 	if err != nil {
-		return nil, 0, err
+		return nil, err
 	}
 	fields := s.builders.GetFields(nsr)
 
 	builderFn := func(index ResourceIndex) (int64, error) {
 		span := trace.SpanFromContext(ctx)
-		span.AddEvent("building index", trace.WithAttributes(attribute.Int64("size", size), attribute.Int64("rv", documentStatsRV), attribute.String("reason", indexBuildReason)))
+		span.AddEvent("building index", trace.WithAttributes(attribute.Int64("size", size), attribute.String("reason", indexBuildReason)))
 
 		listRV, err := s.storage.ListIterator(ctx, &resourcepb.ListRequest{
 			Limit: 1000000000000, // big number
@@ -840,7 +799,7 @@ func (s *searchSupport) build(ctx context.Context, nsr NamespacedResource, size 
 
 	updaterFn := func(ctx context.Context, index ResourceIndex, sinceRV int64) (int64, int, error) {
 		span := trace.SpanFromContext(ctx)
-		span.AddEvent("updating index", trace.WithAttributes(attribute.Int64("sinceRV", documentStatsRV)))
+		span.AddEvent("updating index", trace.WithAttributes(attribute.Int64("sinceRV", sinceRV)))
 
 		rv, it := s.storage.ListModifiedSince(ctx, NamespacedResource{
 			Group:     nsr.Group,
@@ -916,10 +875,10 @@ func (s *searchSupport) build(ctx context.Context, nsr NamespacedResource, size 
 		return rv, docs, nil
 	}
 
-	index, err := s.search.BuildIndex(ctx, nsr, size, documentStatsRV, fields, indexBuildReason, builderFn, updaterFn, rebuild, s.searchAfterWrite)
+	index, err := s.search.BuildIndex(ctx, nsr, size, fields, indexBuildReason, builderFn, updaterFn, rebuild)
 
 	if err != nil {
-		return nil, 0, err
+		return nil, err
 	}
 
 	// Record the number of objects indexed for the kind/resource
@@ -931,26 +890,7 @@ func (s *searchSupport) build(ctx context.Context, nsr NamespacedResource, size 
 		s.indexMetrics.IndexedKinds.WithLabelValues(nsr.Resource).Add(float64(docCount))
 	}
 
-	// rv is the last RV we read.  when watching, we must add all events since that time
-	return index, documentStatsRV, err
-}
-
-// buildEmptyIndex creates an empty index without adding any documents
-func (s *searchSupport) buildEmptyIndex(ctx context.Context, nsr NamespacedResource, rv int64) (ResourceIndex, error) {
-	ctx, span := s.tracer.Start(ctx, tracingPrexfixSearch+"BuildEmptyIndex")
-	defer span.End()
-
-	fields := s.builders.GetFields(nsr)
-	s.log.Debug("Building empty index", "namespace", nsr.Namespace, "group", nsr.Group, "resource", nsr.Resource, "rv", rv)
-
-	// Build an empty index by passing a builder function that doesn't add any documents
-	return s.search.BuildIndex(ctx, nsr, 0, rv, fields, "empty", func(index ResourceIndex) (int64, error) {
-		// Return the resource version without adding any documents to the index
-		return 0, nil
-	}, func(context context.Context, index ResourceIndex, sinceRV int64) (int64, int, error) {
-		// No update is performed.
-		return 0, 0, nil
-	}, false, s.searchAfterWrite)
+	return index, err
 }
 
 type builderCache struct {
