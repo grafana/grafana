@@ -72,7 +72,7 @@ describe('TableNG hooks', () => {
       expect(nextRows.length).toBe(1);
       expect(nextRows[0].name).toBe('Alice');
       expect(result.current.crossFilterOrder).toEqual(['name']);
-      expect(result.current.crossFilterRows).toEqual({ name: ['Alice'] });
+      expect(result.current.crossFilterRows.current).toEqual({ name: [rows[0]] });
     });
 
     it('should clear filters correctly', () => {

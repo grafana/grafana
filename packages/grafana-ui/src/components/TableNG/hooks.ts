@@ -32,7 +32,7 @@ export interface FilteredRowsResult {
   filter: FilterType;
   setFilter: React.Dispatch<React.SetStateAction<FilterType>>;
   crossFilterOrder: string[];
-  crossFilterRows: Record<string, TableRow[]>;
+  crossFilterRows: RefObject<Record<string, TableRow[]>>;
 }
 
 export interface FilteredRowsOptions {
@@ -76,7 +76,7 @@ export function useFilterRowsCallback(hasNestedFrames?: boolean): FilteredRowsRe
     [crossFilterRows, filterValues, hasNestedFrames]
   );
 
-  return { filterRows, filter, setFilter, crossFilterOrder, crossFilterRows: crossFilterRows.current };
+  return { filterRows, filter, setFilter, crossFilterOrder, crossFilterRows };
 }
 
 export interface SortedRowsOptions {
