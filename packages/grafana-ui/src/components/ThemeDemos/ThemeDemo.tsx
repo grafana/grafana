@@ -2,6 +2,7 @@
 import { css, cx } from '@emotion/css';
 import { useId, useState } from 'react';
 import * as React from 'react';
+import tinycolor from 'tinycolor2';
 
 import { colorManipulator, GrafanaTheme2, ThemeRichColor, ThemeVizHue } from '@grafana/data';
 
@@ -316,7 +317,7 @@ export function RichColorDemo({ theme, color }: RichColorDemoProps) {
         <div
           className={css({
             background: color.shade,
-            color: color.contrastText,
+            color: theme.colors.getContrastText(color.shade, 4.5),
             borderRadius: theme.shape.radius.default,
             padding: '8px',
           })}
