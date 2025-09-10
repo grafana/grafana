@@ -41,9 +41,9 @@ Inside the data source-managed alert rules section, the rules are organized from
 
 Select a group to expand it and view the list of alert rules within that group.
 
-The view includes filters to simplify managing large volumes of alerts.
+The list view includes a number of filters to simplify managing large volumes of alerts.
 
-You can filter by data sources, dashboards, and alert rule properties such as state, type, health, and contact points. The **Search** input allows you to filter by additional parameters like folders, evaluation groups, labels, and more.
+Click the **Filter** button to open the filter popup. You can filter by name, label, folder/namespace, evaluation group, data source, contact point, rule source, rule state, rule type, and the health of the alert rule from the popup menu while you scroll through the list view. Click **Apply** at the bottom of the filter popup to enact the filters as you search.
 
 ## Change alert rules list view
 
