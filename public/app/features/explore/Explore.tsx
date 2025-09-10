@@ -315,7 +315,7 @@ export class Explore extends PureComponent<Props, ExploreState> {
       let compact = true;
 
       /**
-       * Temporal fix grafana-clickhouse-datasource as it requires the query editor to be fully rendered to update the query
+       * Temporary fix grafana-clickhouse-datasource as it requires the query editor to be fully rendered to update the query
        * Proposed fixes:
        * - https://github.com/grafana/clickhouse-datasource/issues/1363 - handle query update in data source
        * - https://github.com/grafana/grafana/issues/110868 - allow data links to provide meta info if the link can be handled in compact mode (default to false)
