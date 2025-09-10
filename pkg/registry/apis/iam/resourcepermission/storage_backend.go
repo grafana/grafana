@@ -116,6 +116,7 @@ func (s *ResourcePermSqlBackend) ReadResource(ctx context.Context, req *resource
 	}
 
 	rsp.ResourceVersion = resourcePermission.GetUpdateTimestamp().UnixMilli()
+	resourcePermission.Namespace = ns.Value // ensure namespace is set, this is required when existing and new resources are compared for updates
 	rsp.Value, err = json.Marshal(resourcePermission)
 	if err != nil {
 		rsp.Error = resource.AsErrorResult(err)
