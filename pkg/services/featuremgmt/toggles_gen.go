@@ -1005,6 +1005,7 @@ const (
 
 	// FlagUnifiedStorageSearchAfterWriteExperimentalAPI
 	// Enable experimental search-after-write guarantees to unified-storage search endpoints
+	// Deprecated, to be removed.
 	FlagUnifiedStorageSearchAfterWriteExperimentalAPI = "unifiedStorageSearchAfterWriteExperimentalAPI"
 
 	// FlagTeamFolders
