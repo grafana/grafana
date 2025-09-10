@@ -1121,7 +1121,8 @@
     },
     "enrichment": {
       "error-boundary": {
-        "notification-message-section-extension": ""
+        "notification-message-section-extension": "",
+        "rule-viewer-section-extension": ""
       }
     },
     "error-modal": {
@@ -3042,6 +3043,7 @@
       "page-nav": {
         "text": {
           "details": "Részletek",
+          "enrichment": "",
           "history": "Előzmények",
           "instances": "Példányok",
           "query-and-conditions": "Lekérdezés és feltételek",
@@ -11211,11 +11213,11 @@
       "description-clear-repository-connection": "Adjon egy egyértelmű nevet ehhez az adattári kapcsolathoz",
       "empty": "Üres",
       "error-field-required": "A mező kitöltése kötelező.",
-      "ext-storage": "Külső tárhely",
-      "grafana": "Grafana-példány",
+      "external-storage-label": "",
       "label-display-name": "Megjelenített név",
       "placeholder-my-repository-connection": "Saját adattári kapcsolat",
       "text-loading-resource-information": "Erőforrás-információk betöltése…",
+      "unmanaged-resources-label": "",
       "dashboards-count_one": "{{count}} irányítópult",
       "dashboards-count_other": "{{count}} irányítópult",
       "files-count_one": "{{count}} fájl",
@@ -11263,7 +11265,9 @@
     },
     "connect-repository-button": {
       "configure": "Konfigurálás",
-      "repository-limit-info-alert": "Elérte az adattár korlátját ({{count}})"
+      "instance-fully-managed-tooltip": "",
+      "repository-limit-reached-tooltip_one": "",
+      "repository-limit-reached-tooltip_other": ""
     },
     "delete-repository-button": {
       "button-delete": "Törlés",

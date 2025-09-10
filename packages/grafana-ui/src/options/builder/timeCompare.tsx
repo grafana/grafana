@@ -11,9 +11,9 @@ export function addTimeCompareOption<T extends { timeCompare?: TimeCompareOption
 ) {
   builder.addBooleanSwitch({
     path: 'timeCompare',
-    name: 'Enable',
+    name: 'Show comparison selector',
     category: ['Time Comparison'],
-    description: '',
+    description: 'Enables the comparison selector, so you can compare data between two time ranges',
     defaultValue,
   });
 }
