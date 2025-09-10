@@ -1,6 +1,7 @@
 import { readdirSync } from 'fs';
 import path from 'path';
 
+import { PanelPlugin } from '@grafana/data';
 import { mockDataSource } from 'app/features/alerting/unified/mocks';
 import { setupDataSources } from 'app/features/alerting/unified/testSetup/datasources';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
@@ -120,6 +121,36 @@ export function constructLatestVersionOutputFilename(inputFile: string, latestVe
 
 export const pluginVersionForAutoMigrate = '12.1.0';
 
+/**
+ * Creates a type-compatible PanelPlugin wrapper for the real panel plugins
+ * This ensures the plugin has the correct version set and is compatible with pluginLoaded method
+ */
+function getPanelPlugin(pluginId: 'stat' | 'table'): PanelPlugin {
+  const realPlugin = pluginId === 'stat' ? statPanelPlugin : tablePanelPlugin;
+
+  // Create a copy of the plugin to avoid modifying the original
+  const pluginCopy = Object.create(Object.getPrototypeOf(realPlugin));
+  Object.assign(pluginCopy, realPlugin);
+
+  // Ensure meta and info exist
+  if (!pluginCopy.meta.info) {
+    pluginCopy.meta.info = {
+      author: { name: 'Grafana Labs', url: 'https://grafana.com' },
+      description: `${pluginId} panel plugin`,
+      links: [],
+      logos: { small: '', large: '' },
+      screenshots: [],
+      updated: '2024-01-01',
+      version: pluginVersionForAutoMigrate,
+    };
+  } else {
+    // Ensure version is set
+    pluginCopy.meta.info.version = pluginVersionForAutoMigrate;
+  }
+
+  return pluginCopy;
+}
+
 export async function handleAngularPanelMigration(frontendModel: DashboardModel): Promise<void> {
   /* 
     Migration from schema V27 involves migrating angular singlestat panels to stat panels
@@ -142,48 +173,12 @@ export async function handleAngularPanelMigration(frontendModel: DashboardModel)
   */
   for (const panel of frontendModel.panels) {
     if (panel.type === 'stat' && panel.autoMigrateFrom) {
-      // Set the plugin version if it doesn't exist
-      if (!statPanelPlugin.meta.info) {
-        statPanelPlugin.meta.info = {
-          author: {
-            name: 'Grafana Labs',
-            url: 'url/to/GrafanaLabs',
-          },
-          description: 'stat plugin',
-          links: [{ name: 'project', url: 'one link' }],
-          logos: { small: 'small/logo', large: 'large/logo' },
-          screenshots: [],
-          updated: '2024-01-01',
-          version: pluginVersionForAutoMigrate,
-        };
-      }
-      if (!statPanelPlugin.meta.info.version) {
-        statPanelPlugin.meta.info.version = pluginVersionForAutoMigrate;
-      }
-
-      await panel.pluginLoaded(statPanelPlugin);
+      const statPlugin = getPanelPlugin('stat');
+      await panel.pluginLoaded(statPlugin);
     }
     if (panel.type === 'table' && panel.autoMigrateFrom === 'table-old') {
-      // Set the plugin version if it doesn't exist
-      if (!tablePanelPlugin.meta.info) {
-        tablePanelPlugin.meta.info = {
-          author: {
-            name: 'Grafana Labs',
-            url: 'url/to/GrafanaLabs',
-          },
-          description: 'table plugin',
-          links: [{ name: 'project', url: 'one link' }],
-          logos: { small: 'small/logo', large: 'large/logo' },
-          screenshots: [],
-          updated: '2024-01-01',
-          version: pluginVersionForAutoMigrate,
-        };
-      }
-      if (!tablePanelPlugin.meta.info.version) {
-        tablePanelPlugin.meta.info.version = pluginVersionForAutoMigrate;
-      }
-
-      await panel.pluginLoaded(tablePanelPlugin);
+      const tablePlugin = getPanelPlugin('table');
+      await panel.pluginLoaded(tablePlugin);
     }
   }
 }
