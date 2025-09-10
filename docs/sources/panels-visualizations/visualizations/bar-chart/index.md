@@ -91,9 +91,15 @@ We recommend that you only use one dataset in a bar chart because using multiple
 <!-- vale Grafana.WordList = NO -->
 <!-- vale Grafana.Spelling = NO -->
 
-## Panel filtering with ad hoc filters
+## Apply ad hoc filters from the bar chart
 
-{{< docs/shared lookup="visualizations/panel-filtering.md" source="grafana" version="<GRAFANA_VERSION>" >}}
+In bar chart visualizations, you can apply ad hoc filters directly from the visualization.
+
+Hover your cursor over the bar with the value you want to filter and click the bar to display the filter option:
+
+{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-adhoc-filter-icon-bar-v12.2.png" max-width="300px" alt="The ad hoc filter icon option in a bar chart tooltip">}}
+
+For more information about applying ad hoc filters this way, refer to [Dashboard drilldown with ad hoc filters](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/variables/add-template-variables/#dashboard-drilldown-with-ad-hoc-filters).
 
 <!-- vale Grafana.Spelling = YES -->
 <!-- vale Grafana.WordList = YES -->
