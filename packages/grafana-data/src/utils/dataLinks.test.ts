@@ -25,7 +25,6 @@ describe('mapInternalLinkToExplore', () => {
       title: '',
       internal: {
         datasourceUid: 'uid',
-        datasourceName: 'dsName',
         query: { query: '12344' },
       },
     };
@@ -143,6 +142,14 @@ describe('mapInternalLinkToExplore', () => {
       replaceVariables: (val, scopedVars) => val.replace(/\$var/g, scopedVars!['var1']!.value),
     });
 
+    const query = {
+      query: 'val1 val1',
+      $var: 'foo',
+      nested: { something: 'val1' },
+      num: 1,
+      arr: ['val1', 'non var'],
+    }
+
     expect(decodeURIComponent(link.href)).toEqual(
       `/explore?left=${JSON.stringify({
         range: {
@@ -150,28 +157,15 @@ describe('mapInternalLinkToExplore', () => {
           to: DATE_AS_MS,
         },
         datasource: 'uid',
-        queries: [
-          {
-            query: 'val1 val1',
-            $var: 'foo',
-            nested: { something: 'val1' },
-            num: 1,
-            arr: ['val1', 'non var'],
-          },
-        ],
+        queries: [query,],
       })}`
     );
 
     expect(link.meta?.internalLink?.interpolated?.query).toEqual({
       datasource: {
-        name: 'dsName',
         uid: 'uid',
       },
-      query: 'val1 val1',
-      $var: 'foo',
-      nested: { something: 'val1' },
-      num: 1,
-      arr: ['val1', 'non var'],
+      ...query,
     });
 
     expect(link.meta?.internalLink?.interpolated.timeRange).toEqual(TIME_RANGE);

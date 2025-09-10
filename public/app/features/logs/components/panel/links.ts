@@ -25,6 +25,8 @@ function getTempoTraceFromLink(link: LinkModel) {
       query: query.query,
       queryType: query.queryType || '',
     }
+  } else {
+    return undefined
   }
 }
 
@@ -40,5 +42,8 @@ type TempoQuery = {
 }
 
 const isTempoQuery = (query: unknown): query is TempoQuery => {
-  return !(!query || !query.query || !query.queryType);
+  if (!query) {
+    return false
+  }
+  return 'query' in query && 'queryType' in query;
 }

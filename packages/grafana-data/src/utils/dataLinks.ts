@@ -58,7 +58,6 @@ export function mapInternalLinkToExplore(options: LinkToExploreOptions): LinkMod
             // data source is defined in a separate property in DataLink, we ensure it's put back together after interpolation
             datasource: {
               ...interpolatedQuery.datasource,
-              name: internalLink.datasourceName,
               uid: internalLink.datasourceUid
             }
           },
