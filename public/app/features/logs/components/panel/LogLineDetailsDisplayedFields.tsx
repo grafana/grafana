@@ -7,6 +7,7 @@ import { t } from '@grafana/i18n';
 import { Card, IconButton, useStyles2 } from '@grafana/ui';
 
 import { LOG_LINE_BODY_FIELD_NAME } from '../LogDetailsBody';
+import { LOG_LINE_ATTRIBUTES_FIELD_NAME } from '../otel/formats';
 
 import { LogLineDetailsMode } from './LogLineDetails';
 import { useLogListContext } from './LogListContext';
@@ -99,7 +100,7 @@ const DisplayedField = ({
       <Card noMargin className={styles.fieldCard}>
         <div className={styles.fieldWrapper}>
           <div className={styles.field}>
-            {field === LOG_LINE_BODY_FIELD_NAME ? t('logs.log-line-details.log-line-field', 'Log line') : field}
+            {getNormalizedFieldName(field)}
           </div>
           {displayedFields.length > 1 && (
             <>
@@ -148,3 +149,12 @@ const getStyles = (theme: GrafanaTheme2, detailsMode: LogLineDetailsMode) => ({
     flex: 1,
   }),
 });
+
+export function getNormalizedFieldName(field: string) {
+  if (field === LOG_LINE_BODY_FIELD_NAME) {
+    return t('logs.log-line-details.log-line-field', 'Log line');
+  } else if (field === LOG_LINE_ATTRIBUTES_FIELD_NAME) {
+    return t('logs.log-line-details.log-attributes-field', 'Log attributes');
+  }
+  return field;
+}
