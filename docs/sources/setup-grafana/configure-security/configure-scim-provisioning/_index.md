@@ -73,7 +73,7 @@ When you enable SCIM in Grafana, the following requirements and restrictions app
 
 ## Configure SCIM in Grafana
 
-The table below describes all SCIM configuration options. Like any other Grafana configuration, you can apply these options as [environment variables](/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#override-configuration-with-environment-variables).
+The table below describes all SCIM configuration options. Like any other Grafana configuration, you can apply these options as [environment variables](/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#override-configuration-with-environment-variables). Alternatively, as a Grafana Admin, you can configure SCIM and vew your current configuration from within Grafana using the Grafana UI. To do this, navigate to **Administration > Authentication > SCIM**.
 
 | Setting                        | Required | Description                                                                                                                                                                                | Default |
 | ------------------------------ | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------- |
