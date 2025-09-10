@@ -9,7 +9,6 @@ import {
   TimeRange,
   FieldConfigSource,
   ActionModel,
-  FieldType,
   SelectableValue,
   FieldState,
 } from '@grafana/data';
@@ -21,6 +20,7 @@ import { TableCellOptions } from '../Table/types';
 
 import { TextAlign } from './utils';
 
+export type { ColumnTypes } from '../DataGrid/types';
 export type { TableRow, TableSummaryRow };
 
 export const FILTER_FOR_OPERATOR = '=';
@@ -228,15 +228,6 @@ export interface TableCellStyleOptions {
 }
 
 export type TableCellStyles = (theme: GrafanaTheme2, options: TableCellStyleOptions) => string;
-
-// Comparator for sorting table values
-export type Comparator = (a: unknown, b: unknown) => number;
-
-// Type for converting a DataFrame into an array of TableRows
-export type FrameToRowsConverter = (frame: DataFrame) => TableRow[];
-
-// Type for mapping column names to their field types
-export type ColumnTypes = Record<string, FieldType>;
 
 export interface ScrollPosition {
   x: number;
