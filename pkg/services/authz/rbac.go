@@ -162,8 +162,8 @@ func newRemoteRBACClient(clientCfg *authzClientSettings, tracer trace.Tracer, re
 	}
 
 	authRequestDuration := promauto.With(reg).NewHistogramVec(prometheus.HistogramOpts{
-		Name:    "auth_server_client_request_duration_seconds",
-		Help:    "Time spent executing requests to auth server.",
+		Name:    "authz_server_client_request_duration_seconds",
+		Help:    "Time spent executing requests to authz server.",
 		Buckets: prometheus.ExponentialBuckets(0.008, 4, 7),
 	}, []string{"operation", "status_code"})
 
