@@ -8,7 +8,7 @@ import (
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository/git"
-	"github.com/grafana/grafana/pkg/util"
+	"github.com/grafana/grafana/apps/provisioning/pkg/util"
 	"k8s.io/apimachinery/pkg/runtime"
 )
 
