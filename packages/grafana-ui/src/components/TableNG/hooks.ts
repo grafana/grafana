@@ -97,41 +97,6 @@ export interface SortedRowsResult {
   setSortColumns: React.Dispatch<React.SetStateAction<SortColumn[]>>;
 }
 
-export function useSortedRows(
-  rows: TableRow[],
-  fields: Field[],
-  { initialSortBy, hasNestedFrames }: SortedRowsOptions
-): SortedRowsResult {
-  const initialSortColumns = useMemo<SortColumn[]>(
-    () =>
-      initialSortBy?.flatMap(({ displayName, desc }) => {
-        if (!fields.some((f) => getDisplayName(f) === displayName)) {
-          return [];
-        }
-        return [
-          {
-            columnKey: displayName,
-            direction: desc ? ('DESC' as const) : ('ASC' as const),
-          },
-        ];
-      }) ?? [],
-    [] // eslint-disable-line react-hooks/exhaustive-deps
-  );
-  const [sortColumns, setSortColumns] = useState<SortColumn[]>(initialSortColumns);
-  const columnTypes = useMemo(() => getColumnTypes(fields), [fields]);
-
-  const sortedRows = useMemo(
-    () => applySort(rows, fields, sortColumns, columnTypes, hasNestedFrames),
-    [rows, fields, sortColumns, hasNestedFrames, columnTypes]
-  );
-
-  return {
-    rows: sortedRows,
-    sortColumns,
-    setSortColumns,
-  };
-}
-
 export interface PaginatedRowsOptions {
   height: number;
   width: number;
@@ -152,7 +117,6 @@ export function useRowsPerPageCallback({
   rowHeight,
   enabled,
 }: PaginatedRowsOptions): (rows: TableRow[]) => number {
-  // using dimensions of the panel, calculate pagination parameters
   const rowsPerPageCallback = useCallback(
     (rows: TableRow[]) => {
       if (!enabled) {

@@ -4,14 +4,7 @@ import { createDataFrame, Field, FieldType, ReducerID } from '@grafana/data';
 import { TableCellDisplayMode } from '@grafana/schema';
 
 import { TABLE } from './constants';
-import {
-  useFilteredRows,
-  usePaginatedRows,
-  useSortedRows,
-  useHeaderHeight,
-  useRowHeight,
-  useReducerEntries,
-} from './hooks';
+import { useFilteredRows, useRowsPerPageCallback, useHeaderHeight, useRowHeight, useReducerEntries } from './hooks';
 import { TableRow } from './types';
 import { createTypographyContext } from './utils';
 
@@ -94,53 +87,11 @@ describe('TableNG hooks', () => {
     it.todo('should handle nested frames');
   });
 
-  describe('useSortedRows', () => {
-    it('should correctly set up the table with an initial sort', () => {
-      const { fields, rows } = setupData();
-      const { result } = renderHook(() =>
-        useSortedRows(rows, fields, {
-          hasNestedFrames: false,
-          initialSortBy: [{ displayName: 'age', desc: false }],
-        })
-      );
-
-      // Initial state checks
-      expect(result.current.sortColumns).toEqual([{ columnKey: 'age', direction: 'ASC' }]);
-      expect(result.current.rows[0].name).toBe('Bob');
-    });
-
-    it('should change the sort on setSortColumns', () => {
-      const { fields, rows } = setupData();
-      const { result } = renderHook(() =>
-        useSortedRows(rows, fields, {
-          hasNestedFrames: false,
-          initialSortBy: [{ displayName: 'age', desc: false }],
-        })
-      );
-
-      expect(result.current.rows[0].name).toBe('Bob');
-
-      act(() => {
-        result.current.setSortColumns([{ columnKey: 'age', direction: 'DESC' }]);
-      });
-
-      expect(result.current.rows[0].name).toBe('Charlie');
-
-      act(() => {
-        result.current.setSortColumns([{ columnKey: 'name', direction: 'ASC' }]);
-      });
-
-      expect(result.current.rows[0].name).toBe('Alice');
-    });
-
-    it.todo('should handle nested frames');
-  });
-
-  describe('usePaginatedRows', () => {
-    it('should return defaults for pagination values when pagination is disabled', () => {
+  describe('useRowsPerPageCallback', () => {
+    it('should return a function which returns 0 when pagination is disabled', () => {
       const { rows } = setupData();
       const { result } = renderHook(() =>
-        usePaginatedRows(rows, {
+        useRowsPerPageCallback({
           rowHeight: 30,
           height: 300,
           width: 800,
@@ -150,18 +101,14 @@ describe('TableNG hooks', () => {
         })
       );
 
-      expect(result.current.page).toBe(-1);
-      expect(result.current.rowsPerPage).toBe(0);
-      expect(result.current.pageRangeStart).toBe(1);
-      expect(result.current.pageRangeEnd).toBe(3);
-      expect(result.current.rows.length).toBe(3);
+      expect(result.current(rows)).toBe(0);
     });
 
-    it('should handle pagination correctly', () => {
+    it('should measure the content and determine the number of rows', () => {
       // with the numbers provided here, we have 3 rows, with 2 rows per page, over 2 pages total.
       const { rows } = setupData();
       const { result } = renderHook(() =>
-        usePaginatedRows(rows, {
+        useRowsPerPageCallback({
           enabled: true,
           height: 60,
           width: 800,
@@ -171,30 +118,16 @@ describe('TableNG hooks', () => {
         })
       );
 
-      expect(result.current.page).toBe(0);
-      expect(result.current.rowsPerPage).toBe(2);
-      expect(result.current.pageRangeStart).toBe(1);
-      expect(result.current.pageRangeEnd).toBe(2);
-      expect(result.current.rows.length).toBe(2);
-
-      act(() => {
-        result.current.setPage(1);
-      });
-
-      expect(result.current.page).toBe(1);
-      expect(result.current.rowsPerPage).toBe(2);
-      expect(result.current.pageRangeStart).toBe(3);
-      expect(result.current.pageRangeEnd).toBe(3);
-      expect(result.current.rows.length).toBe(1);
+      expect(result.current(rows)).toBe(2);
     });
 
     it('should handle header and footer correctly', () => {
       // with the numbers provided here, we have 3 rows, with 2 rows per page, over 2 pages total.
       const { rows } = setupData();
       const { result } = renderHook(() =>
-        usePaginatedRows(rows, {
+        useRowsPerPageCallback({
           enabled: true,
-          height: 140,
+          height: 260,
           width: 800,
           rowHeight: 10,
           headerHeight: TABLE.HEADER_HEIGHT,
@@ -202,21 +135,7 @@ describe('TableNG hooks', () => {
         })
       );
 
-      expect(result.current.page).toBe(0);
-      expect(result.current.rowsPerPage).toBe(2);
-      expect(result.current.pageRangeStart).toBe(1);
-      expect(result.current.pageRangeEnd).toBe(2);
-      expect(result.current.rows.length).toBe(2);
-
-      act(() => {
-        result.current.setPage(1);
-      });
-
-      expect(result.current.page).toBe(1);
-      expect(result.current.rowsPerPage).toBe(2);
-      expect(result.current.pageRangeStart).toBe(3);
-      expect(result.current.pageRangeEnd).toBe(3);
-      expect(result.current.rows.length).toBe(1);
+      expect(result.current(rows)).toBe(4);
     });
   });
 
