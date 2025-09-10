@@ -313,7 +313,7 @@ To add a data link, follow these steps:
 1. Enter the **URL** to which you want to link.
 1. (Optional) To add a data link variable, do the following:
    - Click in the **URL** field and enter `$` or press Ctrl+Space or Cmd+Space to see a list of available variables.
-   - Ensure that you use the variable _name_ and not the variable _label_ in the URL. The label is only used as display text.
+   - Ensure that the target dashboard has the same variable name defined so it can be used in subsequent queries. 
 
 1. If you want the link to open in a new tab, toggle the **Open in a new tab** switch.
 1. If you want the data link to open with a single click on the visualization, toggle the **One click** switch.
