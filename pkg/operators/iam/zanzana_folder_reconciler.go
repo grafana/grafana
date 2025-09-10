@@ -127,6 +127,9 @@ func buildIAMConfigFromSettings(cfg *setting.Cfg) (*iamConfig, error) {
 	}
 	iamCfg.RunnerConfig.KubeConfig = *kubeConfig
 
+	metricsSection := cfg.SectionWithEnvOverrides("metrics")
+	iamCfg.RunnerConfig.MetricsConfig.Enabled = metricsSection.Key("enabled").MustBool(true)
+
 	return &iamCfg, nil
 }
 
