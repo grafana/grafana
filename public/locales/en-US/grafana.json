@@ -3664,8 +3664,11 @@
     "restore": {
       "all-failed_one": "Failed to restore {{count}} dashboard",
       "all-failed_other": "Failed to restore {{count}} dashboards",
-      "partial-success": "{{successCount}} of {{totalCount}} dashboards restored successfully. {{failedCount}} failed.",
-      "success": "Dashboards restored successfully"
+      "failed-count_one": "{{count}} dashboard failed",
+      "failed-count_other": "{{count}} dashboards failed",
+      "success": "Dashboards restored successfully",
+      "success-count_one": "{{count}} dashboard restored successfully",
+      "success-count_other": "{{count}} dashboards restored successfully"
     },
     "text-this-repository-is-read-only": "If you have direct access to the target, copy the JSON and paste it there.",
     "trash-state-manager": {

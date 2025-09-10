@@ -24,7 +24,7 @@ export function RecentlyDeletedActions() {
   const [searchState, stateManager] = useRecentlyDeletedStateManager();
   const [restoreDashboard, { isLoading: isRestoreLoading }] = useRestoreDashboardMutation();
 
-  const showRestoreNotifications = (successful: string[], failedCount: number, totalCount: number) => {
+  const showRestoreNotifications = (successful: string[], failedCount: number) => {
     const successCount = successful.length;
 
     if (successCount === 0 && failedCount === 0) {
@@ -38,11 +38,15 @@ export function RecentlyDeletedActions() {
       if (successCount > 0) {
         // Partial success
         alertType = AppEvents.alertWarning.name;
-        message = t(
-          'browse-dashboards.restore.partial-success',
-          '{{successCount}} of {{totalCount}} dashboards restored successfully. {{failedCount}} failed.',
-          { successCount, totalCount, failedCount }
+        const successMessage = t(
+          'browse-dashboards.restore.success-count',
+          '{{count}} dashboard restored successfully',
+          { count: successCount }
         );
+        const failedMessage = t('browse-dashboards.restore.failed-count', '{{count}} dashboard failed', {
+          count: failedCount,
+        });
+        message = `${successMessage}. ${failedMessage}.`;
       } else {
         // All failed
         alertType = AppEvents.alertError.name;
@@ -132,8 +136,7 @@ export function RecentlyDeletedActions() {
 
     // Show consolidated notification
     const failedCount = failed.length;
-    const totalCount = results.length;
-    showRestoreNotifications(successful, failedCount, totalCount);
+    showRestoreNotifications(successful, failedCount);
 
     const parentUIDs = new Set<string | undefined>();
     for (const uid of selectedDashboards) {
