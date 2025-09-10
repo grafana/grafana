@@ -42,7 +42,7 @@ export function mapInternalLinkToExplore(options: LinkToExploreOptions): LinkMod
     typeof link.internal?.query === 'function'
       ? link.internal.query({ replaceVariables, scopedVars })
       : internalLink.query;
-  const interpolatedQuery = interpolateObject<DataQuery>(query, scopedVars, replaceVariables);
+  const interpolatedQuery = interpolateObject(query, scopedVars, replaceVariables);
   const interpolatedPanelsState = interpolateObject(link.internal?.panelsState, scopedVars, replaceVariables);
   const interpolatedCorrelationData = interpolateObject(link.meta?.correlationData, scopedVars, replaceVariables);
   const title = link.title ? link.title : internalLink.datasourceName;
@@ -65,7 +65,7 @@ export function mapInternalLinkToExplore(options: LinkToExploreOptions): LinkMod
     title: replaceVariables(title, scopedVars),
     // In this case this is meant to be internal link (opens split view by default) the href will also points
     // to explore but this way you can open it in new tab.
-    href: generateInternalHref<DataQuery>(
+    href: generateInternalHref(
       internalLink.datasourceUid,
       interpolatedQuery,
       range,
