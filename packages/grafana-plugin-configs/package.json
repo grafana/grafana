@@ -22,7 +22,7 @@
     "identity-obj-proxy": "^3.0.0",
     "imports-loader": "^5.0.0",
     "jest-canvas-mock": "2.5.2",
-    "jest-environment-jsdom": "29.7.0",
+    "jest-environment-jsdom": "30.1.2",
     "replace-in-file-webpack-plugin": "1.0.6",
     "swc-loader": "0.2.6",
     "typescript": "5.9.2",
