@@ -135,14 +135,6 @@ type searchSupport struct {
 
 	buildIndex singleflight.Group
 
-	// Index queue processors
-	indexQueueProcessorsMutex sync.Mutex
-	indexQueueProcessors      map[string]*indexQueueProcessor
-	indexEventsChan           chan *IndexEvent
-
-	// testing
-	clientIndexEventsChan chan *IndexEvent
-
 	// periodic rebuilding of the indexes to keep usage insights up to date
 	rebuildInterval time.Duration
 }
@@ -166,20 +158,17 @@ func newSearchSupport(opts SearchOptions, storage StorageBackend, access types.A
 	}
 
 	support = &searchSupport{
-		access:                access,
-		tracer:                tracer,
-		storage:               storage,
-		search:                opts.Backend,
-		log:                   slog.Default().With("logger", "resource-search"),
-		initWorkers:           opts.WorkerThreads,
-		initMinSize:           opts.InitMinCount,
-		indexMetrics:          indexMetrics,
-		clientIndexEventsChan: opts.IndexEventsChan,
-		indexEventsChan:       make(chan *IndexEvent),
-		indexQueueProcessors:  make(map[string]*indexQueueProcessor),
-		rebuildInterval:       opts.RebuildInterval,
-		ring:                  ring,
-		ringLifecycler:        ringLifecycler,
+		access:          access,
+		tracer:          tracer,
+		storage:         storage,
+		search:          opts.Backend,
+		log:             slog.Default().With("logger", "resource-search"),
+		initWorkers:     opts.WorkerThreads,
+		initMinSize:     opts.InitMinCount,
+		indexMetrics:    indexMetrics,
+		rebuildInterval: opts.RebuildInterval,
+		ring:            ring,
+		ringLifecycler:  ringLifecycler,
 	}
 
 	info, err := opts.Resources.GetDocumentBuilders()
@@ -507,77 +496,6 @@ func (s *searchSupport) init(ctx context.Context) error {
 	s.log.Info("search index initialized", "duration_secs", end-start, "total_docs", s.search.TotalDocs())
 
 	return nil
-}
-
-// Async event dispatching
-// This is called from the watch event loop
-// It will dispatch the event to the appropriate index queue processor
-func (s *searchSupport) dispatchEvent(ctx context.Context, evt *WrittenEvent) {
-	ctx, span := s.tracer.Start(ctx, tracingPrexfixSearch+"dispatchEvent")
-	defer span.End()
-	span.SetAttributes(
-		attribute.String("event_type", evt.Type.String()),
-		attribute.String("namespace", evt.Key.Namespace),
-		attribute.String("group", evt.Key.Group),
-		attribute.String("resource", evt.Key.Resource),
-		attribute.String("name", evt.Key.Name),
-	)
-
-	switch evt.Type {
-	case resourcepb.WatchEvent_ADDED, resourcepb.WatchEvent_MODIFIED, resourcepb.WatchEvent_DELETED: // OK
-	default:
-		s.log.Info("ignoring watch event", "type", evt.Type)
-		span.AddEvent("ignoring watch event", trace.WithAttributes(attribute.String("type", evt.Type.String())))
-	}
-
-	nsr := NamespacedResource{
-		Namespace: evt.Key.Namespace,
-		Group:     evt.Key.Group,
-		Resource:  evt.Key.Resource,
-	}
-	index, err := s.getOrCreateIndex(ctx, nsr, "dispatchEvent")
-	if err != nil {
-		s.log.Warn("error getting index for watch event", "error", err)
-		span.RecordError(err)
-		return
-	}
-	// Get or create index queue processor for this index
-	indexQueueProcessor, err := s.getOrCreateIndexQueueProcessor(index, nsr)
-	if err != nil {
-		s.log.Error("error getting index queue processor for watch event", "error", err)
-		span.RecordError(err)
-		return
-	}
-	indexQueueProcessor.Add(evt)
-}
-
-func (s *searchSupport) monitorIndexEvents(ctx context.Context) {
-	var evt *IndexEvent
-	for {
-		select {
-		case <-ctx.Done():
-			return
-		case evt = <-s.indexEventsChan:
-		}
-		if evt.Err != nil {
-			s.log.Error("error indexing watch event", "error", evt.Err)
-			continue
-		}
-		_, span := s.tracer.Start(ctx, tracingPrexfixSearch+"monitorIndexEvents")
-		defer span.End()
-		// record latency from when event was created to when it was indexed
-		span.AddEvent("index latency", trace.WithAttributes(attribute.Float64("latency_seconds", evt.Latency.Seconds())))
-		s.log.Debug("indexed new object", "resource", evt.WrittenEvent.Key.Resource, "latency_seconds", evt.Latency.Seconds(), "name", evt.WrittenEvent.Key.Name, "namespace", evt.WrittenEvent.Key.Namespace, "rv", evt.WrittenEvent.ResourceVersion)
-		if evt.Latency.Seconds() > 1 {
-			s.log.Warn("high index latency object details", "resource", evt.WrittenEvent.Key.Resource, "latency_seconds", evt.Latency.Seconds(), "name", evt.WrittenEvent.Key.Name, "namespace", evt.WrittenEvent.Key.Namespace, "rv", evt.WrittenEvent.ResourceVersion)
-		}
-		if s.indexMetrics != nil {
-			s.indexMetrics.IndexLatency.WithLabelValues(evt.WrittenEvent.Key.Resource).Observe(evt.Latency.Seconds())
-		}
-		if s.clientIndexEventsChan != nil {
-			s.clientIndexEventsChan <- evt
-		}
-	}
 }
 
 func (s *searchSupport) startPeriodicRebuild(ctx context.Context) {
@@ -1007,28 +925,6 @@ func AsResourceKey(ns string, t string) (*resourcepb.ResourceKey, error) {
 	}
 
 	return nil, fmt.Errorf("unknown resource type")
-}
-
-// getOrCreateIndexQueueProcessor returns an IndexQueueProcessor for the given index
-func (s *searchSupport) getOrCreateIndexQueueProcessor(index ResourceIndex, nsr NamespacedResource) (*indexQueueProcessor, error) {
-	s.indexQueueProcessorsMutex.Lock()
-	defer s.indexQueueProcessorsMutex.Unlock()
-
-	key := fmt.Sprintf("%s/%s/%s", nsr.Namespace, nsr.Group, nsr.Resource)
-	if indexQueueProcessor, ok := s.indexQueueProcessors[key]; ok {
-		// index stored on existing processor may have been closed and rebuilt, so we need to update it
-		indexQueueProcessor.updateIndex(index)
-		return indexQueueProcessor, nil
-	}
-
-	builder, err := s.builders.get(context.Background(), nsr)
-	if err != nil {
-		s.log.Error("error getting document builder", "error", err)
-		return nil, err
-	}
-	indexQueueProcessor := newIndexQueueProcessor(index, nsr, maxBatchSize, builder, s.indexEventsChan)
-	s.indexQueueProcessors[key] = indexQueueProcessor
-	return indexQueueProcessor, nil
 }
 
 func (s *builderCache) clearNamespacedCache(key NamespacedResource) {

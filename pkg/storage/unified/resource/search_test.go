@@ -128,10 +128,9 @@ type mockSearchBackend struct {
 }
 
 type buildIndexCall struct {
-	key             NamespacedResource
-	size            int64
-	resourceVersion int64
-	fields          SearchableDocumentFields
+	key    NamespacedResource
+	size   int64
+	fields SearchableDocumentFields
 }
 
 type buildEmptyIndexCall struct {
@@ -147,7 +146,7 @@ func (m *mockSearchBackend) GetIndex(ctx context.Context, key NamespacedResource
 	return m.cache[key], nil
 }
 
-func (m *mockSearchBackend) BuildIndex(ctx context.Context, key NamespacedResource, size int64, resourceVersion int64, fields SearchableDocumentFields, reason string, builder BuildFn, updater UpdateFn, rebuild bool) (ResourceIndex, error) {
+func (m *mockSearchBackend) BuildIndex(ctx context.Context, key NamespacedResource, size int64, fields SearchableDocumentFields, reason string, builder BuildFn, updater UpdateFn, rebuild bool) (ResourceIndex, error) {
 	index := &MockResourceIndex{}
 	index.On("BulkIndex", mock.Anything).Return(nil).Maybe()
 	index.On("DocCount", mock.Anything, mock.Anything).Return(int64(0), nil).Maybe()
@@ -171,18 +170,16 @@ func (m *mockSearchBackend) BuildIndex(ctx context.Context, key NamespacedResour
 	if size == 0 {
 		// This is an empty index (buildEmptyIndex was called)
 		m.buildEmptyIndexCalls = append(m.buildEmptyIndexCalls, buildEmptyIndexCall{
-			key:             key,
-			size:            size,
-			resourceVersion: resourceVersion,
-			fields:          fields,
+			key:    key,
+			size:   size,
+			fields: fields,
 		})
 	} else {
 		// This is a normal index (build was called)
 		m.buildIndexCalls = append(m.buildIndexCalls, buildIndexCall{
-			key:             key,
-			size:            size,
-			resourceVersion: resourceVersion,
-			fields:          fields,
+			key:    key,
+			size:   size,
+			fields: fields,
 		})
 	}
 
@@ -191,122 +188,6 @@ func (m *mockSearchBackend) BuildIndex(ctx context.Context, key NamespacedResour
 
 func (m *mockSearchBackend) TotalDocs() int64 {
 	return 0
-}
-
-func TestBuildIndexes_MaxCountThreshold(t *testing.T) {
-	tests := []struct {
-		name                 string
-		initMaxSize          int
-		resourceStats        []ResourceStats
-		expectedNormalBuilds []string // expected NamespacedResource strings that should be built normally
-		expectedEmptyBuilds  []string // expected NamespacedResource strings that should be built as empty
-	}{
-		{
-			name:        "max count disabled (0) - all resources built normally",
-			initMaxSize: 0,
-			resourceStats: []ResourceStats{
-				{NamespacedResource: NamespacedResource{Namespace: "ns1", Group: "group1", Resource: "resource1"}, Count: 50},
-				{NamespacedResource: NamespacedResource{Namespace: "ns1", Group: "group1", Resource: "resource2"}, Count: 150},
-				{NamespacedResource: NamespacedResource{Namespace: "ns1", Group: "group2", Resource: "resource1"}, Count: 250},
-			},
-			expectedNormalBuilds: []string{
-				"ns1/group1/resource1",
-				"ns1/group1/resource2",
-				"ns1/group2/resource1",
-			},
-			expectedEmptyBuilds: []string{},
-		},
-		{
-			name:        "max count 100 - resources above threshold get empty indexes",
-			initMaxSize: 100,
-			resourceStats: []ResourceStats{
-				{NamespacedResource: NamespacedResource{Namespace: "ns1", Group: "group1", Resource: "resource1"}, Count: 50},  // normal build
-				{NamespacedResource: NamespacedResource{Namespace: "ns1", Group: "group1", Resource: "resource2"}, Count: 150}, // empty build
-				{NamespacedResource: NamespacedResource{Namespace: "ns1", Group: "group2", Resource: "resource1"}, Count: 250}, // empty build
-				{NamespacedResource: NamespacedResource{Namespace: "ns1", Group: "group2", Resource: "resource2"}, Count: 80},  // normal build
-			},
-			expectedNormalBuilds: []string{
-				"ns1/group1/resource1",
-				"ns1/group2/resource2",
-			},
-			expectedEmptyBuilds: []string{
-				"ns1/group1/resource2",
-				"ns1/group2/resource1",
-			},
-		},
-		{
-			name:        "max count 300 - no resources exceed threshold",
-			initMaxSize: 300,
-			resourceStats: []ResourceStats{
-				{NamespacedResource: NamespacedResource{Namespace: "ns1", Group: "group1", Resource: "resource1"}, Count: 50},  // normal build
-				{NamespacedResource: NamespacedResource{Namespace: "ns1", Group: "group1", Resource: "resource2"}, Count: 150}, // normal build
-				{NamespacedResource: NamespacedResource{Namespace: "ns1", Group: "group2", Resource: "resource1"}, Count: 250}, // normal build
-			},
-			expectedNormalBuilds: []string{
-				"ns1/group1/resource1",
-				"ns1/group1/resource2",
-				"ns1/group2/resource1",
-			},
-			expectedEmptyBuilds: []string{},
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			// Setup mock implementations
-			storage := &mockStorageBackend{
-				resourceStats: tt.resourceStats,
-			}
-			search := &mockSearchBackend{
-				buildIndexCalls:      []buildIndexCall{},
-				buildEmptyIndexCalls: []buildEmptyIndexCall{},
-			}
-			supplier := &TestDocumentBuilderSupplier{
-				GroupsResources: map[string]string{
-					"group1": "resource1",
-					"group2": "resource2",
-				},
-			}
-
-			// Create search support with the specified initMaxSize
-			opts := SearchOptions{
-				Backend:       search,
-				Resources:     supplier,
-				WorkerThreads: 1,
-				InitMinCount:  1, // set min count to default for this test
-				InitMaxCount:  tt.initMaxSize,
-			}
-
-			support, err := newSearchSupport(opts, storage, nil, nil, noop.NewTracerProvider().Tracer("test"), nil, nil, nil)
-			require.NoError(t, err)
-			require.NotNil(t, support)
-
-			// Call buildIndexes
-			ctx := context.Background()
-			indexesBuilt, err := support.buildIndexes(ctx, false)
-			require.NoError(t, err)
-
-			// Verify the correct number of indexes were built (normal + empty)
-			expectedTotal := len(tt.expectedNormalBuilds) + len(tt.expectedEmptyBuilds)
-			require.Equal(t, expectedTotal, indexesBuilt)
-
-			// Verify the correct resources were built normally
-			actualNormalBuilds := make([]string, len(search.buildIndexCalls))
-			for i, call := range search.buildIndexCalls {
-				actualNormalBuilds[i] = call.key.String()
-			}
-			require.ElementsMatch(t, tt.expectedNormalBuilds, actualNormalBuilds)
-
-			// Verify the correct resources were built as empty indexes
-			actualEmptyBuilds := make([]string, len(search.buildEmptyIndexCalls))
-			for i, call := range search.buildEmptyIndexCalls {
-				actualEmptyBuilds[i] = call.key.String()
-				// Verify that empty indexes are built with size 0
-				require.Equal(t, int64(0), call.size, "Empty index should be built with size 0")
-			}
-			require.ElementsMatch(t, tt.expectedEmptyBuilds, actualEmptyBuilds)
-		})
-	}
 }
 
 func TestSearchGetOrCreateIndex(t *testing.T) {
@@ -332,7 +213,6 @@ func TestSearchGetOrCreateIndex(t *testing.T) {
 		Resources:     supplier,
 		WorkerThreads: 1,
 		InitMinCount:  1, // set min count to default for this test
-		InitMaxCount:  0,
 	}
 
 	support, err := newSearchSupport(opts, storage, nil, nil, noop.NewTracerProvider().Tracer("test"), nil, nil, nil)
@@ -361,7 +241,6 @@ func TestSearchGetOrCreateIndex(t *testing.T) {
 	require.NotEmpty(t, search.buildIndexCalls)
 	require.Less(t, len(search.buildIndexCalls), concurrency, "Should not have built index more than a few times (ideally once)")
 	require.Equal(t, int64(50), search.buildIndexCalls[0].size)
-	require.Equal(t, int64(11111111), search.buildIndexCalls[0].resourceVersion)
 }
 
 func TestSearchGetOrCreateIndexWithIndexUpdate(t *testing.T) {
@@ -394,7 +273,6 @@ func TestSearchGetOrCreateIndexWithIndexUpdate(t *testing.T) {
 		Resources:     supplier,
 		WorkerThreads: 1,
 		InitMinCount:  1, // set min count to default for this test
-		InitMaxCount:  0,
 	}
 
 	// Enable searchAfterWrite
@@ -447,7 +325,6 @@ func TestSearchGetOrCreateIndexWithCancellation(t *testing.T) {
 		Resources:     supplier,
 		WorkerThreads: 1,
 		InitMinCount:  1, // set min count to default for this test
-		InitMaxCount:  0,
 	}
 
 	support, err := newSearchSupport(opts, storage, nil, nil, noop.NewTracerProvider().Tracer("test"), nil, nil, nil)
@@ -533,7 +410,7 @@ func (m *slowSearchBackendWithCache) GetIndex(ctx context.Context, key Namespace
 	return m.cache[key], nil
 }
 
-func (m *slowSearchBackendWithCache) BuildIndex(ctx context.Context, key NamespacedResource, size int64, resourceVersion int64, fields SearchableDocumentFields, reason string, builder BuildFn, updater UpdateFn, rebuild bool) (ResourceIndex, error) {
+func (m *slowSearchBackendWithCache) BuildIndex(ctx context.Context, key NamespacedResource, size int64, fields SearchableDocumentFields, reason string, builder BuildFn, updater UpdateFn, rebuild bool) (ResourceIndex, error) {
 	m.wg.Add(1)
 	defer m.wg.Done()
 
@@ -543,7 +420,7 @@ func (m *slowSearchBackendWithCache) BuildIndex(ctx context.Context, key Namespa
 	if ctx.Err() != nil {
 		return nil, ctx.Err()
 	}
-	idx, err := m.mockSearchBackend.BuildIndex(ctx, key, size, resourceVersion, fields, reason, builder, updater, rebuild)
+	idx, err := m.mockSearchBackend.BuildIndex(ctx, key, size, fields, reason, builder, updater, rebuild)
 	if err != nil {
 		return nil, err
 	}

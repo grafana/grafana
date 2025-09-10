@@ -183,9 +183,6 @@ type SearchOptions struct {
 	// Skip building index on startup for small indexes
 	InitMinCount int
 
-	// Channel to watch for index events (for testing)
-	IndexEventsChan chan *IndexEvent
-
 	// Interval for periodic index rebuilds (0 disables periodic rebuilds)
 	RebuildInterval time.Duration
 
