@@ -504,6 +504,7 @@
       "copy-link": "Copy link",
       "duplicate": "Duplicate",
       "export": "Export",
+      "manage-enrichments": "Manage enrichments",
       "silence-notifications": "Silence notifications",
       "with-modifications": "With modifications"
     },
@@ -1121,7 +1122,7 @@
     },
     "enrichment": {
       "error-boundary": {
-        "notification-message-section-extension": "Notification Message Section Extension failed to load",
+        "enrichment-drawer-extension": "Enrichment Drawer Extension failed to load",
         "rule-viewer-section-extension": "Rule Viewer Enrichment Section failed to load"
       }
     },
