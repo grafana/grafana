@@ -70,7 +70,6 @@ func ProvideFrontendService(cfg *setting.Cfg, features featuremgmt.FeatureToggle
 }
 
 func (s *frontendService) start(ctx context.Context) error {
-	s.log.Info("starting frontend server")
 	s.httpServ = s.newFrontendServer(ctx)
 	s.errChan = make(chan error)
 	go func() {
@@ -99,6 +98,7 @@ func (s *frontendService) stop(failureReason error) error {
 }
 
 func (s *frontendService) newFrontendServer(ctx context.Context) *http.Server {
+	s.log.Info("starting frontend server", "addr", ":"+s.cfg.HTTPPort)
 	// Use the same web.Mux as the main grafana server for consistency + middleware reuse
 	handler := web.New()
 	s.addMiddlewares(handler)

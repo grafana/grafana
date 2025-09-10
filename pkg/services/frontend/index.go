@@ -76,7 +76,6 @@ func NewIndexProvider(cfg *setting.Cfg, assetsManifest dtos.EntryPointAssets) (*
 }
 
 func (p *IndexProvider) HandleRequest(writer http.ResponseWriter, request *http.Request) {
-	p.log.Info("handleRequest")
 	_, span := tracer.Start(request.Context(), "frontend.index.HandleRequest")
 	defer span.End()
 

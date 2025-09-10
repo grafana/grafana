@@ -103,6 +103,13 @@ func (h *shortURLK8sHandler) ResolveShortURL(ctx context.Context, req *http.Requ
 		targetPath = "/" + targetPath
 	}
 
+	// Security: Prevent open redirect attacks via double slash or slash-backslash
+	// After normalization, ensure the second character (if it exists) is not '/' or '\'
+	if len(targetPath) > 1 && (targetPath[1] == '/' || targetPath[1] == '\\') {
+		h.log.Warn("Blocked potentially malicious redirect path", "uid", uid, "targetPath", targetPath)
+		return "", fmt.Errorf("invalid redirect path: potential open redirect attack")
+	}
+
 	h.log.Info("Successfully resolved short URL", "uid", uid, "targetPath", targetPath)
 
 	return targetPath, nil
