@@ -1,6 +1,6 @@
 import { css, cx } from '@emotion/css';
 import { capitalize } from 'lodash';
-import { forwardRef, MouseEvent, useCallback, useMemo, useState } from 'react';
+import { forwardRef, MouseEvent, useCallback, useMemo } from 'react';
 
 import {
   CoreApp,
@@ -14,13 +14,13 @@ import {
 import { GrafanaTheme2 } from '@grafana/data/';
 import { t } from '@grafana/i18n';
 import { config, reportInteraction } from '@grafana/runtime';
-import { Dropdown, Icon, Menu, Tooltip, useStyles2 } from '@grafana/ui';
+import { Dropdown, Menu, useStyles2 } from '@grafana/ui';
 
 import { LogsVisualisationType } from '../../../explore/Logs/Logs';
 import { DownloadFormat } from '../../utils';
 
-import { getDefaultControlsExpandedMode, useLogListContext } from './LogListContext';
-import { LogListControlsOption } from './LogListControlsOption';
+import { useLogListContext } from './LogListContext';
+import { LogListControlsOption, LogListControlsSelectOption } from './LogListControlsOption';
 import { useLogListSearchContext } from './LogListSearchContext';
 import { ScrollToLogsEvent } from './virtualization';
 
@@ -47,9 +47,10 @@ const FILTER_LEVELS: LogLevel[] = [
   LogLevel.unknown,
 ];
 
-export const LogListControls = ({ eventBus, visualisationType = 'logs', containerElement }: Props) => {
+export const LogListControls = ({ eventBus, visualisationType = 'logs' }: Props) => {
   const {
     app,
+    controlsExpanded,
     dedupStrategy,
     downloadLogs,
     filterLevels,
@@ -57,6 +58,7 @@ export const LogListControls = ({ eventBus, visualisationType = 'logs', containe
     forceEscape,
     hasUnescapedContent,
     prettifyJSON,
+    setControlsExpanded,
     setDedupStrategy,
     setFilterLevels,
     setFontSize,
@@ -75,17 +77,6 @@ export const LogListControls = ({ eventBus, visualisationType = 'logs', containe
     logOptionsStorageKey,
   } = useLogListContext();
   const { hideSearch, searchVisible, showSearch } = useLogListSearchContext();
-
-  const controlsExpandedFromStoreRaw: undefined | 'true' | 'false' = store.get(
-    `${logOptionsStorageKey}.controlsExpanded`
-  );
-  const controlsExpandedFromStore =
-    controlsExpandedFromStoreRaw === undefined ? undefined : controlsExpandedFromStoreRaw === 'true';
-
-  // If the user has a large viewport, show the expanded state by default
-  const [controlsExpanded, setControlsExpanded] = useState<boolean>(
-    controlsExpandedFromStore ?? getDefaultControlsExpandedMode(containerElement)
-  );
 
   const styles = useStyles2(getStyles, controlsExpanded);
 
@@ -111,7 +102,7 @@ export const LogListControls = ({ eventBus, visualisationType = 'logs', containe
     reportInteraction('logs_log_list_controls_expand_controls_clicked');
     setControlsExpanded(!controlsExpanded);
     store.set(`${logOptionsStorageKey}.controlsExpanded`, !controlsExpanded);
-  }, [controlsExpanded, logOptionsStorageKey]);
+  }, [controlsExpanded, logOptionsStorageKey, setControlsExpanded]);
 
   const onForceEscapeClick = useCallback(() => {
     reportInteraction('logs_log_list_controls_force_escape_clicked');
@@ -508,6 +499,11 @@ export const LogListControls = ({ eventBus, visualisationType = 'logs', containe
               name={'search'}
               className={searchVisible ? styles.controlButtonActive : styles.controlButton}
               onClick={searchVisible ? hideSearch : showSearch}
+              label={
+                searchVisible
+                  ? t('logs.logs-controls.labels.hide-search', 'Close search')
+                  : t('logs.logs-controls.labels.show-search', 'Search logs')
+              }
               tooltip={
                 searchVisible
                   ? t('logs.logs-controls.hide-search', 'Close search')
@@ -547,6 +543,7 @@ export const LogListControls = ({ eventBus, visualisationType = 'logs', containe
       )}
       {visualisationType === 'logs' && (
         <LogListControlsOption
+          stickToBottom={true}
           expanded={controlsExpanded}
           name="arrow-up"
           data-testid="scrollToTop"
@@ -565,8 +562,9 @@ export const LogListControls = ({ eventBus, visualisationType = 'logs', containe
 interface TimestampResolutionButtonProps {
   expanded: boolean;
 }
+
 const TimestampResolutionButton = forwardRef<HTMLButtonElement, TimestampResolutionButtonProps>(
-  ({ expanded }: TimestampResolutionButtonProps, ref) => {
+  ({ expanded }: TimestampResolutionButtonProps) => {
     const styles = useStyles2(getWrapButtonStyles, expanded);
     const { setTimestampResolution, setShowTime, showTime, timestampResolution } = useLogListContext();
 
@@ -624,35 +622,22 @@ const TimestampResolutionButton = forwardRef<HTMLButtonElement, TimestampResolut
         ? t('logs.logs-controls.timestamp.label.ms', 'Display ms')
         : t('logs.logs-controls.timestamp.label.ns', 'Display ns');
 
+    const customTagText =
+      timestampResolution === 'ms'
+        ? t('logs.logs-controls.resolution-ms', 'ms')
+        : t('logs.logs-controls.resolution-ns', 'ns');
+
     return (
-      <div className={styles.container}>
-        <label className={styles.label}>
-          {expanded && <span className={styles.labelText}>{labelText}</span>}
-          <span>
-            <Dropdown overlay={timestampMenu} placement="auto-end">
-              <div className={styles.iconContainer}>
-                <Tooltip content={t('logs.logs-controls.timestamp.tooltip', 'Set timestamp format')}>
-                  <button
-                    aria-pressed={showTime}
-                    aria-label={t('logs.logs-controls.timestamp.label', 'Log timestamps')}
-                    className={`${styles.customControlButton} ${showTime ? styles.controlButtonActive : styles.controlButton}`}
-                    type="button"
-                  >
-                    <Icon name="clock-nine" size="lg" className={styles.customControlIcon} />
-                    {showTime && (
-                      <span className={styles.customControlTag}>
-                        {timestampResolution === 'ms'
-                          ? t('logs.logs-controls.resolution-ms', 'ms')
-                          : t('logs.logs-controls.resolution-ns', 'ns')}
-                      </span>
-                    )}
-                  </button>
-                </Tooltip>
-              </div>
-            </Dropdown>
-          </span>
-        </label>
-      </div>
+      <LogListControlsSelectOption
+        expanded={expanded}
+        name={'clock-nine'}
+        isActive={showTime}
+        dropdown={timestampMenu}
+        tooltip={t('logs.logs-controls.timestamp.tooltip', 'Set timestamp format')}
+        label={labelText}
+        buttonAriaLabel={t('logs.logs-controls.timestamp.label', 'Log timestamps')}
+        customTagText={customTagText}
+      />
     );
   }
 );
@@ -662,6 +647,7 @@ TimestampResolutionButton.displayName = 'TimestampResolutionButton';
 interface WrapLogMessageButtonProps {
   expanded: boolean;
 }
+
 const WrapLogMessageButton = ({ expanded }: WrapLogMessageButtonProps) => {
   const styles = useStyles2(getWrapButtonStyles, expanded);
   const { prettifyJSON, setPrettifyJSON, setWrapLogMessage, wrapLogMessage } = useLogListContext();
@@ -732,28 +718,43 @@ const WrapLogMessageButton = ({ expanded }: WrapLogMessageButtonProps) => {
       ? t('logs.logs-controls.line-wrapping.state.wrap', 'Wrap lines')
       : t('logs.logs-controls.line-wrapping.state.json', 'Wrap json');
 
+  const tooltip = t('logs.logs-controls.line-wrapping.tooltip', 'Set line wrap');
+
   return (
-    <div className={styles.container}>
-      <label className={styles.label}>
-        {expanded && <span className={styles.labelText}>{wrapStateText}</span>}
-        <Dropdown overlay={wrappingMenu} placement="auto-end">
-          <div className={styles.iconContainer}>
-            <Tooltip content={t('logs.logs-controls.line-wrapping.tooltip', 'Set line wrap')}>
-              <button
-                aria-label={t('logs.logs-controls.line-wrapping.tooltip', 'Set line wrap')}
-                aria-pressed={wrapLogMessage}
-                className={`${styles.customControlButton} ${wrapLogMessage ? styles.controlButtonActive : styles.controlButton}`}
-                type="button"
-              >
-                <Icon name="wrap-text" size="lg" className={styles.customControlIcon} />
-                {prettifyJSON && <span className={styles.customControlTag}>+</span>}
-              </button>
-            </Tooltip>
-          </div>
-        </Dropdown>
-      </label>
-    </div>
+    <LogListControlsSelectOption
+      expanded={expanded}
+      name={'wrap-text'}
+      isActive={wrapLogMessage}
+      dropdown={wrappingMenu}
+      tooltip={tooltip}
+      label={wrapStateText}
+      buttonAriaLabel={tooltip}
+      customTagText={'+'}
+    />
   );
+
+  // return (
+  //   <div className={styles.container}>
+  //     <label className={styles.label}>
+  //       {expanded && <span className={styles.labelText}>{wrapStateText}</span>}
+  //       <Dropdown overlay={wrappingMenu} placement="auto-end">
+  //         <div className={styles.iconContainer}>
+  //           <Tooltip content={t('logs.logs-controls.line-wrapping.tooltip', 'Set line wrap')}>
+  //             <button
+  //               aria-label={t('logs.logs-controls.line-wrapping.tooltip', 'Set line wrap')}
+  //               aria-pressed={wrapLogMessage}
+  //               className={`${styles.customControlButton} ${wrapLogMessage ? styles.controlButtonActive : styles.controlButton}`}
+  //               type="button"
+  //             >
+  //               <Icon name="wrap-text" size="lg" className={styles.customControlIcon} />
+  //               {prettifyJSON && <span className={styles.customControlTag}>+</span>}
+  //             </button>
+  //           </Tooltip>
+  //         </div>
+  //       </Dropdown>
+  //     </label>
+  //   </div>
+  // );
 };
 
 const getWrapButtonStyles = (theme: GrafanaTheme2, expanded: boolean) => {
@@ -860,20 +861,25 @@ const getWrapButtonStyles = (theme: GrafanaTheme2, expanded: boolean) => {
   };
 };
 
+export const CONTROLS_WIDTH = 32;
+export const CONTROLS_WIDTH_EXPANDED = 176;
+
 const getStyles = (theme: GrafanaTheme2, controlsExpanded: boolean) => {
   return {
     navContainer: css({
       maxHeight: '100%',
       display: 'flex',
+      flex: '1 0 auto',
       gap: theme.spacing(3),
       flexDirection: 'column',
       justifyContent: 'flex-start',
-      width: controlsExpanded ? theme.spacing(22) : theme.spacing(4),
+      width: controlsExpanded ? CONTROLS_WIDTH_EXPANDED : CONTROLS_WIDTH,
       paddingTop: theme.spacing(0.75),
       paddingLeft: theme.spacing(1),
       borderLeft: `solid 1px ${theme.colors.border.medium}`,
       overflow: 'hidden',
       minWidth: theme.spacing(4),
+      backgroundColor: theme.colors.background.primary,
     }),
     scrollToTopButton: css({
       margin: 0,
@@ -921,33 +927,6 @@ const getStyles = (theme: GrafanaTheme2, controlsExpanded: boolean) => {
         width: '2px',
         backgroundColor: theme.colors.warning.main,
       },
-    }),
-    customControlButton: css({
-      position: 'relative',
-      zIndex: 0,
-      margin: 0,
-      boxShadow: 'none',
-      border: 'none',
-      display: 'flex',
-      background: 'transparent',
-      justifyContent: 'center',
-      alignItems: 'center',
-      padding: 0,
-      overflow: 'visible',
-      width: '100%',
-    }),
-    customControlIcon: css({
-      verticalAlign: 'baseline',
-    }),
-    customControlTag: css({
-      color: theme.colors.primary.text,
-      fontSize: 10,
-      position: 'absolute',
-      bottom: -4,
-      right: 1,
-      lineHeight: '10px',
-      backgroundColor: theme.colors.background.primary,
-      paddingLeft: 2,
     }),
   };
 };

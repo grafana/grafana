@@ -8,7 +8,7 @@ import { LogsTableWrap } from '../../explore/Logs/LogsTableWrap';
 
 import { LogRowsComponentProps } from './ControlledLogRows';
 import { useLogListContext } from './panel/LogListContext';
-import { LogListControls } from './panel/LogListControls';
+import { CONTROLS_WIDTH, CONTROLS_WIDTH_EXPANDED, LogListControls } from './panel/LogListControls';
 
 export const ControlledLogsTable = ({
   loading,
@@ -26,7 +26,7 @@ export const ControlledLogsTable = ({
   visualisationType,
   ...rest
 }: LogRowsComponentProps) => {
-  const { sortOrder } = useLogListContext();
+  const { sortOrder, controlsExpanded } = useLogListContext();
   const eventBus = useMemo(() => new EventBusSrv(), []);
   const ref = useRef(null);
 
@@ -38,6 +38,9 @@ export const ControlledLogsTable = ({
     return;
   }
 
+  const tableWidthExpandedControls = width - (CONTROLS_WIDTH_EXPANDED + 12);
+  const tableWidth = width - (CONTROLS_WIDTH + 12);
+
   return (
     <div ref={ref} className={styles.logRowsContainer}>
       <LogListControls eventBus={eventBus} visualisationType={visualisationType} containerElement={ref.current} />
@@ -48,7 +51,7 @@ export const ControlledLogsTable = ({
           range={range}
           splitOpen={splitOpen}
           timeZone={rest.timeZone}
-          width={width - 45}
+          width={controlsExpanded ? tableWidthExpandedControls : tableWidth}
           logsFrames={logsTableFrames ?? []}
           onClickFilterLabel={onClickFilterLabel}
           onClickFilterOutLabel={onClickFilterOutLabel}

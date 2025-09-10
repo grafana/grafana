@@ -40,6 +40,7 @@ import { getScrollbarWidth, LOG_LIST_CONTROLS_WIDTH, LOG_LIST_MIN_WIDTH } from '
 
 export interface LogListContextData extends Omit<Props, 'containerElement' | 'logs' | 'logsMeta' | 'showControls'> {
   closeDetails: () => void;
+  controlsExpanded: boolean;
   detailsDisplayed: (log: LogListModel) => boolean;
   detailsMode: LogLineDetailsMode;
   detailsWidth: number;
@@ -51,6 +52,7 @@ export interface LogListContextData extends Omit<Props, 'containerElement' | 'lo
   hasSampledLogs?: boolean;
   hasUnescapedContent: boolean;
   logLineMenuCustomItems?: LogLineMenuCustomItem[];
+  setControlsExpanded: (expanded: boolean) => void;
   setDedupStrategy: (dedupStrategy: LogsDedupStrategy) => void;
   setDetailsMode: (mode: LogLineDetailsMode) => void;
   setDetailsWidth: (width: number) => void;
@@ -76,6 +78,7 @@ export interface LogListContextData extends Omit<Props, 'containerElement' | 'lo
 export const LogListContext = createContext<LogListContextData>({
   app: CoreApp.Unknown,
   closeDetails: () => {},
+  controlsExpanded: false,
   dedupStrategy: LogsDedupStrategy.none,
   detailsDisplayed: () => false,
   detailsMode: 'sidebar',
@@ -88,6 +91,7 @@ export const LogListContext = createContext<LogListContextData>({
   fontSize: 'default',
   hasUnescapedContent: false,
   noInteractions: false,
+  setControlsExpanded: () => {},
   setDedupStrategy: () => {},
   setDetailsMode: () => {},
   setDetailsWidth: () => {},
@@ -393,6 +397,17 @@ export const LogListContextProvider = ({
     }));
   }, [timestampResolution]);
 
+  const controlsExpandedFromStoreRaw: undefined | 'true' | 'false' = store.get(
+    `${logOptionsStorageKey}.controlsExpanded`
+  );
+  const controlsExpandedFromStore =
+    controlsExpandedFromStoreRaw === undefined ? undefined : controlsExpandedFromStoreRaw === 'true';
+
+  // If the user has a large viewport, show the expanded state by default
+  const [controlsExpanded, setControlsExpanded] = useState<boolean>(
+    controlsExpandedFromStore ?? getDefaultControlsExpandedMode(containerElement ?? null)
+  );
+
   const detailsDisplayed = useCallback(
     (log: LogListModel) => !!showDetails.find((shownLog) => shownLog.uid === log.uid),
     [showDetails]
@@ -594,6 +609,7 @@ export const LogListContextProvider = ({
       value={{
         app,
         closeDetails,
+        controlsExpanded,
         detailsDisplayed,
         dedupStrategy: logListState.dedupStrategy,
         detailsMode,
@@ -628,6 +644,7 @@ export const LogListContextProvider = ({
         pinLineButtonTooltipTitle,
         pinnedLogs: logListState.pinnedLogs,
         prettifyJSON,
+        setControlsExpanded,
         setDedupStrategy,
         setDetailsMode,
         setDetailsWidth,
