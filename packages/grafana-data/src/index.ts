@@ -50,6 +50,8 @@ export {
   isTimeSeriesField,
   getRowUniqueId,
   addRow,
+  alignTimeRangeCompareData,
+  shouldAlignTimeCompare,
 } from './dataframe/utils';
 export {
   StreamingDataFrame,
@@ -569,6 +571,7 @@ export {
   PluginExtensionTypes,
   PluginExtensionPoints,
   PluginExtensionExposedComponents,
+  PluginExtensionPointPatterns,
   type PluginExtension,
   type PluginExtensionLink,
   type PluginExtensionComponent,

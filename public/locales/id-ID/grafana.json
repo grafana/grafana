@@ -1115,7 +1115,8 @@
     },
     "enrichment": {
       "error-boundary": {
-        "notification-message-section-extension": ""
+        "notification-message-section-extension": "",
+        "rule-viewer-section-extension": ""
       }
     },
     "error-modal": {
@@ -1697,9 +1698,6 @@
       "notes": "Catatan",
       "returns": "Hasil"
     },
-    "label-picker": {
-      "no-options-message": "Tidak ada label yang ditemukan"
-    },
     "labels-editor-modal": {
       "title-edit-labels": "Edit label"
     },
@@ -1717,9 +1715,6 @@
     "labels-sub-form": {
       "description": "Pilih kunci/nilai label dari opsi di bawah ini, atau ketik yang baru dan tekan Enter.",
       "save": "Simpan"
-    },
-    "labels-with-suggestions": {
-      "text-loading-existing-labels": "Memuat label yang ada"
     },
     "labels-without-suggestions": {
       "message": {
@@ -3035,6 +3030,7 @@
       "page-nav": {
         "text": {
           "details": "Detail",
+          "enrichment": "",
           "history": "Sejarah",
           "instances": "Instans",
           "query-and-conditions": "Kueri dan syarat",
@@ -4669,6 +4665,7 @@
       "move": "Pindahkan {{typeName}}",
       "panel-background": "Ubah latar belakang panel",
       "panel-description": "Ubah deskripsi panel",
+      "panel-edit": "",
       "panel-max-repeats-per-row": "Pengulangan maksimum per baris",
       "panel-repeat-direction": "Ulangi arah",
       "panel-repeat-variable": "Panel diulang berdasarkan",
@@ -4923,12 +4920,11 @@
       "dataframe-aria-label": "Pilih dataframe",
       "dataframe-label": "Tampilkan bingkai data",
       "download-csv": "Unduh CSV",
-      "download-excel-description": "Menambahkan header ke CSV untuk digunakan dengan Excel",
-      "download-excel-label": "Unduh untuk Excel",
       "download-logs": "Unduh log",
       "download-service": "Unduh grafik layanan",
       "download-traces": "Unduh jejak",
-      "excel-header": "Header Excel",
+      "excel-compatibility-mode-description": "",
+      "excel-compatibility-mode-label": "",
       "formatted": "Data yang diformat",
       "formatted-data-description": "Data tabel diformat dengan opsi yang ditentukan di tab Bidang dan Timpa.",
       "formatted-data-label": "Data yang diformat",
@@ -9621,6 +9617,12 @@
       "hide-search": "Tutup pencarian",
       "hide-timestamps": "Sembunyikan stempel waktu",
       "hide-unique-labels": "Sembunyikan label unik",
+      "line-wrapping": {
+        "enable": "",
+        "enable-prettify": "",
+        "hide": "",
+        "label": ""
+      },
       "newest-first": "Diurutkan berdasarkan log terbaru lebih dulu - Klik untuk menampilkan yang paling lama lebih dulu",
       "oldest-first": "Diurutkan berdasarkan log paling lama lebih dulu - Klik untuk menampilkan yang terbaru lebih dulu",
       "prettify-json": "Perluas log JSON",
@@ -9629,13 +9631,16 @@
       "resolution-ns": "nd",
       "scroll-bottom": "Gulir ke bawah",
       "scroll-top": "Gulir ke atas",
-      "show-ms-timestamps": "Tampilkan stempel waktu milidetik",
-      "show-ns-timestamps": "Tampilkan stempel waktu nanodetik",
       "show-search": "Cari di hasil log",
       "show-timestamps": "Tampilkan stempel waktu",
       "show-unique-labels": "Tampilkan label unik",
+      "timestamp": {
+        "hide": "",
+        "label": "",
+        "milliseconds": "",
+        "nanoseconds": ""
+      },
       "unwrap-lines": "Batal terapkan wrap pada baris",
-      "wrap-json-lines": "",
       "wrap-lines": "Terapkan wrap pada baris"
     },
     "logs-navigation": {
@@ -11176,11 +11181,11 @@
       "description-clear-repository-connection": "Tambahkan nama yang jelas untuk koneksi repositori ini",
       "empty": "Kosong",
       "error-field-required": "Bidang ini wajib diisi.",
-      "ext-storage": "Penyimpanan eksternal",
-      "grafana": "Instans Grafana",
+      "external-storage-label": "",
       "label-display-name": "Nama tampilan",
       "placeholder-my-repository-connection": "Koneksi repositori saya",
       "text-loading-resource-information": "Memuat informasi sumber daya...",
+      "unmanaged-resources-label": "",
       "dashboards-count_other": "{{count}} dasbor",
       "files-count_other": "{{count}} file",
       "folders-count_other": "{{count}} folder"
@@ -11225,7 +11230,8 @@
     },
     "connect-repository-button": {
       "configure": "Konfigurasikan",
-      "repository-limit-info-alert": "Batas repositori tercapai ({{count}})"
+      "instance-fully-managed-tooltip": "",
+      "repository-limit-reached-tooltip_other": ""
     },
     "delete-repository-button": {
       "button-delete": "Hapus",
@@ -11904,7 +11910,6 @@
       "expand-row": "Perluas baris kueri",
       "hide-response": "Sembunyikan respons",
       "remove-query": "Hapus kueri",
-      "replace-query-from-library": "Ganti dengan kueri tersimpan",
       "show-response": "Tampilkan respons"
     },
     "query-editor-not-exported": "Plugin sumber data tidak mengekspor komponen Editor Kueri apa pun"
@@ -11917,13 +11922,6 @@
       "no-deleted-dashboards": "Anda belum menghapus dasbor baru-baru ini.",
       "no-deleted-dashboards-text": "Saat Anda menghapus dasbor, dasbor akan muncul di sini selama 30 hari sebelum dihapus secara permanen. Administrator organisasi Anda dapat memulihkan dasbor yang baru saja dihapus.",
       "no-search-result": "Hasil untuk kueri Anda tidak ditemukan"
-    },
-    "permanently-delete-modal": {
-      "confirm-text": "Hapus",
-      "delete-button": "Hapus",
-      "delete-loading": "Menghapus...",
-      "title": "Hapus Dasbor Secara Permanen",
-      "text_other": "Tindakan ini akan menghapus {{numberOfDashboards}} dasbor."
     },
     "restore-modal": {
       "restore-button": "Pulihkan",

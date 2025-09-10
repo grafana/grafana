@@ -25,6 +25,59 @@ import { getDashboardSceneFor, getPanelIdForVizPanel } from '../utils/utils';
 
 import { MultiSelectedVizPanelsEditableElement } from './MultiSelectedVizPanelsEditableElement';
 
+function useEditPaneOptions(this: VizPanelEditableElement, isNewElement: boolean): OptionsPaneCategoryDescriptor[] {
+  const panel = this.panel;
+  const layoutElement = panel.parent!;
+  const rootId = useId();
+  const titleId = useId();
+  const descriptionId = useId();
+  const backgroundId = useId();
+
+  const panelOptions = useMemo(() => {
+    return new OptionsPaneCategoryDescriptor({ title: '', id: 'panel-options' })
+      .addItem(
+        new OptionsPaneItemDescriptor({
+          title: '',
+          id: rootId,
+          render: () => <OpenPanelEditViz panel={this.panel} />,
+        })
+      )
+      .addItem(
+        new OptionsPaneItemDescriptor({
+          title: t('dashboard.viz-panel.options.title-option', 'Title'),
+          id: titleId,
+          value: panel.state.title,
+          popularRank: 1,
+          render: (descriptor) => (
+            <PanelFrameTitleInput id={descriptor.props.id} panel={panel} isNewElement={isNewElement} />
+          ),
+        })
+      )
+      .addItem(
+        new OptionsPaneItemDescriptor({
+          title: t('dashboard.viz-panel.options.description', 'Description'),
+          id: descriptionId,
+          value: panel.state.description,
+          render: (descriptor) => <PanelDescriptionTextArea id={descriptor.props.id} panel={panel} />,
+        })
+      )
+      .addItem(
+        new OptionsPaneItemDescriptor({
+          title: t('dashboard.viz-panel.options.transparent-background', 'Transparent background'),
+          id: backgroundId,
+          render: (descriptor) => <PanelBackgroundSwitch id={descriptor.props.id} panel={panel} />,
+        })
+      );
+  }, [rootId, titleId, panel, descriptionId, backgroundId, isNewElement]);
+
+  const layoutCategories = useMemo(
+    () => (isDashboardLayoutItem(layoutElement) && layoutElement.getOptions ? layoutElement.getOptions() : []),
+    [layoutElement]
+  );
+
+  return [panelOptions, ...layoutCategories];
+}
+
 export class VizPanelEditableElement implements EditableDashboardElement, BulkActionElement {
   public readonly isEditableDashboardElement = true;
   public readonly typeName = 'Panel';
@@ -39,58 +92,7 @@ export class VizPanelEditableElement implements EditableDashboardElement, BulkAc
     };
   }
 
-  public useEditPaneOptions(isNewElement: boolean): OptionsPaneCategoryDescriptor[] {
-    const panel = this.panel;
-    const layoutElement = panel.parent!;
-    const rootId = useId();
-    const titleId = useId();
-    const descriptionId = useId();
-    const backgroundId = useId();
-
-    const panelOptions = useMemo(() => {
-      return new OptionsPaneCategoryDescriptor({ title: '', id: 'panel-options' })
-        .addItem(
-          new OptionsPaneItemDescriptor({
-            title: '',
-            id: rootId,
-            render: () => <OpenPanelEditViz panel={this.panel} />,
-          })
-        )
-        .addItem(
-          new OptionsPaneItemDescriptor({
-            title: t('dashboard.viz-panel.options.title-option', 'Title'),
-            id: titleId,
-            value: panel.state.title,
-            popularRank: 1,
-            render: (descriptor) => (
-              <PanelFrameTitleInput id={descriptor.props.id} panel={panel} isNewElement={isNewElement} />
-            ),
-          })
-        )
-        .addItem(
-          new OptionsPaneItemDescriptor({
-            title: t('dashboard.viz-panel.options.description', 'Description'),
-            id: descriptionId,
-            value: panel.state.description,
-            render: (descriptor) => <PanelDescriptionTextArea id={descriptor.props.id} panel={panel} />,
-          })
-        )
-        .addItem(
-          new OptionsPaneItemDescriptor({
-            title: t('dashboard.viz-panel.options.transparent-background', 'Transparent background'),
-            id: backgroundId,
-            render: (descriptor) => <PanelBackgroundSwitch id={descriptor.props.id} panel={panel} />,
-          })
-        );
-    }, [rootId, titleId, panel, descriptionId, backgroundId, isNewElement]);
-
-    const layoutCategories = useMemo(
-      () => (isDashboardLayoutItem(layoutElement) && layoutElement.getOptions ? layoutElement.getOptions() : []),
-      [layoutElement]
-    );
-
-    return [panelOptions, ...layoutCategories];
-  }
+  public useEditPaneOptions = useEditPaneOptions.bind(this);
 
   public onDelete() {
     const layout = dashboardSceneGraph.getLayoutManagerFor(this.panel);

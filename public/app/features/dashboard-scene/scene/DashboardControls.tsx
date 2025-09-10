@@ -124,6 +124,10 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
   const { links, editPanel } = dashboard.useState();
   const styles = useStyles2(getStyles);
   const showDebugger = window.location.search.includes('scene-debugger');
+  const hasControlMenuVariables = sceneGraph
+    .getVariables(dashboard)
+    .useState()
+    .variables.some((v) => v.state.showInControlsMenu === true);
 
   if (!model.hasControls()) {
     // To still have spacing when no controls are rendered
@@ -147,14 +151,16 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
         {editPanel && <PanelEditControls panelEditor={editPanel} />}
       </Stack>
       {!hideTimeControls && (
-        <div className={styles.timeControlStack}>
+        <Stack justifyContent="flex-end">
           <timePicker.Component model={timePicker} />
           <refreshPicker.Component model={refreshPicker} />
-        </div>
+        </Stack>
       )}
-      <Stack>
-        <DropdownVariableControls dashboard={dashboard} />
-      </Stack>
+      {hasControlMenuVariables && (
+        <Stack>
+          <DropdownVariableControls dashboard={dashboard} />
+        </Stack>
+      )}
       {showDebugger && <SceneDebugger scene={model} key={'scene-debugger'} />}
     </div>
   );
@@ -181,7 +187,7 @@ function getStyles(theme: GrafanaTheme2) {
       gap: theme.spacing(1),
       padding: theme.spacing(2),
       flexDirection: 'row',
-      flexWrap: 'wrap-reverse',
+      flexWrap: 'nowrap',
       position: 'relative',
       width: '100%',
       marginLeft: 'auto',
@@ -197,13 +203,6 @@ function getStyles(theme: GrafanaTheme2) {
     embedded: css({
       background: 'unset',
       position: 'unset',
-    }),
-    timeControlStack: css({
-      display: 'flex',
-      flexWrap: 'wrap',
-      justifyContent: 'flex-end',
-      gap: theme.spacing(1),
-      marginLeft: 'auto',
     }),
   };
 }

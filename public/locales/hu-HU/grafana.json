@@ -1121,7 +1121,8 @@
     },
     "enrichment": {
       "error-boundary": {
-        "notification-message-section-extension": ""
+        "notification-message-section-extension": "",
+        "rule-viewer-section-extension": ""
       }
     },
     "error-modal": {
@@ -1703,9 +1704,6 @@
       "notes": "Megjegyzések",
       "returns": "Visszaadott értékek"
     },
-    "label-picker": {
-      "no-options-message": "Nem található címke"
-    },
     "labels-editor-modal": {
       "title-edit-labels": "Címkék szerkesztése"
     },
@@ -1723,9 +1721,6 @@
     "labels-sub-form": {
       "description": "Válasszon egy címkekulcsot/-értéket az alábbi lehetőségek közül, vagy írjon be egy újat, és nyomja le az Enter billentyűt.",
       "save": "Mentés"
-    },
-    "labels-with-suggestions": {
-      "text-loading-existing-labels": "Meglévő címkék betöltése"
     },
     "labels-without-suggestions": {
       "message": {
@@ -3048,6 +3043,7 @@
       "page-nav": {
         "text": {
           "details": "Részletek",
+          "enrichment": "",
           "history": "Előzmények",
           "instances": "Példányok",
           "query-and-conditions": "Lekérdezés és feltételek",
@@ -4687,6 +4683,7 @@
       "move": "{{typeName}} áthelyezése",
       "panel-background": "Panel hátterének módosítása",
       "panel-description": "Panel leírásának módosítása",
+      "panel-edit": "",
       "panel-max-repeats-per-row": "Max. ismétlés soronként",
       "panel-repeat-direction": "Ismétlési irány",
       "panel-repeat-variable": "Panelismétlés alapja:",
@@ -4941,12 +4938,11 @@
       "dataframe-aria-label": "Adatkeret kijelölése",
       "dataframe-label": "Adatkeret megjelenítése",
       "download-csv": "CSV letöltése",
-      "download-excel-description": "Fejléc hozzáadása a CSV-fájlhoz az Excelben történő használathoz",
-      "download-excel-label": "Letöltés Excelhez",
       "download-logs": "Naplók letöltése",
       "download-service": "Szolgáltatási grafikon letöltése",
       "download-traces": "Nyomkövetések letöltése",
-      "excel-header": "Excel-fejléc",
+      "excel-compatibility-mode-description": "",
+      "excel-compatibility-mode-label": "",
       "formatted": "Formázott adatok",
       "formatted-data-description": "A táblázatadatok a Mező és a Felülbírálás lapon meghatározott opciókkal formázhatók.",
       "formatted-data-label": "Formázott adatok",
@@ -9650,6 +9646,12 @@
       "hide-search": "Keresés bezárása",
       "hide-timestamps": "Időbélyegek elrejtése",
       "hide-unique-labels": "Egyedi címkék elrejtése",
+      "line-wrapping": {
+        "enable": "",
+        "enable-prettify": "",
+        "hide": "",
+        "label": ""
+      },
       "newest-first": "Rendezés a legújabb naplók szerint – kattintson, hogy a legrégebbi naplók jelenjenek meg elsőként",
       "oldest-first": "Rendezés a legrégebbi naplók szerint – kattintson, hogy a legújabb naplók jelenjenek meg elsőként",
       "prettify-json": "JSON-naplók kibontása",
@@ -9658,13 +9660,16 @@
       "resolution-ns": "ns",
       "scroll-bottom": "Görgetés az aljára",
       "scroll-top": "Görgetés a tetejére",
-      "show-ms-timestamps": "Milliszekundumos időbélyegek megjelenítése",
-      "show-ns-timestamps": "Nanoszekundumos időbélyegek megjelenítése",
       "show-search": "Keresés a naplóeredményekben",
       "show-timestamps": "Időbélyegek megjelenítése",
       "show-unique-labels": "Egyedi címkék megjelenítése",
+      "timestamp": {
+        "hide": "",
+        "label": "",
+        "milliseconds": "",
+        "nanoseconds": ""
+      },
       "unwrap-lines": "Sortörés megszüntetése",
-      "wrap-json-lines": "",
       "wrap-lines": "Sortörés"
     },
     "logs-navigation": {
@@ -11208,11 +11213,11 @@
       "description-clear-repository-connection": "Adjon egy egyértelmű nevet ehhez az adattári kapcsolathoz",
       "empty": "Üres",
       "error-field-required": "A mező kitöltése kötelező.",
-      "ext-storage": "Külső tárhely",
-      "grafana": "Grafana-példány",
+      "external-storage-label": "",
       "label-display-name": "Megjelenített név",
       "placeholder-my-repository-connection": "Saját adattári kapcsolat",
       "text-loading-resource-information": "Erőforrás-információk betöltése…",
+      "unmanaged-resources-label": "",
       "dashboards-count_one": "{{count}} irányítópult",
       "dashboards-count_other": "{{count}} irányítópult",
       "files-count_one": "{{count}} fájl",
@@ -11260,7 +11265,9 @@
     },
     "connect-repository-button": {
       "configure": "Konfigurálás",
-      "repository-limit-info-alert": "Elérte az adattár korlátját ({{count}})"
+      "instance-fully-managed-tooltip": "",
+      "repository-limit-reached-tooltip_one": "",
+      "repository-limit-reached-tooltip_other": ""
     },
     "delete-repository-button": {
       "button-delete": "Törlés",
@@ -11940,7 +11947,6 @@
       "expand-row": "Lekérdezési sor kibontása",
       "hide-response": "Válasz elrejtése",
       "remove-query": "Lekérdezés eltávolítása",
-      "replace-query-from-library": "Csere mentett lekérdezéssel",
       "show-response": "Válasz megjelenítése"
     },
     "query-editor-not-exported": "Az adatforrás-bővítmény nem exportál egyetlen lekérdezésszerkesztő-komponenst sem"
@@ -11953,14 +11959,6 @@
       "no-deleted-dashboards": "Mostanában nem törölt irányítópultokat.",
       "no-deleted-dashboards-text": "Ha töröl egy irányítópultot, az 30 napig itt fog megjelenni, mielőtt véglegesen törlődik. A szervezeti rendszergazda visszaállíthatja a legutóbb törölt irányítópultokat.",
       "no-search-result": "Nincs találat a lekérdezésre"
-    },
-    "permanently-delete-modal": {
-      "confirm-text": "Törlés",
-      "delete-button": "Törlés",
-      "delete-loading": "Törlés...",
-      "title": "Irányítópultok végleges törlése",
-      "text_one": "Ez a művelet {{numberOfDashboards}} irányítópultot töröl.",
-      "text_other": "Ez a művelet {{numberOfDashboards}} irányítópultot töröl."
     },
     "restore-modal": {
       "restore-button": "Visszaállítás",

@@ -64,6 +64,36 @@
     },
     {
       "metadata": {
+        "name": "alertEnrichmentConditional",
+        "resourceVersion": "1757418974334",
+        "creationTimestamp": "2025-09-09T11:56:14Z"
+      },
+      "spec": {
+        "description": "Enable conditional alert enrichment steps.",
+        "stage": "experimental",
+        "codeowner": "@grafana/alerting-squad",
+        "hideFromAdminPage": true,
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "alertEnrichmentMultiStep",
+        "resourceVersion": "1757418224384",
+        "creationTimestamp": "2025-09-09T11:43:44Z"
+      },
+      "spec": {
+        "description": "Allow multiple steps per enrichment.",
+        "stage": "experimental",
+        "codeowner": "@grafana/alerting-squad",
+        "hideFromAdminPage": true,
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "alertRuleRestore",
         "resourceVersion": "1753448760331",
         "creationTimestamp": "2025-03-05T14:15:26Z"
@@ -1141,6 +1171,25 @@
     },
     {
       "metadata": {
+        "name": "dskitBackgroundServices",
+        "resourceVersion": "1757339637779",
+        "creationTimestamp": "2025-09-03T12:20:24Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-09-08 13:53:57.77994 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Enables dskit background service wrapper",
+        "stage": "experimental",
+        "codeowner": "@grafana/plugins-platform-backend",
+        "requiresRestart": true,
+        "hideFromAdminPage": true,
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "editPanelCSVDragAndDrop",
         "resourceVersion": "1753448760331",
         "creationTimestamp": "2023-01-24T09:43:44Z"
@@ -1155,13 +1204,17 @@
     {
       "metadata": {
         "name": "elasticsearchCrossClusterSearch",
-        "resourceVersion": "1753448760331",
-        "creationTimestamp": "2024-12-12T22:20:04Z"
+        "resourceVersion": "1757441088767",
+        "creationTimestamp": "2024-12-12T22:20:04Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-09-09 18:04:48.76781 +0000 UTC"
+        }
       },
       "spec": {
-        "description": "Enables cross cluster search in the Elasticsearch datasource",
-        "stage": "preview",
-        "codeowner": "@grafana/aws-datasources"
+        "description": "Enables cross cluster search in the Elasticsearch data source",
+        "stage": "GA",
+        "codeowner": "@grafana/partner-datasources",
+        "expression": "false"
       }
     },
     {
@@ -1861,6 +1914,19 @@
     },
     {
       "metadata": {
+        "name": "kubernetesAlertingRules",
+        "resourceVersion": "1754340669702",
+        "creationTimestamp": "2025-08-04T20:51:09Z"
+      },
+      "spec": {
+        "description": "Adds support for Kubernetes alerting and recording rules",
+        "stage": "experimental",
+        "codeowner": "@grafana/alerting-squad",
+        "requiresRestart": true
+      }
+    },
+    {
+      "metadata": {
         "name": "kubernetesAuthnMutation",
         "resourceVersion": "1753454405614",
         "creationTimestamp": "2025-07-25T15:05:32Z",
@@ -2229,7 +2295,8 @@
       "metadata": {
         "name": "multiTenantFrontend",
         "resourceVersion": "1753448760331",
-        "creationTimestamp": "2025-04-25T09:24:25Z"
+        "creationTimestamp": "2025-04-25T09:24:25Z",
+        "deletionTimestamp": "2025-09-08T17:06:39Z"
       },
       "spec": {
         "description": "Register MT frontend",
@@ -2545,6 +2612,20 @@
     },
     {
       "metadata": {
+        "name": "pluginContainers",
+        "resourceVersion": "1756911074581",
+        "creationTimestamp": "2025-09-03T14:51:14Z"
+      },
+      "spec": {
+        "description": "Enables running plugins in containers",
+        "stage": "privatePreview",
+        "codeowner": "@grafana/plugins-platform-backend",
+        "requiresRestart": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "pluginProxyPreserveTrailingSlash",
         "resourceVersion": "1753448760331",
         "creationTimestamp": "2024-06-05T11:36:14Z"
@@ -2712,6 +2793,23 @@
         "stage": "experimental",
         "codeowner": "@grafana/oss-big-tent",
         "frontend": true
+      }
+    },
+    {
+      "metadata": {
+        "name": "prometheusTypeMigration",
+        "resourceVersion": "1757089774247",
+        "creationTimestamp": "2025-08-25T21:53:16Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-09-05 16:29:34.247055837 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Checks for deprecated Prometheus authentication methods (SigV4 and Azure), installs the relevant data source, and migrates the Prometheus data sources",
+        "stage": "experimental",
+        "codeowner": "@grafana/partner-datasources",
+        "requiresRestart": true,
+        "expression": "false"
       }
     },
     {

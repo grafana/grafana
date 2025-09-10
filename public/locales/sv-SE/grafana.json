@@ -1121,7 +1121,8 @@
     },
     "enrichment": {
       "error-boundary": {
-        "notification-message-section-extension": ""
+        "notification-message-section-extension": "",
+        "rule-viewer-section-extension": ""
       }
     },
     "error-modal": {
@@ -1703,9 +1704,6 @@
       "notes": "Anteckningar",
       "returns": "Återsändningar"
     },
-    "label-picker": {
-      "no-options-message": "Inga etiketter hittades"
-    },
     "labels-editor-modal": {
       "title-edit-labels": "Redigera etiketter"
     },
@@ -1723,9 +1721,6 @@
     "labels-sub-form": {
       "description": "Välj etikettnyckel/värde från alternativen nedan, eller skriv in nytt och tryck på Enter.",
       "save": "Spara"
-    },
-    "labels-with-suggestions": {
-      "text-loading-existing-labels": "Läser in befintliga etiketter"
     },
     "labels-without-suggestions": {
       "message": {
@@ -3048,6 +3043,7 @@
       "page-nav": {
         "text": {
           "details": "Detaljer",
+          "enrichment": "",
           "history": "Historik",
           "instances": "Instanser",
           "query-and-conditions": "Fråga och villkor",
@@ -4687,6 +4683,7 @@
       "move": "Flytta {{typeName}}",
       "panel-background": "Ändra panelbakgrund",
       "panel-description": "Ändra panelbeskrivning",
+      "panel-edit": "",
       "panel-max-repeats-per-row": "Max upprepningar per rad",
       "panel-repeat-direction": "Upprepa riktning",
       "panel-repeat-variable": "Panelupprepning efter",
@@ -4941,12 +4938,11 @@
       "dataframe-aria-label": "Välj dataram",
       "dataframe-label": "Visa dataram",
       "download-csv": "Ladda ner CSV",
-      "download-excel-description": "Lägger till rubrik i CSV för användning med Excel",
-      "download-excel-label": "Ladda ner för Excel",
       "download-logs": "Ladda ner loggar",
       "download-service": "Ladda ner servicegraf",
       "download-traces": "Ladda ner spår",
-      "excel-header": "Excel-rubrik",
+      "excel-compatibility-mode-description": "",
+      "excel-compatibility-mode-label": "",
       "formatted": "Formaterade data",
       "formatted-data-description": "Tabelldata formateras med alternativ som definieras på flikarna Fält och Åsidosätt.",
       "formatted-data-label": "Formaterade data",
@@ -9650,6 +9646,12 @@
       "hide-search": "Stäng sökning",
       "hide-timestamps": "Dölj tidsstämplar",
       "hide-unique-labels": "Dölj unika etiketter",
+      "line-wrapping": {
+        "enable": "",
+        "enable-prettify": "",
+        "hide": "",
+        "label": ""
+      },
       "newest-first": "Sorterat efter nyaste loggar först – klicka om du vill visa äldsta först",
       "oldest-first": "Sorterat efter äldsta loggar först – klicka om du vill visa nyaste först",
       "prettify-json": "Expandera JSON-loggar",
@@ -9658,13 +9660,16 @@
       "resolution-ns": "ns",
       "scroll-bottom": "Skrolla längst ner",
       "scroll-top": "Skrolla till toppen",
-      "show-ms-timestamps": "Visa tidsstämplar i millisekunder",
-      "show-ns-timestamps": "Visa tidsstämplar i nanosekunder",
       "show-search": "Resultat av sökning i loggar",
       "show-timestamps": "Visa tidsstämplar",
       "show-unique-labels": "Visa unika etiketter",
+      "timestamp": {
+        "hide": "",
+        "label": "",
+        "milliseconds": "",
+        "nanoseconds": ""
+      },
       "unwrap-lines": "Ta bort radbrytningar",
-      "wrap-json-lines": "",
       "wrap-lines": "Radbryt linjer"
     },
     "logs-navigation": {
@@ -11208,11 +11213,11 @@
       "description-clear-repository-connection": "Lägg till ett tydligt namn för den här lagringsplatsanslutningen",
       "empty": "Tom",
       "error-field-required": "Detta fält är obligatoriskt.",
-      "ext-storage": "Extern lagring",
-      "grafana": "Grafana-instans",
+      "external-storage-label": "",
       "label-display-name": "Visningsnamn",
       "placeholder-my-repository-connection": "Min lagringsplatsanslutning",
       "text-loading-resource-information": "Läser in resursinformation …",
+      "unmanaged-resources-label": "",
       "dashboards-count_one": "{{count}} kontrollpanel",
       "dashboards-count_other": "{{count}} kontrollpanel",
       "files-count_one": "{{count}} filer",
@@ -11260,7 +11265,9 @@
     },
     "connect-repository-button": {
       "configure": "Konfigurera",
-      "repository-limit-info-alert": "Gränsen för lagringsplatsen har uppnåtts ({{count}})"
+      "instance-fully-managed-tooltip": "",
+      "repository-limit-reached-tooltip_one": "",
+      "repository-limit-reached-tooltip_other": ""
     },
     "delete-repository-button": {
       "button-delete": "Ta bort",
@@ -11940,7 +11947,6 @@
       "expand-row": "Expandera frågeraden",
       "hide-response": "Dölj svar",
       "remove-query": "Ta bort fråga",
-      "replace-query-from-library": "Ersätt med sparad fråga",
       "show-response": "Visa svar"
     },
     "query-editor-not-exported": "Tilläggsprogram för datakälla exporterar inte någon frågeredigerarkomponent"
@@ -11953,14 +11959,6 @@
       "no-deleted-dashboards": "Du har inte raderat några instrumentpaneler nyligen.",
       "no-deleted-dashboards-text": "När du tar bort en instrumentpanel visas den här under 30 dagar innan den raderas permanent. Din organisations administratör kan återställa nyligen raderade instrumentpaneler.",
       "no-search-result": "Inga resultat hittades för din fråga"
-    },
-    "permanently-delete-modal": {
-      "confirm-text": "Ta bort",
-      "delete-button": "Ta bort",
-      "delete-loading": "Tar bort ...",
-      "title": "Radera instrumentpaneler permanent",
-      "text_one": "Denna åtgärd raderar {{numberOfDashboards}} paneler.",
-      "text_other": "Denna åtgärd raderar {{numberOfDashboards}} paneler."
     },
     "restore-modal": {
       "restore-button": "Återställ",
