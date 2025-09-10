@@ -50,6 +50,8 @@ export {
   isTimeSeriesField,
   getRowUniqueId,
   addRow,
+  alignTimeRangeCompareData,
+  shouldAlignTimeCompare,
 } from './dataframe/utils';
 export {
   StreamingDataFrame,
@@ -568,6 +570,8 @@ export type { FeatureToggles } from './types/featureToggles.gen';
 export {
   PluginExtensionTypes,
   PluginExtensionPoints,
+  PluginExtensionExposedComponents,
+  PluginExtensionPointPatterns,
   type PluginExtension,
   type PluginExtensionLink,
   type PluginExtensionComponent,
@@ -588,9 +592,11 @@ export {
   type PluginExtensionAddedLinkConfig,
   type PluginExtensionAddedFunctionConfig,
   type PluginExtensionResourceAttributesContext,
+  type CentralAlertHistorySceneV1Props,
 } from './types/pluginExtensions';
 export {
   type ScopeDashboardBindingSpec,
+  type ScopeDashboardBindingStatus,
   type ScopeDashboardBinding,
   type ScopeFilterOperator,
   type ScopeSpecFilter,
@@ -849,6 +855,8 @@ export {
   defaultActionConfig,
   contentTypeOptions,
   httpMethodOptions,
+  type FetchOptions,
+  type InfinityOptions,
 } from './types/action';
 export { DataFrameType } from './types/dataFrameTypes';
 export {

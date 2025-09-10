@@ -44,7 +44,7 @@ const (
 	anonString = "Anonymous"
 )
 
-func (hs *HTTPServer) isDashboardStarredByUser(c *contextmodel.ReqContext, dashID int64) (bool, error) {
+func (hs *HTTPServer) isDashboardStarredByUser(c *contextmodel.ReqContext, dashUID string) (bool, error) {
 	ctx, span := tracer.Start(c.Req.Context(), "api.isDashboardStarredByUser")
 	defer span.End()
 	c.Req = c.Req.WithContext(ctx)
@@ -62,7 +62,7 @@ func (hs *HTTPServer) isDashboardStarredByUser(c *contextmodel.ReqContext, dashI
 		return false, err
 	}
 
-	query := star.IsStarredByUserQuery{UserID: userID, DashboardID: dashID}
+	query := star.IsStarredByUserQuery{UserID: userID, DashboardUID: dashUID}
 	return hs.starService.IsStarredByUser(c.Req.Context(), &query)
 }
 
@@ -158,7 +158,7 @@ func (hs *HTTPServer) GetDashboard(c *contextmodel.ReqContext) response.Response
 	adminEvaluator := accesscontrol.EvalPermission(dashboards.ActionDashboardsPermissionsWrite, dashScope)
 	canAdmin, _ := hs.AccessControl.Evaluate(ctx, c.SignedInUser, adminEvaluator)
 
-	isStarred, err := hs.isDashboardStarredByUser(c, dash.ID)
+	isStarred, err := hs.isDashboardStarredByUser(c, dash.UID)
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Error while checking if dashboard was starred by user", err)
 	}

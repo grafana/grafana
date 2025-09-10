@@ -125,9 +125,6 @@ func NewMapperRegistry() MapperRegistry {
 			"securevalues": newResourceTranslation("secret.securevalues", "uid", false),
 			"keepers":      newResourceTranslation("secret.keepers", "uid", false),
 		},
-		"settings.grafana.app": {
-			"settings": newResourceTranslation("settings", "uid", false),
-		},
 		"query.grafana.app": {
 			"query": translation{
 				resource:  "datasources",

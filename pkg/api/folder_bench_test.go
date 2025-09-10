@@ -37,6 +37,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/dashboards/database"
 	dashboardservice "github.com/grafana/grafana/pkg/services/dashboards/service"
+	dashclient "github.com/grafana/grafana/pkg/services/dashboards/service/client"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder/folderimpl"
 	"github.com/grafana/grafana/pkg/services/licensing/licensingtest"
@@ -429,14 +430,12 @@ func setupServer(b testing.TB, sc benchScenario, features featuremgmt.FeatureTog
 	dashStore, err := database.ProvideDashboardStore(sc.db, sc.cfg, features, tagimpl.ProvideService(sc.db))
 	require.NoError(b, err)
 
-	folderStore := folderimpl.ProvideDashboardFolderStore(sc.db)
-
 	ac := acimpl.ProvideAccessControl(featuremgmt.WithFeatures())
 	cfg := setting.NewCfg()
 	actionSets := resourcepermissions.NewActionSetService()
 	fStore := folderimpl.ProvideStore(sc.db)
 	folderServiceWithFlagOn := folderimpl.ProvideService(
-		fStore, ac, bus.ProvideBus(tracing.InitializeTracerForTest()), dashStore, folderStore,
+		fStore, ac, bus.ProvideBus(tracing.InitializeTracerForTest()), dashStore,
 		nil, sc.db, features, supportbundlestest.NewFakeBundleService(), nil, cfg, nil, tracing.InitializeTracerForTest(), nil, dualwrite.ProvideTestService(), sort.ProvideService(), apiserver.WithoutRestConfig)
 	acSvc := acimpl.ProvideOSSService(
 		sc.cfg, acdb.ProvideService(sc.db), actionSets, localcache.ProvideService(),
@@ -446,11 +445,31 @@ func setupServer(b testing.TB, sc benchScenario, features featuremgmt.FeatureTog
 		cfg, features, routing.NewRouteRegister(), sc.db, ac, license, folderServiceWithFlagOn, acSvc, sc.teamSvc, sc.userSvc, actionSets)
 	require.NoError(b, err)
 	dashboardSvc, err := dashboardservice.ProvideDashboardServiceImpl(
-		sc.cfg, dashStore, folderStore,
-		features, folderPermissions, ac, actest.FakeService{},
-		folderServiceWithFlagOn, nil, client.MockTestRestConfig{}, nil, quotaSrv, nil, nil, nil, dualwrite.ProvideTestService(), sort.ProvideService(),
+		sc.cfg,
+		dashStore,
+		features,
+		folderPermissions,
+		ac,
+		actest.FakeService{},
+		folderServiceWithFlagOn,
+		nil,
+		quotaSrv,
+		nil,
+		nil,
+		dualwrite.ProvideTestService(),
 		serverlock.ProvideService(sc.db, tracing.InitializeTracerForTest()),
 		kvstore.NewFakeKVStore(),
+		dashclient.NewK8sClientWithFallback(
+			sc.cfg,
+			client.MockTestRestConfig{},
+			dashStore,
+			sc.userSvc,
+			nil,
+			sort.ProvideService(),
+			dualwrite.ProvideTestService(),
+			nil,
+			features,
+		),
 	)
 	require.NoError(b, err)
 

@@ -208,6 +208,18 @@ export enum PluginExtensionPoints {
   ExtensionSidebar = 'grafana/extension-sidebar/v0-alpha',
 }
 
+// Don't use directly in a plugin!
+// Extension point IDs that contain dynamic segments and are not valid as static values — they require runtime substitution of certain parts.
+// (They cannot be used as is. E.g. "grafana/nav-landing-page/.*/v1" becomes "grafana/nav-landing-page/observability/v1" during runtime.)
+export enum PluginExtensionPointPatterns {
+  NavLandingPage = 'grafana/dynamic/nav-landing-page/nav-id-.*/v1',
+}
+
+// Extension Points available in plugins
+export enum PluginExtensionExposedComponents {
+  CentralAlertHistorySceneV1 = 'grafana/central-alert-history-scene/v1',
+}
+
 export type PluginExtensionPanelContext = {
   pluginId: string;
   id: number;
@@ -218,6 +230,13 @@ export type PluginExtensionPanelContext = {
   targets: DataQuery[];
   scopedVars?: ScopedVars;
   data?: PanelData;
+};
+
+export type CentralAlertHistorySceneV1Props = {
+  defaultLabelsFilter?: string;
+  defaultTimeRange?: { from: string; to: string };
+  hideFilters?: boolean;
+  hideAlertRuleColumn?: boolean;
 };
 
 export type PluginExtensionQueryEditorRowAdaptiveTelemetryV1Context = {
