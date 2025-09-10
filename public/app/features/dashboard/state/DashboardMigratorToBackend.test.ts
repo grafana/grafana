@@ -80,9 +80,7 @@ describe('Backend / Frontend result comparison', () => {
         });
 
         // Handle angular panel migration if needed
-        if (jsonInput.schemaVersion <= 27) {
-          await handleAngularPanelMigration(frontendModel);
-        }
+        await handleAngularPanelMigration(frontendModel);
 
         const frontendMigrationResult = frontendModel.getSaveModelClone();
 

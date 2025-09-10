@@ -88,22 +88,22 @@ describe('Backend / Frontend single version migration result comparison', () => 
         const expectedSchemaVersion = targetVersion - 1;
         expect(jsonInput.schemaVersion).toBe(expectedSchemaVersion);
 
-        // Generate the expected output filename for single version migration
-        const singleVersionOutputFile = constructBackendOutputFilename(inputFile, targetVersion);
-        const singleVersionOutputPath = path.join(outputDir, singleVersionOutputFile);
+        // Construct the backend output filename: v15.something.json -> v15.something.v16.json
+        const backendOutputFilename = constructBackendOutputFilename(inputFile, targetVersion);
+        const backendOutputPath = path.join(outputDir, backendOutputFilename);
 
-        // Check if the single version output file exists
-        let backendOutput: any;
+        // Check if the backend output file exists
+        let backendMigrationResult: Record<string, unknown>;
         try {
-          backendOutput = JSON.parse(readFileSync(singleVersionOutputPath, 'utf8'));
+          backendMigrationResult = JSON.parse(readFileSync(backendOutputPath, 'utf8'));
         } catch (error) {
-          // If single version output doesn't exist, skip this test
+          // If backend output doesn't exist, skip this test
           // This can happen if the backend test hasn't generated the single version output yet
-          console.warn(`Skipping ${inputFile}: single version output file ${singleVersionOutputFile} not found`);
+          console.warn(`Skipping ${inputFile}: single version output file ${backendOutputFilename} not found`);
           return;
         }
 
-        expect(backendOutput.schemaVersion).toEqual(targetVersion);
+        expect(backendMigrationResult.schemaVersion).toEqual(targetVersion);
 
         // Migrate dashboard in Frontend.
         const frontendModel = new DashboardModel(jsonInput, undefined, {
@@ -112,13 +112,11 @@ describe('Backend / Frontend single version migration result comparison', () => 
         });
 
         // Handle angular panel migration if needed
-        if (jsonInput.schemaVersion <= 27) {
-          await handleAngularPanelMigration(frontendModel);
-        }
+        await handleAngularPanelMigration(frontendModel);
 
         const frontendMigrationResult = frontendModel.getSaveModelClone();
 
-        expect(backendOutput).toEqual(frontendMigrationResult);
+        expect(backendMigrationResult).toEqual(frontendMigrationResult);
       });
     });
 });

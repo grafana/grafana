@@ -1,7 +1,6 @@
-import { readdirSync, readFileSync } from 'fs';
+import { readdirSync } from 'fs';
 import path from 'path';
 
-import { sortedDeepCloneWithoutNulls } from 'app/core/utils/object';
 import { mockDataSource } from 'app/features/alerting/unified/mocks';
 import { setupDataSources } from 'app/features/alerting/unified/testSetup/datasources';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
@@ -187,31 +186,6 @@ export async function handleAngularPanelMigration(frontendModel: DashboardModel)
       await panel.pluginLoaded(tablePanelPlugin);
     }
   }
-}
-
-export function cleanDashboardModel(dashboard: DashboardModel) {
-  // Although getSaveModelClone() runs sortedDeepCloneWithoutNulls() internally,
-  // we run it again to ensure consistent handling of null values (like threshold -Infinity values)
-  // Because Go and TS handle -Infinity differently.
-  const dashboardWithoutNulls = sortedDeepCloneWithoutNulls(dashboard.getSaveModelClone());
-
-  // Remove deprecated angular properties that backend shouldn't return, but DashboardModel will still set them
-  for (const panel of dashboardWithoutNulls.panels ?? []) {
-    // @ts-expect-error
-    delete panel.autoMigrateFrom;
-    // @ts-expect-error
-    delete panel.styles;
-    // @ts-expect-error - Backend removes these deprecated table properties
-    delete panel.transform;
-    // @ts-expect-error - Backend removes these deprecated table properties
-    delete panel.columns;
-  }
-
-  return dashboardWithoutNulls;
-}
-
-export function shouldSkipAngularMigration(schemaVersion: number): boolean {
-  return schemaVersion <= 27;
 }
 
 export const TEST_MIN_VERSION = 27;
