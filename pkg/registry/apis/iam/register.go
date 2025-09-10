@@ -86,7 +86,7 @@ func NewAPIService(
 	store legacy.LegacyIdentityStore,
 	resourcePermissionsStorage resource.StorageBackend,
 ) *IdentityAccessManagementAPIBuilder {
-	authz := gfauthorizer.NewResourceAuthorizer(accessClient)
+	resourceAuthorizer := gfauthorizer.NewResourceAuthorizer(accessClient)
 	return &IdentityAccessManagementAPIBuilder{
 		store:                        store,
 		display:                      user.NewLegacyDisplayREST(store),
@@ -96,7 +96,7 @@ func NewAPIService(
 			func(ctx context.Context, a authorizer.Attributes) (authorizer.Decision, string, error) {
 				// For now only authorize resourcepermissions resource
 				if a.GetResource() == "resourcepermissions" {
-					return authz.Authorize(ctx, a)
+					return resourceAuthorizer.Authorize(ctx, a)
 				}
 
 				user, err := identity.GetRequester(ctx)
@@ -118,6 +118,11 @@ func (b *IdentityAccessManagementAPIBuilder) GetGroupVersion() schema.GroupVersi
 func (b *IdentityAccessManagementAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
 	if b.enableAuthZApis {
 		if err := iamv0.AddAuthZKnownTypes(scheme); err != nil {
+			return err
+		}
+	}
+	if b.enableResourcePermissionApis {
+		if err := iamv0.AddResourcePermissionKnownTypes(scheme, iamv0.SchemeGroupVersion); err != nil {
 			return err
 		}
 	}
