@@ -29,18 +29,21 @@ var (
 )
 
 type AuthService struct {
-	db       db.DB
-	features featuremgmt.FeatureToggles
-	dashSvc  dashboards.DashboardService
-	cfg      *setting.Cfg
+	db                                              db.DB
+	features                                        featuremgmt.FeatureToggles
+	dashSvc                                         dashboards.DashboardService
+	dashboardsWithVisibleAnnotationsSearchPageLimit int64
 }
 
 func NewAuthService(db db.DB, features featuremgmt.FeatureToggles, dashSvc dashboards.DashboardService, cfg *setting.Cfg) *AuthService {
+	section := cfg.Raw.Section("annotations")
+	dashboardsWithVisibleAnnotationsSearchPageLimit := section.Key("dashboards_with_visible_annotations_search_dashboards_page_limit").MustInt64(1000)
+
 	return &AuthService{
 		db:       db,
 		features: features,
 		dashSvc:  dashSvc,
-		cfg:      cfg,
+		dashboardsWithVisibleAnnotationsSearchPageLimit: dashboardsWithVisibleAnnotationsSearchPageLimit,
 	}
 }
 
@@ -134,17 +137,13 @@ func (authz *AuthService) dashboardsWithVisibleAnnotations(ctx context.Context, 
 		})
 	}
 
-	section := authz.cfg.Raw.Section("annotations")
-	key := "dashboards_with_visible_annotations_search_dashboards_page_limit"
-	limit := section.Key(key).MustInt64(1000)
-
 	dashs, err := authz.dashSvc.SearchDashboards(ctx, &dashboards.FindPersistedDashboardsQuery{
 		OrgId:        query.SignedInUser.GetOrgID(),
 		Filters:      filters,
 		SignedInUser: query.SignedInUser,
 		Page:         query.Page,
 		Type:         filterType,
-		Limit:        limit,
+		Limit:        authz.dashboardsWithVisibleAnnotationsSearchPageLimit,
 	})
 	if err != nil {
 		return nil, err
