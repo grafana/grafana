@@ -14,9 +14,8 @@ import { LogLabelStats } from '../LogLabelStats';
 import { FieldDef } from '../logParser';
 import { LOG_LINE_ATTRIBUTES_FIELD_NAME } from '../otel/formats';
 
-import { getNormalizedFieldName } from './LogLineDetailsDisplayedFields';
 import { useLogListContext } from './LogListContext';
-import { LogListModel } from './processing';
+import { LogListModel, getNormalizedFieldName } from './processing';
 
 interface LogLineDetailsFieldsProps {
   disableActions?: boolean;
@@ -317,7 +316,9 @@ export const LogLineDetailsField = ({
             />
           </div>
         )}
-        <div className={styles.label}>{singleKey ? getNormalizedFieldName(keys[0]) : <MultipleValue values={keys} />}</div>
+        <div className={styles.label}>
+          {singleKey ? getNormalizedFieldName(keys[0]) : <MultipleValue values={keys} />}
+        </div>
         <div className={styles.value}>
           <div className={styles.valueContainer}>
             {singleValue ? (
