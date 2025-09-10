@@ -120,6 +120,76 @@ func batch(count, batchSize int, eachFn func(start, end int) error) error {
 	return nil
 }
 
+// MigrateRemoveDeprecatedPermissions removes deprecated permissions from the database
+func MigrateRemoveDeprecatedPermissions(db db.DB, log log.Logger) error {
+	ctx := context.Background()
+	t := time.Now()
+
+	// Define the deprecated permissions to remove
+	deprecatedPermissions := []string{
+		"apikeys:",
+	}
+
+	log.Info("Starting migration to remove deprecated permissions", "migration", "removeDeprecatedPermissions")
+
+	// Find and remove permissions matching the deprecated patterns
+	var totalRemoved int
+	for _, permPattern := range deprecatedPermissions {
+		var permissions []ac.Permission
+		if errFind := db.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+			return sess.SQL("SELECT * FROM permission WHERE action LIKE ?", permPattern+"%").Find(&permissions)
+		}); errFind != nil {
+			log.Error("Could not search for deprecated permissions to remove", "migration", "removeDeprecatedPermissions", "pattern", permPattern, "error", errFind)
+			return errFind
+		}
+
+		if len(permissions) == 0 {
+			log.Debug("No permissions found for pattern", "migration", "removeDeprecatedPermissions", "pattern", permPattern)
+			continue
+		}
+
+		// Remove permissions in batches
+		errBatchRemove := batch(len(permissions), batchSize, func(start, end int) error {
+			n := end - start
+
+			// Build delete query for this batch
+			delQuery := "DELETE FROM permission WHERE id IN ("
+			delArgs := make([]any, 0, n)
+
+			for i := start; i < end; i++ {
+				delQuery += "?,"
+				delArgs = append(delArgs, permissions[i].ID)
+			}
+
+			// Remove trailing ','
+			delQuery = delQuery[:len(delQuery)-1] + ")"
+
+			// Execute delete
+			if errDel := db.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+				_, err := sess.Exec(delQuery, delArgs)
+				return err
+			}); errDel != nil {
+				log.Error("Error deleting deprecated permissions batch", "migration", "removeDeprecatedPermissions", "pattern", permPattern, "start", start, "end", end, "error", errDel)
+				return errDel
+			}
+
+			log.Debug("Removed deprecated permissions batch", "migration", "removeDeprecatedPermissions", "pattern", permPattern, "count", n)
+			return nil
+		})
+
+		if errBatchRemove != nil {
+			log.Error("Could not remove deprecated permissions batch", "migration", "removeDeprecatedPermissions", "pattern", permPattern, "error", errBatchRemove)
+			return errBatchRemove
+		}
+
+		totalRemoved += len(permissions)
+		log.Info("Removed deprecated permissions for pattern", "migration", "removeDeprecatedPermissions", "pattern", permPattern, "count", len(permissions))
+	}
+
+	log.Info("Completed migration to remove deprecated permissions", "migration", "removeDeprecatedPermissions", "totalRemoved", totalRemoved, "duration", time.Since(t))
+	return nil
+}
+
 func trimToMaxLen(s string, maxLen int) string {
 	if len(s) > maxLen {
 		return s[:maxLen]

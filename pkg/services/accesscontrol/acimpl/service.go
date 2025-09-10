@@ -81,6 +81,13 @@ func ProvideService(
 		return nil, err
 	}
 
+	// Migrating to remove API key permissions from the database
+	// This will be removed once we've:
+	// 2) have released enough versions not to need api key removals
+	if err := migrator.MigrateRemoveDeprecatedPermissions(db, service.log); err != nil {
+		return nil, err
+	}
+
 	return service, nil
 }
 
@@ -699,7 +706,7 @@ func PermissionMatchesSearchOptions(permission accesscontrol.Permission, searchO
 	if searchOptions.Scope != "" {
 		// Permissions including the scope should also match
 		scopes := append(searchOptions.Wildcards(), searchOptions.Scope)
-		if !slices.Contains[[]string, string](scopes, permission.Scope) {
+		if !slices.Contains(scopes, permission.Scope) {
 			return false
 		}
 	}
