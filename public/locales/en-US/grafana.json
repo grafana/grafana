@@ -3662,8 +3662,12 @@
       "text": "No results found for your query"
     },
     "restore": {
-      "partial-failure": "{{failedCount}} of {{totalCount}} dashboards failed to restore",
-      "success": "Dashboard {{name}} restored"
+      "all-failed_one": "Failed to restore {{count}} dashboard",
+      "all-failed_other": "Failed to restore {{count}} dashboards",
+      "partial-success": "{{successCount}} of {{totalCount}} dashboards restored successfully. {{failedCount}} failed.",
+      "success": "Dashboard {{name}} restored",
+      "success-multiple_one": "{{count}} dashboards restored: {{names}}",
+      "success-multiple_other": "{{count}} dashboards restored: {{names}}"
     },
     "text-this-repository-is-read-only": "If you have direct access to the target, copy the JSON and paste it there.",
     "trash-state-manager": {

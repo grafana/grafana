@@ -24,6 +24,46 @@ export function RecentlyDeletedActions() {
   const [searchState, stateManager] = useRecentlyDeletedStateManager();
   const [restoreDashboard, { isLoading: isRestoreLoading }] = useRestoreDashboardMutation();
 
+  const showRestoreNotifications = (successful: string[], failedCount: number, totalCount: number) => {
+    const successCount = successful.length;
+
+    if (successCount === 0 && failedCount === 0) {
+      return;
+    }
+
+    let alertType = AppEvents.alertSuccess.name;
+    let message =
+      successCount === 1
+        ? t('browse-dashboards.restore.success', 'Dashboard {{name}} restored', { name: successful[0] })
+        : t('browse-dashboards.restore.success-multiple', '{{count}} dashboards restored: {{names}}', {
+            count: successCount,
+            names: successful.join(', '),
+          });
+
+    if (failedCount > 0) {
+      if (successCount > 0) {
+        // Partial success
+        alertType = AppEvents.alertWarning.name;
+        message = t(
+          'browse-dashboards.restore.partial-success',
+          '{{successCount}} of {{totalCount}} dashboards restored successfully. {{failedCount}} failed.',
+          { successCount, totalCount, failedCount }
+        );
+      } else {
+        // All failed
+        alertType = AppEvents.alertError.name;
+        message = t('browse-dashboards.restore.all-failed', 'Failed to restore {{count}} dashboard', {
+          count: failedCount,
+        });
+      }
+    }
+
+    appEvents.publish({
+      type: alertType,
+      payload: [message],
+    });
+  };
+
   const selectedDashboards = useMemo(() => {
     return Object.entries(selectedItemsState.dashboard)
       .filter(([_, selected]) => selected)
@@ -81,25 +121,25 @@ export function RecentlyDeletedActions() {
 
     const results = await Promise.allSettled(promises);
 
-    // Count failures from both rejected promises and RTK Query errors
-    const failures = results.filter(
-      (result) => result.status === 'rejected' || (result.status === 'fulfilled' && result.value.error)
-    );
+    // Separate successful and failed restores
+    const successful: string[] = [];
+    const failed: string[] = [];
 
-    const failedCount = failures.length;
-    if (failedCount > 0) {
-      const totalCount = results.length;
-      appEvents.publish({
-        type: AppEvents.alertWarning.name,
-        payload: [
-          t(
-            'browse-dashboards.restore.partial-failure',
-            '{{failedCount}} of {{totalCount}} dashboards failed to restore',
-            { failedCount, totalCount }
-          ),
-        ],
-      });
-    }
+    results.forEach((result, index) => {
+      const dashboardUid = selectedDashboards[index];
+      if (result.status === 'rejected') {
+        failed.push(dashboardUid);
+      } else if (result.value.error) {
+        failed.push(dashboardUid);
+      } else if ('data' in result.value && result.value.data?.name) {
+        successful.push(result.value.data.name);
+      }
+    });
+
+    // Show consolidated notification
+    const failedCount = failed.length;
+    const totalCount = results.length;
+    showRestoreNotifications(successful, failedCount, totalCount);
 
     const parentUIDs = new Set<string | undefined>();
     for (const uid of selectedDashboards) {
@@ -107,7 +147,6 @@ export function RecentlyDeletedActions() {
       if (!foundItem) {
         continue;
       }
-
       // Search API returns items with no parent with a location of 'general', so we
       // need to convert that back to undefined
       const folderUID = foundItem.location === GENERAL_FOLDER_UID ? undefined : foundItem.location;

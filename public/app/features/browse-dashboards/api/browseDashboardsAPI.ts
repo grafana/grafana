@@ -489,22 +489,16 @@ export const browseDashboardsAPI = createApi({
     }),
 
     // restore a dashboard that got deleted
-    restoreDashboard: builder.mutation<void, RestoreDashboardArgs>({
+    restoreDashboard: builder.mutation<{ name: string }, RestoreDashboardArgs>({
       invalidatesTags: ['getFolder'],
       queryFn: async ({ dashboard }) => {
         try {
           const api = getDashboardAPI();
           const response = await api.restoreDashboard(dashboard);
-          const name = response.spec.title;
+          const name = response.spec.title || '';
           const parentFolder = response.metadata?.annotations?.[AnnoKeyFolder];
 
-          if (name) {
-            appEvents.publish({
-              type: AppEvents.alertSuccess.name,
-              payload: [t('browse-dashboards.restore.success', 'Dashboard {{name}} restored', { name })],
-            });
-
-            // Refresh the contents of the folder a dashboard was restored to
+          if (parentFolder) {
             dispatch(
               refetchChildren({
                 parentUID: parentFolder,
@@ -513,7 +507,7 @@ export const browseDashboardsAPI = createApi({
             );
           }
 
-          return { data: undefined };
+          return { data: { name } };
         } catch (error) {
           return handleRequestError(error);
         }
