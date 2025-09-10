@@ -42,7 +42,7 @@ type TempoQuery = {
 }
 
 const isTempoQuery = (query: unknown): query is TempoQuery => {
-  if (!query) {
+  if (!query || typeof query !== 'object') {
     return false
   }
   return 'query' in query && 'queryType' in query;
