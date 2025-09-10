@@ -49,31 +49,28 @@ describe('navModelReducer', () => {
       const teams = { id: 'teams', text: 'Teams' };
       const plugins = { id: 'plugins', text: 'Plugins' };
       const orgsettings = { id: 'org-settings', text: 'Preferences' };
-      const apikeys = { id: 'apikeys', text: 'API Keys' };
 
       const initialState = {
-        cfg: { ...originalCfg, children: [datasources, users, teams, plugins, orgsettings, apikeys] },
+        cfg: { ...originalCfg, children: [datasources, users, teams, plugins, orgsettings ] },
         datasources: { ...datasources, parentItem: originalCfg },
         correlations: { ...correlations, parentItem: originalCfg },
         users: { ...users, parentItem: originalCfg },
         teams: { ...teams, parentItem: originalCfg },
         plugins: { ...plugins, parentItem: originalCfg },
         'org-settings': { ...orgsettings, parentItem: originalCfg },
-        apikeys: { ...apikeys, parentItem: originalCfg },
       };
 
       const newOrgName = 'Org 2';
       const subTitle = `Organization: ${newOrgName}`;
       const newCfg = { ...originalCfg, subTitle };
       const expectedState = {
-        cfg: { ...newCfg, children: [datasources, users, teams, plugins, orgsettings, apikeys] },
+        cfg: { ...newCfg, children: [datasources, users, teams, plugins, orgsettings ] },
         datasources: { ...datasources, parentItem: newCfg },
         correlations: { ...correlations, parentItem: newCfg },
         users: { ...users, parentItem: newCfg },
         teams: { ...teams, parentItem: newCfg },
         plugins: { ...plugins, parentItem: newCfg },
         'org-settings': { ...orgsettings, parentItem: newCfg },
-        apikeys: { ...apikeys, parentItem: newCfg },
       };
 
       reducerTester<NavIndex>()

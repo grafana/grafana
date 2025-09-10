@@ -107,7 +107,6 @@
 /pkg/cmd/grafana-cli/commands/upgrade_command.go @grafana/plugins-platform-backend
 /pkg/cmd/grafana-cli/commands/upgrade_all_command.go @grafana/plugins-platform-backend
 /pkg/cmd/grafana-cli/commands/upgrade_all_command_test.go @grafana/plugins-platform-backend
-/pkg/components/apikeygen/ @grafana/identity-squad
 /pkg/components/satokengen/ @grafana/identity-squad
 /pkg/components/dashdiffs/ @grafana/grafana-app-platform-squad
 /pkg/components/imguploader/ @grafana/alerting-backend
