@@ -29,21 +29,21 @@ var (
 )
 
 type AuthService struct {
-	db                                              db.DB
-	features                                        featuremgmt.FeatureToggles
-	dashSvc                                         dashboards.DashboardService
-	dashboardsWithVisibleAnnotationsSearchPageLimit int64
+	db                        db.DB
+	features                  featuremgmt.FeatureToggles
+	dashSvc                   dashboards.DashboardService
+	searchDashboardsPageLimit int64
 }
 
 func NewAuthService(db db.DB, features featuremgmt.FeatureToggles, dashSvc dashboards.DashboardService, cfg *setting.Cfg) *AuthService {
 	section := cfg.Raw.Section("annotations")
-	dashboardsWithVisibleAnnotationsSearchPageLimit := section.Key("dashboards_with_visible_annotations_search_dashboards_page_limit").MustInt64(1000)
+	searchDashboardsPageLimit := section.Key("search_dashboards_page_limit").MustInt64(1000)
 
 	return &AuthService{
-		db:       db,
-		features: features,
-		dashSvc:  dashSvc,
-		dashboardsWithVisibleAnnotationsSearchPageLimit: dashboardsWithVisibleAnnotationsSearchPageLimit,
+		db:                        db,
+		features:                  features,
+		dashSvc:                   dashSvc,
+		searchDashboardsPageLimit: searchDashboardsPageLimit,
 	}
 }
 
@@ -143,7 +143,7 @@ func (authz *AuthService) dashboardsWithVisibleAnnotations(ctx context.Context, 
 		SignedInUser: query.SignedInUser,
 		Page:         query.Page,
 		Type:         filterType,
-		Limit:        authz.dashboardsWithVisibleAnnotationsSearchPageLimit,
+		Limit:        authz.searchDashboardsPageLimit,
 	})
 	if err != nil {
 		return nil, err
