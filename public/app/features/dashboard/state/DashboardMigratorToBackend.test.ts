@@ -18,7 +18,6 @@ import {
   getJsonInputFiles,
   constructLatestVersionOutputFilename,
   handleAngularPanelMigration,
-  TEST_MIN_VERSION,
 } from './__tests__/migrationTestUtils';
 
 /*
@@ -61,30 +60,27 @@ describe('Backend / Frontend result comparison', () => {
   const outputDir = getOutputDirectory('latest_version');
   const jsonInputs = getJsonInputFiles(inputDir);
 
-  jsonInputs
-    // TODO: remove this filter when we fixed all inconsistencies
-    .filter((inputFile) => parseInt(inputFile.split('.')[0].replace('v', ''), 10) > TEST_MIN_VERSION)
-    .forEach((inputFile) => {
-      it(`should migrate ${inputFile} correctly`, async () => {
-        const jsonInput = JSON.parse(readFileSync(path.join(inputDir, inputFile), 'utf8'));
+  jsonInputs.forEach((inputFile) => {
+    it(`should migrate ${inputFile} correctly`, async () => {
+      const jsonInput = JSON.parse(readFileSync(path.join(inputDir, inputFile), 'utf8'));
 
-        // Construct the backend output filename: v30.something.json -> v30.something.v41.json
-        const backendOutputFilename = constructLatestVersionOutputFilename(inputFile, DASHBOARD_SCHEMA_VERSION);
-        const backendMigrationResult = JSON.parse(readFileSync(path.join(outputDir, backendOutputFilename), 'utf8'));
+      // Construct the backend output filename: v30.something.json -> v30.something.v41.json
+      const backendOutputFilename = constructLatestVersionOutputFilename(inputFile, DASHBOARD_SCHEMA_VERSION);
+      const backendMigrationResult = JSON.parse(readFileSync(path.join(outputDir, backendOutputFilename), 'utf8'));
 
-        expect(backendMigrationResult.schemaVersion).toEqual(DASHBOARD_SCHEMA_VERSION);
+      expect(backendMigrationResult.schemaVersion).toEqual(DASHBOARD_SCHEMA_VERSION);
 
-        // Migrate dashboard in Frontend.
-        const frontendModel = new DashboardModel(jsonInput, undefined, {
-          getVariablesFromState: () => jsonInput?.templating?.list ?? [],
-        });
-
-        // Handle angular panel migration if needed
-        await handleAngularPanelMigration(frontendModel, DASHBOARD_SCHEMA_VERSION);
-
-        const frontendMigrationResult = frontendModel.getSaveModelClone();
-
-        expect(backendMigrationResult).toEqual(frontendMigrationResult);
+      // Migrate dashboard in Frontend.
+      const frontendModel = new DashboardModel(jsonInput, undefined, {
+        getVariablesFromState: () => jsonInput?.templating?.list ?? [],
       });
+
+      // Handle angular panel migration if needed
+      await handleAngularPanelMigration(frontendModel, DASHBOARD_SCHEMA_VERSION);
+
+      const frontendMigrationResult = frontendModel.getSaveModelClone();
+
+      expect(backendMigrationResult).toEqual(frontendMigrationResult);
     });
+  });
 });
