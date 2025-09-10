@@ -498,6 +498,7 @@ export const browseDashboardsAPI = createApi({
           const name = response.spec.title || '';
           const parentFolder = response.metadata?.annotations?.[AnnoKeyFolder];
 
+          // Refresh the contents of the folder a dashboard was restored to
           dispatch(
             refetchChildren({
               parentUID: parentFolder,
