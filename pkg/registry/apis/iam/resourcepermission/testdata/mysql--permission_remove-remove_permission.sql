@@ -1,5 +1,5 @@
 DELETE FROM `grafana`.`permission` AS p
-WHERE p.scope = 'folders:uid:folder1'
+WHERE p.scope = 'folders:uid:folder1' AND p.action = 'folders:edit'
 AND p.role_id = (
     SELECT r.id
     FROM `grafana`.`role` AS r

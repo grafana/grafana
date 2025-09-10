@@ -1,5 +1,5 @@
 DELETE FROM {{ .Ident .PermissionTable }} AS p
-WHERE p.scope = {{ .Arg .Scope }}
+WHERE p.scope = {{ .Arg .Scope }} AND p.action = {{ .Arg .Action }}
 AND p.role_id = (
     SELECT r.id
     FROM {{ .Ident .RoleTable }} AS r

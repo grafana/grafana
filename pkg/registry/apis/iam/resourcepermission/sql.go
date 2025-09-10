@@ -462,17 +462,9 @@ func (s *ResourcePermSqlBackend) updateResourcePermission(ctx context.Context, d
 	}
 
 	err = dbHelper.DB.GetSqlxSession().WithTransaction(ctx, func(tx *session.SessionTx) error {
-		if len(permsToAdd) > 0 {
-			for _, assignment := range permsToAdd {
-				if err := s.storeRbacAssignment(ctx, dbHelper, tx, ns.OrgID, assignment); err != nil {
-					return err
-				}
-			}
-		}
-
 		if len(permsToRemove) > 0 {
 			for _, perm := range permsToRemove {
-				removePermQuery, args, err := buildRemovePermissionQuery(dbHelper, perm.Scope, perm.RoleName, ns.OrgID)
+				removePermQuery, args, err := buildRemovePermissionQuery(dbHelper, perm.Scope, perm.Action, perm.RoleName, ns.OrgID)
 				if err != nil {
 					return err
 				}
@@ -482,6 +474,14 @@ func (s *ResourcePermSqlBackend) updateResourcePermission(ctx context.Context, d
 					return fmt.Errorf("could not remove role permission")
 				}
 
+			}
+		}
+
+		if len(permsToAdd) > 0 {
+			for _, assignment := range permsToAdd {
+				if err := s.storeRbacAssignment(ctx, dbHelper, tx, ns.OrgID, assignment); err != nil {
+					return err
+				}
 			}
 		}
 

@@ -242,6 +242,7 @@ type removePermissionTemplate struct {
 	PermissionTable string
 	RoleTable       string
 	Scope           string
+	Action          string
 	OrgID           int64
 	RoleName        string
 }
@@ -250,12 +251,13 @@ func (t removePermissionTemplate) Validate() error {
 	return nil
 }
 
-func buildRemovePermissionQuery(dbHelper *legacysql.LegacyDatabaseHelper, scope, roleName string, orgID int64) (string, []any, error) {
+func buildRemovePermissionQuery(dbHelper *legacysql.LegacyDatabaseHelper, scope, action, roleName string, orgID int64) (string, []any, error) {
 	req := removePermissionTemplate{
 		SQLTemplate:     sqltemplate.New(dbHelper.DialectForDriver()),
 		PermissionTable: dbHelper.Table("permission"),
 		RoleTable:       dbHelper.Table("role"),
 		Scope:           scope,
+		Action:          action,
 		OrgID:           orgID,
 		RoleName:        roleName,
 	}

@@ -43,12 +43,13 @@ func TestTemplates(t *testing.T) {
 		return &v
 	}
 
-	getRemovePermission := func(scope, roleName string) sqltemplate.SQLTemplate {
+	getRemovePermission := func(scope, action, roleName string) sqltemplate.SQLTemplate {
 		v := removePermissionTemplate{
 			SQLTemplate:     sqltemplate.New(nodb.DialectForDriver()),
 			PermissionTable: nodb.Table("permission"),
 			RoleTable:       nodb.Table("role"),
 			Scope:           scope,
+			Action:          action,
 			OrgID:           55,
 			RoleName:        roleName,
 		}
@@ -153,7 +154,7 @@ func TestTemplates(t *testing.T) {
 			permissionRemoveTplt: {
 				{
 					Name: "remove_permission",
-					Data: getRemovePermission("folders:uid:folder1", "managed:users:1:permissions"),
+					Data: getRemovePermission("folders:uid:folder1", "folders:edit", "managed:users:1:permissions"),
 				},
 			},
 			assignmentInsertTplt: {
