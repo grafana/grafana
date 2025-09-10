@@ -51,7 +51,8 @@ done
 
 # Log failed packages and exit with error if any failed
 if (( ${#failed_packages[@]} > 0 )); then
-    echo "\nERROR: The following packages failed to publish:"
+    echo ""
+    echo "ERROR: The following packages failed to publish:"
     for pkg in "${failed_packages[@]}"; do
         echo "  - $pkg"
     done
