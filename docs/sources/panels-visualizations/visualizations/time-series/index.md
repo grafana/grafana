@@ -182,12 +182,12 @@ When you apply a time comparison to a visualization, the comparison data is disp
 
 {{< figure src="/media/docs/grafana/panels-visualizations/screenshot-time-series-time-comparison-v12.2.png" max-width="750px" alt="A time series graph with the comparison selector open and Previous period selected" >}}
 
-<!-- to be replaced -->
+The options available in the **Comparison** selector are dynamically populated since they're based on the dashboard time range and can include:
 
-The options available in the **Comparison** selector are dynamically populated since they're based on your data.
-They might include options like **Day before**, **Week before**, or **Month before**.
-If you have a lot of data, the list might include the option **Year before**.
-If you have very little data, the list might include the option **Minute before**.
+- **Day before** - Available when time range <= 24 hours
+- **Week before** - Available when time range <= 1 week
+- **Month before** - Available when time range <= 1 month
+
 In all cases, the list includes the options:
 
 - **None**
