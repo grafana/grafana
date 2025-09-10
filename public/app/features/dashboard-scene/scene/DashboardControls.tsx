@@ -128,6 +128,7 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
     .getVariables(dashboard)
     .useState()
     .variables.some((v) => v.state.showInControlsMenu === true);
+  const hasControlMenuLinks = links.some((link) => link.placement === 'inControlsMenu');
 
   if (!model.hasControls()) {
     // To still have spacing when no controls are rendered
@@ -156,7 +157,7 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
           <refreshPicker.Component model={refreshPicker} />
         </Stack>
       )}
-      {hasControlMenuVariables && (
+      {(hasControlMenuVariables || hasControlMenuLinks) && (
         <Stack>
           <DashboardControlsMenu dashboard={dashboard} />
         </Stack>
