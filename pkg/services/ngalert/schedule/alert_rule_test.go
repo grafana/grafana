@@ -30,6 +30,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	historianModels "github.com/grafana/grafana/pkg/services/ngalert/schedule/historian/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -546,12 +547,12 @@ func TestRuleRoutine(t *testing.T) {
 			}()
 
 			expectedTime := time.UnixMicro(rand.Int63())
-
-			ruleInfo.Eval(&Evaluation{
+			evaluation := &Evaluation{
 				scheduledAt: expectedTime,
 				rule:        rule,
 				folderTitle: folderTitle,
-			})
+			}
+			ruleInfo.Eval(evaluation)
 
 			actualTime := waitForTimeChannel(t, evalAppliedChan)
 			require.Equal(t, expectedTime, actualTime)
@@ -698,6 +699,24 @@ func TestRuleRoutine(t *testing.T) {
 					"grafana_alerting_rule_process_evaluation_duration_seconds",
 					"grafana_alerting_rule_send_alerts_duration_seconds")
 				require.NoError(t, err)
+			})
+
+			t.Run("it should record to history", func(t *testing.T) {
+				historian := sch.historian.(*fakeHistorian)
+				require.Eventually(t, func() bool {
+					return len(historian.Records) > 0
+				}, 10*time.Second, 10*time.Millisecond)
+				assert.Len(t, historian.Records, 1)
+				record := historian.Records[0]
+				assert.Equal(t, 1, record.Attempt)
+				assert.Equal(t, rule.UID, record.RuleUID)
+				assert.Equal(t, rule.GetGroupKey(), record.GroupKey)
+				assert.Equal(t, evaluation.Fingerprint().String(), record.RuleFingerprint)
+				assert.Equal(t, historianModels.EvalStatusSuccess, record.Status)
+				assert.Empty(t, record.Error)
+				assert.Equal(t, evaluation.scheduledAt, record.Tick)
+				assert.NotEmpty(t, record.EvaluationTime)
+				assert.Equal(t, rule.Version, record.RuleVersion)
 			})
 		})
 	}
@@ -906,6 +925,7 @@ func TestRuleRoutine(t *testing.T) {
 			sch.recordingWriter,
 			sch.evalAppliedFunc,
 			sch.stopAppliedFunc,
+			sch.historian,
 		)
 
 		ctx, cancel := context.WithCancel(context.Background())
@@ -915,11 +935,11 @@ func TestRuleRoutine(t *testing.T) {
 		go func() {
 			_ = ruleInfo.Run()
 		}()
-
-		ruleInfo.Eval(&Evaluation{
+		evaluation := &Evaluation{
 			scheduledAt: sch.clock.Now(),
 			rule:        rule,
-		})
+		}
+		ruleInfo.Eval(evaluation)
 
 		// Because we are using a mock clock, first we need to wait until the rule evaluation
 		// reaches the point where it sleeps for the duration of the retry interval.
@@ -1026,6 +1046,25 @@ func TestRuleRoutine(t *testing.T) {
 			require.Contains(t, status.LastError.Error(), "cannot reference itself")
 			require.Equal(t, int64(0), status.EvaluationTimestamp.UTC().Unix())
 			require.Equal(t, time.Duration(0), status.EvaluationDuration)
+		})
+
+		t.Run("it should record to history", func(t *testing.T) {
+			historian := sch.historian.(*fakeHistorian)
+			require.Eventually(t, func() bool {
+				return len(historian.Records) == int(sch.retryConfig.MaxAttempts)
+			}, 10*time.Second, 10*time.Millisecond)
+			assert.Len(t, historian.Records, int(sch.retryConfig.MaxAttempts))
+			for i, record := range historian.Records {
+				assert.Equal(t, i+1, record.Attempt)
+				assert.Equal(t, rule.UID, record.RuleUID)
+				assert.Equal(t, rule.GetGroupKey(), record.GroupKey)
+				assert.Equal(t, evaluation.Fingerprint().String(), record.RuleFingerprint)
+				assert.Equal(t, historianModels.EvalStatusEvalError, record.Status)
+				assert.NotEmpty(t, record.Error)
+				assert.Equal(t, evaluation.scheduledAt, record.Tick)
+				assert.NotEmpty(t, record.EvaluationTime)
+				assert.Equal(t, rule.Version, record.RuleVersion)
+			}
 		})
 	})
 
@@ -1210,6 +1249,7 @@ func TestAlertRuleRetry(t *testing.T) {
 		sch.recordingWriter,
 		sch.evalAppliedFunc,
 		sch.stopAppliedFunc,
+		sch.historian,
 	)
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -1297,6 +1337,7 @@ func ruleFactoryFromScheduler(sch *schedule) ruleFactory {
 		sch.recordingWriter,
 		sch.evalAppliedFunc,
 		sch.stopAppliedFunc,
+		sch.historian,
 	)
 }
 
