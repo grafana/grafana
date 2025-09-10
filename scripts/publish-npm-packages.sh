@@ -34,8 +34,7 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
-echo "Starting to release $dist_tag version"
-
+echo "Starting to release $dist_tag version with NPM version $(npm --version) to registry $registry"
 
 if [[ "$NPM_TOKEN" != "oidc" ]]; then
   registry_without_protocol=${registry#*:}
