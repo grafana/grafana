@@ -10,16 +10,18 @@ import {
   FieldConfigSource,
   ActionModel,
   FieldType,
-  DataFrameWithValue,
   SelectableValue,
   FieldState,
 } from '@grafana/data';
 import { TableCellHeight, TableFieldOptions } from '@grafana/schema';
 
+import { TableRow, TableSummaryRow } from '../DataGrid/types';
 import { TableCellInspectorMode } from '../Table/TableCellInspector';
 import { TableCellOptions } from '../Table/types';
 
 import { TextAlign } from './utils';
+
+export type { TableRow, TableSummaryRow };
 
 export const FILTER_FOR_OPERATOR = '=';
 export const FILTER_OUT_OPERATOR = '!=';
@@ -51,39 +53,10 @@ export type FilterType = Record<
 >;
 
 /* ----------------------------- Table specific types ----------------------------- */
-export interface TableSummaryRow {
-  [columnName: string]: string | number | undefined;
-}
-
 export interface TableColumn extends Column<TableRow, TableSummaryRow> {
   field: Field; // Grafana field data/config
   width?: number | string; // Column width
   minWidth?: number; // Min width constraint
-}
-
-// Possible values for table cells based on field types
-export type TableCellValue =
-  | string // FieldType.string, FieldType.enum
-  | number // FieldType.number
-  | boolean // FieldType.boolean
-  | Date // FieldType.time
-  | DataFrame // For nested data
-  | DataFrame[] // For nested frames
-  | DataFrameWithValue // For sparklines
-  | undefined; // For undefined values
-
-export interface TableRow {
-  // Required metadata properties
-  __depth: number;
-  __index: number;
-
-  // Nested table properties
-  data?: DataFrame;
-  __nestedFrames?: DataFrame[];
-  __expanded?: boolean; // For row expansion state
-
-  // Generic typing for column values
-  [columnName: string]: TableCellValue;
 }
 
 export interface CustomCellRendererProps {
@@ -149,7 +122,7 @@ export interface TableCellRendererProps {
   rowIdx: number;
   frame: DataFrame;
   timeRange?: TimeRange;
-  value: TableCellValue;
+  value: unknown;
   height: number;
   // flags that are static per column
   field: Field;
@@ -171,7 +144,7 @@ export type InspectCellProps = {
 
 export interface TableCellActionsProps {
   field: Field;
-  value: TableCellValue;
+  value: unknown;
   cellOptions: TableCellOptions;
   displayName: string;
   cellInspect: boolean;
@@ -192,7 +165,7 @@ export interface SparklineCellProps {
   rowIdx: number;
   theme: GrafanaTheme2;
   timeRange?: TimeRange;
-  value: TableCellValue;
+  value: unknown;
   width: number;
 }
 
@@ -201,14 +174,14 @@ export interface BarGaugeCellProps {
   height: number;
   rowIdx: number;
   theme: GrafanaTheme2;
-  value: TableCellValue;
+  value: unknown;
   width: number;
 }
 
 export interface ImageCellProps {
   cellOptions: TableCellOptions;
   field: Field;
-  value: TableCellValue;
+  value: unknown;
   rowIdx: number;
 }
 
@@ -218,13 +191,13 @@ export interface DataLinksCellProps {
 }
 
 export interface GeoCellProps {
-  value: TableCellValue;
+  value: unknown;
   height: number;
 }
 
 export interface AutoCellProps {
   field: Field;
-  value: TableCellValue;
+  value: unknown;
   rowIdx: number;
 }
 
@@ -257,7 +230,7 @@ export interface TableCellStyleOptions {
 export type TableCellStyles = (theme: GrafanaTheme2, options: TableCellStyleOptions) => string;
 
 // Comparator for sorting table values
-export type Comparator = (a: TableCellValue, b: TableCellValue) => number;
+export type Comparator = (a: unknown, b: unknown) => number;
 
 // Type for converting a DataFrame into an array of TableRows
 export type FrameToRowsConverter = (frame: DataFrame) => TableRow[];

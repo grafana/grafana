@@ -8479,6 +8479,9 @@
     "confirm-content": {
       "placeholder": "Type \"{{confirmPromptText}}\" to confirm"
     },
+    "data-grid": {
+      "pagination-summary": "{{pageRangeStart}} - {{pageRangeEnd}} of {{numRows}} rows"
+    },
     "data-link-editor": {
       "info": "With data links you can reference data variables like series name, labels and values. Type CMD+Space, CTRL+Space, or $ to open variable suggestions.",
       "new-tab-label": "Open in new tab",

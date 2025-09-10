@@ -2,61 +2,82 @@ import 'react-data-grid/lib/styles.css';
 
 import { css } from '@emotion/css';
 import clsx from 'clsx';
-import { ComponentProps, ReactNode, useState } from 'react';
-import { DataGrid as RDG } from 'react-data-grid';
+import { ComponentProps, ReactNode, RefObject, useMemo, useState, cloneElement, useLayoutEffect } from 'react';
+import { DataGridHandle, DataGrid as RDG } from 'react-data-grid';
 
-import { colorManipulator, GrafanaTheme2 } from '@grafana/data';
+import { colorManipulator, DataFrame, GrafanaTheme2 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
 
 import { useStyles2 } from '../../themes/ThemeContext';
 import { Pagination } from '../Pagination/Pagination';
 
-interface DataGridPaginationProps {
-  numPages: number;
-  numRows: number;
-  pageRowStart: number;
-  pageRowEnd: number;
+import { useSortedRows } from './hooks';
+import { TableRow, TableSummaryRow } from './types';
+import { frameToRecords, type applySort } from './utils';
+
+const DEFAULT_ROWS_PER_PAGE = 25;
+
+export interface DataGridPaginationProps {
+  rows: TableRow[];
+  children: (rows: TableRow[]) => ReactNode;
+  rowsPerPage?: number | ((rows: TableRow[]) => number);
   onPageChange?: (pageIndex: number) => void;
   initialPage?: number;
   small?: boolean;
 }
 
-export interface DataGridProps<R, SR> extends ComponentProps<typeof RDG<R, SR>> {
-  transparent?: boolean;
-  pagination?: DataGridPaginationProps;
-  hideHeader?: boolean;
-}
-
 const PaginatedDataGrid = ({
   children,
-  numPages,
-  numRows,
-  pageRowStart,
-  pageRowEnd,
+  rows,
+  rowsPerPage: _rowsPerPage = DEFAULT_ROWS_PER_PAGE,
   onPageChange,
-  initialPage = 1,
+  initialPage = 0,
   small,
-}: DataGridPaginationProps & { children: ReactNode }) => {
+}: DataGridPaginationProps) => {
   const styles = useStyles2(getPaginationStyles);
   const [page, setPage] = useState(initialPage);
+  const rowsPerPage = useMemo(
+    () => (typeof _rowsPerPage === 'function' ? _rowsPerPage(rows) : _rowsPerPage),
+    [_rowsPerPage, rows]
+  );
+  const numRows = rows.length;
+  const numPages = Math.ceil(numRows / rowsPerPage);
+  const pageRangeStart = page * rowsPerPage + 1;
+  let pageRangeEnd = pageRangeStart + rowsPerPage - 1;
+  if (pageRangeEnd > numRows) {
+    pageRangeEnd = numRows;
+  }
+  const paginatedRows = useMemo(() => {
+    const pageOffset = page * rowsPerPage;
+    return rows.slice(pageOffset, pageOffset + rowsPerPage);
+  }, [page, rows, rowsPerPage]);
+
+  // safeguard against page overflow on panel resize or other factors
+  useLayoutEffect(() => {
+    if (page > numPages) {
+      // resets pagination to end
+      setPage(numPages - 1);
+    }
+  }, [numPages, page, setPage]);
+
   return (
     <>
-      {children}
+      {children(paginatedRows)}
       <div className={styles.container}>
         <Pagination
           className="table-ng-pagination"
-          currentPage={page}
+          currentPage={page + 1}
           numberOfPages={numPages}
           showSmallVersion={small}
           onNavigate={(toPage) => {
             onPageChange?.(toPage);
-            setPage(toPage);
+            setPage(toPage - 1);
           }}
         />
         {!small && (
           <div className={styles.summary}>
             <Trans i18nKey="grafana-ui.data-grid.pagination-summary">
-              {{ pageRowStart }} - {{ pageRowEnd }} of {{ numRows }} rows
+              {{ pageRangeStart }} - {{ pageRangeEnd }} of {{ numRows }} rows
             </Trans>
           </div>
         )}
@@ -65,26 +86,72 @@ const PaginatedDataGrid = ({
   );
 };
 
-export function DataGrid<R, SR>({
+export interface DataGridProps<TableRow, TableSummaryRow>
+  extends ComponentProps<typeof RDG<TableRow, TableSummaryRow>> {
+  data: DataFrame;
+  transparent?: boolean;
+  pagination?: {
+    rowsPerPage: DataGridPaginationProps['rowsPerPage'];
+    onPageChange?: DataGridPaginationProps['onPageChange'];
+    initialPage?: DataGridPaginationProps['initialPage'];
+    small?: DataGridPaginationProps['small'];
+  };
+  hideHeader?: boolean;
+  sortColumns?: Array<{ columnKey: string; direction: 'ASC' | 'DESC' }>;
+  initialSortColumns?: Array<{ columnKey: string; direction: 'ASC' | 'DESC' }>;
+  customSort?: typeof applySort;
+  gridRef?: RefObject<DataGridHandle>; // NOTE: until React 19, we must use a prop with a name other than "ref" for this.
+}
+
+export function DataGrid({
   pagination,
   transparent,
   hideHeader,
   className,
   headerRowClass,
+  gridRef,
+  data,
+  rows: _rows,
+  initialSortColumns,
+  sortColumns: controlledSortColumns,
+  customSort,
+  onSortColumnsChange,
+  rowHeight,
   ...props
-}: DataGridProps<R, SR>) {
+}: DataGridProps<TableRow, TableSummaryRow>) {
   const styles = useStyles2(getStyles, Boolean(pagination), transparent, hideHeader);
 
+  const rows = useMemo(() => (_rows ? [..._rows] : frameToRecords(data)), [_rows, data]);
+
+  const {
+    rows: sortedRows,
+    sortColumns,
+    setSortColumns,
+  } = useSortedRows(rows, data.fields, { initialSortColumns, sortColumns: controlledSortColumns, customSort });
+
   let content = (
-    <RDG<R, SR>
+    <RDG<TableRow, TableSummaryRow>
+      {...props}
       className={clsx(styles.container, className)}
       headerRowClass={clsx(styles.header, headerRowClass)}
-      {...props}
+      ref={gridRef}
+      rows={sortedRows}
+      sortColumns={sortColumns}
+      rowHeight={rowHeight}
+      onSortColumnsChange={(newSortColumns) => {
+        setSortColumns(newSortColumns);
+        onSortColumnsChange?.(newSortColumns);
+      }}
     />
   );
 
   if (pagination) {
-    content = <PaginatedDataGrid {...pagination}>{content}</PaginatedDataGrid>;
+    const origContent = content;
+    content = (
+      <PaginatedDataGrid {...pagination} rows={sortedRows}>
+        {(rows) => cloneElement(origContent, { rows })}
+      </PaginatedDataGrid>
+    );
   }
 
   return content;

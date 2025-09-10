@@ -7,7 +7,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { TableFooterOptions } from '@grafana/schema';
 
-import { useStyles2, useTheme2 } from '../../../../themes/ThemeContext';
+import { useStyles2, useTheme2 } from '../../../themes/ThemeContext';
 import { useReducerEntries } from '../hooks';
 import { getDefaultCellStyles } from '../styles';
 import { TableRow } from '../types';

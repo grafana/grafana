@@ -12,7 +12,7 @@ import {
 import { FieldColorModeId } from '@grafana/schema';
 
 import { getActiveCellSelector } from '../styles';
-import { PillCellProps, TableCellStyles, TableCellValue } from '../types';
+import { PillCellProps, TableCellStyles } from '../types';
 
 export function PillCell({ rowIdx, field, theme, getTextColorForBackground }: PillCellProps) {
   const value = field.values[rowIdx];
@@ -60,7 +60,7 @@ interface Pill {
 const SPLIT_RE = /\s*,\s*/;
 const TRANSPARENT = 'rgba(0,0,0,0)';
 
-export function inferPills(rawValue: TableCellValue): unknown[] {
+export function inferPills(rawValue: unknown): unknown[] {
   if (rawValue === '' || rawValue == null) {
     return [];
   }
