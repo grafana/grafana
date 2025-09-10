@@ -11,17 +11,11 @@ function clearMemoizedCache(fn: Memoized<AnyFn>) {
 let regionalFormat: string | undefined;
 
 const createDateTimeFormatter = deepMemoize((locale: string | undefined, options: Intl.DateTimeFormatOptions) => {
-  // Validate locale to prevent crashes with invalid locales like 'c'
-  let safeLocale = locale;
-  if (locale) {
-    try {
-      new Intl.DateTimeFormat(locale);
-    } catch {
-      // Fallback to default language if locale is invalid
-      safeLocale = undefined;
-    }
+  try {
+    return new Intl.DateTimeFormat(locale, options);
+  } catch {
+    return new Intl.DateTimeFormat("en-US", options);
   }
-  return new Intl.DateTimeFormat(safeLocale, options);
 });
 
 const createDurationFormatter = deepMemoize((locale: string | undefined, options: Intl.DurationFormatOptions) => {
