@@ -4,8 +4,11 @@ import (
 	"context"
 	"time"
 
+	"go.opentelemetry.io/otel/attribute"
+
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/session"
@@ -123,32 +126,57 @@ func batch(count, batchSize int, eachFn func(start, end int) error) error {
 // MigrateRemoveDeprecatedPermissions removes deprecated permissions from the database
 func MigrateRemoveDeprecatedPermissions(db db.DB, log log.Logger) error {
 	ctx := context.Background()
+	ctx, span := tracing.Start(ctx, "migrator.removeDeprecatedPermissions",
+		attribute.String("migration.type", "removeDeprecatedPermissions"))
+	defer span.End()
+
 	t := time.Now()
 
 	// Define the deprecated permissions to remove
 	deprecatedPermissions := []string{
-		"apikeys:",
+		"apikeys:", // remove in 2026/03
+	}
+	if len(deprecatedPermissions) == 0 {
+		span.SetAttributes(attribute.Bool("migration.skipped", true))
+		log.Debug("No deprecated permissions to remove", "migration", "removeDeprecatedPermissions")
+		return nil
 	}
 
+	span.SetAttributes(attribute.Int("deprecated.patterns.count", len(deprecatedPermissions)))
 	log.Info("Starting migration to remove deprecated permissions", "migration", "removeDeprecatedPermissions")
 
 	// Find and remove permissions matching the deprecated patterns
 	var totalRemoved int
 	for _, permPattern := range deprecatedPermissions {
+		patternCtx, patternSpan := tracing.Start(ctx, "migrator.removeDeprecatedPermissions.pattern",
+			attribute.String("pattern", permPattern))
+		patternSpan.SetAttributes(attribute.String("migration.type", "removeDeprecatedPermissions"))
+
 		var permissions []ac.Permission
-		if errFind := db.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		if errFind := db.WithTransactionalDbSession(patternCtx, func(sess *sqlstore.DBSession) error {
 			return sess.SQL("SELECT * FROM permission WHERE action LIKE ?", permPattern+"%").Find(&permissions)
 		}); errFind != nil {
 			log.Error("Could not search for deprecated permissions to remove", "migration", "removeDeprecatedPermissions", "pattern", permPattern, "error", errFind)
+			patternSpan.RecordError(errFind)
+			patternSpan.End()
 			return errFind
 		}
 
+		patternSpan.SetAttributes(attribute.Int("permissions.found", len(permissions)))
+
 		if len(permissions) == 0 {
 			log.Debug("No permissions found for pattern", "migration", "removeDeprecatedPermissions", "pattern", permPattern)
+			patternSpan.End()
 			continue
 		}
 
 		// Remove permissions in batches
+		batchCtx, batchSpan := tracing.Start(patternCtx, "migrator.removeDeprecatedPermissions.batch",
+			attribute.String("pattern", permPattern),
+			attribute.Int("batch.size", batchSize),
+			attribute.Int("permissions.total", len(permissions)))
+		batchSpan.SetAttributes(attribute.String("migration.type", "removeDeprecatedPermissions"))
+
 		errBatchRemove := batch(len(permissions), batchSize, func(start, end int) error {
 			n := end - start
 
@@ -165,11 +193,12 @@ func MigrateRemoveDeprecatedPermissions(db db.DB, log log.Logger) error {
 			delQuery = delQuery[:len(delQuery)-1] + ")"
 
 			// Execute delete using the same pattern as MigrateScopeSplit
-			if errDel := db.GetSqlxSession().WithTransaction(ctx, func(tx *session.SessionTx) error {
-				_, err := tx.Exec(ctx, delQuery, delArgs...)
+			if errDel := db.GetSqlxSession().WithTransaction(batchCtx, func(tx *session.SessionTx) error {
+				_, err := tx.Exec(batchCtx, delQuery, delArgs...)
 				return err
 			}); errDel != nil {
 				log.Error("Error deleting deprecated permissions batch", "migration", "removeDeprecatedPermissions", "pattern", permPattern, "start", start, "end", end, "error", errDel)
+				batchSpan.RecordError(errDel)
 				return errDel
 			}
 
@@ -177,14 +206,26 @@ func MigrateRemoveDeprecatedPermissions(db db.DB, log log.Logger) error {
 			return nil
 		})
 
+		batchSpan.End()
+
 		if errBatchRemove != nil {
 			log.Error("Could not remove deprecated permissions batch", "migration", "removeDeprecatedPermissions", "pattern", permPattern, "error", errBatchRemove)
+			patternSpan.RecordError(errBatchRemove)
+			patternSpan.End()
 			return errBatchRemove
 		}
 
 		totalRemoved += len(permissions)
+		patternSpan.SetAttributes(attribute.Int("permissions.removed", len(permissions)))
 		log.Info("Removed deprecated permissions for pattern", "migration", "removeDeprecatedPermissions", "pattern", permPattern, "count", len(permissions))
+
+		patternSpan.End()
 	}
+
+	span.SetAttributes(
+		attribute.Int("permissions.total.removed", totalRemoved),
+		attribute.Int("migration.duration.ms", int(time.Since(t).Milliseconds())),
+	)
 
 	log.Info("Completed migration to remove deprecated permissions", "migration", "removeDeprecatedPermissions", "totalRemoved", totalRemoved, "duration", time.Since(t))
 	return nil

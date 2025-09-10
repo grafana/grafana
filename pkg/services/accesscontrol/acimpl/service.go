@@ -81,9 +81,7 @@ func ProvideService(
 		return nil, err
 	}
 
-	// Migrating to remove API key permissions from the database
-	// This will be removed once we've:
-	// 2) have released enough versions not to need api key removals
+	// Migrating to remove deprecated permissions from the database
 	if err := migrator.MigrateRemoveDeprecatedPermissions(db, service.log); err != nil {
 		return nil, err
 	}
