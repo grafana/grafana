@@ -1,15 +1,15 @@
 ---
 aliases:
-  - ../data-sources/aws-cloudwatch/
-  - ../data-sources/aws-cloudwatch/preconfig-cloudwatch-dashboards/
-  - ../data-sources/aws-cloudwatch/provision-cloudwatch/
-  - cloudwatch/
-  - preconfig-cloudwatch-dashboards/
-  - provision-cloudwatch/
+  - ../data-sources/aws-CloudWatch/
+  - ../data-sources/aws-CloudWatch/preconfig-CloudWatch-dashboards/
+  - ../data-sources/aws-CloudWatch/provision-CloudWatch/
+  - CloudWatch/
+  - preconfig-CloudWatch-dashboards/
+  - provision-CloudWatch/
 description: This document provides configuration instructions for the CloudWatch data source.
 keywords:
   - grafana
-  - cloudwatch
+  - CloudWatch
   - guide
 labels:
   products:
@@ -55,11 +55,11 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/administration/data-source-management/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana/<GRAFANA_VERSION>/administration/data-source-management/
-  cloudwatch-aws-authentication:
+  CloudWatch-aws-authentication:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/aws-cloudwatch/aws-authentication/
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/aws-CloudWatch/aws-authentication/
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/aws-cloudwatch/aws-authentication/
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/aws-CloudWatch/aws-authentication/
   private-data-source-connect:
     - pattern: /docs/grafana/
       destination: docs/grafana-cloud/connect-externally-hosted/private-data-source-connect/
@@ -142,16 +142,16 @@ You must use both an access key ID and a secret access key to authenticate.
 
 | Setting                  | Description                                                                                                                                                                                                                                                                                                                   |
 | ------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Query timeout result** | Grafana polls Cloudwatch Logs every second until AWS returns a `Done` status or the timeout is reached. An error is returned if the timeout is exceeded. For alerting, the timeout defined in the Grafana config file takes precedence. Enter a valid duration string, such as `30m`, `30s` or `200ms`. The default is `30m`. |
+| **Query timeout result** | Grafana polls CloudWatch Logs every second until AWS returns a `Done` status or the timeout is reached. An error is returned if the timeout is exceeded. For alerting, the timeout defined in the Grafana configuration file takes precedence. Enter a valid duration string, such as `30m`, `30s` or `200ms`. The default is `30m`. |
 | **Default Log Groups**   | _Optional_. Specify the default log groups for CloudWatch Logs queries.                                                                                                                                                                                                                                                       |
 
 **X-Ray trace link:**
 
 | Setting         | Description                                           |
 | --------------- | ----------------------------------------------------- |
-| **Data source** | Select the X-ray data source from the drop-down menu. |
+| **Data source** | Select the X-Ray data source from the drop-down menu. |
 
-Grafana automatically creates a link to a trace in X-ray data source if logs contain the `@xrayTraceId` field. To use this feature, you must already have an X-Ray data source configured. For details, see the [X-Ray data source docs](/grafana/plugins/grafana-x-ray-datasource/). To view the X-Ray link, select the log row in either the Explore view or dashboard [Logs panel](ref:logs) to view the log details section.
+Grafana automatically creates a link to a trace in X-Ray data source if logs contain the `@xrayTraceId` field. To use this feature, you must already have an X-Ray data source configured. For details, see the [X-Ray data source docs](/grafana/plugins/grafana-X-Ray-datasource/). To view the X-Ray link, select the log row in either the Explore view or dashboard [Logs panel](ref:logs) to view the log details section.
 
 To log the `@xrayTraceId`, refer to the [AWS X-Ray documentation](https://docs.amazonaws.cn/en_us/xray/latest/devguide/xray-services.html). To provide the field to Grafana, your log queries must also contain the `@xrayTraceId` field, for example by using the query `fields @message, @xrayTraceId`.
 
@@ -163,7 +163,7 @@ To log the `@xrayTraceId`, refer to the [AWS X-Ray documentation](https://docs.a
 
 After configuring your Amazon CloudWatch data source options, click **Save & test** at the bottom to test the connection. You should see a confirmation dialog box that says:
 
-{{< figure src="/media/docs/cloudwatch/cloudwatch-config-success-message.png" >}}
+{{< figure src="/media/docs/CloudWatch/CloudWatch-config-success-message.png" >}}
 
 
 {{< admonition type="note" >}}
@@ -185,12 +185,12 @@ You can attach these permissions to the IAM role or IAM user you configured in [
       "Sid": "AllowReadingMetricsFromCloudWatch",
       "Effect": "Allow",
       "Action": [
-        "cloudwatch:DescribeAlarmsForMetric",
-        "cloudwatch:DescribeAlarmHistory",
-        "cloudwatch:DescribeAlarms",
-        "cloudwatch:ListMetrics",
-        "cloudwatch:GetMetricData",
-        "cloudwatch:GetInsightRuleReport"
+        "CloudWatch:DescribeAlarmsForMetric",
+        "CloudWatch:DescribeAlarmHistory",
+        "CloudWatch:DescribeAlarms",
+        "CloudWatch:ListMetrics",
+        "CloudWatch:GetMetricData",
+        "CloudWatch:GetInsightRuleReport"
       ],
       "Resource": "*"
     },
@@ -261,12 +261,12 @@ You can attach these permissions to the IAM role or IAM user you configured in [
       "Sid": "AllowReadingMetricsFromCloudWatch",
       "Effect": "Allow",
       "Action": [
-        "cloudwatch:DescribeAlarmsForMetric",
-        "cloudwatch:DescribeAlarmHistory",
-        "cloudwatch:DescribeAlarms",
-        "cloudwatch:ListMetrics",
-        "cloudwatch:GetMetricData",
-        "cloudwatch:GetInsightRuleReport"
+        "CloudWatch:DescribeAlarmsForMetric",
+        "CloudWatch:DescribeAlarmHistory",
+        "CloudWatch:DescribeAlarms",
+        "CloudWatch:ListMetrics",
+        "CloudWatch:GetMetricData",
+        "CloudWatch:GetInsightRuleReport"
       ],
       "Resource": "*"
     },
@@ -324,7 +324,7 @@ You can attach these permissions to the IAM role or IAM user you configured in [
 Cross-account observability lets you retrieve metrics and logs across different accounts in a single region, but you can't query EC2 Instance Attributes across accounts because those come from the EC2 API and not the CloudWatch API.
 {{< /admonition >}}
 
-For more information on configuring authentication, refer to [Configure AWS authentication](ref:cloudwatch-aws-authentication).
+For more information on configuring authentication, refer to [Configure AWS authentication](ref:CloudWatch-aws-authentication).
 
 ### Configure the data source with grafana.ini
 
@@ -332,8 +332,8 @@ The Grafana [configuration file](ref:configure-grafana-aws) includes an `AWS` se
 
 | Configuration option      | Description                                                                                                                                                                                                                                                                                                                                                                                                                                     |
 | ------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `allowed_auth_providers`  | Specifies which authentication providers are allowed for the CloudWatch data source. The following providers are enabled by default in open-source Grafana: `default` (AWS SDK default), `keys` (Access and secret key), `credentials` (Credentials file), `ec2_IAM_role` (EC2 IAM role).                                                                                                                                                       |
-| `assume_role_enabled`     | Allows you to disable `assume role (ARN)` in the CloudWatch data source. The assume role (ARN) is enabled by default in open-source Grafana.                                                                                                                                                                                                                                                                                                    |
+| `allowed_auth_providers`  | Specifies which authentication providers are allowed for the CloudWatch data source. The following providers are enabled by default in open source Grafana: `default` (AWS SDK default), `keys` (Access and secret key), `credentials` (Credentials file), `ec2_IAM_role` (EC2 IAM role).                                                                                                                                                       |
+| `assume_role_enabled`     | Allows you to disable `assume role (ARN)` in the CloudWatch data source. The assume role (ARN) is enabled by default in open source Grafana.                                                                                                                                                                                                                                                                                                    |
 | `list_metrics_page_limit` | Sets the limit of List Metrics API pages. When a custom namespace is specified in the query editor, the [List Metrics API](https://docs.aws.amazon.com/AmazonCloudWatch/latest/APIReference/API_ListMetrics.html) populates the _Metrics_ field and _Dimension_ fields. The API is paginated and returns up to 500 results per page, and the data source also limits the number of pages to 500 by default. This setting customizes that limit. |
 
 ### Provision the data source
@@ -347,7 +347,7 @@ For more information about provisioning and available configuration options, ref
 apiVersion: 1
 datasources:
   - name: CloudWatch
-    type: cloudwatch
+    type: CloudWatch
     jsonData:
       authType: default
       defaultRegion: eu-west-2
@@ -360,7 +360,7 @@ apiVersion: 1
 
 datasources:
   - name: CloudWatch
-    type: cloudwatch
+    type: CloudWatch
     jsonData:
       authType: credentials
       defaultRegion: eu-west-2
@@ -375,7 +375,7 @@ apiVersion: 1
 
 datasources:
   - name: CloudWatch
-    type: cloudwatch
+    type: CloudWatch
     jsonData:
       authType: keys
       defaultRegion: eu-west-2
@@ -390,7 +390,7 @@ datasources:
 apiVersion: 1
 datasources:
   - name: CloudWatch
-    type: cloudwatch
+    type: CloudWatch
     jsonData:
       authType: default
       assumeRoleArn: arn:aws:iam::123456789012:root

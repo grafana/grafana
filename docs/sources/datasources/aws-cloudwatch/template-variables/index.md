@@ -68,7 +68,7 @@ For details about the metrics CloudWatch provides, refer to the [CloudWatch docu
 
 ### Use variables in queries
 
-Use Grafana's variable syntax to include variables in queries. A query variable in dynamically retrieves values from your data source using a query.
+Use the Grafana variable syntax to include variables in queries. A query variable in dynamically retrieves values from your data source using a query.
 For details, refer to the [variable syntax documentation](ref:variable-syntax).
 
 ## Use ec2_instance_attribute
