@@ -84,7 +84,7 @@ export function ProviderSCIMCard() {
         </div>
       </Card.Meta>
       <Card.Figure>
-        <Icon name="sync" size={'xxxl'} />
+        <Icon name="scim" size={'xxxl'} />
       </Card.Figure>
       <Card.Actions>
         <CloudEnterpriseBadge />
