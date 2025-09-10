@@ -366,9 +366,9 @@ To quickly ad hoc filter variables, follow these steps:
 
    {{< figure src="/media/docs/grafana/panels-visualizations/screenshot-adhoc-filter-icon-v12.2.png" max-width="550px" alt="Table and bar chart with ad hoc filter icon displayed on a table cell" >}}
 
-   In bar chart visualizations, hover and click the bar to display the filter option:
+   In bar chart visualizations, hover and click the bar to display the filter button:
 
-   {{< figure src="/media/docs/grafana/panels-visualizations/screenshot-adhoc-filter-icon-bar-v12.2.png" max-width="300px" alt="The ad hoc filter icon option in a bar chart tooltip">}}
+   {{< figure src="/media/docs/grafana/panels-visualizations/screenshot-adhoc-filter-icon-bar-v12.2.png" max-width="300px" alt="The ad hoc filter button in a bar chart tooltip">}}
 
 1. Click the add filter icon.
 
