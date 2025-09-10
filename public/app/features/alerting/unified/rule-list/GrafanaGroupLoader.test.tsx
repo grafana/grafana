@@ -1,5 +1,5 @@
 import { render } from 'test/test-utils';
-import { byLabelText, byRole, byTitle } from 'testing-library-selector';
+import { byLabelText, byRole } from 'testing-library-selector';
 
 import { setPluginComponentsHook, setPluginLinksHook } from '@grafana/runtime';
 import { AccessControlAction } from 'app/types/accessControl';
