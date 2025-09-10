@@ -385,9 +385,6 @@ const (
 	// Global Scopes
 	ScopeGlobalUsersAll = "global.users:*"
 
-	// APIKeys scope
-	ScopeAPIKeysAll = "apikeys:*"
-
 	// Users scope
 	ScopeUsersAll    = "users:*"
 	ScopeUsersPrefix = "users:id:"

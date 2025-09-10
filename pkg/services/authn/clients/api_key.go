@@ -11,7 +11,6 @@ import (
 
 	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
-	"github.com/grafana/grafana/pkg/components/apikeygen"
 	"github.com/grafana/grafana/pkg/components/satokengen"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/apikey"
@@ -60,7 +59,7 @@ func (s *APIKey) Authenticate(ctx context.Context, r *authn.Request) (*authn.Ide
 	defer span.End()
 	key, err := s.getAPIKey(ctx, getTokenFromRequest(r))
 	if err != nil {
-		if errors.Is(err, apikeygen.ErrInvalidApiKey) {
+		if errors.Is(err, satokengen.ErrInvalidApiKey) {
 			return nil, errAPIKeyInvalid.Errorf("API key is invalid")
 		}
 		return nil, err
@@ -93,9 +92,6 @@ func (s *APIKey) getAPIKey(ctx context.Context, token string) (*apikey.APIKey, e
 	ctx, span := s.tracer.Start(ctx, "authn.apikey.getAPIKey")
 	defer span.End()
 	fn := s.getFromToken
-	if !strings.HasPrefix(token, satokengen.GrafanaPrefix) {
-		fn = s.getFromTokenLegacy
-	}
 
 	apiKey, err := fn(ctx, token)
 	if err != nil {
@@ -121,32 +117,6 @@ func (s *APIKey) getFromToken(ctx context.Context, token string) (*apikey.APIKey
 	return s.apiKeyService.GetAPIKeyByHash(ctx, hash)
 }
 
-func (s *APIKey) getFromTokenLegacy(ctx context.Context, token string) (*apikey.APIKey, error) {
-	ctx, span := s.tracer.Start(ctx, "authn.apikey.getFromTokenLegacy")
-	defer span.End()
-	decoded, err := apikeygen.Decode(token)
-	if err != nil {
-		return nil, err
-	}
-	// fetch key
-	keyQuery := apikey.GetByNameQuery{KeyName: decoded.Name, OrgID: decoded.OrgId}
-	key, err := s.apiKeyService.GetApiKeyByName(ctx, &keyQuery)
-	if err != nil {
-		return nil, err
-	}
-
-	// validate api key
-	isValid, err := apikeygen.IsValid(decoded, key.Key)
-	if err != nil {
-		return nil, err
-	}
-	if !isValid {
-		return nil, apikeygen.ErrInvalidApiKey
-	}
-
-	return key, nil
-}
-
 func (s *APIKey) Test(ctx context.Context, r *authn.Request) bool {
 	return looksLikeApiKey(getTokenFromRequest(r))
 }
@@ -156,7 +126,7 @@ func (s *APIKey) Priority() uint {
 }
 
 func (s *APIKey) Hook(ctx context.Context, identity *authn.Identity, r *authn.Request) error {
-	ctx, span := s.tracer.Start(ctx, "authn.apikey.Hook") //nolint:ineffassign,staticcheck
+	_, span := s.tracer.Start(ctx, "authn.apikey.Hook") //nolint:ineffassign,staticcheck
 	defer span.End()
 
 	if r.GetMeta(metaKeySkipLastUsed) != "" {
