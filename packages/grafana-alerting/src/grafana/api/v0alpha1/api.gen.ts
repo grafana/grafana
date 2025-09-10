@@ -1244,11 +1244,13 @@ export type ReceiverIntegration = {
   secureFields?: {
     [key: string]: boolean;
   };
+  /** Settings for the receiver integration */
   settings: {
-    [key: string]: object;
+    [key: string]: any;
   };
   type: string;
   uid?: string;
+  version: string;
 };
 export type ReceiverSpec = {
   integrations: ReceiverIntegration[];
@@ -1358,7 +1360,7 @@ export type RoutingTreeRouteDefaults = {
 };
 export type RoutingTreeMatcher = {
   label: string;
-  type: string;
+  type: '=' | '!=' | '=~' | '!~';
   value: string;
 };
 export type RoutingTreeRoute = {
