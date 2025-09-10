@@ -183,4 +183,4 @@ export async function handleAngularPanelMigration(frontendModel: DashboardModel)
   }
 }
 
-export const TEST_MIN_VERSION = 27;
+export const TEST_MIN_VERSION = 0;

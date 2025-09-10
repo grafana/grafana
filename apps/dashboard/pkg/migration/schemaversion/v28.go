@@ -280,7 +280,7 @@ func migratetSinglestat(panel map[string]interface{}, defaults map[string]interf
 			"steps": []interface{}{
 				map[string]interface{}{
 					"color": "green",
-					"value": nil,
+					"value": (*float64)(nil),
 				},
 				map[string]interface{}{
 					"color": "red",
@@ -337,7 +337,7 @@ func migrateGrafanaSinglestatPanel(panel map[string]interface{}, defaults map[st
 			"steps": []interface{}{
 				map[string]interface{}{
 					"color": "green",
-					"value": nil,
+					"value": (*float64)(nil),
 				},
 				map[string]interface{}{
 					"color": "red",

@@ -576,7 +576,7 @@ func generateThresholds(thresholds []interface{}, colors []interface{}) []interf
 
 	steps = append(steps, map[string]interface{}{
 		"color": baseColor,
-		"value": nil,
+		"value": (*float64)(nil),
 	})
 
 	// Add threshold steps
