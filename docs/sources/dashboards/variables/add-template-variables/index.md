@@ -360,7 +360,7 @@ Add as many panels as you need.
 ### Dashboard drilldown with ad hoc filters
 
 In table and bar chart visualizations, you can apply ad hoc filters directly from the visualization.
-To quickly ad hoc filter variables, follow these steps:
+To quickly apply ad hoc filter variables, follow these steps:
 
 1. Hover your cursor over the table cell with the value you want to filter for to display the filter icons. In this example, the cell value is `ConfigMap Updated`, which is in the `alertname` column:
 
