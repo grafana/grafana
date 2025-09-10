@@ -32,13 +32,9 @@ export function RecentlyDeletedActions() {
     }
 
     let alertType = AppEvents.alertSuccess.name;
-    let message =
-      successCount === 1
-        ? t('browse-dashboards.restore.success', 'Dashboard {{name}} restored', { name: successful[0] })
-        : t('browse-dashboards.restore.success-multiple', '{{count}} dashboards restored: {{names}}', {
-            count: successCount,
-            names: successful.join(', '),
-          });
+    let message = t('browse-dashboards.restore.success', 'Dashboards restored: {{count}}', {
+      count: successCount,
+    });
 
     if (failedCount > 0) {
       if (successCount > 0) {
