@@ -459,7 +459,7 @@ module.exports = [
 
   {
     // custom rule for Table to avoid performance regressions
-    files: ['packages/grafana-ui/src/components/Table/TableNG/Cells/**/*.{ts,tsx}'],
+    files: ['packages/grafana-ui/src/components/TableNG/Cells/**/*.{ts,tsx}'],
     rules: {
       'no-restricted-imports': [
         'error',
