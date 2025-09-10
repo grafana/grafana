@@ -8,6 +8,7 @@ import { Count, varPreLine } from 'uwrap';
 import {
   FieldType,
   Field,
+  FieldConfigSource,
   formattedValueToString,
   GrafanaTheme2,
   DisplayValue,
@@ -692,7 +693,7 @@ export const frameToRecords = (frame: DataFrame): TableRow[] => {
 
   // Creates a function that converts a DataFrame into an array of TableRows
   // Uses new Function() for performance as it's faster than creating rows using loops
-  const convert = new Function('frame', fnBody) as unknown as FrameToRowsConverter;
+  const convert = new Function('frame', fnBody) as FrameToRowsConverter;
   return convert(frame);
 };
 
@@ -843,6 +844,58 @@ export const processNestedTableRows = (
 
 /**
  * @internal
+ * Get the maximum number of reducers across all fields
+ */
+const getMaxReducerCount = (dataFrame: DataFrame, fieldConfig?: FieldConfigSource): number => {
+  // Filter to only numeric fields that can have reducers
+  const numericFields = dataFrame.fields.filter(({ type }) => type === FieldType.number);
+
+  // If there are no numeric fields, return 0
+  if (numericFields.length === 0) {
+    return 0;
+  }
+
+  // Map each field to its reducer count (direct config or override)
+  const reducerCounts = numericFields.map((field) => {
+    // Get the direct reducer count from the field config
+    const directReducers = field.config?.custom?.footer?.reducers ?? [];
+    let reducerCount = directReducers.length;
+
+    // Check for overrides if field config is available
+    if (fieldConfig?.overrides) {
+      // Find override that matches this field
+      const override = fieldConfig.overrides.find(
+        ({ matcher: { id, options } }) => id === 'byName' && options === getDisplayName(field)
+      );
+
+      // Check if there's a footer reducer property in the override
+      const footerProperty = override?.properties?.find(({ id }) => id === 'custom.footer.reducers');
+      if (footerProperty?.value && Array.isArray(footerProperty.value)) {
+        // If override exists, it takes precedence over direct config
+        reducerCount = footerProperty.value.length;
+      }
+    }
+
+    return reducerCount;
+  });
+
+  // Return the maximum count or 0 if no reducers found
+  return reducerCounts.length > 0 ? Math.max(...reducerCounts) : 0;
+};
+
+/**
+ * @internal
+ * Calculate the footer height based on the maximum reducer count
+ */
+export const calculateFooterHeight = (dataFrame: DataFrame, fieldConfig?: FieldConfigSource) => {
+  const maxReducerCount = getMaxReducerCount(dataFrame, fieldConfig);
+  // Base height (+ padding) + height per reducer
+  return maxReducerCount * TABLE.LINE_HEIGHT + TABLE.CELL_PADDING * 2;
+};
+
+/**
+ * @internal
+ * returns the display name of a field
  * returns the display name of a field.
  * We intentionally do not want to use @grafana/data's getFieldDisplayName here,
  * instead we have a call to cacheFieldDisplayNames up in TablePanel to handle this
@@ -978,3 +1031,19 @@ export const displayJsonValue: DisplayProcessor = (value: unknown): DisplayValue
 
   return { text: displayValue, numeric: Number.NaN };
 };
+
+export function getSummaryCellTextAlign(textAlign: TextAlign, cellType: TableCellDisplayMode): TextAlign {
+  // gauge is weird. left-aligned gauge has the viz on the left and its numbers on the right, and vice-versa.
+  // if you center-aligned your gauge... ok.
+  if (cellType === TableCellDisplayMode.Gauge) {
+    return (
+      {
+        left: 'right',
+        right: 'left',
+        center: 'center',
+      } as const
+    )[textAlign];
+  }
+
+  return textAlign;
+}

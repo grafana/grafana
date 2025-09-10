@@ -35,9 +35,11 @@ export function TablePanel(props: Props) {
 
   const theme = useTheme2();
   const panelContext = usePanelContext();
+  const userCanExecuteActions = useMemo(() => panelContext.canExecuteActions?.() ?? false, [panelContext]);
   const _getActions = useCallback(
-    (frame: DataFrame, field: Field, rowIndex: number) => getCellActions(frame, field, rowIndex, replaceVariables),
-    [replaceVariables]
+    (frame: DataFrame, field: Field, rowIndex: number) =>
+      userCanExecuteActions ? getCellActions(frame, field, rowIndex, replaceVariables) : [],
+    [replaceVariables, userCanExecuteActions]
   );
   const frames = hasDeprecatedParentRowIndex(data.series)
     ? migrateFromParentRowIndexToNestedFrames(data.series)
@@ -76,9 +78,8 @@ export function TablePanel(props: Props) {
       onSortByChange={(sortBy) => onSortByChange(sortBy, props)}
       onColumnResize={(displayName, resizedWidth) => onColumnResize(displayName, resizedWidth, props)}
       onCellFilterAdded={panelContext.onAddAdHocFilter}
-      footerOptions={options.footer}
       frozenColumns={options.frozenColumns?.left}
-      enablePagination={options.footer?.enablePagination}
+      enablePagination={options.enablePagination}
       cellHeight={options.cellHeight}
       maxRowHeight={options.maxRowHeight}
       timeRange={timeRange}
