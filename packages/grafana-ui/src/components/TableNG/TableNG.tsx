@@ -300,7 +300,7 @@ export function TableNG(props: TableNGProps) {
         bottomSummaryRows: hasFooter ? [{}] : undefined,
         summaryRowHeight: footerHeight,
         headerRowHeight: noHeader ? 0 : TABLE.HEADER_ROW_HEIGHT,
-      }) satisfies Partial<DataGridProps<TableRow, TableSummaryRow>>,
+      }) satisfies Partial<DataGridProps>,
     [
       enableVirtualization,
       hasFooter,

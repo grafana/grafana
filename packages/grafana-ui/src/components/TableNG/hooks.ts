@@ -1,8 +1,9 @@
 import { useState, useMemo, useCallback, useRef, useLayoutEffect, RefObject, CSSProperties, useEffect } from 'react';
-import { Column, DataGridHandle, DataGridProps, SortColumn } from 'react-data-grid';
+import { Column, DataGridHandle, SortColumn } from 'react-data-grid';
 
 import { compareArrayValues, Field, FieldType, formattedValueToString, reduceField, ReducerID } from '@grafana/data';
 
+import { DataGridProps } from '../DataGrid/DataGrid';
 import { TableColumnResizeActionCallback } from '../Table/types';
 
 import { TABLE } from './constants';
@@ -298,7 +299,7 @@ const INITIAL_COL_RESIZE_STATE = Object.freeze({ columnKey: undefined, width: 0 
 
 export function useColumnResize(
   onColumnResize: TableColumnResizeActionCallback = () => {}
-): DataGridProps<TableRow, TableSummaryRow>['onColumnResize'] {
+): DataGridProps['onColumnResize'] {
   // these must be refs. if we used setState, we would run into race conditions with these event listeners
   const colResizeState = useRef<UseColumnResizeState>({ ...INITIAL_COL_RESIZE_STATE });
   const pointerIsDown = useRef(false);

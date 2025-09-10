@@ -83,7 +83,7 @@ const PaginatedDataGrid = ({
   );
 };
 
-export interface DataGridProps<TableRow, TableSummaryRow>
+export interface DataGridProps
   extends Omit<ComponentProps<typeof RDG<TableRow, TableSummaryRow>>, 'sortColumns' | 'rows'> {
   /**
    * instead of providing `rows` as you would with a typical react-data-grid, you should provide `data` as a DataFrame
@@ -155,7 +155,7 @@ export function DataGrid({
   rowHeight,
   transparent,
   ...props
-}: DataGridProps<TableRow, TableSummaryRow>) {
+}: DataGridProps) {
   const styles = useStyles2(getStyles, Boolean(pagination), transparent, hideHeader);
   const rows = useMemo(() => frameToRecords(data), [data]);
   const [sortColumns, setSortColumns] = useState<SortColumn[]>(initialSortColumns ?? []);
