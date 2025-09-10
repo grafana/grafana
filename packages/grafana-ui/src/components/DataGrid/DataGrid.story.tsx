@@ -22,7 +22,7 @@ export const Basic: StoryFn<typeof DataGrid> = (args: DataGridProps) => {
       data={createDataFrame({
         fields: [
           { name: 'A (number)', values: [123, null] },
-          { name: 'B (strings)', values: [null, 'Hello'] },
+          { name: 'B (strings)', values: ['Very long text which we need overflow to see', 'Hello'] },
           { name: 'C (nulls)', values: [null, null] },
           { name: 'Time', values: ['2000', 1967] },
           { name: 'D (number strings)', values: ['NaN', null, 1] },
