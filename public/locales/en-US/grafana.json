@@ -3665,8 +3665,7 @@
       "all-failed_one": "Failed to restore {{count}} dashboard",
       "all-failed_other": "Failed to restore {{count}} dashboards",
       "partial-success": "{{successCount}} of {{totalCount}} dashboards restored successfully. {{failedCount}} failed.",
-      "success_one": "Dashboards restored: {{count}}",
-      "success_other": "Dashboards restored: {{count}}"
+      "success": "Dashboards restored successfully"
     },
     "text-this-repository-is-read-only": "If you have direct access to the target, copy the JSON and paste it there.",
     "trash-state-manager": {
@@ -9454,9 +9453,9 @@
       "type": {
         "loki": {
           "indexed-label_one": "Indexed label",
-          "indexed-label_other": "Indexed labels",
+          "indexed-label_other": "Indexed label",
           "parsedl-label_one": "Parsed field",
-          "parsedl-label_other": "Parsed fields",
+          "parsedl-label_other": "Parsed field",
           "structured-metadata_one": "Structured metadata",
           "structured-metadata_other": "Structured metadata"
         }

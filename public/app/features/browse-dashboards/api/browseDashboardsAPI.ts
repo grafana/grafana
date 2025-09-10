@@ -498,14 +498,12 @@ export const browseDashboardsAPI = createApi({
           const name = response.spec.title || '';
           const parentFolder = response.metadata?.annotations?.[AnnoKeyFolder];
 
-          if (parentFolder) {
-            dispatch(
-              refetchChildren({
-                parentUID: parentFolder,
-                pageSize: PAGE_SIZE,
-              })
-            );
-          }
+          dispatch(
+            refetchChildren({
+              parentUID: parentFolder,
+              pageSize: PAGE_SIZE,
+            })
+          );
 
           return { data: { name } };
         } catch (error) {
