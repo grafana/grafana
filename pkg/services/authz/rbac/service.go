@@ -593,7 +593,7 @@ func (s *Service) checkPermission(ctx context.Context, scopeMap map[string]bool,
 			return scopeMap[""], nil
 		}
 		// If creating a resource that goes in a folder, but no folder is specified,
-		// assume the general folder if the resource supports folders
+		// assume parent folder is the general folder
 		if t.HasFolderSupport() && req.ParentFolder == "" {
 			req.ParentFolder = accesscontrol.GeneralFolderUID
 		}
