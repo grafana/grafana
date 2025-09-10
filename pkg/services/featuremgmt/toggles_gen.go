@@ -1034,4 +1034,8 @@ const (
 	// FlagPluginContainers
 	// Enables running plugins in containers
 	FlagPluginContainers = "pluginContainers"
+
+	// FlagAlertingEvaluationHistory
+	// Enables sending evaluation history to Loki
+	FlagAlertingEvaluationHistory = "alertingEvaluationHistory"
 )

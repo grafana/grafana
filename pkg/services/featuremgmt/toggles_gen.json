@@ -265,6 +265,20 @@
     },
     {
       "metadata": {
+        "name": "alertingEvaluationHistory",
+        "resourceVersion": "1757522966563",
+        "creationTimestamp": "2025-09-10T16:49:26Z"
+      },
+      "spec": {
+        "description": "Enables sending evaluation history to Loki",
+        "stage": "experimental",
+        "codeowner": "@grafana/alerting-squad",
+        "requiresRestart": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "alertingFilterV2",
         "resourceVersion": "1753448760331",
         "creationTimestamp": "2024-09-11T11:29:26Z"
