@@ -385,11 +385,10 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
 
     const hasEditorHelp = datasource?.components?.QueryEditorHelp;
     const isEditingQueryLibrary = queryLibraryRef !== undefined;
-    const isUnifiedAlerting = app === CoreApp.UnifiedAlerting;
 
     return (
       <>
-        {!isEditingQueryLibrary && !isUnifiedAlerting && (
+        {!isEditingQueryLibrary && (
           <SavedQueryButtons
             query={query}
             app={app}

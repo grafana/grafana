@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { cloneDeep } from 'lodash';
+import { cloneDeep, omit } from 'lodash';
 import * as React from 'react';
 import { ChangeEvent, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
@@ -13,6 +13,7 @@ import {
   PanelData,
   RelativeTimeRange,
   ThresholdsConfig,
+  getDataSourceRef,
   getDefaultRelativeTimeRange,
   rangeUtil,
 } from '@grafana/data';
@@ -21,10 +22,13 @@ import { config } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
 import { GraphThresholdsStyleMode, Icon, InlineField, Input, Stack, Tooltip, useStyles2 } from '@grafana/ui';
 import { logInfo } from 'app/features/alerting/unified/Analytics';
+import { isExpressionQuery } from 'app/features/expressions/guards';
+import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { QueryEditorRow } from 'app/features/query/components/QueryEditorRow';
 import { AlertDataQuery, AlertQuery } from 'app/types/unified-alerting-dto';
 
 import { RuleFormValues } from '../../types/rule-form';
+import { getInstantFromDataQuery } from '../../utils/rule-form';
 import { msToSingleUnitDuration } from '../../utils/time';
 import { ExpressionStatusIndicator } from '../expressions/ExpressionStatusIndicator';
 import { AlertingRuleQueryExtensionPoint } from '../extensions/AlertingRuleQueryExtensionPoint';
@@ -88,6 +92,47 @@ export const QueryWrapper = ({
   const { getValues } = useFormContext<RuleFormValues>();
   const isSwitchModeEnabled = config.featureToggles.alertingQueryAndExpressionsStepMode ?? false;
   const isAdvancedMode = isSwitchModeEnabled ? getValues('editorSettings.simplifiedQueryEditor') !== true : true;
+
+  const getDataSourceSettings = (query: AlertQuery): DataSourceInstanceSettings | undefined => {
+    return getDatasourceSrv().getInstanceSettings(query.datasourceUid);
+  };
+
+  const handleQueryReplace = (replacedQuery: DataQuery) => {
+    const replacementDatasource = replacedQuery.datasource;
+
+    if (replacementDatasource?.uid && replacementDatasource.uid !== query.datasourceUid) {
+      // Cross-datasource replacement: use the established pattern from QueryRows
+      const newDsSettings = getDatasourceSrv().getInstanceSettings(replacementDatasource.uid);
+
+      if (newDsSettings) {
+        const previousSettings = getDataSourceSettings(query);
+
+        // Use the same logic as QueryRows: copy model if same type, otherwise create new
+        const updatedQuery =
+          previousSettings?.type === newDsSettings.type
+            ? copyAlertModel(query, newDsSettings)
+            : newAlertModel(query, newDsSettings);
+
+        // Replace the model with the saved query content while preserving AlertQuery structure
+        updatedQuery.model = {
+          ...updatedQuery.model,
+          ...replacedQuery,
+          datasource: getDataSourceRef(newDsSettings),
+        };
+
+        // Trigger datasource change to update UI, then update query content
+        onChangeDataSource(newDsSettings, index);
+        setTimeout(() => {
+          onChangeQuery(updatedQuery.model, index);
+        }, 0);
+
+        return;
+      }
+    }
+
+    // Same datasource or no datasource info - just replace query content
+    onChangeQuery(replacedQuery, index);
+  };
 
   const queryWithDefaults = {
     ...defaults,
@@ -220,6 +265,7 @@ export const QueryWrapper = ({
           )}
           app={CoreApp.UnifiedAlerting}
           hideHideQueryButton={true}
+          onReplace={handleQueryReplace}
         />
       </div>
       {showVizualisation && <VizWrapper data={data} thresholds={thresholds} thresholdsType={thresholdsType} />}
@@ -315,6 +361,43 @@ export function MinIntervalOption({
       />
     </InlineField>
   );
+}
+
+// Helper functions for handling datasource changes during query replacement
+// These follow the same pattern as QueryRows.tsx for consistency
+function copyAlertModel(item: AlertQuery, settings: DataSourceInstanceSettings): AlertQuery {
+  return {
+    ...item,
+    model: {
+      ...omit(item.model, 'datasource'),
+      datasource: getDataSourceRef(settings),
+    },
+    datasourceUid: settings.uid,
+  };
+}
+
+function newAlertModel(item: AlertQuery, settings: DataSourceInstanceSettings): AlertQuery {
+  const isExpression = isExpressionQuery(item);
+  const isInstant = isExpression ? false : getInstantFromDataQuery(item);
+
+  const baseModel: DataQuery = {
+    refId: item.refId,
+    hide: false,
+    datasource: getDataSourceRef(settings),
+  };
+
+  // Add instant property if needed for non-expression queries
+  const model = isInstant && !isExpressionQuery(item) ? { ...baseModel, instant: isInstant } : baseModel;
+
+  const newQuery: AlertQuery = {
+    refId: item.refId,
+    relativeTimeRange: item.relativeTimeRange,
+    queryType: '',
+    datasourceUid: settings.uid,
+    model,
+  };
+
+  return newQuery;
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
