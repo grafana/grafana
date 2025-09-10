@@ -1,10 +1,5 @@
 package migration
 
-import (
-	"reflect"
-	"testing"
-)
-
 // TestFrontendDefaultsSuite tests all the logic of mimicking DashboardModel and PanelModel behavior
 // including the new cleanup logic that mimics getSaveModel()
 // func TestFrontendDefaultsSuite(t *testing.T) {
@@ -683,49 +678,3 @@ import (
 // 		})
 // 	})
 // }
-
-// Helper functions for assertions
-func assertEqual(t *testing.T, expected, actual interface{}) {
-	t.Helper()
-	if !reflect.DeepEqual(expected, actual) {
-		t.Errorf("Expected %v, got %v", expected, actual)
-	}
-}
-
-func assertTrue(t *testing.T, condition bool, message string) {
-	t.Helper()
-	if !condition {
-		t.Errorf("Assertion failed: %s", message)
-	}
-}
-
-func assertFalse(t *testing.T, condition bool, message string) {
-	t.Helper()
-	if condition {
-		t.Errorf("Assertion failed: %s", message)
-	}
-}
-
-func assertMapHasKey(t *testing.T, m map[string]interface{}, key string) {
-	t.Helper()
-	if _, exists := m[key]; !exists {
-		t.Errorf("Map should have key '%s'", key)
-	}
-}
-
-func assertMapDoesNotHaveKey(t *testing.T, m map[string]interface{}, key string) {
-	t.Helper()
-	if _, exists := m[key]; exists {
-		t.Errorf("Map should NOT have key '%s'", key)
-	}
-}
-
-func assertContains(t *testing.T, slice []string, item string) {
-	t.Helper()
-	for _, s := range slice {
-		if s == item {
-			return
-		}
-	}
-	t.Errorf("Slice should contain '%s'", item)
-}

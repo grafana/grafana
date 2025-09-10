@@ -369,7 +369,6 @@ func TestSchemaMigrationLogging(t *testing.T) {
 
 // TestLogMessageStructure tests that log messages contain expected structured fields
 func TestLogMessageStructure(t *testing.T) {
-
 	t.Run("log messages include all required fields", func(t *testing.T) {
 		// Test that migration functions execute successfully, ensuring log code paths are hit
 		dashboard := map[string]interface{}{

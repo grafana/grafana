@@ -419,5 +419,4 @@ func TestMigrateDatasourceNameToRef(t *testing.T) {
 			assert.Equal(t, expected, result)
 		})
 	})
-
 }

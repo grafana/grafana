@@ -65,7 +65,7 @@ func (m *migrator) migrate(ctx context.Context, dash map[string]interface{}, tar
 	// This matches the frontend ensurePanelsHaveUniqueIds() behavior
 	ensurePanelsHaveUniqueIds(dash)
 
-	// TODO: Probably we can check if we can migrate at the begining of the function
+	// TODO: Probably we can check if we can migrate at the beginning of the function
 	// 4. Ensure schema version is set and if not default to 0
 	inputVersion := schemaversion.GetSchemaVersion(dash)
 	dash["schemaVersion"] = inputVersion

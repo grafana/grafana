@@ -612,8 +612,14 @@ func isEqual(a, b interface{}) bool {
 
 // cleanupDashboardForSave applies the same cleanup logic as the frontend
 func cleanupDashboardForSave(dashboard map[string]interface{}) {
+	removeNonPersistedProperties(dashboard)
+	removeNullValues(dashboard)
+	cleanupTemplating(dashboard)
+	cleanupPanels(dashboard)
+}
 
-	// Remove non-persisted dashboard properties to match frontend getSaveModel behavior
+// removeNonPersistedProperties removes non-persisted dashboard properties
+func removeNonPersistedProperties(dashboard map[string]interface{}) {
 	nonPersistedProperties := map[string]bool{
 		"events":                           true,
 		"meta":                             true,
@@ -642,126 +648,148 @@ func cleanupDashboardForSave(dashboard map[string]interface{}) {
 			delete(dashboard, k)
 		}
 	}
+}
 
-	// Remove null values to match frontend's JSON.stringify/parse behavior
+// removeNullValues removes null values to match frontend's JSON.stringify/parse behavior
+func removeNullValues(dashboard map[string]interface{}) {
 	// This handles gnetId: null and other null properties
 	if dashboard["gnetId"] == nil {
 		delete(dashboard, "gnetId")
 	}
+}
 
-	// Clean up templating to match frontend's getTemplatingSaveModel behavior
+// cleanupTemplating cleans up templating to match frontend's getTemplatingSaveModel behavior
+func cleanupTemplating(dashboard map[string]interface{}) {
 	if templating, ok := dashboard["templating"].(map[string]interface{}); ok {
 		removeNullValuesRecursively(templating)
+		cleanupTemplatingVariables(templating)
+	}
+}
 
-		// Apply variable adapter logic (matches frontend variable adapters)
-		if list, ok := templating["list"].([]interface{}); ok {
-			for _, variableInterface := range list {
-				if variable, ok := variableInterface.(map[string]interface{}); ok {
-					// Remove null datasource
-					if variable["datasource"] == nil {
-						delete(variable, "datasource")
-					}
-
-					// Apply variable type-specific logic
-					if variableType, ok := variable["type"].(string); ok {
-						switch variableType {
-						case "query":
-							// Query variables: keep options: [] if refresh !== never
-							// Since refresh is not specified in the input, it defaults to not "never"
-							if _, hasOptions := variable["options"]; !hasOptions {
-								variable["options"] = []interface{}{}
-							}
-						case "constant":
-							// Constant variables: remove options completely
-							delete(variable, "options")
-						case "datasource":
-							// Datasource variables: always set options to empty array
-							variable["options"] = []interface{}{}
-						case "custom":
-							// Custom variables: no special handling (just return rest)
-							// This is the default behavior - no additional processing needed
-						case "textbox":
-							// Textbox variables: handle query vs originalQuery logic
-							// For now, just return rest (no special handling needed for basic cases)
-						case "adhoc":
-							// Adhoc variables: no special handling
-							// This is the default behavior - no additional processing needed
-						}
-					}
-				}
+// cleanupTemplatingVariables applies variable adapter logic
+func cleanupTemplatingVariables(templating map[string]interface{}) {
+	if list, ok := templating["list"].([]interface{}); ok {
+		for _, variableInterface := range list {
+			if variable, ok := variableInterface.(map[string]interface{}); ok {
+				cleanupVariable(variable)
 			}
 		}
 	}
+}
 
-	// Clean up panels - ensure panels property always exists (like frontend)
-	if panels, ok := dashboard["panels"].([]interface{}); ok {
-		for _, panelInterface := range panels {
-			if panel, ok := panelInterface.(map[string]interface{}); ok {
-				cleanupPanelForSave(panel)
+// cleanupVariable cleans up individual variable properties
+func cleanupVariable(variable map[string]interface{}) {
+	// Remove null datasource
+	if variable["datasource"] == nil {
+		delete(variable, "datasource")
+	}
 
-				// Handle nested panels in row panels
-				if nestedPanels, ok := panel["panels"].([]interface{}); ok {
-					for _, nestedPanelInterface := range nestedPanels {
-						if nestedPanel, ok := nestedPanelInterface.(map[string]interface{}); ok {
-							cleanupPanelForSave(nestedPanel)
-						}
-					}
-				}
+	// Apply variable type-specific logic
+	if variableType, ok := variable["type"].(string); ok {
+		switch variableType {
+		case "query":
+			// Query variables: keep options: [] if refresh !== never
+			// Since refresh is not specified in the input, it defaults to not "never"
+			if _, hasOptions := variable["options"]; !hasOptions {
+				variable["options"] = []interface{}{}
 			}
+		case "constant":
+			// Constant variables: remove options completely
+			delete(variable, "options")
+		case "datasource":
+			// Datasource variables: always set options to empty array
+			variable["options"] = []interface{}{}
+		case "custom":
+			// Custom variables: no special handling (just return rest)
+			// This is the default behavior - no additional processing needed
+		case "textbox":
+			// Textbox variables: handle query vs originalQuery logic
+			// For now, just return rest (no special handling needed for basic cases)
+		case "adhoc":
+			// Adhoc variables: no special handling
+			// This is the default behavior - no additional processing needed
 		}
+	}
+}
 
-		// Sort panels by grid position (matches frontend sortPanelsByGridPos behavior)
-		sort.Slice(panels, func(i, j int) bool {
-			panelA, okA := panels[i].(map[string]interface{})
-			panelB, okB := panels[j].(map[string]interface{})
-			if !okA || !okB {
-				return false
-			}
-
-			// Get gridPos or use default values if missing
-			gridPosA, okA := panelA["gridPos"].(map[string]interface{})
-			gridPosB, okB := panelB["gridPos"].(map[string]interface{})
-
-			// Default gridPos values (matches frontend PanelModel defaults)
-			defaultY := float64(0)
-			defaultX := float64(0)
-
-			yA := defaultY
-			if okA {
-				if y, ok := gridPosA["y"].(float64); ok {
-					yA = y
-				}
-			}
-
-			yB := defaultY
-			if okB {
-				if y, ok := gridPosB["y"].(float64); ok {
-					yB = y
-				}
-			}
-
-			if yA == yB {
-				xA := defaultX
-				if okA {
-					if x, ok := gridPosA["x"].(float64); ok {
-						xA = x
-					}
-				}
-
-				xB := defaultX
-				if okB {
-					if x, ok := gridPosB["x"].(float64); ok {
-						xB = x
-					}
-				}
-				return xA < xB
-			}
-			return yA < yB
-		})
+// cleanupPanels cleans up panels and ensures panels property always exists
+func cleanupPanels(dashboard map[string]interface{}) {
+	if panels, ok := dashboard["panels"].([]interface{}); ok {
+		cleanupPanelList(panels)
+		sortPanelsByGridPosition(panels)
 	} else {
 		// Ensure panels property exists even if empty (matches frontend behavior)
 		dashboard["panels"] = []interface{}{}
 	}
+}
+
+// cleanupPanelList cleans up all panels including nested ones
+func cleanupPanelList(panels []interface{}) {
+	for _, panelInterface := range panels {
+		if panel, ok := panelInterface.(map[string]interface{}); ok {
+			cleanupPanelForSave(panel)
+
+			// Handle nested panels in row panels
+			if nestedPanels, ok := panel["panels"].([]interface{}); ok {
+				for _, nestedPanelInterface := range nestedPanels {
+					if nestedPanel, ok := nestedPanelInterface.(map[string]interface{}); ok {
+						cleanupPanelForSave(nestedPanel)
+					}
+				}
+			}
+		}
+	}
+}
+
+// sortPanelsByGridPosition sorts panels by grid position (matches frontend sortPanelsByGridPos behavior)
+func sortPanelsByGridPosition(panels []interface{}) {
+	sort.Slice(panels, func(i, j int) bool {
+		panelA, okA := panels[i].(map[string]interface{})
+		panelB, okB := panels[j].(map[string]interface{})
+		if !okA || !okB {
+			return false
+		}
+
+		// Get gridPos or use default values if missing
+		gridPosA, okA := panelA["gridPos"].(map[string]interface{})
+		gridPosB, okB := panelB["gridPos"].(map[string]interface{})
+
+		// Default gridPos values (matches frontend PanelModel defaults)
+		defaultY := float64(0)
+		defaultX := float64(0)
+
+		yA := defaultY
+		if okA {
+			if y, ok := gridPosA["y"].(float64); ok {
+				yA = y
+			}
+		}
+
+		yB := defaultY
+		if okB {
+			if y, ok := gridPosB["y"].(float64); ok {
+				yB = y
+			}
+		}
+
+		if yA == yB {
+			xA := defaultX
+			if okA {
+				if x, ok := gridPosA["x"].(float64); ok {
+					xA = x
+				}
+			}
+
+			xB := defaultX
+			if okB {
+				if x, ok := gridPosB["x"].(float64); ok {
+					xB = x
+				}
+			}
+			return xA < xB
+		}
+		return yA < yB
+	})
 }
 
 // applyPanelAutoMigration applies the same auto-migration logic as the frontend PanelModel constructor
@@ -779,7 +807,8 @@ func applyPanelAutoMigration(panel map[string]interface{}) {
 		// Check xaxis mode for special cases
 		if xaxis, ok := panel["xaxis"].(map[string]interface{}); ok {
 			if mode, ok := xaxis["mode"].(string); ok {
-				if mode == "series" {
+				switch mode {
+				case "series":
 					// Check legend values for bargauge
 					if legend, ok := panel["legend"].(map[string]interface{}); ok {
 						if values, ok := legend["values"].(bool); ok && values {
@@ -790,7 +819,7 @@ func applyPanelAutoMigration(panel map[string]interface{}) {
 					} else {
 						newType = "barchart"
 					}
-				} else if mode == "histogram" {
+				case "histogram":
 					newType = "histogram"
 				}
 			}
