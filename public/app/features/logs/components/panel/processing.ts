@@ -11,6 +11,7 @@ import {
   LogsSortOrder,
   systemDateFormats,
 } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { GetFieldLinksFn } from 'app/plugins/panel/logs/types';
 
@@ -329,4 +330,13 @@ function countNewLines(log: string, limit = Infinity) {
     }
   }
   return count;
+}
+
+export function getNormalizedFieldName(field: string) {
+  if (field === LOG_LINE_BODY_FIELD_NAME) {
+    return t('logs.log-line-details.log-line-field', 'Log line');
+  } else if (field === LOG_LINE_ATTRIBUTES_FIELD_NAME) {
+    return t('logs.log-line-details.log-attributes-field', 'Log attributes');
+  }
+  return field;
 }
