@@ -1715,9 +1715,6 @@
       "notes": "Примечания",
       "returns": "Возвраты"
     },
-    "label-picker": {
-      "no-options-message": "Метки не найдены"
-    },
     "labels-editor-modal": {
       "title-edit-labels": "Редактирование меток"
     },
@@ -1735,9 +1732,6 @@
     "labels-sub-form": {
       "description": "Выберите ключ/значение метки из вариантов ниже или введите новые и нажмите Enter.",
       "save": "Сохранить"
-    },
-    "labels-with-suggestions": {
-      "text-loading-existing-labels": "Загрузка существующих меток"
     },
     "labels-without-suggestions": {
       "message": {
@@ -4723,6 +4717,7 @@
       "move": "Переместить {{typeName}}",
       "panel-background": "Изменить фон панели",
       "panel-description": "Изменить описание панели",
+      "panel-edit": "",
       "panel-max-repeats-per-row": "Макс. повторений на строку",
       "panel-repeat-direction": "Повторение направления",
       "panel-repeat-variable": "Повторение панели по",
@@ -4977,12 +4972,11 @@
       "dataframe-aria-label": "Выбрать фрейм данных",
       "dataframe-label": "Показать фрейм данных",
       "download-csv": "Загрузить CSV",
-      "download-excel-description": "Добавляет заголовок в CSV для использования в Excel",
-      "download-excel-label": "Загрузить для Excel",
       "download-logs": "Загрузить журналы",
       "download-service": "Загрузить граф сервиса",
       "download-traces": "Загрузить трассировки",
-      "excel-header": "Заголовок Excel",
+      "excel-compatibility-mode-description": "",
+      "excel-compatibility-mode-label": "",
       "formatted": "Форматированные данные",
       "formatted-data-description": "Данные таблицы форматируются с помощью параметров, заданных на вкладках «Поле» и «Переопределение».",
       "formatted-data-label": "Форматированные данные",
@@ -9708,6 +9702,12 @@
       "hide-search": "Закрыть поиск",
       "hide-timestamps": "Скрыть метки времени",
       "hide-unique-labels": "Скрыть уникальные метки",
+      "line-wrapping": {
+        "enable": "",
+        "enable-prettify": "",
+        "hide": "",
+        "label": ""
+      },
       "newest-first": "Сначала отображаются самые новые журналы. Нажмите, чтобы показать сначала самые старые",
       "oldest-first": "Сначала отображаются самые старые журналы. Нажмите, чтобы показать сначала самые новые",
       "prettify-json": "Развернуть журналы JSON",
@@ -9716,13 +9716,16 @@
       "resolution-ns": "нс",
       "scroll-bottom": "Прокрутить вниз",
       "scroll-top": "Прокрутить вверх",
-      "show-ms-timestamps": "Показать метки времени в миллисекундах",
-      "show-ns-timestamps": "Показать метки времени в наносекундах",
       "show-search": "Результат поиска по журналам",
       "show-timestamps": "Показать метки времени",
       "show-unique-labels": "Показать уникальные метки",
+      "timestamp": {
+        "hide": "",
+        "label": "",
+        "milliseconds": "",
+        "nanoseconds": ""
+      },
       "unwrap-lines": "Не переносить строки",
-      "wrap-json-lines": "",
       "wrap-lines": "Переносить строки"
     },
     "logs-navigation": {
@@ -12012,7 +12015,6 @@
       "expand-row": "Развернуть строку запроса",
       "hide-response": "Скрыть ответ",
       "remove-query": "Удалить запрос",
-      "replace-query-from-library": "Заменить на сохраненный запрос",
       "show-response": "Показать ответ"
     },
     "query-editor-not-exported": "Плагин источника данных не экспортирует компоненты редактора запросов"
@@ -12025,16 +12027,6 @@
       "no-deleted-dashboards": "В последнее время вы не удаляли ни одного дашборда.",
       "no-deleted-dashboards-text": "Удаленные дашборды отображаются здесь в течение 30 дней, после чего удаляются без возможности восстановления. Администратор вашей организации может восстановить недавно удаленные дашборды.",
       "no-search-result": "По вашему запросу ничего не найдено"
-    },
-    "permanently-delete-modal": {
-      "confirm-text": "Удалить",
-      "delete-button": "Удалить",
-      "delete-loading": "Удаление...",
-      "title": "Удаление дашбордов без возможности восстановления",
-      "text_one": "Это действие приведет к удалению {{numberOfDashboards}} дашборда.",
-      "text_few": "Это действие приведет к удалению {{numberOfDashboards}} дашбордов.",
-      "text_many": "Это действие приведет к удалению {{numberOfDashboards}} дашбордов.",
-      "text_other": "Это действие приведет к удалению {{numberOfDashboards}} дашборда."
     },
     "restore-modal": {
       "restore-button": "Восстановить",
