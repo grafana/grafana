@@ -142,114 +142,48 @@ export interface PaginatedRowsOptions {
   enabled: boolean;
 }
 
-export interface PaginatedRowsResult {
-  rows: TableRow[];
-  page: number;
-  setPage: React.Dispatch<React.SetStateAction<number>>;
-  numPages: number;
-  rowsPerPage: number;
-  pageRangeStart: number;
-  pageRangeEnd: number;
-  smallPagination: boolean;
-}
-
 // hand-measured. pagination height is 30px, plus 8px top margin
 const PAGINATION_HEIGHT = 38;
 
-export function usePaginatedRows(
-  rows: TableRow[],
-  { height, width, headerHeight, footerHeight, rowHeight, enabled }: PaginatedRowsOptions
-): PaginatedRowsResult {
-  // TODO: allow persisted page selection via url
-  const [page, setPage] = useState(0);
-  const numRows = rows.length;
-
-  // calculate average row height if row height is variable.
-  const avgRowHeight = useMemo(() => {
-    if (!enabled) {
-      return 0;
-    }
-
-    if (typeof rowHeight === 'number') {
-      return rowHeight;
-    }
-
-    // when using auto-sized rows, we're just going to have to pick a number. the alternative
-    // is to measure each row, which we could do but would be expensive.
-    if (typeof rowHeight === 'string') {
-      return TABLE.MAX_CELL_HEIGHT;
-    }
-
-    // we'll just measure 100 rows to estimate
-    return rows.slice(0, 100).reduce((avg, row, _, { length }) => avg + rowHeight(row) / length, 0);
-  }, [rows, rowHeight, enabled]);
-
-  const smallPagination = useMemo(() => enabled && width < TABLE.PAGINATION_LIMIT, [enabled, width]);
-
+export function useRowsPerPageCallback({
+  height,
+  headerHeight,
+  footerHeight,
+  rowHeight,
+  enabled,
+}: PaginatedRowsOptions): (rows: TableRow[]) => number {
   // using dimensions of the panel, calculate pagination parameters
-  const { numPages, rowsPerPage, pageRangeStart, pageRangeEnd } = useMemo((): {
-    numPages: number;
-    rowsPerPage: number;
-    pageRangeStart: number;
-    pageRangeEnd: number;
-  } => {
-    if (!enabled) {
-      return { numPages: 0, rowsPerPage: 0, pageRangeStart: 1, pageRangeEnd: numRows };
-    }
+  const rowsPerPageCallback = useCallback(
+    (rows: TableRow[]) => {
+      if (!enabled) {
+        return 0;
+      }
 
-    // calculate number of rowsPerPage based on height stack
-    const rowAreaHeight = height - headerHeight - footerHeight - PAGINATION_HEIGHT;
-    const heightPerRow = Math.floor(rowAreaHeight / (avgRowHeight || 1));
-    // ensure at least one row per page is displayed
-    let rowsPerPage = heightPerRow > 1 ? heightPerRow : 1;
+      let avgRowHeight;
+      if (typeof rowHeight === 'number') {
+        avgRowHeight = rowHeight;
+      } else if (typeof rowHeight === 'string') {
+        // when using auto-sized rows, we're just going to have to pick a number. the alternative
+        // is to measure each row, which we could do but would be expensive.
+        avgRowHeight = TABLE.MAX_CELL_HEIGHT;
+      } else {
+        // for a rowHeight function, we'll just measure 100 rows to estimate
+        avgRowHeight = rows.slice(0, 100).reduce((avg, row, _, { length }) => avg + rowHeight(row) / length, 0);
+      }
 
-    // calculate row range for pagination summary display
-    const pageRangeStart = page * rowsPerPage + 1;
-    let pageRangeEnd = pageRangeStart + rowsPerPage - 1;
-    if (pageRangeEnd > numRows) {
-      pageRangeEnd = numRows;
-    }
+      if (avgRowHeight <= 0) {
+        avgRowHeight = 1; // avoid div0
+      }
 
-    const numPages = Math.ceil(numRows / rowsPerPage);
-    return {
-      numPages,
-      rowsPerPage,
-      pageRangeStart,
-      pageRangeEnd,
-    };
-  }, [height, headerHeight, footerHeight, avgRowHeight, enabled, numRows, page]);
+      // calculate number of rowsPerPage based on height stack
+      const rowAreaHeight = height - headerHeight - footerHeight - PAGINATION_HEIGHT;
+      const heightPerRow = Math.floor(rowAreaHeight / avgRowHeight);
+      return heightPerRow > 1 ? heightPerRow : 1; // ensure at least one row per page is displayed
+    },
+    [enabled, rowHeight, height, headerHeight, footerHeight]
+  );
 
-  // safeguard against page overflow on panel resize or other factors
-  useLayoutEffect(() => {
-    if (!enabled) {
-      return;
-    }
-
-    if (page > numPages) {
-      // resets pagination to end
-      setPage(numPages - 1);
-    }
-  }, [numPages, enabled, page, setPage]);
-
-  // apply pagination to the sorted rows
-  const paginatedRows = useMemo(() => {
-    if (!enabled) {
-      return rows;
-    }
-    const pageOffset = page * rowsPerPage;
-    return rows.slice(pageOffset, pageOffset + rowsPerPage);
-  }, [page, rowsPerPage, rows, enabled]);
-
-  return {
-    rows: paginatedRows,
-    page: enabled ? page : -1,
-    setPage,
-    numPages,
-    rowsPerPage,
-    pageRangeStart,
-    pageRangeEnd,
-    smallPagination,
-  };
+  return rowsPerPageCallback;
 }
 
 const ICON_WIDTH = 16;
