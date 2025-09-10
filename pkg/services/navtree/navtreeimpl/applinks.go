@@ -54,10 +54,12 @@ func (s *ServiceImpl) addAppLinks(treeRoot *navtree.NavTreeRoot, c *contextmodel
 		}
 	}
 
-	if adaptiveTelemetryPlugin, adaptiveTelemetrySection := enabledAccessibleAppPluginMap["grafana-adaptivetelemetry-app"], treeRoot.FindById(navtree.NavIDAdaptiveTelemetry); adaptiveTelemetryPlugin != nil && adaptiveTelemetrySection != nil {
-		// If the adaptivetelemetry app is enabled, and the adaptiveTelemetrySection exists, then update the section to point to the plugin
-		adaptiveTelemetrySection.Url = s.cfg.AppSubURL + "/a/" + adaptiveTelemetryPlugin.ID
-		adaptiveTelemetrySection.PluginID = adaptiveTelemetryPlugin.ID
+	if adaptiveTelemetryPlugin := enabledAccessibleAppPluginMap["grafana-adaptivetelemetry-app"]; adaptiveTelemetryPlugin != nil {
+		if adaptiveTelemetrySection := treeRoot.FindById(navtree.NavIDAdaptiveTelemetry); adaptiveTelemetrySection != nil {
+			// If the adaptivetelemetry app is enabled, and the adaptiveTelemetrySection exists, then update the section to point to the plugin
+			adaptiveTelemetrySection.Url = s.cfg.AppSubURL + "/a/" + adaptiveTelemetryPlugin.ID
+			adaptiveTelemetrySection.PluginID = adaptiveTelemetryPlugin.ID
+		}
 	}
 
 	if len(appLinks) > 0 {
