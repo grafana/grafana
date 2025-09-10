@@ -247,6 +247,10 @@ const (
 	// Routes short url requests from /api to the /apis endpoint
 	FlagKubernetesShortURLs = "kubernetesShortURLs"
 
+	// FlagKubernetesAlertingRules
+	// Adds support for Kubernetes alerting and recording rules
+	FlagKubernetesAlertingRules = "kubernetesAlertingRules"
+
 	// FlagDashboardDisableSchemaValidationV1
 	// Disable schema validation for dashboards/v1
 	FlagDashboardDisableSchemaValidationV1 = "dashboardDisableSchemaValidationV1"
@@ -390,6 +394,10 @@ const (
 	// FlagSecretsManagementAppPlatform
 	// Enable the secrets management API and services under app platform
 	FlagSecretsManagementAppPlatform = "secretsManagementAppPlatform"
+
+	// FlagSecretsManagementAppPlatformUI
+	// Enable the secrets management app platform UI
+	FlagSecretsManagementAppPlatformUI = "secretsManagementAppPlatformUI"
 
 	// FlagAlertingSaveStatePeriodic
 	// Writes the state periodically to the database, asynchronous to rule evaluation
@@ -555,6 +563,10 @@ const (
 	// Enables new combobox style UI for the Ad hoc filters variable in scenes architecture
 	FlagNewFiltersUI = "newFiltersUI"
 
+	// FlagVizActionsAuth
+	// Allows authenticated API calls in actions
+	FlagVizActionsAuth = "vizActionsAuth"
+
 	// FlagAlertingPrometheusRulesPrimary
 	// Uses Prometheus rules as the primary source of truth for ruler-enabled data sources
 	FlagAlertingPrometheusRulesPrimary = "alertingPrometheusRulesPrimary"
@@ -700,7 +712,7 @@ const (
 	FlagUnifiedStorageSearchUI = "unifiedStorageSearchUI"
 
 	// FlagElasticsearchCrossClusterSearch
-	// Enables cross cluster search in the Elasticsearch datasource
+	// Enables cross cluster search in the Elasticsearch data source
 	FlagElasticsearchCrossClusterSearch = "elasticsearchCrossClusterSearch"
 
 	// FlagUnifiedHistory
@@ -823,10 +835,6 @@ const (
 	// Enables the unified storage grpc connection pool
 	FlagUnifiedStorageGrpcConnectionPool = "unifiedStorageGrpcConnectionPool"
 
-	// FlagExtensionSidebar
-	// Enables the extension sidebar
-	FlagExtensionSidebar = "extensionSidebar"
-
 	// FlagAlertingRulePermanentlyDelete
 	// Enables UI functionality to permanently delete alert rules
 	FlagAlertingRulePermanentlyDelete = "alertingRulePermanentlyDelete"
@@ -871,10 +879,6 @@ const (
 	// Enables auto-updating of users installed plugins
 	FlagPluginsAutoUpdate = "pluginsAutoUpdate"
 
-	// FlagMultiTenantFrontend
-	// Register MT frontend
-	FlagMultiTenantFrontend = "multiTenantFrontend"
-
 	// FlagAlertingListViewV2PreviewToggle
 	// Enables the alerting list view v2 preview toggle
 	FlagAlertingListViewV2PreviewToggle = "alertingListViewV2PreviewToggle"
@@ -910,6 +914,14 @@ const (
 	// FlagAlertEnrichment
 	// Enable configuration of alert enrichments in Grafana Cloud.
 	FlagAlertEnrichment = "alertEnrichment"
+
+	// FlagAlertEnrichmentMultiStep
+	// Allow multiple steps per enrichment.
+	FlagAlertEnrichmentMultiStep = "alertEnrichmentMultiStep"
+
+	// FlagAlertEnrichmentConditional
+	// Enable conditional alert enrichment steps.
+	FlagAlertEnrichmentConditional = "alertEnrichmentConditional"
 
 	// FlagAlertingImportAlertmanagerAPI
 	// Enables the API to import Alertmanager configuration
@@ -975,6 +987,10 @@ const (
 	// Starts Grafana in remote secondary mode pulling the latest state from the remote Alertmanager to avoid duplicate notifications.
 	FlagAlertmanagerRemoteSecondaryWithRemoteState = "alertmanagerRemoteSecondaryWithRemoteState"
 
+	// FlagRestrictedPluginApis
+	// Enables sharing a list of APIs with a list of plugins
+	FlagRestrictedPluginApis = "restrictedPluginApis"
+
 	// FlagAdhocFiltersInTooltips
 	// Enable adhoc filter buttons in visualization tooltips
 	FlagAdhocFiltersInTooltips = "adhocFiltersInTooltips"
@@ -998,4 +1014,28 @@ const (
 	// FlagTeamFolders
 	// Enables team folders functionality
 	FlagTeamFolders = "teamFolders"
+
+	// FlagAlertingTriage
+	// Enables the alerting triage feature
+	FlagAlertingTriage = "alertingTriage"
+
+	// FlagGraphiteBackendMode
+	// Enables the Graphite data source full backend mode
+	FlagGraphiteBackendMode = "graphiteBackendMode"
+
+	// FlagAzureResourcePickerUpdates
+	// Enables the updated Azure Monitor resource picker
+	FlagAzureResourcePickerUpdates = "azureResourcePickerUpdates"
+
+	// FlagPrometheusTypeMigration
+	// Checks for deprecated Prometheus authentication methods (SigV4 and Azure), installs the relevant data source, and migrates the Prometheus data sources
+	FlagPrometheusTypeMigration = "prometheusTypeMigration"
+
+	// FlagDskitBackgroundServices
+	// Enables dskit background service wrapper
+	FlagDskitBackgroundServices = "dskitBackgroundServices"
+
+	// FlagPluginContainers
+	// Enables running plugins in containers
+	FlagPluginContainers = "pluginContainers"
 )

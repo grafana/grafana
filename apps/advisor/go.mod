@@ -8,7 +8,7 @@ require (
 	github.com/grafana/authlib/types v0.0.0-20250710201142-9542f2f28d43
 	github.com/grafana/grafana v0.0.0-00010101000000-000000000000
 	github.com/grafana/grafana-app-sdk v0.40.2
-	github.com/grafana/grafana-app-sdk/logging v0.40.1
+	github.com/grafana/grafana-app-sdk/logging v0.40.2
 	github.com/grafana/grafana-plugin-sdk-go v0.278.0
 	github.com/grafana/grafana/pkg/apimachinery v0.0.0-20250804150913-990f1c69ecc2
 	github.com/stretchr/testify v1.10.0
@@ -25,7 +25,7 @@ replace github.com/prometheus/alertmanager => github.com/grafana/prometheus-aler
 
 require (
 	cloud.google.com/go/compute/metadata v0.7.0 // indirect
-	dario.cat/mergo v1.0.1 // indirect
+	dario.cat/mergo v1.0.2 // indirect
 	filippo.io/edwards25519 v1.1.0 // indirect
 	github.com/Azure/azure-sdk-for-go/sdk/azcore v1.18.1 // indirect
 	github.com/Azure/azure-sdk-for-go/sdk/azidentity v1.10.1 // indirect

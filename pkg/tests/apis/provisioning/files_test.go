@@ -10,6 +10,7 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/util/testutil"
 	"github.com/stretchr/testify/require"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -17,9 +18,7 @@ import (
 )
 
 func TestIntegrationProvisioning_DeleteResources(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	helper := runGrafana(t)
 	ctx := context.Background()
@@ -110,9 +109,7 @@ func TestIntegrationProvisioning_DeleteResources(t *testing.T) {
 }
 
 func TestIntegrationProvisioning_MoveResources(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	helper := runGrafana(t)
 	ctx := context.Background()
@@ -395,9 +392,7 @@ func TestIntegrationProvisioning_MoveResources(t *testing.T) {
 }
 
 func TestIntegrationProvisioning_FilesOwnershipProtection(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	helper := runGrafana(t)
 	ctx := context.Background()

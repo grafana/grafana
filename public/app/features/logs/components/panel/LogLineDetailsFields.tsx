@@ -103,7 +103,7 @@ const getFieldsStyles = (theme: GrafanaTheme2) => ({
   fieldsTable: css({
     display: 'grid',
     gap: theme.spacing(1),
-    gridTemplateColumns: `${theme.spacing(11.5)} minmax(auto, 40%) 1fr`,
+    gridTemplateColumns: `${theme.spacing(11.5)} fit-content(30%) 1fr`,
   }),
   fieldsTableNoActions: css({
     display: 'grid',
@@ -148,7 +148,7 @@ export const LogLineDetailsField = ({
     onClickHideField,
     onPinLine,
     pinLineButtonTooltipTitle,
-    syntaxHighlighting,
+    prettifyJSON,
   } = useLogListContext();
 
   const styles = useStyles2(getFieldStyles);
@@ -317,7 +317,7 @@ export const LogLineDetailsField = ({
         <div className={styles.value}>
           <div className={styles.valueContainer}>
             {singleValue ? (
-              <SingleValue value={values[0]} syntaxHighlighting={syntaxHighlighting} />
+              <SingleValue value={values[0]} prettifyJSON={prettifyJSON} />
             ) : (
               <MultipleValue showCopy={true} values={values} />
             )}
@@ -339,7 +339,7 @@ export const LogLineDetailsField = ({
         }
         return (
           <div className={styles.row} key={`${link.title}-${i}`}>
-            <div className={disableActions ? undefined : styles.link}>
+            <div className={disableActions ? styles.linkNoActions : styles.link}>
               <DataLinkButton
                 buttonProps={{
                   // Show tooltip message if max number of pinned lines has been reached
@@ -383,6 +383,7 @@ const getFieldStyles = (theme: GrafanaTheme2) => ({
     whiteSpace: 'nowrap',
   }),
   label: css({
+    paddingRight: theme.spacing(1),
     overflowWrap: 'break-word',
     wordBreak: 'break-word',
   }),
@@ -400,6 +401,10 @@ const getFieldStyles = (theme: GrafanaTheme2) => ({
   }),
   link: css({
     gridColumn: '2 / 4',
+  }),
+  linkNoActions: css({
+    gridColumn: 'span 2',
+    paddingBottom: theme.spacing(0.5),
   }),
   stats: css({
     paddingRight: theme.spacing(1),
@@ -460,7 +465,7 @@ const getClipboardButtonStyles = (theme: GrafanaTheme2) => ({
   }),
 });
 
-const MultipleValue = ({ showCopy, values = [] }: { showCopy?: boolean; values: string[] }) => {
+export const MultipleValue = ({ showCopy, values = [] }: { showCopy?: boolean; values: string[] }) => {
   if (values.every((val) => val === '')) {
     return null;
   }
@@ -480,9 +485,9 @@ const MultipleValue = ({ showCopy, values = [] }: { showCopy?: boolean; values: 
   );
 };
 
-const SingleValue = ({ value: originalValue, syntaxHighlighting }: { value: string; syntaxHighlighting?: boolean }) => {
+export const SingleValue = ({ value: originalValue, prettifyJSON }: { value: string; prettifyJSON?: boolean }) => {
   const value = useMemo(() => {
-    if (!syntaxHighlighting) {
+    if (!prettifyJSON) {
       return originalValue;
     }
     try {
@@ -492,7 +497,7 @@ const SingleValue = ({ value: originalValue, syntaxHighlighting }: { value: stri
       }
     } catch (error) {}
     return originalValue;
-  }, [originalValue, syntaxHighlighting]);
+  }, [originalValue, prettifyJSON]);
 
   return (
     <>
@@ -519,7 +524,7 @@ const AsyncIconButton = ({ isActive, tooltipSuffix, ...rest }: AsyncIconButtonPr
   return <IconButton {...rest} variant={active ? 'primary' : undefined} tooltip={tooltip + tooltipSuffix} />;
 };
 
-function filterFields(fields: FieldDef[], search: string) {
+export function filterFields(fields: FieldDef[], search: string) {
   const keys = fields.map((field) => field.keys.join(' '));
   const keysIdx = fuzzySearch(keys, search);
   const values = fields.map((field) => field.values.join(' '));

@@ -132,15 +132,17 @@ type Cfg struct {
 	HomePath                   string
 	ProvisioningPath           string
 	PermittedProvisioningPaths []string
-	// Job History Configuration
-	ProvisioningLokiURL      string
-	ProvisioningLokiUser     string
-	ProvisioningLokiPassword string
-	ProvisioningLokiTenantID string
-	DataPath                 string
-	LogsPath                 string
-	PluginsPath              string
-	EnterpriseLicensePath    string
+	// Provisioning config
+	ProvisioningDisableControllers bool
+	ProvisioningRepositoryTypes    []string
+	ProvisioningLokiURL            string
+	ProvisioningLokiUser           string
+	ProvisioningLokiPassword       string
+	ProvisioningLokiTenantID       string
+	DataPath                       string
+	LogsPath                       string
+	PluginsPath                    string
+	EnterpriseLicensePath          string
 
 	// SMTP email settings
 	Smtp SmtpSettings
@@ -204,7 +206,6 @@ type Cfg struct {
 	PluginForcePublicKeyDownload     bool
 	PluginSkipPublicKeyDownload      bool
 	DisablePlugins                   []string
-	HideAngularDeprecation           []string
 	ForwardHostEnvVars               []string
 	PreinstallPluginsAsync           []InstallPlugin
 	PreinstallPluginsSync            []InstallPlugin
@@ -213,6 +214,10 @@ type Cfg struct {
 	PluginLogBackendRequests bool
 
 	PluginUpdateStrategy string
+
+	// Plugin API restrictions - maps API name to list of plugin IDs/patterns
+	PluginRestrictedAPIsAllowList map[string][]string
+	PluginRestrictedAPIsBlockList map[string][]string
 
 	// Panels
 	DisableSanitizeHtml bool
@@ -1056,6 +1061,10 @@ func NewCfg() *Cfg {
 		Logger: log.New("settings"),
 		Raw:    ini.Empty(),
 		Azure:  &azsettings.AzureSettings{},
+
+		// Initialize plugin API restriction maps
+		PluginRestrictedAPIsAllowList: make(map[string][]string),
+		PluginRestrictedAPIsBlockList: make(map[string][]string),
 
 		// Avoid nil pointer
 		IsFeatureToggleEnabled: func(_ string) bool {
@@ -2094,6 +2103,21 @@ func (cfg *Cfg) readProvisioningSettings(iniFile *ini.File) error {
 			cfg.PermittedProvisioningPaths[i] = makeAbsolute(s, cfg.HomePath)
 		}
 	}
+
+	repositoryTypes := strings.TrimSpace(valueAsString(iniFile.Section("provisioning"), "repository_types", "github|local"))
+	if repositoryTypes != "|" && repositoryTypes != "" {
+		cfg.ProvisioningRepositoryTypes = strings.Split(repositoryTypes, "|")
+		for i, s := range cfg.ProvisioningRepositoryTypes {
+			s = strings.TrimSpace(s)
+			if s == "" {
+				return fmt.Errorf("a provisioning repository type is empty in '%s' (at index %d)", repositoryTypes, i)
+			}
+
+			cfg.ProvisioningRepositoryTypes[i] = s
+		}
+	}
+
+	cfg.ProvisioningDisableControllers = iniFile.Section("provisioning").Key("disable_controllers").MustBool(false)
 
 	// Read job history configuration
 	cfg.ProvisioningLokiURL = valueAsString(iniFile.Section("provisioning"), "loki_url", "")

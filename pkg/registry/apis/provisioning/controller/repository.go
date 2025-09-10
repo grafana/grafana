@@ -20,9 +20,9 @@ import (
 	client "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned/typed/provisioning/v0alpha1"
 	informer "github.com/grafana/grafana/apps/provisioning/pkg/generated/informers/externalversions/provisioning/v0alpha1"
 	listers "github.com/grafana/grafana/apps/provisioning/pkg/generated/listers/provisioning/v0alpha1"
+	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 )
@@ -41,13 +41,11 @@ type queueItem struct {
 
 // RepositoryController controls how and when CRD is established.
 type RepositoryController struct {
-	client         client.ProvisioningV0alpha1Interface
-	resourceLister resources.ResourceLister
-	repoLister     listers.RepositoryLister
-	repoSynced     cache.InformerSynced
-	parsers        resources.ParserFactory
-	logger         logging.Logger
-	dualwrite      dualwrite.Service
+	client     client.ProvisioningV0alpha1Interface
+	repoLister listers.RepositoryLister
+	repoSynced cache.InformerSynced
+	logger     logging.Logger
+	dualwrite  dualwrite.Service
 
 	jobs          jobs.Queue
 	finalizer     *finalizer
@@ -69,19 +67,16 @@ func NewRepositoryController(
 	repoInformer informer.RepositoryInformer,
 	repoFactory repository.Factory,
 	resourceLister resources.ResourceLister,
-	parsers resources.ParserFactory,
 	clients resources.ClientFactory,
-	tester RepositoryTester,
 	jobs jobs.Queue,
 	dualwrite dualwrite.Service,
 	healthChecker *HealthChecker,
 	statusPatcher StatusPatcher,
 ) (*RepositoryController, error) {
 	rc := &RepositoryController{
-		client:         provisioningClient,
-		resourceLister: resourceLister,
-		repoLister:     repoInformer.Lister(),
-		repoSynced:     repoInformer.Informer().HasSynced,
+		client:     provisioningClient,
+		repoLister: repoInformer.Lister(),
+		repoSynced: repoInformer.Informer().HasSynced,
 		queue: workqueue.NewTypedRateLimitingQueueWithConfig(
 			workqueue.DefaultTypedControllerRateLimiter[*queueItem](),
 			workqueue.TypedRateLimitingQueueConfig[*queueItem]{
@@ -91,7 +86,6 @@ func NewRepositoryController(
 		repoFactory:   repoFactory,
 		healthChecker: healthChecker,
 		statusPatcher: statusPatcher,
-		parsers:       parsers,
 		finalizer: &finalizer{
 			lister:        resourceLister,
 			clientFactory: clients,
@@ -221,7 +215,7 @@ func (rc *RepositoryController) handleDelete(ctx context.Context, obj *provision
 		} else {
 			err := rc.finalizer.process(ctx, repo, obj.Finalizers)
 			if err != nil {
-				logger.Warn("error running finalizer", "err")
+				logger.Warn("error running finalizer", "err", err)
 			}
 		}
 
@@ -291,7 +285,7 @@ func (rc *RepositoryController) determineSyncStrategy(ctx context.Context, obj *
 	case !healthStatus.Healthy:
 		logger.Info("skip sync for unhealthy repository")
 		return nil
-	case dualwrite.IsReadingLegacyDashboardsAndFolders(ctx, rc.dualwrite):
+	case rc.dualwrite != nil && dualwrite.IsReadingLegacyDashboardsAndFolders(ctx, rc.dualwrite):
 		logger.Info("skip sync as we are reading from legacy storage")
 		return nil
 	case healthStatus.Healthy != obj.Status.Health.Healthy:

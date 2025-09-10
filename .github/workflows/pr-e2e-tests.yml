@@ -30,7 +30,7 @@ jobs:
       changed: ${{ steps.detect-changes.outputs.e2e }}
       cloud_plugins_changed: ${{ steps.detect-changes.outputs.e2e-cloud-plugins }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           persist-credentials: true # required to get more history in the changed-files action
           fetch-depth: 2
@@ -48,7 +48,7 @@ jobs:
     permissions:
       contents: read
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           persist-credentials: false
 
@@ -67,6 +67,7 @@ jobs:
         if: steps.cache.outputs.cache-hit != 'true'
         uses: dagger/dagger-for-github@e47aba410ef9bb9ed81a4d2a97df31061e5e842e
         with:
+          version: 0.18.8
           verb: run
           args: go run ./pkg/build/cmd artifacts -a targz:grafana:linux/amd64 -a docker:grafana:linux/amd64 --grafana-dir="${PWD}" > out.txt
       - name: Cat built artifact
@@ -117,7 +118,7 @@ jobs:
     outputs:
       artifact: ${{ steps.artifact.outputs.artifact }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           persist-credentials: false
       - name: Setup Go
@@ -207,8 +208,6 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - suite: various-suite
-            path: e2e/various-suite
           - suite: various-suite (old arch)
             path: e2e/old-arch/various-suite
             flags: --flags="--env dashboardScene=false"
@@ -227,7 +226,7 @@ jobs:
       contents: read
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           persist-credentials: false
       - uses: actions/download-artifact@v4
@@ -241,6 +240,7 @@ jobs:
       - name: Run E2E tests
         uses: dagger/dagger-for-github@e47aba410ef9bb9ed81a4d2a97df31061e5e842e
         with:
+          version: 0.18.8
           verb: run
           args: go run ./pkg/build/e2e --package=grafana.tar.gz
             --suite=${{ matrix.path }}
@@ -270,7 +270,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           persist-credentials: false
 
@@ -303,7 +303,7 @@ jobs:
         shardTotal: [8]
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           persist-credentials: false
       - uses: actions/download-artifact@v4
@@ -312,6 +312,7 @@ jobs:
       - name: Run E2E tests
         uses: dagger/dagger-for-github@e47aba410ef9bb9ed81a4d2a97df31061e5e842e
         with:
+          version: 0.18.8
           verb: run
           args: go run ./pkg/build/e2e-playwright --package=grafana.tar.gz --shard=${{ matrix.shard }}/${{ matrix.shardTotal }} --blob-dir=./blob-report
       - uses: actions/upload-artifact@v4
@@ -331,7 +332,7 @@ jobs:
       contents: read
       id-token: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           persist-credentials: false
 
@@ -374,6 +375,7 @@ jobs:
       - name: Run E2E tests
         uses: dagger/dagger-for-github@e47aba410ef9bb9ed81a4d2a97df31061e5e842e
         with:
+          version: 0.18.8
           verb: run
           args: go run ./pkg/build/e2e-playwright --package=grafana.tar.gz --playwright-command="yarn e2e:playwright:cloud-plugins" --cloud-plugin-creds=/tmp/outputs.json
 
@@ -397,7 +399,7 @@ jobs:
     name: All Playwright tests complete
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           persist-credentials: false
 
@@ -482,7 +484,7 @@ jobs:
       contents: read
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           persist-credentials: false
       - uses: actions/download-artifact@v4
@@ -492,14 +494,58 @@ jobs:
         if: github.event_name == 'pull_request'
         uses: dagger/dagger-for-github@e47aba410ef9bb9ed81a4d2a97df31061e5e842e
         with:
+          version: 0.18.8
           verb: run
           args: go run ./pkg/build/a11y --package=grafana.tar.gz
       - name: Run non-PR a11y test
         if: github.event_name != 'pull_request'
         uses: dagger/dagger-for-github@e47aba410ef9bb9ed81a4d2a97df31061e5e842e
         with:
+          version: 0.18.8
           verb: run
-          args: go run ./pkg/build/a11y --package=grafana.tar.gz --no-threshold-fail
+          args: go run ./pkg/build/a11y --package=grafana.tar.gz --no-threshold-fail --results=./pa11y-ci-results.json
+      - name: Upload pa11y results
+        if: github.event_name != 'pull_request'
+        uses: actions/upload-artifact@v4
+        with:
+          retention-days: 1
+          name: pa11y-ci-results
+          path: pa11y-ci-results.json
+
+  publish-metrics:
+    needs:
+      - run-a11y-test
+    name: Publish metrics
+    # Run on `grafana/grafana` main branch only
+    if: github.event_name == 'push' && github.repository == 'grafana/grafana' && github.ref_name == 'main'
+    permissions:
+      contents: read
+      id-token: write
+    runs-on: ubuntu-latest
+    steps:
+      - id: vault-secrets
+        uses: grafana/shared-workflows/actions/get-vault-secrets@main
+        with:
+          repo_secrets: |
+            GRAFANA_MISC_STATS_API_KEY=grafana-misc-stats:api_key
+      - name: Checkout code
+        uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: '.nvmrc'
+      - name: Install dependencies
+        run: yarn install --immutable
+      - name: Get pa11y results
+        uses: actions/download-artifact@v4
+        with:
+          name: pa11y-ci-results
+      - name: Extract and publish metrics
+        run: ./scripts/ci-frontend-metrics.sh | node --experimental-strip-types .github/workflows/scripts/publish-frontend-metrics.mts
+        env:
+          GRAFANA_MISC_STATS_API_KEY: ${{ env.GRAFANA_MISC_STATS_API_KEY}}
 
   # This is the job that is actually required by rulesets.
   # We want to only require one job instead of all the individual tests.
@@ -518,7 +564,7 @@ jobs:
     name: All E2E tests complete
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           persist-credentials: false
 

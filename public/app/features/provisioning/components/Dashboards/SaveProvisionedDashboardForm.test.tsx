@@ -36,16 +36,6 @@ jest.mock('../../hooks/useProvisionedRequestHandler', () => {
   };
 });
 
-jest.mock('app/core/components/Select/FolderPicker', () => {
-  const actual = jest.requireActual('app/core/components/Select/FolderPicker');
-  return {
-    ...actual,
-    FolderPicker: function MockFolderPicker() {
-      return <div data-testid="folder-picker">Folder Picker</div>;
-    },
-  };
-});
-
 jest.mock('app/features/provisioning/hooks/useCreateOrUpdateRepositoryFile', () => {
   return {
     useCreateOrUpdateRepositoryFile: jest.fn(),
@@ -55,6 +45,12 @@ jest.mock('app/features/provisioning/hooks/useCreateOrUpdateRepositoryFile', () 
 jest.mock('app/features/provisioning/hooks/useGetResourceRepositoryView', () => {
   return {
     useGetResourceRepositoryView: jest.fn(),
+  };
+});
+
+jest.mock('app/features/provisioning/components/Shared/ProvisioningAwareFolderPicker', () => {
+  return {
+    ProvisioningAwareFolderPicker: () => <div data-testid="folder-picker">Mocked Folder Picker</div>,
   };
 });
 
@@ -75,6 +71,11 @@ jest.mock('react-router-dom-v5-compat', () => {
     useNavigate: () => jest.fn(),
   };
 });
+
+// Mock RTK Query hook used inside ResourceEditFormSharedFields to avoid requiring a Redux Provider
+jest.mock('app/api/clients/provisioning/v0alpha1', () => ({
+  useGetRepositoryRefsQuery: jest.fn().mockReturnValue({ data: { items: [] }, isLoading: false, error: null }),
+}));
 
 jest.mock('app/features/dashboard-scene/saving/SaveDashboardForm', () => {
   const actual = jest.requireActual('app/features/dashboard-scene/saving/SaveDashboardForm');
@@ -235,7 +236,7 @@ describe('SaveProvisionedDashboardForm', () => {
 
     await waitFor(() => {
       expect(mockAction).toHaveBeenCalledWith({
-        ref: undefined,
+        ref: 'dashboard/2023-01-01-abcde',
         name: 'test-repo',
         path: 'test-dashboard.json',
         message: 'Initial commit',
@@ -291,7 +292,7 @@ describe('SaveProvisionedDashboardForm', () => {
     await user.click(submitButton);
     await waitFor(() => {
       expect(mockAction).toHaveBeenCalledWith({
-        ref: undefined,
+        ref: 'dashboard/2023-01-01-abcde',
         name: 'test-repo',
         path: 'test-dashboard.json',
         message: 'Update dashboard',
@@ -346,7 +347,7 @@ describe('SaveProvisionedDashboardForm', () => {
 
     await waitFor(() => {
       expect(mockAction).toHaveBeenCalledWith({
-        ref: undefined,
+        ref: 'dashboard/2023-01-01-abcde',
         name: 'test-repo',
         path: 'error-dashboard.json',
         message: 'Error commit',

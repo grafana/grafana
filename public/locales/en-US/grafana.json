@@ -504,6 +504,7 @@
       "copy-link": "Copy link",
       "duplicate": "Duplicate",
       "export": "Export",
+      "manage-enrichments": "Manage enrichments",
       "silence-notifications": "Silence notifications",
       "with-modifications": "With modifications"
     },
@@ -549,6 +550,7 @@
     },
     "alert-rules": {
       "firing-for": "Firing for",
+      "multiple-sources": "{{numSources}} data sources",
       "next-evaluation": "Next evaluation",
       "next-evaluation-in": "next evaluation in",
       "rule-definition": "Rule definition"
@@ -1120,7 +1122,8 @@
     },
     "enrichment": {
       "error-boundary": {
-        "notification-message-section-extension": "Notification Message Section Extension failed to load"
+        "enrichment-drawer-extension": "Enrichment Drawer Extension failed to load",
+        "rule-viewer-section-extension": "Rule Viewer Enrichment Section failed to load"
       }
     },
     "error-modal": {
@@ -1702,9 +1705,6 @@
       "notes": "Notes",
       "returns": "Returns"
     },
-    "label-picker": {
-      "no-options-message": "No labels found"
-    },
     "labels-editor-modal": {
       "title-edit-labels": "Edit labels"
     },
@@ -1722,9 +1722,6 @@
     "labels-sub-form": {
       "description": "Select a label key/value from the options below, or type a new one and press Enter.",
       "save": "Save"
-    },
-    "labels-with-suggestions": {
-      "text-loading-existing-labels": "Loading existing labels"
     },
     "labels-without-suggestions": {
       "message": {
@@ -2638,13 +2635,15 @@
         "show": "Show"
       },
       "manage-alerts": "In these data sources, you can select Manage alerts via Alerting UI to be able to manage these alert rules in the Grafana UI as well as in the data source where they were configured.",
-      "no-groups": "No groups available",
-      "no-namespaces": "No folders available",
       "placeholder-all-data-sources": "All data sources",
       "placeholder-contact-point": "Select contact point",
       "placeholder-data-sources": "Select data sources",
       "placeholder-labels": "Select labels",
       "plugin-rules": "Plugin rules",
+      "rule-source": {
+        "datasource": "Data source managed",
+        "grafana": "Grafana managed"
+      },
       "rule-type": "Rule type",
       "rulesSearchInput-placeholder-search": "Search",
       "search": "Search",
@@ -2666,6 +2665,7 @@
         "namespace": "Folder / Namespace",
         "rule-health": "Health",
         "rule-name": "Rule name",
+        "rule-source": "Rule source",
         "rule-type": "Type",
         "state": "State"
       }
@@ -3044,6 +3044,7 @@
       "page-nav": {
         "text": {
           "details": "Details",
+          "enrichment": "Alert enrichment",
           "history": "History",
           "instances": "Instances",
           "query-and-conditions": "Query and conditions",
@@ -3393,9 +3394,6 @@
       "text-badge-enabled": "Enabled",
       "text-badge-not-enabled": "Not enabled"
     },
-    "scim-banner": {
-      "message": "SCIM is currently in development and not recommended for production use. Please use with caution and expect potential changes."
-    },
     "server-discovery-modal": {
       "label-the-wellknownopenidconfiguration-endpoint-for-your-id-p": "The .well-known/openid-configuration endpoint for your IdP",
       "title-open-id-connect-discovery-url": "OpenID Connect Discovery URL"
@@ -3565,20 +3563,22 @@
       },
       "error-moving-resources": "Error moving resources",
       "error-no-target-folder-path": "Target folder path is invalid or empty, please select again.",
-      "move-warning": "This will move selected folders and their descendants. In total, this will affect:",
+      "move-total": "In total, this will affect:",
+      "move-warning": "This will move selected folders and their descendants. Available target folders depend on the selected resources.",
+      "move-warning-tooltip": "You can only move provisioned resources within their provisioned folder, and local resources to local folders.",
       "target-folder": "Target Folder"
     },
     "counts": {
       "alertRule_one": "{{count}} alert rule",
-      "alertRule_other": "{{count}} alert rule",
+      "alertRule_other": "{{count}} alert rules",
       "dashboard_one": "{{count}} dashboard",
-      "dashboard_other": "{{count}} dashboard",
+      "dashboard_other": "{{count}} dashboards",
       "folder_one": "{{count}} folder",
-      "folder_other": "{{count}} folder",
+      "folder_other": "{{count}} folders",
       "libraryPanel_one": "{{count}} library panel",
-      "libraryPanel_other": "{{count}} library panel",
+      "libraryPanel_other": "{{count}} library panels",
       "total_one": "{{count}} item",
-      "total_other": "{{count}} item"
+      "total_other": "{{count}} items"
     },
     "dashboards-tree": {
       "checkbox": {
@@ -4019,6 +4019,7 @@
       }
     },
     "tooltip-options": {
+      "label-disable-one-click": "Disable for one-click elements",
       "name-tooltip-mode": "Tooltip mode",
       "tooltip-mode-options": {
         "label-disabled": "Disabled",
@@ -4502,16 +4503,11 @@
             "any": "Match any",
             "label": "Match rules"
           },
-          "label": "Group",
           "visibility": {
             "hide": "Hide",
             "label": "{{type}} visibility",
             "show": "Show"
           }
-        },
-        "shared": {
-          "delete-condition": "Delete Condition",
-          "unsupported-item-type": "This condition is not supported by the element, hence it will be ignored."
         },
         "time-range-size": {
           "info": "Show or hide the {{type}} if the dashboard time range is shorter than the selected time frame.",
@@ -4541,17 +4537,21 @@
             "not-matches": "Not matches"
           },
           "value": "Value"
+        },
+        "wrapper": {
+          "delete-condition": "Delete Condition",
+          "unsupported-object-type": "This condition is not supported by the element, hence it will be ignored."
         }
       },
       "editor": {
+        "info": "Set rules to control {{type}} visibility by matching any or all rules.",
         "not-supported-for-custom-grid": "Conditional rendering is not supported for the custom grid layout. Switch to auto grid to use conditional rendering.",
-        "unsupported-item-type": "Conditional rendering not supported for this item type"
+        "unsupported-object-type": "Conditional rendering not supported for this item type"
       },
       "overlay": {
         "tooltip": "Element is hidden due to conditional rendering."
       },
       "root": {
-        "info": "Set rules to control {{type}} visibility by matching any or all rules.",
         "title": "Show / hide rules"
       }
     },
@@ -4560,6 +4560,12 @@
       "cancel": "Cancel",
       "overwrite": "Overwrite",
       "title-plugin-dashboard": "Plugin dashboard"
+    },
+    "controls": {
+      "menu": {
+        "aria-label": "",
+        "title": ""
+      }
     },
     "dash-nav": {
       "on-open-snapshot-original": {
@@ -4678,13 +4684,16 @@
       "move": "Move {{typeName}}",
       "panel-background": "Change panel background",
       "panel-description": "Change panel description",
+      "panel-edit": "Panel changes",
       "panel-max-repeats-per-row": "Max repeats per row",
       "panel-repeat-direction": "Repeat direction",
       "panel-repeat-variable": "Panel repeat by",
       "panel-title": "Change panel title",
       "paste-panel": "Paste panel",
       "remove": "Remove {{typeName}}",
-      "switch-layout": "Switch layout"
+      "row-title": "Change row title",
+      "switch-layout": "Switch layout",
+      "tab-title": "Change tab title"
     },
     "edit-pane": {
       "elements": {
@@ -4930,12 +4939,11 @@
       "dataframe-aria-label": "Select dataframe",
       "dataframe-label": "Show data frame",
       "download-csv": "Download CSV",
-      "download-excel-description": "Adds header to CSV for use with Excel",
-      "download-excel-label": "Download for Excel",
       "download-logs": "Download logs",
       "download-service": "Download service graph",
       "download-traces": "Download traces",
-      "excel-header": "Excel header",
+      "excel-compatibility-mode-description": "Generates a CSV file that's compatible with most Excel versions",
+      "excel-compatibility-mode-label": "Download for Excel",
       "formatted": "Formatted data",
       "formatted-data-description": "Table data is formatted with options defined in the Field and Override tabs.",
       "formatted-data-label": "Formatted data",
@@ -5839,11 +5847,6 @@
         "transparent-background": "Transparent background"
       }
     },
-    "get-workflow-options": {
-      "label": {
-        "push-to-a-new-branch": "Push to a new branch"
-      }
-    },
     "group-by-variable-form": {
       "alert-not-supported": "This data source does not support group by variables",
       "description-enables-users-custom-values": "Enables users to add custom values to the list",
@@ -6540,7 +6543,8 @@
     },
     "data-source-load-error": {
       "back": "Back",
-      "delete": "Delete"
+      "delete": "Delete",
+      "not-found": "Data source not found"
     },
     "data-source-missing-rights-message": {
       "title-missing-rights": "Missing rights"
@@ -6940,11 +6944,6 @@
       "dragging-a-divider": "Dragging a divider",
       "dragging-a-sub-region": "Dragging a sub-region",
       "value": "Value: {{ dividerPos }}"
-    },
-    "drilldownInfo": {
-      "action": "Go to Grafana Drilldown",
-      "description": "Looking for the Grafana Explore apps? They are now called the Grafana Drilldown apps and can be found under <1>Menu > Drilldown</1>",
-      "title": "Explore Metrics, Logs, Traces and Profiles have moved!"
     },
     "drop-down-menu": {
       "aria-label-links": "Links",
@@ -7568,7 +7567,9 @@
   "folders": {
     "api": {
       "folder-delete-error-provisioned": "Cannot delete provisioned folder. To remove it, delete it from the repository and synchronise to apply the changes.",
-      "folder-deleted-success": "Folder deleted"
+      "folder-deleted-success": "Folder deleted",
+      "folder-move-error-provisioned": "Cannot move provisioned folder. To move it, move it in the repository and synchronise to apply the changes.",
+      "folder-moved-success": "Folder moved"
     },
     "get-loading-nav": {
       "main": {
@@ -8344,6 +8345,10 @@
         "action-title": "Title",
         "action-title-placeholder": "Action title",
         "action-variables": "Variables",
+        "connection": "Connection",
+        "connection-direct-description": "Make request directly from browser",
+        "connection-direct-label": "Direct from browser",
+        "connection-placeholder": "Select connection",
         "one-click-description": "Only one link or action can have one click enabled at a time"
       }
     },
@@ -8768,7 +8773,6 @@
       "cell-inspect": "Inspect value",
       "cell-inspect-tooltip": "Inspect value",
       "copy": "Copy to Clipboard",
-      "count": "Count",
       "csv-counts": "Rows:{{rows}}, Columns:{{columns}}  <5></5>",
       "csv-placeholder": "Enter CSV here...",
       "filter-placeholder": "Filter values",
@@ -8779,6 +8783,11 @@
       "filter-popup-heading": "Filter by values:",
       "filter-popup-input-placeholder": "Filter values",
       "filter-popup-match-case": "Match case",
+      "footer": {
+        "reducer": {
+          "count": "Count"
+        }
+      },
       "inspect-drawer-title": "Inspect value",
       "nested-table": {
         "no-data": "No data"
@@ -9442,9 +9451,9 @@
       "type": {
         "loki": {
           "indexed-label_one": "Indexed label",
-          "indexed-label_other": "Indexed label",
+          "indexed-label_other": "Indexed labels",
           "parsedl-label_one": "Parsed field",
-          "parsedl-label_other": "Parsed field",
+          "parsedl-label_other": "Parsed fields",
           "structured-metadata_one": "Structured metadata",
           "structured-metadata_other": "Structured metadata"
         }
@@ -9528,6 +9537,7 @@
       "fields-section": "Fields",
       "hide-log-line": "Hide log line",
       "inline-mode": "Display inline",
+      "link-value-tooltip": "Link value",
       "links-section": "Links",
       "log-line-field": "Log line",
       "log-line-section": "Log line",
@@ -9637,6 +9647,12 @@
       "hide-search": "Close search",
       "hide-timestamps": "Hide timestamps",
       "hide-unique-labels": "Hide unique labels",
+      "line-wrapping": {
+        "enable": "Enable line wrapping",
+        "enable-prettify": "Enable line wrapping and prettify JSON",
+        "hide": "Disable line wrapping",
+        "label": "Log line wrapping"
+      },
       "newest-first": "Sorted by newest logs first - Click to show oldest first",
       "oldest-first": "Sorted by oldest logs first - Click to show newest first",
       "prettify-json": "Expand JSON logs",
@@ -9645,13 +9661,16 @@
       "resolution-ns": "ns",
       "scroll-bottom": "Scroll to bottom",
       "scroll-top": "Scroll to top",
-      "show-ms-timestamps": "Show millisecond timestamps",
-      "show-ns-timestamps": "Show nanosecond timestamps",
       "show-search": "Search in logs result",
       "show-timestamps": "Show timestamps",
       "show-unique-labels": "Show unique labels",
+      "timestamp": {
+        "hide": "Hide timestamps",
+        "label": "Log timestamps",
+        "milliseconds": "Show millisecond timestamps",
+        "nanoseconds": "Show nanosecond timestamps"
+      },
       "unwrap-lines": "Unwrap lines",
-      "wrap-json-lines": "Wrap lines and expand JSON",
       "wrap-lines": "Wrap lines"
     },
     "logs-navigation": {
@@ -9718,30 +9737,6 @@
     "un-themed-log-label-stats": {
       "field-log-stats": "{{label}}: {{total}} of {{rowCount}} rows have that field",
       "label-log-stats": "{{label}}: {{total}} of {{rowCount}} rows have that label"
-    }
-  },
-  "logs-new": {
-    "category-logs": "Logs",
-    "deduplication-options": {
-      "label-exact": "Exact",
-      "label-none": "None",
-      "label-numbers": "Numbers",
-      "label-signature": "Signature"
-    },
-    "description-infinite-scrolling": "Experimental. Request more results by scrolling to the bottom of the logs list.",
-    "description-show-controls": "Display controls to jump to the last or first log line, and filters by log level",
-    "description-syntax-highlighting": "Use a predefined syntax coloring grammar to highlight relevant parts of the log lines",
-    "name-deduplication": "Deduplication",
-    "name-enable-log-details": "Enable log details",
-    "name-infinite-scrolling": "Enable infinite scrolling",
-    "name-order": "Order",
-    "name-show-controls": "Show controls",
-    "name-syntax-highlighting": "Enable syntax highlighting",
-    "name-time": "Time",
-    "name-wrap-lines": "Wrap lines",
-    "order-options": {
-      "label-newest-first": "Newest first",
-      "label-oldest-first": "Oldest first"
     }
   },
   "manage-dashbaords": {
@@ -11157,11 +11152,16 @@
     "save-or-delete-resource-shared-fields": {
       "comment-placeholder-describe-changes-optional": "Add a note to describe your changes (optional)",
       "description-branch-name-in-git-hub": "Branch name in GitHub",
+      "description-file-path": "File path inside the repository (.json or .yaml)",
+      "description-folder-path": "Folder path inside the repository",
       "description-inside-repository": "",
       "label-branch": "Branch",
       "label-comment": "Comment",
       "label-path": "Path",
-      "label-workflow": "Workflow"
+      "label-workflow": "Workflow",
+      "placeholder-branch": "Select or enter branch name",
+      "placeholder-new-branch": "Enter new branch name",
+      "suffix-configured-branch": "Configured branch"
     }
   },
   "provisioned-resource-preview-banner": {
@@ -11216,15 +11216,15 @@
       "description-clear-repository-connection": "Add a clear name for this repository connection",
       "empty": "Empty",
       "error-field-required": "This field is required.",
-      "ext-storage": "External storage",
+      "external-storage-label": "External storage",
       "files-count_one": "{{count}} files",
       "files-count_other": "{{count}} files",
       "folders-count_one": "{{count}} folder",
       "folders-count_other": "{{count}} folder",
-      "grafana": "Grafana instance",
       "label-display-name": "Display name",
       "placeholder-my-repository-connection": "My repository connection",
-      "text-loading-resource-information": "Loading resource information..."
+      "text-loading-resource-information": "Loading resource information...",
+      "unmanaged-resources-label": "Unmanaged resources"
     },
     "check-repository": {
       "check": "Check"
@@ -11266,7 +11266,9 @@
     },
     "connect-repository-button": {
       "configure": "Configure",
-      "repository-limit-info-alert": "Repository limit reached ({{count}})"
+      "instance-fully-managed-tooltip": "Configuration is disabled because this instance is fully managed",
+      "repository-limit-reached-tooltip_one": "Repository limit reached {{count}}",
+      "repository-limit-reached-tooltip_other": "Repository limit reached {{count}}"
     },
     "delete-repository-button": {
       "button-delete": "Delete",
@@ -11695,6 +11697,10 @@
       "button-previous": "Previous",
       "button-submitting": "Submitting...",
       "error-instance-repository-exists": "Instance repository already exists"
+    },
+    "workflow-options-label": {
+      "push-to-a-new-branch": "Push to a new branch",
+      "push-to-existing-branch": "Push to an existing branch"
     }
   },
   "public-dashboard": {
@@ -11942,7 +11948,6 @@
       "expand-row": "Expand query row",
       "hide-response": "Hide response",
       "remove-query": "Remove query",
-      "replace-query-from-library": "Replace with saved query",
       "show-response": "Show response"
     },
     "query-editor-not-exported": "Data source plugin does not export any Query Editor component"
@@ -11955,14 +11960,6 @@
       "no-deleted-dashboards": "You haven't deleted any dashboards recently.",
       "no-deleted-dashboards-text": "When you delete a dashboard, it will appear here for 30 days before being permanently deleted. Your organization administrator can restore recently-deleted dashboards.",
       "no-search-result": "No results found for your query"
-    },
-    "permanently-delete-modal": {
-      "confirm-text": "Delete",
-      "delete-button": "Delete",
-      "delete-loading": "Deleting...",
-      "text_one": "This action will delete {{numberOfDashboards}} dashboards.",
-      "text_other": "This action will delete {{numberOfDashboards}} dashboards.",
-      "title": "Permanently Delete Dashboards"
     },
     "restore-modal": {
       "folder-picker-text_one": "Please choose a folder where your dashboards will be restored.",
@@ -12079,6 +12076,7 @@
     "selector": {
       "apply": "Apply",
       "cancel": "Cancel",
+      "error-title": "An unexpected error happened",
       "input": {
         "placeholder": "Select scopes...",
         "removeAll": "Remove all scopes"
@@ -12773,8 +12771,6 @@
     "description-calculation": "Choose a reducer function / calculation",
     "description-cell-value-inspect": "Enable cell value inspection in a modal window",
     "description-column-filter": "Enables/disables field filters in table",
-    "description-count-rows": "Display a single count for all data rows",
-    "description-fields": "Select the fields that should be calculated",
     "description-frozen-columns": "Columns are frozen from the left side of the table",
     "description-min-column-width": "The minimum width for column auto resizing",
     "description-tooltip-from-field": "Render a cell from a field (hidden or visible) in a tooltip",
@@ -12801,20 +12797,18 @@
     "name-column-alignment": "Column alignment",
     "name-column-filter": "Column filter",
     "name-column-width": "Column width",
-    "name-count-rows": "Count rows",
     "name-enable-pagination": "Enable pagination",
-    "name-fields": "Fields",
     "name-frozen-columns": "Frozen columns",
     "name-hide-in-table": "Hide in table",
+    "name-max-height": "Max row height",
     "name-min-column-width": "Minimum column width",
-    "name-show-table-footer": "Show table footer",
     "name-show-table-header": "Show table header",
     "name-tooltip-from-field": "Tooltip from field",
     "name-tooltip-placement": "Tooltip placement",
     "name-wrap-header-text": "Wrap header text",
     "name-wrap-text": "Wrap text",
     "placeholder-column-width": "auto",
-    "placeholder-fields": "All Numeric Fields",
+    "placeholder-max-height": "none",
     "tooltip-placement-options": {
       "label-auto": "Auto",
       "label-bottom": "Bottom",

@@ -89,11 +89,11 @@ func LoadConfigFromEnv() (*Config, error) {
 		}
 		cfg.KubeConfig = kubeConfig
 	} else if folderAppURL := os.Getenv("FOLDER_APP_URL"); folderAppURL != "" {
-		exchangeUrl := os.Getenv("AUTH_TOKEN_EXCHANGE_URL")
+		exchangeUrl := os.Getenv("TOKEN_EXCHANGE_URL")
 		authToken := os.Getenv("AUTH_TOKEN")
 		namespace := os.Getenv("FOLDER_APP_NAMESPACE")
 		if exchangeUrl == "" || authToken == "" {
-			return nil, fmt.Errorf("AUTH_TOKEN_EXCHANGE_URL and AUTH_TOKEN must be set when FOLDER_APP_URL is set")
+			return nil, fmt.Errorf("TOKEN_EXCHANGE_URL and AUTH_TOKEN must be set when FOLDER_APP_URL is set")
 		}
 
 		kubeConfig, err := LoadKubeConfigFromFolderAppURL(folderAppURL, exchangeUrl, authToken, namespace)
@@ -109,9 +109,9 @@ func LoadConfigFromEnv() (*Config, error) {
 		cfg.KubeConfig = kubeConfig
 	}
 
-	cfg.ZanzanaClient.Address = os.Getenv("ZANZANA_ADDR")
+	cfg.ZanzanaClient.URL = os.Getenv("ZANZANA_ADDR")
 	cfg.ZanzanaClient.Token = os.Getenv("ZANZANA_TOKEN")
-	cfg.ZanzanaClient.TokenExchangeURL = os.Getenv("ZANZANA_TOKEN_EXCHANGE_URL")
+	cfg.ZanzanaClient.TokenExchangeURL = os.Getenv("TOKEN_EXCHANGE_URL")
 	cfg.ZanzanaClient.ServerCertFile = os.Getenv("ZANZANA_SERVER_CERT_FILE")
 
 	cfg.FolderReconciler.Namespace = os.Getenv("FOLDER_RECONCILER_NAMESPACE")
