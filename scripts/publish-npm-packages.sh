@@ -43,9 +43,21 @@ if [[ "$NPM_TOKEN" != "oidc" ]]; then
 fi
 
 # Loop over .tar files in directory and publish them to npm registry
+failed_packages=()
 for file in ./npm-artifacts/*.tgz; do
-    npm publish "$file" --tag "$dist_tag" --registry "$registry"
+    if ! npm publish "$file" --tag "$dist_tag" --registry "$registry"; then
+        failed_packages+=("$file")
+    fi
 done
+
+# Log failed packages and exit with error if any failed
+if (( ${#failed_packages[@]} > 0 )); then
+    echo "\nERROR: The following packages failed to publish:"
+    for pkg in "${failed_packages[@]}"; do
+        echo "  - $pkg"
+    done
+    exit 1
+fi
 
 # Check if any files in packages/grafana-e2e-selectors were changed. If so, add a 'modified' tag to the package
 CHANGES_COUNT=$(git diff HEAD~1..HEAD --name-only -- packages/grafana-e2e-selectors | awk 'END{print NR}')
