@@ -191,6 +191,7 @@ func (s *ResourcePermSqlBackend) buildRbacAssignments(ctx context.Context, ns ty
 				AssignmentTable:  "user_role",
 				AssignmentColumn: "user_id",
 				SubjectID:        fmt.Sprintf("%d", userID.ID),
+				SubjectUID:       perm.Name,
 				Action:           rbacActionSet,
 				Scope:            rbacScope,
 			})
@@ -210,6 +211,7 @@ func (s *ResourcePermSqlBackend) buildRbacAssignments(ctx context.Context, ns ty
 				AssignmentTable:  "team_role",
 				AssignmentColumn: "team_id",
 				SubjectID:        fmt.Sprintf("%d", teamID.ID),
+				SubjectUID:       perm.Name,
 				Action:           rbacActionSet,
 				Scope:            rbacScope,
 			})
@@ -229,6 +231,7 @@ func (s *ResourcePermSqlBackend) buildRbacAssignments(ctx context.Context, ns ty
 				AssignmentTable:  "user_role",
 				AssignmentColumn: "user_id",
 				SubjectID:        fmt.Sprintf("%d", saID.ID),
+				SubjectUID:       perm.Name,
 				Action:           rbacActionSet,
 				Scope:            rbacScope,
 			})
@@ -241,6 +244,7 @@ func (s *ResourcePermSqlBackend) buildRbacAssignments(ctx context.Context, ns ty
 				AssignmentTable:  "builtin_role",
 				AssignmentColumn: "role",
 				SubjectID:        perm.Name,
+				SubjectUID:       perm.Name,
 				Action:           rbacActionSet,
 				Scope:            rbacScope,
 			})
@@ -328,7 +332,7 @@ func (s *ResourcePermSqlBackend) updateResourcePermission(ctx context.Context, d
 	}
 	currentPerms := permsByResource[*grn]
 	if len(currentPerms) == 0 {
-		return 0, fmt.Errorf("resource permissions doesn't exist for resource %s", grn.Name)
+		return 0, fmt.Errorf("resource permissions don't exist for resource %s: %w", grn.Name, errNotFound)
 	}
 
 	assignments, err := s.buildRbacAssignments(ctx, ns, mapper, v0ResourcePerm, mapper.Scope(grn.Name))
@@ -344,8 +348,7 @@ func (s *ResourcePermSqlBackend) updateResourcePermission(ctx context.Context, d
 	for _, desired := range assignments {
 		found := false
 		for _, existing := range currentPerms {
-			// TODO check what fields need to be compared here
-			if desired.Action == existing.Action && desired.SubjectID == existing.SubjectUID && desired.AssignmentColumn == existing.SubjectType {
+			if comparePermissions(existing, desired) {
 				found = true
 				break
 			}
@@ -359,7 +362,7 @@ func (s *ResourcePermSqlBackend) updateResourcePermission(ctx context.Context, d
 	for _, existing := range currentPerms {
 		found := false
 		for _, desired := range assignments {
-			if desired.Action == existing.Action && desired.SubjectID == existing.SubjectUID && desired.AssignmentColumn == existing.SubjectType {
+			if comparePermissions(existing, desired) {
 				found = true
 				break
 			}
@@ -398,6 +401,20 @@ func (s *ResourcePermSqlBackend) updateResourcePermission(ctx context.Context, d
 
 	// Return a timestamp as resource version
 	return timeNow().UnixMilli(), nil
+}
+
+func comparePermissions(a rbacAssignment, b rbacAssignmentCreate) bool {
+	if a.Action != b.Action || a.Scope != b.Scope || a.SubjectUID != b.SubjectUID {
+		return false
+	}
+
+	// For builtin roles, the subject type matches the assignment table directly and the subject ID and UID are the role name
+	// For users and teams, the assignment table is "user_role" or "team_role", while the subject type is "user" or "team" and the subject ID is the internal ID stored as string while the subject UID is "user-<id>" or "team-<id>"
+	if a.SubjectType == "builtin_role" {
+		return b.AssignmentTable == "builtin_role"
+	} else {
+		return b.AssignmentTable == a.SubjectType+"_role"
+	}
 }
 
 func validateCreateAndUpdateInput(v0ResourcePerm *v0alpha1.ResourcePermission, grn *groupResourceName) error {

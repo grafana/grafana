@@ -378,6 +378,113 @@ func TestIntegration_ResourcePermSqlBackend_CreateResourcePermission(t *testing.
 	})
 }
 
+func TestIntegration_ResourcePermSqlBackend_UpdateResourcePermission(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	backend := setupBackend(t)
+	backend.identityStore = NewFakeIdentityStore(t)
+	ctx := context.Background()
+	sql, err := backend.dbProvider(ctx)
+	require.NoError(t, err)
+	setupTestRoles(t, sql.DB)
+
+	t.Run("should fail to update resource permission for a resource that doesn't have any permissions yet", func(t *testing.T) {
+		resourcePerm := &v0alpha1.ResourcePermission{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "folder.grafana.app-folders-newfold",
+				Namespace: "default",
+			},
+			Spec: v0alpha1.ResourcePermissionSpec{
+				Resource: v0alpha1.ResourcePermissionspecResource{
+					ApiGroup: "folder.grafana.app",
+					Resource: "folders",
+					Name:     "newfold",
+				},
+				Permissions: []v0alpha1.ResourcePermissionspecPermission{
+					{
+						Kind: v0alpha1.ResourcePermissionSpecPermissionKindBasicRole,
+						Name: "Viewer",
+						Verb: "view",
+					},
+				},
+			},
+		}
+
+		mapper, grn, err := backend.splitResourceName(resourcePerm.Name)
+		require.NoError(t, err)
+
+		_, err = backend.updateResourcePermission(ctx, sql, types.NamespaceInfo{Value: "default", OrgID: 1}, mapper, grn, resourcePerm)
+		require.Error(t, err)
+		require.ErrorIs(t, err, errNotFound)
+	})
+
+	t.Run("should update resource permission", func(t *testing.T) {
+		resourcePerm := &v0alpha1.ResourcePermission{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "folder.grafana.app-folders-fold1",
+				Namespace: "default",
+			},
+			Spec: v0alpha1.ResourcePermissionSpec{
+				Resource: v0alpha1.ResourcePermissionspecResource{
+					ApiGroup: "folder.grafana.app",
+					Resource: "folders",
+					Name:     "fold1",
+				},
+				Permissions: []v0alpha1.ResourcePermissionspecPermission{
+					{
+						Kind: v0alpha1.ResourcePermissionSpecPermissionKindBasicRole,
+						Name: "Editor",
+						Verb: "view",
+					},
+					{
+						Kind: v0alpha1.ResourcePermissionSpecPermissionKindUser,
+						Name: "user-1",
+						Verb: "view",
+					},
+					{
+						Kind: v0alpha1.ResourcePermissionSpecPermissionKindServiceAccount,
+						Name: "sa-1",
+						Verb: "admin",
+					},
+				},
+			},
+		}
+
+		mapper, grn, err := backend.splitResourceName(resourcePerm.Name)
+		require.NoError(t, err)
+
+		rv, err := backend.updateResourcePermission(ctx, sql, types.NamespaceInfo{Value: "default", OrgID: 1}, mapper, grn, resourcePerm)
+		require.NoError(t, err)
+		require.Equal(t, timeNow().UnixMilli(), rv)
+
+		var permission accesscontrol.Permission
+		sess := sql.DB.GetSqlxSession()
+
+		// Check that the right permissions exist and that the old ones have been removed
+		// User-1 should still have view access to fold1
+		// User-2 should no longer have edit on fold1
+		// Service account should now have admin on fold1
+		// Builtin Editor should now have view access to fold1
+
+		err = sess.Get(ctx, &permission, "SELECT action FROM permission WHERE scope = \"folders:uid:fold1\" AND role_id = (SELECT role_id FROM user_role WHERE org_id = ? AND user_id = ?)", 1, "1")
+		require.NoError(t, err)
+		require.Equal(t, "folders:view", permission.Action)
+
+		count := 0
+		err = sess.Get(ctx, &count, "SELECT COUNT(*) FROM permission WHERE role_id = (SELECT role_id FROM user_role WHERE org_id = ? AND user_id = ?)", 1, "2")
+		require.NoError(t, err)
+		require.Equal(t, 0, count)
+
+		err = sess.Get(ctx, &permission, "SELECT action FROM permission WHERE scope = \"folders:uid:fold1\" AND role_id = (SELECT role_id FROM user_role WHERE org_id = ? AND user_id = ?)", 1, "3")
+		require.NoError(t, err)
+		require.Equal(t, "folders:admin", permission.Action)
+
+		err = sess.Get(ctx, &permission, "SELECT action FROM permission WHERE scope = \"folders:uid:fold1\" AND role_id = (SELECT role_id FROM builtin_role WHERE org_id = ? AND role = ?)", 1, "Editor")
+		require.NoError(t, err)
+		require.Equal(t, "folders:view", permission.Action)
+	})
+}
+
 type fakeIdentityStore struct {
 	t *testing.T
 
@@ -390,8 +497,8 @@ type fakeIdentityStore struct {
 func NewFakeIdentityStore(t *testing.T) *fakeIdentityStore {
 	return &fakeIdentityStore{
 		t:               t,
-		users:           map[string]int64{"captain": 101},
-		serviceAccounts: map[string]int64{"robot": 201},
+		users:           map[string]int64{"captain": 101, "user-1": 1, "user-2": 2},
+		serviceAccounts: map[string]int64{"robot": 201, "sa-1": 3},
 		teams:           map[string]int64{"devs": 301},
 		expectedNs:      types.NamespaceInfo{Value: "default"},
 	}

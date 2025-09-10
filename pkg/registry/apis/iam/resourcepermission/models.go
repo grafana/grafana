@@ -60,6 +60,7 @@ type rbacAssignmentCreate struct {
 	Scope            string // e.g. "folders:uid:1"
 	RoleName         string // e.g. "managed:users:1:permissions
 	SubjectID        any    // int64 for user/team, string for builtin_role
+	SubjectUID       string
 	AssignmentTable  string // "user_role", "team_role", or "builtin_role"
 	AssignmentColumn string // "user_id", "team_id", or "role"
 }
