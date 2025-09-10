@@ -11350,6 +11350,8 @@
       "label-sync-interval": "Sync Interval (seconds)"
     },
     "folder-repository-list": {
+      "all-resources-managed_one": "All {{count}} resources are managed",
+      "all-resources-managed_other": "All {{count}} resources are managed",
       "no-results-matching-your-query": "No results matching your query",
       "placeholder-search": "Search"
     },
