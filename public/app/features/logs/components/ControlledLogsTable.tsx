@@ -43,7 +43,7 @@ export const ControlledLogsTable = ({
 
   return (
     <div ref={ref} className={styles.logRowsContainer}>
-      <LogListControls eventBus={eventBus} visualisationType={visualisationType} containerElement={ref.current} />
+      <LogListControls eventBus={eventBus} visualisationType={visualisationType} />
       <div className={styles.logRows} data-testid="logRowsTable">
         {/* Width should be full width minus logs navigation and padding */}
         <LogsTableWrap

@@ -46,7 +46,7 @@ describe('LogListControls', () => {
   test('Renders without errors', () => {
     render(
       <LogListContextProvider {...contextProps}>
-        <LogListControls containerElement={document.createElement('div')} eventBus={new EventBusSrv()} />
+        <LogListControls eventBus={new EventBusSrv()} />
       </LogListContextProvider>
     );
     expect(screen.getByLabelText('Scroll to bottom')).toBeInTheDocument();
@@ -68,7 +68,7 @@ describe('LogListControls', () => {
   test('Renders legacy controls', () => {
     render(
       <LogListContextProvider {...contextProps} app={CoreApp.Explore} showUniqueLabels={false} prettifyJSON={false}>
-        <LogListControls containerElement={document.createElement('div')} eventBus={new EventBusSrv()} />
+        <LogListControls eventBus={new EventBusSrv()} />
       </LogListContextProvider>
     );
     expect(screen.getByLabelText('Show unique labels')).toBeInTheDocument();
@@ -80,7 +80,7 @@ describe('LogListControls', () => {
     (app: CoreApp) => {
       render(
         <LogListContextProvider {...contextProps} app={app}>
-          <LogListControls containerElement={document.createElement('div')} eventBus={new EventBusSrv()} />
+          <LogListControls eventBus={new EventBusSrv()} />
         </LogListContextProvider>
       );
       expect(screen.getByLabelText('Scroll to bottom')).toBeInTheDocument();
@@ -97,7 +97,7 @@ describe('LogListControls', () => {
   test('Renders a subset of options for plugins', () => {
     render(
       <LogListContextProvider {...contextProps} app={CoreApp.Unknown}>
-        <LogListControls containerElement={document.createElement('div')} eventBus={new EventBusSrv()} />
+        <LogListControls eventBus={new EventBusSrv()} />
       </LogListContextProvider>
     );
     expect(screen.getByLabelText('Scroll to bottom')).toBeInTheDocument();
@@ -121,7 +121,7 @@ describe('LogListControls', () => {
     jest.spyOn(eventBus, 'publish');
     render(
       <LogListContextProvider {...contextProps}>
-        <LogListControls containerElement={document.createElement('div')} eventBus={eventBus} />
+        <LogListControls eventBus={eventBus} />
       </LogListContextProvider>
     );
     await userEvent.click(screen.getByLabelText('Scroll to bottom'));
@@ -147,7 +147,7 @@ describe('LogListControls', () => {
         sortOrder={LogsSortOrder.Ascending}
         onLogOptionsChange={onLogOptionsChange}
       >
-        <LogListControls containerElement={document.createElement('div')} eventBus={new EventBusSrv()} />
+        <LogListControls eventBus={new EventBusSrv()} />
       </LogListContextProvider>
     );
     await userEvent.click(screen.getByLabelText(/oldest logs first/));
@@ -159,7 +159,7 @@ describe('LogListControls', () => {
     const onLogOptionsChange = jest.fn();
     render(
       <LogListContextProvider {...contextProps} onLogOptionsChange={onLogOptionsChange}>
-        <LogListControls containerElement={document.createElement('div')} eventBus={new EventBusSrv()} />
+        <LogListControls eventBus={new EventBusSrv()} />
       </LogListContextProvider>
     );
     await userEvent.click(screen.getByLabelText('Deduplication'));
@@ -172,7 +172,7 @@ describe('LogListControls', () => {
     const onLogOptionsChange = jest.fn();
     render(
       <LogListContextProvider {...contextProps} onLogOptionsChange={onLogOptionsChange}>
-        <LogListControls containerElement={document.createElement('div')} eventBus={new EventBusSrv()} />
+        <LogListControls eventBus={new EventBusSrv()} />
       </LogListContextProvider>
     );
     await userEvent.click(screen.getByLabelText('Display levels'));
@@ -191,7 +191,7 @@ describe('LogListControls', () => {
     const onLogOptionsChange = jest.fn();
     render(
       <LogListContextProvider {...contextProps} showTime={false} onLogOptionsChange={onLogOptionsChange}>
-        <LogListControls containerElement={document.createElement('div')} eventBus={new EventBusSrv()} />
+        <LogListControls eventBus={new EventBusSrv()} />
       </LogListContextProvider>
     );
     await userEvent.click(screen.getByLabelText('Show timestamps'));
@@ -203,7 +203,7 @@ describe('LogListControls', () => {
     const onLogOptionsChange = jest.fn();
     render(
       <LogListContextProvider {...contextProps} wrapLogMessage={false} onLogOptionsChange={onLogOptionsChange}>
-        <LogListControls containerElement={document.createElement('div')} eventBus={new EventBusSrv()} />
+        <LogListControls eventBus={new EventBusSrv()} />
       </LogListContextProvider>
     );
     await userEvent.click(screen.getByLabelText('Wrap lines'));
@@ -223,7 +223,7 @@ describe('LogListControls', () => {
         onLogOptionsChange={onLogOptionsChange}
         prettifyJSON={false}
       >
-        <LogListControls containerElement={document.createElement('div')} eventBus={new EventBusSrv()} />
+        <LogListControls eventBus={new EventBusSrv()} />
       </LogListContextProvider>
     );
 
@@ -258,7 +258,7 @@ describe('LogListControls', () => {
     const onLogOptionsChange = jest.fn();
     render(
       <LogListContextProvider {...contextProps} showTime={false} onLogOptionsChange={onLogOptionsChange}>
-        <LogListControls containerElement={document.createElement('div')} eventBus={new EventBusSrv()} />
+        <LogListControls eventBus={new EventBusSrv()} />
       </LogListContextProvider>
     );
 
@@ -286,7 +286,7 @@ describe('LogListControls', () => {
     const onLogOptionsChange = jest.fn();
     render(
       <LogListContextProvider {...contextProps} syntaxHighlighting={false} onLogOptionsChange={onLogOptionsChange}>
-        <LogListControls containerElement={document.createElement('div')} eventBus={new EventBusSrv()} />
+        <LogListControls eventBus={new EventBusSrv()} />
       </LogListContextProvider>
     );
     await userEvent.click(screen.getByLabelText('Enable highlighting'));
@@ -297,13 +297,13 @@ describe('LogListControls', () => {
   test('Controls unique labels', async () => {
     const { rerender } = render(
       <LogListContextProvider {...contextProps} app={CoreApp.Explore} showUniqueLabels={false}>
-        <LogListControls containerElement={document.createElement('div')} eventBus={new EventBusSrv()} />
+        <LogListControls eventBus={new EventBusSrv()} />
       </LogListContextProvider>
     );
     await userEvent.click(screen.getByLabelText('Show unique labels'));
     rerender(
       <LogListContextProvider {...contextProps} app={CoreApp.Explore} showUniqueLabels={false}>
-        <LogListControls containerElement={document.createElement('div')} eventBus={new EventBusSrv()} />
+        <LogListControls eventBus={new EventBusSrv()} />
       </LogListContextProvider>
     );
     expect(screen.getByLabelText('Hide unique labels'));
@@ -312,13 +312,13 @@ describe('LogListControls', () => {
   test('Controls Expand JSON logs', async () => {
     const { rerender } = render(
       <LogListContextProvider {...contextProps} prettifyJSON={false}>
-        <LogListControls containerElement={document.createElement('div')} eventBus={new EventBusSrv()} />
+        <LogListControls eventBus={new EventBusSrv()} />
       </LogListContextProvider>
     );
     await userEvent.click(screen.getByLabelText('Expand JSON logs'));
     rerender(
       <LogListContextProvider {...contextProps} showUniqueLabels={false}>
-        <LogListControls containerElement={document.createElement('div')} eventBus={new EventBusSrv()} />
+        <LogListControls eventBus={new EventBusSrv()} />
       </LogListContextProvider>
     );
     expect(screen.getByLabelText('Collapse JSON logs'));
@@ -330,7 +330,7 @@ describe('LogListControls', () => {
 
     render(
       <LogListContextProvider {...contextProps}>
-        <LogListControls containerElement={document.createElement('div')} eventBus={new EventBusSrv()} />
+        <LogListControls eventBus={new EventBusSrv()} />
       </LogListContextProvider>
     );
     await userEvent.click(screen.getByLabelText('Use small font size'));
@@ -350,7 +350,7 @@ describe('LogListControls', () => {
     jest.mocked(downloadLogs).mockClear();
     render(
       <LogListContextProvider {...contextProps}>
-        <LogListControls containerElement={document.createElement('div')} eventBus={new EventBusSrv()} />
+        <LogListControls eventBus={new EventBusSrv()} />
       </LogListContextProvider>
     );
     await userEvent.click(screen.getByLabelText('Download logs'));
@@ -368,7 +368,7 @@ describe('LogListControls', () => {
 
     render(
       <LogListContextProvider {...contextProps} logs={logs} filterLevels={[LogLevel.error]}>
-        <LogListControls containerElement={document.createElement('div')} eventBus={new EventBusSrv()} />
+        <LogListControls eventBus={new EventBusSrv()} />
       </LogListContextProvider>
     );
     await userEvent.click(screen.getByLabelText('Download logs'));
@@ -380,13 +380,13 @@ describe('LogListControls', () => {
     const log = createLogLine({ entry: 'the\\r\\nentry', hasUnescapedContent: true });
     const { rerender } = render(
       <LogListContextProvider {...contextProps} logs={[log]}>
-        <LogListControls containerElement={document.createElement('div')} eventBus={new EventBusSrv()} />
+        <LogListControls eventBus={new EventBusSrv()} />
       </LogListContextProvider>
     );
     await userEvent.click(screen.getByLabelText('Fix incorrectly escaped newline and tab sequences in log lines'));
     rerender(
       <LogListContextProvider {...contextProps} logs={[log]}>
-        <LogListControls containerElement={document.createElement('div')} eventBus={new EventBusSrv()} />
+        <LogListControls eventBus={new EventBusSrv()} />
       </LogListContextProvider>
     );
     await userEvent.click(screen.getByLabelText('Remove escaping'));

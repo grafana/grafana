@@ -27,7 +27,7 @@ import { ScrollToLogsEvent } from './virtualization';
 type Props = {
   eventBus: EventBus;
   visualisationType?: LogsVisualisationType;
-  containerElement: HTMLDivElement | null;
+  // containerElement: HTMLDivElement | null;
 };
 
 const DEDUP_OPTIONS = [

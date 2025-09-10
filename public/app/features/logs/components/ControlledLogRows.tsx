@@ -172,7 +172,7 @@ const LogRowsComponent = forwardRef<HTMLDivElement | null, LogRowsComponentProps
 
     return (
       <div className={styles.logRowsContainer}>
-        <LogListControls eventBus={eventBus} containerElement={scrollElementRef.current} />
+        <LogListControls eventBus={eventBus} />
         <div ref={scrollElementRef} className={scrollElementClassName}>
           <InfiniteScroll
             loading={loading}

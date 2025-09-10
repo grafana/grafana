@@ -414,7 +414,7 @@ const LogListComponent = ({
 
   return (
     <div className={styles.logListContainer}>
-      {showControls && <LogListControls eventBus={eventBus} containerElement={containerElement} />}
+      {showControls && <LogListControls eventBus={eventBus} />}
       {detailsMode === 'sidebar' && showDetails.length > 0 && (
         <LogLineDetails
           containerElement={containerElement}

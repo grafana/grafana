@@ -92,7 +92,13 @@ export const LogListControlsSelectOption = React.forwardRef<SVGElement, SelectPr
                     className={`${styles.customControlButton} ${isActive ? styles.controlButtonActive : styles.controlButton}`}
                     type="button"
                   >
-                    <Icon {...iconButtonProps} name={iconButtonName} size="lg" className={styles.customControlIcon} />
+                    <Icon
+                      ref={ref}
+                      {...iconButtonProps}
+                      name={iconButtonName}
+                      size="lg"
+                      className={styles.customControlIcon}
+                    />
                     {isActive && <span className={styles.customControlTag}>{customTagText}</span>}
                   </button>
                 </Tooltip>
@@ -165,6 +171,7 @@ const getStyles = (theme: GrafanaTheme2, expanded: boolean) => {
     iconContainer: css({
       display: 'flex',
       alignItems: 'center',
+      height: '16px',
     }),
     container: css({
       fontSize: theme.typography.pxToRem(12),
@@ -174,6 +181,7 @@ const getStyles = (theme: GrafanaTheme2, expanded: boolean) => {
     label: css({
       display: 'flex',
       justifyContent: expanded ? 'space-between' : 'center',
+      marginRight: expanded ? '2.5px' : 0,
     }),
   };
 };
