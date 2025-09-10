@@ -2,7 +2,6 @@
 import { css, cx } from '@emotion/css';
 import { useId, useState } from 'react';
 import * as React from 'react';
-import tinycolor from 'tinycolor2';
 
 import { colorManipulator, GrafanaTheme2, ThemeRichColor, ThemeVizHue } from '@grafana/data';
 
