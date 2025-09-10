@@ -282,6 +282,10 @@ export interface FeatureToggles {
   */
   kubernetesAlertingRules?: boolean;
   /**
+  * Adds support for Kubernetes correlations
+  */
+  kubernetesCorrelations?: boolean;
+  /**
   * Disable schema validation for dashboards/v1
   */
   dashboardDisableSchemaValidationV1?: boolean;

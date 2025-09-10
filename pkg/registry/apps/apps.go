@@ -38,13 +38,15 @@ func ProvideAppInstallers(
 	installers := []appsdkapiserver.AppInstaller{
 		playlistAppInstaller,
 		pluginsApplInstaller,
-		correlationsAppInstaller,
 	}
 	if features.IsEnabledGlobally(featuremgmt.FlagKubernetesShortURLs) {
 		installers = append(installers, shorturlAppInstaller)
 	}
 	if features.IsEnabledGlobally(featuremgmt.FlagKubernetesAlertingRules) {
 		installers = append(installers, rulesAppInstaller)
+	}
+	if features.IsEnabledGlobally(featuremgmt.FlagKubernetesCorrelations) {
+		installers = append(installers, correlationsAppInstaller)
 	}
 	return installers
 }
