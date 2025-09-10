@@ -121,8 +121,7 @@ func applyPanelDefaults(panel map[string]interface{}) {
 		panel["title"] = ""
 	}
 
-	// Auto-migration logic (matches frontend PanelModel constructor)
-	applyPanelAutoMigration(panel)
+	// Auto-migration logic is now applied during cleanup phase to match frontend behavior
 
 	// Structure normalizations
 	ensureQueryIds(panel)
@@ -442,6 +441,22 @@ func getPanels(dashboard map[string]interface{}) []map[string]interface{} {
 // cleanupPanelForSave mimics the PanelModel.getSaveModel() behavior
 // This removes properties that shouldn't be persisted and filters out default values
 func cleanupPanelForSave(panel map[string]interface{}) {
+	cleanupPanelForSaveWithContext(panel, false)
+}
+
+// cleanupPanelForSaveWithContext mimics the PanelModel.getSaveModel() behavior
+// This removes properties that shouldn't be persisted and filters out default values
+func cleanupPanelForSaveWithContext(panel map[string]interface{}, isNested bool) {
+	// Apply auto-migration logic (matches frontend PanelModel constructor)
+	// This happens during cleanup phase to match when frontend applies auto-migration
+	// Only apply auto-migration to top-level panels, not nested ones (matches frontend behavior)
+	if !isNested {
+		applyPanelAutoMigration(panel)
+	}
+
+	// Row panel specific cleanup (matches frontend behavior)
+	cleanupRowPanelProperties(panel)
+
 	// Track which properties were present in the input to preserve them even if they become empty
 	originalProperties := make(map[string]bool)
 	for key := range panel {
@@ -743,7 +758,7 @@ func cleanupPanelList(panels []interface{}) {
 			if nestedPanels, ok := panel["panels"].([]interface{}); ok {
 				for _, nestedPanelInterface := range nestedPanels {
 					if nestedPanel, ok := nestedPanelInterface.(map[string]interface{}); ok {
-						cleanupPanelForSave(nestedPanel)
+						cleanupPanelForSaveWithContext(nestedPanel, true)
 					}
 				}
 			}
@@ -772,6 +787,8 @@ func sortPanelsByGridPosition(panels []interface{}) {
 		if okA {
 			if y, ok := gridPosA["y"].(float64); ok {
 				yA = y
+			} else if y, ok := gridPosA["y"].(int); ok {
+				yA = float64(y)
 			}
 		}
 
@@ -779,6 +796,8 @@ func sortPanelsByGridPosition(panels []interface{}) {
 		if okB {
 			if y, ok := gridPosB["y"].(float64); ok {
 				yB = y
+			} else if y, ok := gridPosB["y"].(int); ok {
+				yB = float64(y)
 			}
 		}
 
@@ -787,6 +806,8 @@ func sortPanelsByGridPosition(panels []interface{}) {
 			if okA {
 				if x, ok := gridPosA["x"].(float64); ok {
 					xA = x
+				} else if x, ok := gridPosA["x"].(int); ok {
+					xA = float64(x)
 				}
 			}
 
@@ -794,12 +815,30 @@ func sortPanelsByGridPosition(panels []interface{}) {
 			if okB {
 				if x, ok := gridPosB["x"].(float64); ok {
 					xB = x
+				} else if x, ok := gridPosB["x"].(int); ok {
+					xB = float64(x)
 				}
 			}
 			return xA < xB
 		}
 		return yA < yB
 	})
+}
+
+// cleanupRowPanelProperties removes default row panel properties that frontend filters out
+func cleanupRowPanelProperties(panel map[string]interface{}) {
+	panelType, ok := panel["type"].(string)
+	if !ok || panelType != "row" {
+		return
+	}
+
+	// Note: The frontend keeps "collapsed": false in the output, so we should NOT remove it
+	// This matches the frontend behavior where collapsed: false is preserved in getSaveModel()
+
+	// Remove repeat if empty string (default value)
+	if repeat, ok := panel["repeat"].(string); ok && repeat == "" {
+		delete(panel, "repeat")
+	}
 }
 
 // applyPanelAutoMigration applies the same auto-migration logic as the frontend PanelModel constructor

@@ -21,6 +21,34 @@
   "links": [],
   "panels": [
     {
+      "collapsed": false,
+      "datasource": {
+        "apiVersion": "v1",
+        "type": "prometheus",
+        "uid": "default-ds-uid"
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "id": 13,
+      "panels": [],
+      "targets": [
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "prometheus",
+            "uid": "default-ds-uid"
+          },
+          "refId": "A"
+        }
+      ],
+      "type": "row"
+    },
+    {
+      "autoMigrateFrom": "graph",
       "datasource": {
         "apiVersion": "v1",
         "type": "prometheus",
@@ -44,7 +72,7 @@
         }
       ],
       "title": "CPU Usage",
-      "type": "graph"
+      "type": "timeseries"
     },
     {
       "datasource": {
@@ -110,34 +138,6 @@
       "type": "stat"
     },
     {
-      "collapsed": false,
-      "datasource": {
-        "apiVersion": "v1",
-        "type": "prometheus",
-        "uid": "default-ds-uid"
-      },
-      "gridPos": {
-        "h": 7,
-        "w": 24,
-        "x": 0,
-        "y": 0
-      },
-      "id": 13,
-      "panels": [],
-      "repeat": "",
-      "targets": [
-        {
-          "datasource": {
-            "apiVersion": "v1",
-            "type": "prometheus",
-            "uid": "default-ds-uid"
-          },
-          "refId": "A"
-        }
-      ],
-      "type": "row"
-    },
-    {
       "collapsed": true,
       "datasource": {
         "apiVersion": "v1",
@@ -188,7 +188,6 @@
           "type": "graph"
         }
       ],
-      "repeat": "",
       "targets": [
         {
           "datasource": {
@@ -200,6 +199,33 @@
         }
       ],
       "title": "Collapsed Row",
+      "type": "row"
+    },
+    {
+      "datasource": {
+        "apiVersion": "v1",
+        "type": "prometheus",
+        "uid": "default-ds-uid"
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 24,
+        "x": 0,
+        "y": 17
+      },
+      "id": 15,
+      "panels": [],
+      "targets": [
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "prometheus",
+            "uid": "default-ds-uid"
+          },
+          "refId": "A"
+        }
+      ],
+      "title": "Visible Row Title",
       "type": "row"
     },
     {
@@ -282,21 +308,19 @@
       "type": "bargauge"
     },
     {
-      "collapsed": false,
       "datasource": {
         "apiVersion": "v1",
         "type": "prometheus",
         "uid": "default-ds-uid"
       },
       "gridPos": {
-        "h": 6,
+        "h": 4,
         "w": 24,
         "x": 0,
-        "y": 17
+        "y": 24
       },
-      "id": 15,
+      "id": 16,
       "panels": [],
-      "repeat": "",
       "targets": [
         {
           "datasource": {
@@ -307,7 +331,6 @@
           "refId": "A"
         }
       ],
-      "title": "Visible Row Title",
       "type": "row"
     },
     {
@@ -364,61 +387,6 @@
       "type": "logs"
     },
     {
-      "collapsed": false,
-      "datasource": {
-        "apiVersion": "v1",
-        "type": "prometheus",
-        "uid": "default-ds-uid"
-      },
-      "gridPos": {
-        "h": 4,
-        "w": 24,
-        "x": 0,
-        "y": 24
-      },
-      "id": 16,
-      "panels": [],
-      "repeat": "",
-      "targets": [
-        {
-          "datasource": {
-            "apiVersion": "v1",
-            "type": "prometheus",
-            "uid": "default-ds-uid"
-          },
-          "refId": "A"
-        }
-      ],
-      "type": "row"
-    },
-    {
-      "datasource": {
-        "apiVersion": "v1",
-        "type": "prometheus",
-        "uid": "default-ds-uid"
-      },
-      "gridPos": {
-        "h": 7,
-        "w": 24,
-        "x": 0,
-        "y": 30
-      },
-      "id": 11,
-      "targets": [
-        {
-          "datasource": {
-            "apiVersion": "v1",
-            "type": "prometheus",
-            "uid": "default-ds-uid"
-          },
-          "refId": "A"
-        }
-      ],
-      "title": "Server Metrics",
-      "type": "graph"
-    },
-    {
-      "collapsed": false,
       "datasource": {
         "apiVersion": "v1",
         "type": "prometheus",
@@ -444,6 +412,33 @@
         }
       ],
       "type": "row"
+    },
+    {
+      "autoMigrateFrom": "graph",
+      "datasource": {
+        "apiVersion": "v1",
+        "type": "prometheus",
+        "uid": "default-ds-uid"
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 24,
+        "x": 0,
+        "y": 30
+      },
+      "id": 11,
+      "targets": [
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "prometheus",
+            "uid": "default-ds-uid"
+          },
+          "refId": "A"
+        }
+      ],
+      "title": "Server Metrics",
+      "type": "timeseries"
     }
   ],
   "refresh": "",
