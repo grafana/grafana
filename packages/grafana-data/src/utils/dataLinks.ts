@@ -65,12 +65,7 @@ export function mapInternalLinkToExplore(options: LinkToExploreOptions): LinkMod
     title: replaceVariables(title, scopedVars),
     // In this case this is meant to be internal link (opens split view by default) the href will also points
     // to explore but this way you can open it in new tab.
-    href: generateInternalHref(
-      internalLink.datasourceUid,
-      interpolatedQuery,
-      range,
-      interpolatedPanelsState
-    ),
+    href: generateInternalHref(internalLink.datasourceUid, interpolatedQuery, range, interpolatedPanelsState),
     onClick: onClickFn
       ? (event) => {
           // Explore data links can be displayed not only in DataLinkButton but it can be used by the consumer in
