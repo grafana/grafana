@@ -90,11 +90,7 @@
             ],
             "title": "Series: __series.name, Field: ${__field.name}, Time: __value.time"
           }
-        },
-        "justifyMode": "auto",
-        "showPercentChange": false,
-        "textMode": "auto",
-        "wideLayout": true
+        }
       },
       "targets": [
         {

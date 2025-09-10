@@ -153,12 +153,6 @@
       },
       "id": 6,
       "maxPerRow": 24,
-      "options": {
-        "justifyMode": "auto",
-        "showPercentChange": false,
-        "textMode": "auto",
-        "wideLayout": true
-      },
       "targets": [
         {
           "datasource": {

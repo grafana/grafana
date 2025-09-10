@@ -88,12 +88,6 @@ func processPanels(panels []interface{}) error {
 			continue
 		}
 
-		// Check for auto-migrated panels before migration (preserve autoMigrateFrom)
-		isAutoMigrated := false
-		if p["autoMigrateFrom"] == "singlestat" || p["autoMigrateFrom"] == "grafana-singlestat-panel" {
-			isAutoMigrated = true
-		}
-
 		// Migrate singlestat panels (including those already auto-migrated to stat)
 		if p["type"] == "singlestat" || p["type"] == "grafana-singlestat-panel" ||
 			p["autoMigrateFrom"] == "singlestat" || p["autoMigrateFrom"] == "grafana-singlestat-panel" {
@@ -102,11 +96,9 @@ func processPanels(panels []interface{}) error {
 			}
 		}
 
-		// Normalize existing stat panels to ensure they have current default options
-		// Skip auto-migrated panels as they already have the correct options
-		if p["type"] == "stat" && !isAutoMigrated {
-			normalizeStatPanel(p)
-		}
+		// Note: Panel defaults (including options object) are already applied
+		// by applyPanelDefaults() in the main migration flow for ALL panels
+		// No need for stat-specific normalization
 	}
 
 	return nil
@@ -142,38 +134,6 @@ func migrateSinglestatPanel(panel map[string]interface{}) error {
 	migrateSinglestatOptions(panel, originalType)
 
 	return nil
-}
-
-// normalizeStatPanel ensures existing stat panels have all current default options
-func normalizeStatPanel(panel map[string]interface{}) {
-	if panel["options"] == nil {
-		panel["options"] = map[string]interface{}{}
-	}
-
-	options := panel["options"].(map[string]interface{})
-
-	// Apply missing default options that might not be present in older stat panels
-	// Note: Don't add percentChangeColorMode for existing stat panels - frontend filters it out as default
-	// if _, exists := options["percentChangeColorMode"]; !exists {
-	//	options["percentChangeColorMode"] = "standard"
-	// }
-
-	// Ensure other critical defaults are present
-	if _, exists := options["justifyMode"]; !exists {
-		options["justifyMode"] = "auto"
-	}
-
-	if _, exists := options["textMode"]; !exists {
-		options["textMode"] = "auto"
-	}
-
-	if _, exists := options["wideLayout"]; !exists {
-		options["wideLayout"] = true
-	}
-
-	if _, exists := options["showPercentChange"]; !exists {
-		options["showPercentChange"] = false
-	}
 }
 
 // migrateSinglestatOptions handles the complete migration of singlestat panel options and field config
@@ -227,11 +187,12 @@ func migrateSinglestatOptions(panel map[string]interface{}, originalType string)
 // getDefaultStatOptions returns the default options structure for stat panels
 // This matches the frontend's stat panel defaultOptions exactly
 func getDefaultStatOptions() map[string]interface{} {
+	// For now, return the explicit defaults until we integrate the centralized system
 	return map[string]interface{}{
 		"colorMode":              "value",
 		"graphMode":              "area",
 		"justifyMode":            "auto",
-		"percentChangeColorMode": "standard", // Match frontend behavior
+		"percentChangeColorMode": "standard",
 		"showPercentChange":      false,
 		"textMode":               "auto",
 		"wideLayout":             true,

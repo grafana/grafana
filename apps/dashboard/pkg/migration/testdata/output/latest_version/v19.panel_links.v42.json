@@ -62,12 +62,6 @@
           "url": "dashboard/my-dashboard-uid?$__all_variables"
         }
       ],
-      "options": {
-        "justifyMode": "auto",
-        "showPercentChange": false,
-        "textMode": "auto",
-        "wideLayout": true
-      },
       "targets": [
         {
           "datasource": {

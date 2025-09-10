@@ -242,12 +242,6 @@
         "y": 18
       },
       "id": 7,
-      "options": {
-        "justifyMode": "auto",
-        "showPercentChange": false,
-        "textMode": "auto",
-        "wideLayout": true
-      },
       "targets": [
         {
           "datasource": {
