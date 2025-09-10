@@ -1171,6 +1171,25 @@
     },
     {
       "metadata": {
+        "name": "dskitBackgroundServices",
+        "resourceVersion": "1757339637779",
+        "creationTimestamp": "2025-09-03T12:20:24Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-09-08 13:53:57.77994 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Enables dskit background service wrapper",
+        "stage": "experimental",
+        "codeowner": "@grafana/plugins-platform-backend",
+        "requiresRestart": true,
+        "hideFromAdminPage": true,
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "editPanelCSVDragAndDrop",
         "resourceVersion": "1753448760331",
         "creationTimestamp": "2023-01-24T09:43:44Z"

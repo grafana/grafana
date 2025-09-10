@@ -1027,6 +1027,10 @@ const (
 	// Checks for deprecated Prometheus authentication methods (SigV4 and Azure), installs the relevant data source, and migrates the Prometheus data sources
 	FlagPrometheusTypeMigration = "prometheusTypeMigration"
 
+	// FlagDskitBackgroundServices
+	// Enables dskit background service wrapper
+	FlagDskitBackgroundServices = "dskitBackgroundServices"
+
 	// FlagPluginContainers
 	// Enables running plugins in containers
 	FlagPluginContainers = "pluginContainers"
