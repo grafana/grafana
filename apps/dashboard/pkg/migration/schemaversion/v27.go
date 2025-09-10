@@ -1,5 +1,7 @@
 package schemaversion
 
+import "context"
+
 // V27 migrates repeated panels and constant variables.
 //
 // The migration performs two main tasks:
@@ -73,7 +75,7 @@ package schemaversion
 //	    }
 //	  ]
 //	}
-func V27(dashboard map[string]interface{}) error {
+func V27(_ context.Context, dashboard map[string]interface{}) error {
 	dashboard["schemaVersion"] = 27
 
 	// Remove repeated panels

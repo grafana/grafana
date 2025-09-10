@@ -678,7 +678,7 @@ export class GraphiteDatasource
   private requestMetricFind(
     query: string,
     requestId: string,
-    range?: { from: any; until: any }
+    range?: { from: string | number; until: string | number }
   ): Promise<MetricFindValue[]> {
     const params: BackendSrvRequest['params'] = {};
 
@@ -721,7 +721,7 @@ export class GraphiteDatasource
   private requestMetricExpand(
     query: string,
     requestId: string,
-    range?: { from: any; until: any }
+    range?: { from: string | number; until: string | number }
   ): Promise<MetricFindValue[]> {
     const params: BackendSrvRequest['params'] = { query };
     if (range) {
@@ -900,7 +900,7 @@ export class GraphiteDatasource
     );
   }
 
-  createFuncInstance(funcDef: string | FuncDef, options?: any): FuncInstance {
+  createFuncInstance(funcDef: string | FuncDef, options?: { withDefaultParams: boolean }): FuncInstance {
     return gfunc.createFuncInstance(funcDef, options, this.funcDefs);
   }
 
