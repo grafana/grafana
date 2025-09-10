@@ -264,11 +264,6 @@ func (s *ResourcePermSqlBackend) WriteEvent(ctx context.Context, event resource.
 				)
 			}
 
-			dbHelper, err := s.dbProvider(ctx)
-			if err != nil {
-				return 0, err
-			}
-
 			if event.Type == resourcepb.WatchEvent_ADDED {
 				rv, err = s.createResourcePermission(ctx, dbHelper, ns, mapper, grn, v0resourceperm)
 				if err != nil && errors.Is(err, errConflict) {
