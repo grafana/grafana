@@ -87,3 +87,14 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 func (s *Service) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
 	return nil
 }
+
+func (s *Service) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
+	return nil
+}
+
+func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
+	return &backend.CheckHealthResult{
+		Status:  backend.HealthStatusOk,
+		Message: "Successfully connected to Graphite.",
+	}, nil
+}

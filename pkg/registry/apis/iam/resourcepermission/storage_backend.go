@@ -10,6 +10,7 @@ import (
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apiserver/pkg/endpoints/request"
 
 	"github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
@@ -97,7 +98,7 @@ func (s *ResourcePermSqlBackend) ListIterator(ctx context.Context, req *resource
 		Continue: token.offset,
 	}
 
-	dbHelper, err := s.dbProvider(ctx)
+	dbHelper, err := s.dbProvider(request.WithNamespace(ctx, ns.Value))
 	if err != nil {
 		logger := s.logger.FromContext(ctx)
 		logger.Error("Failed to get database helper", "error", err)
@@ -146,7 +147,7 @@ func (s *ResourcePermSqlBackend) ReadResource(ctx context.Context, req *resource
 		return rsp
 	}
 
-	dbHelper, err := s.dbProvider(ctx)
+	dbHelper, err := s.dbProvider(request.WithNamespace(ctx, ns.Value))
 	if err != nil {
 		// Hide the error from the user, but log it
 		logger := s.logger.FromContext(ctx)
@@ -224,7 +225,7 @@ func (s *ResourcePermSqlBackend) WriteEvent(ctx context.Context, event resource.
 		return 0, apierrors.NewBadRequest(fmt.Sprintf("invalid key %q: %v", event.Key, err.Error()))
 	}
 
-	dbHelper, err := s.dbProvider(ctx)
+	dbHelper, err := s.dbProvider(request.WithNamespace(ctx, ns.Value))
 	if err != nil {
 		// Hide the error from the user, but log it
 		logger := s.logger.FromContext(ctx)
