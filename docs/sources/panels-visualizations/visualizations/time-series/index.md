@@ -189,7 +189,7 @@ To show the selector on the panel, toggle on the **Show comparison selector** sw
 
 When you apply a time comparison to a visualization, the comparison data is displayed with color-matching dashed lines:
 
-{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-time-series-time-comparison-v12.2.png" max-width="750px" alt="A time series graph with the comparison selector open and Previous period selected" >}}
+{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-time-series-time-comparison-v12.3.png" max-width="750px" alt="A time series graph with the comparison selector open and Previous period selected" >}}
 
 The options available in the **Comparison** selector are dynamically populated since they're based on the dashboard time range and can include:
 
