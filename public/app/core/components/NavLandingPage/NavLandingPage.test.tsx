@@ -102,7 +102,7 @@ describe('NavLandingPage', () => {
             component: () => <div>ObservabilityLandingPage</div>,
             pluginId: 'grafana-plugin-app',
           },
-          'grafana/nav-landing-page/observability/v1'
+          'grafana/dynamic/nav-landing-page/nav-id-observability/v1'
         ),
       ],
       isLoading: false,

@@ -14,7 +14,7 @@ interface Props {
   header?: React.ReactNode;
 }
 
-const EXTENSION_ID = (nodeId: string) => `grafana/nav-landing-page/${nodeId}/v1`;
+const EXTENSION_ID = (nodeId: string) => `grafana/dynamic/nav-landing-page/nav-id-${nodeId}/v1`;
 
 export function NavLandingPage({ navId, header }: Props) {
   const { node } = useNavModel(navId);
