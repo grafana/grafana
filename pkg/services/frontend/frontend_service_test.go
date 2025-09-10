@@ -18,6 +18,14 @@ import (
 	"github.com/grafana/grafana/pkg/web"
 )
 
+// mockShortURLHandler is a test mock for ShortURLHandler
+type mockShortURLHandler struct{}
+
+func (m *mockShortURLHandler) ResolveShortURL(ctx context.Context, req *http.Request, uid string) (string, error) {
+	// Return a simple test URL for the test
+	return "https://example.com/test-redirect", nil
+}
+
 // Helper function to create a test service with minimal configuration
 func createTestService(t *testing.T, cfg *setting.Cfg) *frontendService {
 	t.Helper()
@@ -32,7 +40,10 @@ func createTestService(t *testing.T, cfg *setting.Cfg) *frontendService {
 		cfg.BuildVersion = "10.3.0"
 	}
 
-	service, err := ProvideFrontendService(cfg, features, promGatherer, promRegister, license)
+	// Create a mock ShortURLHandler for testing
+	mockHandler := &mockShortURLHandler{}
+
+	service, err := ProvideFrontendService(cfg, features, promGatherer, promRegister, license, mockHandler)
 	require.NoError(t, err)
 
 	return service

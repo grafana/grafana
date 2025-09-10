@@ -15,6 +15,7 @@ import (
 	ringclient "github.com/grafana/dskit/ring/client"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/urfave/cli/v2"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/grafana/dskit/services"
 
@@ -22,6 +23,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/modules"
+	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/apiserver/standalone"
 	"github.com/grafana/grafana/pkg/services/authz"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -195,7 +197,16 @@ func (s *ModuleServer) Run() error {
 	})
 
 	m.RegisterModule(modules.FrontendServer, func() (services.Service, error) {
-		return frontend.ProvideFrontendService(s.cfg, s.features, s.promGatherer, s.registerer, s.license)
+		// Create short URL handler for the frontend service
+		gvr := schema.GroupVersionResource{
+			Group:    "shorturl.grafana.app",
+			Version:  "v1alpha1",
+			Resource: "shorturls",
+		}
+		namespacer := request.GetNamespaceMapper(s.cfg)
+		shortURLHandler := frontend.NewShortURLK8sHandler(s.cfg, namespacer, gvr)
+
+		return frontend.ProvideFrontendService(s.cfg, s.features, s.promGatherer, s.registerer, s.license, shortURLHandler)
 	})
 
 	m.RegisterModule(modules.OperatorServer, s.initOperatorServer)
