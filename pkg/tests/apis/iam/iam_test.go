@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/tests/apis"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
+	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 var gvrTeams = schema.GroupVersionResource{
@@ -36,9 +37,8 @@ func TestMain(m *testing.M) {
 }
 
 func TestIntegrationIdentity(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
 		AppModeProduction: false, // required for experimental APIs
 		DisableAnonymous:  true,
@@ -180,9 +180,7 @@ func TestIntegrationIdentity(t *testing.T) {
 }
 
 func TestIntegrationUsers(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	// TODO: Figure out why rest.Mode4 is failing
 	modes := []rest.DualWriterMode{rest.Mode0, rest.Mode1, rest.Mode2, rest.Mode3}

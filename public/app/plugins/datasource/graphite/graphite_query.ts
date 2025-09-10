@@ -224,7 +224,7 @@ export default class GraphiteQuery {
     this.functions.forEach((func) => (func.added = false));
   }
 
-  updateRenderedTarget(target: { refId: string | number; target: any; targetFull: any }, targets: any) {
+  updateRenderedTarget(target: { refId: string | number; target: string; targetFull: any }, targets: any) {
     // render nested query
     const targetsByRefId = keyBy(targets, 'refId');
 
