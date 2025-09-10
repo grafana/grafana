@@ -307,6 +307,7 @@ Instead, you use ad hoc filters to write filters for existing queries.
 
 The following data sources support ad hoc filters:
 
+- Dashboard - Use this special data source to [apply ad hoc filters to data from unsupported data sources](#filter-any-data-using-the-dashboard-data-source).
 - Prometheus
 - Loki
 - InfluxDB
@@ -328,24 +329,59 @@ To create an ad hoc filter, follow these steps:
 
 Now you can [filter data on the dashboard](ref:filter-dashboard).
 
+### Filter any data using the Dashboard data source
+
+In cases where a data source doesn't support the use of ad hoc filters, you can use the Dashboard data source to reference that data, and then filter it in a new panel.
+This allows you to bypass the limitations of the data source in the source panel.
+
+{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-adhoc-filter-dashboard-ds-v12.2.png" max-width="750px" alt="The query section of a panel with the Dashboard data source configured" >}}
+
+To use ad hoc filters on data from an unsupported data source, follow these steps:
+
+1. Navigate to the dashboard with the panel with the data you want to filter.
+1. Click **Edit** in top-right corner of the dashboard.
+1. At the top of the dashboard, click **Add** and select **Visualization** in the drop-down list.
+1. In the **Queries** tab of the edit panel view, enter `Dashboard` in the **Data source** field and select **-- Dashboard --**.
+1. In the query configuration section, make the following selections:
+   - **Source panel** - Choose the panel with the source data.
+   - **Data** - Select **All Data** to use the data of the panel, and not just the annotations. This is the default selection.
+   - **AdHoc Filters** - Toggle on the switch to make the data from the referenced panel filterable.
+
+   {{< admonition type="note">}}
+   If you're referencing multiple panels in a dashboard with the Dashboard data source, you can only use one of those source panels at a time for ad hoc filtering.
+   {{< /admonition >}}
+
+1. Configure any other needed options for the panel.
+1. Click **Save dashboard**.
+
+Now you can filter the data from the source panel by way of the Dashboard data source.
+Add as many panels as you need.
+
 ### Dashboard drilldown with ad hoc filters
 
-In table visualizations, you can apply ad hoc filters from the visualization with one click.
-To quickly filter the dashboard data, follow these steps:
+In table and bar chart visualizations, you can apply ad hoc filters directly from the visualization.
+To quickly apply ad hoc filter variables, follow these steps:
 
-1. Hover your cursor over the cell with the value you want to filter for to display the filter icons. In this example, the cell value is `ConfigMap Updated`, which is in the `alertname` column:
+1. To display the filter icons, hover your cursor over the table cell with the value for which you want to filter. In this example, the cell value is `ConfigMap Updated`, which is in the `alertname` column:
 
-   {{< figure src="/media/docs/grafana/panels-visualizations/screenshot-ad-hoc-filter-icon-v12.png" max-width="750px" alt="Table with ad hoc filter icon displayed on a cell" >}}
+   {{< figure src="/media/docs/grafana/panels-visualizations/screenshot-adhoc-filter-icon-v12.2.png" max-width="550px" alt="Table and bar chart with ad hoc filter icon displayed on a table cell" >}}
+
+   In bar chart visualizations, hover and click the bar to display the filter button:
+
+   {{< figure src="/media/docs/grafana/panels-visualizations/screenshot-adhoc-filter-icon-bar-v12.2.png" max-width="300px" alt="The ad hoc filter button in a bar chart tooltip">}}
 
 1. Click the add filter icon.
 
-   The variable pair `alertname = ConfigMap Updated` is added to the ad hoc filter and all panels using the same data source are filtered by that value:
+   The variable pair `alertname = ConfigMap Updated` is added to the ad hoc filter and all panels using the same data source that include that variable value are filtered by that value:
 
-   {{< figure src="/media/docs/grafana/panels-visualizations/screenshot-ad-hoc-filter-applied-v12.2.png" max-width="750px" alt="Two tables, filtered" >}}
+   {{< figure src="/media/docs/grafana/panels-visualizations/screenshot-adhoc-filter-applied-v12.2.png" max-width="550px" alt="Table and bar chart, filtered" >}}
 
-Panels in the dashboard that use the same data source but don't include the column value won't have any data remaining to display once the filter has been applied. In this example, the variable pair `_name_ = ALERTS` has been added to the ad hoc filter, so one of the tables doesn't return any results:
+If one of the panels in the dashboard using that data source doesn't include that variable value, the panel won't return any data. In this example, the variable pair `_name_ = ALERTS` has been added to the ad hoc filter so the bar chart doesn't return any results:
 
-{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-ad-hoc-filter-no-data-v12.2.png" max-width="750px" alt="Two tables, one filtered and one returning no results" >}}
+{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-adhoc-filter-no-data-v12.2.png" max-width="650px" alt="Table, filtered and bar chart returning no results" >}}
+
+In cases where the data source you're using doesn't support ad hoc filtering, consider using the special Dashboard data source.
+For more information, refer to [Filter any data using the Dashboard data source](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/variables/add-template-variables/#filter-any-data-using-the-dashboard-data-source).
 
 <!-- vale Grafana.Spelling = YES -->
 <!-- vale Grafana.WordList = YES -->

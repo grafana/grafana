@@ -179,9 +179,9 @@ To remove the filter, click the blue filter icon and then click **Clear filter**
 
 ### Apply ad hoc filters from the table
 
-In table visualizations, you can apply ad hoc filters from the visualization with one click.
+In tables, you can apply ad hoc filters directly from the visualization with one click.
 
-Hover your cursor over the cell with the value you want to filter for to display the filter icons:
+To display the filter icons, hover your cursor over the cell that has the value for which you want to filter:
 
 {{< figure src="/media/docs/grafana/panels-visualizations/screenshot-table-adhoc-filter-v12.2.png" max-width="500px" alt="Table with ad hoc filter icon displayed on a cell" >}}
 
