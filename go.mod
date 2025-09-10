@@ -673,3 +673,6 @@ exclude k8s.io/client-go v12.0.0+incompatible
 // only used to run tests and not required for building the Grafana binary.
 // Since the test data doesn't contain a license file we exclude it.
 exclude github.com/RoaringBitmap/real-roaring-datasets v0.0.0-20190726190000-eb7c87156f76
+
+// gomemcache 20250828162811 contains breaking changes, so it needs to be excluded unless loki package is updated
+exclude github.com/grafana/gomemcache v0.0.0-20250828162811-a96f6acee2fe
