@@ -75,7 +75,7 @@ func TestIsInterfaceNil_NestedInterfaces(t *testing.T) {
 			name: "nested interface with value",
 			value: func() interface{} {
 				val := 42
-				var inner *int = &val
+				inner := &val
 				var middle interface{} = inner
 				return middle
 			}(),
@@ -85,7 +85,7 @@ func TestIsInterfaceNil_NestedInterfaces(t *testing.T) {
 			name: "interface containing interface with value",
 			value: func() interface{} {
 				var inner interface{} = 42
-				var outer interface{} = inner
+				outer := inner
 				return outer
 			}(),
 			expected: false,
@@ -94,7 +94,7 @@ func TestIsInterfaceNil_NestedInterfaces(t *testing.T) {
 			name: "interface containing nil interface",
 			value: func() interface{} {
 				var inner interface{} = nil
-				var outer interface{} = inner
+				outer := inner
 				return outer
 			}(),
 			expected: true,
