@@ -953,7 +953,6 @@
   ],
   "refresh": "30s",
   "schemaVersion": 42,
-  "style": "dark",
   "tags": [
     "sample-monitoring"
   ],

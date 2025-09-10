@@ -616,6 +616,7 @@ func cleanupDashboardForSave(dashboard map[string]interface{}) {
 	removeNullValues(dashboard)
 	cleanupTemplating(dashboard)
 	cleanupPanels(dashboard)
+	cleanupDashboardDefaults(dashboard)
 }
 
 // removeNonPersistedProperties removes non-persisted dashboard properties
@@ -873,5 +874,16 @@ func removeNullValuesRecursively(data interface{}) {
 				removeNullValuesRecursively(item)
 			}
 		}
+	}
+}
+
+// cleanupDashboardDefaults removes dashboard-level default values that frontend filters out
+func cleanupDashboardDefaults(dashboard map[string]interface{}) {
+	// Remove style if it's the default "dark" value
+	// Frontend never sets this.style in DashboardModel constructor, so hasOwnProperty('style') returns false
+	// This causes the frontend to skip the style property entirely in getSaveModelCloneOld()
+	// We replicate this behavior by removing "style": "dark" when it matches the default
+	if style, ok := dashboard["style"].(string); ok && style == "dark" {
+		delete(dashboard, "style")
 	}
 }

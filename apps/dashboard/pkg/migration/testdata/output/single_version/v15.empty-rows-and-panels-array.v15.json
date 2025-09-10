@@ -946,7 +946,6 @@
   "refresh": "30s",
   "rows": [],
   "schemaVersion": 15,
-  "style": "dark",
   "tags": [
     "sample-monitoring"
   ],
