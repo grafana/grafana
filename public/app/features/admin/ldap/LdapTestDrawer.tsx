@@ -3,7 +3,7 @@ import { useForm } from 'react-hook-form';
 
 import { Trans, t } from '@grafana/i18n';
 import { featureEnabled } from '@grafana/runtime';
-import { Alert, Button, Drawer, Field, Input, Stack } from '@grafana/ui';
+import { Alert, Button, Drawer, Field, Input, Stack, Text } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
 import { AccessControlAction } from 'app/types/accessControl';
 import { AppNotificationSeverity } from 'app/types/appNotifications';
@@ -96,31 +96,33 @@ export const LdapTestDrawer = ({ onClose, username }: Props) => {
 
         {canReadLDAPUser && (
           <section>
-            <h3>
-              <Trans i18nKey="admin.ldap.test-mapping-heading">Test user mapping</Trans>
-            </h3>
-            <form onSubmit={handleSubmit(search)}>
-              <Field label={t('admin.ldap-page.label-username', 'Username')}>
-                <Input
-                  {...register('username', { required: true })}
-                  width={34}
-                  id="username"
-                  type="text"
-                  defaultValue={username}
-                  addonAfter={
-                    <Button variant="primary" type="submit">
+            <Stack direction="column" gap={2}>
+              <Text element="h3">
+                <Trans i18nKey="admin.ldap.test-mapping-heading">Test user mapping</Trans>
+              </Text>
+              <form onSubmit={handleSubmit(search)}>
+                <Field label={t('admin.ldap-page.label-username', 'Username')}>
+                  <Stack>
+                    <Input
+                      {...register('username', { required: true })}
+                      width={34}
+                      id="username"
+                      type="text"
+                      defaultValue={username}
+                    />
+                    <Button variant="secondary" type="submit">
                       <Trans i18nKey="admin.ldap.test-mapping-run-button">Run</Trans>
                     </Button>
-                  }
-                />
-              </Field>
-            </form>
-            {userError && userError.title && (
-              <Alert title={userError.title} severity={AppNotificationSeverity.Error} onRemove={onClearUserError}>
-                {userError.body}
-              </Alert>
-            )}
-            {ldapUser && <LdapUserInfo ldapUser={ldapUser} />}
+                  </Stack>
+                </Field>
+              </form>
+              {userError && userError.title && (
+                <Alert title={userError.title} severity={AppNotificationSeverity.Error} onRemove={onClearUserError}>
+                  {userError.body}
+                </Alert>
+              )}
+              {ldapUser && <LdapUserInfo ldapUser={ldapUser} />}
+            </Stack>
           </section>
         )}
       </Stack>
