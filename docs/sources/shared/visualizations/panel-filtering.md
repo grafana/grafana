@@ -20,7 +20,7 @@ To quickly filter the dashboard data, follow these steps:
 
    {{< figure src="/media/docs/grafana/panels-visualizations/screenshot-ad-hoc-filter-applied-v12.2.png" max-width="750px" alt="Two tables, filtered" >}}
 
-If one of the panels in the dashboard using that data source doesn't include that variable value, the panel won't return any data. In this example, the variable pair `_name_ = ALERTS` has been added to the ad hoc filter so one of the tables doesn't return any results:
+Panels in the dashboard that use the same data source but don't include the column value won't have any data remaining to display once the filter has been applied. In this example, the variable pair `_name_ = ALERTS` has been added to the ad hoc filter, so one of the tables doesn't return any results:
 
 {{< figure src="/media/docs/grafana/panels-visualizations/screenshot-ad-hoc-filter-no-data-v12.2.png" max-width="750px" alt="Two tables, one filtered and one returning no results" >}}
 
