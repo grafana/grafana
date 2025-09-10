@@ -1549,6 +1549,7 @@ func makeQueryResult(query *dashboards.FindPersistedDashboardsQuery, res []dashb
 			FolderUID:   item.FolderUID,
 			FolderTitle: item.FolderTitle,
 			Tags:        []string{},
+			Description: item.Description,
 		}
 
 		if item.Tags != nil {

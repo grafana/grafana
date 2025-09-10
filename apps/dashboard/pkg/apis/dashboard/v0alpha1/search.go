@@ -61,7 +61,7 @@ type DashboardHit struct {
 	Resource string `json:"resource"` // dashboards | folders
 	// The k8s "name" (eg, grafana UID)
 	Name string `json:"name"`
-	// The display nam
+	// The display name
 	Title string `json:"title"`
 	// Dashboard description
 	Description string `json:"description,omitempty"`
@@ -70,11 +70,11 @@ type DashboardHit struct {
 	// The k8s name (eg, grafana UID) for the parent folder
 	Folder string `json:"folder,omitempty"`
 	// Stick untyped extra fields in this object (including the sort value)
-	Field *common.Unstructured `json:"field,omitempty"`
+	Field *common.Unstructured `json:"field,omitzero,omitempty"`
 	// When using "real" search, this is the score
 	Score float64 `json:"score,omitempty"`
 	// Explain the score (if possible)
-	Explain *common.Unstructured `json:"explain,omitempty"`
+	Explain *common.Unstructured `json:"explain,omitzero,omitempty"`
 }
 
 // +k8s:deepcopy-gen=true

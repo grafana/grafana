@@ -40,6 +40,7 @@ var (
 	}
 )
 
+// nolint:gocyclo
 func ParseResults(result *resourcepb.ResourceSearchResponse, offset int64) (v0alpha1.SearchResults, error) {
 	if result == nil {
 		return v0alpha1.SearchResults{}, nil

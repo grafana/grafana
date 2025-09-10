@@ -6572,6 +6572,9 @@
       },
       "Hit": {
         "properties": {
+          "description": {
+            "type": "string"
+          },
           "folderId": {
             "format": "int64",
             "type": "integer"

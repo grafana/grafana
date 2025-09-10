@@ -32,6 +32,10 @@ func TestParseResults(t *testing.T) {
 						Name: search.DASHBOARD_LINK_COUNT,
 						Type: resourcepb.ResourceTableColumnDefinition_INT32,
 					},
+					{
+						Name: "description",
+						Type: resourcepb.ResourceTableColumnDefinition_STRING,
+					},
 				},
 				Rows: []*resourcepb.ResourceTableRow{
 					{
@@ -44,6 +48,7 @@ func TestParseResults(t *testing.T) {
 							[]byte("folder1"),
 							[]byte("100"),
 							[]byte("25"),
+							[]byte("description"),
 						},
 					},
 				},
@@ -51,8 +56,10 @@ func TestParseResults(t *testing.T) {
 			TotalHits: 1,
 		}
 
-		_, err := ParseResults(resSearchResp, 0)
+		results, err := ParseResults(resSearchResp, 0)
 		require.NoError(t, err)
+		require.Len(t, results.Hits, 1)
+		require.Equal(t, "description", results.Hits[0].Description)
 	})
 
 	t.Run("should return error when trying to parse results with mismatch length between Columns and row Cells", func(t *testing.T) {
