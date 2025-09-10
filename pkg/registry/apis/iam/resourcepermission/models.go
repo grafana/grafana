@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/authlib/types"
 
 	v0alpha1 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
+	"github.com/grafana/grafana/pkg/registry/apis/iam/common"
 	idStore "github.com/grafana/grafana/pkg/registry/apis/iam/legacy"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 )
@@ -43,11 +44,16 @@ type IdentityStore interface {
 	GetUserInternalID(ctx context.Context, ns types.NamespaceInfo, query idStore.GetUserInternalIDQuery) (*idStore.GetUserInternalIDResult, error)
 }
 
+type PageQuery struct {
+	ScopePatterns []string
+	OrgID         int64
+	Pagination    common.Pagination
+}
+
 type ListResourcePermissionsQuery struct {
-	Scope      string
+	Scopes     []string
 	OrgID      int64
 	ActionSets []string
-	// TODO Pagination common.Pagination
 }
 
 type DeleteResourcePermissionsQuery struct {
@@ -85,83 +91,123 @@ type rbacAssignment struct {
 	IsServiceAccount bool      `xorm:"is_service_account"`
 }
 
-// toV0ResourcePermissions converts rbacAssignment grouped by resource (e.g. {folder.grafana.app, folders, fold1}) to a list of v0alpha1.ResourcePermission
-func toV0ResourcePermissions(permsByResource map[groupResourceName][]rbacAssignment) ([]v0alpha1.ResourcePermission, error) {
-	if len(permsByResource) == 0 {
+// newV0ResourcePermission creates a new v0alpha1.ResourcePermission from the given groupResourceName and permission specs.
+// Specs are sorted for consistency, created and updated are used for the metadata timestamps and resourceVersion is set to the updated timestamp in milliseconds.
+func newV0ResourcePermission(grn *groupResourceName, specs []v0alpha1.ResourcePermissionspecPermission, created, updated time.Time, namespace string) v0alpha1.ResourcePermission {
+	// Sort specs for consistency
+	sort.Slice(specs, func(i, j int) bool {
+		if specs[i].Kind != specs[j].Kind {
+			return specs[i].Kind < specs[j].Kind
+		}
+		if specs[i].Name != specs[j].Name {
+			return specs[i].Name < specs[j].Name
+		}
+		return specs[i].Verb < specs[j].Verb
+	})
+
+	r := v0alpha1.ResourcePermission{
+		TypeMeta: v0alpha1.ResourcePermissionInfo.TypeMeta(),
+		ObjectMeta: metav1.ObjectMeta{
+			Name:              grn.string(),
+			Namespace:         namespace,
+			ResourceVersion:   fmt.Sprint(updated.UnixMilli()),
+			CreationTimestamp: metav1.NewTime(created.UTC()),
+		},
+		Spec: v0alpha1.ResourcePermissionSpec{
+			Resource:    grn.v0alpha1(),
+			Permissions: specs,
+		},
+	}
+	r.SetUpdateTimestamp(updated.UTC())
+	return r
+}
+
+// toV0ResourcePermissions translates a list of rbacAssignments into a list of v0alpha1.ResourcePermissions.
+// it is assumed that assignments are sorted by scope
+func (s *ResourcePermSqlBackend) toV0ResourcePermissions(assignments []rbacAssignment, namespace string) ([]v0alpha1.ResourcePermission, error) {
+	if len(assignments) == 0 {
 		return nil, nil
 	}
 
-	resourcePermissions := make([]v0alpha1.ResourcePermission, 0, len(permsByResource))
-	for resource, perms := range permsByResource {
-		specs := make([]v0alpha1.ResourcePermissionspecPermission, 0, len(perms))
+	var (
+		created        = assignments[0].Created
+		updated        = assignments[0].Updated
+		permissionKind v0alpha1.ResourcePermissionSpecPermissionKind
 
-		var (
-			created        = time.Now()
-			updated        = time.Now()
-			permissionKind v0alpha1.ResourcePermissionSpecPermissionKind
-		)
-		for i := range perms {
-			// Find the most recent updated time
-			if i == 0 || perms[i].Updated.After(updated) {
-				updated = perms[i].Updated
-			}
-			// Find the oldest created time
-			if i == 0 || perms[i].Created.Before(created) {
-				created = perms[i].Created
-			}
-			perm := perms[i]
-			switch perm.SubjectType {
-			case "user":
-				if perm.IsServiceAccount {
-					permissionKind = v0alpha1.ResourcePermissionSpecPermissionKindServiceAccount
-				} else {
-					permissionKind = v0alpha1.ResourcePermissionSpecPermissionKindUser
-				}
-			case "team":
-				permissionKind = v0alpha1.ResourcePermissionSpecPermissionKindTeam
-			case "builtin_role":
-				permissionKind = v0alpha1.ResourcePermissionSpecPermissionKindBasicRole
-			default:
-				return nil, errors.New("unknown subject type: " + perm.SubjectType)
-			}
+		resourcePermissions = make([]v0alpha1.ResourcePermission, 0, 8)
+		specs               = make([]v0alpha1.ResourcePermissionspecPermission, 0, 4)
+	)
 
-			actionParts := strings.SplitN(perm.Action, ":", 2)
-			if len(actionParts) < 2 || actionParts[1] == "" {
-				return nil, fmt.Errorf("invalid action format: %s", perm.Action)
-			}
-			verb := actionParts[1]
-			specs = append(specs, v0alpha1.ResourcePermissionspecPermission{
-				Kind: permissionKind,
-				Name: perm.SubjectUID,
-				Verb: verb,
-			})
-		}
-
-		sort.Slice(specs, func(i, j int) bool {
-			if specs[i].Kind != specs[j].Kind {
-				return specs[i].Kind < specs[j].Kind
-			}
-			if specs[i].Name != specs[j].Name {
-				return specs[i].Name < specs[j].Name
-			}
-			return specs[i].Verb < specs[j].Verb
-		})
-
-		r := v0alpha1.ResourcePermission{
-			TypeMeta: v0alpha1.ResourcePermissionInfo.TypeMeta(),
-			ObjectMeta: metav1.ObjectMeta{
-				Name:              resource.string(),
-				ResourceVersion:   fmt.Sprint(updated.UnixMilli()),
-				CreationTimestamp: metav1.NewTime(created.UTC()),
-			},
-			Spec: v0alpha1.ResourcePermissionSpec{
-				Resource:    resource.v0alpha1(),
-				Permissions: specs,
-			},
-		}
-		r.SetUpdateTimestamp(updated.UTC())
-		resourcePermissions = append(resourcePermissions, r)
+	grn, err := s.parseScope(assignments[0].Scope)
+	if err != nil {
+		return nil, err
 	}
+
+	for _, assign := range assignments {
+		// Ensure all assignments belong to the same resource
+		parsedGrn, err := s.parseScope(assign.Scope)
+		if err != nil {
+			return nil, err
+		}
+		// If it's a new resource, flush the current specs to a ResourcePermission and start a new one
+		if *parsedGrn != *grn {
+			resourcePermissions = append(
+				resourcePermissions,
+				newV0ResourcePermission(grn, specs, created, updated, namespace),
+			)
+
+			// Reset for the new resource
+			grn = parsedGrn
+			specs = make([]v0alpha1.ResourcePermissionspecPermission, 0, 4)
+			created = assign.Created
+			updated = assign.Updated
+		}
+
+		// Find the most recent updated time
+		if assign.Updated.After(updated) {
+			updated = assign.Updated
+		}
+		// Find the oldest created time
+		if assign.Created.Before(created) {
+			created = assign.Created
+		}
+
+		// Determine permission kind
+		switch assign.SubjectType {
+		case "user":
+			if assign.IsServiceAccount {
+				permissionKind = v0alpha1.ResourcePermissionSpecPermissionKindServiceAccount
+			} else {
+				permissionKind = v0alpha1.ResourcePermissionSpecPermissionKindUser
+			}
+		case "team":
+			permissionKind = v0alpha1.ResourcePermissionSpecPermissionKindTeam
+		case "builtin_role":
+			permissionKind = v0alpha1.ResourcePermissionSpecPermissionKindBasicRole
+		default:
+			return nil, errors.New("unknown subject type: " + assign.SubjectType)
+		}
+
+		// Determine verb from action
+		actionParts := strings.SplitN(assign.Action, ":", 2)
+		if len(actionParts) < 2 || actionParts[1] == "" {
+			return nil, fmt.Errorf("invalid action format: %s", assign.Action)
+		}
+		verb := actionParts[1]
+
+		// Append the translated permission spec
+		specs = append(specs, v0alpha1.ResourcePermissionspecPermission{
+			Kind: permissionKind,
+			Name: assign.SubjectUID,
+			Verb: verb,
+		})
+	}
+
+	// Flush the final resource
+	resourcePermissions = append(
+		resourcePermissions,
+		newV0ResourcePermission(grn, specs, created, updated, namespace),
+	)
 
 	return resourcePermissions, nil
 }

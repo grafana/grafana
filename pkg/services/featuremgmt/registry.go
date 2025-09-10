@@ -463,6 +463,13 @@ var (
 			RequiresRestart: true, // changes the API routing
 		},
 		{
+			Name:            "kubernetesAlertingRules",
+			Description:     "Adds support for Kubernetes alerting and recording rules",
+			Stage:           FeatureStageExperimental,
+			Owner:           grafanaAlertingSquad,
+			RequiresRestart: true,
+		},
+		{
 			Name:        "dashboardDisableSchemaValidationV1",
 			Description: "Disable schema validation for dashboards/v1",
 			Stage:       FeatureStageExperimental,
@@ -1343,9 +1350,10 @@ var (
 		},
 		{
 			Name:        "elasticsearchCrossClusterSearch",
-			Description: "Enables cross cluster search in the Elasticsearch datasource",
-			Stage:       FeatureStagePublicPreview,
-			Owner:       awsDatasourcesSquad,
+			Description: "Enables cross cluster search in the Elasticsearch data source",
+			Stage:       FeatureStageGeneralAvailability,
+			Owner:       grafanaPartnerPluginsSquad,
+			Expression:  "false",
 		},
 		{
 			Name:         "unifiedHistory",
@@ -1739,6 +1747,24 @@ var (
 			Expression:        "false",
 		},
 		{
+			Name:              "alertEnrichmentMultiStep",
+			Description:       "Allow multiple steps per enrichment.",
+			Stage:             FeatureStageExperimental,
+			Owner:             grafanaAlertingSquad,
+			HideFromAdminPage: true,
+			HideFromDocs:      true,
+			Expression:        "false",
+		},
+		{
+			Name:              "alertEnrichmentConditional",
+			Description:       "Enable conditional alert enrichment steps.",
+			Stage:             FeatureStageExperimental,
+			Owner:             grafanaAlertingSquad,
+			HideFromAdminPage: true,
+			HideFromDocs:      true,
+			Expression:        "false",
+		},
+		{
 			Name:              "alertingImportAlertmanagerAPI",
 			Description:       "Enables the API to import Alertmanager configuration",
 			Stage:             FeatureStageExperimental,
@@ -1964,6 +1990,24 @@ var (
 			RequiresRestart: true,
 			Owner:           grafanaPartnerPluginsSquad,
 			Expression:      "false",
+		},
+		{
+			Name:              "dskitBackgroundServices",
+			Description:       "Enables dskit background service wrapper",
+			HideFromAdminPage: true,
+			HideFromDocs:      true,
+			Stage:             FeatureStageExperimental,
+			RequiresRestart:   true,
+			Owner:             grafanaPluginsPlatformSquad,
+			Expression:        "false",
+		},
+		{
+			Name:            "pluginContainers",
+			Description:     "Enables running plugins in containers",
+			Stage:           FeatureStagePrivatePreview,
+			Owner:           grafanaPluginsPlatformSquad,
+			Expression:      "false",
+			RequiresRestart: true,
 		},
 	}
 )
