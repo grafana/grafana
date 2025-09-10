@@ -184,8 +184,8 @@ The following example shows three series: Min, Max, and Value. The Min and Max s
 
 ### Time comparison
 
-Toggle on the **Show comparison selector** switch to show **Comparison** drop-down list in the panel.
-This allows you to compare data between two time ranges.
+The **Comparison** selector allows you to compare data between two time ranges.
+To show the selector on the panel, toggle on the **Show comparison selector** switch.
 
 When you apply a time comparison to a visualization, the comparison data is displayed with color-matching dashed lines:
 
