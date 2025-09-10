@@ -1171,6 +1171,25 @@
     },
     {
       "metadata": {
+        "name": "dskitBackgroundServices",
+        "resourceVersion": "1757339637779",
+        "creationTimestamp": "2025-09-03T12:20:24Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-09-08 13:53:57.77994 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Enables dskit background service wrapper",
+        "stage": "experimental",
+        "codeowner": "@grafana/plugins-platform-backend",
+        "requiresRestart": true,
+        "hideFromAdminPage": true,
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "editPanelCSVDragAndDrop",
         "resourceVersion": "1753448760331",
         "creationTimestamp": "2023-01-24T09:43:44Z"
@@ -1185,13 +1204,17 @@
     {
       "metadata": {
         "name": "elasticsearchCrossClusterSearch",
-        "resourceVersion": "1753448760331",
-        "creationTimestamp": "2024-12-12T22:20:04Z"
+        "resourceVersion": "1757441088767",
+        "creationTimestamp": "2024-12-12T22:20:04Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-09-09 18:04:48.76781 +0000 UTC"
+        }
       },
       "spec": {
-        "description": "Enables cross cluster search in the Elasticsearch datasource",
-        "stage": "preview",
-        "codeowner": "@grafana/aws-datasources"
+        "description": "Enables cross cluster search in the Elasticsearch data source",
+        "stage": "GA",
+        "codeowner": "@grafana/partner-datasources",
+        "expression": "false"
       }
     },
     {
@@ -1891,6 +1914,19 @@
     },
     {
       "metadata": {
+        "name": "kubernetesAlertingRules",
+        "resourceVersion": "1754340669702",
+        "creationTimestamp": "2025-08-04T20:51:09Z"
+      },
+      "spec": {
+        "description": "Adds support for Kubernetes alerting and recording rules",
+        "stage": "experimental",
+        "codeowner": "@grafana/alerting-squad",
+        "requiresRestart": true
+      }
+    },
+    {
+      "metadata": {
         "name": "kubernetesAuthnMutation",
         "resourceVersion": "1753454405614",
         "creationTimestamp": "2025-07-25T15:05:32Z",
@@ -2574,6 +2610,20 @@
         "requiresRestart": true,
         "hideFromAdminPage": true,
         "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "pluginContainers",
+        "resourceVersion": "1756911074581",
+        "creationTimestamp": "2025-09-03T14:51:14Z"
+      },
+      "spec": {
+        "description": "Enables running plugins in containers",
+        "stage": "privatePreview",
+        "codeowner": "@grafana/plugins-platform-backend",
+        "requiresRestart": true,
         "expression": "false"
       }
     },

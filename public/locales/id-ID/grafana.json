@@ -1115,7 +1115,8 @@
     },
     "enrichment": {
       "error-boundary": {
-        "notification-message-section-extension": ""
+        "notification-message-section-extension": "",
+        "rule-viewer-section-extension": ""
       }
     },
     "error-modal": {
@@ -3029,6 +3030,7 @@
       "page-nav": {
         "text": {
           "details": "Detail",
+          "enrichment": "",
           "history": "Sejarah",
           "instances": "Instans",
           "query-and-conditions": "Kueri dan syarat",
@@ -11179,11 +11181,11 @@
       "description-clear-repository-connection": "Tambahkan nama yang jelas untuk koneksi repositori ini",
       "empty": "Kosong",
       "error-field-required": "Bidang ini wajib diisi.",
-      "ext-storage": "Penyimpanan eksternal",
-      "grafana": "Instans Grafana",
+      "external-storage-label": "",
       "label-display-name": "Nama tampilan",
       "placeholder-my-repository-connection": "Koneksi repositori saya",
       "text-loading-resource-information": "Memuat informasi sumber daya...",
+      "unmanaged-resources-label": "",
       "dashboards-count_other": "{{count}} dasbor",
       "files-count_other": "{{count}} file",
       "folders-count_other": "{{count}} folder"
@@ -11228,7 +11230,8 @@
     },
     "connect-repository-button": {
       "configure": "Konfigurasikan",
-      "repository-limit-info-alert": "Batas repositori tercapai ({{count}})"
+      "instance-fully-managed-tooltip": "",
+      "repository-limit-reached-tooltip_other": ""
     },
     "delete-repository-button": {
       "button-delete": "Hapus",
