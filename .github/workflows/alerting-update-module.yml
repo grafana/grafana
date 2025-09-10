@@ -17,7 +17,7 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v5 # 4.2.2
+        uses: actions/checkout@v5
         with:
           persist-credentials: false
       - name: Check if update branch exists
@@ -60,10 +60,10 @@ jobs:
         run: |
           FROM_COMMIT="${{ steps.current-commit.outputs.from_commit }}"
           TO_COMMIT="${{ steps.latest-commit.outputs.to_commit }}"
-          
+
           # Compare just the length of the shorter hash
           SHORT_TO_COMMIT="${TO_COMMIT:0:${#FROM_COMMIT}}"
-          
+
           if [ "$FROM_COMMIT" = "$SHORT_TO_COMMIT" ]; then
             echo "Current version ($FROM_COMMIT) is already at latest ($SHORT_TO_COMMIT). No update needed."
             exit 0

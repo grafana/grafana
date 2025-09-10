@@ -22,7 +22,7 @@ jobs:
     steps:
 
       - name: Checkout Actions
-        uses: actions/checkout@v5 # v4.2.2
+        uses: actions/checkout@v5
         with:
           repository: "grafana/grafana-github-actions"
           path: ./actions
@@ -97,7 +97,7 @@ jobs:
             ACTOR: ${{ github.actor }}
       - name: Checkout
         if: steps.check-if-grafana-org-member.outputs.is_grafana_org_member != 'true' && github.event.issue.author_association != 'MEMBER' && github.event.issue.author_association != 'OWNER'
-        uses: actions/checkout@v5 # v4.2.2
+        uses: actions/checkout@v5
         with:
           persist-credentials: false
           sparse-checkout: |
@@ -144,7 +144,7 @@ jobs:
             # Secrets placed in the ci/repo/grafana/grafana/plugins_platform_issue_triager path in Vault
             repo_secrets: |
               GITHUB_APP_ID=plugins_platform_issue_triager_github_bot:app_id
-              GITHUB_APP_PRIVATE_KEY=plugins_platform_issue_triager_github_bot:app_pem  
+              GITHUB_APP_PRIVATE_KEY=plugins_platform_issue_triager_github_bot:app_pem
         - name: Generate token
           id: generate_token
           uses: actions/create-github-app-token@df432ceedc7162793a195dd1713ff69aefc7379e # v2.0.6
