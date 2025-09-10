@@ -1,6 +1,16 @@
+import { act, render, screen } from '@testing-library/react';
+import { createElement } from 'react';
+
 import { FieldType, toDataFrame } from '@grafana/data';
 
-import { getAllFieldNamesFromDataFrames, numberOrVariableValidator } from './utils';
+import { GroupByTransformerEditorBase } from './editors/GroupByTransformerEditor';
+import {
+  DataFieldsErrorWrapper,
+  detectMixedQueryResults,
+  getAllFieldNamesFromDataFrames,
+  numberOrVariableValidator,
+  TIMEOUT,
+} from './utils';
 
 describe('validator', () => {
   it('validates a positive number', () => {
@@ -110,5 +120,89 @@ describe('useAllFieldNamesFromDataFrames', () => {
     const names = getAllFieldNamesFromDataFrames(frames, true);
 
     expect(names).toEqual(['T', 't', 'n', 's', 't2']);
+  });
+});
+
+describe('detectMixedQueryResults', () => {
+  it('returns false when all queries are successful', () => {
+    const frames = [toDataFrame({ fields: [{ name: 'test', type: FieldType.string, values: ['a'] }] })];
+    expect(detectMixedQueryResults(frames)).toBe(false);
+  });
+
+  it('returns true when some queries are successful and some are not', () => {
+    const frames = [
+      toDataFrame({ fields: [] }),
+      toDataFrame({ fields: [{ name: 'test', type: FieldType.string, values: ['a'] }] }),
+    ];
+    expect(detectMixedQueryResults(frames)).toBe(true);
+  });
+});
+
+describe('DataFieldsErrorWrapper', () => {
+  const WrappedDashboard = DataFieldsErrorWrapper(GroupByTransformerEditorBase, { withBaseFieldNames: true });
+
+  beforeEach(() => {
+    jest.useFakeTimers();
+  });
+
+  afterEach(() => {
+    jest.runOnlyPendingTimers();
+    jest.useRealTimers();
+  });
+
+  test('shows no error message if there are fields', () => {
+    const mockProps = {
+      input: [toDataFrame({ fields: [{ name: 'test', type: FieldType.string, values: ['a'] }] })],
+      options: { fields: {} },
+      onChange: jest.fn(),
+    };
+    render(createElement(WrappedDashboard, mockProps));
+    expect(screen.queryByText(/One or more queries failed/)).not.toBeInTheDocument();
+  });
+
+  test('shows error message after debounce delay when there are no fields (e.g., datasource error or failed query', () => {
+    const mockProps = {
+      input: [toDataFrame({ fields: [] })],
+      options: { fields: {} },
+      onChange: jest.fn(),
+    };
+
+    render(createElement(WrappedDashboard, mockProps));
+
+    // It should not show the error message immediately
+    expect(screen.queryByText(/One or more queries failed/)).not.toBeInTheDocument();
+
+    // It should show the error message after the debounce delay
+    act(() => jest.advanceTimersByTime(TIMEOUT));
+    expect(screen.getByText(/One or more queries failed/)).toBeInTheDocument();
+  });
+
+  test('shows error message for mixed query results (some successful, some failed)', () => {
+    const mockProps = {
+      input: [
+        toDataFrame({
+          refId: 'A',
+          fields: [
+            { name: 'time', type: FieldType.time, values: [1, 2, 3] },
+            { name: 'temperature', type: FieldType.number, values: [20, 21, 22] },
+          ],
+        }),
+        toDataFrame({ refId: 'B', fields: [] }),
+      ],
+      options: { fields: {} },
+      onChange: jest.fn(),
+    };
+
+    render(createElement(WrappedDashboard, mockProps));
+
+    // It should not show the error message immediately
+    expect(screen.queryByText(/One or more queries failed/)).not.toBeInTheDocument();
+
+    // It should show the error message after the debounce delay
+    act(() => jest.advanceTimersByTime(TIMEOUT));
+    expect(screen.getByText(/One or more queries failed/)).toBeInTheDocument();
+
+    // Should show available field names
+    expect(screen.getByText('time')).toBeInTheDocument();
   });
 });
