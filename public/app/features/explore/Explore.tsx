@@ -312,7 +312,19 @@ export class Explore extends PureComponent<Props, ExploreState> {
    */
   onSplitOpen = (panelType: string) => {
     return async (options?: SplitOpenOptions) => {
-      this.props.splitOpen(options ? { ...options, compact: true } : options);
+      let compact = true;
+
+      /**
+       * Temporal fix grafana-clickhouse-datasource as it requires the query editor to be fully rendered to update the query
+       * Proposed fixes:
+       * - https://github.com/grafana/clickhouse-datasource/issues/1363 - handle query update in data source
+       * - https://github.com/grafana/grafana/issues/110868 - allow data links to provide meta info if the link can be handled in compact mode (default to false)
+       */
+      if (options?.queries?.some((q) => q.datasource?.type === 'grafana-clickhouse-datasource')) {
+        compact = false;
+      }
+
+      this.props.splitOpen(options ? { ...options, compact } : options);
       if (options && this.props.datasourceInstance) {
         const target = (await getDataSourceSrv().get(options.datasourceUid)).type;
         const source =
