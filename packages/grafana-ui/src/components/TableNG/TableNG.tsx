@@ -667,7 +667,7 @@ export function TableNG(props: TableNGProps) {
               filter={filter}
               setFilter={setFilter}
               crossFilterOrder={crossFilterOrder}
-              crossFilterRows={crossFilterRows}
+              crossFilterRows={crossFilterRows.current ?? {}}
               direction={sortDirection}
               showTypeIcons={showTypeIcons}
             />
