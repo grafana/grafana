@@ -43,7 +43,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": null
               },
               {
                 "color": "red",
@@ -60,8 +61,7 @@
             },
             "properties": [
               {
-                "id": "custom.align",
-                "value": ""
+                "id": "custom.align"
               }
             ]
           },
@@ -72,8 +72,7 @@
             },
             "properties": [
               {
-                "id": "custom.align",
-                "value": ""
+                "id": "custom.align"
               }
             ]
           }
@@ -82,14 +81,6 @@
       "id": 1,
       "options": {
         "cellHeight": "sm",
-        "footer": {
-          "countRows": false,
-          "fields": "",
-          "reducer": [
-            "sum"
-          ],
-          "show": false
-        },
         "showHeader": true
       },
       "pluginVersion": "12.1.0",

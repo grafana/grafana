@@ -242,15 +242,10 @@ func tablePanelChangedHandler(panel map[string]interface{}) error {
 		"overrides": overrides,
 	}
 
-	// Add default table panel options to match frontend behavior
+	// Add minimal table panel options to match frontend behavior
+	// Frontend doesn't add default footer options, so we don't either
 	panel["options"] = map[string]interface{}{
 		"cellHeight": "sm",
-		"footer": map[string]interface{}{
-			"countRows": false,
-			"fields":    "",
-			"reducer":   []interface{}{"sum"},
-			"show":      false,
-		},
 		"showHeader": true,
 	}
 
@@ -258,6 +253,9 @@ func tablePanelChangedHandler(panel map[string]interface{}) error {
 	delete(panel, "styles")
 	delete(panel, "transform")
 	delete(panel, "columns")
+
+	// Remove legend property - frontend table panel migration doesn't preserve it
+	delete(panel, "legend")
 
 	return nil
 }
@@ -456,9 +454,11 @@ func migrateTableStyleToOverride(style map[string]interface{}) map[string]interf
 
 	// Handle alignment
 	if align, ok := style["align"].(string); ok && align != "" {
-		alignValue := align
+		var alignValue interface{}
 		if align == "auto" {
-			alignValue = ""
+			alignValue = nil // Frontend sets to null and filters it out
+		} else {
+			alignValue = align
 		}
 		properties = append(properties, map[string]interface{}{
 			"id":    "custom.align",
@@ -514,7 +514,7 @@ func migrateDefaults(prevDefaults map[string]interface{}) map[string]interface{}
 		defaults["thresholds"] = map[string]interface{}{
 			"mode": "absolute",
 			"steps": []interface{}{
-				map[string]interface{}{"color": "green"},
+				map[string]interface{}{"color": "green", "value": (*float64)(nil)},
 				map[string]interface{}{"color": "red", "value": 80},
 			},
 		}
@@ -537,9 +537,11 @@ func migrateDefaults(prevDefaults map[string]interface{}) map[string]interface{}
 	}
 
 	if align, ok := prevDefaults["align"].(string); ok && align != "" {
-		alignValue := align
+		var alignValue interface{}
 		if align == "auto" {
-			alignValue = ""
+			alignValue = nil // Frontend sets to null and filters it out
+		} else {
+			alignValue = align
 		}
 		defaults["custom"].(map[string]interface{})["align"] = alignValue
 	}
@@ -581,14 +583,6 @@ func generateThresholds(thresholds []interface{}, colors []interface{}) []interf
 
 	// Add threshold steps
 	for i, threshold := range thresholds {
-		var color interface{}
-		// Use colors[i+1] for the i-th threshold (colors[0] was used for base step)
-		if i+1 < len(colors) && colors[i+1] != nil {
-			color = colors[i+1]
-		} else {
-			color = "red"
-		}
-
 		var value float64
 		switch v := threshold.(type) {
 		case string:
@@ -601,10 +595,17 @@ func generateThresholds(thresholds []interface{}, colors []interface{}) []interf
 			value = float64(v)
 		}
 
-		steps = append(steps, map[string]interface{}{
-			"color": color,
+		step := map[string]interface{}{
 			"value": value,
-		})
+		}
+
+		// Only add color if there's a corresponding color in the colors array
+		// This matches the frontend behavior where colors[idx] might be undefined
+		if i+1 < len(colors) && colors[i+1] != nil {
+			step["color"] = colors[i+1]
+		}
+
+		steps = append(steps, step)
 	}
 
 	return steps

@@ -502,7 +502,16 @@ func cleanupPanelForSave(panel map[string]interface{}) {
 	}
 
 	// Remove null values recursively to match frontend's JSON.stringify/parse behavior
-	removeNullValuesRecursively(panel)
+	// Pass panel type information to help with threshold handling
+	panelType := ""
+	if t, ok := panel["type"].(string); ok {
+		panelType = t
+	}
+	// Debug: log panel type for troubleshooting
+	if panelType != "" {
+		// fmt.Printf("Panel type: %s\n", panelType)
+	}
+	removeNullValuesRecursivelyWithContext(panel, panelType)
 
 	// Filter out properties that match defaults (matches frontend's isEqual logic)
 	filterDefaultValues(panel, originalProperties)
@@ -856,25 +865,63 @@ func applyPanelAutoMigration(panel map[string]interface{}) {
 // removeNullValuesRecursively removes null values from nested objects and arrays
 // This matches the frontend's JSON.stringify/parse behavior
 func removeNullValuesRecursively(data interface{}) {
+	removeNullValuesRecursivelyWithContext(data, "")
+}
+
+// removeNullValuesRecursivelyWithContext removes null values from nested objects and arrays
+// This matches the frontend's JSON.stringify/parse behavior
+// Special case: preserve "value": null only in the first threshold step for table panels
+func removeNullValuesRecursivelyWithContext(data interface{}, panelType string) {
 	switch v := data.(type) {
 	case map[string]interface{}:
 		// Remove null values from map
 		for key, value := range v {
 			if value == nil {
+				// Special case: preserve "value": null only in the first threshold step for table panels
+				if key == "value" && isFirstThresholdStepForPanel(v, panelType) {
+					continue // Don't delete null values in the first threshold step for table panels
+				}
 				delete(v, key)
 			} else {
 				// Recursively process nested values
-				removeNullValuesRecursively(value)
+				removeNullValuesRecursivelyWithContext(value, panelType)
 			}
 		}
 	case []interface{}:
 		// Process array elements
 		for _, item := range v {
 			if item != nil {
-				removeNullValuesRecursively(item)
+				removeNullValuesRecursivelyWithContext(item, panelType)
 			}
 		}
 	}
+}
+
+// isFirstThresholdStep checks if a map represents the first threshold step (base step)
+// The first threshold step has "color" and "value": null (represents -Infinity)
+// Only preserve null values for v24 table panels where the frontend expects them
+func isFirstThresholdStep(obj map[string]interface{}) bool {
+	return isFirstThresholdStepForPanel(obj, "")
+}
+
+// isFirstThresholdStepForPanel checks if a map represents the first threshold step for a specific panel type
+// The first threshold step has "color" and may have "value": null (represents -Infinity)
+// Only preserve null values for table panels where the frontend expects them
+func isFirstThresholdStepForPanel(obj map[string]interface{}, panelType string) bool {
+	_, hasColor := obj["color"]
+	value, hasValue := obj["value"]
+
+	// Only preserve null values if this is a threshold step with null value
+	if hasColor && hasValue && value == nil {
+		// For table panels, the frontend expects "value": null in first threshold step
+		// For other panel types (stat, gauge), the frontend expects NO value property
+		if panelType == "table" {
+			return true // Preserve null values for table panels
+		}
+		return false // Remove null values for other panel types
+	}
+
+	return false
 }
 
 // cleanupDashboardDefaults removes dashboard-level default values that frontend filters out
