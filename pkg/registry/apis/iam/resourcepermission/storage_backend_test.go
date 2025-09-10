@@ -554,6 +554,64 @@ func TestIntegration_ResourcePermSqlBackend_ListIterator(t *testing.T) {
 		require.Equal(t, expectedErr, err)
 		require.Zero(t, listRV)
 	})
+
+	t.Run("Should paginate through all results", func(t *testing.T) {
+		expectedResults := []string{
+			"dashboard.grafana.app-dashboards-dash1",
+			"folder.grafana.app-folders-fold1",
+		}
+		req := &resourcepb.ListRequest{
+			Options: &resourcepb.ListOptions{
+				Key: &resourcepb.ResourceKey{
+					Group:     gr.Group,
+					Resource:  gr.Resource,
+					Namespace: "default",
+				},
+			},
+			Limit:         1,
+			NextPageToken: "start:0",
+		}
+
+		var perm v0alpha1.ResourcePermission
+		continueToken := "start:0"
+		results := []string{}
+		_, _ = backend.ListIterator(context.Background(), req, func(it resource.ListIterator) error {
+			for it.Next() {
+				continueToken = it.ContinueToken()
+				require.NoError(t, json.Unmarshal(it.Value(), &perm))
+				results = append(results, perm.Name)
+			}
+			return nil
+		})
+		require.Equal(t, "start:1", continueToken)
+
+		req.NextPageToken = continueToken
+		_, _ = backend.ListIterator(context.Background(), req, func(it resource.ListIterator) error {
+			for it.Next() {
+				continueToken = it.ContinueToken()
+				require.NoError(t, json.Unmarshal(it.Value(), &perm))
+				results = append(results, perm.Name)
+			}
+			return nil
+		})
+		require.Equal(t, "start:2", continueToken)
+
+		// No more results, token should not change
+		req.NextPageToken = continueToken
+		_, _ = backend.ListIterator(context.Background(), req, func(it resource.ListIterator) error {
+			for it.Next() {
+				continueToken = it.ContinueToken()
+				require.NoError(t, json.Unmarshal(it.Value(), &perm))
+				results = append(results, perm.Name)
+			}
+			return nil
+		})
+		require.Equal(t, "start:2", continueToken) // No change
+
+		// Verify we got all expected results
+		require.Len(t, results, 2)
+		require.ElementsMatch(t, expectedResults, results)
+	})
 }
 
 func TestIntegration_WriteEvent_Delete(t *testing.T) {
