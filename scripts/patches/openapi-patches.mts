@@ -1,4 +1,4 @@
-import { SpecPatches } from './types';
+import { type SpecPatches } from './types.mts';
 
 /**
  * Patches to apply to OpenAPI specs for type narrowing.
@@ -29,7 +29,7 @@ import { SpecPatches } from './types';
  *     description: 'Narrow MyType.status to specific values'
  *   }
  */
-export const SPEC_PATCHES: SpecPatches = {
+const SPEC_PATCHES: SpecPatches = {
   'notifications.alerting.grafana.app-v0alpha1': [
     {
       description: 'Narrow RoutingTreeMatcher.type to specific matcher operators',
@@ -303,3 +303,5 @@ export const SPEC_PATCHES: SpecPatches = {
     },
   ],
 };
+
+export default SPEC_PATCHES;

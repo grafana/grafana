@@ -19,4 +19,4 @@ export interface SchemaPatch {
  */
 export interface SpecPatches {
   [filename: string]: SchemaPatch[];
-}
+} 

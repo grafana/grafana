@@ -1,16 +1,15 @@
-import { applyPatch } from 'fast-json-patch';
+import jsonPatch from 'fast-json-patch';
 import fs from 'fs';
 import { OpenAPIV3 } from 'openapi-types';
 import path from 'path';
 
-import { SPEC_PATCHES } from './patches/openapi-patches';
-import type { SchemaPatch } from './patches/types';
+import specPatches from './patches/openapi-patches.mts';
 
 /**
  * Apply JSON patches to an OpenAPI spec document.
  */
 function applyPatches(spec: OpenAPIV3.Document, filename: string): OpenAPIV3.Document {
-  const patches = SPEC_PATCHES[filename];
+  const patches = specPatches[filename];
   if (!patches?.length) {
     return spec;
   }
@@ -22,7 +21,7 @@ function applyPatches(spec: OpenAPIV3.Document, filename: string): OpenAPIV3.Doc
   for (const patch of patches) {
     try {
       // Apply all operations in this patch group
-      const result = applyPatch(currentSpec, patch.operations, /* validate */ true, /* mutate */ false);
+      const result = jsonPatch.applyPatch(currentSpec, patch.operations, /* validate */ true, /* mutate */ false);
 
       if (result.newDocument) {
         currentSpec = result.newDocument;
@@ -222,10 +221,11 @@ function processDirectory(sourceDir: string, outputDir: string) {
 }
 
 const sourceDirs = [
-  path.resolve(__dirname, '../pkg/tests/apis/openapi_snapshots'),
-  path.resolve(__dirname, '../pkg/extensions/apiserver/tests/openapi_snapshots'),
+  path.resolve(import.meta.url, '../pkg/tests/apis/openapi_snapshots'),
+  path.resolve(import.meta.url, '../pkg/extensions/apiserver/tests/openapi_snapshots'),
 ];
-const outputDir = path.resolve(__dirname, '../data/openapi');
+
+const outputDir = path.resolve(import.meta.url, '../data/openapi');
 
 for (const sourceDir of sourceDirs) {
   processDirectory(sourceDir, outputDir);
