@@ -14,27 +14,29 @@ import "reflect"
 // the interface becomes != nil even though it holds a nil value.
 //
 // Example of the gotcha:
-//   var p *int = nil        // p is a nil pointer
-//   var i interface{} = p   // i holds a typed nil (*int)(nil)
-//   fmt.Println(i == nil)   // prints: false (this is the gotcha!)
-//   fmt.Println(IsInterfaceNil(i)) // prints: true (correctly identifies nil)
+//
+//	var p *int = nil        // p is a nil pointer
+//	var i interface{} = p   // i holds a typed nil (*int)(nil)
+//	fmt.Println(i == nil)   // prints: false (this is the gotcha!)
+//	fmt.Println(IsInterfaceNil(i)) // prints: true (correctly identifies nil)
 //
 // Common scenario with error interfaces:
-//   func doSomething() error {
-//       var err *MyError = nil
-//       if someCondition {
-//           err = &MyError{msg: "failed"}
-//       }
-//       return err  // returns interface{} containing (*MyError)(nil)
-//   }
-//   
-//   if err := doSomething(); err != nil {  // this check fails!
-//       // This code won't run even when err contains nil
-//   }
-//   
-//   if err := doSomething(); !IsInterfaceNil(err) {
-//       // This correctly identifies the nil error
-//   }
+//
+//	func doSomething() error {
+//	    var err *MyError = nil
+//	    if someCondition {
+//	        err = &MyError{msg: "failed"}
+//	    }
+//	    return err  // returns interface{} containing (*MyError)(nil)
+//	}
+//
+//	if err := doSomething(); err != nil {  // this check fails!
+//	    // This code won't run even when err contains nil
+//	}
+//
+//	if err := doSomething(); !IsInterfaceNil(err) {
+//	    // This correctly identifies the nil error
+//	}
 //
 // Supported types: Ptr, Slice, Map, Func, Interface
 // Unsupported nilable types: Chan, UnsafePointer (these return false even when nil)
