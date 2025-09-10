@@ -59,7 +59,6 @@ export const TimeSeriesPanel = ({
   const isVerticallyOriented = options.orientation === VizOrientation.Vertical;
   const { frames, compareDiffMs } = useMemo(() => {
     let frames = prepareGraphableFields(data.series, config.theme2, timeRange);
-
     if (frames != null) {
       let compareDiffMs: number[] = [0];
 
@@ -78,7 +77,7 @@ export const TimeSeriesPanel = ({
           const needsAlignment = shouldAlignTimeCompare(frame, frames, timeRange);
 
           if (needsAlignment) {
-            alignTimeRangeCompareData(frame, diffMs, config.theme2.colors.text.disabled);
+            alignTimeRangeCompareData(frame, diffMs, config.theme2);
           }
         }
       });

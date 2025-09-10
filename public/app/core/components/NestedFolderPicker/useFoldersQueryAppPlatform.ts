@@ -139,6 +139,7 @@ export function useFoldersQueryAppPlatform({
             uid: name,
             // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
             managedBy: item.metadata?.annotations?.[AnnoKeyManagerKind] as ManagerKind | undefined,
+            parentUID: item.parentUID,
           },
         };
 

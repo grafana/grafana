@@ -1133,7 +1133,8 @@
     },
     "enrichment": {
       "error-boundary": {
-        "notification-message-section-extension": ""
+        "notification-message-section-extension": "",
+        "rule-viewer-section-extension": ""
       }
     },
     "error-modal": {
@@ -3068,6 +3069,7 @@
       "page-nav": {
         "text": {
           "details": "Подробности",
+          "enrichment": "",
           "history": "История",
           "instances": "Экземпляры",
           "query-and-conditions": "Запрос и условия",
@@ -4717,6 +4719,7 @@
       "move": "Переместить {{typeName}}",
       "panel-background": "Изменить фон панели",
       "panel-description": "Изменить описание панели",
+      "panel-edit": "",
       "panel-max-repeats-per-row": "Макс. повторений на строку",
       "panel-repeat-direction": "Повторение направления",
       "panel-repeat-variable": "Повторение панели по",
@@ -4971,12 +4974,11 @@
       "dataframe-aria-label": "Выбрать фрейм данных",
       "dataframe-label": "Показать фрейм данных",
       "download-csv": "Загрузить CSV",
-      "download-excel-description": "Добавляет заголовок в CSV для использования в Excel",
-      "download-excel-label": "Загрузить для Excel",
       "download-logs": "Загрузить журналы",
       "download-service": "Загрузить граф сервиса",
       "download-traces": "Загрузить трассировки",
-      "excel-header": "Заголовок Excel",
+      "excel-compatibility-mode-description": "",
+      "excel-compatibility-mode-label": "",
       "formatted": "Форматированные данные",
       "formatted-data-description": "Данные таблицы форматируются с помощью параметров, заданных на вкладках «Поле» и «Переопределение».",
       "formatted-data-label": "Форматированные данные",
@@ -11275,11 +11277,11 @@
       "description-clear-repository-connection": "Добавьте понятное имя для этого подключения к репозиторию.",
       "empty": "Пусто",
       "error-field-required": "Поле является обязательным.",
-      "ext-storage": "Внешнее хранилище",
-      "grafana": "Экземпляр Grafana",
+      "external-storage-label": "",
       "label-display-name": "Отображаемое имя",
       "placeholder-my-repository-connection": "Мое подключение к репозиторию",
       "text-loading-resource-information": "Загрузка информации о ресурсе...",
+      "unmanaged-resources-label": "",
       "dashboards-count_one": "{{count}} дашборд",
       "dashboards-count_few": "{{count}} дашборда",
       "dashboards-count_many": "{{count}} дашбордов",
@@ -11333,7 +11335,11 @@
     },
     "connect-repository-button": {
       "configure": "Настроить",
-      "repository-limit-info-alert": "Достигнут лимит репозитория ({{count}})"
+      "instance-fully-managed-tooltip": "",
+      "repository-limit-reached-tooltip_one": "",
+      "repository-limit-reached-tooltip_few": "",
+      "repository-limit-reached-tooltip_many": "",
+      "repository-limit-reached-tooltip_other": ""
     },
     "delete-repository-button": {
       "button-delete": "Удалить",
@@ -12027,16 +12033,6 @@
       "no-deleted-dashboards": "В последнее время вы не удаляли ни одного дашборда.",
       "no-deleted-dashboards-text": "Удаленные дашборды отображаются здесь в течение 30 дней, после чего удаляются без возможности восстановления. Администратор вашей организации может восстановить недавно удаленные дашборды.",
       "no-search-result": "По вашему запросу ничего не найдено"
-    },
-    "permanently-delete-modal": {
-      "confirm-text": "Удалить",
-      "delete-button": "Удалить",
-      "delete-loading": "Удаление...",
-      "title": "Удаление дашбордов без возможности восстановления",
-      "text_one": "Это действие приведет к удалению {{numberOfDashboards}} дашборда.",
-      "text_few": "Это действие приведет к удалению {{numberOfDashboards}} дашбордов.",
-      "text_many": "Это действие приведет к удалению {{numberOfDashboards}} дашбордов.",
-      "text_other": "Это действие приведет к удалению {{numberOfDashboards}} дашборда."
     },
     "restore-modal": {
       "restore-button": "Восстановить",

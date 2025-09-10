@@ -1121,7 +1121,8 @@
     },
     "enrichment": {
       "error-boundary": {
-        "notification-message-section-extension": ""
+        "notification-message-section-extension": "",
+        "rule-viewer-section-extension": ""
       }
     },
     "error-modal": {
@@ -3042,6 +3043,7 @@
       "page-nav": {
         "text": {
           "details": "Ayrıntılar",
+          "enrichment": "",
           "history": "Geçmiş",
           "instances": "Örnekler",
           "query-and-conditions": "Sorgu ve koşullar",
@@ -4681,6 +4683,7 @@
       "move": "{{typeName}} ögesini taşı",
       "panel-background": "Panel arka planını değiştir",
       "panel-description": "Panel açıklamasını değiştir",
+      "panel-edit": "",
       "panel-max-repeats-per-row": "Satır başına maksimum tekrar sayısı",
       "panel-repeat-direction": "Tekrar yönü",
       "panel-repeat-variable": "Panel yineleme ölçütü",
@@ -4935,12 +4938,11 @@
       "dataframe-aria-label": "Veri çerçevesi seçin",
       "dataframe-label": "Veri çerçevesini göster",
       "download-csv": "CSV olarak indir",
-      "download-excel-description": "Excel'de kullanmak için CSV'ye başlık ekler",
-      "download-excel-label": "Excel olarak indir",
       "download-logs": "Günlükleri indir",
       "download-service": "Servis grafiğini indir",
       "download-traces": "İzleme verilerini indir",
-      "excel-header": "Excel başlığı",
+      "excel-compatibility-mode-description": "",
+      "excel-compatibility-mode-label": "",
       "formatted": "Biçimlendirilmiş veriler",
       "formatted-data-description": "Tablo verileri, Alan ve Geçersiz Kılma sekmelerinde tanımlanan seçeneklerle biçimlendirilir.",
       "formatted-data-label": "Biçimlendirilmiş veriler",
@@ -11211,11 +11213,11 @@
       "description-clear-repository-connection": "Bu depo bağlantısı için net bir ad ekleyin",
       "empty": "Boş",
       "error-field-required": "Bu alan gereklidir.",
-      "ext-storage": "Harici depolama",
-      "grafana": "Grafana örneği",
+      "external-storage-label": "",
       "label-display-name": "Görünen ad",
       "placeholder-my-repository-connection": "Depo bağlantım",
       "text-loading-resource-information": "Kaynak bilgileri yükleniyor...",
+      "unmanaged-resources-label": "",
       "dashboards-count_one": "{{count}} pano",
       "dashboards-count_other": "{{count}} pano",
       "files-count_one": "{{count}} dosya",
@@ -11263,7 +11265,9 @@
     },
     "connect-repository-button": {
       "configure": "Yapılandır",
-      "repository-limit-info-alert": "Depo sınırına ulaşıldı ({{count}})"
+      "instance-fully-managed-tooltip": "",
+      "repository-limit-reached-tooltip_one": "",
+      "repository-limit-reached-tooltip_other": ""
     },
     "delete-repository-button": {
       "button-delete": "Sil",
@@ -11955,14 +11959,6 @@
       "no-deleted-dashboards": "Yakın zamanda bir pano silmediniz.",
       "no-deleted-dashboards-text": "Bir panoyu sildiğinizde, kalıcı olarak silinmeden önce 30 gün boyunca burada görünecektir. Kuruluş yöneticiniz, yakın zamanda silinen panoları geri yükleyebilir.",
       "no-search-result": "Sorgunuz için sonuç bulunamadı"
-    },
-    "permanently-delete-modal": {
-      "confirm-text": "Sil",
-      "delete-button": "Sil",
-      "delete-loading": "Siliniyor...",
-      "title": "Panoları Kalıcı Olarak Silme",
-      "text_one": "Bu işlem {{numberOfDashboards}} panoyu silecektir.",
-      "text_other": "Bu işlem {{numberOfDashboards}} panoyu silecektir."
     },
     "restore-modal": {
       "restore-button": "Geri yükle",

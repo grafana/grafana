@@ -573,6 +573,7 @@ export {
   PluginExtensionTypes,
   PluginExtensionPoints,
   PluginExtensionExposedComponents,
+  PluginExtensionPointPatterns,
   type PluginExtension,
   type PluginExtensionLink,
   type PluginExtensionComponent,

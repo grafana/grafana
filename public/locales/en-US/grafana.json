@@ -504,6 +504,7 @@
       "copy-link": "Copy link",
       "duplicate": "Duplicate",
       "export": "Export",
+      "manage-enrichments": "Manage enrichments",
       "silence-notifications": "Silence notifications",
       "with-modifications": "With modifications"
     },
@@ -1121,7 +1122,8 @@
     },
     "enrichment": {
       "error-boundary": {
-        "notification-message-section-extension": "Notification Message Section Extension failed to load"
+        "enrichment-drawer-extension": "Enrichment Drawer Extension failed to load",
+        "rule-viewer-section-extension": "Rule Viewer Enrichment Section failed to load"
       }
     },
     "error-modal": {
@@ -3042,6 +3044,7 @@
       "page-nav": {
         "text": {
           "details": "Details",
+          "enrichment": "Alert enrichment",
           "history": "History",
           "instances": "Instances",
           "query-and-conditions": "Query and conditions",
@@ -3567,15 +3570,15 @@
     },
     "counts": {
       "alertRule_one": "{{count}} alert rule",
-      "alertRule_other": "{{count}} alert rule",
+      "alertRule_other": "{{count}} alert rules",
       "dashboard_one": "{{count}} dashboard",
-      "dashboard_other": "{{count}} dashboard",
+      "dashboard_other": "{{count}} dashboards",
       "folder_one": "{{count}} folder",
-      "folder_other": "{{count}} folder",
+      "folder_other": "{{count}} folders",
       "libraryPanel_one": "{{count}} library panel",
-      "libraryPanel_other": "{{count}} library panel",
+      "libraryPanel_other": "{{count}} library panels",
       "total_one": "{{count}} item",
-      "total_other": "{{count}} item"
+      "total_other": "{{count}} items"
     },
     "dashboards-tree": {
       "checkbox": {
@@ -4681,6 +4684,7 @@
       "move": "Move {{typeName}}",
       "panel-background": "Change panel background",
       "panel-description": "Change panel description",
+      "panel-edit": "Panel changes",
       "panel-max-repeats-per-row": "Max repeats per row",
       "panel-repeat-direction": "Repeat direction",
       "panel-repeat-variable": "Panel repeat by",
@@ -4935,12 +4939,11 @@
       "dataframe-aria-label": "Select dataframe",
       "dataframe-label": "Show data frame",
       "download-csv": "Download CSV",
-      "download-excel-description": "Adds header to CSV for use with Excel",
-      "download-excel-label": "Download for Excel",
       "download-logs": "Download logs",
       "download-service": "Download service graph",
       "download-traces": "Download traces",
-      "excel-header": "Excel header",
+      "excel-compatibility-mode-description": "Generates a CSV file that's compatible with most Excel versions",
+      "excel-compatibility-mode-label": "Download for Excel",
       "formatted": "Formatted data",
       "formatted-data-description": "Table data is formatted with options defined in the Field and Override tabs.",
       "formatted-data-label": "Formatted data",
@@ -11213,15 +11216,15 @@
       "description-clear-repository-connection": "Add a clear name for this repository connection",
       "empty": "Empty",
       "error-field-required": "This field is required.",
-      "ext-storage": "External storage",
+      "external-storage-label": "External storage",
       "files-count_one": "{{count}} files",
       "files-count_other": "{{count}} files",
       "folders-count_one": "{{count}} folder",
       "folders-count_other": "{{count}} folder",
-      "grafana": "Grafana instance",
       "label-display-name": "Display name",
       "placeholder-my-repository-connection": "My repository connection",
-      "text-loading-resource-information": "Loading resource information..."
+      "text-loading-resource-information": "Loading resource information...",
+      "unmanaged-resources-label": "Unmanaged resources"
     },
     "check-repository": {
       "check": "Check"
@@ -11263,7 +11266,9 @@
     },
     "connect-repository-button": {
       "configure": "Configure",
-      "repository-limit-info-alert": "Repository limit reached ({{count}})"
+      "instance-fully-managed-tooltip": "Configuration is disabled because this instance is fully managed",
+      "repository-limit-reached-tooltip_one": "Repository limit reached {{count}}",
+      "repository-limit-reached-tooltip_other": "Repository limit reached {{count}}"
     },
     "delete-repository-button": {
       "button-delete": "Delete",
