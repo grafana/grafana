@@ -47,17 +47,19 @@ export function mapInternalLinkToExplore(options: LinkToExploreOptions): LinkMod
   const interpolatedCorrelationData = interpolateObject(link.meta?.correlationData, scopedVars, replaceVariables);
   const title = link.title ? link.title : internalLink.datasourceName;
 
-  const interpolation = interpolatedQuery ? {
-    query: {
-      ...interpolatedQuery,
-      // data source is defined in a separate property in DataLink, we ensure it's put back together after interpolation
-      datasource: {
-        ...interpolatedQuery.datasource,
-        uid: internalLink.datasourceUid,
-      },
-    },
-    ...(range && { timeRange: range }),
-  } : undefined
+  const interpolation = interpolatedQuery
+    ? {
+        query: {
+          ...interpolatedQuery,
+          // data source is defined in a separate property in DataLink, we ensure it's put back together after interpolation
+          datasource: {
+            ...interpolatedQuery.datasource,
+            uid: internalLink.datasourceUid,
+          },
+        },
+        ...(range && { timeRange: range }),
+      }
+    : undefined;
 
   return {
     title: replaceVariables(title, scopedVars),
