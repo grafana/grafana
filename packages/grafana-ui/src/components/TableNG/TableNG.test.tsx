@@ -309,11 +309,11 @@ describe('TableNG', () => {
     origScrollIntoView = window.HTMLElement.prototype.scrollIntoView;
     // Mock ResizeObserver
     global.ResizeObserver = class ResizeObserver {
-      constructor(callback: any) {
+      constructor(callback: Function) {
         // Store the callback
         this.callback = callback;
       }
-      callback: any;
+      callback: Function;
       observe() {
         // Do nothing
       }
