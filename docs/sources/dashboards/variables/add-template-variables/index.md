@@ -329,6 +329,7 @@ To create an ad hoc filter, follow these steps:
 Now you can [filter data on the dashboard](ref:filter-dashboard).
 
 ### Apply ad hoc filters from visualizations
+
 <!-- or ### Dashboard drilldown with ad hoc filters -->
 
 In table visualizations, you can apply ad hoc filters from the visualization with one click.
