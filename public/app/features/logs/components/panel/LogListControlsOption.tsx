@@ -185,6 +185,7 @@ const getStyles = (theme: GrafanaTheme2, expanded: boolean) => {
     }),
     marginTopAuto: css({
       marginTop: 'auto',
+      marginBottom: theme.spacing(1),
     }),
     labelText: css({
       display: expanded ? 'block' : 'none',

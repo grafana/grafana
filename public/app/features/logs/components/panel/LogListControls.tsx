@@ -745,7 +745,7 @@ const getWrapButtonStyles = (theme: GrafanaTheme2, expanded: boolean) => {
   };
 };
 
-export const CONTROLS_WIDTH = 32;
+export const CONTROLS_WIDTH = 35;
 export const CONTROLS_WIDTH_EXPANDED = 176;
 
 const getStyles = (theme: GrafanaTheme2, controlsExpanded: boolean) => {
