@@ -167,7 +167,7 @@ After configuring your Amazon CloudWatch data source options, click **Save & tes
 
 
 {{< admonition type="note" >}}
-To troubleshoot issues while setting up the CloudWatch data source, check the `/var/log/grafana/grafana.log` file.
+To troubleshoot issues while setting up the CloudWatch data source, check the `/var/log/grafana/grafana.log` file. Common issues include invalid credentials, missing regions and metrics-only credentials.
 {{< /admonition >}}
 
 ### IAM policy examples

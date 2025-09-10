@@ -44,6 +44,11 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/alerting-and-irm/alerting/
+  add-template-variables:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/add-template-variables/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/add-template-variables/
 ---
 
 # Amazon CloudWatch query editor
@@ -99,9 +104,10 @@ To run the query, click **Run query** above the code editor.
 
 ### Metrics editor
 
-When you select `Builder` mode within the Metric search editor, a new Account field is displayed. Use the Account field to specify which of the linked accounts to target for the given query. By default, the `All` option is specified, which will target all linked accounts.
+When you select `Builder` mode within the Metric search editor, a new Account field is displayed. Use the `Account` field to specify which of the linked monitoring accounts to target for the given query. By default, the `All` option is specified, which will target all linked accounts.
 
-While in `Code` mode, you can specify any math expression. If the Monitoring account badge displays in the query editor header, all `SEARCH` expressions entered in this field will be cross-account by default. You can limit the search to one or a set of accounts, as documented in the [AWS documentation](http://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/CloudWatch-Unified-Cross-Account.html).
+While in `Code` mode, you can specify any math expression. If the Monitoring account badge displays in the query editor header, all `SEARCH` expressions entered in this field will be cross-account by default and can query metrics from linked accounts. Note that while queries run cross-account, the autocomplete feature currently doesn't fetch cross-account resources, so you'll need to manually specify resource names when writing cross-account queries.
+You can limit the search to one or a set of accounts, as documented in the [AWS documentation](http://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/CloudWatch-Unified-Cross-Account.html).
 
 ### Logs editor
 
@@ -208,12 +214,12 @@ For more information on Grafana alerts, refer to [Alerting](ref:alerting).
 
 ### Deep-link Grafana panels to the CloudWatch console
 
-{{< figure src="/static/img/docs/v65/cloudwatch-deep-linking.png" max-width="500px" class="docs-image--right" caption="CloudWatch deep linking" >}}
-
 Left-clicking a time series in the panel displays a context menu with a link to `View in CloudWatch console`.
 Clicking the link opens a new tab that takes you to the CloudWatch console and displays all metrics for that query.
 If you're not logged in to the CloudWatch console, the link forwards you to the login page.
 The link provided is valid for any account but displays the expected metrics only if you're logged in to the account that corresponds to the selected data source in Grafana.
+
+{{< figure src="/media/docs/cloudwatch/cloudwatch-deep-link-v12.1.png" caption="CloudWatch deep linking" >}}
 
 This feature is not available for metrics based on [metric math expressions](#metric-math-expressions).
 
@@ -244,7 +250,7 @@ For details about the Metrics Insights syntax, refer to the [AWS reference docum
 
 For information about Metrics Insights limits, refer to the [AWS feature documentation](https://docs.aws.amazon.com/console/cloudwatch/metricsinsights).
 
-You can also augment queries by using [template variables](../template-variables/).
+You can also augment queries by using [template variables](ref:add-template-variables).
 
 #### Use Metrics Insights keywords
 
@@ -260,6 +266,25 @@ This table summarizes common Metrics Insights query keywords:
 | `GROUP BY`   | Optional. Groups the query results into multiple time series. For example, `GROUP BY ServiceName`.                                                                                                           |
 | `ORDER BY`   | Optional. Specifies the order in which time series are returned. Options are `ASC`, `DESC`.                                                                                                                  |
 | `LIMIT`      | Optional. Limits the number of time series returned.                                                                                                                                                         |
+
+#### Use Metric Insights syntax
+
+Metric Insights uses a dialect of SQL and this query syntax:
+
+```sql
+SELECT FUNCTION(MetricName)
+FROM Namespace | SCHEMA(...)
+[ WHERE labelKey OPERATOR labelValue [AND|...]]
+[ GROUP BY labelKey [, ...]]
+[ ORDER BY FUNCTION() [DESC | ASC] ]
+[ LIMIT number]
+```
+
+For details about the Metrics Insights syntax, refer to the [AWS reference documentation](https://docs.aws.amazon.com/console/cloudwatch/metricsinsights-syntax).
+
+For information about Metrics Insights limits, refer to the [AWS feature documentation](https://docs.aws.amazon.com/console/cloudwatch/metricsinsights).
+
+You can also augment queries by using [template variables](../template-variables/).
 
 ## Query CloudWatch Logs
 
