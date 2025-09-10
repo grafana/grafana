@@ -161,13 +161,13 @@ func newRemoteRBACClient(clientCfg *authzClientSettings, tracer trace.Tracer, re
 		}
 	}
 
-	authRequestDuration := promauto.With(reg).NewHistogramVec(prometheus.HistogramOpts{
+	authzRequestDuration := promauto.With(reg).NewHistogramVec(prometheus.HistogramOpts{
 		Name:    "authz_server_client_request_duration_seconds",
 		Help:    "Time spent executing requests to authz server.",
 		Buckets: prometheus.ExponentialBuckets(0.008, 4, 7),
 	}, []string{"operation", "status_code"})
 
-	unaryInterceptors, streamInterceptors := grpcclient.Instrument(authRequestDuration)
+	unaryInterceptors, streamInterceptors := grpcclient.Instrument(authzRequestDuration)
 
 	opts := []grpc.DialOption{
 		grpc.WithTransportCredentials(transportCreds),
