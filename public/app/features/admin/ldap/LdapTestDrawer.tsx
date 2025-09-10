@@ -1,9 +1,9 @@
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 
 import { Trans, t } from '@grafana/i18n';
 import { featureEnabled } from '@grafana/runtime';
-import { Alert, Button, Drawer, Field, Input, Stack, Text } from '@grafana/ui';
+import { Alert, Button, Drawer, Field, Input, LoadingPlaceholder, Stack, Text } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
 import { AccessControlAction } from 'app/types/accessControl';
 import { AppNotificationSeverity } from 'app/types/appNotifications';
@@ -38,6 +38,7 @@ export const LdapTestDrawer = ({ onClose, username }: Props) => {
   const ldapSyncInfo = useSelector((state) => state.ldap.syncInfo);
   const userError = useSelector((state) => state.ldap.userError);
   const ldapError = useSelector((state) => state.ldap.ldapError);
+  const [isLoading, setIsLoading] = useState(true);
   const { register, handleSubmit } = useForm<FormModel>();
 
   const fetchUserMapping = useCallback(
@@ -59,6 +60,8 @@ export const LdapTestDrawer = ({ onClose, username }: Props) => {
       if (username) {
         await fetchUserMapping(username);
       }
+
+      setIsLoading(false);
     }
 
     init();
@@ -83,49 +86,53 @@ export const LdapTestDrawer = ({ onClose, username }: Props) => {
       subtitle={t('admin.ldap.debug-subtitle', 'Verify your LDAP and user mapping configuration.')}
       onClose={onClose}
     >
-      <Stack direction="column" gap={4}>
-        {ldapError && ldapError.title && (
-          <Alert title={ldapError.title} severity={AppNotificationSeverity.Error}>
-            {ldapError.body}
-          </Alert>
-        )}
+      {isLoading ? (
+        <LoadingPlaceholder text={t('admin.ldap.text-loading-ldap-status', 'Loading LDAP status...')} />
+      ) : (
+        <Stack direction="column" gap={4}>
+          {ldapError && ldapError.title && (
+            <Alert title={ldapError.title} severity={AppNotificationSeverity.Error}>
+              {ldapError.body}
+            </Alert>
+          )}
 
-        <LdapConnectionStatus ldapConnectionInfo={ldapConnectionInfo} />
+          <LdapConnectionStatus ldapConnectionInfo={ldapConnectionInfo} />
 
-        {featureEnabled('ldapsync') && ldapSyncInfo && <LdapSyncInfo ldapSyncInfo={ldapSyncInfo} />}
+          {featureEnabled('ldapsync') && ldapSyncInfo && <LdapSyncInfo ldapSyncInfo={ldapSyncInfo} />}
 
-        {canReadLDAPUser && (
-          <section>
-            <Stack direction="column" gap={2}>
-              <Text element="h3">
-                <Trans i18nKey="admin.ldap.test-mapping-heading">Test user mapping</Trans>
-              </Text>
-              <form onSubmit={handleSubmit(search)}>
-                <Field label={t('admin.ldap-page.label-username', 'Username')}>
-                  <Stack>
-                    <Input
-                      {...register('username', { required: true })}
-                      width={34}
-                      id="username"
-                      type="text"
-                      defaultValue={username}
-                    />
-                    <Button variant="secondary" type="submit">
-                      <Trans i18nKey="admin.ldap.test-mapping-run-button">Run</Trans>
-                    </Button>
-                  </Stack>
-                </Field>
-              </form>
-              {userError && userError.title && (
-                <Alert title={userError.title} severity={AppNotificationSeverity.Error} onRemove={onClearUserError}>
-                  {userError.body}
-                </Alert>
-              )}
-              {ldapUser && <LdapUserInfo ldapUser={ldapUser} />}
-            </Stack>
-          </section>
-        )}
-      </Stack>
+          {canReadLDAPUser && (
+            <section>
+              <Stack direction="column" gap={2}>
+                <Text element="h3">
+                  <Trans i18nKey="admin.ldap.test-mapping-heading">Test user mapping</Trans>
+                </Text>
+                <form onSubmit={handleSubmit(search)}>
+                  <Field label={t('admin.ldap-page.label-username', 'Username')}>
+                    <Stack>
+                      <Input
+                        {...register('username', { required: true })}
+                        width={34}
+                        id="username"
+                        type="text"
+                        defaultValue={username}
+                      />
+                      <Button variant="secondary" type="submit">
+                        <Trans i18nKey="admin.ldap.test-mapping-run-button">Run</Trans>
+                      </Button>
+                    </Stack>
+                  </Field>
+                </form>
+                {userError && userError.title && (
+                  <Alert title={userError.title} severity={AppNotificationSeverity.Error} onRemove={onClearUserError}>
+                    {userError.body}
+                  </Alert>
+                )}
+                {ldapUser && <LdapUserInfo ldapUser={ldapUser} />}
+              </Stack>
+            </section>
+          )}
+        </Stack>
+      )}
     </Drawer>
   );
 };
