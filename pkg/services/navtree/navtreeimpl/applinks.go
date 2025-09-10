@@ -37,6 +37,8 @@ func (s *ServiceImpl) addAppLinks(treeRoot *navtree.NavTreeRoot, c *contextmodel
 		return false
 	}
 
+	enabledAccessibleAppPluginMap := make(map[string]*pluginstore.Plugin)
+
 	for _, plugin := range s.pluginStore.Plugins(c.Req.Context(), plugins.TypeApp) {
 		if !isPluginEnabled(plugin) {
 			continue
@@ -46,26 +48,16 @@ func (s *ServiceImpl) addAppLinks(treeRoot *navtree.NavTreeRoot, c *contextmodel
 			continue
 		}
 
+		enabledAccessibleAppPluginMap[plugin.ID] = &plugin
 		if appNode := s.processAppPlugin(plugin, c, treeRoot); appNode != nil {
 			appLinks = append(appLinks, appNode)
 		}
 	}
 
-	// Update select tree nodes for certain plugins
-	for _, plugin := range s.pluginStore.Plugins(c.Req.Context(), plugins.TypeApp) {
-		if !isPluginEnabled(plugin) {
-			continue
-		}
-
-		if plugin.ID == "grafana-adaptivetelemetry-app" {
-			adaptiveTelemetryNode := treeRoot.FindById(navtree.NavIDAdaptiveTelemetry)
-			if adaptiveTelemetryNode == nil {
-				continue
-			}
-			// If the adaptivetelemetry app is installed, updated the nav menu item accordingly
-			adaptiveTelemetryNode.Url = s.cfg.AppSubURL + "/a/grafana-adaptivetelemetry-app"
-			adaptiveTelemetryNode.PluginID = "grafana-adaptivetelemetry-app"
-		}
+	if adaptiveTelemetryPlugin, adaptiveTelemetrySection := enabledAccessibleAppPluginMap["grafana-adaptivetelemetry-app"], treeRoot.FindById(navtree.NavIDAdaptiveTelemetry); adaptiveTelemetryPlugin != nil && adaptiveTelemetryNode != nil {
+		// If the adaptivetelemetry app is enabled, and the adaptiveTelemetrySection exists, then update the section to point to the plugin
+		adaptiveTelemetrySection.Url = s.cfg.AppSubURL + "/a/" + adaptiveTelemetryPlugin.ID
+		adaptiveTelemetrySection.PluginID = adaptiveTelemetryPlugin.ID
 	}
 
 	if len(appLinks) > 0 {
