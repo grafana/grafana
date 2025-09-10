@@ -51,7 +51,7 @@ describe('navModelReducer', () => {
       const orgsettings = { id: 'org-settings', text: 'Preferences' };
 
       const initialState = {
-        cfg: { ...originalCfg, children: [datasources, users, teams, plugins, orgsettings ] },
+        cfg: { ...originalCfg, children: [datasources, users, teams, plugins, orgsettings] },
         datasources: { ...datasources, parentItem: originalCfg },
         correlations: { ...correlations, parentItem: originalCfg },
         users: { ...users, parentItem: originalCfg },
@@ -64,7 +64,7 @@ describe('navModelReducer', () => {
       const subTitle = `Organization: ${newOrgName}`;
       const newCfg = { ...originalCfg, subTitle };
       const expectedState = {
-        cfg: { ...newCfg, children: [datasources, users, teams, plugins, orgsettings ] },
+        cfg: { ...newCfg, children: [datasources, users, teams, plugins, orgsettings] },
         datasources: { ...datasources, parentItem: newCfg },
         correlations: { ...correlations, parentItem: newCfg },
         users: { ...users, parentItem: newCfg },
