@@ -1301,10 +1301,18 @@ func (s *server) GetStats(ctx context.Context, req *resourcepb.ResourceStatsRequ
 }
 
 func (s *server) ListManagedObjects(ctx context.Context, req *resourcepb.ListManagedObjectsRequest) (*resourcepb.ListManagedObjectsResponse, error) {
+	if s.search == nil {
+		return nil, fmt.Errorf("search index not configured")
+	}
+
 	return s.search.ListManagedObjects(ctx, req)
 }
 
 func (s *server) CountManagedObjects(ctx context.Context, req *resourcepb.CountManagedObjectsRequest) (*resourcepb.CountManagedObjectsResponse, error) {
+	if s.search == nil {
+		return nil, fmt.Errorf("search index not configured")
+	}
+
 	return s.search.CountManagedObjects(ctx, req)
 }
 

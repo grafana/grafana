@@ -7,8 +7,6 @@ import { Repository } from 'app/api/clients/provisioning/v0alpha1';
 import { RepositoryCard } from '../Repository/RepositoryCard';
 import { checkSyncSettings } from '../utils/checkSyncSettings';
 
-import { ConnectRepositoryButton } from './ConnectRepositoryButton';
-
 interface Props {
   items: Repository[];
 }
@@ -27,7 +25,6 @@ export function RepositoryList({ items }: Props) {
             value={query}
             onChange={setQuery}
           />
-          <ConnectRepositoryButton items={items} />
         </Stack>
       )}
       <Stack direction={'column'} gap={2}>
