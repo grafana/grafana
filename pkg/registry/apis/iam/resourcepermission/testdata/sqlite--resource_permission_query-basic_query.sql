@@ -15,4 +15,4 @@ LEFT JOIN "grafana"."team" t ON tr.team_id = t.id
 LEFT JOIN "grafana"."builtin_role" br ON r.id = br.role_id
 WHERE r.name LIKE 'managed:%'
 AND (u.uid IS NOT NULL OR t.uid IS NOT NULL OR br.role IS NOT NULL)
-ORDER BY p.id
+ORDER BY p.scope
