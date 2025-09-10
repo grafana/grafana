@@ -2,16 +2,14 @@
 
 export interface ConfigSpec {
 	field: string;
-	type: string;
+	type?: string;
 	target: TargetSpec;
-	transformations: TransformationSpec[];
+	transformations?: TransformationSpec[];
 }
 
 export const defaultConfigSpec = (): ConfigSpec => ({
 	field: "",
-	type: "",
 	target: defaultTargetSpec(),
-	transformations: [],
 });
 
 export type TargetSpec = Record<string, any>;
@@ -41,9 +39,9 @@ export const defaultCorrelationType = (): CorrelationType => (CorrelationType.Qu
 
 export interface Spec {
 	source_uid: string;
-	target_uid: string;
+	target_uid?: string;
 	label: string;
-	description: string;
+	description?: string;
 	config: ConfigSpec;
 	provisioned: boolean;
 	type: CorrelationType;
@@ -51,9 +49,7 @@ export interface Spec {
 
 export const defaultSpec = (): Spec => ({
 	source_uid: "",
-	target_uid: "",
 	label: "",
-	description: "",
 	config: defaultConfigSpec(),
 	provisioned: false,
 	type: CorrelationType.Query,

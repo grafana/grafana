@@ -5,16 +5,14 @@ package v0alpha1
 // +k8s:openapi-gen=true
 type CorrelationConfigSpec struct {
 	Field           string                          `json:"field"`
-	Type            string                          `json:"type"`
+	Type            *string                         `json:"type,omitempty"`
 	Target          CorrelationTargetSpec           `json:"target"`
-	Transformations []CorrelationTransformationSpec `json:"transformations"`
+	Transformations []CorrelationTransformationSpec `json:"transformations,omitempty"`
 }
 
 // NewCorrelationConfigSpec creates a new CorrelationConfigSpec object.
 func NewCorrelationConfigSpec() *CorrelationConfigSpec {
-	return &CorrelationConfigSpec{
-		Transformations: []CorrelationTransformationSpec{},
-	}
+	return &CorrelationConfigSpec{}
 }
 
 // +k8s:openapi-gen=true
@@ -44,9 +42,9 @@ const (
 // +k8s:openapi-gen=true
 type CorrelationSpec struct {
 	SourceUid   string                     `json:"source_uid"`
-	TargetUid   string                     `json:"target_uid"`
+	TargetUid   *string                    `json:"target_uid,omitempty"`
 	Label       string                     `json:"label"`
-	Description string                     `json:"description"`
+	Description *string                    `json:"description,omitempty"`
 	Config      CorrelationConfigSpec      `json:"config"`
 	Provisioned bool                       `json:"provisioned"`
 	Type        CorrelationCorrelationType `json:"type"`

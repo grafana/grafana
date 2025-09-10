@@ -6,9 +6,9 @@ correlationsv0alpha1: {
 	schema: {
 		spec: {
 			source_uid:  string
-			target_uid:  string
+			target_uid?:  string
 			label:       string
-			description: string
+			description?: string
 			config:      ConfigSpec
 			provisioned: bool
 			type:        CorrelationType
@@ -18,9 +18,9 @@ correlationsv0alpha1: {
 
 ConfigSpec: {
 	field: string
-	type: string
+	type?: string
 	target: TargetSpec
-	transformations: [...TransformationSpec] | *[]
+	transformations?: [...TransformationSpec]
 }
 
 TargetSpec:  [string]: _
