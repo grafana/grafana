@@ -48,6 +48,19 @@ describe('mapInternalLinkToExplore', () => {
         title: 'dsName',
         href: `/explore?left=${encodeURIComponent('{"datasource":"uid","queries":[{"query":"12344"}]}')}`,
         onClick: undefined,
+        meta: {
+          internalLink: {
+            interpolated: {
+              query: {
+                query: '12344',
+                datasource: {
+                  name: 'dsName',
+                  uid: 'uid',
+                },
+              },
+            }
+          }
+        }
       })
     );
   });
@@ -148,5 +161,19 @@ describe('mapInternalLinkToExplore', () => {
         ],
       })}`
     );
+
+    expect(link.meta?.internalLink?.interpolated?.query).toEqual({
+      datasource: {
+        name: 'dsName',
+        uid: 'uid',
+      },
+      query: 'val1 val1',
+      $var: 'foo',
+      nested: { something: 'val1' },
+      num: 1,
+      arr: ['val1', 'non var'],
+    });
+
+    expect(link.meta?.internalLink?.interpolated.timeRange).toEqual(TIME_RANGE);
   });
 });
