@@ -2595,6 +2595,20 @@
     },
     {
       "metadata": {
+        "name": "pluginContainers",
+        "resourceVersion": "1756911074581",
+        "creationTimestamp": "2025-09-03T14:51:14Z"
+      },
+      "spec": {
+        "description": "Enables running plugins in containers",
+        "stage": "privatePreview",
+        "codeowner": "@grafana/plugins-platform-backend",
+        "requiresRestart": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "pluginProxyPreserveTrailingSlash",
         "resourceVersion": "1753448760331",
         "creationTimestamp": "2024-06-05T11:36:14Z"

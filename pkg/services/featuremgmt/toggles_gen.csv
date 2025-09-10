@@ -255,3 +255,4 @@ graphiteBackendMode,privatePreview,@grafana/partner-datasources,false,false,fals
 azureResourcePickerUpdates,preview,@grafana/partner-datasources,false,false,true
 prometheusTypeMigration,experimental,@grafana/partner-datasources,false,true,false
 dskitBackgroundServices,experimental,@grafana/plugins-platform-backend,false,true,false
+pluginContainers,privatePreview,@grafana/plugins-platform-backend,false,true,false

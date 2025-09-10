@@ -4,13 +4,12 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/grafana/grafana/pkg/util"
-
 	"github.com/grafana/grafana-azure-sdk-go/v2/azsettings"
 
 	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 // ProvidePluginManagementConfig returns a new config.PluginManagementCfg.
