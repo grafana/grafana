@@ -69,6 +69,7 @@ func newRuleFactory(
 	recordingWriter RecordingWriter,
 	evalAppliedHook evalAppliedFunc,
 	stopAppliedHook stopAppliedFunc,
+	historian Historian,
 ) ruleFactoryFunc {
 	return func(ctx context.Context, rule *ngmodels.AlertRule) Rule {
 		if rule.Type() == ngmodels.RuleTypeRecording {
@@ -85,6 +86,7 @@ func newRuleFactory(
 				recordingWriter,
 				evalAppliedHook,
 				stopAppliedHook,
+				historian,
 			)
 		}
 		return newAlertRule(
@@ -103,6 +105,7 @@ func newRuleFactory(
 			featureToggles,
 			evalAppliedHook,
 			stopAppliedHook,
+			historian,
 		)
 	}
 }
@@ -135,6 +138,7 @@ type alertRule struct {
 	logger         log.Logger
 	tracer         tracing.Tracer
 	featureToggles featuremgmt.FeatureToggles
+	historian      Historian
 }
 
 func newAlertRule(
@@ -153,6 +157,7 @@ func newAlertRule(
 	featureToggles featuremgmt.FeatureToggles,
 	evalAppliedHook func(ngmodels.AlertRuleKey, time.Time),
 	stopAppliedHook func(ngmodels.AlertRuleKey),
+	historian Historian,
 ) *alertRule {
 	ctx, stop := util.WithCancelCause(ngmodels.WithRuleKey(parent, key.AlertRuleKey))
 
@@ -175,6 +180,7 @@ func newAlertRule(
 		logger:               logger.FromContext(ctx),
 		tracer:               tracer,
 		featureToggles:       featureToggles,
+		historian:            historian,
 	}
 }
 

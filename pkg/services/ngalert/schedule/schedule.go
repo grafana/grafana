@@ -18,10 +18,15 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
+	historianModels "github.com/grafana/grafana/pkg/services/ngalert/schedule/historian/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/schedule/ticker"
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
 	"github.com/grafana/grafana/pkg/setting"
 )
+
+type Historian interface {
+	Record(ctx context.Context, opts historianModels.Record)
+}
 
 // ScheduleService is an interface for a service that schedules the evaluation
 // of alert rules.
@@ -107,6 +112,7 @@ type schedule struct {
 	tracer          tracing.Tracer
 	featureToggles  featuremgmt.FeatureToggles
 	recordingWriter RecordingWriter
+	historian       Historian
 }
 
 // RetryConfig configures the exponential backoff for alert rule and recording rule evaluations.
@@ -136,6 +142,7 @@ type SchedulerCfg struct {
 	RecordingWriter        RecordingWriter
 	RuleStopReasonProvider AlertRuleStopReasonProvider
 	FeatureToggles         featuremgmt.FeatureToggles
+	Historian              Historian
 }
 
 // NewScheduler returns a new scheduler.
@@ -167,6 +174,7 @@ func NewScheduler(cfg SchedulerCfg, stateManager *state.Manager) *schedule {
 		recordingWriter:        cfg.RecordingWriter,
 		ruleStopReasonProvider: cfg.RuleStopReasonProvider,
 		featureToggles:         cfg.FeatureToggles,
+		historian:              cfg.Historian,
 	}
 
 	return &sch
@@ -318,6 +326,7 @@ func (sch *schedule) processTick(ctx context.Context, dispatcherGroup *errgroup.
 		sch.recordingWriter,
 		sch.evalAppliedFunc,
 		sch.stopAppliedFunc,
+		sch.historian,
 	)
 	for _, item := range alertRules {
 		ruleRoutine, newRoutine := sch.registry.getOrCreate(ctx, item, ruleFactory)

@@ -179,7 +179,7 @@ func blankRecordingRuleForTests(ctx context.Context) *recordingRule {
 		Enabled: true,
 	}
 
-	return newRecordingRule(context.Background(), models.AlertRuleKeyWithGroup{}, RetryConfig{}, nil, nil, st, log.NewNopLogger(), nil, nil, writer.FakeWriter{}, nil, nil)
+	return newRecordingRule(context.Background(), models.AlertRuleKeyWithGroup{}, RetryConfig{}, nil, nil, st, log.NewNopLogger(), nil, nil, writer.FakeWriter{}, nil, nil, nil)
 }
 
 func TestRecordingRule_Integration(t *testing.T) {

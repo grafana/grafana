@@ -51,9 +51,10 @@ type recordingRule struct {
 	evalAppliedHook evalAppliedFunc
 	stopAppliedHook stopAppliedFunc
 
-	logger  log.Logger
-	metrics *metrics.Scheduler
-	tracer  tracing.Tracer
+	logger    log.Logger
+	metrics   *metrics.Scheduler
+	tracer    tracing.Tracer
+	historian Historian
 }
 
 func newRecordingRule(
@@ -69,6 +70,7 @@ func newRecordingRule(
 	writer RecordingWriter,
 	evalAppliedHook evalAppliedFunc,
 	stopAppliedHook stopAppliedFunc,
+	historian Historian,
 ) *recordingRule {
 	ctx, stop := util.WithCancelCause(ngmodels.WithRuleKey(parent, key.AlertRuleKey))
 	return &recordingRule{
@@ -90,6 +92,7 @@ func newRecordingRule(
 		metrics:             metrics,
 		tracer:              tracer,
 		writer:              writer,
+		historian:           historian,
 	}
 }
 

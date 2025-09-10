@@ -11,6 +11,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	historianModels "github.com/grafana/grafana/pkg/services/ngalert/schedule/historian/models"
 )
 
 // waitForTimeChannel blocks the execution until either the channel ch has some data or a timeout of 10 second expires.
@@ -109,4 +110,21 @@ func (m *SyncAlertsSenderMock) Calls() []mock.Call {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	return slices.Clone(m.AlertsSenderMock.Calls)
+}
+
+type fakeHistorian struct {
+	Records []historianModels.Record
+	mu      sync.Mutex
+}
+
+func (f *fakeHistorian) Record(_ context.Context, opts historianModels.Record) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	f.Records = append(f.Records, opts)
+}
+
+func (f *fakeHistorian) Reset() {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	f.Records = make([]historianModels.Record, 0)
 }

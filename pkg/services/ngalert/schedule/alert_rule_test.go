@@ -503,7 +503,7 @@ func blankRuleForTests(ctx context.Context, key models.AlertRuleKeyWithGroup) *a
 		Log:       log.NewNopLogger(),
 	}
 	st := state.NewManager(managerCfg, state.NewNoopPersister())
-	return newAlertRule(ctx, key, nil, false, RetryConfig{}, nil, st, nil, nil, nil, log.NewNopLogger(), nil, featuremgmt.WithFeatures(), nil, nil)
+	return newAlertRule(ctx, key, nil, false, RetryConfig{}, nil, st, nil, nil, nil, log.NewNopLogger(), nil, featuremgmt.WithFeatures(), nil, nil, nil)
 }
 
 func TestRuleRoutine(t *testing.T) {
