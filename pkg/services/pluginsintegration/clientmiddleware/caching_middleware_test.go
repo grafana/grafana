@@ -4,7 +4,10 @@ import (
 	"context"
 	"encoding/json"
 	"net/http"
+	"sync"
+	"sync/atomic"
 	"testing"
+	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/handlertest"
@@ -321,4 +324,90 @@ func TestCachingMiddleware(t *testing.T) {
 			cs.AssertCalls(t, "HandleResourceRequest", 0)
 		})
 	})
+}
+
+func TestRequestDeduplicationMiddleware(t *testing.T) {
+	t.Run("deduplicates requests issuing the same query", func(t *testing.T) {
+		t.Parallel()
+
+		handler := newMockMiddlewareHandler()
+		middleware := newRequestDeduplicationMiddleware(handler)
+
+		req := backend.QueryDataRequest{
+			PluginContext: backend.PluginContext{
+				DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{
+					UID: "uid",
+				},
+			},
+		}
+
+		wg := &sync.WaitGroup{}
+		wg.Add(2)
+
+		for range 2 {
+			go func() {
+				defer wg.Done()
+				resp, err := middleware.QueryData(t.Context(), &req)
+				require.NoError(t, err)
+				require.Equal(t, &backend.QueryDataResponse{}, resp)
+			}()
+		}
+
+		wg.Wait()
+
+		require.EqualValues(t, 1, handler.QueryDataCalls)
+	})
+}
+
+type mockMiddlewareHandler struct {
+	backend.BaseHandler
+	QueryDataCalls int32
+}
+
+func newMockMiddlewareHandler() *mockMiddlewareHandler {
+	return &mockMiddlewareHandler{}
+}
+
+func (m *mockMiddlewareHandler) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+	atomic.AddInt32(&m.QueryDataCalls, 1)
+	time.Sleep(10 * time.Millisecond)
+	return &backend.QueryDataResponse{}, nil
+}
+
+func TestGetDatasourceID(t *testing.T) {
+	t.Parallel()
+
+	cases := []struct {
+		desc         string
+		settings     backend.DataSourceInstanceSettings
+		expectedID   string
+		expectedBool bool
+	}{
+		{
+			desc:         "should return uid",
+			settings:     backend.DataSourceInstanceSettings{UID: "uid"},
+			expectedID:   "uid",
+			expectedBool: true,
+		},
+		{
+			desc:         "should return id",
+			settings:     backend.DataSourceInstanceSettings{ID: 1},
+			expectedID:   "1",
+			expectedBool: true,
+		},
+		{
+			desc:         "should not find uid or id",
+			settings:     backend.DataSourceInstanceSettings{},
+			expectedID:   "",
+			expectedBool: false,
+		},
+	}
+
+	for _, tt := range cases {
+		t.Run(tt.desc, func(t *testing.T) {
+			id, ok := getDatasourceID(&tt.settings)
+			require.Equal(t, tt.expectedBool, ok)
+			require.Equal(t, tt.expectedID, id)
+		})
+	}
 }

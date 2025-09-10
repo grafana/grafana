@@ -2757,6 +2757,19 @@
     },
     {
       "metadata": {
+        "name": "queryCacheRequestDeduplication",
+        "resourceVersion": "1757521912495",
+        "creationTimestamp": "2025-09-10T16:31:52Z"
+      },
+      "spec": {
+        "description": "Enable request deduplication when query caching is enabled. Requests issuing the same query will be deduplicated, only the first request to arrive will be executed and the response will be shared with requests arriving while there is a request in-flight",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-operator-experience-squad",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "queryLibrary",
         "resourceVersion": "1755721444487",
         "creationTimestamp": "2022-10-07T18:31:45Z",
