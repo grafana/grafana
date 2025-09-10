@@ -162,8 +162,8 @@ func newRemoteRBACClient(clientCfg *authzClientSettings, tracer trace.Tracer, re
 	}
 
 	authzRequestDuration := promauto.With(reg).NewHistogramVec(prometheus.HistogramOpts{
-		Name:    "authz_server_client_request_duration_seconds",
-		Help:    "Time spent executing requests to authz server.",
+		Name:                            "authz_server_client_request_duration_seconds",
+		Help:                            "Time spent executing requests to authz server.",
 		NativeHistogramBucketFactor:     1.1,
 		NativeHistogramMaxBucketNumber:  160,
 		NativeHistogramMinResetDuration: time.Hour,
