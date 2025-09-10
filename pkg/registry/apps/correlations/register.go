@@ -13,32 +13,32 @@ import (
 )
 
 var (
-    _ appsdkapiserver.AppInstaller = (*CorrelationsAppInstaller)(nil)
+	_ appsdkapiserver.AppInstaller = (*CorrelationsAppInstaller)(nil)
 )
 
 type CorrelationsAppInstaller struct {
-    appsdkapiserver.AppInstaller
-    cfg *setting.Cfg
+	appsdkapiserver.AppInstaller
+	cfg *setting.Cfg
 }
 
 func RegisterAppInstaller(
-    cfg *setting.Cfg,
-    features featuremgmt.FeatureToggles,
+	cfg *setting.Cfg,
+	features featuremgmt.FeatureToggles,
 ) (*CorrelationsAppInstaller, error) {
-    installer := &CorrelationsAppInstaller{
-        cfg: cfg,
-    }
-    provider := simple.NewAppProvider(apis.LocalManifest(), nil, correlationsapp.New)
+	installer := &CorrelationsAppInstaller{
+		cfg: cfg,
+	}
+	provider := simple.NewAppProvider(apis.LocalManifest(), nil, correlationsapp.New)
 
-    appConfig := app.Config{
-        KubeConfig:   restclient.Config{}, // this will be overridden by the installer's InitializeApp method
-        ManifestData: *apis.LocalManifest().ManifestData,
-    }
-    i, err := appsdkapiserver.NewDefaultAppInstaller(provider, appConfig, apis.ManifestGoTypeAssociator, apis.ManifestCustomRouteResponsesAssociator)
-    if err != nil {
-        return nil, err
-    }
-    installer.AppInstaller = i
+	appConfig := app.Config{
+		KubeConfig:   restclient.Config{}, // this will be overridden by the installer's InitializeApp method
+		ManifestData: *apis.LocalManifest().ManifestData,
+	}
+	i, err := appsdkapiserver.NewDefaultAppInstaller(provider, appConfig, apis.ManifestGoTypeAssociator, apis.ManifestCustomRouteResponsesAssociator)
+	if err != nil {
+		return nil, err
+	}
+	installer.AppInstaller = i
 
-    return installer, nil
+	return installer, nil
 }
