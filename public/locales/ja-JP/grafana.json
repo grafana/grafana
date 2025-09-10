@@ -1115,7 +1115,8 @@
     },
     "enrichment": {
       "error-boundary": {
-        "notification-message-section-extension": ""
+        "notification-message-section-extension": "",
+        "rule-viewer-section-extension": ""
       }
     },
     "error-modal": {
@@ -3029,6 +3030,7 @@
       "page-nav": {
         "text": {
           "details": "詳細",
+          "enrichment": "",
           "history": "履歴",
           "instances": "インスタンス",
           "query-and-conditions": "クエリと条件",
@@ -11179,11 +11181,11 @@
       "description-clear-repository-connection": "このリポジトリ接続にわかりやすい名前を追加します",
       "empty": "空",
       "error-field-required": "このフィールドは必須です。",
-      "ext-storage": "外部ストレージ",
-      "grafana": "Grafanaインスタンス",
+      "external-storage-label": "",
       "label-display-name": "表示名",
       "placeholder-my-repository-connection": "自分のリポジトリ接続",
       "text-loading-resource-information": "リソース情報読み込み中...",
+      "unmanaged-resources-label": "",
       "dashboards-count_other": "{{count}}個のダッシュボード",
       "files-count_other": "{{count}}個のファイル",
       "folders-count_other": "{{count}}個のフォルダ"
@@ -11228,7 +11230,8 @@
     },
     "connect-repository-button": {
       "configure": "構成",
-      "repository-limit-info-alert": "リポジトリの上限に達しました（{{count}}）"
+      "instance-fully-managed-tooltip": "",
+      "repository-limit-reached-tooltip_other": ""
     },
     "delete-repository-button": {
       "button-delete": "削除",
