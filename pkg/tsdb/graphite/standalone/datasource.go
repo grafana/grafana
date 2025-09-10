@@ -28,9 +28,7 @@ type Datasource struct {
 
 func contextualMiddlewares(ctx context.Context) context.Context {
 	cfg := backend.GrafanaConfigFromContext(ctx)
-	responseLimitMiddleware := httpclient.ResponseLimitMiddleware(cfg.ResponseLimit())
-	ctx = httpclient.WithContextualMiddleware(ctx, responseLimitMiddleware)
-	return ctx
+	return httpclient.WithContextualMiddleware(ctx, httpclient.ResponseLimitMiddleware(cfg.ResponseLimit()))
 }
 
 func (d *Datasource) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {

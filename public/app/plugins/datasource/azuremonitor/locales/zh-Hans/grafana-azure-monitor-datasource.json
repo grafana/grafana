@@ -227,16 +227,26 @@
       "select-resource": "选择资源"
     },
     "resource-picker": {
+      "browse-tab": "",
       "button-apply": "应用",
       "button-cancel": "取消",
       "header-location": "位置",
+      "header-resource-group": "",
       "header-scope": "范围",
       "header-type": "类型",
       "heading-selection": "选择",
+      "locations-filter": "",
+      "locations-filter-placeholder": "",
+      "recent-tab": "",
       "result-limit": "显示最初 {{numResults}} 个结果",
+      "subscriptions-filter": "",
+      "subscriptions-filter-placeholder": "",
       "text-loading": "加载中...",
+      "text-no-recent-resources": "",
       "text-no-resources": "未找到资源",
-      "title-error-occurred": "从 Azure Monitor 请求资源时发生错误"
+      "title-error-occurred": "从 Azure Monitor 请求资源时发生错误",
+      "types-filter": "",
+      "types-filter-placeholder": ""
     },
     "scope-selector": {
       "label": "范围"

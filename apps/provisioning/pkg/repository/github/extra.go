@@ -8,6 +8,7 @@ import (
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository/git"
+	"github.com/grafana/grafana/apps/provisioning/pkg/util"
 	"k8s.io/apimachinery/pkg/runtime"
 )
 
@@ -63,7 +64,7 @@ func (e *extra) Build(ctx context.Context, r *provisioning.Repository) (reposito
 		return nil, fmt.Errorf("error creating github repository: %w", err)
 	}
 
-	if e.webhookBuilder == nil {
+	if util.IsInterfaceNil(e.webhookBuilder) {
 		return ghRepo, nil
 	}
 
