@@ -276,7 +276,7 @@ jobs:
     permissions:
       contents: read
       id-token: write
-    runs-on: ubuntu-x64-small
+    runs-on: github-hosted-ubuntu-x64-small
     needs:
       - setup
       - build
@@ -288,19 +288,15 @@ jobs:
         with:
           persist-credentials: false
 
-      # - name: Setup Node.js
-      #   uses: ./.github/actions/setup-node
+      # Setting nodejs up just for npm publish. Not restoring the cache for all our dependencies
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: '.nvmrc'
 
-      # - name: Yarn install
-      #   run: yarn install --immutable
-      #   env:
-      #     PUPPETEER_SKIP_DOWNLOAD: true
-      #     CYPRESS_INSTALL_BINARY: 0
-
-      # - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
-      #   with:
-      #     name: artifacts-list-linux-amd64
-      #     path: .
+      # Trusted Publishing is only available in npm v11.5.1 and later
+      - name: Install NPM
+        run: npm install -g npm@^11.5.1
 
       - run: echo "publishing as version ${PACKAGES_VERSION}"
 
@@ -308,8 +304,6 @@ jobs:
         with:
           name: artifacts-linux-amd64
           path: dist
-
-      - run: tree . -a -L 4
 
       - run: mv dist/"${PACKAGES_VERSION}"/npm-packages npm-artifacts
 
