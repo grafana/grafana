@@ -1665,13 +1665,6 @@ var (
 			Owner:        grafanaPluginsPlatformSquad,
 		},
 		{
-			Name:         "multiTenantFrontend",
-			Description:  "Register MT frontend",
-			Stage:        FeatureStageExperimental,
-			FrontendOnly: false,
-			Owner:        grafanaFrontendPlatformSquad,
-		},
-		{
 			Name:         "alertingListViewV2PreviewToggle",
 			Description:  "Enables the alerting list view v2 preview toggle",
 			FrontendOnly: true,
@@ -1739,6 +1732,24 @@ var (
 		{
 			Name:              "alertEnrichment",
 			Description:       "Enable configuration of alert enrichments in Grafana Cloud.",
+			Stage:             FeatureStageExperimental,
+			Owner:             grafanaAlertingSquad,
+			HideFromAdminPage: true,
+			HideFromDocs:      true,
+			Expression:        "false",
+		},
+		{
+			Name:              "alertEnrichmentMultiStep",
+			Description:       "Allow multiple steps per enrichment.",
+			Stage:             FeatureStageExperimental,
+			Owner:             grafanaAlertingSquad,
+			HideFromAdminPage: true,
+			HideFromDocs:      true,
+			Expression:        "false",
+		},
+		{
+			Name:              "alertEnrichmentConditional",
+			Description:       "Enable conditional alert enrichment steps.",
 			Stage:             FeatureStageExperimental,
 			Owner:             grafanaAlertingSquad,
 			HideFromAdminPage: true,
@@ -1971,6 +1982,24 @@ var (
 			RequiresRestart: true,
 			Owner:           grafanaPartnerPluginsSquad,
 			Expression:      "false",
+		},
+		{
+			Name:              "dskitBackgroundServices",
+			Description:       "Enables dskit background service wrapper",
+			HideFromAdminPage: true,
+			HideFromDocs:      true,
+			Stage:             FeatureStageExperimental,
+			RequiresRestart:   true,
+			Owner:             grafanaPluginsPlatformSquad,
+			Expression:        "false",
+		},
+		{
+			Name:            "pluginContainers",
+			Description:     "Enables running plugins in containers",
+			Stage:           FeatureStagePrivatePreview,
+			Owner:           grafanaPluginsPlatformSquad,
+			Expression:      "false",
+			RequiresRestart: true,
 		},
 	}
 )

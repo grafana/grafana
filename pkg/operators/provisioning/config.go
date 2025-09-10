@@ -23,9 +23,11 @@ import (
 	authrt "github.com/grafana/grafana/apps/provisioning/pkg/auth"
 	client "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
+	"github.com/grafana/grafana/apps/provisioning/pkg/repository/git"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository/github"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository/local"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/webhooks"
 	secretdecrypt "github.com/grafana/grafana/pkg/registry/apis/secret/decrypt"
 )
 
@@ -55,6 +57,7 @@ type provisioningControllerConfig struct {
 // audiences =
 // [operator]
 // provisioning_server_url =
+// provisioning_server_public_url =
 // dashboards_server_url =
 // folders_server_url =
 // tls_insecure =
@@ -62,9 +65,10 @@ type provisioningControllerConfig struct {
 // tls_key_file =
 // tls_ca_file =
 // resync_interval =
-// repository_types =
 // home_path =
 // local_permitted_prefixes =
+// [provisioning]
+// repository_types =
 func setupFromConfig(cfg *setting.Cfg) (controllerCfg *provisioningControllerConfig, err error) {
 	if cfg == nil {
 		return nil, fmt.Errorf("no configuration available")
@@ -218,7 +222,11 @@ func setupRepoFactory(
 	provisioningClient *client.Clientset,
 ) (repository.Factory, error) {
 	operatorSec := cfg.SectionWithEnvOverrides("operator")
-	repoTypes := operatorSec.Key("repository_types").Strings("|")
+	provisioningSec := cfg.SectionWithEnvOverrides("provisioning")
+	repoTypes := provisioningSec.Key("repository_types").Strings("|")
+	if len(repoTypes) == 0 {
+		repoTypes = []string{"github"}
+	}
 
 	// TODO: This depends on the different flavor of Grafana
 	// https://github.com/grafana/git-ui-sync-project/issues/495
@@ -232,13 +240,19 @@ func setupRepoFactory(
 		alreadyRegistered[provisioning.RepositoryType(t)] = struct{}{}
 
 		switch provisioning.RepositoryType(t) {
+		case provisioning.GitRepositoryType:
+			extras = append(extras, git.Extra(decrypter))
 		case provisioning.GitHubRepositoryType:
+			var webhook *webhooks.WebhookExtraBuilder
+			provisioningAppURL := operatorSec.Key("provisioning_server_public_url").String()
+			if provisioningAppURL != "" {
+				webhook = webhooks.ProvideWebhooks(provisioningAppURL)
+			}
+
 			extras = append(extras, github.Extra(
 				decrypter,
 				github.ProvideFactory(),
-				// TODO: we need to plug the webhook builder here for webhooks to be created in repository controller
-				// https://github.com/grafana/git-ui-sync-project/issues/455
-				nil,
+				webhook,
 			),
 			)
 		case provisioning.LocalRepositoryType:
@@ -261,7 +275,7 @@ func setupRepoFactory(
 		}
 	}
 
-	repoFactory, err := repository.ProvideFactory(extras)
+	repoFactory, err := repository.ProvideFactory(alreadyRegistered, extras)
 	if err != nil {
 		return nil, fmt.Errorf("create repository factory: %w", err)
 	}

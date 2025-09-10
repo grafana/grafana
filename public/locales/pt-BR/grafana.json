@@ -1121,7 +1121,8 @@
     },
     "enrichment": {
       "error-boundary": {
-        "notification-message-section-extension": ""
+        "notification-message-section-extension": "",
+        "rule-viewer-section-extension": ""
       }
     },
     "error-modal": {
@@ -3042,6 +3043,7 @@
       "page-nav": {
         "text": {
           "details": "Detalhes",
+          "enrichment": "",
           "history": "Histórico",
           "instances": "Instâncias",
           "query-and-conditions": "Consulta e condições",
@@ -4681,6 +4683,7 @@
       "move": "Mover {{typeName}}",
       "panel-background": "Alterar plano de fundo do painel",
       "panel-description": "Alterar descrição do painel",
+      "panel-edit": "",
       "panel-max-repeats-per-row": "Máximo de repetições por linha",
       "panel-repeat-direction": "Repetir direção",
       "panel-repeat-variable": "Repetição do painel por",
@@ -4935,12 +4938,11 @@
       "dataframe-aria-label": "Selecionar quadro de dados",
       "dataframe-label": "Mostrar quadro de dados",
       "download-csv": "Baixar CSV",
-      "download-excel-description": "Adiciona cabeçalho ao CSV para usar com o Excel",
-      "download-excel-label": "Baixar para Excel",
       "download-logs": "Baixar logs",
       "download-service": "Baixar gráfico de serviço",
       "download-traces": "Baixar rastreamentos",
-      "excel-header": "Cabeçalho do Excel",
+      "excel-compatibility-mode-description": "",
+      "excel-compatibility-mode-label": "",
       "formatted": "Dados formatados",
       "formatted-data-description": "Os dados da tabela estão formatados com opções definidas no campo e nas guias de substituição.",
       "formatted-data-label": "Dados formatados",
@@ -11211,11 +11213,11 @@
       "description-clear-repository-connection": "Adicione um nome de fácil compreensão para esta conexão de repositório",
       "empty": "Vazio",
       "error-field-required": "Este campo é obrigatório.",
-      "ext-storage": "Armazenamento externo",
-      "grafana": "Instância da Grafana",
+      "external-storage-label": "",
       "label-display-name": "Nome de exibição",
       "placeholder-my-repository-connection": "Minha conexão de repositório",
       "text-loading-resource-information": "Carregando informações de recursos…",
+      "unmanaged-resources-label": "",
       "dashboards-count_one": "{{count}} painel de controle",
       "dashboards-count_other": "{{count}} painel de controle",
       "files-count_one": "{{count}} arquivos",
@@ -11263,7 +11265,9 @@
     },
     "connect-repository-button": {
       "configure": "Configuração",
-      "repository-limit-info-alert": "Limite do repositório atingido ({{count}})"
+      "instance-fully-managed-tooltip": "",
+      "repository-limit-reached-tooltip_one": "",
+      "repository-limit-reached-tooltip_other": ""
     },
     "delete-repository-button": {
       "button-delete": "Excluir",
@@ -11955,14 +11959,6 @@
       "no-deleted-dashboards": "Você não excluiu nenhum painel de controle recentemente.",
       "no-deleted-dashboards-text": "Quando você exclui um painel de controle, ele continua aqui por 30 dias e só depois é excluído permanentemente. O administrador da sua organização pode restaurar painéis de controle que foram excluídos recentemente.",
       "no-search-result": "Nenhum resultado encontrado para sua consulta"
-    },
-    "permanently-delete-modal": {
-      "confirm-text": "Excluir",
-      "delete-button": "Excluir",
-      "delete-loading": "Excluindo...",
-      "title": "Excluir painéis de controle permanentemente",
-      "text_one": "Esta ação excluirá {{numberOfDashboards}} painel de controle.",
-      "text_other": "Esta ação excluirá {{numberOfDashboards}} painéis de controle."
     },
     "restore-modal": {
       "restore-button": "Restaurar",

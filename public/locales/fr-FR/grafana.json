@@ -1121,7 +1121,8 @@
     },
     "enrichment": {
       "error-boundary": {
-        "notification-message-section-extension": ""
+        "notification-message-section-extension": "",
+        "rule-viewer-section-extension": ""
       }
     },
     "error-modal": {
@@ -3042,6 +3043,7 @@
       "page-nav": {
         "text": {
           "details": "Détails",
+          "enrichment": "",
           "history": "Historique",
           "instances": "Instances",
           "query-and-conditions": "Requête et conditions",
@@ -4681,6 +4683,7 @@
       "move": "Déplacer {{typeName}}",
       "panel-background": "Modifier l’arrière-plan du panneau",
       "panel-description": "Modifier la description du panneau",
+      "panel-edit": "",
       "panel-max-repeats-per-row": "Nombre maximal de répétitions par ligne",
       "panel-repeat-direction": "Répéter la direction",
       "panel-repeat-variable": "Répéter le panneau selon",
@@ -4935,12 +4938,11 @@
       "dataframe-aria-label": "Sélectionner la dataframe",
       "dataframe-label": "Afficher la dataframe",
       "download-csv": "Télécharger en format CSV",
-      "download-excel-description": "Ajoute l'en-tête au fichier CSV pour une utilisation dans Excel",
-      "download-excel-label": "Télécharger pour Excel",
       "download-logs": "Télécharger les journaux",
       "download-service": "Télécharger le graphique de service",
       "download-traces": "Télécharger les traces",
-      "excel-header": "En-tête Excel",
+      "excel-compatibility-mode-description": "",
+      "excel-compatibility-mode-label": "",
       "formatted": "Données formatées",
       "formatted-data-description": "Les données du tableau sont formatées avec les options définies dans les onglets Champ et Remplacer.",
       "formatted-data-label": "Données formatées",
@@ -11211,11 +11213,11 @@
       "description-clear-repository-connection": "Ajoutez un nom clair pour cette connexion de référentiel",
       "empty": "Vide",
       "error-field-required": "Ce champ est obligatoire.",
-      "ext-storage": "Stockage externalisé",
-      "grafana": "Instance Grafana",
+      "external-storage-label": "",
       "label-display-name": "Pseudo",
       "placeholder-my-repository-connection": "Ma connexion au référentiel",
       "text-loading-resource-information": "Chargement des informations sur les ressources...",
+      "unmanaged-resources-label": "",
       "dashboards-count_one": "{{count}} tableau de bord",
       "dashboards-count_other": "{{count}} tableau de bord",
       "files-count_one": "{{count}} fichiers",
@@ -11263,7 +11265,9 @@
     },
     "connect-repository-button": {
       "configure": "Configurer",
-      "repository-limit-info-alert": "Limite du référentiel atteinte ({{count}})"
+      "instance-fully-managed-tooltip": "",
+      "repository-limit-reached-tooltip_one": "",
+      "repository-limit-reached-tooltip_other": ""
     },
     "delete-repository-button": {
       "button-delete": "Supprimer",
@@ -11955,14 +11959,6 @@
       "no-deleted-dashboards": "Vous n'avez pas supprimé de tableau de bord récemment.",
       "no-deleted-dashboards-text": "Lorsque vous supprimez un tableau de bord, il apparaîtra ici pendant 30 jours avant d'être définitivement supprimé. L'administrateur de votre organisation peut restaurer les tableaux de bord récemment supprimés.",
       "no-search-result": "Aucun résultat n'a été trouvé pour votre requête"
-    },
-    "permanently-delete-modal": {
-      "confirm-text": "Supprimer",
-      "delete-button": "Supprimer",
-      "delete-loading": "Suppression…",
-      "title": "Supprimer définitivement les tableaux de bord",
-      "text_one": "Cette action supprimera {{numberOfDashboards}} tableaux de bord.",
-      "text_other": "Cette action supprimera {{numberOfDashboards}} tableaux de bord."
     },
     "restore-modal": {
       "restore-button": "Restaurer",

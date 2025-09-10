@@ -22,9 +22,9 @@ describe('SignInLink', () => {
     expect(link).toHaveAttribute('target', '_self');
   });
 
-  describe('with multiTenantFrontend toggle enabled', () => {
+  describe('with frontend-service enabled', () => {
     beforeAll(() => {
-      config.featureToggles.multiTenantFrontend = true;
+      config.bootData._femt = true;
     });
 
     it('should render a link to the login page', () => {

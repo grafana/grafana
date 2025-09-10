@@ -235,7 +235,7 @@ func NewPlugin(pluginID string, cfg *setting.Cfg, httpClientProvider *httpclient
 	case Prometheus:
 		svc = prometheus.ProvideService(httpClientProvider)
 	case Tempo:
-		svc = tempo.ProvideService(httpClientProvider)
+		svc = tempo.ProvideService(httpClientProvider, tracer)
 	case PostgreSQL:
 		svc = postgres.ProvideService(cfg, features)
 	case MySQL:
