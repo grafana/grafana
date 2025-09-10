@@ -11,7 +11,7 @@ import { ShowModalReactEvent } from 'app/types/events';
 import { useDispatch } from 'app/types/store';
 
 import { deletedDashboardsCache } from '../../search/service/deletedDashboardsCache';
-import { useListDeletedDashboardsQuery, useRestoreDashboardMutation } from '../api/browseDashboardsAPI';
+import { useRestoreDashboardMutation } from '../api/browseDashboardsAPI';
 import { useRecentlyDeletedStateManager } from '../api/useRecentlyDeletedStateManager';
 import { useActionSelectionState } from '../state/hooks';
 import { clearFolders, setAllSelection } from '../state/slice';
@@ -22,7 +22,6 @@ export function RecentlyDeletedActions() {
   const dispatch = useDispatch();
   const selectedItemsState = useActionSelectionState();
   const [searchState, stateManager] = useRecentlyDeletedStateManager();
-  const deletedDashboards = useListDeletedDashboardsQuery();
   const [restoreDashboard, { isLoading: isRestoreLoading }] = useRestoreDashboardMutation();
 
   const selectedDashboards = useMemo(() => {
@@ -64,7 +63,8 @@ export function RecentlyDeletedActions() {
     }
 
     const promises = selectedDashboards.map(async (uid) => {
-      const dashboard = deletedDashboards.data?.items.find((d) => d.metadata.name === uid);
+      const deletedDashboards = await deletedDashboardsCache.getAsResourceList();
+      const dashboard = deletedDashboards?.items.find((d) => d.metadata.name === uid);
       if (!dashboard) {
         console.warn(`Dashboard ${uid} not found in deleted items`);
         return { uid, error: 'not_found' };
