@@ -155,7 +155,7 @@ func (s *ModuleServer) Run() error {
 	s.notifySystemd("READY=1")
 	s.log.Debug("Waiting on services...")
 
-	m := modules.New(s.cfg.Target)
+	m := modules.New(s.log, s.cfg.Target)
 
 	// only run the instrumentation server module if were not running a module that already contains an http server
 	m.RegisterInvisibleModule(modules.InstrumentationServer, func() (services.Service, error) {
