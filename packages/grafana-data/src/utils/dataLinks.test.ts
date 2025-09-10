@@ -157,13 +157,13 @@ describe('mapInternalLinkToExplore', () => {
       })}`
     );
 
-    expect(link.meta?.internalLink?.interpolated?.query).toEqual({
+    expect(link.interpolation?.query).toEqual({
       datasource: {
         uid: 'uid',
       },
       ...query,
     });
 
-    expect(link.meta?.internalLink?.interpolated.timeRange).toEqual(TIME_RANGE);
+    expect(link.interpolation.timeRange).toEqual(TIME_RANGE);
   });
 });
