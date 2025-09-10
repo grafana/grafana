@@ -177,9 +177,14 @@ To remove the filter, click the blue filter icon and then click **Clear filter**
 <!-- vale Grafana.WordList = NO -->
 <!-- vale Grafana.Spelling = NO -->
 
-### Panel filtering with ad hoc filters
+### Apply ad hoc filters from visualizations
+<!-- ### Dashboard drilldown with ad hoc filters -->
 
-{{< docs/shared lookup="visualizations/panel-filtering.md" source="grafana" version="<GRAFANA_VERSION>" >}}
+In table visualizations, you can apply ad hoc filters from the visualization with one click.
+
+Hover your cursor over the cell with the value you want to filter for to display the filter icons. In this example, the cell value is `ConfigMap Updated`, which is in the `alertname` column:
+
+{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-ad-hoc-filter-icon-v12.png" max-width="750px" alt="Table with ad hoc filter icon displayed on a cell" >}}
 
 <!-- vale Grafana.Spelling = YES -->
 <!-- vale Grafana.WordList = YES -->
