@@ -362,7 +362,7 @@ Add as many panels as you need.
 In table and bar chart visualizations, you can apply ad hoc filters directly from the visualization.
 To quickly apply ad hoc filter variables, follow these steps:
 
-1. Hover your cursor over the table cell with the value you want to filter for to display the filter icons. In this example, the cell value is `ConfigMap Updated`, which is in the `alertname` column:
+1. To display the filter icons, hover your cursor over the table cell with the value for which you want to filter. In this example, the cell value is `ConfigMap Updated`, which is in the `alertname` column:
 
    {{< figure src="/media/docs/grafana/panels-visualizations/screenshot-adhoc-filter-icon-v12.2.png" max-width="550px" alt="Table and bar chart with ad hoc filter icon displayed on a table cell" >}}
 

@@ -93,9 +93,9 @@ We recommend that you only use one dataset in a bar chart because using multiple
 
 ## Apply ad hoc filters from the bar chart
 
-In bar chart visualizations, you can apply ad hoc filters directly from the visualization.
+In bar charts, you can apply ad hoc filters directly from the visualization.
 
-Hover your cursor over the bar with the value you want to filter and click the bar to display the filter button:
+To display the filter button, hover your cursor over the bar that has the value for which you want to filter and click the bar:
 
 {{< figure src="/media/docs/grafana/panels-visualizations/screenshot-adhoc-filter-icon-bar-v12.2.png" max-width="300px" alt="The ad hoc filter button in a bar chart tooltip">}}
 
