@@ -17,7 +17,7 @@ weight: 1110
 
 Grafana provides support for proxying data source connections through a secure SOCKS5 proxy. This enables you to securely connect to data sources hosted in a different network than Grafana.
 
-To make use of this functionality, you need to deploy a SOCKS5 proxy server that supports TLS on a machine accessible from where your Grafana instance us running, and within the same network as your data source. From there, Grafana establishes a mutually trusted connection from Grafana to the proxy. Then the SOCKS5 proxy can proxy the Grafana data source connection to your private data source instance without exposing your data source to the public internet.
+To make use of this functionality, you need to deploy a SOCKS5 proxy server that supports TLS on a machine accessible from where your Grafana instance is running, and within the same network as your data source. From there, Grafana establishes a mutually trusted connection from Grafana to the proxy. Then the SOCKS5 proxy can proxy the Grafana data source connection to your private data source instance without exposing your data source to the public internet.
 
 ## Known limitations
 
