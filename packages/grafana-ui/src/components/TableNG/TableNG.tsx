@@ -767,14 +767,8 @@ export function TableNG(props: TableNGProps) {
         transparent={transparent}
         gridRef={gridRef} // NOTE: this can't be called `ref` until React 19.
         columns={structureRevColumns}
-        pagination={
-          enablePagination
-            ? {
-                rowsPerPage: paginationRowsPerPage,
-                small: width < TABLE.PAGINATION_LIMIT,
-              }
-            : undefined
-        }
+        rowsPerPage={enablePagination ? paginationRowsPerPage : undefined}
+        smallPagination={width < TABLE.PAGINATION_LIMIT}
         hideHeader={noHeader}
         headerRowHeight={headerHeight}
         onCellClick={({ column, row }, { clientX, clientY, preventGridDefault, target }) => {
