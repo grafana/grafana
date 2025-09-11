@@ -237,6 +237,16 @@ func AddAuthZKnownTypes(scheme *runtime.Scheme) error {
 		&CoreRoleList{},
 		&Role{},
 		&RoleList{},
+
+		// What is this about?
+		&metav1.PartialObjectMetadata{},
+		&metav1.PartialObjectMetadataList{},
+	)
+	return nil
+}
+
+func AddResourcePermissionKnownTypes(scheme *runtime.Scheme, version schema.GroupVersion) error {
+	scheme.AddKnownTypes(version,
 		&ResourcePermission{},
 		&ResourcePermissionList{},
 

@@ -35,6 +35,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/iam/team"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/user"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	gfauthorizer "github.com/grafana/grafana/pkg/services/apiserver/auth/authorizer"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ssosettings"
@@ -80,12 +81,26 @@ func RegisterAPIService(
 	return builder, nil
 }
 
-func NewAPIService(store legacy.LegacyIdentityStore) *IdentityAccessManagementAPIBuilder {
+func NewAPIService(
+	accessClient types.AccessClient,
+	dbProvider legacysql.LegacyDatabaseProvider,
+	enabledApis map[string]bool,
+) *IdentityAccessManagementAPIBuilder {
+	store := legacy.NewLegacySQLStores(dbProvider)
+	resourcePermissionsStorage := resourcepermission.ProvideStorageBackend(dbProvider)
+	resourceAuthorizer := gfauthorizer.NewResourceAuthorizer(accessClient)
 	return &IdentityAccessManagementAPIBuilder{
-		store:   store,
-		display: user.NewLegacyDisplayREST(store),
+		store:                        store,
+		display:                      user.NewLegacyDisplayREST(store),
+		resourcePermissionsStorage:   resourcePermissionsStorage,
+		enableResourcePermissionApis: enabledApis["resourcepermissions"],
 		authorizer: authorizer.AuthorizerFunc(
 			func(ctx context.Context, a authorizer.Attributes) (authorizer.Decision, string, error) {
+				// For now only authorize resourcepermissions resource
+				if a.GetResource() == "resourcepermissions" {
+					return resourceAuthorizer.Authorize(ctx, a)
+				}
+
 				user, err := identity.GetRequester(ctx)
 				if err != nil {
 					return authorizer.DecisionDeny, "no identity found", err
@@ -105,6 +120,11 @@ func (b *IdentityAccessManagementAPIBuilder) GetGroupVersion() schema.GroupVersi
 func (b *IdentityAccessManagementAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
 	if b.enableAuthZApis {
 		if err := iamv0.AddAuthZKnownTypes(scheme); err != nil {
+			return err
+		}
+	}
+	if b.enableResourcePermissionApis {
+		if err := iamv0.AddResourcePermissionKnownTypes(scheme, iamv0.SchemeGroupVersion); err != nil {
 			return err
 		}
 	}
