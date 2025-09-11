@@ -278,6 +278,10 @@ export interface FeatureToggles {
   */
   kubernetesShortURLs?: boolean;
   /**
+  * Adds support for Kubernetes alerting and recording rules
+  */
+  kubernetesAlertingRules?: boolean;
+  /**
   * Disable schema validation for dashboards/v1
   */
   dashboardDisableSchemaValidationV1?: boolean;
@@ -780,7 +784,8 @@ export interface FeatureToggles {
   */
   unifiedStorageSearchUI?: boolean;
   /**
-  * Enables cross cluster search in the Elasticsearch datasource
+  * Enables cross cluster search in the Elasticsearch data source
+  * @default false
   */
   elasticsearchCrossClusterSearch?: boolean;
   /**
@@ -1113,11 +1118,6 @@ export interface FeatureToggles {
   * @default false
   */
   newClickhouseConfigPageDesign?: boolean;
-  /**
-  * Enable experimental search-after-write guarantees to unified-storage search endpoints
-  * @default false
-  */
-  unifiedStorageSearchAfterWriteExperimentalAPI?: boolean;
   /**
   * Enables team folders functionality
   * @default false

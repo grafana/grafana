@@ -6,7 +6,6 @@ require (
 	github.com/google/go-github/v70 v70.0.0
 	github.com/google/uuid v1.6.0
 	github.com/grafana/authlib v0.0.0-20250710201142-9542f2f28d43
-	github.com/grafana/grafana v6.1.6+incompatible
 	github.com/grafana/grafana-app-sdk/logging v0.40.3
 	github.com/grafana/grafana/apps/secret v0.0.0-20250902093454-b56b7add012f
 	github.com/grafana/grafana/pkg/apimachinery v0.0.0-20250804150913-990f1c69ecc2
@@ -57,10 +56,8 @@ require (
 	github.com/prometheus/client_model v0.6.2 // indirect
 	github.com/prometheus/common v0.65.0 // indirect
 	github.com/prometheus/procfs v0.16.1 // indirect
-	github.com/smartystreets/goconvey v1.8.1 // indirect
 	github.com/spf13/pflag v1.0.7 // indirect
 	github.com/stretchr/objx v0.5.2 // indirect
-	github.com/teris-io/shortid v0.0.0-20220617161101-71ec9f2aa569 // indirect
 	github.com/x448/float16 v0.8.4 // indirect
 	go.opentelemetry.io/auto/sdk v1.1.0 // indirect
 	go.opentelemetry.io/otel v1.37.0 // indirect
