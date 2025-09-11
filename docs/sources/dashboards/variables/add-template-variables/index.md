@@ -345,10 +345,6 @@ Learn more in:
 
 ### Filter any data using the Dashboard data source
 
-=======
-
-### Filter any data using the Dashboard data source
-
 In cases where a data source doesn't support the use of ad hoc filters, you can use the Dashboard data source to reference that data, and then filter it in a new panel.
 This allows you to bypass the limitations of the data source in the source panel.
 
@@ -400,8 +396,6 @@ If one of the panels in the dashboard using that data source doesn't include tha
 
 In cases where the data source you're using doesn't support ad hoc filtering, consider using the special Dashboard data source.
 For more information, refer to [Filter any data using the Dashboard data source](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/variables/add-template-variables/#filter-any-data-using-the-dashboard-data-source).
-
-> > > > > > > upstream/main
 
 <!-- vale Grafana.Spelling = YES -->
 <!-- vale Grafana.WordList = YES -->
