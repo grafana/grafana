@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 
 import { AppEvents } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
@@ -7,7 +7,6 @@ import { Button, Stack } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
 import { AnnoKeyFolder } from 'app/features/apiserver/types';
 import { GENERAL_FOLDER_UID } from 'app/features/search/constants';
-import { ShowModalReactEvent } from 'app/types/events';
 import { useDispatch } from 'app/types/store';
 
 import { deletedDashboardsCache } from '../../search/service/deletedDashboardsCache';
@@ -22,7 +21,9 @@ export function RecentlyDeletedActions() {
   const dispatch = useDispatch();
   const selectedItemsState = useActionSelectionState();
   const [searchState, stateManager] = useRecentlyDeletedStateManager();
-  const [restoreDashboard, { isLoading: isRestoreLoading }] = useRestoreDashboardMutation();
+  const [restoreDashboard] = useRestoreDashboardMutation();
+  const [isBulkRestoreLoading, setIsBulkRestoreLoading] = useState(false);
+  const [isRestoreModalOpen, setIsRestoreModalOpen] = useState(false);
 
   const showRestoreNotifications = (successful: string[], failedCount: number) => {
     const successCount = successful.length;
@@ -100,6 +101,8 @@ export function RecentlyDeletedActions() {
       return;
     }
 
+    setIsBulkRestoreLoading(true);
+
     const promises = selectedDashboards.map(async (uid) => {
       const deletedDashboards = await deletedDashboardsCache.getAsResourceList();
       const dashboard = deletedDashboards?.items.find((d) => d.metadata.name === uid);
@@ -152,6 +155,8 @@ export function RecentlyDeletedActions() {
     dispatch(clearFolders(Array.from(parentUIDs)));
 
     onActionComplete();
+    setIsBulkRestoreLoading(false);
+    setIsRestoreModalOpen(false);
   };
 
   const showRestoreModal = () => {
@@ -160,24 +165,24 @@ export function RecentlyDeletedActions() {
         dashboard: selectedDashboards.length,
       },
     });
-    appEvents.publish(
-      new ShowModalReactEvent({
-        component: RestoreModal,
-        props: {
-          selectedDashboards,
-          dashboardOrigin: selectedDashboardOrigin,
-          onConfirm: onRestore,
-          isLoading: isRestoreLoading,
-        },
-      })
-    );
+    setIsRestoreModalOpen(true);
   };
 
   return (
-    <Stack gap={1}>
-      <Button onClick={showRestoreModal} variant="secondary">
-        <Trans i18nKey="recently-deleted.buttons.restore">Restore</Trans>
-      </Button>
-    </Stack>
+    <>
+      <Stack gap={1}>
+        <Button onClick={showRestoreModal} variant="secondary">
+          <Trans i18nKey="recently-deleted.buttons.restore">Restore</Trans>
+        </Button>
+      </Stack>
+      <RestoreModal
+        isOpen={isRestoreModalOpen}
+        onConfirm={onRestore}
+        onDismiss={() => setIsRestoreModalOpen(false)}
+        selectedDashboards={selectedDashboards}
+        dashboardOrigin={selectedDashboardOrigin}
+        isLoading={isBulkRestoreLoading}
+      />
+    </>
   );
 }
