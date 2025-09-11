@@ -75,7 +75,7 @@ export const AlertLabels = ({ labels, commonLabels = {}, size, onClick }: Props)
   );
 };
 
-function getLabelColor(input: string): string {
+export function getLabelColor(input: string): string {
   return getTagColorsFromName(input).color;
 }
 

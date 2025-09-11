@@ -15,9 +15,10 @@ interface AlertRuleRowProps {
   row: AlertRuleRowType;
   leftColumnWidth: number;
   rowKey: React.Key;
+  depth?: number;
 }
 
-export const AlertRuleRow = ({ row, leftColumnWidth, rowKey }: AlertRuleRowProps) => {
+export const AlertRuleRow = ({ row, leftColumnWidth, rowKey, depth = 0 }: AlertRuleRowProps) => {
   return (
     <GenericRow
       key={rowKey}
@@ -46,8 +47,9 @@ export const AlertRuleRow = ({ row, leftColumnWidth, rowKey }: AlertRuleRowProps
         </Stack>
       }
       content={<AlertRuleSummary ruleUID={row.metadata.ruleUID} />}
+      depth={depth}
     >
-      <AlertRuleInstances ruleUID={row.metadata.ruleUID} />
+      <AlertRuleInstances ruleUID={row.metadata.ruleUID} depth={depth + 1} />
     </GenericRow>
   );
 };
