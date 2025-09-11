@@ -500,6 +500,7 @@
       "copy-link": "リンクをコピー",
       "duplicate": "複製",
       "export": "エクスポート",
+      "manage-enrichments": "",
       "silence-notifications": "通知を消音",
       "with-modifications": "修正あり"
     },
@@ -1115,7 +1116,7 @@
     },
     "enrichment": {
       "error-boundary": {
-        "notification-message-section-extension": "",
+        "enrichment-drawer-extension": "",
         "rule-viewer-section-extension": ""
       }
     },

@@ -504,6 +504,7 @@
       "copy-link": "Copia link",
       "duplicate": "Duplica",
       "export": "Esporta",
+      "manage-enrichments": "",
       "silence-notifications": "Silenzia notifiche",
       "with-modifications": "Con modifiche"
     },
@@ -1121,7 +1122,7 @@
     },
     "enrichment": {
       "error-boundary": {
-        "notification-message-section-extension": "",
+        "enrichment-drawer-extension": "",
         "rule-viewer-section-extension": ""
       }
     },

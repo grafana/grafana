@@ -500,6 +500,7 @@
       "copy-link": "링크 복사",
       "duplicate": "복제",
       "export": "내보내기",
+      "manage-enrichments": "",
       "silence-notifications": "알림 끄기에 대한 알림",
       "with-modifications": "수정 사항 포함"
     },
@@ -1115,7 +1116,7 @@
     },
     "enrichment": {
       "error-boundary": {
-        "notification-message-section-extension": "",
+        "enrichment-drawer-extension": "",
         "rule-viewer-section-extension": ""
       }
     },
