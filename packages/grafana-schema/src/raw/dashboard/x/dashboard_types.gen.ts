@@ -357,7 +357,6 @@ export const defaultDashboardLink: Partial<DashboardLink> = {
  */
 export type DashboardLinkType = ('link' | 'dashboards');
 
-
 /**
  * Dashboard Link placement. Defines where the link should be displayed.
  * - "inControlsMenu" renders the link in bottom part of the dashboard controls dropdown menu
