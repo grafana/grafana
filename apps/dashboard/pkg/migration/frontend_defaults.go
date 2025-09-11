@@ -979,6 +979,12 @@ func cleanupDashboardDefaults(dashboard map[string]interface{}) {
 		delete(dashboard, "hideControls")
 	}
 
+	// Remove dashboard id if it's null
+	// Frontend filters out null id values during getSaveModelClone()
+	if id, ok := dashboard["id"]; ok && id == nil {
+		delete(dashboard, "id")
+	}
+
 	// Remove transient properties that frontend filters out during getSaveModelClone()
 	// These properties are not defined as class properties in DashboardModel, so they get lost
 	// during the frontend's property copying loop in getSaveModelCloneOld()
