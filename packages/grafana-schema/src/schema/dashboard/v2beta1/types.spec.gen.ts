@@ -532,8 +532,11 @@ export interface FetchOptions {
 	method: HttpRequestMethod;
 	url: string;
 	body?: string;
-	queryParams?: Record<string, string>;
-	headers?: Record<string, string>;
+	// These are 2D arrays of strings, each representing a key-value pair
+	// We are defining them this way because we can't generate a go struct that
+	// that would have exactly two strings in each sub-array
+	queryParams?: string[][];
+	headers?: string[][];
 }
 
 export const defaultFetchOptions = (): FetchOptions => ({
@@ -549,9 +552,12 @@ export interface InfinityOptions {
 	method: HttpRequestMethod;
 	url: string;
 	body?: string;
-	queryParams?: Record<string, string>;
+	// These are 2D arrays of strings, each representing a key-value pair
+	// We are defining them this way because we can't generate a go struct that
+	// that would have exactly two strings in each sub-array
+	queryParams?: string[][];
 	datasourceUid: string;
-	headers?: Record<string, string>;
+	headers?: string[][];
 }
 
 export const defaultInfinityOptions = (): InfinityOptions => ({
@@ -569,8 +575,11 @@ export interface ActionVariable {
 export const defaultActionVariable = (): ActionVariable => ({
 	key: "",
 	name: "",
-	type: "string",
+	type: ActionVariableType,
 });
+
+// Action variable type
+export const ActionVariableType = "string";
 
 export interface DynamicConfigValue {
 	id: string;

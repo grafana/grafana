@@ -38,7 +38,7 @@ import { setDashboardPanelContext } from '../../scene/setDashboardPanelContext';
 import { DashboardLayoutManager } from '../../scene/types/DashboardLayoutManager';
 import { getVizPanelKeyForPanelId } from '../../utils/utils';
 import { createElements, vizPanelToSchemaV2 } from '../transformSceneToSaveModelSchemaV2';
-import { transformMappingsAndActionsToV1 } from '../transformToV1TypesUtils';
+import { transformMappingsToV1 } from '../transformToV1TypesUtils';
 import { transformDataTopic } from '../transformToV2TypesUtils';
 
 export function buildVizPanel(panel: PanelKind, id?: number): VizPanel {
@@ -62,7 +62,7 @@ export function buildVizPanel(panel: PanelKind, id?: number): VizPanel {
     description: panel.spec.description,
     pluginId: panel.spec.vizConfig.group,
     options: panel.spec.vizConfig.spec.options,
-    fieldConfig: transformMappingsAndActionsToV1(panel.spec.vizConfig.spec.fieldConfig),
+    fieldConfig: transformMappingsToV1(panel.spec.vizConfig.spec.fieldConfig),
     pluginVersion: panel.spec.vizConfig.version,
     displayMode: panel.spec.transparent ? 'transparent' : 'default',
     hoverHeader: !panel.spec.title && !timeOverrideShown,

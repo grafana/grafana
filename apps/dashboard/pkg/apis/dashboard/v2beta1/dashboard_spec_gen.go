@@ -646,11 +646,14 @@ const (
 
 // +k8s:openapi-gen=true
 type DashboardFetchOptions struct {
-	Method      DashboardHttpRequestMethod `json:"method"`
-	Url         string                     `json:"url"`
-	Body        *string                    `json:"body,omitempty"`
-	QueryParams map[string]string          `json:"queryParams,omitempty"`
-	Headers     map[string]string          `json:"headers,omitempty"`
+	Method DashboardHttpRequestMethod `json:"method"`
+	Url    string                     `json:"url"`
+	Body   *string                    `json:"body,omitempty"`
+	// These are 2D arrays of strings, each representing a key-value pair
+	// We are defining them this way because we can't generate a go struct that
+	// that would have exactly two strings in each sub-array
+	QueryParams [][]string `json:"queryParams,omitempty"`
+	Headers     [][]string `json:"headers,omitempty"`
 }
 
 // NewDashboardFetchOptions creates a new DashboardFetchOptions object.
@@ -671,12 +674,15 @@ const (
 
 // +k8s:openapi-gen=true
 type DashboardInfinityOptions struct {
-	Method        DashboardHttpRequestMethod `json:"method"`
-	Url           string                     `json:"url"`
-	Body          *string                    `json:"body,omitempty"`
-	QueryParams   map[string]string          `json:"queryParams,omitempty"`
-	DatasourceUid string                     `json:"datasourceUid"`
-	Headers       map[string]string          `json:"headers,omitempty"`
+	Method DashboardHttpRequestMethod `json:"method"`
+	Url    string                     `json:"url"`
+	Body   *string                    `json:"body,omitempty"`
+	// These are 2D arrays of strings, each representing a key-value pair
+	// We are defining them this way because we can't generate a go struct that
+	// that would have exactly two strings in each sub-array
+	QueryParams   [][]string `json:"queryParams,omitempty"`
+	DatasourceUid string     `json:"datasourceUid"`
+	Headers       [][]string `json:"headers,omitempty"`
 }
 
 // NewDashboardInfinityOptions creates a new DashboardInfinityOptions object.
@@ -694,9 +700,13 @@ type DashboardActionVariable struct {
 // NewDashboardActionVariable creates a new DashboardActionVariable object.
 func NewDashboardActionVariable() *DashboardActionVariable {
 	return &DashboardActionVariable{
-		Type: "string",
+		Type: DashboardActionVariableType,
 	}
 }
+
+// Action variable type
+// +k8s:openapi-gen=true
+const DashboardActionVariableType = "string"
 
 // +k8s:openapi-gen=true
 type DashboardDynamicConfigValue struct {

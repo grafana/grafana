@@ -54,7 +54,7 @@ import { getLibraryPanelBehavior, getPanelIdForVizPanel, getQueryRunnerFor, isLi
 import { DSReferencesMapping } from './DashboardSceneSerializer';
 import { transformV1ToV2AnnotationQuery } from './annotations';
 import { sceneVariablesSetToSchemaV2Variables } from './sceneVariablesSetToVariables';
-import { colorIdEnumToColorIdV2, transformCursorSynctoEnum, transformActionsV2 } from './transformToV2TypesUtils';
+import { colorIdEnumToColorIdV2, transformCursorSynctoEnum } from './transformToV2TypesUtils';
 
 // FIXME: This is temporary to avoid creating partial types for all the new schema, it has some performance implications, but it's fine for now
 type DeepPartial<T> = T extends object
@@ -217,9 +217,6 @@ function handleFieldConfigDefaultsConversion(vizPanel: VizPanel) {
     return defaultFieldConfig();
   }
 
-  // handle panel actions conversion
-  const actions = transformActionsV2(vizPanel.state.fieldConfig.defaults.actions ?? []);
-
   // Handle type conversion for color mode
   const rawColor = vizPanel.state.fieldConfig.defaults.color;
   let color: FieldColor | undefined;
@@ -243,7 +240,6 @@ function handleFieldConfigDefaultsConversion(vizPanel: VizPanel) {
   const defaults = Object.fromEntries(
     Object.entries({
       ...vizPanel.state.fieldConfig.defaults,
-      actions,
       decimals,
       min,
       max,

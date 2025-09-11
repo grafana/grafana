@@ -101,7 +101,7 @@ function transformSpecialValueMatchToV1(match: SpecialValueMatch): SpecialValueM
   }
 }
 
-export function transformMappingsAndActionsToV1(fieldConfig: FieldConfigSource): FieldConfigSourceV1 {
+export function transformMappingsToV1(fieldConfig: FieldConfigSource): FieldConfigSourceV1 {
   const getThresholdsMode = (mode: ThresholdsMode): ThresholdsModeV1 => {
     switch (mode) {
       case 'absolute':
@@ -155,35 +155,6 @@ export function transformMappingsAndActionsToV1(fieldConfig: FieldConfigSource):
       ...fieldConfig.defaults.thresholds,
       mode: getThresholdsMode(fieldConfig.defaults.thresholds.mode),
     };
-  }
-
-  // Unfortunately with schema v2 when generating Go types through cue, it's not possible to have a tuple
-  if (fieldConfig.defaults.actions) {
-    transformedDefaults.actions = fieldConfig.defaults.actions.map((action) => {
-      if (action.fetch) {
-        return {
-          ...action,
-          fetch: {
-            ...action.fetch,
-            headers: action.fetch.headers ? Object.entries(action.fetch.headers) : undefined,
-            queryParams: action.fetch.queryParams ? Object.entries(action.fetch.queryParams) : undefined,
-          },
-        };
-      }
-
-      if (action.infinity) {
-        return {
-          ...action,
-          infinity: {
-            ...action.infinity,
-            headers: action.infinity.headers ? Object.entries(action.infinity.headers) : undefined,
-            queryParams: action.infinity.queryParams ? Object.entries(action.infinity.queryParams) : undefined,
-          },
-        };
-      }
-
-      return action;
-    });
   }
 
   return {

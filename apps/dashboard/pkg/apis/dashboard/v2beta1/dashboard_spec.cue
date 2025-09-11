@@ -369,8 +369,11 @@ FetchOptions: {
 	method: HttpRequestMethod
 	url: string
 	body?: string
-	queryParams?: {[string]: string}
-	headers?: {[string]: string}
+	// These are 2D arrays of strings, each representing a key-value pair
+	// We are defining them this way because we can't generate a go struct that 
+	// that would have exactly two strings in each sub-array
+	queryParams?: [...[...string]]
+	headers?: [...[...string]]
 }
 
 InfinityOptions: FetchOptions & {
@@ -379,10 +382,13 @@ InfinityOptions: FetchOptions & {
 
 HttpRequestMethod: "GET" | "PUT" | "POST" | "DELETE" | "PATCH" 
 
+// Action variable type
+ActionVariableType: "string"
+
 ActionVariable: {
 	key: string
 	name: string
-	type: "string"
+	type: ActionVariableType
 }
 
 Action: {
