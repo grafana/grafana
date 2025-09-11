@@ -35,6 +35,10 @@ export interface DataGridProps
    */
   transparent?: boolean;
   /**
+   * if true, hovering over cells will overflow the cell contents over the rest of the table to reveal the full contents.
+   */
+  hoverOverflow?: boolean;
+  /**
    * if set, enables pagination. either an integer for number of rows, or a method which, given the rows in the grid, returns
    * a number of rows (which is useful for dynamic pagination based on the height of the container or other unique situations).
    */
@@ -102,6 +106,7 @@ export function DataGrid({
   gridRef,
   headerRowClass,
   hideHeader,
+  hoverOverflow = false,
   initialSortColumns,
   onSortColumnsChange,
   rowsPerPage,
@@ -112,7 +117,7 @@ export function DataGrid({
   transparent,
   ...props
 }: DataGridProps) {
-  const styles = useStyles2(getStyles, Boolean(rowsPerPage), transparent, hideHeader);
+  const styles = useStyles2(getStyles, Boolean(rowsPerPage), transparent, hideHeader, hoverOverflow);
   const rows = useMemo(() => frameToRecords(data), [data]);
   const [sortColumns, setSortColumns] = useState<SortColumn[]>(initialSortColumns ?? []);
   const columnTypes = useMemo(() => getColumnTypes(data.fields), [data.fields]);
@@ -178,7 +183,13 @@ export function DataGrid({
   return content;
 }
 
-const getStyles = (theme: GrafanaTheme2, enablePagination?: boolean, transparent?: boolean, hideHeader?: boolean) => {
+const getStyles = (
+  theme: GrafanaTheme2,
+  enablePagination?: boolean,
+  transparent?: boolean,
+  hideHeader?: boolean,
+  hoverOverflow?: boolean
+) => {
   const bgColor = transparent ? theme.colors.background.canvas : theme.colors.background.primary;
   // this needs to be pre-calc'd since the theme colors have alpha and the border color becomes
   // unpredictable for background color cells
@@ -266,15 +277,18 @@ const getStyles = (theme: GrafanaTheme2, enablePagination?: boolean, transparent
           }),
     }),
     cell: css({
-      display: 'flex',
-      alignItems: 'center',
-      minHeight: '100%',
+      overflow: 'hidden',
+      textOverflow: 'ellipsis',
+      whiteSpace: 'nowrap',
+      ...(hoverOverflow && { minHeight: '100%' }),
 
       '&:hover, &[aria-selected=true]': {
         '.table-cell-actions': { display: 'flex' },
-        zIndex: theme.zIndex.tooltip - 2,
-        height: 'fit-content',
-        whiteSpace: 'pre-line',
+        ...(hoverOverflow && {
+          zIndex: theme.zIndex.tooltip - 2,
+          height: 'fit-content',
+          whiteSpace: 'pre-line',
+        }),
       },
     }),
   };
