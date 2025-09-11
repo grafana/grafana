@@ -111,7 +111,7 @@ func TestIntegrationSearchAndStorage(t *testing.T) {
 	search, err := search.NewBleveBackend(search.BleveOptions{
 		FileThreshold: 0,
 		Root:          tempDir,
-	}, tracing.NewNoopTracerService(), featuremgmt.WithFeatures(), nil)
+	}, tracing.NewNoopTracerService(), nil)
 	require.NoError(t, err)
 	require.NotNil(t, search)
 
