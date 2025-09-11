@@ -76,13 +76,6 @@ export function useSaveDashboard(isCopy = false) {
             expression_types: expressionTypes,
           });
         } else {
-          console.log('reportInteraction', {
-            event: `grafana_dashboard_${options.isNew ? 'created' : 'saved'}`,
-            name: saveModel.title,
-            url: resultData.url,
-            hasExpression: expressionTypes.length > 0,
-            expression_types: expressionTypes,
-          });
           reportInteraction(`grafana_dashboard_${options.isNew ? 'created' : 'saved'}`, {
             name: saveModel.title,
             url: resultData.url,
