@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net/http"
 	"path"
 	"strings"
 
@@ -23,9 +24,7 @@ var (
 	ErrShortURLInvalidPath  = fmt.Errorf("invalid short URL path")
 )
 
-type ShortURLConfig struct {
-	AppURL string
-}
+type ShortURLConfig struct{}
 
 func New(cfg app.Config) (app.App, error) {
 	// Extract the AppURL from the specific config
@@ -75,6 +74,11 @@ func New(cfg app.Config) (app.App, error) {
 						Method: "GET",
 						Path:   "goto",
 					}: func(ctx context.Context, w app.CustomRouteResponseWriter, req *app.CustomRouteRequest) error {
+						url, _, found := strings.Cut(req.URL.String(), "/apis/")
+						if !found {
+							return fmt.Errorf("unable to parse request URL")
+						}
+
 						info := &shorturlv1alpha1.ShortURL{}
 						if err := client.GetInto(ctx, resource.Identifier{
 							Namespace: req.ResourceIdentifier.Namespace,
@@ -83,12 +87,23 @@ func New(cfg app.Config) (app.App, error) {
 							return err
 						}
 
-						// TODO... update status
+						go func() {
+							fmt.Printf("TODO... update status with lastSeenAt")
+						}()
 
-						resp := shorturlv1alpha1.GetGoto{
-							Url: info.Spec.Path,
+						url = url + "/" + info.Spec.Path
+						redirect := true
+
+						if redirect {
+							w.Header().Add("Location", url)
+							w.WriteHeader(http.StatusMovedPermanently)
+							return nil
 						}
-						return json.NewEncoder(w).Encode(resp)
+
+						// Write the response
+						return json.NewEncoder(w).Encode(shorturlv1alpha1.GetGoto{
+							Url: url,
+						})
 					},
 				},
 			},
