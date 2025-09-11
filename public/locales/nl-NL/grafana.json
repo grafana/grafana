@@ -504,6 +504,7 @@
       "copy-link": "Link kopiëren",
       "duplicate": "Dupliceren",
       "export": "Exporteren",
+      "manage-enrichments": "",
       "silence-notifications": "Stiltemeldingen",
       "with-modifications": "Met wijzigingen"
     },
@@ -1121,7 +1122,8 @@
     },
     "enrichment": {
       "error-boundary": {
-        "notification-message-section-extension": ""
+        "enrichment-drawer-extension": "",
+        "rule-viewer-section-extension": ""
       }
     },
     "error-modal": {
@@ -3042,6 +3044,7 @@
       "page-nav": {
         "text": {
           "details": "Details",
+          "enrichment": "",
           "history": "Geschiedenis",
           "instances": "Instanties",
           "query-and-conditions": "Query en voorwaarden",
@@ -11211,11 +11214,11 @@
       "description-clear-repository-connection": "Voeg een duidelijke naam toe voor deze repository-verbinding",
       "empty": "Leeg",
       "error-field-required": "Dit veld is verplicht.",
-      "ext-storage": "Externe opslag",
-      "grafana": "Grafana-instantie",
+      "external-storage-label": "",
       "label-display-name": "Weergavenaam",
       "placeholder-my-repository-connection": "Mijn repository-verbinding",
       "text-loading-resource-information": "Broninformatie laden...",
+      "unmanaged-resources-label": "",
       "dashboards-count_one": "{{count}} dashboard",
       "dashboards-count_other": "{{count}} dashboard",
       "files-count_one": "{{count}} bestanden",
@@ -11263,7 +11266,9 @@
     },
     "connect-repository-button": {
       "configure": "Configureren",
-      "repository-limit-info-alert": "Limiet van repository bereikt ({{count}})"
+      "instance-fully-managed-tooltip": "",
+      "repository-limit-reached-tooltip_one": "",
+      "repository-limit-reached-tooltip_other": ""
     },
     "delete-repository-button": {
       "button-delete": "Verwijderen",

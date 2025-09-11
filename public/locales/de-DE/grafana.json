@@ -504,6 +504,7 @@
       "copy-link": "Link kopieren",
       "duplicate": "Duplikat",
       "export": "Exportieren",
+      "manage-enrichments": "",
       "silence-notifications": "Benachrichtigungen stummschalten",
       "with-modifications": "Mit Änderungen"
     },
@@ -1121,7 +1122,8 @@
     },
     "enrichment": {
       "error-boundary": {
-        "notification-message-section-extension": ""
+        "enrichment-drawer-extension": "",
+        "rule-viewer-section-extension": ""
       }
     },
     "error-modal": {
@@ -3042,6 +3044,7 @@
       "page-nav": {
         "text": {
           "details": "Details",
+          "enrichment": "",
           "history": "Verlauf",
           "instances": "Instanzen",
           "query-and-conditions": "Abfrage und Bedingungen",
@@ -11211,11 +11214,11 @@
       "description-clear-repository-connection": "Fügen Sie einen eindeutigen Namen für diese Repository-Verbindung hinzu",
       "empty": "Leer",
       "error-field-required": "Dieses Feld ist erforderlich.",
-      "ext-storage": "Externer Speicher",
-      "grafana": "Grafana-Instanz",
+      "external-storage-label": "",
       "label-display-name": "Anzeigename",
       "placeholder-my-repository-connection": "Meine Repository-Verbindung",
       "text-loading-resource-information": "Ressourceninformationen werden geladen ...",
+      "unmanaged-resources-label": "",
       "dashboards-count_one": "{{count}} Dashboard",
       "dashboards-count_other": "{{count}} Dashboard",
       "files-count_one": "{{count}} Dateien",
@@ -11263,7 +11266,9 @@
     },
     "connect-repository-button": {
       "configure": "Konfigurieren",
-      "repository-limit-info-alert": "Repository-Limit erreicht ({{count}})"
+      "instance-fully-managed-tooltip": "",
+      "repository-limit-reached-tooltip_one": "",
+      "repository-limit-reached-tooltip_other": ""
     },
     "delete-repository-button": {
       "button-delete": "Löschen",
