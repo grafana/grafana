@@ -46,7 +46,7 @@ export const UnknownIntegrationFactory = Factory.define<Integration>(() => ({
   disableResolveMessage: false,
   version: '1',
   settings: {
-    addresses: faker.internet.email(),
+    foo: 'bar',
   },
 }));
 
