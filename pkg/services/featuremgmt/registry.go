@@ -463,6 +463,13 @@ var (
 			RequiresRestart: true, // changes the API routing
 		},
 		{
+			Name:            "kubernetesAlertingRules",
+			Description:     "Adds support for Kubernetes alerting and recording rules",
+			Stage:           FeatureStageExperimental,
+			Owner:           grafanaAlertingSquad,
+			RequiresRestart: true,
+		},
+		{
 			Name:        "dashboardDisableSchemaValidationV1",
 			Description: "Disable schema validation for dashboards/v1",
 			Stage:       FeatureStageExperimental,
@@ -1343,9 +1350,10 @@ var (
 		},
 		{
 			Name:        "elasticsearchCrossClusterSearch",
-			Description: "Enables cross cluster search in the Elasticsearch datasource",
-			Stage:       FeatureStagePublicPreview,
-			Owner:       awsDatasourcesSquad,
+			Description: "Enables cross cluster search in the Elasticsearch data source",
+			Stage:       FeatureStageGeneralAvailability,
+			Owner:       grafanaPartnerPluginsSquad,
+			Expression:  "false",
 		},
 		{
 			Name:         "unifiedHistory",
@@ -1930,16 +1938,6 @@ var (
 			FrontendOnly: false,
 			Owner:        grafanaPartnerPluginsSquad,
 			Expression:   "false",
-		},
-		{
-			Name:              "unifiedStorageSearchAfterWriteExperimentalAPI",
-			Description:       "Enable experimental search-after-write guarantees to unified-storage search endpoints",
-			Stage:             FeatureStageExperimental,
-			Owner:             grafanaSearchAndStorageSquad,
-			HideFromAdminPage: true,
-			HideFromDocs:      true,
-			RequiresRestart:   true,
-			Expression:        "false",
 		},
 		{
 			Name:         "teamFolders",

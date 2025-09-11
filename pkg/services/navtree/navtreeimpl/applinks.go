@@ -247,7 +247,7 @@ func (s *ServiceImpl) addPluginToSection(c *contextmodel.ReqContext, treeRoot *n
 			treeRoot.AddSection(&navtree.NavLink{
 				Text:       "Observability",
 				Id:         navtree.NavIDObservability,
-				SubTitle:   "Opinionated observability across applications, services, and infrastructure",
+				SubTitle:   "Monitor infrastructure and applications in real time with Grafana Cloud's fully managed observability suite",
 				Icon:       "heart-rate",
 				SortWeight: navtree.WeightObservability,
 				Children:   []*navtree.NavLink{appLink},

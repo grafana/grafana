@@ -59,9 +59,10 @@ const (
 )
 
 type K8sTestHelper struct {
-	t          *testing.T
-	env        server.TestEnv
-	Namespacer request.NamespaceMapper
+	t               *testing.T
+	listenerAddress string
+	env             server.TestEnv
+	Namespacer      request.NamespaceMapper
 
 	Org1 OrgUsers // default
 	OrgB OrgUsers // some other id
@@ -88,12 +89,13 @@ func NewK8sTestHelper(t *testing.T, opts testinfra.GrafanaOpts) *K8sTestHelper {
 	// The flag only exists to support the transition from the old to the new behavior in dev/ops/prod.
 	opts.EnableFeatureToggles = append(opts.EnableFeatureToggles, featuremgmt.FlagAppPlatformGrpcClientAuth)
 	dir, path := testinfra.CreateGrafDir(t, opts)
-	_, env := testinfra.StartGrafanaEnv(t, dir, path)
+	listenerAddress, env := testinfra.StartGrafanaEnv(t, dir, path)
 
 	c := &K8sTestHelper{
-		env:        *env,
-		t:          t,
-		Namespacer: request.GetNamespaceMapper(nil),
+		env:             *env,
+		listenerAddress: listenerAddress,
+		t:               t,
+		Namespacer:      request.GetNamespaceMapper(nil),
 	}
 
 	cfgProvider, err := configprovider.ProvideService(c.env.Cfg)
@@ -149,6 +151,10 @@ func (c *K8sTestHelper) loadAPIGroups() {
 
 func (c *K8sTestHelper) GetEnv() server.TestEnv {
 	return c.env
+}
+
+func (c *K8sTestHelper) GetListenerAddress() string {
+	return c.listenerAddress
 }
 
 func (c *K8sTestHelper) Shutdown() {

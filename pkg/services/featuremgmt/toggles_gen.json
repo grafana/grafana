@@ -1204,13 +1204,17 @@
     {
       "metadata": {
         "name": "elasticsearchCrossClusterSearch",
-        "resourceVersion": "1753448760331",
-        "creationTimestamp": "2024-12-12T22:20:04Z"
+        "resourceVersion": "1757441088767",
+        "creationTimestamp": "2024-12-12T22:20:04Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-09-09 18:04:48.76781 +0000 UTC"
+        }
       },
       "spec": {
-        "description": "Enables cross cluster search in the Elasticsearch datasource",
-        "stage": "preview",
-        "codeowner": "@grafana/aws-datasources"
+        "description": "Enables cross cluster search in the Elasticsearch data source",
+        "stage": "GA",
+        "codeowner": "@grafana/partner-datasources",
+        "expression": "false"
       }
     },
     {
@@ -1905,6 +1909,19 @@
         "description": "Enable CAP token based authentication in grafana's embedded kube-aggregator",
         "stage": "experimental",
         "codeowner": "@grafana/grafana-app-platform-squad",
+        "requiresRestart": true
+      }
+    },
+    {
+      "metadata": {
+        "name": "kubernetesAlertingRules",
+        "resourceVersion": "1754340669702",
+        "creationTimestamp": "2025-08-04T20:51:09Z"
+      },
+      "spec": {
+        "description": "Adds support for Kubernetes alerting and recording rules",
+        "stage": "experimental",
+        "codeowner": "@grafana/alerting-squad",
         "requiresRestart": true
       }
     },
@@ -3520,6 +3537,7 @@
         "name": "unifiedStorageSearchAfterWriteExperimentalAPI",
         "resourceVersion": "1755089543487",
         "creationTimestamp": "2025-08-13T14:05:15Z",
+        "deletionTimestamp": "2025-09-10T09:52:56Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2025-08-13 12:52:23.487521 +0000 UTC"
         }
