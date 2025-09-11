@@ -342,17 +342,18 @@ test.describe(
 
       // extracting embedded panel url from UI
       const textAreaValue = await page.getByTestId('share-embed-html').evaluate((el) => el.textContent);
-      const regex = /src="([^"]*)"/;
-      const matches = textAreaValue.match(regex);
-
-      let soloPanelUrl;
-      if (matches) {
-        soloPanelUrl = matches[1];
-      }
+      const srcRegex = /src="([^"]*)"/;
+      let soloPanelUrl = textAreaValue.match(srcRegex)?.[1];
 
       expect(soloPanelUrl).toBeDefined();
 
-      page.goto(soloPanelUrl);
+      // adjust base url (different each time in CI)
+      const currentUrl = page.url();
+      const baseUrlRegex = /^http:\/\/[^/:]+:3001\//;
+      const baseUrl = currentUrl.match(baseUrlRegex)?.[0];
+      soloPanelUrl = soloPanelUrl!.replace(baseUrlRegex, baseUrl!);
+
+      page.goto(soloPanelUrl!);
 
       await expect(
         dashboardPage.getByGrafanaSelector(
