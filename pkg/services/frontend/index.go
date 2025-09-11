@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"html/template"
 	"net/http"
+	"strings"
 	"syscall"
 
 	"github.com/grafana/grafana-app-sdk/logging"
@@ -33,7 +34,9 @@ type IndexViewData struct {
 	BuildCommit  string
 	AppTitle     string
 
-	Assets dtos.EntryPointAssets // Includes CDN info
+	Assets      dtos.EntryPointAssets // Includes CDN info
+	Settings    dtos.FrontendSettingsDTO
+	DefaultUser dtos.CurrentUser
 
 	// Nonce is a cryptographic identifier for use with Content Security Policy.
 	Nonce string
@@ -54,6 +57,40 @@ func NewIndexProvider(cfg *setting.Cfg, assetsManifest dtos.EntryPointAssets) (*
 		return nil, fmt.Errorf("missing index template")
 	}
 
+	// subset of frontend settings needed for the login page
+	// TODO what about enterprise settings here?
+	frontendSettings := dtos.FrontendSettingsDTO{
+		AnalyticsConsoleReporting:           cfg.FrontendAnalyticsConsoleReporting,
+		AnonymousEnabled:                    cfg.Anonymous.Enabled,
+		ApplicationInsightsConnectionString: cfg.ApplicationInsightsConnectionString,
+		ApplicationInsightsEndpointUrl:      cfg.ApplicationInsightsEndpointUrl,
+		AuthProxyEnabled:                    cfg.AuthProxy.Enabled,
+		AutoAssignOrg:                       cfg.AutoAssignOrg,
+		CSPReportOnlyEnabled:                cfg.CSPReportOnlyEnabled,
+		DisableLoginForm:                    cfg.DisableLoginForm,
+		DisableUserSignUp:                   !cfg.AllowUserSignUp,
+		GoogleAnalytics4Id:                  cfg.GoogleAnalytics4ID,
+		GoogleAnalytics4SendManualPageViews: cfg.GoogleAnalytics4SendManualPageViews,
+		GoogleAnalyticsId:                   cfg.GoogleAnalyticsID,
+		GrafanaJavascriptAgent:              cfg.GrafanaJavascriptAgent,
+		Http2Enabled:                        cfg.Protocol == setting.HTTP2Scheme,
+		JwtHeaderName:                       cfg.JWTAuth.HeaderName,
+		JwtUrlLogin:                         cfg.JWTAuth.URLLogin,
+		LdapEnabled:                         cfg.LDAPAuthEnabled,
+		LoginHint:                           cfg.LoginHint,
+		PasswordHint:                        cfg.PasswordHint,
+		ReportingStaticContext:              cfg.ReportingStaticContext,
+		RudderstackConfigUrl:                cfg.RudderstackConfigURL,
+		RudderstackDataPlaneUrl:             cfg.RudderstackDataPlaneURL,
+		RudderstackIntegrationsUrl:          cfg.RudderstackIntegrationsURL,
+		RudderstackSdkUrl:                   cfg.RudderstackSDKURL,
+		RudderstackWriteKey:                 cfg.RudderstackWriteKey,
+		TrustedTypesDefaultPolicyEnabled:    (cfg.CSPEnabled && strings.Contains(cfg.CSPTemplate, "require-trusted-types-for")) || (cfg.CSPReportOnlyEnabled && strings.Contains(cfg.CSPReportOnlyTemplate, "require-trusted-types-for")),
+		VerifyEmailEnabled:                  cfg.VerifyEmailEnabled,
+	}
+
+	defaultUser := dtos.CurrentUser{}
+
 	return &IndexProvider{
 		log:   logging.DefaultLogger.With("logger", "index-provider"),
 		index: t,
@@ -70,7 +107,9 @@ func NewIndexProvider(cfg *setting.Cfg, assetsManifest dtos.EntryPointAssets) (*
 
 			IsDevelopmentEnv: cfg.Env == setting.Dev,
 
-			Assets: assetsManifest,
+			Assets:      assetsManifest,
+			Settings:    frontendSettings,
+			DefaultUser: defaultUser,
 		},
 	}, nil
 }
