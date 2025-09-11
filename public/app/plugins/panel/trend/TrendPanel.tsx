@@ -8,9 +8,10 @@ import {
   FieldType,
   PanelProps,
   TimeRange,
+  useDataLinksContext,
 } from '@grafana/data';
 import { config, PanelDataErrorView } from '@grafana/runtime';
-import { KeyboardPlugin, TooltipDisplayMode, usePanelContext, TooltipPlugin2 } from '@grafana/ui';
+import { KeyboardPlugin, TooltipDisplayMode, TooltipPlugin2 } from '@grafana/ui';
 import { TooltipHoverMode } from '@grafana/ui/internal';
 import { XYFieldMatchers } from 'app/core/components/GraphNG/types';
 import { preparePlotFrame } from 'app/core/components/GraphNG/utils';
@@ -33,7 +34,7 @@ export const TrendPanel = ({
   replaceVariables,
   id,
 }: PanelProps<Options>) => {
-  const { dataLinkPostProcessor } = usePanelContext();
+  const { dataLinkPostProcessor } = useDataLinksContext();
   // Need to fallback to first number field if no xField is set in options otherwise panel crashes 😬
   const trendXFieldName =
     options.xField ?? data.series[0]?.fields.find((field) => field.type === FieldType.number)?.name;

@@ -11,7 +11,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/store/kind/dashboard"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
@@ -232,12 +231,11 @@ func newTestDashboardsIndex(t testing.TB, threshold int64, size int64, batchSize
 		Root:          t.TempDir(),
 		FileThreshold: threshold, // use in-memory for tests
 		BatchSize:     int(batchSize),
-	}, tracing.NewNoopTracerService(), featuremgmt.WithFeatures(), nil)
+	}, tracing.NewNoopTracerService(), nil)
 	require.NoError(t, err)
 
 	t.Cleanup(backend.CloseAllIndexes)
 
-	rv := int64(10)
 	ctx := identity.WithRequester(context.Background(), &user.SignedInUser{Namespace: "ns"})
 
 	info, err := search.DashboardBuilder(func(ctx context.Context, namespace string, blob resource.BlobSupport) (resource.DocumentBuilder, error) {
@@ -254,7 +252,7 @@ func newTestDashboardsIndex(t testing.TB, threshold int64, size int64, batchSize
 		Namespace: key.Namespace,
 		Group:     key.Group,
 		Resource:  key.Resource,
-	}, size, rv, info.Fields, "test", writer, nil, false, false)
+	}, size, info.Fields, "test", writer, nil, false)
 	require.NoError(t, err)
 
 	return index

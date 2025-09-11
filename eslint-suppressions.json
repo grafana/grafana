@@ -1,14 +1,4 @@
 {
-  "apps/dashboard/tshack/v0alpha1_spec_gen.ts": {
-    "@typescript-eslint/no-explicit-any": {
-      "count": 1
-    }
-  },
-  "apps/dashboard/tshack/v1alpha1_spec_gen.ts": {
-    "@typescript-eslint/no-explicit-any": {
-      "count": 1
-    }
-  },
   "e2e/cypress/support/commands.js": {
     "no-restricted-syntax": {
       "count": 1
@@ -370,11 +360,6 @@
   "packages/grafana-data/src/vector/FunctionalVector.ts": {
     "@typescript-eslint/no-explicit-any": {
       "count": 9
-    }
-  },
-  "packages/grafana-data/test/helpers/pluginMocks.ts": {
-    "@typescript-eslint/consistent-type-assertions": {
-      "count": 1
     }
   },
   "packages/grafana-e2e-selectors/src/resolver.ts": {
@@ -1723,11 +1708,6 @@
       "count": 1
     }
   },
-  "public/app/features/alerting/unified/components/rule-viewer/RuleViewer.tsx": {
-    "react-hooks/rules-of-hooks": {
-      "count": 1
-    }
-  },
   "public/app/features/alerting/unified/components/rules/Filter/RulesFilter.v1.tsx": {
     "no-restricted-syntax": {
       "count": 4
@@ -2050,19 +2030,9 @@
       "count": 4
     }
   },
-  "public/app/features/dashboard-scene/edit-pane/DashboardEditableElement.tsx": {
-    "react-hooks/rules-of-hooks": {
-      "count": 4
-    }
-  },
   "public/app/features/dashboard-scene/edit-pane/DashboardOutline.tsx": {
     "@typescript-eslint/consistent-type-assertions": {
       "count": 1
-    }
-  },
-  "public/app/features/dashboard-scene/edit-pane/VizPanelEditableElement.tsx": {
-    "react-hooks/rules-of-hooks": {
-      "count": 6
     }
   },
   "public/app/features/dashboard-scene/inspect/HelpWizard/HelpWizard.tsx": {
@@ -2164,30 +2134,15 @@
       "count": 1
     }
   },
-  "public/app/features/dashboard-scene/scene/layout-default/SceneGridRowEditableElement.tsx": {
-    "react-hooks/rules-of-hooks": {
-      "count": 2
-    }
-  },
   "public/app/features/dashboard-scene/scene/layout-default/row-actions/RowOptionsForm.tsx": {
     "no-restricted-syntax": {
       "count": 2
-    }
-  },
-  "public/app/features/dashboard-scene/scene/layout-rows/RowItem.tsx": {
-    "react-hooks/rules-of-hooks": {
-      "count": 1
     }
   },
   "public/app/features/dashboard-scene/scene/layout-rows/RowItemEditor.tsx": {
     "no-restricted-syntax": {
       "count": 1
     },
-    "react-hooks/rules-of-hooks": {
-      "count": 1
-    }
-  },
-  "public/app/features/dashboard-scene/scene/layout-tabs/TabItem.tsx": {
     "react-hooks/rules-of-hooks": {
       "count": 1
     }
@@ -2243,25 +2198,17 @@
       "count": 10
     }
   },
-  "public/app/features/dashboard-scene/settings/variables/LocalVariableEditableElement.tsx": {
-    "react-hooks/rules-of-hooks": {
-      "count": 3
-    }
-  },
   "public/app/features/dashboard-scene/settings/variables/VariableEditableElement.tsx": {
     "no-restricted-syntax": {
       "count": 1
     },
     "react-hooks/rules-of-hooks": {
-      "count": 9
+      "count": 4
     }
   },
   "public/app/features/dashboard-scene/settings/variables/VariableSetEditableElement.tsx": {
     "no-restricted-syntax": {
       "count": 1
-    },
-    "react-hooks/rules-of-hooks": {
-      "count": 2
     }
   },
   "public/app/features/dashboard-scene/settings/variables/components/AdHocVariableForm.tsx": {
@@ -2374,14 +2321,6 @@
   "public/app/features/dashboard-scene/v2schema/ImportDashboardOverviewV2.tsx": {
     "@typescript-eslint/consistent-type-assertions": {
       "count": 10
-    },
-    "@typescript-eslint/no-explicit-any": {
-      "count": 1
-    }
-  },
-  "public/app/features/dashboard-scene/v2schema/test-helpers.ts": {
-    "@typescript-eslint/consistent-type-assertions": {
-      "count": 3
     }
   },
   "public/app/features/dashboard/api/ResponseTransformers.ts": {
@@ -3316,11 +3255,6 @@
       "count": 2
     }
   },
-  "public/app/features/provisioning/Wizard/SynchronizeStep.tsx": {
-    "react/no-unescaped-entities": {
-      "count": 1
-    }
-  },
   "public/app/features/query/components/QueryEditorRow.tsx": {
     "@grafana/no-aria-label-selectors": {
       "count": 1
@@ -3356,9 +3290,6 @@
     }
   },
   "public/app/features/query/state/DashboardQueryRunner/testHelpers.ts": {
-    "@typescript-eslint/consistent-type-assertions": {
-      "count": 1
-    },
     "@typescript-eslint/no-explicit-any": {
       "count": 2
     }
@@ -3459,22 +3390,12 @@
       "count": 1
     }
   },
-  "public/app/features/templating/template_srv.mock.ts": {
-    "@typescript-eslint/consistent-type-assertions": {
-      "count": 4
-    }
-  },
   "public/app/features/templating/template_srv.ts": {
     "@typescript-eslint/consistent-type-assertions": {
       "count": 3
     },
     "@typescript-eslint/no-explicit-any": {
       "count": 9
-    }
-  },
-  "public/app/features/transformers/FilterByValueTransformer/ValueMatchers/BasicMatcherEditor.tsx": {
-    "@typescript-eslint/no-explicit-any": {
-      "count": 1
     }
   },
   "public/app/features/transformers/FilterByValueTransformer/ValueMatchers/types.ts": {
@@ -3575,7 +3496,7 @@
   },
   "public/app/features/transformers/spatial/optionsHelper.tsx": {
     "@typescript-eslint/consistent-type-assertions": {
-      "count": 3
+      "count": 2
     },
     "@typescript-eslint/no-explicit-any": {
       "count": 3
@@ -3993,7 +3914,7 @@
   },
   "public/app/plugins/datasource/cloudwatch/language/cloudwatch-logs/CloudWatchLogsLanguageProvider.ts": {
     "@typescript-eslint/no-explicit-any": {
-      "count": 3
+      "count": 1
     }
   },
   "public/app/plugins/datasource/cloudwatch/types.ts": {
@@ -4026,7 +3947,7 @@
   },
   "public/app/plugins/datasource/elasticsearch/LanguageProvider.ts": {
     "@typescript-eslint/no-explicit-any": {
-      "count": 4
+      "count": 3
     }
   },
   "public/app/plugins/datasource/elasticsearch/QueryBuilder.ts": {
@@ -4097,11 +4018,6 @@
       "count": 1
     }
   },
-  "public/app/plugins/datasource/elasticsearch/test-helpers/render.tsx": {
-    "@typescript-eslint/consistent-type-assertions": {
-      "count": 1
-    }
-  },
   "public/app/plugins/datasource/grafana-postgresql-datasource/configuration/ConfigurationEditor.tsx": {
     "no-restricted-syntax": {
       "count": 12
@@ -4139,9 +4055,6 @@
   "public/app/plugins/datasource/grafana-testdata-datasource/components/SimulationQueryEditor.tsx": {
     "@typescript-eslint/consistent-type-assertions": {
       "count": 1
-    },
-    "@typescript-eslint/no-explicit-any": {
-      "count": 2
     }
   },
   "public/app/plugins/datasource/grafana-testdata-datasource/components/SimulationSchemaForm.tsx": {
@@ -4151,9 +4064,6 @@
   },
   "public/app/plugins/datasource/grafana-testdata-datasource/datasource.ts": {
     "@typescript-eslint/consistent-type-assertions": {
-      "count": 1
-    },
-    "@typescript-eslint/no-explicit-any": {
       "count": 1
     }
   },
@@ -4168,9 +4078,6 @@
   "public/app/plugins/datasource/grafana/components/QueryEditor.tsx": {
     "@typescript-eslint/consistent-type-assertions": {
       "count": 2
-    },
-    "@typescript-eslint/no-explicit-any": {
-      "count": 1
     }
   },
   "public/app/plugins/datasource/grafana/components/TimeRegionEditor.tsx": {
@@ -4201,7 +4108,7 @@
       "count": 4
     },
     "@typescript-eslint/no-explicit-any": {
-      "count": 15
+      "count": 10
     }
   },
   "public/app/plugins/datasource/graphite/gfunc.ts": {
@@ -4217,7 +4124,7 @@
       "count": 1
     },
     "@typescript-eslint/no-explicit-any": {
-      "count": 10
+      "count": 9
     }
   },
   "public/app/plugins/datasource/graphite/lexer.ts": {
@@ -4318,12 +4225,12 @@
   },
   "public/app/plugins/datasource/influxdb/influx_series.ts": {
     "@typescript-eslint/no-explicit-any": {
-      "count": 9
+      "count": 8
     }
   },
   "public/app/plugins/datasource/influxdb/query_part.ts": {
     "@typescript-eslint/no-explicit-any": {
-      "count": 14
+      "count": 12
     }
   },
   "public/app/plugins/datasource/influxdb/response_parser.ts": {
@@ -4333,11 +4240,6 @@
   },
   "public/app/plugins/datasource/jaeger/datasource.ts": {
     "@typescript-eslint/consistent-type-assertions": {
-      "count": 1
-    }
-  },
-  "public/app/plugins/datasource/loki/LanguageProvider.ts": {
-    "@typescript-eslint/no-explicit-any": {
       "count": 1
     }
   },
@@ -4359,11 +4261,6 @@
   "public/app/plugins/datasource/loki/components/LokiQueryField.tsx": {
     "no-restricted-syntax": {
       "count": 2
-    }
-  },
-  "public/app/plugins/datasource/loki/configuration/ConfigEditor.tsx": {
-    "@typescript-eslint/no-explicit-any": {
-      "count": 1
     }
   },
   "public/app/plugins/datasource/loki/configuration/DerivedField.tsx": {
@@ -4448,7 +4345,7 @@
   },
   "public/app/plugins/datasource/opentsdb/datasource.ts": {
     "@typescript-eslint/no-explicit-any": {
-      "count": 18
+      "count": 16
     }
   },
   "public/app/plugins/datasource/parca/QueryEditor/QueryOptions.tsx": {
@@ -4487,9 +4384,6 @@
     }
   },
   "public/app/plugins/datasource/tempo/_importedDependencies/components/AdHocFilter/AdHocFilterRenderer.tsx": {
-    "@typescript-eslint/no-explicit-any": {
-      "count": 1
-    },
     "no-restricted-syntax": {
       "count": 1
     }
@@ -4527,11 +4421,6 @@
       "count": 2
     }
   },
-  "public/app/plugins/datasource/tempo/language_provider.ts": {
-    "@typescript-eslint/no-explicit-any": {
-      "count": 1
-    }
-  },
   "public/app/plugins/datasource/tempo/resultTransformer.ts": {
     "@typescript-eslint/consistent-type-assertions": {
       "count": 2
@@ -4556,11 +4445,6 @@
   },
   "public/app/plugins/datasource/zipkin/datasource.ts": {
     "@typescript-eslint/consistent-type-assertions": {
-      "count": 1
-    }
-  },
-  "public/app/plugins/datasource/zipkin/utils/transforms.ts": {
-    "@typescript-eslint/no-explicit-any": {
       "count": 1
     }
   },
@@ -4913,12 +4797,12 @@
   },
   "public/app/types/events.ts": {
     "@typescript-eslint/no-explicit-any": {
-      "count": 9
+      "count": 5
     }
   },
   "public/app/types/jquery/jquery.d.ts": {
     "@typescript-eslint/no-explicit-any": {
-      "count": 8
+      "count": 3
     }
   },
   "public/app/types/store.ts": {
@@ -4956,7 +4840,7 @@
   },
   "public/test/core/thunk/thunkTester.ts": {
     "@typescript-eslint/no-explicit-any": {
-      "count": 6
+      "count": 4
     }
   },
   "public/test/global-jquery-shim.ts": {
@@ -4981,7 +4865,7 @@
   },
   "public/test/specs/helpers.ts": {
     "@typescript-eslint/no-explicit-any": {
-      "count": 5
+      "count": 1
     }
   }
 }

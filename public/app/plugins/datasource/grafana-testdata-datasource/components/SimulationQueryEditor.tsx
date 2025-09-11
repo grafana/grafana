@@ -7,7 +7,7 @@ import { InlineField, InlineFieldRow, InlineSwitch, Input, Label, Select } from 
 import { EditorProps } from '../QueryEditor';
 import { SimulationQuery } from '../dataquery';
 
-import { SimulationSchemaForm } from './SimulationSchemaForm';
+import { SimulationSchemaForm, type Config } from './SimulationSchemaForm';
 
 // Type         string      `json:"type"`
 // Name         string      `json:"name"`
@@ -27,7 +27,7 @@ export const SimulationQueryEditor = ({ onChange, query, ds }: EditorProps) => {
   const simQuery = query.sim ?? ({} as SimulationQuery);
   const simKey = simQuery.key ?? {};
   // keep track of updated config state to pass down to form
-  const [cfgValue, setCfgValue] = useState<Record<string, any>>({});
+  const [cfgValue, setCfgValue] = useState<Config>({});
 
   // This only changes once
   const info = useAsync(async () => {
@@ -85,7 +85,7 @@ export const SimulationQueryEditor = ({ onChange, query, ds }: EditorProps) => {
     onChange({ ...query, sim: { ...simQuery, last: !simQuery.last } });
   };
 
-  const onSchemaFormChange = (config: Record<string, any>) => {
+  const onSchemaFormChange = (config: Config) => {
     let path = simKey.type + '/' + simKey.tick + 'hz';
     if (simKey.uid) {
       path += '/' + simKey.uid;

@@ -504,6 +504,7 @@
       "copy-link": "Copiar enlace",
       "duplicate": "Duplicar",
       "export": "Exportar",
+      "manage-enrichments": "",
       "silence-notifications": "Silenciar notificaciones",
       "with-modifications": "Con modificaciones"
     },
@@ -1121,7 +1122,8 @@
     },
     "enrichment": {
       "error-boundary": {
-        "notification-message-section-extension": ""
+        "enrichment-drawer-extension": "",
+        "rule-viewer-section-extension": ""
       }
     },
     "error-modal": {
@@ -3042,6 +3044,7 @@
       "page-nav": {
         "text": {
           "details": "Detalles",
+          "enrichment": "",
           "history": "Historial",
           "instances": "Instancias",
           "query-and-conditions": "Consulta y condiciones",
@@ -4681,6 +4684,7 @@
       "move": "Mover {{typeName}}",
       "panel-background": "Cambiar fondo del panel",
       "panel-description": "Cambiar descripción del panel",
+      "panel-edit": "",
       "panel-max-repeats-per-row": "Máx. de repeticiones por fila",
       "panel-repeat-direction": "Repetir dirección",
       "panel-repeat-variable": "Repetición del panel por",
@@ -4935,12 +4939,11 @@
       "dataframe-aria-label": "Seleccionar marco de datos",
       "dataframe-label": "Mostrar marco de datos",
       "download-csv": "Descargar CSV",
-      "download-excel-description": "Añadir encabezado a CSV para su uso con Excel",
-      "download-excel-label": "Descargar para Excel",
       "download-logs": "Descargar registros",
       "download-service": "Descargar gráfico de servicio",
       "download-traces": "Descargar seguimientos",
-      "excel-header": "Encabezado de Excel",
+      "excel-compatibility-mode-description": "",
+      "excel-compatibility-mode-label": "",
       "formatted": "Datos formateados",
       "formatted-data-description": "Los datos de la tabla están formateados con opciones definidas en las pestañas Campo y Anulación.",
       "formatted-data-label": "Datos formateados",
@@ -11211,11 +11214,11 @@
       "description-clear-repository-connection": "Añade un nombre claro para esta conexión de repositorio",
       "empty": "Vacío",
       "error-field-required": "Este campo es obligatorio.",
-      "ext-storage": "Almacenamiento externo",
-      "grafana": "Instancia de Grafana",
+      "external-storage-label": "",
       "label-display-name": "Nombre que mostrar",
       "placeholder-my-repository-connection": "Mi conexión de repositorio",
       "text-loading-resource-information": "Cargando información de recursos...",
+      "unmanaged-resources-label": "",
       "dashboards-count_one": "{{count}} dashboard",
       "dashboards-count_other": "{{count}} dashboards",
       "files-count_one": "{{count}} archivos",
@@ -11263,7 +11266,9 @@
     },
     "connect-repository-button": {
       "configure": "Configurar",
-      "repository-limit-info-alert": "Se ha alcanzado el límite del repositorio ({{count}})"
+      "instance-fully-managed-tooltip": "",
+      "repository-limit-reached-tooltip_one": "",
+      "repository-limit-reached-tooltip_other": ""
     },
     "delete-repository-button": {
       "button-delete": "Eliminar",
@@ -11955,14 +11960,6 @@
       "no-deleted-dashboards": "No has eliminado ningún panel de control recientemente.",
       "no-deleted-dashboards-text": "Cuando elimines un panel de control, aparecerá aquí durante 30 días antes de eliminarse de forma permanente. El administrador de tu organización puede restaurar los paneles de control eliminados recientemente.",
       "no-search-result": "No se han encontrado resultados para tu consulta"
-    },
-    "permanently-delete-modal": {
-      "confirm-text": "Eliminar",
-      "delete-button": "Eliminar",
-      "delete-loading": "Eliminando...",
-      "title": "Eliminar paneles de control permanentemente",
-      "text_one": "Esta acción eliminará {{numberOfDashboards}} paneles de control.",
-      "text_other": "Esta acción eliminará {{numberOfDashboards}} paneles de control."
     },
     "restore-modal": {
       "restore-button": "Restaurar",

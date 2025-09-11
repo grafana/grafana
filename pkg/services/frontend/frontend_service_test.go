@@ -28,6 +28,10 @@ func createTestService(t *testing.T, cfg *setting.Cfg) *frontendService {
 	var promRegister prometheus.Registerer = prometheus.NewRegistry()
 	promGatherer := promRegister.(*prometheus.Registry)
 
+	if cfg.BuildVersion == "" {
+		cfg.BuildVersion = "10.3.0"
+	}
+
 	service, err := ProvideFrontendService(cfg, features, promGatherer, promRegister, license)
 	require.NoError(t, err)
 
