@@ -548,7 +548,7 @@ func (s *SocialAzureAD) groupsGraphAPIURL(claims *azureClaims, token *oauth2.Tok
 		tenantID := claims.TenantID
 		// If tenantID wasn't found in the id_token, parse access token
 		if tenantID == "" {
-			parsedToken, err := jwt.ParseSigned(token.AccessToken, []jose.SignatureAlgorithm{jose.ES256})
+			parsedToken, err := jwt.ParseSigned(token.AccessToken, []jose.SignatureAlgorithm{jose.PS256, jose.RS256, jose.RS512, jose.ES256})
 			if err != nil {
 				return "", fmt.Errorf("error parsing access token: %w", err)
 			}
