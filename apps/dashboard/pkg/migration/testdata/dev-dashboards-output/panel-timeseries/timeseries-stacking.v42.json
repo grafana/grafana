@@ -1,0 +1,1100 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "uid": "-- Grafana --"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations \u0026 Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "links": [],
+  "panels": [
+    {
+      "datasource": {
+        "apiVersion": "v1",
+        "type": "grafana-testdata-datasource",
+        "uid": "testdata-type-uid"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "hideFrom": {
+              "graph": false,
+              "legend": false,
+              "tooltip": false
+            },
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": true,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 16,
+        "w": 8,
+        "x": 0,
+        "y": 0
+      },
+      "id": 14,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "single"
+        }
+      },
+      "pluginVersion": "7.5.0-pre",
+      "targets": [
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "grafana-testdata-datasource",
+            "uid": "testdata-type-uid"
+          },
+          "refId": "A",
+          "scenarioId": "csv_metric_values",
+          "stringInput": "20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 15, 14, 30, 30, 30, 30, 30, 30, 30, -15, 30, 30, 30, 15, 0"
+        },
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "grafana-testdata-datasource",
+            "uid": "testdata-type-uid"
+          },
+          "hide": false,
+          "refId": "B",
+          "scenarioId": "csv_metric_values",
+          "stringInput": "10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 20, 10, 10, 10, 10, 10"
+        },
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "grafana-testdata-datasource",
+            "uid": "testdata-type-uid"
+          },
+          "hide": false,
+          "refId": "C",
+          "scenarioId": "csv_metric_values",
+          "stringInput": "10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 20, 10, 10, 10, 10, 10"
+        },
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "grafana-testdata-datasource",
+            "uid": "testdata-type-uid"
+          },
+          "hide": false,
+          "refId": "D",
+          "scenarioId": "csv_metric_values",
+          "stringInput": "5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5"
+        },
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "grafana-testdata-datasource",
+            "uid": "testdata-type-uid"
+          },
+          "hide": false,
+          "refId": "E",
+          "scenarioId": "csv_metric_values",
+          "stringInput": "5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5"
+        }
+      ],
+      "title": "Data not stacked",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "apiVersion": "v1",
+        "type": "grafana-testdata-datasource",
+        "uid": "testdata-type-uid"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "hideFrom": {
+              "graph": false,
+              "legend": false,
+              "tooltip": false
+            },
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": true,
+            "stacking": {
+              "group": "A",
+              "mode": "normal"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 16,
+        "x": 8,
+        "y": 0
+      },
+      "id": 3,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "single"
+        }
+      },
+      "pluginVersion": "7.5.0-pre",
+      "targets": [
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "grafana-testdata-datasource",
+            "uid": "testdata-type-uid"
+          },
+          "refId": "A",
+          "scenarioId": "csv_metric_values",
+          "stringInput": "20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 15, 14, 30, 30, 30, 30, 30, 30, 30, -15, 30, 30, 30, 15, 0"
+        },
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "grafana-testdata-datasource",
+            "uid": "testdata-type-uid"
+          },
+          "hide": false,
+          "refId": "B",
+          "scenarioId": "csv_metric_values",
+          "stringInput": "10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 20, 10, 10, 10, 10, 10"
+        },
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "grafana-testdata-datasource",
+            "uid": "testdata-type-uid"
+          },
+          "hide": false,
+          "refId": "C",
+          "scenarioId": "csv_metric_values",
+          "stringInput": "10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 20, 10, 10, 10, 10, 10"
+        },
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "grafana-testdata-datasource",
+            "uid": "testdata-type-uid"
+          },
+          "hide": false,
+          "refId": "D",
+          "scenarioId": "csv_metric_values",
+          "stringInput": "5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5"
+        },
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "grafana-testdata-datasource",
+            "uid": "testdata-type-uid"
+          },
+          "hide": false,
+          "refId": "E",
+          "scenarioId": "csv_metric_values",
+          "stringInput": "5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5"
+        }
+      ],
+      "title": "Normal stacking (series order 1)",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "apiVersion": "v1",
+        "type": "grafana-testdata-datasource",
+        "uid": "testdata-type-uid"
+      },
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "hideFrom": {
+              "graph": false,
+              "legend": false,
+              "tooltip": false
+            },
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": true,
+            "stacking": {
+              "group": "A",
+              "mode": "normal"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 16,
+        "x": 8,
+        "y": 8
+      },
+      "id": 5,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "single"
+        }
+      },
+      "pluginVersion": "7.5.0-pre",
+      "targets": [
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "grafana-testdata-datasource",
+            "uid": "testdata-type-uid"
+          },
+          "hide": false,
+          "refId": "D",
+          "scenarioId": "csv_metric_values",
+          "stringInput": "5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5"
+        },
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "grafana-testdata-datasource",
+            "uid": "testdata-type-uid"
+          },
+          "hide": false,
+          "refId": "E",
+          "scenarioId": "csv_metric_values",
+          "stringInput": "5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5"
+        },
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "grafana-testdata-datasource",
+            "uid": "testdata-type-uid"
+          },
+          "hide": false,
+          "refId": "B",
+          "scenarioId": "csv_metric_values",
+          "stringInput": "10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 20, 10, 10, 10, 10, 10"
+        },
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "grafana-testdata-datasource",
+            "uid": "testdata-type-uid"
+          },
+          "hide": false,
+          "refId": "C",
+          "scenarioId": "csv_metric_values",
+          "stringInput": "10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 20, 10, 10, 10, 10, 10"
+        },
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "grafana-testdata-datasource",
+            "uid": "testdata-type-uid"
+          },
+          "refId": "A",
+          "scenarioId": "csv_metric_values",
+          "stringInput": "20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 15, 14, 30, 30, 30, 30, 30, 30, 30, -15, 30, 30, 30, 15, 0"
+        }
+      ],
+      "title": "Normal stacking (series order 2)",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "apiVersion": "v1",
+        "type": "grafana-testdata-datasource",
+        "uid": "testdata-type-uid"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "bars",
+            "fillOpacity": 100,
+            "gradientMode": "none",
+            "hideFrom": {
+              "graph": false,
+              "legend": false,
+              "tooltip": false
+            },
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": true,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 16,
+        "w": 8,
+        "x": 0,
+        "y": 16
+      },
+      "id": 9,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "single"
+        }
+      },
+      "pluginVersion": "7.5.0-pre",
+      "targets": [
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "grafana-testdata-datasource",
+            "uid": "testdata-type-uid"
+          },
+          "refId": "A",
+          "scenarioId": "csv_metric_values",
+          "stringInput": "109,117,122,104,105,117,119,121,117,121,122,129,119,113,113,121,108,108,100,103,113,110,null,null,null,null,87,83,91,85,81,69,76,61,63,74,76,68,55,61,48,39,54,44,37,30,22,33,29,21,22,43,47,33,47,28,29,31,32,35,37,25,-5,-14,-7,-14,-7,-18,-18,-18,-16,-41,-22,-30,-27,-30,-47,-49,-47,-42,-55,-34,-27,-22,-23,-34,-23,-32,-36,-47,-33,-32,-18,-23,-21,-33,-39,-21,-18,-27,-5"
+        },
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "grafana-testdata-datasource",
+            "uid": "testdata-type-uid"
+          },
+          "hide": false,
+          "refId": "B",
+          "scenarioId": "csv_metric_values",
+          "stringInput": "253,248,247,282,212,275,306,276,253,243,276,261,313,233,231,315,302,288,251,300,263,227,232,271,258,212,225,234,244,200,249,205,231,173,263,246,190,184,198,233,246,232,228,201,212,163,194,155,177,179,130,160,245,184,225,221,217,229,165,172,227,212,181,133,140,128,111,177,177,159,92,100,92,154,161,124,83,99,104,76,117,87,151,154,77,71,164,68,94,105,107,74,130,156,91,103,97,98,96,76,117"
+        },
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "grafana-testdata-datasource",
+            "uid": "testdata-type-uid"
+          },
+          "hide": false,
+          "refId": "C",
+          "scenarioId": "csv_metric_values",
+          "stringInput": "408,436,368,422,383,454,459,380,360,400,378,419,468,394,343,457,411,422,448,419,431,389,414,381,415,357,419,398,352,398,379,400,337,299,369,416,329,303,333,362,438,383,350,337,348,289,362,298,355,285,294,319,445,308,375,387,337,406,323,372,342,389,311,254,270,248,271,309,374,323,255,289,223,280,331,237,247,229,293,230,239,242,271,343,255,185,296,217,236,268,257,273,323,346,205,285,277,265,277,253,219"
+        },
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "grafana-testdata-datasource",
+            "uid": "testdata-type-uid"
+          },
+          "hide": false,
+          "refId": "D",
+          "scenarioId": "csv_metric_values",
+          "stringInput": "556,581,482,552,550,589,575,565,471,575,565,605,663,544,471,641,567,535,630,535,623,579,582,559,611,509,521,563,513,544,523,558,450,486,478,584,440,432,473,480,555,510,451,476,490,470,555,418,463,402,403,476,591,431,560,581,532,579,427,501,452,551,479,405,397,376,458,439,490,508,389,488,360,413,509,351,434,392,430,426,375,414,401,459,435,327,491,406,397,406,384,423,439,538,338,467,421,406,477,428,371"
+        }
+      ],
+      "title": "Bars, data not stacked",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "apiVersion": "v1",
+        "type": "grafana-testdata-datasource",
+        "uid": "testdata-type-uid"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "bars",
+            "fillOpacity": 100,
+            "gradientMode": "none",
+            "hideFrom": {
+              "graph": false,
+              "legend": false,
+              "tooltip": false
+            },
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": true,
+            "stacking": {
+              "group": "A",
+              "mode": "normal"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 16,
+        "x": 8,
+        "y": 16
+      },
+      "id": 11,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "stacking": "none",
+        "tooltip": {
+          "mode": "single"
+        }
+      },
+      "pluginVersion": "7.5.0-pre",
+      "targets": [
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "grafana-testdata-datasource",
+            "uid": "testdata-type-uid"
+          },
+          "refId": "A",
+          "scenarioId": "csv_metric_values",
+          "stringInput": "109,117,122,104,105,117,119,121,117,121,122,129,119,113,113,121,108,108,100,103,113,110,null,null,null,null,87,83,91,85,81,69,76,61,63,74,76,68,55,61,48,39,54,44,37,30,22,33,29,21,22,43,47,33,47,28,29,31,32,35,37,25,-5,-14,-7,-14,-7,-18,-18,-18,-16,-41,-22,-30,-27,-30,-47,-49,-47,-42,-55,-34,-27,-22,-23,-34,-23,-32,-36,-47,-33,-32,-18,-23,-21,-33,-39,-21,-18,-27,-5"
+        },
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "grafana-testdata-datasource",
+            "uid": "testdata-type-uid"
+          },
+          "hide": false,
+          "refId": "B",
+          "scenarioId": "csv_metric_values",
+          "stringInput": "253,248,247,282,212,275,306,276,253,243,276,261,313,233,231,315,302,288,251,300,263,227,232,271,258,212,225,234,244,200,249,205,231,173,263,246,190,184,198,233,246,232,228,201,212,163,194,155,177,179,130,160,245,184,225,221,217,229,165,172,227,212,181,133,140,128,111,177,177,159,92,100,92,154,161,124,83,99,104,76,117,87,151,154,77,71,164,68,94,105,107,74,130,156,91,103,97,98,96,76,117"
+        },
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "grafana-testdata-datasource",
+            "uid": "testdata-type-uid"
+          },
+          "hide": false,
+          "refId": "C",
+          "scenarioId": "csv_metric_values",
+          "stringInput": "408,436,368,422,383,454,459,380,360,400,378,419,468,394,343,457,411,422,448,419,431,389,414,381,415,357,419,398,352,398,379,400,337,299,369,416,329,303,333,362,438,383,350,337,348,289,362,298,355,285,294,319,445,308,375,387,337,406,323,372,342,389,311,254,270,248,271,309,374,323,255,289,223,280,331,237,247,229,293,230,239,242,271,343,255,185,296,217,236,268,257,273,323,346,205,285,277,265,277,253,219"
+        },
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "grafana-testdata-datasource",
+            "uid": "testdata-type-uid"
+          },
+          "hide": false,
+          "refId": "D",
+          "scenarioId": "csv_metric_values",
+          "stringInput": "556,581,482,552,550,589,575,565,471,575,565,605,663,544,471,641,567,535,630,535,623,579,582,559,611,509,521,563,513,544,523,558,450,486,478,584,440,432,473,480,555,510,451,476,490,470,555,418,463,402,403,476,591,431,560,581,532,579,427,501,452,551,479,405,397,376,458,439,490,508,389,488,360,413,509,351,434,392,430,426,375,414,401,459,435,327,491,406,397,406,384,423,439,538,338,467,421,406,477,428,371"
+        }
+      ],
+      "title": "Bars, normal stacking (series order 1)",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "apiVersion": "v1",
+        "type": "grafana-testdata-datasource",
+        "uid": "testdata-type-uid"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "bars",
+            "fillOpacity": 100,
+            "gradientMode": "none",
+            "hideFrom": {
+              "graph": false,
+              "legend": false,
+              "tooltip": false
+            },
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": true,
+            "stacking": {
+              "group": "A",
+              "mode": "normal"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 16,
+        "x": 8,
+        "y": 24
+      },
+      "id": 15,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "stacking": "none",
+        "tooltip": {
+          "mode": "single"
+        }
+      },
+      "pluginVersion": "7.5.0-pre",
+      "targets": [
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "grafana-testdata-datasource",
+            "uid": "testdata-type-uid"
+          },
+          "hide": false,
+          "refId": "D",
+          "scenarioId": "csv_metric_values",
+          "stringInput": "556,581,482,552,550,589,575,565,471,575,565,605,663,544,471,641,567,535,630,535,623,579,582,559,611,509,521,563,513,544,523,558,450,486,478,584,440,432,473,480,555,510,451,476,490,470,555,418,463,402,403,476,591,431,560,581,532,579,427,501,452,551,479,405,397,376,458,439,490,508,389,488,360,413,509,351,434,392,430,426,375,414,401,459,435,327,491,406,397,406,384,423,439,538,338,467,421,406,477,428,371"
+        },
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "grafana-testdata-datasource",
+            "uid": "testdata-type-uid"
+          },
+          "hide": false,
+          "refId": "C",
+          "scenarioId": "csv_metric_values",
+          "stringInput": "408,436,368,422,383,454,459,380,360,400,378,419,468,394,343,457,411,422,448,419,431,389,414,381,415,357,419,398,352,398,379,400,337,299,369,416,329,303,333,362,438,383,350,337,348,289,362,298,355,285,294,319,445,308,375,387,337,406,323,372,342,389,311,254,270,248,271,309,374,323,255,289,223,280,331,237,247,229,293,230,239,242,271,343,255,185,296,217,236,268,257,273,323,346,205,285,277,265,277,253,219"
+        },
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "grafana-testdata-datasource",
+            "uid": "testdata-type-uid"
+          },
+          "hide": false,
+          "refId": "B",
+          "scenarioId": "csv_metric_values",
+          "stringInput": "253,248,247,282,212,275,306,276,253,243,276,261,313,233,231,315,302,288,251,300,263,227,232,271,258,212,225,234,244,200,249,205,231,173,263,246,190,184,198,233,246,232,228,201,212,163,194,155,177,179,130,160,245,184,225,221,217,229,165,172,227,212,181,133,140,128,111,177,177,159,92,100,92,154,161,124,83,99,104,76,117,87,151,154,77,71,164,68,94,105,107,74,130,156,91,103,97,98,96,76,117"
+        },
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "grafana-testdata-datasource",
+            "uid": "testdata-type-uid"
+          },
+          "refId": "A",
+          "scenarioId": "csv_metric_values",
+          "stringInput": "109,117,122,104,105,117,119,121,117,121,122,129,119,113,113,121,108,108,100,103,113,110,null,null,null,null,87,83,91,85,81,69,76,61,63,74,76,68,55,61,48,39,54,44,37,30,22,33,29,21,22,43,47,33,47,28,29,31,32,35,37,25,-5,-14,-7,-14,-7,-18,-18,-18,-16,-41,-22,-30,-27,-30,-47,-49,-47,-42,-55,-34,-27,-22,-23,-34,-23,-32,-36,-47,-33,-32,-18,-23,-21,-33,-39,-21,-18,-27,-5"
+        }
+      ],
+      "title": "Bars, normal stacking (series order 2)",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "apiVersion": "v1",
+        "type": "grafana-testdata-datasource",
+        "uid": "testdata-type-uid"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "hideFrom": {
+              "graph": false,
+              "legend": false,
+              "tooltip": false
+            },
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": true,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 0,
+        "y": 32
+      },
+      "id": 13,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "stacking": "none",
+        "tooltip": {
+          "mode": "single"
+        }
+      },
+      "pluginVersion": "7.5.0-pre",
+      "targets": [
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "grafana-testdata-datasource",
+            "uid": "testdata-type-uid"
+          },
+          "refId": "A",
+          "scenarioId": "csv_metric_values",
+          "stringInput": "5,6,7,8,7,6"
+        },
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "grafana-testdata-datasource",
+            "uid": "testdata-type-uid"
+          },
+          "refId": "B",
+          "scenarioId": "csv_metric_values",
+          "stringInput": "5,5,5,5,5,5"
+        },
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "grafana-testdata-datasource",
+            "uid": "testdata-type-uid"
+          },
+          "hide": false,
+          "refId": "C",
+          "scenarioId": "csv_metric_values",
+          "stringInput": "5,5,5,5,5,5"
+        },
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "grafana-testdata-datasource",
+            "uid": "testdata-type-uid"
+          },
+          "hide": false,
+          "refId": "D",
+          "scenarioId": "csv_metric_values",
+          "stringInput": "5,5,5,5,5,5"
+        }
+      ],
+      "title": "Stacking groups, data not stacked",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "apiVersion": "v1",
+        "type": "grafana-testdata-datasource",
+        "uid": "testdata-type-uid"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "hideFrom": {
+              "graph": false,
+              "legend": false,
+              "tooltip": false
+            },
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": true,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "A-series"
+            },
+            "properties": [
+              {
+                "id": "custom.stacking",
+                "value": {
+                  "group": "A",
+                  "mode": "normal"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "B-series"
+            },
+            "properties": [
+              {
+                "id": "custom.stacking",
+                "value": {
+                  "group": "A",
+                  "mode": "normal"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "C-series"
+            },
+            "properties": [
+              {
+                "id": "custom.stacking",
+                "value": {
+                  "group": "B",
+                  "mode": "normal"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "D-series"
+            },
+            "properties": [
+              {
+                "id": "custom.stacking",
+                "value": {
+                  "group": "B",
+                  "mode": "normal"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 16,
+        "x": 8,
+        "y": 32
+      },
+      "id": 16,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "stacking": "none",
+        "tooltip": {
+          "mode": "single"
+        }
+      },
+      "pluginVersion": "7.5.0-pre",
+      "targets": [
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "grafana-testdata-datasource",
+            "uid": "testdata-type-uid"
+          },
+          "refId": "A",
+          "scenarioId": "csv_metric_values",
+          "stringInput": "5,6,7,8,7,6"
+        },
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "grafana-testdata-datasource",
+            "uid": "testdata-type-uid"
+          },
+          "refId": "B",
+          "scenarioId": "csv_metric_values",
+          "stringInput": "5,5,5,5,5,5"
+        },
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "grafana-testdata-datasource",
+            "uid": "testdata-type-uid"
+          },
+          "hide": false,
+          "refId": "C",
+          "scenarioId": "csv_metric_values",
+          "stringInput": "5,5,5,5,5,5"
+        },
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "grafana-testdata-datasource",
+            "uid": "testdata-type-uid"
+          },
+          "hide": false,
+          "refId": "D",
+          "scenarioId": "csv_metric_values",
+          "stringInput": "5,5,5,5,5,5"
+        }
+      ],
+      "title": "Stacking groups, data stacked, two stacking groups",
+      "type": "timeseries"
+    }
+  ],
+  "refresh": "",
+  "schemaVersion": 42,
+  "tags": [
+    "gdev",
+    "panel-tests",
+    "graph-ng"
+  ],
+  "templating": {
+    "list": []
+  },
+  "time": {
+    "from": "now-6h",
+    "to": "now"
+  },
+  "timepicker": {},
+  "timezone": "",
+  "title": "Panel Tests - TimeSeries - stacking",
+  "uid": "Ei86FP_Mx",
+  "version": 6,
+  "weekStart": ""
+}

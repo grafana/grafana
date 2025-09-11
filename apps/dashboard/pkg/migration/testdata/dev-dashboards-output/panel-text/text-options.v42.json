@@ -1,0 +1,310 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "type": "datasource",
+          "uid": "grafana"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations \u0026 Alerts",
+        "target": {
+          "limit": 100,
+          "matchAny": false,
+          "tags": [],
+          "type": "dashboard"
+        },
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "id": 1348,
+  "links": [],
+  "liveNow": false,
+  "panels": [
+    {
+      "datasource": {
+        "type": "grafana-testdata-datasource"
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 12,
+        "x": 0,
+        "y": 0
+      },
+      "id": 4,
+      "options": {
+        "code": {
+          "language": "plaintext",
+          "showLineNumbers": false,
+          "showMiniMap": false
+        },
+        "content": "## Data center = $datacenter\n\n### server = $server\n\n#### pod = $pod\n\n---\ntext = $Text",
+        "mode": "markdown"
+      },
+      "pluginVersion": "9.2.0-pre",
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-testdata-datasource"
+          },
+          "refId": "A",
+          "scenarioId": "random_walk"
+        }
+      ],
+      "title": "Markdown (with variables)",
+      "type": "text"
+    },
+    {
+      "datasource": {
+        "type": "grafana-testdata-datasource"
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 12,
+        "x": 12,
+        "y": 0
+      },
+      "id": 5,
+      "options": {
+        "code": {
+          "language": "json",
+          "showLineNumbers": true,
+          "showMiniMap": false
+        },
+        "content": "{\n  \"datacenter\": $datacenter,\n  \"server\": $server,\n  \"pod\": $pod\n  \"text\": $Text\n}\n",
+        "mode": "code"
+      },
+      "pluginVersion": "9.2.0-pre",
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-testdata-datasource"
+          },
+          "refId": "A",
+          "scenarioId": "random_walk"
+        }
+      ],
+      "title": "JSON (with variables)",
+      "type": "text"
+    },
+    {
+      "datasource": {
+        "type": "grafana-testdata-datasource"
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 12,
+        "x": 0,
+        "y": 9
+      },
+      "id": 6,
+      "options": {
+        "code": {
+          "language": "plaintext",
+          "showLineNumbers": false,
+          "showMiniMap": false
+        },
+        "content": "\u003ch3\u003eData center\u003c/h3\u003e\n\u003cp\u003e$datacenter\u003c/p\u003e\n\n\u003ch3\u003eserver\u003c/h3\u003e\n\u003cp\u003e$server\u003c/p\u003e\n\n\u003ch3\u003epod\u003c/h3\u003e\n\u003cp\u003e$pod\u003c/p\u003e\n\n\u003ch3\u003eText\u003c/h3\u003e\n\u003cp\u003e$Text\u003c/p\u003e",
+        "mode": "html"
+      },
+      "pluginVersion": "9.2.0-pre",
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-testdata-datasource"
+          },
+          "refId": "A",
+          "scenarioId": "random_walk"
+        }
+      ],
+      "title": "HTML (with variables)",
+      "type": "text"
+    },
+    {
+      "datasource": {
+        "type": "grafana-testdata-datasource"
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 12,
+        "x": 12,
+        "y": 9
+      },
+      "id": 7,
+      "options": {
+        "code": {
+          "language": "markdown",
+          "showLineNumbers": true,
+          "showMiniMap": true
+        },
+        "content": "## Data center\n$datacenter\n\n### server\n$server\n\n#### pod = \n$pod\n",
+        "mode": "code"
+      },
+      "pluginVersion": "9.2.0-pre",
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-testdata-datasource"
+          },
+          "refId": "A",
+          "scenarioId": "random_walk"
+        }
+      ],
+      "title": "Markdown (code w/ with variables)",
+      "type": "text"
+    }
+  ],
+  "refresh": "",
+  "schemaVersion": 42,
+  "tags": [],
+  "templating": {
+    "list": [
+      {
+        "current": {
+          "selected": false,
+          "text": [
+            "All"
+          ],
+          "value": [
+            "$__all"
+          ]
+        },
+        "datasource": {
+          "type": "grafana-testdata-datasource"
+        },
+        "definition": "*",
+        "hide": 0,
+        "includeAll": true,
+        "multi": true,
+        "name": "datacenter",
+        "options": [],
+        "query": {
+          "query": "*",
+          "refId": "gdev-testdata-datacenter-Variable-Query"
+        },
+        "refresh": 1,
+        "regex": "",
+        "skipUrlSync": false,
+        "sort": 0,
+        "tagValuesQuery": "",
+        "tagsQuery": "",
+        "type": "query",
+        "useTags": false
+      },
+      {
+        "current": {
+          "selected": false,
+          "text": [
+            "All"
+          ],
+          "value": [
+            "$__all"
+          ]
+        },
+        "datasource": {
+          "type": "grafana-testdata-datasource"
+        },
+        "definition": "$datacenter.*",
+        "hide": 0,
+        "includeAll": true,
+        "multi": true,
+        "name": "server",
+        "options": [],
+        "query": {
+          "query": "$datacenter.*",
+          "refId": "gdev-testdata-server-Variable-Query"
+        },
+        "refresh": 1,
+        "regex": "",
+        "skipUrlSync": false,
+        "sort": 0,
+        "tagValuesQuery": "",
+        "tagsQuery": "",
+        "type": "query",
+        "useTags": false
+      },
+      {
+        "current": {
+          "selected": false,
+          "text": [
+            "AAA",
+            "ACB"
+          ],
+          "value": [
+            "AAA",
+            "ACB"
+          ]
+        },
+        "datasource": {
+          "type": "grafana-testdata-datasource"
+        },
+        "definition": "$datacenter.$server.*",
+        "hide": 0,
+        "includeAll": true,
+        "multi": true,
+        "name": "pod",
+        "options": [],
+        "query": {
+          "query": "$datacenter.$server.*",
+          "refId": "gdev-testdata-pod-Variable-Query"
+        },
+        "refresh": 1,
+        "regex": "",
+        "skipUrlSync": false,
+        "sort": 0,
+        "tagValuesQuery": "",
+        "tagsQuery": "",
+        "type": "query",
+        "useTags": false
+      },
+      {
+        "current": {
+          "selected": false,
+          "text": "temp",
+          "value": "temp"
+        },
+        "hide": 0,
+        "name": "Text",
+        "options": [
+          {
+            "selected": true,
+            "text": "temp",
+            "value": "temp"
+          }
+        ],
+        "query": "temp",
+        "skipUrlSync": false,
+        "type": "textbox"
+      }
+    ]
+  },
+  "time": {
+    "from": "now-1h",
+    "to": "now"
+  },
+  "timepicker": {
+    "refresh_intervals": [
+      "10s",
+      "30s",
+      "1m",
+      "5m",
+      "15m",
+      "30m",
+      "1h",
+      "2h",
+      "1d"
+    ]
+  },
+  "timezone": "",
+  "title": "Text options",
+  "uid": "WZ7AhQiVz",
+  "version": 1,
+  "weekStart": ""
+}

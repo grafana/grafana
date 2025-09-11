@@ -56,6 +56,61 @@ export const dataSources = {
   }),
 };
 
+// Separate datasource setup for dev-dashboards which primarily use testdata datasource
+export const devDashboardDataSources = {
+  // Add datasource that can be found by type name for migration resolution
+  testdataByType: mockDataSource(
+    {
+      name: 'grafana-testdata-datasource',
+      uid: 'testdata-type-uid',
+      type: 'grafana-testdata-datasource',
+      isDefault: true,
+    },
+    {
+      metrics: true,
+      annotations: true,
+      logs: true,
+    }
+  ),
+  testdata: mockDataSource(
+    {
+      name: 'TestData',
+      uid: 'testdata',
+      type: 'grafana-testdata-datasource',
+      isDefault: false,
+    },
+    {
+      metrics: true,
+      annotations: true,
+      logs: true,
+    }
+  ),
+  prometheus: mockDataSource({
+    name: 'Prometheus',
+    uid: 'prometheus-uid',
+    type: 'prometheus',
+    isDefault: false,
+  }),
+  loki: mockDataSource({
+    name: 'Loki',
+    uid: 'loki-uid',
+    type: 'loki',
+    isDefault: false,
+  }),
+  elasticsearch: mockDataSource({
+    name: 'Elasticsearch',
+    uid: 'elasticsearch-uid',
+    type: 'elasticsearch',
+    isDefault: false,
+  }),
+  mixed: mockDataSource({
+    name: MIXED_DATASOURCE_NAME,
+    type: 'mixed',
+    uid: MIXED_DATASOURCE_NAME,
+    isDefault: false,
+  }),
+};
+
 export function setupTestDataSources() {
   setupDataSources(...Object.values(dataSources));
 }

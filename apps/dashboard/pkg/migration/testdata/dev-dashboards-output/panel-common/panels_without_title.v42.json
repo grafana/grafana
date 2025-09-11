@@ -1,0 +1,929 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "uid": "-- Grafana --"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations \u0026 Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "links": [],
+  "panels": [
+    {
+      "datasource": {
+        "apiVersion": "v1",
+        "type": "grafana-testdata-datasource",
+        "uid": "testdata-type-uid"
+      },
+      "description": "asdasdas",
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 11,
+        "x": 0,
+        "y": 0
+      },
+      "id": 8,
+      "maxDataPoints": 100,
+      "options": {
+        "colorMode": "none",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "horizontal",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "mean"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "12.1.0",
+      "targets": [
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "grafana-testdata-datasource",
+            "uid": "testdata-type-uid"
+          },
+          "refId": "A",
+          "scenarioId": "random_walk"
+        }
+      ],
+      "timeShift": "2h",
+      "title": "Title",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "apiVersion": "v1",
+        "type": "grafana-testdata-datasource",
+        "uid": "testdata-type-uid"
+      },
+      "description": "asdasdas",
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 13,
+        "x": 11,
+        "y": 0
+      },
+      "id": 2,
+      "maxDataPoints": 100,
+      "options": {
+        "colorMode": "none",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "horizontal",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "mean"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "12.1.0",
+      "targets": [
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "grafana-testdata-datasource",
+            "uid": "testdata-type-uid"
+          },
+          "refId": "A",
+          "scenarioId": "random_walk"
+        }
+      ],
+      "timeShift": "2h",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "apiVersion": "v1",
+        "type": "grafana-testdata-datasource",
+        "uid": "testdata-type-uid"
+      },
+      "description": "asdasdas",
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 11,
+        "x": 0,
+        "y": 4
+      },
+      "id": 4,
+      "maxDataPoints": 100,
+      "options": {
+        "colorMode": "none",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "horizontal",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "mean"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "12.1.0",
+      "targets": [
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "grafana-testdata-datasource",
+            "uid": "testdata-type-uid"
+          },
+          "refId": "A",
+          "scenarioId": "random_walk"
+        }
+      ],
+      "timeShift": "2h",
+      "title": "Panel Title",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "apiVersion": "v1",
+        "type": "grafana-testdata-datasource",
+        "uid": "testdata-type-uid"
+      },
+      "description": "asdasdas",
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 11,
+        "y": 4
+      },
+      "id": 9,
+      "options": {
+        "maxValue": 100,
+        "minValue": 0,
+        "orientation": "auto",
+        "showThresholdLabels": false,
+        "showThresholdMarkers": true,
+        "thresholds": [
+          {
+            "color": "green",
+            "index": 0
+          },
+          {
+            "color": "red",
+            "index": 1,
+            "value": 80
+          }
+        ],
+        "valueMappings": [],
+        "valueOptions": {
+          "prefix": "",
+          "stat": "mean",
+          "suffix": "",
+          "unit": "none"
+        }
+      },
+      "pluginVersion": "6.2.0-pre",
+      "targets": [
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "grafana-testdata-datasource",
+            "uid": "testdata-type-uid"
+          },
+          "refId": "A",
+          "scenarioId": "random_walk"
+        }
+      ],
+      "timeShift": "2h",
+      "title": "Panel Title",
+      "type": "gauge"
+    },
+    {
+      "datasource": {
+        "apiVersion": "v1",
+        "type": "grafana-testdata-datasource",
+        "uid": "testdata-type-uid"
+      },
+      "description": "asdasdas",
+      "gridPos": {
+        "h": 4,
+        "w": 7,
+        "x": 17,
+        "y": 4
+      },
+      "id": 11,
+      "options": {
+        "maxValue": 100,
+        "minValue": 0,
+        "orientation": "auto",
+        "showThresholdLabels": false,
+        "showThresholdMarkers": true,
+        "thresholds": [
+          {
+            "color": "green",
+            "index": 0
+          },
+          {
+            "color": "red",
+            "index": 1,
+            "value": 80
+          }
+        ],
+        "valueMappings": [],
+        "valueOptions": {
+          "prefix": "",
+          "stat": "mean",
+          "suffix": "",
+          "unit": "none"
+        }
+      },
+      "pluginVersion": "6.2.0-pre",
+      "targets": [
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "grafana-testdata-datasource",
+            "uid": "testdata-type-uid"
+          },
+          "refId": "A",
+          "scenarioId": "random_walk"
+        }
+      ],
+      "timeShift": "2h",
+      "title": "Panel Title",
+      "type": "gauge"
+    },
+    {
+      "datasource": {
+        "apiVersion": "v1",
+        "type": "grafana-testdata-datasource",
+        "uid": "testdata-type-uid"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 11,
+        "x": 0,
+        "y": 8
+      },
+      "id": 15,
+      "options": {
+        "content": "# Title\n\nFor markdown syntax help: [commonmark.org/help](https://commonmark.org/help/)\n\n\n",
+        "mode": "markdown"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "grafana-testdata-datasource",
+            "uid": "testdata-type-uid"
+          },
+          "refId": "A"
+        }
+      ],
+      "type": "text"
+    },
+    {
+      "datasource": {
+        "apiVersion": "v1",
+        "type": "grafana-testdata-datasource",
+        "uid": "testdata-type-uid"
+      },
+      "description": "asdasdas",
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [],
+          "max": 100,
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 11,
+        "y": 8
+      },
+      "id": 10,
+      "maxDataPoints": 100,
+      "options": {
+        "colorMode": "none",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "horizontal",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "mean"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "12.1.0",
+      "targets": [
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "grafana-testdata-datasource",
+            "uid": "testdata-type-uid"
+          },
+          "refId": "A",
+          "scenarioId": "random_walk"
+        }
+      ],
+      "timeShift": "2h",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "apiVersion": "v1",
+        "type": "grafana-testdata-datasource",
+        "uid": "testdata-type-uid"
+      },
+      "description": "asdasdas",
+      "gridPos": {
+        "h": 4,
+        "w": 7,
+        "x": 17,
+        "y": 8
+      },
+      "id": 12,
+      "options": {
+        "maxValue": 100,
+        "minValue": 0,
+        "orientation": "auto",
+        "showThresholdLabels": false,
+        "showThresholdMarkers": true,
+        "thresholds": [
+          {
+            "color": "green",
+            "index": 0
+          },
+          {
+            "color": "red",
+            "index": 1,
+            "value": 80
+          }
+        ],
+        "valueMappings": [],
+        "valueOptions": {
+          "prefix": "",
+          "stat": "mean",
+          "suffix": "",
+          "unit": "none"
+        }
+      },
+      "pluginVersion": "6.2.0-pre",
+      "targets": [
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "grafana-testdata-datasource",
+            "uid": "testdata-type-uid"
+          },
+          "refId": "A",
+          "scenarioId": "random_walk"
+        }
+      ],
+      "timeShift": "2h",
+      "type": "gauge"
+    },
+    {
+      "datasource": {
+        "apiVersion": "v1",
+        "type": "grafana-testdata-datasource",
+        "uid": "testdata-type-uid"
+      },
+      "description": "",
+      "gridPos": {
+        "h": 6,
+        "w": 11,
+        "x": 0,
+        "y": 12
+      },
+      "id": 3,
+      "options": {
+        "displayMode": "gradient",
+        "fieldOptions": {
+          "defaults": {
+            "max": 100,
+            "min": 0
+          },
+          "mappings": [],
+          "override": {},
+          "stats": [
+            "mean"
+          ],
+          "thresholds": [
+            {
+              "color": "green",
+              "index": 0
+            },
+            {
+              "color": "red",
+              "index": 1,
+              "value": 80
+            }
+          ],
+          "title": "Testing",
+          "values": false
+        },
+        "maxValue": 100,
+        "minValue": 0,
+        "orientation": "horizontal",
+        "thresholds": [
+          {
+            "color": "green",
+            "index": 0
+          },
+          {
+            "color": "red",
+            "index": 1,
+            "value": 80
+          }
+        ],
+        "valueMappings": [],
+        "valueOptions": {
+          "prefix": "",
+          "stat": "mean",
+          "suffix": "",
+          "unit": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "grafana-testdata-datasource",
+            "uid": "testdata-type-uid"
+          },
+          "refId": "A",
+          "scenarioId": "random_walk"
+        },
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "grafana-testdata-datasource",
+            "uid": "testdata-type-uid"
+          },
+          "refId": "B",
+          "scenarioId": "random_walk"
+        }
+      ],
+      "timeShift": "2h",
+      "type": "bargauge"
+    },
+    {
+      "datasource": {
+        "apiVersion": "v1",
+        "type": "grafana-testdata-datasource",
+        "uid": "testdata-type-uid"
+      },
+      "description": "asdasdas",
+      "gridPos": {
+        "h": 6,
+        "w": 13,
+        "x": 11,
+        "y": 12
+      },
+      "id": 5,
+      "options": {
+        "displayMode": "gradient",
+        "fieldOptions": {
+          "defaults": {
+            "max": 100,
+            "min": 0
+          },
+          "mappings": [],
+          "override": {},
+          "stats": [
+            "mean"
+          ],
+          "thresholds": [
+            {
+              "color": "green",
+              "index": 0
+            },
+            {
+              "color": "red",
+              "index": 1,
+              "value": 80
+            }
+          ],
+          "title": "Testing",
+          "values": false
+        },
+        "maxValue": 100,
+        "minValue": 0,
+        "orientation": "horizontal",
+        "thresholds": [
+          {
+            "color": "green",
+            "index": 0
+          },
+          {
+            "color": "red",
+            "index": 1,
+            "value": 80
+          }
+        ],
+        "valueMappings": [],
+        "valueOptions": {
+          "prefix": "",
+          "stat": "mean",
+          "suffix": "",
+          "unit": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "grafana-testdata-datasource",
+            "uid": "testdata-type-uid"
+          },
+          "refId": "A",
+          "scenarioId": "slow_query",
+          "stringInput": "1s"
+        },
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "grafana-testdata-datasource",
+            "uid": "testdata-type-uid"
+          },
+          "refId": "B",
+          "scenarioId": "slow_query",
+          "stringInput": "1s"
+        }
+      ],
+      "timeShift": "2h",
+      "title": "My cool pane title",
+      "type": "bargauge"
+    },
+    {
+      "datasource": {
+        "apiVersion": "v1",
+        "type": "grafana-testdata-datasource",
+        "uid": "testdata-type-uid"
+      },
+      "description": "asdasdas",
+      "gridPos": {
+        "h": 4,
+        "w": 24,
+        "x": 0,
+        "y": 18
+      },
+      "id": 7,
+      "options": {
+        "displayMode": "gradient",
+        "fieldOptions": {
+          "defaults": {
+            "max": 100,
+            "min": 0
+          },
+          "mappings": [],
+          "override": {},
+          "stats": [
+            "mean"
+          ],
+          "thresholds": [
+            {
+              "color": "green",
+              "index": 0
+            },
+            {
+              "color": "red",
+              "index": 1,
+              "value": 80
+            }
+          ],
+          "title": "Testing",
+          "values": false
+        },
+        "maxValue": 100,
+        "minValue": 0,
+        "orientation": "horizontal",
+        "thresholds": [
+          {
+            "color": "green",
+            "index": 0
+          },
+          {
+            "color": "red",
+            "index": 1,
+            "value": 80
+          }
+        ],
+        "valueMappings": [],
+        "valueOptions": {
+          "prefix": "",
+          "stat": "mean",
+          "suffix": "",
+          "unit": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "grafana-testdata-datasource",
+            "uid": "testdata-type-uid"
+          },
+          "refId": "A",
+          "scenarioId": "slow_query",
+          "stringInput": "10s"
+        }
+      ],
+      "title": "My cool pane title",
+      "type": "bargauge"
+    },
+    {
+      "aliasColors": {},
+      "autoMigrateFrom": "graph",
+      "bars": false,
+      "dashLength": 10,
+      "dashes": false,
+      "datasource": {
+        "apiVersion": "v1",
+        "type": "grafana-testdata-datasource",
+        "uid": "testdata-type-uid"
+      },
+      "description": "asdasdas",
+      "fill": 1,
+      "gridPos": {
+        "h": 6,
+        "w": 11,
+        "x": 0,
+        "y": 22
+      },
+      "id": 6,
+      "legend": {
+        "avg": false,
+        "current": false,
+        "max": false,
+        "min": false,
+        "show": true,
+        "total": false,
+        "values": false
+      },
+      "lines": true,
+      "linewidth": 1,
+      "nullPointMode": "null",
+      "percentage": false,
+      "pointradius": 2,
+      "points": false,
+      "renderer": "flot",
+      "seriesOverrides": [],
+      "spaceLength": 10,
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "grafana-testdata-datasource",
+            "uid": "testdata-type-uid"
+          },
+          "refId": "A",
+          "scenarioId": "slow_query",
+          "stringInput": "5s"
+        }
+      ],
+      "thresholds": [],
+      "timeRegions": [],
+      "title": "My cool pane title",
+      "tooltip": {
+        "shared": true,
+        "sort": 0,
+        "value_type": "individual"
+      },
+      "type": "timeseries",
+      "xaxis": {
+        "mode": "time",
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "format": "short",
+          "logBase": 1,
+          "show": true
+        },
+        {
+          "format": "short",
+          "logBase": 1,
+          "show": true
+        }
+      ],
+      "yaxis": {
+        "align": false
+      }
+    },
+    {
+      "aliasColors": {},
+      "autoMigrateFrom": "graph",
+      "bars": false,
+      "dashLength": 10,
+      "dashes": false,
+      "datasource": {
+        "apiVersion": "v1",
+        "type": "grafana-testdata-datasource",
+        "uid": "testdata-type-uid"
+      },
+      "description": "",
+      "fill": 1,
+      "gridPos": {
+        "h": 6,
+        "w": 13,
+        "x": 11,
+        "y": 22
+      },
+      "id": 13,
+      "legend": {
+        "avg": false,
+        "current": false,
+        "max": false,
+        "min": false,
+        "show": true,
+        "total": false,
+        "values": false
+      },
+      "lines": true,
+      "linewidth": 1,
+      "nullPointMode": "null",
+      "percentage": false,
+      "pointradius": 2,
+      "points": false,
+      "renderer": "flot",
+      "seriesOverrides": [],
+      "spaceLength": 10,
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "grafana-testdata-datasource",
+            "uid": "testdata-type-uid"
+          },
+          "refId": "A",
+          "scenarioId": "slow_query",
+          "stringInput": "5s"
+        }
+      ],
+      "thresholds": [],
+      "timeRegions": [],
+      "tooltip": {
+        "shared": true,
+        "sort": 0,
+        "value_type": "individual"
+      },
+      "type": "timeseries",
+      "xaxis": {
+        "mode": "time",
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "format": "short",
+          "logBase": 1,
+          "show": true
+        },
+        {
+          "format": "short",
+          "logBase": 1,
+          "show": true
+        }
+      ],
+      "yaxis": {
+        "align": false
+      }
+    }
+  ],
+  "refresh": "",
+  "schemaVersion": 42,
+  "tags": [
+    "gdev",
+    "panel-tests"
+  ],
+  "templating": {
+    "list": []
+  },
+  "time": {
+    "from": "now-6h",
+    "to": "now"
+  },
+  "timepicker": {
+    "refresh_intervals": [
+      "5s",
+      "10s",
+      "30s",
+      "1m",
+      "5m",
+      "15m",
+      "30m",
+      "1h",
+      "2h",
+      "1d"
+    ]
+  },
+  "timezone": "",
+  "title": "Panel Tests - With \u0026 Without title",
+  "uid": "2WaUpZmWk",
+  "version": 23,
+  "weekStart": ""
+}

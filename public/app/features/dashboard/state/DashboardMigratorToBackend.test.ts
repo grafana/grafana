@@ -43,6 +43,7 @@ import {
  *    - Ensures both paths produce identical final dashboard states
  *    - Avoids test brittleness from comparing raw JSON with different default value representations
  */
+
 variableAdapters.register(createQueryVariableAdapter());
 variableAdapters.register(createDataSourceVariableAdapter());
 variableAdapters.register(createConstantVariableAdapter());

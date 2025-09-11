@@ -13,6 +13,15 @@ func Initialize(dsInfoProvider schemaversion.DataSourceInfoProvider) {
 	migratorInstance.init(dsInfoProvider)
 }
 
+// ResetForTesting resets the migrator singleton for testing purposes.
+func ResetForTesting() {
+	migratorInstance = &migrator{
+		migrations: map[int]schemaversion.SchemaVersionMigrationFunc{},
+		ready:      make(chan struct{}),
+	}
+	initOnce = sync.Once{}
+}
+
 // Migrate migrates the given dashboard to the target version.
 // This will block until the migrator is initialized.
 func Migrate(ctx context.Context, dash map[string]interface{}, targetVersion int) error {

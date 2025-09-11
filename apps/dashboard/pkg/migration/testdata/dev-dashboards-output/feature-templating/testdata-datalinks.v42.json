@@ -1,0 +1,542 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "uid": "-- Grafana --"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations \u0026 Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "iteration": 1568372030444,
+  "links": [],
+  "panels": [
+    {
+      "content": "## Data link variables overview\n\nThis dashboard presents variables that one can use when creating *data links*. All links redirect to this dashboard and this panel represents the values that were interpolated in the link that was clicked.\n\n\n#### Series variables\n1. **Name:** \u003cspan style=\"color: orange;\"\u003e$seriesName\u003c/span\u003e\n2. **label.datacenter:** \u003cspan style=\"color: orange;\"\u003e$labelDatacenter\u003c/span\u003e\n3. **label.datacenter.region:** \u003cspan style=\"color: orange;\"\u003e$labelDatacenterRegion\u003c/span\u003e\n\n#### Field variables\n1. **Name:** \u003cspan style=\"color: orange;\"\u003e$fieldName\u003c/span\u003e\n\n#### Value variables\n1. **Time:** \u003cspan style=\"color: orange;\"\u003e$valueTime\u003c/span\u003e\n2. **Numeric:** \u003cspan style=\"color: orange;\"\u003e$valueNumeric\u003c/span\u003e\n3. **Text:** \u003cspan style=\"color: orange;\"\u003e$valueText\u003c/span\u003e\n4. **Calc:** \u003cspan style=\"color: orange;\"\u003e$valueCalc\u003c/span\u003e\n\n",
+      "datasource": {
+        "apiVersion": "v1",
+        "type": "grafana-testdata-datasource",
+        "uid": "testdata-type-uid"
+      },
+      "gridPos": {
+        "h": 16,
+        "w": 6,
+        "x": 0,
+        "y": 0
+      },
+      "id": 8,
+      "mode": "markdown",
+      "targets": [
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "grafana-testdata-datasource",
+            "uid": "testdata-type-uid"
+          },
+          "refId": "A"
+        }
+      ],
+      "transparent": true,
+      "type": "text"
+    },
+    {
+      "aliasColors": {},
+      "autoMigrateFrom": "graph",
+      "bars": false,
+      "dashLength": 10,
+      "dashes": false,
+      "datasource": {
+        "apiVersion": "v1",
+        "type": "grafana-testdata-datasource",
+        "uid": "testdata-type-uid"
+      },
+      "fill": 1,
+      "fillGradient": 0,
+      "gridPos": {
+        "h": 8,
+        "w": 9,
+        "x": 6,
+        "y": 0
+      },
+      "id": 2,
+      "legend": {
+        "avg": false,
+        "current": false,
+        "max": false,
+        "min": false,
+        "show": true,
+        "total": false,
+        "values": false
+      },
+      "lines": true,
+      "linewidth": 1,
+      "nullPointMode": "null",
+      "options": {
+        "dataLinks": [
+          {
+            "targetBlank": false,
+            "title": "Drill it down",
+            "url": "/d/wfTJJL5Wz/datalinks-source?var-seriesName=${__series.name}\u0026var-labelDatacenter=${__field.labels.datacenter}\u0026var-labelDatacenterRegion=${__field.labels[\"datacenter.region\"]}\u0026var-valueTime=${__value.time}\u0026var-valueNumeric=${__value.numeric}\u0026var-valueText=${__value.text}"
+          }
+        ]
+      },
+      "percentage": false,
+      "pointradius": 2,
+      "points": false,
+      "renderer": "flot",
+      "seriesOverrides": [],
+      "spaceLength": 10,
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
+        {
+          "alias": "Foo datacenter",
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "grafana-testdata-datasource",
+            "uid": "testdata-type-uid"
+          },
+          "labels": "datacenter=foo,datacenter.region=us-east-1",
+          "refId": "A",
+          "scenarioId": "random_walk"
+        },
+        {
+          "alias": "Bar datacenter",
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "grafana-testdata-datasource",
+            "uid": "testdata-type-uid"
+          },
+          "labels": "datacenter=bar,datacenter.region=us-east-2",
+          "refId": "B",
+          "scenarioId": "random_walk"
+        }
+      ],
+      "thresholds": [],
+      "timeRegions": [],
+      "title": "Multiple series",
+      "tooltip": {
+        "shared": true,
+        "sort": 0,
+        "value_type": "individual"
+      },
+      "type": "timeseries",
+      "xaxis": {
+        "mode": "time",
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "format": "short",
+          "logBase": 1,
+          "show": true
+        },
+        {
+          "format": "short",
+          "logBase": 1,
+          "show": true
+        }
+      ],
+      "yaxis": {
+        "align": false
+      }
+    },
+    {
+      "aliasColors": {},
+      "autoMigrateFrom": "graph",
+      "bars": false,
+      "dashLength": 10,
+      "dashes": false,
+      "datasource": {
+        "apiVersion": "v1",
+        "type": "grafana-testdata-datasource",
+        "uid": "testdata-type-uid"
+      },
+      "fill": 1,
+      "fillGradient": 0,
+      "gridPos": {
+        "h": 8,
+        "w": 9,
+        "x": 15,
+        "y": 0
+      },
+      "id": 9,
+      "legend": {
+        "avg": false,
+        "current": false,
+        "max": false,
+        "min": false,
+        "show": true,
+        "total": false,
+        "values": false
+      },
+      "lines": true,
+      "linewidth": 1,
+      "nullPointMode": "null",
+      "options": {
+        "dataLinks": [
+          {
+            "targetBlank": false,
+            "title": "Drill it down",
+            "url": "/d/wfTJJL5Wz/datalinks-source?var-seriesName=${__series.name}\u0026var-valueTime=${__value.time}\u0026var-valueNumeric=${__value.numeric}\u0026var-valueText=${__value.text}\u0026var-fieldName=${__field.name}"
+          }
+        ]
+      },
+      "percentage": false,
+      "pointradius": 2,
+      "points": false,
+      "renderer": "flot",
+      "seriesOverrides": [],
+      "spaceLength": 10,
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
+        {
+          "alias": "Foo datacenter",
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "grafana-testdata-datasource",
+            "uid": "testdata-type-uid"
+          },
+          "labels": "datacenter=foo,datacenter.region=us-east-1",
+          "refId": "A",
+          "scenarioId": "random_walk_table",
+          "stringInput": ""
+        }
+      ],
+      "thresholds": [],
+      "timeRegions": [],
+      "title": "Multiple fields",
+      "tooltip": {
+        "shared": true,
+        "sort": 0,
+        "value_type": "individual"
+      },
+      "type": "timeseries",
+      "xaxis": {
+        "mode": "time",
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "format": "short",
+          "logBase": 1,
+          "show": true
+        },
+        {
+          "format": "short",
+          "logBase": 1,
+          "show": true
+        }
+      ],
+      "yaxis": {
+        "align": false
+      }
+    },
+    {
+      "datasource": {
+        "uid": "-- Dashboard --"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 9,
+        "x": 6,
+        "y": 8
+      },
+      "id": 6,
+      "options": {
+        "displayMode": "lcd",
+        "fieldOptions": {
+          "calcs": [
+            "last"
+          ],
+          "defaults": {
+            "links": [
+              {
+                "targetBlank": true,
+                "title": "Drill it down!",
+                "url": "/d/wfTJJL5Wz/datalinks-source\n?var-fieldName=${__field.name}\n\u0026var-labelDatacenter=${__field.labels.datacenter}\n\u0026var-labelDatacenterRegion=${__field.labels[\"datacenter.region\"]}\n\u0026var-valueNumeric=${__value.numeric}\n\u0026var-valueText=${__value.text}\n\u0026var-valueCalc=${__value.calc}"
+              }
+            ],
+            "mappings": [
+              {
+                "id": 0,
+                "op": "=",
+                "text": "N/A",
+                "type": 1,
+                "value": "null"
+              }
+            ],
+            "max": 100,
+            "min": 0,
+            "nullValueMode": "connected",
+            "thresholds": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ],
+            "title": "${__series.name} - $__calc",
+            "unit": "none"
+          },
+          "override": {},
+          "values": false
+        },
+        "orientation": "horizontal"
+      },
+      "pluginVersion": "6.4.0-pre",
+      "targets": [
+        {
+          "datasource": {
+            "uid": "-- Dashboard --"
+          },
+          "panelId": 2,
+          "refId": "A"
+        }
+      ],
+      "title": "Value reducers 1",
+      "type": "bargauge"
+    },
+    {
+      "datasource": {
+        "uid": "-- Dashboard --"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 9,
+        "x": 15,
+        "y": 8
+      },
+      "id": 4,
+      "options": {
+        "fieldOptions": {
+          "calcs": [
+            "mean"
+          ],
+          "defaults": {
+            "links": [
+              {
+                "title": "Drill it down",
+                "url": "/d/wfTJJL5Wz/datalinks-source?var-fieldName=${__field.name}\u0026var-labelDatacenter=${__field.labels.datacenter}\u0026var-labelDatacenterRegion=${__field.labels[\"datacenter.region\"]}\u0026var-valueNumeric=${__value.numeric}\u0026var-valueText=${__value.text}\u0026var-valueCalc=${__value.calc}"
+              }
+            ],
+            "mappings": [],
+            "max": 100,
+            "min": 0,
+            "thresholds": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ],
+            "title": "${__series.name} - $__calc"
+          },
+          "override": {},
+          "values": false
+        },
+        "orientation": "auto",
+        "showThresholdLabels": false,
+        "showThresholdMarkers": true
+      },
+      "pluginVersion": "6.4.0-pre",
+      "targets": [
+        {
+          "datasource": {
+            "uid": "-- Dashboard --"
+          },
+          "panelId": 2,
+          "refId": "A"
+        }
+      ],
+      "title": "Value reducers 2",
+      "type": "gauge"
+    }
+  ],
+  "refresh": "",
+  "schemaVersion": 42,
+  "tags": [
+    "gdev",
+    "templating"
+  ],
+  "templating": {
+    "list": [
+      {
+        "current": {
+          "text": "",
+          "value": ""
+        },
+        "hide": 2,
+        "label": "Series name",
+        "name": "seriesName",
+        "options": [
+          {
+            "text": "",
+            "value": ""
+          }
+        ],
+        "query": "",
+        "skipUrlSync": false,
+        "type": "textbox"
+      },
+      {
+        "current": {
+          "text": "",
+          "value": ""
+        },
+        "hide": 2,
+        "name": "labelDatacenter",
+        "options": [
+          {
+            "text": "",
+            "value": ""
+          }
+        ],
+        "query": "",
+        "skipUrlSync": false,
+        "type": "textbox"
+      },
+      {
+        "current": {
+          "text": "",
+          "value": ""
+        },
+        "hide": 2,
+        "name": "labelDatacenterRegion",
+        "options": [
+          {
+            "text": "",
+            "value": ""
+          }
+        ],
+        "query": "",
+        "skipUrlSync": false,
+        "type": "textbox"
+      },
+      {
+        "current": {
+          "text": "",
+          "value": ""
+        },
+        "hide": 2,
+        "name": "valueTime",
+        "options": [
+          {
+            "text": "",
+            "value": ""
+          }
+        ],
+        "query": "",
+        "skipUrlSync": false,
+        "type": "textbox"
+      },
+      {
+        "current": {
+          "text": "",
+          "value": ""
+        },
+        "hide": 2,
+        "name": "valueNumeric",
+        "options": [
+          {
+            "text": "",
+            "value": ""
+          }
+        ],
+        "query": "",
+        "skipUrlSync": false,
+        "type": "textbox"
+      },
+      {
+        "current": {
+          "text": "",
+          "value": ""
+        },
+        "hide": 2,
+        "name": "valueText",
+        "options": [
+          {
+            "text": "",
+            "value": ""
+          }
+        ],
+        "query": "",
+        "skipUrlSync": false,
+        "type": "textbox"
+      },
+      {
+        "current": {
+          "text": "",
+          "value": ""
+        },
+        "hide": 2,
+        "name": "valueCalc",
+        "options": [
+          {
+            "text": "",
+            "value": ""
+          }
+        ],
+        "query": "",
+        "skipUrlSync": false,
+        "type": "textbox"
+      },
+      {
+        "current": {
+          "text": "",
+          "value": ""
+        },
+        "hide": 2,
+        "name": "fieldName",
+        "options": [
+          {
+            "text": "",
+            "value": ""
+          }
+        ],
+        "query": "",
+        "skipUrlSync": false,
+        "type": "textbox"
+      }
+    ]
+  },
+  "time": {
+    "from": "now-6h",
+    "to": "now"
+  },
+  "timepicker": {
+    "refresh_intervals": [
+      "5s",
+      "10s",
+      "30s",
+      "1m",
+      "5m",
+      "15m",
+      "30m",
+      "1h",
+      "2h",
+      "1d"
+    ]
+  },
+  "timezone": "",
+  "title": "Datalinks - variables",
+  "uid": "wfTJJL5Wz",
+  "version": 1,
+  "weekStart": ""
+}
