@@ -8,8 +8,6 @@ import (
 	"strconv"
 	"strings"
 	"time"
-
-	"github.com/bwmarrin/snowflake"
 )
 
 const (
@@ -234,42 +232,28 @@ func (n *eventStore) CleanupOldEvents(ctx context.Context, retentionPeriod time.
 		return 0, fmt.Errorf("retention period must be positive")
 	}
 
-	// Calculate the cutoff time - events older than this will be deleted
-	cutoffTime := time.Now().Add(-retentionPeriod)
-
 	deletedCount := 0
 
 	// Keys are stored in the format of "resource_version~namespace~group~resource~name"
-	// So if we sort ascending, we can stop once we get to an event that is newer than the cutoff time
-	for key, err := range n.kv.Keys(ctx, eventsSection, ListOptions{Sort: SortOrderAsc}) {
+	// With a start key of "1" and an end key of the current time minus the (retention period + lookback period),
+	// we can get all expired events.
+	endKey := fmt.Sprintf("%d", snowflakeFromTime(time.Now().Add(-retentionPeriod-defaultLookbackPeriod)))
+	for key, err := range n.kv.Keys(ctx, eventsSection, ListOptions{StartKey: "1", EndKey: endKey, Sort: SortOrderAsc}) {
 		if err != nil {
 			return deletedCount, fmt.Errorf("failed to list event keys: %w", err)
 		}
 
-		// Parse the event key to get the resource version (which is a snowflake ID)
-		eventKey, err := ParseEventKey(key)
-		if err != nil {
-			continue
-		}
-
-		// Extract timestamp from the snowflake ID (resource version)
-		eventTimestamp := snowflake.ID(eventKey.ResourceVersion).Time()
-		eventTime := time.UnixMilli(eventTimestamp)
-
 		// TODO should use batch deletes here when available
-		// If the event is older than the cutoff time, delete it
-		if eventTime.Before(cutoffTime) {
-			if err := n.kv.Delete(ctx, eventsSection, key); err != nil {
-				return deletedCount, fmt.Errorf("failed to delete event key %s: %w", key, err)
-			}
-			deletedCount++
+		if err := n.kv.Delete(ctx, eventsSection, key); err != nil {
+			return deletedCount, fmt.Errorf("failed to delete event key %s: %w", key, err)
 		}
-
-		// Since keys are sorted ascending, we can stop processing once we reach an event newer than the cutoff
-		if eventTime.After(cutoffTime) {
-			break
-		}
+		deletedCount++
 	}
 
 	return deletedCount, nil
+}
+
+// snowflake id with last two sections set to 0 (machine id and sequence)
+func snowflakeFromTime(t time.Time) int64 {
+	return (t.UnixMilli() - 1288834974657) << 22
 }

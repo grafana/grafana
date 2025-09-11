@@ -618,8 +618,3 @@ func TestEventStore_CleanupOldEvents_EmptyStore(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, 0, deletedCount, "Should not have deleted any events from empty store")
 }
-
-// snowflake id with last two sections set to 0 (machine id and sequence)
-func snowflakeFromTime(t time.Time) int64 {
-	return (t.UnixMilli() - 1288834974657) << 22
-}
