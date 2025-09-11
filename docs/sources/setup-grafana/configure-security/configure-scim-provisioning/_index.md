@@ -79,7 +79,7 @@ The Grafana SCIM UI provides the following advantages over configuring SCIM in t
 
 - It is accessible by Grafana Cloud users
 - It doesn't require Grafana to be restarted after a configuration update
-- Access to the SCIM UI only requires access to authentication settings, so it can be used by users with limited access to Grafana's configuration
+- Access to the SCIM UI only requires access to authentication settings, so it can be used by users with limited access to Grafana configuration
 
 {{< admonition type="note" >}}
 Any configuration changes made through the Grafana user interface (UI) will take precedence over settings specified in the Grafana configuration file or through environment variables. This means that if you modify any configuration settings in the UI, they will override any corresponding settings set via environment variables or defined in the configuration file.
