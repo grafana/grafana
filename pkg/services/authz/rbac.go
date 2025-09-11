@@ -9,6 +9,8 @@ import (
 
 	"github.com/fullstorydev/grpchan/inprocgrpc"
 	grpcAuth "github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/auth"
+	otgrpc "github.com/opentracing-contrib/go-grpc"
+	"github.com/opentracing/opentracing-go"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 	"go.opentelemetry.io/otel/trace"
@@ -22,7 +24,7 @@ import (
 	authzv1 "github.com/grafana/authlib/authz/proto/v1"
 	"github.com/grafana/authlib/cache"
 	authlib "github.com/grafana/authlib/types"
-	"github.com/grafana/dskit/grpcclient"
+	"github.com/grafana/dskit/middleware"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -169,7 +171,7 @@ func newRemoteRBACClient(clientCfg *authzClientSettings, tracer trace.Tracer, re
 		NativeHistogramMinResetDuration: time.Hour,
 	}, []string{"operation", "status_code"})
 
-	unaryInterceptors, streamInterceptors := grpcclient.Instrument(authzRequestDuration)
+	unaryInterceptors, streamInterceptors := instrument(authzRequestDuration, middleware.ReportGRPCStatusOption)
 
 	opts := []grpc.DialOption{
 		grpc.WithTransportCredentials(transportCreds),
@@ -279,4 +281,16 @@ func (lc *NoopCache) Set(ctx context.Context, key string, data []byte, exp time.
 
 func (lc *NoopCache) Delete(ctx context.Context, key string) error {
 	return nil
+}
+
+// instrument is the same as grpcclient.Instrument but without the middleware.ClientUserHeaderInterceptor
+// and middleware.StreamClientUserHeaderInterceptor as we don't need them.
+func instrument(requestDuration *prometheus.HistogramVec, instrumentationLabelOptions ...middleware.InstrumentationOption) ([]grpc.UnaryClientInterceptor, []grpc.StreamClientInterceptor) {
+	return []grpc.UnaryClientInterceptor{
+			otgrpc.OpenTracingClientInterceptor(opentracing.GlobalTracer()),
+			middleware.UnaryClientInstrumentInterceptor(requestDuration, instrumentationLabelOptions...),
+		}, []grpc.StreamClientInterceptor{
+			otgrpc.OpenTracingStreamClientInterceptor(opentracing.GlobalTracer()),
+			middleware.StreamClientInstrumentInterceptor(requestDuration, instrumentationLabelOptions...),
+		}
 }
