@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 func verifyRequestKey(key *resourcepb.ResourceKey) *resourcepb.ErrorResult {
@@ -16,6 +17,18 @@ func verifyRequestKey(key *resourcepb.ResourceKey) *resourcepb.ErrorResult {
 	}
 	if key.Resource == "" {
 		return NewBadRequestError("request key is missing resource")
+	}
+	if !util.IsValidShortUID(key.Name) {
+		return NewBadRequestError(fmt.Sprintf("name '%s' is invalid", key.Name))
+	}
+	if !validNameRegex.MatchString(key.Namespace) {
+		return NewBadRequestError(fmt.Sprintf("namespace '%s' is invalid", key.Namespace))
+	}
+	if !validNameRegex.MatchString(key.Group) {
+		return NewBadRequestError(fmt.Sprintf("group '%s' is invalid", key.Group))
+	}
+	if !validNameRegex.MatchString(key.Resource) {
+		return NewBadRequestError(fmt.Sprintf("resource '%s' is invalid", key.Resource))
 	}
 	return nil
 }
