@@ -246,9 +246,21 @@ func (b *FolderAPIBuilder) Mutate(ctx context.Context, a admission.Attributes, _
 }
 
 func (b *FolderAPIBuilder) Validate(ctx context.Context, a admission.Attributes, _ admission.ObjectInterfaces) error {
-	obj := a.GetObject()
-	if obj == nil || a.GetOperation() == admission.Connect {
-		return nil // This is normal for sub-resource
+	var obj runtime.Object
+	verb := a.GetOperation()
+
+	switch verb {
+	case admission.Create, admission.Update:
+		obj = a.GetObject()
+	case admission.Delete:
+		obj = a.GetOldObject()
+		if obj == nil {
+			return fmt.Errorf("old object is nil for delete request")
+		}
+	case admission.Connect:
+		return nil
+	default:
+		obj = a.GetObject()
 	}
 
 	f, ok := obj.(*folders.Folder)
