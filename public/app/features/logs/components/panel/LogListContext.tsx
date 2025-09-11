@@ -774,5 +774,5 @@ export function getDefaultDetailsMode(container: HTMLDivElement | undefined): Lo
 
 export function getDefaultControlsExpandedMode(container: HTMLDivElement | null): boolean {
   const width = container?.clientWidth ?? window.innerWidth;
-  return width > 1080;
+  return width > 1200;
 }
