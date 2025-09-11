@@ -201,7 +201,7 @@ func (c *ZanzanaPermissionStore) listFolderParentRelations(ctx context.Context, 
 		})
 		if err != nil {
 			span.RecordError(err)
-			span.SetStatus(codes.Error, fmt.Sprintf("failed to read tuples from zanzana"))
+			span.SetStatus(codes.Error, "failed to read tuples from zanzana")
 			return nil, err
 		}
 
