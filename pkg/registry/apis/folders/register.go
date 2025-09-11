@@ -91,13 +91,13 @@ func RegisterAPIService(cfg *setting.Cfg,
 	return builder
 }
 
-func NewAPIService(ac authlib.AccessClient) *FolderAPIBuilder {
+func NewAPIService(ac authlib.AccessClient, searcher resource.ResourceClient) *FolderAPIBuilder {
 	return &FolderAPIBuilder{
 		authorizer:   newMultiTenantAuthorizer(ac),
+		searcher:     searcher,
 		ignoreLegacy: true,
 	}
 }
-
 func (b *FolderAPIBuilder) GetGroupVersion() schema.GroupVersion {
 	return resourceInfo.GroupVersion()
 }
