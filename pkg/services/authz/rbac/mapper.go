@@ -19,16 +19,16 @@ type Mapping interface {
 	AllActions() []string
 	// HasFolderSupport returns true if the translation supports folders.
 	HasFolderSupport() bool
-	// RequiresScopeOnCreate returns true if the translation requires a scope on create.
-	RequiresScopeOnCreate() bool
+	// SkipScopeOnCreate returns true if the translation does not require a scope on create.
+	SkipScopeOnCreate() bool
 }
 
 type translation struct {
-	resource         string
-	attribute        string
-	verbMapping      map[string]string
-	folderSupport    bool
-	reqScopeOnCreate bool
+	resource          string
+	attribute         string
+	verbMapping       map[string]string
+	folderSupport     bool
+	skipScopeOnCreate bool
 }
 
 func (t translation) Action(verb string) (string, bool) {
@@ -61,8 +61,8 @@ func (t translation) HasFolderSupport() bool {
 	return t.folderSupport
 }
 
-func (t translation) RequiresScopeOnCreate() bool {
-	return t.reqScopeOnCreate
+func (t translation) SkipScopeOnCreate() bool {
+	return t.skipScopeOnCreate
 }
 
 // MapperRegistry is a registry of mappers that maps a group and resource to a translation.
@@ -76,7 +76,7 @@ type MapperRegistry interface {
 
 type mapper map[string]map[string]translation
 
-func newResourceTranslation(resource string, attribute string, folderSupport, reqScopeOnCreate bool) translation {
+func newResourceTranslation(resource string, attribute string, folderSupport, skipScopeOnCreate bool) translation {
 	defaultMapping := func(r string) map[string]string {
 		return map[string]string{
 			utils.VerbGet:              fmt.Sprintf("%s:read", r),
@@ -93,25 +93,25 @@ func newResourceTranslation(resource string, attribute string, folderSupport, re
 	}
 
 	return translation{
-		resource:         resource,
-		attribute:        attribute,
-		verbMapping:      defaultMapping(resource),
-		folderSupport:    folderSupport,
-		reqScopeOnCreate: reqScopeOnCreate,
+		resource:          resource,
+		attribute:         attribute,
+		verbMapping:       defaultMapping(resource),
+		folderSupport:     folderSupport,
+		skipScopeOnCreate: skipScopeOnCreate,
 	}
 }
 
 func NewMapperRegistry() MapperRegistry {
 	mapper := mapper(map[string]map[string]translation{
 		"dashboard.grafana.app": {
-			"dashboards": newResourceTranslation("dashboards", "uid", true, true),
+			"dashboards": newResourceTranslation("dashboards", "uid", true, false),
 		},
 		"folder.grafana.app": {
-			"folders": newResourceTranslation("folders", "uid", true, true),
+			"folders": newResourceTranslation("folders", "uid", true, false),
 		},
 		"iam.grafana.app": {
 			// Teams is a special case. We translate user permissions from id to uid based.
-			"teams":     newResourceTranslation("teams", "uid", false, false),
+			"teams":     newResourceTranslation("teams", "uid", false, true),
 			"coreroles": newResourceTranslation("roles", "uid", false, false),
 			"roles": translation{
 				resource:  "roles",
@@ -126,13 +126,13 @@ func NewMapperRegistry() MapperRegistry {
 					utils.VerbList:             "roles:read",
 					utils.VerbWatch:            "roles:read",
 				},
-				folderSupport:    false,
-				reqScopeOnCreate: false,
+				folderSupport:     false,
+				skipScopeOnCreate: false,
 			},
 		},
 		"secret.grafana.app": {
-			"securevalues": newResourceTranslation("secret.securevalues", "uid", false, true),
-			"keepers":      newResourceTranslation("secret.keepers", "uid", false, true),
+			"securevalues": newResourceTranslation("secret.securevalues", "uid", false, false),
+			"keepers":      newResourceTranslation("secret.keepers", "uid", false, false),
 		},
 		"query.grafana.app": {
 			"query": translation{
@@ -141,8 +141,8 @@ func NewMapperRegistry() MapperRegistry {
 				verbMapping: map[string]string{
 					utils.VerbCreate: "datasources:query",
 				},
-				folderSupport:    false,
-				reqScopeOnCreate: true,
+				folderSupport:     false,
+				skipScopeOnCreate: false,
 			},
 		},
 	})

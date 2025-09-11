@@ -588,8 +588,8 @@ func (s *Service) checkPermission(ctx context.Context, scopeMap map[string]bool,
 	}
 
 	if req.Verb == utils.VerbCreate {
-		// Resource doesn't require scope on create, so allow the user has the action
-		if !t.RequiresScopeOnCreate() {
+		// Resource doesn't require scope on create, so allow if the user has the action
+		if t.SkipScopeOnCreate() {
 			return scopeMap[""], nil
 		}
 		// If creating a resource that goes in a folder, but no folder is specified,
