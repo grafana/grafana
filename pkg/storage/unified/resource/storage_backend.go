@@ -89,28 +89,26 @@ func NewKvStorageBackend(opts KvBackendOptions) (StorageBackend, error) {
 	}
 
 	// Start the event cleanup background job
-	backend.startEventCleanup(ctx)
+	go backend.runCleanupOldEvents(ctx)
 
 	return backend, nil
 }
 
-// startEventCleanup starts a background goroutine that periodically cleans up old events
-func (k *kvStorageBackend) startEventCleanup(ctx context.Context) {
-	go func() {
-		// Run cleanup every hour
-		ticker := time.NewTicker(time.Hour)
-		defer ticker.Stop()
+// runCleanupOldEvents starts a background goroutine that periodically cleans up old events
+func (k *kvStorageBackend) runCleanupOldEvents(ctx context.Context) {
+	// Run cleanup every hour
+	ticker := time.NewTicker(time.Hour)
+	defer ticker.Stop()
 
-		for {
-			select {
-			case <-ctx.Done():
-				k.log.Debug("Event cleanup stopped due to context cancellation")
-				return
-			case <-ticker.C:
-				k.cleanupOldEvents(ctx)
-			}
+	for {
+		select {
+		case <-ctx.Done():
+			k.log.Debug("Event cleanup stopped due to context cancellation")
+			return
+		case <-ticker.C:
+			k.cleanupOldEvents(ctx)
 		}
-	}()
+	}
 }
 
 // cleanupOldEvents performs the actual cleanup of old events
