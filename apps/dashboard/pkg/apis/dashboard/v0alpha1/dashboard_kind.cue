@@ -78,7 +78,7 @@ lineage: schemas: [{
 
 			// Version of the JSON schema, incremented each time a Grafana update brings
 			// changes to said schema.
-			schemaVersion: uint16 | *41
+			schemaVersion: uint16 | *42
 
 			// Version of the dashboard, incremented each time the dashboard is updated.
 			version?: uint32
@@ -243,8 +243,8 @@ lineage: schemas: [{
 		#VariableRefresh: 0 | 1 | 2 @cuetsy(kind="enum",memberNames="never|onDashboardLoad|onTimeRangeChanged")
 
 		// Determine if the variable shows on dashboard
-		// Accepted values are 0 (show label and value), 1 (show value only), 2 (show nothing).
-		#VariableHide: 0 | 1 | 2 @cuetsy(kind="enum",memberNames="dontHide|hideLabel|hideVariable") @grafana(TSVeneer="type")
+		// Accepted values are 0 (show label and value), 1 (show value only), 2 (show nothing), 3 (show under the controls dropdown menu).
+		#VariableHide: 0 | 1 | 2 | 3 @cuetsy(kind="enum",memberNames="dontHide|hideLabel|hideVariable|inControlsMenu") @grafana(TSVeneer="type")
 
 		// Sort variable options
 		// Accepted values are:
@@ -284,16 +284,23 @@ lineage: schemas: [{
 			tags: [...string]
 			// If true, all dashboards links will be displayed in a dropdown. If false, all dashboards links will be displayed side by side. Only valid if the type is dashboards
 			asDropdown: bool | *false
+			// Placement can be used to display the link somewhere else on the dashboard other than above the visualisations.
+			placement?: #DashboardLinkPlacement
 			// If true, the link will be opened in a new tab
 			targetBlank: bool | *false
 			// If true, includes current template variables values in the link as query params
 			includeVars: bool | *false
 			// If true, includes current time range in the link as query params
 			keepTime: bool | *false
+
 		} @cuetsy(kind="interface")
 
 		// Dashboard Link type. Accepted values are dashboards (to refer to another dashboard) and link (to refer to an external resource)
 		#DashboardLinkType: "link" | "dashboards" @cuetsy(kind="type")
+
+		// Dashboard Link placement. Defines where the link should be displayed. 
+		// - "inControlsMenu" renders the link in bottom part of the dashboard controls dropdown menu 
+		#DashboardLinkPlacement: "inControlsMenu" @cuetsy(kind="type")
 
 		// Dashboard variable type
 		// `query`: Query-generated list of values such as metric names, server names, sensor IDs, data centers, and so on.

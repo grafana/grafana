@@ -885,6 +885,8 @@ export interface DashboardLink {
 	includeVars: boolean;
 	// If true, includes current time range in the link as query params
 	keepTime: boolean;
+	// Placement can be used to display the link somewhere else on the dashboard other than above the visualisations.
+	placement?: "inControlsMenu";
 }
 
 export const defaultDashboardLink = (): DashboardLink => ({
@@ -903,6 +905,10 @@ export const defaultDashboardLink = (): DashboardLink => ({
 export type DashboardLinkType = "link" | "dashboards";
 
 export const defaultDashboardLinkType = (): DashboardLinkType => ("link");
+
+// Dashboard Link placement. Defines where the link should be displayed.
+// - "inControlsMenu" renders the link in bottom part of the dashboard controls dropdown menu
+export const DashboardLinkPlacement = "inControlsMenu";
 
 // Time configuration
 // It defines the default time config for the time picker, the refresh picker for the specific dashboard.
@@ -1039,8 +1045,8 @@ export const defaultVariableOption = (): VariableOption => ({
 });
 
 // Determine if the variable shows on dashboard
-// Accepted values are `dontHide` (show label and value), `hideLabel` (show value only), `hideVariable` (show nothing).
-export type VariableHide = "dontHide" | "hideLabel" | "hideVariable";
+// Accepted values are `dontHide` (show label and value), `hideLabel` (show value only), `hideVariable` (show nothing), `inControlsMenu` (show in a drop-down menu).
+export type VariableHide = "dontHide" | "hideLabel" | "hideVariable" | "inControlsMenu";
 
 export const defaultVariableHide = (): VariableHide => ("dontHide");
 

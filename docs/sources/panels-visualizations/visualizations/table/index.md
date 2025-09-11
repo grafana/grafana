@@ -174,6 +174,22 @@ Columns with filters applied have a blue filter displayed next to the title.
 
 To remove the filter, click the blue filter icon and then click **Clear filter**.
 
+<!-- vale Grafana.WordList = NO -->
+<!-- vale Grafana.Spelling = NO -->
+
+### Apply ad hoc filters from the table
+
+In tables, you can apply ad hoc filters directly from the visualization with one click.
+
+To display the filter icons, hover your cursor over the cell that has the value for which you want to filter:
+
+{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-table-adhoc-filter-v12.2.png" max-width="500px" alt="Table with ad hoc filter icon displayed on a cell" >}}
+
+For more information about applying ad hoc filters this way, refer to [Dashboard drilldown with ad hoc filters](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/variables/add-template-variables/#dashboard-drilldown-with-ad-hoc-filters).
+
+<!-- vale Grafana.Spelling = YES -->
+<!-- vale Grafana.WordList = YES -->
+
 ## Sort columns
 
 Click a column title to change the sort order from default to descending to ascending.
@@ -219,7 +235,7 @@ This option is only available when you're editing the panel.
 The table footer displays the results of calculations (and reducer functions) on fields.
 The footer is only displayed after you select an option in the **Calculation** drop-down list:
 
-{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-table-footer-selector-v12.2.png" max-width="300px" alt="" >}}
+{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-table-footer-selector-v12.2.png" max-width="300px" alt="The footer calculation selector, open" >}}
 
 There are several calculations you can choose from including minimum, maximum, first, last, and total.
 For the full list of options, refer to [Calculations](ref:calculations).
@@ -227,20 +243,15 @@ For the full list of options, refer to [Calculations](ref:calculations).
 In the table footer:
 
 - You can apply multiple calculations at once.
-- All calculations and reducer functions are labeled except **Total** when it's the only function applied.
 - The calculations and reducer functions apply to all fields in the table, by default. To control which fields have a calculation or function applied, add the table footer in an override instead.
 - If you enable a mathematical function for a non-numeric field, nothing for that function is displayed for that field.
 
 In the following image, multiple calculations&mdash;**Mean**, **Max**, and **Last**&mdash;have been applied:
 
-{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-table-footer-1-v12.2.png" max-width="750px" alt="" >}}
+{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-tablefooter-v12.2.png" max-width="750px" alt="Table with footer displaying mean, max, and last" >}}
 
 You can also see in the previous image that the mathematical functions, **Mean** and **Max**, haven't been applied to the text field in the table.
 Only the **Last** function has been applied to that field.
-
-In the following image, the **Total** calculation has been applied, and no label is displayed because it's the only function:
-
-{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-table-footer-2-v12.2.png" max-width="750px" alt="" >}}
 
 {{< admonition type="note">}}
 Calculations applied to cell types like **Markdown + HTML** might have unexpected results.
@@ -413,7 +424,7 @@ However, you can switch back and forth between tabs.
 
 The **Pill** cell type displays each item in a comma-separated string in a colored block.
 
-{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-table-pills-v12.1.png" max-width="750px" alt="Table using the pill cell type" >}}
+{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-table-pill-cells-v12.2.png" max-width="750px" alt="Table using the pill cell type" >}}
 
 The colors applied to each piece of text are maintained throughout the table.
 For example, if the word "test" is first displayed in a red pill, it will always be displayed in a red pill.
@@ -443,6 +454,8 @@ in these cells if the [`disable_sanitize_html`](https://grafana.com/docs/grafana
 
 Toggle on the **Tooltip from field** switch to use the values from another field (or column) in a tooltip.
 For more information, refer to [Tooltip from field](#tooltip-from-field).
+
+{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-table-markdown-v12.2.png" max-width="600px" alt="Table using the pill cell type" >}}
 
 #### Image
 

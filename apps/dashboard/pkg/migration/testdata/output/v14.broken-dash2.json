@@ -2262,7 +2262,7 @@
     }
   ],
   "refresh": "5m",
-  "schemaVersion": 41,
+  "schemaVersion": 42,
   "style": "dark",
   "tags": [
     "metrics",

@@ -16,7 +16,6 @@ import (
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	alertingac "github.com/grafana/grafana/pkg/services/ngalert/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
 )
@@ -30,7 +29,7 @@ type ReceiverService interface {
 	GetReceivers(ctx context.Context, q ngmodels.GetReceiversQuery, user identity.Requester) ([]*ngmodels.Receiver, error)
 	CreateReceiver(ctx context.Context, r *ngmodels.Receiver, orgID int64, user identity.Requester) (*ngmodels.Receiver, error)
 	UpdateReceiver(ctx context.Context, r *ngmodels.Receiver, storedSecureFields map[string][]string, orgID int64, user identity.Requester) (*ngmodels.Receiver, error)
-	DeleteReceiver(ctx context.Context, name string, provenance definitions.Provenance, version string, orgID int64, user identity.Requester) error
+	DeleteReceiver(ctx context.Context, name string, provenance ngmodels.Provenance, version string, orgID int64, user identity.Requester) error
 }
 
 type MetadataService interface {
@@ -76,9 +75,9 @@ func (s *legacyStorage) List(ctx context.Context, opts *internalversion.ListOpti
 	q := ngmodels.GetReceiversQuery{
 		OrgID:   orgId,
 		Decrypt: false,
-		//Names:   ctx.QueryStrings("names"), // TODO: Query params.
-		//Limit:   ctx.QueryInt("limit"),
-		//Offset:  ctx.QueryInt("offset"),
+		// Names:   ctx.QueryStrings("names"), // TODO: Query params.
+		// Limit:   ctx.QueryInt("limit"),
+		// Offset:  ctx.QueryInt("offset"),
 	}
 
 	user, err := identity.GetRequester(ctx)
@@ -273,8 +272,8 @@ func (s *legacyStorage) Delete(ctx context.Context, uid string, deleteValidation
 		version = *options.Preconditions.ResourceVersion
 	}
 
-	err = s.service.DeleteReceiver(ctx, uid, definitions.Provenance(ngmodels.ProvenanceNone), version, info.OrgID, user) // TODO add support for dry-run option
-	return old, false, err                                                                                               // false - will be deleted async
+	err = s.service.DeleteReceiver(ctx, uid, ngmodels.ProvenanceNone, version, info.OrgID, user) // TODO add support for dry-run option
+	return old, false, err                                                                       // false - will be deleted async
 }
 
 func (s *legacyStorage) DeleteCollection(ctx context.Context, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions, listOptions *internalversion.ListOptions) (runtime.Object, error) {

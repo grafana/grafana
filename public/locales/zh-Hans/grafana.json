@@ -500,6 +500,7 @@
       "copy-link": "复制链接",
       "duplicate": "复制",
       "export": "导出",
+      "manage-enrichments": "",
       "silence-notifications": "静默通知",
       "with-modifications": "含修改"
     },
@@ -1115,7 +1116,8 @@
     },
     "enrichment": {
       "error-boundary": {
-        "notification-message-section-extension": ""
+        "enrichment-drawer-extension": "",
+        "rule-viewer-section-extension": ""
       }
     },
     "error-modal": {
@@ -1697,9 +1699,6 @@
       "notes": "备注",
       "returns": "退回"
     },
-    "label-picker": {
-      "no-options-message": "找不到标签"
-    },
     "labels-editor-modal": {
       "title-edit-labels": "编辑标签"
     },
@@ -1717,9 +1716,6 @@
     "labels-sub-form": {
       "description": "从以下选项中选择一个标签键/值，或输入新的标签键/值，然后按 Enter 键。",
       "save": "保存"
-    },
-    "labels-with-suggestions": {
-      "text-loading-existing-labels": "加载现有标签"
     },
     "labels-without-suggestions": {
       "message": {
@@ -3035,6 +3031,7 @@
       "page-nav": {
         "text": {
           "details": "详情",
+          "enrichment": "",
           "history": "历史记录",
           "instances": "实例",
           "query-and-conditions": "查询和条件",
@@ -4488,16 +4485,11 @@
             "any": "任意匹配",
             "label": "匹配规则"
           },
-          "label": "组",
           "visibility": {
             "hide": "隐藏",
             "label": "{{type}}可见性",
             "show": "显示"
           }
-        },
-        "shared": {
-          "delete-condition": "删除条件",
-          "unsupported-item-type": "此条件不受元素支持，因此将被忽略。"
         },
         "time-range-size": {
           "info": "如果数据面板时间范围短于所选时间范围，则显示或隐藏{{type}}。",
@@ -4527,17 +4519,21 @@
             "not-matches": "不匹配"
           },
           "value": "值"
+        },
+        "wrapper": {
+          "delete-condition": "",
+          "unsupported-object-type": ""
         }
       },
       "editor": {
+        "info": "",
         "not-supported-for-custom-grid": "自定义网格布局不支持条件渲染。请切换到自动网格以使用条件渲染。",
-        "unsupported-item-type": "此项目类型不支持条件渲染"
+        "unsupported-object-type": ""
       },
       "overlay": {
         "tooltip": "由于条件渲染，元素已被隐藏。"
       },
       "root": {
-        "info": "设置规则以通过匹配任何或所有规则来控制{{type}}可见性。",
         "title": "显示/隐藏规则"
       }
     },
@@ -4670,6 +4666,7 @@
       "move": "移动{{typeName}}",
       "panel-background": "更改面板背景",
       "panel-description": "更改面板描述",
+      "panel-edit": "",
       "panel-max-repeats-per-row": "每行最大重复次数",
       "panel-repeat-direction": "重复方向",
       "panel-repeat-variable": "面板重复方式",
@@ -4677,7 +4674,8 @@
       "paste-panel": "粘贴面板",
       "remove": "移除{{typeName}}",
       "row-title": "",
-      "switch-layout": "切换布局"
+      "switch-layout": "切换布局",
+      "tab-title": ""
     },
     "edit-pane": {
       "elements": {
@@ -4923,12 +4921,11 @@
       "dataframe-aria-label": "选择 dataframe",
       "dataframe-label": "显示数据框",
       "download-csv": "下载 CSV",
-      "download-excel-description": "向 CSV 中添加页眉，以便在 Excel 中使用",
-      "download-excel-label": "下载 Excel 版本",
       "download-logs": "下载日志",
       "download-service": "下载服务图表",
       "download-traces": "下载跟踪",
-      "excel-header": "Excel 页眉",
+      "excel-compatibility-mode-description": "",
+      "excel-compatibility-mode-label": "",
       "formatted": "格式化数据",
       "formatted-data-description": "按照\"字段\"和\"覆盖\"选项卡中定义的选项将表格数据格式化。",
       "formatted-data-label": "格式化数据",
@@ -8327,6 +8324,10 @@
         "action-title": "标题",
         "action-title-placeholder": "操作标题",
         "action-variables": "变量",
+        "connection": "",
+        "connection-direct-description": "",
+        "connection-direct-label": "",
+        "connection-placeholder": "",
         "one-click-description": "一次只能为一个链接或操作启用一次点击"
       }
     },
@@ -9617,6 +9618,12 @@
       "hide-search": "关闭搜索",
       "hide-timestamps": "隐藏时间戳",
       "hide-unique-labels": "隐藏唯一标签",
+      "line-wrapping": {
+        "enable": "",
+        "enable-prettify": "",
+        "hide": "",
+        "label": ""
+      },
       "newest-first": "先显示最新日志 - 点击以先显示最旧日志",
       "oldest-first": "先显示最旧日志 - 点击以先显示最新日志",
       "prettify-json": "展开 JSON 日志",
@@ -9625,13 +9632,16 @@
       "resolution-ns": "ns",
       "scroll-bottom": "滚动到底部",
       "scroll-top": "滚动到顶部",
-      "show-ms-timestamps": "显示毫秒时间戳",
-      "show-ns-timestamps": "显示纳秒时间戳",
       "show-search": "在日志结果中搜索",
       "show-timestamps": "显示时间戳",
       "show-unique-labels": "显示唯一标签",
+      "timestamp": {
+        "hide": "",
+        "label": "",
+        "milliseconds": "",
+        "nanoseconds": ""
+      },
       "unwrap-lines": "取消多行显示",
-      "wrap-json-lines": "",
       "wrap-lines": "多行显示"
     },
     "logs-navigation": {
@@ -9698,30 +9708,6 @@
     "un-themed-log-label-stats": {
       "field-log-stats": "{{label}}：{{total}} 行（共 {{rowCount}} 行）含有该字段",
       "label-log-stats": "{{label}}：{{total}} 行（共 {{rowCount}} 行）含有该标签"
-    }
-  },
-  "logs-new": {
-    "category-logs": "日志",
-    "deduplication-options": {
-      "label-exact": "确切",
-      "label-none": "无",
-      "label-numbers": "数字",
-      "label-signature": "签名"
-    },
-    "description-infinite-scrolling": "实验性。通过滚动到日志列表底部来请求更多结果。",
-    "description-show-controls": "显示控件以跳转到最后一行或第一行日志，并按日志级别筛选",
-    "description-syntax-highlighting": "使用预定义的语法着色规则来突出显示日志行的相关部分",
-    "name-deduplication": "去重",
-    "name-enable-log-details": "启用日志详情",
-    "name-infinite-scrolling": "启用无限滚动",
-    "name-order": "顺序",
-    "name-show-controls": "显示控件",
-    "name-syntax-highlighting": "启用语法高亮",
-    "name-time": "时间",
-    "name-wrap-lines": "多行显示",
-    "order-options": {
-      "label-newest-first": "最新靠前",
-      "label-oldest-first": "最旧靠前"
     }
   },
   "manage-dashbaords": {
@@ -11196,11 +11182,11 @@
       "description-clear-repository-connection": "为此存储库连接添加明确的名称",
       "empty": "空",
       "error-field-required": "此字段是必填字段。",
-      "ext-storage": "外部存储",
-      "grafana": "Grafana 实例",
+      "external-storage-label": "",
       "label-display-name": "显示名称",
       "placeholder-my-repository-connection": "我的存储库连接",
       "text-loading-resource-information": "正在加载资源信息...",
+      "unmanaged-resources-label": "",
       "dashboards-count_other": "{{count}} 个数据面板",
       "files-count_other": "{{count}} 个文件",
       "folders-count_other": "{{count}} 个文件夹"
@@ -11245,7 +11231,8 @@
     },
     "connect-repository-button": {
       "configure": "配置",
-      "repository-limit-info-alert": "已达到存储库限制 ({{count}})"
+      "instance-fully-managed-tooltip": "",
+      "repository-limit-reached-tooltip_other": ""
     },
     "delete-repository-button": {
       "button-delete": "删除",
@@ -11924,7 +11911,6 @@
       "expand-row": "展开查询行",
       "hide-response": "隐藏回复",
       "remove-query": "删除查询",
-      "replace-query-from-library": "替换为已保存的查询",
       "show-response": "显示回复"
     },
     "query-editor-not-exported": "数据源插件不导出任何查询编辑器组件"
@@ -11937,13 +11923,6 @@
       "no-deleted-dashboards": "您最近没有删除任何数据面板。",
       "no-deleted-dashboards-text": "当您删除数据面板时，它将在此处显示 30 天，然后会被永久删除。您的组织管理员可以还原最近删除的数据面板。",
       "no-search-result": "未找到与您的查询相关的结果"
-    },
-    "permanently-delete-modal": {
-      "confirm-text": "删除",
-      "delete-button": "删除",
-      "delete-loading": "正在删除...",
-      "title": "永久删除数据面板",
-      "text_other": "此操作将删除 {{numberOfDashboards}} 个数据面板。"
     },
     "restore-modal": {
       "restore-button": "还原",

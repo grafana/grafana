@@ -504,6 +504,7 @@
       "copy-link": "Copier le lien",
       "duplicate": "Dupliquer",
       "export": "Exporter",
+      "manage-enrichments": "",
       "silence-notifications": "Mettre les notifications en sourdine",
       "with-modifications": "Avec modifications"
     },
@@ -1121,7 +1122,8 @@
     },
     "enrichment": {
       "error-boundary": {
-        "notification-message-section-extension": ""
+        "enrichment-drawer-extension": "",
+        "rule-viewer-section-extension": ""
       }
     },
     "error-modal": {
@@ -1703,9 +1705,6 @@
       "notes": "Remarques",
       "returns": "Retours"
     },
-    "label-picker": {
-      "no-options-message": "Aucune étiquette trouvée"
-    },
     "labels-editor-modal": {
       "title-edit-labels": "Modifier les étiquettes"
     },
@@ -1723,9 +1722,6 @@
     "labels-sub-form": {
       "description": "Sélectionnez une clé/valeur d’étiquette parmi les options ci-dessous, ou saisissez-en une nouvelle et appuyez sur Entrée.",
       "save": "Enregistrer"
-    },
-    "labels-with-suggestions": {
-      "text-loading-existing-labels": "Chargement des étiquettes existantes"
     },
     "labels-without-suggestions": {
       "message": {
@@ -3048,6 +3044,7 @@
       "page-nav": {
         "text": {
           "details": "Détails",
+          "enrichment": "",
           "history": "Historique",
           "instances": "Instances",
           "query-and-conditions": "Requête et conditions",
@@ -4506,16 +4503,11 @@
             "any": "Correspondre à au moins un élément",
             "label": "Règles de concordance"
           },
-          "label": "Groupe",
           "visibility": {
             "hide": "Masquer",
             "label": "Visibilité : {{type}}",
             "show": "Afficher"
           }
-        },
-        "shared": {
-          "delete-condition": "Supprimer la condition",
-          "unsupported-item-type": "Cette condition n’est pas prise en charge par l’élément, elle sera donc ignorée."
         },
         "time-range-size": {
           "info": "Afficher ou masquer le {{type}} si la plage temporelle du tableau de bord est plus courte que la plage temporelle sélectionnée.",
@@ -4545,17 +4537,21 @@
             "not-matches": "Non correspondances"
           },
           "value": "Valeur"
+        },
+        "wrapper": {
+          "delete-condition": "",
+          "unsupported-object-type": ""
         }
       },
       "editor": {
+        "info": "",
         "not-supported-for-custom-grid": "Le rendu conditionnel n’est pas pris en charge pour la grille personnalisée. Basculez vers la grille automatique pour l’utiliser.",
-        "unsupported-item-type": "Le rendu conditionnel n’est pas pris en charge pour ce type d’élément"
+        "unsupported-object-type": ""
       },
       "overlay": {
         "tooltip": "L’élément est masqué en raison du rendu conditionnel."
       },
       "root": {
-        "info": "Définissez des règles pour contrôler la visibilité de {{type}} en faisant correspondre une ou toutes les règles.",
         "title": "Afficher / masquer les règles"
       }
     },
@@ -4688,6 +4684,7 @@
       "move": "Déplacer {{typeName}}",
       "panel-background": "Modifier l’arrière-plan du panneau",
       "panel-description": "Modifier la description du panneau",
+      "panel-edit": "",
       "panel-max-repeats-per-row": "Nombre maximal de répétitions par ligne",
       "panel-repeat-direction": "Répéter la direction",
       "panel-repeat-variable": "Répéter le panneau selon",
@@ -4695,7 +4692,8 @@
       "paste-panel": "Coller le panneau",
       "remove": "Supprimer {{typeName}}",
       "row-title": "",
-      "switch-layout": "Changer la disposition"
+      "switch-layout": "Changer la disposition",
+      "tab-title": ""
     },
     "edit-pane": {
       "elements": {
@@ -4941,12 +4939,11 @@
       "dataframe-aria-label": "Sélectionner la dataframe",
       "dataframe-label": "Afficher la dataframe",
       "download-csv": "Télécharger en format CSV",
-      "download-excel-description": "Ajoute l'en-tête au fichier CSV pour une utilisation dans Excel",
-      "download-excel-label": "Télécharger pour Excel",
       "download-logs": "Télécharger les journaux",
       "download-service": "Télécharger le graphique de service",
       "download-traces": "Télécharger les traces",
-      "excel-header": "En-tête Excel",
+      "excel-compatibility-mode-description": "",
+      "excel-compatibility-mode-label": "",
       "formatted": "Données formatées",
       "formatted-data-description": "Les données du tableau sont formatées avec les options définies dans les onglets Champ et Remplacer.",
       "formatted-data-label": "Données formatées",
@@ -8348,6 +8345,10 @@
         "action-title": "Titre",
         "action-title-placeholder": "Titre de l'action",
         "action-variables": "Variables",
+        "connection": "",
+        "connection-direct-description": "",
+        "connection-direct-label": "",
+        "connection-placeholder": "",
         "one-click-description": "Un seul lien ou une seule action peut avoir un clic activé à la fois"
       }
     },
@@ -9646,6 +9647,12 @@
       "hide-search": "Fermer la recherche",
       "hide-timestamps": "Masquer les horodatages",
       "hide-unique-labels": "Masquer les étiquettes uniques",
+      "line-wrapping": {
+        "enable": "",
+        "enable-prettify": "",
+        "hide": "",
+        "label": ""
+      },
       "newest-first": "Trié par les journaux les plus récents en premier - Cliquez pour afficher les plus anciens en premier",
       "oldest-first": "Trié par les journaux les plus anciens en premier - Cliquez pour afficher les plus récents en premier",
       "prettify-json": "Développer les journaux JSON",
@@ -9654,13 +9661,16 @@
       "resolution-ns": "ns",
       "scroll-bottom": "Faire défiler vers le bas",
       "scroll-top": "Retour en haut de page",
-      "show-ms-timestamps": "Afficher les horodatages en millisecondes",
-      "show-ns-timestamps": "Afficher les horodatages en nanosecondes",
       "show-search": "Rechercher dans les résultats de logs",
       "show-timestamps": "Afficher les horodatages",
       "show-unique-labels": "Afficher les étiquettes uniques",
+      "timestamp": {
+        "hide": "",
+        "label": "",
+        "milliseconds": "",
+        "nanoseconds": ""
+      },
       "unwrap-lines": "Dérouler les lignes",
-      "wrap-json-lines": "",
       "wrap-lines": "Enrouler les lignes"
     },
     "logs-navigation": {
@@ -9727,30 +9737,6 @@
     "un-themed-log-label-stats": {
       "field-log-stats": "{{label}} : {{total}} lignes sur {{rowCount}} ont ce champ",
       "label-log-stats": "{{label}} : {{total}} lignes sur {{rowCount}} ont cette étiquette"
-    }
-  },
-  "logs-new": {
-    "category-logs": "Logs",
-    "deduplication-options": {
-      "label-exact": "Exact",
-      "label-none": "Aucun",
-      "label-numbers": "Nombres",
-      "label-signature": "Signature"
-    },
-    "description-infinite-scrolling": "Expérimental. Obtenez plus de résultats en faisant défiler jusqu’en bas de la liste des logs.",
-    "description-show-controls": "Afficher les contrôles pour accéder à la première ou à la dernière ligne du log et filtrer par niveau de log",
-    "description-syntax-highlighting": "Utiliser une grammaire de coloration syntaxique prédéfinie pour mettre en évidence les parties pertinentes des lignes de log",
-    "name-deduplication": "Déduplication",
-    "name-enable-log-details": "Activer les détails du log",
-    "name-infinite-scrolling": "Activer le défilement infini",
-    "name-order": "Ordre",
-    "name-show-controls": "Afficher les contrôles",
-    "name-syntax-highlighting": "Activer la coloration syntaxique",
-    "name-time": "Heure",
-    "name-wrap-lines": "Retour à la ligne automatique",
-    "order-options": {
-      "label-newest-first": "Le plus récent en premier",
-      "label-oldest-first": "Le plus ancien en premier"
     }
   },
   "manage-dashbaords": {
@@ -11228,11 +11214,11 @@
       "description-clear-repository-connection": "Ajoutez un nom clair pour cette connexion de référentiel",
       "empty": "Vide",
       "error-field-required": "Ce champ est obligatoire.",
-      "ext-storage": "Stockage externalisé",
-      "grafana": "Instance Grafana",
+      "external-storage-label": "",
       "label-display-name": "Pseudo",
       "placeholder-my-repository-connection": "Ma connexion au référentiel",
       "text-loading-resource-information": "Chargement des informations sur les ressources...",
+      "unmanaged-resources-label": "",
       "dashboards-count_one": "{{count}} tableau de bord",
       "dashboards-count_other": "{{count}} tableau de bord",
       "files-count_one": "{{count}} fichiers",
@@ -11280,7 +11266,9 @@
     },
     "connect-repository-button": {
       "configure": "Configurer",
-      "repository-limit-info-alert": "Limite du référentiel atteinte ({{count}})"
+      "instance-fully-managed-tooltip": "",
+      "repository-limit-reached-tooltip_one": "",
+      "repository-limit-reached-tooltip_other": ""
     },
     "delete-repository-button": {
       "button-delete": "Supprimer",
@@ -11960,7 +11948,6 @@
       "expand-row": "Développer la ligne de requête",
       "hide-response": "Masquer la réponse",
       "remove-query": "Supprimer la requête",
-      "replace-query-from-library": "Remplacer par une requête sauvegardée",
       "show-response": "Afficher la réponse"
     },
     "query-editor-not-exported": "Le plugin source de données n'exporte aucun composant de l'éditeur de requête"
@@ -11973,14 +11960,6 @@
       "no-deleted-dashboards": "Vous n'avez pas supprimé de tableau de bord récemment.",
       "no-deleted-dashboards-text": "Lorsque vous supprimez un tableau de bord, il apparaîtra ici pendant 30 jours avant d'être définitivement supprimé. L'administrateur de votre organisation peut restaurer les tableaux de bord récemment supprimés.",
       "no-search-result": "Aucun résultat n'a été trouvé pour votre requête"
-    },
-    "permanently-delete-modal": {
-      "confirm-text": "Supprimer",
-      "delete-button": "Supprimer",
-      "delete-loading": "Suppression…",
-      "title": "Supprimer définitivement les tableaux de bord",
-      "text_one": "Cette action supprimera {{numberOfDashboards}} tableaux de bord.",
-      "text_other": "Cette action supprimera {{numberOfDashboards}} tableaux de bord."
     },
     "restore-modal": {
       "restore-button": "Restaurer",

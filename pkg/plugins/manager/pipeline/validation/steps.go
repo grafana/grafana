@@ -3,7 +3,6 @@ package validation
 import (
 	"context"
 	"errors"
-	"slices"
 	"time"
 
 	"github.com/grafana/grafana/pkg/plugins"
@@ -117,6 +116,5 @@ func (a *AngularDetector) Validate(ctx context.Context, p *plugins.Plugin) error
 			}).WithMessage("angular plugins are not supported")
 		}
 	}
-	p.Angular.HideDeprecation = slices.Contains(a.cfg.HideAngularDeprecation, p.ID)
 	return nil
 }

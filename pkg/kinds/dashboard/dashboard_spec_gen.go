@@ -86,7 +86,7 @@ func NewSpec() *Spec {
 		Editable:             (func(input bool) *bool { return &input })(true),
 		GraphTooltip:         (func(input DashboardCursorSync) *DashboardCursorSync { return &input })(DashboardCursorSyncOff),
 		FiscalYearStartMonth: (func(input uint8) *uint8 { return &input })(0),
-		SchemaVersion:        41,
+		SchemaVersion:        42,
 	}
 }
 
@@ -272,6 +272,8 @@ type DashboardLink struct {
 	Tags []string `json:"tags"`
 	// If true, all dashboards links will be displayed in a dropdown. If false, all dashboards links will be displayed side by side. Only valid if the type is dashboards
 	AsDropdown bool `json:"asDropdown"`
+	// Placement can be used to display the link somewhere else on the dashboard other than above the visualisations.
+	Placement string `json:"placement,omitempty"`
 	// If true, the link will be opened in a new tab
 	TargetBlank bool `json:"targetBlank"`
 	// If true, includes current template variables values in the link as query params
@@ -285,6 +287,7 @@ func NewDashboardLink() *DashboardLink {
 	return &DashboardLink{
 		Tags:        []string{},
 		AsDropdown:  false,
+		Placement:   DashboardLinkPlacement,
 		TargetBlank: false,
 		IncludeVars: false,
 		KeepTime:    false,
@@ -298,6 +301,10 @@ const (
 	DashboardLinkTypeLink       DashboardLinkType = "link"
 	DashboardLinkTypeDashboards DashboardLinkType = "dashboards"
 )
+
+// Dashboard Link placement. Defines where the link should be displayed.
+// - "inControlsMenu" renders the link in bottom part of the dashboard controls dropdown menu
+const DashboardLinkPlacement = "inControlsMenu"
 
 // Transformations allow to manipulate data returned by a query before the system applies a visualization.
 // Using transformations you can: rename fields, join time series data, perform mathematical operations across queries,
@@ -766,13 +773,14 @@ const (
 )
 
 // Determine if the variable shows on dashboard
-// Accepted values are 0 (show label and value), 1 (show value only), 2 (show nothing).
+// Accepted values are 0 (show label and value), 1 (show value only), 2 (show nothing), 3 (show under the controls dropdown menu).
 type VariableHide int64
 
 const (
-	VariableHideDontHide     VariableHide = 0
-	VariableHideHideLabel    VariableHide = 1
-	VariableHideHideVariable VariableHide = 2
+	VariableHideDontHide       VariableHide = 0
+	VariableHideHideLabel      VariableHide = 1
+	VariableHideHideVariable   VariableHide = 2
+	VariableHideInControlsMenu VariableHide = 3
 )
 
 // Option to be selected in a variable.

@@ -504,6 +504,7 @@
       "copy-link": "Copiar link",
       "duplicate": "Duplicar",
       "export": "Exportar",
+      "manage-enrichments": "",
       "silence-notifications": "Silenciar notificações",
       "with-modifications": "Com modificações"
     },
@@ -1121,7 +1122,8 @@
     },
     "enrichment": {
       "error-boundary": {
-        "notification-message-section-extension": ""
+        "enrichment-drawer-extension": "",
+        "rule-viewer-section-extension": ""
       }
     },
     "error-modal": {
@@ -1703,9 +1705,6 @@
       "notes": "Observações",
       "returns": "Devoluções"
     },
-    "label-picker": {
-      "no-options-message": "Nenhuma etiqueta encontrada"
-    },
     "labels-editor-modal": {
       "title-edit-labels": "Editar etiquetas"
     },
@@ -1723,9 +1722,6 @@
     "labels-sub-form": {
       "description": "Selecione uma chave/valor de etiqueta nas opções abaixo ou insira uma nova e prima Enter.",
       "save": "Guardar"
-    },
-    "labels-with-suggestions": {
-      "text-loading-existing-labels": "A carregar etiquetas existentes"
     },
     "labels-without-suggestions": {
       "message": {
@@ -3048,6 +3044,7 @@
       "page-nav": {
         "text": {
           "details": "Detalhes",
+          "enrichment": "",
           "history": "Histórico",
           "instances": "Instâncias",
           "query-and-conditions": "Consulta e condições",
@@ -4506,16 +4503,11 @@
             "any": "Correspondência parcial",
             "label": "Regras de correspondência"
           },
-          "label": "Grupo",
           "visibility": {
             "hide": "Ocultar",
             "label": "Visibilidade de {{type}}",
             "show": "Mostrar"
           }
-        },
-        "shared": {
-          "delete-condition": "Eliminar condição",
-          "unsupported-item-type": "Esta condição não é suportada pelo elemento, por isso será ignorada."
         },
         "time-range-size": {
           "info": "Mostrar ou ocultar o elemento {{type}} se o intervalo de tempo do painel de controlo for inferior ao período de tempo selecionado.",
@@ -4545,17 +4537,21 @@
             "not-matches": "Não correspondências"
           },
           "value": "Valor"
+        },
+        "wrapper": {
+          "delete-condition": "",
+          "unsupported-object-type": ""
         }
       },
       "editor": {
+        "info": "",
         "not-supported-for-custom-grid": "A renderização condicional não é suportada para o layout de grelha personalizado. Mude para a grelha automática para utilizar a renderização condicional.",
-        "unsupported-item-type": "A renderização condicional não é suportada para este tipo de elemento"
+        "unsupported-object-type": ""
       },
       "overlay": {
         "tooltip": "O elemento está oculto devido à renderização condicional."
       },
       "root": {
-        "info": "Defina regras para controlar a visibilidade de {{type}} através da correspondência de qualquer uma ou todas as regras.",
         "title": "Mostrar/ocultar regras"
       }
     },
@@ -4688,6 +4684,7 @@
       "move": "Mover {{typeName}}",
       "panel-background": "Alterar fundo do painel",
       "panel-description": "Alterar descrição do painel",
+      "panel-edit": "",
       "panel-max-repeats-per-row": "Máx. de repetições por linha",
       "panel-repeat-direction": "Repetir direção",
       "panel-repeat-variable": "Repetição do painel por",
@@ -4695,7 +4692,8 @@
       "paste-panel": "Colar painel",
       "remove": "Remover {{typeName}}",
       "row-title": "",
-      "switch-layout": "Mudar o layout"
+      "switch-layout": "Mudar o layout",
+      "tab-title": ""
     },
     "edit-pane": {
       "elements": {
@@ -4941,12 +4939,11 @@
       "dataframe-aria-label": "Selecionar estrutura de dados",
       "dataframe-label": "Mostrar estrutura de dados",
       "download-csv": "Transferir CSV",
-      "download-excel-description": "Adiciona um cabeçalho ao CSV para utilizar com o Excel",
-      "download-excel-label": "Transferir para Excel",
       "download-logs": "Transferir registos",
       "download-service": "Transferir gráfico de serviço",
       "download-traces": "Transferir Traces",
-      "excel-header": "Cabeçalho do Excel",
+      "excel-compatibility-mode-description": "",
+      "excel-compatibility-mode-label": "",
       "formatted": "Dados formatados",
       "formatted-data-description": "Os dados da tabela são formatados com opções definidas nos separadores Campo e Substituir.",
       "formatted-data-label": "Dados formatados",
@@ -8348,6 +8345,10 @@
         "action-title": "Título",
         "action-title-placeholder": "Título da ação",
         "action-variables": "Variáveis",
+        "connection": "",
+        "connection-direct-description": "",
+        "connection-direct-label": "",
+        "connection-placeholder": "",
         "one-click-description": "Apenas um link ou ação pode ter um clique ativado de cada vez"
       }
     },
@@ -9646,6 +9647,12 @@
       "hide-search": "Fechar a pesquisa",
       "hide-timestamps": "Ocultar registos de hora/data",
       "hide-unique-labels": "Ocultar etiquetas únicas",
+      "line-wrapping": {
+        "enable": "",
+        "enable-prettify": "",
+        "hide": "",
+        "label": ""
+      },
       "newest-first": "Ordenado por registos mais recentes primeiro - Clique para mostrar os mais antigos primeiro",
       "oldest-first": "Ordenado por registos mais antigos primeiro - Clique para mostrar os mais recentes primeiro",
       "prettify-json": "Expandir registos JSON",
@@ -9654,13 +9661,16 @@
       "resolution-ns": "ns",
       "scroll-bottom": "Rolar para baixo",
       "scroll-top": "Rolar para o topo",
-      "show-ms-timestamps": "Mostrar carimbos de data e hora em milissegundos",
-      "show-ns-timestamps": "Mostrar carimbos de data e hora em nanossegundos",
       "show-search": "Pesquisar no resultado dos registos",
       "show-timestamps": "Mostrar registos de data e hora",
       "show-unique-labels": "Mostrar etiquetas únicas",
+      "timestamp": {
+        "hide": "",
+        "label": "",
+        "milliseconds": "",
+        "nanoseconds": ""
+      },
       "unwrap-lines": "Revelar linhas",
-      "wrap-json-lines": "",
       "wrap-lines": "Quebra de linhas"
     },
     "logs-navigation": {
@@ -9727,30 +9737,6 @@
     "un-themed-log-label-stats": {
       "field-log-stats": "{{label}}: {{total}} de {{rowCount}} linhas têm esse campo",
       "label-log-stats": "{{label}}: {{total}} de {{rowCount}} linhas têm essa etiqueta"
-    }
-  },
-  "logs-new": {
-    "category-logs": "Registos",
-    "deduplication-options": {
-      "label-exact": "Exato",
-      "label-none": "Nenhum",
-      "label-numbers": "Números",
-      "label-signature": "Assinatura"
-    },
-    "description-infinite-scrolling": "Experimental. Obtenha mais resultados deslocando o ecrã até à parte inferior da lista de registos.",
-    "description-show-controls": "Mostrar controlos para aceder à última ou primeira linha de registo e filtrar por nível de registo",
-    "description-syntax-highlighting": "Utilizar uma gramática de coloração de sintaxe predefinida para destacar as partes relevantes das linhas de registo",
-    "name-deduplication": "Desduplicação",
-    "name-enable-log-details": "Ativar detalhes do registo",
-    "name-infinite-scrolling": "Ativar deslocação infinita",
-    "name-order": "Ordem",
-    "name-show-controls": "Mostrar controlos",
-    "name-syntax-highlighting": "Ativar o destaque de sintaxe",
-    "name-time": "Hora",
-    "name-wrap-lines": "Encapsular linhas",
-    "order-options": {
-      "label-newest-first": "Mais recentes primeiro",
-      "label-oldest-first": "Mais antigos primeiro"
     }
   },
   "manage-dashbaords": {
@@ -11228,11 +11214,11 @@
       "description-clear-repository-connection": "Adicione um nome claro para esta ligação de repositório",
       "empty": "Esvaziar",
       "error-field-required": "Este campo é obrigatório.",
-      "ext-storage": "Armazenamento externo",
-      "grafana": "Instância Grafana",
+      "external-storage-label": "",
       "label-display-name": "Nome do visor",
       "placeholder-my-repository-connection": "A minha ligação de repositório",
       "text-loading-resource-information": "A carregar informações de recursos...",
+      "unmanaged-resources-label": "",
       "dashboards-count_one": "{{count}} painéis de controlo",
       "dashboards-count_other": "{{count}} painéis de controlo",
       "files-count_one": "{{count}} ficheiro",
@@ -11280,7 +11266,9 @@
     },
     "connect-repository-button": {
       "configure": "Configurar",
-      "repository-limit-info-alert": "Limite do repositório atingido ({{count}})"
+      "instance-fully-managed-tooltip": "",
+      "repository-limit-reached-tooltip_one": "",
+      "repository-limit-reached-tooltip_other": ""
     },
     "delete-repository-button": {
       "button-delete": "Eliminar",
@@ -11960,7 +11948,6 @@
       "expand-row": "Expandir linha de consulta",
       "hide-response": "Ocultar resposta",
       "remove-query": "Remover consulta",
-      "replace-query-from-library": "Substituir por consulta guardada",
       "show-response": "Mostrar resposta"
     },
     "query-editor-not-exported": "O plugin de origem de dados não exporta nenhum componente do Editor de Consultas"
@@ -11973,14 +11960,6 @@
       "no-deleted-dashboards": "Não eliminou quaisquer painéis de controlo recentemente.",
       "no-deleted-dashboards-text": "Quando elimina um painel de controlo, este aparecerá aqui durante 30 dias antes de ser eliminado permanentemente. O administrador da sua organização pode restaurar painéis de controlo eliminados recentemente.",
       "no-search-result": "Não foram encontrados resultados para a sua consulta"
-    },
-    "permanently-delete-modal": {
-      "confirm-text": "Eliminar",
-      "delete-button": "Eliminar",
-      "delete-loading": "A eliminar...",
-      "title": "Eliminar permanentemente painéis de controlo",
-      "text_one": "Esta ação irá eliminar {{numberOfDashboards}} painéis de controlo.",
-      "text_other": "Esta ação irá eliminar {{numberOfDashboards}} painéis de controlo."
     },
     "restore-modal": {
       "restore-button": "Restaurar",

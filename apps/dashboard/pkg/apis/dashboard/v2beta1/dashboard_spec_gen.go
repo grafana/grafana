@@ -1106,6 +1106,8 @@ type DashboardDashboardLink struct {
 	IncludeVars bool `json:"includeVars"`
 	// If true, includes current time range in the link as query params
 	KeepTime bool `json:"keepTime"`
+	// Placement can be used to display the link somewhere else on the dashboard other than above the visualisations.
+	Placement string `json:"placement,omitempty"`
 }
 
 // NewDashboardDashboardLink creates a new DashboardDashboardLink object.
@@ -1116,6 +1118,7 @@ func NewDashboardDashboardLink() *DashboardDashboardLink {
 		TargetBlank: false,
 		IncludeVars: false,
 		KeepTime:    false,
+		Placement:   DashboardDashboardLinkPlacement,
 	}
 }
 
@@ -1127,6 +1130,11 @@ const (
 	DashboardDashboardLinkTypeLink       DashboardDashboardLinkType = "link"
 	DashboardDashboardLinkTypeDashboards DashboardDashboardLinkType = "dashboards"
 )
+
+// Dashboard Link placement. Defines where the link should be displayed.
+// - "inControlsMenu" renders the link in bottom part of the dashboard controls dropdown menu
+// +k8s:openapi-gen=true
+const DashboardDashboardLinkPlacement = "inControlsMenu"
 
 // Time configuration
 // It defines the default time config for the time picker, the refresh picker for the specific dashboard.
@@ -1282,14 +1290,15 @@ func NewDashboardVariableOption() *DashboardVariableOption {
 }
 
 // Determine if the variable shows on dashboard
-// Accepted values are `dontHide` (show label and value), `hideLabel` (show value only), `hideVariable` (show nothing).
+// Accepted values are `dontHide` (show label and value), `hideLabel` (show value only), `hideVariable` (show nothing), `inControlsMenu` (show in a drop-down menu).
 // +k8s:openapi-gen=true
 type DashboardVariableHide string
 
 const (
-	DashboardVariableHideDontHide     DashboardVariableHide = "dontHide"
-	DashboardVariableHideHideLabel    DashboardVariableHide = "hideLabel"
-	DashboardVariableHideHideVariable DashboardVariableHide = "hideVariable"
+	DashboardVariableHideDontHide       DashboardVariableHide = "dontHide"
+	DashboardVariableHideHideLabel      DashboardVariableHide = "hideLabel"
+	DashboardVariableHideHideVariable   DashboardVariableHide = "hideVariable"
+	DashboardVariableHideInControlsMenu DashboardVariableHide = "inControlsMenu"
 )
 
 // Options to config when to refresh a variable
