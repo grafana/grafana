@@ -34,6 +34,11 @@ while IFS=" " read -r -a package; do
     continue
   fi
 
+  # Skip packages that don't exist in the base (packages introduced in PR)
+  if [[ ! -f "./base/@$PACKAGE_PATH.tgz" ]]; then
+    continue
+  fi
+
   # Extract the npm package tarballs into separate directories e.g. ./base/@grafana-data.tgz -> ./base/grafana-data/
   mkdir "$PREV"
   tar -xf "./base/@$PACKAGE_PATH.tgz" --strip-components=1 -C "$PREV"
