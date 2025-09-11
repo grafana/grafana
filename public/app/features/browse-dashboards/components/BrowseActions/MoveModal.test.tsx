@@ -89,11 +89,9 @@ describe('browse-dashboards MoveModal', () => {
         };
         render(<MoveModal {...props} />);
 
-        expect(
-          await screen.findByRole('status', { name: 'This action will move the following content:' })
-        ).toBeInTheDocument();
+        expect(await screen.findByText(/This action will move the following content/i)).toBeInTheDocument();
 
-        expect(screen.getByText(/5 item/)).toBeInTheDocument();
+        expect(await screen.findByText(/5 item/)).toBeInTheDocument();
         expect(screen.getByText(/2 folder/)).toBeInTheDocument();
         expect(screen.getByText(/1 dashboard/)).toBeInTheDocument();
         expect(screen.getByText(/1 library panel/)).toBeInTheDocument();
