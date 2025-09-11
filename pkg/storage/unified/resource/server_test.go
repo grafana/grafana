@@ -195,6 +195,47 @@ func TestSimpleServer(t *testing.T) {
 		require.Len(t, all.Items, 0) // empty
 	})
 
+	t.Run("playlist FAIL CRUD paths", func(t *testing.T) {
+		raw := []byte(`{
+    		"apiVersion": "playlist.grafana.app/v0alpha1",
+			"kind": "Playlist",
+			"metadata": {
+				"name": "fdgsv37#qslr0ga",
+				"uid": "xyz",
+				"namespace": "default",
+				"annotations": {
+					"grafana.app/repoName": "elsewhere",
+					"grafana.app/repoPath": "path/to/item",
+					"grafana.app/repoTimestamp": "2024-02-02T00:00:00Z"
+				}
+			},
+			"spec": {
+				"title": "hello",
+				"interval": "5m",
+				"items": [
+					{
+						"type": "dashboard_by_uid",
+						"value": "vmie2cmWz"
+					}
+				]
+			}
+		}`)
+
+		key := &resourcepb.ResourceKey{
+			Group:     "playlist.grafana.app",
+			Resource:  "rrrr", // can be anything :(
+			Namespace: "default###",
+			Name:      "fdgsv37qslr0ga",
+		}
+
+		created, err := server.Create(ctx, &resourcepb.CreateRequest{
+			Value: raw,
+			Key:   key,
+		})
+		require.Error(t, err)
+		require.Nil(t, created)
+	})
+
 	t.Run("playlist update optimistic concurrency check", func(t *testing.T) {
 		raw := []byte(`{
     	"apiVersion": "playlist.grafana.app/v0alpha1",
