@@ -92,6 +92,7 @@
             "inspect": false
           },
           "decimals": 2,
+          "displayName": "",
           "mappings": [],
           "thresholds": {
             "mode": "absolute",
@@ -110,7 +111,6 @@
         },
         "overrides": []
       },
-      "fontSize": "100%",
       "gridPos": {
         "h": 4,
         "w": 24,
@@ -123,12 +123,6 @@
         "showHeader": true
       },
       "pluginVersion": "12.1.0",
-      "scroll": true,
-      "showHeader": true,
-      "sort": {
-        "col": 0,
-        "desc": true
-      },
       "targets": [
         {
           "alias": "",
@@ -167,6 +161,7 @@
             "inspect": false
           },
           "decimals": 2,
+          "displayName": "",
           "mappings": [],
           "thresholds": {
             "mode": "absolute",
@@ -205,7 +200,6 @@
           }
         ]
       },
-      "fontSize": "100%",
       "gridPos": {
         "h": 3,
         "w": 6,
@@ -218,12 +212,6 @@
         "showHeader": true
       },
       "pluginVersion": "12.1.0",
-      "scroll": true,
-      "showHeader": true,
-      "sort": {
-        "col": 0,
-        "desc": true
-      },
       "targets": [
         {
           "alias": "",
@@ -263,6 +251,7 @@
             "inspect": false
           },
           "decimals": 2,
+          "displayName": "",
           "mappings": [],
           "thresholds": {
             "mode": "absolute",
@@ -301,7 +290,6 @@
           }
         ]
       },
-      "fontSize": "100%",
       "gridPos": {
         "h": 3,
         "w": 6,
@@ -314,12 +302,6 @@
         "showHeader": true
       },
       "pluginVersion": "12.1.0",
-      "scroll": true,
-      "showHeader": true,
-      "sort": {
-        "col": 0,
-        "desc": true
-      },
       "targets": [
         {
           "alias": "",
@@ -359,6 +341,7 @@
             "inspect": false
           },
           "decimals": 2,
+          "displayName": "",
           "mappings": [],
           "thresholds": {
             "mode": "absolute",
@@ -397,7 +380,6 @@
           }
         ]
       },
-      "fontSize": "100%",
       "gridPos": {
         "h": 3,
         "w": 6,
@@ -410,12 +392,6 @@
         "showHeader": true
       },
       "pluginVersion": "12.1.0",
-      "scroll": true,
-      "showHeader": true,
-      "sort": {
-        "col": 0,
-        "desc": true
-      },
       "targets": [
         {
           "alias": "",
@@ -455,6 +431,7 @@
             "inspect": false
           },
           "decimals": 2,
+          "displayName": "",
           "mappings": [],
           "thresholds": {
             "mode": "absolute",
@@ -493,7 +470,6 @@
           }
         ]
       },
-      "fontSize": "100%",
       "gridPos": {
         "h": 3,
         "w": 6,
@@ -506,12 +482,6 @@
         "showHeader": true
       },
       "pluginVersion": "12.1.0",
-      "scroll": true,
-      "showHeader": true,
-      "sort": {
-        "col": 0,
-        "desc": true
-      },
       "targets": [
         {
           "alias": "",

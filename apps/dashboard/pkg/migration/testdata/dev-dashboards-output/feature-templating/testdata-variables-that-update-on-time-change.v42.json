@@ -137,7 +137,6 @@
         "definition": "value.$__from",
         "hide": 0,
         "includeAll": false,
-        "index": -1,
         "multi": false,
         "name": "updatesOnTime",
         "options": [],
@@ -162,7 +161,6 @@
         "definition": "value.$updatesOnTime",
         "hide": 0,
         "includeAll": false,
-        "index": -1,
         "multi": false,
         "name": "dependsOnFirst",
         "options": [],
@@ -199,9 +197,6 @@
   "timezone": "",
   "title": "Templating - Variables That Refresh On Time Change",
   "uid": "HeUnbEuZk",
-  "variables": {
-    "list": []
-  },
   "version": 13,
   "weekStart": ""
 }

@@ -89,6 +89,7 @@ func isEmptyObject(value interface{}) bool {
 }
 
 // alignCurrentWithMulti aligns the current property with the multi property
+// This matches the frontend's alignCurrentWithMulti function behavior
 func alignCurrentWithMulti(current map[string]interface{}, multi bool) map[string]interface{} {
 	if current == nil {
 		return current
@@ -100,7 +101,7 @@ func alignCurrentWithMulti(current map[string]interface{}, multi bool) map[strin
 	}
 
 	if multi {
-		// Convert single values to arrays
+		// Convert single values to arrays (both value and text must be arrays)
 		if value, ok := result["value"]; ok {
 			if !utils.IsArray(value) {
 				result["value"] = []interface{}{value}
@@ -112,7 +113,7 @@ func alignCurrentWithMulti(current map[string]interface{}, multi bool) map[strin
 			}
 		}
 	} else {
-		// Convert arrays to single values
+		// Convert arrays to single values (both value and text must be single values)
 		if value, ok := result["value"]; ok {
 			if utils.IsArray(value) {
 				if arr, ok := value.([]interface{}); ok && len(arr) > 0 {

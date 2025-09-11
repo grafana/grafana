@@ -35,6 +35,7 @@
             "inspect": false
           },
           "decimals": 2,
+          "displayName": "",
           "mappings": [],
           "thresholds": {
             "mode": "absolute",
@@ -163,7 +164,6 @@
           }
         ]
       },
-      "fontSize": "100%",
       "gridPos": {
         "h": 11,
         "w": 12,
@@ -175,14 +175,7 @@
         "cellHeight": "sm",
         "showHeader": true
       },
-      "pageSize": 10,
       "pluginVersion": "12.1.0",
-      "scroll": true,
-      "showHeader": true,
-      "sort": {
-        "col": 0,
-        "desc": true
-      },
       "targets": [
         {
           "alias": "server1",
@@ -233,6 +226,7 @@
             "inspect": false
           },
           "decimals": 2,
+          "displayName": "",
           "mappings": [],
           "thresholds": {
             "mode": "absolute",
@@ -361,7 +355,6 @@
           }
         ]
       },
-      "fontSize": "100%",
       "gridPos": {
         "h": 11,
         "w": 12,
@@ -373,14 +366,7 @@
         "cellHeight": "sm",
         "showHeader": true
       },
-      "pageSize": 10,
       "pluginVersion": "12.1.0",
-      "scroll": true,
-      "showHeader": true,
-      "sort": {
-        "col": 0,
-        "desc": true
-      },
       "targets": [
         {
           "alias": "server1",
@@ -436,6 +422,7 @@
             "inspect": false
           },
           "decimals": 2,
+          "displayName": "",
           "mappings": [],
           "thresholds": {
             "mode": "absolute",
@@ -519,7 +506,6 @@
           }
         ]
       },
-      "fontSize": "100%",
       "gridPos": {
         "h": 7,
         "w": 24,
@@ -532,12 +518,6 @@
         "showHeader": true
       },
       "pluginVersion": "12.1.0",
-      "scroll": true,
-      "showHeader": true,
-      "sort": {
-        "col": 0,
-        "desc": true
-      },
       "targets": [
         {
           "alias": "ColorValue",
@@ -579,6 +559,7 @@
             "inspect": false
           },
           "decimals": 2,
+          "displayName": "",
           "mappings": [],
           "thresholds": {
             "mode": "absolute",
@@ -707,7 +688,6 @@
           }
         ]
       },
-      "fontSize": "100%",
       "gridPos": {
         "h": 8,
         "w": 24,
@@ -720,12 +700,6 @@
         "showHeader": true
       },
       "pluginVersion": "12.1.0",
-      "scroll": true,
-      "showHeader": true,
-      "sort": {
-        "col": 0,
-        "desc": true
-      },
       "targets": [
         {
           "alias": "ColorValue",
@@ -776,6 +750,7 @@
             "inspect": false
           },
           "decimals": 2,
+          "displayName": "",
           "mappings": [],
           "thresholds": {
             "mode": "absolute",
@@ -924,7 +899,6 @@
           }
         ]
       },
-      "fontSize": "100%",
       "gridPos": {
         "h": 10,
         "w": 24,
@@ -936,14 +910,7 @@
         "cellHeight": "sm",
         "showHeader": true
       },
-      "pageSize": 20,
       "pluginVersion": "12.1.0",
-      "scroll": true,
-      "showHeader": true,
-      "sort": {
-        "col": 0,
-        "desc": true
-      },
       "targets": [
         {
           "alias": "ColorValue",

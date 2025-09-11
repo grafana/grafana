@@ -733,7 +733,6 @@
       "datasource": {
         "type": "grafana-testdata-datasource"
       },
-      "fontSize": "100%",
       "gridPos": {
         "h": 10,
         "w": 16,
@@ -755,11 +754,6 @@
         "showRowNums": false
       },
       "pluginVersion": "9.5.0-pre",
-      "showHeader": true,
-      "sort": {
-        "col": 0,
-        "desc": true
-      },
       "styles": [
         {
           "alias": "Time",

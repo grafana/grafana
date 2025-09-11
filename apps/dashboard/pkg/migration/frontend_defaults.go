@@ -716,6 +716,10 @@ func removeNonPersistedProperties(dashboard map[string]interface{}) {
 			delete(dashboard, k)
 		}
 	}
+
+	// Remove properties that frontend filters out in getSaveModel
+	// Frontend omits these properties in the save model
+	delete(dashboard, "variables")
 }
 
 // removeNullValues removes null values to match frontend's JSON.stringify/parse behavior
@@ -751,6 +755,10 @@ func cleanupVariable(variable map[string]interface{}) {
 	if variable["datasource"] == nil {
 		delete(variable, "datasource")
 	}
+
+	// Remove properties that frontend filters out in getSaveModel
+	// Frontend omits these properties in the save model
+	delete(variable, "index")
 
 	// Apply variable type-specific logic
 	if variableType, ok := variable["type"].(string); ok {

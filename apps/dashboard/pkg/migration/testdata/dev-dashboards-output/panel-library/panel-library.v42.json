@@ -135,11 +135,6 @@
       }
     },
     {
-      "datasource": {
-        "apiVersion": "v1",
-        "type": "grafana-testdata-datasource",
-        "uid": "testdata-type-uid"
-      },
       "gridPos": {
         "h": 6,
         "w": 6,
@@ -151,23 +146,9 @@
         "name": "React Table",
         "uid": "MAnX2ifMk"
       },
-      "targets": [
-        {
-          "datasource": {
-            "apiVersion": "v1",
-            "type": "grafana-testdata-datasource",
-            "uid": "testdata-type-uid"
-          },
-          "refId": "A"
-        }
-      ]
+      "title": ""
     },
     {
-      "datasource": {
-        "apiVersion": "v1",
-        "type": "grafana-testdata-datasource",
-        "uid": "testdata-type-uid"
-      },
       "gridPos": {
         "h": 16,
         "w": 12,
@@ -179,16 +160,7 @@
         "name": "React Gauge",
         "uid": "g1sNpCaMz"
       },
-      "targets": [
-        {
-          "datasource": {
-            "apiVersion": "v1",
-            "type": "grafana-testdata-datasource",
-            "uid": "testdata-type-uid"
-          },
-          "refId": "A"
-        }
-      ]
+      "title": ""
     }
   ],
   "refresh": "",

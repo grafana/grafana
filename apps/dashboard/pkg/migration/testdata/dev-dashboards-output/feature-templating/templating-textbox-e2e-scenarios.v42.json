@@ -1,33 +1,4 @@
 {
-  "__inputs": [
-    {
-      "description": "",
-      "label": "gdev-testdata",
-      "name": "DS_GDEV-TESTDATA",
-      "pluginId": "testdata",
-      "type": "datasource"
-    }
-  ],
-  "__requires": [
-    {
-      "id": "grafana",
-      "name": "Grafana",
-      "type": "grafana",
-      "version": "7.4.0-pre"
-    },
-    {
-      "id": "testdata",
-      "name": "TestData",
-      "type": "datasource",
-      "version": "1.0.0"
-    },
-    {
-      "id": "text",
-      "name": "Text",
-      "type": "panel",
-      "version": ""
-    }
-  ],
   "annotations": {
     "list": [
       {
@@ -46,7 +17,6 @@
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 0,
-  "id": null,
   "links": [],
   "panels": [
     {
