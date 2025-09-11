@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/authlib/types"
 	"github.com/grafana/dskit/ring"
 	"github.com/grafana/dskit/services"
+
 	infraDB "github.com/grafana/grafana/pkg/infra/db"
 	secrets "github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	inlinesecurevalue "github.com/grafana/grafana/pkg/registry/apis/secret/inline"
@@ -119,7 +120,6 @@ func NewResourceServer(
 	serverOptions.QOSQueue = opts.QOSQueue
 	serverOptions.Ring = opts.Ring
 	serverOptions.RingLifecycler = opts.RingLifecycler
-	serverOptions.SearchAfterWrite = opts.Features.IsEnabledGlobally(featuremgmt.FlagUnifiedStorageSearchAfterWriteExperimentalAPI)
 
 	return resource.NewResourceServer(serverOptions)
 }
