@@ -69,6 +69,9 @@ func main() {
 	appCfg := app.AppConfig{
 		ZanzanaClientCfg:          cfg.ZanzanaClient,
 		FolderReconcilerNamespace: cfg.FolderReconciler.Namespace,
+		InformerConfig: app.InformerConfig{
+			MaxConcurrentWorkers: cfg.FolderReconciler.MaxConcurrentWorkers,
+		},
 	}
 
 	// Run
