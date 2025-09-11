@@ -139,7 +139,7 @@ export function Workbench({ domain, data, queryRunner }: WorkbenchProps) {
           <SummaryStatsReact />
           <SummaryChartReact />
         </div>
-        <div className={cx(styles.groupItemWrapper(leftColumnWidth), styles.stickyHeader, styles.headerContainer)}>
+        <div className={cx(styles.groupItemWrapper(leftColumnWidth), styles.headerContainer)}>
           <EditorColumnHeader label={t('alerting.left-column.label-instances', 'Instances')} />
           <EditorColumnHeader>
             <TimelineHeader domain={domain} />
@@ -165,11 +165,6 @@ export function Workbench({ domain, data, queryRunner }: WorkbenchProps) {
 export const getStyles = (theme: GrafanaTheme2) => {
   const summaryHeight = 200;
   return {
-    stickyHeader: css({
-      position: 'sticky',
-      top: 0,
-      zIndex: 1,
-    }),
     groupsContainer: css({
       position: 'absolute',
       width: '100%',
