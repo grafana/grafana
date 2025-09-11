@@ -1640,8 +1640,8 @@ github.com/grafana/nanogit v0.0.0-20250723104447-68f58f5ecec0 h1:cS0SlJGIlZbmDLc
 github.com/grafana/nanogit v0.0.0-20250723104447-68f58f5ecec0/go.mod h1:ToqLjIdvV3AZQa3K6e5m9hy/nsGaUByc2dWQlctB9iA=
 github.com/grafana/otel-profiling-go v0.5.1 h1:stVPKAFZSa7eGiqbYuG25VcqYksR6iWvF3YH66t4qL8=
 github.com/grafana/otel-profiling-go v0.5.1/go.mod h1:ftN/t5A/4gQI19/8MoWurBEtC6gFw8Dns1sJZ9W4Tls=
-github.com/grafana/prometheus-alertmanager v0.25.1-0.20250821192752-903ba9e90238 h1:0UYzSzpVFKCc4OhVB8dZai3lO0ANg7IIdSZhMiBhdOg=
-github.com/grafana/prometheus-alertmanager v0.25.1-0.20250821192752-903ba9e90238/go.mod h1:O/QP1BCm0HHIzbKvgMzqb5sSyH88rzkFk84F4TfJjBU=
+github.com/grafana/prometheus-alertmanager v0.25.1-0.20250911094103-5456b6e45604 h1:aXfUhVN/Ewfpbko2CCtL65cIiGgwStOo4lWH2b6gw2U=
+github.com/grafana/prometheus-alertmanager v0.25.1-0.20250911094103-5456b6e45604/go.mod h1:O/QP1BCm0HHIzbKvgMzqb5sSyH88rzkFk84F4TfJjBU=
 github.com/grafana/pyroscope-go/godeltaprof v0.1.8 h1:iwOtYXeeVSAeYefJNaxDytgjKtUuKQbJqgAIjlnicKg=
 github.com/grafana/pyroscope-go/godeltaprof v0.1.8/go.mod h1:2+l7K7twW49Ct4wFluZD3tZ6e0SjanjcUUBPVD/UuGU=
 github.com/grafana/pyroscope/api v1.2.1-0.20250415190842-3ff7247547ae h1:35W3Wjp9KWnSoV/DuymmyIj5aHE0CYlDQ5m2KeXUPAc=
