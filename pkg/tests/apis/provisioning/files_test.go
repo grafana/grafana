@@ -322,6 +322,9 @@ func TestIntegrationProvisioning_MoveResources(t *testing.T) {
 		})
 		// nolint:errcheck
 		defer resp.Body.Close()
+		body, err := io.ReadAll(resp.Body)
+		require.NoError(t, err, "should read response body")
+		t.Logf("Response Body: %s", string(body))
 		require.Equal(t, http.StatusOK, resp.StatusCode, "directory move should succeed")
 
 		// Verify source directory no longer exists
