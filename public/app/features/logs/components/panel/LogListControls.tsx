@@ -722,7 +722,7 @@ const WrapLogMessageButton = ({ expanded }: LogSelectOptionProps) => {
     ? t('logs.logs-controls.line-wrapping.state.hide', 'Wrap disabled')
     : wrapLogMessage && !prettifyJSON
       ? t('logs.logs-controls.line-wrapping.state.wrap', 'Wrap lines')
-      : t('logs.logs-controls.line-wrapping.state.json', 'Wrap json');
+      : t('logs.logs-controls.line-wrapping.state.json', 'Wrap JSON');
 
   const tooltip = t('logs.logs-controls.line-wrapping.tooltip', 'Set line wrap');
 
