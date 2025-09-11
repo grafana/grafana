@@ -384,6 +384,8 @@ func newDummyTransport(name string) *dummyTransport {
 	return &dummyTransport{name: name}
 }
 
+// There is a duplication of this function in the identity package. pkg/apimachinery/identity/requester_test.go.
+// If you need to copy it, place it as a test helper function in the identity package.
 var testKey = decodePrivateKey([]byte(`
 -----BEGIN EC PRIVATE KEY-----
 MHcCAQEEID6lXWsmcv/UWn9SptjOThsy88cifgGIBj2Lu0M9I8tQoAoGCCqGSM49

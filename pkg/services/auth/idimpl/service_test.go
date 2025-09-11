@@ -2,6 +2,10 @@ package idimpl
 
 import (
 	"context"
+	"crypto/ecdsa"
+	"crypto/x509"
+	"encoding/pem"
+	"fmt"
 	"testing"
 
 	"github.com/go-jose/go-jose/v4"
@@ -36,11 +40,36 @@ func Test_ProvideService(t *testing.T) {
 	})
 }
 
+var testKey = decodePrivateKey([]byte(`
+-----BEGIN EC PRIVATE KEY-----
+MHcCAQEEID6lXWsmcv/UWn9SptjOThsy88cifgGIBj2Lu0M9I8tQoAoGCCqGSM49
+AwEHoUQDQgAEsf6eNnNMNhl+q7jXsbdUf3ADPh248uoFUSSV9oBzgptyokHCjJz6
+n6PKDm2W7i3S2+dAs5M5f3s7d8KiLjGZdQ==
+-----END EC PRIVATE KEY-----
+`))
+
+func decodePrivateKey(data []byte) *ecdsa.PrivateKey {
+	block, _ := pem.Decode(data)
+	if block == nil {
+		panic("should include PEM block")
+	}
+
+	privateKey, err := x509.ParseECPrivateKey(block.Bytes)
+	if err != nil {
+		panic(fmt.Sprintf("should be able to parse ec private key: %v", err))
+
+	}
+	if privateKey.Curve.Params().Name != "P-256" {
+		panic("should be valid private key")
+	}
+
+	return privateKey
+}
+
 func TestService_SignIdentity(t *testing.T) {
 	signer := &idtest.FakeSigner{
 		SignIDTokenFn: func(_ context.Context, claims *auth.IDClaims) (string, error) {
-			key := []byte("key")
-			s, err := jose.NewSigner(jose.SigningKey{Algorithm: jose.HS256, Key: key}, nil)
+			s, err := jose.NewSigner(jose.SigningKey{Algorithm: jose.ES256, Key: testKey}, nil)
 			require.NoError(t, err)
 
 			token, err := jwt.Signed(s).Claims(claims.Claims).Claims(claims.Rest).Serialize()
