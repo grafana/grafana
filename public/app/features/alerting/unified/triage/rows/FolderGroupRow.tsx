@@ -2,15 +2,14 @@ import { css } from '@emotion/css';
 import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { useStyles2 } from '@grafana/ui';
+import { Stack, Text, useStyles2 } from '@grafana/ui';
 
-import { getLabelColor } from '../../components/AlertLabels';
-import { Label } from '../../components/Label';
+import { MetaText } from '../../components/MetaText';
 import { GenericGroupedRow } from '../types';
 
 import { GenericRow } from './GenericRow';
 
-interface GroupRowProps {
+interface FolderGroupRowProps {
   row: GenericGroupedRow;
   leftColumnWidth: number;
   rowKey: React.Key;
@@ -18,7 +17,7 @@ interface GroupRowProps {
   children?: React.ReactNode;
 }
 
-export const GroupRow = ({ row, leftColumnWidth, rowKey, depth = 0, children }: GroupRowProps) => {
+export const FolderGroupRow = ({ row, leftColumnWidth, rowKey, depth = 0, children }: FolderGroupRowProps) => {
   const styles = useStyles2(getStyles);
 
   return (
@@ -26,16 +25,14 @@ export const GroupRow = ({ row, leftColumnWidth, rowKey, depth = 0, children }: 
       key={rowKey}
       width={leftColumnWidth}
       title={
-        <Label
-          size="sm"
-          label={row.metadata.label}
-          value={row.metadata.value}
-          color={getLabelColor(row.metadata.label)}
-        />
+        <Stack direction="row" gap={0.5} alignItems="center">
+          <MetaText icon="folder" />
+          <Text color="primary">{row.metadata.value}</Text>
+        </Stack>
       }
       isOpenByDefault={true}
-      leftColumnClassName={styles.groupRow}
-      rightColumnClassName={styles.groupRow}
+      leftColumnClassName={styles.folderGroupRow}
+      rightColumnClassName={styles.folderGroupRow}
       depth={depth}
     >
       {children}
@@ -44,7 +41,7 @@ export const GroupRow = ({ row, leftColumnWidth, rowKey, depth = 0, children }: 
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  groupRow: css({
+  folderGroupRow: css({
     backgroundColor: theme.colors.background.secondary,
   }),
 });

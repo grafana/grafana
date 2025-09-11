@@ -15,6 +15,7 @@ import LoadMoreHelper from '../rule-list/LoadMoreHelper';
 import { TimelineHeader } from './Timeline';
 import { WorkbenchProvider } from './WorkbenchContext';
 import { AlertRuleRow } from './rows/AlertRuleRow';
+import { FolderGroupRow } from './rows/FolderGroupRow';
 import { GroupRow } from './rows/GroupRow';
 import { generateRowKey, isAlertRuleRow } from './rows/utils';
 import { SummaryChartReact } from './scene/SummaryChart';
@@ -30,6 +31,38 @@ type WorkbenchProps = {
 };
 
 const initialSize = 1 / 3;
+
+// Helper function to recursively render WorkbenchRow items with children pattern
+function renderWorkbenchRow(
+  row: WorkbenchRow,
+  leftColumnWidth: number,
+  domain: Domain,
+  key: React.Key,
+  depth = 0
+): React.ReactElement {
+  if (isAlertRuleRow(row)) {
+    return <AlertRuleRow key={key} row={row} leftColumnWidth={leftColumnWidth} rowKey={key} depth={depth} />;
+  } else {
+    const children = row.rows.map((childRow, childIndex) =>
+      renderWorkbenchRow(childRow, leftColumnWidth, domain, `${key}-${generateRowKey(childRow, childIndex)}`, depth + 1)
+    );
+
+    // Check if this is a grafana_folder group and use FolderGroupRow
+    if (row.metadata.label === 'grafana_folder') {
+      return (
+        <FolderGroupRow key={key} row={row} leftColumnWidth={leftColumnWidth} rowKey={key} depth={depth}>
+          {children}
+        </FolderGroupRow>
+      );
+    }
+
+    return (
+      <GroupRow key={key} row={row} leftColumnWidth={leftColumnWidth} rowKey={key} depth={depth}>
+        {children}
+      </GroupRow>
+    );
+  }
+}
 
 /**
  * The workbench displays groups of alerts, each group containing metadata and a chart.
@@ -118,20 +151,7 @@ export function Workbench({ domain, data, queryRunner }: WorkbenchProps) {
             <ScrollContainer height="100%" width="100%" scrollbarWidth="none" showScrollIndicators>
               {dataSlice.map((row, index) => {
                 const rowKey = generateRowKey(row, index);
-
-                if (isAlertRuleRow(row)) {
-                  return <AlertRuleRow key={rowKey} row={row} leftColumnWidth={leftColumnWidth} rowKey={rowKey} />;
-                } else {
-                  return (
-                    <GroupRow
-                      key={rowKey}
-                      row={row}
-                      leftColumnWidth={leftColumnWidth}
-                      domain={domain}
-                      rowKey={rowKey}
-                    />
-                  );
-                }
+                return renderWorkbenchRow(row, leftColumnWidth, domain, rowKey);
               })}
               {hasMore && <LoadMoreHelper handleLoad={() => setPageIndex((prevIndex) => prevIndex + 1)} />}
             </ScrollContainer>

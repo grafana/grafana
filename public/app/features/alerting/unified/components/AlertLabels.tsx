@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { chain } from 'lodash';
-import { useState } from 'react';
+import { CSSProperties, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
@@ -15,10 +15,11 @@ interface Props {
   commonLabels?: Record<string, string>;
   size?: LabelSize;
   onClick?: (label: string, value: string) => void;
+  wrap?: CSSProperties['flexWrap'];
 }
 
-export const AlertLabels = ({ labels, commonLabels = {}, size, onClick }: Props) => {
-  const styles = useStyles2(getStyles, size);
+export const AlertLabels = ({ labels, commonLabels = {}, size, onClick, wrap }: Props) => {
+  const styles = useStyles2(getStyles, size, wrap);
   const [showCommonLabels, setShowCommonLabels] = useState(false);
 
   const labelsToShow = chain(labels)
@@ -79,11 +80,11 @@ export function getLabelColor(input: string): string {
   return getTagColorsFromName(input).color;
 }
 
-const getStyles = (theme: GrafanaTheme2, size?: LabelSize) => {
+const getStyles = (theme: GrafanaTheme2, size?: LabelSize, wrap: CSSProperties['flexWrap'] = 'wrap') => {
   return {
     wrapper: css({
       display: 'flex',
-      flexWrap: 'wrap',
+      flexWrap: wrap,
       alignItems: 'center',
 
       gap: size === 'md' ? theme.spacing() : theme.spacing(0.5),

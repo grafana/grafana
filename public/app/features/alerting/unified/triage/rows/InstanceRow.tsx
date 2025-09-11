@@ -87,7 +87,7 @@ export function InstanceRow({ instance, commonLabels, leftColumnWidth, timeRange
             <Trans i18nKey="alerting.triage.no-labels">No labels</Trans>
           </div>
         ) : (
-          <AlertLabels labels={labels} commonLabels={commonLabels} size="sm" />
+          <AlertLabels labels={labels} commonLabels={commonLabels} size="xs" wrap="nowrap" />
         )
       }
       content={
