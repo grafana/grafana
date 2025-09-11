@@ -58,8 +58,9 @@ func validateOnCreate(ctx context.Context, f *folders.Folder, getter parentsGett
 		return fmt.Errorf("unable to create folder inside parent: %w", err)
 	}
 
-	// Can not create a folder that will be too deep
-	if len(parents.Items)+1 > maxDepth {
+	// Can not create a folder that will be too deep.
+	// We need to add +1 as we also have the root folder as part of the parents.
+	if len(parents.Items) > maxDepth+1 {
 		return fmt.Errorf("folder max depth exceeded, max depth is %d", maxDepth)
 	}
 
