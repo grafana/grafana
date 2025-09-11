@@ -2,6 +2,7 @@ import { readdirSync, readFileSync, statSync } from 'fs';
 import path from 'path';
 
 import { variableAdapters } from 'app/features/variables/adapters';
+import { createAdHocVariableAdapter } from 'app/features/variables/adhoc/adapter';
 import { createConstantVariableAdapter } from 'app/features/variables/constant/adapter';
 import { createCustomVariableAdapter } from 'app/features/variables/custom/adapter';
 import { createDataSourceVariableAdapter } from 'app/features/variables/datasource/adapter';
@@ -58,6 +59,7 @@ variableAdapters.register(createConstantVariableAdapter());
 variableAdapters.register(createIntervalVariableAdapter());
 variableAdapters.register(createCustomVariableAdapter());
 variableAdapters.register(createTextBoxVariableAdapter());
+variableAdapters.register(createAdHocVariableAdapter());
 
 describe('Dev Dashboard Backend / Frontend result comparison', () => {
   beforeEach(() => {
