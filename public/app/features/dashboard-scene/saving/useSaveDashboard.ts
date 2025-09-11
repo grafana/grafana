@@ -65,15 +65,29 @@ export function useSaveDashboard(isCopy = false) {
         //Update local storage dashboard to handle things like last used datasource
         updateDashboardUidLastUsedDatasource(resultData.uid);
 
+        // For analytics tracking, get all expression types used in dashboard
+        const expressionTypes = scene.getExpressionTypes(saveModel);
+
         if (isCopy) {
           reportInteraction('grafana_dashboard_copied', {
             name: saveModel.title,
             url: resultData.url,
+            hasExpression: expressionTypes.length > 0,
+            expression_types: expressionTypes,
           });
         } else {
+          console.log('reportInteraction', {
+            event: `grafana_dashboard_${options.isNew ? 'created' : 'saved'}`,
+            name: saveModel.title,
+            url: resultData.url,
+            hasExpression: expressionTypes.length > 0,
+            expression_types: expressionTypes,
+          });
           reportInteraction(`grafana_dashboard_${options.isNew ? 'created' : 'saved'}`, {
             name: saveModel.title,
             url: resultData.url,
+            hasExpression: expressionTypes.length > 0,
+            expression_types: expressionTypes,
           });
         }
 

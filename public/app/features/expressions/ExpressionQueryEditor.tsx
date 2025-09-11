@@ -3,6 +3,7 @@ import { useCallback, useEffect, useRef } from 'react';
 
 import { DataSourceApi, GrafanaTheme2, QueryEditorProps } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
+import { reportInteraction } from '@grafana/runtime';
 import { Button, IconButton, InlineField, PopoverContent, useStyles2 } from '@grafana/ui';
 
 import { ClassicConditions } from './components/ClassicConditions';
@@ -84,12 +85,34 @@ export function ExpressionQueryEditor(props: ExpressionQueryEditorProps) {
 
   const styles = useStyles2(getStyles);
 
+  const hasTrackedAddExpression = useRef(false);
+
+  useEffect(() => {
+    if (query.type && !hasTrackedAddExpression.current) {
+      reportInteraction('dashboards_expression_interaction', {
+        action: 'add_expression',
+        expression_type: query.type,
+        expressionRef: query.refId,
+        context: 'expression_editor',
+      });
+      hasTrackedAddExpression.current = true;
+    }
+  }, [query.type, query.refId]);
+
   useEffect(() => {
     setCachedExpression(query.type, query.expression);
   }, [query.expression, query.type, setCachedExpression]);
 
   const onSelectExpressionType = useCallback(
     (value: ExpressionQueryType) => {
+      reportInteraction('dashboards_expression_interaction', {
+        action: 'change_expression_type',
+        from_type: query.type,
+        expression_type: value,
+        expressionRef: query.refId,
+        context: 'expression_editor',
+      });
+
       const cachedExpression = getCachedExpression(value!);
       const defaults = getDefaults({ ...query, type: value! });
 

@@ -15,7 +15,7 @@ import {
   SceneVariableDependencyConfigLike,
   VizPanel,
 } from '@grafana/scenes';
-import { Dashboard, DashboardLink, LibraryPanel } from '@grafana/schema';
+import { Dashboard, DashboardLink, LibraryPanel, Panel } from '@grafana/schema';
 import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2';
 import appEvents from 'app/core/app_events';
 import { ScrollRefElement } from 'app/core/components/NativeScrollbar';
@@ -724,6 +724,30 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
 
   public getDashboardPanels() {
     return dashboardSceneGraph.getVizPanels(this);
+  }
+
+  public getExpressionTypes(saveModel?: Dashboard | DashboardV2Spec): string[] {
+    const model = saveModel ?? this.getSaveModel();
+
+    // Early return for non-V1 dashboards
+    if (!('panels' in model) || !model.panels?.length) {
+      return [];
+    }
+
+    const expressionTypes = new Set<string>();
+
+    const allTargets = model.panels
+      .filter((panel): panel is Panel => 'targets' in panel && Boolean(panel.targets?.length))
+      .flatMap(({ targets }) => targets || []);
+
+    for (const target of allTargets) {
+      const targetType = target?.type;
+      if (typeof targetType === 'string' && targetType) {
+        expressionTypes.add(targetType);
+      }
+    }
+
+    return Array.from(expressionTypes);
   }
 
   public onSetScrollRef = (scrollElement: ScrollRefElement): void => {
