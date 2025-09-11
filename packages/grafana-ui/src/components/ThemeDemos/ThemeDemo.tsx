@@ -316,7 +316,7 @@ export function RichColorDemo({ theme, color }: RichColorDemoProps) {
         <div
           className={css({
             background: color.shade,
-            color: color.contrastText,
+            color: theme.colors.getContrastText(color.shade, 4.5),
             borderRadius: theme.shape.radius.default,
             padding: '8px',
           })}

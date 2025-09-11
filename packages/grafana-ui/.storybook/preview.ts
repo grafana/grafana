@@ -183,6 +183,9 @@ const preview: Preview = {
   },
   tags: ['autodocs'],
   loaders: [mswLoader],
+  initialGlobals: {
+    theme: process.env.STORYBOOK_THEME || 'system',
+  },
 };
 
 export default preview;
