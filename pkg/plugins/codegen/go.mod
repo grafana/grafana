@@ -18,7 +18,7 @@ require (
 	github.com/dave/dst v0.27.3 // indirect
 	github.com/emicklei/proto v1.13.2 // indirect
 	github.com/expr-lang/expr v1.17.2 // indirect
-	github.com/getkin/kin-openapi v0.133.0 // indirect
+	github.com/getkin/kin-openapi v0.132.0 // indirect
 	github.com/go-openapi/jsonpointer v0.21.0 // indirect
 	github.com/go-openapi/swag v0.23.0 // indirect
 	github.com/google/go-cmp v0.7.0 // indirect
@@ -40,7 +40,6 @@ require (
 	github.com/protocolbuffers/txtpbfmt v0.0.0-20241112170944-20d2c9ebc01d // indirect
 	github.com/rogpeppe/go-internal v1.14.1 // indirect
 	github.com/santhosh-tekuri/jsonschema/v5 v5.3.1 // indirect
-	github.com/woodsbury/decimal128 v1.3.0 // indirect
 	github.com/xlab/treeprint v1.2.0 // indirect
 	github.com/yalue/merged_fs v1.3.0 // indirect
 	golang.org/x/mod v0.28.0 // indirect
