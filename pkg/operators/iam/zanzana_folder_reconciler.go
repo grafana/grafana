@@ -106,6 +106,8 @@ func buildIAMConfigFromSettings(cfg *setting.Cfg) (*iamConfig, error) {
 	}
 	iamCfg.AppConfig.ZanzanaClientCfg.URL = zanzanaURL
 
+	iamCfg.AppConfig.InformerConfig.MaxConcurrentWorkers = operatorSec.Key("max_concurrent_workers").MustUint64(20)
+
 	folderAppURL := operatorSec.Key("folder_app_url").MustString("")
 	if folderAppURL == "" {
 		return nil, fmt.Errorf("folder_app_url is required in [operator] section")
