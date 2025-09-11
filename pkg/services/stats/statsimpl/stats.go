@@ -106,7 +106,9 @@ func (ss *sqlStatsService) getRepositoryCount(ctx context.Context, orgs []*org.O
 		if err != nil {
 			return 0, err
 		}
-		total += resp.Stats[0].Count
+		if len(resp.Stats) != 0 {
+			total += resp.Stats[0].Count
+		}
 	}
 	return total, nil
 }
