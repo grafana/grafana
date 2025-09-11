@@ -1258,7 +1258,8 @@ func TestKvStorageBackend_PruneEvents(t *testing.T) {
 			Group:     "apps",
 			Resource:  "resources",
 			Name:      "test-resource",
-		}, SortOrderDesc) {
+			Sort:      SortOrderDesc,
+		}) {
 			require.NoError(t, err)
 			require.NotEqual(t, rv1, datakey.ResourceVersion)
 			counter++
@@ -1324,7 +1325,8 @@ func TestKvStorageBackend_PruneEvents(t *testing.T) {
 			Group:     "apps",
 			Resource:  "resources",
 			Name:      "test-resource",
-		}, SortOrderDesc) {
+			Sort:      SortOrderDesc,
+		}) {
 			require.NoError(t, err)
 			counter++
 		}
@@ -1391,7 +1393,8 @@ func TestKvStorageBackend_PruneEvents(t *testing.T) {
 			Group:     "apps",
 			Resource:  "resources",
 			Name:      "test-resource",
-		}, SortOrderDesc) {
+			Sort:      SortOrderDesc,
+		}) {
 			require.NoError(t, err)
 			counter++
 		}
