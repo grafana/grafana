@@ -503,6 +503,7 @@ func cleanupPanelForSaveWithContext(panel map[string]interface{}, isNested bool)
 		"key":                     true,
 		"isNew":                   true,
 		"refreshWhenInView":       true,
+		"scopedVars":              true, // Frontend removes scopedVars from save model
 	}
 
 	// Default values that should be filtered out if they match (defaults)
@@ -557,6 +558,12 @@ func cleanupPanelForSaveWithContext(panel map[string]interface{}, isNested bool)
 
 // filterDefaultValues removes properties that match the default values (matches frontend's isEqual logic)
 func filterDefaultValues(panel map[string]interface{}, originalProperties map[string]bool) {
+	// Get panel type for panel-specific defaults
+	panelType := ""
+	if t, ok := panel["type"].(string); ok {
+		panelType = t
+	}
+
 	// PanelModel defaults from frontend
 	defaults := map[string]interface{}{
 		"gridPos": map[string]interface{}{
@@ -575,6 +582,19 @@ func filterDefaultValues(panel map[string]interface{}, originalProperties map[st
 			"overrides": []interface{}{},
 		},
 		"title": "",
+	}
+
+	// Add panel-specific defaults
+	if panelType == "table" {
+		// Table panel legacy properties that should be filtered out
+		// These are not part of the current table panel schema and frontend filters them out
+		// We need to filter them out regardless of their values since they're legacy properties
+		legacyTableProps := []string{"fontSize", "pageSize", "scroll", "showHeader", "sort"}
+		for _, prop := range legacyTableProps {
+			if _, exists := panel[prop]; exists {
+				delete(panel, prop)
+			}
+		}
 	}
 
 	// Remove properties that match defaults, but preserve properties that were originally present
@@ -763,8 +783,25 @@ func cleanupVariable(variable map[string]interface{}) {
 // cleanupPanels cleans up panels and ensures panels property always exists
 func cleanupPanels(dashboard map[string]interface{}) {
 	if panels, ok := dashboard["panels"].([]interface{}); ok {
-		cleanupPanelList(panels)
-		sortPanelsByGridPosition(panels)
+		// Filter out repeated panels (matches frontend getPanelSaveModels behavior)
+		// Frontend filters: !(panel.repeatPanelId || panel.repeatedByRow)
+		filteredPanels := []interface{}{}
+		for _, panelInterface := range panels {
+			if panel, ok := panelInterface.(map[string]interface{}); ok {
+				// Skip panels with repeatPanelId or repeatedByRow
+				if _, hasRepeatPanelId := panel["repeatPanelId"]; hasRepeatPanelId {
+					continue
+				}
+				if _, hasRepeatedByRow := panel["repeatedByRow"]; hasRepeatedByRow {
+					continue
+				}
+				filteredPanels = append(filteredPanels, panel)
+			}
+		}
+
+		cleanupPanelList(filteredPanels)
+		sortPanelsByGridPosition(filteredPanels)
+		dashboard["panels"] = filteredPanels
 	} else {
 		// Ensure panels property exists even if empty (matches frontend behavior)
 		dashboard["panels"] = []interface{}{}
