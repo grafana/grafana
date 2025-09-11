@@ -31,13 +31,7 @@ import { TableCellOptions } from '../Table/types';
 import { inferPills } from './Cells/PillCell';
 import { AutoCellRenderer, getCellRenderer } from './Cells/renderers';
 import { COLUMN, TABLE } from './constants';
-import {
-  TableRow,
-  ColumnTypes,
-  TypographyCtx,
-  MeasureCellHeight,
-  MeasureCellHeightEntry,
-} from './types';
+import { TableRow, ColumnTypes, TypographyCtx, MeasureCellHeight, MeasureCellHeightEntry } from './types';
 
 /* ---------------------------- Cell calculations --------------------------- */
 export type CellNumLinesCalculator = (text: string, cellWidth: number) => number;
