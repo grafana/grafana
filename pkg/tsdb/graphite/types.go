@@ -18,3 +18,16 @@ type GraphiteQuery struct {
 	Tags            []string `json:"tags,omitempty"`
 	FromAnnotations *bool    `json:"fromAnnotations,omitempty"`
 }
+
+type GraphiteEventsRequest struct {
+	Tags  string `json:"tags,omitempty"`
+	From  string `json:"from"`
+	Until string `json:"until"`
+}
+
+type GraphiteEventsResponse struct {
+	When int64    `json:"when"`
+	What string   `json:"what"`
+	Tags []string `json:"tags"`
+	Data string   `json:"data"`
+}
