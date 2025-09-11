@@ -3,8 +3,8 @@ package jwt
 import (
 	"testing"
 
-	jose "github.com/go-jose/go-jose/v3"
-	"github.com/go-jose/go-jose/v3/jwt"
+	jose "github.com/go-jose/go-jose/v4"
+	"github.com/go-jose/go-jose/v4/jwt"
 	"github.com/stretchr/testify/require"
 )
 
