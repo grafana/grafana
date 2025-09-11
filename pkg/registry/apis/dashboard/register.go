@@ -58,6 +58,7 @@ import (
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/storage/unified/apistore"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 var (
@@ -280,7 +281,7 @@ func (b *DashboardsAPIBuilder) validateDelete(ctx context.Context, a admission.A
 	}
 
 	// HACK: deletion validation currently doesn't work for the standalone case. So we currently skip it.
-	if b.isStandalone && b.dashboardProvisioningService == nil {
+	if b.isStandalone && util.IsInterfaceNil(b.dashboardProvisioningService) {
 		return nil
 	}
 
