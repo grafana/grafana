@@ -14,7 +14,7 @@ const createDateTimeFormatter = deepMemoize((locale: string | undefined, options
   try {
     return new Intl.DateTimeFormat(locale, options);
   } catch {
-    return new Intl.DateTimeFormat("en-US", options);
+    return new Intl.DateTimeFormat('en-US', options);
   }
 });
 

@@ -12,7 +12,7 @@ const createDateTimeFormatter = deepMemoize((locale: string, options: Intl.DateT
   try {
     return new Intl.DateTimeFormat(locale, options);
   } catch {
-    return new Intl.DateTimeFormat("en-US", options);
+    return new Intl.DateTimeFormat('en-US', options);
   }
 });
 

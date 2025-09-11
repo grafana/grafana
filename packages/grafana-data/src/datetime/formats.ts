@@ -110,7 +110,7 @@ export function localTimeFormat(
   try {
     dateTimeFormat = new Intl.DateTimeFormat(locale || undefined, options);
   } catch {
-    dateTimeFormat = new Intl.DateTimeFormat("en-US", options);
+    dateTimeFormat = new Intl.DateTimeFormat('en-US', options);
   }
   const parts = dateTimeFormat.formatToParts(new Date());
   const hour12 = dateTimeFormat.resolvedOptions().hour12;
