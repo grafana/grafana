@@ -101,9 +101,10 @@ func applyPanelDefaults(panel map[string]interface{}) {
 	if panel["links"] == nil {
 		panel["links"] = []interface{}{}
 	}
-	if panel["transformations"] == nil {
-		panel["transformations"] = []interface{}{}
-	}
+	// Don't set default transformations - frontend omits empty arrays in save model
+	// if panel["transformations"] == nil {
+	//	panel["transformations"] = []interface{}{}
+	// }
 	if _, exists := panel["fieldConfig"]; !exists {
 		panel["fieldConfig"] = map[string]interface{}{
 			"defaults":  map[string]interface{}{},
@@ -518,7 +519,8 @@ func cleanupPanelForSaveWithContext(panel map[string]interface{}, isNested bool)
 		"transparent":         false,
 		"options":             map[string]interface{}{},
 		"links":               []interface{}{},
-		"transformations":     []interface{}{},
+		// Don't set default transformations - frontend omits empty arrays in save model
+		// "transformations":     []interface{}{},
 		"fieldConfig": map[string]interface{}{
 			"defaults":  map[string]interface{}{},
 			"overrides": []interface{}{},
@@ -529,6 +531,11 @@ func cleanupPanelForSaveWithContext(panel map[string]interface{}, isNested bool)
 	// Remove notPersistedProperties
 	for prop := range notPersistedProps {
 		delete(panel, prop)
+	}
+
+	// Remove empty transformations array - frontend omits empty arrays in save model
+	if transformations, ok := panel["transformations"].([]interface{}); ok && len(transformations) == 0 {
+		delete(panel, "transformations")
 	}
 
 	// Filter out properties that match defaults
@@ -576,7 +583,8 @@ func filterDefaultValues(panel map[string]interface{}, originalProperties map[st
 		"transparent":         false,
 		"options":             map[string]interface{}{},
 		"links":               []interface{}{},
-		"transformations":     []interface{}{},
+		// Don't set default transformations - frontend omits empty arrays in save model
+		// "transformations":     []interface{}{},
 		"fieldConfig": map[string]interface{}{
 			"defaults":  map[string]interface{}{},
 			"overrides": []interface{}{},
