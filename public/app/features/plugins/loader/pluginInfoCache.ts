@@ -2,19 +2,19 @@ import { PluginLoadingStrategy } from '@grafana/data';
 
 import { clearPluginSettingsCache } from '../pluginSettings';
 
-import { CACHE_INITIALISED_AT } from './constants';
+import { CACHE_INITIALISED_AT, DECOUPLED_PLUGIN_REGEX, PLUGIN_PATH_REGEX } from './constants';
 
-const cache: Record<string, CachedPlugin> = {};
+const cache: Record<string, PluginInfo> = {};
 
-type CacheablePlugin = {
+type RegisterPluginInfo = {
   path: string;
   version: string;
   loadingStrategy: PluginLoadingStrategy;
 };
 
-type CachedPlugin = Omit<CacheablePlugin, 'path'>;
+type PluginInfo = Omit<RegisterPluginInfo, 'path'>;
 
-export function registerPluginInCache({ path, version, loadingStrategy }: CacheablePlugin): void {
+export function registerPluginInfoInCache({ path, version, loadingStrategy }: RegisterPluginInfo): void {
   const key = extractCacheKeyFromPath(path);
 
   if (key && !cache[key]) {
@@ -25,7 +25,7 @@ export function registerPluginInCache({ path, version, loadingStrategy }: Cachea
   }
 }
 
-export function invalidatePluginInCache(pluginId: string): void {
+export function clearPluginInfoInCache(pluginId: string): void {
   const path = pluginId;
   if (cache[path]) {
     delete cache[path];
@@ -33,7 +33,7 @@ export function invalidatePluginInCache(pluginId: string): void {
   clearPluginSettingsCache(pluginId);
 }
 
-export function resolveWithCache(url: string, defaultBust = CACHE_INITIALISED_AT): string {
+export function resolvePluginUrlWithCache(url: string, defaultBust = CACHE_INITIALISED_AT): string {
   const path = getCacheKey(url);
   if (!path) {
     return `${url}?_cache=${defaultBust}`;
@@ -43,7 +43,7 @@ export function resolveWithCache(url: string, defaultBust = CACHE_INITIALISED_AT
   return `${url}?_cache=${bust}`;
 }
 
-export function getPluginFromCache(path: string): CachedPlugin | undefined {
+export function getPluginInfoFromCache(path: string): PluginInfo | undefined {
   const key = getCacheKey(path);
   if (!key) {
     return;
@@ -51,17 +51,15 @@ export function getPluginFromCache(path: string): CachedPlugin | undefined {
   return cache[key];
 }
 
-export function extractCacheKeyFromPath(path: string) {
-  const regex = /\/?public\/plugins\/([^\/]+)\//;
-  const match = path.match(regex);
+export function extractCacheKeyFromPath(path: string): string | null {
+  const match = path.match(PLUGIN_PATH_REGEX);
 
   if (match) {
     return match[1];
   }
 
   // Decoupled core plugins can be loaded by alternative paths
-  const decoupledPluginRegex = /\/?public\/app\/plugins\/(?:datasource|panel)\/([^\/]+)\//;
-  const decoupledPluginMatch = path.match(decoupledPluginRegex);
+  const decoupledPluginMatch = path.match(DECOUPLED_PLUGIN_REGEX);
 
   if (decoupledPluginMatch) {
     return decoupledPluginMatch[1];
@@ -70,8 +68,8 @@ export function extractCacheKeyFromPath(path: string) {
   return null;
 }
 
-function getCacheKey(address: string): string | undefined {
-  const key = Object.keys(cache).find((key) => address.includes(key));
+function getCacheKey(path: string): string | undefined {
+  const key = Object.keys(cache).find((key) => path.includes(key));
   if (!key) {
     return;
   }
