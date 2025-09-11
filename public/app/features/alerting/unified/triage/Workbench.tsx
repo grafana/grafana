@@ -5,6 +5,7 @@ import { useMeasure } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
+import { SceneQueryRunner } from '@grafana/scenes';
 import { ScrollContainer, useSplitter, useStyles2 } from '@grafana/ui';
 import { DEFAULT_PER_PAGE_PAGINATION } from 'app/core/constants';
 
@@ -25,6 +26,7 @@ type WorkbenchProps = {
   data: WorkbenchRow[];
   groupBy?: string[]; // @TODO proper type
   filterBy?: Filter[];
+  queryRunner: SceneQueryRunner;
 };
 
 const initialSize = 1 / 3;
@@ -66,7 +68,7 @@ const initialSize = 1 / 3;
  │                         │ │                                   │
  └─────────────────────────┘ └───────────────────────────────────┘
  */
-export function Workbench({ domain, data }: WorkbenchProps) {
+export function Workbench({ domain, data, queryRunner }: WorkbenchProps) {
   const styles = useStyles2(getStyles);
 
   const [pageIndex, setPageIndex] = useState<number>(1);
@@ -112,7 +114,7 @@ export function Workbench({ domain, data }: WorkbenchProps) {
         </div>
         {/* Render actual data */}
         <div className={styles.virtualizedContainer}>
-          <WorkbenchProvider leftColumnWidth={leftColumnWidth} domain={domain}>
+          <WorkbenchProvider leftColumnWidth={leftColumnWidth} domain={domain} queryRunner={queryRunner}>
             <ScrollContainer height="100%" width="100%" scrollbarWidth="none" showScrollIndicators>
               {dataSlice.map((row, index) => {
                 const rowKey = generateRowKey(row, index);

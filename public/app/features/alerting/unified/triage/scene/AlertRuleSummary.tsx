@@ -1,5 +1,5 @@
 import { VizConfigBuilders } from '@grafana/scenes';
-import { VizPanel, useQueryRunner } from '@grafana/scenes-react';
+import { VizPanel, useDataTransformer } from '@grafana/scenes-react';
 import {
   AxisPlacement,
   BarAlignment,
@@ -11,9 +11,7 @@ import {
 } from '@grafana/schema';
 
 import { overrideToFixedColor } from '../../home/Insights';
-import { METRIC_NAME } from '../constants';
-
-import { getDataQuery } from './utils';
+import { useWorkbenchContext } from '../WorkbenchContext';
 
 /**
  * Viz config for the alert rule summary chart - used by the React component
@@ -44,22 +42,49 @@ export const alertRuleSummaryVizConfig = VizConfigBuilders.timeseries()
   .build();
 
 export function AlertRuleSummary({ ruleUID }: { ruleUID: string }) {
-  // Create query that filters by rule UID and partitions by alert state
-  // This replaces the scene transformations with a direct query approach
-  const query = getDataQuery(`count by (alertstate) (${METRIC_NAME}{grafana_rule_uid="${ruleUID}"})`, {
-    legendFormat: '{{alertstate}}', // This ensures field names match the override patterns
-    interval: '1m',
-  });
+  // Use WorkbenchContext to access the parent query runner and reuse its data
+  const { queryRunner } = useWorkbenchContext();
 
-  const queryRunner = useQueryRunner({
-    queries: [query],
+  // Transform parent data to filter by this specific rule and partition by alert state
+  const transformedData = useDataTransformer({
+    data: queryRunner,
+    transformations: [
+      {
+        id: 'filterByValue',
+        options: {
+          filters: [
+            {
+              config: {
+                id: 'equal',
+                options: {
+                  value: ruleUID,
+                },
+              },
+              fieldName: 'grafana_rule_uid',
+            },
+          ],
+          match: 'any',
+          type: 'include',
+        },
+      },
+      {
+        id: 'partitionByValues',
+        options: {
+          fields: ['alertstate'],
+          keepFields: false,
+          naming: {
+            asLabels: true,
+          },
+        },
+      },
+    ],
   });
 
   return (
     <VizPanel
       title=""
       viz={alertRuleSummaryVizConfig}
-      dataProvider={queryRunner}
+      dataProvider={transformedData}
       hoverHeader={true}
       displayMode="transparent"
       collapsible={false}
