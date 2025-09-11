@@ -129,6 +129,8 @@ TableFieldOptions: {
   wrapHeaderText?: bool
   // Selecting or hovering this field will show a tooltip containing the content within the target field
   tooltip?: TableCellTooltipOptions
+  // The name of the field which contains styling overrides for this cell
+  styleField?: string
   // options for the footer for this field
   footer?: TableFooterOptions
 } & HideableFieldConfig @cuetsy(kind="interface")

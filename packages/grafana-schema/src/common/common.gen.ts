@@ -1010,6 +1010,10 @@ export interface TableFieldOptions extends HideableFieldConfig {
   inspect: boolean;
   minWidth?: number;
   /**
+   * The name of the field which contains styling overrides for this cell
+   */
+  styleField?: string;
+  /**
    * Selecting or hovering this field will show a tooltip containing the content within the target field
    */
   tooltip?: {

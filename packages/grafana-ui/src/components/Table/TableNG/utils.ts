@@ -1047,3 +1047,28 @@ export function getSummaryCellTextAlign(textAlign: TextAlign, cellType: TableCel
 
   return textAlign;
 }
+
+let warnedAboutCellStyleSet = new Set<string>();
+export function getCellStyleByField(field: Field, data: DataFrame, row: TableRow): CSSProperties | void {
+  const styleFieldName = field.config.custom?.styleField;
+  if (styleFieldName) {
+    const styleField = data.fields.find(predicateByName(styleFieldName));
+    if (styleField) {
+      const styleValueRaw = row[getDisplayName(styleField)];
+      if (styleValueRaw) {
+        const styleValueStr = styleField.display!(styleValueRaw).text;
+        try {
+          const parsedJsonValue = JSON.parse(styleField.display!(styleValueRaw).text);
+          if (typeof parsedJsonValue === 'object' && !Array.isArray(parsedJsonValue)) {
+            return parsedJsonValue;
+          }
+        } catch (e) {
+          if (!warnedAboutCellStyleSet.has(styleValueStr)) {
+            console.error(`encountered invalid cell style JSON: ${styleValueStr}`, e);
+            warnedAboutCellStyleSet.add(styleValueStr);
+          }
+        }
+      }
+    }
+  }
+}

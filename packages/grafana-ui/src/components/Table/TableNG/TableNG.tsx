@@ -96,6 +96,7 @@ import {
   shouldTextWrap,
   withDataLinksActionsTooltip,
   getSummaryCellTextAlign,
+  getCellStyleByField,
 } from './utils';
 
 const EXPANDED_COLUMN_KEY = 'expanded';
@@ -495,12 +496,22 @@ export function TableNG(props: TableNGProps) {
             }
           }
 
+
+
           let style: CSSProperties = { ...rowCellStyle };
           if (canBeColorized) {
             const value = props.row[props.column.key];
             const displayValue = field.display!(value); // this fires here to get colors, then again to get rendered value?
             const cellColorStyles = getCellColorInlineStyles(cellOptions, displayValue, applyToRowBgFn != null);
             Object.assign(style, cellColorStyles);
+          }
+
+          // FIXME: will be wrapped in a feature flag
+          if (true) {
+            const cellStyleByField = getCellStyleByField(field, data, props.row);
+            if (cellStyleByField) {
+              style = { ...style, ...cellStyleByField };
+            }
           }
 
           return (

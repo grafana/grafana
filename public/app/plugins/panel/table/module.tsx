@@ -170,6 +170,20 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(TablePanel)
           },
           showIf: (cfg) => cfg.tooltip?.field !== undefined,
         });
+
+      // FIXME: gonna add a feature flag for this
+      if (true) {
+        builder.addFieldNamePicker({
+          path: 'styleField',
+          name: t('table.name-styling-from-field', 'Styling from field'),
+          description: t(
+            'table.description-styling-from-field',
+            'A field containing a JSON object matching the React.CSSProperties interface.'
+          ),
+
+          category: cellCategory,
+        });
+      }
     },
   })
   .setPanelOptions((builder) => {

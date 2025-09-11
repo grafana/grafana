@@ -384,6 +384,10 @@
               {
                 "id": "custom.width",
                 "value": 139
+              },
+              {
+                "id": "custom.styleField",
+                "value": "Styling"
               }
             ]
           },
@@ -461,6 +465,22 @@
                 "value": ["min", "max"]
               }
             ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "State"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Styling"
+              },
+              {
+                "id": "custom.hideFrom.viz",
+                "value": true
+              }
+            ]
           }
         ]
       },
@@ -495,7 +515,7 @@
           "scenarioId": "random_walk_table"
         },
         {
-          "csvContent": "Info,Image,Image w/ Link,Pills,Data Link,Long Text\ndown,https://grafana.com/media/menus/products/grafana-menu-icon.svg,https://grafana.com/media/menus/products/grafana-menu-icon.svg,hello,https://grafana.com,\"Lorem ipsum dolor sit amet, consectetur adipiscing elit. Suspendisse tempus et augue et lacinia. Interdum et malesuada fames ac ante ipsum primis in faucibus.\"\nup,https://grafana.com/media/menus/products/grafana-menu-icon-logs.svg,https://grafana.com/media/menus/products/grafana-menu-icon-logs.svg,\"[1,2,3,\"\"foo\"\",\"\"bar\"\"]\",https://grafana.com/solutions/kubernetes/,\"Sed imperdiet eget diam sit amet fringilla. Curabitur quis lacus blandit, mollis diam non, accumsan tortor.\"\nup fast,https://grafana.com/media/menus/products/grafana-menu-icon-traces.svg,https://grafana.com/media/menus/products/grafana-menu-icon-traces.svg,\"foo,1,4,beep\",https://k6.io/,\"Proin ac libero vulputate ex vulputate pharetra ut vel lacus. Phasellus quis dolor sed leo finibus scelerisque. Ut vel finibus leo, sed viverra ipsum.\"\ndown fast,https://grafana.com/media/menus/products/grafana-menu-icon-metrics.svg,https://grafana.com/media/menus/products/grafana-menu-icon-metrics.svg,\"foo,bar,baz,a longer one,bim\",https://grafana.com/products/cloud/,\"Nullam in pulvinar justo. Nunc dictum arcu ac pellentesque bibendum. Sed in erat turpis. Vestibulum eu orci ac ligula lobortis tempus.\"",
+          "csvContent": "Info,Image,Image w/ Link,Pills,Data Link,Long Text,Styling\ndown,https://grafana.com/media/menus/products/grafana-menu-icon.svg,https://grafana.com/media/menus/products/grafana-menu-icon.svg,hello,https://grafana.com,\"Lorem ipsum dolor sit amet, consectetur adipiscing elit. Suspendisse tempus et augue et lacinia. Interdum et malesuada fames ac ante ipsum primis in faucibus.\",\nup,https://grafana.com/media/menus/products/grafana-menu-icon-logs.svg,https://grafana.com/media/menus/products/grafana-menu-icon-logs.svg,\"[1,2,3,\"\"foo\"\",\"\"bar\"\"]\",https://grafana.com/solutions/kubernetes/,\"Sed imperdiet eget diam sit amet fringilla. Curabitur quis lacus blandit, mollis diam non, accumsan tortor.\",\"{\"\"textDecoration\"\": \"\"line-through\"\",\"\"background\"\":\"\"aquamarine\"\"}\"\nup fast,https://grafana.com/media/menus/products/grafana-menu-icon-traces.svg,https://grafana.com/media/menus/products/grafana-menu-icon-traces.svg,\"foo,1,4,beep\",https://k6.io/,\"Proin ac libero vulputate ex vulputate pharetra ut vel lacus. Phasellus quis dolor sed leo finibus scelerisque. Ut vel finibus leo, sed viverra ipsum.\",\ndown fast,https://grafana.com/media/menus/products/grafana-menu-icon-metrics.svg,https://grafana.com/media/menus/products/grafana-menu-icon-metrics.svg,\"foo,bar,baz,a longer one,bim\",https://grafana.com/products/cloud/,\"Nullam in pulvinar justo. Nunc dictum arcu ac pellentesque bibendum. Sed in erat turpis. Vestibulum eu orci ac ligula lobortis tempus.\",",
           "datasource": {
             "type": "grafana-testdata-datasource"
           },

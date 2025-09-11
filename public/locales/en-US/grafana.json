@@ -12780,6 +12780,7 @@
     "description-column-filter": "Enables/disables field filters in table",
     "description-frozen-columns": "Columns are frozen from the left side of the table",
     "description-min-column-width": "The minimum width for column auto resizing",
+    "description-styling-from-field": "A field containing a JSON object matching the React.CSSProperties interface.",
     "description-tooltip-from-field": "Render a cell from a field (hidden or visible) in a tooltip",
     "image-cell-options-editor": {
       "description-alt-text": "Alternative text that will be displayed if an image can't be displayed or for users who use a screen reader",
@@ -12810,6 +12811,7 @@
     "name-max-height": "Max row height",
     "name-min-column-width": "Minimum column width",
     "name-show-table-header": "Show table header",
+    "name-styling-from-field": "Styling from field",
     "name-tooltip-from-field": "Tooltip from field",
     "name-tooltip-placement": "Tooltip placement",
     "name-wrap-header-text": "Wrap header text",
