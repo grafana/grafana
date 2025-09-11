@@ -198,15 +198,15 @@ require (
 	go.uber.org/zap v1.27.0 // @grafana/identity-access-team
 	gocloud.dev v0.42.0 // @grafana/grafana-app-platform-squad
 	gocloud.dev/secrets/hashivault v0.42.0 // @grafana/grafana-operator-experience-squad
-	golang.org/x/crypto v0.41.0 // @grafana/grafana-backend-group
-	golang.org/x/exp v0.0.0-20250506013437-ce4c2cf36ca6 // @grafana/alerting-backend
-	golang.org/x/mod v0.27.0 // indirect; @grafana/grafana-backend-group
-	golang.org/x/net v0.43.0 // @grafana/oss-big-tent @grafana/partner-datasources
+	golang.org/x/crypto v0.42.0 // @grafana/grafana-backend-group
+	golang.org/x/exp v0.0.0-20250911091902-df9299821621 // @grafana/alerting-backend
+	golang.org/x/mod v0.28.0 // indirect; @grafana/grafana-backend-group
+	golang.org/x/net v0.44.0 // @grafana/oss-big-tent @grafana/partner-datasources
 	golang.org/x/oauth2 v0.30.0 // @grafana/identity-access-team
-	golang.org/x/sync v0.16.0 // @grafana/alerting-backend
-	golang.org/x/text v0.28.0 // @grafana/grafana-backend-group
+	golang.org/x/sync v0.17.0 // @grafana/alerting-backend
+	golang.org/x/text v0.29.0 // @grafana/grafana-backend-group
 	golang.org/x/time v0.11.0 // @grafana/grafana-backend-group
-	golang.org/x/tools v0.36.0 // indirect; @grafana/grafana-as-code
+	golang.org/x/tools v0.37.0 // indirect; @grafana/grafana-as-code
 	gonum.org/v1/gonum v0.16.0 // @grafana/oss-big-tent
 	google.golang.org/api v0.235.0 // @grafana/grafana-backend-group
 	google.golang.org/grpc v1.74.2 // @grafana/plugins-platform-backend
@@ -619,8 +619,8 @@ require (
 	go.uber.org/multierr v1.11.0 // indirect
 	go.yaml.in/yaml/v2 v2.4.2 // indirect
 	go4.org/netipx v0.0.0-20230125063823-8449b0a6169f // indirect
-	golang.org/x/sys v0.35.0 // indirect
-	golang.org/x/term v0.34.0 // indirect
+	golang.org/x/sys v0.36.0 // indirect
+	golang.org/x/term v0.35.0 // indirect
 	golang.org/x/xerrors v0.0.0-20240903120638-7835f813f4da // indirect
 	gomodules.xyz/jsonpatch/v2 v2.5.0 // indirect
 	google.golang.org/genproto v0.0.0-20250603155806-513f23925822 // indirect
@@ -646,6 +646,8 @@ require (
 require (
 	github.com/gopherjs/gopherjs v1.17.2 // indirect
 	github.com/smarty/assertions v1.15.0 // indirect
+	golang.org/x/telemetry v0.0.0-20250908211612-aef8a434d053 // indirect
+	golang.org/x/tools/godoc v0.1.0-deprecated // indirect
 )
 
 // Use fork of crewjam/saml with fixes for some issues until changes get merged into upstream
