@@ -1100,8 +1100,6 @@ github.com/openfga/language/pkg/go v0.2.0-beta.2.0.20250220223040-ed0cfba54336 h
 github.com/openfga/language/pkg/go v0.2.0-beta.2.0.20250220223040-ed0cfba54336/go.mod h1:IWRgDIekw3UGSWINwmCALHpMmn6NEJzz6e7KZGm+xQ4=
 github.com/openfga/openfga v1.8.13 h1:ROURkotKhbmtyBX3188+cNElN8AOZmTl0CMkxUqwawo=
 github.com/openfga/openfga v1.8.13/go.mod h1:h1VGcVW81eY1YyDtFx5+gxxAIEhIiOGR9SRGgs/X/k8=
-github.com/opentracing-contrib/go-grpc v0.1.1 h1:Ws7IN1zyiL1DFqKQPhRXuKe5pLYzMfdxnC1qtajE2PE=
-github.com/opentracing-contrib/go-grpc v0.1.1/go.mod h1:Nu6sz+4zzgxXu8rvKfnwjBEmHsuhTigxRwV2RhELrS8=
 github.com/opentracing-contrib/go-stdlib v1.0.0 h1:TBS7YuVotp8myLon4Pv7BtCBzOTo1DeZCld0Z63mW2w=
 github.com/opentracing-contrib/go-stdlib v1.0.0/go.mod h1:qtI1ogk+2JhVPIXVc6q+NHziSmy2W5GbdQZFUHADCBU=
 github.com/opentracing/opentracing-go v1.1.0/go.mod h1:UkNAQd3GIcIGf0SeVgPpRdFStlNbqXla1AfSYxPUl2o=
