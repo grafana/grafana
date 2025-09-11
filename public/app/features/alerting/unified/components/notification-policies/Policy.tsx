@@ -5,6 +5,7 @@ import * as React from 'react';
 import { FC, Fragment, ReactNode, useState } from 'react';
 import { useToggle } from 'react-use';
 
+import { InheritableProperties } from '@grafana/alerting/internal';
 import { getInheritedProperties } from '@grafana/alerting/unstable';
 import { GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
@@ -53,8 +54,6 @@ import { Matchers } from './Matchers';
 import { RoutesMatchingFilters } from './NotificationPoliciesList';
 import { TimingOptions } from './timingOptions';
 
-type InheritableProperties = ReturnType<typeof getInheritedProperties>;
-
 const POLICIES_PER_PAGE = 20;
 
 interface PolicyComponentProps {
@@ -62,7 +61,7 @@ interface PolicyComponentProps {
   contactPointsState?: ReceiversState;
   readOnly?: boolean;
   provisioned?: boolean;
-  inheritedProperties?: Partial<InheritableProperties>;
+  inheritedProperties?: InheritableProperties;
   routesMatchingFilters?: RoutesMatchingFilters;
 
   matchingInstancesPreview?: {
