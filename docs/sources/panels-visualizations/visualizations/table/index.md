@@ -408,7 +408,7 @@ However, you can switch back and forth between tabs.
 
 The **Pill** cell type displays each item in a comma-separated string in a colored block.
 
-{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-table-pills-v12.1.png" max-width="750px" alt="Table using the pill cell type" >}}
+{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-table-pill-cells-v12.2.png" max-width="750px" alt="Table using the pill cell type" >}}
 
 The colors applied to each piece of text are maintained throughout the table.
 For example, if the word "test" is first displayed in a red pill, it will always be displayed in a red pill.
@@ -438,6 +438,8 @@ in these cells if the [`disable_sanitize_html`](https://grafana.com/docs/grafana
 
 Toggle on the **Tooltip from field** switch to use the values from another field (or column) in a tooltip.
 For more information, refer to [Tooltip from field](#tooltip-from-field).
+
+{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-table-markdown-v12.2.png" max-width="600px" alt="Table using the pill cell type" >}}
 
 #### Image
 
