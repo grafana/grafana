@@ -500,6 +500,7 @@
       "copy-link": "複製網址",
       "duplicate": "重複",
       "export": "匯出",
+      "manage-enrichments": "",
       "silence-notifications": "靜音通知",
       "with-modifications": "經過修改"
     },
@@ -1115,7 +1116,7 @@
     },
     "enrichment": {
       "error-boundary": {
-        "notification-message-section-extension": "",
+        "enrichment-drawer-extension": "",
         "rule-viewer-section-extension": ""
       }
     },

@@ -247,6 +247,10 @@ const (
 	// Routes short url requests from /api to the /apis endpoint
 	FlagKubernetesShortURLs = "kubernetesShortURLs"
 
+	// FlagKubernetesAlertingRules
+	// Adds support for Kubernetes alerting and recording rules
+	FlagKubernetesAlertingRules = "kubernetesAlertingRules"
+
 	// FlagDashboardDisableSchemaValidationV1
 	// Disable schema validation for dashboards/v1
 	FlagDashboardDisableSchemaValidationV1 = "dashboardDisableSchemaValidationV1"
@@ -708,7 +712,7 @@ const (
 	FlagUnifiedStorageSearchUI = "unifiedStorageSearchUI"
 
 	// FlagElasticsearchCrossClusterSearch
-	// Enables cross cluster search in the Elasticsearch datasource
+	// Enables cross cluster search in the Elasticsearch data source
 	FlagElasticsearchCrossClusterSearch = "elasticsearchCrossClusterSearch"
 
 	// FlagUnifiedHistory
