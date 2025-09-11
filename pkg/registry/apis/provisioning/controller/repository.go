@@ -213,6 +213,9 @@ func (rc *RepositoryController) handleDelete(ctx context.Context, obj *provision
 		if err != nil {
 			logger.Warn("unable to get repository for cleanup")
 		} else {
+			logger.Debug("processing finalizers",
+				"finalizers", obj.Finalizers,
+			)
 			err := rc.finalizer.process(ctx, repo, obj.Finalizers)
 			if err != nil {
 				logger.Warn("error running finalizer", "err", err)
