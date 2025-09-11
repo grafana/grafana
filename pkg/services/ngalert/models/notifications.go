@@ -190,8 +190,12 @@ func (s *NotificationSettings) Fingerprint() data.Fingerprint {
 	for _, interval := range s.MuteTimeIntervals {
 		writeString(interval)
 	}
+	// Add a separator between the time intervals to avoid collisions
+	// when all settings are the same including interval names except for the interval type (mute vs active).
+	_, _ = h.Write([]byte{255})
 	for _, interval := range s.ActiveTimeIntervals {
 		writeString(interval)
 	}
+
 	return data.Fingerprint(h.Sum64())
 }
