@@ -33,7 +33,10 @@ func New(cfg app.Config) (app.App, error) {
 	if !ok || shortURLConfig == nil {
 		return nil, fmt.Errorf("invalid or missing ShortURLConfig")
 	}
-	client, err := k8s.NewClientRegistry(cfg.KubeConfig, k8s.DefaultClientConfig()).ClientFor(shorturlv1alpha1.ShortURLKind())
+
+	cfg.KubeConfig.APIPath = "apis" // ???
+	client, err := k8s.NewClientRegistry(cfg.KubeConfig, k8s.DefaultClientConfig()).
+		ClientFor(shorturlv1alpha1.ShortURLKind())
 	if err != nil {
 		return nil, fmt.Errorf("unable to create client")
 	}
@@ -80,8 +83,10 @@ func New(cfg app.Config) (app.App, error) {
 							return err
 						}
 
+						// TODO... update status
+
 						resp := shorturlv1alpha1.GetGoto{
-							Url: "????" + info.Spec.Path,
+							Url: info.Spec.Path,
 						}
 						return json.NewEncoder(w).Encode(resp)
 					},
