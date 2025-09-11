@@ -562,7 +562,7 @@ func (s *Service) updateOnApiServer(ctx context.Context, cmd *folder.UpdateFolde
 
 	user := cmd.SignedInUser
 
-	foldr, err := s.unifiedStore.Update(ctx, folder.UpdateFolderCommand{
+	folder, err := s.unifiedStore.Update(ctx, folder.UpdateFolderCommand{
 		UID:                  cmd.UID,
 		OrgID:                cmd.OrgID,
 		NewTitle:             cmd.NewTitle,
@@ -570,7 +570,7 @@ func (s *Service) updateOnApiServer(ctx context.Context, cmd *folder.UpdateFolde
 		SignedInUser:         user,
 		Overwrite:            cmd.Overwrite,
 		Version:              cmd.Version,
-		ManagerKindClassicFP: cmd.ManagerKindClassicFP, // nolint:static
+		ManagerKindClassicFP: cmd.ManagerKindClassicFP, // nolint:staticcheck
 	})
 
 	if err != nil {
@@ -580,7 +580,7 @@ func (s *Service) updateOnApiServer(ctx context.Context, cmd *folder.UpdateFolde
 	if cmd.NewTitle != nil {
 		metrics.MFolderIDsServiceCount.WithLabelValues(metrics.Folder).Inc()
 
-		if err := s.publishFolderFullPathUpdatedEventViaApiServer(ctx, foldr.Updated, cmd.OrgID, cmd.UID); err != nil {
+		if err := s.publishFolderFullPathUpdatedEventViaApiServer(ctx, folder.Updated, cmd.OrgID, cmd.UID); err != nil {
 			return nil, err
 		}
 	}
@@ -588,7 +588,7 @@ func (s *Service) updateOnApiServer(ctx context.Context, cmd *folder.UpdateFolde
 	// always expose the dashboard store sequential ID
 	metrics.MFolderIDsServiceCount.WithLabelValues(metrics.Folder).Inc()
 
-	return foldr, nil
+	return folder, nil
 }
 
 func (s *Service) deleteFromApiServer(ctx context.Context, cmd *folder.DeleteFolderCommand) error {
