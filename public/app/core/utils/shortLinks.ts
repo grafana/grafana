@@ -23,7 +23,8 @@ function buildHostUrl() {
 export function buildShortUrl(k8sShortUrl: ShortURL) {
   const key = k8sShortUrl.metadata.name;
   const orgId = k8sShortUrl.metadata.namespace;
-  return `${window.location.protocol}//${window.location.host}${config.appSubUrl}/goto/${key}?orgId=${orgId}`;
+  const hostUrl = buildHostUrl();
+  return `${hostUrl}/goto/${key}?orgId=${orgId}`;
 }
 
 function getRelativeURLPath(url: string) {
