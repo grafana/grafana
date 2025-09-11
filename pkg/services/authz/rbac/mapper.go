@@ -111,7 +111,8 @@ func NewMapperRegistry() MapperRegistry {
 		},
 		"iam.grafana.app": {
 			// Teams is a special case. We translate user permissions from id to uid based.
-			"teams":     newResourceTranslation("teams", "uid", false, true),
+			"teams": newResourceTranslation("teams", "uid", false, true),
+			// No need to skip scope on create for roles because we translate `permissions:type:delegate` to `roles:*``
 			"coreroles": newResourceTranslation("roles", "uid", false, false),
 			"roles": translation{
 				resource:  "roles",
