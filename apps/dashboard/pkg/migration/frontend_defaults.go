@@ -969,17 +969,15 @@ func removeNullValuesRecursively(data interface{}) {
 
 // removeNullValuesRecursivelyWithContext removes null values from nested objects and arrays
 // This matches the frontend's JSON.stringify/parse behavior
-// Special case: preserve "value": null only in the first threshold step for table panels
+// Frontend removes null values via JSON serialization in getSaveModelClone()
 func removeNullValuesRecursivelyWithContext(data interface{}, panelType string) {
 	switch v := data.(type) {
 	case map[string]interface{}:
 		// Remove null values from map
 		for key, value := range v {
 			if value == nil {
-				// Special case: preserve "value": null only in the first threshold step for table panels
-				if key == "value" && isFirstThresholdStepForPanel(v, panelType) {
-					continue // Don't delete null values in the first threshold step for table panels
-				}
+				// Frontend removes null values via JSON serialization, so we should too
+				// No special case needed for threshold steps
 				delete(v, key)
 			} else {
 				// Recursively process nested values
@@ -1005,21 +1003,10 @@ func isFirstThresholdStep(obj map[string]interface{}) bool {
 
 // isFirstThresholdStepForPanel checks if a map represents the first threshold step for a specific panel type
 // The first threshold step has "color" and may have "value": null (represents -Infinity)
-// Only preserve null values for table panels where the frontend expects them
+// Frontend removes "value": null via JSON.stringify/parse in getSaveModelClone()
 func isFirstThresholdStepForPanel(obj map[string]interface{}, panelType string) bool {
-	_, hasColor := obj["color"]
-	value, hasValue := obj["value"]
-
-	// Only preserve null values if this is a threshold step with null value
-	if hasColor && hasValue && value == nil {
-		// For table panels, the frontend expects "value": null in first threshold step
-		// For other panel types (stat, gauge), the frontend expects NO value property
-		if panelType == "table" {
-			return true // Preserve null values for table panels
-		}
-		return false // Remove null values for other panel types
-	}
-
+	// Frontend removes null values from threshold steps via JSON serialization
+	// So we should also remove them to match frontend behavior
 	return false
 }
 
