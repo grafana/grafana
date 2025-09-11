@@ -71,6 +71,13 @@ const contextProps = {
   openAssistantByLog: () => {},
 };
 
+const assertExpandedOptionsCopyVisible = () => {
+  expect(screen.getByText(EXPANDED_LABEL_COPY)).toBeVisible();
+  expect(screen.getByText(SCROLL_BOTTOM_LABEL_COPY)).toBeVisible();
+  expect(screen.getByText(OLDEST_LOGS_LABEL_COPY)).toBeVisible();
+  expect(screen.getByText(DEDUPE_LABEL_COPY)).toBeVisible();
+  expect(screen.getByText(SCROLL_TOP_LABEL_COPY)).toBeVisible();
+};
 describe('LogListControls', () => {
   test('Renders without errors', () => {
     render(
@@ -179,12 +186,28 @@ describe('LogListControls', () => {
     // Verify that the label (state) is not collapsed
     expect(screen.queryByLabelText(COLLAPSED_LABEL_COPY)).not.toBeInTheDocument();
     expect(screen.getByLabelText(EXPANDED_LABEL_COPY)).toBeVisible();
-    // Verify that the option label text is visible
-    expect(screen.getByText(EXPANDED_LABEL_COPY)).toBeVisible();
-    expect(screen.getByText(SCROLL_BOTTOM_LABEL_COPY)).toBeVisible();
-    expect(screen.getByText(OLDEST_LOGS_LABEL_COPY)).toBeVisible();
-    expect(screen.getByText(DEDUPE_LABEL_COPY)).toBeVisible();
-    expect(screen.getByText(SCROLL_TOP_LABEL_COPY)).toBeVisible();
+    // Verify the expanded labels are rendered
+    assertExpandedOptionsCopyVisible();
+  });
+
+  test('Expands options shown by default with container width > 1200', async () => {
+    const div = document.createElement('div');
+    const divSpy = jest.spyOn(div, 'clientWidth', 'get');
+    //@ts-expect-error
+    divSpy['clientWidth'] = 1201;
+    render(
+      //@ts-expect-error
+      <LogListContextProvider {...contextProps} sortOrder={LogsSortOrder.Ascending} containerElement={divSpy}>
+        <LogListControls eventBus={new EventBusSrv()} />
+      </LogListContextProvider>
+    );
+
+    // Verify the expanded labels are rendered
+    assertExpandedOptionsCopyVisible();
+    // Collapse options
+    await userEvent.click(screen.getByLabelText(EXPANDED_LABEL_COPY));
+    // State should be collapsed
+    expect(screen.getByLabelText(COLLAPSED_LABEL_COPY)).toBeVisible();
   });
 
   test('Controls sort order', async () => {
