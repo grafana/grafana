@@ -6,13 +6,13 @@ import { SceneVariableSet, TextBoxVariable, QueryVariable, CustomVariable, Scene
 import {
   DASHBOARD_CONTROLS_MENU_ARIA_LABEL,
   DASHBOARD_CONTROLS_MENU_TITLE,
-  DashboardControlsMenu,
+  DashboardControlsButton,
 } from './DashboardControlsMenu';
 import { DashboardScene } from './DashboardScene';
 
 describe('DashboardControlsMenu', () => {
   it('should return null and not render anything when there are no variables', () => {
-    const { container } = render(<DashboardControlsMenu dashboard={getDashboard([])} />);
+    const { container } = render(<DashboardControlsButton dashboard={getDashboard([])} />);
     expect(container.firstChild).toBeNull();
   });
 
@@ -24,7 +24,7 @@ describe('DashboardControlsMenu', () => {
         showInControlsMenu: false,
       }),
     ];
-    const { container } = render(<DashboardControlsMenu dashboard={getDashboard(variables)} />);
+    const { container } = render(<DashboardControlsButton dashboard={getDashboard(variables)} />);
     expect(container.firstChild).toBeNull();
   });
 
@@ -37,7 +37,7 @@ describe('DashboardControlsMenu', () => {
       }),
     ];
 
-    render(<DashboardControlsMenu dashboard={getDashboard(variables)} />);
+    render(<DashboardControlsButton dashboard={getDashboard(variables)} />);
 
     // Should render the toolbar button
     const button = screen.getByRole('button');
@@ -66,7 +66,7 @@ describe('DashboardControlsMenu', () => {
     ];
 
     act(() => {
-      render(<DashboardControlsMenu dashboard={getDashboard(variables)} />);
+      render(<DashboardControlsButton dashboard={getDashboard(variables)} />);
     });
 
     // Should have rendered a dropdown
@@ -98,7 +98,7 @@ describe('DashboardControlsMenu', () => {
       }),
     ];
 
-    render(<DashboardControlsMenu dashboard={getDashboard(variables)} />);
+    render(<DashboardControlsButton dashboard={getDashboard(variables)} />);
 
     // Should still render dropdown since we have variables with showInControlsMenu=true
     expect(screen.getByRole('button')).toBeInTheDocument();
