@@ -55,7 +55,7 @@ export const MoveModal = ({ onConfirm, onDismiss, selectedItems, ...props }: Pro
 
       <Space v={3} />
 
-      <Field label={t('browse-dashboards.action.move-modal-field-label', 'Folder name')}>
+      <Field noMargin label={t('browse-dashboards.action.move-modal-field-label', 'Folder name')}>
         <ProvisioningAwareFolderPicker
           value={moveTarget}
           excludeUIDs={selectedFolders}
