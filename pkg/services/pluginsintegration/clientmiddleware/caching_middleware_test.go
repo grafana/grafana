@@ -331,7 +331,7 @@ func TestRequestDeduplicationMiddleware(t *testing.T) {
 		t.Parallel()
 
 		handler := newMockMiddlewareHandler()
-		middleware := newRequestDeduplicationMiddleware(handler)
+		middleware := newRequestDeduplicationMiddleware(nil, handler)
 
 		req := backend.QueryDataRequest{
 			PluginContext: backend.PluginContext{

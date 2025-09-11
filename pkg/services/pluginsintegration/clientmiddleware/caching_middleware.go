@@ -44,7 +44,7 @@ func NewCachingMiddlewareWithFeatureManager(cachingService caching.CachingServic
 			features:    features,
 		}
 		if features != nil && features.IsEnabled(context.Background(), featuremgmt.FlagQueryCacheRequestDeduplication) {
-			return newRequestDeduplicationMiddleware(cachingMiddleware)
+			return newRequestDeduplicationMiddleware(log, cachingMiddleware)
 		}
 		return cachingMiddleware
 	}
@@ -177,11 +177,12 @@ func (m *CachingMiddleware) CallResource(ctx context.Context, req *backend.CallR
 // and the other ones will wait for the response received by the request being executed.
 type requestDeduplicationMiddleware struct {
 	backend.BaseHandler
+	log          *log.ConcreteLogger
 	singleflight *singleflight.Group
 }
 
-func newRequestDeduplicationMiddleware(next backend.Handler) *requestDeduplicationMiddleware {
-	return &requestDeduplicationMiddleware{BaseHandler: backend.NewBaseHandler(next), singleflight: &singleflight.Group{}}
+func newRequestDeduplicationMiddleware(log *log.ConcreteLogger, next backend.Handler) *requestDeduplicationMiddleware {
+	return &requestDeduplicationMiddleware{log: log, BaseHandler: backend.NewBaseHandler(next), singleflight: &singleflight.Group{}}
 }
 
 func (m *requestDeduplicationMiddleware) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
@@ -211,7 +212,7 @@ func (m *requestDeduplicationMiddleware) CallResource(ctx context.Context, req *
 
 	key, err := caching.GetKey(datasourceID, req)
 	if err != nil {
-		// TODO: log error
+		m.log.Error("error building cache key for request deduplication, skipping request deduplication", "error", err)
 		return m.BaseHandler.CallResource(ctx, req, sender)
 	}
 	_, err, _ = m.singleflight.Do(key, func() (interface{}, error) {
