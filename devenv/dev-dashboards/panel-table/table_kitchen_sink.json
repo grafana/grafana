@@ -469,13 +469,9 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "State"
+              "options": "Styling"
             },
             "properties": [
-              {
-                "id": "displayName",
-                "value": "Styling"
-              },
               {
                 "id": "custom.hideFrom.viz",
                 "value": true
