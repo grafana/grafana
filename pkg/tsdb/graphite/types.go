@@ -31,3 +31,17 @@ type GraphiteEventsResponse struct {
 	Tags []string `json:"tags"`
 	Data string   `json:"data"`
 }
+
+type GraphiteMetricsFindRequest struct {
+	From  string `json:"from"`
+	Until string `json:"until"`
+	Query string `json:"query"`
+}
+
+type GraphiteMetricsFindResponse struct {
+	Text          string `json:"text"`
+	Id            string `json:"id"`
+	AllowChildren int    `json:"allowChildren"`
+	Expandable    int    `json:"expandable"`
+	Leaf          int    `json:"leaf"`
+}
