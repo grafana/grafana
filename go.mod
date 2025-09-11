@@ -644,6 +644,7 @@ require (
 )
 
 require (
+	github.com/gomodule/redigo v1.8.9 // indirect
 	github.com/gopherjs/gopherjs v1.17.2 // indirect
 	github.com/smarty/assertions v1.15.0 // indirect
 )
