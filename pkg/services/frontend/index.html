@@ -249,12 +249,21 @@
         }
 
         async function initGrafana() {
-          const rawBootData = await loadBootData();
-
+          // global config
           window.grafanaBootData = {
-            _femt: true,
-            ...rawBootData,
+            _femt: true, // isFrontendService() needs this
+            assets: [[.Assets]],
+            navTree: [],
+            settings: [[.Settings]],
+            user: [[.DefaultUser]],
           }
+
+          // tenant-specific config
+          // TODO split this into separate API calls
+          const { navTree, settings, user } = await loadBootData();
+          window.grafanaBootData.settings = settings;
+          window.grafanaBootData.navTree = navTree;
+          window.grafanaBootData.user = user;
 
           // The per-theme CSS still contains some global styles needed
           // to render the page correctly.

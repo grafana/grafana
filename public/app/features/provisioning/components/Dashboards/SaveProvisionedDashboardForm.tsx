@@ -154,6 +154,7 @@ export function SaveProvisionedDashboardForm({
       isNew,
       title,
       description,
+      copyTags: true,
     });
 
     createOrUpdateFile({

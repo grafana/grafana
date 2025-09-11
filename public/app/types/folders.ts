@@ -6,6 +6,7 @@ export interface FolderListItemDTO {
   uid: string;
   title: string;
   managedBy?: ManagerKind;
+  parentUid?: string;
 }
 
 export type FolderParent = Pick<FolderDTO, 'title' | 'uid' | 'url'>;

@@ -138,25 +138,33 @@ func (k *kvStorageBackend) pruneEvents(ctx context.Context, key PruningKey) erro
 		return fmt.Errorf("invalid pruning key, all fields must be set: %+v", key)
 	}
 
-	keepEvents := make([]DataKey, 0, prunerMaxEvents)
-
+	listKey := ListRequestKey{
+		Namespace: key.Namespace,
+		Group:     key.Group,
+		Resource:  key.Resource,
+		Name:      key.Name,
+		Sort:      SortOrderDesc,
+	}
+	counter := 0
 	// iterate over all keys for the resource and delete versions beyond the latest 20
-	for datakey, err := range k.dataStore.Keys(ctx, ListRequestKey(key)) {
+	for datakey, err := range k.dataStore.Keys(ctx, listKey) {
 		if err != nil {
 			return err
 		}
 
-		if len(keepEvents) < prunerMaxEvents {
-			keepEvents = append(keepEvents, datakey)
+		// Pruner needs to exclude deleted events
+		if counter < prunerMaxEvents && datakey.Action != DataActionDeleted {
+			counter++
 			continue
 		}
 
-		// If we already have 20 versions, delete the oldest one and append the new one
-		err := k.dataStore.Delete(ctx, keepEvents[0])
-		if err != nil {
-			return err
+		// If we already have 20 versions, delete any more create or update events
+		if datakey.Action != DataActionDeleted {
+			err := k.dataStore.Delete(ctx, datakey)
+			if err != nil {
+				return err
+			}
 		}
-		keepEvents = append(keepEvents[1:], datakey)
 	}
 
 	return nil

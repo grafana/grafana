@@ -6,6 +6,8 @@ import (
 
 	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/grafana/grafana-app-sdk/logging"
+	"github.com/grafana/grafana-app-sdk/operator"
+	"github.com/grafana/grafana-app-sdk/resource"
 	"github.com/grafana/grafana-app-sdk/simple"
 	foldersKind "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	"github.com/grafana/grafana/apps/iam/pkg/reconcilers"
@@ -17,13 +19,47 @@ var appManifestData = app.ManifestData{
 	Group:   "iam.grafana.app",
 }
 
+type InformerConfig struct {
+	MaxConcurrentWorkers uint64
+}
+
 type AppConfig struct {
 	ZanzanaClientCfg          authz.ZanzanaClientConfig
+	InformerConfig            InformerConfig
 	FolderReconcilerNamespace string
 }
 
 func Provider(appCfg app.SpecificConfig) app.Provider {
 	return simple.NewAppProvider(app.NewEmbeddedManifest(appManifestData), appCfg, New)
+}
+
+func generateInformerSupplier(informerConfig InformerConfig) simple.InformerSupplier {
+	return func(kind resource.Kind, clients resource.ClientGenerator, options operator.ListWatchOptions) (operator.Informer, error) {
+		client, err := clients.ClientFor(kind)
+		if err != nil {
+			return nil, err
+		}
+
+		informer, err := operator.NewKubernetesBasedInformer(
+			kind, client,
+			operator.KubernetesBasedInformerOptions{
+				ListWatchOptions: options,
+			},
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		return operator.NewConcurrentInformer(
+			informer,
+			operator.ConcurrentInformerOptions{
+				MaxConcurrentWorkers: informerConfig.MaxConcurrentWorkers,
+				ErrorHandler: func(ctx context.Context, err error) {
+					logging.FromContext(ctx).With("error", err).Error("ConcurrentInformer processing error")
+				},
+			},
+		)
+	}
 }
 
 func New(cfg app.Config) (app.App, error) {
@@ -53,8 +89,8 @@ func New(cfg app.Config) (app.App, error) {
 		Name:       cfg.ManifestData.AppName,
 		KubeConfig: cfg.KubeConfig,
 		InformerConfig: simple.AppInformerConfig{
+			InformerSupplier: generateInformerSupplier(appSpecificConfig.InformerConfig),
 			ErrorHandler: func(ctx context.Context, err error) {
-				// FIXME: add your own error handling here
 				logging.FromContext(ctx).With("error", err).Error("Informer processing error")
 			},
 		},

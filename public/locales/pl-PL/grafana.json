@@ -512,6 +512,7 @@
       "copy-link": "Kopiuj link",
       "duplicate": "Duplikuj",
       "export": "Eksport",
+      "manage-enrichments": "",
       "silence-notifications": "Powiadomienia o wyciszeniu",
       "with-modifications": "Ze zmianami"
     },
@@ -1133,7 +1134,8 @@
     },
     "enrichment": {
       "error-boundary": {
-        "notification-message-section-extension": ""
+        "enrichment-drawer-extension": "",
+        "rule-viewer-section-extension": ""
       }
     },
     "error-modal": {
@@ -3068,6 +3070,7 @@
       "page-nav": {
         "text": {
           "details": "Szczegóły",
+          "enrichment": "",
           "history": "Historia",
           "instances": "Instancje",
           "query-and-conditions": "Zapytanie i warunki",
@@ -4717,6 +4720,7 @@
       "move": "Przenieś {{typeName}}",
       "panel-background": "Zmień tło panelu",
       "panel-description": "Zmień opis panelu",
+      "panel-edit": "",
       "panel-max-repeats-per-row": "Maks. liczba powtórzeń na wiersz",
       "panel-repeat-direction": "Powtórz kierunek",
       "panel-repeat-variable": "Powtórz panel wg",
@@ -4971,12 +4975,11 @@
       "dataframe-aria-label": "Wybierz ramkę danych",
       "dataframe-label": "Pokaż ramkę danych",
       "download-csv": "Pobierz plik CSV",
-      "download-excel-description": "Dodaje nagłówek do pliku CSV do użytku z programem Excel",
-      "download-excel-label": "Pobierz do programu Excel",
       "download-logs": "Pobierz logi",
       "download-service": "Pobierz wykres usługi",
       "download-traces": "Pobierz śledzenie",
-      "excel-header": "Nagłówek na potrzeby programu Excel",
+      "excel-compatibility-mode-description": "",
+      "excel-compatibility-mode-label": "",
       "formatted": "Sformatowane dane",
       "formatted-data-description": "Dane tabeli są formatowane za pomocą opcji zdefiniowanych na kartach Pole i Nadpisanie.",
       "formatted-data-label": "Sformatowane dane",
@@ -11275,11 +11278,11 @@
       "description-clear-repository-connection": "Dodaj zrozumiałą nazwę tego połączenia z repozytorium",
       "empty": "Pusty",
       "error-field-required": "To pole jest wymagane.",
-      "ext-storage": "Zewnętrzna pamięć masowa",
-      "grafana": "Instancja Grafany",
+      "external-storage-label": "",
       "label-display-name": "Nazwa wyświetlana",
       "placeholder-my-repository-connection": "Połączenie z moim repozytorium",
       "text-loading-resource-information": "Wczytywanie informacji o zasobach…",
+      "unmanaged-resources-label": "",
       "dashboards-count_one": "{{count}} pulpit",
       "dashboards-count_few": "{{count}} pulpitu",
       "dashboards-count_many": "{{count}} pulpitu",
@@ -11333,7 +11336,11 @@
     },
     "connect-repository-button": {
       "configure": "Konfiguruj",
-      "repository-limit-info-alert": "Osiągnięto limit repozytorium ({{count}})"
+      "instance-fully-managed-tooltip": "",
+      "repository-limit-reached-tooltip_one": "",
+      "repository-limit-reached-tooltip_few": "",
+      "repository-limit-reached-tooltip_many": "",
+      "repository-limit-reached-tooltip_other": ""
     },
     "delete-repository-button": {
       "button-delete": "Usuń",
@@ -12027,16 +12034,6 @@
       "no-deleted-dashboards": "Ostatnio nie usunięto żadnych pulpitów.",
       "no-deleted-dashboards-text": "Usunięty pulpit będzie widoczny tutaj przez 30 dni, zanim zostanie trwale usunięty. Administrator organizacji może przywrócić ostatnio usunięte pulpity.",
       "no-search-result": "Nie znaleziono wyników dla tego zapytania"
-    },
-    "permanently-delete-modal": {
-      "confirm-text": "Usuń",
-      "delete-button": "Usuń",
-      "delete-loading": "Usuwanie…",
-      "title": "Trwale usuń pulpity",
-      "text_one": "To działanie spowoduje usunięcie {{numberOfDashboards}} pulpitu.",
-      "text_few": "To działanie spowoduje usunięcie {{numberOfDashboards}} pulpitów.",
-      "text_many": "To działanie spowoduje usunięcie {{numberOfDashboards}} pulpitów.",
-      "text_other": "To działanie spowoduje usunięcie {{numberOfDashboards}} pulpitu."
     },
     "restore-modal": {
       "restore-button": "Przywróć",
