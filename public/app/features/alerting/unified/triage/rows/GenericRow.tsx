@@ -16,6 +16,8 @@ interface GenericRowProps {
   content?: ReactNode;
   isOpenByDefault?: boolean;
   children?: ReactNode;
+  // allow overriding / adding styles for the row
+  leftColumnClassName?: string;
 }
 
 export const GenericRow = ({
@@ -26,6 +28,7 @@ export const GenericRow = ({
   content,
   isOpenByDefault = false,
   children,
+  leftColumnClassName,
 }: GenericRowProps) => {
   const styles = useStyles2(getStyles);
   const [isOpen, handleToggle] = useToggle(isOpenByDefault);
@@ -36,7 +39,7 @@ export const GenericRow = ({
   return (
     <>
       <div className={styles.groupItemWrapper(width)}>
-        <div className={cx(styles.leftColumn, styles.column)}>
+        <div className={cx(styles.leftColumn, styles.column, leftColumnClassName)}>
           <div className={styles.columnContent}>
             <LeftCell
               title={title}

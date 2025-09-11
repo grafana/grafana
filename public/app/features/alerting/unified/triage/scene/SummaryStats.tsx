@@ -9,6 +9,11 @@ import { METRIC_NAME } from '../constants';
 
 import { getDataQuery, useQueryFilter } from './utils';
 
+interface Frame {
+  alertstate: 'firing' | 'pending';
+  Value: number;
+}
+
 export function SummaryStatsReact() {
   const filter = useQueryFilter();
 
@@ -24,12 +29,16 @@ export function SummaryStatsReact() {
 
   const isLoading = !dataProvider.isDataReadyToDisplay;
   const data = dataProvider.useState().data;
+  const firstFrame = data?.series?.at(0);
 
-  if (isLoading || !data?.series?.length) {
+  if (isLoading || !firstFrame) {
     return null;
   }
 
-  const dfv = new DataFrameView(data.series[0]);
+  const dfv = new DataFrameView<Frame>(firstFrame);
+  if (dfv.length === 0) {
+    return null;
+  }
 
   const firingIndex = dfv.fields.alertstate.values.findIndex((state) => state === 'firing');
   const firingCount = dfv.fields.Value.values[firingIndex] ?? 0;

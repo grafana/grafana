@@ -1,4 +1,4 @@
-import { omit, size } from 'lodash';
+import { omit } from 'lodash';
 import { useMemo } from 'react';
 
 import { DataFrame, Labels, findCommonLabels } from '@grafana/data';

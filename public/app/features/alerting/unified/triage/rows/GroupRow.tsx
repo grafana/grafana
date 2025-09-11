@@ -1,4 +1,8 @@
+import { css } from '@emotion/css';
 import React from 'react';
+
+import { GrafanaTheme2 } from '@grafana/data';
+import { useStyles2 } from '@grafana/ui';
 
 import { Label } from '../../components/Label';
 import { Domain, GenericGroupedRow, WorkbenchRow } from '../types';
@@ -30,14 +34,16 @@ function renderWorkbenchRow(
 }
 
 export const GroupRow = ({ row, leftColumnWidth, domain, rowKey }: GroupRowProps) => {
+  const styles = useStyles2(getStyles);
+
   return (
     <GenericRow
       key={rowKey}
       width={leftColumnWidth}
-      title={row.metadata.value}
-      actions={<Label size="sm" value={row.metadata.label} />}
+      title={<Label size="md" label={row.metadata.label} value={row.metadata.value} />}
       content={null}
       isOpenByDefault={true}
+      leftColumnClassName={styles.groupRow}
     >
       {row.rows.map((childRow, childIndex) =>
         renderWorkbenchRow(childRow, leftColumnWidth, domain, `${rowKey}-${generateRowKey(childRow, childIndex)}`)
@@ -45,3 +51,9 @@ export const GroupRow = ({ row, leftColumnWidth, domain, rowKey }: GroupRowProps
     </GenericRow>
   );
 };
+
+const getStyles = (theme: GrafanaTheme2) => ({
+  groupRow: css({
+    backgroundColor: theme.colors.background.secondary,
+  }),
+});
