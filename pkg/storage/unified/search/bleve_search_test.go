@@ -237,7 +237,6 @@ func newTestDashboardsIndex(t testing.TB, threshold int64, size int64, batchSize
 
 	t.Cleanup(backend.CloseAllIndexes)
 
-	rv := int64(10)
 	ctx := identity.WithRequester(context.Background(), &user.SignedInUser{Namespace: "ns"})
 
 	info, err := search.DashboardBuilder(func(ctx context.Context, namespace string, blob resource.BlobSupport) (resource.DocumentBuilder, error) {
@@ -254,7 +253,7 @@ func newTestDashboardsIndex(t testing.TB, threshold int64, size int64, batchSize
 		Namespace: key.Namespace,
 		Group:     key.Group,
 		Resource:  key.Resource,
-	}, size, rv, info.Fields, "test", writer, nil, false, false)
+	}, size, info.Fields, "test", writer, nil, false)
 	require.NoError(t, err)
 
 	return index
