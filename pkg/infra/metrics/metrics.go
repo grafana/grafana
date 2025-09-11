@@ -213,6 +213,9 @@ var (
 
 	// MStatTotalCorrelations is a metric total amount of correlations
 	MStatTotalCorrelations prometheus.Gauge
+
+	// MStatTotalRepositories is a metric total amount of repositories
+	MStatTotalRepositories prometheus.Gauge
 )
 
 const (
@@ -658,6 +661,12 @@ func init() {
 		Help:      "total amount of correlations",
 		Namespace: ExporterName,
 	})
+
+	MStatTotalRepositories = prometheus.NewGauge(prometheus.GaugeOpts{
+		Name:      "stat_totals_repositories",
+		Help:      "total amount of repositories",
+		Namespace: ExporterName,
+	})
 }
 
 // SetBuildInformation sets the build information for this binary
@@ -778,6 +787,7 @@ func initMetricVars(reg prometheus.Registerer) {
 		MPublicDashboardRequestCount,
 		MPublicDashboardDatasourceQuerySuccess,
 		MStatTotalCorrelations,
+		MStatTotalRepositories,
 		MFolderIDsAPICount,
 		MFolderIDsServiceCount,
 	)
