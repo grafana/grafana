@@ -227,7 +227,7 @@ func NewPlugin(pluginID string, cfg *setting.Cfg, httpClientProvider *httpclient
 	case Graphite:
 		svc = graphite.ProvideService(httpClientProvider, tracer)
 	case InfluxDB:
-		svc = influxdb.ProvideService(httpClientProvider, features)
+		svc = influxdb.ProvideService(httpClientProvider)
 	case Loki:
 		svc = loki.ProvideService(httpClientProvider, tracer)
 	case OpenTSDB:
