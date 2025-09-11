@@ -143,6 +143,10 @@ func (b *FolderAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.API
 	storage := map[string]rest.Storage{}
 
 	if b.ignoreLegacy {
+		opts.StorageOptsRegister(resourceInfo.GroupResource(), apistore.StorageOptions{
+			EnableFolderSupport:         true,
+			RequireDeprecatedInternalID: true})
+
 		store, err := grafanaregistry.NewRegistryStore(opts.Scheme, resourceInfo, opts.OptsGetter)
 		if err != nil {
 			return err
@@ -150,6 +154,7 @@ func (b *FolderAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.API
 		storage[resourceInfo.StoragePath()] = store
 		apiGroupInfo.VersionedResourcesStorageMap[folders.VERSION] = storage
 		b.storage = storage[resourceInfo.StoragePath()].(grafanarest.Storage)
+		b.parents = newParentsGetter(store, folder.MaxNestedFolderDepth)
 		return nil
 	}
 
