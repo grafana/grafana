@@ -56,6 +56,12 @@ func (m *migrator) migrate(ctx context.Context, dash map[string]interface{}, tar
 	// wait for the migrator to be initialized
 	<-m.ready
 
+	// 0. Clean up dashboard properties that frontend never includes in save model
+	// These properties are added by backend but frontend filters them out
+	delete(dash, "__elements")
+	delete(dash, "__inputs")
+	delete(dash, "__requires")
+
 	// 1. Apply ALL frontend defaults FIRST (DashboardModel + PanelModel defaults)
 	// This replicates the behavior of the frontend DashboardModel and PanelModel constructors
 	applyFrontendDefaults(dash)
