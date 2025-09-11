@@ -18,6 +18,7 @@ import {
   SceneDataLayerProvider,
   UserActionEvent,
   SceneObjectState,
+  LocalValueVariable,
 } from '@grafana/scenes';
 import { isWeekStart } from '@grafana/ui';
 import { K8S_V1_DASHBOARD_API_CONFIG } from 'app/features/dashboard/api/v1';
@@ -253,7 +254,7 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel,
   let annotationLayers: SceneDataLayerProvider[] = [];
   let alertStatesLayer: AlertStatesDataLayer | undefined;
   const uid = oldModel.uid;
-  const serializerVersion = config.featureToggles.dashboardNewLayouts ? 'v2' : 'v1';
+  const serializerVersion = config.featureToggles.dashboardNewLayouts && !oldModel.meta.isSnapshot ? 'v2' : 'v1';
 
   if (oldModel.meta.isSnapshot) {
     variables = createVariablesForSnapshot(oldModel);
@@ -442,6 +443,21 @@ export function buildGridItemForPanel(panel: PanelModel): DashboardGridItem {
       timeFrom: panel.timeFrom,
       timeShift: panel.timeShift,
       hideTimeOverride: panel.hideTimeOverride,
+    });
+  }
+
+  if (panel.scopedVars && panel.targets?.[0]?.queryType === 'snapshot') {
+    vizPanelState.$variables = new SceneVariableSet({
+      variables: Object.entries(panel.scopedVars).map(
+        ([key, variable]) =>
+          new LocalValueVariable({
+            name: key,
+            value: variable?.value,
+            text: variable?.text,
+            isMulti: true,
+            includeAll: true,
+          })
+      ),
     });
   }
 

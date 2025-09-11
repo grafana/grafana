@@ -315,11 +315,12 @@ func (h *provisioningTestHelper) RenderObject(t *testing.T, filePath string, val
 // The from path is relative to test file's directory.
 func (h *provisioningTestHelper) CopyToProvisioningPath(t *testing.T, from, to string) {
 	fullPath := path.Join(h.ProvisioningPath, to)
-	err := os.MkdirAll(path.Dir(fullPath), 0750)
+	t.Logf("Copying file from '%s' to provisioning path '%s'", from, fullPath)
+	err := os.MkdirAll(path.Dir(fullPath), 0o750)
 	require.NoError(t, err, "failed to create directories for provisioning path")
 
 	file := h.LoadFile(from)
-	err = os.WriteFile(fullPath, file, 0600)
+	err = os.WriteFile(fullPath, file, 0o600)
 	require.NoError(t, err, "failed to write file to provisioning path")
 }
 
@@ -439,28 +440,65 @@ func (h *provisioningTestHelper) logRepositoryObject(t *testing.T, obj map[strin
 				t.Logf("%s%d items:", prefix, len(v))
 				for i, item := range v {
 					if itemMap, ok := item.(map[string]interface{}); ok {
-						t.Logf("%s├── item %d:", prefix, i+1)
+						// Try to get the actual file path from the item
+						if pathVal, exists := itemMap["path"]; exists {
+							t.Logf("%s├── %v", prefix, pathVal)
+						} else {
+							t.Logf("%s├── item %d:", prefix, i+1)
+						}
 						h.logRepositoryObject(t, itemMap, prefix+"  ", newPath)
 					}
 				}
 			}
 		default:
 			// This could be file content or metadata
-			if key != "kind" && key != "apiVersion" {
-				t.Logf("%s├── %s", prefix, key)
+			// Skip common metadata fields that are not useful for debugging
+			if key != "kind" && key != "apiVersion" && key != "path" && key != "size" && key != "hash" {
+				t.Logf("%s├── %s: %v", prefix, key, value)
 			}
 		}
 	}
 }
 
+// validateManagedDashboardsFolderMetadata validates the folder metadata
+// of the managed dashboards.
+// If folder is nested, folder annotations should not be empty.
+// Also checks that the managerId property exists.
+func (h *provisioningTestHelper) validateManagedDashboardsFolderMetadata(t *testing.T,
+	ctx context.Context, repoName string, dashboards []unstructured.Unstructured) {
+	t.Helper()
+
+	// Check if folder is nested or not.
+	// If not, folder annotations should be empty as we have an "instance" sync target
+	for _, d := range dashboards {
+		sourcePath, _, _ := unstructured.NestedString(d.Object, "metadata", "annotations", "grafana.app/sourcePath")
+		isNested := strings.Contains(sourcePath, "/")
+
+		folder, found, _ := unstructured.NestedString(d.Object, "metadata", "annotations", "grafana.app/folder")
+		if isNested {
+			require.True(t, found, "dashboard should have a folder annotation")
+			require.NotEmpty(t, folder, "dashboard should be in a non-empty folder")
+		} else {
+			require.False(t, found, "dashboard should not have a folder annotation")
+		}
+
+		managerID, _, _ := unstructured.NestedString(d.Object, "metadata", "annotations", "grafana.app/managerId")
+		// require.Equal(t, repoName, managerID, "dashboard should be managed by gitsync repo")
+		require.Equal(t, repoName, managerID, "dashboard should be managed by gitsync repo")
+	}
+}
+
 type TestRepo struct {
-	Name               string
-	Target             string
-	Path               string
-	Values             map[string]any
-	Copies             map[string]string
-	ExpectedDashboards int
-	ExpectedFolders    int
+	Name                   string
+	Target                 string
+	Path                   string
+	Values                 map[string]any
+	Copies                 map[string]string
+	ExpectedDashboards     int
+	ExpectedFolders        int
+	SkipSync               bool
+	SkipResourceAssertions bool
+	Template               string
 }
 
 func (h *provisioningTestHelper) CreateRepo(t *testing.T, repo TestRepo) {
@@ -473,52 +511,81 @@ func (h *provisioningTestHelper) CreateRepo(t *testing.T, repo TestRepo) {
 	if repo.Path != "" {
 		repoPath = repo.Path
 		// Ensure the directory exists
-		err := os.MkdirAll(repoPath, 0750)
+		err := os.MkdirAll(repoPath, 0o750)
 		require.NoError(t, err, "should be able to create repository path")
 	}
 
 	templateVars := map[string]any{
 		"Name":        repo.Name,
-		"SyncEnabled": true,
+		"SyncEnabled": !repo.SkipSync,
 		"SyncTarget":  repo.Target,
 	}
 	if repo.Path != "" {
 		templateVars["Path"] = repoPath
 	}
+	// Add custom values from TestRepo
+	for key, value := range repo.Values {
+		templateVars[key] = value
+	}
 
-	localTmp := h.RenderObject(t, "testdata/local-write.json.tmpl", templateVars)
+	tmpl := "testdata/local-write.json.tmpl"
+	if repo.Template != "" {
+		tmpl = repo.Template
+	}
+	localTmp := h.RenderObject(t, tmpl, templateVars)
 
 	_, err := h.Repositories.Resource.Create(t.Context(), localTmp, metav1.CreateOptions{})
 	require.NoError(t, err)
+	h.WaitForHealthyRepository(t, repo.Name)
 
 	for from, to := range repo.Copies {
 		if repo.Path != "" {
 			// Copy to custom path
 			fullPath := path.Join(repoPath, to)
-			err := os.MkdirAll(path.Dir(fullPath), 0750)
+			err := os.MkdirAll(path.Dir(fullPath), 0o750)
 			require.NoError(t, err, "failed to create directories for custom path")
 			file := h.LoadFile(from)
-			err = os.WriteFile(fullPath, file, 0600)
+			err = os.WriteFile(fullPath, file, 0o600)
 			require.NoError(t, err, "failed to write file to custom path")
 		} else {
 			h.CopyToProvisioningPath(t, from, to)
 		}
 	}
 
-	// Trigger and wait for initial sync to populate resources
-	h.SyncAndWait(t, repo.Name, nil)
-
-	// Debug state after initial sync
-	h.DebugState(t, repo.Name, "AFTER INITIAL SYNC")
+	if !repo.SkipSync {
+		// Trigger and wait for initial sync to populate resources
+		h.SyncAndWait(t, repo.Name, nil)
+		h.DebugState(t, repo.Name, "AFTER INITIAL SYNC")
+	} else {
+		h.DebugState(t, repo.Name, "AFTER REPO CREATION")
+	}
 
 	// Verify initial state
-	dashboards, err := h.DashboardsV1.Resource.List(t.Context(), metav1.ListOptions{})
-	require.NoError(t, err)
-	require.Equal(t, repo.ExpectedDashboards, len(dashboards.Items), "should the expected dashboards after sync")
+	if !repo.SkipResourceAssertions {
+		dashboards, err := h.DashboardsV1.Resource.List(t.Context(), metav1.ListOptions{})
+		require.NoError(t, err)
+		require.Equal(t, repo.ExpectedDashboards, len(dashboards.Items), "should the expected dashboards after sync")
+		folders, err := h.Folders.Resource.List(t.Context(), metav1.ListOptions{})
+		require.NoError(t, err)
+		require.Equal(t, repo.ExpectedFolders, len(folders.Items), "should have the expected folders after sync")
+	}
+}
 
-	folders, err := h.Folders.Resource.List(t.Context(), metav1.ListOptions{})
-	require.NoError(t, err)
-	require.Equal(t, repo.ExpectedFolders, len(folders.Items), "should have the expected folders after sync")
+// WaitForHealthyRepository waits for a repository to become healthy.
+func (h *provisioningTestHelper) WaitForHealthyRepository(t *testing.T, name string) {
+	require.EventuallyWithT(t, func(collect *assert.CollectT) {
+		repoStatus, err := h.Repositories.Resource.Get(t.Context(), name, metav1.GetOptions{})
+		if !assert.NoError(collect, err, "failed to get repository status") {
+			return
+		}
+		errType := mustNestedString(repoStatus.Object, "status", "health", "error")
+		assert.Empty(collect, errType, "repository %s has health error: %s", name, errType)
+		msgs := mustNestedStringSlice(repoStatus.Object, "status", "health", "message")
+		assert.Empty(collect, msgs, "repository %s has health messages: %v", name, msgs)
+		status, found := mustNestedBool(repoStatus.Object, "status", "health", "healthy")
+		assert.True(collect, found, "repository %s does not have health status", name)
+		assert.True(collect, status, "repository %s is not healthy yet", name)
+	}, time.Second*10, time.Millisecond*50, "repository %s should become healthy", name)
 }
 
 type grafanaOption func(opts *testinfra.GrafanaOpts)
@@ -531,17 +598,9 @@ func withLogs(opts *testinfra.GrafanaOpts) {
 	opts.EnableLog = true
 }
 
-func useAppPlatformSecrets(opts *testinfra.GrafanaOpts) {
-	opts.EnableFeatureToggles = append(opts.EnableFeatureToggles,
-		featuremgmt.FlagProvisioningSecretsService,
-		featuremgmt.FlagSecretsManagementAppPlatform,
-	)
-}
-
 func runGrafana(t *testing.T, options ...grafanaOption) *provisioningTestHelper {
 	provisioningPath := t.TempDir()
 	opts := testinfra.GrafanaOpts{
-		AppModeProduction: false, // required for experimental APIs
 		EnableFeatureToggles: []string{
 			featuremgmt.FlagProvisioning,
 		},
@@ -646,6 +705,15 @@ func mustNestedString(obj map[string]interface{}, fields ...string) string {
 		panic(err)
 	}
 	return v
+}
+
+func mustNestedBool(obj map[string]interface{}, fields ...string) (bool, bool) {
+	v, found, err := unstructured.NestedBool(obj, fields...)
+	if err != nil {
+		panic(err)
+	}
+
+	return v, found
 }
 
 func mustNestedStringSlice(obj map[string]interface{}, fields ...string) []string {

@@ -121,11 +121,12 @@ func TestLoader_Load(t *testing.T) {
 						Backend:      true,
 						QueryOptions: map[string]bool{"minInterval": true},
 					},
-					Module:    "core:plugin/cloudwatch",
-					BaseURL:   "public/plugins/cloudwatch",
-					FS:        mustNewStaticFSForTests(t, filepath.Join(corePluginDir(t), "app/plugins/datasource/cloudwatch")),
-					Signature: plugins.SignatureStatusInternal,
-					Class:     plugins.ClassCore,
+					Module:       "core:plugin/cloudwatch",
+					BaseURL:      "public/plugins/cloudwatch",
+					FS:           mustNewStaticFSForTests(t, filepath.Join(corePluginDir(t), "app/plugins/datasource/cloudwatch")),
+					Signature:    plugins.SignatureStatusInternal,
+					Class:        plugins.ClassCore,
+					Translations: map[string]string{},
 				},
 			},
 		},
@@ -220,6 +221,7 @@ func TestLoader_Load(t *testing.T) {
 					Signature:     "valid",
 					SignatureType: plugins.SignatureTypeGrafana,
 					SignatureOrg:  "Grafana Labs",
+					Translations:  map[string]string{},
 				},
 			},
 		},
@@ -265,11 +267,12 @@ func TestLoader_Load(t *testing.T) {
 						Backend: true,
 						State:   plugins.ReleaseStateAlpha,
 					},
-					Class:     plugins.ClassExternal,
-					Module:    "public/plugins/test-datasource/module.js",
-					BaseURL:   "public/plugins/test-datasource",
-					FS:        mustNewStaticFSForTests(t, filepath.Join(testDataDir(t), "unsigned-datasource/plugin")),
-					Signature: "unsigned",
+					Class:        plugins.ClassExternal,
+					Module:       "public/plugins/test-datasource/module.js",
+					BaseURL:      "public/plugins/test-datasource",
+					FS:           mustNewStaticFSForTests(t, filepath.Join(testDataDir(t), "unsigned-datasource/plugin")),
+					Signature:    "unsigned",
+					Translations: map[string]string{},
 				},
 			},
 		},
@@ -328,11 +331,12 @@ func TestLoader_Load(t *testing.T) {
 						Backend: true,
 						State:   plugins.ReleaseStateAlpha,
 					},
-					Class:     plugins.ClassExternal,
-					Module:    "public/plugins/test-datasource/module.js",
-					BaseURL:   "public/plugins/test-datasource",
-					FS:        mustNewStaticFSForTests(t, filepath.Join(testDataDir(t), "unsigned-datasource/plugin")),
-					Signature: plugins.SignatureStatusUnsigned,
+					Class:        plugins.ClassExternal,
+					Module:       "public/plugins/test-datasource/module.js",
+					BaseURL:      "public/plugins/test-datasource",
+					FS:           mustNewStaticFSForTests(t, filepath.Join(testDataDir(t), "unsigned-datasource/plugin")),
+					Signature:    plugins.SignatureStatusUnsigned,
+					Translations: map[string]string{},
 				},
 			},
 		},
@@ -453,6 +457,7 @@ func TestLoader_Load(t *testing.T) {
 					Signature:     plugins.SignatureStatusUnsigned,
 					Module:        "public/plugins/test-app/module.js",
 					BaseURL:       "public/plugins/test-app",
+					Translations:  map[string]string{},
 				},
 			},
 		},
@@ -542,6 +547,7 @@ func TestLoader_Load_ExternalRegistration(t *testing.T) {
 					ClientID:     "client-id",
 					ClientSecret: "secretz",
 				},
+				Translations: map[string]string{},
 			},
 		}
 
@@ -636,11 +642,12 @@ func TestLoader_Load_CustomSource(t *testing.T) {
 					ExtensionPoints:   []plugins.ExtensionPoint{},
 				},
 			},
-			FS:        mustNewStaticFSForTests(t, filepath.Join(testDataDir(t), "cdn/plugin")),
-			Class:     plugins.ClassExternal,
-			Signature: plugins.SignatureStatusValid,
-			BaseURL:   "https://cdn.example.com/grafana-worldmap-panel/0.3.3/public/plugins/grafana-worldmap-panel",
-			Module:    "https://cdn.example.com/grafana-worldmap-panel/0.3.3/public/plugins/grafana-worldmap-panel/module.js",
+			FS:           mustNewStaticFSForTests(t, filepath.Join(testDataDir(t), "cdn/plugin")),
+			Class:        plugins.ClassExternal,
+			Signature:    plugins.SignatureStatusValid,
+			BaseURL:      "https://cdn.example.com/grafana-worldmap-panel/0.3.3/public/plugins/grafana-worldmap-panel",
+			Module:       "https://cdn.example.com/grafana-worldmap-panel/0.3.3/public/plugins/grafana-worldmap-panel/module.js",
+			Translations: map[string]string{},
 		}}
 
 		l := newLoader(t, cfg, fakes.NewFakePluginRegistry(), fakes.NewFakeProcessManager(), fakes.NewFakeBackendProcessProvider(), newFakeErrorTracker())
@@ -727,6 +734,7 @@ func TestLoader_Load_MultiplePlugins(t *testing.T) {
 						Signature:     "valid",
 						SignatureType: plugins.SignatureTypePrivate,
 						SignatureOrg:  "Will Browne",
+						Translations:  map[string]string{},
 					},
 				},
 				pluginErrors: map[string]*plugins.Error{
@@ -845,6 +853,7 @@ func TestLoader_Load_RBACReady(t *testing.T) {
 					SignatureOrg:  "gabrielmabille",
 					Module:        "public/plugins/test-app/module.js",
 					BaseURL:       "public/plugins/test-app",
+					Translations:  map[string]string{},
 				},
 			},
 		},
@@ -913,6 +922,7 @@ func TestLoader_Load_Signature_RootURL(t *testing.T) {
 				SignatureOrg:  "Will Browne",
 				Module:        "public/plugins/test-datasource/module.js",
 				BaseURL:       "public/plugins/test-datasource",
+				Translations:  map[string]string{},
 			},
 		}
 
@@ -999,6 +1009,7 @@ func TestLoader_Load_DuplicatePlugins(t *testing.T) {
 				SignatureOrg:  "Grafana Labs",
 				Module:        "public/plugins/test-app/module.js",
 				BaseURL:       "public/plugins/test-app",
+				Translations:  map[string]string{},
 			},
 		}
 
@@ -1089,6 +1100,7 @@ func TestLoader_Load_SkipUninitializedPlugins(t *testing.T) {
 				SignatureOrg:  "Grafana Labs",
 				Module:        "public/plugins/test-app/module.js",
 				BaseURL:       "public/plugins/test-app",
+				Translations:  map[string]string{},
 			},
 		}
 
@@ -1174,75 +1186,35 @@ func TestLoader_Load_Angular(t *testing.T) {
 		},
 		DiscoverFunc: sources.NewLocalSource(plugins.ClassExternal, []string{filepath.Join(testDataDir(t), "valid-v2-signature")}).Discover,
 	}
-	for _, cfgTc := range []struct {
-		name string
-		cfg  *config.PluginManagementCfg
-	}{
-		{name: "angular support enabled", cfg: &config.PluginManagementCfg{}},
-		{name: "angular support disabled", cfg: &config.PluginManagementCfg{}},
-	} {
-		t.Run(cfgTc.name, func(t *testing.T) {
-			for _, tc := range []struct {
-				name             string
-				angularInspector angularinspector.Inspector
-				shouldLoad       bool
-			}{
-				{
-					name:             "angular plugin",
-					angularInspector: angularinspector.AlwaysAngularFakeInspector,
-					// angular plugins should load only if allowed by the cfg
-					shouldLoad: false,
-				},
-				{
-					name:             "non angular plugin",
-					angularInspector: angularinspector.NeverAngularFakeInspector,
-					// non-angular plugins should always load
-					shouldLoad: true,
-				},
-			} {
-				t.Run(tc.name, func(t *testing.T) {
-					l := newLoaderWithOpts(t, cfgTc.cfg, loaderDepOpts{angularInspector: tc.angularInspector})
-					p, err := l.Load(context.Background(), fakePluginSource)
-					require.NoError(t, err)
-					if tc.shouldLoad {
-						require.Len(t, p, 1, "plugin should have been loaded")
-					} else {
-						require.Empty(t, p, "plugin shouldn't have been loaded")
-					}
-				})
-			}
-		})
-	}
-}
+	cfg := &config.PluginManagementCfg{}
 
-func TestLoader_HideAngularDeprecation(t *testing.T) {
-	fakePluginSource := &fakes.FakePluginSource{
-		PluginClassFunc: func(ctx context.Context) plugins.Class {
-			return plugins.ClassExternal
-		},
-		DiscoverFunc: sources.NewLocalSource(plugins.ClassExternal, []string{filepath.Join(testDataDir(t), "valid-v2-signature")}).Discover,
-	}
 	for _, tc := range []struct {
-		name string
-		cfg  *config.PluginManagementCfg
+		name             string
+		angularInspector angularinspector.Inspector
+		shouldLoad       bool
 	}{
-		{name: "with plugin id in HideAngularDeprecation list", cfg: &config.PluginManagementCfg{
-			HideAngularDeprecation: []string{"one-app", "two-panel", "test-datasource", "three-datasource"},
-		}},
-		{name: "without plugin id in HideAngularDeprecation list", cfg: &config.PluginManagementCfg{
-			HideAngularDeprecation: []string{"one-app", "two-panel", "three-datasource"},
-		}},
-		{name: "with empty HideAngularDeprecation", cfg: &config.PluginManagementCfg{
-			HideAngularDeprecation: nil,
-		}},
+		{
+			name:             "should not load an angular plugin",
+			angularInspector: angularinspector.AlwaysAngularFakeInspector,
+			// angular plugins should never load
+			shouldLoad: false,
+		},
+		{
+			name:             "should load a non angular plugin",
+			angularInspector: angularinspector.NeverAngularFakeInspector,
+			// non-angular plugins should always load
+			shouldLoad: true,
+		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			l := newLoaderWithOpts(t, tc.cfg, loaderDepOpts{
-				angularInspector: angularinspector.AlwaysAngularFakeInspector,
-			})
+			l := newLoaderWithOpts(t, cfg, loaderDepOpts{angularInspector: tc.angularInspector})
 			p, err := l.Load(context.Background(), fakePluginSource)
 			require.NoError(t, err)
-			require.Empty(t, p, "plugin shouldn't have been loaded")
+			if tc.shouldLoad {
+				require.Len(t, p, 1, "plugin should have been loaded")
+			} else {
+				require.Empty(t, p, "plugin shouldn't have been loaded")
+			}
 		})
 	}
 }
@@ -1290,6 +1262,7 @@ func TestLoader_Load_NestedPlugins(t *testing.T) {
 		SignatureType: plugins.SignatureTypeGrafana,
 		SignatureOrg:  "Grafana Labs",
 		Class:         plugins.ClassExternal,
+		Translations:  map[string]string{},
 	}
 
 	child := &plugins.Plugin{
@@ -1333,6 +1306,7 @@ func TestLoader_Load_NestedPlugins(t *testing.T) {
 		SignatureType: plugins.SignatureTypeGrafana,
 		SignatureOrg:  "Grafana Labs",
 		Class:         plugins.ClassExternal,
+		Translations:  map[string]string{},
 	}
 
 	parent.Children = []*plugins.Plugin{child}
@@ -1482,6 +1456,7 @@ func TestLoader_Load_NestedPlugins(t *testing.T) {
 			SignatureType: plugins.SignatureTypeGrafana,
 			SignatureOrg:  "Grafana Labs",
 			Class:         plugins.ClassExternal,
+			Translations:  map[string]string{},
 		}
 
 		child := &plugins.Plugin{
@@ -1532,6 +1507,7 @@ func TestLoader_Load_NestedPlugins(t *testing.T) {
 			SignatureType:   plugins.SignatureTypeGrafana,
 			SignatureOrg:    "Grafana Labs",
 			Class:           plugins.ClassExternal,
+			Translations:    map[string]string{},
 		}
 
 		parent.Children = []*plugins.Plugin{child}

@@ -2,6 +2,7 @@ package apiserver
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"path"
@@ -35,7 +36,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/modules"
-	servicetracing "github.com/grafana/grafana/pkg/modules/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/registry/apis/datasource"
@@ -171,8 +171,7 @@ func ProvideService(
 		dualWriterMetrics:                 grafanarest.NewDualWriterMetrics(reg),
 	}
 	// This will be used when running as a dskit service
-	service := services.NewBasicService(s.start, s.running, nil).WithName(modules.GrafanaAPIServer)
-	s.NamedService = servicetracing.NewServiceTracer(tracing.GetTracerProvider(), service)
+	s.NamedService = services.NewBasicService(s.start, s.running, nil).WithName(modules.GrafanaAPIServer)
 
 	// TODO: this is very hacky
 	// We need to register the routes in ProvideService to make sure
@@ -291,11 +290,6 @@ func (s *service) start(ctx context.Context) error {
 
 	o := grafanaapiserveroptions.NewOptions(s.codecs.LegacyCodec(groupVersions...))
 
-	// Register admission plugins from app installers after options are created
-	if err := appinstaller.RegisterAdmissionPlugins(ctx, s.appInstallers, o); err != nil {
-		return err
-	}
-
 	// Register authorizers from app installers
 	appinstaller.RegisterAuthorizers(ctx, s.appInstallers, s.authorizer)
 
@@ -316,6 +310,12 @@ func (s *service) start(ctx context.Context) error {
 	if err := o.ApplyTo(serverConfig); err != nil {
 		return err
 	}
+	serverConfig.EffectiveVersion = builder.GetEffectiveVersion(
+		s.cfg.BuildStamp,
+		s.cfg.BuildVersion,
+		s.cfg.BuildCommit,
+		s.cfg.BuildBranch,
+	)
 
 	if err := o.APIEnablementOptions.ApplyTo(&serverConfig.Config, appinstaller.NewAPIResourceConfig(s.appInstallers), s.scheme); err != nil {
 		return err
@@ -355,13 +355,18 @@ func (s *service) start(ctx context.Context) error {
 		s.scheme,
 		serverConfig,
 		builders,
-		s.cfg.BuildStamp,
 		s.cfg.BuildVersion,
-		s.cfg.BuildCommit,
-		s.cfg.BuildBranch,
 		s.buildHandlerChainFuncFromBuilders,
 		groupVersions,
 		defGetters,
+	)
+	if err != nil {
+		return err
+	}
+
+	serverConfig.AdmissionControl, err = appinstaller.RegisterAdmission(
+		serverConfig.AdmissionControl,
+		s.appInstallers,
 	)
 	if err != nil {
 		return err
@@ -469,6 +474,13 @@ func (s *service) start(ctx context.Context) error {
 	// used by local clients to make requests to the server
 	s.restConfig = runningServer.LoopbackClientConfig
 
+	for _, installer := range s.appInstallers {
+		err := installer.InitializeApp(*s.restConfig)
+		if err != nil && !errors.Is(err, appsdkapiserver.ErrAppAlreadyInitialized) {
+			return err
+		}
+	}
+
 	return nil
 }
 
@@ -569,7 +581,6 @@ func (s *service) running(ctx context.Context) error {
 			return err
 		}
 	case <-ctx.Done():
-		return ctx.Err()
 	}
 	return nil
 }

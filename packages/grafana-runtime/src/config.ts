@@ -186,10 +186,18 @@ export class GrafanaBootConfig {
   unifiedAlertingEnabled = false;
   unifiedAlerting: UnifiedAlertingConfig = {
     minInterval: '',
-    alertStateHistoryBackend: undefined,
-    alertStateHistoryPrimary: undefined,
+    stateHistory: {
+      backend: undefined,
+      primary: undefined,
+      prometheusTargetDatasourceUID: undefined,
+      prometheusMetricName: undefined,
+    },
     recordingRulesEnabled: false,
     defaultRecordingRulesTargetDatasourceUID: undefined,
+
+    // Backward compatibility fields - populated by backend
+    alertStateHistoryBackend: undefined,
+    alertStateHistoryPrimary: undefined,
   };
   applicationInsightsConnectionString?: string;
   applicationInsightsEndpointUrl?: string;
@@ -236,6 +244,8 @@ export class GrafanaBootConfig {
   exploreDefaultTimeOffset = '1h';
   exploreHideLogsDownload?: boolean;
   quickRanges?: TimeOption[];
+  pluginRestrictedAPIsAllowList?: Record<string, string[]>;
+  pluginRestrictedAPIsBlockList?: Record<string, string[]>;
 
   /**
    * Language used in Grafana's UI. This is after the user's preference (or deteceted locale) is resolved to one of

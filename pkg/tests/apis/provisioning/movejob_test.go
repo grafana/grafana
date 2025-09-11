@@ -14,12 +14,11 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 func TestIntegrationProvisioning_MoveJob(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	helper := runGrafana(t)
 	ctx := context.Background()
@@ -197,16 +196,6 @@ func TestIntegrationProvisioning_MoveJob(t *testing.T) {
 			assert.True(collect, apierrors.IsNotFound(err), "repository should be deleted")
 		}, time.Second*5, time.Millisecond*50, "repository should be deleted before creating new one")
 
-		// Create a unique repository for resource reference testing to avoid contamination
-		const refRepo = "move-ref-test-repo"
-		localRefTmp := helper.RenderObject(t, "testdata/local-write.json.tmpl", map[string]any{
-			"Name":        refRepo,
-			"SyncEnabled": true,
-			"SyncTarget":  "instance",
-		})
-		_, err = helper.Repositories.Resource.Create(ctx, localRefTmp, metav1.CreateOptions{})
-		require.NoError(t, err)
-
 		// Create modified test files with unique UIDs for ResourceRef testing
 		allPanelsContent := helper.LoadFile("testdata/all-panels.json")
 		textOptionsContent := helper.LoadFile("testdata/text-options.json")
@@ -232,8 +221,12 @@ func TestIntegrationProvisioning_MoveJob(t *testing.T) {
 		helper.CopyToProvisioningPath(t, tmpFile2, "move-source-2.json")
 		helper.CopyToProvisioningPath(t, tmpFile3, "move-source-3.json")
 
-		// Sync to populate resources in Grafana
-		helper.SyncAndWait(t, refRepo, nil)
+		// Create a unique repository for resource reference testing to avoid contamination
+		const refRepo = "move-ref-test-repo"
+		helper.CreateRepo(t, TestRepo{
+			Name:                   refRepo,
+			SkipResourceAssertions: true, // HACK: I am not sure why sometimes it's 6 or 3 dashbaords.
+		})
 
 		t.Run("move single dashboard by resource reference", func(t *testing.T) {
 			spec := provisioning.JobSpec{

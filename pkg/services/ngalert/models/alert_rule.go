@@ -281,6 +281,55 @@ func NewUserUID(requester interface{ GetIdentifier() string }) *UserUID {
 	return &userUID
 }
 
+const (
+	NoGroupPrefix     = "no_group_for_rule_"
+	NoGroupNameLength = 200
+)
+
+// NoGroupRuleGroup is a special rule group that is used to represent rules that do not belong to any group.
+type NoGroupRuleGroup struct {
+	ruleUID string
+}
+
+func NewNoGroupRuleGroup(ruleUID string) (*NoGroupRuleGroup, error) {
+	// Generate a "no group" string that exceeds 190 char limit to fail validation
+	// This is to ensure that the rule group is not created in the database.
+	if len(ruleUID) > NoGroupNameLength-len(NoGroupPrefix) {
+		return nil, fmt.Errorf("rule UID is too long: %s", ruleUID)
+	}
+	return &NoGroupRuleGroup{ruleUID: ruleUID}, nil
+}
+
+func (ruleGroup *NoGroupRuleGroup) String() string {
+	sb := strings.Builder{}
+	sb.WriteString(NoGroupPrefix)
+	sb.WriteString(ruleGroup.ruleUID)
+	for sb.Len() < NoGroupNameLength {
+		sb.WriteRune('*')
+	}
+	return sb.String()
+}
+
+func (ruleGroup *NoGroupRuleGroup) GetRuleUID() string {
+	return ruleGroup.ruleUID
+}
+
+func IsNoGroupRuleGroup(ruleGroup string) bool {
+	return strings.HasPrefix(ruleGroup, NoGroupPrefix) && len(ruleGroup) == NoGroupNameLength &&
+		strings.Count(ruleGroup, "*") >= (NoGroupNameLength-len(NoGroupPrefix)-util.MaxUIDLength)
+}
+
+func ParseNoRuleGroup(ruleGroup string) (*NoGroupRuleGroup, error) {
+	if !IsNoGroupRuleGroup(ruleGroup) {
+		return nil, fmt.Errorf("rule group %s is not a no group rule group", ruleGroup)
+	}
+	ruleUID := strings.TrimRight(strings.TrimPrefix(ruleGroup, NoGroupPrefix), "*")
+	if err := util.ValidateUID(ruleUID); err != nil {
+		return nil, fmt.Errorf("rule group %s is not a no group rule group, rule uid could not be parsed: %w", ruleGroup, err)
+	}
+	return &NoGroupRuleGroup{ruleUID: ruleUID}, nil
+}
+
 // AlertRule is the model for alert rules in unified alerting.
 type AlertRule struct {
 	ID int64
@@ -642,7 +691,7 @@ func (alertRule *AlertRule) PreSave(timeNow func() time.Time, userUID *UserUID) 
 	for i, q := range alertRule.Data {
 		err := q.PreSave()
 		if err != nil {
-			return fmt.Errorf("invalid alert query %s: %w", q.RefID, err)
+			return errors.Join(ErrAlertRuleFailedValidation, fmt.Errorf("invalid alert query %s: %w", q.RefID, err))
 		}
 		alertRule.Data[i] = q
 	}
@@ -835,8 +884,9 @@ func (alertRule *AlertRule) Copy() *AlertRule {
 
 	if alertRule.Record != nil {
 		result.Record = &Record{
-			From:   alertRule.Record.From,
-			Metric: alertRule.Record.Metric,
+			From:                alertRule.Record.From,
+			Metric:              alertRule.Record.Metric,
+			TargetDatasourceUID: alertRule.Record.TargetDatasourceUID,
 		}
 	}
 
@@ -888,14 +938,6 @@ const (
 	RuleTypeFilterRecording
 )
 
-type ListAlertRulesByGroupQuery struct {
-	ListAlertRulesQuery
-	RuleType RuleTypeFilter
-
-	GroupLimit         int64  // Number of groups to fetch
-	GroupContinueToken string // Token for per-group pagination
-}
-
 type GroupCursor struct {
 	NamespaceUID string `json:"n"`
 	RuleGroup    string `json:"g"`
@@ -937,6 +979,15 @@ type ListAlertRulesQuery struct {
 	TimeIntervalName string
 
 	HasPrometheusRuleDefinition *bool
+}
+
+type ListAlertRulesExtendedQuery struct {
+	ListAlertRulesQuery
+
+	RuleType RuleTypeFilter
+
+	Limit         int64
+	ContinueToken string
 }
 
 // CountAlertRulesQuery is the query for counting alert rules

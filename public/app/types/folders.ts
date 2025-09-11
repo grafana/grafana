@@ -6,6 +6,7 @@ export interface FolderListItemDTO {
   uid: string;
   title: string;
   managedBy?: ManagerKind;
+  parentUid?: string;
 }
 
 export type FolderParent = Pick<FolderDTO, 'title' | 'uid' | 'url'>;
@@ -31,6 +32,9 @@ export interface FolderDTO extends WithAccessControlMetadata {
   url: string;
   version?: number;
 }
+
+/** Minimal data required to create a new folder */
+export type NewFolder = Pick<FolderDTO, 'title' | 'parentUid'>;
 
 export interface FolderState {
   id: number;

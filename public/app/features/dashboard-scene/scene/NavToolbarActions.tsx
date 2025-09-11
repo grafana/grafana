@@ -18,7 +18,6 @@ import {
 } from '@grafana/ui';
 import { AppChromeUpdate } from 'app/core/components/AppChrome/AppChromeUpdate';
 import { NavToolbarSeparator } from 'app/core/components/AppChrome/NavToolbar/NavToolbarSeparator';
-import grafanaConfig from 'app/core/config';
 import { LS_PANEL_COPY_KEY } from 'app/core/constants';
 import { contextSrv } from 'app/core/core';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
@@ -66,7 +65,7 @@ NavToolbarActions.displayName = 'NavToolbarActions';
  * This part is split into a separate component to help test this
  */
 export function ToolbarActions({ dashboard }: Props) {
-  const { isEditing, viewPanelScene, isDirty, uid, meta, editview, editPanel, editable } = dashboard.useState();
+  const { isEditing, viewPanel, isDirty, uid, meta, editview, editPanel, editable } = dashboard.useState();
 
   const { isPlaying } = playlistSrv.useState();
   const [isAddPanelMenuOpen, setIsAddPanelMenuOpen] = useState(false);
@@ -75,7 +74,7 @@ export function ToolbarActions({ dashboard }: Props) {
   const toolbarActions: ToolbarAction[] = [];
   const styles = useStyles2(getStyles);
   const isEditingPanel = Boolean(editPanel);
-  const isViewingPanel = Boolean(viewPanelScene);
+  const isViewingPanel = Boolean(viewPanel);
   const isEditedPanelDirty = usePanelEditDirty(editPanel);
 
   const isEditingLibraryPanel = editPanel && isLibraryPanel(editPanel.state.panelRef.resolve());
@@ -91,11 +90,6 @@ export function ToolbarActions({ dashboard }: Props) {
   const { isReadOnlyRepo, repoType } = useGetResourceRepositoryView({
     folderName: meta.folderUid,
   });
-
-  // Internal only;
-  // allows viewer editing without ability to save
-  // used for grafana play
-  const canEdit = grafanaConfig.viewersCanEdit;
 
   if (!isEditingPanel) {
     // This adds the presence indicators in enterprise
@@ -351,7 +345,7 @@ export function ToolbarActions({ dashboard }: Props) {
 
   toolbarActions.push({
     group: 'main-buttons',
-    condition: !isEditing && (dashboard.canEditDashboard() || canEdit) && !isViewingPanel && !isPlaying && editable,
+    condition: !isEditing && dashboard.canEditDashboard() && !isViewingPanel && !isPlaying && editable,
     render: () => (
       <Button
         onClick={() => {

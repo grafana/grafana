@@ -1,7 +1,7 @@
 import { css, cx } from '@emotion/css';
 import { useDialog } from '@react-aria/dialog';
 import { useOverlay } from '@react-aria/overlays';
-import { createRef } from 'react';
+import { createRef, useMemo } from 'react';
 
 import {
   Field,
@@ -14,7 +14,7 @@ import {
   ValueLinkConfig,
   ActionModel,
 } from '@grafana/data';
-import { Portal, useStyles2, VizTooltipContainer } from '@grafana/ui';
+import { Portal, useStyles2, useTheme2, VizTooltipContainer, usePanelContext } from '@grafana/ui';
 import {
   VizTooltipContent,
   VizTooltipFooter,
@@ -33,7 +33,10 @@ interface Props {
 }
 
 export const CanvasTooltip = ({ scene }: Props) => {
+  const theme = useTheme2();
   const styles = useStyles2(getStyles);
+  const { canExecuteActions } = usePanelContext();
+  const userCanExecuteActions = useMemo(() => canExecuteActions?.() ?? false, [canExecuteActions]);
 
   const onClose = () => {
     if (scene?.tooltipCallback && scene.tooltipPayload) {
@@ -56,7 +59,7 @@ export const CanvasTooltip = ({ scene }: Props) => {
   const shouldDisplayTimeContentItem =
     timeField && lastTimeValue && element.data.field && getFieldDisplayName(timeField) !== element.data.field;
 
-  const headerItem: VizTooltipItem | null = {
+  const headerItem: VizTooltipItem = {
     label: element.getName(),
     value: '',
   };
@@ -103,7 +106,7 @@ export const CanvasTooltip = ({ scene }: Props) => {
   const elementHasActions = (element.options.actions?.length ?? 0) > 0;
   const frames = scene.data?.series;
 
-  if (elementHasActions && frames) {
+  if (elementHasActions && frames && userCanExecuteActions) {
     const defaultField = getActionsDefaultField(element.options.links ?? [], element.options.actions ?? []);
     const scopedVars: ScopedVars = {
       __dataContext: {
@@ -139,7 +142,7 @@ export const CanvasTooltip = ({ scene }: Props) => {
   return (
     <>
       {scene.tooltipPayload?.element && scene.tooltipPayload.anchorPoint && (
-        <Portal>
+        <Portal zIndex={theme.zIndex.tooltip}>
           <VizTooltipContainer
             className={cx(styles.tooltipWrapper, scene.tooltipPayload.isOpen && styles.pinned)}
             position={{ x: scene.tooltipPayload.anchorPoint.x, y: scene.tooltipPayload.anchorPoint.y }}
@@ -167,7 +170,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
   tooltipWrapper: css({
     top: 0,
     left: 0,
-    zIndex: theme.zIndex.portal,
     whiteSpace: 'pre',
     borderRadius: theme.shape.radius.default,
     position: 'fixed',

@@ -22,6 +22,8 @@ import appEvents from 'app/core/app_events';
 import { getPluginSettings } from 'app/features/plugins/pluginSettings';
 import { CloseExtensionSidebarEvent, OpenExtensionSidebarEvent, ShowModalReactEvent } from 'app/types/events';
 
+import { RestrictedGrafanaApisProvider } from '../components/restrictedGrafanaApis/RestrictedGrafanaApisProvider';
+
 import { ExtensionErrorBoundary } from './ExtensionErrorBoundary';
 import { ExtensionsLog, log as baseLog } from './logs/log';
 import { AddedLinkRegistryItem } from './registry/AddedLinksRegistry';
@@ -98,7 +100,11 @@ export const wrapWithPluginContext = <T,>({
     return (
       <PluginContextProvider meta={pluginMeta}>
         <ExtensionErrorBoundary pluginId={pluginId} extensionTitle={extensionTitle} log={log}>
-          <Component {...writableProxy(props, { log, source: 'extension', pluginId })} />
+          <RestrictedGrafanaApisProvider pluginId={pluginId}>
+            <Component
+              {...writableProxy(props, { log, source: 'extension', pluginId, pluginVersion: pluginMeta.info?.version })}
+            />
+          </RestrictedGrafanaApisProvider>
         </ExtensionErrorBoundary>
       </PluginContextProvider>
     );

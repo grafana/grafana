@@ -59,9 +59,10 @@ const (
 )
 
 type K8sTestHelper struct {
-	t          *testing.T
-	env        server.TestEnv
-	Namespacer request.NamespaceMapper
+	t               *testing.T
+	listenerAddress string
+	env             server.TestEnv
+	Namespacer      request.NamespaceMapper
 
 	Org1 OrgUsers // default
 	OrgB OrgUsers // some other id
@@ -88,12 +89,13 @@ func NewK8sTestHelper(t *testing.T, opts testinfra.GrafanaOpts) *K8sTestHelper {
 	// The flag only exists to support the transition from the old to the new behavior in dev/ops/prod.
 	opts.EnableFeatureToggles = append(opts.EnableFeatureToggles, featuremgmt.FlagAppPlatformGrpcClientAuth)
 	dir, path := testinfra.CreateGrafDir(t, opts)
-	_, env := testinfra.StartGrafanaEnv(t, dir, path)
+	listenerAddress, env := testinfra.StartGrafanaEnv(t, dir, path)
 
 	c := &K8sTestHelper{
-		env:        *env,
-		t:          t,
-		Namespacer: request.GetNamespaceMapper(nil),
+		env:             *env,
+		listenerAddress: listenerAddress,
+		t:               t,
+		Namespacer:      request.GetNamespaceMapper(nil),
 	}
 
 	cfgProvider, err := configprovider.ProvideService(c.env.Cfg)
@@ -151,6 +153,10 @@ func (c *K8sTestHelper) GetEnv() server.TestEnv {
 	return c.env
 }
 
+func (c *K8sTestHelper) GetListenerAddress() string {
+	return c.listenerAddress
+}
+
 func (c *K8sTestHelper) Shutdown() {
 	err := c.env.Server.Shutdown(context.Background(), "done")
 	require.NoError(c.t, err)
@@ -181,6 +187,24 @@ type K8sResourceClient struct {
 	Resource dynamic.ResourceInterface
 }
 
+// newOptimizedRestConfig creates a base rest.Config optimized for integration tests.
+// It disables client-side rate limiting and uses an optimized HTTP transport.
+func newOptimizedRestConfig(host string) *rest.Config {
+	return &rest.Config{
+		Host: host,
+		// For integration tests against a local server, client-side rate-limiting
+		// is too low and can cause requests to be throttled.
+		QPS:   10,
+		Burst: 20,
+		// Use a shared transport optimized for high-concurrency testing
+		// against a single host.
+		Transport: &http.Transport{
+			MaxIdleConns:        100,
+			MaxIdleConnsPerHost: 50, // Default is 2, which is too low for test concurrency.
+		},
+	}
+}
+
 // This will set the expected Group/Version/Resource and return the discovery info if found
 func (c *K8sTestHelper) GetResourceClient(args ResourceClientArgs) *K8sResourceClient {
 	c.t.Helper()
@@ -205,10 +229,8 @@ func (c *K8sTestHelper) GetResourceClient(args ResourceClientArgs) *K8sResourceC
 		client, clientErr = dynamic.NewForConfig(args.User.NewRestConfig())
 	} else {
 		// Use service account token for authentication
-		cfg := &rest.Config{
-			Host:        fmt.Sprintf("http://%s", c.env.Server.HTTPServer.Listener.Addr()),
-			BearerToken: args.ServiceAccountToken,
-		}
+		cfg := newOptimizedRestConfig(fmt.Sprintf("http://%s", c.env.Server.HTTPServer.Listener.Addr()))
+		cfg.BearerToken = args.ServiceAccountToken
 		client, clientErr = dynamic.NewForConfig(cfg)
 	}
 	require.NoError(c.t, clientErr)
@@ -316,6 +338,8 @@ type OrgUsers struct {
 	Editor User
 	Viewer User
 
+	OrgID int64
+
 	// Separate standalone service accounts with different roles
 	AdminServiceAccount       serviceaccounts.ServiceAccountDTO
 	AdminServiceAccountToken  string
@@ -335,11 +359,10 @@ type User struct {
 }
 
 func (c *User) NewRestConfig() *rest.Config {
-	return &rest.Config{
-		Host:     c.baseURL,
-		Username: c.Identity.GetLogin(),
-		Password: c.password,
-	}
+	cfg := newOptimizedRestConfig(c.baseURL)
+	cfg.Username = c.Identity.GetLogin()
+	cfg.Password = c.password
+	return cfg
 }
 
 // Implements: apiserver.RestConfigProvider
@@ -544,18 +567,19 @@ func (c *K8sTestHelper) createTestUsers(orgName string) OrgUsers {
 		Editor: c.CreateUser("editor", orgName, org.RoleEditor, nil),
 		Viewer: c.CreateUser("viewer", orgName, org.RoleViewer, nil),
 	}
+	users.OrgID = users.Admin.Identity.GetOrgID()
 
 	// Create service accounts
-	users.AdminServiceAccount = c.CreateServiceAccount(users.Admin, "admin-sa", users.Admin.Identity.GetOrgID(), org.RoleAdmin)
-	users.AdminServiceAccountToken = c.CreateServiceAccountToken(users.Admin, users.AdminServiceAccount.Id, users.Admin.Identity.GetOrgID(), "admin-token", 0)
+	users.AdminServiceAccount = c.CreateServiceAccount(users.Admin, "admin-sa", users.OrgID, org.RoleAdmin)
+	users.AdminServiceAccountToken = c.CreateServiceAccountToken(users.Admin, users.AdminServiceAccount.Id, users.OrgID, "admin-token", 0)
 
-	users.EditorServiceAccount = c.CreateServiceAccount(users.Admin, "editor-sa", users.Admin.Identity.GetOrgID(), org.RoleEditor)
-	users.EditorServiceAccountToken = c.CreateServiceAccountToken(users.Admin, users.EditorServiceAccount.Id, users.Admin.Identity.GetOrgID(), "editor-token", 0)
+	users.EditorServiceAccount = c.CreateServiceAccount(users.Admin, "editor-sa", users.OrgID, org.RoleEditor)
+	users.EditorServiceAccountToken = c.CreateServiceAccountToken(users.Admin, users.EditorServiceAccount.Id, users.OrgID, "editor-token", 0)
 
-	users.ViewerServiceAccount = c.CreateServiceAccount(users.Admin, "viewer-sa", users.Admin.Identity.GetOrgID(), org.RoleViewer)
-	users.ViewerServiceAccountToken = c.CreateServiceAccountToken(users.Admin, users.ViewerServiceAccount.Id, users.Admin.Identity.GetOrgID(), "viewer-token", 0)
+	users.ViewerServiceAccount = c.CreateServiceAccount(users.Admin, "viewer-sa", users.OrgID, org.RoleViewer)
+	users.ViewerServiceAccountToken = c.CreateServiceAccountToken(users.Admin, users.ViewerServiceAccount.Id, users.OrgID, "viewer-token", 0)
 
-	users.Staff = c.CreateTeam("staff", "staff@"+orgName, users.Admin.Identity.GetOrgID())
+	users.Staff = c.CreateTeam("staff", "staff@"+orgName, users.OrgID)
 
 	// Add Admin and Editor to Staff team as Admin and Member, respectively.
 	c.AddOrUpdateTeamMember(users.Admin, users.Staff.ID, team.PermissionTypeAdmin)
@@ -691,16 +715,19 @@ func (c *K8sTestHelper) AddOrUpdateTeamMember(user User, teamID int64, permissio
 	require.NoError(c.t, err)
 }
 
-func (c *K8sTestHelper) NewDiscoveryClient() *discovery.DiscoveryClient {
+func (c *K8sTestHelper) NewAdminRestConfig() *rest.Config {
 	c.t.Helper()
 
 	baseUrl := fmt.Sprintf("http://%s", c.env.Server.HTTPServer.Listener.Addr())
-	conf := &rest.Config{
-		Host:     baseUrl,
-		Username: c.Org1.Admin.Identity.GetLogin(),
-		Password: c.Org1.Admin.password,
-	}
-	client, err := discovery.NewDiscoveryClientForConfig(conf)
+	cfg := newOptimizedRestConfig(baseUrl)
+	cfg.Username = c.Org1.Admin.Identity.GetLogin()
+	cfg.Password = c.Org1.Admin.password
+	return cfg
+}
+
+func (c *K8sTestHelper) NewDiscoveryClient() *discovery.DiscoveryClient {
+	c.t.Helper()
+	client, err := discovery.NewDiscoveryClientForConfig(c.NewAdminRestConfig())
 	require.NoError(c.t, err)
 	return client
 }
@@ -771,7 +798,7 @@ func VerifyOpenAPISnapshots(t *testing.T, dir string, gv schema.GroupVersion, h 
 		return // skip invalid groups
 	}
 	path := fmt.Sprintf("/openapi/v3/apis/%s/%s", gv.Group, gv.Version)
-	t.Run(path, func(t *testing.T) {
+	t.Run(path[1:], func(t *testing.T) {
 		rsp := DoRequest(h, RequestParams{
 			Method: http.MethodGet,
 			Path:   path,
@@ -779,7 +806,9 @@ func VerifyOpenAPISnapshots(t *testing.T, dir string, gv schema.GroupVersion, h 
 		}, &AnyResource{})
 
 		require.NotNil(t, rsp.Response)
-		require.Equal(t, 200, rsp.Response.StatusCode, path)
+		if rsp.Response.StatusCode != 200 {
+			require.Failf(t, "Not OK", "Code[%d] %s", rsp.Response.StatusCode, string(rsp.Body))
+		}
 
 		var prettyJSON bytes.Buffer
 		err := json.Indent(&prettyJSON, rsp.Body, "", "  ")

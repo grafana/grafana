@@ -7,18 +7,17 @@ import { Button, Drawer, Dropdown, Icon, Menu, MenuItem } from '@grafana/ui';
 import { Permissions } from 'app/core/components/AccessControl';
 import { appEvents } from 'app/core/core';
 import { RepoType } from 'app/features/provisioning/Wizard/types';
+import { DeleteProvisionedFolderForm } from 'app/features/provisioning/components/Folders/DeleteProvisionedFolderForm';
 import { getReadOnlyTooltipText } from 'app/features/provisioning/utils/repository';
 import { ShowModalReactEvent } from 'app/types/events';
 import { FolderDTO } from 'app/types/folders';
 
-import { useDeleteFolderMutationFacade } from '../../../api/clients/folder/v1beta1/hooks';
+import { useDeleteFolderMutationFacade, useMoveFolderMutationFacade } from '../../../api/clients/folder/v1beta1/hooks';
 import { ManagerKind } from '../../apiserver/types';
-import { useMoveFolderMutation } from '../api/browseDashboardsAPI';
 import { getFolderPermissions } from '../permissions';
 
 import { DeleteModal } from './BrowseActions/DeleteModal';
 import { MoveModal } from './BrowseActions/MoveModal';
-import { DeleteProvisionedFolderForm } from './DeleteProvisionedFolderForm';
 
 interface Props {
   folder: FolderDTO;
@@ -30,7 +29,7 @@ export function FolderActionsButton({ folder, repoType, isReadOnlyRepo }: Props)
   const [isOpen, setIsOpen] = useState(false);
   const [showPermissionsDrawer, setShowPermissionsDrawer] = useState(false);
   const [showDeleteProvisionedFolderDrawer, setShowDeleteProvisionedFolderDrawer] = useState(false);
-  const [moveFolder] = useMoveFolderMutation();
+  const [moveFolder] = useMoveFolderMutationFacade();
 
   const deleteFolder = useDeleteFolderMutationFacade();
 
@@ -40,7 +39,7 @@ export function FolderActionsButton({ folder, repoType, isReadOnlyRepo }: Props)
   const canMoveFolder = canEditFolders && !isProvisionedFolder;
 
   const onMove = async (destinationUID: string) => {
-    await moveFolder({ folder, destinationUID });
+    await moveFolder({ folderUID: folder.uid, destinationUID: destinationUID });
     reportInteraction('grafana_manage_dashboards_item_moved', {
       item_counts: {
         folder: 1,

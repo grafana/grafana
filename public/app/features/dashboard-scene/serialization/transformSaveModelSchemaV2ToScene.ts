@@ -49,6 +49,7 @@ import {
   AnnoKeyUpdatedTimestamp,
   AnnoKeyDashboardIsSnapshot,
   DeprecatedInternalId,
+  AnnoKeyEmbedded,
 } from 'app/features/apiserver/types';
 import { DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
 import {
@@ -140,6 +141,7 @@ export function transformSaveModelSchemaV2ToScene(dto: DashboardWithAccessInfo<D
     updatedBy: metadata.annotations?.[AnnoKeyUpdatedBy],
     folderUid: metadata.annotations?.[AnnoKeyFolder],
     isSnapshot: Boolean(metadata.annotations?.[AnnoKeyDashboardIsSnapshot]),
+    isEmbedded: Boolean(metadata.annotations?.[AnnoKeyEmbedded]),
 
     // UI-only metadata, ref: DashboardModel.initMeta
     showSettings: Boolean(dto.access.canEdit),
@@ -273,6 +275,7 @@ function createSceneVariableFromVariableModel(variable: TypedVariableModelV2): S
     name: variable.spec.name,
     label: variable.spec.label,
     description: variable.spec.description,
+    showInControlsMenu: variable.spec.showInControlsMenu,
   };
   if (variable.kind === defaultAdhocVariableKind().kind) {
     const ds = getDataSourceForQuery(

@@ -4,7 +4,11 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana/apps/dashboard/pkg/migration/schemaversion"
-	"github.com/grafana/grafana/apps/dashboard/pkg/migration/testutil"
+)
+
+const (
+	// The pluginVersion to set after simulating auto-migrate for angular panels
+	pluginVersionForAutoMigrate = "12.1.0"
 )
 
 func TestV24(t *testing.T) {
@@ -47,6 +51,9 @@ func TestV24(t *testing.T) {
 									"cellOptions": map[string]interface{}{
 										"type": "auto",
 									},
+									"footer": map[string]interface{}{
+										"reducers": []interface{}{},
+									},
 									"inspect": false,
 								},
 								"mappings": []interface{}{},
@@ -76,7 +83,7 @@ func TestV24(t *testing.T) {
 						"targets": []interface{}{
 							map[string]interface{}{"refId": "A"},
 						},
-						"pluginVersion": "1.0.0",
+						"pluginVersion": pluginVersionForAutoMigrate,
 					},
 				},
 			},
@@ -155,6 +162,9 @@ func TestV24(t *testing.T) {
 									"cellOptions": map[string]interface{}{
 										"type": "color-background",
 									},
+									"footer": map[string]interface{}{
+										"reducers": []interface{}{},
+									},
 									"inspect": false,
 								},
 								"mappings": []interface{}{},
@@ -216,7 +226,7 @@ func TestV24(t *testing.T) {
 										"options": "Hidden",
 									},
 									"properties": []interface{}{
-										map[string]interface{}{"id": "custom.hidden", "value": true},
+										map[string]interface{}{"id": "custom.hideFrom.viz", "value": true},
 									},
 								},
 							},
@@ -235,7 +245,7 @@ func TestV24(t *testing.T) {
 						"targets": []interface{}{
 							map[string]interface{}{"refId": "A"},
 						},
-						"pluginVersion": "1.0.0",
+						"pluginVersion": pluginVersionForAutoMigrate,
 					},
 				},
 			},
@@ -287,6 +297,9 @@ func TestV24(t *testing.T) {
 									"cellOptions": map[string]interface{}{
 										"type": "auto",
 									},
+									"footer": map[string]interface{}{
+										"reducers": []interface{}{},
+									},
 									"inspect": false,
 								},
 								"mappings": []interface{}{},
@@ -322,7 +335,7 @@ func TestV24(t *testing.T) {
 						"targets": []interface{}{
 							map[string]interface{}{"refId": "A"},
 						},
-						"pluginVersion": "1.0.0",
+						"pluginVersion": pluginVersionForAutoMigrate,
 					},
 				},
 			},
@@ -364,6 +377,9 @@ func TestV24(t *testing.T) {
 									"cellOptions": map[string]interface{}{
 										"type": "auto",
 									},
+									"footer": map[string]interface{}{
+										"reducers": []interface{}{},
+									},
 									"inspect": false,
 								},
 								"mappings": []interface{}{},
@@ -398,7 +414,7 @@ func TestV24(t *testing.T) {
 						"targets": []interface{}{
 							map[string]interface{}{"refId": "A"},
 						},
-						"pluginVersion": "1.0.0",
+						"pluginVersion": pluginVersionForAutoMigrate,
 					},
 				},
 			},
@@ -440,6 +456,9 @@ func TestV24(t *testing.T) {
 									"cellOptions": map[string]interface{}{
 										"type": "auto",
 									},
+									"footer": map[string]interface{}{
+										"reducers": []interface{}{},
+									},
 									"inspect": false,
 								},
 								"mappings": []interface{}{},
@@ -474,7 +493,7 @@ func TestV24(t *testing.T) {
 						"targets": []interface{}{
 							map[string]interface{}{"refId": "A"},
 						},
-						"pluginVersion": "1.0.0",
+						"pluginVersion": pluginVersionForAutoMigrate,
 					},
 				},
 			},
@@ -515,6 +534,9 @@ func TestV24(t *testing.T) {
 									"cellOptions": map[string]interface{}{
 										"type": "auto",
 									},
+									"footer": map[string]interface{}{
+										"reducers": []interface{}{},
+									},
 									"inspect": false,
 								},
 								"mappings": []interface{}{},
@@ -549,7 +571,7 @@ func TestV24(t *testing.T) {
 						"targets": []interface{}{
 							map[string]interface{}{"refId": "A"},
 						},
-						"pluginVersion": "1.0.0",
+						"pluginVersion": pluginVersionForAutoMigrate,
 					},
 				},
 			},
@@ -601,6 +623,9 @@ func TestV24(t *testing.T) {
 									"cellOptions": map[string]interface{}{
 										"type": "auto",
 									},
+									"footer": map[string]interface{}{
+										"reducers": []interface{}{},
+									},
 									"inspect": false,
 								},
 								"mappings": []interface{}{},
@@ -643,7 +668,7 @@ func TestV24(t *testing.T) {
 						"targets": []interface{}{
 							map[string]interface{}{"refId": "A"},
 						},
-						"pluginVersion": "1.0.0",
+						"pluginVersion": pluginVersionForAutoMigrate,
 					},
 				},
 			},
@@ -783,6 +808,9 @@ func TestV24(t *testing.T) {
 									"cellOptions": map[string]interface{}{
 										"type": "auto",
 									},
+									"footer": map[string]interface{}{
+										"reducers": []interface{}{},
+									},
 									"inspect": false,
 								},
 								"mappings": []interface{}{},
@@ -812,12 +840,12 @@ func TestV24(t *testing.T) {
 						"targets": []interface{}{
 							map[string]interface{}{"refId": "A"},
 						},
-						"pluginVersion": "1.0.0",
+						"pluginVersion": pluginVersionForAutoMigrate,
 					},
 				},
 			},
 		},
 	}
 
-	runMigrationTests(t, tests, schemaversion.V24(testutil.GetTestPanelProvider()))
+	runMigrationTests(t, tests, schemaversion.V24)
 }

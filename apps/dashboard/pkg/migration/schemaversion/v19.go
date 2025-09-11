@@ -1,6 +1,7 @@
 package schemaversion
 
 import (
+	"context"
 	"regexp"
 	"strings"
 )
@@ -36,7 +37,7 @@ import (
 //	    ]
 //	  }
 //	]
-func V19(dashboard map[string]interface{}) error {
+func V19(_ context.Context, dashboard map[string]interface{}) error {
 	dashboard["schemaVersion"] = 19
 
 	panels, ok := dashboard["panels"].([]interface{})
@@ -84,8 +85,8 @@ func upgradePanelLink(link map[string]interface{}) map[string]interface{} {
 
 	result := map[string]interface{}{
 		"url":         url,
-		"title":       getStringValue(link, "title"),
-		"targetBlank": getBoolValue(link, "targetBlank"),
+		"title":       GetStringValue(link, "title"),
+		"targetBlank": GetBoolValue(link, "targetBlank"),
 	}
 
 	return result
@@ -111,11 +112,11 @@ func buildPanelLinkURL(link map[string]interface{}) string {
 	// Add query parameters
 	params := []string{}
 
-	if getBoolValue(link, "keepTime") {
+	if GetBoolValue(link, "keepTime") {
 		params = append(params, "$__url_time_range")
 	}
 
-	if getBoolValue(link, "includeVars") {
+	if GetBoolValue(link, "includeVars") {
 		params = append(params, "$__all_variables")
 	}
 
@@ -149,18 +150,4 @@ func slugifyForURL(name string) string {
 	name = reNonWordOrSpace.ReplaceAllString(name, "")
 	name = reSpaces.ReplaceAllString(name, "-")
 	return name
-}
-
-func getStringValue(m map[string]interface{}, key string) string {
-	if v, ok := m[key].(string); ok {
-		return v
-	}
-	return ""
-}
-
-func getBoolValue(m map[string]interface{}, key string) bool {
-	if v, ok := m[key].(bool); ok {
-		return v
-	}
-	return false
 }

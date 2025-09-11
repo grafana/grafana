@@ -31,8 +31,8 @@ import (
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	fakeDatasources "github.com/grafana/grafana/pkg/services/datasources/fakes"
+	"github.com/grafana/grafana/pkg/services/dsquerierclient"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/mtdsclient"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginconfig"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
 	pluginSettings "github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings/service"
@@ -43,6 +43,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
+	"github.com/grafana/grafana/pkg/util/testutil"
 	"github.com/grafana/grafana/pkg/web"
 )
 
@@ -51,9 +52,8 @@ func TestMain(m *testing.M) {
 }
 
 func TestIntegrationParseMetricRequest(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test in short mode")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	t.Run("Test a simple single datasource query", func(t *testing.T) {
 		tc := setup(t, false, nil)
 		mr := metricRequestWithQueries(t, `{
@@ -468,9 +468,8 @@ func TestIntegrationParseMetricRequest(t *testing.T) {
 }
 
 func TestIntegrationQueryDataMultipleSources(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test in short mode")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	t.Run("can query multiple datasources", func(t *testing.T) {
 		tc := setup(t, false, nil)
 		query1, err := simplejson.NewJson([]byte(`
@@ -653,10 +652,9 @@ func TestIntegrationQueryDataMultipleSources(t *testing.T) {
 	})
 }
 
-func TestIntegrationQueryDataWithMTDSClient(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test in short mode")
-	}
+func TestIntegrationQueryDataWithQSDSClient(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	t.Run("can run a simple datasource query with a mt ds client", func(t *testing.T) {
 		stubbedResponse := &backend.QueryDataResponse{Responses: make(backend.Responses)}
 		testClient := &testClient{
@@ -758,11 +756,11 @@ func setup(t *testing.T, isMultiTenant bool, mockClient clientapi.QueryDataClien
 		pluginconfig.NewFakePluginRequestConfigProvider(),
 	)
 
-	var mtdsClientBuilder mtdsclient.MTDatasourceClientBuilder
+	var qsdsClientBuilder dsquerierclient.QSDatasourceClientBuilder
 	if isMultiTenant {
-		mtdsClientBuilder = mtdsclient.NewTestMTDSClientBuilder(isMultiTenant, mockClient)
+		qsdsClientBuilder = dsquerierclient.NewTestQSDSClientBuilder(isMultiTenant, mockClient)
 	} else {
-		mtdsClientBuilder = mtdsclient.NewTestMTDSClientBuilder(false, nil)
+		qsdsClientBuilder = dsquerierclient.NewTestQSDSClientBuilder(false, nil)
 	}
 
 	exprService := expr.ProvideService(
@@ -772,7 +770,7 @@ func setup(t *testing.T, isMultiTenant bool, mockClient clientapi.QueryDataClien
 		featuremgmt.WithFeatures(),
 		nil,
 		tracing.InitializeTracerForTest(),
-		mtdsClientBuilder,
+		qsdsClientBuilder,
 	)
 
 	queryService := ProvideService(
@@ -782,7 +780,7 @@ func setup(t *testing.T, isMultiTenant bool, mockClient clientapi.QueryDataClien
 		rv,
 		pc,
 		pCtxProvider,
-		mtdsClientBuilder,
+		qsdsClientBuilder,
 	)
 
 	return &testContext{

@@ -132,6 +132,13 @@ type CreateFolderCommand struct {
 	ParentUID   string `json:"parentUid"`
 
 	SignedInUser identity.Requester `json:"-"`
+
+	// When running classic file provisioning with folders saved in kubernetes,
+	// folders will be marked with a manager of kind ManagerKindClassicFP
+	// NOTE: this is ignored when running legacy SQL storage
+	//
+	// Deprecated: this should only be used by the legacy file provisioning system
+	ManagerKindClassicFP string `json:"-"`
 }
 
 // UpdateFolderCommand captures the information required by the folder service
@@ -170,7 +177,8 @@ type DeleteFolderCommand struct {
 	OrgID            int64  `json:"orgId" xorm:"org_id"`
 	ForceDeleteRules bool   `json:"forceDeleteRules"`
 
-	SignedInUser identity.Requester `json:"-"`
+	SignedInUser      identity.Requester `json:"-"`
+	RemovePermissions bool               `json:"-"`
 }
 
 // GetFolderQuery is used for all folder Get requests. Only one of UID, ID, or

@@ -23,9 +23,7 @@ import {
 } from '@grafana/schema/dist/esm/schema/dashboard/v2';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 
-import { ConditionalRendering } from '../../conditional-rendering/ConditionalRendering';
-import { ConditionalRenderingGroup } from '../../conditional-rendering/ConditionalRenderingGroup';
-import { conditionalRenderingSerializerRegistry } from '../../conditional-rendering/serializers';
+import { ConditionalRenderingGroup } from '../../conditional-rendering/group/ConditionalRenderingGroup';
 import { CustomTimeRangeCompare } from '../../scene/CustomTimeRangeCompare';
 import { DashboardDatasourceBehaviour } from '../../scene/DashboardDatasourceBehaviour';
 import { DashboardScene } from '../../scene/DashboardScene';
@@ -234,8 +232,8 @@ export function getDataSourceForQuery(querySpecDS: DataSourceRef | undefined | n
   }
 
   // Otherwise try to infer datasource based on query kind (kind = ds type)
-  const defaultDatasource = config.bootData.settings.defaultDatasource;
-  const dsList = config.bootData.settings.datasources;
+  const defaultDatasource = config.defaultDatasource;
+  const dsList = config.datasources;
 
   // First check if the default datasource matches the query type
   if (dsList && dsList[defaultDatasource] && dsList[defaultDatasource].meta.id === queryKind) {
@@ -293,20 +291,12 @@ export function getLayout(sceneState: DashboardLayoutManager): DashboardV2Spec['
 
 export function getConditionalRendering(
   item: TabsLayoutTabKind | RowsLayoutRowKind | AutoGridLayoutItemKind
-): ConditionalRendering {
+): ConditionalRenderingGroup {
   if (!item.spec.conditionalRendering) {
-    return ConditionalRendering.createEmpty();
+    return ConditionalRenderingGroup.createEmpty();
   }
 
-  const rootGroup = conditionalRenderingSerializerRegistry
-    .get(item.spec.conditionalRendering.kind)
-    .deserialize(item.spec.conditionalRendering);
-
-  if (rootGroup && !(rootGroup instanceof ConditionalRenderingGroup)) {
-    throw new Error(`Conditional rendering must always start with a root group`);
-  }
-
-  return new ConditionalRendering({ rootGroup: rootGroup });
+  return ConditionalRenderingGroup.deserialize(item.spec.conditionalRendering);
 }
 
 export function getElements(layout: DashboardLayoutManager, scene: DashboardScene): DashboardV2Spec['elements'] {

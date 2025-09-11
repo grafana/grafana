@@ -6,13 +6,16 @@ go 1.24.6
 use (
 	. // skip:golangci-lint
 	./apps/advisor
+	./apps/alerting/alertenrichment
 	./apps/alerting/notifications
+	./apps/alerting/rules
 	./apps/dashboard
 	./apps/folder
 	./apps/iam
 	./apps/investigations
 	./apps/playlist
 	./apps/plugins
+	./apps/preferences
 	./apps/provisioning
 	./apps/secret
 	./apps/shorturl

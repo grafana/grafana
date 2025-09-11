@@ -4,10 +4,11 @@ import (
 	"os"
 	"path/filepath"
 
+	"go.opentelemetry.io/otel/trace"
+
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
-	"go.opentelemetry.io/otel/trace"
 )
 
 func NewSearchOptions(features featuremgmt.FeatureToggles, cfg *setting.Cfg, tracer trace.Tracer, docs resource.DocumentBuilderSupplier, indexMetrics *resource.BleveIndexMetrics) (resource.SearchOptions, error) {
@@ -38,7 +39,6 @@ func NewSearchOptions(features featuremgmt.FeatureToggles, cfg *setting.Cfg, tra
 			Resources:       docs,
 			WorkerThreads:   cfg.IndexWorkers,
 			InitMinCount:    cfg.IndexMinCount,
-			InitMaxCount:    cfg.IndexMaxCount,
 			RebuildInterval: cfg.IndexRebuildInterval,
 		}, nil
 	}

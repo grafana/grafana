@@ -1,6 +1,6 @@
 import { act, renderHook } from '@testing-library/react';
 
-import { cacheFieldDisplayNames, createDataFrame, Field, FieldType } from '@grafana/data';
+import { createDataFrame, Field, FieldType, ReducerID } from '@grafana/data';
 import { TableCellDisplayMode } from '@grafana/schema';
 
 import { TABLE } from './constants';
@@ -8,9 +8,9 @@ import {
   useFilteredRows,
   usePaginatedRows,
   useSortedRows,
-  useFooterCalcs,
   useHeaderHeight,
   useRowHeight,
+  useReducerEntries,
 } from './hooks';
 import { TableRow } from './types';
 import { createTypographyContext } from './utils';
@@ -220,210 +220,6 @@ describe('TableNG hooks', () => {
     });
   });
 
-  describe('useFooterCalcs', () => {
-    const rows = [
-      { 'Field 1': 1, Text: 'a', __depth: 0, __index: 0 },
-      { 'Field 1': 2, Text: 'b', __depth: 0, __index: 1 },
-      { 'Field 1': 3, Text: 'c', __depth: 0, __index: 2 },
-      { 'Field 2': 3, Text: 'd', __depth: 0, __index: 3 },
-      { 'Field 2': 10, Text: 'e', __depth: 0, __index: 4 },
-    ];
-
-    const numericField: Field = {
-      name: 'Field1',
-      type: FieldType.number,
-      values: [1, 2, 3],
-      config: {
-        custom: {},
-        displayName: 'Field 1',
-      },
-      display: (value: unknown) => ({
-        text: String(value),
-        numeric: Number(value),
-        color: undefined,
-        prefix: undefined,
-        suffix: undefined,
-      }),
-      getLinks: undefined,
-    };
-
-    const numericField2: Field = {
-      name: 'Field2',
-      type: FieldType.number,
-      values: [3, 10],
-      config: {
-        custom: {},
-        displayName: 'Field 2',
-      },
-      display: (value: unknown) => ({
-        text: String(value),
-        numeric: Number(value),
-        color: undefined,
-        prefix: undefined,
-        suffix: undefined,
-      }),
-      getLinks: undefined,
-    };
-
-    const textField: Field = {
-      name: 'Text',
-      type: FieldType.string,
-      values: ['a', 'b', 'c'],
-      config: { custom: {} },
-      display: (value: unknown) => ({
-        text: String(value),
-        numeric: 0,
-        color: undefined,
-        prefix: undefined,
-        suffix: undefined,
-      }),
-      getLinks: undefined,
-    };
-
-    it('should calculate sum for numeric fields', () => {
-      const { result } = renderHook(() => {
-        const data = createDataFrame({ fields: [textField, numericField] });
-        cacheFieldDisplayNames([data]);
-        return useFooterCalcs(rows, data.fields, {
-          enabled: true,
-          footerOptions: { show: true, reducer: ['sum'] },
-        });
-      });
-
-      expect(result.current).toEqual(['Total', '6']); // 1 + 2 + 3
-    });
-
-    it('should calculate mean for numeric fields', () => {
-      const { result } = renderHook(() => {
-        const data = createDataFrame({ fields: [textField, numericField] });
-        cacheFieldDisplayNames([data]);
-        return useFooterCalcs(rows, data.fields, {
-          enabled: true,
-          footerOptions: { show: true, reducer: ['mean'] },
-        });
-      });
-
-      expect(result.current).toEqual(['Mean', '2']); // (1 + 2 + 3) / 3
-    });
-
-    it('should return an empty string for non-numeric fields', () => {
-      const { result } = renderHook(() => {
-        const data = createDataFrame({ fields: [textField, textField] });
-        cacheFieldDisplayNames([data]);
-        return useFooterCalcs(rows, data.fields, {
-          enabled: true,
-          footerOptions: { show: true, reducer: ['sum'] },
-        });
-      });
-
-      expect(result.current).toEqual(['Total', '']);
-    });
-
-    it('should return empty array if no footerOptions are provided', () => {
-      const { result } = renderHook(() => {
-        const data = createDataFrame({ fields: [textField, numericField, numericField2] });
-        cacheFieldDisplayNames([data]);
-        return useFooterCalcs(rows, data.fields, {
-          enabled: true,
-          footerOptions: undefined,
-        });
-      });
-
-      expect(result.current).toEqual([]);
-    });
-
-    it('should return empty array when footer is disabled', () => {
-      const { result } = renderHook(() => {
-        const data = createDataFrame({ fields: [textField, numericField, numericField2] });
-        cacheFieldDisplayNames([data]);
-        return useFooterCalcs(rows, data.fields, {
-          enabled: false,
-          footerOptions: { show: true, reducer: ['sum'] },
-        });
-      });
-
-      expect(result.current).toEqual([]);
-    });
-
-    it('should return empty array when reducer is undefined', () => {
-      const { result } = renderHook(() => {
-        const data = createDataFrame({ fields: [textField, textField] });
-        cacheFieldDisplayNames([data]);
-        return useFooterCalcs(rows, data.fields, {
-          enabled: true,
-          footerOptions: { show: true, reducer: undefined },
-        });
-      });
-
-      expect(result.current).toEqual([]);
-    });
-
-    it('should return empty array when reducer is empty', () => {
-      const { result } = renderHook(() => {
-        const data = createDataFrame({ fields: [textField, numericField, numericField2] });
-        cacheFieldDisplayNames([data]);
-        return useFooterCalcs(rows, data.fields, {
-          enabled: true,
-          footerOptions: { show: true, reducer: [] },
-        });
-      });
-
-      expect(result.current).toEqual([]);
-    });
-
-    it('should return empty string if fields array doesnt include this field', () => {
-      const { result } = renderHook(() => {
-        const data = createDataFrame({ fields: [textField, numericField, numericField2] });
-        cacheFieldDisplayNames([data]);
-        return useFooterCalcs(rows, data.fields, {
-          enabled: true,
-          footerOptions: { show: true, reducer: ['sum'], fields: ['Field2', 'Field3'] },
-        });
-      });
-
-      expect(result.current).toEqual(['Total', '', '13']);
-    });
-
-    it('should return the calculation if fields array includes this field', () => {
-      const { result } = renderHook(() => {
-        const data = createDataFrame({ fields: [textField, numericField, numericField2] });
-        cacheFieldDisplayNames([data]);
-        return useFooterCalcs(rows, data.fields, {
-          enabled: true,
-          footerOptions: { show: true, reducer: ['sum'], fields: ['Field1', 'Field2', 'Field3'] },
-        });
-      });
-
-      expect(result.current).toEqual(['Total', '6', '13']);
-    });
-
-    it('should return the calculation if fields array includes this field by either name or display name', () => {
-      const { result } = renderHook(() => {
-        const data = createDataFrame({ fields: [textField, numericField, numericField2] });
-        cacheFieldDisplayNames([data]);
-        return useFooterCalcs(rows, data.fields, {
-          enabled: true,
-          footerOptions: { show: true, reducer: ['sum'], fields: ['Field1', 'Field 2'] },
-        });
-      });
-
-      expect(result.current).toEqual(['Total', '6', '13']);
-    });
-
-    it('should not return the reducer label in the first column if there is a calc to render', () => {
-      const { result } = renderHook(() => {
-        const data = createDataFrame({ fields: [numericField, numericField2] });
-        cacheFieldDisplayNames([data]);
-        return useFooterCalcs(rows, data.fields, {
-          enabled: true,
-          footerOptions: { show: true, reducer: ['sum'], fields: [] },
-        });
-      });
-
-      expect(result.current).toEqual(['6', '13']);
-    });
-  });
-
   describe('useHeaderHeight', () => {
     const typographyCtx = createTypographyContext(14, 'sans-serif');
 
@@ -477,7 +273,7 @@ describe('TableNG hooks', () => {
           }),
           columnWidths: [100, 100, 100],
           enabled: true,
-          typographyCtx: { ...typographyCtx, avgCharWidth: 5, wrappedCount: jest.fn(() => 2) },
+          typographyCtx: { ...typographyCtx, avgCharWidth: 5, measureHeight: jest.fn(() => 44) },
           sortColumns: [],
         });
       });
@@ -486,7 +282,7 @@ describe('TableNG hooks', () => {
     });
 
     it('should calculate the available width for a header cell based on the icons rendered within it', () => {
-      const countFn = jest.fn(() => 1);
+      const heightFn = jest.fn(() => 20);
 
       const { fields } = setupData();
 
@@ -512,13 +308,13 @@ describe('TableNG hooks', () => {
           fields: modifiedFields,
           columnWidths: [100, 100, 100],
           enabled: true,
-          typographyCtx: { ...typographyCtx, wrappedCount: countFn },
+          typographyCtx: { ...typographyCtx, measureHeight: heightFn },
           sortColumns: [],
           showTypeIcons: false,
         });
       });
 
-      expect(countFn).toHaveBeenCalledWith('Longer name that needs wrapping', 86, modifiedFields[0], -1);
+      expect(heightFn).toHaveBeenCalledWith('Longer name that needs wrapping', 86, modifiedFields[0], -1, 22);
 
       modifiedFields = fields.map((field) => {
         if (field.name === 'name') {
@@ -543,13 +339,27 @@ describe('TableNG hooks', () => {
           fields: modifiedFields,
           columnWidths: [100, 100, 100],
           enabled: true,
-          typographyCtx: { ...typographyCtx, wrappedCount: countFn },
+          typographyCtx: { ...typographyCtx, measureHeight: heightFn },
           sortColumns: [{ columnKey: 'Longer name that needs wrapping', direction: 'ASC' }],
           showTypeIcons: true,
         });
       });
 
-      expect(countFn).toHaveBeenCalledWith('Longer name that needs wrapping', 26, modifiedFields[0], -1);
+      expect(heightFn).toHaveBeenCalledWith('Longer name that needs wrapping', 26, modifiedFields[0], -1, 22);
+    });
+
+    it('does not throw if a field has been deleted but the colWidth has not yet been updated', () => {
+      const { fields } = setupData();
+      const { result } = renderHook(() => {
+        return useHeaderHeight({
+          fields,
+          columnWidths: [100, 100, 100, 100],
+          enabled: true,
+          typographyCtx,
+          sortColumns: [],
+        });
+      });
+      expect(result.current).toBe(28);
     });
   });
 
@@ -685,9 +495,9 @@ describe('TableNG hooks', () => {
       });
     });
 
-    // we test the lineCounters and getRowHeight directly to check that all of that
-    // math is working correctly. we mainly want to confirm here that the
-    // cache is clearing and that the local logic in this hook works.
+    // we test the cell height measurerers and getRowHeight directly to check
+    //that all of that  math is working correctly. we mainly want to confirm that
+    // the cache is clearing and that the local logic in this hook works.
     describe('wrapped columns', () => {
       let rows: TableRow[];
       let fieldsWithWrappedText: Field[];
@@ -705,9 +515,9 @@ describe('TableNG hooks', () => {
                 ...field.config,
                 custom: {
                   ...field.config?.custom,
+                  wrapText: true,
                   cellOptions: {
                     cellType: TableCellDisplayMode.Auto,
-                    wrapText: true,
                   },
                 },
               },
@@ -749,14 +559,14 @@ describe('TableNG hooks', () => {
       it('adjusts the width of the columns based on the cell padding and border', () => {
         fieldsWithWrappedText[0].values[0] = 'Annie Lennox';
 
-        const wrappedCountFn = jest.fn(() => 2);
-        const estimateLinesFn = jest.fn(() => 2);
+        const measureHeightFn = jest.fn(() => 40);
+        const estimateHeightFn = jest.fn(() => 40);
         const { result } = renderHook(() => {
           const rowHeight = useRowHeight({
             fields: fieldsWithWrappedText,
             columnWidths: [100, 100, 100],
             defaultHeight: 40,
-            typographyCtx: { ...typographyCtx, wrappedCount: wrappedCountFn, estimateLines: estimateLinesFn },
+            typographyCtx: { ...typographyCtx, measureHeight: measureHeightFn, estimateHeight: estimateHeightFn },
             hasNestedFrames: false,
             expandedRows: new Set(),
           });
@@ -768,13 +578,134 @@ describe('TableNG hooks', () => {
 
         expect(result.current(rows[0])).toEqual(expect.any(Number));
 
-        expect(estimateLinesFn).toHaveBeenCalledWith(
+        expect(measureHeightFn).toHaveBeenCalledWith(
           'Annie Lennox',
           100 - TABLE.CELL_PADDING * 2 - TABLE.BORDER_RIGHT,
           fieldsWithWrappedText[0],
-          0
+          0,
+          22
         );
       });
+    });
+  });
+
+  describe('useReducerEntries', () => {
+    it('should return the correct reducers for a field', () => {
+      const { fields, rows } = setupData();
+      fields[0].config.custom = {
+        footer: {
+          reducers: [ReducerID.first],
+        },
+      };
+      fields[1].config.custom = {
+        footer: {
+          reducers: [ReducerID.mean, 'max', 'min', ReducerID.first],
+        },
+      };
+
+      const { result } = renderHook(() => useReducerEntries(fields[0], rows, 'name', 0));
+      expect(result.current).toEqual([[ReducerID.first, 'Alice']]);
+
+      const { result: result2 } = renderHook(() => useReducerEntries(fields[1], rows, 'age', 0));
+      expect(result2.current).toEqual([
+        [ReducerID.mean, '30'],
+        ['max', '35'],
+        ['min', '25'],
+        [ReducerID.first, '30'],
+      ]);
+    });
+
+    it('should return an empty array if no reducers are configured', () => {
+      const { fields, rows } = setupData();
+      const { result } = renderHook(() => useReducerEntries(fields[0], rows, 'name', 0));
+      expect(result.current).toEqual([]);
+    });
+
+    it('should return an empty array if all of the reducers are numeric and the field non-numeric', () => {
+      const { fields, rows } = setupData();
+      fields[0].config.custom = {
+        footer: {
+          reducers: [ReducerID.mean, 'max'],
+        },
+      };
+
+      const { result } = renderHook(() => useReducerEntries(fields[0], rows, 'name', 0));
+      expect(result.current).toEqual([]);
+    });
+
+    it('should return null for non-numeric fields for numeric reducers', () => {
+      const { fields, rows } = setupData();
+      fields[0].config.custom = {
+        footer: {
+          reducers: [ReducerID.mean, ReducerID.first],
+        },
+      };
+      const { result } = renderHook(() => useReducerEntries(fields[0], rows, 'name', 0));
+      expect(result.current).toEqual([
+        [ReducerID.mean, null],
+        [ReducerID.first, 'Alice'],
+      ]);
+    });
+
+    it('should return null when the colIdx is not 0 for the countAll reducer', () => {
+      const { fields, rows } = setupData();
+      fields[0].config.custom = {
+        footer: {
+          reducers: [ReducerID.countAll, ReducerID.first],
+        },
+      };
+
+      const { result } = renderHook(() => useReducerEntries(fields[0], rows, 'name', 1));
+      expect(result.current).toEqual([
+        [ReducerID.countAll, null],
+        [ReducerID.first, 'Alice'],
+      ]);
+    });
+
+    it('should return null (and should not throw) for an unknown reducer', () => {
+      const { fields, rows } = setupData();
+      fields[0].config.custom = {
+        footer: {
+          reducers: ['unknownReducer', ReducerID.first],
+        },
+      };
+
+      const { result } = renderHook(() => useReducerEntries(fields[0], rows, 'name', 0));
+      expect(result.current).toEqual([
+        ['unknownReducer', null],
+        [ReducerID.first, 'Alice'],
+      ]);
+    });
+
+    it('should format the value for most reducers', () => {
+      const { fields, rows } = setupData();
+      fields[1].config.custom = {
+        footer: {
+          reducers: [ReducerID.mean, ReducerID.first],
+        },
+      };
+      fields[1].display = (v) => ({ text: `$${v}`, numeric: v as number });
+      const { result } = renderHook(() => useReducerEntries(fields[1], rows, 'age', 0));
+      expect(result.current).toEqual([
+        [ReducerID.mean, '$30'],
+        [ReducerID.first, '$30'],
+      ]);
+    });
+
+    it.each([ReducerID.count, ReducerID.countAll])('should not format the value for the %s reducer', (reducerId) => {
+      const { fields, rows } = setupData();
+      fields[1].config.custom = {
+        footer: {
+          reducers: [reducerId, ReducerID.first],
+        },
+      };
+      fields[1].display = (v) => ({ text: `${v} years`, numeric: v as number });
+
+      const { result } = renderHook(() => useReducerEntries(fields[1], rows, 'age', 0));
+      expect(result.current).toEqual([
+        [reducerId, '3'],
+        [ReducerID.first, '30 years'],
+      ]);
     });
   });
 });

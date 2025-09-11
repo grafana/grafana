@@ -4,6 +4,7 @@ export const availableIconsIndex = {
   github: true,
   gitlab: true,
   okta: true,
+  scim: true,
   discord: true,
   hipchat: true,
   amazon: true,

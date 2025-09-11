@@ -229,7 +229,7 @@ func TestService_checkPermission(t *testing.T) {
 					Identifier: "parent",
 				},
 			},
-			folders: []store.Folder{{UID: "parent"}},
+			folders: []store.Folder{{UID: "parent"}, {UID: "other_parent"}},
 			check: CheckRequest{
 				Action:       "dashboards:create",
 				Group:        "dashboard.grafana.app",
@@ -263,21 +263,54 @@ func TestService_checkPermission(t *testing.T) {
 			expected: true,
 		},
 		{
-			name: "should return true for datasources if service has permission",
+			name: "should allow querying a datasource",
 			permissions: []accesscontrol.Permission{
 				{
 					Action:     "datasources:query",
-					Scope:      "datasources:uid:some_datasource",
+					Scope:      "datasources:uid:ds1",
 					Kind:       "datasources",
 					Attribute:  "uid",
-					Identifier: "some_datasource",
+					Identifier: "ds1",
 				},
 			},
 			check: CheckRequest{
 				Action:   "datasources:query",
 				Group:    "query.grafana.app",
 				Resource: "query",
-				Name:     "some_datasource",
+				Name:     "ds1",
+				Verb:     utils.VerbCreate,
+			},
+			expected: true,
+		},
+		{
+			name: "should deny querying a datasource without correct permission",
+			permissions: []accesscontrol.Permission{
+				{
+					Action:     "datasources:query",
+					Scope:      "datasources:uid:ds2",
+					Kind:       "datasources",
+					Attribute:  "uid",
+					Identifier: "ds2",
+				},
+			},
+			check: CheckRequest{
+				Action:   "datasources:query",
+				Group:    "query.grafana.app",
+				Resource: "query",
+				Name:     "ds1",
+				Verb:     utils.VerbCreate,
+			},
+			expected: false,
+		},
+		{
+			name: "should allow creating a team (no scope needed)",
+			permissions: []accesscontrol.Permission{
+				{Action: "teams:create"},
+			},
+			check: CheckRequest{
+				Action:   "teams:create",
+				Group:    "iam.grafana.app",
+				Resource: "teams",
 				Verb:     utils.VerbCreate,
 			},
 			expected: true,
@@ -295,6 +328,43 @@ func TestService_checkPermission(t *testing.T) {
 			assert.Equal(t, tc.expected, got)
 		})
 	}
+}
+
+func TestService_checkPermission_folderCacheMissRecovery(t *testing.T) {
+	s := setupService()
+	ctx := context.Background()
+
+	// User has root folder access
+	userPermissions := map[string]bool{
+		"folders:uid:root": true,
+	}
+
+	// Populate store with folders
+	folderStore := &fakeStore{
+		folders:        []store.Folder{{UID: "root"}, {UID: "sub", ParentUID: strPtr("root")}},
+		disableNsCheck: true,
+	}
+	s.folderStore = folderStore
+
+	// Sub folder is missing from the cache
+	s.folderCache.Set(ctx, folderCacheKey("default"), newFolderTree([]store.Folder{{UID: "root"}}))
+
+	// Perform check on sub folder
+	check := CheckRequest{
+		Action:       "dashboards:read",
+		Group:        "dashboard.grafana.app",
+		Resource:     "dashboards",
+		Name:         "dash1",
+		ParentFolder: "sub",
+		Namespace:    types.NamespaceInfo{Value: "default", OrgID: 1},
+	}
+
+	got, err := s.checkPermission(ctx, userPermissions, &check)
+	require.NoError(t, err)
+	assert.True(t, got)
+
+	// Check that folder store was queried despite the initial cache hit
+	assert.Equal(t, 1, folderStore.calls)
 }
 
 func TestService_getUserTeams(t *testing.T) {

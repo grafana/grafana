@@ -72,7 +72,7 @@
       "label-enable-basic-logs": "Povolit základní protokoly"
     },
     "config-editor": {
-      "description-additional-settings": "",
+      "description-additional-settings": "Další nastavení jsou volitelná nastavení, která lze nakonfigurovat pro větší kontrolu nad zdrojem dat. Patří sem zabezpečený proxy server Socks, časový limit požadavku a přeposlané soubory cookie.",
       "title-additional-settings": "Další nastavení"
     },
     "current-user-fallback-credentials": {
@@ -113,12 +113,12 @@
       "aria-label-column": "Sloupec",
       "aria-label-column-value": "Hodnota sloupce",
       "aria-label-operator": "Operátor",
-      "aria-label-remove-filter": "",
+      "aria-label-remove-filter": "Odebrat filtr",
       "label-or": "NEBO"
     },
     "filter-section": {
-      "aria-label-add-filter": "",
-      "aria-label-add-or-filter": "",
+      "aria-label-add-filter": "Přidat filtr",
+      "aria-label-add-or-filter": "Přidat filtr NEBO",
       "label-add-group": "Přidat skupinu",
       "label-and": "A",
       "label-filters": "Filtry",
@@ -131,8 +131,8 @@
       "label-format-as": "Formátovat jako"
     },
     "fuzzy-search": {
-      "aria-label-add-fuzzy-search": "",
-      "aria-label-remove-fuzzy-search": "",
+      "aria-label-add-fuzzy-search": "Přidat hledání s přibližnými výsledky",
+      "aria-label-remove-fuzzy-search": "Odebrat hledání s přibližnými výsledky",
       "aria-label-select-column": "Vybrat sloupec",
       "label-fuzzy-search": "Hledání s přibližnými výsledky",
       "placeholder-search-team": "Zadejte hledaný výraz",
@@ -147,7 +147,7 @@
       "aria-label-remove": "Odebrat"
     },
     "group-by-section": {
-      "aria-label-add-group-by": "",
+      "aria-label-add-group-by": "Přidat skupinu podle",
       "label-group-by": "Seřadit podle",
       "tooltip-group-by": "Uspořádejte výsledky do kategorií na základě zadaných sloupců. Funkci Seřadit podle lze použít nezávisle k výpisu jedinečných hodnot ve vybraných sloupcích nebo v kombinaci s agregovanými funkcemi k vytvoření souhrnných statistik pro každou skupinu. Při samostatném použití vrátí odlišné kombinace zadaných sloupců."
     },
@@ -190,10 +190,10 @@
       "text-loading": "Načítání…"
     },
     "order-by-section": {
-      "aria-label-add-order-by": "",
+      "aria-label-add-order-by": "Přidat řazení podle",
       "aria-label-order-by-column": "Seřazení podle sloupce",
       "aria-label-order-direction": "Směr řazení",
-      "aria-label-remove-order-by": "",
+      "aria-label-remove-order-by": "Odebrat řazení podle",
       "label-by": "PODLE",
       "label-order-by": "Seřadit podle",
       "tooltip-order-by": "Seřadit výsledky podle jednoho nebo více sloupců ve vzestupném nebo sestupném pořadí."
@@ -227,16 +227,26 @@
       "select-resource": "Vyberte zdroj"
     },
     "resource-picker": {
+      "browse-tab": "",
       "button-apply": "Použít",
       "button-cancel": "Zrušit",
       "header-location": "Poloha",
+      "header-resource-group": "",
       "header-scope": "Rozsah",
       "header-type": "Typ",
       "heading-selection": "Výběr",
+      "locations-filter": "",
+      "locations-filter-placeholder": "",
+      "recent-tab": "",
       "result-limit": "Zobrazují se první {{numResults}} výsledky",
+      "subscriptions-filter": "",
+      "subscriptions-filter-placeholder": "",
       "text-loading": "Načítání…",
+      "text-no-recent-resources": "",
       "text-no-resources": "Nebyly nalezeny žádné zdroje",
-      "title-error-occurred": "Při požadování zdrojů ze služby Azure Monitor došlo k chybě"
+      "title-error-occurred": "Při požadování zdrojů ze služby Azure Monitor došlo k chybě",
+      "types-filter": "",
+      "types-filter-placeholder": ""
     },
     "scope-selector": {
       "label": "Rozsah"
@@ -256,7 +266,7 @@
       "label-table": "Tabulka",
       "placeholder-select-columns": "Zvolte sloupce",
       "placeholder-select-table": "Vyberte tabulku",
-      "tooltip-remove-all-columns": ""
+      "tooltip-remove-all-columns": "Odebrat všechny sloupce"
     },
     "time-grain-field": {
       "label-time-grain": "Časové zrno"

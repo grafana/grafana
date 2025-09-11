@@ -93,12 +93,22 @@ type FrontendSettingsAnalyticsDTO struct {
 	Enabled bool `json:"enabled"`
 }
 
+type FrontendSettingsUnifiedAlertingStateHistoryDTO struct {
+	Backend                       string `json:"backend,omitempty"`
+	Primary                       string `json:"primary,omitempty"`
+	PrometheusTargetDatasourceUID string `json:"prometheusTargetDatasourceUID,omitempty"`
+	PrometheusMetricName          string `json:"prometheusMetricName,omitempty"`
+}
+
 type FrontendSettingsUnifiedAlertingDTO struct {
-	MinInterval                              string `json:"minInterval"`
-	AlertStateHistoryBackend                 string `json:"alertStateHistoryBackend,omitempty"`
-	AlertStateHistoryPrimary                 string `json:"alertStateHistoryPrimary,omitempty"`
-	RecordingRulesEnabled                    bool   `json:"recordingRulesEnabled"`
-	DefaultRecordingRulesTargetDatasourceUID string `json:"defaultRecordingRulesTargetDatasourceUID,omitempty"`
+	MinInterval                              string                                          `json:"minInterval"`
+	StateHistory                             *FrontendSettingsUnifiedAlertingStateHistoryDTO `json:"stateHistory,omitempty"`
+	RecordingRulesEnabled                    bool                                            `json:"recordingRulesEnabled"`
+	DefaultRecordingRulesTargetDatasourceUID string                                          `json:"defaultRecordingRulesTargetDatasourceUID,omitempty"`
+
+	// Backward compatibility fields - deprecated
+	AlertStateHistoryBackend string `json:"alertStateHistoryBackend,omitempty"`
+	AlertStateHistoryPrimary string `json:"alertStateHistoryPrimary,omitempty"`
 }
 
 // Enterprise-only
@@ -199,25 +209,27 @@ type FrontendSettingsDTO struct {
 	DashboardMemoryMonitoringInterval string   `json:"dashboardMemoryMonitoringInterval"`
 	PanelSeriesLimit                  int      `json:"panelSeriesLimit"`
 
-	FeedbackLinksEnabled                bool     `json:"feedbackLinksEnabled"`
-	ApplicationInsightsConnectionString string   `json:"applicationInsightsConnectionString"`
-	ApplicationInsightsEndpointUrl      string   `json:"applicationInsightsEndpointUrl"`
-	DisableLoginForm                    bool     `json:"disableLoginForm"`
-	DisableUserSignUp                   bool     `json:"disableUserSignUp"`
-	LoginHint                           string   `json:"loginHint"`
-	PasswordHint                        string   `json:"passwordHint"`
-	ExternalUserMngInfo                 string   `json:"externalUserMngInfo"`
-	ExternalUserMngLinkUrl              string   `json:"externalUserMngLinkUrl"`
-	ExternalUserMngLinkName             string   `json:"externalUserMngLinkName"`
-	ExternalUserMngAnalytics            bool     `json:"externalUserMngAnalytics"`
-	ExternalUserMngAnalyticsParams      string   `json:"externalUserMngAnalyticsParams"`
-	ViewersCanEdit                      bool     `json:"viewersCanEdit"`
-	DisableSanitizeHtml                 bool     `json:"disableSanitizeHtml"`
-	TrustedTypesDefaultPolicyEnabled    bool     `json:"trustedTypesDefaultPolicyEnabled"`
-	CSPReportOnlyEnabled                bool     `json:"cspReportOnlyEnabled"`
-	EnableFrontendSandboxForPlugins     []string `json:"enableFrontendSandboxForPlugins"`
-	ExploreDefaultTimeOffset            string   `json:"exploreDefaultTimeOffset"`
-	ExploreHideLogsDownload             bool     `json:"exploreHideLogsDownload"`
+	FeedbackLinksEnabled                bool                `json:"feedbackLinksEnabled"`
+	ApplicationInsightsConnectionString string              `json:"applicationInsightsConnectionString"`
+	ApplicationInsightsEndpointUrl      string              `json:"applicationInsightsEndpointUrl"`
+	DisableLoginForm                    bool                `json:"disableLoginForm"`
+	DisableUserSignUp                   bool                `json:"disableUserSignUp"`
+	LoginHint                           string              `json:"loginHint"`
+	PasswordHint                        string              `json:"passwordHint"`
+	ExternalUserMngInfo                 string              `json:"externalUserMngInfo"`
+	ExternalUserMngLinkUrl              string              `json:"externalUserMngLinkUrl"`
+	ExternalUserMngLinkName             string              `json:"externalUserMngLinkName"`
+	ExternalUserMngAnalytics            bool                `json:"externalUserMngAnalytics"`
+	ExternalUserMngAnalyticsParams      string              `json:"externalUserMngAnalyticsParams"`
+	ViewersCanEdit                      bool                `json:"viewersCanEdit"`
+	DisableSanitizeHtml                 bool                `json:"disableSanitizeHtml"`
+	TrustedTypesDefaultPolicyEnabled    bool                `json:"trustedTypesDefaultPolicyEnabled"`
+	CSPReportOnlyEnabled                bool                `json:"cspReportOnlyEnabled"`
+	EnableFrontendSandboxForPlugins     []string            `json:"enableFrontendSandboxForPlugins"`
+	PluginRestrictedAPIsAllowList       map[string][]string `json:"pluginRestrictedAPIsAllowList"`
+	PluginRestrictedAPIsBlockList       map[string][]string `json:"pluginRestrictedAPIsBlockList"`
+	ExploreDefaultTimeOffset            string              `json:"exploreDefaultTimeOffset"`
+	ExploreHideLogsDownload             bool                `json:"exploreHideLogsDownload"`
 
 	Auth FrontendSettingsAuthDTO `json:"auth"`
 

@@ -32,6 +32,7 @@ import { getAllPanelPluginMeta } from 'app/features/panel/state/util';
 import { PanelOptions } from './PanelOptions';
 import { PanelVizTypePicker } from './PanelVizTypePicker';
 import { INTERACTION_EVENT_NAME, INTERACTION_ITEM } from './interaction';
+import { useScrollReflowLimit } from './useScrollReflowLimit';
 
 export interface PanelOptionsPaneState extends SceneObjectState {
   isVizPickerOpen?: boolean;
@@ -119,78 +120,78 @@ export class PanelOptionsPane extends SceneObjectBase<PanelOptionsPaneState> {
     ];
   }
 
-  static Component = ({ model }: SceneComponentProps<PanelOptionsPane>) => {
-    const { isVizPickerOpen, searchQuery, listMode, panelRef } = model.useState();
-    const panel = panelRef.resolve();
-    const { pluginId } = panel.useState();
-    const { data } = sceneGraph.getData(panel).useState();
-    const styles = useStyles2(getStyles);
-    const isSearching = searchQuery.length > 0;
-    const hasFieldConfig = !isSearching && !panel.getPlugin()?.fieldConfigRegistry.isEmpty();
-    const [isSearchingOptions, setIsSearchingOptions] = useToggle(false);
-    const onlyOverrides = listMode === OptionFilter.Overrides;
+  static Component = PanelOptionsPaneComponent;
+}
 
-    return (
-      <>
-        {!isVizPickerOpen && (
-          <>
-            <div className={styles.top}>
-              <Field
-                label={t('dashboard.panel-edit.visualization-button-label', 'Visualization')}
-                className={styles.vizField}
-              >
-                <Stack gap={1}>
-                  <VisualizationButton pluginId={pluginId} onOpen={model.onToggleVizPicker} />
-                  <Button
-                    icon="search"
-                    variant="secondary"
-                    onClick={setIsSearchingOptions}
-                    tooltip={t('dashboard.panel-edit.visualization-button-tooltip', 'Search options')}
-                  />
-                  {hasFieldConfig && (
-                    <ToolbarButton
-                      icon="filter"
-                      tooltip={t('dashboard.panel-edit.only-overrides-button-tooltip', 'Show only overrides')}
-                      variant={onlyOverrides ? 'active' : 'canvas'}
-                      onClick={() => {
-                        model.onSetListMode(onlyOverrides ? OptionFilter.All : OptionFilter.Overrides);
-                      }}
-                    />
-                  )}
-                </Stack>
-              </Field>
+function PanelOptionsPaneComponent({ model }: SceneComponentProps<PanelOptionsPane>) {
+  const { isVizPickerOpen, searchQuery, listMode, panelRef } = model.useState();
+  const panel = panelRef.resolve();
+  const { pluginId } = panel.useState();
+  const { data } = sceneGraph.getData(panel).useState();
+  const styles = useStyles2(getStyles);
+  const isSearching = searchQuery.length > 0;
+  const hasFieldConfig = !isSearching && !panel.getPlugin()?.fieldConfigRegistry.isEmpty();
+  const [isSearchingOptions, setIsSearchingOptions] = useToggle(false);
+  const onlyOverrides = listMode === OptionFilter.Overrides;
+  const isScrollingLayout = useScrollReflowLimit();
 
-              {isSearchingOptions && (
-                <FilterInput
-                  className={styles.searchOptions}
-                  value={searchQuery}
-                  placeholder={t('dashboard.panel-edit.placeholder-search-options', 'Search options')}
-                  onChange={model.onSetSearchQuery}
-                  autoFocus={true}
-                  onBlur={() => {
-                    if (searchQuery.length === 0) {
-                      setIsSearchingOptions(false);
-                    }
-                  }}
+  return (
+    <>
+      {!isVizPickerOpen && (
+        <>
+          <div className={styles.top}>
+            <Field label={t('dashboard.panel-edit.visualization-button-label', 'Visualization')} noMargin>
+              <Stack gap={1}>
+                <VisualizationButton pluginId={pluginId} onOpen={model.onToggleVizPicker} />
+                <Button
+                  icon="search"
+                  variant="secondary"
+                  onClick={setIsSearchingOptions}
+                  tooltip={t('dashboard.panel-edit.visualization-button-tooltip', 'Search options')}
                 />
-              )}
-            </div>
-            <ScrollContainer>
-              <PanelOptions panel={panel} searchQuery={searchQuery} listMode={listMode} data={data} />
-            </ScrollContainer>
-          </>
-        )}
-        {isVizPickerOpen && (
-          <PanelVizTypePicker
-            panel={panel}
-            onChange={model.onChangePanelPlugin}
-            onClose={model.onToggleVizPicker}
-            data={data}
-          />
-        )}
-      </>
-    );
-  };
+                {hasFieldConfig && (
+                  <ToolbarButton
+                    icon="filter"
+                    tooltip={t('dashboard.panel-edit.only-overrides-button-tooltip', 'Show only overrides')}
+                    variant={onlyOverrides ? 'active' : 'canvas'}
+                    onClick={() => {
+                      model.onSetListMode(onlyOverrides ? OptionFilter.All : OptionFilter.Overrides);
+                    }}
+                  />
+                )}
+              </Stack>
+            </Field>
+
+            {isSearchingOptions && (
+              <FilterInput
+                className={styles.searchOptions}
+                value={searchQuery}
+                placeholder={t('dashboard.panel-edit.placeholder-search-options', 'Search options')}
+                onChange={model.onSetSearchQuery}
+                autoFocus={true}
+                onBlur={() => {
+                  if (searchQuery.length === 0) {
+                    setIsSearchingOptions(false);
+                  }
+                }}
+              />
+            )}
+          </div>
+          <ScrollContainer minHeight={isScrollingLayout ? 'max-content' : 0}>
+            <PanelOptions panel={panel} searchQuery={searchQuery} listMode={listMode} data={data} />
+          </ScrollContainer>
+        </>
+      )}
+      {isVizPickerOpen && (
+        <PanelVizTypePicker
+          panel={panel}
+          onChange={model.onChangePanelPlugin}
+          onClose={model.onToggleVizPicker}
+          data={data}
+        />
+      )}
+    </>
+  );
 }
 
 function getStyles(theme: GrafanaTheme2) {
@@ -206,9 +207,6 @@ function getStyles(theme: GrafanaTheme2) {
     }),
     searchWrapper: css({
       padding: theme.spacing(2, 2, 2, 0),
-    }),
-    vizField: css({
-      marginBottom: theme.spacing(0),
     }),
     rotateIcon: css({
       rotate: '180deg',

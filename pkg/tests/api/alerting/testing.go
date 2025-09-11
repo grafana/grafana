@@ -511,6 +511,19 @@ func (a apiClient) DeleteRulesGroup(t *testing.T, folder string, group string, p
 	return status, string(resp)
 }
 
+func (a apiClient) DeleteRulesGroupProvisioning(t *testing.T, folder string, group string) (int, string) {
+	t.Helper()
+
+	u := fmt.Sprintf("%s/api/v1/provisioning/folder/%s/rule-groups/%s", a.url, folder, group)
+	req, err := http.NewRequest(http.MethodDelete, u, nil)
+	require.NoError(t, err)
+
+	resp, status, err := sendRequestRaw(t, req)
+	require.NoError(t, err)
+
+	return status, string(resp)
+}
+
 func (a apiClient) PostSilence(t *testing.T, s apimodels.PostableSilence) (apimodels.PostSilencesOKBody, int, string) {
 	t.Helper()
 
@@ -1485,6 +1498,14 @@ func createUser(t *testing.T, db db.DB, cfg *setting.Cfg, cmd user.CreateUserCom
 	u, err := usrSvc.Create(context.Background(), &cmd)
 	require.NoError(t, err)
 	return u.ID
+}
+
+func (a apiClient) GetProvisioningAlertRule(t *testing.T, ruleUID string) (apimodels.ProvisionedAlertRule, int, string) {
+	t.Helper()
+	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("%s/api/v1/provisioning/alert-rules/%s", a.url, ruleUID), nil)
+	require.NoError(t, err)
+
+	return sendRequestJSON[apimodels.ProvisionedAlertRule](t, req, http.StatusOK)
 }
 
 func (a apiClient) GetProvisioningAlertRuleExport(t *testing.T, ruleUID string, params *apimodels.ExportQueryParams) (int, string) {

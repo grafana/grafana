@@ -66,7 +66,7 @@ export interface Props {
   onClickFilterOutString?: (value: string, refId?: string) => void;
   onClickShowField?: (key: string) => void;
   onClickHideField?: (key: string) => void;
-  onLogOptionsChange?: (option: keyof LogListControlOptions, value: string | boolean | string[]) => void;
+  onLogOptionsChange?: (option: LogListControlOptions, value: string | boolean | string[]) => void;
   onLogLineHover?: (row?: LogRowModel) => void;
   onPermalinkClick?: (row: LogRowModel) => Promise<void>;
   onPinLine?: (row: LogRowModel) => void;
@@ -88,7 +88,7 @@ export interface Props {
 
 export type LogListFontSize = 'default' | 'small';
 
-export type LogListControlOptions = LogListState;
+export type LogListControlOptions = keyof LogListState | 'wrapLogMessage' | 'prettifyJSON';
 
 type LogListComponentProps = Omit<
   Props,
@@ -109,7 +109,7 @@ export const LogList = ({
   displayedFields,
   containerElement,
   logOptionsStorageKey,
-  detailsMode = logOptionsStorageKey ? (store.get(`${logOptionsStorageKey}.detailsMode`) ?? 'sidebar') : 'sidebar',
+  detailsMode,
   dedupStrategy,
   enableLogDetails,
   eventBus,
@@ -241,6 +241,7 @@ const LogListComponent = ({
     onClickFilterString,
     onClickFilterOutString,
     permalinkedLogId,
+    prettifyJSON,
     showDetails,
     showTime,
     sortOrder,
@@ -312,19 +313,24 @@ const LogListComponent = ({
   }, [eventBus, filteredLogs]);
 
   useEffect(() => {
-    if (loading) {
-      return;
-    }
     setProcessedLogs(
       preProcessLogs(
         logs,
-        { getFieldLinks, escape: forceEscape ?? false, order: sortOrder, timeZone, virtualization, wrapLogMessage },
+        {
+          getFieldLinks,
+          escape: forceEscape ?? false,
+          prettifyJSON,
+          order: sortOrder,
+          timeZone,
+          virtualization,
+          wrapLogMessage,
+        },
         grammar
       )
     );
     virtualization.resetLogLineSizes();
     listRef.current?.resetAfterIndex(0);
-  }, [forceEscape, getFieldLinks, grammar, loading, logs, sortOrder, timeZone, virtualization, wrapLogMessage]);
+  }, [forceEscape, getFieldLinks, grammar, logs, prettifyJSON, sortOrder, timeZone, virtualization, wrapLogMessage]);
 
   useEffect(() => {
     listRef.current?.resetAfterIndex(0);
@@ -376,11 +382,6 @@ const LogListComponent = ({
     [initialScrollPosition, permalinkedLogId, processedLogs]
   );
 
-  if (!containerElement || listHeight == null) {
-    // Wait for container to be rendered
-    return null;
-  }
-
   const handleLogLineClick = useCallback(
     (e: MouseEvent<HTMLElement>, log: LogListModel) => {
       if (handleTextSelection(e, log)) {
@@ -398,13 +399,18 @@ const LogListComponent = ({
 
   const focusLogLine = useCallback(
     (log: LogListModel) => {
-      const index = filteredLogs.indexOf(log);
+      const index = filteredLogs.findIndex((filteredLog) => filteredLog.uid === log.uid);
       if (index >= 0) {
         debouncedScrollToItem(index, 'start');
       }
     },
     [debouncedScrollToItem, filteredLogs]
   );
+
+  if (!containerElement || listHeight == null) {
+    // Wait for container to be rendered
+    return null;
+  }
 
   return (
     <div className={styles.logListContainer}>
@@ -414,7 +420,10 @@ const LogListComponent = ({
           containerElement={containerElement}
           focusLogLine={focusLogLine}
           logs={filteredLogs}
+          timeRange={timeRange}
+          timeZone={timeZone}
           onResize={handleLogDetailsResize}
+          showControls={showControls}
         />
       )}
       <div className={styles.logListWrapper} ref={wrapperRef}>
@@ -456,6 +465,7 @@ const LogListComponent = ({
           displayedFields={displayedFields}
           handleOverflow={handleOverflow}
           infiniteScrollMode={infiniteScrollMode}
+          loading={loading}
           logs={filteredLogs}
           loadMore={loadMore}
           onClick={handleLogLineClick}
