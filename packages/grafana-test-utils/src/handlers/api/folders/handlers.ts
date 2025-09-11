@@ -122,6 +122,34 @@ const saveFolderHandler = () =>
     return HttpResponse.json({ ...folder.item, title: body.title });
   });
 
-const handlers = [listFoldersHandler(), getFolderHandler(), createFolderHandler(), saveFolderHandler()];
+const getMockFolderCounts = (folders: number, dashboards: number, library_elements: number, alertrules: number) => {
+  return {
+    folder: folders,
+    dashboard: dashboards,
+    library_elements: library_elements,
+    alertrule: alertrules,
+  };
+};
+
+const folderCountsHandler = () =>
+  http.get<{ uid: string }, { title: string; version: number }>('/api/folders/:uid/counts', async ({ params }) => {
+    const { uid } = params;
+    const folder = mockTree.find((v) => v.item.uid === uid);
+
+    if (!folder) {
+      // The legacy API returns 0's for a folder that doesn't exist 🤷‍♂️
+      return HttpResponse.json(getMockFolderCounts(0, 0, 0, 0));
+    }
+
+    return HttpResponse.json(getMockFolderCounts(1, 1, 1, 1));
+  });
+
+const handlers = [
+  listFoldersHandler(),
+  getFolderHandler(),
+  createFolderHandler(),
+  saveFolderHandler(),
+  folderCountsHandler(),
+];
 
 export default handlers;

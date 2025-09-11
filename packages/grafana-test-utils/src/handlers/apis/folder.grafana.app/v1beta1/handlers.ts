@@ -164,4 +164,63 @@ const replaceFolderHandler = () =>
       return HttpResponse.json(appPlatformFolder);
     }
   );
-export default [getFolderHandler(), getFolderParentsHandler(), createFolderHandler(), replaceFolderHandler()];
+
+const getMockFolderCounts = (folders: number, dashboards: number, library_elements: number, alertrules: number) => {
+  return {
+    kind: 'DescendantCounts',
+    apiVersion: 'folder.grafana.app/v1beta1',
+    counts: [
+      {
+        group: 'dashboard.grafana.app',
+        resource: 'dashboards',
+        count: dashboards,
+      },
+      {
+        group: 'sql-fallback',
+        resource: 'alertrules',
+        count: alertrules,
+      },
+      {
+        group: 'sql-fallback',
+        resource: 'dashboards',
+        count: dashboards,
+      },
+      {
+        group: 'sql-fallback',
+        resource: 'folders',
+        count: folders,
+      },
+      {
+        group: 'sql-fallback',
+        resource: 'library_elements',
+        count: library_elements,
+      },
+    ],
+  };
+};
+
+const folderCountsHandler = () =>
+  http.get<{ folderUid: string; namespace: string }, PartialFolderPayload>(
+    '/apis/folder.grafana.app/v1beta1/namespaces/:namespace/folders/:folderUid/counts',
+    async ({ params }) => {
+      const { folderUid } = params;
+      const matchedFolder = mockTree.find(({ item }) => {
+        return item.uid === folderUid;
+      });
+
+      if (!matchedFolder) {
+        // The API returns 0's for a folder that doesn't exist 🤷‍♂️
+        return HttpResponse.json(getMockFolderCounts(0, 0, 0, 0));
+      }
+
+      return HttpResponse.json(getMockFolderCounts(1, 1, 1, 1));
+    }
+  );
+
+export default [
+  getFolderHandler(),
+  getFolderParentsHandler(),
+  createFolderHandler(),
+  replaceFolderHandler(),
+  folderCountsHandler(),
+];
