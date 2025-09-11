@@ -156,10 +156,15 @@ func (b *APIBuilder) handleSettings(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	legacyStorage := false
+	if b.storageStatus != nil {
+		legacyStorage = dualwrite.IsReadingLegacyDashboardsAndFolders(ctx, b.storageStatus)
+	}
+
 	settings := provisioning.RepositoryViewList{
 		Items: make([]provisioning.RepositoryView, len(all)),
 		// FIXME: this shouldn't be here in provisioning but at the dual writer or something about the storage
-		LegacyStorage:            dualwrite.IsReadingLegacyDashboardsAndFolders(ctx, b.storageStatus),
+		LegacyStorage:            legacyStorage,
 		AvailableRepositoryTypes: b.repoFactory.Types(),
 	}
 
