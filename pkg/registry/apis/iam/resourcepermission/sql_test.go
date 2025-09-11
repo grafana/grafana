@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/iam/common"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/legacy"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/sqlstore/session"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/util/testutil"
@@ -297,7 +298,12 @@ func TestIntegration_ResourcePermSqlBackend_getResourcePermission(t *testing.T) 
 			ns := types.NamespaceInfo{
 				OrgID: tt.orgID,
 			}
-			got, err := backend.getResourcePermission(context.Background(), sql, ns, tt.resource)
+			var got *v0alpha1.ResourcePermission
+			err = sql.DB.GetSqlxSession().WithTransaction(context.Background(), func(tx *session.SessionTx) error {
+				got, err = backend.getResourcePermission(context.Background(), sql, tx, ns, tt.resource)
+				return err
+			})
+
 			if tt.err != nil {
 				require.Error(t, err)
 				require.ErrorIs(t, err, tt.err)
@@ -369,7 +375,10 @@ func TestIntegration_ResourcePermSqlBackend_deleteResourcePermission(t *testing.
 			require.NoError(t, err)
 
 			// check that the resource has been deleted
-			_, err = backend.getResourcePermission(context.Background(), sql, ns, tt.resource)
+			err = sql.DB.GetSqlxSession().WithTransaction(context.Background(), func(tx *session.SessionTx) error {
+				_, err = backend.getResourcePermission(context.Background(), sql, tx, ns, tt.resource)
+				return err
+			})
 			require.Error(t, err)
 		})
 	}

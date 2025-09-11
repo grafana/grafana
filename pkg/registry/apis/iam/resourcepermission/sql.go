@@ -156,7 +156,7 @@ func (s *ResourcePermSqlBackend) getRbacAssignmentsWithTx(ctx context.Context, s
 }
 
 // getResourcePermission retrieves a single ResourcePermission by its name in the format <group>-<resource>-<name> (e.g. dashboard.grafana.app-dashboards-ad5rwqs)
-func (s *ResourcePermSqlBackend) getResourcePermission(ctx context.Context, sql *legacysql.LegacyDatabaseHelper, ns types.NamespaceInfo, name string) (*v0alpha1.ResourcePermission, error) {
+func (s *ResourcePermSqlBackend) getResourcePermission(ctx context.Context, sql *legacysql.LegacyDatabaseHelper, tx *session.SessionTx, ns types.NamespaceInfo, name string) (*v0alpha1.ResourcePermission, error) {
 	mapper, grn, err := s.splitResourceName(name)
 	if err != nil {
 		return nil, err
@@ -168,11 +168,10 @@ func (s *ResourcePermSqlBackend) getResourcePermission(ctx context.Context, sql 
 		ActionSets: mapper.ActionSets(),
 	}
 
-	var assignments []rbacAssignment
-	err = sql.DB.GetSqlxSession().WithTransaction(ctx, func(tx *session.SessionTx) error {
-		assignments, err = s.getRbacAssignmentsWithTx(ctx, sql, tx, resourceQuery)
-		return err
-	})
+	assignments, err := s.getRbacAssignmentsWithTx(ctx, sql, tx, resourceQuery)
+	if err != nil {
+		return nil, err
+	}
 
 	if len(assignments) == 0 {
 		return nil, fmt.Errorf("resource permission %q: %w", resourceQuery.Scopes, errNotFound)
@@ -410,59 +409,24 @@ func (s *ResourcePermSqlBackend) updateResourcePermission(ctx context.Context, d
 		return 0, err
 	}
 
-	currentPerms, err := s.getResourcePermission(ctx, dbHelper, ns, grn.string())
-	if err != nil {
-		if errors.Is(err, errNotFound) {
-			return 0, fmt.Errorf("resource permissions not found: %w", errNotFound)
-		}
-		s.logger.Error("could not get resource permissions", "orgID", ns.OrgID, "scope", grn.Name, "error", err.Error())
-		return 0, fmt.Errorf("could not get the existing resource permissions for resource %s", grn.Name)
-	}
-
-	// Diff the existing permissions with the desired ones
-	permissionsToAdd := make([]v0alpha1.ResourcePermissionspecPermission, 0)
-	permissionsToRemove := make([]v0alpha1.ResourcePermissionspecPermission, 0)
-
-	for _, desired := range v0ResourcePerm.Spec.Permissions {
-		found := false
-		for _, existing := range currentPerms.Spec.Permissions {
-			if desired.Name == existing.Name && desired.Kind == existing.Kind && desired.Verb == existing.Verb {
-				found = true
-				break
+	err := dbHelper.DB.GetSqlxSession().WithTransaction(ctx, func(tx *session.SessionTx) error {
+		currentPerms, err := s.getResourcePermission(ctx, dbHelper, tx, ns, grn.string())
+		if err != nil {
+			if errors.Is(err, errNotFound) {
+				return fmt.Errorf("resource permissions not found: %w", errNotFound)
 			}
+			s.logger.Error("could not get resource permissions", "orgID", ns.OrgID, "scope", grn.Name, "error", err.Error())
+			return fmt.Errorf("could not get the existing resource permissions for resource %s", grn.Name)
 		}
-		if !found {
-			permissionsToAdd = append(permissionsToAdd, desired)
-		}
-	}
 
-	// Compile a list of permissions to remove
-	for _, existing := range currentPerms.Spec.Permissions {
-		found := false
-		for _, desired := range v0ResourcePerm.Spec.Permissions {
-			if desired.Name == existing.Name && desired.Kind == existing.Kind && desired.Verb == existing.Verb {
-				found = true
-				break
+		permissionsToAdd, permissionsToRemove := diffPermissions(currentPerms.Spec.Permissions, v0ResourcePerm.Spec.Permissions)
+
+		if len(permissionsToRemove) > 0 {
+			permsToRemove, err := s.buildRbacAssignments(ctx, ns, mapper, permissionsToRemove, mapper.Scope(grn.Name))
+			if err != nil {
+				return err
 			}
-		}
-		if !found {
-			permissionsToRemove = append(permissionsToRemove, existing)
-		}
-	}
 
-	// Build the assignments to add/remove
-	permsToAdd, err := s.buildRbacAssignments(ctx, ns, mapper, permissionsToAdd, mapper.Scope(grn.Name))
-	if err != nil {
-		return 0, err
-	}
-
-	permsToRemove, err := s.buildRbacAssignments(ctx, ns, mapper, permissionsToRemove, mapper.Scope(grn.Name))
-	if err != nil {
-		return 0, err
-	}
-
-	err = dbHelper.DB.GetSqlxSession().WithTransaction(ctx, func(tx *session.SessionTx) error {
-		if len(permsToRemove) > 0 {
 			for _, perm := range permsToRemove {
 				removePermQuery, args, err := buildRemovePermissionQuery(dbHelper, perm.Scope, perm.Action, perm.RoleName, ns.OrgID)
 				if err != nil {
@@ -477,7 +441,12 @@ func (s *ResourcePermSqlBackend) updateResourcePermission(ctx context.Context, d
 			}
 		}
 
-		if len(permsToAdd) > 0 {
+		if len(permissionsToAdd) > 0 {
+			permsToAdd, err := s.buildRbacAssignments(ctx, ns, mapper, permissionsToAdd, mapper.Scope(grn.Name))
+			if err != nil {
+				return err
+			}
+
 			for _, assignment := range permsToAdd {
 				if err := s.storeRbacAssignment(ctx, dbHelper, tx, ns.OrgID, assignment); err != nil {
 					return err
@@ -494,6 +463,37 @@ func (s *ResourcePermSqlBackend) updateResourcePermission(ctx context.Context, d
 
 	// Return a timestamp as resource version
 	return timeNow().UnixMilli(), nil
+}
+
+func diffPermissions(currentPermissions, desiredPermissions []v0alpha1.ResourcePermissionspecPermission) (permissionsToAdd, permissionsToRemove []v0alpha1.ResourcePermissionspecPermission) {
+	for _, desired := range desiredPermissions {
+		found := false
+		for _, existing := range currentPermissions {
+			if desired.Name == existing.Name && desired.Kind == existing.Kind && desired.Verb == existing.Verb {
+				found = true
+				break
+			}
+		}
+		if !found {
+			permissionsToAdd = append(permissionsToAdd, desired)
+		}
+	}
+
+	// Compile a list of permissions to remove
+	for _, existing := range currentPermissions {
+		found := false
+		for _, desired := range desiredPermissions {
+			if desired.Name == existing.Name && desired.Kind == existing.Kind && desired.Verb == existing.Verb {
+				found = true
+				break
+			}
+		}
+		if !found {
+			permissionsToRemove = append(permissionsToRemove, existing)
+		}
+	}
+
+	return permissionsToAdd, permissionsToRemove
 }
 
 func validateCreateAndUpdateInput(v0ResourcePerm *v0alpha1.ResourcePermission, grn *groupResourceName) error {

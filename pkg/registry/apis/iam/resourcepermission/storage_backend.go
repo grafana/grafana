@@ -16,6 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/common"
 	idStore "github.com/grafana/grafana/pkg/registry/apis/iam/legacy"
+	"github.com/grafana/grafana/pkg/services/sqlstore/session"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
@@ -155,7 +156,12 @@ func (s *ResourcePermSqlBackend) ReadResource(ctx context.Context, req *resource
 		return rsp
 	}
 
-	resourcePermission, err := s.getResourcePermission(ctx, dbHelper, ns, req.Key.Name)
+	var resourcePermission *v0alpha1.ResourcePermission
+	err = dbHelper.DB.GetSqlxSession().WithTransaction(ctx, func(tx *session.SessionTx) error {
+		resourcePermission, err = s.getResourcePermission(ctx, dbHelper, tx, ns, req.Key.Name)
+		return err
+	})
+
 	if err != nil {
 		if errors.Is(err, errNotFound) {
 			rsp.Error = resource.AsErrorResult(
