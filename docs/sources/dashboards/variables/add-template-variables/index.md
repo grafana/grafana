@@ -324,6 +324,20 @@ To create an ad hoc filter, follow these steps:
 
 Now you can [filter data on the dashboard](ref:filter-dashboard).
 
+{{< admonition type="tip" >}}
+Data links preserve context. When you click a data link, Grafana carries the current
+time range, dashboard variables, and ad hoc filters so the destination opens with the
+same filters applied.
+
+Ad hoc filters are data source scoped; they apply only when the destination uses the
+same data source.
+
+Learn more in:
+
+- [Configure data links and actions](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/configure-data-links/)
+- [Create dashboard URL variables – Ad hoc filters](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/create-dashboard-url-variables/#ad-hoc-filters)
+  {{< /admonition >}}
+
 <!-- vale Grafana.Spelling = YES -->
 <!-- vale Grafana.WordList = YES -->
 
@@ -761,3 +775,8 @@ enp216s0f0np3         0000:d7:00_0_0000:d8:00_3
 {{< admonition type="note" >}}
 Only `text` and `value` capture group names are supported.
 {{< /admonition >}}
+
+```
+
+
+```
