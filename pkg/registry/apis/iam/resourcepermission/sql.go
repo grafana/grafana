@@ -488,6 +488,10 @@ func (s *ResourcePermSqlBackend) updateResourcePermission(ctx context.Context, d
 		return nil
 	})
 
+	if err != nil {
+		return 0, err
+	}
+
 	// Return a timestamp as resource version
 	return timeNow().UnixMilli(), nil
 }

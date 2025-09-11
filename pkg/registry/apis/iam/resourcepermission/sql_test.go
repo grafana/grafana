@@ -575,7 +575,7 @@ func TestIntegration_ResourcePermSqlBackend_UpdateResourcePermission(t *testing.
 		// Service account should now have admin on fold1
 		// Builtin Editor should now have view access to fold1
 
-		err = sess.Get(ctx, &permission, "SELECT action FROM permission WHERE scope = \"folders:uid:fold1\" AND role_id = (SELECT role_id FROM user_role WHERE org_id = ? AND user_id = ?)", 1, "1")
+		err = sess.Get(ctx, &permission, "SELECT action FROM permission WHERE scope = ? AND role_id = (SELECT role_id FROM user_role WHERE org_id = ? AND user_id = ?)", "folders:uid:fold1", 1, "1")
 		require.NoError(t, err)
 		require.Equal(t, "folders:view", permission.Action)
 
@@ -584,11 +584,11 @@ func TestIntegration_ResourcePermSqlBackend_UpdateResourcePermission(t *testing.
 		require.NoError(t, err)
 		require.Equal(t, 0, count)
 
-		err = sess.Get(ctx, &permission, "SELECT action FROM permission WHERE scope = \"folders:uid:fold1\" AND role_id = (SELECT role_id FROM user_role WHERE org_id = ? AND user_id = ?)", 1, "3")
+		err = sess.Get(ctx, &permission, "SELECT action FROM permission WHERE scope = ? AND role_id = (SELECT role_id FROM user_role WHERE org_id = ? AND user_id = ?)", "folders:uid:fold1", 1, "3")
 		require.NoError(t, err)
 		require.Equal(t, "folders:admin", permission.Action)
 
-		err = sess.Get(ctx, &permission, "SELECT action FROM permission WHERE scope = \"folders:uid:fold1\" AND role_id = (SELECT role_id FROM builtin_role WHERE org_id = ? AND role = ?)", 1, "Editor")
+		err = sess.Get(ctx, &permission, "SELECT action FROM permission WHERE scope = ? AND role_id = (SELECT role_id FROM builtin_role WHERE org_id = ? AND role = ?)", "folders:uid:fold1", 1, "Editor")
 		require.NoError(t, err)
 		require.Equal(t, "folders:view", permission.Action)
 	})
