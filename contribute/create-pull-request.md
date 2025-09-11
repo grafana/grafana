@@ -1,17 +1,127 @@
-# Create a pull request
+# Pull Request Guidelines
 
-Every contribution to Grafana's software begins with a [pull request](https://help.github.com/en/articles/about-pull-requests/). This document guides you through the process of creating a PR.
+This document explains how a contributor like yo can submit a pull request (PR) to the Grafana project.
 
-## Before you begin
+## Before You Contribute
 
 We know you're excited to create your first pull request. Before we get started, read these resources first:
 
 - Get started [contributing to Grafana](/CONTRIBUTING.md).
-- Make sure your code follows the relevant [style guides](/contribute/style-guides).
 - It's recommended you [set up precommit hooks](/contribute/developer-guide.md) to auto-format when you commit
+
+ Also, please make sure you meet the following prerequisites. We will help you meet them with the help of our AI-powered asssitant.
+
+- **Environment setup**: TBD
+<!-- [TODO: Add details about required tooling, local environment setup, and dependencies?] -->
+- **Coding standards**: Contributions should follow Grafana’s coding guidelines and [style conventions](/contribute/style-guides).
+- **Tests**: Ensure new code is covered by unit or integration tests where possible.  
+- **Documentation**: Update documentation for any new or changed functionality. <!-- TODO: Are we going to automate this? -->
+
+📌 *We are working on improving the community contribution process, and this section will be expanded with specific commands, scripts, and tooling guidance soon.*
+
+## What can I expect?
+
+- The submission process may be **assisted with AI** to suggest improvements.  
+<!-- - You can **opt out** of some or all AI-assisted steps (for example, “I don’t want AI to suggest changes to my code”).   -->
+  <!-- - [TODO: Add concrete instructions on how to opt out.]   -->
+  <!-- - If you opt out, the PR will still be considered but may take longer to review.   -->
+- Not all PRs will be reviewed or accepted.  
+- Review timelines are **not guaranteed** . PRs are considered on a **best-effort basis**.  
+- Please follow our [Code of Conduct](./CODE_OF_CONDUCT.md).
+
+## How can I contribute?
+
+### Contribute with Code
+Grafana uses a **categorization + adaptive workflow** model to make the review process clear and fair.  
+
+#### PR Categorization
+
+When you submit a PR, our automation will classify it into categories.  
+We consider both **size** and **type**:
+
+- **Size categories**:  
+  - *Small*: one-liner bug fix, documentation typo, config change.  
+  - *Medium*: moderate code changes, minor feature improvements, refactors.  
+  - *Large*: new features, architectural changes, complex multi-file refactors.  
+
+- **Type categories**:  
+  - *Docs*: Documentation updates or fixes.  
+  - *Bugfix*: Fixes for existing issues.  
+  - *Refactor*: Code reorganization without feature changes.  
+  - *Feature*: Adds new functionality.  
+  - [TODO: Define additional categories if needed.]  
+
+Categorization is based on approaches such as:
+- Lines of code changed.  
+- Number of files touched.  
+- Labels added by contributors.  
+- Contributor’s self-selection prompt at PR creation.  
+
+A bot will apply labels (e.g., `size:small`, `type:docs`) and explain which review workflow applies.  
+
+#### Adaptive workflow per category
+
+- **Small PRs**  
+  - Fully automated validation (linting, tests, AI lightweight review).  
+  - Human reviewer only for final approval.  
+
+- **Medium PRs**  
+  - Automated validation + AI review.  
+  - Routed to the relevant squad/project team.  
+  - Human review required before merge.  
+
+- **Large PRs**  
+  - Early human checkpoint before full validation.  
+  - Reviewer ensures alignment with project goals and direction.  
+  - Once aligned, automation (AI + tests) reduces engineering toil.  
+
+
+### Contribute without Code
+👉 *We are working on describing ways to contribute without writing code (e.g., testing, documentation, design feedback). Stay tuned for updates.*
+
+You can also explore [documentation contribution guidelines](./contribute/documentation/README.md).
+
+---
+
+## How does it work?
+
+```mermaid
+    
+    SizeType --> Small[Small PR]
+    SizeType --> Medium[Medium PR]
+    SizeType --> Large[Large PR]
+    Small --> SmallFlow["Automated validation (lint/tests/AI) Human only for final approval"]
+    Medium --> MediumFlow["Automated validation + AI review Routed to squad Human review required"]
+    Large --> LargeFlow["Early human checkpoint (alignment) Then automation & AI review"]
+
+```
+
+**Why automation matters**:
+- PRs gain more visibility and are easier to discover.  
+- Validation helps prevent introducing bugs.  
+- Saves engineering time by reducing back-and-forth early in the process.  
+- Contributors get early clarity about review expectations.  
+
+---
+
+## After you contribute
+
+If your PR sits idle for a long time:
+- Please reach out to us in on our community channels (Slack, forums ) for updates.  
+<!-- - [TODO: Add direct links to Grafana’s community channels.] -->
+
+---
+
+
+<!-- we probably can leave this out since we are going to be very detailed in what a PR should have ... -->
+<!-- # Create a pull request
+
+Every contribution to Grafana's software begins with a [pull request](https://help.github.com/en/articles/about-pull-requests/). This document guides you through the process of creating a PR. -->
+
 
 ## Your first pull request
 
+<!-- replace github article with our own process -->
 If this is your first time contributing to an open-source project on GitHub, make sure you read GitHub's article on [creating a pull request](https://help.github.com/en/articles/creating-a-pull-request).
 
 To increase the chance of having your pull request accepted, make sure your pull request follows these guidelines:
@@ -78,6 +188,7 @@ Refer to the [backend style guidelines](/contribute/backend/style-guide.md).
 
 ## Code review
 
+<!-- update this section -->
 Once you've created a pull request, the next step is to have someone review your change. A review is a learning opportunity for both the reviewer and the author of the pull request.
 
 If you think a specific person needs to review your pull request, then you can tag them in the description or in a comment. To tag a user on GitHub, go to Reviewers box on the Conversations page and enter the `@` symbol followed by their GitHub username.
@@ -85,6 +196,7 @@ If you think a specific person needs to review your pull request, then you can t
 We recommend that you read [How to do a code review](https://google.github.io/eng-practices/review/reviewer/) to learn more about code reviews.
 
 ## Formatting guidelines
+<!-- update this section -->
 
 A well-written pull request minimizes the time to get your change accepted. The following guidelines help you to write good commit messages and descriptions for your pull requests.
 
@@ -96,7 +208,7 @@ Grafana uses the guidelines for commit messages outlined in the article [How to 
 - Footer in the form of an optional [keyword and issue reference](https://help.github.com/en/articles/closing-issues-using-keywords).
 
 #### Area
-
+<!-- update this section -->
 The _area_ refers to a specific part of Grafana's codebase. It should be given in the upper camel case format. For example: UpperCamelCase.
 
 Prefer using one of the following areas:
