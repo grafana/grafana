@@ -11,7 +11,7 @@ import { DataLinkButton } from '../DataLinks/DataLinkButton';
 import { Icon } from '../Icon/Icon';
 import { Stack } from '../Layout/Stack/Stack';
 import { ResponsiveProp } from '../Layout/utils/responsiveness';
-import { AdHocFilterItem } from '../Table/TableNG/types';
+import { AdHocFilterItem } from '../TableNG/types';
 
 export interface AdHocFilterModel extends AdHocFilterItem {
   onClick: () => void;
