@@ -143,7 +143,7 @@ export function DashList(props: PanelProps<Options>) {
     ];
   }, [dashboards]);
 
-  const { showStarred, showRecentlyViewed, showHeadings, showFolderNames, showSearch, showDescriptions } = props.options;
+  const { showStarred, showRecentlyViewed, showHeadings, showFolderNames, showSearch } = props.options;
 
   const dashboardGroups: DashboardGroup[] = [
     {
@@ -179,7 +179,6 @@ export function DashList(props: PanelProps<Options>) {
                 <a className={css.dashlistTitle} href={url}>
                   {dash.title}
                 </a>
-                {showDescriptions && dash.description && <div className={css.dashlistDescription}>{dash.description}</div>}
                 {showFolderNames && dash.folderTitle && <div className={css.dashlistFolder}>{dash.folderTitle}</div>}
               </div>
               <IconButton

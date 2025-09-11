@@ -29,7 +29,6 @@ composableKinds: PanelCfg: {
 					showSearch:         bool | *false
 					showHeadings:       bool | *true
 					showFolderNames:    bool | *true
-					showDescriptions:   bool | *false
 					maxItems:           int | *10
 					query:              string | *""
 					tags:               [...string] | *[]
