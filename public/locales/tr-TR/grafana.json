@@ -504,6 +504,7 @@
       "copy-link": "Bağlantıyı kopyala",
       "duplicate": "Çoğalt",
       "export": "Dışa aktar",
+      "manage-enrichments": "",
       "silence-notifications": "Bildirimleri sessize al",
       "with-modifications": "Değişikliklerle birlikte"
     },
@@ -1121,7 +1122,7 @@
     },
     "enrichment": {
       "error-boundary": {
-        "notification-message-section-extension": "",
+        "enrichment-drawer-extension": "",
         "rule-viewer-section-extension": ""
       }
     },

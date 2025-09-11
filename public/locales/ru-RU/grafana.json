@@ -512,6 +512,7 @@
       "copy-link": "Копировать ссылку",
       "duplicate": "Дублировать",
       "export": "Экспорт",
+      "manage-enrichments": "",
       "silence-notifications": "Отключить звук уведомлений",
       "with-modifications": "С изменениями"
     },
@@ -1133,7 +1134,7 @@
     },
     "enrichment": {
       "error-boundary": {
-        "notification-message-section-extension": "",
+        "enrichment-drawer-extension": "",
         "rule-viewer-section-extension": ""
       }
     },

@@ -52,8 +52,8 @@ func buildPageQueryFromTemplate(dbHelper *legacysql.LegacyDatabaseHelper, query 
 	req := pageQueryTemplate{
 		SQLTemplate:        sqltemplate.New(dbHelper.DialectForDriver()),
 		Query:              query,
-		PermissionTable:    "permission",
-		RoleTable:          "role",
+		PermissionTable:    dbHelper.Table("permission"),
+		RoleTable:          dbHelper.Table("role"),
 		ManagedRolePattern: "managed:%",
 	}
 
