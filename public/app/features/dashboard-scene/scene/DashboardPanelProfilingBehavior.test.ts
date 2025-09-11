@@ -1,16 +1,8 @@
-// Mock getPanelPerformanceCollector
-jest.mock('app/features/dashboard/services/PanelPerformanceCollector', () => ({
-  getPanelPerformanceCollector: jest.fn(() => ({
-    getAllPanelMetrics: jest.fn(() => []),
-    clearAllPanelMetrics: jest.fn(),
-  })),
-}));
-
 // Mock @grafana/scenes to include VizPanelRenderProfiler
-const mockVizPanelRenderProfilerInstances: any[] = [];
+const mockVizPanelRenderProfilerInstances: MockVizPanelRenderProfiler[] = [];
 
 class MockVizPanelRenderProfiler {
-  constructor(public state: any) {
+  constructor(public state: Record<string, unknown>) {
     mockVizPanelRenderProfilerInstances.push(this);
   }
 }

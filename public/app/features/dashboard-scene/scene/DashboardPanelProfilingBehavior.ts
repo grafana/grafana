@@ -1,5 +1,5 @@
 import { SceneObjectBase, SceneObjectState, behaviors } from '@grafana/scenes';
-import { getPanelPerformanceCollector } from 'app/features/dashboard/services/PanelPerformanceCollector';
+import { getDashboardSceneProfiler } from 'app/features/dashboard/services/DashboardProfiler';
 
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 
@@ -11,7 +11,6 @@ import { DashboardScene } from './DashboardScene';
  */
 export class DashboardPanelProfilingBehavior extends SceneObjectBase<SceneObjectState> {
   private _dashboard?: DashboardScene;
-  private _collector = getPanelPerformanceCollector();
 
   public constructor() {
     super({});
@@ -54,10 +53,8 @@ export class DashboardPanelProfilingBehavior extends SceneObjectBase<SceneObject
       const existingProfiler = panel.state.$behaviors?.find((b) => b instanceof behaviors.VizPanelRenderProfiler);
 
       if (!existingProfiler) {
-        // Add profiler behavior
-        const profiler = new behaviors.VizPanelRenderProfiler({
-          collector: this._collector,
-        });
+        // Add profiler behavior (uses unified collector automatically)
+        const profiler = new behaviors.VizPanelRenderProfiler();
 
         panel.setState({
           $behaviors: [...(panel.state.$behaviors || []), profiler],

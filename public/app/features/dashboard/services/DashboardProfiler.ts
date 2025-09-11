@@ -32,21 +32,57 @@ export function getDashboardInteractionCallback(uid: string, title: string) {
     if (e.panelMetrics && e.panelMetrics.length > 0) {
       console.log(`Panel Metrics (${e.panelMetrics.length} panels):`, e.panelMetrics);
 
-      // Performance insights
-      const totalPanelTime = e.panelMetrics.reduce((sum, panel) => sum + (panel.totalTime || 0), 0);
-      const avgPanelTime = totalPanelTime / e.panelMetrics.length;
-      const slowestPanel = e.panelMetrics.reduce((slowest, panel) =>
-        (panel.totalTime || 0) > (slowest.totalTime || 0) ? panel : slowest
-      );
+      // Performance insights (S5.0: Calculate totals from hybrid structure)
+      const totalPanelTime = e.panelMetrics.reduce((sum, panel) => {
+        const panelTotal =
+          (panel.totalQueryTime || 0) +
+          (panel.totalFieldConfigTime || 0) +
+          (panel.totalTransformationTime || 0) +
+          (panel.totalRenderTime || 0) +
+          (panel.pluginLoadTime || 0);
+        return sum + panelTotal;
+      }, 0);
 
-      console.log('Performance Summary:', {
+      const avgPanelTime = totalPanelTime / e.panelMetrics.length;
+
+      const slowestPanel = e.panelMetrics.reduce((slowest, panel) => {
+        const panelTotal =
+          (panel.totalQueryTime || 0) +
+          (panel.totalFieldConfigTime || 0) +
+          (panel.totalTransformationTime || 0) +
+          (panel.totalRenderTime || 0) +
+          (panel.pluginLoadTime || 0);
+        const slowestTotal =
+          (slowest.totalQueryTime || 0) +
+          (slowest.totalFieldConfigTime || 0) +
+          (slowest.totalTransformationTime || 0) +
+          (slowest.totalRenderTime || 0) +
+          (slowest.pluginLoadTime || 0);
+        return panelTotal > slowestTotal ? panel : slowest;
+      });
+
+      const slowestPanelTotal =
+        (slowestPanel.totalQueryTime || 0) +
+        (slowestPanel.totalFieldConfigTime || 0) +
+        (slowestPanel.totalTransformationTime || 0) +
+        (slowestPanel.totalRenderTime || 0) +
+        (slowestPanel.pluginLoadTime || 0);
+
+      console.log('Performance Summary (S5.0 Hybrid):', {
         totalPanels: e.panelMetrics.length,
         totalPanelTime: `${totalPanelTime.toFixed(1)}ms`,
         avgPanelTime: `${avgPanelTime.toFixed(1)}ms`,
         slowestPanel: {
           id: slowestPanel.panelId,
           plugin: slowestPanel.pluginId,
-          time: `${(slowestPanel.totalTime || 0).toFixed(1)}ms`,
+          time: `${slowestPanelTotal.toFixed(1)}ms`,
+          breakdown: {
+            query: `${slowestPanel.totalQueryTime || 0}ms`,
+            fieldConfig: `${slowestPanel.totalFieldConfigTime || 0}ms`,
+            transformation: `${slowestPanel.totalTransformationTime || 0}ms`,
+            render: `${slowestPanel.totalRenderTime || 0}ms`,
+            plugin: `${slowestPanel.pluginLoadTime || 0}ms`,
+          },
         },
       });
     } else {
