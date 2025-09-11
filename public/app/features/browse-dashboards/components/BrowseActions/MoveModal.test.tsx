@@ -66,6 +66,9 @@ describe('browse-dashboards MoveModal', () => {
       false,
     ])('with foldersAppPlatformAPI set to %s', (toggle) => {
       beforeEach(() => {
+        props.selectedItems.folder = {
+          [folderA.item.uid]: true,
+        };
         config.featureToggles.foldersAppPlatformAPI = toggle;
       });
       afterEach(() => {
@@ -73,9 +76,6 @@ describe('browse-dashboards MoveModal', () => {
       });
 
       it('displays a warning about permissions if a folder is selected', async () => {
-        props.selectedItems.folder = {
-          [folderA.item.uid]: true,
-        };
         render(<MoveModal {...props} />);
 
         expect(
@@ -84,9 +84,6 @@ describe('browse-dashboards MoveModal', () => {
       });
 
       it('displays summary of affected items', async () => {
-        props.selectedItems.folder = {
-          [folderA.item.uid]: true,
-        };
         render(<MoveModal {...props} />);
 
         expect(await screen.findByText(/This action will move the following content/i)).toBeInTheDocument();
