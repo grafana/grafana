@@ -114,7 +114,6 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
   tracesToLogs?: TraceToLogsOptions;
   serviceMap?: {
     datasourceUid?: string;
-    histogramType?: 'classic' | 'native' | 'both';
   };
   search?: {
     hide?: boolean;
