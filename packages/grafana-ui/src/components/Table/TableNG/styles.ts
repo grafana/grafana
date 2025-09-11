@@ -228,10 +228,7 @@ export const getTooltipStyles = (theme: GrafanaTheme2, textAlign: TextAlign) => 
     [textAlign === 'right' ? 'right' : 'left']: theme.spacing(0.25),
     width: theme.spacing(1.75),
     height: theme.spacing(1.75),
-    background: caretTriangle(textAlign === 'right' ? 'right' : 'left', theme.colors.border.medium),
-    '&:hover, &[aria-pressed=true]': {
-      background: caretTriangle(textAlign === 'right' ? 'right' : 'left', theme.colors.border.strong),
-    },
+    background: caretTriangle(textAlign === 'right' ? 'right' : 'left', theme.colors.border.strong),
   }),
 });
 
