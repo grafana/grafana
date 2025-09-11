@@ -7,6 +7,10 @@ import (
 
 	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
+	"go.opentelemetry.io/otel/trace"
 )
 
 type ZanzanaPermissionStore struct {
@@ -20,8 +24,20 @@ func NewZanzanaPermissionStore(zanzanaClient zanzana.Client) PermissionStore {
 }
 
 func (c *ZanzanaPermissionStore) SetFolderParent(ctx context.Context, namespace, folderUID, parentUID string) error {
+	tracer := otel.GetTracerProvider().Tracer("iam-folder-reconciler")
+	ctx, span := tracer.Start(ctx, "zanzana-permission-store.set-folder-parent",
+		trace.WithAttributes(
+			attribute.String("folder.uid", folderUID),
+			attribute.String("folder.namespace", namespace),
+			attribute.String("parent.uid", parentUID),
+		),
+	)
+	defer span.End()
+
 	err := c.DeleteFolderParents(ctx, namespace, folderUID)
 	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, "failed to delete existing folder parents")
 		return err
 	}
 
@@ -32,11 +48,15 @@ func (c *ZanzanaPermissionStore) SetFolderParent(ctx context.Context, namespace,
 
 	user, err := toFolderTuple(parentUID)
 	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, "failed to create parent tuple")
 		return err
 	}
 
 	object, err := toFolderTuple(folderUID)
 	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, "failed to create folder tuple")
 		return err
 	}
 
@@ -50,6 +70,8 @@ func (c *ZanzanaPermissionStore) SetFolderParent(ctx context.Context, namespace,
 			}},
 		},
 	}); err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, "failed to write parent tuple to zanzana")
 		return err
 	}
 
@@ -57,11 +79,23 @@ func (c *ZanzanaPermissionStore) SetFolderParent(ctx context.Context, namespace,
 }
 
 func (c *ZanzanaPermissionStore) GetFolderParents(ctx context.Context, namespace, folderUID string) ([]string, error) {
+	tracer := otel.GetTracerProvider().Tracer("iam-folder-reconciler")
+	ctx, span := tracer.Start(ctx, "ZanzanaPermissionStore.GetFolderParents",
+		trace.WithAttributes(
+			attribute.String("folder.uid", folderUID),
+			attribute.String("folder.namespace", namespace),
+		),
+	)
+	defer span.End()
+
 	tuples, err := c.listFolderParentRelations(ctx, namespace, folderUID)
 	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, "failed to list folder parent relations")
 		return nil, err
 	}
 
+	span.SetAttributes(attribute.Int("tuples.count", len(tuples)))
 	parents := make([]string, 0, len(tuples))
 
 	for _, t := range tuples {
@@ -73,10 +107,16 @@ func (c *ZanzanaPermissionStore) GetFolderParents(ctx context.Context, namespace
 			if len(uidAndRelationParts) > 0 {
 				parents = append(parents, uidAndRelationParts[0])
 			} else {
-				return nil, fmt.Errorf("invalid user format: %s, expected format: folder:UID or folder:UID#relation", t.Key.User)
+				err := fmt.Errorf("invalid user format: %s, expected format: folder:UID or folder:UID#relation", t.Key.User)
+				span.RecordError(err)
+				span.SetStatus(codes.Error, "invalid tuple user format")
+				return nil, err
 			}
 		} else {
-			return nil, fmt.Errorf("invalid user format: %s, expected format: folder:UID or folder:UID#relation", t.Key.User)
+			err := fmt.Errorf("invalid user format: %s, expected format: folder:UID or folder:UID#relation", t.Key.User)
+			span.RecordError(err)
+			span.SetStatus(codes.Error, "invalid tuple user format")
+			return nil, err
 		}
 	}
 
@@ -84,14 +124,29 @@ func (c *ZanzanaPermissionStore) GetFolderParents(ctx context.Context, namespace
 }
 
 func (c *ZanzanaPermissionStore) DeleteFolderParents(ctx context.Context, namespace, folderUID string) error {
+	tracer := otel.GetTracerProvider().Tracer("iam-folder-reconciler")
+	ctx, span := tracer.Start(ctx, "ZanzanaPermissionStore.DeleteFolderParents",
+		trace.WithAttributes(
+			attribute.String("folder.uid", folderUID),
+			attribute.String("folder.namespace", namespace),
+		),
+	)
+	defer span.End()
+
 	tuples, err := c.listFolderParentRelations(ctx, namespace, folderUID)
 	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, "failed to list folder parent relations")
 		return err
 	}
+
+	span.SetAttributes(attribute.Int("tuples.toDelete.count", len(tuples)))
 
 	if len(tuples) > 0 {
 		err = c.deleteTuples(ctx, namespace, tuples)
 		if err != nil {
+			span.RecordError(err)
+			span.SetStatus(codes.Error, "failed to delete tuples")
 			return err
 		}
 	}
@@ -102,8 +157,19 @@ func (c *ZanzanaPermissionStore) DeleteFolderParents(ctx context.Context, namesp
 // listFolderParentRelations lists parent relations where the given folder is the object.
 // It returns tuples where other folders are parents of this folder, not children.
 func (c *ZanzanaPermissionStore) listFolderParentRelations(ctx context.Context, namespace, folderUID string) ([]*authzextv1.Tuple, error) {
+	tracer := otel.GetTracerProvider().Tracer("iam-folder-reconciler")
+	ctx, span := tracer.Start(ctx, "ZanzanaPermissionStore.listFolderParentRelations",
+		trace.WithAttributes(
+			attribute.String("folder.uid", folderUID),
+			attribute.String("folder.namespace", namespace),
+		),
+	)
+	defer span.End()
+
 	object, err := toFolderTuple(folderUID)
 	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, "failed to create folder tuple")
 		return nil, err
 	}
 
@@ -118,6 +184,8 @@ func (c *ZanzanaPermissionStore) listFolderParentRelations(ctx context.Context, 
 	})
 
 	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, "failed to read tuples from zanzana")
 		return nil, err
 	}
 
@@ -132,6 +200,8 @@ func (c *ZanzanaPermissionStore) listFolderParentRelations(ctx context.Context, 
 			},
 		})
 		if err != nil {
+			span.RecordError(err)
+			span.SetStatus(codes.Error, fmt.Sprintf("failed to read tuples from zanzana"))
 			return nil, err
 		}
 
@@ -143,6 +213,15 @@ func (c *ZanzanaPermissionStore) listFolderParentRelations(ctx context.Context, 
 }
 
 func (c *ZanzanaPermissionStore) deleteTuples(ctx context.Context, namespace string, tuples []*authzextv1.Tuple) error {
+	tracer := otel.GetTracerProvider().Tracer("zanzana-folder-reconciler")
+	ctx, span := tracer.Start(ctx, "zanzana-permission-store.delete-tuples",
+		trace.WithAttributes(
+			attribute.String("namespace", namespace),
+			attribute.Int("tuples.count", len(tuples)),
+		),
+	)
+	defer span.End()
+
 	tupleKeys := make([]*authzextv1.TupleKeyWithoutCondition, 0, len(tuples))
 	for _, t := range tuples {
 		tupleKeys = append(tupleKeys, &authzextv1.TupleKeyWithoutCondition{
@@ -152,12 +231,20 @@ func (c *ZanzanaPermissionStore) deleteTuples(ctx context.Context, namespace str
 		})
 	}
 
-	return c.zanzanaClient.Write(ctx, &authzextv1.WriteRequest{
+	err := c.zanzanaClient.Write(ctx, &authzextv1.WriteRequest{
 		Namespace: namespace,
 		Deletes: &authzextv1.WriteRequestDeletes{
 			TupleKeys: tupleKeys,
 		},
 	})
+
+	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, "failed to delete tuples in zanzana")
+		return err
+	}
+
+	return nil
 }
 
 func toFolderTuple(UID string) (string, error) {
