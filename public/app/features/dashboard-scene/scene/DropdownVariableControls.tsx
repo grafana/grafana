@@ -16,7 +16,7 @@ export function DropdownVariableControls({ dashboard }: { dashboard: DashboardSc
   const variables = sceneGraph
     .getVariables(dashboard)!
     .useState()
-    .variables.filter((v) => v.state.showInControlsMenu === true);
+    .variables.filter((v) => v.state.showInControlsMenu !== true);
 
   if (variables.length === 0) {
     return null;

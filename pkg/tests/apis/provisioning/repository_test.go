@@ -19,7 +19,6 @@ import (
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	"github.com/grafana/grafana/pkg/extensions"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/tests/apis"
 	"github.com/grafana/grafana/pkg/util/testutil"
@@ -134,21 +133,10 @@ func TestIntegrationProvisioning_CreatingAndGetting(t *testing.T) {
 				return
 			}
 
-			// FIXME: this should be an enterprise integration test
-			if extensions.IsEnterprise {
-				assert.ElementsMatch(collect, []provisioning.RepositoryType{
-					provisioning.LocalRepositoryType,
-					provisioning.GitHubRepositoryType,
-					provisioning.GitRepositoryType,
-					provisioning.BitbucketRepositoryType,
-					provisioning.GitLabRepositoryType,
-				}, settings.AvailableRepositoryTypes)
-			} else {
-				assert.ElementsMatch(collect, []provisioning.RepositoryType{
-					provisioning.LocalRepositoryType,
-					provisioning.GitHubRepositoryType,
-				}, settings.AvailableRepositoryTypes)
-			}
+			assert.ElementsMatch(collect, []provisioning.RepositoryType{
+				provisioning.LocalRepositoryType,
+				provisioning.GitHubRepositoryType,
+			}, settings.AvailableRepositoryTypes)
 		}, time.Second*10, time.Millisecond*100, "Expected settings to match")
 	})
 

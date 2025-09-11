@@ -512,6 +512,7 @@
       "copy-link": "Kopírovat odkaz",
       "duplicate": "Duplikovat",
       "export": "Exportovat",
+      "manage-enrichments": "",
       "silence-notifications": "Potlačit oznámení",
       "with-modifications": "S úpravami"
     },
@@ -1133,7 +1134,8 @@
     },
     "enrichment": {
       "error-boundary": {
-        "notification-message-section-extension": ""
+        "enrichment-drawer-extension": "",
+        "rule-viewer-section-extension": ""
       }
     },
     "error-modal": {
@@ -3068,6 +3070,7 @@
       "page-nav": {
         "text": {
           "details": "Podrobnosti",
+          "enrichment": "",
           "history": "Historie",
           "instances": "Instance",
           "query-and-conditions": "Dotaz a podmínky",
@@ -4717,6 +4720,7 @@
       "move": "Přesunout {{typeName}}",
       "panel-background": "Změnit pozadí panelu",
       "panel-description": "Změnit popis panelu",
+      "panel-edit": "",
       "panel-max-repeats-per-row": "Max. počet opakování na řádek",
       "panel-repeat-direction": "Opakovat směr",
       "panel-repeat-variable": "Opakování panelu podle",
@@ -4971,12 +4975,11 @@
       "dataframe-aria-label": "Vyberte rámec data",
       "dataframe-label": "Zobrazit rámec data",
       "download-csv": "Stáhnout CSV",
-      "download-excel-description": "Přidá záhlaví do CSV pro použití s aplikací Excel",
-      "download-excel-label": "Stáhnout pro Excel",
       "download-logs": "Stáhnout protokoly",
       "download-service": "Stáhnout graf služby",
       "download-traces": "Stáhnout stopy",
-      "excel-header": "Záhlaví Excel",
+      "excel-compatibility-mode-description": "",
+      "excel-compatibility-mode-label": "",
       "formatted": "Formátovaná data",
       "formatted-data-description": "Data tabulky jsou formátována možnostmi definovanými na kartách Pole a Přepsat.",
       "formatted-data-label": "Formátovaná data",
@@ -11275,11 +11278,11 @@
       "description-clear-repository-connection": "Pojmenujte jasně toto připojení k úložišti",
       "empty": "Prázdný",
       "error-field-required": "Toto pole je povinné.",
-      "ext-storage": "Externí úložiště",
-      "grafana": "Instance Grafany",
+      "external-storage-label": "",
       "label-display-name": "Zobrazované jméno",
       "placeholder-my-repository-connection": "Moje připojení k úložišti",
       "text-loading-resource-information": "Načítání informací o zdroji…",
+      "unmanaged-resources-label": "",
       "dashboards-count_one": "{{count}} nástěnka",
       "dashboards-count_few": "{{count}} nástěnka",
       "dashboards-count_many": "{{count}} nástěnka",
@@ -11333,7 +11336,11 @@
     },
     "connect-repository-button": {
       "configure": "Konfigurovat",
-      "repository-limit-info-alert": "Bylo dosaženo limitu úložiště ({{count}})"
+      "instance-fully-managed-tooltip": "",
+      "repository-limit-reached-tooltip_one": "",
+      "repository-limit-reached-tooltip_few": "",
+      "repository-limit-reached-tooltip_many": "",
+      "repository-limit-reached-tooltip_other": ""
     },
     "delete-repository-button": {
       "button-delete": "Odstranit",
@@ -12027,16 +12034,6 @@
       "no-deleted-dashboards": "V poslední době jste neodstranili žádné nástěnky.",
       "no-deleted-dashboards-text": "Když odstraníte nástěnku, zobrazí se tady po dobu 30 dnů, než bude trvale odstraněna. Správce organizace může obnovit nedávno odstraněné nástěnky.",
       "no-search-result": "Nebyly nalezeny žádné výsledky pro váš dotaz"
-    },
-    "permanently-delete-modal": {
-      "confirm-text": "Odstranit",
-      "delete-button": "Odstranit",
-      "delete-loading": "Probíhá odstranění…",
-      "title": "Trvale smazat nástěnky",
-      "text_one": "Tato akce odstraní následující počet nástěnek: {{numberOfDashboards}}.",
-      "text_few": "Tato akce odstraní následující počet nástěnek: {{numberOfDashboards}}.",
-      "text_many": "Tato akce odstraní následující počet nástěnek: {{numberOfDashboards}}.",
-      "text_other": "Tato akce odstraní následující počet nástěnek: {{numberOfDashboards}}."
     },
     "restore-modal": {
       "restore-button": "Obnovit",

@@ -17,7 +17,8 @@ import { useEditPaneInputAutoFocus } from '../layouts-shared/utils';
 
 import { RowItem } from './RowItem';
 
-export function useEditOptions(model: RowItem, isNewElement: boolean): OptionsPaneCategoryDescriptor[] {
+export function useEditOptions(this: RowItem, isNewElement: boolean): OptionsPaneCategoryDescriptor[] {
+  const model = this;
   const { layout } = model.useState();
 
   const rowCategory = useMemo(
@@ -45,7 +46,7 @@ export function useEditOptions(model: RowItem, isNewElement: boolean): OptionsPa
             render: (descriptor) => <RowHeaderSwitch id={descriptor.props.id} row={model} />,
           })
         ),
-    [model, isNewElement]
+    [isNewElement, model]
   );
 
   const repeatCategory = useMemo(
@@ -57,7 +58,7 @@ export function useEditOptions(model: RowItem, isNewElement: boolean): OptionsPa
       }).addItem(
         new OptionsPaneItemDescriptor({
           title: t('dashboard.rows-layout.row-options.repeat.variable.title', 'Repeat by variable'),
-          id: `dash-row-repeat-by-variable`,
+          id: 'dash-row-repeat-by-variable',
           description: t(
             'dashboard.rows-layout.row-options.repeat.variable.description',
             'Repeat this row for each value in the selected variable.'

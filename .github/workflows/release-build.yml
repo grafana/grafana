@@ -56,7 +56,7 @@ jobs:
     permissions:
       contents: read
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           persist-credentials: false
       - name: Set up version (Release Branches)
@@ -140,7 +140,7 @@ jobs:
         # The downside to this is that the frontend will be built for each one when it could be reused for all of them.
         # This could be a future improvement.
         include:
-          - name: linux-amd64
+          - name: linux-amd64 # publish-npm relies on this step building npm packages
             artifacts: targz:grafana:linux/amd64,deb:grafana:linux/amd64,rpm:grafana:linux/amd64,docker:grafana:linux/amd64,docker:grafana:linux/amd64:ubuntu,npm:grafana,storybook
             verify: true
           - name: linux-arm64
@@ -169,7 +169,7 @@ jobs:
             verify: true
     steps:
       - uses: grafana/shared-workflows/actions/dockerhub-login@dockerhub-login/v1.0.2
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           persist-credentials: false
       - name: Set up QEMU
@@ -197,6 +197,7 @@ jobs:
           name: artifacts-${{ matrix.name }}
           path: ${{ steps.build.outputs.dist-dir }}
           retention-days: 1
+
   publish-artifacts:
     name: Upload artifacts
     uses: grafana/grafana/.github/workflows/publish-artifact.yml@main
@@ -211,6 +212,7 @@ jobs:
       run-id: ${{ github.run_id }}
       bucket-path: ${{ needs.setup.outputs.version }}_${{ github.run_id }}
       environment: prod
+
   publish-dockerhub:
     if: github.ref_name == 'main'
     permissions:
@@ -268,3 +270,44 @@ jobs:
           docker manifest push grafana/grafana:main-ubuntu
           docker manifest push "grafana/grafana-dev:${VERSION}"
           docker manifest push "grafana/grafana-dev:${VERSION}-ubuntu"
+
+  publish-npm:
+    if: github.ref_name == 'main'
+    permissions:
+      contents: read
+      id-token: write
+    # NPM Trusted Publishing does not yet support self-hosted runners
+    runs-on: github-hosted-ubuntu-x64-small
+    needs:
+      - setup
+      - build
+    env:
+      PACKAGES_VERSION: ${{ needs.setup.outputs.version }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      # Setting nodejs up just for npm publish. Not restoring the cache for all our dependencies
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: '.nvmrc'
+
+      # Trusted Publishing is only available in npm v11.5.1 and later
+      - name: Update npm
+        run: npm install -g npm@^11.5.1
+
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: artifacts-linux-amd64
+          path: dist
+
+      - name: Copy packages
+        run: mv dist/"${PACKAGES_VERSION}"/npm-packages npm-artifacts
+
+      - name: Publish to NPM
+        env:
+          NPM_TOKEN: "oidc"
+        run: ./scripts/publish-npm-packages.sh --dist-tag 'canary' --registry 'https://registry.npmjs.org/'

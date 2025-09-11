@@ -1723,11 +1723,6 @@
       "count": 1
     }
   },
-  "public/app/features/alerting/unified/components/rule-viewer/RuleViewer.tsx": {
-    "react-hooks/rules-of-hooks": {
-      "count": 1
-    }
-  },
   "public/app/features/alerting/unified/components/rules/Filter/RulesFilter.v1.tsx": {
     "no-restricted-syntax": {
       "count": 4
@@ -2050,19 +2045,9 @@
       "count": 4
     }
   },
-  "public/app/features/dashboard-scene/edit-pane/DashboardEditableElement.tsx": {
-    "react-hooks/rules-of-hooks": {
-      "count": 4
-    }
-  },
   "public/app/features/dashboard-scene/edit-pane/DashboardOutline.tsx": {
     "@typescript-eslint/consistent-type-assertions": {
       "count": 1
-    }
-  },
-  "public/app/features/dashboard-scene/edit-pane/VizPanelEditableElement.tsx": {
-    "react-hooks/rules-of-hooks": {
-      "count": 6
     }
   },
   "public/app/features/dashboard-scene/inspect/HelpWizard/HelpWizard.tsx": {
@@ -2164,30 +2149,15 @@
       "count": 1
     }
   },
-  "public/app/features/dashboard-scene/scene/layout-default/SceneGridRowEditableElement.tsx": {
-    "react-hooks/rules-of-hooks": {
-      "count": 2
-    }
-  },
   "public/app/features/dashboard-scene/scene/layout-default/row-actions/RowOptionsForm.tsx": {
     "no-restricted-syntax": {
       "count": 2
-    }
-  },
-  "public/app/features/dashboard-scene/scene/layout-rows/RowItem.tsx": {
-    "react-hooks/rules-of-hooks": {
-      "count": 1
     }
   },
   "public/app/features/dashboard-scene/scene/layout-rows/RowItemEditor.tsx": {
     "no-restricted-syntax": {
       "count": 1
     },
-    "react-hooks/rules-of-hooks": {
-      "count": 1
-    }
-  },
-  "public/app/features/dashboard-scene/scene/layout-tabs/TabItem.tsx": {
     "react-hooks/rules-of-hooks": {
       "count": 1
     }
@@ -2243,25 +2213,17 @@
       "count": 10
     }
   },
-  "public/app/features/dashboard-scene/settings/variables/LocalVariableEditableElement.tsx": {
-    "react-hooks/rules-of-hooks": {
-      "count": 3
-    }
-  },
   "public/app/features/dashboard-scene/settings/variables/VariableEditableElement.tsx": {
     "no-restricted-syntax": {
       "count": 1
     },
     "react-hooks/rules-of-hooks": {
-      "count": 9
+      "count": 4
     }
   },
   "public/app/features/dashboard-scene/settings/variables/VariableSetEditableElement.tsx": {
     "no-restricted-syntax": {
       "count": 1
-    },
-    "react-hooks/rules-of-hooks": {
-      "count": 2
     }
   },
   "public/app/features/dashboard-scene/settings/variables/components/AdHocVariableForm.tsx": {
@@ -3311,11 +3273,6 @@
   "public/app/features/provisioning/Shared/TokenPermissionsInfo.tsx": {
     "react/no-unescaped-entities": {
       "count": 2
-    }
-  },
-  "public/app/features/provisioning/Wizard/SynchronizeStep.tsx": {
-    "react/no-unescaped-entities": {
-      "count": 1
     }
   },
   "public/app/features/query/components/QueryEditorRow.tsx": {
