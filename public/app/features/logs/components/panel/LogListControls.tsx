@@ -350,7 +350,8 @@ export const LogListControls = ({ eventBus, visualisationType = 'logs' }: Props)
                   className={
                     filterLevels && filterLevels.length > 0 ? styles.controlButtonActive : styles.controlButton
                   }
-                  tooltip={t('logs.logs-controls.display-level', 'Display levels')}
+                  label={t('logs.logs-controls.filter-levels', 'Filter levels')}
+                  tooltip={t('logs.logs-controls.tooltip.filter-level', 'Filter logs result by level')}
                   size="lg"
                 />
               </Dropdown>
@@ -467,6 +468,11 @@ export const LogListControls = ({ eventBus, visualisationType = 'logs' }: Props)
                   aria-pressed={forceEscape}
                   className={forceEscape ? styles.controlButtonActive : styles.controlButton}
                   onClick={onForceEscapeClick}
+                  label={
+                    forceEscape
+                      ? t('logs.logs-controls.remove-escaping', 'Remove escaping')
+                      : t('logs.logs-controls.label.escape-newlines', 'Escape newlines')
+                  }
                   tooltip={
                     forceEscape
                       ? t('logs.logs-controls.remove-escaping', 'Remove escaping')
@@ -522,7 +528,8 @@ export const LogListControls = ({ eventBus, visualisationType = 'logs' }: Props)
               expanded={controlsExpanded}
               name={'gf-logs'}
               className={filterLevels && filterLevels.length > 0 ? styles.controlButtonActive : styles.controlButton}
-              tooltip={t('logs.logs-controls.display-level', 'Display levels')}
+              label={t('logs.logs-controls.filter-levels', 'Filter levels')}
+              tooltip={t('logs.logs-controls.tooltip.filter-level', 'Filter logs result by level')}
               size="lg"
             />
           </Dropdown>
@@ -533,6 +540,11 @@ export const LogListControls = ({ eventBus, visualisationType = 'logs' }: Props)
               aria-pressed={forceEscape}
               className={forceEscape ? styles.controlButtonActive : styles.controlButton}
               onClick={onForceEscapeClick}
+              label={
+                forceEscape
+                  ? t('logs.logs-controls.remove-escaping', 'Remove escaping')
+                  : t('logs.logs-controls.label.escape-newlines', 'Escape newlines')
+              }
               tooltip={
                 forceEscape
                   ? t('logs.logs-controls.remove-escaping', 'Remove escaping')
