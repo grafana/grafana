@@ -729,7 +729,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
   public getExpressionTypes(saveModel?: Dashboard | DashboardV2Spec): string[] {
     const model = saveModel ?? this.getSaveModel();
 
-    // Early return for non-V1 dashboards
+    // Early return for non-V1 dashboards since v2 is still in alpha
     if (!('panels' in model) || !model.panels?.length) {
       return [];
     }
