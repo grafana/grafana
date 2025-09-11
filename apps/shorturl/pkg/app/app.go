@@ -2,6 +2,7 @@ package app
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"path"
 	"strings"
@@ -10,6 +11,7 @@ import (
 	"k8s.io/klog/v2"
 
 	"github.com/grafana/grafana-app-sdk/app"
+	"github.com/grafana/grafana-app-sdk/k8s"
 	"github.com/grafana/grafana-app-sdk/resource"
 	"github.com/grafana/grafana-app-sdk/simple"
 	shorturlv1alpha1 "github.com/grafana/grafana/apps/shorturl/pkg/apis/shorturl/v1alpha1"
@@ -30,6 +32,10 @@ func New(cfg app.Config) (app.App, error) {
 	shortURLConfig, ok := cfg.SpecificConfig.(*ShortURLConfig)
 	if !ok || shortURLConfig == nil {
 		return nil, fmt.Errorf("invalid or missing ShortURLConfig")
+	}
+	client, err := k8s.NewClientRegistry(cfg.KubeConfig, k8s.DefaultClientConfig()).ClientFor(shorturlv1alpha1.ShortURLKind())
+	if err != nil {
+		return nil, fmt.Errorf("unable to create client")
 	}
 
 	simpleConfig := simple.AppConfig{
@@ -59,6 +65,25 @@ func New(cfg app.Config) (app.App, error) {
 							return fmt.Errorf("%w: %s", ErrShortURLInvalidPath, relPath)
 						}
 						return nil
+					},
+				},
+				CustomRoutes: simple.AppCustomRouteHandlers{
+					simple.AppCustomRoute{
+						Method: "GET",
+						Path:   "goto",
+					}: func(ctx context.Context, w app.CustomRouteResponseWriter, req *app.CustomRouteRequest) error {
+						info := &shorturlv1alpha1.ShortURL{}
+						if err := client.GetInto(ctx, resource.Identifier{
+							Namespace: req.ResourceIdentifier.Namespace,
+							Name:      req.ResourceIdentifier.Name,
+						}, info); err != nil {
+							return err
+						}
+
+						resp := shorturlv1alpha1.GetGoto{
+							Url: "????" + info.Spec.Path,
+						}
+						return json.NewEncoder(w).Encode(resp)
 					},
 				},
 			},
