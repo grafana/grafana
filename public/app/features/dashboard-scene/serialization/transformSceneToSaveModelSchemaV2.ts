@@ -1,6 +1,6 @@
 import { omit } from 'lodash';
 
-import { AnnotationQuery } from '@grafana/data';
+import { AnnotationQuery, isEmptyObject, TimeRange } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import {
   behaviors,
@@ -13,7 +13,7 @@ import {
   SceneVariableSet,
   VizPanel,
 } from '@grafana/scenes';
-import { DataSourceRef } from '@grafana/schema';
+import { DataSourceRef, VariableRefresh } from '@grafana/schema';
 import { sortedDeepCloneWithoutNulls } from 'app/core/utils/object';
 
 import {
@@ -495,6 +495,104 @@ export function getDefaultDataSourceRef(): DataSourceRef {
   const ds = dsList[defaultDatasource];
 
   return { type: ds.meta.id, uid: ds.name }; // in the datasource list from bootData "id" is the type
+}
+
+export function trimDashboardForSnapshot(title: string, time: TimeRange, dash: DashboardV2Spec, panel?: VizPanel) {
+  let spec: DashboardV2Spec = {
+    ...dash,
+    title,
+    timeSettings: {
+      ...dash.timeSettings,
+      from: time.from.toISOString(),
+      to: time.to.toISOString(),
+    },
+    links: [],
+  };
+
+  // When VizPanel is present, we are snapshoting a single panel. The rest of the panels is removed from the dashboard,
+  // and the panel is resized to 24x20 grid and placed at the top of the dashboard.
+  if (panel) {
+    const panelId = getPanelIdForVizPanel(panel);
+
+    // Find the panel in elements
+    const panelElementKey = Object.keys(dash.elements || {}).find((key) => {
+      const element = dash.elements![key];
+      return element.spec.id === panelId;
+    });
+
+    if (panelElementKey) {
+      // Keep only this panel in elements
+      spec.elements = {
+        [panelElementKey]: dash.elements![panelElementKey],
+      };
+
+      spec.layout = {
+        kind: 'GridLayout',
+        spec: {
+          items: [
+            {
+              kind: 'GridLayoutItem',
+              spec: {
+                element: {
+                  kind: 'ElementReference',
+                  name: panelElementKey,
+                },
+                width: 24,
+                height: 20,
+                x: 0,
+                y: 0,
+              },
+            },
+          ],
+        },
+      };
+    }
+  }
+
+  // Remove links from all panels
+  spec.elements = Object.fromEntries(
+    Object.entries(spec.elements).map(([key, element]) => {
+      if ('links' in element) {
+        element.links = [];
+      }
+      return [key, element];
+    })
+  );
+
+  if (spec.annotations) {
+    const annotations = spec.annotations.filter((annotation) => annotation.spec.enable) || [];
+    const trimedAnnotations = annotations.map((annotation): AnnotationQueryKind => {
+      return {
+        kind: 'AnnotationQuery',
+        spec: {
+          name: annotation.spec.name,
+          enable: annotation.spec.enable,
+          iconColor: annotation.spec.iconColor,
+          builtIn: annotation.spec.builtIn,
+          hide: annotation.spec.hide,
+          query: annotation.spec.query,
+        },
+      };
+    });
+    spec.annotations = trimedAnnotations;
+  }
+
+  if (spec.variables) {
+    spec.variables.forEach((variable) => {
+      if ('query' in variable) {
+        variable.query = '';
+      }
+      if ('options' in variable && 'current' in variable) {
+        variable.options = variable.current && !isEmptyObject(variable.current) ? [variable.current] : [];
+      }
+
+      if ('refresh' in variable) {
+        variable.refresh = VariableRefresh.never;
+      }
+    });
+  }
+
+  return spec;
 }
 
 // Function to know if the dashboard transformed is a valid DashboardV2Spec
