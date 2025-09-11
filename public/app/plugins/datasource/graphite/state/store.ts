@@ -2,8 +2,8 @@ import { AnyAction } from '@reduxjs/toolkit';
 import { Action, Dispatch } from 'redux';
 
 import { DataQuery, TimeRange } from '@grafana/data';
+import { TemplateSrv } from '@grafana/runtime';
 
-import { TemplateSrv } from '../../../../features/templating/template_srv';
 import { GraphiteDatasource } from '../datasource';
 import { FuncDefs } from '../gfunc';
 import GraphiteQuery, { GraphiteTarget } from '../graphite_query';
