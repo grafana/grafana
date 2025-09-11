@@ -13662,6 +13662,7 @@
         }
       }
     },
+    "query-validation-message": "One or more queries failed. The transformation will only use fields from successful queries.",
     "range-matcher-editor": {
       "and": "and",
       "placeholder-from": "From",
