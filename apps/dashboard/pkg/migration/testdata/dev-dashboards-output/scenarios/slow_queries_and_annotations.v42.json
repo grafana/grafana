@@ -75,9 +75,7 @@
       "targets": [
         {
           "datasource": {
-            "apiVersion": "v1",
-            "type": "grafana-testdata-datasource",
-            "uid": "testdata-type-uid"
+            "type": "grafana-testdata-datasource"
           },
           "expr": "",
           "format": "time_series",
@@ -156,9 +154,7 @@
       "targets": [
         {
           "datasource": {
-            "apiVersion": "v1",
-            "type": "grafana-testdata-datasource",
-            "uid": "testdata-type-uid"
+            "type": "grafana-testdata-datasource"
           },
           "expr": "",
           "format": "time_series",
@@ -237,9 +233,7 @@
       "targets": [
         {
           "datasource": {
-            "apiVersion": "v1",
-            "type": "grafana-testdata-datasource",
-            "uid": "testdata-type-uid"
+            "type": "grafana-testdata-datasource"
           },
           "expr": "",
           "format": "time_series",
@@ -318,9 +312,7 @@
       "targets": [
         {
           "datasource": {
-            "apiVersion": "v1",
-            "type": "grafana-testdata-datasource",
-            "uid": "testdata-type-uid"
+            "type": "grafana-testdata-datasource"
           },
           "expr": "",
           "format": "time_series",
@@ -399,9 +391,7 @@
       "targets": [
         {
           "datasource": {
-            "apiVersion": "v1",
-            "type": "grafana-testdata-datasource",
-            "uid": "testdata-type-uid"
+            "type": "grafana-testdata-datasource"
           },
           "expr": "",
           "format": "time_series",
@@ -480,9 +470,7 @@
       "targets": [
         {
           "datasource": {
-            "apiVersion": "v1",
-            "type": "grafana-testdata-datasource",
-            "uid": "testdata-type-uid"
+            "type": "grafana-testdata-datasource"
           },
           "expr": "",
           "format": "time_series",
@@ -561,9 +549,7 @@
       "targets": [
         {
           "datasource": {
-            "apiVersion": "v1",
-            "type": "grafana-testdata-datasource",
-            "uid": "testdata-type-uid"
+            "type": "grafana-testdata-datasource"
           },
           "expr": "",
           "format": "time_series",
@@ -642,9 +628,7 @@
       "targets": [
         {
           "datasource": {
-            "apiVersion": "v1",
-            "type": "grafana-testdata-datasource",
-            "uid": "testdata-type-uid"
+            "type": "grafana-testdata-datasource"
           },
           "expr": "",
           "format": "time_series",
@@ -723,9 +707,7 @@
       "targets": [
         {
           "datasource": {
-            "apiVersion": "v1",
-            "type": "grafana-testdata-datasource",
-            "uid": "testdata-type-uid"
+            "type": "grafana-testdata-datasource"
           },
           "expr": "",
           "format": "time_series",
@@ -804,9 +786,7 @@
       "targets": [
         {
           "datasource": {
-            "apiVersion": "v1",
-            "type": "grafana-testdata-datasource",
-            "uid": "testdata-type-uid"
+            "type": "grafana-testdata-datasource"
           },
           "expr": "",
           "format": "time_series",
@@ -885,9 +865,7 @@
       "targets": [
         {
           "datasource": {
-            "apiVersion": "v1",
-            "type": "grafana-testdata-datasource",
-            "uid": "testdata-type-uid"
+            "type": "grafana-testdata-datasource"
           },
           "expr": "",
           "format": "time_series",
@@ -966,9 +944,7 @@
       "targets": [
         {
           "datasource": {
-            "apiVersion": "v1",
-            "type": "grafana-testdata-datasource",
-            "uid": "testdata-type-uid"
+            "type": "grafana-testdata-datasource"
           },
           "expr": "",
           "format": "time_series",
@@ -1047,9 +1023,7 @@
       "targets": [
         {
           "datasource": {
-            "apiVersion": "v1",
-            "type": "grafana-testdata-datasource",
-            "uid": "testdata-type-uid"
+            "type": "grafana-testdata-datasource"
           },
           "expr": "",
           "format": "time_series",

@@ -99,9 +99,7 @@
             "valuesCSV": "0,0,2,2,1,1"
           },
           "datasource": {
-            "apiVersion": "v1",
-            "type": "grafana-testdata-datasource",
-            "uid": "testdata-type-uid"
+            "type": "grafana-testdata-datasource"
           },
           "lines": 10,
           "points": [],
@@ -318,9 +316,7 @@
             "valuesCSV": "0,0,2,2,1,1"
           },
           "datasource": {
-            "apiVersion": "v1",
-            "type": "grafana-testdata-datasource",
-            "uid": "testdata-type-uid"
+            "type": "grafana-testdata-datasource"
           },
           "lines": 10,
           "points": [],

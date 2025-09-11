@@ -174,9 +174,7 @@
             "valuesCSV": "0,0,2,2,1,1"
           },
           "datasource": {
-            "apiVersion": "v1",
-            "type": "grafana-testdata-datasource",
-            "uid": "testdata-type-uid"
+            "type": "grafana-testdata-datasource"
           },
           "lines": 10,
           "points": [],
@@ -292,9 +290,7 @@
             "valuesCSV": "0,0,2,2,1,1"
           },
           "datasource": {
-            "apiVersion": "v1",
-            "type": "grafana-testdata-datasource",
-            "uid": "testdata-type-uid"
+            "type": "grafana-testdata-datasource"
           },
           "lines": 10,
           "points": [],
@@ -410,9 +406,7 @@
             "valuesCSV": "0,0,2,2,1,1"
           },
           "datasource": {
-            "apiVersion": "v1",
-            "type": "grafana-testdata-datasource",
-            "uid": "testdata-type-uid"
+            "type": "grafana-testdata-datasource"
           },
           "lines": 10,
           "points": [],
@@ -470,9 +464,7 @@
         {
           "alias": "__server_names",
           "datasource": {
-            "apiVersion": "v1",
-            "type": "grafana-testdata-datasource",
-            "uid": "testdata-type-uid"
+            "type": "grafana-testdata-datasource"
           },
           "refId": "A",
           "scenarioId": "random_walk",
@@ -586,9 +578,7 @@
             "valuesCSV": "0,0,2,2,1,1"
           },
           "datasource": {
-            "apiVersion": "v1",
-            "type": "grafana-testdata-datasource",
-            "uid": "testdata-type-uid"
+            "type": "grafana-testdata-datasource"
           },
           "lines": 10,
           "points": [],
@@ -692,9 +682,7 @@
             "valuesCSV": "0,0,2,2,1,1"
           },
           "datasource": {
-            "apiVersion": "v1",
-            "type": "grafana-testdata-datasource",
-            "uid": "testdata-type-uid"
+            "type": "grafana-testdata-datasource"
           },
           "lines": 10,
           "points": [],
@@ -799,9 +787,7 @@
             "valuesCSV": "0,0,2,2,1,1"
           },
           "datasource": {
-            "apiVersion": "v1",
-            "type": "grafana-testdata-datasource",
-            "uid": "testdata-type-uid"
+            "type": "grafana-testdata-datasource"
           },
           "lines": 10,
           "points": [],
@@ -906,9 +892,7 @@
             "valuesCSV": "0,0,2,2,1,1"
           },
           "datasource": {
-            "apiVersion": "v1",
-            "type": "grafana-testdata-datasource",
-            "uid": "testdata-type-uid"
+            "type": "grafana-testdata-datasource"
           },
           "lines": 10,
           "points": [],
@@ -965,9 +949,7 @@
         {
           "alias": "__server_names",
           "datasource": {
-            "apiVersion": "v1",
-            "type": "grafana-testdata-datasource",
-            "uid": "testdata-type-uid"
+            "type": "grafana-testdata-datasource"
           },
           "refId": "A",
           "scenarioId": "random_walk",
@@ -1132,9 +1114,7 @@
             "valuesCSV": "0,0,2,2,1,1"
           },
           "datasource": {
-            "apiVersion": "v1",
-            "type": "grafana-testdata-datasource",
-            "uid": "testdata-type-uid"
+            "type": "grafana-testdata-datasource"
           },
           "lines": 10,
           "points": [],
@@ -1163,9 +1143,7 @@
             "valuesCSV": "0,0,2,2,1,1"
           },
           "datasource": {
-            "apiVersion": "v1",
-            "type": "grafana-testdata-datasource",
-            "uid": "testdata-type-uid"
+            "type": "grafana-testdata-datasource"
           },
           "hide": false,
           "lines": 10,
@@ -1195,9 +1173,7 @@
             "valuesCSV": "0,0,2,2,1,1"
           },
           "datasource": {
-            "apiVersion": "v1",
-            "type": "grafana-testdata-datasource",
-            "uid": "testdata-type-uid"
+            "type": "grafana-testdata-datasource"
           },
           "hide": false,
           "lines": 10,
@@ -1260,9 +1236,7 @@
         {
           "alias": "__server_names",
           "datasource": {
-            "apiVersion": "v1",
-            "type": "grafana-testdata-datasource",
-            "uid": "testdata-type-uid"
+            "type": "grafana-testdata-datasource"
           },
           "refId": "A",
           "scenarioId": "random_walk",
@@ -1475,9 +1449,7 @@
             "valuesCSV": "0,0,2,2,1,1"
           },
           "datasource": {
-            "apiVersion": "v1",
-            "type": "grafana-testdata-datasource",
-            "uid": "testdata-type-uid"
+            "type": "grafana-testdata-datasource"
           },
           "lines": 10,
           "points": [],
@@ -1506,9 +1478,7 @@
             "valuesCSV": "0,0,2,2,1,1"
           },
           "datasource": {
-            "apiVersion": "v1",
-            "type": "grafana-testdata-datasource",
-            "uid": "testdata-type-uid"
+            "type": "grafana-testdata-datasource"
           },
           "lines": 10,
           "points": [],
@@ -1537,9 +1507,7 @@
             "valuesCSV": "0,0,2,2,1,1"
           },
           "datasource": {
-            "apiVersion": "v1",
-            "type": "grafana-testdata-datasource",
-            "uid": "testdata-type-uid"
+            "type": "grafana-testdata-datasource"
           },
           "lines": 10,
           "points": [],
@@ -1568,9 +1536,7 @@
             "valuesCSV": "0,0,2,2,1,1"
           },
           "datasource": {
-            "apiVersion": "v1",
-            "type": "grafana-testdata-datasource",
-            "uid": "testdata-type-uid"
+            "type": "grafana-testdata-datasource"
           },
           "lines": 10,
           "points": [],
@@ -1599,9 +1565,7 @@
             "valuesCSV": "0,0,2,2,1,1"
           },
           "datasource": {
-            "apiVersion": "v1",
-            "type": "grafana-testdata-datasource",
-            "uid": "testdata-type-uid"
+            "type": "grafana-testdata-datasource"
           },
           "lines": 10,
           "points": [],
@@ -1630,9 +1594,7 @@
             "valuesCSV": "0,0,2,2,1,1"
           },
           "datasource": {
-            "apiVersion": "v1",
-            "type": "grafana-testdata-datasource",
-            "uid": "testdata-type-uid"
+            "type": "grafana-testdata-datasource"
           },
           "lines": 10,
           "points": [],
@@ -1762,9 +1724,7 @@
             "valuesCSV": "0,0,2,2,1,1"
           },
           "datasource": {
-            "apiVersion": "v1",
-            "type": "grafana-testdata-datasource",
-            "uid": "testdata-type-uid"
+            "type": "grafana-testdata-datasource"
           },
           "hide": false,
           "lines": 10,
@@ -1895,9 +1855,7 @@
             "valuesCSV": "0,0,2,2,1,1"
           },
           "datasource": {
-            "apiVersion": "v1",
-            "type": "grafana-testdata-datasource",
-            "uid": "testdata-type-uid"
+            "type": "grafana-testdata-datasource"
           },
           "hide": false,
           "lines": 10,
@@ -1955,9 +1913,7 @@
         {
           "alias": "__server_names",
           "datasource": {
-            "apiVersion": "v1",
-            "type": "grafana-testdata-datasource",
-            "uid": "testdata-type-uid"
+            "type": "grafana-testdata-datasource"
           },
           "refId": "A",
           "scenarioId": "random_walk",
@@ -2074,9 +2030,7 @@
             "valuesCSV": "0,0,2,2,1,1"
           },
           "datasource": {
-            "apiVersion": "v1",
-            "type": "grafana-testdata-datasource",
-            "uid": "testdata-type-uid"
+            "type": "grafana-testdata-datasource"
           },
           "lines": 10,
           "points": [],
@@ -2133,9 +2087,7 @@
         {
           "alias": "__server_names",
           "datasource": {
-            "apiVersion": "v1",
-            "type": "grafana-testdata-datasource",
-            "uid": "testdata-type-uid"
+            "type": "grafana-testdata-datasource"
           },
           "refId": "A",
           "scenarioId": "random_walk",
@@ -2293,9 +2245,7 @@
             "valuesCSV": "0,0,2,2,1,1"
           },
           "datasource": {
-            "apiVersion": "v1",
-            "type": "grafana-testdata-datasource",
-            "uid": "testdata-type-uid"
+            "type": "grafana-testdata-datasource"
           },
           "lines": 10,
           "points": [],
@@ -2353,9 +2303,7 @@
         {
           "alias": "__server_names",
           "datasource": {
-            "apiVersion": "v1",
-            "type": "grafana-testdata-datasource",
-            "uid": "testdata-type-uid"
+            "type": "grafana-testdata-datasource"
           },
           "refId": "A",
           "scenarioId": "random_walk",

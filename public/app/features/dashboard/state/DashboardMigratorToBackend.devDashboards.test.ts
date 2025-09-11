@@ -12,7 +12,7 @@ import { createTextBoxVariableAdapter } from 'app/features/variables/textbox/ada
 import { DASHBOARD_SCHEMA_VERSION } from './DashboardMigrator';
 import { DashboardModel } from './DashboardModel';
 import {
-  setupTestDataSources,
+  setupDevDashboardDataSources,
   handleAngularPanelMigration,
   constructLatestVersionOutputFilename,
 } from './__tests__/migrationTestUtils';
@@ -62,8 +62,8 @@ variableAdapters.register(createTextBoxVariableAdapter());
 describe('Dev Dashboard Backend / Frontend result comparison', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    // Setup dev dashboard datasources using the same approach as the main test
-    setupTestDataSources();
+    // Setup dev dashboard datasources to match backend DevDashboardDataSourceProvider
+    setupDevDashboardDataSources();
   });
 
   const devDashboardInputDir = '../../../../../devenv/dev-dashboards';

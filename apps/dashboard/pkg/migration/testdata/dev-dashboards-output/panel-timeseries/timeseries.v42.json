@@ -2344,9 +2344,7 @@
       "targets": [
         {
           "datasource": {
-            "apiVersion": "v1",
-            "type": "grafana-testdata-datasource",
-            "uid": "testdata-type-uid"
+            "type": "grafana-testdata-datasource"
           },
           "hide": false,
           "refId": "A",
@@ -2354,9 +2352,7 @@
         },
         {
           "datasource": {
-            "apiVersion": "v1",
-            "type": "grafana-testdata-datasource",
-            "uid": "testdata-type-uid"
+            "type": "grafana-testdata-datasource"
           },
           "hide": false,
           "refId": "B",
@@ -2364,9 +2360,7 @@
         },
         {
           "datasource": {
-            "apiVersion": "v1",
-            "type": "grafana-testdata-datasource",
-            "uid": "testdata-type-uid"
+            "type": "grafana-testdata-datasource"
           },
           "refId": "C",
           "scenarioId": "random_walk"
@@ -2499,9 +2493,7 @@
             "valuesCSV": "0,0,2,2,1,1"
           },
           "datasource": {
-            "apiVersion": "v1",
-            "type": "grafana-testdata-datasource",
-            "uid": "testdata-type-uid"
+            "type": "grafana-testdata-datasource"
           },
           "hide": false,
           "lines": 10,
@@ -2653,9 +2645,7 @@
             "valuesCSV": "0,0,2,2,1,1"
           },
           "datasource": {
-            "apiVersion": "v1",
-            "type": "grafana-testdata-datasource",
-            "uid": "testdata-type-uid"
+            "type": "grafana-testdata-datasource"
           },
           "lines": 10,
           "points": [],
@@ -2806,9 +2796,7 @@
             "valuesCSV": "0,0,2,2,1,1"
           },
           "datasource": {
-            "apiVersion": "v1",
-            "type": "grafana-testdata-datasource",
-            "uid": "testdata-type-uid"
+            "type": "grafana-testdata-datasource"
           },
           "lines": 10,
           "points": [],
@@ -3306,9 +3294,7 @@
       "targets": [
         {
           "datasource": {
-            "apiVersion": "v1",
-            "type": "grafana-testdata-datasource",
-            "uid": "testdata-type-uid"
+            "type": "grafana-testdata-datasource"
           },
           "refId": "C",
           "scenarioId": "csv_metric_values",
@@ -3316,9 +3302,7 @@
         },
         {
           "datasource": {
-            "apiVersion": "v1",
-            "type": "grafana-testdata-datasource",
-            "uid": "testdata-type-uid"
+            "type": "grafana-testdata-datasource"
           },
           "refId": "A",
           "scenarioId": "csv_metric_values",

@@ -61,9 +61,7 @@
       "targets": [
         {
           "datasource": {
-            "apiVersion": "v1",
-            "type": "grafana-testdata-datasource",
-            "uid": "testdata-type-uid"
+            "type": "grafana-testdata-datasource"
           },
           "refId": "A",
           "scenario": "random_walk",
@@ -143,9 +141,7 @@
       "targets": [
         {
           "datasource": {
-            "apiVersion": "v1",
-            "type": "grafana-testdata-datasource",
-            "uid": "testdata-type-uid"
+            "type": "grafana-testdata-datasource"
           },
           "refId": "A",
           "scenario": "random_walk",
@@ -225,9 +221,7 @@
       "targets": [
         {
           "datasource": {
-            "apiVersion": "v1",
-            "type": "grafana-testdata-datasource",
-            "uid": "testdata-type-uid"
+            "type": "grafana-testdata-datasource"
           },
           "refId": "A",
           "scenario": "random_walk",
@@ -307,9 +301,7 @@
       "targets": [
         {
           "datasource": {
-            "apiVersion": "v1",
-            "type": "grafana-testdata-datasource",
-            "uid": "testdata-type-uid"
+            "type": "grafana-testdata-datasource"
           },
           "refId": "A",
           "scenario": "random_walk",
@@ -424,9 +416,7 @@
       "targets": [
         {
           "datasource": {
-            "apiVersion": "v1",
-            "type": "grafana-testdata-datasource",
-            "uid": "testdata-type-uid"
+            "type": "grafana-testdata-datasource"
           },
           "refId": "A",
           "scenarioId": "csv_metric_values",
@@ -435,9 +425,7 @@
         },
         {
           "datasource": {
-            "apiVersion": "v1",
-            "type": "grafana-testdata-datasource",
-            "uid": "testdata-type-uid"
+            "type": "grafana-testdata-datasource"
           },
           "refId": "B",
           "scenarioId": "csv_metric_values",
@@ -548,9 +536,7 @@
       "targets": [
         {
           "datasource": {
-            "apiVersion": "v1",
-            "type": "grafana-testdata-datasource",
-            "uid": "testdata-type-uid"
+            "type": "grafana-testdata-datasource"
           },
           "refId": "B",
           "scenarioId": "csv_metric_values",
@@ -630,9 +616,7 @@
       "targets": [
         {
           "datasource": {
-            "apiVersion": "v1",
-            "type": "grafana-testdata-datasource",
-            "uid": "testdata-type-uid"
+            "type": "grafana-testdata-datasource"
           },
           "refId": "B",
           "scenarioId": "csv_metric_values",
@@ -746,9 +730,7 @@
       "targets": [
         {
           "datasource": {
-            "apiVersion": "v1",
-            "type": "grafana-testdata-datasource",
-            "uid": "testdata-type-uid"
+            "type": "grafana-testdata-datasource"
           },
           "hide": false,
           "refId": "B",
@@ -759,9 +741,7 @@
         {
           "alias": "",
           "datasource": {
-            "apiVersion": "v1",
-            "type": "grafana-testdata-datasource",
-            "uid": "testdata-type-uid"
+            "type": "grafana-testdata-datasource"
           },
           "hide": false,
           "refId": "A",
@@ -772,9 +752,7 @@
         {
           "alias": "",
           "datasource": {
-            "apiVersion": "v1",
-            "type": "grafana-testdata-datasource",
-            "uid": "testdata-type-uid"
+            "type": "grafana-testdata-datasource"
           },
           "hide": false,
           "refId": "C",
@@ -890,9 +868,7 @@
         {
           "alias": "",
           "datasource": {
-            "apiVersion": "v1",
-            "type": "grafana-testdata-datasource",
-            "uid": "testdata-type-uid"
+            "type": "grafana-testdata-datasource"
           },
           "hide": false,
           "refId": "B",
@@ -903,9 +879,7 @@
         {
           "alias": "",
           "datasource": {
-            "apiVersion": "v1",
-            "type": "grafana-testdata-datasource",
-            "uid": "testdata-type-uid"
+            "type": "grafana-testdata-datasource"
           },
           "hide": false,
           "refId": "A",
@@ -916,9 +890,7 @@
         {
           "alias": "",
           "datasource": {
-            "apiVersion": "v1",
-            "type": "grafana-testdata-datasource",
-            "uid": "testdata-type-uid"
+            "type": "grafana-testdata-datasource"
           },
           "hide": false,
           "refId": "C",
@@ -1034,9 +1006,7 @@
         {
           "alias": "",
           "datasource": {
-            "apiVersion": "v1",
-            "type": "grafana-testdata-datasource",
-            "uid": "testdata-type-uid"
+            "type": "grafana-testdata-datasource"
           },
           "hide": false,
           "refId": "B",
@@ -1047,9 +1017,7 @@
         {
           "alias": "",
           "datasource": {
-            "apiVersion": "v1",
-            "type": "grafana-testdata-datasource",
-            "uid": "testdata-type-uid"
+            "type": "grafana-testdata-datasource"
           },
           "hide": false,
           "refId": "C",
@@ -1159,9 +1127,7 @@
       "targets": [
         {
           "datasource": {
-            "apiVersion": "v1",
-            "type": "grafana-testdata-datasource",
-            "uid": "testdata-type-uid"
+            "type": "grafana-testdata-datasource"
           },
           "refId": "A",
           "scenarioId": "csv_metric_values",
@@ -1240,9 +1206,7 @@
       "targets": [
         {
           "datasource": {
-            "apiVersion": "v1",
-            "type": "grafana-testdata-datasource",
-            "uid": "testdata-type-uid"
+            "type": "grafana-testdata-datasource"
           },
           "refId": "A",
           "scenarioId": "csv_metric_values",
@@ -1251,9 +1215,7 @@
         },
         {
           "datasource": {
-            "apiVersion": "v1",
-            "type": "grafana-testdata-datasource",
-            "uid": "testdata-type-uid"
+            "type": "grafana-testdata-datasource"
           },
           "refId": "B",
           "scenarioId": "csv_metric_values",
@@ -1262,9 +1224,7 @@
         },
         {
           "datasource": {
-            "apiVersion": "v1",
-            "type": "grafana-testdata-datasource",
-            "uid": "testdata-type-uid"
+            "type": "grafana-testdata-datasource"
           },
           "refId": "C",
           "scenarioId": "csv_metric_values",
@@ -1273,9 +1233,7 @@
         },
         {
           "datasource": {
-            "apiVersion": "v1",
-            "type": "grafana-testdata-datasource",
-            "uid": "testdata-type-uid"
+            "type": "grafana-testdata-datasource"
           },
           "refId": "D",
           "scenarioId": "csv_metric_values",
@@ -1354,9 +1312,7 @@
       "targets": [
         {
           "datasource": {
-            "apiVersion": "v1",
-            "type": "grafana-testdata-datasource",
-            "uid": "testdata-type-uid"
+            "type": "grafana-testdata-datasource"
           },
           "refId": "A",
           "scenarioId": "csv_metric_values",
@@ -1365,9 +1321,7 @@
         },
         {
           "datasource": {
-            "apiVersion": "v1",
-            "type": "grafana-testdata-datasource",
-            "uid": "testdata-type-uid"
+            "type": "grafana-testdata-datasource"
           },
           "refId": "B",
           "scenarioId": "csv_metric_values",
@@ -1376,9 +1330,7 @@
         },
         {
           "datasource": {
-            "apiVersion": "v1",
-            "type": "grafana-testdata-datasource",
-            "uid": "testdata-type-uid"
+            "type": "grafana-testdata-datasource"
           },
           "refId": "C",
           "scenarioId": "csv_metric_values",
@@ -1387,9 +1339,7 @@
         },
         {
           "datasource": {
-            "apiVersion": "v1",
-            "type": "grafana-testdata-datasource",
-            "uid": "testdata-type-uid"
+            "type": "grafana-testdata-datasource"
           },
           "refId": "D",
           "scenarioId": "csv_metric_values",
@@ -1398,9 +1348,7 @@
         },
         {
           "datasource": {
-            "apiVersion": "v1",
-            "type": "grafana-testdata-datasource",
-            "uid": "testdata-type-uid"
+            "type": "grafana-testdata-datasource"
           },
           "refId": "E",
           "scenarioId": "csv_metric_values",
@@ -1409,9 +1357,7 @@
         },
         {
           "datasource": {
-            "apiVersion": "v1",
-            "type": "grafana-testdata-datasource",
-            "uid": "testdata-type-uid"
+            "type": "grafana-testdata-datasource"
           },
           "refId": "F",
           "scenarioId": "csv_metric_values",
@@ -1420,9 +1366,7 @@
         },
         {
           "datasource": {
-            "apiVersion": "v1",
-            "type": "grafana-testdata-datasource",
-            "uid": "testdata-type-uid"
+            "type": "grafana-testdata-datasource"
           },
           "refId": "G",
           "scenarioId": "csv_metric_values",
@@ -1431,9 +1375,7 @@
         },
         {
           "datasource": {
-            "apiVersion": "v1",
-            "type": "grafana-testdata-datasource",
-            "uid": "testdata-type-uid"
+            "type": "grafana-testdata-datasource"
           },
           "refId": "H",
           "scenarioId": "csv_metric_values",
@@ -1442,9 +1384,7 @@
         },
         {
           "datasource": {
-            "apiVersion": "v1",
-            "type": "grafana-testdata-datasource",
-            "uid": "testdata-type-uid"
+            "type": "grafana-testdata-datasource"
           },
           "refId": "I",
           "scenarioId": "csv_metric_values",
@@ -1453,9 +1393,7 @@
         },
         {
           "datasource": {
-            "apiVersion": "v1",
-            "type": "grafana-testdata-datasource",
-            "uid": "testdata-type-uid"
+            "type": "grafana-testdata-datasource"
           },
           "refId": "J",
           "scenarioId": "csv_metric_values",
@@ -1535,9 +1473,7 @@
       "targets": [
         {
           "datasource": {
-            "apiVersion": "v1",
-            "type": "grafana-testdata-datasource",
-            "uid": "testdata-type-uid"
+            "type": "grafana-testdata-datasource"
           },
           "refId": "A",
           "scenarioId": "csv_metric_values",
@@ -1546,9 +1482,7 @@
         },
         {
           "datasource": {
-            "apiVersion": "v1",
-            "type": "grafana-testdata-datasource",
-            "uid": "testdata-type-uid"
+            "type": "grafana-testdata-datasource"
           },
           "refId": "B",
           "scenarioId": "csv_metric_values",
@@ -1557,9 +1491,7 @@
         },
         {
           "datasource": {
-            "apiVersion": "v1",
-            "type": "grafana-testdata-datasource",
-            "uid": "testdata-type-uid"
+            "type": "grafana-testdata-datasource"
           },
           "refId": "C",
           "scenarioId": "csv_metric_values",
@@ -1568,9 +1500,7 @@
         },
         {
           "datasource": {
-            "apiVersion": "v1",
-            "type": "grafana-testdata-datasource",
-            "uid": "testdata-type-uid"
+            "type": "grafana-testdata-datasource"
           },
           "refId": "D",
           "scenarioId": "csv_metric_values",
@@ -1650,9 +1580,7 @@
       "targets": [
         {
           "datasource": {
-            "apiVersion": "v1",
-            "type": "grafana-testdata-datasource",
-            "uid": "testdata-type-uid"
+            "type": "grafana-testdata-datasource"
           },
           "refId": "A",
           "scenarioId": "csv_metric_values",
@@ -1661,9 +1589,7 @@
         },
         {
           "datasource": {
-            "apiVersion": "v1",
-            "type": "grafana-testdata-datasource",
-            "uid": "testdata-type-uid"
+            "type": "grafana-testdata-datasource"
           },
           "refId": "B",
           "scenarioId": "csv_metric_values",
@@ -1672,9 +1598,7 @@
         },
         {
           "datasource": {
-            "apiVersion": "v1",
-            "type": "grafana-testdata-datasource",
-            "uid": "testdata-type-uid"
+            "type": "grafana-testdata-datasource"
           },
           "refId": "C",
           "scenarioId": "csv_metric_values",
@@ -1683,9 +1607,7 @@
         },
         {
           "datasource": {
-            "apiVersion": "v1",
-            "type": "grafana-testdata-datasource",
-            "uid": "testdata-type-uid"
+            "type": "grafana-testdata-datasource"
           },
           "refId": "D",
           "scenarioId": "csv_metric_values",
@@ -1694,9 +1616,7 @@
         },
         {
           "datasource": {
-            "apiVersion": "v1",
-            "type": "grafana-testdata-datasource",
-            "uid": "testdata-type-uid"
+            "type": "grafana-testdata-datasource"
           },
           "refId": "E",
           "scenarioId": "csv_metric_values",
@@ -1705,9 +1625,7 @@
         },
         {
           "datasource": {
-            "apiVersion": "v1",
-            "type": "grafana-testdata-datasource",
-            "uid": "testdata-type-uid"
+            "type": "grafana-testdata-datasource"
           },
           "refId": "F",
           "scenarioId": "csv_metric_values",
@@ -1716,9 +1634,7 @@
         },
         {
           "datasource": {
-            "apiVersion": "v1",
-            "type": "grafana-testdata-datasource",
-            "uid": "testdata-type-uid"
+            "type": "grafana-testdata-datasource"
           },
           "refId": "G",
           "scenarioId": "csv_metric_values",
@@ -1727,9 +1643,7 @@
         },
         {
           "datasource": {
-            "apiVersion": "v1",
-            "type": "grafana-testdata-datasource",
-            "uid": "testdata-type-uid"
+            "type": "grafana-testdata-datasource"
           },
           "refId": "H",
           "scenarioId": "csv_metric_values",
@@ -1738,9 +1652,7 @@
         },
         {
           "datasource": {
-            "apiVersion": "v1",
-            "type": "grafana-testdata-datasource",
-            "uid": "testdata-type-uid"
+            "type": "grafana-testdata-datasource"
           },
           "refId": "I",
           "scenarioId": "csv_metric_values",
@@ -1749,9 +1661,7 @@
         },
         {
           "datasource": {
-            "apiVersion": "v1",
-            "type": "grafana-testdata-datasource",
-            "uid": "testdata-type-uid"
+            "type": "grafana-testdata-datasource"
           },
           "refId": "J",
           "scenarioId": "csv_metric_values",
@@ -1760,9 +1670,7 @@
         },
         {
           "datasource": {
-            "apiVersion": "v1",
-            "type": "grafana-testdata-datasource",
-            "uid": "testdata-type-uid"
+            "type": "grafana-testdata-datasource"
           },
           "refId": "K",
           "scenarioId": "csv_metric_values",
@@ -1771,9 +1679,7 @@
         },
         {
           "datasource": {
-            "apiVersion": "v1",
-            "type": "grafana-testdata-datasource",
-            "uid": "testdata-type-uid"
+            "type": "grafana-testdata-datasource"
           },
           "refId": "L",
           "scenarioId": "csv_metric_values",

@@ -80,11 +80,19 @@ func (m *DevDashboardDataSourceProvider) GetDataSourceInfo(_ context.Context) []
 		},
 		{
 			Default:    false,
+			UID:        "testdata",
+			Type:       "grafana-testdata-datasource",
+			APIVersion: "", // Frontend testdata datasource has no apiVersion
+			Name:       "TestData",
+			ID:         2,
+		},
+		{
+			Default:    false,
 			UID:        "prometheus-uid",
 			Type:       "prometheus",
 			APIVersion: "v1",
 			Name:       "Prometheus",
-			ID:         2,
+			ID:         3,
 		},
 		{
 			Default:    false,
@@ -92,7 +100,7 @@ func (m *DevDashboardDataSourceProvider) GetDataSourceInfo(_ context.Context) []
 			Type:       "loki",
 			APIVersion: "v1",
 			Name:       "Loki",
-			ID:         3,
+			ID:         4,
 		},
 		{
 			Default:    false,
@@ -100,7 +108,7 @@ func (m *DevDashboardDataSourceProvider) GetDataSourceInfo(_ context.Context) []
 			Type:       "elasticsearch",
 			APIVersion: "v1",
 			Name:       "Elasticsearch",
-			ID:         4,
+			ID:         5,
 		},
 		{
 			Default:    false,
@@ -108,7 +116,7 @@ func (m *DevDashboardDataSourceProvider) GetDataSourceInfo(_ context.Context) []
 			Type:       "mixed",
 			APIVersion: "v1",
 			Name:       "-- Mixed --",
-			ID:         5,
+			ID:         6,
 		},
 	}
 }

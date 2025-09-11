@@ -64,6 +64,7 @@ export const devDashboardDataSources = {
       name: 'grafana-testdata-datasource',
       uid: 'testdata-type-uid',
       type: 'grafana-testdata-datasource',
+      apiVersion: 'v1',
       isDefault: true,
     },
     {
@@ -89,30 +90,38 @@ export const devDashboardDataSources = {
     name: 'Prometheus',
     uid: 'prometheus-uid',
     type: 'prometheus',
+    apiVersion: 'v1',
     isDefault: false,
   }),
   loki: mockDataSource({
     name: 'Loki',
     uid: 'loki-uid',
     type: 'loki',
+    apiVersion: 'v1',
     isDefault: false,
   }),
   elasticsearch: mockDataSource({
     name: 'Elasticsearch',
     uid: 'elasticsearch-uid',
     type: 'elasticsearch',
+    apiVersion: 'v1',
     isDefault: false,
   }),
   mixed: mockDataSource({
     name: MIXED_DATASOURCE_NAME,
     type: 'mixed',
     uid: MIXED_DATASOURCE_NAME,
+    apiVersion: 'v1',
     isDefault: false,
   }),
 };
 
 export function setupTestDataSources() {
   setupDataSources(...Object.values(dataSources));
+}
+
+export function setupDevDashboardDataSources() {
+  setupDataSources(...Object.values(devDashboardDataSources));
 }
 
 export function getTestDirectories() {

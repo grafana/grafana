@@ -187,9 +187,7 @@
         {
           "alias": "server1",
           "datasource": {
-            "apiVersion": "v1",
-            "type": "grafana-testdata-datasource",
-            "uid": "testdata-type-uid"
+            "type": "grafana-testdata-datasource"
           },
           "expr": "",
           "format": "table",
@@ -201,9 +199,7 @@
         {
           "alias": "server2",
           "datasource": {
-            "apiVersion": "v1",
-            "type": "grafana-testdata-datasource",
-            "uid": "testdata-type-uid"
+            "type": "grafana-testdata-datasource"
           },
           "refId": "B",
           "scenarioId": "csv_metric_values",
@@ -389,9 +385,7 @@
         {
           "alias": "server1",
           "datasource": {
-            "apiVersion": "v1",
-            "type": "grafana-testdata-datasource",
-            "uid": "testdata-type-uid"
+            "type": "grafana-testdata-datasource"
           },
           "expr": "",
           "format": "table",
@@ -403,9 +397,7 @@
         {
           "alias": "server2",
           "datasource": {
-            "apiVersion": "v1",
-            "type": "grafana-testdata-datasource",
-            "uid": "testdata-type-uid"
+            "type": "grafana-testdata-datasource"
           },
           "refId": "B",
           "scenarioId": "csv_metric_values",
@@ -550,9 +542,7 @@
         {
           "alias": "ColorValue",
           "datasource": {
-            "apiVersion": "v1",
-            "type": "grafana-testdata-datasource",
-            "uid": "testdata-type-uid"
+            "type": "grafana-testdata-datasource"
           },
           "expr": "",
           "format": "table",
@@ -740,9 +730,7 @@
         {
           "alias": "ColorValue",
           "datasource": {
-            "apiVersion": "v1",
-            "type": "grafana-testdata-datasource",
-            "uid": "testdata-type-uid"
+            "type": "grafana-testdata-datasource"
           },
           "expr": "",
           "format": "table",
@@ -754,9 +742,7 @@
         {
           "alias": "ColorCell",
           "datasource": {
-            "apiVersion": "v1",
-            "type": "grafana-testdata-datasource",
-            "uid": "testdata-type-uid"
+            "type": "grafana-testdata-datasource"
           },
           "refId": "B",
           "scenarioId": "csv_metric_values",
@@ -962,9 +948,7 @@
         {
           "alias": "ColorValue",
           "datasource": {
-            "apiVersion": "v1",
-            "type": "grafana-testdata-datasource",
-            "uid": "testdata-type-uid"
+            "type": "grafana-testdata-datasource"
           },
           "expr": "",
           "format": "table",
@@ -976,9 +960,7 @@
         {
           "alias": "ColorCell",
           "datasource": {
-            "apiVersion": "v1",
-            "type": "grafana-testdata-datasource",
-            "uid": "testdata-type-uid"
+            "type": "grafana-testdata-datasource"
           },
           "refId": "B",
           "scenarioId": "csv_metric_values",
