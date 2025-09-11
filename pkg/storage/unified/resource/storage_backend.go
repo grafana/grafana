@@ -27,7 +27,8 @@ import (
 const (
 	defaultListBufferSize       = 100
 	prunerMaxEvents             = 20
-	defaultEventRetentionPeriod = 24 * time.Hour
+	defaultEventRetentionPeriod = 1 * time.Hour
+	defaultEventPruningInterval = 5 * time.Minute
 )
 
 // kvStorageBackend Unified storage backend based on KV storage.
@@ -42,6 +43,7 @@ type kvStorageBackend struct {
 	log                  logging.Logger
 	withPruner           bool
 	eventRetentionPeriod time.Duration
+	eventPruningInterval time.Duration
 	historyPruner        Pruner
 	//tracer        trace.Tracer
 	//reg           prometheus.Registerer
@@ -52,7 +54,8 @@ var _ StorageBackend = &kvStorageBackend{}
 type KvBackendOptions struct {
 	KvStore              KV
 	WithPruner           bool
-	EventRetentionPeriod time.Duration         // How long to keep events (default: 24 hours)
+	EventRetentionPeriod time.Duration         // How long to keep events (default: 1 hour)
+	EventPruningInterval time.Duration         // How often to run the event pruning (default: 5 minutes)
 	Tracer               trace.Tracer          // TODO add tracing
 	Reg                  prometheus.Registerer // TODO add metrics
 }
@@ -72,6 +75,11 @@ func NewKvStorageBackend(opts KvBackendOptions) (StorageBackend, error) {
 		eventRetentionPeriod = defaultEventRetentionPeriod
 	}
 
+	eventPruningInterval := opts.EventPruningInterval
+	if eventPruningInterval <= 0 {
+		eventPruningInterval = defaultEventPruningInterval
+	}
+
 	backend := &kvStorageBackend{
 		kv:                   kv,
 		dataStore:            newDataStore(kv),
@@ -82,6 +90,7 @@ func NewKvStorageBackend(opts KvBackendOptions) (StorageBackend, error) {
 		builder:              StandardDocumentBuilder(), // For now we use the standard document builder.
 		log:                  &logging.NoOpLogger{},     // Make this configurable
 		eventRetentionPeriod: eventRetentionPeriod,
+		eventPruningInterval: eventPruningInterval,
 	}
 	err = backend.initPruner(ctx)
 	if err != nil {
@@ -97,7 +106,7 @@ func NewKvStorageBackend(opts KvBackendOptions) (StorageBackend, error) {
 // runCleanupOldEvents starts a background goroutine that periodically cleans up old events
 func (k *kvStorageBackend) runCleanupOldEvents(ctx context.Context) {
 	// Run cleanup every hour
-	ticker := time.NewTicker(time.Hour)
+	ticker := time.NewTicker(k.eventPruningInterval)
 	defer ticker.Stop()
 
 	for {
