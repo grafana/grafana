@@ -40,7 +40,6 @@ jest.mock('app/core/components/AppChrome/AppChromeUpdate', () => ({
 }));
 
 jest.mock('app/features/query/components/QueryEditorRow', () => ({
-  // eslint-disable-next-line react/display-name
   QueryEditorRow: () => <p>hi</p>,
 }));
 

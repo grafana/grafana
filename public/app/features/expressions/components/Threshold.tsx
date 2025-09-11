@@ -151,7 +151,7 @@ export const Threshold = ({ labelWidth, onChange, refIds, query, onError, useHys
         The onMouseDown event precedes the onBlur event, unlike onchange. */}
 
         {/*Disabling the a11y rules here as the InlineSwitch handles keyboard interactions */}
-        {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */}
+        {/* eslint-disable-next-line jsx-a11y/no-static-element-interactions */}
         <div onMouseDown={onHysteresisCheckDown}>
           <InlineSwitch
             showLabel={true}

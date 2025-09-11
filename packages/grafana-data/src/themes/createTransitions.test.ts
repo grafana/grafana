@@ -60,13 +60,13 @@ describe('transitions', () => {
 
     it('should return NaN when passed a negative number', () => {
       const zeroHeightDurationNegativeOne = getAutoHeightDuration(-1);
-      // eslint-disable-next-line no-restricted-globals
+
       expect(isNaN(zeroHeightDurationNegativeOne)).toEqual(true);
       const zeroHeightDurationSmallNegative = getAutoHeightDuration(-0.000001);
-      // eslint-disable-next-line no-restricted-globals
+
       expect(isNaN(zeroHeightDurationSmallNegative)).toEqual(true);
       const zeroHeightDurationBigNegative = getAutoHeightDuration(-100000);
-      // eslint-disable-next-line no-restricted-globals
+
       expect(isNaN(zeroHeightDurationBigNegative)).toEqual(true);
     });
 

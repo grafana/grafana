@@ -137,7 +137,7 @@ export const LdapSettingsPage = () => {
       setIsLoading(false);
     }
     init();
-  }, [reset]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [reset]);
 
   /**
    * Display warning if the feature flag is disabled

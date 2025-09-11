@@ -26,15 +26,12 @@ export function polyfill(target: Window & typeof globalThis, msElapse = DEFAULT_
   const _target = target || global;
   if (!_target.requestAnimationFrame) {
     if (msElapse === DEFAULT_ELAPSE) {
-      // eslint-disable-next-line no-param-reassign
       _target.requestAnimationFrame = requestAnimationFrame;
     } else {
-      // eslint-disable-next-line no-param-reassign, no-shadow
       _target.requestAnimationFrame = (callback) => setTimeout(callback, msElapse);
     }
   }
   if (!_target.cancelAnimationFrame) {
-    // eslint-disable-next-line no-param-reassign
     _target.cancelAnimationFrame = cancelAnimationFrame;
   }
 }

@@ -72,7 +72,6 @@ export const VizLegendTable = <T extends unknown>({
   }
 
   if (!itemRenderer) {
-    /* eslint-disable-next-line react/display-name */
     itemRenderer = (item, index) => (
       <LegendTableItem
         key={`${item.label}-${index}`}

@@ -122,7 +122,6 @@ describe('Tween', () => {
       const copy = { ...current };
       try {
         current!.done = !current!.done;
-        // eslint-disable-next-line no-empty
       } catch (_) {}
       expect(current).toEqual(copy);
     });
