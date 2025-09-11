@@ -1,6 +1,6 @@
 import { createApi } from '@reduxjs/toolkit/query/react';
 
-import { AppEvents, isTruthy, locationUtil } from '@grafana/data';
+import { AppEvents, locationUtil } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config, getBackendSrv, isFetchError, locationService } from '@grafana/runtime';
 import { Dashboard } from '@grafana/schema';
@@ -22,7 +22,6 @@ import { FolderListItemDTO, FolderDTO, DescendantCount, DescendantCountDTO } fro
 import { getDashboardScenePageStateManager } from '../../dashboard-scene/pages/DashboardScenePageStateManager';
 import { deletedDashboardsCache } from '../../search/service/deletedDashboardsCache';
 import { refetchChildren, refreshParents } from '../state/actions';
-import { DashboardTreeSelection } from '../types';
 
 import { isProvisionedDashboard } from './isProvisioned';
 import { PAGE_SIZE } from './services';
@@ -191,30 +190,28 @@ export const browseDashboardsAPI = createApi({
     }),
 
     // gets the descendant counts for a folder. used in the move/delete modals.
-    getAffectedItems: builder.query<DescendantCount, DashboardTreeSelection>({
+    getAffectedItems: builder.query<DescendantCount, { folderUIDs: string[]; dashboardUIDs: string[] }>({
       // don't cache this data for now, since library panel/alert rule creation isn't done through rtk query
       keepUnusedDataFor: 0,
-      queryFn: async (selectedItems) => {
-        const folderUIDs = Object.keys(selectedItems.folder).filter((uid) => selectedItems.folder[uid]);
-
+      queryFn: async ({ folderUIDs, dashboardUIDs }) => {
         const promises = folderUIDs.map((folderUID) => {
           return getBackendSrv().get<DescendantCountDTO>(`/api/folders/${folderUID}/counts`);
         });
 
         const results = await Promise.all(promises);
 
-        const totalCounts = {
-          folder: Object.values(selectedItems.folder).filter(isTruthy).length,
-          dashboard: Object.values(selectedItems.dashboard).filter(isTruthy).length,
-          libraryPanel: 0,
-          alertRule: 0,
+        const totalCounts: DescendantCount = {
+          folders: folderUIDs.length,
+          dashboards: dashboardUIDs.length,
+          library_elements: 0,
+          alertrules: 0,
         };
 
         for (const folderCounts of results) {
-          totalCounts.folder += folderCounts.folder;
-          totalCounts.dashboard += folderCounts.dashboard;
-          totalCounts.alertRule += folderCounts.alertrule;
-          totalCounts.libraryPanel += folderCounts.librarypanel;
+          totalCounts.folders += folderCounts.folder;
+          totalCounts.dashboards += folderCounts.dashboard;
+          totalCounts.alertrules += folderCounts.alertrule;
+          totalCounts.library_elements += folderCounts.librarypanel;
         }
 
         return { data: totalCounts };
