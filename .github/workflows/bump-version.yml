@@ -41,7 +41,7 @@ jobs:
           app_id: ${{ vars.DELIVERY_BOT_APP_ID }}
           private_key: ${{ env.GRAFANA_DELIVERY_BOT_APP_PEM }}
           repositories: '["grafana"]'
-          permissions: '{"contents": "write", "pull-requests": "write"}'
+          permissions: '{"contents": "write", "pull_requests": "write"}'
       - if: ${{ inputs.push }}
         name: Push & Create PR
         env:
