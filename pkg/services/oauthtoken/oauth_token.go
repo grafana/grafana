@@ -7,13 +7,15 @@ import (
 	"strings"
 	"time"
 
-	"github.com/go-jose/go-jose/v3/jwt"
+	jose "github.com/go-jose/go-jose/v4"
+	"github.com/go-jose/go-jose/v4/jwt"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 	"golang.org/x/oauth2"
 
 	claims "github.com/grafana/authlib/types"
+
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/serverlock"
@@ -577,7 +579,7 @@ func GetIDTokenExpiry(token *oauth2.Token) (time.Time, error) {
 		return time.Time{}, nil
 	}
 
-	parsedToken, err := jwt.ParseSigned(idToken)
+	parsedToken, err := jwt.ParseSigned(idToken, []jose.SignatureAlgorithm{jose.ES256})
 	if err != nil {
 		return time.Time{}, fmt.Errorf("error parsing id token: %w", err)
 	}

@@ -7,7 +7,8 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/go-jose/go-jose/v3/jwt"
+	jose "github.com/go-jose/go-jose/v4"
+	"github.com/go-jose/go-jose/v4/jwt"
 	"golang.org/x/oauth2"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -115,7 +116,7 @@ func (s *SocialOkta) UserInfo(ctx context.Context, client *http.Client, token *o
 		return nil, fmt.Errorf("no id_token found")
 	}
 
-	parsedToken, err := jwt.ParseSigned(idToken.(string))
+	parsedToken, err := jwt.ParseSigned(idToken.(string), []jose.SignatureAlgorithm{jose.ES256})
 	if err != nil {
 		return nil, fmt.Errorf("error parsing id token: %w", err)
 	}

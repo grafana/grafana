@@ -12,8 +12,8 @@ import (
 
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/policy"
 	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
-	jose "github.com/go-jose/go-jose/v3"
-	"github.com/go-jose/go-jose/v3/jwt"
+	jose "github.com/go-jose/go-jose/v4"
+	"github.com/go-jose/go-jose/v4/jwt"
 	"github.com/google/uuid"
 	"golang.org/x/oauth2"
 
@@ -124,7 +124,7 @@ func (s *SocialAzureAD) UserInfo(ctx context.Context, client *http.Client, token
 		return nil, ErrIDTokenNotFound
 	}
 
-	parsedToken, err := jwt.ParseSigned(idToken.(string))
+	parsedToken, err := jwt.ParseSigned(idToken.(string), []jose.SignatureAlgorithm{jose.ES256})
 	if err != nil {
 		return nil, fmt.Errorf("error parsing id token: %w", err)
 	}
@@ -548,7 +548,7 @@ func (s *SocialAzureAD) groupsGraphAPIURL(claims *azureClaims, token *oauth2.Tok
 		tenantID := claims.TenantID
 		// If tenantID wasn't found in the id_token, parse access token
 		if tenantID == "" {
-			parsedToken, err := jwt.ParseSigned(token.AccessToken)
+			parsedToken, err := jwt.ParseSigned(token.AccessToken, []jose.SignatureAlgorithm{jose.ES256})
 			if err != nil {
 				return "", fmt.Errorf("error parsing access token: %w", err)
 			}

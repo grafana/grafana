@@ -6,7 +6,7 @@ import (
 	"reflect"
 	"time"
 
-	"github.com/go-jose/go-jose/v3/jwt"
+	"github.com/go-jose/go-jose/v4/jwt"
 )
 
 func (s *AuthService) initClaimExpectations() error {

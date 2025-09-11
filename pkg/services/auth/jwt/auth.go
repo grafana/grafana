@@ -6,7 +6,8 @@ import (
 	"errors"
 	"strings"
 
-	"github.com/go-jose/go-jose/v3/jwt"
+	jose "github.com/go-jose/go-jose/v4"
+	"github.com/go-jose/go-jose/v4/jwt"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
@@ -69,7 +70,7 @@ func (s *AuthService) Verify(ctx context.Context, strToken string) (map[string]a
 	s.log.Debug("Parsing JSON Web Token")
 
 	strToken = sanitizeJWT(strToken)
-	token, err := jwt.ParseSigned(strToken)
+	token, err := jwt.ParseSigned(strToken, []jose.SignatureAlgorithm{jose.ES256})
 	if err != nil {
 		return nil, err
 	}
@@ -106,7 +107,7 @@ func (s *AuthService) Verify(ctx context.Context, strToken string) (map[string]a
 // HasSubClaim checks if the provided JWT token contains a non-empty "sub" claim.
 // Returns true if it contains, otherwise returns false.
 func HasSubClaim(jwtToken string) bool {
-	parsed, err := jwt.ParseSigned(sanitizeJWT(jwtToken))
+	parsed, err := jwt.ParseSigned(sanitizeJWT(jwtToken), []jose.SignatureAlgorithm{jose.ES256})
 	if err != nil {
 		return false
 	}
