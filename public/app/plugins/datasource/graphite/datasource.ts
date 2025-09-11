@@ -11,7 +11,6 @@ import {
   DataFrame,
   DataQueryRequest,
   DataQueryResponse,
-  DataSourceApi,
   DataSourceWithQueryExportSupport,
   dateMath,
   DateTime,
@@ -23,7 +22,15 @@ import {
   TimeRange,
   toDataFrame,
 } from '@grafana/data';
-import { BackendSrvRequest, FetchResponse, getBackendSrv, getTemplateSrv, TemplateSrv } from '@grafana/runtime';
+import {
+  BackendSrvRequest,
+  config,
+  DataSourceWithBackend,
+  FetchResponse,
+  getBackendSrv,
+  getTemplateSrv,
+  TemplateSrv,
+} from '@grafana/runtime';
 import { TimeZone } from '@grafana/schema';
 
 import { AnnotationEditor } from './components/AnnotationsEditor';
@@ -67,7 +74,7 @@ function convertGlobToRegEx(text: string): string {
 }
 
 export class GraphiteDatasource
-  extends DataSourceApi<GraphiteQuery, GraphiteOptions, GraphiteQueryImportConfiguration>
+  extends DataSourceWithBackend<GraphiteQuery, GraphiteOptions>
   implements DataSourceWithQueryExportSupport<GraphiteQuery>
 {
   basicAuth: string;
@@ -953,6 +960,9 @@ export class GraphiteDatasource
   }
 
   testDatasource() {
+    if (config.featureToggles.graphiteBackendMode) {
+      return super.testDatasource();
+    }
     const query: DataQueryRequest<GraphiteQuery> = {
       app: 'graphite',
       interval: '10ms',
