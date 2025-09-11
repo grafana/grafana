@@ -1,14 +1,4 @@
 {
-  "apps/dashboard/tshack/v0alpha1_spec_gen.ts": {
-    "@typescript-eslint/no-explicit-any": {
-      "count": 1
-    }
-  },
-  "apps/dashboard/tshack/v1alpha1_spec_gen.ts": {
-    "@typescript-eslint/no-explicit-any": {
-      "count": 1
-    }
-  },
   "e2e/cypress/support/commands.js": {
     "no-restricted-syntax": {
       "count": 1
@@ -370,11 +360,6 @@
   "packages/grafana-data/src/vector/FunctionalVector.ts": {
     "@typescript-eslint/no-explicit-any": {
       "count": 9
-    }
-  },
-  "packages/grafana-data/test/helpers/pluginMocks.ts": {
-    "@typescript-eslint/consistent-type-assertions": {
-      "count": 1
     }
   },
   "packages/grafana-e2e-selectors/src/resolver.ts": {
@@ -2338,11 +2323,6 @@
       "count": 10
     }
   },
-  "public/app/features/dashboard-scene/v2schema/test-helpers.ts": {
-    "@typescript-eslint/consistent-type-assertions": {
-      "count": 3
-    }
-  },
   "public/app/features/dashboard/api/ResponseTransformers.ts": {
     "@typescript-eslint/consistent-type-assertions": {
       "count": 4
@@ -3310,9 +3290,6 @@
     }
   },
   "public/app/features/query/state/DashboardQueryRunner/testHelpers.ts": {
-    "@typescript-eslint/consistent-type-assertions": {
-      "count": 1
-    },
     "@typescript-eslint/no-explicit-any": {
       "count": 2
     }
@@ -3411,11 +3388,6 @@
   "public/app/features/templating/templateProxies.ts": {
     "@typescript-eslint/no-explicit-any": {
       "count": 1
-    }
-  },
-  "public/app/features/templating/template_srv.mock.ts": {
-    "@typescript-eslint/consistent-type-assertions": {
-      "count": 4
     }
   },
   "public/app/features/templating/template_srv.ts": {
@@ -4042,11 +4014,6 @@
     }
   },
   "public/app/plugins/datasource/elasticsearch/hooks/useStatelessReducer.ts": {
-    "@typescript-eslint/consistent-type-assertions": {
-      "count": 1
-    }
-  },
-  "public/app/plugins/datasource/elasticsearch/test-helpers/render.tsx": {
     "@typescript-eslint/consistent-type-assertions": {
       "count": 1
     }
