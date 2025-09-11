@@ -6,8 +6,7 @@ import (
 	"os"
 	"time"
 
-	dashboardV1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
-	folderV1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
+	dashboard "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/folder"
@@ -58,17 +57,8 @@ func New(ctx context.Context, configDirectory string, provisioner dashboards.Das
 		return nil, fmt.Errorf("%v: %w", "Failed to initialize file readers", err)
 	}
 
-	if dual != nil {
-		foldersInUnified, _ := dual.ReadFromUnified(context.Background(), folderV1.FolderResourceInfo.GroupResource())
-		if foldersInUnified {
-			for _, reader := range fileReaders {
-				reader.foldersInUnified = true
-			}
-		}
-
-		if !dual.ShouldManage(dashboardV1.DashboardResourceInfo.GroupResource()) {
-			dual = nil // not actively managed
-		}
+	if dual != nil && !dual.ShouldManage(dashboard.DashboardResourceInfo.GroupResource()) {
+		dual = nil // not actively managed
 	}
 
 	d := &Provisioner{
@@ -88,7 +78,7 @@ func New(ctx context.Context, configDirectory string, provisioner dashboards.Das
 func (provider *Provisioner) Provision(ctx context.Context) error {
 	// skip provisioning during migrations to prevent multi-replica instances from crashing when another replica is migrating
 	if provider.dual != nil {
-		status, _ := provider.dual.Status(context.Background(), dashboardV1.DashboardResourceInfo.GroupResource())
+		status, _ := provider.dual.Status(context.Background(), dashboard.DashboardResourceInfo.GroupResource())
 		if status.Migrating > 0 {
 			provider.log.Info("dashboard migrations are running, skipping provisioning", "elapsed", time.Since(time.UnixMilli(status.Migrating)))
 			return nil
