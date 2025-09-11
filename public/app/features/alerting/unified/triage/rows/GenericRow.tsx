@@ -18,6 +18,8 @@ interface GenericRowProps {
   children?: ReactNode;
   // allow overriding / adding styles for the row
   leftColumnClassName?: string;
+  rightColumnClassName?: string;
+  depth?: number; // for indentation of nested rows
 }
 
 export const GenericRow = ({
@@ -29,6 +31,8 @@ export const GenericRow = ({
   isOpenByDefault = false,
   children,
   leftColumnClassName,
+  rightColumnClassName,
+  depth = 0,
 }: GenericRowProps) => {
   const styles = useStyles2(getStyles);
   const [isOpen, handleToggle] = useToggle(isOpenByDefault);
@@ -40,7 +44,7 @@ export const GenericRow = ({
     <>
       <div className={styles.groupItemWrapper(width)}>
         <div className={cx(styles.leftColumn, styles.column, leftColumnClassName)}>
-          <div className={styles.columnContent}>
+          <div className={styles.columnContent(depth)}>
             <LeftCell
               title={title}
               metadata={metadata}
@@ -50,8 +54,11 @@ export const GenericRow = ({
             />
           </div>
         </div>
-        <div style={{ minWidth: 'min-content', flexGrow: 1 }} className={cx(styles.rightColumn, styles.column)}>
-          {content && <div className={styles.columnContent}>{content}</div>}
+        <div
+          style={{ minWidth: 'min-content', flexGrow: 1 }}
+          className={cx(styles.rightColumn, styles.column, rightColumnClassName)}
+        >
+          {content && <div className={styles.columnContent()}>{content}</div>}
         </div>
       </div>
       {showChildContent ? children : null}
@@ -115,10 +122,12 @@ export const getStyles = (theme: GrafanaTheme2) => {
     rightColumn: css({
       // background: `rgba(255, 0, 0, 0.1)`,
     }),
-    columnContent: css({
-      padding: 5,
-      width: '100%',
-    }),
+    columnContent: (depth?: number) =>
+      css({
+        padding: 5,
+        width: '100%',
+        paddingLeft: depth ? `calc(${theme.spacing(depth)} + 5px)` : 5,
+      }),
     groupItemWrapper: (width: number) =>
       css({
         display: 'grid',

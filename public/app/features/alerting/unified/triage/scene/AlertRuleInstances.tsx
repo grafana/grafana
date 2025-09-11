@@ -37,7 +37,7 @@ function extractInstancesFromData(series: DataFrame[] | undefined) {
   return Array.from(groups.values());
 }
 
-export function AlertRuleInstances({ ruleUID }: { ruleUID: string }) {
+export function AlertRuleInstances({ ruleUID, depth = 0 }: { ruleUID: string; depth?: number }) {
   const { leftColumnWidth } = useWorkbenchContext();
   const [timeRange] = useTimeRange();
 
@@ -58,6 +58,7 @@ export function AlertRuleInstances({ ruleUID }: { ruleUID: string }) {
       <GenericRow
         width={leftColumnWidth}
         title={<Trans i18nKey="alerting.triage.alert-instances">Alert instances</Trans>}
+        depth={depth}
       >
         <div>
           <Trans i18nKey="alerting.triage.no-instances-found">No alert instances found for rule: {ruleUID}</Trans>
@@ -78,6 +79,7 @@ export function AlertRuleInstances({ ruleUID }: { ruleUID: string }) {
           commonLabels={commonLabels}
           leftColumnWidth={leftColumnWidth}
           timeRange={timeRange}
+          depth={depth}
         />
       ))}
     </>

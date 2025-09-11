@@ -32,6 +32,7 @@ interface InstanceRowProps {
   commonLabels: Labels;
   leftColumnWidth: number;
   timeRange: TimeRange;
+  depth?: number;
 }
 
 const chartConfig = VizConfigBuilders.timeseries()
@@ -60,7 +61,7 @@ const chartConfig = VizConfigBuilders.timeseries()
   )
   .build();
 
-export function InstanceRow({ instance, commonLabels, leftColumnWidth, timeRange }: InstanceRowProps) {
+export function InstanceRow({ instance, commonLabels, leftColumnWidth, timeRange, depth = 0 }: InstanceRowProps) {
   const styles = useStyles2(getStyles);
 
   const dataProvider = useMemo(
@@ -92,6 +93,7 @@ export function InstanceRow({ instance, commonLabels, leftColumnWidth, timeRange
       content={
         <VizPanel title="" hoverHeader={true} viz={chartConfig} dataProvider={dataProvider} displayMode="transparent" />
       }
+      depth={depth}
     />
   );
 }
