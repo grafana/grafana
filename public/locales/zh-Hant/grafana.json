@@ -500,6 +500,7 @@
       "copy-link": "複製網址",
       "duplicate": "重複",
       "export": "匯出",
+      "manage-enrichments": "",
       "silence-notifications": "靜音通知",
       "with-modifications": "經過修改"
     },
@@ -1115,7 +1116,8 @@
     },
     "enrichment": {
       "error-boundary": {
-        "notification-message-section-extension": ""
+        "enrichment-drawer-extension": "",
+        "rule-viewer-section-extension": ""
       }
     },
     "error-modal": {
@@ -3029,6 +3031,7 @@
       "page-nav": {
         "text": {
           "details": "詳細資訊",
+          "enrichment": "",
           "history": "歷史紀錄",
           "instances": "執行個體",
           "query-and-conditions": "查詢和條件",
@@ -11179,11 +11182,11 @@
       "description-clear-repository-connection": "為此儲存庫連線新增一個明確的名稱",
       "empty": "空",
       "error-field-required": "此為必填欄位。",
-      "ext-storage": "外部儲存空間",
-      "grafana": "Grafana 執行個體",
+      "external-storage-label": "",
       "label-display-name": "顯示名稱",
       "placeholder-my-repository-connection": "我的儲存庫連線",
       "text-loading-resource-information": "正在載入資源資訊…",
+      "unmanaged-resources-label": "",
       "dashboards-count_other": "{{count}} 個儀表板",
       "files-count_other": "{{count}} 個檔案",
       "folders-count_other": "{{count}} 個資料夾"
@@ -11228,7 +11231,8 @@
     },
     "connect-repository-button": {
       "configure": "設定",
-      "repository-limit-info-alert": "已達到儲存庫限制（{{count}} 個）"
+      "instance-fully-managed-tooltip": "",
+      "repository-limit-reached-tooltip_other": ""
     },
     "delete-repository-button": {
       "button-delete": "刪除",

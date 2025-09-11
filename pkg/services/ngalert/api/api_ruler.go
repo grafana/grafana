@@ -550,6 +550,9 @@ func (srv RulerSrv) performUpdateAlertRules(ctx context.Context, c *contextmodel
 			updates := make([]ngmodels.UpdateRule, 0, len(finalChanges.Update))
 			for _, update := range finalChanges.Update {
 				logger.Debug("Updating rule", "rule_uid", update.New.UID, "diff", update.Diff.String())
+				if ngmodels.IsNoGroupRuleGroup(update.Existing.RuleGroup) && !ngmodels.IsNoGroupRuleGroup(update.New.RuleGroup) {
+					return fmt.Errorf("%w: cannot move rule out of this group", ngmodels.ErrAlertRuleFailedValidation)
+				}
 				updates = append(updates, ngmodels.UpdateRule{
 					Existing: update.Existing,
 					New:      *update.New,
