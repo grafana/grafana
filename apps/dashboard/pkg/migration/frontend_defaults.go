@@ -454,6 +454,29 @@ func cleanupPanelForSaveWithContext(panel map[string]interface{}, isNested bool)
 		applyPanelAutoMigration(panel)
 	}
 
+	// Library panel specific cleanup (matches frontend behavior)
+	// Frontend only preserves id, title, gridPos, and libraryPanel for library panels
+	if libraryPanel, hasLibraryPanel := panel["libraryPanel"]; hasLibraryPanel && libraryPanel != nil {
+		// Create a new panel with only the essential properties
+		essentialProps := map[string]interface{}{
+			"id":           panel["id"],
+			"title":        panel["title"],
+			"gridPos":      panel["gridPos"],
+			"libraryPanel": libraryPanel,
+		}
+
+		// Clear the original panel and copy back only essential properties
+		for key := range panel {
+			delete(panel, key)
+		}
+		for key, value := range essentialProps {
+			if value != nil {
+				panel[key] = value
+			}
+		}
+		return // Skip the rest of the cleanup for library panels
+	}
+
 	// Row panel specific cleanup (matches frontend behavior)
 	cleanupRowPanelProperties(panel)
 
