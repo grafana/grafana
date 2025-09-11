@@ -20,9 +20,9 @@ import { Box, Stack, useStyles2 } from '@grafana/ui';
 import { PanelEditControls } from '../panel-edit/PanelEditControls';
 import { getDashboardSceneFor } from '../utils/utils';
 
+import { DashboardControlsButton } from './DashboardControlsMenu';
 import { DashboardLinksControls } from './DashboardLinksControls';
 import { DashboardScene } from './DashboardScene';
-import { DropdownVariableControls } from './DropdownVariableControls';
 import { VariableControls } from './VariableControls';
 
 export interface DashboardControlsState extends SceneObjectState {
@@ -128,6 +128,7 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
     .getVariables(dashboard)
     .useState()
     .variables.some((v) => v.state.showInControlsMenu === true);
+  const hasControlMenuLinks = links.some((link) => link.placement === 'inControlsMenu');
 
   if (!model.hasControls()) {
     // To still have spacing when no controls are rendered
@@ -156,9 +157,9 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
           <refreshPicker.Component model={refreshPicker} />
         </Stack>
       )}
-      {hasControlMenuVariables && (
+      {(hasControlMenuVariables || hasControlMenuLinks) && (
         <Stack>
-          <DropdownVariableControls dashboard={dashboard} />
+          <DashboardControlsButton dashboard={dashboard} />
         </Stack>
       )}
       {showDebugger && <SceneDebugger scene={model} key={'scene-debugger'} />}
