@@ -307,7 +307,7 @@ To add a data link, follow these steps:
    This is a human-readable label for the link displayed in the UI. This is a required field.
 
 1. Enter the **URL** to which you want to link.
-1. (Optional) To add a data link variable, click in the **URL** field and enter `$` or press Ctrl+Space or Cmd+Space to see a list of available variables. 
+1. (Optional) To add a data link variable, click in the **URL** field and enter `$` or press Ctrl+Space or Cmd+Space to see a list of available variables.
 1. If you want the link to open in a new tab, toggle the **Open in a new tab** switch.
 1. If you want the data link to open with a single click on the visualization, toggle the **One click** switch.
 
