@@ -1,18 +1,18 @@
-import { render, screen } from '@testing-library/react';
+import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { SceneVariableSet, TextBoxVariable, QueryVariable, CustomVariable, SceneVariable } from '@grafana/scenes';
 
-import { DashboardScene } from './DashboardScene';
 import {
-  DROPDOWN_CONTROLS_ARIA_LABEL,
-  DROPDOWN_CONTROLS_TITLE,
-  DropdownVariableControls,
-} from './DropdownVariableControls';
+  DASHBOARD_CONTROLS_MENU_ARIA_LABEL,
+  DASHBOARD_CONTROLS_MENU_TITLE,
+  DashboardControlsButton,
+} from './DashboardControlsMenu';
+import { DashboardScene } from './DashboardScene';
 
-describe('DropdownVariableControls', () => {
+describe('DashboardControlsMenu', () => {
   it('should return null and not render anything when there are no variables', () => {
-    const { container } = render(<DropdownVariableControls dashboard={getDashboard([])} />);
+    const { container } = render(<DashboardControlsButton dashboard={getDashboard([])} />);
     expect(container.firstChild).toBeNull();
   });
 
@@ -24,7 +24,7 @@ describe('DropdownVariableControls', () => {
         showInControlsMenu: false,
       }),
     ];
-    const { container } = render(<DropdownVariableControls dashboard={getDashboard(variables)} />);
+    const { container } = render(<DashboardControlsButton dashboard={getDashboard(variables)} />);
     expect(container.firstChild).toBeNull();
   });
 
@@ -37,13 +37,13 @@ describe('DropdownVariableControls', () => {
       }),
     ];
 
-    render(<DropdownVariableControls dashboard={getDashboard(variables)} />);
+    render(<DashboardControlsButton dashboard={getDashboard(variables)} />);
 
     // Should render the toolbar button
     const button = screen.getByRole('button');
     expect(button).toBeInTheDocument();
-    expect(button).toHaveAttribute('aria-label', DROPDOWN_CONTROLS_ARIA_LABEL);
-    expect(button).toHaveAttribute('title', DROPDOWN_CONTROLS_TITLE);
+    expect(button).toHaveAttribute('aria-label', DASHBOARD_CONTROLS_MENU_ARIA_LABEL);
+    expect(button).toHaveAttribute('title', DASHBOARD_CONTROLS_MENU_TITLE);
   });
 
   it('should render multiple variables in dropdown menu', async () => {
@@ -65,7 +65,9 @@ describe('DropdownVariableControls', () => {
       }),
     ];
 
-    render(<DropdownVariableControls dashboard={getDashboard(variables)} />);
+    act(() => {
+      render(<DashboardControlsButton dashboard={getDashboard(variables)} />);
+    });
 
     // Should have rendered a dropdown
     expect(screen.getByRole('button')).toBeInTheDocument();
@@ -96,7 +98,7 @@ describe('DropdownVariableControls', () => {
       }),
     ];
 
-    render(<DropdownVariableControls dashboard={getDashboard(variables)} />);
+    render(<DashboardControlsButton dashboard={getDashboard(variables)} />);
 
     // Should still render dropdown since we have variables with showInControlsMenu=true
     expect(screen.getByRole('button')).toBeInTheDocument();

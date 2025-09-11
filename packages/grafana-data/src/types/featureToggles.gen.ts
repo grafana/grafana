@@ -1123,11 +1123,6 @@ export interface FeatureToggles {
   */
   newClickhouseConfigPageDesign?: boolean;
   /**
-  * Enable experimental search-after-write guarantees to unified-storage search endpoints
-  * @default false
-  */
-  unifiedStorageSearchAfterWriteExperimentalAPI?: boolean;
-  /**
   * Enables team folders functionality
   * @default false
   */

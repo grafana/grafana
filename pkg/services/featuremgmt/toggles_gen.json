@@ -3550,6 +3550,7 @@
         "name": "unifiedStorageSearchAfterWriteExperimentalAPI",
         "resourceVersion": "1755089543487",
         "creationTimestamp": "2025-08-13T14:05:15Z",
+        "deletionTimestamp": "2025-09-10T09:52:56Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2025-08-13 12:52:23.487521 +0000 UTC"
         }
