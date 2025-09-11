@@ -7,6 +7,7 @@ ARG GO_IMAGE=golang:1.23.1-alpine
 
 ARG GO_SRC=go-builder
 ARG JS_SRC=js-builder
+ARG DEPLOYMENT
 
 FROM --platform=${JS_PLATFORM} ${JS_IMAGE} as js-builder
 
@@ -31,6 +32,7 @@ COPY scripts scripts
 COPY emails emails
 
 ENV NODE_ENV production
+ENV DEPLOYMENT=${DEPLOYMENT}
 RUN yarn build
 
 FROM ${GO_IMAGE} as go-builder

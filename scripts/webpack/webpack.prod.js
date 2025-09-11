@@ -21,76 +21,92 @@ const esbuildOptions = {
   target: esbuildTargets,
   format: undefined,
   jsx: 'automatic',
+  keepNames: true,
+  minifyIdentifiers: false,
 };
 
 const envConfig = getEnvConfig();
 
-module.exports = (env = {}) =>
-  merge(common, {
-    mode: 'production',
-    devtool: 'source-map',
+const DEPLOYMENT = process.env.DEPLOYMENT;
+const isProfilingEnabled = ['dev', 'staging'].includes(DEPLOYMENT);
 
-    entry: {
-      dark: './public/sass/grafana.dark.scss',
-      light: './public/sass/grafana.light.scss',
+module.exports = (env = {}) => merge(common, {
+  mode: 'production',
+  devtool: 'source-map',
+
+  entry: {
+    app: './public/app/index.ts',
+    dark: './public/sass/grafana.dark.scss',
+    light: './public/sass/grafana.light.scss',
+  },
+
+  resolve: isProfilingEnabled ? {
+    alias: {
+      // Enable React DevTools profiling in production when profiling flag is set
+      'react-dom$': 'react-dom/profiling',
+      'scheduler/tracing': 'scheduler/tracing-profiling',
     },
+  } : {},
 
-    module: {
-      // Note: order is bottom-to-top and/or right-to-left
-      rules: [
-        {
-          test: /\.tsx?$/,
-          use: {
-            loader: 'esbuild-loader',
-            options: esbuildOptions,
-          },
+  module: {
+    // Note: order is bottom-to-top and/or right-to-left
+    rules: [
+      {
+        test: /\.tsx?$/,
+        use: {
+          loader: 'esbuild-loader',
+          options: esbuildOptions,
         },
-        require('./sass.rule.js')({
-          sourceMap: false,
-          preserveUrl: false,
-        }),
-      ],
-    },
-    optimization: {
-      nodeEnv: 'production',
-      minimize: parseInt(env.noMinify, 10) !== 1,
-      minimizer: [new EsbuildPlugin(esbuildOptions), new CssMinimizerPlugin()],
-    },
-
-    // enable persistent cache for faster builds
-    cache: {
-      type: 'filesystem',
-      name: 'grafana-default-production',
-      buildDependencies: {
-        config: [__filename],
       },
-    },
-
-    plugins: [
-      new MiniCssExtractPlugin({
-        filename: 'grafana.[name].[contenthash].css',
+      require('./sass.rule.js')({
+        sourceMap: false,
+        preserveUrl: false,
       }),
-      /**
-       * I know we have two manifest plugins here.
-       * WebpackManifestPlugin was only used in prod before and does not support integrity hashes
-       */
-      new WebpackAssetsManifest({
-        entrypoints: true,
-        integrity: true,
-        publicPath: true,
-      }),
-      new WebpackManifestPlugin({
-        fileName: path.join(process.cwd(), 'manifest.json'),
-        filter: (file) => !file.name.endsWith('.map'),
-      }),
-      function () {
-        this.hooks.done.tap('Done', function (stats) {
-          if (stats.compilation.errors && stats.compilation.errors.length) {
-            console.log(stats.compilation.errors);
-            process.exit(1);
-          }
-        });
-      },
-      new EnvironmentPlugin(envConfig),
     ],
-  });
+  },
+  optimization: {
+    nodeEnv: 'production',
+    minimize: parseInt(env.noMinify, 10) !== 1,
+    minimizer: [
+      new EsbuildPlugin(esbuildOptions),
+      new CssMinimizerPlugin(),
+    ],
+  },
+
+  // enable persistent cache for faster builds
+  cache: {
+    type: 'filesystem',
+    name: 'grafana-default-production',
+    buildDependencies: {
+      config: [__filename],
+    },
+  },
+
+  plugins: [
+    new MiniCssExtractPlugin({
+      filename: 'grafana.[name].[contenthash].css',
+    }),
+    /**
+     * I know we have two manifest plugins here.
+     * WebpackManifestPlugin was only used in prod before and does not support integrity hashes
+     */
+    new WebpackAssetsManifest({
+      entrypoints: true,
+      integrity: true,
+      publicPath: true,
+    }),
+    new WebpackManifestPlugin({
+      fileName: path.join(process.cwd(), 'manifest.json'),
+      filter: (file) => !file.name.endsWith('.map'),
+    }),
+    function () {
+      this.hooks.done.tap('Done', function (stats) {
+        if (stats.compilation.errors && stats.compilation.errors.length) {
+          console.log(stats.compilation.errors);
+          process.exit(1);
+        }
+      });
+    },
+    new EnvironmentPlugin(envConfig),
+  ],
+});

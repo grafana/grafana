@@ -26,6 +26,12 @@
     [[ end ]]
 
     <script nonce="[[.Nonce]]">
+      if (window.parent !== window) {
+        window.__REACT_DEVTOOLS_GLOBAL_HOOK__ = window.parent.__REACT_DEVTOOLS_GLOBAL_HOOK__;
+      }
+    </script>
+
+    <script nonce="[[.Nonce]]">
       performance.mark('frontend_boot_css_time_seconds');
     </script>
 

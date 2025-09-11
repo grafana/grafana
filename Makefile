@@ -337,6 +337,7 @@ build-docker-full: ## Build Docker image for development.
 	--build-arg WIRE_TAGS=$(WIRE_TAGS) \
 	--build-arg COMMIT_SHA=$$(git rev-parse HEAD) \
 	--build-arg BUILD_BRANCH=$$(git rev-parse --abbrev-ref HEAD) \
+	--build-arg DEPLOYMENT=$(DEPLOYMENT) \
 	--tag grafana/grafana$(TAG_SUFFIX):dev \
 	$(DOCKER_BUILD_ARGS)
 
