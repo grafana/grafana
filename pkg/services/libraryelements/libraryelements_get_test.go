@@ -13,13 +13,13 @@ import (
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/libraryelements/model"
 	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/util/testutil"
 	"github.com/grafana/grafana/pkg/web"
 )
 
 func TestIntegration_GetLibraryElement(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test in short mode")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	scenarioWithPanel(t, "When an admin tries to get a library panel that does not exist, it should fail",
 		func(t *testing.T, sc scenarioContext) {
 			// by uid

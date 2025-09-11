@@ -22,7 +22,7 @@ replace github.com/prometheus/alertmanager => github.com/grafana/prometheus-aler
 
 require (
 	github.com/grafana/authlib v0.0.0-20250710201142-9542f2f28d43
-	github.com/grafana/grafana v0.0.0-00010101000000-000000000000
+	github.com/grafana/grafana v6.1.6+incompatible
 	github.com/grafana/grafana-app-sdk v0.40.3
 	github.com/grafana/grafana-app-sdk/logging v0.40.3
 	github.com/grafana/grafana-app-sdk/plugin v0.40.3
@@ -308,6 +308,7 @@ require (
 	github.com/openfga/api/proto v0.0.0-20250127102726-f9709139a369 // indirect
 	github.com/openfga/language/pkg/go v0.2.0-beta.2.0.20250220223040-ed0cfba54336 // indirect
 	github.com/openfga/openfga v1.8.13 // indirect
+	github.com/opentracing-contrib/go-grpc v0.1.1 // indirect
 	github.com/opentracing-contrib/go-stdlib v1.0.0 // indirect
 	github.com/opentracing/opentracing-go v1.2.0 // indirect
 	github.com/patrickmn/go-cache v2.1.0+incompatible // indirect

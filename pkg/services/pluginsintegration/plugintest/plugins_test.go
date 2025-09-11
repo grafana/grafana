@@ -48,6 +48,7 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/prometheus"
 	"github.com/grafana/grafana/pkg/tsdb/tempo"
 	"github.com/grafana/grafana/pkg/tsdb/zipkin"
+	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 func TestMain(m *testing.M) {
@@ -57,9 +58,7 @@ func TestMain(m *testing.M) {
 // This test should run before TestIntegrationPluginManager because this test relies on having a pre-existing Admin user
 // and because the SQLStore instance is shared between tests, this test does all the necessary setup
 func TestIntegrationPluginDashboards(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		AnonymousUserRole: org.RoleAdmin,
@@ -123,9 +122,8 @@ func TestIntegrationPluginDashboards(t *testing.T) {
 }
 
 func TestIntegrationPluginManager(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	staticRootPath, err := filepath.Abs("../../../../public/")
 	require.NoError(t, err)
 
@@ -161,7 +159,7 @@ func TestIntegrationPluginManager(t *testing.T) {
 	lk := loki.ProvideService(hcp, tracer)
 	otsdb := opentsdb.ProvideService(hcp)
 	pr := prometheus.ProvideService(hcp)
-	tmpo := tempo.ProvideService(hcp)
+	tmpo := tempo.ProvideService(hcp, tracer)
 	td := testdatasource.ProvideService()
 	pg := postgres.ProvideService(cfg, features)
 	my := mysql.ProvideService()

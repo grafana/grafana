@@ -500,6 +500,7 @@
       "copy-link": "复制链接",
       "duplicate": "复制",
       "export": "导出",
+      "manage-enrichments": "",
       "silence-notifications": "静默通知",
       "with-modifications": "含修改"
     },
@@ -1115,7 +1116,8 @@
     },
     "enrichment": {
       "error-boundary": {
-        "notification-message-section-extension": ""
+        "enrichment-drawer-extension": "",
+        "rule-viewer-section-extension": ""
       }
     },
     "error-modal": {
@@ -3029,6 +3031,7 @@
       "page-nav": {
         "text": {
           "details": "详情",
+          "enrichment": "",
           "history": "历史记录",
           "instances": "实例",
           "query-and-conditions": "查询和条件",
@@ -4663,6 +4666,7 @@
       "move": "移动{{typeName}}",
       "panel-background": "更改面板背景",
       "panel-description": "更改面板描述",
+      "panel-edit": "",
       "panel-max-repeats-per-row": "每行最大重复次数",
       "panel-repeat-direction": "重复方向",
       "panel-repeat-variable": "面板重复方式",
@@ -4917,12 +4921,11 @@
       "dataframe-aria-label": "选择 dataframe",
       "dataframe-label": "显示数据框",
       "download-csv": "下载 CSV",
-      "download-excel-description": "向 CSV 中添加页眉，以便在 Excel 中使用",
-      "download-excel-label": "下载 Excel 版本",
       "download-logs": "下载日志",
       "download-service": "下载服务图表",
       "download-traces": "下载跟踪",
-      "excel-header": "Excel 页眉",
+      "excel-compatibility-mode-description": "",
+      "excel-compatibility-mode-label": "",
       "formatted": "格式化数据",
       "formatted-data-description": "按照\"字段\"和\"覆盖\"选项卡中定义的选项将表格数据格式化。",
       "formatted-data-label": "格式化数据",
@@ -11179,11 +11182,11 @@
       "description-clear-repository-connection": "为此存储库连接添加明确的名称",
       "empty": "空",
       "error-field-required": "此字段是必填字段。",
-      "ext-storage": "外部存储",
-      "grafana": "Grafana 实例",
+      "external-storage-label": "",
       "label-display-name": "显示名称",
       "placeholder-my-repository-connection": "我的存储库连接",
       "text-loading-resource-information": "正在加载资源信息...",
+      "unmanaged-resources-label": "",
       "dashboards-count_other": "{{count}} 个数据面板",
       "files-count_other": "{{count}} 个文件",
       "folders-count_other": "{{count}} 个文件夹"
@@ -11228,7 +11231,8 @@
     },
     "connect-repository-button": {
       "configure": "配置",
-      "repository-limit-info-alert": "已达到存储库限制 ({{count}})"
+      "instance-fully-managed-tooltip": "",
+      "repository-limit-reached-tooltip_other": ""
     },
     "delete-repository-button": {
       "button-delete": "删除",
@@ -11919,13 +11923,6 @@
       "no-deleted-dashboards": "您最近没有删除任何数据面板。",
       "no-deleted-dashboards-text": "当您删除数据面板时，它将在此处显示 30 天，然后会被永久删除。您的组织管理员可以还原最近删除的数据面板。",
       "no-search-result": "未找到与您的查询相关的结果"
-    },
-    "permanently-delete-modal": {
-      "confirm-text": "删除",
-      "delete-button": "删除",
-      "delete-loading": "正在删除...",
-      "title": "永久删除数据面板",
-      "text_other": "此操作将删除 {{numberOfDashboards}} 个数据面板。"
     },
     "restore-modal": {
       "restore-button": "还原",
