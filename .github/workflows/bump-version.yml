@@ -13,17 +13,29 @@ on:
         required: false
 
 permissions:
-  contents: write
-  pull-requests: write
+  id-token: write
+  contents: read
 
 jobs:
   bump-version:
     runs-on: ubuntu-latest
     steps:
+      - uses: grafana/shared-workflows/actions/get-vault-secrets@main
+        with:
+          repo_secrets: |
+            GRAFANA_DELIVERY_BOT_APP_PEM=delivery-bot-app:PRIVATE_KEY
+      - name: Generate token
+        id: generate_token
+        uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a
+        with:
+          app_id: ${{ vars.DELIVERY_BOT_APP_ID }}
+          private_key: ${{ env.GRAFANA_DELIVERY_BOT_APP_PEM }}
+          repositories: '["grafana"]'
+          permissions: '{"contents": "write", "pull_requests": "write"}'
       - name: Checkout Grafana
         uses: actions/checkout@v4
         with:
-          persist-credentials: false
+          token: ${{ steps.generate_token.outputs.token }}
       - name: Update package.json versions
         uses: ./pkg/build/actions/bump-version
         with:
@@ -35,10 +47,10 @@ jobs:
           DRY_RUN: ${{ inputs.dry_run }}
           REF_NAME: ${{ github.ref_name }}
           RUN_ID: ${{ github.run_id }}
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ steps.generate_token.outputs.token }}
         run: |
-          git config --local user.name "github-actions[bot]"
-          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "grafana-delivery-bot[bot]"
+          git config --local user.email "grafana-delivery-bot[bot]@users.noreply.github.com"
           git config --local --add --bool push.autoSetupRemote true
           git checkout -b "bump-version/${RUN_ID}/${VERSION}"
           git add .
