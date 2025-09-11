@@ -115,8 +115,8 @@ func (s *SocialOkta) UserInfo(ctx context.Context, client *http.Client, token *o
 	if idToken == nil {
 		return nil, fmt.Errorf("no id_token found")
 	}
-
-	parsedToken, err := jwt.ParseSigned(idToken.(string), []jose.SignatureAlgorithm{jose.ES256})
+	parsedToken, err := jwt.ParseSigned(idToken.(string), []jose.SignatureAlgorithm{jose.HS256,
+		jose.HS384, jose.HS512, jose.RS256, jose.RS384, jose.RS512, jose.ES256, jose.ES384, jose.ES512})
 	if err != nil {
 		return nil, fmt.Errorf("error parsing id token: %w", err)
 	}

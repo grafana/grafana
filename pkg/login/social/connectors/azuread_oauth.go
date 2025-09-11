@@ -124,7 +124,7 @@ func (s *SocialAzureAD) UserInfo(ctx context.Context, client *http.Client, token
 		return nil, ErrIDTokenNotFound
 	}
 
-	parsedToken, err := jwt.ParseSigned(idToken.(string), []jose.SignatureAlgorithm{jose.ES256})
+	parsedToken, err := jwt.ParseSigned(idToken.(string), []jose.SignatureAlgorithm{jose.PS256, jose.RS256, jose.RS512, jose.ES256})
 	if err != nil {
 		return nil, fmt.Errorf("error parsing id token: %w", err)
 	}
