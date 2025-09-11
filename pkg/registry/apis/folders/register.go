@@ -2,7 +2,6 @@ package folders
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"strings"
 
@@ -21,7 +20,6 @@ import (
 
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	"github.com/grafana/grafana/apps/iam/pkg/reconcilers"
-	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -40,9 +38,6 @@ var _ builder.APIGroupBuilder = (*FolderAPIBuilder)(nil)
 var _ builder.APIGroupValidation = (*FolderAPIBuilder)(nil)
 
 var resourceInfo = folders.FolderResourceInfo
-
-var errNoUser = errors.New("valid user is required")
-var errNoResource = errors.New("resource name is required")
 
 // This is used just so wire has something unique to return
 type FolderAPIBuilder struct {
@@ -83,7 +78,7 @@ func RegisterAPIService(cfg *setting.Cfg,
 		acService:            acService,
 		ac:                   accessControl,
 		permissionsOnCreate:  cfg.RBAC.PermissionsOnCreation("folder"),
-		authorizer:           newLegacyAuthorizer(accessControl),
+		authorizer:           newAuthorizer(accessClient),
 		searcher:             unified,
 		permissionStore:      reconcilers.NewZanzanaPermissionStore(zanzanaClient),
 	}
@@ -93,7 +88,7 @@ func RegisterAPIService(cfg *setting.Cfg,
 
 func NewAPIService(ac authlib.AccessClient) *FolderAPIBuilder {
 	return &FolderAPIBuilder{
-		authorizer:   newMultiTenantAuthorizer(ac),
+		authorizer:   newAuthorizer(ac),
 		ignoreLegacy: true,
 	}
 }
@@ -215,11 +210,6 @@ func (b *FolderAPIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefinitions 
 func (b *FolderAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAPI, error) {
 	oas.Info.Description = "Grafana folders"
 	return oas, nil
-}
-
-type authorizerParams struct {
-	user      identity.Requester
-	evaluator accesscontrol.Evaluator
 }
 
 func (b *FolderAPIBuilder) GetAuthorizer() authorizer.Authorizer {
