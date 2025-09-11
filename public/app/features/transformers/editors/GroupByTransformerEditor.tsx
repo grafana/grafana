@@ -12,7 +12,7 @@ import {
 } from '@grafana/data';
 import { GroupByFieldOptions, GroupByOperationID, GroupByTransformerOptions } from '@grafana/data/internal';
 import { t } from '@grafana/i18n';
-import { useTheme2, StatsPicker, InlineField, Stack, Alert, Combobox, ComboboxOption, Select } from '@grafana/ui';
+import { useTheme2, StatsPicker, InlineField, Stack, Alert, Combobox, ComboboxOption } from '@grafana/ui';
 
 import { getTransformationContent } from '../docs/getTransformationContent';
 import darkImage from '../images/dark/groupBy.svg';
