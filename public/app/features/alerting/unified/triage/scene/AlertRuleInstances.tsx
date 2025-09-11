@@ -37,7 +37,12 @@ function extractInstancesFromData(series: DataFrame[] | undefined) {
   return Array.from(groups.values());
 }
 
-export function AlertRuleInstances({ ruleUID, depth = 0 }: { ruleUID: string; depth?: number }) {
+type AlertRuleInstancesProps = {
+  ruleUID: string;
+  depth?: number;
+};
+
+export function AlertRuleInstances({ ruleUID, depth = 0 }: AlertRuleInstancesProps) {
   const { leftColumnWidth } = useWorkbenchContext();
   const [timeRange] = useTimeRange();
 
