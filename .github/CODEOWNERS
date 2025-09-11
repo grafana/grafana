@@ -871,6 +871,7 @@ playwright.storybook.config.ts @grafana/grafana-frontend-platform
 /public/app/core/utils/accessControl.ts @grafana/identity-access-team
 /public/app/core/utils/applyStateChanges.ts @grafana/dashboards-squad
 /public/app/core/utils/arrayMove.ts @grafana/grafana-frontend-platform
+/public/app/core/utils/isFrontendService.ts @grafana/grafana-frontend-platform
 /public/app/core/utils/auth.ts @grafana/identity-access-team
 /public/app/core/utils/browser* @grafana/grafana-frontend-platform
 /public/app/core/utils/colors.ts @grafana/grafana-frontend-platform
