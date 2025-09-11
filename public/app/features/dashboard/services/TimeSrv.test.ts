@@ -297,7 +297,7 @@ describe('timeSrv', () => {
       timeSrv.setTime({ from: 'now-1h', to: 'now-10s' });
       timeSrv.setTime({ from: 'now-1h', to: 'now-10s' });
 
-      expect(locationUpdates[1].search).toEqual('?kiosk&from=now-1h&to=now-10s');
+      expect(locationUpdates[1].search).toEqual('?kiosk=true&from=now-1h&to=now-10s');
     });
 
     it('should not change the URL if the updateUrl param is false', () => {
