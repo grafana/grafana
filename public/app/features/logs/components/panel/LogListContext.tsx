@@ -397,16 +397,12 @@ export const LogListContextProvider = ({
     }));
   }, [timestampResolution]);
 
-  const controlsExpandedFromStoreRaw: undefined | 'true' | 'false' = store.get(
-    `${logOptionsStorageKey}.controlsExpanded`
+  const controlsExpandedFromStore = store.getBool(
+    `${logOptionsStorageKey}.controlsExpanded`,
+    getDefaultControlsExpandedMode(containerElement ?? null)
   );
-  const controlsExpandedFromStore =
-    controlsExpandedFromStoreRaw === undefined ? undefined : controlsExpandedFromStoreRaw === 'true';
-
   // If the user has a large viewport, show the expanded state by default
-  const [controlsExpanded, setControlsExpanded] = useState<boolean>(
-    controlsExpandedFromStore ?? getDefaultControlsExpandedMode(containerElement ?? null)
-  );
+  const [controlsExpanded, setControlsExpanded] = useState<boolean>(controlsExpandedFromStore);
 
   const detailsDisplayed = useCallback(
     (log: LogListModel) => !!showDetails.find((shownLog) => shownLog.uid === log.uid),
