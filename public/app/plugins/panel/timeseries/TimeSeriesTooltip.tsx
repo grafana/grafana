@@ -64,7 +64,6 @@ export const TimeSeriesTooltip = ({
   compareDiffMs,
 }: TimeSeriesTooltipProps) => {
   const xField = series.fields[0];
-
   let xVal = xField.values[dataIdxs[0]!];
 
   if (compareDiffMs != null && xField.type === FieldType.time) {

@@ -127,6 +127,10 @@ func buildIAMConfigFromSettings(cfg *setting.Cfg) (*iamConfig, error) {
 	}
 	iamCfg.RunnerConfig.KubeConfig = *kubeConfig
 
+	metricsSection := cfg.SectionWithEnvOverrides("metrics")
+	iamCfg.RunnerConfig.MetricsConfig.Enabled = metricsSection.Key("enabled").MustBool(true)
+	iamCfg.RunnerConfig.MetricsConfig.Namespace = metricsSection.Key("namespace").MustString("grafana-iam")
+
 	return &iamCfg, nil
 }
 
