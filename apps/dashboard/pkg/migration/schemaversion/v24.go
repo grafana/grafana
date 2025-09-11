@@ -532,7 +532,7 @@ func migrateDefaults(prevDefaults map[string]interface{}) map[string]interface{}
 		defaults["decimals"] = int(decimals)
 	}
 
-	if alias, ok := prevDefaults["alias"].(string); ok && alias != "" {
+	if alias, ok := prevDefaults["alias"].(string); ok {
 		defaults["displayName"] = alias
 	}
 
