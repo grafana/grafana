@@ -254,7 +254,7 @@ func (n *eventStore) CleanupOldEvents(ctx context.Context, retentionPeriod time.
 
 		// Extract timestamp from the snowflake ID (resource version)
 		eventTimestamp := snowflake.ID(eventKey.ResourceVersion).Time()
-		eventTime := time.Unix(0, eventTimestamp*int64(time.Millisecond))
+		eventTime := time.UnixMilli(eventTimestamp)
 
 		// TODO should use batch deletes here when available
 		// If the event is older than the cutoff time, delete it
