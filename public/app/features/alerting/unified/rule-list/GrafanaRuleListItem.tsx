@@ -14,13 +14,12 @@ import {
   UnknownRuleListItem,
 } from './components/AlertRuleListItem';
 import { RuleActionsButtons } from './components/RuleActionsButtons.V2';
-import { RuleOperation } from './components/RuleListIcon';
 
 interface GrafanaRuleListItemProps {
   rule: GrafanaPromRuleDTO;
   groupIdentifier: GrafanaRuleGroupIdentifier;
   namespaceName: string;
-  operation?: RuleOperation;
+  operation?: 'creating' | 'deleting';
   showLocation?: boolean;
 }
 
