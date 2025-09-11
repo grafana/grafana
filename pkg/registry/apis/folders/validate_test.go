@@ -12,6 +12,7 @@ import (
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
+	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
@@ -23,79 +24,110 @@ func TestValidateCreate(t *testing.T) {
 		getterError error
 		expectedErr string
 		maxDepth    int // defaults to 5 unless set
-	}{{
-		name: "ok",
-		folder: &folders.Folder{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:        "p1",
-				Annotations: map[string]string{"grafana.app/folder": "p2"},
+	}{
+		{
+			name: "ok",
+			folder: &folders.Folder{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:        "p1",
+					Annotations: map[string]string{"grafana.app/folder": "p2"},
+				},
+				Spec: folders.FolderSpec{
+					Title: "some title",
+				},
 			},
-			Spec: folders.FolderSpec{
-				Title: "some title",
-			},
-		},
-		getter: &folders.FolderInfoList{
-			Items: []folders.FolderInfo{
-				{Name: "p2", Parent: "p3"},
-				{Name: "p3"},
-			},
-		},
-	}, {
-		name: "reserved name",
-		folder: &folders.Folder{
-			ObjectMeta: metav1.ObjectMeta{
-				Name: "general", // can not name something with general
+			getter: &folders.FolderInfoList{
+				Items: []folders.FolderInfo{
+					{Name: "p2", Parent: "p3"},
+					{Name: "p3"},
+				},
 			},
 		},
-		expectedErr: "invalid uid for folder provided",
-	}, {
-		name: "too long",
-		folder: &folders.Folder{
-			ObjectMeta: metav1.ObjectMeta{
-				Name: "a0123456789012345678901234567890123456789", // longer than 40
+		{
+			name: "reserved name",
+			folder: &folders.Folder{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "general", // can not name something with general
+				},
 			},
+			expectedErr: "invalid uid for folder provided",
 		},
-		expectedErr: "uid too long, max 40 characters",
-	}, {
-		name: "bad name",
-		folder: &folders.Folder{
-			ObjectMeta: metav1.ObjectMeta{
-				Name: "hello world", // not a-z|0-9,
+		{
+			name: "too long",
+			folder: &folders.Folder{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "a0123456789012345678901234567890123456789", // longer than 40
+				},
 			},
+			expectedErr: "uid too long, max 40 characters",
 		},
-		expectedErr: "uid contains illegal characters",
-	}, {
-		name: "can not be a parent of yourself",
-		folder: &folders.Folder{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:        "p1",
-				Annotations: map[string]string{"grafana.app/folder": "p1"},
+		{
+			name: "bad name",
+			folder: &folders.Folder{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "hello world", // not a-z|0-9,
+				},
 			},
-			Spec: folders.FolderSpec{
-				Title: "some title",
-			},
+			expectedErr: "uid contains illegal characters",
 		},
-		expectedErr: "folder cannot be parent of itself",
-	}, {
-		name: "can not create a tree that is too deep",
-		folder: &folders.Folder{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:        "p1",
-				Annotations: map[string]string{"grafana.app/folder": "p2"},
+		{
+			name: "can not be a parent of yourself",
+			folder: &folders.Folder{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:        "p1",
+					Annotations: map[string]string{"grafana.app/folder": "p1"},
+				},
+				Spec: folders.FolderSpec{
+					Title: "some title",
+				},
 			},
-			Spec: folders.FolderSpec{
-				Title: "some title",
-			},
+			expectedErr: "folder cannot be parent of itself",
 		},
-		getter: &folders.FolderInfoList{
-			Items: []folders.FolderInfo{
-				{Name: "p2", Parent: "p3"},
-				{Name: "p3"},
+		{
+			name: "can not create a tree that is too deep",
+			folder: &folders.Folder{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:        "p1",
+					Annotations: map[string]string{"grafana.app/folder": "p2"},
+				},
+				Spec: folders.FolderSpec{
+					Title: "some title",
+				},
 			},
+			getter: &folders.FolderInfoList{
+				Items: []folders.FolderInfo{
+					{Name: "p2", Parent: "p3"},
+					{Name: "p3", Parent: "p4"},
+					{Name: "p4", Parent: folder.GeneralFolderUID},
+					{Name: folder.GeneralFolderUID},
+				},
+			},
+			maxDepth:    2,
+			expectedErr: "folder max depth exceeded",
 		},
-		maxDepth:    2, // will become 3
-		expectedErr: "folder max depth exceeded",
-	}}
+		{
+			name: "can create a folder in max depth",
+			folder: &folders.Folder{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:        "5",
+					Annotations: map[string]string{"grafana.app/folder": "4"},
+				},
+				Spec: folders.FolderSpec{
+					Title: "some title",
+				},
+			},
+			getter: &folders.FolderInfoList{
+				Items: []folders.FolderInfo{
+					{Name: "4", Parent: "3"},
+					{Name: "3", Parent: "2"},
+					{Name: "2", Parent: "1"},
+					{Name: "1", Parent: folder.GeneralFolderUID},
+					{Name: folder.GeneralFolderUID},
+				},
+			},
+			maxDepth: folder.MaxNestedFolderDepth,
+		},
+	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -127,75 +159,113 @@ func TestValidateUpdate(t *testing.T) {
 		parentsError error
 		expectedErr  string
 		maxDepth     int // defaults to 5 unless set
-	}{{
-		name: "change title",
-		folder: &folders.Folder{
-			ObjectMeta: metav1.ObjectMeta{
-				Name: "nnn",
-			},
-			Spec: folders.FolderSpec{
-				Title: "changed",
-			},
-		},
-		old: &folders.Folder{
-			ObjectMeta: metav1.ObjectMeta{
-				Name: "nnn",
-			},
-			Spec: folders.FolderSpec{
-				Title: "old title",
-			},
-		},
-	}, {
-		name: "error to move into k6 folder",
-		folder: &folders.Folder{
-			ObjectMeta: metav1.ObjectMeta{
-				Name: "nnn",
-				Annotations: map[string]string{
-					utils.AnnoKeyFolder: "k6-app",
+	}{
+		{
+			name: "change title",
+			folder: &folders.Folder{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "nnn",
+				},
+				Spec: folders.FolderSpec{
+					Title: "changed",
 				},
 			},
-			Spec: folders.FolderSpec{
-				Title: "changed",
-			},
-		},
-		old: &folders.Folder{
-			ObjectMeta: metav1.ObjectMeta{
-				Name: "nnn",
-			},
-			Spec: folders.FolderSpec{
-				Title: "old title",
-			},
-		},
-		expectedErr: "k6 project may not be moved",
-	}, {
-		name: "error when moving too deep",
-		folder: &folders.Folder{
-			ObjectMeta: metav1.ObjectMeta{
-				Name: "test",
-				Annotations: map[string]string{
-					utils.AnnoKeyFolder: "p1",
+			old: &folders.Folder{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "nnn",
+				},
+				Spec: folders.FolderSpec{
+					Title: "old title",
 				},
 			},
-			Spec: folders.FolderSpec{
-				Title: "changed",
-			},
 		},
-		old: &folders.Folder{
-			ObjectMeta: metav1.ObjectMeta{},
-			Spec: folders.FolderSpec{
-				Title: "old title",
+		{
+			name: "error to move into k6 folder",
+			folder: &folders.Folder{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "nnn",
+					Annotations: map[string]string{
+						utils.AnnoKeyFolder: "k6-app",
+					},
+				},
+				Spec: folders.FolderSpec{
+					Title: "changed",
+				},
 			},
-		},
-		parents: &folders.FolderInfoList{
-			Items: []folders.FolderInfo{
-				{Name: "p1", Parent: "p2"},
-				{Name: "p2", Parent: "p3"},
-				{Name: "p3"},
+			old: &folders.Folder{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "nnn",
+				},
+				Spec: folders.FolderSpec{
+					Title: "old title",
+				},
 			},
+			expectedErr: "k6 project may not be moved",
 		},
-		maxDepth:    2, // will become 3
-		expectedErr: "[folder.maximum-depth-reached]",
-	}}
+		{
+			name: "no error when moving to max depth",
+			folder: &folders.Folder{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "test",
+					Annotations: map[string]string{
+						utils.AnnoKeyFolder: "4",
+					},
+				},
+				Spec: folders.FolderSpec{
+					Title: "changed",
+				},
+			},
+			old: &folders.Folder{
+				ObjectMeta: metav1.ObjectMeta{},
+				Spec: folders.FolderSpec{
+					Title: "old title",
+				},
+			},
+			parents: &folders.FolderInfoList{
+				Items: []folders.FolderInfo{
+					{Name: "4", Parent: "3"},
+					{Name: "3", Parent: "2"},
+					{Name: "2", Parent: "1"},
+					{Name: "1", Parent: folder.GeneralFolderUID},
+					{Name: folder.GeneralFolderUID},
+				},
+			},
+			maxDepth:    folder.MaxNestedFolderDepth,
+			expectedErr: "[folder.maximum-depth-reached]",
+		},
+		{
+			name: "error when moving too deep",
+			folder: &folders.Folder{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "test",
+					Annotations: map[string]string{
+						utils.AnnoKeyFolder: "5",
+					},
+				},
+				Spec: folders.FolderSpec{
+					Title: "changed",
+				},
+			},
+			old: &folders.Folder{
+				ObjectMeta: metav1.ObjectMeta{},
+				Spec: folders.FolderSpec{
+					Title: "old title",
+				},
+			},
+			parents: &folders.FolderInfoList{
+				Items: []folders.FolderInfo{
+					{Name: "5", Parent: "4"},
+					{Name: "4", Parent: "3"},
+					{Name: "3", Parent: "2"},
+					{Name: "2", Parent: "1"},
+					{Name: "1", Parent: folder.GeneralFolderUID},
+					{Name: folder.GeneralFolderUID},
+				},
+			},
+			maxDepth:    folder.MaxNestedFolderDepth,
+			expectedErr: "[folder.maximum-depth-reached]",
+		},
+	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
