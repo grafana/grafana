@@ -4,8 +4,10 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { Button, Menu, Stack, Text, useStyles2, Dropdown, Icon, IconButton } from '@grafana/ui';
+import { trackDeleteDashboardElement } from 'app/features/dashboard/utils/tracking';
 
 import { EditableDashboardElement } from '../scene/types/EditableDashboardElement';
+import { DashboardInteractions } from '../utils/interactions';
 
 import { DashboardEditPane } from './DashboardEditPane';
 
@@ -75,7 +77,14 @@ export function EditPaneHeader({ element, editPane }: EditPaneHeaderProps) {
 
         {(onDelete || onConfirmDelete) && (
           <Button
-            onClick={onConfirmDelete || onDelete}
+            onClick={() => {
+              trackDeleteDashboardElement(elementInfo);
+              if (onConfirmDelete) {
+                onConfirmDelete();
+              } else if (onDelete) {
+                onDelete();
+              }
+            }}
             size="sm"
             variant="destructive"
             fill="outline"
