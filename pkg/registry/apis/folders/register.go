@@ -19,6 +19,8 @@ import (
 
 	authlib "github.com/grafana/authlib/types"
 
+	"github.com/grafana/grafana-app-sdk/logging"
+
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	"github.com/grafana/grafana/apps/iam/pkg/reconcilers"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -176,9 +178,13 @@ func (b *FolderAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.API
 			return err
 		}
 
+		log := logging.FromContext(context.Background())
 		if b.features.IsEnabledGlobally(featuremgmt.FlagZanzana) {
+			log.Info("Enabling Zanzana folder propagation hooks")
 			store.BeginCreate = b.beginCreate
 			store.BeginUpdate = b.beginUpdate
+		} else {
+			log.Info("Zanzana is not enabled; skipping folder propagation hooks")
 		}
 
 		dw, err := dualWriteBuilder(resourceInfo.GroupResource(), legacyStore, store)
