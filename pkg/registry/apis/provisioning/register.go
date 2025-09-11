@@ -24,6 +24,8 @@ import (
 	"k8s.io/kube-openapi/pkg/spec3"
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
+	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
+
 	authlib "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana-app-sdk/logging"
 	dashboard "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
@@ -87,7 +89,7 @@ type APIBuilder struct {
 	usageStats usagestats.Service
 
 	tracer              tracing.Tracer
-	getter              rest.Getter
+	store               grafanarest.Storage
 	parsers             resources.ParserFactory
 	repositoryResources resources.RepositoryResourcesFactory
 	clients             resources.ClientFactory
@@ -403,7 +405,7 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 		return fmt.Errorf("failed to create repository storage: %w", err)
 	}
 	repositoryStatusStorage := grafanaregistry.NewRegistryStatusStore(opts.Scheme, repositoryStorage)
-	b.getter = repositoryStorage
+	b.store = repositoryStorage
 
 	jobStore, err := grafanaregistry.NewCompleteRegistryStore(opts.Scheme, provisioning.JobResourceInfo, opts.OptsGetter)
 	if err != nil {
@@ -1231,7 +1233,7 @@ func (b *APIBuilder) tryRunningOnlyUnifiedStorage() error {
 // TODO: where should the helpers live?
 
 func (b *APIBuilder) GetRepository(ctx context.Context, name string) (repository.Repository, error) {
-	obj, err := b.getter.Get(ctx, name, &metav1.GetOptions{})
+	obj, err := b.store.Get(ctx, name, &metav1.GetOptions{})
 	if err != nil {
 		return nil, err
 	}
