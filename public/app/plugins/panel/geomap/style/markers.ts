@@ -393,7 +393,7 @@ export async function getMarkerMaker(symbol?: string, hasTextLabel?: boolean): P
   let maker = markerMakers.getIfExists(symbol);
   if (maker) {
     return maker.make;
-  }
+  } 
 
   // Prepare svg as icon
   if (symbol.endsWith('.svg')) {

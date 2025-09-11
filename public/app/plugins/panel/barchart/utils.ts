@@ -39,7 +39,9 @@ import { AxisProps, UPLOT_AXIS_FONT_SIZE, getStackingGroups } from '@grafana/ui/
 import { setClassicPaletteIdxs } from '../timeseries/utils';
 
 import { BarsOptions, getConfig } from './bars';
+import { singleBarMarker } from './barmarkers';
 import { FieldConfig, Options, defaultFieldConfig } from './panelcfg.gen';
+
 // import { isLegendOrdered } from './utils';
 
 interface BarSeries {
@@ -68,7 +70,7 @@ export function prepSeries(
 
   cacheFieldDisplayNames(frames);
   decoupleHideFromState(frames, fieldConfig);
-
+ 
   let frame: DataFrame | undefined = { ...frames[0] };
 
   // auto-sort and/or join on first time field (if any)
@@ -291,7 +293,12 @@ export const prepConfig = ({ series, totalSeries, color, orientation, options, t
 
   builder.addHook('init', config.init);
   builder.addHook('drawClear', config.drawClear);
-  builder.addHook('draw', config.draw);
+
+  builder.addHook('draw', singleBarMarker(builder)); // example marker
+
+
+
+  
 
   if (xTickLabelRotation !== 0) {
     // these are the amount of space we already have available between plot edge and first label
@@ -465,6 +472,8 @@ export const prepConfig = ({ series, totalSeries, color, orientation, options, t
       }
 
       builder.addAxis(axisOpts);
+
+      
     }
   }
 
@@ -556,4 +565,6 @@ function getScaleOrientation(orientation: VizOrientation) {
     yOri: ScaleOrientation.Horizontal,
     yDir: ScaleDirection.Right,
   };
+
+  
 }

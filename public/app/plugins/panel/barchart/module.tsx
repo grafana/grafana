@@ -21,7 +21,6 @@ import { TickSpacingEditor } from './TickSpacingEditor';
 import { changeToBarChartPanelMigrationHandler } from './migrations';
 import { FieldConfig, Options, defaultFieldConfig, defaultOptions } from './panelcfg.gen';
 import { BarChartSuggestionsSupplier } from './suggestions';
-import { AddBarMarkersEditor } from './AddBarMarkersEditor';
 import { BarMarkersEditor } from './BarMarkersEditor';
 
 export const plugin = new PanelPlugin<Options, FieldConfig>(BarChartPanel)
@@ -48,6 +47,7 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(BarChartPanel)
     },
     useCustomConfig: (builder) => {
       const cfg = defaultFieldConfig;
+      const markersCategory = [t('barchart.config.category-markers', 'Markers')];
 
      
       builder
@@ -79,22 +79,9 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(BarChartPanel)
             options: getGraphFieldOptions().fillGradient,
           },
         });
-         builder.addCustomEditor({
-        id: 'addMarker',
-        path: 'barchart.config.add-marker',
-        name: 'Markers',
-        editor: AddBarMarkersEditor,
-        override: AddBarMarkersEditor,
-        process: function (value: any, context: FieldOverrideContext, settings?: any) {
-          // Example implementation: Return the value as-is
-          return value;
-        },
-        shouldApply: function (field: Field): boolean {
-          // Example implementation: Apply to all fields
-          return true;
-        }
-      });
+      
       builder.addCustomEditor({
+        category: markersCategory,
         id: 'Markers',
         path: 'barchart.config.markers',
         name: 'Markers',

@@ -12,10 +12,13 @@ import {
 import { measureText } from '@grafana/ui';
 import { timeUnitSize, StackingGroup, preparePlotData2 } from '@grafana/ui/internal';
 
+
 const intervals = systemDateFormats.interval;
 
 import { distribute, SPACE_BETWEEN } from './distribute';
 import { findRects, intersects, pointWithin, Quadtree, Rect } from './quadtree';
+import { BarMarkerDetails } from './barmarkers';
+
 
 const groupDistr = SPACE_BETWEEN;
 const barDistr = SPACE_BETWEEN;
@@ -340,6 +343,7 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
         }
       }
 
+      
       qt.add(barRect);
 
       if (showValue !== VisibilityMode.Never) {
@@ -528,6 +532,7 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
       barsPctLayout = [null, ...distrOne(u.data[0].length, u.data.length - 1)];
     } else {
       barsPctLayout = [null, ...distrTwo(u.data[0].length, u.data.length - 1)];
+      // Calculate BarMarker positions
     }
 
     if (useMappedColors) {
@@ -550,6 +555,7 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
         });
       }
     }
+    
 
     labels = {};
     fontSize = opts.text?.valueSize ?? VALUE_MAX_FONT_SIZE;
@@ -636,6 +642,7 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
     u.ctx.restore();
   };
 
+
   let alignedTotals: AlignedData | null = null;
 
   function prepData(frames: DataFrame[], stackingGroups: StackingGroup[]) {
@@ -659,6 +666,9 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
     init,
     drawClear,
     draw,
+    
     prepData,
   };
 }
+
+

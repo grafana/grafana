@@ -17,9 +17,11 @@ import { AdHocFilterModel, FILTER_FOR_OPERATOR, TooltipHoverMode } from '@grafan
 
 import { TimeSeriesTooltip } from '../timeseries/TimeSeriesTooltip';
 
+// Import some sort of MarkerList here
 import { BarChartLegend, hasVisibleLegendSeries } from './BarChartLegend';
 import { Options } from './panelcfg.gen';
 import { prepConfig, prepSeries } from './utils';
+
 
 const charWidth = measureText('M', UPLOT_AXIS_FONT_SIZE).width;
 const toRads = Math.PI / 180;
@@ -46,7 +48,8 @@ export const BarChartPanel = (props: PanelProps<Options>) => {
     xTickLabelSpacing,
     fullHighlight,
     xField,
-    colorByField,
+    colorByField, 
+    // maybe marker options here?
   } = options;
 
   // size-dependent, calculated opts that should cause viz re-config
@@ -89,6 +92,7 @@ export const BarChartPanel = (props: PanelProps<Options>) => {
 
   let { builder, prepData } = useMemo(
     () => {
+      
       return xGroupsCount === 0
         ? { builder: null, prepData: null }
         : prepConfig({ series: vizSeries, totalSeries, color: info.color, orientation, options, timeZone, theme });
@@ -167,8 +171,8 @@ export const BarChartPanel = (props: PanelProps<Options>) => {
 
                 // Check if the field supports filtering
                 // We only show filters on filterable fields (xField.config.filterable).
-                // Fields will have been marked as filterable by the data source if that data source supports adhoc filtering
-                // (eg. Prom or Loki) and the field types support adhoc filtering (eg. string or number - depending on the data source).
+                // Fields will have been marked as filterat adhoc fible by the data source if that data source supports adhoc filtering
+                // (eg. Prom or Loki) and the field types supporltering (eg. string or number - depending on the data source).
                 // Fields may later be marked as not filterable. For example, fields created from Grafana Transforms that
                 // are derived from a data source, but are not present in the data source.
                 // We choose `xField` here because it contains the label-value pair, rather than `field` which is the numeric Value.
