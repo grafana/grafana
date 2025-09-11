@@ -98,6 +98,7 @@ export const availableIconsIndex = {
   'download-alt': true,
   draggabledots: true,
   drilldown: true,
+  'adaptive-telemetry': true,
   edit: true,
   'ellipsis-v': true,
   enter: true,
