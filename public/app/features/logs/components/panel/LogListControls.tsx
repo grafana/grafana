@@ -631,10 +631,10 @@ const TimestampResolutionButton = ({ expanded }: LogSelectOptionProps) => {
   );
 
   const labelText = !showTime
-    ? t('logs.logs-controls.timestamp.label.hide', 'Hide timestamps')
+    ? t('logs.logs-controls.timestamp.label-hide', 'Hide timestamps')
     : timestampResolution === 'ms'
-      ? t('logs.logs-controls.timestamp.label.ms', 'Display ms')
-      : t('logs.logs-controls.timestamp.label.ns', 'Display ns');
+      ? t('logs.logs-controls.timestamp.label-ms', 'Display ms')
+      : t('logs.logs-controls.timestamp.label-ns', 'Display ns');
 
   const customTagText =
     timestampResolution === 'ms'
