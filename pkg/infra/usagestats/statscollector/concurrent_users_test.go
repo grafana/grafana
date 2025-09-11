@@ -32,7 +32,7 @@ func TestIntegrationConcurrentUsersMetrics(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	sqlStore, cfg := db.InitTestDBWithCfg(t)
-	statsService := statsimpl.ProvideService(&setting.Cfg{}, sqlStore, &dashboards.FakeDashboardService{}, &foldertest.FakeService{}, &orgtest.FakeOrgService{}, featuremgmt.WithFeatures())
+	statsService := statsimpl.ProvideService(&setting.Cfg{}, sqlStore, &dashboards.FakeDashboardService{}, &foldertest.FakeService{}, &orgtest.FakeOrgService{}, nil, featuremgmt.WithFeatures())
 	s := createService(t, cfg, sqlStore, statsService)
 
 	createConcurrentTokens(t, sqlStore)
@@ -52,7 +52,7 @@ func TestIntegrationConcurrentUsersStats(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	sqlStore, cfg := db.InitTestDBWithCfg(t)
-	statsService := statsimpl.ProvideService(&setting.Cfg{}, sqlStore, &dashboards.FakeDashboardService{}, &foldertest.FakeService{}, &orgtest.FakeOrgService{}, featuremgmt.WithFeatures())
+	statsService := statsimpl.ProvideService(&setting.Cfg{}, sqlStore, &dashboards.FakeDashboardService{}, &foldertest.FakeService{}, &orgtest.FakeOrgService{}, nil, featuremgmt.WithFeatures())
 	s := createService(t, cfg, sqlStore, statsService)
 
 	createConcurrentTokens(t, sqlStore)
