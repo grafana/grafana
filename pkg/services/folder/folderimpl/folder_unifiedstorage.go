@@ -563,13 +563,14 @@ func (s *Service) updateOnApiServer(ctx context.Context, cmd *folder.UpdateFolde
 	user := cmd.SignedInUser
 
 	foldr, err := s.unifiedStore.Update(ctx, folder.UpdateFolderCommand{
-		UID:            cmd.UID,
-		OrgID:          cmd.OrgID,
-		NewTitle:       cmd.NewTitle,
-		NewDescription: cmd.NewDescription,
-		SignedInUser:   user,
-		Overwrite:      cmd.Overwrite,
-		Version:        cmd.Version,
+		UID:                  cmd.UID,
+		OrgID:                cmd.OrgID,
+		NewTitle:             cmd.NewTitle,
+		NewDescription:       cmd.NewDescription,
+		SignedInUser:         user,
+		Overwrite:            cmd.Overwrite,
+		Version:              cmd.Version,
+		ManagerKindClassicFP: cmd.ManagerKindClassicFP, // nolint:static
 	})
 
 	if err != nil {
