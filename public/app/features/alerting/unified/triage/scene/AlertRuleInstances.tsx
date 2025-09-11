@@ -1,4 +1,4 @@
-import { omit } from 'lodash';
+import { omit, size } from 'lodash';
 import { useMemo } from 'react';
 
 import { DataFrame, Labels, findCommonLabels } from '@grafana/data';
@@ -67,7 +67,7 @@ export function AlertRuleInstances({ ruleUID }: { ruleUID: string }) {
   }
 
   const allSeriesLabels: Labels[] = instances.map((instance) => instance.labels);
-  const commonLabels = findCommonLabels(allSeriesLabels);
+  const commonLabels = allSeriesLabels.length === 1 ? {} : findCommonLabels(allSeriesLabels);
 
   return (
     <>
