@@ -3275,11 +3275,6 @@
       "count": 2
     }
   },
-  "public/app/features/provisioning/Wizard/SynchronizeStep.tsx": {
-    "react/no-unescaped-entities": {
-      "count": 1
-    }
-  },
   "public/app/features/query/components/QueryEditorRow.tsx": {
     "@grafana/no-aria-label-selectors": {
       "count": 1
