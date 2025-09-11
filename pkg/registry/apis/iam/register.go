@@ -83,15 +83,17 @@ func RegisterAPIService(
 
 func NewAPIService(
 	accessClient types.AccessClient,
-	store legacy.LegacyIdentityStore,
-	resourcePermissionsStorage resource.StorageBackend,
+	dbProvider legacysql.LegacyDatabaseProvider,
+	enabledApis map[string]bool,
 ) *IdentityAccessManagementAPIBuilder {
+	store := legacy.NewLegacySQLStores(dbProvider)
+	resourcePermissionsStorage := resourcepermission.ProvideStorageBackend(dbProvider)
 	resourceAuthorizer := gfauthorizer.NewResourceAuthorizer(accessClient)
 	return &IdentityAccessManagementAPIBuilder{
 		store:                        store,
 		display:                      user.NewLegacyDisplayREST(store),
 		resourcePermissionsStorage:   resourcePermissionsStorage,
-		enableResourcePermissionApis: true,
+		enableResourcePermissionApis: enabledApis["resourcepermissions"],
 		authorizer: authorizer.AuthorizerFunc(
 			func(ctx context.Context, a authorizer.Attributes) (authorizer.Decision, string, error) {
 				// For now only authorize resourcepermissions resource
