@@ -72,7 +72,7 @@ func TestIntegrationSQLStorageBackend(t *testing.T) {
 			})
 			require.NoError(t, err)
 			require.NotNil(t, backend)
-			err = backend.Init(testutil.NewDefaultTestContext(t))
+			err = backend.Init(testutil.NewTestContext(t, time.Now().Add(1*time.Minute)))
 			require.NoError(t, err)
 			return backend
 		}, nil)
@@ -91,7 +91,7 @@ func TestIntegrationSQLStorageBackend(t *testing.T) {
 			})
 			require.NoError(t, err)
 			require.NotNil(t, backend)
-			err = backend.Init(testutil.NewDefaultTestContext(t))
+			err = backend.Init(testutil.NewTestContext(t, time.Now().Add(1*time.Minute)))
 			require.NoError(t, err)
 			return backend
 		}, nil)
