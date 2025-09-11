@@ -298,7 +298,8 @@ groupByNode(summarize(movingAverage(apps.$app.$server.counters.requests.count, 5
 ## Add ad hoc filters
 
 _Ad hoc filters_ are one of the most complex and flexible variable options available.
-Instead of a regular list of variable options, this variable allows you to build a dashboard-wide ad hoc query.
+Instead of creating a variable for each dimension by which you want to filter, ad hoc filters automatically create variables (key/value pairs) for all the dimensions returned by your data source query.
+This allows you to apply filters dashboard-wide.
 
 Ad hoc filters let you add label/value filters that are automatically added to all metric queries that use the specified data source.
 Unlike other variables, you don't use ad hoc filters in queries.
