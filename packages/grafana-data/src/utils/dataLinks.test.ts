@@ -164,6 +164,6 @@ describe('mapInternalLinkToExplore', () => {
       ...query,
     });
 
-    expect(link.interpolation.timeRange).toEqual(TIME_RANGE);
+    expect(link.interpolation?.timeRange).toEqual(TIME_RANGE);
   });
 });
