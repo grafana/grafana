@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 
 import { Trans, t } from '@grafana/i18n';
-import { Button, Text, Stack, TextLink, Field, Checkbox, Alert, Spinner } from '@grafana/ui';
+import { Alert, Button, Checkbox, Field, Spinner, Stack, Text, TextLink } from '@grafana/ui';
 import { Job, useGetRepositoryStatusQuery } from 'app/api/clients/provisioning/v0alpha1';
 
 import { JobStatus } from '../Job/JobStatus';
@@ -134,7 +134,7 @@ export function SynchronizeStep({ isLegacyStorage, onCancel, isCancelling }: Syn
       )}
 
       <Field noMargin>
-        {!isRepositoryHealthy ? (
+        {isRepositoryHealthy === false ? (
           <Button variant="destructive" onClick={() => onCancel?.(repoName)} disabled={isCancelling}>
             {isCancelling ? (
               <Trans i18nKey="provisioning.wizard.button-cancelling">Cancelling...</Trans>
