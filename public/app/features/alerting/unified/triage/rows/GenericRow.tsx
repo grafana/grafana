@@ -118,6 +118,7 @@ export const getStyles = (theme: GrafanaTheme2) => {
     }),
     leftColumn: css({
       // background: `rgba(0, 0, 255, 0.1)`,
+      overflow: 'hidden',
     }),
     rightColumn: css({
       // background: `rgba(255, 0, 0, 0.1)`,

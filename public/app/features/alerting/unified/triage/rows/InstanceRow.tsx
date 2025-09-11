@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { isEmpty, omit } from 'lodash';
+import { isEmpty } from 'lodash';
 import { useMemo } from 'react';
 
 import { DataFrame, GrafanaTheme2, Labels, LoadingState, TimeRange } from '@grafana/data';
@@ -12,13 +12,13 @@ import {
   BarAlignment,
   LegendDisplayMode,
   StackingMode,
+  Text,
   TooltipDisplayMode,
   useStyles2,
 } from '@grafana/ui';
 
 import { AlertLabels } from '../../components/AlertLabels';
 import { overrideToFixedColor } from '../../home/Insights';
-import { DEFAULT_FIELDS } from '../constants';
 
 import { GenericRow } from './GenericRow';
 
@@ -76,18 +76,18 @@ export function InstanceRow({ instance, commonLabels, leftColumnWidth, timeRange
     [instance, timeRange]
   );
 
-  const labels = omit(instance.labels, DEFAULT_FIELDS);
-
   return (
     <GenericRow
       width={leftColumnWidth}
       title={
-        isEmpty(labels) ? (
+        isEmpty(instance.labels) ? (
           <div className={styles.wrapper}>
-            <Trans i18nKey="alerting.triage.no-labels">No labels</Trans>
+            <Text color="secondary" variant="bodySmall">
+              <Trans i18nKey="alerting.triage.no-labels">No labels</Trans>
+            </Text>
           </div>
         ) : (
-          <AlertLabels labels={labels} commonLabels={commonLabels} size="xs" wrap="nowrap" />
+          <AlertLabels labels={instance.labels} commonLabels={commonLabels} size="xs" wrap="nowrap" />
         )
       }
       content={
@@ -101,7 +101,7 @@ export function InstanceRow({ instance, commonLabels, leftColumnWidth, timeRange
 const getStyles = (theme: GrafanaTheme2) => {
   return {
     wrapper: css({
-      minHeight: theme.spacing(5),
+      minHeight: theme.spacing(2.5),
       display: 'flex',
       alignItems: 'center',
     }),
