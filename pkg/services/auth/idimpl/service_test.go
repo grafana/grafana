@@ -74,7 +74,7 @@ func TestService_SignIdentity(t *testing.T) {
 		})
 		require.NoError(t, err)
 
-		parsed, err := jwt.ParseSigned(token)
+		parsed, err := jwt.ParseSigned(token, []jose.SignatureAlgorithm{jose.ES256})
 		require.NoError(t, err)
 
 		gotClaims := &auth.IDClaims{}
