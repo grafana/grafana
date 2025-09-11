@@ -37,9 +37,7 @@
       ],
       "d3DivId": "d3_svg_4",
       "datasource": {
-        "apiVersion": "v1",
-        "type": "grafana-testdata-datasource",
-        "uid": "testdata-type-uid"
+        "type": "grafana-testdata-datasource"
       },
       "decimals": 2,
       "displayModes": [
@@ -1231,9 +1229,7 @@
       ],
       "d3DivId": "d3_svg_5",
       "datasource": {
-        "apiVersion": "v1",
-        "type": "grafana-testdata-datasource",
-        "uid": "testdata-type-uid"
+        "type": "grafana-testdata-datasource"
       },
       "decimals": 2,
       "displayModes": [
@@ -2386,9 +2382,7 @@
       ],
       "d3DivId": "d3_svg_2",
       "datasource": {
-        "apiVersion": "v1",
-        "type": "grafana-testdata-datasource",
-        "uid": "testdata-type-uid"
+        "type": "grafana-testdata-datasource"
       },
       "decimals": 2,
       "displayModes": [

@@ -21,9 +21,7 @@
   "panels": [
     {
       "datasource": {
-        "apiVersion": "v1",
-        "type": "grafana-testdata-datasource",
-        "uid": "testdata-type-uid"
+        "type": "grafana-testdata-datasource"
       },
       "gridPos": {
         "h": 7,
@@ -228,9 +226,7 @@
     },
     {
       "datasource": {
-        "apiVersion": "v1",
-        "type": "grafana-testdata-datasource",
-        "uid": "testdata-type-uid"
+        "type": "grafana-testdata-datasource"
       },
       "fieldConfig": {
         "defaults": {
@@ -292,9 +288,7 @@
     },
     {
       "datasource": {
-        "apiVersion": "v1",
-        "type": "grafana-testdata-datasource",
-        "uid": "testdata-type-uid"
+        "type": "grafana-testdata-datasource"
       },
       "fieldConfig": {
         "defaults": {
@@ -356,9 +350,7 @@
     },
     {
       "datasource": {
-        "apiVersion": "v1",
-        "type": "grafana-testdata-datasource",
-        "uid": "testdata-type-uid"
+        "type": "grafana-testdata-datasource"
       },
       "fieldConfig": {
         "defaults": {
@@ -420,9 +412,7 @@
     },
     {
       "datasource": {
-        "apiVersion": "v1",
-        "type": "grafana-testdata-datasource",
-        "uid": "testdata-type-uid"
+        "type": "grafana-testdata-datasource"
       },
       "fieldConfig": {
         "defaults": {
@@ -494,9 +484,7 @@
       "dashLength": 10,
       "dashes": false,
       "datasource": {
-        "apiVersion": "v1",
-        "type": "grafana-testdata-datasource",
-        "uid": "testdata-type-uid"
+        "type": "grafana-testdata-datasource"
       },
       "fill": 3,
       "fillGradient": 0,
@@ -602,9 +590,7 @@
     },
     {
       "datasource": {
-        "apiVersion": "v1",
-        "type": "grafana-testdata-datasource",
-        "uid": "testdata-type-uid"
+        "type": "grafana-testdata-datasource"
       },
       "gridPos": {
         "h": 4,
@@ -665,9 +651,7 @@
       "dashLength": 10,
       "dashes": false,
       "datasource": {
-        "apiVersion": "v1",
-        "type": "grafana-testdata-datasource",
-        "uid": "testdata-type-uid"
+        "type": "grafana-testdata-datasource"
       },
       "fill": 1,
       "fillGradient": 5,
@@ -752,9 +736,7 @@
       "dashLength": 10,
       "dashes": false,
       "datasource": {
-        "apiVersion": "v1",
-        "type": "grafana-testdata-datasource",
-        "uid": "testdata-type-uid"
+        "type": "grafana-testdata-datasource"
       },
       "fill": 1,
       "fillGradient": 5,
@@ -839,9 +821,7 @@
       "dashLength": 10,
       "dashes": false,
       "datasource": {
-        "apiVersion": "v1",
-        "type": "grafana-testdata-datasource",
-        "uid": "testdata-type-uid"
+        "type": "grafana-testdata-datasource"
       },
       "fill": 1,
       "fillGradient": 5,
@@ -926,9 +906,7 @@
       "dashLength": 10,
       "dashes": false,
       "datasource": {
-        "apiVersion": "v1",
-        "type": "grafana-testdata-datasource",
-        "uid": "testdata-type-uid"
+        "type": "grafana-testdata-datasource"
       },
       "fill": 1,
       "fillGradient": 5,
@@ -1016,9 +994,7 @@
       "dashLength": 10,
       "dashes": false,
       "datasource": {
-        "apiVersion": "v1",
-        "type": "grafana-testdata-datasource",
-        "uid": "testdata-type-uid"
+        "type": "grafana-testdata-datasource"
       },
       "fill": 3,
       "fillGradient": 0,
@@ -1133,9 +1109,7 @@
       "dashLength": 10,
       "dashes": false,
       "datasource": {
-        "apiVersion": "v1",
-        "type": "grafana-testdata-datasource",
-        "uid": "testdata-type-uid"
+        "type": "grafana-testdata-datasource"
       },
       "fill": 1,
       "fillGradient": 10,
@@ -1218,9 +1192,7 @@
       "dashLength": 10,
       "dashes": false,
       "datasource": {
-        "apiVersion": "v1",
-        "type": "grafana-testdata-datasource",
-        "uid": "testdata-type-uid"
+        "type": "grafana-testdata-datasource"
       },
       "fill": 1,
       "fillGradient": 8,
@@ -1305,9 +1277,7 @@
       "dashLength": 10,
       "dashes": false,
       "datasource": {
-        "apiVersion": "v1",
-        "type": "grafana-testdata-datasource",
-        "uid": "testdata-type-uid"
+        "type": "grafana-testdata-datasource"
       },
       "fill": 1,
       "fillGradient": 5,
@@ -1392,9 +1362,7 @@
       "dashLength": 10,
       "dashes": false,
       "datasource": {
-        "apiVersion": "v1",
-        "type": "grafana-testdata-datasource",
-        "uid": "testdata-type-uid"
+        "type": "grafana-testdata-datasource"
       },
       "fill": 1,
       "fillGradient": 5,
@@ -1479,9 +1447,7 @@
       "dashLength": 10,
       "dashes": false,
       "datasource": {
-        "apiVersion": "v1",
-        "type": "grafana-testdata-datasource",
-        "uid": "testdata-type-uid"
+        "type": "grafana-testdata-datasource"
       },
       "fill": 1,
       "fillGradient": 5,
@@ -1566,9 +1532,7 @@
       "dashLength": 10,
       "dashes": false,
       "datasource": {
-        "apiVersion": "v1",
-        "type": "grafana-testdata-datasource",
-        "uid": "testdata-type-uid"
+        "type": "grafana-testdata-datasource"
       },
       "fill": 1,
       "fillGradient": 5,
@@ -1656,9 +1620,7 @@
       "dashLength": 10,
       "dashes": false,
       "datasource": {
-        "apiVersion": "v1",
-        "type": "grafana-testdata-datasource",
-        "uid": "testdata-type-uid"
+        "type": "grafana-testdata-datasource"
       },
       "fill": 3,
       "fillGradient": 0,
@@ -1773,9 +1735,7 @@
       "dashLength": 10,
       "dashes": false,
       "datasource": {
-        "apiVersion": "v1",
-        "type": "grafana-testdata-datasource",
-        "uid": "testdata-type-uid"
+        "type": "grafana-testdata-datasource"
       },
       "fill": 1,
       "fillGradient": 5,
@@ -1860,9 +1820,7 @@
       "dashLength": 10,
       "dashes": false,
       "datasource": {
-        "apiVersion": "v1",
-        "type": "grafana-testdata-datasource",
-        "uid": "testdata-type-uid"
+        "type": "grafana-testdata-datasource"
       },
       "fill": 1,
       "fillGradient": 5,
@@ -1947,9 +1905,7 @@
       "dashLength": 10,
       "dashes": false,
       "datasource": {
-        "apiVersion": "v1",
-        "type": "grafana-testdata-datasource",
-        "uid": "testdata-type-uid"
+        "type": "grafana-testdata-datasource"
       },
       "fill": 1,
       "fillGradient": 5,
@@ -2034,9 +1990,7 @@
       "dashLength": 10,
       "dashes": false,
       "datasource": {
-        "apiVersion": "v1",
-        "type": "grafana-testdata-datasource",
-        "uid": "testdata-type-uid"
+        "type": "grafana-testdata-datasource"
       },
       "fill": 1,
       "fillGradient": 5,
@@ -2114,9 +2068,7 @@
     },
     {
       "datasource": {
-        "apiVersion": "v1",
-        "type": "grafana-testdata-datasource",
-        "uid": "testdata-type-uid"
+        "type": "grafana-testdata-datasource"
       },
       "gridPos": {
         "h": 7,

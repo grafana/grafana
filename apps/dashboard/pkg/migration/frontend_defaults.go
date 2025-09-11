@@ -978,4 +978,10 @@ func cleanupDashboardDefaults(dashboard map[string]interface{}) {
 	if hideControls, ok := dashboard["hideControls"].(bool); ok && !hideControls {
 		delete(dashboard, "hideControls")
 	}
+
+	// Remove transient properties that frontend filters out during getSaveModelClone()
+	// These properties are not defined as class properties in DashboardModel, so they get lost
+	// during the frontend's property copying loop in getSaveModelCloneOld()
+	delete(dashboard, "preload")   // Transient dashboard loading state
+	delete(dashboard, "iteration") // Template variable iteration timestamp
 }

@@ -21,9 +21,7 @@
   "panels": [
     {
       "datasource": {
-        "apiVersion": "v1",
-        "type": "grafana-testdata-datasource",
-        "uid": "testdata-type-uid"
+        "type": "grafana-testdata-datasource"
       },
       "fieldConfig": {
         "defaults": {
@@ -225,9 +223,7 @@
     },
     {
       "datasource": {
-        "apiVersion": "v1",
-        "type": "grafana-testdata-datasource",
-        "uid": "testdata-type-uid"
+        "type": "grafana-testdata-datasource"
       },
       "fieldConfig": {
         "defaults": {
@@ -434,9 +430,7 @@
     },
     {
       "datasource": {
-        "apiVersion": "v1",
-        "type": "grafana-testdata-datasource",
-        "uid": "testdata-type-uid"
+        "type": "grafana-testdata-datasource"
       },
       "fieldConfig": {
         "defaults": {
@@ -581,9 +575,7 @@
     },
     {
       "datasource": {
-        "apiVersion": "v1",
-        "type": "grafana-testdata-datasource",
-        "uid": "testdata-type-uid"
+        "type": "grafana-testdata-datasource"
       },
       "fieldConfig": {
         "defaults": {
@@ -784,9 +776,7 @@
     },
     {
       "datasource": {
-        "apiVersion": "v1",
-        "type": "grafana-testdata-datasource",
-        "uid": "testdata-type-uid"
+        "type": "grafana-testdata-datasource"
       },
       "fieldConfig": {
         "defaults": {

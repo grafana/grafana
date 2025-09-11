@@ -27,9 +27,7 @@
       "dashLength": 10,
       "dashes": false,
       "datasource": {
-        "apiVersion": "v1",
-        "type": "grafana-testdata-datasource",
-        "uid": "testdata-type-uid"
+        "type": "grafana-testdata-datasource"
       },
       "editable": true,
       "error": false,
@@ -124,9 +122,7 @@
       "dashLength": 10,
       "dashes": false,
       "datasource": {
-        "apiVersion": "v1",
-        "type": "grafana-testdata-datasource",
-        "uid": "testdata-type-uid"
+        "type": "grafana-testdata-datasource"
       },
       "editable": true,
       "error": false,
@@ -220,9 +216,7 @@
       "dashLength": 10,
       "dashes": false,
       "datasource": {
-        "apiVersion": "v1",
-        "type": "grafana-testdata-datasource",
-        "uid": "testdata-type-uid"
+        "type": "grafana-testdata-datasource"
       },
       "editable": true,
       "error": false,
@@ -334,9 +328,7 @@
       "dashLength": 10,
       "dashes": false,
       "datasource": {
-        "apiVersion": "v1",
-        "type": "grafana-testdata-datasource",
-        "uid": "testdata-type-uid"
+        "type": "grafana-testdata-datasource"
       },
       "editable": true,
       "error": false,
@@ -462,9 +454,7 @@
       "dashLength": 10,
       "dashes": false,
       "datasource": {
-        "apiVersion": "v1",
-        "type": "grafana-testdata-datasource",
-        "uid": "testdata-type-uid"
+        "type": "grafana-testdata-datasource"
       },
       "editable": true,
       "error": false,
@@ -578,9 +568,7 @@
       "dashLength": 10,
       "dashes": false,
       "datasource": {
-        "apiVersion": "v1",
-        "type": "grafana-testdata-datasource",
-        "uid": "testdata-type-uid"
+        "type": "grafana-testdata-datasource"
       },
       "decimals": 3,
       "fieldConfig": {

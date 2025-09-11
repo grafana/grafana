@@ -1475,7 +1475,6 @@
       "type": "table"
     }
   ],
-  "preload": false,
   "schemaVersion": 42,
   "tags": [],
   "templating": {

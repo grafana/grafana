@@ -17,7 +17,6 @@
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 0,
-  "iteration": 1610180483405,
   "links": [],
   "panels": [
     {
@@ -50,9 +49,7 @@
     },
     {
       "datasource": {
-        "apiVersion": "v1",
-        "type": "grafana-testdata-datasource",
-        "uid": "testdata-type-uid"
+        "type": "grafana-testdata-datasource"
       },
       "fieldConfig": {
         "defaults": {
@@ -126,9 +123,7 @@
     },
     {
       "datasource": {
-        "apiVersion": "v1",
-        "type": "grafana-testdata-datasource",
-        "uid": "testdata-type-uid"
+        "type": "grafana-testdata-datasource"
       },
       "fieldConfig": {
         "defaults": {
@@ -201,9 +196,7 @@
     },
     {
       "datasource": {
-        "apiVersion": "v1",
-        "type": "grafana-testdata-datasource",
-        "uid": "testdata-type-uid"
+        "type": "grafana-testdata-datasource"
       },
       "fieldConfig": {
         "defaults": {
@@ -276,9 +269,7 @@
     },
     {
       "datasource": {
-        "apiVersion": "v1",
-        "type": "grafana-testdata-datasource",
-        "uid": "testdata-type-uid"
+        "type": "grafana-testdata-datasource"
       },
       "fieldConfig": {
         "defaults": {
@@ -351,9 +342,7 @@
     },
     {
       "datasource": {
-        "apiVersion": "v1",
-        "type": "grafana-testdata-datasource",
-        "uid": "testdata-type-uid"
+        "type": "grafana-testdata-datasource"
       },
       "fieldConfig": {
         "defaults": {
@@ -427,9 +416,7 @@
     },
     {
       "datasource": {
-        "apiVersion": "v1",
-        "type": "grafana-testdata-datasource",
-        "uid": "testdata-type-uid"
+        "type": "grafana-testdata-datasource"
       },
       "fieldConfig": {
         "defaults": {
@@ -502,9 +489,7 @@
     },
     {
       "datasource": {
-        "apiVersion": "v1",
-        "type": "grafana-testdata-datasource",
-        "uid": "testdata-type-uid"
+        "type": "grafana-testdata-datasource"
       },
       "fieldConfig": {
         "defaults": {
@@ -689,9 +674,7 @@
     },
     {
       "datasource": {
-        "apiVersion": "v1",
-        "type": "grafana-testdata-datasource",
-        "uid": "testdata-type-uid"
+        "type": "grafana-testdata-datasource"
       },
       "fieldConfig": {
         "defaults": {
@@ -774,9 +757,7 @@
     },
     {
       "datasource": {
-        "apiVersion": "v1",
-        "type": "grafana-testdata-datasource",
-        "uid": "testdata-type-uid"
+        "type": "grafana-testdata-datasource"
       },
       "description": "should read N/A",
       "fieldConfig": {
@@ -861,9 +842,7 @@
     },
     {
       "datasource": {
-        "apiVersion": "v1",
-        "type": "grafana-testdata-datasource",
-        "uid": "testdata-type-uid"
+        "type": "grafana-testdata-datasource"
       },
       "description": "should read N/A",
       "fieldConfig": {
@@ -949,9 +928,7 @@
     },
     {
       "datasource": {
-        "apiVersion": "v1",
-        "type": "grafana-testdata-datasource",
-        "uid": "testdata-type-uid"
+        "type": "grafana-testdata-datasource"
       },
       "description": "should read N/A",
       "fieldConfig": {
@@ -1075,9 +1052,7 @@
     },
     {
       "datasource": {
-        "apiVersion": "v1",
-        "type": "grafana-testdata-datasource",
-        "uid": "testdata-type-uid"
+        "type": "grafana-testdata-datasource"
       },
       "fieldConfig": {
         "defaults": {
@@ -1160,9 +1135,7 @@
     },
     {
       "datasource": {
-        "apiVersion": "v1",
-        "type": "grafana-testdata-datasource",
-        "uid": "testdata-type-uid"
+        "type": "grafana-testdata-datasource"
       },
       "fieldConfig": {
         "defaults": {
@@ -1246,9 +1219,7 @@
     },
     {
       "datasource": {
-        "apiVersion": "v1",
-        "type": "grafana-testdata-datasource",
-        "uid": "testdata-type-uid"
+        "type": "grafana-testdata-datasource"
       },
       "fieldConfig": {
         "defaults": {
@@ -1332,9 +1303,7 @@
     },
     {
       "datasource": {
-        "apiVersion": "v1",
-        "type": "grafana-testdata-datasource",
-        "uid": "testdata-type-uid"
+        "type": "grafana-testdata-datasource"
       },
       "fieldConfig": {
         "defaults": {

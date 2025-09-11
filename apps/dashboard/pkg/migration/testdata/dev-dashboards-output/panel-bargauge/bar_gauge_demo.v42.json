@@ -22,9 +22,7 @@
   "panels": [
     {
       "datasource": {
-        "apiVersion": "v1",
-        "type": "grafana-testdata-datasource",
-        "uid": "testdata-type-uid"
+        "type": "grafana-testdata-datasource"
       },
       "gridPos": {
         "h": 7,
@@ -233,9 +231,7 @@
     },
     {
       "datasource": {
-        "apiVersion": "v1",
-        "type": "grafana-testdata-datasource",
-        "uid": "testdata-type-uid"
+        "type": "grafana-testdata-datasource"
       },
       "gridPos": {
         "h": 10,
@@ -341,9 +337,7 @@
     },
     {
       "datasource": {
-        "apiVersion": "v1",
-        "type": "grafana-testdata-datasource",
-        "uid": "testdata-type-uid"
+        "type": "grafana-testdata-datasource"
       },
       "gridPos": {
         "h": 10,
@@ -489,9 +483,7 @@
     },
     {
       "datasource": {
-        "apiVersion": "v1",
-        "type": "grafana-testdata-datasource",
-        "uid": "testdata-type-uid"
+        "type": "grafana-testdata-datasource"
       },
       "gridPos": {
         "h": 22,
@@ -543,9 +535,7 @@
     },
     {
       "datasource": {
-        "apiVersion": "v1",
-        "type": "grafana-testdata-datasource",
-        "uid": "testdata-type-uid"
+        "type": "grafana-testdata-datasource"
       },
       "gridPos": {
         "h": 12,
@@ -758,9 +748,7 @@
     },
     {
       "datasource": {
-        "apiVersion": "v1",
-        "type": "grafana-testdata-datasource",
-        "uid": "testdata-type-uid"
+        "type": "grafana-testdata-datasource"
       },
       "gridPos": {
         "h": 8,

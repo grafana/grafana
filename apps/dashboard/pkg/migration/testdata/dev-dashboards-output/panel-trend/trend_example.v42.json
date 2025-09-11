@@ -196,7 +196,6 @@
       "type": "trend"
     }
   ],
-  "preload": false,
   "refresh": "",
   "schemaVersion": 42,
   "tags": [
