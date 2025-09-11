@@ -690,7 +690,7 @@ export class GraphiteDatasource
    *
    * For more complex searches use requestMetricExpand
    */
-  private requestMetricFind(
+  private async requestMetricFind(
     query: string,
     requestId: string,
     range?: { from: string | number; until: string | number }
@@ -700,6 +700,14 @@ export class GraphiteDatasource
     if (range) {
       params.from = range.from;
       params.until = range.until;
+    }
+
+    if (config.featureToggles.graphiteBackendMode) {
+      return await this.postResource<MetricFindValue[]>('metrics/find', {
+        from: typeof params.from === 'string' ? params.from : `${params.from}`,
+        until: typeof params.until === 'string' ? params.until : `${params.until}`,
+        query,
+      });
     }
 
     const httpOptions: BackendSrvRequest = {
