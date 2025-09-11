@@ -71,9 +71,42 @@ When you enable SCIM in Grafana, the following requirements and restrictions app
    - Configure `userUID` SAML assertion in [Azure AD](/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/configure-authentication/saml/configure-saml-with-azuread/#configure-saml-assertions-when-using-scim-provisioning)
    - Configure `userUID` SAML assertion in [Okta](/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/configure-authentication/saml/configure-saml-with-okta/#configure-saml-assertions-when-using-scim-provisioning)
 
-## Configure SCIM in Grafana
+## Configure SCIM using the Grafana user interface
 
-The table below describes all SCIM configuration options. Like any other Grafana configuration, you can apply these options as [environment variables](/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#override-configuration-with-environment-variables). Alternatively, as a Grafana Admin, you can configure SCIM and view your current configuration using the Grafana UI. To do this, navigate to **Administration > Authentication > SCIM**.
+You can configure SCIM in Grafana using the Grafana user interface. To do this, navigate to **Administration > Authentication > SCIM**.
+
+The Grafana SCIM UI provides the following advantages over configuring SCIM in the Grafana configuration file:
+
+- It is accessible by Grafana Cloud users
+- It doesn't require Grafana to be restarted after a configuration update
+- Access to the SCIM UI only requires access to authentication settings, so it can be used by users with limited access to Grafana's configuration
+
+{{< admonition type="note" >}}
+Any configuration changes made through the Grafana user interface (UI) will take precedence over settings specified in the Grafana configuration file or through environment variables. This means that if you modify any configuration settings in the UI, they will override any corresponding settings set via environment variables or defined in the configuration file.
+{{< /admonition >}}
+
+### Configure SCIM settings
+
+Sign in to Grafana and navigate to **Administration > Authentication > SCIM**. Here you can configure the following settings:
+
+| Setting                        | Required | Description                                                                                                                                                                                | Default |
+| ------------------------------ | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------- |
+| `Enable Group Sync`            | No       | Enable SCIM group provisioning. When enabled, Grafana will create, update, and delete teams based on SCIM requests from your identity provider. Cannot be enabled if Team Sync is enabled. | `false` |
+| `Reject Non-Provisioned Users` | No       | When enabled, prevents non-SCIM provisioned users from signing in. Cloud Portal users can always sign in regardless of this setting.                                                       | `false` |
+| `Enable User Sync`             | Yes      | Enable SCIM user provisioning. When enabled, Grafana will create, update, and deactivate users based on SCIM requests from your identity provider.                                         | `false` |
+
+The SCIM UI also displays information that may help you configure SCIM in your identity provider, including stack domain, stack ID, and tenant URL.
+
+### Next steps
+
+After configuring SCIM in Grafana, configure your identity provider:
+
+- [Configure SCIM with Okta](configure-scim-with-okta/)
+- [Configure SCIM with Azure AD](configure-scim-with-azuread/)
+
+## Configure SCIM using the configuration file
+
+The table below describes all SCIM configuration options. Like any other Grafana configuration, you can apply these options as [environment variables](/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#override-configuration-with-environment-variables).
 
 | Setting                        | Required | Description                                                                                                                                                                                | Default |
 | ------------------------------ | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------- |
