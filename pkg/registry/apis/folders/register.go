@@ -18,6 +18,7 @@ import (
 	"k8s.io/kube-openapi/pkg/spec3"
 
 	authlib "github.com/grafana/authlib/types"
+
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	"github.com/grafana/grafana/apps/iam/pkg/reconcilers"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -240,24 +241,21 @@ func (b *FolderAPIBuilder) Mutate(ctx context.Context, a admission.Attributes, _
 }
 
 func (b *FolderAPIBuilder) Validate(ctx context.Context, a admission.Attributes, _ admission.ObjectInterfaces) error {
+	var obj runtime.Object
 	verb := a.GetOperation()
-	if verb == admission.Connect {
-		return nil
-	}
 
-	obj := a.GetObject()
-	// If we have a delete request, we need to use the old object to validate.
-	if verb == admission.Delete {
-		if old := a.GetOldObject(); old != nil {
-			obj = old
-		} else {
+	switch verb {
+	case admission.Create, admission.Update:
+		obj = a.GetObject()
+	case admission.Delete:
+		obj = a.GetOldObject()
+		if obj == nil {
 			return fmt.Errorf("old object is nil for delete request")
 		}
-	}
-
-	// This is normal for sub-resource.
-	if obj == nil {
+	case admission.Connect:
 		return nil
+	default:
+		obj = a.GetObject()
 	}
 
 	f, ok := obj.(*folders.Folder)
