@@ -3663,7 +3663,13 @@
       "text": "No results found for your query"
     },
     "restore": {
-      "success": "Dashboard {{name}} restored"
+      "all-failed_one": "Failed to restore {{count}} dashboard",
+      "all-failed_other": "Failed to restore {{count}} dashboards",
+      "failed-count_one": "{{count}} dashboard failed",
+      "failed-count_other": "{{count}} dashboards failed",
+      "success": "Dashboards restored successfully",
+      "success-count_one": "{{count}} dashboard restored successfully",
+      "success-count_other": "{{count}} dashboards restored successfully"
     },
     "text-this-repository-is-read-only": "If you have direct access to the target, copy the JSON and paste it there.",
     "trash-state-manager": {
@@ -9451,9 +9457,9 @@
       "type": {
         "loki": {
           "indexed-label_one": "Indexed label",
-          "indexed-label_other": "Indexed labels",
+          "indexed-label_other": "Indexed label",
           "parsedl-label_one": "Parsed field",
-          "parsedl-label_other": "Parsed fields",
+          "parsedl-label_other": "Parsed field",
           "structured-metadata_one": "Structured metadata",
           "structured-metadata_other": "Structured metadata"
         }
