@@ -1478,6 +1478,13 @@ func schema_pkg_apis_dashboard_v2beta1_DashboardDashboardLink(ref common.Referen
 							Format:      "",
 						},
 					},
+					"placement": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Placement can be used to display the link somewhere else on the dashboard other than above the visualisations.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
 				},
 				Required: []string{"title", "type", "icon", "tooltip", "tags", "asDropdown", "targetBlank", "includeVars", "keepTime"},
 			},
