@@ -11655,6 +11655,7 @@
       "tooltip-unhealthy-repository": "Unable to pull an unhealthy repository"
     },
     "synchronize-step": {
+      "repository-unhealthy": "The repository cannot be synchronized. Cancel provisioning and try again once the issue has been resolved. See details below.",
       "synchronization-description": "Include commits for each historical value",
       "synchronization-options": "Synchronization options"
     },
@@ -11678,6 +11679,8 @@
       "alert-point-3": "The duration of this process depends on the number of resources involved.",
       "alert-point-4": "Enterprise instance administrators can display an announcement banner to users. See <2>this guide</2> for step-by-step instructions.",
       "alert-title": "Important: No data or configuration will be lost, but dashboards will be temporarily unavailable for a few minutes.",
+      "button-cancel": "Cancel",
+      "button-cancelling": "Cancelling...",
       "button-next": "Finish",
       "button-start": "Begin synchronization",
       "discard-modal": {
