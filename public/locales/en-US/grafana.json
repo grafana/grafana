@@ -11357,6 +11357,8 @@
       "all-resources-managed_one": "All {{count}} resources are managed",
       "all-resources-managed_other": "All {{count}} resources are managed",
       "no-results-matching-your-query": "No results matching your query",
+      "partial-managed_one": "{{managedCount}}/{{count}} resources managed. {{unmanagedCount}} resources aren't managed as code yet.",
+      "partial-managed_other": "{{managedCount}}/{{count}} resources managed. {{unmanagedCount}} resources aren't managed as code yet.",
       "placeholder-search": "Search"
     },
     "get-default-values": {
