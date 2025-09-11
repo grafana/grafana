@@ -43,11 +43,12 @@ type LokiClient interface {
 }
 
 type Historian struct {
-	client         LokiClient
-	externalLabels map[string]string
-	metrics        *metrics.EvalHistorian
-	log            log.Logger
-	timeout        time.Duration
+	client                 LokiClient
+	externalLabels         map[string]string
+	metrics                *metrics.EvalHistorian
+	log                    log.Logger
+	timeout                time.Duration
+	skipSuccessEvaluations bool
 }
 
 func NewHistorian(
@@ -56,20 +57,28 @@ func NewHistorian(
 	metrics *metrics.EvalHistorian,
 	externalLabels map[string]string,
 	timeout time.Duration,
+	skipSuccessEvaluations bool,
 ) *Historian {
 	if timeout <= 0 {
 		timeout = historyWriteTimeout
 	}
+	if skipSuccessEvaluations {
+		logger.Info("Skipping success evaluations")
+	}
 	return &Historian{
-		client:         lokiClient,
-		externalLabels: externalLabels,
-		metrics:        metrics,
-		log:            logger,
-		timeout:        timeout,
+		client:                 lokiClient,
+		externalLabels:         externalLabels,
+		metrics:                metrics,
+		log:                    logger,
+		timeout:                timeout,
+		skipSuccessEvaluations: skipSuccessEvaluations,
 	}
 }
 
 func (h *Historian) Record(ctx context.Context, opts historianModels.Record) {
+	if h.skipSuccessEvaluations && opts.Status == historianModels.EvalStatusSuccess {
+		return
+	}
 	logger := h.log.FromContext(ctx)
 	stream := h.prepareStream(opts, logger)
 	if len(stream) == 0 {

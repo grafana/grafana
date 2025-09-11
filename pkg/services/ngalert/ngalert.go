@@ -785,5 +785,6 @@ func (ng *AlertNG) createEvaluationHistorian(ctx context.Context) (schedule.Hist
 		m,
 		ng.Cfg.UnifiedAlerting.StateHistory.ExternalLabels,
 		0, // TODO add to config
+		false,
 	), nil
 }
