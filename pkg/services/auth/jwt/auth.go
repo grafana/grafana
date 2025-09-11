@@ -70,7 +70,8 @@ func (s *AuthService) Verify(ctx context.Context, strToken string) (map[string]a
 	s.log.Debug("Parsing JSON Web Token")
 
 	strToken = sanitizeJWT(strToken)
-	token, err := jwt.ParseSigned(strToken, []jose.SignatureAlgorithm{jose.ES256})
+	token, err := jwt.ParseSigned(strToken, []jose.SignatureAlgorithm{jose.EdDSA, jose.HS256, jose.HS384,
+		jose.HS512, jose.RS512, jose.RS256, jose.ES256, jose.ES384, jose.ES512, jose.PS256, jose.PS384, jose.PS512})
 	if err != nil {
 		return nil, err
 	}
@@ -107,7 +108,8 @@ func (s *AuthService) Verify(ctx context.Context, strToken string) (map[string]a
 // HasSubClaim checks if the provided JWT token contains a non-empty "sub" claim.
 // Returns true if it contains, otherwise returns false.
 func HasSubClaim(jwtToken string) bool {
-	parsed, err := jwt.ParseSigned(sanitizeJWT(jwtToken), []jose.SignatureAlgorithm{jose.ES256})
+	parsed, err := jwt.ParseSigned(sanitizeJWT(jwtToken), []jose.SignatureAlgorithm{jose.EdDSA, jose.HS256, jose.HS384,
+		jose.HS512, jose.RS512, jose.RS256, jose.ES256, jose.ES384, jose.ES512, jose.PS256, jose.PS384, jose.PS512})
 	if err != nil {
 		return false
 	}

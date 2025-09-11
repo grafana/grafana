@@ -579,7 +579,8 @@ func GetIDTokenExpiry(token *oauth2.Token) (time.Time, error) {
 		return time.Time{}, nil
 	}
 
-	parsedToken, err := jwt.ParseSigned(idToken, []jose.SignatureAlgorithm{jose.ES256})
+	parsedToken, err := jwt.ParseSigned(idToken, []jose.SignatureAlgorithm{jose.EdDSA, jose.HS256, jose.HS384,
+		jose.HS512, jose.RS512, jose.RS256, jose.ES256, jose.ES384, jose.ES512, jose.PS256, jose.PS384, jose.PS512})
 	if err != nil {
 		return time.Time{}, fmt.Errorf("error parsing id token: %w", err)
 	}
