@@ -238,7 +238,7 @@ func (n *eventStore) CleanupOldEvents(ctx context.Context, retentionPeriod time.
 	// With a start key of "1" and an end key of the current time minus the (retention period + lookback period),
 	// we can get all expired events.
 	endKey := fmt.Sprintf("%d", snowflakeFromTime(time.Now().Add(-retentionPeriod-defaultLookbackPeriod)))
-	for key, err := range n.kv.Keys(ctx, eventsSection, ListOptions{StartKey: "1", EndKey: endKey, Sort: SortOrderAsc}) {
+	for key, err := range n.kv.Keys(ctx, eventsSection, ListOptions{StartKey: "1", EndKey: endKey}) {
 		if err != nil {
 			return deletedCount, fmt.Errorf("failed to list event keys: %w", err)
 		}
