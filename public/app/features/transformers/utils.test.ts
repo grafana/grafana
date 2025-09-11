@@ -146,7 +146,7 @@ describe('DataFieldsErrorWrapper', () => {
   });
 
   afterEach(() => {
-    jest.runOnlyPendingTimers();
+    act(() => jest.runOnlyPendingTimers());
     jest.useRealTimers();
   });
 
@@ -156,7 +156,7 @@ describe('DataFieldsErrorWrapper', () => {
       options: { fields: {} },
       onChange: jest.fn(),
     };
-    render(createElement(WrappedDashboard, mockProps));
+    act(() => render(createElement(WrappedDashboard, mockProps)));
     expect(screen.queryByText(/One or more queries failed/)).not.toBeInTheDocument();
   });
 
@@ -167,7 +167,7 @@ describe('DataFieldsErrorWrapper', () => {
       onChange: jest.fn(),
     };
 
-    render(createElement(WrappedDashboard, mockProps));
+    act(() => render(createElement(WrappedDashboard, mockProps)));
 
     // It should not show the error message immediately
     expect(screen.queryByText(/One or more queries failed/)).not.toBeInTheDocument();
@@ -193,7 +193,7 @@ describe('DataFieldsErrorWrapper', () => {
       onChange: jest.fn(),
     };
 
-    render(createElement(WrappedDashboard, mockProps));
+    act(() => render(createElement(WrappedDashboard, mockProps)));
 
     // It should not show the error message immediately
     expect(screen.queryByText(/One or more queries failed/)).not.toBeInTheDocument();
