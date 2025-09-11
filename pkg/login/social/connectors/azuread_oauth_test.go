@@ -880,10 +880,10 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 						tt.claims.ClaimNames.Groups: {Endpoint: server.URL},
 					}
 				}
-				raw, err = jwt.Signed(sig).Claims(cl).Claims(tt.claims).CompactSerialize()
+				raw, err = jwt.Signed(sig).Claims(cl).Claims(tt.claims).Serialize()
 				require.NoError(t, err)
 			} else {
-				raw, err = jwt.Signed(sig).Claims(cl).CompactSerialize()
+				raw, err = jwt.Signed(sig).Claims(cl).Serialize()
 				require.NoError(t, err)
 			}
 
@@ -1054,10 +1054,10 @@ func TestSocialAzureAD_SkipOrgRole(t *testing.T) {
 						tt.claims.ClaimNames.Groups: {Endpoint: server.URL},
 					}
 				}
-				raw, err = jwt.Signed(sig).Claims(cl).Claims(tt.claims).CompactSerialize()
+				raw, err = jwt.Signed(sig).Claims(cl).Claims(tt.claims).Serialize()
 				require.NoError(t, err)
 			} else {
-				raw, err = jwt.Signed(sig).Claims(cl).CompactSerialize()
+				raw, err = jwt.Signed(sig).Claims(cl).Serialize()
 				require.NoError(t, err)
 			}
 

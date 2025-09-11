@@ -397,7 +397,7 @@ func createToken(t *testing.T, exp *time.Time) string {
 		claims.Expiry = jwt.NewNumericDate(*exp)
 	}
 
-	token, err := jwt.Signed(signer).Claims(claims).CompactSerialize()
+	token, err := jwt.Signed(signer).Claims(claims).Serialize()
 	require.NoError(t, err)
 	return token
 }

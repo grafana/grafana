@@ -18,7 +18,7 @@ func sign(t *testing.T, key any, claims any, opts *jose.SignerOptions) string {
 	}
 	sig, err := jose.NewSigner(jose.SigningKey{Algorithm: jose.PS512, Key: key}, (opts).WithType("JWT"))
 	require.NoError(t, err)
-	token, err := jwt.Signed(sig).Claims(claims).CompactSerialize()
+	token, err := jwt.Signed(sig).Claims(claims).Serialize()
 	require.NoError(t, err)
 	return token
 }
@@ -40,7 +40,7 @@ func signNone(t *testing.T, claims any) string {
 
 	sig, err := jose.NewSigner(jose.SigningKey{Algorithm: "none", Key: noneSigner{}}, (&jose.SignerOptions{}).WithType("JWT"))
 	require.NoError(t, err)
-	token, err := jwt.Signed(sig).Claims(claims).CompactSerialize()
+	token, err := jwt.Signed(sig).Claims(claims).Serialize()
 	require.NoError(t, err)
 	return token
 }

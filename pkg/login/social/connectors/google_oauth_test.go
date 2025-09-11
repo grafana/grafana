@@ -257,7 +257,7 @@ func TestSocialGoogle_UserInfo(t *testing.T) {
 		"email_verified": true,
 	}
 
-	raw, err := jwt.Signed(sig).Claims(cl).Claims(idMap).CompactSerialize()
+	raw, err := jwt.Signed(sig).Claims(cl).Claims(idMap).Serialize()
 	require.NoError(t, err)
 
 	tokenWithID := (&oauth2.Token{

@@ -43,7 +43,7 @@ func TestService_SignIdentity(t *testing.T) {
 			s, err := jose.NewSigner(jose.SigningKey{Algorithm: jose.HS256, Key: key}, nil)
 			require.NoError(t, err)
 
-			token, err := jwt.Signed(s).Claims(claims.Claims).Claims(claims.Rest).CompactSerialize()
+			token, err := jwt.Signed(s).Claims(claims.Claims).Claims(claims.Rest).Serialize()
 			require.NoError(t, err)
 
 			return token, nil

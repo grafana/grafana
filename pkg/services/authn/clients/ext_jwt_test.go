@@ -718,7 +718,7 @@ func generateToken(payload accessTokenClaims, signingKey any, alg jose.Signature
 			"kid":           "default",
 		}})
 
-	result, _ := jwt.Signed(signer).Claims(payload).CompactSerialize()
+	result, _ := jwt.Signed(signer).Claims(payload).Serialize()
 	return result
 }
 
@@ -729,6 +729,6 @@ func generateIDToken(payload idTokenClaims, signingKey any, alg jose.SignatureAl
 			"kid":           "default",
 		}})
 
-	result, _ := jwt.Signed(signer).Claims(payload).CompactSerialize()
+	result, _ := jwt.Signed(signer).Claims(payload).Serialize()
 	return result
 }
