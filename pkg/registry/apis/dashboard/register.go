@@ -274,14 +274,14 @@ func (b *DashboardsAPIBuilder) validateDelete(ctx context.Context, a admission.A
 		return nil
 	}
 
-	// HACK: deletion validation currently doesn't work for the standalone case. So we currently skip it.
-	if b.isStandalone {
-		return nil
-	}
-
 	nsInfo, err := claims.ParseNamespace(a.GetNamespace())
 	if err != nil {
 		return fmt.Errorf("%v: %w", "failed to parse namespace", err)
+	}
+
+	// HACK: deletion validation currently doesn't work for the standalone case. So we currently skip it.
+	if b.isStandalone && b.dashboardProvisioningService == nil {
+		return nil
 	}
 
 	// The name of the resource is the dashboard UID
