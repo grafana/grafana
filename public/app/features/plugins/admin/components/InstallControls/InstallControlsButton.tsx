@@ -2,13 +2,13 @@ import { useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom-v5-compat';
 
 import { AppEvents } from '@grafana/data';
-import { GrafanaEdition } from '@grafana/data/internal';
 import { t, Trans } from '@grafana/i18n';
 import { config, locationService, reportInteraction } from '@grafana/runtime';
 import { Button, ConfirmModal, LinkButton, Stack } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import { removePluginFromNavTree } from 'app/core/reducers/navBarTree';
+import { isOpenSourceBuildOrUnlicenced } from 'app/features/admin/EnterpriseAuthFeaturesCard';
 import { useDispatch } from 'app/types/store';
 
 import { getExternalManageLink, isDisabledAngularPlugin } from '../../helpers';
@@ -22,6 +22,7 @@ import {
 } from '../../state/hooks';
 import { trackPluginInstalled, trackPluginUninstalled } from '../../tracking';
 import { CatalogPlugin, PluginStatus, PluginTabIds, Version } from '../../types';
+
 
 const PLUGIN_UPDATE_INTERACTION_EVENT_NAME = 'plugin_update_clicked';
 
@@ -168,10 +169,9 @@ export function InstallControlsButton({
     );
   }
 
-  const isOpenSource = config.buildInfo.edition === GrafanaEdition.OpenSource;
 
   // Show learn more button for an enterprise plugin if your on OSS
-  if (plugin.isEnterprise && isOpenSource) {
+  if (plugin.isEnterprise && isOpenSourceBuildOrUnlicenced()) {
     return (
       <LinkButton
         href={`${getExternalManageLink(plugin.id)}?utm_source=grafana_catalog_learn_more`}
