@@ -88,6 +88,7 @@ func ProvideService(
 		resourcePermissions:          resourcePermissions,
 		tracer:                       tracer,
 		migratePrometheusType:        promTypeMigrationProvider.Run,
+		dual:                         dual,
 	}
 
 	if err := s.setDashboardProvisioner(); err != nil {

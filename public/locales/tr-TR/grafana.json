@@ -2058,9 +2058,6 @@
       "text-loading-rules": "Kurallar yükleniyor...",
       "title-dashboard-not-saved": "Pano kaydedilmedi"
     },
-    "paused-badge": {
-      "paused": "Duraklatıldı"
-    },
     "payload-editor": {
       "edit-payload": "Yükü düzenle",
       "label-add-custom-alert-instance": "Özel uyarı örneği ekle",
@@ -2212,9 +2209,6 @@
       "label-time-range": "Zaman Aralığı",
       "max-data-points": "MD (Maks. Veri Noktası) = {{maxDataPoints}}",
       "min-interval": "Min. Aralık = {{minInterval}}"
-    },
-    "query-preview": {
-      "relative-time-range": "<0>{{from}}</0> itibarıyla şimdiye kadar"
     },
     "queryAndExpressionsStep": {
       "disableAdvancedOptions": {
@@ -2560,6 +2554,10 @@
       "recovering": "{{recoveringStats}} eski durumuna döndürülüyor",
       "error_one": "{{count}} hata",
       "error_other": "{{count}} hata"
+    },
+    "rule-time-range-label": {
+      "relative": "",
+      "relative-with-to": ""
     },
     "rule-type-picker": {
       "grafana-managed": "Ruler API etkin olan bir Mimir, Loki veya Cortex veri kaynağınız yoksa \"Grafana tarafından yönetilen\" seçeneğini belirleyin."
@@ -3663,7 +3661,13 @@
       "text": "Sorgunuz için sonuç bulunamadı"
     },
     "restore": {
-      "success": "{{name}} panosu geri yüklendi"
+      "success": "",
+      "all-failed_one": "",
+      "all-failed_other": "",
+      "failed-count_one": "",
+      "failed-count_other": "",
+      "success-count_one": "",
+      "success-count_other": ""
     },
     "text-this-repository-is-read-only": "Hedefe doğrudan erişiminiz varsa JSON'u kopyalayıp oraya yapıştırın.",
     "trash-state-manager": {
@@ -11649,6 +11653,7 @@
       "tooltip-unhealthy-repository": "İyi durumda olmayan bir depo çekilemedi"
     },
     "synchronize-step": {
+      "repository-unhealthy": "",
       "synchronization-description": "Her geçmiş değer için yürütmeyi dahil et",
       "synchronization-options": "Senkronizasyon seçenekleri"
     },
@@ -11672,6 +11677,8 @@
       "alert-point-3": "Bu işlemin süresi dâhil olan kaynakların sayısına bağlıdır.",
       "alert-point-4": "Enterprise örnek yöneticileri, kullanıcılara bir duyuru afişi gösterebilir. Adım adım talimatlar için <2>bu kılavuza</2> bakın.",
       "alert-title": "Önemli: Veri veya yapılandırma kaybı yaşanmayacak ancak panolar birkaç dakika boyunca geçici olarak kullanılamayacaktır.",
+      "button-cancel": "",
+      "button-cancelling": "",
       "button-next": "Sonlandır",
       "button-start": "Senkronizasyonu başlat",
       "discard-modal": {
