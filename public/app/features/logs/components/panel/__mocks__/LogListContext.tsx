@@ -3,7 +3,6 @@ import { createContext, useContext } from 'react';
 import { CoreApp, LogsDedupStrategy, LogsSortOrder } from '@grafana/data';
 import { checkLogsError, checkLogsSampled } from 'app/features/logs/utils';
 
-import { LogLineDetailsMode } from '../LogLineDetails';
 import { LogListContextData, Props } from '../LogListContext';
 import { LogListModel } from '../processing';
 
@@ -49,11 +48,11 @@ export const LogListContext = createContext<LogListContextData>({
   toggleDetails: () => {},
   wrapLogMessage: false,
   detailsMode: 'sidebar',
-  setDetailsMode: function (mode: LogLineDetailsMode): void {
-    throw new Error('Function not implemented.');
-  },
+  setDetailsMode: () => {},
   isAssistantAvailable: false,
   openAssistantByLog: () => {},
+  controlsExpanded: false,
+  setControlsExpanded: () => {},
 });
 
 export const useLogListContextData = (key: keyof LogListContextData) => {
@@ -110,8 +109,10 @@ export const defaultValue: LogListContextData = {
   sortOrder: LogsSortOrder.Ascending,
   wrapLogMessage: false,
   isAssistantAvailable: false,
-  openAssistantByLog: () => {},
+  openAssistantByLog: jest.fn(),
   timestampResolution: 'ns',
+  controlsExpanded: false,
+  setControlsExpanded: jest.fn(),
 };
 
 export const defaultProps: Props = {

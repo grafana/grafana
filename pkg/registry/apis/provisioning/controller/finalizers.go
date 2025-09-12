@@ -19,15 +19,6 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 )
 
-// RemoveOrphanResourcesFinalizer removes everything this repo created
-const RemoveOrphanResourcesFinalizer = "remove-orphan-resources"
-
-// ReleaseOrphanResourcesFinalizer removes the metadata for anything this repo created
-const ReleaseOrphanResourcesFinalizer = "release-orphan-resources"
-
-// CleanFinalizer calls the "OnDelete" function for resource
-const CleanFinalizer = "cleanup"
-
 type finalizer struct {
 	lister        resources.ResourceLister
 	clientFactory resources.ClientFactory
@@ -41,7 +32,7 @@ func (f *finalizer) process(ctx context.Context,
 
 	for _, finalizer := range finalizers {
 		switch finalizer {
-		case CleanFinalizer:
+		case repository.CleanFinalizer:
 			// NOTE: the controller loop will never get run unless a finalizer is set
 			hooks, ok := repo.(repository.Hooks)
 			if ok {
@@ -50,7 +41,7 @@ func (f *finalizer) process(ctx context.Context,
 				}
 			}
 
-		case ReleaseOrphanResourcesFinalizer:
+		case repository.ReleaseOrphanResourcesFinalizer:
 			err := f.processExistingItems(ctx, repo.Config(),
 				func(client dynamic.ResourceInterface, item *provisioning.ResourceListItem) error {
 					patchAnnotations, err := getPatchedAnnotations(item)
@@ -67,7 +58,7 @@ func (f *finalizer) process(ctx context.Context,
 				return err
 			}
 
-		case RemoveOrphanResourcesFinalizer:
+		case repository.RemoveOrphanResourcesFinalizer:
 			err := f.processExistingItems(ctx, repo.Config(),
 				func(client dynamic.ResourceInterface, item *provisioning.ResourceListItem) error {
 					return client.Delete(ctx, item.Name, v1.DeleteOptions{})
