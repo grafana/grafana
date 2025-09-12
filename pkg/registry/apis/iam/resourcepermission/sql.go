@@ -437,7 +437,6 @@ func (s *ResourcePermSqlBackend) updateResourcePermission(ctx context.Context, d
 					s.logger.Error("could not remove role permission", "scope", perm.Scope, "role", perm.RoleName, "error", err.Error())
 					return fmt.Errorf("could not remove role permission")
 				}
-
 			}
 		}
 
