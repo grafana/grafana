@@ -3,7 +3,7 @@ import { HttpResponse, http } from 'msw';
 
 import { treeViewersCanEdit, wellFormedTree } from '../../../fixtures/folders';
 
-const [mockTree] = wellFormedTree();
+const [mockTree, { folderB }] = wellFormedTree();
 const [mockTreeThatViewersCanEdit] = treeViewersCanEdit();
 const collator = new Intl.Collator();
 
@@ -139,6 +139,10 @@ const folderCountsHandler = () =>
     if (!folder) {
       // The legacy API returns 0's for a folder that doesn't exist 🤷‍♂️
       return HttpResponse.json(getMockFolderCounts(0, 0, 0, 0));
+    }
+
+    if (uid === folderB.item.uid) {
+      return HttpResponse.json({}, { status: 500 });
     }
 
     return HttpResponse.json(getMockFolderCounts(1, 1, 1, 1));

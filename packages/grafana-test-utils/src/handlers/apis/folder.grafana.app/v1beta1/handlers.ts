@@ -4,7 +4,7 @@ import { HttpResponse, http } from 'msw';
 import { wellFormedTree } from '../../../../fixtures/folders';
 import { getErrorResponse } from '../../../helpers';
 
-const [mockTree] = wellFormedTree();
+const [mockTree, { folderB }] = wellFormedTree();
 
 const baseResponse = {
   kind: 'Folder',
@@ -211,6 +211,10 @@ const folderCountsHandler = () =>
       if (!matchedFolder) {
         // The API returns 0's for a folder that doesn't exist 🤷‍♂️
         return HttpResponse.json(getMockFolderCounts(0, 0, 0, 0));
+      }
+
+      if (folderUid === folderB.item.uid) {
+        return HttpResponse.json({}, { status: 500 });
       }
 
       return HttpResponse.json(getMockFolderCounts(1, 1, 1, 1));

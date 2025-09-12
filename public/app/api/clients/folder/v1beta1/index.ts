@@ -61,20 +61,27 @@ export const folderAPIv1beta1 = generatedAPI
           const promises = folderUIDs.map(async (folderUID) =>
             queryApi.dispatch(generatedAPI.endpoints.getFolderCounts.initiate({ name: folderUID }))
           );
-          const results = await Promise.all(promises);
+          try {
+            const results = await Promise.all(promises);
 
-          const mapped = results.reduce((acc, result) => {
-            const { data } = result;
+            const mapped = results.reduce((acc, result) => {
+              const { data, error } = result;
+              if (error) {
+                throw error;
+              }
 
-            const counts = getParsedCounts(data?.counts ?? []);
-            acc.folders += counts.folders;
-            acc.dashboards += counts.dashboards;
-            acc.alertrules += counts.alertrules;
-            acc.library_elements += counts.library_elements;
-            return acc;
-          }, initialCounts);
+              const counts = getParsedCounts(data?.counts ?? []);
+              acc.folders += counts.folders;
+              acc.dashboards += counts.dashboards;
+              acc.alertrules += counts.alertrules;
+              acc.library_elements += counts.library_elements;
+              return acc;
+            }, initialCounts);
 
-          return { data: mapped };
+            return { data: mapped };
+          } catch (error) {
+            return { error };
+          }
         },
       }),
     }),

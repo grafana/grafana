@@ -194,27 +194,30 @@ export const browseDashboardsAPI = createApi({
       // don't cache this data for now, since library panel/alert rule creation isn't done through rtk query
       keepUnusedDataFor: 0,
       queryFn: async ({ folderUIDs, dashboardUIDs }) => {
-        const promises = folderUIDs.map((folderUID) => {
-          return getBackendSrv().get<DescendantCountDTO>(`/api/folders/${folderUID}/counts`);
-        });
+        try {
+          const promises = folderUIDs.map((folderUID) => {
+            return getBackendSrv().get<DescendantCountDTO>(`/api/folders/${folderUID}/counts`);
+          });
+          const results = await Promise.all(promises);
 
-        const results = await Promise.all(promises);
+          const totalCounts: DescendantCount = {
+            folders: folderUIDs.length,
+            dashboards: dashboardUIDs.length,
+            library_elements: 0,
+            alertrules: 0,
+          };
 
-        const totalCounts: DescendantCount = {
-          folders: folderUIDs.length,
-          dashboards: dashboardUIDs.length,
-          library_elements: 0,
-          alertrules: 0,
-        };
+          for (const folderCounts of results) {
+            totalCounts.folders += folderCounts.folder;
+            totalCounts.dashboards += folderCounts.dashboard;
+            totalCounts.alertrules += folderCounts.alertrule;
+            totalCounts.library_elements += folderCounts.librarypanel;
+          }
 
-        for (const folderCounts of results) {
-          totalCounts.folders += folderCounts.folder;
-          totalCounts.dashboards += folderCounts.dashboard;
-          totalCounts.alertrules += folderCounts.alertrule;
-          totalCounts.library_elements += folderCounts.librarypanel;
+          return { data: totalCounts };
+        } catch (error) {
+          return { error };
         }
-
-        return { data: totalCounts };
       },
     }),
 
