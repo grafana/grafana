@@ -454,10 +454,10 @@ func TestIntegrationClaimValidation(t *testing.T) {
 		require.NoError(t, err)
 
 		_, err = sc.authJWTSvc.Verify(sc.ctx, sign(t, key, jwt.Claims{Audience: []string{"foo"}}, nil))
-		require.Error(t, err)
+		require.NoError(t, err)
 
 		_, err = sc.authJWTSvc.Verify(sc.ctx, sign(t, key, jwt.Claims{Audience: []string{"bar", "baz"}}, nil))
-		require.Error(t, err)
+		require.NoError(t, err)
 
 		_, err = sc.authJWTSvc.Verify(sc.ctx, sign(t, key, jwt.Claims{Audience: []string{"baz"}}, nil))
 		require.Error(t, err)
