@@ -19,6 +19,7 @@ import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScen
 import { ProvisionedOperationInfo, useProvisionedRequestHandler } from '../../hooks/useProvisionedRequestHandler';
 import { ProvisionedDashboardFormData } from '../../types/form';
 import { buildResourceBranchRedirectUrl } from '../../utils/redirect';
+import { useBulkActionJob } from '../BulkActions/useBulkActionJob';
 import { getTargetFolderPathInRepo } from '../BulkActions/utils';
 import { ResourceEditFormSharedFields } from '../Shared/ResourceEditFormSharedFields';
 
@@ -64,6 +65,7 @@ export function MoveProvisionedDashboardForm({
 
   const { data: targetFolder } = useGetFolderQuery(targetFolderUID ? { name: targetFolderUID! } : skipToken);
 
+  const { createBulkJob, isLoading: isCreatingJob } = useBulkActionJob();
   const [moveFile, moveRequest] = useCreateRepositoryFilesWithPathMutation();
   const [targetPath, setTargetPath] = useState<string>('');
 
@@ -86,47 +88,102 @@ export function MoveProvisionedDashboardForm({
     setTargetPath(newPath);
   }, [currentFileData, targetFolder, targetFolderUID, targetFolderTitle, repository]);
 
+  // Helper function to show error messages
+  const showError = (error?: unknown) => {
+    const payload = error
+      ? [t('dashboard-scene.move-provisioned-dashboard-form.api-error', 'Failed to move dashboard'), error]
+      : [t('dashboard-scene.move-provisioned-dashboard-form.api-error', 'Failed to move dashboard')];
+
+    appEvents.publish({
+      type: AppEvents.alertError.name,
+      payload,
+    });
+  };
+
   const handleSubmitForm = async ({ repo, path, comment }: ProvisionedDashboardFormData) => {
-    if (!currentFileData?.resource?.file) {
-      appEvents.publish({
-        type: AppEvents.alertError.name,
-        payload: [
-          t(
-            'dashboard-scene.move-provisioned-dashboard-form.current-file-not-found',
-            'Current dashboard file could not be found'
-          ),
-        ],
-      });
+    if (!repo || !repository) {
+      showError();
       return;
     }
 
-    const branchRef = workflow === 'write' ? loadedFromRef : ref;
-    const commitMessage = comment || `Move dashboard: ${dashboard.state.title}`;
+    const targetFolderPath = getTargetFolderPathInRepo({
+      targetFolderUID,
+      targetFolder,
+      repoName: repository?.name,
+    });
+
+    if (!targetFolderPath) {
+      showError();
+      return;
+    }
+
+    // Branch workflow: use /files API for direct file operations
+    if (workflow === 'branch') {
+      if (!currentFileData?.resource?.file) {
+        appEvents.publish({
+          type: AppEvents.alertError.name,
+          payload: [
+            t(
+              'dashboard-scene.move-provisioned-dashboard-form.current-file-not-found',
+              'Current dashboard file could not be found'
+            ),
+          ],
+        });
+        return;
+      }
+
+      const branchRef = ref;
+      const commitMessage = comment || `Move dashboard: ${dashboard.state.title}`;
+
+      try {
+        await moveFile({
+          name: repo,
+          path: targetPath,
+          ref: branchRef,
+          message: commitMessage,
+          body: currentFileData.resource.file,
+          originalPath: path,
+        }).unwrap();
+      } catch (error) {
+        showError(error);
+      }
+      return;
+    }
+
+    // Write workflow: use Job API
+    const effectiveRef = isNew ? undefined : loadedFromRef;
+    const jobSpec = {
+      action: 'move' as const,
+      move: {
+        ref: effectiveRef,
+        targetPath: targetFolderPath,
+        resources: [
+          {
+            name: dashboard.state.meta.uid ?? dashboard.state.meta.k8s?.name ?? '',
+            group: 'dashboard.grafana.app' as const,
+            kind: 'Dashboard' as const,
+          },
+        ],
+      },
+    };
 
     try {
-      await moveFile({
-        name: repo,
-        path: targetPath,
-        ref: branchRef,
-        message: commitMessage,
-        body: currentFileData.resource.file,
-        originalPath: path,
-      }).unwrap();
-    } catch (error) {
-      appEvents.publish({
-        type: AppEvents.alertError.name,
-        payload: [t('dashboard-scene.move-provisioned-dashboard-form.api-error', 'Failed to move dashboard'), error],
-      });
-    }
-  };
+      const result = await createBulkJob(repository, jobSpec);
+      if (!result.success) {
+        showError();
+        return;
+      }
 
-  const onWriteSuccess = () => {
-    dashboard.setState({ isDirty: false });
-    panelEditor?.onDiscard();
-    if (targetFolderUID && targetFolderTitle) {
-      onSuccess(targetFolderUID, targetFolderTitle);
+      appEvents.publish({
+        type: AppEvents.alertSuccess.name,
+        payload: [
+          t('dashboard-scene.move-provisioned-dashboard-form.queued', 'Move queued. Changes will be applied shortly.'),
+        ],
+      });
+      onDismiss();
+    } catch (error) {
+      showError(error);
     }
-    navigate('/dashboards');
   };
 
   const onBranchSuccess = (info: ProvisionedOperationInfo) => {
@@ -153,20 +210,19 @@ export function MoveProvisionedDashboardForm({
   useProvisionedRequestHandler({
     request: moveRequest,
     workflow,
+    resourceType: 'dashboard',
     successMessage: t(
       'dashboard-scene.move-provisioned-dashboard-form.success-message',
       'Dashboard moved successfully'
     ),
-    resourceType: 'dashboard',
     handlers: {
       onBranchSuccess: (_, info) => onBranchSuccess(info),
-      onWriteSuccess,
       onDismiss,
       onError,
     },
   });
 
-  const isLoading = moveRequest.isLoading;
+  const isLoading = isCreatingJob || moveRequest.isLoading;
 
   return (
     <Drawer
@@ -195,7 +251,10 @@ export function MoveProvisionedDashboardForm({
               <Stack alignItems="center" gap={2}>
                 <Spinner />
                 <div>
-                  {t('dashboard-scene.move-provisioned-dashboard-form.loading-file-data', 'Loading dashboard data')}
+                  {t(
+                    'dashboard-scene.move-provisioned-dashboard-form.loading-dashboard-data',
+                    'Loading dashboard data'
+                  )}
                 </div>
               </Stack>
             )}
@@ -231,11 +290,7 @@ export function MoveProvisionedDashboardForm({
               <Button variant="secondary" onClick={onDismiss} fill="outline">
                 <Trans i18nKey="dashboard-scene.move-provisioned-dashboard-form.cancel-action">Cancel</Trans>
               </Button>
-              <Button
-                variant="primary"
-                type="submit"
-                disabled={isLoading || readOnly || !currentFileData || isLoadingFileData}
-              >
+              <Button variant="primary" type="submit" disabled={isLoading || readOnly || isLoadingFileData}>
                 {isLoading
                   ? t('dashboard-scene.move-provisioned-dashboard-form.moving', 'Moving...')
                   : t('dashboard-scene.move-provisioned-dashboard-form.move-action', 'Move dashboard')}

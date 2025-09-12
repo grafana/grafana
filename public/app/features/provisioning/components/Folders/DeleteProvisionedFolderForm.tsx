@@ -7,15 +7,14 @@ import { getAppEvents } from '@grafana/runtime';
 import { Box, Button, Stack } from '@grafana/ui';
 import { Folder } from 'app/api/clients/folder/v1beta1';
 import { RepositoryView, useDeleteRepositoryFilesWithPathMutation } from 'app/api/clients/provisioning/v0alpha1';
-import { AnnoKeySourcePath } from 'app/features/apiserver/types';
 import { DescendantCount } from 'app/features/browse-dashboards/components/BrowseActions/DescendantCount';
-import { getFolderURL } from 'app/features/browse-dashboards/components/utils';
 import { FolderDTO } from 'app/types/folders';
 
 import { useProvisionedFolderFormData } from '../../hooks/useProvisionedFolderFormData';
 import { ProvisionedOperationInfo, useProvisionedRequestHandler } from '../../hooks/useProvisionedRequestHandler';
 import { BaseProvisionedFormData } from '../../types/form';
 import { buildResourceBranchRedirectUrl } from '../../utils/redirect';
+import { useBulkActionJob } from '../BulkActions/useBulkActionJob';
 import { RepoInvalidStateBanner } from '../Shared/RepoInvalidStateBanner';
 import { ResourceEditFormSharedFields } from '../Shared/ResourceEditFormSharedFields';
 
@@ -33,28 +32,83 @@ interface DeleteProvisionedFolderFormProps {
 
 function FormContent({ initialValues, parentFolder, repository, workflowOptions, folder, onDismiss }: FormProps) {
   const resourceId = parentFolder?.uid || '';
-
-  const [deleteRepoFile, request] = useDeleteRepositoryFilesWithPathMutation();
+  const { createBulkJob, isLoading } = useBulkActionJob();
+  const [deleteRepoFile, deleteRequest] = useDeleteRepositoryFilesWithPathMutation();
   const navigate = useNavigate();
 
   const methods = useForm<BaseProvisionedFormData>({ defaultValues: initialValues });
   const { handleSubmit, watch } = methods;
-  const workflow = watch('workflow');
+  const [ref, workflow] = watch(['ref', 'workflow']);
 
-  const handleSubmitForm = async ({ repo, path, comment, ref }: BaseProvisionedFormData) => {
-    if (!repository?.name) {
+  // Helper function to show error messages
+  const showError = (error?: unknown) => {
+    const payload = [t('browse-dashboards.delete-provisioned-folder-form.api-error', 'Failed to delete folder'), error];
+
+    getAppEvents().publish({
+      type: AppEvents.alertError.name,
+      payload,
+    });
+  };
+
+  const handleSubmitForm = async ({ repo, path, comment }: BaseProvisionedFormData) => {
+    if (!repo || !repository) {
+      showError();
       return;
     }
 
-    const commitMessage = comment || `Delete folder: ${folder?.metadata?.annotations?.[AnnoKeySourcePath]}`;
-    const targetRef = workflow === 'write' ? undefined : ref;
+    // Branch workflow: use /files API for direct file operations
+    if (workflow === 'branch') {
+      const branchRef = ref;
+      const commitMessage = comment || t('browse-dashboards.delete-provisioned-folder-form.commit', 'Delete folder');
 
-    deleteRepoFile({
-      name: repo,
-      path: `${path}/`,
-      ref: targetRef,
-      message: commitMessage,
-    });
+      try {
+        await deleteRepoFile({
+          name: repo,
+          path: `${path}/`,
+          ref: branchRef,
+          message: commitMessage,
+        }).unwrap();
+      } catch (error) {
+        showError(error);
+      }
+      return;
+    }
+
+    // Write workflow: use Job API
+    const jobSpec = {
+      action: 'delete' as const,
+      delete: {
+        ref: undefined,
+        resources: [
+          {
+            name: resourceId,
+            group: 'folder.grafana.app' as const,
+            kind: 'Folder' as const,
+          },
+        ],
+      },
+    };
+
+    try {
+      const result = await createBulkJob(repository, jobSpec);
+      if (!result.success) {
+        showError();
+        return;
+      }
+
+      getAppEvents().publish({
+        type: AppEvents.alertSuccess.name,
+        payload: [
+          t(
+            'browse-dashboards.delete-provisioned-folder-form.queued',
+            'Delete queued. Changes will be applied shortly.'
+          ),
+        ],
+      });
+      onDismiss?.();
+    } catch (error) {
+      showError(error);
+    }
   };
 
   const onBranchSuccess = ({ urls }: { urls?: Record<string, string> }, info: ProvisionedOperationInfo) => {
@@ -69,36 +123,21 @@ function FormContent({ initialValues, parentFolder, repository, workflowOptions,
     }
   };
 
-  const onWriteSuccess = () => {
-    // Navigate back to parent folder if it exists, otherwise go to dashboards root
-    if (parentFolder?.parentUid) {
-      window.location.href = getFolderURL(parentFolder.parentUid);
-    } else {
-      window.location.href = '/dashboards';
-    }
-  };
-
   const onError = (error: unknown) => {
-    getAppEvents().publish({
-      type: AppEvents.alertError.name,
-      payload: [t('browse-dashboards.delete-provisioned-folder-form.api-error', 'Failed to delete folder'), error],
-    });
+    showError(error);
   };
 
-  // Use the repository-type and resource-type aware provisioned request handler
   useProvisionedRequestHandler({
-    request,
+    request: deleteRequest,
     workflow,
+    resourceType: 'folder',
     successMessage: t(
       'browse-dashboards.delete-provisioned-folder-form.success-message',
       'Folder deleted successfully'
     ),
-    resourceType: 'folder',
-    repository,
     handlers: {
       onDismiss,
       onBranchSuccess,
-      onWriteSuccess,
       onError,
     },
   });
@@ -129,13 +168,12 @@ function FormContent({ initialValues, parentFolder, repository, workflowOptions,
             repository={repository}
           />
 
-          {/* Delete / Cancel button */}
           <Stack gap={2}>
             <Button variant="secondary" fill="outline" onClick={onDismiss}>
               <Trans i18nKey="browse-dashboards.delete-provisioned-folder-form.button-cancel">Cancel</Trans>
             </Button>
-            <Button type="submit" disabled={request.isLoading} variant="destructive">
-              {request.isLoading
+            <Button type="submit" disabled={isLoading || deleteRequest.isLoading} variant="destructive">
+              {isLoading || deleteRequest.isLoading
                 ? t('browse-dashboards.delete-provisioned-folder-form.button-deleting', 'Deleting...')
                 : t('browse-dashboards.delete-provisioned-folder-form.button-delete', 'Delete')}
             </Button>
