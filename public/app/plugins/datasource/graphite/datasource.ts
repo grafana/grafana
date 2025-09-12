@@ -704,8 +704,8 @@ export class GraphiteDatasource
 
     if (config.featureToggles.graphiteBackendMode) {
       return await this.postResource<MetricFindValue[]>('metrics/find', {
-        from: typeof params.from === 'string' ? params.from : `${params.from}`,
-        until: typeof params.until === 'string' ? params.until : `${params.until}`,
+        from: params.from ? (typeof params.from === 'string' ? params.from : `${params.from}`) : undefined,
+        until: params.until ? (typeof params.until === 'string' ? params.until : `${params.until}`) : undefined,
         query,
       });
     }
@@ -741,7 +741,7 @@ export class GraphiteDatasource
    * The result will contain all metrics (with full name) matching provided query.
    * It's a more flexible version of /metrics/find endpoint (@see requestMetricFind)
    */
-  private requestMetricExpand(
+  private async requestMetricExpand(
     query: string,
     requestId: string,
     range?: { from: string | number; until: string | number }
@@ -750,6 +750,18 @@ export class GraphiteDatasource
     if (range) {
       params.from = range.from;
       params.until = range.until;
+    }
+
+    if (config.featureToggles.graphiteBackendMode) {
+      const metrics = await this.postResource<MetricFindValue[]>('metrics/expand', {
+        from: params.from ? (typeof params.from === 'string' ? params.from : `${params.from}`) : undefined,
+        until: params.until ? (typeof params.until === 'string' ? params.until : `${params.until}`) : undefined,
+        query,
+      });
+      return metrics.map((metric) => ({
+        text: metric.text,
+        expandable: false,
+      }));
     }
 
     const httpOptions: BackendSrvRequest = {
