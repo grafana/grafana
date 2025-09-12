@@ -5,78 +5,50 @@ The main goal of issue triage is to categorize all incoming Grafana issues and m
 > [!NOTE]
 > This information is for Grafana project Maintainers, Owners, and Admins. If you are a Contributor, then you won't be able to perform most of the tasks in this topic.
 
-The core maintainers of the Grafana project are responsible for categorizing all incoming issues and delegating any critical or important issue to other maintainers. Currently, one maintainer each week is responsible. Besides that part, triage provides an important way to contribute to an open source project.
+All issues except the internal ones, are automatically [triaged](https://github.com/grafana/grafana/blob/main/.github/workflows/issue-opened.yml). The automation adds labels based on the title and description provided. The [labels](https://github.com/grafana/grafana/blob/main/.github/workflows/auto-triager/labels.txt) are mapped to projects.
 
-## Simplified flowchart diagram of the issue triage process
+## Simplified flowchart diagram of the automated issue triage process
 
 ```mermaid
 flowchart TD
-    A([New issue /<br>more info added])
-    B{All info needed to categorize the issue?}
-    C1([Label: needs more info])
-    C2([Label: type/#42; <br> Label: area/#42; <br> Label: datasource/#42;])
-    D{Is duplicate?}
-    E1([Add comment: <br> /duplicate of #&lt;issue number&gt;])
-    E2{Can repro?}
-    F1([Label: triage/needs-confirmation])
-    F2{Needs priority?}
-    G1([Assign to project])
-    G2([Label: priority/*])
+    A([New issue])
+    C2([Triage app adds: <br>Label: type/#42; <br> Label: area/#42; <br> Label: datasource/#42; <br> Label: automated-triage])
+
+    G1([Assigns to project])
+
     H([Done])
 
     %% Flow
-    A --> B
-    B -- No --> C1
-    B -- Yes --> C2
-    C2 --> D
-    D -- Yes --> E1
-    D -- No --> E2
-    E2 -- No --> F1
-    E2 -- Yes --> F2
-    F1 --> G1
-    F2 -- No --> H
-    F2 -- Yes --> G2
-    G2 --> H
-    E1 --> H
-    G1 --> H
+    A --> C2
+    C2 --> G1 --> H
 ```
 
 ## Key functions of issue triage
 
-Triage helps ensure issues resolve quickly by:
+Even with automation, understanding the purpose and value of triage remains important. Automation helps categorize and label issues, but human review is still important to:
 
-- Ensuring the issue's intent and purpose is conveyed precisely. This is necessary because it can be difficult for an issue to explain how an end user experiences a problem and what actions they took.
-- Giving a contributor the information they need before they commit to resolving an issue.
-- Lowering the issue count by preventing duplicate issues.
-- Streamlining the development process by preventing duplicate discussions.
+- Ensure the issue's intent and purpose is conveyed precisely. This is necessary because it can be difficult for an issue to explain how an end user experiences a problem and what actions they took.
+- Provide contributors with the information they need before they commit to resolving an issue.
+- Lower the issue count by preventing duplicate issues.
+- Improve the overall quality and clarity of issues, making it easier for everyone to contribute.
 
-If you don't have the knowledge or time to code, consider helping with triage. The community will thank you for saving them time by spending some of yours.
+If you don't have the knowledge or time to code, consider helping with triage. Your efforts help maintainers and contributors focus on resolving issues more efficiently, benefiting the entire community.
 
-### 1. Find uncategorized issues
+## 1. Get started with issue triage
 
-To get started with issue triage and finding issues that haven't been triaged you have two alternatives.
+### Subscribe to all notifications
 
-#### Browse unlabeled issues
-
-The easiest and most straightforward way of getting started and finding issues that haven't been triaged is to browse [unlabeled issues](https://github.com/grafana/grafana/issues?q=is%3Aopen+is%3Aissue+no%3Alabel), and then work on them starting from the bottom to the top.
-
-#### Subscribe to all notifications
-
-The more advanced, but recommended way is to subscribe to all notifications from this repository which means that all new issues, pull requests, comments and important status changes are sent to your configured email address. Read this [guide](https://help.github.com/en/articles/watching-and-unwatching-repositories#watching-a-single-repository) for help with setting this up.
+One way is to subscribe to all notifications from this repository which means that all new issues, pull requests, comments and important status changes are sent to your configured email address. Read this [guide](https://help.github.com/en/articles/watching-and-unwatching-repositories#watching-a-single-repository) for help with setting this up.
 
 It's highly recommended that you set up filters to automatically remove emails from the inbox and label them accordingly. When issues are properly categorized you can easily understand when you need to act upon a notification or where to look to find issues that haven't been triaged.
 
 Instructions for setting up filters in Gmail can be found [here](#setting-up-gmail-filters). Another alternative is to use [Trailer](https://github.com/ptsochantaris/trailer) or similar software.
 
-### 2. Ensure the issue contains basic information
+## 2. Ensure the issue contains basic information
 
-Before triaging an issue very far, make sure that the issue's author provided the standard information. This helps you make an educated recommendation on how to categorize the issue. The Grafana project uses [GitHub issue templates](https://docs.github.com/en/communities/using-templates-to-encourage-useful-issues-and-pull-requests/configuring-issue-templates-for-your-repository) to guide contributors to provide standard information that must be included for each type of template or type of issue.
+Before triaging an issue very far, make sure that the issue's author provided the standard information. This helps you make an educated recommendation on how to categorize the issue. The Grafana project uses [GitHub issue templates](https://github.com/grafana/grafana/tree/main/.github/ISSUE_TEMPLATE) to guide contributors to provide standard information that must be included for each type of template or type of issue.
 
-#### Standard issue information that must be included
-
-Grafana uses various [issue templates](https://github.com/grafana/grafana/issues/new/choose) to collect information from the issue reporter. The following list describes the standard information that is included.
-
-##### Bug reports
+#### Bug reports
 
 Bug reports should explain what happened, what was expected, and how to reproduce it. Also, it should include additional information that may help giving a complete picture of what happened such as screenshots, [query inspector](https://community.grafana.com/t/using-grafanas-query-inspector-to-troubleshoot-issues/2630) output, and any relevant information about the environment. For example:
 
@@ -87,7 +59,7 @@ Bug reports should explain what happened, what was expected, and how to reproduc
 - Grafana plugins:
 - Others:
 
-##### Enhancement requests
+#### Enhancement requests
 
 > **Note:** Prior to August, 2023, community-submitted feature requests were submitted as [GitHub discussions](https://github.com/grafana/grafana/discussions). These are now submitted using the [feature request issue template](https://github.com/grafana/grafana/issues/new?assignees=&labels=type%2Ffeature-request&projects=&template=1-feature_requests.md).
 
@@ -96,35 +68,27 @@ When submitting an enhancement request we ask that users focus on the problem th
 - What would you like to be added?:
 - Why is this needed (describe your use case and goals)\*\*?:
 
-##### Accessibility issues
+#### Accessibility issues
 
 This is a mix between a bug report and enhancement request but focused on accessibility issues to help make Grafana improve keyboard navigation, screen-reader support, and general accessibility. The report should include relevant [WCAG criteria](https://www.w3.org/WAI/WCAG21/quickref/?versions=2.0), if applicable.
 
 Grafana Labs is dedicated to improving our graphical user interfaces and overall experience so that our product becomes usable and accessible for people with disabilities as well as anyone else. Learn more about Grafana's commitment to [A11y](https://grafana.com/accessibility/) (accessibility).
 
-##### Support requests
+#### Support requests
 
 In general, if the issue description and title is perceived as a question no more information is needed. See how to categorize these requests [here](#support-requests-1).
 
 #### Good practices
 
-To make it easier for everyone to understand and find issues a good rule of thumbs is to:
+To make it easier for everyone to understand and find issues a good rule of thumb is to:
 
 - Make sure that issue titles are named to explain the subject of the issue, are spelled correctly, and don't include irrelevant or sensitive information.
 - Make sure that issue descriptions don't include irrelevant information, information from a template that hasn't been filled out, or sensitive information.
-- Do your best effort to change the title and description or request suggested changes by adding a comment.
+- Make your best effort to change the title and description or request suggested changes by adding a comment.
 
-#### Do you have all the information needed to categorize an issue?
+#### Does the issue have all the information needed for automated categorization?
 
-Depending on the issue, you might not feel all this information is needed. Use your best judgement. If you cannot triage an issue using what its author provided, explain kindly to the author that they must provide the previously mentioned information to clarify the problem. Label issue with `needs more info` and add any related `area/*` or `datasource/*` labels. Alternatively, use `bot/needs more info` label and the Grafana bot will request it for you.
-
-If the author provides the standard information, but you are still unable to triage the issue, request additional information. Do this kindly and politely because you are asking for more of the author's time.
-
-If the author does not respond to the requested information within a week, close the issue with a kind note stating that the author can request for the issue to be reopened when the necessary information is provided.
-
-When you feel you have all the information needed, then you're ready to [categorize the issue](#3-categorize-an-issue).
-
-If you receive a notification with additional information provided, but you aren't on issue triage anymore and you feel you don't have time to handle it, you should delegate it to the current person on issue triage.
+Most issues are now categorized automatically based on the information provided. However, if the automation cannot categorize an issue due to missing or unclear information, a human reviewer may need to request additional details from the author. Use your best judgement—if the issue lacks enough information for automation to work correctly, kindly ask the author to provide the necessary details.
 
 ### 3. Categorize an issue
 
@@ -167,8 +131,8 @@ If it's not perfectly clear that it's an actual bug, quickly try to reproduce it
 
 **It can't be reproduced:**
 
-1. Either [ask for more information](#2-ensure-the-issue-contains-basic-information) needed to investigate it more thoroughly.
-1. Either [delegate further investigations](#investigation-of-issues) to someone else.
+1. You can either [ask for more information](#2-ensure-the-issue-contains-basic-information) needed to investigate it more thoroughly.
+1. or [delegate further investigations](#investigation-of-issues) to someone else.
 
 **It works as intended (that is, by design):**
 
@@ -178,7 +142,7 @@ If it's not perfectly clear that it's an actual bug, quickly try to reproduce it
 #### Enhancement or feature request?
 
 1. Label the issue `type/feature-request` and add at least one `area/*` or `datasource/*` label.
-1. Make sure the submitter has justified why this feature requests is important.
+1. Make sure the submitter has justified why this feature request is important.
 
 #### Documentation issue?
 
@@ -284,7 +248,7 @@ In certain areas there probably exist domain experts who may be able to help:
 
 1. Kindly and politely add a comment to signal to users subscribed to updates of the issue.
    - Explain that the issue would be nice to get resolved, but it isn't prioritized to work on by maintainers for an unforeseen future.
-   - If possible or applicable, try to help contributors getting starting by adding pointers and references to what code needs to be changed. Note any suggests for good ways of solving or implementing the issue.
+   - If possible or applicable, try to help contributors get started by adding pointers and references to what code needs to be changed. Note any suggestions for good ways of solving or implementing the issue.
 1. Label the issue with `help wanted`.
 1. If applicable, label the issue with `beginner friendly` to denote that the issue is suitable for a beginner to work on.
 1. If possible, try to estimate the amount of work by adding `effort/small`, `effort/medium` or `effort/large`.
@@ -295,7 +259,7 @@ When an issue has all basic information provided, but the triage responsible has
 
 Investigating issues can be a very time consuming task, especially for the maintainers, given the huge number of combinations of plugins, data sources, platforms, databases, browsers, hardware, integrations, cloud services, and so on, that are used with Grafana. There are a certain number of combinations that are more common than others, and these are in general easier for maintainers to investigate.
 
-For some other combinations it may not be possible at all for a maintainer to setup a proper test environment to investigate the issue. In these cases we really appreciate any help we can get from the community. Otherwise, the issue is highly likely to be closed.
+For some other combinations it may not be possible at all for a maintainer to set up a proper test environment to investigate the issue. In these cases we really appreciate any help we can get from the community. Otherwise, the issue is highly likely to be closed.
 
 Even if you don't have the time or knowledge to investigate an issue we highly recommend that you [upvote](https://github.blog/2016-03-10-add-reactions-to-pull-requests-issues-and-comments) the issue if you happen to have the same problem. If you have further details that may help investigating the issue, please provide as much information as possible.
 
@@ -310,14 +274,14 @@ To learn more about bot actions, refer to our [bot documentation](https://github
 Part of issue triage should also be triaging of external PRs. The main goal should be to make sure PRs from external contributors have an owner and aren't forgotten.
 
 1. Check new external PRs which don't have a reviewer. You can easily search for pull requests made by external contributors by using the label: `pr/external` in your [query search](https://github.com/grafana/grafana/pulls?q=is%3Aopen+is%3Apr+label%3Apr%2Fexternal) Note: external PRs are automatically labeled with `pr/external` upon creation.
-1. Check if there is a link to an existing issue. The link to a existing issue should be in the description section, underneath “Which issue(s) does this PR fix?:”. If not, and you know which issue it is solving, add the link yourself. Otherwise, ask the author to link the issue or create one.
+1. Check if there is a link to an existing issue. The link to an existing issue should be in the description section, underneath “Which issue(s) does this PR fix?:”. If not, and you know which issue it is solving, add the link yourself. Otherwise, ask the author to link the issue or to create one.
 1. Assign a reviewer based on who was handling the linked issue or what code or feature the PR touches (if all else fails, look at who was the last to make changes).
 
 ### Appendix
 
 #### Setting up Gmail filters
 
-If you're using Gmail, a best practice is to set up filters to automatically remove emails from the inbox and label them to make it easy for you to understand when you need to act upon a notification. You should be able to promptly process all incoming issues that haven't been triaged.
+If you're using Gmail, a best practice is to set up filters to automatically remove emails from the inbox and label them, making it easy for you to understand when you need to act upon a notification. You should be able to promptly process all incoming issues that haven't been triaged.
 
 This may be set up by personal preference, but here's a working configuration for reference:
 
