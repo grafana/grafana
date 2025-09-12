@@ -6,11 +6,12 @@ import (
 
 	restclient "k8s.io/client-go/rest"
 
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apiserver/pkg/authorization/authorizer"
+
 	"github.com/grafana/grafana-app-sdk/app"
 	appsdkapiserver "github.com/grafana/grafana-app-sdk/k8s/apiserver"
 	"github.com/grafana/grafana-app-sdk/simple"
-	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/apiserver/pkg/authorization/authorizer"
 
 	"github.com/grafana/grafana/apps/alerting/rules/pkg/apis"
 	rulesApp "github.com/grafana/grafana/apps/alerting/rules/pkg/app"
@@ -55,7 +56,7 @@ func RegisterAppInstaller(
 		ManifestData: *apis.LocalManifest().ManifestData,
 	}
 
-	i, err := appsdkapiserver.NewDefaultAppInstaller(provider, appConfig, apis.ManifestGoTypeAssociator, apis.ManifestCustomRouteResponsesAssociator)
+	i, err := appsdkapiserver.NewDefaultAppInstaller(provider, appConfig, nil) // FIXME!!! , &apis.GoTypeAssociator{}
 	if err != nil {
 		return nil, err
 	}
