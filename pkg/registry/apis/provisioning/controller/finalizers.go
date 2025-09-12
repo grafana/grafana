@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"slices"
 	"sort"
 	"strings"
 
@@ -39,61 +40,65 @@ func (f *finalizer) process(ctx context.Context,
 	finalizers []string,
 ) error {
 	logger := logging.FromContext(ctx)
+	logger.Info("process finalizers", "finalizers", finalizers)
 
-	for _, finalizer := range finalizers {
-		switch finalizer {
-		case CleanFinalizer:
-			// NOTE: the controller loop will never get run unless a finalizer is set
-			hooks, ok := repo.(repository.Hooks)
-			if ok {
-				if err := hooks.OnDelete(ctx); err != nil {
-					logger.Warn("Error running deletion hooks", "err", err)
+	if slices.Contains(finalizers, ReleaseOrphanResourcesFinalizer) {
+		logger.Info("release orphan resources")
+		err := f.processExistingItems(ctx, repo.Config(),
+			func(client dynamic.ResourceInterface, item *provisioning.ResourceListItem) error {
+				logger.Info("release resource",
+					"name", item.Name,
+					"group", item.Group,
+					"resource", item.Resource,
+				)
+
+				patchAnnotations, err := getPatchedAnnotations(item)
+				if err != nil {
+					return fmt.Errorf("get patched annotations: %w", err)
 				}
-			}
 
-		case ReleaseOrphanResourcesFinalizer:
-			err := f.processExistingItems(ctx, repo.Config(),
-				func(client dynamic.ResourceInterface, item *provisioning.ResourceListItem) error {
-					logger.Debug("releasing resource",
-						"finalizer", ReleaseOrphanResourcesFinalizer,
-						"resource", item.Name,
-						"group", item.Group,
-						"resourceType", item.Resource,
-					)
-
-					patchAnnotations, err := getPatchedAnnotations(item)
-					if err != nil {
-						return fmt.Errorf("get patched annotations: %w", err)
-					}
-
-					_, err = client.Patch(
-						ctx, item.Name, types.JSONPatchType, patchAnnotations, v1.PatchOptions{},
-					)
-					return fmt.Errorf("patch resource to release ownership: %w", err)
-				})
-			if err != nil {
-				return fmt.Errorf("running %s finalizer: %w", ReleaseOrphanResourcesFinalizer, err)
-			}
-
-		case RemoveOrphanResourcesFinalizer:
-			err := f.processExistingItems(ctx, repo.Config(),
-				func(client dynamic.ResourceInterface, item *provisioning.ResourceListItem) error {
-					logger.Debug("removing resource",
-						"finalizer", RemoveOrphanResourcesFinalizer,
-						"resource", item.Name,
-						"group", item.Group,
-						"resourceType", item.Resource,
-					)
-					return client.Delete(ctx, item.Name, v1.DeleteOptions{})
-				})
-			if err != nil {
-				return fmt.Errorf("running %s finalizer: %w", RemoveOrphanResourcesFinalizer, err)
-			}
-
-		default:
-			logger.Warn("skipping unknown finalizer", "finalizer", finalizer)
+				_, err = client.Patch(
+					ctx, item.Name, types.JSONPatchType, patchAnnotations, v1.PatchOptions{},
+				)
+				return fmt.Errorf("patch resource to release ownership: %w", err)
+			})
+		if err != nil {
+			return fmt.Errorf("release resources: %w", err)
 		}
 	}
+
+	if slices.Contains(finalizers, RemoveOrphanResourcesFinalizer) {
+		logger.Info("remove orphan resources")
+		err := f.processExistingItems(ctx, repo.Config(),
+			func(client dynamic.ResourceInterface, item *provisioning.ResourceListItem) error {
+				logger.Info("remove resource",
+					"name", item.Name,
+					"group", item.Group,
+					"resource", item.Resource,
+				)
+				return client.Delete(ctx, item.Name, v1.DeleteOptions{})
+			})
+		if err != nil {
+			return fmt.Errorf("remove resources: %w", err)
+		}
+	}
+
+	if slices.Contains(finalizers, CleanFinalizer) {
+		logger.Info("execute deletion hooks")
+		hooks, ok := repo.(repository.Hooks)
+		if ok {
+			if err := hooks.OnDelete(ctx); err != nil {
+				return fmt.Errorf("execute deletion hooks: %w", err)
+			}
+		}
+	}
+
+	// TODO: Validate in ValidateRepository
+	// 	default:
+	// 		logger.Warn("skipping unknown finalizer", "finalizer", finalizer)
+	// 	}
+	// }
+
 	return nil
 }
 

@@ -84,6 +84,8 @@ func ValidateRepository(repo Repository) field.ErrorList {
 		}
 	}
 
+	// TODO: Validate finalizers
+
 	return list
 }
 
