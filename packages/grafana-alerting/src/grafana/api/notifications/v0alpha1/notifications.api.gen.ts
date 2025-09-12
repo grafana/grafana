@@ -458,7 +458,7 @@ const injectedRtkApi = api
     }),
     overrideExisting: false,
   });
-export { injectedRtkApi as alertingAPI };
+export { injectedRtkApi as notificationsAPI };
 export type GetApiResourcesApiResponse = /** status 200 OK */ ApiResourceList;
 export type GetApiResourcesApiArg = void;
 export type ListReceiverApiResponse = /** status 200 OK */ ReceiverList;
@@ -1249,6 +1249,7 @@ export type ReceiverIntegration = {
   };
   type: string;
   uid?: string;
+  version: string;
 };
 export type ReceiverSpec = {
   integrations: ReceiverIntegration[];

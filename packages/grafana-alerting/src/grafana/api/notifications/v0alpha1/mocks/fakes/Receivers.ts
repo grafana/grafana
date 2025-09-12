@@ -1,7 +1,7 @@
 import { faker } from '@faker-js/faker';
 import { Factory } from 'fishery';
 
-import { DEFAULT_NAMESPACE, generateResourceVersion, generateTitle, generateUID } from '../../../../mocks/util';
+import { DEFAULT_NAMESPACE, generateResourceVersion, generateTitle, generateUID } from '../../../../../mocks/util';
 import { GROUP, VERSION } from '../../const';
 import {
   ContactPoint,
