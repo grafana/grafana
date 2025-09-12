@@ -39,7 +39,7 @@ func (rev *ConfigRevision) CreateReceiver(receiver *models.Receiver) (*models.Re
 
 	rev.Config.AlertmanagerConfig.Receivers = append(rev.Config.AlertmanagerConfig.Receivers, postable)
 
-	if err := rev.ValidateReceiver(postable); err != nil {
+	if err := rev.validateReceiver(postable); err != nil {
 		return nil, err
 	}
 
@@ -65,7 +65,7 @@ func (rev *ConfigRevision) UpdateReceiver(receiver *models.Receiver) (*models.Re
 
 	rev.Config.AlertmanagerConfig.Receivers[existingIdx] = newReceiver
 
-	if err := rev.ValidateReceiver(newReceiver); err != nil {
+	if err := rev.validateReceiver(newReceiver); err != nil {
 		return nil, err
 	}
 
@@ -178,9 +178,9 @@ func (rev *ConfigRevision) RenameReceiverInRoutes(oldName, newName string) int {
 	return RenameReceiverInRoute(oldName, newName, rev.Config.AlertmanagerConfig.Route)
 }
 
-// ValidateReceiver checks if the given receiver conflicts in name or integration UID with existing receivers.
+// validateReceiver checks if the given receiver conflicts in name or integration UID with existing receivers.
 // We only check the receiver being modified to prevent existing issues from other receivers being reported.
-func (rev *ConfigRevision) ValidateReceiver(p *definitions.PostableApiReceiver) error {
+func (rev *ConfigRevision) validateReceiver(p *definitions.PostableApiReceiver) error {
 	uids := make(map[string]struct{}, len(rev.Config.AlertmanagerConfig.Receivers))
 	for _, integrations := range p.GrafanaManagedReceivers {
 		if _, exists := uids[integrations.UID]; exists {
