@@ -59,7 +59,7 @@ func handleResourceReq[T any](handlerFn resourceHandler[T], s *Service) func(rw 
 
 		parsedBody, err := parseRequestBody[T](requestBody, s.logger)
 		if err != nil {
-			writeErrorResponse(rw, http.StatusInternalServerError, fmt.Sprintf("failed to parse request body: %v", err))
+			writeErrorResponse(rw, http.StatusBadRequest, fmt.Sprintf("failed to parse request body: %v", err))
 			return
 		}
 
@@ -210,9 +210,8 @@ func doGraphiteRequest[T any](ctx context.Context, endpoint string, dsInfo *data
 	}
 
 	defer func() {
-		err := res.Body.Close()
-		if err != nil {
-			logger.Warn("Failed to close response body", "error", err)
+		if err := res.Body.Close(); err != nil {
+			logger.Warn("Failed to close response body", "err", err)
 		}
 	}()
 
