@@ -14,6 +14,7 @@ import { DashboardsTreeItem } from 'app/features/browse-dashboards/types';
 import { DashboardViewItem } from 'app/features/search/types';
 import { useSelector } from 'app/types/store';
 
+import { FolderParent } from './FolderParent';
 import { FolderRepo } from './FolderRepo';
 
 const ROW_HEIGHT = 40;
@@ -171,6 +172,7 @@ function Row({ index, style: virtualStyles, data }: RowProps) {
       </span>
     ) : null;
   }
+  console.log('item', item);
 
   return (
     // don't need a key handler here, it's handled at the input level in NestedFolderPicker
@@ -212,6 +214,7 @@ function Row({ index, style: virtualStyles, data }: RowProps) {
           <span className={styles.folderButtonSpacer} />
         )}
 
+        <FolderParent item={items[index]} />
         <label className={styles.label} id={labelId}>
           <Text truncate>{item.title}</Text>
           <FolderRepo folder={item} />
