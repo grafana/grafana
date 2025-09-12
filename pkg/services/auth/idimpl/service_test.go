@@ -57,7 +57,6 @@ func decodePrivateKey(data []byte) *ecdsa.PrivateKey {
 	privateKey, err := x509.ParseECPrivateKey(block.Bytes)
 	if err != nil {
 		panic(fmt.Sprintf("should be able to parse ec private key: %v", err))
-
 	}
 	if privateKey.Curve.Params().Name != "P-256" {
 		panic("should be valid private key")
