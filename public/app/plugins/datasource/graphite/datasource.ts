@@ -854,7 +854,7 @@ export class GraphiteDatasource
     );
   }
 
-  getTagsAutoComplete(expressions: string[], tagPrefix?: string, optionalOptions?: any) {
+  async getTagsAutoComplete(expressions: string[], tagPrefix?: string, optionalOptions?: any) {
     const options = optionalOptions || {};
     const params: BackendSrvRequest['params'] = {
       expr: _map(expressions, (expression) => this.templateSrv.replace((expression || '').trim())),
@@ -869,6 +869,18 @@ export class GraphiteDatasource
     if (options.range) {
       params.from = this.translateTime(options.range.from, false, options.timezone);
       params.until = this.translateTime(options.range.to, true, options.timezone);
+    }
+
+    if (config.featureToggles.graphiteBackendMode) {
+      const tags = await this.postResource<string[]>('tags/autoComplete/tags', {
+        from: typeof params.from === 'string' ? params.from : `${params.from}`,
+        until: typeof params.until === 'string' ? params.until : `${params.until}`,
+        tagPrefix,
+        limit: options.limit,
+      });
+      return tags.map((tag) => ({
+        text: tag,
+      }));
     }
 
     const httpOptions: BackendSrvRequest = {
