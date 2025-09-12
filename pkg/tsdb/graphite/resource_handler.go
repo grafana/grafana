@@ -25,6 +25,7 @@ func (s *Service) newResourceMux() *http.ServeMux {
 	mux.HandleFunc("/metrics/find", handleResourceReq(s.handleMetricsFind, s))
 	mux.HandleFunc("/metrics/expand", handleResourceReq(s.handleMetricsExpand, s))
 	mux.HandleFunc("/functions", handleResourceReq(s.handleFunctions, s))
+	mux.HandleFunc("/tags/autoComplete/tags", handleResourceReq(s.handleTagsAutocomplete, s))
 	return mux
 }
 
@@ -201,6 +202,35 @@ func (s *Service) handleMetricsExpand(ctx context.Context, dsInfo *datasourceInf
 	}
 
 	return metricsExpandResponse, statusCode, nil
+}
+
+func (s *Service) handleTagsAutocomplete(ctx context.Context, dsInfo *datasourceInfo, tagsAutocompleteRequestJson *GraphiteTagsRequest) ([]byte, int, error) {
+	queryParams := map[string]string{
+		"from":      tagsAutocompleteRequestJson.From,
+		"until":     tagsAutocompleteRequestJson.Until,
+		"limit":     fmt.Sprintf("%d", tagsAutocompleteRequestJson.Limit),
+		"tagPrefix": tagsAutocompleteRequestJson.TagPrefix,
+	}
+	req, err := s.createRequest(ctx, dsInfo, URLParams{
+		SubPath:     "tags/autoComplete/tags",
+		Method:      http.MethodGet,
+		QueryParams: queryParams,
+	})
+	if err != nil {
+		return nil, http.StatusInternalServerError, fmt.Errorf("failed to create metrics expand request %v", err)
+	}
+
+	tags, _, statusCode, err := doGraphiteRequest[[]string](ctx, dsInfo, s.logger, req, false)
+	if err != nil {
+		return nil, statusCode, fmt.Errorf("tags autocomplete request failed: %v", err)
+	}
+
+	tagsResponse, err := json.Marshal(tags)
+	if err != nil {
+		return nil, http.StatusInternalServerError, fmt.Errorf("failed to marshal tags autocomplete response: %s", err)
+	}
+
+	return tagsResponse, statusCode, nil
 }
 
 func (s *Service) handleFunctions(ctx context.Context, dsInfo *datasourceInfo, _ *any) ([]byte, int, error) {
