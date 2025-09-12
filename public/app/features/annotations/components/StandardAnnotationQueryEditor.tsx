@@ -4,6 +4,7 @@ import { lastValueFrom } from 'rxjs';
 import {
   AnnotationEventMappings,
   AnnotationQuery,
+  CoreApp,
   DataQuery,
   DataSourceApi,
   DataSourceInstanceSettings,
@@ -12,14 +13,17 @@ import {
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
+import { config } from '@grafana/runtime';
 import { Alert, AlertVariant, Button, Space, Spinner } from '@grafana/ui';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
+import { useQueryLibraryContext } from 'app/features/explore/QueryLibrary/QueryLibraryContext';
 
 import { executeAnnotationQuery } from '../executeAnnotationQuery';
 import { shouldUseLegacyRunner, shouldUseMappingUI, standardAnnotationSupport } from '../standardAnnotationSupport';
 import { AnnotationQueryResponse } from '../types';
+import { getDataQueryFromAnnotationForSavedQueries, updateAnnotationFromSavedQuery } from '../utils/savedQueryUtils';
 
 import { AnnotationFieldMapper } from './AnnotationResultMapper';
 
@@ -232,6 +236,13 @@ export default class StandardAnnotationQueryEditor extends PureComponent<Props, 
     });
   };
 
+  onQueryReplace = (replacedQuery: DataQuery) => {
+    const { annotation, onChange } = this.props;
+    // Handle cross-datasource replacement
+    const updatedAnnotation = updateAnnotationFromSavedQuery(annotation, replacedQuery);
+    onChange(updatedAnnotation);
+  };
+
   render() {
     const { datasource, annotation, datasourceInstanceSettings } = this.props;
     const { response } = this.state;
@@ -274,6 +285,15 @@ export default class StandardAnnotationQueryEditor extends PureComponent<Props, 
     return (
       <>
         <DataSourcePluginContextProvider instanceSettings={datasourceInstanceSettings}>
+          {/* Only show SavedQueryButtons for v1 dashboards (annotations with target field) */}
+          {!annotation.query && (
+            <SavedQueryButtons
+              query={getDataQueryFromAnnotationForSavedQueries(annotation, datasource)}
+              app={CoreApp.Dashboard}
+              onSelectQuery={this.onQueryReplace}
+              datasourceFilters={datasourceInstanceSettings?.name ? [datasourceInstanceSettings.name] : []}
+            />
+          )}
           <QueryEditor
             key={datasource?.name}
             query={query}
@@ -295,4 +315,22 @@ export default class StandardAnnotationQueryEditor extends PureComponent<Props, 
       </>
     );
   }
+}
+
+// Will render saved query buttons only if query library feature is enabled
+function SavedQueryButtons(props: {
+  query: DataQuery;
+  app?: CoreApp;
+  onUpdateSuccess?: () => void;
+  onSelectQuery: (query: DataQuery) => void;
+  datasourceFilters: string[];
+}) {
+  const { renderSavedQueryButtons } = useQueryLibraryContext();
+  return renderSavedQueryButtons(
+    props.query,
+    props.app,
+    props.onUpdateSuccess,
+    props.onSelectQuery,
+    props.datasourceFilters
+  );
 }
