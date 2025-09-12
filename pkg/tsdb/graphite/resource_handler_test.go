@@ -131,7 +131,7 @@ func TestHandleEvents(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			svc := &Service{logger: log.NewNullLogger()}
 
-			respBody, status, err := svc.handleEvents(context.Background(), tt.dsInfo, tt.request)
+			respBody, status, err := svc.handleEvents(context.Background(), tt.dsInfo, &tt.request)
 
 			assert.Equal(t, tt.expectedStatus, status)
 
@@ -236,7 +236,7 @@ func TestHandleMetricsFind(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			svc := &Service{logger: log.NewNullLogger()}
 
-			respBody, status, err := svc.handleMetricsFind(context.Background(), tt.dsInfo, tt.request)
+			respBody, status, err := svc.handleMetricsFind(context.Background(), tt.dsInfo, &tt.request)
 
 			assert.Equal(t, tt.expectedStatus, status)
 
@@ -370,7 +370,7 @@ func TestHandleMetricsExpand(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			svc := &Service{logger: log.NewNullLogger()}
 
-			respBody, status, err := svc.handleMetricsExpand(context.Background(), tt.dsInfo, tt.request)
+			respBody, status, err := svc.handleMetricsExpand(context.Background(), tt.dsInfo, &tt.request)
 
 			assert.Equal(t, tt.expectedStatus, status)
 
