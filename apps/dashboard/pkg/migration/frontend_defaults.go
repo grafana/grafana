@@ -597,7 +597,9 @@ func filterDefaultValues(panel map[string]interface{}, originalProperties map[st
 		// Table panel legacy properties that should be filtered out
 		// These are not part of the current table panel schema and frontend filters them out
 		// We need to filter them out regardless of their values since they're legacy properties
-		legacyTableProps := []string{"fontSize", "pageSize", "scroll", "showHeader", "sort"}
+		// NOTE: Removed fontSize, showHeader, and sort from filtering to match frontend behavior
+		// The frontend preserves these properties when they exist in the input dashboard
+		legacyTableProps := []string{"pageSize", "scroll"}
 		for _, prop := range legacyTableProps {
 			if _, exists := panel[prop]; exists {
 				delete(panel, prop)

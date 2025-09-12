@@ -100,7 +100,7 @@ describe('Backend / Frontend single version migration result comparison', () => 
       });
 
       // Handle angular panel migration if needed
-      await handleAngularPanelMigration(frontendModel, targetVersion);
+      await handleAngularPanelMigration(frontendModel, jsonInput.schemaVersion, targetVersion);
 
       const frontendMigrationResult = frontendModel.getSaveModelClone();
 

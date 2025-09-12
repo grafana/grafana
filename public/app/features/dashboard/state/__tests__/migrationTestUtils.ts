@@ -215,7 +215,11 @@ function getPanelPlugin(pluginId: 'stat' | 'table'): PanelPlugin {
   return pluginCopy;
 }
 
-export async function handleAngularPanelMigration(frontendModel: DashboardModel, targetVersion: number): Promise<void> {
+export async function handleAngularPanelMigration(
+  frontendModel: DashboardModel,
+  sourceVersion: number,
+  targetVersion: number
+): Promise<void> {
   /* 
     Migration from schema V27 involves migrating angular singlestat panels to stat panels
     These panels are auto migrated where PanelModel.restoreModel() is called in the constructor,
@@ -236,11 +240,11 @@ export async function handleAngularPanelMigration(frontendModel: DashboardModel,
     We need to manually run the pluginLoaded logic to ensure the panels are migrated correctly.
   */
   for (const panel of frontendModel.panels) {
-    if (panel.type === 'stat' && panel.autoMigrateFrom && targetVersion >= 28) {
+    if (panel.type === 'stat' && panel.autoMigrateFrom && targetVersion >= 28 && sourceVersion < 28) {
       const statPlugin = getPanelPlugin('stat');
       await panel.pluginLoaded(statPlugin);
     }
-    if (panel.type === 'table' && panel.autoMigrateFrom === 'table-old' && targetVersion >= 24) {
+    if (panel.type === 'table' && panel.autoMigrateFrom === 'table-old' && targetVersion >= 24 && sourceVersion < 24) {
       const tablePlugin = getPanelPlugin('table');
       await panel.pluginLoaded(tablePlugin);
     }
