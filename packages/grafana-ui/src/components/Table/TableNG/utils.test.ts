@@ -46,6 +46,7 @@ import {
   getDefaultRowHeight,
   getDisplayName,
   predicateByName,
+  getCellStyleByField,
 } from './utils';
 
 describe('TableNG utils', () => {
@@ -1427,6 +1428,115 @@ describe('TableNG utils', () => {
       const field: Field = { name: 'test', type: FieldType.string, config: {}, values: [] };
       const predicate = predicateByName('other');
       expect(predicate(field)).toBe(false);
+    });
+  });
+
+  describe('getCellStyleByField', () => {
+    let data: DataFrame;
+    beforeEach(() => {
+      data = createDataFrame({
+        fields: [
+          {
+            name: 'test',
+            type: FieldType.string,
+            values: ['a', 'b', 'c'],
+            config: { custom: { styleField: 'test_style' } },
+          },
+          { name: 'test_style', type: FieldType.string, values: ['{"color":"red"}', '{"color":"blue"}', '{}'] },
+        ],
+      });
+
+      data.fields[1].display = (value) => ({ text: String(value), numeric: Number.NaN });
+    });
+
+    it('returns void if no styleField is set', () => {
+      delete data.fields[0].config!.custom!.styleField;
+
+      expect(
+        getCellStyleByField(data.fields[0], data, {
+          __index: 0,
+          __depth: 0,
+          test: data.fields[0].values[0],
+          test_style: data.fields[1].values[0],
+        })
+      ).toBeUndefined();
+    });
+
+    it('parses the contents of the styleField for this row and returns a style object', () => {
+      expect(
+        getCellStyleByField(data.fields[0], data, {
+          __index: 0,
+          __depth: 0,
+          test: data.fields[0].values[0],
+          test_style: data.fields[1].values[0],
+        })
+      ).toEqual({ color: 'red' });
+    });
+
+    it.each([
+      { type: 'array', value: '["not","an","object"]' },
+      { type: 'string', value: '"just a string"' },
+      { type: 'number', value: '12345' },
+      { type: 'boolean', value: 'true' },
+      { type: 'null', value: 'null' },
+    ])('returns void and does not throw if the JSON is a $type', ({ value }) => {
+      data.fields[1].values[0] = value;
+
+      expect(
+        getCellStyleByField(data.fields[0], data, {
+          __index: 0,
+          __depth: 0,
+          test: data.fields[0].values[0],
+          test_style: data.fields[1].values[0],
+        })
+      ).toBeUndefined();
+    });
+
+    it('returns void and does not throw if this is invalid JSON (but it does console.error)', () => {
+      jest.spyOn(console, 'error').mockImplementation();
+
+      data.fields[1].values[0] = '{"mal": "formed}';
+
+      expect(
+        getCellStyleByField(data.fields[0], data, {
+          __index: 0,
+          __depth: 0,
+          test: data.fields[0].values[0],
+          test_style: data.fields[1].values[0],
+        })
+      ).toBeUndefined();
+
+      expect(console.error).toHaveBeenCalled();
+    });
+
+    it('only calls console.error once for a given malformed style', () => {
+      jest.spyOn(console, 'error').mockImplementation();
+
+      data.fields[1].values[0] = '{"mal": "formed-in-a-new-way}';
+
+      for (let i = 0; i < 100; i++) {
+        getCellStyleByField(data.fields[0], data, {
+          __index: 0,
+          __depth: 0,
+          test: data.fields[0].values[0],
+          test_style: data.fields[1].values[0],
+        });
+      }
+
+      expect(console.error).toHaveBeenCalledTimes(1);
+    });
+
+    it('returns an object with invalid style properties, because we do not validate the style properties', () => {
+      data.fields[1].values[0] = '{"notARealStyle": "someValue"}';
+
+      expect(
+        getCellStyleByField(data.fields[0], data, {
+          __index: 0,
+          __depth: 0,
+          test: data.fields[0].values[0],
+          test_style: data.fields[1].values[0],
+        })
+      ).toEqual({ notARealStyle: 'someValue' });
     });
   });
 });
