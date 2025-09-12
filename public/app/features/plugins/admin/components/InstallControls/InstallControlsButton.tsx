@@ -23,7 +23,6 @@ import {
 import { trackPluginInstalled, trackPluginUninstalled } from '../../tracking';
 import { CatalogPlugin, PluginStatus, PluginTabIds, Version } from '../../types';
 
-
 const PLUGIN_UPDATE_INTERACTION_EVENT_NAME = 'plugin_update_clicked';
 
 type InstallControlsButtonProps = {
@@ -168,7 +167,6 @@ export function InstallControlsButton({
       </Stack>
     );
   }
-
 
   // Show learn more button for an enterprise plugin if your on OSS
   if (plugin.isEnterprise && isOpenSourceBuildOrUnlicenced()) {
