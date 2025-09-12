@@ -23,9 +23,10 @@ const (
 )
 
 type authzClientSettings struct {
-	remoteAddress string
-	certFile      string
-	mode          clientMode
+	remoteAddress        string
+	certFile             string
+	mode                 clientMode
+	loadBalancingEnabled bool
 
 	token            string
 	tokenExchangeURL string
@@ -51,6 +52,7 @@ func readAuthzClientSettings(cfg *setting.Cfg) (*authzClientSettings, error) {
 	if s.mode == clientModeInproc {
 		return s, nil
 	}
+	s.loadBalancingEnabled = authzSection.Key("load_balancing_enabled").MustBool(false)
 
 	s.remoteAddress = authzSection.Key("remote_address").MustString("")
 	s.certFile = authzSection.Key("cert_file").MustString("")

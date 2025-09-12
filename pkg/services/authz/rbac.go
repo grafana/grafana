@@ -5,12 +5,12 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"strings"
 	"time"
 
 	"github.com/fullstorydev/grpchan/inprocgrpc"
 	grpcAuth "github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/auth"
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promauto"
 	"go.opentelemetry.io/otel/trace"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
@@ -22,6 +22,7 @@ import (
 	authzv1 "github.com/grafana/authlib/authz/proto/v1"
 	"github.com/grafana/authlib/cache"
 	authlib "github.com/grafana/authlib/types"
+	"github.com/grafana/dskit/middleware"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -70,7 +71,7 @@ func ProvideAuthZClient(
 
 	switch authCfg.mode {
 	case clientModeCloud:
-		rbacClient, err := newRemoteRBACClient(authCfg, tracer)
+		rbacClient, err := newRemoteRBACClient(authCfg, tracer, reg)
 		if features.IsEnabledGlobally(featuremgmt.FlagZanzana) {
 			return zanzana.WithShadowClient(rbacClient, zanzanaClient, reg)
 		}
@@ -129,7 +130,7 @@ func ProvideAuthZClient(
 // ProvideStandaloneAuthZClient provides a standalone AuthZ client, without registering the AuthZ service.
 // You need to provide a remote address in the configuration
 func ProvideStandaloneAuthZClient(
-	cfg *setting.Cfg, features featuremgmt.FeatureToggles, tracer trace.Tracer,
+	cfg *setting.Cfg, features featuremgmt.FeatureToggles, tracer trace.Tracer, reg prometheus.Registerer,
 ) (authlib.AccessClient, error) {
 	if !features.IsEnabledGlobally(featuremgmt.FlagAuthZGRPCServer) {
 		return nil, nil
@@ -140,10 +141,10 @@ func ProvideStandaloneAuthZClient(
 		return nil, err
 	}
 
-	return newRemoteRBACClient(authCfg, tracer)
+	return newRemoteRBACClient(authCfg, tracer, reg)
 }
 
-func newRemoteRBACClient(clientCfg *authzClientSettings, tracer trace.Tracer) (authlib.AccessClient, error) {
+func newRemoteRBACClient(clientCfg *authzClientSettings, tracer trace.Tracer, reg prometheus.Registerer) (authlib.AccessClient, error) {
 	tokenClient, err := authnlib.NewTokenExchangeClient(authnlib.TokenExchangeConfig{
 		Token:            clientCfg.token,
 		TokenExchangeURL: clientCfg.tokenExchangeURL,
@@ -160,16 +161,27 @@ func newRemoteRBACClient(clientCfg *authzClientSettings, tracer trace.Tracer) (a
 		}
 	}
 
-	// Build gRPC dial options
+	authzRequestDuration := promauto.With(reg).NewHistogramVec(prometheus.HistogramOpts{
+		Name:                            "authz_server_client_request_duration_seconds",
+		Help:                            "Time spent executing requests to authz server.",
+		NativeHistogramBucketFactor:     1.1,
+		NativeHistogramMaxBucketNumber:  160,
+		NativeHistogramMinResetDuration: time.Hour,
+	}, []string{"operation", "status_code"})
+
+	unaryInterceptors, streamInterceptors := instrument(authzRequestDuration, middleware.ReportGRPCStatusOption)
+
 	opts := []grpc.DialOption{
 		grpc.WithTransportCredentials(transportCreds),
 		grpc.WithPerRPCCredentials(
 			NewGRPCTokenAuth(AuthzServiceAudience, clientCfg.tokenNamespace, tokenClient),
 		),
+		grpc.WithChainUnaryInterceptor(unaryInterceptors...),
+		grpc.WithChainStreamInterceptor(streamInterceptors...),
 	}
 
-	// if we serve the client as a load balancer
-	if strings.Contains(clientCfg.remoteAddress, "dns") {
+	// // if we serve the client as a load balancer
+	if clientCfg.loadBalancingEnabled {
 		// Use round_robin to balances requests more evenly over the available Grafana replicas.
 		opts = append(opts, grpc.WithDefaultServiceConfig(`{"loadBalancingPolicy": "round_robin"}`))
 
@@ -277,4 +289,15 @@ func (lc *NoopCache) Set(ctx context.Context, key string, data []byte, exp time.
 
 func (lc *NoopCache) Delete(ctx context.Context, key string) error {
 	return nil
+}
+
+// instrument is the same as grpcclient.Instrument but without the middleware.ClientUserHeaderInterceptor,
+// otgrpc.OpenTracingClientInterceptor, otgrpc.OpenTracingStreamClientInterceptor
+// and middleware.StreamClientUserHeaderInterceptor as we don't need them.
+func instrument(requestDuration *prometheus.HistogramVec, instrumentationLabelOptions ...middleware.InstrumentationOption) ([]grpc.UnaryClientInterceptor, []grpc.StreamClientInterceptor) {
+	return []grpc.UnaryClientInterceptor{
+			middleware.UnaryClientInstrumentInterceptor(requestDuration, instrumentationLabelOptions...),
+		}, []grpc.StreamClientInterceptor{
+			middleware.StreamClientInstrumentInterceptor(requestDuration, instrumentationLabelOptions...),
+		}
 }

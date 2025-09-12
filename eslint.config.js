@@ -27,8 +27,12 @@ const commonTestIgnores = [
   '**/mocks/**/*.{ts,tsx}',
   '**/public/test/**',
   '**/mocks.{ts,tsx}',
-  '**/spec/**/*.{ts,tsx}',
+  '**/*.mock.{ts,tsx}',
+  '**/{test-helpers,testHelpers}.{ts,tsx}',
+  '**/{spec,test-helpers}/**/*.{ts,tsx}',
 ];
+
+const generatedFiles = ['**/*.gen.ts', '**/*_gen.ts'];
 
 const enterpriseIgnores = ['public/app/extensions/**/*', 'e2e/extensions/**/*'];
 
@@ -92,7 +96,7 @@ module.exports = [
       '.github',
       '.yarn',
       '**/.*', // dotfiles aren't ignored by default in FlatConfig
-      '**/*.gen.ts',
+      ...generatedFiles,
       '**/build/',
       '**/compiled/',
       '**/dist/',
@@ -417,6 +421,7 @@ module.exports = [
       'public/app/plugins/datasource/grafana-postgresql-datasource/**/*.{ts,tsx}',
       'public/app/plugins/datasource/grafana-pyroscope-datasource/**/*.{ts,tsx}',
       'public/app/plugins/datasource/grafana-testdata-datasource/**/*.{ts,tsx}',
+      'public/app/plugins/datasource/graphite/**/*.{ts,tsx}',
       'public/app/plugins/datasource/jaeger/**/*.{ts,tsx}',
       'public/app/plugins/datasource/loki/**/*.{ts,tsx}',
       'public/app/plugins/datasource/loki/**/*.{ts,tsx}',

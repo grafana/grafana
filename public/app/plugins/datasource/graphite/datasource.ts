@@ -2,6 +2,7 @@ import { map as _map, each, indexOf, isArray, isString } from 'lodash';
 import moment from 'moment';
 import { lastValueFrom, merge, Observable, of, OperatorFunction, pipe, throwError } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
+import { coerce, gte, SemVer, valid } from 'semver';
 
 import {
   AbstractLabelMatcher,
@@ -10,7 +11,6 @@ import {
   DataFrame,
   DataQueryRequest,
   DataQueryResponse,
-  DataSourceApi,
   DataSourceWithQueryExportSupport,
   dateMath,
   DateTime,
@@ -22,19 +22,26 @@ import {
   TimeRange,
   toDataFrame,
 } from '@grafana/data';
-import { BackendSrvRequest, FetchResponse, getBackendSrv } from '@grafana/runtime';
+import {
+  BackendSrvRequest,
+  config,
+  DataSourceWithBackend,
+  FetchResponse,
+  getBackendSrv,
+  getTemplateSrv,
+  TemplateSrv,
+} from '@grafana/runtime';
 import { TimeZone } from '@grafana/schema';
-import { isVersionGtOrEq, SemVersion } from 'app/core/utils/version';
-import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
-import { getRollupNotice, getRuntimeConsolidationNotice } from 'app/plugins/datasource/graphite/meta';
 
 import { AnnotationEditor } from './components/AnnotationsEditor';
 import { convertToGraphiteQueryObject } from './components/helpers';
 import gfunc, { FuncDef, FuncDefs, FuncInstance } from './gfunc';
 import GraphiteQueryModel from './graphite_query';
+import { getRollupNotice, getRuntimeConsolidationNotice } from './meta';
 import { prepareAnnotation } from './migrations';
 // Types
 import {
+  GraphiteEvents,
   GraphiteLokiMapping,
   GraphiteMetricLokiMatcher,
   GraphiteOptions,
@@ -68,7 +75,7 @@ function convertGlobToRegEx(text: string): string {
 }
 
 export class GraphiteDatasource
-  extends DataSourceApi<GraphiteQuery, GraphiteOptions, GraphiteQueryImportConfiguration>
+  extends DataSourceWithBackend<GraphiteQuery, GraphiteOptions>
   implements DataSourceWithQueryExportSupport<GraphiteQuery>
 {
   basicAuth: string;
@@ -451,7 +458,7 @@ export class GraphiteDatasource
       return this.events({ range: range, tags: tags }).then((results) => {
         const list = [];
         if (!isArray(results.data)) {
-          console.error(`Unable to get annotations from ${results.url}.`);
+          console.error(`Unable to get annotations.`);
           return [];
         }
         for (let i = 0; i < results.data.length; i++) {
@@ -476,23 +483,30 @@ export class GraphiteDatasource
     }
   }
 
-  events(options: { range: TimeRange; tags: string; timezone?: TimeZone }) {
+  async events(options: {
+    range: TimeRange;
+    tags: string;
+    timezone?: TimeZone;
+  }): Promise<{ data: GraphiteEvents[] } | FetchResponse<GraphiteEvents>> {
     try {
-      let tags = '';
-      if (options.tags) {
-        tags = '&tags=' + options.tags;
+      const tags = options.tags || '';
+      const from = this.translateTime(options.range.raw.from, false, options.timezone);
+      const until = this.translateTime(options.range.raw.to, true, options.timezone);
+      if (config.featureToggles.graphiteBackendMode) {
+        return await this.postResource<{ data: GraphiteEvents[] }>('events', {
+          from: typeof from === 'string' ? from : `${from}`,
+          until: typeof until === 'string' ? until : `${until}`,
+          tags,
+        });
+      } else {
+        const tagsQueryParam = tags === '' ? '' : `&tags=${tags}`;
+        return lastValueFrom(
+          this.doGraphiteRequest<GraphiteEvents[]>({
+            method: 'GET',
+            url: `/events/get_data?from=${from}&until=${until}${tagsQueryParam}`,
+          })
+        );
       }
-      return lastValueFrom(
-        this.doGraphiteRequest({
-          method: 'GET',
-          url:
-            '/events/get_data?from=' +
-            this.translateTime(options.range.raw.from, false, options.timezone) +
-            '&until=' +
-            this.translateTime(options.range.raw.to, true, options.timezone) +
-            tags,
-        })
-      );
     } catch (err) {
       return Promise.reject(err);
     }
@@ -676,7 +690,7 @@ export class GraphiteDatasource
    *
    * For more complex searches use requestMetricExpand
    */
-  private requestMetricFind(
+  private async requestMetricFind(
     query: string,
     requestId: string,
     range?: { from: string | number; until: string | number }
@@ -686,6 +700,14 @@ export class GraphiteDatasource
     if (range) {
       params.from = range.from;
       params.until = range.until;
+    }
+
+    if (config.featureToggles.graphiteBackendMode) {
+      return await this.postResource<MetricFindValue[]>('metrics/find', {
+        from: typeof params.from === 'string' ? params.from : `${params.from}`,
+        until: typeof params.until === 'string' ? params.until : `${params.until}`,
+        query,
+      });
     }
 
     const httpOptions: BackendSrvRequest = {
@@ -889,8 +911,8 @@ export class GraphiteDatasource
       this.doGraphiteRequest(httpOptions).pipe(
         map((results: FetchResponse) => {
           if (results.data) {
-            const semver = new SemVersion(results.data);
-            return semver.isValid() ? results.data : '';
+            const semver = new SemVer(results.data);
+            return valid(semver) ? results.data : '';
           }
           return '';
         }),
@@ -954,6 +976,9 @@ export class GraphiteDatasource
   }
 
   testDatasource() {
+    if (config.featureToggles.graphiteBackendMode) {
+      return super.testDatasource();
+    }
     const query: DataQueryRequest<GraphiteQuery> = {
       app: 'graphite',
       interval: '10ms',
@@ -976,7 +1001,7 @@ export class GraphiteDatasource
     return lastValueFrom(this.query(query)).then(() => ({ status: 'success', message: 'Data source is working' }));
   }
 
-  doGraphiteRequest(
+  doGraphiteRequest<T>(
     options: BackendSrvRequest & {
       inspect?: any;
     }
@@ -993,7 +1018,7 @@ export class GraphiteDatasource
     options.inspect = { type: 'graphite' };
 
     return getBackendSrv()
-      .fetch(options)
+      .fetch<T>(options)
       .pipe(
         catchError((err) => {
           return throwError(() => {
@@ -1079,11 +1104,19 @@ export class GraphiteDatasource
 }
 
 function supportsTags(version: string): boolean {
-  return isVersionGtOrEq(version, '1.1');
+  const fullVersion = coerce(version);
+  if (!fullVersion) {
+    return false;
+  }
+  return gte(fullVersion, '1.1.0');
 }
 
 function supportsFunctionIndex(version: string): boolean {
-  return isVersionGtOrEq(version, '1.1');
+  const fullVersion = coerce(version);
+  if (!fullVersion) {
+    return false;
+  }
+  return gte(fullVersion, '1.1.0');
 }
 
 function mapToTags(): OperatorFunction<FetchResponse, Array<{ text: string }>> {
