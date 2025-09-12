@@ -1459,7 +1459,7 @@ func TestReceiverService_InUseMetadata(t *testing.T) {
 		}, nil
 	}
 
-	sut := createReceiverServiceSut(t, &secretsService)
+	sut := createReceiverServiceSut(t, &secretsService, includeStagedConfig, withStagedConfig)
 	sut.ruleNotificationsStore = store
 
 	// Create route after receivers as they will be referenced.
@@ -1544,7 +1544,7 @@ func createReceiverServiceSut(t *testing.T, encryptSvc secretService, opts ...su
 	xact := newNopTransactionManager()
 	provisioningStore := fakes.NewFakeProvisioningStore()
 
-	return NewReceiverService(
+	sut := NewReceiverService(
 		ac.NewReceiverAccess[*models.Receiver](acimpl.ProvideAccessControl(featuremgmt.WithFeatures()), false),
 		legacy_storage.NewAlertmanagerConfigStore(store, NewExtraConfigsCrypto(encryptSvc)),
 		provisioningStore,
@@ -1556,6 +1556,16 @@ func createReceiverServiceSut(t *testing.T, encryptSvc secretService, opts ...su
 		tracing.InitializeTracerForTest(),
 		false,
 	)
+
+	for _, opt := range opts {
+		if opt == withStagedConfig {
+			addExtraConfiguration(t, store)
+		}
+		if opt == includeStagedConfig {
+			sut.readStagedResources = true
+		}
+	}
+	return sut
 }
 
 func createEncryptedConfig(t *testing.T, secretService secretService) string {
@@ -1640,3 +1650,28 @@ func (n *NopTransactionManager) InTransaction(ctx context.Context, work func(ctx
 func assertInTransaction(t *testing.T, ctx context.Context) {
 	assert.Truef(t, ctx.Value(NopTransactionManager{}) != nil, "Expected to be executed in transaction but there is none")
 }
+
+func addExtraConfiguration(t *testing.T, storage *fakes.FakeAlertmanagerConfigStore) {
+	c := &definitions.PostableUserConfig{}
+	err := json.Unmarshal([]byte(storage.Config.AlertmanagerConfiguration), c)
+	require.NoError(t, err)
+	c.ExtraConfigs = append(c.ExtraConfigs, definitions.ExtraConfiguration{
+		Identifier:         "default",
+		MergeMatchers:      config.Matchers{{Type: labels.MatchEqual, Name: "env", Value: "prod"}},
+		TemplateFiles:      nil,
+		AlertmanagerConfig: extraConfigurationYaml,
+	})
+	bytes, err := json.Marshal(c)
+	require.NoError(t, err)
+	storage.Config.AlertmanagerConfiguration = string(bytes)
+}
+
+const extraConfigurationYaml = `
+route:
+  receiver: extra-receiver-1
+receivers:
+  - name: extra-receiver-1
+    webhook_configs:
+      - url: "http://localhost/"
+  - name: extra-receiver-2
+`
