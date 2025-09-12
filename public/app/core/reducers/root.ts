@@ -3,7 +3,6 @@ import { AnyAction, combineReducers } from 'redux';
 
 import { notificationsAPI, rulesAPI } from '@grafana/alerting/unstable';
 import { dashboardAPIv0alpha1 } from 'app/api/clients/dashboard/v0alpha1';
-import { rulesAPIv0alpha1 } from 'app/api/clients/rules/v0alpha1';
 import sharedReducers from 'app/core/reducers';
 import ldapReducers from 'app/features/admin/state/reducers';
 import alertingReducers from 'app/features/alerting/state/reducers';

@@ -43,6 +43,7 @@ export const ContactPointSpecFactory = Factory.define<ContactPoint['spec']>(() =
 
 export const GenericIntegrationFactory = Factory.define<Integration>(() => ({
   type: 'generic',
+  version: '1',
   disableResolveMessage: false,
   settings: {
     foo: 'bar',
@@ -51,6 +52,8 @@ export const GenericIntegrationFactory = Factory.define<Integration>(() => ({
 
 export const EmailIntegrationFactory = Factory.define<Integration>(() => ({
   type: 'email',
+  version: '1',
+  secureFields: {},
   settings: {
     addresses: faker.internet.email(),
   },
@@ -58,6 +61,8 @@ export const EmailIntegrationFactory = Factory.define<Integration>(() => ({
 
 export const SlackIntegrationFactory = Factory.define<Integration>(() => ({
   type: 'slack',
+  version: '1',
+  secureFields: { token: '' },
   settings: {
     mentionChannel: '#alerts',
   },
