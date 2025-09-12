@@ -18,8 +18,8 @@ import { Select, usePanelContext, useTheme2 } from '@grafana/ui';
 import { TableSortByFieldState } from '@grafana/ui/internal';
 import { TableNG } from '@grafana/ui/unstable';
 import { getConfig } from 'app/core/config';
-
-import { getActions } from '../../../features/actions/utils';
+import { getInstrumentationContext, ActionContext } from 'app/features/actions/analytics';
+import { getActions } from 'app/features/actions/utils';
 
 import { hasDeprecatedParentRowIndex, migrateFromParentRowIndexToNestedFrames } from './migrations';
 import { Options } from './panelcfg.gen';
@@ -33,13 +33,15 @@ export function TablePanel(props: Props) {
     cacheFieldDisplayNames(data.series);
   }, [data.series]);
 
+  const context = useMemo(() => getInstrumentationContext('table', id), [id]);
+
   const theme = useTheme2();
   const panelContext = usePanelContext();
   const userCanExecuteActions = useMemo(() => panelContext.canExecuteActions?.() ?? false, [panelContext]);
   const _getActions = useCallback(
     (frame: DataFrame, field: Field, rowIndex: number) =>
-      userCanExecuteActions ? getCellActions(frame, field, rowIndex, replaceVariables) : [],
-    [replaceVariables, userCanExecuteActions]
+      userCanExecuteActions ? getCellActions(frame, field, rowIndex, replaceVariables, context) : [],
+    [replaceVariables, userCanExecuteActions, context]
   );
   const frames = hasDeprecatedParentRowIndex(data.series)
     ? migrateFromParentRowIndexToNestedFrames(data.series)
@@ -169,7 +171,8 @@ const getCellActions = (
   dataFrame: DataFrame,
   field: Field,
   rowIndex: number,
-  replaceVariables: InterpolateFunction | undefined
+  replaceVariables: InterpolateFunction | undefined,
+  context?: ActionContext
 ): Array<ActionModel<Field>> => {
   const numActions = field.config.actions?.length ?? 0;
 
@@ -180,7 +183,8 @@ const getCellActions = (
       field.state!.scopedVars!,
       replaceVariables ?? replaceVars,
       field.config.actions ?? [],
-      { valueRowIndex: rowIndex }
+      { valueRowIndex: rowIndex },
+      context
     );
 
     if (actions.length === 1) {

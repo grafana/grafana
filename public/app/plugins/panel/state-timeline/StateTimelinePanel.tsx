@@ -17,6 +17,7 @@ import {
   prepareTimelineLegendItems,
   TimelineMode,
 } from 'app/core/components/TimelineChart/utils';
+import { getInstrumentationContext } from 'app/features/actions/analytics';
 
 import { AnnotationsPlugin2 } from '../timeseries/plugins/AnnotationsPlugin2';
 import { OutsideRangePlugin } from '../timeseries/plugins/OutsideRangePlugin';
@@ -44,6 +45,8 @@ export const StateTimelinePanel = ({
   id: panelId,
 }: TimelinePanelProps) => {
   const theme = useTheme2();
+
+  const context = useMemo(() => getInstrumentationContext('state-timeline', panelId), [panelId]);
 
   // temp range set for adding new annotation set by TooltipPlugin2, consumed by AnnotationPlugin2
   const [newAnnotationRange, setNewAnnotationRange] = useState<TimeRange2 | null>(null);
@@ -142,6 +145,7 @@ export const StateTimelinePanel = ({
                         replaceVariables={replaceVariables}
                         dataLinks={dataLinks}
                         canExecuteActions={userCanExecuteActions}
+                        context={context}
                       />
                     );
                   }}

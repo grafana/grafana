@@ -18,6 +18,7 @@ import {
 import { AxisProps, ScaleProps, TimeRange2, TooltipHoverMode } from '@grafana/ui/internal';
 import { TimeSeries } from 'app/core/components/TimeSeries/TimeSeries';
 import { config } from 'app/core/config';
+import { getInstrumentationContext } from 'app/features/actions/analytics';
 
 import { TimeSeriesTooltip } from '../timeseries/TimeSeriesTooltip';
 import { AnnotationsPlugin2 } from '../timeseries/plugins/AnnotationsPlugin2';
@@ -43,6 +44,8 @@ export const CandlestickPanel = ({
   onChangeTimeRange,
   replaceVariables,
 }: CandlestickPanelProps) => {
+  const context = useMemo(() => getInstrumentationContext('candlestick', id), [id]);
+
   const {
     sync,
     eventsScope,
@@ -305,6 +308,7 @@ export const CandlestickPanel = ({
                     <TimeSeriesTooltip
                       series={alignedFrame}
                       dataIdxs={dataIdxs}
+                      context={context}
                       seriesIdx={seriesIdx}
                       mode={viaSync ? TooltipDisplayMode.Multi : options.tooltip.mode}
                       sortOrder={options.tooltip.sort}

@@ -220,6 +220,7 @@ export const HeatmapPanel = ({
                       maxHeight={options.tooltip.maxHeight}
                       maxWidth={options.tooltip.maxWidth}
                       replaceVariables={replaceVariables}
+                      panelId={id}
                     />
                   );
                 }}

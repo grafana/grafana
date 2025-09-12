@@ -1,4 +1,4 @@
-import { ReactElement, useEffect, useRef, useState, ReactNode } from 'react';
+import { ReactElement, useEffect, useRef, useState, ReactNode, useMemo } from 'react';
 import * as React from 'react';
 import uPlot from 'uplot';
 
@@ -25,6 +25,7 @@ import {
   ColorPlacement,
 } from '@grafana/ui/internal';
 import { ColorScale } from 'app/core/components/ColorScale/ColorScale';
+import { getInstrumentationContext } from 'app/features/actions/analytics';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { isHeatmapCellsDense, readHeatmapRowsCustomMeta } from 'app/features/transformers/calculateHeatmap/heatmap';
 import { getDisplayValuesAndLinks } from 'app/features/visualization/data-hover/DataHoverView';
@@ -48,6 +49,7 @@ interface HeatmapTooltipProps {
   dismiss: () => void;
   panelData: PanelData;
   annotate?: () => void;
+  panelId?: number;
   maxHeight?: number;
   maxWidth?: number;
   replaceVariables: InterpolateFunction;
@@ -95,9 +97,12 @@ const HeatmapHoverCell = ({
   maxWidth,
   replaceVariables,
   canExecuteActions,
+  panelId,
 }: HeatmapTooltipProps) => {
   const index = dataIdxs[1]!;
   const data = dataRef.current;
+
+  const context = useMemo(() => getInstrumentationContext('heatmap', panelId), [panelId]);
 
   const [isSparse] = useState(
     () => data.heatmap?.meta?.type === DataFrameType.HeatmapCells && !isHeatmapCellsDense(data.heatmap)
@@ -325,7 +330,9 @@ const HeatmapHoverCell = ({
         links = getDataLinks(linksField, xValueIdx);
       }
 
-      actions = canExecuteActions ? getFieldActions(data.series!, linksField, replaceVariables, xValueIdx) : [];
+      actions = canExecuteActions
+        ? getFieldActions(data.series!, linksField, replaceVariables, xValueIdx, context)
+        : [];
     }
 
     footer = <VizTooltipFooter dataLinks={links} annotate={annotate} actions={actions} />;

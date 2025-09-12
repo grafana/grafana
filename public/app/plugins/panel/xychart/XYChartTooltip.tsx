@@ -1,4 +1,4 @@
-import { ReactNode } from 'react';
+import { ReactNode, useMemo } from 'react';
 
 import { colorManipulator, DataFrame, Field, InterpolateFunction, LinkModel } from '@grafana/data';
 import {
@@ -9,6 +9,7 @@ import {
   ColorIndicator,
   VizTooltipItem,
 } from '@grafana/ui/internal';
+import { getInstrumentationContext } from 'app/features/actions/analytics';
 
 import { getFieldActions } from '../status-history/utils';
 
@@ -24,6 +25,7 @@ export interface Props {
   xySeries: XYSeries[];
   replaceVariables: InterpolateFunction;
   dataLinks: LinkModel[];
+  panelId?: number;
 }
 
 function stripSeriesName(fieldName: string, seriesName: string) {
@@ -51,7 +53,10 @@ export const XYChartTooltip = ({
   isPinned,
   replaceVariables,
   dataLinks,
+  panelId,
 }: Props) => {
+  const context = useMemo(() => getInstrumentationContext('xychart', panelId), [panelId]);
+
   const rowIndex = dataIdxs.find((idx) => idx !== null)!;
 
   const series = xySeries[seriesIdx! - 1];
@@ -130,7 +135,7 @@ export const XYChartTooltip = ({
 
     if (isPinned || hasOneClickLink) {
       const yFieldFrame = data.find((frame) => frame.fields.includes(yField))!;
-      const actions = getFieldActions(yFieldFrame, yField, replaceVariables, rowIndex);
+      const actions = getFieldActions(yFieldFrame, yField, replaceVariables, rowIndex, context);
 
       footer = <VizTooltipFooter dataLinks={dataLinks} actions={actions} />;
     }

@@ -16,6 +16,7 @@ import { EventBusPlugin, KeyboardPlugin, TooltipPlugin2, usePanelContext } from 
 import { TimeRange2, TooltipHoverMode } from '@grafana/ui/internal';
 import { TimeSeries } from 'app/core/components/TimeSeries/TimeSeries';
 import { config } from 'app/core/config';
+import { getInstrumentationContext } from 'app/features/actions/analytics';
 
 import { TimeSeriesTooltip } from './TimeSeriesTooltip';
 import { Options } from './panelcfg.gen';
@@ -40,6 +41,7 @@ export const TimeSeriesPanel = ({
   replaceVariables,
   id,
 }: TimeSeriesPanelProps) => {
+  const context = useMemo(() => getInstrumentationContext('timeseries', id), [id]);
   const {
     sync,
     eventsScope,
@@ -171,6 +173,7 @@ export const TimeSeriesPanel = ({
                     <TimeSeriesTooltip
                       series={alignedFrame}
                       dataIdxs={dataIdxs}
+                      context={context}
                       seriesIdx={seriesIdx}
                       mode={viaSync ? TooltipDisplayMode.Multi : options.tooltip.mode}
                       sortOrder={options.tooltip.sort}
