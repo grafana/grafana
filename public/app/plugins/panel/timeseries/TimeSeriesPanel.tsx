@@ -41,7 +41,7 @@ export const TimeSeriesPanel = ({
   replaceVariables,
   id,
 }: TimeSeriesPanelProps) => {
-  const context = getInstrumentationContext('timeseries', id);
+  const context = useMemo(() => getInstrumentationContext('timeseries', id), [id]);
   const {
     sync,
     eventsScope,

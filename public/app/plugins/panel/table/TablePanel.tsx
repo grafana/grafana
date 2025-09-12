@@ -18,7 +18,7 @@ import { Select, usePanelContext, useTheme2 } from '@grafana/ui';
 import { TableSortByFieldState } from '@grafana/ui/internal';
 import { TableNG } from '@grafana/ui/unstable';
 import { getConfig } from 'app/core/config';
-import { getInstrumentationContext } from 'app/features/actions/analytics';
+import { getInstrumentationContext, ActionContext } from 'app/features/actions/analytics';
 import { getActions } from 'app/features/actions/utils';
 
 import { hasDeprecatedParentRowIndex, migrateFromParentRowIndexToNestedFrames } from './migrations';
@@ -33,13 +33,15 @@ export function TablePanel(props: Props) {
     cacheFieldDisplayNames(data.series);
   }, [data.series]);
 
+  const context = useMemo(() => getInstrumentationContext('table', id), [id]);
+
   const theme = useTheme2();
   const panelContext = usePanelContext();
   const userCanExecuteActions = useMemo(() => panelContext.canExecuteActions?.() ?? false, [panelContext]);
   const _getActions = useCallback(
     (frame: DataFrame, field: Field, rowIndex: number) =>
-      userCanExecuteActions ? getCellActions(frame, field, rowIndex, replaceVariables, id) : [],
-    [replaceVariables, userCanExecuteActions, id]
+      userCanExecuteActions ? getCellActions(frame, field, rowIndex, replaceVariables, context) : [],
+    [replaceVariables, userCanExecuteActions, context]
   );
   const frames = hasDeprecatedParentRowIndex(data.series)
     ? migrateFromParentRowIndexToNestedFrames(data.series)
@@ -170,7 +172,7 @@ const getCellActions = (
   field: Field,
   rowIndex: number,
   replaceVariables: InterpolateFunction | undefined,
-  panelId?: number
+  context?: ActionContext
 ): Array<ActionModel<Field>> => {
   const numActions = field.config.actions?.length ?? 0;
 
@@ -182,7 +184,7 @@ const getCellActions = (
       replaceVariables ?? replaceVars,
       field.config.actions ?? [],
       { valueRowIndex: rowIndex },
-      getInstrumentationContext('table', panelId)
+      context
     );
 
     if (actions.length === 1) {

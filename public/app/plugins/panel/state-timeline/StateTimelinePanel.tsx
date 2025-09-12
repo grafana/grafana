@@ -46,7 +46,7 @@ export const StateTimelinePanel = ({
 }: TimelinePanelProps) => {
   const theme = useTheme2();
 
-  const context = getInstrumentationContext('state-timeline', panelId);
+  const context = useMemo(() => getInstrumentationContext('state-timeline', panelId), [panelId]);
 
   // temp range set for adding new annotation set by TooltipPlugin2, consumed by AnnotationPlugin2
   const [newAnnotationRange, setNewAnnotationRange] = useState<TimeRange2 | null>(null);

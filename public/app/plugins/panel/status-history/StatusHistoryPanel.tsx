@@ -55,7 +55,7 @@ export const StatusHistoryPanel = ({
 
   const enableAnnotationCreation = Boolean(canAddAnnotations && canAddAnnotations());
 
-  const context = getInstrumentationContext('status-history', panelId);
+  const context = useMemo(() => getInstrumentationContext('status-history', panelId), [panelId]);
 
   const { frames, warn } = useMemo(
     () => prepareTimelineFields(data.series, false, timeRange, theme),

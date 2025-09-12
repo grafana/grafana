@@ -38,6 +38,7 @@ export const CanvasTooltip = ({ scene }: Props) => {
   const styles = useStyles2(getStyles);
   const { canExecuteActions } = usePanelContext();
   const userCanExecuteActions = useMemo(() => canExecuteActions?.() ?? false, [canExecuteActions]);
+  const context = useMemo(() => getInstrumentationContext('canvas', scene.panel.props.id), [scene.panel.props.id]);
 
   const onClose = () => {
     if (scene?.tooltipCallback && scene.tooltipPayload) {
@@ -129,7 +130,7 @@ export const CanvasTooltip = ({ scene }: Props) => {
       scene.panel.props.replaceVariables!,
       element.options.actions ?? [],
       config,
-      getInstrumentationContext('canvas', scene.panel.props.id)
+      context
     );
 
     actionsModel.forEach((action) => {

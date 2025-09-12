@@ -44,7 +44,7 @@ export const CandlestickPanel = ({
   onChangeTimeRange,
   replaceVariables,
 }: CandlestickPanelProps) => {
-  const context = getInstrumentationContext('candlestick', id);
+  const context = useMemo(() => getInstrumentationContext('candlestick', id), [id]);
 
   const {
     sync,

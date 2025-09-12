@@ -1,4 +1,4 @@
-import { ReactNode } from 'react';
+import { ReactNode, useMemo } from 'react';
 
 import { colorManipulator, DataFrame, Field, InterpolateFunction, LinkModel } from '@grafana/data';
 import {
@@ -55,6 +55,8 @@ export const XYChartTooltip = ({
   dataLinks,
   panelId,
 }: Props) => {
+  const context = useMemo(() => getInstrumentationContext('xychart', panelId), [panelId]);
+
   const rowIndex = dataIdxs.find((idx) => idx !== null)!;
 
   const series = xySeries[seriesIdx! - 1];
@@ -133,13 +135,7 @@ export const XYChartTooltip = ({
 
     if (isPinned || hasOneClickLink) {
       const yFieldFrame = data.find((frame) => frame.fields.includes(yField))!;
-      const actions = getFieldActions(
-        yFieldFrame,
-        yField,
-        replaceVariables,
-        rowIndex,
-        getInstrumentationContext('xychart', panelId)
-      );
+      const actions = getFieldActions(yFieldFrame, yField, replaceVariables, rowIndex, context);
 
       footer = <VizTooltipFooter dataLinks={dataLinks} actions={actions} />;
     }

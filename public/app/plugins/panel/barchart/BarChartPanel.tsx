@@ -127,6 +127,8 @@ export const BarChartPanel = (props: PanelProps<Options>) => {
     [prepData, vizSeries, info.color]
   );
 
+  const context = useMemo(() => getInstrumentationContext('barchart', id), [id]);
+
   if (info.warn != null || builder == null) {
     return (
       <PanelDataErrorView
@@ -143,8 +145,6 @@ export const BarChartPanel = (props: PanelProps<Options>) => {
     legend.showLegend && hasVisibleLegendSeries(builder, info.series!) ? (
       <BarChartLegend data={info.series!} colorField={info.color} {...legend} />
     ) : null;
-
-  const context = getInstrumentationContext('barchart', id);
 
   return (
     <VizLayout

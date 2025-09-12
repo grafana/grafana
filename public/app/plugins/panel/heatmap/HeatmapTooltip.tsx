@@ -1,4 +1,4 @@
-import { ReactElement, useEffect, useRef, useState, ReactNode } from 'react';
+import { ReactElement, useEffect, useRef, useState, ReactNode, useMemo } from 'react';
 import * as React from 'react';
 import uPlot from 'uplot';
 
@@ -101,6 +101,8 @@ const HeatmapHoverCell = ({
 }: HeatmapTooltipProps) => {
   const index = dataIdxs[1]!;
   const data = dataRef.current;
+
+  const context = useMemo(() => getInstrumentationContext('heatmap', panelId), [panelId]);
 
   const [isSparse] = useState(
     () => data.heatmap?.meta?.type === DataFrameType.HeatmapCells && !isHeatmapCellsDense(data.heatmap)
@@ -329,13 +331,7 @@ const HeatmapHoverCell = ({
       }
 
       actions = canExecuteActions
-        ? getFieldActions(
-            data.series!,
-            linksField,
-            replaceVariables,
-            xValueIdx,
-            getInstrumentationContext('heatmap', panelId)
-          )
+        ? getFieldActions(data.series!, linksField, replaceVariables, xValueIdx, context)
         : [];
     }
 

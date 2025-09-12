@@ -62,7 +62,7 @@ export const getActions = (
   replaceVariables: InterpolateFunction,
   actions: Action[],
   config: ValueLinkConfig,
-  actionContext?: ActionContext
+  context?: ActionContext
 ): Array<ActionModel<Field>> => {
   if (!actions || actions.length === 0) {
     return [];
@@ -100,8 +100,8 @@ export const getActions = (
             actionVars
           )(action.confirmation || `Are you sure you want to ${action.title}?`),
         onClick: (evt: MouseEvent, origin: Field, actionVars?: ActionVariableInput) => {
-          if (actionContext?.visualizationType) {
-            reportActionTrigger(action.type, action.oneClick ?? false, actionContext);
+          if (context?.visualizationType) {
+            reportActionTrigger(action.type, action.oneClick ?? false, context);
           }
 
           // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
