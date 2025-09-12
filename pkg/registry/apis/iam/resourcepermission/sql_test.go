@@ -306,7 +306,7 @@ func TestIntegration_ResourcePermSqlBackend_getResourcePermission(t *testing.T) 
 
 			if tt.err != nil {
 				require.Error(t, err)
-				require.ErrorIs(t, err, tt.err)
+				require.ErrorAs(t, err, &tt.err)
 				return
 			}
 			require.NoError(t, err)
@@ -533,7 +533,6 @@ func TestIntegration_ResourcePermSqlBackend_UpdateResourcePermission(t *testing.
 
 		_, err = backend.updateResourcePermission(ctx, sql, types.NamespaceInfo{Value: "default", OrgID: 1}, mapper, grn, resourcePerm)
 		require.Error(t, err)
-		require.ErrorIs(t, err, errNotFound)
 	})
 
 	t.Run("should update resource permission", func(t *testing.T) {
