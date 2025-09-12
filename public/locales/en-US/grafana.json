@@ -9633,10 +9633,9 @@
       }
     },
     "logs-controls": {
+      "collapse": "Collapse",
       "deduplication": "Deduplication",
-      "disable-highlighting": "Disable highlighting",
       "disable-prettify-json": "Collapse JSON logs",
-      "display-level": "Display levels",
       "display-level-all": "All levels",
       "download": "Download logs",
       "download-logs": {
@@ -9644,18 +9643,39 @@
         "json": "json",
         "txt": "txt"
       },
-      "enable-highlighting": "Enable highlighting",
       "escape-newlines": "Fix incorrectly escaped newline and tab sequences in log lines",
-      "font-size-default": "Use small font size",
-      "font-size-small": "Use default font size",
+      "expand": "Expand",
+      "filter-levels": "Filter levels",
+      "font-large": "Set large font",
+      "font-small": "Set small font",
       "hide-search": "Close search",
       "hide-timestamps": "Hide timestamps",
       "hide-unique-labels": "Hide unique labels",
+      "label": {
+        "collapse": "Expanded",
+        "disable-highlighting": "Highlight text",
+        "enable-highlighting": "Plain text",
+        "escape-newlines": "Escape newlines",
+        "expand": "Collapsed"
+      },
+      "labels": {
+        "font-large": "Large font",
+        "font-small": "Small font",
+        "hide-search": "Close search",
+        "newest-first": "Newest logs first",
+        "oldest-first": "Oldest logs first",
+        "show-search": "Search logs"
+      },
       "line-wrapping": {
         "enable": "Enable line wrapping",
         "enable-prettify": "Enable line wrapping and prettify JSON",
         "hide": "Disable line wrapping",
-        "label": "Log line wrapping"
+        "state": {
+          "hide": "Wrap disabled",
+          "json": "Wrap JSON",
+          "wrap": "Wrap lines"
+        },
+        "tooltip": "Set line wrap"
       },
       "newest-first": "Sorted by newest logs first - Click to show oldest first",
       "oldest-first": "Sorted by oldest logs first - Click to show newest first",
@@ -9671,8 +9691,18 @@
       "timestamp": {
         "hide": "Hide timestamps",
         "label": "Log timestamps",
+        "label-hide": "Hide timestamps",
+        "label-ms": "Display ms",
+        "label-ns": "Display ns",
         "milliseconds": "Show millisecond timestamps",
-        "nanoseconds": "Show nanosecond timestamps"
+        "nanoseconds": "Show nanosecond timestamps",
+        "tooltip": "Set timestamp format"
+      },
+      "tooltip": {
+        "disable-highlighting": "Disable highlighting",
+        "download": "Download",
+        "enable-highlighting": "Enable highlighting",
+        "filter-level": "Filter logs result by level"
       },
       "unwrap-lines": "Unwrap lines",
       "wrap-lines": "Wrap lines"
