@@ -766,6 +766,11 @@ export interface FeatureToggles {
   */
   alertingEnrichmentPerRule?: boolean;
   /**
+  * Enable Assistant Investigations enrichment type.
+  * @default false
+  */
+  alertingEnrichmentAssistantInvestigations?: boolean;
+  /**
   * Enable AI-analyze central state history.
   * @default false
   */
