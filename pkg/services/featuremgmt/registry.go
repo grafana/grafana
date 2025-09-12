@@ -1317,6 +1317,15 @@ var (
 			Expression:        "false",
 		},
 		{
+			Name:              "alertingEnrichmentAssistantInvestigations",
+			Description:       "Enable Assistant Investigations enrichment type.",
+			Stage:             FeatureStageExperimental,
+			Owner:             grafanaAlertingSquad,
+			HideFromAdminPage: true,
+			HideFromDocs:      true,
+			Expression:        "false",
+		},
+		{
 			Name:              "alertingAIAnalyzeCentralStateHistory",
 			Description:       "Enable AI-analyze central state history.",
 			Stage:             FeatureStageExperimental,
