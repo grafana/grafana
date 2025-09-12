@@ -172,6 +172,7 @@ alertingAIFeedback,experimental,@grafana/alerting-squad,false,false,false
 alertingAIImproveAlertRules,experimental,@grafana/alerting-squad,false,false,false
 alertingAIGenTemplates,experimental,@grafana/alerting-squad,false,false,false
 alertingEnrichmentPerRule,experimental,@grafana/alerting-squad,false,false,false
+alertingEnrichmentAssistantInvestigations,experimental,@grafana/alerting-squad,false,false,false
 alertingAIAnalyzeCentralStateHistory,experimental,@grafana/alerting-squad,false,false,false
 alertingNotificationsStepMode,GA,@grafana/alerting-squad,false,false,true
 feedbackButton,experimental,@grafana/grafana-operator-experience-squad,false,false,false
@@ -250,7 +251,6 @@ adhocFiltersInTooltips,GA,@grafana/datapro,false,false,true
 favoriteDatasources,experimental,@grafana/plugins-platform-backend,false,false,true
 newLogContext,experimental,@grafana/observability-logs,false,false,true
 newClickhouseConfigPageDesign,privatePreview,@grafana/partner-datasources,false,false,false
-unifiedStorageSearchAfterWriteExperimentalAPI,experimental,@grafana/search-and-storage,false,true,false
 teamFolders,experimental,@grafana/grafana-search-navigate-organise,false,false,false
 alertingTriage,experimental,@grafana/alerting-squad,false,false,true
 graphiteBackendMode,privatePreview,@grafana/partner-datasources,false,false,false

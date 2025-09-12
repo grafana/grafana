@@ -30,7 +30,6 @@ import (
 	"k8s.io/apimachinery/pkg/selection"
 
 	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 
 	authlib "github.com/grafana/authlib/types"
@@ -76,11 +75,10 @@ type bleveBackend struct {
 	cacheMx sync.RWMutex
 	cache   map[resource.NamespacedResource]*bleveIndex
 
-	features     featuremgmt.FeatureToggles
 	indexMetrics *resource.BleveIndexMetrics
 }
 
-func NewBleveBackend(opts BleveOptions, tracer trace.Tracer, features featuremgmt.FeatureToggles, indexMetrics *resource.BleveIndexMetrics) (*bleveBackend, error) {
+func NewBleveBackend(opts BleveOptions, tracer trace.Tracer, indexMetrics *resource.BleveIndexMetrics) (*bleveBackend, error) {
 	if opts.Root == "" {
 		return nil, fmt.Errorf("bleve backend missing root folder configuration")
 	}
@@ -108,7 +106,6 @@ func NewBleveBackend(opts BleveOptions, tracer trace.Tracer, features featuremgm
 		tracer:       tracer,
 		cache:        map[resource.NamespacedResource]*bleveIndex{},
 		opts:         opts,
-		features:     features,
 		indexMetrics: indexMetrics,
 	}
 
@@ -213,8 +210,7 @@ func newBleveIndex(path string, mapper mapping.IndexMapping) (bleve.Index, error
 
 // BuildIndex builds an index from scratch or retrieves it from the filesystem.
 // If built successfully, the new index replaces the old index in the cache (if there was any).
-// An index in the file system is considered to be valid if the requested resourceVersion is smaller than or equal to
-// the resourceVersion used to build the index and the number of indexed objects matches the expected size.
+// Existing index in the file system is reused, if it exists, and if size indicates that we should use file-based index, and rebuild is not true.
 // The return value of "builder" should be the RV returned from List. This will be stored as the index RV
 //
 //nolint:gocyclo
@@ -222,13 +218,11 @@ func (b *bleveBackend) BuildIndex(
 	ctx context.Context,
 	key resource.NamespacedResource,
 	size int64,
-	resourceVersion int64,
 	fields resource.SearchableDocumentFields,
 	indexBuildReason string,
 	builder resource.BuildFn,
 	updater resource.UpdateFn,
 	rebuild bool,
-	searchAfterWrite bool,
 ) (resource.ResourceIndex, error) {
 	_, span := b.tracer.Start(ctx, tracingPrexfixBleve+"BuildIndex")
 	defer span.End()
@@ -238,7 +232,6 @@ func (b *bleveBackend) BuildIndex(
 		attribute.String("group", key.Group),
 		attribute.String("resource", key.Resource),
 		attribute.Int64("size", size),
-		attribute.Int64("rv", resourceVersion),
 		attribute.String("reason", indexBuildReason),
 	)
 
@@ -254,7 +247,7 @@ func (b *bleveBackend) BuildIndex(
 		return nil, err
 	}
 
-	logWithDetails := b.log.With("namespace", key.Namespace, "group", key.Group, "resource", key.Resource, "size", size, "rv", resourceVersion, "reason", indexBuildReason)
+	logWithDetails := b.log.With("namespace", key.Namespace, "group", key.Group, "resource", key.Resource, "size", size, "reason", indexBuildReason)
 
 	// Close the newly created/opened index by default.
 	closeIndex := true
@@ -290,8 +283,8 @@ func (b *bleveBackend) BuildIndex(
 		// We only check for the existing file-based index if we don't already have an open index for this key.
 		// This happens on startup, or when memory-based index has expired. (We don't expire file-based indexes)
 		// If we do have an unexpired cached index already, we always build a new index from scratch.
-		if cachedIndex == nil && resourceVersion > 0 && !rebuild {
-			index, fileIndexName, indexRV = b.findPreviousFileBasedIndex(resourceDir, resourceVersion, size, searchAfterWrite)
+		if cachedIndex == nil && !rebuild {
+			index, fileIndexName, indexRV = b.findPreviousFileBasedIndex(resourceDir)
 		}
 
 		if index != nil {
@@ -509,7 +502,7 @@ func formatIndexName(now time.Time) string {
 	return now.Format("20060102-150405")
 }
 
-func (b *bleveBackend) findPreviousFileBasedIndex(resourceDir string, resourceVersion int64, size int64, searchAfterWrite bool) (bleve.Index, string, int64) {
+func (b *bleveBackend) findPreviousFileBasedIndex(resourceDir string) (bleve.Index, string, int64) {
 	entries, err := os.ReadDir(resourceDir)
 	if err != nil {
 		return nil, "", 0
@@ -528,34 +521,12 @@ func (b *bleveBackend) findPreviousFileBasedIndex(resourceDir string, resourceVe
 			continue
 		}
 
-		if !searchAfterWrite {
-			cnt, err := idx.DocCount()
-			if err != nil {
-				b.log.Debug("error getting count from index", "indexDir", indexDir, "err", err)
-				_ = idx.Close()
-				continue
-			}
-
-			if uint64(size) != cnt {
-				b.log.Debug("index count mismatch. ignoring index", "indexDir", indexDir, "size", size, "cnt", cnt)
-				_ = idx.Close()
-				continue
-			}
-		}
-
 		indexRV, err := getRV(idx)
 		if err != nil {
 			b.log.Error("error getting rv from index", "indexDir", indexDir, "err", err)
 			if !errors.Is(err, bleve.ErrorIndexClosed) {
 				_ = idx.Close()
 			}
-			continue
-		}
-
-		// if searchAfterWrite is enabled, we don't need to re-build the index, as it will be updated at request time
-		if !searchAfterWrite && indexRV < resourceVersion {
-			b.log.Debug("indexRV is less than requested resourceVersion. ignoring index", "indexDir", indexDir, "rv", indexRV, "resourceVersion", resourceVersion)
-			_ = idx.Close()
 			continue
 		}
 
@@ -609,7 +580,6 @@ type bleveIndex struct {
 
 	// The values returned with all
 	allFields []*resourcepb.ResourceTableColumnDefinition
-	features  featuremgmt.FeatureToggles
 	tracing   trace.Tracer
 	logger    *slog.Logger
 
@@ -643,7 +613,6 @@ func (b *bleveBackend) newBleveIndex(
 		fields:       fields,
 		allFields:    allFields,
 		standard:     standardSearchFields,
-		features:     b.features,
 		tracing:      b.tracer,
 		logger:       logger,
 		updaterFn:    updaterFn,

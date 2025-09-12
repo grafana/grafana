@@ -500,6 +500,7 @@
       "copy-link": "复制链接",
       "duplicate": "复制",
       "export": "导出",
+      "manage-enrichments": "",
       "silence-notifications": "静默通知",
       "with-modifications": "含修改"
     },
@@ -1115,7 +1116,7 @@
     },
     "enrichment": {
       "error-boundary": {
-        "notification-message-section-extension": "",
+        "enrichment-drawer-extension": "",
         "rule-viewer-section-extension": ""
       }
     },
@@ -2050,9 +2051,6 @@
       "text-loading-rules": "正在加载规则...",
       "title-dashboard-not-saved": "数据面板未保存"
     },
-    "paused-badge": {
-      "paused": "已暂停"
-    },
     "payload-editor": {
       "edit-payload": "编辑负载",
       "label-add-custom-alert-instance": "添加自定义警报实例",
@@ -2202,9 +2200,6 @@
       "label-time-range": "时间范围",
       "max-data-points": "MD = {{maxDataPoints}}",
       "min-interval": "最小间隔 = {{minInterval}}"
-    },
-    "query-preview": {
-      "relative-time-range": "<0>{{from}}</0>至现在"
     },
     "queryAndExpressionsStep": {
       "disableAdvancedOptions": {
@@ -2546,6 +2541,10 @@
       "recording": "{{recordingStats}} 正在录制",
       "recovering": "{{recoveringStats}}正在恢复",
       "error_other": "{{count}} 个错误"
+    },
+    "rule-time-range-label": {
+      "relative": "",
+      "relative-with-to": ""
     },
     "rule-type-picker": {
       "grafana-managed": "选择“Grafana 托管”，除非您有启用了 Ruler API 的 Mimir、Loki 或 Cortex 数据源。"
@@ -3644,7 +3643,10 @@
       "text": "未找到与您的查询相关的结果"
     },
     "restore": {
-      "success": "数据面板 {{name}} 已恢复"
+      "success": "",
+      "all-failed_other": "",
+      "failed-count_other": "",
+      "success-count_other": ""
     },
     "text-this-repository-is-read-only": "如果您可以直接访问目标，请复制 JSON 并将其粘贴到那里。",
     "trash-state-manager": {
@@ -11612,6 +11614,7 @@
       "tooltip-unhealthy-repository": "无法拉取状态不良的存储库"
     },
     "synchronize-step": {
+      "repository-unhealthy": "",
       "synchronization-description": "包括每个历史值的提交",
       "synchronization-options": "同步选项"
     },
@@ -11635,6 +11638,8 @@
       "alert-point-3": "此过程的持续时间取决于所涉及资源的数量。",
       "alert-point-4": "企业实例管理员可以向用户显示公告横幅。有关分步说明，请参阅<2>本指南</2>。",
       "alert-title": "重要提示：数据或配置不会丢失，但数据面板将在几分钟内暂时不可用。",
+      "button-cancel": "",
+      "button-cancelling": "",
       "button-next": "完成",
       "button-start": "开始同步",
       "discard-modal": {

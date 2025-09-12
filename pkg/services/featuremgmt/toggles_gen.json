@@ -250,6 +250,37 @@
     },
     {
       "metadata": {
+        "name": "alertingEnrichmentAssistantInvestigations",
+        "resourceVersion": "1757606567075",
+        "creationTimestamp": "2025-09-11T16:02:47Z"
+      },
+      "spec": {
+        "description": "Enable Assistant Investigations enrichment type.",
+        "stage": "experimental",
+        "codeowner": "@grafana/alerting-squad",
+        "hideFromAdminPage": true,
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "alertingEnrichmentAssistantInvestigationsUI",
+        "resourceVersion": "1757541861834",
+        "creationTimestamp": "2025-09-10T22:04:21Z",
+        "deletionTimestamp": "2025-09-11T16:02:47Z"
+      },
+      "spec": {
+        "description": "Enable Assistant Investigations enrichment type in the UI.",
+        "stage": "experimental",
+        "codeowner": "@grafana/alerting-squad",
+        "hideFromAdminPage": true,
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "alertingEnrichmentPerRule",
         "resourceVersion": "1756206837948",
         "creationTimestamp": "2025-08-28T08:30:28Z"
@@ -3540,6 +3571,7 @@
         "name": "unifiedStorageSearchAfterWriteExperimentalAPI",
         "resourceVersion": "1755089543487",
         "creationTimestamp": "2025-08-13T14:05:15Z",
+        "deletionTimestamp": "2025-09-10T09:52:56Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2025-08-13 12:52:23.487521 +0000 UTC"
         }

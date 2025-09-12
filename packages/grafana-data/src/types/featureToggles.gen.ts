@@ -770,6 +770,11 @@ export interface FeatureToggles {
   */
   alertingEnrichmentPerRule?: boolean;
   /**
+  * Enable Assistant Investigations enrichment type.
+  * @default false
+  */
+  alertingEnrichmentAssistantInvestigations?: boolean;
+  /**
   * Enable AI-analyze central state history.
   * @default false
   */
@@ -1122,11 +1127,6 @@ export interface FeatureToggles {
   * @default false
   */
   newClickhouseConfigPageDesign?: boolean;
-  /**
-  * Enable experimental search-after-write guarantees to unified-storage search endpoints
-  * @default false
-  */
-  unifiedStorageSearchAfterWriteExperimentalAPI?: boolean;
   /**
   * Enables team folders functionality
   * @default false
