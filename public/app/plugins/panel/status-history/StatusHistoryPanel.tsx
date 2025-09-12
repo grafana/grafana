@@ -48,11 +48,12 @@ export const StatusHistoryPanel = ({
 
   // temp range set for adding new annotation set by TooltipPlugin2, consumed by AnnotationPlugin2
   const [newAnnotationRange, setNewAnnotationRange] = useState<TimeRange2 | null>(null);
-  const { sync, eventsScope, canAddAnnotations, eventBus } = usePanelContext();
+  const { sync, eventsScope, canAddAnnotations, eventBus, canExecuteActions } = usePanelContext();
   const { dataLinkPostProcessor } = useDataLinksContext();
   const cursorSync = sync?.() ?? DashboardCursorSync.Off;
 
   const enableAnnotationCreation = Boolean(canAddAnnotations && canAddAnnotations());
+  const userCanExecuteActions = useMemo(() => canExecuteActions?.() ?? false, [canExecuteActions]);
 
   const { frames, warn } = useMemo(
     () => prepareTimelineFields(data.series, false, timeRange, theme),
@@ -153,6 +154,7 @@ export const StatusHistoryPanel = ({
                         maxHeight={options.tooltip.maxHeight}
                         replaceVariables={replaceVariables}
                         dataLinks={dataLinks}
+                        canExecuteActions={userCanExecuteActions}
                       />
                     );
                   }}

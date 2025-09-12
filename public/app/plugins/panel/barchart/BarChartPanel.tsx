@@ -31,7 +31,9 @@ export const BarChartPanel = (props: PanelProps<Options>) => {
   // const { dataLinkPostProcessor } = usePanelContext();
 
   const theme = useTheme2();
-  const { onAddAdHocFilter } = usePanelContext();
+  const { onAddAdHocFilter, canExecuteActions } = usePanelContext();
+
+  const userCanExecuteActions = useMemo(() => canExecuteActions?.() ?? false, [canExecuteActions]);
 
   const {
     barWidth,
@@ -210,6 +212,7 @@ export const BarChartPanel = (props: PanelProps<Options>) => {
                     dataLinks={dataLinks}
                     adHocFilters={adHocFilters}
                     hideZeros={options.tooltip.hideZeros}
+                    canExecuteActions={userCanExecuteActions}
                   />
                 );
               }}
