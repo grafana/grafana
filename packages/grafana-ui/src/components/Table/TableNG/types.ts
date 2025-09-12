@@ -259,9 +259,6 @@ export type TableCellStyles = (theme: GrafanaTheme2, options: TableCellStyleOpti
 // Comparator for sorting table values
 export type Comparator = (a: TableCellValue, b: TableCellValue) => number;
 
-// Type for converting a DataFrame into an array of TableRows
-export type FrameToRowsConverter = (frame: DataFrame) => TableRow[];
-
 // Type for mapping column names to their field types
 export type ColumnTypes = Record<string, FieldType>;
 
