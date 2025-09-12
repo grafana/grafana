@@ -2,8 +2,7 @@ import { FormEvent, useEffect, useState } from 'react';
 
 import { RawTimeRange, TimeRange } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
-import { Button, ClipboardButton, Field, Label, Modal, Stack, Switch, TextArea } from '@grafana/ui';
+import { Button, ClipboardButton, Field, Label, Stack, Switch, TextArea } from '@grafana/ui';
 import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
 
 import { ThemePicker } from './ThemePicker';
@@ -104,16 +103,12 @@ export function ShareEmbed({
           onChange={onIframeHtmlChange}
         />
       </Field>
-      {config.featureToggles.newDashboardSharingComponent ? (
-        <Stack gap={1} justifyContent={'start'}>
-          {clipboardButton}
-          <Button variant="secondary" fill="outline" onClick={onCancelClick}>
-            <Trans i18nKey="snapshot.share.cancel-button">Cancel</Trans>
-          </Button>
-        </Stack>
-      ) : (
-        <Modal.ButtonRow>{clipboardButton}</Modal.ButtonRow>
-      )}
+      <Stack gap={1} justifyContent={'start'}>
+        {clipboardButton}
+        <Button variant="secondary" fill="outline" onClick={onCancelClick}>
+          <Trans i18nKey="snapshot.share.cancel-button">Cancel</Trans>
+        </Button>
+      </Stack>
     </>
   );
 }

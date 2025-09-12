@@ -4,7 +4,7 @@ import { render } from 'test/test-utils';
 import { getDefaultTimeRange, LoadingState } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
-import { config, setPluginImportUtils } from '@grafana/runtime';
+import { setPluginImportUtils } from '@grafana/runtime';
 import {
   CustomVariable,
   SceneQueryRunner,
@@ -31,7 +31,6 @@ setPluginImportUtils({
 });
 
 beforeEach(() => {
-  config.featureToggles.newDashboardSharingComponent = true;
   jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
   jest.spyOn(contextSrv, 'hasRole').mockReturnValue(true);
 });

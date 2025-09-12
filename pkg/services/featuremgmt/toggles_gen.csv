@@ -121,7 +121,6 @@ grafanaManagedRecordingRules,experimental,@grafana/alerting-squad,false,false,fa
 queryLibrary,privatePreview,@grafana/sharing-squad,false,false,false
 savedQueries,preview,@grafana/sharing-squad,false,false,false
 logsExploreTableDefaultVisualization,experimental,@grafana/observability-logs,false,false,true
-newDashboardSharingComponent,GA,@grafana/sharing-squad,false,false,true
 alertingListViewV2,privatePreview,@grafana/alerting-squad,false,false,true
 alertingDisableSendAlertsExternal,experimental,@grafana/alerting-squad,false,false,false
 preserveDashboardStateWhenNavigating,experimental,@grafana/dashboards-squad,false,false,false

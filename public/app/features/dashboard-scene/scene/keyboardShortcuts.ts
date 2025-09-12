@@ -10,7 +10,6 @@ import { AccessControlAction } from 'app/types/accessControl';
 import { shareDashboardType } from '../../dashboard/components/ShareModal/utils';
 import { PanelInspectDrawer } from '../inspect/PanelInspectDrawer';
 import { ShareDrawer } from '../sharing/ShareDrawer/ShareDrawer';
-import { ShareModal } from '../sharing/ShareModal';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { findVizPanelByPathId } from '../utils/pathId';
 import { getEditPanelUrl, tryGetExploreUrlForPanel } from '../utils/urlBuilders';
@@ -59,52 +58,43 @@ export function setupKeyboardShortcuts(scene: DashboardScene) {
   });
 
   // Panel share
-  if (config.featureToggles.newDashboardSharingComponent) {
-    keybindings.addBinding({
-      key: 'p u',
-      onTrigger: withFocusedPanel(scene, async (vizPanel: VizPanel) => {
-        const drawer = new ShareDrawer({
-          shareView: shareDashboardType.link,
-          panelRef: vizPanel.getRef(),
-        });
-
-        scene.showModal(drawer);
-      }),
-    });
-    keybindings.addBinding({
-      key: 'p e',
-      onTrigger: withFocusedPanel(scene, async (vizPanel: VizPanel) => {
-        const drawer = new ShareDrawer({
-          shareView: shareDashboardType.embed,
-          panelRef: vizPanel.getRef(),
-        });
-
-        scene.showModal(drawer);
-      }),
-    });
-
-    if (
-      contextSrv.isSignedIn &&
-      config.snapshotEnabled &&
-      contextSrv.hasPermission(AccessControlAction.SnapshotsCreate)
-    ) {
-      keybindings.addBinding({
-        key: 'p s',
-        onTrigger: withFocusedPanel(scene, async (vizPanel: VizPanel) => {
-          const drawer = new ShareDrawer({
-            shareView: shareDashboardType.snapshot,
-            panelRef: vizPanel.getRef(),
-          });
-
-          scene.showModal(drawer);
-        }),
+  keybindings.addBinding({
+    key: 'p u',
+    onTrigger: withFocusedPanel(scene, async (vizPanel: VizPanel) => {
+      const drawer = new ShareDrawer({
+        shareView: shareDashboardType.link,
+        panelRef: vizPanel.getRef(),
       });
-    }
-  } else {
+
+      scene.showModal(drawer);
+    }),
+  });
+  keybindings.addBinding({
+    key: 'p e',
+    onTrigger: withFocusedPanel(scene, async (vizPanel: VizPanel) => {
+      const drawer = new ShareDrawer({
+        shareView: shareDashboardType.embed,
+        panelRef: vizPanel.getRef(),
+      });
+
+      scene.showModal(drawer);
+    }),
+  });
+
+  if (
+    contextSrv.isSignedIn &&
+    config.snapshotEnabled &&
+    contextSrv.hasPermission(AccessControlAction.SnapshotsCreate)
+  ) {
     keybindings.addBinding({
       key: 'p s',
       onTrigger: withFocusedPanel(scene, async (vizPanel: VizPanel) => {
-        scene.showModal(new ShareModal({ panelRef: vizPanel.getRef() }));
+        const drawer = new ShareDrawer({
+          shareView: shareDashboardType.snapshot,
+          panelRef: vizPanel.getRef(),
+        });
+
+        scene.showModal(drawer);
       }),
     });
   }

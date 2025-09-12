@@ -495,10 +495,6 @@ const (
 	// Sets the logs table as default visualisation in logs explore
 	FlagLogsExploreTableDefaultVisualization = "logsExploreTableDefaultVisualization"
 
-	// FlagNewDashboardSharingComponent
-	// Enables the new sharing drawer design
-	FlagNewDashboardSharingComponent = "newDashboardSharingComponent"
-
 	// FlagAlertingListViewV2
 	// Enables the new alert list view design
 	FlagAlertingListViewV2 = "alertingListViewV2"
