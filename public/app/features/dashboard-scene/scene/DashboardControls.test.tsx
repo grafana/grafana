@@ -118,6 +118,7 @@ describe('DashboardControls', () => {
         hideTimeControls: true,
         hideVariableControls: true,
         hideLinksControls: true,
+        hideDashboardControls: true,
       });
       expect(scene.getUrlState()).toEqual({});
     });
@@ -128,18 +129,22 @@ describe('DashboardControls', () => {
         '_dash.hideTimePicker': 'true',
         '_dash.hideVariables': 'true',
         '_dash.hideLinks': 'true',
+        '_dash.hideDashboardControls': 'true',
       });
       expect(scene.state.hideTimeControls).toBeTruthy();
       expect(scene.state.hideVariableControls).toBeTruthy();
       expect(scene.state.hideLinksControls).toBeTruthy();
+      expect(scene.state.hideDashboardControls).toBeTruthy();
       scene.updateFromUrl({
         '_dash.hideTimePicker': '',
         '_dash.hideVariables': '',
         '_dash.hideLinks': '',
+        '_dash.hideDashboardControls': '',
       });
       expect(scene.state.hideTimeControls).toBeTruthy();
       expect(scene.state.hideVariableControls).toBeTruthy();
       expect(scene.state.hideLinksControls).toBeTruthy();
+      expect(scene.state.hideDashboardControls).toBeTruthy();
     });
 
     it('should not override state if no new state comes from url', () => {
@@ -147,11 +152,13 @@ describe('DashboardControls', () => {
         hideTimeControls: true,
         hideVariableControls: true,
         hideLinksControls: true,
+        hideDashboardControls: true,
       });
       scene.updateFromUrl({});
       expect(scene.state.hideTimeControls).toBeTruthy();
       expect(scene.state.hideVariableControls).toBeTruthy();
       expect(scene.state.hideLinksControls).toBeTruthy();
+      expect(scene.state.hideDashboardControls).toBeTruthy();
     });
 
     it('should not call setState if no changes', () => {
@@ -159,6 +166,7 @@ describe('DashboardControls', () => {
         hideTimeControls: true,
         hideVariableControls: true,
         hideLinksControls: true,
+        hideDashboardControls: true,
       });
       const setState = jest.spyOn(scene, 'setState');
 
@@ -166,6 +174,7 @@ describe('DashboardControls', () => {
         '_dash.hideTimePicker': 'true',
         '_dash.hideVariables': 'true',
         '_dash.hideLinks': 'true',
+        '_dash.hideDashboardControls': 'true',
       });
 
       expect(setState).toHaveBeenCalledTimes(0);

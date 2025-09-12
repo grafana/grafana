@@ -138,7 +138,14 @@ export class DashboardControls extends SceneObjectBase<DashboardControlsState> {
 }
 
 function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardControls>) {
-  const { refreshPicker, timePicker, hideTimeControls, hideVariableControls, hideLinksControls } = model.useState();
+  const {
+    refreshPicker,
+    timePicker,
+    hideTimeControls,
+    hideVariableControls,
+    hideLinksControls,
+    hideDashboardControls,
+  } = model.useState();
   const dashboard = getDashboardSceneFor(model);
   const { links, editPanel } = dashboard.useState();
   const styles = useStyles2(getStyles);
@@ -171,7 +178,7 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
           <refreshPicker.Component model={refreshPicker} />
         </Stack>
       )}
-      {model.hasDashboardControls() && (
+      {!hideDashboardControls && model.hasDashboardControls() && (
         <Stack>
           <DashboardControlsButton dashboard={dashboard} />
         </Stack>
