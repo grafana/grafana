@@ -7,7 +7,7 @@ import { backendSrv } from 'app/core/services/backend_srv';
 
 import { MoveModal, Props } from './MoveModal';
 
-const [_, { folderA }] = getFolderFixtures();
+const [_, { folderA, folderB }] = getFolderFixtures();
 
 setBackendSrv(backendSrv);
 setupMockServer();
@@ -93,6 +93,16 @@ describe('browse-dashboards MoveModal', () => {
         expect(screen.getByText(/1 dashboard/)).toBeInTheDocument();
         expect(screen.getByText(/1 library panel/)).toBeInTheDocument();
         expect(screen.getByText(/1 alert rule/)).toBeInTheDocument();
+      });
+
+      it('shows an error if one of the folder counts cannot be fetched', async () => {
+        props.selectedItems.folder = {
+          [folderA.item.uid]: true,
+          [folderB.item.uid]: true,
+        };
+        render(<MoveModal {...props} />);
+
+        expect(await screen.findByRole('alert', { name: /unable to retrieve/i })).toBeInTheDocument();
       });
     });
   });
