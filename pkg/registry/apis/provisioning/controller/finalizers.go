@@ -3,6 +3,7 @@ package controller
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"sort"
 	"strings"
 
@@ -44,27 +45,40 @@ func (f *finalizer) process(ctx context.Context,
 		case repository.ReleaseOrphanResourcesFinalizer:
 			err := f.processExistingItems(ctx, repo.Config(),
 				func(client dynamic.ResourceInterface, item *provisioning.ResourceListItem) error {
+					logger.Debug("releasing resource",
+						"finalizer", ReleaseOrphanResourcesFinalizer,
+						"resource", item.Name,
+						"group", item.Group,
+						"resourceType", item.Resource,
+					)
+
 					patchAnnotations, err := getPatchedAnnotations(item)
 					if err != nil {
-						return err
+						return fmt.Errorf("get patched annotations: %w", err)
 					}
 
 					_, err = client.Patch(
 						ctx, item.Name, types.JSONPatchType, patchAnnotations, v1.PatchOptions{},
 					)
-					return err
+					return fmt.Errorf("patch resource to release ownership: %w", err)
 				})
 			if err != nil {
-				return err
+				return fmt.Errorf("running %s finalizer: %w", ReleaseOrphanResourcesFinalizer, err)
 			}
 
 		case repository.RemoveOrphanResourcesFinalizer:
 			err := f.processExistingItems(ctx, repo.Config(),
 				func(client dynamic.ResourceInterface, item *provisioning.ResourceListItem) error {
+					logger.Debug("removing resource",
+						"finalizer", RemoveOrphanResourcesFinalizer,
+						"resource", item.Name,
+						"group", item.Group,
+						"resourceType", item.Resource,
+					)
 					return client.Delete(ctx, item.Name, v1.DeleteOptions{})
 				})
 			if err != nil {
-				return err
+				return fmt.Errorf("running %s finalizer: %w", RemoveOrphanResourcesFinalizer, err)
 			}
 
 		default:
@@ -103,6 +117,7 @@ func (f *finalizer) processExistingItems(
 			Resource: item.Resource,
 		})
 		if err != nil {
+			logger.Warn("error getting client for resource", "resource", item.Resource, "error", err)
 			return err
 		}
 
