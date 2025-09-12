@@ -97,6 +97,10 @@ func (ss *FolderUnifiedStoreImpl) Update(ctx context.Context, cmd folder.UpdateF
 		return nil, err
 	}
 	updated := obj.DeepCopy()
+	meta, err := utils.MetaAccessor(updated)
+	if err != nil {
+		return nil, err
+	}
 
 	if cmd.NewTitle != nil {
 		err = unstructured.SetNestedField(updated.Object, *cmd.NewTitle, "spec", "title")
@@ -111,16 +115,20 @@ func (ss *FolderUnifiedStoreImpl) Update(ctx context.Context, cmd folder.UpdateF
 		}
 	}
 	if cmd.NewParentUID != nil {
-		meta, err := utils.MetaAccessor(updated)
-		if err != nil {
-			return nil, err
-		}
 		meta.SetFolder(*cmd.NewParentUID)
 	} else {
 		// only compare versions if not moving the folder
 		if !cmd.Overwrite && (cmd.Version != int(obj.GetGeneration())) {
 			return nil, dashboards.ErrDashboardVersionMismatch
 		}
+	}
+
+	// nolint:staticcheck
+	if cmd.ManagerKindClassicFP != "" {
+		meta.SetManagerProperties(utils.ManagerProperties{
+			Kind:     utils.ManagerKindClassicFP,
+			Identity: cmd.ManagerKindClassicFP,
+		})
 	}
 
 	out, err := ss.k8sclient.Update(ctx, updated, cmd.OrgID, v1.UpdateOptions{
