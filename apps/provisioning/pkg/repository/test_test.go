@@ -26,6 +26,9 @@ func TestValidateRepository(t *testing.T) {
 			repository: func() *MockRepository {
 				m := NewMockRepository(t)
 				m.On("Config").Return(&provisioning.Repository{
+					ObjectMeta: metav1.ObjectMeta{
+						Finalizers: []string{CleanFinalizer, RemoveOrphanResourcesFinalizer},
+					},
 					Spec: provisioning.RepositorySpec{
 						Title: "Test Repo",
 					},
@@ -230,6 +233,28 @@ func TestValidateRepository(t *testing.T) {
 			expectedErrs: 1,
 			validateError: func(t *testing.T, errors field.ErrorList) {
 				require.Contains(t, errors.ToAggregate().Error(), "spec.workflow: Invalid value: \"invalid\": invalid workflow")
+			},
+		},
+		{
+			name: "mutual exclusive finalizers are set together",
+			repository: func() *MockRepository {
+				m := NewMockRepository(t)
+				m.On("Config").Return(&provisioning.Repository{
+					ObjectMeta: metav1.ObjectMeta{
+						Finalizers: []string{RemoveOrphanResourcesFinalizer, ReleaseOrphanResourcesFinalizer},
+					},
+					Spec: provisioning.RepositorySpec{
+						Title:     "Test Repo",
+						Type:      provisioning.GitHubRepositoryType,
+						Workflows: []provisioning.Workflow{provisioning.WriteWorkflow},
+					},
+				})
+				m.On("Validate").Return(field.ErrorList{})
+				return m
+			}(),
+			expectedErrs: 1,
+			validateError: func(t *testing.T, errors field.ErrorList) {
+				require.Contains(t, errors.ToAggregate().Error(), "cannot have both remove and release orphan resources finalizers")
 			},
 		},
 	}
