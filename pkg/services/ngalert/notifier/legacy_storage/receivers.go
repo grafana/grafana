@@ -14,11 +14,14 @@ import (
 type provenances = map[string]models.Provenance
 
 func (rev *ConfigRevision) DeleteReceiver(uid string) {
-	defer rev.reset()
 	// Remove the receiver from the configuration.
-	rev.Config.AlertmanagerConfig.Receivers = slices.DeleteFunc(rev.Config.AlertmanagerConfig.Receivers, func(r *definitions.PostableApiReceiver) bool {
+	updated := slices.DeleteFunc(rev.Config.AlertmanagerConfig.Receivers, func(r *definitions.PostableApiReceiver) bool {
 		return NameToUid(r.GetName()) == uid
 	})
+	if len(updated) != len(rev.Config.AlertmanagerConfig.Receivers) {
+		rev.Config.AlertmanagerConfig.Receivers = updated
+		rev.reset()
+	}
 }
 
 func (rev *ConfigRevision) CreateReceiver(receiver *models.Receiver) (*models.Receiver, error) {
