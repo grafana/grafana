@@ -186,11 +186,10 @@ func newRequestDeduplicationMiddleware(log *log.ConcreteLogger, next backend.Han
 }
 
 func (m *requestDeduplicationMiddleware) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
-	datasourceID, ok := getDatasourceID(req.PluginContext.DataSourceInstanceSettings)
-	if !ok {
+	if req.PluginContext.DataSourceInstanceSettings.UID == "" {
 		return m.BaseHandler.QueryData(ctx, req)
 	}
-	key, err := caching.GetKey(datasourceID, req)
+	key, err := caching.GetKey(req.PluginContext.DataSourceInstanceSettings.UID, req)
 	if err != nil {
 		m.log.Error("error building cache key for request deduplication, skipping request deduplication", "error", err)
 		return m.BaseHandler.QueryData(ctx, req)
@@ -205,12 +204,11 @@ func (m *requestDeduplicationMiddleware) QueryData(ctx context.Context, req *bac
 }
 
 func (m *requestDeduplicationMiddleware) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
-	datasourceID, ok := getDatasourceID(req.PluginContext.DataSourceInstanceSettings)
-	if !ok {
+	if req.PluginContext.DataSourceInstanceSettings.UID == "" {
 		return m.BaseHandler.CallResource(ctx, req, sender)
 	}
 
-	key, err := caching.GetKey(datasourceID, req)
+	key, err := caching.GetKey(req.PluginContext.DataSourceInstanceSettings.UID, req)
 	if err != nil {
 		m.log.Error("error building cache key for request deduplication, skipping request deduplication", "error", err)
 		return m.BaseHandler.CallResource(ctx, req, sender)
@@ -222,15 +220,4 @@ func (m *requestDeduplicationMiddleware) CallResource(ctx context.Context, req *
 		return fmt.Errorf("singleflight: calling next.CallResource: %w", err)
 	}
 	return nil
-}
-
-func getDatasourceID(settings *backend.DataSourceInstanceSettings) (string, bool) {
-	if settings.UID != "" {
-		return settings.UID, true
-	}
-	if settings.ID != 0 {
-		return fmt.Sprint(settings.ID), true
-	}
-
-	return "", false
 }
