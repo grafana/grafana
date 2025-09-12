@@ -28,7 +28,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log/logtest"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/store/kind/dashboard"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
@@ -63,7 +62,7 @@ func TestBleveBackend(t *testing.T) {
 	backend, err := NewBleveBackend(BleveOptions{
 		Root:          tmpdir,
 		FileThreshold: 5, // with more than 5 items we create a file on disk
-	}, tracing.NewNoopTracerService(), featuremgmt.WithFeatures(), nil)
+	}, tracing.NewNoopTracerService(), nil)
 	require.NoError(t, err)
 
 	t.Cleanup(backend.CloseAllIndexes)
@@ -769,7 +768,7 @@ func setupBleveBackend(t *testing.T, fileThreshold int, cacheTTL time.Duration, 
 		FileThreshold: int64(fileThreshold),
 		IndexCacheTTL: cacheTTL,
 		Logger:        slog.New(logtest.NewNopHandler(t)),
-	}, tracing.NewNoopTracerService(), featuremgmt.WithFeatures(), metrics)
+	}, tracing.NewNoopTracerService(), metrics)
 	require.NoError(t, err)
 	require.NotNil(t, backend)
 	t.Cleanup(backend.CloseAllIndexes)
