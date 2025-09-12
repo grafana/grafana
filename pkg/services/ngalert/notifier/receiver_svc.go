@@ -55,6 +55,7 @@ type ReceiverService struct {
 	provenanceValidator    validation.ProvenanceStatusTransitionValidator
 	resourcePermissions    ac.ReceiverPermissionsService
 	tracer                 tracing.Tracer
+	readStagedResources    bool
 }
 
 type alertRuleNotificationSettingsStore interface {
@@ -108,6 +109,7 @@ func NewReceiverService(
 	log log.Logger,
 	resourcePermissions ac.ReceiverPermissionsService,
 	tracer tracing.Tracer,
+	readStagedResources bool,
 ) *ReceiverService {
 	return &ReceiverService{
 		authz:                  authz,
@@ -120,6 +122,7 @@ func NewReceiverService(
 		provenanceValidator:    validation.ValidateProvenanceRelaxed,
 		resourcePermissions:    resourcePermissions,
 		tracer:                 tracer,
+		readStagedResources:    readStagedResources,
 	}
 }
 
@@ -137,7 +140,7 @@ func (rs *ReceiverService) GetReceiver(ctx context.Context, q models.GetReceiver
 	))
 	defer span.End()
 
-	revision, err := rs.cfgStore.Get(ctx, q.OrgID)
+	revision, err := rs.loadRevision(ctx, q.OrgID)
 	if err != nil {
 		return nil, err
 	}
@@ -196,7 +199,7 @@ func (rs *ReceiverService) GetReceivers(ctx context.Context, q models.GetReceive
 		uids = append(uids, legacy_storage.NameToUid(name))
 	}
 
-	revision, err := rs.cfgStore.Get(ctx, q.OrgID)
+	revision, err := rs.loadRevision(ctx, q.OrgID)
 	if err != nil {
 		return nil, err
 	}
@@ -258,7 +261,7 @@ func (rs *ReceiverService) DeleteReceiver(ctx context.Context, uid string, calle
 	if err := rs.authz.AuthorizeDeleteByUID(ctx, user, uid); err != nil {
 		return err
 	}
-	revision, err := rs.cfgStore.Get(ctx, orgID)
+	revision, err := rs.loadRevision(ctx, orgID)
 	if err != nil {
 		return err
 	}
@@ -341,7 +344,7 @@ func (rs *ReceiverService) CreateReceiver(ctx context.Context, r *models.Receive
 	if r.Origin != models.ResourceOriginGrafana {
 		return nil, makeErrReceiverOrigin(r, "create")
 	}
-	revision, err := rs.cfgStore.Get(ctx, orgID)
+	revision, err := rs.loadRevision(ctx, orgID)
 	if err != nil {
 		return nil, err
 	}
@@ -403,7 +406,7 @@ func (rs *ReceiverService) UpdateReceiver(ctx context.Context, r *models.Receive
 	logger := rs.log.FromContext(ctx).New("receiver", r.Name, "uid", r.UID, "version", r.Version, "integrations", r.GetIntegrationTypes())
 	logger.Debug("Updating receiver")
 
-	revision, err := rs.cfgStore.Get(ctx, orgID)
+	revision, err := rs.loadRevision(ctx, orgID)
 	if err != nil {
 		return nil, err
 	}
@@ -416,6 +419,10 @@ func (rs *ReceiverService) UpdateReceiver(ctx context.Context, r *models.Receive
 	existing, err := revision.GetReceiver(r.GetUID(), prov)
 	if err != nil {
 		return nil, err
+	}
+
+	if existing.Origin != models.ResourceOriginGrafana {
+		return nil, makeErrReceiverOrigin(existing, "update")
 	}
 
 	// We re-encrypt the existing receiver to ensure any unencrypted secure fields that are correctly encrypted, note this should NOT re-encrypt secure fields that are already encrypted.
@@ -438,10 +445,6 @@ func (rs *ReceiverService) UpdateReceiver(ctx context.Context, r *models.Receive
 	err = rs.checkOptimisticConcurrency(existing, r.Version)
 	if err != nil {
 		return nil, err
-	}
-
-	if existing.Origin != models.ResourceOriginGrafana {
-		return nil, makeErrReceiverOrigin(existing, "update")
 	}
 
 	if err := rs.provenanceValidator(existing.Provenance, r.Provenance); err != nil {
@@ -524,7 +527,7 @@ func (rs *ReceiverService) AccessControlMetadata(ctx context.Context, user ident
 
 // InUseMetadata returns metadata for the given Receivers about their usage in routes and rules.
 func (rs *ReceiverService) InUseMetadata(ctx context.Context, orgID int64, receivers ...*models.Receiver) (map[string]models.ReceiverMetadata, error) {
-	revision, err := rs.cfgStore.Get(ctx, orgID)
+	revision, err := rs.loadRevision(ctx, orgID)
 	if err != nil {
 		return nil, err
 	}
@@ -740,4 +743,18 @@ func (rs *ReceiverService) RenameReceiverInDependentResources(ctx context.Contex
 		rs.log.FromContext(ctx).Info("Updated rules and routes that use renamed receiver", "oldName", oldName, "newName", newName, "rules", len(affected), "routes", updatedRoutes)
 	}
 	return nil
+}
+
+func (rs *ReceiverService) loadRevision(ctx context.Context, orgID int64) (*legacy_storage.ConfigRevision, error) {
+	revision, err := rs.cfgStore.Get(ctx, orgID)
+	if err != nil {
+		return nil, err
+	}
+	if rs.readStagedResources {
+		err := revision.IncludeStaged()
+		if err != nil {
+			rs.log.FromContext(ctx).Warn("Failed to include staged resources. Staged resources will be ignored", "error", err)
+		}
+	}
+	return revision, nil
 }
