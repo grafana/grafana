@@ -704,8 +704,8 @@ export class GraphiteDatasource
 
     if (config.featureToggles.graphiteBackendMode) {
       return await this.postResource<MetricFindValue[]>('metrics/find', {
-        from: typeof params.from === 'string' ? params.from : `${params.from}`,
-        until: typeof params.until === 'string' ? params.until : `${params.until}`,
+        from: params.from ? (typeof params.from === 'string' ? params.from : `${params.from}`) : undefined,
+        until: params.until ? (typeof params.until === 'string' ? params.until : `${params.until}`) : undefined,
         query,
       });
     }
@@ -741,7 +741,7 @@ export class GraphiteDatasource
    * The result will contain all metrics (with full name) matching provided query.
    * It's a more flexible version of /metrics/find endpoint (@see requestMetricFind)
    */
-  private requestMetricExpand(
+  private async requestMetricExpand(
     query: string,
     requestId: string,
     range?: { from: string | number; until: string | number }
@@ -750,6 +750,18 @@ export class GraphiteDatasource
     if (range) {
       params.from = range.from;
       params.until = range.until;
+    }
+
+    if (config.featureToggles.graphiteBackendMode) {
+      const metrics = await this.postResource<MetricFindValue[]>('metrics/expand', {
+        from: params.from ? (typeof params.from === 'string' ? params.from : `${params.from}`) : undefined,
+        until: params.until ? (typeof params.until === 'string' ? params.until : `${params.until}`) : undefined,
+        query,
+      });
+      return metrics.map((metric) => ({
+        text: metric.text,
+        expandable: false,
+      }));
     }
 
     const httpOptions: BackendSrvRequest = {
@@ -842,7 +854,7 @@ export class GraphiteDatasource
     );
   }
 
-  getTagsAutoComplete(expressions: string[], tagPrefix?: string, optionalOptions?: any) {
+  async getTagsAutoComplete(expressions: string[], tagPrefix?: string, optionalOptions?: any) {
     const options = optionalOptions || {};
     const params: BackendSrvRequest['params'] = {
       expr: _map(expressions, (expression) => this.templateSrv.replace((expression || '').trim())),
@@ -857,6 +869,18 @@ export class GraphiteDatasource
     if (options.range) {
       params.from = this.translateTime(options.range.from, false, options.timezone);
       params.until = this.translateTime(options.range.to, true, options.timezone);
+    }
+
+    if (config.featureToggles.graphiteBackendMode) {
+      const tags = await this.postResource<string[]>('tags/autoComplete/tags', {
+        from: typeof params.from === 'string' ? params.from : `${params.from}`,
+        until: typeof params.until === 'string' ? params.until : `${params.until}`,
+        tagPrefix,
+        limit: options.limit,
+      });
+      return tags.map((tag) => ({
+        text: tag,
+      }));
     }
 
     const httpOptions: BackendSrvRequest = {
@@ -935,7 +959,7 @@ export class GraphiteDatasource
     return this.getFuncDefs();
   }
 
-  getFuncDefs() {
+  async getFuncDefs() {
     if (this.funcDefsPromise !== null) {
       return this.funcDefsPromise;
     }
@@ -953,6 +977,12 @@ export class GraphiteDatasource
       // backend_srv defaults to json
       responseType: 'text' as const,
     };
+
+    if (config.featureToggles.graphiteBackendMode) {
+      const functions = await this.getResource<string>('functions');
+      this.funcDefs = gfunc.parseFuncDefs(functions);
+      return this.funcDefs;
+    }
 
     return lastValueFrom(
       this.doGraphiteRequest(httpOptions).pipe(
