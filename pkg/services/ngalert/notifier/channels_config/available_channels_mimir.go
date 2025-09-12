@@ -2,225 +2,8 @@ package channels_config
 
 import promCfg "github.com/prometheus/alertmanager/config"
 
-// GetAvailableMimirNotifiers returns the metadata of all the cloud notification channels that can be configured.
-func GetAvailableMimirNotifiers() []*NotifierPlugin {
-	proxyConfigOptions := func() []NotifierOption {
-		return []NotifierOption{
-			{
-				Label:        "Proxy URL",
-				Description:  "HTTP proxy server to use to connect to the targets.",
-				Element:      ElementTypeInput,
-				InputType:    InputTypeText,
-				PropertyName: "proxy_url",
-			},
-			{
-				Label:        "No Proxy",
-				Description:  "Comma-separated list of domains for which the proxy should not be used.",
-				Element:      ElementTypeInput,
-				InputType:    InputTypeText,
-				PropertyName: "no_proxy",
-			},
-			{
-				Label:        "Proxy From Environment",
-				Description:  "Makes use of net/http ProxyFromEnvironment function to determine proxies.",
-				Element:      ElementTypeCheckbox,
-				PropertyName: "proxy_from_environment",
-			},
-			{
-				Label:        "Proxy Header Environment",
-				Description:  "Headers to send to proxies during CONNECT requests.",
-				Element:      ElementTypeKeyValueMap,
-				PropertyName: "proxy_connect_header",
-			},
-		}
-	}
-
-	tlsConfigOption := func(propertyName string) NotifierOption {
-		return NotifierOption{
-			Label:        "TLS config",
-			Description:  "Configures the TLS settings.",
-			PropertyName: propertyName,
-			Element:      ElementTypeSubform,
-			SubformOptions: []NotifierOption{
-				// TODO these fields are not allowed by Mimir
-				// {
-				// 	Label:        "CA Certificate",
-				// 	Element:      ElementTypeTextArea,
-				// 	Description:  "Certificate in PEM format to use when verifying the server's certificate chain.",
-				// 	InputType:    InputTypeText,
-				// 	PropertyName: "ca",
-				// 	Required:     false,
-				// },
-				// {
-				// 	Label:        "Client Certificate",
-				// 	Element:      ElementTypeTextArea,
-				// 	Description:  "Client certificate in PEM format to use when connecting to the server.",
-				// 	InputType:    InputTypeText,
-				// 	PropertyName: "cert",
-				// 	Required:     false,
-				// },
-				// {
-				// 	Label:        "Client Key",
-				// 	Element:      ElementTypeTextArea,
-				// 	Description:  "Client key in PEM format to use when connecting to the server.",
-				// 	InputType:    InputTypeText,
-				// 	PropertyName: "key",
-				// 	Required:     false,
-				// 	Secure:       true,
-				// },
-				{
-					Label:        "Server name",
-					Description:  "ServerName extension to indicate the name of the server.",
-					Element:      ElementTypeInput,
-					InputType:    InputTypeText,
-					PropertyName: "server_name",
-				},
-				{
-					Label:        "Skip verify",
-					Description:  "Disable validation of the server certificate.",
-					Element:      ElementTypeCheckbox,
-					PropertyName: "insecure_skip_verify",
-				},
-				{
-					Label:        "Min TLS Version",
-					Element:      ElementTypeInput,
-					InputType:    InputTypeText,
-					PropertyName: "min_version",
-				},
-				{
-					Label:        "Max TLS Version",
-					Element:      ElementTypeInput,
-					InputType:    InputTypeText,
-					PropertyName: "max_version",
-				},
-			},
-		}
-	}
-
-	oauth2ConfigOption := func() NotifierOption {
-		return NotifierOption{
-			Label:        "OAuth2",
-			Description:  "Configures the OAuth2 settings.",
-			PropertyName: "oauth2",
-			Element:      ElementTypeSubform,
-			SubformOptions: []NotifierOption{
-				{
-					Label:        "Client ID",
-					Description:  "The OAuth2 client ID",
-					Element:      ElementTypeInput,
-					InputType:    InputTypeText,
-					PropertyName: "client_id",
-					Required:     true,
-				},
-				{
-					Label:        "Client secret",
-					Description:  "The OAuth2 client secret",
-					Element:      ElementTypeInput,
-					InputType:    InputTypePassword,
-					PropertyName: "client_secret",
-					Required:     true,
-					Secure:       true,
-				},
-				{
-					Label:        "Token URL",
-					Description:  "The OAuth2 token exchange URL",
-					Element:      ElementTypeInput,
-					InputType:    InputTypeText,
-					PropertyName: "token_url",
-					Required:     true,
-				},
-				{
-					Label:        "Scopes",
-					Description:  "Comma-separated list of scopes",
-					Element:      ElementStringArray,
-					PropertyName: "scopes",
-				},
-				{
-					Label:        "Additional parameters",
-					Element:      ElementTypeKeyValueMap,
-					PropertyName: "endpoint_params",
-				},
-				tlsConfigOption("TLSConfig"), // OAuth2 struct definition does not define JSON tag for this field
-			}, /*proxyConfigOptions()...)*/ // TODO OAuth2 proxy config is not allowed in Mimir (see validation)
-		}
-	}
-
-	httpConfigOption := func() NotifierOption {
-		return NotifierOption{
-			Label:        "HTTP Config",
-			Description:  "Note that `basic_auth` and `bearer_token` options are mutually exclusive.",
-			PropertyName: "http_config",
-			Element:      ElementTypeSubform,
-			SubformOptions: append([]NotifierOption{
-
-				{
-					Label:        "Basic auth",
-					Description:  "Sets the `Authorization` header with the configured username and password.",
-					PropertyName: "basic_auth",
-					Element:      ElementTypeSubform,
-					SubformOptions: []NotifierOption{
-						{
-							Label:        "Username",
-							Element:      ElementTypeInput,
-							InputType:    InputTypeText,
-							PropertyName: "username",
-						},
-						{
-							Label:        "Password",
-							Element:      ElementTypeInput,
-							InputType:    InputTypePassword,
-							PropertyName: "password",
-							Secure:       true,
-						},
-					},
-				},
-				{
-					Label:        "Authorization",
-					Description:  "The HTTP authorization credentials for the targets.",
-					Element:      ElementTypeSubform,
-					PropertyName: "authorization",
-					SubformOptions: []NotifierOption{
-						{
-							Label:        "Type",
-							Element:      ElementTypeInput,
-							InputType:    InputTypeText,
-							PropertyName: "type",
-						},
-						{
-							Label:        "Credentials",
-							Element:      ElementTypeInput,
-							InputType:    InputTypePassword,
-							PropertyName: "credentials",
-							Secure:       true,
-						},
-					},
-				},
-				{
-					Label:        "Follow redirects",
-					Description:  "Whether the client should follow HTTP 3xx redirects.",
-					Element:      ElementTypeCheckbox,
-					PropertyName: "follow_redirects",
-				},
-				{
-					Label:        "Enable HTTP2",
-					Description:  "Whether the client should configure HTTP2.",
-					Element:      ElementTypeCheckbox,
-					PropertyName: "enable_http2",
-				},
-				{
-					Label:        "HTTP Headers",
-					Description:  "Headers to inject in the requests.",
-					Element:      ElementTypeKeyValueMap,
-					PropertyName: "http_headers",
-				},
-			}, append(
-				proxyConfigOptions(),
-				tlsConfigOption("tls_config"),
-				oauth2ConfigOption())...,
-			),
-		}
-	}
-
+// getAvailableMimirNotifiers returns the metadata of all the cloud notification channels that can be configured.
+func getAvailableMimirNotifiers() []*NotifierPlugin {
 	return []*NotifierPlugin{
 		{
 			Type:        "discord",
@@ -253,7 +36,7 @@ func GetAvailableMimirNotifiers() []*NotifierPlugin {
 					InputType:    InputTypeText,
 					PropertyName: "message",
 				},
-				httpConfigOption(),
+				mimirHttpConfigOption(),
 			},
 		},
 		{
@@ -494,7 +277,7 @@ func GetAvailableMimirNotifiers() []*NotifierPlugin {
 					InputType:    InputTypeText,
 					PropertyName: "group",
 				},
-				httpConfigOption(),
+				mimirHttpConfigOption(),
 			},
 		},
 		{
@@ -726,7 +509,7 @@ func GetAvailableMimirNotifiers() []*NotifierPlugin {
 						},
 					},
 				},
-				httpConfigOption(),
+				mimirHttpConfigOption(),
 			},
 		},
 		{
@@ -761,7 +544,7 @@ func GetAvailableMimirNotifiers() []*NotifierPlugin {
 					InputType:    InputTypeText,
 					PropertyName: "timeout",
 				},
-				httpConfigOption(),
+				mimirHttpConfigOption(),
 			},
 		},
 		{
@@ -895,7 +678,7 @@ func GetAvailableMimirNotifiers() []*NotifierPlugin {
 						},
 					},
 				},
-				httpConfigOption(),
+				mimirHttpConfigOption(),
 			},
 		},
 		{
@@ -972,7 +755,7 @@ func GetAvailableMimirNotifiers() []*NotifierPlugin {
 					InputType:    InputTypeText,
 					PropertyName: "to_tag",
 				},
-				httpConfigOption(),
+				mimirHttpConfigOption(),
 			},
 		},
 		{
@@ -1081,7 +864,7 @@ func GetAvailableMimirNotifiers() []*NotifierPlugin {
 					Element:      ElementTypeCheckbox,
 					PropertyName: "html",
 				},
-				httpConfigOption(),
+				mimirHttpConfigOption(),
 			},
 		},
 		{
@@ -1152,7 +935,7 @@ func GetAvailableMimirNotifiers() []*NotifierPlugin {
 					Element:      ElementTypeKeyValueMap,
 					PropertyName: "custom_fields",
 				},
-				httpConfigOption(),
+				mimirHttpConfigOption(),
 			},
 		},
 		{
@@ -1257,7 +1040,7 @@ func GetAvailableMimirNotifiers() []*NotifierPlugin {
 					Element:      ElementTypeKeyValueMap,
 					PropertyName: "attributes",
 				},
-				httpConfigOption(),
+				mimirHttpConfigOption(),
 			},
 		},
 		{
@@ -1317,7 +1100,7 @@ func GetAvailableMimirNotifiers() []*NotifierPlugin {
 						{Value: "HTML", Label: "HTML"},
 					},
 				},
-				httpConfigOption(),
+				mimirHttpConfigOption(),
 			},
 		},
 		{
@@ -1351,7 +1134,7 @@ func GetAvailableMimirNotifiers() []*NotifierPlugin {
 					InputType:    InputTypeText,
 					PropertyName: "message",
 				},
-				httpConfigOption(), // TODO Authorization should be required
+				mimirHttpConfigOption(), // TODO Authorization should be required
 			},
 		},
 		{
@@ -1393,7 +1176,7 @@ func GetAvailableMimirNotifiers() []*NotifierPlugin {
 					InputType:    InputTypeText,
 					PropertyName: "text",
 				},
-				httpConfigOption(),
+				mimirHttpConfigOption(),
 			},
 		},
 		{
@@ -1490,8 +1273,270 @@ func GetAvailableMimirNotifiers() []*NotifierPlugin {
 					Element:      ElementTypeKeyValueMap,
 					PropertyName: "fields",
 				},
-				httpConfigOption(),
+				mimirHttpConfigOption(),
 			},
 		},
 	}
+}
+
+func getAvailableMimirV2Notifiers() []*NotifierPlugin {
+	return []*NotifierPlugin{
+		{
+			Type:        "msteams",
+			Name:        "Microsoft Teams",
+			Description: "Sends notifications to Microsoft Teams using new format of adaptive cards",
+			Heading:     "Microsoft Teams settings",
+			Options: []NotifierOption{
+				{
+					Label:        "Webhook URL",
+					Description:  "The incoming webhook URL.",
+					Element:      ElementTypeInput,
+					InputType:    InputTypeText,
+					PropertyName: "webhook_url",
+					Secure:       true,
+					Required:     true,
+				},
+				{
+					Label:        "Title",
+					Description:  "Message title template.",
+					Placeholder:  promCfg.DefaultMSTeamsV2Config.Title,
+					Element:      ElementTypeInput,
+					InputType:    InputTypeText,
+					PropertyName: "title",
+				},
+				{
+					Label:        "Text",
+					Description:  "Message body template.",
+					Placeholder:  promCfg.DefaultMSTeamsConfig.Text,
+					Element:      ElementTypeInput,
+					InputType:    InputTypeText,
+					PropertyName: "text",
+				},
+				mimirHttpConfigOption(),
+			},
+		},
+	}
+}
+
+func proxyConfigOptions() []NotifierOption {
+	return []NotifierOption{
+		{
+			Label:        "Proxy URL",
+			Description:  "HTTP proxy server to use to connect to the targets.",
+			Element:      ElementTypeInput,
+			InputType:    InputTypeText,
+			PropertyName: "proxy_url",
+		},
+		{
+			Label:        "No Proxy",
+			Description:  "Comma-separated list of domains for which the proxy should not be used.",
+			Element:      ElementTypeInput,
+			InputType:    InputTypeText,
+			PropertyName: "no_proxy",
+		},
+		{
+			Label:        "Proxy From Environment",
+			Description:  "Makes use of net/http ProxyFromEnvironment function to determine proxies.",
+			Element:      ElementTypeCheckbox,
+			PropertyName: "proxy_from_environment",
+		},
+		{
+			Label:        "Proxy Header Environment",
+			Description:  "Headers to send to proxies during CONNECT requests.",
+			Element:      ElementTypeKeyValueMap,
+			PropertyName: "proxy_connect_header",
+		},
+	}
+}
+
+func tlsConfigOption(propertyName string) NotifierOption {
+	return NotifierOption{
+		Label:        "TLS config",
+		Description:  "Configures the TLS settings.",
+		PropertyName: propertyName,
+		Element:      ElementTypeSubform,
+		SubformOptions: []NotifierOption{
+			// TODO these fields are not allowed by Mimir
+			// {
+			// 	Label:        "CA Certificate",
+			// 	Element:      ElementTypeTextArea,
+			// 	Description:  "Certificate in PEM format to use when verifying the server's certificate chain.",
+			// 	InputType:    InputTypeText,
+			// 	PropertyName: "ca",
+			// 	Required:     false,
+			// },
+			// {
+			// 	Label:        "Client Certificate",
+			// 	Element:      ElementTypeTextArea,
+			// 	Description:  "Client certificate in PEM format to use when connecting to the server.",
+			// 	InputType:    InputTypeText,
+			// 	PropertyName: "cert",
+			// 	Required:     false,
+			// },
+			// {
+			// 	Label:        "Client Key",
+			// 	Element:      ElementTypeTextArea,
+			// 	Description:  "Client key in PEM format to use when connecting to the server.",
+			// 	InputType:    InputTypeText,
+			// 	PropertyName: "key",
+			// 	Required:     false,
+			// 	Secure:       true,
+			// },
+			{
+				Label:        "Server name",
+				Description:  "ServerName extension to indicate the name of the server.",
+				Element:      ElementTypeInput,
+				InputType:    InputTypeText,
+				PropertyName: "server_name",
+			},
+			{
+				Label:        "Skip verify",
+				Description:  "Disable validation of the server certificate.",
+				Element:      ElementTypeCheckbox,
+				PropertyName: "insecure_skip_verify",
+			},
+			{
+				Label:        "Min TLS Version",
+				Element:      ElementTypeInput,
+				InputType:    InputTypeText,
+				PropertyName: "min_version",
+			},
+			{
+				Label:        "Max TLS Version",
+				Element:      ElementTypeInput,
+				InputType:    InputTypeText,
+				PropertyName: "max_version",
+			},
+		},
+	}
+}
+
+func mimirHttpConfigOption() NotifierOption {
+	oauth2ConfigOption := func() NotifierOption {
+		return NotifierOption{
+			Label:        "OAuth2",
+			Description:  "Configures the OAuth2 settings.",
+			PropertyName: "oauth2",
+			Element:      ElementTypeSubform,
+			SubformOptions: []NotifierOption{
+				{
+					Label:        "Client ID",
+					Description:  "The OAuth2 client ID",
+					Element:      ElementTypeInput,
+					InputType:    InputTypeText,
+					PropertyName: "client_id",
+					Required:     true,
+				},
+				{
+					Label:        "Client secret",
+					Description:  "The OAuth2 client secret",
+					Element:      ElementTypeInput,
+					InputType:    InputTypePassword,
+					PropertyName: "client_secret",
+					Required:     true,
+					Secure:       true,
+				},
+				{
+					Label:        "Token URL",
+					Description:  "The OAuth2 token exchange URL",
+					Element:      ElementTypeInput,
+					InputType:    InputTypeText,
+					PropertyName: "token_url",
+					Required:     true,
+				},
+				{
+					Label:        "Scopes",
+					Description:  "Comma-separated list of scopes",
+					Element:      ElementStringArray,
+					PropertyName: "scopes",
+				},
+				{
+					Label:        "Additional parameters",
+					Element:      ElementTypeKeyValueMap,
+					PropertyName: "endpoint_params",
+				},
+				tlsConfigOption("TLSConfig"), // OAuth2 struct definition does not define JSON tag for this field
+			}, /*proxyConfigOptions()...)*/ // TODO OAuth2 proxy config is not allowed in Mimir (see validation)
+		}
+	}
+	return NotifierOption{
+		Label:        "HTTP Config",
+		Description:  "Note that `basic_auth` and `bearer_token` options are mutually exclusive.",
+		PropertyName: "http_config",
+		Element:      ElementTypeSubform,
+		SubformOptions: append([]NotifierOption{
+
+			{
+				Label:        "Basic auth",
+				Description:  "Sets the `Authorization` header with the configured username and password.",
+				PropertyName: "basic_auth",
+				Element:      ElementTypeSubform,
+				SubformOptions: []NotifierOption{
+					{
+						Label:        "Username",
+						Element:      ElementTypeInput,
+						InputType:    InputTypeText,
+						PropertyName: "username",
+					},
+					{
+						Label:        "Password",
+						Element:      ElementTypeInput,
+						InputType:    InputTypePassword,
+						PropertyName: "password",
+						Secure:       true,
+					},
+				},
+			},
+			{
+				Label:        "Authorization",
+				Description:  "The HTTP authorization credentials for the targets.",
+				Element:      ElementTypeSubform,
+				PropertyName: "authorization",
+				SubformOptions: []NotifierOption{
+					{
+						Label:        "Type",
+						Element:      ElementTypeInput,
+						InputType:    InputTypeText,
+						PropertyName: "type",
+					},
+					{
+						Label:        "Credentials",
+						Element:      ElementTypeInput,
+						InputType:    InputTypePassword,
+						PropertyName: "credentials",
+						Secure:       true,
+					},
+				},
+			},
+			{
+				Label:        "Follow redirects",
+				Description:  "Whether the client should follow HTTP 3xx redirects.",
+				Element:      ElementTypeCheckbox,
+				PropertyName: "follow_redirects",
+			},
+			{
+				Label:        "Enable HTTP2",
+				Description:  "Whether the client should configure HTTP2.",
+				Element:      ElementTypeCheckbox,
+				PropertyName: "enable_http2",
+			},
+			{
+				Label:        "HTTP Headers",
+				Description:  "Headers to inject in the requests.",
+				Element:      ElementTypeKeyValueMap,
+				PropertyName: "http_headers",
+			},
+		}, append(
+			proxyConfigOptions(),
+			tlsConfigOption("tls_config"),
+			oauth2ConfigOption())...,
+		),
+	}
+}
+
+func mimirIntegrationTypeToNotifierType(integrationType string) (string, NotifierVersion) {
+	if integrationType == "msteamsv2" {
+		return "msteams", V0mimir2
+	}
+	return integrationType, V0mimir1
 }

@@ -54,20 +54,21 @@ func TestGetSecretKeysForContactPointType(t *testing.T) {
 		{receiverType: "sns", version: V1, expectedSecretFields: []string{"sigv4.access_key", "sigv4.secret_key"}},
 		{receiverType: "mqtt", version: V1, expectedSecretFields: []string{"password", "tlsConfig.caCertificate", "tlsConfig.clientCertificate", "tlsConfig.clientKey"}},
 		{receiverType: "jira", version: V1, expectedSecretFields: []string{"user", "password", "api_token"}},
-		{receiverType: "victorops", version: V0, expectedSecretFields: append([]string{"api_key"}, httpConfigSecrets...)},
-		{receiverType: "sns", version: V0, expectedSecretFields: append([]string{"sigv4.SecretKey"}, httpConfigSecrets...)},
-		{receiverType: "telegram", version: V0, expectedSecretFields: append([]string{"token"}, httpConfigSecrets...)},
-		{receiverType: "discord", version: V0, expectedSecretFields: append([]string{"webhook_url"}, httpConfigSecrets...)},
-		{receiverType: "pagerduty", version: V0, expectedSecretFields: append([]string{"routing_key", "service_key"}, httpConfigSecrets...)},
-		{receiverType: "pushover", version: V0, expectedSecretFields: append([]string{"user_key", "token"}, httpConfigSecrets...)},
-		{receiverType: "jira", version: V0, expectedSecretFields: httpConfigSecrets},
-		{receiverType: "opsgenie", version: V0, expectedSecretFields: append([]string{"api_key"}, httpConfigSecrets...)},
-		{receiverType: "msteams", version: V0, expectedSecretFields: append([]string{"webhook_url"}, httpConfigSecrets...)},
-		{receiverType: "email", version: V0, expectedSecretFields: []string{"auth_password", "auth_secret"}},
-		{receiverType: "slack", version: V0, expectedSecretFields: append([]string{"api_url"}, httpConfigSecrets...)},
-		{receiverType: "webex", version: V0, expectedSecretFields: httpConfigSecrets},
-		{receiverType: "wechat", version: V0, expectedSecretFields: append([]string{"api_secret"}, httpConfigSecrets...)},
-		{receiverType: "webhook", version: V0, expectedSecretFields: append([]string{"url"}, httpConfigSecrets...)},
+		{receiverType: "victorops", version: V0mimir1, expectedSecretFields: append([]string{"api_key"}, httpConfigSecrets...)},
+		{receiverType: "sns", version: V0mimir1, expectedSecretFields: append([]string{"sigv4.SecretKey"}, httpConfigSecrets...)},
+		{receiverType: "telegram", version: V0mimir1, expectedSecretFields: append([]string{"token"}, httpConfigSecrets...)},
+		{receiverType: "discord", version: V0mimir1, expectedSecretFields: append([]string{"webhook_url"}, httpConfigSecrets...)},
+		{receiverType: "pagerduty", version: V0mimir1, expectedSecretFields: append([]string{"routing_key", "service_key"}, httpConfigSecrets...)},
+		{receiverType: "pushover", version: V0mimir1, expectedSecretFields: append([]string{"user_key", "token"}, httpConfigSecrets...)},
+		{receiverType: "jira", version: V0mimir1, expectedSecretFields: httpConfigSecrets},
+		{receiverType: "opsgenie", version: V0mimir1, expectedSecretFields: append([]string{"api_key"}, httpConfigSecrets...)},
+		{receiverType: "msteams", version: V0mimir1, expectedSecretFields: append([]string{"webhook_url"}, httpConfigSecrets...)},
+		{receiverType: "msteams", version: V0mimir2, expectedSecretFields: append([]string{"webhook_url"}, httpConfigSecrets...)},
+		{receiverType: "email", version: V0mimir1, expectedSecretFields: []string{"auth_password", "auth_secret"}},
+		{receiverType: "slack", version: V0mimir1, expectedSecretFields: append([]string{"api_url"}, httpConfigSecrets...)},
+		{receiverType: "webex", version: V0mimir1, expectedSecretFields: httpConfigSecrets},
+		{receiverType: "wechat", version: V0mimir1, expectedSecretFields: append([]string{"api_secret"}, httpConfigSecrets...)},
+		{receiverType: "webhook", version: V0mimir1, expectedSecretFields: append([]string{"url"}, httpConfigSecrets...)},
 	}
 	n := slices.Collect(GetAvailableNotifiersV2())
 	type typeWithVersion struct {
@@ -154,7 +155,9 @@ func TestV0IntegrationsSecrets(t *testing.T) {
 	notifytest.ForEachIntegrationType(t, func(configType reflect.Type) {
 		t.Run(configType.Name(), func(t *testing.T) {
 			integrationType := strings.ToLower(strings.TrimSuffix(configType.Name(), "Config"))
-			expectedSecrets, err := GetSecretKeysForContactPointType(integrationType, V0)
+			var version NotifierVersion
+			integrationType, version = mimirIntegrationTypeToNotifierType(integrationType)
+			expectedSecrets, err := GetSecretKeysForContactPointType(integrationType, version)
 			require.NoError(t, err)
 
 			var secrets []string
