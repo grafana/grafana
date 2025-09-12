@@ -16,6 +16,8 @@ const intervals = systemDateFormats.interval;
 
 import { distribute, SPACE_BETWEEN } from './distribute';
 import { findRects, intersects, pointWithin, Quadtree, Rect } from './quadtree';
+import { groupBy } from 'lodash';
+import { MAX_HISTORY_AUTOCOMPLETE_ITEMS } from 'app/features/explore/state/utils';
 
 const groupDistr = SPACE_BETWEEN;
 const barDistr = SPACE_BETWEEN;
@@ -203,20 +205,32 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2, clusters: num
       return splits.map((v) => (v == null ? '' : dateTimeFormat(v, { format, timeZone })));
     }
 
+    if (groupByField && clusters.length !== 0) { // use only distinct x-axis values when grouping is used.
+      splits = Array.from(new Set(u.data[0]))
+        .map(value => u.data[0].find(obj => obj === value))
+        .filter((v): v is number => v !== undefined);
+    }
     return splits.map((v) => (isXHorizontal ? formatShortValue(0, v) : formatValue(0, v)));
   };
 
   // this expands the distr: 2 scale so that the indicies of each data[0] land at the proper justified positions
-  const xRange: Scale.Range = (u, min, max) => {
+  const xRange: Scale.Range = (u, min, max) => {    
     min = 0;
     max = Math.max(1, u.data[0].length - 1);
 
     let pctOffset = 0;
 
-    // how far in is the first tick in % of full dimension
-    distribute(u.data[0].length, groupWidth, groupDistr, 0, (di, lftPct, widPct) => {
-      pctOffset = lftPct + widPct / 2;
-    });
+    if (!groupByField || clusters.length === 0) {
+      // how far in is the first tick in % of full dimension
+      distribute(u.data[0].length, groupWidth, groupDistr, 0, (di, lftPct, widPct) => {
+        pctOffset = lftPct + widPct / 2;
+      });
+    } else {
+        distribute(clusters.length, clusterWidth, clusterDistr, 0, (di, lftPct, widPct) => {
+          pctOffset = lftPct + widPct / 2;
+      });
+        max = Math.max(1, clusters.length - 1);
+    }
 
     // expand scale range by equal amounts on both ends
     let rn = max - min;
@@ -273,7 +287,7 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2, clusters: num
       offs: Array(groupCount).fill(0),
       size: Array(groupCount).fill(0),
     }));
-    let groupOffset = 0; // running index into groups
+    let groupOffset = 0; 
     // distribute clusters across the entire x-axis
     distribute(clusterCount, clusterWidth, clusterDistr, null, (clusterIdx, clusterOffPct, clusterDimPct) => {
       const groupsInCurrentCluster = groupsPerCluster[clusterIdx]; // number of groups in this cluster
@@ -581,8 +595,6 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2, clusters: num
       s._paths = null;
     });
 
-    // const nClusters = 2; // TODO for testing, remove
-    // const groupsPerCluster = [2,2];
 
     if (groupByField && clusters.length !== 0) {
       if (isStacked) {

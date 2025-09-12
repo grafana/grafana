@@ -364,7 +364,8 @@ export const prepConfig = ({ series, totalSeries, color, orientation, options, t
 
     // make barcharts start at 0 unless explicitly overridden
     let softMin = customConfig.axisSoftMin;
-    let softMax = customConfig.axisSoftMax;
+    // let softMax = customConfig.axisSoftMax;
+    let softMax = 3;
 
     if (softMin == null && field.config.min == null) {
       softMin = 0;
@@ -494,10 +495,7 @@ export const prepConfig = ({ series, totalSeries, color, orientation, options, t
 
 // returns an array of ints, where each number n represents the size of the nth cluster
 export function getClustersFromField(series: DataFrame[], groupByField: string | undefined): number[] {
-  if (!groupByField || series.length === 0) { return [] };
-  const fieldIdx = series[0].fields.findIndex((field) => field.name === groupByField);
-  if (fieldIdx === -1) { return [] };
-  const fieldValues = series[0].fields[fieldIdx].values;
+  const fieldValues = getFieldValuesFromData(series, groupByField);
   const clusters = [];
   let clustersIdx = -1;
   let currentValue: any = undefined;
@@ -511,6 +509,29 @@ export function getClustersFromField(series: DataFrame[], groupByField: string |
     clusters[clustersIdx]++;
   }
   return clusters;
+}
+
+// returns the values of a field when given data and a field name, else returns an empty array.
+function getFieldValuesFromData(data: DataFrame[], groupByFieldName: string | undefined): any[] {
+  if (!groupByFieldName || !data || data.length === 0 || data[0].length === 0) { return [] };
+  const fieldIdx = data[0].fields.findIndex((field) => field.name === groupByFieldName);
+  if (fieldIdx === -1) { return [] };
+  const fieldValues = data[0].fields[fieldIdx].values;
+  return fieldValues;
+}
+
+// returns the amount of disctinct values when given a field
+export function getDistinctValuesFromField(field: Field<any>):any[] {
+  if (!field || !field.values) { return []; }
+  return Array.from(new Set(field.values)).map(value => field.values.find(obj => obj === value));
+}
+
+// returns the amount of disctinct values when given data and field name
+export function getDistinctValuesFromData(data: DataFrame[], groupByFieldName: string | undefined):any[] {
+  const fieldValues = getFieldValuesFromData(data, groupByFieldName);
+  if (fieldValues.length === 0) { return []; }
+  return Array.from(new Set(fieldValues)).map(value => fieldValues.find(obj => obj === value))
+    .filter((v) => v !== undefined);
 }
 
 function shortenValue(value: string, length: number) {

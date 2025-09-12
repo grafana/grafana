@@ -20,7 +20,7 @@ import {
 } from '@grafana/schema';
 
 import { FieldConfig as PanelFieldConfig } from './panelcfg.gen';
-import { prepSeries, prepConfig, PrepConfigOpts, getClustersFromField } from './utils';
+import { prepSeries, prepConfig, PrepConfigOpts, getClustersFromField, getDistinctValuesFromField } from './utils';
 
 const fieldConfig: FieldConfigSource = {
   defaults: {},
@@ -300,6 +300,36 @@ describe('BarChart utils', () => {
       df.fields.forEach((f) => (f.config.custom = f.config.custom ?? {}));
       const info = prepSeries([df], fieldConfig, StackingMode.Percent, createTheme());
       expect(getClustersFromField(info.series, "station")).toEqual([2,2]);
+    });
+    it('should return correct clusters for a large amount of fields', () => {
+      const df = createDataFrame({
+        fields: [
+          { name: 'station', 
+            values: ['ML01','ML01','ML01','ML02_5','ML02_5','ML02','ML02','ML02'
+              ,'ML03','ML03','ML03','ML04','ML04','ML06','ML06','ML07_5','ML07_5','ML07','ML07',
+              'ML08','ML08','PB01','PB01','PB02','PB02','PB03','PB03','PB04','PB04','PB05','PB05']},
+        ],
+      });
+      df.fields.forEach((f) => (f.config.custom = f.config.custom ?? {}));
+      const info = prepSeries([df], fieldConfig, StackingMode.Percent, createTheme());
+      expect(getClustersFromField(info.series, "station")).toEqual([3,2,3,3,2,2,2,2,2,2,2,2,2,2]);
+    });
+  });
+  describe('getDistinctClustersFromField', () => {
+    it('should return a correct values', () => {
+      const df = createDataFrame({
+        fields: [
+          { name: 'station', 
+            values: ['ML01','ML01','ML01','ML02_5','ML02_5','ML02','ML02','ML02'
+              ,'ML03','ML03','ML03','ML04','ML04','ML06','ML06','ML07_5','ML07_5','ML07','ML07',
+              'ML08','ML08','PB01','PB01','PB02','PB02','PB03','PB03','PB04','PB04','PB05','PB05']},
+        ],
+      });
+      df.fields.forEach((f) => (f.config.custom = f.config.custom ?? {}));
+      const info = prepSeries([df], fieldConfig, StackingMode.Percent, createTheme());
+      const distinctValues = getDistinctValuesFromField(info.series[0].fields[0]);
+      expect(distinctValues.length).toEqual(14);
+      expect(distinctValues).toEqual(['ML01','ML02_5','ML02','ML03','ML04','ML06','ML07_5','ML07','ML08','PB01','PB02','PB03','PB04','PB05']);
     });
   });
 });
