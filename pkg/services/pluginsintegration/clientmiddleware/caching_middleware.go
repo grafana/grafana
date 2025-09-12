@@ -192,7 +192,7 @@ func (m *requestDeduplicationMiddleware) QueryData(ctx context.Context, req *bac
 	}
 	key, err := caching.GetKey(datasourceID, req)
 	if err != nil {
-		// TODO: log error
+		m.log.Error("error building cache key for request deduplication, skipping request deduplication", "error", err)
 		return m.BaseHandler.QueryData(ctx, req)
 	}
 	v, err, _ := m.singleflight.Do(key, func() (interface{}, error) {
