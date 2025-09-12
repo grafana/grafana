@@ -127,6 +127,64 @@ describe('PanelOptionsPane', () => {
       //removed fieldConfig custom values as well
       expect(mockFn.mock.calls[0][2].defaults.custom).toStrictEqual({});
     });
+
+    it('Should merge fieldConfig overrides when fieldConfig is provided in options', () => {
+      const { optionsPane, panel } = setupTest('panel-1');
+
+      const originalFieldConfig = {
+        defaults: { unit: 'bytes' },
+        overrides: [
+          {
+            matcher: { id: 'byName', options: 'A-series' },
+            properties: [{ id: 'displayName', value: 'Original Override' }],
+          },
+        ],
+      };
+
+      panel.setState({ fieldConfig: originalFieldConfig });
+
+      const mockOnFieldConfigChange = jest.fn();
+      panel.onFieldConfigChange = mockOnFieldConfigChange;
+
+      // Call onChangePanelPlugin with fieldConfig that has overrides
+      optionsPane.onChangePanelPlugin({
+        pluginId: 'table',
+        fieldConfig: {
+          defaults: { unit: 'percent' },
+          overrides: [],
+        },
+      });
+
+      // Verify onFieldConfigChange was called with merged overrides
+      expect(mockOnFieldConfigChange).toHaveBeenCalled();
+
+      const mergedConfig = mockOnFieldConfigChange.mock.calls[0][0];
+
+      // Should have both original and new overrides
+      expect(mergedConfig.overrides).toHaveLength(1);
+
+      // First override should be from the original (filtered) fieldConfig
+      expect(mergedConfig.overrides[0].matcher).toEqual({ id: 'byName', options: 'A-series' });
+      expect(mergedConfig.overrides[0].properties[0].id).toBe('displayName');
+
+      // Should use the new fieldConfig defaults
+      expect(mergedConfig.defaults.unit).toBe('percent');
+    });
+
+    it('Should not call onFieldConfigChange when no fieldConfig provided', () => {
+      const { optionsPane, panel } = setupTest('panel-1');
+
+      const mockOnFieldConfigChange = jest.fn();
+      panel.onFieldConfigChange = mockOnFieldConfigChange;
+
+      // Call without fieldConfig
+      optionsPane.onChangePanelPlugin({
+        pluginId: 'table',
+        options: { showHeader: false },
+      });
+
+      expect(mockOnFieldConfigChange).not.toHaveBeenCalled();
+    });
   });
 });
 

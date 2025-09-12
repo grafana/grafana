@@ -92,7 +92,11 @@ export class PanelOptionsPane extends SceneObjectBase<PanelOptionsPaneState> {
     }
 
     if (options.fieldConfig) {
-      panel.onFieldConfigChange(options.fieldConfig, true);
+      const fieldConfigWithOverrides = {
+        ...options.fieldConfig,
+        overrides: newFieldConfig.overrides,
+      };
+      panel.onFieldConfigChange(fieldConfigWithOverrides, true);
     }
 
     this.onToggleVizPicker();
