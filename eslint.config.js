@@ -552,4 +552,24 @@ module.exports = [
       'no-barrel-files/no-barrel-files': 'error',
     },
   },
+
+  {
+    // @grafana/i18n shouldn't import from our 'library' NPM packages
+    name: 'grafana/packages-that-i18n-cant-import',
+    files: ['packages/grafana-i18n/**/*.{ts,tsx}'],
+    ignores: [],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        withBaseRestrictedImportsConfig({
+          patterns: [
+            {
+              group: ['@grafana/*'],
+              message: "'@grafana/* packages' should not be imported in @grafana/i18n",
+            },
+          ],
+        }),
+      ],
+    },
+  },
 ];
