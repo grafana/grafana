@@ -347,18 +347,27 @@ function filterRules(props: PanelProps<UnifiedAlertListOptions>, rules: Combined
     if (replacedLabelFilter) {
       filteredRules = filteredRules.filter((rule) => {
         const alertingRule = getAlertingRule(rule);
-        if (!alertingRule || !alertingRule.alerts || alertingRule.alerts.length === 0) {
+        if (!alertingRule) {
           return false;
         }
 
-        // Check if any alert instance matches the label filter
-        return alertingRule.alerts.some((alert) => {
+        // Check if the rule itself, or any alert instance matches the label
+        // filter.
+        const labelDicts = [
+          ...(alertingRule.labels ? [alertingRule.labels] : []),
+          ...(alertingRule.alerts ? alertingRule.alerts.map((alert) => alert.labels) : [])
+        ];
+        if (labelDicts.length === 0) {
+          return false;
+        }
+
+        return labelDicts.some((labelDict) => {
           try {
             const matchers = parsePromQLStyleMatcherLooseSafe(replacedLabelFilter);
-            return labelsMatchMatchers(alert.labels, matchers);
+            return labelsMatchMatchers(labelDict, matchers);
           } catch (error) {
             // Enhanced fallback for more matcher types
-            return Object.entries(alert.labels).some(([key, value]) => {
+            return Object.entries(labelDict).some(([key, value]) => {
               // Handle exact match: key="value"
               if (replacedLabelFilter.includes(`${key}="${value}"`)) {
                 return true;
