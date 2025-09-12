@@ -48,13 +48,14 @@ export function DeleteProvisionedDashboardForm({
 
   const [ref, workflow] = watch(['ref', 'workflow']);
   const { createBulkJob, isLoading } = useBulkActionJob();
-  const [deleteRepoFile, deleteRequest] = useDeleteRepositoryFilesWithPathMutation();
+  const [deleteRepoFile, request] = useDeleteRepositoryFilesWithPathMutation();
 
   // Helper function to show error messages
   const showError = (error?: unknown) => {
-    const payload = error
-      ? [t('dashboard-scene.delete-provisioned-dashboard-form.api-error', 'Failed to delete dashboard'), error]
-      : [t('dashboard-scene.delete-provisioned-dashboard-form.api-error', 'Failed to delete dashboard')];
+    const payload = [
+      t('dashboard-scene.delete-provisioned-dashboard-form.api-error', 'Failed to delete dashboard'),
+      error,
+    ];
 
     getAppEvents().publish({
       type: AppEvents.alertError.name,
@@ -128,7 +129,7 @@ export function DeleteProvisionedDashboardForm({
   const onBranchSuccess = (path: string, info: { repoType: string }, urls?: Record<string, string>) => {
     panelEditor?.onDiscard();
     const url = buildResourceBranchRedirectUrl({
-      baseUrl: `${PROVISIONING_URL}/${defaultValues.repo}/dashboard/preview/${defaultValues.path}`,
+      baseUrl: `${PROVISIONING_URL}/${defaultValues.repo}/dashboard/preview/${path}`,
       paramName: 'pull_request_url',
       paramValue: urls?.newPullRequestURL,
       repoType: info.repoType,
@@ -137,7 +138,7 @@ export function DeleteProvisionedDashboardForm({
   };
 
   useProvisionedRequestHandler({
-    request: deleteRequest,
+    request,
     workflow,
     resourceType: 'dashboard',
     successMessage: t(
@@ -148,15 +149,7 @@ export function DeleteProvisionedDashboardForm({
       onDismiss,
       onBranchSuccess: ({ path, urls }, info) => onBranchSuccess(path, info, urls),
       onWriteSuccess: () => {}, // Not used since write workflow handles success directly
-      onError: (error: unknown) => {
-        getAppEvents().publish({
-          type: AppEvents.alertError.name,
-          payload: [
-            t('dashboard-scene.delete-provisioned-dashboard-form.api-error', 'Failed to delete dashboard'),
-            error,
-          ],
-        });
-      },
+      onError: showError,
     },
   });
 
@@ -190,8 +183,8 @@ export function DeleteProvisionedDashboardForm({
               <Button variant="secondary" onClick={onDismiss} fill="outline">
                 <Trans i18nKey="dashboard-scene.delete-provisioned-dashboard-form.cancel-action">Cancel</Trans>
               </Button>
-              <Button variant="destructive" type="submit" disabled={isLoading || deleteRequest.isLoading || readOnly}>
-                {isLoading || deleteRequest.isLoading
+              <Button variant="destructive" type="submit" disabled={isLoading || request.isLoading || readOnly}>
+                {isLoading || request.isLoading
                   ? t('dashboard-scene.delete-provisioned-dashboard-form.deleting', 'Deleting...')
                   : t('dashboard-scene.delete-provisioned-dashboard-form.delete-action', 'Delete dashboard')}
               </Button>

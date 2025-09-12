@@ -33,7 +33,7 @@ interface DeleteProvisionedFolderFormProps {
 function FormContent({ initialValues, parentFolder, repository, workflowOptions, folder, onDismiss }: FormProps) {
   const resourceId = parentFolder?.uid || '';
   const { createBulkJob, isLoading } = useBulkActionJob();
-  const [deleteRepoFile, deleteRequest] = useDeleteRepositoryFilesWithPathMutation();
+  const [deleteRepoFile, request] = useDeleteRepositoryFilesWithPathMutation();
   const navigate = useNavigate();
 
   const methods = useForm<BaseProvisionedFormData>({ defaultValues: initialValues });
@@ -128,7 +128,7 @@ function FormContent({ initialValues, parentFolder, repository, workflowOptions,
   };
 
   useProvisionedRequestHandler({
-    request: deleteRequest,
+    request,
     workflow,
     resourceType: 'folder',
     successMessage: t(
@@ -172,8 +172,8 @@ function FormContent({ initialValues, parentFolder, repository, workflowOptions,
             <Button variant="secondary" fill="outline" onClick={onDismiss}>
               <Trans i18nKey="browse-dashboards.delete-provisioned-folder-form.button-cancel">Cancel</Trans>
             </Button>
-            <Button type="submit" disabled={isLoading || deleteRequest.isLoading} variant="destructive">
-              {isLoading || deleteRequest.isLoading
+            <Button type="submit" disabled={isLoading || request.isLoading} variant="destructive">
+              {isLoading || request.isLoading
                 ? t('browse-dashboards.delete-provisioned-folder-form.button-deleting', 'Deleting...')
                 : t('browse-dashboards.delete-provisioned-folder-form.button-delete', 'Delete')}
             </Button>

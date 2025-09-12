@@ -48,7 +48,6 @@ export function MoveProvisionedDashboardForm({
   targetFolderTitle,
   repository,
   onDismiss,
-  onSuccess,
 }: Props) {
   const methods = useForm<ProvisionedDashboardFormData>({ defaultValues });
   const { editPanel: panelEditor } = dashboard.useState();
@@ -90,9 +89,7 @@ export function MoveProvisionedDashboardForm({
 
   // Helper function to show error messages
   const showError = (error?: unknown) => {
-    const payload = error
-      ? [t('dashboard-scene.move-provisioned-dashboard-form.api-error', 'Failed to move dashboard'), error]
-      : [t('dashboard-scene.move-provisioned-dashboard-form.api-error', 'Failed to move dashboard')];
+    const payload = [t('dashboard-scene.move-provisioned-dashboard-form.api-error', 'Failed to move dashboard'), error];
 
     appEvents.publish({
       type: AppEvents.alertError.name,
@@ -197,16 +194,6 @@ export function MoveProvisionedDashboardForm({
     navigate(url);
   };
 
-  const onError = (error: unknown) => {
-    getAppEvents().publish({
-      type: AppEvents.alertError.name,
-      payload: [
-        t('dashboard-scene.move-provisioned-dashboard-form.alert-error-moving-dashboard', 'Error moving dashboard'),
-        error,
-      ],
-    });
-  };
-
   useProvisionedRequestHandler({
     request: moveRequest,
     workflow,
@@ -218,7 +205,7 @@ export function MoveProvisionedDashboardForm({
     handlers: {
       onBranchSuccess: (_, info) => onBranchSuccess(info),
       onDismiss,
-      onError,
+      onError: showError,
     },
   });
 
