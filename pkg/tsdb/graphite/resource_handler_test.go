@@ -5,11 +5,9 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"io"
 	"net/http"
 	"net/http/httptest"
-	"net/url"
 	"testing"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
@@ -99,7 +97,7 @@ func TestHandleEvents(t *testing.T) {
 			request:        GraphiteEventsRequest{From: "now-1h", Until: "now"},
 			expectedStatus: http.StatusInternalServerError,
 			expectError:    true,
-			errorContains:  "unexpected error",
+			errorContains:  "failed to create events request",
 		},
 		{
 			name: "HTTP client error",
@@ -111,7 +109,7 @@ func TestHandleEvents(t *testing.T) {
 			request:        GraphiteEventsRequest{From: "now-1h", Until: "now"},
 			expectedStatus: http.StatusInternalServerError,
 			expectError:    true,
-			errorContains:  "failed to complete events request",
+			errorContains:  "events request failed",
 		},
 		{
 			name: "Invalid response JSON",
@@ -123,7 +121,7 @@ func TestHandleEvents(t *testing.T) {
 			request:        GraphiteEventsRequest{From: "now-1h", Until: "now"},
 			expectedStatus: http.StatusInternalServerError,
 			expectError:    true,
-			errorContains:  "failed to parse events response",
+			errorContains:  "events request failed",
 		},
 	}
 
@@ -216,7 +214,7 @@ func TestHandleMetricsFind(t *testing.T) {
 			request:        GraphiteMetricsFindRequest{Query: "app.grafana.*"},
 			expectedStatus: http.StatusInternalServerError,
 			expectError:    true,
-			errorContains:  "unexpected error",
+			errorContains:  "failed to create metrics find request",
 		},
 		{
 			name: "HTTP client error",
@@ -228,7 +226,7 @@ func TestHandleMetricsFind(t *testing.T) {
 			request:        GraphiteMetricsFindRequest{Query: "app.grafana.*"},
 			expectedStatus: http.StatusInternalServerError,
 			expectError:    true,
-			errorContains:  "failed to complete metrics find request",
+			errorContains:  "metrics find request failed",
 		},
 	}
 
@@ -326,7 +324,7 @@ func TestHandleMetricsExpand(t *testing.T) {
 			request:        GraphiteMetricsFindRequest{Query: "app.grafana.*"},
 			expectedStatus: http.StatusInternalServerError,
 			expectError:    true,
-			errorContains:  "unexpected error",
+			errorContains:  "failed to create metrics expand request",
 		},
 		{
 			name: "HTTP client error",
@@ -338,7 +336,7 @@ func TestHandleMetricsExpand(t *testing.T) {
 			request:        GraphiteMetricsFindRequest{Query: "app.grafana.*"},
 			expectedStatus: http.StatusInternalServerError,
 			expectError:    true,
-			errorContains:  "failed to complete metrics expand request",
+			errorContains:  "metrics expand request failed",
 		},
 		{
 			name: "Invalid response JSON",
@@ -350,7 +348,7 @@ func TestHandleMetricsExpand(t *testing.T) {
 			request:        GraphiteMetricsFindRequest{Query: "app.grafana.*"},
 			expectedStatus: http.StatusInternalServerError,
 			expectError:    true,
-			errorContains:  "failed to parse metrics expand response",
+			errorContains:  "metrics expand request failed",
 		},
 		{
 			name: "Empty results",
@@ -537,7 +535,7 @@ func TestDoGraphiteRequest(t *testing.T) {
 			method:        "GET",
 			headers:       map[string]string{},
 			expectError:   true,
-			errorContains: "failed to complete events request",
+			errorContains: "failed to complete request",
 		},
 		{
 			name:     "Invalid response JSON",
@@ -550,7 +548,7 @@ func TestDoGraphiteRequest(t *testing.T) {
 			method:        "GET",
 			headers:       map[string]string{},
 			expectError:   true,
-			errorContains: "failed to parse events response",
+			errorContains: "failed to parse response",
 		},
 		{
 			name:     "Non-200 status code with valid JSON",
@@ -571,9 +569,32 @@ func TestDoGraphiteRequest(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			ctx := context.Background()
-			testURL, _ := url.Parse(fmt.Sprintf("%s/test", tt.dsInfo.URL))
 
-			result, status, err := doGraphiteRequest[[]GraphiteEventsResponse](ctx, tt.endpoint, tt.dsInfo, testURL, tt.method, tt.body, tt.headers, log.NewNullLogger())
+			// Create a service instance for the test
+			svc := &Service{logger: log.NewNullLogger()}
+
+			// Create the HTTP request using the createRequest method
+			req, err := svc.createRequest(ctx, tt.dsInfo, URLParams{
+				SubPath: tt.endpoint,
+				Method:  tt.method,
+				Body:    tt.body,
+				Headers: tt.headers,
+			})
+
+			if tt.expectError {
+				// For cases where we expect errors in request creation
+				if err != nil {
+					assert.Error(t, err)
+					if tt.errorContains != "" {
+						assert.Contains(t, err.Error(), tt.errorContains)
+					}
+					return
+				}
+			} else {
+				assert.NoError(t, err)
+			}
+
+			result, status, err := doGraphiteRequest[[]GraphiteEventsResponse](ctx, tt.dsInfo, svc.logger, req)
 
 			if tt.expectError {
 				assert.Error(t, err)
@@ -621,9 +642,18 @@ func TestDoGraphiteRequestGenericTypes(t *testing.T) {
 					HTTPClient: &http.Client{Transport: &mockRoundTripper{respBody: mockMetricsResp, status: 200}},
 				}
 				ctx := context.Background()
-				testURL, _ := url.Parse(fmt.Sprintf("%s/test", dsInfo.URL))
 
-				result, status, err := doGraphiteRequest[[]GraphiteMetricsFindResponse](ctx, "metrics find", dsInfo, testURL, "GET", nil, map[string]string{}, log.NewNullLogger())
+				// Create a service instance for the test
+				svc := &Service{logger: log.NewNullLogger()}
+
+				// Create the HTTP request using the createRequest method
+				req, err := svc.createRequest(ctx, dsInfo, URLParams{
+					SubPath: "test",
+					Method:  "GET",
+				})
+				assert.NoError(t, err)
+
+				result, status, err := doGraphiteRequest[[]GraphiteMetricsFindResponse](ctx, dsInfo, svc.logger, req)
 
 				assert.NoError(t, err)
 				assert.NotNil(t, result)
@@ -640,9 +670,18 @@ func TestDoGraphiteRequestGenericTypes(t *testing.T) {
 					HTTPClient: &http.Client{Transport: &mockRoundTripper{respBody: mockExpandResp, status: 200}},
 				}
 				ctx := context.Background()
-				testURL, _ := url.Parse(fmt.Sprintf("%s/test", dsInfo.URL))
 
-				result, status, err := doGraphiteRequest[GraphiteMetricsExpandResponse](ctx, "metrics expand", dsInfo, testURL, "GET", nil, map[string]string{}, log.NewNullLogger())
+				// Create a service instance for the test
+				svc := &Service{logger: log.NewNullLogger()}
+
+				// Create the HTTP request using the createRequest method
+				req, err := svc.createRequest(ctx, dsInfo, URLParams{
+					SubPath: "test",
+					Method:  "GET",
+				})
+				assert.NoError(t, err)
+
+				result, status, err := doGraphiteRequest[GraphiteMetricsExpandResponse](ctx, dsInfo, svc.logger, req)
 
 				assert.NoError(t, err)
 				assert.NotNil(t, result)
