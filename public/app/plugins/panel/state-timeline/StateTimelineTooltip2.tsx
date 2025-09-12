@@ -35,7 +35,7 @@ export const StateTimelineTooltip2 = ({
   maxHeight,
   replaceVariables,
   dataLinks,
-  actionInstrumentationContext,
+  context,
 }: StateTimelineTooltip2Props) => {
   const xField = series.fields[0];
 
@@ -80,7 +80,7 @@ export const StateTimelineTooltip2 = ({
 
     if (isPinned || hasOneClickLink) {
       const dataIdx = dataIdxs[seriesIdx]!;
-      const actions = getFieldActions(series, field, replaceVariables!, dataIdx, actionInstrumentationContext);
+      const actions = getFieldActions(series, field, replaceVariables!, dataIdx, context);
 
       footer = <VizTooltipFooter dataLinks={dataLinks} actions={actions} annotate={annotate} />;
     }

@@ -22,10 +22,9 @@ import {
   VizTooltipItem,
   CloseButton,
 } from '@grafana/ui/internal';
-import { ActionContext } from 'app/features/actions/analytics';
+import { getInstrumentationContext } from 'app/features/actions/analytics';
 import { getActions, getActionsDefaultField } from 'app/features/actions/utils';
 import { Scene } from 'app/features/canvas/runtime/scene';
-import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 
 import { getDataLinks } from '../../status-history/utils';
 import { getElementFields, getRowIndex } from '../utils';
@@ -123,12 +122,6 @@ export const CanvasTooltip = ({ scene }: Props) => {
 
     const config: ValueLinkConfig = { valueRowIndex: getRowIndex(element.data.field, scene) };
 
-    const actionInstrumentationContext: ActionContext = {
-      visualizationType: 'canvas',
-      panelId: scene.panel.props.id,
-      dashboardUid: getDashboardSrv().getCurrent()?.uid,
-    };
-
     const actionsModel = getActions(
       frames[0],
       defaultField,
@@ -136,7 +129,7 @@ export const CanvasTooltip = ({ scene }: Props) => {
       scene.panel.props.replaceVariables!,
       element.options.actions ?? [],
       config,
-      actionInstrumentationContext
+      getInstrumentationContext('canvas', scene.panel.props.id)
     );
 
     actionsModel.forEach((action) => {

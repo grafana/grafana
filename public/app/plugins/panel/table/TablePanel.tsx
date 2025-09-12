@@ -18,8 +18,8 @@ import { Select, usePanelContext, useTheme2 } from '@grafana/ui';
 import { TableSortByFieldState } from '@grafana/ui/internal';
 import { TableNG } from '@grafana/ui/unstable';
 import { getConfig } from 'app/core/config';
+import { getInstrumentationContext } from 'app/features/actions/analytics';
 import { getActions } from 'app/features/actions/utils';
-import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 
 import { hasDeprecatedParentRowIndex, migrateFromParentRowIndexToNestedFrames } from './migrations';
 import { Options } from './panelcfg.gen';
@@ -182,11 +182,7 @@ const getCellActions = (
       replaceVariables ?? replaceVars,
       field.config.actions ?? [],
       { valueRowIndex: rowIndex },
-      {
-        visualizationType: 'table',
-        panelId,
-        dashboardUid: getDashboardSrv().getCurrent()?.uid,
-      }
+      getInstrumentationContext('table', panelId)
     );
 
     if (actions.length === 1) {

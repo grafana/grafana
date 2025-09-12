@@ -25,7 +25,7 @@ import {
   ColorPlacement,
 } from '@grafana/ui/internal';
 import { ColorScale } from 'app/core/components/ColorScale/ColorScale';
-import { ActionContext } from 'app/features/actions/analytics';
+import { getInstrumentationContext } from 'app/features/actions/analytics';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { isHeatmapCellsDense, readHeatmapRowsCustomMeta } from 'app/features/transformers/calculateHeatmap/heatmap';
 import { getDisplayValuesAndLinks } from 'app/features/visualization/data-hover/DataHoverView';
@@ -328,13 +328,14 @@ const HeatmapHoverCell = ({
         links = getDataLinks(linksField, xValueIdx);
       }
 
-      const actionInstrumentationContext: ActionContext = {
-        visualizationType: 'heatmap',
-        panelId,
-        dashboardUid: getDashboardSrv().getCurrent()?.uid,
-      };
       actions = canExecuteActions
-        ? getFieldActions(data.series!, linksField, replaceVariables, xValueIdx, actionInstrumentationContext)
+        ? getFieldActions(
+            data.series!,
+            linksField,
+            replaceVariables,
+            xValueIdx,
+            getInstrumentationContext('heatmap', panelId)
+          )
         : [];
     }
 

@@ -46,7 +46,7 @@ export interface TimeSeriesTooltipProps {
   canExecuteActions?: boolean;
   compareDiffMs?: number[];
 
-  actionInstrumentationContext?: ActionContext;
+  context?: ActionContext;
 }
 
 export const TimeSeriesTooltip = ({
@@ -65,7 +65,7 @@ export const TimeSeriesTooltip = ({
   adHocFilters,
   canExecuteActions,
   compareDiffMs,
-  actionInstrumentationContext,
+  context,
 }: TimeSeriesTooltipProps) => {
   const xField = series.fields[0];
   let xVal = xField.values[dataIdxs[0]!];
@@ -96,9 +96,7 @@ export const TimeSeriesTooltip = ({
 
     if (isPinned || hasOneClickLink) {
       const dataIdx = dataIdxs[seriesIdx]!;
-      const actions = canExecuteActions
-        ? getFieldActions(series, field, replaceVariables, dataIdx, actionInstrumentationContext)
-        : [];
+      const actions = canExecuteActions ? getFieldActions(series, field, replaceVariables, dataIdx, context) : [];
 
       footer = (
         <VizTooltipFooter dataLinks={dataLinks} actions={actions} annotate={annotate} adHocFilters={adHocFilters} />

@@ -17,8 +17,7 @@ import {
   prepareTimelineLegendItems,
   TimelineMode,
 } from 'app/core/components/TimelineChart/utils';
-import { ActionContext } from 'app/features/actions/analytics';
-import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
+import { getInstrumentationContext } from 'app/features/actions/analytics';
 
 import { AnnotationsPlugin2 } from '../timeseries/plugins/AnnotationsPlugin2';
 import { OutsideRangePlugin } from '../timeseries/plugins/OutsideRangePlugin';
@@ -46,6 +45,8 @@ export const StateTimelinePanel = ({
   id: panelId,
 }: TimelinePanelProps) => {
   const theme = useTheme2();
+
+  const context = getInstrumentationContext('state-timeline', panelId);
 
   // temp range set for adding new annotation set by TooltipPlugin2, consumed by AnnotationPlugin2
   const [newAnnotationRange, setNewAnnotationRange] = useState<TimeRange2 | null>(null);
@@ -129,12 +130,6 @@ export const StateTimelinePanel = ({
                       dismiss();
                     };
 
-                    const actionInstrumentationContext: ActionContext = {
-                      visualizationType: 'state-timeline',
-                      panelId,
-                      dashboardUid: getDashboardSrv().getCurrent()?.uid,
-                    };
-
                     return (
                       <StateTimelineTooltip2
                         series={alignedFrame}
@@ -150,7 +145,7 @@ export const StateTimelinePanel = ({
                         replaceVariables={replaceVariables}
                         dataLinks={dataLinks}
                         canExecuteActions={userCanExecuteActions}
-                        actionInstrumentationContext={actionInstrumentationContext}
+                        context={context}
                       />
                     );
                   }}

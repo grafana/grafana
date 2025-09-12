@@ -16,8 +16,7 @@ import { EventBusPlugin, KeyboardPlugin, TooltipPlugin2, usePanelContext } from 
 import { TimeRange2, TooltipHoverMode } from '@grafana/ui/internal';
 import { TimeSeries } from 'app/core/components/TimeSeries/TimeSeries';
 import { config } from 'app/core/config';
-import { ActionContext } from 'app/features/actions/analytics';
-import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
+import { getInstrumentationContext } from 'app/features/actions/analytics';
 
 import { TimeSeriesTooltip } from './TimeSeriesTooltip';
 import { Options } from './panelcfg.gen';
@@ -42,6 +41,7 @@ export const TimeSeriesPanel = ({
   replaceVariables,
   id,
 }: TimeSeriesPanelProps) => {
+  const context = getInstrumentationContext('timeseries', id);
   const {
     sync,
     eventsScope,
@@ -168,18 +168,12 @@ export const TimeSeriesPanel = ({
                     dismiss();
                   };
 
-                  const actionInstrumentationContext: ActionContext = {
-                    visualizationType: 'timeseries',
-                    panelId: id,
-                    dashboardUid: getDashboardSrv().getCurrent()?.uid,
-                  };
-
                   return (
                     // not sure it header time here works for annotations, since it's taken from nearest datapoint index
                     <TimeSeriesTooltip
                       series={alignedFrame}
                       dataIdxs={dataIdxs}
-                      actionInstrumentationContext={actionInstrumentationContext}
+                      context={context}
                       seriesIdx={seriesIdx}
                       mode={viaSync ? TooltipDisplayMode.Multi : options.tooltip.mode}
                       sortOrder={options.tooltip.sort}

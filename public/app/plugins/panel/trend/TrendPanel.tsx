@@ -16,8 +16,7 @@ import { TooltipHoverMode } from '@grafana/ui/internal';
 import { XYFieldMatchers } from 'app/core/components/GraphNG/types';
 import { preparePlotFrame } from 'app/core/components/GraphNG/utils';
 import { TimeSeries } from 'app/core/components/TimeSeries/TimeSeries';
-import { ActionContext } from 'app/features/actions/analytics';
-import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
+import { getInstrumentationContext } from 'app/features/actions/analytics';
 import { findFieldIndex } from 'app/features/dimensions/utils';
 
 import { TimeSeriesTooltip } from '../timeseries/TimeSeriesTooltip';
@@ -37,6 +36,8 @@ export const TrendPanel = ({
   id,
 }: PanelProps<Options>) => {
   const { dataLinkPostProcessor } = useDataLinksContext();
+
+  const context = getInstrumentationContext('trend', id);
   // Need to fallback to first number field if no xField is set in options otherwise panel crashes 😬
   const trendXFieldName =
     options.xField ?? data.series[0]?.fields.find((field) => field.type === FieldType.number)?.name;
@@ -133,17 +134,11 @@ export const TrendPanel = ({
                   alignedDataFrame.fields[seriesIdx].getLinks?.({ valueRowIndex: dataIdx }) ?? []
                 }
                 render={(u, dataIdxs, seriesIdx, isPinned = false, dismiss, timeRange, viaSync, dataLinks) => {
-                  const actionInstrumentationContext: ActionContext = {
-                    visualizationType: 'trend',
-                    panelId: id,
-                    dashboardUid: getDashboardSrv().getCurrent()?.uid,
-                  };
-
                   return (
                     <TimeSeriesTooltip
                       series={alignedDataFrame}
                       dataIdxs={dataIdxs}
-                      actionInstrumentationContext={actionInstrumentationContext}
+                      context={context}
                       seriesIdx={seriesIdx}
                       mode={options.tooltip.mode}
                       sortOrder={options.tooltip.sort}

@@ -9,8 +9,7 @@ import {
   ColorIndicator,
   VizTooltipItem,
 } from '@grafana/ui/internal';
-import { ActionContext } from 'app/features/actions/analytics';
-import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
+import { getInstrumentationContext } from 'app/features/actions/analytics';
 
 import { getFieldActions } from '../status-history/utils';
 
@@ -134,12 +133,13 @@ export const XYChartTooltip = ({
 
     if (isPinned || hasOneClickLink) {
       const yFieldFrame = data.find((frame) => frame.fields.includes(yField))!;
-      const actionInstrumentationContext: ActionContext = {
-        visualizationType: 'xychart',
-        panelId,
-        dashboardUid: getDashboardSrv().getCurrent()?.uid,
-      };
-      const actions = getFieldActions(yFieldFrame, yField, replaceVariables, rowIndex, actionInstrumentationContext);
+      const actions = getFieldActions(
+        yFieldFrame,
+        yField,
+        replaceVariables,
+        rowIndex,
+        getInstrumentationContext('xychart', panelId)
+      );
 
       footer = <VizTooltipFooter dataLinks={dataLinks} actions={actions} />;
     }

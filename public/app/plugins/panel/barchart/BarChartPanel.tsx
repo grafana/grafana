@@ -14,8 +14,7 @@ import {
   useTheme2,
 } from '@grafana/ui';
 import { AdHocFilterModel, FILTER_FOR_OPERATOR, TooltipHoverMode } from '@grafana/ui/internal';
-import { ActionContext } from 'app/features/actions/analytics';
-import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
+import { getInstrumentationContext } from 'app/features/actions/analytics';
 
 import { TimeSeriesTooltip } from '../timeseries/TimeSeriesTooltip';
 
@@ -145,11 +144,7 @@ export const BarChartPanel = (props: PanelProps<Options>) => {
       <BarChartLegend data={info.series!} colorField={info.color} {...legend} />
     ) : null;
 
-  const actionInstrumentationContext: ActionContext = {
-    visualizationType: 'barchart',
-    panelId: id,
-    dashboardUid: getDashboardSrv().getCurrent()?.uid,
-  };
+  const context = getInstrumentationContext('barchart', id);
 
   return (
     <VizLayout
@@ -208,7 +203,7 @@ export const BarChartPanel = (props: PanelProps<Options>) => {
                   <TimeSeriesTooltip
                     series={vizSeries[0]}
                     _rest={info._rest}
-                    actionInstrumentationContext={actionInstrumentationContext}
+                    context={context}
                     dataIdxs={dataIdxs}
                     seriesIdx={seriesIdx}
                     mode={options.tooltip.mode}
