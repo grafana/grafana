@@ -1,6 +1,6 @@
 import { useCallback } from 'react';
 
-import { RoutingTree, alertingAPI } from '../../api/v0alpha1/api.gen';
+import { RoutingTree, notificationsAPI } from '../../api/notifications/v0alpha1/notifications.api.gen';
 import { Label } from '../../matchers/types';
 import { USER_DEFINED_TREE_NAME } from '../consts';
 import { Route, RouteWithID } from '../types';
@@ -37,7 +37,7 @@ export type InstanceMatchResult = {
  */
 export function useMatchAlertInstancesToNotificationPolicies() {
   // fetch the routing trees from the API
-  const { data, ...rest } = alertingAPI.endpoints.listRoutingTree.useQuery(
+  const { data, ...rest } = notificationsAPI.endpoints.listRoutingTree.useQuery(
     {},
     {
       refetchOnFocus: true,

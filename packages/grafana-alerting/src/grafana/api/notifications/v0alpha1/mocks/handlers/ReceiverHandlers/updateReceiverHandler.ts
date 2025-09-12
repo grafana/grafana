@@ -1,7 +1,7 @@
 import { HttpResponse, http } from 'msw';
 
-import { getAPIBaseURLForMocks } from '../../../../../mocks/util';
-import { UpdateReceiverApiResponse } from '../../../api.gen';
+import { getAPIBaseURLForMocks } from '../../../../../../mocks/util';
+import { UpdateReceiverApiResponse } from '../../../../v0alpha1/notifications.api.gen';
 import { GROUP, VERSION } from '../../../const';
 
 export function updateReceiverHandler(

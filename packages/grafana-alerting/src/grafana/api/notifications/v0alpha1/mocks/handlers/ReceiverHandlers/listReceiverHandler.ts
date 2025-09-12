@@ -1,6 +1,6 @@
 import { HttpResponse, http } from 'msw';
 
-import { getAPIBaseURLForMocks } from '../../../../../mocks/util';
+import { getAPIBaseURLForMocks } from '../../../../../../mocks/util';
 import { GROUP, VERSION } from '../../../const';
 import { EnhancedListReceiverApiResponse } from '../../../types';
 

@@ -1,6 +1,6 @@
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
 
-import { getAPIBaseURL, getAPIReducerPath } from '../util';
+import { getAPIBaseURL, getAPIReducerPath } from '../../util';
 
 import { GROUP, VERSION } from './const';
 
