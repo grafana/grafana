@@ -261,43 +261,49 @@ export type ObjectMeta = {
     Populated by the system. Read-only. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names#uids */
   uid?: string;
 };
+export type PlaylistItem = {
+  /** type of the item. */
+  type: 'dashboard_by_tag' | 'dashboard_by_uid' | 'dashboard_by_id';
+  /** Value depends on type and describes the playlist item.
+     - dashboard_by_id: The value is an internal numerical identifier set by Grafana. This
+     is not portable as the numerical identifier is non-deterministic between different instances.
+     Will be replaced by dashboard_by_uid in the future. (deprecated)
+     - dashboard_by_tag: The value is a tag which is set on any number of dashboards. All
+     dashboards behind the tag will be added to the playlist.
+     - dashboard_by_uid: The value is the dashboard UID */
+  value: string;
+};
 export type PlaylistSpec = {
   interval: string;
-  items: {
-    /** type of the item. */
-    type: 'dashboard_by_tag' | 'dashboard_by_uid' | 'dashboard_by_id';
-    /** Value depends on type and describes the playlist item.
-         - dashboard_by_id: The value is an internal numerical identifier set by Grafana. This
-         is not portable as the numerical identifier is non-deterministic between different instances.
-         Will be replaced by dashboard_by_uid in the future. (deprecated)
-         - dashboard_by_tag: The value is a tag which is set on any number of dashboards. All
-         dashboards behind the tag will be added to the playlist.
-         - dashboard_by_uid: The value is the dashboard UID */
-    value: string;
-  }[];
+  items: PlaylistItem[];
   title: string;
+};
+export type PlaylistOperatorState = {
+  /** descriptiveState is an optional more descriptive state field which has no requirements on format */
+  descriptiveState?: string;
+  /** details contains any extra information that is operator-specific */
+  details?: {
+    [key: string]: {
+      [key: string]: any;
+    };
+  };
+  /** lastEvaluation is the ResourceVersion last evaluated */
+  lastEvaluation: string;
+  /** state describes the state of the lastEvaluation.
+    It is limited to three possible states for machine evaluation. */
+  state: 'success' | 'in_progress' | 'failed';
 };
 export type PlaylistStatus = {
   /** additionalFields is reserved for future use */
   additionalFields?: {
-    [key: string]: any;
+    [key: string]: {
+      [key: string]: any;
+    };
   };
   /** operatorStates is a map of operator ID to operator state evaluations.
     Any operator which consumes this kind SHOULD add its state evaluation information to this field. */
   operatorStates?: {
-    [key: string]: {
-      /** descriptiveState is an optional more descriptive state field which has no requirements on format */
-      descriptiveState?: string;
-      /** details contains any extra information that is operator-specific */
-      details?: {
-        [key: string]: any;
-      };
-      /** lastEvaluation is the ResourceVersion last evaluated */
-      lastEvaluation: string;
-      /** state describes the state of the lastEvaluation.
-            It is limited to three possible states for machine evaluation. */
-      state: 'success' | 'in_progress' | 'failed';
-    };
+    [key: string]: PlaylistOperatorState;
   };
 };
 export type Playlist = {
