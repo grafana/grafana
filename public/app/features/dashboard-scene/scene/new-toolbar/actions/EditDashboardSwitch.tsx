@@ -25,8 +25,8 @@ export const EditDashboardSwitch = ({ dashboard }: ToolbarActionProps) => {
           trackDashboardSceneEditButtonClicked();
           dashboard.onEnterEditMode();
         } else {
-          dashboard.exitEditMode({ skipConfirm: false });
           DashboardInteractions.exitEditButtonClicked();
+          dashboard.exitEditMode({ skipConfirm: false });
         }
       }}
     />
