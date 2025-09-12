@@ -87,7 +87,7 @@ export function useResourceStats(repoName?: string, isLegacyStorage?: boolean) {
 
   const { managedCount, unmanagedCount } = useMemo(() => {
     return {
-      // managed does not exist in response when first time connect to a repo
+      // managed does not exist in response when first time connecting to a repo
       managedCount: getManagedCount(resourceStatsQuery.data?.managed),
       unmanagedCount: getResourceCount(resourceStatsQuery.data?.unmanaged).resourceCount,
     };
