@@ -2,8 +2,9 @@ package clients
 
 import (
 	"context"
+	"crypto/ecdsa"
+	"crypto/elliptic"
 	"crypto/rand"
-	"crypto/rsa"
 	"fmt"
 	"net/http"
 	"testing"
@@ -127,7 +128,8 @@ var (
 		},
 	}
 
-	pk, _ = rsa.GenerateKey(rand.Reader, 4096)
+	// generate ES256 key
+	pk, _ = ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
 )
 
 var _ authnlib.Verifier[authnlib.IDTokenClaims] = &mockIDVerifier{}
@@ -173,12 +175,12 @@ func TestExtendedJWT_Test(t *testing.T) {
 		},
 		{
 			name:           "should return true when Authorization header contains Bearer prefix",
-			authHeaderFunc: func() string { return "Bearer " + generateToken(validAccessTokenClaims, pk, jose.RS256) },
+			authHeaderFunc: func() string { return "Bearer " + generateToken(validAccessTokenClaims, pk, jose.ES256) },
 			want:           true,
 		},
 		{
 			name:           "should return true when Authorization header only contains the token",
-			authHeaderFunc: func() string { return generateToken(validAccessTokenClaims, pk, jose.RS256) },
+			authHeaderFunc: func() string { return generateToken(validAccessTokenClaims, pk, jose.ES256) },
 			want:           true,
 		},
 		{
