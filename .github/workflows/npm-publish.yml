@@ -11,6 +11,9 @@ on:
       build_id:
         description: 'Run ID from the original release-build workflow'
         required: true
+      version_type:
+        description: 'Version type (canary, nightly, stable)'
+        required: true
 
 permissions: {}
 
@@ -18,26 +21,53 @@ jobs:
   publish:
     name: Publish NPM packages
     runs-on: github-hosted-ubuntu-x64-small
-    env:
-      GRAFANA_COMMIT: ${{ github.event.inputs.grafana_commit }}
-      GITHUB_REF: ${{ github.ref }}
+
     steps:
       - name: Info
+        env:
+          GITHUB_REF: ${{ github.ref }}
         run: |
           echo "GRAFANA_COMMIT: $GRAFANA_COMMIT"
-          echo "GITHUB_REF: $GITHUB_REF"
+          echo "github.ref: $GITHUB_REF"
 
-      - name: Verify commit hash is in ref
+      - name: Checkout workflow ref
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Verify commit is in workflow HEAD
+        env:
+          GIT_COMMIT: ${{ github.event.inputs.grafana_commit }}
+        run: ./github/workflows/scripts/validate-commit-in-head.sh
+        shell: bash
+
+      - name: Validate version_type matches version
+        env:
+          VERSION: ${{ github.event.inputs.version }}
+          VERSION_TYPE: ${{ github.event.inputs.version_type }}
+        run: ./github/workflows/scripts/npm-publish-validate-version.sh
+        shell: bash
+
+        # TODO: This currently publishes all stables as 'latest' tag, which is wrong.
+        # Ideally we only set that for the actual latest release.
+      - name: Map version type to NPM tag
+        id: npm-tag
+        env:
+          VERSION_TYPE: ${{ github.event.inputs.version_type }}
         run: |
-          echo "Checking that $GRAFANA_COMMIT is in $GITHUB_REF..."
-          git fetch origin "$GITHUB_REF"
-          if ! git merge-base --is-ancestor "$GRAFANA_COMMIT" "$GITHUB_REF"; then
-            echo "Error: Commit $GRAFANA_COMMIT is not an ancestor of ref $GITHUB_REF."
+          if [ "$VERSION_TYPE" = "canary" ]; then
+            echo "NPM_TAG=canary" >> $GITHUB_OUTPUT
+          elif [ "$VERSION_TYPE" = "nightly" ]; then
+            echo "NPM_TAG=nightly" >> $GITHUB_OUTPUT
+          elif [ "$VERSION_TYPE" = "stable" ]; then
+            echo "NPM_TAG=latest" >> $GITHUB_OUTPUT
+          else
+            echo "Error: Unknown version_type '$VERSION_TYPE'"
             exit 1
           fi
-          echo "Commit verified."
+        shell: bash
 
-      - name: Checkout code
+      - name: Checkout build commit
         uses: actions/checkout@v4
         with:
           persist-credentials: false
@@ -48,6 +78,9 @@ jobs:
 
       - name: Install dependencies
         run: yarn install --immutable
+
+      - name: Typecheck packages
+        run: yarn run packages:typecheck
 
       - name: Version, build, and pack packages
         run: |
@@ -65,8 +98,9 @@ jobs:
 
       - name: Publish packages
         env:
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
-        run: ./scripts/publish-npm-packages.sh --dist-tag 'canary' --registry 'https://registry.npmjs.org/'
+          NPM_TOKEN: oidc # TODO: update the publish script to not require this magic value if GH env vars are set
+          NPM_TAG: ${{ steps.npm-tag.outputs.NPM_TAG }}
+        run: ./scripts/publish-npm-packages.sh --dist-tag "$NPM_TAG" --registry 'https://registry.npmjs.org/'
 
 
 
