@@ -105,7 +105,7 @@ In the alert rule, choose the contact point or notification policies to determin
 
 ### Alert instances
 
-Each alert rule can produce multiple alert instances (also known as alerts) - one alert instance for each time series or dimension. This is allows you to observe multiple resources in a single expression.
+Each alert rule can produce multiple alert instances (also known as alerts) - one alert instance for each time series or dimension. This allows you to observe multiple resources in a single expression.
 
 ```promql
 sum by(cpu) (
