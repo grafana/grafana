@@ -104,8 +104,8 @@ function VariableList({ set }: { set: SceneVariableSet }) {
             size="sm"
             variant="secondary"
             onClick={() => {
-              setIsAdding();
               DashboardInteractions.addVariableButtonClicked({ source: 'edit_pane' });
+              setIsAdding();
             }}
             data-testid={selectors.components.PanelEditor.ElementEditPane.addVariableButton}
           >

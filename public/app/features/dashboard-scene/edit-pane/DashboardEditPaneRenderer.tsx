@@ -17,7 +17,7 @@ import { useEditableElement } from './useEditableElement';
 
 export interface Props {
   editPane: DashboardEditPane;
-  isCollapsed: boolean;
+  isEditPaneCollapsed: boolean;
   openOverlay?: boolean;
   onToggleCollapse: () => void;
 }
@@ -25,7 +25,7 @@ export interface Props {
 /**
  * Making the EditPane rendering completely standalone (not using editPane.Component) in order to pass custom react props
  */
-export function DashboardEditPaneRenderer({ editPane, isCollapsed, onToggleCollapse, openOverlay }: Props) {
+export function DashboardEditPaneRenderer({ editPane, isEditPaneCollapsed, onToggleCollapse, openOverlay }: Props) {
   const { selection } = useSceneObjectState(editPane, { shouldActivateOrKeepAlive: true });
   const styles = useStyles2(getStyles);
   const clearButton = useStyles2(clearButtonStyles);
@@ -55,7 +55,7 @@ export function DashboardEditPaneRenderer({ editPane, isCollapsed, onToggleColla
     return null;
   }
 
-  if (isCollapsed) {
+  if (isEditPaneCollapsed) {
     return (
       <>
         <div className={styles.expandOptionsWrapper}>
