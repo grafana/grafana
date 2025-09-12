@@ -528,7 +528,7 @@ func TestEventStore_CleanupOldEvents(t *testing.T) {
 	require.NoError(t, err)
 
 	// Clean up events older than 24 hours
-	deletedCount, err := store.CleanupOldEvents(ctx, 24*time.Hour)
+	deletedCount, err := store.CleanupOldEvents(ctx, time.Now().Add(-24*time.Hour))
 	require.NoError(t, err)
 	assert.Equal(t, 1, deletedCount, "Should have deleted 1 old event")
 
@@ -555,23 +555,6 @@ func TestEventStore_CleanupOldEvents(t *testing.T) {
 	require.NoError(t, err, "Recent event should still exist")
 }
 
-func TestEventStore_CleanupOldEvents_InvalidRetentionPeriod(t *testing.T) {
-	ctx := context.Background()
-	store := setupTestEventStore(t)
-
-	// Test with zero retention period
-	deletedCount, err := store.CleanupOldEvents(ctx, 0)
-	assert.Error(t, err)
-	assert.Equal(t, 0, deletedCount)
-	assert.Contains(t, err.Error(), "retention period must be positive")
-
-	// Test with negative retention period
-	deletedCount, err = store.CleanupOldEvents(ctx, -1*time.Hour)
-	assert.Error(t, err)
-	assert.Equal(t, 0, deletedCount)
-	assert.Contains(t, err.Error(), "retention period must be positive")
-}
-
 func TestEventStore_CleanupOldEvents_NoOldEvents(t *testing.T) {
 	ctx := context.Background()
 	store := setupTestEventStore(t)
@@ -593,7 +576,7 @@ func TestEventStore_CleanupOldEvents_NoOldEvents(t *testing.T) {
 	require.NoError(t, err)
 
 	// Clean up events older than 24 hours
-	deletedCount, err := store.CleanupOldEvents(ctx, 24*time.Hour)
+	deletedCount, err := store.CleanupOldEvents(ctx, time.Now().Add(-24*time.Hour))
 	require.NoError(t, err)
 	assert.Equal(t, 0, deletedCount, "Should not have deleted any events")
 
@@ -614,7 +597,7 @@ func TestEventStore_CleanupOldEvents_EmptyStore(t *testing.T) {
 	store := setupTestEventStore(t)
 
 	// Clean up events from empty store
-	deletedCount, err := store.CleanupOldEvents(ctx, 24*time.Hour)
+	deletedCount, err := store.CleanupOldEvents(ctx, time.Now().Add(-24*time.Hour))
 	require.NoError(t, err)
 	assert.Equal(t, 0, deletedCount, "Should not have deleted any events from empty store")
 }

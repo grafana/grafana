@@ -229,17 +229,12 @@ func (n *eventStore) ListSince(ctx context.Context, sinceRV int64) iter.Seq2[Eve
 }
 
 // CleanupOldEvents deletes events older than the specified retention period.
-func (n *eventStore) CleanupOldEvents(ctx context.Context, retentionPeriod time.Duration) (int, error) {
-	if retentionPeriod <= 0 {
-		return 0, fmt.Errorf("retention period must be positive")
-	}
-
+func (n *eventStore) CleanupOldEvents(ctx context.Context, cutoff time.Time) (int, error) {
 	deletedCount := 0
 
 	// Keys are stored in the format of "resource_version~namespace~group~resource~name"
-	// With a start key of "1" and an end key of the current time minus the (retention period + lookback period),
-	// we can get all expired events.
-	endKey := fmt.Sprintf("%d", snowflakeFromTime(time.Now().Add(-retentionPeriod-defaultLookbackPeriod)))
+	// With a start key of "1" and an end key of the cutoff time we can get all expired events.
+	endKey := fmt.Sprintf("%d", snowflakeFromTime(cutoff))
 	for key, err := range n.kv.Keys(ctx, eventsSection, ListOptions{StartKey: "1", EndKey: endKey}) {
 		if err != nil {
 			return deletedCount, fmt.Errorf("failed to list event keys: %w", err)
