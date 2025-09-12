@@ -8,6 +8,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/bwmarrin/snowflake"
 )
 
 const (
@@ -255,5 +257,5 @@ func (n *eventStore) CleanupOldEvents(ctx context.Context, retentionPeriod time.
 
 // snowflake id with last two sections set to 0 (machine id and sequence)
 func snowflakeFromTime(t time.Time) int64 {
-	return (t.UnixMilli() - 1288834974657) << 22
+	return (t.UnixMilli() - snowflake.Epoch) << (snowflake.NodeBits + snowflake.StepBits)
 }
