@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/prometheus/alertmanager/config"
+	"github.com/prometheus/alertmanager/pkg/labels"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -1432,115 +1433,112 @@ func TestReceiverServiceAC_Delete(t *testing.T) {
 
 func TestReceiverService_InUseMetadata(t *testing.T) {
 	secretsService := fake_secrets.NewFakeSecretsService()
-
-	admin := &user.SignedInUser{OrgID: 1, OrgRole: org.RoleAdmin, Permissions: map[int64]map[string][]string{
-		1: {
+	orgID := int64(1)
+	admin := &user.SignedInUser{OrgID: orgID, OrgRole: org.RoleAdmin, Permissions: map[int64]map[string][]string{
+		orgID: {
 			accesscontrol.ActionAlertingNotificationsWrite: nil,
 			accesscontrol.ActionAlertingNotificationsRead:  nil,
 		},
 	}}
 
-	for _, tc := range []struct {
-		name             string
-		user             identity.Requester
-		storeRoute       definitions.Route
-		storeSettings    map[models.AlertRuleKey][]models.NotificationSettings
-		existing         []*models.Receiver
-		expectedMetadata map[string]models.ReceiverMetadata
-	}{
-		{
-			name: "mixed metadata",
-			user: admin,
-			existing: []*models.Receiver{
-				util.Pointer(models.ReceiverGen(models.ReceiverMuts.WithName("receiver1"))()),
-				util.Pointer(models.ReceiverGen(models.ReceiverMuts.WithName("receiver2"))()),
-				util.Pointer(models.ReceiverGen(models.ReceiverMuts.WithName("receiver3"))()),
-				util.Pointer(models.ReceiverGen(models.ReceiverMuts.WithName("receiver4"))()),
+	var receivers = []*models.Receiver{
+		util.Pointer(models.ReceiverGen(models.ReceiverMuts.WithName("receiver1"))()),
+		util.Pointer(models.ReceiverGen(models.ReceiverMuts.WithName("receiver2"))()),
+	}
+
+	store := &fakeAlertRuleNotificationStore{}
+	store.ListNotificationSettingsFn = func(ctx context.Context, q models.ListNotificationSettingsQuery) (map[models.AlertRuleKey][]models.NotificationSettings, error) {
+		return map[models.AlertRuleKey][]models.NotificationSettings{
+			{OrgID: 1, UID: "rule1uid"}: {
+				models.NotificationSettingsGen(models.NSMuts.WithReceiver("receiver1"))(),
+				models.NotificationSettingsGen(models.NSMuts.WithReceiver("receiver2"))(),
 			},
-			storeSettings: map[models.AlertRuleKey][]models.NotificationSettings{
-				{OrgID: 1, UID: "rule1uid"}: {
-					models.NotificationSettingsGen(models.NSMuts.WithReceiver("receiver1"))(),
-					models.NotificationSettingsGen(models.NSMuts.WithReceiver("receiver2"))(),
-				},
-				{OrgID: 1, UID: "rule2uid"}: {
-					models.NotificationSettingsGen(models.NSMuts.WithReceiver("receiver2"))(),
-					models.NotificationSettingsGen(models.NSMuts.WithReceiver("receiver3"))(),
-				},
+			{OrgID: 1, UID: "rule2uid"}: {
+				models.NotificationSettingsGen(models.NSMuts.WithReceiver("receiver2"))(),
 			},
-			storeRoute: definitions.Route{
-				Receiver: "receiver1",
-				Routes: []*definitions.Route{
-					{Receiver: "receiver2"},
-					{Receiver: "receiver3"},
-					{
-						Receiver: "receiver4",
-						Routes: []*definitions.Route{
-							{Receiver: "receiver1"},
-							{Receiver: "receiver3"},
-						},
-					},
-				},
-			},
-			expectedMetadata: map[string]models.ReceiverMetadata{
-				legacy_storage.NameToUid("receiver1"): {
-					InUseByRules:  []models.AlertRuleKey{{OrgID: 1, UID: "rule1uid"}},
-					InUseByRoutes: 2,
-					CanUse:        true,
-				},
-				legacy_storage.NameToUid("receiver2"): {
-					InUseByRules:  []models.AlertRuleKey{{OrgID: 1, UID: "rule1uid"}, {OrgID: 1, UID: "rule2uid"}},
-					InUseByRoutes: 1,
-					CanUse:        true,
-				},
-				legacy_storage.NameToUid("receiver3"): {
-					InUseByRules:  []models.AlertRuleKey{{OrgID: 1, UID: "rule2uid"}},
-					InUseByRoutes: 2,
-					CanUse:        true,
-				},
-				legacy_storage.NameToUid("receiver4"): {
-					InUseByRules:  []models.AlertRuleKey{},
-					InUseByRoutes: 1,
-					CanUse:        true,
-				},
-			},
+		}, nil
+	}
+
+	sut := createReceiverServiceSut(t, &secretsService)
+	sut.ruleNotificationsStore = store
+
+	// Create route after receivers as they will be referenced.
+	revision, err := sut.cfgStore.Get(context.Background(), orgID)
+	require.NoError(t, err)
+	revision.Config.AlertmanagerConfig.Route.Routes = append(revision.Config.AlertmanagerConfig.Route.Routes,
+		&definitions.Route{
+			Receiver: "receiver1",
+			Matchers: config.Matchers{{Type: labels.MatchEqual, Name: "env", Value: "dev"}},
 		},
-	} {
-		t.Run(tc.name, func(t *testing.T) {
-			store := &fakeAlertRuleNotificationStore{}
-			store.ListNotificationSettingsFn = func(ctx context.Context, q models.ListNotificationSettingsQuery) (map[models.AlertRuleKey][]models.NotificationSettings, error) {
-				return tc.storeSettings, nil
-			}
+	)
+	for _, r := range receivers {
+		_, err := revision.CreateReceiver(r)
+		require.NoError(t, err)
+	}
+	err = sut.cfgStore.Save(context.Background(), revision, orgID)
+	require.NoError(t, err)
 
-			sut := createReceiverServiceSut(t, &secretsService)
-			sut.ruleNotificationsStore = store
+	// Setup ends
 
-			for _, recv := range tc.existing {
-				_, err := sut.CreateReceiver(context.Background(), recv, tc.user.GetOrgID(), tc.user)
-				require.NoError(t, err)
-			}
+	actualReceivers, err := sut.GetReceivers(context.Background(), models.GetReceiversQuery{OrgID: orgID}, admin)
+	require.NoError(t, err)
 
-			// Create route after receivers as they will be referenced.
-			revision, err := sut.cfgStore.Get(context.Background(), tc.user.GetOrgID())
-			require.NoError(t, err)
-			revision.Config.AlertmanagerConfig.Route = &tc.storeRoute
-			err = sut.cfgStore.Save(context.Background(), revision, tc.user.GetOrgID())
-			require.NoError(t, err)
+	metadata, err := sut.InUseMetadata(context.Background(), orgID, actualReceivers...)
+	require.NoError(t, err)
 
-			metadata, err := sut.InUseMetadata(context.Background(), tc.user.GetOrgID(), tc.existing...)
-			require.NoError(t, err)
+	expectedMetadata := map[string]models.ReceiverMetadata{
+		legacy_storage.NameToUid("receiver1"): {
+			InUseByRules:  []models.AlertRuleKey{{OrgID: 1, UID: "rule1uid"}},
+			InUseByRoutes: 1,
+			CanUse:        true,
+		},
+		legacy_storage.NameToUid("receiver2"): {
+			InUseByRules:  []models.AlertRuleKey{{OrgID: 1, UID: "rule1uid"}, {OrgID: 1, UID: "rule2uid"}},
+			InUseByRoutes: 0,
+			CanUse:        true,
+		},
+		legacy_storage.NameToUid("grafana-default-email"): {
+			InUseByRules:  []models.AlertRuleKey{},
+			InUseByRoutes: 2,
+			CanUse:        true,
+		},
+		legacy_storage.NameToUid("slack receiver"): {
+			InUseByRules:  []models.AlertRuleKey{},
+			InUseByRoutes: 0,
+			CanUse:        true,
+		},
+		legacy_storage.NameToUid("extra-receiver-1"): {
+			InUseByRules:  nil,
+			InUseByRoutes: 1,
+			CanUse:        false,
+		},
+		legacy_storage.NameToUid("extra-receiver-2"): {
+			InUseByRules:  nil,
+			InUseByRoutes: 0,
+			CanUse:        false,
+		},
+	}
 
-			assert.Lenf(t, metadata, len(tc.expectedMetadata), "unexpected metadata length")
-			for _, recv := range tc.existing {
-				expected, ok := tc.expectedMetadata[recv.UID]
-				assert.Truef(t, ok, "missing metadata for receiver uid: %q, name: %q", recv.UID, recv.Name)
-				assert.ElementsMatch(t, expected.InUseByRules, metadata[recv.UID].InUseByRules, "unexpected rules metadata for receiver uid: %q, name: %q", recv.UID, recv.Name)
-				assert.Equalf(t, expected.InUseByRoutes, metadata[recv.UID].InUseByRoutes, "unexpected routes metadata for receiver uid: %q, name: %q", recv.UID, recv.Name)
-			}
-		})
+	assert.Lenf(t, metadata, len(expectedMetadata), "unexpected metadata length")
+	for uid, expected := range expectedMetadata {
+		name, err := legacy_storage.UidToName(uid)
+		if err != nil {
+			name = uid
+		}
+		actual, ok := metadata[uid]
+		assert.Truef(t, ok, "missing metadata for receiver uid: %q, name: %q", uid, name)
+		assert.ElementsMatch(t, expected.InUseByRules, actual.InUseByRules, "unexpected rules metadata for receiver uid: %q, name: %q", uid, name)
+		assert.Equalf(t, expected.InUseByRoutes, actual.InUseByRoutes, "unexpected routes metadata for receiver uid: %q, name: %q", uid, name)
+		assert.Equalf(t, expected.CanUse, actual.CanUse, "unexpected canUse metadata for receiver uid: %q, name: %q", uid, name)
 	}
 }
 
-func createReceiverServiceSut(t *testing.T, encryptSvc secretService) *ReceiverService {
+type sutOption string
+
+const withStagedConfig sutOption = "withStagedConfig"
+const includeStagedConfig sutOption = "includeStagedConfig"
+
+func createReceiverServiceSut(t *testing.T, encryptSvc secretService, opts ...sutOption) *ReceiverService {
 	cfg := createEncryptedConfig(t, encryptSvc)
 	store := fakes.NewFakeAlertmanagerConfigStore(cfg)
 	xact := newNopTransactionManager()
