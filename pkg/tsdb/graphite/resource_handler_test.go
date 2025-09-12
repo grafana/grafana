@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -94,7 +95,7 @@ func TestHandleEvents(t *testing.T) {
 			name: "Invalid URL",
 			dsInfo: &datasourceInfo{
 				Id:  1,
-				URL: "ht tp://invalid url", // Invalid URL
+				URL: "ht tp://invalid url",
 			},
 			request:        GraphiteEventsRequest{From: "now-1h", Until: "now"},
 			expectedStatus: http.StatusInternalServerError,
@@ -211,7 +212,7 @@ func TestHandleMetricsFind(t *testing.T) {
 			name: "Invalid URL",
 			dsInfo: &datasourceInfo{
 				Id:  1,
-				URL: "ht tp://invalid url", // Invalid URL
+				URL: "ht tp://invalid url",
 			},
 			request:        GraphiteMetricsFindRequest{Query: "app.grafana.*"},
 			expectedStatus: http.StatusInternalServerError,
@@ -321,7 +322,7 @@ func TestHandleMetricsExpand(t *testing.T) {
 			name: "Invalid URL",
 			dsInfo: &datasourceInfo{
 				Id:  1,
-				URL: "ht tp://invalid url", // Invalid URL
+				URL: "ht tp://invalid url",
 			},
 			request:        GraphiteMetricsFindRequest{Query: "app.grafana.*"},
 			expectedStatus: http.StatusInternalServerError,
@@ -394,6 +395,109 @@ func TestHandleMetricsExpand(t *testing.T) {
 	}
 }
 
+func TestHandleTagsAutocomplete(t *testing.T) {
+	tests := []struct {
+		name          string
+		request       GraphiteTagsRequest
+		responseBody  string
+		statusCode    int
+		expectError   bool
+		errorContains string
+		expectedData  []string
+	}{
+		{
+			name: "successful tags autocomplete request",
+			request: GraphiteTagsRequest{
+				From:      "1h",
+				Until:     "now",
+				Limit:     10,
+				TagPrefix: "app",
+			},
+			responseBody: `["app", "application", "app_name"]`,
+			statusCode:   200,
+			expectedData: []string{"app", "application", "app_name"},
+		},
+		{
+			name:         "tags autocomplete with minimal request",
+			request:      GraphiteTagsRequest{},
+			responseBody: `["tag1", "tag2"]`,
+			statusCode:   200,
+			expectedData: []string{"tag1", "tag2"},
+		},
+		{
+			name: "tags autocomplete with empty response",
+			request: GraphiteTagsRequest{
+				TagPrefix: "nonexistent",
+			},
+			responseBody: `[]`,
+			statusCode:   200,
+			expectedData: []string{},
+		},
+		{
+			name: "tags autocomplete server error - invalid JSON causes marshal error",
+			request: GraphiteTagsRequest{
+				From: "invalid",
+			},
+			responseBody:  `invalid json response`,
+			statusCode:    400,
+			expectError:   true,
+			errorContains: "tags autocomplete request failed",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mockTransport := &mockRoundTripper{
+				respBody: []byte(tt.responseBody),
+				status:   tt.statusCode,
+			}
+
+			dsInfo := &datasourceInfo{
+				HTTPClient: &http.Client{Transport: mockTransport},
+				URL:        "http://graphite.example.com",
+			}
+
+			service := &Service{
+				logger: log.NewNullLogger(),
+			}
+
+			result, statusCode, err := service.handleTagsAutocomplete(context.Background(), dsInfo, &tt.request)
+
+			if tt.expectError {
+				assert.Error(t, err)
+				if tt.errorContains != "" {
+					assert.Contains(t, err.Error(), tt.errorContains)
+				}
+			} else {
+				assert.NoError(t, err)
+				assert.Equal(t, tt.statusCode, statusCode)
+
+				var tags []string
+				err = json.Unmarshal(result, &tags)
+				assert.NoError(t, err)
+				assert.Equal(t, tt.expectedData, tags)
+			}
+
+			if !tt.expectError {
+				expectedURL := "http://graphite.example.com/tags/autoComplete/tags"
+				assert.Contains(t, mockTransport.lastRequest.URL.String(), expectedURL)
+
+				if tt.request.From != "" {
+					assert.Contains(t, mockTransport.lastRequest.URL.RawQuery, fmt.Sprintf("from=%s", tt.request.From))
+				}
+				if tt.request.Until != "" {
+					assert.Contains(t, mockTransport.lastRequest.URL.RawQuery, fmt.Sprintf("until=%s", tt.request.Until))
+				}
+				if tt.request.Limit != 0 {
+					assert.Contains(t, mockTransport.lastRequest.URL.RawQuery, fmt.Sprintf("limit=%d", tt.request.Limit))
+				}
+				if tt.request.TagPrefix != "" {
+					assert.Contains(t, mockTransport.lastRequest.URL.RawQuery, fmt.Sprintf("tagPrefix=%s", tt.request.TagPrefix))
+				}
+			}
+		})
+	}
+}
 func TestHandleFunctions(t *testing.T) {
 	tests := []struct {
 		name          string
