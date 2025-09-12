@@ -25,6 +25,7 @@ var (
 	_ rest.Getter               = (*LegacyStore)(nil)
 	_ rest.Lister               = (*LegacyStore)(nil)
 	_ rest.Storage              = (*LegacyStore)(nil)
+	_ rest.Creater              = (*LegacyStore)(nil)
 )
 
 var resource = iamv0alpha1.TeamResourceInfo
@@ -117,6 +118,40 @@ func (s *LegacyStore) Get(ctx context.Context, name string, options *metav1.GetO
 
 	obj := toTeamObject(found.Teams[0], ns)
 	return &obj, nil
+}
+
+func (s *LegacyStore) Create(ctx context.Context, obj runtime.Object, createValidation rest.ValidateObjectFunc, options *metav1.CreateOptions) (runtime.Object, error) {
+	ns, err := request.NamespaceInfoFrom(ctx, true)
+	if err != nil {
+		return nil, err
+	}
+
+	teamObj, ok := obj.(*iamv0alpha1.Team)
+	if !ok {
+		return nil, fmt.Errorf("expected Team object, got %T", obj)
+	}
+
+	if createValidation != nil {
+		if err := createValidation(ctx, obj); err != nil {
+			return nil, err
+		}
+	}
+
+	createCmd := legacy.CreateTeamCommand{
+		UID:           teamObj.Name,
+		Name:          teamObj.Spec.Title,
+		Email:         teamObj.Spec.Email,
+		IsProvisioned: teamObj.Spec.Provisioned,
+		ExternalUID:   teamObj.Spec.ExternalUID,
+	}
+
+	result, err := s.store.CreateTeam(ctx, ns, createCmd)
+	if err != nil {
+		return nil, err
+	}
+
+	iamTeam := toTeamObject(result.Team, ns)
+	return &iamTeam, nil
 }
 
 func toTeamObject(t team.Team, ns claims.NamespaceInfo) iamv0alpha1.Team {
