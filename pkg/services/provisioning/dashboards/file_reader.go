@@ -386,6 +386,9 @@ func (fr *FileReader) getOrCreateFolder(ctx context.Context, cfg *config, servic
 	// When we expect folders in unified storage, they should have a manager indicated
 	if err == nil && result != nil && result.ManagedBy == "" && fr.foldersInUnified {
 		result, err = service.UpdateFolderWithManagedByAnnotation(ctx, result, fr.Cfg.Name)
+		if err != nil {
+			return 0, "", fmt.Errorf("unable to update provisioned folder")
+		}
 	}
 
 	// dashboard folder not found. create one.

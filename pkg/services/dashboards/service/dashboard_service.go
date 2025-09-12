@@ -996,17 +996,19 @@ func (dr *DashboardServiceImpl) UpdateFolderWithManagedByAnnotation(ctx context.
 	defer span.End()
 
 	ctx, ident := identity.WithServiceIdentity(ctx, f.OrgID)
-	f, err := dr.folderService.Update(ctx, &folder.UpdateFolderCommand{
+	updated, err := dr.folderService.Update(ctx, &folder.UpdateFolderCommand{
 		UID:                  f.UID,
 		OrgID:                f.OrgID,
 		SignedInUser:         ident,
 		ManagerKindClassicFP: readerName, // nolint:staticcheck
+		Overwrite:            true,
+		Version:              f.Version,
 	})
 	if err != nil {
 		dr.log.Error("failed to update folder for provisioned dashboards", "folder", f.Title, "org", f.OrgID, "err", err)
 		return nil, err
 	}
-	return f, nil
+	return updated, nil
 }
 
 func (dr *DashboardServiceImpl) SaveDashboard(ctx context.Context, dto *dashboards.SaveDashboardDTO,
