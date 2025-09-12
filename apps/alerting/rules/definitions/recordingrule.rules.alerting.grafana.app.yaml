@@ -13,14 +13,16 @@ spec:
                 properties:
                     spec:
                         properties:
-                            data:
+                            expressions:
                                 additionalProperties:
                                     properties:
                                         datasourceUID:
+                                            description: The UID of the datasource to run this expression against. If omitted, the expression will be run against the `__expr__` datasource
                                             pattern: ^[a-zA-Z0-9_-]+$
                                             type: string
                                         model: {}
                                         queryType:
+                                            description: The type of query if this is a query expression
                                             type: string
                                         relativeTimeRange:
                                             properties:
@@ -35,10 +37,13 @@ spec:
                                                 - to
                                             type: object
                                         source:
+                                            description: |-
+                                                Used to mark the expression to be used as the final source for the rule evaluation
+                                                Only one expression in a rule can be marked as the source
+                                                For AlertRules, this is the expression that will be evaluated against the alerting condition
+                                                For RecordingRules, this is the expression that will be recorded
                                             type: boolean
                                     required:
-                                        - queryType
-                                        - datasourceUID
                                         - model
                                     type: object
                                 type: object
@@ -69,9 +74,9 @@ spec:
                                 type: object
                         required:
                             - title
-                            - data
                             - trigger
                             - metric
+                            - expressions
                             - targetDatasourceUID
                         type: object
                         x-kubernetes-preserve-unknown-fields: true

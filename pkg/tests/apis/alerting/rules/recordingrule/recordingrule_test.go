@@ -55,10 +55,10 @@ func TestIntegrationResourceIdentifier(t *testing.T) {
 		Spec: v0alpha1.RecordingRuleSpec{
 			Title:  rule.Title,
 			Metric: rule.Record.Metric,
-			Data: map[string]v0alpha1.RecordingRuleQuery{
+			Expressions: v0alpha1.RecordingRuleExpressionMap{
 				"A": {
-					QueryType:     "query",
-					DatasourceUID: v0alpha1.RecordingRuleDatasourceUID(rule.Data[0].DatasourceUID),
+					QueryType:     util.Pointer(rule.Data[0].QueryType),
+					DatasourceUID: util.Pointer(v0alpha1.RecordingRuleDatasourceUID(rule.Data[0].DatasourceUID)),
 					Model:         rule.Data[0].Model,
 					Source:        util.Pointer(true),
 					RelativeTimeRange: &v0alpha1.RecordingRuleRelativeTimeRange{
@@ -155,10 +155,10 @@ func TestIntegrationAccessControl(t *testing.T) {
 		Spec: v0alpha1.RecordingRuleSpec{
 			Title:  rule.Title,
 			Metric: rule.Record.Metric,
-			Data: map[string]v0alpha1.RecordingRuleQuery{
+			Expressions: v0alpha1.RecordingRuleExpressionMap{
 				"A": {
-					QueryType:     "query",
-					DatasourceUID: v0alpha1.RecordingRuleDatasourceUID(rule.Data[0].DatasourceUID),
+					QueryType:     util.Pointer(rule.Data[0].QueryType),
+					DatasourceUID: util.Pointer(v0alpha1.RecordingRuleDatasourceUID(rule.Data[0].DatasourceUID)),
 					Model:         rule.Data[0].Model,
 					Source:        util.Pointer(true),
 					RelativeTimeRange: &v0alpha1.RecordingRuleRelativeTimeRange{
@@ -242,10 +242,10 @@ func TestIntegrationCRUD(t *testing.T) {
 			Spec: v0alpha1.RecordingRuleSpec{
 				Title:  rule.Title,
 				Metric: rule.Record.Metric,
-				Data: map[string]v0alpha1.RecordingRuleQuery{
+				Expressions: v0alpha1.RecordingRuleExpressionMap{
 					"A": {
-						QueryType:     "query",
-						DatasourceUID: v0alpha1.RecordingRuleDatasourceUID(rule.Data[0].DatasourceUID),
+						QueryType:     util.Pointer(rule.Data[0].QueryType),
+						DatasourceUID: util.Pointer(v0alpha1.RecordingRuleDatasourceUID(rule.Data[0].DatasourceUID)),
 						Model:         rule.Data[0].Model,
 						Source:        util.Pointer(true),
 						RelativeTimeRange: &v0alpha1.RecordingRuleRelativeTimeRange{
@@ -294,10 +294,10 @@ func TestIntegrationCRUD(t *testing.T) {
 			Spec: v0alpha1.RecordingRuleSpec{
 				Title:  rule.Title,
 				Metric: rule.Record.Metric,
-				Data: map[string]v0alpha1.RecordingRuleQuery{
+				Expressions: v0alpha1.RecordingRuleExpressionMap{
 					"A": {
-						QueryType:     "query",
-						DatasourceUID: v0alpha1.RecordingRuleDatasourceUID(rule.Data[0].DatasourceUID),
+						QueryType:     util.Pointer(rule.Data[0].QueryType),
+						DatasourceUID: util.Pointer(v0alpha1.RecordingRuleDatasourceUID(rule.Data[0].DatasourceUID)),
 						Model:         rule.Data[0].Model,
 						Source:        util.Pointer(true),
 						RelativeTimeRange: &v0alpha1.RecordingRuleRelativeTimeRange{
@@ -325,8 +325,8 @@ func TestIntegrationCRUD(t *testing.T) {
 				},
 			},
 			Spec: v0alpha1.RecordingRuleSpec{
-				Title: "invalid-recording-rule",
-				Data:  map[string]v0alpha1.RecordingRuleQuery{}, // Empty data should fail
+				Title:       "invalid-recording-rule",
+				Expressions: v0alpha1.RecordingRuleExpressionMap{}, // Empty data should fail
 				Trigger: v0alpha1.RecordingRuleIntervalTrigger{
 					Interval: "30s",
 				},
@@ -352,10 +352,10 @@ func TestIntegrationCRUD(t *testing.T) {
 			Spec: v0alpha1.RecordingRuleSpec{
 				Title:  rule.Title,
 				Metric: rule.Record.Metric,
-				Data: map[string]v0alpha1.RecordingRuleQuery{
+				Expressions: v0alpha1.RecordingRuleExpressionMap{
 					"A": {
-						QueryType:     "query",
-						DatasourceUID: v0alpha1.RecordingRuleDatasourceUID(rule.Data[0].DatasourceUID),
+						QueryType:     util.Pointer(rule.Data[0].QueryType),
+						DatasourceUID: util.Pointer(v0alpha1.RecordingRuleDatasourceUID(rule.Data[0].DatasourceUID)),
 						Model:         rule.Data[0].Model,
 						Source:        util.Pointer(true),
 						RelativeTimeRange: &v0alpha1.RecordingRuleRelativeTimeRange{
@@ -404,10 +404,10 @@ func TestIntegrationCRUD(t *testing.T) {
 			Spec: v0alpha1.RecordingRuleSpec{
 				Title:  rule.Title,
 				Metric: rule.Record.Metric,
-				Data: map[string]v0alpha1.RecordingRuleQuery{
+				Expressions: v0alpha1.RecordingRuleExpressionMap{
 					"A": {
-						QueryType:     "query",
-						DatasourceUID: v0alpha1.RecordingRuleDatasourceUID(rule.Data[0].DatasourceUID),
+						QueryType:     util.Pointer(rule.Data[0].QueryType),
+						DatasourceUID: util.Pointer(v0alpha1.RecordingRuleDatasourceUID(rule.Data[0].DatasourceUID)),
 						Model:         rule.Data[0].Model,
 						RelativeTimeRange: &v0alpha1.RecordingRuleRelativeTimeRange{
 							From: v0alpha1.RecordingRulePromDurationWMillis("5m"),
@@ -440,10 +440,10 @@ func TestIntegrationCRUD(t *testing.T) {
 			Spec: v0alpha1.RecordingRuleSpec{
 				Title:  rule.Title,
 				Metric: rule.Record.Metric,
-				Data: map[string]v0alpha1.RecordingRuleQuery{
+				Expressions: v0alpha1.RecordingRuleExpressionMap{
 					"A": {
-						QueryType:     "query",
-						DatasourceUID: v0alpha1.RecordingRuleDatasourceUID(rule.Data[0].DatasourceUID),
+						QueryType:     util.Pointer(rule.Data[0].QueryType),
+						DatasourceUID: util.Pointer(v0alpha1.RecordingRuleDatasourceUID(rule.Data[0].DatasourceUID)),
 						Model:         rule.Data[0].Model,
 						Source:        util.Pointer(true),
 						RelativeTimeRange: &v0alpha1.RecordingRuleRelativeTimeRange{
@@ -496,10 +496,10 @@ func TestIntegrationPatch(t *testing.T) {
 		Spec: v0alpha1.RecordingRuleSpec{
 			Title:  rule.Title,
 			Metric: rule.Record.Metric,
-			Data: map[string]v0alpha1.RecordingRuleQuery{
+			Expressions: v0alpha1.RecordingRuleExpressionMap{
 				"A": {
-					QueryType:     "query",
-					DatasourceUID: v0alpha1.RecordingRuleDatasourceUID(rule.Data[0].DatasourceUID),
+					QueryType:     util.Pointer(rule.Data[0].QueryType),
+					DatasourceUID: util.Pointer(v0alpha1.RecordingRuleDatasourceUID(rule.Data[0].DatasourceUID)),
 					Model:         rule.Data[0].Model,
 					Source:        util.Pointer(true),
 					RelativeTimeRange: &v0alpha1.RecordingRuleRelativeTimeRange{

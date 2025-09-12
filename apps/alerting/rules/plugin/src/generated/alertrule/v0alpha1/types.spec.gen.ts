@@ -1,24 +1,47 @@
 // Code generated - EDITING IS FUTILE. DO NOT EDIT.
 
+export interface IntervalTrigger {
+	interval: PromDuration;
+}
+
+export const defaultIntervalTrigger = (): IntervalTrigger => ({
+	interval: defaultPromDuration(),
+});
+
+export type PromDuration = string;
+
+export const defaultPromDuration = (): PromDuration => ("");
+
+export type TemplateString = string;
+
+export const defaultTemplateString = (): TemplateString => ("");
+
+// TODO(@moustafab): validate regex for time interval ref
+export type TimeIntervalRef = string;
+
+export const defaultTimeIntervalRef = (): TimeIntervalRef => ("");
+
 // TODO: validate that only one can specify source=true
 // & struct.MinFields(1) This doesn't work in Cue <v0.12.0 as per
-export type QueryMap = Record<string, Query>;
+export type ExpressionMap = Record<string, Expression>;
 
-export const defaultQueryMap = (): QueryMap => ({});
+export const defaultExpressionMap = (): ExpressionMap => ({});
 
-// TODO: come up with a better name for this. We have expression type things and data source queries
-export interface Query {
-	// TODO: consider making this optional, with the nil value meaning "__expr__" (i.e. expression query)
-	queryType: string;
+export interface Expression {
+	// The type of query if this is a query expression
+	queryType?: string;
 	relativeTimeRange?: RelativeTimeRange;
-	datasourceUID: DatasourceUID;
+	// The UID of the datasource to run this expression against. If omitted, the expression will be run against the `__expr__` datasource
+	datasourceUID?: DatasourceUID;
 	model: any;
+	// Used to mark the expression to be used as the final source for the rule evaluation
+	// Only one expression in a rule can be marked as the source
+	// For AlertRules, this is the expression that will be evaluated against the alerting condition
+	// For RecordingRules, this is the expression that will be recorded
 	source?: boolean;
 }
 
-export const defaultQuery = (): Query => ({
-	queryType: "",
-	datasourceUID: defaultDatasourceUID(),
+export const defaultExpression = (): Expression => ({
 	model: {},
 });
 
@@ -40,37 +63,17 @@ export type DatasourceUID = string;
 
 export const defaultDatasourceUID = (): DatasourceUID => ("");
 
-export interface IntervalTrigger {
-	interval: PromDuration;
-}
-
-export const defaultIntervalTrigger = (): IntervalTrigger => ({
-	interval: defaultPromDuration(),
-});
-
-export type PromDuration = string;
-
-export const defaultPromDuration = (): PromDuration => ("");
-
-// TODO(@moustafab): validate regex for time interval ref
-export type TimeIntervalRef = string;
-
-export const defaultTimeIntervalRef = (): TimeIntervalRef => ("");
-
-export type TemplateString = string;
-
-export const defaultTemplateString = (): TemplateString => ("");
-
 export interface Spec {
 	title: string;
-	data: QueryMap;
 	paused?: boolean;
 	trigger: IntervalTrigger;
-	noDataState: string;
-	execErrState: string;
+	labels?: Record<string, TemplateString>;
+	annotations?: Record<string, TemplateString>;
 	for?: string;
 	keepFiringFor?: string;
 	missingSeriesEvalsToResolve?: number;
+	noDataState: string;
+	execErrState: string;
 	notificationSettings?: {
 		receiver: string;
 		groupBy?: string[];
@@ -80,8 +83,7 @@ export interface Spec {
 		muteTimeIntervals?: TimeIntervalRef[];
 		activeTimeIntervals?: TimeIntervalRef[];
 	};
-	annotations?: Record<string, TemplateString>;
-	labels?: Record<string, TemplateString>;
+	expressions: ExpressionMap;
 	panelRef?: {
 		dashboardUID: string;
 		panelID: number;
@@ -90,9 +92,9 @@ export interface Spec {
 
 export const defaultSpec = (): Spec => ({
 	title: "",
-	data: defaultQueryMap(),
 	trigger: defaultIntervalTrigger(),
 	noDataState: "NoData",
 	execErrState: "Error",
+	expressions: defaultExpressionMap(),
 });
 
