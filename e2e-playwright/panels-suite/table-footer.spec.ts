@@ -11,7 +11,7 @@ const waitForTableLoad = async (loc: Page | Locator) => {
 };
 
 test.describe('Panels test: Table - Footer', { tag: ['@panels', '@table'] }, () => {
-  test('Footer unaffected by filtering', async ({ gotoDashboardPage, selectors, page }) => {
+  test('Footer affected by filtering', async ({ gotoDashboardPage, selectors, page }) => {
     const dashboardPage = await gotoDashboardPage({
       uid: DASHBOARD_UID,
       queryParams: new URLSearchParams({ editPanel: '4' }),
@@ -51,7 +51,7 @@ test.describe('Panels test: Table - Footer', { tag: ['@panels', '@table'] }, () 
       dashboardPage
         .getByGrafanaSelector(selectors.components.Panels.Visualization.TableNG.Footer.Value)
         .nth(minColumnIdx)
-    ).toHaveText(minReducerValue);
+    ).not.toHaveText(minReducerValue);
   });
 
   test('Footer unaffected by sorting', async ({ gotoDashboardPage, selectors, page }) => {
