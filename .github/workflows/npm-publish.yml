@@ -1,0 +1,76 @@
+name: Publish NPM packages
+on:
+  workflow_dispatch:
+    inputs:
+      grafana_commit:
+        description: 'Grafana commit SHA to build against'
+        required: true
+      version:
+        description: 'Version to publish as'
+        required: true
+      build_id:
+        description: 'Run ID from the original release-build workflow'
+        required: true
+
+permissions: {}
+
+jobs:
+  publish:
+    name: Publish NPM packages
+    runs-on: github-hosted-ubuntu-x64-small
+    env:
+      GRAFANA_COMMIT: ${{ github.event.inputs.grafana_commit }}
+      GITHUB_REF: ${{ github.ref }}
+    steps:
+      - name: Info
+        run: |
+          echo "GRAFANA_COMMIT: $GRAFANA_COMMIT"
+          echo "GITHUB_REF: $GITHUB_REF"
+
+      - name: Verify commit hash is in ref
+        run: |
+          echo "Checking that $GRAFANA_COMMIT is in $GITHUB_REF..."
+          git fetch origin "$GITHUB_REF"
+          if ! git merge-base --is-ancestor "$GRAFANA_COMMIT" "$GITHUB_REF"; then
+            echo "Error: Commit $GRAFANA_COMMIT is not an ancestor of ref $GITHUB_REF."
+            exit 1
+          fi
+          echo "Commit verified."
+
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          ref: ${{ github.event.inputs.grafana_commit }}
+
+      - name: Setup Node
+        uses: ./github/actions/setup-node
+
+      - name: Install dependencies
+        run: yarn install --immutable
+
+      - name: Version, build, and pack packages
+        run: |
+          yarn run packages:build
+          yarn lerna version "$PACKAGES_VERSION" \
+            --exact \
+            --no-git-tag-version \
+            --no-push \
+            --force-publish \
+            --yes
+          yarn run packages:pack
+
+      - name: Debug packed files
+        run: tree -a ./npm-artifacts
+
+      - name: Publish packages
+        env:
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: ./scripts/publish-npm-packages.sh --dist-tag 'canary' --registry 'https://registry.npmjs.org/'
+
+
+
+
+
+
+
