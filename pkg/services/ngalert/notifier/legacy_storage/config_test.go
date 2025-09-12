@@ -7,6 +7,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/prometheus/alertmanager/config"
+	"github.com/prometheus/alertmanager/pkg/labels"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -14,6 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 var defaultConfig = setting.GetAlertmanagerDefaultConfiguration()
@@ -173,5 +176,70 @@ func TestAlertmanagerConfigStoreSave(t *testing.T) {
 			err := store.Save(context.Background(), &revision, orgID)
 			require.ErrorIs(t, err, expectedErr)
 		})
+	})
+}
+
+func TestRevisionIncludeStaged(t *testing.T) {
+	cfg := definitions.PostableUserConfig{}
+	require.NoError(t, json.Unmarshal([]byte(defaultConfig), &cfg))
+
+	revision := ConfigRevision{
+		Config:           &cfg,
+		ConcurrencyToken: util.GenerateShortUID(),
+		Version:          util.GenerateShortUID(),
+	}
+
+	t.Run("should do nothing if no extra configs", func(t *testing.T) {
+		assert.NoError(t, revision.IncludeStaged())
+		assert.Nil(t, revision.readConfig)
+		assert.False(t, revision.includeStaged)
+		t.Run("getConfigForRead should return original config", func(t *testing.T) {
+			assert.Same(t, &revision.Config.AlertmanagerConfig, revision.getConfigForRead())
+		})
+	})
+
+	t.Run("should return error if merge fails", func(t *testing.T) {
+		revision.Config.ExtraConfigs = []definitions.ExtraConfiguration{
+			{
+				Identifier:         "test-config",
+				AlertmanagerConfig: ``,
+			},
+		}
+		assert.Error(t, revision.IncludeStaged())
+
+		assert.Nil(t, revision.readConfig)
+		assert.True(t, revision.includeStaged)
+		t.Run("getConfigForRead should return original config", func(t *testing.T) {
+			assert.Same(t, &revision.Config.AlertmanagerConfig, revision.getConfigForRead())
+		})
+	})
+
+	t.Run("should load merged config", func(t *testing.T) {
+		revision.Config.ExtraConfigs = []definitions.ExtraConfiguration{
+			{
+				Identifier:         "test-config",
+				MergeMatchers:      config.Matchers{{Type: labels.MatchEqual, Name: "env", Value: "prod"}},
+				AlertmanagerConfig: `{"route":{"receiver":"default"},"receivers":[{"name":"default"}]}`,
+			},
+		}
+
+		assert.NoError(t, revision.IncludeStaged())
+
+		assert.NotNil(t, revision.readConfig)
+		assert.True(t, revision.includeStaged)
+		t.Run("getConfigForRead should return merged config", func(t *testing.T) {
+			assert.Same(t, revision.readConfig, revision.getConfigForRead())
+		})
+	})
+
+	t.Run("reset should nullify read config", func(t *testing.T) {
+		revision.reset()
+		assert.Nil(t, revision.readConfig)
+		assert.True(t, revision.includeStaged)
+	})
+
+	t.Run("getConfigForRead should return merged config after reset", func(t *testing.T) {
+		revision.reset()
+		assert.Same(t, revision.readConfig, revision.getConfigForRead())
 	})
 }
