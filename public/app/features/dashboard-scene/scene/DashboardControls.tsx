@@ -31,6 +31,8 @@ export interface DashboardControlsState extends SceneObjectState {
   hideTimeControls?: boolean;
   hideVariableControls?: boolean;
   hideLinksControls?: boolean;
+  // Hides the dashbaord-controls dropdown menu
+  hideDashboardControls?: boolean;
 }
 
 export class DashboardControls extends SceneObjectBase<DashboardControlsState> {
@@ -41,7 +43,7 @@ export class DashboardControls extends SceneObjectBase<DashboardControlsState> {
   });
 
   protected _urlSync = new SceneObjectUrlSyncConfig(this, {
-    keys: ['_dash.hideTimePicker', '_dash.hideVariables', '_dash.hideLinks'],
+    keys: ['_dash.hideTimePicker', '_dash.hideVariables', '_dash.hideLinks', '_dash.hideDashboardControls'],
   });
 
   /**
@@ -53,7 +55,7 @@ export class DashboardControls extends SceneObjectBase<DashboardControlsState> {
   }
 
   updateFromUrl(values: SceneObjectUrlValues) {
-    const { hideTimeControls, hideVariableControls, hideLinksControls } = this.state;
+    const { hideTimeControls, hideVariableControls, hideLinksControls, hideDashboardControls } = this.state;
     const isEnabledViaUrl = (key: string) => values[key] === 'true' || values[key] === '';
 
     // Only allow hiding, never "unhiding" from url
@@ -69,6 +71,10 @@ export class DashboardControls extends SceneObjectBase<DashboardControlsState> {
 
     if (!hideLinksControls && isEnabledViaUrl('_dash.hideLinks')) {
       this.setState({ hideLinksControls: true });
+    }
+
+    if (!hideDashboardControls && isEnabledViaUrl('_dash.hideDashboardControls')) {
+      this.setState({ hideDashboardControls: true });
     }
   }
 
@@ -104,6 +110,18 @@ export class DashboardControls extends SceneObjectBase<DashboardControlsState> {
     }
   }
 
+  // Dashboard controls is a separate dropdown menu at the top-right of the controls
+  public hasDashboardControls(): boolean {
+    const dashboard = getDashboardSceneFor(this);
+    const { links } = dashboard.state;
+    const hasControlMenuVariables = sceneGraph
+      .getVariables(dashboard)
+      ?.state.variables.some((v) => v.state.showInControlsMenu === true);
+    const hasControlMenuLinks = links.some((link) => link.placement === 'inControlsMenu');
+
+    return hasControlMenuVariables || hasControlMenuLinks;
+  }
+
   public hasControls(): boolean {
     const hasVariables = sceneGraph
       .getVariables(this)
@@ -113,8 +131,9 @@ export class DashboardControls extends SceneObjectBase<DashboardControlsState> {
     const hideLinks = this.state.hideLinksControls || !hasLinks;
     const hideVariables = this.state.hideVariableControls || (!hasAnnotations && !hasVariables);
     const hideTimePicker = this.state.hideTimeControls;
+    const hideDashboardControls = this.state.hideDashboardControls || !this.hasDashboardControls();
 
-    return !(hideVariables && hideLinks && hideTimePicker);
+    return !(hideVariables && hideLinks && hideTimePicker && hideDashboardControls);
   }
 }
 
@@ -124,11 +143,6 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
   const { links, editPanel } = dashboard.useState();
   const styles = useStyles2(getStyles);
   const showDebugger = window.location.search.includes('scene-debugger');
-  const hasControlMenuVariables = sceneGraph
-    .getVariables(dashboard)
-    .useState()
-    .variables.some((v) => v.state.showInControlsMenu === true);
-  const hasControlMenuLinks = links.some((link) => link.placement === 'inControlsMenu');
 
   if (!model.hasControls()) {
     // To still have spacing when no controls are rendered
@@ -157,7 +171,7 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
           <refreshPicker.Component model={refreshPicker} />
         </Stack>
       )}
-      {(hasControlMenuVariables || hasControlMenuLinks) && (
+      {model.hasDashboardControls() && (
         <Stack>
           <DashboardControlsButton dashboard={dashboard} />
         </Stack>
