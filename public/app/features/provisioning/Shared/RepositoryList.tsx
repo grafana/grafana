@@ -1,7 +1,7 @@
 import { useState } from 'react';
 
 import { t, Trans } from '@grafana/i18n';
-import { Alert, EmptyState, FilterInput, Icon, Stack } from '@grafana/ui';
+import { Alert, Box, EmptyState, FilterInput, Icon, Stack } from '@grafana/ui';
 import { Repository } from 'app/api/clients/provisioning/v0alpha1';
 
 import { RepositoryCard } from '../Repository/RepositoryCard';
@@ -24,12 +24,14 @@ export function RepositoryList({ items }: Props) {
   const getResourceCountSection = () => {
     if (isProvisionedInstance) {
       return (
-        <Stack alignItems="center">
-          <Icon name="check" color="green" />
-          <Trans i18nKey="provisioning.folder-repository-list.all-resources-managed" count={resourceCount}>
-            All {{ count: resourceCount }} resources are managed
-          </Trans>
-        </Stack>
+        <Box marginBottom={2}>
+          <Stack alignItems="center">
+            <Icon name="check" color="green" />
+            <Trans i18nKey="provisioning.folder-repository-list.all-resources-managed" count={resourceCount}>
+              All {{ count: resourceCount }} resources are managed
+            </Trans>
+          </Stack>
+        </Box>
       );
     }
 

@@ -18,7 +18,9 @@ function getManagedCount(managed?: ManagerStats[]) {
   managed?.forEach((manager) => {
     // Loop through stats inside each manager and sum up the counts
     manager.stats.forEach((stat) => {
-      totalCount += stat.count;
+      if (stat.group === 'folder.grafana.app' || stat.group === 'dashboard.grafana.app') {
+        totalCount += stat.count;
+      }
     });
   });
 
