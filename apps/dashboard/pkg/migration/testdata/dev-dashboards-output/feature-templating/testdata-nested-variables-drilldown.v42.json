@@ -227,9 +227,7 @@
     "list": [
       {
         "current": {
-          "text": [
-            "A"
-          ],
+          "text": "A",
           "value": [
             "A"
           ]
@@ -255,9 +253,7 @@
       },
       {
         "current": {
-          "text": [
-            "AA"
-          ],
+          "text": "AA",
           "value": [
             "AA"
           ]
@@ -283,9 +279,7 @@
       },
       {
         "current": {
-          "text": [
-            "All"
-          ],
+          "text": "All",
           "value": [
             "$__all"
           ]

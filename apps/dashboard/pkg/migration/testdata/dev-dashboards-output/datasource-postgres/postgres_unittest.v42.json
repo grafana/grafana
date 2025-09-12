@@ -2611,9 +2611,7 @@
         "current": {
           "selected": true,
           "tags": [],
-          "text": [
-            "All"
-          ],
+          "text": "All",
           "value": [
             "$__all"
           ]

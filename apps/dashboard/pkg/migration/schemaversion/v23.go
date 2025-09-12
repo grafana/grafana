@@ -101,15 +101,17 @@ func alignCurrentWithMulti(current map[string]interface{}, multi bool) map[strin
 	}
 
 	if multi {
-		// Convert single values to arrays (both value and text must be arrays)
+		// Convert single values to arrays (match frontend behavior)
+		// Frontend only converts when current.value is NOT an array
 		if value, ok := result["value"]; ok {
 			if !utils.IsArray(value) {
 				result["value"] = []interface{}{value}
-			}
-		}
-		if text, ok := result["text"]; ok {
-			if !utils.IsArray(text) {
-				result["text"] = []interface{}{text}
+				// Only convert text to array when we're converting value
+				if text, ok := result["text"]; ok {
+					if !utils.IsArray(text) {
+						result["text"] = []interface{}{text}
+					}
+				}
 			}
 		}
 	} else {
