@@ -496,8 +496,6 @@ export function TableNG(props: TableNGProps) {
             }
           }
 
-
-
           let style: CSSProperties = { ...rowCellStyle };
           if (canBeColorized) {
             const value = props.row[props.column.key];
@@ -505,13 +503,9 @@ export function TableNG(props: TableNGProps) {
             const cellColorStyles = getCellColorInlineStyles(cellOptions, displayValue, applyToRowBgFn != null);
             Object.assign(style, cellColorStyles);
           }
-
-          // FIXME: will be wrapped in a feature flag
-          if (true) {
-            const cellStyleByField = getCellStyleByField(field, data, props.row);
-            if (cellStyleByField) {
-              style = { ...style, ...cellStyleByField };
-            }
+          const cellStyleByField = getCellStyleByField(field, data, props.row);
+          if (cellStyleByField) {
+            style = { ...style, ...cellStyleByField };
           }
 
           return (

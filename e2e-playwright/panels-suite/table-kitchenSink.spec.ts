@@ -406,6 +406,38 @@ test.describe('Panels test: Table - Kitchen Sink', { tag: ['@panels', '@table'] 
     ).not.toBeVisible();
   });
 
+  test('Styling overrides with styling from field', async ({ gotoDashboardPage, selectors, page }) => {
+    const dashboardPage = await gotoDashboardPage({
+      uid: DASHBOARD_UID,
+      queryParams: new URLSearchParams({ editPanel: '1' }),
+    });
+
+    await expect(
+      dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('Table - Kitchen Sink'))
+    ).toBeVisible();
+
+    await waitForTableLoad(page);
+
+    const infoColumnIdx = await getColumnIdx(page, 'Info');
+    const dataLinkColumnIdx = await getColumnIdx(page, 'Data Link');
+    const stateColumnHeader = page.getByRole('columnheader').nth(infoColumnIdx);
+
+    // filter to only "Up," which we have a style override on.
+    await stateColumnHeader.getByTestId(selectors.components.Panels.Visualization.TableNG.Filters.HeaderButton).click();
+    const filterContainer = dashboardPage.getByGrafanaSelector(
+      selectors.components.Panels.Visualization.TableNG.Filters.Container
+    );
+
+    await expect(filterContainer).toBeVisible();
+
+    await filterContainer.getByTitle('up', { exact: true }).locator('label').click();
+    await filterContainer.getByRole('button', { name: 'Ok' }).click();
+
+    const cell = await getCell(page, 1, dataLinkColumnIdx);
+    await expect(cell).toBeVisible();
+    await expect(cell).toHaveCSS('text-decoration', /line-through/);
+  });
+
   test('Empty Table panel', async ({ gotoDashboardPage, selectors }) => {
     const dashboardPage = await gotoDashboardPage({
       uid: DASHBOARD_UID,
