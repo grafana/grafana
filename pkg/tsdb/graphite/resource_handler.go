@@ -26,6 +26,8 @@ func (s *Service) newResourceMux() *http.ServeMux {
 	mux.HandleFunc("/metrics/expand", handleResourceReq(s.handleMetricsExpand, s))
 	mux.HandleFunc("/functions", handleResourceReq(s.handleFunctions, s))
 	mux.HandleFunc("/tags/autoComplete/tags", handleResourceReq(s.handleTagsAutocomplete, s))
+	mux.HandleFunc("/tags/autoComplete/values", handleResourceReq(s.handleTagValuesAutocomplete, s))
+
 	return mux
 }
 
@@ -87,12 +89,12 @@ func handleResourceReq[T any](handlerFn resourceHandler[T], s *Service) func(rw 
 }
 
 func (s *Service) handleEvents(ctx context.Context, dsInfo *datasourceInfo, eventsRequestJson *GraphiteEventsRequest) ([]byte, int, error) {
-	queryParams := map[string]string{
-		"from":  eventsRequestJson.From,
-		"until": eventsRequestJson.Until,
+	queryParams := map[string][]string{
+		"from":  {eventsRequestJson.From},
+		"until": {eventsRequestJson.Until},
 	}
 	if eventsRequestJson.Tags != "" {
-		queryParams["tags"] = eventsRequestJson.Tags
+		queryParams["tags"] = []string{eventsRequestJson.Tags}
 	}
 
 	req, err := s.createRequest(ctx, dsInfo, URLParams{
@@ -128,12 +130,12 @@ func (s *Service) handleMetricsFind(ctx context.Context, dsInfo *datasourceInfo,
 	data := url.Values{}
 	data.Set("query", metricsFindRequestJson.Query)
 
-	queryParams := map[string]string{}
+	queryParams := map[string][]string{}
 	if metricsFindRequestJson.From != "" {
-		queryParams["from"] = metricsFindRequestJson.From
+		queryParams["from"] = []string{metricsFindRequestJson.From}
 	}
 	if metricsFindRequestJson.Until != "" {
-		queryParams["until"] = metricsFindRequestJson.Until
+		queryParams["until"] = []string{metricsFindRequestJson.Until}
 	}
 
 	req, err := s.createRequest(ctx, dsInfo, URLParams{
@@ -165,14 +167,14 @@ func (s *Service) handleMetricsExpand(ctx context.Context, dsInfo *datasourceInf
 		return nil, http.StatusBadRequest, fmt.Errorf("query is required")
 	}
 
-	queryParams := map[string]string{
-		"query": metricsExpandRequestJson.Query,
+	queryParams := map[string][]string{
+		"query": {metricsExpandRequestJson.Query},
 	}
 	if metricsExpandRequestJson.From != "" {
-		queryParams["from"] = metricsExpandRequestJson.From
+		queryParams["from"] = []string{metricsExpandRequestJson.From}
 	}
 	if metricsExpandRequestJson.Until != "" {
-		queryParams["until"] = metricsExpandRequestJson.Until
+		queryParams["until"] = []string{metricsExpandRequestJson.Until}
 	}
 
 	req, err := s.createRequest(ctx, dsInfo, URLParams{
@@ -205,11 +207,11 @@ func (s *Service) handleMetricsExpand(ctx context.Context, dsInfo *datasourceInf
 }
 
 func (s *Service) handleTagsAutocomplete(ctx context.Context, dsInfo *datasourceInfo, tagsAutocompleteRequestJson *GraphiteTagsRequest) ([]byte, int, error) {
-	queryParams := map[string]string{
-		"from":      tagsAutocompleteRequestJson.From,
-		"until":     tagsAutocompleteRequestJson.Until,
-		"limit":     fmt.Sprintf("%d", tagsAutocompleteRequestJson.Limit),
-		"tagPrefix": tagsAutocompleteRequestJson.TagPrefix,
+	queryParams := map[string][]string{
+		"from":      {tagsAutocompleteRequestJson.From},
+		"until":     {tagsAutocompleteRequestJson.Until},
+		"limit":     {fmt.Sprintf("%d", tagsAutocompleteRequestJson.Limit)},
+		"tagPrefix": {tagsAutocompleteRequestJson.TagPrefix},
 	}
 	req, err := s.createRequest(ctx, dsInfo, URLParams{
 		SubPath:     "tags/autoComplete/tags",
@@ -217,7 +219,7 @@ func (s *Service) handleTagsAutocomplete(ctx context.Context, dsInfo *datasource
 		QueryParams: queryParams,
 	})
 	if err != nil {
-		return nil, http.StatusInternalServerError, fmt.Errorf("failed to create metrics expand request %v", err)
+		return nil, http.StatusInternalServerError, fmt.Errorf("failed to create tags autocomplete request %v", err)
 	}
 
 	tags, _, statusCode, err := doGraphiteRequest[[]string](ctx, dsInfo, s.logger, req, false)
@@ -231,6 +233,38 @@ func (s *Service) handleTagsAutocomplete(ctx context.Context, dsInfo *datasource
 	}
 
 	return tagsResponse, statusCode, nil
+}
+
+func (s *Service) handleTagValuesAutocomplete(ctx context.Context, dsInfo *datasourceInfo, tagValuesAutocompleteRequestJson *GraphiteTagValuesRequest) ([]byte, int, error) {
+	queryParams := map[string][]string{
+		"expr":        tagValuesAutocompleteRequestJson.Expr,
+		"tag":         {tagValuesAutocompleteRequestJson.Tag},
+		"from":        {tagValuesAutocompleteRequestJson.From},
+		"until":       {tagValuesAutocompleteRequestJson.Until},
+		"limit":       {fmt.Sprintf("%d", tagValuesAutocompleteRequestJson.Limit)},
+		"valuePrefix": {tagValuesAutocompleteRequestJson.ValuePrefix},
+	}
+
+	req, err := s.createRequest(ctx, dsInfo, URLParams{
+		SubPath:     "tags/autoComplete/values",
+		Method:      http.MethodGet,
+		QueryParams: queryParams,
+	})
+	if err != nil {
+		return nil, http.StatusInternalServerError, fmt.Errorf("failed to create tag values autocomplete request %v", err)
+	}
+
+	tagValues, _, statusCode, err := doGraphiteRequest[[]string](ctx, dsInfo, s.logger, req, false)
+	if err != nil {
+		return nil, statusCode, fmt.Errorf("tag values autocomplete request failed: %v", err)
+	}
+
+	tagValuesResponse, err := json.Marshal(tagValues)
+	if err != nil {
+		return nil, http.StatusInternalServerError, fmt.Errorf("failed to marshal tag values autocomplete response: %s", err)
+	}
+
+	return tagValuesResponse, statusCode, nil
 }
 
 func (s *Service) handleFunctions(ctx context.Context, dsInfo *datasourceInfo, _ *any) ([]byte, int, error) {
