@@ -3,7 +3,7 @@ module github.com/grafana/grafana/pkg/promlib
 go 1.24.6
 
 require (
-	github.com/grafana/dskit v0.0.0-20250611075409-46f51e1ce914
+	github.com/grafana/dskit v0.0.0-20250818234656-8ff9c6532e85
 	github.com/grafana/grafana-plugin-sdk-go v0.278.0
 	github.com/json-iterator/go v1.1.12
 	github.com/prometheus/client_golang v1.23.0
