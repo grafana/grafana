@@ -95,9 +95,9 @@ To make it easier for everyone to understand and find issues a good rule of thum
 
 Most issues are now categorized automatically based on the information provided. However, if the automation cannot categorize an issue due to missing or unclear information, a human reviewer may need to request additional details from the author. Use your best judgement—if the issue lacks enough information for automation to work correctly, kindly ask the author to provide the necessary details.
 
-### 3. Categorize an issue
+### 3. Issue categorization
 
-An issue can have multiple labels. Typically, a properly categorized issue should at least have these labels:
+Issues are automatically categorized. An issue can have multiple labels. Typically, a properly categorized issue should at least have these labels:
 
 - One label identifying its type (`type/*`).
 - One or multiple labels identifying the functional areas of interest or component (`area/*`) and/or data source (`datasource/*`), if applicable.
