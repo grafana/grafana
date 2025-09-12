@@ -155,10 +155,6 @@ export enum AccessControlAction {
   AlertingTemplatesWrite = 'alert.notifications.templates:write',
   AlertingTemplatesDelete = 'alert.notifications.templates:delete',
 
-  ActionAPIKeysRead = 'apikeys:read',
-  ActionAPIKeysCreate = 'apikeys:create',
-  ActionAPIKeysDelete = 'apikeys:delete',
-
   PluginsInstall = 'plugins:install',
   PluginsWrite = 'plugins:write',
 

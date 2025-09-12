@@ -81,6 +81,11 @@ func ProvideService(
 		return nil, err
 	}
 
+	// Migrating to remove deprecated permissions from the database
+	if err := migrator.MigrateRemoveDeprecatedPermissions(db, service.log); err != nil {
+		return nil, err
+	}
+
 	return service, nil
 }
 
@@ -699,7 +704,7 @@ func PermissionMatchesSearchOptions(permission accesscontrol.Permission, searchO
 	if searchOptions.Scope != "" {
 		// Permissions including the scope should also match
 		scopes := append(searchOptions.Wildcards(), searchOptions.Scope)
-		if !slices.Contains[[]string, string](scopes, permission.Scope) {
+		if !slices.Contains(scopes, permission.Scope) {
 			return false
 		}
 	}
