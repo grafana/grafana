@@ -23,9 +23,12 @@ const INPUT_DIR = "testdata/input"
 const OUTPUT_DIR = "testdata/output"
 const SINGLE_VERSION_OUTPUT_DIR = "testdata/output/single_version"
 const LATEST_VERSION_OUTPUT_DIR = "testdata/output/latest_version"
+const DEV_DASHBOARDS_INPUT_DIR = "../../../../devenv/dev-dashboards"
+const DEV_DASHBOARDS_OUTPUT_DIR = "testdata/dev-dashboards-output"
 
 func TestMigrate(t *testing.T) {
-	// Use the same datasource provider as the frontend test to ensure consistency
+	// Reset the migration singleton and use the same datasource provider as the frontend test to ensure consistency
+	ResetForTesting()
 	Initialize(migrationtestutil.GetTestDataSourceProvider())
 
 	t.Run("minimum version check", func(t *testing.T) {
@@ -160,7 +163,11 @@ func testMigrationUnified(t *testing.T, dash map[string]interface{}, inputFileNa
 
 	// 6. Check if output file already exists
 	if _, err := os.Stat(outPath); os.IsNotExist(err) {
-		// 7a. If no existing file, create a new one
+		// 7a. If no existing file, create a new one (ensure directory exists first)
+		outDir := filepath.Dir(outPath)
+		err = os.MkdirAll(outDir, 0755)
+		require.NoError(t, err, "failed to create output directory %s", outDir)
+
 		err = os.WriteFile(outPath, outBytes, 0644)
 		require.NoError(t, err, "failed to write new output file %s", outPath)
 		return
@@ -400,4 +407,64 @@ func TestLogMessageStructure(t *testing.T) {
 		t.Log("✓ Error logging includes errorType and error fields")
 		t.Log("✓ Success logging uses Debug level, failure logging uses Error level")
 	})
+}
+
+// findJSONFiles recursively finds all .json files in a directory
+func findJSONFiles(dir string) ([]string, error) {
+	var jsonFiles []string
+
+	err := filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+		if !info.IsDir() && strings.HasSuffix(strings.ToLower(info.Name()), ".json") {
+			jsonFiles = append(jsonFiles, path)
+		}
+		return nil
+	})
+
+	return jsonFiles, err
+}
+
+// getRelativeOutputPath converts an input path to a relative output path preserving directory structure
+func getRelativeOutputPath(inputPath, inputDir string) string {
+	// Get the relative path from the input directory
+	relPath, err := filepath.Rel(inputDir, inputPath)
+	if err != nil {
+		// If we can't get relative path, just use the filename
+		return filepath.Base(inputPath)
+	}
+	// Preserve the directory structure
+	return relPath
+}
+
+func TestMigrateDevDashboards(t *testing.T) {
+	// Reset the migration singleton and use the dev dashboard datasource provider
+	// to match the frontend devDashboardDataSources configuration
+	ResetForTesting()
+	Initialize(migrationtestutil.GetDevDashboardDataSourceProvider())
+
+	runDevDashboardMigrationTests(t, schemaversion.LATEST_VERSION, DEV_DASHBOARDS_OUTPUT_DIR)
+}
+
+// runDevDashboardMigrationTests runs migration tests for dev dashboards with a unified approach (same as runMigrationTests)
+func runDevDashboardMigrationTests(t *testing.T, targetVersion int, outputDir string) {
+	// Find all JSON files in the dev-dashboards directory
+	jsonFiles, err := findJSONFiles(DEV_DASHBOARDS_INPUT_DIR)
+	require.NoError(t, err, "failed to find JSON files in dev-dashboards directory")
+
+	t.Logf("Found %d JSON files in dev-dashboards", len(jsonFiles))
+
+	for _, jsonFile := range jsonFiles {
+		relativeOutputPath := getRelativeOutputPath(jsonFile, DEV_DASHBOARDS_INPUT_DIR)
+
+		// Load a fresh copy of the dashboard for this test (ensures no object sharing)
+		inputDash := loadDashboard(t, jsonFile)
+		inputVersion := getSchemaVersion(t, inputDash)
+
+		testName := fmt.Sprintf("%s v%d to v%d", relativeOutputPath, inputVersion, targetVersion)
+		t.Run(testName, func(t *testing.T) {
+			testMigrationUnified(t, inputDash, relativeOutputPath, inputVersion, targetVersion, outputDir)
+		})
+	}
 }

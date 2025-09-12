@@ -1,0 +1,628 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "uid": "-- Grafana --"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations \u0026 Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 2,
+  "id": 396,
+  "links": [],
+  "panels": [
+    {
+      "datasource": {
+        "apiVersion": "v1",
+        "type": "grafana-testdata-datasource",
+        "uid": "testdata-type-uid"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "hideFrom": {
+              "graph": false,
+              "legend": false,
+              "tooltip": false
+            },
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": true,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "degree"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 8,
+        "x": 0,
+        "y": 0
+      },
+      "id": 2,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "single"
+        }
+      },
+      "pluginVersion": "7.5.0-pre",
+      "targets": [
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "grafana-testdata-datasource",
+            "uid": "testdata-type-uid"
+          },
+          "refId": "A",
+          "scenarioId": "csv_metric_values",
+          "stringInput": "-9.4, -8.2, -8, -8, -7, -7.9, -5.9, -6.1, -5.5, -5.8, -4.7, -4.7, -4.1, -4.5, -3.5, -4, -2.4, -3.4, -1, -1, -0.3, -0.8, 0.8, 0.5, 1.7, 1.2, 2, 1.9, 2.4, 2.3, 3.3, 3.2, 3.9, 3.8, 4.5, 4.5, 5.6, 5.1, 7.1, 6.7, 7.2, 7.1, 7.6, 7.5, 8.4, 7.9, 9, 8.5, 9.4, 9.2"
+        }
+      ],
+      "title": "Origin",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "apiVersion": "v1",
+        "type": "grafana-testdata-datasource",
+        "uid": "testdata-type-uid"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "hideFrom": {
+              "graph": false,
+              "legend": false,
+              "tooltip": false
+            },
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": true,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "degree"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "B-series"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "tflops"
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 8,
+        "x": 8,
+        "y": 0
+      },
+      "id": 9,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "single"
+        }
+      },
+      "pluginVersion": "7.5.0-pre",
+      "targets": [
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "grafana-testdata-datasource",
+            "uid": "testdata-type-uid"
+          },
+          "hide": false,
+          "max": 10,
+          "min": -10,
+          "noise": 1,
+          "refId": "A",
+          "scenarioId": "random_walk",
+          "spread": 2
+        },
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "grafana-testdata-datasource",
+            "uid": "testdata-type-uid"
+          },
+          "hide": false,
+          "max": 10,
+          "min": -10,
+          "noise": 1,
+          "refId": "B",
+          "scenarioId": "random_walk",
+          "spread": 2
+        },
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "grafana-testdata-datasource",
+            "uid": "testdata-type-uid"
+          },
+          "hide": false,
+          "max": 10,
+          "min": -10,
+          "noise": 1,
+          "refId": "C",
+          "scenarioId": "random_walk",
+          "spread": 2
+        }
+      ],
+      "title": "Sensor 1, ranging as Origin panel",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "apiVersion": "v1",
+        "type": "grafana-testdata-datasource",
+        "uid": "testdata-type-uid"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "hideFrom": {
+              "graph": false,
+              "legend": false,
+              "tooltip": false
+            },
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": true,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "degree"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "B-series"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "tflops"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "A-series"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "purple",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 8,
+        "x": 16,
+        "y": 0
+      },
+      "id": 10,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "single"
+        }
+      },
+      "pluginVersion": "7.5.0-pre",
+      "targets": [
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "grafana-testdata-datasource",
+            "uid": "testdata-type-uid"
+          },
+          "hide": false,
+          "max": 4,
+          "min": -4,
+          "noise": 0,
+          "refId": "B",
+          "scenarioId": "random_walk",
+          "spread": 2
+        },
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "grafana-testdata-datasource",
+            "uid": "testdata-type-uid"
+          },
+          "hide": false,
+          "max": 4,
+          "min": -4,
+          "noise": 0,
+          "refId": "A",
+          "scenarioId": "random_walk",
+          "spread": 2
+        }
+      ],
+      "title": "Sensor 2, ranging [-4, 4]",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "apiVersion": "v1",
+        "type": "grafana-testdata-datasource",
+        "uid": "testdata-type-uid"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "hideFrom": {
+              "graph": false,
+              "legend": false,
+              "tooltip": false
+            },
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": true,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "degree"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "B-series"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "tflops"
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 8,
+        "x": 8,
+        "y": 9
+      },
+      "id": 7,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "single"
+        }
+      },
+      "pluginVersion": "7.5.0-pre",
+      "targets": [
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "grafana-testdata-datasource",
+            "uid": "testdata-type-uid"
+          },
+          "refId": "A",
+          "scenarioId": "csv_metric_values",
+          "stringInput": "5, 4.6, 4.4, 3.5, 3.3, 3, 2.6, 2.6, 2.4, 2.1, 1.8, 1.8, 1.7, 1.6, 1.5, 1.5, 1.4, 0.5, 0.5, 0, -0.2, -0.2, -0.4, -0.6, -1.2, -1.6, -2.4, -2.4, -2.8, -2.9, -2.9, -3.2, -3.3, -3.4, -4.3, -4.3, -4.6, -6.1, -6.3, -6.6, -6.7, -7, -7.2, -7.3, -7.5, -7.8, -8.2, -8.3, -9.1, -9.3"
+        },
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "grafana-testdata-datasource",
+            "uid": "testdata-type-uid"
+          },
+          "refId": "B",
+          "scenarioId": "csv_metric_values",
+          "stringInput": "6,4,2"
+        },
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "grafana-testdata-datasource",
+            "uid": "testdata-type-uid"
+          },
+          "hide": false,
+          "refId": "C",
+          "scenarioId": "csv_metric_values",
+          "stringInput": "-3,-4,-2"
+        }
+      ],
+      "title": "Sensor 3",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "apiVersion": "v1",
+        "type": "grafana-testdata-datasource",
+        "uid": "testdata-type-uid"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "hideFrom": {
+              "graph": false,
+              "legend": false,
+              "tooltip": false
+            },
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": true,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "degree"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "B-series"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "tflops"
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 8,
+        "x": 16,
+        "y": 9
+      },
+      "id": 8,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "single"
+        }
+      },
+      "pluginVersion": "7.5.0-pre",
+      "targets": [
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "grafana-testdata-datasource",
+            "uid": "testdata-type-uid"
+          },
+          "refId": "B",
+          "scenarioId": "csv_metric_values",
+          "stringInput": "6,4,2"
+        },
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "grafana-testdata-datasource",
+            "uid": "testdata-type-uid"
+          },
+          "hide": false,
+          "refId": "C",
+          "scenarioId": "csv_metric_values",
+          "stringInput": "-3,-4,-2"
+        }
+      ],
+      "title": "Sensor 5",
+      "type": "timeseries"
+    }
+  ],
+  "refresh": "",
+  "schemaVersion": 42,
+  "tags": [
+    "gdev",
+    "panel-tests",
+    "graph-ng"
+  ],
+  "templating": {
+    "list": []
+  },
+  "time": {
+    "from": "now-6h",
+    "to": "now"
+  },
+  "timepicker": {},
+  "timezone": "",
+  "title": "Panel Tests - shared tooltips cursor positioning",
+  "uid": "ICiqZ1rGk",
+  "version": 51,
+  "weekStart": ""
+}

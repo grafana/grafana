@@ -13,6 +13,15 @@ func Initialize(dsInfoProvider schemaversion.DataSourceInfoProvider) {
 	migratorInstance.init(dsInfoProvider)
 }
 
+// ResetForTesting resets the migrator singleton for testing purposes.
+func ResetForTesting() {
+	migratorInstance = &migrator{
+		migrations: map[int]schemaversion.SchemaVersionMigrationFunc{},
+		ready:      make(chan struct{}),
+	}
+	initOnce = sync.Once{}
+}
+
 // Migrate migrates the given dashboard to the target version.
 // This will block until the migrator is initialized.
 func Migrate(ctx context.Context, dash map[string]interface{}, targetVersion int) error {
@@ -46,6 +55,12 @@ func (m *migrator) migrate(ctx context.Context, dash map[string]interface{}, tar
 
 	// wait for the migrator to be initialized
 	<-m.ready
+
+	// 0. Clean up dashboard properties that frontend never includes in save model
+	// These properties are added by backend but frontend filters them out
+	delete(dash, "__elements")
+	delete(dash, "__inputs")
+	delete(dash, "__requires")
 
 	// 1. Apply ALL frontend defaults FIRST (DashboardModel + PanelModel defaults)
 	// This replicates the behavior of the frontend DashboardModel and PanelModel constructors

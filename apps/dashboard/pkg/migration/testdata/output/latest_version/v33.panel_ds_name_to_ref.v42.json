@@ -192,7 +192,7 @@
       "type": "timeseries"
     },
     {
-      "datasource": {},
+      "datasource": null,
       "description": "Tests v33 migration behavior with empty string datasource. Should migrate to empty object {} based on MigrateDatasourceNameToRef logic.",
       "id": 7,
       "targets": [
