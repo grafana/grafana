@@ -24,6 +24,8 @@ import { createAbsoluteUrl, RelativeUrl } from '../alerting/unified/utils/url';
 import { getTimeSrv } from '../dashboard/services/TimeSrv';
 import { getNextRequestId } from '../query/state/PanelQueryRunner';
 
+import { reportActionTrigger, ActionContext } from './analytics';
+
 /** @internal */
 export const isInfinityActionWithAuth = (action: Action): boolean => {
   return (grafanaConfig.featureToggles.vizActionsAuth ?? false) && action.type === ActionType.Infinity;
@@ -59,7 +61,8 @@ export const getActions = (
   fieldScopedVars: ScopedVars,
   replaceVariables: InterpolateFunction,
   actions: Action[],
-  config: ValueLinkConfig
+  config: ValueLinkConfig,
+  actionContext?: ActionContext
 ): Array<ActionModel<Field>> => {
   if (!actions || actions.length === 0) {
     return [];
@@ -89,6 +92,7 @@ export const getActions = (
 
       const actionModel: ActionModel<Field> = {
         title: replaceVariables(action.title, actionScopedVars),
+        type: action.type,
         confirmation: (actionVars?: ActionVariableInput) =>
           genReplaceActionVars(
             boundReplaceVariables,
@@ -96,6 +100,10 @@ export const getActions = (
             actionVars
           )(action.confirmation || `Are you sure you want to ${action.title}?`),
         onClick: (evt: MouseEvent, origin: Field, actionVars?: ActionVariableInput) => {
+          if (actionContext?.visualizationType) {
+            reportActionTrigger(action.type, action.oneClick ?? false, actionContext);
+          }
+
           // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
           let request = {} as BackendSrvRequest;
           if (isInfinityActionWithAuth(action)) {

@@ -35,7 +35,9 @@ import {
   removeStyles,
 } from 'app/plugins/panel/canvas/utils';
 
+import { reportActionTrigger } from '../../actions/analytics';
 import { getActions, getActionsDefaultField, isInfinityActionWithAuth } from '../../actions/utils';
+import { getDashboardSrv } from '../../dashboard/services/DashboardSrv';
 import { CanvasElementItem, CanvasElementOptions } from '../element';
 import { canvasElementRegistry } from '../registry';
 
@@ -1049,6 +1051,14 @@ export class ElementState implements LayerElement {
             onConfirm={() => {
               this.showActionConfirmation = false;
               action.onClick(new MouseEvent('click'), null, this.actionVars);
+              if (action.type) {
+                const scene = this.getScene();
+                reportActionTrigger(action.type, true, {
+                  visualizationType: 'canvas',
+                  panelId: scene?.panel?.props?.id,
+                  dashboardUid: getDashboardSrv().getCurrent()?.uid,
+                });
+              }
               this.forceUpdate();
             }}
             onDismiss={() => {

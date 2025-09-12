@@ -25,6 +25,7 @@ import {
   ColorPlacement,
 } from '@grafana/ui/internal';
 import { ColorScale } from 'app/core/components/ColorScale/ColorScale';
+import { ActionContext } from 'app/features/actions/analytics';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { isHeatmapCellsDense, readHeatmapRowsCustomMeta } from 'app/features/transformers/calculateHeatmap/heatmap';
 import { getDisplayValuesAndLinks } from 'app/features/visualization/data-hover/DataHoverView';
@@ -48,6 +49,7 @@ interface HeatmapTooltipProps {
   dismiss: () => void;
   panelData: PanelData;
   annotate?: () => void;
+  panelId?: number;
   maxHeight?: number;
   maxWidth?: number;
   replaceVariables: InterpolateFunction;
@@ -95,6 +97,7 @@ const HeatmapHoverCell = ({
   maxWidth,
   replaceVariables,
   canExecuteActions,
+  panelId,
 }: HeatmapTooltipProps) => {
   const index = dataIdxs[1]!;
   const data = dataRef.current;
@@ -325,7 +328,14 @@ const HeatmapHoverCell = ({
         links = getDataLinks(linksField, xValueIdx);
       }
 
-      actions = canExecuteActions ? getFieldActions(data.series!, linksField, replaceVariables, xValueIdx) : [];
+      const actionInstrumentationContext: ActionContext = {
+        visualizationType: 'heatmap',
+        panelId,
+        dashboardUid: getDashboardSrv().getCurrent()?.uid,
+      };
+      actions = canExecuteActions
+        ? getFieldActions(data.series!, linksField, replaceVariables, xValueIdx, actionInstrumentationContext)
+        : [];
     }
 
     footer = <VizTooltipFooter dataLinks={links} annotate={annotate} actions={actions} />;
