@@ -3,7 +3,7 @@
   "license": "AGPL-3.0-only",
   "private": true,
   "name": "grafana",
-  "version": "12.2.0-pre",
+  "version": "12.3.0-pre",
   "repository": "github:grafana/grafana",
   "scripts": {
     "predev": "./scripts/check-frontend-dev.sh",
