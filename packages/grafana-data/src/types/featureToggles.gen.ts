@@ -544,11 +544,6 @@ export interface FeatureToggles {
   */
   logsExploreTableDefaultVisualization?: boolean;
   /**
-  * Enables the new sharing drawer design
-  * @default true
-  */
-  newDashboardSharingComponent?: boolean;
-  /**
   * Enables the new alert list view design
   */
   alertingListViewV2?: boolean;

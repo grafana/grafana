@@ -5404,10 +5404,6 @@
       "save-dashboard-short": "Save",
       "save-library-panel": "Save library panel",
       "settings": "Dashboard settings",
-      "share": {
-        "label": "Share",
-        "tooltip": "Share dashboard"
-      },
       "share-button": "Share",
       "unlink-library-panel": "Unlink library panel",
       "unmark-favorite": "Unmark as favorite"
@@ -9269,8 +9265,6 @@
   },
   "library-panel": {
     "add-modal": {
-      "cancel": "Cancel",
-      "create": "Create library panel",
       "error": "Library panel with this name already exists",
       "folder": "Save in folder",
       "folder-description": "Library panel permissions are derived from the folder permissions",
@@ -10338,9 +10332,6 @@
     },
     "profiles": {
       "title": "Profiles"
-    },
-    "public": {
-      "title": "Public dashboards"
     },
     "recently-deleted": {
       "subtitle": "Any items listed here for more than 30 days will be automatically deleted.",
@@ -11775,7 +11766,6 @@
       "success-pause": "Your dashboard access has been paused",
       "success-resume": "Your dashboard access has been resumed",
       "success-update": "Settings have been successfully updated",
-      "success-update-old": "Public dashboard updated!",
       "time-range-label": "Time range",
       "time-range-tooltip": "The shared dashboard uses the default time range settings of the dashboard"
     },
@@ -11783,10 +11773,6 @@
       "generate-public-url-button": "Generate public URL",
       "unsupported-features-desc": "Currently, we don’t support template variables or frontend data sources",
       "welcome-title": "Welcome to public dashboards!"
-    },
-    "delete-modal": {
-      "revoke-body-text": "Are you sure you want to revoke this URL? The dashboard will no longer be public.",
-      "revoke-title": "Revoke public URL"
     },
     "email-sharing": {
       "accept-button": "Accept",
@@ -11817,11 +11803,8 @@
       "success-share-type-change": "Dashboard access updated: Only specific people can now access with the link"
     },
     "modal-alerts": {
-      "no-upsert-perm-alert-desc": "Contact your admin to get permission to {{action}} public dashboards",
-      "no-upsert-perm-alert-title": "You don’t have permission to {{ action }} a public dashboard",
       "save-dashboard-changes-alert-title": "Please save your dashboard changes before updating the public configuration",
       "unsupport-data-source-alert-readmore-link": "Read more about supported data sources",
-      "unsupported-data-source-alert-desc": "There are data sources in this dashboard that are unsupported for public dashboards. Panels that use these data sources may not function properly: {{unsupportedDataSources}}.",
       "unsupported-data-source-alert-title": "Unsupported data sources",
       "unsupported-template-variable-alert-desc": "This public dashboard may not work since it uses template variables",
       "unsupported-template-variable-alert-title": "Template variables are not supported"
@@ -11855,8 +11838,7 @@
       "time-range-text": "Time range = "
     },
     "share": {
-      "success-delete": "Your dashboard is no longer shareable",
-      "success-delete-old": "Public dashboard deleted!"
+      "success-delete": "Your dashboard is no longer shareable"
     },
     "share-configuration": {
       "share-type-label": "Link access"
@@ -11875,24 +11857,6 @@
       "revoke-access-button": "Revoke access",
       "revoke-access-description": "Are you sure you want to revoke this access? The dashboard can no longer be shared.",
       "unsupported-data-source-alert-desc": "There are data sources in this dashboard that are unsupported for shared dashboards. Panels that use these data sources may not function properly: {{unsupportedDataSources}}."
-    },
-    "sharing": {
-      "success-creation": "Dashboard is public!"
-    }
-  },
-  "public-dashboard-list": {
-    "button": {
-      "config-button-tooltip": "Configure public dashboard",
-      "revoke-button-text": "Revoke public URL",
-      "revoke-button-tooltip": "Revoke public dashboard URL",
-      "view-button-tooltip": "View public dashboard"
-    },
-    "empty-state": {
-      "message": "You haven't created any public dashboards yet",
-      "more-info": "Create a public dashboard from any existing dashboard through the <1>Share</1> modal. <4>Learn more</4>"
-    },
-    "toggle": {
-      "pause-sharing-toggle-text": "Pause sharing"
     }
   },
   "public-dashboard-users-access-list": {
@@ -11900,8 +11864,6 @@
       "external-link": "External link",
       "loading-text": "Loading...",
       "open-dashboard-list-text": "Open dashboards list",
-      "public-dashboard-link": "Public dashboard URL",
-      "public-dashboard-setting": "Public dashboard settings",
       "sharing-setting": "Sharing settings"
     },
     "delete-user-modal": {
@@ -11909,14 +11871,12 @@
       "delete-user-cancel-button": "Cancel",
       "delete-user-revoke-access-button": "Revoke access",
       "revoke-access-title": "Revoke access",
-      "revoke-user-access-modal-desc-line1": "Are you sure you want to revoke access for {{email}}?",
-      "revoke-user-access-modal-desc-line2": "This action will immediately revoke {{email}}&apos;s access to all public dashboards."
+      "revoke-user-access-modal-desc-line1": "Are you sure you want to revoke access for {{email}}?"
     },
     "delete-user-shared-dashboards-modal": {
       "revoke-user-access-modal-desc-line2": "This action will immediately revoke {{email}}&apos;s access to all shared dashboards."
     },
     "modal": {
-      "dashboard-modal-title": "Public dashboards",
       "shared-dashboard-modal-title": "Shared dashboards"
     },
     "table-body": {
@@ -12418,7 +12378,6 @@
       "export": "Export",
       "library-panel": "Library panel",
       "link": "Link",
-      "panel-embed": "Embed",
       "public-dashboard": "Public Dashboard",
       "public-dashboard-title": "Public dashboard",
       "snapshot": "Snapshot"
@@ -14013,7 +13972,6 @@
   },
   "users-access-list": {
     "tabs": {
-      "public-dashboard-users-tab-title": "Public dashboard users",
       "shared-dashboard-users-tab-title": "Shared dashboard users"
     }
   },
