@@ -76,7 +76,8 @@ func ProvideService(ctx context.Context, db db.DB, configProvider configprovider
 }
 
 func (s *service) IsDisabled(ctx context.Context) bool {
-	return !s.cfg.Get(ctx).Quota.Enabled
+	c, err := s.cfg.Get(ctx)
+	return err != nil || !c.Quota.Enabled
 }
 
 // QuotaReached checks that quota is reached for a target. Runs CheckQuotaReached and take context and scope parameters from the request context
