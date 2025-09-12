@@ -111,10 +111,10 @@ func trimStringArrays(arrays [][]string) [][]string {
 	for i, arr := range arrays {
 		if len(arr) > 2 {
 			result[i] = arr[:2]
+		} else {
 			result[i] = arr
 		}
 	}
-
 	return result
 }
 
