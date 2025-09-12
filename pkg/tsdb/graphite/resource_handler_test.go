@@ -18,12 +18,14 @@ import (
 )
 
 type mockRoundTripper struct {
-	respBody []byte
-	status   int
-	err      error
+	respBody    []byte
+	status      int
+	err         error
+	lastRequest *http.Request
 }
 
 func (m *mockRoundTripper) RoundTrip(req *http.Request) (*http.Response, error) {
+	m.lastRequest = req
 	if m.err != nil {
 		return nil, m.err
 	}
@@ -129,7 +131,7 @@ func TestHandleEvents(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			svc := &Service{logger: log.NewNullLogger()}
 
-			respBody, status, err := svc.handleEvents(context.Background(), tt.dsInfo, tt.request)
+			respBody, status, err := svc.handleEvents(context.Background(), tt.dsInfo, &tt.request)
 
 			assert.Equal(t, tt.expectedStatus, status)
 
@@ -234,7 +236,7 @@ func TestHandleMetricsFind(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			svc := &Service{logger: log.NewNullLogger()}
 
-			respBody, status, err := svc.handleMetricsFind(context.Background(), tt.dsInfo, tt.request)
+			respBody, status, err := svc.handleMetricsFind(context.Background(), tt.dsInfo, &tt.request)
 
 			assert.Equal(t, tt.expectedStatus, status)
 
@@ -368,7 +370,7 @@ func TestHandleMetricsExpand(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			svc := &Service{logger: log.NewNullLogger()}
 
-			respBody, status, err := svc.handleMetricsExpand(context.Background(), tt.dsInfo, tt.request)
+			respBody, status, err := svc.handleMetricsExpand(context.Background(), tt.dsInfo, &tt.request)
 
 			assert.Equal(t, tt.expectedStatus, status)
 
@@ -387,6 +389,106 @@ func TestHandleMetricsExpand(t *testing.T) {
 					require.NoError(t, json.Unmarshal(respBody, &result))
 					assert.Equal(t, tt.expectedMetrics, result)
 				}
+			}
+		})
+	}
+}
+
+func TestHandleFunctions(t *testing.T) {
+	tests := []struct {
+		name          string
+		responseBody  string
+		statusCode    int
+		expectError   bool
+		errorContains string
+		expectedData  string
+	}{
+		{
+			name:         "successful functions request",
+			responseBody: `{"sum": {"description": "Sum function"}, "avg": {"description": "Average function"}}`,
+			statusCode:   200,
+			expectError:  false,
+			expectedData: `{"sum": {"description": "Sum function"}, "avg": {"description": "Average function"}}`,
+		},
+		{
+			name:         "functions with infinity replacement",
+			responseBody: `{"func": {"default": Infinity, "description": "Test function"}}`,
+			statusCode:   200,
+			expectError:  false,
+			expectedData: `{"func": {"default": 1e9999, "description": "Test function"}}`,
+		},
+		{
+			name:         "empty functions response",
+			responseBody: `{}`,
+			statusCode:   200,
+			expectError:  false,
+			expectedData: `{}`,
+		},
+		{
+			name:          "functions request server error",
+			responseBody:  `{"error": "internal error"}`,
+			statusCode:    500,
+			expectError:   true,
+			errorContains: "version request failed",
+		},
+		{
+			name:          "functions request not found",
+			responseBody:  `{"error": "not found"}`,
+			statusCode:    404,
+			expectError:   true,
+			errorContains: "version request failed",
+		},
+		{
+			name:          "network error",
+			responseBody:  "",
+			statusCode:    0,
+			expectError:   true,
+			errorContains: "version request failed",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var mockTransport *mockRoundTripper
+
+			if tt.name == "network error" {
+				mockTransport = &mockRoundTripper{
+					err: errors.New("network connection failed"),
+				}
+			} else {
+				mockTransport = &mockRoundTripper{
+					respBody: []byte(tt.responseBody),
+					status:   tt.statusCode,
+				}
+			}
+
+			dsInfo := &datasourceInfo{
+				HTTPClient: &http.Client{Transport: mockTransport},
+				URL:        "http://graphite.example.com",
+			}
+
+			service := &Service{
+				logger: log.NewNullLogger(),
+			}
+
+			result, statusCode, err := service.handleFunctions(context.Background(), dsInfo, nil)
+
+			if tt.expectError {
+				assert.Error(t, err)
+				if tt.errorContains != "" {
+					assert.Contains(t, err.Error(), tt.errorContains)
+				}
+			} else {
+				assert.NoError(t, err)
+				assert.Equal(t, tt.statusCode, statusCode)
+				assert.Equal(t, tt.expectedData, string(result))
+			}
+
+			// Verify the request was made correctly (except for network error case)
+			if tt.name != "network error" {
+				require.NotNil(t, mockTransport.lastRequest)
+				assert.Equal(t, "http://graphite.example.com/functions", mockTransport.lastRequest.URL.String())
+				assert.Equal(t, http.MethodGet, mockTransport.lastRequest.Method)
 			}
 		})
 	}
@@ -558,11 +660,10 @@ func TestDoGraphiteRequest(t *testing.T) {
 				URL:        "http://graphite.grafana",
 				HTTPClient: &http.Client{Transport: &mockRoundTripper{respBody: []byte("[]"), status: 500}},
 			},
-			method:         "GET",
-			headers:        map[string]string{},
-			expectedStatus: 500,
-			expectError:    false,
-			expectedData:   []GraphiteEventsResponse{},
+			method:        "GET",
+			headers:       map[string]string{},
+			expectError:   true,
+			errorContains: "request failed, status: 500",
 		},
 	}
 
@@ -594,7 +695,7 @@ func TestDoGraphiteRequest(t *testing.T) {
 				assert.NoError(t, err)
 			}
 
-			result, status, err := doGraphiteRequest[[]GraphiteEventsResponse](ctx, tt.dsInfo, svc.logger, req)
+			result, _, status, err := doGraphiteRequest[[]GraphiteEventsResponse](ctx, tt.dsInfo, svc.logger, req, false)
 
 			if tt.expectError {
 				assert.Error(t, err)
@@ -653,7 +754,7 @@ func TestDoGraphiteRequestGenericTypes(t *testing.T) {
 				})
 				assert.NoError(t, err)
 
-				result, status, err := doGraphiteRequest[[]GraphiteMetricsFindResponse](ctx, dsInfo, svc.logger, req)
+				result, _, status, err := doGraphiteRequest[[]GraphiteMetricsFindResponse](ctx, dsInfo, svc.logger, req, false)
 
 				assert.NoError(t, err)
 				assert.NotNil(t, result)
@@ -681,7 +782,7 @@ func TestDoGraphiteRequestGenericTypes(t *testing.T) {
 				})
 				assert.NoError(t, err)
 
-				result, status, err := doGraphiteRequest[GraphiteMetricsExpandResponse](ctx, dsInfo, svc.logger, req)
+				result, _, status, err := doGraphiteRequest[GraphiteMetricsExpandResponse](ctx, dsInfo, svc.logger, req, false)
 
 				assert.NoError(t, err)
 				assert.NotNil(t, result)
@@ -825,7 +926,7 @@ func TestParseResponse(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result, err := parseResponse[[]GraphiteEventsResponse](tt.response)
+			result, _, err := parseResponse[[]GraphiteEventsResponse](tt.response, false, log.NewNullLogger())
 
 			if tt.expectError {
 				assert.Error(t, err)
