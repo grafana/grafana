@@ -10,13 +10,16 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/resource/httpadapter"
 	"go.opentelemetry.io/otel/trace"
 )
 
 type Service struct {
-	im     instancemgmt.InstanceManager
-	tracer trace.Tracer
-	logger log.Logger
+	im              instancemgmt.InstanceManager
+	tracer          trace.Tracer
+	logger          log.Logger
+	resourceHandler backend.CallResourceHandler
+	HTTPClient      *http.Client
 }
 
 const (
@@ -26,11 +29,15 @@ const (
 
 func ProvideService(httpClientProvider *httpclient.Provider, tracer trace.Tracer) *Service {
 	logger := backend.NewLoggerWith("logger", "graphite")
-	return &Service{
+	s := &Service{
 		im:     datasource.NewInstanceManager(newInstanceSettings(httpClientProvider)),
 		tracer: tracer,
 		logger: logger,
 	}
+
+	s.resourceHandler = httpadapter.New(s.newResourceMux())
+
+	return s
 }
 
 type datasourceInfo struct {
@@ -85,5 +92,5 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 }
 
 func (s *Service) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
-	return nil
+	return s.resourceHandler.CallResource(ctx, req, sender)
 }
