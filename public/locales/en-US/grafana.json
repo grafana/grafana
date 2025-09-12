@@ -504,6 +504,7 @@
       "copy-link": "Copy link",
       "duplicate": "Duplicate",
       "export": "Export",
+      "manage-enrichments": "Manage enrichments",
       "silence-notifications": "Silence notifications",
       "with-modifications": "With modifications"
     },
@@ -1121,7 +1122,8 @@
     },
     "enrichment": {
       "error-boundary": {
-        "notification-message-section-extension": "Notification Message Section Extension failed to load"
+        "enrichment-drawer-extension": "Enrichment Drawer Extension failed to load",
+        "rule-viewer-section-extension": "Rule Viewer Enrichment Section failed to load"
       }
     },
     "error-modal": {
@@ -2056,9 +2058,6 @@
       "text-loading-rules": "Loading rules...",
       "title-dashboard-not-saved": "Dashboard not saved"
     },
-    "paused-badge": {
-      "paused": "Paused"
-    },
     "payload-editor": {
       "edit-payload": "Edit payload",
       "label-add-custom-alert-instance": "Add custom alert instance",
@@ -2210,9 +2209,6 @@
       "label-time-range": "Time Range",
       "max-data-points": "MD = {{maxDataPoints}}",
       "min-interval": "Min. Interval = {{minInterval}}"
-    },
-    "query-preview": {
-      "relative-time-range": "<0>{{from}}</0> to now"
     },
     "queryAndExpressionsStep": {
       "disableAdvancedOptions": {
@@ -2558,6 +2554,10 @@
       "pending": "{{pendingStats}} pending",
       "recording": "{{recordingStats}} recording",
       "recovering": "{{recoveringStats}} recovering"
+    },
+    "rule-time-range-label": {
+      "relative": "<0>{{from}}</0> to now",
+      "relative-with-to": "<0>{{from}}</0> to <2>{{to}}</2>"
     },
     "rule-type-picker": {
       "grafana-managed": "Select &ldquo;Grafana managed&rdquo; unless you have a Mimir, Loki or Cortex data source with the Ruler API enabled."
@@ -3042,6 +3042,7 @@
       "page-nav": {
         "text": {
           "details": "Details",
+          "enrichment": "Alert enrichment",
           "history": "History",
           "instances": "Instances",
           "query-and-conditions": "Query and conditions",
@@ -3567,15 +3568,15 @@
     },
     "counts": {
       "alertRule_one": "{{count}} alert rule",
-      "alertRule_other": "{{count}} alert rule",
+      "alertRule_other": "{{count}} alert rules",
       "dashboard_one": "{{count}} dashboard",
-      "dashboard_other": "{{count}} dashboard",
+      "dashboard_other": "{{count}} dashboards",
       "folder_one": "{{count}} folder",
-      "folder_other": "{{count}} folder",
+      "folder_other": "{{count}} folders",
       "libraryPanel_one": "{{count}} library panel",
-      "libraryPanel_other": "{{count}} library panel",
+      "libraryPanel_other": "{{count}} library panels",
       "total_one": "{{count}} item",
-      "total_other": "{{count}} item"
+      "total_other": "{{count}} items"
     },
     "dashboards-tree": {
       "checkbox": {
@@ -3660,7 +3661,13 @@
       "text": "No results found for your query"
     },
     "restore": {
-      "success": "Dashboard {{name}} restored"
+      "all-failed_one": "Failed to restore {{count}} dashboard",
+      "all-failed_other": "Failed to restore {{count}} dashboards",
+      "failed-count_one": "{{count}} dashboard failed",
+      "failed-count_other": "{{count}} dashboards failed",
+      "success": "Dashboards restored successfully",
+      "success-count_one": "{{count}} dashboard restored successfully",
+      "success-count_other": "{{count}} dashboards restored successfully"
     },
     "text-this-repository-is-read-only": "If you have direct access to the target, copy the JSON and paste it there.",
     "trash-state-manager": {
@@ -9448,9 +9455,9 @@
       "type": {
         "loki": {
           "indexed-label_one": "Indexed label",
-          "indexed-label_other": "Indexed labels",
+          "indexed-label_other": "Indexed label",
           "parsedl-label_one": "Parsed field",
-          "parsedl-label_other": "Parsed fields",
+          "parsedl-label_other": "Parsed field",
           "structured-metadata_one": "Structured metadata",
           "structured-metadata_other": "Structured metadata"
         }
@@ -9626,10 +9633,9 @@
       }
     },
     "logs-controls": {
+      "collapse": "Collapse",
       "deduplication": "Deduplication",
-      "disable-highlighting": "Disable highlighting",
       "disable-prettify-json": "Collapse JSON logs",
-      "display-level": "Display levels",
       "display-level-all": "All levels",
       "download": "Download logs",
       "download-logs": {
@@ -9637,18 +9643,39 @@
         "json": "json",
         "txt": "txt"
       },
-      "enable-highlighting": "Enable highlighting",
       "escape-newlines": "Fix incorrectly escaped newline and tab sequences in log lines",
-      "font-size-default": "Use small font size",
-      "font-size-small": "Use default font size",
+      "expand": "Expand",
+      "filter-levels": "Filter levels",
+      "font-large": "Set large font",
+      "font-small": "Set small font",
       "hide-search": "Close search",
       "hide-timestamps": "Hide timestamps",
       "hide-unique-labels": "Hide unique labels",
+      "label": {
+        "collapse": "Expanded",
+        "disable-highlighting": "Highlight text",
+        "enable-highlighting": "Plain text",
+        "escape-newlines": "Escape newlines",
+        "expand": "Collapsed"
+      },
+      "labels": {
+        "font-large": "Large font",
+        "font-small": "Small font",
+        "hide-search": "Close search",
+        "newest-first": "Newest logs first",
+        "oldest-first": "Oldest logs first",
+        "show-search": "Search logs"
+      },
       "line-wrapping": {
         "enable": "Enable line wrapping",
         "enable-prettify": "Enable line wrapping and prettify JSON",
         "hide": "Disable line wrapping",
-        "label": "Log line wrapping"
+        "state": {
+          "hide": "Wrap disabled",
+          "json": "Wrap JSON",
+          "wrap": "Wrap lines"
+        },
+        "tooltip": "Set line wrap"
       },
       "newest-first": "Sorted by newest logs first - Click to show oldest first",
       "oldest-first": "Sorted by oldest logs first - Click to show newest first",
@@ -9664,8 +9691,18 @@
       "timestamp": {
         "hide": "Hide timestamps",
         "label": "Log timestamps",
+        "label-hide": "Hide timestamps",
+        "label-ms": "Display ms",
+        "label-ns": "Display ns",
         "milliseconds": "Show millisecond timestamps",
-        "nanoseconds": "Show nanosecond timestamps"
+        "nanoseconds": "Show nanosecond timestamps",
+        "tooltip": "Set timestamp format"
+      },
+      "tooltip": {
+        "disable-highlighting": "Disable highlighting",
+        "download": "Download",
+        "enable-highlighting": "Enable highlighting",
+        "filter-level": "Filter logs result by level"
       },
       "unwrap-lines": "Unwrap lines",
       "wrap-lines": "Wrap lines"
@@ -11213,15 +11250,15 @@
       "description-clear-repository-connection": "Add a clear name for this repository connection",
       "empty": "Empty",
       "error-field-required": "This field is required.",
-      "ext-storage": "External storage",
+      "external-storage-label": "External storage",
       "files-count_one": "{{count}} files",
       "files-count_other": "{{count}} files",
       "folders-count_one": "{{count}} folder",
       "folders-count_other": "{{count}} folder",
-      "grafana": "Grafana instance",
       "label-display-name": "Display name",
       "placeholder-my-repository-connection": "My repository connection",
-      "text-loading-resource-information": "Loading resource information..."
+      "text-loading-resource-information": "Loading resource information...",
+      "unmanaged-resources-label": "Unmanaged resources"
     },
     "check-repository": {
       "check": "Check"
@@ -11263,7 +11300,9 @@
     },
     "connect-repository-button": {
       "configure": "Configure",
-      "repository-limit-info-alert": "Repository limit reached ({{count}})"
+      "instance-fully-managed-tooltip": "Configuration is disabled because this instance is fully managed",
+      "repository-limit-reached-tooltip_one": "Repository limit reached {{count}}",
+      "repository-limit-reached-tooltip_other": "Repository limit reached {{count}}"
     },
     "delete-repository-button": {
       "button-delete": "Delete",
@@ -11644,6 +11683,7 @@
       "tooltip-unhealthy-repository": "Unable to pull an unhealthy repository"
     },
     "synchronize-step": {
+      "repository-unhealthy": "The repository cannot be synchronized. Cancel provisioning and try again once the issue has been resolved. See details below.",
       "synchronization-description": "Include commits for each historical value",
       "synchronization-options": "Synchronization options"
     },
@@ -11667,6 +11707,8 @@
       "alert-point-3": "The duration of this process depends on the number of resources involved.",
       "alert-point-4": "Enterprise instance administrators can display an announcement banner to users. See <2>this guide</2> for step-by-step instructions.",
       "alert-title": "Important: No data or configuration will be lost, but dashboards will be temporarily unavailable for a few minutes.",
+      "button-cancel": "Cancel",
+      "button-cancelling": "Cancelling...",
       "button-next": "Finish",
       "button-start": "Begin synchronization",
       "discard-modal": {

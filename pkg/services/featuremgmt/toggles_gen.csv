@@ -59,6 +59,7 @@ kubernetesSnapshots,experimental,@grafana/grafana-app-platform-squad,false,true,
 kubernetesLibraryPanels,experimental,@grafana/grafana-app-platform-squad,false,true,false
 kubernetesDashboards,GA,@grafana/dashboards-squad,false,false,true
 kubernetesShortURLs,experimental,@grafana/grafana-app-platform-squad,false,true,false
+kubernetesAlertingRules,experimental,@grafana/alerting-squad,false,true,false
 dashboardDisableSchemaValidationV1,experimental,@grafana/grafana-app-platform-squad,false,false,false
 dashboardDisableSchemaValidationV2,experimental,@grafana/grafana-app-platform-squad,false,false,false
 dashboardSchemaValidationLogging,experimental,@grafana/grafana-app-platform-squad,false,false,false
@@ -170,11 +171,12 @@ alertingAIFeedback,experimental,@grafana/alerting-squad,false,false,false
 alertingAIImproveAlertRules,experimental,@grafana/alerting-squad,false,false,false
 alertingAIGenTemplates,experimental,@grafana/alerting-squad,false,false,false
 alertingEnrichmentPerRule,experimental,@grafana/alerting-squad,false,false,false
+alertingEnrichmentAssistantInvestigations,experimental,@grafana/alerting-squad,false,false,false
 alertingAIAnalyzeCentralStateHistory,experimental,@grafana/alerting-squad,false,false,false
 alertingNotificationsStepMode,GA,@grafana/alerting-squad,false,false,true
 feedbackButton,experimental,@grafana/grafana-operator-experience-squad,false,false,false
 unifiedStorageSearchUI,experimental,@grafana/search-and-storage,false,false,false
-elasticsearchCrossClusterSearch,preview,@grafana/aws-datasources,false,false,false
+elasticsearchCrossClusterSearch,GA,@grafana/partner-datasources,false,false,false
 unifiedHistory,experimental,@grafana/grafana-frontend-platform,false,false,true
 lokiLabelNamesQueryApi,GA,@grafana/observability-logs,false,false,false
 investigationsBackend,experimental,@grafana/grafana-app-platform-squad,false,false,false
@@ -216,7 +218,6 @@ grafanaAssistantInProfilesDrilldown,GA,@grafana/observability-traces-and-profili
 postgresDSUsePGX,experimental,@grafana/oss-big-tent,false,false,false
 tempoAlerting,experimental,@grafana/observability-traces-and-profiling,false,false,true
 pluginsAutoUpdate,experimental,@grafana/plugins-platform-backend,false,false,false
-multiTenantFrontend,experimental,@grafana/grafana-frontend-platform,false,false,false
 alertingListViewV2PreviewToggle,privatePreview,@grafana/alerting-squad,false,false,true
 alertRuleUseFiredAtForStartsAt,experimental,@grafana/alerting-squad,false,false,false
 alertingBulkActionsInUI,GA,@grafana/alerting-squad,false,false,true
@@ -226,6 +227,8 @@ kubernetesAuthnMutation,experimental,@grafana/identity-access-team,false,false,f
 restoreDashboards,experimental,@grafana/grafana-frontend-platform,false,false,false
 skipTokenRotationIfRecent,GA,@grafana/identity-access-team,false,false,false
 alertEnrichment,experimental,@grafana/alerting-squad,false,false,false
+alertEnrichmentMultiStep,experimental,@grafana/alerting-squad,false,false,false
+alertEnrichmentConditional,experimental,@grafana/alerting-squad,false,false,false
 alertingImportAlertmanagerAPI,experimental,@grafana/alerting-squad,false,false,false
 alertingImportAlertmanagerUI,experimental,@grafana/alerting-squad,false,false,false
 sharingDashboardImage,experimental,@grafana/sharing-squad,false,false,true
@@ -247,9 +250,10 @@ adhocFiltersInTooltips,GA,@grafana/datapro,false,false,true
 favoriteDatasources,experimental,@grafana/plugins-platform-backend,false,false,true
 newLogContext,experimental,@grafana/observability-logs,false,false,true
 newClickhouseConfigPageDesign,privatePreview,@grafana/partner-datasources,false,false,false
-unifiedStorageSearchAfterWriteExperimentalAPI,experimental,@grafana/search-and-storage,false,true,false
 teamFolders,experimental,@grafana/grafana-search-navigate-organise,false,false,false
 alertingTriage,experimental,@grafana/alerting-squad,false,false,true
 graphiteBackendMode,privatePreview,@grafana/partner-datasources,false,false,false
 azureResourcePickerUpdates,preview,@grafana/partner-datasources,false,false,true
 prometheusTypeMigration,experimental,@grafana/partner-datasources,false,true,false
+dskitBackgroundServices,experimental,@grafana/plugins-platform-backend,false,true,false
+pluginContainers,privatePreview,@grafana/plugins-platform-backend,false,true,false

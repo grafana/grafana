@@ -500,6 +500,7 @@
       "copy-link": "Salin tautan",
       "duplicate": "Duplikasikan",
       "export": "Ekspor",
+      "manage-enrichments": "",
       "silence-notifications": "Senyapkan pemberitahuan",
       "with-modifications": "Dengan modifikasi"
     },
@@ -1115,7 +1116,8 @@
     },
     "enrichment": {
       "error-boundary": {
-        "notification-message-section-extension": ""
+        "enrichment-drawer-extension": "",
+        "rule-viewer-section-extension": ""
       }
     },
     "error-modal": {
@@ -2049,9 +2051,6 @@
       "text-loading-rules": "Memuat aturan...",
       "title-dashboard-not-saved": "Dasbor tidak disimpan"
     },
-    "paused-badge": {
-      "paused": "Dijeda"
-    },
     "payload-editor": {
       "edit-payload": "Edit payload",
       "label-add-custom-alert-instance": "Tambah instans peringatan kustom",
@@ -2201,9 +2200,6 @@
       "label-time-range": "Rentang Waktu",
       "max-data-points": "MD = {{maxDataPoints}}",
       "min-interval": "Min. Interval = {{minInterval}}"
-    },
-    "query-preview": {
-      "relative-time-range": "<0>{{from}}</0> hingga sekarang"
     },
     "queryAndExpressionsStep": {
       "disableAdvancedOptions": {
@@ -2545,6 +2541,10 @@
       "recording": "{{recordingStats}} perekaman",
       "recovering": "{{recoveringStats}} memulihkan",
       "error_other": "{{count}} kesalahan"
+    },
+    "rule-time-range-label": {
+      "relative": "",
+      "relative-with-to": ""
     },
     "rule-type-picker": {
       "grafana-managed": "Pilih &ldquo;dikelola Grafana&rdquo; kecuali Anda memiliki sumber data Mimir, Loki, atau Cortex yang mengaktifkan API Ruler."
@@ -3029,6 +3029,7 @@
       "page-nav": {
         "text": {
           "details": "Detail",
+          "enrichment": "",
           "history": "Sejarah",
           "instances": "Instans",
           "query-and-conditions": "Kueri dan syarat",
@@ -3642,7 +3643,10 @@
       "text": "Hasil untuk kueri Anda tidak ditemukan"
     },
     "restore": {
-      "success": "Dasbor {{name}} dipulihkan"
+      "success": "",
+      "all-failed_other": "",
+      "failed-count_other": "",
+      "success-count_other": ""
     },
     "text-this-repository-is-read-only": "Jika Anda memiliki akses langsung ke target, salin JSON dan tempel di sana.",
     "trash-state-manager": {
@@ -4663,6 +4667,7 @@
       "move": "Pindahkan {{typeName}}",
       "panel-background": "Ubah latar belakang panel",
       "panel-description": "Ubah deskripsi panel",
+      "panel-edit": "",
       "panel-max-repeats-per-row": "Pengulangan maksimum per baris",
       "panel-repeat-direction": "Ulangi arah",
       "panel-repeat-variable": "Panel diulang berdasarkan",
@@ -4917,12 +4922,11 @@
       "dataframe-aria-label": "Pilih dataframe",
       "dataframe-label": "Tampilkan bingkai data",
       "download-csv": "Unduh CSV",
-      "download-excel-description": "Menambahkan header ke CSV untuk digunakan dengan Excel",
-      "download-excel-label": "Unduh untuk Excel",
       "download-logs": "Unduh log",
       "download-service": "Unduh grafik layanan",
       "download-traces": "Unduh jejak",
-      "excel-header": "Header Excel",
+      "excel-compatibility-mode-description": "",
+      "excel-compatibility-mode-label": "",
       "formatted": "Data yang diformat",
       "formatted-data-description": "Data tabel diformat dengan opsi yang ditentukan di tab Bidang dan Timpa.",
       "formatted-data-label": "Data yang diformat",
@@ -11179,11 +11183,11 @@
       "description-clear-repository-connection": "Tambahkan nama yang jelas untuk koneksi repositori ini",
       "empty": "Kosong",
       "error-field-required": "Bidang ini wajib diisi.",
-      "ext-storage": "Penyimpanan eksternal",
-      "grafana": "Instans Grafana",
+      "external-storage-label": "",
       "label-display-name": "Nama tampilan",
       "placeholder-my-repository-connection": "Koneksi repositori saya",
       "text-loading-resource-information": "Memuat informasi sumber daya...",
+      "unmanaged-resources-label": "",
       "dashboards-count_other": "{{count}} dasbor",
       "files-count_other": "{{count}} file",
       "folders-count_other": "{{count}} folder"
@@ -11228,7 +11232,8 @@
     },
     "connect-repository-button": {
       "configure": "Konfigurasikan",
-      "repository-limit-info-alert": "Batas repositori tercapai ({{count}})"
+      "instance-fully-managed-tooltip": "",
+      "repository-limit-reached-tooltip_other": ""
     },
     "delete-repository-button": {
       "button-delete": "Hapus",
@@ -11609,6 +11614,7 @@
       "tooltip-unhealthy-repository": "Tidak dapat menerapkan pull pada repositori yang tidak sehat"
     },
     "synchronize-step": {
+      "repository-unhealthy": "",
       "synchronization-description": "Sertakan commit untuk setiap nilai historis",
       "synchronization-options": "Opsi sinkronisasi"
     },
@@ -11632,6 +11638,8 @@
       "alert-point-3": "Durasi proses ini bergantung pada jumlah sumber daya yang terlibat.",
       "alert-point-4": "Administrator instans Enterprise dapat menampilkan banner pengumuman kepada pengguna. Lihat <2>panduan ini</2> untuk petunjuk langkah demi langkah.",
       "alert-title": "Penting: Tidak ada data atau konfigurasi yang akan hilang, tetapi dasbor tidak akan tersedia sementara selama beberapa menit.",
+      "button-cancel": "",
+      "button-cancelling": "",
       "button-next": "Selesai",
       "button-start": "Mulai sinkronisasi",
       "discard-modal": {
@@ -11919,13 +11927,6 @@
       "no-deleted-dashboards": "Anda belum menghapus dasbor baru-baru ini.",
       "no-deleted-dashboards-text": "Saat Anda menghapus dasbor, dasbor akan muncul di sini selama 30 hari sebelum dihapus secara permanen. Administrator organisasi Anda dapat memulihkan dasbor yang baru saja dihapus.",
       "no-search-result": "Hasil untuk kueri Anda tidak ditemukan"
-    },
-    "permanently-delete-modal": {
-      "confirm-text": "Hapus",
-      "delete-button": "Hapus",
-      "delete-loading": "Menghapus...",
-      "title": "Hapus Dasbor Secara Permanen",
-      "text_other": "Tindakan ini akan menghapus {{numberOfDashboards}} dasbor."
     },
     "restore-modal": {
       "restore-button": "Pulihkan",

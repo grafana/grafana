@@ -500,6 +500,7 @@
       "copy-link": "复制链接",
       "duplicate": "复制",
       "export": "导出",
+      "manage-enrichments": "",
       "silence-notifications": "静默通知",
       "with-modifications": "含修改"
     },
@@ -1115,7 +1116,8 @@
     },
     "enrichment": {
       "error-boundary": {
-        "notification-message-section-extension": ""
+        "enrichment-drawer-extension": "",
+        "rule-viewer-section-extension": ""
       }
     },
     "error-modal": {
@@ -2049,9 +2051,6 @@
       "text-loading-rules": "正在加载规则...",
       "title-dashboard-not-saved": "数据面板未保存"
     },
-    "paused-badge": {
-      "paused": "已暂停"
-    },
     "payload-editor": {
       "edit-payload": "编辑负载",
       "label-add-custom-alert-instance": "添加自定义警报实例",
@@ -2201,9 +2200,6 @@
       "label-time-range": "时间范围",
       "max-data-points": "MD = {{maxDataPoints}}",
       "min-interval": "最小间隔 = {{minInterval}}"
-    },
-    "query-preview": {
-      "relative-time-range": "<0>{{from}}</0>至现在"
     },
     "queryAndExpressionsStep": {
       "disableAdvancedOptions": {
@@ -2545,6 +2541,10 @@
       "recording": "{{recordingStats}} 正在录制",
       "recovering": "{{recoveringStats}}正在恢复",
       "error_other": "{{count}} 个错误"
+    },
+    "rule-time-range-label": {
+      "relative": "",
+      "relative-with-to": ""
     },
     "rule-type-picker": {
       "grafana-managed": "选择“Grafana 托管”，除非您有启用了 Ruler API 的 Mimir、Loki 或 Cortex 数据源。"
@@ -3029,6 +3029,7 @@
       "page-nav": {
         "text": {
           "details": "详情",
+          "enrichment": "",
           "history": "历史记录",
           "instances": "实例",
           "query-and-conditions": "查询和条件",
@@ -3642,7 +3643,10 @@
       "text": "未找到与您的查询相关的结果"
     },
     "restore": {
-      "success": "数据面板 {{name}} 已恢复"
+      "success": "",
+      "all-failed_other": "",
+      "failed-count_other": "",
+      "success-count_other": ""
     },
     "text-this-repository-is-read-only": "如果您可以直接访问目标，请复制 JSON 并将其粘贴到那里。",
     "trash-state-manager": {
@@ -4663,6 +4667,7 @@
       "move": "移动{{typeName}}",
       "panel-background": "更改面板背景",
       "panel-description": "更改面板描述",
+      "panel-edit": "",
       "panel-max-repeats-per-row": "每行最大重复次数",
       "panel-repeat-direction": "重复方向",
       "panel-repeat-variable": "面板重复方式",
@@ -4917,12 +4922,11 @@
       "dataframe-aria-label": "选择 dataframe",
       "dataframe-label": "显示数据框",
       "download-csv": "下载 CSV",
-      "download-excel-description": "向 CSV 中添加页眉，以便在 Excel 中使用",
-      "download-excel-label": "下载 Excel 版本",
       "download-logs": "下载日志",
       "download-service": "下载服务图表",
       "download-traces": "下载跟踪",
-      "excel-header": "Excel 页眉",
+      "excel-compatibility-mode-description": "",
+      "excel-compatibility-mode-label": "",
       "formatted": "格式化数据",
       "formatted-data-description": "按照\"字段\"和\"覆盖\"选项卡中定义的选项将表格数据格式化。",
       "formatted-data-label": "格式化数据",
@@ -11179,11 +11183,11 @@
       "description-clear-repository-connection": "为此存储库连接添加明确的名称",
       "empty": "空",
       "error-field-required": "此字段是必填字段。",
-      "ext-storage": "外部存储",
-      "grafana": "Grafana 实例",
+      "external-storage-label": "",
       "label-display-name": "显示名称",
       "placeholder-my-repository-connection": "我的存储库连接",
       "text-loading-resource-information": "正在加载资源信息...",
+      "unmanaged-resources-label": "",
       "dashboards-count_other": "{{count}} 个数据面板",
       "files-count_other": "{{count}} 个文件",
       "folders-count_other": "{{count}} 个文件夹"
@@ -11228,7 +11232,8 @@
     },
     "connect-repository-button": {
       "configure": "配置",
-      "repository-limit-info-alert": "已达到存储库限制 ({{count}})"
+      "instance-fully-managed-tooltip": "",
+      "repository-limit-reached-tooltip_other": ""
     },
     "delete-repository-button": {
       "button-delete": "删除",
@@ -11609,6 +11614,7 @@
       "tooltip-unhealthy-repository": "无法拉取状态不良的存储库"
     },
     "synchronize-step": {
+      "repository-unhealthy": "",
       "synchronization-description": "包括每个历史值的提交",
       "synchronization-options": "同步选项"
     },
@@ -11632,6 +11638,8 @@
       "alert-point-3": "此过程的持续时间取决于所涉及资源的数量。",
       "alert-point-4": "企业实例管理员可以向用户显示公告横幅。有关分步说明，请参阅<2>本指南</2>。",
       "alert-title": "重要提示：数据或配置不会丢失，但数据面板将在几分钟内暂时不可用。",
+      "button-cancel": "",
+      "button-cancelling": "",
       "button-next": "完成",
       "button-start": "开始同步",
       "discard-modal": {
@@ -11919,13 +11927,6 @@
       "no-deleted-dashboards": "您最近没有删除任何数据面板。",
       "no-deleted-dashboards-text": "当您删除数据面板时，它将在此处显示 30 天，然后会被永久删除。您的组织管理员可以还原最近删除的数据面板。",
       "no-search-result": "未找到与您的查询相关的结果"
-    },
-    "permanently-delete-modal": {
-      "confirm-text": "删除",
-      "delete-button": "删除",
-      "delete-loading": "正在删除...",
-      "title": "永久删除数据面板",
-      "text_other": "此操作将删除 {{numberOfDashboards}} 个数据面板。"
     },
     "restore-modal": {
       "restore-button": "还原",

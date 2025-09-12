@@ -504,6 +504,7 @@
       "copy-link": "Link kopiëren",
       "duplicate": "Dupliceren",
       "export": "Exporteren",
+      "manage-enrichments": "",
       "silence-notifications": "Stiltemeldingen",
       "with-modifications": "Met wijzigingen"
     },
@@ -1121,7 +1122,8 @@
     },
     "enrichment": {
       "error-boundary": {
-        "notification-message-section-extension": ""
+        "enrichment-drawer-extension": "",
+        "rule-viewer-section-extension": ""
       }
     },
     "error-modal": {
@@ -2056,9 +2058,6 @@
       "text-loading-rules": "Regels laden...",
       "title-dashboard-not-saved": "Dashboard is niet opgeslagen"
     },
-    "paused-badge": {
-      "paused": "Gepauzeerd"
-    },
     "payload-editor": {
       "edit-payload": "Payload bewerken",
       "label-add-custom-alert-instance": "Aangepaste waarschuwingsinstantie toevoegen",
@@ -2210,9 +2209,6 @@
       "label-time-range": "Tijdbereik",
       "max-data-points": "MD = {{maxDataPoints}}",
       "min-interval": "Min. Interval = {{minInterval}}"
-    },
-    "query-preview": {
-      "relative-time-range": "<0>{{from}}</0> tot nu"
     },
     "queryAndExpressionsStep": {
       "disableAdvancedOptions": {
@@ -2558,6 +2554,10 @@
       "recovering": "{{recoveringStats}} worden hersteld",
       "error_one": "{{count}} fouten",
       "error_other": "{{count}} fouten"
+    },
+    "rule-time-range-label": {
+      "relative": "",
+      "relative-with-to": ""
     },
     "rule-type-picker": {
       "grafana-managed": "Selecteer 'Grafana beheerd', tenzij je een Mimir-, Loki- of Cortex-gegevensbron hebt met de Ruler-API ingeschakeld."
@@ -3042,6 +3042,7 @@
       "page-nav": {
         "text": {
           "details": "Details",
+          "enrichment": "",
           "history": "Geschiedenis",
           "instances": "Instanties",
           "query-and-conditions": "Query en voorwaarden",
@@ -3660,7 +3661,13 @@
       "text": "Geen resultaten gevonden voor je zoekopdracht"
     },
     "restore": {
-      "success": " {{name}} dashboard is hersteld"
+      "success": "",
+      "all-failed_one": "",
+      "all-failed_other": "",
+      "failed-count_one": "",
+      "failed-count_other": "",
+      "success-count_one": "",
+      "success-count_other": ""
     },
     "text-this-repository-is-read-only": "Als je directe toegang hebt tot het doel, kopieer je de JSON en plak je deze daar.",
     "trash-state-manager": {
@@ -4681,6 +4688,7 @@
       "move": "{{typeName}} verplaatsen ",
       "panel-background": "Paneelachtergrond wijzigen",
       "panel-description": "Paneelbeschrijving wijzigen",
+      "panel-edit": "",
       "panel-max-repeats-per-row": "Max herhalingen per rij",
       "panel-repeat-direction": "Herhaalrichting",
       "panel-repeat-variable": "Paneel herhalen op",
@@ -4935,12 +4943,11 @@
       "dataframe-aria-label": "Gegevensframe selecteren",
       "dataframe-label": "Gegevensframe weergeven",
       "download-csv": "Csv uploaden",
-      "download-excel-description": "Voegt koptekst toe aan csv voor gebruik met Excel",
-      "download-excel-label": "Downloaden voor Excel",
       "download-logs": "Logs downloaden",
       "download-service": "Servicegrafiek downloaden",
       "download-traces": "Sporen downloaden",
-      "excel-header": "Excel-koptekst",
+      "excel-compatibility-mode-description": "",
+      "excel-compatibility-mode-label": "",
       "formatted": "Opgemaakte gegevens",
       "formatted-data-description": "Tabelgegevens worden opgemaakt met opties die zijn gedefinieerd in de tabbladen Veld en Overschrijven.",
       "formatted-data-label": "Opgemaakte gegevens",
@@ -11211,11 +11218,11 @@
       "description-clear-repository-connection": "Voeg een duidelijke naam toe voor deze repository-verbinding",
       "empty": "Leeg",
       "error-field-required": "Dit veld is verplicht.",
-      "ext-storage": "Externe opslag",
-      "grafana": "Grafana-instantie",
+      "external-storage-label": "",
       "label-display-name": "Weergavenaam",
       "placeholder-my-repository-connection": "Mijn repository-verbinding",
       "text-loading-resource-information": "Broninformatie laden...",
+      "unmanaged-resources-label": "",
       "dashboards-count_one": "{{count}} dashboard",
       "dashboards-count_other": "{{count}} dashboard",
       "files-count_one": "{{count}} bestanden",
@@ -11263,7 +11270,9 @@
     },
     "connect-repository-button": {
       "configure": "Configureren",
-      "repository-limit-info-alert": "Limiet van repository bereikt ({{count}})"
+      "instance-fully-managed-tooltip": "",
+      "repository-limit-reached-tooltip_one": "",
+      "repository-limit-reached-tooltip_other": ""
     },
     "delete-repository-button": {
       "button-delete": "Verwijderen",
@@ -11644,6 +11653,7 @@
       "tooltip-unhealthy-repository": "Kan geen ongezonde repository ophalen"
     },
     "synchronize-step": {
+      "repository-unhealthy": "",
       "synchronization-description": "Commits opnemen voor elke historische waarde",
       "synchronization-options": "Synchronisatie-opties"
     },
@@ -11667,6 +11677,8 @@
       "alert-point-3": "De duur van dit proces is afhankelijk van het aantal betrokken bronnen.",
       "alert-point-4": "Enterprise-instantiebeheerders kunnen een aankondigingsbanner weergeven aan gebruikers. Zie <2>deze handleiding</2> voor stapsgewijze instructies.",
       "alert-title": "Belangrijk: er zullen geen gegevens of configuratie verloren gaan, maar dashboards zullen tijdelijk een paar minuten niet beschikbaar zijn.",
+      "button-cancel": "",
+      "button-cancelling": "",
       "button-next": "Voltooien",
       "button-start": "Synchronisatie starten",
       "discard-modal": {
@@ -11955,14 +11967,6 @@
       "no-deleted-dashboards": "Je hebt onlangs geen dashboards verwijderd.",
       "no-deleted-dashboards-text": "Wanneer je een dashboard verwijdert, wordt dit hier 30 dagen weergegeven voordat het definitief wordt verwijderd. Je organisatiebeheerder kan recent verwijderde dashboards herstellen.",
       "no-search-result": "Geen resultaten gevonden voor je zoekopdracht"
-    },
-    "permanently-delete-modal": {
-      "confirm-text": "Verwijderen",
-      "delete-button": "Verwijderen",
-      "delete-loading": "Bezig met verwijderen ...",
-      "title": "Dashboards permanent verwijderen",
-      "text_one": "Met deze actie worden {{numberOfDashboards}} dashboards verwijderd.",
-      "text_other": "Met deze actie worden {{numberOfDashboards}} dashboards verwijderd."
     },
     "restore-modal": {
       "restore-button": "Herstellen",

@@ -512,6 +512,7 @@
       "copy-link": "Копировать ссылку",
       "duplicate": "Дублировать",
       "export": "Экспорт",
+      "manage-enrichments": "",
       "silence-notifications": "Отключить звук уведомлений",
       "with-modifications": "С изменениями"
     },
@@ -1133,7 +1134,8 @@
     },
     "enrichment": {
       "error-boundary": {
-        "notification-message-section-extension": ""
+        "enrichment-drawer-extension": "",
+        "rule-viewer-section-extension": ""
       }
     },
     "error-modal": {
@@ -2070,9 +2072,6 @@
       "text-loading-rules": "Загрузка правил...",
       "title-dashboard-not-saved": "Дашборд не сохранен"
     },
-    "paused-badge": {
-      "paused": "Приостановлено"
-    },
     "payload-editor": {
       "edit-payload": "Редактировать полезные данные",
       "label-add-custom-alert-instance": "Добавить экземпляр пользовательского оповещения",
@@ -2228,9 +2227,6 @@
       "label-time-range": "Временной диапазон",
       "max-data-points": "MD = {{maxDataPoints}}",
       "min-interval": "Мин. интервал = {{minInterval}}"
-    },
-    "query-preview": {
-      "relative-time-range": "С <0>{{from}}</0> до текущего момента"
     },
     "queryAndExpressionsStep": {
       "disableAdvancedOptions": {
@@ -2584,6 +2580,10 @@
       "error_few": "{{count}} ошибки",
       "error_many": "{{count}} ошибок",
       "error_other": "{{count}} ошибок"
+    },
+    "rule-time-range-label": {
+      "relative": "",
+      "relative-with-to": ""
     },
     "rule-type-picker": {
       "grafana-managed": "Выберите «Управляемые Grafana», если у вас нет источника данных Mimir, Loki или Cortex с включенным Ruler API."
@@ -3068,6 +3068,7 @@
       "page-nav": {
         "text": {
           "details": "Подробности",
+          "enrichment": "",
           "history": "История",
           "instances": "Экземпляры",
           "query-and-conditions": "Запрос и условия",
@@ -3696,7 +3697,19 @@
       "text": "По вашему запросу ничего не найдено"
     },
     "restore": {
-      "success": "Дашборд {{name}} восстановлен"
+      "success": "",
+      "all-failed_one": "",
+      "all-failed_few": "",
+      "all-failed_many": "",
+      "all-failed_other": "",
+      "failed-count_one": "",
+      "failed-count_few": "",
+      "failed-count_many": "",
+      "failed-count_other": "",
+      "success-count_one": "",
+      "success-count_few": "",
+      "success-count_many": "",
+      "success-count_other": ""
     },
     "text-this-repository-is-read-only": "Если у вас есть прямой доступ к целевому объекту, скопируйте JSON-файл и вставьте его туда.",
     "trash-state-manager": {
@@ -4717,6 +4730,7 @@
       "move": "Переместить {{typeName}}",
       "panel-background": "Изменить фон панели",
       "panel-description": "Изменить описание панели",
+      "panel-edit": "",
       "panel-max-repeats-per-row": "Макс. повторений на строку",
       "panel-repeat-direction": "Повторение направления",
       "panel-repeat-variable": "Повторение панели по",
@@ -4971,12 +4985,11 @@
       "dataframe-aria-label": "Выбрать фрейм данных",
       "dataframe-label": "Показать фрейм данных",
       "download-csv": "Загрузить CSV",
-      "download-excel-description": "Добавляет заголовок в CSV для использования в Excel",
-      "download-excel-label": "Загрузить для Excel",
       "download-logs": "Загрузить журналы",
       "download-service": "Загрузить граф сервиса",
       "download-traces": "Загрузить трассировки",
-      "excel-header": "Заголовок Excel",
+      "excel-compatibility-mode-description": "",
+      "excel-compatibility-mode-label": "",
       "formatted": "Форматированные данные",
       "formatted-data-description": "Данные таблицы форматируются с помощью параметров, заданных на вкладках «Поле» и «Переопределение».",
       "formatted-data-label": "Форматированные данные",
@@ -11275,11 +11288,11 @@
       "description-clear-repository-connection": "Добавьте понятное имя для этого подключения к репозиторию.",
       "empty": "Пусто",
       "error-field-required": "Поле является обязательным.",
-      "ext-storage": "Внешнее хранилище",
-      "grafana": "Экземпляр Grafana",
+      "external-storage-label": "",
       "label-display-name": "Отображаемое имя",
       "placeholder-my-repository-connection": "Мое подключение к репозиторию",
       "text-loading-resource-information": "Загрузка информации о ресурсе...",
+      "unmanaged-resources-label": "",
       "dashboards-count_one": "{{count}} дашборд",
       "dashboards-count_few": "{{count}} дашборда",
       "dashboards-count_many": "{{count}} дашбордов",
@@ -11333,7 +11346,11 @@
     },
     "connect-repository-button": {
       "configure": "Настроить",
-      "repository-limit-info-alert": "Достигнут лимит репозитория ({{count}})"
+      "instance-fully-managed-tooltip": "",
+      "repository-limit-reached-tooltip_one": "",
+      "repository-limit-reached-tooltip_few": "",
+      "repository-limit-reached-tooltip_many": "",
+      "repository-limit-reached-tooltip_other": ""
     },
     "delete-repository-button": {
       "button-delete": "Удалить",
@@ -11714,6 +11731,7 @@
       "tooltip-unhealthy-repository": "Невозможно внести изменения в неисправный репозиторий"
     },
     "synchronize-step": {
+      "repository-unhealthy": "",
       "synchronization-description": "Включить фиксации для каждого ранее зафиксированного значения",
       "synchronization-options": "Параметры синхронизации"
     },
@@ -11737,6 +11755,8 @@
       "alert-point-3": "Длительность процесса зависит от количества задействованных ресурсов.",
       "alert-point-4": "Администраторы экземпляров Enterprise могут показывать пользователям баннер с объявлением. Пошаговые инструкции см. в <2>руководстве</2>.",
       "alert-title": "Важно. Данные и конфигурация не будут потеряны, однако дашборды будут недоступны в течение нескольких минут.",
+      "button-cancel": "",
+      "button-cancelling": "",
       "button-next": "Готово",
       "button-start": "Начать синхронизацию",
       "discard-modal": {
@@ -12027,16 +12047,6 @@
       "no-deleted-dashboards": "В последнее время вы не удаляли ни одного дашборда.",
       "no-deleted-dashboards-text": "Удаленные дашборды отображаются здесь в течение 30 дней, после чего удаляются без возможности восстановления. Администратор вашей организации может восстановить недавно удаленные дашборды.",
       "no-search-result": "По вашему запросу ничего не найдено"
-    },
-    "permanently-delete-modal": {
-      "confirm-text": "Удалить",
-      "delete-button": "Удалить",
-      "delete-loading": "Удаление...",
-      "title": "Удаление дашбордов без возможности восстановления",
-      "text_one": "Это действие приведет к удалению {{numberOfDashboards}} дашборда.",
-      "text_few": "Это действие приведет к удалению {{numberOfDashboards}} дашбордов.",
-      "text_many": "Это действие приведет к удалению {{numberOfDashboards}} дашбордов.",
-      "text_other": "Это действие приведет к удалению {{numberOfDashboards}} дашборда."
     },
     "restore-modal": {
       "restore-button": "Восстановить",

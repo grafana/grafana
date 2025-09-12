@@ -504,6 +504,7 @@
       "copy-link": "Copiar link",
       "duplicate": "Duplicar",
       "export": "Exportar",
+      "manage-enrichments": "",
       "silence-notifications": "Silenciar notificações",
       "with-modifications": "Com modificações"
     },
@@ -1121,7 +1122,8 @@
     },
     "enrichment": {
       "error-boundary": {
-        "notification-message-section-extension": ""
+        "enrichment-drawer-extension": "",
+        "rule-viewer-section-extension": ""
       }
     },
     "error-modal": {
@@ -2056,9 +2058,6 @@
       "text-loading-rules": "A carregar regras...",
       "title-dashboard-not-saved": "Painel de controlo não guardado"
     },
-    "paused-badge": {
-      "paused": "Em pausa"
-    },
     "payload-editor": {
       "edit-payload": "Editar carga útil",
       "label-add-custom-alert-instance": "Adicionar instância de alerta personalizado",
@@ -2210,9 +2209,6 @@
       "label-time-range": "Intervalo de tempo",
       "max-data-points": "MD = {{maxDataPoints}}",
       "min-interval": "Min. Intervalo = {{minInterval}}"
-    },
-    "query-preview": {
-      "relative-time-range": "<0>{{from}}</0> até agora"
     },
     "queryAndExpressionsStep": {
       "disableAdvancedOptions": {
@@ -2558,6 +2554,10 @@
       "recovering": "{{recoveringStats}} em recuperação",
       "error_one": "{{count}} erros",
       "error_other": "{{count}} erros"
+    },
+    "rule-time-range-label": {
+      "relative": "",
+      "relative-with-to": ""
     },
     "rule-type-picker": {
       "grafana-managed": "Selecione \"Gerido pela Grafana\", a menos que tenha uma origem de dados Mimir, Loki ou Cortex com a Ruler API ativada."
@@ -3042,6 +3042,7 @@
       "page-nav": {
         "text": {
           "details": "Detalhes",
+          "enrichment": "",
           "history": "Histórico",
           "instances": "Instâncias",
           "query-and-conditions": "Consulta e condições",
@@ -3660,7 +3661,13 @@
       "text": "Não foram encontrados resultados para a sua consulta"
     },
     "restore": {
-      "success": "Painel de controlo {{name}} restaurado"
+      "success": "",
+      "all-failed_one": "",
+      "all-failed_other": "",
+      "failed-count_one": "",
+      "failed-count_other": "",
+      "success-count_one": "",
+      "success-count_other": ""
     },
     "text-this-repository-is-read-only": "Se tiver acesso direto ao destino, copie o JSON e cole-o lá.",
     "trash-state-manager": {
@@ -4681,6 +4688,7 @@
       "move": "Mover {{typeName}}",
       "panel-background": "Alterar fundo do painel",
       "panel-description": "Alterar descrição do painel",
+      "panel-edit": "",
       "panel-max-repeats-per-row": "Máx. de repetições por linha",
       "panel-repeat-direction": "Repetir direção",
       "panel-repeat-variable": "Repetição do painel por",
@@ -4935,12 +4943,11 @@
       "dataframe-aria-label": "Selecionar estrutura de dados",
       "dataframe-label": "Mostrar estrutura de dados",
       "download-csv": "Transferir CSV",
-      "download-excel-description": "Adiciona um cabeçalho ao CSV para utilizar com o Excel",
-      "download-excel-label": "Transferir para Excel",
       "download-logs": "Transferir registos",
       "download-service": "Transferir gráfico de serviço",
       "download-traces": "Transferir Traces",
-      "excel-header": "Cabeçalho do Excel",
+      "excel-compatibility-mode-description": "",
+      "excel-compatibility-mode-label": "",
       "formatted": "Dados formatados",
       "formatted-data-description": "Os dados da tabela são formatados com opções definidas nos separadores Campo e Substituir.",
       "formatted-data-label": "Dados formatados",
@@ -11211,11 +11218,11 @@
       "description-clear-repository-connection": "Adicione um nome claro para esta ligação de repositório",
       "empty": "Esvaziar",
       "error-field-required": "Este campo é obrigatório.",
-      "ext-storage": "Armazenamento externo",
-      "grafana": "Instância Grafana",
+      "external-storage-label": "",
       "label-display-name": "Nome do visor",
       "placeholder-my-repository-connection": "A minha ligação de repositório",
       "text-loading-resource-information": "A carregar informações de recursos...",
+      "unmanaged-resources-label": "",
       "dashboards-count_one": "{{count}} painéis de controlo",
       "dashboards-count_other": "{{count}} painéis de controlo",
       "files-count_one": "{{count}} ficheiro",
@@ -11263,7 +11270,9 @@
     },
     "connect-repository-button": {
       "configure": "Configurar",
-      "repository-limit-info-alert": "Limite do repositório atingido ({{count}})"
+      "instance-fully-managed-tooltip": "",
+      "repository-limit-reached-tooltip_one": "",
+      "repository-limit-reached-tooltip_other": ""
     },
     "delete-repository-button": {
       "button-delete": "Eliminar",
@@ -11644,6 +11653,7 @@
       "tooltip-unhealthy-repository": "Não foi possível obter um repositório que não está em bom estado"
     },
     "synchronize-step": {
+      "repository-unhealthy": "",
       "synchronization-description": "Incluir commits para cada valor histórico",
       "synchronization-options": "Opções de sincronização"
     },
@@ -11667,6 +11677,8 @@
       "alert-point-3": "A duração deste processo depende do número de recursos envolvidos.",
       "alert-point-4": "Os administradores de instâncias empresariais podem exibir um banner de anúncio aos utilizadores. Consulte <2>este guia</2> para obter instruções passo a passo.",
       "alert-title": "Importante: não serão perdidos dados ou configurações, mas os painéis de controlo ficarão temporariamente indisponíveis durante alguns minutos.",
+      "button-cancel": "",
+      "button-cancelling": "",
       "button-next": "Concluir",
       "button-start": "Iniciar sincronização",
       "discard-modal": {
@@ -11955,14 +11967,6 @@
       "no-deleted-dashboards": "Não eliminou quaisquer painéis de controlo recentemente.",
       "no-deleted-dashboards-text": "Quando elimina um painel de controlo, este aparecerá aqui durante 30 dias antes de ser eliminado permanentemente. O administrador da sua organização pode restaurar painéis de controlo eliminados recentemente.",
       "no-search-result": "Não foram encontrados resultados para a sua consulta"
-    },
-    "permanently-delete-modal": {
-      "confirm-text": "Eliminar",
-      "delete-button": "Eliminar",
-      "delete-loading": "A eliminar...",
-      "title": "Eliminar permanentemente painéis de controlo",
-      "text_one": "Esta ação irá eliminar {{numberOfDashboards}} painéis de controlo.",
-      "text_other": "Esta ação irá eliminar {{numberOfDashboards}} painéis de controlo."
     },
     "restore-modal": {
       "restore-button": "Restaurar",

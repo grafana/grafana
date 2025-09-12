@@ -504,6 +504,7 @@
       "copy-link": "Copia link",
       "duplicate": "Duplica",
       "export": "Esporta",
+      "manage-enrichments": "",
       "silence-notifications": "Silenzia notifiche",
       "with-modifications": "Con modifiche"
     },
@@ -1121,7 +1122,8 @@
     },
     "enrichment": {
       "error-boundary": {
-        "notification-message-section-extension": ""
+        "enrichment-drawer-extension": "",
+        "rule-viewer-section-extension": ""
       }
     },
     "error-modal": {
@@ -2056,9 +2058,6 @@
       "text-loading-rules": "Caricamento regole in corso...",
       "title-dashboard-not-saved": "La dashboard non è stata salvata"
     },
-    "paused-badge": {
-      "paused": "In pausa"
-    },
     "payload-editor": {
       "edit-payload": "Modifica carico utile",
       "label-add-custom-alert-instance": "Aggiungi istanza di avviso personalizzata",
@@ -2210,9 +2209,6 @@
       "label-time-range": "Intervallo orario",
       "max-data-points": "MD = {{maxDataPoints}}",
       "min-interval": "Min Intervallo = {{minInterval}}"
-    },
-    "query-preview": {
-      "relative-time-range": "<0>{{from}}</0> a ora"
     },
     "queryAndExpressionsStep": {
       "disableAdvancedOptions": {
@@ -2558,6 +2554,10 @@
       "recovering": "{{recoveringStats}} in fase di recupero",
       "error_one": "{{count}} errori",
       "error_other": "{{count}} errori"
+    },
+    "rule-time-range-label": {
+      "relative": "",
+      "relative-with-to": ""
     },
     "rule-type-picker": {
       "grafana-managed": "Seleziona \"Gestito da Grafana\" a meno che tu non disponga di un'origine dei dati Mimir, Loki o Cortex con l'API Ruler abilitata."
@@ -3042,6 +3042,7 @@
       "page-nav": {
         "text": {
           "details": "Dettagli",
+          "enrichment": "",
           "history": "Cronologia",
           "instances": "Istanze",
           "query-and-conditions": "Query e condizioni",
@@ -3660,7 +3661,13 @@
       "text": "Nessun risultato trovato per la ricerca"
     },
     "restore": {
-      "success": "Dashboard {{name}} ripristinata"
+      "success": "",
+      "all-failed_one": "",
+      "all-failed_other": "",
+      "failed-count_one": "",
+      "failed-count_other": "",
+      "success-count_one": "",
+      "success-count_other": ""
     },
     "text-this-repository-is-read-only": "Se hai accesso diretto alla destinazione, copia il file JSON e incollalo lì.",
     "trash-state-manager": {
@@ -4681,6 +4688,7 @@
       "move": "Sposta {{typeName}}",
       "panel-background": "Modifica lo sfondo del pannello",
       "panel-description": "Modifica la descrizione del pannello",
+      "panel-edit": "",
       "panel-max-repeats-per-row": "Ripetizioni massime per riga",
       "panel-repeat-direction": "Ripeti la direzione",
       "panel-repeat-variable": "Ripetizione del pannello per",
@@ -4935,12 +4943,11 @@
       "dataframe-aria-label": "Seleziona dataframe",
       "dataframe-label": "Mostra dataframe",
       "download-csv": "Scarica CSV",
-      "download-excel-description": "Aggiunge l'intestazione al CSV per l'utilizzo con Excel",
-      "download-excel-label": "Scarica per Excel",
       "download-logs": "Scarica i registri",
       "download-service": "Scarica il grafico del servizio",
       "download-traces": "Scarica le tracce",
-      "excel-header": "Intestazione Excel",
+      "excel-compatibility-mode-description": "",
+      "excel-compatibility-mode-label": "",
       "formatted": "Dati formattati",
       "formatted-data-description": "I dati della tabella sono formattati con le opzioni definite nelle schede Campo e Sovrascrivi.",
       "formatted-data-label": "Dati formattati",
@@ -11211,11 +11218,11 @@
       "description-clear-repository-connection": "Aggiungi un nome semplice per questa connessione al repository",
       "empty": "Vuoto",
       "error-field-required": "Questo campo è obbligatorio.",
-      "ext-storage": "Memoria esterna ",
-      "grafana": "Istanza Grafana",
+      "external-storage-label": "",
       "label-display-name": "Nome visualizzato",
       "placeholder-my-repository-connection": "La mia connessione al repository",
       "text-loading-resource-information": "Caricamento delle informazioni sulle risorse in corso...",
+      "unmanaged-resources-label": "",
       "dashboards-count_one": "{{count}} dashboard",
       "dashboards-count_other": "{{count}} dashboard",
       "files-count_one": "{{count}} file",
@@ -11263,7 +11270,9 @@
     },
     "connect-repository-button": {
       "configure": "Configura",
-      "repository-limit-info-alert": "Limite del repository raggiunto ({{count}})"
+      "instance-fully-managed-tooltip": "",
+      "repository-limit-reached-tooltip_one": "",
+      "repository-limit-reached-tooltip_other": ""
     },
     "delete-repository-button": {
       "button-delete": "Elimina",
@@ -11644,6 +11653,7 @@
       "tooltip-unhealthy-repository": "Impossibile eseguire il pull di un repository non integro"
     },
     "synchronize-step": {
+      "repository-unhealthy": "",
       "synchronization-description": "Includi commit per ogni valore storico",
       "synchronization-options": "Opzioni di sincronizzazione"
     },
@@ -11667,6 +11677,8 @@
       "alert-point-3": "La durata di questo processo dipende dal numero di risorse coinvolte.",
       "alert-point-4": "Gli amministratori dell'istanza aziendale possono mostrare un banner di annuncio agli utenti. Consulta <2>questa guida</2> per istruzioni dettagliate.",
       "alert-title": "Importante: nessun dato o configurazione andrà perso, ma le dashboard non saranno disponibili per alcuni minuti.",
+      "button-cancel": "",
+      "button-cancelling": "",
       "button-next": "Fine",
       "button-start": "Inizia la sincronizzazione",
       "discard-modal": {
@@ -11955,14 +11967,6 @@
       "no-deleted-dashboards": "Non hai eliminato nessun dashboard di recente.",
       "no-deleted-dashboards-text": "Quando elimini un dashboard, questo verrà visualizzato qui per 30 giorni prima di essere eliminato definitivamente. L'amministratore dell'organizzazione può ripristinare i dashboard eliminati di recente.",
       "no-search-result": "Nessun risultato trovato per la ricerca"
-    },
-    "permanently-delete-modal": {
-      "confirm-text": "Elimina",
-      "delete-button": "Elimina",
-      "delete-loading": "Eliminazione in corso...",
-      "title": "Elimina definitivamente i dashboard",
-      "text_one": "Questa azione eliminerà {{numberOfDashboards}} dashboard.",
-      "text_other": "Questa azione eliminerà {{numberOfDashboards}} dashboard."
     },
     "restore-modal": {
       "restore-button": "Ripristina",

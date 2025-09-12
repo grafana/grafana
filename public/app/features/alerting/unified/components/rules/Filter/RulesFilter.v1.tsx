@@ -74,7 +74,7 @@ const RulesFilter = ({ onClear = () => undefined, viewMode, onViewModeChange }: 
     });
 
     setFilterKey((key) => key + 1);
-    trackAlertRuleFilterEvent({ filterMethod: 'filter-component', filter: 'dataSourceNames' });
+    trackAlertRuleFilterEvent({ filterMethod: 'filter-component', filter: 'dataSourceNames', filterVariant: 'v1' });
   };
 
   type Filters = typeof filterState;
@@ -83,7 +83,7 @@ const RulesFilter = ({ onClear = () => undefined, viewMode, onViewModeChange }: 
     <K extends keyof Filters>(key: K) =>
     (value: Filters[K]) => {
       updateFilters({ ...filterState, [key]: value });
-      trackAlertRuleFilterEvent({ filterMethod: 'filter-component', filter: key });
+      trackAlertRuleFilterEvent({ filterMethod: 'filter-component', filter: key, filterVariant: 'v1' });
     };
 
   const clearDataSource = () => {
@@ -266,6 +266,7 @@ const RulesFilter = ({ onClear = () => undefined, viewMode, onViewModeChange }: 
               trackAlertRuleFilterEvent({
                 filterMethod: 'search-input',
                 filter: getSearchFilterFromQuery(data.searchQuery),
+                filterVariant: 'v1',
               });
             })}
           >
