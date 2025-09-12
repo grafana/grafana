@@ -51,7 +51,7 @@ func ValidateOnCreate(ctx context.Context, obj *iamv0alpha1.ServiceAccount) erro
 	if !requester.HasRole(requestedRole) {
 		return apierrors.NewForbidden(iamv0alpha1.ServiceAccountResourceInfo.GroupResource(),
 			obj.Name,
-			fmt.Errorf("can not assign a role higher than user's role"))
+			fmt.Errorf("cannot assign a role higher than user's role"))
 	}
 
 	return nil

@@ -154,9 +154,8 @@ func doServiceAccountCRUDTestsUsingTheNewAPIs(t *testing.T, helper *apis.K8sTest
 			})
 
 		saClient := helper.GetResourceClient(apis.ResourceClientArgs{
-			User:      editorWithSACreate,
-			Namespace: helper.Namespacer(editorWithSACreate.Identity.GetOrgID()),
-			GVR:       gvrServiceAccounts,
+			User: editorWithSACreate,
+			GVR:  gvrServiceAccounts,
 		})
 
 		saToCreate := helper.LoadYAMLOrJSONFile("testdata/serviceaccount-test-higher-role-v0.yaml")
@@ -166,7 +165,7 @@ func doServiceAccountCRUDTestsUsingTheNewAPIs(t *testing.T, helper *apis.K8sTest
 		var statusErr *errors.StatusError
 		require.ErrorAs(t, err, &statusErr)
 		require.Equal(t, int32(403), statusErr.ErrStatus.Code)
-		require.Contains(t, statusErr.ErrStatus.Message, "can not assign a role higher than user's role")
+		require.Contains(t, statusErr.ErrStatus.Message, "cannot assign a role higher than user's role")
 	})
 
 	t.Run("should not be able to create service account without a title", func(t *testing.T) {
