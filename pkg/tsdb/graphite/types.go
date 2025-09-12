@@ -1,5 +1,7 @@
 package graphite
 
+import "io"
+
 type TargetResponseDTO struct {
 	Target     string               `json:"target"`
 	DataPoints DataTimeSeriesPoints `json:"datapoints"`
@@ -9,6 +11,14 @@ type TargetResponseDTO struct {
 
 type DataTimePoint [2]Float
 type DataTimeSeriesPoints []DataTimePoint
+
+type URLParams struct {
+	SubPath     string
+	Method      string
+	Body        io.Reader
+	QueryParams map[string]string
+	Headers     map[string]string
+}
 
 type GraphiteQuery struct {
 	QueryType       string   `json:"queryType"`

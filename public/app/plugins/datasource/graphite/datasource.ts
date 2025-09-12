@@ -704,8 +704,8 @@ export class GraphiteDatasource
 
     if (config.featureToggles.graphiteBackendMode) {
       return await this.postResource<MetricFindValue[]>('metrics/find', {
-        from: typeof params.from === 'string' ? params.from : `${params.from}`,
-        until: typeof params.until === 'string' ? params.until : `${params.until}`,
+        from: params.from ? (typeof params.from === 'string' ? params.from : `${params.from}`) : undefined,
+        until: params.until ? (typeof params.until === 'string' ? params.until : `${params.until}`) : undefined,
         query,
       });
     }
@@ -754,8 +754,8 @@ export class GraphiteDatasource
 
     if (config.featureToggles.graphiteBackendMode) {
       const metrics = await this.postResource<MetricFindValue[]>('metrics/expand', {
-        from: typeof params.from === 'string' ? params.from : `${params.from}`,
-        until: typeof params.until === 'string' ? params.until : `${params.until}`,
+        from: params.from ? (typeof params.from === 'string' ? params.from : `${params.from}`) : undefined,
+        until: params.until ? (typeof params.until === 'string' ? params.until : `${params.until}`) : undefined,
         query,
       });
       return metrics.map((metric) => ({

@@ -6,10 +6,9 @@ import (
 
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
-	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apiserver/pkg/endpoints/request"
 
-	listers "github.com/grafana/grafana/apps/provisioning/pkg/generated/listers/provisioning/v0alpha1"
+	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
@@ -17,7 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
-func MetricCollector(tracer tracing.Tracer, repositoryLister listers.RepositoryLister, unified resource.ResourceClient) usagestats.MetricsFunc {
+func MetricCollector(tracer tracing.Tracer, repositoryLister func(ctx context.Context) ([]provisioning.Repository, error), unified resource.ResourceClient) usagestats.MetricsFunc {
 	return func(ctx context.Context) (metrics map[string]any, err error) {
 		ctx, span := tracer.Start(ctx, "Provisioning.Usage.collectProvisioningStats")
 		defer func() {
@@ -65,7 +64,7 @@ func MetricCollector(tracer tracing.Tracer, repositoryLister listers.RepositoryL
 		}
 
 		// Inspect all configs
-		repos, err := repositoryLister.List(labels.Everything())
+		repos, err := repositoryLister(ctx)
 		if err != nil {
 			return m, fmt.Errorf("list repositories: %w", err)
 		}

@@ -5,11 +5,9 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"io"
 	"net/http"
 	"net/http/httptest"
-	"net/url"
 	"testing"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
@@ -101,7 +99,7 @@ func TestHandleEvents(t *testing.T) {
 			request:        GraphiteEventsRequest{From: "now-1h", Until: "now"},
 			expectedStatus: http.StatusInternalServerError,
 			expectError:    true,
-			errorContains:  "unexpected error",
+			errorContains:  "failed to create events request",
 		},
 		{
 			name: "HTTP client error",
@@ -113,19 +111,19 @@ func TestHandleEvents(t *testing.T) {
 			request:        GraphiteEventsRequest{From: "now-1h", Until: "now"},
 			expectedStatus: http.StatusInternalServerError,
 			expectError:    true,
-			errorContains:  "failed to complete events request",
+			errorContains:  "events request failed",
 		},
 		{
 			name: "Invalid response JSON",
 			dsInfo: &datasourceInfo{
 				Id:         1,
 				URL:        "http://graphite.grafana",
-				HTTPClient: &http.Client{Transport: &mockRoundTripper{respBody: []byte("invalid json"), status: 400}},
+				HTTPClient: &http.Client{Transport: &mockRoundTripper{respBody: []byte("invalid json"), status: 200}},
 			},
 			request:        GraphiteEventsRequest{From: "now-1h", Until: "now"},
-			expectedStatus: 400,
+			expectedStatus: http.StatusInternalServerError,
 			expectError:    true,
-			errorContains:  "failed to parse events response",
+			errorContains:  "events request failed",
 		},
 	}
 
@@ -218,7 +216,7 @@ func TestHandleMetricsFind(t *testing.T) {
 			request:        GraphiteMetricsFindRequest{Query: "app.grafana.*"},
 			expectedStatus: http.StatusInternalServerError,
 			expectError:    true,
-			errorContains:  "unexpected error",
+			errorContains:  "failed to create metrics find request",
 		},
 		{
 			name: "HTTP client error",
@@ -230,19 +228,7 @@ func TestHandleMetricsFind(t *testing.T) {
 			request:        GraphiteMetricsFindRequest{Query: "app.grafana.*"},
 			expectedStatus: http.StatusInternalServerError,
 			expectError:    true,
-			errorContains:  "failed to complete metrics find request",
-		},
-		{
-			name: "Invalid response JSON",
-			dsInfo: &datasourceInfo{
-				Id:         1,
-				URL:        "http://graphite.grafana",
-				HTTPClient: &http.Client{Transport: &mockRoundTripper{respBody: []byte("invalid json"), status: 400}},
-			},
-			request:        GraphiteMetricsFindRequest{Query: "app.grafana.*"},
-			expectedStatus: 400,
-			expectError:    true,
-			errorContains:  "failed to parse metrics find response",
+			errorContains:  "metrics find request failed",
 		},
 	}
 
@@ -340,7 +326,7 @@ func TestHandleMetricsExpand(t *testing.T) {
 			request:        GraphiteMetricsFindRequest{Query: "app.grafana.*"},
 			expectedStatus: http.StatusInternalServerError,
 			expectError:    true,
-			errorContains:  "unexpected error",
+			errorContains:  "failed to create metrics expand request",
 		},
 		{
 			name: "HTTP client error",
@@ -352,19 +338,19 @@ func TestHandleMetricsExpand(t *testing.T) {
 			request:        GraphiteMetricsFindRequest{Query: "app.grafana.*"},
 			expectedStatus: http.StatusInternalServerError,
 			expectError:    true,
-			errorContains:  "failed to complete metrics expand request",
+			errorContains:  "metrics expand request failed",
 		},
 		{
 			name: "Invalid response JSON",
 			dsInfo: &datasourceInfo{
 				Id:         1,
 				URL:        "http://graphite.grafana",
-				HTTPClient: &http.Client{Transport: &mockRoundTripper{respBody: []byte("invalid json"), status: 400}},
+				HTTPClient: &http.Client{Transport: &mockRoundTripper{respBody: []byte("invalid json"), status: 200}},
 			},
 			request:        GraphiteMetricsFindRequest{Query: "app.grafana.*"},
-			expectedStatus: 400,
+			expectedStatus: http.StatusInternalServerError,
 			expectError:    true,
-			errorContains:  "failed to parse metrics expand response",
+			errorContains:  "metrics expand request failed",
 		},
 		{
 			name: "Empty results",
@@ -421,31 +407,41 @@ func TestHandleFunctions(t *testing.T) {
 			name:         "successful functions request",
 			responseBody: `{"sum": {"description": "Sum function"}, "avg": {"description": "Average function"}}`,
 			statusCode:   200,
+			expectError:  false,
 			expectedData: `{"sum": {"description": "Sum function"}, "avg": {"description": "Average function"}}`,
 		},
 		{
 			name:         "functions with infinity replacement",
 			responseBody: `{"func": {"default": Infinity, "description": "Test function"}}`,
 			statusCode:   200,
+			expectError:  false,
 			expectedData: `{"func": {"default": 1e9999, "description": "Test function"}}`,
 		},
 		{
 			name:         "empty functions response",
 			responseBody: `{}`,
 			statusCode:   200,
+			expectError:  false,
 			expectedData: `{}`,
 		},
 		{
-			name:          "functions request server error - now returns error due to status check",
+			name:          "functions request server error",
 			responseBody:  `{"error": "internal error"}`,
 			statusCode:    500,
 			expectError:   true,
 			errorContains: "version request failed",
 		},
 		{
-			name:          "functions request not found - now returns error due to status check",
+			name:          "functions request not found",
 			responseBody:  `{"error": "not found"}`,
 			statusCode:    404,
+			expectError:   true,
+			errorContains: "version request failed",
+		},
+		{
+			name:          "network error",
+			responseBody:  "",
+			statusCode:    0,
 			expectError:   true,
 			errorContains: "version request failed",
 		},
@@ -453,9 +449,17 @@ func TestHandleFunctions(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			mockTransport := &mockRoundTripper{
-				respBody: []byte(tt.responseBody),
-				status:   tt.statusCode,
+			var mockTransport *mockRoundTripper
+
+			if tt.name == "network error" {
+				mockTransport = &mockRoundTripper{
+					err: errors.New("network connection failed"),
+				}
+			} else {
+				mockTransport = &mockRoundTripper{
+					respBody: []byte(tt.responseBody),
+					status:   tt.statusCode,
+				}
 			}
 
 			dsInfo := &datasourceInfo{
@@ -467,7 +471,7 @@ func TestHandleFunctions(t *testing.T) {
 				logger: log.NewNullLogger(),
 			}
 
-			result, statusCode, err := service.handleFunctions(context.Background(), dsInfo)
+			result, statusCode, err := service.handleFunctions(context.Background(), dsInfo, nil)
 
 			if tt.expectError {
 				assert.Error(t, err)
@@ -480,10 +484,12 @@ func TestHandleFunctions(t *testing.T) {
 				assert.Equal(t, tt.expectedData, string(result))
 			}
 
-			// Verify the URL was constructed correctly
-			expectedURL := "http://graphite.example.com/functions"
-			assert.Equal(t, expectedURL, mockTransport.lastRequest.URL.String())
-			assert.Equal(t, http.MethodGet, mockTransport.lastRequest.Method)
+			// Verify the request was made correctly (except for network error case)
+			if tt.name != "network error" {
+				require.NotNil(t, mockTransport.lastRequest)
+				assert.Equal(t, "http://graphite.example.com/functions", mockTransport.lastRequest.URL.String())
+				assert.Equal(t, http.MethodGet, mockTransport.lastRequest.Method)
+			}
 		})
 	}
 }
@@ -510,7 +516,7 @@ func TestHandleResourceReq_Success(t *testing.T) {
 	req = req.WithContext(backend.WithPluginContext(context.Background(), backend.PluginContext{}))
 	rr := httptest.NewRecorder()
 
-	handler := handlePostResourceReq(svc.handleEvents, svc)
+	handler := handleResourceReq(svc.handleEvents, svc)
 	handler(rr, req)
 
 	assert.Equal(t, http.StatusOK, rr.Code)
@@ -530,7 +536,7 @@ func TestHandleResourceReq_GetDSInfoError(t *testing.T) {
 	req = req.WithContext(backend.WithPluginContext(context.Background(), backend.PluginContext{}))
 	rr := httptest.NewRecorder()
 
-	handler := handlePostResourceReq(svc.handleEvents, svc)
+	handler := handleResourceReq(svc.handleEvents, svc)
 	handler(rr, req)
 
 	assert.Equal(t, http.StatusInternalServerError, rr.Code)
@@ -552,7 +558,7 @@ func TestHandleResourceReq_NilHandler(t *testing.T) {
 	req = req.WithContext(backend.WithPluginContext(context.Background(), backend.PluginContext{}))
 	rr := httptest.NewRecorder()
 
-	handler := handlePostResourceReq[any](nil, svc)
+	handler := handleResourceReq[any](nil, svc)
 	handler(rr, req)
 
 	assert.Equal(t, http.StatusInternalServerError, rr.Code)
@@ -631,7 +637,7 @@ func TestDoGraphiteRequest(t *testing.T) {
 			method:        "GET",
 			headers:       map[string]string{},
 			expectError:   true,
-			errorContains: "failed to complete events request",
+			errorContains: "failed to complete request",
 		},
 		{
 			name:     "Invalid response JSON",
@@ -639,12 +645,12 @@ func TestDoGraphiteRequest(t *testing.T) {
 			dsInfo: &datasourceInfo{
 				Id:         1,
 				URL:        "http://graphite.grafana",
-				HTTPClient: &http.Client{Transport: &mockRoundTripper{respBody: []byte("invalid json"), status: 400}},
+				HTTPClient: &http.Client{Transport: &mockRoundTripper{respBody: []byte("invalid json"), status: 200}},
 			},
 			method:        "GET",
 			headers:       map[string]string{},
 			expectError:   true,
-			errorContains: "failed to parse events response",
+			errorContains: "failed to parse response",
 		},
 		{
 			name:     "Non-200 status code with valid JSON",
@@ -657,16 +663,39 @@ func TestDoGraphiteRequest(t *testing.T) {
 			method:        "GET",
 			headers:       map[string]string{},
 			expectError:   true,
-			errorContains: "failed to parse events response",
+			errorContains: "request failed, status: 500",
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			ctx := context.Background()
-			testURL, _ := url.Parse(fmt.Sprintf("%s/test", tt.dsInfo.URL))
 
-			result, _, status, err := doGraphiteRequest[[]GraphiteEventsResponse](ctx, tt.endpoint, tt.dsInfo, testURL, tt.method, tt.body, tt.headers, log.NewNullLogger(), false)
+			// Create a service instance for the test
+			svc := &Service{logger: log.NewNullLogger()}
+
+			// Create the HTTP request using the createRequest method
+			req, err := svc.createRequest(ctx, tt.dsInfo, URLParams{
+				SubPath: tt.endpoint,
+				Method:  tt.method,
+				Body:    tt.body,
+				Headers: tt.headers,
+			})
+
+			if tt.expectError {
+				// For cases where we expect errors in request creation
+				if err != nil {
+					assert.Error(t, err)
+					if tt.errorContains != "" {
+						assert.Contains(t, err.Error(), tt.errorContains)
+					}
+					return
+				}
+			} else {
+				assert.NoError(t, err)
+			}
+
+			result, _, status, err := doGraphiteRequest[[]GraphiteEventsResponse](ctx, tt.dsInfo, svc.logger, req, false)
 
 			if tt.expectError {
 				assert.Error(t, err)
@@ -685,6 +714,86 @@ func TestDoGraphiteRequest(t *testing.T) {
 				}
 			}
 		})
+	}
+}
+
+func TestDoGraphiteRequestGenericTypes(t *testing.T) {
+	// Test with GraphiteMetricsFindResponse
+	mockMetrics := []GraphiteMetricsFindResponse{
+		{Text: "metric1", Id: "metric1.id", AllowChildren: 1, Expandable: 1, Leaf: 0},
+	}
+	mockMetricsResp, _ := json.Marshal(mockMetrics)
+
+	// Test with GraphiteMetricsExpandResponse
+	mockExpand := GraphiteMetricsExpandResponse{
+		Results: []string{"app.grafana.metric1", "app.grafana.metric2"},
+	}
+	mockExpandResp, _ := json.Marshal(mockExpand)
+
+	tests := []struct {
+		name     string
+		testFunc func(t *testing.T)
+	}{
+		{
+			name: "Success with GraphiteMetricsFindResponse type",
+			testFunc: func(t *testing.T) {
+				dsInfo := &datasourceInfo{
+					Id:         1,
+					URL:        "http://graphite.grafana",
+					HTTPClient: &http.Client{Transport: &mockRoundTripper{respBody: mockMetricsResp, status: 200}},
+				}
+				ctx := context.Background()
+
+				// Create a service instance for the test
+				svc := &Service{logger: log.NewNullLogger()}
+
+				// Create the HTTP request using the createRequest method
+				req, err := svc.createRequest(ctx, dsInfo, URLParams{
+					SubPath: "test",
+					Method:  "GET",
+				})
+				assert.NoError(t, err)
+
+				result, _, status, err := doGraphiteRequest[[]GraphiteMetricsFindResponse](ctx, dsInfo, svc.logger, req, false)
+
+				assert.NoError(t, err)
+				assert.NotNil(t, result)
+				assert.Equal(t, 200, status)
+				assert.Equal(t, mockMetrics, *result)
+			},
+		},
+		{
+			name: "Success with GraphiteMetricsExpandResponse type",
+			testFunc: func(t *testing.T) {
+				dsInfo := &datasourceInfo{
+					Id:         1,
+					URL:        "http://graphite.grafana",
+					HTTPClient: &http.Client{Transport: &mockRoundTripper{respBody: mockExpandResp, status: 200}},
+				}
+				ctx := context.Background()
+
+				// Create a service instance for the test
+				svc := &Service{logger: log.NewNullLogger()}
+
+				// Create the HTTP request using the createRequest method
+				req, err := svc.createRequest(ctx, dsInfo, URLParams{
+					SubPath: "test",
+					Method:  "GET",
+				})
+				assert.NoError(t, err)
+
+				result, _, status, err := doGraphiteRequest[GraphiteMetricsExpandResponse](ctx, dsInfo, svc.logger, req, false)
+
+				assert.NoError(t, err)
+				assert.NotNil(t, result)
+				assert.Equal(t, 200, status)
+				assert.Equal(t, mockExpand, *result)
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, tt.testFunc)
 	}
 }
 
@@ -812,16 +921,6 @@ func TestParseResponse(t *testing.T) {
 			},
 			expectError:   true,
 			errorContains: "failed to unmarshal response",
-		},
-		{
-			name: "Non-200 status code",
-			response: &http.Response{
-				StatusCode: 400,
-				Body:       io.NopCloser(bytes.NewBuffer([]byte(`random error`))),
-				Header:     make(http.Header),
-			},
-			expectError:   true,
-			errorContains: "request failed, status: 400",
 		},
 	}
 
