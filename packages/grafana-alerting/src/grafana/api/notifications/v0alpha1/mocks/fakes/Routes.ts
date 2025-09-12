@@ -1,8 +1,8 @@
 import { faker } from '@faker-js/faker';
 import { Factory } from 'fishery';
 
-import { LabelMatcher } from '../../../../matchers/types';
-import { Route } from '../../../../notificationPolicies/types';
+import { LabelMatcher } from '../../../../../matchers/types';
+import { Route } from '../../../../../notificationPolicies/types';
 
 export const LabelMatcherFactory = Factory.define<LabelMatcher>(() => {
   const operators: Array<LabelMatcher['type']> = ['=', '!=', '=~', '!~'];

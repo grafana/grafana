@@ -1,7 +1,7 @@
 import { HttpResponse, http } from 'msw';
 
-import { getAPIBaseURLForMocks } from '../../../../../mocks/util';
-import { DeleteReceiverApiResponse } from '../../../api.gen';
+import { getAPIBaseURLForMocks } from '../../../../../../mocks/util';
+import { DeleteReceiverApiResponse } from '../../../../v0alpha1/notifications.api.gen';
 import { GROUP, VERSION } from '../../../const';
 
 export function deleteReceiverHandler(
