@@ -148,8 +148,8 @@ test.describe(
         .fill(`${newTitleBase}$c1`);
       await dashboardPage.getByGrafanaSelector(selectors.components.PanelEditor.OptionsPane.fieldInput('Title')).blur();
 
-      // playwright too fast, needs some waiting for change to register
-      await page.waitForTimeout(400);
+      // playwright too fast, verifying JSON diff that changes landed
+      await verifyChanges(dashboardPage, page, selectors, newTitleBase);
 
       // verify panel title change in panel editor UI
       await expect(
@@ -201,8 +201,8 @@ test.describe(
 
       await dashboardPage.getByGrafanaSelector(selectors.components.PanelEditor.OptionsPane.fieldInput('Title')).blur();
 
-      // playwright too fast, needs some waiting for change to register
-      await page.waitForTimeout(400);
+      // playwright too fast, verifying JSON diff that changes landed
+      await verifyChanges(dashboardPage, page, selectors, newTitleBase);
 
       await expect(
         dashboardPage.getByGrafanaSelector(
@@ -485,4 +485,16 @@ async function getPanelPosition(
     .first();
   const boundingBox = await panel.boundingBox();
   return boundingBox;
+}
+
+async function verifyChanges(
+  dashboardPage: DashboardPage,
+  page: Page,
+  selectors: E2ESelectorGroups,
+  changeText: string
+) {
+  await dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.saveButton).click();
+  await dashboardPage.getByGrafanaSelector(selectors.components.Tab.title('Changes')).click();
+  await expect(page.getByText('Full JSON diff').locator('..')).toContainText(changeText);
+  await dashboardPage.getByGrafanaSelector(selectors.components.Drawer.General.close).click();
 }
