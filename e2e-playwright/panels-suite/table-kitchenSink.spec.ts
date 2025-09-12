@@ -436,6 +436,18 @@ test.describe('Panels test: Table - Kitchen Sink', { tag: ['@panels', '@table'] 
     const cell = await getCell(page, 1, dataLinkColumnIdx);
     await expect(cell).toBeVisible();
     await expect(cell).toHaveCSS('text-decoration', /line-through/);
+
+    // now filter out "up," and confirm that the style override isn't present.
+    await stateColumnHeader.getByTestId(selectors.components.Panels.Visualization.TableNG.Filters.HeaderButton).click();
+    await expect(filterContainer).toBeVisible();
+
+    // select all, then click the first value to unselect it, filtering it out.
+    await filterContainer.getByTestId(selectors.components.Panels.Visualization.TableNG.Filters.SelectAll).click();
+    await filterContainer.getByTitle('up', { exact: true }).locator('label').click();
+    await filterContainer.getByRole('button', { name: 'Ok' }).click();
+
+    await expect(cell).toBeVisible();
+    await expect(cell).not.toHaveCSS('text-decoration', /line-through/);
   });
 
   test('Empty Table panel', async ({ gotoDashboardPage, selectors }) => {
