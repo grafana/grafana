@@ -3,7 +3,7 @@ import { getResolvedLanguage } from '@grafana/i18n/internal';
 import { config } from '@grafana/runtime';
 
 import builtInPlugins from '../built_in_plugins';
-import { registerPluginInCache } from '../loader/cache';
+import { registerPluginInfoInCache } from '../loader/pluginInfoCache';
 import { SystemJS } from '../loader/systemjs';
 import { resolveModulePath } from '../loader/utils';
 import { importPluginModuleInSandbox } from '../sandbox/sandboxPluginLoader';
@@ -22,7 +22,7 @@ export async function importPluginModule({
   translations,
 }: PluginImportInfo): Promise<System.Module> {
   if (version) {
-    registerPluginInCache({ path, version, loadingStrategy });
+    registerPluginInfoInCache({ path, version, loadingStrategy });
   }
 
   // Add locales to i18n for a plugin if the feature toggle is enabled and the plugin has locales

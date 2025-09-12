@@ -504,6 +504,7 @@
       "copy-link": "Hivatkozás másolása",
       "duplicate": "Duplikálás",
       "export": "Exportálás",
+      "manage-enrichments": "",
       "silence-notifications": "Némítási értesítések",
       "with-modifications": "Módosításokkal"
     },
@@ -1121,7 +1122,7 @@
     },
     "enrichment": {
       "error-boundary": {
-        "notification-message-section-extension": "",
+        "enrichment-drawer-extension": "",
         "rule-viewer-section-extension": ""
       }
     },
@@ -2057,9 +2058,6 @@
       "text-loading-rules": "Szabályok betöltése…",
       "title-dashboard-not-saved": "Az irányítópult nincs mentve"
     },
-    "paused-badge": {
-      "paused": "Szüneteltetett"
-    },
     "payload-editor": {
       "edit-payload": "Hasznos tartalom szerkesztése",
       "label-add-custom-alert-instance": "Egyéni riasztási példány hozzáadása",
@@ -2211,9 +2209,6 @@
       "label-time-range": "Időtartomány",
       "max-data-points": "MD = {{maxDataPoints}}",
       "min-interval": "Min. intervallum = {{minInterval}}"
-    },
-    "query-preview": {
-      "relative-time-range": "<0>{{from}}</0> és a jelen között"
     },
     "queryAndExpressionsStep": {
       "disableAdvancedOptions": {
@@ -2559,6 +2554,10 @@
       "recovering": "{{recoveringStats}} helyreáll",
       "error_one": "{{count}} hiba",
       "error_other": "{{count}} hiba"
+    },
+    "rule-time-range-label": {
+      "relative": "",
+      "relative-with-to": ""
     },
     "rule-type-picker": {
       "grafana-managed": "Válassza a „Grafana által felügyelt” lehetőséget, kivéve, ha Mimir-, Loki- vagy Cortex-adatforrása van engedélyezett Ruler API-val."
@@ -3662,7 +3661,13 @@
       "text": "Nincs találat a lekérdezésre"
     },
     "restore": {
-      "success": "{{name}} irányítópult visszaállítva"
+      "success": "",
+      "all-failed_one": "",
+      "all-failed_other": "",
+      "failed-count_one": "",
+      "failed-count_other": "",
+      "success-count_one": "",
+      "success-count_other": ""
     },
     "text-this-repository-is-read-only": "Ha közvetlen hozzáférése van a célhoz, másolja ki a JSON-kódot, és illessze be oda.",
     "trash-state-manager": {
@@ -11648,6 +11653,7 @@
       "tooltip-unhealthy-repository": "Nem lehet beolvasni egy nem megfelelő állapotú adattárat"
     },
     "synchronize-step": {
+      "repository-unhealthy": "",
       "synchronization-description": "Változtatások belefoglalása minden előzményértékhez",
       "synchronization-options": "Szinkronizálási beállítások"
     },
@@ -11671,6 +11677,8 @@
       "alert-point-3": "A folyamat időtartama az érintett erőforrások számától függ.",
       "alert-point-4": "A vállalati példányok adminisztrátorai megjeleníthetnek egy értesítési szalagot a felhasználóknak. A lépésenkénti utasításokat lásd az <2>útmutatóban</2>.",
       "alert-title": "Fontos: Egyetlen adat vagy konfiguráció sem fog elveszni, de az irányítópultok néhány percig átmenetileg nem lesznek elérhetők.",
+      "button-cancel": "",
+      "button-cancelling": "",
       "button-next": "Befejezés",
       "button-start": "Szinkronizálás indítása",
       "discard-modal": {

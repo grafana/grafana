@@ -500,6 +500,7 @@
       "copy-link": "複製網址",
       "duplicate": "重複",
       "export": "匯出",
+      "manage-enrichments": "",
       "silence-notifications": "靜音通知",
       "with-modifications": "經過修改"
     },
@@ -1115,7 +1116,7 @@
     },
     "enrichment": {
       "error-boundary": {
-        "notification-message-section-extension": "",
+        "enrichment-drawer-extension": "",
         "rule-viewer-section-extension": ""
       }
     },
@@ -2050,9 +2051,6 @@
       "text-loading-rules": "正在載入規則...",
       "title-dashboard-not-saved": "儀表板未儲存"
     },
-    "paused-badge": {
-      "paused": "已暫停"
-    },
     "payload-editor": {
       "edit-payload": "編輯負載",
       "label-add-custom-alert-instance": "新增自訂警報執行個體",
@@ -2202,9 +2200,6 @@
       "label-time-range": "時間範圍",
       "max-data-points": "MD = {{maxDataPoints}}",
       "min-interval": "最小間隔 = {{minInterval}}"
-    },
-    "query-preview": {
-      "relative-time-range": "<0>{{from}}</0>至現在"
     },
     "queryAndExpressionsStep": {
       "disableAdvancedOptions": {
@@ -2546,6 +2541,10 @@
       "recording": "{{recordingStats}}正在錄製",
       "recovering": "正在復原{{recoveringStats}}",
       "error_other": "{{count}} 個錯誤"
+    },
+    "rule-time-range-label": {
+      "relative": "",
+      "relative-with-to": ""
     },
     "rule-type-picker": {
       "grafana-managed": "選擇「Grafana 管理」，除非有已啟用 Ruler API 的 Mimir、Loki 或 Cortex 資料來源。"
@@ -3644,7 +3643,10 @@
       "text": "未找到您的查詢結果"
     },
     "restore": {
-      "success": "儀表板 {{name}} 已復原"
+      "success": "",
+      "all-failed_other": "",
+      "failed-count_other": "",
+      "success-count_other": ""
     },
     "text-this-repository-is-read-only": "如果您可以直接存取目標，請複製 JSON 並將其貼上至該處。",
     "trash-state-manager": {
@@ -11612,6 +11614,7 @@
       "tooltip-unhealthy-repository": "無法拉取狀態不佳的儲存庫"
     },
     "synchronize-step": {
+      "repository-unhealthy": "",
       "synchronization-description": "包含每個歷史數值的提交",
       "synchronization-options": "同步選項"
     },
@@ -11635,6 +11638,8 @@
       "alert-point-3": "此流程的持續時間取決於所涉及的資源數量。",
       "alert-point-4": "企業執行個體管理員可以向使用者顯示公告橫幅。請參閱<2>本指南</2>，了解逐步說明。",
       "alert-title": "重要事項：不會遺失任何資料或設定，但儀表板將在幾分鐘內暫時無法使用。",
+      "button-cancel": "",
+      "button-cancelling": "",
       "button-next": "結束",
       "button-start": "開始同步處理",
       "discard-modal": {

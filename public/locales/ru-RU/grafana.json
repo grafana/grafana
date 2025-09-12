@@ -512,6 +512,7 @@
       "copy-link": "Копировать ссылку",
       "duplicate": "Дублировать",
       "export": "Экспорт",
+      "manage-enrichments": "",
       "silence-notifications": "Отключить звук уведомлений",
       "with-modifications": "С изменениями"
     },
@@ -1133,7 +1134,7 @@
     },
     "enrichment": {
       "error-boundary": {
-        "notification-message-section-extension": "",
+        "enrichment-drawer-extension": "",
         "rule-viewer-section-extension": ""
       }
     },
@@ -2071,9 +2072,6 @@
       "text-loading-rules": "Загрузка правил...",
       "title-dashboard-not-saved": "Дашборд не сохранен"
     },
-    "paused-badge": {
-      "paused": "Приостановлено"
-    },
     "payload-editor": {
       "edit-payload": "Редактировать полезные данные",
       "label-add-custom-alert-instance": "Добавить экземпляр пользовательского оповещения",
@@ -2229,9 +2227,6 @@
       "label-time-range": "Временной диапазон",
       "max-data-points": "MD = {{maxDataPoints}}",
       "min-interval": "Мин. интервал = {{minInterval}}"
-    },
-    "query-preview": {
-      "relative-time-range": "С <0>{{from}}</0> до текущего момента"
     },
     "queryAndExpressionsStep": {
       "disableAdvancedOptions": {
@@ -2585,6 +2580,10 @@
       "error_few": "{{count}} ошибки",
       "error_many": "{{count}} ошибок",
       "error_other": "{{count}} ошибок"
+    },
+    "rule-time-range-label": {
+      "relative": "",
+      "relative-with-to": ""
     },
     "rule-type-picker": {
       "grafana-managed": "Выберите «Управляемые Grafana», если у вас нет источника данных Mimir, Loki или Cortex с включенным Ruler API."
@@ -3698,7 +3697,19 @@
       "text": "По вашему запросу ничего не найдено"
     },
     "restore": {
-      "success": "Дашборд {{name}} восстановлен"
+      "success": "",
+      "all-failed_one": "",
+      "all-failed_few": "",
+      "all-failed_many": "",
+      "all-failed_other": "",
+      "failed-count_one": "",
+      "failed-count_few": "",
+      "failed-count_many": "",
+      "failed-count_other": "",
+      "success-count_one": "",
+      "success-count_few": "",
+      "success-count_many": "",
+      "success-count_other": ""
     },
     "text-this-repository-is-read-only": "Если у вас есть прямой доступ к целевому объекту, скопируйте JSON-файл и вставьте его туда.",
     "trash-state-manager": {
@@ -11720,6 +11731,7 @@
       "tooltip-unhealthy-repository": "Невозможно внести изменения в неисправный репозиторий"
     },
     "synchronize-step": {
+      "repository-unhealthy": "",
       "synchronization-description": "Включить фиксации для каждого ранее зафиксированного значения",
       "synchronization-options": "Параметры синхронизации"
     },
@@ -11743,6 +11755,8 @@
       "alert-point-3": "Длительность процесса зависит от количества задействованных ресурсов.",
       "alert-point-4": "Администраторы экземпляров Enterprise могут показывать пользователям баннер с объявлением. Пошаговые инструкции см. в <2>руководстве</2>.",
       "alert-title": "Важно. Данные и конфигурация не будут потеряны, однако дашборды будут недоступны в течение нескольких минут.",
+      "button-cancel": "",
+      "button-cancelling": "",
       "button-next": "Готово",
       "button-start": "Начать синхронизацию",
       "discard-modal": {

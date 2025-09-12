@@ -500,6 +500,7 @@
       "copy-link": "リンクをコピー",
       "duplicate": "複製",
       "export": "エクスポート",
+      "manage-enrichments": "",
       "silence-notifications": "通知を消音",
       "with-modifications": "修正あり"
     },
@@ -1115,7 +1116,7 @@
     },
     "enrichment": {
       "error-boundary": {
-        "notification-message-section-extension": "",
+        "enrichment-drawer-extension": "",
         "rule-viewer-section-extension": ""
       }
     },
@@ -2050,9 +2051,6 @@
       "text-loading-rules": "ルールを読み込み中...",
       "title-dashboard-not-saved": "ダッシュボードは保存されていません"
     },
-    "paused-badge": {
-      "paused": "中断しています"
-    },
     "payload-editor": {
       "edit-payload": "ペイロードを編集",
       "label-add-custom-alert-instance": "カスタムアラートインスタンスを追加",
@@ -2202,9 +2200,6 @@
       "label-time-range": "時間範囲",
       "max-data-points": "MD = {{maxDataPoints}}",
       "min-interval": "最小間隔= {{minInterval}}"
-    },
-    "query-preview": {
-      "relative-time-range": "<0>{{from}}</0>から現在"
     },
     "queryAndExpressionsStep": {
       "disableAdvancedOptions": {
@@ -2546,6 +2541,10 @@
       "recording": "{{recordingStats}}件記録中",
       "recovering": "{{recoveringStats}}件が復旧中",
       "error_other": "{{count}}件のエラー"
+    },
+    "rule-time-range-label": {
+      "relative": "",
+      "relative-with-to": ""
     },
     "rule-type-picker": {
       "grafana-managed": "Ruler APIが有効なMimir、Loki、またはCortexデータソースがない限り、「Grafana管理」を選択してください。"
@@ -3644,7 +3643,10 @@
       "text": "クエリに一致する結果が見つかりませんでした。"
     },
     "restore": {
-      "success": "ダッシュボード{{name}}が復元されました"
+      "success": "",
+      "all-failed_other": "",
+      "failed-count_other": "",
+      "success-count_other": ""
     },
     "text-this-repository-is-read-only": "ターゲットに直接アクセスできる場合は、JSONをコピーしてそこに貼り付けます。",
     "trash-state-manager": {
@@ -11612,6 +11614,7 @@
       "tooltip-unhealthy-repository": "問題のあるリポジトリをプルできません"
     },
     "synchronize-step": {
+      "repository-unhealthy": "",
       "synchronization-description": "各履歴値のコミットを含める",
       "synchronization-options": "同期オプション"
     },
@@ -11635,6 +11638,8 @@
       "alert-point-3": "このプロセスの所要時間は、関連するリソースの数によって異なります。",
       "alert-point-4": "エンタープライズインスタンス管理者は、ユーザーにお知らせバナーを表示できます。詳しい手順については<2>このガイド</2>をご覧ください。",
       "alert-title": "重要：データや設定は失われませんが、ダッシュボードは数分間一時的に利用できなくなります。",
+      "button-cancel": "",
+      "button-cancelling": "",
       "button-next": "完了",
       "button-start": "同期を開始",
       "discard-modal": {

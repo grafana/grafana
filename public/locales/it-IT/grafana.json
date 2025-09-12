@@ -504,6 +504,7 @@
       "copy-link": "Copia link",
       "duplicate": "Duplica",
       "export": "Esporta",
+      "manage-enrichments": "",
       "silence-notifications": "Silenzia notifiche",
       "with-modifications": "Con modifiche"
     },
@@ -1121,7 +1122,7 @@
     },
     "enrichment": {
       "error-boundary": {
-        "notification-message-section-extension": "",
+        "enrichment-drawer-extension": "",
         "rule-viewer-section-extension": ""
       }
     },
@@ -2057,9 +2058,6 @@
       "text-loading-rules": "Caricamento regole in corso...",
       "title-dashboard-not-saved": "La dashboard non è stata salvata"
     },
-    "paused-badge": {
-      "paused": "In pausa"
-    },
     "payload-editor": {
       "edit-payload": "Modifica carico utile",
       "label-add-custom-alert-instance": "Aggiungi istanza di avviso personalizzata",
@@ -2211,9 +2209,6 @@
       "label-time-range": "Intervallo orario",
       "max-data-points": "MD = {{maxDataPoints}}",
       "min-interval": "Min Intervallo = {{minInterval}}"
-    },
-    "query-preview": {
-      "relative-time-range": "<0>{{from}}</0> a ora"
     },
     "queryAndExpressionsStep": {
       "disableAdvancedOptions": {
@@ -2559,6 +2554,10 @@
       "recovering": "{{recoveringStats}} in fase di recupero",
       "error_one": "{{count}} errori",
       "error_other": "{{count}} errori"
+    },
+    "rule-time-range-label": {
+      "relative": "",
+      "relative-with-to": ""
     },
     "rule-type-picker": {
       "grafana-managed": "Seleziona \"Gestito da Grafana\" a meno che tu non disponga di un'origine dei dati Mimir, Loki o Cortex con l'API Ruler abilitata."
@@ -3662,7 +3661,13 @@
       "text": "Nessun risultato trovato per la ricerca"
     },
     "restore": {
-      "success": "Dashboard {{name}} ripristinata"
+      "success": "",
+      "all-failed_one": "",
+      "all-failed_other": "",
+      "failed-count_one": "",
+      "failed-count_other": "",
+      "success-count_one": "",
+      "success-count_other": ""
     },
     "text-this-repository-is-read-only": "Se hai accesso diretto alla destinazione, copia il file JSON e incollalo lì.",
     "trash-state-manager": {
@@ -11648,6 +11653,7 @@
       "tooltip-unhealthy-repository": "Impossibile eseguire il pull di un repository non integro"
     },
     "synchronize-step": {
+      "repository-unhealthy": "",
       "synchronization-description": "Includi commit per ogni valore storico",
       "synchronization-options": "Opzioni di sincronizzazione"
     },
@@ -11671,6 +11677,8 @@
       "alert-point-3": "La durata di questo processo dipende dal numero di risorse coinvolte.",
       "alert-point-4": "Gli amministratori dell'istanza aziendale possono mostrare un banner di annuncio agli utenti. Consulta <2>questa guida</2> per istruzioni dettagliate.",
       "alert-title": "Importante: nessun dato o configurazione andrà perso, ma le dashboard non saranno disponibili per alcuni minuti.",
+      "button-cancel": "",
+      "button-cancelling": "",
       "button-next": "Fine",
       "button-start": "Inizia la sincronizzazione",
       "discard-modal": {
