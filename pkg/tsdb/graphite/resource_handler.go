@@ -50,10 +50,9 @@ func handleResourceReq[T any](handlerFn resourceHandler[T], s *Service) func(rw 
 			}
 		}()
 
-		body := []byte{}
 		var parsedBody *T
 		if req.Body != nil {
-			body, err = io.ReadAll(req.Body)
+			body, err := io.ReadAll(req.Body)
 			if err != nil {
 				s.logger.Error("Failed to read request body", "error", err)
 				writeErrorResponse(rw, http.StatusInternalServerError, fmt.Sprintf("unexpected error %v", err))
@@ -222,7 +221,7 @@ func (s *Service) handleFunctions(ctx context.Context, dsInfo *datasourceInfo, _
 		return []byte{}, statusCode, nil
 	}
 
-	rawBodyReplaced := bytes.Replace(*rawBody, []byte("\"default\": Infinity"), []byte("\"default\": 1e9999"), -1)
+	rawBodyReplaced := bytes.ReplaceAll(*rawBody, []byte("\"default\": Infinity"), []byte("\"default\": 1e9999"))
 	return rawBodyReplaced, statusCode, nil
 }
 
