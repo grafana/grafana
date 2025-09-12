@@ -18,6 +18,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/tests/apis"
@@ -160,6 +161,58 @@ func TestIntegrationProvisioning_CreatingAndGetting(t *testing.T) {
 			}, stats)
 		}, time.Second*10, time.Millisecond*100, "Expected stats to match")
 	})
+}
+
+func TestIntegrationProvisioning_RepositoryValidation(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	helper := runGrafana(t)
+	ctx := context.Background()
+
+	for _, testCase := range []struct {
+		name        string
+		repo        *unstructured.Unstructured
+		expectedErr string
+	}{
+		{
+			name: "should succeed with valid local repository",
+			repo: func() *unstructured.Unstructured {
+				return helper.RenderObject(t, "testdata/local-readonly.json.tmpl", map[string]any{
+					"Name":        "valid-repo",
+					"SyncEnabled": true,
+				})
+			}(),
+		},
+		{
+			name: "should error if mutually exclusive finalizers are set",
+			repo: func() *unstructured.Unstructured {
+				localTmp := helper.RenderObject(t, "testdata/local-readonly.json.tmpl", map[string]any{
+					"Name":        "repo-with-invalid-finalizers",
+					"SyncEnabled": true,
+				})
+
+				// Setting finalizers to trigger a failure
+				localTmp.SetFinalizers([]string{
+					repository.CleanFinalizer,
+					repository.ReleaseOrphanResourcesFinalizer,
+					repository.RemoveOrphanResourcesFinalizer,
+				})
+
+				return localTmp
+			}(),
+			expectedErr: "cannot have both remove and release orphan resources finalizers",
+		},
+	} {
+		t.Run(testCase.name, func(t *testing.T) {
+			_, err := helper.Repositories.Resource.Create(ctx, testCase.repo, metav1.CreateOptions{})
+			if testCase.expectedErr == "" {
+				assert.NoError(t, err)
+			} else {
+				assert.Error(t, err)
+				assert.ErrorContains(t, err, testCase.expectedErr)
+			}
+		})
+	}
 }
 
 func TestIntegrationProvisioning_FailInvalidSchema(t *testing.T) {
