@@ -142,7 +142,7 @@ export function TableNG(props: TableNGProps) {
   const visibleFields = useMemo(() => getVisibleFields(data.fields), [data.fields]);
   const hasHeader = !noHeader;
   const hasFooter = useMemo(
-    () => visibleFields.some((field) => field.config?.custom?.footer?.reducers?.length ?? false),
+    () => visibleFields.some((field) => Boolean(field.config.custom?.footer?.reducers?.length)),
     [visibleFields]
   );
   const footerHeight = useMemo(
