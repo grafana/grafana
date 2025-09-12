@@ -170,9 +170,18 @@ func MigrateRemoveDeprecatedPermissions(db db.DB, log log.Logger) error {
 			continue
 		}
 
-		// Remove permissions with a single DELETE per pattern
+		// Remove permissions by the exact IDs we found
 		if errDel := db.GetSqlxSession().WithTransaction(patternCtx, func(tx *session.SessionTx) error {
-			_, err := tx.Exec(patternCtx, "DELETE FROM permission WHERE action LIKE ?", permPattern+"%")
+			delQuery := "DELETE FROM permission WHERE id IN ("
+			delArgs := make([]any, 0, len(permissions))
+			for i := range permissions {
+				delQuery += "?,"
+				delArgs = append(delArgs, permissions[i].ID)
+			}
+			// close the IN clause
+			delQuery = delQuery[:len(delQuery)-1] + ")"
+
+			_, err := tx.Exec(patternCtx, delQuery, delArgs...)
 			return err
 		}); errDel != nil {
 			log.Error("Error deleting deprecated permissions", "migration", "removeDeprecatedPermissions", "pattern", permPattern, "error", errDel)
