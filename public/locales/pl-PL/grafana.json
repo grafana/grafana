@@ -512,6 +512,7 @@
       "copy-link": "Kopiuj link",
       "duplicate": "Duplikuj",
       "export": "Eksport",
+      "manage-enrichments": "",
       "silence-notifications": "Powiadomienia o wyciszeniu",
       "with-modifications": "Ze zmianami"
     },
@@ -1133,7 +1134,8 @@
     },
     "enrichment": {
       "error-boundary": {
-        "notification-message-section-extension": ""
+        "enrichment-drawer-extension": "",
+        "rule-viewer-section-extension": ""
       }
     },
     "error-modal": {
@@ -2070,9 +2072,6 @@
       "text-loading-rules": "Ładowanie reguł…",
       "title-dashboard-not-saved": "Nie zapisano pulpitu"
     },
-    "paused-badge": {
-      "paused": "Wstrzymano"
-    },
     "payload-editor": {
       "edit-payload": "Edytuj ładunek",
       "label-add-custom-alert-instance": "Dodaj niestandardową instancję alertu",
@@ -2228,9 +2227,6 @@
       "label-time-range": "Zakres czasu",
       "max-data-points": "MD = {{maxDataPoints}}",
       "min-interval": "Min. odstęp czasu = {{minInterval}}"
-    },
-    "query-preview": {
-      "relative-time-range": "Od <0>{{from}}</0> do teraz"
     },
     "queryAndExpressionsStep": {
       "disableAdvancedOptions": {
@@ -2584,6 +2580,10 @@
       "error_few": "{{count}} błędy",
       "error_many": "{{count}} błędów",
       "error_other": "{{count}} błędu"
+    },
+    "rule-time-range-label": {
+      "relative": "",
+      "relative-with-to": ""
     },
     "rule-type-picker": {
       "grafana-managed": "Wybierz „Zarządzane przez Grafana”, chyba że masz źródło danych Mimir, Loki lub Cortex z włączonym interfejsem API Ruler."
@@ -3068,6 +3068,7 @@
       "page-nav": {
         "text": {
           "details": "Szczegóły",
+          "enrichment": "",
           "history": "Historia",
           "instances": "Instancje",
           "query-and-conditions": "Zapytanie i warunki",
@@ -3696,7 +3697,19 @@
       "text": "Nie znaleziono wyników dla tego zapytania"
     },
     "restore": {
-      "success": "Przywrócono pulpit {{name}}"
+      "success": "",
+      "all-failed_one": "",
+      "all-failed_few": "",
+      "all-failed_many": "",
+      "all-failed_other": "",
+      "failed-count_one": "",
+      "failed-count_few": "",
+      "failed-count_many": "",
+      "failed-count_other": "",
+      "success-count_one": "",
+      "success-count_few": "",
+      "success-count_many": "",
+      "success-count_other": ""
     },
     "text-this-repository-is-read-only": "Jeśli masz bezpośredni dostęp do celu, skopiuj kod JSON i wklej go tam.",
     "trash-state-manager": {
@@ -11275,11 +11288,11 @@
       "description-clear-repository-connection": "Dodaj zrozumiałą nazwę tego połączenia z repozytorium",
       "empty": "Pusty",
       "error-field-required": "To pole jest wymagane.",
-      "ext-storage": "Zewnętrzna pamięć masowa",
-      "grafana": "Instancja Grafany",
+      "external-storage-label": "",
       "label-display-name": "Nazwa wyświetlana",
       "placeholder-my-repository-connection": "Połączenie z moim repozytorium",
       "text-loading-resource-information": "Wczytywanie informacji o zasobach…",
+      "unmanaged-resources-label": "",
       "dashboards-count_one": "{{count}} pulpit",
       "dashboards-count_few": "{{count}} pulpitu",
       "dashboards-count_many": "{{count}} pulpitu",
@@ -11333,7 +11346,11 @@
     },
     "connect-repository-button": {
       "configure": "Konfiguruj",
-      "repository-limit-info-alert": "Osiągnięto limit repozytorium ({{count}})"
+      "instance-fully-managed-tooltip": "",
+      "repository-limit-reached-tooltip_one": "",
+      "repository-limit-reached-tooltip_few": "",
+      "repository-limit-reached-tooltip_many": "",
+      "repository-limit-reached-tooltip_other": ""
     },
     "delete-repository-button": {
       "button-delete": "Usuń",
@@ -11714,6 +11731,7 @@
       "tooltip-unhealthy-repository": "Nie można pobrać danych z niesprawnego repozytorium"
     },
     "synchronize-step": {
+      "repository-unhealthy": "",
       "synchronization-description": "Uwzględnij zatwierdzenia dla każdej wartości historycznej",
       "synchronization-options": "Opcje synchronizacji"
     },
@@ -11737,6 +11755,8 @@
       "alert-point-3": "Czas trwania tego procesu zależy od liczby zasobów.",
       "alert-point-4": "Administratorzy instancji Enterprise mogą włączyć wyświetlanie użytkownikom banera z ogłoszeniem. Szczegółowe instrukcje znajdziesz w <2>tym przewodniku</2>.",
       "alert-title": "Ważne: dane ani konfiguracja nie zostaną utracone, ale pulpity będą niedostępne przez kilka minut.",
+      "button-cancel": "",
+      "button-cancelling": "",
       "button-next": "Zakończ",
       "button-start": "Rozpocznij synchronizację",
       "discard-modal": {

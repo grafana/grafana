@@ -500,6 +500,7 @@
       "copy-link": "링크 복사",
       "duplicate": "복제",
       "export": "내보내기",
+      "manage-enrichments": "",
       "silence-notifications": "알림 끄기에 대한 알림",
       "with-modifications": "수정 사항 포함"
     },
@@ -1115,7 +1116,8 @@
     },
     "enrichment": {
       "error-boundary": {
-        "notification-message-section-extension": ""
+        "enrichment-drawer-extension": "",
+        "rule-viewer-section-extension": ""
       }
     },
     "error-modal": {
@@ -2049,9 +2051,6 @@
       "text-loading-rules": "규칙 로딩 중...",
       "title-dashboard-not-saved": "대시보드 저장되지 않음"
     },
-    "paused-badge": {
-      "paused": "일시 중지됨"
-    },
     "payload-editor": {
       "edit-payload": "페이로드 편집",
       "label-add-custom-alert-instance": "사용자 지정 경고 인스턴스 추가",
@@ -2201,9 +2200,6 @@
       "label-time-range": "시간 범위",
       "max-data-points": "MD = {{maxDataPoints}}",
       "min-interval": "최소 간격 = {{minInterval}}"
-    },
-    "query-preview": {
-      "relative-time-range": "<0>{{from}}</0>부터 현재까지"
     },
     "queryAndExpressionsStep": {
       "disableAdvancedOptions": {
@@ -2545,6 +2541,10 @@
       "recording": "기록 중 {{recordingStats}}개",
       "recovering": "{{recoveringStats}}개 복구 중",
       "error_other": "오류 {{count}}개"
+    },
+    "rule-time-range-label": {
+      "relative": "",
+      "relative-with-to": ""
     },
     "rule-type-picker": {
       "grafana-managed": "Ruler API가 활성화된 Mimir, Loki 또는 Cortex 데이터 소스가 없는 경우 &ldquo;Grafana 관리형&rdquo;을 선택합니다."
@@ -3029,6 +3029,7 @@
       "page-nav": {
         "text": {
           "details": "세부 정보",
+          "enrichment": "",
           "history": "이력",
           "instances": "인스턴스",
           "query-and-conditions": "쿼리 및 조건",
@@ -3642,7 +3643,10 @@
       "text": "쿼리에 대해 찾은 결과 없음"
     },
     "restore": {
-      "success": "{{name}} 대시보드 복원됨"
+      "success": "",
+      "all-failed_other": "",
+      "failed-count_other": "",
+      "success-count_other": ""
     },
     "text-this-repository-is-read-only": "대상에 직접 액세스할 수 있는 경우 JSON을 복사하여 붙여넣으세요.",
     "trash-state-manager": {
@@ -11179,11 +11183,11 @@
       "description-clear-repository-connection": "이 리포지토리 연결에 대해 알기 쉬운 이름 추가",
       "empty": "비어 있음",
       "error-field-required": "이 필드는 필수 입력 항목입니다.",
-      "ext-storage": "외부 스토리지",
-      "grafana": "Grafana 인스턴스",
+      "external-storage-label": "",
       "label-display-name": "표시 이름",
       "placeholder-my-repository-connection": "내 리포지토리 연결",
       "text-loading-resource-information": "리소스 정보 로딩 중...",
+      "unmanaged-resources-label": "",
       "dashboards-count_other": "대시보드 {{count}}개",
       "files-count_other": "파일 {{count}}개",
       "folders-count_other": "폴더 {{count}}개"
@@ -11228,7 +11232,8 @@
     },
     "connect-repository-button": {
       "configure": "구성",
-      "repository-limit-info-alert": "리포지토리 한도 도달({{count}}개)"
+      "instance-fully-managed-tooltip": "",
+      "repository-limit-reached-tooltip_other": ""
     },
     "delete-repository-button": {
       "button-delete": "삭제",
@@ -11609,6 +11614,7 @@
       "tooltip-unhealthy-repository": "상태가 좋지 않은 리포지토리를 가져올 수 없습니다"
     },
     "synchronize-step": {
+      "repository-unhealthy": "",
       "synchronization-description": "각 과거 값에 대한 커밋을 포함합니다",
       "synchronization-options": "동기화 옵션"
     },
@@ -11632,6 +11638,8 @@
       "alert-point-3": "이 프로세스의 지속 시간은 관련된 리소스 수에 따라 달라집니다.",
       "alert-point-4": "Enterprise 인스턴스 관리자는 사용자에게 공지 배너를 표시할 수 있습니다. 단계별 지침은 <2>이 가이드</2>를 확인하세요.",
       "alert-title": "중요: 데이터나 구성은 손실되지 않지만 대시보드를 몇 분 동안 일시적으로 사용할 수 없습니다.",
+      "button-cancel": "",
+      "button-cancelling": "",
       "button-next": "완료",
       "button-start": "동기화 시작",
       "discard-modal": {

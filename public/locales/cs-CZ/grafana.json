@@ -512,6 +512,7 @@
       "copy-link": "Kopírovat odkaz",
       "duplicate": "Duplikovat",
       "export": "Exportovat",
+      "manage-enrichments": "",
       "silence-notifications": "Potlačit oznámení",
       "with-modifications": "S úpravami"
     },
@@ -1133,7 +1134,8 @@
     },
     "enrichment": {
       "error-boundary": {
-        "notification-message-section-extension": ""
+        "enrichment-drawer-extension": "",
+        "rule-viewer-section-extension": ""
       }
     },
     "error-modal": {
@@ -2070,9 +2072,6 @@
       "text-loading-rules": "Načítání pravidel…",
       "title-dashboard-not-saved": "Nástěnka není uložena"
     },
-    "paused-badge": {
-      "paused": "Pozastaveno"
-    },
     "payload-editor": {
       "edit-payload": "Upravit datový obsah",
       "label-add-custom-alert-instance": "Přidat vlastní instanci výstrahy",
@@ -2228,9 +2227,6 @@
       "label-time-range": "Časový rozsah",
       "max-data-points": "MD = {{maxDataPoints}}",
       "min-interval": "Min. Interval = {{minInterval}}"
-    },
-    "query-preview": {
-      "relative-time-range": "Od <0>{{from}}</0> doteď"
     },
     "queryAndExpressionsStep": {
       "disableAdvancedOptions": {
@@ -2584,6 +2580,10 @@
       "error_few": "Počet chyb: {{count}}",
       "error_many": "Počet chyb: {{count}}",
       "error_other": "Počet chyb: {{count}}"
+    },
+    "rule-time-range-label": {
+      "relative": "",
+      "relative-with-to": ""
     },
     "rule-type-picker": {
       "grafana-managed": "Pokud nemáte zdroj dat Mimir, Loki nebo Cortex s povoleným rozhraním API pravidla, vyberte možnost „Spravováno Grafanou“."
@@ -3068,6 +3068,7 @@
       "page-nav": {
         "text": {
           "details": "Podrobnosti",
+          "enrichment": "",
           "history": "Historie",
           "instances": "Instance",
           "query-and-conditions": "Dotaz a podmínky",
@@ -3696,7 +3697,19 @@
       "text": "Nebyly nalezeny žádné výsledky pro váš dotaz"
     },
     "restore": {
-      "success": "Nástěnka {{name}} byla obnovena"
+      "success": "",
+      "all-failed_one": "",
+      "all-failed_few": "",
+      "all-failed_many": "",
+      "all-failed_other": "",
+      "failed-count_one": "",
+      "failed-count_few": "",
+      "failed-count_many": "",
+      "failed-count_other": "",
+      "success-count_one": "",
+      "success-count_few": "",
+      "success-count_many": "",
+      "success-count_other": ""
     },
     "text-this-repository-is-read-only": "Pokud máte přímý přístup k cíli, zkopírujte JSON a vložte ho tam.",
     "trash-state-manager": {
@@ -11275,11 +11288,11 @@
       "description-clear-repository-connection": "Pojmenujte jasně toto připojení k úložišti",
       "empty": "Prázdný",
       "error-field-required": "Toto pole je povinné.",
-      "ext-storage": "Externí úložiště",
-      "grafana": "Instance Grafany",
+      "external-storage-label": "",
       "label-display-name": "Zobrazované jméno",
       "placeholder-my-repository-connection": "Moje připojení k úložišti",
       "text-loading-resource-information": "Načítání informací o zdroji…",
+      "unmanaged-resources-label": "",
       "dashboards-count_one": "{{count}} nástěnka",
       "dashboards-count_few": "{{count}} nástěnka",
       "dashboards-count_many": "{{count}} nástěnka",
@@ -11333,7 +11346,11 @@
     },
     "connect-repository-button": {
       "configure": "Konfigurovat",
-      "repository-limit-info-alert": "Bylo dosaženo limitu úložiště ({{count}})"
+      "instance-fully-managed-tooltip": "",
+      "repository-limit-reached-tooltip_one": "",
+      "repository-limit-reached-tooltip_few": "",
+      "repository-limit-reached-tooltip_many": "",
+      "repository-limit-reached-tooltip_other": ""
     },
     "delete-repository-button": {
       "button-delete": "Odstranit",
@@ -11714,6 +11731,7 @@
       "tooltip-unhealthy-repository": "Nelze stáhnout nezdravé úložiště"
     },
     "synchronize-step": {
+      "repository-unhealthy": "",
       "synchronization-description": "Zahrnout předložení pro každou historickou hodnotu",
       "synchronization-options": "Možnosti synchronizace"
     },
@@ -11737,6 +11755,8 @@
       "alert-point-3": "Doba trvání tohoto procesu závisí na počtu zapojených zdrojů.",
       "alert-point-4": "Správci podnikových instancí mohou uživatelům zobrazit banner oznámení. Podrobné pokyny najdete v <2>této příručce</2>.",
       "alert-title": "Důležité: Nebudou ztracena žádná data ani konfigurace, ale nástěnky budou na několik minut dočasně nedostupné.",
+      "button-cancel": "",
+      "button-cancelling": "",
       "button-next": "Dokončit",
       "button-start": "Zahájit synchronizaci",
       "discard-modal": {

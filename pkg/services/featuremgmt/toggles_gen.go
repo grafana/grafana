@@ -247,6 +247,10 @@ const (
 	// Routes short url requests from /api to the /apis endpoint
 	FlagKubernetesShortURLs = "kubernetesShortURLs"
 
+	// FlagKubernetesAlertingRules
+	// Adds support for Kubernetes alerting and recording rules
+	FlagKubernetesAlertingRules = "kubernetesAlertingRules"
+
 	// FlagDashboardDisableSchemaValidationV1
 	// Disable schema validation for dashboards/v1
 	FlagDashboardDisableSchemaValidationV1 = "dashboardDisableSchemaValidationV1"
@@ -691,6 +695,10 @@ const (
 	// Enable enrichment per rule in the alerting UI.
 	FlagAlertingEnrichmentPerRule = "alertingEnrichmentPerRule"
 
+	// FlagAlertingEnrichmentAssistantInvestigations
+	// Enable Assistant Investigations enrichment type.
+	FlagAlertingEnrichmentAssistantInvestigations = "alertingEnrichmentAssistantInvestigations"
+
 	// FlagAlertingAIAnalyzeCentralStateHistory
 	// Enable AI-analyze central state history.
 	FlagAlertingAIAnalyzeCentralStateHistory = "alertingAIAnalyzeCentralStateHistory"
@@ -708,7 +716,7 @@ const (
 	FlagUnifiedStorageSearchUI = "unifiedStorageSearchUI"
 
 	// FlagElasticsearchCrossClusterSearch
-	// Enables cross cluster search in the Elasticsearch datasource
+	// Enables cross cluster search in the Elasticsearch data source
 	FlagElasticsearchCrossClusterSearch = "elasticsearchCrossClusterSearch"
 
 	// FlagUnifiedHistory
@@ -1003,10 +1011,6 @@ const (
 	// Enables new design for the Clickhouse data source configuration page
 	FlagNewClickhouseConfigPageDesign = "newClickhouseConfigPageDesign"
 
-	// FlagUnifiedStorageSearchAfterWriteExperimentalAPI
-	// Enable experimental search-after-write guarantees to unified-storage search endpoints
-	FlagUnifiedStorageSearchAfterWriteExperimentalAPI = "unifiedStorageSearchAfterWriteExperimentalAPI"
-
 	// FlagTeamFolders
 	// Enables team folders functionality
 	FlagTeamFolders = "teamFolders"
@@ -1026,4 +1030,12 @@ const (
 	// FlagPrometheusTypeMigration
 	// Checks for deprecated Prometheus authentication methods (SigV4 and Azure), installs the relevant data source, and migrates the Prometheus data sources
 	FlagPrometheusTypeMigration = "prometheusTypeMigration"
+
+	// FlagDskitBackgroundServices
+	// Enables dskit background service wrapper
+	FlagDskitBackgroundServices = "dskitBackgroundServices"
+
+	// FlagPluginContainers
+	// Enables running plugins in containers
+	FlagPluginContainers = "pluginContainers"
 )

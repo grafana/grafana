@@ -504,6 +504,7 @@
       "copy-link": "Copier le lien",
       "duplicate": "Dupliquer",
       "export": "Exporter",
+      "manage-enrichments": "",
       "silence-notifications": "Mettre les notifications en sourdine",
       "with-modifications": "Avec modifications"
     },
@@ -1121,7 +1122,8 @@
     },
     "enrichment": {
       "error-boundary": {
-        "notification-message-section-extension": ""
+        "enrichment-drawer-extension": "",
+        "rule-viewer-section-extension": ""
       }
     },
     "error-modal": {
@@ -2056,9 +2058,6 @@
       "text-loading-rules": "Chargement des règles...",
       "title-dashboard-not-saved": "Tableau de bord non enregistré"
     },
-    "paused-badge": {
-      "paused": "En pause"
-    },
     "payload-editor": {
       "edit-payload": "Modifier la charge utile",
       "label-add-custom-alert-instance": "Ajouter une instance d’alerte personnalisée",
@@ -2210,9 +2209,6 @@
       "label-time-range": "Période",
       "max-data-points": "MD = {{maxDataPoints}}",
       "min-interval": "Min. Intervalle = {{minInterval}}"
-    },
-    "query-preview": {
-      "relative-time-range": "<0>{{from}}</0> à maintenant"
     },
     "queryAndExpressionsStep": {
       "disableAdvancedOptions": {
@@ -2558,6 +2554,10 @@
       "recovering": "{{recoveringStats}} en cours de récupération",
       "error_one": "{{count}} erreurs",
       "error_other": "{{count}} erreurs"
+    },
+    "rule-time-range-label": {
+      "relative": "",
+      "relative-with-to": ""
     },
     "rule-type-picker": {
       "grafana-managed": "Sélectionnez « Grafana géré » à moins que vous n’ayez une source de données Mimir, Loki ou Cortex avec l’API Ruler activée."
@@ -3042,6 +3042,7 @@
       "page-nav": {
         "text": {
           "details": "Détails",
+          "enrichment": "",
           "history": "Historique",
           "instances": "Instances",
           "query-and-conditions": "Requête et conditions",
@@ -3660,7 +3661,13 @@
       "text": "Aucun résultat n'a été trouvé pour votre requête"
     },
     "restore": {
-      "success": "Tableau de bord {{name}} restauré"
+      "success": "",
+      "all-failed_one": "",
+      "all-failed_other": "",
+      "failed-count_one": "",
+      "failed-count_other": "",
+      "success-count_one": "",
+      "success-count_other": ""
     },
     "text-this-repository-is-read-only": "Si vous avez un accès direct à la cible, copiez le JSON et collez-le à cet endroit.",
     "trash-state-manager": {
@@ -11211,11 +11218,11 @@
       "description-clear-repository-connection": "Ajoutez un nom clair pour cette connexion de référentiel",
       "empty": "Vide",
       "error-field-required": "Ce champ est obligatoire.",
-      "ext-storage": "Stockage externalisé",
-      "grafana": "Instance Grafana",
+      "external-storage-label": "",
       "label-display-name": "Pseudo",
       "placeholder-my-repository-connection": "Ma connexion au référentiel",
       "text-loading-resource-information": "Chargement des informations sur les ressources...",
+      "unmanaged-resources-label": "",
       "dashboards-count_one": "{{count}} tableau de bord",
       "dashboards-count_other": "{{count}} tableau de bord",
       "files-count_one": "{{count}} fichiers",
@@ -11263,7 +11270,9 @@
     },
     "connect-repository-button": {
       "configure": "Configurer",
-      "repository-limit-info-alert": "Limite du référentiel atteinte ({{count}})"
+      "instance-fully-managed-tooltip": "",
+      "repository-limit-reached-tooltip_one": "",
+      "repository-limit-reached-tooltip_other": ""
     },
     "delete-repository-button": {
       "button-delete": "Supprimer",
@@ -11644,6 +11653,7 @@
       "tooltip-unhealthy-repository": "Impossible de fusionner un référentiel en mauvais état"
     },
     "synchronize-step": {
+      "repository-unhealthy": "",
       "synchronization-description": "Inclure les commits pour chaque valeur historique",
       "synchronization-options": "Options de synchronisation"
     },
@@ -11667,6 +11677,8 @@
       "alert-point-3": "La durée de ce processus dépend du nombre de ressources impliquées.",
       "alert-point-4": "Les administrateurs d’instances d’entreprise peuvent afficher une bannière d’annonce aux utilisateurs. Consultez <2>ce guide</2> pour obtenir des instructions étape par étape.",
       "alert-title": "Important : aucune donnée ou configuration ne sera perdue, mais les tableaux de bord seront temporairement indisponibles pendant quelques minutes.",
+      "button-cancel": "",
+      "button-cancelling": "",
       "button-next": "Terminer",
       "button-start": "Commencer la synchronisation",
       "discard-modal": {
