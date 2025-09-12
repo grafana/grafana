@@ -8,7 +8,6 @@ import (
 	"io"
 	"net/http"
 	"net/url"
-	"path"
 	"regexp"
 	"strconv"
 	"strings"
@@ -173,29 +172,17 @@ func (s *Service) createGraphiteRequest(ctx context.Context, query backend.DataQ
 
 	s.logger.Debug("Graphite request", "params", formData)
 
-	graphiteReq, err := s.createRequest(ctx, dsInfo, formData)
+	graphiteReq, err := s.createRequest(ctx, dsInfo, URLParams{
+		SubPath: "render",
+		Method:  http.MethodPost,
+		Body:    strings.NewReader(formData.Encode()),
+		Headers: map[string]string{"Content-Type": "application/x-www-form-urlencoded"},
+	})
 	if err != nil {
 		return nil, formData, nil, err
 	}
 
 	return graphiteReq, formData, emptyQuery, nil
-}
-
-func (s *Service) createRequest(ctx context.Context, dsInfo *datasourceInfo, data url.Values) (*http.Request, error) {
-	u, err := url.Parse(dsInfo.URL)
-	if err != nil {
-		return nil, err
-	}
-	u.Path = path.Join(u.Path, "render")
-
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, u.String(), strings.NewReader(data.Encode()))
-	if err != nil {
-		s.logger.Info("Failed to create request", "error", err)
-		return nil, fmt.Errorf("failed to create request: %w", err)
-	}
-
-	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-	return req, err
 }
 
 func (s *Service) toDataFrames(response *http.Response, refId string) (frames data.Frames, error error) {
