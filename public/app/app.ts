@@ -435,13 +435,18 @@ function handleRedirectTo(): void {
   }
 
   window.sessionStorage.removeItem(RedirectToUrlKey);
-  const decodedRedirectTo = decodeURIComponent(redirectTo);
+  let decodedRedirectTo = decodeURIComponent(redirectTo);
   if (decodedRedirectTo.startsWith('/goto/')) {
     // In this case there should be a request to the backend
+    if (config.appSubUrl && !decodedRedirectTo.startsWith(config.appSubUrl)) {
+      decodedRedirectTo = config.appSubUrl + decodedRedirectTo;
+    }
     window.location.replace(decodedRedirectTo);
-  } else {
-    locationService.replace(decodedRedirectTo);
+    return;
   }
+  // Ensure that the appsuburl is stripped from the redirect to in case of a frontend redirect
+  const stripped = locationUtil.stripBaseFromUrl(decodedRedirectTo);
+  locationService.replace(stripped);
 }
 
 export default new GrafanaApp();
