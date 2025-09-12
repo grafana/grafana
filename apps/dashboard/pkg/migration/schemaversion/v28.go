@@ -172,6 +172,10 @@ func migrateSinglestatOptions(panel map[string]interface{}, originalType string)
 	// Apply shared migration logic
 	applySharedSinglestatMigration(defaults)
 
+	// Apply complete stat panel defaults (matches frontend getPanelOptionsWithDefaults)
+	// The frontend applies these defaults after migration via applyPluginOptionDefaults
+	applyCompleteStatPanelDefaults(panel)
+
 	// Create proper fieldConfig structure from defaults
 	createFieldConfigFromDefaults(panel, defaults)
 
@@ -197,21 +201,18 @@ func getDefaultStatOptions() map[string]interface{} {
 		"textMode":               "auto",
 		"wideLayout":             true,
 		"reduceOptions": map[string]interface{}{
-			"calcs":  []string{"mean"},
+			"calcs":  []string{"lastNotNull"}, // Matches frontend: ReducerID.lastNotNull
 			"fields": "",
 			"values": false,
 		},
-		"orientation": "horizontal",
+		"orientation": "auto",
 	}
 }
 
 // migratetSinglestat handles explicit migration from 'singlestat' panels
-// Based on explicit migration logic in DashboardMigrator.ts
+// Based on frontend migrateFromAngularSinglestat function
 func migratetSinglestat(panel map[string]interface{}, defaults map[string]interface{}) {
 	angularOpts := extractAngularOptions(panel)
-
-	// Start with default stat panel options (matches frontend statPanelChangedHandler)
-	options := getDefaultStatOptions()
 
 	// Extract valueName for reducer mapping (matches frontend migrateFromAngularSinglestat)
 	var valueName string
@@ -220,15 +221,23 @@ func migratetSinglestat(panel map[string]interface{}, defaults map[string]interf
 	}
 
 	// Set calcs based on valueName (matches frontend: calcs: [reducer ? reducer.id : ReducerID.mean])
+	var calcs []string
 	if reducer := getReducerForValueName(valueName); reducer != "" {
-		options["reduceOptions"].(map[string]interface{})["calcs"] = []string{reducer}
+		calcs = []string{reducer}
 	} else {
-		// Use mean as fallback (matches frontend ReducerID.mean)
-		options["reduceOptions"].(map[string]interface{})["calcs"] = []string{"mean"}
+		// Use mean as fallback (matches frontend migrateFromAngularSinglestat: ReducerID.mean)
+		calcs = []string{"mean"}
 	}
 
-	// Set orientation to horizontal (matches frontend: orientation: VizOrientation.Horizontal)
-	options["orientation"] = "horizontal"
+	// Create options exactly like frontend migrateFromAngularSinglestat
+	options := map[string]interface{}{
+		"reduceOptions": map[string]interface{}{
+			"calcs":  calcs,
+			"fields": "",
+			"values": false,
+		},
+		"orientation": "horizontal", // Matches frontend migrateFromAngularSinglestat: VizOrientation.Horizontal
+	}
 
 	// Migrate thresholds FIRST (consolidated: both panel types create DEFAULT_THRESHOLDS for empty strings)
 	migrateThresholds(angularOpts, defaults)
@@ -265,51 +274,40 @@ func migratetSinglestat(panel map[string]interface{}, defaults map[string]interf
 }
 
 // migrateGrafanaSinglestatPanel handles auto-migration from 'grafana-singlestat-panel'
-// Based on frontend changePlugin() and sharedSingleStatPanelChangedHandler logic
+// Based on frontend autoMigrateAngular map: both singlestat and grafana-singlestat-panel migrate to stat
+// However, the frontend only calls migrateFromAngularSinglestat for 'singlestat' panels.
+// For 'grafana-singlestat-panel' panels, it uses the default stat panel options from getPanelOptionsWithDefaults.
+// The frontend does NOT apply field config migration for grafana-singlestat-panel panels.
+// Therefore, we only apply the stat panel defaults, not the field config migration.
 func migrateGrafanaSinglestatPanel(panel map[string]interface{}, defaults map[string]interface{}) {
-	angularOpts := extractAngularOptions(panel)
+	// For grafana-singlestat-panel, the frontend uses default stat panel options
+	// This means it uses ReducerID.lastNotNull as the default, not the valueName mapping
+	// The frontend only applies valueName mapping for 'singlestat' panels via migrateFromAngularSinglestat
 
-	// Auto-migration uses different defaults (matches frontend changePlugin behavior)
-	options := map[string]interface{}{
-		"reduceOptions": map[string]interface{}{
-			"calcs":  []string{"lastNotNull"}, // Auto-migration default
-			"fields": "",
-			"values": false,
-		},
-		"orientation":            "auto", // Auto-migration uses auto
-		"justifyMode":            "auto",
-		"percentChangeColorMode": "standard", // Match frontend behavior
-		"showPercentChange":      false,
-		"textMode":               "auto",
-		"wideLayout":             true,
-	}
+	// Create options with complete stat panel defaults (matches frontend getPanelOptionsWithDefaults)
+	options := getDefaultStatOptions()
 
-	// Auto-migration: don't apply valueName mapping - keep default "lastNotNull"
-	// The frontend changePlugin() behavior uses stat panel defaults, not valueName mapping
+	// For grafana-singlestat-panel, the frontend does NOT apply field config migration
+	// It only applies the stat panel defaults and basic threshold defaults
+	// So we only add default thresholds, not the full field config migration
 
-	// Migrate thresholds FIRST (consolidated: both panel types create DEFAULT_THRESHOLDS for empty strings)
-	migrateThresholds(angularOpts, defaults)
-
-	// If no thresholds were set from angular migration, add default stat panel thresholds
-	// This matches the behavior of frontend pluginLoaded which adds default thresholds
-	if _, hasThresholds := defaults["thresholds"]; !hasThresholds {
-		defaults["thresholds"] = map[string]interface{}{
-			"mode": "absolute",
-			"steps": []interface{}{
-				map[string]interface{}{
-					"color": "green",
-					"value": (*float64)(nil),
-				},
-				map[string]interface{}{
-					"color": "red",
-					"value": 80,
-				},
+	// Add default stat panel thresholds and mappings (matches frontend behavior)
+	defaults["thresholds"] = map[string]interface{}{
+		"mode": "absolute",
+		"steps": []interface{}{
+			map[string]interface{}{
+				"color": "green",
+				"value": (*float64)(nil),
 			},
-		}
+			map[string]interface{}{
+				"color": "red",
+				"value": 80,
+			},
+		},
 	}
 
-	// Apply common angular option migrations (value mappings can now use threshold colors)
-	applyCommonAngularMigration(panel, defaults, options, angularOpts)
+	// Add empty mappings array (matches frontend behavior)
+	defaults["mappings"] = []interface{}{}
 
 	// Merge new options with existing panel options to preserve properties like maxDataPoints
 	if existingOptions, exists := panel["options"].(map[string]interface{}); exists {
@@ -357,20 +355,20 @@ func applyCommonAngularMigration(panel map[string]interface{}, defaults map[stri
 		options["reduceOptions"].(map[string]interface{})["fields"] = "/^" + tableColumn + "$/"
 	}
 
-	// Note: Frontend stat panel change handler doesn't add unit property
-	// if format, ok := angularOpts["format"].(string); ok {
-	// 	defaults["unit"] = format
-	// }
+	// Migrate unit from format property (matches frontend sharedSingleStatPanelChangedHandler)
+	if format, ok := angularOpts["format"].(string); ok {
+		defaults["unit"] = format
+	}
 
 	// Migrate decimals
 	if decimals, ok := angularOpts["decimals"]; ok {
 		defaults["decimals"] = decimals
 	}
 
-	// Note: Frontend stat panel change handler doesn't add nullValueMode property
-	// if nullPointMode, ok := angularOpts["nullPointMode"]; ok {
-	// 	defaults["nullValueMode"] = nullPointMode
-	// }
+	// Migrate nullPointMode to nullValueMode (matches frontend migrateFromAngularSinglestat)
+	if nullPointMode, ok := angularOpts["nullPointMode"]; ok {
+		defaults["nullValueMode"] = nullPointMode
+	}
 
 	// Migrate null text
 	if nullText, ok := angularOpts["nullText"].(string); ok {
@@ -421,6 +419,28 @@ func applyCommonAngularMigration(panel map[string]interface{}, defaults map[stri
 	if angularOpts["gauge"] != nil && angularOpts["gauge"].(map[string]interface{})["show"] == true {
 		defaults["min"] = angularOpts["gauge"].(map[string]interface{})["minValue"]
 		defaults["max"] = angularOpts["gauge"].(map[string]interface{})["maxValue"]
+	}
+}
+
+// applyCompleteStatPanelDefaults applies the complete stat panel defaults
+// This matches the frontend's getPanelOptionsWithDefaults behavior after migration
+func applyCompleteStatPanelDefaults(panel map[string]interface{}) {
+	// Get or create options object
+	options, exists := panel["options"].(map[string]interface{})
+	if !exists {
+		options = map[string]interface{}{}
+		panel["options"] = options
+	}
+
+	// Apply complete stat panel defaults (matches frontend stat panel defaultOptions)
+	defaultOptions := getDefaultStatOptions()
+
+	// Merge defaults with existing options, but don't override existing values
+	// This matches the frontend's getPanelOptionsWithDefaults behavior
+	for key, defaultValue := range defaultOptions {
+		if _, exists := options[key]; !exists {
+			options[key] = defaultValue
+		}
 	}
 }
 
