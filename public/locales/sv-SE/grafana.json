@@ -2058,9 +2058,6 @@
       "text-loading-rules": "Laddar regler …",
       "title-dashboard-not-saved": "Instrumentpanelen sparades inte"
     },
-    "paused-badge": {
-      "paused": "Pausad"
-    },
     "payload-editor": {
       "edit-payload": "Redigera nyttolast",
       "label-add-custom-alert-instance": "Lägg till anpassad larminstans",
@@ -2212,9 +2209,6 @@
       "label-time-range": "Tidsintervall",
       "max-data-points": "MD = {{maxDataPoints}}",
       "min-interval": "Min. Intervall = {{minInterval}}"
-    },
-    "query-preview": {
-      "relative-time-range": "<0>{{from}}</0> till nu"
     },
     "queryAndExpressionsStep": {
       "disableAdvancedOptions": {
@@ -2560,6 +2554,10 @@
       "recovering": "{{recoveringStats}} återhämtas",
       "error_one": "{{count}} fel",
       "error_other": "{{count}} fel"
+    },
+    "rule-time-range-label": {
+      "relative": "",
+      "relative-with-to": ""
     },
     "rule-type-picker": {
       "grafana-managed": "Välj ”Grafana-hanterad” om du inte har en Mimir-, Loki- eller Cortex-datakälla med Ruler API aktiverat."
@@ -3663,7 +3661,13 @@
       "text": "Inga resultat hittades för din fråga"
     },
     "restore": {
-      "success": "Instrumentpanelen {{name}} har återställts"
+      "success": "",
+      "all-failed_one": "",
+      "all-failed_other": "",
+      "failed-count_one": "",
+      "failed-count_other": "",
+      "success-count_one": "",
+      "success-count_other": ""
     },
     "text-this-repository-is-read-only": "Om du har direkt åtkomst till målet kopierar du JSON och klistrar in den där.",
     "trash-state-manager": {
@@ -11649,6 +11653,7 @@
       "tooltip-unhealthy-repository": "Det gick inte att hämta en ohälsosam lagringsplats"
     },
     "synchronize-step": {
+      "repository-unhealthy": "",
       "synchronization-description": "Inkludera åtaganden för varje historiskt värde",
       "synchronization-options": "Synkroniseringsalternativ"
     },
@@ -11672,6 +11677,8 @@
       "alert-point-3": "Hur lång den här processen är beror på hur många resurser som är inblandade.",
       "alert-point-4": "Enterprise-instansadministratörer kan visa en meddelandebanner för användare. Se <2>denna guide</2> för steg för steg-anvisningar.",
       "alert-title": "Viktigt: Inga data eller konfigurationer kommer att förloras, men instrumentpaneler kommer att vara tillfälligt otillgängliga under några minuter.",
+      "button-cancel": "",
+      "button-cancelling": "",
       "button-next": "Slutför",
       "button-start": "Påbörja synkronisering",
       "discard-modal": {
