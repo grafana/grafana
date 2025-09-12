@@ -17,22 +17,22 @@ import (
 	"go.opentelemetry.io/otel/codes"
 )
 
-type postResourceHandler[T any] func(context.Context, *datasourceInfo, T) ([]byte, int, error)
-type getResourceHandler func(context.Context, *datasourceInfo) ([]byte, int, error)
+type resourceHandler[T any] func(context.Context, *datasourceInfo, *T) ([]byte, int, error)
 
 func (s *Service) newResourceMux() *http.ServeMux {
 	mux := http.NewServeMux()
-	mux.HandleFunc("/events", handlePostResourceReq(s.handleEvents, s))
-	mux.HandleFunc("/metrics/find", handlePostResourceReq(s.handleMetricsFind, s))
-	mux.HandleFunc("/metrics/expand", handlePostResourceReq(s.handleMetricsExpand, s))
-	mux.HandleFunc("/tags/autoComplete/tags", handlePostResourceReq(s.handleTagsAutocomplete, s))
-	mux.HandleFunc("/tags/autoComplete/values", handlePostResourceReq(s.handleTagValuesAutocomplete, s))
-	mux.HandleFunc("/version", handleGetResourceReq(s.handleVersion, s))
-	mux.HandleFunc("/functions", handleGetResourceReq(s.handleFunctions, s))
+
+	mux.HandleFunc("/events", handleResourceReq(s.handleEvents, s))
+	mux.HandleFunc("/metrics/find", handleResourceReq(s.handleMetricsFind, s))
+	mux.HandleFunc("/metrics/expand", handleResourceReq(s.handleMetricsExpand, s))
+	mux.HandleFunc("/functions", handleResourceReq(s.handleFunctions, s))
+	mux.HandleFunc("/tags/autoComplete/tags", handleResourceReq(s.handleTagsAutocomplete, s))
+	mux.HandleFunc("/tags/autoComplete/values", handleResourceReq(s.handleTagValuesAutocomplete, s))
+	mux.HandleFunc("/version", handleResourceReq(s.handleVersion, s))
 	return mux
 }
 
-func handlePostResourceReq[T any](handlerFn postResourceHandler[T], s *Service) func(rw http.ResponseWriter, req *http.Request) {
+func handleResourceReq[T any](handlerFn resourceHandler[T], s *Service) func(rw http.ResponseWriter, req *http.Request) {
 	return func(rw http.ResponseWriter, req *http.Request) {
 		s.logger.Debug("Received resource call", "url", req.URL.String(), "method", req.Method)
 
@@ -45,17 +45,29 @@ func handlePostResourceReq[T any](handlerFn postResourceHandler[T], s *Service) 
 		}
 
 		defer func() {
-			if err := req.Body.Close(); err != nil {
-				s.logger.Warn("Failed to close request body", "err", err)
+			if req.Body != nil {
+				if err := req.Body.Close(); err != nil {
+					s.logger.Warn("Failed to close request body", "err", err)
+					writeErrorResponse(rw, http.StatusInternalServerError, fmt.Sprintf("unexpected error %v", err))
+					return
+				}
+			}
+		}()
+
+		body := []byte{}
+		var parsedBody *T
+		if req.Body != nil {
+			body, err = io.ReadAll(req.Body)
+			if err != nil {
+				s.logger.Error("Failed to read request body", "error", err)
 				writeErrorResponse(rw, http.StatusInternalServerError, fmt.Sprintf("unexpected error %v", err))
 				return
 			}
-		}()
-		requestBody, err := io.ReadAll(req.Body)
-		if err != nil {
-			s.logger.Error("Failed to read request body", "error", err)
-			writeErrorResponse(rw, http.StatusInternalServerError, fmt.Sprintf("unexpected error %v", err))
-			return
+			parsedBody, err = parseRequestBody[T](body, s.logger)
+			if err != nil {
+				writeErrorResponse(rw, http.StatusBadRequest, fmt.Sprintf("failed to parse request body: %v", err))
+				return
+			}
 		}
 
 		if handlerFn == nil {
@@ -63,13 +75,7 @@ func handlePostResourceReq[T any](handlerFn postResourceHandler[T], s *Service) 
 			return
 		}
 
-		parsedBody, err := parseRequestBody[T](requestBody, s.logger)
-		if err != nil {
-			writeErrorResponse(rw, http.StatusInternalServerError, fmt.Sprintf("failed to parse request body: %v", err))
-			return
-		}
-
-		response, statusCode, err := handlerFn(ctx, dsInfo, *parsedBody)
+		response, statusCode, err := handlerFn(ctx, dsInfo, parsedBody)
 		if err != nil {
 			writeErrorResponse(rw, statusCode, fmt.Sprintf("failed to handle resource request: %v", err))
 			return
@@ -84,54 +90,24 @@ func handlePostResourceReq[T any](handlerFn postResourceHandler[T], s *Service) 
 	}
 }
 
-func handleGetResourceReq(handlerFn getResourceHandler, s *Service) func(rw http.ResponseWriter, req *http.Request) {
-	return func(rw http.ResponseWriter, req *http.Request) {
-		s.logger.Debug("Received resource call", "url", req.URL.String(), "method", req.Method)
-
-		pluginCtx := backend.PluginConfigFromContext(req.Context())
-		ctx := req.Context()
-		dsInfo, err := s.getDSInfo(ctx, pluginCtx)
-		if err != nil {
-			writeErrorResponse(rw, http.StatusInternalServerError, fmt.Sprintf("unexpected error %v", err))
-			return
-		}
-
-		if handlerFn == nil {
-			writeErrorResponse(rw, http.StatusInternalServerError, "responseFn should not be nil")
-			return
-		}
-
-		response, statusCode, err := handlerFn(ctx, dsInfo)
-		if err != nil {
-			writeErrorResponse(rw, statusCode, fmt.Sprintf("failed to handle resource request: %v", err))
-			return
-		}
-
-		rw.WriteHeader(statusCode)
-		_, err = rw.Write(response)
-		if err != nil {
-			writeErrorResponse(rw, http.StatusInternalServerError, fmt.Sprintf("failed to write response: %v", err))
-			return
-		}
+func (s *Service) handleEvents(ctx context.Context, dsInfo *datasourceInfo, eventsRequestJson *GraphiteEventsRequest) ([]byte, int, error) {
+	queryParams := map[string][]string{
+		"from":  {eventsRequestJson.From},
+		"until": {eventsRequestJson.Until},
 	}
-}
-
-func (s *Service) handleEvents(ctx context.Context, dsInfo *datasourceInfo, eventsRequestJson GraphiteEventsRequest) ([]byte, int, error) {
-	eventsUrl, err := url.Parse(fmt.Sprintf("%s/events/get_data", dsInfo.URL))
-	if err != nil {
-		return nil, http.StatusInternalServerError, fmt.Errorf("unexpected error %v", err)
-	}
-
-	queryValues := eventsUrl.Query()
-	queryValues.Set("from", eventsRequestJson.From)
-	queryValues.Set("until", eventsRequestJson.Until)
 	if eventsRequestJson.Tags != "" {
-		queryValues.Set("tags", eventsRequestJson.Tags)
+		queryParams["tags"] = []string{eventsRequestJson.Tags}
 	}
 
-	eventsUrl.RawQuery = queryValues.Encode()
+	req, err := s.createRequest(ctx, dsInfo, URLParams{
+		SubPath:     "events/get_data",
+		QueryParams: queryParams,
+	})
+	if err != nil {
+		return nil, http.StatusInternalServerError, fmt.Errorf("failed to create events request %v", err)
+	}
 
-	events, _, statusCode, err := doGraphiteRequest[[]GraphiteEventsResponse](ctx, "events", dsInfo, eventsUrl, http.MethodGet, nil, map[string]string{}, s.logger, false)
+	events, _, statusCode, err := doGraphiteRequest[[]GraphiteEventsResponse](ctx, dsInfo, s.logger, req, false)
 	if err != nil {
 		return nil, statusCode, fmt.Errorf("events request failed: %v", err)
 	}
@@ -147,28 +123,34 @@ func (s *Service) handleEvents(ctx context.Context, dsInfo *datasourceInfo, even
 	return graphiteEventsResponse, statusCode, nil
 }
 
-func (s *Service) handleMetricsFind(ctx context.Context, dsInfo *datasourceInfo, metricsFindRequestJson GraphiteMetricsFindRequest) ([]byte, int, error) {
+func (s *Service) handleMetricsFind(ctx context.Context, dsInfo *datasourceInfo, metricsFindRequestJson *GraphiteMetricsFindRequest) ([]byte, int, error) {
 	if metricsFindRequestJson.Query == "" {
 		return nil, http.StatusBadRequest, fmt.Errorf("query is required")
-	}
-
-	metricsFindUrl, err := url.Parse(fmt.Sprintf("%s/metrics/find", dsInfo.URL))
-	if err != nil {
-		return nil, http.StatusInternalServerError, fmt.Errorf("unexpected error %v", err)
-	}
-
-	queryValues := metricsFindUrl.Query()
-	if metricsFindRequestJson.From != "" {
-		queryValues.Set("from", metricsFindRequestJson.From)
-	}
-	if metricsFindRequestJson.Until != "" {
-		queryValues.Set("until", metricsFindRequestJson.Until)
 	}
 
 	data := url.Values{}
 	data.Set("query", metricsFindRequestJson.Query)
 
-	metrics, _, statusCode, err := doGraphiteRequest[[]GraphiteMetricsFindResponse](ctx, "metrics find", dsInfo, metricsFindUrl, http.MethodPost, strings.NewReader(data.Encode()), map[string]string{"Content-Type": "application/x-www-form-urlencoded"}, s.logger, false)
+	queryParams := map[string][]string{}
+	if metricsFindRequestJson.From != "" {
+		queryParams["from"] = []string{metricsFindRequestJson.From}
+	}
+	if metricsFindRequestJson.Until != "" {
+		queryParams["until"] = []string{metricsFindRequestJson.Until}
+	}
+
+	req, err := s.createRequest(ctx, dsInfo, URLParams{
+		SubPath:     "metrics/find",
+		Method:      http.MethodPost,
+		QueryParams: queryParams,
+		Body:        strings.NewReader(data.Encode()),
+		Headers:     map[string]string{"Content-Type": "application/x-www-form-urlencoded"},
+	})
+	if err != nil {
+		return nil, http.StatusInternalServerError, fmt.Errorf("failed to create metrics find request %v", err)
+	}
+
+	metrics, _, statusCode, err := doGraphiteRequest[[]GraphiteMetricsFindResponse](ctx, dsInfo, s.logger, req, false)
 	if err != nil {
 		return nil, statusCode, fmt.Errorf("metrics find request failed: %v", err)
 	}
@@ -181,27 +163,30 @@ func (s *Service) handleMetricsFind(ctx context.Context, dsInfo *datasourceInfo,
 	return metricsFindResponse, statusCode, nil
 }
 
-func (s *Service) handleMetricsExpand(ctx context.Context, dsInfo *datasourceInfo, metricsExpandRequestJson GraphiteMetricsFindRequest) ([]byte, int, error) {
+func (s *Service) handleMetricsExpand(ctx context.Context, dsInfo *datasourceInfo, metricsExpandRequestJson *GraphiteMetricsFindRequest) ([]byte, int, error) {
 	if metricsExpandRequestJson.Query == "" {
 		return nil, http.StatusBadRequest, fmt.Errorf("query is required")
 	}
 
-	metricsExpandUrl, err := url.Parse(fmt.Sprintf("%s/metrics/expand", dsInfo.URL))
-	if err != nil {
-		return nil, http.StatusInternalServerError, fmt.Errorf("unexpected error %v", err)
+	queryParams := map[string][]string{
+		"query": {metricsExpandRequestJson.Query},
 	}
-
-	queryValues := metricsExpandUrl.Query()
-	queryValues.Set("query", metricsExpandRequestJson.Query)
 	if metricsExpandRequestJson.From != "" {
-		queryValues.Set("from", metricsExpandRequestJson.From)
+		queryParams["from"] = []string{metricsExpandRequestJson.From}
 	}
 	if metricsExpandRequestJson.Until != "" {
-		queryValues.Set("until", metricsExpandRequestJson.Until)
+		queryParams["until"] = []string{metricsExpandRequestJson.Until}
 	}
-	metricsExpandUrl.RawQuery = queryValues.Encode()
 
-	metrics, _, statusCode, err := doGraphiteRequest[GraphiteMetricsExpandResponse](ctx, "metrics expand", dsInfo, metricsExpandUrl, http.MethodGet, nil, map[string]string{}, s.logger, false)
+	req, err := s.createRequest(ctx, dsInfo, URLParams{
+		SubPath:     "metrics/expand",
+		QueryParams: queryParams,
+	})
+	if err != nil {
+		return nil, http.StatusInternalServerError, fmt.Errorf("failed to create metrics expand request %v", err)
+	}
+
+	metrics, _, statusCode, err := doGraphiteRequest[GraphiteMetricsExpandResponse](ctx, dsInfo, s.logger, req, false)
 	if err != nil {
 		return nil, statusCode, fmt.Errorf("metrics expand request failed: %v", err)
 	}
@@ -221,28 +206,22 @@ func (s *Service) handleMetricsExpand(ctx context.Context, dsInfo *datasourceInf
 	return metricsExpandResponse, statusCode, nil
 }
 
-func (s *Service) handleTagsAutocomplete(ctx context.Context, dsInfo *datasourceInfo, tagsAutocompleteRequestJson GraphiteTagsRequest) ([]byte, int, error) {
-	tagsAutocompleteUrl, err := url.Parse(fmt.Sprintf("%s/tags/autoComplete/tags", dsInfo.URL))
+func (s *Service) handleTagsAutocomplete(ctx context.Context, dsInfo *datasourceInfo, tagsAutocompleteRequestJson *GraphiteTagsRequest) ([]byte, int, error) {
+	queryParams := map[string][]string{
+		"from":      {tagsAutocompleteRequestJson.From},
+		"until":     {tagsAutocompleteRequestJson.Until},
+		"limit":     {fmt.Sprintf("%d", tagsAutocompleteRequestJson.Limit)},
+		"tagPrefix": {tagsAutocompleteRequestJson.TagPrefix},
+	}
+	req, err := s.createRequest(ctx, dsInfo, URLParams{
+		SubPath:     "tags/autoComplete/tags",
+		QueryParams: queryParams,
+	})
 	if err != nil {
-		return nil, http.StatusInternalServerError, fmt.Errorf("unexpected error %v", err)
+		return nil, http.StatusInternalServerError, fmt.Errorf("failed to create tags autocomplete request %v", err)
 	}
 
-	queryValues := tagsAutocompleteUrl.Query()
-	if tagsAutocompleteRequestJson.From != "" {
-		queryValues.Set("from", tagsAutocompleteRequestJson.From)
-	}
-	if tagsAutocompleteRequestJson.Until != "" {
-		queryValues.Set("until", tagsAutocompleteRequestJson.Until)
-	}
-	if tagsAutocompleteRequestJson.Limit != 0 {
-		queryValues.Set("limit", fmt.Sprintf("%d", tagsAutocompleteRequestJson.Limit))
-	}
-	if tagsAutocompleteRequestJson.TagPrefix != "" {
-		queryValues.Set("tagPrefix", tagsAutocompleteRequestJson.TagPrefix)
-	}
-	tagsAutocompleteUrl.RawQuery = queryValues.Encode()
-
-	tags, _, statusCode, err := doGraphiteRequest[[]string](ctx, "tags autocomplete", dsInfo, tagsAutocompleteUrl, http.MethodGet, nil, map[string]string{}, s.logger, false)
+	tags, _, statusCode, err := doGraphiteRequest[[]string](ctx, dsInfo, s.logger, req, false)
 	if err != nil {
 		return nil, statusCode, fmt.Errorf("tags autocomplete request failed: %v", err)
 	}
@@ -255,30 +234,25 @@ func (s *Service) handleTagsAutocomplete(ctx context.Context, dsInfo *datasource
 	return tagsResponse, statusCode, nil
 }
 
-func (s *Service) handleTagValuesAutocomplete(ctx context.Context, dsInfo *datasourceInfo, tagValuesAutocompleteRequestJson GraphiteTagValuesRequest) ([]byte, int, error) {
-	tagValuesAutocompleteUrl, err := url.Parse(fmt.Sprintf("%s/tags/autoComplete/values", dsInfo.URL))
+func (s *Service) handleTagValuesAutocomplete(ctx context.Context, dsInfo *datasourceInfo, tagValuesAutocompleteRequestJson *GraphiteTagValuesRequest) ([]byte, int, error) {
+	queryParams := map[string][]string{
+		"expr":        tagValuesAutocompleteRequestJson.Expr,
+		"tag":         {tagValuesAutocompleteRequestJson.Tag},
+		"from":        {tagValuesAutocompleteRequestJson.From},
+		"until":       {tagValuesAutocompleteRequestJson.Until},
+		"limit":       {fmt.Sprintf("%d", tagValuesAutocompleteRequestJson.Limit)},
+		"valuePrefix": {tagValuesAutocompleteRequestJson.ValuePrefix},
+	}
+
+	req, err := s.createRequest(ctx, dsInfo, URLParams{
+		SubPath:     "tags/autoComplete/values",
+		QueryParams: queryParams,
+	})
 	if err != nil {
-		return nil, http.StatusInternalServerError, fmt.Errorf("unexpected error %v", err)
+		return nil, http.StatusInternalServerError, fmt.Errorf("failed to create tag values autocomplete request %v", err)
 	}
 
-	queryValues := tagValuesAutocompleteUrl.Query()
-	queryValues.Set("expr", tagValuesAutocompleteRequestJson.Expr)
-	queryValues.Set("tag", tagValuesAutocompleteRequestJson.Tag)
-	if tagValuesAutocompleteRequestJson.From != "" {
-		queryValues.Set("from", tagValuesAutocompleteRequestJson.From)
-	}
-	if tagValuesAutocompleteRequestJson.Until != "" {
-		queryValues.Set("until", tagValuesAutocompleteRequestJson.Until)
-	}
-	if tagValuesAutocompleteRequestJson.Limit != 0 {
-		queryValues.Set("limit", fmt.Sprintf("%d", tagValuesAutocompleteRequestJson.Limit))
-	}
-	if tagValuesAutocompleteRequestJson.ValuePrefix != "" {
-		queryValues.Set("valuePrefix", tagValuesAutocompleteRequestJson.ValuePrefix)
-	}
-	tagValuesAutocompleteUrl.RawQuery = queryValues.Encode()
-
-	tagValues, _, statusCode, err := doGraphiteRequest[[]string](ctx, "tag values autocomplete", dsInfo, tagValuesAutocompleteUrl, http.MethodGet, nil, map[string]string{}, s.logger, false)
+	tagValues, _, statusCode, err := doGraphiteRequest[[]string](ctx, dsInfo, s.logger, req, false)
 	if err != nil {
 		return nil, statusCode, fmt.Errorf("tag values autocomplete request failed: %v", err)
 	}
@@ -291,13 +265,15 @@ func (s *Service) handleTagValuesAutocomplete(ctx context.Context, dsInfo *datas
 	return tagValuesResponse, statusCode, nil
 }
 
-func (s *Service) handleVersion(ctx context.Context, dsInfo *datasourceInfo) ([]byte, int, error) {
-	versionUrl, err := url.Parse(fmt.Sprintf("%s/version", dsInfo.URL))
+func (s *Service) handleVersion(ctx context.Context, dsInfo *datasourceInfo, _ *any) ([]byte, int, error) {
+	req, err := s.createRequest(ctx, dsInfo, URLParams{
+		SubPath: "version",
+	})
 	if err != nil {
-		return nil, http.StatusInternalServerError, fmt.Errorf("unexpected error %v", err)
+		return nil, http.StatusInternalServerError, fmt.Errorf("failed to create version request %v", err)
 	}
 
-	version, _, statusCode, err := doGraphiteRequest[string](ctx, "version", dsInfo, versionUrl, http.MethodGet, nil, map[string]string{}, s.logger, false)
+	version, _, statusCode, err := doGraphiteRequest[string](ctx, dsInfo, s.logger, req, false)
 	if err != nil {
 		return nil, statusCode, fmt.Errorf("version request failed: %v", err)
 	}
@@ -310,13 +286,15 @@ func (s *Service) handleVersion(ctx context.Context, dsInfo *datasourceInfo) ([]
 	return versionResponse, statusCode, nil
 }
 
-func (s *Service) handleFunctions(ctx context.Context, dsInfo *datasourceInfo) ([]byte, int, error) {
-	functionsUrl, err := url.Parse(fmt.Sprintf("%s/functions", dsInfo.URL))
+func (s *Service) handleFunctions(ctx context.Context, dsInfo *datasourceInfo, _ *any) ([]byte, int, error) {
+	req, err := s.createRequest(ctx, dsInfo, URLParams{
+		SubPath: "functions",
+	})
 	if err != nil {
-		return nil, http.StatusInternalServerError, fmt.Errorf("unexpected error %v", err)
+		return nil, http.StatusInternalServerError, fmt.Errorf("failed to create functions request %v", err)
 	}
 
-	_, rawBody, statusCode, err := doGraphiteRequest[map[string]any](ctx, "functions", dsInfo, functionsUrl, http.MethodGet, nil, map[string]string{}, s.logger, true)
+	_, rawBody, statusCode, err := doGraphiteRequest[map[string]any](ctx, dsInfo, s.logger, req, true)
 	if err != nil {
 		return nil, statusCode, fmt.Errorf("version request failed: %v", err)
 	}
@@ -329,42 +307,31 @@ func (s *Service) handleFunctions(ctx context.Context, dsInfo *datasourceInfo) (
 	return rawBodyReplaced, statusCode, nil
 }
 
-func doGraphiteRequest[T any](ctx context.Context, endpoint string, dsInfo *datasourceInfo, url *url.URL, method string, body io.Reader, headers map[string]string, logger log.Logger, rawResponse bool) (*T, *[]byte, int, error) {
-	graphiteReq, err := http.NewRequestWithContext(ctx, method, url.String(), body)
-	if err != nil {
-		logger.Info(fmt.Sprintf("Failed to create %s request", endpoint), "error", err)
-		return nil, nil, http.StatusInternalServerError, fmt.Errorf("failed to create %s request: %v", endpoint, err)
-	}
-
-	for k, v := range headers {
-		graphiteReq.Header.Add(k, v)
-	}
-
-	_, span := tracing.DefaultTracer().Start(ctx, fmt.Sprintf("graphite %s", endpoint))
+func doGraphiteRequest[T any](ctx context.Context, dsInfo *datasourceInfo, logger log.Logger, req *http.Request, isRaw bool) (*T, *[]byte, int, error) {
+	_, span := tracing.DefaultTracer().Start(ctx, "graphite request")
 	defer span.End()
 	span.SetAttributes(
 		attribute.Int64("datasource_id", dsInfo.Id),
 	)
-	res, err := dsInfo.HTTPClient.Do(graphiteReq)
+	res, err := dsInfo.HTTPClient.Do(req)
 	if res != nil {
 		span.SetAttributes(attribute.Int("graphite.response.code", res.StatusCode))
 	}
 	if err != nil {
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())
-		return nil, nil, http.StatusInternalServerError, fmt.Errorf("failed to complete %s request: %v", endpoint, err)
+		return nil, nil, http.StatusInternalServerError, fmt.Errorf("failed to complete request: %v", err)
 	}
 
 	defer func() {
-		err := res.Body.Close()
-		if err != nil {
-			logger.Warn("Failed to close response body", "error", err)
+		if err := res.Body.Close(); err != nil {
+			logger.Warn("Failed to close response body", "err", err)
 		}
 	}()
 
-	parsedResponse, rawBody, err := parseResponse[T](res, rawResponse, logger)
+	parsedResponse, rawBody, err := parseResponse[T](res, isRaw, logger)
 	if err != nil {
-		return nil, nil, res.StatusCode, fmt.Errorf("failed to parse %s response: %v", endpoint, err)
+		return nil, nil, http.StatusInternalServerError, fmt.Errorf("failed to parse response: %v", err)
 	}
 
 	return parsedResponse, rawBody, res.StatusCode, nil
@@ -380,7 +347,7 @@ func parseRequestBody[V any](requestBody []byte, logger log.Logger) (*V, error) 
 	return requestJson, nil
 }
 
-func parseResponse[V any](res *http.Response, raw bool, logger log.Logger) (*V, *[]byte, error) {
+func parseResponse[V any](res *http.Response, isRaw bool, logger log.Logger) (*V, *[]byte, error) {
 	encoding := res.Header.Get("Content-Encoding")
 	body, err := decode(encoding, res.Body)
 	if err != nil {
@@ -392,7 +359,7 @@ func parseResponse[V any](res *http.Response, raw bool, logger log.Logger) (*V, 
 		return nil, nil, fmt.Errorf("request failed, status: %d", res.StatusCode)
 	}
 
-	if raw {
+	if isRaw {
 		return nil, &body, nil
 	}
 

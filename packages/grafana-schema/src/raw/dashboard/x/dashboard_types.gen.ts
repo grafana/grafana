@@ -364,6 +364,87 @@ export type DashboardLinkType = ('link' | 'dashboards');
 export type DashboardLinkPlacement = 'inControlsMenu';
 
 /**
+ * Dashboard action type
+ */
+export type ActionType = ('fetch' | 'infinity');
+
+/**
+ * Fetch options
+ */
+export interface FetchOptions {
+  body?: string;
+  headers?: Array<Array<string>>;
+  method: HttpRequestMethod;
+  /**
+   * These are 2D arrays of strings, each representing a key-value pair
+   * We are defining this way because we can't generate a go struct that
+   * that would have exactly two strings in each sub-array
+   */
+  queryParams?: Array<Array<string>>;
+  url: string;
+}
+
+export const defaultFetchOptions: Partial<FetchOptions> = {
+  headers: [],
+  queryParams: [],
+};
+
+/**
+ * Infinity options
+ */
+export interface InfinityOptions {
+  body?: string;
+  datasourceUid: string;
+  headers?: Array<Array<string>>;
+  method: HttpRequestMethod;
+  /**
+   * These are 2D arrays of strings, each representing a key-value pair
+   * We are defining them this way because we can't generate a go struct that
+   * that would have exactly two strings in each sub-array
+   */
+  queryParams?: Array<Array<string>>;
+  url: string;
+}
+
+export const defaultInfinityOptions: Partial<InfinityOptions> = {
+  headers: [],
+  queryParams: [],
+};
+
+export type HttpRequestMethod = ('GET' | 'PUT' | 'POST' | 'DELETE' | 'PATCH');
+
+/**
+ * Action variable type
+ */
+export type ActionVariableType = 'string';
+
+export interface ActionVariable {
+  key: string;
+  name: string;
+  type: ActionVariableType;
+}
+
+/**
+ * Dashboard action
+ */
+export interface Action {
+  confirmation?: string;
+  fetch?: FetchOptions;
+  infinity?: InfinityOptions;
+  oneClick?: boolean;
+  style?: {
+    backgroundColor?: string;
+  };
+  title: string;
+  type: ActionType;
+  variables?: Array<ActionVariable>;
+}
+
+export const defaultAction: Partial<Action> = {
+  variables: [],
+};
+
+/**
  * Dashboard variable type
  * `query`: Query-generated list of values such as metric names, server names, sensor IDs, data centers, and so on.
  * `adhoc`: Key/value filters that are automatically added to all metric queries for a data source (Prometheus, Loki, InfluxDB, and Elasticsearch only).
@@ -917,6 +998,10 @@ export const defaultMatcherConfig: Partial<MatcherConfig> = {
  */
 export interface FieldConfig {
   /**
+   * Define interactive HTTP requests that can be triggered from data visualizations.
+   */
+  actions?: Array<Action>;
+  /**
    * Panel color configuration
    */
   color?: FieldColor;
@@ -1001,6 +1086,7 @@ export interface FieldConfig {
 }
 
 export const defaultFieldConfig: Partial<FieldConfig> = {
+  actions: [],
   links: [],
   mappings: [],
 };
