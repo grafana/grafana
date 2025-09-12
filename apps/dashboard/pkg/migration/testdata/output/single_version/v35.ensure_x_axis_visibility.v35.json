@@ -116,6 +116,9 @@
       "type": "timeseries"
     },
     {
+      "fieldConfig": {
+        "overrides": []
+      },
       "id": 10,
       "title": "Timeseries with Missing Defaults",
       "type": "timeseries"

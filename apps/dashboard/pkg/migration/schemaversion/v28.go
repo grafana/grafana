@@ -387,13 +387,13 @@ func applyCommonAngularMigration(panel map[string]interface{}, defaults map[stri
 		if show, ok := sparkline["show"].(bool); ok && show {
 			options["graphMode"] = "area"
 
-			// Note: Frontend stat panel change handler doesn't add sparkline color to fieldConfig
-			// if lineColor, ok := sparkline["lineColor"].(string); ok {
-			// 	defaults["color"] = map[string]interface{}{
-			// 		"mode":       "fixed",
-			// 		"fixedColor": lineColor,
-			// 	}
-			// }
+			// Migrate sparkline lineColor to fieldConfig color
+			if lineColor, ok := sparkline["lineColor"].(string); ok {
+				defaults["color"] = map[string]interface{}{
+					"mode":       "fixed",
+					"fixedColor": lineColor,
+				}
+			}
 		} else {
 			options["graphMode"] = "none"
 		}
@@ -541,10 +541,19 @@ func migrateValueMappings(panel map[string]interface{}, defaults map[string]inte
 	mappings := []interface{}{}
 	mappingType := panel["mappingType"]
 
-	if mappingType == nil {
-		if panel["valueMaps"] != nil && len(panel["valueMaps"].([]interface{})) > 0 {
+	// Check for inconsistent mapping configuration
+	// If panel has rangeMaps but mappingType is 1, or vice versa, fix it
+	hasValueMaps := panel["valueMaps"] != nil && len(panel["valueMaps"].([]interface{})) > 0
+	hasRangeMaps := panel["rangeMaps"] != nil && len(panel["rangeMaps"].([]interface{})) > 0
+
+	if hasRangeMaps && mappingType == float64(1) {
+		mappingType = 2
+	} else if hasValueMaps && mappingType == float64(2) {
+		mappingType = 1
+	} else if mappingType == nil {
+		if hasValueMaps {
 			mappingType = 1
-		} else if panel["rangeMaps"] != nil && len(panel["rangeMaps"].([]interface{})) > 0 {
+		} else if hasRangeMaps {
 			mappingType = 2
 		}
 	}

@@ -1,0 +1,921 @@
+PASS public/app/features/dashboard/state/DashboardMigrator.test.ts (5.232 s)
+FAIL public/app/features/dashboard/state/DashboardMigratorSingleVersion.test.ts (5.406 s)
+  ● Backend / Frontend single version migration result comparison › should migrate v28.singlestat_migration.json to v28 correctly
+
+    expect(received).toEqual(expected) // deep equality
+
+    - Expected  -  1
+    + Received  + 15
+
+    @@ -260,11 +260,25 @@
+            "datasource": Object {
+              "type": "prometheus",
+            },
+            "fieldConfig": Object {
+              "defaults": Object {
+    -           "mappings": Array [],
+    +           "color": Object {
+    +             "fixedColor": "rgb(31, 120, 193)",
+    +             "mode": "fixed",
+    +           },
+    +           "mappings": Array [
+    +             Object {
+    +               "options": Object {
+    +                 "match": "null",
+    +                 "result": Object {
+    +                   "text": "N/A",
+    +                 },
+    +               },
+    +               "type": "special",
+    +             },
+    +           ],
+                "thresholds": Object {
+                  "mode": "absolute",
+                  "steps": Array [
+                    Object {
+                      "color": "green",
+
+      105 |       const frontendMigrationResult = frontendModel.getSaveModelClone();
+      106 |
+    > 107 |       expect(backendMigrationResult).toEqual(frontendMigrationResult);
+          |                                      ^
+      108 |     });
+      109 |   });
+      110 | });
+
+      at Object.<anonymous> (public/app/features/dashboard/state/DashboardMigratorSingleVersion.test.ts:107:38)
+
+  ● Backend / Frontend single version migration result comparison › should migrate v35.ensure_x_axis_visibility.json to v35 correctly
+
+    expect(received).toEqual(expected) // deep equality
+
+    - Expected  - 0
+    + Received  + 3
+
+    @@ -114,10 +114,13 @@
+            "id": 5,
+            "title": "Timeseries with Missing FieldConfig",
+            "type": "timeseries",
+          },
+          Object {
+    +       "fieldConfig": Object {
+    +         "overrides": Array [],
+    +       },
+            "id": 10,
+            "title": "Timeseries with Missing Defaults",
+            "type": "timeseries",
+          },
+          Object {
+
+      105 |       const frontendMigrationResult = frontendModel.getSaveModelClone();
+      106 |
+    > 107 |       expect(backendMigrationResult).toEqual(frontendMigrationResult);
+          |                                      ^
+      108 |     });
+      109 |   });
+      110 | });
+
+      at Object.<anonymous> (public/app/features/dashboard/state/DashboardMigratorSingleVersion.test.ts:107:38)
+
+FAIL public/app/features/dashboard/state/DashboardMigratorToBackend.test.ts (5.42 s)
+  ● Backend / Frontend result comparison › should migrate v28.singlestat_migration.json correctly
+
+    expect(received).toEqual(expected) // deep equality
+
+    - Expected  -  1
+    + Received  + 15
+
+    @@ -330,11 +330,25 @@
+            "datasource": Object {
+              "type": "prometheus",
+            },
+            "fieldConfig": Object {
+              "defaults": Object {
+    -           "mappings": Array [],
+    +           "color": Object {
+    +             "fixedColor": "rgb(31, 120, 193)",
+    +             "mode": "fixed",
+    +           },
+    +           "mappings": Array [
+    +             Object {
+    +               "options": Object {
+    +                 "match": "null",
+    +                 "result": Object {
+    +                   "text": "N/A",
+    +                 },
+    +               },
+    +               "type": "special",
+    +             },
+    +           ],
+                "thresholds": Object {
+                  "mode": "absolute",
+                  "steps": Array [
+                    Object {
+                      "color": "green",
+
+      82 |       const frontendMigrationResult = frontendModel.getSaveModelClone();
+      83 |
+    > 84 |       expect(backendMigrationResult).toEqual(frontendMigrationResult);
+         |                                      ^
+      85 |     });
+      86 |   });
+      87 | });
+
+      at Object.<anonymous> (public/app/features/dashboard/state/DashboardMigratorToBackend.test.ts:84:38)
+
+  ● Backend / Frontend result comparison › should migrate v33.panel_ds_name_to_ref.json correctly
+
+    expect(received).toEqual(expected) // deep equality
+
+    - Expected  - 1
+    + Received  + 1
+
+    @@ -190,11 +190,11 @@
+            ],
+            "title": "Panel: null datasource with mixed target types",
+            "type": "timeseries",
+          },
+          Object {
+    -       "datasource": Object {},
+    +       "datasource": null,
+            "description": "Tests v33 migration behavior with empty string datasource. Should migrate to empty object {} based on MigrateDatasourceNameToRef logic.",
+            "id": 7,
+            "targets": Array [
+              Object {
+                "datasource": Object {},
+
+      82 |       const frontendMigrationResult = frontendModel.getSaveModelClone();
+      83 |
+    > 84 |       expect(backendMigrationResult).toEqual(frontendMigrationResult);
+         |                                      ^
+      85 |     });
+      86 |   });
+      87 | });
+
+      at Object.<anonymous> (public/app/features/dashboard/state/DashboardMigratorToBackend.test.ts:84:38)
+
+  ● Backend / Frontend result comparison › should migrate v35.ensure_x_axis_visibility.json correctly
+
+    expect(received).toEqual(expected) // deep equality
+
+    - Expected  - 0
+    + Received  + 3
+
+    @@ -194,10 +194,13 @@
+            "datasource": Object {
+              "apiVersion": "v1",
+              "type": "prometheus",
+              "uid": "default-ds-uid",
+            },
+    +       "fieldConfig": Object {
+    +         "overrides": Array [],
+    +       },
+            "id": 10,
+            "targets": Array [
+              Object {
+                "datasource": Object {
+                  "apiVersion": "v1",
+
+      82 |       const frontendMigrationResult = frontendModel.getSaveModelClone();
+      83 |
+    > 84 |       expect(backendMigrationResult).toEqual(frontendMigrationResult);
+         |                                      ^
+      85 |     });
+      86 |   });
+      87 | });
+
+      at Object.<anonymous> (public/app/features/dashboard/state/DashboardMigratorToBackend.test.ts:84:38)
+
+FAIL public/app/features/dashboard/state/DashboardMigratorToBackend.devDashboards.test.ts (5.926 s)
+  ● Dev Dashboard Backend / Frontend result comparison › should migrate dev dashboard datasource-elasticsearch/elasticsearch_complex.json correctly
+
+    expect(received).toEqual(expected) // deep equality
+
+    - Expected  - 2
+    + Received  + 0
+
+    @@ -3307,11 +3307,10 @@
+                    "target": "",
+                    "timeField": "@timestamp",
+                  },
+                ],
+                "title": "count/average with triple terms agg - interval auto",
+    -           "transformations": Array [],
+                "type": "timeseries",
+              },
+            ],
+            "title": "Multiple metrics and aggregations",
+            "type": "row",
+    @@ -5044,11 +5043,10 @@
+                    "refId": "A",
+                    "timeField": "@timestamp",
+                  },
+                ],
+                "title": "Raw data",
+    -           "transformations": Array [],
+                "type": "table",
+              },
+            ],
+            "title": "Raw data and documents",
+            "type": "row",
+
+      113 |       const frontendMigrationResult = frontendModel.getSaveModelClone();
+      114 |
+    > 115 |       expect(backendMigrationResult).toEqual(frontendMigrationResult);
+          |                                      ^
+      116 |     });
+      117 |   });
+      118 | });
+
+      at Object.<anonymous> (public/app/features/dashboard/state/DashboardMigratorToBackend.devDashboards.test.ts:115:38)
+
+  ● Dev Dashboard Backend / Frontend result comparison › should migrate dev dashboard datasource-elasticsearch/elasticsearch_migration.json correctly
+
+    expect(received).toEqual(expected) // deep equality
+
+    - Expected  - 2
+    + Received  + 0
+
+    @@ -6558,11 +6558,10 @@
+                    "target": "",
+                    "timeField": "@timestamp",
+                  },
+                ],
+                "title": "count/average with triple terms agg - interval auto",
+    -           "transformations": Array [],
+                "type": "timeseries",
+              },
+              Object {
+                "datasource": Object {
+                  "type": "elasticsearch",
+    @@ -10077,11 +10076,10 @@
+                    "refId": "A",
+                    "timeField": "@timestamp",
+                  },
+                ],
+                "title": "Raw data",
+    -           "transformations": Array [],
+                "type": "table",
+              },
+            ],
+            "title": "Raw data and documents",
+            "type": "row",
+
+      113 |       const frontendMigrationResult = frontendModel.getSaveModelClone();
+      114 |
+    > 115 |       expect(backendMigrationResult).toEqual(frontendMigrationResult);
+          |                                      ^
+      116 |     });
+      117 |   });
+      118 | });
+
+      at Object.<anonymous> (public/app/features/dashboard/state/DashboardMigratorToBackend.devDashboards.test.ts:115:38)
+
+  ● Dev Dashboard Backend / Frontend result comparison › should migrate dev dashboard datasource-postgres/postgres_unittest.json correctly
+
+    expect(received).toEqual(expected) // deep equality
+
+    - Expected  - 1
+    + Received  + 3
+
+    @@ -2681,11 +2681,13 @@
+          "list": Array [
+            Object {
+              "current": Object {
+                "selected": true,
+                "tags": Array [],
+    -           "text": "All",
+    +           "text": Array [
+    +             "All",
+    +           ],
+                "value": Array [
+                  "$__all",
+                ],
+              },
+              "datasource": "gdev-postgres-ds-tests",
+
+      113 |       const frontendMigrationResult = frontendModel.getSaveModelClone();
+      114 |
+    > 115 |       expect(backendMigrationResult).toEqual(frontendMigrationResult);
+          |                                      ^
+      116 |     });
+      117 |   });
+      118 | });
+
+      at Object.<anonymous> (public/app/features/dashboard/state/DashboardMigratorToBackend.devDashboards.test.ts:115:38)
+
+  ● Dev Dashboard Backend / Frontend result comparison › should migrate dev dashboard feature-templating/testdata-nested-variables-drilldown.json correctly
+
+    expect(received).toEqual(expected) // deep equality
+
+    - Expected  - 4
+    + Received  + 9
+
+    @@ -86,11 +86,10 @@
+                      "color": "red",
+                      "value": 80,
+                    },
+                  ],
+                },
+    -           "unit": "none",
+              },
+              "overrides": Array [],
+            },
+            "gridPos": Object {
+              "h": 6,
+    @@ -229,11 +228,13 @@
+        ],
+        "templating": Object {
+          "list": Array [
+            Object {
+              "current": Object {
+    -           "text": "A",
+    +           "text": Array [
+    +             "A",
+    +           ],
+                "value": Array [
+                  "A",
+                ],
+              },
+              "datasource": Object {
+    @@ -255,11 +256,13 @@
+              "type": "query",
+              "useTags": false,
+            },
+            Object {
+              "current": Object {
+    -           "text": "AA",
+    +           "text": Array [
+    +             "AA",
+    +           ],
+                "value": Array [
+                  "AA",
+                ],
+              },
+              "datasource": Object {
+    @@ -281,11 +284,13 @@
+              "type": "query",
+              "useTags": false,
+            },
+            Object {
+              "current": Object {
+    -           "text": "All",
+    +           "text": Array [
+    +             "All",
+    +           ],
+                "value": Array [
+                  "$__all",
+                ],
+              },
+              "datasource": Object {
+
+      113 |       const frontendMigrationResult = frontendModel.getSaveModelClone();
+      114 |
+    > 115 |       expect(backendMigrationResult).toEqual(frontendMigrationResult);
+          |                                      ^
+      116 |     });
+      117 |   });
+      118 | });
+
+      at Object.<anonymous> (public/app/features/dashboard/state/DashboardMigratorToBackend.devDashboards.test.ts:115:38)
+
+  ● Dev Dashboard Backend / Frontend result comparison › should migrate dev dashboard feature-templating/testdata-nested-variables.json correctly
+
+    expect(received).toEqual(expected) // deep equality
+
+    - Expected  - 1
+    + Received  + 1
+
+    @@ -66,10 +66,11 @@
+              "defaults": Object {
+                "color": Object {
+                  "fixedColor": "rgb(31, 120, 193)",
+                  "mode": "fixed",
+                },
+    +           "custom": Object {},
+                "mappings": Array [
+                  Object {
+                    "options": Object {
+                      "match": "null",
+                      "result": Object {
+    @@ -90,11 +91,10 @@
+                      "color": "red",
+                      "value": 80,
+                    },
+                  ],
+                },
+    -           "unit": "none",
+              },
+              "overrides": Array [],
+            },
+            "gridPos": Object {
+              "h": 9,
+
+      113 |       const frontendMigrationResult = frontendModel.getSaveModelClone();
+      114 |
+    > 115 |       expect(backendMigrationResult).toEqual(frontendMigrationResult);
+          |                                      ^
+      116 |     });
+      117 |   });
+      118 | });
+
+      at Object.<anonymous> (public/app/features/dashboard/state/DashboardMigratorToBackend.devDashboards.test.ts:115:38)
+
+  ● Dev Dashboard Backend / Frontend result comparison › should migrate dev dashboard migrations/migrations.json correctly
+
+    expect(received).toEqual(expected) // deep equality
+
+    - Expected  - 93
+    + Received  + 89
+
+    @@ -911,94 +911,71 @@
+            ],
+            "title": "Status + Notes",
+            "type": "text",
+          },
+          Object {
+    +       "autoMigrateFrom": "table-old",
+    +       "columns": Array [],
+            "datasource": Object {
+              "type": "grafana-testdata-datasource",
+    -       },
+    -       "fieldConfig": Object {
+    -         "defaults": Object {
+    -           "custom": Object {
+    -             "align": "right",
+    -             "cellOptions": Object {
+    -               "type": "auto",
+    -             },
+    -             "footer": Object {
+    -               "reducers": Array [],
+            },
+    -             "inspect": false,
+    -           },
+    -           "decimals": 2,
+    -           "displayName": "",
+    -           "mappings": Array [],
+    -           "thresholds": Object {
+    -             "mode": "absolute",
+    -             "steps": Array [
+    -               Object {
+    -                 "color": "green",
+    -                 "value": null,
+    -               },
+    -               Object {
+    -                 "color": "red",
+    -                 "value": 80,
+    -               },
+    -             ],
+    -           },
+    -           "unit": "short",
+    -         },
+    -         "overrides": Array [
+    -           Object {
+    -             "matcher": Object {
+    -               "id": "byName",
+    -               "options": "Time",
+    -             },
+    -             "properties": Array [
+    -               Object {
+    -                 "id": "displayName",
+    -                 "value": "Time",
+    -               },
+    -               Object {
+    -                 "id": "unit",
+    -                 "value": "time: YYYY-MM-DD HH:mm:ss",
+    -               },
+    -               Object {
+    -                 "id": "custom.align",
+    -               },
+    -             ],
+    -           },
+    -         ],
+    -       },
+            "gridPos": Object {
+              "h": 10,
+              "w": 16,
+              "x": 0,
+              "y": 33,
+            },
+            "id": 2,
+            "options": Object {
+              "cellHeight": "sm",
+    +         "footer": Object {
+    +           "countRows": false,
+    +           "fields": "",
+    +           "reducer": Array [
+    +             "sum",
+    +           ],
+    +           "show": false,
+    +         },
+              "showHeader": true,
+    +         "showRowNums": false,
+            },
+    -       "pluginVersion": "12.1.0",
+    +       "pluginVersion": "9.5.0-pre",
+    +       "styles": Array [
+    +         Object {
+    +           "alias": "Time",
+    +           "align": "auto",
+    +           "dateFormat": "YYYY-MM-DD HH:mm:ss",
+    +           "pattern": "Time",
+    +           "type": "date",
+    +         },
+    +         Object {
+    +           "alias": "",
+    +           "align": "right",
+    +           "colors": Array [
+    +             "rgba(245, 54, 54, 0.9)",
+    +             "rgba(237, 129, 40, 0.89)",
+    +             "rgba(50, 172, 45, 0.97)",
+    +           ],
+    +           "decimals": 2,
+    +           "pattern": "/.*/",
+    +           "thresholds": Array [],
+    +           "type": "number",
+    +           "unit": "short",
+    +         },
+    +       ],
+            "targets": Array [
+              Object {
+                "datasource": Object {
+                  "type": "grafana-testdata-datasource",
+                },
+                "refId": "A",
+                "scenarioId": "random_walk_table",
+              },
+            ],
+            "title": "Table (old)",
+    +       "transform": "table",
+            "transformations": Array [
+    -         Object {
+    -           "id": "merge",
+    -           "options": Object {
+    -             "reducers": Array [],
+    -           },
+    -         },
+              Object {
+                "id": "merge",
+                "options": Object {
+                  "reducers": Array [],
+                },
+    @@ -1041,68 +1018,87 @@
+            ],
+            "title": "Status + Notes",
+            "type": "text",
+          },
+          Object {
+    +       "autoMigrateFrom": "grafana-singlestat-panel",
+    +       "colorBackground": false,
+    +       "colorValue": true,
+    +       "colors": Array [
+    +         "#299c46",
+    +         "rgba(237, 129, 40, 0.89)",
+    +         "#d44a3a",
+    +       ],
+            "datasource": Object {
+              "type": "grafana-testdata-datasource",
+    -       },
+    -       "fieldConfig": Object {
+    -         "defaults": Object {
+    -           "mappings": Array [],
+    -           "thresholds": Object {
+    -             "mode": "absolute",
+    -             "steps": Array [
+    -               Object {
+    -                 "color": "green",
+    -                 "value": null,
+            },
+    -               Object {
+    -                 "color": "red",
+    -                 "value": 80,
+    -               },
+    -             ],
+    -           },
+    -         },
+    -         "overrides": Array [],
+    +       "format": "areaF2",
+    +       "gauge": Object {
+    +         "maxValue": 100,
+    +         "minValue": 0,
+    +         "show": false,
+    +         "thresholdLabels": false,
+    +         "thresholdMarkers": true,
+            },
+            "gridPos": Object {
+              "h": 8,
+              "w": 8,
+              "x": 0,
+              "y": 43,
+            },
+            "id": 9,
+    -       "maxDataPoints": 100,
+    -       "options": Object {
+    -         "colorMode": "value",
+    -         "graphMode": "area",
+    -         "justifyMode": "auto",
+    -         "orientation": "auto",
+    -         "percentChangeColorMode": "standard",
+    -         "reduceOptions": Object {
+    -           "calcs": Array [
+    -             "lastNotNull",
+    +       "mappingType": 1,
+    +       "mappingTypes": Array [
+    +         Object {
+    +           "name": "value to text",
+    +           "value": 1,
+    +         },
+    +         Object {
+    +           "name": "range to text",
+    +           "value": 2,
+    +         },
+            ],
+    -           "fields": "",
+    -           "values": false,
+    +       "maxDataPoints": 100,
+    +       "nullPointMode": "connected",
+    +       "postfix": "b",
+    +       "postfixFontSize": "50%",
+    +       "prefix": "a",
+    +       "prefixFontSize": "50%",
+    +       "rangeMaps": Array [
+    +         Object {
+    +           "from": "null",
+    +           "text": "N/A",
+    +           "to": "null",
+              },
+    -         "showPercentChange": false,
+    -         "textMode": "auto",
+    -         "wideLayout": true,
+    +       ],
+    +       "sparkline": Object {
+    +         "fillColor": "rgba(31, 118, 189, 0.18)",
+    +         "full": false,
+    +         "lineColor": "rgb(31, 120, 193)",
+    +         "show": true,
+            },
+    -       "pluginVersion": "12.1.0",
+    +       "tableColumn": "",
+            "targets": Array [
+              Object {
+                "datasource": Object {
+                  "type": "grafana-testdata-datasource",
+                },
+                "refId": "A",
+              },
+            ],
+    +       "thresholds": "",
+            "title": "grafana-singlestat-panel",
+            "type": "stat",
+    +       "valueFontSize": "80%",
+    +       "valueMaps": Array [
+    +         Object {
+    +           "op": "=",
+    +           "text": "N/A",
+    +           "value": "null",
+    +         },
+    +       ],
+    +       "valueName": "avg",
+          },
+          Object {
+            "datasource": Object {
+              "type": "grafana-testdata-datasource",
+            },
+
+      113 |       const frontendMigrationResult = frontendModel.getSaveModelClone();
+      114 |
+    > 115 |       expect(backendMigrationResult).toEqual(frontendMigrationResult);
+          |                                      ^
+      116 |     });
+      117 |   });
+      118 | });
+
+      at Object.<anonymous> (public/app/features/dashboard/state/DashboardMigratorToBackend.devDashboards.test.ts:115:38)
+
+  ● Dev Dashboard Backend / Frontend result comparison › should migrate dev dashboard panel-common/color_modes.json correctly
+
+    expect(received).toEqual(expected) // deep equality
+
+    - Expected  - 1
+    + Received  + 0
+
+    @@ -66,11 +66,10 @@
+                    "options": "Field",
+                  },
+                  "properties": Array [
+                    Object {
+                      "id": "custom.cellOptions",
+    -                 "value": Object {},
+                    },
+                  ],
+                },
+              ],
+            },
+
+      113 |       const frontendMigrationResult = frontendModel.getSaveModelClone();
+      114 |
+    > 115 |       expect(backendMigrationResult).toEqual(frontendMigrationResult);
+          |                                      ^
+      116 |     });
+      117 |   });
+      118 | });
+
+      at Object.<anonymous> (public/app/features/dashboard/state/DashboardMigratorToBackend.devDashboards.test.ts:115:38)
+
+  ● Dev Dashboard Backend / Frontend result comparison › should migrate dev dashboard panel-common/lazy_loading.json correctly
+
+    expect(received).toEqual(expected) // deep equality
+
+    - Expected  -  4
+    + Received  + 16
+
+    @@ -194,10 +194,14 @@
+            "datasource": Object {
+              "type": "grafana-testdata-datasource",
+            },
+            "fieldConfig": Object {
+              "defaults": Object {
+    +           "color": Object {
+    +             "fixedColor": "rgb(31, 120, 193)",
+    +             "mode": "fixed",
+    +           },
+                "mappings": Array [
+                  Object {
+                    "options": Object {
+                      "match": "null",
+                      "result": Object {
+    @@ -218,11 +222,10 @@
+                      "color": "red",
+                      "value": 80,
+                    },
+                  ],
+                },
+    -           "unit": "ms",
+              },
+              "overrides": Array [],
+            },
+            "gridPos": Object {
+              "h": 4,
+    @@ -265,10 +268,14 @@
+            "datasource": Object {
+              "type": "grafana-testdata-datasource",
+            },
+            "fieldConfig": Object {
+              "defaults": Object {
+    +           "color": Object {
+    +             "fixedColor": "rgb(31, 120, 193)",
+    +             "mode": "fixed",
+    +           },
+                "mappings": Array [
+                  Object {
+                    "options": Object {
+                      "match": "null",
+                      "result": Object {
+    @@ -289,11 +296,10 @@
+                      "color": "red",
+                      "value": 80,
+                    },
+                  ],
+                },
+    -           "unit": "ms",
+              },
+              "overrides": Array [],
+            },
+            "gridPos": Object {
+              "h": 4,
+    @@ -336,10 +342,14 @@
+            "datasource": Object {
+              "type": "grafana-testdata-datasource",
+            },
+            "fieldConfig": Object {
+              "defaults": Object {
+    +           "color": Object {
+    +             "fixedColor": "rgb(31, 120, 193)",
+    +             "mode": "fixed",
+    +           },
+                "mappings": Array [
+                  Object {
+                    "options": Object {
+                      "match": "null",
+                      "result": Object {
+    @@ -360,11 +370,10 @@
+                      "color": "red",
+                      "value": 80,
+                    },
+                  ],
+                },
+    -           "unit": "ms",
+              },
+              "overrides": Array [],
+            },
+            "gridPos": Object {
+              "h": 4,
+    @@ -407,10 +416,14 @@
+            "datasource": Object {
+              "type": "grafana-testdata-datasource",
+            },
+            "fieldConfig": Object {
+              "defaults": Object {
+    +           "color": Object {
+    +             "fixedColor": "rgb(31, 120, 193)",
+    +             "mode": "fixed",
+    +           },
+                "mappings": Array [
+                  Object {
+                    "options": Object {
+                      "match": "null",
+                      "result": Object {
+    @@ -431,11 +444,10 @@
+                      "color": "red",
+                      "value": 80,
+                    },
+                  ],
+                },
+    -           "unit": "ms",
+              },
+              "overrides": Array [],
+            },
+            "gridPos": Object {
+              "h": 4,
+
+      113 |       const frontendMigrationResult = frontendModel.getSaveModelClone();
+      114 |
+    > 115 |       expect(backendMigrationResult).toEqual(frontendMigrationResult);
+          |                                      ^
+      116 |     });
+      117 |   });
+      118 | });
+
+      at Object.<anonymous> (public/app/features/dashboard/state/DashboardMigratorToBackend.devDashboards.test.ts:115:38)
+
+  ● Dev Dashboard Backend / Frontend result comparison › should migrate dev dashboard panel-common/panels_without_title.json correctly
+
+    expect(received).toEqual(expected) // deep equality
+
+    - Expected  - 4
+    + Received  + 0
+
+    @@ -54,11 +54,10 @@
+                      "color": "red",
+                      "value": 80,
+                    },
+                  ],
+                },
+    -           "unit": "ms",
+              },
+              "overrides": Array [],
+            },
+            "gridPos": Object {
+              "h": 4,
+    @@ -136,11 +135,10 @@
+                      "color": "red",
+                      "value": 80,
+                    },
+                  ],
+                },
+    -           "unit": "ms",
+              },
+              "overrides": Array [],
+            },
+            "gridPos": Object {
+              "h": 4,
+    @@ -217,11 +215,10 @@
+                      "color": "red",
+                      "value": 80,
+                    },
+                  ],
+                },
+    -           "unit": "ms",
+              },
+              "overrides": Array [],
+            },
+            "gridPos": Object {
+              "h": 4,
+    @@ -441,11 +438,10 @@
+                      "color": "red",
+                      "value": 80,
+                    },
+                  ],
+                },
+    -           "unit": "none",
+              },
+              "overrides": Array [],
+            },
+            "gridPos": Object {
+              "h": 4,
+
+      113 |       const frontendMigrationResult = frontendModel.getSaveModelClone();
+      114 |
+    > 115 |       expect(backendMigrationResult).toEqual(frontendMigrationResult);
+          |                                      ^
+      116 |     });
+      117 |   });
+      118 | });
+
+      at Object.<anonymous> (public/app/features/dashboard/state/DashboardMigratorToBackend.devDashboards.test.ts:115:38)
+
+Test Suites: 3 failed, 1 passed, 4 total
+Tests:       14 failed, 2 skipped, 311 passed, 327 total
+Snapshots:   4 passed, 4 total
+Time:        6.72 s, estimated 7 s
+Ran all test suites matching /DashboardMigrator/i.

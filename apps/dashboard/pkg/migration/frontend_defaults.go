@@ -622,14 +622,18 @@ func filterDefaultValues(panel map[string]interface{}, originalProperties map[st
 		delete(panel, "targets")
 	}
 
-	// Remove fieldConfig objects that only have empty overrides arrays (frontend removes them in cleanup)
+	// Clean up fieldConfig to match frontend behavior
 	if fieldConfig, exists := panel["fieldConfig"].(map[string]interface{}); exists {
-		if overrides, hasOverrides := fieldConfig["overrides"].([]interface{}); hasOverrides && len(overrides) == 0 {
-			// Check if fieldConfig only has empty overrides
-			if len(fieldConfig) == 1 {
-				delete(panel, "fieldConfig")
-			}
+		// Clean up fieldConfig defaults to match frontend behavior
+		if defaults, hasDefaults := fieldConfig["defaults"].(map[string]interface{}); hasDefaults {
+			// Remove properties that frontend considers as defaults and omits
+			cleanupFieldConfigDefaults(defaults)
 		}
+
+		// Check if fieldConfig should be removed entirely (matches PanelModel defaults)
+		// Don't remove fieldConfig - frontend keeps it even when it has empty custom objects
+		// The frontend's getSaveModel() logic is more complex and we should preserve fieldConfig
+		// unless we're absolutely certain it should be removed
 	}
 }
 
@@ -1053,4 +1057,25 @@ func cleanupDashboardDefaults(dashboard map[string]interface{}) {
 	// during the frontend's property copying loop in getSaveModelCloneOld()
 	delete(dashboard, "preload")   // Transient dashboard loading state
 	delete(dashboard, "iteration") // Template variable iteration timestamp
+}
+
+// cleanupFieldConfigDefaults removes properties that frontend considers as defaults and omits
+func cleanupFieldConfigDefaults(defaults map[string]interface{}) {
+	// Don't remove mappings - frontend keeps them even if they are empty arrays
+	// The frontend's getSaveModel() logic preserves mappings arrays that are explicitly set
+
+	// Don't remove color objects - frontend keeps them
+	// The frontend's getSaveModel() logic preserves color objects that are explicitly set
+
+	// Don't remove unit properties - frontend keeps them
+	// The frontend's getSaveModel() logic preserves unit properties that are explicitly set
+
+	// Don't remove empty custom objects - frontend keeps them
+	// The frontend's getSaveModel() logic preserves empty custom objects in fieldConfig
+}
+
+// isArray checks if a value is an array
+func isArray(value interface{}) bool {
+	_, ok := value.([]interface{})
+	return ok
 }

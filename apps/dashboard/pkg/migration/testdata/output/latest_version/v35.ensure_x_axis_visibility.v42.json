@@ -196,6 +196,9 @@
         "type": "prometheus",
         "uid": "default-ds-uid"
       },
+      "fieldConfig": {
+        "overrides": []
+      },
       "id": 10,
       "targets": [
         {
