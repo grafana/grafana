@@ -91,6 +91,7 @@
     "react-dom": "^18.0.0"
   },
   "dependencies": {
+    "@emotion/css": "11.13.5",
     "@faker-js/faker": "^9.8.0",
     "@grafana/i18n": "12.2.0-pre",
     "fishery": "^2.3.1",
