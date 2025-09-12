@@ -507,3 +507,15 @@ export {
   type VizTooltipOptions,
   type OptionsWithTooltip,
 } from '@grafana/schema';
+
+// NOTE: Exports needed for @grafana/histogram in-repo plugin package
+export { getStackingGroups, preparePlotData2 } from './components/uPlot/utils';
+export { TooltipHoverMode } from './components/uPlot/plugins/TooltipPlugin2';
+export {
+  VizTooltipContent,
+  VizTooltipFooter,
+  VizTooltipHeader,
+  VizTooltipWrapper,
+  getContentItems,
+  type VizTooltipItem,
+} from './internal';
