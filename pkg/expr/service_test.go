@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"sort"
-	"strings"
 	"testing"
 	"time"
 
@@ -14,7 +13,6 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/testutil"
-	"github.com/prometheus/common/expfmt"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
@@ -301,17 +299,4 @@ func counterVal(t *testing.T, cv *prometheus.CounterVec, labels ...string) float
 	ch, err := cv.GetMetricWithLabelValues(labels...)
 	require.NoError(t, err)
 	return testutil.ToFloat64(ch)
-}
-
-func dumpMetrics(t *testing.T, reg *prometheus.Registry) string {
-	t.Helper()
-	mfs, err := reg.Gather()
-	require.NoError(t, err)
-
-	var sb strings.Builder
-	enc := expfmt.NewEncoder(&sb, expfmt.FmtText)
-	for _, mf := range mfs {
-		require.NoError(t, enc.Encode(mf))
-	}
-	return sb.String()
 }
