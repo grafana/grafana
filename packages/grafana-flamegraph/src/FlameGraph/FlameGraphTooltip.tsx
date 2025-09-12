@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 
-import {DisplayValue, getValueFormat, GrafanaTheme2, ValueFormatter} from '@grafana/data';
+import { DisplayValue, getValueFormat, GrafanaTheme2, ValueFormatter } from '@grafana/data';
 import { InteractiveTable, Portal, useStyles2, VizTooltipContainer } from '@grafana/ui';
 
 import { CollapseConfig, FlameGraphDataContainer, LevelItem } from './dataTransform';
@@ -125,7 +125,7 @@ type DiffTableData = {
 const formatWithSuffix = (value: number, formatter: ValueFormatter): string => {
   const displayValue = formatter(value);
   return displayValue.text + displayValue.suffix;
-}
+};
 
 export const getDiffTooltipData = (
   data: FlameGraphDataContainer,
