@@ -39,6 +39,7 @@ export function updateAnnotationFromSavedQuery(annotation: AnnotationQuery, repl
   };
 
   // For v2 dashboards, also update query.spec
+  // TODO: Double check this is correct from v2 perspective
   if (annotation.query && annotation.query.spec) {
     updatedAnnotation.query = {
       ...annotation.query,
