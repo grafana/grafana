@@ -1317,6 +1317,15 @@ var (
 			Expression:        "false",
 		},
 		{
+			Name:              "alertingEnrichmentAssistantInvestigations",
+			Description:       "Enable Assistant Investigations enrichment type.",
+			Stage:             FeatureStageExperimental,
+			Owner:             grafanaAlertingSquad,
+			HideFromAdminPage: true,
+			HideFromDocs:      true,
+			Expression:        "false",
+		},
+		{
 			Name:              "alertingAIAnalyzeCentralStateHistory",
 			Description:       "Enable AI-analyze central state history.",
 			Stage:             FeatureStageExperimental,
@@ -1938,16 +1947,6 @@ var (
 			FrontendOnly: false,
 			Owner:        grafanaPartnerPluginsSquad,
 			Expression:   "false",
-		},
-		{
-			Name:              "unifiedStorageSearchAfterWriteExperimentalAPI",
-			Description:       "Enable experimental search-after-write guarantees to unified-storage search endpoints",
-			Stage:             FeatureStageExperimental,
-			Owner:             grafanaSearchAndStorageSquad,
-			HideFromAdminPage: true,
-			HideFromDocs:      true,
-			RequiresRestart:   true,
-			Expression:        "false",
 		},
 		{
 			Name:         "teamFolders",
