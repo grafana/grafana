@@ -1,10 +1,10 @@
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { sceneGraph, SceneVariable } from '@grafana/scenes';
 import { DashboardLink } from '@grafana/schema';
-import { Box, Dropdown, ToolbarButton, useStyles2 } from '@grafana/ui';
+import { Box, Dropdown, Menu, ToolbarButton, useStyles2 } from '@grafana/ui';
 
 import { DashboardLinkRenderer } from './DashboardLinkRenderer';
 import { DashboardScene } from './DashboardScene';
@@ -15,7 +15,11 @@ export const DASHBOARD_CONTROLS_MENU_TITLE = 'Dashboard controls';
 
 export function DashboardControlsButton({ dashboard }: { dashboard: DashboardScene }) {
   const { links, uid } = dashboard.useState();
-  const filteredLinks = links.filter((link) => link.placement === 'inControlsMenu');
+  // Dashboard links are not supported at the moment.
+  // Reason: nesting <Dropdown> components causes issues since the inner dropdown is rendered in a portal,
+  // so clicking it closes the parent dropdown (the parent sees it as an overlay click, and the event cannot easily be intercepted,
+  // as it is in different HTML subtree).
+  const filteredLinks = links.filter((link) => link.placement === 'inControlsMenu' && link.type !== 'dashboards');
   const variables = sceneGraph
     .getVariables(dashboard)!
     .useState()
@@ -42,13 +46,13 @@ export function DashboardControlsButton({ dashboard }: { dashboard: DashboardSce
   );
 }
 
-interface VariablesMenuProps {
+interface DashboardControlsMenuProps {
   variables: SceneVariable[];
   links: DashboardLink[];
   dashboardUID: string;
 }
 
-function DashboardControlsMenu({ variables, links, dashboardUID }: VariablesMenuProps) {
+function DashboardControlsMenu({ variables, links, dashboardUID }: DashboardControlsMenuProps) {
   const styles = useStyles2(getStyles);
 
   return (
@@ -61,23 +65,31 @@ function DashboardControlsMenu({ variables, links, dashboardUID }: VariablesMenu
       direction={'column'}
       borderRadius={'default'}
       backgroundColor={'primary'}
-      padding={1}
+      padding={1.5}
       gap={0.5}
       onClick={(e) => {
+        // Normally, clicking the overlay closes the dropdown.
+        // We stop event propagation here to keep it open while users interact with variable controls.
         e.stopPropagation();
       }}
     >
       {/* Variables */}
-      {variables.map((variable) => (
-        <div className={styles.menuItem} key={variable.state.key}>
+      {variables.map((variable, index) => (
+        <div className={cx(index > 0 && styles.menuItem)} key={variable.state.key}>
           <VariableValueSelectWrapper variable={variable} inMenu />
         </div>
       ))}
 
+      {variables.length > 0 && links.length > 0 && (
+        <div className={styles.divider}>
+          <Menu.Divider />
+        </div>
+      )}
+
       {/* Links */}
       {links.map((link, index) => (
-        <div className={styles.menuItem} key={`${link.title}-$${index}`}>
-          <DashboardLinkRenderer link={link} dashboardUID={dashboardUID} />
+        <div key={`${link.title}-${index}`}>
+          <DashboardLinkRenderer link={link} dashboardUID={dashboardUID} inMenu />
         </div>
       ))}
     </Box>
@@ -85,7 +97,11 @@ function DashboardControlsMenu({ variables, links, dashboardUID }: VariablesMenu
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
+  divider: css({
+    marginTop: theme.spacing(1),
+    padding: theme.spacing(0, 0.5),
+  }),
   menuItem: css({
-    padding: theme.spacing(0.5),
+    marginTop: theme.spacing(2),
   }),
 });
