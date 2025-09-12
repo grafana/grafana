@@ -2108,6 +2108,14 @@ func ConfigForIntegrationType(contactPointType string) (VersionedNotifierPlugin,
 			return n, nil
 		}
 	}
+	alternateType, _ := mimirIntegrationTypeToNotifierType(contactPointType)
+	if alternateType != contactPointType {
+		for n := range notifiers {
+			if strings.EqualFold(n.Type, alternateType) {
+				return n, nil
+			}
+		}
+	}
 	return VersionedNotifierPlugin{}, fmt.Errorf("unknown integration type '%s'", contactPointType)
 }
 
