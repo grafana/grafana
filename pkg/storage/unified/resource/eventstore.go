@@ -7,6 +7,9 @@ import (
 	"iter"
 	"strconv"
 	"strings"
+	"time"
+
+	"github.com/bwmarrin/snowflake"
 )
 
 const (
@@ -223,4 +226,31 @@ func (n *eventStore) ListSince(ctx context.Context, sinceRV int64) iter.Seq2[Eve
 			}
 		}
 	}
+}
+
+// CleanupOldEvents deletes events older than the specified retention period.
+func (n *eventStore) CleanupOldEvents(ctx context.Context, cutoff time.Time) (int, error) {
+	deletedCount := 0
+
+	// Keys are stored in the format of "resource_version~namespace~group~resource~name"
+	// With a start key of "1" and an end key of the cutoff time we can get all expired events.
+	endKey := fmt.Sprintf("%d", snowflakeFromTime(cutoff))
+	for key, err := range n.kv.Keys(ctx, eventsSection, ListOptions{StartKey: "1", EndKey: endKey}) {
+		if err != nil {
+			return deletedCount, fmt.Errorf("failed to list event keys: %w", err)
+		}
+
+		// TODO should use batch deletes here when available
+		if err := n.kv.Delete(ctx, eventsSection, key); err != nil {
+			return deletedCount, fmt.Errorf("failed to delete event key %s: %w", key, err)
+		}
+		deletedCount++
+	}
+
+	return deletedCount, nil
+}
+
+// snowflake id with last two sections set to 0 (machine id and sequence)
+func snowflakeFromTime(t time.Time) int64 {
+	return (t.UnixMilli() - snowflake.Epoch) << (snowflake.NodeBits + snowflake.StepBits)
 }
