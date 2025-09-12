@@ -1,5 +1,7 @@
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
+import { trackDashboardSceneEditButtonClicked } from 'app/features/dashboard/utils/tracking';
+import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
 import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
 
 import { ToolbarActionProps } from '../types';
@@ -20,9 +22,11 @@ export const EditDashboardSwitch = ({ dashboard }: ToolbarActionProps) => {
         evt.stopPropagation();
 
         if (!dashboard.state.isEditing) {
+          trackDashboardSceneEditButtonClicked();
           dashboard.onEnterEditMode();
         } else {
           dashboard.exitEditMode({ skipConfirm: false });
+          DashboardInteractions.exitEditButtonClicked();
         }
       }}
     />

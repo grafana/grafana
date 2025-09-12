@@ -8,6 +8,8 @@ import { Trans, t } from '@grafana/i18n';
 import { useSceneObjectState } from '@grafana/scenes';
 import { useStyles2, useSplitter, ToolbarButton, ScrollContainer, Text, Icon, clearButtonStyles } from '@grafana/ui';
 
+import { DashboardInteractions } from '../utils/interactions';
+
 import { DashboardEditPane } from './DashboardEditPane';
 import { DashboardOutline } from './DashboardOutline';
 import { ElementEditPane } from './ElementEditPane';
@@ -111,7 +113,10 @@ export function DashboardEditPaneRenderer({ editPane, isCollapsed, onToggleColla
         <div {...splitter.secondaryProps} className={cx(splitter.secondaryProps.className, styles.paneContent)}>
           <button
             type="button"
-            onClick={() => setOutlineCollapsed(!outlineCollapsed)}
+            onClick={() => {
+              DashboardInteractions.dashboardOutlineClicked();
+              setOutlineCollapsed(!outlineCollapsed);
+            }}
             className={cx(clearButton, styles.outlineCollapseButton)}
             data-testid={selectors.components.PanelEditor.Outline.section}
           >

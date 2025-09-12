@@ -13,6 +13,7 @@ import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/Pan
 import { dashboardEditActions } from '../../edit-pane/shared';
 import { DashboardScene } from '../../scene/DashboardScene';
 import { EditableDashboardElement, EditableDashboardElementInfo } from '../../scene/types/EditableDashboardElement';
+import { DashboardInteractions } from '../../utils/interactions';
 import { getDashboardSceneFor } from '../../utils/utils';
 
 import { EditableVariableType, getNextAvailableId, getVariableScene, getVariableTypeSelectOptions } from './utils';
@@ -102,7 +103,10 @@ function VariableList({ set }: { set: SceneVariableSet }) {
             icon="plus"
             size="sm"
             variant="secondary"
-            onClick={setIsAdding}
+            onClick={() => {
+              setIsAdding();
+              DashboardInteractions.addVariableButtonClicked({ source: 'edit_pane' });
+            }}
             data-testid={selectors.components.PanelEditor.ElementEditPane.addVariableButton}
           >
             <Trans i18nKey="dashboard.edit-pane.variables.add-variable">Add variable</Trans>
