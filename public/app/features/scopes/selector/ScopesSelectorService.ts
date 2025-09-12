@@ -103,7 +103,7 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
   };
 
   private expandOrFilterNode = async (scopeNodeId: string, query?: string) => {
-    this.interactionProfiler.startProfile('updateScopeNode');
+    this.interactionProfiler.startProfile('scopeNodeDiscovery');
 
     const path = getPathOfNode(scopeNodeId, this.state.nodes);
 
