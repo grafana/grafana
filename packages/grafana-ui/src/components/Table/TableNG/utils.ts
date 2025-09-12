@@ -848,7 +848,7 @@ export const processNestedTableRows = (
 export const calculateFooterHeight = (fields: Field[]): number => {
   let maxReducerCount = 0;
   for (const field of fields) {
-    maxReducerCount = Math.max(maxReducerCount, field.config?.custom?.footer?.reducers?.length ?? 0);
+    maxReducerCount = Math.max(maxReducerCount, field.config.custom?.footer?.reducers?.length ?? 0);
   }
 
   // Base height (+ padding) + height per reducer
