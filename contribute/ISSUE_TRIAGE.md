@@ -5,7 +5,12 @@ The main goal of issue triage is to categorize all incoming Grafana issues and m
 > [!NOTE]
 > This information is for Grafana project Maintainers, Owners, and Admins. If you are a Contributor, then you won't be able to perform most of the tasks in this topic.
 
+## Automation
+
 All issues except the internal ones, are automatically [triaged](https://github.com/grafana/grafana/blob/main/.github/workflows/issue-opened.yml). The automation adds labels based on the title and description provided. The [labels](https://github.com/grafana/grafana/blob/main/.github/workflows/auto-triager/labels.txt) are mapped to projects.
+
+Many of these automated behaviors are defined in [commands.json](https://github.com/grafana/grafana/blob/main/.github/commands.json). Or in other [GitHub Actions](https://github.com/grafana/grafana/tree/main/.github/workflows)
+Learn more about the auto triager bot in our [bot documentation](https://github.com/grafana/grafana/blob/main/.github/bot.md).
 
 ## Simplified flowchart diagram of the automated issue triage process
 
@@ -14,7 +19,7 @@ flowchart TD
     A([New issue])
     C2([Triage app adds: <br>Label: type/#42; <br> Label: area/#42; <br> Label: datasource/#42; <br> Label: automated-triage])
 
-    G1([Assigns to project])
+    G1([Assigns to mapped project])
 
     H([Done])
 
@@ -262,12 +267,6 @@ Investigating issues can be a very time consuming task, especially for the maint
 For some other combinations it may not be possible at all for a maintainer to set up a proper test environment to investigate the issue. In these cases we really appreciate any help we can get from the community. Otherwise, the issue is highly likely to be closed.
 
 Even if you don't have the time or knowledge to investigate an issue we highly recommend that you [upvote](https://github.blog/2016-03-10-add-reactions-to-pull-requests-issues-and-comments) the issue if you happen to have the same problem. If you have further details that may help investigating the issue, please provide as much information as possible.
-
-### Automation
-
-We have some automation that triggers on comments or labels being added to issues. Many of these automated behaviors are defined in [commands.json](https://github.com/grafana/grafana/blob/main/.github/commands.json). Or in other [GitHub Actions](https://github.com/grafana/grafana/tree/main/.github/workflows)
-
-To learn more about bot actions, refer to our [bot documentation](https://github.com/grafana/grafana/blob/main/.github/bot.md).
 
 ### External PRs
 
