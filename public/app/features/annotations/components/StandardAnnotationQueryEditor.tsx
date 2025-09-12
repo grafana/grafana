@@ -314,21 +314,3 @@ export default class StandardAnnotationQueryEditor extends PureComponent<Props, 
     );
   }
 }
-
-// Will render saved query buttons only if query library feature is enabled
-function SavedQueryButtons(props: {
-  query: DataQuery;
-  app?: CoreApp;
-  onUpdateSuccess?: () => void;
-  onSelectQuery: (query: DataQuery) => void;
-  datasourceFilters: string[];
-}) {
-  const { renderSavedQueryButtons } = useQueryLibraryContext();
-  return renderSavedQueryButtons(
-    props.query,
-    props.app,
-    props.onUpdateSuccess,
-    props.onSelectQuery,
-    props.datasourceFilters
-  );
-}
