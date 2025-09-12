@@ -695,6 +695,10 @@ const (
 	// Enable enrichment per rule in the alerting UI.
 	FlagAlertingEnrichmentPerRule = "alertingEnrichmentPerRule"
 
+	// FlagAlertingEnrichmentAssistantInvestigations
+	// Enable Assistant Investigations enrichment type.
+	FlagAlertingEnrichmentAssistantInvestigations = "alertingEnrichmentAssistantInvestigations"
+
 	// FlagAlertingAIAnalyzeCentralStateHistory
 	// Enable AI-analyze central state history.
 	FlagAlertingAIAnalyzeCentralStateHistory = "alertingAIAnalyzeCentralStateHistory"
