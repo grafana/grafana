@@ -7,7 +7,7 @@
 
 import { chain, compact } from 'lodash';
 
-import { parseFlags } from '@grafana/data';
+import { type LabelMatcher } from '@grafana/alerting/unstable';
 import { Matcher, MatcherOperator, ObjectMatcher, Route } from 'app/plugins/datasource/alertmanager/types';
 
 import { Labels } from '../../../../types/unified-alerting-dto';
@@ -228,6 +228,8 @@ export const matcherFormatter = {
   },
 } as const;
 
+export type MatcherFormatter = keyof typeof matcherFormatter;
+
 export function isPromQLStyleMatcher(input: string): boolean {
   return input.startsWith('{') && input.endsWith('}');
 }
@@ -251,81 +253,13 @@ function matcherToOperator(matcher: Matcher): MatcherOperator {
   }
 }
 
-// Compare set of matchers to set of label
-export function matchLabelsSet(matchers: ObjectMatcher[], labels: Label[]): boolean {
-  for (const matcher of matchers) {
-    if (!isLabelMatchInSet(matcher, labels)) {
-      return false;
-    }
-  }
-  return true;
+export function convertObjectMatcherToAlertingPackageMatcher(matcher: ObjectMatcher): LabelMatcher {
+  const [label, operator, value] = matcher;
+
+  return {
+    label,
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+    type: operator as LabelMatcher['type'],
+    value,
+  };
 }
-
-type OperatorPredicate = (labelValue: string, matcherValue: string) => boolean;
-const OperatorFunctions: Record<MatcherOperator, OperatorPredicate> = {
-  [MatcherOperator.equal]: (lv, mv) => lv === mv,
-  [MatcherOperator.notEqual]: (lv, mv) => lv !== mv,
-  // At the time of writing, Alertmanager compiles to another (anchored) Regular Expression,
-  // so we should also anchor our UI matches for consistency with this behaviour
-  // https://github.com/prometheus/alertmanager/blob/fd37ce9c95898ca68be1ab4d4529517174b73c33/pkg/labels/matcher.go#L69
-  [MatcherOperator.regex]: (lv, mv) => {
-    const valueWithFlagsParsed = parseFlags(`^(?:${mv})$`);
-    const re = new RegExp(valueWithFlagsParsed.cleaned, valueWithFlagsParsed.flags);
-    return re.test(lv);
-  },
-  [MatcherOperator.notRegex]: (lv, mv) => {
-    const valueWithFlagsParsed = parseFlags(`^(?:${mv})$`);
-    const re = new RegExp(valueWithFlagsParsed.cleaned, valueWithFlagsParsed.flags);
-    return !re.test(lv);
-  },
-};
-
-function isLabelMatchInSet(matcher: ObjectMatcher, labels: Label[]): boolean {
-  const [matcherKey, operator, matcherValue] = matcher;
-
-  let labelValue = ''; // matchers that have no labels are treated as empty string label values
-  const labelForMatcher = Object.fromEntries(labels)[matcherKey];
-  if (labelForMatcher) {
-    labelValue = labelForMatcher;
-  }
-
-  const matchFunction = OperatorFunctions[operator];
-  if (!matchFunction) {
-    throw new Error(`no such operator: ${operator}`);
-  }
-
-  try {
-    // This can throw because the regex operators use the JavaScript regex engine
-    // and "new RegExp()" throws on invalid regular expressions.
-    //
-    // This is usually a user-error (because matcher values are taken from user input)
-    // but we're still logging this as a warning because it _might_ be a programmer error.
-    return matchFunction(labelValue, matcherValue);
-  } catch (err) {
-    console.warn(err);
-    return false;
-  }
-}
-
-// ⚠️ DO NOT USE THIS FUNCTION FOR ROUTE SELECTION ALGORITHM
-// for route selection algorithm, always compare a single matcher to the entire label set
-// see "matchLabelsSet"
-export function isLabelMatch(matcher: ObjectMatcher, label: Label): boolean {
-  const [labelKey, labelValue] = label;
-  const [matcherKey, operator, matcherValue] = matcher;
-
-  if (labelKey !== matcherKey) {
-    return false;
-  }
-
-  const matchFunction = OperatorFunctions[operator];
-  if (!matchFunction) {
-    throw new Error(`no such operator: ${operator}`);
-  }
-
-  return matchFunction(labelValue, matcherValue);
-}
-
-export type MatcherFormatter = keyof typeof matcherFormatter;
-
-export type Label = [string, string];

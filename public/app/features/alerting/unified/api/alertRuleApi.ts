@@ -1,6 +1,6 @@
 import { RelativeTimeRange } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { Matcher } from 'app/plugins/datasource/alertmanager/types';
+import { AlertmanagerAlert, Matcher } from 'app/plugins/datasource/alertmanager/types';
 import { RuleIdentifier, RuleNamespace, RulerDataSourceConfig } from 'app/types/unified-alerting';
 import {
   AlertQuery,
@@ -33,11 +33,9 @@ import {
 } from './prometheus';
 import { FetchRulerRulesFilter, rulerUrlBuilder } from './ruler';
 
-export type ResponseLabels = {
-  labels: AlertInstances[];
-};
-
-export type PreviewResponse = ResponseLabels[];
+export type PreviewResponse = Array<
+  Pick<AlertmanagerAlert, 'annotations' | 'endsAt' | 'startsAt' | 'generatorURL' | 'labels'>
+>;
 
 export interface Datasource {
   type: string;
@@ -82,8 +80,6 @@ export interface Rule {
   labels: Labels;
   annotations: Annotations;
 }
-
-export type AlertInstances = Record<string, string>;
 
 interface ExportRulesParams {
   format: ExportFormats;
