@@ -1,16 +1,23 @@
-import { AnnotationQuery, DataQuery, DataSourceApi } from '@grafana/data';
+import { AnnotationQuery, DataSourceApi } from '@grafana/data';
+import { DataQuery } from '@grafana/schema';
 
 /**
  * Converts an AnnotationQuery to DataQuery format for SavedQueryButtons.
- * Currently only supports v1 dashboards (uses target field).
+ * Supports both v1 dashboards (uses target field) and v2 dashboards (uses query.spec field).
  */
 export function getDataQueryFromAnnotationForSavedQueries(
   annotation: AnnotationQuery,
   datasource: DataSourceApi
 ): DataQuery {
+  // For v2 dashboards, use query.spec
+  let querySpec = annotation.target;
+  if (annotation.query && annotation.query.spec) {
+    querySpec = annotation.query.spec;
+  }
+
   const baseQuery = {
     ...datasource.annotations?.getDefaultQuery?.(),
-    ...(annotation.target ?? { refId: 'Anno' }),
+    ...(querySpec ?? { refId: 'Anno' }),
   };
 
   return {
@@ -22,12 +29,22 @@ export function getDataQueryFromAnnotationForSavedQueries(
 /**
  * Converts DataQuery back to AnnotationQuery format while preserving annotation metadata.
  * Used when replacing an annotation query with a saved query.
- * Currently only supports v1 dashboards (uses target field).
+ * Supports both v1 dashboards (uses target field) and v2 dashboards (uses query.spec field).
  */
 export function updateAnnotationFromSavedQuery(annotation: AnnotationQuery, replacedQuery: DataQuery): AnnotationQuery {
-  return {
+  const updatedAnnotation: AnnotationQuery = {
     ...annotation, // Keep all annotation-specific fields (enable, iconColor, mappings, etc.)
     datasource: replacedQuery.datasource,
-    target: replacedQuery, // v1 format - simple replacement
+    target: replacedQuery, // v1 format
   };
+
+  // For v2 dashboards, also update query.spec
+  if (annotation.query && annotation.query.spec) {
+    updatedAnnotation.query = {
+      ...annotation.query,
+      spec: { ...replacedQuery },
+    };
+  }
+
+  return updatedAnnotation;
 }
