@@ -207,6 +207,16 @@ export function getAllRulesSources(): RulesSource[] {
   return availableRulesSources;
 }
 
+export function getOodleRulesSources(): Array<Exclude<RulesSource, 'grafana'>> {
+  return getRulesDataSources().filter(
+    (ds) => (
+      isCloudRulesSource(ds)
+      && ds.type === DataSourceType.Prometheus
+      && JSON.stringify(ds.jsonData).toLowerCase().includes('oodle')
+    )
+  );
+}
+
 export function getRulesSourceName(rulesSource: RulesSource): string {
   return isCloudRulesSource(rulesSource) ? rulesSource.name : rulesSource;
 }

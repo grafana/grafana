@@ -137,9 +137,10 @@ export const alertRuleApi = alertingApi.injectEndpoints({
         filter?: FetchPromRulesFilter;
         state?: string[];
         matcher?: Matcher[];
+        sourceUID?: string;
       }
     >({
-      query: ({ limitAlerts, identifier, filter, state, matcher }) => {
+      query: ({ limitAlerts, identifier, filter, state, matcher, sourceUID }) => {
         const searchParams = new URLSearchParams();
 
         // if we're fetching for Grafana managed rules, we should add a limit to the number of alert instances
@@ -155,11 +156,15 @@ export const alertRuleApi = alertingApi.injectEndpoints({
 
         const filterParams = getRulesFilterSearchParams(filter);
         const params = { ...filterParams, ...Object.fromEntries(searchParams) };
+        const url = PROM_RULES_URL.replace(
+          GRAFANA_RULES_SOURCE_NAME,
+          sourceUID ?? GRAFANA_RULES_SOURCE_NAME,
+        );
 
-        return { url: PROM_RULES_URL, params: paramsWithMatcherAndState(params, state, matcher) };
+        return { url, params: paramsWithMatcherAndState(params, state, matcher) };
       },
-      transformResponse: (response: PromRulesResponse): RuleNamespace[] => {
-        return groupRulesByFileName(response.data.groups, GRAFANA_RULES_SOURCE_NAME);
+      transformResponse: (response: PromRulesResponse, _, { sourceUID }): RuleNamespace[] => {
+        return groupRulesByFileName(response.data.groups, sourceUID ?? GRAFANA_RULES_SOURCE_NAME);
       },
     }),
 

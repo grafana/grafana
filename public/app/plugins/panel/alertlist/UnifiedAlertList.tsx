@@ -26,7 +26,7 @@ import {
 } from 'app/features/alerting/unified/state/actions';
 import { labelsMatchMatchers } from 'app/features/alerting/unified/utils/alertmanager';
 import { Annotation } from 'app/features/alerting/unified/utils/constants';
-import { GRAFANA_DATASOURCE_NAME, GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
+import { getOodleRulesSources, GRAFANA_DATASOURCE_NAME, GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
 import { parsePromQLStyleMatcherLooseSafe } from 'app/features/alerting/unified/utils/matchers';
 import {
   isAsyncRequestMapSlicePartiallyDispatched,
@@ -87,7 +87,7 @@ const fetchPromAndRuler = ({
         limitAlerts: limitInstances ? INSTANCES_DISPLAY_LIMIT : undefined,
         matcher: matcherList,
         state: stateList,
-      })
+      }, getOodleRulesSources().map((ds) => ds.name))
     );
   }
 };
@@ -139,8 +139,31 @@ function UnifiedAlertList(props: PanelProps<UnifiedAlertListOptions>) {
   // Undefined dataSourceName means that there is no datasource filter applied and we should fetch all the rules
   const shouldFetchGrafanaRules = (!dataSourceName || dataSourceName === GRAFANA_RULES_SOURCE_NAME) && gmaViewAllowed;
 
-  //For grafana managed rules, get the result using RTK Query to avoid the need of using the redux store
+  //For Grafana and Oodle managed rules, get the result using RTK Query to avoid the need of using the redux store
   //See https://github.com/grafana/grafana/pull/70482
+  const oodleSources = getOodleRulesSources();
+  const oodleSourcesToFetchFrom = useMemo(
+    () => !dataSourceName
+      ? oodleSources
+      : oodleSources.filter((ds) => ds.name === dataSourceName),
+    [dataSourceName, oodleSources]
+  );
+  const shouldFetchOodleRules = oodleSourcesToFetchFrom.length > 0;
+
+  const {
+    currentData: oodlePromRules = [],
+    isLoading: oodleRulesLoading,
+    refetch: refetchOodlePromRules,
+  } = usePrometheusRulesByNamespaceQuery(
+    {
+      limitAlerts: limitInstances ? INSTANCES_DISPLAY_LIMIT : undefined,
+      matcher: matcherList,
+      state: stateList,
+      sourceUID: oodleSourcesToFetchFrom.map((ds) => ds.uid)[0],
+    },
+    { skip: oodleSourcesToFetchFrom.length === 0 }
+  );
+
   const {
     currentData: grafanaPromRules = [],
     isLoading: grafanaRulesLoading,
@@ -163,6 +186,9 @@ function UnifiedAlertList(props: PanelProps<UnifiedAlertListOptions>) {
       if (shouldFetchGrafanaRules) {
         refetchGrafanaPromRules();
       }
+      if (shouldFetchOodleRules) {
+        refetchOodlePromRules();
+      }
 
       if (!dataSourceName || dataSourceName !== GRAFANA_RULES_SOURCE_NAME) {
         fetchPromAndRuler({ dispatch, limitInstances, matcherList, dataSourceName, stateList });
@@ -180,6 +206,7 @@ function UnifiedAlertList(props: PanelProps<UnifiedAlertListOptions>) {
     dataSourceName,
     refetchGrafanaPromRules,
     shouldFetchGrafanaRules,
+    shouldFetchOodleRules,
     promRulesRequests.loading,
   ]);
 
@@ -193,7 +220,11 @@ function UnifiedAlertList(props: PanelProps<UnifiedAlertListOptions>) {
     }
   };
 
-  const combinedRules = useCombinedRuleNamespaces(undefined, grafanaPromRules);
+  const combinedRules = useCombinedRuleNamespaces(
+    undefined,
+    [...grafanaPromRules, ...oodlePromRules]
+  );
+  console.log({ combinedRules });
 
   const someRulerRulesDispatched = isAsyncRequestMapSlicePartiallyDispatched(rulerRulesRequests);
   const haveResults = isAsyncRequestMapSlicePartiallyFulfilled(promRulesRequests);
@@ -213,7 +244,7 @@ function UnifiedAlertList(props: PanelProps<UnifiedAlertListOptions>) {
 
   const noAlertsMessage = rules.length === 0 ? 'No alerts matching filters' : undefined;
 
-  const renderLoading = grafanaRulesLoading || (dispatched && loading && !haveResults);
+  const renderLoading = grafanaRulesLoading || oodleRulesLoading || (dispatched && loading && !haveResults);
 
   const havePreviousResults = Object.values(promRulesRequests).some((state) => state.result);
 
