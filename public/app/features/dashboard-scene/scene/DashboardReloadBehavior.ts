@@ -60,7 +60,6 @@ export class DashboardReloadBehavior extends SceneObjectBase<DashboardReloadBeha
       from: timeRange.from.toISOString(),
       to: timeRange.to.toISOString(),
       ...sceneUtils.getUrlState(this._dashboardScene?.state.$variables!),
-      version: this._dashboardScene?.state.version,
     };
   }
 
