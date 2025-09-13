@@ -137,6 +137,7 @@ func (authz *AuthService) dashboardsWithVisibleAnnotations(ctx context.Context, 
 		})
 	}
 
+	// SearchDashboards
 	dashs, err := authz.dashSvc.SearchDashboards(ctx, &dashboards.FindPersistedDashboardsQuery{
 		OrgId:        query.SignedInUser.GetOrgID(),
 		Filters:      filters,
