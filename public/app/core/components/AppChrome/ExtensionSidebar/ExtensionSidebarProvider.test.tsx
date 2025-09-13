@@ -32,6 +32,7 @@ jest.mock('@grafana/data', () => ({
     get: jest.fn(),
     set: jest.fn(),
     delete: jest.fn(),
+    getObject: jest.fn((_a, b) => b),
   },
 }));
 
