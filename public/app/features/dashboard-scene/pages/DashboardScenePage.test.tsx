@@ -245,7 +245,7 @@ describe('DashboardScenePage', () => {
 
       // Hacking a bit, accessing private cache property to get access to the underlying DashboardScene object
       const dashboardScenesCache = getDashboardScenePageStateManager()['cache'];
-      const dashboard = dashboardScenesCache['my-dash-uid'];
+      const dashboard = dashboardScenesCache.get('my-dash-uid')!;
       const panels = dashboardSceneGraph.getVizPanels(dashboard);
 
       act(() => {

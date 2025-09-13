@@ -25,6 +25,12 @@ class LiveTimer {
   timeRange?: TimeRange;
   liveTimeOffset = 0;
 
+  interval: NodeJS.Timeout;
+
+  constructor() {
+    this.interval = setInterval(this.measure, interval);
+  }
+
   /** Called when the dashboard time range changes */
   setLiveTimeRange(v?: TimeRange) {
     this.timeRange = v;
@@ -42,6 +48,12 @@ class LiveTimer {
   }
 
   listen(panel: PanelStateWrapper) {
+    // Prevent duplicate listeners for the same panel
+    const existingIndex = this.listeners.findIndex(listener => listener.panel === panel);
+    if (existingIndex !== -1) {
+      return;
+    }
+    
     this.listeners.push({
       last: this.lastUpdate,
       panel: panel,
@@ -118,4 +130,3 @@ export function getLiveTimerInterval(delta: number, width: number): number {
 }
 
 export const liveTimer = new LiveTimer();
-setInterval(liveTimer.measure, interval);

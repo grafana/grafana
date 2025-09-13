@@ -56,7 +56,7 @@ export interface LoadDashboardOptions {
 }
 
 export class DashboardScenePageStateManager extends StateManagerBase<DashboardScenePageState> {
-  private cache: Record<string, DashboardScene> = {};
+  private cache: Map<string, DashboardScene> = new Map();
 
   // This is a simplistic, short-term cache for DashboardDTOs to avoid fetching the same dashboard multiple times across a short time span.
   private dashboardCache?: DashboardCacheEntry;
@@ -280,13 +280,13 @@ export class DashboardScenePageStateManager extends StateManagerBase<DashboardSc
   public getSceneFromCache(cacheKey: string) {
     cacheKey = this.getCacheKey(cacheKey);
 
-    return this.cache[cacheKey];
+    return this.cache.get(cacheKey);
   }
 
   public setSceneCache(cacheKey: string, scene: DashboardScene) {
     cacheKey = this.getCacheKey(cacheKey);
 
-    this.cache[cacheKey] = scene;
+    this.cache.set(cacheKey, scene);
   }
 
   public getCacheKey(cacheKey: string): string {

@@ -38,7 +38,11 @@ export function DashboardSettings({ dashboard, editview, pageNav, sectionNav }: 
   const [updateId, setUpdateId] = useState(0);
   const isSingleTopNav = config.featureToggles.singleTopNav;
   useEffect(() => {
-    dashboard.events.subscribe(DashboardMetaChangedEvent, () => setUpdateId((v) => v + 1));
+    const subscription = dashboard.events.subscribe(DashboardMetaChangedEvent, () => setUpdateId((v) => v + 1));
+
+    return () => {
+      subscription.unsubscribe();
+    };
   }, [dashboard]);
 
   // updateId in deps so we can revaluate when dashboard is mutated

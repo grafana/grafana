@@ -431,6 +431,13 @@ export class PanelQueryRunner {
 
   clearLastResult() {
     this.lastResult = undefined;
+    
+    if(this.subject) {
+      this.subject.complete();
+      this.subject.unsubscribe();
+      this.subject = undefined as any;
+    }
+
     // A new subject is also needed since it's a replay subject that remembers/sends last value
     this.subject = new ReplaySubject(1);
   }
@@ -439,13 +446,19 @@ export class PanelQueryRunner {
    * Called when the panel is closed
    */
   destroy() {
+    // Unsubscribe from any active queries first
+    if (this.subscription) {
+      this.subscription.unsubscribe();
+      this.subscription = undefined;
+    }
+
+    // Clear cached results to free memory
+    this.clearLastResult();
+
     // Tell anyone listening that we are done
     if (this.subject) {
       this.subject.complete();
-    }
-
-    if (this.subscription) {
-      this.subscription.unsubscribe();
+      this.subject = undefined as any;
     }
   }
 

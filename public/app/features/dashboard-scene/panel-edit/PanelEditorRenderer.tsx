@@ -175,7 +175,7 @@ function getStyles(theme: GrafanaTheme2) {
       height: '100%',
     }),
     canvasContent: css({
-      label: 'canvas-content',
+      label: 'canvas-content-panel-editor-renderer',
       display: 'flex',
       flexDirection: 'column',
       flexBasis: '100%',

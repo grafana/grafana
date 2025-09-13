@@ -639,6 +639,22 @@ export class PanelModel implements DataConfigSource, IPanelModel {
     if (this.queryRunner) {
       this.queryRunner.destroy();
     }
+
+    // Clear cached data
+    this.cachedPluginOptions = {};
+    
+    // Clear snapshot data
+    if (this.snapshotData) {
+      delete this.snapshotData;
+    }
+
+    // Complete event bus and clear listeners
+    if (this.events) {
+      this.events.removeAllListeners();
+    }
+
+    // Clear plugin reference
+    this.plugin = undefined;
   }
 
   setTransformations(transformations: DataTransformerConfig[]) {

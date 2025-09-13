@@ -103,7 +103,7 @@ function useSubscribeToEmbeddedUrlState(onStateChange: ((state: string) => void)
 function getStyles(theme: GrafanaTheme2) {
   return {
     canvas: css({
-      label: 'canvas-content',
+      label: 'canvas-content-embedded-dashboard',
       display: 'grid',
       gridTemplateAreas: `
         "panels"`,

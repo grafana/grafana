@@ -184,7 +184,13 @@ export class DashboardSceneChangeTracker {
   public terminate() {
     this.stopTrackingChanges();
     this._changesWorker?.terminate();
-    this._changesWorker = undefined;
+
+    if (this._changesWorker) {
+      // Break the reference chain
+      this._changesWorker.onmessage = null;
+      this._changesWorker.onerror = null;
+      this._changesWorker = undefined;
+    }
   }
 }
 
