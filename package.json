@@ -211,7 +211,7 @@
     "jest-fail-on-console": "3.3.1",
     "jest-junit": "16.0.0",
     "jest-matcher-utils": "29.7.0",
-    "jest-watch-typeahead": "^2.2.2",
+    "jest-watch-typeahead": "^3.0.0",
     "jimp": "^1.6.0",
     "jsdom-testing-mocks": "^1.13.1",
     "lerna": "8.2.3",
