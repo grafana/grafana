@@ -559,6 +559,12 @@ export const versionedPages = {
             customValueInput: {
               [MIN_GRAFANA_VERSION]: 'data-testid custom-variable-input',
             },
+            optionsOpenButton: {
+              [MIN_GRAFANA_VERSION]: 'data-testid custom-variable-options-open-button',
+            },
+            closeButton: {
+              [MIN_GRAFANA_VERSION]: 'data-testid custom-variable-close-button',
+            },
           },
           IntervalVariable: {
             intervalsValueInput: {
