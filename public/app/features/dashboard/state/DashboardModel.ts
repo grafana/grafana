@@ -138,6 +138,8 @@ export class DashboardModel implements TimeModel {
     options?: {
       // By default this uses variables from redux state
       getVariablesFromState?: GetVariables;
+      // Target schema version for migration (defaults to latest)
+      targetSchemaVersion?: number;
     }
   ) {
     this.getVariablesFromState = options?.getVariablesFromState ?? getVariablesByKey;
@@ -177,7 +179,7 @@ export class DashboardModel implements TimeModel {
     this.formatDate = this.formatDate.bind(this);
 
     this.initMeta(meta);
-    this.updateSchema(data);
+    this.updateSchema(data, options?.targetSchemaVersion);
 
     this.addBuiltInAnnotationQuery();
     this.sortPanelsByGridPos();
@@ -1120,9 +1122,9 @@ export class DashboardModel implements TimeModel {
     return this.timezone ? this.timezone : contextSrv?.user?.timezone;
   }
 
-  private updateSchema(old: any) {
+  private updateSchema(old: any, targetVersion?: number) {
     const migrator = new DashboardMigrator(this);
-    migrator.updateSchema(old);
+    migrator.updateSchema(old, targetVersion);
   }
 
   hasTimeChanged() {

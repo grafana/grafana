@@ -136,12 +136,12 @@ func migrateTemplateVariables(dashboard map[string]interface{}, datasources []Da
 		}
 
 		ds, exists := varMap["datasource"]
-		// Handle null datasource variables by setting to default
+		// Handle null datasource variables by setting to default (matches frontend behavior)
 		if !exists || ds == nil {
 			varMap["datasource"] = GetDataSourceRef(defaultDS)
-		} else {
-			varMap["datasource"] = MigrateDatasourceNameToRef(ds, map[string]bool{"returnDefaultAsNull": false}, datasources)
 		}
+		// Note: Frontend v36 migration only converts null datasources to default objects
+		// It does NOT convert string datasources to objects, so we should not do that either
 	}
 }
 
@@ -170,13 +170,18 @@ func migratePanels(dashboard map[string]interface{}, datasources []DataSourceInf
 			if !ok {
 				continue
 			}
-			migratePanelDatasources(np, datasources)
+			migratePanelDatasourcesInternal(np, datasources, true)
 		}
 	}
 }
 
 // migratePanelDatasources updates datasource references in a single panel and its targets
 func migratePanelDatasources(panelMap map[string]interface{}, datasources []DataSourceInfo) {
+	migratePanelDatasourcesInternal(panelMap, datasources, false)
+}
+
+// migratePanelDatasourcesInternal updates datasource references with nesting awareness
+func migratePanelDatasourcesInternal(panelMap map[string]interface{}, datasources []DataSourceInfo, isNested bool) {
 	// NOTE: Even though row panels don't technically need datasource or targets fields,
 	// we process them anyway to exactly match frontend behavior and avoid inconsistencies
 	// between frontend and backend migrations. The frontend DashboardMigrator processes
@@ -185,24 +190,32 @@ func migratePanelDatasources(panelMap map[string]interface{}, datasources []Data
 	defaultDS := GetDefaultDSInstanceSettings(datasources)
 	panelDataSourceWasDefault := false
 
-	// Handle targets - treat empty arrays same as missing targets (matches frontend behavior)
+	// Handle targets - only add default targets to top-level panels (matches frontend behavior)
 	targets, hasTargets := panelMap["targets"].([]interface{})
 	if !hasTargets || len(targets) == 0 {
-		targets = []interface{}{
-			map[string]interface{}{
-				"refId": "A",
-			},
+		if !isNested {
+			// Add default target to top-level panels only
+			targets = []interface{}{
+				map[string]interface{}{
+					"refId": "A",
+				},
+			}
+			panelMap["targets"] = targets
+			hasTargets = true
+		} else {
+			// Nested panels without targets are not processed
+			return
 		}
-		panelMap["targets"] = targets
-		hasTargets = true
 	}
 
 	// Handle panel datasource
 	ds, exists := panelMap["datasource"]
 	if !exists || ds == nil {
-		// Set to default if panel has targets (matches frontend logic)
-		panelMap["datasource"] = GetDataSourceRef(defaultDS)
-		panelDataSourceWasDefault = true
+		// Set to default if panel has targets with length > 0 (matches frontend logic)
+		if len(targets) > 0 {
+			panelMap["datasource"] = GetDataSourceRef(defaultDS)
+			panelDataSourceWasDefault = true
+		}
 	} else {
 		// Migrate existing non-null datasource (should be null after V33)
 		migrated := MigrateDatasourceNameToRef(ds, map[string]bool{"returnDefaultAsNull": true}, datasources)

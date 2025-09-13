@@ -43,8 +43,9 @@ func GetInstanceSettings(nameOrRef interface{}, datasources []DataSourceInfo) *D
 	// Check if it's a reference object
 	if ref, ok := nameOrRef.(map[string]interface{}); ok {
 		if _, hasUID := ref["uid"]; !hasUID {
-			// Reference object without UID should return default
-			return GetDefaultDSInstanceSettings(datasources)
+			// Reference object without UID should return nil to preserve as-is (frontend behavior)
+			// Frontend doesn't do type-based lookup for {type: "prometheus"} - it preserves the original
+			return nil
 		}
 		// It's a reference object with UID, search for matching UID
 		for _, ds := range datasources {
@@ -95,6 +96,10 @@ func MigrateDatasourceNameToRef(nameOrRef interface{}, options map[string]bool, 
 		if _, hasUID := dsRef["uid"]; hasUID {
 			return dsRef
 		}
+		// Empty object {} should be preserved as-is (frontend behavior)
+		if len(dsRef) == 0 {
+			return dsRef
+		}
 	}
 
 	ds := GetInstanceSettings(nameOrRef, datasources)
@@ -102,10 +107,15 @@ func MigrateDatasourceNameToRef(nameOrRef interface{}, options map[string]bool, 
 		return GetDataSourceRef(ds)
 	}
 
+	// If GetInstanceSettings returned nil for a reference object, preserve it as-is
+	if dsRef, ok := nameOrRef.(map[string]interface{}); ok {
+		return dsRef
+	}
+
 	// Handle string cases (including empty strings)
 	if dsName, ok := nameOrRef.(string); ok {
 		if dsName == "" {
-			// Empty string should return empty object (frontend behavior)
+			// Empty string should return {} (frontend behavior)
 			return map[string]interface{}{}
 		}
 		// Unknown datasource name should be preserved as UID-only reference

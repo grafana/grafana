@@ -48,12 +48,14 @@ func V29(_ context.Context, dashboard map[string]interface{}) error {
 		refreshInt := 0
 		if r, ok := refresh.(int); ok {
 			refreshInt = r
+		} else if r, ok := refresh.(float64); ok {
+			refreshInt = int(r)
 		}
 		if !hasRefresh || (refreshInt != 1 && refreshInt != 2) {
 			variable["refresh"] = 1
 		}
-		// Clear options if present
-		if _, hasOptions := variable["options"]; hasOptions {
+		// Clear options if they have content (matches frontend behavior)
+		if options, hasOptions := variable["options"].([]interface{}); hasOptions && len(options) > 0 {
 			variable["options"] = []interface{}{}
 		}
 	}
