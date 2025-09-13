@@ -24,7 +24,6 @@ func newIAMAuthorizer(accessClient authlib.AccessClient, legacyAccessClient auth
 	// Identity specific resources
 	legacyAuthorizer := gfauthorizer.NewResourceAuthorizer(legacyAccessClient)
 	resourceAuthorizer[iamv0.UserResourceInfo.GetName()] = legacyAuthorizer
-	resourceAuthorizer[iamv0.ServiceAccountResourceInfo.GetName()] = legacyAuthorizer
 	resourceAuthorizer[iamv0.TeamResourceInfo.GetName()] = legacyAuthorizer
 	resourceAuthorizer["display"] = legacyAuthorizer
 
@@ -33,6 +32,7 @@ func newIAMAuthorizer(accessClient authlib.AccessClient, legacyAccessClient auth
 	resourceAuthorizer[iamv0.CoreRoleInfo.GetName()] = authorizer
 	resourceAuthorizer[iamv0.RoleInfo.GetName()] = authorizer
 	resourceAuthorizer[iamv0.ResourcePermissionInfo.GetName()] = authorizer
+	resourceAuthorizer[iamv0.ServiceAccountResourceInfo.GetName()] = authorizer
 
 	return &iamAuthorizer{resourceAuthorizer: resourceAuthorizer}
 }

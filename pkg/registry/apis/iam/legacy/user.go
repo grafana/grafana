@@ -325,15 +325,6 @@ type DeleteUserCommand struct {
 	UID string
 }
 
-type DeleteUserQuery struct {
-	OrgID int64
-	UID   string
-}
-
-type DeleteUserResult struct {
-	Success bool
-}
-
 var sqlCreateUserTemplate = mustTemplate("create_user.sql")
 var sqlCreateOrgUserTemplate = mustTemplate("create_org_user.sql")
 var sqlDeleteUserTemplate = mustTemplate("delete_user.sql")
@@ -467,20 +458,34 @@ func (s *legacySQLStore) CreateUser(ctx context.Context, ns claims.NamespaceInfo
 	return &CreateUserResult{User: createdUser}, nil
 }
 
-func newDeleteUser(sql *legacysql.LegacyDatabaseHelper, q *DeleteUserQuery) deleteUserQuery {
+func newDeleteUser(sql *legacysql.LegacyDatabaseHelper, cmd *DeleteUserCommand) deleteUserQuery {
 	return deleteUserQuery{
-		SQLTemplate:  sqltemplate.New(sql.DialectForDriver()),
-		UserTable:    sql.Table("user"),
-		OrgUserTable: sql.Table("org_user"),
-		Query:        q,
+		SQLTemplate: sqltemplate.New(sql.DialectForDriver()),
+		UserTable:   sql.Table("user"),
+		Command:     cmd,
 	}
 }
 
 type deleteUserQuery struct {
 	sqltemplate.SQLTemplate
-	UserTable    string
-	OrgUserTable string
-	Query        *DeleteUserQuery
+	UserTable string
+	Command   *DeleteUserCommand
+}
+
+func (r deleteUserQuery) Validate() error {
+	if r.Command.UID == "" {
+		return fmt.Errorf("user UID is required")
+	}
+
+	return nil
+}
+
+func newDeleteOrgUser(sql *legacysql.LegacyDatabaseHelper, userID int64) deleteOrgUserQuery {
+	return deleteOrgUserQuery{
+		SQLTemplate:  sqltemplate.New(sql.DialectForDriver()),
+		OrgUserTable: sql.Table("org_user"),
+		UserID:       userID,
+	}
 }
 
 type deleteOrgUserQuery struct {
@@ -496,45 +501,22 @@ func (r deleteOrgUserQuery) Validate() error {
 	return nil
 }
 
-func (r deleteUserQuery) Validate() error {
-	if r.Query.UID == "" {
-		return fmt.Errorf("user UID is required")
-	}
-	if r.Query.OrgID == 0 {
-		return fmt.Errorf("org ID is required")
-	}
-	return nil
-}
-
 // DeleteUser implements LegacyIdentityStore.
-func (s *legacySQLStore) DeleteUser(ctx context.Context, ns claims.NamespaceInfo, cmd DeleteUserCommand) (*DeleteUserResult, error) {
-	if ns.OrgID == 0 {
-		return nil, fmt.Errorf("expected non zero org id")
-	}
-
-	if cmd.UID == "" {
-		return nil, fmt.Errorf("user UID is required")
-	}
-
+func (s *legacySQLStore) DeleteUser(ctx context.Context, ns claims.NamespaceInfo, cmd DeleteUserCommand) error {
 	sql, err := s.sql(ctx)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	query := &DeleteUserQuery{
-		OrgID: ns.OrgID,
-		UID:   cmd.UID,
-	}
-
-	req := newDeleteUser(sql, query)
+	req := newDeleteUser(sql, &cmd)
 	if err := req.Validate(); err != nil {
-		return nil, err
+		return err
 	}
 
 	err = sql.DB.GetSqlxSession().WithTransaction(ctx, func(st *session.SessionTx) error {
 		userLookupReq := newGetUserInternalID(sql, &GetUserInternalIDQuery{
 			OrgID: ns.OrgID,
-			UID:   req.Query.UID,
+			UID:   req.Command.UID,
 		})
 
 		userQuery, err := sqltemplate.Execute(sqlQueryUserInternalIDTemplate, userLookupReq)
@@ -608,8 +590,8 @@ func (s *legacySQLStore) DeleteUser(ctx context.Context, ns claims.NamespaceInfo
 	})
 
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	return &DeleteUserResult{Success: true}, nil
+	return nil
 }
