@@ -419,3 +419,38 @@ func TestHARedisSentinelModeSettings(t *testing.T) {
 		})
 	}
 }
+
+func TestAlertmanagerDefaultConfig(t *testing.T) {
+	f := ini.Empty()
+	section, err := f.NewSection("unified_alerting")
+	require.NoError(t, err)
+
+	snsConfig := `{
+	"alertmanager_config": {
+		"route": {
+			"receiver": "grafana-default-sns",
+			"group_by": ["grafana_folder", "alertname"]
+		},
+		"receivers": [{
+			"name": "grafana-default-sns",
+			"grafana_managed_receiver_configs": [{
+				"uid": "",
+				"name": "sns receiver",
+				"type": "sns",
+				"settings": {
+					"topic_arn": "arn:aws:sns:region:0123456789:SNSTopicName"
+				}
+			}]
+		}]
+	}
+}`
+
+	_, err = section.NewKey("default_configuration", snsConfig)
+	require.NoError(t, err)
+
+	cfg := NewCfg()
+	err = cfg.ReadUnifiedAlertingSettings(f)
+	require.NoError(t, err)
+
+	require.Equal(t, snsConfig, cfg.UnifiedAlerting.DefaultConfiguration)
+}
