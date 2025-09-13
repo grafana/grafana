@@ -2930,11 +2930,6 @@
       "count": 2
     }
   },
-  "public/app/features/expressions/ExpressionQueryEditor.tsx": {
-    "react/no-unescaped-entities": {
-      "count": 4
-    }
-  },
   "public/app/features/expressions/guards.ts": {
     "@typescript-eslint/consistent-type-assertions": {
       "count": 1
