@@ -23,6 +23,8 @@ export interface QueryOperationRowProps {
   draggable?: boolean;
   collapsable?: boolean;
   disabled?: boolean;
+  collapsed?: boolean;
+  onCollapseToggle?: (index: number) => void;
   expanderMessages?: ExpanderMessages;
 }
 
@@ -48,20 +50,27 @@ export function QueryOperationRow({
   index,
   id,
   expanderMessages,
+  collapsed,
+  onCollapseToggle,
 }: QueryOperationRowProps) {
-  const [isContentVisible, setIsContentVisible] = useState(isOpen !== undefined ? isOpen : true);
+  const [isContentVisible, setIsContentVisible] = useState(
+    collapsed !== undefined ? !collapsed : isOpen !== undefined ? isOpen : true
+  );
   const styles = useStyles2(getQueryOperationRowStyles);
   const onRowToggle = useCallback(() => {
+    if (onCollapseToggle) {
+      onCollapseToggle(index);
+    }
     setIsContentVisible(!isContentVisible);
-  }, [isContentVisible, setIsContentVisible]);
+  }, [isContentVisible, setIsContentVisible, index, onCollapseToggle]);
 
   // Force QueryOperationRow expansion when `isOpen` prop updates in parent component.
   // `undefined` can be deliberately passed value here, but we only want booleans to trigger the effect.
   useEffect(() => {
     if (typeof isOpen === 'boolean') {
-      setIsContentVisible(isOpen);
+      setIsContentVisible(collapsed !== undefined ? !collapsed : isOpen);
     }
-  }, [isOpen]);
+  }, [isOpen, collapsed]);
 
   const reportDragMousePosition = useCallback((e: React.MouseEvent) => {
     // When drag detected react-beautiful-dnd will preventDefault the event
@@ -96,10 +105,18 @@ export function QueryOperationRow({
   const renderPropArgs: QueryOperationRowRenderProps = {
     isOpen: isContentVisible,
     onOpen: () => {
-      setIsContentVisible(true);
+      if (onCollapseToggle) {
+        onCollapseToggle(index);
+      } else {
+        setIsContentVisible(true);
+      }
     },
     onClose: () => {
-      setIsContentVisible(false);
+      if (onCollapseToggle) {
+        onCollapseToggle(index);
+      } else {
+        setIsContentVisible(false);
+      }
     },
   };
 
