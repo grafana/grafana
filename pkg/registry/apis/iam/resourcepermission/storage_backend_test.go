@@ -551,7 +551,7 @@ func TestIntegration_ResourcePermSqlBackend_ListIterator(t *testing.T) {
 		})
 
 		require.Error(t, err)
-		require.Equal(t, expectedErr, err)
+		require.ErrorAs(t, expectedErr, err)
 		require.Zero(t, listRV)
 	})
 

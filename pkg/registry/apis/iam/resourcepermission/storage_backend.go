@@ -103,7 +103,7 @@ func (s *ResourcePermSqlBackend) ListIterator(ctx context.Context, req *resource
 	if err != nil {
 		logger := s.logger.FromContext(ctx)
 		logger.Error("Failed to get database helper", "error", err)
-		return 0, errDatabaseHelper
+		return 0, apierrors.NewInternalError(errDatabaseHelper)
 	}
 
 	iterator, err := s.newRoleIterator(ctx, dbHelper, ns, pagination)
@@ -113,12 +113,12 @@ func (s *ResourcePermSqlBackend) ListIterator(ctx context.Context, req *resource
 		}()
 	}
 	if err != nil {
-		return 0, err
+		return 0, apierrors.NewInternalError(err)
 	}
 
 	err = callback(iterator)
 	if err != nil {
-		return 0, err
+		return 0, apierrors.NewInternalError(err)
 	}
 
 	return s.latestUpdate(ctx, dbHelper, ns), nil
@@ -135,7 +135,7 @@ func (s *ResourcePermSqlBackend) ReadResource(ctx context.Context, req *resource
 
 	ns, err := types.ParseNamespace(req.Key.Namespace)
 	if err != nil {
-		rsp.Error = resource.AsErrorResult(err)
+		rsp.Error = resource.AsErrorResult(apierrors.NewBadRequest(err.Error()))
 		return rsp
 	}
 	if ns.OrgID <= 0 {
@@ -153,7 +153,6 @@ func (s *ResourcePermSqlBackend) ReadResource(ctx context.Context, req *resource
 		// Hide the error from the user, but log it
 		logger := s.logger.FromContext(ctx)
 		logger.Error("Failed to get database helper", "error", err)
-		rsp.Error = resource.AsErrorResult(errDatabaseHelper)
 		return rsp
 	}
 
@@ -164,15 +163,7 @@ func (s *ResourcePermSqlBackend) ReadResource(ctx context.Context, req *resource
 	})
 
 	if err != nil {
-		if errors.Is(err, errNotFound) {
-			rsp.Error = resource.AsErrorResult(
-				apierrors.NewNotFound(v0alpha1.ResourcePermissionInfo.GroupResource(), req.Key.Name),
-			)
-		} else if errors.Is(err, errUnknownGroupResource) || errors.Is(err, errInvalidName) {
-			rsp.Error = resource.AsErrorResult(apierrors.NewBadRequest(err.Error()))
-		} else {
-			rsp.Error = resource.AsErrorResult(err)
-		}
+		rsp.Error = resource.AsErrorResult(err)
 		return rsp
 	}
 
@@ -257,7 +248,7 @@ func (s *ResourcePermSqlBackend) WriteEvent(ctx context.Context, event resource.
 			var v0resourceperm *v0alpha1.ResourcePermission
 			v0resourceperm, err = getResourcePermissionFromEvent(event)
 			if err != nil {
-				return 0, err
+				return 0, apierrors.NewBadRequest(fmt.Sprintf("invalid resource permission in event: %v", err))
 			}
 
 			if v0resourceperm.Name != event.Key.Name {
@@ -291,7 +282,7 @@ func (s *ResourcePermSqlBackend) WriteEvent(ctx context.Context, event resource.
 			}
 		}
 	default:
-		return 0, fmt.Errorf("unsupported event type: %v", event.Type)
+		return 0, apierrors.NewMethodNotSupported(v0alpha1.ResourcePermissionInfo.GroupResource(), event.Type.String())
 	}
 
 	return rv, err
