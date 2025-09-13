@@ -1901,11 +1901,6 @@
       "count": 1
     }
   },
-  "public/app/features/browse-dashboards/components/BrowseActions/MoveModal.tsx": {
-    "no-restricted-syntax": {
-      "count": 1
-    }
-  },
   "public/app/features/browse-dashboards/components/NewFolderForm.tsx": {
     "no-restricted-syntax": {
       "count": 1
