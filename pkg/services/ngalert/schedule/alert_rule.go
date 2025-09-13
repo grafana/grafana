@@ -21,6 +21,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
+	historianModels "github.com/grafana/grafana/pkg/services/ngalert/schedule/historian/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -69,6 +70,7 @@ func newRuleFactory(
 	recordingWriter RecordingWriter,
 	evalAppliedHook evalAppliedFunc,
 	stopAppliedHook stopAppliedFunc,
+	historian Historian,
 ) ruleFactoryFunc {
 	return func(ctx context.Context, rule *ngmodels.AlertRule) Rule {
 		if rule.Type() == ngmodels.RuleTypeRecording {
@@ -85,6 +87,7 @@ func newRuleFactory(
 				recordingWriter,
 				evalAppliedHook,
 				stopAppliedHook,
+				historian,
 			)
 		}
 		return newAlertRule(
@@ -103,6 +106,7 @@ func newRuleFactory(
 			featureToggles,
 			evalAppliedHook,
 			stopAppliedHook,
+			historian,
 		)
 	}
 }
@@ -135,6 +139,7 @@ type alertRule struct {
 	logger         log.Logger
 	tracer         tracing.Tracer
 	featureToggles featuremgmt.FeatureToggles
+	historian      Historian
 }
 
 func newAlertRule(
@@ -153,6 +158,7 @@ func newAlertRule(
 	featureToggles featuremgmt.FeatureToggles,
 	evalAppliedHook func(ngmodels.AlertRuleKey, time.Time),
 	stopAppliedHook func(ngmodels.AlertRuleKey),
+	historian Historian,
 ) *alertRule {
 	ctx, stop := util.WithCancelCause(ngmodels.WithRuleKey(parent, key.AlertRuleKey))
 
@@ -175,6 +181,7 @@ func newAlertRule(
 		logger:               logger.FromContext(ctx),
 		tracer:               tracer,
 		featureToggles:       featureToggles,
+		historian:            historian,
 	}
 }
 
@@ -339,10 +346,40 @@ func (a *alertRule) Run() error {
 					}
 					nextDelay := retryer.NextAttemptIn()
 					shouldRetry := nextDelay != retryStop
-					err := a.evaluate(tracingCtx, ctx, span, shouldRetry, logger)
+					start := a.clock.Now()
+					results, err := a.evaluate(tracingCtx, ctx, span, shouldRetry, logger)
 					// This is extremely confusing - when we exhaust all retry attempts, or we have no retryable errors
 					// we return nil - so technically, this is meaningless to know whether the evaluation has errors or not.
 					span.End()
+
+					if a.historian != nil {
+						duration := a.clock.Since(start)
+						status := historianModels.EvalStatusSuccess
+						var statusErr string
+						if results.IsError() || err != nil {
+							status = historianModels.EvalStatusEvalError
+							if err != nil {
+								statusErr = err.Error()
+							} else {
+								statusErr = results.Error().Error()
+							}
+						} else if results.IsNoData() {
+							status = historianModels.EvalStatusNoData
+						}
+						go a.historian.Record(grafanaCtx, historianModels.Record{
+							RuleUID:         ctx.rule.UID,
+							RuleVersion:     ctx.rule.Version,
+							GroupKey:        ctx.rule.GetGroupKey(),
+							RuleFingerprint: ctx.Fingerprint().String(),
+							Tick:            ctx.scheduledAt,
+							Attempt:         attempt,
+							Status:          status,
+							Error:           statusErr,
+							Duration:        duration,
+							EvaluationTime:  start,
+						})
+					}
+
 					if err == nil {
 						logger.Debug("Tick processed", "attempt", attempt, "duration", a.clock.Now().Sub(evalStart))
 						return
@@ -389,7 +426,7 @@ func (a *alertRule) Run() error {
 	}
 }
 
-func (a *alertRule) evaluate(ctx context.Context, e *Evaluation, span trace.Span, retry bool, logger log.Logger) error {
+func (a *alertRule) evaluate(ctx context.Context, e *Evaluation, span trace.Span, retry bool, logger log.Logger) (eval.Results, error) {
 	orgID := fmt.Sprint(a.key.OrgID)
 	evalAttemptTotal := a.metrics.EvalAttemptTotal.WithLabelValues(orgID)
 	evalAttemptFailures := a.metrics.EvalAttemptFailures.WithLabelValues(orgID)
@@ -419,7 +456,7 @@ func (a *alertRule) evaluate(ctx context.Context, e *Evaluation, span trace.Span
 	if ctx.Err() != nil { // check if the context is not cancelled. The evaluation can be a long-running task.
 		span.SetStatus(codes.Error, "rule evaluation cancelled")
 		logger.Debug("Skip updating the state because the context has been cancelled")
-		return nil
+		return nil, nil
 	}
 
 	if err != nil || results.HasErrors() {
@@ -432,14 +469,14 @@ func (a *alertRule) evaluate(ctx context.Context, e *Evaluation, span trace.Span
 			if err != nil {
 				span.SetStatus(codes.Error, "rule evaluation failed")
 				span.RecordError(err)
-				return fmt.Errorf("server side expressions pipeline returned an error: %w", err)
+				return nil, fmt.Errorf("server side expressions pipeline returned an error: %w", err)
 			}
 
 			// If the pipeline executed successfully but have other types of errors that can be retryable, we should do so.
 			if !results.HasNonRetryableErrors() {
 				span.SetStatus(codes.Error, "rule evaluation failed")
 				span.RecordError(err)
-				return fmt.Errorf("the result-set has errors that can be retried: %w", results.Error())
+				return results, fmt.Errorf("the result-set has errors that can be retried: %w", results.Error())
 			}
 		} else {
 			// Only count the final attempt as a failure.
@@ -483,7 +520,7 @@ func (a *alertRule) evaluate(ctx context.Context, e *Evaluation, span trace.Span
 	)
 	processDuration.Observe(a.clock.Now().Sub(start).Seconds())
 
-	return nil
+	return results, nil
 }
 
 // send sends alerts for the given state transitions.
