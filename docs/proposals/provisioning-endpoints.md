@@ -87,8 +87,5 @@ curl -X POST http://grafana.local/apis/provisioning.grafana.app/v1beta/namespace
 2. How to merge/override file-based configs?
 3. Should scope start small (datasources only) or include dashboards/settings?
 
-## Next steps
-- Gather feedback from maintainers on API scope and storage approach.  
-- Decide on sync vs async apply as the default.  
-- Prototype handler + validation + tests.
+
 
