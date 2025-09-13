@@ -3443,11 +3443,6 @@
       "count": 1
     }
   },
-  "public/app/features/transformers/editors/GroupByTransformerEditor.tsx": {
-    "@typescript-eslint/consistent-type-assertions": {
-      "count": 1
-    }
-  },
   "public/app/features/transformers/editors/GroupToNestedTableTransformerEditor.tsx": {
     "no-restricted-syntax": {
       "count": 1
