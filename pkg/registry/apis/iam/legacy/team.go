@@ -9,6 +9,7 @@ import (
 
 	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/common"
+	"github.com/grafana/grafana/pkg/services/sqlstore/session"
 	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
@@ -174,6 +175,94 @@ func (s *legacySQLStore) ListTeams(ctx context.Context, ns claims.NamespaceInfo,
 	}
 
 	return res, err
+}
+
+type CreateTeamCommand struct {
+	UID           string
+	Name          string
+	OrgID         int64
+	Created       DBTime
+	Updated       DBTime
+	Email         string
+	ExternalID    string
+	IsProvisioned bool
+	ExternalUID   string
+}
+
+type CreateTeamResult struct {
+	Team team.Team
+}
+
+var sqlCreateTeamTemplate = mustTemplate("create_team.sql")
+
+func newCreateTeam(sql *legacysql.LegacyDatabaseHelper, cmd *CreateTeamCommand) createTeamQuery {
+	return createTeamQuery{
+		SQLTemplate: sqltemplate.New(sql.DialectForDriver()),
+		TeamTable:   sql.Table("team"),
+		Command:     cmd,
+	}
+}
+
+type createTeamQuery struct {
+	sqltemplate.SQLTemplate
+	TeamTable string
+	Command   *CreateTeamCommand
+}
+
+func (r createTeamQuery) Validate() error {
+	return nil
+}
+
+func (s *legacySQLStore) CreateTeam(ctx context.Context, ns claims.NamespaceInfo, cmd CreateTeamCommand) (*CreateTeamResult, error) {
+	now := time.Now().UTC().Truncate(time.Second)
+
+	cmd.Created = NewDBTime(now)
+	cmd.Updated = NewDBTime(now)
+	cmd.OrgID = ns.OrgID
+
+	if cmd.OrgID == 0 {
+		return nil, fmt.Errorf("expected non zero org id")
+	}
+
+	sql, err := s.sql(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	req := newCreateTeam(sql, &cmd)
+
+	var createdTeam team.Team
+	err = sql.DB.GetSqlxSession().WithTransaction(ctx, func(st *session.SessionTx) error {
+		teamQuery, err := sqltemplate.Execute(sqlCreateTeamTemplate, req)
+		if err != nil {
+			return fmt.Errorf("failed to execute team template %q: %w", sqlCreateTeamTemplate.Name(), err)
+		}
+
+		teamID, err := st.ExecWithReturningId(ctx, teamQuery, req.GetArgs()...)
+		if err != nil {
+			return fmt.Errorf("failed to create team: %w", err)
+		}
+
+		createdTeam = team.Team{
+			ID:            teamID,
+			UID:           cmd.UID,
+			Name:          cmd.Name,
+			OrgID:         cmd.OrgID,
+			Email:         cmd.Email,
+			ExternalUID:   cmd.ExternalUID,
+			IsProvisioned: cmd.IsProvisioned,
+			Created:       cmd.Created.Time,
+			Updated:       cmd.Updated.Time,
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &CreateTeamResult{Team: createdTeam}, nil
 }
 
 type ListTeamBindingsQuery struct {
