@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/grafana/authlib/types"
+
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/storage/legacysql"

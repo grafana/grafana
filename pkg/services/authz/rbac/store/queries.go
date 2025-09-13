@@ -16,6 +16,7 @@ var (
 
 	sqlQueryBasicRoles = mustTemplate("basic_role_query.sql")
 	sqlUserIdentifiers = mustTemplate("user_identifier_query.sql")
+	sqlLatestUpdate    = mustTemplate("latest_update_query.sql")
 )
 
 func mustTemplate(filename string) *template.Template {
@@ -81,5 +82,30 @@ func newGetFolders(sql *legacysql.LegacyDatabaseHelper, q *FolderQuery) getFolde
 		SQLTemplate: sqltemplate.New(sql.DialectForDriver()),
 		Query:       q,
 		FolderTable: sql.Table("folder"),
+	}
+}
+
+type getLatestUpdateQuery struct {
+	sqltemplate.SQLTemplate
+	Query *LatestUpdateQuery
+
+	BuiltinRoleTable string
+	UserRoleTable    string
+	TeamRoleTable    string
+	PermissionTable  string
+}
+
+func (r getLatestUpdateQuery) Validate() error {
+	return nil
+}
+
+func newGetLatestUpdate(sql *legacysql.LegacyDatabaseHelper, q *LatestUpdateQuery) getLatestUpdateQuery {
+	return getLatestUpdateQuery{
+		SQLTemplate:      sqltemplate.New(sql.DialectForDriver()),
+		Query:            q,
+		BuiltinRoleTable: sql.Table("builtin_role"),
+		UserRoleTable:    sql.Table("user_role"),
+		TeamRoleTable:    sql.Table("team_role"),
+		PermissionTable:  sql.Table("permission"),
 	}
 }
