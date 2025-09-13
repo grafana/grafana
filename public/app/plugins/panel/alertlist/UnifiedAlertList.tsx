@@ -157,7 +157,12 @@ function UnifiedAlertList(props: PanelProps<UnifiedAlertListOptions>) {
   } = usePrometheusRulesByNamespaceQuery(
     {
       limitAlerts: limitInstances ? INSTANCES_DISPLAY_LIMIT : undefined,
-      matcher: matcherList,
+      matcher: [{
+        name: 'name',
+        value: `.*${props.options.alertName}.*`,
+        isRegex: true,
+        isEqual: true
+      }, ...matcherList],
       state: stateList,
       sourceUID: oodleSourcesToFetchFrom.map((ds) => ds.uid)[0],
     },
