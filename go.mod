@@ -194,7 +194,7 @@ require (
 	go.opentelemetry.io/otel/trace v1.38.0 // @grafana/grafana-backend-group
 	go.uber.org/atomic v1.11.0 // @grafana/alerting-backend
 	go.uber.org/goleak v1.3.0 // @grafana/grafana-search-and-storage
-	go.uber.org/mock v0.5.2 // @grafana/grafana-operator-experience-squad
+	go.uber.org/mock v0.6.0 // @grafana/grafana-operator-experience-squad
 	go.uber.org/zap v1.27.0 // @grafana/identity-access-team
 	gocloud.dev v0.42.0 // @grafana/grafana-app-platform-squad
 	gocloud.dev/secrets/hashivault v0.42.0 // @grafana/grafana-operator-experience-squad
