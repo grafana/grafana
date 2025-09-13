@@ -17,9 +17,6 @@ describe('ScopesSelectorService', () => {
     },
     spec: {
       title: 'test-scope',
-      type: 'scope',
-      description: 'test scope',
-      category: 'scope',
       filters: [],
     },
   };
@@ -30,9 +27,6 @@ describe('ScopesSelectorService', () => {
     },
     spec: {
       title: 'test-scope',
-      type: 'scope',
-      category: 'scope',
-      description: 'test scope',
       filters: [],
     },
   };
@@ -283,9 +277,6 @@ describe('ScopesSelectorService', () => {
         metadata: { name: 'test-scope' },
         spec: {
           title: 'test-scope',
-          type: 'scope',
-          category: 'scope',
-          description: 'test scope',
           filters: [],
         },
         parentNode: {
@@ -314,9 +305,6 @@ describe('ScopesSelectorService', () => {
         metadata: { name: 'test-scope' },
         spec: {
           title: 'test-scope',
-          type: 'scope',
-          category: 'scope',
-          description: 'test scope',
           filters: [],
         },
         parentNode: {
@@ -336,9 +324,6 @@ describe('ScopesSelectorService', () => {
         metadata: { name: 'test-scope' },
         spec: {
           title: 'test-scope',
-          type: 'scope',
-          category: 'scope',
-          description: 'test scope',
           filters: [],
         },
         parentNode: {
@@ -366,9 +351,6 @@ describe('ScopesSelectorService', () => {
         metadata: { name: 'valid-scope' },
         spec: {
           title: 'valid-scope',
-          type: 'scope',
-          category: 'scope',
-          description: 'valid scope',
           filters: [],
         },
         parentNode: {
@@ -387,9 +369,6 @@ describe('ScopesSelectorService', () => {
         metadata: { name: 'invalid-scope-1' },
         spec: {
           title: 'invalid-scope-1',
-          type: 'scope',
-          category: 'scope',
-          description: 'invalid scope 1',
           filters: [],
         },
         parentNode: {
@@ -404,9 +383,6 @@ describe('ScopesSelectorService', () => {
         metadata: { name: 'invalid-scope-2' },
         spec: {
           title: 'invalid-scope-2',
-          type: 'scope',
-          category: 'scope',
-          description: 'invalid scope 2',
           filters: [],
         },
         parentNode: {
