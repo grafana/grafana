@@ -14,6 +14,14 @@ import (
 	alertingTemplates "github.com/grafana/alerting/templates"
 )
 
+type NotifierVersion string
+
+const (
+	V0mimir1 NotifierVersion = "v0mimir1"
+	V0mimir2 NotifierVersion = "v0mimir2"
+	V1       NotifierVersion = "v1"
+)
+
 // GetAvailableNotifiers returns the metadata of all the notification channels that can be configured.
 func GetAvailableNotifiers() []*NotifierPlugin {
 	hostname, _ := os.Hostname()
@@ -2055,14 +2063,23 @@ func GetAvailableNotifiers() []*NotifierPlugin {
 }
 
 // GetSecretKeysForContactPointType returns settings keys of contact point of the given type that are expected to be secrets. Returns error is contact point type is not known.
-func GetSecretKeysForContactPointType(contactPointType string) ([]string, error) {
-	notifiers := GetAvailableNotifiers()
+func GetSecretKeysForContactPointType(contactPointType string, version NotifierVersion) ([]string, error) {
+	var notifiers []*NotifierPlugin
+	if version == V1 {
+		notifiers = GetAvailableNotifiers()
+	}
+	if version == V0mimir1 {
+		notifiers = getAvailableMimirNotifiers()
+	}
+	if version == V0mimir2 {
+		notifiers = getAvailableMimirV2Notifiers()
+	}
 	for _, n := range notifiers {
 		if strings.EqualFold(n.Type, contactPointType) {
 			return getSecretFields("", n.Options), nil
 		}
 	}
-	return nil, fmt.Errorf("no secrets configured for type '%s'", contactPointType)
+	return nil, fmt.Errorf("no secrets configured for type '%s' of version %s", contactPointType, version)
 }
 
 func getSecretFields(parentPath string, options []NotifierOption) []string {
@@ -2091,30 +2108,44 @@ func ConfigForIntegrationType(contactPointType string) (VersionedNotifierPlugin,
 			return n, nil
 		}
 	}
+	alternateType, _ := mimirIntegrationTypeToNotifierType(contactPointType)
+	if alternateType != contactPointType {
+		for n := range notifiers {
+			if strings.EqualFold(n.Type, alternateType) {
+				return n, nil
+			}
+		}
+	}
 	return VersionedNotifierPlugin{}, fmt.Errorf("unknown integration type '%s'", contactPointType)
 }
 
 func GetAvailableNotifiersV2() iter.Seq[VersionedNotifierPlugin] {
 	v1 := GetAvailableNotifiers()
 	m := make(map[string]VersionedNotifierPlugin, len(v1))
-	for _, n := range v1 {
-		pl := VersionedNotifierPlugin{
-			Type:           n.Type,
-			Name:           n.Name,
-			Description:    n.Description,
-			Heading:        n.Heading,
-			Info:           n.Info,
-			CurrentVersion: "v1",
-			Versions: []NotifierPluginVersion{
-				{
-					Version:   "v1",
-					CanCreate: true,
-					Options:   n.Options,
-					Info:      "",
-				},
-			},
+	add := func(n []*NotifierPlugin, version NotifierVersion) {
+		for _, n := range n {
+			pl, ok := m[n.Type]
+			if !ok {
+				pl = VersionedNotifierPlugin{
+					Type:        n.Type,
+					Name:        n.Name,
+					Description: n.Description,
+					Heading:     n.Heading,
+					Info:        n.Info,
+				}
+				pl.CurrentVersion = version
+			}
+			pl.Versions = append(pl.Versions, NotifierPluginVersion{
+				Version:   version,
+				CanCreate: false,
+				Options:   n.Options,
+				Info:      "",
+			})
+			m[n.Type] = pl
 		}
-		m[n.Type] = pl
 	}
+	add(v1, V1)
+	add(getAvailableMimirNotifiers(), V0mimir1)
+	add(getAvailableMimirV2Notifiers(), V0mimir2)
 	return maps.Values(m)
 }
