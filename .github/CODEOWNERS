@@ -1043,6 +1043,7 @@ playwright.storybook.config.ts @grafana/grafana-frontend-platform
 /scripts/verify-repo-update/ @grafana/grafana-developer-enablement-squad
 /scripts/generate-rtk-apis.ts @grafana/grafana-frontend-platform
 /scripts/process-specs.ts @grafana/grafana-frontend-platform
+/scripts/patches/ @grafanabot
 /scripts/generate-alerting-rtk-apis.ts @grafana/alerting-frontend
 /scripts/levitate-parse-json-report.js @grafana/plugins-platform-frontend
 /scripts/levitate-show-affected-plugins.js @grafana/plugins-platform-frontend
