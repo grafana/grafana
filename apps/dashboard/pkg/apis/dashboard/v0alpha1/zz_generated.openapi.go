@@ -281,8 +281,15 @@ func schema_pkg_apis_dashboard_v0alpha1_DashboardHit(ref common.ReferenceCallbac
 					},
 					"title": {
 						SchemaProps: spec.SchemaProps{
-							Description: "The display nam",
+							Description: "The display name",
 							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"description": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Dashboard description",
 							Type:        []string{"string"},
 							Format:      "",
 						},
