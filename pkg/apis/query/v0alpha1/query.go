@@ -7,6 +7,7 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	data "github.com/grafana/grafana-plugin-sdk-go/experimental/apis/data/v0alpha1"
+	"github.com/grafana/grafana/pkg/expr"
 )
 
 // Generic query request with shared time across all values
@@ -26,6 +27,14 @@ type QueryDataResponse struct {
 
 	// Backend wrapper (external dependency)
 	backend.QueryDataResponse `json:",inline"`
+}
+
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+type SQLSchemaResponse struct {
+	metav1.TypeMeta `json:",inline"`
+
+	// Backend wrapper (external dependency)
+	expr.SQLSchemaResponse `json:",inline"`
 }
 
 // GetResponseCode return the right status code for the response by checking the responses.
