@@ -5,7 +5,7 @@ import { config, usePluginComponents } from '@grafana/runtime';
 import { AddedComponentRegistryItem } from 'app/features/plugins/extensions/registry/AddedComponentsRegistry';
 import { createComponentWithMeta } from 'app/features/plugins/extensions/usePluginComponents';
 
-import { ExtensionSidebar } from './ExtensionSidebar';
+import { ExtensionSidebar, MIN_EXTENSION_SIDEBAR_WIDTH, DEFAULT_EXTENSION_SIDEBAR_WIDTH } from './ExtensionSidebar';
 import {
   ExtensionSidebarContextType,
   getComponentIdFromComponentMeta,
@@ -50,6 +50,8 @@ const extensionSidebarContextMock: ExtensionSidebarContextType = {
   availableComponents: new Map(),
   extensionSidebarWidth: 300,
   setExtensionSidebarWidth: jest.fn(),
+  currentComponentMinWidth: MIN_EXTENSION_SIDEBAR_WIDTH,
+  currentComponentInitialWidth: DEFAULT_EXTENSION_SIDEBAR_WIDTH,
 };
 
 const addedComponentRegistryItemMock: AddedComponentRegistryItem = {

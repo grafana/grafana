@@ -15,11 +15,7 @@ import { ScopesDashboards } from 'app/features/scopes/dashboards/ScopesDashboard
 
 import { AppChromeMenu } from './AppChromeMenu';
 import { AppChromeService, DOCKED_LOCAL_STORAGE_KEY } from './AppChromeService';
-import {
-  ExtensionSidebar,
-  MAX_EXTENSION_SIDEBAR_WIDTH,
-  MIN_EXTENSION_SIDEBAR_WIDTH,
-} from './ExtensionSidebar/ExtensionSidebar';
+import { ExtensionSidebar, MAX_EXTENSION_SIDEBAR_WIDTH } from './ExtensionSidebar/ExtensionSidebar';
 import { useExtensionSidebarContext } from './ExtensionSidebar/ExtensionSidebarProvider';
 import { MegaMenu, MENU_WIDTH } from './MegaMenu/MegaMenu';
 import { useMegaMenuFocusHelper } from './MegaMenu/utils';
@@ -35,6 +31,8 @@ export function AppChrome({ children }: Props) {
     isOpen: isExtensionSidebarOpen,
     extensionSidebarWidth,
     setExtensionSidebarWidth,
+    currentComponentMinWidth,
+    currentComponentInitialWidth,
   } = useExtensionSidebarContext();
   const state = chrome.useState();
   const scopes = useScopes();
@@ -140,11 +138,11 @@ export function AppChrome({ children }: Props) {
           {!state.chromeless && isExtensionSidebarOpen && (
             <Resizable
               className={styles.sidebarContainer}
-              defaultSize={{ width: extensionSidebarWidth }}
+              defaultSize={{ width: currentComponentInitialWidth }}
               enable={{ left: true }}
               onResize={(_evt, _direction, ref) => setExtensionSidebarWidth(ref.getBoundingClientRect().width)}
               handleClasses={{ left: dragStyles.dragHandleBaseVertical }}
-              minWidth={MIN_EXTENSION_SIDEBAR_WIDTH}
+              minWidth={currentComponentMinWidth}
               maxWidth={MAX_EXTENSION_SIDEBAR_WIDTH}
             >
               <ExtensionSidebar />
