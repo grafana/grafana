@@ -1,13 +1,10 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 
-import { NavModelItem } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { featureEnabled } from '@grafana/runtime';
-import { Alert, Button, Field, Input, Stack } from '@grafana/ui';
-import { Page } from 'app/core/components/Page/Page';
+import { Alert, Button, Drawer, Field, Input, LoadingPlaceholder, Stack, Text } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
-import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { AccessControlAction } from 'app/types/accessControl';
 import { AppNotificationSeverity } from 'app/types/appNotifications';
 import { useDispatch, useSelector } from 'app/types/store';
@@ -24,20 +21,16 @@ import { LdapConnectionStatus } from './LdapConnectionStatus';
 import { LdapSyncInfo } from './LdapSyncInfo';
 import { LdapUserInfo } from './LdapUserInfo';
 
-interface Props extends GrafanaRouteComponentProps<{}, { username?: string }> {}
+interface Props {
+  onClose: () => void;
+  username?: string;
+}
 
 interface FormModel {
   username: string;
 }
 
-const pageNav: NavModelItem = {
-  text: 'LDAP',
-  subTitle: `Verify your LDAP and user mapping configuration.`,
-  icon: 'book',
-  id: 'LDAP',
-};
-
-export const LdapPage = ({ queryParams }: Props) => {
+export const LdapTestDrawer = ({ onClose, username }: Props) => {
   const dispatch = useDispatch();
 
   const ldapConnectionInfo = useSelector((state) => state.ldap.connectionInfo);
@@ -61,22 +54,24 @@ export const LdapPage = ({ queryParams }: Props) => {
     };
 
     async function init() {
-      await dispatch(clearUserMappingInfo());
+      dispatch(clearUserMappingInfo());
       await fetchLDAPStatus();
 
-      if (queryParams.username) {
-        await fetchUserMapping(queryParams.username);
+      if (username) {
+        await fetchUserMapping(username);
       }
 
       setIsLoading(false);
     }
 
     init();
-  }, [dispatch, fetchUserMapping, queryParams]);
+  }, [dispatch, fetchUserMapping, username]);
 
-  const search = ({ username }: FormModel) => {
-    if (username) {
-      fetchUserMapping(username);
+  const search = (data: FormModel, event?: React.BaseSyntheticEvent) => {
+    event?.preventDefault();
+    event?.stopPropagation();
+    if (data.username) {
+      fetchUserMapping(data.username);
     }
   };
 
@@ -86,8 +81,14 @@ export const LdapPage = ({ queryParams }: Props) => {
 
   const canReadLDAPUser = contextSrv.hasPermission(AccessControlAction.LDAPUsersRead);
   return (
-    <Page navId="authentication" pageNav={pageNav}>
-      <Page.Contents isLoading={isLoading}>
+    <Drawer
+      title={t('admin.ldap.debug-title', 'LDAP Diagnostics')}
+      subtitle={t('admin.ldap.debug-subtitle', 'Verify your LDAP and user mapping configuration.')}
+      onClose={onClose}
+    >
+      {isLoading ? (
+        <LoadingPlaceholder text={t('admin.ldap.text-loading-ldap-status', 'Loading LDAP status...')} />
+      ) : (
         <Stack direction="column" gap={4}>
           {ldapError && ldapError.title && (
             <Alert title={ldapError.title} severity={AppNotificationSeverity.Error}>
@@ -101,37 +102,37 @@ export const LdapPage = ({ queryParams }: Props) => {
 
           {canReadLDAPUser && (
             <section>
-              <h3>
-                <Trans i18nKey="admin.ldap.test-mapping-heading">Test user mapping</Trans>
-              </h3>
-              <form onSubmit={handleSubmit(search)}>
-                <Field label={t('admin.ldap-page.label-username', 'Username')}>
-                  <Input
-                    {...register('username', { required: true })}
-                    width={34}
-                    id="username"
-                    type="text"
-                    defaultValue={queryParams.username}
-                    addonAfter={
-                      <Button variant="primary" type="submit">
+              <Stack direction="column" gap={2}>
+                <Text element="h3">
+                  <Trans i18nKey="admin.ldap.test-mapping-heading">Test user mapping</Trans>
+                </Text>
+                <form onSubmit={handleSubmit(search)}>
+                  <Field noMargin label={t('admin.ldap-page.label-username', 'Username')}>
+                    <Stack>
+                      <Input
+                        {...register('username', { required: true })}
+                        width={34}
+                        id="username"
+                        type="text"
+                        defaultValue={username}
+                      />
+                      <Button variant="secondary" type="submit">
                         <Trans i18nKey="admin.ldap.test-mapping-run-button">Run</Trans>
                       </Button>
-                    }
-                  />
-                </Field>
-              </form>
-              {userError && userError.title && (
-                <Alert title={userError.title} severity={AppNotificationSeverity.Error} onRemove={onClearUserError}>
-                  {userError.body}
-                </Alert>
-              )}
-              {ldapUser && <LdapUserInfo ldapUser={ldapUser} />}
+                    </Stack>
+                  </Field>
+                </form>
+                {userError && userError.title && (
+                  <Alert title={userError.title} severity={AppNotificationSeverity.Error} onRemove={onClearUserError}>
+                    {userError.body}
+                  </Alert>
+                )}
+                {ldapUser && <LdapUserInfo ldapUser={ldapUser} />}
+              </Stack>
             </section>
           )}
         </Stack>
-      </Page.Contents>
-    </Page>
+      )}
+    </Drawer>
   );
 };
-
-export default LdapPage;
