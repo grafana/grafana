@@ -6,6 +6,9 @@ test.describe(
     tag: ['@various'],
   },
   () => {
+    // test were flaky when run at the same time, adding serial mode to run consecutively
+    test.describe.configure({ mode: 'serial' });
+
     test.beforeEach(async ({ page }) => {
       // Set localStorage to dock the navigation
       await page.evaluate(() => {
