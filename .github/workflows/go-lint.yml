@@ -65,10 +65,10 @@ jobs:
       - uses: actions/setup-go@v5.5.0
         with:
           go-version-file: ./go.mod
-      - name: golangci-lint
-        uses: golangci/golangci-lint-action@1481404843c368bc19ca9406f87d6e0fc97bdcfd
-        with:
-          version: v2.0.2
-          args: |
-            --verbose $(go list -m -f '{{.Dir}}' | xargs -I{} sh -c 'test ! -f {}/.nolint && echo {}/...')
-          install-mode: binary
+      - name: Run golangci-lint
+        run: |
+          make lint-go
+      - name: Run wirecheck
+        continue-on-error: true
+        run: |
+          make lint-go GO_LINT_FLAGS="--enable-only wirecheck --max-issues-per-linter 0"

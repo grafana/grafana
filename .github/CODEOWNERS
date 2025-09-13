@@ -67,6 +67,8 @@
 /scripts/modowners/ @grafana/grafana-backend-services-squad
 /scripts/go-workspace @grafana/grafana-app-platform-squad
 /scripts/ci/backend-tests @grafana/grafana-operator-experience-squad
+/scripts/go/golangci-lint/ @grafana/plugins-platform-backend
+/scripts/go/wirecheck/ @grafana/plugins-platform-backend
 /hack/ @grafana/grafana-app-platform-squad
 /.air.toml @macabu
 

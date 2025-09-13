@@ -32,6 +32,13 @@ linters:
     - unused
     - whitespace
   settings:
+    custom:
+      wirecheck:
+        type: module
+        description: Check for direct dependency method calls in wire provider functions
+        settings:
+          wire-gen: ./pkg/server/wire_gen.go
+          recursive: true
     depguard:
       rules:
         aggregator:
