@@ -6,14 +6,28 @@ import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
 import { selectors } from '@grafana/e2e-selectors';
 import { LocationServiceProvider, config, locationService } from '@grafana/runtime';
 import { SceneQueryRunner, SceneTimeRange, UrlSyncContextProvider, VizPanel } from '@grafana/scenes';
+import { mockLocalStorage } from 'app/features/alerting/unified/mocks';
 import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
 import { DashboardMeta } from 'app/types/dashboard';
 
 import { buildPanelEditScene } from '../panel-edit/PanelEditor';
+import { DashboardInteractions } from '../utils/interactions';
 
 import { DashboardScene } from './DashboardScene';
 import { ToolbarActions } from './NavToolbarActions';
 import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutManager';
+
+jest.mock('../utils/interactions', () => ({
+  DashboardInteractions: {
+    editButtonClicked: jest.fn(),
+  },
+}));
+
+const localStorageMock = mockLocalStorage();
+Object.defineProperty(window, 'localStorage', {
+  value: localStorageMock,
+  writable: true,
+});
 
 jest.mock('app/features/playlist/PlaylistSrv', () => ({
   playlistSrv: {
@@ -141,6 +155,27 @@ describe('NavToolbarActions', () => {
       expect(await screen.findByText('Save dashboard')).toBeInTheDocument();
       expect(await screen.findByText('Discard panel changes')).toBeInTheDocument();
       expect(await screen.findByText('Back to dashboard')).toBeInTheDocument();
+    });
+    describe('edit dashboard button tracking', () => {
+      it('should call DashboardInteractions.editButtonClicked with outlineExpanded:true if grafana.dashboard.edit-pane.outline.collapsed is undefined', async () => {
+        setup();
+        await userEvent.click(await screen.findByTestId(selectors.components.NavToolbar.editDashboard.editButton));
+        expect(DashboardInteractions.editButtonClicked).toHaveBeenCalledWith({ outlineExpanded: false });
+      });
+
+      it('should call DashboardInteractions.editButtonClicked with outlineExpanded:true if grafana.dashboard.edit-pane.outline.collapsed is false', async () => {
+        localStorageMock.setItem('grafana.dashboard.edit-pane.outline.collapsed', 'false');
+        setup();
+        await userEvent.click(await screen.findByTestId(selectors.components.NavToolbar.editDashboard.editButton));
+        expect(DashboardInteractions.editButtonClicked).toHaveBeenCalledWith({ outlineExpanded: true });
+      });
+
+      it('should call DashboardInteractions.editButtonClicked with outlineExpanded:false if grafana.dashboard.edit-pane.outline.collapsed is true', async () => {
+        localStorageMock.setItem('grafana.dashboard.edit-pane.outline.collapsed', 'true');
+        setup();
+        await userEvent.click(await screen.findByTestId(selectors.components.NavToolbar.editDashboard.editButton));
+        expect(DashboardInteractions.editButtonClicked).toHaveBeenCalledWith({ outlineExpanded: false });
+      });
     });
   });
 
