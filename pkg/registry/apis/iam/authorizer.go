@@ -4,9 +4,9 @@ import (
 	"context"
 	"fmt"
 
+	authlib "github.com/grafana/authlib/types"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 
-	authlib "github.com/grafana/authlib/types"
 	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/legacy"
@@ -33,6 +33,7 @@ func newIAMAuthorizer(accessClient authlib.AccessClient, legacyAccessClient auth
 	resourceAuthorizer[iamv0.CoreRoleInfo.GetName()] = authorizer
 	resourceAuthorizer[iamv0.RoleInfo.GetName()] = authorizer
 	resourceAuthorizer[iamv0.ResourcePermissionInfo.GetName()] = authorizer
+	resourceAuthorizer[iamv0.RoleBindingInfo.GetName()] = authorizer
 
 	return &iamAuthorizer{resourceAuthorizer: resourceAuthorizer}
 }

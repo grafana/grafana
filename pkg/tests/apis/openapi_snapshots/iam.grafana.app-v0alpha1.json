@@ -4327,18 +4327,18 @@
       "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.GlobalRoleBindingSpec": {
         "type": "object",
         "required": [
-          "subjects",
-          "roleRef"
+          "subject",
+          "roleRefs"
         ],
         "properties": {
-          "roleRef": {
-            "default": {}
-          },
-          "subjects": {
+          "roleRefs": {
             "type": "array",
             "items": {
               "default": {}
             }
+          },
+          "subject": {
+            "default": {}
           }
         }
       },
@@ -4816,18 +4816,18 @@
       "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.RoleBindingSpec": {
         "type": "object",
         "required": [
-          "subjects",
-          "roleRef"
+          "subject",
+          "roleRefs"
         ],
         "properties": {
-          "roleRef": {
-            "default": {}
-          },
-          "subjects": {
+          "roleRefs": {
             "type": "array",
             "items": {
               "default": {}
             }
+          },
+          "subject": {
+            "default": {}
           }
         }
       },
