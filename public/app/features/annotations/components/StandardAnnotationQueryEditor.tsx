@@ -4,7 +4,6 @@ import { lastValueFrom } from 'rxjs';
 import {
   AnnotationEventMappings,
   AnnotationQuery,
-  DataQuery,
   DataSourceApi,
   DataSourceInstanceSettings,
   DataSourcePluginContextProvider,
@@ -12,6 +11,7 @@ import {
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
+import { DataQuery } from '@grafana/schema';
 import { Alert, AlertVariant, Button, Space, Spinner } from '@grafana/ui';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
@@ -20,7 +20,9 @@ import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { executeAnnotationQuery } from '../executeAnnotationQuery';
 import { shouldUseLegacyRunner, shouldUseMappingUI, standardAnnotationSupport } from '../standardAnnotationSupport';
 import { AnnotationQueryResponse } from '../types';
+import { updateAnnotationFromSavedQuery } from '../utils/savedQueryUtils';
 
+import { AnnotationQueryEditorActionsWrapper } from './AnnotationQueryEditorActionsWrapper';
 import { AnnotationFieldMapper } from './AnnotationResultMapper';
 
 export interface Props {
@@ -232,6 +234,13 @@ export default class StandardAnnotationQueryEditor extends PureComponent<Props, 
     });
   };
 
+  onQueryReplace = (replacedQuery: DataQuery) => {
+    const { annotation, onChange } = this.props;
+    // Handle cross-datasource replacement
+    const updatedAnnotation = updateAnnotationFromSavedQuery(annotation, replacedQuery);
+    onChange(updatedAnnotation);
+  };
+
   render() {
     const { datasource, annotation, datasourceInstanceSettings } = this.props;
     const { response } = this.state;
@@ -274,17 +283,24 @@ export default class StandardAnnotationQueryEditor extends PureComponent<Props, 
     return (
       <>
         <DataSourcePluginContextProvider instanceSettings={datasourceInstanceSettings}>
-          <QueryEditor
-            key={datasource?.name}
-            query={query}
+          <AnnotationQueryEditorActionsWrapper
+            annotation={annotation}
             datasource={datasource}
-            onChange={this.onQueryChange}
-            onRunQuery={this.onRunQuery}
-            data={response?.panelData}
-            range={getTimeSrv().timeRange()}
-            annotation={editorAnnotation}
-            onAnnotationChange={this.onAnnotationChange}
-          />
+            datasourceInstanceSettings={datasourceInstanceSettings}
+            onQueryReplace={this.onQueryReplace}
+          >
+            <QueryEditor
+              key={datasource?.name}
+              query={query}
+              datasource={datasource}
+              onChange={this.onQueryChange}
+              onRunQuery={this.onRunQuery}
+              data={response?.panelData}
+              range={getTimeSrv().timeRange()}
+              annotation={editorAnnotation}
+              onAnnotationChange={this.onAnnotationChange}
+            />
+          </AnnotationQueryEditorActionsWrapper>
         </DataSourcePluginContextProvider>
         {shouldUseMappingUI(datasource) && (
           <>
