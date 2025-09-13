@@ -52,6 +52,71 @@ describe('DateMath', () => {
     expect(startOfDay).toBe(expected.getTime());
   });
 
+  // Test case for the bug fix: now/d+17h should be today at 17:00, not tomorrow at 17:00
+  describe('rounding with addition', () => {
+    beforeEach(() => {
+      // Set a fixed time for consistent testing: 2025-09-11 10:00:00
+      const fixedTime = dateTime('2025-09-11T10:00:00Z').valueOf();
+      jest.useFakeTimers({ now: fixedTime });
+    });
+
+    afterEach(() => {
+      jest.useRealTimers();
+    });
+
+    it('now/d+17h should be today at 17:00, not tomorrow at 17:00', () => {
+      const result = dateMath.parse('now/d+17h', false, 'utc');
+      const expected = dateTime('2025-09-11T17:00:00Z');
+
+      expect(result).toBeDefined();
+      expect(result!.format('YYYY-MM-DD HH:mm:ss')).toBe('2025-09-11 17:00:00');
+      expect(result!.valueOf()).toBe(expected.valueOf());
+    });
+
+    it('now/d+9h should be today at 09:00', () => {
+      const result = dateMath.parse('now/d+9h', false, 'utc');
+      const expected = dateTime('2025-09-11T09:00:00Z');
+
+      expect(result).toBeDefined();
+      expect(result!.format('YYYY-MM-DD HH:mm:ss')).toBe('2025-09-11 09:00:00');
+      expect(result!.valueOf()).toBe(expected.valueOf());
+    });
+
+    it('now/d+23h should be today at 23:00', () => {
+      const result = dateMath.parse('now/d+23h', false, 'utc');
+      const expected = dateTime('2025-09-11T23:00:00Z');
+
+      expect(result).toBeDefined();
+      expect(result!.format('YYYY-MM-DD HH:mm:ss')).toBe('2025-09-11 23:00:00');
+      expect(result!.valueOf()).toBe(expected.valueOf());
+    });
+
+    it('now/d+24h should be tomorrow at 00:00', () => {
+      const result = dateMath.parse('now/d+24h', false, 'utc');
+      const expected = dateTime('2025-09-12T00:00:00Z');
+
+      expect(result).toBeDefined();
+      expect(result!.format('YYYY-MM-DD HH:mm:ss')).toBe('2025-09-12 00:00:00');
+      expect(result!.valueOf()).toBe(expected.valueOf());
+    });
+
+    // Test the actual issue: when using browser timezone, the result should still be correct
+    it('now/d+17h with browser timezone should be today at 17:00 in local time', () => {
+      // Mock the browser timezone to be UTC+5 (like the user in the issue)
+      const originalTz = process.env.TZ;
+      process.env.TZ = 'Asia/Karachi'; // UTC+5
+
+      const result = dateMath.parse('now/d+17h', false, 'browser');
+
+      // The result should be 2025-09-11 17:00:00 in the local timezone
+      expect(result).toBeDefined();
+      expect(result!.format('YYYY-MM-DD HH:mm:ss')).toBe('2025-09-11 17:00:00');
+
+      // Restore original timezone
+      process.env.TZ = originalTz;
+    });
+  });
+
   describe('with fiscal quarters', () => {
     beforeEach(() => {
       const fixedTime = dateTime('2023-07-05T06:06:06.666Z').valueOf();
