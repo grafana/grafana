@@ -9697,10 +9697,9 @@
       }
     },
     "logs-controls": {
+      "collapse": "",
       "deduplication": "Deduplikace",
-      "disable-highlighting": "Zakázat zvýraznění",
       "disable-prettify-json": "Sbalit protokoly JSON",
-      "display-level": "Zobrazit úrovně",
       "display-level-all": "Všechny úrovně",
       "download": "Stáhnout protokoly",
       "download-logs": {
@@ -9708,18 +9707,39 @@
         "json": "json",
         "txt": "txt"
       },
-      "enable-highlighting": "Povolit zvýraznění",
       "escape-newlines": "Opravit nesprávně uniklé sekvence nového řádku a záložek v řádcích protokolu",
-      "font-size-default": "Použít malou velikost písma",
-      "font-size-small": "Použít výchozí velikost písma",
+      "expand": "",
+      "filter-levels": "",
+      "font-large": "",
+      "font-small": "",
       "hide-search": "Zavřít vyhledávání",
       "hide-timestamps": "Skrýt časová razítka",
       "hide-unique-labels": "Skrýt jedinečné štítky",
+      "label": {
+        "collapse": "",
+        "disable-highlighting": "",
+        "enable-highlighting": "",
+        "escape-newlines": "",
+        "expand": ""
+      },
+      "labels": {
+        "font-large": "",
+        "font-small": "",
+        "hide-search": "",
+        "newest-first": "",
+        "oldest-first": "",
+        "show-search": ""
+      },
       "line-wrapping": {
         "enable": "",
         "enable-prettify": "",
         "hide": "",
-        "label": ""
+        "state": {
+          "hide": "",
+          "json": "",
+          "wrap": ""
+        },
+        "tooltip": ""
       },
       "newest-first": "Seřazeno od nejnovějších protokolů – kliknutím zobrazíte nejstarší protokoly jako první",
       "oldest-first": "Seřazeno od nejstarších protokolů – kliknutím zobrazíte nejnovější protokoly jako první",
@@ -9735,8 +9755,18 @@
       "timestamp": {
         "hide": "",
         "label": "",
+        "label-hide": "",
+        "label-ms": "",
+        "label-ns": "",
         "milliseconds": "",
-        "nanoseconds": ""
+        "nanoseconds": "",
+        "tooltip": ""
+      },
+      "tooltip": {
+        "disable-highlighting": "",
+        "download": "",
+        "enable-highlighting": "",
+        "filter-level": ""
       },
       "unwrap-lines": "Rozbalit řádky",
       "wrap-lines": "Zalomit řádky"
@@ -11433,7 +11463,15 @@
     },
     "folder-repository-list": {
       "no-results-matching-your-query": "Vašemu dotazu neodpovídají žádné výsledky",
-      "placeholder-search": "Hledat"
+      "placeholder-search": "Hledat",
+      "all-resources-managed_one": "",
+      "all-resources-managed_few": "",
+      "all-resources-managed_many": "",
+      "all-resources-managed_other": "",
+      "partial-managed_one": "",
+      "partial-managed_few": "",
+      "partial-managed_many": "",
+      "partial-managed_other": ""
     },
     "get-default-values": {
       "title": {
