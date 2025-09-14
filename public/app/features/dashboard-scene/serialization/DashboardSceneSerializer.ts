@@ -7,10 +7,7 @@ import { SaveDashboardAsOptions } from 'app/features/dashboard/components/SaveDa
 import { DASHBOARD_SCHEMA_VERSION } from 'app/features/dashboard/state/DashboardMigrator';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import {
-  getLayoutStatsForDashboard,
-  getNoOfConditionalRulesInDashboard,
   getPanelPluginCounts,
-  getSanitizedLayout,
   getV1SchemaVariables,
   getV2SchemaVariables,
 } from 'app/features/dashboard/utils/tracking';
@@ -22,6 +19,7 @@ import { DashboardChangeInfo } from '../saving/shared';
 import { DashboardScene } from '../scene/DashboardScene';
 import { makeExportableV1, makeExportableV2 } from '../scene/export/exporters';
 import { getVariablesCompatibility } from '../utils/getVariablesCompatibility';
+import { getLayoutStatsForDashboard, getSanitizedLayout, getNoOfConditionalRulesInDashboard } from '../utils/tracking';
 import { getVizPanelKeyForPanelId } from '../utils/utils';
 
 import { transformSceneToSaveModel } from './transformSceneToSaveModel';
@@ -39,7 +37,6 @@ function isV2Dashboard(
 } {
   return isDashboardV2Spec(scene.getSaveModel());
 }
-type TrackingInformation<DashboardScene> = isV
 /**
  * T is the type of the save model
  * M is the type of the metadata
