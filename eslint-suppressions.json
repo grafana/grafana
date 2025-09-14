@@ -4195,11 +4195,6 @@
       "count": 3
     }
   },
-  "public/app/plugins/datasource/influxdb/components/editor/query/fsql/FSQLEditor.tsx": {
-    "no-restricted-syntax": {
-      "count": 3
-    }
-  },
   "public/app/plugins/datasource/influxdb/components/editor/query/influxql/visual/PartListSection.tsx": {
     "no-restricted-syntax": {
       "count": 2
