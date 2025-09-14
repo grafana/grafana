@@ -33,10 +33,9 @@ export function CanvasGridAddActions({ layoutManager }: Props) {
         icon="plus"
         data-testid={selectors.components.CanvasGridAddActions.addPanel}
         onClick={() => {
-          layoutManager.addPanel(getDefaultVizPanel())
-        DashboardInteractions.trackAddPanelClick();
-        }
-        }
+          layoutManager.addPanel(getDefaultVizPanel());
+          DashboardInteractions.trackAddPanelClick();
+        }}
       >
         <Trans i18nKey="dashboard.canvas-actions.add-panel">Add panel</Trans>
       </Button>
@@ -46,6 +45,7 @@ export function CanvasGridAddActions({ layoutManager }: Props) {
             <Menu.Item
               icon="list-ul"
               label={t('dashboard.canvas-actions.group-into-row', 'Group into row')}
+              testId={selectors.components.CanvasGridAddActions.addRow}
               onClick={() => {
                 addNewRowTo(layoutManager);
                 DashboardInteractions.trackGroupRowClick();
@@ -53,6 +53,7 @@ export function CanvasGridAddActions({ layoutManager }: Props) {
             ></Menu.Item>
             <Menu.Item
               icon="layers"
+              testId={selectors.components.CanvasGridAddActions.addTab}
               label={t('dashboard.canvas-actions.group-into-tab', 'Group into tab')}
               onClick={() => {
                 addNewTabTo(layoutManager);
@@ -74,6 +75,7 @@ export function CanvasGridAddActions({ layoutManager }: Props) {
       {renderUngroupAction(layoutManager)}
       {hasCopiedPanel && layoutManager.pastePanel && (
         <Button
+          data-testid={selectors.components.CanvasGridAddActions.pastePanel}
           variant="primary"
           fill="text"
           icon="clipboard-alt"
@@ -99,8 +101,8 @@ function renderUngroupAction(layoutManager: DashboardLayoutManager) {
   const parentLayout = dashboardSceneGraph.getLayoutManagerFor(layoutManager.parent!);
 
   const onUngroup = () => {
-    ungroupLayout(parentLayout, layoutManager);
     DashboardInteractions.trackUngroupClick();
+    ungroupLayout(parentLayout, layoutManager);
   };
 
   if (parentLayout instanceof TabsLayoutManager) {

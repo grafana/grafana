@@ -7,7 +7,6 @@ import { Button, Menu, Stack, Text, useStyles2, Dropdown, Icon, IconButton } fro
 import { trackDeleteDashboardElement } from 'app/features/dashboard/utils/tracking';
 
 import { EditableDashboardElement } from '../scene/types/EditableDashboardElement';
-import { DashboardInteractions } from '../utils/interactions';
 
 import { DashboardEditPane } from './DashboardEditPane';
 
@@ -27,6 +26,15 @@ export function EditPaneHeader({ element, editPane }: EditPaneHeaderProps) {
   // temporary simple solution, should select parent element
   const onGoBack = () => editPane.clearSelection();
   const canGoBack = editPane.state.selection;
+
+  const onDeleteElement = () => {
+    if (onConfirmDelete) {
+      onConfirmDelete();
+    } else if (onDelete) {
+      onDelete();
+    }
+    trackDeleteDashboardElement(elementInfo);
+  };
 
   return (
     <div className={styles.wrapper}>
@@ -77,14 +85,7 @@ export function EditPaneHeader({ element, editPane }: EditPaneHeaderProps) {
 
         {(onDelete || onConfirmDelete) && (
           <Button
-            onClick={() => {
-              trackDeleteDashboardElement(elementInfo);
-              if (onConfirmDelete) {
-                onConfirmDelete();
-              } else if (onDelete) {
-                onDelete();
-              }
-            }}
+            onClick={onDeleteElement}
             size="sm"
             variant="destructive"
             fill="outline"

@@ -17,7 +17,6 @@ export const DashboardInteractions = {
   trackGroupRowClick() {
     reportDashboardInteraction('edit_action_clicked', { item: 'group_row' });
   },
-
   trackGroupTabClick() {
     reportDashboardInteraction('edit_action_clicked', { item: 'group_tab' });
   },
@@ -33,7 +32,6 @@ export const DashboardInteractions = {
   trackRemoveTabClick() {
     reportDashboardInteraction('edit_action_clicked', { item: 'remove_tab' });
   },
-
 
   panelLinkClicked: (properties?: Record<string, unknown>) => {
     reportDashboardInteraction('panelheader_datalink_clicked', properties);
