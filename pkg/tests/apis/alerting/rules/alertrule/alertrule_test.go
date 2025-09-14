@@ -54,10 +54,10 @@ func TestIntegrationResourceIdentifier(t *testing.T) {
 		},
 		Spec: v0alpha1.AlertRuleSpec{
 			Title: rule.Title,
-			Data: map[string]v0alpha1.AlertRuleQuery{
+			Expressions: v0alpha1.AlertRuleExpressionMap{
 				"A": {
-					QueryType:     "query",
-					DatasourceUID: v0alpha1.AlertRuleDatasourceUID(rule.Data[0].DatasourceUID),
+					QueryType:     util.Pointer("query"),
+					DatasourceUID: util.Pointer(v0alpha1.AlertRuleDatasourceUID(rule.Data[0].DatasourceUID)),
 					Model:         rule.Data[0].Model,
 					Source:        util.Pointer(true),
 					RelativeTimeRange: &v0alpha1.AlertRuleRelativeTimeRange{
@@ -154,10 +154,10 @@ func TestIntegrationAccessControl(t *testing.T) {
 		},
 		Spec: v0alpha1.AlertRuleSpec{
 			Title: rule.Title,
-			Data: map[string]v0alpha1.AlertRuleQuery{
+			Expressions: v0alpha1.AlertRuleExpressionMap{
 				"A": {
-					QueryType:     "query",
-					DatasourceUID: v0alpha1.AlertRuleDatasourceUID(rule.Data[0].DatasourceUID),
+					QueryType:     util.Pointer(rule.Data[0].QueryType),
+					DatasourceUID: util.Pointer(v0alpha1.AlertRuleDatasourceUID(rule.Data[0].DatasourceUID)),
 					Model:         rule.Data[0].Model,
 					Source:        util.Pointer(true),
 					RelativeTimeRange: &v0alpha1.AlertRuleRelativeTimeRange{
@@ -241,10 +241,10 @@ func TestIntegrationCRUD(t *testing.T) {
 			},
 			Spec: v0alpha1.AlertRuleSpec{
 				Title: rule.Title,
-				Data: map[string]v0alpha1.AlertRuleQuery{
+				Expressions: v0alpha1.AlertRuleExpressionMap{
 					"A": {
-						QueryType:     "query",
-						DatasourceUID: v0alpha1.AlertRuleDatasourceUID(rule.Data[0].DatasourceUID),
+						QueryType:     util.Pointer(rule.Data[0].QueryType),
+						DatasourceUID: util.Pointer(v0alpha1.AlertRuleDatasourceUID(rule.Data[0].DatasourceUID)),
 						Model:         rule.Data[0].Model,
 						Source:        util.Pointer(true),
 						RelativeTimeRange: &v0alpha1.AlertRuleRelativeTimeRange{
@@ -295,10 +295,10 @@ func TestIntegrationCRUD(t *testing.T) {
 			},
 			Spec: v0alpha1.AlertRuleSpec{
 				Title: rule.Title,
-				Data: map[string]v0alpha1.AlertRuleQuery{
+				Expressions: v0alpha1.AlertRuleExpressionMap{
 					"A": {
-						QueryType:     "query",
-						DatasourceUID: v0alpha1.AlertRuleDatasourceUID(rule.Data[0].DatasourceUID),
+						QueryType:     util.Pointer(rule.Data[0].QueryType),
+						DatasourceUID: util.Pointer(v0alpha1.AlertRuleDatasourceUID(rule.Data[0].DatasourceUID)),
 						Model:         rule.Data[0].Model,
 						Source:        util.Pointer(true),
 						RelativeTimeRange: &v0alpha1.AlertRuleRelativeTimeRange{
@@ -328,8 +328,8 @@ func TestIntegrationCRUD(t *testing.T) {
 				},
 			},
 			Spec: v0alpha1.AlertRuleSpec{
-				Title: "invalid-rule",
-				Data:  map[string]v0alpha1.AlertRuleQuery{}, // Empty data should fail
+				Title:       "invalid-rule",
+				Expressions: v0alpha1.AlertRuleExpressionMap{}, // Empty data should fail
 				Trigger: v0alpha1.AlertRuleIntervalTrigger{
 					Interval: "30",
 				},
@@ -356,10 +356,10 @@ func TestIntegrationCRUD(t *testing.T) {
 			},
 			Spec: v0alpha1.AlertRuleSpec{
 				Title: rule.Title,
-				Data: map[string]v0alpha1.AlertRuleQuery{
+				Expressions: v0alpha1.AlertRuleExpressionMap{
 					"A": {
-						QueryType:     "query",
-						DatasourceUID: v0alpha1.AlertRuleDatasourceUID(rule.Data[0].DatasourceUID),
+						QueryType:     util.Pointer(rule.Data[0].QueryType),
+						DatasourceUID: util.Pointer(v0alpha1.AlertRuleDatasourceUID(rule.Data[0].DatasourceUID)),
 						Model:         rule.Data[0].Model,
 						Source:        util.Pointer(true),
 						RelativeTimeRange: &v0alpha1.AlertRuleRelativeTimeRange{
@@ -408,10 +408,10 @@ func TestIntegrationCRUD(t *testing.T) {
 			},
 			Spec: v0alpha1.AlertRuleSpec{
 				Title: rule.Title,
-				Data: map[string]v0alpha1.AlertRuleQuery{
+				Expressions: v0alpha1.AlertRuleExpressionMap{
 					"A": {
-						QueryType:     "query",
-						DatasourceUID: v0alpha1.AlertRuleDatasourceUID(rule.Data[0].DatasourceUID),
+						QueryType:     util.Pointer(rule.Data[0].QueryType),
+						DatasourceUID: util.Pointer(v0alpha1.AlertRuleDatasourceUID(rule.Data[0].DatasourceUID)),
 						Model:         rule.Data[0].Model,
 						RelativeTimeRange: &v0alpha1.AlertRuleRelativeTimeRange{
 							From: v0alpha1.AlertRulePromDurationWMillis("5m"),
@@ -445,10 +445,10 @@ func TestIntegrationCRUD(t *testing.T) {
 			},
 			Spec: v0alpha1.AlertRuleSpec{
 				Title: rule.Title,
-				Data: map[string]v0alpha1.AlertRuleQuery{
+				Expressions: v0alpha1.AlertRuleExpressionMap{
 					"A": {
-						QueryType:     "query",
-						DatasourceUID: v0alpha1.AlertRuleDatasourceUID(rule.Data[0].DatasourceUID),
+						QueryType:     util.Pointer(rule.Data[0].QueryType),
+						DatasourceUID: util.Pointer(v0alpha1.AlertRuleDatasourceUID(rule.Data[0].DatasourceUID)),
 						Model:         rule.Data[0].Model,
 						Source:        util.Pointer(true),
 						RelativeTimeRange: &v0alpha1.AlertRuleRelativeTimeRange{
@@ -501,10 +501,10 @@ func TestIntegrationPatch(t *testing.T) {
 		},
 		Spec: v0alpha1.AlertRuleSpec{
 			Title: rule.Title,
-			Data: map[string]v0alpha1.AlertRuleQuery{
+			Expressions: v0alpha1.AlertRuleExpressionMap{
 				"A": {
-					QueryType:     "query",
-					DatasourceUID: v0alpha1.AlertRuleDatasourceUID(rule.Data[0].DatasourceUID),
+					QueryType:     util.Pointer(rule.Data[0].QueryType),
+					DatasourceUID: util.Pointer(v0alpha1.AlertRuleDatasourceUID(rule.Data[0].DatasourceUID)),
 					Model:         rule.Data[0].Model,
 					Source:        util.Pointer(true),
 					RelativeTimeRange: &v0alpha1.AlertRuleRelativeTimeRange{

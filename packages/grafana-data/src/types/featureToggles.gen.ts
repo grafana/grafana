@@ -274,9 +274,13 @@ export interface FeatureToggles {
   */
   kubernetesDashboards?: boolean;
   /**
-  * Routes short url requests from /api to the /apis endpoint
+  * Enables k8s short url api and uses it under the hood when handling legacy /api
   */
   kubernetesShortURLs?: boolean;
+  /**
+  * Routes short url requests from /api to the /apis endpoint in the frontend. Depends on kubernetesShortURLs
+  */
+  useKubernetesShortURLsAPI?: boolean;
   /**
   * Adds support for Kubernetes alerting and recording rules
   */
@@ -765,6 +769,11 @@ export interface FeatureToggles {
   * @default false
   */
   alertingEnrichmentPerRule?: boolean;
+  /**
+  * Enable Assistant Investigations enrichment type.
+  * @default false
+  */
+  alertingEnrichmentAssistantInvestigations?: boolean;
   /**
   * Enable AI-analyze central state history.
   * @default false
