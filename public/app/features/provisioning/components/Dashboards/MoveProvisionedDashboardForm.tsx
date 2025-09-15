@@ -280,7 +280,11 @@ export function MoveProvisionedDashboardForm({
               <Button variant="secondary" onClick={onDismiss} fill="outline">
                 <Trans i18nKey="dashboard-scene.move-provisioned-dashboard-form.cancel-action">Cancel</Trans>
               </Button>
-              <Button variant="primary" type="submit" disabled={isLoading || readOnly || isLoadingFileData}>
+              <Button
+                variant="primary"
+                type="submit"
+                disabled={isLoading || readOnly || isLoadingFileData || !currentFileData?.resource?.file}
+              >
                 {isLoading
                   ? t('dashboard-scene.move-provisioned-dashboard-form.moving', 'Moving...')
                   : t('dashboard-scene.move-provisioned-dashboard-form.move-action', 'Move dashboard')}
