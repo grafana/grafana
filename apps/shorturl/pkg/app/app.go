@@ -35,7 +35,7 @@ func New(cfg app.Config) (app.App, error) {
 		return nil, fmt.Errorf("invalid or missing ShortURLConfig")
 	}
 
-	cfg.KubeConfig.APIPath = "apis" // ???
+	cfg.KubeConfig.APIPath = "apis"
 	client, err := k8s.NewClientRegistry(cfg.KubeConfig, k8s.DefaultClientConfig()).
 		ClientFor(shorturlv1alpha1.ShortURLKind())
 	if err != nil {
@@ -91,11 +91,10 @@ func New(cfg app.Config) (app.App, error) {
 						}
 
 						// Update lastSeenAt in the background
-						go func() {
+						func() { // TODO, this should be async, but keeping sync until we update tests
 							info.Status.LastSeenAt = time.Now().UnixMilli()
-							time.Sleep(time.Millisecond * 20)
 							ctx, _, err := identity.WithProvisioningIdentity(context.Background(), req.ResourceIdentifier.Namespace)
-							if err == nil {
+							if err != nil {
 								logging.FromContext(ctx).Warn("unable to create background identity", "err", err)
 							} else {
 								_, _ = client.Update(ctx, id, info, resource.UpdateOptions{})
