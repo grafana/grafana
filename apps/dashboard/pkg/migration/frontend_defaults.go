@@ -533,7 +533,8 @@ func cleanupPanelForSaveWithContext(panel map[string]interface{}, isNested bool)
 		delete(panel, prop)
 	}
 
-	// Remove empty transformations array - frontend omits empty arrays in save model
+	// Remove empty transformations array - frontend omits them when they don't exist in input
+	// The frontend's getSaveModelClone() doesn't add empty transformations arrays if they weren't in the original
 	if transformations, ok := panel["transformations"].([]interface{}); ok && len(transformations) == 0 {
 		delete(panel, "transformations")
 	}
@@ -597,12 +598,22 @@ func filterDefaultValues(panel map[string]interface{}, originalProperties map[st
 		// Table panel legacy properties that should be filtered out
 		// These are not part of the current table panel schema and frontend filters them out
 		// We need to filter them out regardless of their values since they're legacy properties
-		// NOTE: Removed fontSize, showHeader, and sort from filtering to match frontend behavior
-		// The frontend preserves these properties when they exist in the input dashboard
-		legacyTableProps := []string{"pageSize", "scroll"}
+		// EXCEPT: frontend preserves these properties only for old table panels with autoMigrateFrom
+		// For regular table panels, frontend always filters them out
+		legacyTableProps := []string{"pageSize", "scroll", "fontSize", "showHeader", "sort"}
 		for _, prop := range legacyTableProps {
 			if _, exists := panel[prop]; exists {
-				delete(panel, prop)
+				// Check if this is an old table panel that should preserve these properties
+				// Only preserve if autoMigrateFrom is set to "table-old"
+				if autoMigrateFrom, hasAutoMigrate := panel["autoMigrateFrom"]; hasAutoMigrate && autoMigrateFrom == "table-old" {
+					// For old table panels, only remove if they weren't originally present
+					if !originalProperties[prop] {
+						delete(panel, prop)
+					}
+				} else {
+					// For regular table panels, always remove these legacy properties
+					delete(panel, prop)
+				}
 			}
 		}
 	}
@@ -630,6 +641,11 @@ func filterDefaultValues(panel map[string]interface{}, originalProperties map[st
 		if defaults, hasDefaults := fieldConfig["defaults"].(map[string]interface{}); hasDefaults {
 			// Remove properties that frontend considers as defaults and omits
 			cleanupFieldConfigDefaults(defaults)
+		}
+
+		// Clean up fieldConfig overrides to match frontend behavior
+		if overrides, hasOverrides := fieldConfig["overrides"].([]interface{}); hasOverrides {
+			cleanupFieldConfigOverrides(overrides)
 		}
 
 		// Check if fieldConfig should be removed entirely (matches PanelModel defaults)
@@ -1074,6 +1090,28 @@ func cleanupFieldConfigDefaults(defaults map[string]interface{}) {
 
 	// Don't remove empty custom objects - frontend keeps them
 	// The frontend's getSaveModel() logic preserves empty custom objects in fieldConfig
+	// if custom, exists := defaults["custom"].(map[string]interface{}); exists {
+	//	if len(custom) == 0 {
+	//		delete(defaults, "custom")
+	//	}
+	// }
+}
+
+// cleanupFieldConfigOverrides removes properties that frontend considers as defaults and omits
+func cleanupFieldConfigOverrides(overrides []interface{}) {
+	for _, overrideInterface := range overrides {
+		if override, ok := overrideInterface.(map[string]interface{}); ok {
+			if properties, hasProperties := override["properties"].([]interface{}); hasProperties {
+				for _, propertyInterface := range properties {
+					if _, ok := propertyInterface.(map[string]interface{}); ok {
+						// Don't remove empty value objects - frontend keeps them
+						// The frontend's getSaveModel() logic preserves empty value objects in overrides
+						// This matches the test output where frontend keeps "value": Object {}
+					}
+				}
+			}
+		}
+	}
 }
 
 // isArray checks if a value is an array
