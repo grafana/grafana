@@ -71,7 +71,7 @@ describe('addLabelToQuery()', () => {
       'foo{x="yy", bar="baz"}'
     );
     expect(addLabelToQuery(addLabelToQuery('foo{x="yy"}', 'bar', 'baz', '='), 'bar', 'baz', '!=')).toBe(
-      'foo{x="yy", bar="baz"}'
+      'foo{x="yy", bar!="baz"}'
     );
   });
 
