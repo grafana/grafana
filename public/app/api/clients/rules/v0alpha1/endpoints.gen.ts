@@ -842,44 +842,56 @@ export type ObjectMeta = {
     Populated by the system. Read-only. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names#uids */
   uid?: string;
 };
+export type AlertRuleTemplateString = string;
+export type AlertRuleDatasourceUid = string;
+export type AlertRulePromDurationWMillis = string;
+export type AlertRuleRelativeTimeRange = {
+  from: AlertRulePromDurationWMillis;
+  to: AlertRulePromDurationWMillis;
+};
+export type AlertRuleExpression = {
+  datasourceUID?: AlertRuleDatasourceUid;
+  model: {
+    [key: string]: any;
+  };
+  /** The type of query if this is a query expression */
+  queryType?: string;
+  relativeTimeRange?: AlertRuleRelativeTimeRange;
+  /** Used to mark the expression to be used as the final source for the rule evaluation
+    Only one expression in a rule can be marked as the source
+    For AlertRules, this is the expression that will be evaluated against the alerting condition
+    For RecordingRules, this is the expression that will be recorded */
+  source?: boolean;
+};
+export type AlertRuleExpressionMap = {
+  [key: string]: AlertRuleExpression;
+};
+export type AlertRuleTimeIntervalRef = string;
+export type AlertRulePromDuration = string;
+export type AlertRuleIntervalTrigger = {
+  interval: AlertRulePromDuration;
+};
 export type AlertRuleSpec = {
   annotations?: {
-    [key: string]: string;
+    [key: string]: AlertRuleTemplateString;
   };
-  execErrState: 'Error' | 'Ok' | 'Alerting' | 'KeepLast';
-  expressions: {
-    [key: string]: {
-      /** The UID of the datasource to run this expression against. If omitted, the expression will be run against the `__expr__` datasource */
-      datasourceUID?: string;
-      model: any;
-      /** The type of query if this is a query expression */
-      queryType?: string;
-      relativeTimeRange?: {
-        from: string;
-        to: string;
-      };
-      /** Used to mark the expression to be used as the final source for the rule evaluation
-            Only one expression in a rule can be marked as the source
-            For AlertRules, this is the expression that will be evaluated against the alerting condition
-            For RecordingRules, this is the expression that will be recorded */
-      source?: boolean;
-    };
-  };
-  for?: any & any;
-  keepFiringFor?: any & any;
+  execErrState: string;
+  expressions: AlertRuleExpressionMap;
+  for?: string;
+  keepFiringFor?: string;
   labels?: {
-    [key: string]: string;
+    [key: string]: AlertRuleTemplateString;
   };
   missingSeriesEvalsToResolve?: number;
-  noDataState: 'NoData' | 'Ok' | 'Alerting' | 'KeepLast';
+  noDataState: string;
   notificationSettings?: {
-    activeTimeIntervals?: string[];
+    activeTimeIntervals?: AlertRuleTimeIntervalRef[];
     groupBy?: string[];
-    groupInterval?: any & any;
-    groupWait?: any & any;
-    muteTimeIntervals?: string[];
+    groupInterval?: AlertRulePromDuration;
+    groupWait?: AlertRulePromDuration;
+    muteTimeIntervals?: AlertRuleTimeIntervalRef[];
     receiver: string;
-    repeatInterval?: any & any;
+    repeatInterval?: AlertRulePromDuration;
   };
   panelRef?: {
     dashboardUID: string;
@@ -887,32 +899,34 @@ export type AlertRuleSpec = {
   };
   paused?: boolean;
   title: string;
-  trigger: {
-    interval: any & any;
+  trigger: AlertRuleIntervalTrigger;
+};
+export type AlertRuleOperatorState = {
+  /** descriptiveState is an optional more descriptive state field which has no requirements on format */
+  descriptiveState?: string;
+  /** details contains any extra information that is operator-specific */
+  details?: {
+    [key: string]: {
+      [key: string]: any;
+    };
   };
-  [key: string]: any;
+  /** lastEvaluation is the ResourceVersion last evaluated */
+  lastEvaluation: string;
+  /** state describes the state of the lastEvaluation.
+    It is limited to three possible states for machine evaluation. */
+  state: 'success' | 'in_progress' | 'failed';
 };
 export type AlertRuleStatus = {
   /** additionalFields is reserved for future use */
   additionalFields?: {
-    [key: string]: any;
+    [key: string]: {
+      [key: string]: any;
+    };
   };
   /** operatorStates is a map of operator ID to operator state evaluations.
     Any operator which consumes this kind SHOULD add its state evaluation information to this field. */
   operatorStates?: {
-    [key: string]: {
-      /** descriptiveState is an optional more descriptive state field which has no requirements on format */
-      descriptiveState?: string;
-      /** details contains any extra information that is operator-specific */
-      details?: {
-        [key: string]: any;
-      };
-      /** lastEvaluation is the ResourceVersion last evaluated */
-      lastEvaluation: string;
-      /** state describes the state of the lastEvaluation.
-            It is limited to three possible states for machine evaluation. */
-      state: 'success' | 'in_progress' | 'failed';
-    };
+    [key: string]: AlertRuleOperatorState;
   };
 };
 export type AlertRule = {
@@ -987,58 +1001,71 @@ export type Status = {
   status?: string;
 };
 export type Patch = object;
-export type RecordingRuleSpec = {
-  expressions: {
-    [key: string]: {
-      /** The UID of the datasource to run this expression against. If omitted, the expression will be run against the `__expr__` datasource */
-      datasourceUID?: string;
-      model: any;
-      /** The type of query if this is a query expression */
-      queryType?: string;
-      relativeTimeRange?: {
-        from: string;
-        to: string;
-      };
-      /** Used to mark the expression to be used as the final source for the rule evaluation
-            Only one expression in a rule can be marked as the source
-            For AlertRules, this is the expression that will be evaluated against the alerting condition
-            For RecordingRules, this is the expression that will be recorded */
-      source?: boolean;
-    };
+export type RecordingRuleDatasourceUid = string;
+export type RecordingRulePromDurationWMillis = string;
+export type RecordingRuleRelativeTimeRange = {
+  from: RecordingRulePromDurationWMillis;
+  to: RecordingRulePromDurationWMillis;
+};
+export type RecordingRuleExpression = {
+  datasourceUID?: RecordingRuleDatasourceUid;
+  model: {
+    [key: string]: any;
   };
+  /** The type of query if this is a query expression */
+  queryType?: string;
+  relativeTimeRange?: RecordingRuleRelativeTimeRange;
+  /** Used to mark the expression to be used as the final source for the rule evaluation
+    Only one expression in a rule can be marked as the source
+    For AlertRules, this is the expression that will be evaluated against the alerting condition
+    For RecordingRules, this is the expression that will be recorded */
+  source?: boolean;
+};
+export type RecordingRuleExpressionMap = {
+  [key: string]: RecordingRuleExpression;
+};
+export type RecordingRuleTemplateString = string;
+export type RecordingRulePromDuration = string;
+export type RecordingRuleIntervalTrigger = {
+  interval: RecordingRulePromDuration;
+};
+export type RecordingRuleSpec = {
+  expressions: RecordingRuleExpressionMap;
   labels?: {
-    [key: string]: string;
+    [key: string]: RecordingRuleTemplateString;
   };
   metric: string;
   paused?: boolean;
   targetDatasourceUID: string;
   title: string;
-  trigger: {
-    interval: any & any;
+  trigger: RecordingRuleIntervalTrigger;
+};
+export type RecordingRuleOperatorState = {
+  /** descriptiveState is an optional more descriptive state field which has no requirements on format */
+  descriptiveState?: string;
+  /** details contains any extra information that is operator-specific */
+  details?: {
+    [key: string]: {
+      [key: string]: any;
+    };
   };
-  [key: string]: any;
+  /** lastEvaluation is the ResourceVersion last evaluated */
+  lastEvaluation: string;
+  /** state describes the state of the lastEvaluation.
+    It is limited to three possible states for machine evaluation. */
+  state: 'success' | 'in_progress' | 'failed';
 };
 export type RecordingRuleStatus = {
   /** additionalFields is reserved for future use */
   additionalFields?: {
-    [key: string]: any;
+    [key: string]: {
+      [key: string]: any;
+    };
   };
   /** operatorStates is a map of operator ID to operator state evaluations.
     Any operator which consumes this kind SHOULD add its state evaluation information to this field. */
   operatorStates?: {
-    [key: string]: {
-      /** descriptiveState is an optional more descriptive state field which has no requirements on format */
-      descriptiveState?: string;
-      /** details contains any extra information that is operator-specific */
-      details?: {
-        [key: string]: any;
-      };
-      /** lastEvaluation is the ResourceVersion last evaluated */
-      lastEvaluation: string;
-      /** state describes the state of the lastEvaluation.
-            It is limited to three possible states for machine evaluation. */
-      state: 'success' | 'in_progress' | 'failed';
-    };
+    [key: string]: RecordingRuleOperatorState;
   };
 };
 export type RecordingRule = {
