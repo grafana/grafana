@@ -1,11 +1,11 @@
 import * as React from 'react';
 import { useMemo } from 'react';
 
+import { AlertLabels } from '@grafana/alerting';
 import { PluginExtensionPoints, dateTime, findCommonLabels } from '@grafana/data';
 import { Alert, CombinedRule, PaginationProps } from 'app/types/unified-alerting';
 
 import { alertInstanceKey } from '../../utils/rules';
-import { AlertLabels } from '../AlertLabels';
 import { DynamicTable, DynamicTableColumnProps, DynamicTableItemProps } from '../DynamicTable';
 import { AlertInstanceExtensionPoint } from '../extensions/AlertInstanceExtensionPoint';
 

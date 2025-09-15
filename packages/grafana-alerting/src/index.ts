@@ -7,5 +7,8 @@
  * Breaking changes should be avoided to maintain backwards compatibility for consumers of this package.
  */
 
+export { AlertLabels } from './grafana/rules/components/labels/AlertLabels';
+// keep label utils internal to the app for now
+
 // This is a dummy export so typescript doesn't error importing an "empty module"
 export const index = {};

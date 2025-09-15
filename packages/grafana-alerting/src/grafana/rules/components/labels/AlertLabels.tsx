@@ -6,9 +6,9 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { Button, getTagColorsFromName, useStyles2 } from '@grafana/ui';
 
-import { isPrivateLabel } from '../utils/labels';
+import { isPrivateLabel } from '../../utils/labels';
 
-import { Label, LabelSize } from './Label';
+import { Label, LabelSize } from './AlertLabel';
 
 interface Props {
   labels: Record<string, string>;
