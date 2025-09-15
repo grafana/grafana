@@ -24,7 +24,7 @@ export interface Props {
   contentDataTestId?: string;
   unmountContentWhenClosed?: boolean;
   newDesign?: boolean;
-  isOptionalTag?: boolean;
+  showOptional?: boolean;
 }
 
 export const CollapsableSection = ({
@@ -40,7 +40,7 @@ export const CollapsableSection = ({
   contentDataTestId,
   unmountContentWhenClosed = true,
   newDesign,
-  isOptionalTag,
+  showOptional,
 }: Props) => {
   const [internalOpenState, toggleInternalOpenState] = useState<boolean>(isOpen);
   const styles = useStyles2(collapsableSectionStyles);
@@ -69,9 +69,13 @@ export const CollapsableSection = ({
   const content = (
     <div
       id={`collapse-content-${id}`}
-      className={newDesign ? cx(styles.newDesignContent, contentClassName) : cx(styles.content, contentClassName, {
-        [styles.contentHidden]: !unmountContentWhenClosed && !isSectionOpen,
-      })}
+      className={
+        newDesign
+          ? cx(styles.newDesignContent, contentClassName)
+          : cx(styles.content, contentClassName, {
+              [styles.contentHidden]: !unmountContentWhenClosed && !isSectionOpen,
+            })
+      }
       data-testid={contentDataTestId}
     >
       {children}
@@ -81,10 +85,13 @@ export const CollapsableSection = ({
   return (
     <>
       <div className={newDesign ? styles.newDesignContainer : undefined}>
-      {/* disabling the a11y rules here as the button handles keyboard interactions */}
-      {/* this is just to provide a better experience for mouse users */}
-      {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */}
-        <div onClick={onClick} className={newDesign ? cx(styles.newDesignHeader, className) : cx(styles.header, className)}>
+        {/* disabling the a11y rules here as the button handles keyboard interactions */}
+        {/* this is just to provide a better experience for mouse users */}
+        {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */}
+        <div
+          onClick={onClick}
+          className={newDesign ? cx(styles.newDesignHeader, className) : cx(styles.header, className)}
+        >
           <button
             type="button"
             id={`collapse-button-${id}`}
@@ -105,11 +112,11 @@ export const CollapsableSection = ({
           </div>
         </div>
         <div>
-          {isOptionalTag && 
+          {showOptional && (
             <div className={styles.optionalTag}>
               <Text variant="bodySmall">{`Optional`}</Text>
             </div>
-          }
+          )}
         </div>
       </div>
       {unmountContentWhenClosed ? isSectionOpen && content : content}
@@ -152,7 +159,7 @@ const collapsableSectionStyles = (theme: GrafanaTheme2) => ({
     },
   }),
   newDesignButton: css({
-     all: 'unset',
+    all: 'unset',
     '&:focus-visible': {
       outline: 'none',
       outlineOffset: 'unset',
@@ -189,7 +196,7 @@ const collapsableSectionStyles = (theme: GrafanaTheme2) => ({
   }),
   optionalTag: css({
     // eslint-disable-next-line @grafana/no-border-radius-literal
-    borderRadius: 5,       
+    borderRadius: 5,
     padding: `${theme.spacing(0.25)} ${theme.spacing(0.5)}`,
     marginRight: theme.spacing(3),
     display: 'inline-flex',
