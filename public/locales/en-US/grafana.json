@@ -5659,14 +5659,6 @@
         }
       }
     },
-    "config-public-dashboard": {
-      "confirmText": {
-        "revoke-public-url": "Revoke public URL"
-      },
-      "title": {
-        "revoke-public-url": "Revoke public URL"
-      }
-    },
     "constant-variable-form": {
       "constant-options": "Constant options",
       "label-value": "Value",
@@ -11756,7 +11748,6 @@
       "email-share-type-option-label": "Only specified people",
       "pause-sharing-dashboard-label": "Pause sharing dashboard",
       "public-share-type-option-label": "Anyone with a link",
-      "revoke-body": "Are you sure you want to revoke this URL? The dashboard will no longer be public.",
       "revoke-public-URL-button": "Revoke public URL",
       "revoke-public-URL-button-title": "Revoke public URL",
       "settings-title": "Settings"
@@ -12382,7 +12373,6 @@
       "export": "Export",
       "library-panel": "Library panel",
       "link": "Link",
-      "public-dashboard": "Public Dashboard",
       "public-dashboard-title": "Public dashboard",
       "snapshot": "Snapshot"
     },
