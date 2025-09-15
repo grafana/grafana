@@ -96,7 +96,7 @@ func ValidateRepository(repo Repository) field.ErrorList {
 	}
 
 	for _, f := range cfg.Finalizers {
-		if !slices.Contains(AllFinalizers, f) {
+		if !slices.Contains(SupportedFinalizers, f) {
 			list = append(list,
 				field.Invalid(
 					field.NewPath("medatada", "finalizers"),
