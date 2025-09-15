@@ -638,6 +638,7 @@
 /packages/grafana-runtime/src/components/PluginPage.tsx @grafana/grafana-search-navigate-organise
 /packages/grafana-runtime/src/components/QueryEditorWithMigration* @grafana/plugins-platform-frontend @grafana/plugins-platform-backend
 /packages/grafana-runtime/src/config.ts @grafana/grafana-frontend-platform
+/packages/grafana-runtime/src/events.ts @grafana/grafana-frontend-platform
 /packages/grafana-runtime/src/services/ @grafana/grafana-frontend-platform
 /packages/grafana-runtime/src/services/pluginExtensions @grafana/plugins-platform-frontend
 /packages/grafana-runtime/src/services/CorrelationsService.ts @grafana/datapro
