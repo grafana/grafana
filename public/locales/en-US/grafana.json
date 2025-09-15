@@ -3599,7 +3599,7 @@
       "button-deleting": "Deleting...",
       "commit": "Delete folder",
       "delete-warning": "This will delete this folder and all its descendants. In total, this will affect:",
-      "queued": "Delete queued. Changes will be applied shortly.",
+      "queued": "Folder deletion has been queued and will be processed in the background. The folder and all its contents will be removed from your repository shortly.",
       "success-message": "Folder deleted successfully"
     },
     "descendant-count": {
@@ -5759,7 +5759,7 @@
       "delete-action": "Delete dashboard",
       "deleting": "Deleting...",
       "drawer-title": "Delete Provisioned Dashboard",
-      "queued": "Delete queued. Changes will be applied shortly.",
+      "queued": "Dashboard deletion has been queued and will be processed in the background. The dashboard will be removed from your repository shortly.",
       "success-message": "Dashboard deleted successfully"
     },
     "description-label": {
@@ -5934,7 +5934,7 @@
       "move-action": "Move dashboard",
       "move-read-only-message": "This dashboard cannot be moved directly from Grafana because the repository is read-only. To move this dashboard, please move the file in your Git repository.",
       "moving": "Moving...",
-      "queued": "Move queued. Changes will be applied shortly.",
+      "queued": "Dashboard move has been queued and will be processed in the background. You can continue working while the changes are applied.",
       "success-message": "Dashboard moved successfully",
       "target-path-label": "Target path",
       "title-this-repository-is-read-only": "This repository is read only"

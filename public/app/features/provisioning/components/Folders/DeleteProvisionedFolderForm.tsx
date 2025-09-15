@@ -101,7 +101,7 @@ function FormContent({ initialValues, parentFolder, repository, workflowOptions,
         payload: [
           t(
             'browse-dashboards.delete-provisioned-folder-form.queued',
-            'Delete queued. Changes will be applied shortly.'
+            'Folder deletion has been queued and will be processed in the background. The folder and all its contents will be removed from your repository shortly.'
           ),
         ],
       });

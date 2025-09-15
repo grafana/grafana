@@ -174,7 +174,10 @@ export function MoveProvisionedDashboardForm({
       appEvents.publish({
         type: AppEvents.alertSuccess.name,
         payload: [
-          t('dashboard-scene.move-provisioned-dashboard-form.queued', 'Move queued. Changes will be applied shortly.'),
+          t(
+            'dashboard-scene.move-provisioned-dashboard-form.queued',
+            'Dashboard move has been queued and will be processed in the background. You can continue working while the changes are applied.'
+          ),
         ],
       });
       onDismiss();

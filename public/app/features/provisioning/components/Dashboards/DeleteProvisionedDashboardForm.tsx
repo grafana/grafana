@@ -115,7 +115,7 @@ export function DeleteProvisionedDashboardForm({
         payload: [
           t(
             'dashboard-scene.delete-provisioned-dashboard-form.queued',
-            'Delete queued. Changes will be applied shortly.'
+            'Dashboard deletion has been queued and will be processed in the background. The dashboard will be removed from your repository shortly.'
           ),
         ],
       });
