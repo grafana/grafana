@@ -45,11 +45,12 @@ func (p VersionedNotifierPlugin) GetCurrentVersion() NotifierPluginVersion {
 
 // NotifierPluginVersion represents a version of a notifier plugin, including configuration options and metadata.
 type NotifierPluginVersion struct {
-	TypeAlias string           `json:"typeAlias,omitempty"`
-	Version   NotifierVersion  `json:"version"`
-	CanCreate bool             `json:"canCreate"`
-	Options   []NotifierOption `json:"options"`
-	Info      string           `json:"info"`
+	TypeAlias string                   `json:"typeAlias,omitempty"`
+	Version   NotifierVersion          `json:"version"`
+	CanCreate bool                     `json:"canCreate"`
+	Options   []NotifierOption         `json:"options"`
+	Info      string                   `json:"info"`
+	Plugin    *VersionedNotifierPlugin `json:"-"`
 }
 
 // NotifierOption holds information about options specific for the NotifierPlugin.

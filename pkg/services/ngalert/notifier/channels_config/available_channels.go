@@ -2119,34 +2119,35 @@ func ConfigForIntegrationType(contactPointTypeOrAlternateType string) (NotifierP
 	return NotifierPluginVersion{}, fmt.Errorf("unknown integration type '%s'", contactPointTypeOrAlternateType)
 }
 
-func GetAvailableNotifiersV2() iter.Seq[VersionedNotifierPlugin] {
-	v1 := GetAvailableNotifiers()
-	m := make(map[string]VersionedNotifierPlugin, len(v1))
+func GetAvailableNotifiersV2() iter.Seq[*VersionedNotifierPlugin] {
+	m := make(map[string]*VersionedNotifierPlugin, 24) // we support 24 notifier types
 	add := func(n []*NotifierPlugin, version NotifierVersion) {
 		for _, n := range n {
 			pl, ok := m[n.Type]
 			if !ok {
-				pl = VersionedNotifierPlugin{
+				pl = &VersionedNotifierPlugin{
 					Type:           n.Type,
 					Name:           n.Name,
 					Description:    n.Description,
 					Heading:        n.Heading,
 					Info:           n.Info,
 					CurrentVersion: version,
+					Versions:       make([]NotifierPluginVersion, 0, 2), // usually, there are 2 versions per type
 				}
+				m[n.Type] = pl
 			}
 			pl.Versions = append(pl.Versions, NotifierPluginVersion{
-				Version:   version,
+				Version: version,
+				// we allow users to create only v1 notifiers
 				CanCreate: version == V1,
 				Options:   n.Options,
-				Info:      "",
 				TypeAlias: n.TypeAlias,
+				Plugin:    pl,
 			})
-			m[n.Type] = pl
 		}
 	}
-	add(v1, V1)
-	add(getAvailableMimirNotifiers(), V0mimir1)
+	add(GetAvailableNotifiers(), V1)
 	add(getAvailableMimirV2Notifiers(), V0mimir2)
+	add(getAvailableMimirNotifiers(), V0mimir1)
 	return maps.Values(m)
 }
