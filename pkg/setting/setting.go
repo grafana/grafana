@@ -507,6 +507,12 @@ type Cfg struct {
 	SAMLSkipOrgRoleSync        bool
 	SAMLRoleValuesGrafanaAdmin string
 
+	// SCIM
+	SCIMEnabled                   bool
+	SCIMUserSyncEnabled           bool
+	SCIMGroupSyncEnabled          bool
+	SCIMRejectNonProvisionedUsers bool
+
 	// OAuth2 Server
 	OAuth2ServerEnabled bool
 
@@ -1334,6 +1340,7 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 	}
 
 	cfg.readSAMLConfig()
+	cfg.readSCIMConfig()
 	cfg.readLDAPConfig()
 	cfg.handleAWSConfig()
 	cfg.readAzureSettings()
@@ -1453,6 +1460,14 @@ func (cfg *Cfg) readSAMLConfig() {
 	cfg.SAMLAuthEnabled = samlSec.Key("enabled").MustBool(false)
 	cfg.SAMLSkipOrgRoleSync = samlSec.Key("skip_org_role_sync").MustBool(false)
 	cfg.SAMLRoleValuesGrafanaAdmin = samlSec.Key("role_values_grafana_admin").MustString("")
+}
+
+func (cfg *Cfg) readSCIMConfig() {
+	scimSec := cfg.Raw.Section("auth.scim")
+	cfg.SCIMEnabled = scimSec.Key("enabled").MustBool(false)
+	cfg.SCIMUserSyncEnabled = scimSec.Key("user_sync_enabled").MustBool(false)
+	cfg.SCIMGroupSyncEnabled = scimSec.Key("group_sync_enabled").MustBool(false)
+	cfg.SCIMRejectNonProvisionedUsers = scimSec.Key("reject_non_provisioned_users").MustBool(false)
 }
 
 func (cfg *Cfg) readLDAPConfig() {

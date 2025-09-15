@@ -338,10 +338,14 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 			MinInterval: hs.Cfg.UnifiedAlerting.MinInterval.String(),
 		},
 
-		Oauth:                   hs.getEnabledOAuthProviders(),
-		SamlEnabled:             hs.samlEnabled(),
-		SamlName:                hs.samlName(),
-		TokenExpirationDayLimit: hs.Cfg.SATokenExpirationDayLimit,
+		Oauth:                         hs.getEnabledOAuthProviders(),
+		SamlEnabled:                   hs.samlEnabled(),
+		SamlName:                      hs.samlName(),
+		ScimEnabled:                   hs.scimEnabled(),
+		ScimUserSyncEnabled:           hs.scimUserSyncEnabled(),
+		ScimGroupSyncEnabled:          hs.scimGroupSyncEnabled(),
+		ScimRejectNonProvisionedUsers: hs.scimRejectNonProvisionedUsers(),
+		TokenExpirationDayLimit:       hs.Cfg.SATokenExpirationDayLimit,
 
 		SnapshotEnabled: hs.Cfg.SnapshotEnabled,
 

@@ -438,6 +438,22 @@ func (hs *HTTPServer) samlAllowAssignGrafanaAdminEnabled() bool {
 	return hs.samlEnabled() && config.IsAllowAssignGrafanaAdminEnabled()
 }
 
+func (hs *HTTPServer) scimEnabled() bool {
+	return hs.Cfg.SCIMEnabled
+}
+
+func (hs *HTTPServer) scimUserSyncEnabled() bool {
+	return hs.Cfg.SCIMUserSyncEnabled
+}
+
+func (hs *HTTPServer) scimGroupSyncEnabled() bool {
+	return hs.Cfg.SCIMGroupSyncEnabled
+}
+
+func (hs *HTTPServer) scimRejectNonProvisionedUsers() bool {
+	return hs.Cfg.SCIMRejectNonProvisionedUsers
+}
+
 func getLoginExternalError(err error) string {
 	var createTokenErr *auth.CreateTokenErr
 	if errors.As(err, &createTokenErr) {

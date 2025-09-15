@@ -264,19 +264,23 @@ type FrontendSettingsDTO struct {
 	DefaultDatasourceManageAlertsUIToggle          bool `json:"defaultDatasourceManageAlertsUiToggle"`
 	DefaultAllowRecordingRulesTargetAlertsUIToggle bool `json:"defaultAllowRecordingRulesTargetAlertsUiToggle"`
 
-	Caching                 FrontendSettingsCachingDTO         `json:"caching"`
-	RecordedQueries         FrontendSettingsRecordedQueriesDTO `json:"recordedQueries"`
-	Reporting               FrontendSettingsReportingDTO       `json:"reporting"`
-	Analytics               FrontendSettingsAnalyticsDTO       `json:"analytics"`
-	UnifiedAlertingEnabled  bool                               `json:"unifiedAlertingEnabled"`
-	UnifiedAlerting         FrontendSettingsUnifiedAlertingDTO `json:"unifiedAlerting"`
-	Oauth                   map[string]any                     `json:"oauth"`
-	SamlEnabled             bool                               `json:"samlEnabled"`
-	SamlName                string                             `json:"samlName"`
-	TokenExpirationDayLimit int                                `json:"tokenExpirationDayLimit"`
-	SharedWithMeFolderUID   string                             `json:"sharedWithMeFolderUID"`
-	RootFolderUID           string                             `json:"rootFolderUID"`
-	PasswordlessEnabled     string                             `json:"passwordlessEnabled"`
+	Caching                       FrontendSettingsCachingDTO         `json:"caching"`
+	RecordedQueries               FrontendSettingsRecordedQueriesDTO `json:"recordedQueries"`
+	Reporting                     FrontendSettingsReportingDTO       `json:"reporting"`
+	Analytics                     FrontendSettingsAnalyticsDTO       `json:"analytics"`
+	UnifiedAlertingEnabled        bool                               `json:"unifiedAlertingEnabled"`
+	UnifiedAlerting               FrontendSettingsUnifiedAlertingDTO `json:"unifiedAlerting"`
+	Oauth                         map[string]any                     `json:"oauth"`
+	SamlEnabled                   bool                               `json:"samlEnabled"`
+	SamlName                      string                             `json:"samlName"`
+	ScimEnabled                   bool                               `json:"scimEnabled"`
+	ScimUserSyncEnabled           bool                               `json:"scimUserSyncEnabled"`
+	ScimGroupSyncEnabled          bool                               `json:"scimGroupSyncEnabled"`
+	ScimRejectNonProvisionedUsers bool                               `json:"scimRejectNonProvisionedUsers"`
+	TokenExpirationDayLimit       int                                `json:"tokenExpirationDayLimit"`
+	SharedWithMeFolderUID         string                             `json:"sharedWithMeFolderUID"`
+	RootFolderUID                 string                             `json:"rootFolderUID"`
+	PasswordlessEnabled           string                             `json:"passwordlessEnabled"`
 
 	GeomapDefaultBaseLayerConfig *map[string]any `json:"geomapDefaultBaseLayerConfig,omitempty"`
 	GeomapDisableCustomBaseLayer bool            `json:"geomapDisableCustomBaseLayer"`

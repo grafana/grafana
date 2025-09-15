@@ -122,6 +122,10 @@ export class GrafanaBootConfig {
   secureSocksDSProxyEnabled = false;
   samlEnabled = false;
   samlName = '';
+  scimEnabled = false;
+  scimUserSyncEnabled = false;
+  scimGroupSyncEnabled = false;
+  scimRejectNonProvisionedUsers = false;
   autoAssignOrg = true;
   verifyEmailEnabled = false;
   oauth: OAuthSettings = {};
