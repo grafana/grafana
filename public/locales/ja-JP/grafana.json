@@ -500,6 +500,7 @@
       "copy-link": "リンクをコピー",
       "duplicate": "複製",
       "export": "エクスポート",
+      "manage-enrichments": "",
       "silence-notifications": "通知を消音",
       "with-modifications": "修正あり"
     },
@@ -1115,7 +1116,8 @@
     },
     "enrichment": {
       "error-boundary": {
-        "notification-message-section-extension": ""
+        "enrichment-drawer-extension": "",
+        "rule-viewer-section-extension": ""
       }
     },
     "error-modal": {
@@ -2049,9 +2051,6 @@
       "text-loading-rules": "ルールを読み込み中...",
       "title-dashboard-not-saved": "ダッシュボードは保存されていません"
     },
-    "paused-badge": {
-      "paused": "中断しています"
-    },
     "payload-editor": {
       "edit-payload": "ペイロードを編集",
       "label-add-custom-alert-instance": "カスタムアラートインスタンスを追加",
@@ -2201,9 +2200,6 @@
       "label-time-range": "時間範囲",
       "max-data-points": "MD = {{maxDataPoints}}",
       "min-interval": "最小間隔= {{minInterval}}"
-    },
-    "query-preview": {
-      "relative-time-range": "<0>{{from}}</0>から現在"
     },
     "queryAndExpressionsStep": {
       "disableAdvancedOptions": {
@@ -2545,6 +2541,10 @@
       "recording": "{{recordingStats}}件記録中",
       "recovering": "{{recoveringStats}}件が復旧中",
       "error_other": "{{count}}件のエラー"
+    },
+    "rule-time-range-label": {
+      "relative": "",
+      "relative-with-to": ""
     },
     "rule-type-picker": {
       "grafana-managed": "Ruler APIが有効なMimir、Loki、またはCortexデータソースがない限り、「Grafana管理」を選択してください。"
@@ -3029,6 +3029,7 @@
       "page-nav": {
         "text": {
           "details": "詳細",
+          "enrichment": "",
           "history": "履歴",
           "instances": "インスタンス",
           "query-and-conditions": "クエリと条件",
@@ -3642,7 +3643,10 @@
       "text": "クエリに一致する結果が見つかりませんでした。"
     },
     "restore": {
-      "success": "ダッシュボード{{name}}が復元されました"
+      "success": "",
+      "all-failed_other": "",
+      "failed-count_other": "",
+      "success-count_other": ""
     },
     "text-this-repository-is-read-only": "ターゲットに直接アクセスできる場合は、JSONをコピーしてそこに貼り付けます。",
     "trash-state-manager": {
@@ -9597,10 +9601,9 @@
       }
     },
     "logs-controls": {
+      "collapse": "",
       "deduplication": "重複排除",
-      "disable-highlighting": "ハイライトを無効にする",
       "disable-prettify-json": "JSONログを折りたたむ",
-      "display-level": "表示レベル",
       "display-level-all": "すべてのレベル",
       "download": "ログをダウンロード",
       "download-logs": {
@@ -9608,18 +9611,39 @@
         "json": "json",
         "txt": "txt"
       },
-      "enable-highlighting": "ハイライトを有効にする",
       "escape-newlines": "ログ行で誤ってエスケープされた改行とタブシーケンスを修正",
-      "font-size-default": "小さいフォントサイズを使用",
-      "font-size-small": "デフォルトのフォントサイズを使用",
+      "expand": "",
+      "filter-levels": "",
+      "font-large": "",
+      "font-small": "",
       "hide-search": "検索を閉じる",
       "hide-timestamps": "タイムスタンプを非表示",
       "hide-unique-labels": "一意のラベルを非表示",
+      "label": {
+        "collapse": "",
+        "disable-highlighting": "",
+        "enable-highlighting": "",
+        "escape-newlines": "",
+        "expand": ""
+      },
+      "labels": {
+        "font-large": "",
+        "font-small": "",
+        "hide-search": "",
+        "newest-first": "",
+        "oldest-first": "",
+        "show-search": ""
+      },
       "line-wrapping": {
         "enable": "",
         "enable-prettify": "",
         "hide": "",
-        "label": ""
+        "state": {
+          "hide": "",
+          "json": "",
+          "wrap": ""
+        },
+        "tooltip": ""
       },
       "newest-first": "最新のログ順に並び替え - クリックして最も古いログを最初に表示",
       "oldest-first": "古いログ順に並び替え - クリックして最新のログを最初に表示",
@@ -9635,8 +9659,18 @@
       "timestamp": {
         "hide": "",
         "label": "",
+        "label-hide": "",
+        "label-ms": "",
+        "label-ns": "",
         "milliseconds": "",
-        "nanoseconds": ""
+        "nanoseconds": "",
+        "tooltip": ""
+      },
+      "tooltip": {
+        "disable-highlighting": "",
+        "download": "",
+        "enable-highlighting": "",
+        "filter-level": ""
       },
       "unwrap-lines": "行の折り返しを解除",
       "wrap-lines": "行を折り返す"
@@ -11179,11 +11213,11 @@
       "description-clear-repository-connection": "このリポジトリ接続にわかりやすい名前を追加します",
       "empty": "空",
       "error-field-required": "このフィールドは必須です。",
-      "ext-storage": "外部ストレージ",
-      "grafana": "Grafanaインスタンス",
+      "external-storage-label": "",
       "label-display-name": "表示名",
       "placeholder-my-repository-connection": "自分のリポジトリ接続",
       "text-loading-resource-information": "リソース情報読み込み中...",
+      "unmanaged-resources-label": "",
       "dashboards-count_other": "{{count}}個のダッシュボード",
       "files-count_other": "{{count}}個のファイル",
       "folders-count_other": "{{count}}個のフォルダ"
@@ -11228,7 +11262,8 @@
     },
     "connect-repository-button": {
       "configure": "構成",
-      "repository-limit-info-alert": "リポジトリの上限に達しました（{{count}}）"
+      "instance-fully-managed-tooltip": "",
+      "repository-limit-reached-tooltip_other": ""
     },
     "delete-repository-button": {
       "button-delete": "削除",
@@ -11311,7 +11346,9 @@
     },
     "folder-repository-list": {
       "no-results-matching-your-query": "クエリに一致する結果なし",
-      "placeholder-search": "検索"
+      "placeholder-search": "検索",
+      "all-resources-managed_other": "",
+      "partial-managed_other": ""
     },
     "get-default-values": {
       "title": {
@@ -11609,6 +11646,7 @@
       "tooltip-unhealthy-repository": "問題のあるリポジトリをプルできません"
     },
     "synchronize-step": {
+      "repository-unhealthy": "",
       "synchronization-description": "各履歴値のコミットを含める",
       "synchronization-options": "同期オプション"
     },
@@ -11632,6 +11670,8 @@
       "alert-point-3": "このプロセスの所要時間は、関連するリソースの数によって異なります。",
       "alert-point-4": "エンタープライズインスタンス管理者は、ユーザーにお知らせバナーを表示できます。詳しい手順については<2>このガイド</2>をご覧ください。",
       "alert-title": "重要：データや設定は失われませんが、ダッシュボードは数分間一時的に利用できなくなります。",
+      "button-cancel": "",
+      "button-cancelling": "",
       "button-next": "完了",
       "button-start": "同期を開始",
       "discard-modal": {

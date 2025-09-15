@@ -2,14 +2,18 @@ package connectors
 
 import (
 	"context"
+	"crypto/ecdsa"
+	"crypto/x509"
+	"encoding/pem"
 	"errors"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 	"time"
 
-	"github.com/go-jose/go-jose/v3"
-	"github.com/go-jose/go-jose/v3/jwt"
+	"github.com/go-jose/go-jose/v4"
+	"github.com/go-jose/go-jose/v4/jwt"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/oauth2"
@@ -240,6 +244,31 @@ const googleGroupsJSON = `
 }
 `
 
+var testKey = decodePrivateKey([]byte(`
+-----BEGIN EC PRIVATE KEY-----
+MHcCAQEEID6lXWsmcv/UWn9SptjOThsy88cifgGIBj2Lu0M9I8tQoAoGCCqGSM49
+AwEHoUQDQgAEsf6eNnNMNhl+q7jXsbdUf3ADPh248uoFUSSV9oBzgptyokHCjJz6
+n6PKDm2W7i3S2+dAs5M5f3s7d8KiLjGZdQ==
+-----END EC PRIVATE KEY-----
+`))
+
+func decodePrivateKey(data []byte) *ecdsa.PrivateKey {
+	block, _ := pem.Decode(data)
+	if block == nil {
+		panic("should include PEM block")
+	}
+
+	privateKey, err := x509.ParseECPrivateKey(block.Bytes)
+	if err != nil {
+		panic(fmt.Sprintf("should be able to parse ec private key: %v", err))
+	}
+	if privateKey.Curve.Params().Name != "P-256" {
+		panic("should be valid private key")
+	}
+
+	return privateKey
+}
+
 func TestSocialGoogle_UserInfo(t *testing.T) {
 	cl := jwt.Claims{
 		Subject:   "88888888888888",
@@ -248,7 +277,7 @@ func TestSocialGoogle_UserInfo(t *testing.T) {
 		Audience:  jwt.Audience{"823123"},
 	}
 
-	sig, err := jose.NewSigner(jose.SigningKey{Algorithm: jose.HS256, Key: []byte("secret")}, (&jose.SignerOptions{}).WithType("JWT"))
+	sig, err := jose.NewSigner(jose.SigningKey{Algorithm: jose.ES256, Key: testKey}, (&jose.SignerOptions{}).WithType("JWT"))
 	require.NoError(t, err)
 	idMap := map[string]any{
 		"email":          "test@example.com",
@@ -257,7 +286,7 @@ func TestSocialGoogle_UserInfo(t *testing.T) {
 		"email_verified": true,
 	}
 
-	raw, err := jwt.Signed(sig).Claims(cl).Claims(idMap).CompactSerialize()
+	raw, err := jwt.Signed(sig).Claims(cl).Claims(idMap).Serialize()
 	require.NoError(t, err)
 
 	tokenWithID := (&oauth2.Token{

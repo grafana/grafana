@@ -577,7 +577,6 @@ type Cfg struct {
 	IndexMaxBatchSize                          int
 	IndexFileThreshold                         int
 	IndexMinCount                              int
-	IndexMaxCount                              int
 	IndexRebuildInterval                       time.Duration
 	IndexCacheTTL                              time.Duration
 	EnableSharding                             bool
@@ -768,7 +767,7 @@ func (cfg *Cfg) readGrafanaEnvironmentMetrics() error {
 		labelName := model.LabelName(key.Name())
 		labelValue := model.LabelValue(key.Value())
 
-		if !labelName.IsValid() {
+		if !labelName.IsValid() { // nolint:staticcheck
 			return fmt.Errorf("invalid label name in [metrics.environment_info] configuration. name %q", labelName)
 		}
 

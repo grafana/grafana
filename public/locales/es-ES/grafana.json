@@ -504,6 +504,7 @@
       "copy-link": "Copiar enlace",
       "duplicate": "Duplicar",
       "export": "Exportar",
+      "manage-enrichments": "",
       "silence-notifications": "Silenciar notificaciones",
       "with-modifications": "Con modificaciones"
     },
@@ -1121,7 +1122,8 @@
     },
     "enrichment": {
       "error-boundary": {
-        "notification-message-section-extension": ""
+        "enrichment-drawer-extension": "",
+        "rule-viewer-section-extension": ""
       }
     },
     "error-modal": {
@@ -2056,9 +2058,6 @@
       "text-loading-rules": "Cargando reglas...",
       "title-dashboard-not-saved": "Dashboard no guardado"
     },
-    "paused-badge": {
-      "paused": "En pausa"
-    },
     "payload-editor": {
       "edit-payload": "Editar carga útil",
       "label-add-custom-alert-instance": "Añadir instancia de alerta personalizada",
@@ -2210,9 +2209,6 @@
       "label-time-range": "Rango de tiempo",
       "max-data-points": "MD = {{maxDataPoints}}",
       "min-interval": "Tamaño min. Intervalo = {{minInterval}}"
-    },
-    "query-preview": {
-      "relative-time-range": "<0>{{from}}</0> hasta ahora"
     },
     "queryAndExpressionsStep": {
       "disableAdvancedOptions": {
@@ -2558,6 +2554,10 @@
       "recovering": "{{recoveringStats}} recuperando",
       "error_one": "{{count}} errores",
       "error_other": "{{count}} errores"
+    },
+    "rule-time-range-label": {
+      "relative": "",
+      "relative-with-to": ""
     },
     "rule-type-picker": {
       "grafana-managed": "Selecciona «Gestionadas por Grafana» a menos que tengas una fuente de datos Mimir, Loki o Cortex con la API de Ruler habilitada."
@@ -3042,6 +3042,7 @@
       "page-nav": {
         "text": {
           "details": "Detalles",
+          "enrichment": "",
           "history": "Historial",
           "instances": "Instancias",
           "query-and-conditions": "Consulta y condiciones",
@@ -3660,7 +3661,13 @@
       "text": "No se han encontrado resultados para tu consulta"
     },
     "restore": {
-      "success": "Dashboard {{name}} restaurado"
+      "success": "",
+      "all-failed_one": "",
+      "all-failed_other": "",
+      "failed-count_one": "",
+      "failed-count_other": "",
+      "success-count_one": "",
+      "success-count_other": ""
     },
     "text-this-repository-is-read-only": "Si tienes acceso directo al destino, copia el JSON y pégalo allí.",
     "trash-state-manager": {
@@ -9626,10 +9633,9 @@
       }
     },
     "logs-controls": {
+      "collapse": "",
       "deduplication": "Deduplicación",
-      "disable-highlighting": "Desactivar resaltado",
       "disable-prettify-json": "Contraer logs JSON",
-      "display-level": "Mostrar niveles",
       "display-level-all": "Todos los niveles",
       "download": "Descargar registros",
       "download-logs": {
@@ -9637,18 +9643,39 @@
         "json": "json",
         "txt": "txt"
       },
-      "enable-highlighting": "Activar resaltado",
       "escape-newlines": "Corregir las secuencias de tabulación y de nueva línea que escaparon incorrectamente en las líneas de log",
-      "font-size-default": "Utilizar tamaño de fuente pequeño",
-      "font-size-small": "Utilizar tamaño de fuente predeterminado",
+      "expand": "",
+      "filter-levels": "",
+      "font-large": "",
+      "font-small": "",
       "hide-search": "Cerrar la búsqueda",
       "hide-timestamps": "Ocultar marcas de tiempo",
       "hide-unique-labels": "Ocultar etiquetas únicas",
+      "label": {
+        "collapse": "",
+        "disable-highlighting": "",
+        "enable-highlighting": "",
+        "escape-newlines": "",
+        "expand": ""
+      },
+      "labels": {
+        "font-large": "",
+        "font-small": "",
+        "hide-search": "",
+        "newest-first": "",
+        "oldest-first": "",
+        "show-search": ""
+      },
       "line-wrapping": {
         "enable": "",
         "enable-prettify": "",
         "hide": "",
-        "label": ""
+        "state": {
+          "hide": "",
+          "json": "",
+          "wrap": ""
+        },
+        "tooltip": ""
       },
       "newest-first": "Ordenado por los logs más nuevos primero: haga clic para mostrar los más antiguos primero",
       "oldest-first": "Ordenado por los logs más antiguos primero: haga clic para mostrar los más nuevos primero",
@@ -9664,8 +9691,18 @@
       "timestamp": {
         "hide": "",
         "label": "",
+        "label-hide": "",
+        "label-ms": "",
+        "label-ns": "",
         "milliseconds": "",
-        "nanoseconds": ""
+        "nanoseconds": "",
+        "tooltip": ""
+      },
+      "tooltip": {
+        "disable-highlighting": "",
+        "download": "",
+        "enable-highlighting": "",
+        "filter-level": ""
       },
       "unwrap-lines": "Desajustar líneas",
       "wrap-lines": "Ajustar líneas"
@@ -11211,11 +11248,11 @@
       "description-clear-repository-connection": "Añade un nombre claro para esta conexión de repositorio",
       "empty": "Vacío",
       "error-field-required": "Este campo es obligatorio.",
-      "ext-storage": "Almacenamiento externo",
-      "grafana": "Instancia de Grafana",
+      "external-storage-label": "",
       "label-display-name": "Nombre que mostrar",
       "placeholder-my-repository-connection": "Mi conexión de repositorio",
       "text-loading-resource-information": "Cargando información de recursos...",
+      "unmanaged-resources-label": "",
       "dashboards-count_one": "{{count}} dashboard",
       "dashboards-count_other": "{{count}} dashboards",
       "files-count_one": "{{count}} archivos",
@@ -11263,7 +11300,9 @@
     },
     "connect-repository-button": {
       "configure": "Configurar",
-      "repository-limit-info-alert": "Se ha alcanzado el límite del repositorio ({{count}})"
+      "instance-fully-managed-tooltip": "",
+      "repository-limit-reached-tooltip_one": "",
+      "repository-limit-reached-tooltip_other": ""
     },
     "delete-repository-button": {
       "button-delete": "Eliminar",
@@ -11346,7 +11385,11 @@
     },
     "folder-repository-list": {
       "no-results-matching-your-query": "No hay resultados que coincidan con tu consulta",
-      "placeholder-search": "Buscar"
+      "placeholder-search": "Buscar",
+      "all-resources-managed_one": "",
+      "all-resources-managed_other": "",
+      "partial-managed_one": "",
+      "partial-managed_other": ""
     },
     "get-default-values": {
       "title": {
@@ -11644,6 +11687,7 @@
       "tooltip-unhealthy-repository": "No se puede extraer un repositorio que no está en buen estado"
     },
     "synchronize-step": {
+      "repository-unhealthy": "",
       "synchronization-description": "Incluir confirmaciones para cada valor histórico",
       "synchronization-options": "Opciones de sincronización"
     },
@@ -11667,6 +11711,8 @@
       "alert-point-3": "La duración de este proceso depende del número de recursos involucrados.",
       "alert-point-4": "Los administradores de instancias empresariales pueden mostrar un báner de anuncio a los usuarios. Consulta <2>esta guía</2> para obtener instrucciones paso a paso.",
       "alert-title": "Importante: No se perderán datos ni configuraciones, pero los dashboards no estarán disponibles temporalmente durante unos minutos.",
+      "button-cancel": "",
+      "button-cancelling": "",
       "button-next": "Terminar",
       "button-start": "Iniciar la sincronización",
       "discard-modal": {

@@ -597,19 +597,27 @@ func (s *Service) checkPermission(ctx context.Context, scopeMap map[string]bool,
 		return len(scopeMap) > 0, nil
 	}
 
-	if req.Verb == utils.VerbCreate && req.ParentFolder == "" {
-		req.ParentFolder = accesscontrol.GeneralFolderUID
+	t, ok := s.mapper.Get(req.Group, req.Resource)
+	if !ok {
+		ctxLogger.Error("unsupport resource", "group", req.Group, "resource", req.Resource)
+		return false, status.Error(codes.NotFound, "unsupported resource")
+	}
+
+	if req.Verb == utils.VerbCreate {
+		// Resource doesn't require scope on create, so allow if the user has the action
+		if t.SkipScopeOnCreate() {
+			return scopeMap[""], nil
+		}
+		// If creating a resource that goes in a folder, but no folder is specified,
+		// assume parent folder is the general folder
+		if t.HasFolderSupport() && req.ParentFolder == "" {
+			req.ParentFolder = accesscontrol.GeneralFolderUID
+		}
 	}
 
 	// Wildcard grant, no further checks needed
 	if scopeMap["*"] {
 		return true, nil
-	}
-
-	t, ok := s.mapper.Get(req.Group, req.Resource)
-	if !ok {
-		ctxLogger.Error("unsupport resource", "group", req.Group, "resource", req.Resource)
-		return false, status.Error(codes.NotFound, "unsupported resource")
 	}
 
 	if req.Name != "" && scopeMap[t.Scope(req.Name)] {
