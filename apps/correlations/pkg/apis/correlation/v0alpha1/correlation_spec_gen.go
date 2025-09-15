@@ -15,10 +15,10 @@ func NewCorrelationDataSourceRef() *CorrelationDataSourceRef {
 	return &CorrelationDataSourceRef{}
 }
 
+// there was a deprecated field here called type, we will need to move that for conversion and provisioning
 // +k8s:openapi-gen=true
 type CorrelationConfigSpec struct {
 	Field           string                          `json:"field"`
-	Type            *string                         `json:"type,omitempty"`
 	Target          CorrelationTargetSpec           `json:"target"`
 	Transformations []CorrelationTransformationSpec `json:"transformations,omitempty"`
 }

@@ -12,9 +12,9 @@ export const defaultDataSourceRef = (): DataSourceRef => ({
 	name: "",
 });
 
+// there was a deprecated field here called type, we will need to move that for conversion and provisioning
 export interface ConfigSpec {
 	field: string;
-	type?: string;
 	target: TargetSpec;
 	transformations?: TransformationSpec[];
 }
