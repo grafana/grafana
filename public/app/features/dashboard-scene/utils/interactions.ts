@@ -8,6 +8,31 @@ export const DashboardInteractions = {
     reportDashboardInteraction('init_dashboard_completed', { ...properties });
   },
 
+  // Dashboard edit item actions
+  // dashboards_edit_action_clicked: when user adds or removes an item in edit mode
+  // props: { item: string } - item is one of: add_panel, group_row, group_tab, ungroup, paste_panel, remove_row, remove_tab
+  trackAddPanelClick() {
+    reportDashboardInteraction('edit_action_clicked', { item: 'add_panel' });
+  },
+  trackGroupRowClick() {
+    reportDashboardInteraction('edit_action_clicked', { item: 'group_row' });
+  },
+  trackGroupTabClick() {
+    reportDashboardInteraction('edit_action_clicked', { item: 'group_tab' });
+  },
+  trackUngroupClick() {
+    reportDashboardInteraction('edit_action_clicked', { item: 'ungroup' });
+  },
+  trackPastePanelClick() {
+    reportDashboardInteraction('edit_action_clicked', { item: 'paste_panel' });
+  },
+  trackRemoveRowClick() {
+    reportDashboardInteraction('edit_action_clicked', { item: 'remove_row' });
+  },
+  trackRemoveTabClick() {
+    reportDashboardInteraction('edit_action_clicked', { item: 'remove_tab' });
+  },
+
   panelLinkClicked: (properties?: Record<string, unknown>) => {
     reportDashboardInteraction('panelheader_datalink_clicked', properties);
   },
