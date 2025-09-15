@@ -216,7 +216,6 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2, clusters: num
   // this expands the distr: 2 scale so that the indicies of each data[0] land at the proper justified positions
   const xRange: Scale.Range = (u, min, max) => {    
     min = 0;
-    max = Math.max(1, u.data[0].length - 1);
 
     let pctOffset = 0;
 
@@ -225,11 +224,12 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2, clusters: num
       distribute(u.data[0].length, groupWidth, groupDistr, 0, (di, lftPct, widPct) => {
         pctOffset = lftPct + widPct / 2;
       });
+      max = Math.max(1, u.data[0].length - 1);
     } else {
-        distribute(clusters.length, clusterWidth, clusterDistr, 0, (di, lftPct, widPct) => {
-          pctOffset = lftPct + widPct / 2;
+      distribute(clusters.length, clusterWidth, clusterDistr, 0, (di, lftPct, widPct) => {
+        pctOffset = lftPct + widPct / 2;
       });
-        max = Math.max(1, clusters.length - 1);
+      max = Math.max(1, clusters.length - 1);
     }
 
     // expand scale range by equal amounts on both ends
