@@ -642,8 +642,6 @@ require (
 	sigs.k8s.io/yaml v1.5.0 // indirect
 )
 
-require github.com/go-jose/go-jose/v3 v3.0.4
-
 require (
 	github.com/gomodule/redigo v1.8.9 // indirect
 	github.com/gopherjs/gopherjs v1.17.2 // indirect
