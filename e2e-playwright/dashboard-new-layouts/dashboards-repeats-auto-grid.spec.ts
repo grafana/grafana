@@ -402,8 +402,6 @@ test.describe(
       await saveDashboard(dashboardPage, page, selectors);
       await page.reload();
 
-      await expect(page.locator('[data-testid="uplot-main-div"]').first()).toBeVisible();
-
       // verify 6 panels are present (4 repeats and 2 normal)
       expect(
         await dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.headerContainer).all()

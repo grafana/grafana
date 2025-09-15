@@ -76,9 +76,6 @@ export class AutoGridItem extends SceneObjectBase<AutoGridItemState> implements 
 
   public performRepeat() {
     if (!this.state.variableName || sceneGraph.hasVariableDependencyInLoadingState(this)) {
-      if (!this.state.variableName && this.state.repeatedPanels) {
-        this.setState({ repeatedPanels: undefined });
-      }
       return;
     }
 
