@@ -397,9 +397,10 @@ func TestService_listPermission_skipCache(t *testing.T) {
 
 	res, err := s.listPermission(ctx, userPermissions, &listReq)
 	require.NoError(t, err)
+	// Check that all folders are in returned list
 	assert.Len(t, res.GetItems(), 2)
 
-	// Check that folder store was queried despite the initial cache hit
+	// Check that folder store was queried
 	assert.Equal(t, 1, folderStore.calls)
 }
 
