@@ -80,7 +80,7 @@
     "@react-aria/overlays": "3.28.0",
     "@react-aria/utils": "3.30.0",
     "@tanstack/react-virtual": "^3.5.1",
-    "@types/jquery": "3.5.32",
+    "@types/jquery": "3.5.33",
     "@types/lodash": "4.17.20",
     "@types/react-table": "7.7.20",
     "calculate-size": "1.1.1",
