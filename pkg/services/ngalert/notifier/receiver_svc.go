@@ -38,8 +38,8 @@ var (
 	)
 
 	ErrReceiverOrigin = errutil.BadRequest("alerting.notifications.receivers.originInvalid").MustTemplate(
-		"Receiver '{{ .Public.Name }} cannot be {{ .Public.Action }}ed because it belongs to a configuration in staging mode.",
-		errutil.WithPublic("Receiver '{{ .Public.Name }} cannot be {{ .Public.Action }}ed because it belongs to a configuration in staging mode. Commit the staged configuration first."),
+		"Receiver '{{ .Public.Name }} cannot be {{ .Public.Action }}d because it belongs to an imported configuration.",
+		errutil.WithPublic("Receiver '{{ .Public.Name }} cannot be {{ .Public.Action }}d because it belongs to an imported configuration. Finish the import of the configuration first."),
 	)
 )
 

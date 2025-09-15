@@ -407,7 +407,7 @@ func TestReceiverService_Create(t *testing.T) {
 		{
 			name:        "create receiver with non-Grafana origin fails",
 			user:        writer,
-			receiver:    models.CopyReceiverWith(baseReceiver, models.ReceiverMuts.WithOrigin(models.ResourceOriginStaging)),
+			receiver:    models.CopyReceiverWith(baseReceiver, models.ReceiverMuts.WithOrigin(models.ResourceOriginImported)),
 			expectedErr: ErrReceiverOrigin,
 		},
 		{

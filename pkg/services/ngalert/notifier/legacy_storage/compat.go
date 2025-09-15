@@ -83,7 +83,7 @@ func PostableApiReceiverToReceiver(postable *apimodels.PostableApiReceiver, prov
 
 // GetReceiverProvenance determines the provenance of a definitions.PostableApiReceiver based on the provenance of its integrations.
 func GetReceiverProvenance(storedProvenances map[string]models.Provenance, r *apimodels.PostableApiReceiver, origin models.ResourceOrigin) models.Provenance {
-	if origin == models.ResourceOriginStaging {
+	if origin == models.ResourceOriginImported {
 		return models.ProvenanceConvertedPrometheus
 	}
 

@@ -47,8 +47,8 @@ type ResourceOrigin string
 const (
 	// ResourceOriginGrafana indicates that the resource is in the Grafana configuration
 	ResourceOriginGrafana ResourceOrigin = "grafana"
-	// ResourceOriginStaging indicates that the resource is from the staging configuration
-	ResourceOriginStaging ResourceOrigin = "staging"
+	// ResourceOriginImported indicates that the resource is from the imported configuration
+	ResourceOriginImported ResourceOrigin = "imported"
 )
 
 // Receiver is the domain model representation of a receiver / contact point.
