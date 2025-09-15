@@ -1,5 +1,7 @@
 import { test, expect } from '@grafana/plugin-e2e';
 
+import { getReloadableDashboards } from './utils';
+
 test.use({
   featureToggles: {
     scopeFilters: true,
@@ -8,8 +10,8 @@ test.use({
   },
 });
 
-export const DASHBOARD_UNDER_TEST = 'cuj-dashboard-1';
-export const PANEL_UNDER_TEST = 'Panel Title';
+const DASHBOARD_UNDER_TEST = 'cuj-dashboard-1';
+const PANEL_UNDER_TEST = 'Panel Title';
 
 test.describe(
   'Dashboard view CUJs',
@@ -18,7 +20,23 @@ test.describe(
   },
   () => {
     test('View a dashboard', async ({ page, gotoDashboardPage, selectors }) => {
-      await test.step('1.Top level selectors', async () => {
+      const dashboards = await getReloadableDashboards();
+      if (dashboards.length === 0) {
+        dashboards.push(DASHBOARD_UNDER_TEST);
+      }
+
+      for (const db of dashboards) {
+        await test.step('1.Loads dashboard successfully - ' + db, async () => {
+          const dashboardPage = await gotoDashboardPage({ uid: db });
+
+          const panelTitle = dashboardPage.getByGrafanaSelector(
+            selectors.components.Panels.Panel.title(PANEL_UNDER_TEST)
+          );
+          await expect(panelTitle).toBeVisible();
+        });
+      }
+
+      await test.step('2.Top level selectors', async () => {
         const dashboardPage = await gotoDashboardPage({ uid: DASHBOARD_UNDER_TEST });
 
         const groupByVariable = dashboardPage.getByGrafanaSelector(
@@ -33,7 +51,7 @@ test.describe(
         expect(adHocVariable).toBeVisible();
       });
 
-      await test.step('2.View individual panel', async () => {
+      await test.step('3.View individual panel', async () => {
         const dashboardPage = await gotoDashboardPage({ uid: DASHBOARD_UNDER_TEST });
 
         const viewPanelBreadcrumb = dashboardPage.getByGrafanaSelector(
@@ -60,12 +78,12 @@ test.describe(
         await expect(viewPanelBreadcrumb).not.toBeVisible();
       });
 
-      await test.step('3.Set time range for the dashboard', async () => {
+      await test.step('4.Set time range for the dashboard', async () => {
         const dashboardPage = await gotoDashboardPage({ uid: DASHBOARD_UNDER_TEST });
 
         const timePickerButton = dashboardPage.getByGrafanaSelector(selectors.components.TimePicker.openButton);
 
-        await test.step('3.1.Click on Quick range', async () => {
+        await test.step('4.1.Click on Quick range', async () => {
           await page.mouse.move(0, 0);
           await expect.soft(timePickerButton).toContainText('Last 6 hours');
           await timePickerButton.click();
@@ -76,7 +94,7 @@ test.describe(
           expect.soft(await timePickerButton.textContent()).toContain('Last 5 minutes');
         });
 
-        await test.step('3.2.Set absolute time range', async () => {
+        await test.step('4.2.Set absolute time range', async () => {
           await timePickerButton.click();
           await dashboardPage
             .getByGrafanaSelector(selectors.components.TimePicker.fromField)
@@ -87,7 +105,7 @@ test.describe(
           expect.soft(await timePickerButton.textContent()).toContain('2024-01-01 00:00:00 to 2024-01-01 23:59:59');
         });
 
-        await test.step('3.3.Change time zone', async () => {
+        await test.step('4.3.Change time zone', async () => {
           await timePickerButton.click();
           await dashboardPage
             .getByGrafanaSelector(selectors.components.TimeZonePicker.changeTimeSettingsButton)
@@ -105,7 +123,7 @@ test.describe(
           await timePickerButton.click();
         });
 
-        await test.step('3.4.Navigate time range', async () => {
+        await test.step('4.4.Navigate time range', async () => {
           await timePickerButton.click();
 
           await dashboardPage
@@ -130,7 +148,7 @@ test.describe(
         });
       });
 
-      await test.step('4.Force refresh', async () => {
+      await test.step('5.Force refresh', async () => {
         const dashboardPage = await gotoDashboardPage({ uid: DASHBOARD_UNDER_TEST });
 
         const refreshBtn = dashboardPage.getByGrafanaSelector(selectors.components.RefreshPicker.runButtonV2);
@@ -146,7 +164,7 @@ test.describe(
         expect(await panelContent.textContent()).not.toBe(panelContents);
       });
 
-      await test.step('5.Turn off refresh', async () => {
+      await test.step('6.Turn off refresh', async () => {
         const dashboardPage = await gotoDashboardPage({ uid: DASHBOARD_UNDER_TEST });
 
         const intervalRefreshBtn = dashboardPage.getByGrafanaSelector(

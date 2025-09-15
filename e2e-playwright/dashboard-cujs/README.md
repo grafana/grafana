@@ -22,7 +22,15 @@ Configures the path to the API mocking configuration file. This enables dynamic 
 
 If the `API_CONFIG_PATH` is not set, the test suite will use mocked responses for API calls using the default configuration, which has settings for the default testing environment. If set, the test suite will make real API calls instead of using mocks, based on the configuration provided in the specified file. This configuration would be used only in live data scenarios where the endpoints might differ due to testing on different dashboards that might use different DataSources which furthermore might have different API endpoints.
 
-The config file should contain endpoint glob patterns for labels and values APIs. These endpoints are used to fetch labels (keys) and values for the AdHocFilters and the GroupBy variables. The pattern should be a string glob pattern, e.g.: '\*\*/resources/\*\*/labels\*'
+The config file should contain endpoint glob patterns for labels and values APIs. These endpoints are used to fetch labels (keys) and values for the AdHocFilters and the GroupBy variables. The pattern should be a string glob pattern, e.g.: `\*\*/resources/\*\*/labels\*`
+
+Alongside the endpoint patterns, the config file can also specify a list of dashboard UIDs that would be used to run navigation and view tests against each of the dashboards. This is useful to verify that static dashboards, alongside reloadable dashboards are viewed and navigated correctly. To use this property, simply add 
+
+```json
+  "reloadable_dashboards": ["cuj-static-dashboard", "cuj-reloadable-dashboard"]
+```
+
+in the config file. The respective tests will then run against the specified dashboards.
 
 ```bash
 API_CONFIG_PATH=/path/to/custom-config.json yarn e2e:playwright
