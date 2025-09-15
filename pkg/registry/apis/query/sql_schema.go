@@ -3,17 +3,14 @@ package query
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"net/http"
 	"strconv"
-	"strings"
 
 	"github.com/davecgh/go-spew/spew"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/expr"
-	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/dsquerierclient"
 	"github.com/grafana/grafana/pkg/setting"
 	"go.opentelemetry.io/otel/attribute"
@@ -151,66 +148,68 @@ func (r *sqlSchemaREST) Connect(connectCtx context.Context, name string, _ runti
 
 		qdr, err := handleSQLSchemaQuery(ctx, *raw, *b, httpreq, *responder, connectLogger)
 
-		if err != nil {
-			connectLogger.Error("execute error", "http code", query.GetResponseCode(qdr), "err", err)
-			logEmptyRefids(raw.Queries, connectLogger)
-			if qdr != nil { // if we have a response, we assume the err is set in the response
-				responder.Object(query.GetResponseCode(qdr), &query.QueryDataResponse{
-					QueryDataResponse: *qdr,
-				})
-				return
-			} else {
-				var errorDataResponse backend.DataResponse
+		// if err != nil {
+		// 	connectLogger.Error("execute error", "http code", query.GetResponseCode(qdr), "err", err)
+		// 	logEmptyRefids(raw.Queries, connectLogger)
+		// 	if qdr != nil { // if we have a response, we assume the err is set in the response
+		// 		responder.Object(query.GetResponseCode(qdr), &query.QueryDataResponse{
+		// 			QueryDataResponse: *qdr,
+		// 		})
+		// 		return
+		// 	} else {
+		// 		var errorDataResponse backend.DataResponse
 
-				badRequestErrors := []error{
-					service.ErrInvalidDatasourceID,
-					service.ErrNoQueriesFound,
-					service.ErrMissingDataSourceInfo,
-					service.ErrQueryParamMismatch,
-					service.ErrDuplicateRefId,
-					datasources.ErrDataSourceNotFound,
-				}
-				isTypedBadRequestError := false
-				for _, badRequestError := range badRequestErrors {
-					if errors.Is(err, badRequestError) {
-						isTypedBadRequestError = true
-					}
-				}
-				if isTypedBadRequestError {
-					errorDataResponse = backend.ErrDataResponseWithSource(backend.StatusBadRequest, backend.ErrorSourceDownstream, err.Error())
-				} else if strings.Contains(err.Error(), "expression request error") {
-					connectLogger.Error("Error calling TransformData in an expression", "err", err)
-					errorDataResponse = backend.ErrDataResponseWithSource(backend.StatusBadRequest, backend.ErrorSourceDownstream, err.Error())
-				} else {
-					connectLogger.Error("unknown error, treated as a 500", "err", err)
-					responder.Error(err)
-					return
-				}
-				// TODO ensure errors also return the refId wherever possible
-				errorRefId := raw.Queries[0].RefID
-				if errorRefId == "" {
-					errorRefId = "A"
-				}
+		// 		badRequestErrors := []error{
+		// 			service.ErrInvalidDatasourceID,
+		// 			service.ErrNoQueriesFound,
+		// 			service.ErrMissingDataSourceInfo,
+		// 			service.ErrQueryParamMismatch,
+		// 			service.ErrDuplicateRefId,
+		// 			datasources.ErrDataSourceNotFound,
+		// 		}
+		// 		isTypedBadRequestError := false
+		// 		for _, badRequestError := range badRequestErrors {
+		// 			if errors.Is(err, badRequestError) {
+		// 				isTypedBadRequestError = true
+		// 			}
+		// 		}
+		// 		if isTypedBadRequestError {
+		// 			errorDataResponse = backend.ErrDataResponseWithSource(backend.StatusBadRequest, backend.ErrorSourceDownstream, err.Error())
+		// 		} else if strings.Contains(err.Error(), "expression request error") {
+		// 			connectLogger.Error("Error calling TransformData in an expression", "err", err)
+		// 			errorDataResponse = backend.ErrDataResponseWithSource(backend.StatusBadRequest, backend.ErrorSourceDownstream, err.Error())
+		// 		} else {
+		// 			connectLogger.Error("unknown error, treated as a 500", "err", err)
+		// 			responder.Error(err)
+		// 			return
+		// 		}
+		// 		// TODO ensure errors also return the refId wherever possible
+		// 		errorRefId := raw.Queries[0].RefID
+		// 		if errorRefId == "" {
+		// 			errorRefId = "A"
+		// 		}
 
-				qdr = &backend.QueryDataResponse{
-					Responses: map[string]backend.DataResponse{
-						errorRefId: errorDataResponse,
-					},
-				}
-				responder.Object(query.GetResponseCode(qdr), &query.QueryDataResponse{
-					QueryDataResponse: *qdr,
-				})
-				return
-			}
-		}
+		// 		qdr = &backend.QueryDataResponse{
+		// 			Responses: map[string]backend.DataResponse{
+		// 				errorRefId: errorDataResponse,
+		// 			},
+		// 		}
+		// 		responder.Object(query.GetResponseCode(qdr), &query.QueryDataResponse{
+		// 			QueryDataResponse: *qdr,
+		// 		})
+		// 		return
+		// 	}
+		// }
 
-		responder.Object(query.GetResponseCode(qdr), &query.QueryDataResponse{
-			QueryDataResponse: *qdr, // wrap the backend response as a QueryDataResponse
+		// TODO error handling
+
+		responder.Object(200, &query.SQLSchemaResponse{
+			SQLSchemaResponse: qdr,
 		})
 	}), nil
 }
 
-func handleSQLSchemaQuery(ctx context.Context, raw query.QueryDataRequest, b QueryAPIBuilder, httpreq *http.Request, responder responderWrapper, connectLogger log.Logger) (*backend.QueryDataResponse, error) {
+func handleSQLSchemaQuery(ctx context.Context, raw query.QueryDataRequest, b QueryAPIBuilder, httpreq *http.Request, responder responderWrapper, connectLogger log.Logger) (expr.SQLSchemaResponse, error) {
 	spew.Dump("SQLSchemaRequest", raw)
 	var jsonQueries = make([]*simplejson.Json, 0, len(raw.Queries))
 	for _, query := range raw.Queries {
@@ -272,15 +271,20 @@ func handleSQLSchemaQuery(ctx context.Context, raw query.QueryDataRequest, b Que
 		qsDsClientBuilder,
 	)
 
-	qdr, err := service.QueryData(ctx, dsQuerierLoggerWithSlug, cache, exprService, mReq, qsDsClientBuilder, headers)
+	//exprService.GetSQLSchemas(ctx, req)
 
+	//qdr, err := service.QueryData(ctx, dsQuerierLoggerWithSlug, cache, exprService, mReq, qsDsClientBuilder, headers)
+
+	schemaRsp, err := service.GetSQLSchemas(ctx, dsQuerierLoggerWithSlug, cache, exprService, mReq, qsDsClientBuilder, headers)
+
+	// service.
 	// tell the `instance` structure that it can now report
 	// metrics that are only reported once during a request
 	instance.ReportMetrics()
 
 	if err != nil {
-		return qdr, err
+		return schemaRsp, err
 	}
 
-	return qdr, nil
+	return schemaRsp, nil
 }
