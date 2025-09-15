@@ -111,8 +111,11 @@ func applyPanelDefaults(panel map[string]interface{}) {
 			"overrides": []interface{}{},
 		}
 	} else {
-		// Add overrides array if it doesn't exist (matches frontend behavior)
+		// Add missing defaults and overrides (matches frontend defaultsDeep behavior)
 		if fieldConfig, ok := panel["fieldConfig"].(map[string]interface{}); ok {
+			if _, hasDefaults := fieldConfig["defaults"]; !hasDefaults {
+				fieldConfig["defaults"] = map[string]interface{}{}
+			}
 			if _, hasOverrides := fieldConfig["overrides"]; !hasOverrides {
 				fieldConfig["overrides"] = []interface{}{}
 			}
@@ -622,9 +625,18 @@ func filterDefaultValues(panel map[string]interface{}, originalProperties map[st
 	for prop, defaultValue := range defaults {
 		if panelValue, exists := panel[prop]; exists {
 			if isEqual(panelValue, defaultValue) {
-				// Only remove if it wasn't originally present in the input
-				if !originalProperties[prop] {
+				// Special case: fieldConfig is always removed if it matches defaults (frontend getSaveModel behavior)
+				if prop == "fieldConfig" {
+					// Debug: log what we're comparing
+					// fmt.Printf("DEBUG: Removing fieldConfig that matches default\n")
+					// fmt.Printf("  Panel fieldConfig: %+v\n", panelValue)
+					// fmt.Printf("  Default fieldConfig: %+v\n", defaultValue)
 					delete(panel, prop)
+				} else {
+					// Only remove if it wasn't originally present in the input
+					if !originalProperties[prop] {
+						delete(panel, prop)
+					}
 				}
 			}
 		}
