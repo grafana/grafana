@@ -271,6 +271,7 @@ func (d *jobDriver) processJobWithLeaseCheck(ctx context.Context, job *provision
 }
 
 func (d *jobDriver) processJob(ctx context.Context, job *provisioning.Job, recorder JobProgressRecorder) error {
+	logger := logging.FromContext(ctx)
 	for _, worker := range d.workers {
 		if !worker.IsSupported(ctx, *job) {
 			continue
@@ -281,7 +282,14 @@ func (d *jobDriver) processJob(ctx context.Context, job *provisioning.Job, recor
 			return apifmt.Errorf("failed to get repository '%s': %w", job.Spec.Repository, err)
 		}
 
-		// TODO(ferruvich): check if queued for deletion to ignore
+		r := repo.Config()
+		if r.DeletionTimestamp != nil && !r.DeletionTimestamp.IsZero() {
+			logger.Info("repository is marked for deletion, skipping processing job",
+				"name", r.Name,
+				"namespace", r.Namespace,
+			)
+			return nil
+		}
 
 		return worker.Process(ctx, repo, *job, recorder)
 	}

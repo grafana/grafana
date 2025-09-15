@@ -254,7 +254,7 @@ func (c *resourceClients) ForResource(ctx context.Context, gvr schema.GroupVersi
 	var versionless schema.GroupVersionResource
 	if gvr.Version == "" {
 		versionless = gvr
-		gvr, gvk, err = discovery.GetPreferredVersion(schema.GroupResource{
+		gvr, gvk, err = discovery.GetPreferredVesion(schema.GroupResource{
 			Group:    gvr.Group,
 			Resource: gvr.Resource,
 		})

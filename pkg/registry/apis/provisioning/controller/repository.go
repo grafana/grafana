@@ -39,6 +39,11 @@ type queueItem struct {
 	attempts int
 }
 
+//go:generate mockery --name Finalizer --structname MockFinalizer --inpackage --filename finalizer_mock.go --with-expecter
+type Finalizer interface {
+	process(ctx context.Context, repo repository.Repository, finalizers []string) error
+}
+
 // RepositoryController controls how and when CRD is established.
 type RepositoryController struct {
 	client     client.ProvisioningV0alpha1Interface
@@ -48,7 +53,7 @@ type RepositoryController struct {
 	dualwrite  dualwrite.Service
 
 	jobs          jobs.Queue
-	finalizer     *finalizer
+	finalizer     Finalizer
 	statusPatcher StatusPatcher
 
 	repoFactory   repository.Factory
@@ -227,7 +232,7 @@ func (rc *RepositoryController) handleDelete(ctx context.Context, obj *provision
 				FieldManager: "provisioning-controller",
 			})
 		if err != nil {
-			return fmt.Errorf("remove finalizers: %w")
+			return fmt.Errorf("remove finalizers: %w", err)
 		}
 		return nil
 	} else {

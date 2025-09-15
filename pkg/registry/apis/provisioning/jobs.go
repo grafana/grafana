@@ -102,8 +102,12 @@ func (c *jobsConnector) Connect(
 			return
 		}
 
-		//TODO(ferruvich): fail with bad request if repo is queued for deletion
 		cfg := repo.Config()
+
+		if cfg.DeletionTimestamp != nil && !cfg.DeletionTimestamp.IsZero() {
+			responder.Error(apierrors.NewBadRequest("cannot create jobs for a repository marked for deletion"))
+			return
+		}
 
 		if idx > 0 {
 			responder.Error(apierrors.NewBadRequest("can not post to a job UID"))
