@@ -193,7 +193,7 @@ func TestCanSearchByTitle(t *testing.T) {
 		}
 	})
 
-	t.Run("title search will ignore terms < 3 characters unless it is exact match", func(t *testing.T) {
+	t.Run("title search will ignore terms < 3 characters", func(t *testing.T) {
 		index := newTestDashboardsIndex(t, threshold, 2, 2, noop)
 		indexDocumentsWithTitles(t, index, key, map[string]string{
 			"name1": "new dashboard",
