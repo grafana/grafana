@@ -1,6 +1,7 @@
 import { css } from '@emotion/css';
-import { CSSProperties, memo, useCallback, useEffect, useMemo, useRef, useState, MouseEvent } from 'react';
+import { CSSProperties, memo, useCallback, useEffect, useMemo, useState, MouseEvent } from 'react';
 import Highlighter from 'react-highlight-words';
+import { useMeasure } from 'react-use';
 import tinycolor from 'tinycolor2';
 
 import { findHighlightChunksInText, GrafanaTheme2, LogsDedupStrategy, TimeRange } from '@grafana/data';
@@ -17,13 +18,7 @@ import { LogLineMenu } from './LogLineMenu';
 import { useLogIsPermalinked, useLogIsPinned, useLogListContext } from './LogListContext';
 import { useLogListSearchContext } from './LogListSearchContext';
 import { LogListModel } from './processing';
-import {
-  FIELD_GAP_MULTIPLIER,
-  hasUnderOrOverflow,
-  LogFieldDimension,
-  LogLineVirtualization,
-  DEFAULT_LINE_HEIGHT,
-} from './virtualization';
+import { FIELD_GAP_MULTIPLIER, LogFieldDimension, LogLineVirtualization, DEFAULT_LINE_HEIGHT } from './virtualization';
 
 export interface Props {
   displayedFields: string[];
@@ -117,18 +112,17 @@ const LogLineComponent = memo(
     const [collapsed, setCollapsed] = useState<boolean | undefined>(
       wrapLogMessage && log.collapsed !== undefined ? log.collapsed : undefined
     );
-    const logLineRef = useRef<HTMLDivElement | null>(null);
     const pinned = useLogIsPinned(log);
     const permalinked = useLogIsPermalinked(log);
+    const [logLineRef, dimensions] = useMeasure<HTMLDivElement>();
 
     useEffect(() => {
-      if (!onOverflow || !logLineRef.current || !virtualization || !height || !wrapLogMessage) {
+      if (!onOverflow || !virtualization || !height || !wrapLogMessage) {
         return;
       }
       const calculatedHeight = typeof height === 'number' ? height : undefined;
-      const actualHeight = hasUnderOrOverflow(virtualization, logLineRef.current, calculatedHeight, log.collapsed);
-      if (actualHeight) {
-        onOverflow(index, log.uid, actualHeight);
+      if (calculatedHeight !== dimensions.height && dimensions.height > 0) {
+        onOverflow(index, log.uid, dimensions.height);
       }
     });
 
@@ -159,16 +153,6 @@ const LogLineComponent = memo(
       },
       [log, onClick]
     );
-
-    const handleLogDetailsResize = useCallback(() => {
-      if (!onOverflow || !logLineRef.current || !virtualization) {
-        return;
-      }
-      const actualHeight = hasUnderOrOverflow(virtualization, logLineRef.current, undefined, log.collapsed);
-      if (actualHeight) {
-        onOverflow(index, log.uid, actualHeight);
-      }
-    }, [index, log.collapsed, log.uid, onOverflow, virtualization]);
 
     const detailsShown = detailsDisplayed(log);
 
@@ -270,13 +254,7 @@ const LogLineComponent = memo(
           </div>
         )}
         {detailsMode === 'inline' && detailsShown && (
-          <InlineLogLineDetails
-            logs={logs}
-            log={log}
-            onResize={handleLogDetailsResize}
-            timeRange={timeRange}
-            timeZone={timeZone}
-          />
+          <InlineLogLineDetails logs={logs} log={log} timeRange={timeRange} timeZone={timeZone} />
         )}
       </>
     );

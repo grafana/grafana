@@ -405,10 +405,6 @@ const LogListComponent = ({
     [handleTextSelection, toggleDetails]
   );
 
-  const handleLogDetailsResize = useCallback(() => {
-    debouncedResetAfterIndex(0);
-  }, [debouncedResetAfterIndex]);
-
   const focusLogLine = useCallback(
     (log: LogListModel) => {
       const index = filteredLogs.findIndex((filteredLog) => filteredLog.uid === log.uid);
@@ -434,7 +430,6 @@ const LogListComponent = ({
           logs={filteredLogs}
           timeRange={timeRange}
           timeZone={timeZone}
-          onResize={handleLogDetailsResize}
           showControls={showControls}
         />
       )}
