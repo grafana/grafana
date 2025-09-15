@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { setPluginImportUtils } from '@grafana/runtime';
-import { SceneGridLayout, SceneTimeRange, VizPanel } from '@grafana/scenes';
+import { SceneGridLayout, SceneTimeRange, SceneVariableSet, VizPanel } from '@grafana/scenes';
 
 import { getPanelPlugin } from '../../../../../packages/grafana-data/test/helpers/pluginMocks';
 import { DashboardScene } from '../scene/DashboardScene';
@@ -38,6 +38,7 @@ jest.mock('react-router-dom-v5-compat', () => ({
 
 export function buildTestScene() {
   const testScene = new DashboardScene({
+    $variables: new SceneVariableSet({ variables: [] }),
     $timeRange: new SceneTimeRange({ from: 'now-6h', to: 'now' }),
     isEditing: true,
     body: new DefaultGridLayoutManager({
