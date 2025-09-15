@@ -1162,4 +1162,9 @@ export interface FeatureToggles {
   * @default false
   */
   pluginContainers?: boolean;
+  /**
+  * Enables sending evaluation history to Loki
+  * @default false
+  */
+  alertingEvaluationHistory?: boolean;
 }

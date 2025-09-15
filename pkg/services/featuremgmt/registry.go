@@ -2015,6 +2015,14 @@ var (
 			Expression:      "false",
 			RequiresRestart: true,
 		},
+		{
+			Name:            "alertingEvaluationHistory",
+			Description:     "Enables sending evaluation history to Loki",
+			Stage:           FeatureStageExperimental,
+			Owner:           grafanaAlertingSquad,
+			Expression:      "false",
+			RequiresRestart: true,
+		},
 	}
 )
 

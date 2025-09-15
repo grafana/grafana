@@ -1298,6 +1298,7 @@ func setupScheduler(
 		FeatureToggles:         featuremgmt.WithFeatures(),
 		RecordingWriter:        fakeRecordingWriter,
 		RuleStopReasonProvider: ruleStopReasonProvider,
+		Historian:              &fakeHistorian{},
 	}
 	managerCfg := state.ManagerCfg{
 		Metrics:                 m.GetStateMetrics(),
