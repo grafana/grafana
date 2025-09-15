@@ -1182,7 +1182,6 @@ func removeSmallTerms(query string) string {
 	}
 
 	return strings.Join(validWords, " ")
-
 }
 
 func (b *bleveIndex) stopUpdaterAndCloseIndex() error {
