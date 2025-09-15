@@ -20,9 +20,9 @@ import { Box, Stack, useStyles2 } from '@grafana/ui';
 import { PanelEditControls } from '../panel-edit/PanelEditControls';
 import { getDashboardSceneFor } from '../utils/utils';
 
+import { DashboardControlsButton } from './DashboardControlsMenu';
 import { DashboardLinksControls } from './DashboardLinksControls';
 import { DashboardScene } from './DashboardScene';
-import { DropdownVariableControls } from './DropdownVariableControls';
 import { VariableControls } from './VariableControls';
 
 export interface DashboardControlsState extends SceneObjectState {
@@ -124,6 +124,11 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
   const { links, editPanel } = dashboard.useState();
   const styles = useStyles2(getStyles);
   const showDebugger = window.location.search.includes('scene-debugger');
+  const hasControlMenuVariables = sceneGraph
+    .getVariables(dashboard)
+    .useState()
+    .variables.some((v) => v.state.showInControlsMenu === true);
+  const hasControlMenuLinks = links.some((link) => link.placement === 'inControlsMenu');
 
   if (!model.hasControls()) {
     // To still have spacing when no controls are rendered
@@ -147,14 +152,16 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
         {editPanel && <PanelEditControls panelEditor={editPanel} />}
       </Stack>
       {!hideTimeControls && (
-        <div className={styles.timeControlStack}>
+        <div className={cx(styles.timeControls, editPanel && styles.timeControlsWrap)}>
           <timePicker.Component model={timePicker} />
           <refreshPicker.Component model={refreshPicker} />
         </div>
       )}
-      <Stack>
-        <DropdownVariableControls dashboard={dashboard} />
-      </Stack>
+      {(hasControlMenuVariables || hasControlMenuLinks) && (
+        <Stack>
+          <DashboardControlsButton dashboard={dashboard} />
+        </Stack>
+      )}
       {showDebugger && <SceneDebugger scene={model} key={'scene-debugger'} />}
     </div>
   );
@@ -181,7 +188,7 @@ function getStyles(theme: GrafanaTheme2) {
       gap: theme.spacing(1),
       padding: theme.spacing(2),
       flexDirection: 'row',
-      flexWrap: 'wrap-reverse',
+      flexWrap: 'nowrap',
       position: 'relative',
       width: '100%',
       marginLeft: 'auto',
@@ -191,6 +198,7 @@ function getStyles(theme: GrafanaTheme2) {
       },
     }),
     controlsPanelEdit: css({
+      flexWrap: 'wrap-reverse',
       // In panel edit we do not need any right padding as the splitter is providing it
       paddingRight: 0,
     }),
@@ -198,11 +206,13 @@ function getStyles(theme: GrafanaTheme2) {
       background: 'unset',
       position: 'unset',
     }),
-    timeControlStack: css({
+    timeControls: css({
       display: 'flex',
-      flexWrap: 'wrap',
       justifyContent: 'flex-end',
       gap: theme.spacing(1),
+    }),
+    timeControlsWrap: css({
+      flexWrap: 'wrap',
       marginLeft: 'auto',
     }),
   };

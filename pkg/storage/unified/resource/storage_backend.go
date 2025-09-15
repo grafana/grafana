@@ -18,43 +18,189 @@ import (
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
+	"github.com/grafana/grafana/pkg/util/debouncer"
+	"github.com/prometheus/client_golang/prometheus"
+	"go.opentelemetry.io/otel/trace"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 const (
-	defaultListBufferSize = 100
+	defaultListBufferSize       = 100
+	prunerMaxEvents             = 20
+	defaultEventRetentionPeriod = 1 * time.Hour
+	defaultEventPruningInterval = 5 * time.Minute
 )
 
-// Unified storage backend based on KV storage.
+// kvStorageBackend Unified storage backend based on KV storage.
 type kvStorageBackend struct {
-	snowflake  *snowflake.Node
-	kv         KV
-	dataStore  *dataStore
-	metaStore  *metadataStore
-	eventStore *eventStore
-	notifier   *notifier
-	builder    DocumentBuilder
-	log        logging.Logger
+	snowflake            *snowflake.Node
+	kv                   KV
+	dataStore            *dataStore
+	metaStore            *metadataStore
+	eventStore           *eventStore
+	notifier             *notifier
+	builder              DocumentBuilder
+	log                  logging.Logger
+	withPruner           bool
+	eventRetentionPeriod time.Duration
+	eventPruningInterval time.Duration
+	historyPruner        Pruner
+	//tracer        trace.Tracer
+	//reg           prometheus.Registerer
 }
 
 var _ StorageBackend = &kvStorageBackend{}
 
-func NewKvStorageBackend(kv KV) *kvStorageBackend {
+type KvBackendOptions struct {
+	KvStore              KV
+	WithPruner           bool
+	EventRetentionPeriod time.Duration         // How long to keep events (default: 1 hour)
+	EventPruningInterval time.Duration         // How often to run the event pruning (default: 5 minutes)
+	Tracer               trace.Tracer          // TODO add tracing
+	Reg                  prometheus.Registerer // TODO add metrics
+}
+
+func NewKvStorageBackend(opts KvBackendOptions) (StorageBackend, error) {
+	ctx := context.Background()
+	kv := opts.KvStore
+
 	s, err := snowflake.NewNode(rand.Int64N(1024))
 	if err != nil {
-		panic(err)
+		return nil, fmt.Errorf("failed to create snowflake node: %w", err)
 	}
 	eventStore := newEventStore(kv)
-	return &kvStorageBackend{
-		kv:         kv,
-		dataStore:  newDataStore(kv),
-		metaStore:  newMetadataStore(kv),
-		eventStore: eventStore,
-		notifier:   newNotifier(eventStore, notifierOptions{}),
-		snowflake:  s,
-		builder:    StandardDocumentBuilder(), // For now we use the standard document builder.
-		log:        &logging.NoOpLogger{},     // Make this configurable
+
+	eventRetentionPeriod := opts.EventRetentionPeriod
+	if eventRetentionPeriod <= 0 {
+		eventRetentionPeriod = defaultEventRetentionPeriod
 	}
+
+	eventPruningInterval := opts.EventPruningInterval
+	if eventPruningInterval <= 0 {
+		eventPruningInterval = defaultEventPruningInterval
+	}
+
+	backend := &kvStorageBackend{
+		kv:                   kv,
+		dataStore:            newDataStore(kv),
+		metaStore:            newMetadataStore(kv),
+		eventStore:           eventStore,
+		notifier:             newNotifier(eventStore, notifierOptions{}),
+		snowflake:            s,
+		builder:              StandardDocumentBuilder(), // For now we use the standard document builder.
+		log:                  &logging.NoOpLogger{},     // Make this configurable
+		eventRetentionPeriod: eventRetentionPeriod,
+		eventPruningInterval: eventPruningInterval,
+	}
+	err = backend.initPruner(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to initialize pruner: %w", err)
+	}
+
+	// Start the event cleanup background job
+	go backend.runCleanupOldEvents(ctx)
+
+	return backend, nil
+}
+
+// runCleanupOldEvents starts a background goroutine that periodically cleans up old events
+func (k *kvStorageBackend) runCleanupOldEvents(ctx context.Context) {
+	// Run cleanup every hour
+	ticker := time.NewTicker(k.eventPruningInterval)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-ctx.Done():
+			k.log.Debug("Event cleanup stopped due to context cancellation")
+			return
+		case <-ticker.C:
+			k.cleanupOldEvents(ctx)
+		}
+	}
+}
+
+// cleanupOldEvents performs the actual cleanup of old events
+func (k *kvStorageBackend) cleanupOldEvents(ctx context.Context) {
+	cutoff := time.Now().Add(-k.eventRetentionPeriod)
+	deletedCount, err := k.eventStore.CleanupOldEvents(ctx, cutoff)
+	if err != nil {
+		k.log.Error("Failed to cleanup old events", "error", err)
+		return
+	}
+
+	if deletedCount == 0 {
+		k.log.Info("Cleaned up old events", "deleted_count", deletedCount, "retention_period", k.eventRetentionPeriod)
+	}
+}
+
+func (k *kvStorageBackend) pruneEvents(ctx context.Context, key PruningKey) error {
+	if !key.Validate() {
+		return fmt.Errorf("invalid pruning key, all fields must be set: %+v", key)
+	}
+
+	listKey := ListRequestKey{
+		Namespace: key.Namespace,
+		Group:     key.Group,
+		Resource:  key.Resource,
+		Name:      key.Name,
+		Sort:      SortOrderDesc,
+	}
+	counter := 0
+	// iterate over all keys for the resource and delete versions beyond the latest 20
+	for datakey, err := range k.dataStore.Keys(ctx, listKey) {
+		if err != nil {
+			return err
+		}
+
+		// Pruner needs to exclude deleted events
+		if counter < prunerMaxEvents && datakey.Action != DataActionDeleted {
+			counter++
+			continue
+		}
+
+		// If we already have 20 versions, delete any more create or update events
+		if datakey.Action != DataActionDeleted {
+			err := k.dataStore.Delete(ctx, datakey)
+			if err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
+}
+
+func (k *kvStorageBackend) initPruner(ctx context.Context) error {
+	if !k.withPruner {
+		k.log.Debug("Pruner disabled, using noop pruner")
+		k.historyPruner = &NoopPruner{}
+		return nil
+	}
+
+	k.log.Debug("Initializing history pruner")
+	pruner, err := debouncer.NewGroup(debouncer.DebouncerOpts[PruningKey]{
+		Name:           "history_pruner",
+		BufferSize:     1000,
+		MinWait:        time.Second * 30,
+		MaxWait:        time.Minute * 5,
+		ProcessHandler: k.pruneEvents,
+		ErrorHandler: func(key PruningKey, err error) {
+			k.log.Error("failed to prune history",
+				"namespace", key.Namespace,
+				"group", key.Group,
+				"resource", key.Resource,
+				"name", key.Name,
+				"error", err)
+		},
+	})
+	if err != nil {
+		return err
+	}
+
+	k.historyPruner = pruner
+	k.historyPruner.Start(ctx)
+	return nil
 }
 
 // WriteEvent writes a resource event (create/update/delete) to the storage backend.
@@ -150,6 +296,14 @@ func (k *kvStorageBackend) WriteEvent(ctx context.Context, event WriteEvent) (in
 	if err != nil {
 		return 0, fmt.Errorf("failed to save event: %w", err)
 	}
+
+	_ = k.historyPruner.Add(PruningKey{
+		Namespace: event.Key.Namespace,
+		Group:     event.Key.Group,
+		Resource:  event.Key.Resource,
+		Name:      event.Key.Name,
+	})
+
 	return rv, nil
 }
 

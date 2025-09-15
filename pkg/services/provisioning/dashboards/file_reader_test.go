@@ -30,6 +30,7 @@ import (
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/util"
+	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 const (
@@ -109,9 +110,8 @@ func TestCreatingNewDashboardFileReader(t *testing.T) {
 }
 
 func TestIntegrationDashboardFileReader(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test in short mode")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	logger := log.New("test-logger")
 	cfg := &config{}
 
@@ -134,9 +134,8 @@ func TestIntegrationDashboardFileReader(t *testing.T) {
 	tagService := tagimpl.ProvideService(sql)
 	dashStore, err := database.ProvideDashboardStore(sql, cfgT, features, tagService)
 	require.NoError(t, err)
-	folderStore := folderimpl.ProvideDashboardFolderStore(sql)
 	folderSvc := folderimpl.ProvideService(fStore, actest.FakeAccessControl{}, bus.ProvideBus(tracing.InitializeTracerForTest()),
-		dashStore, folderStore, nil, sql, featuremgmt.WithFeatures(),
+		dashStore, nil, sql, featuremgmt.WithFeatures(),
 		supportbundlestest.NewFakeBundleService(), nil, cfgT, nil, tracing.InitializeTracerForTest(), nil, dualwrite.ProvideTestService(), sort.ProvideService(), apiserver.WithoutRestConfig)
 
 	t.Run("Reading dashboards from disk", func(t *testing.T) {
@@ -146,7 +145,7 @@ func TestIntegrationDashboardFileReader(t *testing.T) {
 			cfg.Folder = "Team A"
 
 			fakeService.On("GetProvisionedDashboardData", mock.Anything, configName).Return(nil, nil).Once()
-			fakeService.On("SaveFolderForProvisionedDashboards", mock.Anything, mock.Anything).Return(&folder.Folder{ID: 1}, nil).Once()
+			fakeService.On("SaveFolderForProvisionedDashboards", mock.Anything, mock.Anything, configName).Return(&folder.Folder{ID: 1}, nil).Once()
 			fakeService.On("SaveProvisionedDashboard", mock.Anything, mock.Anything, mock.Anything).Return(&dashboards.Dashboard{ID: 2}, nil).Times(2)
 			reader, err := NewDashboardFileReader(cfg, logger, nil, fakeStore, folderSvc)
 			reader.dashboardProvisioningService = fakeService
@@ -325,7 +324,7 @@ func TestIntegrationDashboardFileReader(t *testing.T) {
 			cfg.Options["foldersFromFilesStructure"] = true
 
 			fakeService.On("GetProvisionedDashboardData", mock.Anything, configName).Return(nil, nil).Once()
-			fakeService.On("SaveFolderForProvisionedDashboards", mock.Anything, mock.Anything).Return(&folder.Folder{}, nil).Times(2)
+			fakeService.On("SaveFolderForProvisionedDashboards", mock.Anything, mock.Anything, configName).Return(&folder.Folder{}, nil).Times(2)
 			fakeService.On("SaveProvisionedDashboard", mock.Anything, mock.Anything, mock.Anything).Return(&dashboards.Dashboard{}, nil).Times(3)
 
 			reader, err := NewDashboardFileReader(cfg, logger, nil, fakeStore, folderSvc)
@@ -363,7 +362,7 @@ func TestIntegrationDashboardFileReader(t *testing.T) {
 			cfg2 := &config{Name: "2", Type: "file", OrgID: 1, Folder: "f2", Options: map[string]any{"path": containingID}}
 
 			fakeService.On("GetProvisionedDashboardData", mock.Anything, mock.AnythingOfType("string")).Return(nil, nil).Times(2)
-			fakeService.On("SaveFolderForProvisionedDashboards", mock.Anything, mock.Anything).Return(&folder.Folder{}, nil).Times(2)
+			fakeService.On("SaveFolderForProvisionedDashboards", mock.Anything, mock.Anything, mock.Anything).Return(&folder.Folder{}, nil).Times(2)
 			fakeService.On("SaveProvisionedDashboard", mock.Anything, mock.Anything, mock.Anything).Return(&dashboards.Dashboard{}, nil).Times(2)
 
 			reader1, err := NewDashboardFileReader(cfg1, logger, nil, fakeStore, folderSvc)
@@ -411,7 +410,7 @@ func TestIntegrationDashboardFileReader(t *testing.T) {
 				"folder": defaultDashboards,
 			},
 		}
-		fakeService.On("SaveFolderForProvisionedDashboards", mock.Anything, mock.Anything).Return(&folder.Folder{ID: 1}, nil).Once()
+		fakeService.On("SaveFolderForProvisionedDashboards", mock.Anything, mock.Anything, cfg.Name).Return(&folder.Folder{ID: 1}, nil).Once()
 
 		r, err := NewDashboardFileReader(cfg, logger, nil, fakeStore, folderSvc)
 		require.NoError(t, err)

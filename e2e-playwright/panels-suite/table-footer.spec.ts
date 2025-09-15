@@ -4,14 +4,14 @@ import { test, expect } from '@grafana/plugin-e2e';
 
 import { getColumnIdx } from './table-utils';
 
-const DASHBOARD_UID = '1ea31838-e4e8-4aa0-9333-1d4c3fa95641';
+const DASHBOARD_UID = '8100236d-603c-421e-a21b-2a0b0ea4eaa3';
 
 const waitForTableLoad = async (loc: Page | Locator) => {
   await expect(loc.locator('.rdg')).toBeVisible();
 };
 
 test.describe('Panels test: Table - Footer', { tag: ['@panels', '@table'] }, () => {
-  test('Footer unaffected by filtering', async ({ gotoDashboardPage, selectors, page }) => {
+  test('Footer affected by filtering', async ({ gotoDashboardPage, selectors, page }) => {
     const dashboardPage = await gotoDashboardPage({
       uid: DASHBOARD_UID,
       queryParams: new URLSearchParams({ editPanel: '4' }),
@@ -26,12 +26,6 @@ test.describe('Panels test: Table - Footer', { tag: ['@panels', '@table'] }, () 
     const minColumnIdx = await getColumnIdx(page, 'Min');
 
     // this is the footer cell for the "Min" column.
-    await expect(
-      dashboardPage
-        .getByGrafanaSelector(selectors.components.Panels.Visualization.TableNG.Footer.ReducerLabel)
-        .nth(minColumnIdx)
-    ).toHaveText('Last *');
-
     const minReducerValue = await dashboardPage
       .getByGrafanaSelector(selectors.components.Panels.Visualization.TableNG.Footer.Value)
       .nth(minColumnIdx)
@@ -57,7 +51,7 @@ test.describe('Panels test: Table - Footer', { tag: ['@panels', '@table'] }, () 
       dashboardPage
         .getByGrafanaSelector(selectors.components.Panels.Visualization.TableNG.Footer.Value)
         .nth(minColumnIdx)
-    ).toHaveText(minReducerValue);
+    ).not.toHaveText(minReducerValue);
   });
 
   test('Footer unaffected by sorting', async ({ gotoDashboardPage, selectors, page }) => {
@@ -75,12 +69,6 @@ test.describe('Panels test: Table - Footer', { tag: ['@panels', '@table'] }, () 
     const minColumnIdx = await getColumnIdx(page, 'Min');
 
     // this is the footer cell for the "Min" column.
-    await expect(
-      dashboardPage
-        .getByGrafanaSelector(selectors.components.Panels.Visualization.TableNG.Footer.ReducerLabel)
-        .nth(minColumnIdx)
-    ).toHaveText('Last *');
-
     const minReducerValue = await dashboardPage
       .getByGrafanaSelector(selectors.components.Panels.Visualization.TableNG.Footer.Value)
       .nth(minColumnIdx)
@@ -112,26 +100,6 @@ test.describe('Panels test: Table - Footer', { tag: ['@panels', '@table'] }, () 
         .getByGrafanaSelector(selectors.components.Panels.Visualization.TableNG.Footer.Value)
         .nth(minColumnIdx)
     ).toHaveText(minReducerValue);
-  });
-
-  test('Single-sum reducer label is hidden', async ({ gotoDashboardPage, selectors, page }) => {
-    const dashboardPage = await gotoDashboardPage({
-      uid: DASHBOARD_UID,
-      queryParams: new URLSearchParams({ editPanel: '6' }),
-    });
-
-    await expect(
-      dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('Single sum reducer'))
-    ).toBeVisible();
-
-    await waitForTableLoad(page);
-
-    await expect(
-      dashboardPage.getByGrafanaSelector(selectors.components.Panels.Visualization.TableNG.Footer.ReducerLabel)
-    ).not.toBeVisible();
-    await expect(
-      dashboardPage.getByGrafanaSelector(selectors.components.Panels.Visualization.TableNG.Footer.Value)
-    ).toBeVisible();
   });
 
   test('Count rows for normal case', async ({ gotoDashboardPage, selectors, page }) => {

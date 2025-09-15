@@ -1186,75 +1186,35 @@ func TestLoader_Load_Angular(t *testing.T) {
 		},
 		DiscoverFunc: sources.NewLocalSource(plugins.ClassExternal, []string{filepath.Join(testDataDir(t), "valid-v2-signature")}).Discover,
 	}
-	for _, cfgTc := range []struct {
-		name string
-		cfg  *config.PluginManagementCfg
-	}{
-		{name: "angular support enabled", cfg: &config.PluginManagementCfg{}},
-		{name: "angular support disabled", cfg: &config.PluginManagementCfg{}},
-	} {
-		t.Run(cfgTc.name, func(t *testing.T) {
-			for _, tc := range []struct {
-				name             string
-				angularInspector angularinspector.Inspector
-				shouldLoad       bool
-			}{
-				{
-					name:             "angular plugin",
-					angularInspector: angularinspector.AlwaysAngularFakeInspector,
-					// angular plugins should load only if allowed by the cfg
-					shouldLoad: false,
-				},
-				{
-					name:             "non angular plugin",
-					angularInspector: angularinspector.NeverAngularFakeInspector,
-					// non-angular plugins should always load
-					shouldLoad: true,
-				},
-			} {
-				t.Run(tc.name, func(t *testing.T) {
-					l := newLoaderWithOpts(t, cfgTc.cfg, loaderDepOpts{angularInspector: tc.angularInspector})
-					p, err := l.Load(context.Background(), fakePluginSource)
-					require.NoError(t, err)
-					if tc.shouldLoad {
-						require.Len(t, p, 1, "plugin should have been loaded")
-					} else {
-						require.Empty(t, p, "plugin shouldn't have been loaded")
-					}
-				})
-			}
-		})
-	}
-}
+	cfg := &config.PluginManagementCfg{}
 
-func TestLoader_HideAngularDeprecation(t *testing.T) {
-	fakePluginSource := &fakes.FakePluginSource{
-		PluginClassFunc: func(ctx context.Context) plugins.Class {
-			return plugins.ClassExternal
-		},
-		DiscoverFunc: sources.NewLocalSource(plugins.ClassExternal, []string{filepath.Join(testDataDir(t), "valid-v2-signature")}).Discover,
-	}
 	for _, tc := range []struct {
-		name string
-		cfg  *config.PluginManagementCfg
+		name             string
+		angularInspector angularinspector.Inspector
+		shouldLoad       bool
 	}{
-		{name: "with plugin id in HideAngularDeprecation list", cfg: &config.PluginManagementCfg{
-			HideAngularDeprecation: []string{"one-app", "two-panel", "test-datasource", "three-datasource"},
-		}},
-		{name: "without plugin id in HideAngularDeprecation list", cfg: &config.PluginManagementCfg{
-			HideAngularDeprecation: []string{"one-app", "two-panel", "three-datasource"},
-		}},
-		{name: "with empty HideAngularDeprecation", cfg: &config.PluginManagementCfg{
-			HideAngularDeprecation: nil,
-		}},
+		{
+			name:             "should not load an angular plugin",
+			angularInspector: angularinspector.AlwaysAngularFakeInspector,
+			// angular plugins should never load
+			shouldLoad: false,
+		},
+		{
+			name:             "should load a non angular plugin",
+			angularInspector: angularinspector.NeverAngularFakeInspector,
+			// non-angular plugins should always load
+			shouldLoad: true,
+		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			l := newLoaderWithOpts(t, tc.cfg, loaderDepOpts{
-				angularInspector: angularinspector.AlwaysAngularFakeInspector,
-			})
+			l := newLoaderWithOpts(t, cfg, loaderDepOpts{angularInspector: tc.angularInspector})
 			p, err := l.Load(context.Background(), fakePluginSource)
 			require.NoError(t, err)
-			require.Empty(t, p, "plugin shouldn't have been loaded")
+			if tc.shouldLoad {
+				require.Len(t, p, 1, "plugin should have been loaded")
+			} else {
+				require.Empty(t, p, "plugin shouldn't have been loaded")
+			}
 		})
 	}
 }

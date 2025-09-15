@@ -10,14 +10,15 @@ import (
 
 	"github.com/prometheus/client_golang/prometheus"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	"k8s.io/apiserver/pkg/admission"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
+	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/registry/rest"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	"k8s.io/kube-openapi/pkg/common"
@@ -29,21 +30,20 @@ import (
 	dashboard "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	appcontroller "github.com/grafana/grafana/apps/provisioning/pkg/controller"
 	clientset "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned"
 	client "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned/typed/provisioning/v0alpha1"
 	informers "github.com/grafana/grafana/apps/provisioning/pkg/generated/informers/externalversions"
-	listers "github.com/grafana/grafana/apps/provisioning/pkg/generated/listers/provisioning/v0alpha1"
+	"github.com/grafana/grafana/apps/provisioning/pkg/loki"
+	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	apiutils "github.com/grafana/grafana/pkg/apimachinery/utils"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
+	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacy"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/controller"
-
-	appcontroller "github.com/grafana/grafana/apps/provisioning/pkg/controller"
-	"github.com/grafana/grafana/apps/provisioning/pkg/loki"
-	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	deletepkg "github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/delete"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/export"
@@ -87,7 +87,7 @@ type APIBuilder struct {
 	usageStats usagestats.Service
 
 	tracer              tracing.Tracer
-	getter              rest.Getter
+	store               grafanarest.Storage
 	parsers             resources.ParserFactory
 	repositoryResources resources.RepositoryResourcesFactory
 	clients             resources.ClientFactory
@@ -98,7 +98,6 @@ type APIBuilder struct {
 	jobHistoryConfig *JobHistoryConfig
 	jobHistoryLoki   *jobs.LokiJobHistory
 	resourceLister   resources.ResourceLister
-	repositoryLister listers.RepositoryLister
 	legacyMigrator   legacy.LegacyMigrator
 	storageStatus    dualwrite.Service
 	unified          resource.ResourceClient
@@ -108,7 +107,8 @@ type APIBuilder struct {
 	statusPatcher    *appcontroller.RepositoryStatusPatcher
 	healthChecker    *controller.HealthChecker
 	// Extras provides additional functionality to the API.
-	extras []Extra
+	extras       []Extra
+	extraWorkers []jobs.Worker
 }
 
 // NewAPIBuilder creates an API builder.
@@ -126,6 +126,7 @@ func NewAPIBuilder(
 	access authlib.AccessChecker,
 	tracer tracing.Tracer,
 	extraBuilders []ExtraBuilder,
+	extraWorkers []jobs.Worker,
 	jobHistoryConfig *JobHistoryConfig,
 ) *APIBuilder {
 	clients := resources.NewClientFactory(configProvider)
@@ -147,6 +148,7 @@ func NewAPIBuilder(
 		unified:             unified,
 		access:              access,
 		jobHistoryConfig:    jobHistoryConfig,
+		extraWorkers:        extraWorkers,
 	}
 
 	for _, builder := range extraBuilders {
@@ -204,6 +206,7 @@ func RegisterAPIService(
 	usageStats usagestats.Service,
 	tracer tracing.Tracer,
 	extraBuilders []ExtraBuilder,
+	extraWorkers []jobs.Worker,
 	repoFactory repository.Factory,
 ) (*APIBuilder, error) {
 	if !features.IsEnabledGlobally(featuremgmt.FlagProvisioning) {
@@ -221,6 +224,7 @@ func RegisterAPIService(
 		access,
 		tracer,
 		extraBuilders,
+		extraWorkers,
 		createJobHistoryConfigFromSettings(cfg),
 	)
 	apiregistration.RegisterAPI(builder)
@@ -398,7 +402,7 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 		return fmt.Errorf("failed to create repository storage: %w", err)
 	}
 	repositoryStatusStorage := grafanaregistry.NewRegistryStatusStore(opts.Scheme, repositoryStorage)
-	b.getter = repositoryStorage
+	b.store = repositoryStorage
 
 	jobStore, err := grafanaregistry.NewCompleteRegistryStore(opts.Scheme, provisioning.JobResourceInfo, opts.OptsGetter)
 	if err != nil {
@@ -480,8 +484,8 @@ func (b *APIBuilder) Mutate(ctx context.Context, a admission.Attributes, o admis
 	// This is called on every update, so be careful to only add the finalizer for create
 	if len(r.Finalizers) == 0 && a.GetOperation() == admission.Create {
 		r.Finalizers = []string{
-			controller.RemoveOrphanResourcesFinalizer,
-			controller.CleanFinalizer,
+			repository.RemoveOrphanResourcesFinalizer,
+			repository.CleanFinalizer,
 		}
 	}
 
@@ -559,7 +563,7 @@ func (b *APIBuilder) Validate(ctx context.Context, a admission.Attributes, o adm
 	}
 
 	// Exit early if we have already found errors
-	targetError := b.verifyAgaintsExistingRepositories(cfg)
+	targetError := b.verifyAgainstExistingRepositories(cfg)
 	if targetError != nil {
 		return invalidRepositoryError(a.GetName(), field.ErrorList{targetError})
 	}
@@ -573,9 +577,28 @@ func invalidRepositoryError(name string, list field.ErrorList) error {
 		name, list)
 }
 
+func (b *APIBuilder) getRepositoriesInNamespace(ctx context.Context) ([]provisioning.Repository, error) {
+	obj, err := b.store.List(ctx, &internalversion.ListOptions{
+		Limit: 100,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	all, ok := obj.(*provisioning.RepositoryList)
+	if !ok {
+		return nil, fmt.Errorf("expected repository list")
+	}
+	return all.Items, nil
+}
+
 // TODO: move this to a more appropriate place. Probably controller/validation.go
-func (b *APIBuilder) verifyAgaintsExistingRepositories(cfg *provisioning.Repository) *field.Error {
-	all, err := b.repositoryLister.Repositories(cfg.Namespace).List(labels.Everything())
+func (b *APIBuilder) verifyAgainstExistingRepositories(cfg *provisioning.Repository) *field.Error {
+	ctx, _, err := identity.WithProvisioningIdentity(context.Background(), cfg.Namespace)
+	if err != nil {
+		return &field.Error{Type: field.ErrorTypeInternal, Detail: err.Error()}
+	}
+	all, err := b.getRepositoriesInNamespace(request.WithNamespace(ctx, cfg.Namespace))
 	if err != nil {
 		return field.Forbidden(field.NewPath("spec"),
 			"Unable to verify root target: "+err.Error())
@@ -628,7 +651,6 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			jobInformer := sharedInformerFactory.Provisioning().V0alpha1().Jobs()
 
 			b.client = c.ProvisioningV0alpha1()
-			b.repositoryLister = repoInformer.Lister()
 
 			// Initialize the API client-based job store
 			b.jobs, err = jobs.NewJobStore(b.client, 30*time.Second)
@@ -654,7 +676,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			}
 
 			// Create the repository resources factory
-			usageMetricCollector := usage.MetricCollector(b.tracer, b.repositoryLister, b.unified)
+			usageMetricCollector := usage.MetricCollector(b.tracer, b.getRepositoriesInNamespace, b.unified)
 			b.usageStats.RegisterMetricsFunc(usageMetricCollector)
 
 			stageIfPossible := repository.WrapWithStageAndPushIfPossible
@@ -720,9 +742,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			}
 
 			// Add any extra workers
-			for _, extra := range b.extras {
-				workers = append(workers, extra.GetJobWorkers()...)
-			}
+			workers = append(workers, b.extraWorkers...)
 
 			var jobHistoryWriter jobs.HistoryWriter
 			if b.jobHistoryLoki != nil {
@@ -1228,7 +1248,7 @@ func (b *APIBuilder) tryRunningOnlyUnifiedStorage() error {
 // TODO: where should the helpers live?
 
 func (b *APIBuilder) GetRepository(ctx context.Context, name string) (repository.Repository, error) {
-	obj, err := b.getter.Get(ctx, name, &metav1.GetOptions{})
+	obj, err := b.store.Get(ctx, name, &metav1.GetOptions{})
 	if err != nil {
 		return nil, err
 	}
