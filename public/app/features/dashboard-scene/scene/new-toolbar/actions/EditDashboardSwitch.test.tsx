@@ -74,7 +74,7 @@ describe('EditDashboardSwitch', () => {
       await userEvent.click(await screen.findByTestId(selectors.components.NavToolbar.editDashboard.editButton));
       expect(DashboardInteractions.editButtonClicked).toHaveBeenCalledWith({ outlineExpanded: false });
     });
-    
+
     it('should call DashboardInteractions.exitEditButtonClicked when exiting edit mode', async () => {
       const scene = buildTestScene(true);
       render(<EditDashboardSwitch dashboard={scene} />);

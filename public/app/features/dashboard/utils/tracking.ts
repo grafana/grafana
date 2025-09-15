@@ -1,4 +1,3 @@
-import { store } from '@grafana/data';
 import { VariableModel } from '@grafana/schema/dist/esm/index';
 import { VariableKind } from '@grafana/schema/dist/esm/schema/dashboard/v2';
 import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';

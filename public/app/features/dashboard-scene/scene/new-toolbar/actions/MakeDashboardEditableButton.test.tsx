@@ -50,7 +50,7 @@ export function buildTestScene(isEditing = false) {
 }
 
 describe('MakeDashboardEditableButton', () => {
-    afterEach(() => {
+  afterEach(() => {
     jest.resetAllMocks();
     localStorageMock.clear();
   });
