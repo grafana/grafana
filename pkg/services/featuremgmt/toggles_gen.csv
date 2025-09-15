@@ -59,6 +59,7 @@ kubernetesSnapshots,experimental,@grafana/grafana-app-platform-squad,false,true,
 kubernetesLibraryPanels,experimental,@grafana/grafana-app-platform-squad,false,true,false
 kubernetesDashboards,GA,@grafana/dashboards-squad,false,false,true
 kubernetesShortURLs,experimental,@grafana/grafana-app-platform-squad,false,true,false
+useKubernetesShortURLsAPI,experimental,@grafana/sharing-squad,false,false,true
 kubernetesAlertingRules,experimental,@grafana/alerting-squad,false,true,false
 dashboardDisableSchemaValidationV1,experimental,@grafana/grafana-app-platform-squad,false,false,false
 dashboardDisableSchemaValidationV2,experimental,@grafana/grafana-app-platform-squad,false,false,false

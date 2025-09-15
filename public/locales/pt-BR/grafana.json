@@ -9633,10 +9633,9 @@
       }
     },
     "logs-controls": {
+      "collapse": "",
       "deduplication": "Desduplicação",
-      "disable-highlighting": "Desativar destaque",
       "disable-prettify-json": "Recolher logs JSON",
-      "display-level": "Exibir níveis",
       "display-level-all": "Todos os níveis",
       "download": "Baixar logs",
       "download-logs": {
@@ -9644,18 +9643,39 @@
         "json": "json",
         "txt": "txt"
       },
-      "enable-highlighting": "Ativar destaque",
       "escape-newlines": "Corrigir sequências de tabulação e quebra de linha adicionadas incorretamente por escape nas linhas de log",
-      "font-size-default": "Usar tamanho de fonte pequeno",
-      "font-size-small": "Usar tamanho de fonte padrão",
+      "expand": "",
+      "filter-levels": "",
+      "font-large": "",
+      "font-small": "",
       "hide-search": "Fechar busca",
       "hide-timestamps": "Ocultar data e hora",
       "hide-unique-labels": "Ocultar rótulos exclusivos",
+      "label": {
+        "collapse": "",
+        "disable-highlighting": "",
+        "enable-highlighting": "",
+        "escape-newlines": "",
+        "expand": ""
+      },
+      "labels": {
+        "font-large": "",
+        "font-small": "",
+        "hide-search": "",
+        "newest-first": "",
+        "oldest-first": "",
+        "show-search": ""
+      },
       "line-wrapping": {
         "enable": "",
         "enable-prettify": "",
         "hide": "",
-        "label": ""
+        "state": {
+          "hide": "",
+          "json": "",
+          "wrap": ""
+        },
+        "tooltip": ""
       },
       "newest-first": "Organizado por logs mais recentes primeiro: clique para exibir os mais antigos primeiro",
       "oldest-first": "Organizado por logs mais antigos primeiro: clique para exibir os mais recentes primeiro",
@@ -9671,8 +9691,18 @@
       "timestamp": {
         "hide": "",
         "label": "",
+        "label-hide": "",
+        "label-ms": "",
+        "label-ns": "",
         "milliseconds": "",
-        "nanoseconds": ""
+        "nanoseconds": "",
+        "tooltip": ""
+      },
+      "tooltip": {
+        "disable-highlighting": "",
+        "download": "",
+        "enable-highlighting": "",
+        "filter-level": ""
       },
       "unwrap-lines": "Desfazer quebra de linha",
       "wrap-lines": "Aplicar quebra de linha"
@@ -11355,7 +11385,11 @@
     },
     "folder-repository-list": {
       "no-results-matching-your-query": "Nenhum resultado corresponde à sua consulta",
-      "placeholder-search": "Pesquisar"
+      "placeholder-search": "Pesquisar",
+      "all-resources-managed_one": "",
+      "all-resources-managed_other": "",
+      "partial-managed_one": "",
+      "partial-managed_other": ""
     },
     "get-default-values": {
       "title": {
