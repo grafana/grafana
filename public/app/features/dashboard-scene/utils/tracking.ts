@@ -69,7 +69,7 @@ export function getLayoutStatsForDashboard(layout: DashboardV2Spec['layout']): L
         layoutTypesCount.GridLayout++;
         break;
       case 'AutoGridLayout':
-        layoutTypesCount.AutoGridLayout ++;
+        layoutTypesCount.AutoGridLayout++;
         break;
       case 'RowsLayout':
         layoutTypesCount.RowsLayout++;
@@ -88,7 +88,7 @@ export function getLayoutStatsForDashboard(layout: DashboardV2Spec['layout']): L
           }
         });
         break;
-      default: 
+      default:
         break;
     }
   };
