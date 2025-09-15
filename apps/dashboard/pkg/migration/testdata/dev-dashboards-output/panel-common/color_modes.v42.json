@@ -67,7 +67,8 @@
             },
             "properties": [
               {
-                "id": "custom.cellOptions"
+                "id": "custom.cellOptions",
+                "value": {}
               }
             ]
           }
