@@ -52,13 +52,11 @@ import {
   AnnoKeyEmbedded,
 } from 'app/features/apiserver/types';
 import { DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
-import {
-  getDashboardInteractionCallback,
-  getDashboardSceneProfiler,
-} from 'app/features/dashboard/services/DashboardProfiler';
+import { getDashboardSceneProfilerWithMetadata } from 'app/features/dashboard/services/DashboardProfiler';
 import { DashboardMeta } from 'app/types/dashboard';
 
 import { addPanelsOnLoadBehavior } from '../addToDashboard/addPanelsOnLoadBehavior';
+import { dashboardAnalyticsInitializer } from '../behaviors/DashboardAnalyticsInitializerBehavior';
 import { DashboardAnnotationsDataLayer } from '../scene/DashboardAnnotationsDataLayer';
 import { DashboardControls } from '../scene/DashboardControls';
 import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
@@ -168,9 +166,8 @@ export function transformSaveModelSchemaV2ToScene(dto: DashboardWithAccessInfo<D
     {
       enableProfiling:
         config.dashboardPerformanceMetrics.findIndex((uid) => uid === '*' || uid === metadata.name) !== -1,
-      onProfileComplete: getDashboardInteractionCallback(metadata.name, dashboard.title),
     },
-    getDashboardSceneProfiler()
+    getDashboardSceneProfilerWithMetadata(metadata.name, dashboard.title, dashboard.elements?.length || 0)
   );
 
   const dashboardScene = new DashboardScene(
@@ -209,6 +206,8 @@ export function transformSaveModelSchemaV2ToScene(dto: DashboardWithAccessInfo<D
           reloadOnParamsChange: config.featureToggles.reloadDashboardsOnParamsChange && false,
           uid: dashboardId?.toString(),
         }),
+        // Analytics aggregator lifecycle management (initialization, observer registration, cleanup)
+        dashboardAnalyticsInitializer,
         // Add panel profiling behavior when dashboard profiling is enabled
         ...(config.dashboardPerformanceMetrics.findIndex((uid) => uid === '*' || uid === dashboardId?.toString()) !== -1
           ? [new DashboardPanelProfilingBehavior()]

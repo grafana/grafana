@@ -22,15 +22,13 @@ import {
 } from '@grafana/scenes';
 import { isWeekStart } from '@grafana/ui';
 import { K8S_V1_DASHBOARD_API_CONFIG } from 'app/features/dashboard/api/v1';
-import {
-  getDashboardInteractionCallback,
-  getDashboardSceneProfiler,
-} from 'app/features/dashboard/services/DashboardProfiler';
+import { getDashboardSceneProfilerWithMetadata } from 'app/features/dashboard/services/DashboardProfiler';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { DashboardDTO, DashboardDataDTO } from 'app/types/dashboard';
 
 import { addPanelsOnLoadBehavior } from '../addToDashboard/addPanelsOnLoadBehavior';
+import { dashboardAnalyticsInitializer } from '../behaviors/DashboardAnalyticsInitializerBehavior';
 import { AlertStatesDataLayer } from '../scene/AlertStatesDataLayer';
 import { CustomTimeRangeCompare } from '../scene/CustomTimeRangeCompare';
 import { DashboardAnnotationsDataLayer } from '../scene/DashboardAnnotationsDataLayer';
@@ -301,9 +299,11 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel,
     {
       enableProfiling:
         config.dashboardPerformanceMetrics.findIndex((uid) => uid === '*' || uid === oldModel.uid) !== -1,
-      onProfileComplete: getDashboardInteractionCallback(oldModel.uid, oldModel.title),
+      onProfileComplete: (event) => {
+        console.log('onProfileComplete', event.duration);
+      },
     },
-    getDashboardSceneProfiler()
+    getDashboardSceneProfilerWithMetadata(oldModel.uid, oldModel.title, oldModel.panels.length)
   );
 
   const behaviorList: SceneObjectState['$behaviors'] = [
@@ -319,6 +319,8 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel,
       reloadOnParamsChange: config.featureToggles.reloadDashboardsOnParamsChange && oldModel.meta.reloadOnParamsChange,
       uid,
     }),
+    // Analytics aggregator lifecycle management (initialization, observer registration, cleanup)
+    dashboardAnalyticsInitializer,
   ];
 
   // Add panel profiling behavior when dashboard profiling is enabled
