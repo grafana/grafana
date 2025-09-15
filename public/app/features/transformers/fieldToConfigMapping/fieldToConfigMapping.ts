@@ -28,7 +28,6 @@ export interface FieldToConfigMapping {
   reducerId?: ReducerID;
   handlerKey: string | null;
   handlerArguments?: HandlerArguments;
-  sourceFieldName?: string; // for mapping
 }
 
 /**
@@ -88,7 +87,7 @@ interface FieldToConfigContext {
   mappingTexts?: string[];
 }
 
-export type FieldToConfigMapHandlerProcessor = (
+type FieldToConfigMapHandlerProcessor = (
   value: any,
   config: FieldConfig,
   context: FieldToConfigContext,

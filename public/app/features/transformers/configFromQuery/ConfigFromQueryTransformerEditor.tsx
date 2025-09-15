@@ -23,13 +23,6 @@ import { getConfigFromDataTransformer, ConfigFromQueryTransformOptions } from '.
 
 export interface Props extends TransformerUIProps<ConfigFromQueryTransformOptions> {}
 
-/*const fieldNamePickerSettings = {
-  editor: FieldNamePicker,
-  id: '',
-  name: '',
-  settings: { width: 24, isClearable: false },
-}; */
-
 export function ConfigFromQueryTransformerEditor({ input, onChange, options }: Props) {
   const styles = useStyles2(getStyles);
 
