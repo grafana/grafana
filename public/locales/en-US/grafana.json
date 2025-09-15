@@ -5074,6 +5074,15 @@
         "panel-layout": "Panel layout",
         "panel-layout-disabled": "Select a row or tab to change panel layout options"
       },
+      "panel": {
+        "modal": {
+          "body": "Are you sure you want to change the layout?",
+          "confirm": "Change layout",
+          "description": "Changing the layout will reset all panel positions and sizes.",
+          "dismiss": "Cancel",
+          "title": "Change layout"
+        }
+      },
       "continue": "Continue",
       "ungroup-nested-text": "This will ungroup all nested groups.",
       "ungroup-nested-title": "Ungroup nested groups?"
