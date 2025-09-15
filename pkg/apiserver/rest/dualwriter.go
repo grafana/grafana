@@ -1,16 +1,17 @@
 package rest
 
 import (
-	"bytes"
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"time"
 
+	apiequality "k8s.io/apimachinery/pkg/api/equality"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/klog/v2"
+
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
 
 // Function that will create a dual writer
@@ -162,27 +163,29 @@ func SetDualWritingMode(
 	return cfg.Mode, nil
 }
 
-var defaultConverter = runtime.UnstructuredConverter(runtime.DefaultUnstructuredConverter)
-
 // Compare asserts on the equality of objects returned from both stores	(object storage and legacy storage)
-func Compare(storageObj, legacyObj runtime.Object) bool {
-	if storageObj == nil || legacyObj == nil {
-		return storageObj == nil && legacyObj == nil
+func Compare(objA, objB runtime.Object) bool {
+	if objA == nil || objB == nil {
+		return objA == nil && objB == nil
 	}
-	return bytes.Equal(extractSpec(storageObj), extractSpec(legacyObj))
-}
-
-func extractSpec(obj runtime.Object) []byte {
-	cpy := obj.DeepCopyObject()
-	unstObj, err := defaultConverter.ToUnstructured(cpy)
+	if objA == objB {
+		return true
+	}
+	mA, err := utils.MetaAccessor(objA)
 	if err != nil {
-		return nil
+		return false
 	}
-
-	// we just want to compare the spec field
-	jsonObj, err := json.Marshal(unstObj["spec"])
+	mB, err := utils.MetaAccessor(objB)
 	if err != nil {
-		return nil
+		return false
 	}
-	return jsonObj
+	sA, err := mA.GetSpec()
+	if err != nil {
+		return false
+	}
+	sB, err := mB.GetSpec()
+	if err != nil {
+		return false
+	}
+	return apiequality.Semantic.DeepEqual(sA, sB)
 }
