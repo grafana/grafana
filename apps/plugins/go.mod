@@ -4,7 +4,7 @@ go 1.24.4
 
 require (
 	github.com/grafana/authlib/types v0.0.0-20250710201142-9542f2f28d43
-	github.com/grafana/grafana-app-sdk v0.43.1
+	github.com/grafana/grafana-app-sdk v0.43.2
 	github.com/grafana/grafana/pkg/apimachinery v0.0.0-20250428110029-a8ea72012bde
 	k8s.io/apimachinery v0.34.1
 	k8s.io/apiserver v0.34.1
@@ -36,7 +36,7 @@ require (
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/grafana/authlib v0.0.0-20250710201142-9542f2f28d43 // indirect
 	github.com/grafana/dskit v0.0.0-20250611075409-46f51e1ce914 // indirect
-	github.com/grafana/grafana-app-sdk/logging v0.43.1 // indirect
+	github.com/grafana/grafana-app-sdk/logging v0.43.2 // indirect
 	github.com/grafana/regexp v0.0.0-20240518133315-a468a5bfb3bc // indirect
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.27.2 // indirect
 	github.com/hashicorp/errwrap v1.1.0 // indirect

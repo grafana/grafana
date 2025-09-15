@@ -3,7 +3,7 @@ module github.com/grafana/grafana/apps/secret
 go 1.24.6
 
 require (
-	github.com/grafana/grafana-app-sdk v0.43.1
+	github.com/grafana/grafana-app-sdk v0.43.2
 	github.com/grafana/grafana/pkg/apimachinery v0.0.0-20250710134100-1f3dc0533caf
 	github.com/stretchr/testify v1.11.1
 	google.golang.org/grpc v1.75.0
@@ -28,7 +28,7 @@ require (
 	github.com/go-test/deep v1.1.1 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/google/gnostic-models v0.7.0 // indirect
-	github.com/grafana/grafana-app-sdk/logging v0.43.1 // indirect
+	github.com/grafana/grafana-app-sdk/logging v0.43.2 // indirect
 	github.com/grafana/regexp v0.0.0-20240518133315-a468a5bfb3bc // indirect
 	github.com/hashicorp/errwrap v1.1.0 // indirect
 	github.com/hashicorp/go-multierror v1.1.1 // indirect

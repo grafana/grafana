@@ -5,7 +5,7 @@ go 1.24.0
 toolchain go1.24.6
 
 require (
-	github.com/grafana/grafana-app-sdk v0.43.1
+	github.com/grafana/grafana-app-sdk v0.43.2
 	k8s.io/apimachinery v0.34.1
 	k8s.io/klog/v2 v2.130.1
 )
@@ -31,7 +31,7 @@ require (
 	github.com/google/go-cmp v0.7.0 // indirect
 	github.com/google/pprof v0.0.0-20250403155104-27863c87afa6 // indirect
 	github.com/google/uuid v1.6.0 // indirect
-	github.com/grafana/grafana-app-sdk/logging v0.43.1 // indirect
+	github.com/grafana/grafana-app-sdk/logging v0.43.2 // indirect
 	github.com/grafana/regexp v0.0.0-20240518133315-a468a5bfb3bc // indirect
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.27.2 // indirect
 	github.com/hashicorp/errwrap v1.1.0 // indirect

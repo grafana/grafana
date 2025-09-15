@@ -3,7 +3,7 @@ module github.com/grafana/grafana/apps/alerting/alertenrichment
 go 1.24.6
 
 require (
-	github.com/grafana/grafana-app-sdk v0.43.1
+	github.com/grafana/grafana-app-sdk v0.43.2
 	github.com/grafana/grafana/pkg/apimachinery v0.0.0-20250901080157-a0280d701b28
 	k8s.io/apimachinery v0.34.1
 	k8s.io/kube-openapi v0.0.0-20250710124328-f3f2b991d03b
