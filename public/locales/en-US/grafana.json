@@ -156,8 +156,11 @@
       "title": "Get Grafana Enterprise"
     },
     "ldap": {
+      "debug-subtitle": "Verify your LDAP and user mapping configuration.",
+      "debug-title": "LDAP Diagnostics",
       "test-mapping-heading": "Test user mapping",
-      "test-mapping-run-button": "Run"
+      "test-mapping-run-button": "Run",
+      "text-loading-ldap-status": "Loading LDAP status..."
     },
     "ldap-connection-status": {
       "columns": {
@@ -9232,7 +9235,8 @@
       "disable-button": "Disable",
       "discard-button": "Discard",
       "save-and-enable-button": "Save and enable",
-      "save-button": "Save"
+      "save-button": "Save",
+      "test-button": "Test"
     },
     "documentation": "documentation",
     "host": {
