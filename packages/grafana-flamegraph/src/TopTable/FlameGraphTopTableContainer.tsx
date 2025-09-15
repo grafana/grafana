@@ -10,8 +10,8 @@ import {
   FieldType,
   GrafanaTheme2,
   MappingType,
+  escapeStringForRegex,
 } from '@grafana/data';
-import { escapeStringForRegex } from '@grafana/data';
 import {
   IconButton,
   Table,
