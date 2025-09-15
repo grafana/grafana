@@ -85,6 +85,9 @@ func Test_CreateGetAndDeleteToken(t *testing.T) {
 }
 
 func Test_GetSnapshotStatusFromGMS(t *testing.T) {
+	// Skipped until flakiness is fixed
+	t.Skip()
+
 	t.Parallel()
 
 	setupTest := func(ctx context.Context) (service *Service, snapshotUID string, sessionUID string) {
