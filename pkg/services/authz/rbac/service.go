@@ -211,11 +211,13 @@ func (s *Service) List(ctx context.Context, req *authzv1.ListRequest) (*authzv1.
 	)
 
 	var permissions map[string]bool
+	cacheHit := false
 
 	if !listReq.Options.SkipCache {
 		permissions, err = s.getCachedIdentityPermissions(ctx, listReq.Namespace, listReq.IdentityType, listReq.UserUID, listReq.Action)
 		if err == nil {
 			s.metrics.permissionCacheUsage.WithLabelValues("true", listReq.Action).Inc()
+			cacheHit = true
 		}
 	}
 	if err != nil || listReq.Options.SkipCache {
@@ -230,7 +232,10 @@ func (s *Service) List(ctx context.Context, req *authzv1.ListRequest) (*authzv1.
 	}
 
 	resp, err := s.listPermission(ctx, permissions, listReq)
-	resp.Zookie = &authzv1.Zookie{Timestamp: time.Now().Unix()}
+	if cacheHit && time.Duration(time.Now().Unix()-resp.Zookie.Timestamp) < s.settings.CacheTTL {
+		resp.Zookie = &authzv1.Zookie{Timestamp: time.Now().Add(-s.settings.CacheTTL).Unix()}
+	}
+
 	s.metrics.requestCount.WithLabelValues(strconv.FormatBool(err != nil), "true", req.GetVerb(), req.GetGroup(), req.GetResource()).Inc()
 	return resp, err
 }
@@ -736,11 +741,13 @@ func (s *Service) listPermission(ctx context.Context, scopeMap map[string]bool, 
 	}
 
 	var tree folderTree
+	cacheHit := false
 	if t.HasFolderSupport() {
 		var err error
 		ok = false
 		if !req.Options.SkipCache {
 			tree, ok = s.getCachedFolderTree(ctx, req.Namespace)
+			cacheHit = true
 		}
 		if !ok {
 			tree, err = s.buildFolderTree(ctx, req.Namespace)
@@ -756,6 +763,12 @@ func (s *Service) listPermission(ctx context.Context, scopeMap map[string]bool, 
 		res = buildFolderList(scopeMap, tree)
 	} else {
 		res = buildItemList(scopeMap, tree, t.Prefix())
+	}
+
+	if cacheHit {
+		res.Zookie = &authzv1.Zookie{Timestamp: time.Now().Add(-s.settings.CacheTTL).Unix()}
+	} else {
+		res.Zookie = &authzv1.Zookie{Timestamp: time.Now().Unix()}
 	}
 
 	span.SetAttributes(attribute.Int("num_folders", len(res.Folders)), attribute.Int("num_items", len(res.Items)))
