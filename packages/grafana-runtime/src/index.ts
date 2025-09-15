@@ -6,6 +6,7 @@
 export * from './services';
 export * from './config';
 export * from './analytics/types';
+export * from './events';
 export { loadPluginCss, type PluginCssOptions, setPluginImportUtils, getPluginImportUtils } from './utils/plugin';
 export { reportMetaAnalytics, reportInteraction, reportPageview, reportExperimentView } from './analytics/utils';
 export { featureEnabled } from './utils/licensing';
