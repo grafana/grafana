@@ -122,6 +122,7 @@ type StructureNode = {
 export function getSanitizedLayout(layout: DashboardV2Spec['layout']): string {
   return JSON.stringify(getStructure(layout));
 }
+
 function getStructure(layout: DashboardV2Spec['layout']): StructureNode[] {
   const l = castLayoutKind(layout);
 
