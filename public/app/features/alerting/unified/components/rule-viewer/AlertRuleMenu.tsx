@@ -148,7 +148,6 @@ const AlertRuleMenu = ({
 
   // todo: make this new menu item for enrichments an extension of the alertrulemenu items. For first iteration, we'll keep it here.
   const canManageEnrichments =
-    canEditRule &&
     ruleUid &&
     handleManageEnrichments &&
     config.featureToggles.alertingEnrichmentPerRule &&
@@ -158,8 +157,12 @@ const AlertRuleMenu = ({
     <>
       {canManageEnrichments && (
         <Menu.Item
-          label={t('alerting.alert-menu.manage-enrichments', 'Manage enrichments')}
-          icon="edit"
+          label={
+            canEditRule
+              ? t('alerting.alert-menu.manage-enrichments', 'Manage enrichments')
+              : t('alerting.alert-menu.view-enrichments', 'View enrichments')
+          }
+          icon={canEditRule ? 'edit' : 'eye'}
           onClick={handleManageEnrichments}
         />
       )}

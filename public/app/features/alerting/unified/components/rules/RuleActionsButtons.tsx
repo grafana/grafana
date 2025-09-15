@@ -146,7 +146,11 @@ export const RuleActionsButtons = ({ compact, showViewButton, rule, rulesSource 
         <SilenceGrafanaRuleDrawer ruleUid={ruleUid} onClose={() => setShowSilenceDrawer(false)} />
       )}
       {ruleUid && showEnrichmentDrawer && (
-        <EnrichmentDrawerExtension ruleUid={ruleUid} onClose={() => setShowEnrichmentDrawer(false)} />
+        <EnrichmentDrawerExtension
+          ruleUid={ruleUid}
+          onClose={() => setShowEnrichmentDrawer(false)}
+          isRuleEditable={canEditRule}
+        />
       )}
       {redirectToClone?.identifier && (
         <RedirectToCloneRule

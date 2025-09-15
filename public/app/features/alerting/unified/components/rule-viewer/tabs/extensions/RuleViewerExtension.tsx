@@ -5,7 +5,10 @@ import { withErrorBoundary } from '@grafana/ui';
 
 import { logError } from '../../../../Analytics';
 
-export interface RuleViewerExtensionProps {}
+export interface RuleViewerExtensionProps {
+  ruleUid: string;
+  isRuleEditable: boolean;
+}
 
 let InternalRulePageEnrichmentSection: ComponentType<RuleViewerExtensionProps> | null = null;
 
