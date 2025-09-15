@@ -111,7 +111,6 @@ export class DashboardAnalyticsAggregator implements ScenePerformanceObserver {
   }
 
   onDashboardInteractionComplete(data: DashboardPerformanceData): void {
-    debugger;
     // Replicate the logic from getDashboardInteractionCallback
     this.sendAnalyticsReport(data);
   }

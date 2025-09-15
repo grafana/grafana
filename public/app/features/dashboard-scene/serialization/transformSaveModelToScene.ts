@@ -299,9 +299,6 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel,
     {
       enableProfiling:
         config.dashboardPerformanceMetrics.findIndex((uid) => uid === '*' || uid === oldModel.uid) !== -1,
-      onProfileComplete: (event) => {
-        console.log('onProfileComplete', event.duration);
-      },
     },
     getDashboardSceneProfilerWithMetadata(oldModel.uid, oldModel.title, oldModel.panels.length)
   );
