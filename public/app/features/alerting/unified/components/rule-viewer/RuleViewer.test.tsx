@@ -20,6 +20,7 @@ import {
   mockRulerGrafanaRecordingRule,
 } from '../../mocks';
 import { grafanaRulerRule } from '../../mocks/grafanaRulerApi';
+import { setFolderAccessControl } from '../../mocks/server/configure';
 import { grantPermissionsHelper } from '../../test/test-utils';
 import { setupDataSources } from '../../testSetup/datasources';
 import { Annotation } from '../../utils/constants';
@@ -30,6 +31,7 @@ import { stringifyIdentifier } from '../../utils/rule-id';
 
 import { AlertRuleProvider } from './RuleContext';
 import RuleViewer, { ActiveTab } from './RuleViewer';
+import { addRulePageEnrichmentSection } from './tabs/extensions/RuleViewerExtension';
 
 // metadata and interactive elements
 const ELEMENTS = {
@@ -409,6 +411,101 @@ describe('RuleViewer', () => {
       expect(ELEMENTS.metadata.summary(mockRule.annotations[Annotation.summary]).getAll()).toHaveLength(2);
 
       expect(ELEMENTS.details.pendingPeriod.get()).toHaveTextContent(/15m/i);
+    });
+  });
+
+  describe('Enrichment tab', () => {
+    const mockRule = getGrafanaRule(
+      {
+        name: 'Test alert',
+        uid: 'test-rule-uid',
+        annotations: {
+          [Annotation.summary]: 'This is the summary for the rule',
+        },
+        labels: {
+          team: 'operations',
+          severity: 'low',
+        },
+        group: {
+          name: 'my-group',
+          interval: '15m',
+          rules: [],
+          totals: { alerting: 1 },
+        },
+      },
+      { uid: grafanaRulerRule.grafana_alert.uid }
+    );
+    const mockRuleIdentifier = ruleId.fromCombinedRule('grafana', mockRule);
+
+    beforeEach(() => {
+      // Clear any existing permissions first
+      grantUserPermissions([]);
+      // Set up permissions for editable rule
+      grantPermissionsHelper([
+        AccessControlAction.AlertingRuleCreate,
+        AccessControlAction.AlertingRuleRead,
+        AccessControlAction.AlertingRuleUpdate,
+        AccessControlAction.AlertingRuleDelete,
+        AccessControlAction.AlertingInstanceRead,
+        AccessControlAction.AlertingInstanceCreate,
+        AccessControlAction.AlertingInstancesExternalRead,
+        AccessControlAction.AlertingInstancesExternalWrite,
+      ]);
+      // Also set folder-level permissions
+      setFolderAccessControl({
+        [AccessControlAction.AlertingRuleUpdate]: true,
+        [AccessControlAction.AlertingRuleDelete]: true,
+      });
+    });
+
+    it('should pass correct props to enrichment section extension for editable rule', async () => {
+      const mockEnrichmentExtension = jest.fn(() => <div data-testid="enrichment-section">Enrichment Section</div>);
+      addRulePageEnrichmentSection(mockEnrichmentExtension);
+
+      await renderRuleViewer(mockRule, mockRuleIdentifier, ActiveTab.Enrichment);
+
+      expect(mockEnrichmentExtension).toHaveBeenCalledWith(
+        expect.objectContaining({
+          isRuleEditable: true,
+          ruleUid: 'test-rule-uid',
+        }),
+        expect.any(Object)
+      );
+      expect(screen.getByTestId('enrichment-section')).toBeInTheDocument();
+    });
+
+    it('should pass correct props to enrichment section extension for read-only rule', async () => {
+      // Clear permissions and set only read permissions to make rule read-only
+      grantUserPermissions([]);
+      grantPermissionsHelper([
+        AccessControlAction.AlertingRuleCreate,
+        AccessControlAction.AlertingRuleRead,
+        AccessControlAction.AlertingRuleDelete,
+        AccessControlAction.AlertingInstanceRead,
+        AccessControlAction.AlertingInstanceCreate,
+        AccessControlAction.AlertingInstancesExternalRead,
+        AccessControlAction.AlertingInstancesExternalWrite,
+        // Note: No AlertingRuleUpdate permission
+      ]);
+      // Set folder-level permissions to deny update
+      setFolderAccessControl({
+        [AccessControlAction.AlertingRuleUpdate]: false,
+        [AccessControlAction.AlertingRuleDelete]: true,
+      });
+
+      const mockEnrichmentExtension = jest.fn(() => <div data-testid="enrichment-section">Enrichment Section</div>);
+      addRulePageEnrichmentSection(mockEnrichmentExtension);
+
+      await renderRuleViewer(mockRule, mockRuleIdentifier, ActiveTab.Enrichment);
+
+      expect(mockEnrichmentExtension).toHaveBeenCalledWith(
+        expect.objectContaining({
+          isRuleEditable: false,
+          ruleUid: 'test-rule-uid',
+        }),
+        expect.any(Object)
+      );
+      expect(screen.getByTestId('enrichment-section')).toBeInTheDocument();
     });
   });
 });
