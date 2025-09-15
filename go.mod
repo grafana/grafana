@@ -166,7 +166,7 @@ require (
 	github.com/russellhaering/goxmldsig v1.4.0 // @grafana/grafana-backend-group
 	github.com/shopspring/decimal v1.4.0 // @grafana/grafana-datasources-core-services
 	github.com/spf13/cobra v1.9.1 // @grafana/grafana-app-platform-squad
-	github.com/spf13/pflag v1.0.7 // @grafana-app-platform-squad
+	github.com/spf13/pflag v1.0.10 // @grafana-app-platform-squad
 	github.com/spyzhov/ajson v0.9.6 // @grafana/grafana-sharing-squad
 	github.com/stretchr/testify v1.11.1 // @grafana/grafana-backend-group
 	github.com/thomaspoignant/go-feature-flag v1.42.0 // @grafana/grafana-backend-group
