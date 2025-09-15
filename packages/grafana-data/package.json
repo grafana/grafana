@@ -89,12 +89,12 @@
     "@types/lodash": "4.17.20",
     "@types/node": "22.17.0",
     "@types/papaparse": "5.3.16",
-    "@types/react": "18.3.18",
-    "@types/react-dom": "18.3.5",
+    "@types/react": "19.0.10",
+    "@types/react-dom": "19.0.4",
     "@types/tinycolor2": "1.4.6",
     "esbuild": "0.25.8",
-    "react": "18.3.1",
-    "react-dom": "18.3.1",
+    "react": "19.0.0",
+    "react-dom": "19.0.0",
     "rimraf": "6.0.1",
     "rollup": "^4.22.4",
     "rollup-plugin-esbuild": "6.2.1",
@@ -102,7 +102,7 @@
     "typescript": "5.9.2"
   },
   "peerDependencies": {
-    "react": "^18.0.0",
-    "react-dom": "^18.0.0"
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
   }
 }
