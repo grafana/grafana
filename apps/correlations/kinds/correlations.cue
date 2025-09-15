@@ -5,8 +5,8 @@ correlationsv0alpha1: {
 	pluralName: "Correlations"
 	schema: {
 		spec: {
-			source_uid:  string
-			target_uid?:  string
+			source_ds_ref:  DataSourceRef
+			target_ds_ref?:  DataSourceRef
 			label:       string
 			description?: string
 			config:      ConfigSpec
@@ -14,6 +14,11 @@ correlationsv0alpha1: {
 			type:        CorrelationType
 		}
 	}
+}
+
+DataSourceRef: {
+   group: string // same as pluginId
+   name: string // same as grafana uid
 }
 
 ConfigSpec: {
