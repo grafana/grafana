@@ -109,8 +109,10 @@ func (s *Service) createRequest(ctx context.Context, dsInfo *datasourceInfo, par
 
 	if params.QueryParams != nil {
 		queryValues := u.Query()
-		for k, v := range params.QueryParams {
-			queryValues.Set(k, v)
+		for key, values := range params.QueryParams {
+			for _, value := range values {
+				queryValues.Add(key, value)
+			}
 		}
 		u.RawQuery = queryValues.Encode()
 	}
