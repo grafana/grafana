@@ -2817,7 +2817,7 @@ __metadata:
     "@emotion/css": "npm:11.13.5"
     "@grafana/data": "npm:12.3.0-pre"
     "@grafana/e2e-selectors": "npm:12.3.0-pre"
-    "@grafana/google-sdk": "npm:0.3.4"
+    "@grafana/google-sdk": "npm:0.3.5"
     "@grafana/plugin-configs": "npm:12.3.0-pre"
     "@grafana/plugin-ui": "npm:^0.10.10"
     "@grafana/runtime": "npm:12.3.0-pre"
@@ -2864,7 +2864,7 @@ __metadata:
     "@emotion/css": "npm:11.13.5"
     "@grafana/data": "workspace:*"
     "@grafana/e2e-selectors": "workspace:*"
-    "@grafana/lezer-traceql": "npm:0.0.23"
+    "@grafana/lezer-traceql": "npm:0.0.24"
     "@grafana/monaco-logql": "npm:^0.0.8"
     "@grafana/o11y-ds-frontend": "workspace:*"
     "@grafana/plugin-configs": "npm:12.3.0-pre"
@@ -3227,15 +3227,15 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@grafana/google-sdk@npm:0.3.4":
-  version: 0.3.4
-  resolution: "@grafana/google-sdk@npm:0.3.4"
+"@grafana/google-sdk@npm:0.3.5":
+  version: 0.3.5
+  resolution: "@grafana/google-sdk@npm:0.3.5"
   peerDependencies:
     "@grafana/data": ">=10.4.0"
     "@grafana/ui": ">=10.4.0"
     react: ^18.2.0
     react-dom: ^18.2.0
-  checksum: 10/6156a07ab9a8e31ac20a689448f7d6bc86bd9d3fd0b22de8182cf5e6f96c05054f8c53a38148de58dca807adb5b0563914b03a22308ec7f770bf1cc71e8f21bd
+  checksum: 10/5070002bc4e4ca4079384e914a0435d6deffe0854b3c2a8ce8a691cdcfa81d9f8ba9247222fbd366f48a8bb0745f8ba2c21790e7f4a46f027d0a867f8c75e06e
   languageName: node
   linkType: hard
 
@@ -3269,12 +3269,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@grafana/lezer-traceql@npm:0.0.23":
-  version: 0.0.23
-  resolution: "@grafana/lezer-traceql@npm:0.0.23"
+"@grafana/lezer-traceql@npm:0.0.24":
+  version: 0.0.24
+  resolution: "@grafana/lezer-traceql@npm:0.0.24"
   peerDependencies:
     "@lezer/lr": ^1.4.2
-  checksum: 10/e9dba8ed747062c791fd2298e20e18da06642d273f9c502f8c1ec90524108edf7c6bd4e719db2ae62de77ba02bfaf0d2f291058d04727969b5af67cdb277b9c3
+  checksum: 10/46bd65d0b61f490dc92db318062079c50564429407e7496def9224b061231d080943b20e63c066ea12ab0929374a50cfa1d29fb2156a65b3ef635f44011bd959
   languageName: node
   linkType: hard
 
@@ -3521,11 +3521,11 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@grafana/scenes-react@npm:6.35.2":
-  version: 6.35.2
-  resolution: "@grafana/scenes-react@npm:6.35.2"
+"@grafana/scenes-react@npm:6.35.3":
+  version: 6.35.3
+  resolution: "@grafana/scenes-react@npm:6.35.3"
   dependencies:
-    "@grafana/scenes": "npm:6.35.2"
+    "@grafana/scenes": "npm:6.35.3"
     lru-cache: "npm:^10.2.2"
     react-use: "npm:^17.4.0"
   peerDependencies:
@@ -3537,13 +3537,13 @@ __metadata:
     react: ^18.0.0
     react-dom: ^18.0.0
     react-router-dom: ^6.28.0
-  checksum: 10/ef106d42e776ae1eed953fd7f5d16a07c188df21b48e225ce36d4eda982b452e3659c779ed55c01ebbeeb40de383804644bcb69c21d75cef22e30e12ce4c51da
+  checksum: 10/2c220eef6aa8560d073a27a02918b4bbf4d0cffee273ff597e94eb4376e75d0e47fcdaa2cd1ca8ea851c29477722dec2e2d2f817f2c5c185151de2051c5e2ab7
   languageName: node
   linkType: hard
 
-"@grafana/scenes@npm:6.35.2":
-  version: 6.35.2
-  resolution: "@grafana/scenes@npm:6.35.2"
+"@grafana/scenes@npm:6.35.3":
+  version: 6.35.3
+  resolution: "@grafana/scenes@npm:6.35.3"
   dependencies:
     "@floating-ui/react": "npm:^0.26.16"
     "@leeoniya/ufuzzy": "npm:^1.0.16"
@@ -3563,7 +3563,7 @@ __metadata:
     react: ^18.0.0
     react-dom: ^18.0.0
     react-router-dom: ^6.28.0
-  checksum: 10/55720bbd4c25b3dfb9abc403069627f5684bf83b928b6b9ca79bc798a9e396403f7623c35898f068c5f6b06246de12c22107ebb1462a1135b549e4c20ccbbc83
+  checksum: 10/a209e6a1cbe6c4e70c2cd8c413df2560a59b157944888e317385f19e43e23ff826d84c922618b1268a7085278aca45a369c8f6255bf70a06134622c6ef2a542e
   languageName: node
   linkType: hard
 
@@ -18158,7 +18158,7 @@ __metadata:
     "@grafana/faro-web-sdk": "npm:^1.19.0"
     "@grafana/faro-web-tracing": "npm:^1.19.0"
     "@grafana/flamegraph": "workspace:*"
-    "@grafana/google-sdk": "npm:0.3.4"
+    "@grafana/google-sdk": "npm:0.3.5"
     "@grafana/i18n": "workspace:*"
     "@grafana/lezer-logql": "npm:0.2.8"
     "@grafana/llm": "npm:0.22.1"
@@ -18168,8 +18168,8 @@ __metadata:
     "@grafana/plugin-ui": "npm:^0.10.10"
     "@grafana/prometheus": "workspace:*"
     "@grafana/runtime": "workspace:*"
-    "@grafana/scenes": "npm:6.35.2"
-    "@grafana/scenes-react": "npm:6.35.2"
+    "@grafana/scenes": "npm:6.35.3"
+    "@grafana/scenes-react": "npm:6.35.3"
     "@grafana/schema": "workspace:*"
     "@grafana/sql": "workspace:*"
     "@grafana/test-utils": "workspace:*"
@@ -19258,21 +19258,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"i18next@npm:^25.0.0":
-  version: 25.3.2
-  resolution: "i18next@npm:25.3.2"
-  dependencies:
-    "@babel/runtime": "npm:^7.27.6"
-  peerDependencies:
-    typescript: ^5
-  peerDependenciesMeta:
-    typescript:
-      optional: true
-  checksum: 10/fb6b2035cc8f3bcc89f56e164d22cefbefd54e5a569315b20ddcfa6e1b68c48962307181b271fea7e5ee37ddfaa90721a4a7f7814b739f24bf00a3a670b8eb93
-  languageName: node
-  linkType: hard
-
-"i18next@npm:^25.5.2":
+"i18next@npm:^25.0.0, i18next@npm:^25.5.2":
   version: 25.5.2
   resolution: "i18next@npm:25.5.2"
   dependencies:
