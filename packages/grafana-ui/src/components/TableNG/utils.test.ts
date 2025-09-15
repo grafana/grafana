@@ -1,4 +1,5 @@
 import {
+  createDataFrame,
   createTheme,
   DataFrame,
   DataLink,
