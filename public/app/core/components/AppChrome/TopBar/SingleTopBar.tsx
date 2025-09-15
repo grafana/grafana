@@ -5,7 +5,7 @@ import { memo } from 'react';
 import { GrafanaTheme2, NavModelItem } from '@grafana/data';
 import { Components } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
-import { ScopesContextValue } from '@grafana/runtime';
+import { getAppEvents, OpenKeyboardShortcutsModalEvent, ScopesContextValue } from '@grafana/runtime';
 import { Dropdown, Icon, Stack, ToolbarButton, useStyles2 } from '@grafana/ui';
 import { config } from 'app/core/config';
 import { MEGA_MENU_TOGGLE_ID } from 'app/core/constants';
@@ -13,11 +13,13 @@ import { useGrafana } from 'app/core/context/GrafanaContext';
 import { contextSrv } from 'app/core/core';
 import { useMediaQueryMinWidth } from 'app/core/hooks/useMediaQueryMinWidth';
 import { HOME_NAV_ID } from 'app/core/reducers/navModel';
+import { ShowModalReactEvent } from 'app/types/events';
 import { useSelector } from 'app/types/store';
 
 import { Branding } from '../../Branding/Branding';
 import { Breadcrumbs } from '../../Breadcrumbs/Breadcrumbs';
 import { buildBreadcrumbs } from '../../Breadcrumbs/utils';
+import { HelpModal } from '../../help/HelpModal';
 import { ExtensionToolbarItem } from '../ExtensionSidebar/ExtensionToolbarItem';
 import { HistoryContainer } from '../History/HistoryContainer';
 import { enrichHelpItem } from '../MegaMenu/utils';
@@ -65,6 +67,13 @@ export const SingleTopBar = memo(function SingleTopBar({
   const breadcrumbs = buildBreadcrumbs(sectionNav, pageNav, homeNav);
   const unifiedHistoryEnabled = config.featureToggles.unifiedHistory;
   const isSmallScreen = !useMediaQueryMinWidth('sm');
+
+  const appEvents = getAppEvents();
+  // Subscribe to separate shortcuts events so that plugins and other places can
+  // open the keyboard shortcuts modal, without having to have access to the necessary components
+  appEvents.subscribe(OpenKeyboardShortcutsModalEvent, () => {
+    appEvents.publish(new ShowModalReactEvent({ component: HelpModal }));
+  });
 
   return (
     <>
