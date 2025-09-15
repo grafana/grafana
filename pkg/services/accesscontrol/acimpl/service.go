@@ -73,14 +73,6 @@ func ProvideService(
 		return nil, err
 	}
 
-	// Migrating scopes that haven't been split yet to have kind, attribute and identifier in the DB
-	// This will be removed once we've:
-	// 1) removed the feature toggle and
-	// 2) have released enough versions not to support a version without split scopes
-	if err := migrator.MigrateScopeSplit(db, service.log); err != nil {
-		return nil, err
-	}
-
 	// Migrating to remove deprecated permissions from the database
 	if err := migrator.MigrateRemoveDeprecatedPermissions(db, service.log); err != nil {
 		return nil, err
