@@ -3,7 +3,7 @@ import { formatDistanceToNowStrict } from 'date-fns';
 import { groupBy, uniqueId } from 'lodash';
 import { Fragment, memo, useEffect, useRef } from 'react';
 
-import { Label } from '@grafana/alerting';
+import { AlertLabel } from '@grafana/alerting';
 import { GrafanaTheme2, dateTimeFormat } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { Icon, Stack, TagList, useStyles2 } from '@grafana/ui';
@@ -182,7 +182,7 @@ const AlertInstanceValues = memo(({ record }: { record: Record<string, number> }
   return (
     <>
       {values.map(([key, value]) => (
-        <Label key={key} label={key} value={value} />
+        <AlertLabel key={key} label={key} value={value} />
       ))}
     </>
   );

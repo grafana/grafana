@@ -1,11 +1,11 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { Label } from './AlertLabel';
+import { AlertLabel } from './AlertLabel';
 
 describe('Label', () => {
   it('renders label and value with correct aria-label', () => {
-    render(<Label label="foo" value="bar" />);
+    render(<AlertLabel label="foo" value="bar" />);
 
     const item = screen.getByTestId('label-value');
     expect(item).toBeInTheDocument();
@@ -16,7 +16,7 @@ describe('Label', () => {
 
   it('calls onClick when clicked', async () => {
     const onClick = jest.fn();
-    render(<Label label="env" value="prod" onClick={onClick} />);
+    render(<AlertLabel label="env" value="prod" onClick={onClick} />);
 
     await userEvent.click(screen.getByRole('button'));
     expect(onClick).toHaveBeenCalledWith('env', 'prod');
@@ -24,7 +24,7 @@ describe('Label', () => {
 
   it('calls onClick when Enter is pressed', async () => {
     const onClick = jest.fn();
-    render(<Label label="region" value="eu-west-1" onClick={onClick} />);
+    render(<AlertLabel label="region" value="eu-west-1" onClick={onClick} />);
 
     const button = screen.getByRole('button');
     await userEvent.type(button, '{enter}');

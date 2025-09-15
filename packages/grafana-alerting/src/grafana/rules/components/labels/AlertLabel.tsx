@@ -16,7 +16,7 @@ interface Props {
   onClick?: (label: string, value: string) => void;
 }
 
-const Label = ({ label, value, icon, color, size = 'md', onClick }: Props) => {
+const AlertLabel = ({ label, value, icon, color, size = 'md', onClick }: Props) => {
   const styles = useStyles2(getStyles, color, size);
   const ariaLabel = `${label}: ${value}`;
   const labelStr = label?.toString() ?? '';
@@ -143,4 +143,4 @@ const getStyles = (theme: GrafanaTheme2, color?: string, size?: string) => {
   };
 };
 
-export { Label };
+export { AlertLabel };

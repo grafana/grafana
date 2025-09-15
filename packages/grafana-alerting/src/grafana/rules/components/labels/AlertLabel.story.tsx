@@ -3,41 +3,41 @@ import { ComponentProps } from 'react';
 
 import { Stack, Text } from '@grafana/ui';
 
-import { Label } from './AlertLabel';
+import { AlertLabel } from './AlertLabel';
 
-const meta: Meta<typeof Label> = {
-  component: Label,
+const meta: Meta<typeof AlertLabel> = {
+  component: AlertLabel,
   title: 'Rules/AlertLabel',
 };
 
 export default meta;
 
-export const Basic: StoryObj<typeof Label> = {
-  render: (args: ComponentProps<typeof Label>) => (
+export const Basic: StoryObj<typeof AlertLabel> = {
+  render: (args: ComponentProps<typeof AlertLabel>) => (
     <Stack direction="column" alignItems="flex-start" gap={1}>
-      <Label {...args} label="alertname" value="HighErrorRate" />
-      <Label {...args} label="instance" value="web-01" />
-      <Label {...args} label="job" value="nginx" />
+      <AlertLabel {...args} label="alertname" value="HighErrorRate" />
+      <AlertLabel {...args} label="instance" value="web-01" />
+      <AlertLabel {...args} label="job" value="nginx" />
     </Stack>
   ),
 };
 
-export const Sizes: StoryObj<typeof Label> = {
-  render: (args: ComponentProps<typeof Label>) => (
+export const Sizes: StoryObj<typeof AlertLabel> = {
+  render: (args: ComponentProps<typeof AlertLabel>) => (
     <Stack direction="column" alignItems="flex-start" gap={1}>
       <Text>md</Text>
-      <Label {...args} label="zone" value="us-east-1" size="md" />
+      <AlertLabel {...args} label="zone" value="us-east-1" size="md" />
       <Text>sm</Text>
-      <Label {...args} label="zone" value="us-east-1" size="sm" />
+      <AlertLabel {...args} label="zone" value="us-east-1" size="sm" />
       <Text>xs</Text>
-      <Label {...args} label="zone" value="us-east-1" size="xs" />
+      <AlertLabel {...args} label="zone" value="us-east-1" size="xs" />
     </Stack>
   ),
 };
 
-export const Clickable: StoryObj<typeof Label> = {
-  render: (args: ComponentProps<typeof Label>) => (
-    <Label
+export const Clickable: StoryObj<typeof AlertLabel> = {
+  render: (args: ComponentProps<typeof AlertLabel>) => (
+    <AlertLabel
       {...args}
       label="region"
       value="eu-central-1"
@@ -46,11 +46,11 @@ export const Clickable: StoryObj<typeof Label> = {
   ),
 };
 
-export const WithIconAndColor: StoryObj<typeof Label> = {
-  render: (args: ComponentProps<typeof Label>) => (
+export const WithIconAndColor: StoryObj<typeof AlertLabel> = {
+  render: (args: ComponentProps<typeof AlertLabel>) => (
     <Stack direction="column" alignItems="flex-start" gap={1}>
-      <Label {...args} icon="tag-alt" label="owner" value="team-a" color="#268bd2" />
-      <Label {...args} icon="tag-alt" label="env" value="prod" color="#2aa198" />
+      <AlertLabel {...args} icon="tag-alt" label="owner" value="team-a" color="#268bd2" />
+      <AlertLabel {...args} icon="tag-alt" label="env" value="prod" color="#2aa198" />
     </Stack>
   ),
 };

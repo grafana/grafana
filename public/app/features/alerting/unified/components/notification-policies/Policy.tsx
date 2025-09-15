@@ -5,7 +5,7 @@ import * as React from 'react';
 import { FC, Fragment, ReactNode, useState } from 'react';
 import { useToggle } from 'react-use';
 
-import { Label } from '@grafana/alerting';
+import { AlertLabel } from '@grafana/alerting';
 import { GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import {
@@ -720,7 +720,7 @@ const InheritedProperties: FC<{ properties: InheritableProperties }> = ({ proper
             return null;
           }
 
-          return <Label key={key} label={routePropertyToLabel(key)} value={routePropertyToValue(key, value)} />;
+          return <AlertLabel key={key} label={routePropertyToLabel(key)} value={routePropertyToValue(key, value)} />;
         })}
       </Stack>
     }
@@ -917,7 +917,7 @@ function getContactPointErrors(contactPoint: string, contactPointsState: Receive
     const notifierErrors = notifierStatuses
       .filter((status) => status.lastNotifyAttemptError)
       .map((status) => (
-        <Label
+        <AlertLabel
           icon="at"
           key={uniqueId()}
           label={t('alerting.contact-point-errors.label-contact-point', 'Contact Point › {{name}}', {

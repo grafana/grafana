@@ -8,7 +8,7 @@ import { Button, getTagColorsFromName, useStyles2 } from '@grafana/ui';
 
 import { isPrivateLabel } from '../../utils/labels';
 
-import { Label, LabelSize } from './AlertLabel';
+import { AlertLabel, LabelSize } from './AlertLabel';
 
 interface Props {
   labels: Record<string, string>;
@@ -35,7 +35,7 @@ export const AlertLabels = ({ labels, commonLabels = {}, size, onClick }: Props)
     <div className={styles.wrapper} role="list" aria-label={t('alerting.alert-labels.aria-label-labels', 'Labels')}>
       {labelsToShow.map(([label, value]) => {
         return (
-          <Label
+          <AlertLabel
             key={label + value}
             size={size}
             label={label}

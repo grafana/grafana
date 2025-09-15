@@ -8,7 +8,7 @@
  */
 
 export { AlertLabels } from './grafana/rules/components/labels/AlertLabels';
-export { Label } from './grafana/rules/components/labels/AlertLabel';
+export { AlertLabel } from './grafana/rules/components/labels/AlertLabel';
 // keep label utils internal to the app for now
 
 // This is a dummy export so typescript doesn't error importing an "empty module"
