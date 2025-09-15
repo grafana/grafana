@@ -79,13 +79,15 @@ func NewKvStorageBackend(opts KvBackendOptions) (StorageBackend, error) {
 	}
 
 	backend := &kvStorageBackend{
-		kv:         kv,
-		dataStore:  newDataStore(kv),
-		eventStore: eventStore,
-		notifier:   newNotifier(eventStore, notifierOptions{}),
-		snowflake:  s,
-		builder:    StandardDocumentBuilder(), // For now we use the standard document builder.
-		log:        &logging.NoOpLogger{},     // Make this configurable
+		kv:                   kv,
+		dataStore:            newDataStore(kv),
+		eventStore:           eventStore,
+		notifier:             newNotifier(eventStore, notifierOptions{}),
+		snowflake:            s,
+		builder:              StandardDocumentBuilder(), // For now we use the standard document builder.
+		log:                  &logging.NoOpLogger{},     // Make this configurable
+		eventRetentionPeriod: eventRetentionPeriod,
+		eventPruningInterval: eventPruningInterval,
 	}
 	err = backend.initPruner(ctx)
 	if err != nil {
