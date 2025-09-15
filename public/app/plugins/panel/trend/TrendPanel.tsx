@@ -11,7 +11,7 @@ import {
   useDataLinksContext,
 } from '@grafana/data';
 import { config, PanelDataErrorView } from '@grafana/runtime';
-import { KeyboardPlugin, TooltipDisplayMode, TooltipPlugin2 } from '@grafana/ui';
+import { KeyboardPlugin, TooltipDisplayMode, TooltipPlugin2, usePanelContext } from '@grafana/ui';
 import { TooltipHoverMode } from '@grafana/ui/internal';
 import { XYFieldMatchers } from 'app/core/components/GraphNG/types';
 import { preparePlotFrame } from 'app/core/components/GraphNG/utils';
@@ -35,6 +35,10 @@ export const TrendPanel = ({
   id,
 }: PanelProps<Options>) => {
   const { dataLinkPostProcessor } = useDataLinksContext();
+  const { canExecuteActions } = usePanelContext();
+
+  const userCanExecuteActions = useMemo(() => canExecuteActions?.() ?? false, [canExecuteActions]);
+
   // Need to fallback to first number field if no xField is set in options otherwise panel crashes 😬
   const trendXFieldName =
     options.xField ?? data.series[0]?.fields.find((field) => field.type === FieldType.number)?.name;
@@ -143,6 +147,7 @@ export const TrendPanel = ({
                       replaceVariables={replaceVariables}
                       dataLinks={dataLinks}
                       hideZeros={options.tooltip.hideZeros}
+                      canExecuteActions={userCanExecuteActions}
                     />
                   );
                 }}
