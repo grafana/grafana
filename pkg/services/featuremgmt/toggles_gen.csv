@@ -43,6 +43,7 @@ provisioning,experimental,@grafana/grafana-app-platform-squad,false,true,false
 grafanaAPIServerEnsureKubectlAccess,experimental,@grafana/grafana-app-platform-squad,true,true,false
 featureToggleAdminPage,experimental,@grafana/grafana-operator-experience-squad,false,true,false
 awsAsyncQueryCaching,GA,@grafana/aws-datasources,false,false,false
+queryCacheRequestDeduplication,experimental,@grafana/grafana-operator-experience-squad,false,false,false
 permissionsFilterRemoveSubquery,experimental,@grafana/search-and-storage,false,false,false
 configurableSchedulerTick,experimental,@grafana/alerting-squad,false,true,false
 dashgpt,GA,@grafana/dashboards-squad,false,false,true
@@ -59,6 +60,7 @@ kubernetesSnapshots,experimental,@grafana/grafana-app-platform-squad,false,true,
 kubernetesLibraryPanels,experimental,@grafana/grafana-app-platform-squad,false,true,false
 kubernetesDashboards,GA,@grafana/dashboards-squad,false,false,true
 kubernetesShortURLs,experimental,@grafana/grafana-app-platform-squad,false,true,false
+useKubernetesShortURLsAPI,experimental,@grafana/sharing-squad,false,false,true
 kubernetesAlertingRules,experimental,@grafana/alerting-squad,false,true,false
 dashboardDisableSchemaValidationV1,experimental,@grafana/grafana-app-platform-squad,false,false,false
 dashboardDisableSchemaValidationV2,experimental,@grafana/grafana-app-platform-squad,false,false,false
@@ -171,6 +173,7 @@ alertingAIFeedback,experimental,@grafana/alerting-squad,false,false,false
 alertingAIImproveAlertRules,experimental,@grafana/alerting-squad,false,false,false
 alertingAIGenTemplates,experimental,@grafana/alerting-squad,false,false,false
 alertingEnrichmentPerRule,experimental,@grafana/alerting-squad,false,false,false
+alertingEnrichmentAssistantInvestigations,experimental,@grafana/alerting-squad,false,false,false
 alertingAIAnalyzeCentralStateHistory,experimental,@grafana/alerting-squad,false,false,false
 alertingNotificationsStepMode,GA,@grafana/alerting-squad,false,false,true
 feedbackButton,experimental,@grafana/grafana-operator-experience-squad,false,false,false

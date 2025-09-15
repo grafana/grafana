@@ -2058,9 +2058,6 @@
       "text-loading-rules": "Regels laden...",
       "title-dashboard-not-saved": "Dashboard is niet opgeslagen"
     },
-    "paused-badge": {
-      "paused": "Gepauzeerd"
-    },
     "payload-editor": {
       "edit-payload": "Payload bewerken",
       "label-add-custom-alert-instance": "Aangepaste waarschuwingsinstantie toevoegen",
@@ -2212,9 +2209,6 @@
       "label-time-range": "Tijdbereik",
       "max-data-points": "MD = {{maxDataPoints}}",
       "min-interval": "Min. Interval = {{minInterval}}"
-    },
-    "query-preview": {
-      "relative-time-range": "<0>{{from}}</0> tot nu"
     },
     "queryAndExpressionsStep": {
       "disableAdvancedOptions": {
@@ -2560,6 +2554,10 @@
       "recovering": "{{recoveringStats}} worden hersteld",
       "error_one": "{{count}} fouten",
       "error_other": "{{count}} fouten"
+    },
+    "rule-time-range-label": {
+      "relative": "",
+      "relative-with-to": ""
     },
     "rule-type-picker": {
       "grafana-managed": "Selecteer 'Grafana beheerd', tenzij je een Mimir-, Loki- of Cortex-gegevensbron hebt met de Ruler-API ingeschakeld."
@@ -3663,7 +3661,13 @@
       "text": "Geen resultaten gevonden voor je zoekopdracht"
     },
     "restore": {
-      "success": " {{name}} dashboard is hersteld"
+      "success": "",
+      "all-failed_one": "",
+      "all-failed_other": "",
+      "failed-count_one": "",
+      "failed-count_other": "",
+      "success-count_one": "",
+      "success-count_other": ""
     },
     "text-this-repository-is-read-only": "Als je directe toegang hebt tot het doel, kopieer je de JSON en plak je deze daar.",
     "trash-state-manager": {
@@ -9629,10 +9633,9 @@
       }
     },
     "logs-controls": {
+      "collapse": "",
       "deduplication": "Dedupliceren",
-      "disable-highlighting": "Markeren uitschakelen",
       "disable-prettify-json": "JSON-logs samenvouwen",
-      "display-level": "Niveaus weergeven",
       "display-level-all": "Alle niveaus",
       "download": "Logs downloaden",
       "download-logs": {
@@ -9640,18 +9643,39 @@
         "json": "json",
         "txt": "txt"
       },
-      "enable-highlighting": "Markeren inschakelen",
       "escape-newlines": "Corrigeer onjuist escaped nieuwe lijn en tabbladsequenties in logregels",
-      "font-size-default": "Gebruik kleine lettergrootte",
-      "font-size-small": "Gebruik standaard lettergrootte",
+      "expand": "",
+      "filter-levels": "",
+      "font-large": "",
+      "font-small": "",
       "hide-search": "Zoekopdracht sluiten",
       "hide-timestamps": "Tijdstempels verbergen",
       "hide-unique-labels": "Unieke labels verbergen",
+      "label": {
+        "collapse": "",
+        "disable-highlighting": "",
+        "enable-highlighting": "",
+        "escape-newlines": "",
+        "expand": ""
+      },
+      "labels": {
+        "font-large": "",
+        "font-small": "",
+        "hide-search": "",
+        "newest-first": "",
+        "oldest-first": "",
+        "show-search": ""
+      },
       "line-wrapping": {
         "enable": "",
         "enable-prettify": "",
         "hide": "",
-        "label": ""
+        "state": {
+          "hide": "",
+          "json": "",
+          "wrap": ""
+        },
+        "tooltip": ""
       },
       "newest-first": "Gesorteerd op nieuwste logboeken eerst - klik om oudste eerst weer te geven",
       "oldest-first": "Gesorteerd op oudste logboeken eerst - klik om nieuwste eerst weer te geven",
@@ -9667,8 +9691,18 @@
       "timestamp": {
         "hide": "",
         "label": "",
+        "label-hide": "",
+        "label-ms": "",
+        "label-ns": "",
         "milliseconds": "",
-        "nanoseconds": ""
+        "nanoseconds": "",
+        "tooltip": ""
+      },
+      "tooltip": {
+        "disable-highlighting": "",
+        "download": "",
+        "enable-highlighting": "",
+        "filter-level": ""
       },
       "unwrap-lines": "Lijnen omsluiten",
       "wrap-lines": "Lijnen omsluiten"
@@ -11351,7 +11385,11 @@
     },
     "folder-repository-list": {
       "no-results-matching-your-query": "Geen resultaten die overeenkomen met je query",
-      "placeholder-search": "Zoeken"
+      "placeholder-search": "Zoeken",
+      "all-resources-managed_one": "",
+      "all-resources-managed_other": "",
+      "partial-managed_one": "",
+      "partial-managed_other": ""
     },
     "get-default-values": {
       "title": {
@@ -11649,6 +11687,7 @@
       "tooltip-unhealthy-repository": "Kan geen ongezonde repository ophalen"
     },
     "synchronize-step": {
+      "repository-unhealthy": "",
       "synchronization-description": "Commits opnemen voor elke historische waarde",
       "synchronization-options": "Synchronisatie-opties"
     },
@@ -11672,6 +11711,8 @@
       "alert-point-3": "De duur van dit proces is afhankelijk van het aantal betrokken bronnen.",
       "alert-point-4": "Enterprise-instantiebeheerders kunnen een aankondigingsbanner weergeven aan gebruikers. Zie <2>deze handleiding</2> voor stapsgewijze instructies.",
       "alert-title": "Belangrijk: er zullen geen gegevens of configuratie verloren gaan, maar dashboards zullen tijdelijk een paar minuten niet beschikbaar zijn.",
+      "button-cancel": "",
+      "button-cancelling": "",
       "button-next": "Voltooien",
       "button-start": "Synchronisatie starten",
       "discard-modal": {
