@@ -5,6 +5,7 @@ import * as React from 'react';
 import { FC, Fragment, ReactNode, useState } from 'react';
 import { useToggle } from 'react-use';
 
+import { Label } from '@grafana/alerting';
 import { GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import {
@@ -42,7 +43,6 @@ import { InheritableProperties, getInheritedProperties } from '../../utils/notif
 import { InsertPosition } from '../../utils/routeTree';
 import { Authorize } from '../Authorize';
 import { PopupCard } from '../HoverCard';
-import { Label } from '../Label';
 import { MetaText } from '../MetaText';
 import { ProvisioningBadge } from '../Provisioning';
 import { Spacer } from '../Spacer';
