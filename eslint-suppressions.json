@@ -3935,11 +3935,6 @@
       "count": 4
     }
   },
-  "public/app/plugins/datasource/dashboard/datasource.ts": {
-    "@typescript-eslint/consistent-type-assertions": {
-      "count": 1
-    }
-  },
   "public/app/plugins/datasource/dashboard/runSharedRequest.ts": {
     "@typescript-eslint/consistent-type-assertions": {
       "count": 2
@@ -4108,7 +4103,7 @@
       "count": 4
     },
     "@typescript-eslint/no-explicit-any": {
-      "count": 10
+      "count": 8
     }
   },
   "public/app/plugins/datasource/graphite/gfunc.ts": {
