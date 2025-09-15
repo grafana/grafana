@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# Set default values for dist-tag and registry for local development
+# to prevent running this script and accidentally publishing to npm
 dist_tag="canary"
 registry="http://localhost:4873"
 
