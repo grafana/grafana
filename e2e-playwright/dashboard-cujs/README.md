@@ -24,7 +24,7 @@ If the `API_CONFIG_PATH` is not set, the test suite will use mocked responses fo
 
 The config file should contain endpoint glob patterns for labels and values APIs. These endpoints are used to fetch labels (keys) and values for the AdHocFilters and the GroupBy variables. The pattern should be a string glob pattern, e.g.: `\*\*/resources/\*\*/labels\*`
 
-Alongside the endpoint patterns, the config file can also specify a list of dashboard UIDs that would be used to run navigation and view tests against each of the dashboards. This is useful to verify that static dashboards, alongside reloadable dashboards are viewed and navigated correctly. To use this property, simply add 
+Alongside the endpoint patterns, the config file can also specify a list of dashboard UIDs that would be used to run navigation and view tests against each of the dashboards. This is useful to verify that static dashboards, alongside reloadable dashboards are viewed and navigated correctly. To use this property, simply add
 
 ```json
   "dashboards": ["cuj-static-dashboard", "cuj-reloadable-dashboard"]
