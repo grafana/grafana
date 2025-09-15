@@ -2,6 +2,29 @@
 
 This documentation describes the dashboard render performance metrics exposed from Grafana's frontend.
 
+## Table of Contents
+
+- [Overview](#overview)
+- [Configuration](#configuration)
+  - [Enabling Performance Metrics](#enabling-performance-metrics)
+- [Tracked Interactions](#tracked-interactions)
+  - [Core Performance-Tracked Interactions](#core-performance-tracked-interactions)
+  - [Interaction Origin Mapping](#interaction-origin-mapping)
+- [Profiling Implementation](#profiling-implementation)
+  - [Profile Data Structure](#profile-data-structure)
+  - [Collected Metrics](#collected-metrics)
+- [Debugging and Development](#debugging-and-development)
+  - [Enable Profiler Debug Logging](#enable-profiler-debug-logging)
+  - [Enable Echo Service Debug Logging](#enable-echo-service-debug-logging)
+  - [Browser Performance Profiler](#browser-performance-profiler)
+- [Analytics Integration](#analytics-integration)
+  - [Interaction Reporting](#interaction-reporting)
+  - [Data Collection](#data-collection)
+- [Implementation Details](#implementation-details)
+  - [Long Frame Detection](#long-frame-detection)
+  - [Tab Inactivity Handling](#tab-inactivity-handling)
+- [Related Documentation](#related-documentation)
+
 ## Overview
 
 The exposed dashboard performance metrics feature provides comprehensive tracking and profiling of dashboard interactions, allowing administrators and developers to analyze dashboard render performance, user interactions, and identify performance bottlenecks.
@@ -69,6 +92,8 @@ const payload = {
   totalJSHeapSize: e.totalJSHeapSize,
   usedJSHeapSize: e.usedJSHeapSize,
   jsHeapSizeLimit: e.jsHeapSizeLimit,
+  longFramesCount: e.longFramesCount,
+  longFramesTotalTime: e.longFramesTotalTime,
   timeSinceBoot: performance.measure('time_since_boot', 'frontend_boot_js_done_time_seconds').duration,
 };
 
@@ -101,6 +126,8 @@ interface SceneInteractionProfileEvent {
   jsHeapSizeLimit: number; // JavaScript heap size limit
   startTs: number; // Profile start timestamp
   endTs: number; // Profile end timestamp
+  longFramesCount: number; // Number of long frames (>50ms threshold)
+  longFramesTotalTime: number; // Total time of long frames during interaction
 }
 ```
 
@@ -113,6 +140,8 @@ For each tracked interaction, the system collects:
   - `duration`: Total interaction time from start to finish
   - `networkDuration`: Time spent on network requests (API calls, data fetching)
   - `processingTime`: Client-side processing time calculated as `duration - networkDuration`
+  - `longFramesCount`: Number of frames that exceeded the 50ms threshold
+  - `longFramesTotalTime`: Cumulative time of all long frames during the interaction
 - **Memory Metrics**: JavaScript heap usage statistics
 - **Timing Information**: Time since boot, profile start and end timestamps
 - **Interaction Context**: Type of user interaction
@@ -124,6 +153,10 @@ The performance metrics provide detailed insights into where time is spent durin
 - **Total Duration (`duration`)**: Complete time from interaction start to completion
 - **Network Time (`networkDuration`)**: Time spent waiting for server responses (data source queries, API calls)
 - **Processing Time (`processingTime`)**: Time spent on client-side operations (rendering, computations, DOM updates)
+- **Long Frames (`longFramesCount` & `longFramesTotalTime`)**: Frames exceeding 50ms threshold indicate potential UI jank or performance issues. These metrics help identify interactions causing poor user experience:
+  - `longFramesCount`: The number of frames that exceeded the 50ms threshold
+  - `longFramesTotalTime`: The total accumulated time of all long frames, indicating the severity of performance issues
+  - **Detection Method**: Automatically uses Long Animation Frame API when available (Chrome 123+), falls back to manual tracking for broader browser support
 
 ## Debugging and Development
 
@@ -140,9 +173,20 @@ localStorage.setItem('grafana.debug.scenes', 'true');
 When debug logging is enabled, you'll see console logs for each profiling event:
 
 ```
-SceneRenderProfiler: Profile started: {origin: <NAME_OF_INTERACTION>, crumbs: Array(0)}
+SceneRenderProfiler: Profile started[clean]
+  ├─ Origin: dashboard_view
+  └─ Timestamp: 1072.5ms
+LongFrameDetector: Started tracking with LoAF API method, threshold: 50ms
 ... // intermediate steps adding profile crumbs
-SceneRenderProfiler: Stopped recording, total measured time (network included): 2123
+LongFrameDetector: Long frame detected (LoAF): 67.4ms at 1071.5ms
+LongFrameDetector: Long frame detected (LoAF): 76.3ms at 1139.8ms
+... // more long frame detections
+SceneRenderProfiler: Profile completed
+  ├─ Timestamp: 3530.6ms
+  ├─ Total time: 156.8ms
+  ├─ Slow frames: 16.3ms (1 frames)
+  └─ Long frames: 143.7ms (2 frames)
+SceneRenderProfiler: Stopped long frame detection - profile complete at 3530.6ms
 ```
 
 ### Enable Echo Service Debug Logging
@@ -194,6 +238,8 @@ The system reports the following data for each interaction:
   totalJSHeapSize: number,      // Memory metrics
   usedJSHeapSize: number,
   jsHeapSizeLimit: number,
+  longFramesCount: number,      // Number of long frames (>50ms threshold)
+  longFramesTotalTime: number,  // Total time of all long frames
   timeSinceBoot: number         // Time since frontend boot
 }
 ```
@@ -201,6 +247,53 @@ The system reports the following data for each interaction:
 ## Implementation Details
 
 The profiler is integrated into dashboard creation paths and uses a singleton pattern to share profiler instances across dashboard reloads. The performance tracking is implemented using the `SceneRenderProfiler` from the `@grafana/scenes` library.
+
+### Long Frame Detection
+
+The profiler uses the Long Animation Frame (LoAF) API when available to monitor frame rendering performance during dashboard interactions:
+
+#### Primary Method: Long Animation Frame API
+
+- **Browser Support**: Chrome 123+ (automatically detected)
+- **Threshold**: 50ms (standard LoAF threshold)
+- **Benefits**:
+  - Browser-level accuracy and performance
+  - Standards-based implementation
+  - More efficient than manual tracking
+  - Automatic buffering control for real-time detection
+
+#### Fallback Method: Manual Frame Tracking
+
+- **Browser Support**: All browsers
+- **Threshold**: 50ms (same as LoAF threshold)
+- **Used when**: LoAF API is not available
+- **Implementation**: Uses requestAnimationFrame for frame monitoring
+
+Both methods track:
+
+- **Count**: Number of frames exceeding the threshold
+- **Total Time**: Cumulative duration of all long frames
+
+#### Debug Output
+
+With LoAF API:
+
+```
+LongFrameDetector: Long frame detected (LoAF): 67.4ms at 1234.5ms
+```
+
+With manual fallback:
+
+```
+LongFrameDetector: Long frame detected (manual): 38.2ms (threshold: 50ms)
+```
+
+This metric is particularly valuable for:
+
+- Detecting rendering performance issues that impact user experience
+- Identifying when interactions cause UI jank or frame drops
+- Measuring the impact of performance optimizations on frame rendering
+- Comparing performance across different browsers and environments
 
 ### Tab Inactivity Handling
 
@@ -325,3 +418,4 @@ Without profile isolation, these scenarios could result in profiles that never c
 - [PR #1211 - SceneRenderProfiler: Improve profiler accuracy by adding cancellation and skipping inactive tabs](https://github.com/grafana/scenes/pull/1211)
 - [PR #1212 - SceneQueryController: Fix profiler query controller registration on scene re-activation](https://github.com/grafana/scenes/pull/1212)
 - [PR #1225 - SceneRenderProfiler: Handle overlapping profiles by cancelling previous profile](https://github.com/grafana/scenes/pull/1225)
+- [PR #1235 - Implement long frame detection with LoAF API and manual fallback](https://github.com/grafana/scenes/pull/1235)
