@@ -38,6 +38,10 @@ func (s *promDepAuthStep) Run(ctx context.Context, log logging.Logger, obj *advi
 	if !ok {
 		return nil, fmt.Errorf("invalid item type %T", i)
 	}
+	if ds.Type != datasources.DS_PROMETHEUS {
+		return nil, nil
+	}
+
 	links := []advisor.CheckErrorLink{}
 
 	awsLink, err := s.checkUsingAWSAuth(ctx, ds)
