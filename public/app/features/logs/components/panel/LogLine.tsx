@@ -8,6 +8,7 @@ import { t } from '@grafana/i18n';
 import { Button, Icon, Tooltip } from '@grafana/ui';
 
 import { LOG_LINE_BODY_FIELD_NAME } from '../LogDetailsBody';
+import { LogLabels } from '../LogLabels';
 import { LogMessageAnsi } from '../LogMessageAnsi';
 
 import { HighlightedLogRenderer } from './HighlightedLogRenderer';
@@ -30,6 +31,7 @@ export interface Props {
   log: LogListModel;
   logs: LogListModel[];
   showTime: boolean;
+  showUniqueLabels?: boolean;
   style: CSSProperties;
   styles: LogLineStyles;
   timeRange: TimeRange;
@@ -108,6 +110,7 @@ const LogLineComponent = memo(
       fontSize,
       hasLogsWithErrors,
       hasSampledLogs,
+      showUniqueLabels,
       timestampResolution,
       onLogLineHover,
     } = useLogListContext();
@@ -233,6 +236,7 @@ const LogLineComponent = memo(
               displayedFields={displayedFields}
               log={log}
               showTime={showTime}
+              showUniqueLabels={showUniqueLabels}
               styles={styles}
               timestampResolution={timestampResolution}
               wrapLogMessage={wrapLogMessage}
@@ -287,33 +291,41 @@ interface LogProps {
   displayedFields: string[];
   log: LogListModel;
   showTime: boolean;
+  showUniqueLabels?: boolean;
   styles: LogLineStyles;
   timestampResolution: LogLineTimestampResolution;
   wrapLogMessage: boolean;
 }
 
-const Log = memo(({ displayedFields, log, showTime, styles, timestampResolution, wrapLogMessage }: LogProps) => {
-  return (
-    <>
-      {showTime && (
-        <span className={`${styles.timestamp} level-${log.logLevel} field`}>
-          {timestampResolution === 'ms' ? log.timestamp : log.timestampNs}
-        </span>
-      )}
-      {
-        // When logs are unwrapped, we want an empty column space to align with other log lines.
-      }
-      {(log.displayLevel || !wrapLogMessage) && (
-        <span className={`${styles.level} level-${log.logLevel} field`}>{log.displayLevel}</span>
-      )}
-      {displayedFields.length > 0 ? (
-        <DisplayedFields displayedFields={displayedFields} log={log} styles={styles} />
-      ) : (
-        <LogLineBody log={log} styles={styles} />
-      )}
-    </>
-  );
-});
+const Log = memo(
+  ({ displayedFields, log, showTime, showUniqueLabels, styles, timestampResolution, wrapLogMessage }: LogProps) => {
+    return (
+      <>
+        {showTime && (
+          <span className={`${styles.timestamp} level-${log.logLevel} field`}>
+            {timestampResolution === 'ms' ? log.timestamp : log.timestampNs}
+          </span>
+        )}
+        {
+          // When logs are unwrapped, we want an empty column space to align with other log lines.
+        }
+        {(log.displayLevel || !wrapLogMessage) && (
+          <span className={`${styles.level} level-${log.logLevel} field`}>{log.displayLevel}</span>
+        )}
+        {showUniqueLabels && log.uniqueLabels && (
+          <span className="field">
+            <LogLabels labels={log.uniqueLabels} addTooltip={true} displayMax={5} />
+          </span>
+        )}
+        {displayedFields.length > 0 ? (
+          <DisplayedFields displayedFields={displayedFields} log={log} styles={styles} />
+        ) : (
+          <LogLineBody log={log} styles={styles} />
+        )}
+      </>
+    );
+  }
+);
 Log.displayName = 'Log';
 
 const DisplayedFields = ({
@@ -402,9 +414,11 @@ const LogLineBody = ({ log, styles }: { log: LogListModel; styles: LogLineStyles
 };
 
 export function getGridTemplateColumns(dimensions: LogFieldDimension[], displayedFields: string[]) {
-  const columns = dimensions.map((dimension) => dimension.width).join('px ');
+  const columns = dimensions
+    .map((dimension) => (dimension.width > 0 ? `${dimension.width}px` : 'fit-content(50%)'))
+    .join(' ');
   const logLineWidth = displayedFields.length > 0 ? '' : ' 1fr';
-  return `${columns}px${logLineWidth}`;
+  return `${columns}${logLineWidth}`;
 }
 
 export type LogLineStyles = ReturnType<typeof getStyles>;

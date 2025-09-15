@@ -79,6 +79,7 @@ export interface Props {
   setDisplayedFields?: (displayedFields: string[]) => void;
   showControls: boolean;
   showTime: boolean;
+  showUniqueLabels?: boolean;
   sortOrder: LogsSortOrder;
   timeRange: TimeRange;
   timestampResolution?: LogLineTimestampResolution;
@@ -148,6 +149,7 @@ export const LogList = ({
   setDisplayedFields,
   showControls,
   showTime,
+  showUniqueLabels,
   sortOrder,
   syntaxHighlighting = logOptionsStorageKey ? store.getBool(`${logOptionsStorageKey}.syntaxHighlighting`, true) : true,
   timeRange,
@@ -192,6 +194,7 @@ export const LogList = ({
       setDisplayedFields={setDisplayedFields}
       showControls={showControls}
       showTime={showTime}
+      showUniqueLabels={showUniqueLabels}
       sortOrder={sortOrder}
       syntaxHighlighting={syntaxHighlighting}
       timestampResolution={timestampResolution}
@@ -247,6 +250,7 @@ const LogListComponent = ({
     prettifyJSON,
     showDetails,
     showTime,
+    showUniqueLabels,
     sortOrder,
     timestampResolution,
     toggleDetails,
@@ -264,8 +268,13 @@ const LogListComponent = ({
     () =>
       wrapLogMessage
         ? []
-        : virtualization.calculateFieldDimensions(processedLogs, displayedFields, timestampResolution),
-    [displayedFields, processedLogs, timestampResolution, virtualization, wrapLogMessage]
+        : virtualization.calculateFieldDimensions(
+            processedLogs,
+            displayedFields,
+            timestampResolution,
+            showUniqueLabels
+          ),
+    [displayedFields, processedLogs, showUniqueLabels, timestampResolution, virtualization, wrapLogMessage]
   );
   const styles = useStyles2(getStyles, dimensions, displayedFields, { showTime });
   const widthContainer = wrapperRef.current ?? containerElement;

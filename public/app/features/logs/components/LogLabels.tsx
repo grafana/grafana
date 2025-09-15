@@ -137,7 +137,7 @@ LogLabel.displayName = 'LogLabel';
 const getStyles = (theme: GrafanaTheme2) => {
   return {
     logsLabels: css({
-      display: 'flex',
+      display: 'inline-flex',
       flexWrap: 'wrap',
       fontSize: theme.typography.size.xs,
       alignItems: 'center',
