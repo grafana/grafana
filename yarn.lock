@@ -2864,7 +2864,7 @@ __metadata:
     "@emotion/css": "npm:11.13.5"
     "@grafana/data": "workspace:*"
     "@grafana/e2e-selectors": "workspace:*"
-    "@grafana/lezer-traceql": "npm:0.0.23"
+    "@grafana/lezer-traceql": "npm:0.0.24"
     "@grafana/monaco-logql": "npm:^0.0.8"
     "@grafana/o11y-ds-frontend": "workspace:*"
     "@grafana/plugin-configs": "npm:12.3.0-pre"
@@ -3269,12 +3269,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@grafana/lezer-traceql@npm:0.0.23":
-  version: 0.0.23
-  resolution: "@grafana/lezer-traceql@npm:0.0.23"
+"@grafana/lezer-traceql@npm:0.0.24":
+  version: 0.0.24
+  resolution: "@grafana/lezer-traceql@npm:0.0.24"
   peerDependencies:
     "@lezer/lr": ^1.4.2
-  checksum: 10/e9dba8ed747062c791fd2298e20e18da06642d273f9c502f8c1ec90524108edf7c6bd4e719db2ae62de77ba02bfaf0d2f291058d04727969b5af67cdb277b9c3
+  checksum: 10/46bd65d0b61f490dc92db318062079c50564429407e7496def9224b061231d080943b20e63c066ea12ab0929374a50cfa1d29fb2156a65b3ef635f44011bd959
   languageName: node
   linkType: hard
 
@@ -3521,11 +3521,11 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@grafana/scenes-react@npm:6.35.0":
-  version: 6.35.0
-  resolution: "@grafana/scenes-react@npm:6.35.0"
+"@grafana/scenes-react@npm:6.35.3":
+  version: 6.35.3
+  resolution: "@grafana/scenes-react@npm:6.35.3"
   dependencies:
-    "@grafana/scenes": "npm:6.35.0"
+    "@grafana/scenes": "npm:6.35.3"
     lru-cache: "npm:^10.2.2"
     react-use: "npm:^17.4.0"
   peerDependencies:
@@ -3537,13 +3537,13 @@ __metadata:
     react: ^18.0.0
     react-dom: ^18.0.0
     react-router-dom: ^6.28.0
-  checksum: 10/7f4f3b2c23137adb0dc71b2fe93e92c41e2f71fc91d1f7a1432f04946841220dc27941f021af74642ebc3b58467c482e1349b8b7e0d490b78f3a33f8671fda85
+  checksum: 10/2c220eef6aa8560d073a27a02918b4bbf4d0cffee273ff597e94eb4376e75d0e47fcdaa2cd1ca8ea851c29477722dec2e2d2f817f2c5c185151de2051c5e2ab7
   languageName: node
   linkType: hard
 
-"@grafana/scenes@npm:6.35.0":
-  version: 6.35.0
-  resolution: "@grafana/scenes@npm:6.35.0"
+"@grafana/scenes@npm:6.35.3":
+  version: 6.35.3
+  resolution: "@grafana/scenes@npm:6.35.3"
   dependencies:
     "@floating-ui/react": "npm:^0.26.16"
     "@leeoniya/ufuzzy": "npm:^1.0.16"
@@ -3563,7 +3563,7 @@ __metadata:
     react: ^18.0.0
     react-dom: ^18.0.0
     react-router-dom: ^6.28.0
-  checksum: 10/4a9ff88c2a6cfafe5aaa7d50b8ee67ab38f105b3073cab4469665338e28c9991fb9b908c0325680cc32525a87ebcd34c3d376d940a4f9b9b684c8db238f02527
+  checksum: 10/a209e6a1cbe6c4e70c2cd8c413df2560a59b157944888e317385f19e43e23ff826d84c922618b1268a7085278aca45a369c8f6255bf70a06134622c6ef2a542e
   languageName: node
   linkType: hard
 
@@ -18168,8 +18168,8 @@ __metadata:
     "@grafana/plugin-ui": "npm:^0.10.10"
     "@grafana/prometheus": "workspace:*"
     "@grafana/runtime": "workspace:*"
-    "@grafana/scenes": "npm:6.35.0"
-    "@grafana/scenes-react": "npm:6.35.0"
+    "@grafana/scenes": "npm:6.35.3"
+    "@grafana/scenes-react": "npm:6.35.3"
     "@grafana/schema": "workspace:*"
     "@grafana/sql": "workspace:*"
     "@grafana/test-utils": "workspace:*"
