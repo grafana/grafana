@@ -49,14 +49,22 @@ export const Dropdown = React.memo(({ children, overlay, placement, offset, onVi
       mainAxis: offset?.[0] ?? 8,
       crossAxis: offset?.[1] ?? 0,
     }),
-    flip({
-      fallbackAxisSideDirection: 'end',
-      // see https://floating-ui.com/docs/flip#combining-with-shift
-      crossAxis: false,
-      boundary: document.body,
-    }),
-    shift(),
   ];
+  const flipMiddleware = flip({
+    // Ensure we flip to the perpendicular axis if it doesn't fit
+    // on narrow viewports.
+    crossAxis: 'alignment',
+    fallbackAxisSideDirection: 'end',
+    boundary: document.querySelector('.main-view') ?? undefined,
+  });
+  const shiftMiddleware = shift();
+
+  // Prioritize flip over shift for edge-aligned placements only.
+  if (placement?.includes('-')) {
+    middleware.push(flipMiddleware, shiftMiddleware);
+  } else {
+    middleware.push(shiftMiddleware, flipMiddleware);
+  }
 
   const { context, refs, floatingStyles } = useFloating({
     open: show,
