@@ -2073,10 +2073,10 @@ func GetSecretKeysForContactPointType(contactPointType string, version NotifierV
 		notifiers = GetAvailableNotifiers()
 	}
 	if version == V0mimir1 {
-		notifiers = getAvailableMimirNotifiers()
+		notifiers = getAvailableV0mimir1Notifiers()
 	}
 	if version == V0mimir2 {
-		notifiers = getAvailableMimirV2Notifiers()
+		notifiers = getAvailableV0mimir2Notifiers()
 	}
 	for _, n := range notifiers {
 		if strings.EqualFold(n.Type, contactPointType) {
@@ -2151,7 +2151,7 @@ func GetAvailableNotifiersV2() iter.Seq[*VersionedNotifierPlugin] {
 		}
 	}
 	add(GetAvailableNotifiers(), V1)
-	add(getAvailableMimirV2Notifiers(), V0mimir2)
-	add(getAvailableMimirNotifiers(), V0mimir1)
+	add(getAvailableV0mimir2Notifiers(), V0mimir2)
+	add(getAvailableV0mimir1Notifiers(), V0mimir1)
 	return maps.Values(m)
 }

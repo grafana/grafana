@@ -4,8 +4,7 @@ import (
 	promCfg "github.com/prometheus/alertmanager/config"
 )
 
-// getAvailableMimirNotifiers returns the metadata of all the cloud notification channels that can be configured.
-func getAvailableMimirNotifiers() []*NotifierPlugin {
+func getAvailableV0mimir1Notifiers() []*NotifierPlugin {
 	return []*NotifierPlugin{
 		getDiscordMimirNotifier(),
 		getEmailMimirNotifier(),
@@ -24,7 +23,7 @@ func getAvailableMimirNotifiers() []*NotifierPlugin {
 	}
 }
 
-func getAvailableMimirV2Notifiers() []*NotifierPlugin {
+func getAvailableV0mimir2Notifiers() []*NotifierPlugin {
 	return []*NotifierPlugin{
 		getMicrosoftTeamsV2MimirNotifier(),
 	}
@@ -62,7 +61,7 @@ func getDiscordMimirNotifier() *NotifierPlugin {
 				InputType:    InputTypeText,
 				PropertyName: "message",
 			},
-			mimirHttpConfigOption(),
+			v0HttpConfigOption(),
 		},
 	}
 }
@@ -159,7 +158,7 @@ func getEmailMimirNotifier() *NotifierPlugin {
 				Element:      ElementTypeKeyValueMap,
 				PropertyName: "headers",
 			},
-			tlsConfigOption("tls_config"),
+			v0TLSConfigOption("tls_config"),
 		},
 	}
 }
@@ -310,7 +309,7 @@ func getPagerDutyMimirNotifier() *NotifierPlugin {
 				InputType:    InputTypeText,
 				PropertyName: "group",
 			},
-			mimirHttpConfigOption(),
+			v0HttpConfigOption(),
 		},
 	}
 }
@@ -545,7 +544,7 @@ func getSlackMimirNotifier() *NotifierPlugin {
 					},
 				},
 			},
-			mimirHttpConfigOption(),
+			v0HttpConfigOption(),
 		},
 	}
 }
@@ -583,7 +582,7 @@ func getWebhookMimirNotifier() *NotifierPlugin {
 				InputType:    InputTypeText,
 				PropertyName: "timeout",
 			},
-			mimirHttpConfigOption(),
+			v0HttpConfigOption(),
 		},
 	}
 }
@@ -720,7 +719,7 @@ func getOpsGenieMimirNotifier() *NotifierPlugin {
 					},
 				},
 			},
-			mimirHttpConfigOption(),
+			v0HttpConfigOption(),
 		},
 	}
 }
@@ -800,7 +799,7 @@ func getWeChatMimirNotifier() *NotifierPlugin {
 				InputType:    InputTypeText,
 				PropertyName: "to_tag",
 			},
-			mimirHttpConfigOption(),
+			v0HttpConfigOption(),
 		},
 	}
 }
@@ -912,7 +911,7 @@ func getPushoverMimirNotifier() *NotifierPlugin {
 				Element:      ElementTypeCheckbox,
 				PropertyName: "html",
 			},
-			mimirHttpConfigOption(),
+			v0HttpConfigOption(),
 		},
 	}
 }
@@ -986,7 +985,7 @@ func getVictorOpsMimirNotifier() *NotifierPlugin {
 				Element:      ElementTypeKeyValueMap,
 				PropertyName: "custom_fields",
 			},
-			mimirHttpConfigOption(),
+			v0HttpConfigOption(),
 		},
 	}
 }
@@ -1094,7 +1093,7 @@ func getAmazonSNSMimirNotifier() *NotifierPlugin {
 				Element:      ElementTypeKeyValueMap,
 				PropertyName: "attributes",
 			},
-			mimirHttpConfigOption(),
+			v0HttpConfigOption(),
 		},
 	}
 }
@@ -1157,7 +1156,7 @@ func getTelegramMimirNotifier() *NotifierPlugin {
 					{Value: "HTML", Label: "HTML"},
 				},
 			},
-			mimirHttpConfigOption(),
+			v0HttpConfigOption(),
 		},
 	}
 }
@@ -1194,7 +1193,7 @@ func getWebexMimirNotifier() *NotifierPlugin {
 				InputType:    InputTypeText,
 				PropertyName: "message",
 			},
-			mimirHttpConfigOption(),
+			v0HttpConfigOption(),
 		},
 	}
 }
@@ -1240,7 +1239,7 @@ func getMicrosoftTeamsMimirNotifier() *NotifierPlugin {
 				InputType:    InputTypeText,
 				PropertyName: "text",
 			},
-			mimirHttpConfigOption(),
+			v0HttpConfigOption(),
 		},
 	}
 }
@@ -1278,7 +1277,7 @@ func getMicrosoftTeamsV2MimirNotifier() *NotifierPlugin {
 				InputType:    InputTypeText,
 				PropertyName: "text",
 			},
-			mimirHttpConfigOption(),
+			v0HttpConfigOption(),
 		},
 	}
 }
@@ -1378,12 +1377,12 @@ func getJiraMimirNotifier() *NotifierPlugin {
 				Element:      ElementTypeKeyValueMap,
 				PropertyName: "fields",
 			},
-			mimirHttpConfigOption(),
+			v0HttpConfigOption(),
 		},
 	}
 }
 
-func proxyConfigOptions() []NotifierOption {
+func v0ProxyConfigOptions() []NotifierOption {
 	return []NotifierOption{
 		{
 			Label:        "Proxy URL",
@@ -1414,7 +1413,7 @@ func proxyConfigOptions() []NotifierOption {
 	}
 }
 
-func tlsConfigOption(propertyName string) NotifierOption {
+func v0TLSConfigOption(propertyName string) NotifierOption {
 	return NotifierOption{
 		Label:        "TLS config",
 		Description:  "Configures the TLS settings.",
@@ -1450,7 +1449,7 @@ func tlsConfigOption(propertyName string) NotifierOption {
 	}
 }
 
-func mimirHttpConfigOption() NotifierOption {
+func v0HttpConfigOption() NotifierOption {
 	oauth2ConfigOption := func() NotifierOption {
 		return NotifierOption{
 			Label:        "OAuth2",
@@ -1494,7 +1493,7 @@ func mimirHttpConfigOption() NotifierOption {
 					Element:      ElementTypeKeyValueMap,
 					PropertyName: "endpoint_params",
 				},
-				tlsConfigOption("TLSConfig"),
+				v0TLSConfigOption("TLSConfig"),
 			},
 		}
 	}
@@ -1565,8 +1564,8 @@ func mimirHttpConfigOption() NotifierOption {
 				PropertyName: "http_headers",
 			},
 		}, append(
-			proxyConfigOptions(),
-			tlsConfigOption("tls_config"),
+			v0ProxyConfigOptions(),
+			v0TLSConfigOption("tls_config"),
 			oauth2ConfigOption())...,
 		),
 	}
