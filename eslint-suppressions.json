@@ -3935,11 +3935,6 @@
       "count": 4
     }
   },
-  "public/app/plugins/datasource/dashboard/datasource.ts": {
-    "@typescript-eslint/consistent-type-assertions": {
-      "count": 1
-    }
-  },
   "public/app/plugins/datasource/dashboard/runSharedRequest.ts": {
     "@typescript-eslint/consistent-type-assertions": {
       "count": 2
