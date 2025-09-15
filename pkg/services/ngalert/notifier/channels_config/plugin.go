@@ -17,9 +17,9 @@ type VersionedNotifierPlugin struct {
 	Type           string                  `json:"type"`
 	CurrentVersion NotifierVersion         `json:"currentVersion"`
 	Name           string                  `json:"name"`
-	Heading        string                  `json:"heading"`
-	Description    string                  `json:"description"`
-	Info           string                  `json:"info"`
+	Heading        string                  `json:"heading,omitempty"`
+	Description    string                  `json:"description,omitempty"`
+	Info           string                  `json:"info,omitempty"`
 	Versions       []NotifierPluginVersion `json:"versions"`
 }
 
@@ -49,7 +49,7 @@ type NotifierPluginVersion struct {
 	Version   NotifierVersion          `json:"version"`
 	CanCreate bool                     `json:"canCreate"`
 	Options   []NotifierOption         `json:"options"`
-	Info      string                   `json:"info"`
+	Info      string                   `json:"info,omitempty"`
 	Plugin    *VersionedNotifierPlugin `json:"-"`
 }
 
