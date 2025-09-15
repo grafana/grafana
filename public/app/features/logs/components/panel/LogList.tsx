@@ -149,7 +149,7 @@ export const LogList = ({
   setDisplayedFields,
   showControls,
   showTime,
-  showUniqueLabels,
+  showUniqueLabels = true,
   sortOrder,
   syntaxHighlighting = logOptionsStorageKey ? store.getBool(`${logOptionsStorageKey}.syntaxHighlighting`, true) : true,
   timeRange,
