@@ -18,7 +18,7 @@ export interface Options extends common.OptionsWithLegend, common.OptionsWithToo
    */
   barRadius?: number;
   /**
-   * Controls the width of bars. 2 = Max width, 0 = Min width.
+   * Controls the width of bars. 1 = Max width, 0 = Min width.
    */
   barWidth: number;
   /**

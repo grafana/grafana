@@ -16,7 +16,7 @@ export interface Options extends common.OptionsWithLegend, common.OptionsWithToo
    */
   barRadius?: number;
   /**
-   * Controls the width of bars. 2 = Max width, 0 = Min width.
+   * Controls the width of bars. 1 = Max width, 0 = Min width.
    */
   barWidth: number;
   /**
@@ -77,7 +77,6 @@ export const defaultOptions: Partial<Options> = {
   clusterWidth: 0.7,
   fullHighlight: false,
   groupWidth: 0.7,
-  groupByField: "",
   orientation: common.VizOrientation.Auto,
   showValue: common.VisibilityMode.Auto,
   stacking: common.StackingMode.None,

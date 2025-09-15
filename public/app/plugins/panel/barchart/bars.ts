@@ -16,8 +16,7 @@ const intervals = systemDateFormats.interval;
 
 import { distribute, SPACE_BETWEEN } from './distribute';
 import { findRects, intersects, pointWithin, Quadtree, Rect } from './quadtree';
-import { groupBy } from 'lodash';
-import { MAX_HISTORY_AUTOCOMPLETE_ITEMS } from 'app/features/explore/state/utils';
+import { getClustersFromArray } from './utils';
 
 const groupDistr = SPACE_BETWEEN;
 const barDistr = SPACE_BETWEEN;
@@ -121,7 +120,7 @@ function calculateFontSizeWithMetrics(
 /**
  * @internal
  */
-export function getConfig(opts: BarsOptions, theme: GrafanaTheme2, clusters: number[]) {
+export function getConfig(opts: BarsOptions, theme: GrafanaTheme2, groupByFieldIdx: number) {
   const {
     xOri,
     xDir: dir,
@@ -145,6 +144,10 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2, clusters: num
 
   if (isStacked) {
     [groupWidth, barWidth] = [barWidth, groupWidth];
+  }
+
+  if (!groupByField) {
+    clusterWidth = groupWidth;
   }
 
   let qt: Quadtree;
@@ -205,11 +208,11 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2, clusters: num
       return splits.map((v) => (v == null ? '' : dateTimeFormat(v, { format, timeZone })));
     }
 
-    if (groupByField && clusters.length !== 0) { // use only distinct x-axis values when grouping is used.
-      splits = Array.from(new Set(u.data[0]))
-        .map(value => u.data[0].find(obj => obj === value))
-        .filter((v): v is number => v !== undefined);
-    }
+    // if (groupByField && clusters.length !== 0) { // use only distinct x-axis values when grouping is used.
+    //   splits = Array.from(new Set(u.data[0]))
+    //     .map(value => u.data[0].find(obj => obj === value))
+    //     .filter((v): v is number => v !== undefined);
+    // }
     return splits.map((v) => (isXHorizontal ? formatShortValue(0, v) : formatValue(0, v)));
   };
 
@@ -219,18 +222,18 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2, clusters: num
 
     let pctOffset = 0;
 
-    if (!groupByField || clusters.length === 0) {
+    // if (!groupByField || clusters.length === 0) {
       // how far in is the first tick in % of full dimension
       distribute(u.data[0].length, groupWidth, groupDistr, 0, (di, lftPct, widPct) => {
         pctOffset = lftPct + widPct / 2;
       });
       max = Math.max(1, u.data[0].length - 1);
-    } else {
-      distribute(clusters.length, clusterWidth, clusterDistr, 0, (di, lftPct, widPct) => {
-        pctOffset = lftPct + widPct / 2;
-      });
-      max = Math.max(1, clusters.length - 1);
-    }
+    // } else {
+    //   distribute(clusters.length, clusterWidth, clusterDistr, 0, (di, lftPct, widPct) => {
+    //     pctOffset = lftPct + widPct / 2;
+    //   });
+    //   max = Math.max(1, clusters.length - 1);
+    // }
 
     // expand scale range by equal amounts on both ends
     let rn = max - min;
@@ -595,17 +598,12 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2, clusters: num
       s._paths = null;
     });
 
+    const clusters = getClustersFromArray(Array.from(u.data[groupByFieldIdx === -1 ? 0 : groupByFieldIdx]), groupByField);
 
-    if (groupByField && clusters.length !== 0) {
-      if (isStacked) {
-        barsPctLayout = [null, ...distrClusteredStacked(u.data[0].length, u.data.length -1, clusters.length, clusters)];
-      } else {
-        barsPctLayout = [null, ...distrClusteredNonStacked(u.data[0].length, u.data.length - 1, clusters.length, clusters)]
-      }
-    }else if (isStacked) {
-      barsPctLayout = [null, ...distrOne(u.data[0].length, u.data.length - 1)];
+    if (isStacked) {
+      barsPctLayout = [null, ...distrClusteredStacked(u.data[0].length, u.data.length -1, clusters.length, clusters)];
     } else {
-      barsPctLayout = [null, ...distrTwo(u.data[0].length, u.data.length - 1)];
+      barsPctLayout = [null, ...distrClusteredNonStacked(u.data[0].length, u.data.length - 1, clusters.length, clusters)]
     }
 
     if (useMappedColors) {

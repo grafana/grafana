@@ -50,8 +50,8 @@ composableKinds: PanelCfg: {
 					stacking: common.StackingMode & (*"none" | _)
 					// This controls whether values are shown on top or to the left of bars.
 					showValue: common.VisibilityMode & (*"auto" | _)
-					// Controls the width of bars. 2 = Max width, 0 = Min width.
-					barWidth: float64 & >=0 & <=3 | *0.97
+					// Controls the width of bars. 1 = Max width, 0 = Min width.
+					barWidth: float64 & >=0 & <=1 | *0.97
 					// Controls the width of groups. 1 = max with, 0 = min width.
 					groupWidth: float64 & >=0 & <=1 | *0.7
 					// Controls the width of the clusters. 1= max width, 0 = min width.

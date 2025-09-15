@@ -291,9 +291,10 @@ export const prepConfig = ({ series, totalSeries, color, orientation, options, t
     hoverMulti: tooltip.mode === TooltipDisplayMode.Multi,
   };
 
-  const clusters = getClustersFromField(series, groupByField);
+  // const clusters = getClustersFromField(series, groupByField);
+  const groupByFieldIdx = getFieldIdx(series, groupByField)
 
-  const config = getConfig(opts, theme, clusters);
+  const config = getConfig(opts, theme, groupByFieldIdx);
 
   builder.setCursor(config.cursor);
 
@@ -509,6 +510,30 @@ export function getClustersFromField(series: DataFrame[], groupByField: string |
     clusters[clustersIdx]++;
   }
   return clusters;
+}
+
+// returns an array of ints, where each number n represents the size of the nth cluster
+export function getClustersFromArray(fieldValues: any[], groupByField: string | undefined): number[] {
+  const fallbackClusters = Array(fieldValues.length).fill(1); // cluster for each group
+  if (!groupByField) { return fallbackClusters; }
+  const clusters = [];
+  let clustersIdx = -1;
+  let currentValue: any = undefined;
+  for (let i = 0; i < fieldValues.length; i++) {
+    if (fieldValues[i] !== currentValue) {
+      currentValue = fieldValues[i];
+      clusters.push(0);
+      clustersIdx++;
+    }
+    if (clustersIdx === -1) { return fallbackClusters; };
+    clusters[clustersIdx]++;
+  }
+  return clusters;
+}
+
+function getFieldIdx(data: DataFrame[], groupByFieldName: string | undefined): number {
+  if (!groupByFieldName || !data || data.length === 0 || data[0].length === 0) { return -1 };
+  return data[0].fields.findIndex((field) => field.name === groupByFieldName);
 }
 
 // returns the values of a field when given data and a field name, else returns an empty array.
