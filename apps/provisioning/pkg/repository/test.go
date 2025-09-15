@@ -95,6 +95,18 @@ func ValidateRepository(repo Repository) field.ErrorList {
 		)
 	}
 
+	for _, f := range cfg.Finalizers {
+		if !slices.Contains(AllFinalizers, f) {
+			list = append(list,
+				field.Invalid(
+					field.NewPath("medatada", "finalizers"),
+					cfg.Finalizers,
+					fmt.Sprintf("unknown finalizer: %s", f),
+				),
+			)
+		}
+	}
+
 	return list
 }
 

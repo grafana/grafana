@@ -281,6 +281,8 @@ func (d *jobDriver) processJob(ctx context.Context, job *provisioning.Job, recor
 			return apifmt.Errorf("failed to get repository '%s': %w", job.Spec.Repository, err)
 		}
 
+		// TODO(ferruvich): check if queued for deletion to ignore
+
 		return worker.Process(ctx, repo, *job, recorder)
 	}
 

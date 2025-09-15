@@ -101,6 +101,8 @@ func (c *jobsConnector) Connect(
 			responder.Error(err)
 			return
 		}
+
+		//TODO(ferruvich): fail with bad request if repo is queued for deletion
 		cfg := repo.Config()
 
 		if idx > 0 {
