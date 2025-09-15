@@ -56,11 +56,11 @@ jobs:
           VERSION_TYPE: ${{ github.event.inputs.version_type }}
         run: |
           if [ "$VERSION_TYPE" = "canary" ]; then
-            echo "NPM_TAG=canary" >> $GITHUB_OUTPUT
+            echo "NPM_TAG=canary" >> "$GITHUB_OUTPUT"
           elif [ "$VERSION_TYPE" = "nightly" ]; then
-            echo "NPM_TAG=nightly" >> $GITHUB_OUTPUT
+            echo "NPM_TAG=nightly" >> "$GITHUB_OUTPUT"
           elif [ "$VERSION_TYPE" = "stable" ]; then
-            echo "NPM_TAG=latest" >> $GITHUB_OUTPUT
+            echo "NPM_TAG=latest" >> "$GITHUB_OUTPUT"
           else
             echo "Error: Unknown version_type '$VERSION_TYPE'"
             exit 1
