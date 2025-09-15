@@ -18,9 +18,13 @@ on:
 permissions: {}
 
 jobs:
+  # If called with version_type 'canary' or 'stable', build + publish to NPM
+  # If called with version_type 'nightly', just tag the given version with nightly tag. It was already published by the canary build.
+
   publish:
     name: Publish NPM packages
     runs-on: github-hosted-ubuntu-x64-small
+    if: inputs.version_type == 'canary' || inputs.version_type == 'stable'
 
     steps:
       - name: Info
@@ -41,30 +45,13 @@ jobs:
         run: ./github/workflows/scripts/validate-commit-in-head.sh
         shell: bash
 
-      - name: Validate version_type matches version
-        env:
-          VERSION: ${{ github.event.inputs.version }}
-          VERSION_TYPE: ${{ github.event.inputs.version_type }}
-        run: ./github/workflows/scripts/npm-publish-validate-version.sh
-        shell: bash
-
-        # TODO: This currently publishes all stables as 'latest' tag, which is wrong.
-        # Ideally we only set that for the actual latest release.
       - name: Map version type to NPM tag
         id: npm-tag
         env:
           VERSION_TYPE: ${{ github.event.inputs.version_type }}
         run: |
-          if [ "$VERSION_TYPE" = "canary" ]; then
-            echo "NPM_TAG=canary" >> "$GITHUB_OUTPUT"
-          elif [ "$VERSION_TYPE" = "nightly" ]; then
-            echo "NPM_TAG=nightly" >> "$GITHUB_OUTPUT"
-          elif [ "$VERSION_TYPE" = "stable" ]; then
-            echo "NPM_TAG=latest" >> "$GITHUB_OUTPUT"
-          else
-            echo "Error: Unknown version_type '$VERSION_TYPE'"
-            exit 1
-          fi
+          TAG=$(./github/workflows/scripts/determine-npm-tag.sh)
+          echo "NPM_TAG=$TAG" >> "$GITHUB_OUTPUT"
         shell: bash
 
       - name: Checkout build commit
@@ -102,9 +89,19 @@ jobs:
           NPM_TAG: ${{ steps.npm-tag.outputs.NPM_TAG }}
         run: ./scripts/publish-npm-packages.sh --dist-tag "$NPM_TAG" --registry 'https://registry.npmjs.org/'
 
+  # TODO: finish this step
+  tag-nightly:
+    name: Tag nightly release
+    runs-on: github-hosted-ubuntu-x64-small
+    needs: publish
+    if: inputs.version_type == 'nightly'
 
+    steps:
+      - name: Checkout workflow ref
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
 
-
-
+      # TODO: tag the given release with nightly
 
 
