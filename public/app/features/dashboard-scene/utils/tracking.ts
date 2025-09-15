@@ -70,7 +70,7 @@ export function getLayoutStatsForDashboard(layout: DashboardV2Spec['layout']): L
         layoutTypesCount.GridLayout++;
         break;
       case 'AutoGridLayout':
-        layoutTypesCount.AutoGridLayout ++;
+        layoutTypesCount.AutoGridLayout++;
         break;
       case 'RowsLayout':
         layoutTypesCount.RowsLayout++;
