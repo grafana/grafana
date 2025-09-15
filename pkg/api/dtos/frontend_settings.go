@@ -273,7 +273,6 @@ type FrontendSettingsDTO struct {
 	Oauth                         map[string]any                     `json:"oauth"`
 	SamlEnabled                   bool                               `json:"samlEnabled"`
 	SamlName                      string                             `json:"samlName"`
-	ScimEnabled                   bool                               `json:"scimEnabled"`
 	ScimUserSyncEnabled           bool                               `json:"scimUserSyncEnabled"`
 	ScimGroupSyncEnabled          bool                               `json:"scimGroupSyncEnabled"`
 	ScimRejectNonProvisionedUsers bool                               `json:"scimRejectNonProvisionedUsers"`

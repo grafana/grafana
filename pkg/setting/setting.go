@@ -508,7 +508,6 @@ type Cfg struct {
 	SAMLRoleValuesGrafanaAdmin string
 
 	// SCIM
-	SCIMEnabled                   bool
 	SCIMUserSyncEnabled           bool
 	SCIMGroupSyncEnabled          bool
 	SCIMRejectNonProvisionedUsers bool
@@ -1464,7 +1463,6 @@ func (cfg *Cfg) readSAMLConfig() {
 
 func (cfg *Cfg) readSCIMConfig() {
 	scimSec := cfg.Raw.Section("auth.scim")
-	cfg.SCIMEnabled = scimSec.Key("enabled").MustBool(false)
 	cfg.SCIMUserSyncEnabled = scimSec.Key("user_sync_enabled").MustBool(false)
 	cfg.SCIMGroupSyncEnabled = scimSec.Key("group_sync_enabled").MustBool(false)
 	cfg.SCIMRejectNonProvisionedUsers = scimSec.Key("reject_non_provisioned_users").MustBool(false)

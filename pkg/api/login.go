@@ -438,10 +438,6 @@ func (hs *HTTPServer) samlAllowAssignGrafanaAdminEnabled() bool {
 	return hs.samlEnabled() && config.IsAllowAssignGrafanaAdminEnabled()
 }
 
-func (hs *HTTPServer) scimEnabled() bool {
-	return hs.Cfg.SCIMEnabled
-}
-
 func (hs *HTTPServer) scimUserSyncEnabled() bool {
 	return hs.Cfg.SCIMUserSyncEnabled
 }

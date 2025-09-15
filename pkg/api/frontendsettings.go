@@ -341,7 +341,6 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 		Oauth:                         hs.getEnabledOAuthProviders(),
 		SamlEnabled:                   hs.samlEnabled(),
 		SamlName:                      hs.samlName(),
-		ScimEnabled:                   hs.scimEnabled(),
 		ScimUserSyncEnabled:           hs.scimUserSyncEnabled(),
 		ScimGroupSyncEnabled:          hs.scimGroupSyncEnabled(),
 		ScimRejectNonProvisionedUsers: hs.scimRejectNonProvisionedUsers(),
