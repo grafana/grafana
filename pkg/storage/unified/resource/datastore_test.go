@@ -654,7 +654,7 @@ func TestDataStore_List(t *testing.T) {
 
 		// List the data
 		results := make([]DataKey, 0, 2)
-		for key, err := range ds.Keys(ctx, resourceKey) {
+		for key, err := range ds.Keys(ctx, resourceKey, SortOrderAsc) {
 			require.NoError(t, err)
 			results = append(results, key)
 		}
@@ -688,7 +688,7 @@ func TestDataStore_List(t *testing.T) {
 		}
 
 		results := make([]DataKey, 0, 1)
-		for key, err := range ds.Keys(ctx, emptyResourceKey) {
+		for key, err := range ds.Keys(ctx, emptyResourceKey, SortOrderAsc) {
 			require.NoError(t, err)
 			results = append(results, key)
 		}
@@ -722,7 +722,7 @@ func TestDataStore_List(t *testing.T) {
 
 		// List should include deleted keys
 		results := make([]DataKey, 0, 2)
-		for key, err := range ds.Keys(ctx, deletedResourceKey) {
+		for key, err := range ds.Keys(ctx, deletedResourceKey, SortOrderAsc) {
 			require.NoError(t, err)
 			results = append(results, key)
 		}
@@ -776,7 +776,7 @@ func TestDataStore_Integration(t *testing.T) {
 
 		// List all versions
 		results := make([]DataKey, 0, 3)
-		for key, err := range ds.Keys(ctx, resourceKey) {
+		for key, err := range ds.Keys(ctx, resourceKey, SortOrderAsc) {
 			require.NoError(t, err)
 			results = append(results, key)
 		}
@@ -802,7 +802,7 @@ func TestDataStore_Integration(t *testing.T) {
 
 		// List should now have 2 items
 		results = nil
-		for key, err := range ds.Keys(ctx, resourceKey) {
+		for key, err := range ds.Keys(ctx, resourceKey, SortOrderAsc) {
 			require.NoError(t, err)
 			results = append(results, key)
 		}
@@ -880,7 +880,7 @@ func TestDataStore_Keys(t *testing.T) {
 
 		// Get keys
 		keys := make([]DataKey, 0, 2)
-		for key, err := range ds.Keys(ctx, resourceKey) {
+		for key, err := range ds.Keys(ctx, resourceKey, SortOrderAsc) {
 			require.NoError(t, err)
 			keys = append(keys, key)
 		}
@@ -909,7 +909,7 @@ func TestDataStore_Keys(t *testing.T) {
 		}
 
 		keys := make([]DataKey, 0, 1)
-		for key, err := range ds.Keys(ctx, emptyResourceKey) {
+		for key, err := range ds.Keys(ctx, emptyResourceKey, SortOrderAsc) {
 			require.NoError(t, err)
 			keys = append(keys, key)
 		}
@@ -940,7 +940,7 @@ func TestDataStore_Keys(t *testing.T) {
 		require.NoError(t, err)
 
 		keys := make([]DataKey, 0, 4)
-		for key, err := range ds.Keys(ctx, partialKey) {
+		for key, err := range ds.Keys(ctx, partialKey, SortOrderAsc) {
 			require.NoError(t, err)
 			keys = append(keys, key)
 		}
@@ -959,7 +959,7 @@ func TestDataStore_Keys(t *testing.T) {
 		}
 
 		keys := make([]DataKey, 0, 4)
-		for key, err := range ds.Keys(ctx, groupAndResourceKey) {
+		for key, err := range ds.Keys(ctx, groupAndResourceKey, SortOrderAsc) {
 			require.NoError(t, err)
 			keys = append(keys, key)
 		}

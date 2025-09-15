@@ -134,13 +134,6 @@ func (k *kvStorageBackend) pruneEvents(ctx context.Context, key PruningKey) erro
 		return fmt.Errorf("invalid pruning key, all fields must be set: %+v", key)
 	}
 
-	listKey := ListRequestKey{
-		Namespace: key.Namespace,
-		Group:     key.Group,
-		Resource:  key.Resource,
-		Name:      key.Name,
-		Sort:      SortOrderDesc,
-	}
 	counter := 0
 	// iterate over all keys for the resource and delete versions beyond the latest 20
 	for datakey, err := range k.dataStore.Keys(ctx, ListRequestKey{
@@ -148,7 +141,7 @@ func (k *kvStorageBackend) pruneEvents(ctx context.Context, key PruningKey) erro
 		Group:     key.Group,
 		Resource:  key.Resource,
 		Name:      key.Name,
-	}) {
+	}, SortOrderAsc) {
 		if err != nil {
 			return err
 		}
@@ -636,7 +629,7 @@ func (k *kvStorageBackend) listModifiedSinceDataStore(ctx context.Context, key N
 	return func(yield func(*ModifiedResource, error) bool) {
 		var lastSeenResource *ModifiedResource
 		var lastSeenDataKey DataKey
-		for dataKey, err := range k.dataStore.Keys(ctx, ListRequestKey{Namespace: key.Namespace, Group: key.Group, Resource: key.Resource}) {
+		for dataKey, err := range k.dataStore.Keys(ctx, ListRequestKey{Namespace: key.Namespace, Group: key.Group, Resource: key.Resource}, SortOrderAsc) {
 			if err != nil {
 				yield(&ModifiedResource{}, err)
 				return
@@ -797,7 +790,7 @@ func (k *kvStorageBackend) ListHistory(ctx context.Context, req *resourcepb.List
 		Group:     key.Group,
 		Resource:  key.Resource,
 		Name:      key.Name,
-	}) {
+	}, SortOrderAsc) {
 		if err != nil {
 			return 0, err
 		}

@@ -121,7 +121,6 @@ type ListRequestKey struct {
 	Resource  string
 	Namespace string
 	Name      string // optional for listing multiple resources
-	Sort      SortOrder
 }
 
 func (k ListRequestKey) Validate() error {
@@ -213,7 +212,7 @@ const (
 )
 
 // Keys returns all keys for a given key by iterating through the KV store
-func (d *dataStore) Keys(ctx context.Context, key ListRequestKey) iter.Seq2[DataKey, error] {
+func (d *dataStore) Keys(ctx context.Context, key ListRequestKey, sort SortOrder) iter.Seq2[DataKey, error] {
 	if err := key.Validate(); err != nil {
 		return func(yield func(DataKey, error) bool) {
 			yield(DataKey{}, err)
@@ -224,7 +223,7 @@ func (d *dataStore) Keys(ctx context.Context, key ListRequestKey) iter.Seq2[Data
 		for k, err := range d.kv.Keys(ctx, dataSection, ListOptions{
 			StartKey: prefix,
 			EndKey:   PrefixRangeEnd(prefix),
-			Sort:     key.Sort,
+			Sort:     sort,
 		}) {
 			if err != nil {
 				yield(DataKey{}, err)
@@ -282,7 +281,12 @@ func (d *dataStore) GetResourceKeyAtRevision(ctx context.Context, key GetRequest
 		rv = math.MaxInt64
 	}
 
-	listKey := ListRequestKey(key)
+	listKey := ListRequestKey{
+		Group:     key.Group,
+		Resource:  key.Resource,
+		Namespace: key.Namespace,
+		Name:      key.Name,
+	}
 
 	iter := d.ListResourceKeysAtRevision(ctx, listKey, rv)
 	for dataKey, err := range iter {
@@ -512,7 +516,7 @@ func (d *dataStore) processGroupResourceStats(ctx context.Context, groupResource
 	}
 
 	// List all keys using the existing Keys method
-	for dataKey, err := range d.Keys(ctx, listKey) {
+	for dataKey, err := range d.Keys(ctx, listKey, SortOrderAsc) {
 		if err != nil {
 			return nil, err
 		}
