@@ -2051,9 +2051,6 @@
       "text-loading-rules": "正在載入規則...",
       "title-dashboard-not-saved": "儀表板未儲存"
     },
-    "paused-badge": {
-      "paused": "已暫停"
-    },
     "payload-editor": {
       "edit-payload": "編輯負載",
       "label-add-custom-alert-instance": "新增自訂警報執行個體",
@@ -2203,9 +2200,6 @@
       "label-time-range": "時間範圍",
       "max-data-points": "MD = {{maxDataPoints}}",
       "min-interval": "最小間隔 = {{minInterval}}"
-    },
-    "query-preview": {
-      "relative-time-range": "<0>{{from}}</0>至現在"
     },
     "queryAndExpressionsStep": {
       "disableAdvancedOptions": {
@@ -2547,6 +2541,10 @@
       "recording": "{{recordingStats}}正在錄製",
       "recovering": "正在復原{{recoveringStats}}",
       "error_other": "{{count}} 個錯誤"
+    },
+    "rule-time-range-label": {
+      "relative": "",
+      "relative-with-to": ""
     },
     "rule-type-picker": {
       "grafana-managed": "選擇「Grafana 管理」，除非有已啟用 Ruler API 的 Mimir、Loki 或 Cortex 資料來源。"
@@ -3645,7 +3643,10 @@
       "text": "未找到您的查詢結果"
     },
     "restore": {
-      "success": "儀表板 {{name}} 已復原"
+      "success": "",
+      "all-failed_other": "",
+      "failed-count_other": "",
+      "success-count_other": ""
     },
     "text-this-repository-is-read-only": "如果您可以直接存取目標，請複製 JSON 並將其貼上至該處。",
     "trash-state-manager": {
@@ -9600,10 +9601,9 @@
       }
     },
     "logs-controls": {
+      "collapse": "",
       "deduplication": "重複資料",
-      "disable-highlighting": "停用醒目提示",
       "disable-prettify-json": "收闔 JSON 紀錄",
-      "display-level": "顯示層級",
       "display-level-all": "所有層級",
       "download": "下載日誌",
       "download-logs": {
@@ -9611,18 +9611,39 @@
         "json": "json",
         "txt": "txt"
       },
-      "enable-highlighting": "啟用醒目提示",
       "escape-newlines": "修復紀錄行中新行和分頁序列的錯誤轉義",
-      "font-size-default": "使用較小的字型",
-      "font-size-small": "使用預設的字型大小",
+      "expand": "",
+      "filter-levels": "",
+      "font-large": "",
+      "font-small": "",
       "hide-search": "關閉搜尋",
       "hide-timestamps": "隱藏時間戳記",
       "hide-unique-labels": "隱藏唯一標籤",
+      "label": {
+        "collapse": "",
+        "disable-highlighting": "",
+        "enable-highlighting": "",
+        "escape-newlines": "",
+        "expand": ""
+      },
+      "labels": {
+        "font-large": "",
+        "font-small": "",
+        "hide-search": "",
+        "newest-first": "",
+        "oldest-first": "",
+        "show-search": ""
+      },
       "line-wrapping": {
         "enable": "",
         "enable-prettify": "",
         "hide": "",
-        "label": ""
+        "state": {
+          "hide": "",
+          "json": "",
+          "wrap": ""
+        },
+        "tooltip": ""
       },
       "newest-first": "按最新紀錄排序 - 按一下以顯示最舊紀錄",
       "oldest-first": "按最舊紀錄排序 - 按一下以顯示最新紀錄",
@@ -9638,8 +9659,18 @@
       "timestamp": {
         "hide": "",
         "label": "",
+        "label-hide": "",
+        "label-ms": "",
+        "label-ns": "",
         "milliseconds": "",
-        "nanoseconds": ""
+        "nanoseconds": "",
+        "tooltip": ""
+      },
+      "tooltip": {
+        "disable-highlighting": "",
+        "download": "",
+        "enable-highlighting": "",
+        "filter-level": ""
       },
       "unwrap-lines": "取消換行",
       "wrap-lines": "換行"
@@ -11315,7 +11346,9 @@
     },
     "folder-repository-list": {
       "no-results-matching-your-query": "沒有符合您查詢的結果",
-      "placeholder-search": "搜尋"
+      "placeholder-search": "搜尋",
+      "all-resources-managed_other": "",
+      "partial-managed_other": ""
     },
     "get-default-values": {
       "title": {
@@ -11613,6 +11646,7 @@
       "tooltip-unhealthy-repository": "無法拉取狀態不佳的儲存庫"
     },
     "synchronize-step": {
+      "repository-unhealthy": "",
       "synchronization-description": "包含每個歷史數值的提交",
       "synchronization-options": "同步選項"
     },
@@ -11636,6 +11670,8 @@
       "alert-point-3": "此流程的持續時間取決於所涉及的資源數量。",
       "alert-point-4": "企業執行個體管理員可以向使用者顯示公告橫幅。請參閱<2>本指南</2>，了解逐步說明。",
       "alert-title": "重要事項：不會遺失任何資料或設定，但儀表板將在幾分鐘內暫時無法使用。",
+      "button-cancel": "",
+      "button-cancelling": "",
       "button-next": "結束",
       "button-start": "開始同步處理",
       "discard-modal": {

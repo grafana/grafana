@@ -30,7 +30,6 @@ import (
 	"k8s.io/apimachinery/pkg/selection"
 
 	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 
 	authlib "github.com/grafana/authlib/types"
@@ -76,11 +75,10 @@ type bleveBackend struct {
 	cacheMx sync.RWMutex
 	cache   map[resource.NamespacedResource]*bleveIndex
 
-	features     featuremgmt.FeatureToggles
 	indexMetrics *resource.BleveIndexMetrics
 }
 
-func NewBleveBackend(opts BleveOptions, tracer trace.Tracer, features featuremgmt.FeatureToggles, indexMetrics *resource.BleveIndexMetrics) (*bleveBackend, error) {
+func NewBleveBackend(opts BleveOptions, tracer trace.Tracer, indexMetrics *resource.BleveIndexMetrics) (*bleveBackend, error) {
 	if opts.Root == "" {
 		return nil, fmt.Errorf("bleve backend missing root folder configuration")
 	}
@@ -108,7 +106,6 @@ func NewBleveBackend(opts BleveOptions, tracer trace.Tracer, features featuremgm
 		tracer:       tracer,
 		cache:        map[resource.NamespacedResource]*bleveIndex{},
 		opts:         opts,
-		features:     features,
 		indexMetrics: indexMetrics,
 	}
 
@@ -583,7 +580,6 @@ type bleveIndex struct {
 
 	// The values returned with all
 	allFields []*resourcepb.ResourceTableColumnDefinition
-	features  featuremgmt.FeatureToggles
 	tracing   trace.Tracer
 	logger    *slog.Logger
 
@@ -617,7 +613,6 @@ func (b *bleveBackend) newBleveIndex(
 		fields:       fields,
 		allFields:    allFields,
 		standard:     standardSearchFields,
-		features:     b.features,
 		tracing:      b.tracer,
 		logger:       logger,
 		updaterFn:    updaterFn,

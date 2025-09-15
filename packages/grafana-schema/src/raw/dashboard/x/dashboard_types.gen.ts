@@ -315,6 +315,10 @@ export interface DashboardLink {
    */
   keepTime: boolean;
   /**
+   * Placement can be used to display the link somewhere else on the dashboard other than above the visualisations.
+   */
+  placement?: DashboardLinkPlacement;
+  /**
    * List of tags to limit the linked dashboards. If empty, all dashboards will be displayed. Only valid if the type is dashboards
    */
   tags: Array<string>;
@@ -352,6 +356,93 @@ export const defaultDashboardLink: Partial<DashboardLink> = {
  * Dashboard Link type. Accepted values are dashboards (to refer to another dashboard) and link (to refer to an external resource)
  */
 export type DashboardLinkType = ('link' | 'dashboards');
+
+/**
+ * Dashboard Link placement. Defines where the link should be displayed.
+ * - "inControlsMenu" renders the link in bottom part of the dashboard controls dropdown menu
+ */
+export type DashboardLinkPlacement = 'inControlsMenu';
+
+/**
+ * Dashboard action type
+ */
+export type ActionType = ('fetch' | 'infinity');
+
+/**
+ * Fetch options
+ */
+export interface FetchOptions {
+  body?: string;
+  headers?: Array<Array<string>>;
+  method: HttpRequestMethod;
+  /**
+   * These are 2D arrays of strings, each representing a key-value pair
+   * We are defining this way because we can't generate a go struct that
+   * that would have exactly two strings in each sub-array
+   */
+  queryParams?: Array<Array<string>>;
+  url: string;
+}
+
+export const defaultFetchOptions: Partial<FetchOptions> = {
+  headers: [],
+  queryParams: [],
+};
+
+/**
+ * Infinity options
+ */
+export interface InfinityOptions {
+  body?: string;
+  datasourceUid: string;
+  headers?: Array<Array<string>>;
+  method: HttpRequestMethod;
+  /**
+   * These are 2D arrays of strings, each representing a key-value pair
+   * We are defining them this way because we can't generate a go struct that
+   * that would have exactly two strings in each sub-array
+   */
+  queryParams?: Array<Array<string>>;
+  url: string;
+}
+
+export const defaultInfinityOptions: Partial<InfinityOptions> = {
+  headers: [],
+  queryParams: [],
+};
+
+export type HttpRequestMethod = ('GET' | 'PUT' | 'POST' | 'DELETE' | 'PATCH');
+
+/**
+ * Action variable type
+ */
+export type ActionVariableType = 'string';
+
+export interface ActionVariable {
+  key: string;
+  name: string;
+  type: ActionVariableType;
+}
+
+/**
+ * Dashboard action
+ */
+export interface Action {
+  confirmation?: string;
+  fetch?: FetchOptions;
+  infinity?: InfinityOptions;
+  oneClick?: boolean;
+  style?: {
+    backgroundColor?: string;
+  };
+  title: string;
+  type: ActionType;
+  variables?: Array<ActionVariable>;
+}
+
+export const defaultAction: Partial<Action> = {
+  variables: [],
+};
 
 /**
  * Dashboard variable type
@@ -907,6 +998,10 @@ export const defaultMatcherConfig: Partial<MatcherConfig> = {
  */
 export interface FieldConfig {
   /**
+   * Define interactive HTTP requests that can be triggered from data visualizations.
+   */
+  actions?: Array<Action>;
+  /**
    * Panel color configuration
    */
   color?: FieldColor;
@@ -991,6 +1086,7 @@ export interface FieldConfig {
 }
 
 export const defaultFieldConfig: Partial<FieldConfig> = {
+  actions: [],
   links: [],
   mappings: [],
 };

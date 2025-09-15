@@ -2,243 +2,240 @@ package graphite
 
 import (
 	"context"
-	"encoding/json"
 	"io"
-	"net/http"
-	"net/http/httptest"
-	"reflect"
 	"strings"
 	"testing"
-	"time"
 
-	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
-	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"go.opentelemetry.io/otel/trace/noop"
 )
 
-func TestFixIntervalFormat(t *testing.T) {
-	testCases := []struct {
-		name     string
-		target   string
-		expected string
+func Test_CreateRequest(t *testing.T) {
+	ctx := context.Background()
+
+	service := &Service{}
+	dsInfo := &datasourceInfo{
+		URL: "http://graphite.example.com",
+	}
+
+	tests := []struct {
+		name           string
+		dsInfo         *datasourceInfo
+		params         URLParams
+		expectedURL    string
+		expectedMethod string
+		expectedError  string
+		checkHeaders   map[string]string
+		checkQuery     map[string]string
 	}{
 		{
-			name:     "should transform 1m to graphite unit (1min) when used as interval string",
-			target:   "aliasByNode(hitcount(averageSeries(app.grafana.*.dashboards.views.count), '1m'), 4)",
-			expected: "aliasByNode(hitcount(averageSeries(app.grafana.*.dashboards.views.count), '1min'), 4)",
+			name:           "basic request with default GET method",
+			dsInfo:         dsInfo,
+			params:         URLParams{},
+			expectedURL:    "http://graphite.example.com",
+			expectedMethod: "GET",
 		},
 		{
-			name:     "should transform 1M to graphite unit (1mon) when used as interval string",
-			target:   "aliasByNode(hitcount(averageSeries(app.grafana.*.dashboards.views.count), '1M'), 4)",
-			expected: "aliasByNode(hitcount(averageSeries(app.grafana.*.dashboards.views.count), '1mon'), 4)",
+			name:   "request with subpath",
+			dsInfo: dsInfo,
+			params: URLParams{
+				SubPath: "/metrics/find",
+			},
+			expectedURL:    "http://graphite.example.com/metrics/find",
+			expectedMethod: "GET",
 		},
 		{
-			name:     "should not transform 1m when not used as interval string",
-			target:   "app.grafana.*.dashboards.views.1m.count",
-			expected: "app.grafana.*.dashboards.views.1m.count",
+			name:   "request with custom method",
+			dsInfo: dsInfo,
+			params: URLParams{
+				Method: "POST",
+			},
+			expectedURL:    "http://graphite.example.com",
+			expectedMethod: "POST",
 		},
 		{
-			name:     "should not transform 1M when not used as interval string",
-			target:   "app.grafana.*.dashboards.views.1M.count",
-			expected: "app.grafana.*.dashboards.views.1M.count",
+			name:   "request with query parameters",
+			dsInfo: dsInfo,
+			params: URLParams{
+				QueryParams: map[string]string{
+					"query":  "stats.counters.*",
+					"format": "json",
+				},
+			},
+			expectedURL:    "http://graphite.example.com",
+			expectedMethod: "GET",
+			checkQuery: map[string]string{
+				"query":  "stats.counters.*",
+				"format": "json",
+			},
+		},
+		{
+			name:   "request with headers",
+			dsInfo: dsInfo,
+			params: URLParams{
+				Headers: map[string]string{
+					"Content-Type": "application/json",
+				},
+			},
+			expectedURL:    "http://graphite.example.com",
+			expectedMethod: "GET",
+			checkHeaders: map[string]string{
+				"Content-Type": "application/json",
+			},
+		},
+		{
+			name:   "request with body",
+			dsInfo: dsInfo,
+			params: URLParams{
+				Method: "POST",
+				Body:   strings.NewReader(`{"test": "data"}`),
+			},
+			expectedURL:    "http://graphite.example.com",
+			expectedMethod: "POST",
+		},
+		{
+			name:   "complex request with all parameters",
+			dsInfo: dsInfo,
+			params: URLParams{
+				SubPath: "/metrics/expand",
+				Method:  "POST",
+				QueryParams: map[string]string{
+					"groupByExpr": "true",
+					"leavesOnly":  "false",
+				},
+				Headers: map[string]string{
+					"X-Custom-Header": "test-value",
+				},
+				Body: strings.NewReader(`{"query": "stats.*"}`),
+			},
+			expectedURL:    "http://graphite.example.com/metrics/expand",
+			expectedMethod: "POST",
+			checkQuery: map[string]string{
+				"groupByExpr": "true",
+				"leavesOnly":  "false",
+			},
+			checkHeaders: map[string]string{
+				"X-Custom-Header": "test-value",
+			},
+		},
+		{
+			name: "invalid URL in datasource",
+			dsInfo: &datasourceInfo{
+				URL: "://invalid-url",
+			},
+			params:        URLParams{},
+			expectedError: "missing protocol scheme",
+		},
+		{
+			name:   "empty query parameter values",
+			dsInfo: dsInfo,
+			params: URLParams{
+				QueryParams: map[string]string{
+					"empty": "",
+					"valid": "value",
+				},
+			},
+			expectedURL:    "http://graphite.example.com",
+			expectedMethod: "GET",
+			checkQuery: map[string]string{
+				"empty": "",
+				"valid": "value",
+			},
 		},
 	}
 
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			tr := fixIntervalFormat(tc.target)
-			assert.Equal(t, tc.expected, tr)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			req, err := service.createRequest(ctx, tt.dsInfo, tt.params)
+
+			if tt.expectedError != "" {
+				require.Error(t, err)
+				assert.Contains(t, err.Error(), tt.expectedError)
+				return
+			}
+
+			require.NoError(t, err)
+			require.NotNil(t, req)
+
+			// Check URL (base URL without query parameters)
+			baseURL := req.URL.Scheme + "://" + req.URL.Host + req.URL.Path
+			assert.Equal(t, tt.expectedURL, baseURL)
+			assert.Equal(t, tt.expectedMethod, req.Method)
+
+			if tt.checkQuery != nil {
+				for key, expectedValue := range tt.checkQuery {
+					actualValue := req.URL.Query().Get(key)
+					assert.Equal(t, expectedValue, actualValue, "Query parameter %s", key)
+				}
+			}
+
+			if tt.checkHeaders != nil {
+				for key, expectedValue := range tt.checkHeaders {
+					actualValue := req.Header.Get(key)
+					assert.Equal(t, expectedValue, actualValue, "Header %s", key)
+				}
+			}
+
+			if tt.params.Body != nil {
+				bodyBytes, err := io.ReadAll(req.Body)
+				require.NoError(t, err)
+
+				expectedContent := ""
+				switch tt.name {
+				case "request with body":
+					expectedContent = `{"test": "data"}`
+				case "complex request with all parameters":
+					expectedContent = `{"query": "stats.*"}`
+				}
+				assert.Equal(t, expectedContent, string(bodyBytes))
+			}
 		})
 	}
 }
 
-func TestProcessQuery(t *testing.T) {
-	service := &Service{
-		logger: backend.Logger,
-	}
-	t.Run("Parses single valid query", func(t *testing.T) {
-		queries := []backend.DataQuery{
-			{
-				RefID: "A",
-				JSON: []byte(`{
-					"target": "app.grafana.*.dashboards.views.1M.count"
-				}`),
-			},
-		}
-		target, jsonModel, err := service.processQuery(queries[0])
-		assert.NoError(t, err)
-		assert.Nil(t, jsonModel)
-		assert.Equal(t, "app.grafana.*.dashboards.views.1M.count", target)
-	})
+func Test_CreateRequest_Body(t *testing.T) {
+	ctx := context.Background()
+	service := &Service{}
+	dsInfo := &datasourceInfo{URL: "http://graphite.example.com"}
 
-	t.Run("Returns if target is empty", func(t *testing.T) {
-		queries := []backend.DataQuery{
-			{
-				RefID: "A",
-				JSON: []byte(`{
-					"target": ""
-				}`),
-			},
-		}
-		emptyQuery := GraphiteQuery{Target: ""}
-		target, jsonModel, err := service.processQuery(queries[0])
-		assert.NoError(t, err)
-		assert.Equal(t, &emptyQuery, jsonModel)
-		assert.Equal(t, "", target)
-	})
-
-	t.Run("QueryData with no valid queries returns bad request response", func(t *testing.T) {
-		queries := []backend.DataQuery{
-			{
-				RefID: "A",
-				JSON: []byte(`{
-					"query": "app.grafana.*.dashboards.views.1M.count"
-				}`),
-			},
-			{
-				RefID: "B",
-				JSON: []byte(`{
-					"query": "app.grafana.*.dashboards.views.1M.count"
-				}`),
-			},
+	t.Run("string reader body", func(t *testing.T) {
+		bodyContent := `{"query": "stats.*", "format": "json"}`
+		params := URLParams{
+			Method: "POST",
+			Body:   strings.NewReader(bodyContent),
 		}
 
-		service := ProvideService(httpclient.NewProvider(), noop.NewTracerProvider().Tracer("graphite-tests"))
-
-		rsp, err := service.QueryData(context.Background(), &backend.QueryDataRequest{
-			PluginContext: backend.PluginContext{
-				DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{
-					ID:  0,
-					URL: "http://localhost",
-				},
-			},
-			Queries: queries,
-		})
-		assert.NoError(t, err)
-		expectedResponse := backend.ErrDataResponseWithSource(400, backend.ErrorSourceDownstream, "no query target found for the alert rule")
-		assert.Equal(t, expectedResponse, rsp.Responses["A"])
-	})
-
-	t.Run("QueryData with no queries returns an error", func(t *testing.T) {
-		service := &Service{
-			logger: backend.Logger,
-		}
-
-		rsp, err := service.QueryData(context.Background(), &backend.QueryDataRequest{})
-		assert.Nil(t, rsp)
-		assert.Error(t, err)
-	})
-
-	t.Run("QueryData happy path with service provider and plugin context", func(t *testing.T) {
-		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			_, _ = w.Write([]byte(`[
-				{
-					"target": "target A",
-					"tags": { "fooTag": "fooValue", "barTag": "barValue", "int": 100, "float": 3.14 },
-					"datapoints": [[50, 1], [null, 2], [100, 3]]
-				}	
-			]`))
-		}))
-		t.Cleanup(server.Close)
-
-		service := ProvideService(httpclient.NewProvider(), noop.NewTracerProvider().Tracer("graphite-tests"))
-
-		queries := []backend.DataQuery{
-			{
-				RefID: "A",
-				JSON: []byte(`{
-					"target": "app.grafana.*.dashboards.views.1M.count"
-				}`),
-			},
-			{
-				RefID: "B",
-				JSON: []byte(`{
-					"query": "app.grafana.*.dashboards.views.1M.count"
-				}`),
-			},
-		}
-
-		rsp, err := service.QueryData(context.Background(), &backend.QueryDataRequest{
-			PluginContext: backend.PluginContext{
-				DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{
-					ID:  0,
-					URL: server.URL,
-				},
-			},
-			Queries: queries,
-		})
-		assert.NoError(t, err)
-		assert.NotNil(t, rsp)
-	})
-}
-
-func TestConvertResponses(t *testing.T) {
-	service := &Service{
-		logger: backend.Logger,
-	}
-
-	t.Run("Converts response without tags to data frames", func(*testing.T) {
-		body := `
-		[
-			{
-				"target": "target",
-				"datapoints": [[50, 1], [null, 2], [100, 3]]
-			}
-		]`
-		a := 50.0
-		b := 100.0
-		refId := "A"
-		expectedFrame := data.NewFrame("A",
-			data.NewField("time", nil, []time.Time{time.Unix(1, 0).UTC(), time.Unix(2, 0).UTC(), time.Unix(3, 0).UTC()}),
-			data.NewField("value", data.Labels{}, []*float64{&a, nil, &b}).SetConfig(&data.FieldConfig{DisplayNameFromDS: "target"}),
-		).SetMeta(&data.FrameMeta{Type: data.FrameTypeTimeSeriesMulti})
-		expectedFrames := data.Frames{expectedFrame}
-
-		httpResponse := &http.Response{StatusCode: 200, Body: io.NopCloser(strings.NewReader(body))}
-		dataFrames, err := service.toDataFrames(httpResponse, refId)
-
+		req, err := service.createRequest(ctx, dsInfo, params)
 		require.NoError(t, err)
-		if !reflect.DeepEqual(expectedFrames, dataFrames) {
-			expectedFramesJSON, _ := json.Marshal(expectedFrames)
-			dataFramesJSON, _ := json.Marshal(dataFrames)
-			t.Errorf("Data frames should have been equal but was, expected:\n%s\nactual:\n%s", expectedFramesJSON, dataFramesJSON)
-		}
+
+		// Read the body to verify content
+		bodyBytes, err := io.ReadAll(req.Body)
+		require.NoError(t, err)
+		assert.Equal(t, bodyContent, string(bodyBytes))
 	})
 
-	t.Run("Converts response with tags to data frames", func(*testing.T) {
-		body := `
-		[
-			{
-				"target": "target",
-				"tags": { "fooTag": "fooValue", "barTag": "barValue", "int": 100, "float": 3.14 },
-				"datapoints": [[50, 1], [null, 2], [100, 3]]
-			}
-		]`
-		a := 50.0
-		b := 100.0
-		refId := "A"
-		expectedFrame := data.NewFrame("A",
-			data.NewField("time", nil, []time.Time{time.Unix(1, 0).UTC(), time.Unix(2, 0).UTC(), time.Unix(3, 0).UTC()}),
-			data.NewField("value", data.Labels{
-				"fooTag": "fooValue",
-				"barTag": "barValue",
-				"int":    "100",
-				"float":  "3.14",
-			}, []*float64{&a, nil, &b}).SetConfig(&data.FieldConfig{DisplayNameFromDS: "target"}),
-		).SetMeta(&data.FrameMeta{Type: data.FrameTypeTimeSeriesMulti})
-		expectedFrames := data.Frames{expectedFrame}
-
-		httpResponse := &http.Response{StatusCode: 200, Body: io.NopCloser(strings.NewReader(body))}
-		dataFrames, err := service.toDataFrames(httpResponse, refId)
-
-		require.NoError(t, err)
-		if !reflect.DeepEqual(expectedFrames, dataFrames) {
-			expectedFramesJSON, _ := json.Marshal(expectedFrames)
-			dataFramesJSON, _ := json.Marshal(dataFrames)
-			t.Errorf("Data frames should have been equal but was, expected:\n%s\nactual:\n%s", expectedFramesJSON, dataFramesJSON)
+	t.Run("nil body", func(t *testing.T) {
+		params := URLParams{
+			Method: "GET",
+			Body:   nil,
 		}
+
+		req, err := service.createRequest(ctx, dsInfo, params)
+		require.NoError(t, err)
+		assert.Nil(t, req.Body)
+	})
+
+	t.Run("empty body reader", func(t *testing.T) {
+		params := URLParams{
+			Method: "POST",
+			Body:   strings.NewReader(""),
+		}
+
+		req, err := service.createRequest(ctx, dsInfo, params)
+		require.NoError(t, err)
+
+		bodyBytes, err := io.ReadAll(req.Body)
+		require.NoError(t, err)
+		assert.Empty(t, string(bodyBytes))
 	})
 }

@@ -1,5 +1,7 @@
 package graphite
 
+import "io"
+
 type TargetResponseDTO struct {
 	Target     string               `json:"target"`
 	DataPoints DataTimeSeriesPoints `json:"datapoints"`
@@ -10,6 +12,14 @@ type TargetResponseDTO struct {
 type DataTimePoint [2]Float
 type DataTimeSeriesPoints []DataTimePoint
 
+type URLParams struct {
+	SubPath     string
+	Method      string
+	Body        io.Reader
+	QueryParams map[string]string
+	Headers     map[string]string
+}
+
 type GraphiteQuery struct {
 	QueryType       string   `json:"queryType"`
 	TextEditor      *bool    `json:"textEditor,omitempty"`
@@ -17,4 +27,42 @@ type GraphiteQuery struct {
 	TargetFull      string   `json:"targetFull,omitempty"`
 	Tags            []string `json:"tags,omitempty"`
 	FromAnnotations *bool    `json:"fromAnnotations,omitempty"`
+}
+
+type GraphiteEventsRequest struct {
+	Tags  string `json:"tags,omitempty"`
+	From  string `json:"from"`
+	Until string `json:"until"`
+}
+
+type GraphiteEventsResponse struct {
+	When int64    `json:"when"`
+	What string   `json:"what"`
+	Tags []string `json:"tags"`
+	Data string   `json:"data"`
+}
+
+type GraphiteMetricsFindRequest struct {
+	From  string `json:"from"`
+	Until string `json:"until"`
+	Query string `json:"query"`
+}
+
+type GraphiteMetricsFindResponse struct {
+	Text          string `json:"text"`
+	Id            string `json:"id"`
+	AllowChildren int    `json:"allowChildren"`
+	Expandable    int    `json:"expandable"`
+	Leaf          int    `json:"leaf"`
+}
+
+type GraphiteMetricsExpandResponse struct {
+	Results []string `json:"results"`
+}
+
+type GraphiteTagsRequest struct {
+	From      string `json:"from"`
+	Until     string `json:"until"`
+	Limit     int    `json:"limit,omitempty"`
+	TagPrefix string `json:"tagPrefix,omitempty"`
 }

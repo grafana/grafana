@@ -244,8 +244,12 @@ const (
 	FlagKubernetesDashboards = "kubernetesDashboards"
 
 	// FlagKubernetesShortURLs
-	// Routes short url requests from /api to the /apis endpoint
+	// Enables k8s short url api and uses it under the hood when handling legacy /api
 	FlagKubernetesShortURLs = "kubernetesShortURLs"
+
+	// FlagUseKubernetesShortURLsAPI
+	// Routes short url requests from /api to the /apis endpoint in the frontend. Depends on kubernetesShortURLs
+	FlagUseKubernetesShortURLsAPI = "useKubernetesShortURLsAPI"
 
 	// FlagKubernetesAlertingRules
 	// Adds support for Kubernetes alerting and recording rules
@@ -694,6 +698,10 @@ const (
 	// FlagAlertingEnrichmentPerRule
 	// Enable enrichment per rule in the alerting UI.
 	FlagAlertingEnrichmentPerRule = "alertingEnrichmentPerRule"
+
+	// FlagAlertingEnrichmentAssistantInvestigations
+	// Enable Assistant Investigations enrichment type.
+	FlagAlertingEnrichmentAssistantInvestigations = "alertingEnrichmentAssistantInvestigations"
 
 	// FlagAlertingAIAnalyzeCentralStateHistory
 	// Enable AI-analyze central state history.
