@@ -1571,10 +1571,3 @@ func mimirHttpConfigOption() NotifierOption {
 		),
 	}
 }
-
-func mimirIntegrationTypeToNotifierType(integrationType string) (string, NotifierVersion) {
-	if integrationType == "msteamsv2" {
-		return "msteams", V0mimir2
-	}
-	return integrationType, V0mimir1
-}

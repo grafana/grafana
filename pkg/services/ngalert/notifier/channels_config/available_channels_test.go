@@ -10,6 +10,7 @@ import (
 	"testing"
 
 	"github.com/grafana/alerting/notify/notifytest"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -62,8 +63,8 @@ func TestGetSecretKeysForContactPointType(t *testing.T) {
 		{receiverType: "pushover", version: V0mimir1, expectedSecretFields: append([]string{"user_key", "token"}, httpConfigSecrets...)},
 		{receiverType: "jira", version: V0mimir1, expectedSecretFields: httpConfigSecrets},
 		{receiverType: "opsgenie", version: V0mimir1, expectedSecretFields: append([]string{"api_key"}, httpConfigSecrets...)},
-		{receiverType: "msteams", version: V0mimir1, expectedSecretFields: append([]string{"webhook_url"}, httpConfigSecrets...)},
-		{receiverType: "msteams", version: V0mimir2, expectedSecretFields: append([]string{"webhook_url"}, httpConfigSecrets...)},
+		{receiverType: "teams", version: V0mimir1, expectedSecretFields: append([]string{"webhook_url"}, httpConfigSecrets...)},
+		{receiverType: "teams", version: V0mimir2, expectedSecretFields: append([]string{"webhook_url"}, httpConfigSecrets...)},
 		{receiverType: "email", version: V0mimir1, expectedSecretFields: []string{"auth_password", "auth_secret"}},
 		{receiverType: "slack", version: V0mimir1, expectedSecretFields: append([]string{"api_url"}, httpConfigSecrets...)},
 		{receiverType: "webex", version: V0mimir1, expectedSecretFields: httpConfigSecrets},
@@ -103,6 +104,85 @@ func TestGetSecretKeysForContactPointType(t *testing.T) {
 	}
 
 	require.Emptyf(t, allTypes, "not all types are covered: %s", allTypes)
+}
+
+func TestGetAvailableNotifiersV2(t *testing.T) {
+	n := slices.Collect(GetAvailableNotifiersV2())
+	require.NotEmpty(t, n)
+	for _, notifier := range n {
+		t.Run(fmt.Sprintf("integration %s [%s]", notifier.Type, notifier.Name), func(t *testing.T) {
+			currentVersion := V1
+			if notifier.Type == "wechat" {
+				currentVersion = V0mimir1
+			}
+			t.Run(fmt.Sprintf("current version is %s", currentVersion), func(t *testing.T) {
+				require.Equal(t, currentVersion, notifier.GetCurrentVersion().Version)
+			})
+			t.Run("should be able to create only v1", func(t *testing.T) {
+				for _, version := range notifier.Versions {
+					if version.Version == V1 {
+						require.True(t, version.CanCreate, "v1 should be able to create")
+						continue
+					}
+					require.False(t, version.CanCreate, "v0 should not be able to create")
+				}
+			})
+		})
+	}
+}
+
+func TestConfigForIntegrationType(t *testing.T) {
+	t.Run("should return current version for all common types", func(t *testing.T) {
+		for plugin := range GetAvailableNotifiersV2() {
+			t.Run(plugin.Type, func(t *testing.T) {
+				version, err := ConfigForIntegrationType(plugin.Type)
+				require.NoErrorf(t, err, "expected config but got error for plugin type %s", plugin.Type)
+				assert.Equal(t, version.Plugin, plugin)
+				assert.Equal(t, version, plugin.GetCurrentVersion())
+			})
+		}
+	})
+
+	t.Run("should return specific version if matched by alias", func(t *testing.T) {
+		for plugin := range GetAvailableNotifiersV2() {
+			for _, version := range plugin.Versions {
+				if version.TypeAlias == "" {
+					continue
+				}
+				t.Run(version.TypeAlias, func(t *testing.T) {
+					actualVersion, err := ConfigForIntegrationType(version.TypeAlias)
+					require.NoErrorf(t, err, "expected config but got error for plugin type %s", plugin.Type)
+					assert.Equal(t, version, actualVersion)
+				})
+			}
+		}
+	})
+
+	t.Run("should return error if not known type", func(t *testing.T) {
+		_, err := ConfigForIntegrationType("unknown")
+		require.Error(t, err)
+	})
+}
+
+func TestTypeUniqueness(t *testing.T) {
+	knownTypes := make(map[string]struct{})
+	for plugin := range GetAvailableNotifiersV2() {
+		iType := strings.ToLower(plugin.Type)
+		if _, ok := knownTypes[iType]; ok {
+			assert.Failf(t, "duplicate plugin type", "plugin type %s", plugin.Type)
+		}
+		knownTypes[iType] = struct{}{}
+		for _, version := range plugin.Versions {
+			if version.TypeAlias == "" {
+				continue
+			}
+			iType = strings.ToLower(version.TypeAlias)
+			if _, ok := knownTypes[iType]; ok {
+				assert.Failf(t, "mimir type duplicates Grafana plugin type", "plugin type %s", iType)
+			}
+			knownTypes[iType] = struct{}{}
+		}
+	}
 }
 
 func Test_getSecretFields(t *testing.T) {
@@ -155,11 +235,14 @@ func TestV0IntegrationsSecrets(t *testing.T) {
 	notifytest.ForEachIntegrationType(t, func(configType reflect.Type) {
 		t.Run(configType.Name(), func(t *testing.T) {
 			integrationType := strings.ToLower(strings.TrimSuffix(configType.Name(), "Config"))
-			var version NotifierVersion
-			integrationType, version = mimirIntegrationTypeToNotifierType(integrationType)
-			expectedSecrets, err := GetSecretKeysForContactPointType(integrationType, version)
+			pluginVersion, err := ConfigForIntegrationType(integrationType)
 			require.NoError(t, err)
-
+			if pluginVersion.Version == V1 {
+				var ok bool
+				pluginVersion, ok = pluginVersion.Plugin.GetVersion(V0mimir1)
+				require.True(t, ok)
+			}
+			expectedSecrets := pluginVersion.GetSecretFieldsPaths()
 			var secrets []string
 			for option := range maps.Keys(notifytest.ValidMimirHTTPConfigs) {
 				cfg, err := notifytest.GetMimirIntegrationForType(configType, option)
