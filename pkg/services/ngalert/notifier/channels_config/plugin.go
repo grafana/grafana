@@ -3,6 +3,7 @@ package channels_config
 // NotifierPlugin holds meta information about a notifier.
 type NotifierPlugin struct {
 	Type        string           `json:"type"`
+	TypeAlias   string           `json:"typeAlias,omitempty"`
 	Name        string           `json:"name"`
 	Heading     string           `json:"heading"`
 	Description string           `json:"description"`
@@ -44,6 +45,7 @@ func (p VersionedNotifierPlugin) GetCurrentVersion() NotifierPluginVersion {
 
 // NotifierPluginVersion represents a version of a notifier plugin, including configuration options and metadata.
 type NotifierPluginVersion struct {
+	TypeAlias string           `json:"typeAlias,omitempty"`
 	Version   NotifierVersion  `json:"version"`
 	CanCreate bool             `json:"canCreate"`
 	Options   []NotifierOption `json:"options"`

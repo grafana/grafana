@@ -1,6 +1,8 @@
 package channels_config
 
-import promCfg "github.com/prometheus/alertmanager/config"
+import (
+	promCfg "github.com/prometheus/alertmanager/config"
+)
 
 // getAvailableMimirNotifiers returns the metadata of all the cloud notification channels that can be configured.
 func getAvailableMimirNotifiers() []*NotifierPlugin {
@@ -1199,7 +1201,8 @@ func getWebexMimirNotifier() *NotifierPlugin {
 
 func getMicrosoftTeamsMimirNotifier() *NotifierPlugin {
 	return &NotifierPlugin{
-		Type:        "msteams",
+		Type:        "teams",
+		TypeAlias:   "msteams",
 		Name:        "Microsoft Teams",
 		Description: "Sends notifications to Microsoft Teams",
 		Heading:     "Microsoft Teams settings",
@@ -1245,6 +1248,7 @@ func getMicrosoftTeamsMimirNotifier() *NotifierPlugin {
 func getMicrosoftTeamsV2MimirNotifier() *NotifierPlugin {
 	return &NotifierPlugin{
 		Type:        "teams",
+		TypeAlias:   "msteamsv2",
 		Name:        "Microsoft Teams",
 		Description: "Sends notifications to Microsoft Teams using new format of adaptive cards",
 		Heading:     "Microsoft Teams settings",

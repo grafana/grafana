@@ -2101,22 +2101,22 @@ func getSecretFields(parentPath string, options []NotifierOption) []string {
 }
 
 // ConfigForIntegrationType returns the config for the given integration type. Returns error is integration type is not known.
-func ConfigForIntegrationType(contactPointType string) (VersionedNotifierPlugin, error) {
+func ConfigForIntegrationType(contactPointTypeOrAlternateType string) (NotifierPluginVersion, error) {
 	notifiers := GetAvailableNotifiersV2()
 	for n := range notifiers {
-		if strings.EqualFold(n.Type, contactPointType) {
-			return n, nil
+		if strings.EqualFold(n.Type, contactPointTypeOrAlternateType) {
+			return n.GetCurrentVersion(), nil
 		}
-	}
-	alternateType, _ := mimirIntegrationTypeToNotifierType(contactPointType)
-	if alternateType != contactPointType {
-		for n := range notifiers {
-			if strings.EqualFold(n.Type, alternateType) {
-				return n, nil
+		for _, version := range n.Versions {
+			if version.TypeAlias == "" {
+				continue
+			}
+			if strings.EqualFold(version.TypeAlias, contactPointTypeOrAlternateType) {
+				return version, nil
 			}
 		}
 	}
-	return VersionedNotifierPlugin{}, fmt.Errorf("unknown integration type '%s'", contactPointType)
+	return NotifierPluginVersion{}, fmt.Errorf("unknown integration type '%s'", contactPointTypeOrAlternateType)
 }
 
 func GetAvailableNotifiersV2() iter.Seq[VersionedNotifierPlugin] {
@@ -2127,19 +2127,20 @@ func GetAvailableNotifiersV2() iter.Seq[VersionedNotifierPlugin] {
 			pl, ok := m[n.Type]
 			if !ok {
 				pl = VersionedNotifierPlugin{
-					Type:        n.Type,
-					Name:        n.Name,
-					Description: n.Description,
-					Heading:     n.Heading,
-					Info:        n.Info,
+					Type:           n.Type,
+					Name:           n.Name,
+					Description:    n.Description,
+					Heading:        n.Heading,
+					Info:           n.Info,
+					CurrentVersion: version,
 				}
-				pl.CurrentVersion = version
 			}
 			pl.Versions = append(pl.Versions, NotifierPluginVersion{
 				Version:   version,
 				CanCreate: version == V1,
 				Options:   n.Options,
 				Info:      "",
+				TypeAlias: n.TypeAlias,
 			})
 			m[n.Type] = pl
 		}
