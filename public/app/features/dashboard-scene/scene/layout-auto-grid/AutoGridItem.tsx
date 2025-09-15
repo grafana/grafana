@@ -141,6 +141,10 @@ export class AutoGridItem extends SceneObjectBase<AutoGridItemState> implements 
   public setRepeatByVariable(variableName: string | undefined) {
     const stateUpdate: Partial<AutoGridItemState> = { variableName };
 
+    if (!variableName) {
+      stateUpdate.repeatedPanels = undefined;
+    }
+
     if (this.state.body.state.$variables) {
       this.state.body.setState({ $variables: undefined });
     }
