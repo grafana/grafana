@@ -1,6 +1,6 @@
 {
   "name": "@test-plugins/extensions-test-app",
-  "version": "12.2.0-pre",
+  "version": "12.3.0-pre",
   "private": true,
   "scripts": {
     "build": "NODE_OPTIONS='--experimental-strip-types --no-warnings=ExperimentalWarning' webpack -c ./webpack.config.ts --env production",
