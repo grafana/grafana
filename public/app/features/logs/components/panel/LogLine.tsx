@@ -277,6 +277,12 @@ interface LogProps {
 
 const Log = memo(
   ({ displayedFields, log, showTime, showUniqueLabels, styles, timestampResolution, wrapLogMessage }: LogProps) => {
+    const handleLabelsToggle = useCallback(
+      (expanded: boolean) => {
+        log.uniqueLabelsExpanded = expanded;
+      },
+      [log]
+    );
     return (
       <>
         {showTime && (
@@ -292,7 +298,13 @@ const Log = memo(
         )}
         {showUniqueLabels && log.uniqueLabels && (
           <span className="field">
-            <LogLabels labels={log.uniqueLabels} addTooltip={true} displayMax={5} />
+            <LogLabels
+              addTooltip={true}
+              displayAll={log.uniqueLabelsExpanded}
+              displayMax={5}
+              labels={log.uniqueLabels}
+              onDisplayMaxToggle={handleLabelsToggle}
+            />
           </span>
         )}
         {displayedFields.length > 0 ? (
