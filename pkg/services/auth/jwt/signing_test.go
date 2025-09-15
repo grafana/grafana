@@ -3,8 +3,8 @@ package jwt
 import (
 	"testing"
 
-	jose "github.com/go-jose/go-jose/v3"
-	"github.com/go-jose/go-jose/v3/jwt"
+	jose "github.com/go-jose/go-jose/v4"
+	"github.com/go-jose/go-jose/v4/jwt"
 	"github.com/stretchr/testify/require"
 )
 
@@ -16,9 +16,9 @@ func sign(t *testing.T, key any, claims any, opts *jose.SignerOptions) string {
 	if opts == nil {
 		opts = &jose.SignerOptions{}
 	}
-	sig, err := jose.NewSigner(jose.SigningKey{Algorithm: jose.PS512, Key: key}, (opts).WithType("JWT"))
+	sig, err := jose.NewSigner(jose.SigningKey{Algorithm: jose.RS256, Key: key}, (opts).WithType("JWT"))
 	require.NoError(t, err)
-	token, err := jwt.Signed(sig).Claims(claims).CompactSerialize()
+	token, err := jwt.Signed(sig).Claims(claims).Serialize()
 	require.NoError(t, err)
 	return token
 }
@@ -40,7 +40,7 @@ func signNone(t *testing.T, claims any) string {
 
 	sig, err := jose.NewSigner(jose.SigningKey{Algorithm: "none", Key: noneSigner{}}, (&jose.SignerOptions{}).WithType("JWT"))
 	require.NoError(t, err)
-	token, err := jwt.Signed(sig).Claims(claims).CompactSerialize()
+	token, err := jwt.Signed(sig).Claims(claims).Serialize()
 	require.NoError(t, err)
 	return token
 }
