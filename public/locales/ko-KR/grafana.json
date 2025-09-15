@@ -9601,10 +9601,9 @@
       }
     },
     "logs-controls": {
+      "collapse": "",
       "deduplication": "중복 제거",
-      "disable-highlighting": "강조 표시 비활성화",
       "disable-prettify-json": "JSON 로그 접기",
-      "display-level": "표시 수준",
       "display-level-all": "모든 수준",
       "download": "로그 다운로드",
       "download-logs": {
@@ -9612,18 +9611,39 @@
         "json": "json",
         "txt": "txt"
       },
-      "enable-highlighting": "강조 표시 활성화",
       "escape-newlines": "로그 줄에서 잘못된 줄 바꿈 및 탭 시퀀스 수정",
-      "font-size-default": "작은 글꼴 크기 사용",
-      "font-size-small": "기본 글꼴 크기 사용",
+      "expand": "",
+      "filter-levels": "",
+      "font-large": "",
+      "font-small": "",
       "hide-search": "검색 닫기",
       "hide-timestamps": "타임스탬프 숨기기",
       "hide-unique-labels": "고유 라벨 숨기기",
+      "label": {
+        "collapse": "",
+        "disable-highlighting": "",
+        "enable-highlighting": "",
+        "escape-newlines": "",
+        "expand": ""
+      },
+      "labels": {
+        "font-large": "",
+        "font-small": "",
+        "hide-search": "",
+        "newest-first": "",
+        "oldest-first": "",
+        "show-search": ""
+      },
       "line-wrapping": {
         "enable": "",
         "enable-prettify": "",
         "hide": "",
-        "label": ""
+        "state": {
+          "hide": "",
+          "json": "",
+          "wrap": ""
+        },
+        "tooltip": ""
       },
       "newest-first": "최신 로그순으로 정렬 - 클릭하여 오래된 로그순으로 표시",
       "oldest-first": "오래된 로그순으로 정렬 - 클릭하여 최신 로그순으로 표시",
@@ -9639,8 +9659,18 @@
       "timestamp": {
         "hide": "",
         "label": "",
+        "label-hide": "",
+        "label-ms": "",
+        "label-ns": "",
         "milliseconds": "",
-        "nanoseconds": ""
+        "nanoseconds": "",
+        "tooltip": ""
+      },
+      "tooltip": {
+        "disable-highlighting": "",
+        "download": "",
+        "enable-highlighting": "",
+        "filter-level": ""
       },
       "unwrap-lines": "줄 바꿈 제거",
       "wrap-lines": "줄 바꿈"
@@ -11316,7 +11346,9 @@
     },
     "folder-repository-list": {
       "no-results-matching-your-query": "쿼리와 일치하는 결과가 없습니다",
-      "placeholder-search": "검색"
+      "placeholder-search": "검색",
+      "all-resources-managed_other": "",
+      "partial-managed_other": ""
     },
     "get-default-values": {
       "title": {
