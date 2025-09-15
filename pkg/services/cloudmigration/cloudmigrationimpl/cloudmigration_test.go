@@ -272,7 +272,7 @@ func Test_GetSnapshotStatusFromGMS(t *testing.T) {
 		})
 		require.NoError(t, err)
 		require.Eventually(t, checkStatusSync(ctx, s, snapshotUID, sessionUID, cloudmigration.SnapshotStatusError), time.Second, 10*time.Millisecond)
-		assert.Eventually(t, gmsClientFake.ValidateSnapshotStatusCallCount, time.Second, 10*time.Millisecond)
+		require.Eventually(t, gmsClientFake.ValidateSnapshotStatusCallCount, time.Second, 10*time.Millisecond)
 	})
 
 	t.Run("test case: gms snapshot unknown", func(t *testing.T) {
