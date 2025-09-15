@@ -25,18 +25,6 @@ import { getVizPanelKeyForPanelId } from '../utils/utils';
 import { transformSceneToSaveModel } from './transformSceneToSaveModel';
 import { transformSceneToSaveModelSchemaV2 } from './transformSceneToSaveModelSchemaV2';
 
-function isV2Dashboard(
-  scene: DashboardScene
-): scene is DashboardScene & {
-  serializer: DashboardSceneSerializerLike<
-    DashboardV2Spec,
-    DashboardWithAccessInfo<DashboardV2Spec>['metadata'],
-    DashboardV2Spec,
-    DashboardV2Spec
-  >;
-} {
-  return isDashboardV2Spec(scene.getSaveModel());
-}
 /**
  * T is the type of the save model
  * M is the type of the metadata
@@ -62,7 +50,7 @@ export interface DashboardSceneSerializerLike<T, M, I = T, E = T | { error: unkn
     }
   ) => DashboardChangeInfo;
   onSaveComplete(saveModel: T, result: SaveDashboardResponseDTO): void;
-  getTrackingInformation: (s: DashboardScene) => Dashboard | DashboardTrackingInfo | DashboardV2TrackingInfo | undefined;
+  getTrackingInformation: (s: DashboardScene) => DashboardTrackingInfo | DashboardV2TrackingInfo | undefined;
   getSnapshotUrl: () => string | undefined;
   getPanelIdForElement: (elementId: string) => number | undefined;
   getElementIdForPanel: (panelId: number) => string | undefined;
