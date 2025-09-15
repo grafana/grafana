@@ -87,7 +87,13 @@ export class DashboardDatasource extends DataSourceApi<DashboardQuery> {
         sourceDataProvider?.setContainerWidth(500);
       }
 
-      const cleanUp = activateSceneObjectAndParentTree(sourceDataProvider!);
+      /**
+       * Ignore the isInView flag on the original data provider
+       * This allows queries to be run even if the original datasource is outside the viewport
+       */
+      sourceDataProvider?.bypassIsInViewChanged?.(true);
+
+      const activateCleanUp = activateSceneObjectAndParentTree(sourceDataProvider!);
 
       return sourceDataProvider!.getResultsStream!().pipe(
         debounceTime(50),
@@ -101,7 +107,11 @@ export class DashboardDatasource extends DataSourceApi<DashboardQuery> {
           };
         }),
         this.emitFirstLoadedDataIfMixedDS(options.requestId),
-        finalize(() => cleanUp?.())
+        finalize(() => {
+          sourceDataProvider?.bypassIsInViewChanged?.(false);
+
+          activateCleanUp?.();
+        })
       );
     });
   }
