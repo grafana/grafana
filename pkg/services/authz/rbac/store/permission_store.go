@@ -94,10 +94,6 @@ func (s *SQLPermissionsStore) GetUserPermissions(ctx context.Context, ns types.N
 		if err := res.Scan(&perm.Kind, &perm.Attribute, &perm.Identifier, &perm.Scope); err != nil {
 			return nil, err
 		}
-		// TODO: Why is the Scope set to '::' when it should be empty in the DB?
-		if perm.Scope == "::" {
-			perm.Scope = ""
-		}
 		perms = append(perms, perm)
 	}
 
