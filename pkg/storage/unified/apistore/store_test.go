@@ -343,10 +343,3 @@ func TestGRPCtoHTTPStatusMapping(t *testing.T) {
 func TestTransformationFailure(t *testing.T) {
 	// TODO(#109831): Enable use of this test and run it.
 }
-
-//func TestCount(t *testing.T) {
-//	ctx, store, destroyFunc, err := testSetup(t)
-//	defer destroyFunc()
-//	assert.NoError(t, err)
-//	storagetesting.RunTestCount(ctx, t, store)
-//}
