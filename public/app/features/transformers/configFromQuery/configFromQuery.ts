@@ -22,7 +22,7 @@ export interface ConfigFromQueryTransformOptions {
   configRefId?: string;
   mappings: FieldToConfigMapping[];
   applyTo?: MatcherConfig;
-  isMapping?: boolean;
+  isDisplayNameMapping?: boolean;
 }
 
 export function extractConfigFromQuery(options: ConfigFromQueryTransformOptions, data: DataFrame[]) {
@@ -74,6 +74,26 @@ export function extractConfigFromQuery(options: ConfigFromQueryTransformOptions,
     for (const field of frame.fields) {
       if (matcher(field, frame, data)) {
         const dataConfig = getFieldConfigFromFrame(reducedConfigFrame, 0, mappingResult);
+
+        if (options.isDisplayNameMapping) {
+          const nameFrame = data.find((d) => d.refId === options.configRefId);
+          const mappingName = options.mappings.find((mapping) => mapping.handlerKey === 'mappings.value')?.fieldName;
+          if (nameFrame && mappingName !== undefined) {
+            const mapKeyField = nameFrame.fields.find((frameNameField) => frameNameField.name === mappingName);
+            const keyIndex = mapKeyField?.values.indexOf(field.name);
+            if (keyIndex !== undefined) {
+              const mappingTextName = options.mappings.find(
+                (mapping) => mapping.handlerKey === 'mappings.text'
+              )?.fieldName;
+
+              if (mappingTextName !== undefined) {
+                const valField = nameFrame.fields.find((field) => field.name === mappingTextName);
+                dataConfig.displayName = valField?.values[keyIndex!];
+              }
+            }
+          }
+        }
+
         outputFrame.fields.push({
           ...field,
           config: {

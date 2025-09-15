@@ -1,5 +1,4 @@
 import { css } from '@emotion/css';
-import { isArray } from 'lodash';
 
 import {
   FieldMatcherID,
@@ -16,7 +15,7 @@ import { Checkbox, fieldMatchersUI, InlineField, InlineFieldRow, Select, useStyl
 
 import { getTransformationContent } from '../docs/getTransformationContent';
 import { FieldToConfigMappingEditor } from '../fieldToConfigMapping/FieldToConfigMappingEditor';
-import { FieldConfigHandlerKey, FieldToConfigMapHandlerProcessor } from '../fieldToConfigMapping/fieldToConfigMapping';
+import { configMapHandlers } from '../fieldToConfigMapping/fieldToConfigMapping';
 import darkImage from '../images/dark/configFromData.svg';
 import lightImage from '../images/light/configFromData.svg';
 
@@ -64,11 +63,6 @@ export function ConfigFromQueryTransformerEditor({ input, onChange, options }: P
     .filter((o) => !o.excludeFromPicker)
     .map<SelectableValue<string>>((i) => ({ label: i.name, value: i.id, description: i.description }));
 
-  const mapFn: FieldToConfigMapHandlerProcessor = (value, config, context) => {
-    console.log(value, config, context);
-    return config.mappings;
-  };
-
   return (
     <>
       <InlineFieldRow>
@@ -103,8 +97,8 @@ export function ConfigFromQueryTransformerEditor({ input, onChange, options }: P
         <InlineField>
           <Checkbox
             label={t('transformers.config-from-query-transformer-editor.label-mapping', 'Map results')}
-            onChange={(evt) => onChange({ ...options, isMapping: evt.currentTarget.checked })}
-            value={options.isMapping}
+            onChange={(evt) => onChange({ ...options, isDisplayNameMapping: evt.currentTarget.checked })}
+            value={options.isDisplayNameMapping}
           />
         </InlineField>
       </InlineFieldRow>
@@ -114,23 +108,10 @@ export function ConfigFromQueryTransformerEditor({ input, onChange, options }: P
             frame={configFrame}
             mappings={options.mappings}
             onChange={(mappings) => onChange({ ...options, mappings })}
-            withReducers={!options.isMapping}
+            withReducers={!options.isDisplayNameMapping}
             configOverride={
-              options.isMapping
-                ? [
-                    {
-                      key: 'mappings.text',
-                      name: 'Value mappings / Display text',
-                      targetProperty: 'mappings',
-                      processor: mapFn,
-                    },
-                    {
-                      key: 'mappings.value',
-                      name: 'Value mappings / Value',
-                      targetProperty: 'mappings',
-                      processor: mapFn,
-                    },
-                  ]
+              options.isDisplayNameMapping
+                ? configMapHandlers.filter((cmh) => cmh.key === 'mappings.value' || cmh.key === 'mappings.text')
                 : undefined
             }
           />
