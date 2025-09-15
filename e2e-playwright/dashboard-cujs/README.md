@@ -27,7 +27,7 @@ The config file should contain endpoint glob patterns for labels and values APIs
 Alongside the endpoint patterns, the config file can also specify a list of dashboard UIDs that would be used to run navigation and view tests against each of the dashboards. This is useful to verify that static dashboards, alongside reloadable dashboards are viewed and navigated correctly. To use this property, simply add 
 
 ```json
-  "reloadable_dashboards": ["cuj-static-dashboard", "cuj-reloadable-dashboard"]
+  "dashboards": ["cuj-static-dashboard", "cuj-reloadable-dashboard"]
 ```
 
 in the config file. The respective tests will then run against the specified dashboards.
