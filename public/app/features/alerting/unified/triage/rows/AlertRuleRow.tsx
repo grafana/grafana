@@ -1,6 +1,7 @@
-import React from 'react';
+import { useState } from 'react';
 
-import { Stack, Text, TextLink } from '@grafana/ui';
+import { t } from '@grafana/i18n';
+import { IconButton, Stack, Text, TextLink } from '@grafana/ui';
 
 import { MetaText } from '../../components/MetaText';
 import { WithReturnButton } from '../../components/WithReturnButton';
@@ -10,6 +11,7 @@ import { AlertRuleSummary } from '../scene/AlertRuleSummary';
 import { AlertRuleRow as AlertRuleRowType } from '../types';
 
 import { GenericRow } from './GenericRow';
+import { RuleDetailsDrawer } from './RuleDetailsDrawer';
 
 interface AlertRuleRowProps {
   row: AlertRuleRowType;
@@ -19,37 +21,59 @@ interface AlertRuleRowProps {
 }
 
 export const AlertRuleRow = ({ row, leftColumnWidth, rowKey, depth = 0 }: AlertRuleRowProps) => {
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+
+  const handleDrawerOpen = () => {
+    setIsDrawerOpen(true);
+  };
+
+  const handleDrawerClose = () => {
+    setIsDrawerOpen(false);
+  };
+
   return (
-    <GenericRow
-      key={rowKey}
-      width={leftColumnWidth}
-      title={
-        <WithReturnButton
-          component={
-            <TextLink
-              inline={false}
-              href={rulesNav.detailsPageLink('grafana', {
-                ruleSourceName: 'grafana',
-                uid: row.metadata.ruleUID,
-              })}
-            >
-              {row.metadata.title}
-            </TextLink>
-          }
-        />
-      }
-      metadata={
-        <Stack direction="row" gap={0.5} alignItems="center">
-          <MetaText icon="folder" />
-          <Text variant="bodySmall" color="secondary">
-            {row.metadata.folder}
-          </Text>
-        </Stack>
-      }
-      content={<AlertRuleSummary ruleUID={row.metadata.ruleUID} />}
-      depth={depth}
-    >
-      <AlertRuleInstances ruleUID={row.metadata.ruleUID} depth={depth + 1} />
-    </GenericRow>
+    <>
+      <GenericRow
+        key={rowKey}
+        width={leftColumnWidth}
+        title={
+          <WithReturnButton
+            component={
+              <TextLink
+                inline={false}
+                href={rulesNav.detailsPageLink('grafana', {
+                  ruleSourceName: 'grafana',
+                  uid: row.metadata.ruleUID,
+                })}
+              >
+                {row.metadata.title}
+              </TextLink>
+            }
+          />
+        }
+        metadata={
+          <Stack direction="row" gap={0.5} alignItems="center">
+            <MetaText icon="folder" />
+            <Text variant="bodySmall" color="secondary">
+              {row.metadata.folder}
+            </Text>
+          </Stack>
+        }
+        actions={
+          <IconButton
+            style={{ transform: 'rotate(180deg)' }}
+            name="web-section-alt"
+            aria-label={t('alerting.triage.open-in-sidebar', 'Open in sidebar')}
+            onClick={handleDrawerOpen}
+          />
+        }
+        content={<AlertRuleSummary ruleUID={row.metadata.ruleUID} />}
+        depth={depth}
+      >
+        <AlertRuleInstances ruleUID={row.metadata.ruleUID} depth={depth + 1} />
+      </GenericRow>
+
+      {isDrawerOpen && <RuleDetailsDrawer ruleUID={row.metadata.ruleUID} onClose={handleDrawerClose} />}
+    </>
   );
 };
