@@ -39,13 +39,6 @@ export function trackDashboardSceneLoaded(dashboard: DashboardScene, duration?: 
   });
 }
 
-export const trackDashboardSceneEditButtonClicked = () => {
-  const outlineExpandedByDefault = !store.getBool('grafana.dashboard.edit-pane.outline.collapsed', true);
-  DashboardInteractions.editButtonClicked({
-    outlineExpanded: outlineExpandedByDefault,
-  });
-};
-
 export function getPanelPluginCounts(panels: string[] | string[]) {
   return panels.reduce((r: Record<string, number>, p) => {
     r[panelName(p)] = 1 + r[panelName(p)] || 1;
