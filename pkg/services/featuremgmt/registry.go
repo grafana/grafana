@@ -450,16 +450,31 @@ var (
 		{
 			Name:         "kubernetesDashboards",
 			Description:  "Use the kubernetes API in the frontend for dashboards",
-			Stage:        FeatureStageExperimental,
-			Owner:        grafanaAppPlatformSquad,
+			Stage:        FeatureStageGeneralAvailability,
+			Owner:        grafanaDashboardsSquad,
 			FrontendOnly: true,
+			Expression:   "true", // enabled by default
 		},
 		{
 			Name:            "kubernetesShortURLs",
-			Description:     "Routes short url requests from /api to the /apis endpoint",
+			Description:     "Enables k8s short url api and uses it under the hood when handling legacy /api",
 			Stage:           FeatureStageExperimental,
 			Owner:           grafanaAppPlatformSquad,
 			RequiresRestart: true, // changes the API routing
+		},
+		{
+			Name:         "useKubernetesShortURLsAPI",
+			Description:  "Routes short url requests from /api to the /apis endpoint in the frontend. Depends on kubernetesShortURLs",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaSharingSquad,
+			FrontendOnly: true,
+		},
+		{
+			Name:            "kubernetesAlertingRules",
+			Description:     "Adds support for Kubernetes alerting and recording rules",
+			Stage:           FeatureStageExperimental,
+			Owner:           grafanaAlertingSquad,
+			RequiresRestart: true,
 		},
 		{
 			Name:        "dashboardDisableSchemaValidationV1",
@@ -725,6 +740,12 @@ var (
 			Owner:       grafanaOperatorExperienceSquad,
 		},
 		{
+			Name:        "secretsManagementAppPlatformUI",
+			Description: "Enable the secrets management app platform UI",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaOperatorExperienceSquad,
+		},
+		{
 			Name:         "alertingSaveStatePeriodic",
 			Description:  "Writes the state periodically to the database, asynchronous to rule evaluation",
 			Stage:        FeatureStagePrivatePreview,
@@ -778,7 +799,7 @@ var (
 		{
 			Name:         "sqlExpressions",
 			Description:  "Enables SQL Expressions, which can execute SQL queries against data source results.",
-			Stage:        FeatureStagePrivatePreview,
+			Stage:        FeatureStagePublicPreview,
 			FrontendOnly: false,
 			Owner:        grafanaDatasourcesCoreServicesSquad,
 		},
@@ -900,7 +921,7 @@ var (
 		{
 			Name:           "savedQueries",
 			Description:    "Enables Saved Queries feature",
-			Stage:          FeatureStagePrivatePreview,
+			Stage:          FeatureStagePublicPreview,
 			Owner:          grafanaSharingSquad,
 			FrontendOnly:   false,
 			AllowSelfServe: false,
@@ -1052,6 +1073,15 @@ var (
 			Stage:       FeatureStageGeneralAvailability,
 			Owner:       grafanaDashboardsSquad,
 			Expression:  "true", // enabled by default
+		},
+		{
+			Name:              "vizActionsAuth",
+			Description:       "Allows authenticated API calls in actions",
+			Stage:             FeatureStagePublicPreview,
+			Owner:             grafanaDatavizSquad,
+			FrontendOnly:      true,
+			HideFromAdminPage: true,
+			HideFromDocs:      true,
 		},
 		{
 			Name:         "alertingPrometheusRulesPrimary",
@@ -1294,6 +1324,15 @@ var (
 			Expression:        "false",
 		},
 		{
+			Name:              "alertingEnrichmentAssistantInvestigations",
+			Description:       "Enable Assistant Investigations enrichment type.",
+			Stage:             FeatureStageExperimental,
+			Owner:             grafanaAlertingSquad,
+			HideFromAdminPage: true,
+			HideFromDocs:      true,
+			Expression:        "false",
+		},
+		{
 			Name:              "alertingAIAnalyzeCentralStateHistory",
 			Description:       "Enable AI-analyze central state history.",
 			Stage:             FeatureStageExperimental,
@@ -1327,9 +1366,10 @@ var (
 		},
 		{
 			Name:        "elasticsearchCrossClusterSearch",
-			Description: "Enables cross cluster search in the Elasticsearch datasource",
-			Stage:       FeatureStagePublicPreview,
-			Owner:       awsDatasourcesSquad,
+			Description: "Enables cross cluster search in the Elasticsearch data source",
+			Stage:       FeatureStageGeneralAvailability,
+			Owner:       grafanaPartnerPluginsSquad,
+			Expression:  "false",
 		},
 		{
 			Name:         "unifiedHistory",
@@ -1649,13 +1689,6 @@ var (
 			Owner:        grafanaPluginsPlatformSquad,
 		},
 		{
-			Name:         "multiTenantFrontend",
-			Description:  "Register MT frontend",
-			Stage:        FeatureStageExperimental,
-			FrontendOnly: false,
-			Owner:        grafanaFrontendPlatformSquad,
-		},
-		{
 			Name:         "alertingListViewV2PreviewToggle",
 			Description:  "Enables the alerting list view v2 preview toggle",
 			FrontendOnly: true,
@@ -1723,6 +1756,24 @@ var (
 		{
 			Name:              "alertEnrichment",
 			Description:       "Enable configuration of alert enrichments in Grafana Cloud.",
+			Stage:             FeatureStageExperimental,
+			Owner:             grafanaAlertingSquad,
+			HideFromAdminPage: true,
+			HideFromDocs:      true,
+			Expression:        "false",
+		},
+		{
+			Name:              "alertEnrichmentMultiStep",
+			Description:       "Allow multiple steps per enrichment.",
+			Stage:             FeatureStageExperimental,
+			Owner:             grafanaAlertingSquad,
+			HideFromAdminPage: true,
+			HideFromDocs:      true,
+			Expression:        "false",
+		},
+		{
+			Name:              "alertEnrichmentConditional",
+			Description:       "Enable conditional alert enrichment steps.",
 			Stage:             FeatureStageExperimental,
 			Owner:             grafanaAlertingSquad,
 			HideFromAdminPage: true,
@@ -1844,9 +1895,10 @@ var (
 		{
 			Name:         "dashboardDsAdHocFiltering",
 			Description:  "Enables adhoc filtering support for the dashboard datasource",
-			Stage:        FeatureStageExperimental,
+			Stage:        FeatureStageGeneralAvailability,
 			Owner:        grafanaDataProSquad,
 			FrontendOnly: true,
+			Expression:   "true",
 		},
 		{
 			Name:         "dashboardLevelTimeMacros",
@@ -1876,9 +1928,10 @@ var (
 		{
 			Name:         "adhocFiltersInTooltips",
 			Description:  "Enable adhoc filter buttons in visualization tooltips",
-			Stage:        FeatureStageExperimental,
+			Stage:        FeatureStageGeneralAvailability,
 			Owner:        grafanaDataProSquad,
 			FrontendOnly: true,
+			Expression:   "true",
 		},
 		{
 			Name:         "favoriteDatasources",
@@ -1901,16 +1954,6 @@ var (
 			FrontendOnly: false,
 			Owner:        grafanaPartnerPluginsSquad,
 			Expression:   "false",
-		},
-		{
-			Name:              "unifiedStorageSearchAfterWriteExperimentalAPI",
-			Description:       "Enable experimental search-after-write guarantees to unified-storage search endpoints",
-			Stage:             FeatureStageExperimental,
-			Owner:             grafanaSearchAndStorageSquad,
-			HideFromAdminPage: true,
-			HideFromDocs:      true,
-			RequiresRestart:   true,
-			Expression:        "false",
 		},
 		{
 			Name:         "teamFolders",
@@ -1937,6 +1980,40 @@ var (
 			FrontendOnly: false,
 			Owner:        grafanaPartnerPluginsSquad,
 			Expression:   "false",
+		},
+		{
+			Name:         "azureResourcePickerUpdates",
+			Description:  "Enables the updated Azure Monitor resource picker",
+			Stage:        FeatureStagePublicPreview,
+			FrontendOnly: true,
+			Owner:        grafanaPartnerPluginsSquad,
+			Expression:   "false",
+		},
+		{
+			Name:            "prometheusTypeMigration",
+			Description:     "Checks for deprecated Prometheus authentication methods (SigV4 and Azure), installs the relevant data source, and migrates the Prometheus data sources",
+			Stage:           FeatureStageExperimental,
+			RequiresRestart: true,
+			Owner:           grafanaPartnerPluginsSquad,
+			Expression:      "false",
+		},
+		{
+			Name:              "dskitBackgroundServices",
+			Description:       "Enables dskit background service wrapper",
+			HideFromAdminPage: true,
+			HideFromDocs:      true,
+			Stage:             FeatureStageExperimental,
+			RequiresRestart:   true,
+			Owner:             grafanaPluginsPlatformSquad,
+			Expression:        "false",
+		},
+		{
+			Name:            "pluginContainers",
+			Description:     "Enables running plugins in containers",
+			Stage:           FeatureStagePrivatePreview,
+			Owner:           grafanaPluginsPlatformSquad,
+			Expression:      "false",
+			RequiresRestart: true,
 		},
 	}
 )

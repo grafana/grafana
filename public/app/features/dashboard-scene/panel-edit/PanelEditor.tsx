@@ -5,6 +5,7 @@ import { NavIndex, PanelPlugin } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config, locationService } from '@grafana/runtime';
 import {
+  NewSceneObjectAddedEvent,
   PanelBuilders,
   SceneDataTransformer,
   SceneObjectBase,
@@ -24,6 +25,7 @@ import { DashboardEditActionEvent } from '../edit-pane/shared';
 import { DashboardSceneChangeTracker } from '../saving/DashboardSceneChangeTracker';
 import { getPanelChanges } from '../saving/getDashboardChanges';
 import { UNCONFIGURED_PANEL_PLUGIN_ID } from '../scene/UnconfiguredPanel';
+import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
 import { DashboardLayoutItem, isDashboardLayoutItem } from '../scene/types/DashboardLayoutItem';
 import { vizPanelToPanel } from '../serialization/transformSceneToSaveModel';
 import {
@@ -96,13 +98,50 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
     this.waitForPlugin();
 
     return () => {
-      this._layoutItem.editingCompleted?.(this.state.isDirty || this._changesHaveBeenMade);
+      this.commitChanges();
 
       if (deactivateParents) {
         deactivateParents();
       }
     };
   }
+
+  private commitChanges() {
+    if (!this.state.isDirty && !this._changesHaveBeenMade) {
+      // Nothing to commit
+      return;
+    }
+
+    const layoutItem = this._layoutItem;
+    const changedState = layoutItem.state;
+    const originalState = this._layoutItemState!;
+
+    // Temp fix for old edit mode
+    if (this._layoutItem instanceof DashboardGridItem && !config.featureToggles.dashboardNewLayouts) {
+      this._layoutItem.handleEditChange();
+      return;
+    }
+
+    const editAction = new DashboardEditActionEvent({
+      description: t('dashboard.edit-actions.panel-edit', 'Panel changes'),
+      source: this._layoutItem,
+      perform: () => {
+        // Because panel edit makes changes directly to layout item & panel
+        // we only need to do this in case we want to re-perform after undo
+        if (layoutItem.state !== changedState) {
+          layoutItem.setState(changedState);
+        }
+      },
+      undo: () => layoutItem!.setState(originalState),
+    });
+
+    // sadly we cannot publish this event directly here as the main dashboard edit / undo system
+    // is not active while panel edit is active so we have to let the edit pane (which owns undo/redo)
+    // publish this event when it activates
+    const dashboard = getDashboardSceneFor(this);
+    dashboard.state.editPane.setPanelEditAction(editAction);
+  }
+
   private waitForPlugin(retry = 0) {
     const panel = this.getPanel();
     const plugin = panel.getPlugin();
@@ -166,8 +205,6 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
     if (this.state.isInitializing) {
       this.setOriginalState(this.state.panelRef);
 
-      this._layoutItem.editingStarted?.();
-
       this._setupChangeDetection();
       this._updateDataPane(plugin);
 
@@ -209,15 +246,16 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
 
       // clean up data provider when switching from data to non data panel
       if (panel.state.$data) {
-        panel.setState({
-          $data: undefined,
-        });
+        panel.setState({ $data: undefined });
       }
     }
 
     if (!skipDataQuery) {
       if (!this.state.dataPane) {
-        this.setState({ dataPane: PanelDataPane.createFor(this.getPanel()) });
+        const dataPane = PanelDataPane.createFor(this.getPanel());
+        this.setState({ dataPane });
+        // This is to notify UrlSyncManager that a new object has been added to scene that requires url sync
+        this.publishEvent(new NewSceneObjectAddedEvent(dataPane), true);
       }
 
       // add data provider when switching from non data to data panel

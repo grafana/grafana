@@ -46,6 +46,7 @@ import {
   getDefaultRowHeight,
   getDisplayName,
   predicateByName,
+  calculateFooterHeight,
 } from './utils';
 
 describe('TableNG utils', () => {
@@ -857,8 +858,6 @@ describe('TableNG utils', () => {
       expect(extractPixelValue('not-a-number')).toBe(0);
       expect(extractPixelValue('px')).toBe(0);
       expect(extractPixelValue('')).toBe(0);
-      expect(extractPixelValue(null as any)).toBe(0);
-      expect(extractPixelValue(undefined as any)).toBe(0);
     });
   });
 
@@ -1379,6 +1378,35 @@ describe('TableNG utils', () => {
         { time: 1, value: 10 },
         { time: 2, value: 30 },
       ]);
+    });
+  });
+
+  describe('calculateFooterHeight', () => {
+    it('should return 0 if no footer is present', () => {
+      const frame = createDataFrame({
+        fields: [
+          { name: 'time', values: [1, 1, 2], nanos: [100, 99, 0] },
+          { name: 'value', values: [10, 20, 30] },
+        ],
+      });
+
+      expect(calculateFooterHeight(frame.fields)).toBe(0);
+    });
+
+    it('should return the height in pixels for the max reducers on a given field', () => {
+      const frame = createDataFrame({
+        fields: [
+          {
+            name: 'time',
+            values: [1, 1, 2],
+            nanos: [100, 99, 0],
+            config: { custom: { footer: { reducers: ['min', 'max', 'count'] } } },
+          },
+          { name: 'value', values: [10, 20, 30], config: { custom: { footer: { reducers: ['min'] } } } },
+        ],
+      });
+
+      expect(calculateFooterHeight(frame.fields)).toBe(78); // 3 reducers * 22px line height + 12px padding
     });
   });
 

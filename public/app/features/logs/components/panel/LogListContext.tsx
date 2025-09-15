@@ -40,6 +40,7 @@ import { getScrollbarWidth, LOG_LIST_CONTROLS_WIDTH, LOG_LIST_MIN_WIDTH } from '
 
 export interface LogListContextData extends Omit<Props, 'containerElement' | 'logs' | 'logsMeta' | 'showControls'> {
   closeDetails: () => void;
+  controlsExpanded: boolean;
   detailsDisplayed: (log: LogListModel) => boolean;
   detailsMode: LogLineDetailsMode;
   detailsWidth: number;
@@ -51,6 +52,7 @@ export interface LogListContextData extends Omit<Props, 'containerElement' | 'lo
   hasSampledLogs?: boolean;
   hasUnescapedContent: boolean;
   logLineMenuCustomItems?: LogLineMenuCustomItem[];
+  setControlsExpanded: (expanded: boolean) => void;
   setDedupStrategy: (dedupStrategy: LogsDedupStrategy) => void;
   setDetailsMode: (mode: LogLineDetailsMode) => void;
   setDetailsWidth: (width: number) => void;
@@ -76,6 +78,7 @@ export interface LogListContextData extends Omit<Props, 'containerElement' | 'lo
 export const LogListContext = createContext<LogListContextData>({
   app: CoreApp.Unknown,
   closeDetails: () => {},
+  controlsExpanded: false,
   dedupStrategy: LogsDedupStrategy.none,
   detailsDisplayed: () => false,
   detailsMode: 'sidebar',
@@ -88,6 +91,7 @@ export const LogListContext = createContext<LogListContextData>({
   fontSize: 'default',
   hasUnescapedContent: false,
   noInteractions: false,
+  setControlsExpanded: () => {},
   setDedupStrategy: () => {},
   setDetailsMode: () => {},
   setDetailsWidth: () => {},
@@ -199,7 +203,10 @@ export const LogListContextProvider = ({
   children,
   containerElement,
   enableLogDetails,
-  detailsMode: detailsModeProp,
+  logOptionsStorageKey,
+  detailsMode: detailsModeProp = logOptionsStorageKey
+    ? store.get(`${logOptionsStorageKey}.detailsMode`)
+    : getDefaultDetailsMode(containerElement),
   dedupStrategy,
   displayedFields,
   filterLevels,
@@ -209,7 +216,6 @@ export const LogListContextProvider = ({
   logs,
   logLineMenuCustomItems,
   logsMeta,
-  logOptionsStorageKey,
   logSupportsContext,
   noInteractions,
   onClickFilterLabel,
@@ -258,7 +264,9 @@ export const LogListContextProvider = ({
   const [detailsWidth, setDetailsWidthState] = useState(
     getDetailsWidth(containerElement, logOptionsStorageKey, undefined, detailsModeProp, showControls)
   );
-  const [detailsMode, setDetailsMode] = useState<LogLineDetailsMode>(detailsModeProp ?? 'sidebar');
+  const [detailsMode, setDetailsMode] = useState<LogLineDetailsMode>(
+    detailsModeProp ?? getDefaultDetailsMode(containerElement)
+  );
   const [isAssistantAvailable, openAssistant] = useAssistant();
   const [prettifyJSON, setPrettifyJSONState] = useState(prettifyJSONProp);
   const [wrapLogMessage, setWrapLogMessageState] = useState(wrapLogMessageProp);
@@ -388,6 +396,13 @@ export const LogListContextProvider = ({
       timestampResolution,
     }));
   }, [timestampResolution]);
+
+  const controlsExpandedFromStore = store.getBool(
+    `${logOptionsStorageKey}.controlsExpanded`,
+    getDefaultControlsExpandedMode(containerElement ?? null)
+  );
+  // If the user has a large viewport, show the expanded state by default
+  const [controlsExpanded, setControlsExpanded] = useState<boolean>(controlsExpandedFromStore);
 
   const detailsDisplayed = useCallback(
     (log: LogListModel) => !!showDetails.find((shownLog) => shownLog.uid === log.uid),
@@ -590,6 +605,7 @@ export const LogListContextProvider = ({
       value={{
         app,
         closeDetails,
+        controlsExpanded,
         detailsDisplayed,
         dedupStrategy: logListState.dedupStrategy,
         detailsMode,
@@ -624,6 +640,7 @@ export const LogListContextProvider = ({
         pinLineButtonTooltipTitle,
         pinnedLogs: logListState.pinnedLogs,
         prettifyJSON,
+        setControlsExpanded,
         setDedupStrategy,
         setDetailsMode,
         setDetailsWidth,
@@ -718,16 +735,20 @@ async function handleOpenAssistant(openAssistant: (props: OpenAssistantProps) =>
   const datasource = await getDataSourceSrv().get(log.datasourceUid);
   const context = [];
   if (datasource) {
-    context.push(createAssistantContextItem('datasource', { datasourceUid: datasource.uid }));
+    context.push(
+      createAssistantContextItem('datasource', {
+        datasourceUid: datasource.uid,
+      })
+    );
   }
   openAssistant({
+    origin: 'grafana/explain-log-line',
     prompt: `${t('logs.log-line-menu.log-line-explainer', 'Explain log line in a concise way')}:
-    
-    \`\`\`
-    ${log.entry.replaceAll('`', '\\`')}
-    \`\`\`
-    `,
-    origin: 'explain-log-line',
+
+      \`\`\`
+${log.entry.replaceAll('`', '\\`')}
+      \`\`\`
+      `,
     context: [
       ...context,
       createAssistantContextItem('structured', {
@@ -740,4 +761,14 @@ async function handleOpenAssistant(openAssistant: (props: OpenAssistantProps) =>
       }),
     ],
   });
+}
+
+export function getDefaultDetailsMode(container: HTMLDivElement | undefined): LogLineDetailsMode {
+  const width = container?.clientWidth ?? window.innerWidth;
+  return width > 1440 ? 'sidebar' : 'inline';
+}
+
+export function getDefaultControlsExpandedMode(container: HTMLDivElement | null): boolean {
+  const width = container?.clientWidth ?? window.innerWidth;
+  return width > 1200;
 }

@@ -12,10 +12,12 @@ import {
   MultiValueVariable,
   CustomVariable,
   VariableValueSingle,
+  SceneGridRow,
 } from '@grafana/scenes';
 import { GRID_COLUMN_COUNT } from 'app/core/constants';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 
+import { DashboardStateChangedEvent } from '../../edit-pane/shared';
 import { getCloneKey, getLocalVariableValueSet } from '../../utils/clone';
 import { getMultiVariableValues } from '../../utils/utils';
 import { scrollCanvasElementIntoView, scrollIntoView } from '../layouts-shared/scrollCanvasElementIntoView';
@@ -24,6 +26,7 @@ import { DashboardLayoutItem } from '../types/DashboardLayoutItem';
 import { getDashboardGridItemOptions } from './DashboardGridItemEditor';
 import { DashboardGridItemRenderer } from './DashboardGridItemRenderer';
 import { DashboardGridItemVariableDependencyHandler } from './DashboardGridItemVariableDependencyHandler';
+import { RowRepeaterBehavior } from './RowRepeaterBehavior';
 
 export interface DashboardGridItemState extends SceneGridItemStateLike {
   body: VizPanel;
@@ -58,6 +61,8 @@ export class DashboardGridItem
 
   private _activationHandler() {
     this.handleVariableName();
+
+    this._subs.add(this.subscribeToEvent(DashboardStateChangedEvent, () => this.handleEditChange()));
 
     return () => {
       this._handleGridSizeUnsubscribe();
@@ -112,20 +117,21 @@ export class DashboardGridItem
     this.setState({ body });
   }
 
-  public editingStarted() {
-    if (!this.state.variableName) {
-      return;
-    }
-  }
+  public handleEditChange() {
+    this._prevRepeatValues = undefined;
 
-  public editingCompleted(withChanges: boolean) {
-    if (withChanges) {
-      this._prevRepeatValues = undefined;
+    if (this.parent instanceof SceneGridRow) {
+      const repeater = this.parent.state.$behaviors?.find((b) => b instanceof RowRepeaterBehavior);
+      if (repeater) {
+        repeater.resetPrevRepeatValues();
+      }
     }
 
     if (this.state.variableName && this.state.repeatDirection === 'h' && this.state.width !== GRID_COLUMN_COUNT) {
       this.setState({ width: GRID_COLUMN_COUNT });
     }
+
+    this.performRepeat();
   }
 
   public performRepeat() {
@@ -203,6 +209,11 @@ export class DashboardGridItem
     if (prevHeight !== this.state.height) {
       const layout = sceneGraph.getLayout(this);
       if (layout instanceof SceneGridLayout) {
+        // When the height changes, we need to adjust the y positions of the following children or we will potentially create a broken layout with grid items out of sync with their parent row.
+        const moveDownAmount = (this.state.height ?? 0) - (prevHeight ?? 0);
+        if (moveDownAmount > 0) {
+          layout.adjustYPositions(this.state.y!, moveDownAmount);
+        }
         layout.forceRender();
       }
     }
@@ -222,6 +233,10 @@ export class DashboardGridItem
 
   public setRepeatByVariable(variableName: string | undefined) {
     const stateUpdate: Partial<DashboardGridItemState> = { variableName };
+
+    if (!variableName) {
+      stateUpdate.repeatedPanels = undefined;
+    }
 
     if (variableName && !this.state.repeatDirection) {
       stateUpdate.repeatDirection = 'h';

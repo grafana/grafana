@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"log/slog"
 	"runtime"
+	"slices"
 	"strings"
 	"sync"
 	"time"
@@ -14,10 +15,8 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
-	"golang.org/x/exp/slices"
 
 	"github.com/grafana/dskit/concurrency"
-
 	dashboardv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
 	folderv1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -50,13 +49,18 @@ import (
 
 const FULLPATH_SEPARATOR = "/"
 
+var (
+	_ folder.LegacyService = (*Service)(nil)
+	_ folder.Service       = (*Service)(nil)
+)
+
 type Service struct {
 	store                  folder.Store
 	unifiedStore           folder.Store
 	db                     db.DB
 	log                    *slog.Logger
-	dashboardStore         dashboards.Store
-	dashboardFolderStore   folder.FolderStore
+	dashboardStore         dashboards.Store // folders are saved in the dashboard table
+	dashboardFolderStore   *DashboardFolderStoreImpl
 	features               featuremgmt.FeatureToggles
 	accessControl          accesscontrol.AccessControl
 	k8sclient              client.K8sHandler
@@ -77,7 +81,6 @@ func ProvideService(
 	ac accesscontrol.AccessControl,
 	bus bus.Bus,
 	dashboardStore dashboards.Store,
-	folderStore folder.FolderStore,
 	userService user.Service,
 	db db.DB, // DB for the (new) nested folder store
 	features featuremgmt.FeatureToggles,
@@ -94,7 +97,7 @@ func ProvideService(
 	srv := &Service{
 		log:                    slog.Default().With("logger", "folder-service"),
 		dashboardStore:         dashboardStore,
-		dashboardFolderStore:   folderStore,
+		dashboardFolderStore:   newDashboardFolderStore(db),
 		store:                  store,
 		features:               features,
 		accessControl:          ac,
@@ -109,7 +112,7 @@ func ProvideService(
 
 	supportBundles.RegisterSupportItemCollector(srv.supportBundleCollector())
 
-	ac.RegisterScopeAttributeResolver(dashboards.NewFolderIDScopeResolver(folderStore, srv))
+	ac.RegisterScopeAttributeResolver(dashboards.NewFolderIDScopeResolver(srv.getUIDFromLegacyID, srv))
 	ac.RegisterScopeAttributeResolver(dashboards.NewFolderUIDScopeResolver(srv))
 
 	k8sHandler := client.NewK8sHandler(
@@ -192,6 +195,14 @@ func (s *Service) DBMigration(db db.DB) {
 	}
 
 	s.log.Debug("syncing dashboard and folder tables finished")
+}
+
+func (s *Service) getUIDFromLegacyID(ctx context.Context, orgID int64, id int64) (string, error) {
+	f, err := s.dashboardFolderStore.GetFolderByID(ctx, orgID, id)
+	if err != nil {
+		return "", err
+	}
+	return f.UID, nil
 }
 
 func (s *Service) CountFoldersInOrg(ctx context.Context, orgID int64) (int64, error) {
@@ -315,7 +326,7 @@ func (s *Service) setFullpath(ctx context.Context, f *folder.Folder, forceLegacy
 	var parents []*folder.Folder
 	var err error
 	if forceLegacy {
-		parents, err = s.GetParentsLegacy(ctx, folder.GetParentsQuery{
+		parents, err = s.getParentsLegacy(ctx, folder.GetParentsQuery{
 			UID:   f.UID,
 			OrgID: f.OrgID,
 		})
@@ -340,8 +351,8 @@ func (s *Service) GetChildren(ctx context.Context, q *folder.GetChildrenQuery) (
 	return s.getChildrenFromApiServer(ctx, q)
 }
 
-func (s *Service) GetChildrenLegacy(ctx context.Context, q *folder.GetChildrenQuery) ([]*folder.FolderReference, error) {
-	ctx, span := s.tracer.Start(ctx, "folder.GetChildrenLegacy")
+func (s *Service) getChildrenLegacy(ctx context.Context, q *folder.GetChildrenQuery) ([]*folder.FolderReference, error) {
+	ctx, span := s.tracer.Start(ctx, "folder.getChildrenLegacy")
 	defer span.End()
 	defer func(t time.Time) {
 		parent := q.UID
@@ -493,7 +504,7 @@ func (s *Service) GetSharedWithMe(ctx context.Context, q *folder.GetChildrenQuer
 	}
 	var rootFolders []*folder.FolderReference
 	if forceLegacy {
-		rootFolders, err = s.GetChildrenLegacy(ctx, &folder.GetChildrenQuery{UID: "", OrgID: q.OrgID, SignedInUser: q.SignedInUser, Permission: q.Permission})
+		rootFolders, err = s.getChildrenLegacy(ctx, &folder.GetChildrenQuery{UID: "", OrgID: q.OrgID, SignedInUser: q.SignedInUser, Permission: q.Permission})
 	} else {
 		rootFolders, err = s.GetChildren(ctx, &folder.GetChildrenQuery{UID: "", OrgID: q.OrgID, SignedInUser: q.SignedInUser, Permission: q.Permission})
 	}
@@ -620,8 +631,8 @@ func (s *Service) GetParents(ctx context.Context, q folder.GetParentsQuery) ([]*
 	return s.getParentsFromApiServer(ctx, q)
 }
 
-func (s *Service) GetParentsLegacy(ctx context.Context, q folder.GetParentsQuery) ([]*folder.Folder, error) {
-	ctx, span := s.tracer.Start(ctx, "folder.GetParentsLegacy")
+func (s *Service) getParentsLegacy(ctx context.Context, q folder.GetParentsQuery) ([]*folder.Folder, error) {
+	ctx, span := s.tracer.Start(ctx, "folder.getParentsLegacy")
 	defer span.End()
 	if q.UID == accesscontrol.GeneralFolderUID {
 		return nil, nil
@@ -1248,42 +1259,6 @@ func (s *Service) GetDescendantCounts(ctx context.Context, q *folder.GetDescenda
 	ctx, span := s.tracer.Start(ctx, "folder.GetDescendantCounts")
 	defer span.End()
 	return s.getDescendantCountsFromApiServer(ctx, q)
-}
-
-func (s *Service) GetDescendantCountsLegacy(ctx context.Context, q *folder.GetDescendantCountsQuery) (folder.DescendantCounts, error) {
-	ctx, span := s.tracer.Start(ctx, "folder.GetDescendantCountsLegacy")
-	defer span.End()
-	if q.SignedInUser == nil {
-		return nil, folder.ErrBadRequest.Errorf("missing signed-in user")
-	}
-	if q.UID == nil || *q.UID == "" {
-		return nil, folder.ErrBadRequest.Errorf("missing UID")
-	}
-	if q.OrgID < 1 {
-		return nil, folder.ErrBadRequest.Errorf("invalid orgID")
-	}
-
-	folders := []string{*q.UID}
-	countsMap := make(folder.DescendantCounts, len(s.registry)+1)
-	descendantFolders, err := s.store.GetDescendants(ctx, q.OrgID, *q.UID)
-	if err != nil {
-		s.log.ErrorContext(ctx, "failed to get descendant folders", "error", err)
-		return nil, err
-	}
-	for _, f := range descendantFolders {
-		folders = append(folders, f.UID)
-	}
-	countsMap[entity.StandardKindFolder] = int64(len(descendantFolders))
-
-	for _, v := range s.registry {
-		c, err := v.CountInFolders(ctx, q.OrgID, folders, q.SignedInUser)
-		if err != nil {
-			s.log.ErrorContext(ctx, "failed to count folder descendants", "error", err)
-			return nil, err
-		}
-		countsMap[v.Kind()] = c
-	}
-	return countsMap, nil
 }
 
 // buildSaveDashboardCommand is a simplified version on DashboardServiceImpl.buildSaveDashboardCommand

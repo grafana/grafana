@@ -233,7 +233,9 @@ You can add multiple exemplars.
 
 - **Private data source connect** - _Only for Grafana Cloud users._ Private data source connect, or PDC, allows you to establish a private, secured connection between a Grafana Cloud instance, or stack, and data sources secured within a private network. Click the drop-down to locate the URL for PDC. For more information regarding Grafana PDC refer to [Private data source connect (PDC)](ref:private-data-source-connect) and [Configure Grafana private data source connect (PDC)](https://grafana.com/docs/grafana-cloud/connect-externally-hosted/private-data-source-connect/configure-pdc/#configure-grafana-private-data-source-connect-pdc) for steps on setting up a PDC connection.
 
-Click **Manage private data source connect** to be taken to your PDC connection page, where you’ll find your PDC configuration details.
+  If you use PDC with SIGv4 (AWS Signature Version 4 Authentication), the PDC agent must allow internet egress to`sts.<region>.amazonaws.com:443`.
+
+  Click **Manage private data source connect** to open your PDC connection page and view your configuration details.
 
 After you have configured your Prometheus data source options, click **Save & test** at the bottom to test out your data source connection.
 
@@ -255,34 +257,34 @@ After you have provisioned a data source you cannot edit it.
 
 **Example of a Prometheus data source configuration:**
 
-    ```yaml
-    apiVersion: 1
+```yaml
+apiVersion: 1
 
-    datasources:
-      - name: Prometheus
-        type: prometheus
-        access: proxy
-        url: http://localhost:9090
-        jsonData:
-          httpMethod: POST
-          manageAlerts: true
-          allowAsRecordingRulesTarget: true
-          prometheusType: Prometheus
-          prometheusVersion: 3.3.0
-          cacheLevel: 'High'
-          disableRecordingRules: false
-          timeInterval: 10s   # Prometheus scrape interval
-          incrementalQueryOverlapWindow: 10m
-          exemplarTraceIdDestinations:
-            # Field with internal link pointing to data source in Grafana.
-            # datasourceUid value can be anything, but it should be unique across all defined data source uids.
-            - datasourceUid: my_jaeger_uid
-              name: traceID
+datasources:
+  - name: Prometheus
+    type: prometheus
+    access: proxy
+    url: http://localhost:9090
+    jsonData:
+      httpMethod: POST
+      manageAlerts: true
+      allowAsRecordingRulesTarget: true
+      prometheusType: Prometheus
+      prometheusVersion: 3.3.0
+      cacheLevel: 'High'
+      disableRecordingRules: false
+      timeInterval: 10s # Prometheus scrape interval
+      incrementalQueryOverlapWindow: 10m
+      exemplarTraceIdDestinations:
+        # Field with internal link pointing to data source in Grafana.
+        # datasourceUid value can be anything, but it should be unique across all defined data source uids.
+        - datasourceUid: my_jaeger_uid
+          name: traceID
 
-            # Field with external link.
-            - name: traceID
-              url: 'http://localhost:3000/explore?orgId=1&left=%5B%22now-1h%22,%22now%22,%22Jaeger%22,%7B%22query%22:%22$${__value.raw}%22%7D%5D'
-    ```
+        # Field with external link.
+        - name: traceID
+          url: 'http://localhost:3000/explore?orgId=1&left=%5B%22now-1h%22,%22now%22,%22Jaeger%22,%7B%22query%22:%22$${__value.raw}%22%7D%5D'
+```
 
 ## Azure authentication settings
 

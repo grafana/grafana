@@ -12,15 +12,6 @@ import (
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 )
 
-// Tester is a struct that implements the Tester interface
-// it's temporary
-// FIXME: remove as soon as controller and jobs refactoring PRs are merged
-type Tester struct{}
-
-func (t *Tester) TestRepository(ctx context.Context, repo Repository) (*provisioning.TestResults, error) {
-	return TestRepository(ctx, repo)
-}
-
 func TestRepository(ctx context.Context, repo Repository) (*provisioning.TestResults, error) {
 	errors := ValidateRepository(repo)
 	if len(errors) > 0 {
@@ -91,6 +82,17 @@ func ValidateRepository(repo Repository) field.ErrorList {
 		default:
 			list = append(list, field.Invalid(field.NewPath("spec", "workflow"), w, "invalid workflow"))
 		}
+	}
+
+	if slices.Contains(cfg.Finalizers, RemoveOrphanResourcesFinalizer) &&
+		slices.Contains(cfg.Finalizers, ReleaseOrphanResourcesFinalizer) {
+		list = append(list,
+			field.Invalid(
+				field.NewPath("medatada", "finalizers"),
+				cfg.Finalizers,
+				"cannot have both remove and release orphan resources finalizers",
+			),
+		)
 	}
 
 	return list

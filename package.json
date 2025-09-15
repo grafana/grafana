@@ -3,7 +3,7 @@
   "license": "AGPL-3.0-only",
   "private": true,
   "name": "grafana",
-  "version": "12.2.0-pre",
+  "version": "12.3.0-pre",
   "repository": "github:grafana/grafana",
   "scripts": {
     "predev": "./scripts/check-frontend-dev.sh",
@@ -38,6 +38,7 @@
     "lint:ts": "eslint ./ ./public/app/extensions/ --cache --no-error-on-unmatched-pattern",
     "lint:sass": "yarn stylelint '{public/sass,packages}/**/*.scss' --cache",
     "lint:fix": "yarn lint:ts --fix",
+    "lint:prune": "yarn lint:ts --prune-suppressions",
     "packages:build": "nx run-many -t build --projects='tag:scope:package'",
     "packages:clean": "rimraf ./npm-artifacts && nx run-many -t clean --projects='tag:scope:package' --maxParallel=100",
     "packages:i18n-extract": "nx run-many -t i18n-extract --projects='tag:scope:package'",
@@ -62,10 +63,6 @@
     "watch": "yarn start -d watch,start core:start --watchTheme",
     "i18n:stats": "node ./scripts/cli/reportI18nStats.mjs",
     "i18n-extract": "make i18n-extract",
-    "betterer": "betterer --tsconfig ./scripts/cli/tsconfig.json",
-    "betterer:stats": "ts-node --transpile-only --project ./scripts/cli/tsconfig.json ./scripts/cli/reportBettererStats.ts",
-    "betterer:issues": "ts-node --transpile-only --project ./scripts/cli/tsconfig.json ./scripts/cli/generateBettererIssues.ts",
-    "betterer:ci": "betterer ci --tsconfig ./scripts/cli/tsconfig.json",
     "plugin:build": "nx run-many -t build --projects='tag:scope:plugin'",
     "plugin:build:commit": "nx run-many -t build:commit --projects='tag:scope:plugin'",
     "plugin:build:dev": "nx run-many -t dev --projects='tag:scope:plugin' --maxParallel=100",
@@ -84,8 +81,6 @@
     "@babel/core": "7.28.0",
     "@babel/preset-env": "7.28.0",
     "@babel/runtime": "7.28.2",
-    "@betterer/betterer": "5.4.0",
-    "@betterer/cli": "5.4.0",
     "@crowdin/crowdin-api-client": "^1.42.0",
     "@cypress/webpack-preprocessor": "6.0.4",
     "@emotion/eslint-plugin": "11.12.0",
@@ -269,11 +264,11 @@
     "@emotion/css": "11.13.5",
     "@emotion/react": "11.14.0",
     "@fingerprintjs/fingerprintjs": "^3.4.2",
-    "@floating-ui/react": "0.27.15",
+    "@floating-ui/react": "0.27.16",
     "@formatjs/intl-durationformat": "^0.7.0",
     "@glideapps/glide-data-grid": "^6.0.0",
     "@grafana/alerting": "workspace:*",
-    "@grafana/assistant": "0.0.16",
+    "@grafana/assistant": "0.0.17",
     "@grafana/aws-sdk": "0.7.1",
     "@grafana/azure-sdk": "0.0.7",
     "@grafana/data": "workspace:*",
@@ -288,11 +283,11 @@
     "@grafana/llm": "0.22.1",
     "@grafana/monaco-logql": "^0.0.8",
     "@grafana/o11y-ds-frontend": "workspace:*",
-    "@grafana/plugin-ui": "0.10.9",
+    "@grafana/plugin-ui": "^0.10.10",
     "@grafana/prometheus": "workspace:*",
     "@grafana/runtime": "workspace:*",
-    "@grafana/scenes": "6.32.0",
-    "@grafana/scenes-react": "6.32.0",
+    "@grafana/scenes": "6.35.0",
+    "@grafana/scenes-react": "6.35.0",
     "@grafana/schema": "workspace:*",
     "@grafana/sql": "workspace:*",
     "@grafana/ui": "workspace:*",
@@ -419,7 +414,7 @@
     "slate": "0.47.9",
     "slate-plain-serializer": "0.7.13",
     "slate-react": "0.22.10",
-    "swagger-ui-react": "5.27.0",
+    "swagger-ui-react": "5.28.1",
     "symbol-observable": "4.0.0",
     "systemjs": "6.15.1",
     "tinycolor2": "1.6.0",
@@ -465,8 +460,11 @@
   },
   "packageManager": "yarn@4.9.2",
   "dependenciesMeta": {
-    "nx": {
-      "built": false
+    "cypress": {
+      "built": true
+    },
+    "msw": {
+      "built": true
     },
     "prettier@3.6.2": {
       "unplugged": true

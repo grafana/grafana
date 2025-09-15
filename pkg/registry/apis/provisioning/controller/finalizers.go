@@ -2,6 +2,7 @@ package controller
 
 import (
 	"context"
+	"encoding/json"
 	"sort"
 	"strings"
 
@@ -18,15 +19,6 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 )
 
-// RemoveOrphanResourcesFinalizer removes everything this repo created
-const RemoveOrphanResourcesFinalizer = "remove-orphan-resources"
-
-// ReleaseOrphanResourcesFinalizer removes the metadata for anything this repo created
-const ReleaseOrphanResourcesFinalizer = "release-orphan-resources"
-
-// CleanFinalizer calls the "OnDelete" function for resource
-const CleanFinalizer = "cleanup"
-
 type finalizer struct {
 	lister        resources.ResourceLister
 	clientFactory resources.ClientFactory
@@ -40,7 +32,7 @@ func (f *finalizer) process(ctx context.Context,
 
 	for _, finalizer := range finalizers {
 		switch finalizer {
-		case CleanFinalizer:
+		case repository.CleanFinalizer:
 			// NOTE: the controller loop will never get run unless a finalizer is set
 			hooks, ok := repo.(repository.Hooks)
 			if ok {
@@ -49,22 +41,24 @@ func (f *finalizer) process(ctx context.Context,
 				}
 			}
 
-		case ReleaseOrphanResourcesFinalizer:
+		case repository.ReleaseOrphanResourcesFinalizer:
 			err := f.processExistingItems(ctx, repo.Config(),
 				func(client dynamic.ResourceInterface, item *provisioning.ResourceListItem) error {
-					_, err := client.Patch(ctx, item.Name, types.JSONPatchType, []byte(`[
-						{"op": "remove", "path": "/metadata/annotations/`+utils.AnnoKeyManagerKind+`" },
-						{"op": "remove", "path": "/metadata/annotations/`+utils.AnnoKeyManagerIdentity+`" },
-						{"op": "remove", "path": "/metadata/annotations/`+utils.AnnoKeySourcePath+`" },
-						{"op": "remove", "path": "/metadata/annotations/`+utils.AnnoKeySourceChecksum+`" }
-					]`), v1.PatchOptions{})
+					patchAnnotations, err := getPatchedAnnotations(item)
+					if err != nil {
+						return err
+					}
+
+					_, err = client.Patch(
+						ctx, item.Name, types.JSONPatchType, patchAnnotations, v1.PatchOptions{},
+					)
 					return err
 				})
 			if err != nil {
 				return err
 			}
 
-		case RemoveOrphanResourcesFinalizer:
+		case repository.RemoveOrphanResourcesFinalizer:
 			err := f.processExistingItems(ctx, repo.Config(),
 				func(client dynamic.ResourceInterface, item *provisioning.ResourceListItem) error {
 					return client.Delete(ctx, item.Name, v1.DeleteOptions{})
@@ -104,7 +98,7 @@ func (f *finalizer) processExistingItems(
 	errors := 0
 
 	for _, item := range items.Items {
-		res, _, err := clients.ForResource(schema.GroupVersionResource{
+		res, _, err := clients.ForResource(ctx, schema.GroupVersionResource{
 			Group:    item.Group,
 			Resource: item.Resource,
 		})
@@ -124,19 +118,78 @@ func (f *finalizer) processExistingItems(
 	return nil
 }
 
+type jsonPatchOperation struct {
+	Op   string `json:"op"`
+	Path string `json:"path"`
+}
+
+func getPatchedAnnotations(item *provisioning.ResourceListItem) ([]byte, error) {
+	annotations := []jsonPatchOperation{
+		{Op: "remove", Path: "/metadata/annotations/" + escapePatchString(utils.AnnoKeyManagerKind)},
+		{Op: "remove", Path: "/metadata/annotations/" + escapePatchString(utils.AnnoKeyManagerIdentity)},
+	}
+
+	if item.Path != "" {
+		annotations = append(
+			annotations,
+			jsonPatchOperation{
+				Op: "remove", Path: "/metadata/annotations/" + escapePatchString(utils.AnnoKeySourcePath),
+			},
+		)
+	}
+	if item.Hash != "" {
+		annotations = append(
+			annotations,
+			jsonPatchOperation{
+				Op: "remove", Path: "/metadata/annotations/" + escapePatchString(utils.AnnoKeySourceChecksum),
+			},
+		)
+	}
+
+	return json.Marshal(annotations)
+}
+
+func escapePatchString(s string) string {
+	s = strings.ReplaceAll(s, "~", "~0")
+	s = strings.ReplaceAll(s, "/", "~1")
+	return s
+}
+
 func sortResourceListForDeletion(list *provisioning.ResourceList) {
 	// FIXME: this code should be simplified once unified storage folders support recursive deletion
 	// Sort by the following logic:
 	// - Put folders at the end so that we empty them first.
 	// - Sort folders by depth so that we remove the deepest first
+	// - If the repo is created within a folder in grafana, make sure that folder is last.
 	sort.Slice(list.Items, func(i, j int) bool {
-		switch {
-		case list.Items[i].Group != folders.RESOURCE:
-			return true
-		case list.Items[j].Group != folders.RESOURCE:
-			return false
-		default:
-			return len(strings.Split(list.Items[i].Path, "/")) > len(strings.Split(list.Items[j].Path, "/"))
+		isFolderI := list.Items[i].Group == folders.GroupVersion.Group
+		isFolderJ := list.Items[j].Group == folders.GroupVersion.Group
+
+		// non-folders always go first in the order of deletion.
+		if isFolderI != isFolderJ {
+			return !isFolderI
 		}
+
+		// if both are not folders, keep order (doesn't matter)
+		if !isFolderI && !isFolderJ {
+			return false
+		}
+
+		hasFolderI := list.Items[i].Folder != ""
+		hasFolderJ := list.Items[j].Folder != ""
+		// if one folder is in the root (i.e. does not have a folder specified), put that last
+		if hasFolderI != hasFolderJ {
+			return hasFolderI
+		}
+
+		// if both are nested folder, sort by depth, with the deepest one being first
+		depthI := len(strings.Split(list.Items[i].Path, "/"))
+		depthJ := len(strings.Split(list.Items[j].Path, "/"))
+		if depthI != depthJ {
+			return depthI > depthJ
+		}
+
+		// otherwise, keep order (doesn't matter)
+		return false
 	})
 }

@@ -39,7 +39,7 @@ import {
 } from '@grafana/runtime';
 import { BarGaugeDisplayMode, TableCellDisplayMode, VariableFormatID } from '@grafana/schema';
 
-import { getTagWithoutScope, interpolateFilters } from './SearchTraceQLEditor/utils';
+import { interpolateFilters } from './SearchTraceQLEditor/utils';
 import { TempoVariableQuery, TempoVariableQueryType } from './VariableQueryEditor';
 import { PrometheusDatasource, PromQuery } from './_importedDependencies/datasources/prometheus/types';
 import { TagLimitOptions } from './configuration/TagLimitSettings';
@@ -115,7 +115,6 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
   tracesToLogs?: TraceToLogsOptions;
   serviceMap?: {
     datasourceUid?: string;
-    histogramType?: 'classic' | 'native' | 'both';
   };
   search?: {
     hide?: boolean;
@@ -207,32 +206,26 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
 
     await this.languageProvider.start(range, this.timeRangeForTags);
 
-    let options;
-    try {
-      // Retrieve the scope of the tag
-      // Example: given `http.status_code`, we want scope `span`
-      // Note that we ignore possible name clashes, e.g., `http.status_code` in both `span` and `resource`
-      const scope: string | undefined = (this.languageProvider.tagsV2 || [])
-        // flatten the Scope objects
-        .flatMap((tagV2) => tagV2.tags.map((tag) => ({ scope: tagV2.name, name: tag })))
-        // find associated scope
-        .find((tag) => tag.name === labelName)?.scope;
-      if (!scope) {
-        throw Error(`Scope for tag ${labelName} not found`);
-      }
-
-      // For V2, we need to send scope and tag name, e.g. `span.http.status_code`,
-      // unless the tag has intrinsic scope
-      const scopeAndTag = scope === 'intrinsic' ? labelName : `${scope}.${labelName}`;
-      options = await this.languageProvider.getOptionsV2({
-        tag: scopeAndTag,
-        timeRangeForTags: this.timeRangeForTags,
-        range,
-      });
-    } catch {
-      // For V1, the tag name (e.g. `http.status_code`) is enough
-      options = await this.languageProvider.getOptionsV1(labelName);
+    // Retrieve the scope of the tag
+    // Example: given `http.status_code`, we want scope `span`
+    // Note that we ignore possible name clashes, e.g., `http.status_code` in both `span` and `resource`
+    const scope: string | undefined = (this.languageProvider.tagsV2 || [])
+      // flatten the Scope objects
+      .flatMap((tagV2) => tagV2.tags.map((tag) => ({ scope: tagV2.name, name: tag })))
+      // find associated scope
+      .find((tag) => tag.name === labelName)?.scope;
+    if (!scope) {
+      throw Error(`Scope for tag ${labelName} not found`);
     }
+
+    // For V2, we need to send scope and tag name, e.g. `span.http.status_code`,
+    // unless the tag has intrinsic scope
+    const scopeAndTag = scope === 'intrinsic' ? labelName : `${scope}.${labelName}`;
+    const options = await this.languageProvider.getOptionsV2({
+      tag: scopeAndTag,
+      timeRangeForTags: this.timeRangeForTags,
+      range,
+    });
 
     return options.flatMap((option: SelectableValue<string>) =>
       option.value !== undefined ? [{ text: option.value }] : []
@@ -258,20 +251,14 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
   }
 
   async tagValuesQuery(tag: string, query: string, range?: TimeRange): Promise<Array<{ text: string }>> {
-    let options;
-    try {
-      // For V2, we need to send scope and tag name, e.g. `span.http.status_code`,
-      // unless the tag has intrinsic scope
-      options = await this.languageProvider.getOptionsV2({
-        tag,
-        query,
-        timeRangeForTags: this.timeRangeForTags,
-        range,
-      });
-    } catch {
-      // For V1, the tag name (e.g. `http.status_code`) is enough
-      options = await this.languageProvider.getOptionsV1(getTagWithoutScope(tag));
-    }
+    // For V2, we need to send scope and tag name, e.g. `span.http.status_code`,
+    // unless the tag has intrinsic scope
+    const options = await this.languageProvider.getOptionsV2({
+      tag,
+      query,
+      timeRangeForTags: this.timeRangeForTags,
+      range,
+    });
 
     return options.flatMap((option: SelectableValue<string>) =>
       option.value !== undefined ? [{ text: option.value }] : []
@@ -943,7 +930,14 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
   }
 
   async metadataRequest(url: string, params = {}) {
-    return await lastValueFrom(this._request(url, params, { method: 'GET', hideFromInspector: true }));
+    // url must not start with a `/`, otherwise the AJAX-request
+    // going from the browser will contain `//`, which can cause problems.
+    if (url.startsWith('/')) {
+      throw new Error(`invalid metadata request url: ${url}`);
+    }
+
+    const res = await this.getResource(url, params, { method: 'GET', hideFromInspector: true });
+    return res?.data ?? res;
   }
 
   _request(apiUrl: string, data?: unknown, options?: Partial<BackendSrvRequest>): Observable<Record<string, any>> {

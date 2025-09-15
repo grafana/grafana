@@ -15,18 +15,18 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/types"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	"github.com/grafana/grafana/pkg/extensions"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/tests/apis"
+	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 func TestIntegrationProvisioning_CreatingAndGetting(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	helper := runGrafana(t)
 	createOptions := metav1.CreateOptions{FieldValidation: "Strict"}
@@ -134,21 +134,10 @@ func TestIntegrationProvisioning_CreatingAndGetting(t *testing.T) {
 				return
 			}
 
-			// FIXME: this should be an enterprise integration test
-			if extensions.IsEnterprise {
-				assert.ElementsMatch(collect, []provisioning.RepositoryType{
-					provisioning.LocalRepositoryType,
-					provisioning.GitHubRepositoryType,
-					provisioning.GitRepositoryType,
-					provisioning.BitbucketRepositoryType,
-					provisioning.GitLabRepositoryType,
-				}, settings.AvailableRepositoryTypes)
-			} else {
-				assert.ElementsMatch(collect, []provisioning.RepositoryType{
-					provisioning.LocalRepositoryType,
-					provisioning.GitHubRepositoryType,
-				}, settings.AvailableRepositoryTypes)
-			}
+			assert.ElementsMatch(collect, []provisioning.RepositoryType{
+				provisioning.LocalRepositoryType,
+				provisioning.GitHubRepositoryType,
+			}, settings.AvailableRepositoryTypes)
 		}, time.Second*10, time.Millisecond*100, "Expected settings to match")
 	})
 
@@ -174,10 +163,61 @@ func TestIntegrationProvisioning_CreatingAndGetting(t *testing.T) {
 	})
 }
 
-func TestIntegrationProvisioning_FailInvalidSchema(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
+func TestIntegrationProvisioning_RepositoryValidation(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	helper := runGrafana(t)
+	ctx := context.Background()
+
+	for _, testCase := range []struct {
+		name        string
+		repo        *unstructured.Unstructured
+		expectedErr string
+	}{
+		{
+			name: "should succeed with valid local repository",
+			repo: func() *unstructured.Unstructured {
+				return helper.RenderObject(t, "testdata/local-readonly.json.tmpl", map[string]any{
+					"Name":        "valid-repo",
+					"SyncEnabled": true,
+				})
+			}(),
+		},
+		{
+			name: "should error if mutually exclusive finalizers are set",
+			repo: func() *unstructured.Unstructured {
+				localTmp := helper.RenderObject(t, "testdata/local-readonly.json.tmpl", map[string]any{
+					"Name":        "repo-with-invalid-finalizers",
+					"SyncEnabled": true,
+				})
+
+				// Setting finalizers to trigger a failure
+				localTmp.SetFinalizers([]string{
+					repository.CleanFinalizer,
+					repository.ReleaseOrphanResourcesFinalizer,
+					repository.RemoveOrphanResourcesFinalizer,
+				})
+
+				return localTmp
+			}(),
+			expectedErr: "cannot have both remove and release orphan resources finalizers",
+		},
+	} {
+		t.Run(testCase.name, func(t *testing.T) {
+			_, err := helper.Repositories.Resource.Create(ctx, testCase.repo, metav1.CreateOptions{})
+			if testCase.expectedErr == "" {
+				assert.NoError(t, err)
+			} else {
+				assert.Error(t, err)
+				assert.ErrorContains(t, err, testCase.expectedErr)
+			}
+		})
 	}
+}
+
+func TestIntegrationProvisioning_FailInvalidSchema(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	t.Skip("Reenable this test once we enforce schema validation for provisioning")
 
 	helper := runGrafana(t)
@@ -229,9 +269,7 @@ func TestIntegrationProvisioning_FailInvalidSchema(t *testing.T) {
 }
 
 func TestIntegrationProvisioning_CreatingGitHubRepository(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	helper := runGrafana(t)
 	ctx := context.Background()
@@ -344,9 +382,7 @@ func TestIntegrationProvisioning_CreatingGitHubRepository(t *testing.T) {
 }
 
 func TestIntegrationProvisioning_RepositoryLimits(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	helper := runGrafana(t)
 	ctx := context.Background()
@@ -452,9 +488,7 @@ func TestIntegrationProvisioning_RepositoryLimits(t *testing.T) {
 }
 
 func TestIntegrationProvisioning_RunLocalRepository(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	helper := runGrafana(t)
 	ctx := context.Background()
@@ -615,9 +649,7 @@ spec:
 }
 
 func TestIntegrationProvisioning_ImportAllPanelsFromLocalRepository(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	helper := runGrafana(t)
 	ctx := context.Background()
@@ -681,4 +713,77 @@ func TestIntegrationProvisioning_ImportAllPanelsFromLocalRepository(t *testing.T
 	_, err = helper.DashboardsV1.Resource.Get(ctx, allPanels, metav1.GetOptions{})
 	require.Error(t, err, "should delete the internal resource")
 	require.True(t, apierrors.IsNotFound(err))
+}
+
+func TestIntegrationProvisioning_DeleteRepositoryAndReleaseResources(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	helper := runGrafana(t)
+	ctx := context.Background()
+
+	const repo = "gh-repo"
+	testRepo := TestRepo{
+		Name:               repo,
+		Template:           "testdata/github-readonly.json.tmpl",
+		Target:             "folder",
+		ExpectedDashboards: 3,
+		ExpectedFolders:    3,
+	}
+	helper.CreateRepo(t, testRepo)
+
+	// Checking resources are there and are managed
+	foundFolders, err := helper.Folders.Resource.List(ctx, metav1.ListOptions{})
+	require.NoError(t, err, "can list folders")
+	for _, v := range foundFolders.Items {
+		assert.Contains(t, v.GetAnnotations(), utils.AnnoKeyManagerKind)
+		assert.Contains(t, v.GetAnnotations(), utils.AnnoKeyManagerIdentity)
+	}
+
+	foundDashboards, err := helper.DashboardsV1.Resource.List(ctx, metav1.ListOptions{})
+	require.NoError(t, err, "can list dashboards")
+	for _, v := range foundDashboards.Items {
+		assert.Contains(t, v.GetAnnotations(), utils.AnnoKeyManagerKind)
+		assert.Contains(t, v.GetAnnotations(), utils.AnnoKeyManagerIdentity)
+		assert.Contains(t, v.GetAnnotations(), utils.AnnoKeySourcePath)
+		assert.Contains(t, v.GetAnnotations(), utils.AnnoKeySourceChecksum)
+	}
+
+	_, err = helper.Repositories.Resource.Patch(ctx, repo, types.JSONPatchType, []byte(`[
+		{
+			"op": "replace",
+			"path": "/metadata/finalizers",
+			"value": ["cleanup", "release-orphan-resources"]
+		}
+	]`), metav1.PatchOptions{})
+	require.NoError(t, err, "should successfully patch finalizers")
+
+	err = helper.Repositories.Resource.Delete(ctx, repo, metav1.DeleteOptions{})
+	require.NoError(t, err, "should delete repository")
+
+	require.EventuallyWithT(t, func(collect *assert.CollectT) {
+		_, err := helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{})
+		assert.True(collect, apierrors.IsNotFound(err), "repository should be deleted")
+	}, time.Second*10, time.Millisecond*50, "repository should be deleted")
+
+	require.EventuallyWithT(t, func(collect *assert.CollectT) {
+		foundDashboards, err := helper.DashboardsV1.Resource.List(ctx, metav1.ListOptions{})
+		assert.NoError(t, err, "can list values")
+		for _, v := range foundDashboards.Items {
+			assert.NotContains(t, v.GetAnnotations(), utils.AnnoKeyManagerKind)
+			assert.NotContains(t, v.GetAnnotations(), utils.AnnoKeyManagerIdentity)
+			assert.NotContains(t, v.GetAnnotations(), utils.AnnoKeySourcePath)
+			assert.NotContains(t, v.GetAnnotations(), utils.AnnoKeySourceChecksum)
+		}
+	}, time.Second*20, time.Millisecond*10, "Expected dashboards to be released")
+
+	require.EventuallyWithT(t, func(collect *assert.CollectT) {
+		foundFolders, err := helper.Folders.Resource.List(ctx, metav1.ListOptions{})
+		assert.NoError(t, err, "can list values")
+		for _, v := range foundFolders.Items {
+			assert.NotContains(t, v.GetAnnotations(), utils.AnnoKeyManagerKind)
+			assert.NotContains(t, v.GetAnnotations(), utils.AnnoKeyManagerIdentity)
+			assert.NotContains(t, v.GetAnnotations(), utils.AnnoKeySourcePath)
+			assert.NotContains(t, v.GetAnnotations(), utils.AnnoKeySourceChecksum)
+		}
+	}, time.Second*20, time.Millisecond*10, "Expected folders to be released")
 }
