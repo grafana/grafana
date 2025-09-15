@@ -584,7 +584,6 @@ func (d *dataStore) getGroupResources(ctx context.Context) ([]GroupResource, err
 	for {
 		// List with limit 1 to get the next key
 		var foundKey string
-		var foundAny bool
 
 		for key, err := range d.kv.Keys(ctx, dataSection, ListOptions{
 			StartKey: startKey,
@@ -595,12 +594,11 @@ func (d *dataStore) getGroupResources(ctx context.Context) ([]GroupResource, err
 				return nil, err
 			}
 			foundKey = key
-			foundAny = true
 			break // Only process the first (and only) key
 		}
 
 		// If no key found, we're done
-		if !foundAny {
+		if foundKey == "" {
 			break
 		}
 
