@@ -140,13 +140,14 @@ func getEmailMimirNotifier() *NotifierPlugin {
 			{
 				Label:        "Email HTML body",
 				Description:  "The HTML body of the email notification.",
-				Placeholder:  "{{ template \"email.default.html\" . }}",
+				Placeholder:  promCfg.DefaultEmailConfig.HTML,
 				Element:      ElementTypeTextArea,
 				PropertyName: "html",
 			},
 			{
 				Label:        "Email text body",
 				Description:  "The text body of the email notification.",
+				Placeholder:  promCfg.DefaultEmailConfig.Text,
 				Element:      ElementTypeTextArea,
 				PropertyName: "text",
 			},
