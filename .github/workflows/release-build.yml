@@ -280,14 +280,14 @@ jobs:
     runs-on: github-hosted-ubuntu-x64-small
     needs:
       - setup
-      - build
+      - build # Strictly speaking we don't need this, but we want to only publish to NPM when grafana built successfully
     steps:
       - name: Dispatch action
         env:
           GRAFANA_COMMIT: ${{ needs.setup.outputs.grafana-commit }}
           VERSION: ${{ needs.setup.outputs.version }}
           BUILD_ID: ${{ github.run_id }}
-        run:
+        run: |
           gh workflow run npm-publish.yml \
             --repo grafana/grafana \
             --ref main \
