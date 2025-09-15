@@ -281,12 +281,7 @@ func (d *dataStore) GetResourceKeyAtRevision(ctx context.Context, key GetRequest
 		rv = math.MaxInt64
 	}
 
-	listKey := ListRequestKey{
-		Group:     key.Group,
-		Resource:  key.Resource,
-		Namespace: key.Namespace,
-		Name:      key.Name,
-	}
+	listKey := ListRequestKey(key)
 
 	iter := d.ListResourceKeysAtRevision(ctx, listKey, rv)
 	for dataKey, err := range iter {
