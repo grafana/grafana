@@ -20,6 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 	"github.com/grafana/grafana/pkg/plugins/manager/signature"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginaccesscontrol"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/provisionedplugins"
 )
 
 func ProvideDiscoveryStage(cfg *config.PluginManagementCfg, pr registry.Service) *discovery.Discovery {
@@ -67,10 +68,9 @@ func ProvideValidationStage(cfg *config.PluginManagementCfg, sv signature.Valida
 
 func ProvideInitializationStage(cfg *config.PluginManagementCfg, pr registry.Service, bp plugins.BackendFactoryProvider,
 	pm process.Manager, externalServiceRegistry auth.ExternalServiceRegistry,
-	roleRegistry pluginaccesscontrol.RoleRegistry,
-	actionSetRegistry pluginaccesscontrol.ActionSetRegistry,
-	pluginEnvProvider envvars.Provider,
-	tracer tracing.Tracer) *initialization.Initialize {
+	roleRegistry pluginaccesscontrol.RoleRegistry, actionSetRegistry pluginaccesscontrol.ActionSetRegistry,
+	pluginEnvProvider envvars.Provider, tracer tracing.Tracer, provisionedPluginsManager provisionedplugins.Manager,
+) *initialization.Initialize {
 	return initialization.New(cfg, initialization.Opts{
 		InitializeFuncs: []initialization.InitializeFunc{
 			ExternalServiceRegistrationStep(cfg, externalServiceRegistry, tracer),
@@ -80,6 +80,8 @@ func ProvideInitializationStage(cfg *config.PluginManagementCfg, pr registry.Ser
 			RegisterActionSetsStep(actionSetRegistry),
 			ReportBuildMetrics,
 			ReportTargetMetrics,
+			ReportFSMetrics,
+			ReportCloudProvisioningMetrics(provisionedPluginsManager),
 			initialization.PluginRegistrationStep(pr),
 		},
 	})
