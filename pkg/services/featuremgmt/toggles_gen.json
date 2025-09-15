@@ -2048,11 +2048,14 @@
     {
       "metadata": {
         "name": "kubernetesShortURLs",
-        "resourceVersion": "1753722806283",
-        "creationTimestamp": "2025-08-04T12:12:12Z"
+        "resourceVersion": "1756914263808",
+        "creationTimestamp": "2025-08-04T12:12:12Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-09-03 15:44:23.80856 +0000 UTC"
+        }
       },
       "spec": {
-        "description": "Routes short url requests from /api to the /apis endpoint",
+        "description": "Enables k8s short url api and uses it under the hood when handling legacy /api",
         "stage": "experimental",
         "codeowner": "@grafana/grafana-app-platform-squad",
         "requiresRestart": true
@@ -3623,6 +3626,22 @@
         "codeowner": "@grafana/search-and-storage",
         "hideFromAdminPage": true,
         "hideFromDocs": true
+      }
+    },
+    {
+      "metadata": {
+        "name": "useKubernetesShortURLsAPI",
+        "resourceVersion": "1756914263808",
+        "creationTimestamp": "2025-09-03T10:49:07Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-09-03 15:44:23.80856 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Routes short url requests from /api to the /apis endpoint in the frontend. Depends on kubernetesShortURLs",
+        "stage": "experimental",
+        "codeowner": "@grafana/sharing-squad",
+        "frontend": true
       }
     },
     {

@@ -155,9 +155,9 @@ require (
 	github.com/patrickmn/go-cache v2.1.0+incompatible // @grafana/alerting-backend
 	github.com/phpdave11/gofpdi v1.0.14 // @grafana/sharing-squad
 	github.com/prometheus/alertmanager v0.28.0 // @grafana/alerting-backend
-	github.com/prometheus/client_golang v1.23.0 // @grafana/alerting-backend
+	github.com/prometheus/client_golang v1.23.1 // @grafana/alerting-backend
 	github.com/prometheus/client_model v0.6.2 // @grafana/grafana-backend-group
-	github.com/prometheus/common v0.65.0 // @grafana/alerting-backend
+	github.com/prometheus/common v0.66.0 // @grafana/alerting-backend
 	github.com/prometheus/prometheus v0.303.1 // @grafana/alerting-backend
 	github.com/prometheus/sigv4 v0.1.2 // @grafana/alerting-backend
 	github.com/redis/go-redis/v9 v9.8.0 // @grafana/alerting-backend
@@ -165,8 +165,8 @@ require (
 	github.com/rs/cors v1.11.1 // @grafana/identity-access-team
 	github.com/russellhaering/goxmldsig v1.4.0 // @grafana/grafana-backend-group
 	github.com/shopspring/decimal v1.4.0 // @grafana/grafana-datasources-core-services
-	github.com/spf13/cobra v1.9.1 // @grafana/grafana-app-platform-squad
-	github.com/spf13/pflag v1.0.7 // @grafana-app-platform-squad
+	github.com/spf13/cobra v1.10.1 // @grafana/grafana-app-platform-squad
+	github.com/spf13/pflag v1.0.10 // @grafana-app-platform-squad
 	github.com/spyzhov/ajson v0.9.6 // @grafana/grafana-sharing-squad
 	github.com/stretchr/testify v1.11.1 // @grafana/grafana-backend-group
 	github.com/thomaspoignant/go-feature-flag v1.42.0 // @grafana/grafana-backend-group

@@ -9633,10 +9633,9 @@
       }
     },
     "logs-controls": {
+      "collapse": "",
       "deduplication": "Yinelenenleri kaldırma",
-      "disable-highlighting": "Vurgulamayı devre dışı bırak",
       "disable-prettify-json": "JSON günlük kayıtlarını daralt",
-      "display-level": "Seviyeleri göster",
       "display-level-all": "Tüm seviyeler",
       "download": "Günlükleri indir",
       "download-logs": {
@@ -9644,18 +9643,39 @@
         "json": "json",
         "txt": "txt"
       },
-      "enable-highlighting": "Vurgulamayı etkinleştir",
       "escape-newlines": "Günlük kaydı satırlarındaki kaçış karakterli satır sonu ve sekme dizilerini düzelt",
-      "font-size-default": "Küçük yazı tipi boyutu kullan",
-      "font-size-small": "Varsayılan yazı tipi boyutunu kullan",
+      "expand": "",
+      "filter-levels": "",
+      "font-large": "",
+      "font-small": "",
       "hide-search": "Aramayı kapat",
       "hide-timestamps": "Zaman damgalarını gizle",
       "hide-unique-labels": "Benzersiz etiketleri gizle",
+      "label": {
+        "collapse": "",
+        "disable-highlighting": "",
+        "enable-highlighting": "",
+        "escape-newlines": "",
+        "expand": ""
+      },
+      "labels": {
+        "font-large": "",
+        "font-small": "",
+        "hide-search": "",
+        "newest-first": "",
+        "oldest-first": "",
+        "show-search": ""
+      },
       "line-wrapping": {
         "enable": "",
         "enable-prettify": "",
         "hide": "",
-        "label": ""
+        "state": {
+          "hide": "",
+          "json": "",
+          "wrap": ""
+        },
+        "tooltip": ""
       },
       "newest-first": "Günlükler yeniden eskiye sıralandı: En eskileri göstermek için tıklayın",
       "oldest-first": "Günlükler eskiden yeniye sıralandı: En yenileri göstermek için tıklayın",
@@ -9671,8 +9691,18 @@
       "timestamp": {
         "hide": "",
         "label": "",
+        "label-hide": "",
+        "label-ms": "",
+        "label-ns": "",
         "milliseconds": "",
-        "nanoseconds": ""
+        "nanoseconds": "",
+        "tooltip": ""
+      },
+      "tooltip": {
+        "disable-highlighting": "",
+        "download": "",
+        "enable-highlighting": "",
+        "filter-level": ""
       },
       "unwrap-lines": "Satırları çöz",
       "wrap-lines": "Satırları kaydır"
@@ -11355,7 +11385,11 @@
     },
     "folder-repository-list": {
       "no-results-matching-your-query": "Sorgunuzla eşleşen sonuç yok",
-      "placeholder-search": "Ara"
+      "placeholder-search": "Ara",
+      "all-resources-managed_one": "",
+      "all-resources-managed_other": "",
+      "partial-managed_one": "",
+      "partial-managed_other": ""
     },
     "get-default-values": {
       "title": {
