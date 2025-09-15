@@ -125,7 +125,7 @@ describe('Tempo data source', () => {
       const ds = new TempoDatasource(defaultSettings, templateSrv);
       await lastValueFrom(ds.query(traceqlQuery as DataQueryRequest<TempoQuery>));
       expect(handleStreamingQuery).toHaveBeenCalledTimes(1);
-      expect(request).toHaveBeenCalledTimes(1);
+      expect(request).toHaveBeenCalledTimes(0);
     });
 
     it('for traceqlSearch queries when live is not enabled', async () => {
@@ -133,7 +133,7 @@ describe('Tempo data source', () => {
       const ds = new TempoDatasource(defaultSettings, templateSrv);
       await lastValueFrom(ds.query(traceqlSearchQuery as DataQueryRequest<TempoQuery>));
       expect(handleStreamingQuery).toHaveBeenCalledTimes(1);
-      expect(request).toHaveBeenCalledTimes(1);
+      expect(request).toHaveBeenCalledTimes(0);
     });
   });
 
