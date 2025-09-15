@@ -152,10 +152,10 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
         {editPanel && <PanelEditControls panelEditor={editPanel} />}
       </Stack>
       {!hideTimeControls && (
-        <Stack justifyContent="flex-end">
+        <div className={cx(styles.timeControls, editPanel && styles.timeControlsWrap)}>
           <timePicker.Component model={timePicker} />
           <refreshPicker.Component model={refreshPicker} />
-        </Stack>
+        </div>
       )}
       {(hasControlMenuVariables || hasControlMenuLinks) && (
         <Stack>
@@ -198,12 +198,22 @@ function getStyles(theme: GrafanaTheme2) {
       },
     }),
     controlsPanelEdit: css({
+      flexWrap: 'wrap-reverse',
       // In panel edit we do not need any right padding as the splitter is providing it
       paddingRight: 0,
     }),
     embedded: css({
       background: 'unset',
       position: 'unset',
+    }),
+    timeControls: css({
+      display: 'flex',
+      justifyContent: 'flex-end',
+      gap: theme.spacing(1),
+    }),
+    timeControlsWrap: css({
+      flexWrap: 'wrap',
+      marginLeft: 'auto',
     }),
   };
 }
