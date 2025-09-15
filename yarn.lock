@@ -2250,17 +2250,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@floating-ui/dom@npm:^1.0.1, @floating-ui/dom@npm:^1.7.3":
-  version: 1.7.3
-  resolution: "@floating-ui/dom@npm:1.7.3"
-  dependencies:
-    "@floating-ui/core": "npm:^1.7.3"
-    "@floating-ui/utils": "npm:^0.2.10"
-  checksum: 10/0e91b67df31d30247a9516216b2d610a0b52f572c11d60a9875c68e5d65db0fe8819d096b823f123b45ed3ac7ef38d7462e268bdfc8b338c511c724acf098e78
-  languageName: node
-  linkType: hard
-
-"@floating-ui/dom@npm:^1.7.4":
+"@floating-ui/dom@npm:^1.0.1, @floating-ui/dom@npm:^1.7.4":
   version: 1.7.4
   resolution: "@floating-ui/dom@npm:1.7.4"
   dependencies:
@@ -2270,19 +2260,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@floating-ui/react-dom@npm:^2.1.2":
-  version: 2.1.5
-  resolution: "@floating-ui/react-dom@npm:2.1.5"
-  dependencies:
-    "@floating-ui/dom": "npm:^1.7.3"
-  peerDependencies:
-    react: ">=16.8.0"
-    react-dom: ">=16.8.0"
-  checksum: 10/45d7bf558cce2045f0a62454f7675e1d139e3e24fe5c14cf8e4f718c911cc378c687ad428c1c6f1b3a7925a3210f1a4a924980be29f90fbd4ee4d9a7d5bb2f7f
-  languageName: node
-  linkType: hard
-
-"@floating-ui/react-dom@npm:^2.1.6":
+"@floating-ui/react-dom@npm:^2.1.2, @floating-ui/react-dom@npm:^2.1.6":
   version: 2.1.6
   resolution: "@floating-ui/react-dom@npm:2.1.6"
   dependencies:
@@ -3403,35 +3381,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@grafana/plugin-ui@npm:^0.10.1":
-  version: 0.10.9
-  resolution: "@grafana/plugin-ui@npm:0.10.9"
-  dependencies:
-    "@emotion/css": "npm:^11.11.2"
-    "@hello-pangea/dnd": "npm:^17.0.0"
-    "@react-awesome-query-builder/ui": "npm:^6.6.4"
-    "@types/prismjs": "npm:^1.26.4"
-    lodash: "npm:^4.17.21"
-    prismjs: "npm:^1.30.0"
-    react-calendar: "npm:^4.8.0"
-    react-popper-tooltip: "npm:^4.4.2"
-    react-use: "npm:^17.3.1"
-    react-virtualized-auto-sizer: "npm:^1.0.6"
-    sql-formatter-plus: "npm:^1.3.6"
-    uuid: "npm:^11.0.0"
-  peerDependencies:
-    "@grafana/data": ">=10.4.0"
-    "@grafana/e2e-selectors": ">=10.4.0"
-    "@grafana/runtime": ">=10.4.0"
-    "@grafana/ui": ">=10.4.0"
-    react: ^18.2.0
-    react-dom: ^18.2.0
-    rxjs: ^7.8.1
-  checksum: 10/3f49f6fef04594b5ea98052738bee64ed587fa7646947d90633b833c83a7376627feabf256f077d69a5ca2f19a3df4fe7c42f67d98e1c0c834ba4712086cd423
-  languageName: node
-  linkType: hard
-
-"@grafana/plugin-ui@npm:^0.10.10":
+"@grafana/plugin-ui@npm:^0.10.1, @grafana/plugin-ui@npm:^0.10.10":
   version: 0.10.10
   resolution: "@grafana/plugin-ui@npm:0.10.10"
   dependencies:
