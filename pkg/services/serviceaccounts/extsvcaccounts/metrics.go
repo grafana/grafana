@@ -1,18 +1,15 @@
 package extsvcaccounts
 
 import (
-	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/prometheus/client_golang/prometheus"
 )
 
 type metrics struct {
-	storedCount  prometheus.GaugeFunc
 	savedCount   prometheus.Counter
 	deletedCount prometheus.Counter
 }
 
-func newMetrics(reg prometheus.Registerer, defaultOrgID int64, saSvc serviceaccounts.Service, logger log.Logger) *metrics {
+func newMetrics(reg prometheus.Registerer) *metrics {
 	var m metrics
 
 	m.savedCount = prometheus.NewCounter(prometheus.CounterOpts{
