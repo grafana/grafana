@@ -54,7 +54,7 @@ export class VariableSetEditableElement implements EditableDashboardElement {
   public useEditPaneOptions = useEditPaneOptions.bind(this, this.set);
 }
 
-function VariableList({ set }: { set: SceneVariableSet }) {
+export function VariableList({ set }: { set: SceneVariableSet }) {
   const { variables } = set.useState();
   const styles = useStyles2(getStyles);
   const [isAdding, setIsAdding] = useToggle(false);
