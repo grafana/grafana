@@ -3,6 +3,19 @@
 package v0alpha1
 
 // +k8s:openapi-gen=true
+type CorrelationDataSourceRef struct {
+	// same as pluginId
+	Group string `json:"group"`
+	// same as grafana uid
+	Name string `json:"name"`
+}
+
+// NewCorrelationDataSourceRef creates a new CorrelationDataSourceRef object.
+func NewCorrelationDataSourceRef() *CorrelationDataSourceRef {
+	return &CorrelationDataSourceRef{}
+}
+
+// +k8s:openapi-gen=true
 type CorrelationConfigSpec struct {
 	Field           string                          `json:"field"`
 	Type            *string                         `json:"type,omitempty"`
@@ -41,8 +54,8 @@ const (
 
 // +k8s:openapi-gen=true
 type CorrelationSpec struct {
-	SourceUid   string                     `json:"source_uid"`
-	TargetUid   *string                    `json:"target_uid,omitempty"`
+	SourceDsRef CorrelationDataSourceRef   `json:"source_ds_ref"`
+	TargetDsRef *CorrelationDataSourceRef  `json:"target_ds_ref,omitempty"`
 	Label       string                     `json:"label"`
 	Description *string                    `json:"description,omitempty"`
 	Config      CorrelationConfigSpec      `json:"config"`
@@ -53,6 +66,7 @@ type CorrelationSpec struct {
 // NewCorrelationSpec creates a new CorrelationSpec object.
 func NewCorrelationSpec() *CorrelationSpec {
 	return &CorrelationSpec{
-		Config: *NewCorrelationConfigSpec(),
+		SourceDsRef: *NewCorrelationDataSourceRef(),
+		Config:      *NewCorrelationConfigSpec(),
 	}
 }

@@ -1,5 +1,17 @@
 // Code generated - EDITING IS FUTILE. DO NOT EDIT.
 
+export interface DataSourceRef {
+	// same as pluginId
+	group: string;
+	// same as grafana uid
+	name: string;
+}
+
+export const defaultDataSourceRef = (): DataSourceRef => ({
+	group: "",
+	name: "",
+});
+
 export interface ConfigSpec {
 	field: string;
 	type?: string;
@@ -38,8 +50,8 @@ export enum CorrelationType {
 export const defaultCorrelationType = (): CorrelationType => (CorrelationType.Query);
 
 export interface Spec {
-	source_uid: string;
-	target_uid?: string;
+	source_ds_ref: DataSourceRef;
+	target_ds_ref?: DataSourceRef;
 	label: string;
 	description?: string;
 	config: ConfigSpec;
@@ -48,7 +60,7 @@ export interface Spec {
 }
 
 export const defaultSpec = (): Spec => ({
-	source_uid: "",
+	source_ds_ref: defaultDataSourceRef(),
 	label: "",
 	config: defaultConfigSpec(),
 	provisioned: false,
