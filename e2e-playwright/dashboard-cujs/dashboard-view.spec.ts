@@ -1,6 +1,6 @@
 import { test, expect } from '@grafana/plugin-e2e';
 
-import { getReloadableDashboards } from './utils';
+import { getConfigDashboards } from './utils';
 
 test.use({
   featureToggles: {
@@ -20,7 +20,7 @@ test.describe(
   },
   () => {
     test('View a dashboard', async ({ page, gotoDashboardPage, selectors }) => {
-      const dashboards = await getReloadableDashboards();
+      const dashboards = await getConfigDashboards();
       if (dashboards.length === 0) {
         dashboards.push(DASHBOARD_UNDER_TEST);
       }

@@ -17,9 +17,9 @@ async function loadApiConfig() {
   }
 }
 
-export async function getReloadableDashboards() {
+export async function getConfigDashboards() {
   const config = await loadApiConfig();
-  return config.reloadable_dashboards || [];
+  return config.dashboards || [];
 }
 
 export async function prepareAPIMocks(page: Page) {

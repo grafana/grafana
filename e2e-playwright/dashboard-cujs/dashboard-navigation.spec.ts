@@ -11,7 +11,7 @@ import {
   getScopesDashboardsSearchInput,
   getScopesSelectorInput,
 } from './cuj-selectors';
-import { getReloadableDashboards } from './utils';
+import { getConfigDashboards } from './utils';
 
 test.use({
   featureToggles: {
@@ -81,7 +81,7 @@ test.describe(
         await expect(markdownContent).toContainText(`now-12h`);
       });
 
-      const dashboards = await getReloadableDashboards();
+      const dashboards = await getConfigDashboards();
       if (dashboards.length === 0) {
         dashboards.push(DASHBOARD_UNDER_TEST_2);
       }
