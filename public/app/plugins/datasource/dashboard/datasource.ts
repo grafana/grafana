@@ -21,7 +21,7 @@ import {
   DrilldownsApplicability,
 } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { SceneDataProvider, SceneDataTransformer, SceneObject } from '@grafana/scenes';
+import { isSceneObject, SceneDataProvider, SceneDataTransformer, SceneObject } from '@grafana/scenes';
 import {
   activateSceneObjectAndParentTree,
   findVizPanelByKey,
@@ -46,7 +46,9 @@ export class DashboardDatasource extends DataSourceApi<DashboardQuery> {
 
   query(options: DataQueryRequest<DashboardQuery>): Observable<DataQueryResponse> {
     const sceneScopedVar: ScopedVar | undefined = options.scopedVars?.__sceneObject;
-    let scene: SceneObject | undefined = sceneScopedVar ? (sceneScopedVar.value.valueOf() as SceneObject) : undefined;
+    const sceneScopedVarValue: unknown | undefined = sceneScopedVar?.value.valueOf();
+    const scene: SceneObject | undefined =
+      sceneScopedVarValue && isSceneObject(sceneScopedVarValue) ? sceneScopedVarValue : undefined;
 
     if (!scene) {
       throw new Error('Can only be called from a scene');
