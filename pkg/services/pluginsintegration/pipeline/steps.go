@@ -9,6 +9,7 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 
+	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
@@ -20,6 +21,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 	"github.com/grafana/grafana/pkg/plugins/manager/signature"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginaccesscontrol"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/provisionedplugins"
 )
 
 // ExternalServiceRegistration implements an InitializeFunc for registering external services.
@@ -137,6 +139,48 @@ func ReportTargetMetrics(_ context.Context, p *plugins.Plugin) (*plugins.Plugin,
 	}
 
 	return p, nil
+}
+
+// ReportFSMetrics reports plugin filesystem information for all non-core plugins.
+func ReportFSMetrics(_ context.Context, p *plugins.Plugin) (*plugins.Plugin, error) {
+	if p.IsCorePlugin() {
+		// No metrics for core plugins
+		return p, nil
+	}
+
+	metrics.SetPluginFSInformation(p.ID, p.FS.Type())
+	return p, nil
+}
+
+// ReportCloudProvisioningMetrics reports plugin cloud provisioning information for all non-core plugins.
+func ReportCloudProvisioningMetrics(ppManaged provisionedplugins.Manager) initialization.InitializeFunc {
+	cloudProvisioningMethod := plugins.CloudProvisioningMethodNone
+	pps, err := ppManaged.ProvisionedPlugins(context.Background())
+	if err != nil {
+		cloudProvisioningMethod = plugins.CloudProvisioningMethodUnknown
+		logger.Warn("Failed to get provisioned plugins", "error", err)
+	}
+
+	return func(ctx context.Context, p *plugins.Plugin) (*plugins.Plugin, error) {
+		if p.IsCorePlugin() {
+			// No metrics for core plugins
+			return p, nil
+		}
+
+		for _, pp := range pps {
+			if pp.ID != p.ID {
+				continue
+			}
+			if pp.URL == "" {
+				cloudProvisioningMethod = plugins.CloudProvisioningMethodCatalog
+			} else {
+				cloudProvisioningMethod = plugins.CloudProvisioningMethodURL
+			}
+			metrics.SetPluginProvisioningInformation(p.ID, string(cloudProvisioningMethod))
+		}
+
+		return p, nil
+	}
 }
 
 // SignatureValidation implements a ValidateFunc for validating plugin signatures.

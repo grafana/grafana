@@ -156,8 +156,11 @@
       "title": "Get Grafana Enterprise"
     },
     "ldap": {
+      "debug-subtitle": "Verify your LDAP and user mapping configuration.",
+      "debug-title": "LDAP Diagnostics",
       "test-mapping-heading": "Test user mapping",
-      "test-mapping-run-button": "Run"
+      "test-mapping-run-button": "Run",
+      "text-loading-ldap-status": "Loading LDAP status..."
     },
     "ldap-connection-status": {
       "columns": {
@@ -9239,7 +9242,8 @@
       "disable-button": "Disable",
       "discard-button": "Discard",
       "save-and-enable-button": "Save and enable",
-      "save-button": "Save"
+      "save-button": "Save",
+      "test-button": "Test"
     },
     "documentation": "documentation",
     "host": {
@@ -9633,10 +9637,9 @@
       }
     },
     "logs-controls": {
+      "collapse": "Collapse",
       "deduplication": "Deduplication",
-      "disable-highlighting": "Disable highlighting",
       "disable-prettify-json": "Collapse JSON logs",
-      "display-level": "Display levels",
       "display-level-all": "All levels",
       "download": "Download logs",
       "download-logs": {
@@ -9644,18 +9647,39 @@
         "json": "json",
         "txt": "txt"
       },
-      "enable-highlighting": "Enable highlighting",
       "escape-newlines": "Fix incorrectly escaped newline and tab sequences in log lines",
-      "font-size-default": "Use small font size",
-      "font-size-small": "Use default font size",
+      "expand": "Expand",
+      "filter-levels": "Filter levels",
+      "font-large": "Set large font",
+      "font-small": "Set small font",
       "hide-search": "Close search",
       "hide-timestamps": "Hide timestamps",
       "hide-unique-labels": "Hide unique labels",
+      "label": {
+        "collapse": "Expanded",
+        "disable-highlighting": "Highlight text",
+        "enable-highlighting": "Plain text",
+        "escape-newlines": "Escape newlines",
+        "expand": "Collapsed"
+      },
+      "labels": {
+        "font-large": "Large font",
+        "font-small": "Small font",
+        "hide-search": "Close search",
+        "newest-first": "Newest logs first",
+        "oldest-first": "Oldest logs first",
+        "show-search": "Search logs"
+      },
       "line-wrapping": {
         "enable": "Enable line wrapping",
         "enable-prettify": "Enable line wrapping and prettify JSON",
         "hide": "Disable line wrapping",
-        "label": "Log line wrapping"
+        "state": {
+          "hide": "Wrap disabled",
+          "json": "Wrap JSON",
+          "wrap": "Wrap lines"
+        },
+        "tooltip": "Set line wrap"
       },
       "newest-first": "Sorted by newest logs first - Click to show oldest first",
       "oldest-first": "Sorted by oldest logs first - Click to show newest first",
@@ -9671,8 +9695,18 @@
       "timestamp": {
         "hide": "Hide timestamps",
         "label": "Log timestamps",
+        "label-hide": "Hide timestamps",
+        "label-ms": "Display ms",
+        "label-ns": "Display ns",
         "milliseconds": "Show millisecond timestamps",
-        "nanoseconds": "Show nanosecond timestamps"
+        "nanoseconds": "Show nanosecond timestamps",
+        "tooltip": "Set timestamp format"
+      },
+      "tooltip": {
+        "disable-highlighting": "Disable highlighting",
+        "download": "Download",
+        "enable-highlighting": "Enable highlighting",
+        "filter-level": "Filter logs result by level"
       },
       "unwrap-lines": "Unwrap lines",
       "wrap-lines": "Wrap lines"
@@ -11354,7 +11388,11 @@
       "label-sync-interval": "Sync Interval (seconds)"
     },
     "folder-repository-list": {
+      "all-resources-managed_one": "All {{count}} resource is managed",
+      "all-resources-managed_other": "All {{count}} resources are managed",
       "no-results-matching-your-query": "No results matching your query",
+      "partial-managed_one": "{{managedCount}}/{{count}} resources managed. {{unmanagedCount}} resources aren't managed as code yet.",
+      "partial-managed_other": "{{managedCount}}/{{count}} resources managed. {{unmanagedCount}} resources aren't managed as code yet.",
       "placeholder-search": "Search"
     },
     "get-default-values": {
@@ -12780,6 +12818,7 @@
     "description-column-filter": "Enables/disables field filters in table",
     "description-frozen-columns": "Columns are frozen from the left side of the table",
     "description-min-column-width": "The minimum width for column auto resizing",
+    "description-styling-from-field": "A field containing JSON objects with CSS properties",
     "description-tooltip-from-field": "Render a cell from a field (hidden or visible) in a tooltip",
     "image-cell-options-editor": {
       "description-alt-text": "Alternative text that will be displayed if an image can't be displayed or for users who use a screen reader",
@@ -12810,6 +12849,7 @@
     "name-max-height": "Max row height",
     "name-min-column-width": "Minimum column width",
     "name-show-table-header": "Show table header",
+    "name-styling-from-field": "Styling from field",
     "name-tooltip-from-field": "Tooltip from field",
     "name-tooltip-placement": "Tooltip placement",
     "name-wrap-header-text": "Wrap header text",
