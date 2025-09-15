@@ -1,9 +1,11 @@
 import { omit } from 'lodash';
 import { useMemo } from 'react';
+import Skeleton from 'react-loading-skeleton';
 
 import { DataFrame, Labels, findCommonLabels } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
 import { useQueryRunner, useTimeRange } from '@grafana/scenes-react';
+import { Box } from '@grafana/ui';
 
 import { useWorkbenchContext } from '../WorkbenchContext';
 import { METRIC_NAME } from '../constants';
@@ -58,6 +60,10 @@ export function AlertRuleInstances({ ruleUID, depth = 0 }: AlertRuleInstancesPro
 
   const instances = useMemo(() => extractInstancesFromData(data?.series), [data]);
 
+  if (isLoading) {
+    return <GenericRowSkeleton width={leftColumnWidth} depth={depth} />;
+  }
+
   if (!instances.length && !isLoading) {
     return (
       <GenericRow
@@ -88,5 +94,20 @@ export function AlertRuleInstances({ ruleUID, depth = 0 }: AlertRuleInstancesPro
         />
       ))}
     </>
+  );
+}
+
+export function GenericRowSkeleton({ width, depth }: { width: number; depth: number }) {
+  return (
+    <GenericRow
+      width={width}
+      title={
+        <Box flex={1}>
+          <Skeleton width="100%" />
+        </Box>
+      }
+      depth={depth}
+      content={<Skeleton width="100%" />}
+    />
   );
 }

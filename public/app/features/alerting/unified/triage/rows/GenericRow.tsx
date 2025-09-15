@@ -92,7 +92,7 @@ const LeftCell = ({ title, metadata = null, actions = null, isOpen = true, onTog
       <Stack direction="column" alignItems="flex-start" gap={0} flex={1}>
         <Stack direction="row" alignItems="center" gap={1} width="100%">
           {title}
-          <Spacer />
+          {actions && <Spacer />}
           {actions}
         </Stack>
         {metadata}

@@ -18,6 +18,7 @@ import { AlertRuleRow } from './rows/AlertRuleRow';
 import { FolderGroupRow } from './rows/FolderGroupRow';
 import { GroupRow } from './rows/GroupRow';
 import { generateRowKey, isAlertRuleRow } from './rows/utils';
+import { GenericRowSkeleton } from './scene/AlertRuleInstances';
 import { SummaryChartReact } from './scene/SummaryChart';
 import { SummaryStatsReact } from './scene/SummaryStats';
 import { Domain, Filter, WorkbenchRow } from './types';
@@ -104,6 +105,7 @@ function renderWorkbenchRow(
 export function Workbench({ domain, data, queryRunner }: WorkbenchProps) {
   const styles = useStyles2(getStyles);
 
+  const isLoading = !queryRunner.isDataReadyToDisplay();
   const [pageIndex, setPageIndex] = useState<number>(1);
   // splitter for template and payload editor
   const splitter = useSplitter({
@@ -149,10 +151,18 @@ export function Workbench({ domain, data, queryRunner }: WorkbenchProps) {
         <div className={styles.virtualizedContainer}>
           <WorkbenchProvider leftColumnWidth={leftColumnWidth} domain={domain} queryRunner={queryRunner}>
             <ScrollContainer height="100%" width="100%" scrollbarWidth="none" showScrollIndicators>
-              {dataSlice.map((row, index) => {
-                const rowKey = generateRowKey(row, index);
-                return renderWorkbenchRow(row, leftColumnWidth, domain, rowKey);
-              })}
+              {isLoading ? (
+                <>
+                  <GenericRowSkeleton key="skeleton-1" width={leftColumnWidth} depth={0} />
+                  <GenericRowSkeleton key="skeleton-2" width={leftColumnWidth} depth={0} />
+                  <GenericRowSkeleton key="skeleton-3" width={leftColumnWidth} depth={0} />
+                </>
+              ) : (
+                dataSlice.map((row, index) => {
+                  const rowKey = generateRowKey(row, index);
+                  return renderWorkbenchRow(row, leftColumnWidth, domain, rowKey);
+                })
+              )}
               {hasMore && <LoadMoreHelper handleLoad={() => setPageIndex((prevIndex) => prevIndex + 1)} />}
             </ScrollContainer>
           </WorkbenchProvider>
