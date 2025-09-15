@@ -156,7 +156,7 @@ func (s *legacySQLStore) ListTeams(ctx context.Context, ns claims.NamespaceInfo,
 	var lastID int64
 	for rows.Next() {
 		t := team.Team{}
-		err = rows.Scan(&t.ID, &t.UID, &t.Name, &t.Email, &t.Created, &t.Updated)
+		err = rows.Scan(&t.ID, &t.UID, &t.Name, &t.Email, &t.ExternalUID, &t.IsProvisioned, &t.Created, &t.Updated)
 		if err != nil {
 			return res, err
 		}

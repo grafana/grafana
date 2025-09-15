@@ -163,8 +163,10 @@ func toTeamObject(t team.Team, ns claims.NamespaceInfo) iamv0alpha1.Team {
 			ResourceVersion:   strconv.FormatInt(t.Updated.UnixMilli(), 10),
 		},
 		Spec: iamv0alpha1.TeamSpec{
-			Title: t.Name,
-			Email: t.Email,
+			Title:       t.Name,
+			Email:       t.Email,
+			Provisioned: t.IsProvisioned,
+			ExternalUID: t.ExternalUID,
 		},
 	}
 	meta, _ := utils.MetaAccessor(&obj)

@@ -71,7 +71,9 @@ func TestIntegrationIdentity(t *testing.T) {
           },
           "spec": {
             "email": "staff@Org1",
-            "title": "staff"
+            "title": "staff",
+			"provisioned": false,
+			"externalUID": ""
           },
           "status": {}
         }
