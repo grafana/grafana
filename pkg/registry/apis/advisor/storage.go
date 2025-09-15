@@ -9,6 +9,7 @@ import (
 	"time"
 
 	advisorv0alpha1 "github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1"
+	"github.com/grafana/grafana/apps/advisor/pkg/app/checks"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
@@ -38,6 +39,7 @@ var (
 	_ rest.Creater              = (*advisorStorage)(nil)
 	_ rest.Updater              = (*advisorStorage)(nil)
 	_ rest.GracefulDeleter      = (*advisorStorage)(nil)
+	_ rest.CollectionDeleter    = (*advisorStorage)(nil)
 )
 
 func (r *advisorStorage) New() runtime.Object {
@@ -132,31 +134,34 @@ func (r *advisorStorage) List(ctx context.Context, options *internalversion.List
 	r.mu.RLock()
 	defer r.mu.RUnlock()
 
-	// Get the list object for this resource type
-	list := r.resourceInfo.NewListFunc()
-
-	// Add all stored items from this namespace to the list
+	// Collect items from storage for this namespace
+	var items []runtime.Object
 	namespacePrefix := info.Value + "/"
+	for key, item := range r.items {
+		// Only include items from the requested namespace
+		if key != namespacePrefix && len(key) > len(namespacePrefix) && key[:len(namespacePrefix)] == namespacePrefix {
+			items = append(items, item.DeepCopyObject())
+		}
+	}
+
+	// Create the list object and populate it with stored items
+	list := r.resourceInfo.NewListFunc()
 	switch r.resourceInfo.GetSingularName() {
 	case "check":
 		if checkList, ok := list.(*advisorv0alpha1.CheckList); ok {
-			for key, item := range r.items {
-				// Only include items from the requested namespace
-				if len(key) > len(namespacePrefix) && key[:len(namespacePrefix)] == namespacePrefix {
-					if check, ok := item.(*advisorv0alpha1.Check); ok {
-						checkList.Items = append(checkList.Items, *check)
-					}
+			checkList.Items = make([]advisorv0alpha1.Check, 0, len(items))
+			for _, item := range items {
+				if check, ok := item.(*advisorv0alpha1.Check); ok {
+					checkList.Items = append(checkList.Items, *check)
 				}
 			}
 		}
 	case "checktype":
 		if checkTypeList, ok := list.(*advisorv0alpha1.CheckTypeList); ok {
-			for key, item := range r.items {
-				// Only include items from the requested namespace
-				if len(key) > len(namespacePrefix) && key[:len(namespacePrefix)] == namespacePrefix {
-					if checkType, ok := item.(*advisorv0alpha1.CheckType); ok {
-						checkTypeList.Items = append(checkTypeList.Items, *checkType)
-					}
+			checkTypeList.Items = make([]advisorv0alpha1.CheckType, 0, len(items))
+			for _, item := range items {
+				if checkType, ok := item.(*advisorv0alpha1.CheckType); ok {
+					checkTypeList.Items = append(checkTypeList.Items, *checkType)
 				}
 			}
 		}
@@ -211,6 +216,16 @@ func (r *advisorStorage) Create(ctx context.Context, obj runtime.Object, createV
 		}
 	}
 
+	// Fake adding processed annotation
+	if meta, ok := obj.(metav1.Object); ok {
+		annotations := meta.GetAnnotations()
+		if annotations == nil {
+			annotations = make(map[string]string)
+		}
+		annotations[checks.StatusAnnotation] = "processed"
+		meta.SetAnnotations(annotations)
+	}
+
 	// Store the object
 	r.items[key] = obj.DeepCopyObject()
 
@@ -236,6 +251,16 @@ func (r *advisorStorage) Update(ctx context.Context, name string, objInfo rest.U
 	obj, err := objInfo.UpdatedObject(ctx, oldObj)
 	if err != nil {
 		return nil, false, err
+	}
+
+	// Fake adding processed annotation
+	if meta, ok := obj.(metav1.Object); ok {
+		annotations := meta.GetAnnotations()
+		if annotations == nil {
+			annotations = make(map[string]string)
+		}
+		annotations[checks.StatusAnnotation] = "processed"
+		meta.SetAnnotations(annotations)
 	}
 
 	// Store the updated object
@@ -269,4 +294,14 @@ func (r *advisorStorage) Delete(ctx context.Context, name string, deleteValidati
 
 	// Return the deleted object
 	return obj.DeepCopyObject(), true, nil
+}
+
+func (r *advisorStorage) DeleteCollection(ctx context.Context, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions, listOptions *internalversion.ListOptions) (runtime.Object, error) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	r.items = make(map[string]runtime.Object)
+	return &metav1.Status{
+		Status: metav1.StatusSuccess,
+	}, nil
 }
