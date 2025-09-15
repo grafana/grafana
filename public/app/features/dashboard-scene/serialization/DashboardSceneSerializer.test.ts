@@ -30,6 +30,7 @@ import { transformSceneToSaveModel } from '../serialization/transformSceneToSave
 import { findVizPanelByKey } from '../utils/utils';
 
 import { V1DashboardSerializer, V2DashboardSerializer } from './DashboardSceneSerializer';
+import nestedDashboard from './testfiles/nested_dashboard.json';
 import { getPanelElement, transformSaveModelSchemaV2ToScene } from './transformSaveModelSchemaV2ToScene';
 import { transformSceneToSaveModelSchemaV2 } from './transformSceneToSaveModelSchemaV2';
 
@@ -673,29 +674,27 @@ describe('DashboardSceneSerializer', () => {
       });
 
       it('provides dashboard tracking information with from initial save model', () => {
-        const dashboard = setupV2({
-          timeSettings: {
-            nowDelay: '10s',
-            from: '',
-            to: '',
-            autoRefresh: '',
-            autoRefreshIntervals: [],
-            hideTimepicker: false,
-            fiscalYearStartMonth: 0,
-            timezone: '',
-          },
-          liveNow: true,
-        });
+        const dashboard = setupV2(nestedDashboard as Partial<DashboardV2Spec>);
 
         expect(dashboard.getTrackingInformation()).toEqual({
           uid: 'dashboard-test',
-          title: 'hello',
-          panels_count: 1,
-          panel_type__count: 1,
-          variable_type_custom_count: 1,
+          title: 'Cloudwatch ec2 new layout',
+          panels_count: 6,
+          schemaVersion: DASHBOARD_SCHEMA_VERSION,
           settings_nowdelay: undefined,
           settings_livenow: true,
-          schemaVersion: DASHBOARD_SCHEMA_VERSION,
+          variable_type_custom_count: 1,
+          variable_type_query_count: 1,
+          panel_type_timeseries_count: 6,
+          // V2TrackingFields
+          tabCount: 4,
+          templateVariableCount: 2,
+          maxNestingLevel: 3,
+          dashStructure:
+            '[{"kind":"row","children":[{"kind":"row","children":[{"kind":"tab","children":[{"kind":"panel"},{"kind":"panel"},{"kind":"panel"}]},{"kind":"tab","children":[]}]},{"kind":"row","children":[{"kind":"row","children":[{"kind":"panel"}]}]}]},{"kind":"row","children":[{"kind":"row","children":[{"kind":"tab","children":[{"kind":"panel"}]},{"kind":"tab","children":[{"kind":"panel"}]}]}]}]',
+          conditionalRenderRulesCount: 3,
+          autoLayoutCount: 3,
+          customGridLayoutCount: 2,
         });
       });
     });
