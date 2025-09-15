@@ -1,5 +1,5 @@
 import { LegacyGraphHoverClearEvent, SetPanelAttentionEvent, locationUtil } from '@grafana/data';
-import { LocationService } from '@grafana/runtime';
+import { LocationService, OpenKeyboardShortcutsModalEvent, config } from '@grafana/runtime';
 import appEvents from 'app/core/app_events';
 import { getExploreUrl } from 'app/core/utils/explore';
 import { toggleMockApiAndReload, togglePseudoLocale } from 'app/dev-utils';
@@ -19,7 +19,6 @@ import {
   PasteTimeEvent,
 } from '../../types/events';
 import { AppChromeService } from '../components/AppChrome/AppChromeService';
-import { HelpModal } from '../components/help/HelpModal';
 import { contextSrv } from '../core';
 import { RouteDescriptor } from '../navigation/types';
 
@@ -117,7 +116,7 @@ export class KeybindingSrv {
   }
 
   private showHelpModal() {
-    appEvents.publish(new ShowModalReactEvent({ component: HelpModal }));
+    appEvents.publish(new OpenKeyboardShortcutsModalEvent());
   }
 
   private exit() {

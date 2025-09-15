@@ -2,8 +2,11 @@ import { css } from '@emotion/css';
 import { cloneDeep } from 'lodash';
 
 import { GrafanaTheme2, NavModelItem } from '@grafana/data';
+import { getAppEvents, OpenKeyboardShortcutsModalEvent } from '@grafana/runtime';
 import { Menu, MenuItem, useStyles2 } from '@grafana/ui';
+import { ShowModalReactEvent } from 'app/types/events';
 
+import { HelpModal } from '../../help/HelpModal';
 import { enrichWithInteractionTracking } from '../MegaMenu/utils';
 
 export interface TopNavBarMenuProps {
@@ -14,6 +17,12 @@ export interface TopNavBarMenuProps {
 export function TopNavBarMenu({ node: nodePlain, children }: TopNavBarMenuProps) {
   const styles = useStyles2(getStyles);
   const node = enrichWithInteractionTracking(cloneDeep(nodePlain), false);
+  const appEvents = getAppEvents();
+  // Subscribe to separate shortcuts events so that plugins and other places can
+  // open the keyboard shortcuts modal, without having to have access to the necessary components
+  appEvents.subscribe(OpenKeyboardShortcutsModalEvent, () => {
+    appEvents.publish(new ShowModalReactEvent({ component: HelpModal }));
+  });
 
   if (!node) {
     return null;
