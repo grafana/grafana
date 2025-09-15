@@ -106,13 +106,6 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 		var err error
 
 		switch q.QueryType {
-		case string(dataquery.TempoQueryTypeTraceqlSearch):
-			res, err = s.Search(ctx, req.PluginContext, q)
-			if err != nil {
-				ctxLogger.Error("Error processing Search query", "error", err)
-				return response, err
-			}
-
 		case string(dataquery.TempoQueryTypeTraceId):
 			res, err = s.getTrace(ctx, req.PluginContext, q)
 			if err != nil {
@@ -120,6 +113,8 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 				return response, err
 			}
 
+		case string(dataquery.TempoQueryTypeTraceqlSearch):
+			fallthrough
 		case string(dataquery.TempoQueryTypeTraceql):
 			res, err = s.runTraceQlQuery(ctx, req.PluginContext, q)
 			if err != nil {
