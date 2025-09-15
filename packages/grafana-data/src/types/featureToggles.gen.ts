@@ -274,9 +274,17 @@ export interface FeatureToggles {
   */
   kubernetesDashboards?: boolean;
   /**
-  * Routes short url requests from /api to the /apis endpoint
+  * Enables k8s short url api and uses it under the hood when handling legacy /api
   */
   kubernetesShortURLs?: boolean;
+  /**
+  * Routes short url requests from /api to the /apis endpoint in the frontend. Depends on kubernetesShortURLs
+  */
+  useKubernetesShortURLsAPI?: boolean;
+  /**
+  * Adds support for Kubernetes alerting and recording rules
+  */
+  kubernetesAlertingRules?: boolean;
   /**
   * Disable schema validation for dashboards/v1
   */
@@ -762,6 +770,11 @@ export interface FeatureToggles {
   */
   alertingEnrichmentPerRule?: boolean;
   /**
+  * Enable Assistant Investigations enrichment type.
+  * @default false
+  */
+  alertingEnrichmentAssistantInvestigations?: boolean;
+  /**
   * Enable AI-analyze central state history.
   * @default false
   */
@@ -780,7 +793,8 @@ export interface FeatureToggles {
   */
   unifiedStorageSearchUI?: boolean;
   /**
-  * Enables cross cluster search in the Elasticsearch datasource
+  * Enables cross cluster search in the Elasticsearch data source
+  * @default false
   */
   elasticsearchCrossClusterSearch?: boolean;
   /**
@@ -965,10 +979,6 @@ export interface FeatureToggles {
   */
   pluginsAutoUpdate?: boolean;
   /**
-  * Register MT frontend
-  */
-  multiTenantFrontend?: boolean;
-  /**
   * Enables the alerting list view v2 preview toggle
   */
   alertingListViewV2PreviewToggle?: boolean;
@@ -1009,6 +1019,16 @@ export interface FeatureToggles {
   * @default false
   */
   alertEnrichment?: boolean;
+  /**
+  * Allow multiple steps per enrichment.
+  * @default false
+  */
+  alertEnrichmentMultiStep?: boolean;
+  /**
+  * Enable conditional alert enrichment steps.
+  * @default false
+  */
+  alertEnrichmentConditional?: boolean;
   /**
   * Enables the API to import Alertmanager configuration
   * @default false
@@ -1108,11 +1128,6 @@ export interface FeatureToggles {
   */
   newClickhouseConfigPageDesign?: boolean;
   /**
-  * Enable experimental search-after-write guarantees to unified-storage search endpoints
-  * @default false
-  */
-  unifiedStorageSearchAfterWriteExperimentalAPI?: boolean;
-  /**
   * Enables team folders functionality
   * @default false
   */
@@ -1132,4 +1147,19 @@ export interface FeatureToggles {
   * @default false
   */
   azureResourcePickerUpdates?: boolean;
+  /**
+  * Checks for deprecated Prometheus authentication methods (SigV4 and Azure), installs the relevant data source, and migrates the Prometheus data sources
+  * @default false
+  */
+  prometheusTypeMigration?: boolean;
+  /**
+  * Enables dskit background service wrapper
+  * @default false
+  */
+  dskitBackgroundServices?: boolean;
+  /**
+  * Enables running plugins in containers
+  * @default false
+  */
+  pluginContainers?: boolean;
 }

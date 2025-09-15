@@ -1,0 +1,131 @@
+kind: CustomResourceDefinition
+apiVersion: apiextensions.k8s.io/v1
+metadata:
+    name: recordingrules.rules.alerting.grafana.app
+spec:
+    group: rules.alerting.grafana.app
+    versions:
+        - name: v0alpha1
+          served: true
+          storage: true
+          schema:
+            openAPIV3Schema:
+                properties:
+                    spec:
+                        properties:
+                            expressions:
+                                additionalProperties:
+                                    properties:
+                                        datasourceUID:
+                                            description: The UID of the datasource to run this expression against. If omitted, the expression will be run against the `__expr__` datasource
+                                            pattern: ^[a-zA-Z0-9_-]+$
+                                            type: string
+                                        model: {}
+                                        queryType:
+                                            description: The type of query if this is a query expression
+                                            type: string
+                                        relativeTimeRange:
+                                            properties:
+                                                from:
+                                                    pattern: ^((([0-9]+)y)?(([0-9]+)w)?(([0-9]+)d)?(([0-9]+)h)?(([0-9]+)m)?(([0-9]+)s)?(([0-9]+)ms)?|0)$
+                                                    type: string
+                                                to:
+                                                    pattern: ^((([0-9]+)y)?(([0-9]+)w)?(([0-9]+)d)?(([0-9]+)h)?(([0-9]+)m)?(([0-9]+)s)?(([0-9]+)ms)?|0)$
+                                                    type: string
+                                            required:
+                                                - from
+                                                - to
+                                            type: object
+                                        source:
+                                            description: |-
+                                                Used to mark the expression to be used as the final source for the rule evaluation
+                                                Only one expression in a rule can be marked as the source
+                                                For AlertRules, this is the expression that will be evaluated against the alerting condition
+                                                For RecordingRules, this is the expression that will be recorded
+                                            type: boolean
+                                    required:
+                                        - model
+                                    type: object
+                                type: object
+                            labels:
+                                additionalProperties:
+                                    type: string
+                                type: object
+                            metric:
+                                pattern: ^[a-zA-Z_:][a-zA-Z0-9_:]*$
+                                type: string
+                            paused:
+                                type: boolean
+                            targetDatasourceUID:
+                                pattern: ^[a-zA-Z0-9_-]+$
+                                type: string
+                            title:
+                                type: string
+                            trigger:
+                                properties:
+                                    interval:
+                                        allOf:
+                                            - pattern: ^((([0-9]+)y)?(([0-9]+)w)?(([0-9]+)d)?(([0-9]+)h)?(([0-9]+)m)?(([0-9]+)s)?|0)$
+                                            - not:
+                                                pattern: hmuµn
+                                        type: string
+                                required:
+                                    - interval
+                                type: object
+                        required:
+                            - title
+                            - trigger
+                            - metric
+                            - expressions
+                            - targetDatasourceUID
+                        type: object
+                        x-kubernetes-preserve-unknown-fields: true
+                    status:
+                        properties:
+                            additionalFields:
+                                description: additionalFields is reserved for future use
+                                type: object
+                                x-kubernetes-preserve-unknown-fields: true
+                            operatorStates:
+                                additionalProperties:
+                                    properties:
+                                        descriptiveState:
+                                            description: descriptiveState is an optional more descriptive state field which has no requirements on format
+                                            type: string
+                                        details:
+                                            description: details contains any extra information that is operator-specific
+                                            type: object
+                                            x-kubernetes-preserve-unknown-fields: true
+                                        lastEvaluation:
+                                            description: lastEvaluation is the ResourceVersion last evaluated
+                                            type: string
+                                        state:
+                                            description: |-
+                                                state describes the state of the lastEvaluation.
+                                                It is limited to three possible states for machine evaluation.
+                                            enum:
+                                                - success
+                                                - in_progress
+                                                - failed
+                                            type: string
+                                    required:
+                                        - lastEvaluation
+                                        - state
+                                    type: object
+                                description: |-
+                                    operatorStates is a map of operator ID to operator state evaluations.
+                                    Any operator which consumes this kind SHOULD add its state evaluation information to this field.
+                                type: object
+                        type: object
+                required:
+                    - spec
+                type: object
+          subresources:
+            status: {}
+          selectableFields:
+            - jsonPath: .spec.title
+            - jsonPath: .spec.paused
+    names:
+        kind: RecordingRule
+        plural: recordingrules
+    scope: Namespaced

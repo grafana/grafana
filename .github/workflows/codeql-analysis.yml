@@ -33,7 +33,7 @@ jobs:
       go: ${{ steps.detect-changes.outputs.backend }}
       actions: 'true'
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           persist-credentials: true # required to get more history in the changed-files action
           fetch-depth: 2
@@ -63,7 +63,7 @@ jobs:
     steps:
     - name: Checkout repository
       if: needs.detect-changes.outputs[matrix.language] == 'true'
-      uses: actions/checkout@v4
+      uses: actions/checkout@v5
       with:
         # We must fetch at least the immediate parents so that if this is
         # a pull request then we can checkout the head.

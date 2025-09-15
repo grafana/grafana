@@ -504,6 +504,7 @@
       "copy-link": "Copia link",
       "duplicate": "Duplica",
       "export": "Esporta",
+      "manage-enrichments": "",
       "silence-notifications": "Silenzia notifiche",
       "with-modifications": "Con modifiche"
     },
@@ -1121,7 +1122,8 @@
     },
     "enrichment": {
       "error-boundary": {
-        "notification-message-section-extension": ""
+        "enrichment-drawer-extension": "",
+        "rule-viewer-section-extension": ""
       }
     },
     "error-modal": {
@@ -1703,9 +1705,6 @@
       "notes": "Note",
       "returns": "Resi"
     },
-    "label-picker": {
-      "no-options-message": "Nessuna etichetta trovata"
-    },
     "labels-editor-modal": {
       "title-edit-labels": "Modifica etichette"
     },
@@ -1723,9 +1722,6 @@
     "labels-sub-form": {
       "description": "Seleziona una chiave/valore dell'etichetta dalle opzioni seguenti o digitane una nuova e premi Invio.",
       "save": "Salva"
-    },
-    "labels-with-suggestions": {
-      "text-loading-existing-labels": "Caricamento delle etichette esistenti"
     },
     "labels-without-suggestions": {
       "message": {
@@ -2062,9 +2058,6 @@
       "text-loading-rules": "Caricamento regole in corso...",
       "title-dashboard-not-saved": "La dashboard non è stata salvata"
     },
-    "paused-badge": {
-      "paused": "In pausa"
-    },
     "payload-editor": {
       "edit-payload": "Modifica carico utile",
       "label-add-custom-alert-instance": "Aggiungi istanza di avviso personalizzata",
@@ -2216,9 +2209,6 @@
       "label-time-range": "Intervallo orario",
       "max-data-points": "MD = {{maxDataPoints}}",
       "min-interval": "Min Intervallo = {{minInterval}}"
-    },
-    "query-preview": {
-      "relative-time-range": "<0>{{from}}</0> a ora"
     },
     "queryAndExpressionsStep": {
       "disableAdvancedOptions": {
@@ -2564,6 +2554,10 @@
       "recovering": "{{recoveringStats}} in fase di recupero",
       "error_one": "{{count}} errori",
       "error_other": "{{count}} errori"
+    },
+    "rule-time-range-label": {
+      "relative": "",
+      "relative-with-to": ""
     },
     "rule-type-picker": {
       "grafana-managed": "Seleziona \"Gestito da Grafana\" a meno che tu non disponga di un'origine dei dati Mimir, Loki o Cortex con l'API Ruler abilitata."
@@ -3048,6 +3042,7 @@
       "page-nav": {
         "text": {
           "details": "Dettagli",
+          "enrichment": "",
           "history": "Cronologia",
           "instances": "Istanze",
           "query-and-conditions": "Query e condizioni",
@@ -3666,7 +3661,13 @@
       "text": "Nessun risultato trovato per la ricerca"
     },
     "restore": {
-      "success": "Dashboard {{name}} ripristinata"
+      "success": "",
+      "all-failed_one": "",
+      "all-failed_other": "",
+      "failed-count_one": "",
+      "failed-count_other": "",
+      "success-count_one": "",
+      "success-count_other": ""
     },
     "text-this-repository-is-read-only": "Se hai accesso diretto alla destinazione, copia il file JSON e incollalo lì.",
     "trash-state-manager": {
@@ -4506,16 +4507,11 @@
             "any": "Abbina qualsiasi",
             "label": "Regole di corrispondenza"
           },
-          "label": "Gruppo",
           "visibility": {
             "hide": "Nascondi",
             "label": "{{type}} visibilità",
             "show": "Mostra"
           }
-        },
-        "shared": {
-          "delete-condition": "Elimina condizione",
-          "unsupported-item-type": "Questa condizione non è supportata dall'elemento, quindi verrà ignorata."
         },
         "time-range-size": {
           "info": "Mostra o nascondi {{type}} se l'intervallo di tempo della dashboard è inferiore al fotogramma orario selezionato.",
@@ -4545,17 +4541,21 @@
             "not-matches": "Nessuna corrispondenza"
           },
           "value": "Valore"
+        },
+        "wrapper": {
+          "delete-condition": "",
+          "unsupported-object-type": ""
         }
       },
       "editor": {
+        "info": "",
         "not-supported-for-custom-grid": "Il rendering condizionale non è supportato per il layout della griglia personalizzata. Passa alla griglia automatica per utilizzare il rendering condizionale.",
-        "unsupported-item-type": "Rendering condizionale non supportato per questo tipo di elemento"
+        "unsupported-object-type": ""
       },
       "overlay": {
         "tooltip": "L'elemento è nascosto a causa del rendering condizionale."
       },
       "root": {
-        "info": "Imposta le regole per controllare la visibilità del {{type}} abbinando una o tutte le regole.",
         "title": "Mostra/nascondi regole"
       }
     },
@@ -4688,6 +4688,7 @@
       "move": "Sposta {{typeName}}",
       "panel-background": "Modifica lo sfondo del pannello",
       "panel-description": "Modifica la descrizione del pannello",
+      "panel-edit": "",
       "panel-max-repeats-per-row": "Ripetizioni massime per riga",
       "panel-repeat-direction": "Ripeti la direzione",
       "panel-repeat-variable": "Ripetizione del pannello per",
@@ -4695,7 +4696,8 @@
       "paste-panel": "Incolla pannello",
       "remove": "Rimuovi {{typeName}}",
       "row-title": "",
-      "switch-layout": "Cambia layout"
+      "switch-layout": "Cambia layout",
+      "tab-title": ""
     },
     "edit-pane": {
       "elements": {
@@ -4941,12 +4943,11 @@
       "dataframe-aria-label": "Seleziona dataframe",
       "dataframe-label": "Mostra dataframe",
       "download-csv": "Scarica CSV",
-      "download-excel-description": "Aggiunge l'intestazione al CSV per l'utilizzo con Excel",
-      "download-excel-label": "Scarica per Excel",
       "download-logs": "Scarica i registri",
       "download-service": "Scarica il grafico del servizio",
       "download-traces": "Scarica le tracce",
-      "excel-header": "Intestazione Excel",
+      "excel-compatibility-mode-description": "",
+      "excel-compatibility-mode-label": "",
       "formatted": "Dati formattati",
       "formatted-data-description": "I dati della tabella sono formattati con le opzioni definite nelle schede Campo e Sovrascrivi.",
       "formatted-data-label": "Dati formattati",
@@ -8348,6 +8349,10 @@
         "action-title": "Titolo",
         "action-title-placeholder": "Titolo azione",
         "action-variables": "Variabili",
+        "connection": "",
+        "connection-direct-description": "",
+        "connection-direct-label": "",
+        "connection-placeholder": "",
         "one-click-description": "Solo un link o un'azione possono avere un clic abilitato alla volta"
       }
     },
@@ -9628,10 +9633,9 @@
       }
     },
     "logs-controls": {
+      "collapse": "",
       "deduplication": "Deduplicazione",
-      "disable-highlighting": "Disabilita evidenziazione",
       "disable-prettify-json": "Riduci i registri JSON",
-      "display-level": "Visualizza livelli",
       "display-level-all": "Tutti i livelli",
       "download": "Scarica i registri",
       "download-logs": {
@@ -9639,13 +9643,40 @@
         "json": "json",
         "txt": "txt"
       },
-      "enable-highlighting": "Abilita evidenziazione",
       "escape-newlines": "Correggi le sequenze di nuove righe e tabulazioni non corrette nelle righe del registro",
-      "font-size-default": "Usa dimensione carattere piccola",
-      "font-size-small": "Usa dimensione carattere predefinita",
+      "expand": "",
+      "filter-levels": "",
+      "font-large": "",
+      "font-small": "",
       "hide-search": "Chiudi ricerca",
       "hide-timestamps": "Nascondi marca temporale",
       "hide-unique-labels": "Nascondi etichette univoche",
+      "label": {
+        "collapse": "",
+        "disable-highlighting": "",
+        "enable-highlighting": "",
+        "escape-newlines": "",
+        "expand": ""
+      },
+      "labels": {
+        "font-large": "",
+        "font-small": "",
+        "hide-search": "",
+        "newest-first": "",
+        "oldest-first": "",
+        "show-search": ""
+      },
+      "line-wrapping": {
+        "enable": "",
+        "enable-prettify": "",
+        "hide": "",
+        "state": {
+          "hide": "",
+          "json": "",
+          "wrap": ""
+        },
+        "tooltip": ""
+      },
       "newest-first": "Ordine: prima i registri più recenti – Fai clic per mostrare prima i meno recenti",
       "oldest-first": "Ordine: prima i registri meno recenti - Fai clic per mostrare prima i più recenti",
       "prettify-json": "Ingrandisci i registri JSON",
@@ -9654,13 +9685,26 @@
       "resolution-ns": "ns",
       "scroll-bottom": "Scorri verso il basso",
       "scroll-top": "Scorri verso l'alto",
-      "show-ms-timestamps": "Mostra marche temporali in millisecondi",
-      "show-ns-timestamps": "Mostra marche temporali in nanosecondi",
       "show-search": "Cerca nel risultato dei registri",
       "show-timestamps": "Mostra marca temporale",
       "show-unique-labels": "Mostra etichette univoche",
+      "timestamp": {
+        "hide": "",
+        "label": "",
+        "label-hide": "",
+        "label-ms": "",
+        "label-ns": "",
+        "milliseconds": "",
+        "nanoseconds": "",
+        "tooltip": ""
+      },
+      "tooltip": {
+        "disable-highlighting": "",
+        "download": "",
+        "enable-highlighting": "",
+        "filter-level": ""
+      },
       "unwrap-lines": "Rimuovi a capo",
-      "wrap-json-lines": "",
       "wrap-lines": "A capo"
     },
     "logs-navigation": {
@@ -9727,30 +9771,6 @@
     "un-themed-log-label-stats": {
       "field-log-stats": "{{label}}: {{total}} di {{rowCount}} righe hanno quel campo",
       "label-log-stats": "{{label}}: {{total}} di {{rowCount}} righe hanno quell'etichetta"
-    }
-  },
-  "logs-new": {
-    "category-logs": "Registri",
-    "deduplication-options": {
-      "label-exact": "Esatto",
-      "label-none": "Nessuno",
-      "label-numbers": "Numeri",
-      "label-signature": "Firma"
-    },
-    "description-infinite-scrolling": "Sperimentale. Richiedi più risultati scorrendo fino alla fine dell'elenco dei registri.",
-    "description-show-controls": "Visualizza i controlli per passare all'ultima o alla prima riga del registro e filtra per livello di registro",
-    "description-syntax-highlighting": "Utilizza una grammatica di colorazione della sintassi predefinita per evidenziare le parti rilevanti delle righe del registro",
-    "name-deduplication": "Deduplicazione",
-    "name-enable-log-details": "Abilita i dettagli del registro",
-    "name-infinite-scrolling": "Abilita lo scorrimento infinito",
-    "name-order": "Ordina",
-    "name-show-controls": "Mostra controlli",
-    "name-syntax-highlighting": "Attiva l'evidenziazione della sintassi",
-    "name-time": "Tempo",
-    "name-wrap-lines": "A capo",
-    "order-options": {
-      "label-newest-first": "Prima il più recente",
-      "label-oldest-first": "Prima il meno recente"
     }
   },
   "manage-dashbaords": {
@@ -11228,11 +11248,11 @@
       "description-clear-repository-connection": "Aggiungi un nome semplice per questa connessione al repository",
       "empty": "Vuoto",
       "error-field-required": "Questo campo è obbligatorio.",
-      "ext-storage": "Memoria esterna ",
-      "grafana": "Istanza Grafana",
+      "external-storage-label": "",
       "label-display-name": "Nome visualizzato",
       "placeholder-my-repository-connection": "La mia connessione al repository",
       "text-loading-resource-information": "Caricamento delle informazioni sulle risorse in corso...",
+      "unmanaged-resources-label": "",
       "dashboards-count_one": "{{count}} dashboard",
       "dashboards-count_other": "{{count}} dashboard",
       "files-count_one": "{{count}} file",
@@ -11280,7 +11300,9 @@
     },
     "connect-repository-button": {
       "configure": "Configura",
-      "repository-limit-info-alert": "Limite del repository raggiunto ({{count}})"
+      "instance-fully-managed-tooltip": "",
+      "repository-limit-reached-tooltip_one": "",
+      "repository-limit-reached-tooltip_other": ""
     },
     "delete-repository-button": {
       "button-delete": "Elimina",
@@ -11363,7 +11385,11 @@
     },
     "folder-repository-list": {
       "no-results-matching-your-query": "Nessun risultato corrisponde alla tua query",
-      "placeholder-search": "Cerca"
+      "placeholder-search": "Cerca",
+      "all-resources-managed_one": "",
+      "all-resources-managed_other": "",
+      "partial-managed_one": "",
+      "partial-managed_other": ""
     },
     "get-default-values": {
       "title": {
@@ -11661,6 +11687,7 @@
       "tooltip-unhealthy-repository": "Impossibile eseguire il pull di un repository non integro"
     },
     "synchronize-step": {
+      "repository-unhealthy": "",
       "synchronization-description": "Includi commit per ogni valore storico",
       "synchronization-options": "Opzioni di sincronizzazione"
     },
@@ -11684,6 +11711,8 @@
       "alert-point-3": "La durata di questo processo dipende dal numero di risorse coinvolte.",
       "alert-point-4": "Gli amministratori dell'istanza aziendale possono mostrare un banner di annuncio agli utenti. Consulta <2>questa guida</2> per istruzioni dettagliate.",
       "alert-title": "Importante: nessun dato o configurazione andrà perso, ma le dashboard non saranno disponibili per alcuni minuti.",
+      "button-cancel": "",
+      "button-cancelling": "",
       "button-next": "Fine",
       "button-start": "Inizia la sincronizzazione",
       "discard-modal": {
@@ -11960,7 +11989,6 @@
       "expand-row": "Espandi riga della query",
       "hide-response": "Nascondi risposta",
       "remove-query": "Rimuovi query",
-      "replace-query-from-library": "Sostituisci con query salvata",
       "show-response": "Mostra la risposta"
     },
     "query-editor-not-exported": "Il plug-in dell'origine dati non esporta alcun componente dell'editor di query"
@@ -11973,14 +12001,6 @@
       "no-deleted-dashboards": "Non hai eliminato nessun dashboard di recente.",
       "no-deleted-dashboards-text": "Quando elimini un dashboard, questo verrà visualizzato qui per 30 giorni prima di essere eliminato definitivamente. L'amministratore dell'organizzazione può ripristinare i dashboard eliminati di recente.",
       "no-search-result": "Nessun risultato trovato per la ricerca"
-    },
-    "permanently-delete-modal": {
-      "confirm-text": "Elimina",
-      "delete-button": "Elimina",
-      "delete-loading": "Eliminazione in corso...",
-      "title": "Elimina definitivamente i dashboard",
-      "text_one": "Questa azione eliminerà {{numberOfDashboards}} dashboard.",
-      "text_other": "Questa azione eliminerà {{numberOfDashboards}} dashboard."
     },
     "restore-modal": {
       "restore-button": "Ripristina",

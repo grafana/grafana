@@ -48,6 +48,7 @@ import (
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/util"
+	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 //go:embed test-data/*.*
@@ -62,9 +63,7 @@ func getTestHelper(t *testing.T) *apis.K8sTestHelper {
 }
 
 func TestIntegrationResourceIdentifier(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	ctx := context.Background()
 	helper := getTestHelper(t)
@@ -126,9 +125,7 @@ func TestIntegrationResourceIdentifier(t *testing.T) {
 // TestIntegrationResourcePermissions focuses on testing resource permissions for the alerting receiver resource. It
 // verifies that access is correctly set when creating resources and assigning permissions to users, teams, and roles.
 func TestIntegrationResourcePermissions(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	ctx := context.Background()
 	helper := getTestHelper(t)
@@ -402,9 +399,7 @@ func TestIntegrationResourcePermissions(t *testing.T) {
 }
 
 func TestIntegrationAccessControl(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	ctx := context.Background()
 	helper := getTestHelper(t)
@@ -730,9 +725,7 @@ func TestIntegrationAccessControl(t *testing.T) {
 }
 
 func TestIntegrationInUseMetadata(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	ctx := context.Background()
 	helper := getTestHelper(t)
@@ -858,9 +851,7 @@ func TestIntegrationInUseMetadata(t *testing.T) {
 }
 
 func TestIntegrationProvisioning(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	ctx := context.Background()
 	helper := getTestHelper(t)
@@ -915,9 +906,7 @@ func TestIntegrationProvisioning(t *testing.T) {
 }
 
 func TestIntegrationOptimisticConcurrency(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	ctx := context.Background()
 	helper := getTestHelper(t)
@@ -998,9 +987,7 @@ func TestIntegrationOptimisticConcurrency(t *testing.T) {
 }
 
 func TestIntegrationPatch(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	ctx := context.Background()
 	helper := getTestHelper(t)
@@ -1094,9 +1081,7 @@ func TestIntegrationPatch(t *testing.T) {
 }
 
 func TestIntegrationReferentialIntegrity(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	ctx := context.Background()
 	helper := getTestHelper(t)
@@ -1214,9 +1199,7 @@ func TestIntegrationReferentialIntegrity(t *testing.T) {
 }
 
 func TestIntegrationCRUD(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	ctx := context.Background()
 	helper := getTestHelper(t)
@@ -1382,9 +1365,7 @@ func TestIntegrationCRUD(t *testing.T) {
 }
 
 func TestIntegrationReceiverListSelector(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	ctx := context.Background()
 	helper := getTestHelper(t)

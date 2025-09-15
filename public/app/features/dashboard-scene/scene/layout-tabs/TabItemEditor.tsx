@@ -9,7 +9,7 @@ import { RepeatRowSelect2 } from 'app/features/dashboard/components/RepeatRowSel
 import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard/constants';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 
-import { useConditionalRenderingEditor } from '../../conditional-rendering/ConditionalRenderingEditor';
+import { useConditionalRenderingEditor } from '../../conditional-rendering/hooks/useConditionalRenderingEditor';
 import { dashboardEditActions } from '../../edit-pane/shared';
 import { getQueryRunnerFor, useDashboard } from '../../utils/utils';
 import { useLayoutCategory } from '../layouts-shared/DashboardLayoutSelector';
@@ -17,7 +17,8 @@ import { useEditPaneInputAutoFocus } from '../layouts-shared/utils';
 
 import { TabItem } from './TabItem';
 
-export function useEditOptions(model: TabItem, isNewElement: boolean): OptionsPaneCategoryDescriptor[] {
+export function useEditOptions(this: TabItem, isNewElement: boolean): OptionsPaneCategoryDescriptor[] {
+  const model = this;
   const { layout } = model.useState();
 
   const tabCategory = useMemo(
@@ -29,7 +30,7 @@ export function useEditOptions(model: TabItem, isNewElement: boolean): OptionsPa
           render: (descriptor) => <TabTitleInput id={descriptor.props.id} tab={model} isNewElement={isNewElement} />,
         })
       ),
-    [model, isNewElement]
+    [isNewElement, model]
   );
 
   const repeatCategory = useMemo(

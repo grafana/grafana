@@ -2,7 +2,7 @@
   "author": "Grafana Labs",
   "license": "Apache-2.0",
   "name": "@grafana/alerting",
-  "version": "12.2.0-pre",
+  "version": "12.3.0-pre",
   "description": "Grafana Alerting Library – Build vertical integrations on top of the industry-leading alerting solution",
   "keywords": [
     "typescript",
@@ -14,7 +14,7 @@
   "sideEffects": false,
   "repository": {
     "type": "git",
-    "url": "git+http://github.com/grafana/grafana.git",
+    "url": "http://github.com/grafana/grafana.git",
     "directory": "packages/grafana-alerting"
   },
   "main": "src/index.ts",
@@ -58,7 +58,8 @@
     "typecheck": "tsc --emitDeclarationOnly false --noEmit",
     "codegen": "rtk-query-codegen-openapi ./scripts/codegen.ts",
     "prepack": "cp package.json package.json.bak && ALIAS_PACKAGE_NAME=testing,unstable node ../../scripts/prepare-npm-package.js",
-    "postpack": "mv package.json.bak package.json && rimraf ./unstable ./testing"
+    "postpack": "mv package.json.bak package.json && rimraf ./unstable ./testing",
+    "i18n-extract": "i18next --config src/locales/i18next-parser.config.cjs"
   },
   "devDependencies": {
     "@grafana/test-utils": "workspace:*",
@@ -69,6 +70,7 @@
     "@types/lodash": "^4",
     "@types/react": "18.3.18",
     "@types/react-dom": "18.3.5",
+    "i18next": "^25.5.2",
     "react": "18.3.1",
     "react-dom": "18.3.1",
     "react-redux": "^9.2.0",
@@ -89,7 +91,9 @@
     "react-dom": "^18.0.0"
   },
   "dependencies": {
+    "@emotion/css": "11.13.5",
     "@faker-js/faker": "^9.8.0",
+    "@grafana/i18n": "12.3.0-pre",
     "fishery": "^2.3.1",
     "lodash": "^4.17.21"
   }
