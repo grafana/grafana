@@ -9,6 +9,10 @@ import (
 	"github.com/grafana/grafana-app-sdk/operator"
 	foldersKind "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	"github.com/grafana/grafana/pkg/services/authz"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
+	"go.opentelemetry.io/otel/trace"
 	"k8s.io/client-go/rest"
 )
 
@@ -60,26 +64,61 @@ func NewFolderReconciler(cfg ReconcilerConfig) (operator.Reconciler, error) {
 	return reconciler, nil
 }
 
+// actionToString converts a ReconcileAction to a human-readable string
+func actionToString(action operator.ReconcileAction) string {
+	switch action {
+	case operator.ReconcileActionCreated:
+		return "CREATE"
+	case operator.ReconcileActionUpdated:
+		return "UPDATE"
+	case operator.ReconcileActionDeleted:
+		return "DELETE"
+	default:
+		return "UNKNOWN"
+	}
+}
+
 func (r *FolderReconciler) reconcile(ctx context.Context, req operator.TypedReconcileRequest[*foldersKind.Folder]) (operator.ReconcileResult, error) {
+	// Create root span for the entire reconciliation process
+	tracer := otel.GetTracerProvider().Tracer("iam-folder-reconciler")
+	ctx, span := tracer.Start(ctx, "folder.reconcile",
+		trace.WithAttributes(
+			attribute.String("action", actionToString(req.Action)),
+			attribute.String("folder.uid", req.Object.Name),
+			attribute.String("namespace", req.Object.Namespace),
+		),
+	)
+	defer span.End()
+
 	// Add timeout to prevent hanging operations
 	ctx, cancel := context.WithTimeout(ctx, 60*time.Second)
 	defer cancel()
 
 	err := validateFolder(req.Object)
 	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, "validation failed")
 		return operator.ReconcileResult{}, err
 	}
 
+	var result operator.ReconcileResult
 	switch req.Action {
 	case operator.ReconcileActionCreated:
-		return r.handleUpdateFolder(ctx, req.Object)
+		result, err = r.handleUpdateFolder(ctx, req.Object)
 	case operator.ReconcileActionUpdated:
-		return r.handleUpdateFolder(ctx, req.Object)
+		result, err = r.handleUpdateFolder(ctx, req.Object)
 	case operator.ReconcileActionDeleted:
-		return r.handleDeleteFolder(ctx, req.Object)
+		result, err = r.handleDeleteFolder(ctx, req.Object)
 	default:
 		return operator.ReconcileResult{}, nil
 	}
+
+	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, "reconciliation failed")
+	}
+
+	return result, err
 }
 
 func (r *FolderReconciler) handleUpdateFolder(ctx context.Context, folder *foldersKind.Folder) (operator.ReconcileResult, error) {

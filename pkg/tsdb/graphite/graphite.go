@@ -4,19 +4,24 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"net/url"
+	"path"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/resource/httpadapter"
 	"go.opentelemetry.io/otel/trace"
 )
 
 type Service struct {
-	im     instancemgmt.InstanceManager
-	tracer trace.Tracer
-	logger log.Logger
+	im              instancemgmt.InstanceManager
+	tracer          trace.Tracer
+	logger          log.Logger
+	resourceHandler backend.CallResourceHandler
+	HTTPClient      *http.Client
 }
 
 const (
@@ -26,11 +31,15 @@ const (
 
 func ProvideService(httpClientProvider *httpclient.Provider, tracer trace.Tracer) *Service {
 	logger := backend.NewLoggerWith("logger", "graphite")
-	return &Service{
+	s := &Service{
 		im:     datasource.NewInstanceManager(newInstanceSettings(httpClientProvider)),
 		tracer: tracer,
 		logger: logger,
 	}
+
+	s.resourceHandler = httpadapter.New(s.newResourceMux())
+
+	return s
 }
 
 type datasourceInfo struct {
@@ -85,5 +94,43 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 }
 
 func (s *Service) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
-	return nil
+	return s.resourceHandler.CallResource(ctx, req, sender)
+}
+
+func (s *Service) createRequest(ctx context.Context, dsInfo *datasourceInfo, params URLParams) (*http.Request, error) {
+	u, err := url.Parse(dsInfo.URL)
+	if err != nil {
+		return nil, err
+	}
+
+	if params.SubPath != "" {
+		u.Path = path.Join(u.Path, params.SubPath)
+	}
+
+	if params.QueryParams != nil {
+		queryValues := u.Query()
+		for key, values := range params.QueryParams {
+			for _, value := range values {
+				queryValues.Add(key, value)
+			}
+		}
+		u.RawQuery = queryValues.Encode()
+	}
+
+	method := params.Method
+	if method == "" {
+		method = http.MethodGet
+	}
+
+	req, err := http.NewRequestWithContext(ctx, method, u.String(), params.Body)
+	if err != nil {
+		s.logger.Info("Failed to create request", "error", err)
+		return nil, fmt.Errorf("failed to create request: %w", err)
+	}
+
+	for k, v := range params.Headers {
+		req.Header.Add(k, v)
+	}
+
+	return req, err
 }

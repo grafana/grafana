@@ -2072,9 +2072,6 @@
       "text-loading-rules": "Загрузка правил...",
       "title-dashboard-not-saved": "Дашборд не сохранен"
     },
-    "paused-badge": {
-      "paused": "Приостановлено"
-    },
     "payload-editor": {
       "edit-payload": "Редактировать полезные данные",
       "label-add-custom-alert-instance": "Добавить экземпляр пользовательского оповещения",
@@ -2230,9 +2227,6 @@
       "label-time-range": "Временной диапазон",
       "max-data-points": "MD = {{maxDataPoints}}",
       "min-interval": "Мин. интервал = {{minInterval}}"
-    },
-    "query-preview": {
-      "relative-time-range": "С <0>{{from}}</0> до текущего момента"
     },
     "queryAndExpressionsStep": {
       "disableAdvancedOptions": {
@@ -2586,6 +2580,10 @@
       "error_few": "{{count}} ошибки",
       "error_many": "{{count}} ошибок",
       "error_other": "{{count}} ошибок"
+    },
+    "rule-time-range-label": {
+      "relative": "",
+      "relative-with-to": ""
     },
     "rule-type-picker": {
       "grafana-managed": "Выберите «Управляемые Grafana», если у вас нет источника данных Mimir, Loki или Cortex с включенным Ruler API."
@@ -3699,7 +3697,19 @@
       "text": "По вашему запросу ничего не найдено"
     },
     "restore": {
-      "success": "Дашборд {{name}} восстановлен"
+      "success": "",
+      "all-failed_one": "",
+      "all-failed_few": "",
+      "all-failed_many": "",
+      "all-failed_other": "",
+      "failed-count_one": "",
+      "failed-count_few": "",
+      "failed-count_many": "",
+      "failed-count_other": "",
+      "success-count_one": "",
+      "success-count_few": "",
+      "success-count_many": "",
+      "success-count_other": ""
     },
     "text-this-repository-is-read-only": "Если у вас есть прямой доступ к целевому объекту, скопируйте JSON-файл и вставьте его туда.",
     "trash-state-manager": {
@@ -9687,10 +9697,9 @@
       }
     },
     "logs-controls": {
+      "collapse": "",
       "deduplication": "Дедупликация",
-      "disable-highlighting": "Отключить выделение",
       "disable-prettify-json": "Свернуть журналы JSON",
-      "display-level": "Показать уровни",
       "display-level-all": "Все уровни",
       "download": "Загрузить журналы",
       "download-logs": {
@@ -9698,18 +9707,39 @@
         "json": "JSON",
         "txt": "TXT"
       },
-      "enable-highlighting": "Включить выделение",
       "escape-newlines": "Исправить неправильно экранированные последовательности новой строки и табуляции в строках журнала",
-      "font-size-default": "Использовать мелкий размер шрифта",
-      "font-size-small": "Использовать размер шрифта по умолчанию",
+      "expand": "",
+      "filter-levels": "",
+      "font-large": "",
+      "font-small": "",
       "hide-search": "Закрыть поиск",
       "hide-timestamps": "Скрыть метки времени",
       "hide-unique-labels": "Скрыть уникальные метки",
+      "label": {
+        "collapse": "",
+        "disable-highlighting": "",
+        "enable-highlighting": "",
+        "escape-newlines": "",
+        "expand": ""
+      },
+      "labels": {
+        "font-large": "",
+        "font-small": "",
+        "hide-search": "",
+        "newest-first": "",
+        "oldest-first": "",
+        "show-search": ""
+      },
       "line-wrapping": {
         "enable": "",
         "enable-prettify": "",
         "hide": "",
-        "label": ""
+        "state": {
+          "hide": "",
+          "json": "",
+          "wrap": ""
+        },
+        "tooltip": ""
       },
       "newest-first": "Сначала отображаются самые новые журналы. Нажмите, чтобы показать сначала самые старые",
       "oldest-first": "Сначала отображаются самые старые журналы. Нажмите, чтобы показать сначала самые новые",
@@ -9725,8 +9755,18 @@
       "timestamp": {
         "hide": "",
         "label": "",
+        "label-hide": "",
+        "label-ms": "",
+        "label-ns": "",
         "milliseconds": "",
-        "nanoseconds": ""
+        "nanoseconds": "",
+        "tooltip": ""
+      },
+      "tooltip": {
+        "disable-highlighting": "",
+        "download": "",
+        "enable-highlighting": "",
+        "filter-level": ""
       },
       "unwrap-lines": "Не переносить строки",
       "wrap-lines": "Переносить строки"
@@ -11423,7 +11463,15 @@
     },
     "folder-repository-list": {
       "no-results-matching-your-query": "По вашему запросу ничего не найдено",
-      "placeholder-search": "Поиск"
+      "placeholder-search": "Поиск",
+      "all-resources-managed_one": "",
+      "all-resources-managed_few": "",
+      "all-resources-managed_many": "",
+      "all-resources-managed_other": "",
+      "partial-managed_one": "",
+      "partial-managed_few": "",
+      "partial-managed_many": "",
+      "partial-managed_other": ""
     },
     "get-default-values": {
       "title": {
@@ -11721,6 +11769,7 @@
       "tooltip-unhealthy-repository": "Невозможно внести изменения в неисправный репозиторий"
     },
     "synchronize-step": {
+      "repository-unhealthy": "",
       "synchronization-description": "Включить фиксации для каждого ранее зафиксированного значения",
       "synchronization-options": "Параметры синхронизации"
     },
@@ -11744,6 +11793,8 @@
       "alert-point-3": "Длительность процесса зависит от количества задействованных ресурсов.",
       "alert-point-4": "Администраторы экземпляров Enterprise могут показывать пользователям баннер с объявлением. Пошаговые инструкции см. в <2>руководстве</2>.",
       "alert-title": "Важно. Данные и конфигурация не будут потеряны, однако дашборды будут недоступны в течение нескольких минут.",
+      "button-cancel": "",
+      "button-cancelling": "",
       "button-next": "Готово",
       "button-start": "Начать синхронизацию",
       "discard-modal": {
