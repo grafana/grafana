@@ -39,7 +39,7 @@ export const CollapsableSection = ({
   headerDataTestId,
   contentDataTestId,
   unmountContentWhenClosed = true,
-  newDesign,
+  newDesign = true,
   showOptional,
 }: Props) => {
   const [internalOpenState, toggleInternalOpenState] = useState<boolean>(isOpen);
@@ -103,6 +103,8 @@ export const CollapsableSection = ({
           >
             {loading ? (
               <Spinner className={styles.spinner} />
+            ) : newDesign ? (
+              <Icon name={isSectionOpen ? 'angle-down' : 'angle-right'} className={styles.icon} />
             ) : (
               <Icon name={isSectionOpen ? 'angle-up' : 'angle-down'} className={styles.icon} />
             )}
