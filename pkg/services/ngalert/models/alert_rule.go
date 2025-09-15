@@ -18,8 +18,9 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 
-	"github.com/grafana/grafana-plugin-sdk-go/data"
 	prommodels "github.com/prometheus/common/model"
+
+	"github.com/grafana/grafana-plugin-sdk-go/data"
 
 	alertingModels "github.com/grafana/alerting/models"
 
@@ -783,7 +784,7 @@ func validateRecordingRuleFields(rule *AlertRule) error {
 	if !metricName.IsValid() {
 		return errors.New("metric name for recording rule must be a valid utf8 string")
 	}
-	if !prommodels.IsValidMetricName(metricName) {
+	if !prommodels.IsValidMetricName(metricName) { // nolint:staticcheck
 		return errors.New("metric name for recording rule must be a valid Prometheus metric name")
 	}
 
