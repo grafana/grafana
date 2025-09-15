@@ -1178,20 +1178,10 @@
             ]
           },
           "spec": {
-            "default": {},
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.shorturl.pkg.apis.shorturl.v1alpha1.ShortURLSpec"
-              }
-            ]
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.shorturl.pkg.apis.shorturl.v1alpha1.ShortURLSpec"
           },
           "status": {
-            "default": {},
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.shorturl.pkg.apis.shorturl.v1alpha1.ShortURLStatus"
-              }
-            ]
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.shorturl.pkg.apis.shorturl.v1alpha1.ShortURLStatus"
           }
         },
         "x-kubernetes-group-version-kind": [
@@ -1245,6 +1235,41 @@
           }
         ]
       },
+      "com.github.grafana.grafana.apps.shorturl.pkg.apis.shorturl.v1alpha1.ShortURLOperatorState": {
+        "type": "object",
+        "required": [
+          "lastEvaluation",
+          "state"
+        ],
+        "properties": {
+          "descriptiveState": {
+            "description": "descriptiveState is an optional more descriptive state field which has no requirements on format",
+            "type": "string"
+          },
+          "details": {
+            "description": "details contains any extra information that is operator-specific",
+            "type": "object",
+            "additionalProperties": {
+              "type": "object",
+              "additionalProperties": {}
+            }
+          },
+          "lastEvaluation": {
+            "description": "lastEvaluation is the ResourceVersion last evaluated",
+            "type": "string"
+          },
+          "state": {
+            "description": "state describes the state of the lastEvaluation.\nIt is limited to three possible states for machine evaluation.",
+            "type": "string",
+            "enum": [
+              "success",
+              "in_progress",
+              "failed"
+            ]
+          }
+        },
+        "additionalProperties": false
+      },
       "com.github.grafana.grafana.apps.shorturl.pkg.apis.shorturl.v1alpha1.ShortURLSpec": {
         "type": "object",
         "required": [
@@ -1255,7 +1280,8 @@
             "description": "The original path to where the short url is linking too e.g. https://localhost:3000/eer8i1kictngga/new-dashboard-with-lib-panel",
             "type": "string"
           }
-        }
+        },
+        "additionalProperties": false
       },
       "com.github.grafana.grafana.apps.shorturl.pkg.apis.shorturl.v1alpha1.ShortURLStatus": {
         "type": "object",
@@ -1266,49 +1292,24 @@
           "additionalFields": {
             "description": "additionalFields is reserved for future use",
             "type": "object",
-            "additionalProperties": true
+            "additionalProperties": {
+              "type": "object",
+              "additionalProperties": {}
+            }
           },
           "lastSeenAt": {
             "description": "The last time the short URL was used, 0 is the initial value",
-            "type": "integer",
-            "format": "int64"
+            "type": "integer"
           },
           "operatorStates": {
             "description": "operatorStates is a map of operator ID to operator state evaluations.\nAny operator which consumes this kind SHOULD add its state evaluation information to this field.",
             "type": "object",
             "additionalProperties": {
-              "type": "object",
-              "required": [
-                "lastEvaluation",
-                "state"
-              ],
-              "properties": {
-                "descriptiveState": {
-                  "description": "descriptiveState is an optional more descriptive state field which has no requirements on format",
-                  "type": "string"
-                },
-                "details": {
-                  "description": "details contains any extra information that is operator-specific",
-                  "type": "object",
-                  "additionalProperties": true
-                },
-                "lastEvaluation": {
-                  "description": "lastEvaluation is the ResourceVersion last evaluated",
-                  "type": "string"
-                },
-                "state": {
-                  "description": "state describes the state of the lastEvaluation.\nIt is limited to three possible states for machine evaluation.",
-                  "type": "string",
-                  "enum": [
-                    "success",
-                    "in_progress",
-                    "failed"
-                  ]
-                }
-              }
+              "$ref": "#/components/schemas/com.github.grafana.grafana.apps.shorturl.pkg.apis.shorturl.v1alpha1.ShortURLOperatorState"
             }
           }
-        }
+        },
+        "additionalProperties": false
       },
       "io.k8s.apimachinery.pkg.apis.meta.v1.APIResource": {
         "description": "APIResource specifies the name of a resource and whether it is namespaced.",

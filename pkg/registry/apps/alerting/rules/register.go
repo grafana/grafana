@@ -56,7 +56,7 @@ func RegisterAppInstaller(
 		ManifestData: *apis.LocalManifest().ManifestData,
 	}
 
-	i, err := appsdkapiserver.NewDefaultAppInstaller(provider, appConfig, nil) // FIXME!!! , &apis.GoTypeAssociator{}
+	i, err := appsdkapiserver.NewDefaultAppInstaller(provider, appConfig, &apis.GoTypeAssociator{})
 	if err != nil {
 		return nil, err
 	}

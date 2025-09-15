@@ -38,7 +38,7 @@ func ProvideAppInstallers(
 	if features.IsEnabledGlobally(featuremgmt.FlagKubernetesShortURLs) {
 		installers = append(installers, shorturlAppInstaller)
 	}
-	if false && features.IsEnabledGlobally(featuremgmt.FlagKubernetesAlertingRules) { // FIXME!!!
+	if features.IsEnabledGlobally(featuremgmt.FlagKubernetesAlertingRules) {
 		installers = append(installers, rulesAppInstaller)
 	}
 	return installers
