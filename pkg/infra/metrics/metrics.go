@@ -584,9 +584,9 @@ func init() {
 
 	grafanaPluginFileSystemInfoDesc = prometheus.NewGaugeVec(prometheus.GaugeOpts{
 		Name:      "plugin_filesystem_info",
-		Help:      "A metric with a constant '1' value labeled by pluginId and source",
+		Help:      "A metric with a constant '1' value labeled by pluginId and filesystem type",
 		Namespace: ExporterName,
-	}, []string{"plugin_id", "filesystem"})
+	}, []string{"plugin_id", "filesystem_type"})
 
 	grafanaPluginProvisioningInfoDesc = prometheus.NewGaugeVec(prometheus.GaugeOpts{
 		Name:      "plugin_provisioning_info",
