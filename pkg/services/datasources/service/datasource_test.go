@@ -1287,6 +1287,44 @@ func TestIntegrationService_GetHttpTransport(t *testing.T) {
 		require.Equal(t, "server-name", tr.TLSClientConfig.ServerName)
 	})
 
+	t.Run("Should properly populate grafanaData with customQueryParameters for middleware", func(t *testing.T) {
+		sjson := simplejson.New()
+		sjson.Set("customQueryParameters", "dedup=true&max_source_resolution=1h&partial_response=false")
+
+		sqlStore := db.InitTestDB(t)
+		secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
+		secretsStore := secretskvs.NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
+		quotaService := quotatest.New(false, nil)
+		dsService, err := ProvideService(sqlStore, secretsService, secretsStore, cfg, featuremgmt.WithFeatures(), acmock.New(), acmock.NewMockedPermissionsService(), quotaService, &pluginstore.FakePluginStore{}, &pluginfakes.FakePluginClient{}, nil)
+		require.NoError(t, err)
+
+		ds := datasources.DataSource{
+			ID:       1,
+			OrgID:    1,
+			Name:     "prometheus",
+			URL:      "http://prometheus:9090",
+			Type:     "prometheus",
+			JsonData: sjson,
+		}
+
+		opts, err := dsService.httpClientOptions(context.Background(), &ds)
+		require.NoError(t, err)
+
+		// Test that customQueryParameters is accessible in grafanaData for middleware
+		grafanaData, exists := opts.CustomOptions["grafanaData"]
+		require.True(t, exists)
+		grafanaDataMap, ok := grafanaData.(map[string]any)
+		require.True(t, ok)
+		customQueryParams, exists := grafanaDataMap["customQueryParameters"]
+		require.True(t, exists)
+		require.Equal(t, "dedup=true&max_source_resolution=1h&partial_response=false", customQueryParams)
+
+		// Test that customQueryParameters is also available at the top level for backward compatibility
+		topLevelParams, exists := opts.CustomOptions["customQueryParameters"]
+		require.True(t, exists)
+		require.Equal(t, "dedup=true&max_source_resolution=1h&partial_response=false", topLevelParams)
+	})
+
 	t.Run("Should set skip TLS verification if configured in JsonData", func(t *testing.T) {
 		var configuredTransport *http.Transport
 		provider := httpclient.NewProvider(sdkhttpclient.ProviderOptions{

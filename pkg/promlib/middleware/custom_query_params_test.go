@@ -167,4 +167,32 @@ func TestCustomQueryParametersMiddleware(t *testing.T) {
 
 		require.Equal(t, "http://test.com/query?custom=par%2Fam&second=f+oo", req.URL.String())
 	})
+
+	t.Run("With Thanos-specific custom query parameters should apply middleware", func(t *testing.T) {
+		mw := CustomQueryParameters(backend.NewLoggerWith("logger", "test"))
+		rt := mw.CreateMiddleware(httpclient.Options{
+			CustomOptions: map[string]any{
+				grafanaDataKey: map[string]any{
+					customQueryParametersKey: "dedup=true&max_source_resolution=1h&partial_response=false",
+				},
+			},
+		}, finalRoundTripper)
+		require.NotNil(t, rt)
+
+		req, err := http.NewRequest(http.MethodGet, "http://thanos.example.com/api/v1/query?query=up", nil)
+		require.NoError(t, err)
+		res, err := rt.RoundTrip(req)
+		require.NoError(t, err)
+		require.NotNil(t, res)
+		if res.Body != nil {
+			require.NoError(t, res.Body.Close())
+		}
+
+		// Verify that Thanos-specific parameters are added
+		q := req.URL.Query()
+		require.Equal(t, "up", q.Get("query"))
+		require.Equal(t, "true", q.Get("dedup"))
+		require.Equal(t, "1h", q.Get("max_source_resolution"))
+		require.Equal(t, "false", q.Get("partial_response"))
+	})
 }
