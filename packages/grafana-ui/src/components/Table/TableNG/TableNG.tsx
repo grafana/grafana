@@ -677,7 +677,7 @@ export function TableNG(props: TableNGProps) {
           ),
           renderSummaryCell: () => (
             <SummaryCell
-              rows={rows}
+              rows={sortedRows}
               footers={footers}
               field={field}
               colIdx={i}
@@ -707,10 +707,11 @@ export function TableNG(props: TableNGProps) {
       maxRowHeight,
       numFrozenColsFullyInView,
       onCellFilterAdded,
+      rows,
       rowHeight,
       rowHeightFn,
-      rows,
       setFilter,
+      sortedRows,
       showTypeIcons,
       theme,
       timeRange,
