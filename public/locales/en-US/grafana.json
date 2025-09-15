@@ -1559,6 +1559,9 @@
     "group-status": {
       "content-the-group-is-being-deleted": "The group is being deleted"
     },
+    "group-wrapper": {
+      "toggle": "Toggle group"
+    },
     "header": {
       "tooltip-remove": "Remove expression \"{{refId}}\""
     },
@@ -2299,9 +2302,6 @@
       "resample-to": "Resample to",
       "upsample": "Upsample"
     },
-    "right-column": {
-      "label-state": "State"
-    },
     "routing": {
       "routing": "Routing"
     },
@@ -2956,6 +2956,13 @@
         "summary": "The following alert rules will be imported:",
         "title-warning": "Warning"
       }
+    },
+    "triage": {
+      "alert-instances": "Alert instances",
+      "firing-instances-count": "{{firingCount}} firing instances",
+      "no-instances-found": "No alert instances found for rule: {ruleUID}",
+      "no-labels": "No labels",
+      "pending-instances-count": "{{pendingCount}} pending instances"
     },
     "type-selector-button": {
       "add-expression": "Add expression"
