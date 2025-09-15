@@ -16,7 +16,6 @@ import { TabsLayoutManager } from '../layout-tabs/TabsLayoutManager';
 
 import { CanvasGridAddActions } from './CanvasGridAddActions';
 
-
 jest.mock('../../utils/interactions', () => ({
   DashboardInteractions: {
     trackAddPanelClick: jest.fn(),
@@ -87,7 +86,7 @@ function buildTestScene() {
 
 describe('CanvasGridAddActions', () => {
   afterEach(() => {
-     jest.clearAllMocks();
+    jest.clearAllMocks();
   });
   describe('tracking scene actions', () => {
     it('should call DashboardInteractions.trackAddPanelClick when clicking on add panel button', async () => {
@@ -117,7 +116,7 @@ describe('CanvasGridAddActions', () => {
       const layoutManager = scene.state.body;
       const user = userEvent.setup();
       render(<CanvasGridAddActions layoutManager={layoutManager} />);
-      
+
       await user.click(await screen.findByTestId(selectors.components.CanvasGridAddActions.groupPanels));
       await user.click(await screen.findByTestId(selectors.components.CanvasGridAddActions.addTab));
       expect(DashboardInteractions.trackGroupTabClick).toHaveBeenCalled();

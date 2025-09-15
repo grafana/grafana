@@ -47,7 +47,7 @@ export const versionedComponents = {
     },
     pastePanel: {
       '12.1.0': 'data-testid CanvasGridAddActions paste-panel',
-    }
+    },
   },
   DashboardEditPaneSplitter: {
     primaryBody: {
