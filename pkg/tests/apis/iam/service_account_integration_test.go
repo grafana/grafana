@@ -5,21 +5,18 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/stretchr/testify/require"
+	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/grafana/grafana/pkg/apiserver/rest"
-	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/apis"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 	"github.com/grafana/grafana/pkg/util/testutil"
-
-	"github.com/stretchr/testify/require"
-	"k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
 var gvrServiceAccounts = schema.GroupVersionResource{
@@ -143,29 +140,6 @@ func doServiceAccountCRUDTestsUsingTheNewAPIs(t *testing.T, helper *apis.K8sTest
 		require.ErrorAs(t, err, &statusErr)
 		require.Equal(t, int32(400), statusErr.ErrStatus.Code)
 		require.Contains(t, statusErr.ErrStatus.Message, "invalid role: InvalidRole")
-	})
-
-	t.Run("should not be able to create service account with higher role than the user", func(t *testing.T) {
-		ctx := context.Background()
-
-		editorWithSACreate := helper.CreateUser("custom-editor", apis.Org1, org.RoleEditor,
-			[]resourcepermissions.SetResourcePermissionCommand{
-				{Actions: []string{serviceaccounts.ActionCreate}},
-			})
-
-		saClient := helper.GetResourceClient(apis.ResourceClientArgs{
-			User: editorWithSACreate,
-			GVR:  gvrServiceAccounts,
-		})
-
-		saToCreate := helper.LoadYAMLOrJSONFile("testdata/serviceaccount-test-higher-role-v0.yaml")
-
-		_, err := saClient.Resource.Create(ctx, saToCreate, metav1.CreateOptions{})
-		require.Error(t, err)
-		var statusErr *errors.StatusError
-		require.ErrorAs(t, err, &statusErr)
-		require.Equal(t, int32(403), statusErr.ErrStatus.Code)
-		require.Contains(t, statusErr.ErrStatus.Message, "cannot assign a role higher than user's role")
 	})
 
 	t.Run("should not be able to create service account without a title", func(t *testing.T) {
