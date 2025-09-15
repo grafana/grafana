@@ -871,7 +871,7 @@ export class GraphiteDatasource
     return lastValueFrom(this.doGraphiteRequest(httpOptions).pipe(mapToTags()));
   }
 
-  getVersion(optionalOptions: any) {
+  async getVersion(optionalOptions: any) {
     const options = optionalOptions || {};
 
     const httpOptions = {
@@ -879,6 +879,12 @@ export class GraphiteDatasource
       url: '/version',
       requestId: options.requestId,
     };
+
+    if (config.featureToggles.graphiteBackendMode) {
+      const version = await this.getResource<string>('version');
+      const semver = new SemVer(version);
+      return valid(semver) ? version : '';
+    }
 
     return lastValueFrom(
       this.doGraphiteRequest(httpOptions).pipe(
