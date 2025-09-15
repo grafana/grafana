@@ -2137,7 +2137,7 @@ func GetAvailableNotifiersV2() iter.Seq[VersionedNotifierPlugin] {
 			}
 			pl.Versions = append(pl.Versions, NotifierPluginVersion{
 				Version:   version,
-				CanCreate: false,
+				CanCreate: version == V1,
 				Options:   n.Options,
 				Info:      "",
 			})
