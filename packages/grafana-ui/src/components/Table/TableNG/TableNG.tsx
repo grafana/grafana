@@ -478,8 +478,10 @@ export function TableNG(props: TableNGProps) {
         const linkStyles = getLinkStyles(theme, canBeColorized);
         const cellParentStyles = clsx(defaultCellStyles, linkStyles);
         const maxHeightClassName = maxRowHeight ? getMaxHeightCellStyles(theme, cellStyleOptions) : undefined;
-        const styleFieldName = field.config.custom?.styleField;
-        const styleField = styleFieldName ? data.fields.find(predicateByName(styleFieldName)) : undefined;
+        const styleFieldValue = field.config.custom?.styleField;
+        const styleField = styleFieldValue ? data.fields.find(predicateByName(styleFieldValue)) : undefined;
+        const styleFieldName = styleField ? getDisplayName(styleField) : undefined;
+        const hasValidStyleField = Boolean(styleFieldName);
 
         // TODO: in future extend this to ensure a non-classic color scheme is set with AutoCell
 
@@ -507,11 +509,8 @@ export function TableNG(props: TableNGProps) {
             const cellColorStyles = getCellColorInlineStyles(cellOptions, displayValue, applyToRowBgFn != null);
             Object.assign(style, cellColorStyles);
           }
-          if (styleField) {
-            const cellStyleByField = parseStyleJson(props.row[getDisplayName(styleField)]);
-            if (cellStyleByField) {
-              style = { ...style, ...cellStyleByField };
-            }
+          if (hasValidStyleField) {
+            style = { ...style, ...parseStyleJson(props.row[styleFieldName!]) };
           }
 
           return (
