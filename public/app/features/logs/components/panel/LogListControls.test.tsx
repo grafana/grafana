@@ -12,6 +12,35 @@ import { LogListContextProvider } from './LogListContext';
 import { LogListControls } from './LogListControls';
 import { ScrollToLogsEvent } from './virtualization';
 
+const FILTER_LEVELS_LABEL_COPY = 'Filter levels';
+const SCROLL_BOTTOM_LABEL_COPY = 'Scroll to bottom';
+const SCROLL_TOP_LABEL_COPY = 'Scroll to top';
+const OLDEST_LOGS_LABEL_COPY = 'Oldest logs first';
+const DEDUPE_LABEL_COPY = 'Deduplication';
+const SHOW_TIMESTAMP_LABEL_COPY = 'Show timestamps';
+const WRAP_LINES_LABEL_COPY = 'Wrap lines';
+const WRAP_JSON_TOOLTIP_COPY = 'Enable line wrapping and prettify JSON';
+const WRAP_JSON_LABEL_COPY = 'Wrap JSON';
+const WRAP_DISABLE_LABEL_COPY = 'Disable line wrapping';
+const ENABLE_HIGHLIGHTING_LABEL_COPY = 'Enable highlighting';
+const EXPANDED_LABEL_COPY = 'Expanded';
+const COLLAPSED_LABEL_COPY = 'Collapsed';
+const SHOW_UNIQUE_LABELS_LABEL_COPY = 'Show unique labels';
+const HIDE_UNIQUE_LABELS_LABEL_COPY = 'Hide unique labels';
+const EXPAND_JSON_LOGS_LABEL_COPY = 'Expand JSON logs';
+const COLLAPSE_JSON_LOGS_LABEL_COPY = 'Collapse JSON logs';
+const ESCAPE_NEWLINES_TOOLTIP_COPY = 'Fix incorrectly escaped newline and tab sequences in log lines';
+const REMOVE_ESCAPE_NEWLINES_LABEL_COPY = 'Remove escaping';
+const TIMESTAMP_LABEL_COPY = 'Log timestamps';
+const TIMESTAMP_HIDE_LABEL_COPY = 'Hide timestamps';
+const FONT_SIZE_LARGE_LABEL_COPY = 'Large font';
+const FONT_SIZE_LARGE_TOOLTIP_COPY = 'Set large font';
+const FONT_SIZE_SMALL_LABEL_COPY = 'Small font';
+const FONT_SIZE_SMALL_TOOLTIP_COPY = 'Set small font';
+const DOWNLOAD_LOGS_LABEL_COPY = 'Download logs';
+
+const OLDEST_LOGS_LABEL_REGEX = /oldest logs first/;
+
 jest.mock('../../utils', () => ({
   ...jest.requireActual('../../utils'),
   downloadLogs: jest.fn(),
@@ -42,6 +71,13 @@ const contextProps = {
   openAssistantByLog: () => {},
 };
 
+const assertExpandedOptionsCopyVisible = () => {
+  expect(screen.getByText(EXPANDED_LABEL_COPY)).toBeVisible();
+  expect(screen.getByText(SCROLL_BOTTOM_LABEL_COPY)).toBeVisible();
+  expect(screen.getByText(OLDEST_LOGS_LABEL_COPY)).toBeVisible();
+  expect(screen.getByText(DEDUPE_LABEL_COPY)).toBeVisible();
+  expect(screen.getByText(SCROLL_TOP_LABEL_COPY)).toBeVisible();
+};
 describe('LogListControls', () => {
   test('Renders without errors', () => {
     render(
@@ -49,20 +85,18 @@ describe('LogListControls', () => {
         <LogListControls eventBus={new EventBusSrv()} />
       </LogListContextProvider>
     );
-    expect(screen.getByLabelText('Scroll to bottom')).toBeInTheDocument();
-    expect(screen.getByLabelText(/oldest logs first/)).toBeInTheDocument();
-    expect(screen.getByLabelText('Deduplication')).toBeInTheDocument();
-    expect(screen.getByLabelText('Display levels')).toBeInTheDocument();
-    expect(screen.getByLabelText('Show timestamps')).toBeInTheDocument();
-    expect(screen.getByLabelText('Wrap lines')).toBeInTheDocument();
-    expect(screen.getByLabelText('Enable highlighting')).toBeInTheDocument();
-    expect(screen.getByLabelText('Scroll to top')).toBeInTheDocument();
-    expect(screen.queryByLabelText('Show unique labels')).not.toBeInTheDocument();
-    expect(screen.queryByLabelText('Expand JSON logs')).not.toBeInTheDocument();
-    expect(
-      screen.queryByLabelText('Fix incorrectly escaped newline and tab sequences in log lines')
-    ).not.toBeInTheDocument();
-    expect(screen.queryByLabelText('Remove escaping')).not.toBeInTheDocument();
+    expect(screen.getByLabelText(SCROLL_BOTTOM_LABEL_COPY)).toBeInTheDocument();
+    expect(screen.getByLabelText(OLDEST_LOGS_LABEL_REGEX)).toBeInTheDocument();
+    expect(screen.getByLabelText(DEDUPE_LABEL_COPY)).toBeInTheDocument();
+    expect(screen.getByLabelText(FILTER_LEVELS_LABEL_COPY)).toBeInTheDocument();
+    expect(screen.getByLabelText(SHOW_TIMESTAMP_LABEL_COPY)).toBeInTheDocument();
+    expect(screen.getByLabelText(WRAP_LINES_LABEL_COPY)).toBeInTheDocument();
+    expect(screen.getByLabelText(ENABLE_HIGHLIGHTING_LABEL_COPY)).toBeInTheDocument();
+    expect(screen.getByLabelText(SCROLL_TOP_LABEL_COPY)).toBeInTheDocument();
+    expect(screen.queryByLabelText(SHOW_UNIQUE_LABELS_LABEL_COPY)).not.toBeInTheDocument();
+    expect(screen.queryByLabelText(EXPAND_JSON_LOGS_LABEL_COPY)).not.toBeInTheDocument();
+    expect(screen.queryByLabelText(ESCAPE_NEWLINES_TOOLTIP_COPY)).not.toBeInTheDocument();
+    expect(screen.queryByLabelText(REMOVE_ESCAPE_NEWLINES_LABEL_COPY)).not.toBeInTheDocument();
   });
 
   test('Renders legacy controls', () => {
@@ -71,8 +105,8 @@ describe('LogListControls', () => {
         <LogListControls eventBus={new EventBusSrv()} />
       </LogListContextProvider>
     );
-    expect(screen.getByLabelText('Show unique labels')).toBeInTheDocument();
-    expect(screen.getByLabelText('Expand JSON logs')).toBeInTheDocument();
+    expect(screen.getByLabelText(SHOW_UNIQUE_LABELS_LABEL_COPY)).toBeInTheDocument();
+    expect(screen.getByLabelText(EXPAND_JSON_LOGS_LABEL_COPY)).toBeInTheDocument();
   });
 
   test.each([CoreApp.Dashboard, CoreApp.PanelEditor, CoreApp.PanelViewer])(
@@ -83,14 +117,14 @@ describe('LogListControls', () => {
           <LogListControls eventBus={new EventBusSrv()} />
         </LogListContextProvider>
       );
-      expect(screen.getByLabelText('Scroll to bottom')).toBeInTheDocument();
-      expect(screen.getByLabelText('Scroll to top')).toBeInTheDocument();
-      expect(screen.getByLabelText('Display levels')).toBeInTheDocument();
-      expect(screen.queryByLabelText(/oldest logs first/)).not.toBeInTheDocument();
-      expect(screen.queryByLabelText('Deduplication')).not.toBeInTheDocument();
-      expect(screen.queryByLabelText('Show timestamps')).not.toBeInTheDocument();
-      expect(screen.queryByLabelText('Wrap lines')).not.toBeInTheDocument();
-      expect(screen.queryByLabelText('Enable highlighting')).not.toBeInTheDocument();
+      expect(screen.getByLabelText(SCROLL_BOTTOM_LABEL_COPY)).toBeInTheDocument();
+      expect(screen.getByLabelText(SCROLL_TOP_LABEL_COPY)).toBeInTheDocument();
+      expect(screen.getByLabelText(FILTER_LEVELS_LABEL_COPY)).toBeInTheDocument();
+      expect(screen.queryByLabelText(OLDEST_LOGS_LABEL_REGEX)).not.toBeInTheDocument();
+      expect(screen.queryByLabelText(DEDUPE_LABEL_COPY)).not.toBeInTheDocument();
+      expect(screen.queryByLabelText(SHOW_TIMESTAMP_LABEL_COPY)).not.toBeInTheDocument();
+      expect(screen.queryByLabelText(WRAP_LINES_LABEL_COPY)).not.toBeInTheDocument();
+      expect(screen.queryByLabelText(ENABLE_HIGHLIGHTING_LABEL_COPY)).not.toBeInTheDocument();
     }
   );
 
@@ -100,20 +134,18 @@ describe('LogListControls', () => {
         <LogListControls eventBus={new EventBusSrv()} />
       </LogListContextProvider>
     );
-    expect(screen.getByLabelText('Scroll to bottom')).toBeInTheDocument();
-    expect(screen.getByLabelText(/oldest logs first/)).toBeInTheDocument();
-    expect(screen.getByLabelText('Deduplication')).toBeInTheDocument();
-    expect(screen.getByLabelText('Display levels')).toBeInTheDocument();
-    expect(screen.getByLabelText('Show timestamps')).toBeInTheDocument();
-    expect(screen.getByLabelText('Wrap lines')).toBeInTheDocument();
-    expect(screen.getByLabelText('Enable highlighting')).toBeInTheDocument();
-    expect(screen.getByLabelText('Scroll to top')).toBeInTheDocument();
-    expect(screen.queryByLabelText('Show unique labels')).not.toBeInTheDocument();
-    expect(screen.queryByLabelText('Expand JSON logs')).not.toBeInTheDocument();
-    expect(
-      screen.queryByLabelText('Fix incorrectly escaped newline and tab sequences in log lines')
-    ).not.toBeInTheDocument();
-    expect(screen.queryByLabelText('Remove escaping')).not.toBeInTheDocument();
+    expect(screen.getByLabelText(SCROLL_BOTTOM_LABEL_COPY)).toBeInTheDocument();
+    expect(screen.getByLabelText(OLDEST_LOGS_LABEL_REGEX)).toBeInTheDocument();
+    expect(screen.getByLabelText(DEDUPE_LABEL_COPY)).toBeInTheDocument();
+    expect(screen.getByLabelText(FILTER_LEVELS_LABEL_COPY)).toBeInTheDocument();
+    expect(screen.getByLabelText(SHOW_TIMESTAMP_LABEL_COPY)).toBeInTheDocument();
+    expect(screen.getByLabelText(WRAP_LINES_LABEL_COPY)).toBeInTheDocument();
+    expect(screen.getByLabelText(ENABLE_HIGHLIGHTING_LABEL_COPY)).toBeInTheDocument();
+    expect(screen.getByLabelText(SCROLL_TOP_LABEL_COPY)).toBeInTheDocument();
+    expect(screen.queryByLabelText(SHOW_UNIQUE_LABELS_LABEL_COPY)).not.toBeInTheDocument();
+    expect(screen.queryByLabelText(EXPAND_JSON_LOGS_LABEL_COPY)).not.toBeInTheDocument();
+    expect(screen.queryByLabelText(ESCAPE_NEWLINES_TOOLTIP_COPY)).not.toBeInTheDocument();
+    expect(screen.queryByLabelText(REMOVE_ESCAPE_NEWLINES_LABEL_COPY)).not.toBeInTheDocument();
   });
 
   test('Allows to scroll', async () => {
@@ -124,8 +156,8 @@ describe('LogListControls', () => {
         <LogListControls eventBus={eventBus} />
       </LogListContextProvider>
     );
-    await userEvent.click(screen.getByLabelText('Scroll to bottom'));
-    await userEvent.click(screen.getByLabelText('Scroll to top'));
+    await userEvent.click(screen.getByLabelText(SCROLL_BOTTOM_LABEL_COPY));
+    await userEvent.click(screen.getByLabelText(SCROLL_TOP_LABEL_COPY));
     expect(eventBus.publish).toHaveBeenCalledTimes(2);
     expect(eventBus.publish).toHaveBeenCalledWith(
       new ScrollToLogsEvent({
@@ -139,6 +171,45 @@ describe('LogListControls', () => {
     );
   });
 
+  test('Expands options', async () => {
+    render(
+      <LogListContextProvider {...contextProps} sortOrder={LogsSortOrder.Ascending}>
+        <LogListControls eventBus={new EventBusSrv()} />
+      </LogListContextProvider>
+    );
+    // Initial state should be collapsed
+    expect(screen.getByLabelText(COLLAPSED_LABEL_COPY)).toBeVisible();
+    // Expanded label should not be visible
+    expect(screen.queryByText(EXPANDED_LABEL_COPY)).not.toBeInTheDocument();
+    // Expand options
+    await userEvent.click(screen.getByLabelText(COLLAPSED_LABEL_COPY));
+    // Verify that the label (state) is not collapsed
+    expect(screen.queryByLabelText(COLLAPSED_LABEL_COPY)).not.toBeInTheDocument();
+    expect(screen.getByLabelText(EXPANDED_LABEL_COPY)).toBeVisible();
+    // Verify the expanded labels are rendered
+    assertExpandedOptionsCopyVisible();
+  });
+
+  test('Expands options shown by default with container width > 1200', async () => {
+    const div = document.createElement('div');
+    const divSpy = jest.spyOn(div, 'clientWidth', 'get');
+    //@ts-expect-error
+    divSpy['clientWidth'] = 1201;
+    render(
+      //@ts-expect-error
+      <LogListContextProvider {...contextProps} sortOrder={LogsSortOrder.Ascending} containerElement={divSpy}>
+        <LogListControls eventBus={new EventBusSrv()} />
+      </LogListContextProvider>
+    );
+
+    // Verify the expanded labels are rendered
+    assertExpandedOptionsCopyVisible();
+    // Collapse options
+    await userEvent.click(screen.getByLabelText(EXPANDED_LABEL_COPY));
+    // State should be collapsed
+    expect(screen.getByLabelText(COLLAPSED_LABEL_COPY)).toBeVisible();
+  });
+
   test('Controls sort order', async () => {
     const onLogOptionsChange = jest.fn();
     render(
@@ -150,7 +221,7 @@ describe('LogListControls', () => {
         <LogListControls eventBus={new EventBusSrv()} />
       </LogListContextProvider>
     );
-    await userEvent.click(screen.getByLabelText(/oldest logs first/));
+    await userEvent.click(screen.getByLabelText(OLDEST_LOGS_LABEL_REGEX));
     expect(onLogOptionsChange).toHaveBeenCalledTimes(1);
     expect(onLogOptionsChange).toHaveBeenCalledWith('sortOrder', LogsSortOrder.Descending);
   });
@@ -162,7 +233,7 @@ describe('LogListControls', () => {
         <LogListControls eventBus={new EventBusSrv()} />
       </LogListContextProvider>
     );
-    await userEvent.click(screen.getByLabelText('Deduplication'));
+    await userEvent.click(screen.getByLabelText(DEDUPE_LABEL_COPY));
     await userEvent.click(screen.getByText('Numbers'));
     expect(onLogOptionsChange).toHaveBeenCalledTimes(1);
     expect(onLogOptionsChange).toHaveBeenCalledWith('dedupStrategy', LogsDedupStrategy.numbers);
@@ -175,7 +246,7 @@ describe('LogListControls', () => {
         <LogListControls eventBus={new EventBusSrv()} />
       </LogListContextProvider>
     );
-    await userEvent.click(screen.getByLabelText('Display levels'));
+    await userEvent.click(screen.getByLabelText(FILTER_LEVELS_LABEL_COPY));
     expect(await screen.findByText('All levels')).toBeVisible();
     expect(screen.getByText('Info')).toBeVisible();
     expect(screen.getByText('Debug')).toBeVisible();
@@ -194,7 +265,7 @@ describe('LogListControls', () => {
         <LogListControls eventBus={new EventBusSrv()} />
       </LogListContextProvider>
     );
-    await userEvent.click(screen.getByLabelText('Show timestamps'));
+    await userEvent.click(screen.getByLabelText(SHOW_TIMESTAMP_LABEL_COPY));
     expect(onLogOptionsChange).toHaveBeenCalledTimes(1);
     expect(onLogOptionsChange).toHaveBeenCalledWith('showTime', true);
   });
@@ -206,7 +277,7 @@ describe('LogListControls', () => {
         <LogListControls eventBus={new EventBusSrv()} />
       </LogListContextProvider>
     );
-    await userEvent.click(screen.getByLabelText('Wrap lines'));
+    await userEvent.click(screen.getByLabelText(WRAP_LINES_LABEL_COPY));
     expect(onLogOptionsChange).toHaveBeenCalledTimes(1);
     expect(onLogOptionsChange).toHaveBeenCalledWith('wrapLogMessage', true);
   });
@@ -227,22 +298,57 @@ describe('LogListControls', () => {
       </LogListContextProvider>
     );
 
-    await userEvent.click(screen.getByLabelText('Wrap lines'));
+    await userEvent.click(screen.getByLabelText('Wrap disabled'));
+    await userEvent.click(screen.getByText('Enable line wrapping'));
 
     expect(onLogOptionsChange).toHaveBeenCalledTimes(2);
     expect(onLogOptionsChange).toHaveBeenCalledWith('wrapLogMessage', true);
     expect(onLogOptionsChange).toHaveBeenCalledWith('prettifyJSON', false);
 
-    await userEvent.click(screen.getByLabelText('Wrap lines and expand JSON'));
-    expect(onLogOptionsChange).toHaveBeenCalledTimes(3);
+    await userEvent.click(screen.getByLabelText(WRAP_LINES_LABEL_COPY));
+    await userEvent.click(screen.getByText(WRAP_JSON_TOOLTIP_COPY));
+
+    expect(onLogOptionsChange).toHaveBeenCalledTimes(4);
     expect(onLogOptionsChange).toHaveBeenCalledWith('prettifyJSON', true);
 
-    await userEvent.click(screen.getByLabelText('Unwrap lines'));
+    await userEvent.click(screen.getByLabelText(WRAP_JSON_LABEL_COPY));
+    await userEvent.click(screen.getByText(WRAP_DISABLE_LABEL_COPY));
 
     expect(onLogOptionsChange).toHaveBeenCalledWith('wrapLogMessage', false);
     expect(onLogOptionsChange).toHaveBeenCalledWith('prettifyJSON', false);
 
-    expect(onLogOptionsChange).toHaveBeenCalledTimes(5);
+    expect(onLogOptionsChange).toHaveBeenCalledTimes(6);
+
+    config.featureToggles.newLogsPanel = originalFlagState;
+  });
+
+  test('Controls line wrapping and prettify JSON', async () => {
+    const originalFlagState = config.featureToggles.newLogsPanel;
+    config.featureToggles.newLogsPanel = true;
+
+    const onLogOptionsChange = jest.fn();
+    render(
+      <LogListContextProvider {...contextProps} showTime={false} onLogOptionsChange={onLogOptionsChange}>
+        <LogListControls eventBus={new EventBusSrv()} />
+      </LogListContextProvider>
+    );
+
+    await userEvent.click(screen.getByLabelText(TIMESTAMP_LABEL_COPY));
+    await userEvent.click(screen.getByText('Show millisecond timestamps'));
+
+    expect(onLogOptionsChange).toHaveBeenCalledTimes(1);
+    expect(onLogOptionsChange).toHaveBeenCalledWith('showTime', true);
+
+    await userEvent.click(screen.getByLabelText(TIMESTAMP_LABEL_COPY));
+    await userEvent.click(screen.getByText('Show nanosecond timestamps'));
+
+    expect(onLogOptionsChange).toHaveBeenCalledTimes(2);
+
+    await userEvent.click(screen.getByLabelText(TIMESTAMP_LABEL_COPY));
+    await userEvent.click(screen.getByText(TIMESTAMP_HIDE_LABEL_COPY));
+
+    expect(onLogOptionsChange).toHaveBeenCalledTimes(3);
+    expect(onLogOptionsChange).toHaveBeenCalledWith('showTime', false);
 
     config.featureToggles.newLogsPanel = originalFlagState;
   });
@@ -254,7 +360,7 @@ describe('LogListControls', () => {
         <LogListControls eventBus={new EventBusSrv()} />
       </LogListContextProvider>
     );
-    await userEvent.click(screen.getByLabelText('Enable highlighting'));
+    await userEvent.click(screen.getByLabelText(ENABLE_HIGHLIGHTING_LABEL_COPY));
     expect(onLogOptionsChange).toHaveBeenCalledTimes(1);
     expect(onLogOptionsChange).toHaveBeenCalledWith('syntaxHighlighting', true);
   });
@@ -265,13 +371,13 @@ describe('LogListControls', () => {
         <LogListControls eventBus={new EventBusSrv()} />
       </LogListContextProvider>
     );
-    await userEvent.click(screen.getByLabelText('Show unique labels'));
+    await userEvent.click(screen.getByLabelText(SHOW_UNIQUE_LABELS_LABEL_COPY));
     rerender(
       <LogListContextProvider {...contextProps} app={CoreApp.Explore} showUniqueLabels={false}>
         <LogListControls eventBus={new EventBusSrv()} />
       </LogListContextProvider>
     );
-    expect(screen.getByLabelText('Hide unique labels'));
+    expect(screen.getByLabelText(HIDE_UNIQUE_LABELS_LABEL_COPY));
   });
 
   test('Controls Expand JSON logs', async () => {
@@ -280,13 +386,13 @@ describe('LogListControls', () => {
         <LogListControls eventBus={new EventBusSrv()} />
       </LogListContextProvider>
     );
-    await userEvent.click(screen.getByLabelText('Expand JSON logs'));
+    await userEvent.click(screen.getByLabelText(EXPAND_JSON_LOGS_LABEL_COPY));
     rerender(
       <LogListContextProvider {...contextProps} showUniqueLabels={false}>
         <LogListControls eventBus={new EventBusSrv()} />
       </LogListContextProvider>
     );
-    expect(screen.getByLabelText('Collapse JSON logs'));
+    expect(screen.getByLabelText(COLLAPSE_JSON_LOGS_LABEL_COPY));
   });
 
   test('Controls font size', async () => {
@@ -298,11 +404,11 @@ describe('LogListControls', () => {
         <LogListControls eventBus={new EventBusSrv()} />
       </LogListContextProvider>
     );
-    await userEvent.click(screen.getByLabelText('Use small font size'));
-    await screen.findByLabelText('Use default font size');
+    await userEvent.click(screen.getByLabelText(FONT_SIZE_LARGE_LABEL_COPY));
+    await screen.findByLabelText(FONT_SIZE_LARGE_TOOLTIP_COPY);
 
-    await userEvent.click(screen.getByLabelText('Use default font size'));
-    await screen.findByLabelText('Use small font size');
+    await userEvent.click(screen.getByLabelText(FONT_SIZE_SMALL_LABEL_COPY));
+    await screen.findByLabelText(FONT_SIZE_SMALL_TOOLTIP_COPY);
 
     config.featureToggles.newLogsPanel = originalValue;
   });
@@ -318,7 +424,7 @@ describe('LogListControls', () => {
         <LogListControls eventBus={new EventBusSrv()} />
       </LogListContextProvider>
     );
-    await userEvent.click(screen.getByLabelText('Download logs'));
+    await userEvent.click(screen.getByLabelText(DOWNLOAD_LOGS_LABEL_COPY));
     await userEvent.click(await screen.findByText(label));
     expect(downloadLogs).toHaveBeenCalledTimes(1);
     expect(downloadLogs).toHaveBeenCalledWith(format, [], undefined);
@@ -336,7 +442,7 @@ describe('LogListControls', () => {
         <LogListControls eventBus={new EventBusSrv()} />
       </LogListContextProvider>
     );
-    await userEvent.click(screen.getByLabelText('Download logs'));
+    await userEvent.click(screen.getByLabelText(DOWNLOAD_LOGS_LABEL_COPY));
     await userEvent.click(await screen.findByText('txt'));
     expect(downloadLogs).toHaveBeenCalledWith('text', filteredLogs, undefined);
   });
@@ -348,12 +454,12 @@ describe('LogListControls', () => {
         <LogListControls eventBus={new EventBusSrv()} />
       </LogListContextProvider>
     );
-    await userEvent.click(screen.getByLabelText('Fix incorrectly escaped newline and tab sequences in log lines'));
+    await userEvent.click(screen.getByLabelText(ESCAPE_NEWLINES_TOOLTIP_COPY));
     rerender(
       <LogListContextProvider {...contextProps} logs={[log]}>
         <LogListControls eventBus={new EventBusSrv()} />
       </LogListContextProvider>
     );
-    await userEvent.click(screen.getByLabelText('Remove escaping'));
+    await userEvent.click(screen.getByLabelText(REMOVE_ESCAPE_NEWLINES_LABEL_COPY));
   });
 });

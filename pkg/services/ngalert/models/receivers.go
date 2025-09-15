@@ -145,6 +145,14 @@ type Integration struct {
 	SecureSettings map[string]string
 }
 
+func (integration *Integration) ResourceType() string {
+	return "contactPoint"
+}
+
+func (integration *Integration) ResourceID() string {
+	return integration.UID
+}
+
 // IntegrationConfig represents the configuration of an integration. It contains the type and information about the fields.
 type IntegrationConfig struct {
 	Type    string

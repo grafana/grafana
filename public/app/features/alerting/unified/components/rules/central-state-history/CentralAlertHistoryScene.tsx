@@ -65,6 +65,7 @@ export const CentralAlertHistoryScene = ({
     to: 'now',
   },
   hideFilters,
+  hideAlertRuleColumn,
 }: CentralAlertHistorySceneV1Props = {}) => {
   //track the loading of the central alert state history
 
@@ -134,12 +135,12 @@ export const CentralAlertHistoryScene = ({
         children: [
           getEventsScenesFlexItem(),
           new SceneFlexItem({
-            body: new HistoryEventsListObject({}),
+            body: new HistoryEventsListObject({ hideAlertRuleColumn }),
           }),
         ],
       }),
     });
-  }, [defaultLabelsFilter, defaultTimeRange, hideFilters]);
+  }, [defaultLabelsFilter, defaultTimeRange, hideFilters, hideAlertRuleColumn]);
 
   // we need to call this to sync the url with the scene state
   const isUrlSyncInitialized = useUrlSync(scene);

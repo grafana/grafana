@@ -233,6 +233,7 @@ export function NestedFolderPicker({
             kind: 'folder' as const,
             title: item.title,
             uid: item.uid,
+            parentUID: item.parentUID,
           },
         })) ?? [];
     }

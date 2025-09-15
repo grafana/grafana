@@ -47,7 +47,6 @@ import (
 	dashsvc "github.com/grafana/grafana/pkg/services/dashboards/service"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/librarypanels"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/services/provisioning"
@@ -59,6 +58,7 @@ import (
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/storage/unified/apistore"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 var (
@@ -89,7 +89,6 @@ type DashboardsAPIBuilder struct {
 	scheme                       *runtime.Scheme
 	search                       *SearchHandler
 	dashStore                    dashboards.Store
-	folderStore                  folder.FolderStore
 	QuotaService                 quota.Service
 	ProvisioningService          provisioning.ProvisioningService
 	cfg                          *setting.Cfg
@@ -125,7 +124,6 @@ func RegisterAPIService(
 	dual dualwrite.Service,
 	sorter sort.Service,
 	quotaService quota.Service,
-	folderStore folder.FolderStore,
 	libraryPanelSvc librarypanels.Service,
 	restConfigProvider apiserver.RestConfigProvider,
 	userService user.Service,
@@ -149,7 +147,6 @@ func RegisterAPIService(
 		dashboardProvisioningService: provisioningDashboardService,
 		search:                       NewSearchHandler(tracing, dual, legacyDashboardSearcher, unified, features),
 		dashStore:                    dashStore,
-		folderStore:                  folderStore,
 		QuotaService:                 quotaService,
 		ProvisioningService:          provisioning,
 		cfg:                          cfg,
@@ -281,6 +278,11 @@ func (b *DashboardsAPIBuilder) validateDelete(ctx context.Context, a admission.A
 	nsInfo, err := claims.ParseNamespace(a.GetNamespace())
 	if err != nil {
 		return fmt.Errorf("%v: %w", "failed to parse namespace", err)
+	}
+
+	// HACK: deletion validation currently doesn't work for the standalone case. So we currently skip it.
+	if b.isStandalone && util.IsInterfaceNil(b.dashboardProvisioningService) {
+		return nil
 	}
 
 	// The name of the resource is the dashboard UID

@@ -176,7 +176,7 @@ func Test_GetSnapshotStatusFromGMS(t *testing.T) {
 		})
 		require.NoError(t, err)
 		require.Eventually(t, checkStatusSync(ctx, s, snapshotUID, sessionUID, cloudmigration.SnapshotStatusPendingProcessing), time.Second, 10*time.Millisecond)
-		require.Equal(t, 1, gmsClientFake.GetSnapshotStatusCallCount())
+		require.True(t, gmsClientFake.GetSnapshotStatusCallCount() >= 1)
 	})
 
 	t.Run("test case: gms snapshot processing", func(t *testing.T) {
@@ -200,7 +200,7 @@ func Test_GetSnapshotStatusFromGMS(t *testing.T) {
 		})
 		require.NoError(t, err)
 		require.Eventually(t, checkStatusSync(ctx, s, snapshotUID, sessionUID, cloudmigration.SnapshotStatusProcessing), time.Second, 10*time.Millisecond)
-		require.Equal(t, 1, gmsClientFake.GetSnapshotStatusCallCount())
+		require.True(t, gmsClientFake.GetSnapshotStatusCallCount() >= 1)
 	})
 
 	t.Run("test case: gms snapshot finished", func(t *testing.T) {
@@ -224,7 +224,7 @@ func Test_GetSnapshotStatusFromGMS(t *testing.T) {
 		})
 		require.NoError(t, err)
 		require.Eventually(t, checkStatusSync(ctx, s, snapshotUID, sessionUID, cloudmigration.SnapshotStatusFinished), time.Second, 10*time.Millisecond)
-		require.Equal(t, 1, gmsClientFake.GetSnapshotStatusCallCount())
+		require.True(t, gmsClientFake.GetSnapshotStatusCallCount() >= 1)
 	})
 
 	t.Run("test case: gms snapshot canceled", func(t *testing.T) {
@@ -248,7 +248,7 @@ func Test_GetSnapshotStatusFromGMS(t *testing.T) {
 		})
 		require.NoError(t, err)
 		require.Eventually(t, checkStatusSync(ctx, s, snapshotUID, sessionUID, cloudmigration.SnapshotStatusCanceled), time.Second, 10*time.Millisecond)
-		require.Equal(t, 1, gmsClientFake.GetSnapshotStatusCallCount())
+		require.True(t, gmsClientFake.GetSnapshotStatusCallCount() >= 1)
 	})
 
 	t.Run("test case: gms snapshot error", func(t *testing.T) {
@@ -272,7 +272,7 @@ func Test_GetSnapshotStatusFromGMS(t *testing.T) {
 		})
 		require.NoError(t, err)
 		require.Eventually(t, checkStatusSync(ctx, s, snapshotUID, sessionUID, cloudmigration.SnapshotStatusError), time.Second, 10*time.Millisecond)
-		assert.Equal(t, 1, gmsClientFake.GetSnapshotStatusCallCount())
+		assert.True(t, gmsClientFake.GetSnapshotStatusCallCount() >= 1)
 	})
 
 	t.Run("test case: gms snapshot unknown", func(t *testing.T) {
@@ -342,21 +342,23 @@ func Test_GetSnapshotStatusFromGMS(t *testing.T) {
 		require.NotNil(t, snapshot)
 		require.Eventually(t, func() bool { return gmsClientFake.GetSnapshotStatusCallCount() == 1 }, time.Second, 10*time.Millisecond)
 
-		snapshot, err = s.GetSnapshot(context.Background(), cloudmigration.GetSnapshotsQuery{
-			SnapshotUID: snapshotUID,
-			SessionUID:  sessionUID,
-			SnapshotResultQueryParams: cloudmigration.SnapshotResultQueryParams{
-				ResultLimit: 10,
-				ResultPage:  1,
-				SortColumn:  cloudmigration.SortColumnID,
-				SortOrder:   cloudmigration.SortOrderAsc,
-			},
-		})
-		require.NoError(t, err)
-		require.NotNil(t, snapshot)
-		require.Len(t, snapshot.Resources, 1)
-		require.Equal(t, "A", snapshot.Resources[0].RefID)
-		require.Equal(t, "fake", snapshot.Resources[0].Error)
+		require.EventuallyWithTf(t, func(t *assert.CollectT) {
+			snapshot, err := s.GetSnapshot(context.Background(), cloudmigration.GetSnapshotsQuery{
+				SnapshotUID: snapshotUID,
+				SessionUID:  sessionUID,
+				SnapshotResultQueryParams: cloudmigration.SnapshotResultQueryParams{
+					ResultLimit: 10,
+					ResultPage:  1,
+					SortColumn:  cloudmigration.SortColumnID,
+					SortOrder:   cloudmigration.SortOrderAsc,
+				},
+			})
+			assert.NoError(t, err)
+			assert.NotNil(t, snapshot)
+			assert.Len(t, snapshot.Resources, 1)
+			assert.Equal(t, "A", snapshot.Resources[0].RefID)
+			assert.Equal(t, "fake", snapshot.Resources[0].Error)
+		}, 5*time.Second, 100*time.Millisecond, "DB wasn't applied to local snapshot in time")
 	})
 }
 

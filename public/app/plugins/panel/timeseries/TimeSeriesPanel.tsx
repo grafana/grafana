@@ -1,6 +1,15 @@
 import { useMemo, useState } from 'react';
 
-import { PanelProps, DataFrameType, DashboardCursorSync } from '@grafana/data';
+import {
+  PanelProps,
+  DataFrameType,
+  DashboardCursorSync,
+  DataFrame,
+  alignTimeRangeCompareData,
+  shouldAlignTimeCompare,
+  useDataLinksContext,
+  FieldType,
+} from '@grafana/data';
 import { PanelDataErrorView } from '@grafana/runtime';
 import { TooltipDisplayMode, VizOrientation } from '@grafana/schema';
 import { EventBusPlugin, KeyboardPlugin, TooltipPlugin2, usePanelContext } from '@grafana/ui';
@@ -38,16 +47,47 @@ export const TimeSeriesPanel = ({
     onThresholdsChange,
     canEditThresholds,
     showThresholds,
-    dataLinkPostProcessor,
     eventBus,
     canExecuteActions,
   } = usePanelContext();
+
+  const { dataLinkPostProcessor } = useDataLinksContext();
 
   const userCanExecuteActions = useMemo(() => canExecuteActions?.() ?? false, [canExecuteActions]);
   // Vertical orientation is not available for users through config.
   // It is simplified version of horizontal time series panel and it does not support all plugins.
   const isVerticallyOriented = options.orientation === VizOrientation.Vertical;
-  const frames = useMemo(() => prepareGraphableFields(data.series, config.theme2, timeRange), [data.series, timeRange]);
+  const { frames, compareDiffMs } = useMemo(() => {
+    let frames = prepareGraphableFields(data.series, config.theme2, timeRange);
+    if (frames != null) {
+      let compareDiffMs: number[] = [0];
+
+      frames.forEach((frame: DataFrame) => {
+        const diffMs = frame.meta?.timeCompare?.diffMs ?? 0;
+
+        frame.fields.forEach((field) => {
+          if (field.type !== FieldType.time) {
+            compareDiffMs.push(diffMs);
+          }
+        });
+
+        if (diffMs !== 0) {
+          // Check if the compared frame needs time alignment
+          // Apply alignment when time ranges match (no shift applied yet)
+          const needsAlignment = shouldAlignTimeCompare(frame, frames, timeRange);
+
+          if (needsAlignment) {
+            alignTimeRangeCompareData(frame, diffMs, config.theme2);
+          }
+        }
+      });
+
+      return { frames, compareDiffMs };
+    }
+
+    return { frames };
+  }, [data.series, timeRange]);
+
   const timezones = useMemo(() => getTimezones(options.timezone, timeZone), [options.timezone, timeZone]);
   const suggestions = useMemo(() => {
     if (frames?.length && frames.every((df) => df.meta?.type === DataFrameType.TimeSeriesLong)) {
@@ -141,6 +181,7 @@ export const TimeSeriesPanel = ({
                       replaceVariables={replaceVariables}
                       dataLinks={dataLinks}
                       canExecuteActions={userCanExecuteActions}
+                      compareDiffMs={compareDiffMs}
                     />
                   );
                 }}

@@ -109,7 +109,13 @@ DashboardLink: {
 	includeVars: bool | *false
 	// If true, includes current time range in the link as query params
 	keepTime: bool | *false
+	// Placement can be used to display the link somewhere else on the dashboard other than above the visualisations.
+	placement?: DashboardLinkPlacement
 }
+
+// Dashboard Link placement. Defines where the link should be displayed. 
+// - "inControlsMenu" renders the link in bottom part of the dashboard controls dropdown menu
+DashboardLinkPlacement: "inControlsMenu"
 
 // A topic is attached to DataFrame metadata in query results.
 // This specifies where the data should be used.
@@ -212,6 +218,9 @@ FieldConfig: {
 
 	// The behavior when clicking on a result
 	links?: [...]
+
+	// Define interactive HTTP requests that can be triggered from data visualizations.
+	actions?: [...Action]
 
 	// Alternative to empty string
 	noValue?: string
@@ -355,6 +364,48 @@ FieldColor: {
 
 // Dashboard Link type. Accepted values are dashboards (to refer to another dashboard) and link (to refer to an external resource)
 DashboardLinkType: "link" | "dashboards"
+
+ActionType: "fetch" | "infinity"
+
+FetchOptions: {
+	method: HttpRequestMethod
+	url: string
+	body?: string
+	// These are 2D arrays of strings, each representing a key-value pair
+	// We are defining them this way because we can't generate a go struct that 
+	// that would have exactly two strings in each sub-array
+	queryParams?: [...[...string]]
+	headers?: [...[...string]]
+}
+
+InfinityOptions: FetchOptions & {
+	datasourceUid: string
+}
+
+HttpRequestMethod: "GET" | "PUT" | "POST" | "DELETE" | "PATCH" 
+
+// Action variable type
+ActionVariableType: "string"
+
+ActionVariable: {
+	key: string
+	name: string
+	type: ActionVariableType
+}
+
+Action: {
+	type: ActionType
+	title: string
+	fetch?: FetchOptions
+	infinity?: InfinityOptions
+	confirmation?: string
+	oneClick?: bool
+	variables?: [...ActionVariable]
+	style?: {
+		backgroundColor?: string
+	}
+}
+
 
 // --- Common types ---
 Kind: {
@@ -684,8 +735,8 @@ VariableSort: "disabled" | "alphabeticalAsc" | "alphabeticalDesc" | "numericalAs
 VariableRefresh: *"never" | "onDashboardLoad" | "onTimeRangeChanged"
 
 // Determine if the variable shows on dashboard
-// Accepted values are `dontHide` (show label and value), `hideLabel` (show value only), `hideVariable` (show nothing).
-VariableHide: *"dontHide" | "hideLabel" | "hideVariable"
+// Accepted values are `dontHide` (show label and value), `hideLabel` (show value only), `hideVariable` (show nothing), `inControlsMenu` (show in a drop-down menu).
+VariableHide: *"dontHide" | "hideLabel" | "hideVariable" | "inControlsMenu"
 
 // Determine the origin of the adhoc variable filter
 FilterOrigin: "dashboard"

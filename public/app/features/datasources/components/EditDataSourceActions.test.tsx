@@ -28,6 +28,14 @@ jest.mock('@grafana/runtime', () => ({
   useFavoriteDatasources: jest.fn(),
 }));
 
+// Mock picker components
+jest.mock('./picker/DataSourcePicker', () => ({
+  INTERACTION_EVENT_NAME: 'dashboards_dspicker_clicked',
+  INTERACTION_ITEM: {
+    TOGGLE_FAVORITE: 'toggle_favorite',
+  },
+}));
+
 // Set default plugin links hook
 setPluginLinksHook(() => ({ links: [], isLoading: false }));
 

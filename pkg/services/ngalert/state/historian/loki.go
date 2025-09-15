@@ -12,16 +12,17 @@ import (
 	"time"
 
 	"github.com/benbjohnson/clock"
+	"github.com/grafana/alerting/notify/historian/lokiclient"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-	"github.com/grafana/grafana/pkg/services/ngalert/lokiclient"
 	"go.opentelemetry.io/otel/trace"
+
+	alertingInstrument "github.com/grafana/alerting/http/instrument"
 
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/ngalert/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/ngalert/client"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -85,7 +86,7 @@ type RemoteLokiBackend struct {
 	ruleStore      RuleStore
 }
 
-func NewRemoteLokiBackend(logger log.Logger, cfg lokiclient.LokiConfig, req client.Requester, metrics *metrics.Historian, tracer tracing.Tracer, ruleStore RuleStore, ac AccessControl) *RemoteLokiBackend {
+func NewRemoteLokiBackend(logger log.Logger, cfg lokiclient.LokiConfig, req alertingInstrument.Requester, metrics *metrics.Historian, tracer tracing.Tracer, ruleStore RuleStore, ac AccessControl) *RemoteLokiBackend {
 	return &RemoteLokiBackend{
 		client:         lokiclient.NewLokiClient(cfg, req, metrics.BytesWritten, metrics.WriteDuration, logger, tracer, LokiClientSpanName),
 		externalLabels: cfg.ExternalLabels,

@@ -140,9 +140,8 @@ describe('BootstrapStep', () => {
 
     it('should render correct info for GitHub repository type', async () => {
       setup();
-      expect(await screen.findByText('Grafana instance')).toBeInTheDocument();
-      expect(screen.getByText('External storage')).toBeInTheDocument();
-      expect(screen.getAllByText('Empty')).toHaveLength(2); // Both should show empty
+      expect(screen.getAllByText('External storage')).toHaveLength(2);
+      expect(screen.getAllByText('Empty')).toHaveLength(3); // Three elements should have the role "Empty" (2 external + 1 unmanaged)
     });
 
     it('should render correct info for local file repository type', async () => {
@@ -170,7 +169,7 @@ describe('BootstrapStep', () => {
 
       setup();
 
-      expect(await screen.findByText('2 files')).toBeInTheDocument();
+      expect(await screen.getAllByText('2 files')).toHaveLength(2);
     });
 
     it('should display resource counts when resources exist', async () => {

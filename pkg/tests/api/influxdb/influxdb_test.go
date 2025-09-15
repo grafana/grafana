@@ -19,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
+	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 func TestMain(m *testing.M) {
@@ -27,10 +28,8 @@ func TestMain(m *testing.M) {
 
 func TestIntegrationInflux(t *testing.T) {
 	t.Skip("skipping due to flaky test")
+	testutil.SkipIntegrationTestInShortMode(t)
 
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		DisableAnonymous: true,
 	})

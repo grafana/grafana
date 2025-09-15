@@ -12,12 +12,8 @@ import (
 	"k8s.io/apimachinery/pkg/selection"
 
 	claims "github.com/grafana/authlib/types"
-
-	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	"github.com/grafana/grafana/pkg/storage/unified/resource"
-	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
-
 	folderv1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/log"
 	internalfolders "github.com/grafana/grafana/pkg/registry/apis/folders"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -26,6 +22,8 @@ import (
 	dashboardsearch "github.com/grafana/grafana/pkg/services/dashboards/service/search"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -99,6 +97,10 @@ func (ss *FolderUnifiedStoreImpl) Update(ctx context.Context, cmd folder.UpdateF
 		return nil, err
 	}
 	updated := obj.DeepCopy()
+	meta, err := utils.MetaAccessor(updated)
+	if err != nil {
+		return nil, err
+	}
 
 	if cmd.NewTitle != nil {
 		err = unstructured.SetNestedField(updated.Object, *cmd.NewTitle, "spec", "title")
@@ -113,16 +115,20 @@ func (ss *FolderUnifiedStoreImpl) Update(ctx context.Context, cmd folder.UpdateF
 		}
 	}
 	if cmd.NewParentUID != nil {
-		meta, err := utils.MetaAccessor(updated)
-		if err != nil {
-			return nil, err
-		}
 		meta.SetFolder(*cmd.NewParentUID)
 	} else {
 		// only compare versions if not moving the folder
 		if !cmd.Overwrite && (cmd.Version != int(obj.GetGeneration())) {
 			return nil, dashboards.ErrDashboardVersionMismatch
 		}
+	}
+
+	// nolint:staticcheck
+	if cmd.ManagerKindClassicFP != "" {
+		meta.SetManagerProperties(utils.ManagerProperties{
+			Kind:     utils.ManagerKindClassicFP,
+			Identity: cmd.ManagerKindClassicFP,
+		})
 	}
 
 	out, err := ss.k8sclient.Update(ctx, updated, cmd.OrgID, v1.UpdateOptions{

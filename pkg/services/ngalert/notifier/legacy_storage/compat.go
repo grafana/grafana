@@ -94,7 +94,7 @@ func PostableApiReceiverToReceiver(postable *apimodels.PostableApiReceiver, prov
 
 // GetReceiverProvenance determines the provenance of a definitions.PostableApiReceiver based on the provenance of its integrations.
 func GetReceiverProvenance(storedProvenances map[string]models.Provenance, r *apimodels.PostableApiReceiver) models.Provenance {
-	if len(r.GrafanaManagedReceivers) == 0 {
+	if len(r.GrafanaManagedReceivers) == 0 || len(storedProvenances) == 0 {
 		return models.ProvenanceNone
 	}
 

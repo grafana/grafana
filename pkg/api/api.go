@@ -47,7 +47,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/frontend"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginaccesscontrol"
 	publicdashboardsapi "github.com/grafana/grafana/pkg/services/publicdashboards/api"
@@ -85,16 +84,8 @@ func (hs *HTTPServer) registerRoutes() {
 	r.Get("/login", hs.LoginView)
 	r.Get("/invite/:code", hs.Index)
 
-	if hs.Features.IsEnabledGlobally(featuremgmt.FlagMultiTenantFrontend) {
-		index, err := frontend.NewIndexProvider(hs.Cfg, hs.License)
-		if err != nil {
-			panic(err) // ???
-		}
-		r.Get("/femt", index.HandleRequest)
-
-		// Temporarily expose the full bootdata via API
-		r.Get("/bootdata", reqNoAuth, hs.GetBootdata)
-	}
+	// Temporary MT-frontend config endpoint
+	r.Get("/bootdata", reqNoAuth, hs.GetBootdata)
 
 	// authed views
 	r.Get("/", reqSignedIn, hs.Index)
@@ -116,7 +107,6 @@ func (hs *HTTPServer) registerRoutes() {
 	r.Get("/org/teams/new", authorize(ac.EvalPermission(ac.ActionTeamsCreate)), hs.Index)
 	r.Get("/org/serviceaccounts", authorize(ac.EvalPermission(serviceaccounts.ActionRead)), hs.Index)
 	r.Get("/org/serviceaccounts/:serviceAccountId", authorize(ac.EvalPermission(serviceaccounts.ActionRead)), hs.Index)
-	r.Get("/org/apikeys/", authorize(ac.EvalPermission(ac.ActionAPIKeyRead)), hs.Index)
 	r.Get("/dashboard/import/", reqSignedIn, hs.Index)
 	r.Get("/configuration", reqGrafanaAdmin, hs.Index)
 	r.Get("/admin", reqOrgAdmin, hs.Index)
