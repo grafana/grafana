@@ -26,6 +26,9 @@ func TestValidateRepository(t *testing.T) {
 			repository: func() *MockRepository {
 				m := NewMockRepository(t)
 				m.On("Config").Return(&provisioning.Repository{
+					ObjectMeta: metav1.ObjectMeta{
+						Finalizers: []string{CleanFinalizer, RemoveOrphanResourcesFinalizer},
+					},
 					Spec: provisioning.RepositorySpec{
 						Title: "Test Repo",
 					},
@@ -232,6 +235,28 @@ func TestValidateRepository(t *testing.T) {
 				require.Contains(t, errors.ToAggregate().Error(), "spec.workflow: Invalid value: \"invalid\": invalid workflow")
 			},
 		},
+		{
+			name: "mutual exclusive finalizers are set together",
+			repository: func() *MockRepository {
+				m := NewMockRepository(t)
+				m.On("Config").Return(&provisioning.Repository{
+					ObjectMeta: metav1.ObjectMeta{
+						Finalizers: []string{RemoveOrphanResourcesFinalizer, ReleaseOrphanResourcesFinalizer},
+					},
+					Spec: provisioning.RepositorySpec{
+						Title:     "Test Repo",
+						Type:      provisioning.GitHubRepositoryType,
+						Workflows: []provisioning.Workflow{provisioning.WriteWorkflow},
+					},
+				})
+				m.On("Validate").Return(field.ErrorList{})
+				return m
+			}(),
+			expectedErrs: 1,
+			validateError: func(t *testing.T, errors field.ErrorList) {
+				require.Contains(t, errors.ToAggregate().Error(), "cannot have both remove and release orphan resources finalizers")
+			},
+		},
 	}
 
 	for _, tt := range tests {
@@ -360,9 +385,6 @@ func TestTestRepository(t *testing.T) {
 }
 
 func TestTester_TestRepository(t *testing.T) {
-	tester := &Tester{}
-
-	// Test that it properly delegates to TestRepository
 	repository := NewMockRepository(t)
 	repository.On("Config").Return(&provisioning.Repository{
 		Spec: provisioning.RepositorySpec{
@@ -375,7 +397,7 @@ func TestTester_TestRepository(t *testing.T) {
 		Success: true,
 	}, nil)
 
-	results, err := tester.TestRepository(context.Background(), repository)
+	results, err := TestRepository(context.Background(), repository)
 	require.NoError(t, err)
 	require.NotNil(t, results)
 	require.Equal(t, http.StatusOK, results.Code)

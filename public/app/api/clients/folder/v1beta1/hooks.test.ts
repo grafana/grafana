@@ -17,7 +17,7 @@ import {
   useDeleteMultipleFoldersMutationFacade,
   useMoveMultipleFoldersMutationFacade,
 } from './hooks';
-import { setupCreateFolder } from './test-utils';
+import { setupCreateFolder, setupUpdateFolder } from './test-utils';
 
 import { useDeleteFolderMutation, useUpdateFolderMutation } from './index';
 
@@ -68,7 +68,7 @@ const renderFolderHook = async () => {
     wrapper: getWrapper({}),
   });
   await waitFor(() => {
-    expect(result.current.isLoading).toBe(false);
+    expect(result.current.data).toBeDefined();
   });
   return result;
 };
@@ -246,26 +246,47 @@ describe('useMoveMultipleFoldersMutationFacade', () => {
   });
 });
 
-describe('useCreateFolder', () => {
-  describe.each([
-    // app platform
-    true,
-    // legacy
-    false,
-  ])('folderAppPlatformAPI toggle set to: %s', (toggle) => {
-    beforeEach(() => {
-      config.featureToggles.foldersAppPlatformAPI = toggle;
-    });
-    afterEach(() => {
-      config.featureToggles = originalToggles;
-    });
+describe.each([
+  // app platform
+  true,
+  // legacy
+  false,
+])('folderAppPlatformAPI toggle set to: %s', (toggle) => {
+  beforeEach(() => {
+    config.featureToggles.foldersAppPlatformAPI = toggle;
+  });
+  afterEach(() => {
+    config.featureToggles = originalToggles;
+  });
 
-    it('creates a folder', async () => {
+  describe('useCreateFolder', () => {
+    it('creates a folder at the root level', async () => {
       const { user } = setupCreateFolder();
 
-      await user.click(screen.getByText('Create Folder'));
+      await user.click(screen.getByText(/Create Folder at root/));
 
       expect(await screen.findByText('Folder created')).toBeInTheDocument();
+      expect(dispatchMockFn).toHaveBeenCalled();
+    });
+
+    it('creates a folder in a nested folder', async () => {
+      const { user } = setupCreateFolder();
+
+      await user.click(screen.getByText(/Create Folder in nested folder/));
+
+      expect(await screen.findByText('Folder created')).toBeInTheDocument();
+      expect(dispatchMockFn).toHaveBeenCalled();
+    });
+  });
+
+  describe('useUpdateFolder', () => {
+    it('updates a folder', async () => {
+      const { user } = await setupUpdateFolder(folderA_folderA.item.uid);
+
+      await user.type(screen.getByLabelText('Folder Title'), 'Updated Folder');
+      await user.click(screen.getByText('Update Folder'));
+
+      expect(await screen.findByText('Folder updated')).toBeInTheDocument();
     });
   });
 });

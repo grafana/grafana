@@ -311,6 +311,9 @@ const ResourcePicker = ({
                 <Trans i18nKey="components.resource-picker.header-scope">Scope</Trans>
               </td>
               <td className={styles.cell}>
+                <Trans i18nKey="components.resource-picker.header-resource-group">Resource Group</Trans>
+              </td>
+              <td className={styles.cell}>
                 <Trans i18nKey="components.resource-picker.header-type">Type</Trans>
               </td>
               <td className={styles.cell}>

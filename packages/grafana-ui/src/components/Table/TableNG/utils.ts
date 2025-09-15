@@ -692,7 +692,7 @@ export const frameToRecords = (frame: DataFrame): TableRow[] => {
 
   // Creates a function that converts a DataFrame into an array of TableRows
   // Uses new Function() for performance as it's faster than creating rows using loops
-  const convert = new Function('frame', fnBody) as unknown as FrameToRowsConverter;
+  const convert = new Function('frame', fnBody) as FrameToRowsConverter;
   return convert(frame);
 };
 
@@ -843,6 +843,21 @@ export const processNestedTableRows = (
 
 /**
  * @internal
+ * Calculate the footer height based on the maximum reducer count
+ */
+export const calculateFooterHeight = (fields: Field[]): number => {
+  let maxReducerCount = 0;
+  for (const field of fields) {
+    maxReducerCount = Math.max(maxReducerCount, field.config.custom?.footer?.reducers?.length ?? 0);
+  }
+
+  // Base height (+ padding) + height per reducer
+  return maxReducerCount > 0 ? maxReducerCount * TABLE.LINE_HEIGHT + TABLE.CELL_PADDING * 2 : 0;
+};
+
+/**
+ * @internal
+ * returns the display name of a field
  * returns the display name of a field.
  * We intentionally do not want to use @grafana/data's getFieldDisplayName here,
  * instead we have a call to cacheFieldDisplayNames up in TablePanel to handle this
@@ -978,3 +993,19 @@ export const displayJsonValue: DisplayProcessor = (value: unknown): DisplayValue
 
   return { text: displayValue, numeric: Number.NaN };
 };
+
+export function getSummaryCellTextAlign(textAlign: TextAlign, cellType: TableCellDisplayMode): TextAlign {
+  // gauge is weird. left-aligned gauge has the viz on the left and its numbers on the right, and vice-versa.
+  // if you center-aligned your gauge... ok.
+  if (cellType === TableCellDisplayMode.Gauge) {
+    return (
+      {
+        left: 'right',
+        right: 'left',
+        center: 'center',
+      } as const
+    )[textAlign];
+  }
+
+  return textAlign;
+}

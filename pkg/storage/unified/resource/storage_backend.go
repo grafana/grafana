@@ -18,43 +18,189 @@ import (
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
+	"github.com/grafana/grafana/pkg/util/debouncer"
+	"github.com/prometheus/client_golang/prometheus"
+	"go.opentelemetry.io/otel/trace"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 const (
-	defaultListBufferSize = 100
+	defaultListBufferSize       = 100
+	prunerMaxEvents             = 20
+	defaultEventRetentionPeriod = 1 * time.Hour
+	defaultEventPruningInterval = 5 * time.Minute
 )
 
-// Unified storage backend based on KV storage.
+// kvStorageBackend Unified storage backend based on KV storage.
 type kvStorageBackend struct {
-	snowflake  *snowflake.Node
-	kv         KV
-	dataStore  *dataStore
-	metaStore  *metadataStore
-	eventStore *eventStore
-	notifier   *notifier
-	builder    DocumentBuilder
-	log        logging.Logger
+	snowflake            *snowflake.Node
+	kv                   KV
+	dataStore            *dataStore
+	metaStore            *metadataStore
+	eventStore           *eventStore
+	notifier             *notifier
+	builder              DocumentBuilder
+	log                  logging.Logger
+	withPruner           bool
+	eventRetentionPeriod time.Duration
+	eventPruningInterval time.Duration
+	historyPruner        Pruner
+	//tracer        trace.Tracer
+	//reg           prometheus.Registerer
 }
 
 var _ StorageBackend = &kvStorageBackend{}
 
-func NewKvStorageBackend(kv KV) *kvStorageBackend {
+type KvBackendOptions struct {
+	KvStore              KV
+	WithPruner           bool
+	EventRetentionPeriod time.Duration         // How long to keep events (default: 1 hour)
+	EventPruningInterval time.Duration         // How often to run the event pruning (default: 5 minutes)
+	Tracer               trace.Tracer          // TODO add tracing
+	Reg                  prometheus.Registerer // TODO add metrics
+}
+
+func NewKvStorageBackend(opts KvBackendOptions) (StorageBackend, error) {
+	ctx := context.Background()
+	kv := opts.KvStore
+
 	s, err := snowflake.NewNode(rand.Int64N(1024))
 	if err != nil {
-		panic(err)
+		return nil, fmt.Errorf("failed to create snowflake node: %w", err)
 	}
 	eventStore := newEventStore(kv)
-	return &kvStorageBackend{
-		kv:         kv,
-		dataStore:  newDataStore(kv),
-		metaStore:  newMetadataStore(kv),
-		eventStore: eventStore,
-		notifier:   newNotifier(eventStore, notifierOptions{}),
-		snowflake:  s,
-		builder:    StandardDocumentBuilder(), // For now we use the standard document builder.
-		log:        &logging.NoOpLogger{},     // Make this configurable
+
+	eventRetentionPeriod := opts.EventRetentionPeriod
+	if eventRetentionPeriod <= 0 {
+		eventRetentionPeriod = defaultEventRetentionPeriod
 	}
+
+	eventPruningInterval := opts.EventPruningInterval
+	if eventPruningInterval <= 0 {
+		eventPruningInterval = defaultEventPruningInterval
+	}
+
+	backend := &kvStorageBackend{
+		kv:                   kv,
+		dataStore:            newDataStore(kv),
+		metaStore:            newMetadataStore(kv),
+		eventStore:           eventStore,
+		notifier:             newNotifier(eventStore, notifierOptions{}),
+		snowflake:            s,
+		builder:              StandardDocumentBuilder(), // For now we use the standard document builder.
+		log:                  &logging.NoOpLogger{},     // Make this configurable
+		eventRetentionPeriod: eventRetentionPeriod,
+		eventPruningInterval: eventPruningInterval,
+	}
+	err = backend.initPruner(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to initialize pruner: %w", err)
+	}
+
+	// Start the event cleanup background job
+	go backend.runCleanupOldEvents(ctx)
+
+	return backend, nil
+}
+
+// runCleanupOldEvents starts a background goroutine that periodically cleans up old events
+func (k *kvStorageBackend) runCleanupOldEvents(ctx context.Context) {
+	// Run cleanup every hour
+	ticker := time.NewTicker(k.eventPruningInterval)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-ctx.Done():
+			k.log.Debug("Event cleanup stopped due to context cancellation")
+			return
+		case <-ticker.C:
+			k.cleanupOldEvents(ctx)
+		}
+	}
+}
+
+// cleanupOldEvents performs the actual cleanup of old events
+func (k *kvStorageBackend) cleanupOldEvents(ctx context.Context) {
+	cutoff := time.Now().Add(-k.eventRetentionPeriod)
+	deletedCount, err := k.eventStore.CleanupOldEvents(ctx, cutoff)
+	if err != nil {
+		k.log.Error("Failed to cleanup old events", "error", err)
+		return
+	}
+
+	if deletedCount == 0 {
+		k.log.Info("Cleaned up old events", "deleted_count", deletedCount, "retention_period", k.eventRetentionPeriod)
+	}
+}
+
+func (k *kvStorageBackend) pruneEvents(ctx context.Context, key PruningKey) error {
+	if !key.Validate() {
+		return fmt.Errorf("invalid pruning key, all fields must be set: %+v", key)
+	}
+
+	listKey := ListRequestKey{
+		Namespace: key.Namespace,
+		Group:     key.Group,
+		Resource:  key.Resource,
+		Name:      key.Name,
+		Sort:      SortOrderDesc,
+	}
+	counter := 0
+	// iterate over all keys for the resource and delete versions beyond the latest 20
+	for datakey, err := range k.dataStore.Keys(ctx, listKey) {
+		if err != nil {
+			return err
+		}
+
+		// Pruner needs to exclude deleted events
+		if counter < prunerMaxEvents && datakey.Action != DataActionDeleted {
+			counter++
+			continue
+		}
+
+		// If we already have 20 versions, delete any more create or update events
+		if datakey.Action != DataActionDeleted {
+			err := k.dataStore.Delete(ctx, datakey)
+			if err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
+}
+
+func (k *kvStorageBackend) initPruner(ctx context.Context) error {
+	if !k.withPruner {
+		k.log.Debug("Pruner disabled, using noop pruner")
+		k.historyPruner = &NoopPruner{}
+		return nil
+	}
+
+	k.log.Debug("Initializing history pruner")
+	pruner, err := debouncer.NewGroup(debouncer.DebouncerOpts[PruningKey]{
+		Name:           "history_pruner",
+		BufferSize:     1000,
+		MinWait:        time.Second * 30,
+		MaxWait:        time.Minute * 5,
+		ProcessHandler: k.pruneEvents,
+		ErrorHandler: func(key PruningKey, err error) {
+			k.log.Error("failed to prune history",
+				"namespace", key.Namespace,
+				"group", key.Group,
+				"resource", key.Resource,
+				"name", key.Name,
+				"error", err)
+		},
+	})
+	if err != nil {
+		return err
+	}
+
+	k.historyPruner = pruner
+	k.historyPruner.Start(ctx)
+	return nil
 }
 
 // WriteEvent writes a resource event (create/update/delete) to the storage backend.
@@ -150,6 +296,14 @@ func (k *kvStorageBackend) WriteEvent(ctx context.Context, event WriteEvent) (in
 	if err != nil {
 		return 0, fmt.Errorf("failed to save event: %w", err)
 	}
+
+	_ = k.historyPruner.Add(PruningKey{
+		Namespace: event.Key.Namespace,
+		Group:     event.Key.Group,
+		Resource:  event.Key.Resource,
+		Name:      event.Key.Name,
+	})
+
 	return rv, nil
 }
 
@@ -452,8 +606,187 @@ func applyPagination(keys []DataKey, lastSeenRV int64, sortAscending bool) []Dat
 }
 
 func (k *kvStorageBackend) ListModifiedSince(ctx context.Context, key NamespacedResource, sinceRv int64) (int64, iter.Seq2[*ModifiedResource, error]) {
-	return 0, func(yield func(*ModifiedResource, error) bool) {
-		yield(nil, errors.New("not implemented"))
+	if !key.Valid() {
+		return 0, func(yield func(*ModifiedResource, error) bool) {
+			yield(nil, fmt.Errorf("group, resource, and namespace are required"))
+		}
+	}
+
+	if sinceRv <= 0 {
+		return 0, func(yield func(*ModifiedResource, error) bool) {
+			yield(nil, fmt.Errorf("sinceRv must be greater than 0"))
+		}
+	}
+
+	// Generate a new resource version for the list
+	listRV := k.snowflake.Generate().Int64()
+
+	// Check if sinceRv is older than 1 hour
+	sinceRvTimestamp := snowflake.ID(sinceRv).Time()
+	sinceTime := time.Unix(0, sinceRvTimestamp*int64(time.Millisecond))
+	sinceRvAge := time.Since(sinceTime)
+
+	if sinceRvAge > time.Hour {
+		k.log.Debug("ListModifiedSince using data store", "sinceRv", sinceRv, "sinceRvAge", sinceRvAge)
+		return listRV, k.listModifiedSinceDataStore(ctx, key, sinceRv)
+	}
+
+	k.log.Debug("ListModifiedSince using event store", "sinceRv", sinceRv, "sinceRvAge", sinceRvAge)
+	return listRV, k.listModifiedSinceEventStore(ctx, key, sinceRv)
+}
+
+func convertEventType(action DataAction) resourcepb.WatchEvent_Type {
+	switch action {
+	case DataActionCreated:
+		return resourcepb.WatchEvent_ADDED
+	case DataActionUpdated:
+		return resourcepb.WatchEvent_MODIFIED
+	case DataActionDeleted:
+		return resourcepb.WatchEvent_DELETED
+	default:
+		panic(fmt.Sprintf("unknown DataAction: %v", action))
+	}
+}
+
+func (k *kvStorageBackend) getValueFromDataStore(ctx context.Context, dataKey DataKey) ([]byte, error) {
+	raw, err := k.dataStore.Get(ctx, dataKey)
+	if err != nil {
+		return []byte{}, err
+	}
+
+	value, err := io.ReadAll(raw)
+	if err != nil {
+		return []byte{}, err
+	}
+
+	return value, nil
+}
+
+func (k *kvStorageBackend) listModifiedSinceDataStore(ctx context.Context, key NamespacedResource, sinceRv int64) iter.Seq2[*ModifiedResource, error] {
+	return func(yield func(*ModifiedResource, error) bool) {
+		var lastSeenResource *ModifiedResource
+		var lastSeenDataKey DataKey
+		for dataKey, err := range k.dataStore.Keys(ctx, ListRequestKey{Namespace: key.Namespace, Group: key.Group, Resource: key.Resource}) {
+			if err != nil {
+				yield(&ModifiedResource{}, err)
+				return
+			}
+
+			if dataKey.ResourceVersion < sinceRv {
+				continue
+			}
+
+			if lastSeenResource == nil {
+				lastSeenResource = &ModifiedResource{
+					Key: resourcepb.ResourceKey{
+						Namespace: dataKey.Namespace,
+						Group:     dataKey.Group,
+						Resource:  dataKey.Resource,
+						Name:      dataKey.Name,
+					},
+					ResourceVersion: dataKey.ResourceVersion,
+					Action:          convertEventType(dataKey.Action),
+				}
+				lastSeenDataKey = dataKey
+			}
+
+			if lastSeenResource.Key.Name != dataKey.Name {
+				value, err := k.getValueFromDataStore(ctx, lastSeenDataKey)
+				if err != nil {
+					yield(&ModifiedResource{}, err)
+					return
+				}
+
+				lastSeenResource.Value = value
+
+				if !yield(lastSeenResource, nil) {
+					return
+				}
+			}
+
+			lastSeenResource = &ModifiedResource{
+				Key: resourcepb.ResourceKey{
+					Namespace: dataKey.Namespace,
+					Group:     dataKey.Group,
+					Resource:  dataKey.Resource,
+					Name:      dataKey.Name,
+				},
+				ResourceVersion: dataKey.ResourceVersion,
+				Action:          convertEventType(dataKey.Action),
+			}
+			lastSeenDataKey = dataKey
+		}
+
+		if lastSeenResource != nil {
+			value, err := k.getValueFromDataStore(ctx, lastSeenDataKey)
+			if err != nil {
+				yield(&ModifiedResource{}, err)
+				return
+			}
+
+			lastSeenResource.Value = value
+
+			yield(lastSeenResource, nil)
+		}
+	}
+}
+
+func (k *kvStorageBackend) listModifiedSinceEventStore(ctx context.Context, key NamespacedResource, sinceRv int64) iter.Seq2[*ModifiedResource, error] {
+	return func(yield func(*ModifiedResource, error) bool) {
+		// store all events ordered by RV for the given tenant here
+		eventKeys := make([]EventKey, 0)
+		for evtKeyStr, err := range k.eventStore.ListKeysSince(ctx, sinceRv-defaultLookbackPeriod.Nanoseconds()) {
+			if err != nil {
+				yield(&ModifiedResource{}, err)
+				return
+			}
+
+			evtKey, err := ParseEventKey(evtKeyStr)
+			if err != nil {
+				yield(&ModifiedResource{}, err)
+				return
+			}
+
+			if evtKey.ResourceVersion < sinceRv {
+				continue
+			}
+
+			if evtKey.Group != key.Group || evtKey.Resource != key.Resource || evtKey.Namespace != key.Namespace {
+				continue
+			}
+
+			eventKeys = append(eventKeys, evtKey)
+		}
+
+		// we only care about the latest revision of every resource in the list
+		seen := make(map[string]struct{})
+		for i := len(eventKeys) - 1; i >= 0; i -= 1 {
+			evtKey := eventKeys[i]
+			if _, ok := seen[evtKey.Name]; ok {
+				continue
+			}
+			seen[evtKey.Name] = struct{}{}
+
+			value, err := k.getValueFromDataStore(ctx, DataKey(evtKey))
+			if err != nil {
+				yield(&ModifiedResource{}, err)
+				return
+			}
+
+			if !yield(&ModifiedResource{
+				Key: resourcepb.ResourceKey{
+					Group:     evtKey.Group,
+					Resource:  evtKey.Resource,
+					Namespace: evtKey.Namespace,
+					Name:      evtKey.Name,
+				},
+				Action:          convertEventType(evtKey.Action),
+				ResourceVersion: evtKey.ResourceVersion,
+				Value:           value,
+			}, nil) {
+				return
+			}
+		}
 	}
 }
 

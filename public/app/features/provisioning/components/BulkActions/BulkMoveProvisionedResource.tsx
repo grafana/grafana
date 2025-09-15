@@ -4,7 +4,7 @@ import { FormProvider, useForm } from 'react-hook-form';
 
 import { AppEvents } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { FolderPicker, getAppEvents } from '@grafana/runtime';
+import { getAppEvents } from '@grafana/runtime';
 import { Box, Button, Field, Stack } from '@grafana/ui';
 import { useGetFolderQuery } from 'app/api/clients/folder/v1beta1';
 import { RepositoryView, Job } from 'app/api/clients/provisioning/v0alpha1';
@@ -17,6 +17,8 @@ import { useGetResourceRepositoryView } from 'app/features/provisioning/hooks/us
 import { GENERAL_FOLDER_UID } from 'app/features/search/constants';
 
 import { useSelectionRepoValidation } from '../../hooks/useSelectionRepoValidation';
+import { MoveActionAvailableTargetWarning } from '../Shared/MoveActionAvailableTargetWarning';
+import { ProvisioningAwareFolderPicker } from '../Shared/ProvisioningAwareFolderPicker';
 import { RepoInvalidStateBanner } from '../Shared/RepoInvalidStateBanner';
 import { ResourceEditFormSharedFields } from '../Shared/ResourceEditFormSharedFields';
 import { generateTimestamp } from '../utils/timestamp';
@@ -111,10 +113,9 @@ function FormContent({ initialValues, selectedItems, repository, workflowOptions
     <FormProvider {...methods}>
       <form onSubmit={handleSubmit(handleSubmitForm)}>
         <Stack direction="column" gap={2}>
+          <MoveActionAvailableTargetWarning />
           <Box paddingBottom={2}>
-            <Trans i18nKey="browse-dashboards.bulk-move-resources-form.move-warning">
-              This will move selected folders and their descendants. In total, this will affect:
-            </Trans>
+            <Trans i18nKey="browse-dashboards.bulk-move-resources-form.move-total">In total, this will affect:</Trans>
             <DescendantCount selectedItems={{ ...selectedItems, panel: {}, $all: false }} />
           </Box>
 
@@ -129,12 +130,14 @@ function FormContent({ initialValues, selectedItems, repository, workflowOptions
                 error={errors.targetFolderUID?.message}
                 invalid={!!errors.targetFolderUID}
               >
-                <FolderPicker
+                <ProvisioningAwareFolderPicker
                   value={targetFolderUID}
                   onChange={(uid) => {
                     setTargetFolderUID(uid || '');
                     clearErrors('targetFolderUID');
                   }}
+                  repositoryName={repository.name}
+                  excludeUIDs={[...Object.keys(selectedItems?.folder).map((uid) => uid)]}
                 />
               </Field>
               <ResourceEditFormSharedFields
@@ -147,6 +150,9 @@ function FormContent({ initialValues, selectedItems, repository, workflowOptions
               />
 
               <Stack gap={2}>
+                <Button variant="secondary" fill="outline" onClick={onDismiss} disabled={isCreatingJob}>
+                  <Trans i18nKey="browse-dashboards.bulk-move-resources-form.button-cancel">Cancel</Trans>
+                </Button>
                 <Button
                   type="submit"
                   disabled={!!job || isCreatingJob || hasSubmitted || targetFolderUID === undefined}
@@ -154,9 +160,6 @@ function FormContent({ initialValues, selectedItems, repository, workflowOptions
                   {isCreatingJob
                     ? t('browse-dashboards.bulk-move-resources-form.button-moving', 'Moving...')
                     : t('browse-dashboards.bulk-move-resources-form.button-move', 'Move')}
-                </Button>
-                <Button variant="secondary" fill="outline" onClick={onDismiss} disabled={isCreatingJob}>
-                  <Trans i18nKey="browse-dashboards.bulk-move-resources-form.button-cancel">Cancel</Trans>
                 </Button>
               </Stack>
             </>

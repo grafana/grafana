@@ -26,7 +26,6 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/sql"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/db/dbimpl"
 	unitest "github.com/grafana/grafana/pkg/storage/unified/testing"
-	"github.com/grafana/grafana/pkg/tests"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
@@ -36,9 +35,8 @@ func TestMain(m *testing.M) {
 }
 
 func TestIntegrationStorageServer(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test in short mode")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	unitest.RunStorageServerTest(t, func(ctx context.Context) resource.StorageBackend {
 		dbstore := db.InitTestDB(t)
 		eDB, err := dbimpl.ProvideResourceDB(dbstore, setting.NewCfg(), nil)
@@ -51,7 +49,7 @@ func TestIntegrationStorageServer(t *testing.T) {
 		})
 		require.NoError(t, err)
 		require.NotNil(t, backend)
-		err = backend.Init(testutil.NewDefaultTestContext(t))
+		err = backend.Init(testutil.NewTestContext(t, time.Now().Add(1*time.Minute)))
 		require.NoError(t, err)
 		return backend
 	})
@@ -59,9 +57,8 @@ func TestIntegrationStorageServer(t *testing.T) {
 
 // TestStorageBackend is a test for the StorageBackend interface.
 func TestIntegrationSQLStorageBackend(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test in short mode")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	t.Run("IsHA (polling notifier)", func(t *testing.T) {
 		unitest.RunStorageBackendTest(t, func(ctx context.Context) resource.StorageBackend {
 			dbstore := db.InitTestDB(t)
@@ -75,7 +72,7 @@ func TestIntegrationSQLStorageBackend(t *testing.T) {
 			})
 			require.NoError(t, err)
 			require.NotNil(t, backend)
-			err = backend.Init(testutil.NewDefaultTestContext(t))
+			err = backend.Init(testutil.NewTestContext(t, time.Now().Add(1*time.Minute)))
 			require.NoError(t, err)
 			return backend
 		}, nil)
@@ -94,7 +91,7 @@ func TestIntegrationSQLStorageBackend(t *testing.T) {
 			})
 			require.NoError(t, err)
 			require.NotNil(t, backend)
-			err = backend.Init(testutil.NewDefaultTestContext(t))
+			err = backend.Init(testutil.NewTestContext(t, time.Now().Add(1*time.Minute)))
 			require.NoError(t, err)
 			return backend
 		}, nil)
@@ -102,10 +99,7 @@ func TestIntegrationSQLStorageBackend(t *testing.T) {
 }
 
 func TestIntegrationSearchAndStorage(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test in short mode")
-	}
-	tests.SkipIntegrationTestInShortMode(t)
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	ctx := context.Background()
 
@@ -117,7 +111,7 @@ func TestIntegrationSearchAndStorage(t *testing.T) {
 	search, err := search.NewBleveBackend(search.BleveOptions{
 		FileThreshold: 0,
 		Root:          tempDir,
-	}, tracing.NewNoopTracerService(), featuremgmt.WithFeatures(), nil)
+	}, tracing.NewNoopTracerService(), nil)
 	require.NoError(t, err)
 	require.NotNil(t, search)
 

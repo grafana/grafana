@@ -8,10 +8,12 @@ import (
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/util/version"
+	"k8s.io/client-go/kubernetes"
 
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
+	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 func TestMain(m *testing.M) {
@@ -19,9 +21,7 @@ func TestMain(m *testing.M) {
 }
 
 func TestIntegrationOpenAPIs(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	h := NewK8sTestHelper(t, testinfra.GrafanaOpts{
 		AppModeProduction: true,
@@ -30,15 +30,21 @@ func TestIntegrationOpenAPIs(t *testing.T) {
 			featuremgmt.FlagProvisioning,
 			featuremgmt.FlagInvestigationsBackend,
 			featuremgmt.FlagGrafanaAdvisor,
+			featuremgmt.FlagKubernetesAlertingRules,
 			featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs, // all datasources
+			featuremgmt.FlagKubernetesShortURLs,
 		},
 	})
 
 	t.Run("check valid version response", func(t *testing.T) {
-		disco := h.NewDiscoveryClient()
-		info, err := disco.ServerVersion()
+		client, err := kubernetes.NewForConfig(h.NewAdminRestConfig())
+		require.NoError(t, err)
+
+		info, err := client.ServerVersion()
 		require.NoError(t, err)
 		require.Equal(t, runtime.Version(), info.GoVersion)
+		require.Equal(t, "1", info.Major)
+		require.Equal(t, "33", info.Minor)
 
 		// Make sure the gitVersion is parsable
 		v, err := version.Parse(info.GitVersion)
@@ -51,6 +57,7 @@ func TestIntegrationOpenAPIs(t *testing.T) {
 		// Removing the explicit `OneOf` properties from InlineSecureValue in:
 		// https://github.com/grafana/grafana/blob/main/pkg/apimachinery/apis/common/v0alpha1/secure_values.go#L78
 		// will consistently support V2, however kubectl and everything else continues to work
+		disco := h.NewDiscoveryClient()
 		paths, err := disco.OpenAPIV3().Paths()
 
 		require.NoError(t, err, "requesting OpenAPI v3")
@@ -89,6 +96,12 @@ func TestIntegrationOpenAPIs(t *testing.T) {
 	}, {
 		Group:   "notifications.alerting.grafana.app",
 		Version: "v0alpha1",
+	}, {
+		Group:   "rules.alerting.grafana.app",
+		Version: "v0alpha1",
+	}, {
+		Group:   "shorturl.grafana.app",
+		Version: "v1alpha1",
 	}}
 	for _, gv := range groups {
 		VerifyOpenAPISnapshots(t, dir, gv, h)
