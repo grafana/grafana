@@ -85,7 +85,6 @@ jobs:
 
       - name: Publish packages
         env:
-          NPM_TOKEN: oidc # TODO: update the publish script to not require this magic value if GH env vars are set
           NPM_TAG: ${{ steps.npm-tag.outputs.NPM_TAG }}
         run: ./scripts/publish-npm-packages.sh --dist-tag "$NPM_TAG" --registry 'https://registry.npmjs.org/'
 
