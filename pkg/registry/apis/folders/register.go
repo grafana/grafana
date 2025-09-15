@@ -19,6 +19,8 @@ import (
 
 	authlib "github.com/grafana/authlib/types"
 
+	"github.com/grafana/grafana-app-sdk/logging"
+
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	"github.com/grafana/grafana/apps/iam/pkg/reconcilers"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -91,13 +93,13 @@ func RegisterAPIService(cfg *setting.Cfg,
 	return builder
 }
 
-func NewAPIService(ac authlib.AccessClient) *FolderAPIBuilder {
+func NewAPIService(ac authlib.AccessClient, searcher resource.ResourceClient) *FolderAPIBuilder {
 	return &FolderAPIBuilder{
 		authorizer:   newMultiTenantAuthorizer(ac),
+		searcher:     searcher,
 		ignoreLegacy: true,
 	}
 }
-
 func (b *FolderAPIBuilder) GetGroupVersion() schema.GroupVersion {
 	return resourceInfo.GroupVersion()
 }
@@ -143,6 +145,10 @@ func (b *FolderAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.API
 	storage := map[string]rest.Storage{}
 
 	if b.ignoreLegacy {
+		opts.StorageOptsRegister(resourceInfo.GroupResource(), apistore.StorageOptions{
+			EnableFolderSupport:         true,
+			RequireDeprecatedInternalID: true})
+
 		store, err := grafanaregistry.NewRegistryStore(opts.Scheme, resourceInfo, opts.OptsGetter)
 		if err != nil {
 			return err
@@ -150,6 +156,7 @@ func (b *FolderAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.API
 		storage[resourceInfo.StoragePath()] = store
 		apiGroupInfo.VersionedResourcesStorageMap[folders.VERSION] = storage
 		b.storage = storage[resourceInfo.StoragePath()].(grafanarest.Storage)
+		b.parents = newParentsGetter(store, folder.MaxNestedFolderDepth)
 		return nil
 	}
 
@@ -176,9 +183,13 @@ func (b *FolderAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.API
 			return err
 		}
 
+		log := logging.FromContext(context.Background())
 		if b.features.IsEnabledGlobally(featuremgmt.FlagZanzana) {
+			log.Info("Enabling Zanzana folder propagation hooks")
 			store.BeginCreate = b.beginCreate
 			store.BeginUpdate = b.beginUpdate
+		} else {
+			log.Info("Zanzana is not enabled; skipping folder propagation hooks")
 		}
 
 		dw, err := dualWriteBuilder(resourceInfo.GroupResource(), legacyStore, store)
@@ -241,9 +252,21 @@ func (b *FolderAPIBuilder) Mutate(ctx context.Context, a admission.Attributes, _
 }
 
 func (b *FolderAPIBuilder) Validate(ctx context.Context, a admission.Attributes, _ admission.ObjectInterfaces) error {
-	obj := a.GetObject()
-	if obj == nil || a.GetOperation() == admission.Connect {
-		return nil // This is normal for sub-resource
+	var obj runtime.Object
+	verb := a.GetOperation()
+
+	switch verb {
+	case admission.Create, admission.Update:
+		obj = a.GetObject()
+	case admission.Delete:
+		obj = a.GetOldObject()
+		if obj == nil {
+			return fmt.Errorf("old object is nil for delete request")
+		}
+	case admission.Connect:
+		return nil
+	default:
+		obj = a.GetObject()
 	}
 
 	f, ok := obj.(*folders.Folder)
