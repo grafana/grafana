@@ -17,7 +17,7 @@ test.use({
   },
 });
 
-export const DASHBOARD_UNDER_TEST = 'cuj-dashboard-1';
+const DASHBOARD_UNDER_TEST = 'cuj-dashboard-1';
 
 test.describe(
   'GroupBy CUJs',

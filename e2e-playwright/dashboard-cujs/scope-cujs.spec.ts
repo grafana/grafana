@@ -25,7 +25,7 @@ test.use({
 
 const USE_LIVE_DATA = Boolean(process.env.API_CONFIG_PATH);
 
-export const DASHBOARD_UNDER_TEST = 'cuj-dashboard-1';
+const DASHBOARD_UNDER_TEST = 'cuj-dashboard-1';
 
 test.describe(
   'Scope CUJs',

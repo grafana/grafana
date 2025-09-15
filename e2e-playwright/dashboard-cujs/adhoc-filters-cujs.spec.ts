@@ -13,7 +13,7 @@ import {
 } from './cuj-selectors';
 import { prepareAPIMocks } from './utils';
 
-export const DASHBOARD_UNDER_TEST = 'cuj-dashboard-1';
+const DASHBOARD_UNDER_TEST = 'cuj-dashboard-1';
 
 test.use({
   featureToggles: {

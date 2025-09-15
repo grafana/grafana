@@ -17,6 +17,11 @@ async function loadApiConfig() {
   }
 }
 
+export async function getConfigDashboards() {
+  const config = await loadApiConfig();
+  return config.dashboards || [];
+}
+
 export async function prepareAPIMocks(page: Page) {
   const apiConfig = await loadApiConfig();
 
