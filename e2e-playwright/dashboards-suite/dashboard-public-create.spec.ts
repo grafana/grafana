@@ -3,6 +3,7 @@ import { test, expect } from '@grafana/plugin-e2e';
 test.use({
   featureToggles: {
     kubernetesDashboards: process.env.KUBERNETES_DASHBOARDS === 'true',
+    dashboardScene: false, // this test is for the old sharing modal only used when scenes is turned off
   },
 });
 
