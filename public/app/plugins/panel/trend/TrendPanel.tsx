@@ -33,7 +33,10 @@ export const TrendPanel = ({
   replaceVariables,
   id,
 }: PanelProps<Options>) => {
-  const { dataLinkPostProcessor } = usePanelContext();
+  const { dataLinkPostProcessor, canExecuteActions } = usePanelContext();
+
+  const userCanExecuteActions = useMemo(() => canExecuteActions?.() ?? false, [canExecuteActions]);
+
   // Need to fallback to first number field if no xField is set in options otherwise panel crashes 😬
   const trendXFieldName =
     options.xField ?? data.series[0]?.fields.find((field) => field.type === FieldType.number)?.name;
@@ -142,6 +145,7 @@ export const TrendPanel = ({
                       replaceVariables={replaceVariables}
                       dataLinks={dataLinks}
                       hideZeros={options.tooltip.hideZeros}
+                      canExecuteActions={userCanExecuteActions}
                     />
                   );
                 }}
