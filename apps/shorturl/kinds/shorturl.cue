@@ -14,4 +14,13 @@ shorturl: {
 			lastSeenAt: int64
 		}
 	}
+	routes: {
+		"/goto": {
+			"GET": {
+				response: {
+					url: string
+				}
+			}
+		}
+	}
 }

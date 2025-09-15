@@ -119,6 +119,10 @@ const injectedRtkApi = api
         }),
         invalidatesTags: ['ShortURL'],
       }),
+      getShortUrlGoto: build.query<GetShortUrlGotoApiResponse, GetShortUrlGotoApiArg>({
+        query: (queryArg) => ({ url: `/shorturls/${queryArg.name}/goto` }),
+        providesTags: ['ShortURL'],
+      }),
       getShortUrlStatus: build.query<GetShortUrlStatusApiResponse, GetShortUrlStatusApiArg>({
         query: (queryArg) => ({
           url: `/shorturls/${queryArg.name}/status`,
@@ -327,6 +331,11 @@ export type UpdateShortUrlApiArg = {
   /** Force is going to "force" Apply requests. It means user will re-acquire conflicting fields owned by other people. Force flag must be unset for non-apply patch requests. */
   force?: boolean;
   patch: Patch;
+};
+export type GetShortUrlGotoApiResponse = /** status 200 OK */ GetGoto;
+export type GetShortUrlGotoApiArg = {
+  /** name of the ResourceCallOptions */
+  name: string;
 };
 export type GetShortUrlStatusApiResponse = /** status 200 OK */ ShortUrl;
 export type GetShortUrlStatusApiArg = {
@@ -580,3 +589,6 @@ export type Status = {
   status?: string;
 };
 export type Patch = object;
+export type GetGoto = {
+  url: string;
+};
