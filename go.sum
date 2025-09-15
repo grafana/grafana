@@ -1588,8 +1588,8 @@ github.com/gorilla/sessions v1.2.1 h1:DHd3rPN5lE3Ts3D8rKkQ8x/0kqfeNmBAaiSi+o7Fsg
 github.com/gorilla/sessions v1.2.1/go.mod h1:dk2InVEVJ0sfLlnXv9EAgkf6ecYs/i80K/zI+bUmuGM=
 github.com/gorilla/websocket v1.5.4-0.20250319132907-e064f32e3674 h1:JeSE6pjso5THxAzdVpqr6/geYxZytqFMBCOtn/ujyeo=
 github.com/gorilla/websocket v1.5.4-0.20250319132907-e064f32e3674/go.mod h1:r4w70xmWCQKmi1ONH4KIaBptdivuRPyosB9RmPlGEwA=
-github.com/grafana/alerting v0.0.0-20250912123435-f2728ab090ee h1:J/9l2w3Q5JDBEB3t5bDsxhxWldGtFd5KpYGoQi0m/hc=
-github.com/grafana/alerting v0.0.0-20250912123435-f2728ab090ee/go.mod h1:XWqj/rlsy4OV/E9XNNyFn+a7U4GNsSugPb2rDBj9+58=
+github.com/grafana/alerting v0.0.0-20250915130141-a8ee25091876 h1:BzoGpzARwRCNOHcqQdYPAFp2LS1pqnkLWhIuDdq1zho=
+github.com/grafana/alerting v0.0.0-20250915130141-a8ee25091876/go.mod h1:T5sitas9VhVj8/S9LeRLy6H75kTBdh/sCCqHo7gaQI8=
 github.com/grafana/authlib v0.0.0-20250909101823-1b466dbd19a1 h1:qdH5s5FV+0Dyja8O1tBJq7MGd8nPCfxfsMimcYq5cRI=
 github.com/grafana/authlib v0.0.0-20250909101823-1b466dbd19a1/go.mod h1:C6CmTG6vfiqebjJswKsc6zes+1F/OtTCi6aAtL5Um6A=
 github.com/grafana/authlib/types v0.0.0-20250721184729-1593a38e4933 h1:GjiMR5NIO1/bYSCnt8x7VUeOMaupv2qXJkeLDVAddxQ=
@@ -1630,8 +1630,8 @@ github.com/grafana/grafana/pkg/semconv v0.0.0-20250804150913-990f1c69ecc2 h1:A65
 github.com/grafana/grafana/pkg/semconv v0.0.0-20250804150913-990f1c69ecc2/go.mod h1:2HRzUK/xQEYc+8d5If/XSusMcaYq9IptnBSHACiQcOQ=
 github.com/grafana/jsonparser v0.0.0-20240425183733-ea80629e1a32 h1:NznuPwItog+rwdVg8hAuGKP29ndRSzJAwhxKldkP8oQ=
 github.com/grafana/jsonparser v0.0.0-20240425183733-ea80629e1a32/go.mod h1:796sq+UcONnSlzA3RtlBZ+b/hrerkZXiEmO8oMjyRwY=
-github.com/grafana/loki/pkg/push v0.0.0-20231124142027-e52380921608 h1:ZYk42718kSXOiIKdjZKljWLgBpzL5z1yutKABksQCMg=
-github.com/grafana/loki/pkg/push v0.0.0-20231124142027-e52380921608/go.mod h1:f3JSoxBTPXX5ec4FxxeC19nTBSxoTz+cBgS3cYLMcr0=
+github.com/grafana/loki/pkg/push v0.0.0-20250823105456-332df2b20000 h1:/5LKSYgLmAhwA4m6iGUD4w1YkydEWWjazn9qxCFT8W0=
+github.com/grafana/loki/pkg/push v0.0.0-20250823105456-332df2b20000/go.mod h1:/ZklAgE1i4f3Z8uriXwESmCr1VLF8lBGaJspuaGuf78=
 github.com/grafana/loki/v3 v3.2.1 h1:VB7u+KHfvL5aHAxgoVBvz5wVhsdGuqKC7uuOFOOe7jw=
 github.com/grafana/loki/v3 v3.2.1/go.mod h1:WvdLl6wOS+yahaeQY+xhD2m2XzkHDfKr5FZaX7D/X2Y=
 github.com/grafana/nanogit v0.0.0-20250723104447-68f58f5ecec0 h1:cS0SlJGIlZbmDLctNj5vIYGemrJDLy25wwoiIyZWVN8=
