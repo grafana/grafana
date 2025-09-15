@@ -17,6 +17,10 @@ import (
 type NotifierVersion string
 
 const (
+	// versions that contain the "mimir" tag in their name are dedicated to integrations supported by Mimir.
+	// By default, all mimir integrations should use the V0mimir1 version.
+	// Exceptions are Mimir integrations that have multiple configurations for the same Grafana type.
+
 	V0mimir1 NotifierVersion = "v0mimir1"
 	V0mimir2 NotifierVersion = "v0mimir2"
 	V1       NotifierVersion = "v1"

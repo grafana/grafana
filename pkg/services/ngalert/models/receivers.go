@@ -218,6 +218,7 @@ func IntegrationConfigFromType(integrationType string, version *string) (Integra
 	if err != nil {
 		return IntegrationConfig{}, err
 	}
+	// if particular version is requested and the version returned does not match, try to get the correct version
 	if version != nil && *version != string(versionConfig.Version) {
 		exists := false
 		versionConfig, exists = versionConfig.Plugin.GetVersion(channels_config.NotifierVersion(*version))
