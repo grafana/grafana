@@ -44,7 +44,7 @@ export function getNavTitle(navId: string | undefined) {
     case 'reports':
       return t('nav.reporting.title', 'Reporting');
     case 'dashboards/public':
-      t('nav.shared-dashboard.title', 'Shared dashboards');
+      return t('nav.shared-dashboard.title', 'Shared dashboards');
     case 'dashboards/recently-deleted':
       return t('nav.recently-deleted.title', 'Recently deleted');
     case 'dashboards/new':
