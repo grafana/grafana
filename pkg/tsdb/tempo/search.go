@@ -11,6 +11,7 @@ import (
 	"sort"
 	"time"
 
+	//nolint:staticcheck // tempopb uses old protobuf API, jsonpb required for compatibility
 	"github.com/golang/protobuf/jsonpb"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
