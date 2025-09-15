@@ -6,7 +6,7 @@
   "dependencies": {
     "@emotion/css": "11.13.5",
     "@grafana/data": "12.3.0-pre",
-    "@grafana/google-sdk": "0.3.4",
+    "@grafana/google-sdk": "0.3.5",
     "@grafana/plugin-ui": "^0.10.10",
     "@grafana/runtime": "12.3.0-pre",
     "@grafana/schema": "12.3.0-pre",

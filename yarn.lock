@@ -2817,7 +2817,7 @@ __metadata:
     "@emotion/css": "npm:11.13.5"
     "@grafana/data": "npm:12.3.0-pre"
     "@grafana/e2e-selectors": "npm:12.3.0-pre"
-    "@grafana/google-sdk": "npm:0.3.4"
+    "@grafana/google-sdk": "npm:0.3.5"
     "@grafana/plugin-configs": "npm:12.3.0-pre"
     "@grafana/plugin-ui": "npm:^0.10.10"
     "@grafana/runtime": "npm:12.3.0-pre"
@@ -3227,15 +3227,15 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@grafana/google-sdk@npm:0.3.4":
-  version: 0.3.4
-  resolution: "@grafana/google-sdk@npm:0.3.4"
+"@grafana/google-sdk@npm:0.3.5":
+  version: 0.3.5
+  resolution: "@grafana/google-sdk@npm:0.3.5"
   peerDependencies:
     "@grafana/data": ">=10.4.0"
     "@grafana/ui": ">=10.4.0"
     react: ^18.2.0
     react-dom: ^18.2.0
-  checksum: 10/6156a07ab9a8e31ac20a689448f7d6bc86bd9d3fd0b22de8182cf5e6f96c05054f8c53a38148de58dca807adb5b0563914b03a22308ec7f770bf1cc71e8f21bd
+  checksum: 10/5070002bc4e4ca4079384e914a0435d6deffe0854b3c2a8ce8a691cdcfa81d9f8ba9247222fbd366f48a8bb0745f8ba2c21790e7f4a46f027d0a867f8c75e06e
   languageName: node
   linkType: hard
 
@@ -18158,7 +18158,7 @@ __metadata:
     "@grafana/faro-web-sdk": "npm:^1.19.0"
     "@grafana/faro-web-tracing": "npm:^1.19.0"
     "@grafana/flamegraph": "workspace:*"
-    "@grafana/google-sdk": "npm:0.3.4"
+    "@grafana/google-sdk": "npm:0.3.5"
     "@grafana/i18n": "workspace:*"
     "@grafana/lezer-logql": "npm:0.2.8"
     "@grafana/llm": "npm:0.22.1"
@@ -19258,21 +19258,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"i18next@npm:^25.0.0":
-  version: 25.3.2
-  resolution: "i18next@npm:25.3.2"
-  dependencies:
-    "@babel/runtime": "npm:^7.27.6"
-  peerDependencies:
-    typescript: ^5
-  peerDependenciesMeta:
-    typescript:
-      optional: true
-  checksum: 10/fb6b2035cc8f3bcc89f56e164d22cefbefd54e5a569315b20ddcfa6e1b68c48962307181b271fea7e5ee37ddfaa90721a4a7f7814b739f24bf00a3a670b8eb93
-  languageName: node
-  linkType: hard
-
-"i18next@npm:^25.5.2":
+"i18next@npm:^25.0.0, i18next@npm:^25.5.2":
   version: 25.5.2
   resolution: "i18next@npm:25.5.2"
   dependencies:
