@@ -12,7 +12,7 @@ import (
 	"crypto"
 	"time"
 
-	"github.com/go-jose/go-jose/v3"
+	"github.com/go-jose/go-jose/v4"
 )
 
 const (
