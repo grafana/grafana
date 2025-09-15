@@ -50,7 +50,7 @@ func ProvideExtSvcAccountsService(acSvc ac.Service, cfg *setting.Cfg, bus bus.Bu
 
 	if esa.enabled {
 		// Register the metrics
-		esa.metrics = newMetrics(reg, esa.defaultOrgID, saSvc, logger)
+		esa.metrics = newMetrics(reg)
 
 		// Register a listener to enable/disable service accounts
 		bus.AddEventListener(esa.handlePluginStateChanged)
