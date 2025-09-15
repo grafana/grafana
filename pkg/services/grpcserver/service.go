@@ -106,36 +106,19 @@ func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, authe
 	}
 
 	// Apply connection management settings
-	keepaliveParams := keepalive.ServerParameters{}
-	keepalivePolicy := keepalive.EnforcementPolicy{}
-
-	if s.cfg.MaxConnectionAge > 0 {
-		keepaliveParams.MaxConnectionAge = time.Duration(s.cfg.MaxConnectionAge) * time.Second
+	keepaliveParams := keepalive.ServerParameters{
+		MaxConnectionAge:      s.cfg.MaxConnectionAge,
+		MaxConnectionAgeGrace: s.cfg.MaxConnectionAgeGrace,
+		MaxConnectionIdle:     s.cfg.MaxConnectionIdle,
+		Time:                  s.cfg.KeepaliveTime,
+		Timeout:               s.cfg.KeepaliveTimeout,
 	}
-	if s.cfg.MaxConnectionAgeGrace > 0 {
-		keepaliveParams.MaxConnectionAgeGrace = time.Duration(s.cfg.MaxConnectionAgeGrace) * time.Second
-	}
-	if s.cfg.MaxConnectionIdle > 0 {
-		keepaliveParams.MaxConnectionIdle = time.Duration(s.cfg.MaxConnectionIdle) * time.Second
-	}
-	if s.cfg.KeepaliveTime > 0 {
-		keepaliveParams.Time = time.Duration(s.cfg.KeepaliveTime) * time.Second
-	}
-	if s.cfg.KeepaliveTimeout > 0 {
-		keepaliveParams.Timeout = time.Duration(s.cfg.KeepaliveTimeout) * time.Second
-	}
-	if s.cfg.KeepaliveMinTime > 0 {
-		keepalivePolicy.MinTime = time.Duration(s.cfg.KeepaliveMinTime) * time.Second
+	keepalivePolicy := keepalive.EnforcementPolicy{
+		MinTime: s.cfg.KeepaliveMinTime,
 	}
 
-	// Only add keepalive options if any values are configured
-	if s.cfg.MaxConnectionAge > 0 || s.cfg.MaxConnectionAgeGrace > 0 || s.cfg.MaxConnectionIdle > 0 ||
-		s.cfg.KeepaliveTime > 0 || s.cfg.KeepaliveTimeout > 0 {
-		opts = append(opts, grpc.KeepaliveParams(keepaliveParams))
-	}
-	if s.cfg.KeepaliveMinTime > 0 {
-		opts = append(opts, grpc.KeepaliveEnforcementPolicy(keepalivePolicy))
-	}
+	opts = append(opts, grpc.KeepaliveParams(keepaliveParams))
+	opts = append(opts, grpc.KeepaliveEnforcementPolicy(keepalivePolicy))
 
 	s.server = grpc.NewServer(opts...)
 	return s, nil
