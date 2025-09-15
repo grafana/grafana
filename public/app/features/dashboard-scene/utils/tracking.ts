@@ -39,7 +39,9 @@ export function getNoOfConditionalRulesInDashboard(layout: DashboardV2Spec['layo
         return acc + direct + nested;
       }, 0);
     default:
-      return 0;
+      // make sure we handle all possible kinds
+      const exhaustiveCheck: never = l;
+      throw new Error(`Unhandled layout: ${exhaustiveCheck}`);
   }
 }
 
