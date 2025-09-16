@@ -700,7 +700,30 @@ export function TableNG(props: TableNGProps) {
 
       return result;
     },
-    [applyToRowBgFn, crossFilterOrder, crossFilterRows, data, disableSanitizeHtml, filter, footers, frozenColumns, getCellActions, getCellColorInlineStyles, getTextColorForBackground, isUniformFooter, maxRowHeight, numFrozenColsFullyInView, onCellFilterAdded, rows, rowHeight, rowHeightFn, setFilter, showTypeIcons, theme, timeRange]
+    [
+      applyToRowBgFn,
+      crossFilterOrder,
+      crossFilterRows,
+      data,
+      disableSanitizeHtml,
+      filter,
+      footers,
+      frozenColumns,
+      getCellActions,
+      getCellColorInlineStyles,
+      getTextColorForBackground,
+      isUniformFooter,
+      maxRowHeight,
+      numFrozenColsFullyInView,
+      onCellFilterAdded,
+      rows,
+      rowHeight,
+      rowHeightFn,
+      setFilter,
+      showTypeIcons,
+      theme,
+      timeRange,
+    ]
   );
 
   // set up the first row's nested data and the nest field widths using useColWidths to avoid
