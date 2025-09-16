@@ -81,8 +81,8 @@ func TestIntegrationShortURL(t *testing.T) {
 	for _, mode := range []grafanarest.DualWriterMode{
 		grafanarest.Mode1,
 		grafanarest.Mode2,
-		// grafanarest.Mode3, TODO: the /goto function needs to use an UpdateStatus client
-		// grafanarest.Mode4,
+		grafanarest.Mode3,
+		grafanarest.Mode4,
 	} {
 		t.Run(fmt.Sprintf("with dual write (unified storage, mode %d)", mode), func(t *testing.T) {
 			helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{

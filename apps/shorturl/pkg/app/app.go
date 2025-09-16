@@ -29,11 +29,12 @@ var (
 
 func New(cfg app.Config) (app.App, error) {
 	cfg.KubeConfig.APIPath = "apis"
-	client, err := k8s.NewClientRegistry(cfg.KubeConfig, k8s.DefaultClientConfig()).
+	tmp, err := k8s.NewClientRegistry(cfg.KubeConfig, k8s.DefaultClientConfig()).
 		ClientFor(shorturlv1alpha1.ShortURLKind())
 	if err != nil {
 		return nil, fmt.Errorf("unable to create client")
 	}
+	client := shorturlv1alpha1.NewShortURLClient(tmp)
 
 	simpleConfig := simple.AppConfig{
 		Name:       "shorturl",
@@ -78,8 +79,8 @@ func New(cfg app.Config) (app.App, error) {
 							Name:      req.ResourceIdentifier.Name,
 						}
 
-						info := &shorturlv1alpha1.ShortURL{}
-						if err := client.GetInto(ctx, id, info); err != nil {
+						info, err := client.Get(ctx, id)
+						if err != nil {
 							return err
 						}
 
@@ -90,7 +91,7 @@ func New(cfg app.Config) (app.App, error) {
 							if err != nil {
 								logging.FromContext(ctx).Warn("unable to create background identity", "err", err)
 							} else {
-								_, _ = client.Update(ctx, id, info, resource.UpdateOptions{})
+								_, _ = client.UpdateStatus(ctx, id, info.Status, resource.UpdateOptions{})
 							}
 						}()
 
