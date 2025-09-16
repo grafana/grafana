@@ -36,11 +36,11 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/apis"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
+	"github.com/grafana/grafana/pkg/tests/testsuite"
 )
 
 func TestMain(m *testing.M) {
-	// TODO: Tests are flaky, so skip them for now
-	//testsuite.Run(m)
+	testsuite.Run(m)
 }
 
 type provisioningTestHelper struct {
