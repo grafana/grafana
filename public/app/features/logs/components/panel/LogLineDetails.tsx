@@ -69,13 +69,17 @@ LogLineDetails.displayName = 'LogLineDetails';
 
 const LogLineDetailsTabs = memo(
   ({ focusLogLine, logs, timeRange, timeZone }: Pick<Props, 'focusLogLine' | 'logs' | 'timeRange' | 'timeZone'>) => {
-    const { app, closeDetails, noInteractions, showDetails, toggleDetails } = useLogListContext();
+    const { app, closeDetails, noInteractions, showDetails, toggleDetails, wrapLogMessage } = useLogListContext();
     const [currentLog, setCurrentLog] = useState(showDetails[0]);
     const previousShowDetails = usePrevious(showDetails);
     const styles = useStyles2(getStyles, 'sidebar');
 
     useEffect(() => {
-      focusLogLine(currentLog);
+      // When wrapping is enabled and details is in sidebar mode, the logs panel width changes and the
+      // user may lose focus of the log line, so we scroll to it.
+      if (wrapLogMessage) {
+        focusLogLine(currentLog);
+      }
       if (!noInteractions) {
         reportInteraction('logs_log_line_details_displayed', {
           mode: 'sidebar',
@@ -142,11 +146,12 @@ LogLineDetailsTabs.displayName = 'LogLineDetailsTabs';
 export interface InlineLogLineDetailsProps {
   log: LogListModel;
   logs: LogListModel[];
+  onResize(): void;
   timeRange: TimeRange;
   timeZone: string;
 }
 
-export const InlineLogLineDetails = memo(({ logs, log, timeRange, timeZone }: InlineLogLineDetailsProps) => {
+export const InlineLogLineDetails = memo(({ logs, log, onResize, timeRange, timeZone }: InlineLogLineDetailsProps) => {
   const { app, detailsWidth, noInteractions } = useLogListContext();
   const styles = useStyles2(getStyles, 'inline');
   const scrollRef = useRef<HTMLDivElement | null>(null);
@@ -159,6 +164,11 @@ export const InlineLogLineDetails = memo(({ logs, log, timeRange, timeZone }: In
       });
     }
   }, [app, noInteractions]);
+
+  useEffect(() => {
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  }, [onResize]);
 
   const saveScroll = useCallback(() => {
     saveDetailsScrollPosition(log, scrollRef.current?.scrollTop ?? 0);
