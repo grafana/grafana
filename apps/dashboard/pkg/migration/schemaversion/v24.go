@@ -236,7 +236,10 @@ func tablePanelChangedHandler(panel map[string]interface{}) error {
 		overrides = []interface{}{}
 	}
 
-	panel["transformations"] = transformations
+	// Only add transformations if they're not empty - frontend omits empty arrays
+	if len(transformations) > 0 {
+		panel["transformations"] = transformations
+	}
 	panel["fieldConfig"] = map[string]interface{}{
 		"defaults":  defaults,
 		"overrides": overrides,

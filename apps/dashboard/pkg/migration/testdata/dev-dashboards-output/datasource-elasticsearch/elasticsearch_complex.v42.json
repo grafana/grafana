@@ -3309,6 +3309,7 @@
             }
           ],
           "title": "count/average with triple terms agg - interval auto",
+          "transformations": [],
           "type": "timeseries"
         }
       ],
@@ -5045,6 +5046,7 @@
             }
           ],
           "title": "Raw data",
+          "transformations": [],
           "type": "table"
         }
       ],

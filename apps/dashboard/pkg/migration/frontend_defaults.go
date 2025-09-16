@@ -536,12 +536,6 @@ func cleanupPanelForSaveWithContext(panel map[string]interface{}, isNested bool)
 		delete(panel, prop)
 	}
 
-	// Remove empty transformations array - frontend omits them when they don't exist in input
-	// The frontend's getSaveModelClone() doesn't add empty transformations arrays if they weren't in the original
-	if transformations, ok := panel["transformations"].([]interface{}); ok && len(transformations) == 0 {
-		delete(panel, "transformations")
-	}
-
 	// Filter out properties that match defaults
 	for prop, defaultValue := range defaults {
 		if panelValue, exists := panel[prop]; exists {
@@ -652,7 +646,7 @@ func filterDefaultValues(panel map[string]interface{}, originalProperties map[st
 		// Clean up fieldConfig defaults to match frontend behavior
 		if defaults, hasDefaults := fieldConfig["defaults"].(map[string]interface{}); hasDefaults {
 			// Remove properties that frontend considers as defaults and omits
-			cleanupFieldConfigDefaults(defaults)
+			cleanupFieldConfigDefaults(defaults, panel)
 		}
 
 		// Clean up fieldConfig overrides to match frontend behavior
@@ -1090,7 +1084,7 @@ func cleanupDashboardDefaults(dashboard map[string]interface{}) {
 }
 
 // cleanupFieldConfigDefaults removes properties that frontend considers as defaults and omits
-func cleanupFieldConfigDefaults(defaults map[string]interface{}) {
+func cleanupFieldConfigDefaults(defaults map[string]interface{}, panel map[string]interface{}) {
 	// Don't remove mappings - frontend keeps them even if they are empty arrays
 	// The frontend's getSaveModel() logic preserves mappings arrays that are explicitly set
 
@@ -1100,13 +1094,42 @@ func cleanupFieldConfigDefaults(defaults map[string]interface{}) {
 	// Don't remove unit properties - frontend keeps them
 	// The frontend's getSaveModel() logic preserves unit properties that are explicitly set
 
-	// Don't remove empty custom objects - frontend keeps them
-	// The frontend's getSaveModel() logic preserves empty custom objects in fieldConfig
-	// if custom, exists := defaults["custom"].(map[string]interface{}); exists {
-	//	if len(custom) == 0 {
-	//		delete(defaults, "custom")
-	//	}
-	// }
+	// Remove empty custom objects from migrated singlestat panels
+	// The frontend filters out empty custom objects for migrated singlestat panels
+	// but keeps them for other panel types
+	if custom, exists := defaults["custom"].(map[string]interface{}); exists {
+		if len(custom) == 0 {
+			// Check if this is a migrated singlestat panel by looking for characteristic properties
+			isMigratedSinglestat := false
+
+			// Check for autoMigrateFrom property first
+			if autoMigrateFrom, exists := panel["autoMigrateFrom"]; exists {
+				if autoMigrateFrom == "singlestat" || autoMigrateFrom == "grafana-singlestat-panel" {
+					isMigratedSinglestat = true
+				}
+			}
+
+			// If autoMigrateFrom is not present, check for characteristic migrated singlestat properties
+			if !isMigratedSinglestat {
+				// Check for color with fixedColor and mode "fixed" (from sparkline migration)
+				if color, hasColor := defaults["color"].(map[string]interface{}); hasColor {
+					if _, hasFixedColor := color["fixedColor"].(string); hasFixedColor {
+						if mode, hasMode := color["mode"].(string); hasMode && mode == "fixed" {
+							// Check for mappings array (from valueMaps migration)
+							if _, hasMappings := defaults["mappings"].([]interface{}); hasMappings {
+								isMigratedSinglestat = true
+							}
+						}
+					}
+				}
+			}
+
+			// Only remove empty custom objects for migrated singlestat panels
+			if isMigratedSinglestat {
+				delete(defaults, "custom")
+			}
+		}
+	}
 }
 
 // cleanupFieldConfigOverrides removes properties that frontend considers as defaults and omits

@@ -222,8 +222,14 @@ func migratePanelDatasourcesInternal(panelMap map[string]interface{}, datasource
 	} else {
 		// Migrate existing non-null datasource
 		// Frontend preserves existing datasource objects as-is, so backend should too
-		migrated := MigrateDatasourceNameToRef(ds, map[string]bool{"returnDefaultAsNull": false}, datasources)
-		panelMap["datasource"] = migrated
+		// But don't override empty objects {} that were set by previous migrations (like V33)
+		if dsMap, ok := ds.(map[string]interface{}); ok && len(dsMap) == 0 {
+			// Keep empty object {} as-is (set by V33 migration for empty strings)
+			panelMap["datasource"] = ds
+		} else {
+			migrated := MigrateDatasourceNameToRef(ds, map[string]bool{"returnDefaultAsNull": false}, datasources)
+			panelMap["datasource"] = migrated
+		}
 	}
 
 	// Handle target datasources
