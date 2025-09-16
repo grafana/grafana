@@ -278,6 +278,7 @@ export const LogListContextProvider = ({
       fontSize,
       forceEscape: logListState.forceEscape,
       showTime,
+      showUniqueLabels,
       syntaxHighlighting,
       wrapLogMessage,
       prettifyJSON,
@@ -311,22 +312,14 @@ export const LogListContextProvider = ({
       ...logListState,
       dedupStrategy,
       showTime,
+      showUniqueLabels,
       sortOrder,
       syntaxHighlighting,
     };
     if (!shallowCompare(logListState, newState)) {
       setLogListState(newState);
     }
-  }, [
-    app,
-    dedupStrategy,
-    logListState,
-    pinnedLogs,
-    showControls,
-    showTime,
-    sortOrder,
-    syntaxHighlighting,
-  ]);
+  }, [app, dedupStrategy, logListState, showControls, showTime, showUniqueLabels, sortOrder, syntaxHighlighting]);
 
   // Sync filter levels
   useEffect(() => {
@@ -385,7 +378,7 @@ export const LogListContextProvider = ({
     observer.observe(containerElement);
     return () => observer.disconnect();
   }, [containerElement, detailsMode, logOptionsStorageKey, showControls]);
-  
+
   // Sync prettifyJSON
   useEffect(() => {
     if (prettifyJSONProp !== undefined) {
