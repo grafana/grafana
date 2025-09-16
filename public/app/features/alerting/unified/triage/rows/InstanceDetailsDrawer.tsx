@@ -1,6 +1,6 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 
-import { Labels } from '@grafana/data';
+import { AnnotationEvent, DataFrame, DataTopic, Labels, arrayToDataFrame } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { isFetchError } from '@grafana/runtime';
 import { VizConfigBuilders } from '@grafana/scenes';
@@ -31,6 +31,42 @@ interface QueryVisualizationProps {
   query: AlertQuery;
   instanceLabels: Labels;
   thresholds?: ReturnType<typeof getThresholdsForQueries>;
+  recentTransitions?: LogRecord[];
+}
+
+// Function to get color based on alert state - matching EventState component colors
+function getStateColor(state: string): string {
+  const stateStr = String(state).toLowerCase();
+  if (stateStr.includes('normal')) {
+    return '#73BF69'; // Green
+  } else if (stateStr.includes('alerting')) {
+    return '#F2495C'; // Red
+  } else if (stateStr.includes('pending')) {
+    return '#FF9830'; // Orange
+  } else if (stateStr.includes('recovering')) {
+    return '#FF9830'; // Orange
+  } else if (stateStr.includes('nodata')) {
+    return '#5794F2'; // Blue
+  }
+  return '#8e8e8e'; // Gray for unknown states
+}
+
+// Transform state history into annotation DataFrame
+function createAnnotationsDataFrame(historyRecords: LogRecord[]): DataFrame {
+  const annotationEvents: AnnotationEvent[] = historyRecords.map((record) => ({
+    time: record.timestamp,
+    title: `${record.line.previous} → ${record.line.current}`,
+    text: `State changed from ${record.line.previous} to ${record.line.current}`,
+    tags: ['state-transition'],
+    color: getStateColor(record.line.current),
+  }));
+
+  const annotationFrame = arrayToDataFrame(annotationEvents);
+  annotationFrame.meta = {
+    dataTopic: DataTopic.Annotations,
+  };
+
+  return annotationFrame;
 }
 
 interface StateTransitionProps {
@@ -50,7 +86,7 @@ function StateTransition({ record }: StateTransitionProps) {
   );
 }
 
-function QueryVisualization({ query, instanceLabels, thresholds }: QueryVisualizationProps) {
+function QueryVisualization({ query, instanceLabels, thresholds, recentTransitions = [] }: QueryVisualizationProps) {
   // Convert query to range query for visualization
   const visualizationQuery = useMemo(() => {
     const model = { ...query.model, refId: query.refId };
@@ -103,6 +139,26 @@ function QueryVisualization({ query, instanceLabels, thresholds }: QueryVisualiz
     data: baseDataProvider,
     transformations,
   });
+
+  // Create annotation data for the visualization
+  const annotationsData = useMemo(() => {
+    return recentTransitions.length > 0 ? [createAnnotationsDataFrame(recentTransitions)] : [];
+  }, [recentTransitions]);
+
+  // Patch the data provider with annotations after it's created
+  useEffect(() => {
+    if (annotationsData.length > 0 && filteredDataProvider.state.data) {
+      const currentData = filteredDataProvider.state.data;
+      // Update the data provider state to include annotations
+      filteredDataProvider.setState({
+        ...filteredDataProvider.state,
+        data: {
+          ...currentData,
+          annotations: annotationsData,
+        },
+      });
+    }
+  }, [annotationsData, filteredDataProvider]);
 
   // Create visualization config with thresholds if available
   const vizConfig = useMemo(() => {
@@ -189,7 +245,6 @@ export function InstanceDetailsDrawer({ ruleUID, instanceLabels, onClose }: Inst
   } = stateHistoryApi.endpoints.getRuleHistory.useQuery({
     ruleUid: ruleUID,
     labels: instanceLabels,
-    limit: 10,
     from: timeRange.from.unix(),
     to: timeRange.to.unix(),
   });
@@ -200,9 +255,6 @@ export function InstanceDetailsDrawer({ ruleUID, instanceLabels, onClose }: Inst
       .map(([key, value]) => `${key}=${value}`)
       .join(','),
   });
-
-  // Sort by timestamp (most recent first) and limit to recent entries
-  const recentTransitions = historyRecords.sort((a, b) => b.timestamp - a.timestamp).slice(0, 10);
 
   if (error) {
     return (
@@ -242,6 +294,7 @@ export function InstanceDetailsDrawer({ ruleUID, instanceLabels, onClose }: Inst
                   query={query}
                   instanceLabels={instanceLabels}
                   thresholds={thresholds}
+                  recentTransitions={historyRecords}
                 />
               ))}
             </Stack>
@@ -267,8 +320,8 @@ export function InstanceDetailsDrawer({ ruleUID, instanceLabels, onClose }: Inst
           )}
           {!stateHistoryLoading && !stateHistoryError && (
             <Stack direction="column" gap={1}>
-              {recentTransitions.length > 0 ? (
-                recentTransitions.map((record, index) => (
+              {historyRecords.length > 0 ? (
+                historyRecords.map((record, index) => (
                   <StateTransition key={`${record.timestamp}-${index}`} record={record} />
                 ))
               ) : (
