@@ -61,7 +61,7 @@ export function RelativeTimeRangePicker(props: RelativeTimeRangePickerProps) {
 
   // the order of middleware is important!
   // see https://floating-ui.com/docs/arrow#order
-  const middleware = [...getPositioningMiddleware(placement)];
+  const middleware = getPositioningMiddleware(placement);
 
   const { context, refs, floatingStyles } = useFloating({
     open: isOpen,

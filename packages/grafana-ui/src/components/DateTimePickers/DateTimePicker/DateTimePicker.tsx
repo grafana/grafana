@@ -98,7 +98,7 @@ export const DateTimePicker = ({
 
   // the order of middleware is important!
   // see https://floating-ui.com/docs/arrow#order
-  const middleware = [...getPositioningMiddleware(placement)];
+  const middleware = getPositioningMiddleware(placement);
 
   const { refs, floatingStyles } = useFloating({
     open: isOpen,

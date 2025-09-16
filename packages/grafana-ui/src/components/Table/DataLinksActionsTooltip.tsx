@@ -31,7 +31,7 @@ export const DataLinksActionsTooltip = ({ links, actions, value, coords, onToolt
   const placement = 'right-start';
 
   // the order of middleware is important!
-  const middleware = [...getPositioningMiddleware(placement)];
+  const middleware = getPositioningMiddleware(placement);
 
   const virtual = useMemo(() => {
     const { clientX, clientY } = coords;

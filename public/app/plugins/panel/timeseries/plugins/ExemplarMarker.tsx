@@ -44,7 +44,7 @@ export const ExemplarMarker = ({
   const placement = 'bottom';
 
   // the order of middleware is important!
-  const middleware = [...floatingUtils.getPositioningMiddleware(placement)];
+  const middleware = floatingUtils.getPositioningMiddleware(placement);
 
   const { context, refs, floatingStyles } = useFloating({
     open: isOpen,

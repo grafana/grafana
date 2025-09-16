@@ -43,7 +43,7 @@ export const AnnotationMarker2 = ({
   const { refs, floatingStyles } = useFloating({
     open: true,
     placement,
-    middleware: [...floatingUtils.getPositioningMiddleware(placement)],
+    middleware: floatingUtils.getPositioningMiddleware(placement),
     whileElementsMounted: autoUpdate,
     strategy: 'fixed',
   });

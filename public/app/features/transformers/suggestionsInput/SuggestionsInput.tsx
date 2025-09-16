@@ -84,7 +84,7 @@ export const SuggestionsInput = ({
   }, [scrollTop]);
 
   // the order of middleware is important!
-  const middleware = [...floatingUtils.getPositioningMiddleware(placement)];
+  const middleware = floatingUtils.getPositioningMiddleware(placement);
 
   const { refs, floatingStyles } = useFloating({
     open: showingSuggestions,
