@@ -60,6 +60,7 @@ import {
 import TempoLanguageProvider from './language_provider';
 import {
   enhanceTraceQlMetricsResponse,
+  formatTraceQLResponse,
   transformFromOTLP as transformFromOTEL,
   transformTrace,
 } from './resultTransformer';
@@ -276,6 +277,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
     );
     this.tempoVersion = response.data.version;
   };
+
   // TODO: Implement this function in Prometheus datasource https://github.com/grafana/grafana/issues/109706
   async getNativeHistograms(timeRange?: TimeRange): Promise<boolean> {
     if (!this.serviceMap?.datasourceUid) {
@@ -457,7 +459,11 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
               return this.handleStreamingQuery(options, targets.traceql, queryValue);
             }
 
-            subQueries.push(this.handleTraceQlQuery(options, targets));
+            if (config.featureToggles.tempoSearchBackendMigration) {
+              subQueries.push(this.handleTraceQlQuery(options, targets));
+            } else {
+              subQueries.push(this.oldSearchQueryLogic(options, targets, queryValue));
+            }
           }
         }
       } catch (error) {
@@ -497,7 +503,11 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
           if (this.isStreamingSearchEnabled()) {
             subQueries.push(this.handleStreamingQuery(options, traceqlSearchTargets, queryFromFilters));
           } else {
-            subQueries.push(this.handleTraceQlQuery(options, targets));
+            if (config.featureToggles.tempoSearchBackendMigration) {
+              subQueries.push(this.handleTraceQlQuery(options, targets));
+            } else {
+              subQueries.push(this.oldSearchQueryLogic(options, targets, queryFromFilters));
+            }
           }
         }
       } catch (error) {
@@ -732,6 +742,48 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
           streaming: false,
           latencyMs: Math.round(performance.now() - startTime),
           query: queries[0].query ?? '',
+          error: getErrorMessage(err.message),
+          statusCode: err.status,
+          statusText: err.statusText,
+        });
+        return of({ error: { message: getErrorMessage(err?.data?.message) }, data: [] });
+      })
+    );
+  };
+
+  // this is just a short term function, we will remove once we have rolled
+  // out the backend migration and are happy with the stability of the feature
+  oldSearchQueryLogic = (
+    options: DataQueryRequest<TempoQuery>,
+    targets: { [type: string]: TempoQuery[] },
+    queryValue: string
+  ) => {
+    console.log('featureToggleDisabled, using old logic.');
+    const startTime = performance.now();
+    return this._request('/api/search', {
+      q: queryValue,
+      limit: options.targets[0].limit ?? DEFAULT_LIMIT,
+      spss: options.targets[0].spss ?? DEFAULT_SPSS,
+      start: options.range.from.unix(),
+      end: options.range.to.unix(),
+    }).pipe(
+      map((response) => {
+        reportTempoQueryMetrics('grafana_traces_traceql_response', options, {
+          success: true,
+          streaming: false,
+          latencyMs: Math.round(performance.now() - startTime), // rounded to nearest millisecond
+          query: queryValue ?? '',
+        });
+        return {
+          data: formatTraceQLResponse(response.data.traces, this.instanceSettings, targets.traceqlSearch[0].tableType),
+        };
+      }),
+      catchError((err) => {
+        reportTempoQueryMetrics('grafana_traces_traceql_response', options, {
+          success: false,
+          streaming: false,
+          latencyMs: Math.round(performance.now() - startTime), // rounded to nearest millisecond
+          query: queryValue ?? '',
           error: getErrorMessage(err.message),
           statusCode: err.status,
           statusText: err.statusText,
