@@ -16,7 +16,7 @@ import { TracingInstrumentation } from '@grafana/faro-web-tracing';
 import { EchoBackend, EchoEvent, EchoEventType } from '@grafana/runtime';
 
 import { EchoSrvTransport } from './EchoSrvTransport';
-import { getSamplingRate } from './getSamplingRate';
+import { beforeSendHandler } from './beforeSendHandler';
 import { GrafanaJavascriptAgentEchoEvent, User } from './types';
 
 function isCrossOriginIframe() {
@@ -114,12 +114,12 @@ export class GrafanaJavascriptAgentBackend
       ignoreUrls,
       sessionTracking: {
         persistent: true,
-        samplingRate: getSamplingRate(navigator.userAgent),
       },
       batching: {
         sendTimeout: 1000,
       },
       internalLoggerLevel: options.internalLoggerLevel || defaultInternalLoggerLevel,
+      beforeSend: beforeSendHandler,
     };
     this.faroInstance = initializeFaro(grafanaJavaScriptAgentOptions);
 
